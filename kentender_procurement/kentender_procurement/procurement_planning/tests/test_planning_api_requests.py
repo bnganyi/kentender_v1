@@ -145,14 +145,53 @@ class TestEndpointsSurviveTheFrameworksTransportFields(RequestShapedCase):
 			issues=json.dumps([
 				{
 					"entry_id": added["entry_id"],
-					"problem": "Amount unsupported",
-					"correction": "Align the amount with the budget line.",
+					"correction_required": "Align the amount with the budget line.",
 				}
 			]),
 			task_token=task.task_token,
 			idempotency_key=key(),
 		)
 		self.assertEqual(returned["action"], "returned")
+
+	def test_save_plan_version_details_over_the_request_path(self):
+		"""PLN18-304 — found live: `api.save_plan_version_details` called
+		`plan_workbench.save_plan_version_details` without importing
+		`plan_workbench` at all, a 500 (`NameError`) for every real caller
+		since the day it was added; no test drove it through the API layer,
+		only `plan_workbench.save_plan_version_details` directly."""
+		frappe.set_user(fx.AUTHOR)
+		opened = self.call(
+			"open_departmental_plan", organisation_unit=fx.OU_ALPHA, fiscal_year=fx.FY_OPEN,
+			idempotency_key=key(),
+		)
+		added = self.call(
+			"save_direct_requirement", dpp_version=opened["current_version"],
+			entry_values=json.dumps(fx.direct_values()),
+			expected_record_version=str(opened["record_version"]),
+			idempotency_key=key(),
+		)
+		frappe.set_user(fx.HOD)
+		submitted = self.call(
+			"submit_departmental_plan", dpp_version=opened["current_version"],
+			certification_confirmed="1",
+			expected_record_version=str(added["record_version"]),
+			idempotency_key=key(),
+		)
+		task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+		frappe.set_user(fx.PLANNER)
+		accepted = self.call(
+			"accept_departmental_plan", task=task.name,
+			classifications=json.dumps({added["entry_id"]: "Consulting services"}),
+			task_token=task.task_token, idempotency_key=key(),
+		)
+		plan = self.call("get_annual_plan", plan_reference=accepted["annual_plan"])
+		result = self.call(
+			"save_plan_version_details", plan_version=plan["version_reference"],
+			detail_values=json.dumps({"project_name": "Digital health infrastructure programme"}),
+			expected_record_version=str(plan["record_version"]), idempotency_key=key(),
+		)
+		self.assertEqual(result["action"], "details_saved")
+		self.assertEqual(self.call("get_annual_plan", plan_reference=accepted["annual_plan"])["project_name"], "Digital health infrastructure programme")
 
 	def test_resolve_planning_context_is_reachable(self):
 		frappe.set_user(fx.PLANNER)
@@ -251,6 +290,7 @@ class TestEndpointsSurviveTheFrameworksTransportFields(RequestShapedCase):
 		self.call("confirm_plan_funding", task=finance_task.name, task_token=finance_task.task_token, idempotency_key=key())
 		frappe.set_user(fx.PLANNER)
 		plan = self.call("get_annual_plan", plan_reference=accepted["annual_plan"])
+		frappe.set_user(fx.HOPF)  # v1.18 §6.2: the Head of Procurement Function signs and submits
 		submitted = self.call("submit_consolidated_plan", plan_version=plan["version_reference"], expected_record_version=str(plan["record_version"]), idempotency_key=key())
 		ao_task = frappe.get_doc("Plan Governance Task", submitted["task"])
 		frappe.set_user(fx.ACCOUNTING_OFFICER)
@@ -258,21 +298,23 @@ class TestEndpointsSurviveTheFrameworksTransportFields(RequestShapedCase):
 		statutory_task = frappe.get_doc("Plan Governance Task", adopted["statutory_task"])
 		frappe.set_user(fx.STATUTORY)
 		approved = self.call("approve_annual_plan", task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=key())
-		self.assertEqual(approved["publication_result"], "Acknowledged")
-		frappe.set_user(fx.PLANNER)
-		preview = self.call("preview_forecast_cascade", plan_item=item_id, milestone="bid_opening", new_forecast_date="2101-09-25")
-		self.assertEqual(len(preview["rows"]), 6)
-		# a three-day shift of two rows keeps award approval (27 Oct) after evaluation (25 Oct)
-		confirmed = self.call(
-			"confirm_forecast_cascade", plan_item=item_id, milestone="bid_opening", new_forecast_date="2101-09-25",
-			included_milestones=json.dumps(["bid_opening", "evaluation_completion"]),
-			reason="Tender Preparation confirmed the issue date will slip three days pending template release.",
-			expected_record_version=str(preview["record_version"]), idempotency_key=key(),
+		self.assertTrue(approved["publication"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		self.call(
+			"record_treasury_submission", plan_version=plan["version_reference"], submitted_at="2101-11-01 09:00:00", channel="Email",
+			destination="treasury@example.test", dispatch_reference="MOH/APP/2101/001", exact_document_confirmed="true", idempotency_key=key(),
 		)
-		self.assertEqual(len(confirmed["revisions"]), 2)
-		self.assertTrue(confirmed["cascade_id"])
-		publication = frappe.db.get_value("Annual Plan Publication", {"plan_version": accepted["annual_plan_version"]}, "name")
-		self.assertEqual(self.call("get_publication_task", publication=publication)["result"], "Acknowledged")
+		frappe.set_user("Administrator")
+		published = self.call("publish_annual_plan", plan_version=plan["version_reference"], idempotency_key=key())
+		self.assertEqual(published["result"], "Acknowledged")
+		# PLN-CHG-001 v1.23 §7.5 (PLN23-AC-001) — the forecast cascade has no
+		# whitelisted endpoint at all, so the request surface cannot reach it.
+		from kentender_procurement.procurement_planning import api as planning_api
+
+		for withdrawn in ("preview_forecast_cascade", "confirm_forecast_cascade"):
+			self.assertFalse(hasattr(planning_api, withdrawn), f"{withdrawn} is exposed again")
+		publication = frappe.db.get_value("Plan Publication", {"plan_version": accepted["annual_plan_version"]}, "name")
+		self.assertEqual(self.call("get_publication_task", publication=publication)["publication_state"], "Acknowledged")
 
 
 class TestNoWhitelistedEndpointTakesKwargs(IntegrationTestCase):

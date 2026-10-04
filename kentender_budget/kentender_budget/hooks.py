@@ -98,3 +98,11 @@ has_permission = {
 	"Procurement Budget Line": "kentender_core.services.authorization.has_permission",
 	"Procurement Budget Line Version": "kentender_core.services.authorization.has_permission",
 }
+
+
+# BUD-CHG-001 v1.11 §8.5 — outcomes of Planning budget revision requests are
+# delivered from a transactional outbox; anything left Pending is retried.
+scheduler_events = globals().get("scheduler_events") or {}
+scheduler_events.setdefault("hourly", []).append(
+	"kentender_budget.services.budget_revision_request_contracts.retry_pending_outcomes"
+)

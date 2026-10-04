@@ -122,7 +122,7 @@ def atomic(_label: str = ""):
 	is entered, so a failure there leaves nothing here to undo; a failure
 	*inside* this block (a bad insert, an unexpected exception) rolls back
 	to the savepoint without discarding the caller's own outer transaction —
-	the same reasoning `plan_requisition.record_requisition_drawdown`'s own
+	the same reasoning `plan_requisition.authorise_requisition_drawdown`'s own
 	docstring gives for why direct Python callers can't rely on
 	`frappe.handler`'s catch-and-rollback wrapper."""
 	savepoint = f"req_{uuid4().hex[:12]}"

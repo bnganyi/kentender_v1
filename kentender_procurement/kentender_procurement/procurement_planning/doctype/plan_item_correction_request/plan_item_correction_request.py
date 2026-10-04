@@ -1,10 +1,12 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 §7.4A — the inbound half of a Requisition's upstream
-correction route. Immutable once received, except the resolution columns a
-Procurement Planner's own `resolve_plan_item_correction_request` command
-sets exactly once.
+"""REQ-CHG-001 v1.6 §7.4A / PLN-CHG-001 v1.18 §5.4.5 — the inbound half of a
+Requisition's upstream correction route. Immutable once received, except the
+status/resolution columns the Procurement Planner's own
+`start_plan_item_correction`, `resolve_plan_item_correction_request` and
+`close_plan_item_correction_without_change` commands set as the request
+moves Open -> In progress -> Resolved / Closed without change.
 """
 
 from __future__ import annotations

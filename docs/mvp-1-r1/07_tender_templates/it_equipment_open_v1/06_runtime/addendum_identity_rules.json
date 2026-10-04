@@ -1,0 +1,383 @@
+{
+  "classifications": [
+    {
+      "bidder_notice": "Unchanged by the addendum; your answer is kept.",
+      "classification": "unchanged",
+      "copy_prior_answer": true,
+      "meaning": "Exact stable identity and material facts unchanged; the prior answer copies automatically."
+    },
+    {
+      "bidder_notice": "Your answer is kept but the requirement's treatment changed; check it before you submit.",
+      "classification": "converted",
+      "copy_prior_answer": true,
+      "meaning": "Material facts unchanged but a released conversion applies; the prior answer copies and completeness is recomputed."
+    },
+    {
+      "bidder_notice": "The addendum changed this requirement; give a new response.",
+      "classification": "fresh_response_required",
+      "copy_prior_answer": false,
+      "meaning": "Same stable identity, changed material facts or control; the prior answer is not copied."
+    },
+    {
+      "bidder_notice": "The addendum removed this requirement; your earlier answer is kept in history only.",
+      "classification": "removed",
+      "copy_prior_answer": false,
+      "meaning": "The identity is absent from the successor definition; the prior answer stays in history only."
+    },
+    {
+      "bidder_notice": "The addendum added this requirement; complete it before you submit.",
+      "classification": "new",
+      "copy_prior_answer": false,
+      "meaning": "The identity did not exist before; a required response begins incomplete."
+    }
+  ],
+  "identity_rules": [
+    {
+      "comparison_basis": [
+        "source_family",
+        "immutable_source_id",
+        "rule_id",
+        "field_key",
+        "material_digest"
+      ],
+      "conversions": [
+        {
+          "applies_when": "requiredness_changed",
+          "bidder_notice": "This response is kept, but whether it is required has changed. Check it before you submit.",
+          "conversion_id": "CONV-DOCUMENT-REQUIREDNESS",
+          "copy_prior_answer": true
+        }
+      ],
+      "fresh_response_notice": "Each addendum must be acknowledged once it becomes effective.",
+      "material_facts": [
+        "addendum_id"
+      ],
+      "source_family": "document"
+    },
+    {
+      "comparison_basis": [
+        "source_family",
+        "immutable_source_id",
+        "rule_id",
+        "field_key",
+        "material_digest"
+      ],
+      "conversions": [
+        {
+          "applies_when": "requiredness_changed",
+          "bidder_notice": "This response is kept, but whether it is required has changed. Check it before you submit.",
+          "conversion_id": "CONV-SUPPLIER-REQUIREDNESS",
+          "copy_prior_answer": true
+        }
+      ],
+      "fresh_response_notice": "Supplier details are copied while the Tender is unchanged.",
+      "material_facts": [
+        "tender_reference"
+      ],
+      "source_family": "supplier"
+    },
+    {
+      "comparison_basis": [
+        "source_family",
+        "immutable_source_id",
+        "rule_id",
+        "field_key",
+        "material_digest"
+      ],
+      "conversions": [
+        {
+          "applies_when": "requiredness_changed",
+          "bidder_notice": "This response is kept, but whether it is required has changed. Check it before you submit.",
+          "conversion_id": "CONV-DECLARATION-REQUIREDNESS",
+          "copy_prior_answer": true
+        }
+      ],
+      "fresh_response_notice": "A changed declaration text or package must be affirmed again.",
+      "material_facts": [
+        "form_id",
+        "text_id",
+        "text_version",
+        "source_text_digest",
+        "resolved_text_digest",
+        "tender_version_id",
+        "effective_addendum_ids"
+      ],
+      "source_family": "declaration"
+    },
+    {
+      "comparison_basis": [
+        "source_family",
+        "immutable_source_id",
+        "rule_id",
+        "field_key",
+        "material_digest"
+      ],
+      "conversions": [
+        {
+          "applies_when": "requiredness_changed",
+          "bidder_notice": "This response is kept, but whether it is required has changed. Check it before you submit.",
+          "conversion_id": "CONV-TENDER-SECURITY-REQUIREDNESS",
+          "copy_prior_answer": true
+        }
+      ],
+      "fresh_response_notice": "A changed security amount, currency or expiry needs a fresh security response.",
+      "material_facts": [
+        "amount",
+        "currency",
+        "bank_guarantee_expiry_date",
+        "insurance_guarantee_expiry_date",
+        "permitted_forms"
+      ],
+      "source_family": "tender_security"
+    },
+    {
+      "comparison_basis": [
+        "source_family",
+        "immutable_source_id",
+        "rule_id",
+        "field_key",
+        "material_digest"
+      ],
+      "conversions": [
+        {
+          "applies_when": "requiredness_changed",
+          "bidder_notice": "This response is kept, but whether it is required has changed. Check it before you submit.",
+          "conversion_id": "CONV-GOODS-REQUIREDNESS",
+          "copy_prior_answer": true
+        }
+      ],
+      "fresh_response_notice": "A changed goods line needs a fresh offer.",
+      "material_facts": [
+        "equipment_category",
+        "quantity",
+        "unit",
+        "destination",
+        "latest_delivery_date",
+        "technical_requirement_ids"
+      ],
+      "source_family": "goods"
+    },
+    {
+      "comparison_basis": [
+        "source_family",
+        "immutable_source_id",
+        "rule_id",
+        "field_key",
+        "material_digest"
+      ],
+      "conversions": [
+        {
+          "applies_when": "requiredness_changed",
+          "bidder_notice": "This response is kept, but whether it is required has changed. Check it before you submit.",
+          "conversion_id": "CONV-TECHNICAL-REQUIREMENT-REQUIREDNESS",
+          "copy_prior_answer": true
+        }
+      ],
+      "fresh_response_notice": "A changed requirement needs a fresh compliance response.",
+      "material_facts": [
+        "characteristic_key",
+        "comparison",
+        "control",
+        "required_value",
+        "unit",
+        "options",
+        "port_options",
+        "applies_to"
+      ],
+      "source_family": "technical_requirement"
+    },
+    {
+      "comparison_basis": [
+        "source_family",
+        "immutable_source_id",
+        "rule_id",
+        "field_key",
+        "material_digest"
+      ],
+      "conversions": [
+        {
+          "applies_when": "requiredness_changed",
+          "bidder_notice": "This response is kept, but whether it is required has changed. Check it before you submit.",
+          "conversion_id": "CONV-WARRANTY-SUPPORT-REQUIREDNESS",
+          "copy_prior_answer": true
+        }
+      ],
+      "fresh_response_notice": "A changed warranty or support obligation needs a fresh confirmation.",
+      "material_facts": [
+        "comparison",
+        "control",
+        "required_value"
+      ],
+      "source_family": "warranty_support"
+    },
+    {
+      "comparison_basis": [
+        "source_family",
+        "immutable_source_id",
+        "rule_id",
+        "field_key",
+        "material_digest"
+      ],
+      "conversions": [
+        {
+          "applies_when": "requiredness_changed",
+          "bidder_notice": "This response is kept, but whether it is required has changed. Check it before you submit.",
+          "conversion_id": "CONV-EXPERIENCE-REQUIREDNESS",
+          "copy_prior_answer": true
+        }
+      ],
+      "fresh_response_notice": "A changed experience window needs a fresh entry.",
+      "material_facts": [
+        "period_years",
+        "window_start",
+        "window_end"
+      ],
+      "source_family": "experience"
+    },
+    {
+      "comparison_basis": [
+        "source_family",
+        "immutable_source_id",
+        "rule_id",
+        "field_key",
+        "material_digest"
+      ],
+      "conversions": [
+        {
+          "applies_when": "requiredness_changed",
+          "bidder_notice": "This response is kept, but whether it is required has changed. Check it before you submit.",
+          "conversion_id": "CONV-RELATED-SERVICE-REQUIREDNESS",
+          "copy_prior_answer": true
+        }
+      ],
+      "fresh_response_notice": "A changed service needs a fresh confirmation.",
+      "material_facts": [
+        "service_type",
+        "required_result",
+        "quantity_or_coverage",
+        "completion_date",
+        "acceptance_evidence",
+        "applies_to"
+      ],
+      "source_family": "related_service"
+    },
+    {
+      "comparison_basis": [
+        "source_family",
+        "immutable_source_id",
+        "rule_id",
+        "field_key",
+        "material_digest"
+      ],
+      "conversions": [
+        {
+          "applies_when": "requiredness_changed",
+          "bidder_notice": "This response is kept, but whether it is required has changed. Check it before you submit.",
+          "conversion_id": "CONV-ACCEPTANCE-REQUIREMENT-REQUIREDNESS",
+          "copy_prior_answer": true
+        }
+      ],
+      "fresh_response_notice": "A changed acceptance requirement must be accepted again.",
+      "material_facts": [
+        "check_type",
+        "pass_condition",
+        "evidence_type",
+        "applies_to"
+      ],
+      "source_family": "acceptance_requirement"
+    },
+    {
+      "comparison_basis": [
+        "source_family",
+        "immutable_source_id",
+        "rule_id",
+        "field_key",
+        "material_digest"
+      ],
+      "conversions": [
+        {
+          "applies_when": "requiredness_changed",
+          "bidder_notice": "This response is kept, but whether it is required has changed. Check it before you submit.",
+          "conversion_id": "CONV-EVIDENCE-REQUIREMENT-REQUIREDNESS",
+          "copy_prior_answer": true
+        }
+      ],
+      "fresh_response_notice": "Changed evidence requirements need fresh evidence.",
+      "material_facts": [
+        "evidence_kind",
+        "requirement_text",
+        "evidence_type",
+        "linked_requirement_type",
+        "linked_requirement_id"
+      ],
+      "source_family": "evidence_requirement"
+    },
+    {
+      "comparison_basis": [
+        "source_family",
+        "immutable_source_id",
+        "rule_id",
+        "field_key",
+        "material_digest"
+      ],
+      "conversions": [
+        {
+          "applies_when": "requiredness_changed",
+          "bidder_notice": "This response is kept, but whether it is required has changed. Check it before you submit.",
+          "conversion_id": "CONV-RESERVATION-REQUIREDNESS",
+          "copy_prior_answer": true
+        }
+      ],
+      "fresh_response_notice": "A changed reservation rule or wording needs a fresh declaration and evidence.",
+      "material_facts": [
+        "category",
+        "rule_snapshot_ids",
+        "permitted_categories",
+        "text_id",
+        "text_version",
+        "source_text_digest",
+        "resolved_text_digest"
+      ],
+      "source_family": "reservation"
+    },
+    {
+      "comparison_basis": [
+        "source_family",
+        "immutable_source_id",
+        "rule_id",
+        "field_key",
+        "material_digest"
+      ],
+      "conversions": [
+        {
+          "applies_when": "requiredness_changed",
+          "bidder_notice": "This response is kept, but whether it is required has changed. Check it before you submit.",
+          "conversion_id": "CONV-PRICE-ROW-REQUIREDNESS",
+          "copy_prior_answer": true
+        }
+      ],
+      "fresh_response_notice": "A changed price row needs a fresh price.",
+      "material_facts": [
+        "quantity",
+        "unit",
+        "currency",
+        "latest_delivery_date",
+        "completion_date"
+      ],
+      "source_family": "price_row"
+    }
+  ],
+  "product_profile_id": "GOODS-IT-SIMPLE-V1",
+  "prohibited_comparison_bases": [
+    "text_similarity",
+    "row_order",
+    "display_label",
+    "client_identity"
+  ],
+  "release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01",
+  "renderer_profile_id": "BDS-GOODS-IT-V1",
+  "schema_version": 1,
+  "supported_renderer_version": "1.2.0",
+  "template_key": "IT-EQUIPMENT-OPEN-V1",
+  "template_release": "1.4"
+}

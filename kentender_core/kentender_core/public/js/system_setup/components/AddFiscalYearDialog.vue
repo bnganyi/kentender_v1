@@ -8,7 +8,7 @@ defineProps({
 	error: { type: String, default: "" },
 	busy: { type: Boolean, default: false },
 });
-const emit = defineEmits(["confirm", "cancel"]);
+const emit = defineEmits(["confirm", "cancel", "view-year"]);
 
 const startYear = ref("");
 const preview = ref(null);
@@ -34,16 +34,15 @@ watch(startYear, async (value) => {
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop" @click.self="emit('cancel')">
+	<div class="kt-dialog-backdrop">
 		<div
-			class="kt-dialog kt-blueprint kt-narrow"
+			class="kt-dialog kt-narrow"
 			role="dialog"
 			aria-modal="true"
 			:aria-label="__('Add financial year')"
 			data-testid="kt-fy-add"
 			@keydown.esc="emit('cancel')"
 		>
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
 			<h2 class="kt-dialog-title">{{ __("Add financial year") }}</h2>
 			<div class="kt-dialog-fields">
 				<div class="kt-field">
@@ -60,11 +59,53 @@ watch(startYear, async (value) => {
 					>
 				</div>
 				<!-- CFG-DES-04 — "FY 2028/29 · 1 Jul 2028 – 30 Jun 2029" -->
-				<div v-if="preview" class="kt-summary" data-testid="kt-fy-preview">
-					{{ preview.label }} · {{ preview.period_label }}
-					<template v-if="preview.exists"> — {{ __("already exists") }}</template>
+				<!-- The generated identity and period as separately labelled
+				     facts (§11.3: dates are never user-entered) — never a
+				     concatenated line the reader has to parse. -->
+				<div v-if="preview" class="kt-meta-row" style="margin-top:10px" data-testid="kt-fy-preview">
+					<div>
+						<span class="kt-label">{{ __("Financial year") }}</span>
+						<span class="kt-meta-value">{{ preview.label }}</span>
+					</div>
+					<div>
+						<span class="kt-label">{{ __("Period") }}</span>
+						<span class="kt-meta-value">{{ preview.period_label }}</span>
+					</div>
 				</div>
-				<p v-if="error" class="kt-inline-error" role="alert">{{ error }}</p>
+				<!-- CFG-UX-AC-05 — the exact duplicate/Company defects, never a
+				     silent create; Add stays disabled for either. -->
+				<!-- C02 #add-year — the exact duplicate and Company defects, each
+				     with its own recovery; Add stays unavailable for either. -->
+				<div
+					v-if="preview && preview.exists"
+					class="kt-notice is-critical"
+					role="alert"
+					style="flex-direction:column;align-items:flex-start"
+					data-testid="kt-fy-duplicate"
+				>
+					<div style="display:flex;gap:12px;align-items:flex-start">
+						<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+						<div class="kt-notice-body"><strong>{{ __("Duplicate.") }}</strong> {{ __("This financial year already exists.") }}</div>
+					</div>
+					<a href="#" style="margin-left:30px;font-size:13px" data-testid="kt-fy-duplicate-view" @click.prevent="emit('view-year', preview.fiscal_year)">{{ __("View financial year") }}</a>
+				</div>
+				<div
+					v-else-if="preview && preview.company_missing"
+					class="kt-notice is-critical"
+					role="alert"
+					style="flex-direction:column;align-items:flex-start"
+					data-testid="kt-fy-company-missing"
+				>
+					<div style="display:flex;gap:12px;align-items:flex-start">
+						<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+						<div class="kt-notice-body"><strong>{{ __("Company not linked.") }}</strong> {{ __("The accounting company must be configured before you can add a financial year.") }}</div>
+					</div>
+					<p class="text-muted" style="font-size:12px;margin-left:30px">{{ __("No accounting company is linked to this site.") }}</p>
+				</div>
+				<div v-if="error" class="kt-notice is-critical" role="alert">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+					<div class="kt-notice-body">{{ error }}</div>
+				</div>
 			</div>
 			<div class="kt-dialog-actions">
 				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="emit('cancel')">
@@ -73,10 +114,10 @@ watch(startYear, async (value) => {
 				<button
 					type="button"
 					class="kt-btn kt-btn-primary"
-					:disabled="busy || !preview || preview.exists"
+					:disabled="busy || !preview || preview.exists || preview.company_missing"
 					data-testid="kt-fy-add-confirm"
 					@click="emit('confirm', Number(startYear))"
-				>{{ __("Add financial year") }}</button>
+				><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add financial year") }}</button>
 			</div>
 		</div>
 	</div>

@@ -19,6 +19,16 @@
   "related_services_required",
   "section_pkg",
   "package_version",
+  "lead_routing_directive",
+  "certified_lead_org_unit_id",
+  "prepared_by",
+  "prepared_capacity",
+  "prepared_authority_snapshot",
+  "submitted_by",
+  "submitted_capacity",
+  "submitted_authority_snapshot",
+  "submitted_at",
+  "basis_snapshot_json",
   "content_digest",
   "section_lines",
   "drawdown_lines",
@@ -106,6 +116,73 @@
    "fieldtype": "Link",
    "label": "Package Version",
    "options": "IT Equipment Requirement Package Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lead_routing_directive",
+   "fieldtype": "Link",
+   "options": "Organisation Unit",
+   "label": "Lead department directive",
+   "description": "\u00a77.3A \u2014 set only by a Head of Procurement Function change of submitting department; fixes the lead for this copied Draft.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "certified_lead_org_unit_id",
+   "fieldtype": "Link",
+   "options": "Organisation Unit",
+   "label": "Certified lead department",
+   "description": "\u00a75.2 \u2014 the lead frozen at departmental submission.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Prepared by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_capacity",
+   "fieldtype": "Data",
+   "label": "Prepared in capacity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_authority_snapshot",
+   "fieldtype": "JSON",
+   "label": "Preparation authority",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Submitted by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_capacity",
+   "fieldtype": "Data",
+   "label": "Submitted in capacity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_authority_snapshot",
+   "fieldtype": "JSON",
+   "label": "Submission authority",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "basis_snapshot_json",
+   "fieldtype": "Long Text",
+   "label": "Basis snapshot",
+   "description": "\u00a75.14 \u2014 exact Planning/Budget identities, currency basis and eligibility observation time frozen at lock.",
    "read_only": 1
   },
   {

@@ -1,0 +1,29 @@
+{
+ "actions": [],
+ "creation": "2026-09-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Kentender Core",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "name": "Method Profile Condition",
+ "istable": 1,
+ "editable_grid": 1,
+ "fields": [
+  {"fieldname": "condition_id", "fieldtype": "Data", "label": "Condition ID", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "kind", "fieldtype": "Select", "label": "Kind", "options": "Known fact\nDeclaration", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "description", "fieldtype": "Small Text", "label": "Condition", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "procurement_category", "fieldtype": "Select", "label": "Procurement Category", "options": "\nGoods\nWorks\nServices", "description": "Blank applies to every category."},
+  {"fieldname": "minimum_amount", "fieldtype": "Currency", "label": "Minimum Amount"},
+  {"fieldname": "maximum_amount", "fieldtype": "Currency", "label": "Maximum Amount", "description": "0 means no fixed maximum."},
+  {"fieldname": "cumulative_basis", "fieldtype": "Select", "label": "Cumulative Basis", "options": "None\nPer request\nPer item per financial year\nPer procurement\nFunds allocated\nSection conditions", "default": "None"},
+  {"fieldname": "mandatory", "fieldtype": "Check", "label": "Mandatory", "default": "1"},
+  {"fieldname": "required_evidence", "fieldtype": "Data", "label": "Required Evidence"},
+  {"fieldname": "authorisation_actor", "fieldtype": "Data", "label": "Specific Authorisation Actor"},
+  {"fieldname": "authorisation_stage", "fieldtype": "Data", "label": "Authorisation Stage"},
+  {"fieldname": "statutory_reference", "fieldtype": "Data", "label": "Statutory Reference"}
+ ],
+ "field_order": ["condition_id", "kind", "description", "procurement_category", "minimum_amount", "maximum_amount", "cumulative_basis", "mandatory", "required_evidence", "authorisation_actor", "authorisation_stage", "statutory_reference"],
+ "permissions": []
+}

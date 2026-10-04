@@ -57,6 +57,7 @@ NDS_DOCTYPES = (
 	"Departmental Need Review Task",
 	"Need Withdrawal Request",
 )
+from kentender_procurement.departmental_needs.tests import support
 
 # A real actor who holds zero currently-Enabled NDS authority: Samuel Otieno's
 # only grant (Head of User Department, Directorate of Digital Health and
@@ -81,9 +82,18 @@ class DepartmentalNeedsPermissionCase(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		support.ensure_transitional_reviewer_grant(cls)
 		units = _granted_units(AUTHOR, DEPARTMENTAL_AUTHOR)
 		cls.ou = units["Digital Health"]
 		cls.ou_hrmd = units["Human Resources Management and Development"]
+		# The reviewer also heads the Directorate above Digital Health
+		# (site_setup.ASSIGNMENTS — Peter succeeds Samuel there from 1 Sep
+		# 2026), and a grant reaches that unit's descendants, so it is a
+		# third unit he resolves and a third scope to drop when a test needs
+		# him to hold no covering authority at all.
+		cls.ou_directorate = frappe.db.get_value(
+			"Organisation Unit", {"unit_name": "Directorate of Digital Health and Policy"}, "name"
+		)
 
 	def setUp(self):
 		super().setUp()
@@ -227,6 +237,9 @@ class TestScopeGating(DepartmentalNeedsPermissionCase):
 		# would under the framework's own default permission semantics.
 		self.drop_scope(REVIEWER, ROLE_HEAD_OF_USER_DEPARTMENT, self.ou)
 		self.drop_scope(REVIEWER, ROLE_HEAD_OF_USER_DEPARTMENT, self.ou_hrmd)
+		# The Directorate grant covers Digital Health by descent, so "no
+		# covering assignment anywhere" is only constructed once it goes too.
+		self.drop_scope(REVIEWER, ROLE_HEAD_OF_USER_DEPARTMENT, self.ou_directorate)
 		self.assertFalse(
 			permissions.in_scope(REVIEWER, business_role=ROLE_HEAD_OF_USER_DEPARTMENT, organisation_unit=self.ou)
 		)
@@ -239,6 +252,129 @@ class TestScopeGating(DepartmentalNeedsPermissionCase):
 				"Administrator", business_role=ROLE_HEAD_OF_USER_DEPARTMENT, organisation_unit=self.ou
 			)
 		)
+
+
+class TestCartesianProductIsolation(DepartmentalNeedsPermissionCase):
+	"""AUTH-ADR-001 v1.7 §16.3 step 8 — one user's Departmental Author and Head
+	of User Department responsibilities in different Organisation Units must
+	not cross. No real seed actor currently holds two *different*
+	responsibilities in two *different* units at once (Grace holds Author in
+	both Digital Health and HR Management and Development; Peter holds Head of
+	User Department in both) — this test grants a disposable dual-role user,
+	exactly as `TestActingHeadOfDepartment._ensure_acting_test_user` does for
+	its own otherwise-unreachable shape, rather than distorting a real actor's
+	assignment set."""
+
+	CARTESIAN_TEST_USER = "nds.test.cartesian@example.test"
+
+	def _ensure_cartesian_test_user(self) -> str:
+		if not frappe.db.exists("User", self.CARTESIAN_TEST_USER):
+			doc = frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": self.CARTESIAN_TEST_USER,
+					"first_name": "Cartesian",
+					"last_name": "Test User",
+					"send_welcome_email": 0,
+					"user_type": "System User",
+					"enabled": 1,
+				}
+			)
+			doc.insert(ignore_permissions=True)
+			doc.add_roles("Desk User")
+		grant(
+			user=self.CARTESIAN_TEST_USER,
+			business_role=ROLE_DEPARTMENTAL_AUTHOR,
+			organisation_unit=self.ou,
+			fixture_namespace=NS_TEST_GRANT,
+			actor="Administrator",
+		)
+		grant(
+			user=self.CARTESIAN_TEST_USER,
+			business_role=ROLE_HEAD_OF_USER_DEPARTMENT,
+			organisation_unit=self.ou_hrmd,
+			fixture_namespace=NS_TEST_GRANT,
+			actor="Administrator",
+		)
+		return self.CARTESIAN_TEST_USER
+
+	def test_author_and_head_of_department_responsibilities_do_not_cross_organisation_units(self):
+		user = self._ensure_cartesian_test_user()
+		# Author in Digital Health: may create there...
+		self.assertTrue(permissions.require_create(user, self.ou))
+		# ...but the Author grant does not extend to HR Management and
+		# Development, where this user's only grant is Head of User Department.
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			permissions.require_create(user, self.ou_hrmd)
+		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
+		# Head of User Department in HR Management and Development: may decide
+		# a submitted Need there...
+		permissions.require_review_command(self.hrmd_need(), user)
+		# ...but the Head of User Department grant does not extend to Digital
+		# Health, where this user's only grant is Departmental Author.
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			permissions.require_review_command(self.accepted_need(), user)
+		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
+
+
+class TestParentOrganisationUnitCoversDescendantsNotSiblings(DepartmentalNeedsPermissionCase):
+	"""AUTH-ADR-001 v1.7 §16.3 step 10 — a Head of User Department assignment
+	on a parent Organisation Unit covers its named descendants but never a
+	sibling outside that subtree (FOLLOW_UPS FU-25).
+
+	`kentender_core.services.authorization.descendants_of` is the shared
+	resolver's own tree traversal — testing the traversal *algorithm* against
+	a real multi-level Organisation Unit tree is kentender_core's own
+	responsibility, not this module's, and this site's real OU tree is flat
+	(no parent/child Organisation Units exist to test against without
+	building disposable tree data outside this module's ownership). What
+	NDS-CHG-001 owns, and what was genuinely untested, is whether its *own*
+	scope check (`require_review_command`) actually consults that traversal
+	rather than only ever comparing the assignment's OU for an exact match —
+	proven here by controlling what the traversal reports.
+	"""
+
+	PARENT_TEST_USER = "nds.test.parent-hod@example.test"
+
+	def _ensure_parent_hod(self) -> str:
+		if not frappe.db.exists("User", self.PARENT_TEST_USER):
+			doc = frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": self.PARENT_TEST_USER,
+					"first_name": "Parent",
+					"last_name": "HoD Test User",
+					"send_welcome_email": 0,
+					"user_type": "System User",
+					"enabled": 1,
+				}
+			)
+			doc.insert(ignore_permissions=True)
+			doc.add_roles("Desk User")
+		grant(
+			user=self.PARENT_TEST_USER,
+			business_role=ROLE_HEAD_OF_USER_DEPARTMENT,
+			organisation_unit=self.ou,
+			fixture_namespace=NS_TEST_GRANT,
+			actor="Administrator",
+		)
+		return self.PARENT_TEST_USER
+
+	def test_a_parent_ou_assignment_covers_named_descendants_but_not_a_sibling(self):
+		from unittest.mock import patch
+
+		user = self._ensure_parent_hod()
+		with patch(
+			"kentender_core.services.authorization.descendants_of",
+			return_value={self.ou, "OU-NDS-TEST-CHILD-1", "OU-NDS-TEST-CHILD-2"},
+		):
+			for covered in ("OU-NDS-TEST-CHILD-1", "OU-NDS-TEST-CHILD-2"):
+				permissions.require_review_command(frappe._dict({"organisation_unit": covered}), user)
+			with self.assertRaises(DepartmentalNeedError) as caught:
+				permissions.require_review_command(
+					frappe._dict({"organisation_unit": self.ou_hrmd}), user
+				)
+			self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
 
 
 class TestActingHeadOfDepartment(DepartmentalNeedsPermissionCase):
@@ -353,23 +489,68 @@ class TestServerSideContextPreferences(DepartmentalNeedsPermissionCase):
 		frappe.set_user(AUTHOR)
 		workspace.get_workspace(organisation_unit=self.ou)
 		# The reviewer shares the browser in the field; here they share nothing
-		# but the server — their own resolution must still prompt (Peter has
-		# two departments, so no single one auto-selects).
+		# but the server — their own resolution must still come back combined
+		# across both their departments (§12.1: several contexts and nothing
+		# remembered is a normal "browse everything" state, never a prompt).
 		frappe.set_user(REVIEWER)
 		fresh = workspace.get_workspace()
-		self.assertEqual(fresh["outcome"], "CONTEXT_SELECTION_REQUIRED")
+		self.assertEqual(fresh["outcome"], "READY")
+		self.assertEqual(fresh["context"]["organisation_unit"], "")
+		self.assertEqual(
+			{row["organisation_unit"] for row in fresh["contexts"]},
+			{self.ou, self.ou_hrmd, self.ou_directorate},
+		)
 
 	def test_a_remembered_unit_outside_the_offer_heals_to_unselected(self):
 		"""A remembered OU the caller no longer holds resolves to "unselected"
-		(re-prompt where more than one context exists), never to access and
-		never to a hard error — the offer itself is the authority on what may
-		be picked. Grace has two real contexts, so a single-context shortcut
-		cannot mask this: healing must actually run `get_module_ou`."""
+		— the combined view across every currently-offered context (§12.1),
+		never to access and never to a hard error; the offer itself is the
+		authority on what may be picked. Grace has two real contexts, so a
+		single-context shortcut cannot mask this: healing must actually run
+		`get_module_ou`."""
 		frappe.defaults.set_user_default("kt_needs_org_unit", "OU-DOES-NOT-EXIST", user=AUTHOR)
 		frappe.set_user(AUTHOR)
 		offer = workspace.get_workspace()
-		self.assertEqual(offer["outcome"], "CONTEXT_SELECTION_REQUIRED")
+		self.assertEqual(offer["outcome"], "READY")
+		self.assertEqual(offer["context"]["organisation_unit"], "")
 		self.assertEqual({row["organisation_unit"] for row in offer["contexts"]}, {self.ou, self.ou_hrmd})
+
+	def test_no_remembered_department_loads_every_authorised_one_combined(self):
+		"""§12.1 — "Load all of the actor's authorised own Needs across
+		assigned departments... Several remain available through ordinary
+		changeable filters; they do not block page entry." Checked before
+		either per-department call below runs, since an explicit
+		`organisation_unit` persists as the remembered default and would
+		otherwise mask the combined case this test exists to prove."""
+		frappe.set_user(AUTHOR)
+		combined = workspace.get_workspace()
+		self.assertEqual(combined["outcome"], "READY")
+		self.assertEqual(combined["context"]["organisation_unit"], "")
+		combined_refs = {row["reference"] for row in combined["needs"]}
+		only_ou_refs = {row["reference"] for row in workspace.get_workspace(organisation_unit=self.ou)["needs"]}
+		only_hrmd_refs = {
+			row["reference"] for row in workspace.get_workspace(organisation_unit=self.ou_hrmd)["needs"]
+		}
+		self.assertTrue(only_ou_refs, "expected at least one seeded Need in Digital Health")
+		self.assertTrue(only_hrmd_refs, "expected at least one seeded Need in HR Management and Development")
+		self.assertEqual(combined_refs, only_ou_refs | only_hrmd_refs)
+
+	def test_an_explicit_all_departments_choice_overrides_the_remembered_one(self):
+		"""The workspace's "All departments" filter option sends an explicit,
+		empty `organisation_unit` — found live 21 Sep 2026 to snap straight
+		back to the previously remembered department instead of honouring the
+		choice, because an empty explicit request and "nothing requested yet"
+		resolved identically. `clear_organisation_unit=True` is how the filter
+		tells the server this pick is deliberate, not absent, and the clear
+		must be durable — a later bare reload must not resurrect the old pick
+		either."""
+		frappe.set_user(AUTHOR)
+		workspace.get_workspace(organisation_unit=self.ou)
+		cleared = workspace.get_workspace(organisation_unit="", clear_organisation_unit=True)
+		self.assertEqual(cleared["outcome"], "READY")
+		self.assertEqual(cleared["context"]["organisation_unit"], "")
+		still_combined = workspace.get_workspace()
+		self.assertEqual(still_combined["context"]["organisation_unit"], "")
 
 	def test_a_direct_record_link_ignores_the_working_preference(self):
 		"""Rule 6 — a record opens under its own stored scope after permission
@@ -530,7 +711,7 @@ class WorkspaceContextResolutionTest(DepartmentalNeedsPermissionCase):
 			msg="the Head of User Department must be able to open the review screen",
 		)
 		units = {row["organisation_unit"] for row in result["contexts"]}
-		self.assertEqual(units, {self.ou, self.ou_hrmd})
+		self.assertEqual(units, {self.ou, self.ou_hrmd, self.ou_directorate})
 
 	def test_planner_and_auditor_resolve_every_active_unit(self):
 		"""§14.2 — Site-wide, so every active Organisation Unit is in view."""

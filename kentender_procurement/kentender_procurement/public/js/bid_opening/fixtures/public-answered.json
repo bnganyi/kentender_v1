@@ -1,0 +1,125 @@
+{
+ "Guest": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "can_join": false,
+  "joined_label": "",
+  "phase": "in-session",
+  "readout": [
+   {
+    "number": 1,
+    "recorded_label": "11:01:45",
+    "security_given": "KES 500,000.00, Seeded answer for the canonical bid.",
+    "submitted_total": "KES 2.50",
+    "tenderer": "Afya Digital Supplies (Test) Limited"
+   }
+  ],
+  "register": {
+   "message": "After the opening record is complete, a supplier who submitted a bid can request the opening register.",
+   "state": "after-completion"
+  },
+  "repeats": [
+   "At 11:02 a figure was repeated at an attendee\u2019s request. The bid is unchanged."
+  ],
+  "signed_in": false,
+  "status": "In session",
+  "tender": {
+   "entity": "Ministry of Health",
+   "opening_label": "5 Jun 2027, 11:00 EAT",
+   "reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  }
+ },
+ "pw.bds.david@afya-pw.example": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "can_join": true,
+  "joined_label": "",
+  "phase": "in-session",
+  "readout": [
+   {
+    "number": 1,
+    "recorded_label": "11:01:45",
+    "security_given": "KES 500,000.00, Seeded answer for the canonical bid.",
+    "submitted_total": "KES 2.50",
+    "tenderer": "Afya Digital Supplies (Test) Limited"
+   }
+  ],
+  "register": {
+   "message": "After the opening record is complete, a supplier who submitted a bid can request the opening register.",
+   "state": "after-completion"
+  },
+  "repeats": [
+   "At 11:02 a figure was repeated at an attendee\u2019s request. The bid is unchanged."
+  ],
+  "signed_in": true,
+  "status": "In session",
+  "tender": {
+   "entity": "Ministry of Health",
+   "opening_label": "5 Jun 2027, 11:00 EAT",
+   "reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  }
+ },
+ "pw.bop.observer@example.test": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "can_join": true,
+  "joined_label": "",
+  "phase": "in-session",
+  "readout": [
+   {
+    "number": 1,
+    "recorded_label": "11:01:45",
+    "security_given": "KES 500,000.00, Seeded answer for the canonical bid.",
+    "submitted_total": "KES 2.50",
+    "tenderer": "Afya Digital Supplies (Test) Limited"
+   }
+  ],
+  "register": {
+   "message": "After the opening record is complete, a supplier who submitted a bid can request the opening register.",
+   "state": "after-completion"
+  },
+  "repeats": [
+   "At 11:02 a figure was repeated at an attendee\u2019s request. The bid is unchanged."
+  ],
+  "signed_in": true,
+  "status": "In session",
+  "tender": {
+   "entity": "Ministry of Health",
+   "opening_label": "5 Jun 2027, 11:00 EAT",
+   "reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  }
+ }
+}

@@ -1,0 +1,145 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "BOP-CHG-001 v0.10 §8: an Opening access support incident with its holder, status and notification delivery.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "incident_id",
+  "opening_case",
+  "incident_type",
+  "envelope_id",
+  "raised_at",
+  "holder_user",
+  "status",
+  "resolution_note",
+  "resolved_at",
+  "resolved_by",
+  "notification_state",
+  "notification_attempts",
+  "last_notified_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "incident_id",
+   "fieldtype": "Data",
+   "label": "Incident ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "opening_case",
+   "fieldtype": "Link",
+   "label": "Opening case",
+   "read_only": 1,
+   "options": "Bid Opening Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "incident_type",
+   "fieldtype": "Select",
+   "label": "Incident type",
+   "read_only": 1,
+   "options": "Opening profile unavailable\nCredential unavailable\nPackage unreadable\nPackage mismatch\nAttendance service unavailable",
+   "reqd": 1
+  },
+  {
+   "fieldname": "envelope_id",
+   "fieldtype": "Data",
+   "label": "Envelope ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "raised_at",
+   "fieldtype": "Datetime",
+   "label": "Raised at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "holder_user",
+   "fieldtype": "Link",
+   "label": "Holder user",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Open\nResolved\nUnresolved",
+   "reqd": 1
+  },
+  {
+   "fieldname": "resolution_note",
+   "fieldtype": "Small Text",
+   "label": "Resolution note",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolved_at",
+   "fieldtype": "Datetime",
+   "label": "Resolved at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolved_by",
+   "fieldtype": "Link",
+   "label": "Resolved by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "notification_state",
+   "fieldtype": "Select",
+   "label": "Notification state",
+   "read_only": 1,
+   "options": "Pending\nDelivered\nFailed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "notification_attempts",
+   "fieldtype": "Int",
+   "label": "Notification attempts",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_notified_at",
+   "fieldtype": "Datetime",
+   "label": "Last notified at",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-29 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Opening",
+ "name": "Opening Access Incident",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:incident_id"
+}

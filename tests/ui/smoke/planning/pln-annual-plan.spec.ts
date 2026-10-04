@@ -1,0 +1,129 @@
+import { expect, test } from "@playwright/test";
+
+import { login } from "../../helpers/auth";
+import {
+	AUDITOR,
+	AUTHOR,
+	OUTSIDER,
+	PASSWORD,
+	PLANNER,
+	collectConsoleErrors,
+	expectReady,
+	gotoPlanning,
+	resetFixture,
+	restoreSite,
+} from "./helpers";
+
+/**
+ * PLN-CHG-001 v1.18 (PLN18-304) — the Annual Plan record's own behaviour:
+ * real §4.5/§4.7 commands and their interactive re-render across the five
+ * tabs, plus U08 formation. Structural/copy fidelity against U07/U08 lives
+ * in `design-fidelity/planning-fidelity.spec.ts` — this file does not
+ * re-assert landmark order or exact prose.
+ *
+ * Replaces the v1.12 `planning-plan-workbench.spec.ts` (deleted with this
+ * row): that file's testids predate the five-tab restructuring.
+ */
+
+// Sequential, but not serial: these run on one worker because the fixtures
+// are one shared world, and each test rebuilds its own. Aborting the rest of
+// the file because one test failed hides every other result behind it.
+test.describe.configure({ timeout: 180_000 });
+
+test.describe("PLN18-304 Annual Plan record", () => {
+	test.afterAll(() => restoreSite());
+
+	test("planner forms a single-source Plan Item and the Plan Items tab updates", async ({ page }) => {
+		const state = resetFixture<{ plan_reference: string }>("reset_workbench_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+
+		// The control is unavailable until a requirement is ticked (§10.6).
+		// The checkbox is styled: its input sits behind the label a user
+		// actually clicks, so the test clicks what the user clicks.
+		await page.locator('[data-testid="ppl-select-source"]').first().click({ force: true });
+		await expect(page.locator('[data-testid="ppl-add-selected"]')).toBeEnabled();
+		await page.locator('[data-testid="ppl-add-selected"]').click();
+		await expect(page.locator('[data-testid="pln-form-dialog"]')).toBeVisible();
+		await expect(page.locator('[data-testid="pln-form-title"]')).toHaveText("How should these requirements be added?");
+		await expect(page.locator('[data-testid="pln-form-confirm"]')).toHaveText("Add to plan");
+		await page.locator('[data-testid="pln-form-confirm"]').click();
+		await expectReady(page, "plan-item");
+
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+		await expect(page.locator('[data-testid="ppl-purchases"] tbody tr')).toHaveCount(1);
+		await expect(page.locator('[data-testid="ppl-all-allocated"]')).toBeVisible();
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+
+	test("planner saves the project name from the Overview tab", async ({ page }) => {
+		const state = resetFixture<{ plan_reference: string }>("reset_workbench_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+
+		// §10.6 — a plan covering several projects leaves this blank, so the
+		// field is offered rather than always present.
+		await page.locator('[data-testid="ppl-add-project-name"]').click();
+		await page.locator('[data-testid="ppl-project-input"]').fill("Digital health infrastructure programme");
+		await page.locator('[data-testid="ppl-save"]').click();
+
+		// It is the persistence that matters: a reload reads it back from the
+		// server, not from what the page still had in hand.
+		await page.reload({ waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+		await expect(page.locator('[data-testid="ppl-project-input"]'))
+			.toHaveValue("Digital health infrastructure programme", { timeout: 30_000 });
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+
+	test("planner requests plan funding confirmation once every readiness check passes", async ({ page }) => {
+		const state = resetFixture<{ plan_reference: string }>("reset_ready_for_funding_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+
+		const request = page.locator('[data-testid="ppl-request-funding"]');
+		await expect(request).toBeEnabled();
+		await request.click();
+		await expectReady(page, "plan");
+		// §10.6 — the check says what is happening, not which queue the record
+		// is waiting in.
+		await expect(page.locator('[data-testid="ppl-plan-checks"]')).toContainText("Finance is reviewing the funding");
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+
+	test("auditor reads every tab with no formation, save or funding-request controls", async ({ page }) => {
+		const state = resetFixture<{ plan_reference: string }>("reset_workbench_fixture");
+		await login(page, AUDITOR, PASSWORD);
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+		await expect(page.locator('[data-testid="ppl-save"]')).toHaveCount(0);
+
+		await expect(page.locator('[data-testid="ppl-add-selected"]')).toHaveCount(0);
+
+		await expect(page.locator('[data-testid="ppl-request-funding"]')).toHaveCount(0);
+	});
+
+	test("a departmental Author has no route to the Annual Plan record", async ({ page }) => {
+		const state = resetFixture<{ plan_reference: string }>("reset_workbench_fixture");
+		await login(page, AUTHOR, PASSWORD);
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+		await expect(page.locator('[data-testid="pln-error"]')).toBeVisible();
+		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record is not available to you.");
+	});
+
+	test("an unrelated Author (Outsider) is masked the same way", async ({ page }) => {
+		const state = resetFixture<{ plan_reference: string }>("reset_workbench_fixture");
+		await login(page, OUTSIDER, PASSWORD);
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record is not available to you.");
+	});
+});

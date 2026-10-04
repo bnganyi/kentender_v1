@@ -43,7 +43,7 @@
    "reqd": 1,
    "search_index": 1,
    "in_list_view": 1,
-   "description": "ERPNext Fiscal Year (CFG-CHG-002 v0.9 \u00a74.2). Planning data, never a permission dimension.",
+   "description": "ERPNext Fiscal Year (CFG-CHG-002 v0.9 §4.2). Planning data, never a permission dimension.",
    "unique": 1
   },
   {
@@ -120,6 +120,10 @@
   },
   {
    "role": "Auditor",
+   "read": 1
+  },
+  {
+   "role": "Head of Procurement Function",
    "read": 1
   }
  ],

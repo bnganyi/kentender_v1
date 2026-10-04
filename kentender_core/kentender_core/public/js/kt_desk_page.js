@@ -49,6 +49,9 @@
 //                                awaited *inside* the function passed to
 //                                `run()`, before its `finally` clears pending
 //                                — see AGENTS.md §6.4.
+//   addLeaveGuard(guard)       — asks `guard(proceed)` before any route change
+//                                leaves the current URL (links, rail, sidebar,
+//                                back/forward); returns a remover. See below.
 //   createSequenceGuard()      — the "every loader carries a sequence token"
 //                                obligation from AGENTS.md §6.4, as a
 //                                two-line utility instead of a hand-rolled
@@ -194,8 +197,15 @@ frappe.provide("kentender_core.desk_page");
 		return !!(r.length && pageToGroup[String(r[0])]);
 	}
 
-	function useRoute(vue, pageSlug) {
+	function useRoute(vue, pageSlug, opts) {
+		// `opts.hash`: the page keeps state in the URL fragment as well as the
+		// path (System setup's `#tab/section/id`, CFG-CHG-002 v0.14 §9). The
+		// fragment is then followed by this same listener, with the same
+		// pause-while-hidden and resume rules, instead of a page-owned
+		// `hashchange` listener.
+		var withHash = !!(opts && opts.hash);
 		var route = vue.ref(currentRoute());
+		var hash = withHash ? vue.ref(currentHash()) : undefined;
 		var epoch = vue.ref(0);
 		var active = true;
 		var paused = false;
@@ -205,18 +215,43 @@ frappe.provide("kentender_core.desk_page");
 			var r = frappe.get_route();
 			return r && r.length ? r.slice() : [pageSlug];
 		}
+		function currentHash() {
+			return String(window.location.hash || "").replace(/^#/, "");
+		}
 		function shown() {
 			var group = groupFor(pageSlug);
 			return group ? group.active : true;
 		}
 		function sync() {
 			var next = currentRoute();
-			if (next.join("/") === route.value.join("/")) return false;
-			route.value = next;
-			return true;
+			var changed = false;
+			if (next.join("/") !== route.value.join("/")) {
+				route.value = next;
+				changed = true;
+			}
+			if (withHash) {
+				var nextHash = currentHash();
+				if (nextHash !== hash.value) {
+					hash.value = nextHash;
+					changed = true;
+				}
+			}
+			return changed;
+		}
+		function belongs(r) {
+			var first = String((r && r[0]) || "");
+			if (!first || first === pageSlug) return true;
+			var mine = pageToGroup[pageSlug];
+			return !!mine && pageToGroup[first] === mine;
 		}
 		function applyRouteChange() {
 			if (!active || paused || !shown()) return;
+			// A route to another page is that page's, never this app's: the
+			// router announces it while this page is still shown, and the app
+			// read the other page's record id as its own (found 26 Sep 2026 —
+			// a need's "Update departmental plan" link fetched need=DPP-…).
+			// Resuming later re-syncs to this page's own route.
+			if (!belongs(frappe.get_route())) return;
 			sync();
 		}
 		function onRouteChange() {
@@ -254,11 +289,13 @@ frappe.provide("kentender_core.desk_page");
 
 		vue.onMounted(function () {
 			frappe.router.on("change", onRouteChange);
+			if (withHash) window.addEventListener("hashchange", onRouteChange);
 			var el = element();
 			if (el) el.addEventListener(SHOW_EVENT, onShow);
 		});
 		vue.onUnmounted(function () {
 			active = false;
+			if (withHash) window.removeEventListener("hashchange", onRouteChange);
 			var el = element();
 			if (el) el.removeEventListener(SHOW_EVENT, onShow);
 		});
@@ -277,10 +314,43 @@ frappe.provide("kentender_core.desk_page");
 		}
 
 		function go() {
-			frappe.set_route.apply(frappe, [pageSlug].concat(Array.prototype.slice.call(arguments)));
+			// 2026-09-19 regression — a screen omitting its default tab segment
+			// with `cond ? "tab" : undefined` (a natural, repeated idiom across
+			// these pages) forwarded that literal `undefined` straight to
+			// frappe.set_route, which stringifies it into the URL itself
+			// ("/review/{id}/undefined") rather than dropping it — landing on a
+			// route no screen resolves, with the previous screen's content stuck
+			// on the page. No route segment is ever legitimately undefined or
+			// null, so every caller's `go(...)` is filtered here once, for every
+			// Vue-in-Desk page built on this adapter, rather than trusting each
+			// call site to build a clean argument list itself.
+			var args = Array.prototype.slice.call(arguments).filter(function (a) {
+				return a !== undefined && a !== null;
+			});
+			frappe.set_route.apply(frappe, [pageSlug].concat(args));
 		}
 
-		return { route: route, go: go, epoch: epoch, isShown: shown };
+		function goHash(fragment, goOpts) {
+			var next = String(fragment || "").replace(/^#/, "");
+			if (next === currentHash()) return;
+			if (goOpts && goOpts.replace) {
+				// replaceState fires no hashchange, so apply it here.
+				history.replaceState(history.state, "", "#" + next);
+				applyRouteChange();
+			} else {
+				window.location.hash = next;
+				// jsdom and some browsers deliver hashchange asynchronously; read
+				// it now so a caller sees its own navigation immediately.
+				applyRouteChange();
+			}
+		}
+
+		var api = { route: route, go: go, epoch: epoch, isShown: shown };
+		if (withHash) {
+			api.hash = hash;
+			api.goHash = goHash;
+		}
+		return api;
 	}
 
 	function createCommandRunner(vue, opts) {
@@ -341,6 +411,91 @@ frappe.provide("kentender_core.desk_page");
 		};
 	}
 
+	// --- Leave guard -----------------------------------------------------------
+	// A screen holding unsaved work registers `guard(proceed)`. Every route
+	// change that would leave the current URL — the screen's own links, the
+	// rail breadcrumb, the sidebar, any frappe.set_route, and browser
+	// back/forward — asks the guards first. A guard returns true when it has
+	// taken over (typically by opening Save / Discard / Stay) and later calls
+	// `proceed()` only if the user chooses to leave; false lets the change
+	// through. Before this existed each screen guarded only its own links.
+	//
+	// Frappe routes through two doors: `router.push_state` (history push, then
+	// `route()`) for links and set_route, and its popstate listener calling
+	// `route()` directly after the browser has already moved. push_state is
+	// held before the history entry is written; a held traversal re-pushes the
+	// page's URL and `proceed()` steps back over it.
+	var leaveGuards = [];
+	var leaveGuardInstalled = false;
+	var lastRoutedUrl = null;
+	var pushing = false;
+	var skipNextRoute = false;
+
+	function currentUrl() {
+		return window.location.pathname + window.location.search;
+	}
+
+	function askLeaveGuards(proceed) {
+		for (var i = 0; i < leaveGuards.length; i++) {
+			if (leaveGuards[i](proceed)) return true;
+		}
+		return false;
+	}
+
+	function installLeaveGuard() {
+		if (leaveGuardInstalled || !frappe.router) return;
+		leaveGuardInstalled = true;
+		lastRoutedUrl = currentUrl();
+		var router = frappe.router;
+		var pushState = router.push_state;
+		var route = router.route;
+
+		router.push_state = function (path, query) {
+			var self = this;
+			var args = arguments;
+			var go = function () {
+				pushing = true;
+				try {
+					return pushState.apply(self, args);
+				} finally {
+					pushing = false;
+				}
+			};
+			if (String(path) + String(query || "") === currentUrl()) return go();
+			if (askLeaveGuards(go)) return;
+			return go();
+		};
+
+		router.route = function () {
+			var url = currentUrl();
+			if (pushing || skipNextRoute || url === lastRoutedUrl) {
+				skipNextRoute = false;
+				lastRoutedUrl = url;
+				return route.apply(this, arguments);
+			}
+			var from = lastRoutedUrl;
+			var proceed = function () {
+				skipNextRoute = true;
+				history.back();
+			};
+			if (askLeaveGuards(proceed)) {
+				history.pushState(null, "", from);
+				return Promise.resolve();
+			}
+			lastRoutedUrl = url;
+			return route.apply(this, arguments);
+		};
+	}
+
+	function addLeaveGuard(guard) {
+		installLeaveGuard();
+		leaveGuards.push(guard);
+		return function () {
+			var i = leaveGuards.indexOf(guard);
+			if (i >= 0) leaveGuards.splice(i, 1);
+		};
+	}
+
 	// Frappe fires "page-change" from Container.change_to for every page —
 	// Desk-native views included — after the destination's own script has run,
 	// so a registered page is already known here and only foreign pages get
@@ -361,6 +516,7 @@ frappe.provide("kentender_core.desk_page");
 		createCommandRunner: createCommandRunner,
 		createSequenceGuard: createSequenceGuard,
 		createScreenCache: createScreenCache,
+		addLeaveGuard: addLeaveGuard,
 		isActive: function (pageSlug) {
 			var group = groupFor(pageSlug);
 			return group ? group.active : false;

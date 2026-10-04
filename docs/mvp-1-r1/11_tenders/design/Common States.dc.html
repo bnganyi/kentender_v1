@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>body{margin:0;} a{color:var(--color-accent-700);} a:hover{color:var(--color-accent-900);} .table th,.table thead th{text-transform:none;letter-spacing:0;} .kt-disclosure-title{text-transform:none;letter-spacing:0;font-size:15px;}
+  </style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:60px;position:relative;">
+  <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;">&larr; Index</a>
+    <span style="color:#fff;opacity:.7;font-size:12px;">TPR-DES-14</span>
+  </div>
+
+  <div data-screen-label="TPR-DES-14 Common states" style="max-width:1100px;margin:0 auto;padding:32px 40px 0;">
+    <h1 style="font-family:var(--font-heading);font-weight:600;font-size:24px;margin:0 0 6px;letter-spacing:.01em;">Common states</h1>
+    <p style="font-size:14px;color:var(--color-neutral-700);margin:0 0 24px;max-width:80ch;">Each is a full inline state under KT-STD-001 v1.8 §3A; successful content never renders behind it. These states carry no journey tracker or next-step block.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;">
+      <sc-for list="{{states}}" as="st" hint-placeholder-count="16">
+        <div class="card blueprint" style="padding:24px;display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;flex:none;display:flex;align-items:center;justify-content:center;background:{{st.bg}};color:{{st.fg}};">
+              <sc-if value="{{st.isCritical}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></sc-if>
+              <sc-if value="{{st.isAttention}}" hint-placeholder-val="{{true}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></sc-if>
+              <sc-if value="{{st.isInfo}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></sc-if>
+            </div>
+            <div style="font-size:12px;font-weight:600;color:var(--color-neutral-700);">{{st.variant}}</div>
+          </div>
+          <h2 style="font-family:var(--font-heading);font-size:21px;font-weight:600;margin:0;">{{st.heading}}</h2>
+          <p class="card-body" style="margin:0;flex:1;">{{st.message}}</p>
+          <sc-if value="{{st.hasActions}}" hint-placeholder-val="{{true}}">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <sc-for list="{{st.actions}}" as="ac" hint-placeholder-count="1">
+                <button type="button" class="{{ac.cls}}">{{ac.label}}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const tone = { critical: ['var(--status-critical-bg)', 'var(--status-critical)'], attention: ['var(--status-attention-bg)', 'var(--status-attention)'], info: ['var(--status-draft-bg)', 'var(--status-draft)'] };
+    const rows = [
+      ['critical', 'Forbidden', 'You do not have access to Tenders', 'This area needs one of these responsibilities: Procurement Officer, Head of Procurement Function, Accounting Officer, Departmental Author, Head of User Department, Auditor or Authorised technical operator. Ask your KenTender administrator to assign one in System setup.', []],
+      ['critical', 'Not found', 'Tender not found', 'This Tender is unavailable or you do not have permission to view it.', ['Back to Tenders']],
+      ['attention', 'Source unavailable', 'Authorised requisition unavailable', 'The requisition is no longer available to start this Tender.', ['Back to Tenders']],
+      ['info', 'Already started — Brian, with linked-Tender read access', 'Tender already started', 'This requisition is linked to TND-MOH-2027-033.', ['Open Tender']],
+      ['attention', 'Already started — viewer without linked-Tender read access', 'Requisition unavailable', 'This requisition cannot be used to start a Tender.', ['Back to Tenders']],
+      ['attention', 'Template unavailable — STD inspection reader', 'Tender format unavailable', 'The standard IT-equipment Tender format is not available.', ['View STD Template']],
+      ['attention', 'Template unavailable — reader without STD inspection access', 'Tender format unavailable', 'The standard IT-equipment Tender format is not available.', ['Back to Tenders']],
+      ['info', 'Bound release Superseded — Brian, integrity passed', 'Tender format has a newer release', 'This Tender remains on release 1.1. Its integrity and renderer checks passed; KenTender will not change the format automatically.', ['View STD Template', 'Continue*']],
+      ['info', 'Bound release Superseded — reader with STD inspection access', 'Tender format has a newer release', 'This Tender remains on release 1.1. Existing work retains the bound format.', ['View STD Template']],
+      ['info', 'Bound release Superseded — reader without STD inspection access', 'Tender format has a newer release', 'This Tender remains on release 1.1. Existing work retains the bound format.', ['Back to Tenders']],
+      ['critical', 'Bound release Withdrawn — STD inspection reader', 'Tender format withdrawn', 'This Tender cannot continue to publication because release 1.1 was withdrawn. Your work is preserved.', ['View STD Template']],
+      ['critical', 'Bound release Withdrawn — reader without STD inspection access', 'Tender format withdrawn', 'This Tender cannot continue to publication because release 1.1 was withdrawn. Your work is preserved.', ['Back to Tenders']],
+      ['critical', 'Bound release integrity failed — STD inspection reader', 'Tender format could not be verified', 'This Tender is preserved, but no further approval or publication action is permitted until the release owner resolves the verification failure.', ['View STD Template']],
+      ['critical', 'Bound release integrity failed — reader without STD inspection access', 'Tender format could not be verified', 'This Tender is preserved, but no further approval or publication action is permitted until the release owner resolves the verification failure.', ['Back to Tenders']],
+      ['attention', 'Publication not configured', 'Publication rule unavailable', 'The publication rule is not configured for this Tender.', ['Contact administrator']],
+      ['attention', 'Stale write', 'Tender changed', 'Another user changed this Tender.', ['Reload']],
+      ['critical', 'Load failure', 'Tenders could not be loaded', 'Try again.', ['Try again']],
+    ];
+    return {
+      states: rows.map(([t, variant, heading, message, actions]) => ({
+        variant, heading, message, bg: tone[t][0], fg: tone[t][1],
+        isCritical: t === 'critical', isAttention: t === 'attention', isInfo: t === 'info',
+        hasActions: actions.length > 0,
+        actions: actions.map((a) => a.endsWith('*') ? { label: a.slice(0, -1), cls: 'btn btn-primary' } : { label: a, cls: 'btn btn-secondary' }),
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

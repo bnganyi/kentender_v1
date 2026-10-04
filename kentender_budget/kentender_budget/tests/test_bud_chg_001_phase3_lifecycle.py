@@ -207,21 +207,20 @@ class TestBudgetVersionDraftCreation(_BudgetLifecycleTestBase):
 		self._track("Procurement Budget Version", first["version"]["id"])
 		self._track("Procurement Budget", first["budget"]["id"])
 
-		with self.assertRaises(frappe.DuplicateEntryError):
-			contracts.save_budget_version_draft(dict(payload))
+		second = contracts.save_budget_version_draft(dict(payload))
+		self.assertFalse(second["ok"])
+		self.assertEqual(second["code"], "BUDGET_ALREADY_EXISTS")
+		self.assertEqual(second["route"][:2], ["budget-funding", first["budget"]["code"]])
 
 	def test_registering_a_budget_does_not_require_an_approval_document(self):
-		"""Approval document is not required to register/save-draft a Budget
-		Version — only before it can be submitted for review (see
-		test_submit_blocked_without_approval_document below). Regression test:
-		Procurement Budget Version.approval_document was DB `reqd: 1`, so even
-		though `_validate_draft_payload` never checked it, the very first
-		`.insert()` still raised Frappe's own generic MandatoryError before the
-		user ever reached the file upload step."""
+		"""2026-09-19 — the approval document is no longer required to
+		register a budget (owner instruction, overriding BUD-CHG-001 v1.9
+		§9.3's own text; FOLLOW_UPS FU-23 tracks reconciling the document)."""
 		self._as(self.officer)
+		fy = self._fresh_fy()
 		result = contracts.save_budget_version_draft(
 			{
-				"fiscal_year": self._fresh_fy(),
+				"fiscal_year": fy,
 				"approval_reference": f"NODOC-{self.suffix}",
 				"approval_date": add_days(nowdate(), -5),
 				"authorised_total": 1000,
@@ -231,9 +230,12 @@ class TestBudgetVersionDraftCreation(_BudgetLifecycleTestBase):
 		self._track("Procurement Budget Version", result["version"]["id"])
 		self._track("Procurement Budget", result["budget"]["id"])
 
-	def test_submit_blocked_without_approval_document(self):
-		"""Optional at draft save, still mandatory before submission
-		(BUD-BR-018-family evidence guard in `_evaluate_readiness`)."""
+	def test_submit_succeeds_without_an_approval_document(self):
+		"""2026-09-19 — the approval document is no longer a submission
+		blocker (owner instruction: remove the requirement; FOLLOW_UPS FU-23
+		tracks updating BUD-CHG-001's own §5/BUD-BR-004 text to match). A
+		Draft whose document link is empty submits on the strength of its
+		other evidence alone."""
 		self._as(self.officer)
 		result = contracts.save_budget_version_draft(
 			{
@@ -245,6 +247,7 @@ class TestBudgetVersionDraftCreation(_BudgetLifecycleTestBase):
 		)
 		self.assertTrue(result["ok"], result.get("errors"))
 		version = result["version"]["id"]
+		self.assertEqual(frappe.db.get_value("Procurement Budget Version", version, "approval_document"), None)
 		self._track("Procurement Budget Version", version)
 		self._track("Procurement Budget", result["budget"]["id"])
 
@@ -256,8 +259,7 @@ class TestBudgetVersionDraftCreation(_BudgetLifecycleTestBase):
 			self._track("Procurement Budget Line", lv)
 
 		submit_result = readiness.submit_budget_version({"budget_version": version})
-		self.assertFalse(submit_result["ok"])
-		self.assertTrue(any(b["code"] == "evidence.approval_document" for b in submit_result["blockers"]))
+		self.assertTrue(submit_result["ok"], submit_result.get("blockers"))
 
 
 class TestBudgetLinesDraft(_BudgetLifecycleTestBase):
@@ -326,7 +328,7 @@ class TestBudgetLinesDraft(_BudgetLifecycleTestBase):
 
 		rows = {r["title"]: r for r in lines_svc.get_budget_version_lines_editor(version)["rows"]}
 		self.assertEqual(rows["Entity-wide line"]["owner_org_unit"], "")
-		self.assertEqual(rows["Entity-wide line"]["owner_org_unit_label"], "Entity-wide")
+		self.assertEqual(rows["Entity-wide line"]["owner_org_unit_label"], "All departments")
 		self.assertEqual(rows["Unit line"]["owner_org_unit"], self.ou_dhp)
 
 	def test_only_editable_line_fields_are_title_owner_funding_amount(self):
@@ -437,8 +439,10 @@ class TestActiveAndSupersededImmutability(_BudgetLifecycleTestBase):
 		budget, version = self._create_active_baseline()
 		self._as(self.officer)
 		line_name = frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="budget_line")[0]
-		with self.assertRaises(frappe.ValidationError):
-			lines_svc.save_budget_lines_draft({"budget_version": version, "lines": [{"budget_line": line_name, "approved_amount": 999}]})
+		result = lines_svc.save_budget_lines_draft({"budget_version": version, "lines": [{"budget_line": line_name, "approved_amount": 999}]})
+		self.assertFalse(result["ok"])
+		self.assertEqual(result["code"], "BUDGET_INVALID_STATE")
+		self.assertNotEqual(frappe.db.get_value("Procurement Budget Line Version", {"budget_version": version, "budget_line": line_name}, "approved_amount"), 999)
 
 
 class TestSuccessorVersionRules(_BudgetLifecycleTestBase):
@@ -463,6 +467,41 @@ class TestSuccessorVersionRules(_BudgetLifecycleTestBase):
 		self.assertTrue(result["ok"], result.get("errors"))
 		saved_title = frappe.db.get_value("Procurement Budget Line Version", {"budget_version": new_version, "budget_line": dhi_line}, "title")
 		self.assertEqual(saved_title, "DHI test line", "identity-locked title must not change even though the payload requested it")
+
+	def test_identity_locked_line_tolerates_a_blank_client_owner_and_funding_source(self):
+		"""Regression (2026-09-19): the client's own "omit, then restore" flow
+		rebuilds a previously-Active row without its owner/funding identity —
+		it only remembers `budget_line`, `title` and `current_amount` across
+		an omit — so a real resubmission sent this row's `owner_org_unit` and
+		`funding_source` back to the server as empty strings. The comment on
+		this rule already promises "silently hold the prior identity" for a
+		locked row; the required-field checks must not fire before that
+		substitution happens, or a locked row's blank client payload is
+		rejected with "Funding source is required" before the server ever
+		gets to ignore it."""
+		budget, active_version = self._create_active_baseline()
+		self._as(self.officer)
+		succ = contracts.create_budget_successor_version(budget, {"revision_type": "Transfer"})
+		self.assertTrue(succ["ok"], succ)
+		new_version = succ["version"]["id"]
+		self._track("Procurement Budget Version", new_version)
+
+		dhi_line = frappe.db.get_value("Procurement Budget Line Version", {"budget_version": active_version, "title": "DHI test line"}, "budget_line")
+		result = lines_svc.save_budget_lines_draft(
+			{
+				"budget_version": new_version,
+				"lines": [
+					{"budget_line": dhi_line, "title": "", "owner_org_unit": "", "funding_source": "", "approved_amount": 100_000_000},
+				],
+			}
+		)
+		self.assertTrue(result["ok"], result.get("errors"))
+		saved = frappe.db.get_value(
+			"Procurement Budget Line Version", {"budget_version": new_version, "budget_line": dhi_line}, ["title", "owner_org_unit", "funding_source"], as_dict=True
+		)
+		self.assertEqual(saved.title, "DHI test line")
+		self.assertEqual(saved.owner_org_unit, self.ou_dhp)
+		self.assertEqual(saved.funding_source, FUNDING_SOURCE)
 
 	def test_previously_active_line_cannot_be_removed(self):
 		"""BUD-BR-020 / BUD-AC-025 — a line with a remaining reservation
@@ -550,6 +589,50 @@ class TestScopeAndPermissions(_BudgetLifecycleTestBase):
 					"approval_document": "/files/x.pdf",
 				}
 			)
+
+	def test_a_submitted_version_tells_its_approver_they_can_review_it(self):
+		"""Regression (2026-09-19): a Budget Approver who opens BUD-UI-02's
+		read-only editor route for a version awaiting their own decision
+		(rather than the BUD-UI-04 approval-task route) got a bare
+		"Read-only" label and no way forward — a dead end for the one person
+		who can actually act. `get_budget_version_draft` must tell the caller
+		they hold the approval capability so the screen can route them to the
+		review task instead of stranding them."""
+		self._as(self.officer)
+		result = contracts.save_budget_version_draft(
+			{
+				"fiscal_year": self._fresh_fy(),
+				"approval_reference": f"REVIEWLINK-{self.suffix}",
+				"approval_date": add_days(nowdate(), -5),
+				"authorised_total": 10_000_000,
+				"approval_document": "/files/test-approval.pdf",
+			}
+		)
+		self.assertTrue(result["ok"], result.get("errors"))
+		version = result["version"]["id"]
+		self._track("Procurement Budget Version", version)
+		self._track("Procurement Budget", result["budget"]["id"])
+
+		lines_result = lines_svc.save_budget_lines_draft(
+			{"budget_version": version, "lines": [{"title": "Line A", "owner_org_unit": self.ou_dhp, "funding_source": FUNDING_SOURCE, "approved_amount": 10_000_000}]}
+		)
+		self.assertTrue(lines_result["ok"], lines_result.get("errors"))
+		for lv in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="budget_line"):
+			self._track("Procurement Budget Line", lv)
+
+		submit_result = readiness.submit_budget_version({"budget_version": version})
+		self.assertTrue(submit_result["ok"], submit_result.get("blockers"))
+
+		self._as(self.approver)
+		draft = contracts.get_budget_version_draft(version)
+		self.assertFalse(draft["can_edit"])
+		self.assertTrue(draft.get("can_review"), "the Approver must be told they can decide this version")
+
+		# An unrelated Auditor with no approval capability gets no such offer.
+		auditor = self._make_user("editorread", ("Auditor",))
+		self._as(auditor)
+		draft_as_auditor = contracts.get_budget_version_draft(version)
+		self.assertFalse(draft_as_auditor.get("can_review"))
 
 	def test_administrator_without_assignment_cannot_mutate(self):
 		"""§8 — Administrator has full technical read but no Budget business

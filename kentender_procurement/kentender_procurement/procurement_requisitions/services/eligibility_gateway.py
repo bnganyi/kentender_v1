@@ -1,73 +1,92 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 §9.1 — the Procurement Planning contracts, under the
-spec's verbs. Requisitions calls only Planning's *published* `plan_requisition`
-service module and never reads Planning's own tables directly (AGENTS.md §2:
-cross-app/cross-module interaction uses the owner's published service).
+"""REQ-CHG-001 v1.11 §9.1 — the Procurement Planning provider contracts.
 
-Unlike Planning's own `budget_gateway.py` (which elevates to a system
-principal for departmental/planner reads Budget's own gate would otherwise
-refuse), no elevation happens here: Planning's read and drawdown gates are
-themselves now resolved against the real acting Requisitions user (Head of
-User Department / Head of Procurement Function / etc., per REQ-103's
-`_authorise_requisition_reader`/`_authorise_requisition_authoriser` on the
-Planning side) — the same actor Requisitions' own command layer already
-authorised. Calling through as that same session, rather than as
-Administrator, is what lets Planning's own gate do its job (AGENTS.md §4.3:
-"never rely on ... client checks for authorization").
+Requisitions calls only Planning's published `plan_requisition` service and
+never reads Planning tables (AGENTS.md §2). Calls run as the acting user, so
+Planning's own gates judge the same actor REQ already authorised. Planning's
+`PLN_ITEM_AUTHORISATION_HELD` and `PLN_ITEM_SCOPE_LOCKED` pass through with
+Planning's exact code and message (§11); an allowance overrun is REQ's
+`REQ_BALANCE_CHANGED`; any other owner failure is
+`REQ_OWNER_VALIDATION_UNAVAILABLE`, committing nothing.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
+import frappe
 
-def get_requisition_eligible_plan_item(plan_item_id: str) -> dict[str, Any]:
+from kentender_procurement.procurement_requisitions.services.errors import fail
+
+_PASS_THROUGH = ("PLN_ITEM_AUTHORISATION_HELD", "PLN_ITEM_SCOPE_LOCKED")
+_BALANCE = ("PLN_ALLOWANCE_EXCEEDED",)
+_PRECISION = ("PLN_MONEY_PRECISION_INVALID",)
+
+
+def _planning():
 	from kentender_procurement.procurement_planning.services import plan_requisition
 
-	return plan_requisition.get_requisition_eligible_plan_item(plan_item_id=plan_item_id)
+	return plan_requisition
+
+
+def _mapped(exc: Exception) -> None:
+	code = getattr(exc, "code", "")
+	detail = {"planning_code": code, **(getattr(exc, "detail", None) or {})}
+	if code in _PASS_THROUGH:
+		fail(code, detail=detail)
+	if code in _BALANCE:
+		fail("REQ_BALANCE_CHANGED", detail=detail)
+	if code in _PRECISION:
+		fail("REQ_MONEY_PRECISION_INVALID", detail=detail)
+	if isinstance(exc, frappe.DoesNotExistError):
+		raise exc
+	fail("REQ_OWNER_VALIDATION_UNAVAILABLE", detail={**detail, "planning_message": str(exc)})
+
+
+def get_requisition_eligible_plan_item(plan_item_id: str) -> dict[str, Any]:
+	return _planning().get_requisition_eligible_plan_item(plan_item_id=plan_item_id)
 
 
 def list_requisition_eligible_plan_items() -> list[dict[str, Any]]:
-	from kentender_procurement.procurement_planning.services import plan_requisition
-
-	return plan_requisition.list_requisition_eligible_plan_items()
+	return _planning().list_requisition_eligible_plan_items()
 
 
-def record_requisition_drawdown(
-	*,
-	plan_item_id: str,
-	requisition_reference: str,
-	requesting_org_unit: str,
-	allocations: list[dict[str, Any]],
-	expected_record_version,
-	idempotency_key: str,
-) -> dict[str, Any]:
-	from kentender_procurement.procurement_planning.services import plan_requisition
+def authorise_requisition_drawdown(*, plan_item_id: str, requisition_reference: str, requisition_version: str, correlation_id: str, allocations: list[dict[str, Any]], expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	try:
+		return _planning().authorise_requisition_drawdown(
+			plan_item_id=plan_item_id, requisition_reference=requisition_reference, requisition_version=requisition_version,
+			correlation_id=correlation_id, allocations=allocations, expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+		)
+	except Exception as exc:  # noqa: BLE001 — every owner failure is mapped onto §11
+		_mapped(exc)
+	return {}
 
-	return plan_requisition.record_requisition_drawdown(
-		plan_item_id=plan_item_id, requisition_reference=requisition_reference,
-		requesting_org_unit=requesting_org_unit, allocations=allocations,
-		expected_record_version=expected_record_version, idempotency_key=idempotency_key,
-	)
+
+def list_requisition_drawdowns(requisition_reference: str) -> list[dict[str, Any]]:
+	return _planning().list_requisition_drawdowns(requisition_reference=requisition_reference)
 
 
 def reverse_requisition_drawdown(*, drawdown_reference: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
-	from kentender_procurement.procurement_planning.services import plan_requisition
+	try:
+		return _planning().reverse_requisition_drawdown(drawdown_reference=drawdown_reference, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+	except Exception as exc:  # noqa: BLE001
+		_mapped(exc)
+	return {}
 
-	return plan_requisition.reverse_requisition_drawdown(
-		drawdown_reference=drawdown_reference, expected_record_version=expected_record_version,
-		idempotency_key=idempotency_key,
-	)
+
+def receive_plan_item_correction_request(*, plan_item_id: str, requisition_reference: str, requisition_version: str, reason: str, idempotency_key: str) -> dict[str, Any]:
+	try:
+		return _planning().receive_plan_item_correction_request(
+			plan_item_id=plan_item_id, requisition_reference=requisition_reference, requisition_version=requisition_version, reason=reason, idempotency_key=idempotency_key,
+		)
+	except frappe.DoesNotExistError:
+		raise
+	except Exception as exc:  # noqa: BLE001
+		_mapped(exc)
+	return {}
 
 
-def receive_plan_item_correction_request(
-	*, plan_item_id: str, requisition_reference: str, requisition_version: str, reason: str, idempotency_key: str,
-) -> dict[str, Any]:
-	from kentender_procurement.procurement_planning.services import plan_requisition
-
-	return plan_requisition.receive_plan_item_correction_request(
-		plan_item_id=plan_item_id, requisition_reference=requisition_reference,
-		requisition_version=requisition_version, reason=reason, idempotency_key=idempotency_key,
-	)
+def correction_request_facts(*, correction_request: str = "", requisition_reference: str = "") -> list[dict[str, Any]]:
+	return _planning().correction_request_facts(correction_request=correction_request, requisition_reference=requisition_reference)

@@ -283,6 +283,46 @@ class TestStrategicPlanDomainModel(FrappeTestCase):
 			frappe.get_doc(self._target(indicator.name, comparison="Bogus")).insert(ignore_permissions=True)
 
 
+	def test_one_indicator_cannot_have_two_targets_for_the_same_period(self):
+		"""§12.3 — sibling scope is the indicator, not the plan version.
+
+		Shipped without a test (588ca3e7): nothing stopped two targets on one
+		indicator sharing a fiscal year or a target-by date, and a live Add
+		target dialog was how it was found.
+		"""
+		pv = self._setup_plan_version()
+		objective = self._objective(pv)
+		first = self._track(frappe.get_doc(self._indicator(pv, objective)).insert(ignore_permissions=True))
+		second = self._track(
+			frappe.get_doc(self._indicator(pv, objective, indicator_name="Second indicator")).insert(
+				ignore_permissions=True
+			)
+		)
+		by_date = {"fiscal_year": None, "target_by_date": "2029-06-30"}
+
+		self._track(frappe.get_doc(self._target(first.name)).insert(ignore_permissions=True))
+		self._track(frappe.get_doc(self._target(first.name, **by_date)).insert(ignore_permissions=True))
+
+		with self.assertRaisesRegex(frappe.ValidationError, "already has a target"):
+			frappe.get_doc(self._target(first.name)).insert(ignore_permissions=True)
+		with self.assertRaisesRegex(frappe.ValidationError, "already has a target"):
+			frappe.get_doc(self._target(first.name, **by_date)).insert(ignore_permissions=True)
+
+		# Another indicator may carry the very same fiscal year and date.
+		self._track(frappe.get_doc(self._target(second.name)).insert(ignore_permissions=True))
+		self._track(frappe.get_doc(self._target(second.name, **by_date)).insert(ignore_permissions=True))
+
+	def test_saving_a_target_again_does_not_count_as_its_own_sibling(self):
+		pv = self._setup_plan_version()
+		indicator = self._track(
+			frappe.get_doc(self._indicator(pv, self._objective(pv))).insert(ignore_permissions=True)
+		)
+		target = self._track(frappe.get_doc(self._target(indicator.name)).insert(ignore_permissions=True))
+		target.target_value = 90
+		target.save(ignore_permissions=True)
+		self.assertEqual(frappe.db.get_value("Performance Target", target.name, "target_value"), 90)
+
+
 class TestStrategyAuditMigratedToCoreEvent(FrappeTestCase):
 	def test_record_event_writes_to_core_audit_event_not_bespoke_doctype(self):
 		self.assertFalse(frappe.db.exists("DocType", "Strategy Audit Event"))

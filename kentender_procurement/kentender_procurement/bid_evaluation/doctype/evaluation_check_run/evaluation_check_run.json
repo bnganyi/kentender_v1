@@ -1,0 +1,163 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "§4.1, §7.2 RunEvaluationChecks: source bid/definition/rule implementation versions; a rerun keeps the prior run.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "run_id",
+  "evaluation_case",
+  "run_number",
+  "reason",
+  "rules_version",
+  "rules_digest",
+  "definition_id",
+  "definition_version",
+  "definition_digest",
+  "engine_version",
+  "affected_json",
+  "started_at",
+  "completed_at",
+  "status",
+  "superseded_by",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "run_id",
+   "fieldtype": "Data",
+   "label": "Run ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "evaluation_case",
+   "fieldtype": "Link",
+   "label": "Evaluation case",
+   "read_only": 1,
+   "options": "Evaluation Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "run_number",
+   "fieldtype": "Int",
+   "label": "Run number",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Select",
+   "label": "Reason",
+   "read_only": 1,
+   "options": "Initial\nRule correction\nFinding resolved\nOpening supplement\nSource repair",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rules_version",
+   "fieldtype": "Data",
+   "label": "Rules version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rules_digest",
+   "fieldtype": "Data",
+   "label": "Rules digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "definition_id",
+   "fieldtype": "Data",
+   "label": "Definition id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "definition_version",
+   "fieldtype": "Int",
+   "label": "Definition version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "definition_digest",
+   "fieldtype": "Data",
+   "label": "Definition digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "engine_version",
+   "fieldtype": "Data",
+   "label": "Engine version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "affected_json",
+   "fieldtype": "Long Text",
+   "label": "Affected json",
+   "read_only": 1
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "completed_at",
+   "fieldtype": "Datetime",
+   "label": "Completed at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Running\nComplete\nFailed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "superseded_by",
+   "fieldtype": "Data",
+   "label": "Superseded by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Evaluation",
+ "name": "Evaluation Check Run",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:run_id"
+}

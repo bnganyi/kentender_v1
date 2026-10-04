@@ -123,17 +123,19 @@ def sync_procurement_requisitions_page() -> None:
 		import_file_by_path(path, force=True)
 
 
-def sync_tender_preparation_page() -> None:
-	"""Same reason as `sync_procurement_requisitions_page`: the Tender
-	Preparation Desk Page (TPR-CHG-001 v0.6 §12) is the sidebar's
+def sync_tenders_page() -> None:
+	"""Same reason as `sync_procurement_requisitions_page`: the Tenders Desk
+	Page (TPR-CHG-001 v0.8 §9) is the sidebar's ``Link To`` target and must
+	exist before the reconcile validates it."""
+	path = os.path.join(frappe.get_app_path("kentender_procurement"), "tenders", "page", "tenders", "tenders.json")
+	if os.path.isfile(path):
+		import_file_by_path(path, force=True)
+
+
+def sync_std_templates_page() -> None:
+	"""The STD Templates Desk Page (STD-TPL-IMP-001 v1.0 §11) is a sidebar
 	``Link To`` target and must exist before the reconcile validates it."""
-	path = os.path.join(
-		frappe.get_app_path("kentender_procurement"),
-		"tender_preparation",
-		"page",
-		"tender_preparation",
-		"tender_preparation.json",
-	)
+	path = os.path.join(frappe.get_app_path("kentender_procurement"), "std_templates", "page", "std_templates", "std_templates.json")
 	if os.path.isfile(path):
 		import_file_by_path(path, force=True)
 
@@ -185,7 +187,8 @@ def run() -> None:
 		sync_coming_soon_page()
 		sync_procurement_home_page()
 		sync_procurement_requisitions_page()
-		sync_tender_preparation_page()
+		sync_tenders_page()
+		sync_std_templates_page()
 	if frappe.db.exists("DocType", "Workspace Sidebar"):
 		reconcile_procurement_navigation_from_exports()
 	if frappe.db.exists("DocType", "Desktop Icon"):

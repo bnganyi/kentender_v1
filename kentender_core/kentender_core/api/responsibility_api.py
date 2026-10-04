@@ -70,6 +70,33 @@ def revoke_responsibility(
 
 
 @frappe.whitelist()
+def update_scheduled_responsibility(
+	assignment: str,
+	user: str,
+	business_role: str,
+	organisation_unit: str | None = None,
+	appointment_type: str = "Permanent",
+	authority_reference: str | None = None,
+	effective_from: str | None = None,
+	effective_to: str | None = None,
+	expected_version: str | None = None,
+) -> dict[str, Any]:
+	"""Change an assignment that has not started yet (owner decision 21 Sep
+	2026). Once it is in force, §14.4's revoke-and-replace governs."""
+	return administration.update_scheduled(
+		assignment,
+		user=user,
+		business_role=business_role,
+		organisation_unit=organisation_unit or "",
+		appointment_type=appointment_type,
+		authority_reference=authority_reference or "",
+		effective_from=effective_from or None,
+		effective_to=effective_to or None,
+		expected_version=expected_version or "",
+	)
+
+
+@frappe.whitelist()
 def list_user_responsibilities(
 	search: str | None = None,
 	organisation_unit: str | None = None,
@@ -98,16 +125,19 @@ def preview_responsibility_assignment(
 	effective_from: str | None = None,
 	effective_to: str | None = None,
 	authority_reference: str | None = None,
+	assignment: str | None = None,
 ) -> dict[str, Any]:
-	"""§9.2 `PreviewResponsibilityAssignment` — validate and describe; create nothing."""
+	"""§9.2 `PreviewResponsibilityAssignment` — validate and describe; create
+	nothing. `assignment` names a scheduled record being changed."""
 	return administration.preview_assignment(
 		user=user or "",
 		business_role=business_role or "",
 		organisation_unit=organisation_unit or "",
 		appointment_type=appointment_type,
-		effective_from=effective_from,
-		effective_to=effective_to,
+		effective_from=effective_from or None,
+		effective_to=effective_to or None,
 		authority_reference=authority_reference or "",
+		assignment=assignment or "",
 	)
 
 

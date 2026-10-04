@@ -1,0 +1,136 @@
+/* STD Templates (STD-TPL-001 v0.10 §11) — page layout only; every component
+   rule comes from kentender_core's kt_industry_tokens.css. Loaded by the
+   page controller through frappe.require (AGENTS.md §6.9), never globally.
+   Selectors chain .kt-industry .kt-stdt so specificity, not load order,
+   decides against the token file (AGENTS.md §6.6). */
+
+.kt-industry.kt-stdt .stdt-eyebrow {
+	margin: 0 0 6px;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	color: var(--kt-color-neutral-700);
+}
+.kt-industry.kt-stdt .stdt-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+.kt-industry.kt-stdt .stdt-filter-actions { display: flex; align-items: end; }
+.kt-industry.kt-stdt .stdt-back {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 14px;
+	font-weight: 600;
+	width: max-content;
+}
+/* Section links land below the sticky page rail. */
+.kt-industry.kt-stdt .kt-region[id^="stdt-"] { scroll-margin-top: 88px; }
+.kt-industry.kt-stdt .stdt-h3 { font-family: var(--kt-font-heading); font-size: 17px; margin: 0 0 10px; }
+.kt-industry.kt-stdt .stdt-dl { margin: 0; display: grid; font-size: 14px; }
+.kt-industry.kt-stdt .stdt-grid-2-1 { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 40px; }
+.kt-industry.kt-stdt .stdt-grid-1-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 40px; }
+.kt-industry.kt-stdt .stdt-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+.kt-industry.kt-stdt .stdt-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+.kt-industry.kt-stdt .stdt-output {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+	border-top: 1px solid var(--kt-color-divider);
+	padding-top: 12px;
+}
+.kt-industry.kt-stdt .stdt-blocker {
+	display: grid;
+	grid-template-columns: 32px minmax(0, 1fr) 220px;
+	gap: 12px;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--kt-color-divider);
+	align-items: baseline;
+}
+.kt-industry.kt-stdt .stdt-section-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px 28px;
+	padding: 12px 0;
+	border-top: 1px solid var(--kt-color-divider);
+	border-bottom: 1px solid var(--kt-color-divider);
+	font-size: 14px;
+	font-weight: 600;
+}
+.kt-industry.kt-stdt .stdt-section-nav a[aria-current="true"] { text-decoration: underline; text-underline-offset: 4px; }
+.kt-industry.kt-stdt .stdt-eval-groups { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--kt-color-divider); }
+.kt-industry.kt-stdt .stdt-treatments {
+	display: grid;
+	grid-template-columns: repeat(6, minmax(0, 1fr));
+	border-top: 1px solid var(--kt-color-divider);
+	border-bottom: 1px solid var(--kt-color-divider);
+}
+.kt-industry.kt-stdt .stdt-verification-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin-top: 20px; flex-wrap: wrap; }
+.kt-industry.kt-stdt .stdt-tech { margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 24px; font-size: 14px; }
+.kt-industry.kt-stdt .stdt-copy { margin-left: 6px; height: 24px; padding: 0 8px; font-size: 12px; }
+.kt-industry.kt-stdt .kt-disclosure-head.stdt-disclosure-button {
+	width: 100%;
+	background: none;
+	border: 0;
+	text-align: left;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+.kt-industry.kt-stdt .kt-disclosure-chevron.is-open { transform: rotate(180deg); }
+.kt-industry.kt-stdt .stdt-pager { display: flex; align-items: center; gap: 12px; justify-content: flex-end; margin-top: 12px; }
+.kt-industry.kt-stdt .kt-dialog.stdt-dialog { width: min(520px, 100%); border-radius: 0; padding: 24px; gap: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+.kt-industry.kt-stdt .kt-dialog-body { font-size: 14px; color: var(--kt-color-neutral-800); }
+.kt-industry.kt-stdt .stdt-toast { position: fixed; right: 24px; bottom: 24px; z-index: 1050; max-width: 420px; }
+
+/* 390 px and 200% zoom (KT-STD-001 v1.8; STD-TPL-001 §11.4): every grid
+   collapses to one column and each table becomes labelled cards with no
+   horizontal scrolling and no omitted fact. */
+@media (max-width: 760px) {
+	.kt-industry.kt-stdt .stdt-grid-2-1,
+	.kt-industry.kt-stdt .stdt-grid-1-2,
+	.kt-industry.kt-stdt .stdt-grid-2,
+	.kt-industry.kt-stdt .stdt-grid-3,
+	.kt-industry.kt-stdt .stdt-tech { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+	.kt-industry.kt-stdt .stdt-eval-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.kt-industry.kt-stdt .stdt-treatments { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.kt-industry.kt-stdt .stdt-treatment-total { border-left: 0 !important; padding-left: 0 !important; grid-column: 1 / -1; }
+	.kt-industry.kt-stdt .stdt-blocker { grid-template-columns: 24px minmax(0, 1fr); }
+	.kt-industry.kt-stdt .stdt-blocker > :last-child { grid-column: 2; }
+	.kt-industry.kt-stdt .stdt-dl { grid-template-columns: minmax(0, 1fr) !important; gap: 2px 0 !important; }
+	.kt-industry.kt-stdt .stdt-dl dd { margin-bottom: 10px !important; }
+	.kt-industry.kt-stdt .kt-filter-bar { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); }
+	.kt-industry.kt-stdt .kt-filter-bar > .is-wide { grid-column: auto; }
+	.kt-industry.kt-stdt .kt-table.stdt-table thead,
+	.kt-industry.kt-stdt .kt-table.stdt-verification thead,
+	.kt-industry.kt-stdt .kt-table.stdt-sub-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+	.kt-industry.kt-stdt .kt-table.stdt-table,
+	.kt-industry.kt-stdt .kt-table.stdt-table tbody,
+	.kt-industry.kt-stdt .kt-table.stdt-table tr,
+	.kt-industry.kt-stdt .kt-table.stdt-table td,
+	.kt-industry.kt-stdt .kt-table.stdt-verification,
+	.kt-industry.kt-stdt .kt-table.stdt-verification tbody,
+	.kt-industry.kt-stdt .kt-table.stdt-verification tr,
+	.kt-industry.kt-stdt .kt-table.stdt-verification td,
+	.kt-industry.kt-stdt .kt-table.stdt-sub-table,
+	.kt-industry.kt-stdt .kt-table.stdt-sub-table tbody,
+	.kt-industry.kt-stdt .kt-table.stdt-sub-table tr,
+	.kt-industry.kt-stdt .kt-table.stdt-sub-table td { display: block; width: 100%; max-width: none !important; white-space: normal !important; }
+	.kt-industry.kt-stdt .kt-table.stdt-table tbody,
+	.kt-industry.kt-stdt .kt-table.stdt-verification tr,
+	.kt-industry.kt-stdt .kt-table.stdt-sub-table tr { border: 1px solid var(--kt-color-divider); padding: 12px; margin-bottom: 12px; }
+	.kt-industry.kt-stdt .kt-table td[data-label]::before {
+		content: attr(data-label);
+		display: block;
+		font-size: 12px;
+		color: var(--kt-color-neutral-700);
+		margin-bottom: 2px;
+	}
+	.kt-industry.kt-stdt .kt-table td { border-bottom: 0 !important; padding: 6px 0 !important; }
+	.kt-industry.kt-stdt .stdt-toast { left: 16px; right: 16px; }
+}

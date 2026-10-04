@@ -17,10 +17,16 @@ windows, catalogues, the governed funding source, the regulatory reference,
 UOMs, actors and their responsibility assignments), ``strategy`` the
 STR-CHG-001 §14 plan, ``budget`` the BUD-CHG-001 §15.3 Active baseline,
 ``needs`` the NDS-CHG-001 §14.3 default Needs, ``planning`` the
-PLN-CHG-001 §14 integrated baseline, ``requisitions`` the REQ-CHG-001 v1.6
-§16 Authorised Requisition on the one eligible combined Plan Item, and
-``tender_preparation`` the TPR-CHG-001 v0.6 §16 Tender approved for
-publication on that Requisition's handoff. Each stage calls the owning
+PLN-CHG-001 §14 integrated baseline, ``requisitions`` the REQ-CHG-001 v1.11
+§16 Authorised Requisition on the one eligible combined Plan Item,
+``tenders`` the TPR-CHG-001 v0.12 §13.3 primary Tender lifecycle on that
+Requisition's handoff, ``bid_submission`` the same Tender built with Afya
+Digital Supplies Limited's bid interleaved (BDS-CHG-001 v0.8), ``bid_opening``
+its opening (BOP-CHG-001 v0.10), ``bid_evaluation`` its evaluation, to the
+report sent to Charles Mutiso (EVL-CHG-001 v0.4), and ``award`` its award, to
+the package Contracting received (AWD-CHG-001 v0.4). The last four use the
+simulated trust, custody and delivery services, so they run only on a test
+site. Each stage calls the owning
 module's own canonical-shaped seed function directly — never the legacy
 multi-PE `kentender_core.seeds.kentender_mvp_v1.orchestrator` — so seeding
 through any stage never creates `PE-CGKIS` or any second Procuring Entity.
@@ -46,7 +52,7 @@ import frappe
 
 from kentender_core.seeds import site_setup
 
-STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tender_preparation")
+STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders", "bid_submission", "bid_opening", "bid_evaluation", "award")
 
 # Namespaces whose rows are canonical and survive `reset`.
 STRATEGY_NS = "str-chg-001-mvp1"
@@ -54,9 +60,11 @@ BUDGET_ACTOR_NS = "KENTENDER_MVP_V1"  # Budget's own actor assignments (pre-2026
 NEEDS_NS = "KENTENDER_MVP_1_R1_NDS"
 PLANNING_NS = "KENTENDER_MVP_1_R1_PLN"
 REQUISITIONS_NS = "KENTENDER_MVP_1_R1_REQ"  # not stamped on Requisitions' own rows (D5 predates the column) — see clear_non_canonical
-TENDER_PREPARATION_NS = "KENTENDER_MVP_1_R1_TPR"
+TENDERS_NS = "KENTENDER_MVP_1_R1_TND"
+BID_OPENING_NS = "KENTENDER_MVP_1_R1_BOP"  # BOP-CHG-001 v0.10 plan D14
+BID_EVALUATION_NS = "KENTENDER_MVP_1_R1_EVL"  # EVL-CHG-001 v0.4 plan D18
 CANONICAL_NAMESPACES = frozenset(
-	{site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS, TENDER_PREPARATION_NS}
+	{site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS, TENDERS_NS, BID_OPENING_NS, BID_EVALUATION_NS}
 )
 
 # KT-STD-001 §8.3 — the whole shared register, whatever stage is seeded.
@@ -73,21 +81,49 @@ REGISTER_LOCAL_PARTS: tuple[str, ...] = (
 	"beatrice.kamau",
 	"amina.hassan",
 	"daniel.rotich",
+	"daniel.otieno",  # KT-STD-001 v1.11 §8.3 — technical operator
+	"nadia.kamau",  # KT-STD-001 v1.12 §8.3 — release operator
 	"charles.mutiso",
 	"brian.wafula",
+	"grace.wambui",  # EVL-CHG-001 v0.4 plan D17 — the evaluation committee and its support holder
+	"peter.mugo",
+	"ruth.achieng",
+	"esther.njeri",
+	# TPR-CHG-001 v0.8 §13.1 (plan D8, D8′ in v0.12) — the bidder-facing
+	# service identity that receives supplier clarifications (the account
+	# name predates v0.12's clarifications and is kept: Tenders FU-32); a
+	# canonical service account, never a person, but on the same fixture
+	# e-mail domain as every other seeded actor and so registered the same
+	# way.
+	"tender.inquiry.producer",
 )
 REGISTER_USERS = frozenset(f"{local}@moh.example.test" for local in REGISTER_LOCAL_PARTS)
 # Only accounts on a fixture e-mail domain are ever deleted; a real person's
-# account (any other domain) is never a seed's to remove.
-FIXTURE_EMAIL_DOMAINS: tuple[str, ...] = ("@moh.example.test", "@example.test", "@test.local", "@moh.test", "@moe.test")
+# account (any other domain) is never a seed's to remove. Includes the
+# RFC 2606 reserved placeholder domains (example.com/.org/.net) since stray
+# manually-created test accounts land there, not just the project's own
+# `.test`/`.local` fixture domains.
+FIXTURE_EMAIL_DOMAINS: tuple[str, ...] = (
+	"@moh.example.test",
+	"@example.test",
+	"@test.local",
+	"@moh.test",
+	"@moe.test",
+	"@example.com",
+	"@example.org",
+	"@example.net",
+)
 
+# The canonical budget is found by content (`kentender_mvp_v1_portfolio.
+# canonical_budget`): its references are the generated ones (Project Owner
+# decision, 26 Sep 2026), which a rebuilt world numbers MOH-BUD-2027-001 again.
 CANONICAL_BUDGET_CODES = ("MOH-BUD-2027-001",)
 
 _LEGACY_DEMO_DOCTYPES = ("Procurement Handoff Card", "Procurement Journey")
 
 
 def _playwright_cleanup_allowed() -> bool:
-	"""Requisitions' and Tender Preparation's own playwright fixture
+	"""Requisitions' and Tenders' own playwright fixture
 	modules refuse to touch their rows unless developer_mode/allow_tests is
 	set (or a test is already running) — a guard this orchestrator's own
 	`force` cannot bypass, since it belongs to a sibling module. Unlike
@@ -111,6 +147,21 @@ def _site_fiscal_years() -> set[str]:
 	from kentender_core.services import site_configuration as configuration
 
 	return {configuration._fy_name(year) for year in site_setup.FISCAL_START_YEARS}
+
+
+def _in_force_now(row) -> bool:
+	"""Same window test `authorization._within_period` applies at resolution
+	time: a blank bound is open, and both ends are inclusive."""
+	from frappe.utils import get_datetime, now_datetime
+
+	now = now_datetime()
+	starts = row.get("effective_from")
+	ends = row.get("effective_to")
+	if starts and get_datetime(starts) > now:
+		return False
+	if ends and get_datetime(ends) < now:
+		return False
+	return True
 
 
 def _canonical_units() -> set[str]:
@@ -150,6 +201,82 @@ def _fiscal_year_referenced(fy: str) -> bool:
 	return False
 
 
+def _kentender_doctypes(**filters) -> list[str]:
+	modules = [module for app in frappe.get_installed_apps() if app.startswith("kentender") for module in frappe.get_module_list(app)]
+	return frappe.get_all("DocType", filters={"module": ("in", modules), "is_virtual": 0, **filters}, pluck="name")
+
+
+def _orphaned_child_rows() -> dict[str, list[str]]:
+	"""Child-table rows of KenTender doctypes whose parent record no longer
+	exists. A module clean-up that deletes a record raw leaves its child
+	rows behind, and no screen can ever reach them again (found 26 Sep
+	2026: about 50,000 on the dev site, from Requisitions, Tenders and the
+	Regulatory Reference)."""
+	out: dict[str, list[str]] = {}
+	for child in _kentender_doctypes(istable=1):
+		if not frappe.db.table_exists(child):
+			continue
+		for parenttype in frappe.db.sql_list(f"select distinct parenttype from `tab{child}`"):
+			if not parenttype or not frappe.db.exists("DocType", {"name": parenttype, "issingle": 0, "is_virtual": 0}):
+				continue
+			names = frappe.db.sql_list(
+				f"select c.name from `tab{child}` c left join `tab{parenttype}` p on p.name = c.parent "
+				"where c.parenttype = %s and p.name is null",
+				parenttype,
+			)
+			if names:
+				out.setdefault(child, []).extend(names)
+	return out
+
+
+def _projections_without_a_need(doctype: str = "Need Planning Disposition Projection") -> list[str]:
+	"""Planning's projection rows for Needs that no longer exist (found
+	26 Sep 2026: 11 disposition rows on the dev site; Planning writes them
+	unstamped, so no namespace purge reaches them). The intake position
+	(owner decision 26 Sep 2026) is written the same way."""
+	if not frappe.db.table_exists(doctype):
+		return []
+	return frappe.db.sql_list(
+		f"select p.name from `tab{doctype}` p "
+		"left join `tabDepartmental Need` n on n.name = p.departmental_need where n.name is null"
+	)
+
+
+def _orphaned_attachments() -> list[str]:
+	"""Files attached to a named KenTender record that no longer exists
+	(found 26 Sep 2026: 1,734 from deleted Tender documents)."""
+	doctypes = set(_kentender_doctypes(istable=0, issingle=0))
+	names: list[str] = []
+	for doctype in frappe.db.sql_list("select distinct attached_to_doctype from `tabFile` where ifnull(attached_to_doctype, '') != ''"):
+		if doctype in doctypes:
+			names += frappe.db.sql_list(
+				f"select f.name from `tabFile` f left join `tab{doctype}` d on d.name = f.attached_to_name "
+				"where f.attached_to_doctype = %s and ifnull(f.attached_to_name, '') != '' and d.name is null",
+				doctype,
+			)
+	return names
+
+
+def _undeclared_site_assignments() -> list[str]:
+	"""Grants stamped with the site stage's namespace that `site_setup.ASSIGNMENTS`
+	no longer declares (found 1 Oct 2026: KT-STD-001 v1.13 dropped the
+	Evaluation committee's Departmental Author grants). The namespace marks
+	them canonical, so nothing else would ever remove them."""
+	declared: set[tuple[str, str, str | None]] = set()
+	for local, role, unit_name, _kwargs in site_setup.ASSIGNMENTS:
+		unit = frappe.db.get_value("Organisation Unit", {"unit_name": unit_name}, "name") if unit_name else None
+		declared.add((f"{local}@moh.example.test", role, unit))
+	return [
+		r.name
+		for r in frappe.get_all(
+			"User Responsibility Assignment",
+			filters={"fixture_namespace": site_setup.FIXTURE_TAG},
+			fields=["name", "user", "business_role", "organisation_unit"],
+		)
+		if (r.user, r.business_role, r.organisation_unit or None) not in declared
+	]
+
+
 def collect_non_canonical() -> dict[str, list[str]]:
 	"""Everything `reset` would remove, as `{doctype: [names]}` — read-only."""
 	plan: dict[str, list[str]] = {}
@@ -162,11 +289,11 @@ def collect_non_canonical() -> dict[str, list[str]]:
 	# version that is not Active, and any reservation — §15.4A's reservation
 	# exists only once a Procurement Requisition module creates it.
 	if frappe.db.exists("DocType", "Procurement Budget"):
-		add(
-			"Procurement Budget",
-			frappe.get_all("Procurement Budget", filters={"generated_reference": ["not in", CANONICAL_BUDGET_CODES]}, pluck="name"),
-		)
-		canonical = frappe.get_all("Procurement Budget", filters={"generated_reference": ["in", CANONICAL_BUDGET_CODES]}, pluck="name")
+		from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budget
+
+		kept = canonical_budget()
+		add("Procurement Budget", [name for name in frappe.get_all("Procurement Budget", pluck="name") if name != kept])
+		canonical = [kept] if kept else []
 		if canonical:
 			add(
 				"Procurement Budget Version",
@@ -196,7 +323,6 @@ def collect_non_canonical() -> dict[str, list[str]]:
 		("Departmental Need", NEEDS_NS),
 		("Annual Plan", PLANNING_NS),
 		("Departmental Plan", PLANNING_NS),
-		("Prepared Tender", TENDER_PREPARATION_NS),
 		("Regulatory Reference", site_setup.FIXTURE_TAG),
 	):
 		if frappe.db.exists("DocType", doctype):
@@ -205,6 +331,26 @@ def collect_non_canonical() -> dict[str, list[str]]:
 	for doctype in _LEGACY_DEMO_DOCTYPES:
 		if frappe.db.exists("DocType", doctype):
 			add(doctype, frappe.get_all(doctype, pluck="name"))
+
+	# Strategy: every plan outside the canonical namespace and every version
+	# of the canonical plan other than Version 1 (the module's own rule).
+	from kentender_strategy.seeds.kentender_mvp_v1_strategy import strategy_rows_to_clear
+
+	for doctype, names in strategy_rows_to_clear().items():
+		add(doctype, names)
+
+	# Tenders: everything not on the canonical Requisition (the module's own
+	# rule, `tenders.seeds.clear`).
+	from kentender_procurement.tenders.seeds.clear import tender_rows_to_clear
+
+	for doctype, names in tender_rows_to_clear().items():
+		add(doctype, names)
+
+	# Requisitions: every root not on a canonical Plan Item (the module's own rule).
+	from kentender_procurement.procurement_requisitions.seeds.clear import requisition_rows_to_clear
+
+	for doctype, names in requisition_rows_to_clear().items():
+		add(doctype, names)
 
 	# Assignments outside the canonical namespaces, or on a non-register fixture user.
 	uras = frappe.get_all("User Responsibility Assignment", fields=["name", "user", "fixture_namespace"])
@@ -216,6 +362,7 @@ def collect_non_canonical() -> dict[str, list[str]]:
 			if (r.fixture_namespace or "") not in CANONICAL_NAMESPACES or (r.user not in REGISTER_USERS and _fixture_email(r.user))
 		],
 	)
+	add("User Responsibility Assignment", _undeclared_site_assignments())
 	add(
 		"User",
 		[
@@ -224,6 +371,20 @@ def collect_non_canonical() -> dict[str, list[str]]:
 			# User, and fixture personas are created both ways.
 			for u in frappe.get_all("User", filters={"name": ["not in", ["Administrator", "Guest"]]}, pluck="name")
 			if _fixture_email(u) and u not in REGISTER_USERS
+		],
+	)
+	# Direct sweep, independent of any User row: a Contact whose User was
+	# already deleted by some other, incomplete test teardown has no User
+	# left to find it through, and is otherwise invisible to this clear
+	# forever. Found on this site accumulating in the thousands from
+	# unrelated CFG/AUTH test suites that create a Contact with no matching
+	# User at all.
+	add(
+		"Contact",
+		[
+			c.name
+			for c in frappe.get_all("Contact", fields=["name", "email_id"])
+			if c.email_id and _fixture_email(c.email_id) and c.email_id not in REGISTER_USERS
 		],
 	)
 
@@ -239,6 +400,11 @@ def collect_non_canonical() -> dict[str, list[str]]:
 			if fy not in site_fys and not _fiscal_year_referenced(fy)
 		],
 	)
+	for child, names in _orphaned_child_rows().items():
+		add(child, names)
+	add("File", _orphaned_attachments())
+	add("Need Planning Disposition Projection", _projections_without_a_need())
+	add("Need Planning Intake Projection", _projections_without_a_need("Need Planning Intake Projection"))
 	return plan
 
 
@@ -265,6 +431,8 @@ def _delete_need(need: str, deleted: dict[str, int]) -> None:
 	for doctype in (
 		"Departmental Need Event",
 		"Need Planning Usage Projection",
+		"Need Planning Disposition Projection",
+		"Need Planning Intake Projection",
 		"Departmental Need Decision",
 		"Departmental Need Review Task",
 		"Need Withdrawal Request",
@@ -310,7 +478,7 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 			if isinstance(count, int) and count:
 				deleted[doctype] = deleted.get(doctype, 0) + count
 
-	# Downstream first: Tender Preparation consumes Requisitions' handoff,
+	# Downstream first: Tenders consumes Requisitions' handoff,
 	# Requisitions consumes Planning's Plan Item, Planning and Needs
 	# reference Budget lines and units. Neither module stamps every
 	# doctype with a fixture_namespace column, so their own clear functions
@@ -318,18 +486,17 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 	# `include_canonical=False` here only ever removes Playwright-owned
 	# residue, matching how Planning/Needs rows survive `reset`.
 	playwright_ok = _playwright_cleanup_allowed()
-	if plan.get("Prepared Tender"):
-		from kentender_procurement.tender_preparation.seeds.clear import clear_tender_fixture_rows
 
-		_fold(clear_tender_fixture_rows(include_canonical=False, include_playwright=playwright_ok))
-		for name in plan.get("Prepared Tender", []):
-			if frappe.db.exists("Prepared Tender", name):
-				frappe.delete_doc("Prepared Tender", name, force=1, ignore_permissions=True)
-				deleted["Prepared Tender"] = deleted.get("Prepared Tender", 0) + 1
+	from kentender_procurement.tenders.seeds.clear import clear_tender_fixture_rows
+
+	_fold(clear_tender_fixture_rows())
 
 	from kentender_procurement.procurement_requisitions.seeds.clear import clear_requisition_fixture_rows
 
 	_fold(clear_requisition_fixture_rows(include_canonical=False, include_playwright=playwright_ok))
+	from kentender_procurement.procurement_requisitions.seeds.clear import clear_stray_requisitions
+
+	_fold(clear_stray_requisitions())
 
 	if plan.get("Annual Plan") or plan.get("Departmental Plan"):
 		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import clear_planning_fixture_rows
@@ -383,15 +550,12 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 		finally:
 			frappe.flags.allow_budget_audit_purge = False
 		_delete_docs("Procurement Budget Version", [version], deleted)
-	# Attachments whose owning document is gone.
-	for row in frappe.get_all(
-		"File",
-		filters={"attached_to_doctype": ["in", ["Procurement Budget Version", "Procurement Budget"]]},
-		fields=["name", "attached_to_doctype", "attached_to_name"],
-	):
-		if not frappe.db.exists(row.attached_to_doctype, row.attached_to_name):
-			frappe.delete_doc("File", row.name, force=1, ignore_permissions=True)
-			deleted["File"] = deleted.get("File", 0) + 1
+
+	# Strategy last among the modules: Budget lines and Needs point at its
+	# objectives, and their strays are gone by now.
+	from kentender_strategy.seeds.kentender_mvp_v1_strategy import clear_non_canonical_strategy
+
+	_fold(clear_non_canonical_strategy())
 
 	# The document's own fixture-purge switch (regulatory_reference.on_trash).
 	_delete_docs("Regulatory Reference", plan.get("Regulatory Reference", []), deleted, kt_fixture_purge=True)
@@ -399,10 +563,21 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 	for doctype in _LEGACY_DEMO_DOCTYPES:
 		_delete_docs(doctype, plan.get(doctype, []), deleted)
 
+	ura_users = set(frappe.get_all("User Responsibility Assignment", filters={"name": ("in", plan.get("User Responsibility Assignment") or [""])}, pluck="user"))
 	_delete_docs("User Responsibility Assignment", plan.get("User Responsibility Assignment", []), deleted)
+	# A direct delete keeps the Frappe roles the grants projected; re-sync the
+	# people who stay (the same projection the revoke command applies).
+	from kentender_core.services.responsibility_administration import _sync_projection
+
+	for user in sorted(ura_users):
+		if frappe.db.exists("User", user):
+			_sync_projection(user)
 	for user in plan.get("User", []):
 		if frappe.db.exists("User", user):
 			_delete_user(user, deleted)
+	# Orphaned Contacts direct from the plan (no User left to delete them
+	# through) — see collect_non_canonical()'s own note on this.
+	_delete_docs("Contact", plan.get("Contact", []), deleted)
 
 	# Units children-first: a pass deletes the leaves, the next their parents.
 	pending = [u for u in plan.get("Organisation Unit", []) if frappe.db.exists("Organisation Unit", u)]
@@ -425,24 +600,63 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 	site_fys = _site_fiscal_years()
 	candidate_fys = [fy for fy in frappe.get_all("Fiscal Year", filters={"name": ["not like", "_Test%"]}, pluck="name") if fy not in site_fys]
 	_delete_docs("Fiscal Year", [fy for fy in candidate_fys if not _fiscal_year_referenced(fy)], deleted)
+
+	# Last, and recomputed like the years: the deletions above leave child
+	# rows and attachments of their own behind.
+	for child, names in _orphaned_child_rows().items():
+		for start in range(0, len(names), 500):
+			frappe.db.delete(child, {"name": ("in", names[start : start + 500])})
+		deleted[child] = deleted.get(child, 0) + len(names)
+	_delete_docs("File", _orphaned_attachments(), deleted)
+	for projection in ("Need Planning Disposition Projection", "Need Planning Intake Projection"):
+		orphans = _projections_without_a_need(projection)
+		if orphans:
+			frappe.db.delete(projection, {"name": ("in", orphans)})
+			deleted[projection] = deleted.get(projection, 0) + len(orphans)
 	return deleted
 
 
 def clear_canonical_modules() -> dict[str, Any]:
 	"""`rebuild`: drop the canonical module rows too (downstream first —
-	Tender Preparation before Requisitions before Planning/Needs, since each
+	Tenders before Requisitions before Planning/Needs, since each
 	consumes the one before it), leaving the §8 site world."""
 	out: dict[str, Any] = {}
 	playwright_ok = _playwright_cleanup_allowed()
-	from kentender_procurement.tender_preparation.seeds.clear import clear_tender_fixture_rows
-
-	out["tender_preparation"] = clear_tender_fixture_rows(include_canonical=True, include_playwright=playwright_ok)
+	# Not clear_requisition_fixture_rows(include_canonical=True, ...): that
+	# path is a direct delete which refuses outright on an Authorised
+	# Requisition with an Active Budget reservation (the "wipe after
+	# authorise" hazard). reset_requisitions_seed() revokes it first through
+	# the real command, then does the same delete — the safe rebuild path.
 	from kentender_procurement.procurement_requisitions.seeds.clear import clear_requisition_fixture_rows
+	from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import reset_requisitions_seed
+	from kentender_procurement.tenders.seeds.kentender_mvp_v1 import reset_tenders_seed
 
-	out["requisitions"] = clear_requisition_fixture_rows(include_canonical=True, include_playwright=playwright_ok)
-	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import clear_planning_fixture_rows
+	out["tenders"] = reset_tenders_seed(commit=False)
+	# Tenders is already cleared, so a handoff it consumed has no Tender left;
+	# Planning and Budget are cleared below in this same transaction.
+	out["requisitions"] = reset_requisitions_seed(commit=False, cross_module_rebuild=True)
+	for doctype, count in clear_requisition_fixture_rows(include_canonical=False, include_playwright=playwright_ok).get("deleted", {}).items():
+		if isinstance(count, int):
+			out["requisitions"][doctype] = out["requisitions"].get(doctype, 0) + count
+		else:
+			out["requisitions"][doctype] = count
+	# Not clear_planning_fixture_rows(include_canonical=True, ...) alone:
+	# "Planning Command Journal" isn't one of its _DOCTYPES, so a stale
+	# "pln-seed:open-dhi-dpp"-keyed row survives, and the next seed run's
+	# open_departmental_plan() replays it — returning a cached result that
+	# names a Departmental Plan Version this same clear just deleted, so
+	# the seed's very next step ("did the accepted Need project into the
+	# Draft DPP") finds nothing and throws. reset_planning_seed() is the
+	# complete teardown: it also reverses the Need's usage projection
+	# through the real published channel and purges that journal.
+	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import (
+		clear_planning_fixture_rows,
+		reset_planning_seed,
+	)
 
-	out["planning"] = clear_planning_fixture_rows(include_canonical=True, include_playwright=True)
+	out["planning"] = reset_planning_seed(commit=False)
+	for doctype, count in clear_planning_fixture_rows(include_canonical=False, include_playwright=playwright_ok).items():
+		out["planning"][doctype] = out["planning"].get(doctype, 0) + count
 	from kentender_procurement.departmental_needs.seeds.playwright_ui_fixtures import purge_fixture_needs
 
 	out["needs"] = purge_fixture_needs(namespace=NEEDS_NS, commit=False)
@@ -466,10 +680,52 @@ def _stage_index(through: str) -> int:
 	return STAGES.index(through)
 
 
+def prepare_site(*, through: str) -> dict[str, Any]:
+	"""What the stages need from the site itself, so one allowed run is enough
+	on a new demo or test site (found 4 Oct 2026: a new server failed one
+	missing piece at a time). From `requisitions`: this repository's
+	IT-equipment tender template, installed and switched on if the site has
+	none. From `bid_submission`: the simulated signing, tender-box and
+	delivery services (site_config `kt_bds_simulation_environment`), switched
+	on with a notice — the canonical bids exist only on a demo or test site."""
+	last = _stage_index(through)
+	out: dict[str, Any] = {"template_release": None, "simulation_switched_on": False}
+	if last >= STAGES.index("requisitions"):
+		from kentender_procurement.procurement_requisitions.services.compatibility import template_problem
+		from kentender_procurement.std_templates.compiler.errors import STDTemplateError
+		from kentender_procurement.std_templates.services import binding, installer
+
+		out["template_release"] = installer.ensure_site_release()
+		# usable, not merely installed: a wrong PDF renderer build otherwise
+		# surfaces three stages later as a misleading requisition refusal
+		try:
+			binding.require(out["template_release"], "new_binding")
+		except STDTemplateError as exc:
+			frappe.throw(f"The IT-equipment tender template cannot be used on this site: {template_problem(exc)} "
+				"The seed needs it from the requisitions stage on; fix this and run the seed again.")
+	from frappe.utils import cint
+
+	if last >= STAGES.index("bid_submission") and not cint(frappe.conf.get("kt_bds_simulation_environment")):
+		from frappe.installer import update_site_config
+
+		update_site_config("kt_bds_simulation_environment", 1)
+		frappe.conf.kt_bds_simulation_environment = 1
+		out["simulation_switched_on"] = True
+		print("NOTICE: switched on the simulated bid services for this site (site_config kt_bds_simulation_environment = 1); "
+			"the canonical bids need them. Never set this on a site that takes real bids.")
+	return out
+
+
 def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
 	"""Reseed the canonical world up to and including `through`. No commit."""
 	last = _stage_index(through)
 	report: dict[str, Any] = {"site": site_setup.run(commit=False)}
+	report["site"]["prepared"] = prepare_site(through=through)
+	# Independent of `through`: the fixture world's Procurement Rules must
+	# be usable whichever stage the caller stops at, not only once the
+	# Planning stage's own seed happens to run (see
+	# `stamp_procurement_rules_fixture_verified`'s docstring).
+	report["site"]["rules_stamped_fixture_verified"] = site_setup.stamp_procurement_rules_fixture_verified()
 	if last >= STAGES.index("strategy"):
 		from kentender_strategy.seeds.kentender_mvp_v1_strategy import upsert_kentender_mvp_v1_strategy
 
@@ -509,10 +765,38 @@ def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
 				pluck="name",
 			):
 				frappe.db.set_value("Funding Reservation", reservation, "fixture_namespace", REQUISITIONS_NS, update_modified=False)
-	if last >= STAGES.index("tender_preparation"):
-		from kentender_procurement.tender_preparation.seeds.kentender_mvp_v1 import upsert_tender_preparation
+	if last >= STAGES.index("tenders") and last < STAGES.index("bid_submission"):
+		from kentender_procurement.tenders.seeds.kentender_mvp_v1 import upsert_tenders_base
 
-		report["tender_preparation"] = upsert_tender_preparation(commit=False)
+		report["tenders"] = upsert_tenders_base(commit=False)
+	if last >= STAGES.index("bid_submission"):
+		# BDS-CHG-001 v0.8 plan D19: the canonical Tender's chronology with the
+		# bid's own lifecycle interleaved (Start bid 19 May … Mary's accepted
+		# submission 10 Jun … the close and Bid Opening hand-off 12 Jun). It
+		# builds the Tenders stage itself, so the Tender is never first closed
+		# with the bid still a Draft.
+		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import upsert_bid_submission_base
+
+		report["bid_submission"] = upsert_bid_submission_base(commit=False)
+		report["tenders"] = {"ok": True, "via": "bid_submission", "tender": report["bid_submission"].get("tender")}
+	if last >= STAGES.index("bid_opening"):
+		# BOP-CHG-001 v0.10 plan D14: the canonical Tender's opening, after the
+		# bid_submission stage closed its box at 11:00.
+		from kentender_procurement.bid_opening.seeds.kentender_mvp_v1 import upsert_bid_opening_base
+
+		report["bid_opening"] = upsert_bid_opening_base(commit=False)
+	if last >= STAGES.index("bid_evaluation"):
+		# EVL-CHG-001 v0.4 plan D18: the canonical Tender's evaluation (§11.1),
+		# from appointment on 11 Jun to the report sent on 16 Jun.
+		from kentender_procurement.bid_evaluation.seeds.kentender_mvp_v1 import upsert_bid_evaluation_base
+
+		report["bid_evaluation"] = upsert_bid_evaluation_base(commit=False)
+	if last >= STAGES.index("award"):
+		# AWD-CHG-001 v0.4 §13: the canonical award, from the report received on
+		# 16 Jun to the package Contracting received on 2 Jul.
+		from kentender_procurement.award.seeds.kentender_mvp_v1 import upsert_award_base
+
+		report["award"] = upsert_award_base(commit=False)
 	return report
 
 
@@ -548,49 +832,76 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 	seeded_users = {f"{local}@moh.example.test" for local, _ in site_setup.ACTORS}
 	for email in seeded_users:
 		check(bool(frappe.db.exists("User", email)), f"user {email}")
+	for local in site_setup.TECHNICAL_ACTORS:
+		check("System Manager" in frappe.get_roles(f"{local}@moh.example.test"), f"{local} is a technical reader (System Manager)")
+	for email, _name in site_setup.PUBLIC_ACTORS:
+		check(frappe.db.get_value("User", email, "user_type") == "Website User", f"{email} is a Website User (public observer)")
 	strays = [
 		u
 		for u in frappe.get_all("User", filters={"name": ["not in", ["Administrator", "Guest"]]}, pluck="name")
 		if _fixture_email(u) and u not in REGISTER_USERS
 	]
 	check(not strays, f"no fixture-domain users outside the register, found {strays}")
-	for local, role, _unit, _kwargs in site_setup.ASSIGNMENTS:
-		check(
-			bool(
-				frappe.db.exists(
-					"User Responsibility Assignment", {"user": f"{local}@moh.example.test", "business_role": role, "status": ["in", ["Enabled", "Scheduled"]]}
-				)
-			)
-			or bool(frappe.db.exists("User Responsibility Assignment", {"user": f"{local}@moh.example.test", "business_role": role})),
-			f"assignment {local}: {role}",
+	check(site_setup.unit_tree_intact(), "every Organisation Unit sits inside its parent's tree range")
+	for local, role, unit_name, kwargs in site_setup.ASSIGNMENTS:
+		rows = frappe.get_all(
+			"User Responsibility Assignment",
+			filters={"user": f"{local}@moh.example.test", "business_role": role, "fixture_namespace": site_setup.FIXTURE_TAG},
+			fields=["organisation_unit", "effective_from", "effective_to"],
 		)
+		unit = frappe.db.get_value("Organisation Unit", {"unit_name": unit_name}, "name") if unit_name else None
+		terms = [
+			(str(row.effective_from or "")[:19], str(row.effective_to or "")[:19])
+			for row in rows
+			if (row.organisation_unit or None) == unit
+		]
+		# The dates the seed asks for, not merely a row (since v1.11): an
+		# existing assignment is returned as it is, so a changed term only
+		# lands on a wiped site.
+		expected = (str(kwargs.get("effective_from") or "")[:19], str(kwargs.get("effective_to") or "")[:19])
+		check(expected in terms, f"assignment {local}: {role}{' in ' + unit_name if unit_name else ''} from {expected[0] or 'no start'} to {expected[1] or 'no end'} (found {terms}); a changed term needs WIPE=True")
+	# Every unit-scoped role a seeded assignment names must have someone
+	# holding it *now*, not merely a row somewhere. The check above only
+	# asks whether the seed wrote what it said it would; it passed happily
+	# while Digital Health had no Head of User Department at all, because
+	# the only two grants for that branch were one expired and one not yet
+	# started. A canonical world nobody can act in is not canonical.
+	scoped: set[tuple[str, str]] = {(role, unit) for _local, role, unit, _kwargs in site_setup.ASSIGNMENTS if unit}
+	for role, unit_name in sorted(scoped):
+		unit = frappe.db.get_value("Organisation Unit", {"unit_name": unit_name}, "name")
+		# A grant reaches the unit it names and that unit's descendants
+		# (`authorization.descendants_of`), so a unit is covered by its own
+		# grant or by any ancestor's — the same walk the resolver does.
+		chain: list[str] = []
+		cursor = unit
+		while cursor:
+			chain.append(cursor)
+			cursor = frappe.db.get_value("Organisation Unit", cursor, "parent_organisation_unit")
+		holders = [
+			row
+			for row in frappe.get_all(
+				"User Responsibility Assignment",
+				filters={"business_role": role, "organisation_unit": ["in", chain], "status": "Enabled"},
+				fields=["name", "effective_from", "effective_to"],
+			)
+			if _in_force_now(row)
+		]
+		check(bool(holders), f"{role} in force today for {unit_name}")
 
 	if last >= STAGES.index("strategy"):
-		plans = frappe.get_all("Strategic Plan", filters={"fixture_namespace": STRATEGY_NS}, pluck="name")
-		check(len(plans) == 1, f"one canonical Strategic Plan, found {len(plans)}")
-		if plans:
-			active = frappe.db.count("Strategic Plan Version", {"plan_id": plans[0], "status": "Active"})
-			check(active == 1, f"one Active Strategic Plan Version, found {active}")
+		from kentender_strategy.seeds.kentender_mvp_v1_strategy import validate_strategy_seed
+
+		for row in validate_strategy_seed():
+			check(row["ok"], f"strategy: {row['check']}")
 
 	if last >= STAGES.index("budget"):
-		budgets = frappe.get_all("Procurement Budget", fields=["name", "generated_reference", "fiscal_year"])
-		check([b.generated_reference for b in budgets] == list(CANONICAL_BUDGET_CODES), f"only {CANONICAL_BUDGET_CODES}, found {[b.generated_reference for b in budgets]}")
+		from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budget
+
+		budgets = frappe.get_all("Procurement Budget", fields=["name", "generated_reference"])
+		check([b.name for b in budgets] == [canonical_budget()], f"the canonical budget is the only one, found {[b.generated_reference for b in budgets]}")
 		if budgets:
-			budget = budgets[0]
-			check(budget.fiscal_year == "2027-2028", f"budget fiscal year {budget.fiscal_year}")
-			versions = frappe.get_all("Procurement Budget Version", filters={"budget": budget.name}, fields=["generated_reference", "status"])
-			check([(v.generated_reference, v.status) for v in versions] == [("MOH-BUD-2027-001-V1", "Active")], f"one Active V1, found {[(v.generated_reference, v.status) for v in versions]}")
-			lines = {
-				frappe.db.get_value("Procurement Budget Line", lv.budget_line, "generated_reference"): (lv.title, lv.approved_amount, lv.owner_org_unit)
-				for lv in frappe.get_all(
-					"Procurement Budget Line Version",
-					filters={"budget_version": ["in", [v.name for v in frappe.get_all("Procurement Budget Version", filters={"budget": budget.name}, fields=["name"])]]},
-					fields=["budget_line", "title", "approved_amount", "owner_org_unit"],
-				)
-			}
-			check(lines.get("MOH-BL-DHI-2027", ("", 0, ""))[1] == 100_000_000, "MOH-BL-DHI-2027 approved 100,000,000")
-			check(lines.get("MOH-BL-HWD-2027", ("", 0, ""))[1] == 60_000_000, "MOH-BL-HWD-2027 approved 60,000,000")
-			check(not lines.get("MOH-BL-HWD-2027", ("", 0, "x"))[2], "MOH-BL-HWD-2027 is Entity-wide (SEED-001 §3.5)")
+			# The version, lines, references and history are the module's
+			# own checks (`validate_budget_seed`, below).
 			# §15.4: reservation begins at Requisition. REQ-CHG-001 v1.6 is the
 			# first live caller and is not yet a canonical stage, so a reservation
 			# stamped REQUISITIONS_NS is expected canonical evidence, not a stray;
@@ -607,29 +918,28 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 				if (r.fixture_namespace or "") != REQUISITIONS_NS
 			]
 			check(not stray_commitments, f"no Procurement Commitment outside {REQUISITIONS_NS!r}, found {stray_commitments}")
+		from kentender_budget.seeds.kentender_mvp_v1_portfolio import validate_budget_seed
+
+		for row in validate_budget_seed():
+			check(row["ok"], f"budget: {row['check']}")
 
 	if last >= STAGES.index("needs"):
-		from kentender_procurement.departmental_needs.constants import STATE_ACCEPTED, STATE_SUBMITTED  # noqa: F401
-		from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import NEEDS as NDS_NEEDS
+		from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import validate_needs_seed
 
-		by_reference = {
-			n.name: n.current_state
-			for n in frappe.get_all("Departmental Need", filters={"fixture_namespace": NEEDS_NS}, fields=["name", "current_state"])
-		}
-		check(len(by_reference) == len(NDS_NEEDS), f"{len(NDS_NEEDS)} canonical Departmental Needs, found {len(by_reference)}")
-		for spec in NDS_NEEDS:
-			check(
-				by_reference.get(spec["reference"]) == spec["state"],
-				f"{spec['reference']} state {by_reference.get(spec['reference'])!r}, expected {spec['state']!r}",
-			)
+		for row in validate_needs_seed():
+			check(row["ok"], f"needs: {row['check']}")
 
 	if last >= STAGES.index("planning"):
 		plan_row = frappe.db.get_value("Annual Plan", {"fiscal_year": "2027-2028"}, ["name", "active_version"], as_dict=True)
 		check(bool(plan_row and plan_row.active_version), f"canonical FY 2027-2028 Annual Plan Active, found {plan_row}")
+		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import validate_planning_history
+
+		for row in validate_planning_history():
+			check(row["ok"], f"{row['check']}: {row['detail']}")
 		if through == "planning":
 			# Only when Planning is the last stage seeded. Once Requisitions'
-			# combined item is later consumed through a real Tender Preparation
-			# build, TPR's own seed legitimately writes a real
+			# combined item is later consumed through a real Tenders
+			# build, the Tenders seed legitimately writes a real
 			# `actual_invitation_date` onto this same Plan Item (FU-16,
 			# `record_tender_milestone_actual`) — `validate_planning_seed()`
 			# was written for Planning seeded alone and would misread that
@@ -645,11 +955,31 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 		for row in validate_requisitions_seed():
 			check(row["ok"], f"{row['check']}: {row['detail']}")
 
-	if last >= STAGES.index("tender_preparation"):
-		from kentender_procurement.tender_preparation.seeds.kentender_mvp_v1 import validate_tender_preparation_seed
+	if last >= STAGES.index("tenders"):
+		from kentender_procurement.tenders.seeds.kentender_mvp_v1 import validate_tenders_seed
 
-		for row in validate_tender_preparation_seed():
+		for row in validate_tenders_seed():
 			check(row["ok"], f"{row['check']}: {row['detail']}")
+	if last >= STAGES.index("bid_submission"):
+		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import validate_bid_submission_seed
+
+		for row in validate_bid_submission_seed():
+			check(row["ok"], row["check"])
+	if last >= STAGES.index("bid_opening"):
+		from kentender_procurement.bid_opening.seeds.kentender_mvp_v1 import validate_bid_opening_seed
+
+		for row in validate_bid_opening_seed():
+			check(row["ok"], row["check"])
+	if last >= STAGES.index("bid_evaluation"):
+		from kentender_procurement.bid_evaluation.seeds.kentender_mvp_v1 import validate_bid_evaluation_seed
+
+		for row in validate_bid_evaluation_seed():
+			check(row["ok"], row["check"])
+	if last >= STAGES.index("award"):
+		from kentender_procurement.award.seeds.kentender_mvp_v1 import validate_award_seed
+
+		for row in validate_award_seed():
+			check(row["ok"], row["check"])
 
 	report = {"ok": not failures, "through": through, "failures": failures}
 	if failures:
@@ -684,45 +1014,156 @@ def run(
 	through: str = STAGES[-1],
 	reset: bool = True,
 	rebuild: bool = False,
+	wipe: bool = False,
+	reseed: bool | None = None,
 	validate: bool = True,
 	force: bool = False,
 	commit: bool = True,
 ) -> dict[str, Any]:
 	"""Clear everything non-canonical (``reset``), optionally the canonical
-	module rows too (``rebuild``), reseed up to ``through`` and validate.
-	One transaction: any failure rolls the whole run back."""
+	module rows too (``rebuild``), optionally the site stage itself
+	(``wipe`` — the Procuring Entity, Organisation Units, Fiscal Years and
+	the §8.3 actors ``rebuild`` alone never touches, since every other
+	stage's canonical rows reference them), reseed up to ``through`` and
+	validate. One transaction: any failure rolls the whole run back.
+
+	``wipe`` implies ``rebuild``: the site stage is the foundation every
+	module stage's canonical rows sit on, so it is only ever safe to drop
+	after they are already gone, never on its own.
+
+	``reseed`` defaults to the opposite of ``wipe``: plain ``reset``/
+	``rebuild`` still reseed immediately, matching every call site before
+	this parameter existed, but ``wipe`` alone now means what the word
+	says — clear everything and stop, no stage rebuilt, ``through``/
+	``validate`` ignored, nothing left on the site to validate against.
+	Pass ``reseed=True`` explicitly with ``wipe=True`` for the old
+	"wipe then immediately rebuild the whole chain" behaviour."""
+	if reseed is None:
+		reseed = not wipe
 	frappe.only_for(("System Manager", "Administrator"))
 	_assert_allowed(force)
 	_stage_index(through)
 	frappe.set_user("Administrator")
-	result: dict[str, Any] = {"ok": True, "through": through}
-	# `force` is meant to mean "bypass every fixture-build guard this run
-	# touches," not just this orchestrator's own (§1.1) — the needs/
-	# planning/requisitions/tender_preparation module seeds each carry an
-	# independent developer_mode/allow_tests guard of their own that this
-	# function's `force` parameter cannot otherwise reach. All of them
-	# already accept `frappe.flags.in_test` as an equally valid bypass, so
-	# set it for the duration of this run rather than making the caller
-	# separately enable developer_mode on the site.
+	result: dict[str, Any] = {"ok": True, "through": through if reseed else None, "reseed": reseed}
+	# One permission for the whole run. The needs/planning/requisitions/
+	# tenders module seeds each carry their own developer_mode/allow_tests
+	# guard; all of them accept `frappe.flags.in_test`, so an allowed run
+	# (`_assert_allowed`: developer_mode, allow_canonical_seed or force) sets
+	# it for its own duration. (Until 4 Oct 2026 only `force` did, so a site
+	# allowed by allow_canonical_seed still stopped at the Planning stage.)
 	in_test_before = frappe.flags.in_test
-	if force:
-		frappe.flags.in_test = True
+	frappe.flags.in_test = True
+	# Frappe refuses any new background job once 500+ are queued, and a
+	# full wipe deletes enough documents to pass that inside this one run
+	# (found 26 Sep 2026: 650 queued before the site stage recreated its
+	# users). The ceiling protects interactive traffic, not this batch run:
+	# lift it in this process only — site_config is untouched — and let
+	# `make seed-canonical` drain the queue afterwards.
+	max_jobs_before = frappe.conf.get("max_queued_jobs")
+	frappe.conf.max_queued_jobs = 1_000_000
+	# The run is allowed (`_assert_allowed` above), so the register's actors
+	# get the fixture password even without developer_mode (site_setup).
+	frappe.flags.kt_fixture_passwords = True
 	try:
-		if rebuild:
+		result["released_profiles"] = release_demo_profiles()
+		if rebuild or wipe:
+			from kentender_strategy.services.strategy_reference import reset_reference_series
+
 			result["rebuild"] = clear_canonical_modules()
+			# The canonical plan is gone, and allocation starts above any
+			# number still in use, so a rebuilt world numbers from 0001 again.
+			result["reference_series_reset"] = reset_reference_series()
+		if wipe:
+			from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import wipe_all_planning
+			from kentender_procurement.procurement_requisitions.seeds.clear import wipe_all_requisitions
+			from kentender_procurement.tenders.seeds.kentender_mvp_v1 import wipe_all_tenders
+
+			# clear_canonical_modules()'s tenders/requisitions/planning steps
+			# all select by a live parent (a title, a Requisition, a fiscal
+			# year) rather than a fixture_namespace column every row
+			# carries, so a row whose parent was already deleted by some
+			# other, unrelated test run is invisible to any of them and
+			# survives every rebuild forever. Only safe to go unconditional
+			# here: `wipe` clears every other module in the same pass, so
+			# nothing is left for an orphan to reference.
+			result["tenders_wiped"] = wipe_all_tenders()
+			result["planning_wiped"] = wipe_all_planning()
+			result["requisitions_wiped"] = wipe_all_requisitions()
+			result["wiped"] = site_setup.reset_site_setup(commit=False)
+			# Not KenTender seed data, but wipe's own job is "empty database"
+			# and this recurs constantly: `bench run-tests` on kentender_core
+			# (or any app) fires Frappe's before_tests global test-record
+			# preload the first time an old-style test class runs, which
+			# creates ~39 ERPNext `_Test Fiscal Year %` rows as a side
+			# effect of routine test runs during ordinary module work - not
+			# a rare event, so a separate command to remember doesn't hold up.
+			from kentender_core.tests.erpnext_test_fixture_cleanup import purge as purge_erpnext_test_fixtures
+
+			result["erpnext_test_fixtures_purged"] = purge_erpnext_test_fixtures(commit=False)
 		if reset:
 			result["removed"] = clear_non_canonical()
-		result["seeded"] = seed(through=through)
-		if validate:
-			result["validate"] = globals()["validate"](through=through)
+		if reseed:
+			result["seeded"] = seed(through=through)
+			if validate:
+				result["validate"] = globals()["validate"](through=through)
 		if commit:
 			frappe.db.commit()
 		print(
-			"CANONICAL_SEED_OK through=%s removed=%s" % (through, result.get("removed") or {}),
+			"CANONICAL_SEED_OK through=%s removed=%s" % (result["through"], result.get("removed") or {}),
 		)
 		return result
-	except Exception:
+	except Exception as exc:
 		frappe.db.rollback()
-		raise
+		if not _partial_bid_world(exc) or rebuild or wipe:
+			raise
 	finally:
 		frappe.flags.in_test = in_test_before
+		frappe.conf.max_queued_jobs = max_jobs_before
+		frappe.flags.kt_fixture_passwords = False
+	# A bid submission commits at once (the attempt must survive a crash), so a
+	# run that failed after the bids left the canonical Tender without its
+	# lifecycle (found 4 Oct 2026 on a new server). Rebuild, once.
+	print("NOTICE: the canonical Tender was left half-built by an earlier failed run; rebuilding the canonical module records.")
+	out = run(through=through, reset=reset, rebuild=True, wipe=False, reseed=reseed, validate=validate, force=force, commit=commit)
+	out["rebuilt_after_partial_world"] = True
+	return out
+
+
+def _partial_bid_world(exc: Exception) -> bool:
+	try:
+		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import CanonicalTenderIncomplete
+	except ImportError:
+		return False
+	return isinstance(exc, CanonicalTenderIncomplete)
+
+
+def release_demo_profiles() -> dict[str, Any]:
+	"""Undo every loaded demo profile before the reset, through each module's
+	own release, and clear the site-wide test clock: the canonical world has
+	none. Each release is a no-op when its profile is not loaded."""
+	from kentender_core.services import test_clock
+
+	out: dict[str, Any] = {}
+	# A loaded Requisitions demo profile (REQ-CHG-001 v1.11 §16.4A) holds
+	# Budget reservations and Planning requests on the canonical item; undo
+	# it through the real commands first, so the reset below never leaves a
+	# Requisition row pointing at a reservation it deleted.
+	from kentender_procurement.procurement_requisitions.seeds.profiles import release_loaded_profile
+
+	out["requisitions"] = release_loaded_profile()
+	# The Departmental Needs demo profiles change the canonical Need
+	# NDS-MOH-2027-0001 in place (a successor revision, a withdrawal, a
+	# usage projection); each reset is a no-op when its profile is not
+	# applied. Found 26 Sep 2026: a test left the successor applied.
+	from kentender_procurement.departmental_needs.seeds import profiles as needs_profiles
+
+	out["needs"] = {name: reset() for name, (_apply, reset) in needs_profiles.PROFILES.items() if name != "default"}
+	# A Bid Opening profile leaves its loaded marker, test controls and the
+	# clock; an Award profile only the clock (found 1 Oct 2026: a plain
+	# reseed retold both stories but left every live page on the profile's
+	# 2027 moment). Their stages retell the partial opening and award.
+	from kentender_procurement.bid_opening.seeds.profiles import release_loaded_profile as release_opening_profile
+
+	out["bid_opening"] = release_opening_profile()
+	out["test_clock_cleared"] = test_clock.set_instant(None)
+	return out

@@ -191,7 +191,7 @@ class TestUniversalReaders(TechnicalReadTestBase):
 		self.assertFalse(workspace["forbidden"])
 		self.assertFalse(workspace["not_found"])
 		self.assertFalse(workspace["is_editable_draft"])
-		self.assertFalse(workspace["capabilities"]["create_successor"])
+		self.assertFalse(workspace["capabilities"]["update_plan"])
 		self.assertFalse(workspace["capabilities"]["edit_identity"])
 		self.assertFalse(workspace["capabilities"]["submit"])
 

@@ -1,0 +1,1378 @@
+{
+ "admin": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": null,
+  "committee": {
+   "appointed": true,
+   "appointed_by": "Playwright Tenders AO",
+   "appointed_label": "3 Jun 2027, 10:15 EAT",
+   "history": [
+    {
+     "appointed_by": "Playwright Tenders AO",
+     "appointed_label": "3 Jun 2027, 10:15 EAT",
+     "status": "Active",
+     "version": 1
+    }
+   ],
+   "members": [
+    {
+     "committee_role": "Chair and recorder",
+     "designation": "Head of Procurement Function",
+     "full_name": "Charles Mutiso",
+     "is_chair": 1,
+     "is_independent": 0,
+     "is_recorder": 1,
+     "joined_label": "10:55",
+     "member_user": "pw.req.hopf@example.test",
+     "present": true
+    },
+    {
+     "committee_role": "Member",
+     "designation": "Procurement Officer",
+     "full_name": "Playwright Tenders Officer",
+     "is_chair": 0,
+     "is_independent": 0,
+     "is_recorder": 0,
+     "joined_label": "10:56",
+     "member_user": "pw.tnd.officer@example.test",
+     "present": true
+    },
+    {
+     "committee_role": "Independent member",
+     "designation": "Budget Approver",
+     "full_name": "Playwright Independent",
+     "is_chair": 0,
+     "is_independent": 1,
+     "is_recorder": 0,
+     "joined_label": "10:57",
+     "member_user": "pw.bop.independent@example.test",
+     "present": true
+    }
+   ]
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "open",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Open bids",
+    "prefix": "Stage 2 of 3: ",
+    "suffix": " \u2014 Charles Mutiso"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 2 of 3: Open bids \u2014 Charles Mutiso",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "",
+     "label": "Prepare opening",
+     "marker": "done",
+     "marker_label": "Done"
+    },
+    {
+     "code": "open",
+     "holder": "Charles Mutiso",
+     "label": "Open bids",
+     "marker": "current",
+     "marker_label": "Current"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "",
+   "holder": null,
+   "kind": "not_involved",
+   "label": "",
+   "primary_action": "",
+   "sentence": "",
+   "since": null,
+   "stage": ""
+  },
+  "opening": {
+   "box_received": true,
+   "closed": true,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 12,
+   "state": "Opening",
+   "status": {
+    "label": "In session",
+    "since": "since 11:00:12 EAT",
+    "text": "",
+    "tone": "is-live"
+   },
+   "tender": "TDR-268628",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": {
+   "completed_label": "",
+   "incidents": 0,
+   "message": "You can see technical status for this opening. Bids, the register and the opening record are not shown to administrators.",
+   "state": "Opening"
+  },
+  "viewer": {
+   "is_accounting_officer": false,
+   "is_chair": false,
+   "is_member": false,
+   "is_recorder": false,
+   "technical": true
+  }
+ },
+ "ao": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": {
+   "accounts": [
+    {
+     "account": "I heard the total repeated after the attendee\u2019s request, but I could not hear the security reference clearly.",
+     "event_id": "PRC-BOC-MOH-2099-001-E0013",
+     "member": "Playwright Independent",
+     "member_user": "pw.bop.independent@example.test",
+     "responded": false,
+     "time_label": "11:02:25"
+    }
+   ],
+   "awaiting_readout": null,
+   "chronology": [
+    {
+     "reported": "",
+     "time": "11:00:12",
+     "what": "Started the opening",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "",
+     "time": "11:01:00",
+     "what": "Bid 1 opened",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "reported time, recorded by Charles Mutiso",
+     "time": "11:01:30",
+     "what": "Playwright Tenders Officer read bid 1 aloud",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "reported time, recorded by Charles Mutiso",
+     "time": "11:02:00",
+     "what": "David Ouma: Asked for the submitted total to be repeated",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "",
+     "time": "11:02:25",
+     "what": "Recorded their own differing account",
+     "who": "Playwright Independent"
+    }
+   ],
+   "current_bids": 1,
+   "opened": [
+    {
+     "designated_pages": "1",
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "number": 1,
+     "opened_label": "11:01:00",
+     "page_count": 10,
+     "price_page": 8,
+     "read_aloud": "Afya Digital Supplies (Test) Limited; KES 2.50; tender security given: KES 500,000.00, Seeded answer for the canonical bid.",
+     "receipt": "RCPT-MOH-2099-001-001",
+     "recorded_label": "11:01:45",
+     "reported_speech": "Reported speech time: 11:01:30 \u2014 recorded by Charles Mutiso",
+     "security_given": "KES 500,000.00, Seeded answer for the canonical bid.",
+     "speaker": "Playwright Tenders Officer",
+     "status": "Read out",
+     "submitted_total": "KES 2.50",
+     "tenderer": "Afya Digital Supplies (Test) Limited"
+    }
+   ],
+   "pause": null,
+   "present": {
+    "pw.bop.independent@example.test": "10:57",
+    "pw.req.hopf@example.test": "10:55",
+    "pw.tnd.officer@example.test": "10:56"
+   },
+   "register": [
+    {
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "number": 1,
+     "package_digest": "8537b0535f2bb6b72080c44d96f43bb2f671a7d1f2c2e21f4d01d28e45038259",
+     "pages": "1",
+     "price_page": 8,
+     "receipt": "RCPT-MOH-2099-001-001",
+     "recorded_at": "2027-06-05 11:01:45",
+     "recorded_label": "11:01:45",
+     "security_given": "KES 500,000.00, Seeded answer for the canonical bid.",
+     "submitted_total": "KES 2.50",
+     "tenderer": "Afya Digital Supplies (Test) Limited"
+    }
+   ],
+   "requests": [
+    {
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "exception_class": "Repeat request",
+     "exception_id": "BOC-MOH-2099-001-EXC-001",
+     "observed_fact": "Asked for the submitted total to be repeated",
+     "outcome": "Answered during opening",
+     "recorded_at": "2027-06-05 11:02:20",
+     "recorded_by": "Charles Mutiso",
+     "recorded_label": "11:02:20",
+     "response": "Charles Mutiso asked the member to repeat it. The total was repeated.",
+     "speaker_name": "David Ouma"
+    }
+   ]
+  },
+  "committee": {
+   "appointed": true,
+   "appointed_by": "Playwright Tenders AO",
+   "appointed_label": "3 Jun 2027, 10:15 EAT",
+   "history": [
+    {
+     "appointed_by": "Playwright Tenders AO",
+     "appointed_label": "3 Jun 2027, 10:15 EAT",
+     "status": "Active",
+     "version": 1
+    }
+   ],
+   "members": [
+    {
+     "committee_role": "Chair and recorder",
+     "designation": "Head of Procurement Function",
+     "full_name": "Charles Mutiso",
+     "is_chair": 1,
+     "is_independent": 0,
+     "is_recorder": 1,
+     "joined_label": "10:55",
+     "member_user": "pw.req.hopf@example.test",
+     "present": true
+    },
+    {
+     "committee_role": "Member",
+     "designation": "Procurement Officer",
+     "full_name": "Playwright Tenders Officer",
+     "is_chair": 0,
+     "is_independent": 0,
+     "is_recorder": 0,
+     "joined_label": "10:56",
+     "member_user": "pw.tnd.officer@example.test",
+     "present": true
+    },
+    {
+     "committee_role": "Independent member",
+     "designation": "Budget Approver",
+     "full_name": "Playwright Independent",
+     "is_chair": 0,
+     "is_independent": 1,
+     "is_recorder": 0,
+     "joined_label": "10:57",
+     "member_user": "pw.bop.independent@example.test",
+     "present": true
+    }
+   ]
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "open",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Open bids",
+    "prefix": "Stage 2 of 3: ",
+    "suffix": " \u2014 Charles Mutiso"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 2 of 3: Open bids \u2014 Charles Mutiso",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "",
+     "label": "Prepare opening",
+     "marker": "done",
+     "marker_label": "Done"
+    },
+    {
+     "code": "open",
+     "holder": "Charles Mutiso",
+     "label": "Open bids",
+     "marker": "current",
+     "marker_label": "Current"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "",
+   "holder": null,
+   "kind": "not_involved",
+   "label": "",
+   "primary_action": "",
+   "sentence": "",
+   "since": null,
+   "stage": ""
+  },
+  "opening": {
+   "box_received": true,
+   "closed": true,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 12,
+   "state": "Opening",
+   "status": {
+    "label": "In session",
+    "since": "since 11:00:12 EAT",
+    "text": "",
+    "tone": "is-live"
+   },
+   "tender": "TDR-268628",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": null,
+  "viewer": {
+   "is_accounting_officer": true,
+   "is_chair": false,
+   "is_member": false,
+   "is_recorder": false,
+   "technical": false
+  }
+ },
+ "auditor": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": {
+   "accounts": [
+    {
+     "account": "I heard the total repeated after the attendee\u2019s request, but I could not hear the security reference clearly.",
+     "event_id": "PRC-BOC-MOH-2099-001-E0013",
+     "member": "Playwright Independent",
+     "member_user": "pw.bop.independent@example.test",
+     "responded": false,
+     "time_label": "11:02:25"
+    }
+   ],
+   "awaiting_readout": null,
+   "chronology": [
+    {
+     "reported": "",
+     "time": "11:00:12",
+     "what": "Started the opening",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "",
+     "time": "11:01:00",
+     "what": "Bid 1 opened",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "reported time, recorded by Charles Mutiso",
+     "time": "11:01:30",
+     "what": "Playwright Tenders Officer read bid 1 aloud",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "reported time, recorded by Charles Mutiso",
+     "time": "11:02:00",
+     "what": "David Ouma: Asked for the submitted total to be repeated",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "",
+     "time": "11:02:25",
+     "what": "Recorded their own differing account",
+     "who": "Playwright Independent"
+    }
+   ],
+   "current_bids": 1,
+   "opened": [
+    {
+     "designated_pages": "1",
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "number": 1,
+     "opened_label": "11:01:00",
+     "page_count": 10,
+     "price_page": 8,
+     "read_aloud": "Afya Digital Supplies (Test) Limited; KES 2.50; tender security given: KES 500,000.00, Seeded answer for the canonical bid.",
+     "receipt": "RCPT-MOH-2099-001-001",
+     "recorded_label": "11:01:45",
+     "reported_speech": "Reported speech time: 11:01:30 \u2014 recorded by Charles Mutiso",
+     "security_given": "KES 500,000.00, Seeded answer for the canonical bid.",
+     "speaker": "Playwright Tenders Officer",
+     "status": "Read out",
+     "submitted_total": "KES 2.50",
+     "tenderer": "Afya Digital Supplies (Test) Limited"
+    }
+   ],
+   "pause": null,
+   "present": {
+    "pw.bop.independent@example.test": "10:57",
+    "pw.req.hopf@example.test": "10:55",
+    "pw.tnd.officer@example.test": "10:56"
+   },
+   "register": [
+    {
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "number": 1,
+     "package_digest": "8537b0535f2bb6b72080c44d96f43bb2f671a7d1f2c2e21f4d01d28e45038259",
+     "pages": "1",
+     "price_page": 8,
+     "receipt": "RCPT-MOH-2099-001-001",
+     "recorded_at": "2027-06-05 11:01:45",
+     "recorded_label": "11:01:45",
+     "security_given": "KES 500,000.00, Seeded answer for the canonical bid.",
+     "submitted_total": "KES 2.50",
+     "tenderer": "Afya Digital Supplies (Test) Limited"
+    }
+   ],
+   "requests": [
+    {
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "exception_class": "Repeat request",
+     "exception_id": "BOC-MOH-2099-001-EXC-001",
+     "observed_fact": "Asked for the submitted total to be repeated",
+     "outcome": "Answered during opening",
+     "recorded_at": "2027-06-05 11:02:20",
+     "recorded_by": "Charles Mutiso",
+     "recorded_label": "11:02:20",
+     "response": "Charles Mutiso asked the member to repeat it. The total was repeated.",
+     "speaker_name": "David Ouma"
+    }
+   ]
+  },
+  "committee": {
+   "appointed": true,
+   "appointed_by": "Playwright Tenders AO",
+   "appointed_label": "3 Jun 2027, 10:15 EAT",
+   "history": [
+    {
+     "appointed_by": "Playwright Tenders AO",
+     "appointed_label": "3 Jun 2027, 10:15 EAT",
+     "status": "Active",
+     "version": 1
+    }
+   ],
+   "members": [
+    {
+     "committee_role": "Chair and recorder",
+     "designation": "Head of Procurement Function",
+     "full_name": "Charles Mutiso",
+     "is_chair": 1,
+     "is_independent": 0,
+     "is_recorder": 1,
+     "joined_label": "10:55",
+     "member_user": "pw.req.hopf@example.test",
+     "present": true
+    },
+    {
+     "committee_role": "Member",
+     "designation": "Procurement Officer",
+     "full_name": "Playwright Tenders Officer",
+     "is_chair": 0,
+     "is_independent": 0,
+     "is_recorder": 0,
+     "joined_label": "10:56",
+     "member_user": "pw.tnd.officer@example.test",
+     "present": true
+    },
+    {
+     "committee_role": "Independent member",
+     "designation": "Budget Approver",
+     "full_name": "Playwright Independent",
+     "is_chair": 0,
+     "is_independent": 1,
+     "is_recorder": 0,
+     "joined_label": "10:57",
+     "member_user": "pw.bop.independent@example.test",
+     "present": true
+    }
+   ]
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "open",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Open bids",
+    "prefix": "Stage 2 of 3: ",
+    "suffix": " \u2014 Charles Mutiso"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 2 of 3: Open bids \u2014 Charles Mutiso",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "",
+     "label": "Prepare opening",
+     "marker": "done",
+     "marker_label": "Done"
+    },
+    {
+     "code": "open",
+     "holder": "Charles Mutiso",
+     "label": "Open bids",
+     "marker": "current",
+     "marker_label": "Current"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "",
+   "holder": null,
+   "kind": "not_involved",
+   "label": "",
+   "primary_action": "",
+   "sentence": "",
+   "since": null,
+   "stage": ""
+  },
+  "opening": {
+   "box_received": true,
+   "closed": true,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 12,
+   "state": "Opening",
+   "status": {
+    "label": "In session",
+    "since": "since 11:00:12 EAT",
+    "text": "",
+    "tone": "is-live"
+   },
+   "tender": "TDR-268628",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": null,
+  "viewer": {
+   "is_accounting_officer": false,
+   "is_chair": false,
+   "is_member": false,
+   "is_recorder": false,
+   "technical": false
+  }
+ },
+ "chair": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": {
+   "accounts": [
+    {
+     "account": "I heard the total repeated after the attendee\u2019s request, but I could not hear the security reference clearly.",
+     "event_id": "PRC-BOC-MOH-2099-001-E0013",
+     "member": "Playwright Independent",
+     "member_user": "pw.bop.independent@example.test",
+     "responded": false,
+     "time_label": "11:02:25"
+    }
+   ],
+   "awaiting_readout": null,
+   "chronology": [
+    {
+     "reported": "",
+     "time": "11:00:12",
+     "what": "Started the opening",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "",
+     "time": "11:01:00",
+     "what": "Bid 1 opened",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "reported time, recorded by Charles Mutiso",
+     "time": "11:01:30",
+     "what": "Playwright Tenders Officer read bid 1 aloud",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "reported time, recorded by Charles Mutiso",
+     "time": "11:02:00",
+     "what": "David Ouma: Asked for the submitted total to be repeated",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "",
+     "time": "11:02:25",
+     "what": "Recorded their own differing account",
+     "who": "Playwright Independent"
+    }
+   ],
+   "current_bids": 1,
+   "opened": [
+    {
+     "designated_pages": "1",
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "number": 1,
+     "opened_label": "11:01:00",
+     "page_count": 10,
+     "price_page": 8,
+     "read_aloud": "Afya Digital Supplies (Test) Limited; KES 2.50; tender security given: KES 500,000.00, Seeded answer for the canonical bid.",
+     "receipt": "RCPT-MOH-2099-001-001",
+     "recorded_label": "11:01:45",
+     "reported_speech": "Reported speech time: 11:01:30 \u2014 recorded by Charles Mutiso",
+     "security_given": "KES 500,000.00, Seeded answer for the canonical bid.",
+     "speaker": "Playwright Tenders Officer",
+     "status": "Read out",
+     "submitted_total": "KES 2.50",
+     "tenderer": "Afya Digital Supplies (Test) Limited"
+    }
+   ],
+   "pause": null,
+   "present": {
+    "pw.bop.independent@example.test": "10:57",
+    "pw.req.hopf@example.test": "10:55",
+    "pw.tnd.officer@example.test": "10:56"
+   },
+   "register": [
+    {
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "number": 1,
+     "package_digest": "8537b0535f2bb6b72080c44d96f43bb2f671a7d1f2c2e21f4d01d28e45038259",
+     "pages": "1",
+     "price_page": 8,
+     "receipt": "RCPT-MOH-2099-001-001",
+     "recorded_at": "2027-06-05 11:01:45",
+     "recorded_label": "11:01:45",
+     "security_given": "KES 500,000.00, Seeded answer for the canonical bid.",
+     "submitted_total": "KES 2.50",
+     "tenderer": "Afya Digital Supplies (Test) Limited"
+    }
+   ],
+   "requests": [
+    {
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "exception_class": "Repeat request",
+     "exception_id": "BOC-MOH-2099-001-EXC-001",
+     "observed_fact": "Asked for the submitted total to be repeated",
+     "outcome": "Answered during opening",
+     "recorded_at": "2027-06-05 11:02:20",
+     "recorded_by": "Charles Mutiso",
+     "recorded_label": "11:02:20",
+     "response": "Charles Mutiso asked the member to repeat it. The total was repeated.",
+     "speaker_name": "David Ouma"
+    }
+   ]
+  },
+  "committee": {
+   "appointed": true,
+   "appointed_by": "Playwright Tenders AO",
+   "appointed_label": "3 Jun 2027, 10:15 EAT",
+   "history": [
+    {
+     "appointed_by": "Playwright Tenders AO",
+     "appointed_label": "3 Jun 2027, 10:15 EAT",
+     "status": "Active",
+     "version": 1
+    }
+   ],
+   "members": [
+    {
+     "committee_role": "Chair and recorder",
+     "designation": "Head of Procurement Function",
+     "full_name": "Charles Mutiso",
+     "is_chair": 1,
+     "is_independent": 0,
+     "is_recorder": 1,
+     "joined_label": "10:55",
+     "member_user": "pw.req.hopf@example.test",
+     "present": true
+    },
+    {
+     "committee_role": "Member",
+     "designation": "Procurement Officer",
+     "full_name": "Playwright Tenders Officer",
+     "is_chair": 0,
+     "is_independent": 0,
+     "is_recorder": 0,
+     "joined_label": "10:56",
+     "member_user": "pw.tnd.officer@example.test",
+     "present": true
+    },
+    {
+     "committee_role": "Independent member",
+     "designation": "Budget Approver",
+     "full_name": "Playwright Independent",
+     "is_chair": 0,
+     "is_independent": 1,
+     "is_recorder": 0,
+     "joined_label": "10:57",
+     "member_user": "pw.bop.independent@example.test",
+     "present": true
+    }
+   ]
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "open",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Open bids",
+    "prefix": "Stage 2 of 3: ",
+    "suffix": " \u2014 Charles Mutiso"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 2 of 3: Open bids \u2014 Charles Mutiso",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "",
+     "label": "Prepare opening",
+     "marker": "done",
+     "marker_label": "Done"
+    },
+    {
+     "code": "open",
+     "holder": "Charles Mutiso",
+     "label": "Open bids",
+     "marker": "current",
+     "marker_label": "Current"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "Record the response to Playwright Independent\u2019s account",
+   "holder": null,
+   "kind": "your_turn",
+   "label": "Your turn",
+   "primary_action": "respond_account",
+   "sentence": "",
+   "since": null,
+   "stage": "open"
+  },
+  "opening": {
+   "box_received": true,
+   "closed": true,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 12,
+   "state": "Opening",
+   "status": {
+    "label": "In session",
+    "since": "since 11:00:12 EAT",
+    "text": "",
+    "tone": "is-live"
+   },
+   "tender": "TDR-268628",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": null,
+  "viewer": {
+   "is_accounting_officer": false,
+   "is_chair": true,
+   "is_member": true,
+   "is_recorder": true,
+   "technical": false
+  }
+ },
+ "independent": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": {
+   "accounts": [
+    {
+     "account": "I heard the total repeated after the attendee\u2019s request, but I could not hear the security reference clearly.",
+     "event_id": "PRC-BOC-MOH-2099-001-E0013",
+     "member": "Playwright Independent",
+     "member_user": "pw.bop.independent@example.test",
+     "responded": false,
+     "time_label": "11:02:25"
+    }
+   ],
+   "awaiting_readout": null,
+   "chronology": [
+    {
+     "reported": "",
+     "time": "11:00:12",
+     "what": "Started the opening",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "",
+     "time": "11:01:00",
+     "what": "Bid 1 opened",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "reported time, recorded by Charles Mutiso",
+     "time": "11:01:30",
+     "what": "Playwright Tenders Officer read bid 1 aloud",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "reported time, recorded by Charles Mutiso",
+     "time": "11:02:00",
+     "what": "David Ouma: Asked for the submitted total to be repeated",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "",
+     "time": "11:02:25",
+     "what": "Recorded their own differing account",
+     "who": "Playwright Independent"
+    }
+   ],
+   "current_bids": 1,
+   "opened": [
+    {
+     "designated_pages": "1",
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "number": 1,
+     "opened_label": "11:01:00",
+     "page_count": 10,
+     "price_page": 8,
+     "read_aloud": "Afya Digital Supplies (Test) Limited; KES 2.50; tender security given: KES 500,000.00, Seeded answer for the canonical bid.",
+     "receipt": "RCPT-MOH-2099-001-001",
+     "recorded_label": "11:01:45",
+     "reported_speech": "Reported speech time: 11:01:30 \u2014 recorded by Charles Mutiso",
+     "security_given": "KES 500,000.00, Seeded answer for the canonical bid.",
+     "speaker": "Playwright Tenders Officer",
+     "status": "Read out",
+     "submitted_total": "KES 2.50",
+     "tenderer": "Afya Digital Supplies (Test) Limited"
+    }
+   ],
+   "pause": null,
+   "present": {
+    "pw.bop.independent@example.test": "10:57",
+    "pw.req.hopf@example.test": "10:55",
+    "pw.tnd.officer@example.test": "10:56"
+   },
+   "register": [
+    {
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "number": 1,
+     "package_digest": "8537b0535f2bb6b72080c44d96f43bb2f671a7d1f2c2e21f4d01d28e45038259",
+     "pages": "1",
+     "price_page": 8,
+     "receipt": "RCPT-MOH-2099-001-001",
+     "recorded_at": "2027-06-05 11:01:45",
+     "recorded_label": "11:01:45",
+     "security_given": "KES 500,000.00, Seeded answer for the canonical bid.",
+     "submitted_total": "KES 2.50",
+     "tenderer": "Afya Digital Supplies (Test) Limited"
+    }
+   ],
+   "requests": [
+    {
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "exception_class": "Repeat request",
+     "exception_id": "BOC-MOH-2099-001-EXC-001",
+     "observed_fact": "Asked for the submitted total to be repeated",
+     "outcome": "Answered during opening",
+     "recorded_at": "2027-06-05 11:02:20",
+     "recorded_by": "Charles Mutiso",
+     "recorded_label": "11:02:20",
+     "response": "Charles Mutiso asked the member to repeat it. The total was repeated.",
+     "speaker_name": "David Ouma"
+    }
+   ]
+  },
+  "committee": {
+   "appointed": true,
+   "appointed_by": "Playwright Tenders AO",
+   "appointed_label": "3 Jun 2027, 10:15 EAT",
+   "history": [
+    {
+     "appointed_by": "Playwright Tenders AO",
+     "appointed_label": "3 Jun 2027, 10:15 EAT",
+     "status": "Active",
+     "version": 1
+    }
+   ],
+   "members": [
+    {
+     "committee_role": "Chair and recorder",
+     "designation": "Head of Procurement Function",
+     "full_name": "Charles Mutiso",
+     "is_chair": 1,
+     "is_independent": 0,
+     "is_recorder": 1,
+     "joined_label": "10:55",
+     "member_user": "pw.req.hopf@example.test",
+     "present": true
+    },
+    {
+     "committee_role": "Member",
+     "designation": "Procurement Officer",
+     "full_name": "Playwright Tenders Officer",
+     "is_chair": 0,
+     "is_independent": 0,
+     "is_recorder": 0,
+     "joined_label": "10:56",
+     "member_user": "pw.tnd.officer@example.test",
+     "present": true
+    },
+    {
+     "committee_role": "Independent member",
+     "designation": "Budget Approver",
+     "full_name": "Playwright Independent",
+     "is_chair": 0,
+     "is_independent": 1,
+     "is_recorder": 0,
+     "joined_label": "10:57",
+     "member_user": "pw.bop.independent@example.test",
+     "present": true
+    }
+   ]
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "open",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Open bids",
+    "prefix": "Stage 2 of 3: ",
+    "suffix": " \u2014 Charles Mutiso"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 2 of 3: Open bids \u2014 Charles Mutiso",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "",
+     "label": "Prepare opening",
+     "marker": "done",
+     "marker_label": "Done"
+    },
+    {
+     "code": "open",
+     "holder": "Charles Mutiso",
+     "label": "Open bids",
+     "marker": "current",
+     "marker_label": "Current"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "Waiting for Charles Mutiso to continue the opening",
+   "holder": {
+    "display": "Charles Mutiso (Chair)",
+    "people": [
+     "Charles Mutiso"
+    ],
+    "role": "Chair"
+   },
+   "kind": "waiting",
+   "label": "Waiting on someone",
+   "primary_action": "",
+   "sentence": "",
+   "since": null,
+   "stage": "open"
+  },
+  "opening": {
+   "box_received": true,
+   "closed": true,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 12,
+   "state": "Opening",
+   "status": {
+    "label": "In session",
+    "since": "since 11:00:12 EAT",
+    "text": "",
+    "tone": "is-live"
+   },
+   "tender": "TDR-268628",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": null,
+  "viewer": {
+   "is_accounting_officer": false,
+   "is_chair": false,
+   "is_member": true,
+   "is_recorder": false,
+   "technical": false
+  }
+ },
+ "member": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": {
+   "accounts": [
+    {
+     "account": "I heard the total repeated after the attendee\u2019s request, but I could not hear the security reference clearly.",
+     "event_id": "PRC-BOC-MOH-2099-001-E0013",
+     "member": "Playwright Independent",
+     "member_user": "pw.bop.independent@example.test",
+     "responded": false,
+     "time_label": "11:02:25"
+    }
+   ],
+   "awaiting_readout": null,
+   "chronology": [
+    {
+     "reported": "",
+     "time": "11:00:12",
+     "what": "Started the opening",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "",
+     "time": "11:01:00",
+     "what": "Bid 1 opened",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "reported time, recorded by Charles Mutiso",
+     "time": "11:01:30",
+     "what": "Playwright Tenders Officer read bid 1 aloud",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "reported time, recorded by Charles Mutiso",
+     "time": "11:02:00",
+     "what": "David Ouma: Asked for the submitted total to be repeated",
+     "who": "Charles Mutiso"
+    },
+    {
+     "reported": "",
+     "time": "11:02:25",
+     "what": "Recorded their own differing account",
+     "who": "Playwright Independent"
+    }
+   ],
+   "current_bids": 1,
+   "opened": [
+    {
+     "designated_pages": "1",
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "number": 1,
+     "opened_label": "11:01:00",
+     "page_count": 10,
+     "price_page": 8,
+     "read_aloud": "Afya Digital Supplies (Test) Limited; KES 2.50; tender security given: KES 500,000.00, Seeded answer for the canonical bid.",
+     "receipt": "RCPT-MOH-2099-001-001",
+     "recorded_label": "11:01:45",
+     "reported_speech": "Reported speech time: 11:01:30 \u2014 recorded by Charles Mutiso",
+     "security_given": "KES 500,000.00, Seeded answer for the canonical bid.",
+     "speaker": "Playwright Tenders Officer",
+     "status": "Read out",
+     "submitted_total": "KES 2.50",
+     "tenderer": "Afya Digital Supplies (Test) Limited"
+    }
+   ],
+   "pause": null,
+   "present": {
+    "pw.bop.independent@example.test": "10:57",
+    "pw.req.hopf@example.test": "10:55",
+    "pw.tnd.officer@example.test": "10:56"
+   },
+   "register": [
+    {
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "number": 1,
+     "package_digest": "8537b0535f2bb6b72080c44d96f43bb2f671a7d1f2c2e21f4d01d28e45038259",
+     "pages": "1",
+     "price_page": 8,
+     "receipt": "RCPT-MOH-2099-001-001",
+     "recorded_at": "2027-06-05 11:01:45",
+     "recorded_label": "11:01:45",
+     "security_given": "KES 500,000.00, Seeded answer for the canonical bid.",
+     "submitted_total": "KES 2.50",
+     "tenderer": "Afya Digital Supplies (Test) Limited"
+    }
+   ],
+   "requests": [
+    {
+     "entry": "BOC-MOH-2099-001-BID-01",
+     "exception_class": "Repeat request",
+     "exception_id": "BOC-MOH-2099-001-EXC-001",
+     "observed_fact": "Asked for the submitted total to be repeated",
+     "outcome": "Answered during opening",
+     "recorded_at": "2027-06-05 11:02:20",
+     "recorded_by": "Charles Mutiso",
+     "recorded_label": "11:02:20",
+     "response": "Charles Mutiso asked the member to repeat it. The total was repeated.",
+     "speaker_name": "David Ouma"
+    }
+   ]
+  },
+  "committee": {
+   "appointed": true,
+   "appointed_by": "Playwright Tenders AO",
+   "appointed_label": "3 Jun 2027, 10:15 EAT",
+   "history": [
+    {
+     "appointed_by": "Playwright Tenders AO",
+     "appointed_label": "3 Jun 2027, 10:15 EAT",
+     "status": "Active",
+     "version": 1
+    }
+   ],
+   "members": [
+    {
+     "committee_role": "Chair and recorder",
+     "designation": "Head of Procurement Function",
+     "full_name": "Charles Mutiso",
+     "is_chair": 1,
+     "is_independent": 0,
+     "is_recorder": 1,
+     "joined_label": "10:55",
+     "member_user": "pw.req.hopf@example.test",
+     "present": true
+    },
+    {
+     "committee_role": "Member",
+     "designation": "Procurement Officer",
+     "full_name": "Playwright Tenders Officer",
+     "is_chair": 0,
+     "is_independent": 0,
+     "is_recorder": 0,
+     "joined_label": "10:56",
+     "member_user": "pw.tnd.officer@example.test",
+     "present": true
+    },
+    {
+     "committee_role": "Independent member",
+     "designation": "Budget Approver",
+     "full_name": "Playwright Independent",
+     "is_chair": 0,
+     "is_independent": 1,
+     "is_recorder": 0,
+     "joined_label": "10:57",
+     "member_user": "pw.bop.independent@example.test",
+     "present": true
+    }
+   ]
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "open",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Open bids",
+    "prefix": "Stage 2 of 3: ",
+    "suffix": " \u2014 Charles Mutiso"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 2 of 3: Open bids \u2014 Charles Mutiso",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "",
+     "label": "Prepare opening",
+     "marker": "done",
+     "marker_label": "Done"
+    },
+    {
+     "code": "open",
+     "holder": "Charles Mutiso",
+     "label": "Open bids",
+     "marker": "current",
+     "marker_label": "Current"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "Waiting for Charles Mutiso to continue the opening",
+   "holder": {
+    "display": "Charles Mutiso (Chair)",
+    "people": [
+     "Charles Mutiso"
+    ],
+    "role": "Chair"
+   },
+   "kind": "waiting",
+   "label": "Waiting on someone",
+   "primary_action": "",
+   "sentence": "",
+   "since": null,
+   "stage": "open"
+  },
+  "opening": {
+   "box_received": true,
+   "closed": true,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 12,
+   "state": "Opening",
+   "status": {
+    "label": "In session",
+    "since": "since 11:00:12 EAT",
+    "text": "",
+    "tone": "is-live"
+   },
+   "tender": "TDR-268628",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": null,
+  "viewer": {
+   "is_accounting_officer": false,
+   "is_chair": false,
+   "is_member": true,
+   "is_recorder": false,
+   "technical": false
+  }
+ }
+}

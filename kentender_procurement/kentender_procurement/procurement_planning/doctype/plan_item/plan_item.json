@@ -1,0 +1,139 @@
+{
+ "actions": [],
+ "autoname": "field:plan_item_id",
+ "creation": "2026-09-12 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "plan_item_id",
+  "plan_item_reference",
+  "annual_plan",
+  "scope_locked_since",
+  "first_authorised_requisition",
+  "authorisation_hold",
+  "open_correction_requests",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "plan_item_id",
+   "fieldtype": "Data",
+   "label": "Plan Item ID",
+   "reqd": 1,
+   "unique": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "plan_item_reference",
+   "fieldtype": "Data",
+   "label": "Plan Item Reference",
+   "read_only": 1,
+   "description": "Generated business reference (§4.6); the stable id is the name."
+  },
+  {
+   "fieldname": "annual_plan",
+   "fieldtype": "Link",
+   "label": "Annual Plan",
+   "options": "Annual Plan",
+   "reqd": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "scope_locked_since",
+   "fieldtype": "Datetime",
+   "label": "Scope Locked Since",
+   "read_only": 1,
+   "description": "Set once by the first authorised Requisition drawdown (§5.4.6); never cleared."
+  },
+  {
+   "fieldname": "first_authorised_requisition",
+   "fieldtype": "Data",
+   "label": "First Authorised Requisition",
+   "read_only": 1
+  },
+  {
+   "fieldname": "authorisation_hold",
+   "fieldtype": "Check",
+   "label": "Authorisation Hold",
+   "read_only": 1,
+   "description": "Projection: an unresolved correction request exists (§5.4.5). Derived from the request records, never entered."
+  },
+  {
+   "fieldname": "open_correction_requests",
+   "fieldtype": "Int",
+   "label": "Open Correction Requests",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record Version",
+   "default": "0",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-09-12 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Plan Item",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Procurement Planner",
+   "read": 1
+  },
+  {
+   "role": "Head of Procurement Function",
+   "read": 1
+  },
+  {
+   "role": "Finance Confirmation Officer",
+   "read": 1
+  },
+  {
+   "role": "Accounting Officer",
+   "read": 1
+  },
+  {
+   "role": "Plan Statutory Approver",
+   "read": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "description": "PLN-CHG-001 v1.18 §4.6 — the stable identity of a Plan Item across every Plan Version; content lives on the per-Version Annual Plan Item row."
+}

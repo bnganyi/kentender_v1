@@ -4,6 +4,7 @@
 **Companions:** `02_STR_Rebuild_Gap_Analysis.md`, `03_STR_Rebuild_Implementation_Plan.md`, `FOLLOW_UPS.md`, `../00_common/KenTender_SEED-001_Harmonized_End_to_End_Fixture_v1_0.md`.
 **Status:** **Phases 0–9 closed on 2026-09-06.** A Strategy Author can register a usable strategy end to end on the §14 seed world in a real browser; every STR-AC row below is evidenced except the design-fidelity half of STR-AC-025 (open as FU-01).
 **Started:** 2026-09-03 · **Closed:** 2026-09-06
+**Superseded-in-tracking (2026-09-14):** the v1.8 usability correction is tracked in `STR-CHG-001_IMPLEMENTATION_TRACKER.md`; this document remains the closed v1.7 baseline it corrects.
 
 ## Tracker rules
 

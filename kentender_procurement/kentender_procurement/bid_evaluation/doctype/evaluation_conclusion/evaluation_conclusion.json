@@ -1,0 +1,153 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "§4.3, §5.2 RecordCommitteeConclusion and the specialised committee decisions: the actual participating roster, evidence and reasons.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "conclusion_id",
+  "evaluation_case",
+  "session",
+  "kind",
+  "evaluation_bid",
+  "requirement_key",
+  "result",
+  "reason",
+  "evidence_json",
+  "next_action",
+  "discussion_item",
+  "recorded_by",
+  "recorded_at",
+  "participants_json",
+  "proceeding_event",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "conclusion_id",
+   "fieldtype": "Data",
+   "label": "Conclusion ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "evaluation_case",
+   "fieldtype": "Link",
+   "label": "Evaluation case",
+   "read_only": 1,
+   "options": "Evaluation Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "session",
+   "fieldtype": "Data",
+   "label": "Session",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "read_only": 1,
+   "options": "Resolved finding\nQualified report\nClarification authorised\nReply disposition\nVerification plan\nVerification outcome\nDue diligence basis\nNo agreed recommendation\nOpening update impact",
+   "reqd": 1
+  },
+  {
+   "fieldname": "evaluation_bid",
+   "fieldtype": "Data",
+   "label": "Evaluation bid",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requirement_key",
+   "fieldtype": "Data",
+   "label": "Requirement key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "result",
+   "fieldtype": "Select",
+   "label": "Result",
+   "read_only": 1,
+   "options": "\nMeets\nDoes not meet\nNeeds review"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "evidence_json",
+   "fieldtype": "Long Text",
+   "label": "Evidence json",
+   "read_only": 1
+  },
+  {
+   "fieldname": "next_action",
+   "fieldtype": "Data",
+   "label": "Next action",
+   "read_only": 1
+  },
+  {
+   "fieldname": "discussion_item",
+   "fieldtype": "Data",
+   "label": "Discussion item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recorded_by",
+   "fieldtype": "Link",
+   "label": "Recorded by",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "recorded_at",
+   "fieldtype": "Datetime",
+   "label": "Recorded at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "participants_json",
+   "fieldtype": "Long Text",
+   "label": "Participants json",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "proceeding_event",
+   "fieldtype": "Data",
+   "label": "Proceeding event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Evaluation",
+ "name": "Evaluation Conclusion",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:conclusion_id"
+}

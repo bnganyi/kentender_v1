@@ -1,0 +1,161 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "PRC-CHG-001 v0.9 §4 Event: server sequence and trusted time; owner facts are linked, never rewritten.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "event_id",
+  "proceeding",
+  "session",
+  "sequence",
+  "event_type",
+  "recorded_at",
+  "actor",
+  "source",
+  "owner_event_id",
+  "event_key",
+  "payload_digest",
+  "owner_reference",
+  "note",
+  "reported_at",
+  "reported_by",
+  "pre_session",
+  "linked_event"
+ ],
+ "fields": [
+  {
+   "fieldname": "event_id",
+   "fieldtype": "Data",
+   "label": "Event ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "proceeding",
+   "fieldtype": "Link",
+   "label": "Proceeding",
+   "read_only": 1,
+   "options": "Proceeding",
+   "reqd": 1
+  },
+  {
+   "fieldname": "session",
+   "fieldtype": "Data",
+   "label": "Session",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "label": "Sequence",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "event_type",
+   "fieldtype": "Data",
+   "label": "Event type",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "recorded_at",
+   "fieldtype": "Datetime",
+   "label": "Recorded at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "actor",
+   "fieldtype": "Link",
+   "label": "Actor",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "read_only": 1,
+   "options": "Owner\nRecorder\nMember\nSystem",
+   "reqd": 1
+  },
+  {
+   "fieldname": "owner_event_id",
+   "fieldtype": "Data",
+   "label": "Owner event ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "event_key",
+   "fieldtype": "Data",
+   "label": "Event key",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "payload_digest",
+   "fieldtype": "Data",
+   "label": "Payload digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "owner_reference",
+   "fieldtype": "Data",
+   "label": "Owner reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reported_at",
+   "fieldtype": "Datetime",
+   "label": "Reported at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reported_by",
+   "fieldtype": "Link",
+   "label": "Reported by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "pre_session",
+   "fieldtype": "Check",
+   "label": "Pre session",
+   "read_only": 1
+  },
+  {
+   "fieldname": "linked_event",
+   "fieldtype": "Data",
+   "label": "Linked event",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Proceedings",
+ "name": "Proceeding Event",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:event_id"
+}

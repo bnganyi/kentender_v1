@@ -1,0 +1,998 @@
+{
+ "schema": "kt-evl-rules/1",
+ "rules_version": "1.0.0",
+ "template_key": "IT-EQUIPMENT-OPEN-V1",
+ "applies_to": [
+  {
+   "template_release": "1.2",
+   "release_id": "stdr-09bbfebd-0297-48c0-8ec2-7aa0c2e64495"
+  },
+  {
+   "template_release": "1.3",
+   "release_id": "stdr-9b953bcf-fb1e-4e85-b9c1-6ac57218d0e2"
+  },
+  {
+   "template_release": "1.4",
+   "release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01"
+  }
+ ],
+ "authority": "EVL-CHG-001 v0.4 §4.1 (owner decision OD-C; plan D7, D23, D24). The executable meaning of each automatic rule. Comparison values always come from the published bid definition, never from this file. A mapping or field without an entry here is Needs review (EVL_RULE_UNAVAILABLE); no default fills a missing rule. An entry with a `releases` list applies only to those template releases; it is how one field key keeps its release 1.2 reading while release 1.3 reads it differently, so a Tender never changes its rules after publication.",
+ "not_evaluated": [
+  "DM-DOC-ACK",
+  "DM-SUPPLIER-DETAILS",
+  "DM-JV-MEMBER"
+ ],
+ "boundaries": {
+  "minimum": "inclusive",
+  "maximum": "inclusive",
+  "date-not-before": "inclusive",
+  "date-not-after": "inclusive",
+  "date-in-window": "inclusive"
+ },
+ "numbers": {
+  "money_scale": 2,
+  "rounding": "ROUND_HALF_UP",
+  "comparison": "exact decimal; no rounding before comparison"
+ },
+ "published_comparison": {
+  "Minimum": {
+   "INTEGER": "minimum",
+   "DECIMAL": "minimum",
+   "TEXT": "manual"
+  },
+  "Maximum": {
+   "INTEGER": "maximum",
+   "DECIMAL": "maximum",
+   "TEXT": "manual"
+  },
+  "Required": {
+   "YES_NO": "equals",
+   "SELECT": "equals",
+   "MULTI_SELECT": "includes-all",
+   "PORT_LIST": "ports-minimum",
+   "TEXT": "manual"
+  },
+  "One of": {
+   "SELECT": "equals",
+   "YES_NO": "equals",
+   "TEXT": "manual"
+  },
+  "Exact": {
+   "INTEGER": "equals",
+   "DECIMAL": "equals",
+   "SELECT": "equals",
+   "YES_NO": "equals",
+   "TEXT": "manual"
+  }
+ },
+ "requirement_aggregates": [
+  {
+   "mapping_id": "DM-EXPERIENCE",
+   "mode": "count-at-least",
+   "fact": "required_count",
+   "reason": "The published number of comparable contracts, completed within the published period, are evidenced."
+  }
+ ],
+ "calculations": [
+  {
+   "mapping_id": "DM-PRICE-GOODS",
+   "line": "CALC-LINE-TOTAL",
+   "total": "CALC-TENDER-TOTAL",
+   "correction_rule": null,
+   "discrepancy": "Needs review: no published arithmetic-correction rule; the submitted total is preserved (EVL-CHG-001 v0.4 §4.4)."
+  }
+ ],
+ "rules": [
+  {
+   "mapping_id": "DM-DECL-FORM-OF-TENDER",
+   "field_key": "confirmed",
+   "kind": "confirmed"
+  },
+  {
+   "mapping_id": "DM-DECL-FORM-OF-TENDER",
+   "field_key": "state_owned_enterprise",
+   "kind": "review-if-yes",
+   "review_reason": "A state-owned enterprise must meet ITT 3.8; the committee assesses the state-owned enterprise statement.",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.2",
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-FORM-OF-TENDER",
+   "field_key": "commissions_gratuities_fees",
+   "kind": "recorded",
+   "releases": [
+    "1.2",
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CITD",
+   "field_key": "confirmed",
+   "kind": "confirmed"
+  },
+  {
+   "mapping_id": "DM-DECL-CITD",
+   "field_key": "disclosure",
+   "kind": "review-unless",
+   "accepted_value": "Arrived at the Tender independently",
+   "review_reason": "A disclosed consultation must be assessed as not collusive."
+  },
+  {
+   "mapping_id": "DM-DECL-SD1",
+   "field_key": "confirmed",
+   "kind": "confirmed",
+   "evidence_assessment": "Confirm the Tenderer is not debarred; no authoritative external source is presumed (EVL-CHG-001 v0.4 §2.2)."
+  },
+  {
+   "mapping_id": "DM-DECL-SD2",
+   "field_key": "confirmed",
+   "kind": "confirmed"
+  },
+  {
+   "mapping_id": "DM-DECL-CODE-OF-ETHICS",
+   "field_key": "confirmed",
+   "kind": "confirmed"
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "confirmed",
+   "kind": "confirmed"
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "procuring_entity_interest",
+   "kind": "review-if-yes",
+   "review_reason": "A person in the Procuring Entity with an interest or relationship in this firm was disclosed; the committee assesses it.",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.2",
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_01",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label}",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.2",
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_02",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label}",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.2",
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_03",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label}",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.2",
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_04",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label}",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.2",
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_05",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label}",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.2",
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_06",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label}",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.2",
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_07",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label}",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.2",
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_08",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label}",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.2",
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_09",
+   "kind": "review-unless",
+   "accepted_value": "Yes",
+   "polarity": "yes-reassures",
+   "when": {
+    "field_keys": [
+     "conflict_07",
+     "conflict_08"
+    ],
+    "equals": "Yes"
+   },
+   "review_reason": "A conflict was disclosed at items 7 or 8 and has not been resolved to the Procuring Entity's satisfaction: {field_label}",
+   "releases": [
+    "1.3",
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "business_structure",
+   "kind": "recorded",
+   "releases": [
+    "1.2",
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "maximum_business_value",
+   "kind": "recorded",
+   "releases": [
+    "1.2",
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "procuring_entity_interest_details",
+   "kind": "recorded",
+   "releases": [
+    "1.2",
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-RESERVATION",
+   "field_key": "certificate_category",
+   "kind": "choice-in",
+   "fact": "permitted_categories"
+  },
+  {
+   "mapping_id": "DM-RESERVATION",
+   "field_key": "certificate_valid_until",
+   "kind": "date-not-before",
+   "fact": "submission_deadline_date"
+  },
+  {
+   "mapping_id": "DM-RESERVATION",
+   "field_key": "certificate_number",
+   "kind": "presence"
+  },
+  {
+   "mapping_id": "DM-RESERVATION",
+   "field_key": "certificate_evidence",
+   "kind": "evidence",
+   "evidence_assessment": "The registration certificate is in the published category and valid at the submission deadline."
+  },
+  {
+   "mapping_id": "DM-RESERVATION",
+   "field_key": "confirmed",
+   "kind": "confirmed"
+  },
+  {
+   "mapping_id": "DM-TENDER-SECURITY",
+   "field_key": "security_form",
+   "kind": "choice-in",
+   "fact": "permitted_forms"
+  },
+  {
+   "mapping_id": "DM-TENDER-SECURITY",
+   "field_key": "instrument_amount",
+   "kind": "money-equals",
+   "fact": "amount",
+   "currency_fact": "currency"
+  },
+  {
+   "mapping_id": "DM-TENDER-SECURITY",
+   "field_key": "bank_guarantee_valid_until",
+   "kind": "date-not-before",
+   "fact": "bank_guarantee_expiry_date",
+   "when": {
+    "field_key": "security_form",
+    "equals": "Demand Bank Guarantee"
+   }
+  },
+  {
+   "mapping_id": "DM-TENDER-SECURITY",
+   "field_key": "insurance_guarantee_valid_until",
+   "kind": "date-not-before",
+   "fact": "insurance_guarantee_expiry_date",
+   "when": {
+    "field_key": "security_form",
+    "equals": "Insurance Guarantee"
+   }
+  },
+  {
+   "mapping_id": "DM-TENDER-SECURITY",
+   "field_key": "issuer",
+   "kind": "presence"
+  },
+  {
+   "mapping_id": "DM-TENDER-SECURITY",
+   "field_key": "guarantee_reference",
+   "kind": "presence"
+  },
+  {
+   "mapping_id": "DM-TENDER-SECURITY",
+   "field_key": "security_evidence",
+   "kind": "evidence",
+   "evidence_assessment": "The instrument is a permitted form, for the published amount and currency, valid to the published expiry; the physical original where recorded."
+  },
+  {
+   "mapping_id": "DM-GOODS-OFFER",
+   "field_key": "offered_make_model",
+   "kind": "presence"
+  },
+  {
+   "mapping_id": "DM-GOODS-OFFER",
+   "field_key": "offered_delivery_date",
+   "kind": "date-not-after",
+   "fact": "latest_delivery_date"
+  },
+  {
+   "mapping_id": "DM-GOODS-OFFER",
+   "field_key": "evidence",
+   "kind": "evidence-optional"
+  },
+  {
+   "mapping_id": "DM-TECHNICAL",
+   "field_key": "compliance",
+   "kind": "equals",
+   "value": "Comply"
+  },
+  {
+   "mapping_id": "DM-TECHNICAL",
+   "field_key": "offered_value",
+   "kind": "published-comparison"
+  },
+  {
+   "mapping_id": "DM-TECHNICAL",
+   "field_key": "comment",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-TECHNICAL",
+   "field_key": "evidence",
+   "kind": "evidence",
+   "evidence_assessment": "The submitted evidence supports the offered value."
+  },
+  {
+   "mapping_id": "DM-WARRANTY-SUPPORT",
+   "field_key": "compliance",
+   "kind": "equals",
+   "value": "Comply"
+  },
+  {
+   "mapping_id": "DM-WARRANTY-SUPPORT",
+   "field_key": "offered_value",
+   "kind": "published-comparison"
+  },
+  {
+   "mapping_id": "DM-WARRANTY-SUPPORT",
+   "field_key": "comment",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-WARRANTY-SUPPORT",
+   "field_key": "evidence",
+   "kind": "evidence-optional"
+  },
+  {
+   "mapping_id": "DM-EXPERIENCE",
+   "field_key": "completion_date",
+   "kind": "date-in-window",
+   "fact_start": "window_start",
+   "fact_end": "window_end"
+  },
+  {
+   "mapping_id": "DM-EXPERIENCE",
+   "field_key": "client_name",
+   "kind": "presence"
+  },
+  {
+   "mapping_id": "DM-EXPERIENCE",
+   "field_key": "contract_reference",
+   "kind": "presence"
+  },
+  {
+   "mapping_id": "DM-EXPERIENCE",
+   "field_key": "scope",
+   "kind": "presence"
+  },
+  {
+   "mapping_id": "DM-EXPERIENCE",
+   "field_key": "contract_value",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-EXPERIENCE",
+   "field_key": "evidence",
+   "kind": "evidence",
+   "evidence_assessment": "The submitted contract is comparable and its completion is evidenced."
+  },
+  {
+   "mapping_id": "DM-ACCEPTANCE",
+   "field_key": "confirmed",
+   "kind": "confirmed"
+  },
+  {
+   "mapping_id": "DM-EVIDENCE-MANUFACTURER-AUTHORISATION",
+   "field_key": "evidence",
+   "kind": "evidence",
+   "evidence_assessment": "The files provide manufacturer authorisation for the offered goods."
+  },
+  {
+   "mapping_id": "DM-EVIDENCE-DATASHEET",
+   "field_key": "evidence",
+   "kind": "evidence",
+   "evidence_assessment": "The files provide datasheets supporting the offered goods."
+  },
+  {
+   "mapping_id": "DM-EVIDENCE-AFTER-SALES",
+   "field_key": "evidence",
+   "kind": "evidence",
+   "evidence_assessment": "The files provide the published after-sales support evidence."
+  },
+  {
+   "mapping_id": "DM-EVIDENCE-ELIGIBILITY-DOCUMENTS",
+   "field_key": "evidence",
+   "kind": "evidence",
+   "evidence_assessment": "The files provide the documents listed on the Tenderer Information Form: tax clearance or exemption, registration and constitution, and the organisational chart and Board list."
+  },
+  {
+   "mapping_id": "DM-PRICE-GOODS",
+   "field_key": "unit_price",
+   "kind": "calculation-input"
+  },
+  {
+   "mapping_id": "DM-PRICE-GOODS",
+   "field_key": "tax_amount",
+   "kind": "calculation-input"
+  },
+  {
+   "mapping_id": "DM-SUBMISSION",
+   "field_key": "signatory_name",
+   "kind": "presence"
+  },
+  {
+   "mapping_id": "DM-SUBMISSION",
+   "field_key": "signatory_title",
+   "kind": "presence"
+  },
+  {
+   "mapping_id": "DM-SUBMISSION",
+   "field_key": "confirmed",
+   "kind": "confirmed"
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "sole_proprietor_name",
+   "kind": "recorded",
+   "releases": [
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "sole_proprietor_age",
+   "kind": "recorded",
+   "releases": [
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "sole_proprietor_nationality",
+   "kind": "recorded",
+   "releases": [
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "sole_proprietor_country_of_origin",
+   "kind": "recorded",
+   "releases": [
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "sole_proprietor_citizenship",
+   "kind": "recorded",
+   "releases": [
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "partners_details",
+   "kind": "recorded",
+   "releases": [
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "company_type",
+   "kind": "recorded",
+   "releases": [
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "nominal_capital",
+   "kind": "recorded",
+   "releases": [
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "issued_capital",
+   "kind": "recorded",
+   "releases": [
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "directors_details",
+   "kind": "recorded",
+   "releases": [
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "trade_licence_number",
+   "kind": "recorded",
+   "releases": [
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "trade_licence_expiry",
+   "kind": "recorded",
+   "releases": [
+    "1.3"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_01_details",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_02_details",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_03_details",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_04_details",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_05_details",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_06_details",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_07_details",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_08_details",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_09_details",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-DECL-CITD",
+   "field_key": "consulted_competitors",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-DECL-CITD",
+   "field_key": "consultation_nature",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-DECL-CITD",
+   "field_key": "consultation_reasons",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-DECL-FORM-OF-TENDER",
+   "field_key": "discounts_offered",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-DECL-FORM-OF-TENDER",
+   "field_key": "discount_method",
+   "kind": "recorded"
+  },
+  {
+   "mapping_id": "DM-RELATED-SERVICE",
+   "field_key": "confirmation",
+   "kind": "equals",
+   "value": "Yes",
+   "polarity": "yes-reassures"
+  },
+  {
+   "mapping_id": "DM-RELATED-SERVICE",
+   "field_key": "offered_completion_date",
+   "kind": "date-not-after",
+   "fact": "completion_date"
+  },
+  {
+   "mapping_id": "DM-RELATED-SERVICE",
+   "field_key": "evidence",
+   "kind": "evidence-optional"
+  },
+  {
+   "mapping_id": "DM-EVIDENCE-ADDITIONAL",
+   "field_key": "evidence",
+   "kind": "evidence-optional"
+  },
+  {
+   "mapping_id": "DM-PRICE-SERVICE",
+   "field_key": "unit_price",
+   "kind": "calculation-input"
+  },
+  {
+   "mapping_id": "DM-PRICE-SERVICE",
+   "field_key": "tax_amount",
+   "kind": "calculation-input"
+  },
+  {
+   "mapping_id": "DM-DECL-FORM-OF-TENDER",
+   "field_key": "discounts",
+   "kind": "recorded",
+   "releases": [
+    "1.2"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CITD",
+   "field_key": "consultation_details",
+   "kind": "recorded",
+   "releases": [
+    "1.2"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_09",
+   "kind": "review-if-yes",
+   "review_reason": "A disclosed interest or conflict must be assessed by the committee.",
+   "releases": [
+    "1.2"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "ownership_details",
+   "kind": "recorded",
+   "releases": [
+    "1.2"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "trade_licence",
+   "kind": "recorded",
+   "releases": [
+    "1.2"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_details",
+   "kind": "recorded",
+   "releases": [
+    "1.2"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_01",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label} This conflicts with the Tenderer's confirmation in the Form of Tender that it has no conflict of interest.",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_02",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label} This conflicts with the Tenderer's confirmation in the Form of Tender that it has no conflict of interest.",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_03",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label} This conflicts with the Tenderer's confirmation in the Form of Tender that it has no conflict of interest.",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_04",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label} This conflicts with the Tenderer's confirmation in the Form of Tender that it has no conflict of interest.",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_05",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label} This conflicts with the Tenderer's confirmation in the Form of Tender that it has no conflict of interest.",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_06",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label} This conflicts with the Tenderer's confirmation in the Form of Tender that it has no conflict of interest.",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_07",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label} This conflicts with the Tenderer's confirmation in the Form of Tender that it has no conflict of interest.",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "conflict_08",
+   "kind": "review-if-yes",
+   "review_reason": "A conflict of interest was disclosed: {field_label} This conflicts with the Tenderer's confirmation in the Form of Tender that it has no conflict of interest.",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "procuring_entity_interest",
+   "kind": "review-if-yes",
+   "review_reason": "A person in the Procuring Entity with an interest or relationship in this firm was disclosed; the committee assesses it.",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-CBQ",
+   "field_key": "procuring_entity_interest_persons",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-FORM-OF-TENDER",
+   "field_key": "commissions_paid",
+   "kind": "recorded",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-DECL-FORM-OF-TENDER",
+   "field_key": "commission_recipients",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "business_structure",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "sole_proprietor_name",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "sole_proprietor_age",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "sole_proprietor_nationality",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "sole_proprietor_country_of_origin",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "sole_proprietor_citizenship",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "partners",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "company_type",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "nominal_capital",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "issued_capital",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "directors",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "trade_licence_number",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "trade_licence_expiry",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "maximum_business_value",
+   "kind": "recorded",
+   "releases": [
+    "1.4"
+   ]
+  },
+  {
+   "mapping_id": "DM-ENTITY-PROFILE",
+   "field_key": "state_owned",
+   "kind": "review-if-yes",
+   "review_reason": "A state-owned enterprise must meet ITT 3.8; the committee assesses the state-owned enterprise statement.",
+   "polarity": "yes-discloses",
+   "releases": [
+    "1.4"
+   ]
+  }
+ ]
+}

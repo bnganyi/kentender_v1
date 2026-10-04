@@ -37,9 +37,31 @@
 	margin-bottom: 24px;
 }
 
-/* PLN-DES-01 v1.12 inline Financial Year filter: a plain control at text
- * weight directly beneath the description — never a bordered, corner-marked
- * card (§11.2). */
+/* The whole screen's own outer sheet: title, filter and every section sit
+ * inside one bordered, shadowed surface — not a bare header on the grey
+ * page background with separate cards floating loose beneath it. Every
+ * PLN-DES panel draws this same plain sheet (no `.kt-blueprint` corner
+ * marks — Planning's own artboards never draw those on the page shell,
+ * only on loading/error/empty state cards). `kt_industry_tokens.css` has
+ * no shared "page sheet" class for this — plain `.kt-card` is a flex
+ * column with its own `gap`, which would double up against every child's
+ * existing margin, so this is a standalone block box, not composed from
+ * `.kt-card`. */
+.kt-pln .pln-sheet {
+	background: var(--kt-color-surface);
+	border: 1px solid var(--color-divider);
+	box-shadow: var(--kt-shadow-md);
+	padding: 32px 40px;
+}
+
+/* §10.3/U01 Financial Year filter: one neutral tag fusing the label and the
+ * value, same as every other on-page fact — never a bordered, corner-marked
+ * card (§11.2; that rule is about `.kt-blueprint`/`.kt-corner`, not this
+ * lighter `.kt-tag` pill). The retired v1.12 artboard (PLN-DES-01) drew this
+ * as a plain unboxed label+select; the current pack redrew it as a chip and
+ * this rule was never updated to follow — a `<select>` still has to sit
+ * inside it functioning as a real control, so it is un-styled to inherit the
+ * tag's own background/padding rather than drawing its own box. */
 .kt-pln .pln-filter-strip {
 	display: flex;
 	flex-direction: row;
@@ -47,18 +69,27 @@
 	gap: 12px;
 	margin-top: 20px;
 }
-.kt-pln .pln-filter-field {
-	display: flex;
-	align-items: center;
-	gap: 8px;
+.kt-pln .pln-fy-chip {
+	gap: 6px;
 }
-.kt-pln .pln-filter-field label {
-	font-size: 14px;
-	color: var(--color-neutral-800);
+.kt-pln .pln-fy-chip label {
 	margin: 0;
 }
-.kt-pln .pln-filter-field select {
+.kt-pln .pln-fy-select {
+	appearance: none;
+	border: none;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	letter-spacing: inherit;
+	padding: 0;
+	margin: 0;
 	width: auto;
+	cursor: pointer;
+}
+.kt-pln .pln-fy-select:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 2px;
 }
 .kt-pln .pln-filter-reset {
 	padding: 2px 8px;
@@ -146,6 +177,53 @@
 	padding: 20px;
 }
 
+/* U01's own breadcrumb line, above the masthead */
+.kt-pln .pln-breadcrumb {
+	font-size: 12px;
+	color: var(--color-neutral-700);
+	margin-bottom: 16px;
+}
+
+/* U01's own .fact/.facts-row (ported verbatim from the artboard's <style>
+ * block, PLN-CHG-001 v1.18 §10.2): a label-over-value pair, several laid
+ * out in a wrapping row beside the card's one action button. */
+.kt-pln .pln-fact {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.kt-pln .pln-fact-val {
+	font-size: 14px;
+	font-weight: 600;
+}
+.kt-pln .pln-facts-row {
+	display: flex;
+	gap: 24px;
+	flex-wrap: wrap;
+}
+.kt-pln .kt-label {
+	font-size: 11px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--color-neutral-600);
+	margin-bottom: 2px;
+}
+
+/* the Annual Plan card's own block(s): U01-B stacks an Active block above a
+ * candidate block, divided by the same rule the artboard draws. */
+.kt-pln .pln-plan-block + .pln-plan-block {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid var(--color-divider);
+}
+.kt-pln .pln-plan-block-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
 /* PLN-DES table treatment (ported from the _ds .table rules) */
 .kt-pln .pln-table {
 	width: 100%;
@@ -217,6 +295,20 @@
 	border-bottom: 1px solid var(--color-neutral-200);
 }
 
+/* U21-empty: the loading heading is announced to assistive tech only —
+   sighted users see the live .kt-skel shimmer, not this placeholder text. */
+.kt-pln .pln-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
 /* PLN-DES-02/05 header row + reference line */
 .kt-pln .pln-header-row {
 	display: flex;
@@ -229,12 +321,20 @@
 	flex: 1;
 	min-width: 320px;
 }
-.kt-pln .pln-header-actions,
-.kt-pln .pln-footer-actions {
+.kt-pln .pln-header-actions {
 	display: flex;
 	gap: 12px;
 	flex-shrink: 0;
 	padding-top: 4px;
+}
+/* U11 — both buttons cluster at the decision block's right edge, matching
+   every literal board; never spread across the row. */
+.kt-pln .pln-footer-actions {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: var(--kt-space-3);
+	flex-wrap: wrap;
 }
 .kt-pln .pln-quiet-ref {
 	font-size: 13px;
@@ -262,6 +362,12 @@
 	font-family: var(--font-heading);
 	font-weight: 600;
 	font-size: 16px;
+}
+/* U07-unallocated/U07-items (before formation) — a zero count/value reads
+   muted, not as an alarming absence. */
+.kt-pln .pln-val.is-zero {
+	color: var(--color-neutral-500);
+	font-weight: 400;
 }
 
 /* PLN-DES-02 amber readiness notice (+ a critical variant for refusals) */
@@ -586,6 +692,10 @@
 	gap: 8px;
 	font-size: 14px;
 }
+/* U08-incompatible — the combined choice greys out rather than disappearing */
+.kt-pln .pln-radio-option.is-disabled {
+	color: var(--color-neutral-500);
+}
 .kt-pln .pln-summary-box {
 	border: 1px solid var(--color-neutral-200);
 	padding: 12px 14px;
@@ -633,3 +743,624 @@
 	font-size: 13.5px;
 	color: var(--kt-color-critical, #b3261e);
 }
+
+/* U11 Review — the header's own secondary action (Download review pack)
+ * sits beside the title/meta instead of below it, so the title block gets
+ * its own row wrapper; .pln-rmeta is U11's own reference/Version/status
+ * line (ported from the artboard's .rmeta). */
+.kt-pln .pln-rhead {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 16px;
+	margin-bottom: 24px;
+}
+.kt-pln .pln-rmeta {
+	display: flex;
+	gap: 24px;
+	font-size: 13px;
+	color: var(--color-neutral-800);
+	align-items: center;
+	margin-top: 6px;
+}
+
+/* U11's own in-page section nav (ported verbatim from the artboard's
+ * .seclinks): anchor links to each read-only section on one long page, not
+ * a tab-switch — every section stays reachable by scroll, reload or Find. */
+.kt-pln .pln-seclinks {
+	display: flex;
+	gap: 24px;
+	flex-wrap: wrap;
+	border-bottom: 1px solid var(--color-divider);
+	margin-bottom: 24px;
+	padding-bottom: 0;
+	font-size: 13px;
+}
+.kt-pln .pln-seclinks a {
+	padding-bottom: 9px;
+	display: inline-block;
+	color: var(--color-neutral-800);
+	text-decoration: none;
+	cursor: pointer;
+}
+.kt-pln .pln-seclinks a.active {
+	border-bottom: 2px solid var(--color-accent);
+	color: var(--color-accent-700);
+	font-weight: 600;
+}
+
+.kt-pln .pln-review-section {
+	margin-bottom: 24px;
+	scroll-margin-top: 16px;
+}
+.kt-pln .pln-review-section + .pln-review-section {
+	margin-top: 0;
+}
+.kt-pln .pln-method-card + .pln-method-card {
+	margin-top: 16px;
+}
+
+/* ==========================================================================
+   PLN-CHG-001 v1.23 §10.3 — U01 workspace composition
+   ========================================================================== */
+
+/* A section heading with its own right-aligned action (Prepare plan update). */
+.kt-pln .pln-section-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--kt-space-4);
+	margin: var(--kt-space-6) 0 var(--kt-space-3);
+}
+.kt-pln .pln-section-head .kt-card-title {
+	margin: 0;
+}
+
+/* One plan row: labelled facts on the left, one action at the right. */
+.kt-pln .pln-plan-row,
+.kt-pln .pln-own-plan,
+.kt-pln .pln-action-card {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--kt-space-4);
+	flex-wrap: wrap;
+	margin-bottom: var(--kt-space-4);
+}
+.kt-pln .pln-plan-row .kt-meta-row,
+.kt-pln .pln-own-plan .kt-meta-row,
+.kt-pln .pln-action-card .kt-meta-row {
+	flex: 1 1 320px;
+	min-width: 0;
+}
+.kt-pln .pln-plan-row .kt-btn,
+.kt-pln .pln-own-plan .kt-btn,
+.kt-pln .pln-action-card .kt-btn {
+	flex-shrink: 0;
+}
+
+/* The note under a plan row sits tight against it — it explains that row, so
+   it must not read as a separate block. */
+.kt-pln .pln-plan-note {
+	margin: calc(var(--kt-space-3) * -1) 0 var(--kt-space-5);
+}
+
+.kt-pln .pln-plan-empty {
+	margin-bottom: var(--kt-space-5);
+}
+.kt-pln .pln-plan-empty .kt-meta-value {
+	margin: 0 0 4px;
+}
+
+/* The current issue: one sentence and its recovery action on one line, so the
+   action reads as belonging to the issue rather than to the page. */
+.kt-pln .pln-notice-split {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--kt-space-4);
+	flex-wrap: wrap;
+}
+.kt-pln .pln-notice-split .kt-btn {
+	flex-shrink: 0;
+}
+
+.kt-pln .pln-dept-table {
+	margin-top: var(--kt-space-3);
+}
+
+.kt-pln .pln-loading-text {
+	margin: 0 0 var(--kt-space-3);
+	padding: var(--kt-space-4) var(--kt-space-4) 0;
+	color: var(--kt-color-neutral-700);
+	font-size: 14px;
+}
+
+/* ==========================================================================
+   PLN-CHG-001 v1.23 §10.4 — U02–U05 departmental plan
+   ========================================================================== */
+
+/* The record-context row is separated from the content by a rule, so the
+   labelled values read as context rather than as the first section. */
+.kt-pln .pln-context-row {
+	border-bottom: 1px solid var(--kt-color-neutral-200);
+	padding-bottom: var(--kt-space-4);
+	margin-bottom: var(--kt-space-4);
+}
+
+/* A requirement's reference sits beneath its name in smaller muted text; the
+   name leads (§10.1). */
+.kt-pln .pln-row-ref {
+	font-size: 12px;
+	margin-top: 2px;
+}
+.kt-pln .pln-row-title {
+	font-weight: 600;
+}
+
+/* Row detail — an exclusion reason or a returned comment — belongs to the row
+   above it, so it is indented and unruled at the top. */
+.kt-pln .pln-row-detail > td {
+	border-top: 0;
+	padding-top: 0;
+	padding-bottom: var(--kt-space-3);
+}
+.kt-pln .pln-row-detail .kt-label {
+	display: block;
+	margin-bottom: 2px;
+}
+
+.kt-pln .pln-dpp-table {
+	margin-top: var(--kt-space-3);
+}
+.kt-pln .pln-dpp-add {
+	margin-top: var(--kt-space-3);
+}
+.kt-pln .pln-certification {
+	margin-top: var(--kt-space-5);
+}
+.kt-pln .pln-certification .kt-checkbox {
+	margin-top: var(--kt-space-3);
+}
+
+/* The action area is separated by a top border after all decision content
+   (§10.1), with secondary actions left of the right-aligned primary. */
+.kt-pln .pln-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	gap: var(--kt-space-4);
+	border-top: 1px solid var(--kt-color-neutral-200);
+	margin-top: var(--kt-space-6);
+	padding-top: var(--kt-space-4);
+}
+.kt-pln .pln-footer-right {
+	display: flex;
+	align-items: center;
+	gap: var(--kt-space-3);
+	flex-wrap: wrap;
+	justify-content: flex-end;
+}
+.kt-pln .pln-footer-right p {
+	margin: 0;
+	font-size: 12px;
+}
+.kt-pln .pln-dpp-task {
+	margin-top: var(--kt-space-4);
+}
+.kt-pln .pln-error-summary {
+	margin-top: var(--kt-space-4);
+	color: var(--kt-status-critical);
+	font-size: 14px;
+}
+/* U11 — the decision statement, matching the artboard's own sizing. */
+.kt-pln .kt-decision .pln-decision-statement {
+	margin: 0 0 var(--kt-space-4);
+	font-size: 15px;
+	max-width: 960px;
+}
+.kt-pln .kt-decision .kt-field {
+	margin-bottom: var(--kt-space-4);
+	max-width: 480px;
+}
+
+/* ==========================================================================
+   PLN-CHG-001 v1.23 §10.13 / §10.15 — U14 progress, U16 correction requests
+   ========================================================================== */
+
+/* Purchases sit side by side so planned, covered and started read as one
+   comparison per purchase rather than a long scroll (U14.dc.html). */
+.kt-pln .pln-progress-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+	gap: var(--kt-space-5);
+	margin-bottom: var(--kt-space-5);
+}
+.kt-pln .pln-progress-card .kt-card-title {
+	margin: 0;
+}
+.kt-pln .pln-progress-card .kt-meta-row {
+	margin-top: var(--kt-space-3);
+}
+/* The hold belongs to the purchase above the purchase's own facts, so it is
+   flush with the top of the card rather than floating between cards. */
+.kt-pln .pln-progress-card .kt-notice {
+	margin-bottom: var(--kt-space-4);
+}
+.kt-pln .pln-progress-actions {
+	margin-top: var(--kt-space-4);
+}
+/* Each proceeding's dates are headed by the proceeding they belong to; two
+   proceedings never read as one table. */
+.kt-pln .pln-progress-dates-head {
+	margin: var(--kt-space-4) 0 var(--kt-space-2);
+}
+
+@media (max-width: 900px) {
+	.kt-pln .pln-progress-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* §10.16 — the missing-setting panel is a notice whose body is an optional
+   leading sentence (C03), a labelled fact row and one action; the labels
+   stack rather than sitting inline. */
+.kt-pln .pln-missing-setting-body {
+	flex: 1;
+}
+.kt-pln .pln-missing-setting-body .kt-notice-body {
+	margin-bottom: var(--kt-space-3);
+}
+.kt-pln .pln-missing-setting .kt-meta-row {
+	margin-bottom: var(--kt-space-3);
+}
+.kt-pln .pln-missing-setting .kt-btn {
+	align-self: flex-start;
+}
+.kt-pln .pln-missing-setting-body > *:last-child {
+	margin-bottom: 0;
+}
+
+/* §10.7 — the add-requirements panel is wider than a confirmation dialog: it
+   carries a source table and a preview, not one question. */
+.kt-pln .pln-form-dialog {
+	width: min(900px, calc(100vw - 48px));
+	max-width: none;
+}
+/* U08's own segmented toggle. `kt_industry_tokens.css` does not ship a
+ * shared `.kt-seg`, so this follows the same locally-scoped precedent
+ * Tenders already set (`.kt-tnd .tnd-seg[-opt]` in tenders_industry.css) —
+ * a bordered track with the selected option filled solid, not two bare
+ * radio labels floating side by side. */
+.kt-pln .pln-seg {
+	display: inline-flex;
+	overflow: hidden;
+	background: var(--kt-color-surface);
+	border: 1px solid var(--color-divider);
+	border-radius: var(--radius-md);
+	width: fit-content;
+	margin: var(--kt-space-4) 0;
+}
+.kt-pln .pln-seg-opt {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	white-space: nowrap;
+	padding: 7px 12px;
+	font-size: 13px;
+	cursor: pointer;
+	margin: 0;
+}
+.kt-pln .pln-seg-opt input {
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
+	pointer-events: none;
+}
+.kt-pln .pln-seg-opt + .pln-seg-opt {
+	border-left: 1px solid var(--color-divider);
+}
+.kt-pln .pln-seg-opt:has(input:checked) {
+	background: var(--color-accent);
+	color: #fff;
+}
+.kt-pln .pln-seg-opt:not(:has(input:checked)):hover {
+	background: var(--color-neutral-100);
+}
+.kt-pln .pln-seg-opt:has(input:focus-visible) {
+	outline: 2px solid var(--color-accent);
+	outline-offset: -2px;
+}
+/* A disabled option stays readable: it is explained above, not hidden. */
+.kt-pln .pln-seg-opt.is-disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+/* U08 — what the choice will produce: a plain shaded block, not a card. */
+.kt-pln .pln-form-preview {
+	margin-top: var(--kt-space-4);
+	background: var(--kt-color-surface-2);
+	padding: var(--kt-space-4);
+}
+
+/* §10.11 — one requirement read end to end: a reading column, not a full-width
+   table page. */
+.kt-pln .pln-evidence {
+	max-width: 820px;
+}
+.kt-pln .pln-evidence-back {
+	display: inline-block;
+	margin-bottom: var(--kt-space-3);
+	font-size: 13px;
+}
+
+/* §10.4 U03-FUNDING — the funding panel is part of the row it belongs to, so
+   it is inset under it rather than floating as its own card. */
+.kt-pln .pln-funding-panel {
+	padding: var(--kt-space-4) 0 var(--kt-space-2);
+}
+.kt-pln .pln-funding-panel .kt-field {
+	max-width: 480px;
+}
+/* §10.4 U03-FUNDING — right-aligned under the Cancel/Save row, with its
+   explanation on its own line beneath the link (never inline beside it). */
+.kt-pln .pln-funding-correction {
+	margin-top: var(--kt-space-3);
+	font-size: 13px;
+	text-align: right;
+}
+.kt-pln .pln-funding-correction-hint {
+	display: block;
+	margin-top: 4px;
+	color: var(--kt-color-neutral-700);
+}
+
+/* §10.4 U04 — a form for one requirement: a reading column, with Quantity and
+   Unit side by side as the artboard pairs them. */
+.kt-pln .pln-entry-editor {
+	max-width: 760px;
+}
+.kt-pln .pln-entry-pair {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--kt-space-4);
+}
+@media (max-width: 640px) {
+	.kt-pln .pln-entry-pair {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* §10.12 — the Treasury form carries four fields and a confirmation, so it is
+   wider than a one-question dialog; wide enough for the artboard's own
+   two-column field grid (U13-TREASURY-FORM/-CORRECT-EVIDENCE), which a
+   single 640px-wide stack could not fit comfortably. */
+.kt-pln .pln-treasury-dialog {
+	width: min(720px, calc(100vw - 48px));
+	max-width: none;
+}
+.kt-pln .pln-treasury-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--kt-space-4) var(--kt-space-5);
+}
+.kt-pln .pln-treasury-file {
+	margin-top: var(--kt-space-5);
+}
+.kt-pln .pln-treasury-confirm {
+	display: flex;
+	align-items: center;
+	gap: var(--kt-space-2);
+	margin-top: var(--kt-space-3);
+}
+/* U13-TREASURY-FORM — the hint sits right above the button it explains,
+   both right-aligned, not floated below the whole action row. */
+.kt-pln .pln-treasury-hint-group {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: var(--kt-space-2);
+}
+.kt-pln .pln-treasury-hint-group .kt-muted {
+	margin: 0;
+	font-size: 13px;
+	text-align: right;
+}
+
+/* ==========================================================================
+   PLN-CHG-001 v1.24 §10.8 — U09 purchase editor
+   --------------------------------------------------------------------------
+   The editor is a form, and the board draws it as one: fields in a column or
+   on a fixed grid, derived results as facts beside them. It had been built
+   with `.kt-meta-row` — the bottom-aligned row for short read-only facts —
+   wrapped around real inputs, which sized every control by its content, left
+   labels and controls on different baselines and (inside `.kt-meta-value`)
+   rendered one input in the heading typeface. Measured live on
+   PPI-MOH-2027-001, 23 September 2026.
+   ========================================================================== */
+
+/* One field per line, a real gap between them, and a reading width. */
+.kt-pln .pln-form-column {
+	display: flex;
+	flex-direction: column;
+	gap: var(--kt-space-4);
+	max-width: 920px;
+}
+
+/* The board's paired fixed-width controls (Procurement approach, Dates). */
+.kt-pln .pln-field-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 320px));
+	gap: var(--kt-space-5);
+	align-items: start;
+	max-width: 1020px;
+}
+.kt-pln .pln-dates-grid {
+	grid-template-columns: repeat(auto-fit, minmax(200px, 240px));
+}
+.kt-pln .pln-field-320 { max-width: 320px; }
+.kt-pln .pln-field-480 { max-width: 480px; }
+
+/* A derived result standing beside editable fields: the same label, and a
+   value line the height of an input, so the row reads as one band. */
+.kt-pln .pln-fact {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+.kt-pln .pln-fact .kt-meta-value {
+	display: flex;
+	align-items: center;
+	min-height: 40px;
+}
+
+/* The field a blocker names — this is what "the highlighted purchase details"
+   in the §8 message refers to. */
+.kt-pln .pln-field-flagged > .kt-input {
+	border-color: var(--kt-status-critical);
+}
+.kt-pln .pln-field-flagged > label {
+	color: var(--kt-status-critical);
+}
+
+/* A derived line under a section's own content (the classification summary,
+   the combined-purchase reason): the fact reads first, its link sits at the
+   end of the same line.
+
+   It is a layout on top of `.kt-group`, not a replacement for it. This rule
+   used to restate the group's own border and padding under a different class
+   name, so the board's container was visually present and structurally
+   absent — the fidelity contract could not see it, and neither could anyone
+   reading the markup (found live 24 Sep 2026). */
+.kt-pln .kt-group.pln-summary-line {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--kt-space-5);
+	flex-wrap: wrap;
+	margin-top: var(--kt-space-4);
+}
+.kt-pln .kt-group.pln-summary-line .kt-tag { margin-right: var(--kt-space-2); }
+
+.kt-pln .pln-region-gap { margin-top: var(--kt-space-4); }
+/* The board's own state line: a tick and the live colour when the schedule
+   meets the department's date, the critical colour when it does not. */
+.kt-pln .pln-boundary {
+	margin: var(--kt-space-4) 0 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	color: var(--kt-status-live);
+}
+.kt-pln .pln-boundary svg { flex: none; }
+
+/* A `<details>` disclosure supplies its own chevron, so the native marker is
+   suppressed (the same treatment `.kt-record` already uses). */
+.kt-pln details.kt-disclosure > summary { list-style: none; }
+.kt-pln details.kt-disclosure > summary::-webkit-details-marker { display: none; }
+.kt-pln .pln-supporting {
+	display: flex;
+	flex-direction: column;
+	gap: var(--kt-space-5);
+}
+
+/* U07 Plan checks — the board bounds the row's width (max-width 860px on the
+   blocking variant, 1000px on the complete one) so the facts read as a block
+   under the heading rather than spreading edge to edge. Dropping that bound
+   was half of why the section read as unstructured text (found live 24 Sep
+   2026); the `.kt-group` rule around it is the other half. */
+.kt-pln .pln-plan-checks {
+	max-width: 1000px;
+}
+/* Approval — the responsible people sit under the state sentence inside the
+   notice, as a labelled fact rather than joined into the sentence. */
+.kt-pln .pln-responsible {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-top: var(--kt-space-3);
+}
+
+/* U07 Plan checks — the board draws a failing check as a notice whose body
+   holds the sentence and, beneath it, the correction as a real button
+   (`.kt-notice > div[flex:1]` on the board). The notice's own flex row would
+   otherwise put the button beside the sentence. */
+.kt-pln .pln-check-issue-body {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--kt-space-3);
+}
+
+/* A `<details class="kt-disclosure">` turns its own chevron without help; only
+   the one screen that drives the state from JS needed a bound class. Eight
+   disclosure heads across this module had been built with neither a title row
+   nor a chevron at all, so they rendered as bare labels with nothing saying
+   the section opened (found live 24 Sep 2026). */
+.kt-pln details.kt-disclosure[open] > .kt-disclosure-head .kt-disclosure-chevron {
+	transform: rotate(180deg);
+}
+
+/* U06 review — one block per certified requirement (owner decision 25 Sep
+   2026). The board drew bare rows separated by a hairline, and the ported
+   `.pln-review-row` had no rule at all, so three requirements read as one
+   undivided stack of titles, selects and budget lines. Still inside the one
+   white sheet (no nested card): a numbered head, the department's facts
+   together, then the Planner's decision in its own tinted, accent-ruled
+   strip. */
+.kt-pln .pln-review-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--kt-color-divider); }
+.kt-pln .pln-review-row { padding: 24px 0 28px; border-bottom: 1px solid var(--kt-color-divider); }
+.kt-pln .pln-review-row-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--kt-space-6); }
+.kt-pln .pln-review-count { font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--kt-color-neutral-700); margin-bottom: 4px; }
+.kt-pln .pln-review-row-title { font-family: var(--kt-font-heading); font-size: 19px; line-height: 1.25; }
+.kt-pln .pln-review-facts { display: flex; flex-wrap: wrap; gap: 6px var(--kt-space-5); margin-top: 6px; font-size: 13.5px; color: var(--kt-color-neutral-800); }
+.kt-pln .pln-review-budget { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-top: 6px; font-size: 13.5px; color: var(--kt-color-neutral-800); }
+.kt-pln .pln-review-budget .kt-label { margin: 0; }
+.kt-pln .pln-review-classify { margin-top: var(--kt-space-4); padding: 14px 18px 16px; background: var(--kt-color-neutral-100); border-left: 3px solid var(--kt-color-accent); }
+.kt-pln .pln-review-classify.is-muted { border-left-color: var(--kt-color-divider); }
+.kt-pln .pln-review-classify.is-missing { border-left-color: var(--kt-status-critical); }
+.kt-pln .pln-review-classify-title { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--kt-color-neutral-800); margin-bottom: 10px; }
+.kt-pln .pln-review-classify-grid { display: grid; grid-template-columns: 260px 200px 1fr; gap: var(--kt-space-5); align-items: end; }
+.kt-pln .pln-review-classify-grid .kt-input { background-color: var(--kt-color-surface); }
+@media (max-width: 900px) {
+	.kt-pln .pln-review-classify-grid { grid-template-columns: 1fr; gap: var(--kt-space-3); }
+	.kt-pln .pln-review-row-head { flex-direction: column; gap: var(--kt-space-3); }
+}
+
+/* PLN v1.27 U07 Plan checks — budget fit and its per-line comparison, and a
+   failing check as a plain row with its correction, ported from the U07 /
+   U07-UPDATE-OVER-BUDGET boards' inline styles. */
+.kt-pln .pln-fit-head { display: flex; align-items: baseline; gap: var(--kt-space-4); flex-wrap: wrap; margin-bottom: var(--kt-space-3); }
+.kt-pln .pln-fit-title { font-family: var(--kt-font-heading); font-size: 17px; }
+.kt-pln .pln-fit-over { font-size: 14px; font-weight: 600; color: var(--kt-status-attention); }
+.kt-pln .pln-fit-line { font-weight: 600; }
+.kt-pln .pln-row-ref { font-size: 12px; margin-top: 2px; }
+.kt-pln .kt-table td.pln-fit-over-cell { color: var(--kt-status-attention); font-weight: 600; }
+.kt-pln .pln-check-value { font-size: 14px; }
+.kt-pln .pln-check-row { display: flex; align-items: center; justify-content: space-between; gap: var(--kt-space-5); flex-wrap: wrap; }
+.kt-pln .pln-check-row + .pln-check-row { margin-top: var(--kt-space-4); }
+.kt-pln .pln-check-row-text { margin: 0; font-size: 14px; color: var(--kt-color-text); }
+
+/* PLN v1.27 U01 — the plan task row states a blocked or waiting next step
+   (no tracker on a workspace), and the signature-only issue follows the
+   warning as a quieter line (U01 BASE, U01-CURRENT-UPDATE-* boards). */
+.kt-pln .pln-row-narrative { margin: var(--kt-space-4) 0 0; font-size: 14px; color: var(--kt-color-text); }
+.kt-pln .pln-row-narrative.is-blocked { font-weight: 600; color: var(--kt-status-attention); }
+.kt-pln .pln-row-narrative-since { color: var(--kt-color-neutral-700); }
+.kt-pln .pln-row-narrative-detail { margin: var(--kt-space-1) 0 0; font-size: 14px; color: var(--kt-color-text); }
+.kt-pln .pln-quiet-issue { display: flex; align-items: center; justify-content: space-between; gap: var(--kt-space-5); flex-wrap: wrap; margin-top: var(--kt-space-4); padding: 0 var(--kt-space-4); }
+.kt-pln .pln-quiet-issue p { margin: 0; font-size: 14px; color: var(--kt-color-neutral-800); }
+/* U01 task-row titles (every U01 board: heading font, 22px; the empty
+   state 21px). `.pln-task-title` had no rule, so the workspace's Level 1
+   task read at body size (found live 25 Sep 2026). */
+.kt-pln .kt-task-row .pln-task-title { font-family: var(--kt-font-heading); font-size: 22px; line-height: 1.15; }
+.kt-pln .kt-empty .pln-task-title { font-family: var(--kt-font-heading); font-size: 21px; }
+
+/* Owner decision 26 Sep 2026 — who asked the department to update its plan, and when. */
+.kt-pln .pln-dpp-update-request-asked { margin-top: var(--kt-space-1); font-size: 13px; color: var(--kt-color-neutral-700); }

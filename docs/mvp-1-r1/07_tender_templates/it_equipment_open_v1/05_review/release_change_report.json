@@ -1,0 +1,190 @@
+{
+  "changes": [
+    {
+      "category": "Assets",
+      "change_kind": "changed",
+      "compatibility_effect": "Compatible",
+      "identity": "02_master/complete_tender.html",
+      "summary": "Asset 02_master/complete_tender.html changed."
+    },
+    {
+      "category": "Assets",
+      "change_kind": "changed",
+      "compatibility_effect": "Compatible",
+      "identity": "03_registers/coverage_register.csv",
+      "summary": "Asset 03_registers/coverage_register.csv changed."
+    },
+    {
+      "category": "Assets",
+      "change_kind": "changed",
+      "compatibility_effect": "Compatible",
+      "identity": "03_registers/forms_register.csv",
+      "summary": "Asset 03_registers/forms_register.csv changed."
+    },
+    {
+      "category": "Assets",
+      "change_kind": "changed",
+      "compatibility_effect": "Compatible",
+      "identity": "05_review/open_issues.md",
+      "summary": "Asset 05_review/open_issues.md changed."
+    },
+    {
+      "category": "Assets",
+      "change_kind": "changed",
+      "compatibility_effect": "Compatible",
+      "identity": "05_review/preceding_release.json",
+      "summary": "Asset 05_review/preceding_release.json changed."
+    },
+    {
+      "category": "Assets",
+      "change_kind": "changed",
+      "compatibility_effect": "Compatible",
+      "identity": "06_runtime/addendum_identity_rules.json",
+      "summary": "Asset 06_runtime/addendum_identity_rules.json changed."
+    },
+    {
+      "category": "Assets",
+      "change_kind": "changed",
+      "compatibility_effect": "Compatible",
+      "identity": "06_runtime/downstream_rules.json",
+      "summary": "Asset 06_runtime/downstream_rules.json changed."
+    },
+    {
+      "category": "Assets",
+      "change_kind": "changed",
+      "compatibility_effect": "Compatible",
+      "identity": "06_runtime/product_profile.json",
+      "summary": "Asset 06_runtime/product_profile.json changed."
+    },
+    {
+      "category": "Assets",
+      "change_kind": "changed",
+      "compatibility_effect": "Compatible",
+      "identity": "06_runtime/response_rules.json",
+      "summary": "Asset 06_runtime/response_rules.json changed."
+    },
+    {
+      "category": "Assets",
+      "change_kind": "changed",
+      "compatibility_effect": "Compatible",
+      "identity": "06_runtime/validate_release.py",
+      "summary": "Asset 06_runtime/validate_release.py changed."
+    },
+    {
+      "category": "Response rules",
+      "change_kind": "changed",
+      "compatibility_effect": "Breaking",
+      "identity": "RR-DECL-CBQ",
+      "summary": "Response rule RR-DECL-CBQ changed."
+    },
+    {
+      "category": "Response rules",
+      "change_kind": "changed",
+      "compatibility_effect": "Breaking",
+      "identity": "RR-DECL-FORM-OF-TENDER",
+      "summary": "Response rule RR-DECL-FORM-OF-TENDER changed."
+    },
+    {
+      "category": "Response rules",
+      "change_kind": "added",
+      "compatibility_effect": "Breaking",
+      "identity": "RR-ENTITY-PROFILE",
+      "summary": "Response rule RR-ENTITY-PROFILE added."
+    },
+    {
+      "category": "Response rules",
+      "change_kind": "changed",
+      "compatibility_effect": "Breaking",
+      "identity": "RR-JV-MEMBER",
+      "summary": "Response rule RR-JV-MEMBER changed."
+    },
+    {
+      "category": "Response rules",
+      "change_kind": "changed",
+      "compatibility_effect": "Breaking",
+      "identity": "RR-SUPPLIER-DETAILS",
+      "summary": "Response rule RR-SUPPLIER-DETAILS changed."
+    },
+    {
+      "category": "Locked declarations",
+      "change_kind": "changed",
+      "compatibility_effect": "Breaking",
+      "identity": "TXT-RR-DECL-FORM-OF-TENDER",
+      "summary": "Locked declaration TXT-RR-DECL-FORM-OF-TENDER changed."
+    },
+    {
+      "category": "Evaluation mappings",
+      "change_kind": "added",
+      "compatibility_effect": "Breaking",
+      "identity": "DM-ENTITY-PROFILE",
+      "summary": "Evaluation mapping DM-ENTITY-PROFILE added."
+    },
+    {
+      "category": "Contract mappings",
+      "change_kind": "added",
+      "compatibility_effect": "Breaking",
+      "identity": "DM-ENTITY-PROFILE",
+      "summary": "Contract mapping DM-ENTITY-PROFILE added."
+    },
+    {
+      "category": "Renderer compatibility",
+      "change_kind": "changed",
+      "compatibility_effect": "Breaking",
+      "identity": "renderer",
+      "summary": "Renderer changed from wkhtmltopdf 0.12.6.1 (with patched qt) to BDS-GOODS-IT-V1 1.2.0 (wkhtmltopdf 0.12.6.1 (with patched qt))."
+    }
+  ],
+  "overall_result": "Breaking — not interchangeable with the preceding release",
+  "preceding_release": "1.3",
+  "release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01",
+  "schema_version": 1,
+  "template_key": "IT-EQUIPMENT-OPEN-V1",
+  "template_release": "1.4",
+  "totals": {
+    "Assets": {
+      "added": 0,
+      "changed": 10,
+      "removed": 0
+    },
+    "Contract mappings": {
+      "added": 1,
+      "changed": 0,
+      "removed": 0
+    },
+    "Document anchors": {
+      "added": 0,
+      "changed": 0,
+      "removed": 0
+    },
+    "Evaluation mappings": {
+      "added": 1,
+      "changed": 0,
+      "removed": 0
+    },
+    "Locked declarations": {
+      "added": 0,
+      "changed": 1,
+      "removed": 0
+    },
+    "Renderer compatibility": {
+      "added": 0,
+      "changed": 1,
+      "removed": 0
+    },
+    "Response rules": {
+      "added": 1,
+      "changed": 4,
+      "removed": 0
+    },
+    "Source treatments": {
+      "added": 0,
+      "changed": 0,
+      "removed": 0
+    },
+    "Supported use": {
+      "added": 0,
+      "changed": 0,
+      "removed": 0
+    }
+  }
+}

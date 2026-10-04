@@ -1,0 +1,911 @@
+{
+ "admin": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": null,
+  "committee": {
+   "appointed": true,
+   "appointed_by": "Playwright Tenders AO",
+   "appointed_label": "3 Jun 2027, 10:15 EAT",
+   "history": [
+    {
+     "appointed_by": "Playwright Tenders AO",
+     "appointed_label": "3 Jun 2027, 10:15 EAT",
+     "status": "Active",
+     "version": 1
+    }
+   ],
+   "members": [
+    {
+     "committee_role": "Chair and recorder",
+     "designation": "Head of Procurement Function",
+     "full_name": "Charles Mutiso",
+     "is_chair": 1,
+     "is_independent": 0,
+     "is_recorder": 1,
+     "joined_label": "",
+     "member_user": "pw.req.hopf@example.test",
+     "present": false
+    },
+    {
+     "committee_role": "Member",
+     "designation": "Procurement Officer",
+     "full_name": "Playwright Tenders Officer",
+     "is_chair": 0,
+     "is_independent": 0,
+     "is_recorder": 0,
+     "joined_label": "",
+     "member_user": "pw.tnd.officer@example.test",
+     "present": false
+    },
+    {
+     "committee_role": "Independent member",
+     "designation": "Budget Approver",
+     "full_name": "Playwright Independent",
+     "is_chair": 0,
+     "is_independent": 1,
+     "is_recorder": 0,
+     "joined_label": "",
+     "member_user": "pw.bop.independent@example.test",
+     "present": false
+    }
+   ]
+  },
+  "decision": {
+   "holder": "Playwright Tenders AO",
+   "kind": "Not held",
+   "reason": "The public attendance service was unavailable; opening did not start",
+   "unavailable_text": "A Tender decision is needed. Cancellation after submissions close is not available in this version."
+  },
+  "incidents": [],
+  "journey": {
+   "current": "open",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Open bids",
+    "prefix": "Stage 2 of 3: ",
+    "suffix": " \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 2 of 3: Open bids \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "",
+     "label": "Prepare opening",
+     "marker": "done",
+     "marker_label": "Done"
+    },
+    {
+     "code": "open",
+     "holder": "Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+     "label": "Open bids",
+     "marker": "blocked",
+     "marker_label": "Blocked"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "The opening did not take place. Waiting for Playwright Tenders AO to decide what happens next.",
+   "holder": {
+    "display": "Playwright Tenders AO (Accounting Officer)",
+    "people": [
+     "Playwright Tenders AO"
+    ],
+    "role": "Accounting Officer"
+   },
+   "kind": "waiting",
+   "label": "Waiting on someone",
+   "primary_action": "",
+   "sentence": "",
+   "since": null,
+   "stage": "open"
+  },
+  "opening": {
+   "box_received": false,
+   "closed": true,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 4,
+   "state": "Not held",
+   "status": {
+    "label": "Did not take place",
+    "since": "",
+    "text": "",
+    "tone": "is-critical"
+   },
+   "tender": "TDR-269167",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": {
+   "completed_label": "",
+   "incidents": 0,
+   "message": "You can see technical status for this opening. Bids, the register and the opening record are not shown to administrators.",
+   "state": "Not held"
+  },
+  "viewer": {
+   "is_accounting_officer": false,
+   "is_chair": false,
+   "is_member": false,
+   "is_recorder": false,
+   "technical": true
+  }
+ },
+ "ao": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": null,
+  "committee": {
+   "appointed": true,
+   "appointed_by": "Playwright Tenders AO",
+   "appointed_label": "3 Jun 2027, 10:15 EAT",
+   "history": [
+    {
+     "appointed_by": "Playwright Tenders AO",
+     "appointed_label": "3 Jun 2027, 10:15 EAT",
+     "status": "Active",
+     "version": 1
+    }
+   ],
+   "members": [
+    {
+     "committee_role": "Chair and recorder",
+     "designation": "Head of Procurement Function",
+     "full_name": "Charles Mutiso",
+     "is_chair": 1,
+     "is_independent": 0,
+     "is_recorder": 1,
+     "joined_label": "",
+     "member_user": "pw.req.hopf@example.test",
+     "present": false
+    },
+    {
+     "committee_role": "Member",
+     "designation": "Procurement Officer",
+     "full_name": "Playwright Tenders Officer",
+     "is_chair": 0,
+     "is_independent": 0,
+     "is_recorder": 0,
+     "joined_label": "",
+     "member_user": "pw.tnd.officer@example.test",
+     "present": false
+    },
+    {
+     "committee_role": "Independent member",
+     "designation": "Budget Approver",
+     "full_name": "Playwright Independent",
+     "is_chair": 0,
+     "is_independent": 1,
+     "is_recorder": 0,
+     "joined_label": "",
+     "member_user": "pw.bop.independent@example.test",
+     "present": false
+    }
+   ]
+  },
+  "decision": {
+   "holder": "Playwright Tenders AO",
+   "kind": "Not held",
+   "reason": "The public attendance service was unavailable; opening did not start",
+   "unavailable_text": "A Tender decision is needed. Cancellation after submissions close is not available in this version."
+  },
+  "incidents": [],
+  "journey": {
+   "current": "open",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Open bids",
+    "prefix": "Stage 2 of 3: ",
+    "suffix": " \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 2 of 3: Open bids \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "",
+     "label": "Prepare opening",
+     "marker": "done",
+     "marker_label": "Done"
+    },
+    {
+     "code": "open",
+     "holder": "Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+     "label": "Open bids",
+     "marker": "blocked",
+     "marker_label": "Blocked"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "Decide what happens next",
+   "holder": null,
+   "kind": "your_turn",
+   "label": "Your turn",
+   "primary_action": "tender_decision",
+   "sentence": "The opening did not take place.",
+   "since": null,
+   "stage": "open"
+  },
+  "opening": {
+   "box_received": false,
+   "closed": true,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 4,
+   "state": "Not held",
+   "status": {
+    "label": "Did not take place",
+    "since": "",
+    "text": "",
+    "tone": "is-critical"
+   },
+   "tender": "TDR-269167",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": null,
+  "viewer": {
+   "is_accounting_officer": true,
+   "is_chair": false,
+   "is_member": false,
+   "is_recorder": false,
+   "technical": false
+  }
+ },
+ "auditor": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": null,
+  "committee": {
+   "appointed": true,
+   "appointed_by": "Playwright Tenders AO",
+   "appointed_label": "3 Jun 2027, 10:15 EAT",
+   "history": [
+    {
+     "appointed_by": "Playwright Tenders AO",
+     "appointed_label": "3 Jun 2027, 10:15 EAT",
+     "status": "Active",
+     "version": 1
+    }
+   ],
+   "members": [
+    {
+     "committee_role": "Chair and recorder",
+     "designation": "Head of Procurement Function",
+     "full_name": "Charles Mutiso",
+     "is_chair": 1,
+     "is_independent": 0,
+     "is_recorder": 1,
+     "joined_label": "",
+     "member_user": "pw.req.hopf@example.test",
+     "present": false
+    },
+    {
+     "committee_role": "Member",
+     "designation": "Procurement Officer",
+     "full_name": "Playwright Tenders Officer",
+     "is_chair": 0,
+     "is_independent": 0,
+     "is_recorder": 0,
+     "joined_label": "",
+     "member_user": "pw.tnd.officer@example.test",
+     "present": false
+    },
+    {
+     "committee_role": "Independent member",
+     "designation": "Budget Approver",
+     "full_name": "Playwright Independent",
+     "is_chair": 0,
+     "is_independent": 1,
+     "is_recorder": 0,
+     "joined_label": "",
+     "member_user": "pw.bop.independent@example.test",
+     "present": false
+    }
+   ]
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "open",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Open bids",
+    "prefix": "Stage 2 of 3: ",
+    "suffix": " \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 2 of 3: Open bids \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "",
+     "label": "Prepare opening",
+     "marker": "done",
+     "marker_label": "Done"
+    },
+    {
+     "code": "open",
+     "holder": "Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+     "label": "Open bids",
+     "marker": "blocked",
+     "marker_label": "Blocked"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "The opening did not take place. Waiting for Playwright Tenders AO to decide what happens next.",
+   "holder": {
+    "display": "Playwright Tenders AO (Accounting Officer)",
+    "people": [
+     "Playwright Tenders AO"
+    ],
+    "role": "Accounting Officer"
+   },
+   "kind": "waiting",
+   "label": "Waiting on someone",
+   "primary_action": "",
+   "sentence": "",
+   "since": null,
+   "stage": "open"
+  },
+  "opening": {
+   "box_received": false,
+   "closed": true,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 4,
+   "state": "Not held",
+   "status": {
+    "label": "Did not take place",
+    "since": "",
+    "text": "",
+    "tone": "is-critical"
+   },
+   "tender": "TDR-269167",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": null,
+  "viewer": {
+   "is_accounting_officer": false,
+   "is_chair": false,
+   "is_member": false,
+   "is_recorder": false,
+   "technical": false
+  }
+ },
+ "chair": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": null,
+  "committee": {
+   "appointed": true,
+   "appointed_by": "Playwright Tenders AO",
+   "appointed_label": "3 Jun 2027, 10:15 EAT",
+   "history": [
+    {
+     "appointed_by": "Playwright Tenders AO",
+     "appointed_label": "3 Jun 2027, 10:15 EAT",
+     "status": "Active",
+     "version": 1
+    }
+   ],
+   "members": [
+    {
+     "committee_role": "Chair and recorder",
+     "designation": "Head of Procurement Function",
+     "full_name": "Charles Mutiso",
+     "is_chair": 1,
+     "is_independent": 0,
+     "is_recorder": 1,
+     "joined_label": "",
+     "member_user": "pw.req.hopf@example.test",
+     "present": false
+    },
+    {
+     "committee_role": "Member",
+     "designation": "Procurement Officer",
+     "full_name": "Playwright Tenders Officer",
+     "is_chair": 0,
+     "is_independent": 0,
+     "is_recorder": 0,
+     "joined_label": "",
+     "member_user": "pw.tnd.officer@example.test",
+     "present": false
+    },
+    {
+     "committee_role": "Independent member",
+     "designation": "Budget Approver",
+     "full_name": "Playwright Independent",
+     "is_chair": 0,
+     "is_independent": 1,
+     "is_recorder": 0,
+     "joined_label": "",
+     "member_user": "pw.bop.independent@example.test",
+     "present": false
+    }
+   ]
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "open",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Open bids",
+    "prefix": "Stage 2 of 3: ",
+    "suffix": " \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 2 of 3: Open bids \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "",
+     "label": "Prepare opening",
+     "marker": "done",
+     "marker_label": "Done"
+    },
+    {
+     "code": "open",
+     "holder": "Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+     "label": "Open bids",
+     "marker": "blocked",
+     "marker_label": "Blocked"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "The opening did not take place. Waiting for Playwright Tenders AO to decide what happens next.",
+   "holder": {
+    "display": "Playwright Tenders AO (Accounting Officer)",
+    "people": [
+     "Playwright Tenders AO"
+    ],
+    "role": "Accounting Officer"
+   },
+   "kind": "waiting",
+   "label": "Waiting on someone",
+   "primary_action": "",
+   "sentence": "",
+   "since": null,
+   "stage": "open"
+  },
+  "opening": {
+   "box_received": false,
+   "closed": true,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 4,
+   "state": "Not held",
+   "status": {
+    "label": "Did not take place",
+    "since": "",
+    "text": "",
+    "tone": "is-critical"
+   },
+   "tender": "TDR-269167",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": null,
+  "viewer": {
+   "is_accounting_officer": false,
+   "is_chair": true,
+   "is_member": true,
+   "is_recorder": true,
+   "technical": false
+  }
+ },
+ "independent": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": null,
+  "committee": {
+   "appointed": true,
+   "appointed_by": "Playwright Tenders AO",
+   "appointed_label": "3 Jun 2027, 10:15 EAT",
+   "history": [
+    {
+     "appointed_by": "Playwright Tenders AO",
+     "appointed_label": "3 Jun 2027, 10:15 EAT",
+     "status": "Active",
+     "version": 1
+    }
+   ],
+   "members": [
+    {
+     "committee_role": "Chair and recorder",
+     "designation": "Head of Procurement Function",
+     "full_name": "Charles Mutiso",
+     "is_chair": 1,
+     "is_independent": 0,
+     "is_recorder": 1,
+     "joined_label": "",
+     "member_user": "pw.req.hopf@example.test",
+     "present": false
+    },
+    {
+     "committee_role": "Member",
+     "designation": "Procurement Officer",
+     "full_name": "Playwright Tenders Officer",
+     "is_chair": 0,
+     "is_independent": 0,
+     "is_recorder": 0,
+     "joined_label": "",
+     "member_user": "pw.tnd.officer@example.test",
+     "present": false
+    },
+    {
+     "committee_role": "Independent member",
+     "designation": "Budget Approver",
+     "full_name": "Playwright Independent",
+     "is_chair": 0,
+     "is_independent": 1,
+     "is_recorder": 0,
+     "joined_label": "",
+     "member_user": "pw.bop.independent@example.test",
+     "present": false
+    }
+   ]
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "open",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Open bids",
+    "prefix": "Stage 2 of 3: ",
+    "suffix": " \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 2 of 3: Open bids \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "",
+     "label": "Prepare opening",
+     "marker": "done",
+     "marker_label": "Done"
+    },
+    {
+     "code": "open",
+     "holder": "Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+     "label": "Open bids",
+     "marker": "blocked",
+     "marker_label": "Blocked"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "The opening did not take place. Waiting for Playwright Tenders AO to decide what happens next.",
+   "holder": {
+    "display": "Playwright Tenders AO (Accounting Officer)",
+    "people": [
+     "Playwright Tenders AO"
+    ],
+    "role": "Accounting Officer"
+   },
+   "kind": "waiting",
+   "label": "Waiting on someone",
+   "primary_action": "",
+   "sentence": "",
+   "since": null,
+   "stage": "open"
+  },
+  "opening": {
+   "box_received": false,
+   "closed": true,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 4,
+   "state": "Not held",
+   "status": {
+    "label": "Did not take place",
+    "since": "",
+    "text": "",
+    "tone": "is-critical"
+   },
+   "tender": "TDR-269167",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": null,
+  "viewer": {
+   "is_accounting_officer": false,
+   "is_chair": false,
+   "is_member": true,
+   "is_recorder": false,
+   "technical": false
+  }
+ },
+ "member": {
+  "arrangements": {
+   "access_instructions": "Select Join public opening on this Tender\u2019s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.",
+   "attendance_method": "Attend the public bid opening online",
+   "join_opens_at": "2027-06-05 10:55:00",
+   "join_opens_label": "5 Jun 2027, 10:55 EAT",
+   "published": true,
+   "published_at": "2027-06-03 10:20:00",
+   "published_label": "3 Jun 2027, 10:20 EAT",
+   "scheduled_at": "2027-06-05 11:00:00",
+   "scheduled_label": "5 Jun 2027, 11:00 EAT",
+   "version": 1
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": null,
+  "committee": {
+   "appointed": true,
+   "appointed_by": "Playwright Tenders AO",
+   "appointed_label": "3 Jun 2027, 10:15 EAT",
+   "history": [
+    {
+     "appointed_by": "Playwright Tenders AO",
+     "appointed_label": "3 Jun 2027, 10:15 EAT",
+     "status": "Active",
+     "version": 1
+    }
+   ],
+   "members": [
+    {
+     "committee_role": "Chair and recorder",
+     "designation": "Head of Procurement Function",
+     "full_name": "Charles Mutiso",
+     "is_chair": 1,
+     "is_independent": 0,
+     "is_recorder": 1,
+     "joined_label": "",
+     "member_user": "pw.req.hopf@example.test",
+     "present": false
+    },
+    {
+     "committee_role": "Member",
+     "designation": "Procurement Officer",
+     "full_name": "Playwright Tenders Officer",
+     "is_chair": 0,
+     "is_independent": 0,
+     "is_recorder": 0,
+     "joined_label": "",
+     "member_user": "pw.tnd.officer@example.test",
+     "present": false
+    },
+    {
+     "committee_role": "Independent member",
+     "designation": "Budget Approver",
+     "full_name": "Playwright Independent",
+     "is_chair": 0,
+     "is_independent": 1,
+     "is_recorder": 0,
+     "joined_label": "",
+     "member_user": "pw.bop.independent@example.test",
+     "present": false
+    }
+   ]
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "open",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Open bids",
+    "prefix": "Stage 2 of 3: ",
+    "suffix": " \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 2 of 3: Open bids \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "",
+     "label": "Prepare opening",
+     "marker": "done",
+     "marker_label": "Done"
+    },
+    {
+     "code": "open",
+     "holder": "Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+     "label": "Open bids",
+     "marker": "blocked",
+     "marker_label": "Blocked"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "The opening did not take place. Waiting for Playwright Tenders AO to decide what happens next.",
+   "holder": {
+    "display": "Playwright Tenders AO (Accounting Officer)",
+    "people": [
+     "Playwright Tenders AO"
+    ],
+    "role": "Accounting Officer"
+   },
+   "kind": "waiting",
+   "label": "Waiting on someone",
+   "primary_action": "",
+   "sentence": "",
+   "since": null,
+   "stage": "open"
+  },
+  "opening": {
+   "box_received": false,
+   "closed": true,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 4,
+   "state": "Not held",
+   "status": {
+    "label": "Did not take place",
+    "since": "",
+    "text": "",
+    "tone": "is-critical"
+   },
+   "tender": "TDR-269167",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": null,
+  "viewer": {
+   "is_accounting_officer": false,
+   "is_chair": false,
+   "is_member": true,
+   "is_recorder": false,
+   "technical": false
+  }
+ }
+}

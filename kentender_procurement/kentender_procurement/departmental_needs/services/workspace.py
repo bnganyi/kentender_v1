@@ -18,12 +18,17 @@ import frappe
 from frappe.utils import cstr, flt, formatdate
 
 from kentender_procurement.departmental_needs.constants import (
+	ACTION_DECLINE,
+	ACTION_WITHDRAW,
 	STATE_ACCEPTED,
 	STATE_DRAFT,
+	STATE_NOT_TAKEN_FORWARD,
 	STATE_RETURNED,
 	STATE_SUBMITTED,
 	STATE_WITHDRAWN,
+	TASK_INITIAL_ACCEPTANCE,
 	TASK_OPEN,
+	TASK_SUCCESSOR_ACCEPTANCE,
 	TASK_WITHDRAWAL,
 	REVISION_CONTENT_FIELDS,
 )
@@ -40,9 +45,20 @@ from kentender_procurement.departmental_needs.services.permissions import (
 	viewing_contexts,
 )
 from kentender_procurement.departmental_needs.services.usage import (
+	planning_disposition_detail,
+	planning_intake_detail,
 	planning_usage,
 	planning_usage_detail,
 )
+
+
+# §11.3 NDS-DES-02 "Review" column — plain-language name for the pending
+# decision kind, distinct from the row's action label.
+_REVIEW_KIND_LABELS = {
+	TASK_INITIAL_ACCEPTANCE: "Initial requirement",
+	TASK_SUCCESSOR_ACCEPTANCE: "Proposed changes",
+	TASK_WITHDRAWAL: "Withdrawal request",
+}
 
 
 def _open_review_task(need: str) -> dict[str, str] | None:
@@ -115,6 +131,9 @@ def _actions(doc, principal: str, profile: str) -> list[dict[str, str]]:
 				"label": "Review withdrawal" if withdrawal else "Review",
 				"task": task["name"],
 				"decision_token": task["decision_token"],
+				# §11.3 — the workspace's "Needs requiring your decision" table
+				# names what kind of decision is pending, not just the action.
+				"review_kind": _REVIEW_KIND_LABELS.get(task["task_type"], task["task_type"]),
 			}
 		]
 	if profile == "owner" and doc.current_state in {STATE_DRAFT, STATE_RETURNED}:
@@ -136,6 +155,23 @@ def _persist_context_preference(principal: str, organisation_unit: str) -> None:
 
 	try:
 		select_module_ou("needs", organisation_unit, principal, offered=[organisation_unit])
+	except Exception:
+		frappe.clear_last_message()
+
+
+def _clear_context_preference(principal: str) -> None:
+	"""The mirror of `_persist_context_preference` — an explicit "All
+	departments" pick (the filter's own §12.1 reset) is itself a preference,
+	so it must overwrite whatever specific department was remembered before.
+	Without this, the very next load that sends no explicit department at all
+	would silently resolve back to the old one through the ordinary
+	remembered-preference path below, and the reset would look broken (found
+	live 21 Sep 2026 — the "All departments" option visibly snapped back to
+	the previous department)."""
+	from kentender_core.services.working_context import clear_module_ou
+
+	try:
+		clear_module_ou("needs", principal)
 	except Exception:
 		frappe.clear_last_message()
 
@@ -184,24 +220,39 @@ def get_workspace(
 	financial_year: str = "",
 	search: str = "",
 	status: str = "",
+	# The filter's own "All departments"/"All financial years" option and the
+	# "Clear filters" button send an explicit empty value — indistinguishable
+	# on its own from a request that simply never mentioned this filter, which
+	# resolves from the remembered preference below. These two flags are how
+	# the caller says "this blank means I chose it," so the choice sticks
+	# instead of silently resolving back to whatever was remembered (found
+	# live 21 Sep 2026 — the "All departments" option visibly snapped back).
+	clear_organisation_unit: bool = False,
+	clear_financial_year: bool = False,
 	user: str | None = None,
 ) -> dict[str, Any]:
 	principal = actor(user)
+	if clear_organisation_unit:
+		_clear_context_preference(principal)
+	# §12.1 — "Do not require... a pre-entry selection screen... One department
+	# may display directly. Several remain available through ordinary
+	# changeable filters; they do not block page entry." `selected` is `None`
+	# whenever several contexts exist and none is remembered/explicit — that
+	# is a normal "browse everything" state below, never a blocking outcome.
+	# Zero contexts is the only real access denial.
 	selected, contexts = _selected_context(principal, cstr(organisation_unit).strip())
-	if not selected:
-		result = {
+	if not contexts:
+		return {
 			"ok": False,
-			"outcome": "NO_AUTHORISED_CONTEXT" if not contexts else "CONTEXT_SELECTION_REQUIRED",
-			"contexts": contexts,
+			"outcome": "NO_AUTHORISED_CONTEXT",
+			"contexts": [],
 			"financial_years": selectable_financial_years(principal),
 			"needs": [],
 			"actions": [],
-		}
-		if not contexts:
 			# Not rendered — see `scope_diagnostic`'s own docstring for why this
 			# stays internal rather than becoming a new visible page state.
-			result["scope_diagnostic"] = scope_diagnostic(principal)
-		return result
+			"scope_diagnostic": scope_diagnostic(principal),
+		}
 	_fy_rows = selectable_financial_years(principal)
 	# CTX-CHG-001 — the module's own FY memory, resolved by the core service:
 	# an explicit year is validated against this module's offer and persisted
@@ -209,6 +260,14 @@ def get_workspace(
 	# "unselected"; a single offered year auto-selects. Never authoritative —
 	# every command still re-checks its own scope and the intake window.
 	from kentender_core.services.working_context import get_module_fy
+
+	if clear_financial_year:
+		from kentender_core.services.working_context import clear_module_fy
+
+		try:
+			clear_module_fy("needs", principal)
+		except Exception:
+			frappe.clear_last_message()
 
 	requested_fy = cstr(financial_year).strip()
 	try:
@@ -218,7 +277,16 @@ def get_workspace(
 		frappe.clear_last_message()
 		fy_state = get_module_fy("needs", principal, offered=_fy_rows)
 	fy = fy_state["selected"]["id"] if fy_state["selected"] else ""
-	filters: dict[str, Any] = {"organisation_unit": selected["organisation_unit"]}
+	# A single resolved context filters to it; several with none chosen loads
+	# every authorised one combined (§12.1) — exactly how the Fiscal Year
+	# filter already behaves above when nothing is selected.
+	filters: dict[str, Any] = {
+		"organisation_unit": (
+			selected["organisation_unit"]
+			if selected
+			else ("in", [row["organisation_unit"] for row in contexts])
+		)
+	}
 	if fy:
 		filters["financial_year"] = fy
 	if cstr(status).strip():
@@ -252,6 +320,7 @@ def get_workspace(
 		if term and term not in title.lower() and term not in cstr(doc.need_reference).lower():
 			continue
 		required_by = version.get("required_by_date")
+		row_actions = _actions(doc, principal, profile)
 		needs.append(
 			{
 				"name": doc.name,
@@ -264,7 +333,10 @@ def get_workspace(
 				"status": doc.current_state,
 				"planning_usage": planning_usage(doc.name),
 				"record_version": doc.record_version,
-				"actions": _actions(doc, principal, profile),
+				"actions": row_actions,
+				# §11.3 NDS-DES-02 "Review" column — flattened for the table's
+				# generic column rendering; empty outside the decision queue.
+				"review_kind": row_actions[0].get("review_kind", "") if row_actions else "",
 			}
 		)
 	return {
@@ -273,27 +345,22 @@ def get_workspace(
 		"contexts": contexts,
 		"financial_years": _fy_rows,
 		"context": {
-			**selected,
+			"organisation_unit": selected["organisation_unit"] if selected else "",
+			"organisation_unit_label": selected["organisation_unit_label"] if selected else "",
 			"financial_year": fy,
 			"financial_year_label": next(
 				(row["label"] for row in _fy_rows if row["id"] == fy), fy
 			),
 		},
 		"needs": needs,
-		"count_label": f"{len(needs)} need" if len(needs) == 1 else f"{len(needs)} needs",
-		# §12.1 / §17 — the server decides the action. A reviewer, Planner or
-		# Auditor reaches this contract too (it backs NDS-UI-02 as well), and
-		# none of them authors, so Create need is offered only where the user
-		# could actually create in this context. The client's separate
-		# intake-window check narrows it further; it cannot stand alone,
-		# because intake is Open for part of every year.
+		# §12.1 — "Derive create targets by combining active Departmental
+		# Author OU assignments with the one... Fiscal Year... Do not use...
+		# the list's current FY filter or a browser-stored context": Create
+		# need is offered whenever the actor can author *anywhere*, entirely
+		# independent of which department the register is currently viewing
+		# or filtered to.
 		"actions": (
-			[{"code": "create", "label": "Create need"}]
-			if any(
-				row["organisation_unit"] == selected["organisation_unit"]
-				for row in creation_contexts(principal)
-			)
-			else []
+			[{"code": "create", "label": "Create need"}] if creation_contexts(principal) else []
 		),
 	}
 
@@ -332,6 +399,13 @@ def get_review_task(*, task: str, decision_token: str = "", user: str | None = N
 	if decision_token and cstr(decision_token) != cstr(row.decision_token):
 		fail("NDS_STALE_WRITE", "This task was already decided. Reload and try again.")
 	version = _version_facts(row.need_revision or doc.current_revision)
+	# §11.10 "What changed" — a successor review compares the proposed
+	# revision against the currently accepted one; an initial review has none.
+	accepted_version = (
+		_version_facts(doc.current_accepted_revision)
+		if row.task_type == TASK_SUCCESSOR_ACCEPTANCE and doc.current_accepted_revision
+		else {}
+	)
 	withdrawal = None
 	if row.withdrawal_request:
 		withdrawal = frappe.db.get_value(
@@ -355,12 +429,13 @@ def get_review_task(*, task: str, decision_token: str = "", user: str | None = N
 		"opened_at": str(row.opened_at or ""),
 		"need": doc.as_dict(no_nulls=True),
 		"revision": version,
+		"accepted_revision": accepted_version,
 		"withdrawal_request": withdrawal,
 		"requester_label": frappe.db.get_value("User", doc.owner, "full_name") or doc.owner,
-		"scope": {
-			"organisation_unit": doc.organisation_unit,
-			"financial_year": doc.financial_year,
-		},
+		# The artboards show scope by name, never by ID (real defect found live
+		# 2026-09-15: this previously returned the raw Organisation Unit/Fiscal
+		# Year doc names).
+		"scope": _scope_labels(doc),
 		# An "oversight" reader (technical or Auditor) never decides (§8): the
 		# control set is empty for them even while the task is open.
 		"permitted_decisions": decisions if row.status == TASK_OPEN and profile == "decider" else [],
@@ -368,6 +443,18 @@ def get_review_task(*, task: str, decision_token: str = "", user: str | None = N
 		# them even when the task is open (NDS-BR-006).
 		"maker_checker_blocked": is_owner(doc, principal),
 		"access_profile": profile,
+		# NDS-CHG-001 v1.15 §5.5 — the review screen states the same next step
+		# as the Need's own page, for this viewer and this task.
+		**_guidance(
+			doc,
+			principal,
+			(
+				[{"code": "withdrawal" if row.task_type == TASK_WITHDRAWAL else "review"}]
+				if row.status == TASK_OPEN and profile == "decider" and not is_owner(doc, principal)
+				else []
+			),
+			planning_intake_detail(doc.name, doc.current_accepted_revision, user=principal),
+		),
 	}
 
 
@@ -426,6 +513,36 @@ def get_current_accepted_need(
 	}
 
 
+def get_need_acceptance_evidence(
+	*, need: str, need_revision: str, user: str | None = None,
+) -> dict[str, Any] | None:
+	"""§8.1 companion to `get_current_accepted_need` — who accepted this exact
+	revision for planning, and when (§10.11's "Need accepted by" evidence).
+
+	A pinned allocation may source from an earlier, since-superseded revision,
+	so this answers for the *named* revision rather than the Need's current
+	one — `get_current_accepted_need` cannot serve that case. Firm D1 boundary:
+	the only way Planning may learn this fact is through this read, never a
+	direct `Departmental Need Decision` query (test_planning_never_touches_a_needs_table).
+	Returns None rather than failing when no such decision is recorded — an
+	absent decision is Planning's caller's own question to handle, not this
+	read's to refuse."""
+	principal = actor(user)
+	name = cstr(need).strip()
+	if not frappe.db.exists("Departmental Need", name):
+		return None
+	doc = frappe.get_doc("Departmental Need", name)
+	require_view(doc, principal)
+	decision = frappe.db.get_value(
+		"Departmental Need Decision",
+		{"departmental_need": name, "need_revision": cstr(need_revision), "action": "Accept for planning"},
+		["actor", "occurred_at"], as_dict=True, order_by="occurred_at asc",
+	)
+	if not decision:
+		return None
+	return {"actor": decision.actor, "occurred_at": decision.occurred_at}
+
+
 def _scope_labels(doc) -> dict[str, str]:
 	"""Display names for the Need's scope; the artboards never show raw IDs."""
 	fy_start = frappe.db.get_value("Fiscal Year", doc.financial_year, "year_start_date")
@@ -438,6 +555,86 @@ def _scope_labels(doc) -> dict[str, str]:
 	}
 
 
+def _financial_year_window(doc) -> dict[str, str]:
+	row = frappe.db.get_value(
+		"Fiscal Year", doc.financial_year, ["year_start_date", "year_end_date"], as_dict=True
+	)
+	return {
+		"start": str(row.year_start_date) if row else "",
+		"end": str(row.year_end_date) if row else "",
+	}
+
+
+# §11.1 History disclosure — plain-language event names and dot colours for
+# each recorded decision, in the vocabulary the artboards use ("Submitted ·
+# Revision 1", "Returned for correction"), not the raw §5 action string.
+# `Create`/`Save draft`/`Save successor` are housekeeping, not a reviewable
+# event, and are omitted entirely (DES-04's History shows Submitted/Returned
+# only, never a Draft-save entry). Only the submission-type events carry a
+# revision number in their title; a decision reads the same whichever
+# revision it decided.
+_HISTORY_EVENT_LABELS: dict[str, tuple[str, str, bool]] = {
+	"Submit": ("Submitted", "is-live", True),
+	"Resubmit": ("Resubmitted", "is-live", True),
+	"Return for correction": ("Returned for correction", "is-attention", False),
+	"Accept for planning": ("Accepted for planning", "is-live", False),
+	"Do not take forward": ("Not taken forward", "is-critical", False),
+	"Withdraw": ("Withdrawn", "is-critical", False),
+	"Submit successor": ("Update submitted", "is-live", True),
+	"Return successor": ("Update returned for correction", "is-attention", False),
+	"Accept successor": ("Update accepted", "is-live", False),
+	"Decline successor": ("Update declined", "is-critical", False),
+	"Cancel successor": ("Update cancelled", "is-critical", False),
+}
+_HISTORY_OMITTED_ACTIONS = frozenset({"Create", "Save draft", "Save successor"})
+
+
+def _decision_history(need: str) -> list[dict[str, str]]:
+	rows = frappe.get_all(
+		"Departmental Need Decision",
+		filters={"departmental_need": need, "action": ("not in", list(_HISTORY_OMITTED_ACTIONS))},
+		fields=["action", "actor", "occurred_at", "need_revision"],
+		order_by="occurred_at asc",
+	)
+	history = []
+	for row in rows:
+		label, dot_class, show_revision = _HISTORY_EVENT_LABELS.get(row.action, (row.action, "is-live", False))
+		revision_number = (
+			frappe.db.get_value("Departmental Need Revision", row.need_revision, "revision_number")
+			if show_revision and row.need_revision
+			else None
+		)
+		title = f"{label} · Revision {revision_number}" if revision_number else label
+		actor_label = frappe.db.get_value("User", row.actor, "full_name") or row.actor
+		history.append(
+			{
+				"title": title,
+				"dot_class": dot_class,
+				"meta": f"{actor_label} · "
+				+ formatdate(row.occurred_at, "d MMM y")
+				+ ", "
+				+ frappe.utils.format_time(row.occurred_at, "HH:mm"),
+			}
+		)
+	return history
+
+
+def _acceptance_capacity(assignment: str) -> str:
+	"""§11.8 "Capacity" — e.g. "Head of User Department" or "Acting Head of
+	User Department", from the exact assignment the accept decision was
+	taken under. Empty when the decision predates §15 snapshotting or the
+	assignment has since been removed — the fact is simply omitted, never
+	guessed."""
+	if not assignment:
+		return ""
+	row = frappe.db.get_value(
+		"User Responsibility Assignment", assignment, ["business_role", "appointment_type"], as_dict=True
+	)
+	if not row or not row.business_role:
+		return ""
+	return f"Acting {row.business_role}" if row.appointment_type == "Acting" else row.business_role
+
+
 def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 	principal = actor(user)
 	if not frappe.db.exists("Departmental Need", need):
@@ -445,6 +642,17 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 		fail("NDS_SCOPE_DENIED", "Departmental Need not found.")
 	doc = frappe.get_doc("Departmental Need", need)
 	profile = require_view(doc, principal)
+	# §11.6 "Submitted at" — the most recent Submit/Resubmit decision.
+	submitted = None
+	submit_row = frappe.db.get_value(
+		"Departmental Need Decision",
+		{"departmental_need": doc.name, "action": ("in", ["Submit", "Resubmit"])},
+		["occurred_at"],
+		order_by="occurred_at desc",
+		as_dict=True,
+	)
+	if submit_row:
+		submitted = {"occurred_at": str(submit_row.occurred_at)}
 	latest_return = None
 	if doc.current_state == STATE_RETURNED:
 		row = frappe.db.get_value(
@@ -464,6 +672,44 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 				+ " at "
 				+ frappe.utils.format_time(row.occurred_at, "HH:mm"),
 			}
+	# NDS-DES-TERMINAL — the decline reason (with who/when) for a "Not taken
+	# forward" Need, or just who/when for a self-withdrawn ("Withdrawn") one
+	# — §5.1's self-service withdrawal collects no reason. Mirrors
+	# `latest_return` above: one dedicated read for the one terminal state
+	# a Need is actually in, never guessed from `history`.
+	terminal_decision = None
+	if doc.current_state == STATE_NOT_TAKEN_FORWARD:
+		row = frappe.db.get_value(
+			"Departmental Need Decision",
+			{"departmental_need": doc.name, "action": ACTION_DECLINE},
+			["reason", "actor", "occurred_at"],
+			order_by="occurred_at desc",
+			as_dict=True,
+		)
+		if row:
+			terminal_decision = {
+				"reason": row.reason,
+				"actor_label": frappe.db.get_value("User", row.actor, "full_name") or row.actor,
+				"occurred_label": formatdate(row.occurred_at, "d MMMM y")
+				+ " at "
+				+ frappe.utils.format_time(row.occurred_at, "HH:mm"),
+			}
+	elif doc.current_state == STATE_WITHDRAWN:
+		row = frappe.db.get_value(
+			"Departmental Need Decision",
+			{"departmental_need": doc.name, "action": ACTION_WITHDRAW},
+			["actor", "occurred_at"],
+			order_by="occurred_at desc",
+			as_dict=True,
+		)
+		if row:
+			terminal_decision = {
+				"reason": "",
+				"actor_label": frappe.db.get_value("User", row.actor, "full_name") or row.actor,
+				"occurred_label": formatdate(row.occurred_at, "d MMMM y")
+				+ " at "
+				+ frappe.utils.format_time(row.occurred_at, "HH:mm"),
+			}
 	accepted = None
 	if doc.current_state == STATE_ACCEPTED:
 		row = frappe.db.get_value(
@@ -472,7 +718,7 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 				"departmental_need": doc.name,
 				"action": ("in", ["Accept for planning", "Accept successor"]),
 			},
-			["actor", "occurred_at"],
+			["actor", "occurred_at", "effective_assignment"],
 			order_by="occurred_at desc",
 			as_dict=True,
 		)
@@ -481,18 +727,53 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 				"actor": row.actor,
 				"actor_label": frappe.db.get_value("User", row.actor, "full_name") or row.actor,
 				"occurred_at": str(row.occurred_at),
+				# §11.8 "Capacity" — Permanent vs. Acting, from the exact
+				# assignment the decision was taken under (§15 snapshot).
+				"capacity": _acceptance_capacity(row.effective_assignment),
 			}
+	actions = _actions(doc, principal, profile)
+	planning_intake = planning_intake_detail(doc.name, doc.current_accepted_revision, user=principal)
 	return {
 		"ok": True,
 		"need": doc.as_dict(no_nulls=True),
 		"scope_labels": _scope_labels(doc),
+		# The editor limits Required by to the Need's own year (UAT issue #25).
+		"financial_year_window": _financial_year_window(doc),
 		"accepted": accepted,
+		"submitted": submitted,
 		"current_revision": _version_facts(doc.current_revision),
 		"accepted_revision": _version_facts(doc.current_accepted_revision),
 		"latest_return": latest_return,
+		"terminal_decision": terminal_decision,
+		"history": _decision_history(doc.name),
 		"author_label": frappe.db.get_value("User", doc.owner, "full_name") or doc.owner,
-		"planning_usage": planning_usage(doc.name),
+		# §4.7/§11.8 — the detail screen needs the Plan/Plan Item references
+		# too (View Plan Item, the Planning decisions and history disclosure),
+		# not just the bare usage value the workspace table's status pill uses.
+		"planning_usage": planning_usage_detail(doc.name, doc.current_accepted_revision),
+		# PLN-CHG-001 v1.18 §5.1.4 — the accepted Planning disposition, shown
+		# as Planning information; it changes neither lifecycle nor usage.
+		"planning_disposition": planning_disposition_detail(doc.name),
+		# Owner decision 26 Sep 2026 — accepted but not in the department's
+		# plan yet (the plan was accepted, or was with Procurement, first).
+		"planning_intake": planning_intake,
 		"open_task": _open_review_task(doc.name),
-		"actions": _actions(doc, principal, profile),
+		"actions": actions,
 		"access_profile": profile,
+		# NDS-CHG-001 v1.15 §5.5 — where the Need stands and whose turn it is
+		# (KT-STD-001 v1.9 §3B.2), from the same actions this read returns.
+		**_guidance(doc, principal, actions, planning_intake),
 	}
+
+
+def _guidance(doc, principal: str, actions: list[dict[str, Any]], planning_intake) -> dict[str, Any]:
+	from kentender_procurement.departmental_needs.services.context import INTAKE_OPEN, needs_submission_state
+	from kentender_procurement.departmental_needs.services.guidance import need_guidance
+
+	return need_guidance(
+		doc,
+		principal=principal,
+		actions=actions,
+		intake_open=needs_submission_state(doc.financial_year)["state"] == INTAKE_OPEN,
+		planning_intake=planning_intake,
+	)

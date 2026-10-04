@@ -1,0 +1,21 @@
+/* Bid Opening (BOP-CHG-001 v0.10 §10) — mounted inside the Tenders page
+   (.kt-industry.kt-tnd), which already maps the artboards' --color-* names.
+   Only what the Industry tokens sheet does not already give the boards. */
+.kt-industry .kt-bop {
+	--space-2: var(--kt-space-2);
+	--space-3: var(--kt-space-3);
+	--space-4: var(--kt-space-4);
+	--space-6: var(--kt-space-6);
+	display: flex;
+	flex-direction: column;
+}
+.kt-industry .kt-bop-host { display: flex; flex-direction: column; }
+
+/* A field or row error under the control it names. */
+.kt-industry .kt-bop .bop-field-error { margin: 8px 0 0; font-size: 13px; color: var(--kt-status-critical); }
+
+/* Departure (tests/ui/fidelity/departures/bid-opening.js): a draft row's
+   Remove control and the Add member dialog are not drawn on any board. */
+.kt-industry .kt-bop .bop-row-action { margin-left: 12px; font-size: 13px; }
+.kt-industry .kt-bop .bop-dialog { max-width: 560px; }
+.kt-industry .kt-bop .bop-dialog-body { display: flex; flex-direction: column; gap: 16px; }

@@ -1,0 +1,117 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "BOP-CHG-001 v0.10 §7 RequestOpeningRegister: a verified submitting tenderer's request and its delivery audit.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "request_id",
+  "opening_case",
+  "requester_user",
+  "receipt_reference",
+  "requested_at",
+  "status",
+  "delivery_mode",
+  "register_digest",
+  "delivered_at",
+  "delivered_by",
+  "decline_reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "request_id",
+   "fieldtype": "Data",
+   "label": "Request ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "opening_case",
+   "fieldtype": "Link",
+   "label": "Opening case",
+   "read_only": 1,
+   "options": "Bid Opening Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requester_user",
+   "fieldtype": "Link",
+   "label": "Requester user",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "receipt_reference",
+   "fieldtype": "Data",
+   "label": "Receipt reference",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "requested_at",
+   "fieldtype": "Datetime",
+   "label": "Requested at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Pending\nReady\nDelivered\nDeclined",
+   "reqd": 1
+  },
+  {
+   "fieldname": "delivery_mode",
+   "fieldtype": "Select",
+   "label": "Delivery mode",
+   "read_only": 1,
+   "options": "\nSelf-service\nAccounting Officer"
+  },
+  {
+   "fieldname": "register_digest",
+   "fieldtype": "Data",
+   "label": "Register digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delivered_at",
+   "fieldtype": "Datetime",
+   "label": "Delivered at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delivered_by",
+   "fieldtype": "Link",
+   "label": "Delivered by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "decline_reason",
+   "fieldtype": "Small Text",
+   "label": "Decline reason",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Opening",
+ "name": "Opening Register Request",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:request_id"
+}

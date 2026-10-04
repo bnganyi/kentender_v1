@@ -1,0 +1,15 @@
+/* Bid Evaluation page styles (EVL-CHG-001 v0.4 §9). Loaded only by the Bid
+   Evaluation pages' own bundles (AGENTS.md §6.9), never globally. The boards
+   draw a person's initials in the design system's round avatar
+   (`.kt-sidebar-avatar`, defined with the design system's sidebar); the Desk
+   Industry stylesheet has no rule for it outside the shell. */
+.kt-industry .evl-board .kt-sidebar-avatar {
+	width: 28px; height: 28px; flex: none; border-radius: 50%;
+	background: var(--kt-color-accent-100); color: var(--kt-color-accent-800);
+	display: inline-flex; align-items: center; justify-content: center;
+	font-size: 12px; font-weight: 600;
+}
+
+/* The design system's empty-state icon (`.kt-empty svg`, 30 px); the Desk
+   Industry stylesheet has no rule for it. */
+.kt-industry .evl-board .kt-empty svg { width: 30px; height: 30px; color: var(--kt-color-neutral-600); margin-bottom: var(--kt-space-3); }

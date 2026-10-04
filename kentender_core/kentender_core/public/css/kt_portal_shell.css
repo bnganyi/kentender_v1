@@ -1,0 +1,161 @@
+/*
+ * BDS-CHG-001 v0.8 §10.1 Supplier Website shell (plan OD-B), ported from the
+ * header, body and footer drawn on every "Bid Board v3" artboard
+ * (docs/mvp-1-r1/12_bid_submission/design/*.dc.html): 1440 frame = 1200 px
+ * centred column; 390 frame = 16 px gutters. Loaded only by
+ * templates/kt_portal/base.html, whose <body> carries .kt-industry, so every
+ * rule is scoped under .kt-industry.kt-portal and nothing reaches Desk.
+ */
+
+.kt-industry.kt-portal {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Visually hidden until focused (board: 1 × 1 px clipped link). */
+.kt-industry.kt-portal .kt-portal-skip {
+	position: absolute;
+	left: 16px;
+	top: -48px;
+	z-index: 20;
+	padding: 8px 12px;
+	background: var(--kt-color-surface);
+	border: 1px solid var(--kt-color-accent-700);
+	color: var(--kt-color-text);
+}
+.kt-industry.kt-portal .kt-portal-skip:focus { top: 8px; }
+
+.kt-industry.kt-portal .kt-portal-environment {
+	padding: 8px 16px;
+	background: var(--kt-status-attention-bg);
+	color: var(--kt-color-text);
+	font-size: 13px;
+	text-align: center;
+	border-bottom: 1px solid var(--kt-color-neutral-300);
+}
+
+.kt-industry.kt-portal .kt-portal-header {
+	background: var(--kt-color-surface);
+	border-bottom: 1px solid var(--kt-color-neutral-300);
+}
+.kt-industry.kt-portal .kt-portal-bar {
+	width: 1200px;
+	max-width: calc(100% - 32px);
+	margin: 0 auto;
+	height: 56px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+/* Header and footer links sit outside the Industry link colour (the board
+   draws them in text / neutral-800); `.kt-portal-header`/`.kt-portal-footer`
+   raise specificity above `.kt-industry a:not(...)`. */
+.kt-industry.kt-portal .kt-portal-header a.kt-portal-brand {
+	font-family: var(--kt-font-heading);
+	font-weight: 700;
+	font-size: 20px;
+	letter-spacing: 0.02em;
+	color: var(--kt-color-text);
+	text-decoration: none;
+}
+.kt-industry.kt-portal .kt-portal-nav {
+	display: flex;
+	gap: var(--kt-space-8);
+	font-size: 14px;
+}
+.kt-industry.kt-portal .kt-portal-header .kt-portal-nav a {
+	color: var(--kt-color-neutral-800);
+	text-decoration: none;
+	padding: 17px 0 15px;
+	border-bottom: 2px solid transparent;
+}
+.kt-industry.kt-portal .kt-portal-nav { margin-left: auto; }
+/* Who is signed in: the same avatar, name and line beneath as Desk's user block */
+.kt-industry.kt-portal .kt-portal-identity {
+	display: flex;
+	align-items: center;
+	gap: var(--kt-space-3);
+	margin-left: var(--kt-space-8);
+	padding-left: var(--kt-space-8);
+	border-left: 1px solid var(--kt-color-neutral-300);
+	min-width: 0;
+}
+.kt-industry.kt-portal .kt-portal-avatar {
+	flex: none;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--kt-color-accent);
+	color: var(--kt-color-surface);
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
+.kt-industry.kt-portal .kt-portal-identity-text { display: grid; line-height: 1.25; min-width: 0; }
+.kt-industry.kt-portal .kt-portal-identity-name { font-size: 14px; font-weight: 600; color: var(--kt-color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.kt-industry.kt-portal .kt-portal-identity-detail { font-size: 12px; color: var(--kt-color-neutral-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.kt-industry.kt-portal .kt-portal-header .kt-portal-nav a[aria-current="page"] {
+	color: var(--kt-color-text);
+	font-weight: 600;
+	border-bottom-color: var(--kt-color-accent);
+}
+
+.kt-industry.kt-portal .kt-portal-body {
+	flex: 1;
+	width: 1200px;
+	max-width: calc(100% - 32px);
+	margin: 0 auto;
+	padding: 32px 0;
+}
+.kt-industry.kt-portal #kt-portal-main:focus { outline: none; }
+.kt-industry.kt-portal .kt-page { margin: 0; }
+.kt-industry.kt-portal .kt-portal-loading { min-height: 240px; }
+
+.kt-industry.kt-portal .kt-portal-footer { border-top: 1px solid var(--kt-color-neutral-300); }
+.kt-industry.kt-portal .kt-portal-footer nav {
+	width: 1200px;
+	max-width: calc(100% - 32px);
+	margin: 0 auto;
+	padding: 20px 0 28px;
+	display: flex;
+	gap: var(--kt-space-8);
+	font-size: 13px;
+}
+.kt-industry.kt-portal .kt-portal-footer nav a[data-kt-portal-footer] { color: var(--kt-color-neutral-800); text-underline-offset: 3px; }
+
+/* 390 × 844 frame — the board's narrow shell. */
+@media (max-width: 600px) {
+	.kt-industry.kt-portal .kt-portal-bar {
+		width: auto;
+		max-width: none;
+		height: 48px;
+		padding: 0 16px;
+	}
+	.kt-industry.kt-portal .kt-portal-header a.kt-portal-brand { font-size: 17px; }
+	.kt-industry.kt-portal .kt-portal-nav { gap: 14px; font-size: 13px; }
+	.kt-industry.kt-portal .kt-portal-identity { margin-left: 12px; padding-left: 12px; }
+	.kt-industry.kt-portal .kt-portal-avatar { width: 28px; height: 28px; }
+	.kt-industry.kt-portal .kt-portal-identity-text { display: none; }
+	.kt-industry.kt-portal .kt-portal-header .kt-portal-nav a { padding: 14px 0 12px; }
+	.kt-industry.kt-portal .kt-portal-body {
+		width: auto;
+		max-width: none;
+		padding: 16px;
+	}
+	.kt-industry.kt-portal .kt-page { padding: var(--kt-space-4); }
+	.kt-industry.kt-portal .kt-page-head { flex-direction: column; gap: var(--kt-space-4); }
+	.kt-industry.kt-portal .kt-page-title { font-size: 26px; }
+	.kt-industry.kt-portal .kt-portal-footer nav {
+		width: auto;
+		max-width: none;
+		padding: 8px 16px 16px;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0 16px;
+	}
+	.kt-industry.kt-portal .kt-portal-footer nav a[data-kt-portal-footer] { padding: 12px 0; }
+}

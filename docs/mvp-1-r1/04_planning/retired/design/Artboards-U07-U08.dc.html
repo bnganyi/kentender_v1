@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: var(--color-neutral-200); }
+  a { color: var(--color-accent-2-800); }
+  a:hover { color: var(--color-accent-2); }
+  .navlink { display: block; padding: 3px 10px; font-size: 12.5px; text-decoration: none; color: var(--color-neutral-800); border-left: 2px solid transparent; }
+  .navlink:hover { background: var(--color-accent-100); color: var(--color-accent-800); border-left-color: var(--color-accent); }
+  .navgrp { font-family: var(--font-heading); font-size: 12px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-accent-800); padding: 14px 10px 4px; }
+</style>
+</helmet>
+
+<div style="display:flex;align-items:flex-start;font-family:var(--font-body);color:var(--color-text)">
+
+<nav style="position:sticky;top:0;flex:none;width:252px;height:100vh;overflow-y:auto;background:var(--color-surface);border-right:1px solid var(--color-divider);padding:0 0 40px">
+  <div style="padding:18px 14px 12px;border-bottom:1px solid var(--color-divider);position:sticky;top:0;background:var(--color-surface);z-index:2">
+    <div style="font-family:var(--font-heading);font-size:19px;line-height:1.1">Planning artboards</div>
+    <div style="font-size:11.5px;color:var(--color-neutral-700);margin-top:4px">PLN-CHG-001 §10 · KT-STD-001 v1.7 §2</div>
+  </div>
+  <div class="navgrp">U01 — Planning workspace</div>
+  <a class="navlink" href="Artboards-U01.dc.html#U01" style="color:var(--color-neutral-600)">U01 · Planner, BASE draft</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-CURRENT" style="color:var(--color-neutral-600)">U01-CURRENT</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-CURRENT-UPDATE" style="color:var(--color-neutral-600)">U01-CURRENT-UPDATE</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-NO-PLAN" style="color:var(--color-neutral-600)">U01-NO-PLAN</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-DEPARTMENT-AUTHOR" style="color:var(--color-neutral-600)">U01-DEPARTMENT-AUTHOR</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-DEPARTMENT-AUTHOR-NONE" style="color:var(--color-neutral-600)">U01-DEPARTMENT-AUTHOR · no plan</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-HOD" style="color:var(--color-neutral-600)">U01-HOD</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-ASSIGNED-DECISION" style="color:var(--color-neutral-600)">U01-ASSIGNED-DECISION</a>
+  <div class="navgrp">U02–U05 — Departmental plan</div>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U02-AUTHOR-DRAFT" style="color:var(--color-neutral-600)">U02-AUTHOR-DRAFT</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U03-FUNDING" style="color:var(--color-neutral-600)">U03-FUNDING</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U03-EXCLUDE" style="color:var(--color-neutral-600)">U03-EXCLUDE</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U03-EXCLUDED-ROW" style="color:var(--color-neutral-600)">U03-EXCLUDED-ROW</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U03-REINCLUDE" style="color:var(--color-neutral-600)">U03-REINCLUDE</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U04-DIRECT" style="color:var(--color-neutral-600)">U04-DIRECT</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U04-EDIT" style="color:var(--color-neutral-600)">U04-EDIT · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U05-HOD" style="color:var(--color-neutral-600)">U05-HOD</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U05-CORRECTION" style="color:var(--color-neutral-600)">U05-CORRECTION</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U05-ALL-EXCLUDED" style="color:var(--color-neutral-600)">U05-ALL-EXCLUDED · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U02-CLOSED" style="color:var(--color-neutral-600)">U02-CLOSED</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U02-ACCEPTED-UPDATE" style="color:var(--color-neutral-600)">U02-ACCEPTED-UPDATE</a>
+  <div class="navgrp">U06 — Procurement review</div>
+  <a class="navlink" href="Artboards-U06.dc.html#U06" style="color:var(--color-neutral-600)">U06 · BASE validation</a>
+  <a class="navlink" href="Artboards-U06.dc.html#U06-RETURN" style="color:var(--color-neutral-600)">U06-RETURN</a>
+  <a class="navlink" href="Artboards-U06.dc.html#U06-EXCLUDED" style="color:var(--color-neutral-600)">U06-EXCLUDED</a>
+  <a class="navlink" href="Artboards-U06.dc.html#U06-CLASSIFICATION-MISSING" style="color:var(--color-neutral-600)">U06-CLASSIFICATION-MISSING</a>
+  <a class="navlink" href="Artboards-U06.dc.html#U06-ACCEPTED-CLASSIFICATION" style="color:var(--color-neutral-600)">U06-ACCEPTED-CLASSIFICATION</a>
+  <a class="navlink" href="Artboards-U06.dc.html#U06-CORRECT-CLASSIFICATION" style="color:var(--color-neutral-600)">U06-CORRECT-CLASSIFICATION</a>
+  <a class="navlink" href="Artboards-U06.dc.html#U06-STALE-SOURCE" style="color:var(--color-neutral-600)">U06-STALE-SOURCE · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U06.dc.html#U06-SEGREGATION" style="color:var(--color-neutral-600)">U06-SEGREGATION</a>
+  <div class="navgrp">U07 — Annual plan preparation</div>
+  <a class="navlink" href="#U07">U07 · formed Draft</a>
+  <a class="navlink" href="#U07-UNALLOCATED">U07-UNALLOCATED</a>
+  <a class="navlink" href="#U07-ONE-SELECTED">U07-ONE-SELECTED</a>
+  <a class="navlink" href="#U07-TWO-SELECTED">U07-TWO-SELECTED</a>
+  <a class="navlink" href="#U07-WAITING-FINANCE">U07-WAITING-FINANCE · awaiting fixture</a>
+  <a class="navlink" href="#U07-FINANCE-COMPLETE">U07-FINANCE-COMPLETE</a>
+  <a class="navlink" href="#U07-UPDATE">U07-UPDATE · awaiting fixture</a>
+  <div class="navgrp">U08 — Add selected requirements</div>
+  <a class="navlink" href="#U08">U08 · combine</a>
+  <a class="navlink" href="#U08-SEPARATE">U08-SEPARATE</a>
+  <a class="navlink" href="#U08-INCOMPATIBLE">U08-INCOMPATIBLE · awaiting fixture</a>
+  <a class="navlink" href="#U08-DUPLICATE">U08-DUPLICATE · awaiting fixture</a>
+  <div class="navgrp">U09 — Purchase editor</div>
+  <a class="navlink" href="Artboards-U09.dc.html#U09" style="color:var(--color-neutral-600)">U09 · BASE</a>
+  <a class="navlink" href="Artboards-U09.dc.html#U09-READY" style="color:var(--color-neutral-600)">U09-READY</a>
+  <a class="navlink" href="Artboards-U09.dc.html#U09-INVALID-SCHEDULE" style="color:var(--color-neutral-600)">U09-INVALID-SCHEDULE</a>
+  <a class="navlink" href="Artboards-U09.dc.html#U09-REMOVE" style="color:var(--color-neutral-600)">U09-REMOVE</a>
+  <a class="navlink" href="Artboards-U09.dc.html#U09-CLASSIFICATION-CORRECTION" style="color:var(--color-neutral-600)">U09-CLASSIFICATION-CORRECTION</a>
+  <a class="navlink" href="Artboards-U09.dc.html#U09-LOCKED" style="color:var(--color-neutral-600)">U09-LOCKED · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U09.dc.html#U09-SOURCE-CORRECTION" style="color:var(--color-neutral-600)">U09-SOURCE-CORRECTION · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U09.dc.html#U09-CLASSIFICATION-LOCKED" style="color:var(--color-neutral-600)">U09-CLASSIFICATION-LOCKED · awaiting fixture</a>
+  <div class="navgrp">U10 — Funding review</div>
+  <a class="navlink" href="Artboards-U10.dc.html#U10" style="color:var(--color-neutral-600)">U10 · within approved</a>
+  <a class="navlink" href="Artboards-U10.dc.html#U10-LOW-AVAILABILITY" style="color:var(--color-neutral-600)">U10-LOW-AVAILABILITY</a>
+  <a class="navlink" href="Artboards-U10.dc.html#U10-OVER-APPROVED" style="color:var(--color-neutral-600)">U10-OVER-APPROVED</a>
+  <a class="navlink" href="Artboards-U10.dc.html#U10-CHANGED" style="color:var(--color-neutral-600)">U10-CHANGED</a>
+  <a class="navlink" href="Artboards-U10.dc.html#U10-RETURN" style="color:var(--color-neutral-600)">U10-RETURN</a>
+  <a class="navlink" href="Artboards-U10.dc.html#U10-HISTORY" style="color:var(--color-neutral-600)">U10-HISTORY</a>
+  <a class="navlink" href="Artboards-U10.dc.html#U10-REASSESS" style="color:var(--color-neutral-600)">U10-REASSESS · awaiting fixture</a>
+  <div class="navgrp">U11 — Annual plan review</div>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-HOPF" style="color:var(--color-neutral-600)">U11-HOPF</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-AO" style="color:var(--color-neutral-600)">U11-AO</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-STATUTORY" style="color:var(--color-neutral-600)">U11-STATUTORY</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-READER" style="color:var(--color-neutral-600)">U11-READER</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-READER-HISTORICAL" style="color:var(--color-neutral-600)">U11-READER · historical</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-RETURN" style="color:var(--color-neutral-600)">U11-RETURN</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-STALE-EVIDENCE" style="color:var(--color-neutral-600)">U11-STALE-EVIDENCE</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-COLLECTIVE" style="color:var(--color-neutral-600)">U11-COLLECTIVE · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-LATE-ADOPTION" style="color:var(--color-neutral-600)">U11-LATE-ADOPTION · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-UPDATE" style="color:var(--color-neutral-600)">U11-UPDATE · awaiting fixture</a>
+  <div class="navgrp">U12 — Departmental evidence</div>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U12" style="color:var(--color-neutral-600)">U12 · pinned source</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U12-NEWER-SOURCE" style="color:var(--color-neutral-600)">U12-NEWER-SOURCE</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U12-HISTORICAL-PLAN" style="color:var(--color-neutral-600)">U12-HISTORICAL-PLAN</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U12-UNAVAILABLE" style="color:var(--color-neutral-600)">U12-UNAVAILABLE</a>
+  <div class="navgrp">U13 — Publication and recovery</div>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13" style="color:var(--color-neutral-600)">U13 · evidence needed</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-TREASURY-FORM" style="color:var(--color-neutral-600)">U13-TREASURY-FORM</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-TREASURY-FORM-CHECKED" style="color:var(--color-neutral-600)">U13-TREASURY-FORM · checked</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-EVIDENCE-RECORDED" style="color:var(--color-neutral-600)">U13-EVIDENCE-RECORDED</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-SENDING" style="color:var(--color-neutral-600)">U13-SENDING</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-FAILED" style="color:var(--color-neutral-600)">U13-FAILED · technical operator</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-FAILED-AO" style="color:var(--color-neutral-600)">U13-FAILED · AO / reader</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-UNKNOWN" style="color:var(--color-neutral-600)">U13-UNKNOWN</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-ACTIVE" style="color:var(--color-neutral-600)">U13-ACTIVE</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-PUBLISHED-HELD" style="color:var(--color-neutral-600)">U13-PUBLISHED-HELD</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-UNPUBLISHED-DEFECT" style="color:var(--color-neutral-600)">U13-UNPUBLISHED-DEFECT</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-WITHDRAWAL-REQUEST" style="color:var(--color-neutral-600)">U13-WITHDRAWAL-REQUEST</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-WITHDRAWN" style="color:var(--color-neutral-600)">U13-WITHDRAWN</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-CORRECT-EVIDENCE" style="color:var(--color-neutral-600)">U13-CORRECT-EVIDENCE</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-WITHDRAWAL-REQUEST-DIALOG" style="color:var(--color-neutral-600)">U13-WITHDRAWAL-REQUEST-DIALOG</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-WITHDRAWAL-DECISION-DIALOG" style="color:var(--color-neutral-600)">U13-WITHDRAWAL-DECISION-DIALOG</a>
+  <div class="navgrp">U14 — Procurement progress</div>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U14" style="color:var(--color-neutral-600)">U14 · initial</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U14-PARTIAL" style="color:var(--color-neutral-600)">U14-PARTIAL</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U14-FULL-COVERAGE" style="color:var(--color-neutral-600)">U14-FULL-COVERAGE</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U14-ACTUALS" style="color:var(--color-neutral-600)">U14-ACTUALS</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U14-HOLD" style="color:var(--color-neutral-600)">U14-HOLD</a>
+  <div class="navgrp">U15 — Update expected dates</div>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U15" style="color:var(--color-neutral-600)">U15 · deferred, no MVP artboard</a>
+  <div class="navgrp">U16 — Correction requests</div>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U16" style="color:var(--color-neutral-600)">U16 · two requests</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U16-OPEN-DETAIL" style="color:var(--color-neutral-600)">U16-OPEN-DETAIL</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U16-COMPLETE" style="color:var(--color-neutral-600)">U16-COMPLETE</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U16-NO-CHANGE" style="color:var(--color-neutral-600)">U16-NO-CHANGE</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U16-MULTIPLE" style="color:var(--color-neutral-600)">U16-MULTIPLE</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U16-ADDITIONAL-REQUIREMENT" style="color:var(--color-neutral-600)">U16-ADDITIONAL-REQUIREMENT</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U16-PERMANENT-SCOPE" style="color:var(--color-neutral-600)">U16-PERMANENT-SCOPE</a>
+  <div class="navgrp">C01–C04 — Setup ownership</div>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#C01-ROUTE-MISSING" style="color:var(--color-neutral-600)">C01-ROUTE-MISSING</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#C02-DPP-CLOSED" style="color:var(--color-neutral-600)">C02-DPP-CLOSED</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#C03-METHOD-MISSING" style="color:var(--color-neutral-600)">C03-METHOD-MISSING</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#C04-SCHEDULE-MISSING" style="color:var(--color-neutral-600)">C04-SCHEDULE-MISSING</a>
+  <div class="navgrp">U21 — Shared states</div>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-LOADING-WORKSPACE" style="color:var(--color-neutral-600)">U21-LOADING-WORKSPACE</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-LOADING-REVIEW" style="color:var(--color-neutral-600)">U21-LOADING-REVIEW</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-DENIED" style="color:var(--color-neutral-600)">U21-DENIED</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-MASKED" style="color:var(--color-neutral-600)">U21-MASKED</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-LOAD-FAILURE" style="color:var(--color-neutral-600)">U21-LOAD-FAILURE</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-NO-TASKS" style="color:var(--color-neutral-600)">U21-NO-TASKS</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-FILTERED-EMPTY" style="color:var(--color-neutral-600)">U21-FILTERED-EMPTY</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-CHANGED-ACTION" style="color:var(--color-neutral-600)">U21-CHANGED-ACTION</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-SAVE-FAILED" style="color:var(--color-neutral-600)">U21-SAVE-FAILED</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-UNCERTAIN-DECISION" style="color:var(--color-neutral-600)">U21-UNCERTAIN-DECISION</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-HISTORICAL" style="color:var(--color-neutral-600)">U21-HISTORICAL</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-LATE-ACTIVATION" style="color:var(--color-neutral-600)">U21-LATE-ACTIVATION</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-REMOVE-DRAFT-ITEM" style="color:var(--color-neutral-600)">U21-REMOVE-DRAFT-ITEM</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-TECHNICAL-WORKSPACE" style="color:var(--color-neutral-600)">U21-TECHNICAL-WORKSPACE</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-TECHNICAL-DETAIL" style="color:var(--color-neutral-600)">U21-TECHNICAL-DETAIL</a>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#U21-CANCEL-UPDATE" style="color:var(--color-neutral-600)">U21-CANCEL-UPDATE · awaiting fixture</a>
+  <div class="navgrp">Review gate</div>
+  <a class="navlink" href="Artboards-C01-U21.dc.html#INVENTORY" style="color:var(--color-neutral-600)">Variants held for fixtures</a>
+</nav>
+
+<main id="board" style="flex:1;min-width:0;overflow-x:auto;padding:28px 28px 120px">
+
+
+<div style="max-width:1440px;margin-bottom:36px">
+  <h1 style="font-family:var(--font-heading);font-size:34px;margin:0 0 6px">Procurement Planning — static design contract</h1>
+  <p style="margin:0;font-size:14px;color:var(--color-neutral-800);max-width:820px">Every artboard below is drawn from the closed fixture pack in PLN-CHG-001 §10.2. Fixture context — actor, scope, instant, scenario — sits on the grey plate above each frame and is not rendered inside the artboard. Frames are 1440&nbsp;px wide; height grows with content.</p>
+</div>
+
+<section id="U07" data-screen-label="U07" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U07</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Prepare the annual procurement plan</span>
+    <span class="tag tag-outline">Form / editor workspace</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: Mercy Kilonzo · BASE Draft Plan PLN-MOH-2027-001 Version 1 · 3 Dec 2026, 09:15 EAT · both plan items formed. Send to Finance is absent while a blocking check fails.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Prepare the annual procurement plan</h1>
+        <p class="kt-page-desc">Ministry of Health Annual Procurement Plan 2027/28</p>
+        <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1 · FY 2027/28 <span class="kt-status is-draft" style="margin-left:6px">Draft</span></div>
+      </div></div>
+
+      <div class="kt-region">
+        <h2>Purchases</h2>
+        <table class="table">
+          <thead><tr><th>Purchase</th><th class="is-num">Quantity</th><th>Unit</th><th class="is-num">Estimated cost</th><th>Required by</th><th>Current work</th><th style="text-align:right">Action</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><div style="font-weight:600">National digital health infrastructure upgrade</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">PPI-MOH-2027-021</div></td>
+              <td class="is-num">1</td><td>Programme</td><td class="is-num">KES 80,000,000</td><td>31 Aug 2027</td>
+              <td>Choose a procurement method</td>
+              <td style="text-align:right"><a href="Artboards-U09.dc.html#U09" class="btn btn-ghost">Edit purchase</a></td>
+            </tr>
+            <tr>
+              <td><div style="font-weight:600">Clinical training and deployment laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">PPI-MOH-2027-033</div></td>
+              <td class="is-num">250</td><td>Each</td><td class="is-num">KES 50,000,000</td><td>31 Dec 2027</td>
+              <td>Review the required reserved allocation</td>
+              <td style="text-align:right"><a href="Artboards-U09.dc.html#U09" class="btn btn-ghost">Edit purchase</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="kt-region is-secondary">
+        <h2>Requirements ready to add</h2>
+        <p style="margin:0;font-size:14px;color:var(--color-neutral-800)">All three departmental requirements are included in the two purchases above.</p>
+      </div>
+
+      <div class="kt-region">
+        <h2>Plan checks</h2>
+        <div class="kt-notice is-warning">
+          <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+          <div style="flex:1">
+            <div class="kt-notice-body"><strong>Reserved procurement</strong> — KES 39,000,000 more qualifying allocation required.</div>
+            <a href="Artboards-U09.dc.html#U09" class="btn btn-secondary" style="margin-top:var(--space-3)">Review reserved procurement</a>
+          </div>
+        </div>
+        <div style="margin-top:var(--space-5)">
+          <div style="display:flex;align-items:baseline;gap:var(--space-4);flex-wrap:wrap;margin-bottom:var(--space-3)"><span style="font-family:var(--font-heading);font-size:17px">Reservation allocation</span><span class="kt-status is-attention">Required allocation not met</span></div>
+          <div class="kt-meta-row" style="max-width:1000px"><div><span class="kt-label">Remaining allocation</span><span class="kt-meta-value">KES 39,000,000</span></div><div><span class="kt-label">Required allocation</span><span class="kt-meta-value">KES 39,000,000</span></div><div><span class="kt-label">Planned qualifying allocation</span><span class="kt-meta-value">KES 0</span></div></div>
+        </div>
+        <div class="kt-disclosure" style="margin-top:var(--space-4)">
+          <div class="kt-disclosure-head" onclick="var b=this.nextElementSibling,c=this.querySelector('.kt-disclosure-chevron');var open=b.style.display!=='none';b.style.display=open?'none':'block';c.classList.toggle('is-open',!open)">
+            <div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Reservation allocation details</span></div>
+            <svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="kt-disclosure-body" style="display:none">
+            <div class="kt-meta-row" style="margin-bottom:var(--space-4)"><div><span class="kt-label">Eligible planned procurement</span><span style="font-size:14px">KES 130,000,000</span></div><div><span class="kt-label">Target</span><span style="font-size:14px">30%</span></div><div><span class="kt-label">Required allocation</span><span style="font-size:14px">KES 39,000,000</span></div><div><span class="kt-label">Planned qualifying allocation</span><span style="font-size:14px">KES 0</span></div><div><span class="kt-label">Remaining allocation</span><span style="font-size:14px">KES 39,000,000</span></div></div>
+            <div class="kt-meta-row" style="margin-bottom:var(--space-4)"><div><span class="kt-label">Plan basis</span><span style="font-size:14px">PLN-MOH-2027-001, Version 1</span></div><div><span class="kt-label">Rule version</span><span style="font-size:14px"><span class="kt-status is-attention">Awaiting fixture</span> exact AGPO rule version</span></div><div><span class="kt-label">County requirement</span><span style="font-size:14px">Not applicable</span></div><div><span class="kt-label">Mandatory restrictions</span><span style="font-size:14px">No additional restriction applies</span></div></div>
+            <table class="table">
+              <thead><tr><th>Purchase</th><th class="is-num">Estimated cost</th><th>Applicability</th><th>Reason</th><th>Planned designation</th><th class="is-num">Qualifying allocation</th></tr></thead>
+              <tbody>
+                <tr><td><div style="font-weight:600">National digital health infrastructure upgrade</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">PPI-MOH-2027-021</div></td><td class="is-num">KES 80,000,000</td><td>Included</td><td><span class="kt-status is-attention">Awaiting fixture</span> inclusion reason</td><td>None</td><td class="is-num is-zero">KES 0</td></tr>
+                <tr><td><div style="font-weight:600">Clinical training and deployment laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">PPI-MOH-2027-033</div></td><td class="is-num">KES 50,000,000</td><td>Included</td><td><span class="kt-status is-attention">Awaiting fixture</span> inclusion reason</td><td>None</td><td class="is-num is-zero">KES 0</td></tr>
+              </tbody>
+            </table>
+            <p style="margin:var(--space-4) 0 0;font-size:13.5px;color:var(--color-neutral-800);max-width:900px">Calculated on the eligible value of this plan version. The approved budget is a separate funding ceiling, checked under Funding, and is not used here.</p>
+          </div>
+        </div>
+        <div class="kt-group" style="margin-top:var(--space-5)">
+          <div class="kt-meta-row" style="max-width:860px">
+            <div><span class="kt-label">Funding</span><span style="font-size:14px">Not yet checked</span></div>
+            <div><span class="kt-label">Schedule</span><span style="font-size:14px">Both purchases meet their departmental deadlines</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kt-disclosure">
+        <div class="kt-disclosure-head" onclick="var b=this.nextElementSibling,c=this.querySelector('.kt-disclosure-chevron');var open=b.style.display!=='none';b.style.display=open?'none':'block';c.classList.toggle('is-open',!open)">
+          <div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Changes and history</span></div>
+          <svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="kt-disclosure-body" style="display:none">
+          <p style="margin:0 0 var(--space-4);font-size:14px">This is the first version of the annual plan.</p>
+          <table class="table">
+            <thead><tr><th>Departmental plan</th><th>Accepted by</th><th>Accepted at</th></tr></thead>
+            <tbody>
+              <tr><td>Digital Health · DPP-MOH-DHI-2027-001</td><td>Mercy Kilonzo</td><td>27 Nov 2026, 14:00 EAT</td></tr>
+              <tr><td>Human Resources Management and Development · DPP-MOH-HRMD-2027-001</td><td>Mercy Kilonzo</td><td>27 Nov 2026, 14:05 EAT</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;border-top:1px solid var(--color-divider);padding-top:var(--space-5)">
+        <button type="button" class="btn btn-primary">Save draft</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U07-UNALLOCATED" data-screen-label="U07-UNALLOCATED" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U07-UNALLOCATED</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Before formation — nothing selected</span>
+    <span class="tag tag-outline">Form / editor workspace</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: Mercy Kilonzo · Draft Plan Version 1 before formation. Every checkbox starts unchecked; Add selected requirements is disabled.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Prepare the annual procurement plan</h1>
+        <p class="kt-page-desc">Ministry of Health Annual Procurement Plan 2027/28</p>
+        <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1 · FY 2027/28 <span class="kt-status is-draft" style="margin-left:6px">Draft</span></div>
+      </div></div>
+      <div class="kt-region">
+        <h2>Purchases</h2>
+        <div class="kt-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M6 6v13a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V6"/><path d="M9 6V4h6v2"/></svg>
+          <div style="font-size:15px">No purchases have been added yet.</div>
+        </div>
+      </div>
+      <div class="kt-region">
+        <h2>Requirements ready to add</h2>
+        <table class="table">
+          <thead><tr><th style="width:52px">Select</th><th>Requirement</th><th>Department</th><th class="is-num">Quantity</th><th>Unit</th><th class="is-num">Estimated cost</th><th style="text-align:right">Action</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox" class="kt-checkbox"></td><td><div style="font-weight:600">National digital health infrastructure upgrade</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">NDS-MOH-2027-0001 · Revision 1</div></td><td>Digital Health</td><td class="is-num">1</td><td>Programme</td><td class="is-num">KES 80,000,000</td><td style="text-align:right"><a href="Artboards-U12-U13.dc.html#U12" class="btn btn-ghost">View requirement</a></td></tr>
+            <tr><td><input type="checkbox" class="kt-checkbox"></td><td><div style="font-weight:600">Clinical training laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">NDS-MOH-2027-0003 · Revision 2</div></td><td>Human Resources Management and Development</td><td class="is-num">100</td><td>Each</td><td class="is-num">KES 20,000,000</td><td style="text-align:right"><a href="Artboards-U12-U13.dc.html#U12" class="btn btn-ghost">View requirement</a></td></tr>
+            <tr><td><input type="checkbox" class="kt-checkbox"></td><td><div style="font-weight:600">Clinical deployment laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">NDS-MOH-2027-0004 · Revision 1</div></td><td>Digital Health</td><td class="is-num">150</td><td>Each</td><td class="is-num">KES 30,000,000</td><td style="text-align:right"><a href="Artboards-U12-U13.dc.html#U12" class="btn btn-ghost">View requirement</a></td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:var(--space-4);margin-top:var(--space-4)">
+          <span style="font-size:13px;color:var(--color-neutral-800)">Select at least one requirement.</span>
+          <button type="button" class="btn btn-primary" disabled="disabled">Add selected requirements</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;border-top:1px solid var(--color-divider);padding-top:var(--space-5)">
+        <button type="button" class="btn btn-primary">Save draft</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U07-ONE-SELECTED" data-screen-label="U07-ONE-SELECTED" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U07-ONE-SELECTED</span>
+    <span style="font-family:var(--font-heading);font-size:23px">One requirement selected</span>
+    <span class="tag tag-outline">Form / editor workspace</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: only the infrastructure row is checked. Add selected requirements is enabled; no grouping-choice panel appears.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Prepare the annual procurement plan</h1>
+        <p class="kt-page-desc">Ministry of Health Annual Procurement Plan 2027/28</p>
+        <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1 · FY 2027/28 <span class="kt-status is-draft" style="margin-left:6px">Draft</span></div>
+      </div></div>
+      <div class="kt-region">
+        <h2>Requirements ready to add</h2>
+        <table class="table">
+          <thead><tr><th style="width:52px">Select</th><th>Requirement</th><th>Department</th><th class="is-num">Quantity</th><th>Unit</th><th class="is-num">Estimated cost</th><th style="text-align:right">Action</th></tr></thead>
+          <tbody>
+            <tr style="background:var(--color-accent-100)"><td><input type="checkbox" class="kt-checkbox" checked="checked"></td><td><div style="font-weight:600">National digital health infrastructure upgrade</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">NDS-MOH-2027-0001 · Revision 1</div></td><td>Digital Health</td><td class="is-num">1</td><td>Programme</td><td class="is-num">KES 80,000,000</td><td style="text-align:right"><a href="Artboards-U12-U13.dc.html#U12" class="btn btn-ghost">View requirement</a></td></tr>
+            <tr><td><input type="checkbox" class="kt-checkbox"></td><td><div style="font-weight:600">Clinical training laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">NDS-MOH-2027-0003 · Revision 2</div></td><td>Human Resources Management and Development</td><td class="is-num">100</td><td>Each</td><td class="is-num">KES 20,000,000</td><td style="text-align:right"><a href="Artboards-U12-U13.dc.html#U12" class="btn btn-ghost">View requirement</a></td></tr>
+            <tr><td><input type="checkbox" class="kt-checkbox"></td><td><div style="font-weight:600">Clinical deployment laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">NDS-MOH-2027-0004 · Revision 1</div></td><td>Digital Health</td><td class="is-num">150</td><td>Each</td><td class="is-num">KES 30,000,000</td><td style="text-align:right"><a href="Artboards-U12-U13.dc.html#U12" class="btn btn-ghost">View requirement</a></td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;justify-content:flex-end;margin-top:var(--space-4)">
+          <button type="button" class="btn btn-primary">Add selected requirements</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;border-top:1px solid var(--color-divider);padding-top:var(--space-5)">
+        <button type="button" class="btn btn-primary">Save draft</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U07-TWO-SELECTED" data-screen-label="U07-TWO-SELECTED" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U07-TWO-SELECTED</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Both laptop requirements selected</span>
+    <span class="tag tag-outline">Form / editor workspace</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: training and deployment laptop rows checked. Selecting Add selected requirements opens <a href="#U08">U08</a>.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Prepare the annual procurement plan</h1>
+        <p class="kt-page-desc">Ministry of Health Annual Procurement Plan 2027/28</p>
+        <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1 · FY 2027/28 <span class="kt-status is-draft" style="margin-left:6px">Draft</span></div>
+      </div></div>
+      <div class="kt-region">
+        <h2>Requirements ready to add</h2>
+        <table class="table">
+          <thead><tr><th style="width:52px">Select</th><th>Requirement</th><th>Department</th><th class="is-num">Quantity</th><th>Unit</th><th class="is-num">Estimated cost</th><th style="text-align:right">Action</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox" class="kt-checkbox"></td><td><div style="font-weight:600">National digital health infrastructure upgrade</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">NDS-MOH-2027-0001 · Revision 1</div></td><td>Digital Health</td><td class="is-num">1</td><td>Programme</td><td class="is-num">KES 80,000,000</td><td style="text-align:right"><a href="Artboards-U12-U13.dc.html#U12" class="btn btn-ghost">View requirement</a></td></tr>
+            <tr style="background:var(--color-accent-100)"><td><input type="checkbox" class="kt-checkbox" checked="checked"></td><td><div style="font-weight:600">Clinical training laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">NDS-MOH-2027-0003 · Revision 2</div></td><td>Human Resources Management and Development</td><td class="is-num">100</td><td>Each</td><td class="is-num">KES 20,000,000</td><td style="text-align:right"><a href="Artboards-U12-U13.dc.html#U12" class="btn btn-ghost">View requirement</a></td></tr>
+            <tr style="background:var(--color-accent-100)"><td><input type="checkbox" class="kt-checkbox" checked="checked"></td><td><div style="font-weight:600">Clinical deployment laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">NDS-MOH-2027-0004 · Revision 1</div></td><td>Digital Health</td><td class="is-num">150</td><td>Each</td><td class="is-num">KES 30,000,000</td><td style="text-align:right"><a href="Artboards-U12-U13.dc.html#U12" class="btn btn-ghost">View requirement</a></td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;justify-content:flex-end;margin-top:var(--space-4)">
+          <button type="button" class="btn btn-primary">Add selected requirements</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;border-top:1px solid var(--color-divider);padding-top:var(--space-5)">
+        <button type="button" class="btn btn-primary">Save draft</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U07-WAITING-FINANCE" data-screen-label="U07-WAITING-FINANCE" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--status-attention);color:#fff;padding:3px 9px">U07-WAITING-FINANCE</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Finance is reviewing the funding</span>
+    <span class="kt-status is-attention">Awaiting fixture</span>
+  </div>
+  <div style="width:1440px;background:var(--color-surface);border:1px dashed var(--color-neutral-400);padding:32px 40px">
+    <p style="margin:0 0 var(--space-4);font-size:15px;max-width:900px;color:var(--color-neutral-800)">Not generated. §10.6 requires the actual task request time, which §10.2 does not supply.</p>
+    <div class="kt-meta-row is-tight" style="gap:var(--space-8)">
+      <div><span class="kt-label">Missing value</span><span style="font-size:14px">Requested at — funding review request instant</span></div>
+      <div><span class="kt-label">Resolved facts</span><span style="font-size:14px">Notice “Finance is reviewing the funding.” · Requested from Josphat Mwangi · no Send action</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="U07-FINANCE-COMPLETE" data-screen-label="U07-FINANCE-COMPLETE" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U07-FINANCE-COMPLETE</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Funding checked — ready for signature</span>
+    <span class="tag tag-outline">Form / editor workspace</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: READY, after 4 Dec 2026, 10:00 EAT. No Planner handover or approval action.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Prepare the annual procurement plan</h1>
+        <p class="kt-page-desc">Ministry of Health Annual Procurement Plan 2027/28</p>
+        <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1 · FY 2027/28 <span class="kt-status is-draft" style="margin-left:6px">Draft</span></div>
+      </div></div>
+      <div class="kt-region">
+        <h2>Purchases</h2>
+        <table class="table">
+          <thead><tr><th>Purchase</th><th class="is-num">Quantity</th><th>Unit</th><th class="is-num">Estimated cost</th><th>Required by</th><th>Current work</th><th style="text-align:right">Action</th></tr></thead>
+          <tbody>
+            <tr><td><div style="font-weight:600">National digital health infrastructure upgrade</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">PPI-MOH-2027-021</div></td><td class="is-num">1</td><td>Programme</td><td class="is-num">KES 80,000,000</td><td>31 Aug 2027</td><td>No work outstanding</td><td style="text-align:right"><a href="Artboards-U09.dc.html#U09" class="btn btn-ghost">Edit purchase</a></td></tr>
+            <tr><td><div style="font-weight:600">Clinical training and deployment laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">PPI-MOH-2027-033</div></td><td class="is-num">250</td><td>Each</td><td class="is-num">KES 50,000,000</td><td>31 Dec 2027</td><td>No work outstanding</td><td style="text-align:right"><a href="Artboards-U09.dc.html#U09" class="btn btn-ghost">Edit purchase</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="kt-region">
+        <h2>Plan checks</h2>
+        <div class="kt-group">
+          <div class="kt-meta-row" style="max-width:1000px">
+            <div><span class="kt-label">Funding</span><span style="font-size:14px">Within each approved budget line</span></div>
+            <div><span class="kt-label">Checked by</span><span style="font-size:14px">Josphat Mwangi</span></div>
+            <div><span class="kt-label">Checked at</span><span style="font-size:14px">4 Dec 2026, 10:00 EAT</span></div>
+            <div><span class="kt-label">Schedule</span><span style="font-size:14px">Both purchases meet their departmental deadlines</span></div>
+          </div>
+        </div>
+        <div style="margin-top:var(--space-5)">
+          <div style="display:flex;align-items:baseline;gap:var(--space-4);flex-wrap:wrap;margin-bottom:var(--space-3)"><span style="font-family:var(--font-heading);font-size:17px">Reservation allocation</span><span class="kt-status is-live">Required allocation met</span></div>
+          <div class="kt-meta-row" style="max-width:1000px"><div><span class="kt-label">Remaining allocation</span><span class="kt-meta-value">KES 0</span></div><div><span class="kt-label">Required allocation</span><span class="kt-meta-value">KES 39,000,000</span></div><div><span class="kt-label">Planned qualifying allocation</span><span class="kt-meta-value">KES 50,000,000</span></div><div><span class="kt-label">Qualifying share</span><span class="kt-meta-value">38.46%</span></div></div>
+        </div>
+        <div class="kt-disclosure" style="margin-top:var(--space-4)">
+          <div class="kt-disclosure-head" onclick="var b=this.nextElementSibling,c=this.querySelector('.kt-disclosure-chevron');var open=b.style.display!=='none';b.style.display=open?'none':'block';c.classList.toggle('is-open',!open)">
+            <div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Reservation allocation details</span></div>
+            <svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="kt-disclosure-body" style="display:none">
+            <div class="kt-meta-row" style="margin-bottom:var(--space-4)"><div><span class="kt-label">Eligible planned procurement</span><span style="font-size:14px">KES 130,000,000</span></div><div><span class="kt-label">Target</span><span style="font-size:14px">30%</span></div><div><span class="kt-label">Required allocation</span><span style="font-size:14px">KES 39,000,000</span></div><div><span class="kt-label">Planned qualifying allocation</span><span style="font-size:14px">KES 50,000,000</span></div><div><span class="kt-label">Remaining allocation</span><span style="font-size:14px">KES 0</span></div><div><span class="kt-label">Qualifying share</span><span style="font-size:14px">38.46%</span></div></div>
+            <div class="kt-meta-row" style="margin-bottom:var(--space-4)"><div><span class="kt-label">Plan basis</span><span style="font-size:14px">PLN-MOH-2027-001, Version 1</span></div><div><span class="kt-label">Rule version</span><span style="font-size:14px"><span class="kt-status is-attention">Awaiting fixture</span> exact AGPO rule version</span></div><div><span class="kt-label">County requirement</span><span style="font-size:14px">Not applicable</span></div><div><span class="kt-label">Mandatory restrictions</span><span style="font-size:14px">No additional restriction applies</span></div></div>
+            <table class="table">
+              <thead><tr><th>Purchase</th><th class="is-num">Estimated cost</th><th>Applicability</th><th>Reason</th><th>Planned designation</th><th class="is-num">Qualifying allocation</th></tr></thead>
+              <tbody>
+                <tr><td><div style="font-weight:600">National digital health infrastructure upgrade</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">PPI-MOH-2027-021</div></td><td class="is-num">KES 80,000,000</td><td>Included</td><td><span class="kt-status is-attention">Awaiting fixture</span> inclusion reason</td><td>None</td><td class="is-num is-zero">KES 0</td></tr>
+                <tr><td><div style="font-weight:600">Clinical training and deployment laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">PPI-MOH-2027-033</div></td><td class="is-num">KES 50,000,000</td><td>Included</td><td><span class="kt-status is-attention">Awaiting fixture</span> inclusion reason</td><td>Youth</td><td class="is-num">KES 50,000,000</td></tr>
+              </tbody>
+            </table>
+            <p style="margin:var(--space-4) 0 0;font-size:13.5px;color:var(--color-neutral-800);max-width:900px">Calculated on the eligible value of this plan version. The approved budget is a separate funding ceiling, checked under Funding, and is not used here.</p>
+          </div>
+        </div>
+      </div>
+      <div class="kt-region is-secondary">
+        <h2>Approval</h2>
+        <div class="kt-notice">
+          <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <div class="kt-notice-body">Ready for the Head of Procurement Function to sign and submit. Responsible person: <strong>Charles Mutiso</strong>.</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;border-top:1px solid var(--color-divider);padding-top:var(--space-5)">
+        <button type="button" class="btn btn-primary">Save draft</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U07-UPDATE" data-screen-label="U07-UPDATE" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--status-attention);color:#fff;padding:3px 9px">U07-UPDATE</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Prepare plan update</span>
+    <span class="kt-status is-attention">Awaiting fixture</span>
+  </div>
+  <div style="width:1440px;background:var(--color-surface);border:1px dashed var(--color-neutral-400);padding:32px 40px">
+    <p style="margin:0 0 var(--space-4);font-size:15px;max-width:900px;color:var(--color-neutral-800)">Not generated. §10.6 requires the exact reason for updating the plan from the UPDATE fixture, plus the pending unrelated source rows for “For a later plan update”. Neither is in §10.2.</p>
+    <div class="kt-meta-row is-tight" style="gap:var(--space-8)">
+      <div><span class="kt-label">Missing values</span><span style="font-size:14px">Reason for updating the plan · pending unrelated source rows</span></div>
+      <div><span class="kt-label">Resolved facts</span><span style="font-size:14px">Version 2 Draft update · current plan Version 1 · Changes and history open with Purchase / Field / Current value / Proposed value · Cancel plan update far left · Save draft right</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="U08" data-screen-label="U08" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U08</span>
+    <span style="font-family:var(--font-heading);font-size:23px">How should these requirements be added?</span>
+    <span class="tag tag-outline">Focused panel</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: Mercy Kilonzo · U07-TWO-SELECTED · 3 Dec 2026, 09:25 EAT. Combine is selected; the selected rows stay visible behind the panel.</p>
+  <div style="display:grid;width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page" style="grid-area:1/1">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Prepare the annual procurement plan</h1>
+        <p class="kt-page-desc">Ministry of Health Annual Procurement Plan 2027/28</p>
+        <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1 · FY 2027/28</div>
+      </div></div>
+      <div class="kt-region">
+        <h2>Requirements ready to add</h2>
+        <table class="table">
+          <thead><tr><th style="width:52px">Select</th><th>Requirement</th><th>Department</th><th class="is-num">Estimated cost</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox" class="kt-checkbox"></td><td>National digital health infrastructure upgrade</td><td>Digital Health</td><td class="is-num">KES 80,000,000</td></tr>
+            <tr style="background:var(--color-accent-100)"><td><input type="checkbox" class="kt-checkbox" checked="checked"></td><td>Clinical training laptops for digital health rollout</td><td>Human Resources Management and Development</td><td class="is-num">KES 20,000,000</td></tr>
+            <tr style="background:var(--color-accent-100)"><td><input type="checkbox" class="kt-checkbox" checked="checked"></td><td>Clinical deployment laptops for digital health rollout</td><td>Digital Health</td><td class="is-num">KES 30,000,000</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="grid-area:1/1;position:relative;z-index:10;background:color-mix(in srgb, var(--color-neutral-900) 50%, transparent);display:flex;align-items:flex-start;justify-content:center;padding:60px 0">
+      <div class="dialog" style="width:720px;max-width:720px">
+        <div class="dialog-title">How should these requirements be added?</div>
+        <table class="table">
+          <thead><tr><th>Requirement</th><th>Department</th><th class="is-num">Quantity</th><th>Unit</th><th class="is-num">Estimated cost</th></tr></thead>
+          <tbody>
+            <tr><td><div style="font-weight:600">Clinical training laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">NDS-MOH-2027-0003 · Revision 2</div></td><td>Human Resources Management and Development</td><td class="is-num">100</td><td>Each</td><td class="is-num">KES 20,000,000</td></tr>
+            <tr><td><div style="font-weight:600">Clinical deployment laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">NDS-MOH-2027-0004 · Revision 1</div></td><td>Digital Health</td><td class="is-num">150</td><td>Each</td><td class="is-num">KES 30,000,000</td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;gap:var(--space-6);margin-top:var(--space-2)">
+          <label class="radio"><input type="radio" name="u08-g"><span class="dot"></span>Keep separate</label>
+          <label class="radio"><input type="radio" name="u08-g" checked="checked"><span class="dot"></span>Combine into one purchase</label>
+        </div>
+        <div class="field"><label for="u08-r">Reason for combining</label><textarea class="input" id="u08-r" rows="3">Both departments require the same laptop specification for the same national digital-health rollout; combining secures better unit pricing and one delivery schedule.</textarea></div>
+        <div style="background:var(--color-surface-2);padding:var(--space-4)">
+          <div class="kt-meta-row">
+            <div><span class="kt-label">Purchases</span><span class="kt-meta-value">1</span></div>
+            <div><span class="kt-label">Total quantity</span><span class="kt-meta-value">250 Each</span></div>
+            <div><span class="kt-label">Estimated cost</span><span class="kt-meta-value">KES 50,000,000</span></div>
+          </div>
+          <div style="margin-top:var(--space-3)"><span class="kt-label">Purchase title</span><div style="font-size:14px;margin-top:2px">Clinical training and deployment laptops for digital health rollout</div></div>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="btn btn-secondary">Cancel</button>
+          <button type="button" class="btn btn-primary">Add to plan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U08-SEPARATE" data-screen-label="U08-SEPARATE" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U08-SEPARATE</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Keep separate</span>
+    <span class="tag tag-outline">Focused panel</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: same two laptop sources with Keep separate selected. No combination reason field; the preview shows one row per exact source.</p>
+  <div style="display:grid;width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page" style="grid-area:1/1">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Prepare the annual procurement plan</h1>
+        <p class="kt-page-desc">Ministry of Health Annual Procurement Plan 2027/28</p>
+        <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1 · FY 2027/28</div>
+      </div></div>
+      <div class="kt-region">
+        <h2>Requirements ready to add</h2>
+        <table class="table">
+          <thead><tr><th style="width:52px">Select</th><th>Requirement</th><th>Department</th><th class="is-num">Estimated cost</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox" class="kt-checkbox"></td><td>National digital health infrastructure upgrade</td><td>Digital Health</td><td class="is-num">KES 80,000,000</td></tr>
+            <tr style="background:var(--color-accent-100)"><td><input type="checkbox" class="kt-checkbox" checked="checked"></td><td>Clinical training laptops for digital health rollout</td><td>Human Resources Management and Development</td><td class="is-num">KES 20,000,000</td></tr>
+            <tr style="background:var(--color-accent-100)"><td><input type="checkbox" class="kt-checkbox" checked="checked"></td><td>Clinical deployment laptops for digital health rollout</td><td>Digital Health</td><td class="is-num">KES 30,000,000</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="grid-area:1/1;position:relative;z-index:10;background:color-mix(in srgb, var(--color-neutral-900) 50%, transparent);display:flex;align-items:flex-start;justify-content:center;padding:60px 0">
+      <div class="dialog" style="width:720px;max-width:720px">
+        <div class="dialog-title">How should these requirements be added?</div>
+        <table class="table">
+          <thead><tr><th>Requirement</th><th>Department</th><th class="is-num">Quantity</th><th>Unit</th><th class="is-num">Estimated cost</th></tr></thead>
+          <tbody>
+            <tr><td><div style="font-weight:600">Clinical training laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">NDS-MOH-2027-0003 · Revision 2</div></td><td>Human Resources Management and Development</td><td class="is-num">100</td><td>Each</td><td class="is-num">KES 20,000,000</td></tr>
+            <tr><td><div style="font-weight:600">Clinical deployment laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">NDS-MOH-2027-0004 · Revision 1</div></td><td>Digital Health</td><td class="is-num">150</td><td>Each</td><td class="is-num">KES 30,000,000</td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;gap:var(--space-6);margin-top:var(--space-2)">
+          <label class="radio"><input type="radio" name="u08s-g" checked="checked"><span class="dot"></span>Keep separate</label>
+          <label class="radio"><input type="radio" name="u08s-g"><span class="dot"></span>Combine into one purchase</label>
+        </div>
+        <div style="background:var(--color-surface-2);padding:var(--space-4)">
+          <div style="margin-bottom:var(--space-3)"><span class="kt-label">Purchases</span><span class="kt-meta-value" style="display:block">2</span></div>
+          <table class="table">
+            <thead><tr><th>Purchase</th><th class="is-num">Quantity</th><th>Unit</th><th class="is-num">Estimated cost</th></tr></thead>
+            <tbody>
+              <tr><td>Clinical training laptops for digital health rollout</td><td class="is-num">100</td><td>Each</td><td class="is-num">KES 20,000,000</td></tr>
+              <tr><td>Clinical deployment laptops for digital health rollout</td><td class="is-num">150</td><td>Each</td><td class="is-num">KES 30,000,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="btn btn-secondary">Cancel</button>
+          <button type="button" class="btn btn-primary">Add to plan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U08-INCOMPATIBLE" data-screen-label="U08-INCOMPATIBLE" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--status-attention);color:#fff;padding:3px 9px">U08-INCOMPATIBLE</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Requirements cannot be combined</span>
+    <span class="kt-status is-attention">Awaiting fixture</span>
+  </div>
+  <div style="width:1440px;background:var(--color-surface);border:1px dashed var(--color-neutral-400);padding:32px 40px">
+    <p style="margin:0 0 var(--space-4);font-size:15px;max-width:900px;color:var(--color-neutral-800)">Not generated. §10.7 requires isolated sources on different budget lines from the fixture builder, and forbids using the BASE laptop pair because both sit on MOH-BL-HWD-2027.</p>
+    <div class="kt-meta-row is-tight" style="gap:var(--space-8)">
+      <div><span class="kt-label">Missing value</span><span style="font-size:14px">Two selected sources with different budget lines</span></div>
+      <div><span class="kt-label">Resolved facts</span><span style="font-size:14px">Message “These requirements use different budget lines and cannot be combined.” · Combine disabled · Keep separate selected · Add to plan enabled</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="U08-DUPLICATE" data-screen-label="U08-DUPLICATE" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--status-attention);color:#fff;padding:3px 9px">U08-DUPLICATE / INCOMPLETE</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Source already allocated or cohort changed</span>
+    <span class="kt-status is-attention">Awaiting fixture</span>
+  </div>
+  <div style="width:1440px;background:var(--color-surface);border:1px dashed var(--color-neutral-400);padding:32px 40px">
+    <p style="margin:0 0 var(--space-4);font-size:15px;max-width:900px;color:var(--color-neutral-800)">Not generated. §10.7 requires actual source and version facts from the respective test profile.</p>
+    <div class="kt-meta-row is-tight" style="gap:var(--space-8)">
+      <div><span class="kt-label">Missing values</span><span style="font-size:14px">Named source, its version, and the concrete problem</span></div>
+      <div><span class="kt-label">Resolved facts</span><span style="font-size:14px">Problem stated above the choice · Add to plan absent</span></div>
+    </div>
+  </div>
+</section>
+</main>
+</div>
+
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,117 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-27 12:30:00.000000",
+ "description": "OD-C / plan D5: forces the gate, outage and custody-outcome worlds on a test environment only; ignored elsewhere.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "gate_closed",
+  "trust_service_down",
+  "time_service_down",
+  "custody_service_down",
+  "deposit_outcome",
+  "rejection_reference",
+  "uncertain_resolution",
+  "accept_after_seconds",
+  "current_instant",
+  "bound_release_state",
+  "reveal_outcome"
+ ],
+ "fields": [
+  {
+   "fieldname": "gate_closed",
+   "fieldtype": "Check",
+   "label": "Production gate closed (GATE world)",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "trust_service_down",
+   "fieldtype": "Check",
+   "label": "Test Trust Service unhealthy",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "time_service_down",
+   "fieldtype": "Check",
+   "label": "Trusted time unhealthy",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "custody_service_down",
+   "fieldtype": "Check",
+   "label": "Test Tender Box unhealthy",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "deposit_outcome",
+   "fieldtype": "Select",
+   "label": "Next deposit outcome",
+   "read_only": 1,
+   "options": "Accept\nReject\nUncertain",
+   "default": "Accept"
+  },
+  {
+   "fieldname": "rejection_reference",
+   "fieldtype": "Data",
+   "label": "Rejection reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "uncertain_resolution",
+   "fieldtype": "Select",
+   "label": "Uncertain attempts resolve to",
+   "read_only": 1,
+   "options": "Pending\nAccept\nReject",
+   "default": "Pending"
+  },
+  {
+   "fieldname": "accept_after_seconds",
+   "fieldtype": "Int",
+   "label": "Seconds between receipt and acceptance",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "current_instant",
+   "fieldtype": "Datetime",
+   "label": "Trusted test clock (current instant)",
+   "read_only": 1,
+   "description": "Browser worlds only (plan D18): Bid Submission's trusted clock reads this instant on a test environment. Cleared on restore."
+  },
+  {
+   "fieldname": "bound_release_state",
+   "fieldtype": "Select",
+   "label": "Bound release state",
+   "read_only": 1,
+   "options": "\nSuperseded\nWithdrawn\nIntegrity failed",
+   "description": "Forces every bound template release to this state for Bid Submission (BDS-CHG-001 v0.8 §4.4.4 worlds); empty = the installed state."
+  },
+  {
+   "fieldname": "reveal_outcome",
+   "fieldtype": "Select",
+   "label": "Reveal outcome",
+   "options": "Deliver\nMismatch\nUnavailable\nIndeterminate",
+   "default": "Deliver",
+   "description": "BOP-CHG-001 v0.10 plan D4/D17: forces the Test Tender Box's opening reveal outcome on a test environment."
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-29 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "name": "BDS Test Environment Controls",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "states": [],
+ "track_changes": 1,
+ "issingle": 1
+}

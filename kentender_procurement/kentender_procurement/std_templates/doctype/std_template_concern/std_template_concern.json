@@ -1,0 +1,162 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:STDC-{YYYY}-{#####}",
+ "creation": "2026-09-26 00:00:00.000000",
+ "description": "STD-TPL-IMP-001 v1.0 §4.3 — a bounded concern against one installed release. It never changes the release.",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "concern_id",
+  "release_id",
+  "category",
+  "source_locator",
+  "summary",
+  "description",
+  "evidence_file_id",
+  "status",
+  "reported_by",
+  "reported_at",
+  "resolution_section",
+  "resolved_by",
+  "resolved_at",
+  "resolution_note",
+  "successor_release_id"
+ ],
+ "fields": [
+  {
+   "fieldname": "concern_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Concern ID",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "release_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Release",
+   "options": "Installed STD Release",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Category",
+   "options": "Source treatment\nTender document\nSupplier response\nEvaluation mapping\nContract mapping\nRenderer\nOther",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_locator",
+   "fieldtype": "Data",
+   "label": "Source locator or section",
+   "read_only": 1
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Summary",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "evidence_file_id",
+   "fieldtype": "Data",
+   "label": "Evidence file",
+   "read_only": 1
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Open\nAcknowledged\nResolved\nRejected",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "reported_by",
+   "fieldtype": "Link",
+   "label": "Reported by",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "reported_at",
+   "fieldtype": "Datetime",
+   "label": "Reported at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "resolution_section",
+   "fieldtype": "Section Break",
+   "label": "Resolution"
+  },
+  {
+   "fieldname": "resolved_by",
+   "fieldtype": "Data",
+   "label": "Resolved by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolved_at",
+   "fieldtype": "Datetime",
+   "label": "Resolved at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolution_note",
+   "fieldtype": "Small Text",
+   "label": "Resolution note",
+   "read_only": 1
+  },
+  {
+   "fieldname": "successor_release_id",
+   "fieldtype": "Link",
+   "label": "Successor release",
+   "options": "Installed STD Release",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-09-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Templates",
+ "name": "STD Template Concern",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "summary"
+}

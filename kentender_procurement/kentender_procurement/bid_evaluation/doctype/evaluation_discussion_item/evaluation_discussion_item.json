@@ -1,0 +1,130 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "§4.3: one chair item per bid and requirement; clears only on a committed conclusion, authorisation, plan or linked support issue.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_id",
+  "evaluation_case",
+  "evaluation_bid",
+  "requirement_key",
+  "subject",
+  "status",
+  "opened_at",
+  "opened_by",
+  "last_finding",
+  "resolution_kind",
+  "resolution_reference",
+  "cleared_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_id",
+   "fieldtype": "Data",
+   "label": "Item ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "evaluation_case",
+   "fieldtype": "Link",
+   "label": "Evaluation case",
+   "read_only": 1,
+   "options": "Evaluation Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "evaluation_bid",
+   "fieldtype": "Data",
+   "label": "Evaluation bid",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "requirement_key",
+   "fieldtype": "Data",
+   "label": "Requirement key",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "label": "Subject",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Open\nResolved\nTransferred",
+   "reqd": 1
+  },
+  {
+   "fieldname": "opened_at",
+   "fieldtype": "Datetime",
+   "label": "Opened at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "opened_by",
+   "fieldtype": "Link",
+   "label": "Opened by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "last_finding",
+   "fieldtype": "Data",
+   "label": "Last finding",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolution_kind",
+   "fieldtype": "Select",
+   "label": "Resolution kind",
+   "read_only": 1,
+   "options": "\nResolved finding\nQualified report\nClarification\nVerification\nSupport issue"
+  },
+  {
+   "fieldname": "resolution_reference",
+   "fieldtype": "Data",
+   "label": "Resolution reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cleared_at",
+   "fieldtype": "Datetime",
+   "label": "Cleared at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Evaluation",
+ "name": "Evaluation Discussion Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:item_id"
+}

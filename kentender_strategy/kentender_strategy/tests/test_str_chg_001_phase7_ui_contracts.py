@@ -15,7 +15,7 @@ from uuid import uuid4
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from kentender_strategy.tests.fixtures import ensure_fiscal_year
+from kentender_strategy.tests.fixtures import ensure_fiscal_year, pin_review_date
 
 from kentender_strategy.services import strategy_ui_contracts as ui
 from kentender_strategy.services.strategy_authorization import (
@@ -38,6 +38,7 @@ _PROFILE_ROLE = {
 
 class Phase7TestBase(FrappeTestCase):
 	def setUp(self):
+		pin_review_date(self)
 		ensure_fiscal_year(2040)
 		ensure_strategy_governance_roles()
 		self.suffix = uuid4().hex[:8]
@@ -365,9 +366,13 @@ class TestDiffStrategyVersions(Phase7TestBase):
 
 		result = ui.diff_strategy_versions(base_version, successor_id)
 		items = {c["item"]: c for c in result["changes"]}
-		self.assertIn("Target: Indicator A", items)
-		self.assertEqual(items["Target: Indicator A"]["active"], "At least 80")
-		self.assertEqual(items["Target: Indicator A"]["submitted"], "At least 85")
+		# v1.8 §8.3 — rows carry the readable item, the previous accepted
+		# baseline and the proposed value, with the indicator's path.
+		self.assertIn("Target for FY 2040/41", items)
+		self.assertEqual(items["Target for FY 2040/41"]["previous"], "At least 80%")
+		self.assertEqual(items["Target for FY 2040/41"]["proposed"], "At least 85%")
+		self.assertIn("Indicator A", items["Target for FY 2040/41"]["path"])
 		self.assertIn("Pillar: New Pillar", items)
-		self.assertEqual(items["Pillar: New Pillar"]["submitted"], "Added")
-		self.assertTrue(result["limitation"])
+		self.assertEqual(items["Pillar: New Pillar"]["proposed"], "Added")
+		self.assertFalse(result["first_version"])
+		self.assertEqual(result["base_version_number"], 1)

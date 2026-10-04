@@ -11,10 +11,10 @@ toggle now (§4.1) — unlike the old per-PE/FY `Needs Intake Window`, no profil
 here needs to open or restore it; §14.1's prerequisite is that it is already
 Open on `base.FY`, checked once by `base._require_prerequisites`.
 
-Commands still stamp decisions with the wall clock, so the §14.3 design-clock
-times are applied afterwards by `_stamp`. Nothing else is rewritten: the
-states, versions, hashes, tasks and published events are exactly what the
-commands produced.
+Commands stamp decisions with the wall clock, which the profiles freeze at
+their fixture instants (PLN-CHG-001 v1.18 §13.1 / plan D19) — nothing is
+back-stamped: the states, versions, hashes, tasks and published events are
+exactly what the commands produced at those instants.
 
 Each profile owns a fixture namespace so `reset_profile` removes precisely what
 it created. Resets use `frappe.db.delete`, which bypasses the controllers that
@@ -27,6 +27,8 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Any, Callable
 
+import json
+
 import frappe
 
 from kentender_procurement.departmental_needs.constants import (
@@ -37,7 +39,17 @@ from kentender_procurement.departmental_needs.constants import (
 from kentender_procurement.departmental_needs.services import lifecycle
 from kentender_procurement.departmental_needs.services.usage import project_planning_usage
 
+from kentender_core.seeds import clock
+
 from . import kentender_mvp_r1 as base
+
+# PLN-CHG-001 v1.18 §13.1 / plan D19 — profile commands run at fixture
+# instants: departmental work on 24 Nov 2026 inside the Needs window; the
+# successor acceptance by Dr Kimani on 2 Dec 2026, after the Digital Health
+# handover from Julia Njeri's acting period.
+PROFILE_AUTHOR_INSTANT = "2026-11-24 15:00:00"
+PROFILE_WITHDRAWAL_INSTANT = "2026-11-24 15:30:00"
+PROFILE_REVIEW_INSTANT = "2026-12-02 10:00:00"
 
 # --- §14.4 integrated Planning usage fixture --------------------------------
 ACTIVE_PLAN = "PLN-MOH-2027-001"
@@ -131,6 +143,31 @@ def _record_version(need: str) -> int:
 # --- §14.4 Planning usage ---------------------------------------------------
 
 
+_SAVED_USAGE_KEY = "kt_nds_profile_saved_usage"
+
+
+def _preserve_canonical_usage(revision: str) -> None:
+	"""The planning-usage and withdrawal profiles rewrite NDS-MOH-2027-0001's
+	usage projection in place. On a site seeded through Planning that row is
+	Planning's own canonical projection — found 26 Sep 2026: each profile
+	reset deleted it for good. Keep one copy, so the reset can put it back."""
+	if frappe.db.get_global(_SAVED_USAGE_KEY):
+		return
+	row = frappe.db.get_value("Need Planning Usage Projection", revision, "*", as_dict=True)
+	if row and row.get("fixture_namespace") != NS_USAGE:
+		frappe.db.set_global(_SAVED_USAGE_KEY, frappe.as_json(row))
+
+
+def _restore_canonical_usage() -> None:
+	saved = frappe.db.get_global(_SAVED_USAGE_KEY)
+	if not saved:
+		return
+	row = json.loads(saved)
+	frappe.db.delete("Need Planning Usage Projection", {"name": row["name"]})
+	frappe.get_doc({**row, "doctype": "Need Planning Usage Projection"}).db_insert()
+	frappe.db.set_global(_SAVED_USAGE_KEY, "")
+
+
 def apply_planning_usage() -> dict[str, Any]:
 	"""Project NDS-MOH-2027-0001 Revision 1 as Fully included in an Active Plan.
 
@@ -141,6 +178,7 @@ def apply_planning_usage() -> dict[str, Any]:
 	need = frappe.get_doc("Departmental Need", SUCCESSOR_NEED)
 	if not need.current_accepted_revision:
 		frappe.throw(f"{SUCCESSOR_NEED} has no accepted revision; apply the default profile first.")
+	_preserve_canonical_usage(need.current_accepted_revision)
 	with _as(base.PLANNER):
 		result = project_planning_usage(
 			departmental_need=need.name,
@@ -159,6 +197,7 @@ def reset_planning_usage() -> dict[str, Any]:
 		"Need Planning Usage Projection", filters={"fixture_namespace": NS_USAGE}, pluck="name"
 	)
 	frappe.db.delete("Need Planning Usage Projection", {"fixture_namespace": NS_USAGE})
+	_restore_canonical_usage()
 	return {"profile": "planning_usage", "removed": removed}
 
 
@@ -177,7 +216,7 @@ def apply_successor() -> dict[str, Any]:
 	if str(frappe.db.get_value("Departmental Need Revision", version_one, "required_by_date")) == SUCCESSOR_REQUIRED_BY:
 		return {"profile": "successor", "idempotent": True, "accepted_revision": version_one}
 	source = frappe.get_doc("Departmental Need Revision", version_one)
-	with _as(base.AUTHOR):
+	with _as(base.AUTHOR), clock.at(PROFILE_AUTHOR_INSTANT):
 		opened = lifecycle.create_accepted_need_successor(
 			need=need.name,
 			expected_version=_record_version(need.name),
@@ -200,7 +239,7 @@ def apply_successor() -> dict[str, Any]:
 			idempotency_key=key("successor", "submit", need.name, saved["record_version"]),
 		)
 	task, token = _open_task(need.name, "Successor acceptance")
-	with _as(base.REVIEWER):
+	with _as(base.REVIEWER), clock.at(PROFILE_REVIEW_INSTANT):
 		accepted = lifecycle.review_need(
 			need=need.name,
 			decision="accept",
@@ -236,6 +275,9 @@ def reset_successor() -> dict[str, Any]:
 	frappe.db.delete("Departmental Need Decision", {"need_revision": ("in", versions)})
 	frappe.db.delete("Departmental Need Review Task", {"need_revision": ("in", versions)})
 	frappe.db.delete("Need Planning Usage Projection", {"accepted_revision": ("in", versions)})
+	# Planning's position names the revision it is about; a successor removed
+	# here must not leave one pointing at it.
+	frappe.db.delete("Need Planning Intake Projection", {"need_revision": ("in", versions)})
 	frappe.db.delete("Departmental Need Revision", {"name": ("in", versions)})
 	frappe.db.set_value(
 		"Departmental Need Revision", original, "revision_status", "Accepted", update_modified=False
@@ -269,6 +311,7 @@ def apply_withdrawal(*, cleared: bool = False) -> dict[str, Any]:
 		frappe.throw(f"{need.name} is not Accepted for planning; apply the default profile first.")
 	if cleared:
 		reset_planning_usage()
+		_preserve_canonical_usage(need.current_accepted_revision)
 		with _as(base.PLANNER):
 			project_planning_usage(
 				departmental_need=need.name,
@@ -285,7 +328,7 @@ def apply_withdrawal(*, cleared: bool = False) -> dict[str, Any]:
 		"name",
 	)
 	if not existing:
-		with _as(base.AUTHOR):
+		with _as(base.AUTHOR), clock.at(PROFILE_WITHDRAWAL_INSTANT):
 			requested = lifecycle.request_withdrawal(
 				need=need.name,
 				expected_version=_record_version(need.name),

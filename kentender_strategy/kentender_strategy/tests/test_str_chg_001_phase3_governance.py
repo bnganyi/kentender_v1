@@ -21,6 +21,8 @@ from uuid import uuid4
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from kentender_strategy.tests.fixtures import pin_review_date
+
 from kentender_core.services import responsibility_administration as administration
 from kentender_core.services.business_role_registry import REGISTRY, SCOPE_SITE
 from kentender_core.services.responsibility_errors import ResponsibilityError
@@ -54,6 +56,7 @@ class TestGovernanceEnforcement(FrappeTestCase):
 	service must honour exactly the granted responsibility and nothing else."""
 
 	def setUp(self):
+		pin_review_date(self)
 		ensure_strategy_governance_roles()
 		self.suffix = uuid4().hex[:8]
 		self._cleanup: list[tuple[str, str]] = []

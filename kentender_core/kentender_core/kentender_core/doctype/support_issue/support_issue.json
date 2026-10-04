@@ -1,0 +1,209 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "Platform support issue (EVL-CHG-001 v0.4 plan D12, OD-B): one record per failed operation, assigned to the technical holder; never carries bid content or findings.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "issue_id",
+  "issue_key",
+  "module",
+  "operation",
+  "operation_correlation",
+  "reference_doctype",
+  "reference_name",
+  "subject",
+  "safe_detail",
+  "holder_role",
+  "holder_users_json",
+  "reported_by",
+  "status",
+  "opened_at",
+  "resolved_at",
+  "resolution_note",
+  "notification_state",
+  "notification_attempts",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "issue_id",
+   "fieldtype": "Data",
+   "label": "Issue ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "issue_key",
+   "fieldtype": "Data",
+   "label": "Issue key",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "module",
+   "fieldtype": "Data",
+   "label": "Module",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "operation",
+   "fieldtype": "Data",
+   "label": "Operation",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "operation_correlation",
+   "fieldtype": "Data",
+   "label": "Operation correlation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Data",
+   "label": "Reference doctype",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Data",
+   "label": "Reference name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "label": "Subject",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "safe_detail",
+   "fieldtype": "Small Text",
+   "label": "Safe detail",
+   "read_only": 1
+  },
+  {
+   "fieldname": "holder_role",
+   "fieldtype": "Data",
+   "label": "Holder role",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "holder_users_json",
+   "fieldtype": "Long Text",
+   "label": "Holder users json",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reported_by",
+   "fieldtype": "Link",
+   "label": "Reported by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Open\nResolved",
+   "reqd": 1
+  },
+  {
+   "fieldname": "opened_at",
+   "fieldtype": "Datetime",
+   "label": "Opened at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "resolved_at",
+   "fieldtype": "Datetime",
+   "label": "Resolved at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolution_note",
+   "fieldtype": "Small Text",
+   "label": "Resolution note",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notification_state",
+   "fieldtype": "Select",
+   "label": "Notification state",
+   "read_only": 1,
+   "options": "\nPending\nDelivered\nFailed"
+  },
+  {
+   "fieldname": "notification_attempts",
+   "fieldtype": "Int",
+   "label": "Notification attempts",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1,
+   "reqd": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-01 19:40:24.006221",
+ "modified_by": "Administrator",
+ "module": "Kentender Core",
+ "name": "Support Issue",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  },
+  {
+   "role": "Desk User",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:issue_id"
+}

@@ -16,6 +16,7 @@ from kentender_procurement.procurement_planning.services import (
 	dpp_lifecycle,
 	dpp_read,
 	dpp_validation,
+	my_work_provider,
 	needs_intake,
 )
 from kentender_procurement.procurement_planning.tests import fixtures as fx
@@ -81,16 +82,87 @@ class TestGetDepartmentalPlan(DppReadCase):
 		need_row = by_origin["Accepted Departmental Need"]
 		self.assertEqual(need_row["source_label"], "Accepted Need · NEED-PLNT-0001")
 		self.assertEqual(need_row["budget_line_display"], "Not selected")
-		self.assertEqual(need_row["amount_display"], "—")
-		self.assertEqual(need_row["status"], "Funding incomplete")
-		self.assertEqual(need_row["action"], "Complete")
+		# PLN-CHG-001 v1.23 §10.4 — the row says what it is to the department:
+		# "Not entered" reads as an outstanding input, "—" reads as nothing.
+		self.assertEqual(need_row["amount_display"], "Not entered")
+		self.assertEqual(need_row["status"], "Funding details needed")
+		self.assertEqual(need_row["reference_line"], "NEED-PLNT-0001 · Revision 1")
+		self.assertEqual(need_row["action"], "Enter funding details")
 		direct_row = by_origin["Direct departmental requirement"]
-		self.assertEqual(direct_row["status"], "Ready")
-		self.assertEqual(direct_row["action"], "Edit")
+		self.assertEqual(direct_row["status"], "Included")
+		self.assertEqual(direct_row["reference_line"], "Direct requirement")
+		# §10.4 — a direct requirement is the department's own record, so its
+		# action opens it for review rather than naming a funding gap.
+		self.assertEqual(direct_row["action"], "Review details")
 		self.assertEqual(result["totals_caption"], "2 requirements · KES 1,000,000 specified")
 		self.assertIn("Open until", result["context"]["window"]["display"])
 		self.assertFalse(result["can_submit"])
 		self.assertFalse(result["certification"]["show"])
+
+	def test_reading_a_draft_picks_up_a_need_accepted_after_it_was_opened(self):
+		"""§5.1 — the coverage boundary is established at command time, not a
+		browser timestamp. `open_departmental_plan`'s own "reused" branch and
+		`submit_departmental_plan` both re-sync a mutable Draft against the
+		Need register; a plain read (what the workspace's "Continue"/"Review"
+		cards route straight to, never back through `open_departmental_plan`)
+		was the one caller left out, so a Need accepted after the Draft was
+		first opened stayed invisible to both the Author funding it and the
+		Head of Department reviewing it, with no error and no indication
+		anything was missing (found live 22 Sep 2026)."""
+		opened = self.opened()
+		before = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		self.assertEqual(before["entries"], [])
+
+		patched = patch.object(needs_intake, "current_accepted_sources", return_value=[fx.accepted_source()])
+		patched.start()
+		self.addCleanup(patched.stop)
+		after = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		self.assertEqual(len(after["entries"]), 1)
+		self.assertEqual(after["entries"][0]["source_label"], "Accepted Need · NEED-PLNT-0001")
+		self.assertEqual(after["entries"][0]["status"], "Funding details needed")
+
+	def test_a_not_proceeding_need_offers_only_the_way_back_in(self):
+		"""§10.4 U03-EXCLUDED-ROW — an excluded entry's own Draft action is
+		always the way back in, whatever state the rest of the plan is in."""
+		self._sources.stop() if hasattr(self, "_sources") else None
+		patched = patch.object(needs_intake, "current_accepted_sources", return_value=[fx.accepted_source()])
+		patched.start()
+		self.addCleanup(patched.stop)
+		revision = patch.object(needs_intake, "current_accepted_revision_of", return_value=fx.NEED_V1)
+		revision.start()
+		self.addCleanup(revision.stop)
+		opened = self.opened()
+		entry_id = frappe.db.get_value(
+			"Departmental Plan Entry", {"dpp_version": opened["current_version"], "need": fx.NEED}, "entry_id",
+		)
+		frappe.set_user(fx.AUTHOR)
+		marked = dpp_lifecycle.set_need_planning_disposition(
+			dpp_version=opened["current_version"], entry_id=entry_id, disposition="Do not proceed",
+			reason="The department will defer this requirement to the following financial year.",
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		result = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		row = next(r for r in result["entries"] if r["entry_id"] == entry_id)
+		self.assertEqual(row["action"], "Include in this year's departmental plan")
+
+		# still Restore, not View, once a direct requirement makes the rest ready
+		frappe.set_user(fx.AUTHOR)
+		dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"], values=fx.direct_values(),
+			expected_record_version=marked["record_version"], idempotency_key=key(),
+		)
+		ready_read = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		self.assertTrue(ready_read["mutable"])
+		still_row = next(r for r in ready_read["entries"] if r["entry_id"] == entry_id)
+		self.assertEqual(still_row["action"], "Include in this year's departmental plan")
+		other_row = next(r for r in ready_read["entries"] if r["entry_id"] != entry_id)
+		self.assertEqual(other_row["action"], "Review details")
+
+		# a Planner reading the same Draft gets no action at all
+		frappe.set_user(fx.PLANNER)
+		planner_read = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		planner_row = next(r for r in planner_read["entries"] if r["entry_id"] == entry_id)
+		self.assertEqual(planner_row["action"], "")
 
 	def test_ready_plan_reads_as_des05_for_the_hod_only(self):
 		opened = self.opened()
@@ -133,8 +205,7 @@ class TestGetDepartmentalPlan(DppReadCase):
 			task=task.name,
 			issues=[{
 				"entry_id": added["entry_id"],
-				"problem": "Amount unsupported",
-				"correction": "Align the amount with the budget line.",
+				"correction_required": "Align the amount with the budget line.",
 			}],
 			task_token=task.task_token, idempotency_key=key(),
 		)
@@ -142,9 +213,85 @@ class TestGetDepartmentalPlan(DppReadCase):
 		result = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
 		self.assertTrue(result["has_returned_issues"])
 		row = next(r for r in result["entries"] if r["entry_id"] == added["entry_id"])
-		self.assertEqual(row["issues"][0]["problem"], "Amount unsupported")
 		self.assertEqual(
-			row["issues"][0]["correction"], "Align the amount with the budget line."
+			row["issues"][0]["correction_required"], "Align the amount with the budget line."
+		)
+
+	def test_returned_plan_surfaces_a_whole_plan_issue_separately(self):
+		opened = self.opened()
+		frappe.set_user(fx.AUTHOR)
+		added = dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"], values=fx.direct_values(),
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		frappe.set_user(fx.HOD)
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True,
+			expected_record_version=added["record_version"], idempotency_key=key(),
+		)
+		task = frappe.get_doc(
+			"Departmental Plan Validation Task", {"task_reference": submitted["task"]}
+		)
+		frappe.set_user(fx.PLANNER)
+		dpp_validation.return_departmental_plan(
+			task=task.name,
+			issues=[{"entry_id": "", "correction_required": "The submitted totals do not reconcile."}],
+			task_token=task.task_token, idempotency_key=key(),
+		)
+		frappe.set_user(fx.AUTHOR)
+		result = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		self.assertTrue(result["has_returned_issues"])
+		self.assertEqual(result["plan_issues"], [{"correction_required": "The submitted totals do not reconcile."}])
+		row = next(r for r in result["entries"] if r["entry_id"] == added["entry_id"])
+		self.assertEqual(row["issues"], [])
+
+	def test_a_historical_two_field_decision_still_reads_back_both_facts(self):
+		"""§4.4 is a coordinated payload amendment, not a rename: a decision
+		already recorded under the retired `{problem, correction}` shape is
+		never rewritten, and both facts of it keep showing distinctly."""
+		opened = self.opened()
+		frappe.set_user(fx.AUTHOR)
+		added = dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"], values=fx.direct_values(),
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		frappe.set_user(fx.HOD)
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True,
+			expected_record_version=added["record_version"], idempotency_key=key(),
+		)
+		task = frappe.get_doc(
+			"Departmental Plan Validation Task", {"task_reference": submitted["task"]}
+		)
+		frappe.set_user(fx.PLANNER)
+		import json as _json
+
+		frappe.get_doc(
+			{
+				"doctype": "Departmental Plan Validation Decision",
+				"decision_reference": "DEC-HIST-TEST-01",
+				"task": task.name,
+				"submission": task.submission,
+				"decision": "Return to department",
+				"issues": _json.dumps([
+					{"entry_id": added["entry_id"], "problem": "Amount unsupported", "correction": "Align the amount with the budget line."}
+				]),
+				"actor": fx.PLANNER,
+				"authority_snapshot": "{}",
+				"decided_at": frappe.utils.now_datetime(),
+				"command_idempotency_key": key(),
+			}
+		).insert(ignore_permissions=True)
+		frappe.db.set_value("Departmental Plan Validation Task", task.name, "status", "Completed", update_modified=False)
+		frappe.db.set_value(
+			"Departmental Plan Version", opened["current_version"], "returned_from_submission", task.submission, update_modified=False,
+		)
+		frappe.set_user(fx.AUTHOR)
+		result = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		row = next(r for r in result["entries"] if r["entry_id"] == added["entry_id"])
+		self.assertEqual(
+			row["issues"][0],
+			{"problem": "Amount unsupported", "correction": "Align the amount with the budget line."},
 		)
 
 	def test_out_of_scope_actor_gets_not_found(self):
@@ -200,6 +347,30 @@ class TestEntryEditorRead(DppReadCase):
 		self.assertNotIn("entry", result)
 		self.assertTrue(any(u["id"] == fx.UNIT for u in result["units"]))
 		self.assertEqual(len(result["budget_lines"]), 1)
+
+	def test_reading_the_editor_picks_up_a_need_accepted_after_the_draft_was_opened(self):
+		"""Same read-path gap as `get_departmental_plan`
+		(test_reading_a_draft_picks_up_a_need_accepted_after_it_was_opened,
+		found live 22 Sep 2026): the editor is what a workspace card
+		deep-links an Author straight into to fund a Need, so it must sync
+		itself rather than 404 on a legitimate entry accepted after the
+		Draft was last opened. Nothing else in this test touches the plan
+		between opening it empty and reading the editor, so the sync can
+		only have come from `get_dpp_entry_editor` itself."""
+		opened = self.opened()
+		patched = patch.object(needs_intake, "current_accepted_sources", return_value=[fx.accepted_source()])
+		patched.start()
+		self.addCleanup(patched.stop)
+		frappe.set_user(fx.AUTHOR)
+
+		dpp_read.get_dpp_entry_editor(dpp_reference=opened["dpp_reference"])
+		entry_id = frappe.db.get_value(
+			"Departmental Plan Entry", {"dpp_version": opened["current_version"], "need": fx.NEED}, "entry_id",
+		)
+		self.assertIsNotNone(entry_id, "the editor's own read should have synced the accepted Need in")
+
+		result = dpp_read.get_dpp_entry_editor(dpp_reference=opened["dpp_reference"], entry_id=entry_id)
+		self.assertEqual(result["entry"]["entry_id"], entry_id)
 
 	def test_planner_cannot_open_the_editor(self):
 		opened = self.opened()
@@ -282,11 +453,26 @@ class TestAcceptedPlanUpdate(DppReadCase):
 		self.assertEqual(view["header"]["badge"], "Accepted")
 		self.assertFalse(view["mutable"])
 		self.assertTrue(view["can_create_update"])
-		self.assertIsNone(view["update_notice"])
+		# nothing missing from it, so the plan is simply done
+		self.assertEqual(view["next_step"]["kind"], "done")
 		frappe.set_user(fx.HOD)
 		self.assertTrue(dpp_read.get_departmental_plan(dpp_reference=reference)["can_create_update"])
 		frappe.set_user(fx.PLANNER)
 		self.assertFalse(dpp_read.get_departmental_plan(dpp_reference=reference)["can_create_update"])
+
+	def test_several_later_needs_are_named_in_the_plural(self):
+		reference = self.accepted()
+		sources = [fx.accepted_source(), fx.accepted_source("NEED-PLNT-0002", version="NEED-PLNT-0002-V1")]
+		patched = patch.object(needs_intake, "current_accepted_sources", return_value=sources)
+		patched.start()
+		self.addCleanup(patched.stop)
+		frappe.set_user(fx.AUTHOR)
+		# Owner decision 26 Sep 2026 — the next step names them (it replaced
+		# the separate "accepted needs are not in this plan" notice).
+		step = dpp_read.get_departmental_plan(dpp_reference=reference)["next_step"]
+		self.assertEqual(step["headline"], "Add NEED-PLNT-0001 and NEED-PLNT-0002 to this plan")
+		self.assertIn("They were accepted after this plan was accepted.", step["sentence"])
+		self.assertIn("to add them", step["sentence"])
 
 	def test_a_need_accepted_later_is_named_and_the_update_carries_it(self):
 		reference = self.accepted()
@@ -295,8 +481,25 @@ class TestAcceptedPlanUpdate(DppReadCase):
 		self.addCleanup(patched.stop)
 		frappe.set_user(fx.AUTHOR)
 		view = dpp_read.get_departmental_plan(dpp_reference=reference)
-		self.assertEqual(view["update_notice"]["title"], "1 accepted need is not in this plan")
-		self.assertIn("NEED-PLNT-0001", view["update_notice"]["text"])
+		self.assertEqual(view["next_step"]["kind"], "your_turn")
+		self.assertEqual(view["next_step"]["primary_action"], "create_update")
+		self.assertEqual(view["next_step"]["headline"], "Add NEED-PLNT-0001 to this plan")
+		self.assertIn("It was accepted after this plan was accepted.", view["next_step"]["sentence"])
+		self.assertNotIn("update_notice", view)
+
+		# The department is told in My Work, not only on a page it has to think
+		# to open (found live 25 Sep 2026: a Need accepted after its plan was
+		# accepted looked stranded). Same rule as the page's Create update.
+		def update_rows(user):
+			return [r for r in my_work_provider.my_work_rows(user=user)["assigned"] if r["task_type"] == "planning.dpp_update_required"]
+
+		for user in (fx.AUTHOR, fx.HOD):
+			rows = [r for r in update_rows(user) if r["reference"] == reference]
+			self.assertEqual(len(rows), 1, user)
+			self.assertEqual(rows[0]["route"], ["departmental-procurement-plan", reference])
+			self.assertEqual(rows[0]["action_label"], "Create update")
+			self.assertEqual(rows[0]["stage"], "NEED-PLNT-0001 not in plan")
+		self.assertEqual([r for r in update_rows(fx.PLANNER) if r["reference"] == reference], [])
 
 		update = dpp_lifecycle.create_departmental_plan_update(
 			departmental_plan=reference, expected_record_version=view["record_version"], idempotency_key=key(),
@@ -304,7 +507,8 @@ class TestAcceptedPlanUpdate(DppReadCase):
 		self.assertEqual(update["action"], "update_created")
 		after = dpp_read.get_departmental_plan(dpp_reference=reference)
 		self.assertFalse(after["can_create_update"])
-		self.assertIsNone(after["update_notice"])
+		self.assertNotEqual(after["next_step"]["primary_action"], "create_update")
+		self.assertEqual([r for r in update_rows(fx.AUTHOR) if r["reference"] == reference], [])
 		self.assertTrue(after["mutable"])
 		# the window gates only a first submission (§5.1) — say so on the update
 		fx.close_test_intake()
@@ -315,7 +519,12 @@ class TestAcceptedPlanUpdate(DppReadCase):
 		)
 		self.assertEqual(after["version"]["version_number"], 2)
 		self.assertIn("Accepted Need · NEED-PLNT-0001", [row["source_label"] for row in after["entries"]])
-		self.assertEqual(after["header"]["badge"], "Draft")
+		# PLN-CHG-001 v1.18 §5.1.1 — acceptance is never replaced by the candidate's state
+		self.assertEqual(after["header"]["badge"], "Accepted — update in progress")
+		self.assertEqual(after["display_state"], "Accepted — update in progress")
+		self.assertEqual(after["current_state"], "Draft")
+		self.assertEqual(after["accepted_submission_number"], 1)
+		self.assertEqual(after["candidate_submission_number"], 2)
 
 
 class TestValidationTaskRead(DppReadCase):
@@ -364,9 +573,32 @@ class TestValidationTaskRead(DppReadCase):
 		self.assertEqual(result["context"]["total_display"], "KES 1,000,000")
 		self.assertEqual(result["header"]["badge"], "Awaiting validation")
 		self.assertIn("Certified by", result["certification"]["signed_line"])
-		self.assertIn("Goods", result["requirement_types"])
+		# PLN-CHG-001 v1.23 §4.4 — the catalogue carries the category the server
+		# derives, so U06 can show it beside the selector without guessing.
+		self.assertIn(
+			{"requirement_type": "Goods", "procurement_category": "Goods"}, result["requirement_types"]
+		)
+		self.assertIn(
+			{"requirement_type": "Non-consulting services", "procurement_category": "Services"},
+			result["requirement_types"],
+		)
 		self.assertFalse(result["maker_checker_blocked"])
 		self.assertEqual(result["task_token"], task.task_token)
+
+	def test_the_summary_strip_and_budget_line_carry_a_name_not_just_a_code(self):
+		"""§10.5 — U06's own DppValidationScreen.vue reads these three facts
+		from `context`, not from a separate `summary` key the read never
+		sent (found live 22 Sep 2026: the three labels rendered with nothing
+		beside them). The budget line reads name-then-code, per the artboard
+		("Test line · BL-PLNT-0001"), never the bare code alone."""
+		task, _ = self.submitted_task()
+		frappe.set_user(fx.PLANNER)
+		result = dpp_read.get_dpp_validation_task(task=task.name)
+		self.assertEqual(result["context"]["included_requirements"], 1)
+		self.assertEqual(result["context"]["included_cost_display"], "KES 1,000,000")
+		self.assertEqual(result["context"]["excluded_requirements"], 0)
+		self.assertNotIn("summary", result)
+		self.assertEqual(result["entries"][0]["budget_line_display"], f"Test line · {fx.BUDGET_LINE_REF}")
 
 	def test_the_certifier_is_flagged_maker_checker_blocked(self):
 		task, _ = self.submitted_task()
@@ -394,6 +626,29 @@ class TestValidationTaskRead(DppReadCase):
 		)
 		result = dpp_read.get_dpp_validation_task(task=own_task.name)
 		self.assertTrue(result["maker_checker_blocked"])
+		# PLN v1.27 §10.5 U06-SEGREGATION — Waiting, naming the other
+		# Planners who can review it (never the certifier), since submission.
+		step = result["next_step"]
+		self.assertEqual(step["kind"], "waiting")
+		self.assertEqual(step["headline"], "Waiting for Procurement review by another Procurement Planner")
+		planner_name = frappe.db.get_value("User", fx.PLANNER, "full_name")
+		hybrid_name = frappe.db.get_value("User", fx.HYBRID, "full_name")
+		self.assertIn(planner_name, step["holder"]["people"])
+		self.assertNotIn(hybrid_name, step["holder"]["people"])
+		self.assertTrue(step["since"]["display"].endswith("EAT"))
+
+	def test_the_review_supplies_its_own_wording_for_an_unclassified_requirement(self):
+		"""§10.5 U06-CLASSIFICATION-MISSING — the count depends on the
+		Planner's unsaved choices, so the read supplies the words and the
+		screen only fills in the number."""
+		task, _ = self.submitted_task()
+		frappe.set_user(fx.PLANNER)
+		result = dpp_read.get_dpp_validation_task(task=task.name)
+		self.assertEqual(result["next_step"]["headline"], "Classify every included requirement, then accept or return the submission")
+		self.assertEqual(result["classification_prompt"], {
+			"one": "Select the requirement type for 1 requirement, then accept",
+			"many": "Select the requirement type for {count} requirements, then accept",
+		})
 
 	def test_non_planner_gets_not_found(self):
 		task, _ = self.submitted_task()

@@ -1,63 +1,79 @@
-# REQ-CHG-001 v1.6 — Gap analysis against the live repository
+# REQ-CHG-001 v1.11 — gap analysis (current code against the approved spec)
 
 | Control | Value |
 |---|---|
-| Authority | `KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_6.md` (approved 4 September 2026; supersedes v1.5, v1.4, v1.3 (withdrawn) and v1.2 in full) |
-| Companions | `03_REQ_Implementation_Plan.md`, `IMPLEMENTATION_TRACKER.md`, `FOLLOW_UPS.md` |
-| Prepared | 6 September 2026, from a direct read of every file named below (no inference rows) |
-| Predecessor | None — no Requisitions cycle has run; v1.2 was approved on 28 August 2026 but never built |
+| Authority | `KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_11.md` (approved 24 September 2026) |
+| Design authority | `design/Requisitions - Design Board v2.dc.html` (owner-updated 24 September 2026). The older `Requisitions - Design Board.dc.html` in the same folder is the superseded v1.9 board and is not an authority. |
+| Code inspected | `kentender_procurement/procurement_requisitions/`, `public/js/procurement_requisitions/`, `tests/ui/smoke/requisitions/`, the Planning, Budget and Tenders seams |
+| Prepared | 24 September 2026 |
+| Supersedes | The v1.6 gap analysis (greenfield baseline, 6 September 2026) |
 
 ## 1. What the code implements today
 
-**Nothing.** There is no `procurement_requisitions` module, doctype, Page, route, service, seed or test in any `kentender_*` app. Every REQ-CHG-001 name (`PrepareITEquipmentRequisition`, `AuthorisedRequisitionHandoff`, `PlanItemCorrectionRequest`, `RecordHandoffConsumption`, `REQ_*` error codes, `IT-EQUIPMENT-OPEN-V1`) occurs only in `docs/`. The slug `procurement-requisitions` collides with no Page, Workspace or DocType (57 Pages and every `Procurement *` DocType checked).
+The module was built for v1.6 (6–7 September 2026), then patched toward v1.8. The v1.9 spec landed in commit `a91e6706` but was never built.
 
-The only traces of the module are:
+- **Backend.** About 506 KB of Python:
+  - 16 doctypes;
+  - 21 service modules;
+  - an explicit-signature `api.py` with 34 endpoints;
+  - 184 Python tests in 19 modules;
+  - a canonical seed and a Playwright world on FY 2099-2100.
+- **UI.**
+  - One Desk Page, `procurement-requisitions`, registered through `kentender_core.desk_page.register` with the shared rail. This is correct under AGENTS.md §6.1.
+  - One root `ProcurementRequisitions.vue` using `useRouteState`, `createScreenCache` and `createSequenceGuard`. All six §12 routes are handled.
+  - 21 components built around a **five-step editor** (StepDrawdown, StepItems, StepTechnical, StepServicesAcceptance, StepReview).
+  - 141 vitest cases.
+  - 10 Playwright specs (32 tests).
+- **Fidelity.** `requisitions-fidelity.spec.ts` points at `REQ-CHG-001 Artboards.dc.html`, which no longer exists, and compares text landmarks only. There is no structural comparison, no departures registry, and the module is not in `make ui-structure-gate`.
 
-- v1.2-era role names in `kentender_procurement/kentender_procurement/setup/procurement_home_page.py:78-85` (`Requisitioner`, `Requester`, `Business Approver`, `Department Approver`, `Designated Approver`, `Procurement Approval Authority`) with a comment deferring their rename to the approved REQ document, plus the legacy `requisitioner@moh.test` user in `kentender_core/kentender_core/seeds/constants.py:20-32` and passive `Requisitioner` rows in ~14 Page/Workspace fixtures.
-- `kentender_core/kentender_core/services/business_role_registry.py:34-37` deliberately omits `Head of Procurement Function` ("registered in the cutover slice of the document that owns it") — this cycle is that slice.
-- Cosmetic strings in the retired STD Configuration module (`std_manifest.py:88` "Requisition Requirements Composer", `std_cfg_output_mapping.json:68`) — retired surface, untouched.
+## 2. Keep (proven, spec-conformant mechanics)
 
-## 2. What exists upstream and downstream for this module to consume
+| Asset | Why it stays |
+|---|---|
+| `services/envelope.py` | Idempotency journal, row lock, record_version, a savepoint `atomic()` that re-raises. |
+| `services/requisition_authorization.py` + hooks | The EXISTS-over-contributing-units predicate. Both permission hooks are registered for five doctypes. |
+| `services/catalogue.py` | All 25 §6.3 characteristics and seven control types. Extended here, not replaced. |
+| `services/digest.py`, `restrictive_terms.py`, `technical_read.py`, `references.py`, `events.py`, `files.py` | No v1.11 defect. |
+| Page controller, bundle entry, root routing, `req_shared/` adapters | Already follow AGENTS.md §6.1 and §6.4. |
 
-| Contract | Where | State |
-|---|---|---|
-| `GetRequisitionEligiblePlanItem.v2` | `procurement_planning/services/plan_requisition.py:67`, whitelisted at `procurement_planning/api.py:356` | Live, tested (`test_plan_requisition.py`, 466 lines), caller-less. Returns plan/version/item ids, `fiscal_year`, `requirement_type`, `procurement_category`, `procurement_method`, `strategic_objective`, `objective_path`, planned/forecast dates, funding references and state, total/remaining quantity and value, `sources[]` per `plan_source_allocation_id` (origin, dpp_entry, need, organisation_unit, title, description, expected_operational_result, approved/remaining quantity, unit, required_by_date, budget_line, allocated/remaining amount), `evaluated_at`. **Missing vs REQ §5.1/§5A and PLN §4.14:** `reservation_category`, `lotting_indicator`, `plan_horizon`, `multi_year_justification` (all present on `Annual Plan Item`), a `contributing_org_unit_ids` aggregate, `currency`, award-package count, per-source `source_line_id` / `plan_item_line_id`. Read gate is Procurement Planner / Auditor only. |
-| `record_requisition_drawdown` / `reverse_requisition_drawdown` | `plan_requisition.py:174, 270` | Live, tested. Two-phase lock-then-insert on `Plan Drawdown Reference` (one per `requesting_org_unit`), idempotent through `Planning Command Journal`. Gated `require_technical` (System Manager) — Planning FU-07 names the Requisitions module as the closer. Spec names them `AuthoriseRequisitionDrawdown` / `ReverseRequisitionDrawdown`. |
-| Planning identifiers | `plan_source_allocation.json`, `annual_plan_item.json` | There is no "Plan Item Line"; the line grain is `Plan Source Allocation.allocation_id`. `source_line_id` exists only inside DPP submission snapshots (`dpp_lifecycle.py:455`: need id, else entry id). |
-| `PlanItemCorrectionRequest` inbound | — | Does not exist. Inbound-only precedent: `procurement_planning/services/schedule.py:390 record_tender_milestone_actual`. |
-| `check_funding` / `reserve_funding` | `kentender_budget/kentender_budget/services/budget_check_reserve_contracts.py:76, 171`; whitelisted in `api/budget_api.py` | Live, tested (`test_bud_chg_001_phase3_check_reserve.py`), **zero production callers** (Planning's gateway is forbidden from importing them by `test_gateway_contracts.py:49` and `test_planning_v12_schema.py:174-178`). Token TTL 300 s; idempotent by `correlation_id = idempotency_key`; lines locked in stable order; errors `BUDGET_CHECK_STALE`, `BUDGET_INSUFFICIENT_FUNDS`, `BUDGET_RESERVATION_CONFLICT`, `BUDGET_LINE_NOT_ELIGIBLE`. **Blockers:** `_require_finance_capability()` (line 31) admits only Finance Confirmation Officer; `calling_module` hard-coded "Procurement Planning" (line 157); `finance_task` is a required Planning-era argument; `Funding Reservation.plan_source_allocation` is `unique` (`funding_reservation.json:98`), so an allocation can hold one reservation ever — revoke-then-correct and a later Requisition on the same allocation are impossible. |
-| `release_reservation` | `kentender_budget/kentender_budget/services/budget_commitment_contracts.py:119` | Live; `amount=None` releases the remainder; idempotent replay on Released. Usable as-is for revocation. |
-| Reservation record | `Funding Reservation` (`autoname: hash`; `generated_reference` `RSV-{SITE}-####`, `plan_item` Data, `plan_source_allocation` Data unique, `correlation_id`, `fixture_namespace`) | No requisition reference column; traceability is by `correlation_id`. |
-| Tender Preparation consumer | `tender_configurations/services/eligibility.py:33` (`return []`, "empty until MVP-1 Plan Item handoff"), `create_configuration.py:15` (`TCFG_PACKAGE_RETIRED`) | Stubbed; TPR-CHG-001 v0.5 is not built. TPR §6.4 accepts handoff "v1.2 or its corrected successor"; §7.3 lists the snapshot rows it stores. |
-| Reservation-category vocabulary | `kentender_core/kentender_core/seeds/site_setup.py:94-105` (10 governed values) vs `tender_configurations/services/tds.py:43-49` (legacy 5 values, different casing) | REQ §5A requires one list shared with Tender Preparation; none is published today. STD-TPL-001 v0.4 §6.1 renders `None`, `Youth`, `Women`, `Persons with disabilities`, `Other disadvantaged group`. |
-| Outbox | `departmental_needs/services/events.py` + `Departmental Need Event` | The only transactional-outbox precedent (publish inside the transaction, `consume_events`, `acknowledge`). No core outbox. |
-| Location master | — | None in KenTender. Needs forbids `delivery_location` fields (`test_departmental_needs_static_scan.py:64-68`). ERPNext `Location` (assets tree) is the only doctype of that name. |
-| Private-file digest / scan | — | None. `Typed Attachment` (core) has no digest; `tender_management/services/planning_tender_handoff_audit.py` has the sha256 idiom. No malware scanner in the bench. |
-| Authorisation | `kentender_core/kentender_core/services/authorization.py` (`require_responsibility`, `authorise_record`, `permitted_ou_scopes`, `assignment_snapshot`, hook targets), `business_role_registry.py`, `responsibility_errors.py` | Live and used by Strategy, Budget, Needs, Planning. Registered roles this module needs: Departmental Author (OU), Head of User Department (OU), Procurement Planner (Site-wide), Auditor (Site-wide). **Not registered:** Head of Procurement Function. |
-| Vue-in-Desk runtime | `kentender_core/kentender_core/public/js/kt_desk_page.js` (`register`, `useRoute`, `createScreenCache`, `ownsRoute`), `kt_industry_page_rail.bundle.js`, `kt_industry_tokens.css` | Live; Planning is the reference consumer (`procurement_planning_page.js`, `ProcurementPlanning.vue`, `pln_shared/`). |
-| Seed world | `kentender_core/kentender_core/seeds/site_setup.py`, `seeds/canonical.py` (`STAGES = site, strategy, budget`) | Grace Wanjiku (Departmental Author DHI + HRMD, HoD HRMD), Dr Peter Kimani (HoD HRMD + DHI), Naomi Chebet (Auditor), FY 2027-2028, UOM `Each`, `MOH-BL-HWD-2027` (KES 60,000,000, Entity-wide) exist. **Charles Mutiso does not exist** (no user, no assignment). The Afya House delivery location does not exist. Needs and Planning are not canonical stages; the Planning legacy seed forms the combined laptops item with a server-issued id (`PPI-MOH-2027-001/-002` observed, Budget FU-10), not the documented `-033`. `canonical.validate` asserts `count("Funding Reservation") == 0` and `collect_non_canonical` deletes every reservation. |
-| Playwright / vitest / gates | `tests/ui/smoke/planning/*`, `tests/ui/helpers/designFidelity.ts`, `vitest.config.ts`, `Makefile` `ui-planning-*-gate` | Live patterns. `globalTeardown.ts` restores Planning only; `purge_kentender_playwright_data` has no requisitions branch; the fidelity helper opens one artboard file per screen, whereas REQ ships one file with 11 `<sc-if>` artboards. |
+## 3. Gaps by concept
 
-## 3. What the specification requires, by concern
-
-| Concern | Today | REQ v1.6 | Owning phase |
+| Concept (v1.11) | State | Evidence | Required change |
 |---|---|---|---|
-| Module, doctypes, hooks, navigation | none | root/version/package/package-version + five row tables, task, decision, handoff, journal, event; `modules.txt`; `kentender_scope_map`, permission hooks; sidebar + workspace-permission entries; one Page `procurement-requisitions` | 1 |
-| Roles | HoPF unregistered; v1.2 names in landing gate | Departmental Author, Head of User Department (OU); Head of Procurement Function, Procurement Planner, Procurement Officer, Auditor (Site-wide); Charles Mutiso seeded | 1 |
-| Planning projection | eight fields missing | §5.1 fields, `contributing_org_unit_ids`, `source_line_id`/`plan_item_line_id`; Requisitions read gate; HoPF drawdown gate | 1 |
-| Budget reservation | caller-blocked, unique allocation | HoPF caller, `calling_module`/`caller_reference`, optional `finance_task`, one non-Released reservation per allocation | 1 |
-| Delivery location | none | core `Delivery Location` master, Afya House seeded | 1 |
-| Category list | two divergent lists | `TENDER_RENDERABLE_RESERVATION_CATEGORIES` in core | 1 |
-| Catalogue, validation, digest, files, compatibility | none | §6.3 catalogue, §6.4 baselines, §6.5 findings/steps, §5A tests, canonical digests, file checks | 2 |
-| Commands and reads | none | §10.1 seven reads, §10.2 twenty-three commands, §11 sixteen codes, outbox event, handoff v1.3, consumption inbound | 2 |
-| Screens | none | REQ-DES-01..10 + §13.13 dialogs, six routes under one Page | 3 |
-| Seed | none | §16 six lifecycle fixtures + stopped version + correction request, idempotent, command-driven | 4 |
-| Evidence | none | §18.3 pack | 5 |
+| Three visible tasks over five validation groups (§6.1) | Absent | `validation.py:217-231` five steps; `ProcurementRequisitions.vue:414` five labels | Reads roll the groups up into three task statuses. The UI is re-ported. |
+| Grouped standard package `LAPTOP-REQUIREMENTS-V1` (§5.5, §6.4) | Absent | `draft_commands.py:384-432` auto-creates baseline rows per item; `confirm_proposed_requirement` confirms one row at a time (`:462-508`) | `ApplySelectedRequirementPackage`, `SaveRequirementProposalDraft`, Reset standard values; `row_state` on technical and acceptance rows; `standard_profile_key/version`; `standard_package_review_state`. |
+| Same-specification items (§5.6, §10.2) | Absent | Items are added one at a time | `AddSameSpecificationItems`, `UpdateSharedItemDetails`, both atomic, plus `REQ_BATCH_ITEM_INVALID`. |
+| Exact Money/Quantity (§5.14) | Absent | Drawdown quantity and value are Float/Currency; `flt()` at `draft_commands.py:156,256-260`, `read.py:41,184,302,546`; `1e-6` tolerances in `authorise.py:99` and `validation.py:108,139` | Store exact decimal strings; add `precision.py`; add the `REQ_MONEY_/QUANTITY_PRECISION_INVALID` codes. |
+| Single atomic authorisation (§7.2, §9.1A) | Partial | Budget and Planning calls commit before REQ writes (`authorise.py:7-16`); Planning is called once per unit (`:121-135`); revoke reads `Plan Drawdown Reference` directly (`:210`) | One transaction with no inner owner commits, one Planning call for every line, reversal through Planning's published service. |
+| Shared-line funding + one reservation per drawdown line (§9.1A) | Partial (Budget side) | `check_funding` checks each row separately (`budget_check_reserve_contracts.py:~136-140`); reservations are keyed per allocation | Budget totals by line and reserves per drawdown line. |
+| Nine compatibility checks (§5A) | Partial (6/9) | `compatibility.py:42-53`; the accepted list contains "Other disadvantaged group"; horizon is deliberately skipped (`:9`) | Add the rule snapshot, County, Open Tender and Single year checks; limit categories to the four base ones; add `REQ_RESERVATION_RULE_UNAVAILABLE`. |
+| Planning projection facts (§9.1) | Partial | `plan_requisition.py:120` has no plan_item_version, County, rule snapshots, scope lock or hold evidence; numbers are floats | Planning publishes them (closes PLN FU-V125-03). |
+| Lead change as return + recertification (§7.3A) | Wrong model | `lifecycle.py:409-435` changes the lead in place | `ChangeRequisitionLeadDepartment` returns and copies; `certified_lead_org_unit_id` frozen per Version. |
+| Return affected section (§5.11) | Absent | Decision has only `return_reason` | `affected_section` Select; the copied Draft opens at that section. |
+| Upstream correction (§7.4A–B, §9.1B) | Partial | The request does not close tasks; Planning calls `receive_plan_item_correction_outcome` directly (`plan_requisition.py:682,731`) with no event identity or ordering | `PlanItemCorrectionOutcome.v1`, `RecordPlanItemCorrectionOutcome`, outcome projection, `PrepareRequisitionAfterPlanCorrection`, `CreateRequisitionCorrectionDraft`, `GetStoppedRequisition`. |
+| Handoff consumption guard (§9.2, §5.13) | Partial | `record_handoff_consumption` does not recheck Authorised; `release_handoff_consumption` exists; Tenders reads REQ tables directly (`tenders/services/handoff_gateway.py:45-61`, `correction.py:74`) | Guarded consumption with `REQ_HANDOFF_CONFLICT`; release removed; handoff v1.4 (owner D4). |
+| Error set (§11) | Partial | 12 codes missing; `REQ_PLAN_ITEM_SCOPE_LOCKED`/`REQ_PLAN_ITEM_HELD` extra | Exact §11 set; pass `PLN_ITEM_*` through unchanged. |
+| Lineage fields (§5.1) | Partial | Missing `strategic_objective_id`, `plan_item_version_id`, rule snapshots, County, `prior_requisition_id`, `planning_correction_request_id` | Add them. `multi_year_justification` becomes history only. |
+| UI v2 board (§13) | Absent | Every component cites v1.6 DES numbering; the classes used omit `kt-meta-row`, `kt-notice`, `kt-timeline` and most `kt-disclosure` | Full re-port, module by module, class-for-class. |
 
-## 4. Facts that shape the design
+## 4. Cross-module callers affected
 
-1. Planning issues **one `Plan Drawdown Reference` per requesting Organisation Unit**, so a two-department Requisition records two drawdown references; the spec's single `planning_drawdown_reference` is projected as a list.
-2. Budget creates **one reservation per source allocation** (BUD §8.2A step 5); with two drawdown lines the authorised fixture carries two reservations (`RSV-MOH-2027-033-001/-002` in REQ §16.4), not the one SEED-001 §4.3 names.
-3. `record_requisition_drawdown` documents that it cannot rely on `frappe.handler` rollback for direct Python callers and locks-then-inserts explicitly; Requisition authorisation must give the same guarantee to seeds and tests (savepoint).
-4. Child rows cannot be Frappe Link targets; `applies_to` and `linked_requirement_ids` must be modelled as stable-id references validated server-side.
-5. The artboards define the Forbidden copy, the six common-state messages and every label; the single `.dc.html` carries all eleven artboards under `<sc-if value="{{ is.desNN }}">` blocks.
+- **Tenders:**
+  - `tenders/services/handoff_gateway.py:21-92`
+  - `draft_commands.py:138`
+  - `correction.py:59,74,130`
+  - `serializer.py:29,133,138,275`
+  - `seeds/kentender_mvp_v1.py:134,319-373`
+  - `seeds/playwright_ui_fixtures.py:30`
+  - `tests/fixtures.py`
+  - `tests/test_gateway_contracts.py`
+- **Planning:** `procurement_planning/services/plan_requisition.py:682,731`.
+- **Core seeds:**
+  - `kentender_core/seeds/canonical.py:49,367,482,561,734,825`
+  - `seeds/kentender_mvp_v1/{clear,orchestrator,validate}.py`
+- **Hooks** (`kentender_procurement/hooks.py`): permission hooks `:386-401`, My Work `:575`, technical read `:586,594`, page and CSS `:73,231`.
+- **UI tests:**
+  - `tests/ui/smoke/requisitions/*`
+  - `tests/ui/globalTeardown.ts:23`
+  - `tests/ui/smoke/core/technical-read.spec.ts`
+- **Informational gate:** `kentender_core/tests/test_artboard_provenance_gate.py:141` names the Requisitions board provenance finding.

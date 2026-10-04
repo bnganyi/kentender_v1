@@ -1,161 +1,127 @@
-<!-- REQ-DES-06's "Add supporting material" dialog (§5.10). Not in the
-     artboard file itself, same as ItemDialog.vue — built on
-     kt_industry_tokens.css's shared .kt-dialog chrome. The file picker
-     itself uses frappe.ui.FileUploader — the same precedent
-     BudgetVersionEditorScreen.vue already established for a metadata dialog
-     that needs a real OS file-open dialog, which no Vue-owned control can
-     replace; the metadata form around it stays a proper in-Vue dialog
-     (AGENTS.md §6.3). §5.10: a supporting file can never be the only
-     statement of an obligation — Forms-part-of-requirement requires at
-     least one linked structured row, checked again server-side. -->
+<!-- Add supporting material (REQ-DES-05 "Add supporting material"). Not
+     drawn on the board; built from the shared dialog and field primitives.
+     The file is uploaded as a private File first; the server then checks its
+     type, size, readability and digest before recording the row. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="req-material-dialog" @keydown.esc="$emit('cancel')">
-		<div class="kt-dialog" role="dialog" aria-modal="true" ref="dialogEl" tabindex="-1">
-			<div class="kt-dialog-title">Add supporting material</div>
-
+	<DialogFrame title="Add supporting material" :width="520" :busy="busy || uploading" testid="req-material-dialog" @close="$emit('close')">
+		<p class="req-dialog-body kt-muted">Files may support a structured requirement but cannot replace it.</p>
+		<div class="kt-field">
+			<label :for="`${id}-file`">File</label>
+			<input :id="`${id}-file`" type="file" class="kt-input" :class="{ 'is-invalid': uploadError }" data-testid="req-material-file" @change="pick" />
+			<span v-if="uploadError" class="req-field-error">{{ uploadError }}</span>
+		</div>
+		<div class="req-grid-2-tight">
 			<div class="kt-field">
-				<label for="mat-title">Title</label>
-				<input id="mat-title" class="kt-input" maxlength="160" :value="fields.title" @input="fields.title = $event.target.value" />
-				<p v-if="errors.title" class="req-field-error">{{ errors.title }}</p>
+				<label :for="`${id}-title`">Title</label>
+				<input :id="`${id}-title`" v-model="form.title" class="kt-input" :class="{ 'is-invalid': fieldError('title') }" data-testid="req-material-title" />
+				<span v-if="fieldError('title')" class="req-field-error">{{ fieldError("title") }}</span>
 			</div>
-
 			<div class="kt-field">
-				<label for="mat-type">Document type</label>
-				<select id="mat-type" class="kt-input" v-model="fields.document_type">
-					<option value="" disabled>Select a type</option>
-					<option v-for="t in materialTypes" :key="t" :value="t">{{ t }}</option>
+				<label :for="`${id}-version`">Document version</label>
+				<input :id="`${id}-version`" v-model="form.document_version" class="kt-input" :class="{ 'is-invalid': fieldError('document_version') }" />
+				<span v-if="fieldError('document_version')" class="req-field-error">{{ fieldError("document_version") }}</span>
+			</div>
+			<div class="kt-field">
+				<label :for="`${id}-type`">Document type</label>
+				<select :id="`${id}-type`" v-model="form.document_type" class="kt-input" :class="{ 'is-invalid': fieldError('document_type') }">
+					<option value="">Select a type</option>
+					<option v-for="t in (view.catalogue || {}).material_types || []" :key="t" :value="t">{{ t }}</option>
 				</select>
-				<p v-if="errors.document_type" class="req-field-error">{{ errors.document_type }}</p>
+				<span v-if="fieldError('document_type')" class="req-field-error">{{ fieldError("document_type") }}</span>
 			</div>
-			<div class="kt-field" v-if="fields.document_type === 'Other supporting material'">
-				<label for="mat-other-type">Other document type</label>
-				<input id="mat-other-type" class="kt-input" maxlength="80" :value="fields.other_document_type" @input="fields.other_document_type = $event.target.value" />
-				<p v-if="errors.other_document_type" class="req-field-error">{{ errors.other_document_type }}</p>
-			</div>
-
 			<div class="kt-field">
-				<label for="mat-purpose">Purpose</label>
-				<textarea id="mat-purpose" class="kt-input" rows="2" minlength="10" maxlength="300" :value="fields.purpose" @input="fields.purpose = $event.target.value"></textarea>
-				<p v-if="errors.purpose" class="req-field-error">{{ errors.purpose }}</p>
-			</div>
-
-			<div class="kt-field">
-				<label>File</label>
-				<div class="req-file-picker">
-					<button type="button" class="kt-btn kt-btn-secondary" @click="openFileUploader">{{ fileName ? "Replace file" : "Choose file" }}</button>
-					<span v-if="fileName" class="req-file-name" data-testid="req-material-filename">{{ fileName }}</span>
-				</div>
-				<p class="req-table-caption">PDF, PNG, JPG or JPEG, maximum 20 MB.</p>
-				<p v-if="errors.file" class="req-field-error">{{ errors.file }}</p>
-			</div>
-
-			<div class="req-field-grid">
-				<div class="kt-field">
-					<label id="mat-treatment-lbl">Treatment</label>
-					<div class="req-seg" role="radiogroup" aria-labelledby="mat-treatment-lbl">
-						<label class="req-seg-opt"><input type="radio" :checked="fields.treatment === 'Informational'" @change="fields.treatment = 'Informational'" />Informational</label>
-						<label class="req-seg-opt"><input type="radio" :checked="fields.treatment === 'Forms part of requirement'" @change="fields.treatment = 'Forms part of requirement'" />Forms part of requirement</label>
-					</div>
-				</div>
-				<div class="kt-field">
-					<label for="mat-version">Document version</label>
-					<input id="mat-version" class="kt-input" maxlength="40" :value="fields.document_version" @input="fields.document_version = $event.target.value" />
-				</div>
-			</div>
-
-			<div class="kt-field" v-if="fields.treatment === 'Forms part of requirement'">
-				<label id="mat-linked-lbl">Linked requirements</label>
-				<div class="req-check-list" aria-labelledby="mat-linked-lbl">
-					<label v-for="row in linkableRows" :key="row.id" class="req-check-opt">
-						<input type="checkbox" :value="row.id" v-model="fields.linked_requirement_ids" />{{ row.label }}
-					</label>
-				</div>
-				<p v-if="errors.linked_requirement_ids" class="req-field-error">{{ errors.linked_requirement_ids }}</p>
-			</div>
-
-			<p v-if="error" class="req-field-error" role="alert">{{ error }}</p>
-
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('cancel')">Cancel</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="req-material-dialog-confirm" @click="confirm">Add material</button>
+				<label :for="`${id}-treatment`">Treatment</label>
+				<select :id="`${id}-treatment`" v-model="form.treatment" class="kt-input" :class="{ 'is-invalid': fieldError('treatment') }">
+					<option value="Informational">Informational</option>
+					<option value="Forms part of requirement">Forms part of requirement</option>
+				</select>
 			</div>
 		</div>
-	</div>
+		<div v-if="form.document_type === 'Other supporting material'" class="kt-field">
+			<label :for="`${id}-other`">Name the document type</label>
+			<input :id="`${id}-other`" v-model="form.other_document_type" class="kt-input" />
+		</div>
+		<div class="kt-field">
+			<label :for="`${id}-purpose`">Purpose</label>
+			<textarea :id="`${id}-purpose`" v-model="form.purpose" class="kt-input" rows="2" :class="{ 'is-invalid': fieldError('purpose') }"></textarea>
+			<span v-if="fieldError('purpose')" class="req-field-error">{{ fieldError("purpose") }}</span>
+		</div>
+		<fieldset v-if="form.treatment === 'Forms part of requirement'" class="kt-field req-fieldset">
+			<legend>Structured requirements this file supports</legend>
+			<label v-for="t in linkable" :key="t.id" class="kt-checkbox req-check-line"><input v-model="form.linked_requirement_ids" type="checkbox" :value="t.id" /><span class="box"></span>{{ t.label }}</label>
+			<span v-if="fieldError('linked_requirement_ids')" class="req-field-error">{{ fieldError("linked_requirement_ids") }}</span>
+		</fieldset>
+		<Notice v-if="otherError" tone="critical">{{ otherError }}</Notice>
+		<template #actions>
+			<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy || uploading" @click="$emit('close')">Cancel</button>
+			<button type="button" class="kt-btn kt-btn-primary" :disabled="busy || uploading || !file" data-testid="req-material-confirm" @click="confirm">{{ uploading ? "Uploading…" : "Add supporting material" }}</button>
+		</template>
+	</DialogFrame>
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref } from "vue";
+import { computed, reactive, ref } from "vue";
+import { useReq } from "../data/context.js";
+import DialogFrame from "./shared/DialogFrame.vue";
+import Notice from "./shared/Notice.vue";
 
-const props = defineProps({
-	editor: { type: Object, required: true },
-	pending: Boolean,
-	error: { type: String, default: "" },
+const props = defineProps({ view: { type: Object, required: true } });
+const emit = defineEmits(["close"]);
+const ctx = useReq();
+const busy = computed(() => ctx.pending.value);
+const id = `req-mat-${Math.random().toString(36).slice(2, 8)}`;
+const form = reactive({ title: "", document_type: "", other_document_type: "", purpose: "", treatment: "Informational", linked_requirement_ids: [], document_version: "1" });
+const file = ref(null);
+const uploading = ref(false);
+const uploadError = ref("");
+
+const linkable = computed(() => {
+	const req = props.view.requirements || {};
+	const out = [];
+	for (const g of req.technical_groups || []) for (const r of g.rows) if (r.state !== "Proposed") out.push({ id: r.technical_requirement_id, label: r.label });
+	for (const s of req.services || []) out.push({ id: s.service_requirement_id, label: s.service_type });
+	for (const a of req.acceptance || []) if (a.state !== "Proposed") out.push({ id: a.acceptance_requirement_id, label: a.check_type });
+	return out;
 });
 
-const emit = defineEmits(["confirm", "cancel"]);
-
-const dialogEl = ref(null);
-const pkg = computed(() => props.editor.package || {});
-const materialTypes = computed(() => (props.editor.catalogue || {}).supporting_material_types || []);
-const catalogueByKey = computed(() => {
-	const map = {};
-	for (const c of (props.editor.catalogue || {}).characteristics || []) map[c.key] = c;
-	return map;
-});
-
-const linkableRows = computed(() => [
-	...(pkg.value.technical_requirements || []).map((r) => ({ id: r.technical_requirement_id, label: `Technical — ${(catalogueByKey.value[r.characteristic_key] || {}).label || r.characteristic_key}` })),
-	...(pkg.value.related_services || []).map((r) => ({ id: r.service_requirement_id, label: `Service — ${r.service_type}` })),
-	...(pkg.value.acceptance_requirements || []).map((r) => ({ id: r.acceptance_requirement_id, label: `Acceptance — ${r.check_type}` })),
-]);
-
-const fileValue = ref("");
-const fileName = ref("");
-const fields = reactive({
-	title: "",
-	document_type: "",
-	other_document_type: "",
-	purpose: "",
-	treatment: "Informational",
-	document_version: "",
-	linked_requirement_ids: [],
-});
-const errors = reactive({});
-
-function openFileUploader() {
-	new frappe.ui.FileUploader({
-		allow_multiple: false,
-		restrictions: { max_number_of_files: 1, allowed_file_types: [".pdf", ".png", ".jpg", ".jpeg"] },
-		on_success: (file) => {
-			fileValue.value = file.name;
-			fileName.value = file.file_name || file.name;
-		},
-	});
+function pick(event) {
+	file.value = (event.target.files || [])[0] || null;
+	uploadError.value = "";
+	if (file.value && !form.title) form.title = file.value.name.replace(/\.[^.]+$/, "");
 }
 
-function validate() {
-	const next = {};
-	if (!fields.title.trim()) next.title = "A title is required.";
-	if (!fields.document_type) next.document_type = "A document type is required.";
-	if (fields.document_type === "Other supporting material" && !fields.other_document_type.trim()) next.other_document_type = "Other document type is required.";
-	if (fields.purpose.trim().length < 10) next.purpose = "10-300 characters stating the purpose is required.";
-	if (!fileValue.value) next.file = "A file is required.";
-	if (fields.treatment === "Forms part of requirement" && !fields.linked_requirement_ids.length) next.linked_requirement_ids = "At least one linked structured row is required.";
-	Object.keys(errors).forEach((k) => delete errors[k]);
-	Object.assign(errors, next);
-	return Object.keys(next).length === 0;
+async function upload() {
+	const data = new FormData();
+	data.append("file", file.value, file.value.name);
+	data.append("is_private", "1");
+	data.append("folder", "Home/Attachments");
+	const response = await fetch("/api/method/upload_file", { method: "POST", body: data, headers: { "X-Frappe-CSRF-Token": window.frappe.csrf_token } });
+	const body = await response.json().catch(() => ({}));
+	if (!response.ok || !body.message || !body.message.name) throw new Error("The file could not be uploaded. Try again.");
+	return body.message.name;
 }
 
-function confirm() {
-	if (!validate()) return;
-	// The doctype's own field is `linked_requirement_ids_json` (Small Text,
-	// §5.10) — the checkbox list's plain array is only this dialog's own
-	// working state.
-	const { linked_requirement_ids, ...rest } = fields;
-	emit("confirm", { ...rest, linked_requirement_ids_json: JSON.stringify(linked_requirement_ids), file: fileValue.value });
+const error = computed(() => (ctx.commandError.value && ctx.commandError.value.label === "add-material" ? ctx.commandError.value : null));
+function fieldError(field) {
+	return (error.value && error.value.detail && error.value.detail.fields && error.value.detail.fields[field]) || "";
 }
+const otherError = computed(() => (error.value && !(error.value.detail && error.value.detail.fields) ? error.value.message : ""));
 
-onMounted(() => {
-	nextTick(() => dialogEl.value && dialogEl.value.focus());
-});
+async function confirm() {
+	uploadError.value = "";
+	let name = "";
+	uploading.value = true;
+	try {
+		name = await upload();
+	} catch (e) {
+		uploadError.value = e.message;
+		return;
+	} finally {
+		uploading.value = false;
+	}
+	const done = await ctx.run("add-material", (key) =>
+		ctx.api.addMaterial({ requisition: props.view.header.requisition, values: { ...form, file: name }, expected_record_version: props.view.package_record_version, idempotency_key: key })
+	);
+	if (done) emit("close");
+}
 </script>

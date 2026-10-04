@@ -9,6 +9,10 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     # "frappe~=16.0.0" # Installed and managed by bench.
+    # The canonical seed runs each command at its fixture instant
+    # (kentender_core.seeds.clock); Frappe only installs freezegun with its
+    # test/dev extras, so a production-style bench lacked it.
+    "freezegun~=1.5.5",
 ]
 
 [build-system]

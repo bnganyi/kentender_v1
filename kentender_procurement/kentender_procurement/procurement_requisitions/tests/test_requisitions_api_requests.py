@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 §10 — request-shaped endpoint tests.
+"""REQ-CHG-001 v1.11 §10 — request-shaped endpoint tests.
 
 The NDS-914 class: `frappe.handler` hands a whitelisted method the whole
 `form_dict` — `cmd` and `csrf_token` included — and only trims it when the
@@ -39,9 +39,7 @@ class RequestShapedCase(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		fx.wipe_requisition_rows()
 		fx.wipe_planning_rows()
-		if not frappe.db.exists("Delivery Location", "Test Delivery Location — Requisitions"):
-			frappe.get_doc({"doctype": "Delivery Location", "location_name": "Test Delivery Location — Requisitions", "address": "1 Test Street", "status": "Active"}).insert(ignore_permissions=True)
-		self.location = "Test Delivery Location — Requisitions"
+		self.addCleanup(fx.wipe_requisition_rows)
 		self.addCleanup(frappe.set_user, "Administrator")
 		self.addCleanup(setattr, frappe.local, "form_dict", frappe._dict())
 
@@ -60,75 +58,47 @@ class RequestShapedCase(IntegrationTestCase):
 
 
 class TestTheFullRequisitionJourneyOverTheRequestPath(RequestShapedCase):
-	def test_prepare_through_authorise(self):
+	def test_prepare_through_consumption_with_json_payloads(self):
 		_, item_id = fx.active_item()
 		frappe.set_user(fx.AUTHOR)
-
-		workspace = self.call("get_requisition_workspace")
-		self.assertEqual(workspace["outcome"], "OK")
-
+		self.assertEqual(self.call("get_requisition_workspace", workspace_filters=json.dumps({}))["outcome"], "OK")
+		self.assertEqual(self.call("get_start_preview", plan_item_id=item_id)["state"], "ready")
 		prepared = self.call("prepare_it_equipment_requisition", plan_item_id=item_id, idempotency_key=self.key())
-		self.assertTrue(prepared["ok"])
+		requisition = prepared["requisition"]
 
-		# `save_requisition_summary` targets the Requisition Version, not the
-		# root — read its record_version back rather than assuming it.
-		version_record_version = frappe.db.get_value("Requisition Version", prepared["requisition_version"], "record_version")
-		summary = self.call(
-			"save_requisition_summary", requisition=prepared["requisition"],
-			summary_values=json.dumps({"delivery_location": self.location, "latest_delivery_date": "2102-04-30"}),
-			expected_record_version=str(version_record_version), idempotency_key=self.key(),
+		view = self.call("get_requisition_record", requisition=requisition)
+		self.call(
+			"save_requisition_summary", requisition=requisition,
+			summary_values=json.dumps({"delivery_location": fx.delivery_location(), "latest_delivery_date": "2102-04-30"}),
+			expected_record_version=str(view["header"]["version_record_version"]), idempotency_key=self.key(),
 		)
-		self.assertEqual(summary["action"], "saved")
+		view = self.call("get_requisition_record", requisition=requisition)
+		rows = [{"drawdown_line_id": r["drawdown_line_id"], "quantity": str(r["quantity"]), "intended_use": "Clinical training for department staff"} for r in view["equipment"]["add_rows"]]
+		added = self.call("add_same_specification_items", requisition=requisition, shared_values=json.dumps({"equipment_category": "Laptop", "item_name": "Business laptops"}), item_rows=json.dumps(rows), expected_record_version=str(view["package_record_version"]), idempotency_key=self.key())
+		self.assertEqual(added["review_state"], "Review required")
 
-		package_record_version = frappe.db.get_value("IT Equipment Requirement Package Version", prepared["package_version"], "record_version")
-		added = self.call(
-			"add_requisition_item", requisition=prepared["requisition"],
-			item_values=json.dumps({"plan_item_line_id": "DL-001", "equipment_category": "Laptop", "item_name": "Business laptops", "quantity": 1, "intended_use": "Clinical training"}),
-			expected_record_version=str(package_record_version), idempotency_key=self.key(),
+		view = self.call("get_requisition_record", requisition=requisition)
+		technical, acceptance, support = fx.visible_proposal(view)
+		req = view["requirements"]
+		applied = self.call(
+			"apply_selected_requirement_package", requisition=requisition, profile_key=req["profile_key"], profile_version=req["profile_version"], proposal_digest=req["proposal_digest"],
+			technical_rows=json.dumps(technical), acceptance_rows=json.dumps(acceptance), support_values=json.dumps(support),
+			expected_record_version=str(view["package_record_version"]), idempotency_key=self.key(),
 		)
-		self.assertEqual(added["action"], "added")
-
-		# A baseline rule that proposes no default (Memory, Storage capacity)
-		# must be given a value before it can be confirmed — confirming it
-		# bare would silently produce a "Confirmed" row requiring nothing.
-		VALUE_LESS_DEFAULTS = {"memory": 16, "storage_capacity": 512}
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		for row in package_version.technical_requirements:
-			kwargs = {}
-			if not row.required_value_json:
-				kwargs["confirmation_values"] = json.dumps({"value": VALUE_LESS_DEFAULTS[row.characteristic_key]})
-			confirmed = self.call(
-				"confirm_proposed_requirement", requisition=prepared["requisition"], technical_requirement_id=row.technical_requirement_id,
-				expected_record_version=str(package_version.record_version), idempotency_key=self.key(), **kwargs,
-			)
-			self.assertEqual(confirmed["action"], "updated")
-			package_version.reload()
-
-		acc = self.call(
-			"add_acceptance_requirement", requisition=prepared["requisition"],
-			acceptance_values=json.dumps({"applies_to_scope": "All items", "check_type": "Quantity", "pass_condition": "Delivered quantities equal the authorised schedule", "evidence_type": "Inspection record"}),
-			expected_record_version=str(package_version.record_version), idempotency_key=self.key(),
-		)
-		self.assertEqual(acc["action"], "added")
+		self.assertEqual(applied["review_state"], "Reviewed")
 
 		frappe.set_user(fx.HOD)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		submitted = self.call("submit_requisition_to_procurement", requisition=prepared["requisition"], expected_record_version=str(root.record_version), idempotency_key=self.key())
-		self.assertEqual(submitted["action"], "submitted")
-
+		submitted = self.call("submit_requisition_to_procurement", requisition=requisition, expected_record_version=str(fx.root_version(requisition)), idempotency_key=self.key())
 		frappe.set_user(fx.HOPF)
-		root.reload()
-		authorised = self.call("authorise_requisition", requisition=prepared["requisition"], task=submitted["task"], expected_record_version=str(root.record_version), idempotency_key=self.key())
+		task_view = self.call("get_procurement_authorisation_task", task=submitted["task"])
+		self.assertEqual(task_view["result"]["title"], "Ready to authorise")
+		authorised = self.call("authorise_requisition", requisition=requisition, task=submitted["task"], expected_record_version=str(fx.root_version(requisition)), idempotency_key=self.key())
 		self.assertEqual(authorised["action"], "authorised")
+		self.assertEqual(self.call("get_requisition_record", requisition=requisition)["kind"], "authorised")
 
-		history = self.call("get_requisition_history", requisition=prepared["requisition"])
-		self.assertEqual(history["outcome"], "OK")
-		self.assertTrue(history["handoff"])
-
-		consumed = self.call(
-			"record_handoff_consumption", handoff_name=authorised["handoff"], tender="TND-0001", tender_version="TND-0001-V1",
-			template_key="IT-EQUIPMENT-DEFAULT", template_version="1.0", idempotency_key=self.key(),
-		)
+		frappe.set_user("Administrator")
+		frappe.set_user(fx.HOPF)
+		consumed = self.call("record_handoff_consumption", handoff_name=authorised["handoff"], tender="TND-0001", tender_version="TND-0001-V1", template_key="IT-EQUIPMENT-OPEN-V1", template_version="1.1", idempotency_key=self.key())
 		self.assertEqual(consumed["action"], "consumed")
 
 

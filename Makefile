@@ -6,8 +6,7 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke seed-canonical seed-canonical-dry-run seed-canonical-validate ui-smoke tender-templates-bundle-gate tender-preparation-schema-gate tender-preparation-services-gate ui-tpr-workspace-gate ui-tpr-start-gate ui-tpr-editor-a-gate ui-tpr-editor-b-gate ui-tpr-review-gate ui-tpr-approval-gate ui-tpr-approved-gate ui-tpr-fidelity-gate ui-tpr-release-evidence-gate ui-workspace-pattern-gate ui-strategy-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-dpp-gate ui-planning-dpp-review-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-plan-workbench-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-req-workspace-gate ui-req-start-gate ui-req-editor-a-gate ui-req-editor-b-gate ui-req-department-gate ui-req-procurement-gate ui-req-authorised-gate ui-req-fidelity-gate ui-req-release-evidence-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
-.PHONY:
+.PHONY: dev-mail-start dev-mail-stop dev-mail-status fidelity-affected test-site-rebuild test-site-serve test-site-stop test-site-status ui-awd-personas-gate awd-preflight awd-services-gate awd-seams-gate awd-leakage-gate awd-dead-end-gate ui-awd-fidelity-gate ui-awd-opinion-gate ui-awd-decision-gate ui-awd-notices-gate ui-awd-supplier-gate ui-awd-wait-gate ui-awd-debrief-gate ui-awd-correction-gate ui-awd-demo-walk-gate ui-awd-gate ui-awd-release-evidence-gate seed-awd-profiles seed-awd-profile seed-awd-profile-restore bop-preflight bop-profiles-gate seed-bop-profiles seed-bop-profile seed-bop-profile-restore ui-bop-prepare-gate ui-bop-before-start-gate ui-bop-ceremony-gate ui-bop-pauses-gate ui-bop-no-bids-gate ui-bop-record-gate ui-bop-completed-gate ui-bop-fidelity-gate ui-bop-public-gate ui-bop-release-evidence-gate ui-bop-gate prc-services-gate bop-services-gate bop-dead-end-gate bop-leakage-gate bds-preflight bds-retirement-gate bds-portal-gate bds-services-gate supplier-accounts-services-gate ui-bds-portal-skeleton-gate ui-bds-security-intake-gate ui-bds-overview-gate ui-bds-account-gate ui-bds-my-bids-gate ui-bds-workspace-gate ui-bds-documents-gate ui-bds-company-gate ui-bds-requirements-price-gate ui-bds-review-gate ui-bds-submit-gate ui-bds-receipt-changes-gate ui-bds-bound-release-gate ui-bds-acceptance-gaps-gate ui-bds-common-states-gate ui-bds-fidelity-gate ui-bds-release-evidence-gate bds-dead-end-gate ui-system-setup-responsibilities-gate seed-req-profiles seed-req-profile seed-req-profile-restore ui-structure-gate ui-visual-gate ui-fidelity-gate artboard-provenance-gate departmental-needs-domain-gate ui-departmental-needs-fidelity-gate tenders-preflight tenders-schema-gate tenders-services-gate tenders-dead-end-gate ui-tenders-workspace-gate ui-tenders-start-gate ui-tenders-details-gate ui-tenders-requirements-gate ui-tenders-review-gate ui-tenders-approval-gate ui-tenders-authorisation-gate ui-tenders-publication-gate ui-tenders-published-gate ui-tenders-addendum-gate ui-tenders-cancel-gate ui-tenders-history-gate ui-tenders-fidelity-gate ui-tenders-release-evidence-gate ui-system-setup-procurement-settings-gate ui-system-setup-fiscal-years-gate ui-system-setup-access-gate ui-system-setup-entity-gate ui-system-setup-funding-sources-gate ui-system-setup-rules-gate ui-system-setup-source-checks-gate ui-system-setup-schedules-gate help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke seed-canonical seed-canonical-dry-run seed-canonical-validate ui-smoke ui-workspace-pattern-gate ui-strategy-gate ui-strategy-fidelity-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-budget-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-departmental-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-annual-plan-gate ui-planning-item-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-req-workspace-gate ui-req-start-gate ui-req-editor-a-gate ui-req-editor-b-gate ui-req-department-gate ui-req-procurement-gate ui-req-authorised-gate ui-req-fidelity-gate ui-req-release-evidence-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
 
 help:
 	@echo "Targets:"
@@ -31,13 +30,33 @@ help:
 	@echo "  make x-02-no-plain-bench-build-gate — X-02 tender-management prompts must not document bare bench asset build (doc 9 §3.1)"
 	@echo "  make x-03-doc9-acceptance-sequence-gate — X-03 doc 9 §23.4 KenTender acceptance runbook markers (doc + audit)"
 	@echo "  make vue-desk-bundle-translation-binding-gate SITE=$(SITE) — every Vue-in-Desk bundle using __() in templates binds globalProperties.__ (AGENTS.md §6.1)"
+	@echo "  make fidelity-affected [SINCE=<ref>] [RUN=1] — which design-match gates this change makes due (only modules whose screens, styles or boards changed); RUN=1 runs them on the test site (AGENTS.md §8)"
+	@echo "  make test-site-rebuild — overwrite the SEPARATE test site (kentender-test.local) with a copy of the dev site; run tests there, not on the dev site (AGENTS.md §8.2)"
+	@echo "  make test-site-serve|test-site-stop|test-site-status — the test site's own server on :8001 and whether its canonical world is intact"
+	@echo "  scripts/test-site.sh run <command> — run any test command (npx playwright test ..., make <gate>) against the test site"
+	@echo "  make ui-queue-check [FIX=1] — background-job queue depth; a full queue breaks every fixture reset and teardown and reports it as a misleading NameError (AGENTS.md §8.1)"
 	@echo "  make ui-smoke — Phase La: npm run test:ui:smoke (needs Node, running site, apps/kentender_v1/.env.ui)"
 	@echo "  make ui-workspace-pattern-gate — workspace contract tests (selection, scroll, anti-flicker)"
-	@echo "  make ui-strategy-gate — STR-CHG-001 v1.7 §16.2 browser journeys (author, approver, access states) on the §14 seed"
+	@echo "  make ui-strategy-gate — STR-CHG-001 v1.8 §16.2 browser journeys (author, approver, access states) on the §14 profiles"
+	@echo "  make ui-strategy-fidelity-gate — Strategy screens match the v1.8 STR-DES artboards: landmark text order AND container structure"
 	@echo "  make ui-stitch-desk-chrome-gate — Shared Stitch Desk chrome baseline (Win98/select/Espresso) — required before Stitch Desk UI Done"
 	@echo "  make ui-industry-design-gate — Industry design system is canonical (AGENTS.md §6.6): kt-industry root class + no forked token files + computed-style parity"
-	@echo "  make ui-system-setup-fidelity-gate — System setup screens match their .dc.html artboards: landmark order + geometry measured from the artboard render"
-	@echo "  make ui-budget-fidelity-gate — Budget & Funding screens match their .dc.html artboards: landmark order + geometry measured from the artboard render"
+	@echo "  make ui-structure-gate — the containers each screen is built from match its .dc.html board, and the shared vocabulary rules hold (no browser)"
+	@echo "  make ui-visual-gate — visual references for Departmental Needs and Procurement Planning at 1440x1024"
+	@echo "  make ui-fidelity-gate — everything that compares a screen against its board: structure, landmarks, provenance, visual"
+	@echo "  make artboard-provenance-gate — every 'ported ... from X.dc.html' header names a file that exists and predates the component's last edit (informational: one open finding — the Requisitions fidelity spec names a board that was renamed)"
+	@echo "  make ui-system-setup-fidelity-gate — System setup screens match their .dc.html artboards: landmark text order AND container structure; boards not yet re-ported are queued in tests/ui/fidelity/departures/system-setup.js (geometry is NOT enforced — see AGENTS.md 6.6)"
+	@echo "  make ui-system-setup-responsibilities-gate — CFG-CHG-002 v0.14 D24: Users and responsibilities and Organisation structure journeys in a browser (assign, edit before start, revoke, unit link, ambiguous structure)"
+	@echo "  make ui-system-setup-schedules-gate — CFG-CHG-002 v0.14 §10.9: schedules and working-day calendars in a browser (list, saved schedule, calendar add/correct/new version/history/check sources, failed read, System Manager, 400px)"
+	@echo "  make ui-system-setup-source-checks-gate — CFG-CHG-002 v0.14 §10.8: Check sources in a browser (record pending, verified refusal at the controls, stale second check, failed read, System Manager, 400px)"
+	@echo "  make ui-system-setup-rules-gate — CFG-CHG-002 v0.14 §10.6: the Procurement rules list and saved detail in a browser (columns, filters, direct link, rename, failed read, System Manager, 400px)"
+	@echo "  make ui-system-setup-funding-sources-gate — CFG-CHG-002 v0.14 §10.5: the Funding sources section in a browser (add/disable/re-enable/remove, dialog focus, Back/Forward, empty, failed load, System Manager, narrow/200%)"
+	@echo "  make ui-system-setup-procurement-settings-gate — PLN-CHG-001 v1.18 C01–C04: System setup component tests + the Procurement settings browser spec (Administrator + refused business user), test funding source purged after"
+	@echo "  make ui-system-setup-fiscal-years-gate — CFG-CHG-002 v0.11 C02: Financial years cross-year replacement, expiry and stale-write recovery browser specs"
+	@echo "  make ui-system-setup-entity-gate — CFG-CHG-002 v0.14 C01: Procuring entity journeys (first paint, save/reload, conflict, missing authority, narrow/200%, keyboard, System Manager, stale-save race)"
+	@echo "  make ui-system-setup-access-gate — CFG-CHG-002 v0.11 §6/§11.1: who may use System setup, the refusal state, sub-path durability, narrow/200% and keyboard focus"
+	@echo "  make ui-budget-fidelity-gate — BUD-CHG-001 v1.9: Budget & Funding screens match their reconciled .dc.html boards, state by state (landmark text order AND container structure)"
+	@echo "  make ui-budget-gate — BUD-CHG-001 v1.9: the five Budget browser journeys (workspace, officer, approver, closure, access), single worker"
 	@echo "  make ui-create-demand-strategy-gate — (retired) DIA create-demand gate; no-op until Demands MVP-1"
 	@echo "  make ui-civic-ledger-queue-gate — Civic Ledger queue/list contract (chrome, filters, table footer)"
 	@echo "  make ui-civic-ledger-ui01-gate — UI-01 home structural layout + mockup states"
@@ -56,23 +75,43 @@ help:
 	@echo "  make pub-domain-gate SITE=$(SITE) — Tender Publications domain API tests"
 	@echo "  make ui-publications-gate — Publications A1/A2/A3 Playwright smoke"
 	@echo "  make ui-demands-workspace-gate — Demands workspace (DEM-UI-01) API + Playwright"
-	@echo "  make ui-planning-workspace-gate — PLN-CHG-001 v1.12 Slice A: workspace domain + vitest + Playwright (D13 world)"
-	@echo "  make ui-planning-dpp-gate — PLN-CHG-001 v1.12 Slice A: DPP authoring domain + vitest + Playwright"
-	@echo "  make ui-planning-dpp-review-gate — PLN-CHG-001 v1.12 Slice A: DPP validation + auto Annual Plan"
+	@echo "  make ui-planning-workspace-gate — PLN-CHG-001 v1.18 PLN18-302: U01 workspace domain + vitest + Playwright (D13 world)"
+	@echo "  make ui-planning-departmental-gate — PLN-CHG-001 v1.18 PLN18-303: U02-U06 Departmental preparation/certification/validation domain + vitest + Playwright"
+	@echo "  make ui-planning-annual-plan-gate — PLN-CHG-001 v1.18 PLN18-304: U07 Annual Plan (5-tab) + U08 Form Plan Items domain + vitest + Playwright"
+	@echo "  make ui-planning-item-gate — PLN-CHG-001 v1.18 PLN18-305: U09 Plan Item editor domain + vitest + Playwright (incl. stale-save race)"
 	@echo "  make ui-planning-fidelity-gate — PLN-CHG-001 v1.12 D14: artboard landmark fidelity on the live screens"
+	@echo "  make planning-dead-end-gate — PLN-CHG-001 v1.27 / KT-STD-001 v1.8 §3B.7: every Planning state × reader, writes evidence/v1_27/dead_end_matrix.md"
+	@echo "  make departmental-needs-domain-gate — the whole Needs-owned Python domain suite (mirrors planning-domain-gate)"
+	@echo "  make ui-departmental-needs-fidelity-gate — NDS Artboards.dc.html structural fidelity on the live screens (mirrors ui-planning-fidelity-gate)"
 	@echo "  make ui-planning-release-evidence-gate — PLN-CHG-001 v1.12 Phase 8: every Planning browser spec + fidelity + §14 persona pass, single-worker"
 	@echo "  make ui-planning-plan-workbench-gate — PLN-CHG-001 v1.2 Slice D: Annual Plan workbench + formation + Plan Item editor"
-	@echo "  make ui-planning-finance-gate — PLN-CHG-001 v1.2 Slice E: Finance confirmation on real Budget contracts"
+	@echo "  make ui-planning-finance-gate — PLN-CHG-001 v1.18 PLN18-306: U10 Finance task (confirm/return/reassess/history) domain + vitest + Playwright"
 	@echo "  make ui-planning-governance-gate — PLN-CHG-001 v1.2 Slice F: Annual Plan governance (adopt/approve/return)"
 	@echo "  make ui-planning-publication-gate — PLN-CHG-001 v1.2 Slice G: Publication, Active and successor (BeginPlanUpdate/RemovePlanItemInSuccessor/CancelPlanUpdate)"
 	@echo "  make planning-requisition-gate — PLN-CHG-001 v1.2 Slice H: §7.4 Requisition eligibility + drawdown consumption (API-only)"
 	@echo "  make planning-seed-gate — PLN-CHG-001 v1.2 §14: deterministic seed contract (baseline + profiles + boundary guard)"
-	@echo "  make tender-templates-bundle-gate SITE=$(SITE) — TPR-CHG-001 v0.6 Phase 3: IT-EQUIPMENT-OPEN-V1 1.1 bundle loader, registry and renderer tests"
-	@echo "  make tender-preparation-schema-gate SITE=$(SITE) — TPR-CHG-001 v0.6 Phase 2: schema, envelope, authorization and gateway-contract tests"
-	@echo "  make tender-preparation-services-gate SITE=$(SITE) — TPR-CHG-001 v0.6 Phase 4: every Tender Preparation service test module"
-	@echo "  make ui-tpr-{workspace,start,editor-a,editor-b,review,approval,approved}-gate SITE=$(SITE) — TPR-CHG-001 v0.6 Phase 5 slice gates: component tests + one browser spec on the Tender Preparation Playwright world"
-	@echo "  make ui-tpr-fidelity-gate SITE=$(SITE) — TPR-CHG-001 v0.6: every artboard section's landmarks in order on the live screen"
-	@echo "  make ui-tpr-release-evidence-gate SITE=$(SITE) — TPR-CHG-001 v0.6 Phase 7: every Tender Preparation browser spec + fidelity, then the world restored"
+	@echo "  make tenders-services-gate SITE=$(SITE) — TPR-CHG-001 v0.8 Phases 4–6: every Tenders service test module"
+	@echo "  make tenders-dead-end-gate SITE=$(SITE) — TPR-CHG-001 v0.12 / KT-STD-001 v1.8 §3B.7: every Tender state × reader, writes evidence/v0_12/dead_end_matrix.md"
+	@echo "  make bds-retirement-gate SITE=$(SITE) — BDS-CHG-001 v0.8 Phase 1: the legacy bid-submission slice is retired"
+	@echo "  make bds-portal-gate SITE=$(SITE) — BDS-CHG-001 v0.8 Phase 2C: portal page, surface resolution and GetAvailableTenders"
+	@echo "  make prc-services-gate SITE=$(SITE) — PRC-CHG-001 v0.9 shared Proceedings records and services"
+	@echo "  make bop-services-gate SITE=$(SITE) — BOP-CHG-001 v0.10 Bid Opening records and owner services"
+	@echo "  make ui-bop-fidelity-gate — BOP-CHG-001 v0.10 Phase 8: each Bid Opening screen against its board, from captured server answers (no browser)"
+	@echo "  make ui-bop-release-evidence-gate — BOP-CHG-001 v0.10 Phase 11: the canonical opening read in a browser by each seeded person (after seed-canonical THROUGH=bid_opening)"
+	@echo "  make ui-bop-gate SITE=$(SITE) — BOP-CHG-001 v0.10 Phase 8: every Bid Opening slice in a browser (or ui-bop-<slice>-gate: prepare, before-start, ceremony, pauses, no-bids, record, completed, public)"
+	@echo "  make bds-services-gate SITE=$(SITE) — BDS-CHG-001 v0.8 Phases 5-9: bid records, Start bid, candidate provider, preparation, evidence, addenda, security/price/intake, availability, signing, submission, receipts, replacement, withdrawal and close"
+	@echo "  make supplier-accounts-services-gate SITE=$(SITE) — BDS-CHG-001 v0.8 Phase 4: Supplier Accounts services"
+	@echo "  make ui-bds-portal-skeleton-gate — BDS-CHG-001 v0.8 Phase 2C: /tenders in a browser as a guest at 1440 and 390"
+	@echo "  make bds-dead-end-gate SITE=$(SITE) — BDS-CHG-001 v0.8 Phase 10: bid states x readers, sound next step or no access; writes the evidence matrix"
+	@echo "  make ui-bds-security-intake-gate — BDS-CHG-001 v0.8 Phase 7: the blind tender-security intake Desk page (component tests + browser, HoPF/officer/auditor, 1440 and 390)"
+	@echo "  make tenders-schema-gate SITE=$(SITE) — TPR-CHG-001 v0.8 Phase 2: Tenders schema, envelope, authorization, gateway-contract and core file-integrity tests"
+	@echo "  make ui-tenders-<slice>-gate — TPR-CHG-001 v0.8 Phase 7 slice gates: workspace start details requirements review approval authorisation publication published addendum cancel history (vitest project tenders + the slice's Playwright spec on the Tenders Playwright world, then restore_site)"
+	@echo "  make ui-tenders-fidelity-gate — TPR-CHG-001 v0.8: every TPR-DES board's landmarks in order on the live screen"
+	@echo "  make ui-tenders-release-evidence-gate — TPR-CHG-001 v0.8 Phase 9: every Tenders browser spec + fidelity + persona pass"
+	@echo "  make std-release-rebuild — STD-TPL-001 v0.10 §13: regenerate the IT-EQUIPMENT-OPEN-V1 1.1 pack outputs, run validate_release.py and write the manifest (PDF=1 also re-renders the fixture PDFs)"
+	@echo "  make std-release-install SITE=$(SITE) [RELEASE_OWNER=...] [SWITCH=Off] — STD-TPL-IMP-001 §5 + owner decision OD5: install the exact release pack, switched On (checks and decisions are evidence only)"
+	@echo "  make std-release-switch SITE=$(SITE) STATE=On|Off [RELEASE_ID=...] [RELEASE_OWNER=...] — owner decision OD5: switch an installed release on or off on this site (Off stops new Tenders starting on it)"
+	@echo "  make std-templates-gate SITE=$(SITE) — STD-TPL-IMP-001 §16: compiler, installer, services and binding tests"
 	@echo "  make ui-req-workspace-gate — REQ-CHG-001 v1.6 Slice 3a: Requisitions workspace (REQ-DES-01) + Playwright (REQ-402 world)"
 	@echo "  make ui-req-start-gate — REQ-CHG-001 v1.6 Slice 3b: Start Requisition (REQ-DES-02)"
 	@echo "  make ui-req-editor-a-gate — REQ-CHG-001 v1.6 Slice 3c-i: Editor steps 1-2 (REQ-DES-03/04)"
@@ -88,11 +127,6 @@ help:
 	@echo "  make ui-demands-detail-gate — Approved Demand detail (DEM-UI-09…09D) API + Playwright"
 	@echo "  make ui-demands-performance-gate — Demand performance (DEM-UI-10) API + Playwright"
 	@echo "  make demands-abs-gate — DEM-ABS-001…012 legacy absence evidence"
-	@echo "  make bw-domain-gate SITE=$(SITE) — Bidder workspace A1 domain API tests"
-	@echo "  make bw-a0-domain-gate SITE=$(SITE) — Available Tenders (A0) domain tests"
-	@echo "  make bw-a2-domain-gate SITE=$(SITE) — Submission Checklist (A2) domain + web route tests"
-	@echo "  make bw-a3-domain-gate SITE=$(SITE) — Tender Documents & Addenda (A3) domain + web route tests"
-	@echo "  make bw-a4-domain-gate SITE=$(SITE) — Requirement Matrix (A4) domain + web route tests"
 	@echo "  make bw-manifest-phase1-gate SITE=$(SITE) — G1 Phase 1 BWMF schemas + NSSF fixture errata"
 	@echo "  make bw-manifest-phase2-gate SITE=$(SITE) — G1 Phase 2 schema preflight + persistence"
 	@echo "  make bw-manifest-phase3-gate SITE=$(SITE) — G1 Phase 3 deterministic BWMF compiler"
@@ -100,42 +134,27 @@ help:
 	@echo "  make bw-manifest-phase5-gate SITE=$(SITE) — G1 Phase 5 governance and atomic publication"
 	@echo "  make bw-manifest-phase2-reset SITE=$(SITE) — clear BWMF persistence rows"
 	@echo "  make bw-manifest-phase2-reseed SITE=$(SITE) — clear + seed BWMF canonical fixture"
-	@echo "  make ui-bidder-a0-gate — A0 Available Tenders Website Playwright smoke"
-	@echo "  make ui-bidder-a1-gate — Bidder A1 Published Tender Overview Playwright smoke"
-	@echo "  make ui-bidder-a2-gate — A2 Submission Checklist Website Playwright smoke"
-	@echo "  make ui-bidder-a3-gate — A3 Tender Documents & Addenda Website Playwright smoke"
-	@echo "  make ui-bidder-a4-gate — A4 Requirement Matrix Website Playwright smoke"
-	@echo "  make bw-fot-domain-gate SITE=$(SITE) — FoT Review-and-Certify domain + order tests"
-	@echo "  make ui-bidder-fot-gate — FoT Review-and-Certify Website Playwright smoke"
-	@echo "  make bw-statutory-domain-gate SITE=$(SITE) — Statutory Declarations domain + web tests"
-	@echo "  make ui-bidder-statutory-gate — Statutory Declarations Website Playwright smoke"
-	@echo "  make bw-tender-security-domain-gate SITE=$(SITE) — Tender Security domain tests"
-	@echo "  make ui-bidder-tender-security-gate — Tender Security Website Playwright smoke"
-	@echo "  make bw-preliminary-domain-gate SITE=$(SITE) — Preliminary Requirements domain tests"
-	@echo "  make ui-bidder-preliminary-gate — Preliminary Requirements Website Playwright smoke"
-	@echo "  make bw-qualification-domain-gate SITE=$(SITE) — Qualification and Capability domain tests"
-	@echo "  make ui-bidder-qualification-gate — Qualification and Capability Website Playwright smoke"
-	@echo "  make bw-technical-proposal-domain-gate SITE=$(SITE) — Technical Proposal domain + layout guard"
-	@echo "  make ui-bidder-technical-proposal-gate — Technical Proposal Website Playwright smoke"
-	@echo "  make bw-requirements-compliance-domain-gate SITE=$(SITE) — Requirements Compliance domain + layout guard"
-	@echo "  make ui-bidder-requirements-compliance-gate — Requirements Compliance Website Playwright smoke"
-	@echo "  make bw-price-schedule-domain-gate SITE=$(SITE) — Price Schedule domain + layout guard"
-	@echo "  make ui-bidder-price-schedule-gate — Price Schedule Website Playwright smoke"
-	@echo "  make bw-final-submission-domain-gate SITE=$(SITE) — Final Submission domain + layout + stitch contracts"
-	@echo "  make bw-final-submission-stitch-contract-gate SITE=$(SITE) — Final Submission per-Stitch-file UI contracts (01–05)"
-	@echo "  make ui-bidder-final-submission-gate — Final Submission Website Playwright smoke (modal structure)"
 	@echo "  make e1-nssf-seed-gate SITE=$(SITE) — E1 NSSF seed mapper + preview (subset)"
 	@echo "  make e1-nssf-poc-gate SITE=$(SITE) — full E1 PoC: seed + bid APIs + Playwright bidder workspace"
-	@echo "  make seed-canonical SITE=$(SITE) [THROUGH=tender_preparation] — clear every non-canonical row, then reseed KT-STD-001 §8 configuration + SEED-001 modules progressively (site → strategy → budget → needs → planning → requisitions → tender_preparation) and validate"
+	@echo "  make seed-bop-profiles SITE=$(SITE) — list the Bid Opening demo profiles (one opening stage each, on the canonical Tender)"
+	@echo "  make seed-bop-profile SITE=$(SITE) PROFILE=BOP-DEMO-READY — load one (replaces any loaded one; sets the test clock) and print who to sign in as and what to do"
+	@echo "  make seed-bop-profile-restore SITE=$(SITE) — remove the loaded profile, retell the completed canonical opening and clear the test clock"
+	@echo "  make seed-awd-profiles SITE=$(SITE) — list the Award demo profiles (one award step each, on the canonical Tender)"
+	@echo "  make seed-awd-profile SITE=$(SITE) PROFILE=AWD-DEMO-OPINION — tell the canonical award up to that step and set the test clock"
+	@echo "  make seed-awd-profile-restore SITE=$(SITE) — tell the whole canonical award again and clear the test clock"
+	@echo "  make seed-req-profiles SITE=$(SITE) — list the REQ-CHG-001 §16.4A Requisitions demo profiles"
+	@echo "  make seed-req-profile SITE=$(SITE) PROFILE=REQ-SC-HOLD — load one profile on the canonical MOH item (replaces any loaded one) and print its report"
+	@echo "  make seed-req-profile-restore SITE=$(SITE) — undo the loaded profile and restore the base authorised requisition"
+	@echo "  make seed-canonical SITE=$(SITE) [THROUGH=tenders] [REBUILD=True] [WIPE=True] [FORCE=True] — clear every non-canonical row, then reseed KT-STD-001 §8 configuration + SEED-001 modules progressively (site → strategy → budget → needs → planning → requisitions → tenders → bid_submission → bid_opening → bid_evaluation → award; THROUGH=award is the full chain) and validate, draining the background-job queue before and after; WIPE=True also drops and rebuilds the site stage itself (needs FORCE=True outside developer_mode)"
 	@echo "  make seed-canonical-dry-run SITE=$(SITE) — report what seed-canonical would remove, delete nothing"
-	@echo "  make seed-canonical-validate SITE=$(SITE) [THROUGH=tender_preparation] — validate the canonical world only"
+	@echo "  make seed-canonical-validate SITE=$(SITE) [THROUGH=requisitions] — validate the canonical world only"
 	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — fixture-scoped reset + full KENTENDER_MVP_V1 seed + Playwright purge + validate"
 	@echo "  make seed-kentender-mvp-v1-validate SITE=$(SITE) — validate full KENTENDER_MVP_V1 stack"
 	@echo "  make purge-kentender-playwright-data SITE=$(SITE) — remove owned Playwright/Gate fixtures without deleting canonical or business records"
+	@echo "  make purge-erpnext-test-fixtures SITE=$(SITE) — remove ERPNext's own _Test Fiscal Year residue (not KenTender seed data)"
 	@echo "  make seed-moh-mvp-v1 SITE=$(SITE) — deprecated alias → seed-kentender-mvp-v1"
 	@echo "  make seed-stable-platform SITE=$(SITE) — load MOH stable platform seed (Works + IT STD)"
 	@echo "  make seed-stable-platform-reset SITE=$(SITE) — clear + reload stable platform seed"
-	@echo "  make seed-demand-to-bidder-journey SITE=$(SITE) — quiet Demand→CFG→bidder sample"
 	@echo "  make seed-stable-platform-validate SITE=$(SITE) — validate stable platform seed only"
 	@echo "  make seed-demo-platform-reset SITE=$(SITE) — clean PEs + linked IT STD demo platform seed"
 	@echo "  make seed-demo-platform-validate SITE=$(SITE) — validate demo platform seed only"
@@ -167,6 +186,43 @@ restart:
 
 doctor:
 	cd $(BENCH_ROOT) && bench doctor
+
+# Which fidelity gates are due for the files changed (scripts/fidelity-affected.sh).
+fidelity-affected:
+	scripts/fidelity-affected.sh $(if $(SINCE),--since $(SINCE),) $(if $(RUN),--run,)
+
+# The separate test site (AGENTS.md §8.2). Tests write real rows with no
+# rollback, so they run on a copy of the dev site, not on the dev site.
+test-site-rebuild:
+	scripts/test-site.sh rebuild --yes
+
+test-site-serve:
+	scripts/test-site.sh serve
+
+test-site-stop:
+	scripts/test-site.sh stop
+
+test-site-status:
+	scripts/test-site.sh status
+
+# Dev mail: Mailpit (docker, inbox http://localhost:8025) catches outgoing mail;
+# this loop sends the dev site's queued mail, because its scheduler is off.
+dev-mail-start:
+	scripts/dev-mail.sh start
+
+dev-mail-stop:
+	scripts/dev-mail.sh stop
+
+dev-mail-status:
+	scripts/dev-mail.sh status
+
+# The background-job queue this bench never drains on its own. Every fixture
+# reset enqueues jobs; past Frappe's ceiling every reset and teardown fails,
+# and `bench execute` reports that as a misleading NameError. The UI suites
+# check this automatically (tests/ui/globalSetup.ts); this is the same check
+# by hand, and `FIX=1` drains it.
+ui-queue-check:
+	node tests/ui/helpers/queueCheck.cjs $(if $(FIX),--fix,)
 
 list:
 	cd $(BENCH_ROOT) && bench --site $(SITE) list-apps
@@ -215,7 +271,15 @@ ui-workspace-pattern-gate:
 
 # Fast gate for Strategy CSS/chrome/typography work (Desk Espresso bleed, shared plan header).
 ui-strategy-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/strategy
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/strategy/strategy-author.spec.ts \
+		tests/ui/smoke/strategy/strategy-approver.spec.ts \
+		tests/ui/smoke/strategy/strategy-access.spec.ts
+
+# FU-01 — the Strategy screens against the v1.8 STR-DES artboards.
+ui-strategy-fidelity-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/strategy/strategy-fidelity.spec.ts
 
 # Shared Stitch Desk chrome baseline — must stay green for Strategy/Budget/… canvases.
 ui-stitch-desk-chrome-gate:
@@ -234,16 +298,150 @@ ui-industry-design-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/industry-design/industry-design-gate.spec.ts
 
+# A Vue component's "ported ... from X.dc.html" header must name a file that
+# still exists, and the component's own last commit must not predate that
+# file's first appearance — the exact defect class found in Procurement
+# Planning's stale v1.24 reconciliation (a component edited before its
+# claimed artboard was ever added to the repo). Check C additionally reads the
+# design-fidelity SPECS, not just component headers: a spec that opens a board
+# by a path that no longer exists fails every test in its serial describe on
+# ERR_FILE_NOT_FOUND, which is how the Requisitions fidelity suite stopped
+# comparing anything against a board without anyone noticing.
+#
+# Informational, and blocked on exactly one open finding: requisitions-fidelity
+# .spec.ts still names 'REQ-CHG-001 Artboards.dc.html', renamed to
+# 'Requisitions - Design Board.dc.html'. Re-port that spec against the new
+# board and this target joins the default gate chain.
+artboard-provenance-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_core.tests.test_artboard_provenance_gate
+
+# The structural half of design fidelity (AGENTS.md §6.6). The landmark gates
+# compare the artboard's ordered landmark *text*; this compares what the screen
+# is built out of — the containers the board draws and how they nest, which no
+# text comparison can see. Runs in Node over the artboard markup and a mounted
+# component: no site, no login, seconds.
+#
+# Covers the comparator itself plus the two modules that have component test
+# projects. Strategy and Budget have no such project, so their structural
+# comparison runs in the browser only, inside ui-fidelity-gate below — which is
+# why that target now also names Strategy's fidelity spec: it is the one that
+# lives outside tests/ui/smoke/design-fidelity/ and was being missed.
+ui-structure-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project design-fidelity
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning --project departmental-needs-components --project system-setup --project desk-runtime --project procurement-requisitions --project std-templates --project tenders --project bid-opening --project bid-evaluation --project award --project bid-portal --project supplier-account-portal --project tender-security-receipts
+
+# Visual references. Nothing ran the Departmental Needs baselines before this
+# target existed, so a spacing or rule change could only be found by a person
+# looking at the screen.
+ui-visual-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/departmental_needs/departmental-needs-visual.spec.ts \
+		tests/ui/smoke/planning/planning-visual.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
+
+# Everything that compares a screen against its board, in one place: structure,
+# landmarks, provenance and visual references.
+ui-fidelity-gate: ui-structure-gate artboard-provenance-gate
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/design-fidelity \
+		tests/ui/smoke/strategy/strategy-fidelity.spec.ts
+	$(MAKE) ui-visual-gate
+
 # Design fidelity (AGENTS.md §6.6 enforcement) — every System setup screen is
 # diffed against its .dc.html artboard rendered in the same browser: the
 # artboard's ordered structural landmarks must appear in order in the live
-# page, and geometry measured off the artboard (column ratios, row heights,
-# 520px dialogs, grid label columns, truncation of named fixture text) must
-# match within tolerance. Seeds the KT-STD §8 world first (idempotent).
+# page. This gate compares landmark TEXT only. It does not compare containers
+# (that is ui-structure-gate) and it does not measure geometry at all: the
+# geometry probes in designFidelity.ts have zero call sites, and this comment
+# claimed otherwise for three weeks. Seeds the KT-STD §8 world first
+# (idempotent).
 ui-system-setup-fidelity-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.playwright_ui_fixtures.reset_config
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/design-fidelity/system-setup-fidelity.spec.ts; status=$$?; \
+		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.playwright_ui_fixtures.restore_site; exit $$status
+
+# PLN-CHG-001 v1.18 §10.11 C01–C04 (tracker PLN18-106) — the System setup
+# component suite plus the Procurement settings browser journey; the spec's
+# one test funding source is purged afterwards.
+ui-system-setup-procurement-settings-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project system-setup
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.site_setup.run
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/design-fidelity/system-setup-fidelity.spec.ts
+		tests/ui/smoke/system_setup/procurement-settings.spec.ts; status=$$?; \
+		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.services.procurement_settings.purge_playwright_funding_sources; exit $$status
+
+# CFG-CHG-002 v0.14 §10.9 (tracker CFG14-5F) — schedules and working-day
+# calendars in a browser; its "Playwright…" calendars go with restore_site.
+# CFG-CHG-002 v0.14 D24 — the AUTH-owned tabs re-ported from C05/C06: assign,
+# edit before start, revoke; the unit link; the ambiguous structure. Its one
+# fixture user and that user's responsibilities go with restore_site.
+ui-system-setup-responsibilities-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/system_setup/system-setup-responsibilities.spec.ts; status=$$?; \
+		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.playwright_ui_fixtures.restore_site; exit $$status
+
+ui-system-setup-schedules-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/system_setup/system-setup-schedules.spec.ts; status=$$?; \
+		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.playwright_ui_fixtures.restore_site; exit $$status
+
+# CFG-CHG-002 v0.14 §10.8 (tracker CFG14-5E) — Check sources in a browser on
+# the CONFIG-RULES world; its fixture version and events go with restore_site.
+ui-system-setup-source-checks-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/system_setup/system-setup-source-checks.spec.ts; status=$$?; \
+		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.playwright_ui_fixtures.restore_site; exit $$status
+
+# CFG-CHG-002 v0.14 §10.6 (tracker CFG14-5D) — the Procurement rules list and
+# saved detail in a browser; the one rename it makes is restored in-test.
+ui-system-setup-rules-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/system_setup/system-setup-rules.spec.ts; status=$$?; \
+		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.playwright_ui_fixtures.restore_site; exit $$status
+
+# CFG-CHG-002 v0.14 §10.5 (tracker CFG14-5C) — the Funding sources browser
+# journey on the canonical site; its one test source is removed by the spec
+# itself and purged again here whatever the result.
+ui-system-setup-funding-sources-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/system_setup/system-setup-funding-sources.spec.ts; status=$$?; \
+		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.services.procurement_settings.purge_playwright_funding_sources; \
+		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.playwright_ui_fixtures.restore_site; exit $$status
+
+# CFG-CHG-002 v0.11 §10.3 (tracker CFG11-302) — the Financial years browser
+# journeys not covered by the fidelity gate: cross-year replacement (reads
+# the live canonical years, submits nothing), expiry and a stale-write
+# recovery (both on isolated far-future years via reset_fiscal_year_edge_cases,
+# never the canonical open year every other module's fixtures depend on).
+ui-system-setup-fiscal-years-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.site_setup.run
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.playwright_ui_fixtures.reset_fiscal_year_edge_cases
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/system_setup/system-setup-fiscal-years.spec.ts; status=$$?; \
+		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.tests.responsibility_test_cleanup.purge; exit $$status
+
+# CFG-CHG-002 v0.14 C01 (tracker CFG14-107, plan Phase 5A) — the Procuring
+# entity journeys. Starts with the RUN-CHG-001 stale-save race, which no gate
+# ran before 24 Sep 2026; Phase 5A adds the entity specs here.
+ui-system-setup-entity-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.site_setup.run
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/system_setup/system-setup-entity.spec.ts \
+		tests/ui/smoke/system_setup/system-setup-pe-stale-save.spec.ts
+
+# CFG-CHG-002 v0.11 §6/§11.1 (tracker CFG11-308) — access and the shared
+# states: a business user is refused with an explanation, every tab resolves
+# to content, a sub-path survives reload and back, all three intake
+# activities stay readable at 400px and 200% text scale, and the keyboard
+# reaches the primary action. Read-only; nothing is written.
+ui-system-setup-access-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.site_setup.run
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/system_setup/system-setup-access.spec.ts \
+		tests/ui/smoke/system_setup/system-setup-routing.spec.ts \
+		tests/ui/smoke/system_setup/system-setup-worlds.spec.ts
 
 # BUD-CHG-001 v1.3 Phase 8 (BUD-802) — Budget & Funding screens match their
 # .dc.html artboards. Seeds via a piped `exec(open(...).read())` rather than
@@ -254,9 +452,21 @@ ui-system-setup-fidelity-gate:
 # indented blocks (IPython's own stdin cell-splitting) — see that file's own
 # top comment.
 ui-budget-fidelity-gate:
-	cd $(BENCH_ROOT) && echo 'exec(open("$(BENCH_ROOT)/apps/kentender_v1/tests/ui/smoke/design-fidelity/budget_fidelity_seed.py").read())' | bench --site $(SITE) console
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/design-fidelity/budget-fidelity.spec.ts
+
+# BUD-CHG-001 v1.9 — the five Budget browser journeys (workspace states, Officer
+# register/edit/submit, Approver decision-first review, year-end closure,
+# access/technical read). Fixtures reset per spec through
+# kentender_budget.seeds.playwright_ui_fixtures; single worker — every spec
+# mutates the one canonical budget.
+ui-budget-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/budget/budget-workspace.spec.ts \
+		tests/ui/smoke/budget/budget-officer.spec.ts \
+		tests/ui/smoke/budget/budget-approver.spec.ts \
+		tests/ui/smoke/budget/budget-closure.spec.ts \
+		tests/ui/smoke/budget/budget-access.spec.ts
 
 # XMOD-STR-002 / 003 — create-demand Strategy target + PVC Review E2E.
 # Retired with DIA preparatory teardown; Demands MVP-1 will restore a successor gate.
@@ -338,40 +548,79 @@ ui-demands-workspace-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/demands/demands-workspace.spec.ts
 
-# PLN-GATE-03 — workspace / register / empty builder (PLN-UI-01…03).
-# PLN-CHG-001 v1.2 — Planning gates are rebuilt slice by slice; each slice's
-# gate replaces its Stitch-era predecessor as its surface lands. Retired with
+# PLN-CHG-001 v1.18 — Phase 2 exit (PLN18-213): the whole Planning-owned
+# Python domain suite (every services/schema test, discovered dynamically —
+# new test files are picked up without editing this target), including the
+# rule-3 removed-concept scan (test_planning_v123_schema). Each test class's
+# own addClassCleanup(fx.restore_site) restores intake flags and wipes test
+# rows; the cross-module checkpoint (core, budget, NDS, strategy, REQ, TPR)
+# has no single shared gate across apps and is run as the sibling modules'
+# own suites (see the tracker's PLN18-213 evidence for the exact list).
+# test_planning_seed is included again: PLN-CHG-001 v1.23 repaired the seed
+# onto the asynchronous publication pipeline, so it is an ordinary regression.
+planning-domain-gate:
+	cd $(BENCH_ROOT) && for m in $$(cd apps/kentender_v1/kentender_procurement/kentender_procurement/procurement_planning/tests && ls test_*.py | sed 's/\.py$$//'); do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.procurement_planning.tests.$$m || exit 1; done
+
+# PLN-CHG-001 v1.27 / KT-STD-001 v1.8 §3B.7 — the Planning dead-end matrix:
+# every workflow state × every reader, the four §3B.7 rules, written to
+# docs/mvp-1-r1/04_planning/evidence/v1_27/dead_end_matrix.md. A failure
+# blocks the release. Never run alongside a Playwright run (shared site).
+planning-dead-end-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.procurement_planning.tests.test_dead_end_matrix
+
+# Departmental Needs — the whole Needs-owned Python domain suite, mirroring
+# planning-domain-gate's own shape (discovered dynamically; each test
+# class's own fixture cleanup restores state). Two exclusions, both
+# pre-existing and unrelated to any UI-fidelity remediation:
+# test_departmental_needs_seed — like test_planning_seed pre-repair, it
+# refuses to run against a site with a live, mid-lifecycle canonical world
+# rather than reseeding over it. test_departmental_needs_navigation — found
+# failing 23 Sep 2026, before this gate existed: the Page fixture's own
+# checked-in `roles: []` (kentender_procurement/.../page/departmental_needs/
+# departmental_needs.json) leaves 4 of its own role-access tests failing,
+# and kentender_procurement/hooks.py still names a page_js entry for a
+# retired `departmental-procurement-plan` page. Real, but a page-registration
+# design question this pass never touched — needs its own fix.
+departmental-needs-domain-gate:
+	cd $(BENCH_ROOT) && for m in $$(cd apps/kentender_v1/kentender_procurement/kentender_procurement/departmental_needs/tests && ls test_*.py | sed 's/\.py$$//' | grep -vE '^test_departmental_needs_(seed|navigation)$$'); do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.departmental_needs.tests.$$m || exit 1; done
+
+# Departmental Needs — the structural fidelity gate (74-section NDS
+# Artboards.dc.html), mirroring ui-planning-fidelity-gate's own shape.
+ui-departmental-needs-fidelity-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/design-fidelity/departmental-needs-fidelity.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.departmental_needs.seeds.playwright_ui_fixtures.reset_all --kwargs '{"commit": True}'
+
+# PLN18-302 — U01 Workspace + U21 Common States (PLN-CHG-001 v1.18 Phase 3A).
+# Supersedes the v1.12 gate of the same name: `planning-workspace.spec.ts` is
+# retired for `pln-workspace.spec.ts` (this row's own testids); fidelity for
+# U01/U21 lives in the shared `ui-planning-fidelity-gate`, not duplicated here.
 ui-planning-workspace-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.procurement_planning.tests.test_planning_workspace
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.procurement_planning.tests.test_planning_api_requests
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-workspace.spec.ts
+		tests/ui/smoke/planning/pln-workspace.spec.ts
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-CHG-001 v1.12 Slice A — DPP authoring (PLN-UI-02..05) on the D13 world
-# (FY 2098-2099, a genuine accepted Need, the live Budget contract).
-ui-planning-dpp-gate:
+# PLN18-303 (PLN-CHG-001 v1.18 Phase 3B) — U02-U06 Departmental preparation,
+# certification and validation. Supersedes the v1.12 ui-planning-dpp-gate and
+# ui-planning-dpp-review-gate (both retired with this row, same as the v1.12
+# planning-dpp.spec.ts / planning-dpp-review.spec.ts they ran): one gate
+# across all three DPP domain modules and the one dedicated spec that
+# replaces both retired Playwright files.
+ui-planning-departmental-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.procurement_planning.tests.test_dpp_lifecycle
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.procurement_planning.tests.test_dpp_read
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-dpp.spec.ts
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
-
-# PLN-CHG-001 v1.12 Slice A — DPP validation → auto Annual Plan (PLN-UI-06).
-ui-planning-dpp-review-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.procurement_planning.tests.test_dpp_validation
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.procurement_planning.tests.test_dpp_read
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-dpp-review.spec.ts
+		tests/ui/smoke/planning/pln-departmental.spec.ts
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
 # PLN-CHG-001 v1.12 Phase 8 — release evidence: every Planning browser spec
@@ -385,31 +634,54 @@ ui-planning-release-evidence-gate:
 		tests/ui/smoke/design-fidelity/planning-fidelity.spec.ts
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-CHG-001 v1.12 decision D14 — every artboard's landmarks in order on the
-# live screen (AGENTS.md §6.6), on the D13 world.
+# PLN-CHG-001 v1.23 — every artboard panel's landmarks, in order, on the live
+# screen (AGENTS.md §6.6), on the Playwright world. Rewritten for v1.23: the
+# design files are one labelled panel per variant, indexed by `openPanel`.
 ui-planning-fidelity-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/design-fidelity/planning-fidelity.spec.ts
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-CHG-001 v1.12 Slice B — Annual Plan workbench, formation and the Plan
-# Item editor (PLN-UI-07..09) on the D13 world.
-ui-planning-plan-workbench-gate:
+# PLN18-304 (PLN-CHG-001 v1.18 Phase 3C) — U07 Annual Plan (5-tab screen:
+# overview/items/funding/governance/changes) and U08 Form Plan Items.
+# Supersedes the v1.12 ui-planning-plan-workbench-gate (retired with this row,
+# same as the planning-plan-workbench.spec.ts it ran): the Plan Item editor
+# (U09) is PLN18-305's own row, not this one.
+ui-planning-annual-plan-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.procurement_planning.tests.test_plan_workbench
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-plan-workbench.spec.ts
+		tests/ui/smoke/planning/pln-annual-plan.spec.ts
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-CHG-001 v1.12 Slice C — plan funding confirmation (PLN-UI-10) over
-# Budget's affordability contract; no reservation.
+# PLN18-305 (PLN-CHG-001 v1.18 Phase 3D) — U09 Plan Item editor: five
+# sections ported from the frame, method-condition Declaration evidence, the
+# live baseline recalculation. Supersedes no dedicated v1.12 gate (the old
+# stale-save spec ran only inside `ui-planning-release-evidence-gate`'s own
+# directory-wide glob); `planning-plan-item-stale-save.spec.ts` is retired
+# for `pln-item.spec.ts`, which carries that same regression test forward.
+ui-planning-item-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.procurement_planning.tests.test_plan_workbench
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/planning/pln-item.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
+
+# PLN18-306 (PLN-CHG-001 v1.18 Phase 3E) — U10 Finance task: plan funding
+# confirmation over Budget's real affordability contract (no reservation),
+# the funding evidence history (U10-history) and Active-Version reassessment
+# (U10-reassess-return — the same U10 route, §9's own table names only one).
+# Supersedes the v1.12 gate of the same name: `planning-finance.spec.ts` is
+# retired for `pln-finance.spec.ts` (this row's own testids and the two new
+# reassessment/history-carrying tests).
 ui-planning-finance-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.procurement_planning.tests.test_plan_finance
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/planning/planning-finance.spec.ts
+		tests/ui/smoke/planning/pln-finance.spec.ts
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
 # PLN-CHG-001 v1.12 Slice C — Annual Plan governance (PLN-UI-11/12).
@@ -438,7 +710,7 @@ planning-requisition-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.procurement_planning.tests.test_plan_requisition
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.procurement_planning.tests.test_planning_v12_schema
+		--module kentender_procurement.procurement_planning.tests.test_planning_v118_schema
 
 # PLN-CHG-001 v1.2 §14 (Phase 11) — the deterministic Planning seed:
 # prerequisites, actors, the integrated baseline through real commands,
@@ -450,18 +722,346 @@ planning-seed-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.departmental_needs.tests.test_departmental_needs_architecture
 
-# TPR-CHG-001 v0.6 — Tender Preparation Python gates.
-tender-templates-bundle-gate:
-	cd $(BENCH_ROOT) && for m in test_loader test_registry test_renderer; do \
-		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.tender_templates.tests.$$m || exit 1; done
+# TPR-CHG-001 v0.12 plan §5 — refuse to start a Tenders Python gate while a
+# Playwright run is mutating the same site (both drive shared test worlds).
+tenders-preflight:
+	@if pgrep -f "[p]laywright test" >/dev/null; then echo "A Playwright run is active on this site; run the Tenders Python gates after it finishes."; exit 1; fi
 
-tender-preparation-schema-gate:
+# BDS-CHG-001 v0.8 — Bid Submission Python gates.
+bds-preflight:
+	@if pgrep -f "[p]laywright test" >/dev/null; then echo "A Playwright run is active on this site; run the Bid Submission Python gates after it finishes."; exit 1; fi
+
+# Phase 1: the legacy bid-submission slice is retired (plan Phase 1; reconciliation/legacy_inventory.md).
+bds-retirement-gate: bds-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.bid_submission.tests.test_legacy_retirement
+
+# BDS-CHG-001 v0.8 Phase 2C — the public portal page (kentender_core kt_portal)
+# and Bid Submission's first surface (/tenders, BDS-DES-01), server side.
+bds-portal-gate: bds-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_core --module kentender_core.tests.test_portal_runtime
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.bid_submission.tests.test_available_tenders
+
+# BDS-CHG-001 v0.8 Phase 5 — the Bid Submission records, Start bid (the
+# candidate registration), the candidate provider Tenders consumes (TPR FU-25),
+# notice contact, clarifications, the organisation snapshot and the seeded
+# candidate over a real supplier account.
+bds-services-gate: bds-preflight
+	cd $(BENCH_ROOT) && for m in test_bds_schema test_simulation test_runtime_rules test_start_bid test_candidate_registry_contract test_clarification test_org_snapshot test_seeds test_save_bid_task test_evidence test_addendum_refresh test_review test_security_and_price test_availability test_submission test_changes_and_close test_guidance test_handoffs test_technical_read test_my_bids test_workspace_view test_documents_task test_company_task test_requirements_task test_price_task test_review_task test_submit_page test_receipt_page test_common_states test_overview test_available_tenders test_bound_release test_acceptance_gaps; do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.$$m || exit 1; done
+
+# BOP-CHG-001 v0.10 (with PRC-CHG-001 v0.9). Never run while a Playwright run
+# mutates the site: `bench run-tests` has no rollback on this bench.
+bop-preflight:
+	@if pgrep -f "[p]laywright test" >/dev/null; then echo "A Playwright run is active on this site; run the Bid Opening Python gates after it finishes."; exit 1; fi
+
+# PRC-CHG-001 v0.9 shared Proceedings service (plan Phase 2 gate PRC-G02; Phase 1 schema).
+prc-services-gate: bop-preflight
+	cd $(BENCH_ROOT) && for m in test_prc_schema test_prc_lifecycle test_prc_events test_prc_minutes test_prc_access test_prc_evaluation_profile; do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.proceedings.tests.$$m || exit 1; done
+
+# BOP-CHG-001 v0.10 plan Phase 7 gates: every state x actor has a sound next
+# step (BOP-A11), and nothing reachable before Start reveals a bid (BOP-N01).
+bop-dead-end-gate: bop-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_opening.tests.test_bop_dead_end
+
+bop-leakage-gate: bop-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_opening.tests.test_bop_leakage
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_opening.tests.test_bop_pre_session
+
+# BOP-CHG-001 v0.10 Bid Opening owner services (plan Phases 1 and 3-6).
+bop-services-gate: bop-preflight
+	cd $(BENCH_ROOT) && for m in test_bop_schema test_bop_gateways test_bop_custody_seam test_bop_pre_session test_bop_ceremony test_bop_record test_bop_api test_bop_public; do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_opening.tests.$$m || exit 1; done
+
+# EVL-CHG-001 v0.4 Bid Evaluation (with the Proceedings Evaluation profile).
+# Never run while a Playwright run mutates the site: `bench run-tests` has no
+# rollback on this bench. Test worlds use years >= 2100 and purge themselves.
+evl-preflight:
+	@if pgrep -f "[p]laywright test" >/dev/null; then echo "A Playwright run is active on this site; run the Bid Evaluation Python gates after it finishes."; exit 1; fi
+
+# EVL-CHG-001 v0.4 owner services (plan Phases 1 and 3-10); grows per phase.
+EVL_SERVICE_MODULES ?= test_evl_schema test_evl_errors test_evl_rules test_evl_seams test_evl_preparation test_evl_committee test_evl_intake \
+	test_evl_comparison test_evl_discussion test_evl_clarification test_evl_diligence test_evl_report test_evl_reads
+evl-services-gate: evl-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_core --module kentender_core.tests.test_support_issues
+	cd $(BENCH_ROOT) && for m in $(EVL_SERVICE_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_evaluation.tests.$$m || exit 1; done
+
+# AWD-CHG-001 v0.4 Award (plan OD-B: the service tests run on the synthetic
+# upstream sources and build no tender, bid, opening or evaluation; only the
+# seams gate reads the real Evaluation output). Never run while a Playwright
+# run mutates the site: `bench run-tests` has no rollback on this bench.
+awd-preflight:
+	@if pgrep -f "[p]laywright test" >/dev/null; then echo "A Playwright run is active on this site; run the Award Python gates after it finishes."; exit 1; fi
+
+# Award services on the synthetic sources (target: under 3 minutes); grows per phase.
+AWD_SERVICE_MODULES ?= test_awd_schema test_awd_errors test_awd_intake test_awd_opinion test_awd_decision test_awd_notices test_awd_authority \
+	test_awd_supplier test_awd_eligibility test_awd_delivery test_awd_explanation test_awd_restrictions test_awd_cancellation test_awd_corrections \
+	test_awd_cycles test_awd_reads
+awd-services-gate: awd-preflight
+	cd $(BENCH_ROOT) && for m in $(AWD_SERVICE_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.$$m || exit 1; done
+
+# The real Evaluation -> Award seam (plan rule 11): read-only contract checks
+# against the canonical report, and one integration world (years >= 2100).
+# That world is Evaluation's shared test world, whose Planning/Tenders fixtures
+# persist: run `make seed-canonical THROUGH=award` afterwards.
+awd-seams-gate: awd-preflight
+	cd $(BENCH_ROOT) && for m in test_awd_seams test_awd_integration; do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.$$m || exit 1; done
+
+awd-leakage-gate: awd-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.test_awd_leakage
+
+awd-dead-end-gate: awd-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.test_awd_dead_end
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.test_awd_idempotency
+
+# Award screens against their 47 boards (vitest project "award"; also in ui-structure-gate).
+ui-awd-fidelity-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project award
+
+# One Playwright spec per slice, each on its own synthetic Award world (seconds to build).
+UI_AWD = cd $(BENCH_ROOT)/apps/kentender_v1 && node tests/ui/helpers/queueCheck.cjs && npx playwright test --workers=1 tests/ui/smoke/award
+ui-awd-opinion-gate:
+	$(UI_AWD)/awd-opinion.spec.ts
+ui-awd-decision-gate:
+	$(UI_AWD)/awd-decision.spec.ts
+ui-awd-notices-gate:
+	$(UI_AWD)/awd-notices.spec.ts
+ui-awd-supplier-gate:
+	$(UI_AWD)/awd-supplier.spec.ts
+ui-awd-wait-gate:
+	$(UI_AWD)/awd-wait-deliver.spec.ts
+ui-awd-debrief-gate:
+	$(UI_AWD)/awd-debrief-hold.spec.ts
+ui-awd-correction-gate:
+	$(UI_AWD)/awd-correction.spec.ts
+# The canonical award walked from the menu and the bell (needs seed-canonical THROUGH=award).
+ui-awd-demo-walk-gate:
+	$(UI_AWD)/awd-demo-walk.spec.ts
+ui-awd-gate: ui-awd-fidelity-gate ui-awd-opinion-gate ui-awd-decision-gate ui-awd-notices-gate ui-awd-supplier-gate ui-awd-wait-gate ui-awd-debrief-gate ui-awd-correction-gate
+ui-awd-personas-gate:
+	$(UI_AWD)/awd-personas.spec.ts
+ui-awd-release-evidence-gate: ui-awd-gate ui-awd-demo-walk-gate ui-awd-personas-gate
+
+# Award demo profiles: one stage of the canonical award at a time, with the
+# site's test clock at that moment, for walking in a browser.
+seed-awd-profiles:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.award.seeds.profiles.list_profiles
+
+seed-awd-profile:
+	@test -n "$(PROFILE)" || (echo "PROFILE is required, e.g. make seed-awd-profile PROFILE=AWD-DEMO-OPINION (see make seed-awd-profiles)"; exit 2)
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.award.seeds.profiles.load_profile --kwargs '{"profile": "$(PROFILE)"}'
+
+seed-awd-profile-restore:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.award.seeds.profiles.restore_base
+
+# BOP-CHG-001 v0.10 plan Phase 8 — the Bid Opening Desk screens. The fidelity
+# gate mounts each screen with the server answer captured for its board
+# (bid_opening.seeds.playwright_ui_fixtures.capture); each slice gate drives
+# its boards in a browser on the Bid Opening world (never alongside the
+# Python gates: both move the same test controls).
+ui-bop-fidelity-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project bid-opening
+
+# 8.1 Prepare opening (a1–a5)
+ui-bop-prepare-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && node tests/ui/helpers/queueCheck.cjs && npx playwright test --workers=1 tests/ui/smoke/bid-opening/bop-prepare.spec.ts
+
+# 8.2 before Start (c1–c3, c2b–c2d)
+ui-bop-before-start-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && node tests/ui/helpers/queueCheck.cjs && npx playwright test --workers=1 tests/ui/smoke/bid-opening/bop-before-start.spec.ts
+
+# 8.3 the ceremony (c4–c9, c13, c13b, c7, c8, c8b)
+ui-bop-ceremony-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && node tests/ui/helpers/queueCheck.cjs && npx playwright test --workers=1 tests/ui/smoke/bid-opening/bop-ceremony.spec.ts
+
+# 8.4 pauses and cancellation (c10–c12)
+ui-bop-pauses-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && node tests/ui/helpers/queueCheck.cjs && npx playwright test --workers=1 tests/ui/smoke/bid-opening/bop-pauses.spec.ts
+
+# 8.5 no bids and not held (z1, n1, n2)
+ui-bop-no-bids-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && node tests/ui/helpers/queueCheck.cjs && npx playwright test --workers=1 tests/ui/smoke/bid-opening/bop-no-bids-not-held.spec.ts
+
+# 8.6 opening record (r1–r5)
+ui-bop-record-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && node tests/ui/helpers/queueCheck.cjs && npx playwright test --workers=1 tests/ui/smoke/bid-opening/bop-record.spec.ts
+
+# 8.7 completed record (r6, h1–h5)
+ui-bop-completed-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && node tests/ui/helpers/queueCheck.cjs && npx playwright test --workers=1 tests/ui/smoke/bid-opening/bop-completed.spec.ts
+
+# Phase 9 — the public opening page (boards p0–p6) inside Bid Submission's portal
+ui-bop-public-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && node tests/ui/helpers/queueCheck.cjs && npx playwright test --workers=1 tests/ui/smoke/bid-opening/bop-public.spec.ts
+
+# Phase 11 — the canonical opening read in a browser by each seeded person
+# (needs `make seed-canonical THROUGH=bid_opening`; read-only)
+ui-bop-release-evidence-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/bid-opening/bop-release-evidence.spec.ts
+
+ui-bop-gate: ui-bop-fidelity-gate ui-bop-public-gate ui-bop-prepare-gate ui-bop-before-start-gate ui-bop-ceremony-gate ui-bop-pauses-gate ui-bop-no-bids-gate ui-bop-record-gate ui-bop-completed-gate
+
+# BDS-CHG-001 v0.8 Phase 4 — Supplier Accounts (kentender_suppliers): record
+# rules, registration and verification, people and authority windows,
+# isolation, suspension, the Account read and the provider contract.
+supplier-accounts-services-gate: bds-preflight
+	cd $(BENCH_ROOT) && for m in test_registration_verification test_people_and_access test_account_read_and_contract test_account_portal; do \
+		bench --site $(SITE) run-tests --app kentender_suppliers --module kentender_suppliers.supplier_accounts.tests.$$m || exit 1; done
+
+# The same skeleton in a browser, as a guest, at 1440 and 390 (plus the
+# portal runtime and bid-portal component projects).
+ui-bds-portal-skeleton-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project desk-runtime --project bid-portal
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/bid-submission/bds-available-tenders.spec.ts
+
+# BDS-CHG-001 v0.8 Phase 10 — every bid state read by every kind of person
+# gives a sound next step or no access (KT-STD-001 v1.8 §3B.7); writes
+# 12_bid_submission/evidence/v0_8/dead_end_matrix.md.
+bds-dead-end-gate: bds-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.bid_submission.tests.test_dead_end_matrix
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_suppliers \
+		--module kentender_suppliers.supplier_accounts.tests.test_account_dead_end_matrix
+
+# BDS-CHG-001 v0.8 Phase 7 (owner decisions OD-G/OD-H) — the blind physical
+# tender-security intake Desk page: component tests, then the browser pass as
+# the Head of Procurement Function (matched and unmatched originals, the
+# supplier-only match, 390 px) and as two actors who are refused.
+ui-bds-security-intake-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tender-security-receipts
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/bid-submission/bds-security-intake.spec.ts
+
+# BDS-CHG-001 v0.8 Phase 11, slice 11.2 — BDS-DES-02 Tender overview: the
+# overview read, the bid-portal component and structural-fidelity tests (both
+# frames), then the browser pass (guest, a Draft's question, Start bid).
+ui-bds-overview-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.test_overview
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project bid-portal
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/bid-submission/bds-available-tenders.spec.ts tests/ui/smoke/bid-submission/bds-tender-overview.spec.ts
+
+# BDS-CHG-001 v0.8 slices 11.3–11.4 — the supplier Account portal (BDS-DES-03/04).
+ui-bds-account-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_suppliers --module kentender_suppliers.supplier_accounts.tests.test_account_portal
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_suppliers --module kentender_suppliers.supplier_accounts.tests.test_account_read_and_contract
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project supplier-account-portal
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/bid-submission/bds-account.spec.ts
+
+# BDS-CHG-001 v0.8 slice 11.5 — My bids (BDS-DES-05) and Receipts (BDS-DES-17).
+ui-bds-my-bids-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.test_my_bids
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project bid-portal --project desk-runtime
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/bid-submission/bds-my-bids.spec.ts
+
+# BDS-CHG-001 v0.8 slice 11.6 — Your bid (BDS-DES-06).
+ui-bds-workspace-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.test_workspace_view
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project bid-portal
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/bid-submission/bds-workspace.spec.ts
+
+# BDS-CHG-001 v0.8 slice 11.7 — Tender documents, clarifications and addenda (BDS-DES-07).
+ui-bds-documents-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.test_documents_task
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project bid-portal
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/bid-submission/bds-documents-task.spec.ts
+
+# BDS-CHG-001 v0.8 slice 11.8 — Company, declarations and tender security (BDS-DES-08).
+ui-bds-company-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.test_company_task
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project bid-portal
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/bid-submission/bds-company-task.spec.ts
+
+# BDS-CHG-001 v0.8 slices 11.9–11.10 — Requirements and supporting evidence (BDS-DES-09), Price (BDS-DES-10).
+ui-bds-requirements-price-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.test_requirements_task
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.test_price_task
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project bid-portal
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/bid-submission/bds-requirements-price.spec.ts
+
+# BDS-CHG-001 v0.8 slice 11.11 — Review bid (BDS-DES-11).
+ui-bds-review-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.test_review_task
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project bid-portal
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/bid-submission/bds-review.spec.ts
+
+# BDS-CHG-001 v0.8 slice 11.12 — Submit bid (BDS-DES-12). The test site keeps
+# the production switch on; each operating world is forced by the test controls.
+ui-bds-submit-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.test_submit_page
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project bid-portal
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/bid-submission/bds-submit.spec.ts
+
+# BDS-CHG-001 v0.8 slices 11.13–11.14 — the receipt (BDS-DES-13), Prepare
+# replacement, the withdrawal dialog and acknowledgement (BDS-DES-14).
+ui-bds-receipt-changes-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.test_receipt_page
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project bid-portal
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/bid-submission/bds-receipt-changes.spec.ts
+
+# BDS-CHG-001 v0.8 Phase 13 (TPR-CHG-001 v0.13) — a published Tender whose
+# bound template release is superseded or withdrawn: the §4.4.4 matrix, the
+# Tenders addendum boundary and the three BDS-DES-02/-06 variants.
+ui-bds-bound-release-gate: bds-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.test_bound_release
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.tenders.tests.test_published_release
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project bid-portal
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/bid-submission/bds-bound-release.spec.ts
+
+# BDS-CHG-001 v0.8 acceptance audit (28 Sep 2026, owner: "Create the tests"):
+# the gap tests — services, portal components and browser.
+ui-bds-acceptance-gaps-gate: bds-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.test_acceptance_gaps
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project bid-portal
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/bid-submission/bds-acceptance-gaps.spec.ts
+
+# BDS-CHG-001 v0.8 slice 11.15 — the §10.17 common states (BDS-DES-16) and View
+# status: one catalogue (bid_submission/common_states.json) checked against
+# board E, the status page, and the live states in a browser.
+ui-bds-common-states-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.test_common_states
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project bid-portal
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/bid-submission/bds-common-states.spec.ts
+
+# BDS-CHG-001 v0.8 BDS-G11 — structural fidelity of every portal screen with
+# its board variant at the 1440 and 390 frames (boards A–E), the Account
+# screens, the common-state catalogue against board E, and the COVERED claim.
+ui-bds-fidelity-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project bid-portal --project supplier-account-portal --project tender-security-receipts
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project design-fidelity
+
+# BDS-CHG-001 v0.8 BDS-G12 — the §13.3 persona release pass on the Playwright
+# world (Start bid → question → tasks → addendum → Charles's blind intake →
+# review → certificate → signed submission → receipt → Peter masked → close and
+# Bid Opening hand-off → the Administrator's technical read; then a withdrawal),
+# writing the evidence pack to docs/mvp-1-r1/12_bid_submission/evidence/v0_8/screens/.
+ui-bds-release-evidence-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && node tests/ui/helpers/queueCheck.cjs
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 tests/ui/smoke/bid-submission/bds-release-evidence.spec.ts
+
+# TPR-CHG-001 — Tenders Python gates.
+tenders-schema-gate: tenders-preflight
 	cd $(BENCH_ROOT) && for m in test_tender_schema test_envelope test_tender_authorization test_gateway_contracts; do \
-		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.tender_preparation.tests.$$m || exit 1; done
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.tenders.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_core --module kentender_core.tests.test_file_integrity
 
-tender-preparation-services-gate:
-	cd $(BENCH_ROOT) && for m in $$(cd apps/kentender_v1/kentender_procurement/kentender_procurement/tender_preparation/tests && ls test_*.py | sed 's/\.py$$//'); do \
-		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.tender_preparation.tests.$$m || exit 1; done
+tenders-services-gate: tenders-preflight
+	cd $(BENCH_ROOT) && for m in $$(cd apps/kentender_v1/kentender_procurement/kentender_procurement/tenders/tests && ls test_*.py | sed 's/\.py$$//'); do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.tenders.tests.$$m || exit 1; done
+
+# TPR-CHG-001 v0.12 §5.9 — every Tender state × reader leaves somewhere to go
+# (KT-STD-001 v1.8 §3B.7); writes docs/mvp-1-r1/11_tenders/evidence/v0_12/dead_end_matrix.md.
+tenders-dead-end-gate: tenders-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.tenders.tests.test_dead_end_matrix
+
+# (tender-templates-bundle-gate retired with the old `tender_templates` package —
+# STD-TPL-IMP-001 v1.0; the installed-release tests are `make std-templates-gate`.)
 
 # REQ-CHG-001 v1.6 — Procurement Requisitions slice gates (tracker rule 6).
 # Each gate runs the shared vitest project (component tests aren't split per
@@ -528,63 +1128,94 @@ ui-req-release-evidence-gate:
 		tests/ui/smoke/design-fidelity/requisitions-fidelity.spec.ts
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_requisitions.seeds.playwright_ui_fixtures.restore_site
 
-ui-tpr-workspace-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tender-preparation
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/tender-preparation/tpr-workspace.spec.ts
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tender_preparation.seeds.playwright_ui_fixtures.restore_site
 
-ui-tpr-start-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tender-preparation
+# TPR-CHG-001 v0.8 — Tenders slice gates (tracker rule 6 / plan §8). Each
+# gate runs the vitest project, the slice's Playwright spec single-worker on
+# the Tenders Playwright world (which extends the Requisitions one), and
+# restores the site afterward. Python gates are proven once per module.
+ui-tenders-workspace-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tenders
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/tender-preparation/tpr-start.spec.ts
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tender_preparation.seeds.playwright_ui_fixtures.restore_site
+		tests/ui/smoke/tenders/tnd-workspace.spec.ts tests/ui/smoke/tenders/tnd-common-states.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
 
-ui-tpr-editor-a-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tender-preparation
+ui-tenders-start-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tenders
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/tender-preparation/tpr-editor-details-requirements.spec.ts
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tender_preparation.seeds.playwright_ui_fixtures.restore_site
+		tests/ui/smoke/tenders/tnd-start.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
 
-ui-tpr-editor-b-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tender-preparation
+ui-tenders-details-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tenders
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/tender-preparation/tpr-editor-schedule-evaluation-contract.spec.ts
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tender_preparation.seeds.playwright_ui_fixtures.restore_site
+		tests/ui/smoke/tenders/tnd-editor-details.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
 
-ui-tpr-review-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tender-preparation
+ui-tenders-requirements-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tenders
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/tender-preparation/tpr-review.spec.ts
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tender_preparation.seeds.playwright_ui_fixtures.restore_site
+		tests/ui/smoke/tenders/tnd-editor-requirements.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
 
-ui-tpr-approval-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tender-preparation
+ui-tenders-review-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tenders
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/tender-preparation/tpr-approval-task.spec.ts
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tender_preparation.seeds.playwright_ui_fixtures.restore_site
+		tests/ui/smoke/tenders/tnd-review.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
 
-ui-tpr-approved-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tender-preparation
+ui-tenders-approval-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tenders
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/tender-preparation/tpr-approved.spec.ts
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tender_preparation.seeds.playwright_ui_fixtures.restore_site
+		tests/ui/smoke/tenders/tnd-approval.spec.ts tests/ui/smoke/tenders/tnd-correction.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
 
-# TPR-CHG-001 v0.6 — every artboard section's landmarks in order on the live
-# screen (AGENTS.md §6.6), on the Tender Preparation Playwright world.
-ui-tpr-fidelity-gate:
+ui-tenders-authorisation-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tenders
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/design-fidelity/tender-preparation-fidelity.spec.ts
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tender_preparation.seeds.playwright_ui_fixtures.restore_site
+		tests/ui/smoke/tenders/tnd-authorisation.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
 
-# TPR-CHG-001 v0.6 Phase 7 — release evidence: every Tender Preparation
-# browser spec single-worker, the fidelity spec, then the world restored.
-ui-tpr-release-evidence-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tender-preparation
+ui-tenders-publication-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tenders
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/tender-preparation \
-		tests/ui/smoke/design-fidelity/tender-preparation-fidelity.spec.ts
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tender_preparation.seeds.playwright_ui_fixtures.restore_site
+		tests/ui/smoke/tenders/tnd-publication.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
+
+ui-tenders-published-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tenders
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/tenders/tnd-published.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
+
+ui-tenders-addendum-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tenders
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/tenders/tnd-addendum.spec.ts tests/ui/smoke/tenders/tnd-clarification.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
+
+ui-tenders-cancel-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tenders
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/tenders/tnd-cancel.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
+
+ui-tenders-history-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tenders
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/tenders/tnd-history.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
+
+ui-tenders-fidelity-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/design-fidelity/tenders-fidelity.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
+
+ui-tenders-release-evidence-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tenders
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/tenders \
+		tests/ui/smoke/design-fidelity/tenders-fidelity.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
 
 ui-demands-form-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
@@ -625,166 +1256,6 @@ ui-demands-performance-gate:
 demands-abs-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
 		--module kentender_procurement.demands.tests.test_demands_mvp1_legacy_absence
-
-bid-submissions-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_bid_submissions_api
-
-ui-bid-submissions-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/bid-submissions/officer-bid-submissions.spec.ts
-
-bw-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_published_tender_overview_api
-
-bw-a0-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_available_tenders_api
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_published_tender_overview_web
-
-ui-bidder-a0-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/bidder-workspace/a0-available-tenders.spec.ts
-
-ui-bidder-a1-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/bidder-workspace/a1-published-tender-overview.spec.ts
-
-bw-a2-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_submission_checklist_api
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_submission_checklist_web
-
-ui-bidder-a2-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/bidder-workspace/a2-submission-checklist.spec.ts
-
-bw-a3-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_tender_documents_addenda_api
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_tender_documents_addenda_web
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_bidder_presentation_boundary
-
-ui-bidder-a3-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/bidder-workspace/a3-documents-addenda.spec.ts
-
-bw-x100-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_lean_x100_evidence_and_issues
-
-bw-s300-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_lean_s300_confidential_business_questionnaire
-
-ui-bidder-s300-cbq-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/bidder-workspace/s300-cbq.spec.ts
-
-bw-fot-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_lean_fot_review_certify
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_lean_f0_foundation
-
-ui-bidder-fot-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/bidder-workspace/fot-review-certify.spec.ts
-
-bw-statutory-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_lean_statutory_declarations
-
-ui-bidder-statutory-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/bidder-workspace/statutory-declarations.spec.ts
-
-bw-tender-security-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_lean_tender_security
-
-ui-bidder-tender-security-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/bidder-workspace/tender-security.spec.ts
-
-bw-preliminary-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_lean_preliminary_requirements
-
-ui-bidder-preliminary-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/bidder-workspace/preliminary-requirements.spec.ts
-
-bw-qualification-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_lean_qualification_and_capability
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_qualification_stitch_layout_guard
-
-ui-bidder-qualification-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 --retries=0 \
-		tests/ui/smoke/bidder-workspace/qualification-and-capability.spec.ts
-
-bw-technical-proposal-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_lean_technical_proposal
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_technical_proposal_stitch_layout_guard
-
-ui-bidder-technical-proposal-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 --retries=0 \
-		tests/ui/smoke/bidder-workspace/technical-proposal.spec.ts
-
-bw-requirements-compliance-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_lean_requirements_compliance
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_requirements_compliance_stitch_layout_guard
-
-ui-bidder-requirements-compliance-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 --retries=0 \
-		tests/ui/smoke/bidder-workspace/requirements-compliance.spec.ts
-
-bw-price-schedule-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_lean_price_schedule
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_price_schedule_stitch_layout_guard
-
-ui-bidder-price-schedule-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 --retries=0 \
-		tests/ui/smoke/bidder-workspace/price-schedule.spec.ts
-
-bw-final-submission-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_final_submission_readiness
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_final_submission_stitch_layout_guard
-	$(MAKE) bw-final-submission-stitch-contract-gate SITE=$(SITE)
-
-.PHONY: bw-final-submission-stitch-contract-gate
-bw-final-submission-stitch-contract-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_bidder_stitch_contract_gate
-
-ui-bidder-final-submission-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 --retries=0 \
-		tests/ui/smoke/bidder-workspace/final-submission.spec.ts
-
-bw-a4-domain-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_requirement_matrix_api
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_requirement_matrix_web
-
-ui-bidder-a4-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/bidder-workspace/a4-requirement-matrix.spec.ts
 
 bw-manifest-phase1-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
@@ -829,15 +1300,15 @@ bw-manifest-phase2-reseed:
 		kentender_procurement.tender_configurations.seed.bwmf_canonical_fixture.seed_bwmf_canonical_fixture
 
 ui-std-config-gate:
-	@echo "STD Module POC archived (2026-07). Use: make verify-std-archived && npm run test:ui:smoke:std-module-retired"
+	@echo "STD Module POC archived (2026-07); STD Configuration archived (2026-09). Use: make verify-std-archived && npx playwright test tests/ui/smoke/std_templates"
 	@exit 1
 
 verify-std-archived:
 	chmod +x $(BENCH_ROOT)/apps/kentender_v1/scripts/verify-std-archived.sh
 	$(BENCH_ROOT)/apps/kentender_v1/scripts/verify-std-archived.sh
 
-ui-std-module-retired-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npm run test:ui:smoke:std-module-retired
+# (ui-std-module-retired-gate retired 26 Sep 2026: the std-module-retired page
+# no longer exists; its spec is archived under archive/std-configuration-retired-2026-09/.)
 
 tm2-v1-contamination-audit:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
@@ -882,18 +1353,71 @@ e1-nssf-poc-gate:
 		--module kentender_procurement.tender_configurations.tests.test_schema_compiler
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_e1_nssf_seed
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_configurations.tests.test_electronic_bid_submission
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/it-std-wizard/e1-bidder-workspace.spec.ts
 
 # Canonical world (KT-STD-001 §8 + SEED-001), progressive by module stage.
-# THROUGH: site | strategy | budget | needs | planning | requisitions | tender_preparation (later stages are added as they land).
-THROUGH ?= tender_preparation
+# THROUGH: site | strategy | budget | needs | planning | requisitions | tenders | bid_submission | bid_opening | bid_evaluation | award
+# (THROUGH=award is the full chain; later stages are added as they land).
+# bid_submission builds the Tenders stage with the canonical bid's lifecycle interleaved (BDS-CHG-001 v0.8 D19);
+# over a world seeded only through tenders it needs REBUILD=True, and it runs only on a test site (the simulated services);
+# so do bid_opening, bid_evaluation and award. A plain run first undoes any loaded demo profile and clears the test clock.
+# WIPE=True also drops the site stage itself (Procuring Entity, Organisation
+# Units, Fiscal Years, actors) before rebuilding from nothing — see
+# docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_24.md §4. FORCE=True bypasses
+# every module seed's own developer_mode/allow_tests guard, required for WIPE
+# outside developer_mode. RESEED defaults to None (Python-literal, not a
+# string) so canonical.run() picks its own default: reseed immediately for
+# a plain reset/rebuild, but WIPE=True alone now means what "wipe" says —
+# clear and stop, empty database. Pass RESEED=True to also force the old
+# "wipe then immediately rebuild everything" behaviour. All three must stay
+# Python-literal True/False/None, not JSON true/false/null.
+THROUGH ?= requisitions
+WIPE ?= False
+FORCE ?= False
+RESEED ?= None
+# REBUILD=True also drops the canonical module rows (runbook §4 `rebuild`) —
+# needed once a canonical Plan Item's scope is permanently locked by an
+# authorisation whose Requisition no longer exists (REQ-CHG-001 v1.11 §7.2).
+REBUILD ?= False
+# Make variables are case-sensitive: `force=True`/`wipe=True`/`through=budget`
+# on the command line silently set a DIFFERENT variable from FORCE/WIPE/
+# THROUGH above and are otherwise ignored - a very natural mistake since
+# it matches the Python kwarg names exactly. Accept the lowercase spelling
+# as an alias, command-line value wins either way.
+ifdef through
+THROUGH := $(through)
+endif
+ifdef wipe
+WIPE := $(wipe)
+endif
+ifdef rebuild
+REBUILD := $(rebuild)
+endif
+ifdef force
+FORCE := $(force)
+endif
+ifdef reseed
+RESEED := $(reseed)
+endif
+# The clear deletes many documents and each deletion enqueues background
+# jobs; past Frappe's ceiling the next enqueue fails and `bench execute`
+# reports it as a misleading NameError (SEED-OPS-001 §7). Drain before and
+# after, so neither this run nor the next one trips it.
+# The queue check is browser-test tooling (it needs esbuild from `npm install`).
+# A server without it — a new or production-like site — still drains the
+# queue, with a plain burst worker, so the seed never depends on test tooling.
+SEED_QUEUE_DRAIN = if node -e "require.resolve('esbuild')" >/dev/null 2>&1; then \
+		node tests/ui/helpers/queueCheck.cjs --fix; \
+	else \
+		echo "Queue check skipped (no test tooling here; run npm install for it): draining the background queue with a bench worker."; \
+		(cd $(BENCH_ROOT) && bench worker --queue default --burst --quiet); \
+	fi
+
 seed-canonical:
+	@$(SEED_QUEUE_DRAIN)
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.canonical.run \
-		--kwargs '{"through": "$(THROUGH)", "reset": True, "validate": True}'
+		--kwargs '{"through": "$(THROUGH)", "reset": True, "rebuild": $(REBUILD), "wipe": $(WIPE), "reseed": $(RESEED), "force": $(FORCE), "validate": True}'
+	@$(SEED_QUEUE_DRAIN)
 
 seed-canonical-dry-run:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
@@ -902,6 +1426,41 @@ seed-canonical-dry-run:
 seed-canonical-validate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.canonical.validate --kwargs '{"through": "$(THROUGH)"}'
+
+# REQ-CHG-001 v1.11 §16.4A — named, mutually exclusive Requisitions demo
+# profiles on the canonical MOH item (runbook SEED-OPS-001 §9).
+# Bid Opening demo profiles: one stage of the canonical Tender's opening at a
+# time, with the site's test clock at that moment, for walking in a browser.
+# Every demo profile loads with its promised next steps; restores the canonical
+# opening afterwards (about 8 minutes; the canonical world must be seeded).
+bop-profiles-gate: bop-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_opening.tests.test_bop_profiles
+
+seed-bop-profiles:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_procurement.bid_opening.seeds.profiles.list_profiles
+
+seed-bop-profile:
+	@test -n "$(PROFILE)" || (echo "PROFILE is required, e.g. make seed-bop-profile PROFILE=BOP-DEMO-READY (see make seed-bop-profiles)"; exit 2)
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_procurement.bid_opening.seeds.profiles.load_profile --kwargs '{"profile": "$(PROFILE)"}'
+
+seed-bop-profile-restore:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_procurement.bid_opening.seeds.profiles.restore_base
+
+seed-req-profiles:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_procurement.procurement_requisitions.seeds.profiles.list_profiles
+
+seed-req-profile:
+	@test -n "$(PROFILE)" || (echo "PROFILE is required, e.g. make seed-req-profile PROFILE=REQ-SC-HOLD (see make seed-req-profiles)"; exit 2)
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_procurement.procurement_requisitions.seeds.profiles.load_profile --kwargs '{"profile": "$(PROFILE)"}'
+
+seed-req-profile-restore:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_procurement.procurement_requisitions.seeds.profiles.restore_base
 
 seed-kentender-mvp-v1:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
@@ -915,6 +1474,13 @@ seed-kentender-mvp-v1-validate:
 purge-kentender-playwright-data:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.kentender_mvp_v1.clear.purge_kentender_playwright_data
+
+# Not KenTender seed data — ERPNext's own `_Test Fiscal Year %` residue from
+# running ERPNext's Python test suite on this site. canonical.py's wipe
+# deliberately never touches these (SEED-OPS-001 §3.2); this is separate.
+purge-erpnext-test-fixtures:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_core.tests.erpnext_test_fixture_cleanup.purge
 
 # Deprecated aliases (one cycle).
 seed-moh-mvp-v1: seed-kentender-mvp-v1
@@ -930,10 +1496,6 @@ seed-stable-platform-reset:
 seed-stable-platform-validate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.seed_stable_platform.validate
 
-seed-demand-to-bidder-journey:
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_procurement.tender_configurations.seed.demand_to_bidder_journey_sample.run
-
 seed-demo-platform:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.seed_demo_platform.run --kwargs '{"reset": false}'
 
@@ -942,3 +1504,24 @@ seed-demo-platform-reset:
 
 seed-demo-platform-validate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.seed_demo_platform.validate
+
+# STD-TPL-IMP-001 v1.0 — installed STD template runtime (STD Templates).
+.PHONY: std-release-rebuild std-release-install std-release-switch std-templates-gate
+STD_RELEASE_PACK ?= $(CURDIR)/docs/mvp-1-r1/07_tender_templates/it_equipment_open_v1
+RELEASE_OWNER ?= bnganyi
+RELEASE_ID ?= stdr-0e81b40c-d548-498c-855a-d4f80764af40
+std-release-rebuild:
+	python3 docs/mvp-1-r1/07_tender_templates/tools/rebuild_release.py $(if $(PDF),--pdf,) --built-by "$(RELEASE_OWNER)" --built-at "$$(date -Iseconds)"
+
+std-release-install:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.std_templates.services.installer.install \
+		--kwargs "{'package': '$(STD_RELEASE_PACK)', 'installed_by': '$(RELEASE_OWNER)', 'switch': '$(if $(SWITCH),$(SWITCH),On)'}"
+
+std-release-switch:
+	@test -n "$(STATE)" || (echo "STATE=On or STATE=Off is required" && exit 2)
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.std_templates.services.lifecycle.switch \
+		--kwargs "{'release_id': '$(RELEASE_ID)', 'state': '$(STATE)', 'actor': '$(RELEASE_OWNER)'}"
+
+std-templates-gate:
+	cd $(BENCH_ROOT) && for m in test_compiler test_release_vocabulary test_installer test_services test_binding test_bid_work_status; do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.std_templates.tests.$$m || exit 1; done

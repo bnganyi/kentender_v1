@@ -1,0 +1,118 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-09-27 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "bidder_arrangement",
+  "bid_workspace",
+  "organisation_id",
+  "snapshot_version",
+  "account_record_version",
+  "facts_json",
+  "facts_digest",
+  "taken_at",
+  "taken_by",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "bidder_arrangement",
+   "fieldtype": "Link",
+   "label": "Bidder arrangement",
+   "read_only": 1,
+   "options": "Bidder Arrangement",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "bid_workspace",
+   "fieldtype": "Data",
+   "label": "Bid workspace",
+   "read_only": 1
+  },
+  {
+   "fieldname": "organisation_id",
+   "fieldtype": "Data",
+   "label": "Supplier organisation",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "snapshot_version",
+   "fieldtype": "Int",
+   "label": "Snapshot version",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "account_record_version",
+   "fieldtype": "Int",
+   "label": "Account record version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "facts_json",
+   "fieldtype": "Long Text",
+   "label": "Facts",
+   "read_only": 1
+  },
+  {
+   "fieldname": "facts_digest",
+   "fieldtype": "Data",
+   "label": "Facts digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "taken_at",
+   "fieldtype": "Datetime",
+   "label": "Taken at",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "taken_by",
+   "fieldtype": "Link",
+   "label": "Taken by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-27 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "name": "Bid Organisation Snapshot",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

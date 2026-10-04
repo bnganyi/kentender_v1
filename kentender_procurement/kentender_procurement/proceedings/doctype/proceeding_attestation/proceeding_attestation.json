@@ -1,0 +1,134 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "PRC-CHG-001 v0.9 §4 Attestation: a member's proof bound to an exact frozen target digest.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "attestation_id",
+  "proceeding",
+  "minutes_version",
+  "target_id",
+  "target_digest",
+  "member_user",
+  "action",
+  "method",
+  "recorded_at",
+  "proof_reference",
+  "correlation_id",
+  "verification_result",
+  "satisfies_current"
+ ],
+ "fields": [
+  {
+   "fieldname": "attestation_id",
+   "fieldtype": "Data",
+   "label": "Attestation ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "proceeding",
+   "fieldtype": "Link",
+   "label": "Proceeding",
+   "read_only": 1,
+   "options": "Proceeding",
+   "reqd": 1
+  },
+  {
+   "fieldname": "minutes_version",
+   "fieldtype": "Data",
+   "label": "Minutes version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_id",
+   "fieldtype": "Data",
+   "label": "Target ID",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_digest",
+   "fieldtype": "Data",
+   "label": "Target digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "member_user",
+   "fieldtype": "Link",
+   "label": "Member user",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "action",
+   "fieldtype": "Select",
+   "label": "Action",
+   "read_only": 1,
+   "options": "Sign\nInitial",
+   "reqd": 1
+  },
+  {
+   "fieldname": "method",
+   "fieldtype": "Data",
+   "label": "Method",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "recorded_at",
+   "fieldtype": "Datetime",
+   "label": "Recorded at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "proof_reference",
+   "fieldtype": "Data",
+   "label": "Proof reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "correlation_id",
+   "fieldtype": "Data",
+   "label": "Correlation ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verification_result",
+   "fieldtype": "Select",
+   "label": "Verification result",
+   "read_only": 1,
+   "options": "Accepted/Verified\nRejected\nUnavailable\nIndeterminate",
+   "reqd": 1
+  },
+  {
+   "fieldname": "satisfies_current",
+   "fieldtype": "Check",
+   "label": "Satisfies current",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Proceedings",
+ "name": "Proceeding Attestation",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:attestation_id"
+}

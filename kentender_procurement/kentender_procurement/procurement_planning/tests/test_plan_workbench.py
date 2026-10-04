@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -19,8 +20,18 @@ from kentender_procurement.procurement_planning.services import (
 	needs_intake,
 	plan_read,
 	plan_workbench,
+	readiness,
+	workspace,
 )
 from kentender_procurement.procurement_planning.tests import fixtures as fx
+
+
+#: §10.7 — a combined purchase must say why it was combined, at the moment it
+#: is combined. 20–500 characters, the same range the readiness gate requires.
+COMBINATION_REASON = (
+	"Both departments require the same specification for the same programme; combining secures "
+	"better unit pricing and one delivery schedule."
+)
 
 
 def key() -> str:
@@ -244,13 +255,73 @@ class TestFormPlanItemsCombine(PlanWorkbenchCase):
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 		result = plan_workbench.form_plan_items(
 			plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
-			mode="combined", expected_record_version=plan["record_version"], idempotency_key=key(),
+			mode="combined", combination_reason=COMBINATION_REASON,
+			expected_record_version=plan["record_version"], idempotency_key=key(),
 		)
 		self.assertTrue(result["single"])
 		item = plan_read.get_plan_item(plan_item_id=result["created_items"][0])
 		self.assertTrue(item["combined"])
 		self.assertEqual(len(item["sources"]), 2)
 		self.assertIn("2 sources", item["sources_caption"])
+
+	def test_a_combined_purchase_carries_the_reason_it_was_combined(self):
+		"""§10.7 U08-COMBINE — the reason is captured where the Planner is
+		asked for it, so the purchase is complete the moment it exists rather
+		than arriving with a readiness blocker already on it."""
+		accepted, entry_a, entry_b = self.accept_two(
+			{"title": "Clinical training laptops"}, {"title": "Clinical deployment laptops"},
+		)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		result = plan_workbench.form_plan_items(
+			plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
+			mode="combined", combination_reason=COMBINATION_REASON,
+			combined_title="Clinical training and deployment laptops for digital health rollout",
+			expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		item = plan_read.get_plan_item(plan_item_id=result["created_items"][0])
+		self.assertEqual(item["identity"]["aggregation_reason"], COMBINATION_REASON)
+		self.assertEqual(item["identity"]["title"], "Clinical training and deployment laptops for digital health rollout")
+
+	def test_combining_without_a_reason_is_refused(self):
+		accepted, entry_a, entry_b = self.accept_two(
+			{"title": "Requirement A"}, {"title": "Requirement B"},
+		)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		for offered in ("", "Too short"):
+			with self.subTest(reason=offered):
+				with self.assertRaises(ProcurementPlanningError) as caught:
+					plan_workbench.form_plan_items(
+						plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
+						mode="combined", combination_reason=offered,
+						expected_record_version=plan["record_version"], idempotency_key=key(),
+					)
+				self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		self.assertEqual(frappe.db.count("Annual Plan Item", {"fixture_namespace": fx.NS}), 0)
+
+	def test_keeping_them_separate_never_invents_a_combination_reason(self):
+		accepted, entry_a, entry_b = self.accept_two(
+			{"title": "Requirement A"}, {"title": "Requirement B"},
+		)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		result = plan_workbench.form_plan_items(
+			plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
+			mode="each", combination_reason=COMBINATION_REASON,
+			expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		for plan_item_id in result["created_items"]:
+			with self.subTest(plan_item_id=plan_item_id):
+				item = plan_read.get_plan_item(plan_item_id=plan_item_id)
+				self.assertEqual(item["identity"]["aggregation_reason"], "")
+
+	def test_the_combination_rule_names_what_actually_differs(self):
+		"""The rule a screen reads is the rule the command enforces: same
+		budget, requirement type, unit and kind of requirement (invariant 8)."""
+		same = frappe._dict({"budget_line": fx.BUDGET_LINE, "classification": "Goods", "unit": "Each", "source_origin": "Direct requirement"})
+		other_unit = frappe._dict({**same, "unit": "Programme"})
+		other_type = frappe._dict({**same, "classification": "Works"})
+		self.assertEqual(plan_workbench.combination_conflicts([same, frappe._dict(same)]), [])
+		self.assertEqual(plan_workbench.combination_conflicts([same, other_unit]), ["They are measured in different units."])
+		self.assertEqual(plan_workbench.combination_conflicts([same, other_type]), ["They are different requirement types."])
 
 	def test_combined_mode_rejects_incompatible_classifications(self):
 		accepted, entry_a, entry_b = self.accept_two(
@@ -261,7 +332,8 @@ class TestFormPlanItemsCombine(PlanWorkbenchCase):
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_workbench.form_plan_items(
 				plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
-				mode="combined", expected_record_version=plan["record_version"], idempotency_key=key(),
+				mode="combined", combination_reason=COMBINATION_REASON,
+				expected_record_version=plan["record_version"], idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_SOURCE_INCOMPATIBLE")
 		self.assertEqual(frappe.db.count("Annual Plan Item", {"fixture_namespace": fx.NS}), 0)
@@ -327,9 +399,9 @@ class TestSavePlanItem(PlanWorkbenchCase):
 		_, item_id = self.one_item()
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		for field, value, code in (
-			("tendering_period_days", 6, "PLN_TENDERING_PERIOD_BELOW_MINIMUM"),
-			("evaluation_period_days", 31, "PLN_EVALUATION_PERIOD_ABOVE_MAXIMUM"),
-			("standstill_period_days", 13, "PLN_STANDSTILL_BELOW_MINIMUM"),
+			("tendering_period_days", 6, "PLN_PROFILE_PERIOD_INVALID"),
+			("evaluation_period_days", 31, "PLN_PROFILE_PERIOD_INVALID"),
+			("standstill_period_days", 13, "PLN_PROFILE_PERIOD_INVALID"),
 		):
 			with self.subTest(field=field):
 				with self.assertRaises(ProcurementPlanningError) as caught:
@@ -364,7 +436,7 @@ class TestSavePlanItem(PlanWorkbenchCase):
 				expected_record_version=item["record_version"], idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_METHOD_NOT_ADMISSIBLE")
-		self.assertIn("Open Tender", caught.exception.detail["admissible_methods"])
+		self.assertEqual(caught.exception.detail["failed_conditions"], ["G-VALUE"])  # v1.18: the profile's known-fact limit
 		saved = plan_workbench.save_plan_item(
 			plan_item=item_id, values=fx.item_values(procurement_method="Request for Proposals"),
 			expected_record_version=item["record_version"], idempotency_key=key(),
@@ -381,33 +453,29 @@ class TestSavePlanItem(PlanWorkbenchCase):
 				plan_item=item_id, values=fx.item_values(plan_horizon="Multi-year"),
 				expected_record_version=item["record_version"], idempotency_key=key(),
 			)
-		self.assertEqual(caught.exception.code, "PLN_PLAN_CONTENTS_INCOMPLETE")
+		self.assertEqual(caught.exception.code, "PLN_MULTI_YEAR_UNSUPPORTED")  # v1.18 §4.6: fixed literal
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_workbench.save_plan_item(
 				plan_item=item_id, values=fx.item_values(lotting_indicator="Packaged into lots"),
 				expected_record_version=item["record_version"], idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_PLAN_CONTENTS_INCOMPLETE")
-		# a lower-advantage scheme than the proposal needs a retained reason
+		# v1.18 §5.5.3.2 — a governed designation needs no reason and has no ranking; an ungoverned one is refused
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_workbench.save_plan_item(
-				plan_item=item_id, values=fx.item_values(reservation_category="Micro, small and medium enterprise"),
+				plan_item=item_id, values=fx.item_values(reservation_category="Friends of the Planner"),
 				expected_record_version=item["record_version"], idempotency_key=key(),
 			)
-		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		self.assertEqual(caught.exception.code, "PLN_RESERVATION_REQUIRED")
 		saved = plan_workbench.save_plan_item(
 			plan_item=item_id,
-			values=fx.item_values(
-				reservation_category="Micro, small and medium enterprise",
-				reservation_category_reason="The requirement suits registered MSME suppliers in this category.",
-				lotting_indicator="Packaged into lots", lot_count=3,
-			),
+			values=fx.item_values(reservation_category="Women", lotting_indicator="Packaged into lots", lot_count=3),
 			expected_record_version=item["record_version"], idempotency_key=key(),
 		)
 		self.assertEqual(saved["action"], "saved")
 		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
 		self.assertEqual(refreshed["preference"]["lot_count"], 3)
-		self.assertEqual(refreshed["preference"]["reservation_category"], "Micro, small and medium enterprise")
+		self.assertEqual(refreshed["preference"]["reservation_category"], "Women")
 
 	def test_save_rejects_ineligible_objective(self):
 		_, item_id = self.one_item()
@@ -418,6 +486,487 @@ class TestSavePlanItem(PlanWorkbenchCase):
 				expected_record_version=item["record_version"], idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_OBJECTIVE_INELIGIBLE")
+
+
+class TestProfilesEvidenceAndFeasibility(PlanWorkbenchCase):
+	"""PLN-CHG-001 v1.18 §5.5.1 / §5.5.3.3 (PLN18-206)."""
+
+	def test_a_formed_item_carries_the_profile_defaults_and_its_stable_root(self):
+		_, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertTrue(frappe.db.exists("Plan Item", item_id))
+		self.assertEqual(frappe.db.get_value("Annual Plan Item", {"plan_item_id": item_id}, "plan_item"), item_id)
+		self.assertTrue(item["baseline"]["profile"]["found"])
+		self.assertEqual(item["baseline"]["periods"]["tendering_period_days"], 21)
+		self.assertEqual(item["baseline"]["estimated_delivery_period_days"], fx.DELIVERY_DEFAULT_DAYS)
+		self.assertEqual(item["baseline"]["floors"], {"tendering_period_days": 7, "standstill_period_days": 14})
+		self.assertEqual(item["baseline"]["ceilings"], {"evaluation_period_days": 30})
+		self.assertTrue(item["classification"]["method_profile"]["found"])
+		self.assertIn("Open Tender", item["classification"]["admissible_methods"])
+		self.assertNotIn("Low Value Procurement", item["classification"]["admissible_methods"])
+		self.assertEqual(item["scope_lock"], {"locked": False, "since": "", "first_requisition": "", "held": False, "open_requests": 0})
+
+	def test_an_unset_strategic_objective_is_the_items_own_blocker_too(self):
+		"""`get_plan_item`'s own `objective_eligible` had drifted from
+		`plan_readiness`'s (found live 23 Sep 2026): an unset objective read as
+		vacuously eligible here, so a freshly formed item carried no blocker
+		and no flagged field on its own editor page, though the plan-level
+		readiness this item's blockers are meant to mirror already refused it
+		a Send to Finance and named "Choose a strategic objective" as its
+		current work. Both reads must agree that unset is not eligible."""
+		accepted, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertEqual(item["classification"]["strategic_objective"], "")
+		self.assertTrue(
+			any(b["code"] == "PLN_OBJECTIVE_INELIGIBLE" and b.get("field") == "strategic_objective" for b in item["blockers"]),
+		)
+		# The same fact, agreed on the plan-level read this item's own
+		# blockers are meant to mirror.
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		objective_check = next(c for c in plan["readiness"] if c["check"] == "Every Plan Item has a Strategic Objective")
+		self.assertEqual(objective_check["result"], "1 to fix")
+		self.assertFalse(plan["can_request_funding"])
+
+	def test_a_complete_item_reads_ready_on_the_annual_plan_screen_too(self):
+		"""`get_annual_plan`'s own `_item_rows` fetched `Annual Plan Item` with
+		an explicit field list that left out `strategic_objective`,
+		`baseline_invitation_date` and `estimate_basis` (found live 23 Sep
+		2026): `frappe.get_all` returns nothing for a field it was never
+		asked for, so `_current_work` read every one of those as unset
+		regardless of the real value, and a fully complete purchase went on
+		showing "Choose a strategic objective" forever — disagreeing with
+		its own editor, which reads the whole document and saw nothing
+		wrong. A save with every field set must read Ready in both places."""
+		accepted, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertEqual(refreshed["blockers"], [])
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		row = next(r for r in plan["plan_items"] if r["plan_item_id"] == item_id)
+		self.assertEqual(row["current_work"], "Ready")
+
+	def test_an_infeasible_but_dated_schedule_is_not_ready_either(self):
+		"""`_current_work` used to check only whether `baseline_invitation_date`
+		was set, never whether the resulting completion actually meets the
+		departmental deadline — so a purchase with a date entered but an
+		infeasible delivery estimate read "Ready" on this screen while Plan
+		checks' Schedule count still counted it (found live 23 Sep 2026).
+		Current work must name the same blocker Plan checks counts, and the
+		count's own wording must be grammatical and point back to it."""
+		accepted, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(estimated_delivery_period_days=3650),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertIn("PLN_DELIVERY_BOUNDARY_INSUFFICIENT", [b["code"] for b in refreshed["blockers"]])
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		row = next(r for r in plan["plan_items"] if r["plan_item_id"] == item_id)
+		self.assertEqual(row["current_work"], "Review the dates against the departmental deadline")
+		schedule_check = next(c for c in plan["plan_checks"] if c["label"] == "Schedule")
+		self.assertEqual(schedule_check["result"], "1 purchase does not yet meet its departmental deadline — see Current work above")
+
+	def test_the_schedule_check_counts_distinct_purchases_not_blockers(self):
+		"""A purchase missing both its invitation date and its delivery
+		period carries two schedule-coded blockers at once; the Schedule
+		count must read the distinct purchases affected, not the blocker
+		entries (found live 23 Sep 2026: a plan with one such purchase read
+		"2 purchases do not meet their departmental deadlines")."""
+		accepted, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(
+			plan_item=item_id,
+			values=fx.item_values(baseline_invitation_date="", estimated_delivery_period_days=""),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		codes = [b["code"] for b in refreshed["blockers"]]
+		self.assertIn("PLN_SCHEDULE_INVALID", codes)
+		self.assertIn("PLN_DELIVERY_PERIOD_REQUIRED", codes)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		schedule_check = next(c for c in plan["plan_checks"] if c["label"] == "Schedule")
+		self.assertEqual(schedule_check["result"], "1 purchase does not yet meet its departmental deadline — see Current work above")
+
+	def test_the_item_editor_read_model_carries_a_total_quantity_and_a_restrictions_line(self):
+		"""PLN18-305 (U09 Plan Item editor): `get_plan_item()` needs one
+		aggregate quantity display (the single-source case already has its own
+		via `sources[0]`, but a combined item's own "Quantity" fact in Package
+		details has no per-source string to reuse) and the Reservation and
+		structure card's own "Mandatory restrictions" fact — a static line for
+		now since no restriction-computation mechanism exists yet in this
+		cycle (matching the spec's own "read-only example text")."""
+		_, item_id = self.one_item()
+		single = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertEqual(single["total_quantity_display"], single["sources"][0]["quantity_display"])
+		self.assertEqual(single["preference"]["mandatory_restrictions_line"], "No additional restriction applies")
+
+	def test_a_combined_item_sums_quantity_across_its_sources(self):
+		accepted, entry_a, entry_b = self.accept_two(
+			{"title": "Clinical training laptops", "quantity": 100, "budget_line": fx.BUDGET_LINE},
+			{"title": "Clinical deployment laptops", "quantity": 150, "budget_line": fx.BUDGET_LINE_2},
+		)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		formed = plan_workbench.form_plan_items(
+			plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
+			mode="combined", combination_reason=COMBINATION_REASON,
+			expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		combined = plan_read.get_plan_item(plan_item_id=formed["created_items"][0])
+		self.assertEqual(combined["total_quantity_display"], "250 each")
+
+	def test_a_method_without_a_schedule_profile_permits_draft_work_but_blocks_submission(self):
+		_, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		saved = plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(procurement_method="Design Competition"),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(saved["action"], "saved")
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertFalse(refreshed["baseline"]["profile"]["found"])
+		self.assertIn("PLN_REFERENCE_UNAVAILABLE", [b["code"] for b in refreshed["blockers"]])
+		self.assertIsNone(frappe.db.get_value("Annual Plan Item", {"plan_item_id": item_id}, "schedule_profile_version"))
+
+	def test_a_declaration_method_needs_its_evidence_before_submission(self):
+		_, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		saved = plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(procurement_method="Direct Procurement"),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(saved["action"], "saved")
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		codes = [b["code"] for b in refreshed["blockers"]]
+		self.assertIn("PLN_METHOD_EVIDENCE_REQUIRED", codes)
+		self.assertIn("PLN_REFERENCE_UNAVAILABLE", codes)  # Direct Procurement has no schedule profile in the fixture
+		self.assertEqual(refreshed["classification"]["method_profile"]["missing_evidence"], ["CIRCUMSTANCES"])
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_item(
+				plan_item=item_id, values={"method_condition_evidence": [{"evidence_reference": "no id"}]},
+				expected_record_version=saved["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		evidenced = plan_workbench.save_plan_item(
+			plan_item=item_id,
+			values={"method_condition_evidence": [{"condition_id": "CIRCUMSTANCES", "evidence_reference": "MER-PLNT-001", "authorisation_reference": "AO/2101/DP/1"}]},
+			expected_record_version=saved["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(evidenced["action"], "saved")
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertNotIn("PLN_METHOD_EVIDENCE_REQUIRED", [b["code"] for b in refreshed["blockers"]])
+		self.assertTrue(refreshed["classification"]["method_profile"]["evidence_complete"])
+
+	def test_estimate_basis_and_delivery_period_are_required_and_zero_is_explicit(self):
+		_, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		values = fx.item_values(estimate_basis="", estimate_basis_reference="", estimated_delivery_period_days="")
+		saved = plan_workbench.save_plan_item(plan_item=item_id, values=values, expected_record_version=item["record_version"], idempotency_key=key())
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		fields = {(b["code"], b["field"]) for b in refreshed["blockers"]}
+		self.assertIn(("PLN_PLAN_CONTENTS_INCOMPLETE", "estimate_basis"), fields)
+		self.assertIn(("PLN_PLAN_CONTENTS_INCOMPLETE", "estimate_basis_reference"), fields)
+		self.assertIn(("PLN_DELIVERY_PERIOD_REQUIRED", "estimated_delivery_period_days"), fields)
+		self.assertIsNone(refreshed["baseline"]["estimated_delivery_period_days"])
+		zero = plan_workbench.save_plan_item(plan_item=item_id, values=fx.item_values(estimated_delivery_period_days=0), expected_record_version=saved["record_version"], idempotency_key=key())
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertEqual(refreshed["baseline"]["estimated_delivery_period_days"], 0)
+		self.assertEqual(refreshed["baseline"]["estimated_completion_date"], "2101-11-12")
+		self.assertNotIn("PLN_DELIVERY_PERIOD_REQUIRED", [b["code"] for b in refreshed["blockers"]])
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_item(plan_item=item_id, values=fx.item_values(estimated_delivery_period_days=-1), expected_record_version=zero["record_version"], idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_DELIVERY_PERIOD_REQUIRED")
+
+	def test_version_details_project_name_and_change_reason(self):
+		accepted, item_id = self.one_item()
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_version_details(
+				plan_version=accepted["annual_plan_version"], values={"project_name": "x" * 161},
+				expected_record_version=plan["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		saved = plan_workbench.save_plan_version_details(
+			plan_version=accepted["annual_plan_version"], values={"project_name": "Digital health rollout", "change_reason": ""},
+			expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(saved["action"], "details_saved")
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", accepted["annual_plan_version"], "project_name"), "Digital health rollout")
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_version_details(
+				plan_version=accepted["annual_plan_version"], values={"budget": "x"},
+				expected_record_version=saved["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+
+
+class TestScopeLock(PlanWorkbenchCase):
+	"""PLN-CHG-001 v1.18 §5.4.6 — the stable item's procurement-scope lock."""
+
+	def lock(self, item_id: str) -> None:
+		frappe.db.set_value("Plan Item", item_id, {"scope_locked_since": "2101-10-01 09:00:00", "first_authorised_requisition": "REQ-TEST-1"}, update_modified=False)
+
+	def test_a_locked_item_keeps_its_package_but_its_schedule_stays_editable(self):
+		_, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(plan_item=item_id, values=fx.item_values(), expected_record_version=item["record_version"], idempotency_key=key())
+		self.lock(item_id)
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertTrue(item["scope_lock"]["locked"])
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_item(
+				plan_item=item_id, values=fx.item_values(title="A wider procurement package"),
+				expected_record_version=item["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_ITEM_SCOPE_LOCKED")
+		self.assertEqual(caught.exception.detail["fields"], ["title"])
+		unchanged = {k: v for k, v in fx.item_values().items() if k not in ("title", "description")}
+		saved = plan_workbench.save_plan_item(
+			plan_item=item_id, values={**unchanged, "baseline_invitation_date": "2101-10-01"},
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(saved["action"], "saved")
+
+	def test_a_locked_item_cannot_be_dissolved_or_its_source_re_formed(self):
+		accepted, item_id = self.one_item()
+		self.lock(item_id)
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.dissolve_plan_item(plan_item=item_id, expected_record_version=item["record_version"], idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_ITEM_SCOPE_LOCKED")
+		entry = frappe.db.get_value("Plan Source Allocation", {"plan_item_id": item_id}, "dpp_entry")
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.form_plan_items(
+				plan_version=accepted["annual_plan_version"], dpp_entries=[entry], mode="each",
+				expected_record_version=plan["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_ITEM_SCOPE_LOCKED")
+		self.assertEqual(caught.exception.detail["plan_item_ids"], [item_id])
+
+
+class TestReservationAllocations(PlanWorkbenchCase):
+	"""The reserved-procurement target is a share of what the plan actually
+	plans to buy, not of the approved budget ceiling.
+
+	Corrected 24 Sep 2026 on the owner's written ruling
+	(`docs/mvp-1-r1/99_other/thirty_percent_reservation_rule.pdf`). The
+	approved budget authorises spending; it does not oblige it. Measuring the
+	30% against it turned unused budget headroom into a compulsory
+	procurement target: a plan of KES 464,980 against a KES 160,000,000
+	ceiling was asked for KES 48,000,000 of reserved allocation, which it
+	could not reach even if every purchase in it were designated. The
+	ceiling's own job — the plan must fit inside it — belongs to the
+	affordability check and is untouched.
+	"""
+
+	def _published(self, plan, **over):
+		reference = {**readiness.reference_for(plan.fiscal_year)}
+		reference["reservation"] = {**reference["reservation"], "target_percent": 30.0, "published": True, **over}
+		reference["verification_status"] = fx.VERIFICATION_FIXTURE
+		return reference
+
+	def test_required_and_shortfall_are_a_share_of_the_planned_value(self):
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = self._published(plan)
+		share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
+		self.assertEqual(share["eligible_value"], "1000000.00")
+		self.assertEqual(share["plan_total"], "1000000.00")
+		self.assertEqual(share["required"], "300000.00")  # 30% of the plan, not of the budget
+		self.assertEqual(share["qualifying"], "0.00")
+		self.assertEqual(share["remaining"], "300000.00")
+		self.assertEqual(share["qualifying_share_percent"], "0.00")
+		self.assertFalse(share["met"])
+		self.assertTrue(share["mandatory"] and share["verified"])
+
+	def test_the_canonical_fixture_calculates_exactly(self):
+		"""PLN25-AC-005 / BUD20-AC-004: 30% of KES 130,000,000 = 39,000,000;
+		KES 50,000,000 designated Youth is 38.46% and leaves nothing
+		remaining. The KES 160,000,000 Budget ceiling is not an input."""
+		rows = [
+			readiness.measure_row("PPI-A", "Digital health infrastructure", Decimal("80000000"), "None"),
+			readiness.measure_row("PPI-B", "Clinical training laptops", Decimal("50000000"), "Youth"),
+		]
+		measure = readiness.reservation_measure(rows, 30)
+		self.assertEqual(measure["eligible"], Decimal("130000000.00"))
+		self.assertEqual(measure["required"], Decimal("39000000.00"))
+		self.assertEqual(measure["qualifying"], Decimal("50000000.00"))
+		self.assertEqual(measure["remaining"], Decimal("0.00"))
+		self.assertEqual(measure["share"], Decimal("38.46"))
+		self.assertEqual([r["qualifying"] for r in rows], [Decimal("0"), Decimal("50000000")])
+		base = readiness.reservation_measure([readiness.measure_row("PPI-A", "A", Decimal("80000000"), "None"), readiness.measure_row("PPI-B", "B", Decimal("50000000"), "None")], 30)
+		self.assertEqual(base["remaining"], Decimal("39000000.00"))
+
+	def test_an_excluded_purchase_leaves_the_denominator_with_its_reason(self):
+		"""PLN25-AC-003: the denominator is the sum of the purchases the rule
+		includes; an exclusion keeps its row and its reason, never vanishes."""
+		rows = [
+			readiness.measure_row("PPI-A", "A", Decimal("100"), "Youth"),
+			{**readiness.measure_row("PPI-B", "B", Decimal("900"), "None"), "applicability": "Excluded", "reason": "Excluded by the rule"},
+		]
+		measure = readiness.reservation_measure(rows, 30)
+		self.assertEqual(measure["eligible"], Decimal("100.00"))
+		self.assertEqual(measure["required"], Decimal("30.00"))
+		self.assertEqual(len(rows), 2)
+
+	def test_every_current_purchase_is_accounted_for_with_the_exact_basis(self):
+		"""PLN25-AC-003: every current Plan Item is included or excluded with a
+		reason, and the calculation names the exact Plan Version and rule
+		Version it was made under."""
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = self._published(plan)
+		share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
+		self.assertEqual([r["plan_item_id"] for r in share["items"]], [item_id])
+		row = share["items"][0]
+		self.assertEqual(row["applicability"], "Included")
+		self.assertTrue(row["reason"])
+		self.assertEqual(row["designation"], "None")
+		self.assertEqual(row["value"], "1000000.00")
+		self.assertEqual(row["qualifying"], "0.00")
+		self.assertEqual(share["plan_basis"], f"{plan.plan_reference}, Version {version.version_number}")
+		self.assertEqual(share["rule_reference"], reference["reference"])
+		self.assertTrue(share["rule_version"])
+		self.assertEqual(share["mandatory_restrictions"], "No additional restriction applies")
+
+	def test_the_approved_budget_is_not_an_input(self):
+		"""PLN25-AC-001/002, BUD20-AC-003: the calculation reads no Budget at
+		all — no basis block, no share of the annual budget — so unused
+		Budget headroom can never enter the denominator."""
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = self._published(plan)
+		from kentender_procurement.procurement_planning.services import budget_gateway
+
+		self.assertFalse(hasattr(budget_gateway, "annual_budget_basis"))
+		share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
+		self.assertEqual(share["required"], "300000.00")
+		for gone in ("basis", "percent_of_annual", "shortfall"):
+			self.assertNotIn(gone, share)
+		# PLN25-AC-006: Planning makes no actual-achievement figure.
+		self.assertFalse([k for k in share if "actual" in k])
+		with patch.object(readiness, "reference_for", return_value=reference):
+			report = plan_read.plan_readiness(version, plan, stage="submission")
+		self.assertIn("PLN_RESERVATION_SHORTFALL", [b["code"] for b in report["blockers"]])
+		row = next(c for c in report["checks"] if c["check"] == "Planned reservation allocation")
+		self.assertNotIn("budget", row["result"].lower())
+
+	def test_only_the_four_base_designations_are_offered_and_accepted(self):
+		"""None, Youth, Women and Persons with disabilities. County is a
+		separate measure; the catalogue's other entries are not Planning
+		designations."""
+		accepted, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertEqual(item["preference"]["reservation_categories"], list(readiness.BASE_RESERVATION_CATEGORIES))
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_item(
+				plan_item=item_id, values=fx.item_values(reservation_category="Micro, small and medium enterprise"),
+				expected_record_version=item["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_RESERVATION_REQUIRED")
+		plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(reservation_category="Persons with disabilities"),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(plan_read.get_plan_item(plan_item_id=item_id)["preference"]["reservation_category"], "Persons with disabilities")
+
+	def test_a_designated_purchase_can_actually_clear_the_target(self):
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = self._published(plan)
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(reservation_category="Youth"),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
+		self.assertEqual(share["qualifying"], "1000000.00")
+		self.assertEqual(share["qualifying_items"], [item_id])
+		self.assertEqual(share["remaining"], "0.00")
+		self.assertTrue(share["met"])
+		self.assertEqual(share["qualifying_share_percent"], "100.00")
+
+	def test_the_county_target_uses_the_same_planned_value(self):
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = self._published(plan, county_target_percent=20.0)
+		with patch.object(frappe.db, "get_single_value", return_value=True):
+			share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
+		self.assertEqual(share["county"]["required"], "200000.00")  # 20% of the plan
+		self.assertEqual(share["county"]["remaining"], "200000.00")
+
+	def test_the_shortfall_blocks_submission_only_but_is_still_reported_on_a_draft(self):
+		"""A Draft may be incomplete, so the shortfall never refuses a
+		funding request. It must still be visible while the plan is being
+		prepared: the Plan checks row reads it from the calculation, not
+		from the blocker list, which is how it came to claim "Required
+		allocation met" over a KES 48,000,000 shortfall (found live 23 Sep
+		2026)."""
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = self._published(plan)
+		with patch.object(readiness, "reference_for", return_value=reference):
+			self.assertIn("PLN_RESERVATION_SHORTFALL", [b["code"] for b in plan_read.plan_readiness(version, plan, stage="submission")["blockers"]])
+			report = plan_read.plan_readiness(version, plan)
+			self.assertNotIn("PLN_RESERVATION_SHORTFALL", [b["code"] for b in report["blockers"]])
+			row = next(c for c in plan_read._plan_checks(version, plan, report) if c["label"] == "Reserved procurement")
+		self.assertEqual(row["result"], "KES 300,000 more qualifying allocation required")
+		self.assertEqual(row["kind"], "critical")
+		self.assertEqual(row["action"], "Review reserved procurement")
+
+	def test_an_unverified_rule_is_named_as_that_and_never_as_a_shortfall(self):
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		pending = {**self._published(plan), "verification_status": "Production verification pending"}
+		with patch.object(readiness, "reference_for", return_value=pending):
+			codes = [b["code"] for b in plan_read.plan_readiness(version, plan, stage="submission")["blockers"]]
+			row = next(c for c in plan_read._plan_checks(version, plan, plan_read.plan_readiness(version, plan)) if c["label"] == "Reserved procurement")
+		self.assertIn("PLN_REFERENCE_UNAVAILABLE", codes)
+		self.assertNotIn("PLN_RESERVATION_SHORTFALL", codes)
+		self.assertEqual(row["result"], "The reserved-procurement rule is missing or unverified")
+		self.assertEqual(row["kind"], "critical")
+
+	def test_a_mandatory_shortfall_is_the_workspaces_second_quieter_issue(self):
+		"""PLN v1.27 §10.3 (D2): the missing method is the dominant pre-Finance
+		issue; the reservation shortfall follows it, quieter, and blocks only
+		signature. The v1.24 sentence "Resolve this before sending the plan
+		to Finance" contradicted §5.5.3.1 and is retired."""
+		accepted, item_id = self.one_item()
+		# as §10.3's BASE fixture: everything complete except the method
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(procurement_method=""),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = self._published(plan)
+		with patch.object(readiness, "reference_for", return_value=reference):
+			issues = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)["issues"]
+		self.assertEqual([i["tone"] for i in issues], ["dominant", "quiet"])
+		self.assertEqual(issues[0]["strong"], "1 purchase needs a procurement method.")
+		self.assertEqual(issues[0]["text"], "1 purchase needs a procurement method. Choose it before sending the plan to Finance.")
+		self.assertEqual(issues[0]["action"], "Choose a procurement method")
+		self.assertEqual(issues[0]["route"], ["procurement-plan-item", item_id])
+		self.assertEqual(
+			issues[1]["text"],
+			"Reserved procurement is below the required allocation by KES 300,000. "
+			"Resolve this before the plan can be signed and submitted.",
+		)
+		self.assertEqual(issues[1]["strong"], "KES 300,000")
+		self.assertEqual(issues[1]["action"], "Review reserved procurement")
 
 
 class TestDissolvePlanItem(PlanWorkbenchCase):
@@ -580,7 +1129,11 @@ class TestSourceCorrectionRequired(PlanWorkbenchCase):
 		self.assertEqual(caught.exception.code, "PLN_SOURCE_UNAVAILABLE")
 
 		# the workspace offers only the genuinely new entry for consolidation
+		# — as the open Draft's own current issue (§7.1), not a second,
+		# separate "actionable" card repeating the same route.
 		from kentender_procurement.procurement_planning.services import workspace
 
-		ready = [a for a in workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)["actionable"] if "ready to consolidate" in a["headline"]]
-		self.assertEqual(ready[0]["headline"], "1 accepted departmental entry ready to consolidate")
+		issues = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)["issues"]
+		consolidate = [i for i in issues if "ready to consolidate into this plan" in i["text"]]
+		self.assertEqual(len(consolidate), 1)
+		self.assertIn("1 accepted departmental entry", consolidate[0]["text"])

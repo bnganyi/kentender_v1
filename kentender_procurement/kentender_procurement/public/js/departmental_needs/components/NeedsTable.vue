@@ -1,10 +1,11 @@
 <!-- The one role-appropriate table §1.1 leaves in place of the retired summary
-     cards and split sections. Shared by NDS-DES-01, 02 and 02b — the caller
-     supplies the columns each role sees. -->
+     cards and split sections. Shared by NDS-DES-01, 01-RETURNED, 02 and 02b —
+     ported class-for-class from NDS Artboards.dc.html; the caller supplies
+     the columns each role sees. NDS-CHG-001 v1.14 §11.2/§11.3 render this
+     directly inside the workspace's .kt-page sheet, with no separate bordered
+     card of its own. -->
 <template>
-	<div class="kt-card kt-blueprint" style="padding: 0; overflow: hidden">
-		<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-		<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+	<div>
 		<table class="kt-table" data-testid="nds-needs-table" style="width: 100%">
 			<thead>
 				<tr>
@@ -24,8 +25,20 @@
 						<template v-if="column.key === 'need'">
 							<span style="font-weight: 500">{{ row.title || "Untitled need" }}</span>
 							<br />
-							<span style="color: var(--color-neutral-600); font-size: 13px">{{
+							<!-- Fixture-build data: a generated reference differs on every
+							     build, so an unmasked visual baseline churns on run order
+							     rather than on design (found live 24 Sep 2026). -->
+							<span style="color: var(--kt-color-neutral-600); font-size: 13px" data-volatile="true">{{
 								row.reference
+							}}</span>
+						</template>
+						<!-- KT-STD-001 §2.2 — related facts grouped into one readable unit;
+						     the artboard's "Quantity and required by" column, not two. -->
+						<template v-else-if="column.key === 'quantity_required_by'">
+							<span>{{ row.quantity_label }}</span>
+							<br />
+							<span style="color: var(--kt-color-neutral-600); font-size: 13px">{{
+								row.required_by_label
 							}}</span>
 						</template>
 						<template v-else-if="column.key === 'action'">
@@ -40,7 +53,7 @@
 								:data-action="primaryAction(row).code"
 								@click="$emit('action', row, primaryAction(row))"
 							>
-								{{ primaryAction(row).label }}
+								{{ registerActionLabel(row) }}
 							</button>
 						</template>
 						<StatusPill
@@ -70,5 +83,17 @@ function cellStyle(column) {
 
 function primaryAction(row) {
 	return (row.actions || [])[0] || null;
+}
+
+// NDS-DES-01-RETURNED — the register row's own action reads "Correct and
+// resubmit", more descriptive than the server's bare "Correct" (kept as-is
+// for the detail page's single, page-level action button, NDS-DES-04); one
+// row among several benefits from naming the whole next step, the same
+// reasoning NDS-DES-02's own `decisionActionLabel()` already applies to the
+// decision queue's "Review requirement".
+function registerActionLabel(row) {
+	const action = primaryAction(row);
+	if (!action) return "";
+	return action.code === "edit" && row.status === "Returned" ? "Correct and resubmit" : action.label;
 }
 </script>

@@ -1,0 +1,140 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""The one door from Bid Submission into Tenders and STD (BDS-CHG-001 v0.8
+plan D3). Bid Submission reads published Tender facts, documents, answers,
+candidate notices and the Published Bid Definition only through the
+Tenders-owned seams named here, so a Tenders change has one place to land."""
+
+from __future__ import annotations
+
+from typing import Any
+
+import frappe
+from frappe.utils import cstr
+
+from kentender_procurement.tenders.services import bid_definition, bidder_projection
+
+ROOT_FIELDS = ["name", "tender_reference", "overall_status", "submission_deadline", "clarification_deadline", "publication", "fixture_namespace"]
+
+
+def available_tenders(*, at) -> list[dict[str, Any]]:
+	return bidder_projection.available_tenders(at=at)
+
+
+def published_tender(reference: str, *, at) -> dict[str, Any] | None:
+	return bidder_projection.published_tender(reference, at=at)
+
+
+def tender_root(reference: str) -> dict[str, Any] | None:
+	"""The published Tender's identity and dates, or None when no published
+	Tender has that reference."""
+	name = bidder_projection.resolve_published(reference)
+	return frappe.db.get_value("Tender", name, ROOT_FIELDS, as_dict=True) if name else None
+
+
+def availability(reference: str, *, at) -> str | None:
+	return bidder_projection.availability(reference, at=at)
+
+
+def current_definition(tender_name: str) -> dict[str, Any] | None:
+	"""The bidder-current (Effective) Published Bid Definition."""
+	return bid_definition.current(tender_name)
+
+
+def definition_for(tender_name: str, definition_version) -> dict[str, Any] | None:
+	return bid_definition.definition_for(tender_name, definition_version)
+
+
+def verify_definition_digest(definition: dict[str, Any]) -> bool:
+	from kentender_procurement.std_templates.compiler.definition import verify_definition_digest as verify
+
+	return bool(definition) and verify(definition)
+
+
+def release_status(release_id: str, *, verify: bool = True) -> dict[str, Any]:
+	"""The bound template release's lifecycle, site switch and live health;
+	a command re-hashes the release assets, a read uses the recorded result
+	(STD-TPL-IMP-001 `bid_work_status`). On a test environment the
+	`bound_release_state` control forces the BDS-CHG-001 §4.4.4 worlds."""
+	from kentender_procurement.bid_submission.services import simulation
+	from kentender_procurement.std_templates.services import runtime
+
+	status = runtime.bid_work_status(release_id, verify=verify)
+	forced = cstr(simulation.controls().get("bound_release_state"))
+	if forced in ("Superseded", "Withdrawn"):
+		status = {**status, "lifecycle": forced}
+	elif forced == "Integrity failed":
+		status = {**status, "integrity_ok": False, "problem": "The bound Tender format failed its integrity check (test environment)."}
+	return status
+
+
+def tenders_past_deadline(before) -> list[dict[str, Any]]:
+	"""Published Tenders whose submission deadline is at or before `before`
+	(open, or with the submission period ended); name, reference, deadline
+	and whether Tenders has ended the period."""
+	rows = frappe.get_all(
+		"Tender", filters={"overall_status": ("in", ("Published — open", "Submission period ended")), "submission_deadline": ("<=", before)},
+		fields=["name", "tender_reference", "submission_deadline", "overall_status"], order_by="submission_deadline asc", limit_page_length=0,
+	)
+	return [{"tender": r.name, "tender_reference": r.tender_reference, "submission_deadline": r.submission_deadline, "period_ended": r.overall_status == "Submission period ended"} for r in rows]
+
+
+def end_submission_period(tender_name: str) -> dict[str, Any]:
+	"""Tenders' own close of the submission period (what its hourly job runs),
+	for a Tender past its deadline; idempotent by the deadline."""
+	from kentender_procurement.tenders.services import submission_close
+
+	deadline = cstr(frappe.db.get_value("Tender", tender_name, "submission_deadline"))
+	return submission_close.close_tender_submission_period(tender=tender_name, idempotency_key=f"close:{tender_name}:{deadline}", user="Administrator")
+
+
+def resolution_holder(tender_name: str) -> str:
+	"""The Procurement Officer who holds the Tender's resolution (a user id)."""
+	return bidder_projection.resolution_holder(tender_name)
+
+
+def submit_clarification(*, tender: str, candidate_registration_id: str, question: str, inbound_event_id: str, received_at, producer: str) -> dict[str, Any]:
+	"""Hand one supplier question to Tenders' clarification intake as the
+	bidder-facing producer identity (TPR-CHG-001 v0.12 §4.9). Tenders owns the
+	question from here; Bid Submission stores no parallel record."""
+	from kentender_procurement.tenders.services import clarifications
+
+	return clarifications.receive_tender_clarification(
+		tender=tender, candidate_registration_id=candidate_registration_id, question=question, inbound_event_id=inbound_event_id, received_at=received_at, user=producer,
+	)
+
+
+def addendum_reference(tender_name: str, addendum_id: str) -> str:
+	"""The public reference of one of the Tender's addenda (the acknowledgement
+	label names it)."""
+	return frappe.db.get_value("Tender Addendum", {"name": addendum_id, "tender": tender_name}, "addendum_reference") or ""
+
+
+def map_addendum(tender_name: str, *, from_version: int, to_version: int) -> dict[str, Any]:
+	"""`MapBidDefinitionAddendum`: the stored identity maps from one supplier
+	definition version to a later effective one, one step per addendum."""
+	return bid_definition.map_bid_definition_addendum(tender=tender_name, from_version=from_version, to_version=to_version)
+
+
+def pending_events(*, event_type: str, consumer: str) -> list[Any]:
+	"""Tenders' outbox events addressed to a Bid Submission consumer, oldest first."""
+	from kentender_procurement.tenders.services import events
+
+	return events.pending_for_consumer(event_type=event_type, consumer=consumer)
+
+
+def mark_event_consumed(event_doc, *, consumer: str) -> None:
+	from kentender_procurement.tenders.services import events
+
+	events.mark_delivered(event_doc, consumer=consumer)
+
+
+def candidate_view(tender_name: str, candidate_registration_id: str) -> dict[str, Any] | None:
+	"""This candidate's own questions and the Tenders notices addressed to it."""
+	return bidder_projection.candidate_view(tender_name, candidate_registration_id)
+
+
+def stream_public_document(reference: str, key: str) -> dict[str, Any] | None:
+	"""A published document's bytes by its bidder-safe key (no digest or file URL)."""
+	return bidder_projection.stream_public_document(reference, key)

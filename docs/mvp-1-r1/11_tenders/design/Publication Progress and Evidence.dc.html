@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>body{margin:0;} a{color:var(--color-accent-700);} a:hover{color:var(--color-accent-900);} .table th,.table thead th{text-transform:none;letter-spacing:0;} .kt-disclosure-title{text-transform:none;letter-spacing:0;font-size:15px;}
+  </style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:100px;position:relative;">
+  <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
+    <span style="color:#fff;opacity:.7;font-size:12px;">TPR-DES-08:</span>
+    <button type="button" class="{{btnA}}" onclick="{{setBase}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Confirmation required</button>
+    <button type="button" class="{{btnB}}" onclick="{{setInvalid}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Invalid evidence</button>
+    <button type="button" class="{{btnC}}" onclick="{{setConflict}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Conflicting confirmation</button>
+    <button type="button" class="btn" onclick="{{openOnline}}" style="font-size:12px;padding:6px 12px;margin-left:auto;color:#fff;border-color:rgba(255,255,255,.45);">Online-channel dialog</button>
+  </div>
+
+  <div data-screen-label="TPR-DES-08 Publication confirmation" style="max-width:1100px;margin:0 auto;padding:32px 40px 0;">
+    <div class="card blueprint elev-sm" style="padding:0;">
+
+      <div style="padding:28px 24px 20px;border-bottom:1px solid var(--color-divider);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+          <h1 style="font-family:var(--font-heading);font-weight:600;font-size:28px;margin:0;letter-spacing:.01em;">Supply and delivery of business laptops</h1>
+        </div>
+        <p style="font-size:13px;color:var(--color-neutral-600);margin:0 0 10px;">{{tenderRef}}</p>
+        <p style="font-size:14px;color:var(--color-neutral-700);margin:0;">Confirm where and when the approved Tender was published.</p>
+      </div>
+
+      <sc-if value="{{isBase}}" hint-placeholder-val="{{true}}">
+        <dc-import name="TenderGuidance" markers="D/D/D/C/N" holder="Charles Mutiso" kind="turn" headline="Confirm publication through Notice board and Two national newspapers; 2 of 4 channels are confirmed." hint-size="100%,96px"></dc-import>
+      </sc-if>
+      <sc-if value="{{isInvalid}}" hint-placeholder-val="{{false}}">
+        <dc-import name="TenderGuidance" markers="D/D/D/B/N" holder="Charles Mutiso" kind="blocked" headline="State Portal evidence could not be accepted." fixes="{{invalidFixes}}" hint-size="100%,140px"></dc-import>
+      </sc-if>
+      <sc-if value="{{isConflict}}" hint-placeholder-val="{{false}}">
+        <dc-import name="TenderGuidance" markers="D/D/D/C/N" holder="Charles Mutiso" kind="turn" headline="Continue with the channels still awaiting confirmation." hint-size="100%,96px"></dc-import>
+      </sc-if>
+
+      <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
+        <table class="table">
+          <thead><tr><th>Channel</th><th>Result</th><th>Available at</th><th>Confirmation / action</th></tr></thead>
+          <tbody>
+            <sc-if value="{{isInvalid}}" hint-placeholder-val="{{false}}"><tr><td>State Portal</td><td><span class="kt-status is-attention">Awaiting confirmation</span></td><td>&mdash;</td><td><button type="button" class="btn btn-secondary" onclick="{{openSP}}">Confirm publication</button></td></tr></sc-if>
+            <sc-if value="{{isNotInvalid}}" hint-placeholder-val="{{true}}"><tr><td>State Portal</td><td><span class="kt-status is-live">Confirmed</span></td><td>15 May 08:00</td><td><a href="#">View confirmation</a></td></tr></sc-if>
+            <sc-if value="{{isConflict}}" hint-placeholder-val="{{false}}"><tr><td colspan="4" style="background:var(--color-surface-2);font-size:13px;"><strong>This channel is already confirmed.</strong> The later confirmation request changed nothing. <a href="#">View confirmation</a></td></tr></sc-if>
+            <tr><td>Ministry website</td><td><span class="kt-status is-live">Confirmed</span></td><td>15 May 08:00</td><td><a href="#">View confirmation</a></td></tr>
+            <tr><td>Notice board</td>
+              <td><span class="kt-status is-attention">Awaiting confirmation</span></td>
+              <td>&mdash;</td>
+              <td><button type="button" class="btn btn-secondary" onclick="{{openNB}}">Confirm publication</button></td>
+            </tr>
+            <tr><td>Two national newspapers</td><td><span class="kt-status is-attention">Awaiting confirmation</span></td><td>&mdash;</td><td><button type="button" class="btn btn-secondary" onclick="{{openNP}}">Confirm publication</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="padding:16px 24px;border-bottom:1px solid var(--color-divider);display:flex;gap:12px;">
+        <button type="button" class="btn btn-secondary" style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>View Invitation</button>
+        <button type="button" class="btn btn-secondary" style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>View complete Tender</button>
+      </div>
+
+      <div style="padding:8px 24px 22px;">
+        <div class="kt-disclosure" style="margin-top:14px;">
+          <div class="kt-disclosure-head" onclick="{{toggleRule}}"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Publication decision and rule</span></div><svg class="kt-disclosure-chevron {{chevronRule}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div>
+          <sc-if value="{{ruleOpen}}" hint-placeholder-val="{{false}}">
+            <div class="kt-disclosure-body"><p class="card-body">Authorised by Amina Hassan, 15 May 2027, 07:55 EAT &middot; Publication rule PUB-RULE-MOH-OT-2027-01 · effective FY 2027/28 · 4 required channels, all evidence based.</p></div>
+          </sc-if>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <sc-if value="{{confirmDialogOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position:fixed;inset:0;z-index:50;">
+      <div class="dialog-backdrop" style="position:fixed;">
+        <div class="dialog" role="dialog" aria-modal="true">
+          <div class="dialog-title">{{dlg.title}}</div>
+          <div class="dialog-body">
+            <p style="font-size:13px;color:var(--color-neutral-700);margin:0 0 14px;">Confirm only after the exact approved Invitation and complete Tender were publicly available through this channel.</p>
+            <div class="field"><label>Available date/time</label><input class="input" value="{{dlg.at}}" /></div>
+            <div class="field"><label>Publication reference</label><input class="input" value="{{dlg.ref}}" /></div>
+            <sc-if value="{{dlg.hasUrl}}" hint-placeholder-val="{{false}}"><div class="field"><label>Public URL</label><input class="input" value="{{dlg.url}}" /></div></sc-if>
+            <div class="field"><label>Evidence file (required)</label><input class="input" value="{{dlg.file}}" style="border-color:{{dlg.fileBorder}};" />
+              <sc-if value="{{dlg.invalid}}" hint-placeholder-val="{{false}}"><div style="font-size:13px;color:var(--status-critical);margin-top:6px;">The selected file cannot be used as publication evidence. Choose an allowed document or image file.</div></sc-if>
+            </div>
+            <div class="field"><label>Notes (optional, maximum 500)</label><textarea class="input" rows="2"></textarea></div>
+            <label class="kt-checkbox" style="display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:13px;"><input type="checkbox" /><span class="box"></span>{{dlg.attest}}</label>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-secondary" onclick="{{closeConfirmDialog}}">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="{{closeConfirmDialog}}">Confirm publication</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { variant: 'base', confirmDialogOpen: false, ruleOpen: false };
+  renderVals() {
+    const v = this.state.variant;
+    const cls = (name) => v === name ? 'btn btn-primary' : 'btn';
+    return {
+      setBase: () => this.setState({ variant: 'base' }),
+      setInvalid: () => this.setState({ variant: 'invalid' }),
+      setConflict: () => this.setState({ variant: 'conflict' }),
+      btnA: cls('base'), btnB: cls('invalid'), btnC: cls('conflict'),
+      isInvalid: v === 'invalid',
+      isConflict: v === 'conflict',
+      isBase: v === 'base', isNotInvalid: v !== 'invalid',
+      tenderRef: v === 'invalid' ? 'TND-MOH-2027-035' : v === 'conflict' ? 'TND-MOH-2027-036' : 'TND-MOH-2027-033',
+      invalidFixes: [{ label: 'Choose evidence file', primary: true }, 'Confirm publication'],
+      openOnline: () => this.setState({ confirmDialogOpen: true, dlgKey: 'spok' }),
+      openSP: () => this.setState({ confirmDialogOpen: true, dlgKey: 'sp' }),
+      openNB: () => this.setState({ confirmDialogOpen: true, dlgKey: 'nb' }),
+      openNP: () => this.setState({ confirmDialogOpen: true, dlgKey: 'np' }),
+      dlg: (() => {
+        const D = {
+          sp: { title: 'Confirm State Portal publication', at: '', ref: '', url: '', file: 'PPIP-MOH-2027-035.exe', invalid: true, attest: 'I confirm that the exact approved Tender package was publicly available through the State Portal at the date and time stated above.' },
+          spok: { title: 'Confirm State Portal publication', at: '15 May 2027, 08:00 EAT', ref: 'PPIP-MOH-2027-033', url: 'https://portal.example.test/tenders/PPIP-MOH-2027-033', file: 'PPIP-MOH-2027-033.pdf', attest: 'I confirm that the exact approved Tender package was publicly available through the State Portal at the date and time stated above.' },
+          nb: { title: 'Confirm notice-board publication', at: '15 May 2027, 08:00 EAT', ref: 'NB-MOH-2027-033', url: '', file: 'NB-MOH-2027-033.jpg', attest: 'I confirm that the exact approved Tender package was publicly available through the Notice board at the date and time stated above.' },
+          np: { title: 'Confirm newspaper publication — Two national newspapers', at: '15 May 2027, 08:00 EAT', ref: 'NP-MOH-2027-033', url: '', file: 'NP-MOH-2027-033.pdf', attest: 'I confirm that the exact approved Tender package was publicly available through Two national newspapers at the date and time stated above.' },
+        };
+        const x = D[this.state.dlgKey || 'nb'];
+        return { ...x, hasUrl: !!x.url, invalid: !!x.invalid, fileBorder: x.invalid ? 'var(--status-critical)' : 'var(--color-neutral-300)' };
+      })(),
+      closeConfirmDialog: () => this.setState({ confirmDialogOpen: false }),
+      confirmDialogOpen: this.state.confirmDialogOpen,
+      toggleRule: () => this.setState((s) => ({ ruleOpen: !s.ruleOpen })),
+      ruleOpen: this.state.ruleOpen,
+      chevronRule: this.state.ruleOpen ? 'is-open' : '',
+    };
+  }
+}
+
+</script>
+</body>
+</html>

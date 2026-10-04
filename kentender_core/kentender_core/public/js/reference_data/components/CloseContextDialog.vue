@@ -22,7 +22,7 @@ function confirm() {
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop" @click.self="emit('cancel')">
+	<div class="kt-dialog-backdrop">
 		<div class="kt-dialog kt-blueprint">
 			<h2 class="kt-dialog-title">{{ __("Close PE/FY context") }}</h2>
 			<div style="font-size:14px;color:color-mix(in srgb, var(--kt-color-text) 72%, transparent)">{{ contextLine }}</div>

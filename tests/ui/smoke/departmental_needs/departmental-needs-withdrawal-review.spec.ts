@@ -49,13 +49,14 @@ test.describe("NDS-UI-07 withdrawal review", () => {
 		await loginAsNdsFixtureReviewer(page);
 		await openWithdrawal(page);
 
-		// NDS-AC-019 — the dependency is shown, and Approve is simply absent
-		// rather than present-and-disabled: §12.6 gives the blocked variant only
-		// Close, so there is no control to mis-click.
+		// NDS-AC-019 / NDS-CHG-001 v1.13 §11.13 — the dependency is shown, and
+		// Approve is simply absent rather than present-and-disabled: the blocked
+		// variant's own footer is Decline withdrawal / Close (no primary
+		// decision action), so there is no control to mis-click.
 		await expect(page.locator('[data-testid="nds-view-plan-item"]')).toBeVisible();
 		await expect(page.locator('[data-testid="nds-withdrawal-close"]')).toBeVisible();
 		await expect(page.locator('[data-testid="nds-withdrawal-approve"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="nds-withdrawal-decline"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="nds-withdrawal-decline"]')).toBeVisible();
 
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
@@ -71,6 +72,40 @@ test.describe("NDS-UI-07 withdrawal review", () => {
 		await expect(page.locator('[data-testid="nds-view-plan-item"]')).toHaveCount(0);
 
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+
+	test("the dependency check failing shows DES-12-UNAVAILABLE, never a silent default (FU-31)", async ({ page }) => {
+		// §11.13/FOLLOW_UPS FU-27/FU-31 — the check itself can fail
+		// independently of whatever the real underlying state is. Built on the
+		// CLEARED fixture deliberately: the real dependency has no Active
+		// inclusion, but a failed check must still block Approve rather than
+		// silently falling back to the real (favourable) answer.
+		NEED = resetFixture<{ need: string }>("reset_withdrawal_cleared_fixture").need;
+		await loginAsNdsFixtureReviewer(page);
+		await page.route(
+			"**/api/method/kentender_procurement.departmental_needs.api.check_accepted_need_withdrawal_dependency",
+			(route) =>
+				route.fulfill({
+					status: 500,
+					contentType: "application/json",
+					body: JSON.stringify({ exc_type: "Exception" }),
+				}),
+		);
+		await openWithdrawal(page);
+
+		await expect(page.getByText("Planning information could not be checked.", { exact: false })).toBeVisible();
+		await expect(page.getByTestId("nds-retry-dependency")).toBeVisible();
+		await expect(page.locator('[data-testid="nds-withdrawal-approve"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="nds-withdrawal-close"]')).toBeVisible();
+		await expect(page.locator('[data-testid="nds-withdrawal-decline"]')).toBeVisible();
+
+		// Try again re-runs the exact same (still failing) check — no crash,
+		// the unavailable state simply holds (NDS-DES-12-UNAVAILABLE's own
+		// comment in WithdrawalReviewScreen.vue: "a second failure is no
+		// different from the first").
+		await page.getByTestId("nds-retry-dependency").click();
+		await expect(page.getByText("Planning information could not be checked.", { exact: false })).toBeVisible();
+		await expect(page.locator('[data-testid="nds-withdrawal-approve"]')).toHaveCount(0);
 	});
 
 	test("approving a cleared withdrawal completes it", async ({ page }) => {

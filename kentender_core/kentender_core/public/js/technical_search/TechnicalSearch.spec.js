@@ -92,6 +92,29 @@ describe("TechnicalSearch", () => {
 		expect(globalThis.frappe.set_route).toHaveBeenCalledWith("departmental-needs", "NDS-0001");
 	});
 
+	it("a route ending in a #fragment opens the page, then that fragment (System setup's §9 links)", async () => {
+		const wrapper = mountScreen();
+		await flushPromises();
+		const row = {
+			reference: "RESERVATION-RULES",
+			record_type: "Procurement rule",
+			doctype: "Regulatory Reference Set",
+			name: "rs-1",
+			title: "Reservation rules",
+			status: "",
+			route: ["system-setup", "#procurement-settings/procurement-rules/rs-1"],
+		};
+		technicalSearchApi.search.mockResolvedValueOnce([row]);
+		await wrapper.find('[data-testid="kt-ts-input"]').setValue("RESERVATION-RULES");
+		await wrapper.find('[data-testid="kt-ts-search"]').trigger("click");
+		await flushPromises();
+		globalThis.frappe.set_route = vi.fn(() => Promise.resolve());
+		await wrapper.find('[data-testid="kt-ts-open"]').trigger("click");
+		await flushPromises();
+		expect(globalThis.frappe.set_route).toHaveBeenCalledWith("system-setup");
+		expect(window.location.hash).toBe("#procurement-settings/procurement-rules/rs-1");
+	});
+
 	it("submits the search on Enter in the input", async () => {
 		const wrapper = mountScreen();
 		await flushPromises();

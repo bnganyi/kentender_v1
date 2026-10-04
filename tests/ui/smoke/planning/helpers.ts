@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
 import path from "node:path";
 
-import { expect, Page } from "@playwright/test";
+import { expect, Locator, Page } from "@playwright/test";
 
 /**
  * Shared plumbing for the PLN-CHG-001 v1.12 browser specs (decision D13).
@@ -45,6 +45,7 @@ export const STATUTORY = "pw.pln.statutory@example.test";
 export const AUDITOR = "pw.pln.auditor@example.test";
 export const OUTSIDER = "pw.pln.outsider@example.test";
 export const NOBODY = "pw.pln.nobody@example.test";
+export const BUDGET_OFFICER = "pw.pln.budget@example.test";
 
 /** §14.4's exact Need text, on this world's year. */
 const NEED_CONTENT = {
@@ -66,7 +67,11 @@ const COMBINED_NEEDS = [
 const NEED_BACKED = new Set([
 	"reset_dpp_fixture", "reset_review_fixture", "reset_accepted_fixture", "reset_workbench_fixture",
 	"reset_plan_item_fixture", "reset_finance_fixture", "reset_governance_fixture", "reset_statutory_fixture",
-	"reset_active_fixture", "reset_publication_failed_fixture",
+	"reset_approved_fixture", "reset_active_fixture", "reset_publication_failed_fixture", "reset_update_candidate_fixture",
+	"reset_collective_fixture", "reset_publication_unknown_fixture", "reset_late_activation_fixture", "reset_finance_excess_fixture",
+	"reset_ready_for_funding_fixture", "reset_item_config_missing_fixture", "reset_item_lots_fixture",
+	"reset_item_direct_procurement_fixture", "reset_item_feasibility_fail_fixture",
+	"reset_finance_reassessment_fixture", "reset_update_over_budget_fixture", "reset_waiting_budget_revision_fixture",
 ]);
 
 export function bench(command: string): string {
@@ -129,7 +134,7 @@ export function resetFixture<T = Record<string, unknown>>(fn: string, kwargs: Re
 	if (NEED_BACKED.has(fn)) {
 		ensureWorld();
 		args.need = acceptedNeeds([NEED_CONTENT])[0];
-	} else if (fn === "reset_combined_item_fixture") {
+	} else if (fn === "reset_combined_item_fixture" || fn === "reset_combinable_sources_fixture") {
 		ensureWorld();
 		args.needs = acceptedNeeds(COMBINED_NEEDS);
 	}
@@ -137,8 +142,33 @@ export function resetFixture<T = Record<string, unknown>>(fn: string, kwargs: Re
 	return parseResult<T>(fn, output);
 }
 
+/** Its own namespace, so accepting it never purges the Need a fixture's plan was built on. */
+const LATE_NAMESPACE = `${NAMESPACE}_LATE`;
+
+/**
+ * A Need accepted after the fixture's departmental plan was accepted (owner
+ * decision 26 Sep 2026): NDS accepts it through the real commands, Planning's
+ * reaction leaves the accepted plan as it is and projects the Need's position.
+ * Call after a fixture that accepts the plan.
+ */
+export function acceptLateNeed(title = "Late departmental requirement"): string {
+	const out = bench(
+		`execute ${NDS_FIXTURES}.reset_accepted_needs_for${pyKwargs({
+			organisation_unit_name: OU_NAME, financial_year: FY, author: AUTHOR, reviewer: HOD,
+			needs: [{ ...NEED_CONTENT, title }], namespace: LATE_NAMESPACE,
+		})}`
+	);
+	return parseResult<{ needs: string[] }>("reset_accepted_needs_for", out).needs[0];
+}
+
+/** Drop the late Needs: left accepted in the unit, the next fixture's Draft would take them in unfunded. */
+export function purgeLateNeeds(): void {
+	bench(`execute ${NDS_FIXTURES}.purge_fixture_needs${pyKwargs({ namespace: LATE_NAMESPACE })}`);
+}
+
 /** Put the intake flags back on the seed year and drop NDS's fixture Needs (idempotent). */
 export function restoreSite(): void {
+	purgeLateNeeds();
 	bench(`execute ${NDS_FIXTURES}.purge_fixture_needs${pyKwargs({ namespace: NAMESPACE })}`);
 	bench(`execute ${FIXTURES}.restore_site`);
 	worldEnsured = false;
@@ -183,4 +213,37 @@ export function collectConsoleErrors(page: Page): string[] {
 	});
 	page.on("pageerror", (error) => errors.push(String(error)));
 	return errors;
+}
+
+/** The Industry checkbox hides the real input (`pointer-events: none`) and draws
+ *  its own box, so `.check()` finds the input unclickable. Click the label, which
+ *  is what a person does, and assert the input actually toggled. */
+export async function tickCheckbox(input: Locator): Promise<void> {
+	await input.locator("xpath=ancestor::label[1]").click();
+	await expect(input).toBeChecked();
+}
+
+/** The value shown under one label in a `kt-meta-row` context strip. Label and
+ *  value are adjacent elements, so the row's own text reads "Version2" and
+ *  `toContainText("Version 2")` can never match — ask for the value itself. */
+export function contextValue(page: Page, testId: string, label: string): Locator {
+	return page
+		.locator(`[data-testid="${testId}"] > div`)
+		.filter({ has: page.getByText(label, { exact: true }) })
+		.locator(".kt-meta-value");
+}
+
+/**
+ * The record's own identity line inside the page head — `PLN-MOH-2027-001 ·
+ * Version 1 · FY 2027/28` with its state badge.
+ *
+ * The boards draw this as one `.kt-page-scope` line in the head; several
+ * Planning screens had it as a labelled `.kt-meta-row` below the head instead,
+ * which read as the page's first section rather than as the record's identity
+ * (corrected 24 September 2026). `contextValue` above still serves the screens
+ * whose board genuinely draws a labelled context row outside the head —
+ * U02–U05's departmental plan is the one that does.
+ */
+export function scopeLine(page: Page, testId: string): Locator {
+	return page.locator(`[data-testid="${testId}"]`);
 }

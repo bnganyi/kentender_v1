@@ -1,0 +1,145 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-01 09:00:00.000000",
+ "description": "\u00a74 source report identity/version and artifact hashes; one row per received Evaluation report version, never replaced.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "report_id",
+  "award_case",
+  "cycle",
+  "source_delivery",
+  "source_version",
+  "version_number",
+  "content_digest",
+  "signature_digest",
+  "snapshot_json",
+  "received_at",
+  "state",
+  "source_complete",
+  "source_problem",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "report_id",
+   "label": "Report ID",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "award_case",
+   "label": "Award case",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cycle",
+   "label": "Cycle",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "source_delivery",
+   "label": "Source delivery",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_version",
+   "label": "Source version",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "version_number",
+   "label": "Version number",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "content_digest",
+   "label": "Content digest",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "signature_digest",
+   "label": "Signature digest",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "snapshot_json",
+   "label": "Snapshot JSON",
+   "read_only": 1,
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "received_at",
+   "label": "Received at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Current\nReturned\nSuperseded"
+  },
+  {
+   "fieldname": "source_complete",
+   "label": "Source complete",
+   "read_only": 1,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "source_problem",
+   "label": "Source problem",
+   "read_only": 1,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "read_only": 1,
+   "fieldtype": "Data"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-01 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Award",
+ "name": "Award Source Report",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:report_id"
+}

@@ -79,6 +79,16 @@ bench --site kentender.midas.com run-tests \
 
 If the runner supports a narrower test selector in the current repository, use it during the red/green loop.
 
+### Run tests on the test site, not the dev site
+
+Tests write real rows with no rollback. Run them on `kentender-test.local` (its own server, port 8001), a copy of the dev site — `AGENTS.md` §8.2:
+
+```bash
+make test-site-rebuild                                   # refresh the copy from dev
+scripts/test-site.sh run npx playwright test <spec> --workers=1
+bench --site kentender-test.local run-tests --app <app> --module <module>
+```
+
 ### Focused frontend and UI tests
 
 ```bash
@@ -87,6 +97,8 @@ npx playwright test path/to/spec.ts -g "test name"
 ```
 
 Use `npm run test:ui:smoke` for the UI smoke checkpoint and `npm run test:ui` only when a full UI run is justified.
+
+If a UI run fails oddly — teardowns failing, later specs failing against state an earlier spec left behind, or a `NameError` naming an app — check `make ui-queue-check` before reading any application code. See `AGENTS.md` §8.1.
 
 ### Assets
 
@@ -109,7 +121,7 @@ make validate-links
 make migrate SITE=<site>
 make clear SITE=<site>
 make doctor
-make seed-canonical SITE=<site> [THROUGH=tender_preparation]   # clear non-canonical rows, reseed KT-STD-001 §8 + SEED-001 up to a stage (site/strategy/budget/needs/planning/requisitions/tender_preparation), validate — runbook: docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_*.md
+make seed-canonical SITE=<site> [THROUGH=award] [REBUILD=True]    # clear non-canonical rows, reseed KT-STD-001 §8 + SEED-001 up to a stage (site/strategy/budget/needs/planning/requisitions/tenders/bid_submission/bid_opening/bid_evaluation/award; default requisitions; THROUGH=award is the full chain), validate; REBUILD=True also drops and rebuilds the canonical module rows — runbook: docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_24.md
 make seed-canonical-dry-run SITE=<site>             # what seed-canonical would remove, deletes nothing
 make seed-canonical-validate SITE=<site>
 make seed-kentender-mvp-v1 SITE=<site>              # legacy KENTENDER_MVP_V1 pack (multi-PE era); prefer seed-canonical

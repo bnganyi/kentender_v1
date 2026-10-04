@@ -19,7 +19,7 @@ from typing import Any
 from uuid import uuid4
 
 import frappe
-from frappe.utils import cstr, flt, getdate, now_datetime
+from frappe.utils import cstr, flt, formatdate, getdate, now_datetime
 
 from kentender_procurement.departmental_needs.constants import (
 	ACTION_ACCEPT,
@@ -458,12 +458,24 @@ def _validate_submission(need, version) -> None:
 		fail("NDS_UNIT_INELIGIBLE", "The selected unit is not an active governed unit.")
 	if not version.required_by_date:
 		fail("NDS_FIELD_REQUIRED", "Required-by date is required.")
-	fy = selectable_financial_year(need.financial_year)
-	required_by = getdate(version.required_by_date)
+	_require_required_by_in_year(selectable_financial_year(need.financial_year), version.required_by_date)
+
+
+def _require_required_by_in_year(fy: dict[str, Any], required_by_date) -> None:
+	"""NDS-AC-005 — a supplied Required-by date lies inside the target year.
+
+	Checked when a value is saved, not only at submission, so a date outside
+	the year can never sit in a Draft looking accepted (UAT issue #25). An empty
+	value passes here: presence is a submission rule (§12.3, NDS-AC-004).
+	"""
+	if not required_by_date:
+		return
+	required_by = getdate(required_by_date)
 	if not (getdate(fy["start_date"]) <= required_by <= getdate(fy["end_date"])):
 		fail(
 			"NDS_REQUIRED_BY_OUTSIDE_FY",
-			"Required-by date must fall within the target financial year.",
+			f"Required by must be between {formatdate(fy['start_date'], 'd MMM yyyy')} and "
+			f"{formatdate(fy['end_date'], 'd MMM yyyy')}, the dates of {fy['label']}.",
 		)
 
 
@@ -526,6 +538,7 @@ def create_need(
 	assignment = require_create(principal, ou)
 	# NDS-BR-002 / NDS-AC-003 — initial creation requires the flag Open.
 	require_open_intake(fy["id"])
+	_require_required_by_in_year(fy, required_by_date)
 	reference, lock_name = _next_reference(fy["id"])
 	try:
 		need = frappe.get_doc(
@@ -599,6 +612,7 @@ def update_need(
 		fail("NDS_STATE_CONFLICT", "This Departmental Need is no longer editable.")
 	if version.revision_status != REVISION_DRAFT:
 		fail("NDS_STATE_CONFLICT", "The current revision is not editable.")
+	_require_required_by_in_year(selectable_financial_year(doc.financial_year), required_by_date)
 	version.update(
 		_content_values(
 			title=title,

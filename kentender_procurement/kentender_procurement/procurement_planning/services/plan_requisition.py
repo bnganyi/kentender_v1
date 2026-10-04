@@ -1,7 +1,9 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.12 §7.4/§8/§8.2 — Requisition eligibility (Slice H).
+"""PLN-CHG-001 v1.18 §5.4.5/§5.4.6/§7.4/§8/§8.2 — Requisition eligibility,
+drawdown, scope lock and the correction-request lifecycle (Slice H; Phase
+2g execution, plan D9).
 
 `GetRequisitionEligiblePlanItem.v2` is the published, read-only contract
 Procurement Requisitions calls to decide whether — and how much of — a Plan
@@ -16,23 +18,33 @@ drawdown commands moved from a System-Manager placeholder gate (closing
 FU-07) to the Head of Procurement Function, the office REQ-CHG-001 v1.6
 §9.1A names as the sole authoriser of a Requisition's drawdown.
 
-§9's twenty-one error codes are Planning's own UI-facing vocabulary; a
-programmatic contract call from a sibling module is not a Planning screen,
-so `record_requisition_drawdown`'s balance/state failures raise a plain
-`frappe.ValidationError` instead of forcing an unrelated §9 code onto a
-condition the contract's own author never named one for (§9's own docstring:
-"an invented code is a defect in the caller") — the same reasoning
-`authz.not_found()` already uses to sit outside that closed set.
+`AuthoriseRequisitionDrawdown` locks the same stable `Plan Item` root
+(`services/scope_lock.guard`) that `ReceivePlanItemCorrectionRequest` and its
+dispositions lock, so a concurrently recorded correction hold and a racing
+authorisation cannot bypass each other (§4.10, PLN-RI-029); a first
+successful drawdown then permanently fixes the item's procurement scope
+under that same lock (§5.4.6). §8's codes cover every named condition this
+module raises (`PLN_ITEM_SCOPE_LOCKED`, `PLN_ITEM_AUTHORISATION_HELD`,
+`PLN_ALLOWANCE_EXCEEDED`, `PLN_CORRECTION_NOT_ACTIVE`); a residual
+precondition with no dedicated code (item not Active, funding not current,
+malformed allocation shape) still raises a plain `frappe.ValidationError` —
+REQ is expected to have already checked eligibility through the read
+contract above, so these are defensive, not user-facing, failures (the same
+reasoning `authz.not_found()` already uses to sit outside the closed set).
 """
 
 from __future__ import annotations
 
+import json
+from decimal import Decimal
 from typing import Any
 
 import frappe
 from frappe.utils import cstr, flt, now_datetime
 
-from kentender_procurement.procurement_planning.services import envelope, plan_read
+from kentender_procurement.procurement_planning.errors import fail
+from kentender_procurement.procurement_planning.services import envelope, outcome_event, plan_read, scope_lock
+from kentender_procurement.procurement_planning.services import money as money_boundary
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	DEPARTMENTAL_ROLES,
@@ -94,17 +106,85 @@ def _requisition_item_name(plan_item_id: str) -> str:
 	return plan_read.resolve_item_doc_name(plan_item_id)
 
 
-def _drawn_totals(allocation_names: set[str]) -> dict[str, tuple[float, float]]:
+def _drawn_totals(allocation_names: set[str]) -> dict[str, tuple[Decimal, Decimal]]:
+	"""Exact drawn quantity/amount per allocation (REQ-CHG-001 v1.11 §5.14):
+	stored Currency/Float values are read back through the money boundary
+	and summed as `Decimal`, never with a float epsilon."""
 	rows = frappe.get_all(
 		"Plan Drawdown Reference",
 		filters={"allocation": ("in", list(allocation_names) or ("",)), "drawdown_state": "Active"},
 		fields=["allocation", "quantity", "amount"],
 	)
-	totals: dict[str, tuple[float, float]] = {}
+	totals: dict[str, tuple[Decimal, Decimal]] = {}
 	for row in rows:
-		qty, amount = totals.get(row.allocation, (0.0, 0.0))
-		totals[row.allocation] = (qty + flt(row.quantity), amount + flt(row.amount))
+		qty, amount = totals.get(row.allocation, (Decimal(0), Decimal(0)))
+		totals[row.allocation] = (qty + _dec(row.quantity), amount + _dec(row.amount))
 	return totals
+
+
+def _dec(value) -> Decimal:
+	converted = money_boundary._to_decimal(value)
+	return converted if converted is not None else Decimal(0)
+
+
+def _qty_text(value) -> str:
+	return money_boundary.quantity_text(value)
+
+
+def _money_text(value) -> str:
+	return money_boundary.money_text(value)
+
+
+def _reservation_rule(item, fiscal_year: str) -> tuple[dict[str, Any], dict[str, Any]]:
+	"""REQ-CHG-001 v1.11 §5.4/§5A — the exact verified rule snapshot the item's
+	designation, and separately its County treatment, are bound to. Planning
+	reads it through the owner's regulatory reference; REQ only consumes the
+	result. No APP-wide denominator, target or shortfall is exposed."""
+	from kentender_procurement.procurement_planning.services import profiles, readiness
+
+	reference = readiness.reference_for(fiscal_year) or {}
+	rules = reference.get("reservation") or {}
+	verified = cstr(reference.get("verification_status")) in profiles.VERIFIED_STATUSES
+	published = bool(rules.get("published"))
+	designation = cstr(item.reservation_category) or readiness.NONE_RESERVATION
+	listed = {cstr(r.get("category")) for r in rules.get("categories") or []}
+	applies = designation == readiness.NONE_RESERVATION or designation in listed
+	snapshot = cstr(reference.get("reference"))
+	base = {
+		"snapshot_id": snapshot,
+		"version_number": int(reference.get("version_number") or 0),
+		"verification_status": cstr(reference.get("verification_status")),
+		"applies_to_designation": applies,
+		"available": bool(snapshot and verified and published and applies),
+	}
+	is_county = bool(frappe.db.get_single_value("Site Procuring Entity", "entity_is_county"))
+	county_applicable = bool(item.county_resident_reservation)
+	county = {
+		"applicable": county_applicable,
+		"entity_is_county": is_county,
+		"snapshot_id": snapshot if county_applicable else "",
+		"available": (not county_applicable) or bool(snapshot and verified and is_county and rules.get("county_target_percent") is not None),
+	}
+	return base, county
+
+
+def _hold_and_scope(plan_item_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
+	state = scope_lock.status(plan_item_id)
+	requests = frappe.get_all(
+		"Plan Item Correction Request",
+		filters={"plan_item_id": plan_item_id, "status": ("in", ("Open", "In progress"))},
+		fields=["name", "status", "requisition_reference", "requested_at"],
+		order_by="creation asc",
+	)
+	hold = {
+		"held": bool(requests) or state["held"],
+		"unresolved_requests": [
+			{"correction_request": r.name, "status": r.status, "requisition_reference": cstr(r.requisition_reference), "requested_at": cstr(r.requested_at)}
+			for r in requests
+		],
+	}
+	scope = {"locked": state["locked"], "locked_since": state["since"], "first_authorised_requisition": state["first_requisition"]}
+	return hold, scope
 
 
 def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, Any]:
@@ -112,8 +192,8 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 
 	REQ-CHG-001 v1.6 §4.14/§5A — every field that document names is
 	enumerated here explicitly (REQ-AC-056): `reservation_category`,
-	`lotting_indicator`, `lot_count`, `plan_horizon`,
-	`multi_year_justification`, `contributing_org_unit_ids`, `currency`,
+	`lotting_indicator`, `lot_count`, `plan_horizon` (fixed `Single year`, v1.18 §4.6),
+	`contributing_org_unit_ids`, `currency`,
 	`award_packages`, and per source `plan_item_line_id`/`source_line_id`.
 	"""
 	actor = authz.actor(user)
@@ -138,11 +218,12 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 	drawn = _drawn_totals({a.name for a in allocations})
 
 	sources: list[dict[str, Any]] = []
-	total_qty = total_value = total_remaining_qty = total_remaining_value = 0.0
+	total_qty = total_value = total_remaining_qty = total_remaining_value = Decimal(0)
 	for a in allocations:
-		drawn_qty, drawn_amount = drawn.get(a.name, (0.0, 0.0))
-		remaining_qty = flt(a.quantity) - drawn_qty
-		remaining_amount = flt(a.indicative_amount) - drawn_amount
+		drawn_qty, drawn_amount = drawn.get(a.name, (Decimal(0), Decimal(0)))
+		approved_qty, approved_amount = _dec(a.quantity), _dec(a.indicative_amount)
+		remaining_qty = approved_qty - drawn_qty
+		remaining_amount = approved_amount - drawn_amount
 		entry = (
 			frappe.db.get_value(
 				"Departmental Plan Entry", a.dpp_entry,
@@ -153,31 +234,31 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		sources.append(
 			{
 				"plan_source_allocation_id": a.allocation_id,
-				# REQ-CHG-001 v1.6 §5.1/§5.3 — `plan_item_line_id` is this same
-				# allocation id; Planning has no separate "Plan Item Line" grain
-				# (the line IS the source allocation). `source_line_id` mirrors
-				# dpp_lifecycle.py's own submission-snapshot formula exactly.
+				# REQ-CHG-001 v1.11 §4 — `plan_item_line_id` is this same exact
+				# allocation id; Planning has no separate "Plan Item Line"
+				# grain. `source_line_id` is the stable Need, or direct DPP
+				# entry, paired with `source_origin`.
 				"plan_item_line_id": a.allocation_id,
 				"source_line_id": cstr(a.need) or a.dpp_entry,
 				"source_origin": a.source_origin,
-				"dpp_entry": a.dpp_entry if a.source_origin == "Direct departmental requirement" else "",
+				"dpp_entry": a.dpp_entry,
 				"need": cstr(a.need) or None,
 				"need_revision": cstr(a.need_revision) or None,
 				"organisation_unit": a.organisation_unit,
 				"title": entry.get("title") or "",
 				"description": entry.get("description") or "",
 				"expected_operational_result": entry.get("expected_operational_result") or "",
-				"approved_quantity": flt(a.quantity),
-				"remaining_quantity": remaining_qty,
+				"approved_quantity": _qty_text(approved_qty),
+				"remaining_quantity": _qty_text(remaining_qty),
 				"unit": a.unit,
 				"required_by_date": cstr(a.required_by_date),
 				"budget_line": a.budget_line,
-				"allocated_amount": flt(a.indicative_amount),
-				"remaining_amount": remaining_amount,
+				"allocated_amount": _money_text(approved_amount),
+				"remaining_amount": _money_text(remaining_amount),
 			}
 		)
-		total_qty += flt(a.quantity)
-		total_value += flt(a.indicative_amount)
+		total_qty += approved_qty
+		total_value += approved_amount
 		total_remaining_qty += remaining_qty
 		total_remaining_value += remaining_amount
 
@@ -204,12 +285,19 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 	)
 	from kentender_procurement.procurement_planning.services import schedule
 
+	rule, county_rule = _reservation_rule(item, plan.fiscal_year)
+	hold, scope = _hold_and_scope(item.plan_item_id)
+	required_by = sorted(d for d in (cstr(a.required_by_date) for a in allocations) if d)
 	return {
 		"outcome": "OK",
 		"eligible": eligible,
+		"plan_id": plan.name,
 		"plan_reference": plan.plan_reference,
 		"version_reference": version.name,
+		"plan_version_id": version.name,
 		"plan_item_id": item.plan_item_id,
+		"plan_item_reference": cstr(frappe.db.get_value("Plan Item", item.plan_item_id, "plan_item_reference")),
+		"plan_item_version_id": item.name,
 		"record_version": int(item.record_version or 0),
 		"fiscal_year": plan.fiscal_year,
 		"requirement_type": item.requirement_type,
@@ -221,24 +309,33 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		"procurement_category": cstr(item.procurement_category),
 		"procurement_method": item.procurement_method,
 		"strategic_objective": item.strategic_objective,
+		"strategic_objective_id": cstr(item.strategic_objective),
 		"objective_path": item.objective_path,
 		"strategic_objective_path": item.objective_path,
 		"reservation_category": cstr(item.reservation_category),
+		"county_resident_reservation": bool(item.county_resident_reservation),
+		"reservation_rule": rule,
+		"county_rule": county_rule,
+		"scope": scope,
+		"hold": hold,
 		"lotting_indicator": cstr(item.lotting_indicator),
 		"lot_count": int(item.lot_count or 0),
 		"plan_horizon": cstr(item.plan_horizon),
-		"multi_year_justification": cstr(item.multi_year_justification),
 		"contributing_org_unit_ids": sorted(contributing_org_units),
 		"currency": "KES",
 		"award_packages": 1,
 		"planned_dates": {f"{m}_date": cstr(item.get(f"baseline_{m}_date")) for m in schedule.MILESTONES},
-		"forecast_dates": {f"{m}_date": cstr(item.get(f"forecast_{m}_date")) for m in schedule.MILESTONES},
+		# §5.14 — three separate dates: the source-derived Plan completion
+		# boundary (the latest source required-by date), the separately
+		# calculated estimate, and REQ's own operational date (not here).
+		"plan_completion_boundary": required_by[-1] if required_by else "",
+		"estimated_completion_date": cstr(item.estimated_completion_date),
 		"funding_confirmation_references": [confirmation] if confirmation else [],
 		"funding_state": version.funding_state,
-		"total_quantity": total_qty,
-		"total_value": total_value,
-		"remaining_quantity": total_remaining_qty,
-		"remaining_value": total_remaining_value,
+		"total_quantity": _qty_text(total_qty),
+		"total_value": _money_text(total_value),
+		"remaining_quantity": _qty_text(total_remaining_qty),
+		"remaining_value": _money_text(total_remaining_value),
 		"sources": sources,
 		"evaluated_at": cstr(now_datetime()),
 	}
@@ -301,14 +398,14 @@ def list_requisition_eligible_plan_items(*, user: str | None = None) -> list[dic
 	)
 	units_by_item: dict[str, set[str]] = {}
 	allocation_names_by_item: dict[str, set[str]] = {}
-	approved_by_item: dict[str, tuple[float, float]] = {}
 	for a in allocations:
 		units_by_item.setdefault(a.plan_item, set()).add(a.organisation_unit)
 		allocation_names_by_item.setdefault(a.plan_item, set()).add(a.name)
-		qty, amount = approved_by_item.get(a.plan_item, (0.0, 0.0))
-		approved_by_item[a.plan_item] = (qty + flt(a.quantity), amount + flt(a.indicative_amount))
 	all_allocation_names = {n for names in allocation_names_by_item.values() for n in names}
 	drawn = _drawn_totals(all_allocation_names)
+	references = dict(
+		frappe.get_all("Plan Item", filters={"name": ("in", sorted({c.plan_item_id for c in candidates}))}, fields=["name", "plan_item_reference"], as_list=True)
+	)
 
 	rows: list[dict[str, Any]] = []
 	for c in candidates:
@@ -319,48 +416,60 @@ def list_requisition_eligible_plan_items(*, user: str | None = None) -> list[dic
 			continue
 		if not site_wide and not (units & scoped_units):
 			continue
-		remaining_qty = remaining_amount = 0.0
+		remaining_qty = remaining_amount = Decimal(0)
 		for a_name in allocation_names_by_item.get(c.name, set()):
-			drawn_qty, drawn_amt = drawn.get(a_name, (0.0, 0.0))
+			drawn_qty, drawn_amt = drawn.get(a_name, (Decimal(0), Decimal(0)))
 			a = next(a for a in allocations if a.name == a_name)
-			remaining_qty += flt(a.quantity) - drawn_qty
-			remaining_amount += flt(a.indicative_amount) - drawn_amt
+			remaining_qty += _dec(a.quantity) - drawn_qty
+			remaining_amount += _dec(a.indicative_amount) - drawn_amt
 		if remaining_qty <= 0 or remaining_amount <= 0:
 			continue
 		version = versions[c.plan_version]
 		plan = plans.get(version.annual_plan) or {}
 		rows.append(
 			{
-				"plan_item_id": c.plan_item_id, "title": cstr(c.title), "procurement_category": cstr(c.procurement_category),
+				"plan_item_id": c.plan_item_id, "plan_item_reference": cstr(references.get(c.plan_item_id)),
+				"title": cstr(c.title), "procurement_category": cstr(c.procurement_category),
 				"fiscal_year": cstr(plan.get("fiscal_year")), "contributing_org_unit_ids": sorted(units),
-				"remaining_quantity": remaining_qty, "remaining_value": remaining_amount, "record_version": int(c.record_version or 0),
+				"remaining_quantity": _qty_text(remaining_qty), "remaining_value": _money_text(remaining_amount), "record_version": int(c.record_version or 0),
 			}
 		)
 	return rows
 
 
-def record_requisition_drawdown(
+def _strict(value, *, parse, field: str, code: str):
+	"""REQ-CHG-001 v1.11 §5.14 — a drawdown value crossing this command is an
+	exact decimal string (or int/Decimal); a binary float is refused, never
+	rounded or read through `repr`."""
+	if isinstance(value, float):
+		fail(code, detail={"field": field, "offered": repr(value)})
+	return parse(value, field=field)
+
+
+def authorise_requisition_drawdown(
 	*,
 	plan_item_id: str,
 	requisition_reference: str,
-	requesting_org_unit: str,
 	allocations: list[dict[str, Any]],
 	expected_record_version,
 	idempotency_key: str,
+	requisition_version: str = "",
+	correlation_id: str = "",
 	user: str | None = None,
 ) -> dict[str, Any]:
-	"""§7.4/§8.2 — atomic: every requested allocation draws within its own
-	remaining balance, or none draw at all. `allocations` is
-	`[{"plan_source_allocation_id": ..., "quantity": ..., "amount": ...}, …]`.
-	`expected_record_version` is the Plan Item's own — §8.2's blanket rule
-	("all mutating commands require an expected record version"); it also
-	means a racing second drawdown against the same item must re-read the
-	freshly-consumed balance before it can proceed, on top of the per-
-	allocation row lock below."""
+	"""REQ-CHG-001 v1.11 §9.1 `AuthoriseRequisitionDrawdown` — the one
+	canonical Planning drawdown command. One call carries every allocation
+	the Requisition draws; every one draws within its own remaining original
+	allowance, or none does. Each row is recorded against its own
+	allocation's department (a combined item draws from more than one).
+
+	Runs inside the caller's transaction and never commits: the Requisition
+	authorisation, this drawdown and scope marker, Budget's reservations, the
+	decision, handoff and outbox commit together or roll back together."""
 	actor = authz.actor(user)
 	payload = {
 		"plan_item_id": plan_item_id, "requisition_reference": cstr(requisition_reference).strip(),
-		"requesting_org_unit": requesting_org_unit, "allocations": allocations,
+		"requisition_version": cstr(requisition_version).strip(), "allocations": allocations,
 	}
 	replay = envelope.replay_or_none(idempotency_key, payload)
 	if replay:
@@ -377,36 +486,42 @@ def record_requisition_drawdown(
 	if item.item_state != "Active" or frappe.db.get_value("Annual Plan Version", item.plan_version, "funding_state") != "Confirmed":
 		frappe.throw("This Plan Item is not currently eligible for a Requisition drawdown.")
 
-	# Validate every requested allocation first, and only write once the
-	# whole batch is known good — "every reservation or none" (§7.3's own
-	# CheckAndReserveFunding phrasing) can't lean on request-level rollback
-	# here, since a direct Python caller (every test in this repo, and any
-	# future in-process Requisitions caller) never goes through
-	# frappe.handler's own catch-and-rollback wrapper.
+	# §5.4.5/PLN-RI-029 — recheck the hold under the same stable-item guard
+	# `ReceivePlanItemCorrectionRequest` records/disposes it with, so a
+	# concurrently recorded request cannot be bypassed by a stale read.
+	root = scope_lock.guard(item.plan_item_id)
+	if root.authorisation_hold:
+		fail("PLN_ITEM_AUTHORISATION_HELD", detail={"plan_item_id": item.plan_item_id, "open_requests": int(root.open_correction_requests or 0)})
+
+	# Validate every requested allocation first and only write once the whole
+	# batch is known good — all or none, without leaning on a request-level
+	# rollback a direct in-process caller never goes through.
 	to_create = []
+	seen: set[str] = set()
 	for spec in allocations:
-		allocation_name = frappe.db.get_value(
-			"Plan Source Allocation",
-			{"allocation_id": cstr(spec.get("plan_source_allocation_id")), "plan_item": item.name},
-			"name",
-		)
+		allocation_id = cstr(spec.get("plan_source_allocation_id"))
+		if allocation_id in seen:
+			frappe.throw(f"Source allocation {allocation_id} appears more than once in one drawdown.")
+		seen.add(allocation_id)
+		allocation_name = frappe.db.get_value("Plan Source Allocation", {"allocation_id": allocation_id, "plan_item": item.name}, "name")
 		if not allocation_name:
 			authz.not_found()
 		allocation = envelope.locked("Plan Source Allocation", allocation_name)
 		if allocation.allocation_state != "Active":
 			frappe.throw(f"Source allocation {allocation.allocation_id} is not currently drawable.")
-		requested_qty = flt(spec.get("quantity"))
-		requested_amount = flt(spec.get("amount"))
-		if requested_qty <= 0 or requested_amount <= 0:
-			frappe.throw("A drawdown quantity and value must both be positive.")
-		drawn_qty, drawn_amount = _drawn_totals({allocation.name}).get(allocation.name, (0.0, 0.0))
-		if (
-			drawn_qty + requested_qty > flt(allocation.quantity) + 1e-6
-			or drawn_amount + requested_amount > flt(allocation.indicative_amount) + 1e-6
-		):
-			frappe.throw(
-				f"The requested drawdown exceeds the remaining balance for source "
-				f"allocation {allocation.allocation_id}."
+		requested_qty = _strict(spec.get("quantity"), parse=money_boundary.parse_quantity, field="quantity", code="PLN_MONEY_PRECISION_INVALID")
+		requested_amount = _strict(spec.get("amount"), parse=money_boundary.parse_money, field="amount", code="PLN_MONEY_PRECISION_INVALID")
+		drawn_qty, drawn_amount = _drawn_totals({allocation.name}).get(allocation.name, (Decimal(0), Decimal(0)))
+		approved_qty, approved_amount = _dec(allocation.quantity), _dec(allocation.indicative_amount)
+		if drawn_qty + requested_qty > approved_qty or drawn_amount + requested_amount > approved_amount:
+			fail(
+				"PLN_ALLOWANCE_EXCEEDED",
+				f"The requested drawdown exceeds the remaining balance for source allocation {allocation.allocation_id}.",
+				detail={
+					"allocation_id": allocation.allocation_id,
+					"requested_quantity": _qty_text(requested_qty), "requested_amount": _money_text(requested_amount),
+					"remaining_quantity": _qty_text(approved_qty - drawn_qty), "remaining_amount": _money_text(approved_amount - drawn_amount),
+				},
 			)
 		to_create.append((allocation, requested_qty, requested_amount))
 
@@ -418,21 +533,66 @@ def record_requisition_drawdown(
 				"plan_item": item.name, "plan_item_id": item.plan_item_id,
 				"allocation": allocation.name,
 				"requisition_reference": requisition_reference,
-				"requesting_org_unit": requesting_org_unit,
-				"quantity": requested_qty, "amount": requested_amount,
+				"requisition_version": cstr(requisition_version).strip(),
+				"correlation_id": cstr(correlation_id).strip(),
+				"requesting_org_unit": allocation.organisation_unit,
+				"quantity": _qty_text(requested_qty), "amount": _money_text(requested_amount),
 				"drawdown_state": "Active",
 				"fixture_namespace": cstr(item.fixture_namespace),
 			}
 		).insert(ignore_permissions=True)
-		created.append({"drawdown_reference": doc.name, "record_version": int(doc.record_version or 0)})
+		created.append(
+			{
+				"plan_source_allocation_id": allocation.allocation_id,
+				"drawdown_reference": doc.name,
+				"record_version": int(doc.record_version or 0),
+			}
+		)
 
-	result = {"ok": True, "idempotent": False, "action": "recorded", "drawdown_references": created}
+	first_lock = scope_lock.lock(root, requisition_reference=requisition_reference)
+
+	result = {
+		"ok": True, "idempotent": False, "action": "recorded",
+		"drawdowns": created, "scope_locked_by_this_drawdown": bool(first_lock),
+	}
 	envelope.record_command(
-		idempotency_key=idempotency_key, command="RecordRequisitionDrawdown", payload=payload,
+		idempotency_key=idempotency_key, command="AuthoriseRequisitionDrawdown", payload=payload,
 		result=result, document_type="Plan Drawdown Reference", document_name=created[0]["drawdown_reference"],
 		actor=actor, fixture_namespace=cstr(item.fixture_namespace),
 	)
 	return result
+
+
+def list_requisition_drawdowns(*, requisition_reference: str, user: str | None = None) -> list[dict[str, Any]]:
+	"""REQ-CHG-001 v1.11 §9.1 — the published read a Requisition's revocation
+	uses to find its exact originating drawdowns (never a direct table read by
+	the caller). Head of Procurement Function only."""
+	actor = authz.actor(user)
+	_authorise_requisition_authoriser(actor)
+	rows = frappe.get_all(
+		"Plan Drawdown Reference",
+		filters={"requisition_reference": cstr(requisition_reference).strip()},
+		fields=["name", "allocation", "quantity", "amount", "drawdown_state", "reversal_reference", "record_version", "requesting_org_unit", "requisition_version"],
+		order_by="creation asc",
+	)
+	allocation_ids = {
+		a.name: a.allocation_id
+		for a in frappe.get_all("Plan Source Allocation", filters={"name": ("in", [r.allocation for r in rows] or ("",))}, fields=["name", "allocation_id"])
+	}
+	return [
+		{
+			"drawdown_reference": r.name,
+			"plan_source_allocation_id": allocation_ids.get(r.allocation, ""),
+			"organisation_unit": cstr(r.requesting_org_unit),
+			"requisition_version": cstr(r.requisition_version),
+			"quantity": _qty_text(r.quantity),
+			"amount": _money_text(r.amount),
+			"drawdown_state": r.drawdown_state,
+			"reversal_reference": cstr(r.reversal_reference),
+			"record_version": int(r.record_version or 0),
+		}
+		for r in rows
+	]
 
 
 def reverse_requisition_drawdown(
@@ -497,11 +657,15 @@ def receive_plan_item_correction_request(
 	idempotency_key: str,
 	user: str | None = None,
 ) -> dict[str, Any]:
-	"""REQ-CHG-001 v1.6 §7.4A step 2/3 — the inbound half of a Requisition's
-	upstream-correction route: preserve the exact request as one immutable
-	row and surface it to the Procurement Planner as a My Work item. This
-	command performs no correction itself; Planning's own governed
-	correction/successor mechanism (§7.4A step 4) is a separate, later act."""
+	"""REQ-CHG-001 v1.6 §7.4A step 2/3 / PLN-RI-029 — the inbound half of a
+	Requisition's upstream-correction route: preserve the exact request as
+	one immutable row, hold new drawdown authorisations against the stable
+	item, and surface the request to the Procurement Planner as a My Work
+	item — recording the request and making the hold effective are atomic,
+	under the same stable-item guard `AuthoriseRequisitionDrawdown` rechecks
+	it against. This command performs no correction itself; Planning's own
+	governed correction/successor mechanism (§7.4A step 4) is a separate,
+	later act."""
 	actor = authz.actor(user)
 	payload = {
 		"plan_item_id": plan_item_id, "requisition_reference": cstr(requisition_reference).strip(),
@@ -526,16 +690,18 @@ def receive_plan_item_correction_request(
 	)
 	requested_role = _authorise_correction_requester(actor, contributing_org_units=contributing_org_units)
 
+	root = scope_lock.guard(item.plan_item_id)
 	doc = frappe.get_doc(
 		{
 			"doctype": "Plan Item Correction Request",
-			"plan_item": item.name, "plan_item_id": item.plan_item_id,
+			"plan_item": item.name, "plan_item_id": item.plan_item_id, "plan_version": item.plan_version,
 			"requisition_reference": requisition_reference, "requisition_version": requisition_version,
 			"reason": reason, "requested_by": actor, "requested_role": requested_role,
 			"requested_at": now_datetime(), "status": "Open", "idempotency_key": idempotency_key,
 			"fixture_namespace": cstr(item.fixture_namespace),
 		}
 	).insert(ignore_permissions=True)
+	scope_lock.recompute_hold(root)
 	result = {"ok": True, "idempotent": False, "correction_request": doc.name, "status": doc.status}
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="ReceivePlanItemCorrectionRequest", payload=payload,
@@ -545,36 +711,212 @@ def receive_plan_item_correction_request(
 	return result
 
 
-def resolve_plan_item_correction_request(
-	*, correction_request: str, resolution_note: str, expected_record_version, idempotency_key: str, user: str | None = None,
-) -> dict[str, Any]:
-	"""§7.4A step 4 — the Procurement Planner records that Planning's own
-	governed correction/successor route has been applied. This command does
-	not itself edit the Plan Item; it closes the inbound request once the
-	real correction (a Plan successor, or a correction to a still-open
-	Version) has happened through Planning's ordinary commands."""
-	actor = authz.actor(user)
-	payload = {"correction_request": correction_request, "resolution_note": cstr(resolution_note).strip()}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
-	authz.require_site_role(ROLE_PROCUREMENT_PLANNER, actor)
-
+def _authorise_disposition(actor: str, correction_request: str, expected_record_version):
+	"""Start/Resolve/Close without change share one Planner-only gate and
+	row lock; the role check runs before the existence/version check
+	(established precedent: a non-Planner is refused Not-found rather than
+	a version-mismatch that would disclose the record exists)."""
+	assignment = authz.require_site_role(ROLE_PROCUREMENT_PLANNER, actor)
 	if not correction_request or not frappe.db.exists("Plan Item Correction Request", correction_request):
 		authz.not_found()
 	doc = envelope.locked("Plan Item Correction Request", correction_request)
 	envelope.check_record_version(doc, expected_record_version)
-	if doc.status != "Open":
-		frappe.throw("This correction request has already been resolved.")
-	resolution_note = cstr(resolution_note).strip()
-	if len(resolution_note) < 10:
-		frappe.throw("A resolution note of at least 10 characters is required.")
+	return doc, assignment
 
-	envelope.bump(doc, status="Resolved", resolved_by=actor, resolved_at=now_datetime(), resolution_note=resolution_note)
-	result = {"ok": True, "idempotent": False, "action": "resolved", "correction_request": doc.name}
+
+def start_plan_item_correction(
+	*, correction_request: str, expected_record_version, idempotency_key: str, user: str | None = None,
+) -> dict[str, Any]:
+	"""§7.2 `StartPlanItemCorrection` — Open moves to In progress; the hold
+	remains in force (recomputed from the same Open-or-In-progress set)
+	while the Planner routes the actual edit to its true source owner (a
+	Need/DPP update, or a Plan successor for a Planning-owned fact). This
+	command never itself edits the Plan Item."""
+	actor = authz.actor(user)
+	payload = {"correction_request": correction_request}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+	doc, assignment = _authorise_disposition(actor, correction_request, expected_record_version)
+	if doc.status != "Open":
+		frappe.throw("Only an Open correction request can be started.")
+
+	disposition = frappe.get_doc(
+		{
+			"doctype": "Plan Item Correction Disposition", "correction_request": doc.name, "action": "Start",
+			"actor": actor, "authority_snapshot": authz.authority_snapshot(assignment), "disposed_at": now_datetime(),
+			"command_idempotency_key": idempotency_key, "fixture_namespace": cstr(doc.fixture_namespace),
+		}
+	).insert(ignore_permissions=True)
+	envelope.bump(doc, status="In progress")
+	result = {"ok": True, "idempotent": False, "action": "started", "correction_request": doc.name, "disposition": disposition.name}
 	envelope.record_command(
-		idempotency_key=idempotency_key, command="ResolvePlanItemCorrectionRequest", payload=payload,
-		result=result, document_type="Plan Item Correction Request", document_name=doc.name,
-		actor=actor, fixture_namespace=cstr(doc.fixture_namespace),
+		idempotency_key=idempotency_key, command="StartPlanItemCorrection", payload=payload, result=result,
+		document_type="Plan Item Correction Request", document_name=doc.name, actor=actor, fixture_namespace=cstr(doc.fixture_namespace),
 	)
 	return result
+
+
+def resolve_plan_item_correction_request(
+	*,
+	correction_request: str,
+	correcting_plan_version: str,
+	replacement_plan_item_id: str = "",
+	expected_record_version,
+	idempotency_key: str,
+	user: str | None = None,
+) -> dict[str, Any]:
+	"""§7.2/§5.4.5 `ResolvePlanItemCorrectionRequest` — allowed only once the
+	named correcting Plan Version is Active, and only once the disposition
+	identifies the replacement eligible lineage (`replacement_plan_item_id`
+	defaults to this same stable item — the ordinary case, since stable
+	identity carries into a successor per §5.4.4; a name is required only
+	when the correction reformed the item under a new identity). Emits
+	`PlanItemCorrectionOutcome.v1` (REQ-CHG-001 v1.11 §9.1B) so a fresh
+	Draft may be started; the stopped Requisition Version is never itself
+	revived here."""
+	actor = authz.actor(user)
+	correcting_plan_version = cstr(correcting_plan_version).strip()
+	replacement_plan_item_id = cstr(replacement_plan_item_id).strip()
+	payload = {
+		"correction_request": correction_request, "correcting_plan_version": correcting_plan_version,
+		"replacement_plan_item_id": replacement_plan_item_id,
+	}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+	doc, assignment = _authorise_disposition(actor, correction_request, expected_record_version)
+	if doc.status not in ("Open", "In progress"):
+		frappe.throw("This correction request has already reached a final outcome.")
+	if not correcting_plan_version:
+		frappe.throw("Name the exact Active Plan Version that corrects this request.")
+	if frappe.db.get_value("Annual Plan Version", correcting_plan_version, "version_status") != "Active":
+		fail("PLN_CORRECTION_NOT_ACTIVE", detail={"correcting_plan_version": correcting_plan_version})
+
+	replacement_plan_item_id = replacement_plan_item_id or cstr(doc.plan_item_id)
+	if not frappe.db.exists(
+		"Annual Plan Item",
+		{"plan_item_id": replacement_plan_item_id, "plan_version": correcting_plan_version, "item_state": "Active"},
+	):
+		frappe.throw("Name the exact Active Plan Item on that Version that replaces this stable item's eligibility.")
+
+	root = scope_lock.guard(cstr(doc.plan_item_id))
+	lineage = {"replaced_plan_item": replacement_plan_item_id, "correcting_plan_version": correcting_plan_version}
+	disposition = frappe.get_doc(
+		{
+			"doctype": "Plan Item Correction Disposition", "correction_request": doc.name, "action": "Resolve",
+			"actor": actor, "authority_snapshot": authz.authority_snapshot(assignment), "disposed_at": now_datetime(),
+			"correcting_plan_version": correcting_plan_version, "replacement_lineage": json.dumps(lineage),
+			"command_idempotency_key": idempotency_key, "fixture_namespace": cstr(doc.fixture_namespace),
+		}
+	).insert(ignore_permissions=True)
+	envelope.bump(
+		doc, status="Resolved", resolved_by=actor, resolved_at=now_datetime(),
+		resolution_note=f"Resolved against {correcting_plan_version}.",
+	)
+	hold = scope_lock.recompute_hold(root)
+
+	# REQ-CHG-001 v1.11 §9.1B — the terminal outcome, emitted in this same
+	# disposition transaction to the registered consumer.
+	outcome_event.deliver(
+		outcome_event.build(
+			request=doc, disposition=disposition, outcome="Resolved", hold=hold,
+			eligibility_revision=int(root.record_version or 0),
+			correcting_plan_version=correcting_plan_version,
+			lineage=outcome_event.replacement_lineage(correcting_plan_version, replacement_plan_item_id),
+		)
+	)
+
+	result = {
+		"ok": True, "idempotent": False, "action": "resolved", "correction_request": doc.name,
+		"disposition": disposition.name, "replacement_plan_item_id": replacement_plan_item_id, "hold": hold,
+	}
+	envelope.record_command(
+		idempotency_key=idempotency_key, command="ResolvePlanItemCorrectionRequest", payload=payload, result=result,
+		document_type="Plan Item Correction Request", document_name=doc.name, actor=actor, fixture_namespace=cstr(doc.fixture_namespace),
+	)
+	return result
+
+
+def close_plan_item_correction_without_change(
+	*, correction_request: str, reason: str, expected_record_version, idempotency_key: str, user: str | None = None,
+) -> dict[str, Any]:
+	"""§7.2/§5.4.5 `ClosePlanItemCorrectionWithoutChange` — a reasoned
+	no-change outcome; it never itself revives or authorises the stopped
+	Requisition (REQ's own amendment defines the requester's permitted
+	follow-up for this outcome)."""
+	actor = authz.actor(user)
+	reason = cstr(reason).strip()
+	payload = {"correction_request": correction_request, "reason": reason}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+	doc, assignment = _authorise_disposition(actor, correction_request, expected_record_version)
+	if doc.status not in ("Open", "In progress"):
+		frappe.throw("This correction request has already reached a final outcome.")
+	if not (20 <= len(reason) <= 1000):
+		frappe.throw("A no-change reason of 20–1,000 characters is required.")
+
+	root = scope_lock.guard(cstr(doc.plan_item_id))
+	disposition = frappe.get_doc(
+		{
+			"doctype": "Plan Item Correction Disposition", "correction_request": doc.name, "action": "Close without change",
+			"actor": actor, "authority_snapshot": authz.authority_snapshot(assignment), "disposed_at": now_datetime(),
+			"reason": reason, "command_idempotency_key": idempotency_key, "fixture_namespace": cstr(doc.fixture_namespace),
+		}
+	).insert(ignore_permissions=True)
+	envelope.bump(doc, status="Closed without change", resolved_by=actor, resolved_at=now_datetime(), resolution_note=reason)
+	hold = scope_lock.recompute_hold(root)
+
+	outcome_event.deliver(
+		outcome_event.build(
+			request=doc, disposition=disposition, outcome="Closed without change", hold=hold,
+			eligibility_revision=int(root.record_version or 0), reason=reason,
+		)
+	)
+
+	result = {"ok": True, "idempotent": False, "action": "closed_without_change", "correction_request": doc.name, "disposition": disposition.name, "hold": hold}
+	envelope.record_command(
+		idempotency_key=idempotency_key, command="ClosePlanItemCorrectionWithoutChange", payload=payload, result=result,
+		document_type="Plan Item Correction Request", document_name=doc.name, actor=actor, fixture_namespace=cstr(doc.fixture_namespace),
+	)
+	return result
+
+
+def correction_request_facts(*, correction_request: str = "", requisition_reference: str = "") -> list[dict[str, Any]]:
+	"""REQ-CHG-001 v1.11 §7.4B/§9.1B — the published, read-only facts of the
+	Planning correction requests a Requisition raised: exact lineage, owner
+	status and the dispositions so far. Requisitions uses it to authenticate
+	an outcome event and to render its stopped page; it never reads these
+	tables itself. No APP-wide figure is included."""
+	filters: dict[str, Any] = {}
+	if correction_request:
+		filters["name"] = cstr(correction_request)
+	if requisition_reference:
+		filters["requisition_reference"] = cstr(requisition_reference)
+	if not filters:
+		return []
+	rows = frappe.get_all(
+		"Plan Item Correction Request", filters=filters,
+		fields=["name", "plan_item_id", "plan_item", "plan_version", "requisition_reference", "requisition_version", "reason", "requested_by", "requested_role", "requested_at", "status", "resolved_by", "resolved_at", "resolution_note"],
+		order_by="creation asc",
+	)
+	out = []
+	for row in rows:
+		dispositions = frappe.get_all(
+			"Plan Item Correction Disposition", filters={"correction_request": row.name},
+			fields=["name", "action", "actor", "disposed_at", "correcting_plan_version", "reason"], order_by="creation asc",
+		)
+		out.append(
+			{
+				"correction_request": row.name, "plan_item_id": row.plan_item_id, "plan_item_version_id": row.plan_item, "plan_version_id": row.plan_version,
+				"requisition_reference": row.requisition_reference, "requisition_version": row.requisition_version, "reason": row.reason,
+				"requested_by": row.requested_by, "requested_role": row.requested_role, "requested_at": cstr(row.requested_at), "status": row.status,
+				"resolved_by": cstr(row.resolved_by), "resolved_at": cstr(row.resolved_at), "resolution_note": cstr(row.resolution_note),
+				"dispositions": [
+					{"disposition": d.name, "action": d.action, "actor": d.actor, "disposed_at": cstr(d.disposed_at), "correcting_plan_version": cstr(d.correcting_plan_version), "reason": cstr(d.reason)}
+					for d in dispositions
+				],
+			}
+		)
+	return out

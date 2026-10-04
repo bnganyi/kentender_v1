@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+</helmet>
+<div ref="{{rootRef}}" style="padding:20px 24px 22px;border-bottom:1px solid var(--color-divider);display:grid;gap:18px;font-family:var(--font-body);color:var(--color-text);">
+  <sc-if value="{{full}}" hint-placeholder-val="{{true}}">
+    <ol aria-label="Tender journey" style="list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;">
+      <sc-for list="{{stages}}" as="s" hint-placeholder-count="5">
+        <li style="display:grid;gap:8px;align-content:start;min-width:0;">
+          <span aria-hidden="true" style="display:block;height:4px;background:{{s.bar}};"></span>
+          <span style="display:flex;gap:6px;align-items:baseline;min-width:0;">
+            <span style="font-family:var(--font-heading);font-size:15px;font-weight:600;color:{{s.numColor}};flex:none;">{{s.num}}</span>
+            <span style="font-size:14px;line-height:1.3;font-weight:{{s.weight}};color:{{s.color}};text-wrap:pretty;">{{s.label}}</span>
+          </span>
+          <span style="font-size:12px;line-height:1.3;font-weight:600;color:{{s.stateColor}};padding-left:16px;">{{s.stateLine}}</span>
+        </li>
+      </sc-for>
+    </ol>
+  </sc-if>
+  <sc-if value="{{reduced}}" hint-placeholder-val="{{false}}">
+    <div style="display:grid;gap:8px;">
+      <div aria-hidden="true" style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;">
+        <sc-for list="{{stages}}" as="s" hint-placeholder-count="5"><span style="display:block;height:4px;background:{{s.bar}};"></span></sc-for>
+      </div>
+      <div style="font-size:14px;"><span style="font-weight:700;color:var(--color-accent-700);">{{currentLabel}}</span> <span style="color:var(--color-neutral-700);">· {{position}} of 5<sc-if value="{{hasHolder}}" hint-placeholder-val="{{false}}"> · {{holder}}</sc-if></span></div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isLine}}" hint-placeholder-val="{{false}}">
+    <div style="border-left:3px solid {{lineRule}};padding:2px 0 2px 14px;display:grid;gap:3px;">
+      <div style="font-size:12px;font-weight:700;color:{{lineLabelColor}};">{{kindLabel}}</div>
+      <p style="margin:0;font-size:17px;font-weight:600;line-height:1.4;text-wrap:pretty;">{{headline}}</p>
+      <sc-if value="{{hasSentence}}" hint-placeholder-val="{{false}}"><p style="margin:0;font-size:14px;color:var(--color-neutral-700);">{{sentence}}</p></sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{isBlocked}}" hint-placeholder-val="{{false}}">
+    <div class="kt-notice is-warning" style="margin:0;">
+      <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      <div class="kt-notice-body" style="display:grid;gap:10px;">
+        <div style="display:grid;gap:3px;">
+          <div style="font-size:12px;font-weight:700;">Your turn, blocked</div>
+          <div style="font-size:17px;font-weight:600;line-height:1.4;">{{headline}}</div>
+          <sc-if value="{{hasSentence}}" hint-placeholder-val="{{false}}"><div style="font-size:14px;">{{sentence}}</div></sc-if>
+        </div>
+        <sc-if value="{{hasFixes}}" hint-placeholder-val="{{false}}">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <sc-for list="{{fixList}}" as="f" hint-placeholder-count="1">
+              <button type="button" class="{{f.cls}}">{{f.label}}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1100,&quot;height&quot;:200},&quot;markers&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;D/D/D/C/N&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;holder&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Charles Mutiso&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;kind&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;turn&quot;,&quot;blocked&quot;,&quot;waiting&quot;,&quot;done&quot;,&quot;none&quot;],&quot;default&quot;:&quot;turn&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;headline&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Confirm publication through Notice board and Two national newspapers; 2 of 4 channels are confirmed.&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sentence&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;fixes&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;Array&lt;string|{label:string,primary?:boolean}&gt;&quot;},&quot;reduced&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { narrow: false };
+  rootRef = React.createRef();
+  componentDidMount() {
+    const el = this.rootRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    this.ro = new ResizeObserver(([e]) => {
+      const narrow = e.contentRect.width < 600;
+      if (narrow !== this.state.narrow) this.setState({ narrow });
+    });
+    this.ro.observe(el);
+  }
+  componentWillUnmount() { this.ro && this.ro.disconnect(); }
+  renderVals() {
+    const p = this.props;
+    const labels = ['Prepare Tender', 'HOPF approval', 'AO publication authorisation', 'Confirm publication', 'Manage open Tender'];
+    const marks = String(p.markers ?? 'C/N/N/N/N').split('/');
+    const holder = p.holder ?? '';
+    const curIdx = marks.findIndex((m) => m === 'C' || m === 'B');
+    const idx = curIdx >= 0 ? curIdx : marks.length - 1;
+    const stages = labels.map((label, i) => {
+      const m = marks[i] || 'N';
+      const withHolder = (t) => (holder ? `${t} · ${holder}` : t);
+      return {
+        num: i + 1, label,
+        bar: m === 'D' ? 'var(--status-live)' : m === 'C' ? 'var(--color-accent)' : m === 'B' ? 'var(--status-attention)' : 'var(--color-neutral-300)',
+        numColor: m === 'C' ? 'var(--color-accent-700)' : m === 'B' ? 'var(--status-attention)' : m === 'D' ? 'var(--color-text)' : 'var(--color-neutral-600)',
+        weight: m === 'C' || m === 'B' ? 700 : 500,
+        color: m === 'C' ? 'var(--color-accent-700)' : m === 'N' ? 'var(--color-neutral-700)' : 'var(--color-text)',
+        stateLine: m === 'D' ? '✓ Done' : m === 'C' ? withHolder('Current') : m === 'B' ? withHolder('Blocked') : 'Not started',
+        stateColor: m === 'D' ? 'var(--status-live)' : m === 'C' ? 'var(--color-accent-700)' : m === 'B' ? 'var(--status-attention)' : 'var(--color-neutral-600)',
+      };
+    });
+    const kind = p.kind ?? 'none';
+    const fixes = Array.isArray(p.fixes) ? p.fixes : [];
+    const reduced = !!p.reduced || this.state.narrow;
+    const kindLabel = { turn: 'Your turn', waiting: 'Waiting on someone', done: 'Done' }[kind] || '';
+    return {
+      rootRef: this.rootRef,
+      stages, full: !reduced, reduced,
+      currentLabel: labels[idx] + (marks[idx] === 'B' ? ' (blocked)' : marks[idx] === 'D' ? ' (done)' : ''),
+      position: idx + 1, holder, hasHolder: !!holder && (marks[idx] === 'C' || marks[idx] === 'B'),
+      headline: p.headline ?? '', sentence: p.sentence ?? '', hasSentence: !!p.sentence,
+      isLine: kind === 'turn' || kind === 'waiting' || kind === 'done', isBlocked: kind === 'blocked',
+      kindLabel,
+      lineRule: kind === 'turn' ? 'var(--color-accent)' : 'var(--color-neutral-400)',
+      lineLabelColor: kind === 'turn' ? 'var(--color-accent-700)' : 'var(--color-neutral-700)',
+      hasFixes: fixes.length > 0,
+      fixList: fixes.map((f, i) => ({ label: typeof f === 'string' ? f : f.label, cls: (typeof f === 'object' && f.primary) || (fixes.length === 1 && i === 0) ? 'btn btn-primary' : 'btn btn-secondary' })),
+    };
+  }
+}
+</script>
+</body>
+</html>

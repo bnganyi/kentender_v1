@@ -13,6 +13,9 @@ tables directly. Two contracts remain after v1.7's lifecycle simplification:
 Planning creates no reservation at any point (§7.3, BUD-BR-009): the v1.2
 module's check/reserve/release/revalidate gateway paths are deleted, not
 wrapped. Neither contract takes a Procuring Entity argument (§16.2).
+The approved budget is the plan's funding ceiling only: the 30%
+reservation is a share of the plan's own eligible value (PLN v1.25
+§5.5.3.1), so there is no annual-budget-basis contract here.
 """
 
 from __future__ import annotations
@@ -90,3 +93,69 @@ def check_plan_affordability(*, fiscal_year: str, planned_totals: dict[str, floa
 
 	with _system_principal():
 		return contract(fiscal_year=fiscal_year, planned_totals=planned_totals)
+
+
+#: BUD v1.11 §6 — Planning's registered principal for the revision-request
+#: calls; Budget checks this flag, never a browser-supplied value.
+PLANNING_PRINCIPAL_FLAG = "kt_budget_service_principal"
+
+
+@contextmanager
+def _planning_principal():
+	with _system_principal():
+		previous = frappe.flags.get(PLANNING_PRINCIPAL_FLAG)
+		frappe.flags[PLANNING_PRINCIPAL_FLAG] = "procurement_planning"
+		try:
+			yield
+		finally:
+			frappe.flags[PLANNING_PRINCIPAL_FLAG] = previous
+
+
+def receive_budget_revision_request(payload: dict[str, Any]) -> dict[str, Any]:
+	"""BUD v1.11 §8.5 item 1 — inside Planning's `RequestBudgetRevision`
+	transaction; Budget records one Open request or refuses."""
+	from kentender_budget.api.budget_api import receive_budget_revision_request as contract
+
+	with _planning_principal():
+		return contract(payload)
+
+
+def withdraw_budget_revision_request(payload: dict[str, Any]) -> dict[str, Any]:
+	"""BUD v1.11 §8.5 item 4 — Planning withdraws its own Open request."""
+	from kentender_budget.api.budget_api import withdraw_budget_revision_request as contract
+
+	with _planning_principal():
+		return contract(payload)
+
+
+class BudgetBasisStale(Exception):
+	"""Budget refused the positive decision: its authoritative basis changed
+	since the review (`BUD_BASIS_STALE`) or is unavailable (`BUD_BASIS_UNAVAILABLE`)."""
+
+	def __init__(self, code: str, message: str):
+		self.code = code
+		super().__init__(message)
+
+
+def validate_plan_affordability_for_decision(*, fiscal_year: str, planned_totals: dict[str, float], expected_revisions: dict[str, str] | None = None, correlation: str = "") -> dict[str, Any]:
+	"""BUD v1.8 (owed) §5.3.3 — the decision-time counterpart of the display
+	read: inside the caller's transaction Budget serialises its Active
+	Version and line versions, validates the reviewed revisions and returns
+	the comparison statement with the line revisions and its basis digest.
+	No reservation, ledger event or Budget record is created. A stale or
+	missing basis is raised as `BudgetBasisStale` for the caller to map."""
+	import frappe as _frappe
+
+	from kentender_budget.api.budget_api import validate_plan_affordability_for_decision as contract
+
+	before = len(_frappe.local.message_log or [])
+	with _system_principal():
+		try:
+			return contract(fiscal_year=fiscal_year, planned_totals=planned_totals, expected_revisions=expected_revisions or {}, correlation=correlation)
+		except _frappe.ValidationError as exc:
+			titles = [m.get("title") for m in (_frappe.local.message_log or [])[before:] if isinstance(m, dict)]
+			code = next((t for t in reversed(titles) if t in ("BUD_BASIS_STALE", "BUD_BASIS_UNAVAILABLE")), "")
+			if code:
+				_frappe.clear_last_message()
+				raise BudgetBasisStale(code, str(exc)) from exc
+			raise

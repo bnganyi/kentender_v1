@@ -26,6 +26,10 @@
   "acceptance_requirements",
   "supporting_materials",
   "catalogue_version",
+  "standard_profile_key",
+  "standard_profile_version",
+  "proposal_digest",
+  "standard_package_review_state",
   "content_digest",
   "record_version",
   "fixture_namespace"
@@ -146,6 +150,32 @@
    "fieldname": "catalogue_version",
    "fieldtype": "Data",
    "label": "Catalogue Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "standard_profile_key",
+   "fieldtype": "Data",
+   "label": "Standard profile",
+   "read_only": 1
+  },
+  {
+   "fieldname": "standard_profile_version",
+   "fieldtype": "Data",
+   "label": "Standard profile version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proposal_digest",
+   "fieldtype": "Data",
+   "label": "Proposal digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "standard_package_review_state",
+   "fieldtype": "Select",
+   "options": "Not generated\nReview required\nReviewed",
+   "default": "Not generated",
+   "label": "Standard package review",
    "read_only": 1
   },
   {

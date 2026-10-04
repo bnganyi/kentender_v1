@@ -26,10 +26,13 @@ from kentender_procurement.procurement_planning.services import (
 	needs_intake,
 	plan_finance,
 	plan_governance,
+	plan_json,
 	plan_publication,
 	plan_read,
 	plan_workbench,
+	publication_pipeline,
 	schedule,
+	treasury,
 )
 from kentender_procurement.procurement_planning.tests import fixtures as fx
 
@@ -52,6 +55,11 @@ class PublicationCase(IntegrationTestCase):
 		super().setUp()
 		frappe.set_user("Administrator")
 		fx.wipe_planning_rows()
+		# `Annual Plan Publication Destination` is a shared site-configuration
+		# row, not wiped per test; a prior test that changed `sandbox_outcome`
+		# and errored before resetting it would otherwise leak into every
+		# later test in the run. Reset it deterministically here instead.
+		frappe.db.set_value("Annual Plan Publication Destination", {"adapter": publication_pipeline.DESTINATION_ADAPTER}, "sandbox_outcome", "Acknowledge")
 		self.addCleanup(frappe.set_user, "Administrator")
 		if self.MOCK_NEEDS:
 			needs_patch = patch.object(needs_intake, "current_accepted_sources", return_value=[])
@@ -136,9 +144,12 @@ class PublicationCase(IntegrationTestCase):
 		self.confirm_funding(accepted["annual_plan"])
 		return accepted, item_a, item_b
 
-	def activate(self, plan_reference: str) -> dict:
+	def approve(self, plan_reference: str) -> dict:
+		"""Sign, adopt and approve — stops at `Approved — publication pending`
+		(§5.5.2: approval only commits; nothing is sent yet)."""
 		frappe.set_user(fx.PLANNER)
 		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
+		frappe.set_user(fx.HOPF)  # v1.18 §6.2: the Head of Procurement Function signs and submits
 		submitted = plan_governance.submit_consolidated_plan(
 			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=key(),
 		)
@@ -151,13 +162,57 @@ class PublicationCase(IntegrationTestCase):
 		frappe.set_user(fx.PLANNER)
 		return result
 
+	def record_treasury(self, plan_version: str) -> dict:
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		result = treasury.record_treasury_submission(
+			plan_version=plan_version, submitted_at="2101-11-01 09:00:00", channel="Email", destination="treasury@example.test",
+			dispatch_reference="MOH/APP/2101/001", exact_document_confirmed=True, idempotency_key=key(),
+		)
+		frappe.set_user(fx.PLANNER)
+		return result
+
+	def activate(self, plan_reference: str) -> dict:
+		"""Approve, record Treasury evidence, then run the publication worker
+		inline (D8: no RQ worker on this bench — the same call `ApproveAnnualPlan`
+		would `frappe.enqueue` post-commit in production). Returns the worker's
+		result dict (`result`: Acknowledged/Failed/Indeterminate)."""
+		approved = self.approve(plan_reference)
+		version = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+		self.record_treasury(version)
+		frappe.set_user("Administrator")
+		published = publication_pipeline.publish_annual_plan(plan_version=version, idempotency_key=key())
+		frappe.set_user(fx.PLANNER)
+		return published
+
 
 class TestActivationAndRetryPublication(PublicationCase):
-	def test_approval_activates_the_plan_with_an_ocds_payload_and_seeded_forecasts(self):
+	"""PLN-CHG-001 v1.18 §5.5.2 / §7.2 — the asynchronous publication
+	pipeline (plan D8, PLN18-209): approval only commits; a separate worker
+	transmits under a Treasury-evidence gate; acknowledgement is a distinct
+	authenticated event that runs activation; retry and reconciliation are
+	technical actions on the frozen manifest, never a new approval."""
+
+	def test_approval_commits_only_then_the_worker_publishes_and_activates_with_the_v1_18_payload(self):
 		reservations_before = frappe.db.count("Funding Reservation")
 		accepted, item_id = self.confirmed_item()
-		approved = self.activate(accepted["annual_plan"])
-		self.assertEqual(approved["publication_result"], "Acknowledged")
+		approved = self.approve(accepted["annual_plan"])
+		version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+		# §5.5.2: commit-only — no external send, content locked, not yet Active
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", version_name, "version_status"), "Approved — publication pending")
+		self.assertFalse(frappe.db.get_value("Annual Plan", accepted["annual_plan"], "active_version"))
+		publication = frappe.get_doc("Plan Publication", approved["publication"])
+		self.assertEqual(publication.publication_state, "Pending")
+		self.assertEqual(publication.schema_version, plan_json.SCHEMA_VERSION)
+
+		# the worker refuses to transmit before Treasury evidence exists
+		frappe.set_user("Administrator")
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_TREASURY_EVIDENCE_REQUIRED")
+		self.record_treasury(version_name)
+		frappe.set_user("Administrator")  # PublishAnnualPlan is a system worker, never a business user action
+		published = publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
+		self.assertEqual(published["result"], "Acknowledged")
 		self.assertEqual(frappe.db.count("Funding Reservation"), reservations_before)  # PLN-AC-081
 
 		read = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
@@ -165,166 +220,460 @@ class TestActivationAndRetryPublication(PublicationCase):
 		self.assertEqual(read["header"]["badge"], "Active")
 		self.assertFalse(read["mutable"])
 		self.assertEqual(read["active_view"]["summary"]["plan_items"], 1)
-		self.assertEqual(read["active_view"]["summary"]["schedule_health_display"], "0 of 1 item behind baseline")
+		# PLN-CHG-001 v1.23 — no schedule-health projection survives the
+		# forecast deferral (PLN23-AC-001).
+		self.assertNotIn("schedule_health_display", read["active_view"]["summary"])
 		row = read["active_view"]["items"][0]
 		self.assertEqual(row["plan_item_id"], item_id)
-		self.assertEqual(len(row["schedule"]), 7)
-		self.assertTrue(all(r["forecast"] == r["baseline"] and r["actual"] == "" for r in row["schedule"]))
-		self.assertTrue(row["schedule"][0]["can_shift"])
-		self.assertFalse(row["schedule"][-1]["can_shift"])
+		# PLN-CHG-001 v1.23 — the Active row carries planned scope and remaining
+		# allowance, not a per-milestone forecast grid: the forecast facility is
+		# deferred in full (PLN23-AC-001).
+		self.assertNotIn("schedule", row)
+		self.assertEqual(row["requisition_availability_display"], "1 each · KES 1,000,000")
 		self.assertIn("Acknowledged", read["active_view"]["governance_card"]["publication_line"])
 
-		publication = frappe.get_doc("Annual Plan Publication", {"plan_version": read["version_reference"]})
-		self.assertEqual(publication.attempt_number, 1)
-		self.assertEqual(publication.result, "Acknowledged")
-		self.assertIn("Invitation to treat", publication.legal_character)
-		payload = json.loads(publication.payload)
-		self.assertEqual(len(payload["releases"]), 1)
-		release = payload["releases"][0]
-		self.assertTrue(release["ocid"].startswith("ocds-"))
-		self.assertEqual(release["tender"]["procurementMethod"], "Open Tender")
-		self.assertEqual(release["planning"]["kentender"]["planHorizon"], "Single year")
-		self.assertEqual(release["planning"]["kentender"]["lottingIndicator"], "Single lot")
-		self.assertEqual(release["planning"]["kentender"]["reservationCategory"], "None")
-		self.assertEqual(release["tender"]["tenderPeriod"]["startDate"], "2101-09-01")
-		self.assertEqual(payload["plan"]["approvedBy"], "Cabinet Secretary")
+		publication.reload()
+		self.assertEqual(publication.publication_state, "Acknowledged")
+		self.assertTrue(publication.external_reference)
+		ack = frappe.get_doc("Publication Acknowledgement", {"publication": publication.name})
+		self.assertTrue(ack.matched)
+		self.assertEqual(ack.package_hash, publication.package_hash)
+		snapshot = frappe.get_doc("Approved Plan Snapshot", publication.snapshot)
+		content = json.loads(snapshot.content)
+		self.assertEqual(content["schemaVersion"], plan_json.SCHEMA_VERSION)
+		self.assertEqual(len(content["items"]), 1)
+		item = content["items"][0]
+		self.assertEqual(item["procurementMethod"], "Open Tender")
+		self.assertEqual(item["planHorizon"], "Single year")
+		self.assertEqual(item["lottingIndicator"], "Single lot")
+		self.assertEqual(item["reservationCategory"], "None")  # the explicit catalogue value, not a blank field
+		self.assertNotIn("ocid", json.dumps(content))
+		payload = plan_json.build_public_payload(snapshot)
+		self.assertEqual(payload["items"][0]["planItemId"], item_id)
+		self.assertNotIn("ocid", json.dumps(payload))
+		self.assertIsNone(payload["items"][0].get("actual"))  # no operational actual/forecast overwrite in the public payload
+
 		frappe.set_user(fx.PLANNER)
 		task_read = plan_read.get_publication_task(publication=publication.name)
-		self.assertEqual(task_read["result"], "Acknowledged")
+		self.assertEqual(task_read["publication_state"], "Acknowledged")
 		self.assertFalse(task_read["can_retry"])
+		self.assertTrue(task_read["treasury_evidence"]["recorded"])
 
-	def test_a_failed_attempt_is_recovered_by_a_system_manager_retry(self):
+	def test_a_failed_attempt_is_recovered_by_a_technical_retry(self):
 		accepted, item_id = self.confirmed_item()
-		with patch.object(plan_publication, "_transmit", return_value=("Failed", "")):
-			approved = self.activate(accepted["annual_plan"])
-		self.assertEqual(approved["publication_result"], "Failed")
-		plan_name = frappe.db.get_value("Annual Plan", {"plan_reference": accepted["annual_plan"]})
-		self.assertFalse(frappe.db.get_value("Annual Plan", plan_name, "active_version"))
-		failed_version = frappe.db.get_value("Annual Plan Version", {"annual_plan": plan_name}, "name")
-		self.assertEqual(frappe.db.get_value("Annual Plan Version", failed_version, "version_status"), "Publication failed")
-		publication = frappe.get_doc("Annual Plan Publication", {"plan_version": failed_version})
-		self.assertEqual(publication.result, "Failed")
-		self.assertFalse(publication.external_reference)
-		self.assertFalse(frappe.db.get_value("Annual Plan Item", {"plan_version": failed_version}, "forecast_invitation_date"))
+		approved = self.approve(accepted["annual_plan"])
+		version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+		self.record_treasury(version_name)
+		frappe.db.set_value("Annual Plan Publication Destination", frappe.get_doc("Plan Publication", approved["publication"]).destination, "sandbox_outcome", "Fail")
+		frappe.set_user("Administrator")
+		published = publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
+		self.assertEqual(published["result"], "Failed")
+		self.assertFalse(frappe.db.get_value("Annual Plan", accepted["annual_plan"], "active_version"))
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", version_name, "version_status"), "Publication failed")
+		publication = frappe.get_doc("Plan Publication", approved["publication"])
+		self.assertEqual(publication.publication_state, "Failed")
 
 		frappe.set_user(fx.PLANNER)
 		with self.assertRaises(frappe.DoesNotExistError):
-			plan_publication.retry_publication(publication=publication.name, idempotency_key=key())
+			publication_pipeline.retry_publication(publication=publication.name, idempotency_key=key())
 		frappe.set_user("Administrator")
 		self.assertTrue(plan_read.get_publication_task(publication=publication.name)["can_retry"])
+		frappe.db.set_value("Annual Plan Publication Destination", publication.destination, "sandbox_outcome", "Acknowledge")
 		retry_key = key()
-		retried = plan_publication.retry_publication(publication=publication.name, idempotency_key=retry_key)
+		retried = publication_pipeline.retry_publication(publication=publication.name, idempotency_key=retry_key)
 		self.assertEqual(retried["result"], "Acknowledged")
-		replayed = plan_publication.retry_publication(publication=publication.name, idempotency_key=retry_key)
+		replayed = publication_pipeline.retry_publication(publication=publication.name, idempotency_key=retry_key)
 		self.assertTrue(replayed["idempotent"])
 		self.assertEqual(replayed["publication"], retried["publication"])
-		self.assertEqual(frappe.db.get_value("Annual Plan Version", failed_version, "version_status"), "Active")
-		self.assertEqual(frappe.db.count("Annual Plan Publication", {"plan_version": failed_version}), 2)
-		second = frappe.get_doc("Annual Plan Publication", retried["publication"])
-		self.assertEqual(second.payload_hash, publication.payload_hash)  # PLN-AC-043: the same payload
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", version_name, "version_status"), "Active")
+		self.assertEqual(frappe.db.count("Publication Attempt", {"publication": publication.name}), 2)
+		# PLN-AC-043: the same frozen manifest is resent, never a new package
+		publication.reload()
+		self.assertEqual(publication.package_hash, frappe.get_doc("Plan Publication", retried["publication"]).package_hash)
+
+	def test_an_indeterminate_result_must_be_reconciled_before_retry(self):
+		accepted, item_id = self.confirmed_item()
+		approved = self.approve(accepted["annual_plan"])
+		version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+		self.record_treasury(version_name)
+		destination = frappe.get_doc("Plan Publication", approved["publication"]).destination
+		frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Indeterminate")
+		frappe.set_user("Administrator")
+		published = publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
+		self.assertEqual(published["result"], "Indeterminate")
+		# still not confirmed failed — the Version stays as it was, awaiting reconciliation
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", version_name, "version_status"), "Approved — publication pending")
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			publication_pipeline.retry_publication(publication=approved["publication"], idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_REVIEW_STALE")  # only a confirmed Failed publication may retry
+		frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Acknowledge")
+		reconciled = publication_pipeline.reconcile_publication(publication=approved["publication"], idempotency_key=key())
+		self.assertEqual(reconciled["outcome"], "Acknowledged")
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", version_name, "version_status"), "Active")
+
+	def test_a_hold_blocks_the_worker_and_a_correction_request_hold_is_ao_only(self):
+		accepted, item_id = self.confirmed_item()
+		approved = self.approve(accepted["annual_plan"])
+		version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+		self.record_treasury(version_name)
+		frappe.set_user(fx.PLANNER)
+		with self.assertRaises(frappe.DoesNotExistError):
+			publication_pipeline.hold_plan_publication(plan_version=version_name, reason="A material defect was found.", hold_kind="Accounting Officer correction request", idempotency_key=key())
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		held = publication_pipeline.hold_plan_publication(plan_version=version_name, reason="A material defect was found.", hold_kind="Accounting Officer correction request", idempotency_key=key())
+		self.assertTrue(held["hold"])
+		frappe.set_user("Administrator")
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_PUBLICATION_HELD")
+		# a hold is not a withdrawal of approval
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", version_name, "version_status"), "Approved — publication pending")
+
+	def test_a_duplicate_acknowledgement_is_idempotent_and_a_mismatched_hash_never_activates(self):
+		accepted, item_id = self.confirmed_item()
+		approved = self.approve(accepted["annual_plan"])
+		version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+		self.record_treasury(version_name)
+		publication = frappe.get_doc("Plan Publication", approved["publication"])
+		frappe.set_user("Administrator")
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			publication_pipeline.receive_publication_acknowledgement(event_id="EVT-BAD-HASH", publication=publication.name, package_hash="not-the-right-hash")
+		self.assertEqual(caught.exception.code, "PLN_PUBLICATION_ACK_MISMATCH")
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", version_name, "version_status"), "Approved — publication pending")
+		first = publication_pipeline.receive_publication_acknowledgement(event_id="EVT-GOOD-1", publication=publication.name, package_hash=publication.package_hash)
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", version_name, "version_status"), "Active")
+		replay = publication_pipeline.receive_publication_acknowledgement(event_id="EVT-GOOD-1", publication=publication.name, package_hash=publication.package_hash)
+		self.assertTrue(replay["idempotent"])
+		self.assertEqual(replay["acknowledgement"], first["acknowledgement"])
+		# the mismatched attempt and the matched one are distinct events, not duplicates of each other;
+		# only replaying the SAME event id (EVT-GOOD-1) is idempotent
+		self.assertEqual(frappe.db.count("Publication Acknowledgement", {"publication": publication.name}), 2)
+		self.assertEqual(frappe.db.count("Publication Acknowledgement", {"publication": publication.name, "event_id": "EVT-GOOD-1"}), 1)
 
 
-class TestForecastCascade(PublicationCase):
+class TestTreasuryAndWithdrawal(PublicationCase):
+	"""PLN-CHG-001 v1.18 §5.5.2.2 / §5.5.2.3 / §7.2 — Treasury submission
+	evidence and the withdrawal-for-correction recovery route (PLN18-209)."""
+
+	def test_correcting_treasury_evidence_appends_and_holds_an_in_flight_attempt(self):
+		accepted, item_id = self.confirmed_item()
+		approved = self.approve(accepted["annual_plan"])
+		version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+		first = self.record_treasury(version_name)
+		destination = frappe.get_doc("Plan Publication", approved["publication"]).destination
+		frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Indeterminate")
+		frappe.set_user("Administrator")
+		publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
+		self.assertEqual(frappe.db.get_value("Plan Publication", approved["publication"], "publication_state"), "Indeterminate")
+
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		corrected = treasury.correct_treasury_submission_evidence(
+			prior_evidence=first["evidence"], reason="The dispatch reference was recorded incorrectly.",
+			submitted_at="2101-11-02 09:00:00", channel="Email", destination="treasury@example.test",
+			dispatch_reference="MOH/APP/2101/002", idempotency_key=key(),
+		)
+		self.assertEqual(corrected["action"], "treasury_evidence_corrected")
+		self.assertTrue(corrected["hold"])  # the in-flight indeterminate attempt is held pending reconciliation
+		self.assertEqual(frappe.db.get_value("Treasury Submission Evidence", first["evidence"], "evidence_state"), "Superseded")
+		self.assertEqual(frappe.db.get_value("Treasury Submission Evidence", first["evidence"], "superseded_by"), corrected["evidence"])
+		self.assertEqual(frappe.db.count("Treasury Submission Evidence", {"plan_version": version_name}), 2)  # append-only
+		frappe.set_user("Administrator")
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_PUBLICATION_HELD")
+
+	def test_a_held_in_flight_attempt_is_distinct_from_its_indeterminate_result_on_the_plan_read(self):
+		"""PLN-CHG-001 v1.18 §9.6 (PLN18-211): "Confirmed unpublished with
+		material defect: Publication on hold" is a workspace-visible label,
+		not only a fact on the drill-in publication screen — a hold never
+		rewrites `publication_state` itself (§5.5.2.3), so `get_annual_plan`
+		must surface it as its own field."""
+		accepted, item_id = self.confirmed_item()
+		approved = self.approve(accepted["annual_plan"])
+		version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+		first = self.record_treasury(version_name)
+		destination = frappe.get_doc("Plan Publication", approved["publication"]).destination
+		frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Indeterminate")
+		frappe.set_user("Administrator")
+		publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
+
+		frappe.set_user(fx.PLANNER)
+		before = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertEqual(before["latest_publication"]["result"], "Indeterminate")
+		self.assertFalse(before["latest_publication"]["held"])
+
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		corrected = treasury.correct_treasury_submission_evidence(
+			prior_evidence=first["evidence"], reason="The dispatch reference was recorded incorrectly.",
+			submitted_at="2101-11-02 09:00:00", channel="Email", destination="treasury@example.test",
+			dispatch_reference="MOH/APP/2101/002", idempotency_key=key(),
+		)
+		self.assertTrue(corrected["hold"])
+
+		frappe.set_user(fx.PLANNER)
+		after = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertEqual(after["latest_publication"]["result"], "Indeterminate")  # unchanged by the hold
+		self.assertTrue(after["latest_publication"]["held"])
+		self.assertEqual(after["latest_publication"]["hold_kind"], "Accounting Officer correction request")
+		self.assertTrue(after["latest_publication"]["hold_reason"])
+
+	def test_withdrawal_requires_confirmed_unpublished_content(self):
+		accepted, item_id = self.confirmed_item()
+		approved = self.activate(accepted["annual_plan"])
+		version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+		self.assertEqual(approved["result"], "Acknowledged")
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			treasury.request_plan_withdrawal(plan_version=version_name, reason="The package needs correction before publication.", idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_WITHDRAWAL_NOT_PERMITTED")
+
+	def test_a_failed_publication_can_be_withdrawn_for_correction_by_the_statutory_authority(self):
+		accepted, item_id = self.confirmed_item()
+		approved = self.approve(accepted["annual_plan"])
+		version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+		self.record_treasury(version_name)
+		destination = frappe.get_doc("Plan Publication", approved["publication"]).destination
+		frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Fail")
+		frappe.set_user("Administrator")
+		publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", version_name, "version_status"), "Publication failed")
+
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		requested = treasury.request_plan_withdrawal(plan_version=version_name, reason="A material defect was found in the approved package.", idempotency_key=key())
+		self.assertTrue(requested["hold"])
+		self.assertTrue(requested["task"])
+		frappe.set_user("Administrator")
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_PUBLICATION_HELD")
+
+		frappe.set_user(fx.STATUTORY)
+		task = frappe.get_doc("Plan Governance Task", requested["task"])
+		withdrawn = treasury.withdraw_approved_plan_for_correction(task=task.name, task_token=task.task_token, idempotency_key=key())
+		self.assertEqual(withdrawn["action"], "withdrawn_for_correction")
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", version_name, "version_status"), "Withdrawn for correction")
+		self.assertEqual(frappe.db.get_value("Plan Publication Hold", {"plan_version": version_name}, "hold_state"), "Released")
+		correction = frappe.get_doc("Annual Plan Version", withdrawn["correction_version"])
+		self.assertEqual(correction.version_status, "Draft")
+		self.assertEqual(correction.correction_of_plan_version, version_name)
+		self.assertEqual(frappe.db.count("Annual Plan Item", {"plan_version": correction.name}), 1)
+		self.assertEqual(json.loads(correction.source_cohort), json.loads(frappe.db.get_value("Annual Plan Version", version_name, "source_cohort")))
+		self.assertEqual(frappe.db.get_value("Annual Plan", accepted["annual_plan"], "open_successor_version"), correction.name)
+		# repeating the withdrawal now finds no valid open request
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			treasury.withdraw_approved_plan_for_correction(task=task.name, task_token=task.task_token, idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_REVIEW_STALE")
+
+
+class TestWithdrawalReadModel(PublicationCase):
+	"""§10.12 U13-WITHDRAWAL-* — whose action it is, at each point."""
+
+	def failed_publication(self):
+		"""An approved plan whose transmission failed — the one state the
+		withdrawal route exists for."""
+		accepted, item_id = self.confirmed_item()
+		approved = self.approve(accepted["annual_plan"])
+		version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+		self.record_treasury(version_name)
+		destination = frappe.get_doc("Plan Publication", approved["publication"]).destination
+		frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Fail")
+		frappe.set_user("Administrator")
+		publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
+		return accepted, version_name, approved["publication"]
+
+	def test_only_the_accounting_officer_is_offered_the_request(self):
+		accepted, version_name, publication = self.failed_publication()
+
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		ao_read = plan_read.get_publication_task(publication=publication)
+		self.assertTrue(ao_read["can_request_withdrawal"])
+		self.assertFalse(ao_read["can_decide_withdrawal"])
+		# The fact the whole route depends on, stated rather than assumed.
+		self.assertEqual(ao_read["publication_confirmation"], "Confirmed not published")
+
+		frappe.set_user(fx.STATUTORY)
+		statutory_read = plan_read.get_publication_task(publication=publication)
+		self.assertFalse(statutory_read["can_request_withdrawal"])
+		# Nothing has been requested yet, so there is nothing to decide.
+		self.assertFalse(statutory_read["can_decide_withdrawal"])
+
+	def test_an_open_request_moves_the_action_to_the_statutory_authority(self):
+		accepted, version_name, publication = self.failed_publication()
+		reason = "A material defect was found in the approved package."
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		treasury.request_plan_withdrawal(plan_version=version_name, reason=reason, idempotency_key=key())
+
+		ao_read = plan_read.get_publication_task(publication=publication)
+		# The AO has asked; there is nothing more for them to do but wait.
+		self.assertFalse(ao_read["can_request_withdrawal"])
+		self.assertEqual(ao_read["withdrawal_request"]["reason"], reason)
+		self.assertTrue(ao_read["withdrawal_request"]["requested_by_name"])
+		self.assertTrue(ao_read["withdrawal_request"]["requested_display"].endswith("EAT"))
+
+		frappe.set_user(fx.STATUTORY)
+		statutory_read = plan_read.get_publication_task(publication=publication)
+		self.assertTrue(statutory_read["can_decide_withdrawal"])
+		self.assertTrue(statutory_read["withdrawal_task"])
+		self.assertTrue(statutory_read["withdrawal_task_token"])
+
+	def test_recorded_treasury_evidence_is_offered_for_correction_not_overwrite(self):
+		accepted, version_name, publication = self.failed_publication()
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		read = plan_read.get_publication_task(publication=publication)
+		self.assertTrue(read["treasury_evidence_id"])
+		prior = read["treasury_prior"]
+		self.assertEqual(prior["dispatch_reference"], "MOH/APP/2101/001")
+		self.assertEqual(prior["channel"], "Email")
+		self.assertEqual(prior["destination"], "treasury@example.test")
+		self.assertTrue(prior["submitted_display"].endswith("EAT"))
+
+
+class TestHeldCorrectionAndReassessment(PublicationCase):
 	def active(self) -> tuple[dict, str]:
 		accepted, item_id = self.confirmed_item()
 		self.activate(accepted["annual_plan"])
 		return accepted, item_id
 
-	def test_preview_proposes_every_later_milestone_and_confirm_writes_one_cascade(self):
+	def test_a_held_version_takes_one_linked_correction_and_is_never_treated_as_active(self):
+		"""v1.18 §5.5.2.3 / §7.2 `BeginHeldPlanCorrection` (PLN18-208; the held state itself is produced in 2f)."""
 		accepted, item_id = self.active()
+		version_name = accepted["annual_plan_version"]
+		plan_name = frappe.db.get_value("Annual Plan Version", version_name, "annual_plan")
+		# simulate the 2f outcome: publication acknowledged, activation checks failed
+		frappe.db.set_value("Annual Plan Version", version_name, {"version_status": "Published — activation held", "activated_at": None}, update_modified=False)
+		frappe.db.set_value("Annual Plan", plan_name, {"active_version": None, "open_successor_version": None}, update_modified=False)
 		frappe.set_user(fx.PLANNER)
-		preview = schedule.preview_forecast_cascade(plan_item=item_id, milestone="bid_opening", new_forecast_date="2101-10-06")
-		self.assertEqual(preview["delta_days"], 14)
-		self.assertEqual([r["milestone"] for r in preview["rows"]], list(schedule.MILESTONES[1:]))
-		self.assertTrue(all(r["included"] for r in preview["rows"]))
-		self.assertEqual(preview["rows"][0]["proposed_forecast"], "2101-10-06")
-		# no write from a preview (invariant 1)
-		self.assertEqual(frappe.db.count("Plan Item Forecast Revision"), 0)
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_governance.begin_held_plan_correction(plan_version=version_name, reason="short", idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		started = plan_governance.begin_held_plan_correction(plan_version=version_name, reason="Activation checks found the reservation basis missing; correct and resubmit.", idempotency_key=key())
+		self.assertEqual(started["action"], "held_correction_started")
+		self.assertEqual(started["active_predecessor"], "")
+		correction = frappe.get_doc("Annual Plan Version", started["correction_version"])
+		self.assertEqual(correction.correction_of_plan_version, version_name)
+		self.assertIsNone(correction.based_on_version)
+		self.assertEqual(correction.version_status, "Draft")
+		self.assertTrue(json.loads(correction.source_cohort))
+		self.assertEqual(frappe.db.count("Annual Plan Item", {"plan_version": correction.name}), 1)
+		self.assertEqual(frappe.db.get_value("Annual Plan Version", version_name, "version_status"), "Published — activation held")
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_governance.begin_held_plan_correction(plan_version=version_name, reason="Activation checks found the reservation basis missing; correct and resubmit again.", idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_STALE_WRITE")
 
-		result = schedule.confirm_forecast_cascade(
-			plan_item=item_id, milestone="bid_opening", new_forecast_date="2101-10-06", included_milestones=None,
-			reason="Tender Preparation confirmed the issue date will slip two weeks pending template release.",
-			expected_record_version=preview["record_version"], idempotency_key=key(),
+	def test_active_reassessment_appends_new_finance_evidence_without_touching_the_baseline(self):
+		"""v1.18 §5.3.4 — a changed approved amount on an unchanged Active Plan is reassessed, never re-approved."""
+		accepted, item_id = self.active()
+		version_name = accepted["annual_plan_version"]
+		before_evidence = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])["funding_evidence"]
+		self.assertTrue(before_evidence["current"])
+		self.assertTrue(before_evidence["at_approval"])
+		line_version = frappe.db.get_value("Procurement Budget Line Version", {"budget_line": fx.BUDGET_LINE, "budget_version": ("in", frappe.get_all("Procurement Budget Version", filters={"status": "Active"}, pluck="name"))}, "name")
+		previous = frappe.db.get_value("Procurement Budget Line Version", line_version, "approved_amount")
+		frappe.db.set_value("Procurement Budget Line Version", line_version, "approved_amount", 95_000_000, update_modified=False)
+		self.addCleanup(frappe.db.set_value, "Procurement Budget Line Version", line_version, "approved_amount", previous, update_modified=False)
+		frappe.set_user(fx.PLANNER)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertFalse(plan["funding_evidence"]["current"])
+		self.assertEqual(plan["version_status"], "Active")
+		requested = plan_finance.request_plan_funding_confirmation(plan_version=version_name, expected_record_version=plan["record_version"], idempotency_key=key())
+		self.assertEqual(requested["action"], "reassessment_requested")
+		self.assertTrue(requested["reassessment"])
+		task = frappe.get_doc("Plan Finance Task", requested["task"])
+		frappe.set_user(fx.FINANCE_OFFICER)
+		self.assertTrue(plan_read.get_finance_task(task=task.name)["is_reassessment"])
+		plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=key())
+		version = frappe.get_doc("Annual Plan Version", version_name)
+		self.assertEqual(version.version_status, "Active")
+		self.assertEqual(version.funding_state, "Confirmed")
+		after = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])["funding_evidence"]
+		self.assertTrue(after["current"])
+		self.assertEqual(after["at_approval"]["decision"], before_evidence["at_approval"]["decision"])
+		self.assertNotEqual(after["current_confirmation"]["decision"], after["at_approval"]["decision"])
+		self.assertEqual(frappe.db.count("Plan Finance Decision", {"decision": "Confirm plan funding", "task": ("in", frappe.get_all("Plan Finance Task", filters={"plan_version": version_name}, pluck="name"))}), 2)
+
+class TestOwnerSuppliedActuals(PublicationCase):
+	"""PLN-CHG-001 v1.23 §5.5.1A — actual milestone dates come only from the
+	module that owns the real event, are stored per procurement proceeding, and
+	never collapse onto the Plan Item. The forecast facility this used to sit
+	beside is deferred in full (PLN23-CHG-001)."""
+
+	def active(self) -> tuple[dict, str]:
+		accepted, item_id = self.confirmed_item()
+		self.activate(accepted["annual_plan"])
+		return accepted, item_id
+
+	def test_an_actual_is_recorded_per_proceeding_and_is_never_typed_by_a_user(self):
+		accepted, item_id = self.active()
+		schedule.record_tender_milestone_actual(
+			plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03",
+			source_event_id="TPR-TEST-1", producer="tender_preparation",
 		)
-		self.assertEqual(result["action"], "forecast_shifted")
-		self.assertTrue(result["cascade_id"])
-		self.assertEqual(len(result["revisions"]), 6)
-		item = frappe.get_doc("Annual Plan Item", plan_read.resolve_item_doc_name(item_id))
-		self.assertEqual(str(item.forecast_bid_opening_date), "2101-10-06")
-		self.assertEqual(str(item.baseline_bid_opening_date), "2101-09-22")  # baseline untouched (PLN-AC-118)
-		self.assertEqual(str(item.forecast_delivery_completion_date), "2102-05-14")
-		read = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
-		self.assertEqual(read["active_view"]["summary"]["schedule_health_display"], "1 of 1 item behind baseline")
-		self.assertTrue(read["active_view"]["items"][0]["behind_baseline"])
-		revisions = frappe.get_all("Plan Item Forecast Revision", filters={"plan_item": item.name}, fields=["cascade_id", "milestone"])
-		self.assertEqual({r.cascade_id for r in revisions}, {result["cascade_id"]})
-
-	def test_excluding_every_downstream_row_writes_a_standalone_revision(self):
-		accepted, item_id = self.active()
-		frappe.set_user(fx.PLANNER)
-		preview = schedule.preview_forecast_cascade(plan_item=item_id, milestone="award_approval", new_forecast_date="2101-10-28")
-		result = schedule.confirm_forecast_cascade(
-			plan_item=item_id, milestone="award_approval", new_forecast_date="2101-10-28", included_milestones=["award_approval"],
-			reason="Award approval alone moves one day; the notification date still follows it.",
-			expected_record_version=preview["record_version"], idempotency_key=key(),
+		events = frappe.get_all(
+			"Milestone Actual Event",
+			filters={"plan_item_id": item_id, "milestone": "invitation"},
+			fields=["actual_date", "event_id"],
 		)
-		self.assertEqual(result["cascade_id"], "")  # PLN-AC-127
-		self.assertEqual(len(result["revisions"]), 1)
-		item = frappe.get_doc("Annual Plan Item", plan_read.resolve_item_doc_name(item_id))
-		self.assertEqual(str(item.forecast_award_approval_date), "2101-10-28")
-		self.assertEqual(str(item.forecast_award_notification_date), "2101-10-29")
+		self.assertEqual(len(events), 1)
+		self.assertEqual(str(events[0].actual_date), "2101-09-03")
 
-	def test_governed_gaps_and_reasons_are_enforced_on_confirmation(self):
-		accepted, item_id = self.active()
+		# A replayed event id changes nothing (PLN18-AC-099).
+		again = schedule.record_tender_milestone_actual(
+			plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03",
+			source_event_id="TPR-TEST-1", producer="tender_preparation",
+		)
+		self.assertTrue(again.get("idempotent"))
+		self.assertEqual(frappe.db.count("Milestone Actual Event", {"plan_item_id": item_id, "milestone": "invitation"}), 1)
+
+		# A different date under a new event id is a conflicting fact for the
+		# same proceeding, not a silent overwrite.
+		with self.assertRaises(ProcurementPlanningError) as guarded:
+			schedule.record_tender_milestone_actual(
+				plan_item_id=item_id, milestone="invitation", actual_date="2101-09-04",
+				source_event_id="TPR-TEST-2", producer="tender_preparation",
+			)
+		self.assertEqual(guarded.exception.code, "PLN_ACTUAL_NOT_WRITABLE")
+
+		# An unauthenticated event with no producer event id is refused.
+		with self.assertRaises(ProcurementPlanningError) as guarded:
+			schedule.record_tender_milestone_actual(
+				plan_item_id=item_id, milestone="invitation", actual_date="2101-09-04",
+				source_event_id="", producer="tender_preparation",
+			)
+		self.assertEqual(guarded.exception.code, "PLN_ACTUAL_NOT_WRITABLE")
+
+	def test_no_planner_save_path_accepts_an_actual_or_a_forecast_date(self):
+		"""PLN18-AC-120 and PLN23-AC-001 together: the Planner can type neither."""
+		accepted, item_id = self.confirmed_item()
 		frappe.set_user(fx.PLANNER)
-		preview = schedule.preview_forecast_cascade(plan_item=item_id, milestone="contract_signing", new_forecast_date="2101-11-05")
-		with self.assertRaises(ProcurementPlanningError) as caught:
-			schedule.confirm_forecast_cascade(
-				plan_item=item_id, milestone="contract_signing", new_forecast_date="2101-11-05", included_milestones=["contract_signing"],
-				reason="Signing pulled forward inside the standstill period, which is not allowed.",
-				expected_record_version=preview["record_version"], idempotency_key=key(),
-			)
-		self.assertEqual(caught.exception.code, "PLN_STANDSTILL_BELOW_MINIMUM")  # PLN-AC-128
-		with self.assertRaises(ProcurementPlanningError) as caught:
-			schedule.confirm_forecast_cascade(
-				plan_item=item_id, milestone="bid_opening", new_forecast_date="2101-10-06", included_milestones=None,
-				reason="short", expected_record_version=preview["record_version"], idempotency_key=key(),
-			)
-		self.assertEqual(caught.exception.code, "PLN_FORECAST_REASON_REQUIRED")
+		for field, expected in (
+			("actual_invitation_date", "PLN_ACTUAL_NOT_WRITABLE"),
+			("forecast_invitation_date", "PLN_SCHEDULE_INVALID"),
+		):
+			with self.assertRaises(ProcurementPlanningError) as caught:
+				plan_workbench.save_plan_item(
+					plan_item=item_id, values={field: "2101-09-03"},
+					expected_record_version=0, idempotency_key=key(),
+				)
+			self.assertEqual(caught.exception.code, expected)
 
-	def test_a_milestone_with_an_actual_is_never_proposed_and_actuals_are_never_typed(self):
-		accepted, item_id = self.active()
-		# the only writer of an actual is the inbound projection contract (§18)
-		schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03", source_event_id="TPR-TEST-1")
-		frappe.set_user(fx.PLANNER)
-		item = plan_read.get_plan_item(plan_item_id=item_id)
-		self.assertEqual(item["schedule"][0]["actual"], "2101-09-03")
-		self.assertEqual(item["schedule"][0]["variance_baseline_days"], 2)
-		self.assertFalse(item["schedule"][0]["can_shift"])
-		with self.assertRaises(ProcurementPlanningError) as caught:
-			schedule.preview_forecast_cascade(plan_item=item_id, milestone="invitation", new_forecast_date="2101-09-10")
-		self.assertEqual(caught.exception.code, "PLN_CASCADE_INCLUDES_ACTUAL_MILESTONE")
-		preview = schedule.preview_forecast_cascade(plan_item=item_id, milestone="bid_opening", new_forecast_date="2101-09-29")
-		self.assertNotIn("invitation", [r["milestone"] for r in preview["rows"]])
-		# PLN-AC-119 — no save path accepts a typed actual, even for Administrator
-		frappe.set_user("Administrator")
-		with self.assertRaises(ProcurementPlanningError) as caught:
-			plan_workbench.save_plan_item(
-				plan_item=item_id, values={"actual_bid_opening_date": "2101-09-25"}, expected_record_version=item["record_version"], idempotency_key=key(),
-			)
-		self.assertEqual(caught.exception.code, "PLN_ACTUAL_NOT_WRITABLE")
+	def test_the_forecast_facility_has_no_runtime_entry_point(self):
+		"""PLN23-AC-001 — no route, endpoint, scheduler job or notice producer."""
+		from kentender_procurement.procurement_planning import api
+		from kentender_procurement.procurement_planning.services import notifications
 
-	def test_the_daily_nudge_raises_once_per_milestone_per_day(self):
-		accepted, item_id = self.active()
-		frappe.db.delete("Notification Log", {"for_user": fx.PLANNER})
-		first = schedule.check_approaching_milestones(today="2101-08-25")
-		self.assertIn((item_id, "invitation"), first["raised"])
-		count = frappe.db.count("Notification Log", {"for_user": fx.PLANNER, "email_header": ("like", f"pln:milestone:{item_id}:invitation:%")})
-		self.assertEqual(count, 1)
-		schedule.check_approaching_milestones(today="2101-08-25")
-		self.assertEqual(frappe.db.count("Notification Log", {"for_user": fx.PLANNER, "email_header": ("like", f"pln:milestone:{item_id}:invitation:%")}), 1)
-		self.assertEqual(frappe.db.count("Plan Governance Task", {"plan_version": accepted["annual_plan_version"], "status": "Open"}), 0)
-		self.assertEqual(schedule.check_approaching_milestones(today="2101-06-01")["raised"], [])
+		for withdrawn in ("preview_forecast_cascade", "confirm_forecast_cascade"):
+			self.assertFalse(hasattr(api, withdrawn), f"{withdrawn} is exposed again")
+		for withdrawn in ("check_approaching_milestones", "seed_forecast_from_baseline", "schedule_health"):
+			self.assertFalse(hasattr(schedule, withdrawn), f"schedule.{withdrawn} is back")
+		for withdrawn in ("upsert_milestone_notice", "clear_milestone_notice", "notify_approaching_milestone"):
+			self.assertFalse(hasattr(notifications, withdrawn), f"notifications.{withdrawn} is back")
+		self.assertFalse(frappe.db.exists("DocType", "Plan Item Forecast Revision"))
+		self.assertFalse(frappe.db.exists("DocType", "Milestone Notice"))
+
+		from kentender_procurement import hooks
+
+		scheduled = [job for jobs in getattr(hooks, "scheduler_events", {}).values() for job in jobs]
+		self.assertEqual([j for j in scheduled if "schedule" in j or "milestone" in j], [])
 
 
 class TestBeginAndCancelPlanUpdate(PublicationCase):
@@ -340,12 +689,11 @@ class TestBeginAndCancelPlanUpdate(PublicationCase):
 		successor = begun["successor_version"]
 		self.assertEqual(frappe.db.get_value("Annual Plan Version", successor, "based_on_version"), active_version)
 		self.assertEqual(frappe.db.get_value("Annual Plan Version", successor, "funding_state"), "Not requested")
-		copies = frappe.get_all("Annual Plan Item", filters={"plan_item_id": item_id}, fields=["name", "plan_version", "item_state", "forecast_invitation_date", "baseline_invitation_date"])
+		copies = frappe.get_all("Annual Plan Item", filters={"plan_item_id": item_id}, fields=["name", "plan_version", "item_state", "baseline_invitation_date"])
 		self.assertEqual(len(copies), 2)
 		by_version = {c.plan_version: c for c in copies}
 		self.assertEqual(by_version[active_version].item_state, "Active")
 		self.assertEqual(by_version[successor].item_state, "Draft")
-		self.assertFalse(by_version[successor].forecast_invitation_date)
 		self.assertEqual(str(by_version[successor].baseline_invitation_date), "2101-09-01")
 
 		read = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
@@ -411,10 +759,9 @@ class TestRemoveItemInSuccessorAndReActivation(PublicationCase):
 		self.assertEqual(read["active_view"]["items"][0]["plan_item_id"], item_b_id)
 
 
-class TestNeedOriginUsagePublishing(PublicationCase):
-	"""§7.1's outbound event proved against a genuine accepted Need created
-	through NDS's own real command chain, so the Need-origin DPP intake, the
-	not-proceeding outcome and the activation publisher round-trip for real."""
+class RealNeedsCase(PublicationCase):
+	"""A Planning case whose accepted Needs are genuine, created through
+	NDS's own real command chain. No tests of its own."""
 
 	MOCK_NEEDS = False
 
@@ -427,6 +774,11 @@ class TestNeedOriginUsagePublishing(PublicationCase):
 			site_configuration.open_needs_submission(fiscal_year=fx.FY_OPEN, reason="Planning test: Need-origin fixtures")
 		self.addCleanup(self._restore_needs_flag)
 		self._wipe_need_fixture()
+		# This bench commits test writes: take the genuine Needs, and the plans
+		# built on them, away again afterwards too (cleanups run last-first),
+		# or the next module's department starts with a stranger's Need in it.
+		self.addCleanup(self._wipe_need_fixture)
+		self.addCleanup(fx.wipe_planning_rows)
 
 	def _restore_needs_flag(self):
 		from kentender_core.services import site_configuration
@@ -440,6 +792,8 @@ class TestNeedOriginUsagePublishing(PublicationCase):
 		needs = frappe.get_all("Departmental Need", filters={"organisation_unit": fx.OU_ALPHA, "name": ("!=", fx.NEED)}, pluck="name")
 		versions = frappe.get_all("Departmental Need Revision", filters={"departmental_need": ("in", needs or ("",))}, pluck="name")
 		frappe.db.delete("Need Planning Usage Projection", {"name": ("in", versions or ("",))})
+		frappe.db.delete("Need Planning Disposition Projection", {"departmental_need": ("in", needs or ("",))})
+		frappe.db.delete("Need Planning Intake Projection", {"departmental_need": ("in", needs or ("",))})
 		frappe.db.delete("Departmental Need Decision", {"departmental_need": ("in", needs or ("",))})
 		frappe.db.delete("Departmental Need Review Task", {"departmental_need": ("in", needs or ("",))})
 		frappe.db.delete("Departmental Need Event", {"departmental_need": ("in", needs or ("",))})
@@ -477,6 +831,12 @@ class TestNeedOriginUsagePublishing(PublicationCase):
 			entries[need] = dpp_entry
 		return opened, entries
 
+
+class TestNeedOriginUsagePublishing(RealNeedsCase):
+	"""§7.1's outbound event proved against a genuine accepted Need created
+	through NDS's own real command chain, so the Need-origin DPP intake, the
+	not-proceeding outcome and the activation publisher round-trip for real."""
+
 	def test_activation_publishes_fully_included_then_removal_publishes_not_included(self):
 		need = self._accepted_need("Need-origin fixture requirement")
 		accepted_version = frappe.db.get_value("Departmental Need", need, "current_accepted_revision")
@@ -504,7 +864,7 @@ class TestNeedOriginUsagePublishing(PublicationCase):
 		self.complete(item_id)
 		self.confirm_funding(accepted["annual_plan"])
 		approved = self.activate(accepted["annual_plan"])
-		self.assertEqual(approved["publication_result"], "Acknowledged")
+		self.assertEqual(approved["result"], "Acknowledged")
 
 		projection = frappe.db.get_value("Need Planning Usage Projection", accepted_version, ["usage", "active_plan", "active_plan_item"], as_dict=True)
 		self.assertEqual(projection.usage, "Fully included")
@@ -535,9 +895,9 @@ class TestNeedOriginUsagePublishing(PublicationCase):
 			)
 		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
 		frappe.set_user(fx.AUTHOR)
-		marked = dpp_lifecycle.save_need_funding(
-			dpp_version=opened["current_version"], entry_id=entry_id,
-			not_proceeding_reason="The department will defer this requirement to the following financial year.",
+		marked = dpp_lifecycle.set_need_planning_disposition(
+			dpp_version=opened["current_version"], entry_id=entry_id, disposition="Do not proceed",
+			reason="The department will defer this requirement to the following financial year.",
 			expected_record_version=opened["record_version"], idempotency_key=key(),
 		)
 		self.assertEqual(marked["action"], "need_not_proceeding")
@@ -554,9 +914,18 @@ class TestNeedOriginUsagePublishing(PublicationCase):
 		accepted = dpp_validation.accept_departmental_plan(
 			task=dpp_task.name, classifications={added["entry_id"]: "Goods"}, task_token=dpp_task.task_token, idempotency_key=key(),
 		)
-		projection = frappe.db.get_value("Need Planning Usage Projection", accepted_version, ["usage", "not_proceeding_reason"], as_dict=True)
-		self.assertEqual(projection.usage, "Not proceeding")
-		self.assertIn("defer", projection.not_proceeding_reason)
+		# v1.18 §5.1.4 — the accepted disposition reaches Needs as NeedPlanningDispositionChanged.v1;
+		# the usage projection keeps its Active-inclusion meaning and is untouched by a DPP exclusion
+		disposition = frappe.db.get_value(
+			"Need Planning Disposition Projection", {"departmental_need": need, "need_revision": accepted_version},
+			["disposition", "reason", "producer_sequence", "dpp_submission"], as_dict=True,
+		)
+		self.assertEqual(disposition.disposition, "Not proceeding")
+		self.assertIn("defer", disposition.reason)
+		self.assertEqual(int(disposition.producer_sequence), 1)
+		self.assertTrue(disposition.dpp_submission)
+		usage = frappe.db.get_value("Need Planning Usage Projection", accepted_version, "usage")
+		self.assertNotEqual(usage, "Not proceeding")
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 		self.assertEqual(len(plan["unallocated_sources"]), 1)
 		self.assertEqual(plan["unallocated_sources"][0]["source_origin"], "Direct departmental requirement")

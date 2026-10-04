@@ -207,7 +207,7 @@ def _governance_task_kwargs() -> dict | None:
 
 
 def _publication_kwargs() -> dict | None:
-	name = _existing_via_plan_version("Annual Plan Publication")
+	name = _existing_via_plan_version("Plan Publication")
 	return {"publication": name} if name else None
 
 

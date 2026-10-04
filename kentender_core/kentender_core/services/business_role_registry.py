@@ -142,7 +142,9 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 		"Accounting Officer",
 		SCOPE_SITE,
 		"PLN-CHG-001 v1.12 §6",
-		sod_tags=("plan_adoption",),
+		# TPR-CHG-001 v0.8 §6 (2026-09-19): the same office authorises Tender
+		# publication (never confirms it) and cancels a Tender.
+		sod_tags=("plan_adoption", "publication_authorisation", "tender_cancellation"),
 	),
 	# §4.12: "Exactly one route applies." The applicable capacity — Cabinet
 	# Secretary, County Executive Committee Member, Board of Directors or
@@ -177,21 +179,64 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 		"REQ-CHG-001 v1.6 §8",
 		# TPR-CHG-001 v0.6 §5/§10.3 (2026-09-08): the same office is the single
 		# Tender Preparation approver — one registry entry, a second sod tag.
-		sod_tags=("requisition_authorisation", "tender_approval"),
+		# PLN-CHG-001 v1.18 §6.2 / D6 (2026-09-12): the same office signs and
+		# submits the consolidated Annual Procurement Plan (preparation
+		# accountability, not an added approval stage) — a third sod tag, no
+		# Planner equivalence.
+		# TPR-CHG-001 v0.8 §6 (2026-09-19): the same office confirms channel
+		# publication with evidence and attestation, and issues addenda —
+		# two more sod tags on the same entry, no new registry row.
+		# BDS-CHG-001 v0.8 owner decisions OD-G/OD-H (2026-09-26): the same
+		# office records physical tender-security originals, blind to bids.
+		sod_tags=("requisition_authorisation", "tender_approval", "plan_preparation_signature", "channel_confirmation", "addendum_issue", "tender_security_receipt"),
 	),
-	# --- Tender Preparation (TPR-CHG-001 v0.6 §5) -------------------------
-	# Site-wide; prepares and submits Tender Versions and can never approve
-	# one it prepared (§10.3 — enforced from the Version's own preparation
-	# audit event, not from this registry). The identically-named legacy
-	# Frappe Role already exists on seeded sites; `ensure_roles()` reuses it.
+	# --- Tenders (TPR-CHG-001 v0.8 §6) ------------------------------------
+	# Site-wide; starts, prepares and submits Tender Versions, drafts addenda
+	# and answers inquiries; can never approve or authorise a Version it
+	# prepared or submitted (§6 — enforced from the Version's own audit
+	# columns, not from this registry). The identically-named legacy Frappe
+	# Role already exists on seeded sites; `ensure_roles()` reuses it.
 	_entry(
 		"Procurement Officer",
 		SCOPE_SITE,
-		"TPR-CHG-001 v0.6 §5",
+		"TPR-CHG-001 v0.8 §6",
 		sod_tags=("tender_preparation",),
 	),
 	_entry("Strategy Author", SCOPE_SITE, "STR-CHG-001 v1.7 §6", sod_tags=("strategy_authoring",)),
 	_entry("Strategy Approver", SCOPE_SITE, "STR-CHG-001 v1.7 §6", sod_tags=("strategy_approval",)),
+	# --- Supplier Accounts (BDS-CHG-001 v0.8, plan owner decision OD-D) ----
+	# Site-wide; reviews suspended supplier access and records Suspend /
+	# Restore with a reason on the Supplier Organisation form. No bid,
+	# evidence or receipt content (BDS-CHG-001 §5.14 "Account access
+	# suspended"). Not in the spec's §6 table yet (FU-V08-02).
+	_entry(
+		"Supplier Account Support Officer",
+		SCOPE_SITE,
+		"BDS-CHG-001 v0.8 plan OD-D",
+		sod_tags=("supplier_account_support",),
+	),
+	# --- Bid Submission operations (BDS-CHG-001 v0.8 §5.12–5.14; Project
+	# Owner decision 27 Sep 2026) ---------------------------------------------
+	# Site-wide operational holders the supplier guidance names; neither is a
+	# procurement authority and neither sees bid content. The Technical
+	# Operator restores the signing, trusted-time and tender-box services and
+	# reconciles an uncertain submission attempt; the Release Operator holds
+	# the verified production-submission release. Not in the spec's §6 table
+	# or the KT-STD-001 persona register yet (FU-V08-41).
+	_entry("Technical Operator", SCOPE_SITE, "BDS-CHG-001 v0.8 owner decision 27 Sep 2026", sod_tags=("bid_submission_operations",)),
+	_entry("Release Operator", SCOPE_SITE, "BDS-CHG-001 v0.8 owner decision 27 Sep 2026", sod_tags=("submission_release",)),
+	# --- Bid Evaluation (EVL-CHG-001 v0.4 §9.1 "Technical issue holder …
+	# Technical support … no evaluation business authority"; KT-STD-001 v1.13
+	# §8.3 "Technical support owner for assigned Evaluation incidents") ------
+	# Holds Bid Evaluation's technical support issues, separately from the
+	# Technical Operator, whose assignments it does not duplicate (Project
+	# Owner, 1 Oct 2026: "Own responsibility"). No bid, finding or decision.
+	_entry(
+		"Evaluation Technical Support",
+		SCOPE_SITE,
+		"KT-STD-001 v1.13 §8.3; EVL-CHG-001 v0.4 §9.1",
+		sod_tags=("evaluation_support",),
+	),
 )
 
 REGISTRY: dict[str, BusinessRole] = {entry.business_role: entry for entry in _ENTRIES}

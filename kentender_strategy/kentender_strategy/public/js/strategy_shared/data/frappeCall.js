@@ -29,6 +29,12 @@ export async function frappeCall(method, args) {
 		// exposed so a caller can distinguish "forbidden" from any other
 		// failure without re-parsing the raw jqXHR itself.
 		err.httpStatus = xhr && xhr.status;
+		// STR-CHG-001 v1.8 §8.2 — a lost response is an UNKNOWN outcome, not
+		// a failure: no status at all (network/timeout) or a gateway status
+		// that can arrive after the server committed. A real Frappe error
+		// (4xx/500 with a body) rolled back and is a known rejection.
+		const status = (xhr && xhr.status) || 0;
+		err.unknownOutcome = status === 0 || status === 502 || status === 503 || status === 504;
 		throw err;
 	}
 }

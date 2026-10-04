@@ -1,0 +1,235 @@
+/*
+ * BDS-CHG-001 v0.8 §10 — Bid Submission portal screens, ported from the
+ * "Bid Board v3" artboards (docs/mvp-1-r1/12_bid_submission/design). The
+ * shell (header, body column, footer) is kentender_core's
+ * kt_portal_shell.css; this file holds only what the boards draw inline
+ * inside .kt-page. Static because the esbuild pipeline discards
+ * <style scoped> CSS; every rule is scoped under .kt-industry.kt-portal.
+ */
+
+/* Page head: title row (board: flex, gap space-3, wrap). */
+.kt-industry.kt-portal .bds-head-main { min-width: 0; }
+.kt-industry.kt-portal .bds-title-row { display: flex; gap: var(--kt-space-3); align-items: center; flex-wrap: wrap; }
+
+/* DES-01 list. */
+.kt-industry.kt-portal .bds-tender-cell { font-weight: 600; }
+.kt-industry.kt-portal .bds-tender-ref { font-weight: 600; margin-top: 2px; }
+.kt-industry.kt-portal .bds-count { margin: 0; font-size: 13px; color: var(--kt-color-neutral-700); text-wrap: pretty; }
+.kt-industry.kt-portal .kt-table + .bds-count,
+.kt-industry.kt-portal [data-testid="bds-tenders-cards"] + .bds-count { margin-top: var(--kt-space-3); }
+.kt-industry.kt-portal .bds-empty-text { margin: 0 0 var(--kt-space-4); font-size: 14px; }
+.kt-industry.kt-portal .bds-load-failure { align-items: center; justify-content: space-between; margin-bottom: var(--kt-space-4); }
+.kt-industry.kt-portal .bds-skeleton { min-height: 160px; border-top: 1px solid var(--kt-color-divider); }
+
+/* 390 frame: labelled cards instead of table rows. */
+.kt-industry.kt-portal .bds-card { border-top: 1px solid var(--kt-color-divider); padding: var(--kt-space-3) 0; display: grid; gap: 6px; }
+.kt-industry.kt-portal .bds-card-title { font-size: 14px; font-weight: 600; }
+.kt-industry.kt-portal .bds-card-fact { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.kt-industry.kt-portal .bds-card-fact > span:last-child { text-align: right; min-width: 0; }
+.kt-industry.kt-portal .bds-card-actions { font-size: 14px; display: flex; gap: 4px 20px; flex-wrap: wrap; min-height: 44px; align-items: center; }
+
+.kt-industry.kt-portal .kt-filter-bar.bds-filter-stack { grid-auto-flow: row; }
+.kt-industry.kt-portal .bds-btn-block { width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.kt-industry.kt-portal .bds-btn-touch { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+
+/* DES-02 Tender overview (board A). */
+.kt-industry.kt-portal .bds-reference { margin-top: 6px; font-size: 13px; color: var(--kt-color-neutral-700); }
+.kt-industry.kt-portal .bds-back { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; margin-bottom: var(--kt-space-3); }
+.kt-industry.kt-portal .bds-region-body { display: grid; gap: var(--kt-space-3); }
+.kt-industry.kt-portal .bds-region-head { display: flex; justify-content: space-between; align-items: center; gap: var(--kt-space-4); flex-wrap: wrap; margin: 0 0 var(--kt-space-3); }
+.kt-industry.kt-portal .bds-region-head h2 { margin: 0; }
+.kt-industry.kt-portal .bds-region-actions { display: flex; gap: var(--kt-space-3); align-items: center; flex-wrap: wrap; }
+.kt-industry.kt-portal .bds-span-2 { grid-column: span 2; }
+.kt-industry.kt-portal .bds-strong { font-weight: 600; }
+.kt-industry.kt-portal .bds-muted { margin: 0; font-size: 13px; color: var(--kt-color-neutral-700); text-wrap: pretty; }
+/* BDS-DES-06-WITHDRAWN-RELEASE: the guidance's navigation links (board B draws them inside the guidance) */
+.kt-industry.kt-portal .bds-guidance-links { display: flex; flex-wrap: wrap; gap: var(--kt-space-4); font-size: 14px; }
+.kt-industry.kt-portal .bds-answer { display: grid; gap: 4px; }
+.kt-industry.kt-portal .bds-my-questions { display: grid; gap: 8px; margin-top: 16px; }
+.kt-industry.kt-portal .bds-my-questions-title { margin: 0; font-size: 14px; font-weight: 600; }
+.kt-industry.kt-portal .bds-row-alert { margin-top: 4px; font-size: 13px; font-weight: 600; }
+.kt-industry.kt-portal .bds-answer > .bds-strong,
+.kt-industry.kt-portal .bds-answer-text { font-size: 14px; }
+.kt-industry.kt-portal .bds-answer-text { color: var(--kt-color-neutral-800); }
+.kt-industry.kt-portal .bds-bullets { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; }
+.kt-industry.kt-portal .kt-page-head.bds-head-stack { flex-direction: column; gap: var(--kt-space-4); }
+.kt-industry.kt-portal .kt-page-actions.bds-actions-stack { flex-direction: column; width: 100%; }
+
+/* Portal dialogs (Who is bidding?, Ask a question). */
+.kt-industry.kt-portal .bds-dialog { width: 520px; max-width: calc(100vw - 32px); max-height: calc(100vh - 48px); overflow-y: auto; }
+.kt-industry.kt-portal .bds-dialog-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--kt-space-3) var(--kt-space-4); }
+.kt-industry.kt-portal .bds-dialog-fact { display: grid; gap: 3px; font-size: 14px; }
+.kt-industry.kt-portal .bds-help { margin: 3px 0 0; font-size: 13px; color: var(--kt-color-neutral-700); }
+.kt-industry.kt-portal .bds-choice { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+.kt-industry.kt-portal .bds-choice legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* A Yes/No answer is one compact row of options under its question, not a tall line for each */
+.kt-industry.kt-portal .bds-radio-row { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--kt-space-8); }
+.kt-industry.kt-portal .bds-radio { display: flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 400; min-height: 36px; cursor: pointer; }
+.kt-industry.kt-portal .bds-radio input { margin: 0; flex: none; }
+@media (max-width: 600px) { .kt-industry.kt-portal .bds-radio { min-height: 44px; } }
+.kt-industry.kt-portal .bds-member-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: var(--kt-space-3); align-items: end; }
+
+/* BDS-DES-16 common state replacing the content surface. */
+.kt-industry.kt-portal .bds-state { gap: 6px; }
+.kt-industry.kt-portal .kt-page h1.bds-state-heading { font-family: var(--kt-font-body); font-size: 15px; font-weight: 700; line-height: 1.35; letter-spacing: 0; }
+.kt-industry.kt-portal .bds-state-message { margin: 0; font-size: 13px; line-height: 1.5; color: var(--kt-color-neutral-800); }
+.kt-industry.kt-portal .bds-state-action { margin-top: 4px; }
+
+@media (max-width: 800px) {
+	.kt-industry.kt-portal .bds-span-2 { grid-column: auto; }
+	.kt-industry.kt-portal .bds-dialog-facts,
+	.kt-industry.kt-portal .bds-member-row { grid-template-columns: minmax(0, 1fr); }
+	/* Inputs at 16 px so a phone does not zoom on focus (board 390 frame). */
+	.kt-industry.kt-portal .kt-filter-bar .kt-input { font-size: 16px; }
+}
+
+/* DES-05 My bids: a row's actions (primary first, then e.g. Start replacement). */
+.kt-industry.kt-portal .bds-row-actions { display: flex; gap: var(--kt-space-2); flex-wrap: wrap; }
+.kt-industry.kt-portal .bds-nowrap { white-space: nowrap; }
+.kt-industry.kt-portal .bds-notice-text { margin-top: 3px; }
+
+/* DES-07 documents task: an addendum's notice state, the acknowledgement, the footer. */
+.kt-industry.kt-portal .bds-notice-group { display: grid; gap: 6px; }
+.kt-industry.kt-portal .bds-notice-line { display: flex; gap: var(--kt-space-3); align-items: center; flex-wrap: wrap; font-size: 13px; }
+.kt-industry.kt-portal .kt-checkbox.bds-acknowledge { font-size: 14px; line-height: 1.5; }
+.kt-industry.kt-portal .bds-footer { display: flex; justify-content: space-between; align-items: center; gap: var(--kt-space-4); padding-top: var(--kt-space-4); border-top: 1px solid var(--kt-color-divider); }
+.kt-industry.kt-portal .bds-footer-end { display: flex; gap: var(--kt-space-4); align-items: center; }
+.kt-industry.kt-portal .bds-footer-stack { display: grid; gap: var(--kt-space-2); padding-top: var(--kt-space-4); border-top: 1px solid var(--kt-color-divider); }
+
+/* Response fields and the response drawer (board C "response drawer"): 480 px
+   from the right; the full width at 390. */
+.kt-industry.kt-portal .bds-drawer-backdrop { position: fixed; inset: 0; z-index: 1050; background: color-mix(in srgb, var(--kt-color-neutral-900) 50%, transparent); }
+.kt-industry.kt-portal .bds-drawer { position: absolute; top: 0; right: 0; bottom: 0; width: 480px; max-width: 100%; background: var(--kt-color-surface); box-shadow: var(--kt-shadow-lg, 0 10px 30px rgba(0, 0, 0, .2)); display: flex; flex-direction: column; outline: none; }
+.kt-industry.kt-portal .bds-drawer-head { padding: var(--kt-space-5); border-bottom: 1px solid var(--kt-color-divider); font-family: var(--kt-font-heading); font-size: 22px; }
+.kt-industry.kt-portal .bds-drawer-body { flex: 1; overflow: auto; padding: var(--kt-space-5); display: grid; gap: var(--kt-space-4); align-content: start; }
+.kt-industry.kt-portal .bds-drawer-fact { display: grid; gap: 3px; font-size: 14px; }
+.kt-industry.kt-portal .bds-drawer-foot { padding: var(--kt-space-4) var(--kt-space-5); border-top: 1px solid var(--kt-color-divider); display: flex; justify-content: flex-end; gap: var(--kt-space-2); }
+.kt-industry.kt-portal .bds-statement { font-size: 14px; line-height: 1.6; white-space: pre-line; padding: var(--kt-space-3); background: var(--kt-color-surface-2, #f5f6f8); border-left: 3px solid var(--kt-color-divider); }
+.kt-industry.kt-portal .bds-field-bare { border: 0; padding: 0; margin: 0; }
+.kt-industry.kt-portal .bds-choice-field { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+/* the question of a choice field reads like every other field's label */
+.kt-industry.kt-portal .bds-choice-field legend { padding: 0; font-size: 12px; font-weight: 400; color: var(--kt-color-neutral-800); margin-bottom: 4px; }
+.kt-industry.kt-portal .bds-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.kt-industry.kt-portal .bds-file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); opacity: 0; }
+.kt-industry.kt-portal .bds-file-row { display: flex; justify-content: space-between; align-items: center; gap: var(--kt-space-4); padding: var(--kt-space-3) 0; border-top: 1px solid var(--kt-color-divider); border-bottom: 1px solid var(--kt-color-divider); font-size: 14px; flex-wrap: wrap; }
+.kt-industry.kt-portal .bds-file-name { overflow-wrap: anywhere; }
+.kt-industry.kt-portal .bds-file-row > p { flex-basis: 100%; margin: 0; }
+.kt-industry.kt-portal .bds-saved-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--kt-color-divider); }
+.kt-industry.kt-portal .bds-saved-option { display: flex; justify-content: space-between; align-items: center; gap: var(--kt-space-4); padding: var(--kt-space-3) 0; border-bottom: 1px solid var(--kt-color-divider); font-size: 14px; }
+.kt-industry.kt-portal .bds-saved-what { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.kt-industry.kt-portal .bds-file-actions { display: flex; gap: var(--kt-space-4); align-items: center; }
+.kt-industry.kt-portal .bds-link-button { background: none; border: 0; padding: 0; color: var(--kt-color-link, var(--kt-color-accent)); text-decoration: underline; cursor: pointer; font: inherit; text-align: left; }
+/* Tables whose columns are set in percent, so the Status and Action columns line up from one table to the next */
+.kt-industry.kt-portal .bds-fixed-table { table-layout: fixed; width: 100%; }
+.kt-industry.kt-portal .bds-fixed-table th { white-space: nowrap; }
+.kt-industry.kt-portal .bds-fixed-table td { overflow-wrap: anywhere; }
+/* Row-group control (release 1.4): a row is a grid of labelled cells, one column on a narrow screen. */
+.kt-industry.kt-portal .bds-rowgroup { border: 0; padding: 0; margin: 0; display: grid; gap: var(--kt-space-3); }
+.kt-industry.kt-portal .bds-rowgroup legend { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding: 0; }
+.kt-industry.kt-portal .bds-rg-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) auto; gap: var(--kt-space-3); align-items: start; padding-bottom: var(--kt-space-3); border-bottom: 1px solid var(--kt-color-neutral-200); }
+.kt-industry.kt-portal .bds-rg-remove { margin-top: 22px; }
+@media (max-width: 800px) {
+	.kt-industry.kt-portal .bds-rg-row { grid-template-columns: minmax(0, 1fr); }
+	.kt-industry.kt-portal .bds-rg-remove { margin-top: 0; justify-self: start; }
+}
+.kt-industry.kt-portal .bds-port-row { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: var(--kt-space-3); }
+@media (max-width: 800px) {
+	.kt-industry.kt-portal .bds-drawer { width: 100%; }
+}
+
+/* DES-08 company task (board C). */
+/* auto-fill, not auto-fit: every block on a page keeps the same columns, so its facts line up with the block above and below */
+.kt-industry.kt-portal .bds-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--kt-space-4) var(--kt-space-6); }
+.kt-industry.kt-portal .bds-fact { display: grid; gap: 4px; min-width: 0; align-content: start; }
+.kt-industry.kt-portal .bds-fact-value { font-size: 14px; overflow-wrap: anywhere; }
+.kt-industry.kt-portal .bds-snapshot-line { display: flex; gap: var(--kt-space-4); align-items: center; flex-wrap: wrap; font-size: 13px; }
+.kt-industry.kt-portal .bds-account-update { display: grid; gap: var(--kt-space-3); }
+.kt-industry.kt-portal .bds-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--kt-space-4) var(--kt-space-8); }
+.kt-industry.kt-portal .bds-inline-status { display: flex; gap: var(--kt-space-3); align-items: center; }
+.kt-industry.kt-portal .bds-confirmed { margin-top: 4px; }
+.kt-industry.kt-portal .bds-notice-facts { display: flex; gap: var(--kt-space-8); flex-wrap: wrap; margin-top: 4px; }
+@media (max-width: 800px) {
+	.kt-industry.kt-portal .bds-grid-2 { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* DES-09 requirements task (board C): the region links and acceptance rows. */
+.kt-industry.kt-portal .bds-section-nav { display: flex; flex-wrap: wrap; gap: var(--kt-space-2) var(--kt-space-6); font-size: 14px; padding: var(--kt-space-3) 0; border-top: 1px solid var(--kt-color-divider); border-bottom: 1px solid var(--kt-color-divider); margin-bottom: var(--kt-space-4); }
+.kt-industry.kt-portal .bds-section-link { text-decoration: none; display: inline-flex; gap: 6px; align-items: baseline; }
+.kt-industry.kt-portal .bds-section-name { text-decoration: underline; text-underline-offset: 3px; }
+.kt-industry.kt-portal .bds-section-state { font-size: 12px; font-weight: 600; color: var(--kt-color-neutral-700); }
+.kt-industry.kt-portal .bds-section-state.is-live { color: var(--kt-status-live, var(--kt-color-success-700, #1a7f37)); }
+.kt-industry.kt-portal .bds-section-state.is-attention { color: var(--kt-status-attention, var(--kt-color-warning-700, #9a6700)); }
+.kt-industry.kt-portal .bds-acceptance-row { display: flex; gap: var(--kt-space-4); align-items: center; justify-content: space-between; flex-wrap: wrap; padding: var(--kt-space-2) 0; border-top: 1px solid var(--kt-color-divider); font-size: 14px; }
+
+/* DES-10 price (board C): right-aligned money inputs and the totals block. */
+.kt-industry.kt-portal .bds-money { text-align: right; max-width: 160px; margin-left: auto; }
+.kt-industry.kt-portal .bds-price-terms { margin-bottom: var(--kt-space-4); }
+.kt-industry.kt-portal .bds-totals { display: grid; gap: var(--kt-space-2); width: 440px; max-width: 100%; margin-left: auto; padding: var(--kt-space-4) 0; border-top: 1px solid var(--kt-color-divider); }
+.kt-industry.kt-portal .bds-total-line { display: flex; justify-content: space-between; font-size: 14px; gap: var(--kt-space-4); }
+.kt-industry.kt-portal .bds-grand-total { align-items: baseline; padding-top: var(--kt-space-2); border-top: 1px solid var(--kt-color-divider); }
+.kt-industry.kt-portal .bds-grand-total > span:first-child { font-family: var(--kt-font-heading); font-size: 18px; }
+.kt-industry.kt-portal .bds-grand-total > span:last-child { font-size: 22px; font-weight: 700; }
+@media (max-width: 800px) {
+	.kt-industry.kt-portal .bds-money { max-width: 100%; font-size: 16px; }
+	.kt-industry.kt-portal .bds-totals { width: 100%; }
+}
+
+/* BDS-DES-11 Review bid: an exact issue link under its task (Board D). */
+.kt-industry.kt-portal .bds-issue-link { margin-top: 4px; font-weight: 400; }
+
+/* BDS-DES-12 Submit bid (Board D): the final confirmation and its pending state. */
+.kt-industry.kt-portal .bds-dialog-text { margin: 0; font-size: 14px; line-height: 1.5; }
+.kt-industry.kt-portal .bds-decision { display: grid; gap: var(--kt-space-4); }
+.kt-industry.kt-portal .bds-decision .kt-checkbox { font-size: 14px; line-height: 1.5; }
+.kt-industry.kt-portal .bds-decision-actions { display: flex; gap: var(--kt-space-3); justify-content: flex-end; flex-wrap: wrap; align-items: center; }
+.kt-industry.kt-portal .bds-meta-tight { gap: var(--kt-space-4) var(--kt-space-8); }
+@media (max-width: 800px) {
+	.kt-industry.kt-portal .bds-decision-actions { flex-direction: column-reverse; align-items: stretch; }
+}
+
+/* BDS-DES-13 / BDS-DES-14-REPLACED receipt (Board D): the replacement's lineage line. */
+.kt-industry.kt-portal .bds-lineage { display: flex; gap: var(--kt-space-4); align-items: center; flex-wrap: wrap; font-size: 14px; }
+
+/* A checkbox choice inside a field: the field's own `label` rule (block, 12px, margin) outranks the checkbox kit's, which
+   left the box an inline span with no size. Restore the kit's layout for the labels that are checkboxes. */
+.kt-industry.kt-portal .kt-field > label.kt-checkbox { display: inline-flex; align-items: flex-start; gap: 8px; margin-bottom: 0; font-size: 14px; color: var(--kt-color-text); min-height: 32px; }
+/* The evidence column: a paperclip and a count badge, whatever the file names are */
+.kt-industry.kt-portal .bds-attachments { display: inline-flex; align-items: center; gap: 6px; color: var(--kt-color-neutral-700); white-space: nowrap; }
+.kt-industry.kt-portal .bds-attachments svg { flex: none; }
+.kt-industry.kt-portal .bds-attachment-count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 11px; background: var(--kt-color-neutral-200); color: var(--kt-color-text); font-size: 12px; font-weight: 600; line-height: 1; }
+
+/* The region links stay in view while a long page scrolls, with a way back to the top; a jumped-to region clears them */
+.kt-industry.kt-portal .bds-section-nav { position: sticky; top: 0; z-index: 3; background: var(--kt-color-surface); align-items: center; }
+.kt-industry.kt-portal .bds-section-top { margin-left: auto; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.kt-industry.kt-portal [id^="bds-region-"] { scroll-margin-top: 72px; }
+@media (max-width: 600px) {
+	.kt-industry.kt-portal .bds-section-nav { flex-wrap: nowrap; overflow-x: auto; width: 0; min-width: 100%; }
+	.kt-industry.kt-portal .bds-section-link { white-space: nowrap; }
+}
+
+/* Acceptance terms are contract terms to confirm, so they sit apart from the responses above them */
+.kt-industry.kt-portal .bds-terms { border-left: 3px solid var(--kt-color-accent); background: var(--kt-color-neutral-100); padding: var(--kt-space-4) var(--kt-space-4) var(--kt-space-4) var(--kt-space-6); margin-top: var(--kt-space-6); }
+.kt-industry.kt-portal .bds-terms-intro { margin: 0 0 var(--kt-space-3); }
+.kt-industry.kt-portal .bds-terms .kt-table th { background: transparent; }
+
+/* The bid's task order made visible: a numbered strip on every task page, Previous / Next beneath it, and the same
+   numbers and a Next tag on the bid page's task list */
+.kt-industry.kt-portal .bds-stepper { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--kt-space-3); margin-bottom: var(--kt-space-5); }
+.kt-industry.kt-portal .bds-stepper-list { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--kt-space-2); }
+.kt-industry.kt-portal .bds-stepper-list li { flex: 1 1 0; min-width: 0; }
+.kt-industry.kt-portal .bds-stepper .bds-stepper-list a.bds-stepper-item { display: flex; align-items: center; gap: 8px; padding: 8px 4px 8px 2px; border-bottom: 3px solid var(--kt-color-neutral-300); color: var(--kt-color-neutral-800); font-size: 13px; text-decoration: none; min-width: 0; }
+.kt-industry.kt-portal .bds-stepper .bds-stepper-list a.bds-stepper-item.is-current { border-bottom-color: var(--kt-color-accent); color: var(--kt-color-text); font-weight: 600; }
+.kt-industry.kt-portal .bds-stepper-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kt-industry.kt-portal .bds-stepper-number, .kt-industry.kt-portal .bds-task-number { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--kt-status-draft-bg); color: var(--kt-status-draft); font-size: 12px; font-weight: 700; }
+.kt-industry.kt-portal .bds-stepper-item.is-live .bds-stepper-number { background: var(--kt-status-live-bg); color: var(--kt-status-live); }
+.kt-industry.kt-portal .bds-stepper-item.is-pending .bds-stepper-number { background: var(--kt-status-pending-bg); color: var(--kt-status-pending); }
+.kt-industry.kt-portal .bds-stepper-item.is-attention .bds-stepper-number { background: var(--kt-status-attention-bg); color: var(--kt-status-attention); }
+.kt-industry.kt-portal .bds-stepper-line { display: flex; justify-content: space-between; align-items: center; gap: var(--kt-space-4); font-size: 13px; }
+.kt-industry.kt-portal .bds-stepper-where { color: var(--kt-color-neutral-700); font-weight: 600; }
+.kt-industry.kt-portal .bds-task-number { margin-right: 10px; }
+.kt-industry.kt-portal .bds-next-tag { margin-left: 10px; padding: 1px 8px; border: 1px solid var(--kt-color-accent); border-radius: 10px; color: var(--kt-color-accent); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; vertical-align: 1px; }
+.kt-industry.kt-portal .bds-progress { margin: 0 0 var(--kt-space-3); font-weight: 600; }
+@media (max-width: 600px) {
+	.kt-industry.kt-portal .bds-stepper-item:not(.is-current) .bds-stepper-name { display: none; }
+	.kt-industry.kt-portal .bds-stepper-list li:has(.is-current) { flex: 3 1 0; }
+}

@@ -1,0 +1,1166 @@
+{
+ "ao": {
+  "record": {
+   "actions": {
+    "authorise_revised": false,
+    "award_supported": false,
+    "correct_contact": false,
+    "correction_proposals": false,
+    "decide": false,
+    "decide_correction": false,
+    "record_outcome": false,
+    "record_restriction": false,
+    "respond_request": false,
+    "retry_operation": false,
+    "return_report": false,
+    "save_opinion": false,
+    "sign_opinion": false
+   },
+   "award": "AWD-MOH-2027-033",
+   "cancelled": false,
+   "closed_reason": null,
+   "correspondence": [],
+   "cycle": {
+    "authorising": null,
+    "awaiting_report": false,
+    "number": 1,
+    "outcome": "",
+    "predecessor": null,
+    "stage": "Waiting to proceed"
+   },
+   "decision": {
+    "amount": "KES 46,400,000",
+    "at": "17 Jun 2027, 10:00 EAT",
+    "by": "Amina Hassan",
+    "committed": true,
+    "cycle": 1,
+    "evaluated": "KES 46,400,000",
+    "id": "AWD-MOH-2027-033-DEC-01",
+    "kind": "Initial",
+    "label": "Award decision",
+    "next_action": null,
+    "next_owner": "",
+    "notices_authorised": true,
+    "outcome": "Award",
+    "reason": "I accept the recommendation in the signed evaluation report and professional opinion.",
+    "supplier": "Afya Digital Supplies Limited",
+    "version": 1
+   },
+   "decision_status": "Award recorded",
+   "eligibility": {
+    "1": {
+     "met": true
+    },
+    "2": {
+     "met": true
+    },
+    "3": {
+     "met": false
+    },
+    "4": {
+     "met": false
+    },
+    "5": {
+     "met": true
+    },
+    "6": {
+     "met": false
+    },
+    "7": {
+     "met": false
+    }
+   },
+   "guidance": {
+    "answer": {
+     "blockers": [],
+     "fixes": [],
+     "headline": "",
+     "holder": null,
+     "kind": "not_involved",
+     "label": "",
+     "primary_action": "",
+     "sentence": "",
+     "since": null,
+     "stage": ""
+    },
+    "journey": {
+     "code": "DDDBN",
+     "current": "wait",
+     "downstream": null,
+     "reduced": false,
+     "reduced_parts": {
+      "label": "Acceptance and wait (blocked)",
+      "prefix": "",
+      "suffix": " · 4 of 5"
+     },
+     "reduced_style": "position",
+     "reduced_text": "Acceptance and wait (blocked) · 4 of 5",
+     "stages": [
+      {
+       "code": "opinion",
+       "holder": "",
+       "label": "Opinion",
+       "marker": "done",
+       "marker_label": "Done"
+      },
+      {
+       "code": "decision",
+       "holder": "",
+       "label": "Decision",
+       "marker": "done",
+       "marker_label": "Done"
+      },
+      {
+       "code": "notices",
+       "holder": "",
+       "label": "Notices",
+       "marker": "done",
+       "marker_label": "Done"
+      },
+      {
+       "code": "wait",
+       "holder": "",
+       "label": "Acceptance and wait",
+       "marker": "blocked",
+       "marker_label": "Blocked"
+      },
+      {
+       "code": "send",
+       "holder": "",
+       "label": "Send to Contracting",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      }
+     ],
+     "upstream": null
+    }
+   },
+   "history": [
+    {
+     "cycle": 1,
+     "decisions": [
+      {
+       "amount": "KES 46,400,000",
+       "at": "17 Jun 2027, 10:00 EAT",
+       "by": "Amina Hassan",
+       "committed": true,
+       "cycle": 1,
+       "evaluated": "KES 46,400,000",
+       "id": "AWD-MOH-2027-033-DEC-01",
+       "kind": "Initial",
+       "label": "Award decision",
+       "next_action": null,
+       "next_owner": "",
+       "notices_authorised": true,
+       "outcome": "Award",
+       "reason": "I accept the recommendation in the signed evaluation report and professional opinion.",
+       "supplier": "Afya Digital Supplies Limited",
+       "version": 1
+      }
+     ],
+     "opinions": [
+      {
+       "author": "Charles Mutiso",
+       "conclusion": "Recommend award",
+       "cycle": 1,
+       "id": "AWD-MOH-2027-033-OP-01",
+       "label": "Professional opinion 1",
+       "proof_label": "Test attestation — not an electronic signature",
+       "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
+       "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
+       "signing_outcome": "Accepted/Verified",
+       "state": "Signed",
+       "version": 1
+      }
+     ],
+     "outcome": "",
+     "stage": "Waiting to proceed"
+    }
+   ],
+   "notices": {
+    "batch": {
+     "all_given": true,
+     "id": "AWD-MOH-2027-033-NB-01",
+     "issued_at": "17 Jun 2027, 10:00 EAT",
+     "kind": "Initial",
+     "label": "Award notice 1",
+     "reply_deadline": "24 Jun 2027, 17:00 EAT",
+     "status": "Issued"
+    },
+    "earliest": "2 Jul 2027, 09:00 EAT",
+    "late": [],
+    "preview": [],
+    "recipients": [
+     {
+      "attempts": 1,
+      "channel": "Email",
+      "contact": "tenders@afyadigital.example",
+      "delivery": "Given",
+      "given_at": "17 Jun 2027, 10:00 EAT",
+      "label": "Award notice 1",
+      "last_attempt": "Delivered",
+      "notice": "AWD-MOH-2027-033-NB-01-01",
+      "owner": "",
+      "reason": "",
+      "recipient": "Afya Digital Supplies Limited",
+      "result": "Successful",
+      "status": "Given"
+     }
+    ],
+    "response": {
+     "at": "18 Jun 2027, 09:00 EAT",
+     "by": "Mary Wanjiku",
+     "reason": "We cannot meet the delivery commitment.",
+     "response": "Decline",
+     "wording": "I decline Award notice 1 on behalf of Afya Digital Supplies Limited."
+    }
+   },
+   "notification_status": "Issued",
+   "ok": true,
+   "opinion": {
+    "all": [
+     {
+      "author": "Charles Mutiso",
+      "conclusion": "Recommend award",
+      "cycle": 1,
+      "id": "AWD-MOH-2027-033-OP-01",
+      "label": "Professional opinion 1",
+      "proof_label": "Test attestation — not an electronic signature",
+      "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
+      "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
+      "signing_outcome": "Accepted/Verified",
+      "state": "Signed",
+      "version": 1
+     }
+    ],
+    "signed": {
+     "author": "Charles Mutiso",
+     "conclusion": "Recommend award",
+     "cycle": 1,
+     "id": "AWD-MOH-2027-033-OP-01",
+     "label": "Professional opinion 1",
+     "proof_label": "Test attestation — not an electronic signature",
+     "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
+     "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
+     "signing_outcome": "Accepted/Verified",
+     "state": "Signed",
+     "version": 1
+    },
+    "working": null
+   },
+   "outcome": "",
+   "outstanding": [
+    {
+     "basis": "",
+     "effective_at": "18 Jun 2027, 09:00 EAT",
+     "external_owner": "",
+     "holds": true,
+     "issue": "AWD-MOH-2027-033-ISS-01",
+     "outcomes": [
+      "Request decision review"
+     ],
+     "owner": "Charles Mutiso",
+     "proposal": null,
+     "reason": "We cannot meet the delivery commitment.",
+     "received_at": "18 Jun 2027, 09:00 EAT",
+     "source": "",
+     "subtype": "Declined",
+     "title": "Review the supplier’s response.",
+     "type": "Supplier response"
+    }
+   ],
+   "package": null,
+   "procuring_entity": "Ministry of Health",
+   "record_version": 10,
+   "report": {
+    "committee": [
+     "Grace Wambui",
+     "Peter Mugo",
+     "Ruth Achieng"
+    ],
+    "comparison": [
+     {
+      "amount": "KES 46,400,000",
+      "position": "1",
+      "submitted": "KES 46,400,000",
+      "tenderer": "Afya Digital Supplies Limited"
+     }
+    ],
+    "dissent": [],
+    "funding": {
+     "available": "50000000.00",
+     "qualification": "",
+     "shortfall": "0.00",
+     "source": "Budget confirmation"
+    },
+    "id": "AWD-MOH-2027-033-RPT-01",
+    "label": "Evaluation report 1",
+    "outcome": "Recommendation",
+    "qualifications": [],
+    "reason": "The only bid received meets the published requirements.",
+    "received_at": "16 Jun 2027, 14:07 EAT",
+    "recommendation": "Award to Afya Digital Supplies Limited",
+    "recommended": {
+     "bid": "BID-MOH-2027-033-001",
+     "bid_version": "Submitted version 1",
+     "evaluated": "KES 46,400,000",
+     "quantity": "250 Each",
+     "submitted": "KES 46,400,000",
+     "supplier": "Afya Digital Supplies Limited",
+     "warranty": "36 months"
+    },
+    "signatures": "3 of 3",
+    "source_problem": "",
+    "state": "Current",
+    "tie": false,
+    "valid_until": "10 Oct 2027, 11:00 EAT",
+    "version": 1,
+    "versions": [
+     {
+      "label": "Evaluation report 1",
+      "received_at": "16 Jun 2027, 14:07 EAT",
+      "state": "Current"
+     }
+    ]
+   },
+   "returned": null,
+   "revised": null,
+   "source_kind": "Synthetic",
+   "stage": "Waiting to proceed",
+   "tender_reference": "TND-MOH-2027-033",
+   "tender_title": "Supply and delivery of business laptops",
+   "test_environment": "Test environment — no live award notices are sent.",
+   "validity_rule": "Submission deadline date plus the published validity days",
+   "viewer": {
+    "ao": true,
+    "auditor": false,
+    "hop": false,
+    "technical": false
+   }
+  },
+  "workspace": {
+   "ok": true,
+   "tasks": [],
+   "test_environment": "Test environment — no live award notices are sent."
+  }
+ },
+ "daniel": {
+  "record": {
+   "award": "AWD-MOH-2027-033",
+   "holder_name": "Daniel Otieno",
+   "ok": true,
+   "operations": [],
+   "record_version": 10,
+   "stage": "Waiting to proceed",
+   "technical": true
+  },
+  "workspace": {
+   "ok": true,
+   "tasks": [],
+   "technical": true
+  }
+ },
+ "david": {
+  "AWD-MOH-2027-033-NB-01-01": {
+   "accept_wording": "I accept Award notice 1 on behalf of Afya Digital Supplies Limited.",
+   "amount": "KES 46,400,000",
+   "award_amount": "KES 46,400,000",
+   "can_respond": false,
+   "current": true,
+   "is_signatory": false,
+   "letter_html": "<article class=\"kt-award-letter\"><p>Ministry of Health</p><h1>Your tender was successful.</h1><p>To Afya Digital Supplies Limited</p><table><tbody><tr><th>Tender</th><td>TND-MOH-2027-033 — Supply and delivery of business laptops</td></tr><tr><th>Notice</th><td>Award notice 1</td></tr><tr><th>Result</th><td>Successful</td></tr><tr><th>Successful supplier</th><td>Afya Digital Supplies Limited</td></tr><tr><th>Award amount</th><td>KES 46,400,000</td></tr><tr><th>Reply by</th><td>24 Jun 2027, 17:00 EAT</td></tr></tbody></table><p>The signed evaluation report identifies your tender as the lowest evaluated responsive tender.</p><p><strong>Accepting this award does not create a contract.</strong></p><p>You may ask the procuring entity to explain this result. A request for an explanation is not a request for review and does not change any period. A formal request for review is made to the Public Procurement Administrative Review Board within the period the Act allows.</p></article>",
+   "next_step": {
+    "headline": "You declined this award.",
+    "kind": "done",
+    "sentence": ""
+   },
+   "not_a_contract": "Accepting this award does not create a contract.",
+   "notice": "AWD-MOH-2027-033-NB-01-01",
+   "notice_label": "Award notice 1",
+   "notice_version": 1,
+   "ok": true,
+   "organisation": "qmqnoe137p",
+   "organisation_name": "Afya Digital Supplies Limited",
+   "own_amount": "",
+   "own_evaluated": "",
+   "procuring_entity": "Ministry of Health",
+   "reason": "The signed evaluation report identifies your tender as the lowest evaluated responsive tender.",
+   "reply_deadline": "24 Jun 2027, 17:00 EAT",
+   "requests": [],
+   "responses": [
+    {
+     "by": "Mary Wanjiku",
+     "late": false,
+     "reason": "We cannot meet the delivery commitment.",
+     "received_at": "18 Jun 2027, 09:00 EAT",
+     "response": "Decline",
+     "wording": "I decline Award notice 1 on behalf of Afya Digital Supplies Limited."
+    }
+   ],
+   "result": "Successful",
+   "review_information": "You may ask the procuring entity to explain this result. A request for an explanation is not a request for review and does not change any period. A formal request for review is made to the Public Procurement Administrative Review Board within the period the Act allows.",
+   "signatory_name": "Mary Wanjiku",
+   "statement": "Your tender was successful.",
+   "successful_supplier": "",
+   "tender_reference": "TND-MOH-2027-033",
+   "tender_title": "Supply and delivery of business laptops",
+   "test_environment": "Test environment — no live award notices are sent."
+  }
+ },
+ "hop": {
+  "record": {
+   "actions": {
+    "authorise_revised": false,
+    "award_supported": false,
+    "correct_contact": true,
+    "correction_proposals": false,
+    "decide": false,
+    "decide_correction": false,
+    "record_outcome": true,
+    "record_restriction": true,
+    "respond_request": true,
+    "retry_operation": false,
+    "return_report": false,
+    "save_opinion": false,
+    "sign_opinion": false
+   },
+   "award": "AWD-MOH-2027-033",
+   "cancelled": false,
+   "closed_reason": null,
+   "correspondence": [],
+   "cycle": {
+    "authorising": null,
+    "awaiting_report": false,
+    "number": 1,
+    "outcome": "",
+    "predecessor": null,
+    "stage": "Waiting to proceed"
+   },
+   "decision": {
+    "amount": "KES 46,400,000",
+    "at": "17 Jun 2027, 10:00 EAT",
+    "by": "Amina Hassan",
+    "committed": true,
+    "cycle": 1,
+    "evaluated": "KES 46,400,000",
+    "id": "AWD-MOH-2027-033-DEC-01",
+    "kind": "Initial",
+    "label": "Award decision",
+    "next_action": null,
+    "next_owner": "",
+    "notices_authorised": true,
+    "outcome": "Award",
+    "reason": "I accept the recommendation in the signed evaluation report and professional opinion.",
+    "supplier": "Afya Digital Supplies Limited",
+    "version": 1
+   },
+   "decision_status": "Award recorded",
+   "eligibility": {
+    "1": {
+     "met": true
+    },
+    "2": {
+     "met": true
+    },
+    "3": {
+     "met": false
+    },
+    "4": {
+     "met": false
+    },
+    "5": {
+     "met": true
+    },
+    "6": {
+     "met": false
+    },
+    "7": {
+     "met": false
+    }
+   },
+   "guidance": {
+    "answer": {
+     "blockers": [],
+     "fixes": [],
+     "headline": "Review the supplier’s response.",
+     "holder": null,
+     "kind": "your_turn",
+     "label": "Your turn",
+     "primary_action": "record_next_action:AWD-MOH-2027-033-ISS-01",
+     "sentence": "",
+     "since": null,
+     "stage": ""
+    },
+    "journey": {
+     "code": "DDDBN",
+     "current": "wait",
+     "downstream": null,
+     "reduced": false,
+     "reduced_parts": {
+      "label": "Acceptance and wait (blocked)",
+      "prefix": "",
+      "suffix": " · 4 of 5"
+     },
+     "reduced_style": "position",
+     "reduced_text": "Acceptance and wait (blocked) · 4 of 5",
+     "stages": [
+      {
+       "code": "opinion",
+       "holder": "",
+       "label": "Opinion",
+       "marker": "done",
+       "marker_label": "Done"
+      },
+      {
+       "code": "decision",
+       "holder": "",
+       "label": "Decision",
+       "marker": "done",
+       "marker_label": "Done"
+      },
+      {
+       "code": "notices",
+       "holder": "",
+       "label": "Notices",
+       "marker": "done",
+       "marker_label": "Done"
+      },
+      {
+       "code": "wait",
+       "holder": "",
+       "label": "Acceptance and wait",
+       "marker": "blocked",
+       "marker_label": "Blocked"
+      },
+      {
+       "code": "send",
+       "holder": "",
+       "label": "Send to Contracting",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      }
+     ],
+     "upstream": null
+    }
+   },
+   "history": [
+    {
+     "cycle": 1,
+     "decisions": [
+      {
+       "amount": "KES 46,400,000",
+       "at": "17 Jun 2027, 10:00 EAT",
+       "by": "Amina Hassan",
+       "committed": true,
+       "cycle": 1,
+       "evaluated": "KES 46,400,000",
+       "id": "AWD-MOH-2027-033-DEC-01",
+       "kind": "Initial",
+       "label": "Award decision",
+       "next_action": null,
+       "next_owner": "",
+       "notices_authorised": true,
+       "outcome": "Award",
+       "reason": "I accept the recommendation in the signed evaluation report and professional opinion.",
+       "supplier": "Afya Digital Supplies Limited",
+       "version": 1
+      }
+     ],
+     "opinions": [
+      {
+       "author": "Charles Mutiso",
+       "conclusion": "Recommend award",
+       "cycle": 1,
+       "id": "AWD-MOH-2027-033-OP-01",
+       "label": "Professional opinion 1",
+       "proof_label": "Test attestation — not an electronic signature",
+       "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
+       "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
+       "signing_outcome": "Accepted/Verified",
+       "state": "Signed",
+       "version": 1
+      }
+     ],
+     "outcome": "",
+     "stage": "Waiting to proceed"
+    }
+   ],
+   "notices": {
+    "batch": {
+     "all_given": true,
+     "id": "AWD-MOH-2027-033-NB-01",
+     "issued_at": "17 Jun 2027, 10:00 EAT",
+     "kind": "Initial",
+     "label": "Award notice 1",
+     "reply_deadline": "24 Jun 2027, 17:00 EAT",
+     "status": "Issued"
+    },
+    "earliest": "2 Jul 2027, 09:00 EAT",
+    "late": [],
+    "preview": [],
+    "recipients": [
+     {
+      "attempts": 1,
+      "channel": "Email",
+      "contact": "tenders@afyadigital.example",
+      "delivery": "Given",
+      "given_at": "17 Jun 2027, 10:00 EAT",
+      "label": "Award notice 1",
+      "last_attempt": "Delivered",
+      "notice": "AWD-MOH-2027-033-NB-01-01",
+      "owner": "",
+      "reason": "",
+      "recipient": "Afya Digital Supplies Limited",
+      "result": "Successful",
+      "status": "Given"
+     }
+    ],
+    "response": {
+     "at": "18 Jun 2027, 09:00 EAT",
+     "by": "Mary Wanjiku",
+     "reason": "We cannot meet the delivery commitment.",
+     "response": "Decline",
+     "wording": "I decline Award notice 1 on behalf of Afya Digital Supplies Limited."
+    }
+   },
+   "notification_status": "Issued",
+   "ok": true,
+   "opinion": {
+    "all": [
+     {
+      "author": "Charles Mutiso",
+      "conclusion": "Recommend award",
+      "cycle": 1,
+      "id": "AWD-MOH-2027-033-OP-01",
+      "label": "Professional opinion 1",
+      "proof_label": "Test attestation — not an electronic signature",
+      "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
+      "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
+      "signing_outcome": "Accepted/Verified",
+      "state": "Signed",
+      "version": 1
+     }
+    ],
+    "signed": {
+     "author": "Charles Mutiso",
+     "conclusion": "Recommend award",
+     "cycle": 1,
+     "id": "AWD-MOH-2027-033-OP-01",
+     "label": "Professional opinion 1",
+     "proof_label": "Test attestation — not an electronic signature",
+     "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
+     "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
+     "signing_outcome": "Accepted/Verified",
+     "state": "Signed",
+     "version": 1
+    },
+    "working": null
+   },
+   "outcome": "",
+   "outstanding": [
+    {
+     "basis": "",
+     "effective_at": "18 Jun 2027, 09:00 EAT",
+     "external_owner": "",
+     "holds": true,
+     "issue": "AWD-MOH-2027-033-ISS-01",
+     "outcomes": [
+      "Request decision review"
+     ],
+     "owner": "Charles Mutiso",
+     "proposal": null,
+     "reason": "We cannot meet the delivery commitment.",
+     "received_at": "18 Jun 2027, 09:00 EAT",
+     "source": "",
+     "subtype": "Declined",
+     "title": "Review the supplier’s response.",
+     "type": "Supplier response"
+    }
+   ],
+   "package": null,
+   "procuring_entity": "Ministry of Health",
+   "record_version": 10,
+   "report": {
+    "committee": [
+     "Grace Wambui",
+     "Peter Mugo",
+     "Ruth Achieng"
+    ],
+    "comparison": [
+     {
+      "amount": "KES 46,400,000",
+      "position": "1",
+      "submitted": "KES 46,400,000",
+      "tenderer": "Afya Digital Supplies Limited"
+     }
+    ],
+    "dissent": [],
+    "funding": {
+     "available": "50000000.00",
+     "qualification": "",
+     "shortfall": "0.00",
+     "source": "Budget confirmation"
+    },
+    "id": "AWD-MOH-2027-033-RPT-01",
+    "label": "Evaluation report 1",
+    "outcome": "Recommendation",
+    "qualifications": [],
+    "reason": "The only bid received meets the published requirements.",
+    "received_at": "16 Jun 2027, 14:07 EAT",
+    "recommendation": "Award to Afya Digital Supplies Limited",
+    "recommended": {
+     "bid": "BID-MOH-2027-033-001",
+     "bid_version": "Submitted version 1",
+     "evaluated": "KES 46,400,000",
+     "quantity": "250 Each",
+     "submitted": "KES 46,400,000",
+     "supplier": "Afya Digital Supplies Limited",
+     "warranty": "36 months"
+    },
+    "signatures": "3 of 3",
+    "source_problem": "",
+    "state": "Current",
+    "tie": false,
+    "valid_until": "10 Oct 2027, 11:00 EAT",
+    "version": 1,
+    "versions": [
+     {
+      "label": "Evaluation report 1",
+      "received_at": "16 Jun 2027, 14:07 EAT",
+      "state": "Current"
+     }
+    ]
+   },
+   "returned": null,
+   "revised": null,
+   "source_kind": "Synthetic",
+   "stage": "Waiting to proceed",
+   "tender_reference": "TND-MOH-2027-033",
+   "tender_title": "Supply and delivery of business laptops",
+   "test_environment": "Test environment — no live award notices are sent.",
+   "validity_rule": "Submission deadline date plus the published validity days",
+   "viewer": {
+    "ao": false,
+    "auditor": false,
+    "hop": true,
+    "technical": false
+   }
+  },
+  "workspace": {
+   "ok": true,
+   "tasks": [
+    {
+     "award": "AWD-MOH-2027-033",
+     "holder": "Charles Mutiso",
+     "task": "Resolve supplier response",
+     "tender_reference": "TND-MOH-2027-033",
+     "tender_title": "Supply and delivery of business laptops"
+    }
+   ],
+   "test_environment": "Test environment — no live award notices are sent."
+  }
+ },
+ "info": {
+  "award": "AWD-MOH-2027-033",
+  "instant": "2027-06-18 10:00:00",
+  "notice": "AWD-MOH-2027-033-NB-01-01",
+  "notices": {
+   "Afya Digital Supplies Limited": "AWD-MOH-2027-033-NB-01-01"
+  },
+  "requests": [],
+  "stage": "declined",
+  "tender_reference": "TND-MOH-2027-033"
+ },
+ "mary": {
+  "AWD-MOH-2027-033-NB-01-01": {
+   "accept_wording": "I accept Award notice 1 on behalf of Afya Digital Supplies Limited.",
+   "amount": "KES 46,400,000",
+   "award_amount": "KES 46,400,000",
+   "can_respond": false,
+   "current": true,
+   "is_signatory": true,
+   "letter_html": "<article class=\"kt-award-letter\"><p>Ministry of Health</p><h1>Your tender was successful.</h1><p>To Afya Digital Supplies Limited</p><table><tbody><tr><th>Tender</th><td>TND-MOH-2027-033 — Supply and delivery of business laptops</td></tr><tr><th>Notice</th><td>Award notice 1</td></tr><tr><th>Result</th><td>Successful</td></tr><tr><th>Successful supplier</th><td>Afya Digital Supplies Limited</td></tr><tr><th>Award amount</th><td>KES 46,400,000</td></tr><tr><th>Reply by</th><td>24 Jun 2027, 17:00 EAT</td></tr></tbody></table><p>The signed evaluation report identifies your tender as the lowest evaluated responsive tender.</p><p><strong>Accepting this award does not create a contract.</strong></p><p>You may ask the procuring entity to explain this result. A request for an explanation is not a request for review and does not change any period. A formal request for review is made to the Public Procurement Administrative Review Board within the period the Act allows.</p></article>",
+   "next_step": {
+    "headline": "You declined this award.",
+    "kind": "done",
+    "sentence": ""
+   },
+   "not_a_contract": "Accepting this award does not create a contract.",
+   "notice": "AWD-MOH-2027-033-NB-01-01",
+   "notice_label": "Award notice 1",
+   "notice_version": 1,
+   "ok": true,
+   "organisation": "qmqnoe137p",
+   "organisation_name": "Afya Digital Supplies Limited",
+   "own_amount": "",
+   "own_evaluated": "",
+   "procuring_entity": "Ministry of Health",
+   "reason": "The signed evaluation report identifies your tender as the lowest evaluated responsive tender.",
+   "reply_deadline": "24 Jun 2027, 17:00 EAT",
+   "requests": [],
+   "responses": [
+    {
+     "by": "Mary Wanjiku",
+     "late": false,
+     "reason": "We cannot meet the delivery commitment.",
+     "received_at": "18 Jun 2027, 09:00 EAT",
+     "response": "Decline",
+     "wording": "I decline Award notice 1 on behalf of Afya Digital Supplies Limited."
+    }
+   ],
+   "result": "Successful",
+   "review_information": "You may ask the procuring entity to explain this result. A request for an explanation is not a request for review and does not change any period. A formal request for review is made to the Public Procurement Administrative Review Board within the period the Act allows.",
+   "signatory_name": "",
+   "statement": "Your tender was successful.",
+   "successful_supplier": "",
+   "tender_reference": "TND-MOH-2027-033",
+   "tender_title": "Supply and delivery of business laptops",
+   "test_environment": "Test environment — no live award notices are sent."
+  }
+ },
+ "naomi": {
+  "record": {
+   "actions": {
+    "authorise_revised": false,
+    "award_supported": false,
+    "correct_contact": false,
+    "correction_proposals": false,
+    "decide": false,
+    "decide_correction": false,
+    "record_outcome": false,
+    "record_restriction": false,
+    "respond_request": false,
+    "retry_operation": false,
+    "return_report": false,
+    "save_opinion": false,
+    "sign_opinion": false
+   },
+   "award": "AWD-MOH-2027-033",
+   "cancelled": false,
+   "closed_reason": null,
+   "correspondence": [],
+   "cycle": {
+    "authorising": null,
+    "awaiting_report": false,
+    "number": 1,
+    "outcome": "",
+    "predecessor": null,
+    "stage": "Waiting to proceed"
+   },
+   "decision": {
+    "amount": "KES 46,400,000",
+    "at": "17 Jun 2027, 10:00 EAT",
+    "by": "Amina Hassan",
+    "committed": true,
+    "cycle": 1,
+    "evaluated": "KES 46,400,000",
+    "id": "AWD-MOH-2027-033-DEC-01",
+    "kind": "Initial",
+    "label": "Award decision",
+    "next_action": null,
+    "next_owner": "",
+    "notices_authorised": true,
+    "outcome": "Award",
+    "reason": "I accept the recommendation in the signed evaluation report and professional opinion.",
+    "supplier": "Afya Digital Supplies Limited",
+    "version": 1
+   },
+   "decision_status": "Award recorded",
+   "eligibility": {
+    "1": {
+     "met": true
+    },
+    "2": {
+     "met": true
+    },
+    "3": {
+     "met": false
+    },
+    "4": {
+     "met": false
+    },
+    "5": {
+     "met": true
+    },
+    "6": {
+     "met": false
+    },
+    "7": {
+     "met": false
+    }
+   },
+   "guidance": {
+    "answer": {
+     "blockers": [],
+     "fixes": [],
+     "headline": "",
+     "holder": null,
+     "kind": "not_involved",
+     "label": "",
+     "primary_action": "",
+     "sentence": "",
+     "since": null,
+     "stage": ""
+    },
+    "journey": {
+     "code": "DDDBN",
+     "current": "wait",
+     "downstream": null,
+     "reduced": false,
+     "reduced_parts": {
+      "label": "Acceptance and wait (blocked)",
+      "prefix": "",
+      "suffix": " · 4 of 5"
+     },
+     "reduced_style": "position",
+     "reduced_text": "Acceptance and wait (blocked) · 4 of 5",
+     "stages": [
+      {
+       "code": "opinion",
+       "holder": "",
+       "label": "Opinion",
+       "marker": "done",
+       "marker_label": "Done"
+      },
+      {
+       "code": "decision",
+       "holder": "",
+       "label": "Decision",
+       "marker": "done",
+       "marker_label": "Done"
+      },
+      {
+       "code": "notices",
+       "holder": "",
+       "label": "Notices",
+       "marker": "done",
+       "marker_label": "Done"
+      },
+      {
+       "code": "wait",
+       "holder": "",
+       "label": "Acceptance and wait",
+       "marker": "blocked",
+       "marker_label": "Blocked"
+      },
+      {
+       "code": "send",
+       "holder": "",
+       "label": "Send to Contracting",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      }
+     ],
+     "upstream": null
+    }
+   },
+   "history": [
+    {
+     "cycle": 1,
+     "decisions": [
+      {
+       "amount": "KES 46,400,000",
+       "at": "17 Jun 2027, 10:00 EAT",
+       "by": "Amina Hassan",
+       "committed": true,
+       "cycle": 1,
+       "evaluated": "KES 46,400,000",
+       "id": "AWD-MOH-2027-033-DEC-01",
+       "kind": "Initial",
+       "label": "Award decision",
+       "next_action": null,
+       "next_owner": "",
+       "notices_authorised": true,
+       "outcome": "Award",
+       "reason": "I accept the recommendation in the signed evaluation report and professional opinion.",
+       "supplier": "Afya Digital Supplies Limited",
+       "version": 1
+      }
+     ],
+     "opinions": [
+      {
+       "author": "Charles Mutiso",
+       "conclusion": "Recommend award",
+       "cycle": 1,
+       "id": "AWD-MOH-2027-033-OP-01",
+       "label": "Professional opinion 1",
+       "proof_label": "Test attestation — not an electronic signature",
+       "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
+       "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
+       "signing_outcome": "Accepted/Verified",
+       "state": "Signed",
+       "version": 1
+      }
+     ],
+     "outcome": "",
+     "stage": "Waiting to proceed"
+    }
+   ],
+   "notices": {
+    "batch": {
+     "all_given": true,
+     "id": "AWD-MOH-2027-033-NB-01",
+     "issued_at": "17 Jun 2027, 10:00 EAT",
+     "kind": "Initial",
+     "label": "Award notice 1",
+     "reply_deadline": "24 Jun 2027, 17:00 EAT",
+     "status": "Issued"
+    },
+    "earliest": "2 Jul 2027, 09:00 EAT",
+    "late": [],
+    "preview": [],
+    "recipients": [
+     {
+      "attempts": 1,
+      "channel": "Email",
+      "contact": "tenders@afyadigital.example",
+      "delivery": "Given",
+      "given_at": "17 Jun 2027, 10:00 EAT",
+      "label": "Award notice 1",
+      "last_attempt": "Delivered",
+      "notice": "AWD-MOH-2027-033-NB-01-01",
+      "owner": "",
+      "reason": "",
+      "recipient": "Afya Digital Supplies Limited",
+      "result": "Successful",
+      "status": "Given"
+     }
+    ],
+    "response": {
+     "at": "18 Jun 2027, 09:00 EAT",
+     "by": "Mary Wanjiku",
+     "reason": "We cannot meet the delivery commitment.",
+     "response": "Decline",
+     "wording": "I decline Award notice 1 on behalf of Afya Digital Supplies Limited."
+    }
+   },
+   "notification_status": "Issued",
+   "ok": true,
+   "opinion": {
+    "all": [
+     {
+      "author": "Charles Mutiso",
+      "conclusion": "Recommend award",
+      "cycle": 1,
+      "id": "AWD-MOH-2027-033-OP-01",
+      "label": "Professional opinion 1",
+      "proof_label": "Test attestation — not an electronic signature",
+      "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
+      "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
+      "signing_outcome": "Accepted/Verified",
+      "state": "Signed",
+      "version": 1
+     }
+    ],
+    "signed": {
+     "author": "Charles Mutiso",
+     "conclusion": "Recommend award",
+     "cycle": 1,
+     "id": "AWD-MOH-2027-033-OP-01",
+     "label": "Professional opinion 1",
+     "proof_label": "Test attestation — not an electronic signature",
+     "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
+     "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
+     "signing_outcome": "Accepted/Verified",
+     "state": "Signed",
+     "version": 1
+    },
+    "working": null
+   },
+   "outcome": "",
+   "outstanding": [
+    {
+     "basis": "",
+     "effective_at": "18 Jun 2027, 09:00 EAT",
+     "external_owner": "",
+     "holds": true,
+     "issue": "AWD-MOH-2027-033-ISS-01",
+     "outcomes": [
+      "Request decision review"
+     ],
+     "owner": "Charles Mutiso",
+     "proposal": null,
+     "reason": "We cannot meet the delivery commitment.",
+     "received_at": "18 Jun 2027, 09:00 EAT",
+     "source": "",
+     "subtype": "Declined",
+     "title": "Review the supplier’s response.",
+     "type": "Supplier response"
+    }
+   ],
+   "package": null,
+   "procuring_entity": "Ministry of Health",
+   "record_version": 10,
+   "report": {
+    "committee": [
+     "Grace Wambui",
+     "Peter Mugo",
+     "Ruth Achieng"
+    ],
+    "comparison": [
+     {
+      "amount": "KES 46,400,000",
+      "position": "1",
+      "submitted": "KES 46,400,000",
+      "tenderer": "Afya Digital Supplies Limited"
+     }
+    ],
+    "dissent": [],
+    "funding": {
+     "available": "50000000.00",
+     "qualification": "",
+     "shortfall": "0.00",
+     "source": "Budget confirmation"
+    },
+    "id": "AWD-MOH-2027-033-RPT-01",
+    "label": "Evaluation report 1",
+    "outcome": "Recommendation",
+    "qualifications": [],
+    "reason": "The only bid received meets the published requirements.",
+    "received_at": "16 Jun 2027, 14:07 EAT",
+    "recommendation": "Award to Afya Digital Supplies Limited",
+    "recommended": {
+     "bid": "BID-MOH-2027-033-001",
+     "bid_version": "Submitted version 1",
+     "evaluated": "KES 46,400,000",
+     "quantity": "250 Each",
+     "submitted": "KES 46,400,000",
+     "supplier": "Afya Digital Supplies Limited",
+     "warranty": "36 months"
+    },
+    "signatures": "3 of 3",
+    "source_problem": "",
+    "state": "Current",
+    "tie": false,
+    "valid_until": "10 Oct 2027, 11:00 EAT",
+    "version": 1,
+    "versions": [
+     {
+      "label": "Evaluation report 1",
+      "received_at": "16 Jun 2027, 14:07 EAT",
+      "state": "Current"
+     }
+    ]
+   },
+   "returned": null,
+   "revised": null,
+   "source_kind": "Synthetic",
+   "stage": "Waiting to proceed",
+   "tender_reference": "TND-MOH-2027-033",
+   "tender_title": "Supply and delivery of business laptops",
+   "test_environment": "Test environment — no live award notices are sent.",
+   "validity_rule": "Submission deadline date plus the published validity days",
+   "viewer": {
+    "ao": false,
+    "auditor": true,
+    "hop": false,
+    "technical": false
+   }
+  },
+  "workspace": {
+   "ok": true,
+   "tasks": [],
+   "test_environment": "Test environment — no live award notices are sent."
+  }
+ }
+}

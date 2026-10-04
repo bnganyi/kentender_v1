@@ -1,0 +1,312 @@
+<script setup>
+// BDS-CHG-001 v0.8 §10.10 BDS-DES-09 — Requirements and supporting evidence,
+// ported from "Bid Board v3 - C" (1440 tables; 390 labelled cards). The task
+// read groups the published requirements by the definition's compositions
+// and decides each row's response, files and state, what must be fixed and
+// each region's link state. A requirement row opens the response drawer; a
+// file is its own command; Save and continue saves the offered-goods form and
+// opens the next task. A refusal is named in place; typed entries survive
+// re-reads.
+import { computed, inject, onMounted, onUnmounted, reactive, ref, watch } from "vue";
+import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
+import CommonState from "../components/CommonState.vue";
+import NotifySignatory from "../components/NotifySignatory.vue";
+import TaskStepper from "../components/TaskStepper.vue";
+import AttachmentCount from "../components/AttachmentCount.vue";
+import FieldControl from "../components/FieldControl.vue";
+import ResponseDrawer from "../components/ResponseDrawer.vue";
+import { fixRoute } from "../composables/fixRoute.js";
+import { useNarrow } from "../composables/useNarrow.js";
+import { arrive, destinationOf } from "../composables/saveDestination.js";
+
+const READ = "kentender_procurement.bid_submission.api.get_bid_task";
+const SAVE = "kentender_procurement.bid_submission.api.save_bid_task";
+const props = defineProps({
+	initial: { type: Object, default: null },
+	reference: { type: String, required: true },
+});
+const emit = defineEmits(["not-found"]);
+const portal = inject("portal");
+const { route, go, epoch } = portal.useRoute({ ref, onMounted, onUnmounted });
+const narrow = useNarrow();
+const data = ref(null);
+// the server says whether this Draft can change now (closed, or its bound
+// release withdrawn): read-only fields and no Save and continue otherwise
+const canEdit = computed(() => !data.value || !data.value.bid || data.value.bid.editable !== false);
+const failure = ref("");
+const errors = ref({});
+const drawer = ref(null);
+const goods = reactive({});
+const guard = portal.createSequenceGuard();
+const runner = portal.createCommandRunner({ ref }, { onError: (e) => (failure.value = e.message) });
+const pending = computed(() => runner.pending.value);
+const bid = computed(() => (data.value ? { reference: data.value.bid.reference, record_version: data.value.bid.record_version } : null));
+// Column widths in percent, one set per table, so the Status and Action columns
+// share their edges down the page and no header wraps. Each set adds up to 100. The acceptance terms sit in their own
+// inset panel with a longer status ("Not accepted yet"), so they take wider Status and Action columns.
+const COLUMNS = { technical: [22, 26, 17, 15, 11, 9], warranty: [48, 17, 15, 11, 9], acceptance: [42, 26, 20, 12], evidence: [48, 32, 11, 9], experience: [22, 26, 17, 26, 9] };
+// What the person does with a row: respond to it first, edit it after, view it when the bid cannot change
+// An acceptance term is confirmed, not answered: Confirm until accepted, Review after, View when the bid cannot change
+function termAction(row) {
+	if (!canEdit.value) return "View";
+	return row.accepted ? "Review" : "Confirm";
+}
+function actionLabel(row) {
+	if (!canEdit.value) return "View";
+	return row.status === "Not started" ? "Respond" : "Edit";
+}
+const rows = computed(() => (data.value ? [...data.value.technical, ...data.value.warranty, ...(data.value.experience ? data.value.experience.rows : []), ...data.value.acceptance, ...data.value.evidence] : []));
+
+function goodsChanges() {
+	const fields = (data.value && data.value.goods && data.value.goods.fields) || [];
+	return Object.fromEntries(fields.filter((f) => f.editable && f.kind !== "evidence" && JSON.stringify(goods[f.handle]) !== JSON.stringify(f.value)).map((f) => [f.handle, goods[f.handle]]));
+}
+function adopt(result) {
+	const unsaved = data.value ? goodsChanges() : {};
+	data.value = result;
+	for (const key of Object.keys(goods)) delete goods[key];
+	for (const f of (result.goods && result.goods.fields) || []) goods[f.handle] = f.handle in unsaved ? unsaved[f.handle] : f.value;
+}
+if (props.initial) adopt(props.initial);
+
+function read() {
+	return portal.call(READ, { tender_reference: props.reference, bid_reference: "", task: "requirements", organisation: route.value.query.organisation || "" });
+}
+async function load() {
+	const token = guard.next();
+	try {
+		const result = await read();
+		if (!guard.isCurrent(token)) return;
+		if (result && result.outcome === "NOT_FOUND") {
+			emit("not-found");
+			return;
+		}
+		adopt(result);
+		failure.value = "";
+		openLinked();
+	} catch (e) {
+		if (guard.isCurrent(token)) failure.value = e.message;
+	}
+}
+function open(key) {
+	drawer.value = rows.value.find((row) => row.key === key) || null;
+}
+// An exact issue link (`?item=` from Review bid) opens that row's drawer once.
+let linked = "";
+function openLinked() {
+	const item = route.value.query.item || "";
+	if (!item || item === linked || !rows.value.some((row) => row.key === item)) return;
+	linked = item;
+	open(item);
+}
+async function afterDrawer() {
+	drawer.value = null;
+	await load();
+}
+async function drawerChanged() {
+	await load();
+	if (drawer.value) open(drawer.value.key);
+}
+function saveAndContinue() {
+	failure.value = "";
+	errors.value = {};
+	const answers = goodsChanges();
+	const destination = destinationOf(data.value.footer);
+	if (!Object.keys(answers).length) return arrive(destination, { go, load });
+	return runner.run(async () => {
+		const result = await portal.call(SAVE, { bid_reference: data.value.bid.reference, task: "requirements", values: JSON.stringify(answers), expected_record_version: data.value.bid.record_version, idempotency_key: `bds-requirements-${Date.now().toString(36)}` }, { type: "POST" });
+		if (result && result.ok) await arrive(destination, { go, load });
+		else if (result && result.errors) errors.value = result.errors;
+		else if (result) failure.value = result.message || "";
+	}, "Save and continue");
+}
+function onFix(fix) {
+	const href = fixRoute(fix, props.reference);
+	if (href && href !== route.value.path) go(href);
+	else if (data.value.attention && data.value.attention.items.length) open(data.value.attention.items[0].key);
+}
+watch(epoch, () => load());
+onMounted(() => {
+	portal.setTitle(__("Requirements and supporting evidence"));
+	if (!data.value) load();
+	else openLinked();
+});
+</script>
+
+<template>
+	<div v-if="data" class="kt-page" data-testid="bds-requirements-task">
+		<TaskStepper v-if="data.step" :step="data.step" />
+		<div class="kt-page-head">
+			<div class="bds-head-main">
+				<a :href="data.page.back_href" class="bds-back"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>{{ __("Back to bid") }}</a>
+				<div class="bds-title-row">
+					<h1 class="kt-page-title">{{ __(data.page.title) }}</h1>
+					<span class="kt-status" :class="'is-' + data.badge.tone" data-testid="bds-requirements-badge">{{ data.badge.label }}</span>
+				</div>
+				<p class="kt-page-desc">{{ __(data.page.description) }}</p>
+			</div>
+		</div>
+
+		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
+
+		<NotifySignatory v-if="data.handover && data.bid" :handover="data.handover" :bid="data.bid" :organisation="route.query.organisation || ''" @sent="load" />
+
+		<div v-if="data.attention" class="kt-notice" :class="data.attention.tone === 'critical' ? 'is-critical' : 'is-warning'" role="status" data-testid="bds-requirements-attention">
+			<svg class="kt-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
+			<div class="kt-notice-body">
+				<strong>{{ data.attention.title }}</strong>
+				<div v-for="item in data.attention.items" :key="item.key"><button type="button" class="bds-link-button" @click="open(item.key)">{{ item.label }}</button></div>
+			</div>
+		</div>
+
+		<nav class="bds-section-nav" :aria-label="__('Requirement groups')" data-testid="bds-requirements-nav">
+			<a v-for="section in data.sections" :key="section.key" :href="'#bds-region-' + section.key" class="bds-section-link"><span class="bds-section-name">{{ __(section.label) }}</span><span class="bds-section-state" :class="'is-' + section.tone">{{ section.status }}</span></a>
+			<a href="#kt-portal-main" class="bds-section-top" data-testid="bds-section-top">↑ {{ __("Top") }}</a>
+		</nav>
+
+		<div v-if="data.goods" id="bds-region-goods" class="kt-region">
+			<h2>{{ __("Offered goods") }}</h2>
+			<div class="bds-region-body">
+				<div class="bds-grid-2">
+					<template v-for="field in data.goods.fields" :key="field.handle">
+						<FieldControl v-if="field.kind !== 'evidence'" v-model="goods[field.handle]" :field="field" :error="errors[field.handle] || ''" :bid="bid" id-prefix="bds-goods" @changed="load" />
+					</template>
+					<div v-for="fact in data.goods.published" :key="fact.label" class="bds-drawer-fact"><span class="kt-label">{{ fact.label }}</span><span>{{ fact.value }}</span></div>
+				</div>
+				<template v-for="field in data.goods.fields" :key="'goods-proof-' + field.handle">
+					<FieldControl v-if="field.kind === 'evidence'" :model-value="field.value" :field="field" :bid="bid" id-prefix="bds-goods" @changed="load" />
+				</template>
+			</div>
+		</div>
+
+		<template v-for="table in [['technical', 'Technical requirements'], ['warranty', 'Warranty and support']]" :key="table[0]">
+		<div v-if="data[table[0]].length" :id="'bds-region-' + table[0]" class="kt-region">
+			<h2>{{ __(table[1]) }}</h2>
+			<div class="bds-region-body">
+				<table v-if="!narrow" class="kt-table bds-fixed-table" :data-testid="'bds-' + table[0] + '-table'">
+					<colgroup><col v-for="(w, i) in COLUMNS[table[0]]" :key="i" :style="'width:' + w + '%'" /></colgroup>
+					<thead><tr><th>{{ __("Requirement") }}</th><th v-if="table[0] === 'technical'">{{ __("Tender requirement") }}</th><th>{{ __("Your response") }}</th><th>{{ __("Evidence") }}</th><th>{{ __("Status") }}</th><th>{{ __("Action") }}</th></tr></thead>
+					<tbody>
+						<tr v-for="row in data[table[0]]" :key="row.key" :data-testid="'bds-row-' + row.key">
+							<td><span class="bds-strong">{{ row.label }}</span><div v-if="table[0] === 'warranty' && row.requirement" class="bds-muted">{{ row.requirement }}</div></td>
+							<td v-if="table[0] === 'technical'">{{ row.requirement }}</td>
+							<td>{{ row.response }}</td>
+							<td><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></td>
+							<td><span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span></td>
+							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ __(actionLabel(row)) }}</button></td>
+						</tr>
+					</tbody>
+				</table>
+				<div v-else :data-testid="'bds-' + table[0] + '-cards'">
+					<div v-for="row in data[table[0]]" :key="row.key" class="bds-card" :data-testid="'bds-row-' + row.key">
+						<div class="bds-card-title">{{ row.label }}</div>
+						<div v-if="row.requirement" class="bds-card-fact"><span class="kt-label">{{ __("Tender requirement") }}</span><span>{{ row.requirement }}</span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Your response") }}</span><span>{{ row.response }}</span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Evidence") }}</span><span><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span></span></div>
+						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ __(actionLabel(row)) }}</button></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		</template>
+
+		<div v-if="data.experience" id="bds-region-experience" class="kt-region">
+			<h2>{{ __("Comparable experience") }}</h2>
+			<div class="bds-region-body">
+				<p v-if="data.experience.text" class="bds-muted">{{ data.experience.text }}</p>
+				<table v-if="!narrow" class="kt-table bds-fixed-table" data-testid="bds-experience-table">
+					<colgroup><col v-for="(w, i) in COLUMNS.experience" :key="i" :style="'width:' + w + '%'" /></colgroup>
+					<thead><tr><th>{{ __("Customer") }}</th><th>{{ __("Supply") }}</th><th>{{ __("Completion date") }}</th><th>{{ __("Evidence") }}</th><th>{{ __("Action") }}</th></tr></thead>
+					<tbody>
+						<tr v-for="row in data.experience.rows" :key="row.key" :data-testid="'bds-row-' + row.key">
+							<td class="bds-strong">{{ row.customer || row.label }}</td>
+							<td>{{ row.supply }}</td>
+							<td>{{ row.completed }}</td>
+							<td><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></td>
+							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ canEdit ? __("Edit") : __("View") }}</button></td>
+						</tr>
+					</tbody>
+				</table>
+				<div v-else data-testid="bds-experience-cards">
+					<div v-for="row in data.experience.rows" :key="row.key" class="bds-card">
+						<div class="bds-card-title">{{ row.customer || row.label }}</div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Supply") }}</span><span>{{ row.supply }}</span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Completion date") }}</span><span>{{ row.completed }}</span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Evidence") }}</span><span><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></span></div>
+						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ canEdit ? __("Edit") : __("View") }}</button></div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div v-if="data.acceptance.length" id="bds-region-acceptance" class="kt-region bds-terms" data-testid="bds-acceptance">
+			<h2>{{ __("Acceptance terms — these become part of your contract") }}</h2>
+			<div class="bds-region-body">
+				<p class="bds-muted bds-terms-intro">{{ __("Each term is applied when the goods are delivered. Confirm that you accept it and will make the stated evidence available at inspection.") }}</p>
+				<table v-if="!narrow" class="kt-table bds-fixed-table" data-testid="bds-acceptance-table">
+					<colgroup><col v-for="(w, i) in COLUMNS.acceptance" :key="i" :style="'width:' + w + '%'" /></colgroup>
+					<thead><tr><th>{{ __("Term") }}</th><th>{{ __("Evidence at inspection") }}</th><th>{{ __("Status") }}</th><th>{{ __("Action") }}</th></tr></thead>
+					<tbody>
+						<tr v-for="row in data.acceptance" :key="row.key" :data-testid="'bds-row-' + row.key">
+							<td><span class="bds-strong">{{ row.term.check || row.label }}</span><div v-if="row.term.passes_when" class="bds-muted">{{ row.term.passes_when }}</div><div v-if="row.term.applies_to && row.term.applies_to !== 'All items'" class="bds-muted">{{ __("Applies to {0}", [row.term.applies_to]) }}</div></td>
+							<td>{{ row.term.evidence }}</td>
+							<td><span class="kt-status" :class="'is-' + row.accept_tone">{{ __(row.accept_status) }}</span></td>
+							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ __(termAction(row)) }}</button></td>
+						</tr>
+					</tbody>
+				</table>
+				<div v-else data-testid="bds-acceptance-cards">
+					<div v-for="row in data.acceptance" :key="row.key" class="bds-card" :data-testid="'bds-row-' + row.key">
+						<div class="bds-card-title">{{ row.term.check || row.label }}</div>
+						<div v-if="row.term.passes_when" class="bds-card-fact"><span class="kt-label">{{ __("Passes when") }}</span><span>{{ row.term.passes_when }}</span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Evidence at inspection") }}</span><span>{{ row.term.evidence }}</span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="'is-' + row.accept_tone">{{ __(row.accept_status) }}</span></span></div>
+						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ __(termAction(row)) }}</button></div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div v-if="data.evidence.length" id="bds-region-evidence" class="kt-region">
+			<h2>{{ __("Supporting evidence") }}</h2>
+			<div class="bds-region-body">
+				<table v-if="!narrow" class="kt-table bds-fixed-table" data-testid="bds-evidence-table">
+					<colgroup><col v-for="(w, i) in COLUMNS.evidence" :key="i" :style="'width:' + w + '%'" /></colgroup>
+					<thead><tr><th>{{ __("Evidence") }}</th><th>{{ __("File") }}</th><th>{{ __("Status") }}</th><th>{{ __("Action") }}</th></tr></thead>
+					<tbody>
+						<tr v-for="row in data.evidence" :key="row.key" :data-testid="'bds-row-' + row.key">
+							<td class="bds-strong">{{ row.label }}</td>
+							<td><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></td>
+							<td><span class="kt-status" :class="'is-' + row.file_tone">{{ row.file_status }}</span></td>
+							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ !canEdit ? __("View") : row.file ? __("Edit") : __("Upload") }}</button></td>
+						</tr>
+					</tbody>
+				</table>
+				<div v-else data-testid="bds-evidence-cards">
+					<div v-for="row in data.evidence" :key="row.key" class="bds-card">
+						<div class="bds-card-title">{{ row.label }}</div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("File") }}</span><span><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="'is-' + row.file_tone">{{ row.file_status }}</span></span></div>
+						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ !canEdit ? __("View") : row.file ? __("Edit") : __("Upload") }}</button></div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure"><div class="kt-notice-body">{{ failure }}</div></div>
+
+		<div v-if="narrow" class="bds-footer-stack">
+			<button v-if="canEdit" type="button" class="kt-btn kt-btn-primary bds-btn-block" :disabled="pending" data-testid="bds-requirements-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
+			<a :href="data.page.back_href" class="kt-btn kt-btn-secondary bds-btn-block">{{ __("Back to bid") }}</a>
+		</div>
+		<div v-else class="bds-footer">
+			<a :href="data.page.back_href" class="kt-btn kt-btn-secondary">{{ __("Back to bid") }}</a>
+			<div class="bds-footer-end"><button v-if="canEdit" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-requirements-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button></div>
+		</div>
+
+		<ResponseDrawer v-if="drawer" :key="drawer.key" :group="drawer" task="requirements" :bid="bid" @close="drawer = null" @saved="afterDrawer" @changed="drawerChanged" />
+	</div>
+	<CommonState v-else-if="failure" state="load-failure" @action="load" />
+	<div v-else class="kt-page" aria-hidden="true"><div class="bds-skeleton" data-testid="bds-requirements-loading"></div></div>
+</template>

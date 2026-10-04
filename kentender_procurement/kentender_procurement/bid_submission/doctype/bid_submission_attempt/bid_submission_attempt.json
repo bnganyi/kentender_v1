@@ -1,0 +1,245 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-27 12:30:00.000000",
+ "description": "One submission attempt (plan D8): recorded and committed before the deposit, resolved to one outcome.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "correlation_id",
+  "bid_workspace",
+  "tender",
+  "attempt_kind",
+  "idempotency_key_hash",
+  "payload_hash",
+  "draft_version",
+  "package_digest",
+  "response_snapshot_digest",
+  "evidence_set_digest",
+  "signed_by",
+  "signatory_assignment",
+  "signature_ref",
+  "signature_evidence_json",
+  "summary_json",
+  "received_at",
+  "status",
+  "rejection_reference",
+  "rejection_reason",
+  "support_reference",
+  "resolved_at",
+  "submission_version",
+  "predecessor_submission_version",
+  "simulation",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "correlation_id",
+   "fieldtype": "Data",
+   "label": "Correlation",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "bid_workspace",
+   "fieldtype": "Link",
+   "label": "Bid workspace",
+   "read_only": 1,
+   "options": "Bid Workspace",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "label": "Tender",
+   "read_only": 1,
+   "options": "Tender",
+   "reqd": 1
+  },
+  {
+   "fieldname": "attempt_kind",
+   "fieldtype": "Select",
+   "label": "Attempt kind",
+   "read_only": 1,
+   "options": "Initial submission\nReplacement submission",
+   "reqd": 1,
+   "default": "Initial submission"
+  },
+  {
+   "fieldname": "idempotency_key_hash",
+   "fieldtype": "Data",
+   "label": "Request key hash",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "payload_hash",
+   "fieldtype": "Data",
+   "label": "Payload hash",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "draft_version",
+   "fieldtype": "Int",
+   "label": "Draft version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "package_digest",
+   "fieldtype": "Data",
+   "label": "Package digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "response_snapshot_digest",
+   "fieldtype": "Data",
+   "label": "Response snapshot digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "evidence_set_digest",
+   "fieldtype": "Data",
+   "label": "Evidence set digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "signed_by",
+   "fieldtype": "Link",
+   "label": "Signed by",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "signatory_assignment",
+   "fieldtype": "Data",
+   "label": "Signatory assignment",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "signature_ref",
+   "fieldtype": "Data",
+   "label": "Signature reference",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "signature_evidence_json",
+   "fieldtype": "Long Text",
+   "label": "Signature verification evidence",
+   "read_only": 1
+  },
+  {
+   "fieldname": "summary_json",
+   "fieldtype": "Long Text",
+   "label": "Receipt summary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_at",
+   "fieldtype": "Datetime",
+   "label": "Received at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Dispatching\nAccepted\nRejected\nUncertain",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "rejection_reference",
+   "fieldtype": "Data",
+   "label": "Rejection reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejection_reason",
+   "fieldtype": "Data",
+   "label": "Rejection reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "support_reference",
+   "fieldtype": "Data",
+   "label": "Support reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolved_at",
+   "fieldtype": "Datetime",
+   "label": "Resolved at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submission_version",
+   "fieldtype": "Link",
+   "label": "Submission version",
+   "read_only": 1,
+   "options": "Bid Submission Version"
+  },
+  {
+   "fieldname": "predecessor_submission_version",
+   "fieldtype": "Link",
+   "label": "Predecessor submission version",
+   "read_only": 1,
+   "options": "Bid Submission Version"
+  },
+  {
+   "fieldname": "simulation",
+   "fieldtype": "Check",
+   "label": "Simulation",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-27 12:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "name": "Bid Submission Attempt",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:correlation_id"
+}

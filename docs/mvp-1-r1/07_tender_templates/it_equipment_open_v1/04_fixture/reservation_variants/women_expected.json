@@ -1,0 +1,69 @@
+{
+  "definition_digest": "d48f3af88c852476a260e25192181ba0c2aefc9ef92a6ff71ed259083a303ba4",
+  "eligibility_mappings": [
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-RESERVATION"
+    }
+  ],
+  "expected_error": null,
+  "expected_result": "Publishable",
+  "incomplete_reason": "",
+  "input": "women_input.json",
+  "release_status": "Complete",
+  "reservation_document_anchors": [
+    "complete_tender.html#decl-reservation"
+  ],
+  "reservation_evidence_requirements": [
+    {
+      "evidence_type": "Access to Government Procurement Opportunities registration certificate",
+      "field_key": "certificate_evidence",
+      "mandatory": true
+    }
+  ],
+  "reservation_treatment": {
+    "award_reporting_treatment": "Retain the category, rule snapshot and eligibility result for the governed award and statutory reporting handoff",
+    "category": "Women",
+    "county_residents": "Not applicable",
+    "declaration_text_id": "TXT-RR-RESERVATION",
+    "eligibility_group_id": "EVG-ELIGIBILITY",
+    "overlap_treatment": "Not applicable",
+    "planning_designation_is_entitlement": false,
+    "response_ids": [
+      "RSP-f88e9f3ce2eb5a1da37cae32",
+      "RSP-dedc027ccbca95748cf203eb",
+      "RSP-a0c22f5f31acac48545d4146",
+      "RSP-fdd420f35524b059a65a14bb",
+      "RSP-d36e84ff4a8a9374df7155a8"
+    ],
+    "rule_snapshot_ids": [
+      "RULE-RES-WOMEN-V1"
+    ]
+  },
+  "response_rule_ids": [
+    "RR-ACCEPTANCE",
+    "RR-DECL-CBQ",
+    "RR-DECL-CITD",
+    "RR-DECL-CODE-OF-ETHICS",
+    "RR-DECL-FORM-OF-TENDER",
+    "RR-DECL-SD1",
+    "RR-DECL-SD2",
+    "RR-ENTITY-PROFILE",
+    "RR-EVIDENCE-AFTER-SALES",
+    "RR-EVIDENCE-DATASHEET",
+    "RR-EVIDENCE-ELIGIBILITY-DOCUMENTS",
+    "RR-EVIDENCE-MANUFACTURER-AUTHORISATION",
+    "RR-EXPERIENCE",
+    "RR-GOODS-OFFER",
+    "RR-JV-MEMBER",
+    "RR-PRICE-GOODS",
+    "RR-RESERVATION",
+    "RR-SUBMISSION",
+    "RR-SUPPLIER-DETAILS",
+    "RR-TECHNICAL",
+    "RR-TENDER-SECURITY",
+    "RR-WARRANTY-SUPPORT"
+  ],
+  "schema_version": 1
+}

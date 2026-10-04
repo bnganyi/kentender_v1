@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 20:00:00.000000",
+ "description": "Owner decision OD-C / plan D17: forces the Bid Opening test worlds on a test environment only; ignored elsewhere.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "opening_profile_down",
+  "attendance_service_down",
+  "render_outcome",
+  "notify_outcome"
+ ],
+ "fields": [
+  {
+   "fieldname": "opening_profile_down",
+   "fieldtype": "Check",
+   "label": "Opening service unavailable",
+   "description": "BOP-CHG-001 v0.10 §10 branch (6)."
+  },
+  {
+   "fieldname": "attendance_service_down",
+   "fieldtype": "Check",
+   "label": "Public attendance service unavailable",
+   "description": "BOP-CHG-001 v0.10 §10 branch (4)."
+  },
+  {
+   "fieldname": "render_outcome",
+   "fieldtype": "Select",
+   "label": "Render outcome",
+   "options": "Render\nUnreadable\nIndeterminate",
+   "default": "Render",
+   "description": "BOP-CHG-001 v0.10 §10 branch (2)."
+  },
+  {
+   "fieldname": "notify_outcome",
+   "fieldtype": "Select",
+   "label": "Support notification outcome",
+   "options": "Deliver\nFail",
+   "default": "Deliver",
+   "description": "BOP-CHG-001 v0.10 §10 branch (6)."
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-09-29 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Opening",
+ "name": "BOP Test Environment Controls",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "states": [],
+ "track_changes": 1
+}

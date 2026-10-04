@@ -1,0 +1,177 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-01 09:00:00.000000",
+ "description": "Plan D8: the versioned legal/operating profile. Only a verified profile allows positive progress (\u00a715).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "profile_id",
+  "profile_version",
+  "verified",
+  "simulation_only",
+  "reviewer",
+  "reviewed_on",
+  "reply_days",
+  "reply_time",
+  "minimum_wait_days",
+  "earliest_time",
+  "timezone",
+  "calendar",
+  "channels",
+  "giving_rule",
+  "audience_rule",
+  "debrief_rule",
+  "revised_notice_treatment",
+  "contracting_owner",
+  "technical_operator"
+ ],
+ "fields": [
+  {
+   "fieldname": "profile_id",
+   "label": "Profile ID",
+   "read_only": 0,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "profile_version",
+   "label": "Profile version",
+   "read_only": 0,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "verified",
+   "label": "Verified",
+   "read_only": 0,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "simulation_only",
+   "label": "Simulation only",
+   "read_only": 0,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "reviewer",
+   "label": "Reviewer",
+   "read_only": 0,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "reviewed_on",
+   "label": "Reviewed on",
+   "read_only": 0,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "reply_days",
+   "label": "Reply days",
+   "read_only": 0,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "reply_time",
+   "label": "Reply time",
+   "read_only": 0,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "minimum_wait_days",
+   "label": "Minimum wait days",
+   "read_only": 0,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "earliest_time",
+   "label": "Earliest time",
+   "read_only": 0,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "timezone",
+   "label": "Timezone",
+   "read_only": 0,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "calendar",
+   "label": "Calendar",
+   "read_only": 0,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "channels",
+   "label": "Channels",
+   "read_only": 0,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "giving_rule",
+   "label": "Giving rule",
+   "read_only": 0,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "audience_rule",
+   "label": "Audience rule",
+   "read_only": 0,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "debrief_rule",
+   "label": "Debrief rule",
+   "read_only": 0,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "revised_notice_treatment",
+   "label": "Revised notice treatment",
+   "read_only": 0,
+   "fieldtype": "Select",
+   "options": "\nUnverified\nVerified"
+  },
+  {
+   "fieldname": "contracting_owner",
+   "label": "Contracting owner",
+   "read_only": 0,
+   "fieldtype": "Link",
+   "options": "User"
+  },
+  {
+   "fieldname": "technical_operator",
+   "label": "Technical operator",
+   "read_only": 0,
+   "fieldtype": "Link",
+   "options": "User"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-01 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Award",
+ "name": "Award Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "issingle": 1
+}

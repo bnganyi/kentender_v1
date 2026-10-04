@@ -1,0 +1,187 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-09-27 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "bid_workspace",
+  "draft_version",
+  "evidence_requirement",
+  "file",
+  "file_digest",
+  "media_type",
+  "size_bytes",
+  "original_filename",
+  "issued_by",
+  "reference",
+  "issued_on",
+  "expires_on",
+  "scan_status",
+  "scan_result",
+  "source_evidence",
+  "status",
+  "uploaded_by",
+  "uploaded_at",
+  "removed_by",
+  "removed_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "bid_workspace",
+   "fieldtype": "Link",
+   "label": "Bid workspace",
+   "read_only": 1,
+   "options": "Bid Workspace",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "draft_version",
+   "fieldtype": "Int",
+   "label": "Draft version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_requirement",
+   "fieldtype": "Data",
+   "label": "Evidence requirement",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "file",
+   "fieldtype": "Link",
+   "label": "File",
+   "read_only": 1,
+   "options": "File"
+  },
+  {
+   "fieldname": "file_digest",
+   "fieldtype": "Data",
+   "label": "File digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "media_type",
+   "fieldtype": "Data",
+   "label": "Media type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "size_bytes",
+   "fieldtype": "Int",
+   "label": "Size (bytes)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "original_filename",
+   "fieldtype": "Data",
+   "label": "File name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "issued_by",
+   "fieldtype": "Data",
+   "label": "Issued by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference",
+   "fieldtype": "Data",
+   "label": "Reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issued_on",
+   "fieldtype": "Date",
+   "label": "Issued on",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expires_on",
+   "fieldtype": "Date",
+   "label": "Expires on",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scan_status",
+   "fieldtype": "Select",
+   "label": "Scan status",
+   "read_only": 1,
+   "options": "Pending\nAccepted\nRejected",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "scan_result",
+   "fieldtype": "Data",
+   "label": "Scan result",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_evidence",
+   "fieldtype": "Data",
+   "label": "Account evidence",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Current\nRemoved\nReplaced",
+   "reqd": 1
+  },
+  {
+   "fieldname": "uploaded_by",
+   "fieldtype": "Link",
+   "label": "Uploaded by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "uploaded_at",
+   "fieldtype": "Datetime",
+   "label": "Uploaded at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "removed_by",
+   "fieldtype": "Link",
+   "label": "Removed by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "removed_at",
+   "fieldtype": "Datetime",
+   "label": "Removed at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-27 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "name": "Bid Evidence",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

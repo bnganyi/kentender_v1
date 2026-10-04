@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)}a{color:var(--color-accent-700)}a:hover{color:var(--color-accent-900)}</style>
+</helmet>
+<div style="display:grid;grid-template-columns:280px minmax(0,1fr);height:100vh">
+  <nav style="overflow:auto;background:var(--color-surface);border-right:1px solid var(--color-divider);padding-bottom:24px" aria-label="Artboards">
+    <div style="padding:20px 16px 8px">
+      <div style="font-family:var(--font-heading);font-size:22px;font-weight:600;line-height:1.1">Award artboards</div>
+      <div style="margin-top:4px;font-size:13px;color:var(--color-neutral-700)">AWD-CHG-001 v0.4 · {{ count }} boards</div>
+    </div>
+    <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+      <div style="padding-top:12px">
+        <div style="padding:4px 16px;font-size:12px;font-weight:600;color:var(--color-neutral-700)">{{ g.name }}</div>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="6">
+          <button type="button" onClick="{{ it.go }}" style="display:flex;gap:10px;align-items:baseline;width:100%;text-align:left;padding:6px 16px;border:0;border-right:3px solid {{ it.bar }};background:{{ it.bg }};cursor:pointer;font-family:var(--font-body);font-size:13px;line-height:1.3;color:var(--color-text)">
+            <span style="flex:none;width:36px;font-weight:600;color:var(--color-accent-700)">{{ it.id }}</span>
+            <span style="flex:1;min-width:0">{{ it.name }}</span>
+            <span style="flex:none;display:flex;gap:2px;align-self:center" aria-hidden="true"><sc-for list="{{ it.bars }}" as="bb" hint-placeholder-count="5"><span style="display:block;width:7px;height:4px;background:{{ bb.c }}"></span></sc-for></span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-for>
+  </nav>
+  <main ref="{{ mainRef }}" style="overflow:auto;padding:24px 32px 64px">
+    <sc-if value="{{ showAnn }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:{{ sheetW }};margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:240px">
+          <div style="font-family:var(--font-heading);font-size:22px;font-weight:600">{{ b.id }} {{ b.name }}</div>
+          <div style="font-size:13px;color:var(--color-neutral-800)">{{ b.ctx }}</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button type="button" class="btn btn-secondary" onClick="{{ goPrev }}">Previous</button>
+          <button type="button" class="btn btn-secondary" onClick="{{ goNext }}">Next</button>
+        </div>
+      </div>
+    </sc-if>
+    <div style="max-width:{{ sheetW }};margin:0 auto">
+      <sc-if value="{{ b.isPage }}" hint-placeholder-val="{{ true }}">
+        <div class="kt-page" style="max-width:none">
+          <div class="kt-page-head">
+            <div>
+              <sc-if value="{{ b.hasKicker }}"><div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:13px;font-weight:600;color:var(--color-accent-700)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><sc-for list="{{ b.kIco }}" as="pth" hint-placeholder-count="2"><path d="{{ pth.d }}"></path></sc-for></svg><span>{{ b.kicker }}</span></div></sc-if>
+              <h1 class="kt-page-title">{{ b.title }}</h1>
+              <sc-if value="{{ b.hasDesc }}"><p class="kt-page-desc" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><span>{{ b.desc }}</span><sc-if value="{{ b.hasChip }}"><span class="{{ b.chipCls }}">{{ b.chipLabel }}</span></sc-if></p></sc-if>
+            </div>
+          </div>
+          <sc-if value="{{ b.hasGuidance }}">
+            <div class="kt-guidance" style="padding-left:0;padding-right:0">
+              <sc-if value="{{ b.hasJourney }}">
+                <ol class="kt-journey" aria-label="Award journey">
+                  <sc-for list="{{ b.journey }}" as="s" hint-placeholder-count="5">
+                    <li class="{{ s.cls }}"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">{{ s.n }}</span>{{ s.title }}</span><span class="kt-journey-state">{{ s.state }}</span></li>
+                  </sc-for>
+                </ol>
+                <div class="kt-journey is-reduced is-fallback" style="grid-template-columns:minmax(0,1fr)"><div class="kt-journey-bars" aria-hidden="true"><sc-for list="{{ b.journey }}" as="s" hint-placeholder-count="5"><span class="{{ s.rcls }}"></span></sc-for></div><p><strong>{{ b.jrTitle }}</strong> · {{ b.jrPos }}</p></div>
+              </sc-if>
+              <sc-if value="{{ b.nextBlocked }}">
+                <div class="kt-notice is-warning kt-next-step" role="status">
+                  <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                  <div class="kt-notice-body">
+                    <div class="kt-next-step-label">Your turn, blocked</div>
+                    <p class="kt-next-step-headline">{{ b.nh }}</p>
+                    <sc-if value="{{ b.hasNs }}"><p class="kt-next-step-sentence">{{ b.ns }}</p></sc-if>
+                    <sc-if value="{{ b.hasFixes }}">
+                      <div class="kt-next-step-fixes">
+                        <sc-for list="{{ b.fixes }}" as="f" hint-placeholder-count="1"><button type="button" class="{{ f.cls }}">{{ f.label }}</button></sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.nextPlain }}">
+                <div class="{{ b.nextCls }}">
+                  <div class="kt-next-step-label">{{ b.nl }}</div>
+                  <p class="kt-next-step-headline">{{ b.nh }}</p>
+                  <sc-if value="{{ b.hasNs }}"><p class="kt-next-step-sentence">{{ b.ns }}</p></sc-if>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+          <sc-for list="{{ b.sections }}" as="sec" hint-placeholder-count="2">
+            <div class="{{ sec.cls }}">
+              <h2 style="display:flex;align-items:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><sc-for list="{{ sec.ico }}" as="pth" hint-placeholder-count="2"><path d="{{ pth.d }}"></path></sc-for></svg><span>{{ sec.t }}</span></h2>
+              <div style="display:grid;gap:16px">
+                <sc-if value="{{ sec.hasP }}">
+                  <div style="display:grid;gap:6px">
+                    <sc-for list="{{ sec.p }}" as="para" hint-placeholder-count="1"><div style="display:flex;gap:8px;align-items:flex-start"><sc-if value="{{ para.ok }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--status-live)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none;margin-top:2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><path d="m9 11 3 3L22 4"></path></svg></sc-if><sc-if value="{{ para.warn }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--status-attention)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none;margin-top:2px"><path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg></sc-if><p style="margin:0;font-size:15px;line-height:1.5;text-wrap:pretty">{{ para.t }}</p></div></sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ sec.hasF }}">
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0 24px">
+                    <sc-for list="{{ sec.f }}" as="fa" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;gap:6px;padding:10px 0 12px;border-top:1px solid var(--color-divider)"><span class="kt-label">{{ fa.l }}</span><sc-if value="{{ fa.hasChip }}"><span><span class="{{ fa.chip }}">{{ fa.v }}</span></span></sc-if><sc-if value="{{ fa.noChip }}"><span class="kt-meta-value" style="font-variant-numeric:tabular-nums;text-wrap:pretty">{{ fa.v }}</span></sc-if></div></sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ sec.hasD }}">
+                  <div style="display:grid;gap:12px">
+                    <sc-for list="{{ sec.d }}" as="de" hint-placeholder-count="2"><div style="display:grid;gap:4px"><span class="kt-label">{{ de.l }}</span><p style="margin:0;font-size:15px;line-height:1.5;max-width:72ch;text-wrap:pretty">{{ de.v }}</p></div></sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ sec.hasTbl }}">
+                  <div style="overflow-x:auto">
+                    <table class="table">
+                      <thead><tr><sc-for list="{{ sec.th }}" as="h" hint-placeholder-count="4"><th class="{{ h.cls }}">{{ h.t }}</th></sc-for></tr></thead>
+                      <tbody>
+                        <sc-for list="{{ sec.rows }}" as="r" hint-placeholder-count="1">
+                          <tr>
+                            <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="4"><td class="{{ c.cls }}"><sc-if value="{{ c.hasChip }}"><span class="{{ c.chip }}">{{ c.t }}</span></sc-if><sc-if value="{{ c.noChip }}">{{ c.t }}</sc-if></td></sc-for>
+                            <sc-if value="{{ r.hasA }}"><td style="text-align:right"><button type="button" class="btn btn-primary">{{ r.a }}</button></td></sc-if>
+                          </tr>
+                        </sc-for>
+                      </tbody>
+                    </table>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ sec.hasEmpty }}">
+                  <div class="kt-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1"></rect><path d="M3 10h18"></path></svg>
+                    <p style="margin:0">{{ sec.empty }}</p>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ sec.hasFld }}">
+                  <div style="display:grid;gap:16px;max-width:720px">
+                    <sc-for list="{{ sec.fld }}" as="fd" hint-placeholder-count="2">
+                      <div class="field">
+                        <label>{{ fd.label }}</label>
+                        <sc-if value="{{ fd.isRadio }}">
+                          <div style="display:flex;gap:20px;flex-wrap:wrap;padding-top:4px">
+                            <sc-for list="{{ fd.opts }}" as="o" hint-placeholder-count="2"><label class="radio"><input type="radio" name="{{ o.name }}" checked="{{ o.checked }}" onChange="{{ noop }}"><span class="dot"></span>{{ o.label }}</label></sc-for>
+                          </div>
+                        </sc-if>
+                        <sc-if value="{{ fd.isArea }}"><textarea class="input" value="{{ fd.value }}" onChange="{{ noop }}"></textarea></sc-if>
+                        <sc-if value="{{ fd.isInput }}"><input class="input" value="{{ fd.value }}" onChange="{{ noop }}"></sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ sec.hasNote }}">
+                  <div class="kt-group"><p style="margin:0;font-size:14px;color:var(--color-neutral-800)">{{ sec.note }}</p></div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ b.hasDecision }}">
+            <div class="kt-decision">
+              <div style="display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap">
+                <sc-for list="{{ b.acts }}" as="a" hint-placeholder-count="3"><button type="button" class="{{ a.cls }}">{{ a.label }}</button></sc-for>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ b.hasRow }}">
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <sc-for list="{{ b.acts }}" as="a" hint-placeholder-count="2"><button type="button" class="{{ a.cls }}">{{ a.label }}</button></sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ b.hasDisc }}">
+            <div>
+              <sc-for list="{{ b.disc }}" as="dc" hint-placeholder-count="3">
+                <div class="kt-disclosure">
+                  <div class="kt-disclosure-head" onClick="{{ dc.toggle }}" style="cursor:pointer">
+                    <div class="kt-disclosure-title-row"><span class="kt-disclosure-title">{{ dc.t }}</span></div>
+                    <svg class="{{ dc.chev }}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
+                  </div>
+                  <sc-if value="{{ dc.open }}">
+                    <div class="kt-disclosure-body">
+                      <sc-if value="{{ dc.hasA }}"><button type="button" class="btn btn-secondary">{{ dc.a }}</button></sc-if>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+      <sc-if value="{{ b.isDialog }}">
+        <div style="position:relative;min-height:720px;margin-top:24px;overflow:hidden;border:1px solid var(--color-divider)">
+          <div class="kt-page" style="max-width:none;margin:0;border:0;box-shadow:none;min-height:720px">
+            <div class="kt-page-head"><div><h1 class="kt-page-title">{{ b.title }}</h1><p class="kt-page-desc">{{ b.desc }}</p></div></div>
+          </div>
+          <div class="dialog-backdrop" style="position:absolute">
+            <div class="dialog" role="dialog" aria-modal="true">
+              <div class="dialog-title">{{ b.dt }}</div>
+              <sc-if value="{{ b.hasDb }}"><div class="dialog-body">{{ b.db }}</div></sc-if>
+              <sc-for list="{{ b.dfld }}" as="fd" hint-placeholder-count="2">
+                <div class="field">
+                  <label>{{ fd.label }}</label>
+                  <sc-if value="{{ fd.isRo }}"><p style="margin:0;font-size:14px;font-weight:600">{{ fd.value }}</p></sc-if>
+                  <sc-if value="{{ fd.isRadio }}">
+                    <div style="display:grid;gap:8px;padding-top:4px">
+                      <sc-for list="{{ fd.opts }}" as="o" hint-placeholder-count="2"><label class="radio"><input type="radio" name="{{ o.name }}" checked="{{ o.checked }}" onChange="{{ noop }}"><span class="dot"></span>{{ o.label }}</label></sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ fd.isArea }}"><textarea class="input" value="{{ fd.value }}" onChange="{{ noop }}"></textarea></sc-if>
+                  <sc-if value="{{ fd.isInput }}"><input class="input" value="{{ fd.value }}" onChange="{{ noop }}"></sc-if>
+                </div>
+              </sc-for>
+              <div class="dialog-actions">
+                <sc-for list="{{ b.dacts }}" as="a" hint-placeholder-count="2"><button type="button" class="{{ a.cls }}">{{ a.label }}</button></sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showAnnotations&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Review&quot;},&quot;viewport&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Desktop&quot;,&quot;Mobile 390&quot;],&quot;default&quot;:&quot;Desktop&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Review&quot;}}">
+const JT=['Opinion','Decision','Notices','Acceptance and wait','Send to Contracting'];
+const H033={title:'Supply and delivery of business laptops',desc:'TND-MOH-2027-033 · AWD-MOH-2027-033 · Ministry of Health'};
+const HS={title:'Supply and delivery of business laptops',desc:'TND-MOH-2027-033 · Ministry of Health'};
+const REPORT=[['Report','Evaluation report 1'],['Received','16 Jun 2027, 14:07 EAT'],['Committee signatures','3 of 3'],['Valid until','10 Oct 2027, 11:00 EAT']];
+const REC=[['Supplier','Afya Digital Supplies Limited'],['Bid','BID-MOH-2027-033-001'],['Bid version','Submitted version 1'],['Quantity','250 Each'],['Submitted tender sum','KES 46,400,000'],['Evaluated amount','KES 46,400,000'],['Warranty','36 months']];
+const D02R='The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.';
+const concl=c=>({label:'Conclusion',radio:['Recommend award','No current recommendation'],checked:c});
+const area=(l,v)=>({label:l,area:true,value:v||''});
+const inp=l=>({label:l});
+const RECSEC={t:'Recommendation',sec:true,d:[['Recommendation','Award to Afya Digital Supplies Limited']],f:REC};
+const NOTICE_FACTS=[['Tender','TND-MOH-2027-033'],['Supplier','Afya Digital Supplies Limited'],['Amount','KES 46,400,000'],['Notice','Award notice 1'],['Reply by','24 Jun 2027, 17:00 EAT']];
+const CYC2=[['Decision cycle','2'],['Report','Evaluation report 2'],['Opinion','Professional opinion 2']];
+const CORR=[['Decision cycle','2'],['Decision','Corrected award decision 2'],['Supplier','Afya Digital Supplies Limited'],['Amount','KES 46,400,000']];
+const WAITJ='DDDCN',HOLDJ='DDDBN';
+
+const BOARDS=[
+{id:'D01',name:'Workspace',g:'Main boards',ctx:'Charles Mutiso, Head of Procurement · 17 Jun 2027, 08:55 EAT',hdr:{title:'Award'},
+ sec:[{t:'Your award tasks',tbl:{h:['Award record','Tender','Task','Holder'],r:[['AWD-MOH-2027-033','Supply and delivery of business laptops','Prepare professional opinion','Charles Mutiso']],a:'Open award'}}]},
+{id:'D01e',name:'Workspace — empty',g:'Main boards',ctx:'Charles Mutiso · empty variant',hdr:{title:'Award'},sec:[{t:'Your award tasks',empty:'You have no award tasks.'}]},
+{id:'D02',name:'Opinion',g:'Main boards',ctx:'Charles Mutiso · 17 Jun 2027, 09:00 EAT',j:'CNNNN',next:{k:'turn',h:'Prepare the professional opinion.'},
+ sec:[{t:'Evaluation report',sec:true,f:REPORT},RECSEC,{t:'Professional opinion',fld:[concl(0),area('Reason',D02R)]}],
+ act:['Return report','Save draft','*Sign opinion'],place:'decision',disc:['Evaluation report','Bid comparison',{t:'Outstanding issues',a:'Record restriction'},'History']},
+{id:'D03',name:'Decision',g:'Main boards',ctx:'Amina Hassan, Accounting Officer · 17 Jun 2027, 10:00 EAT',j:'DCNNN',next:{k:'turn',h:'Decide the award.'},
+ sec:[RECSEC,{t:'Professional opinion',sec:true,f:[['Opinion','Professional opinion 1']],p:['Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT'],d:[['Reason',D02R]]},
+  {t:'Decision',fld:[area('Decision reason','I accept the recommendation in the signed evaluation report and professional opinion.')],d:[['Notice preview','Successful bidder notice — Afya Digital Supplies Limited']]}],
+ act:['Record no award','Return for correction','*Award and notify bidders'],place:'decision',disc:['Professional opinion','Evaluation report','Notice preview']},
+{id:'D04',name:'Supplier notice',g:'Main boards',ctx:'Mary Wanjiku, Authorised Signatory · 17 Jun 2027, 10:10 EAT',hdr:HS,next:{k:'turn',h:'Your tender was successful.'},
+ sec:[{t:'Award notice',f:NOTICE_FACTS,note:'Accepting this award does not create a contract.'}],
+ act:['View notice','Request explanation','Decline award','*Accept award'],place:'decision'},
+{id:'D05',name:'Wait',g:'Main boards',ctx:'Charles Mutiso · 18 Jun 2027, 09:05 EAT',j:WAITJ,next:{k:'waiting',h:'The required waiting period is still running.',s:'KenTender will send the award to Contracting when all conditions are met.'},
+ sec:[{t:'Acceptance and wait',p:['+Supplier accepted, 18 Jun 2027, 09:00 EAT','+All bidders have been notified'],f:[['Earliest permitted date and time','2 Jul 2027, 09:00 EAT']]}],
+ act:['View decision','View notices','View acceptance'],place:'row'},
+{id:'D06',name:'Delivered',g:'Main boards',ctx:'Charles Mutiso · 2 Jul 2027, 09:00 EAT',j:'DDDDD',next:{k:'done',h:'Contracting has received the award.'},
+ sec:[{t:'Contracting',f:[['Received','2 Jul 2027, 09:00 EAT'],['Next','Prepare contract'],['Contracting owner','Charles Mutiso']]}],
+ act:['View award package','Open Contracting'],place:'row'},
+{id:'D07',name:'Explanation',g:'Main boards',ctx:'Charles Mutiso · isolated branch · 18 Jun 2027, 10:00 EAT',j:WAITJ,next:{k:'turn',h:'Respond to the bidder’s request.'},
+ sec:[{t:'Request',f:[['From','David Ouma']],p:['Please explain the recorded award result.'],fld:[area('Response')]},{t:'Acceptance and wait',sec:true,p:['The required waiting period is still running.']}],
+ act:['Save reply','*Send and close'],place:'decision'},
+{id:'D07c',name:'Explanation — closed',g:'Main boards',ctx:'Charles Mutiso · closed variant',j:WAITJ,next:{k:'done',h:'This request is closed.'},
+ sec:[{t:'Request',f:[['From','David Ouma'],['Closed','18 Jun 2027, 10:15 EAT']],p:['Please explain the recorded award result.'],d:[['Response','The recorded result follows the signed evaluation report. Your tender was successful at KES 46,400,000.']]}],
+ act:['View correspondence'],place:'row'},
+
+{id:'V01',name:'Returned',g:'Variants',ctx:'Charles Mutiso · 18 Jun 2027, 10:00 EAT',j:'CNNNN',next:{k:'turn',h:'Resolve the Accounting Officer’s comments.'},
+ sec:[{t:'Accounting Officer’s comments',d:[['Comment','Explain the unresolved funding concern before recommending an award.']]},{t:'Professional opinion',fld:[concl(-1),area('Reason')]}],
+ act:['Return report','Save draft','*Sign opinion'],place:'decision',disc:['History']},
+{id:'V02',name:'Source problem',g:'Variants',ctx:'Charles Mutiso · 18 Jun 2027, 10:00 EAT',j:'BNNNN',next:{k:'blocked',h:'The evaluation report is incomplete. The Head of Procurement has been notified.',s:'One required annex is unavailable.',fix:['*View source issue','Return report']},
+ sec:[{t:'Evaluation report',sec:true,f:REPORT}]},
+{id:'V03',name:'Expired report',g:'Variants',ctx:'Charles Mutiso · 11 Oct 2027, 09:00 EAT',j:'CNNNN',next:{k:'turn',h:'Tender validity has expired. No award can proceed.'},
+ sec:[{t:'Evaluation report',sec:true,f:REPORT},{t:'Professional opinion',fld:[concl(1),area('Reason','Tender validity expired before an award could be notified.')]}],
+ act:['View evaluation report','Save draft','*Sign opinion'],place:'decision'},
+{id:'V04',name:'No award',g:'Variants',ctx:'Charles Mutiso · 11 Oct 2027, 09:00 EAT',j:'DDNNN',chip:['is-critical','Closed'],next:{k:'turn',h:'No award was made.',s:'Next: Charles Mutiso to review whether the tender should be cancelled.'},
+ sec:[{t:'Decision',d:[['Reason','Tender validity expired before an award could be notified.']]}],act:['View decision','View evaluation report'],place:'row'},
+{id:'V05',name:'Delivery failure',g:'Variants',ctx:'Charles Mutiso · 18 Jun 2027, 10:00 EAT',j:'DDBNN',next:{k:'blocked',h:'A required notice is not yet confirmed.',s:'The notice address was rejected.',fix:['*Correct contact']},
+ sec:[{t:'Notices',tbl:{h:['Recipient','Channel','Result','Owner'],r:[['Afya Digital Supplies Limited','Email','~is-critical:Delivery failed','Charles Mutiso']]}}],act:['View notice','View delivery history'],place:'row'},
+{id:'V06',name:'Supplier declined',g:'Variants',ctx:'Charles Mutiso · 18 Jun 2027, 10:00 EAT',j:HOLDJ,next:{k:'turn',h:'Review the supplier’s response.'},
+ sec:[{t:'Supplier response',p:['!Declined by Mary Wanjiku, 18 Jun 2027, 09:00 EAT'],d:[['Reason','We cannot meet the delivery commitment.']],note:'The Accounting Officer must decide the next procurement action.'}],
+ act:['View response','*Record next action'],place:'decision'},
+{id:'V07',name:'No response',g:'Variants',ctx:'Charles Mutiso · 24 Jun 2027, 17:01 EAT',j:HOLDJ,next:{k:'turn',h:'The supplier has not replied by the deadline.'},
+ sec:[{t:'Supplier response',f:[['Reply deadline','24 Jun 2027, 17:00 EAT']]}],act:['View notice','*Record next action'],place:'decision'},
+{id:'V08',name:'Review hold',g:'Variants',ctx:'Charles Mutiso · 20 Jun 2027, 11:00 EAT',j:HOLDJ,next:{k:'blocked',h:'This award is on hold.',s:'Review Board suspension received 20 Jun 2027, 11:00 EAT',fix:['*Record outcome']},
+ sec:[{t:'Restriction',f:[['Responsible officer','Charles Mutiso'],['Basis for hold','~is-attention:Authoritative order']],d:[['Source','Review Board suspension notice']]}],act:['View restriction'],place:'row'},
+{id:'V09',name:'Post-decision correction',g:'Variants',ctx:'Charles Mutiso · 18 Jun 2027, 10:00 EAT',j:HOLDJ,next:{k:'turn',h:'Review the report correction before this award proceeds.'},
+ sec:[{t:'Report correction',p:['Evaluation reported a material calculation issue.']}],act:['View original decision','*Review correction'],place:'decision'},
+{id:'V10',name:'Receiver failure',g:'Variants',ctx:'Charles Mutiso · 2 Jul 2027, 09:01 EAT',j:'DDDDB',next:{k:'waiting',h:'Contracting is unavailable. KenTender will check that the award can still proceed before sending it.',s:'Technical operator Daniel Otieno is restoring delivery.'},
+ act:['View award package'],place:'row'},
+{id:'V11',name:'Cancelled',g:'Variants',ctx:'Charles Mutiso · 17 Jun 2027, 09:30 EAT',j:'DBNNN',chip:['is-critical','Closed'],next:{k:'done',l:'Closed',h:'This tender was cancelled. Award ended.'},
+ act:['View cancellation','View history'],place:'row'},
+{id:'V12',name:'Signing unavailable',g:'Variants',ctx:'Charles Mutiso · 18 Jun 2027, 10:00 EAT',j:'BNNNN',next:{k:'waiting',h:'Signing is unavailable. Your draft has been saved.',s:'Technical operator Daniel Otieno is restoring signing.'},
+ sec:[{t:'Professional opinion',fld:[concl(0),area('Reason',D02R)]}],act:['Save draft','View opinion'],place:'row'},
+{id:'V13',name:'Supplier representative',g:'Variants',ctx:'David Ouma, Supplier Representative · 17 Jun 2027, 10:10 EAT',hdr:HS,next:{k:'waiting',h:'Your tender was successful.',s:'Mary Wanjiku must respond for Afya Digital Supplies Limited.'},
+ sec:[{t:'Award notice',f:NOTICE_FACTS,note:'Accepting this award does not create a contract.'}],act:['View notice','Request explanation'],place:'row'},
+{id:'V14',name:'Unsuccessful bidder',g:'Variants',ctx:'Mary Wanjiku · isolated two-bid fixture',hdr:{title:'Supply and delivery of business laptops',desc:'TND-MOH-2027-037 · Ministry of Health'},next:{k:'done',l:'Result',h:'Your tender was unsuccessful.'},
+ sec:[{t:'Award result',f:[['Your submitted and evaluated amount','KES 46,400,000'],['Successful supplier','Jirani Office Supplies Limited'],['Evaluated and award amount','KES 45,900,000']],d:[['Reason','Your tender met the requirements. Another responsive tender had a lower evaluated price.']]}],
+ act:['View notice','Request explanation'],place:'row'},
+{id:'V15',name:'Rules unavailable',g:'Variants',ctx:'Charles Mutiso · 18 Jun 2027, 10:00 EAT',j:'BNNNN',next:{k:'blocked',h:'The applicable rules have not been confirmed. The award cannot proceed yet.',fix:['*View outstanding issue']},
+ sec:[{t:'Outstanding issue',f:[['Responsible officer','Charles Mutiso']]}]},
+{id:'V15s',name:'Status service unavailable',g:'Variants',ctx:'Charles Mutiso · status-service alternative',j:'BNNNN',next:{k:'waiting',h:'The current tender status could not be confirmed. The system will check again when service is restored.'},
+ sec:[{t:'Outstanding issue',f:[['Owner','Daniel Otieno']]}],act:['View outstanding issue'],place:'row'},
+{id:'V16',name:'Technical incident',g:'Variants',ctx:'Daniel Otieno, Technical operator · technical work view',hdr:{title:'Restore notice delivery'},
+ sec:[{t:'Operation',f:[['Operation','Award notice delivery'],['Result','Service unavailable'],['Assigned to','Daniel Otieno']]}],act:['View service history','*Retry operation'],place:'decision'},
+{id:'V17',name:'Correction decision',g:'Variants',ctx:'Amina Hassan · 18 Jun 2027, 10:00 EAT',j:HOLDJ,next:{k:'turn',h:'Decide the reported correction.'},
+ sec:[{t:'Reported correction',d:[['Issue','Evaluation reported a material calculation issue.'],['Proposal','Request a corrected evaluation report addressing the calculation issue.'],['Reason','The reported calculation issue may affect the recommendation.']]}],
+ act:['View original decision','View correction','*Request corrected evaluation'],place:'decision'},
+{id:'V18',name:'No single recommendation',g:'Variants',ctx:'Charles Mutiso · tender 036 fixture',hdr:{title:'Supply and delivery of office laptops',desc:'TND-MOH-2027-036 · AWD-MOH-2027-036 · Ministry of Health'},j:'CNNNN',next:{k:'turn',h:'Review the equal-price outcome.'},
+ sec:[{t:'Evaluation result',tbl:{h:['Tenderer','Amount','Position'],n:[1,2],r:[['Afya Digital Supplies Limited','KES 46,400,000','1'],['Jirani Office Supplies Limited','KES 46,400,000','1']]},p:['The published tender has no tie-break rule.','Negotiation is outside MVP 1.']},
+  {t:'Professional opinion',fld:[concl(1),area('Reason','Refer the unresolved tie to the Accounting Officer for a lawful next step.')]}],
+ act:['View evaluation report','Save draft','*Sign opinion'],place:'decision'},
+{id:'V19',name:'Correction authorised',g:'Variants',ctx:'Charles Mutiso · 18 Jun 2027, 10:05 EAT',j:'BNNNN',next:{k:'waiting',h:'Evaluation is correcting the report.'},
+ sec:[{t:'Correction instruction',f:[['Decision cycle','2']],d:[['Reason','The reported calculation issue may affect the recommendation.']]}],act:['View correction instruction','View prior decision'],place:'row'},
+{id:'V20',name:'Corrected report received',g:'Variants',ctx:'Charles Mutiso · 19 Jun 2027, 09:05 EAT',j:'CNNNN',next:{k:'turn',h:'Prepare the professional opinion on the corrected report.'},
+ sec:[{t:'Corrected report',sec:true,f:[['Decision cycle','2'],['Report','Evaluation report 2'],['Received','19 Jun 2027, 09:00 EAT'],['Corrected result','~is-attention:No current recommendation']],d:[['Reason','The calculation discrepancy remains unresolved.']]},{t:'Professional opinion',fld:[concl(-1),area('Reason')]}],
+ act:['View evaluation report','View prior decision','Save draft','*Sign opinion'],place:'decision'},
+{id:'V21',name:'Correction after No award',g:'Variants',ctx:'Charles Mutiso · 11 Oct 2027, 10:00 EAT',j:'DDNNN',chip:['is-critical','Closed'],next:{k:'turn',h:'Review the correction to the closed award record.'},
+ sec:[{t:'Decision cycle 1 — Closed',p:['No award was made.']}],act:['View prior decision','*Review correction'],place:'decision'},
+{id:'V22',name:'Late response',g:'Variants',ctx:'Mary Wanjiku · isolated branch',hdr:HS,next:{k:'waiting',h:'Your response was received after the deadline. It cannot be used to proceed with this award.'},
+ sec:[{t:'Your response',f:[['Received','24 Jun 2027, 17:01 EAT'],['Reply deadline','24 Jun 2027, 17:00 EAT']]}],act:['View response','View notice'],place:'row'},
+{id:'V23',name:'Corrected opinion decision',g:'Variants',ctx:'Amina Hassan · 19 Jun 2027, 09:15 EAT',j:'DCNNN',next:{k:'turn',h:'Decide the reported correction.'},
+ sec:[{t:'Professional opinion 2',f:CYC2,p:['Signed by Charles Mutiso, 19 Jun 2027, 09:10 EAT'],d:[['Conclusion','No current recommendation'],['Reason','The calculation discrepancy remains unresolved.']]}],
+ act:['View prior decision','Return for correction','*Record no award'],place:'decision'},
+{id:'V23p',name:'Corrected opinion — positive',g:'Variants',ctx:'Amina Hassan · separate synthetic branch · 19 Jun 2027, 09:15 EAT',j:'DCNNN',next:{k:'turn',h:'Decide the reported correction.'},
+ sec:[{t:'Professional opinion 2',f:CYC2.concat([['Amount','KES 46,400,000']]),p:['Signed by Charles Mutiso, 19 Jun 2027, 09:10 EAT'],d:[['Conclusion','Recommend award to Afya Digital Supplies Limited'],['Reason','The corrected report confirms the recommendation.']]},
+  {t:'Revised notice',sec:true,f:[['Notice','Revised notice 2'],['Reply by','26 Jun 2027, 17:00 EAT']],p:['The waiting period will be calculated after notices are given.']}],
+ act:['Record no award','Return for correction','*Record corrected award and notify bidders'],place:'decision'},
+{id:'V24',name:'Revised notices held',g:'Variants',ctx:'Charles Mutiso · isolated branch · 19 Jun 2027, 10:00 EAT',j:'DDBNN',next:{k:'blocked',h:'Confirm the required notice treatment before this award proceeds.',s:'The rules for revised notices have not been confirmed.',fix:['*View outstanding issue']},
+ sec:[{t:'Corrected award',f:CORR}],act:['View corrected decision'],place:'row'},
+{id:'V25',name:'Revised notices ready',g:'Variants',ctx:'Amina Hassan · isolated branch · 19 Jun 2027, 10:00 EAT',j:'DDCNN',next:{k:'turn',h:'Authorise the revised notices.'},
+ sec:[{t:'Corrected award',sec:true,f:CORR},{t:'Revised notice',f:[['Notice','Revised notice 2'],['Reply by','26 Jun 2027, 17:00 EAT']],p:['The waiting period will be calculated after notices are given.']}],
+ act:['View notice preview','View corrected decision','*Authorise revised notices'],place:'decision'},
+
+{id:'X01',name:'Accept award',g:'Dialogs',ctx:'From D04 · Mary Wanjiku',hdr:HS,dlg:{t:'Accept this award?',b:'I accept Award notice 1 on behalf of Afya Digital Supplies Limited.',a:['Back','*Accept award']}},
+{id:'X02',name:'Decline award',g:'Dialogs',ctx:'From D04 · Mary Wanjiku',hdr:HS,dlg:{t:'Decline this award?',f:[area('Reason')],a:['Back','!Decline award']}},
+{id:'X03',name:'Record restriction',g:'Dialogs',ctx:'From Outstanding issues · Charles Mutiso',dlg:{t:'Record restriction',f:[{label:'Basis for hold',radio:['Authoritative order','Reported challenge'],checked:-1},inp('Source'),inp('Received at'),inp('Effective from'),inp('Scope'),inp('Evidence'),area('Reason')],a:['Back','*Save restriction']}},
+{id:'X04',name:'Record outcome — order',g:'Dialogs',ctx:'From V08 · Charles Mutiso',dlg:{t:'Record outcome',f:[{label:'Basis for hold',ro:'Authoritative order'},{label:'Outcome',radio:['Restriction ended','Further action required'],checked:-1},area('Reason'),inp('Evidence'),inp('Next action')],a:['Back','*Save outcome']}},
+{id:'X05',name:'Record outcome — reported challenge',g:'Dialogs',ctx:'Reported-challenge variant · Charles Mutiso',dlg:{t:'Record outcome',f:[{label:'Basis for hold',ro:'Reported challenge'},{label:'Outcome',radio:['Reported challenge not substantiated','Further action required'],checked:-1},area('Reason'),inp('Evidence'),inp('Next action')],a:['Back','*Save outcome']}},
+{id:'X06',name:'Review correction',g:'Dialogs',ctx:'From V09 and V21 · Charles Mutiso',dlg:{t:'Review correction',f:[{label:'Outcome',radio:['No material effect','Request corrected evaluation','Request decision review','Further action required'],checked:-1},area('Reason'),inp('Evidence'),inp('Next action')],a:['Back','*Save outcome']}},
+{id:'X07',name:'Return report',g:'Dialogs',ctx:'From D02 · Charles Mutiso',dlg:{t:'Return report',f:[area('Reason')],a:['Back','*Return report']}},
+{id:'X08',name:'Return for correction',g:'Dialogs',ctx:'From D03 · Amina Hassan',dlg:{t:'Return for correction',f:[area('Reason')],a:['Back','*Return for correction']}},
+{id:'X09',name:'Record no award',g:'Dialogs',ctx:'From D03 · Amina Hassan',dlg:{t:'Record no award',f:[area('Reason'),inp('Next action')],a:['Back','*Record no award']}},
+{id:'X10',name:'Record next action',g:'Dialogs',ctx:'From V06 and V07 · Charles Mutiso',dlg:{t:'Record next action',f:[area('Reason'),inp('Next action')],a:['Back','*Save']}},
+{id:'X11',name:'Request explanation',g:'Dialogs',ctx:'From D04 · supplier user',hdr:HS,dlg:{t:'Request explanation',f:[area('Your request')],a:['Back','*Send request']}}
+];
+
+const btn=s=>s[0]==='*'?{label:s.slice(1),cls:'btn btn-primary'}:s[0]==='!'?{label:s.slice(1),cls:'btn btn-danger'}:{label:s,cls:'btn btn-secondary'};
+const JS={D:['kt-journey-stage is-done','✓ Done'],C:['kt-journey-stage is-current','Current'],B:['kt-journey-stage is-blocked','Blocked'],N:['kt-journey-stage','Not started']};
+const NL={turn:'Your turn',waiting:'Waiting on someone',done:'Done'};
+const C10='M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z';
+const ICO={
+ file:['M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z','M14 2v4a2 2 0 0 0 2 2h4','M10 9H8','M16 13H8','M16 17H8'],
+ award:['M18 8a6 6 0 1 1-12 0 6 6 0 0 1 12 0z','M15.477 12.89 17 22l-5-3-5 3 1.523-9.11'],
+ pen:['M12 20h9','M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z'],
+ scale:['m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z','m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z','M7 21h10','M12 3v18','M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2'],
+ mail:['M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z','m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7'],
+ clock:[C10,'M12 6v6l4 2'],
+ send:['m22 2-7 20-4-9-9-4Z','M22 2 11 13'],
+ msg:['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],
+ reply:['M9 17 4 12 9 7','M20 18v-2a4 4 0 0 0-4-4H4'],
+ lock:['M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z','M7 11V7a5 5 0 0 1 10 0v4'],
+ alert:[C10,'M12 8v4','M12 16h.01'],
+ server:['M4 2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z','M4 14h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2z','M6 6h.01','M6 18h.01'],
+ list:['M8 6h13','M8 12h13','M8 18h13','M3 6h.01','M3 12h.01','M3 18h.01'],
+ refresh:['M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8','M21 3v5h-5','M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16','M8 16H3v5']
+};
+const SECICO={'Your award tasks':'list','Evaluation report':'file','Corrected report':'file','Recommendation':'award','Professional opinion':'pen','Professional opinion 2':'pen','Decision':'scale','Award notice':'mail','Revised notice':'mail','Notices':'mail','Acceptance and wait':'clock','Contracting':'send','Request':'msg','Accounting Officer’s comments':'msg','Supplier response':'reply','Your response':'reply','Restriction':'lock','Report correction':'refresh','Reported correction':'refresh','Correction instruction':'refresh','Outstanding issue':'alert','Operation':'server','Evaluation result':'scale','Award result':'award','Corrected award':'award','Decision cycle 1 — Closed':'scale'};
+const JH={D02:'Charles Mutiso',D03:'Amina Hassan',V01:'Charles Mutiso',V03:'Charles Mutiso',V18:'Charles Mutiso',V20:'Charles Mutiso',V23:'Amina Hassan',V23p:'Amina Hassan',V25:'Amina Hassan'};
+const BARC={D:'var(--status-live)',C:'var(--color-accent)',B:'var(--status-attention)',N:'var(--color-neutral-300)'};
+const ico=k=>(ICO[k]||ICO.file).map(d=>({d}));
+const chipOf=s=>{const m=/^~([a-z-]+):(.*)$/.exec(s);return m?{t:m[2],chip:'kt-status '+m[1],hasChip:true,noChip:false}:{t:s,chip:'',hasChip:false,noChip:true};};
+
+class Component extends DCLogic {
+  state = { sel: (()=>{ try { return localStorage.getItem('awd-artboards-sel') || 'D01'; } catch(e){ return 'D01'; } })(), open: {} };
+  mainRef = React.createRef();
+  componentDidMount(){ this.onKey=e=>{ if(e.target.closest&&e.target.closest('input,textarea'))return; if(e.key==='ArrowDown'||e.key==='j'){e.preventDefault();this.step(1);} if(e.key==='ArrowUp'||e.key==='k'){e.preventDefault();this.step(-1);} }; window.addEventListener('keydown',this.onKey); }
+  componentWillUnmount(){ window.removeEventListener('keydown',this.onKey); }
+  go(id){ this.setState({sel:id}); try{localStorage.setItem('awd-artboards-sel',id);}catch(e){} if(this.mainRef.current)this.mainRef.current.scrollTop=0; }
+  step(d){ const i=BOARDS.findIndex(b=>b.id===this.state.sel); const n=BOARDS[(i+d+BOARDS.length)%BOARDS.length]; this.go(n.id); }
+  field(f,key,i){ const opts=(f.radio||[]).map((o,k)=>({label:o,name:key+'-'+i,checked:f.checked===k})); return {label:f.label,value:f.ro||f.value||'',isRo:!!f.ro,isRadio:!!f.radio,isArea:!!f.area,isInput:!f.ro&&!f.radio&&!f.area,opts}; }
+  norm(b){
+    const hdr=b.hdr||H033, n=b.next;
+    const o={id:b.id,name:b.name,ctx:b.ctx,title:hdr.title,desc:hdr.desc||'',hasDesc:!!hdr.desc,isDialog:!!b.dlg,isPage:!b.dlg,hasChip:!!b.chip,chipCls:b.chip?'kt-status '+b.chip[0]:'',chipLabel:b.chip?b.chip[1]:''};
+    o.hasJourney=!!b.j; o.journey=(b.j||'').split('').map((c,i)=>({n:i+1,title:JT[i],cls:JS[c][0],state:c==='C'&&JH[b.id]?'Current · '+JH[b.id]:JS[c][1]}));
+    o.journey.forEach((s,i)=>{const c=b.j[i];s.rcls=c==='D'?'is-done':c==='C'?'is-current':c==='B'?'is-blocked':'';});
+    const ji=b.j?Math.max(b.j.search(/[CB]/),0):0; const jall=b.j&&!/[CBN]/.test(b.j);
+    o.jrTitle=b.j?(jall?'All stages done':JT[ji]+' — '+JS[b.j[ji]][1]):''; o.jrPos=b.j?(jall?'5 of 5':(ji+1)+' of 5'):'';
+    const sup=hdr===HS||b.id==='V14', tech=b.id==='V16', ws=b.id.startsWith('D01');
+    o.hasKicker=!b.dlg&&!ws; o.kicker=sup?'Award notice':tech?'Technical work':'Award record'; o.kIco=ico(sup?'mail':tech?'server':'award');
+    o.hasGuidance=!!(b.j||n); o.nextBlocked=!!n&&n.k==='blocked'; o.nextPlain=!!n&&n.k!=='blocked';
+    o.nextCls=n?'kt-next-step is-'+n.k:''; o.nl=n?(n.l||NL[n.k]||''):''; o.nh=n?n.h:''; o.ns=n&&n.s||''; o.hasNs=!!(n&&n.s);
+    o.fixes=(n&&n.fix||[]).map(btn); o.hasFixes=o.fixes.length>0;
+    o.sections=(b.sec||[]).map((s,si)=>{ const t=s.tbl; const nums=t&&t.n||[];
+      return {t:s.t,ico:ico(SECICO[s.t]),cls:s.sec?'kt-region is-secondary':'kt-region',hasP:!!s.p,p:(s.p||[]).map(x=>({t:/^[+!]/.test(x)?x.slice(1):x,ok:x[0]==='+',warn:x[0]==='!'})),hasF:!!s.f,f:(s.f||[]).map(x=>{const c=chipOf(x[1]);return {l:x[0],v:c.t,chip:c.chip,hasChip:c.hasChip,noChip:c.noChip};}),hasD:!!s.d,d:(s.d||[]).map(x=>({l:x[0],v:x[1]})),
+        hasTbl:!!t,th:t?t.h.map((h,k)=>({t:h,cls:nums.includes(k)?'is-num':''})).concat(t.a?[{t:'Action',cls:''}]:[]):[],rows:t?t.r.map(r=>({cells:r.map((c,k)=>({...chipOf(c),cls:nums.includes(k)?'is-num':''})),hasA:!!t.a,a:t.a||'—'})):[],
+        hasEmpty:!!s.empty,empty:s.empty||'',hasFld:!!s.fld,fld:(s.fld||[]).map((f,i)=>this.field(f,b.id+'-'+si,i)),hasNote:!!s.note,note:s.note||''}; });
+    o.acts=(b.act||[]).map(btn); o.hasDecision=b.place==='decision'&&o.acts.length>0; o.hasRow=b.place==='row'&&o.acts.length>0;
+    o.disc=(b.disc||[]).map((d,i)=>{ const x=typeof d==='string'?{t:d}:d; const k=b.id+':'+i; const open=!!x.a&&!!this.state.open[k];
+      return {t:x.t,hasA:!!x.a,noA:!x.a,a:x.a||'',open,chev:'kt-disclosure-chevron'+(open?' is-open':''),toggle:()=>this.setState(s=>({open:{...s.open,[k]:!s.open[k]}}))}; });
+    o.hasDisc=o.disc.length>0;
+    if(b.dlg){ o.dt=b.dlg.t; o.db=b.dlg.b||''; o.hasDb=!!b.dlg.b; o.dfld=(b.dlg.f||[]).map((f,i)=>this.field(f,b.id,i)); o.dacts=b.dlg.a.map(btn); }
+    return o;
+  }
+  renderVals(){
+    const cur=BOARDS.find(x=>x.id===this.state.sel)||BOARDS[0];
+    const gnames=[...new Set(BOARDS.map(x=>x.g))];
+    const groups=gnames.map(g=>({name:g,items:BOARDS.filter(x=>x.g===g).map(x=>{const a=x.id===cur.id;return {id:x.id,name:x.name,go:()=>this.go(x.id),bg:a?'var(--color-accent-100)':'transparent',bar:a?'var(--color-accent)':'transparent',bars:(x.j||'').split('').map(c=>({c:BARC[c]}))};})}));
+    const mobile=(this.props.viewport??'Desktop')==='Mobile 390';
+    return {groups,count:BOARDS.length,b:this.norm(cur),mainRef:this.mainRef,goPrev:()=>this.step(-1),goNext:()=>this.step(1),noop:()=>{},
+      showAnn:this.props.showAnnotations??true,sheetW:mobile?'390px':'1120px'};
+  }
+}
+</script>
+</body>
+</html>

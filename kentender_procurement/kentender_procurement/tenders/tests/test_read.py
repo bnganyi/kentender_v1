@@ -1,0 +1,295 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""TPR-CHG-001 v0.8 §7.1 reads, the My Work provider, the technical-read
+surface and the request-shaped API path: verdict-first workspace (AC-001..
+004), start read (AC-005/006), record read with role-computed actions and
+segregation copy (AC-037..039, 070), review read (AC-026..028), history,
+masked not-found, the `**kwargs` AST guard, and the exact §10.2 status/
+action vocabulary."""
+
+from __future__ import annotations
+
+import ast
+import os
+
+import frappe
+from frappe.handler import execute_cmd
+from frappe.tests import IntegrationTestCase
+
+from kentender_procurement.tenders import api
+from kentender_procurement.tenders.services import draft_commands as cmd, history, lifecycle, my_work_provider, read, technical_read
+from kentender_procurement.tenders.tests import fixtures as fx, sample
+
+API = "kentender_procurement.tenders.api"
+
+
+class TenderReadCase(IntegrationTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		frappe.set_user("Administrator")
+		fx.ensure_world()
+		cls.addClassCleanup(fx.restore_site)
+
+	def setUp(self):
+		super().setUp()
+		frappe.set_user("Administrator")
+		fx.wipe_all()
+		self.addCleanup(frappe.set_user, "Administrator")
+		self.addCleanup(setattr, frappe.local, "form_dict", frappe._dict())
+
+	def _started(self) -> tuple[dict, dict]:
+		authorised = fx.authorised_handoff(items=(("Business laptops", 1, "Clinical training"),))
+		started = cmd.start_tender(handoff=authorised["handoff"], idempotency_key=fx.key(), user=fx.OFFICER)
+		return authorised, started
+
+	def _complete(self, started: dict) -> None:
+		root = frappe.get_doc("Tender", started["tender"])
+		cmd.save_tender_draft(tender=root.name, values=sample.officer_values(inspection_location=fx.LOCATION, contact_office=fx.CONTACT_OFFICE), expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+
+	def call(self, method: str, **args):
+		frappe.local.form_dict = frappe._dict(cmd=f"{API}.{method}", csrf_token="irrelevant-but-present-on-every-post", **args)
+		had_request = hasattr(frappe.local, "request")
+		if not had_request:
+			frappe.local.request = frappe._dict(method="POST", path=f"/api/method/{API}.{method}", headers={})
+			self.addCleanup(delattr, frappe.local, "request")
+		return execute_cmd(f"{API}.{method}")
+
+
+class TestWorkspaceAndStart(TenderReadCase):
+	def test_forbidden_verdict_and_role_queues(self):
+		forbidden = read.get_tenders_workspace(user=fx.NOBODY)
+		self.assertEqual(forbidden["outcome"], "FORBIDDEN")
+		self.assertIn("Procurement Officer, Head of Procurement Function, Accounting Officer", forbidden["forbidden"]["text"])
+		authorised = fx.authorised_handoff()
+		ws = read.get_tenders_workspace(user=fx.OFFICER)
+		self.assertEqual(ws["outcome"], "OK")
+		start = next(r for r in ws["rows"] if r["kind"] == "start" and r["handoff"] == authorised["handoff"])
+		self.assertEqual((start["tender_reference"], start["status_label"], start["action_label"], start["route"][:2]), ("Not started", "Ready to start", "Start Tender", ["tenders", "new"]))
+		self.assertEqual([c["label"] for c in ws["counts"]], ["Ready to start", "Drafts", "Returned to me", "In progress", "Published — open", "Closed"])
+		self.assertEqual(ws["counts"][0]["value"], 1)
+		reader = read.get_tenders_workspace(user=fx.AUDITOR)
+		self.assertEqual((reader["mode"], reader["counts"]), ("reader", []))
+		self.assertFalse(any(r["kind"] == "start" for r in reader["rows"]))
+		technical = read.get_tenders_workspace(user="Administrator")
+		self.assertEqual((technical["mode"], technical["counts"]), ("technical", []))
+		# the site may hold published Tenders of its own, so assert what the filter does rather than that nothing is published
+		published = read.get_tenders_workspace(user=fx.OFFICER, status="published")
+		self.assertTrue(all(r["status_key"] == "published" for r in published["rows"]))
+		self.assertEqual(published["counts"], ws["counts"])
+		nothing = read.get_tenders_workspace(user=fx.OFFICER, fiscal_year="1999-2000")
+		self.assertEqual((nothing["rows"], nothing["empty_text"]), ([], "No Tenders match these filters."))
+
+	def test_the_start_read_creates_nothing_and_reports_the_three_outcomes(self):
+		authorised = fx.authorised_handoff()
+		before = frappe.db.count("Tender")
+		start = read.get_tender_start(handoff=authorised["handoff"], user=fx.OFFICER)
+		self.assertEqual((start["outcome"], start["supported"], start["can_start"]), ("OK", True, True))
+		self.assertEqual(start["result_text"], "Supported — IT equipment using the standard Open Tender format.")
+		self.assertEqual([c["check"] for c in start["compatibility"]], ["Procurement category", "Product", "Method", "Reservation", "County-residents restriction", "Lotting", "Currency", "Award package", "Plan horizon"])
+		self.assertEqual(start["summary"]["method"], "Open Tender")
+		self.assertTrue(start["template"]["available"])
+		self.assertEqual(frappe.db.count("Tender"), before)
+		self.assertFalse(read.get_tender_start(handoff=authorised["handoff"], user=fx.HOPF)["can_start"])
+		with self.assertRaises(frappe.DoesNotExistError):
+			read.get_tender_start(handoff=authorised["handoff"], user=fx.NOBODY)
+		self.assertEqual(read.get_tender_start(handoff="RQH-nothing", user=fx.OFFICER)["outcome"], "SOURCE_UNAVAILABLE")
+		started = cmd.start_tender(handoff=authorised["handoff"], idempotency_key=fx.key(), user=fx.OFFICER)
+		again = read.get_tender_start(handoff=authorised["handoff"], user=fx.OFFICER)
+		self.assertEqual((again["outcome"], again["tender"], again["can_open"]), ("ALREADY_STARTED", started["tender"], True))
+
+
+class TestRecordReview(TenderReadCase):
+	def test_record_read_per_role_and_state(self):
+		_, started = self._started()
+		root = frappe.get_doc("Tender", started["tender"])
+		officer = read.get_tender(tender=root.tender_reference, user=fx.OFFICER)
+		self.assertEqual((officer["outcome"], officer["screen"], officer["tender"]["badge"]), ("OK", "editor", "Draft"))
+		self.assertEqual(officer["tasks"], {"details": "Needs attention", "requirements": "Not started", "review": "Not started"})
+		self.assertIn("save_draft", officer["allowed_actions"])
+		self.assertNotIn("submit_for_approval", officer["allowed_actions"])
+		self.assertEqual(officer["inherited"]["context"]["quantity"], "1 Each")
+		self.assertEqual(len(officer["inherited"]["goods_lines"]), 1)
+		self.assertIn("internal", officer["inherited"])
+		# §10.4 drawer / §10.5: the four authorised tables and the carried summary, shaped by the server
+		self.assertEqual([t["key"] for t in officer["inherited"]["requirement_tables"]], ["items", "technical", "warranty", "acceptance"])
+		self.assertEqual([c["label"] for c in officer["inherited"]["requirement_tables"][0]["columns"]], ["Item", "Approved requirement", "Quantity", "Delivery"])
+		self.assertEqual([line["label"] for line in officer["inherited"]["carried_summary"]], ["Equipment", "Technical", "Warranty and support", "Acceptance"])
+		# §10.17 DES-03: the editor's own task answer and the Tender journey
+		self.assertEqual(officer["task_steps"]["details"]["headline"], "Set the Tender dates, security and meeting details.")
+		self.assertEqual(officer["task_steps"]["requirements"]["headline"], "Set supplier evidence and contract terms.")
+		self.assertEqual([s["marker"] for s in officer["guidance"]["journey"]["stages"]], ["current", "not_started", "not_started", "not_started", "not_started"])
+		department = read.get_tender(tender=root.name, user=fx.DEPARTMENTAL)
+		self.assertEqual((department["mode"], department["screen"], department["allowed_actions"]), ("department", "record", ["view_history"]))
+		self.assertNotIn("internal", department["inherited"])
+		self.assertEqual(department["documents"], [])
+		with self.assertRaises(frappe.DoesNotExistError):
+			read.get_tender(tender=root.name, user=fx.OUTSIDER)
+		self.assertEqual(api.get_tender(tender="TND-NOTHING")["outcome"], "NOT_FOUND")
+
+		self._complete(started)
+		root.reload()
+		officer = read.get_tender(tender=root.name, user=fx.OFFICER)
+		self.assertEqual(officer["tasks"], {"details": "Complete", "requirements": "Complete", "review": "Complete"})
+		self.assertIn("submit_for_approval", officer["allowed_actions"])
+		rev = read.get_tender_review(tender=root.name, user=fx.OFFICER)
+		self.assertEqual((rev["review"]["result"], rev["review"]["must_fix_count"], rev["review"]["review_note_count"]), ("Ready to submit", 0, 1))
+		self.assertEqual([s["key"] for s in rev["sections"]], ["details", "requirements", "pricing", "supplier", "contract", "technical"])
+		self.assertEqual([s["open"] for s in rev["sections"]], [False, False, False, True, False, False])
+		pricing = rev["sections"][2]["blocks"][0]
+		self.assertEqual(([c["label"] for c in pricing["columns"]], pricing["rows"][0][2:]), (["Line", "Quantity", "Unit price", "Tax", "Total"], ["Completed by supplier", "Completed by supplier", "Calculated from supplier response"]))
+		self.assertEqual(rev["sections"][3]["tag"], "1 review note")
+		self.assertEqual(rev["submit_blocked_text"], "")
+
+		submitted = lifecycle.submit_tender_for_approval(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		hopf = read.get_tender(tender=root.name, user=fx.HOPF)
+		self.assertEqual((hopf["screen"], hopf["tender"]["badge"]), ("approval", "Awaiting your approval"))
+		self.assertEqual(sorted(a for a in hopf["allowed_actions"] if a != "view_history"), ["approve_tender_package", "request_requisition_correction", "return_for_correction"])
+		self.assertEqual(hopf["segregation_message"], "")
+		ws = read.get_tenders_workspace(user=fx.HOPF)
+		row = next(r for r in ws["rows"] if r.get("tender") == root.name)
+		self.assertEqual((row["status_label"], row["action_label"]), ("Awaiting your approval", "Review"))
+		self.assertEqual(ws["counts"][0], {"key": "awaiting_approval", "label": "Awaiting approval", "value": 1, "sub": "Tenders submitted for procurement approval"})
+		# one rule for every persona: a card for each status where it is that persona's turn, then In progress for the rest in flight
+		self.assertEqual([c["key"] for c in ws["counts"]], ["awaiting_approval", "publishing", "ready", "in_progress", "published", "closed"])
+		self.assertEqual((ws["counts"][0]["value"], ws["counts"][1]["value"], ws["counts"][3]["value"]), (1, 0, 0))
+		self.assertEqual(sum(c["value"] for c in ws["counts"]), len(ws["rows"]))  # the cards always add up to the table
+		ao_ws = read.get_tenders_workspace(user=fx.AO)
+		self.assertEqual([c["key"] for c in ao_ws["counts"]], ["approved", "in_progress", "published", "closed"])
+		self.assertEqual((ao_ws["counts"][0]["value"], ao_ws["counts"][1]["value"]), (0, 1))
+		self.assertEqual(sum(c["value"] for c in ao_ws["counts"]), len(ao_ws["rows"]))
+		# the officer's own submitted Tender must stay visible in a card, not drop out of the work summary
+		officer_counts = {c["key"]: c["value"] for c in read.get_tenders_workspace(user=fx.OFFICER)["counts"]}
+		self.assertEqual((officer_counts["in_progress"], officer_counts["draft"]), (1, 0))
+		# a card is a filter: it narrows the table, never the work summary itself
+		narrowed = read.get_tenders_workspace(user=fx.OFFICER, status="in_progress")
+		self.assertEqual([r["tender"] for r in narrowed["rows"]], [root.name])
+		self.assertEqual({c["key"]: c["value"] for c in narrowed["counts"]}, officer_counts)
+		self.assertEqual(read.get_tenders_workspace(user=fx.OFFICER, status="draft")["rows"], [])
+		rows = my_work_provider.my_work_rows(user=fx.HOPF)["assigned"]
+		# §5.11 / §11.2: "Review Tender {ref}", opened with the workspace's "Review"
+		self.assertEqual((rows[0]["task_id"], rows[0]["route"], rows[0]["action_label"], rows[0]["title"]), (submitted["task"], ["tenders", root.tender_reference], "Review", f"Review Tender {root.tender_reference}"))
+		self.assertEqual(my_work_provider.my_work_rows(user=fx.OFFICER)["assigned"], [])
+
+		root.reload()
+		lifecycle.approve_tender_package(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF, task=submitted["task"])
+		ao = read.get_tender(tender=root.name, user=fx.AO)
+		self.assertEqual((ao["screen"], ao["tender"]["badge"]), ("authorisation", "Awaiting publication authorisation"))
+		self.assertIn("authorise_publication", ao["allowed_actions"])
+		self.assertEqual(ao["version"]["approved_by"], fx.HOPF)
+		ws = read.get_tenders_workspace(user=fx.AO)
+		row = next(r for r in ws["rows"] if r.get("tender") == root.name)
+		self.assertEqual((row["status_label"], row["action_label"]), ("Awaiting your publication decision", "Review publication"))
+		self.assertEqual([(c["key"], c["value"]) for c in ws["counts"] if c["key"] in ("approved", "in_progress")], [("approved", 1), ("in_progress", 0)])
+		self.assertEqual(sum(c["value"] for c in ws["counts"]), len(ws["rows"]))
+		hopf_ws = read.get_tenders_workspace(user=fx.HOPF)
+		self.assertEqual([(c["key"], c["value"]) for c in hopf_ws["counts"] if c["key"] in ("awaiting_approval", "publishing", "in_progress")], [("awaiting_approval", 0), ("publishing", 0), ("in_progress", 1)])
+		self.assertEqual(sum(c["value"] for c in hopf_ws["counts"]), len(hopf_ws["rows"]))
+		self.assertEqual([r["tender"] for r in read.get_tenders_workspace(user=fx.HOPF, status="in_progress")["rows"]], [root.name])
+		self.assertEqual(my_work_provider.my_work_rows(user=fx.AO)["assigned"][0]["action_label"], "Review publication")
+		hist = history.get_tender_history(tender=root.name, user=fx.AUDITOR)
+		self.assertEqual([v["version_number"] for v in hist["versions"]], [1])
+		self.assertEqual([d["decision"] for d in hist["decisions"]], ["Submit for approval", "Approve Tender package"])
+		self.assertEqual([e["event_type"] for e in hist["events"]], ["TenderStarted", "TenderDraftSaved", "TenderSubmitted", "TenderApproved"])
+		self.assertTrue(hist["events"][0]["payload"])  # oversight readers see payloads
+		officer_hist = history.get_tender_history(tender=root.name, user=fx.OFFICER)
+		self.assertEqual(officer_hist["events"][0]["payload"], {})
+
+	def test_a_returned_draft_reads_as_returned_to_you_at_the_affected_task(self):
+		# TPR-CHG-001 v0.8 Phase 7 (UI-informed correction, 19 Sep 2026): the
+		# workspace row's own "Correct" action now routes straight to the
+		# task the reviewer flagged (`AFFECTED_TASK_KEYS`), not always to
+		# "review" — a Playwright click-through of the real screen showed
+		# routing every return through the review summary first, no matter
+		# which task was flagged, is one extra hop the label "Correct"
+		# already promises to skip. `get_tender`'s own `returned.affected_task`
+		# (asserted below) is unchanged and still drives the editor's own
+		# returned-notice banner regardless of which task the row opens on.
+		_, started = self._started()
+		self._complete(started)
+		root = frappe.get_doc("Tender", started["tender"])
+		submitted = lifecycle.submit_tender_for_approval(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		root.reload()
+		lifecycle.return_tender_for_correction(tender=root.name, reason="Confirm whether manufacturer authorisation is necessary and update the supplier evidence requirement.", affected_task="Supplier and contract requirements", expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF, task=submitted["task"])
+		ws = read.get_tenders_workspace(user=fx.OFFICER)
+		row = next(r for r in ws["rows"] if r.get("tender") == root.name)
+		self.assertEqual((row["status_key"], row["action_label"], row["route"]), ("returned", "Correct", ["tenders", root.tender_reference, "requirements"]))
+		self.assertTrue(row["status_label"].startswith("Returned to you"))
+		self.assertEqual(next(c["value"] for c in ws["counts"] if c["key"] == "returned"), 1)
+		record = read.get_tender(tender=root.name, user=fx.OFFICER)
+		self.assertEqual(record["returned"]["affected_task"], "requirements")
+		self.assertEqual(record["returned"]["comment"], "Confirm whether manufacturer authorisation is necessary and update the supplier evidence requirement.")
+		self.assertEqual(record["version"]["version_number"], 2)
+
+
+class TestCountsAddUp(IntegrationTestCase):
+	"""The work-summary cards always add up to the queue below them, for every persona and every status (owner, 3 Oct 2026)."""
+
+	STATUSES = ("ready", "draft", "returned", "awaiting_approval", "approved", "publishing", "published", "ended", "cancelled", "correction", "")
+	BASE = {"officer": False, "hopf": False, "ao": False, "auditor": False, "technical": False}
+
+	def _counts(self, **roles):
+		return read._counts([{"status_key": k} for k in self.STATUSES], {**self.BASE, **roles})
+
+	def test_every_persona_counts_every_row_exactly_once(self):
+		for roles in ({"officer": True}, {"hopf": True}, {"ao": True}, {"officer": True, "hopf": True}, {"hopf": True, "ao": True}, {"officer": True, "hopf": True, "ao": True}):
+			counts = self._counts(**roles)
+			self.assertEqual(sum(c["value"] for c in counts), len(self.STATUSES), roles)
+			self.assertEqual(len({c["key"] for c in counts}), len(counts), roles)
+
+	def test_card_labels_are_short_enough_to_stay_on_a_compact_card(self):
+		# owner, 3 Oct 2026: long labels wrapped to three lines; the table and filter keep the full status names
+		labels = {c["key"]: c["label"] for c in self._counts(officer=True, hopf=True, ao=True)} | {c["key"]: c["label"] for c in self._counts(hopf=True)}
+		self.assertTrue(all(len(label) <= 24 for label in labels.values()), {k: v for k, v in labels.items() if len(v) > 24})
+		self.assertEqual((labels["awaiting_approval"], labels["approved"], labels["publishing"]), ("Awaiting approval", "Awaiting authorisation", "Confirm publication"))
+
+	def test_finished_and_stopped_tenders_have_a_card(self):
+		hopf = {c["key"]: c["value"] for c in self._counts(hopf=True)}
+		self.assertEqual(hopf, {"awaiting_approval": 1, "publishing": 1, "ready": 1, "in_progress": 5, "published": 1, "closed": 2})
+		officer = {c["key"]: c["value"] for c in self._counts(officer=True)}
+		self.assertEqual(officer, {"ready": 1, "draft": 1, "returned": 1, "in_progress": 5, "published": 1, "closed": 2})
+		ao = {c["key"]: c["value"] for c in self._counts(ao=True)}
+		self.assertEqual(ao, {"approved": 1, "in_progress": 7, "published": 1, "closed": 2})  # an AO never sees an unstarted requisition: it falls into in progress
+
+	def test_the_closed_and_in_progress_cards_filter_to_exactly_what_they_count(self):
+		rows = [{"status_key": k} for k in self.STATUSES]
+		roles = {**self.BASE, "hopf": True}
+		self.assertEqual(sorted(r["status_key"] for r in read.rows_for_card(rows, "closed", roles)), ["cancelled", "ended"])
+		self.assertEqual(sorted(r["status_key"] for r in read.rows_for_card(rows, "in_progress", roles)), ["", "approved", "correction", "draft", "returned"])
+
+
+class TestApiSurface(TenderReadCase):
+	def test_no_endpoint_declares_kwargs(self):
+		path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "api.py")
+		with open(path, encoding="utf-8") as handle:
+			tree = ast.parse(handle.read())
+		offenders = [n.name for n in tree.body if isinstance(n, ast.FunctionDef) and n.args.kwarg is not None]
+		self.assertEqual(offenders, [])
+		whitelisted = [n.name for n in tree.body if isinstance(n, ast.FunctionDef) and any(getattr(d, "attr", None) == "whitelist" or getattr(getattr(d, "func", None), "attr", None) == "whitelist" for d in n.decorator_list)]
+		self.assertEqual(len(whitelisted), 42)  # TPR FU-25 removed the stand-in register endpoint; v0.16 added ReturnApprovedTender
+
+	def test_the_journey_over_the_request_path(self):
+		authorised = fx.authorised_handoff(items=(("Business laptops", 1, "Clinical training"),))
+		frappe.set_user(fx.OFFICER)
+		ws = self.call("get_tenders_workspace")
+		self.assertEqual(ws["outcome"], "OK")
+		started = self.call("start_tender", handoff=authorised["handoff"], idempotency_key=fx.key())
+		self.assertEqual(started["action"], "started")
+		import json
+
+		saved = self.call("save_tender_draft", tender=started["tender"], draft_values=json.dumps(sample.officer_values(inspection_location=fx.LOCATION, contact_office=fx.CONTACT_OFFICE)), expected_record_version=started["record_version"], idempotency_key=fx.key())
+		self.assertTrue(saved["ok"])
+		preview = self.call("preview_tender_documents", tender=started["tender"])
+		self.assertEqual(preview["outcome"], "OK")
+		self.assertIn("INVITATION TO TENDER", preview["invitation_html"])
+		submitted = self.call("submit_tender_for_approval", tender=started["tender"], expected_record_version=saved["record_version"], idempotency_key=fx.key())
+		self.assertEqual(submitted["action"], "submitted")
+		self.assertEqual(self.call("get_tender", tender="TND-NOTHING")["outcome"], "NOT_FOUND")
+		frappe.set_user(fx.HOPF)
+		approved = self.call("approve_tender_package", tender=started["tender"], expected_record_version=submitted["record_version"], idempotency_key=fx.key(), task=submitted["task"])
+		self.assertEqual(approved["action"], "approved")
+		frappe.set_user("Administrator")
+		probes = technical_read.read_probes()
+		self.assertEqual([p["label"] for p in probes][:3], ["tenders.get_tenders_workspace", "tenders.get_tender_start", "tenders.get_tender"])
+		self.assertEqual(technical_read.reference_resolvers()[0]["route"](started["tender"]), ["tenders", started["tender_reference"]])

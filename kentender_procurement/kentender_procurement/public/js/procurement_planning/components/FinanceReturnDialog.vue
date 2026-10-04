@@ -1,18 +1,21 @@
-<!-- §12.9 — Return to planner requires one actionable correction reason and
-     creates no reservation. No artboard names this dialog; it follows the
-     same title/intro/required-multiline/Cancel+Return shape PLN-DES-15 uses
-     for the two governance return dialogs (§11.17), adapted to Finance's
-     own copy. No reason category, attachment, assignee, due date or
-     optional note (§11.17's own absences apply here too). -->
+<!-- PLN-CHG-001 v1.24 §10.9 U10-RETURN, ported from Artboards-U10.dc.html
+     (re-diffed 23 Sep 2026 against the real §10.9/U10-RETURN section: the
+     artboard draws only the heading, the read-only Context and the Reason
+     field above Cancel / Return to planner — no explanatory lede paragraph.
+     The template previously carried one ("No reservation is created. State
+     the correction required.") that the artboard never draws; removed. No
+     reason category, attachment, assignee, due date or optional note, same
+     as every other "return for correction" dialog in this app. -->
 <template>
 	<div class="kt-dialog-backdrop" data-testid="fnt-return-dialog">
-		<div class="kt-dialog" role="dialog" aria-modal="true" aria-labelledby="fnt-return-title">
-			<div id="fnt-return-title" class="kt-dialog-title">Return to planner?</div>
-			<p class="pln-dialog-lede">
-				No reservation is created. State the correction required.
-			</p>
+		<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="fnt-return-title">
+			<div id="fnt-return-title" class="kt-dialog-title">What needs to change?</div>
+			<div class="kt-group">
+				<span class="kt-label">Context</span>
+				<div style="font-size: 14px; margin-top: 2px" data-testid="fnt-return-context">Whole annual plan</div>
+			</div>
 			<div class="pln-field">
-				<label for="fnt-return-reason">Correction required</label>
+				<label for="fnt-return-reason">Reason</label>
 				<textarea
 					id="fnt-return-reason" class="kt-input" rows="3"
 					data-testid="fnt-return-reason" v-model="reason"
@@ -30,7 +33,7 @@
 					:disabled="pending || reason.trim().length < 10"
 					@click="$emit('confirm', reason.trim())"
 				>
-					Return for correction
+					Return to planner
 				</button>
 			</div>
 		</div>

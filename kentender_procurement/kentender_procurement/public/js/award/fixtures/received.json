@@ -1,0 +1,646 @@
+{
+ "ao": {
+  "record": {
+   "actions": {
+    "authorise_revised": false,
+    "award_supported": false,
+    "correct_contact": false,
+    "correction_proposals": false,
+    "decide": false,
+    "decide_correction": false,
+    "record_outcome": false,
+    "record_restriction": false,
+    "respond_request": false,
+    "retry_operation": false,
+    "return_report": false,
+    "save_opinion": false,
+    "sign_opinion": false
+   },
+   "award": "AWD-MOH-2027-033",
+   "cancelled": false,
+   "closed_reason": null,
+   "correspondence": [],
+   "cycle": {
+    "authorising": null,
+    "awaiting_report": false,
+    "number": 1,
+    "outcome": "",
+    "predecessor": null,
+    "stage": "Opinion"
+   },
+   "decision": null,
+   "decision_status": "No decision recorded",
+   "eligibility": null,
+   "guidance": {
+    "answer": {
+     "blockers": [],
+     "fixes": [],
+     "headline": "The Head of Procurement is preparing the professional opinion.",
+     "holder": {
+      "display": "Charles Mutiso (Head of Procurement Function)",
+      "people": [
+       "Charles Mutiso"
+      ],
+      "role": "Head of Procurement Function"
+     },
+     "kind": "waiting",
+     "label": "Waiting on someone",
+     "primary_action": "",
+     "sentence": "",
+     "since": null,
+     "stage": ""
+    },
+    "journey": {
+     "code": "CNNNN",
+     "current": "opinion",
+     "downstream": null,
+     "reduced": false,
+     "reduced_parts": {
+      "label": "Opinion",
+      "prefix": "",
+      "suffix": " · 1 of 5 · Charles Mutiso"
+     },
+     "reduced_style": "position",
+     "reduced_text": "Opinion · 1 of 5 · Charles Mutiso",
+     "stages": [
+      {
+       "code": "opinion",
+       "holder": "Charles Mutiso",
+       "label": "Opinion",
+       "marker": "current",
+       "marker_label": "Current"
+      },
+      {
+       "code": "decision",
+       "holder": "",
+       "label": "Decision",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      },
+      {
+       "code": "notices",
+       "holder": "",
+       "label": "Notices",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      },
+      {
+       "code": "wait",
+       "holder": "",
+       "label": "Acceptance and wait",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      },
+      {
+       "code": "send",
+       "holder": "",
+       "label": "Send to Contracting",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      }
+     ],
+     "upstream": null
+    }
+   },
+   "history": [
+    {
+     "cycle": 1,
+     "decisions": [],
+     "opinions": [],
+     "outcome": "",
+     "stage": "Opinion"
+    }
+   ],
+   "notices": {
+    "batch": null,
+    "preview": [
+     {
+      "label": "Successful bidder notice — Afya Digital Supplies Limited",
+      "organisation": "Afya Digital Supplies Limited",
+      "result": "Successful"
+     }
+    ],
+    "recipients": []
+   },
+   "notification_status": "Not issued",
+   "ok": true,
+   "opinion": {
+    "all": [],
+    "signed": null,
+    "working": null
+   },
+   "outcome": "",
+   "outstanding": [],
+   "package": null,
+   "procuring_entity": "Ministry of Health",
+   "record_version": 2,
+   "report": {
+    "committee": [
+     "Grace Wambui",
+     "Peter Mugo",
+     "Ruth Achieng"
+    ],
+    "comparison": [
+     {
+      "amount": "KES 46,400,000",
+      "position": "1",
+      "submitted": "KES 46,400,000",
+      "tenderer": "Afya Digital Supplies Limited"
+     }
+    ],
+    "dissent": [],
+    "funding": {
+     "available": "50000000.00",
+     "qualification": "",
+     "shortfall": "0.00",
+     "source": "Budget confirmation"
+    },
+    "id": "AWD-MOH-2027-033-RPT-01",
+    "label": "Evaluation report 1",
+    "outcome": "Recommendation",
+    "qualifications": [],
+    "reason": "The only bid received meets the published requirements.",
+    "received_at": "16 Jun 2027, 14:07 EAT",
+    "recommendation": "Award to Afya Digital Supplies Limited",
+    "recommended": {
+     "bid": "BID-MOH-2027-033-001",
+     "bid_version": "Submitted version 1",
+     "evaluated": "KES 46,400,000",
+     "quantity": "250 Each",
+     "submitted": "KES 46,400,000",
+     "supplier": "Afya Digital Supplies Limited",
+     "warranty": "36 months"
+    },
+    "signatures": "3 of 3",
+    "source_problem": "",
+    "state": "Current",
+    "tie": false,
+    "valid_until": "10 Oct 2027, 11:00 EAT",
+    "version": 1,
+    "versions": [
+     {
+      "label": "Evaluation report 1",
+      "received_at": "16 Jun 2027, 14:07 EAT",
+      "state": "Current"
+     }
+    ]
+   },
+   "returned": null,
+   "revised": null,
+   "source_kind": "Synthetic",
+   "stage": "Opinion",
+   "tender_reference": "TND-MOH-2027-033",
+   "tender_title": "Supply and delivery of business laptops",
+   "test_environment": "Test environment — no live award notices are sent.",
+   "validity_rule": "Submission deadline date plus the published validity days",
+   "viewer": {
+    "ao": true,
+    "auditor": false,
+    "hop": false,
+    "technical": false
+   }
+  },
+  "workspace": {
+   "ok": true,
+   "tasks": [],
+   "test_environment": "Test environment — no live award notices are sent."
+  }
+ },
+ "daniel": {
+  "record": {
+   "award": "AWD-MOH-2027-033",
+   "holder_name": "Daniel Otieno",
+   "ok": true,
+   "operations": [],
+   "record_version": 2,
+   "stage": "Opinion",
+   "technical": true
+  },
+  "workspace": {
+   "ok": true,
+   "tasks": [],
+   "technical": true
+  }
+ },
+ "david": {},
+ "hop": {
+  "record": {
+   "actions": {
+    "authorise_revised": false,
+    "award_supported": false,
+    "correct_contact": false,
+    "correction_proposals": false,
+    "decide": false,
+    "decide_correction": false,
+    "record_outcome": true,
+    "record_restriction": true,
+    "respond_request": true,
+    "retry_operation": false,
+    "return_report": true,
+    "save_opinion": true,
+    "sign_opinion": true
+   },
+   "award": "AWD-MOH-2027-033",
+   "cancelled": false,
+   "closed_reason": null,
+   "correspondence": [],
+   "cycle": {
+    "authorising": null,
+    "awaiting_report": false,
+    "number": 1,
+    "outcome": "",
+    "predecessor": null,
+    "stage": "Opinion"
+   },
+   "decision": null,
+   "decision_status": "No decision recorded",
+   "eligibility": null,
+   "guidance": {
+    "answer": {
+     "blockers": [],
+     "fixes": [],
+     "headline": "Prepare the professional opinion.",
+     "holder": null,
+     "kind": "your_turn",
+     "label": "Your turn",
+     "primary_action": "sign_opinion",
+     "sentence": "",
+     "since": null,
+     "stage": ""
+    },
+    "journey": {
+     "code": "CNNNN",
+     "current": "opinion",
+     "downstream": null,
+     "reduced": false,
+     "reduced_parts": {
+      "label": "Opinion",
+      "prefix": "",
+      "suffix": " · 1 of 5 · Charles Mutiso"
+     },
+     "reduced_style": "position",
+     "reduced_text": "Opinion · 1 of 5 · Charles Mutiso",
+     "stages": [
+      {
+       "code": "opinion",
+       "holder": "Charles Mutiso",
+       "label": "Opinion",
+       "marker": "current",
+       "marker_label": "Current"
+      },
+      {
+       "code": "decision",
+       "holder": "",
+       "label": "Decision",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      },
+      {
+       "code": "notices",
+       "holder": "",
+       "label": "Notices",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      },
+      {
+       "code": "wait",
+       "holder": "",
+       "label": "Acceptance and wait",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      },
+      {
+       "code": "send",
+       "holder": "",
+       "label": "Send to Contracting",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      }
+     ],
+     "upstream": null
+    }
+   },
+   "history": [
+    {
+     "cycle": 1,
+     "decisions": [],
+     "opinions": [],
+     "outcome": "",
+     "stage": "Opinion"
+    }
+   ],
+   "notices": {
+    "batch": null,
+    "preview": [
+     {
+      "label": "Successful bidder notice — Afya Digital Supplies Limited",
+      "organisation": "Afya Digital Supplies Limited",
+      "result": "Successful"
+     }
+    ],
+    "recipients": []
+   },
+   "notification_status": "Not issued",
+   "ok": true,
+   "opinion": {
+    "all": [],
+    "signed": null,
+    "working": null
+   },
+   "outcome": "",
+   "outstanding": [],
+   "package": null,
+   "procuring_entity": "Ministry of Health",
+   "record_version": 2,
+   "report": {
+    "committee": [
+     "Grace Wambui",
+     "Peter Mugo",
+     "Ruth Achieng"
+    ],
+    "comparison": [
+     {
+      "amount": "KES 46,400,000",
+      "position": "1",
+      "submitted": "KES 46,400,000",
+      "tenderer": "Afya Digital Supplies Limited"
+     }
+    ],
+    "dissent": [],
+    "funding": {
+     "available": "50000000.00",
+     "qualification": "",
+     "shortfall": "0.00",
+     "source": "Budget confirmation"
+    },
+    "id": "AWD-MOH-2027-033-RPT-01",
+    "label": "Evaluation report 1",
+    "outcome": "Recommendation",
+    "qualifications": [],
+    "reason": "The only bid received meets the published requirements.",
+    "received_at": "16 Jun 2027, 14:07 EAT",
+    "recommendation": "Award to Afya Digital Supplies Limited",
+    "recommended": {
+     "bid": "BID-MOH-2027-033-001",
+     "bid_version": "Submitted version 1",
+     "evaluated": "KES 46,400,000",
+     "quantity": "250 Each",
+     "submitted": "KES 46,400,000",
+     "supplier": "Afya Digital Supplies Limited",
+     "warranty": "36 months"
+    },
+    "signatures": "3 of 3",
+    "source_problem": "",
+    "state": "Current",
+    "tie": false,
+    "valid_until": "10 Oct 2027, 11:00 EAT",
+    "version": 1,
+    "versions": [
+     {
+      "label": "Evaluation report 1",
+      "received_at": "16 Jun 2027, 14:07 EAT",
+      "state": "Current"
+     }
+    ]
+   },
+   "returned": null,
+   "revised": null,
+   "source_kind": "Synthetic",
+   "stage": "Opinion",
+   "tender_reference": "TND-MOH-2027-033",
+   "tender_title": "Supply and delivery of business laptops",
+   "test_environment": "Test environment — no live award notices are sent.",
+   "validity_rule": "Submission deadline date plus the published validity days",
+   "viewer": {
+    "ao": false,
+    "auditor": false,
+    "hop": true,
+    "technical": false
+   }
+  },
+  "workspace": {
+   "ok": true,
+   "tasks": [
+    {
+     "award": "AWD-MOH-2027-033",
+     "holder": "Charles Mutiso",
+     "task": "Prepare professional opinion",
+     "tender_reference": "TND-MOH-2027-033",
+     "tender_title": "Supply and delivery of business laptops"
+    }
+   ],
+   "test_environment": "Test environment — no live award notices are sent."
+  }
+ },
+ "info": {
+  "award": "AWD-MOH-2027-033",
+  "instant": "2027-06-17 09:00:00",
+  "notice": "",
+  "notices": {},
+  "requests": [],
+  "stage": "received",
+  "tender_reference": "TND-MOH-2027-033"
+ },
+ "mary": {},
+ "naomi": {
+  "record": {
+   "actions": {
+    "authorise_revised": false,
+    "award_supported": false,
+    "correct_contact": false,
+    "correction_proposals": false,
+    "decide": false,
+    "decide_correction": false,
+    "record_outcome": false,
+    "record_restriction": false,
+    "respond_request": false,
+    "retry_operation": false,
+    "return_report": false,
+    "save_opinion": false,
+    "sign_opinion": false
+   },
+   "award": "AWD-MOH-2027-033",
+   "cancelled": false,
+   "closed_reason": null,
+   "correspondence": [],
+   "cycle": {
+    "authorising": null,
+    "awaiting_report": false,
+    "number": 1,
+    "outcome": "",
+    "predecessor": null,
+    "stage": "Opinion"
+   },
+   "decision": null,
+   "decision_status": "No decision recorded",
+   "eligibility": null,
+   "guidance": {
+    "answer": {
+     "blockers": [],
+     "fixes": [],
+     "headline": "",
+     "holder": null,
+     "kind": "not_involved",
+     "label": "",
+     "primary_action": "",
+     "sentence": "",
+     "since": null,
+     "stage": ""
+    },
+    "journey": {
+     "code": "CNNNN",
+     "current": "opinion",
+     "downstream": null,
+     "reduced": false,
+     "reduced_parts": {
+      "label": "Opinion",
+      "prefix": "",
+      "suffix": " · 1 of 5 · Charles Mutiso"
+     },
+     "reduced_style": "position",
+     "reduced_text": "Opinion · 1 of 5 · Charles Mutiso",
+     "stages": [
+      {
+       "code": "opinion",
+       "holder": "Charles Mutiso",
+       "label": "Opinion",
+       "marker": "current",
+       "marker_label": "Current"
+      },
+      {
+       "code": "decision",
+       "holder": "",
+       "label": "Decision",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      },
+      {
+       "code": "notices",
+       "holder": "",
+       "label": "Notices",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      },
+      {
+       "code": "wait",
+       "holder": "",
+       "label": "Acceptance and wait",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      },
+      {
+       "code": "send",
+       "holder": "",
+       "label": "Send to Contracting",
+       "marker": "not_started",
+       "marker_label": "Not started"
+      }
+     ],
+     "upstream": null
+    }
+   },
+   "history": [
+    {
+     "cycle": 1,
+     "decisions": [],
+     "opinions": [],
+     "outcome": "",
+     "stage": "Opinion"
+    }
+   ],
+   "notices": {
+    "batch": null,
+    "preview": [
+     {
+      "label": "Successful bidder notice — Afya Digital Supplies Limited",
+      "organisation": "Afya Digital Supplies Limited",
+      "result": "Successful"
+     }
+    ],
+    "recipients": []
+   },
+   "notification_status": "Not issued",
+   "ok": true,
+   "opinion": {
+    "all": [],
+    "signed": null,
+    "working": null
+   },
+   "outcome": "",
+   "outstanding": [],
+   "package": null,
+   "procuring_entity": "Ministry of Health",
+   "record_version": 2,
+   "report": {
+    "committee": [
+     "Grace Wambui",
+     "Peter Mugo",
+     "Ruth Achieng"
+    ],
+    "comparison": [
+     {
+      "amount": "KES 46,400,000",
+      "position": "1",
+      "submitted": "KES 46,400,000",
+      "tenderer": "Afya Digital Supplies Limited"
+     }
+    ],
+    "dissent": [],
+    "funding": {
+     "available": "50000000.00",
+     "qualification": "",
+     "shortfall": "0.00",
+     "source": "Budget confirmation"
+    },
+    "id": "AWD-MOH-2027-033-RPT-01",
+    "label": "Evaluation report 1",
+    "outcome": "Recommendation",
+    "qualifications": [],
+    "reason": "The only bid received meets the published requirements.",
+    "received_at": "16 Jun 2027, 14:07 EAT",
+    "recommendation": "Award to Afya Digital Supplies Limited",
+    "recommended": {
+     "bid": "BID-MOH-2027-033-001",
+     "bid_version": "Submitted version 1",
+     "evaluated": "KES 46,400,000",
+     "quantity": "250 Each",
+     "submitted": "KES 46,400,000",
+     "supplier": "Afya Digital Supplies Limited",
+     "warranty": "36 months"
+    },
+    "signatures": "3 of 3",
+    "source_problem": "",
+    "state": "Current",
+    "tie": false,
+    "valid_until": "10 Oct 2027, 11:00 EAT",
+    "version": 1,
+    "versions": [
+     {
+      "label": "Evaluation report 1",
+      "received_at": "16 Jun 2027, 14:07 EAT",
+      "state": "Current"
+     }
+    ]
+   },
+   "returned": null,
+   "revised": null,
+   "source_kind": "Synthetic",
+   "stage": "Opinion",
+   "tender_reference": "TND-MOH-2027-033",
+   "tender_title": "Supply and delivery of business laptops",
+   "test_environment": "Test environment — no live award notices are sent.",
+   "validity_rule": "Submission deadline date plus the published validity days",
+   "viewer": {
+    "ao": false,
+    "auditor": true,
+    "hop": false,
+    "technical": false
+   }
+  },
+  "workspace": {
+   "ok": true,
+   "tasks": [],
+   "test_environment": "Test environment — no live award notices are sent."
+  }
+ }
+}

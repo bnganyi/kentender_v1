@@ -1,0 +1,183 @@
+{
+ "actions": [],
+ "autoname": "format:TSE-{#####}",
+ "creation": "2026-09-12 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "plan_version",
+  "document_hash",
+  "submitted_at",
+  "channel",
+  "destination",
+  "dispatch_reference",
+  "supporting_attachment",
+  "exact_document_confirmed",
+  "actor",
+  "authority_snapshot",
+  "recorded_at",
+  "evidence_state",
+  "superseded_by",
+  "correction_reason",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "plan_version",
+   "fieldtype": "Link",
+   "label": "Approved Plan Version",
+   "options": "Annual Plan Version",
+   "reqd": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "document_hash",
+   "fieldtype": "Data",
+   "label": "Document Hash",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted At",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Data",
+   "label": "Channel",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "destination",
+   "fieldtype": "Data",
+   "label": "Destination",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "dispatch_reference",
+   "fieldtype": "Data",
+   "label": "Dispatch Reference",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "supporting_attachment",
+   "fieldtype": "Attach",
+   "label": "Supporting Attachment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "exact_document_confirmed",
+   "fieldtype": "Check",
+   "label": "Exact Document Confirmed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actor",
+   "fieldtype": "Link",
+   "label": "Recorded By",
+   "options": "User",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "authority_snapshot",
+   "fieldtype": "JSON",
+   "label": "Authority Snapshot",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recorded_at",
+   "fieldtype": "Datetime",
+   "label": "Recorded At",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_state",
+   "fieldtype": "Select",
+   "label": "Evidence State",
+   "options": "Current\nSuperseded\nInvalid",
+   "default": "Current",
+   "read_only": 1
+  },
+  {
+   "fieldname": "superseded_by",
+   "fieldtype": "Link",
+   "label": "Superseded By",
+   "options": "Treasury Submission Evidence",
+   "read_only": 1
+  },
+  {
+   "fieldname": "correction_reason",
+   "fieldtype": "Small Text",
+   "label": "Correction Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-09-12 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Treasury Submission Evidence",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Procurement Planner",
+   "read": 1
+  },
+  {
+   "role": "Head of Procurement Function",
+   "read": 1
+  },
+  {
+   "role": "Finance Confirmation Officer",
+   "read": 1
+  },
+  {
+   "role": "Accounting Officer",
+   "read": 1
+  },
+  {
+   "role": "Plan Statutory Approver",
+   "read": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

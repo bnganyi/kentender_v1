@@ -1,0 +1,112 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-19 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "obligation_id",
+  "obligation_type",
+  "channel",
+  "label",
+  "due_by",
+  "status",
+  "evidence_reference",
+  "evidence_file",
+  "evidence_digest",
+  "recorded_by",
+  "recorded_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "obligation_id",
+   "fieldtype": "Data",
+   "label": "Obligation",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "obligation_type",
+   "fieldtype": "Select",
+   "options": "Notice channel\nCandidate notice\nPPRA report",
+   "label": "Type",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Data",
+   "label": "Channel",
+   "read_only": 1
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Label",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "due_by",
+   "fieldtype": "Date",
+   "label": "Due by",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "options": "Not due\nDue\nRecorded\nOverdue",
+   "label": "Status",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "evidence_reference",
+   "fieldtype": "Data",
+   "label": "Evidence reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_file",
+   "fieldtype": "Link",
+   "options": "File",
+   "label": "Evidence file",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_digest",
+   "fieldtype": "Data",
+   "label": "Evidence digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recorded_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Recorded by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recorded_at",
+   "fieldtype": "Datetime",
+   "label": "Recorded at",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tenders",
+ "name": "Tender Cancellation Obligation",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "permissions": []
+}

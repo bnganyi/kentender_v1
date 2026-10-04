@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>html,body{margin:0;height:100%;background:var(--color-bg);font-family:var(--font-body);color:var(--color-text)}a{color:var(--color-accent-2-700)}a:hover{color:var(--color-accent-2-900)}</style>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden">
+
+<aside style="width:300px;flex:none;overflow-y:auto;background:var(--color-surface);border-right:1px solid var(--color-divider);padding:20px 0 40px">
+<div style="padding:0 20px 16px;border-bottom:1px solid var(--color-divider)">
+<div style="font-family:var(--font-heading);font-size:22px;font-weight:600;line-height:1.1">Bid opening artboards</div>
+<div style="font-size:13px;color:var(--color-neutral-700);margin-top:4px">BOP-CHG-001 v0.10 (proposed) · PRC v0.9 · KT-STD-001 v1.9</div>
+<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><span class="kt-status is-live">{{ readyCount }} drawn</span><span class="kt-status is-live">No open flags</span></div>
+<div style="font-size:12px;color:var(--color-neutral-700);margin-top:10px">↑ ↓ to move between boards</div>
+</div>
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+<div style="padding:14px 0 2px">
+<div style="padding:0 20px 6px;font-size:12px;font-weight:700;color:var(--color-neutral-700)">{{ g.name }}</div>
+<sc-for list="{{ g.items }}" as="it">
+<button type="button" onClick="{{ it.go }}" style="display:flex;width:100%;align-items:center;gap:8px;border:0;border-left:3px solid {{ it.rule }};background:{{ it.bg }};padding:7px 16px 7px 17px;text-align:left;cursor:pointer;font:inherit;color:var(--color-text)" style-hover="background:var(--color-neutral-100)">
+<span style="flex:1;min-width:0"><span style="display:block;font-size:11px;font-weight:600;color:var(--color-neutral-700)">{{ it.code }}</span><span style="display:block;font-size:14px;line-height:1.3">{{ it.label }}</span></span>
+<span class="kt-status {{ it.chip }}" style="font-size:11px">{{ it.stLabel }}</span>
+</button>
+</sc-for>
+</div>
+</sc-for>
+</aside>
+
+<main style="flex:1;overflow:auto;padding:24px 32px 64px">
+<div style="width:1280px;display:flex;flex-direction:column;gap:14px">
+<div style="display:grid;grid-template-columns:1fr auto;gap:8px 24px;align-items:end;padding-bottom:12px;border-bottom:1px solid var(--color-divider)">
+<div>
+<div style="font-size:12px;font-weight:700;color:var(--color-neutral-700)">{{ cur.gname }} · {{ cur.code }}</div>
+<div style="font-family:var(--font-heading);font-size:28px;font-weight:600;line-height:1.1">{{ cur.label }}</div>
+</div>
+<div style="display:flex;gap:8px"><button type="button" class="btn btn-secondary" onClick="{{ prev }}">Previous</button><button type="button" class="btn btn-secondary" onClick="{{ next }}">Next</button></div>
+<div style="grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:6px 28px;font-size:13px;color:var(--color-neutral-800)">
+<span><strong>Actor</strong> {{ cur.actor }}</span><span><strong>Moment</strong> {{ cur.at }}</span><span><strong>Source</strong> {{ cur.ref }}</span>
+</div>
+<sc-if value="{{ cur.hasNote }}"><div style="grid-column:1 / -1;font-size:13px;color:var(--color-neutral-800);border-left:2px solid var(--status-attention);padding-left:10px">{{ cur.note }}</div></sc-if>
+</div>
+
+<sc-if value="{{ is.n00 }}" hint-placeholder-val="{{ true }}">
+<div style="background:var(--color-surface);border:1px solid var(--color-divider);padding:28px 32px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 40px;font-size:14px;line-height:1.55">
+<div><h3 style="font-family:var(--font-heading);font-size:20px;margin:0 0 8px">What is drawn</h3><p style="margin:0">Every BOP v0.10 §10 state using its labelled scenario values: the main Afya path from appointment (10 Jun) to completion and register download, and each independent branch with its own times. Docking stations (TND-MOH-2027-034, 19 Jun) is the no-bids case; printers (TND-MOH-2027-035, 26 Jun) is the opening that did not take place.</p></div>
+<div><h3 style="font-family:var(--font-heading);font-size:20px;margin:0 0 8px">Provider-neutral</h3><p style="margin:0">Signing and secure access are shown as the KenTender task and outcome only. No checkbox stands in for a signature, and no external meeting link is drawn.</p></div>
+<div><h3 style="font-family:var(--font-heading);font-size:20px;margin:0 0 8px">Markers</h3><p style="margin:0">An amber note under a board title records a design assumption. Wording and step problems are under Flags.</p></div>
+<div><h3 style="font-family:var(--font-heading);font-size:20px;margin:0 0 8px">Shell and journey</h3><p style="margin:0">Desk boards use the top bar and one page sheet; the product sidebar is omitted. Journey: Prepare opening, Open bids, Record opening. Beatrice Kamau’s designation is from KT-STD-001 §8.3 (Budget Approver).</p></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.f00 }}">
+<div style="background:var(--color-surface);border:1px solid var(--color-divider);padding:28px 32px;font-size:14px;line-height:1.5">
+<h3 style="font-family:var(--font-heading);font-size:20px;margin:0 0 8px">Resolved by the 29 Sep correction</h3>
+<p style="margin:0 0 20px;font-size:14px;max-width:80ch;text-wrap:pretty">All 16 earlier flags are resolved in BOP v0.9 and PRC v0.9. The boards now use: “Recorded at” with the reported speech time in details; Beatrice records her own account (c8), with Charles’s linked response (c8b); the §8 mismatch, member-absent and unreadable messages; “Notify Beatrice Kamau”; “Appoint replacement”; one version-conflict message; “This opening record is final”; the 10:55 join line; page choice inside the readout (c6; the separate pages board is removed); “Bid opening isn’t available yet” (c2c, c2d); no deployment conditions in user copy; the unavailable AO decision route (n2, c11e); the comment for Evaluation example (c13, c13b); correcting a completed record (h4, h5); and “before ending the opening”.</p>
+<h3 style="font-family:var(--font-heading);font-size:20px;margin:0 0 8px">Resolved in BOP v0.10</h3>
+<table class="table"><thead><tr><th>No.</th><th>Where</th><th>Change in v0.10</th><th>Boards</th></tr></thead><tbody>
+<tr><td>1</td><td>§10 negative branch (6)</td><td>Opening service unavailable at 11:00:05; incident INC-OPEN-033-03; notify fails, Notify support retry at 11:00:40; support told 11:00:41; resolved 11:06:00; Start 11:06:20.</td><td>c2c, c2d</td></tr>
+<tr><td>2</td><td>§10.6, §11</td><td>What needs correcting? is a choice: Attendance note, Procedural note, Typographical error in a note, Observer name or organisation. Any other kind is denied.</td><td>h4, h5</td></tr>
+<tr><td>3</td><td>§10.7</td><td>Open AO item with no route uses Your turn, one explanatory sentence, and the unavailable line in a Tender decision region. Project Owner decision.</td><td>n2, c11e (unchanged)</td></tr>
+<tr><td>4</td><td>§9</td><td>One route family: /app/tenders/{tender_id}. Sub-paths and the public prefix are locked in implementation.</td><td>—</td></tr>
+</tbody></table>
+<h3 style="font-family:var(--font-heading);font-size:20px;margin:20px 0 8px">Open</h3>
+<p style="margin:0;font-size:14px;max-width:80ch;text-wrap:pretty">None from this review. BOP v0.10 is proposed and needs Project Owner approval.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.a1 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Amina Hassan</div><div class="role">Accounting Officer</div></div><div class="kt-topbar-avatar">AH</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Supply and delivery of business laptops</h1><p class="kt-page-desc">TND-MOH-2027-033 · Bid opening · Submissions close 12 Jun 2027, 11:00 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">Current · Amina Hassan</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Not started</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Appoint opening committee</p></div>
+</div>
+<div class="kt-region"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Designation</th><th>Role on committee</th><th>Eligibility</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Head of Procurement Function</td><td>Chair and recorder</td><td><span class="kt-status is-live">Eligible</span></td></tr>
+<tr><td>Brian Wafula</td><td>Procurement Officer</td><td>Member</td><td><span class="kt-status is-live">Eligible</span></td></tr>
+<tr><td>Beatrice Kamau</td><td>Budget Approver</td><td>Independent member</td><td><span class="kt-status is-live">Eligible</span> <span style="font-size:13px;color:var(--color-neutral-800)">Not involved in processing this Tender and will not evaluate it</span></td></tr>
+</tbody></table><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">Add member</button></div>
+</div>
+<div class="kt-decision">
+<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">Each member gets their own task to join the opening at 12 Jun 2027, 11:00 EAT. As the independent member, Beatrice Kamau cannot later be appointed to evaluate this Tender.</p>
+<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary">Appoint committee</button></div>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Appointment history</span><span class="tag tag-neutral">No appointments yet</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.a2 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Amina Hassan</div><div class="role">Accounting Officer</div></div><div class="kt-topbar-avatar">AH</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Supply and delivery of business laptops</h1><p class="kt-page-desc">TND-MOH-2027-033 · Bid opening · Submissions close 12 Jun 2027, 11:00 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-blocked"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">Blocked</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Not started</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-notice is-warning kt-next-step"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg><div class="kt-notice-body"><div class="kt-next-step-label">Your turn, blocked</div><p class="kt-next-step-headline">The opening committee needs an independent third member</p><p class="kt-next-step-sentence">Appoint a committee member who was not involved in processing this Tender and will not evaluate it.</p><div class="kt-next-step-fixes"><button type="button" class="btn btn-primary">Add an independent third member</button></div></div></div>
+</div>
+<div class="kt-region"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Designation</th><th>Role on committee</th><th>Eligibility</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Head of Procurement Function</td><td>Chair and recorder</td><td><span class="kt-status is-live">Eligible</span></td></tr>
+<tr><td>Brian Wafula</td><td>Procurement Officer</td><td>Member</td><td><span class="kt-status is-live">Eligible</span></td></tr>
+</tbody></table>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Appointment history</span><span class="tag tag-neutral">No appointments yet</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.a3 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Amina Hassan</div><div class="role">Accounting Officer</div></div><div class="kt-topbar-avatar">AH</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Supply and delivery of business laptops</h1><p class="kt-page-desc">TND-MOH-2027-033 · Bid opening · Submissions close 12 Jun 2027, 11:00 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">Current · Amina Hassan</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Not started</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Publish how to attend</p><p class="kt-next-step-sentence">You appointed the committee on 10 Jun 2027, 10:15 EAT. The opening cannot start until attendance details are published.</p></div>
+</div>
+<div class="kt-region"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Designation</th><th>Role on committee</th><th>Task to join</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Head of Procurement Function</td><td>Chair and recorder</td><td>Sent</td></tr>
+<tr><td>Brian Wafula</td><td>Procurement Officer</td><td>Member</td><td>Sent</td></tr>
+<tr><td>Beatrice Kamau</td><td>Budget Approver</td><td>Independent member</td><td>Sent</td></tr>
+</tbody></table>
+</div>
+<div class="kt-region is-secondary"><h2>How to attend</h2>
+<div class="kt-group"><p style="margin:0 0 12px;font-size:14px;max-width:75ch;text-wrap:pretty">Not published. The public Tender page says “Details on how to attend the opening are coming soon”.</p><button type="button" class="btn btn-primary">Publish how to attend</button></div>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Appointment history</span><span class="tag tag-neutral">Appointed 10 Jun 2027, 10:15 EAT by Amina Hassan</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.a4 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Amina Hassan</div><div class="role">Accounting Officer</div></div><div class="kt-topbar-avatar">AH</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Supply and delivery of business laptops</h1><p class="kt-page-desc">TND-MOH-2027-033 · Bid opening · Submissions close 12 Jun 2027, 11:00 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">Current · Amina Hassan</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Not started</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Publish how to attend</p></div>
+</div>
+<div class="kt-region"><h2>How to attend</h2>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;max-width:1000px"><div class="field" style="grid-column:1 / -1"><label>Attendance method</label><input class="input" value="Attend the public bid opening online"></div><div class="field" style="grid-column:1 / -1"><label>What attendees can do</label><textarea class="input" rows="3">Select Join public opening on this Tender’s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, or make a procedural comment.</textarea></div><div><span class="kt-label">Opening time</span><div class="kt-meta-value">12 Jun 2027, 11:00 EAT</div></div><div><span class="kt-label">Published</span><div class="kt-meta-value">Not yet</div></div></div>
+</div>
+<div class="kt-decision">
+<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">Publishing shows these details on the public Tender page straight away. No bid details are shown. If the online service is unavailable on the day, post updated instructions here; the opening waits until attendees can join.</p>
+<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary">Publish how to attend</button></div>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.a5 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Amina Hassan</div><div class="role">Accounting Officer</div></div><div class="kt-topbar-avatar">AH</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Supply and delivery of business laptops</h1><p class="kt-page-desc">TND-MOH-2027-033 · Bid opening · Submissions close 12 Jun 2027, 11:00 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Opens 12 Jun 2027, 11:00 EAT</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-done"><div class="kt-next-step-label">Done</div><p class="kt-next-step-headline">You published how to attend on 10 Jun 2027, 10:20 EAT.</p></div>
+</div>
+<div class="kt-region"><h2>How to attend</h2>
+<div class="kt-meta-row"><div><span class="kt-label">Attendance method</span><span class="kt-meta-value">Attend the public bid opening online</span></div><div><span class="kt-label">Join opens</span><span class="kt-meta-value">12 Jun 2027, 10:55 EAT</span></div><div><span class="kt-label">Opening time</span><span class="kt-meta-value">12 Jun 2027, 11:00 EAT</span></div><div><span class="kt-label">Published</span><span class="kt-meta-value">10 Jun 2027, 10:20 EAT</span></div></div><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">Update instructions</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>Opening committee</h2>
+<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">Charles Mutiso (chair and recorder), Brian Wafula, Beatrice Kamau (independent member). Appointed 10 Jun 2027, 10:15 EAT.</p></div>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Appointment and publication history</span><span class="tag tag-neutral">2 events by Amina Hassan</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.p0 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening</strong></div><div class="kt-topbar-right"><button type="button" class="btn btn-secondary">Sign in</button></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · Supply and delivery of business laptops</h1><p class="kt-page-desc">TND-MOH-2027-033 · Ministry of Health · Opening 12 Jun 2027, 11:00 EAT</p></div></div>
+<div class="kt-region"><h2>Attending the opening</h2>
+<p style="margin:0 0 16px;font-size:16px;max-width:70ch">You can attend the opening. Attending does not submit or change a bid. After the opening record is complete, a supplier who submitted a bid can request the opening register.</p><div class="kt-meta-row"><div><span class="kt-label">Opening time</span><span class="kt-meta-value">12 Jun 2027, 11:00 EAT</span></div><div><span class="kt-label">How to attend</span><span class="kt-meta-value">Details on how to attend the opening are coming soon</span></div></div>
+</div>
+<div class="kt-region is-secondary"><h2>What the opening register is</h2>
+<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">The opening register lists each bid opened, with the tenderer’s name, the total they submitted and the tender security they gave, exactly as read aloud.</p></div>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.p1a }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Jane Wanjiku</div><div class="role">Public observer</div></div><div class="kt-topbar-avatar">JW</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · Supply and delivery of business laptops</h1><p class="kt-page-desc">TND-MOH-2027-033 · Ministry of Health · Opening 12 Jun 2027, 11:00 EAT</p></div></div>
+<div class="kt-region"><h2>Attending the opening</h2>
+<p style="margin:0 0 16px;font-size:16px;max-width:70ch">You can attend the opening. Attending does not submit or change a bid. After the opening record is complete, a supplier who submitted a bid can request the opening register.</p><div class="kt-meta-row"><div><span class="kt-label">How to attend</span><span class="kt-meta-value">Attend the public bid opening online</span></div><div><span class="kt-label">Join opens</span><span class="kt-meta-value">12 Jun 2027, 10:55 EAT</span></div><div><span class="kt-label">Opening time</span><span class="kt-meta-value">12 Jun 2027, 11:00 EAT</span></div><div><span class="kt-label">Published</span><span class="kt-meta-value">10 Jun 2027, 10:20 EAT</span></div></div><p style="margin:14px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">You can join from 12 Jun 2027, 10:55 EAT. Once joined you can listen, ask for a figure to be repeated, or make a procedural comment.</p>
+</div>
+<div class="kt-region is-secondary"><h2>What the opening register is</h2>
+<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">The opening register lists each bid opened, with the tenderer’s name, the total they submitted and the tender security they gave, exactly as read aloud.</p></div>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.p1 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Jane Wanjiku</div><div class="role">Public observer</div></div><div class="kt-topbar-avatar">JW</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · Supply and delivery of business laptops</h1><p class="kt-page-desc">TND-MOH-2027-033 · Ministry of Health · Opening 12 Jun 2027, 11:00 EAT</p></div></div>
+<div class="kt-region"><h2>Attending the opening</h2>
+<p style="margin:0 0 16px;font-size:16px;max-width:70ch">You can attend the opening. Attending does not submit or change a bid. After the opening record is complete, a supplier who submitted a bid can request the opening register.</p><div class="kt-meta-row"><div><span class="kt-label">How to attend</span><span class="kt-meta-value">Attend the public bid opening online</span></div><div><span class="kt-label">Join opens</span><span class="kt-meta-value">12 Jun 2027, 10:55 EAT</span></div><div><span class="kt-label">Opening time</span><span class="kt-meta-value">12 Jun 2027, 11:00 EAT</span></div><div><span class="kt-label">Published</span><span class="kt-meta-value">10 Jun 2027, 10:20 EAT</span></div></div><p style="margin:14px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">You can listen, ask for a figure to be repeated, or make a procedural comment.</p><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-primary">Join public opening</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>What the opening register is</h2>
+<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">The opening register lists each bid opened, with the tenderer’s name, the total they submitted and the tender security they gave, exactly as read aloud.</p></div>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.p2 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Jane Wanjiku</div><div class="role">Public observer</div></div><div class="kt-topbar-avatar">JW</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · Supply and delivery of business laptops</h1><p class="kt-page-desc">TND-MOH-2027-033 · Ministry of Health · <span class="kt-status is-live">In session</span></p></div></div>
+<div class="kt-region"><h2>Read aloud at the opening</h2>
+<p style="margin:0 0 16px;font-size:16px;max-width:70ch">You joined at 10:59. Each bid appears here once the committee has recorded what was read aloud.</p><table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Tender security given</th><th>Recorded at</th></tr></thead><tbody>
+<tr><td>1</td><td>Afya Digital Supplies Limited</td><td class="is-num">KES 46,400,000.00</td><td>KES 500,000.00, KCB/TG/2027/8841</td><td>11:01:45</td></tr>
+</tbody></table><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">At 11:02 the submitted total was repeated at an attendee’s request. The bid is unchanged.</p>
+</div>
+<div class="kt-region is-secondary"><h2>Opening register</h2>
+<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">After the opening record is complete, a supplier who submitted a bid can request the opening register.</p></div>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.p3 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">David Ouma</div><div class="role">Afya Digital Supplies Limited</div></div><div class="kt-topbar-avatar">DO</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · Supply and delivery of business laptops</h1><p class="kt-page-desc">TND-MOH-2027-033 · Ministry of Health · <span class="kt-status is-live">Opening complete</span></p></div></div>
+<div class="kt-region"><h2>Read aloud at the opening</h2>
+<table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Tender security given</th><th>Recorded at</th></tr></thead><tbody>
+<tr><td>1</td><td>Afya Digital Supplies Limited</td><td class="is-num">KES 46,400,000.00</td><td>KES 500,000.00, KCB/TG/2027/8841</td><td>11:01:45</td></tr>
+</tbody></table>
+</div>
+<div class="kt-region"><h2>Opening register</h2>
+<p style="margin:0 0 12px;font-size:14px;max-width:75ch;text-wrap:pretty">The opening record is complete. As the representative of a supplier who submitted a bid, you can request a copy of the opening register.</p><button type="button" class="btn btn-primary">Request opening register</button>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.p4 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">David Ouma</div><div class="role">Afya Digital Supplies Limited</div></div><div class="kt-topbar-avatar">DO</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · Supply and delivery of business laptops</h1><p class="kt-page-desc">TND-MOH-2027-033 · Ministry of Health · <span class="kt-status is-live">Opening complete</span></p></div></div>
+<div class="kt-region"><h2>Read aloud at the opening</h2>
+<table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Tender security given</th><th>Recorded at</th></tr></thead><tbody>
+<tr><td>1</td><td>Afya Digital Supplies Limited</td><td class="is-num">KES 46,400,000.00</td><td>KES 500,000.00, KCB/TG/2027/8841</td><td>11:01:45</td></tr>
+</tbody></table>
+</div>
+<div class="kt-region"><h2>Opening register</h2>
+<div class="kt-group"><p style="margin:0 0 4px;font-size:16px;font-weight:600">The opening register is being prepared</p><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">You requested it at 11:12. We will notify you when it is ready to download.</p></div>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.p5 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">David Ouma</div><div class="role">Afya Digital Supplies Limited</div></div><div class="kt-topbar-avatar">DO</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · Supply and delivery of business laptops</h1><p class="kt-page-desc">TND-MOH-2027-033 · Ministry of Health · <span class="kt-status is-live">Opening complete</span></p></div></div>
+<div class="kt-region"><h2>Read aloud at the opening</h2>
+<table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Tender security given</th><th>Recorded at</th></tr></thead><tbody>
+<tr><td>1</td><td>Afya Digital Supplies Limited</td><td class="is-num">KES 46,400,000.00</td><td>KES 500,000.00, KCB/TG/2027/8841</td><td>11:01:45</td></tr>
+</tbody></table>
+</div>
+<div class="kt-region"><h2>Opening register</h2>
+<p style="margin:0 0 12px;font-size:14px;max-width:75ch;text-wrap:pretty">Your copy of the opening register is ready. It lists the one bid opened, as read aloud.</p><button type="button" class="btn btn-primary">Download opening register</button>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.p6 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Jane Wanjiku</div><div class="role">Public observer</div></div><div class="kt-topbar-avatar">JW</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · Supply and delivery of business laptops</h1><p class="kt-page-desc">TND-MOH-2027-033 · Ministry of Health · <span class="kt-status is-live">Opening complete</span></p></div></div>
+<div class="kt-region"><h2>Read aloud at the opening</h2>
+<table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Tender security given</th><th>Recorded at</th></tr></thead><tbody>
+<tr><td>1</td><td>Afya Digital Supplies Limited</td><td class="is-num">KES 46,400,000.00</td><td>KES 500,000.00, KCB/TG/2027/8841</td><td>11:01:45</td></tr>
+</tbody></table>
+</div>
+<div class="kt-region is-secondary"><h2>Opening register</h2>
+<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">Only a supplier who submitted a bid for this Tender can request the opening register. The facts read aloud are shown above.</p></div>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c1 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · Submissions close 12 Jun 2027, 11:00 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Opens 12 Jun 2027, 11:00 EAT</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-waiting"><div class="kt-next-step-label">Scheduled</div><p class="kt-next-step-headline">Submissions close automatically at 12 Jun 2027, 11:00 EAT.</p></div>
+</div>
+<div class="kt-region"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Joined</span> 10:55</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Joined</span> 10:56</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Joined</span> 10:57</td></tr>
+</tbody></table>
+</div>
+<div class="kt-region is-secondary"><h2>Attendees</h2>
+<table class="table"><thead><tr><th>Attendee</th><th>Says they represent</th><th>Joined</th></tr></thead><tbody>
+<tr><td>David Ouma</td><td>Afya Digital Supplies Limited</td><td>10:58</td></tr>
+</tbody></table><p style="margin:10px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">Saying who you represent does not show that a bid was submitted.</p>
+</div>
+<div class="kt-region is-secondary"><h2>Bids</h2>
+<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">Bids stay sealed until the committee opens them together. Nobody can see how many bids were received before then.</p></div>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">History</span><span class="tag tag-neutral">Committee appointed 10 Jun 10:15 · attendance published 10 Jun 10:20</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c2 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · Submissions closed 12 Jun 2027, 11:00 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Beatrice Kamau</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-waiting"><div class="kt-next-step-label">Waiting on someone</div><p class="kt-next-step-headline">Opening cannot start because Beatrice Kamau has not joined.</p><p class="kt-next-step-sentence">Submissions closed at 11:00 EAT. You can start once every appointed member has joined.</p></div>
+</div>
+<div class="kt-region"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Joined</span> 10:55</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Joined</span> 10:56</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-pending">Not joined</span></td></tr>
+</tbody></table><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">Notify Beatrice Kamau</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>Attendees</h2>
+<table class="table"><thead><tr><th>Attendee</th><th>Says they represent</th><th>Joined</th></tr></thead><tbody>
+<tr><td>David Ouma</td><td>Afya Digital Supplies Limited</td><td>10:58</td></tr>
+<tr><td>Jane Wanjiku</td><td>No one (public observer)</td><td>10:59</td></tr>
+</tbody></table>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">History</span><span class="tag tag-neutral">Committee appointed 10 Jun 10:15 · attendance published 10 Jun 10:20</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c2b }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · Submissions closed 12 Jun 2027, 11:00 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Opening access support</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-waiting"><div class="kt-next-step-label">Waiting on someone</div><p class="kt-next-step-headline">Opening access is not ready yet.</p><p class="kt-next-step-sentence">Opening access is not ready yet. You can start once they have fixed it.</p></div>
+</div>
+<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">View problem details</button></div>
+<div class="kt-region"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Joined</span> 10:55</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Joined</span> 10:56</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Joined</span> 10:57</td></tr>
+</tbody></table>
+</div>
+<div class="kt-region is-secondary"><h2>Attendees</h2>
+<table class="table"><thead><tr><th>Attendee</th><th>Says they represent</th><th>Joined</th></tr></thead><tbody>
+<tr><td>David Ouma</td><td>Afya Digital Supplies Limited</td><td>10:58</td></tr>
+<tr><td>Jane Wanjiku</td><td>No one (public observer)</td><td>10:59</td></tr>
+</tbody></table>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">History</span><span class="tag tag-neutral">Committee appointed 10 Jun 10:15 · attendance published 10 Jun 10:20</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+<sc-if value="{{ is.c2c }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · Submissions closed 12 Jun 2027, 11:00 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Beatrice Kamau</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-waiting"><div class="kt-next-step-label">Waiting on someone</div><p class="kt-next-step-headline">Bid opening isn’t available yet.</p><p class="kt-next-step-sentence">Opening access support has been told.</p></div>
+</div>
+<div class="kt-region"><h2>Why the opening cannot start</h2>
+<div class="kt-meta-row"><div><span class="kt-label">Being handled by</span><span class="kt-meta-value">Opening access support</span></div><div><span class="kt-label">Status</span><span class="kt-meta-value">Support notified 11:00:41</span></div><div><span class="kt-label">Reference</span><span class="kt-meta-value">INC-OPEN-033-03</span></div></div><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">View problem details</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Joined</span> 10:55</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Joined</span> 10:56</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Joined</span> 10:57</td></tr>
+</tbody></table>
+</div>
+</div></div>
+</sc-if>
+<sc-if value="{{ is.c2d }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · Submissions closed 12 Jun 2027, 11:00 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Beatrice Kamau</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-notice is-warning kt-next-step"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg><div class="kt-notice-body"><div class="kt-next-step-label">Your turn, blocked</div><p class="kt-next-step-headline">Bid opening isn’t available yet.</p><p class="kt-next-step-sentence">Support could not be notified. Try again.</p><div class="kt-next-step-fixes"><button type="button" class="btn btn-primary">Notify support</button><button type="button" class="btn btn-secondary">View problem details</button></div></div></div>
+</div>
+<div class="kt-region"><h2>Why the opening cannot start</h2>
+<div class="kt-meta-row"><div><span class="kt-label">Assigned to</span><span class="kt-meta-value">Opening access support</span></div><div><span class="kt-label">Status</span><span class="kt-meta-value">Not yet notified</span></div><div><span class="kt-label">Reference</span><span class="kt-meta-value">INC-OPEN-033-03</span></div></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">Notify support resends the notice for the same problem. It does not open a new one.</p>
+</div>
+<div class="kt-region is-secondary"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Joined</span> 10:55</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Joined</span> 10:56</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Joined</span> 10:57</td></tr>
+</tbody></table>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c3 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · Submissions closed 12 Jun 2027, 11:00 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Charles Mutiso</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Ready to start</p><p class="kt-next-step-sentence">All three members have joined and submissions closed at 11:00 EAT.</p></div>
+</div>
+<div class="kt-region"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Joined</span> 10:55</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Joined</span> 10:56</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Joined</span> 10:57</td></tr>
+</tbody></table>
+</div>
+<div class="kt-region is-secondary"><h2>Attendees</h2>
+<table class="table"><thead><tr><th>Attendee</th><th>Says they represent</th><th>Joined</th></tr></thead><tbody>
+<tr><td>David Ouma</td><td>Afya Digital Supplies Limited</td><td>10:58</td></tr>
+<tr><td>Jane Wanjiku</td><td>No one (public observer)</td><td>10:59</td></tr>
+</tbody></table>
+</div>
+<div class="kt-decision">
+<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">Starting opens the bids one at a time, in front of the committee and attendees. Every member must stay present until the opening ends.</p>
+<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary">Start opening</button></div>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">History</span><span class="tag tag-neutral">Committee appointed 10 Jun 10:15 · attendance published 10 Jun 10:20</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c4 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">In session</span> since 11:00:12 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Charles Mutiso</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Open the first bid</p></div>
+</div>
+<div class="kt-region"><h2>Attendees</h2>
+<table class="table"><thead><tr><th>Attendee</th><th>Says they represent</th><th>Joined</th><th>In session</th><th></th></tr></thead><tbody>
+<tr><td>David Ouma</td><td>Afya Digital Supplies Limited</td><td>10:58</td><td><span class="kt-status is-live">Present</span></td><td><button type="button" class="btn btn-ghost">Correct</button></td></tr>
+<tr><td>Jane Wanjiku</td><td>No one (public observer)</td><td>10:59</td><td><span class="kt-status is-live">Present</span></td><td><button type="button" class="btn btn-ghost">Correct</button></td></tr>
+</tbody></table><p style="margin:10px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">People who joined before the start are carried into the session automatically. Departures are recorded when they happen.</p>
+</div>
+<div class="kt-decision">
+<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">Opening a bid shows it to the committee. Bids are opened one at a time.</p>
+<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary">Open next bid</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Joined</span> 10:55</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Joined</span> 10:56</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Joined</span> 10:57</td></tr>
+</tbody></table>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence details</span><span class="tag tag-neutral">Event history</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c5 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Brian Wafula</div><div class="role">Committee member</div></div><div class="kt-topbar-avatar">BW</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">In session</span> since 11:00:12 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Brian Wafula</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Read these details aloud</p><p class="kt-next-step-sentence">Charles Mutiso will record what you read. You do not need to confirm it.</p></div>
+</div>
+<div class="kt-region"><h2>Bid 1</h2>
+<div class="kt-meta-row"><div><span class="kt-label">Bid</span><span class="kt-meta-value">1</span></div><div><span class="kt-label">Tenderer</span><span class="kt-meta-value">Afya Digital Supplies Limited</span></div><div><span class="kt-label">Submitted total</span><span class="kt-meta-value">KES 46,400,000.00</span></div><div><span class="kt-label">Tender security given</span><span class="kt-meta-value">KES 500,000.00, KCB/TG/2027/8841</span></div><div><span class="kt-label">Pages</span><span class="kt-meta-value">12 · price on page 4</span></div></div><div style="margin-top:20px;padding:16px 20px;border-left:3px solid var(--color-neutral-400)"><div class="kt-label" style="margin-bottom:6px">Read aloud</div><p style="margin:0;font-size:20px;line-height:1.45">Afya Digital Supplies Limited; KES 46,400,000.00; tender security given: KES 500,000.00, KCB/TG/2027/8841</p></div><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">View bid pages</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Joined</span> 10:55</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Joined</span> 10:56</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Joined</span> 10:57</td></tr>
+</tbody></table>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence details</span><span class="tag tag-neutral">Receipt RCPT-MOH-2027-033-001 · event history</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c6 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">In session</span> since 11:00:12 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Charles Mutiso</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Record what was read aloud</p></div>
+</div>
+<div class="kt-region"><h2>What was read aloud</h2>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 24px;max-width:1000px"><div class="field"><label>Read aloud by</label><select class="input"><option>Brian Wafula</option></select></div><div class="field"><label>Bid</label><input class="input" value="1 · Afya Digital Supplies Limited" readonly="readonly"></div><div class="field"><label>Time read aloud (as you heard it)</label><input class="input" value="11:01:30"></div><div class="field"><label>Page the committee will sign</label><select class="input"><option>Page 1 (proposed, change if the committee chose another)</option></select></div><div class="field"><label>Price page</label><input class="input" value="Page 4 (found in the bid)" readonly="readonly"></div></div><div style="margin-top:16px"><div class="kt-meta-row"><div><span class="kt-label">Bid</span><span class="kt-meta-value">1</span></div><div><span class="kt-label">Tenderer</span><span class="kt-meta-value">Afya Digital Supplies Limited</span></div><div><span class="kt-label">Submitted total</span><span class="kt-meta-value">KES 46,400,000.00</span></div><div><span class="kt-label">Tender security given</span><span class="kt-meta-value">KES 500,000.00, KCB/TG/2027/8841</span></div><div><span class="kt-label">Pages</span><span class="kt-meta-value">12 · price on page 4</span></div></div></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">These facts come from the opened bid and cannot be edited. The system records the time you confirm.</p>
+</div>
+<div class="kt-decision">
+<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">Recording adds bid 1 to the opening register exactly as shown, records the pages each member will sign, and shows the bid on the public Tender page.</p>
+<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary">Record what was read aloud</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>Register</h2>
+<table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Security given</th><th>Recorded at</th></tr></thead><tbody>
+
+</tbody></table><div class="kt-empty" style="border-top:0;padding:16px"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">Nothing recorded yet.</p></div>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence details</span><span class="tag tag-neutral">Receipt RCPT-MOH-2027-033-001 · event history</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c7 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">In session</span> since 11:00:12 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Charles Mutiso</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Record the request to repeat the total</p></div>
+</div>
+<div class="kt-region"><h2>Request during opening</h2>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 24px;max-width:1000px"><div class="field"><label>Asked by</label><input class="input" value="David Ouma" readonly="readonly"></div><div class="field"><label>Bid</label><input class="input" value="1 · Afya Digital Supplies Limited" readonly="readonly"></div><div class="field"><label>Asked at</label><input class="input" value="11:02:00" readonly="readonly"></div><div class="field" style="grid-column:1 / -1"><label>What was asked</label><input class="input" value="Asked for the submitted total to be repeated"></div><div class="field" style="grid-column:1 / -1"><label>How it was answered</label><textarea class="input" rows="3">Charles Mutiso asked Brian Wafula to repeat it. Brian Wafula repeated KES 46,400,000.00 at 11:02:15.</textarea></div></div><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-primary">Record as answered during opening</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>Register</h2>
+<table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Security given</th><th>Recorded at</th></tr></thead><tbody>
+<tr><td>1</td><td>Afya Digital Supplies Limited</td><td class="is-num">KES 46,400,000.00</td><td>KES 500,000.00, KCB/TG/2027/8841</td><td>11:01:45</td></tr>
+</tbody></table><p style="margin:10px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">The request does not change the bid.</p>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence details</span><span class="tag tag-neutral">Receipt RCPT-MOH-2027-033-001 · event history</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+
+<sc-if value="{{ is.c8 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Beatrice Kamau</div><div class="role">Independent member</div></div><div class="kt-topbar-avatar">BK</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">In session</span> since 11:00:12 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Charles Mutiso</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+
+</div>
+<div class="kt-region"><h2>Record my differing account</h2>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;max-width:1000px"><div class="field"><label>Bid</label><input class="input" value="1 · Afya Digital Supplies Limited" readonly="readonly"></div><div class="field"><label>Recorded under</label><input class="input" value="Beatrice Kamau · Independent member" readonly="readonly"></div><div class="field" style="grid-column:1 / -1"><label>Your account, in your words</label><textarea class="input" rows="3">I heard the total repeated after the attendee’s request, but I could not hear the security reference clearly.</textarea></div></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">Your account is kept under your name. Only you can submit or change it. It does not change the bid or what was recorded as read aloud.</p><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-primary">Record my differing account</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>Session so far</h2>
+<table class="table"><thead><tr><th>Time</th><th>Who</th><th>What happened</th></tr></thead><tbody>
+<tr><td>11:00:12</td><td>Charles Mutiso</td><td>Started the opening</td></tr>
+<tr><td>11:01:30</td><td>Brian Wafula</td><td>Read bid 1 aloud (reported speech time, recorded by Charles Mutiso)</td></tr>
+<tr><td>11:01:45</td><td>Charles Mutiso</td><td>Recorded what was read aloud, with bid page 1 and price page 4 for signing</td></tr>
+<tr><td>11:02:00</td><td>David Ouma</td><td>Asked for the submitted total to be repeated</td></tr>
+<tr><td>11:02:15</td><td>Brian Wafula</td><td>Repeated KES 46,400,000.00</td></tr>
+<tr><td>11:02:20</td><td>Charles Mutiso</td><td>Recorded the request as answered during opening</td></tr>
+</tbody></table>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence details</span><span class="tag tag-neutral">Receipt RCPT-MOH-2027-033-001 · event history</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+<sc-if value="{{ is.c8b }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">In session</span> since 11:00:12 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Charles Mutiso</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Record the response to Beatrice Kamau’s account</p></div>
+</div>
+<div class="kt-region"><h2>Response to a member’s account</h2>
+<div class="kt-group" style="margin-bottom:16px"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty"><strong>Beatrice Kamau, 11:02:25:</strong> I heard the total repeated after the attendee’s request, but I could not hear the security reference clearly.</p></div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;max-width:1000px"><div class="field"><label>Repeated by</label><select class="input"><option>Brian Wafula</option></select></div><div class="field"><label>Time repeated (as you heard it)</label><input class="input" value="11:02:35"></div><div class="field" style="grid-column:1 / -1"><label>Response</label><textarea class="input" rows="2">Brian Wafula repeated the security reference KCB/TG/2027/8841.</textarea></div></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">Your response is linked to her account. Her words stay as she recorded them.</p><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-primary">Record response</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>Session so far</h2>
+<table class="table"><thead><tr><th>Time</th><th>Who</th><th>What happened</th></tr></thead><tbody>
+<tr><td>11:00:12</td><td>Charles Mutiso</td><td>Started the opening</td></tr>
+<tr><td>11:01:30</td><td>Brian Wafula</td><td>Read bid 1 aloud (reported speech time, recorded by Charles Mutiso)</td></tr>
+<tr><td>11:01:45</td><td>Charles Mutiso</td><td>Recorded what was read aloud, with bid page 1 and price page 4 for signing</td></tr>
+<tr><td>11:02:00</td><td>David Ouma</td><td>Asked for the submitted total to be repeated</td></tr>
+<tr><td>11:02:15</td><td>Brian Wafula</td><td>Repeated KES 46,400,000.00</td></tr>
+<tr><td>11:02:20</td><td>Charles Mutiso</td><td>Recorded the request as answered during opening</td></tr>
+<tr><td>11:02:25</td><td>Beatrice Kamau</td><td>Recorded her own differing account</td></tr>
+</tbody></table>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence details</span><span class="tag tag-neutral">Receipt RCPT-MOH-2027-033-001 · event history</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+<sc-if value="{{ is.c13 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">In session</span> since 11:00:12 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Charles Mutiso</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Record comment for Evaluation</p></div>
+</div>
+<div class="kt-region"><h2>Comment for Evaluation</h2>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 24px;max-width:1000px"><div class="field"><label>Made by</label><select class="input"><option>Beatrice Kamau · Independent member</option></select></div><div class="field"><label>Bid</label><input class="input" value="1 · Afya Digital Supplies Limited" readonly="readonly"></div><div class="field"><label>Time made (as you heard it)</label><input class="input" value="11:02:25"></div><div class="field" style="grid-column:1 / -1"><label>Comment</label><textarea class="input" rows="2">The security reference shown on the price page differs from the reference read aloud.</textarea></div><div class="field" style="grid-column:1 / -1"><label>Response</label><textarea class="input" rows="2">The observation is recorded for the Evaluation Committee to check. No decision is made at opening.</textarea></div></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">The comment is linked to receipt RCPT-MOH-2027-033-001 and to what was read aloud. The bid and the register do not change. Use this only for a factual comment. A bid that cannot be opened or matched is a problem for Opening access support, not a comment.</p>
+</div>
+<div class="kt-decision"><p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">The Evaluation Committee receives this comment with the opened bid. It makes no decision at opening.</p><div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary">Record comment for Evaluation</button></div></div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence details</span><span class="tag tag-neutral">Receipt RCPT-MOH-2027-033-001 · event history</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+<sc-if value="{{ is.c13b }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">In session</span> since 11:00:12 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Charles Mutiso</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">End opening</p><p class="kt-next-step-sentence">Every opened bid is read out and recorded.</p></div>
+</div>
+<div class="kt-region"><h2>Requests and comments</h2>
+<table class="table"><thead><tr><th>Time</th><th>Who</th><th>What</th><th>Response</th><th>Outcome</th></tr></thead><tbody>
+<tr><td>11:02:25</td><td>Beatrice Kamau</td><td>The security reference shown on the price page differs from the reference read aloud.</td><td>The observation is recorded for the Evaluation Committee to check. No decision is made at opening.</td><td><span class="kt-status is-pending">Recorded for Evaluation</span></td></tr>
+</tbody></table><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">Recorded by Charles Mutiso at 11:02:40, linked to bid 1.</p>
+</div>
+<div class="kt-region is-secondary"><h2>Register</h2>
+<table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th><span>Submitted total</span></th><th>Security given</th><th>Recorded at</th></tr></thead><tbody>
+<tr><td>1</td><td>Afya Digital Supplies Limited</td><td>KES 46,400,000.00</td><td>KES 500,000.00, KCB/TG/2027/8841</td><td>11:01:45</td></tr>
+</tbody></table>
+</div>
+<div class="kt-decision"><div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary">End opening</button></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c9 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">In session</span> since 11:00:12 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Charles Mutiso</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">End the opening</p><p class="kt-next-step-sentence">Every bid has been read aloud and recorded, and the pages for signing are chosen.</p></div>
+</div>
+<div class="kt-region"><h2>Register</h2>
+<table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Security given</th><th>Recorded at</th></tr></thead><tbody>
+<tr><td>1</td><td>Afya Digital Supplies Limited</td><td class="is-num">KES 46,400,000.00</td><td>KES 500,000.00, KCB/TG/2027/8841</td><td>11:01:45</td></tr>
+</tbody></table><p style="margin:10px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">Pages for signing: bid page 1, price page 4. Recorded 11:02:30.</p>
+</div>
+<div class="kt-region is-secondary"><h2>Requests and comments</h2>
+<table class="table"><thead><tr><th>Time</th><th>Who</th><th>What</th><th>Outcome</th></tr></thead><tbody>
+<tr><td>11:02:00</td><td>David Ouma</td><td>Asked for the submitted total to be repeated</td><td><span class="kt-status is-live">Answered during opening</span></td></tr>
+</tbody></table><p style="margin:10px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">Use Record comment for Evaluation only for a factual comment that was not resolved during the opening. It does not score or reject the bid.</p><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">Record comment for Evaluation</button></div>
+</div>
+<div class="kt-decision">
+<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">Ending closes the session and fixes the register. You then prepare the opening record for the committee to sign.</p>
+<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary">End opening</button></div>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence details</span><span class="tag tag-neutral">Receipt RCPT-MOH-2027-033-001 · event history</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c10 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-attention">Paused</span> since 11:02 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-blocked"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Paused · Beatrice Kamau</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-waiting"><div class="kt-next-step-label">Waiting on someone</div><p class="kt-next-step-headline">Waiting for Beatrice Kamau to rejoin or for Amina Hassan to appoint a replacement</p><p class="kt-next-step-sentence">Opening is paused because Beatrice Kamau is not present. She left at 11:02.</p></div>
+</div>
+<div class="kt-region"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Present</span></td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Present</span></td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-critical">Left</span> 11:02</td></tr>
+</tbody></table><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">Notify Beatrice</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>Where the opening stopped</h2>
+<div class="kt-group"><div class="kt-meta-row"><div><span class="kt-label">Last recorded step</span><span class="kt-meta-value">Bid 1 read aloud and recorded, 11:01:45</span></div><div><span class="kt-label">Waiting to record</span><span class="kt-meta-value">David Ouma’s request to repeat the total</span></div></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">Nothing else is recorded, opened or ended until every member is present. When she rejoins, you continue from here.</p></div>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence details</span><span class="tag tag-neutral">Receipt RCPT-MOH-2027-033-001 · event history</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c10b }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">In session</span> since 11:00:12 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Charles Mutiso</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Record the request to repeat the total</p><p class="kt-next-step-sentence">Beatrice Kamau rejoined at 11:05. The opening continues from the last recorded step.</p></div>
+</div>
+<div class="kt-region"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Present</span></td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Present</span></td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Rejoined</span> 11:05</td></tr>
+</tbody></table>
+</div>
+<div class="kt-region is-secondary"><h2>Session so far</h2>
+<table class="table"><thead><tr><th>Time</th><th>Who</th><th>What happened</th></tr></thead><tbody>
+<tr><td>11:00:12</td><td>Charles Mutiso</td><td>Started the opening</td></tr>
+<tr><td>11:01:30</td><td>Brian Wafula</td><td>Read bid 1 aloud (reported speech time, recorded by Charles Mutiso)</td></tr>
+<tr><td>11:01:45</td><td>Charles Mutiso</td><td>Recorded what was read aloud, with bid page 1 and price page 4 for signing</td></tr>
+<tr><td>11:02:00</td><td>David Ouma</td><td>Asked for the submitted total to be repeated</td></tr>
+<tr><td>11:02</td><td>Beatrice Kamau</td><td>Left the opening</td></tr>
+<tr><td>11:05</td><td>Beatrice Kamau</td><td>Rejoined and signed in again</td></tr>
+</tbody></table>
+</div>
+<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-primary">Record the request</button></div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence details</span><span class="tag tag-neutral">Receipt RCPT-MOH-2027-033-001 · event history</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c11 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-attention">Paused</span> since 11:01 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-blocked"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Paused · Opening access support</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-notice is-warning kt-next-step"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg><div class="kt-notice-body"><div class="kt-next-step-label">Your turn, blocked</div><p class="kt-next-step-headline">This bid could not be opened. Opening access support is checking it; you can retry when they resolve it.</p><div class="kt-next-step-fixes"><button type="button" class="btn btn-secondary">View problem details</button></div></div></div>
+</div>
+<div class="kt-region"><h2>Bid that could not be opened</h2>
+<div class="kt-meta-row"><div><span class="kt-label">Receipt</span><span class="kt-meta-value">RCPT-MOH-2027-033-001</span></div><div><span class="kt-label">Tried to open</span><span class="kt-meta-value">11:01:00</span></div><div><span class="kt-label">Being checked by</span><span class="kt-meta-value">Opening access support</span></div><div><span class="kt-label">Status</span><span class="kt-meta-value">Being checked</span></div></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">The bid is not skipped or rejected. Nothing from it has been read aloud or shown.</p><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary" disabled="disabled">Retry opening</button><span style="font-size:13px;color:var(--color-neutral-800)">Available when support marks the problem resolved</span></div>
+</div>
+
+<div class="kt-region is-secondary"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Joined</span> 10:55</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Joined</span> 10:56</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Joined</span> 10:57</td></tr>
+</tbody></table>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Problem details</span><span class="tag tag-neutral">Reference INC-OPEN-033-01</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c11b }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-attention">Paused</span> since 11:01 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Charles Mutiso</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Retry opening</p><p class="kt-next-step-sentence">Opening access support resolved the problem at 11:05. The same bid will be opened again.</p></div>
+</div>
+<div class="kt-region"><h2>Bid that could not be opened</h2>
+<div class="kt-meta-row"><div><span class="kt-label">Receipt</span><span class="kt-meta-value">RCPT-MOH-2027-033-001</span></div><div><span class="kt-label">Tried to open</span><span class="kt-meta-value">11:01:00</span></div><div><span class="kt-label">Being checked by</span><span class="kt-meta-value">Opening access support</span></div><div><span class="kt-label">Status</span><span class="kt-meta-value"><span class="kt-status is-live">Resolved 11:05</span></span></div></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">The bid is not skipped or rejected. Nothing from it has been read aloud or shown.</p><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-primary">Retry opening</button><button type="button" class="btn btn-secondary">View problem details</button></div>
+</div>
+
+<div class="kt-region is-secondary"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Joined</span> 10:55</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Joined</span> 10:56</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Joined</span> 10:57</td></tr>
+</tbody></table>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Problem details</span><span class="tag tag-neutral">Reference INC-OPEN-033-01</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c11c }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-attention">Paused</span> since 11:01 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-blocked"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Paused · Amina Hassan</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-waiting"><div class="kt-next-step-label">Waiting on someone</div><p class="kt-next-step-headline">Waiting for Amina Hassan to resolve the paused opening</p><p class="kt-next-step-sentence">Opening access support could not fix the problem. Amina Hassan will decide how to proceed.</p></div>
+</div>
+<div class="kt-region"><h2>Bid that could not be opened</h2>
+<div class="kt-meta-row"><div><span class="kt-label">Receipt</span><span class="kt-meta-value">RCPT-MOH-2027-033-001</span></div><div><span class="kt-label">Tried to open</span><span class="kt-meta-value">11:01:00</span></div><div><span class="kt-label">Being checked by</span><span class="kt-meta-value">Opening access support</span></div><div><span class="kt-label">Status</span><span class="kt-meta-value"><span class="kt-status is-critical">Not resolved</span></span></div></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">The bid is not skipped or rejected. Nothing from it has been read aloud or shown.</p><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">View problem details</button></div>
+</div>
+
+<div class="kt-region is-secondary"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Joined</span> 10:55</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Joined</span> 10:56</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Joined</span> 10:57</td></tr>
+</tbody></table>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Problem details</span><span class="tag tag-neutral">Reference INC-OPEN-033-01</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+<sc-if value="{{ is.c11e }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Amina Hassan</div><div class="role">Accounting Officer</div></div><div class="kt-topbar-avatar">AH</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-attention">Paused</span> since 11:01 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-blocked"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Paused · Amina Hassan</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Decide how to proceed with the paused opening</p><p class="kt-next-step-sentence">Opening access support could not fix the problem. This stays in your work until the opening resumes or a Tender decision is recorded.</p></div>
+</div>
+<div class="kt-region"><h2>Why the opening is paused</h2>
+<div class="kt-meta-row"><div><span class="kt-label">Bid</span><span class="kt-meta-value">Receipt RCPT-MOH-2027-033-001</span></div><div><span class="kt-label">Problem</span><span class="kt-meta-value">The bid could not be opened</span></div><div><span class="kt-label">Handled by</span><span class="kt-meta-value">Opening access support</span></div><div><span class="kt-label">Last recorded step</span><span class="kt-meta-value">Opening started, 11:00:12</span></div></div><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">View problem details</button></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">If support fixes the problem, the chair can resume the opening once all three members have rejoined. Nothing from the bid has been read aloud or shown.</p>
+</div>
+<div class="kt-region"><h2>Tender decision</h2>
+<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">A Tender decision is needed. Cancellation after submissions close is not available in this version.</p></div>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c11d }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-attention">Paused</span> since 11:01 EAT</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-blocked"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Paused · Opening access support</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-notice is-warning kt-next-step"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg><div class="kt-notice-body"><div class="kt-next-step-label">Your turn, blocked</div><p class="kt-next-step-headline">Opening is paused while Opening access support checks this bid against the submissions received at the deadline.</p><div class="kt-next-step-fixes"><button type="button" class="btn btn-secondary">View problem details</button></div></div></div>
+</div>
+<div class="kt-region"><h2>Bid being checked</h2>
+<div class="kt-meta-row"><div><span class="kt-label">Receipt</span><span class="kt-meta-value">RCPT-MOH-2027-033-001</span></div><div><span class="kt-label">Found at</span><span class="kt-meta-value">11:01</span></div><div><span class="kt-label">Being checked by</span><span class="kt-meta-value">Opening access support</span></div></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">The bid cannot be replaced or left out. The opening cannot finish until there is a documented outcome.</p>
+</div>
+<div class="kt-region is-secondary"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Joined</span> 10:55</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Joined</span> 10:56</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Joined</span> 10:57</td></tr>
+</tbody></table>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Problem details</span><span class="tag tag-neutral">Reference INC-OPEN-033-02</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.c12 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-critical">Ended — Tender cancelled</span></p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-blocked"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Ended</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+
+</div>
+<div class="kt-region"><h2>Opening ended by Tender cancellation</h2>
+<div class="kt-meta-row"><div><span class="kt-label">Tender cancelled</span><span class="kt-meta-value">12 Jun 2027, 11:03 EAT</span></div><div><span class="kt-label">Opening started</span><span class="kt-meta-value">11:00:12 EAT</span></div><div><span class="kt-label">Last recorded step</span><span class="kt-meta-value">Repeat request answered, 11:02:20</span></div></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">What happened up to 11:03 is kept as a partial record. There is no opening record to sign and nothing is passed to Evaluation. Cancellation notices are handled with the Tender.</p>
+</div>
+<div class="kt-region is-secondary"><h2>Session up to cancellation</h2>
+<table class="table"><thead><tr><th>Time</th><th>Who</th><th>What happened</th></tr></thead><tbody>
+<tr><td>11:00:12</td><td>Charles Mutiso</td><td>Started the opening</td></tr>
+<tr><td>11:01:30</td><td>Brian Wafula</td><td>Read bid 1 aloud (reported speech time, recorded by Charles Mutiso)</td></tr>
+<tr><td>11:01:45</td><td>Charles Mutiso</td><td>Recorded what was read aloud, with bid page 1 and price page 4 for signing</td></tr>
+<tr><td>11:02:00</td><td>David Ouma</td><td>Asked for the submitted total to be repeated</td></tr>
+<tr><td>11:02:15</td><td>Brian Wafula</td><td>Repeated KES 46,400,000.00</td></tr>
+<tr><td>11:02:20</td><td>Charles Mutiso</td><td>Recorded the request as answered during opening</td></tr>
+</tbody></table>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence details</span><span class="tag tag-neutral">Receipt RCPT-MOH-2027-033-001 · event history</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.z1 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-034</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-034</h1><p class="kt-page-desc">Supply and delivery of docking stations · <span class="kt-status is-live">In session</span> since 11:00:12 EAT, 19 Jun 2027</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Charles Mutiso</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">No bids to open</p><p class="kt-next-step-sentence">Submissions closed at 11:00 EAT with no current bids.</p></div>
+</div>
+<div class="kt-region"><h2>Bids</h2>
+<div class="kt-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8v13H3V8"></path><path d="M1 3h22v5H1z"></path><path d="M10 12h4"></path></svg><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">There are no bids to open. The register will be empty.</p></div>
+</div>
+<div class="kt-decision">
+<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">Ending records that there were no bids and closes the session. The committee still signs the opening record. Nothing is passed to Evaluation.</p>
+<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary">End opening with no bids</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>Opening committee</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Present</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Joined</span> 10:55</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Joined</span> 10:56</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Joined</span> 10:57</td></tr>
+</tbody></table>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.n1 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-035</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Amina Hassan</div><div class="role">Accounting Officer</div></div><div class="kt-topbar-avatar">AH</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-035</h1><p class="kt-page-desc">Supply and delivery of printers · Scheduled 26 Jun 2027, 11:00 EAT · <span class="kt-status is-attention">Not started</span></p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Current · Amina Hassan</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">The opening has not started; record what happened</p></div>
+</div>
+<div class="kt-region"><h2>Record what happened</h2>
+<div class="kt-meta-row"><div><span class="kt-label">Scheduled</span><span class="kt-meta-value">26 Jun 2027, 11:00 EAT</span></div><div><span class="kt-label">Problem</span><span class="kt-meta-value">Public attendance service unavailable, recorded by Opening access support at 10:55</span></div><div><span class="kt-label">Bids</span><span class="kt-meta-value">Still sealed</span></div></div><div style="margin-top:16px"><div style="display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:16px 24px;max-width:1000px"><div class="field"><label>Reason</label><input class="input" value="The public attendance service was unavailable; opening did not start"></div></div></div>
+</div>
+<div class="kt-decision">
+<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">This is final for this opening: it cannot be started later on this record. The bids stay sealed and you then decide what happens next for the Tender.</p>
+<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary">Record that opening did not take place</button></div>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.n2 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-035</a> / <strong>Bid opening</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Amina Hassan</div><div class="role">Accounting Officer</div></div><div class="kt-topbar-avatar">AH</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Bid opening · TND-MOH-2027-035</h1><p class="kt-page-desc">Supply and delivery of printers · <span class="kt-status is-critical">Did not take place</span></p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-blocked"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">Did not take place</span></li><li class="kt-journey-stage "><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Not started</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Decide what happens next</p><p class="kt-next-step-sentence">The opening did not take place. This stays in your work until you record a decision for the Tender.</p></div>
+</div>
+<div class="kt-region"><h2>The opening did not take place</h2>
+<div class="kt-meta-row"><div><span class="kt-label">Recorded</span><span class="kt-meta-value">26 Jun 2027, 11:10 EAT by Amina Hassan</span></div><div><span class="kt-label">Reason</span><span class="kt-meta-value">The public attendance service was unavailable; opening did not start</span></div><div><span class="kt-label">Bids</span><span class="kt-meta-value">Still sealed</span></div></div><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">View problem details</button></div>
+</div>
+<div class="kt-region"><h2>Tender decision</h2>
+<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">A Tender decision is needed. Cancellation after submissions close is not available in this version.</p></div>
+</div>
+<div class="kt-region is-secondary"><h2>What this means</h2>
+<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">No bids were opened and there is no opening record. The Tender is not cancelled or rescheduled by this record.</p></div>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.r1 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening record</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Opening record · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">Opening ended 11:04 EAT</span></p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Current · Charles Mutiso</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Prepare opening record</p><p class="kt-next-step-sentence">The opening ended at 11:04. The draft is built from the register, attendance and what happened in the session.</p></div>
+</div>
+<div class="kt-region"><h2>Register</h2>
+<table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Security given</th><th>Recorded at</th></tr></thead><tbody>
+<tr><td>1</td><td>Afya Digital Supplies Limited</td><td class="is-num">KES 46,400,000.00</td><td>KES 500,000.00, KCB/TG/2027/8841</td><td>11:01:45</td></tr>
+</tbody></table>
+</div>
+<div class="kt-region is-secondary"><h2>What happened</h2>
+<table class="table"><thead><tr><th>Time</th><th>Who</th><th>What happened</th></tr></thead><tbody>
+<tr><td>11:00:12</td><td>Charles Mutiso</td><td>Started the opening</td></tr>
+<tr><td>11:01:30</td><td>Brian Wafula</td><td>Read bid 1 aloud (reported speech time, recorded by Charles Mutiso)</td></tr>
+<tr><td>11:01:45</td><td>Charles Mutiso</td><td>Recorded what was read aloud, with bid page 1 and price page 4 for signing</td></tr>
+<tr><td>11:02:00</td><td>David Ouma</td><td>Asked for the submitted total to be repeated</td></tr>
+<tr><td>11:02:15</td><td>Brian Wafula</td><td>Repeated KES 46,400,000.00</td></tr>
+<tr><td>11:02:20</td><td>Charles Mutiso</td><td>Recorded the request as answered during opening</td></tr>
+<tr><td>11:04:00</td><td>Charles Mutiso</td><td>Ended the opening</td></tr>
+</tbody></table>
+</div>
+<div class="kt-region is-secondary"><h2>Attendance</h2>
+<table class="table"><thead><tr><th>Name</th><th>Attended as</th><th>Joined</th><th>Left</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td>10:55</td><td>11:04</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td>10:56</td><td>11:04</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td>10:57</td><td>11:04</td></tr>
+<tr><td>David Ouma</td><td>Representing Afya Digital Supplies Limited</td><td>10:58</td><td>11:04</td></tr>
+<tr><td>Jane Wanjiku</td><td>Public observer</td><td>10:59</td><td>11:04</td></tr>
+</tbody></table>
+</div>
+<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-primary">Prepare opening record</button></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.r2 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening record</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Opening record · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-draft">Draft</span></p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Current · Charles Mutiso</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Check the draft and finish the opening record</p><p class="kt-next-step-sentence">Finishing sends it to each member to review and sign.</p></div>
+</div>
+<div class="kt-region"><h2>Opening record (the official minutes of the opening)</h2>
+<div class="kt-meta-row"><div><span class="kt-label">Status</span><span class="kt-meta-value">Draft</span></div><div><span class="kt-label">Pages</span><span class="kt-meta-value">2</span></div><div><span class="kt-label">Prepared</span><span class="kt-meta-value">12 Jun 2027, 11:06 EAT</span></div></div><div style="margin-top:16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;max-width:900px"><div style="border:1px solid var(--color-divider);aspect-ratio:1/1.3;padding:16px;font-size:12px;color:var(--color-neutral-700)">Page 1 · committee, attendance, register</div><div style="border:1px solid var(--color-divider);aspect-ratio:1/1.3;padding:16px;font-size:12px;color:var(--color-neutral-700)">Page 2 · what happened, names and designations for signature</div></div><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">Open full draft</button><button type="button" class="btn btn-secondary">Correct draft</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>What each member will sign</h2>
+<table class="table"><thead><tr><th>What</th><th>Page</th><th>What you do</th></tr></thead><tbody>
+<tr><td>Afya Digital Supplies Limited bid</td><td>Page 1 (designated)</td><td>Sign the page</td></tr>
+<tr><td>Afya Digital Supplies Limited bid</td><td>Page 4 (price)</td><td>Initial the price</td></tr>
+<tr><td>Opening record</td><td>Pages 1–2</td><td>Initial each page</td></tr>
+<tr><td>Opening record</td><td>Page 2 (final)</td><td>Sign with full name and designation</td></tr>
+</tbody></table>
+</div>
+<div class="kt-decision">
+<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">After finishing, the record cannot be changed without making a new version, which every member must sign again.</p>
+<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary">Finish opening record</button></div>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.r3 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening record</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Beatrice Kamau</div><div class="role">Independent member</div></div><div class="kt-topbar-avatar">BK</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Opening record · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · Version 1</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Current · Beatrice Kamau</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Review and sign opening record</p><p class="kt-next-step-sentence">Brian Wafula signed at 11:08.</p></div>
+</div>
+<div class="kt-region"><h2>What you are signing</h2>
+<table class="table"><thead><tr><th>What</th><th>Page</th><th>What you do</th><th>Status</th></tr></thead><tbody>
+<tr><td>Afya Digital Supplies Limited bid</td><td>Page 1 (designated)</td><td>Sign the page</td><td><span class="kt-status is-attention">Awaiting your signature</span></td></tr>
+<tr><td>Afya Digital Supplies Limited bid</td><td>Page 4 (price)</td><td>Initial the price</td><td><span class="kt-status is-attention">Awaiting your signature</span></td></tr>
+<tr><td>Opening record</td><td>Pages 1–2</td><td>Initial each page</td><td><span class="kt-status is-attention">Awaiting your signature</span></td></tr>
+<tr><td>Opening record</td><td>Page 2 (final)</td><td>Sign with full name and designation</td><td><span class="kt-status is-attention">Awaiting your signature</span></td></tr>
+</tbody></table><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">Read opening record</button><button type="button" class="btn btn-secondary">View bid pages</button></div>
+</div>
+<div class="kt-decision">
+<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">You sign for yourself only, against version 1 exactly as shown.</p>
+<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary">Review and sign opening record</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>Committee signatures</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Version 1</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-pending">Not yet</span></td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Signed</span> 11:08</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-pending">Not yet</span></td></tr>
+</tbody></table>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.r4 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening record</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Brian Wafula</div><div class="role">Committee member</div></div><div class="kt-topbar-avatar">BW</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Opening record · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · Version 1</p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Current · Beatrice Kamau</span></li></ol>
+<div class="kt-next-step is-waiting"><div class="kt-next-step-label">Waiting on someone</div><p class="kt-next-step-headline">Waiting for Beatrice Kamau and Charles Mutiso to sign the opening record</p><p class="kt-next-step-sentence">You signed version 1 at 11:08.</p></div>
+</div>
+<div class="kt-region"><h2>Committee signatures</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Version 1</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-pending">Not yet</span></td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Signed</span> 11:08</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-pending">Not yet</span></td></tr>
+</tbody></table>
+</div>
+<div class="kt-region is-secondary"><h2>Register</h2>
+<table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Security given</th><th>Recorded at</th></tr></thead><tbody>
+<tr><td>1</td><td>Afya Digital Supplies Limited</td><td class="is-num">KES 46,400,000.00</td><td>KES 500,000.00, KCB/TG/2027/8841</td><td>11:01:45</td></tr>
+</tbody></table>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.r5 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening record</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Brian Wafula</div><div class="role">Committee member</div></div><div class="kt-topbar-avatar">BW</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Opening record · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-attention">Version 2</span></p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-current"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">Current · Brian Wafula</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">The opening record changed. Review the latest version before signing</p></div>
+</div>
+<div class="kt-region"><h2>What changed</h2>
+<div class="kt-meta-row"><div><span class="kt-label">New version</span><span class="kt-meta-value">2, finished 11:08:45</span></div><div><span class="kt-label">Changed by</span><span class="kt-meta-value">Charles Mutiso</span></div><div><span class="kt-label">Reason</span><span class="kt-meta-value">Add the attendee’s repeat request and the chair’s response</span></div></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">Your signature on version 1 is kept in the history but does not count for version 2.</p>
+</div>
+<div class="kt-region is-secondary"><h2>What you are signing</h2>
+<table class="table"><thead><tr><th>What</th><th>Page</th><th>What you do</th><th>Status</th></tr></thead><tbody>
+<tr><td>Afya Digital Supplies Limited bid</td><td>Page 1 (designated)</td><td>Sign the page</td><td><span class="kt-status is-attention">Awaiting your signature</span></td></tr>
+<tr><td>Afya Digital Supplies Limited bid</td><td>Page 4 (price)</td><td>Initial the price</td><td><span class="kt-status is-attention">Awaiting your signature</span></td></tr>
+<tr><td>Opening record, version 2</td><td>Pages 1–2</td><td>Initial each page</td><td><span class="kt-status is-attention">Awaiting your signature</span></td></tr>
+<tr><td>Opening record, version 2</td><td>Page 2 (final)</td><td>Sign with full name and designation</td><td><span class="kt-status is-attention">Awaiting your signature</span></td></tr>
+</tbody></table>
+</div>
+<div class="kt-decision">
+<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">You sign version 2 exactly as shown.</p>
+<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary">Review and sign opening record</button></div>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.r6 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening record</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Opening record · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">Complete</span></p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">✓ Done</span></li></ol>
+<div class="kt-next-step is-done"><div class="kt-next-step-label">Done</div><p class="kt-next-step-headline">The opening was completed at 12 Jun 2027, 11:10:30 EAT, after the last signature.</p><p class="kt-next-step-sentence">The opened bid is now available to the Evaluation Committee.</p></div>
+</div>
+<div class="kt-region"><h2>Committee signatures</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Version 1</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Signed</span> 11:10</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Signed</span> 11:08</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Signed</span> 11:09</td></tr>
+</tbody></table><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">Correct opening record</button></div>
+</div>
+<div class="kt-region is-secondary"><h2>Register</h2>
+<table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Security given</th><th>Recorded at</th></tr></thead><tbody>
+<tr><td>1</td><td>Afya Digital Supplies Limited</td><td class="is-num">KES 46,400,000.00</td><td>KES 500,000.00, KCB/TG/2027/8841</td><td>11:01:45</td></tr>
+</tbody></table>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence details</span><span class="tag tag-neutral">Evaluation reference EV-IN-033-01 · version 1 · signature history</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.h1 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening record</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Naomi Chebet</div><div class="role">Auditor</div></div><div class="kt-topbar-avatar">NC</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Opening record · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">Complete</span></p></div></div>
+<div class="kt-region"><h2>Opening summary</h2>
+<div class="kt-meta-row"><div><span class="kt-label">Completed</span><span class="kt-meta-value">12 Jun 2027, 11:10:30 EAT</span></div><div><span class="kt-label">Bids opened</span><span class="kt-meta-value">1</span></div><div><span class="kt-label">Passed to Evaluation</span><span class="kt-meta-value">EV-IN-033-01</span></div></div>
+</div>
+<div class="kt-region"><h2>Register</h2>
+<table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Security given</th><th>Recorded at</th></tr></thead><tbody>
+<tr><td>1</td><td>Afya Digital Supplies Limited</td><td class="is-num">KES 46,400,000.00</td><td>KES 500,000.00, KCB/TG/2027/8841</td><td>11:01:45</td></tr>
+</tbody></table><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">Reported speech time: 11:01:30 — recorded by Charles Mutiso</p>
+</div>
+<div class="kt-region is-secondary"><h2>What happened</h2>
+<table class="table"><thead><tr><th>Time</th><th>Who</th><th>What happened</th></tr></thead><tbody>
+<tr><td>11:00:12</td><td>Charles Mutiso</td><td>Started the opening</td></tr>
+<tr><td>11:01:30</td><td>Brian Wafula</td><td>Read bid 1 aloud (reported speech time, recorded by Charles Mutiso)</td></tr>
+<tr><td>11:01:45</td><td>Charles Mutiso</td><td>Recorded what was read aloud, with bid page 1 and price page 4 for signing</td></tr>
+<tr><td>11:02:00</td><td>David Ouma</td><td>Asked for the submitted total to be repeated</td></tr>
+<tr><td>11:02:15</td><td>Brian Wafula</td><td>Repeated KES 46,400,000.00</td></tr>
+<tr><td>11:02:20</td><td>Charles Mutiso</td><td>Recorded the request as answered during opening</td></tr>
+<tr><td>11:04:00</td><td>Charles Mutiso</td><td>Ended the opening</td></tr>
+</tbody></table>
+</div>
+<div class="kt-region is-secondary"><h2>Requests and comments</h2>
+<table class="table"><thead><tr><th>Time</th><th>Who</th><th>What</th><th>Outcome</th></tr></thead><tbody>
+<tr><td>11:02:00</td><td>David Ouma</td><td>Asked for the submitted total to be repeated</td><td>Answered during opening</td></tr>
+</tbody></table>
+</div>
+<div class="kt-region is-secondary"><h2>Committee signatures</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Version 1</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Signed</span> 11:10</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Signed</span> 11:08</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Signed</span> 11:09</td></tr>
+</tbody></table>
+</div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence history</span><span class="tag tag-neutral">Receipt, versions, signature and access history · read only</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+<sc-if value="{{ is.h4 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening record</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Opening record · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">Complete</span></p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">✓ Done</span></li></ol>
+<div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">Correct opening record</p><p class="kt-next-step-sentence">Your correction will be added to this record. The original will remain available.</p></div>
+</div>
+<div class="kt-region"><h2>Add a correction</h2>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;max-width:1000px"><div class="field" style="grid-column:1 / -1"><label>What needs correcting?</label><div style="display:flex;flex-wrap:wrap;gap:12px 24px;padding-top:4px"><label class="radio"><input type="radio" name="h4kind" checked="checked"><span class="dot"></span>Attendance note</label><label class="radio"><input type="radio" name="h4kind"><span class="dot"></span>Procedural note</label><label class="radio"><input type="radio" name="h4kind"><span class="dot"></span>Typographical error in a note</label><label class="radio"><input type="radio" name="h4kind"><span class="dot"></span>Observer name or organisation</label></div></div><div class="field"><label>Correct information</label><input class="input" value="Jane Wanjiku left at 11:03 EAT"></div><div class="field"><label>Reason for correction</label><input class="input" value="Add the departure noted during the opening"></div></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">You can correct only these four kinds of information. A correction cannot change a bid, the register or anything the members signed.</p>
+</div>
+<div class="kt-decision"><p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">The correction is added under your name with the time you submit it. Version 1 and its signatures stay as they are.</p><div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Add correction</button></div></div>
+<div class="kt-region is-secondary"><h2>Original opening record</h2>
+<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">Version 1, signed by all three members. Read only.</p><a href="#" style="font-size:14px">View version 1</a></div>
+</div>
+</div></div>
+</sc-if>
+<sc-if value="{{ is.h5 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening record</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Opening record · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">Complete</span></p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">✓ Done</span></li></ol>
+<div class="kt-next-step is-done"><div class="kt-next-step-label">Done</div><p class="kt-next-step-headline">Correction added at 12 Jun 2027, 11:15 EAT.</p><p class="kt-next-step-sentence">The original opening record is unchanged. People who can read this record see the correction with it.</p></div>
+</div>
+<div class="kt-region"><h2>Corrections</h2>
+<table class="table"><thead><tr><th>Added</th><th>By</th><th>Kind</th><th>Correction</th><th>Reason</th></tr></thead><tbody>
+<tr><td>11:15</td><td>Charles Mutiso</td><td>Attendance note</td><td>Jane Wanjiku left at 11:03 EAT (time as reported by Charles Mutiso)</td><td>Add the departure noted during the opening</td></tr>
+</tbody></table>
+</div>
+<div class="kt-region is-secondary"><h2>Committee signatures</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Version 1</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Signed</span> 11:10</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Signed</span> 11:08</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Signed</span> 11:09</td></tr>
+</tbody></table><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary">Correct opening record</button></div>
+</div>
+<div class="kt-notice is-critical" style="margin-top:8px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg><div class="kt-notice-body"><p style="margin:0;font-size:14px"><strong>If a request uses any other kind, or tries to change a bid or a signed page:</strong> This correction cannot change a bid or replace the signed opening record.</p></div></div>
+<div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence details</span><span class="tag tag-neutral">Evaluation reference EV-IN-033-01 · version 1 · correction history</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.h2 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-034</a> / <strong>Opening record</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Charles Mutiso</div><div class="role">Chair and recorder</div></div><div class="kt-topbar-avatar">CM</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Opening record · TND-MOH-2027-034</h1><p class="kt-page-desc">Supply and delivery of docking stations · <span class="kt-status is-live">Complete</span></p></div></div>
+<div class="kt-guidance">
+<ol class="kt-journey" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare opening</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Open bids</span><span class="kt-journey-state">✓ Done</span></li><li class="kt-journey-stage is-done"><span class="kt-journey-bar"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Record opening</span><span class="kt-journey-state">✓ Done</span></li></ol>
+<div class="kt-next-step is-done"><div class="kt-next-step-label">Done</div><p class="kt-next-step-headline">Opening complete — no bids to evaluate</p><p class="kt-next-step-sentence">Completed 19 Jun 2027, 11:06:30 EAT. Nothing was passed to Evaluation.</p></div>
+</div>
+<div class="kt-region"><h2>Register</h2>
+<table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Security given</th><th>Recorded at</th></tr></thead><tbody>
+
+</tbody></table><div class="kt-empty" style="border-top:0;padding:16px"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">Empty register. There were no current bids.</p></div>
+</div>
+<div class="kt-region is-secondary"><h2>Committee signatures</h2>
+<table class="table"><thead><tr><th>Member</th><th>Role on committee</th><th>Opening record, 1 page</th></tr></thead><tbody>
+<tr><td>Charles Mutiso</td><td>Chair and recorder</td><td><span class="kt-status is-live">Signed</span> 11:06</td></tr>
+<tr><td>Brian Wafula</td><td>Member</td><td><span class="kt-status is-live">Signed</span> 11:04</td></tr>
+<tr><td>Beatrice Kamau</td><td>Independent member</td><td><span class="kt-status is-live">Signed</span> 11:05</td></tr>
+</tbody></table>
+</div>
+</div></div>
+</sc-if>
+<sc-if value="{{ is.h3 }}">
+<div style="background:var(--color-bg);border:1px solid var(--color-divider);padding:20px 40px 8px">
+<div class="kt-topbar"><div class="kt-breadcrumb"><a href="#">Desk</a> / <a href="#">Tenders</a> / <a href="#">TND-MOH-2027-033</a> / <strong>Opening record</strong></div><div class="kt-topbar-right"><div class="kt-topbar-user"><div class="kt-topbar-user-text"><div class="name">Administrator</div><div class="role">System Manager</div></div><div class="kt-topbar-avatar">AD</div></div></div></div>
+<div class="kt-page">
+<div class="kt-page-head"><div><h1 class="kt-page-title">Opening record · TND-MOH-2027-033</h1><p class="kt-page-desc">Supply and delivery of business laptops · <span class="kt-status is-live">Complete</span></p></div></div>
+<div class="kt-region"><h2>Technical status</h2>
+<p style="margin:0 0 16px;font-size:14px;max-width:75ch;text-wrap:pretty">You can see technical status for this opening. Bids, the register and the opening record are not shown to administrators.</p>
+<div class="kt-meta-row"><div><span class="kt-label">Opening completed</span><span class="kt-meta-value">12 Jun 2027, 11:10:30 EAT</span></div><div><span class="kt-label">Technical incidents</span><span class="kt-meta-value">None recorded</span></div></div>
+</div>
+</div></div>
+</sc-if>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>const G = {"R":"Review","A":"BOP-DES-01 · Prepare opening","P":"BOP-DES-04 · Public page","C":"BOP-DES-02 · Open bids","O":"BOP-DES-03 · Opening record","H":"BOP-DES-05 · Completed record"};
+const B = [{"id":"n00","g":"R","code":"00","label":"Read me","actor":"Reviewer","at":"—","ref":"BOP v0.10 §10","note":"","st":"note"},{"id":"f00","g":"R","code":"FLAGS","label":"Wording and steps","actor":"Reviewer","at":"—","ref":"BOP v0.10, PRC v0.9","note":"","st":"note"},{"id":"a1","g":"A","code":"01 · APPOINT","label":"Appoint committee","actor":"Amina Hassan, Accounting Officer","at":"10 Jun 2027, before 10:15 EAT","ref":"BOP v0.10 §10.2, §20 row 1","note":"","st":"ready"},{"id":"a2","g":"A","code":"01 · INCOMPLETE","label":"Needs an independent member","actor":"Amina Hassan","at":"Before appointment, two members named","ref":"BOP v0.10 §10.2, §8","note":"Appoint committee is omitted; the blocked block carries the fix.","st":"ready"},{"id":"a3","g":"A","code":"01 · APPOINTED","label":"Appointed, publish next","actor":"Amina Hassan","at":"10 Jun 2027, 10:15 EAT","ref":"BOP v0.10 §10.2, §5 row 2","note":"","st":"ready"},{"id":"a4","g":"A","code":"01 · HOW TO ATTEND","label":"Publish how to attend","actor":"Amina Hassan","at":"10 Jun 2027, 10:18 EAT","ref":"BOP v0.10 §10.2, §20 row 2","note":"“What attendees can do” is my wording from the §10 fixture.","st":"ready"},{"id":"a5","g":"A","code":"01 · PUBLISHED","label":"Attendance published","actor":"Amina Hassan","at":"10 Jun 2027, 10:20 EAT","ref":"BOP v0.10 §10.2","note":"","st":"ready"},{"id":"p0","g":"P","code":"04 · DETAILS COMING","label":"Before details are published","actor":"Visitor, signed out","at":"Before 10 Jun 10:20 EAT","ref":"BOP v0.10 §5 row 2","note":"","st":"ready"},{"id":"p1a","g":"P","code":"04 · BEFORE JOIN OPENS","label":"Published, join not open yet","actor":"Jane Wanjiku","at":"12 Jun 2027, 10:40 EAT","ref":"BOP v0.10 §10.5","note":"","st":"ready"},{"id":"p1","g":"P","code":"04 · JOIN","label":"Join public opening","actor":"Jane Wanjiku","at":"12 Jun 2027, 10:58 EAT","ref":"BOP v0.10 §10.5","note":"","st":"ready"},{"id":"p2","g":"P","code":"04 · READOUT","label":"Readout in session","actor":"Jane Wanjiku","at":"12 Jun 2027, 11:02:30 EAT","ref":"BOP v0.10 §10.5, §10 completion row","note":"Readout appears only after Charles’s 11:01:45 record.","st":"ready"},{"id":"p3","g":"P","code":"04 · REQUEST","label":"Request register","actor":"David Ouma, verified submitting supplier","at":"12 Jun 2027, 11:11 EAT","ref":"BOP v0.10 §10.5","note":"","st":"ready"},{"id":"p4","g":"P","code":"04 · PREPARING","label":"Register being prepared","actor":"David Ouma","at":"12 Jun 2027, 11:12 EAT","ref":"BOP v0.10 §10.5","note":"","st":"ready"},{"id":"p5","g":"P","code":"04 · READY","label":"Download register","actor":"David Ouma","at":"12 Jun 2027, 11:13 EAT","ref":"BOP v0.10 §10.5","note":"","st":"ready"},{"id":"p6","g":"P","code":"04 · NOT A SUBMITTER","label":"No register request","actor":"Jane Wanjiku","at":"After 11:10:30 EAT","ref":"BOP v0.10 §10.5","note":"The “denied” variant: no request control, plain reason.","st":"ready"},{"id":"c1","g":"C","code":"02 · WAIT","label":"Scheduled","actor":"Charles Mutiso, chair and recorder","at":"12 Jun 2027, 10:58:30 EAT","ref":"BOP v0.10 §10.3 WAIT, §5 timed kind","note":"","st":"ready"},{"id":"c2","g":"C","code":"02 · WAITING TO JOIN","label":"Member not joined","actor":"Charles Mutiso","at":"11:00:05 EAT, branch","ref":"BOP v0.10 §10.3 READY, §8 BOP_MEMBER_ABSENT","note":"","st":"ready"},{"id":"c2b","g":"C","code":"02 · ACCESS NOT READY","label":"Secure access being checked","actor":"Charles Mutiso","at":"11:00:05 EAT, branch","ref":"BOP v0.10 §10.3 READY, §8 BOP_CREDENTIAL_UNAVAILABLE","note":"","st":"ready"},{"id":"c2c","g":"C","code":"02 · NOT AVAILABLE","label":"Bid opening not available","actor":"Charles Mutiso","at":"12 Jun 2027, 11:00:41 EAT (branch 6)","ref":"BOP v0.10 §10 negative branch (6); §8 BOP_OPENING_PROFILE_UNAVAILABLE","note":"Shown only after the retried notification is committed. Support resolves at 11:06:00; Start opening at 11:06:20.","st":"ready"},{"id":"c2d","g":"C","code":"02 · SUPPORT NOT NOTIFIED","label":"Notification failed","actor":"Charles Mutiso","at":"12 Jun 2027, 11:00:05–11:00:40 EAT (branch 6)","ref":"BOP v0.10 §10 negative branch (6); §11 Notify support","note":"Charles uses Notify support at 11:00:40. Same incident, no new one.","st":"ready"},{"id":"c3","g":"C","code":"02 · READY","label":"Ready to start","actor":"Charles Mutiso","at":"12 Jun 2027, 11:00:05 EAT","ref":"BOP v0.10 §10.3 READY, §20 row 4","note":"","st":"ready"},{"id":"c4","g":"C","code":"02 · OPEN NEXT BID","label":"Started, open first bid","actor":"Charles Mutiso","at":"12 Jun 2027, 11:00:30 EAT","ref":"BOP v0.10 §10.3 ATTENDANCE, §11","note":"","st":"ready"},{"id":"c5","g":"C","code":"02 · READ ALOUD","label":"Read these details aloud","actor":"Brian Wafula, member","at":"12 Jun 2027, 11:01:20 EAT","ref":"BOP v0.10 §10.3 OPEN / READOUT","note":"12 pages and price page 4 are §10 illustrative values.","st":"ready"},{"id":"c6","g":"C","code":"02 · RECORD READOUT","label":"Record what was read aloud and pages","actor":"Charles Mutiso, recorder","at":"12 Jun 2027, 11:01:40 EAT","ref":"BOP v0.10 §10.3 OPEN / READOUT, §11","note":"Page 1 is a proposal Charles can change. One action records the readout and the pages together.","st":"ready"},{"id":"c7","g":"C","code":"02 · REQUEST","label":"Record request as answered","actor":"Charles Mutiso","at":"12 Jun 2027, 11:02:18 EAT","ref":"BOP v0.10 §10 procedural exchange","note":"","st":"ready"},{"id":"c8","g":"C","code":"02 · MEMBER’S ACCOUNT","label":"Beatrice records her own account","actor":"Beatrice Kamau, Independent member","at":"12 Jun 2027, before 11:02:25 EAT (separate branch)","ref":"BOP v0.10 §10.3 OBSERVATION / DIFFERING ACCOUNT, §11","note":"","st":"ready"},{"id":"c8b","g":"C","code":"02 · RESPONSE","label":"Response to member’s account","actor":"Charles Mutiso","at":"12 Jun 2027, 11:02:40 EAT (separate branch)","ref":"BOP v0.10 §10.3 OBSERVATION / DIFFERING ACCOUNT","note":"","st":"ready"},{"id":"c13","g":"C","code":"02 · COMMENT FOR EVALUATION","label":"Record comment for Evaluation","actor":"Charles Mutiso","at":"12 Jun 2027, before 11:02:40 EAT (separate branch)","ref":"BOP v0.10 §10.3 FACTUAL EXCEPTION, §5.1","note":"","st":"ready"},{"id":"c13b","g":"C","code":"02 · RECORDED FOR EVALUATION","label":"Comment recorded","actor":"Charles Mutiso","at":"12 Jun 2027, 11:02:40 EAT (separate branch)","ref":"BOP v0.10 §10.3 FACTUAL EXCEPTION","note":"","st":"ready"},{"id":"c9","g":"C","code":"02 · END OPENING","label":"Readout complete, end","actor":"Charles Mutiso","at":"12 Jun 2027, 11:03:30 EAT","ref":"BOP v0.10 §10.3, §11 End opening","note":"","st":"ready"},{"id":"c10","g":"C","code":"02 · MEMBER LEFT","label":"Paused, member left","actor":"Charles Mutiso","at":"11:02:10 EAT, branch 1","ref":"BOP v0.10 §10 branch 1","note":"","st":"ready"},{"id":"c10b","g":"C","code":"02 · MEMBER REJOINED","label":"Resumed after rejoin","actor":"Charles Mutiso","at":"11:05:10 EAT, branch 1","ref":"BOP v0.10 §10 branch 1","note":"","st":"ready"},{"id":"c11","g":"C","code":"02 · CANNOT OPEN","label":"Bid pages cannot be shown","actor":"Charles Mutiso","at":"11:01:10 EAT, branch 2","ref":"BOP v0.10 §10.3 UNREADABLE","note":"Retry is disabled with its condition beside it.","st":"ready"},{"id":"c11b","g":"C","code":"02 · RESOLVED","label":"Retry opening","actor":"Charles Mutiso","at":"11:05:05 EAT, branch 2","ref":"BOP v0.10 §10 branch 2","note":"","st":"ready"},{"id":"c11c","g":"C","code":"02 · NOT RESOLVED","label":"Waiting for Amina Hassan","actor":"Charles Mutiso","at":"Branch 2, support cannot fix","ref":"BOP v0.10 §10.3 UNREADABLE, §5 row 6","note":"","st":"ready"},{"id":"c11e","g":"C","code":"02 · PAUSED, AO DECISION","label":"Decide how to proceed","actor":"Amina Hassan, Accounting Officer","at":"12 Jun 2027, after 11:05 EAT (separate branch)","ref":"BOP v0.10 §10.7, §5 hand-off table","note":"Last recorded step (Opening started, 11:00:12) is inferred from the branch. No Cancel Tender button under TPR v0.13. Dependency (not on screen): KenTender Project Owner approves TPR v0.14; Tenders development owner implements the post-close route.","st":"ready"},{"id":"c11d","g":"C","code":"02 · NOT MATCHED","label":"Bid not matched to deadline record","actor":"Charles Mutiso","at":"11:01:10 EAT, branch 3","ref":"BOP v0.10 §10.3 MISMATCH","note":"See flag 4.","st":"ready"},{"id":"c12","g":"C","code":"02 · CANCELLED","label":"Ended by Tender cancellation","actor":"Charles Mutiso","at":"11:03:10 EAT, branch 5","ref":"BOP v0.10 §10 branch 5","note":"Not involved after cancellation, so no next-step block.","st":"ready"},{"id":"z1","g":"C","code":"02 · NO BIDS","label":"No bids to open","actor":"Charles Mutiso","at":"19 Jun 2027, 11:00:30 EAT, TND-MOH-2027-034","ref":"BOP v0.10 §10 empty-outcome fixture","note":"","st":"ready"},{"id":"n1","g":"C","code":"02 · DID NOT TAKE PLACE","label":"Record what happened","actor":"Amina Hassan","at":"26 Jun 2027, 11:10 EAT, TND-MOH-2027-035","ref":"BOP v0.10 §10 branch 4","note":"","st":"ready"},{"id":"n2","g":"C","code":"02 · DID NOT TAKE PLACE (after)","label":"Decide what happens next","actor":"Amina Hassan","at":"26 Jun 2027, after 11:10 EAT","ref":"BOP v0.10 §10.7, §10.3 NOT HELD","note":"No Cancel Tender button under TPR v0.13. Dependency (not on screen): KenTender Project Owner approves TPR v0.14; Tenders development owner implements the post-close route.","st":"ready"},{"id":"r1","g":"O","code":"03 · PREPARE","label":"Prepare opening record","actor":"Charles Mutiso, recorder","at":"12 Jun 2027, 11:04:30 EAT","ref":"BOP v0.10 §10.4, §5 row 8","note":"","st":"ready"},{"id":"r2","g":"O","code":"03 · FINISH","label":"Check draft and finish","actor":"Charles Mutiso","at":"12 Jun 2027, 11:06 EAT","ref":"BOP v0.10 §10.4","note":"Page thumbnails are placeholders for the generated record.","st":"ready"},{"id":"r3","g":"O","code":"03 · SIGN","label":"Review and sign","actor":"Beatrice Kamau","at":"12 Jun 2027, 11:08:30 EAT","ref":"BOP v0.10 §10.4, §5 row 9","note":"The button opens the support module’s signing step.","st":"ready"},{"id":"r4","g":"O","code":"03 · WAITING","label":"Waiting for signatures","actor":"Brian Wafula","at":"12 Jun 2027, 11:08:30 EAT","ref":"BOP v0.10 §10.4 WAITING","note":"","st":"ready"},{"id":"r5","g":"O","code":"03 · CHANGED","label":"Record changed, version 2","actor":"Brian Wafula","at":"11:08:45 EAT, independent branch","ref":"BOP v0.10 §10.4 STALE","note":"","st":"ready"},{"id":"r6","g":"O","code":"03 · COMPLETE","label":"Opening complete","actor":"Charles Mutiso","at":"12 Jun 2027, 11:10:30 EAT","ref":"BOP v0.10 §10.4, §20 row 8","note":"Correct opening record opens board h4.","st":"ready"},{"id":"h1","g":"H","code":"05 · AUDIT","label":"Completed record, read only","actor":"Naomi Chebet, Auditor","at":"After 11:10:30 EAT","ref":"BOP v0.10 §10.6","note":"Not involved, so no next-step block.","st":"ready"},{"id":"h2","g":"H","code":"05 · NO BIDS COMPLETE","label":"No bids to evaluate","actor":"Charles Mutiso","at":"19 Jun 2027, 11:06:30 EAT, TND-MOH-2027-034","ref":"BOP v0.10 §10 empty-outcome fixture","note":"","st":"ready"},{"id":"h4","g":"H","code":"05 · CORRECT","label":"Correct completed record","actor":"Charles Mutiso","at":"12 Jun 2027, 11:15 EAT (separate branch)","ref":"BOP v0.10 §10.6 CORRECT COMPLETED RECORD","note":"What needs correcting? is a choice of four kinds (BOP v0.10).","st":"ready"},{"id":"h5","g":"H","code":"05 · CORRECTION ADDED","label":"Correction added","actor":"Charles Mutiso","at":"12 Jun 2027, after 11:15 EAT (separate branch)","ref":"BOP v0.10 §10.6","note":"The red notice shows the denied message for reference only.","st":"ready"},{"id":"h3","g":"H","code":"05 · ADMINISTRATOR","label":"Technical status only","actor":"Administrator","at":"12 Jun 2027, after 11:10:30 EAT","ref":"BOP v0.10 §10.6, §6","note":"Not involved, so no next-step block. No incidents in the main fixture.","st":"ready"}];
+const KEY = 'bop-artboards-v092-cur';
+class Component extends DCLogic {
+  state = { cur: (typeof localStorage !== 'undefined' && localStorage.getItem(KEY)) || 'n00' };
+  componentDidMount() {
+    this._k = (e) => {
+      if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); this.step(1); }
+      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); this.step(-1); }
+    };
+    window.addEventListener('keydown', this._k);
+  }
+  componentWillUnmount() { window.removeEventListener('keydown', this._k); }
+  go(id) { try { localStorage.setItem(KEY, id); } catch (e) {} this.setState({ cur: id }); }
+  step(d) { const i = B.findIndex(b => b.id === this.state.cur); const n = B[Math.max(0, Math.min(B.length - 1, i + d))]; this.go(n.id); }
+  renderVals() {
+    const cid = B.some(b => b.id === this.state.cur) ? this.state.cur : 'n00';
+    const c = B.find(b => b.id === cid);
+    const is = {}; B.forEach(b => { is[b.id] = b.id === cid; });
+    const chip = { ready: 'is-live', flag: 'is-critical', note: 'is-pending' };
+    const lab = { ready: 'Drawn', flag: '4', note: 'Notes' };
+    const groups = ['R', 'A', 'P', 'C', 'O', 'H'].map(k => ({
+      name: G[k],
+      items: B.filter(b => b.g === k).map(b => ({
+        code: b.code, label: b.label, chip: chip[b.st], stLabel: lab[b.st],
+        bg: b.id === cid ? 'var(--color-accent-100)' : 'transparent',
+        rule: b.id === cid ? 'var(--color-accent)' : 'transparent',
+        go: () => this.go(b.id)
+      }))
+    }));
+    return {
+      groups, is,
+      cur: { ...c, gname: G[c.g], hasNote: !!c.note },
+      readyCount: B.filter(b => b.st === 'ready').length,
+      flagCount: 0,
+      prev: () => this.step(-1), next: () => this.step(1)
+    };
+  }
+}
+</script>
+</body>
+</html>

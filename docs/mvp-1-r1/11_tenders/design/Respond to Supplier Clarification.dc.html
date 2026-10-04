@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>body{margin:0;} a{color:var(--color-accent-700);} a:hover{color:var(--color-accent-900);} .table th,.table thead th{text-transform:none;letter-spacing:0;} .kt-disclosure-title{text-transform:none;letter-spacing:0;font-size:15px;}
+  </style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:100px;position:relative;">
+  <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
+    <span style="color:#fff;opacity:.7;font-size:12px;">TPR-DES-11:</span>
+    <sc-for list="{{variants}}" as="vv" hint-placeholder-count="3">
+      <button type="button" class="{{vv.cls}}" onclick="{{vv.select}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">{{vv.label}}</button>
+    </sc-for>
+  </div>
+
+  <div data-screen-label="TPR-DES-11 Respond to supplier clarification" style="max-width:1100px;margin:0 auto;padding:32px 40px 0;">
+    <div class="card blueprint elev-sm" style="padding:0;">
+
+      <div style="padding:28px 24px 20px;border-bottom:1px solid var(--color-divider);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
+          <h1 style="font-family:var(--font-heading);font-weight:600;font-size:28px;margin:0;letter-spacing:.01em;">Respond to supplier clarification</h1>
+          <sc-if value="{{isFailure}}" hint-placeholder-val="{{false}}"><span class="kt-status is-live">Answered</span></sc-if>
+        </div>
+        <p style="font-size:13px;color:var(--color-neutral-600);margin:0 0 10px;">TND-MOH-2027-033 · Clarification deadline 27 May 2027, 17:00 EAT</p>
+        <p style="font-size:14px;color:var(--color-neutral-700);margin:0;">Answer the question and state whether the response changes the published Tender.</p>
+      </div>
+
+      <dc-import name="TenderGuidance" markers="{{g.markers}}" holder="{{g.holder}}" kind="{{g.kind}}" headline="{{g.headline}}" sentence="{{g.sentence}}" fixes="{{g.fixes}}" hint-size="100%,96px"></dc-import>
+
+      <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;gap:16px;">
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;">
+          <div><div class="kt-label" style="margin-bottom:3px;">Candidate</div><div style="font-size:14px;">Registered Tender candidate</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Received</div><div style="font-size:14px;">26 May 2027, 09:00 EAT</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Related addendum</div><div style="font-size:14px;">None</div></div>
+        </div>
+        <p style="font-size:12px;color:var(--color-neutral-700);margin:0;">Registration confirms only that the candidate is registered for this Tender. It does not confirm supplier qualification or eligibility.</p>
+        <div><div class="kt-label" style="margin-bottom:4px;">Question</div><p style="font-size:15px;margin:0;">May the two comparable contracts be from different customers?</p></div>
+      </div>
+
+      <sc-if value="{{isEditable}}" hint-placeholder-val="{{true}}">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;gap:18px;">
+          <div class="field" style="margin:0;"><label>Response</label><textarea class="input" rows="3">Yes. The Tender requires two comparable contracts and does not require both contracts to be from the same customer.</textarea></div>
+          <div class="field" style="margin:0;"><label>Would this response change the published Tender?</label>
+            <div class="seg" role="radiogroup" style="width:fit-content;">
+              <label class="seg-opt"><input type="radio" name="chg" checked="{{noChecked}}" onchange="{{setOrdinary}}" />No</label>
+              <label class="seg-opt"><input type="radio" name="chg" checked="{{yesChecked}}" onchange="{{setChange}}" />Yes</label>
+            </div>
+          </div>
+          <sc-if value="{{isOrdinary}}" hint-placeholder-val="{{true}}">
+            <div class="field" style="margin:0;"><label>Who should receive this answer?</label>
+              <div style="display:flex;gap:20px;flex-wrap:wrap;">
+                <label class="radio"><input type="radio" name="aud" /><span class="dot"></span>Only the supplier who asked</label>
+                <label class="radio"><input type="radio" name="aud" checked="checked" /><span class="dot"></span>All registered candidates</label>
+              </div>
+              <div class="kt-label" style="margin-top:6px;font-weight:400;">A general answer will not identify who asked.</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isFailure}}" hint-placeholder-val="{{false}}">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;gap:16px;">
+          <div><div class="kt-label" style="margin-bottom:4px;">Response</div><p style="font-size:14px;margin:0;">Yes. The Tender requires two comparable contracts and does not require both contracts to be from the same customer.</p></div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;">
+            <div><div class="kt-label" style="margin-bottom:3px;">Audience</div><div style="font-size:14px;">All registered candidates</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Answered by</div><div style="font-size:14px;">Brian Wafula, 26 May 2027, 11:00 EAT</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Changes published Tender</div><div style="font-size:14px;">No</div></div>
+          </div>
+        </div>
+        <div style="padding:20px 24px;">
+          <h2 style="font-family:var(--font-heading);font-size:19px;font-weight:600;margin:0 0 12px;">Candidate notice delivery</h2>
+          <table class="table">
+            <thead><tr><th>Candidate</th><th>Destination</th><th class="is-num">Attempts</th><th>Result</th></tr></thead>
+            <tbody><tr><td>ARR-MOH-2027-033-009</td><td>procurement@failed-delivery.example</td><td class="is-num">3</td><td><span class="kt-status is-critical">Failed</span></td></tr></tbody>
+          </table>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+
+  <div style="position:sticky;bottom:0;background:var(--color-surface);border-top:1px solid var(--color-divider);padding:16px 40px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+    <a href="Published Tender.dc.html" style="font-size:13px;">Back to Tender</a>
+    <sc-if value="{{isOrdinary}}" hint-placeholder-val="{{true}}">
+      <div style="display:flex;gap:12px;">
+        <button type="button" class="btn btn-secondary">Cancel</button>
+        <button type="button" class="btn btn-primary">Send response</button>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { v: 'ordinary' };
+  renderVals() {
+    const v = this.state.v;
+    const list = [['ordinary', 'General answer'], ['change', 'Published change blocked'], ['failure', 'Delivery failure']];
+    const G = {
+      ordinary: ['D/D/D/D/C', 'Brian Wafula', 'turn', 'Send the answer to all registered candidates.'],
+      change: ['D/D/D/D/B', 'Brian Wafula or Charles Mutiso', 'blocked', 'Issue an addendum before sending this answer.', 'A clarification cannot change requirements, criteria, dates or supplier obligations on its own.', [{ label: 'Prepare addendum', primary: true }]],
+      failure: ['D/D/D/D/B', 'Charles Mutiso', 'blocked', '1 candidate notice failed delivery; the Tender remains open.', '', [{ label: 'Retry notice', primary: true }]],
+    }[v];
+    return {
+      variants: list.map(([k, label]) => ({ label, cls: k === v ? 'btn btn-primary' : 'btn', select: () => this.setState({ v: k }) })),
+      g: { markers: G[0], holder: G[1], kind: G[2], headline: G[3], sentence: G[4] || '', fixes: G[5] || [] },
+      isOrdinary: v === 'ordinary', isFailure: v === 'failure', isEditable: v !== 'failure',
+      noChecked: v === 'ordinary' ? true : undefined, yesChecked: v === 'change' ? true : undefined,
+      setOrdinary: () => this.setState({ v: 'ordinary' }), setChange: () => this.setState({ v: 'change' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

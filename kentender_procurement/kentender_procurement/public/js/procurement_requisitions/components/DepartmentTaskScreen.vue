@@ -1,164 +1,149 @@
-<!-- REQ-DES-08 Department approval task (§13.10), ported class-for-class:
-     the eyebrow+title+status+reference header, "Prepared by" line, three
-     summary cards, drawdown table, items table, technical-requirements
-     table, content digest line, the italic certification statement card,
-     the "Decision by" line, and Return/Submit footer. No edit control —
-     this is a read-only certification screen (§13.10: "No edit control"). -->
+<!-- REQ-DES-07 — Head of User Department review (base, return dialog,
+     SUBMITTED; the REQ-DES-12 uncertain-result state in its footer). The
+     question, certification and decision chain lead; the complete immutable
+     Version follows as result-first sections. Only the lead HoD decides. -->
 <template>
-	<div class="req-step-content">
-		<div class="req-masthead">
-			<div class="kt-eyebrow">DEPARTMENT APPROVAL</div>
-			<div class="req-editor-titlebar">
-				<h1 class="req-editor-title">{{ (task.version || {}).requirement_title }}</h1>
-				<span class="kt-status is-pending">Awaiting Department Approval</span>
-			</div>
-			<div class="req-editor-reference">{{ reference }}</div>
-			<p class="req-prepared-by">Prepared by <strong>{{ (task.prepared_by || {}).name }}</strong>, {{ (task.prepared_by || {}).role }}</p>
+	<div class="kt-panel-lg req-page" data-testid="req-department-task" :data-mode="view.mode">
+		<div class="req-title-row">
+			<h3>{{ view.header.title }}</h3>
+			<span class="kt-status" :class="view.header.badge.tone" data-testid="req-badge">{{ view.header.badge.label }}</span>
 		</div>
+		<div class="kt-label req-reference">{{ view.header.reference }}</div>
+		<p class="kt-muted req-lede" style="margin-top: 6px">{{ view.header.description }}</p>
 
-		<div class="req-summary-grid">
-			<div class="kt-card kt-blueprint req-card-pad-tight">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-eyebrow">Planning drawdown</div>
-				<div class="req-summary-title">{{ drawdown.lineCount }} source line{{ drawdown.lineCount === 1 ? "" : "s" }} · {{ drawdown.quantity }} Each</div>
-				<p class="req-context-body">{{ money(drawdown.value) }}</p>
-			</div>
-			<div class="kt-card kt-blueprint req-card-pad-tight">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-eyebrow">Technical requirements</div>
-				<div class="req-summary-title">{{ confirmedTechnicalCount }} confirmed row{{ confirmedTechnicalCount === 1 ? "" : "s" }}</div>
-			</div>
-			<div class="kt-card kt-blueprint req-card-pad-tight">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-eyebrow">Validation</div>
-				<div class="req-summary-title" :class="validationReport.blocking_count ? 'req-validation-blocked' : 'req-validation-live'">
-					{{ validationReport.blocking_count || 0 }} Blocking · {{ validationReport.warning_count || 0 }} Warning{{ (validationReport.warning_count || 0) === 1 ? "" : "s" }}
-				</div>
+		<div class="req-rule" style="margin-bottom: var(--kt-space-6)">
+			<div class="kt-meta-row">
+				<div v-for="fact in view.context" :key="fact.label"><span class="kt-label">{{ fact.label }}</span><span class="kt-meta-value" style="font-size: 14px">{{ fact.value }}</span></div>
 			</div>
 		</div>
+		<div v-if="decider" class="req-question" style="margin-top: calc(-1 * var(--kt-space-3))" data-testid="req-question">{{ view.question }}</div>
 
-		<table class="kt-table" data-testid="req-task-drawdown-table">
-			<thead>
-				<tr>
-					<th>Contributing department</th>
-					<th>Source requirement</th>
-					<th class="req-num">Requested quantity</th>
-					<th class="req-num">Requested value</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr v-for="(row, idx) in drawdownRows" :key="row.drawdown_line_id">
-					<td>{{ row.organisation_unit_label }}</td>
-					<td>{{ row.source_title }}</td>
-					<td class="req-num">{{ requestedLines[idx] ? requestedLines[idx].requested_quantity : "" }} {{ row.unit }}</td>
-					<td class="req-num">{{ money(requestedLines[idx] ? requestedLines[idx].requested_value : 0) }}</td>
-				</tr>
-			</tbody>
-		</table>
+		<DecisionChain :rows="view.decision_chain || []" style="margin-bottom: var(--kt-space-6)" />
 
-		<table class="kt-table" data-testid="req-task-items-table">
-			<thead>
-				<tr>
-					<th>Item</th>
-					<th>Category</th>
-					<th class="req-num">Quantity</th>
-					<th>Intended use</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr v-for="item in items" :key="item.requisition_item_id">
-					<td>{{ item.item_name }}</td>
-					<td>{{ item.equipment_category }}</td>
-					<td class="req-num">{{ item.quantity }} {{ item.unit }}</td>
-					<td>{{ item.intended_use }}</td>
-				</tr>
-			</tbody>
-		</table>
+		<Notice v-for="(f, i) in blocking" :key="i" tone="critical">{{ f.message }}</Notice>
+		<ReviewSections :sections="view.sections || []" />
 
-		<div class="kt-card-title">Technical requirements — {{ confirmedTechnicalCount }} confirmed rows</div>
-		<table class="kt-table" data-testid="req-task-technical-table">
-			<thead>
-				<tr>
-					<th>Characteristic</th>
-					<th>Required value</th>
-					<th>Status</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr v-for="row in confirmedTechnical" :key="row.technical_requirement_id">
-					<td>{{ characteristicLabel(row.characteristic_key) }}</td>
-					<td>{{ row.required_value_display }}</td>
-					<td><span class="kt-status is-live">Confirmed</span></td>
-				</tr>
-			</tbody>
-		</table>
+		<Disclosure title="Record details" testid="req-record-details" style="margin-bottom: var(--kt-space-6)">
+			<div class="kt-meta-row" style="flex-wrap: wrap">
+				<div v-for="fact in view.record_details || []" :key="fact.label"><span class="kt-label">{{ fact.label }}</span><span class="kt-meta-value" style="font-size: 14px">{{ fact.value }}</span></div>
+			</div>
+		</Disclosure>
 
-		<p class="req-table-caption">Content digest — Generated by KenTender · <span class="req-digest">{{ (task.package || {}).content_digest }}</span></p>
-
-		<div class="kt-card kt-blueprint req-card-pad">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<p class="req-certification-statement">I confirm that this Requisition states the departments' operational need and minimum requirements and may be submitted to Procurement.</p>
+		<div v-if="decider" class="req-statement">
+			<div class="req-statement-box"><div class="kt-label" style="margin-bottom: 4px">Certification</div>{{ view.certification }}</div>
 		</div>
-		<p v-if="actorName" class="req-table-caption">Decision by <strong>{{ actorName }}</strong>, {{ actorRoleLabel }} — certifying on behalf of {{ certifyingScope }}.</p>
 
-		<div class="req-actions">
-			<button v-if="task.can_return" type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="req-task-return" @click="$emit('return')">Return for correction</button>
-			<button v-if="task.can_certify" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="req-task-submit" @click="$emit('submit')">Submit to Procurement</button>
+		<template v-if="uncertain">
+			<p v-if="uncertain === 'checking'" style="font-size: 14px" data-testid="req-uncertain-checking">{{ CHECKING }}</p>
+			<Notice v-else-if="uncertain === 'committed'" tone="live"><span data-testid="req-uncertain-committed">{{ committedText }}</span></Notice>
+			<Notice v-else tone="warning"><span data-testid="req-uncertain-unconfirmed">{{ RETRY_SAFE }}</span></Notice>
+		</template>
+		<Notice v-if="error" tone="critical"><span data-testid="req-decision-error">{{ error }}</span></Notice>
+
+		<div v-if="decider && uncertain !== 'checking' && uncertain !== 'committed'" class="req-footer">
+			<button v-if="actions.request_planning_correction" type="button" class="kt-btn kt-btn-ghost" :disabled="busy" data-testid="req-action-planning" @click="dialog = 'planning'">Request Planning correction</button>
+			<div class="req-actions">
+				<ActionsMenu v-if="menu.length" :actions="menu" :disabled="busy" @choose="(k) => (dialog = k)" />
+				<button v-if="actions.return_for_correction" type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="req-return" @click="dialog = 'return'">Return for correction</button>
+				<button type="button" class="kt-btn" :class="actions.submit_to_procurement ? 'kt-btn-primary' : 'kt-btn-secondary'" :disabled="busy || !actions.submit_to_procurement" data-testid="req-submit" @click="submit">
+					{{ busy && acting === 'submit' ? "Submitting…" : "Submit to Procurement" }}
+				</button>
+			</div>
 		</div>
+		<div v-else-if="uncertain !== 'checking'" class="req-footer">
+			<button type="button" class="kt-btn kt-btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
+			<ActionsMenu v-if="readerMenu.length" :actions="readerMenu" :disabled="busy" @choose="(k) => (dialog = k)" />
+		</div>
+
+		<ReasonDialog
+			v-if="dialog === 'return'"
+			title="Return this requisition for correction?"
+			reason-label="Correction required (20–1,000 characters)"
+			hint="State what must change and identify the affected section."
+			confirm-label="Return for correction"
+			:sections="(view.catalogue || {}).affected_sections"
+			:busy="busy"
+			:error="dialogError('return')"
+			testid="req-return-dialog"
+			@close="dialog = null"
+			@confirm="returnForCorrection"
+		/>
+		<ReasonDialog
+			v-if="dialog === 'withdraw'"
+			v-bind="WITHDRAW"
+			:busy="busy"
+			:error="dialogError('withdraw')"
+			@close="dialog = null"
+			@confirm="withdraw"
+		/>
+		<ReasonDialog
+			v-if="dialog === 'planning'"
+			v-bind="PLANNING_CORRECTION"
+			:busy="busy"
+			:error="dialogError('planning')"
+			@close="dialog = null"
+			@confirm="requestPlanning"
+		/>
 	</div>
 </template>
 
 <script setup>
-import { computed } from "vue";
-import { formatMoney } from "../data/format.js";
+import { computed, ref } from "vue";
+import { useReq } from "../data/context.js";
+import { PLANNING_CORRECTION, WITHDRAW } from "../data/dialogs.js";
+import { CHECKING, RETRY_SAFE, useDecision } from "../data/decision.js";
+import ActionsMenu from "./shared/ActionsMenu.vue";
+import DecisionChain from "./shared/DecisionChain.vue";
+import Disclosure from "./shared/Disclosure.vue";
+import Notice from "./shared/Notice.vue";
+import ReasonDialog from "./shared/ReasonDialog.vue";
+import ReviewSections from "./shared/ReviewSections.vue";
 
-const props = defineProps({
-	task: { type: Object, required: true },
-	actorName: { type: String, default: "" },
-	actorRoleLabel: { type: String, default: "Head of User Department" },
-	pending: Boolean,
-});
+const props = defineProps({ view: { type: Object, required: true } });
+const ctx = useReq();
+const busy = computed(() => ctx.pending.value);
+const actions = computed(() => props.view.actions || {});
+const decider = computed(() => props.view.mode === "decider");
+const blocking = computed(() => (props.view.findings || []).filter((f) => f.severity === "Blocking"));
+const menu = computed(() => (actions.value.withdraw ? [{ key: "withdraw", label: "Withdraw requisition" }] : []));
+// After submission the lead HoD keeps these two quiet actions (REQ-DES-07-SUBMITTED).
+const readerMenu = computed(() => [
+	...(actions.value.request_planning_correction ? [{ key: "planning", label: "Request Planning correction" }] : []),
+	...(actions.value.withdraw ? [{ key: "withdraw", label: "Withdraw requisition" }] : []),
+]);
 
-defineEmits(["return", "submit"]);
-
-const reference = computed(() => {
-	const r = props.task.requisition || {};
-	const v = props.task.version || {};
-	return [r.requisition_reference, r.plan_item_id, v.version_number ? `Version ${v.version_number}` : ""].filter(Boolean).join(" · ");
-});
-
-const pkg = computed(() => props.task.package || {});
-const items = computed(() => pkg.value.items || []);
-const drawdownRows = computed(() => props.task.drawdown_context || []);
-const requestedLines = computed(() => (props.task.version || {}).drawdown_lines || []);
-const confirmedTechnical = computed(() => (pkg.value.technical_requirements || []).filter((r) => r.row_status === "Confirmed"));
-const confirmedTechnicalCount = computed(() => confirmedTechnical.value.length);
-const validationReport = computed(() => props.task.validation || {});
-
-const drawdown = computed(() => {
-	const lines = requestedLines.value;
-	return {
-		lineCount: lines.length,
-		quantity: lines.reduce((sum, l) => sum + (l.requested_quantity || 0), 0),
-		value: lines.reduce((sum, l) => sum + (l.requested_value || 0), 0),
-	};
-});
-
-const certifyingScope = computed(() => {
-	const count = new Set(drawdownRows.value.map((r) => r.organisation_unit)).size;
-	return count > 1 ? "both contributing departments" : "the contributing department";
-});
-
-const catalogueByKey = computed(() => {
-	const map = {};
-	for (const c of (props.task.catalogue || {}).characteristics || []) map[c.key] = c;
-	return map;
-});
-function characteristicLabel(key) {
-	return (catalogueByKey.value[key] || {}).label || key;
+const dialog = ref(null);
+const acting = ref("");
+const { uncertain, committedText, decide } = useDecision(ctx);
+const error = computed(() => (ctx.commandError.value && ctx.commandError.value.label === "submit" ? ctx.commandError.value.message : ""));
+function dialogError(label) {
+	return ctx.commandError.value && ctx.commandError.value.label === label ? ctx.commandError.value.message : "";
 }
+const taskClosed = () => (props.view.task || {}).status !== "Open";
 
-function money(amount) {
-	return formatMoney(amount);
+async function submit() {
+	acting.value = "submit";
+	await decide(
+		"submit",
+		(key) => ctx.api.submitToProcurement({ requisition: props.view.requisition, task: props.view.task.task, expected_record_version: props.view.root_record_version, idempotency_key: key }),
+		{ committed: taskClosed, text: "Requisition submitted to Procurement" }
+	);
+	acting.value = "";
+}
+async function returnForCorrection({ reason, affected_section }) {
+	const done = await decide(
+		"return",
+		(key) => ctx.api.returnToAuthor({ task: props.view.task.task, reason, affected_section, expected_record_version: props.view.task.record_version, idempotency_key: key }),
+		{ committed: taskClosed, text: "Requisition returned for correction" }
+	);
+	if (done || uncertain.value) dialog.value = null;
+}
+async function withdraw({ reason }) {
+	const done = await ctx.run("withdraw", (key) => ctx.api.withdraw({ requisition: props.view.requisition, reason, expected_record_version: props.view.root_record_version, idempotency_key: key }));
+	if (done) dialog.value = null;
+}
+async function requestPlanning({ reason }) {
+	const done = await ctx.run("planning", (key) => ctx.api.requestPlanningCorrection({ requisition: props.view.requisition, reason, expected_record_version: props.view.root_record_version, idempotency_key: key }));
+	if (done) dialog.value = null;
 }
 </script>

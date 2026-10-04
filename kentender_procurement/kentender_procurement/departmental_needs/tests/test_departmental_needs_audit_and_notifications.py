@@ -38,6 +38,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cstr
 
+from kentender_core.seeds import clock
 from kentender_core.services.responsibility_administration import grant
 from kentender_procurement.departmental_needs.constants import ROLE_HEAD_OF_USER_DEPARTMENT
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
@@ -119,10 +120,13 @@ class TestTransitionNotificationRecipients(NotificationCase):
 	def test_submission_reaches_the_reviewers_and_not_the_author(self):
 		# The author already knows they submitted; the point of the effect is to
 		# raise the task with whoever can act on it. Julia (ACTING_REVIEWER)
-		# holds a real, currently-effective Digital Health grant too (see the
-		# module docstring), so she is a genuine third reviewer here.
+		# holds a real Digital Health grant for 1 Oct–30 Nov 2026 only
+		# (PLN-CHG-001 v1.18 §13.1), so the submission runs at a fixture
+		# instant inside that window under the frozen clock; she is then a
+		# genuine third reviewer beside Peter and the second HoD.
 		second = self.ensure_second_hod()
-		submitted = self.submit(self.create_in(self.ou))
+		with clock.at("2026-11-24 10:00:00"):
+			submitted = self.submit(self.create_in(self.ou))
 		told = self.recipients(submitted["need"], notifications.EVENT_SUBMITTED)
 		self.assertEqual(told, sorted([ACTING_REVIEWER, REVIEWER, second]))
 		self.assertNotIn(AUTHOR, told)

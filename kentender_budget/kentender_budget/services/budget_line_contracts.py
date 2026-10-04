@@ -28,7 +28,33 @@ from kentender_budget.services.budget_contracts import (
 	_version_totals,
 	format_kes_full,
 )
+from kentender_budget.services.budget_idempotency import run_idempotent
 from kentender_budget.services.budget_reference import allocate_budget_line_reference, allocate_budget_line_version_reference
+
+
+def _protected_amount(budget_line: str) -> float:
+	pos = _line_position(budget_line, None)
+	return pos["reserved"] + pos["committed"]
+
+
+def _editor_totals(version, rows: list[dict[str, Any]]) -> dict[str, Any]:
+	"""§11.3/§11.15 — Approved allocation vs Total entered with the exact
+	positive still-to-assign / over-allocation figure, plus Total moved out /
+	Total moved in for a successor."""
+	from kentender_budget.services.budget_readiness_contracts import _reconcile
+
+	line_total = sum(flt(r.get("approved_amount")) for r in rows)
+	totals = _reconcile(version.authorised_total, line_total)
+	if version.based_on_budget_version:
+		moved_out = moved_in = 0.0
+		for r in rows:
+			delta = flt(r.get("approved_amount")) - flt(r.get("current_amount") or 0.0)
+			if delta > 0:
+				moved_in += delta
+			elif delta < 0:
+				moved_out += -delta
+		totals.update({"total_moved_out": moved_out, "total_moved_in": moved_in, "transfer_balanced": abs(moved_out - moved_in) < 0.01})
+	return totals
 
 
 def _lines_previously_in_active(budget_version) -> dict[str, Any]:
@@ -53,10 +79,19 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 		payload = frappe.parse_json(payload)
 	payload = payload or {}
 
+	return run_idempotent(payload=payload, fn=lambda: _save_budget_lines_draft(payload), budget_for=lambda r: (r.get("version") or {}).get("budget"))
+
+
+def _save_budget_lines_draft(payload: dict[str, Any]) -> dict[str, Any]:
+	from kentender_budget.services.budget_contracts import _version_summary
+
 	version = _resolve_budget_version(payload.get("budget_version") or "")
 	require_budget_version_capability(frappe.session.user, CAP_EDIT, version)
 	if version.status != "Draft":
-		frappe.throw(_("Only a Draft version can be edited"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+		return {"ok": False, "code": "BUDGET_INVALID_STATE", "errors": {"status": _("This budget has changed. Refresh to see the available actions.")}, "version": _version_summary(version)}
+	expected = payload.get("expected_modified")
+	if expected and str(version.modified) != str(expected):
+		return {"ok": False, "code": "BUDGET_STALE_WRITE", "errors": {"expected_modified": _("This budget has changed since you opened it. Refresh to see the current details.")}, "version": _version_summary(version)}
 
 	budget = frappe.get_doc("Procurement Budget", version.budget)
 	locked = _lines_previously_in_active(version)
@@ -74,10 +109,29 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 	for i, row in enumerate(rows):
 		budget_line_key = (row.get("budget_line") or "").strip()
 		remove = bool(row.get("remove"))
+		omit = bool(row.get("omit"))
+
+		if omit:
+			# BUD-BR-020 / §12.2 — omission from the proposed Version only,
+			# permitted while the line has no remaining reservation or active
+			# commitment (rechecked again at approval). The line identity and
+			# its history are untouched; only this Draft's Line Version goes.
+			if budget_line_key not in locked:
+				errors[f"lines.{i}"] = _("Only a previously approved line can be omitted from an update")
+				continue
+			protected = _protected_amount(budget_line_key)
+			if protected > 0:
+				errors[f"lines.{i}"] = _("{0} has {1} reserved or committed and cannot be omitted from this update").format(
+					locked[budget_line_key].title, format_kes_full(protected, currency=budget.currency or "KES")
+				)
+				continue
+			if budget_line_key in existing_versions:
+				frappe.delete_doc("Procurement Budget Line Version", existing_versions[budget_line_key].name, ignore_permissions=True)
+			continue
 
 		if remove:
 			if budget_line_key in locked:
-				errors[f"lines.{i}"] = _("A previously Active line cannot be removed")
+				errors[f"lines.{i}"] = _("A previously approved line cannot be removed; omit it from this update instead")
 				continue
 			if budget_line_key and budget_line_key in existing_versions:
 				frappe.delete_doc("Procurement Budget Line Version", existing_versions[budget_line_key].name, ignore_permissions=True)
@@ -87,6 +141,22 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 		owner_org_unit = (row.get("owner_org_unit") or "").strip()
 		funding_source = (row.get("funding_source") or "").strip()
 		approved_amount = flt(row.get("approved_amount"))
+
+		# BUD-BR-019 — identity fields are immutable once previously Active;
+		# only approved_amount may change. This substitution must run before
+		# the required-field checks below: a locked row is "silently held" to
+		# its prior identity regardless of what the client sent, so a blank
+		# or stale client value for title/owner/funding on a locked row is
+		# never a validation failure (2026-09-19 regression — the client's
+		# own omit-then-restore round trip does not remember a row's owner
+		# unit or funding source, so a real resubmission sent both blank;
+		# the checks below used to run against that blank payload before this
+		# substitution ever reached it).
+		if budget_line_key and budget_line_key in locked:
+			prior = locked[budget_line_key]
+			title = prior.title
+			owner_org_unit = prior.owner_org_unit or ""
+			funding_source = prior.funding_source
 
 		if not title:
 			errors[f"lines.{i}.title"] = _("Line title is required")
@@ -98,15 +168,6 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 		# or permission check (§17.1/§18) — only existence is validated here.
 		if owner_org_unit and not frappe.db.exists("Organisation Unit", owner_org_unit):
 			errors[f"lines.{i}.owner_org_unit"] = _("Organisation unit not found")
-
-		if budget_line_key and budget_line_key in locked:
-			prior = locked[budget_line_key]
-			# BUD-BR-019 — identity fields are immutable once previously Active;
-			# only approved_amount may change. Silently hold the prior identity
-			# rather than accept a client-supplied change.
-			title = prior.title
-			owner_org_unit = prior.owner_org_unit
-			funding_source = prior.funding_source
 
 		seen.add(budget_line_key)
 		if errors:
@@ -161,15 +222,9 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 		calling_module="Budget & Funding",
 	)
 
-	totals = _version_totals(version.name)
-	return {
-		"ok": True,
-		"totals": {
-			"authorised_total": flt(version.authorised_total),
-			"line_total": totals["approved"],
-			"difference": flt(version.authorised_total) - totals["approved"],
-		},
-	}
+	version.reload()
+	editor = get_budget_version_lines_editor(version.name)
+	return {"ok": True, "saved_scope": "budget_lines", "totals": editor["totals"], "rows": editor["rows"], "version": _version_summary(version)}
 
 
 def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
@@ -206,10 +261,8 @@ def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
 		if rows
 		else {}
 	)
-	line_total = 0.0
 	out = []
 	for r in rows:
-		line_total += flt(r.approved_amount)
 		is_locked = r.budget_line in locked
 		row_dto: dict[str, Any] = {
 			"budget_line": r.budget_line,
@@ -237,17 +290,31 @@ def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
 					)
 				)
 			row_dto["active_amount"] = active_amount
+			row_dto["current_amount"] = active_amount
 			row_dto["change"] = flt(r.approved_amount) - active_amount
+			protected = _protected_amount(r.budget_line) if is_locked else 0.0
+			row_dto["protected_amount"] = protected
+			# §11.15 Omit from this update — only when nothing is reserved or committed.
+			row_dto["can_omit"] = may_edit and is_locked and protected <= 0
 		out.append(row_dto)
+
+	omitted = []
+	if version.based_on_budget_version:
+		present = {r.budget_line for r in rows}
+		for line_name, prior in locked.items():
+			if line_name not in present:
+				omitted.append({"budget_line": line_name, "title": prior.title, "current_amount": flt(frappe.db.get_value("Procurement Budget Line Version", {"budget_version": version.based_on_budget_version, "budget_line": line_name}, "approved_amount"))})
+	totals = _editor_totals(version, out)
+	if omitted and "total_moved_out" in totals:
+		totals["total_moved_out"] += sum(o["current_amount"] for o in omitted)
+		totals["transfer_balanced"] = abs(totals["total_moved_out"] - totals["total_moved_in"]) < 0.01
 
 	return {
 		"rows": out,
+		"omitted": omitted,
 		"is_successor": bool(version.based_on_budget_version),
-		"totals": {
-			"authorised_total": flt(version.authorised_total),
-			"line_total": line_total,
-			"difference": flt(version.authorised_total) - line_total,
-		},
+		"can_edit": may_edit and version.status == "Draft",
+		"totals": totals,
 	}
 
 
@@ -463,6 +530,170 @@ def check_plan_affordability(
 		"as_at": str(as_at),
 		"active_version": version.name,
 		"currency": currency,
+		"lines": lines,
+		"unknown_lines": unknown,
+		"within_approved": all_within_approved,
+		"within_available": all_within_available,
+		"failing_lines": failing,
+	}
+
+
+
+# --------------------------------------------------------------------------
+# PLN-CHG-001 v1.18 §5.3.3 / §7.3 — the Budget contract Planning's Finance
+# decision consumes: ceiling and affordability evidence only. The approved
+# budget is never the 30% reservation denominator (BUD-CHG-001 v1.10
+# BUD20-AC-001/002 — the old annual-basis contract was removed with no
+# alias). Amounts are decimal strings in currency units (v1.18 §4.1);
+# nothing here writes, reserves or produces a ledger event.
+# --------------------------------------------------------------------------
+
+import hashlib
+import json
+from decimal import Decimal
+
+CURRENCY_PRECISION = 2  # KES; BUD-CHG-001's currency contract carries the precision
+
+
+def money(value) -> str:
+	"""Exact decimal string in currency units (never a binary float)."""
+	return str(Decimal(repr(round(flt(value), CURRENCY_PRECISION))).quantize(Decimal(1).scaleb(-CURRENCY_PRECISION)))
+
+
+def _planned_totals(planned_totals) -> dict[str, float]:
+	if isinstance(planned_totals, str):
+		planned_totals = frappe.parse_json(planned_totals)
+	totals: dict[str, float] = {}
+	if isinstance(planned_totals, dict):
+		return {str(k): flt(v) for k, v in planned_totals.items()}
+	for row in planned_totals or []:
+		key = str(row.get("budget_line") or row.get("id") or "")
+		if key:
+			totals[key] = totals.get(key, 0.0) + flt(row.get("planned") if "planned" in row else row.get("amount"))
+	return totals
+
+
+def validate_plan_affordability_for_decision(
+	fiscal_year: str,
+	planned_totals,
+	expected_revisions=None,
+	correlation: str = "",
+) -> dict[str, Any]:
+	"""v1.18 §5.3.3 — the decision-time counterpart of
+	`check_plan_affordability`. Called *inside* the Finance decision's own
+	transaction: it serialises the year's Active Budget Version and its line
+	versions (`SELECT … FOR UPDATE`), validates the line revisions the caller
+	reviewed (`expected_revisions`: `{budget_line: line_version_name}` and
+	optionally `budget_version`), and returns the comparison statement the
+	caller records verbatim. A Budget change since the review fails the
+	positive decision atomically (`BUD_BASIS_STALE`); nothing is written,
+	reserved or journaled here. `check_plan_affordability` stays the
+	non-locking display read.
+	"""
+	from frappe.utils import now_datetime
+
+	fiscal_year = (fiscal_year or "").strip()
+	totals = _planned_totals(planned_totals)
+	if isinstance(expected_revisions, str):
+		expected_revisions = frappe.parse_json(expected_revisions or "{}")
+	expected = dict(expected_revisions or {})
+	expected_version = expected.pop("budget_version", "") or ""
+
+	budget_name = frappe.db.get_value("Procurement Budget", {"fiscal_year": fiscal_year}, "name") if fiscal_year else None
+	version = _active_version(budget_name) if budget_name else None
+	if not version:
+		frappe.throw(f"No Active Procurement Budget Version exists for {fiscal_year}.", title="BUD_BASIS_UNAVAILABLE")
+	require_budget_version_read_scope(version)
+
+	# Serialise the authoritative basis for the rest of the caller's transaction.
+	frappe.db.sql("select name from `tabProcurement Budget Version` where name = %s for update", version.name)
+	frappe.db.sql("select name from `tabProcurement Budget Line Version` where budget_version = %s for update", version.name)
+	if frappe.db.get_value("Procurement Budget Version", version.name, "status") != "Active":
+		frappe.throw("The Budget basis changed while the decision was being recorded.", title="BUD_BASIS_STALE")
+	if expected_version and expected_version != version.name:
+		frappe.throw(
+			f"The reviewed Budget Version {expected_version} is no longer the Active one ({version.name}).",
+			title="BUD_BASIS_STALE",
+		)
+
+	rows = frappe.get_all(
+		"Procurement Budget Line Version",
+		filters={"budget_version": version.name},
+		fields=["name", "budget_line", "title", "owner_org_unit", "funding_source", "approved_amount", "modified"],
+		order_by="title asc",
+	)
+	line_versions = {r.budget_line: r.name for r in rows}
+	stale = sorted(line for line, reviewed in expected.items() if line_versions.get(line) != reviewed)
+	if stale:
+		frappe.throw(
+			"The reviewed Budget Line revision has changed for: " + ", ".join(stale) + ".",
+			title="BUD_BASIS_STALE",
+		)
+
+	as_at = now_datetime()
+	references = _line_references([r.budget_line for r in rows])
+	currency = frappe.db.get_value("Procurement Budget", budget_name, "currency") or "KES"
+	lines = []
+	failing = []
+	seen = set()
+	all_within_approved = True
+	all_within_available = True
+	digest_rows = []
+	for r in rows:
+		seen.add(r.budget_line)
+		pos = _line_position(r.budget_line, r)
+		planned = flt(totals.get(r.budget_line, 0.0))
+		within_approved = planned <= pos["approved"] + 1e-9
+		within_available = planned <= pos["available"] + 1e-9
+		excess = max(0.0, planned - pos["approved"])
+		if not within_approved:
+			all_within_approved = False
+			failing.append({"budget_line": r.budget_line, "reference": references.get(r.budget_line, ""), "excess": money(excess)})
+		if not within_available:
+			all_within_available = False
+		lines.append(
+			{
+				"budget_line": r.budget_line,
+				"line_version": r.name,
+				"reference": references.get(r.budget_line, ""),
+				"title": r.title,
+				"owner_org_unit": r.owner_org_unit,
+				"funding_source": r.funding_source,
+				"currency": currency,
+				"approved": money(pos["approved"]),
+				"planned": money(planned),
+				"reserved": money(pos["reserved"]),
+				"committed": money(pos["committed"]),
+				"available": money(pos["available"]),
+				"within_approved": within_approved,
+				"within_available": within_available,
+				"excess_over_approved": money(excess),
+				"eligible": True,
+			}
+		)
+		digest_rows.append([r.budget_line, r.name, money(pos["approved"]), money(planned), r.funding_source or "", currency])
+	unknown = sorted(k for k in totals if k not in seen and flt(totals[k]) > 0)
+	if unknown:
+		all_within_approved = False
+		all_within_available = False
+		for key in unknown:
+			failing.append({"budget_line": key, "reference": "", "excess": money(totals[key])})
+			digest_rows.append([key, "", "0.00", money(totals[key]), "", currency])
+	digest_rows.sort()
+	digest = hashlib.sha256(json.dumps(digest_rows, separators=(",", ":")).encode("utf-8")).hexdigest()
+	return {
+		"fiscal_year": fiscal_year,
+		"as_at": str(as_at),
+		"decision_basis": True,
+		"correlation": correlation or "",
+		"budget": budget_name,
+		"budget_version": version.name,
+		"version_reference": version.generated_reference or "",
+		"version_number": int(version.version_number or 0),
+		"currency": currency,
+		"currency_precision": CURRENCY_PRECISION,
+		"line_versions": line_versions,
+		"basis_digest": digest,
 		"lines": lines,
 		"unknown_lines": unknown,
 		"within_approved": all_within_approved,

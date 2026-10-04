@@ -1,279 +1,462 @@
-<!-- PLN-UI-09 Plan Item editor (§12.8), rendering PLN-DES-09 (single source)
-     and PLN-DES-09A (combined) from one read model: read-only source card or
-     table, Identity, Classification and method (Objective + admissible
-     method selects), Preference and structure (with the conditional
-     multi-year justification and lot count), and the Baseline schedule card
-     whose computed dates recalculate live from the target invitation date
-     and the five governed periods behind a closed-by-default disclosure.
-     No Finance action, no forecast or actual field, no source edit. -->
+<!-- PLN-CHG-001 v1.24 §10.8 — the purchase editor (U09), ported from
+     Artboards-U09.dc.html.
+
+     This is the screen v1.22 cut hardest, and the cut is the point. The first
+     view is Purchase details, Included requirements, Estimated cost,
+     Procurement approach and Dates — the decisions the Planner actually makes.
+     Strategy provenance, classification provenance, rule evidence and the
+     milestone table go into one collapsed Supporting details.
+
+     What must never appear as an ordinary business field: "Procedure —
+     Planning example", resolver support or status, Rule version, Source check.
+     A blocking configuration problem is replaced by one plain issue and the
+     responsible recovery action (PLN22-AC-005). Blank, None, Not applicable,
+     Single lot and Lot count 1 are omitted rather than displayed to prove the
+     values exist (PLN22-AC-006).
+
+     A material issue is never moved into Supporting details. -->
 <template>
-	<div class="pln-editor pln-editor-wide">
-		<p class="kt-page-kicker">{{ item.header?.eyebrow }}</p>
-		<h1 class="kt-page-title">{{ item.header?.title }}</h1>
-		<p class="pln-quiet-ref">{{ item.header?.reference_line }}</p>
-		<span class="kt-status is-draft" data-testid="ppi-badge">{{ item.header?.item_state_badge }}</span>
-
-		<div
-			v-if="item.source_correction_required"
-			class="pln-notice is-critical"
-			data-testid="ppi-source-correction"
-		>
-			<p class="pln-notice-title">Source correction required</p>
-			<p>
-				A departmental source changed. Dissolve this Plan Item and re-form it
-				from the current source before continuing.
-			</p>
-		</div>
-
-		<div v-if="errorSummary" class="pln-notice is-critical" role="alert" data-testid="ppi-error">
-			<p class="pln-notice-title">This command could not be completed</p>
-			<p>{{ errorSummary }}</p>
-		</div>
-
-		<!-- single source -->
-		<div v-if="!item.combined" class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-source">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title">Departmental source</div>
-			<div v-if="source" class="pln-field-grid">
-				<div class="pln-ro-field"><label>Department</label><div class="pln-val">{{ source.department }}</div></div>
-				<div class="pln-ro-field"><label>Source origin</label><div class="pln-val">{{ source.source_origin }}</div></div>
-				<div class="pln-ro-field"><label>Departmental plan</label><div class="pln-val">{{ source.departmental_plan_line }}</div></div>
-				<div v-if="source.need_reference_line" class="pln-ro-field">
-					<label>Accepted Need</label><div class="pln-val">{{ source.need_reference_line }}</div>
-				</div>
-				<div class="pln-ro-field"><label>Quantity</label><div class="pln-val">{{ source.quantity_display }}</div></div>
-				<div class="pln-ro-field"><label>Required by</label><div class="pln-val">{{ source.required_by_display }}</div></div>
-				<div class="pln-ro-field"><label>Procurement Budget Line</label><div class="pln-val">{{ source.budget_line_display }}</div></div>
-				<div class="pln-ro-field"><label>Planned value</label><div class="pln-val">{{ item.planned_value_display }}</div></div>
-			</div>
-			<p class="pln-helper-text" data-testid="ppi-price-index">{{ priceIndexLine }}</p>
-		</div>
-
-		<!-- combined sources -->
-		<div v-else class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-sources">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title">Departmental sources</div>
-			<table class="pln-table">
-				<thead>
-					<tr>
-						<th>Requirement</th><th>Department</th><th>Source origin</th>
-						<th class="pln-num">Quantity</th><th>Required by</th>
-						<th>Procurement Budget Line</th><th class="pln-num">Amount</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="(row, idx) in item.sources" :key="idx">
-						<td>{{ row.requirement }}</td>
-						<td>{{ row.department }}</td>
-						<td>{{ row.source_origin }}</td>
-						<td class="pln-num">{{ row.quantity_display }}</td>
-						<td>{{ row.required_by_display }}</td>
-						<td>{{ row.budget_line_display?.split(" — ")[0] || row.budget_line }}</td>
-						<td class="pln-num">{{ row.amount_display }}</td>
-					</tr>
-				</tbody>
-			</table>
-			<p class="pln-table-caption">{{ item.sources_caption }}</p>
-			<p class="pln-helper-text" data-testid="ppi-price-index">{{ priceIndexLine }}</p>
-		</div>
-
-		<!-- Identity -->
-		<div class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-identity">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title">Identity</div>
-			<div class="pln-field-grid">
-				<div class="pln-field" style="grid-column: 1 / -1">
-					<label for="ppi-title">Plan Item title</label>
-					<input id="ppi-title" type="text" class="kt-input" data-testid="ppi-title" v-model="form.title" :disabled="!item.mutable" />
-				</div>
-				<div class="pln-field" style="grid-column: 1 / -1">
-					<label for="ppi-description">Procurement description</label>
-					<textarea id="ppi-description" class="kt-input" rows="3" data-testid="ppi-description" v-model="form.description" :disabled="!item.mutable"></textarea>
-				</div>
-				<div class="pln-ro-field">
-					<label>Requirement type</label><div class="pln-val">{{ identity.requirement_type }}</div>
-				</div>
-				<div v-if="item.combined" class="pln-field" style="grid-column: 1 / -1">
-					<label for="ppi-aggregation">Aggregation reason</label>
-					<textarea id="ppi-aggregation" class="kt-input" rows="2" data-testid="ppi-aggregation" v-model="form.aggregation_reason" :disabled="!item.mutable" :aria-invalid="invalid('aggregation_reason')"></textarea>
-				</div>
-			</div>
-		</div>
-
-		<!-- Classification and method -->
-		<div class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-classification">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title">Classification and method</div>
-			<div class="pln-field-grid">
-				<div class="pln-field">
-					<label for="ppi-objective">Strategic Objective</label>
-					<select id="ppi-objective" class="kt-input" data-testid="ppi-objective" v-model="form.strategic_objective" :disabled="!item.mutable" :aria-invalid="invalid('strategic_objective')">
-						<option value="">Select…</option>
-						<option v-for="row in classification.strategic_objectives || []" :key="row.id" :value="row.id">
-							{{ row.reference ? `${row.reference} — ${row.title}` : row.title }}
-						</option>
-					</select>
-				</div>
-				<div class="pln-ro-field">
-					<label>Objective path</label><div class="pln-val">{{ objectivePath }}</div>
-				</div>
-				<div class="pln-field">
-					<label for="ppi-method">Procurement method</label>
-					<select id="ppi-method" class="kt-input" data-testid="ppi-method" v-model="form.procurement_method" :disabled="!item.mutable" :aria-invalid="invalid('procurement_method')">
-						<option v-for="method in methodOptions" :key="method" :value="method">{{ method }}</option>
-					</select>
-				</div>
-				<div class="pln-ro-field">
-					<label>Value band</label><div class="pln-val" data-testid="ppi-value-band">{{ classification.value_band }}</div>
-				</div>
-			</div>
-		</div>
-
-		<!-- Preference and structure -->
-		<div class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-preference">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title">Preference and structure</div>
-			<div class="pln-field-grid">
-				<div class="pln-field" style="grid-column: 1 / -1">
-					<label for="ppi-reservation">Preference and reservation</label>
-					<select id="ppi-reservation" class="kt-input" data-testid="ppi-reservation" v-model="form.reservation_category" :disabled="!item.mutable" :aria-invalid="invalid('reservation_category')">
-						<option v-for="category in reservationOptions" :key="category" :value="category">{{ category }}</option>
-					</select>
-					<p class="pln-helper-text">{{ preference.helper }}</p>
-				</div>
-				<div v-if="reasonRequired" class="pln-field" style="grid-column: 1 / -1">
-					<label for="ppi-reservation-reason">Reservation reason</label>
-					<textarea id="ppi-reservation-reason" class="kt-input" rows="2" data-testid="ppi-reservation-reason" v-model="form.reservation_category_reason" :disabled="!item.mutable" :aria-invalid="invalid('reservation_category_reason')"></textarea>
-					<p class="pln-helper-text">Why this scheme rather than {{ preference.highest_advantage }}, the highest-advantage scheme published for this year.</p>
-				</div>
-				<div v-if="preference.county_control_available" class="pln-field" style="grid-column: 1 / -1">
-					<label class="pln-checkbox-row">
-						<input type="checkbox" data-testid="ppi-county" v-model="form.county_resident_reservation" :disabled="!item.mutable" />
-						Reserved for county-resident tenderers
-					</label>
-				</div>
-				<div class="pln-field">
-					<label for="ppi-horizon">Plan horizon</label>
-					<select id="ppi-horizon" class="kt-input" data-testid="ppi-horizon" v-model="form.plan_horizon" :disabled="!item.mutable">
-						<option value="Single year">Single year</option>
-						<option value="Multi-year">Multi-year</option>
-					</select>
-				</div>
-				<div class="pln-field">
-					<label for="ppi-aggregation-indicator">Aggregation</label>
-					<select id="ppi-aggregation-indicator" class="kt-input" data-testid="ppi-aggregation-indicator" v-model="form.aggregation_indicator" :disabled="!item.mutable">
-						<option value="Not aggregated">Not aggregated</option>
-						<option value="Aggregated into this package">Aggregated into this package</option>
-						<option value="Common-user item arrangement">Common-user item arrangement</option>
-					</select>
-				</div>
-				<div class="pln-field">
-					<label for="ppi-lotting">Lotting</label>
-					<select id="ppi-lotting" class="kt-input" data-testid="ppi-lotting" v-model="form.lotting_indicator" :disabled="!item.mutable">
-						<option value="Single lot">Single lot</option>
-						<option value="Packaged into lots">Packaged into lots</option>
-					</select>
-				</div>
-				<div v-if="form.plan_horizon === 'Multi-year'" class="pln-field" style="grid-column: 1 / -1">
-					<label for="ppi-multi-year">Multi-year justification</label>
-					<textarea id="ppi-multi-year" class="kt-input" rows="2" data-testid="ppi-multi-year" v-model="form.multi_year_justification" :disabled="!item.mutable" :aria-invalid="invalid('multi_year_justification')"></textarea>
-				</div>
-				<div v-if="form.lotting_indicator === 'Packaged into lots'" class="pln-field">
-					<label for="ppi-lot-count">Lot count</label>
-					<input id="ppi-lot-count" type="number" min="2" step="1" class="kt-input" data-testid="ppi-lot-count" v-model="form.lot_count" :disabled="!item.mutable" :aria-invalid="invalid('lot_count')" />
-				</div>
-			</div>
-		</div>
-
-		<!-- Baseline schedule -->
-		<div class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-baseline">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title">Baseline schedule</div>
-			<p class="pln-card-subhead">
-				Computed from your target invitation date using the governed periods for this
-				procurement's category and method. Locked once this Plan Version is submitted.
-			</p>
-
-			<div class="pln-field" style="max-width: 280px">
-				<label for="ppi-target-date">Target invitation date</label>
-				<input id="ppi-target-date" type="date" class="kt-input" data-testid="ppi-target-date" v-model="form.baseline_invitation_date" :disabled="!item.mutable || baseline.locked" :aria-invalid="invalid('baseline_invitation_date')" />
-			</div>
-
-			<table class="pln-table pln-baseline-table" style="margin-top: 16px" data-testid="ppi-baseline-table">
-				<thead><tr><th>Milestone</th><th>Baseline date</th></tr></thead>
-				<tbody>
-					<tr v-for="row in computedRows" :key="row.milestone" :data-testid="`ppi-baseline-${row.milestone}`">
-						<td>{{ row.label }}</td>
-						<td>{{ row.display }}</td>
-					</tr>
-				</tbody>
-			</table>
-			<p class="pln-helper-text">
-				Delivery completion is the department's own required-by date. The computed contract
-				signing date must leave a reasonable delivery period before it.
-			</p>
-			<p v-if="!deliveryBoundaryOk" class="pln-dialog-error" data-testid="ppi-boundary-warning">
-				The computed contract signing date leaves too little time before the required-by date. Bring the target invitation date forward or shorten a period.
-			</p>
-
-			<div class="pln-disclosure">
-				<button
-					type="button"
-					class="pln-disclosure-trigger"
-					data-testid="ppi-adjust-periods"
-					:aria-expanded="periodsOpen ? 'true' : 'false'"
-					@click="periodsOpen = !periodsOpen"
-				>
-					<svg class="pln-chevron" :class="{ open: periodsOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg>
-					Adjust periods
-				</button>
-				<p v-if="!periodsOpen" class="pln-disclosure-summary" data-testid="ppi-periods-summary">{{ periodsSummary }}</p>
-				<div v-else class="pln-periods-grid" data-testid="ppi-periods">
-					<div v-for="period in PERIODS" :key="period.key" class="pln-field">
-						<label :for="`ppi-${period.key}`">{{ period.label }}</label>
-						<input :id="`ppi-${period.key}`" type="number" min="0" step="1" class="kt-input" :data-testid="`ppi-${period.key}`" v-model.number="form[period.key]" :disabled="!item.mutable || baseline.locked" :aria-invalid="invalid(period.key)" />
-						<p class="pln-period-note">{{ periodNote(period) }}</p>
+	<div>
+		<div class="kt-page">
+			<!-- The artboard's own head: the title, then one scope line naming
+			     the purchase, its Plan Version and its state. This used to be a
+			     three-cell `.kt-meta-row` of labelled facts, which the board
+			     never draws here and which read as the screen's first section
+			     rather than as the record's identity. -->
+			<div class="kt-page-head">
+				<div>
+					<h1 class="kt-page-title" data-testid="ppi-title">{{ item.header?.title }}</h1>
+					<div class="kt-page-scope" data-testid="ppi-context">
+						<span>{{ item.plan_item_id }}</span>
+						<span v-if="versionNumber">· Plan Version {{ versionNumber }}</span>
+						<span class="kt-status" :class="item.is_active ? 'is-live' : 'is-draft'">{{ statusLabel }}</span>
 					</div>
 				</div>
 			</div>
-		</div>
 
-		<div class="pln-footer-bar">
-			<div class="pln-footer-actions">
-				<button type="button" class="kt-btn kt-btn-ghost" @click="$emit('back')">Back to Annual Plan</button>
+			<!-- Current material issues, immediately below the context and never
+			     inside a disclosure. -->
+			<div
+				v-for="notice in notices"
+				:key="notice.kind"
+				class="kt-notice"
+				:class="notice.kind === 'scope_locked' || notice.kind === 'correction_hold' ? 'is-critical' : 'is-warning'"
+				data-testid="ppi-notice"
+			>
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+				</svg>
+				<div class="kt-notice-body">
+					<strong>{{ notice.heading }}</strong>
+					<p>{{ notice.text }}</p>
+				</div>
+			</div>
+			<div v-for="blocker in visibleBlockers" :key="blocker.message" class="kt-notice is-critical" data-testid="ppi-blocker">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+				</svg>
+				<div class="kt-notice-body">{{ blocker.message }}</div>
+			</div>
+
+			<!-- 1. Purchase details -->
+			<div class="kt-region">
+				<h2>Purchase details</h2>
+				<!-- The artboard's own form column: one field per line, a real
+				     gap between them and a reading width. -->
+				<div class="pln-form-column">
+					<div class="kt-field" :class="flagged('title')">
+						<label for="ppi-title-input" class="kt-label">Title</label>
+						<input id="ppi-title-input" class="kt-input" data-testid="ppi-title-input" :value="draft.title" :disabled="!item.mutable" @input="onField('title', $event.target.value)">
+					</div>
+					<div class="kt-field" :class="flagged('description')">
+						<label for="ppi-description" class="kt-label">Description</label>
+						<textarea id="ppi-description" class="kt-input" rows="3" data-testid="ppi-description" :value="draft.description" :disabled="!item.mutable" @input="onField('description', $event.target.value)"></textarea>
+					</div>
+				</div>
+				<div class="kt-group pln-summary-line">
+					<!-- Derived from the included requirements; not editable here, and
+					     Plan horizon is a fixed literal so it is not shown at all. -->
+					<span class="kt-muted" data-testid="ppi-summary-line">{{ item.summary_line }}</span>
+					<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppi-view-classification" @click.prevent="$emit('view-classification')">View classification details</a>
+				</div>
+			</div>
+
+			<!-- 2. Included requirements -->
+			<div class="kt-region">
+				<h2>Included requirements</h2>
+				<table class="kt-table" data-testid="ppi-sources">
+					<thead>
+						<tr>
+							<th>Requirement</th><th>Department</th><th class="is-num">Quantity</th>
+							<th>Unit</th><th>Required by</th><th class="is-num">Allocation</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="row in sources" :key="row.requirement + row.department" data-testid="ppi-source-row">
+							<td>
+								<div class="pln-row-title">{{ row.requirement }}</div>
+								<div v-if="sourceRefLine(row)" class="kt-muted pln-row-ref">{{ sourceRefLine(row) }}</div>
+							</td>
+							<td>{{ row.department }}</td>
+							<td class="is-num">{{ row.quantity_number }}</td>
+							<td>{{ row.unit_label }}</td>
+							<td>{{ row.required_by_display }}</td>
+							<td class="is-num">{{ row.amount_display }}</td>
+						</tr>
+					</tbody>
+				</table>
+				<div v-if="item.combined" class="kt-group pln-summary-line" data-testid="ppi-combined">
+					<span>
+						<span class="kt-tag kt-tag-neutral">Combined purchase</span>
+						<span class="kt-muted">{{ item.aggregation_reason_preview }}</span>
+					</span>
+					<a href="#" data-testid="ppi-read-reason" @click.prevent="fullReason = !fullReason">Read full reason</a>
+				</div>
+				<p v-if="fullReason" class="kt-muted" data-testid="ppi-full-reason">{{ item.identity?.aggregation_reason }}</p>
+			</div>
+
+			<!-- 3. Estimated cost -->
+			<div class="kt-region">
+				<h2>Estimated cost</h2>
+				<!-- The amount is derived from the included requirements, so it
+				     reads as a fact; what the Planner writes — the basis and its
+				     supporting document — are ordinary fields beneath it. All
+				     three used to share one `.kt-meta-row`, which bottom-aligned
+				     a two-line textarea against a one-line figure, sized every
+				     control by its content and rendered the document reference
+				     in the heading typeface (measured live, 23 Sep 2026). -->
+				<div class="pln-fact">
+					<span class="kt-label">Planned amount (KES)</span>
+					<span class="kt-meta-value" data-testid="ppi-planned-value">{{ item.planned_value_display }}</span>
+				</div>
+				<div class="pln-form-column pln-region-gap">
+					<div v-if="item.mutable" class="kt-field" :class="flagged('estimate_basis')">
+						<label for="ppi-estimate-basis" class="kt-label">Estimate basis</label>
+						<textarea
+							id="ppi-estimate-basis"
+							class="kt-input"
+							rows="2"
+							data-testid="ppi-estimate-basis"
+							:value="draft.estimate_basis"
+							@input="onField('estimate_basis', $event.target.value)"
+						></textarea>
+					</div>
+					<div v-else class="kt-group">
+						<span class="kt-label">Estimate basis</span>
+						<p class="kt-muted" style="margin: 2px 0 0">
+							{{ item.estimate_basis_preview }}
+							<a href="#" data-testid="ppi-read-basis" @click.prevent="fullBasis = !fullBasis">Read full basis</a>
+						</p>
+					</div>
+					<!-- §10.8/§12 — an identifiable market-survey document or working-paper
+					     reference, not an attached file (the spec's own words); the
+					     placeholder carries that distinction instead of a permanent
+					     hint line, since nothing else on this form gets one by default. -->
+					<div v-if="item.mutable" class="kt-field pln-field-320" :class="flagged('estimate_basis_reference')">
+						<label for="ppi-basis-reference" class="kt-label">Supporting document reference</label>
+						<input
+							id="ppi-basis-reference"
+							class="kt-input"
+							data-testid="ppi-basis-reference"
+							placeholder="A market-survey document or working-paper reference — not a file upload"
+							:value="draft.estimate_basis_reference"
+							@input="onField('estimate_basis_reference', $event.target.value)"
+						>
+					</div>
+					<div v-else-if="draft.estimate_basis_reference" class="pln-fact">
+						<span class="kt-label">Supporting document reference</span>
+						<span class="kt-meta-value">{{ draft.estimate_basis_reference }}</span>
+					</div>
+				</div>
+				<p v-if="fullBasis" class="kt-muted" data-testid="ppi-full-basis">{{ classification.estimate_basis }}</p>
+			</div>
+
+			<!-- 4. Procurement approach -->
+			<div class="kt-region">
+				<h2>Procurement approach</h2>
+				<!-- §10.16 C03/C04 — the board states the blocked setting before the
+				     field it blocks, not after the whole grid: a Planner reads why
+				     the method they already chose no longer resolves before meeting
+				     what now looks like an empty control (found live 23 Sep 2026 —
+				     the panel sat after every field in this section, including ones
+				     it has nothing to do with). Never resolver mechanics, and the
+				     setup control only for an actor who actually holds setup access. -->
+				<MissingSettingGroup :panels="missingSettings" />
+				<!-- The artboard's paired 320px controls. These were wrapped in a
+				     `.kt-meta-row` — a bottom-aligned row built for short read-only
+				     facts — which stretched each control to its content and left
+				     the condition inputs and the designation at different
+				     heights. -->
+				<div class="pln-field-grid">
+					<div class="kt-field" :class="flagged('procurement_method')">
+						<label for="ppi-method" class="kt-label">Procurement method</label>
+						<select id="ppi-method" class="kt-input" data-testid="ppi-method" :value="draft.procurement_method" :disabled="!item.mutable" @change="onField('procurement_method', $event.target.value)">
+							<option value="">Select a procurement method</option>
+							<option v-for="method in classification.admissible_methods || []" :key="method" :value="method">{{ method }}</option>
+						</select>
+						<!-- A control that offers nothing says why it offers
+						     nothing. This list is not a catalogue: it is every
+						     method whose rule is in force on the date below, so
+						     an empty one is a fact about that date, not a fault
+						     of the Planner's (found live 23 Sep 2026 rendering
+						     as a blank dropdown with no explanation at all). -->
+						<div v-if="noMethodsHint" class="kt-field-hint" data-testid="ppi-method-none">{{ noMethodsHint }}</div>
+					</div>
+					<!-- Shown only when the Planner must choose one or one is set;
+					     "None" is never displayed to prove the field exists. -->
+					<div v-if="showReservation" class="kt-field" :class="flagged('reservation_category')">
+						<label for="ppi-reservation" class="kt-label">Planned designation</label>
+						<select id="ppi-reservation" class="kt-input" data-testid="ppi-reservation" :value="draft.reservation_category" :disabled="!item.mutable" @change="onField('reservation_category', $event.target.value)">
+							<option value="">Select a designation</option>
+							<option v-for="option in preference.reservation_categories || []" :key="option" :value="option">{{ option }}</option>
+						</select>
+						<!-- None is a legitimate answer, and the Planner gave it
+						     four times before learning at the final refusal that
+						     the sum of those answers failed a plan-level rule
+						     (found live 23 Sep 2026). What it costs is said here,
+						     where it is chosen. The amounts stay on U07: one
+						     obligation, stated once at plan level. -->
+						<div v-if="draft.reservation_category === 'None'" class="kt-field-hint" data-testid="ppi-reservation-none">
+							Not reserved. This purchase will not count towards the plan's reserved-procurement target.
+						</div>
+					</div>
+					<!-- §10.8 — a condition-specific input appears only when the chosen
+					     method actually requires the Planner to supply it. A method
+					     whose conditions are facts about the purchase asks nothing. -->
+					<div
+						v-for="condition in declarableConditions"
+						:key="condition.condition_id"
+						class="kt-field pln-condition"
+						:data-testid="`ppi-condition-${condition.condition_id}`"
+					>
+						<label :for="`ppi-evidence-${condition.condition_id}`" class="kt-label">
+							{{ condition.required_evidence || condition.description }}
+						</label>
+						<input
+							:id="`ppi-evidence-${condition.condition_id}`"
+							class="kt-input"
+							:data-testid="`ppi-evidence-${condition.condition_id}`"
+							:value="conditionEvidence[condition.condition_id]?.evidence_reference || ''"
+							:disabled="!item.mutable"
+							@input="onEvidence(condition.condition_id, 'evidence_reference', $event.target.value)"
+						>
+						<!-- Only where the rule names someone who has to authorise it. -->
+						<template v-if="condition.authorisation_actor">
+							<label :for="`ppi-authorisation-${condition.condition_id}`" class="kt-label">
+								{{ condition.authorisation_actor }} authorisation
+							</label>
+							<input
+								:id="`ppi-authorisation-${condition.condition_id}`"
+								class="kt-input"
+								:data-testid="`ppi-authorisation-${condition.condition_id}`"
+								:value="conditionEvidence[condition.condition_id]?.authorisation_reference || ''"
+								:disabled="!item.mutable"
+								@input="onEvidence(condition.condition_id, 'authorisation_reference', $event.target.value)"
+							>
+						</template>
+						<div class="kt-field-hint" :data-testid="`ppi-condition-result-${condition.condition_id}`">
+							{{ condition.result }}<template v-if="condition.statutory_reference"> · {{ condition.statutory_reference }}</template>
+						</div>
+					</div>
+					<!-- Only for an applicable county entity, and only when it changes
+					     the item decision. -->
+					<div v-if="preference.county_control_available" class="kt-field">
+						<label class="kt-label">County requirement</label>
+						<label class="kt-checkbox">
+							<input type="checkbox" data-testid="ppi-county" :checked="draft.county_resident_reservation" :disabled="!item.mutable" @change="onField('county_resident_reservation', $event.target.checked)">
+							<span class="box"></span>Reserved for county residents
+						</label>
+					</div>
+					<!-- Only when the Planner chooses multiple lots or must resolve a
+					     lotting issue; Single lot and Lot count 1 are omitted. -->
+					<div v-if="showLotting" class="kt-field" :class="flagged('lot_count')">
+						<label for="ppi-lots" class="kt-label">Lots</label>
+						<input id="ppi-lots" class="kt-input" type="number" min="2" data-testid="ppi-lot-count" :value="draft.lot_count" :disabled="!item.mutable" @input="onField('lot_count', $event.target.value)">
+					</div>
+				</div>
 				<button
-					v-if="item.mutable"
+					v-if="!showReservation && item.mutable"
 					type="button"
-					class="kt-btn kt-btn-secondary"
-					data-testid="ppi-dissolve"
-					:disabled="pending"
-					@click="$emit('dissolve')"
+					class="kt-btn kt-btn-ghost"
+					data-testid="ppi-add-reservation"
+					@click="forceReservation = true"
 				>
-					Dissolve Plan Item
+					Add a planned designation
 				</button>
 			</div>
-			<button
-				v-if="item.mutable"
-				type="button"
-				class="kt-btn kt-btn-primary"
-				data-testid="ppi-save"
-				:disabled="pending"
-				@click="save"
-			>
-				Save draft
-			</button>
+
+			<!-- 5. Dates -->
+			<div class="kt-region">
+				<!-- U09-INVALID-SCHEDULE — the blocking problem and its recovery
+				     action sit beside the dates they are about. -->
+				<div v-if="saveBlocked" class="kt-notice is-critical" style="margin-bottom: var(--kt-space-4)">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+						<circle cx="12" cy="12" r="10"></circle><path d="M12 8v5"></path><path d="M12 16h.01"></path>
+					</svg>
+					<div style="flex: 1">
+						<div class="kt-notice-body">{{ boundaryText }}</div>
+						<button
+							type="button"
+							class="kt-btn kt-btn-secondary"
+							style="margin-top: var(--kt-space-3)"
+							data-testid="ppi-review-dates"
+							@click="scrollToDates"
+						>
+							Review dates
+						</button>
+					</div>
+				</div>
+				<h2>Dates</h2>
+				<!-- The board draws these four as one band. Two of them are the
+				     Planner's own entries and two are derived from them, so the
+				     entries are fields and the results are facts — on one grid,
+				     top-aligned, rather than a flex row that bottom-aligned a
+				     hint-bearing input against a bare figure. -->
+				<div class="pln-field-grid pln-dates-grid">
+					<div class="kt-field" :class="flagged('baseline_invitation_date')">
+						<label for="ppi-invitation" class="kt-label">Target invitation date</label>
+						<input id="ppi-invitation" class="kt-input" type="date" data-testid="ppi-invitation" :value="draft.baseline_invitation_date" :disabled="!item.mutable" @input="onField('baseline_invitation_date', $event.target.value)">
+					</div>
+					<!-- The board's own label text is the landmark the fidelity gate
+					     checks; the unit still needs saying for a bare number input,
+					     so it stays a hint (unlike Estimate basis's removed one,
+					     this one disambiguates the value itself, not instructs). -->
+					<div class="kt-field" :class="flagged('estimated_delivery_period_days')">
+						<label for="ppi-delivery" class="kt-label">Expected delivery period</label>
+						<input id="ppi-delivery" class="kt-input" type="number" min="0" data-testid="ppi-delivery-days" :value="draft.estimated_delivery_period_days" :disabled="!item.mutable" @input="onField('estimated_delivery_period_days', $event.target.value)">
+						<div class="kt-field-hint">Calendar days</div>
+					</div>
+					<div class="pln-fact">
+						<span class="kt-label">Expected completion</span>
+						<span class="kt-meta-value" data-testid="ppi-completion">{{ baseline.estimated_completion_display || "—" }}</span>
+					</div>
+					<div class="pln-fact">
+						<span class="kt-label">Departmental deadline</span>
+						<span class="kt-meta-value" data-testid="ppi-deadline">{{ deadlineDisplay }}</span>
+					</div>
+				</div>
+				<!-- Said once. When the deadline cannot be met the critical notice
+				     above already says so and offers the recovery action, so
+				     repeating the same sentence here left the page stating one
+				     problem twice (U09-INVALID-SCHEDULE draws the notice alone). -->
+				<p
+					v-if="baseline.estimated_completion_display && !saveBlocked"
+					class="pln-boundary"
+					data-testid="ppi-boundary"
+				>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M20 6 9 17l-5-5"></path>
+					</svg>
+					{{ boundaryText }}
+				</p>
+				<div class="pln-region-gap">
+					<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppi-view-dates" @click.prevent="viewCalculatedDates">View calculated dates</a>
+				</div>
+			</div>
+
+			<!-- 6. Supporting details — one level, closed by default. -->
+			<details class="kt-disclosure" :open="supporting" data-testid="ppi-supporting">
+				<summary class="kt-disclosure-head">
+					<div class="kt-disclosure-title-row">
+						<span class="kt-disclosure-title">Supporting details</span>
+						<!-- The board's own chip: what is inside, so the disclosure can
+						     stay closed without hiding what it holds. -->
+						<span class="kt-tag kt-tag-neutral">Strategy, classification, rule evidence, milestone calculations</span>
+					</div>
+					<svg class="kt-disclosure-chevron" :class="{ 'is-open': supporting }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+						<path d="M6 9l6 6 6-6"></path>
+					</svg>
+				</summary>
+				<div class="kt-disclosure-body pln-supporting">
+					<div class="kt-field pln-field-480" :class="flagged('strategic_objective')">
+						<label for="ppi-objective" class="kt-label">Strategy</label>
+						<select id="ppi-objective" class="kt-input" data-testid="ppi-objective" :value="draft.strategic_objective" :disabled="!item.mutable" @change="onField('strategic_objective', $event.target.value)">
+							<option value="">Select a strategic objective</option>
+							<option v-for="objective in classification.strategic_objectives || []" :key="objective.id" :value="objective.id">{{ objective.title }}</option>
+						</select>
+						<div v-if="classification.objective_path" class="kt-field-hint" data-testid="ppi-objective-path">{{ classification.objective_path }}</div>
+					</div>
+
+					<div class="pln-fact">
+						<span class="kt-label">Classification provenance</span>
+						<span class="kt-meta-value" data-testid="ppi-classification-provenance">
+							{{ item.identity?.requirement_type }} / {{ item.identity?.procurement_category }}
+						</span>
+					</div>
+
+					<!-- Only where a rule actually resolved. Clearing the method
+					     left this heading standing over nothing (live, 23 Sep
+					     2026); §10.16 replaces an unresolved rule with the
+					     missing-setting panel, not with an empty section. -->
+					<div v-if="methodProfile.profile || methodProfile.verification_status" class="kt-meta-row" data-testid="ppi-rule-evidence">
+						<div v-if="methodProfile.profile">
+							<span class="kt-label">Applicable rule</span>
+							<span class="kt-meta-value">{{ methodProfile.profile }}</span>
+						</div>
+						<div v-if="methodProfile.verification_status">
+							<span class="kt-label">Source check</span>
+							<span class="kt-meta-value">{{ methodProfile.verification_status }}</span>
+						</div>
+					</div>
+
+					<div>
+						<h4 class="kt-label">Calculated dates</h4>
+						<!-- A table of dashes states nothing. Until the Planner sets
+						     the target invitation date there is no schedule to show. -->
+						<table v-if="hasCalculatedDates" class="kt-table pln-region-gap" data-testid="ppi-milestones">
+							<thead><tr><th>Milestone</th><th>Baseline date</th></tr></thead>
+							<tbody>
+								<tr v-for="row in baseline.rows || []" :key="row.milestone">
+									<td>{{ row.label }}</td>
+									<td>{{ row.date_display }}</td>
+								</tr>
+							</tbody>
+						</table>
+						<p v-else class="kt-muted" data-testid="ppi-milestones-empty">
+							Set the target invitation date to calculate the milestone dates.
+						</p>
+					</div>
+				</div>
+			</details>
+
+			<p v-if="errorSummary" class="pln-error-summary" data-testid="ppi-error">{{ errorSummary }}</p>
+
+			<div class="pln-footer" data-testid="ppi-footer">
+				<button
+					v-if="item.mutable && !item.scope_lock?.locked"
+					type="button"
+					class="kt-btn kt-btn-primary kt-danger"
+					data-testid="ppi-remove"
+					:disabled="pending"
+					@click="$emit('remove')"
+				>
+					Remove purchase
+				</button>
+				<span v-else></span>
+				<div class="pln-footer-right">
+					<button type="button" class="kt-btn kt-btn-secondary" data-testid="ppi-back" @click="$emit('back')">
+						Back to annual plan
+					</button>
+					<button
+						v-if="item.mutable"
+						type="button"
+						class="kt-btn kt-btn-primary"
+						data-testid="ppi-save"
+						:disabled="pending || saveBlocked"
+						@click="$emit('save', draft)"
+					>
+						Save draft
+					</button>
+				</div>
+			</div>
 		</div>
 	</div>
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from "vue";
+import { computed, nextTick, reactive, ref, watch } from "vue";
+import { formatDate } from "../data/format.js";
+import MissingSettingGroup from "./MissingSettingGroup.vue";
 
 const props = defineProps({
 	item: { type: Object, default: () => ({}) },
@@ -281,222 +464,206 @@ const props = defineProps({
 	errorSummary: String,
 });
 
-const emit = defineEmits(["save", "dissolve", "back"]);
+const emit = defineEmits(["save", "remove", "back", "view-classification"]);
 
-const PERIODS = [
-	{ key: "tendering_period_days", label: "Tendering period", floor: "tendering_period_days" },
-	{ key: "evaluation_period_days", label: "Evaluation period", ceiling: "evaluation_period_days" },
-	{ key: "award_approval_buffer_days", label: "Award approval buffer", assumption: true },
-	{ key: "notification_buffer_days", label: "Notification buffer", assumption: true },
-	{ key: "standstill_period_days", label: "Standstill period", floor: "standstill_period_days" },
+const EDITABLE = [
+	"title",
+	"description",
+	"estimate_basis",
+	"estimate_basis_reference",
+	"procurement_method",
+	"reservation_category",
+	"county_resident_reservation",
+	"lot_count",
+	"baseline_invitation_date",
+	"estimated_delivery_period_days",
+	"strategic_objective",
 ];
 
-const MILESTONES = [
-	["invitation", "Invitation or advertisement"],
-	["bid_opening", "Bid opening"],
-	["evaluation_completion", "Evaluation completion"],
-	["award_approval", "Tender award approval"],
-	["award_notification", "Notification of award"],
-	["contract_signing", "Contract signing"],
-	["delivery_completion", "Delivery or implementation completion"],
-];
-
-const MIN_IMPLEMENTATION_ALLOWANCE_DAYS = 7;
-
-const source = computed(() => (props.item.sources || [])[0] || null);
-const identity = computed(() => props.item.identity || {});
-const classification = computed(() => props.item.classification || {});
-const preference = computed(() => props.item.preference || {});
-const baseline = computed(() => props.item.baseline || {});
-const periodsOpen = ref(false);
-
-const priceIndexLine = computed(() => (props.item.market_price_index || {}).helper || "");
-
-const objectivePath = computed(() => {
-	const selected = (classification.value.strategic_objectives || []).find((row) => row.id === form.strategic_objective);
-	return selected?.path_display || classification.value.objective_path || "";
-});
-
-// §12.8 — the eleven methods narrowed to the resolved band; the current value
-// stays offered even when the band changed under it, so the refusal is visible.
-const methodOptions = computed(() => {
-	const admissible = classification.value.admissible_methods || [];
-	const current = classification.value.procurement_method;
-	return current && !admissible.includes(current) ? [current, ...admissible] : admissible;
-});
-
-const reservationOptions = computed(() => {
-	const categories = preference.value.reservation_categories || [];
-	return categories.includes("None") ? categories : ["None", ...categories];
-});
-
-const reasonRequired = computed(
-	() => form.reservation_category && form.reservation_category !== "None" && preference.value.highest_advantage && form.reservation_category !== preference.value.highest_advantage
-);
-
-const form = reactive({
-	title: "",
-	description: "",
-	strategic_objective: "",
-	aggregation_reason: "",
-	procurement_method: "",
-	reservation_category: "None",
-	reservation_category_reason: "",
-	county_resident_reservation: false,
-	plan_horizon: "Single year",
-	multi_year_justification: "",
-	aggregation_indicator: "Not aggregated",
-	lotting_indicator: "Single lot",
-	lot_count: null,
-	baseline_invitation_date: "",
-	tendering_period_days: null,
-	evaluation_period_days: null,
-	award_approval_buffer_days: null,
-	notification_buffer_days: null,
-	standstill_period_days: null,
-});
-
-function hydrate() {
-	const item = props.item || {};
-	const ident = item.identity || {};
-	const cls = item.classification || {};
-	const pref = item.preference || {};
-	const base = item.baseline || {};
-	const periods = base.periods || {};
-	const defaults = base.defaults || {};
-	Object.assign(form, {
-		title: ident.title || "",
-		description: ident.description || "",
-		strategic_objective: cls.strategic_objective || "",
-		aggregation_reason: ident.aggregation_reason || "",
-		procurement_method: cls.procurement_method || cls.proposed_method || "",
-		reservation_category: pref.reservation_category || "None",
-		reservation_category_reason: pref.reservation_category_reason || "",
-		county_resident_reservation: !!pref.county_resident_reservation,
-		plan_horizon: pref.plan_horizon || "Single year",
-		multi_year_justification: pref.multi_year_justification || "",
-		aggregation_indicator: pref.aggregation_indicator || (item.combined ? "Aggregated into this package" : "Not aggregated"),
-		lotting_indicator: pref.lotting_indicator || "Single lot",
-		lot_count: pref.lot_count || null,
-		baseline_invitation_date: base.target_invitation_date || "",
-	});
-	for (const period of PERIODS) {
-		form[period.key] = periods[period.key] || defaults[period.key] || 0;
-	}
-	periodsOpen.value = false;
+function initial() {
+	const identity = props.item.identity || {};
+	const classification = props.item.classification || {};
+	const preference = props.item.preference || {};
+	const baseline = props.item.baseline || {};
+	return {
+		title: identity.title || "",
+		description: identity.description || "",
+		estimate_basis: classification.estimate_basis || "",
+		estimate_basis_reference: classification.estimate_basis_reference || "",
+		procurement_method: classification.procurement_method || "",
+		reservation_category: preference.reservation_category || "",
+		county_resident_reservation: Boolean(preference.county_resident_reservation),
+		lot_count: preference.lot_count || 0,
+		baseline_invitation_date: baseline.target_invitation_date || "",
+		estimated_delivery_period_days: baseline.estimated_delivery_period_days ?? "",
+		strategic_objective: classification.strategic_objective || "",
+		// §7.2 — the rows the save command expects: one per declarable
+		// condition, carrying what the Planner supplied for it.
+		method_condition_evidence: ((classification.method_profile || {}).conditions || [])
+			.filter((c) => c.kind !== "Known fact")
+			.map((c) => ({
+				condition_id: c.condition_id,
+				evidence_reference: c.evidence_reference || "",
+				authorisation_reference: c.authorisation_reference || "",
+			})),
+	};
 }
 
+const draft = reactive(initial());
+// What the server actually flagged this field against — kept only to tell
+// whether the Planner has acted on a field since the page loaded (found
+// live 23 Sep 2026: a filled-in field still showed the critical border,
+// because the flag is the server's, current only as of the last load, and
+// nothing cleared it before the next save re-derives it).
+const loaded = reactive(initial());
+const fullReason = ref(false);
+const fullBasis = ref(false);
+// Strategy is the one editable field Supporting details holds; when it is
+// what still blocks this purchase, opening the disclosure by default means
+// the Planner meets the actual field their "Choose a strategic objective"
+// current-work note sent them here for, not a collapsed section they then
+// have to go hunting in (found live 23 Sep 2026).
+const supporting = ref((props.item.blockers || []).some((b) => b.field === "strategic_objective"));
+const forceReservation = ref(false);
+
+// A quiet in-place refresh carries nothing new; re-hydrating would discard
+// what the Planner has typed since.
 watch(
 	() => props.item,
 	(item, previous) => {
-		// An in-place refresh that returns the same item at the same record
-		// version carries nothing new — re-hydrating would discard what the
-		// user has typed since.
-		if (
-			previous &&
-			(previous.plan_item_id ?? null) === (item?.plan_item_id ?? null) &&
-			(previous.record_version ?? null) === (item?.record_version ?? null)
-		) {
-			return;
-		}
-		hydrate();
+		if (previous && (previous.record_version ?? null) === (item?.record_version ?? null)) return;
+		Object.assign(draft, initial());
+		Object.assign(loaded, initial());
+		forceReservation.value = false;
 	},
-	{ immediate: true }
 );
 
-// --- live baseline computation (PLN-AC-115: recalculates before any save) ---
-
-function addDays(iso, days) {
-	if (!iso) return "";
-	const [y, m, d] = iso.split("-").map(Number);
-	const date = new Date(Date.UTC(y, m - 1, d + (Number(days) || 0)));
-	return date.toISOString().slice(0, 10);
-}
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-function display(iso) {
-	if (!iso) return "—";
-	const [y, m, d] = iso.split("-").map(Number);
-	return `${d} ${MONTHS[m - 1]} ${y}`;
-}
-
-const computedDates = computed(() => {
-	const start = form.baseline_invitation_date;
-	const bid = addDays(start, form.tendering_period_days);
-	const evaluation = addDays(bid, form.evaluation_period_days);
-	const award = addDays(evaluation, form.award_approval_buffer_days);
-	const notification = addDays(award, form.notification_buffer_days);
-	const signing = addDays(notification, form.standstill_period_days);
-	const deliveryRow = (baseline.value.rows || []).find((r) => r.milestone === "delivery_completion");
-	return {
-		invitation: start,
-		bid_opening: bid,
-		evaluation_completion: evaluation,
-		award_approval: award,
-		award_notification: notification,
-		contract_signing: signing,
-		delivery_completion: deliveryRow?.date || "",
-	};
+const classification = computed(() => props.item.classification || {});
+const noMethodsHint = computed(() => {
+	if ((classification.value.admissible_methods || []).length) return "";
+	const on = formatDate(classification.value.applicability_date);
+	if (!on) return "No procurement method is available for this purchase yet.";
+	return classification.value.applicability_basis === "invitation"
+		? `No procurement method rule is in force on ${on}, this purchase's planned invitation date. Change the date, or ask your KenTender administrator to add a rule covering it.`
+		: `No procurement method rule is in force on ${on}, the start of this purchase's financial year. Set a planned invitation date, or ask your KenTender administrator to add a rule covering it.`;
 });
+const preference = computed(() => props.item.preference || {});
+const baseline = computed(() => props.item.baseline || {});
+const methodProfile = computed(() => classification.value.method_profile || {});
+const sources = computed(() => props.item.sources || []);
+// U09's own row: the need reference and revision, then the budget line —
+// found live 23 Sep 2026 missing entirely, though the read model already
+// carries both (`need_reference_line`, `budget_line`).
+function sourceRefLine(row) {
+	return [row.need_reference_line, row.budget_line_display].filter(Boolean).join(" · ");
+}
+const notices = computed(() => props.item.notices || []);
+const missingSettings = computed(() => props.item.missing_settings || []);
 
-const computedRows = computed(() =>
-	MILESTONES.map(([milestone, label]) => ({
-		milestone,
-		label,
-		display:
-			milestone === "delivery_completion"
-				? `${display(computedDates.value.delivery_completion)} · from the authorised Requisition`
-				: display(computedDates.value[milestone]),
-	}))
+// A condition the rule states as a fact about the purchase (a value band) is
+// evaluated, not declared; only the rest are asked of the Planner.
+const declarableConditions = computed(() =>
+	((classification.value.method_profile || {}).conditions || []).filter((c) => c.kind !== "Known fact"),
 );
 
-const deliveryBoundaryOk = computed(() => {
-	const { contract_signing, delivery_completion } = computedDates.value;
-	if (!contract_signing || !delivery_completion) return true; // nothing computed yet
-	const gap = (Date.parse(delivery_completion) - Date.parse(contract_signing)) / 86_400_000;
-	return gap >= MIN_IMPLEMENTATION_ALLOWANCE_DAYS;
+const conditionEvidence = computed(() =>
+	Object.fromEntries((draft.method_condition_evidence || []).map((row) => [row.condition_id, row])),
+);
+
+function onEvidence(conditionId, field, value) {
+	if (!props.item.mutable) return;
+	const rows = draft.method_condition_evidence || [];
+	const existing = rows.find((row) => row.condition_id === conditionId);
+	if (existing) existing[field] = value;
+	else rows.push({ condition_id: conditionId, evidence_reference: "", authorisation_reference: "", [field]: value });
+	draft.method_condition_evidence = [...rows];
+}
+const versionNumber = computed(() => {
+	const match = /Version (\d+)/.exec(props.item.header?.reference_line || "");
+	return match ? match[1] : "";
+});
+const statusLabel = computed(() => (props.item.is_active ? "Active" : props.item.header?.item_state_badge || "Draft"));
+
+// PLN22-AC-006 — a designation is shown when the Planner must choose one or
+// one has been chosen. "None" is a real choice but not a thing to display.
+const showReservation = computed(
+	() => forceReservation.value || Boolean(preference.value.reservation_category) || blockerCodes.value.has("PLN_RESERVATION_REQUIRED"),
+);
+// Single lot and Lot count 1 are omitted; lots appear only when there are
+// several or a lotting issue to resolve.
+const showLotting = computed(
+	() => Number(draft.lot_count) > 1 || preference.value.lotting_indicator === "Packaged into lots",
+);
+
+const blockerCodes = computed(() => new Set((props.item.blockers || []).map((b) => b.code)));
+// `item_blockers` reports one blocker per incomplete field, because the fields
+// are what the Planner has to fix; several of them legitimately share one
+// code, and so one message. Saying the same sentence once per field stacked
+// identical banners on top of each other (two live, 23 Sep 2026) and gave
+// `v-for` a duplicate key. One banner per distinct sentence — the fields it
+// names are marked in place instead, which is what "the highlighted purchase
+// details" means.
+// Schedule problems are said once, beside the dates.
+const visibleBlockers = computed(() => {
+	const seen = new Set();
+	return (props.item.blockers || [])
+		.filter(
+			(b) => !["PLN_SCHEDULE_INVALID", "PLN_DELIVERY_BOUNDARY_INSUFFICIENT", "PLN_DELIVERY_PERIOD_REQUIRED", "PLN_REFERENCE_UNAVAILABLE", "PLN_RESERVATION_REQUIRED"].includes(b.code),
+		)
+		.filter((b) => {
+			const message = b.message || b.code;
+			if (seen.has(message)) return false;
+			seen.add(message);
+			return true;
+		});
 });
 
-const periodsSummary = computed(() => {
-	const defaults = baseline.value.defaults || {};
-	const usingDefaults = PERIODS.every((p) => Number(form[p.key]) === Number(defaults[p.key]));
-	return usingDefaults ? baseline.value.defaults_line || "Using governed defaults" : "Adjusted from the governed defaults";
+// The fields those blockers name, so the sentence is literally true.
+const flaggedFields = computed(() => new Set((props.item.blockers || []).map((b) => b.field).filter(Boolean)));
+// The server's word on this field is only as current as the last load; once
+// the Planner has changed it, the highlight would be claiming something
+// about a value the server has never actually seen. Whether the new value
+// clears the blocker for real is the next save's question, not this one's.
+function flagged(field) {
+	if (!flaggedFields.value.has(field)) return "";
+	return String(draft[field]) === String(loaded[field]) ? "pln-field-flagged" : "";
+}
+
+// Every milestone row before the source boundary reads "—" until the Planner
+// sets a target invitation date; the boundary row alone carries the
+// department's own date, so it is not evidence of a calculated schedule.
+const hasCalculatedDates = computed(() =>
+	(baseline.value.rows || []).some((row) => !row.source_boundary && row.date_display && row.date_display !== "—"),
+);
+
+const deadlineDisplay = computed(() => {
+	const row = (baseline.value.rows || []).find((r) => r.source_boundary);
+	return row ? row.date_display : "—";
 });
 
-function periodNote(period) {
-	const days = Number(form[period.key]) || 0;
-	const floors = baseline.value.floors || {};
-	const ceilings = baseline.value.ceilings || {};
-	if (period.floor && floors[period.floor] != null) return `${days} days · minimum ${floors[period.floor]}`;
-	if (period.ceiling && ceilings[period.ceiling] != null) return `${days} days · maximum ${ceilings[period.ceiling]}`;
-	return `${days} days · governed default for this category and method, not a statutory figure`;
+const saveBlocked = computed(() => blockerCodes.value.has("PLN_DELIVERY_BOUNDARY_INSUFFICIENT"));
+
+const boundaryText = computed(() =>
+	baseline.value.delivery_boundary_ok
+		? "Expected to meet the departmental deadline"
+		: "Expected completion is after the department's required date.",
+);
+
+function onField(field, value) {
+	if (!EDITABLE.includes(field)) return;
+	draft[field] = value;
 }
 
-// PLN-AC-114 — a blocker names its input; the control carries aria-invalid
-const invalidFields = computed(() => new Set((props.item.blockers || []).map((b) => b.field).filter(Boolean)));
-function invalid(field) {
-	return invalidFields.value.has(field) ? "true" : undefined;
+function scrollToDates() {
+	document.querySelector('[data-testid="ppi-invitation"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
-function save() {
-	const values = {
-		title: form.title,
-		description: form.description,
-		strategic_objective: form.strategic_objective,
-		procurement_method: form.procurement_method,
-		reservation_category: form.reservation_category,
-		plan_horizon: form.plan_horizon,
-		aggregation_indicator: form.aggregation_indicator,
-		lotting_indicator: form.lotting_indicator,
-		baseline_invitation_date: form.baseline_invitation_date,
-	};
-	for (const period of PERIODS) values[period.key] = Number(form[period.key]);
-	if (props.item.combined) values.aggregation_reason = form.aggregation_reason;
-	if (reasonRequired.value) values.reservation_category_reason = form.reservation_category_reason;
-	if (preference.value.county_control_available) values.county_resident_reservation = form.county_resident_reservation ? 1 : 0;
-	if (form.plan_horizon === "Multi-year") values.multi_year_justification = form.multi_year_justification;
-	if (form.lotting_indicator === "Packaged into lots") values.lot_count = Number(form.lot_count) || 0;
-	emit("save", values);
+// Opening Supporting details without moving to it reads as a dead link when
+// the section is already off-screen (found live 23 Sep 2026).
+function viewCalculatedDates() {
+	supporting.value = true;
+	nextTick(() => {
+		document.querySelector('[data-testid="ppi-milestones"], [data-testid="ppi-milestones-empty"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
+	});
 }
 </script>

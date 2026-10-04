@@ -179,12 +179,38 @@ def list_need_create_targets(user: str | None = None) -> dict[str, Any]:
 	principal = actor(user)
 	organisation_units = creation_contexts(principal)
 	state = get_needs_submission_state()
+	year = _fiscal_year_row(state["financial_year"]) if state["open"] else None
 	return {
 		"organisation_units": organisation_units,
 		"financial_year": state["financial_year"] if state["open"] else "",
 		"financial_year_label": state["label"] if state["open"] else "",
+		# The editor limits Required by to these dates (UAT issue #25); the
+		# server enforces the same window on every save.
+		"financial_year_start": year["start_date"] if year else "",
+		"financial_year_end": year["end_date"] if year else "",
 		"open": bool(state["open"] and organisation_units),
 	}
+
+
+def list_need_units(user: str | None = None) -> list[dict[str, str]]:
+	"""§8.1 `list_need_units` — the enabled units the need editor offers.
+
+	Read on the server so the editor never depends on the caller's own read
+	permission on ERPNext's `UOM` (UAT issue #24: the browser's permission-checked
+	read failed with "Insufficient Permission for UOM" for a signed-in author
+	whose Frappe role carried no UOM grant). Unit names are non-sensitive
+	reference data, so any signed-in caller may read them; the unit chosen is
+	still validated server-side as enabled on every save (`UOM.enabled`).
+	"""
+	actor(user)
+	rows = frappe.get_all(
+		"UOM",
+		filters={"enabled": 1},
+		fields=["name", "uom_name"],
+		order_by="uom_name asc",
+		limit_page_length=200,
+	)
+	return [{"name": row.name, "unit_label": row.uom_name or row.name} for row in rows]
 
 
 def resolve_creation_context(*, user: str | None = None) -> dict:

@@ -1,7 +1,9 @@
 # STD-TPL-001 — tracker
 
+> **25 September 2026:** release 1.1 construction under STD-TPL-001 v0.10, and the runtime under STD-TPL-IMP-001 v1.0, are tracked in `STD-TPL-IMP-001_v1_0_IMPLEMENTATION_TRACKER.md`. Gates TPL-G07 and TPL-G08 below are superseded by STI-G01 and STI-G05 there. v0.10 folds the response definition into release 1.1, so there is no separate "1.2". Rows below are kept unchanged as history.
+
 **Authority:** STD-TPL-001 v0.3 - Proposed for curation review (supersedes v0.2; adds the two-output Invitation/issued-Tender boundary)
-**Status:** IT-EQUIPMENT-OPEN-V1 Version 1.0 LOCKED 2026-08-28; **Version 1.1 delta in progress from 2026-09-08 under TPR-CHG-001 v0.6 Phase 1 (gate TPL-G07 below, per STD-TPL-001 v0.5)**. Version 1.0 history: All six passes and Gates A-F complete; decision APPROVE FOR IMPLEMENTATION PACK (`05_review/review_record.md`). No further curation edits to the locked files — a future change is a new version with its own gate sequence. Implementation-pack authorization is a separate, not-yet-started step
+**Status:** IT-EQUIPMENT-OPEN-V1 Version 1.0 LOCKED 2026-08-28; **Version 1.1 delta in progress from 2026-09-08 under TPR-CHG-001 v0.6 Phase 1 (gate TPL-G07 below, per STD-TPL-001 v0.5)**; **Version 1.2 delta proposed 2026-09-21 under BDS-CHG-001 v0.4 planning, blocked on the document owner at gate TPL-G08 (a proposal exists, no spec authorization yet)**. Version 1.0 history: All six passes and Gates A-F complete; decision APPROVE FOR IMPLEMENTATION PACK (`05_review/review_record.md`). No further curation edits to the locked files — a future change is a new version with its own gate sequence. Implementation-pack authorization is a separate, not-yet-started step
 **Started:** 2026-08-28
 
 ## Tracker rules
@@ -165,3 +167,21 @@
 | TPL-707 | `package_index.md` (no technical-specification file); `kebs_*` fixture files removed — Version 1.0 remains in git history (commit 74793a0d) and in the v1.0 review record | Done | 2026-09-08. `package_index.md` rewritten for Version 1.1 (notice + issued Tender only, Section V structured-content confirmation, no specification file); `git rm` of the six `kebs_*` fixture files (history: commit 74793a0d and the Version 1.0 manifest in `review_record.md`) |
 | TPL-708 | `05_review/open_issues.md` v1.1 items closed; `review_record.md` "Version 1.1" section with new sha256 manifest, source digest unchanged (`95726a88…ae1ee`) | Done | 2026-09-08. `open_issues.md` "Version 1.1 delta" section items 53–63 with the post-delta check list; `review_record.md` "Version 1.1 — delta review record" (what changed, Gate TPL-G07 confirmation table, boundary confirmation, decision PENDING) and the 14-file candidate sha256 manifest, source digest unchanged `95726a88…ae1ee` |
 | TPL-709 | Owner gate TPL-G07: APPROVE FOR IMPLEMENTATION PACK v1.1 / CORRECT AND RE-REVIEW / REJECT | Planned | |
+
+## Version 1.2 delta (proposed) — bid-response-definition register, opened 2026-09-21 under BDS-CHG-001 planning
+
+**Authority for this block: none yet.** This is a proposed delta, independent of and unblocked by `TPL-G07` above (a different, already-complete piece of work). It originates from BDS-CHG-001 v0.4's Phase 3 needing a machine-readable response/evaluation/contract-mapping register that no approved STD-TPL-001 version defines — confirmed by reading the full approved v1.1 bundle and STD-TPL-001 v0.6 §9-10 directly, not assumed. See the plan's new §8 for the full rationale. **No curation work under this block may begin, and no register file may be created, until the document owner authors or approves a spec revision authorizing it** — the same rule that gated the Version 1.1 delta below behind v0.5's approval.
+
+### Gate
+
+| Gate | Exit condition | Status | Evidence / gap |
+|---|---|---|---|
+| TPL-G08 | Document owner reviews the proposal and either (a) authors/approves a STD-TPL-001 spec revision (v0.7+) authorizing a new bid-response-definition register, its response-type vocabulary, and the three flagged decisions, or (b) declines/defers it | **Blocked — owner** | Proposal ready for review: `STD-TPL-001_Bid_Response_Definition_Proposal_IT-EQUIPMENT-OPEN-V1.md`. No spec text drafted by Claude, per the standing rule that STD-TPL-001's own spec is document-owner-authored. |
+
+### Work register — Version 1.2 delta (proposed)
+
+| ID | Item | Status | Evidence / gap |
+|---|---|---|---|
+| TPL-801 | Draft bid-response-definition content directly from the approved v1.1 bundle's own source (`insertion_points.csv`, `forms_register.csv`, `fixtures/moh_input.json`, rendered `complete_tender.html`) as a proposal for the document owner | Done | 2026-09-21. `STD-TPL-001_Bid_Response_Definition_Proposal_IT-EQUIPMENT-OPEN-V1.md` — 9 declaration units, 11 technical response rows, warranty/comparable-experience/evidence content, tender security, simplified price schedule, each with evaluation and contract mapping; three flagged decisions (Price simplification, a real `reservation.category` fixture inconsistency between this bundle and BDS-CHG-001's own canonical fixture for the same tender `TND-MOH-2027-033`, dropping paper-only witness fields). |
+| TPL-802 | Document owner reviews the proposal; authors or approves a spec revision (v0.7+) if adopting it | Planned — owner | — |
+| TPL-803 | (after TPL-802) New curation pass builds the actual register file(s) against the approved spec text, with its own review gate, following the same discipline as Passes 2-3 above | Planned | Blocked on TPL-802 |

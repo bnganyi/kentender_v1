@@ -1,0 +1,83 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "PRC-CHG-001 v0.9 §4 Member snapshot: owner-appointed identity, designation, capacity and appointment reference, per roster segment.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "member_user",
+  "full_name",
+  "designation",
+  "committee_capacity",
+  "appointment_reference",
+  "roster_segment",
+  "active"
+ ],
+ "fields": [
+  {
+   "fieldname": "member_user",
+   "fieldtype": "Link",
+   "label": "Member user",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "label": "Full name",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Data",
+   "label": "Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "committee_capacity",
+   "fieldtype": "Data",
+   "label": "Committee capacity",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "appointment_reference",
+   "fieldtype": "Data",
+   "label": "Appointment reference",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "roster_segment",
+   "fieldtype": "Int",
+   "label": "Roster segment",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-29 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Proceedings",
+ "name": "Proceeding Member",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "autoname": "hash"
+}

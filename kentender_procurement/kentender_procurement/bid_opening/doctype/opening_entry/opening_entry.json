@@ -1,0 +1,219 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "BOP-CHG-001 v0.10 §4 Opening entry: number, receipt, source-derived facts read aloud, page count and readout actor/time. Never edited.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "entry_id",
+  "opening_case",
+  "entry_number",
+  "envelope_id",
+  "receipt_reference",
+  "submission_version",
+  "package_digest",
+  "render_digest",
+  "page_count",
+  "price_page",
+  "change_pages",
+  "designated_pages",
+  "bidder_name",
+  "submitted_total",
+  "currency",
+  "permitted_changes",
+  "security_given",
+  "revealed_at",
+  "revealed_by",
+  "readout_speaker",
+  "readout_confirmed_at",
+  "readout_confirmed_by",
+  "reported_speech_at",
+  "status",
+  "proceeding_event"
+ ],
+ "fields": [
+  {
+   "fieldname": "entry_id",
+   "fieldtype": "Data",
+   "label": "Entry ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "opening_case",
+   "fieldtype": "Link",
+   "label": "Opening case",
+   "read_only": 1,
+   "options": "Bid Opening Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "entry_number",
+   "fieldtype": "Int",
+   "label": "Entry number",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "envelope_id",
+   "fieldtype": "Data",
+   "label": "Envelope ID",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "receipt_reference",
+   "fieldtype": "Data",
+   "label": "Receipt reference",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "submission_version",
+   "fieldtype": "Data",
+   "label": "Submission version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "package_digest",
+   "fieldtype": "Data",
+   "label": "Package digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "render_digest",
+   "fieldtype": "Data",
+   "label": "Render digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "page_count",
+   "fieldtype": "Int",
+   "label": "Page count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "price_page",
+   "fieldtype": "Int",
+   "label": "Price page",
+   "read_only": 1
+  },
+  {
+   "fieldname": "change_pages",
+   "fieldtype": "Data",
+   "label": "Change pages",
+   "read_only": 1
+  },
+  {
+   "fieldname": "designated_pages",
+   "fieldtype": "Data",
+   "label": "Designated pages",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bidder_name",
+   "fieldtype": "Data",
+   "label": "Bidder name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_total",
+   "fieldtype": "Currency",
+   "label": "Submitted total",
+   "read_only": 1,
+   "options": "currency"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "label": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "permitted_changes",
+   "fieldtype": "Small Text",
+   "label": "Permitted changes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "security_given",
+   "fieldtype": "Small Text",
+   "label": "Security given",
+   "read_only": 1
+  },
+  {
+   "fieldname": "revealed_at",
+   "fieldtype": "Datetime",
+   "label": "Revealed at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "revealed_by",
+   "fieldtype": "Link",
+   "label": "Revealed by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "readout_speaker",
+   "fieldtype": "Link",
+   "label": "Readout speaker",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "readout_confirmed_at",
+   "fieldtype": "Datetime",
+   "label": "Readout confirmed at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "readout_confirmed_by",
+   "fieldtype": "Link",
+   "label": "Readout confirmed by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "reported_speech_at",
+   "fieldtype": "Datetime",
+   "label": "Reported speech at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Opened\nRead out",
+   "reqd": 1
+  },
+  {
+   "fieldname": "proceeding_event",
+   "fieldtype": "Data",
+   "label": "Proceeding event",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Opening",
+ "name": "Opening Entry",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:entry_id"
+}

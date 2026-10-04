@@ -1,0 +1,172 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "PRC-CHG-001 v0.9 §4 Minutes version: frozen rendered content and exact digest; regeneration makes a new version.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "minutes_version_id",
+  "proceeding",
+  "version_number",
+  "record_kind",
+  "owner_reference",
+  "content",
+  "content_digest",
+  "page_count",
+  "register_reference",
+  "register_digest",
+  "event_ids_json",
+  "authored_by",
+  "frozen_at",
+  "frozen_by",
+  "state",
+  "supersedes_version",
+  "supersede_reason",
+  "targets"
+ ],
+ "fields": [
+  {
+   "fieldname": "minutes_version_id",
+   "fieldtype": "Data",
+   "label": "Minutes version ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "proceeding",
+   "fieldtype": "Link",
+   "label": "Proceeding",
+   "read_only": 1,
+   "options": "Proceeding",
+   "reqd": 1
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Version number",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "record_kind",
+   "fieldtype": "Select",
+   "label": "Record kind",
+   "read_only": 1,
+   "reqd": 1,
+   "default": "Opening minutes",
+   "options": "Opening minutes\nEvaluation report\nVerification report"
+  },
+  {
+   "fieldname": "owner_reference",
+   "fieldtype": "Data",
+   "label": "Owner reference",
+   "read_only": 1,
+   "description": "The owner's own version identity (for example an Evaluation report version)."
+  },
+  {
+   "fieldname": "content",
+   "fieldtype": "Long Text",
+   "label": "Content",
+   "read_only": 1,
+   "reqd": 1,
+   "ignore_xss_filter": 1,
+   "description": "Frozen exactly as given: the digest is over these bytes, so the HTML sanitiser must not rewrite it. The owner builds it from escaped values."
+  },
+  {
+   "fieldname": "content_digest",
+   "fieldtype": "Data",
+   "label": "Content digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "page_count",
+   "fieldtype": "Int",
+   "label": "Page count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "register_reference",
+   "fieldtype": "Data",
+   "label": "Register reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "register_digest",
+   "fieldtype": "Data",
+   "label": "Register digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "event_ids_json",
+   "fieldtype": "Long Text",
+   "label": "Event ids json",
+   "read_only": 1
+  },
+  {
+   "fieldname": "authored_by",
+   "fieldtype": "Link",
+   "label": "Authored by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "frozen_at",
+   "fieldtype": "Datetime",
+   "label": "Frozen at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "frozen_by",
+   "fieldtype": "Link",
+   "label": "Frozen by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "read_only": 1,
+   "options": "Frozen\nSuperseded\nFinalized",
+   "reqd": 1
+  },
+  {
+   "fieldname": "supersedes_version",
+   "fieldtype": "Data",
+   "label": "Supersedes version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supersede_reason",
+   "fieldtype": "Small Text",
+   "label": "Supersede reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "targets",
+   "fieldtype": "Table",
+   "label": "Targets",
+   "options": "Proceeding Minutes Target"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Proceedings",
+ "name": "Proceeding Minutes Version",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:minutes_version_id"
+}

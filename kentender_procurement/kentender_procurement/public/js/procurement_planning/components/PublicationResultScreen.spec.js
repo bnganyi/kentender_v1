@@ -1,65 +1,295 @@
-// PLN-CHG-001 v1.12 §15 — PublicationResultScreen component tests (D14).
-// PLN-DES-13: read-only approved Version, destination, attempt, result and
-// acknowledgement; the retry only for a technical user on a failed attempt.
+// PLN-CHG-001 v1.24 §10.12 — PublicationResultScreen component tests (U13),
+// ported from Artboards-U12-U13.dc.html.
+//
+// Four facts that do not prove each other, and two rules about the actions: an
+// unknown external result is never shown as failure and never offers a blind
+// retry, and the AO's business action is not the technical operator's.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import PublicationResultScreen from "./PublicationResultScreen.vue";
+import { RETRY_TURN, TREASURY_TURN, WAITING_OPERATOR, planJourney } from "./guidance.fixtures.js";
 
-const TASK = {
-	outcome: "OK",
-	publication: "PUB-1",
-	publication_reference: "PUB-MOH-2027-001",
-	header: { eyebrow: "ANNUAL PLAN PUBLICATION", title: "Publication result", reference_line: "PLN-MOH-2027-001 · Version 1", badge: "Publication pending", badge_kind: "attention" },
-	plan_reference: "PLN-MOH-2027-001",
-	approved_plan: { financial_year: "FY 2027/28", plan_items: 1, value_display: "KES 80,000,000", statutory_approval_line: "Responsible Cabinet Secretary · 9 Dec 2026, 11:00 EAT" },
-	destination: { id: "MOH-APP-SANDBOX-v1", title: "KenTender Annual Plan Publication Sandbox" },
-	configuration: "MOH-APP-SANDBOX-v1",
-	attempt_number: 1,
-	result: "Pending",
-	attempted_display: "9 Dec 2026, 11:00 EAT",
-	acknowledged_display: "",
-	result_display: "Awaiting acknowledgement",
-	acknowledgement_reference: "Not received",
-	quiet_notice: "Publication is an automatic system action after statutory approval. It runs without a business-role control.",
-	can_retry: false,
-};
+const APPROVED_ROWS = [
+	{ label: "Plan approval", state: "Approved", kind: "live" },
+	{ label: "Treasury submission", state: "Details not yet recorded", kind: "attention" },
+	{ label: "Website publication", state: "Not started", kind: "pending" },
+	{ label: "Use for procurement", state: "This plan is not yet active", kind: "pending" },
+];
 
-function make(task = TASK) {
-	return mount(PublicationResultScreen, { props: { task, pending: false, errorSummary: "" } });
+function task(overrides = {}) {
+	return {
+		outcome: "OK",
+		publication: "PUB-PLN-MOH-2027-001-V1",
+		plan_reference: "PLN-MOH-2027-001",
+		version: { number: 1, status: "Approved — publication pending" },
+		header: { badge: "Awaiting dispatch", badge_kind: "attention" },
+		publication_state: "Pending",
+		status_rows: APPROVED_ROWS,
+		treasury_evidence: null,
+		hold: { active: false },
+		attempts: [],
+		can_record_treasury: true,
+		can_retry: false,
+		can_reconcile: false,
+		next_step: TREASURY_TURN,
+		journey: planJourney("publication", { holder: "Amina Hassan", reduced: true }),
+		...overrides,
+	};
 }
 
-describe("PublicationResultScreen — PLN-DES-13", () => {
-	it("renders the header, the Approved Plan card and the Publication card read-only", () => {
+function make(props = {}) {
+	return mount(PublicationResultScreen, { props: { task: task(), pending: false, errorSummary: "", ...props } });
+}
+
+describe("PublicationResultScreen — U13 BASE", () => {
+	it("shows four distinct facts in order", () => {
 		const w = make();
-		expect(w.find(".kt-page-kicker").text()).toBe("ANNUAL PLAN PUBLICATION");
-		expect(w.find(".kt-page-title").text()).toBe("Publication result");
-		expect(w.find('[data-testid="pub-badge"]').text()).toBe("Publication pending");
-		expect(w.find('[data-testid="pub-approved-plan"]').findAll("label").map((l) => l.text())).toEqual(["Financial Year", "Plan Items", "Approved value", "Statutory approval"]);
-		expect(w.find('[data-testid="pub-publication"]').findAll("label").map((l) => l.text())).toEqual(["Destination", "Configuration", "Latest attempt", "Result", "Acknowledgement reference"]);
-		expect(w.find('[data-testid="pub-result"]').text()).toBe("Awaiting acknowledgement");
-		expect(w.find('[data-testid="pub-reference"]').text()).toBe("Not received");
-		expect(w.find('[data-testid="pub-quiet-notice"]').text()).toBe(TASK.quiet_notice);
-		expect(w.findAll("input, textarea, select")).toHaveLength(0);
-		expect(w.text()).not.toContain("Publish");
+		const rows = w.findAll('[data-testid="pub-status-row"]');
+		expect(rows).toHaveLength(4);
+		expect(rows.map((r) => r.text())).toEqual([
+			expect.stringContaining("Plan approval"),
+			expect.stringContaining("Treasury submission"),
+			expect.stringContaining("Website publication"),
+			expect.stringContaining("Use for procurement"),
+		]);
+		expect(rows[3].text()).toContain("This plan is not yet active");
+	});
+
+	it("replaces the header state badge with the next step and a one-line tracker", () => {
+		const w = make();
+		expect(w.find('[data-testid="pub-context"] .kt-status').exists()).toBe(false);
+		expect(w.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Record the Treasury submission");
+		expect(w.find(".kt-journey.is-reduced").text()).toBe("Stage 6 of 7: Publication — Amina Hassan");
+		expect(w.find('[data-testid="pub-responsible"]').exists()).toBe(false);
+	});
+
+	it("offers the AO the record action and no technical controls", () => {
+		const w = make();
+		expect(w.find('[data-testid="pub-record-treasury"]').text()).toBe("Record Treasury submission");
 		expect(w.find('[data-testid="pub-retry"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pub-reconcile"]').exists()).toBe(false);
 	});
 
-	it("shows the failed state with the retry only for a technical user (§11.15)", async () => {
-		const failed = { ...TASK, result: "Failed", result_display: "Not acknowledged", header: { ...TASK.header, badge: "Publication failed", badge_kind: "critical" } };
-		const reader = make(failed);
-		expect(reader.find('[data-testid="pub-failed"] h3').text()).toBe("Publication was not acknowledged");
+	it("§10.12 header: offers View approved plan, Download approved plan and Download Plan data, in that order", async () => {
+		const w = make();
+		const actions = w.findAll('[data-testid="pub-view-plan"], [data-testid="pub-download-plan"], [data-testid="pub-download-plan-data"]');
+		expect(actions.map((a) => a.text())).toEqual(["View approved plan", "Download approved plan", "Download Plan data"]);
+		await w.find('[data-testid="pub-download-plan"]').trigger("click");
+		expect(w.emitted("download-plan")).toBeTruthy();
+		await w.find('[data-testid="pub-download-plan-data"]').trigger("click");
+		expect(w.emitted("download-plan-data")).toBeTruthy();
+	});
+});
+
+describe("PublicationResultScreen — recorded evidence", () => {
+	it("U13-EVIDENCE-RECORDED: shows every field, with dispatch and recording distinct", async () => {
+		const w = make({
+			task: task({
+				status_rows: [
+					APPROVED_ROWS[0],
+					{ label: "Treasury submission", state: "Recorded", kind: "live" },
+					APPROVED_ROWS[2],
+					APPROVED_ROWS[3],
+				],
+				treasury_evidence: {
+					recorded: true,
+					submitted_display: "10 Dec 2026, 14:00 EAT",
+					channel: "Official correspondence",
+					destination: "National Treasury",
+					dispatch_reference: "MOH/APP/2027/001",
+					recorded_display: "10 Dec 2026, 14:05 EAT",
+					recorded_by_name: "Amina Hassan",
+					supporting_attachment: "Treasury-dispatch-evidence-example.pdf",
+				},
+			}),
+		});
+		const evidence = w.find('[data-testid="pub-treasury-evidence"]');
+		expect(evidence.text()).toContain("10 Dec 2026, 14:00 EAT");
+		expect(evidence.text()).toContain("Official correspondence");
+		// Destination is its own labelled field, not folded into the channel.
+		expect(evidence.text()).toContain("National Treasury");
+		expect(evidence.text()).toContain("MOH/APP/2027/001");
+		expect(evidence.text()).toContain("Amina Hassan");
+		// Recording it once does not offer to record it again.
+		expect(w.find('[data-testid="pub-record-treasury"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pub-correct-treasury"]').text()).toBe("Correct submission details");
+		// §10.12 — enabled once there is something to view.
+		const viewEvidence = w.find('[data-testid="pub-view-evidence"]');
+		expect(viewEvidence.text()).toBe("View submission evidence");
+		await viewEvidence.trigger("click");
+		expect(w.emitted("view-evidence")).toBeTruthy();
+	});
+
+	it("offers no View submission evidence link when no file was recorded", () => {
+		const w = make({
+			task: task({
+				treasury_evidence: {
+					recorded: true,
+					submitted_display: "10 Dec 2026, 14:00 EAT",
+					channel: "Official correspondence",
+					destination: "National Treasury",
+					dispatch_reference: "MOH/APP/2027/001",
+					recorded_by_name: "Amina Hassan",
+					supporting_attachment: "",
+				},
+			}),
+		});
+		expect(w.find('[data-testid="pub-view-evidence"]').exists()).toBe(false);
+	});
+});
+
+describe("PublicationResultScreen — failure is not uncertainty", () => {
+	it("U13-FAILED: offers retry to a technical operator only", () => {
+		const technical = make({
+			task: task({
+				publication_state: "Failed",
+				header: { badge: "Publication failed", badge_kind: "critical" },
+				status_rows: [
+					APPROVED_ROWS[0],
+					{ label: "Treasury submission", state: "Recorded", kind: "live" },
+					{ label: "Website publication", state: "The plan was not published", kind: "critical" },
+					APPROVED_ROWS[3],
+				],
+				treasury_evidence: { recorded: true, submitted_display: "x", channel: "y", dispatch_reference: "z", recorded_by_name: "Amina Hassan" },
+				can_record_treasury: false,
+				can_retry: true,
+				next_step: RETRY_TURN,
+			}),
+		});
+		expect(technical.find('[data-testid="pub-retry"]').text()).toBe("Retry publication");
+		// O4 — the one exception: the technical operator's turn.
+		expect(technical.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Retry publication");
+		expect(technical.find('[data-testid="pub-reconcile"]').exists()).toBe(false);
+
+		// A reader who is not that operator is told whose action it is.
+		const reader = make({
+			task: task({ publication_state: "Failed", can_record_treasury: false, can_retry: false, treasury_evidence: { recorded: true, recorded_by_name: "Amina Hassan" }, next_step: WAITING_OPERATOR }),
+		});
 		expect(reader.find('[data-testid="pub-retry"]').exists()).toBe(false);
-		const technical = make({ ...failed, can_retry: true });
-		const retry = technical.find('[data-testid="pub-retry"]');
-		expect(retry.text()).toBe("Retry exact approved payload");
-		await retry.trigger("click");
-		expect(technical.emitted("retry")).toHaveLength(1);
+		// v1.27 — the waiting line names whose it is and since when, replacing
+		// the "Responsible role" sentence.
+		expect(reader.find(".kt-page-head .kt-next-step").text()).toContain("Waiting for an authorised technical operator to retry publication");
+		expect(reader.find(".kt-page-head .kt-next-step").text()).toContain("since 10 Dec 2026, 11:55 EAT");
+		expect(reader.find('[data-testid="pub-responsible"]').exists()).toBe(false);
+
+		// And the Accounting Officer is still told whose the recovery is, even
+		// though they hold a Treasury action of their own on the same screen.
+		const ao = make({
+			task: task({ publication_state: "Failed", can_record_treasury: true, can_retry: false, treasury_evidence: null, next_step: WAITING_OPERATOR }),
+		});
+		expect(ao.find('[data-testid="pub-retry"]').exists()).toBe(false);
+		expect(ao.find(".kt-page-head .kt-next-step").text()).toContain("authorised technical operator");
 	});
 
-	it("an acknowledged publication reads its reference and no failed card", () => {
-		const w = make({ ...TASK, result: "Acknowledged", result_display: "Acknowledged", acknowledgement_reference: "APP-ACK-2026-001", header: { ...TASK.header, badge: "Acknowledged", badge_kind: "live" } });
-		expect(w.find('[data-testid="pub-badge"]').classes()).toContain("is-live");
-		expect(w.find('[data-testid="pub-reference"]').text()).toBe("APP-ACK-2026-001");
-		expect(w.find('[data-testid="pub-failed"]').exists()).toBe(false);
+	it("§10.14: the Accounting Officer is offered the late-start explanation, and it appends", () => {
+		const late = {
+			applicable: true,
+			financial_year_started_display: "1 Jul 2027",
+			activated_display: "2 Jul 2027, 09:00 EAT",
+			explanations: [],
+			can_explain: true,
+		};
+		const w = make({ task: task({ late_activation: late }) });
+		const section = w.find('[data-testid="pub-late-activation"]');
+		expect(section.exists()).toBe(true);
+		expect(section.text()).toContain("Financial year started");
+		expect(section.text()).toContain("Plan became active");
+		expect(w.find('[data-testid="pub-late-activation-none"]').exists()).toBe(true);
+		expect(w.find('[data-testid="pub-explain-late"]').text()).toBe("Explain late start of the annual plan");
+
+		// A recorded explanation is kept and shown; the action then adds to it.
+		const w2 = make({
+			task: task({
+				late_activation: {
+					...late,
+					explanations: [{ id: "LAE-1", reason: "Acknowledgement arrived after the year began.", actor_name: "Amina Hassan", recorded_display: "3 Jul 2027, 08:00 EAT", superseded: false }],
+				},
+			}),
+		});
+		expect(w2.find('[data-testid="pln-late-explanation-history"]').exists()).toBe(true);
+		expect(w2.find('[data-testid="pub-explain-late"]').text()).toBe("Add to the explanation");
+
+		// A reader who is not the Accounting Officer sees the fact, not the action.
+		const reader = make({ task: task({ late_activation: { ...late, can_explain: false } }) });
+		expect(reader.find('[data-testid="pub-late-activation"]').exists()).toBe(true);
+		expect(reader.find('[data-testid="pub-explain-late"]').exists()).toBe(false);
+
+		// Not late at all: the whole section is absent, not an empty heading.
+		const ordinary = make({ task: task() });
+		expect(ordinary.find('[data-testid="pub-late-activation"]').exists()).toBe(false);
+	});
+
+	it("U13-UNKNOWN: says it is unconfirmed, and reconciles rather than retrying blind", () => {
+		const w = make({
+			task: task({
+				publication_state: "Indeterminate",
+				header: { badge: "Result unknown — reconcile", badge_kind: "attention" },
+				status_rows: [
+					APPROVED_ROWS[0],
+					{ label: "Treasury submission", state: "Recorded", kind: "live" },
+					{ label: "Website publication", state: "We could not confirm whether publication succeeded.", kind: "attention" },
+					APPROVED_ROWS[3],
+				],
+				treasury_evidence: { recorded: true, recorded_by_name: "Amina Hassan" },
+				can_record_treasury: false,
+				can_reconcile: true,
+			}),
+		});
+		expect(w.find('[data-testid="pub-unknown"]').text()).toContain("Check the existing attempt before trying again.");
+		expect(w.find('[data-testid="pub-reconcile"]').text()).toBe("Check publication result");
+		// Never a blind retry on an unknown outcome.
+		expect(w.find('[data-testid="pub-retry"]').exists()).toBe(false);
+		// And never rendered as a failure.
+		expect(w.text()).not.toContain("The plan was not published");
+	});
+});
+
+describe("PublicationResultScreen — published states", () => {
+	it("U13-ACTIVE: publication and procurement availability are separate rows", () => {
+		const w = make({
+			task: task({
+				publication_state: "Acknowledged",
+				version: { number: 1, status: "Active" },
+				status_rows: [
+					APPROVED_ROWS[0],
+					{ label: "Treasury submission", state: "Recorded", kind: "live" },
+					{ label: "Website publication", state: "Published", kind: "live" },
+					{ label: "Use for procurement", state: "Current plan", kind: "live" },
+				],
+				treasury_evidence: { recorded: true, recorded_by_name: "Amina Hassan" },
+				can_record_treasury: false,
+			}),
+		});
+		const rows = w.findAll('[data-testid="pub-status-row"]');
+		expect(rows[2].text()).toContain("Published");
+		expect(rows[3].text()).toContain("Current plan");
+	});
+
+	it("U13-PUBLISHED-HELD: keeps the external fact and denies procurement", () => {
+		const w = make({
+			task: task({
+				publication_state: "Acknowledged",
+				version: { number: 1, status: "Published — activation held" },
+				status_rows: [
+					APPROVED_ROWS[0],
+					{ label: "Treasury submission", state: "Recorded", kind: "live" },
+					{ label: "Website publication", state: "Published", kind: "live" },
+					{ label: "Use for procurement", state: "Published, but not available for new procurement", kind: "critical" },
+				],
+				treasury_evidence: { recorded: true, recorded_by_name: "Amina Hassan" },
+				can_record_treasury: false,
+			}),
+		});
+		const rows = w.findAll('[data-testid="pub-status-row"]');
+		expect(rows[2].text()).toContain("Published");
+		expect(rows[3].text()).toContain("Published, but not available for new procurement");
+	});
+
+	it("a hold is shown as a control over transmission, not a lost approval", () => {
+		const w = make({
+			task: task({ hold: { active: true, reason: "A material defect was found in the approved content.", kind: "defect" } }),
+		});
+		expect(w.find('[data-testid="pub-hold"]').text()).toContain("Publication is on hold");
+		expect(w.find('[data-testid="pub-status-row"]').text()).toContain("Approved");
 	});
 });

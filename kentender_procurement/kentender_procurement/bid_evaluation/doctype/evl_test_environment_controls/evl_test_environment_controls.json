@@ -1,0 +1,60 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "Simulation-only fault switches (plan D16); read only when kt_bds_simulation_environment is set.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "intake_outcome",
+  "notice_outcome",
+  "delivery_outcome",
+  "downstream_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "intake_outcome",
+   "fieldtype": "Select",
+   "label": "Intake outcome",
+   "read_only": 0,
+   "options": "\nUnavailable\nIndeterminate\nRejected"
+  },
+  {
+   "fieldname": "notice_outcome",
+   "fieldtype": "Select",
+   "label": "Notice outcome",
+   "read_only": 0,
+   "options": "\nFailed"
+  },
+  {
+   "fieldname": "delivery_outcome",
+   "fieldtype": "Select",
+   "label": "Delivery outcome",
+   "read_only": 0,
+   "options": "\nFailed"
+  },
+  {
+   "fieldname": "downstream_status",
+   "fieldtype": "Select",
+   "label": "Downstream status",
+   "read_only": 0,
+   "options": "\nNo award decision recorded\nAward decision recorded\nUnknown"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Evaluation",
+ "name": "EVL Test Environment Controls",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "issingle": 1
+}

@@ -1,0 +1,174 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-01 09:00:00.000000",
+ "description": "\u00a74 correspondence: a bidder's request and HOP's reply; sent content is immutable (\u00a75.6).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "correspondence_id",
+  "award_case",
+  "notice",
+  "organisation",
+  "organisation_name",
+  "requested_by",
+  "request_text",
+  "requested_at",
+  "predecessor",
+  "reply_draft",
+  "reply_text",
+  "reply_state",
+  "attempts_json",
+  "sent_at",
+  "state",
+  "closed_at",
+  "closed_by",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "correspondence_id",
+   "label": "Correspondence ID",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "award_case",
+   "label": "Award case",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "notice",
+   "label": "Notice",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "organisation",
+   "label": "Organisation",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "organisation_name",
+   "label": "Organisation name",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "requested_by",
+   "label": "Requested by",
+   "read_only": 1,
+   "fieldtype": "Link",
+   "options": "User"
+  },
+  {
+   "fieldname": "request_text",
+   "label": "Request text",
+   "read_only": 1,
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "requested_at",
+   "label": "Requested at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "predecessor",
+   "label": "Predecessor",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "reply_draft",
+   "label": "Reply draft",
+   "read_only": 1,
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "reply_text",
+   "label": "Reply text",
+   "read_only": 1,
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "reply_state",
+   "label": "Reply state",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "\nDraft\nSending\nSent"
+  },
+  {
+   "fieldname": "attempts_json",
+   "label": "Attempts JSON",
+   "read_only": 1,
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "sent_at",
+   "label": "Sent at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Open\nClosed"
+  },
+  {
+   "fieldname": "closed_at",
+   "label": "Closed at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "closed_by",
+   "label": "Closed by",
+   "read_only": 1,
+   "fieldtype": "Link",
+   "options": "User"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "read_only": 1,
+   "fieldtype": "Data"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-01 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Award",
+ "name": "Award Correspondence",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:correspondence_id"
+}

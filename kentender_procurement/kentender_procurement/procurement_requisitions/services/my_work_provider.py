@@ -19,7 +19,6 @@ from frappe import _
 from frappe.utils import cstr
 
 from kentender_procurement.procurement_requisitions.services import requisition_authorization as authz
-from kentender_procurement.procurement_requisitions.services.draft_commands import _contributing_units
 from kentender_procurement.procurement_requisitions.services.errors import ProcurementRequisitionsError
 from kentender_procurement.procurement_requisitions.services.requisition_roles import ROLE_HEAD_OF_PROCUREMENT_FUNCTION
 
@@ -63,14 +62,15 @@ def _department_approval_rows(user: str) -> list[dict[str, Any]]:
 		order_by="creation asc", limit_page_length=0,
 	):
 		root = frappe.get_doc("Procurement Requisition", task.requisition)
-		if not _can(authz.require_hod_for_any, _contributing_units(root), user, masked=False):
+		# §7.3 — only the lead department's Head of User Department certifies.
+		if not _can(authz.require_hod_for_any, {task.organisation_unit}, user, masked=False):
 			continue
 		rows.append(
 			_row(
 				task=task, task_type="requisitions.department_approval",
-				title=_("Approve Requisition — {0}").format(root.requisition_reference), reference=root.requisition_reference,
-				stage=_("Department approval"), organisation_unit=root.lead_org_unit, assignment="Head of User Department",
-				action_label=_("Open department task"), route=["procurement-requisitions", "department-task", task.name],
+				title=_("Review departmental requisition — {0}").format(root.requisition_reference), reference=root.requisition_reference,
+				stage=_("Department approval"), organisation_unit=root.lead_org_unit_id, assignment="Head of User Department",
+				action_label=_("Review"), route=["procurement-requisitions", "department-task", task.name],
 			)
 		)
 	return rows
@@ -89,9 +89,9 @@ def _procurement_authorisation_rows(user: str) -> list[dict[str, Any]]:
 		rows.append(
 			_row(
 				task=task, task_type="requisitions.procurement_authorisation",
-				title=_("Authorise Requisition — {0}").format(root.requisition_reference), reference=root.requisition_reference,
-				stage=_("Procurement authorisation"), organisation_unit=root.lead_org_unit, assignment=ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
-				action_label=_("Open procurement task"), route=["procurement-requisitions", "procurement-task", task.name],
+				title=_("Decide whether to authorise — {0}").format(root.requisition_reference), reference=root.requisition_reference,
+				stage=_("Procurement authorisation"), organisation_unit=root.lead_org_unit_id, assignment=ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
+				action_label=_("Review"), route=["procurement-requisitions", "procurement-task", task.name],
 			)
 		)
 	return rows

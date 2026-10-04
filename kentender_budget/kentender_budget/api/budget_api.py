@@ -28,6 +28,14 @@ def get_budget_workspace(fiscal_year: str | None = None):
 
 
 @frappe.whitelist()
+def decline_budget_revision_request(payload: dict | str | None = None):
+	"""BUD v1.11 §9.2 — the Budget Officer's decline (BUD-DES-19)."""
+	from kentender_budget.services import budget_revision_request_contracts as requests
+
+	return requests.decline_budget_revision_request(payload)
+
+
+@frappe.whitelist()
 def save_budget_version_draft(payload: dict | str | None = None):
 	return contracts.save_budget_version_draft(payload)
 
@@ -99,6 +107,22 @@ def check_plan_affordability(fiscal_year: str | None = None, planned_totals=None
 
 
 @frappe.whitelist()
+def validate_plan_affordability_for_decision(
+	fiscal_year: str | None = None, planned_totals=None, expected_revisions=None, correlation: str | None = None
+):
+	"""PLN-CHG-001 v1.18 §5.3.3 — decision-time basis validation inside the
+	caller's transaction; locks, validates, writes nothing."""
+	from kentender_budget.services import budget_line_contracts as lines
+
+	return lines.validate_plan_affordability_for_decision(
+		fiscal_year=fiscal_year or "",
+		planned_totals=planned_totals,
+		expected_revisions=expected_revisions,
+		correlation=correlation or "",
+	)
+
+
+@frappe.whitelist()
 def get_budget_approval_task(budget_version: str | None = None):
 	from kentender_budget.services import budget_readiness_contracts as readiness
 
@@ -138,6 +162,15 @@ def approve_budget_version(payload: dict | str | None = None):
 	from kentender_budget.services import budget_readiness_contracts as readiness
 
 	return readiness.approve_budget_version(payload)
+
+
+@frappe.whitelist()
+def get_budget_closure_status(budget: str | None = None):
+	"""BUD-CHG-001 v1.9 §9.4/§11.18 — year-end closure read: before year end,
+	blocked, unavailable, ready or closed. Reads only."""
+	from kentender_budget.services import budget_readiness_contracts as readiness
+
+	return readiness.get_budget_closure_status(budget or "")
 
 
 @frappe.whitelist()
@@ -302,3 +335,22 @@ def adjust_commitment(
 		variation_event_type=variation_event_type or "",
 		idempotency_key=idempotency_key or "",
 	)
+
+
+
+# BUD-CHG-001 v1.11 §6 / §9.2 — the Planning service principal's two calls.
+# Published for Procurement Planning's gateway, deliberately NOT whitelisted:
+# no browser or HTTP caller may send or withdraw a request; the service
+# checks the registered principal flag Planning's gateway sets.
+
+
+def receive_budget_revision_request(payload: dict | str | None = None):
+	from kentender_budget.services import budget_revision_request_contracts as requests
+
+	return requests.receive_budget_revision_request(payload)
+
+
+def withdraw_budget_revision_request(payload: dict | str | None = None):
+	from kentender_budget.services import budget_revision_request_contracts as requests
+
+	return requests.withdraw_budget_revision_request(payload)

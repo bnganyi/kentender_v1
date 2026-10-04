@@ -66,12 +66,12 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/business_readiness_summary.css?v={_desk_asset_v('public/css/business_readiness_summary.css')}",
 	f"/assets/kentender_procurement/css/tender_management_v2_workbench.css?v={_desk_asset_v('public/css/tender_management_v2_workbench.css')}",
 	# coming_soon_page.css: now lazy-loaded by coming_soon_page.js's own
-	# on_page_load. bid_submissions_page.css: bid_submissions_page.js already
-	# had its own ensureCss() fallback link-injection for exactly this case.
+	# on_page_load.
 	f"/assets/kentender_procurement/css/departmental_needs_industry.css?v={_desk_asset_v('public/css/departmental_needs_industry.css')}",
 	f"/assets/kentender_procurement/css/procurement_planning_industry.css?v={_desk_asset_v('public/css/procurement_planning_industry.css')}",
 	f"/assets/kentender_procurement/css/procurement_requisitions_industry.css?v={_desk_asset_v('public/css/procurement_requisitions_industry.css')}",
-	f"/assets/kentender_procurement/css/tender_preparation_industry.css?v={_desk_asset_v('public/css/tender_preparation_industry.css')}",
+	f"/assets/kentender_procurement/css/tenders_industry.css?v={_desk_asset_v('public/css/tenders_industry.css')}",
+	f"/assets/kentender_procurement/css/bid_opening_industry.css?v={_desk_asset_v('public/css/bid_opening_industry.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_sidebar_header.js?v={_desk_asset_v('public/js/procurement_sidebar_header.js')}",
@@ -88,7 +88,6 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_home_workspace.js?v={_desk_asset_v('public/js/procurement_home_workspace.js')}",
 	f"/assets/kentender_procurement/js/tm2_workbench_lifecycle.js?v={_desk_asset_v('public/js/tm2_workbench_lifecycle.js')}",
 	f"/assets/kentender_procurement/js/it_tender_configuration_create_modal.js?v={_desk_asset_v('public/js/it_tender_configuration_create_modal.js')}",
-	f"/assets/kentender_procurement/js/electronic_bid/bidder_workspace_renderer.js?v={_desk_asset_v('public/js/electronic_bid/bidder_workspace_renderer.js')}",
 ]
 
 # include js, css files in header of web template
@@ -98,95 +97,135 @@ app_include_js = [
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "kentender_procurement/public/scss/website"
 
-# Doc 9 §18.1 — supplier portal URLs (`/supplier/tenders`, `/supplier/tenders/<tender_code>`).
-# Resolves dynamic detail paths to ``www/supplier/tenders`` (same shell as list).
 website_route_rules = [
 	# Prompt canonical alias → thin Website page that redirects into Desk.
 	{"from_route": "/procurement/home", "to_route": "procurement/home"},
-	{"from_route": "/supplier/tenders/<tender_code>", "to_route": "supplier/tenders"},
-	{
-		"from_route": "/tenders/<publication_ref>/review-and-validate",
-		"to_route": "tenders/review_and_validate",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/final-bid-review",
-		"to_route": "tenders/final_bid_review",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/submit-bid",
-		"to_route": "tenders/submit_bid",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/submission-receipt",
-		"to_route": "tenders/submission_receipt",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/form_of_tender",
-		"to_route": "tenders/form_of_tender",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/confidential_business_questionnaire",
-		"to_route": "tenders/confidential_business_questionnaire",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/statutory_declarations",
-		"to_route": "tenders/statutory_declarations",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/tender_security",
-		"to_route": "tenders/tender_security",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/preliminary_requirements_and_evidence",
-		"to_route": "tenders/preliminary_requirements",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/qualification_and_capability/<category_key>",
-		"to_route": "tenders/qualification_category",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/qualification_and_capability",
-		"to_route": "tenders/qualification_and_capability",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/technical_proposal_and_implementation_plan/review",
-		"to_route": "tenders/technical_proposal_review",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/technical_proposal_and_implementation_plan/<subsection_key>",
-		"to_route": "tenders/technical_proposal_subsection",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/technical_proposal_and_implementation_plan",
-		"to_route": "tenders/technical_proposal_and_implementation_plan",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/requirements_compliance/review",
-		"to_route": "tenders/requirements_compliance_review",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/requirements_compliance",
-		"to_route": "tenders/requirements_compliance",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/price_schedule/review",
-		"to_route": "tenders/price_schedule_review",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/price_schedule/schedules/<schedule_key>",
-		"to_route": "tenders/price_schedule_schedule",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/price_schedule",
-		"to_route": "tenders/price_schedule",
-	},
-	{"from_route": "/tenders/<publication_ref>/sections/<section_key>", "to_route": "tenders/section"},
-	{"from_route": "/tenders/<publication_ref>/documents", "to_route": "tenders/documents"},
-	{"from_route": "/tenders/<publication_ref>/evidence", "to_route": "tenders/evidence"},
-	{"from_route": "/tenders/<publication_ref>/issues", "to_route": "tenders/issues"},
-	{"from_route": "/tenders/<publication_ref>/workspace", "to_route": "tenders/workspace"},
-	{"from_route": "/tenders/<publication_ref>", "to_route": "tenders/overview"},
+	# AWD-CHG-001 v0.4 §9 — the supplier's award notice, rendered by the one
+	# portal page and answered by the Award surface below.
+	{"from_route": "/supplier/awards", "to_route": "kt_portal"},
+	{"from_route": "/supplier/awards/<path:portal_path>", "to_route": "kt_portal"},
+	# The legacy bidder-workspace routes (`/tenders/<publication_ref>/…`,
+	# `/supplier/tenders/<tender_code>`) were retired by BDS-CHG-001 v0.8
+	# Phase 1. The supplier portal routes are kentender_core's (`kt_portal`);
+	# Bid Submission answers its paths through `kt_portal_surfaces` below.
 ]
+
+# BDS-CHG-001 v0.8 plan OD-B — Bid Submission's public portal surface. The
+# resolver returns the verdict and first payload; the bundle mounts one Vue
+# app that stays mounted across its owned paths. The page CSS is a static
+# file because the esbuild pipeline discards <style scoped> CSS.
+kt_portal_surfaces = [
+	{
+		"key": "tenders",
+		"prefix": "/tenders",
+		"resolver": "kentender_procurement.bid_submission.portal.resolve",
+		"bundle": "bid_portal.bundle.js",
+		"css": [f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}"],
+	},
+	# BDS-DES-05 My bids and BDS-DES-17 receipt history — the same app and
+	# bundle; `/account/receipts` outranks Supplier Accounts' `/account`.
+	*(
+		{"key": "tenders", "prefix": prefix, "resolver": "kentender_procurement.bid_submission.portal.resolve", "bundle": "bid_portal.bundle.js",
+		 "css": [f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}"]}
+		for prefix in ("/my-bids", "/account/receipts")
+	),
+	# AWD-CHG-001 v0.4 plan D14 — the supplier's own award notice.
+	{
+		"key": "supplier-awards",
+		"prefix": "/supplier/awards",
+		"resolver": "kentender_procurement.award.portal.resolve",
+		"bundle": "award_portal.bundle.js",
+		"css": [f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}"],
+	},
+]
+
+# BOP-CHG-001 v0.10 plan D10 — Bid Opening answers /tenders/{ref}/opening
+# inside Bid Submission's portal surface above.
+kt_tender_opening_portal = ["kentender_procurement.bid_opening.portal.resolve"]
+# BOP-CHG-001 v0.10 §9 — the Tender record links to its bid opening.
+kt_tender_record_links = ["kentender_procurement.bid_opening.desk_links.tender_record_links",
+	"kentender_procurement.bid_evaluation.desk_links.tender_record_links", "kentender_procurement.award.desk_links.tender_record_links"]
+kt_tender_portal_links = ["kentender_procurement.bid_opening.portal.tender_links", "kentender_procurement.bid_evaluation.portal.tender_links",
+	"kentender_procurement.award.portal.tender_links"]
+# EVL-CHG-001 v0.4 plan D14 — Bid Evaluation answers
+# /tenders/{ref}/bid/evaluation-clarifications/{request} inside Bid Submission's portal.
+kt_tender_evaluation_portal = ["kentender_procurement.bid_evaluation.portal.resolve"]
+
+# AWD-CHG-001 v0.4 (Award). Plan D4: the upstream sources (the real seams; the
+# synthetic stand-in answers on a test environment only). Plan D5: Evaluation
+# hands its delivered reports and later corrections to Award; Tenders asks
+# Award before a cancellation and reads its authority status; the Award goes
+# with its evaluation or Tender. Plan D10: the Contracting receiver (only the
+# simulation stand-in exists). Plan D7: the notice email channel.
+kt_award_source_providers = [
+	"kentender_procurement.award.services.sources.evaluation_provider",
+	"kentender_procurement.award.test_services.sources.synthetic_provider",
+]
+kt_evaluation_report_consumers = ["kentender_procurement.award.services.intake.on_report_delivered"]
+kt_evaluation_report_consumers_failed = ["kentender_procurement.award.services.intake.on_report_delivery_failed"]
+kt_evaluation_correction_consumers = ["kentender_procurement.award.services.corrections.on_evaluation_correction"]
+kt_evaluation_removal_consumers = ["kentender_procurement.award.seeds.clear.on_evaluations_removed"]
+kt_award_authority_status = ["kentender_procurement.award.services.authority.tender_status"]
+kt_tender_cancellation_guards = ["kentender_procurement.award.services.authority.cancellation_guard"]
+kt_award_contracting_receivers = ["kentender_procurement.award.test_services.contracting_receiver.receiver"]
+kt_award_notice_transports = ["kentender_procurement.bid_submission.test_services.mailbox.deliver"]
+
+# BDS-CHG-001 v0.8 plan Phase 5 (TPR FU-25) — the Tender candidate registry is
+# Bid Submission's: a bidder arrangement, created only by Start bid, is the
+# candidate registration Tenders' notices and clarification intake consume.
+kt_tender_candidate_registry = ["kentender_procurement.bid_submission.services.candidate_registry"]
+# The canonical Tenders seed registers its candidate through Start bid here.
+kt_tender_seed_candidate = ["kentender_procurement.bid_submission.seeds.canonical.seed_candidate"]
+# Bid Submission removes its rows for Tenders the Tenders clean-up removes.
+kt_tender_removal_consumers = [
+	"kentender_procurement.award.seeds.clear.on_tenders_removed",
+	"kentender_procurement.bid_evaluation.seeds.clear.on_tenders_removed",
+	"kentender_procurement.bid_opening.seeds.clear.on_tenders_removed",
+	"kentender_procurement.bid_submission.seeds.clear.on_tenders_removed",
+]
+kt_tender_seed_candidate_cleanup = ["kentender_procurement.bid_submission.seeds.canonical.remove_seeded_suppliers"]
+# BDS-CHG-001 v0.8 OD-C: the Test Scanner answers only on a site whose
+# site_config sets kt_bds_simulation_environment; elsewhere it is silent.
+kt_file_scanners = ["kentender_procurement.bid_submission.test_services.scanner.scan"]
+# BDS-CHG-001 v0.8 plan D6: the approved signing/trust service, trusted-time
+# source and electronic tender box. No production provider is configured on
+# this bench; the simulation doubles below answer only on a test environment
+# (owner decision OD-C), so elsewhere submission stays unavailable.
+kt_bds_trust_services = ["kentender_procurement.bid_submission.test_services.trust.service"]
+kt_bds_time_services = ["kentender_procurement.bid_submission.test_services.trusted_time.service"]
+kt_bds_custody_services = ["kentender_procurement.bid_submission.test_services.tender_box.service"]
+# BOP-CHG-001 v0.10 plan D6/D15 and TRUST-ADR-001 v0.1 §2: the shared signing
+# service seam used by Proceedings attestations. Only the test attestation
+# double is configured, and it answers on a test environment only.
+kt_trust_signing_services = ["kentender_procurement.proceedings.test_services.attestation.service"]
+# BOP-CHG-001 v0.10 plan D5/D11: the Bid Opening renderer and the Opening
+# access support transports. The last renderer that answers wins, so the
+# test-only fault renderer (silent unless forced) overrides the default.
+# Transports are tried in order; the test-only failing transport is silent
+# unless forced, then the in-app Notification Log answers.
+# BOP-CHG-001 v0.10 plan D1: Bid Opening owns its Proceeding; Proceedings is
+# reachable only from inside a Bid Opening command or read.
+# EVL-CHG-001 v0.4 plan D4: Bid Evaluation owns its (multi-session) Proceeding.
+kt_prc_owner_adapters = [
+	"kentender_procurement.bid_opening.services.prc_owner.adapters",
+	"kentender_procurement.bid_evaluation.services.prc_owner.adapters",
+]
+kt_bop_renderer_services = [
+	"kentender_procurement.bid_opening.services.package_renderer.service",
+	"kentender_procurement.bid_opening.test_services.renderer_faults.service",
+]
+kt_bop_support_transports = [
+	"kentender_procurement.bid_opening.test_services.support_faults.transport",
+	"kentender_procurement.bid_opening.services.notify.notification_log",
+]
+# BDS-CHG-001 v0.8 plan D18: a browser world's persisted instant, read by
+# every app's trusted clock through kentender_core's test_clock (test
+# environment only).
+kt_test_clock = ["kentender_procurement.bid_submission.services.simulation.current_instant"]
+kt_test_clock_setters = ["kentender_procurement.bid_submission.services.simulation.set_test_instant"]
+# The Test Mailbox (test environments only; declines elsewhere so the real transport is used).
+kt_supplier_account_message_transports = ["kentender_procurement.bid_submission.test_services.mailbox.deliver"]
+kt_bds_supplier_message_transports = ["kentender_procurement.bid_submission.test_services.mailbox.deliver"]
 
 # include js, css files in header of web form
 # webform_include_js = {"doctype": "public/js/doctype.js"}
@@ -229,27 +268,20 @@ page_js = {
 	"publications": "public/js/publications_page.js",
 	"procurement-planning": "public/js/procurement_planning_page.js",
 	"procurement-requisitions": "public/js/procurement_requisitions_page.js",
-	"tender-preparation": "public/js/tender_preparation_page.js",
+	"tenders": "public/js/tenders_page.js",
+	# STD-TPL-IMP-001 v1.0 §11 — STD Templates (list + release detail).
+	"std-templates": "public/js/std_templates_page.js",
+	# BDS-CHG-001 v0.8 OD-G/OD-H — the blind physical tender-security intake.
+	"tender-security-receipts": "public/js/tender_security_receipts_page.js",
+	# EVL-CHG-001 v0.4 plan D13 — the Bid evaluation workspace.
+	"bid-evaluation": "public/js/bid_evaluation_page.js",
+	"award": "public/js/award_page.js",
 	"departmental-procurement-plan": "public/js/departmental_procurement_plan_page.js",
 	"annual-procurement-plan": "public/js/annual_procurement_plan_page.js",
 	"procurement-plan-item": "public/js/procurement_plan_item_page.js",
 	"publication-setup": "public/js/publication_setup_page.js",
-	"published-tender-overview": "public/js/published_tender_overview_page.js",
-	"bid-submissions": "public/js/bid_submissions_page.js",
-	"it-electronic-bidder-workspace": "public/js/it_electronic_bidder_workspace_page.js",
-	# STD-CHG-001 v1.3 Phase 11 — Vue-in-Desk STD Configuration surfaces
-	# (STD-UI-*/PCFG-*/STD-WF-*). The legacy "std-*" STD engine route family
-	# that used to sit below these was retired outright on 2026-09-05.
-	"std-cfg-documents": "public/js/std_cfg_documents_page.js",
-	# "std-cfg-package" (unsuffixed) collides with the auto-generated Desk
-	# route for the "STD Cfg Package" DocType — confirmed live: it opened the
-	# DocType's form view instead of this Vue page. "-home" avoids every
-	# current and future "STD Cfg *" DocType's own auto-slug.
-	"std-cfg-package-home": "public/js/std_cfg_package_page.js",
-	"std-cfg-area": "public/js/std_cfg_area_page.js",
-	"std-cfg-readiness": "public/js/std_cfg_readiness_page.js",
-	"std-cfg-review": "public/js/std_cfg_review_page.js",
-	"std-cfg-comparison": "public/js/std_cfg_comparison_page.js",
+	# The STD-CHG-001 v1.3 "std-cfg-*" STD Configuration pages were retired
+	# with that module (STD-TPL-IMP-001 v1.0, OD4; archive/std-configuration-retired-2026-09/).
 }
 
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
@@ -401,18 +433,18 @@ has_permission.update({
 	"Authorised Requisition Handoff": f"{_REQ_AUTHZ}.has_permission",
 })
 
-# TPR-CHG-001 v0.6 §5 / plan D11 — the Tender family is Site-wide with no
-# Organisation Unit column, so (as with Requisitions) it registers its own
-# predicate for both hooks rather than a `kentender_scope_map` entry; the
-# same registered predicate serves every list, count, route, preview, file
-# and command (§5).
-_TPR_AUTHZ = "kentender_procurement.tender_preparation.services.tender_authorization"
-_TPR_FAMILY = (
-	"Prepared Tender", "Tender Preparation Version", "Tender Preparation Task", "Tender Preparation Decision",
-	"Tender Publication Handoff", "Tender Preparation Event", "Tender Preparation Command Journal", "Supported Tender Template",
+# TPR-CHG-001 v0.8 §6 / plan D12 — the Tender family is Site-wide with one
+# neutral departmental read keyed on `Tender.lead_org_unit`, so (as with
+# Requisitions) it registers its own predicate for both hooks rather than a
+# `kentender_scope_map` entry; every family doctype delegates to the root.
+_TND_AUTHZ = "kentender_procurement.tenders.services.tender_authorization"
+_TND_FAMILY = (
+	"Tender", "Tender Version", "Tender Task", "Tender Decision", "Tender Publication", "Tender Channel Confirmation",
+	"Tender Addendum", "Tender Clarification", "Tender Candidate Notice", "Tender Bid Definition",
+	"Tender Cancellation", "Tender Document", "Tender Event", "Tender Submission Handoff",
 )
-permission_query_conditions.update({doctype: f"{_TPR_AUTHZ}.permission_query_conditions" for doctype in _TPR_FAMILY})
-has_permission.update({doctype: f"{_TPR_AUTHZ}.has_permission" for doctype in _TPR_FAMILY})
+permission_query_conditions.update({doctype: f"{_TND_AUTHZ}.permission_query_conditions" for doctype in _TND_FAMILY})
+has_permission.update({doctype: f"{_TND_AUTHZ}.has_permission" for doctype in _TND_FAMILY})
 
 # Document Events
 # ---------------
@@ -422,6 +454,14 @@ doc_events = {
 	"File": {
 		"on_trash": "kentender_procurement.tender_configurations.bidder_workspace_manifest.repository.cas.prevent_cas_file_trash",
 	},
+	# Procurement Planning subscribes to the Departmental Needs published
+	# outbox (NDS §7.1): accepting a Need starts that department's Draft
+	# departmental plan, so the Head of Department never has to start it by
+	# hand after deciding. Registered on the consumer's side — Needs neither
+	# knows nor calls Planning (decision D5).
+	"Departmental Need Event": {
+		"after_insert": "kentender_procurement.procurement_planning.services.dpp_autostart.on_need_event",
+	},
 }
 
 # Scheduled Tasks
@@ -429,9 +469,37 @@ doc_events = {
 
 # PLN-CHG-001 v1.12 §8.3 — the daily approaching-milestone nudge. Creates no
 # task, no state and no blocking condition; deduplicated per item/milestone/day.
-scheduler_events = {
-	"daily": [
-		"kentender_procurement.procurement_planning.services.schedule.check_approaching_milestones",
+# PLN-CHG-001 v1.23 §7.5 (PLN23-CHG-001): the MVP registers no forecast or
+# milestone-notification scheduler job. `check_approaching_milestones` remains
+# in `procurement_planning/services/schedule.py` with its tests, but it is not
+# scheduled, routed or invoked from configuration. Re-register it only when the
+# forecast/reminder facility is separately approved under §15.3.
+scheduler_events: dict[str, list[str]] = {
+	# TPR-CHG-001 v0.8 §5.1 / plan D9 — the submission period closes by the
+	# system, one Tender per transaction, idempotent.
+	"hourly": ["kentender_procurement.tenders.services.submission_close.close_due_submission_periods"],
+	# TPR-CHG-001 v0.12 §4.9A — dispatch Queued candidate notices (the outbox
+	# sweep; every scheduler tick).
+	"all": [
+		"kentender_procurement.tenders.services.candidate_notices.dispatch_pending",
+		# BDS-CHG-001 v0.8 plan D8 — resolve uncertain submission attempts from
+		# the tender box's answer for the same correlation (never a re-send).
+		"kentender_procurement.bid_submission.services.submission.reconcile_uncertain_attempts",
+		# BDS-CHG-001 v0.8 plan D9 — close each Tender's box after Tenders ends its
+		# submission period, and issue the sealed Bid Opening hand-off.
+		"kentender_procurement.bid_submission.services.close.consume_tender_events",
+		# BDS-CHG-001 v0.8 §5.14 — hand-offs and operational incidents follow
+		# service health, newly effective addenda and the deadline.
+		"kentender_procurement.bid_submission.services.handoffs.sweep",
+		# BOP-CHG-001 v0.10 plan D7/D8/D11 — prepare opening cases, receive the sealed
+		# close, record presence lapses and open Opening access support incidents.
+		"kentender_procurement.bid_opening.services.sweep.run",
+		# EVL-CHG-001 v0.4 plan D25 — prepare evaluations on publication, take up a
+		# completed opening, close on a final no-bids opening, apply owner events.
+		"kentender_procurement.bid_evaluation.services.sweep.run",
+		# AWD-CHG-001 v0.4 plan D9 — receipt retries, Tenders' events, corrections,
+		# deadlines and technical retries for awards.
+		"kentender_procurement.award.services.sweep.run",
 	],
 }
 
@@ -544,8 +612,9 @@ scheduler_events = {
 
 after_migrate = [
 	"kentender_procurement.setup.after_migrate_navigation.run",
-	# TPR-CHG-001 v0.6 §6.3 — idempotent installer of the read-only template registry row.
-	"kentender_procurement.tender_templates.registry.after_migrate",
+	# STD-TPL-IMP-001 v1.0: STD releases are installed only by
+	# `make std-release-install` (never on migrate); the old
+	# `tender_templates.registry.after_migrate` auto-install is retired.
 ]
 
 boot_session = [
@@ -558,7 +627,13 @@ kt_my_work_providers = [
 	"kentender_procurement.departmental_needs.services.my_work_provider.my_work_rows",
 	"kentender_procurement.procurement_planning.services.my_work_provider.my_work_rows",
 	"kentender_procurement.procurement_requisitions.services.my_work_provider.my_work_rows",
-	"kentender_procurement.tender_preparation.services.my_work_provider.my_work_rows",
+	"kentender_procurement.tenders.services.my_work_provider.my_work_rows",
+	# BOP-CHG-001 v0.10 §5 hand-off table (plan D11).
+	"kentender_procurement.bid_opening.services.my_work_provider.my_work_rows",
+	# EVL-CHG-001 v0.4 §7.3 hand-off register (plan D11).
+	"kentender_procurement.bid_evaluation.services.my_work_provider.my_work_rows",
+	# AWD-CHG-001 v0.4 §5.9 work items (plan D12).
+	"kentender_procurement.award.services.tasks.my_work_rows",
 ]
 
 # AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical
@@ -569,16 +644,21 @@ kt_technical_reference_resolvers = [
 	"kentender_procurement.departmental_needs.services.technical_read.reference_resolvers",
 	"kentender_procurement.procurement_planning.services.technical_read.reference_resolvers",
 	"kentender_procurement.procurement_requisitions.services.technical_read.reference_resolvers",
-	"kentender_procurement.tender_preparation.services.technical_read.reference_resolvers",
-	"kentender_procurement.std_configuration.services.technical_read.reference_resolvers",
+	"kentender_procurement.tenders.services.technical_read.reference_resolvers",
+	"kentender_procurement.std_templates.services.technical_read.reference_resolvers",
+	"kentender_procurement.bid_submission.services.technical_read.reference_resolvers",
+	"kentender_procurement.bid_opening.services.technical_read.reference_resolvers",
+	"kentender_procurement.award.services.technical_read.reference_resolvers",
 ]
 
 kt_technical_read_probes = [
 	"kentender_procurement.departmental_needs.services.technical_read.read_probes",
 	"kentender_procurement.procurement_planning.services.technical_read.read_probes",
 	"kentender_procurement.procurement_requisitions.services.technical_read.read_probes",
-	"kentender_procurement.tender_preparation.services.technical_read.read_probes",
-	"kentender_procurement.std_configuration.services.technical_read.read_probes",
+	"kentender_procurement.tenders.services.technical_read.read_probes",
+	"kentender_procurement.std_templates.services.technical_read.read_probes",
+	"kentender_procurement.bid_submission.services.technical_read.read_probes",
+	"kentender_procurement.award.services.technical_read.read_probes",
 ]
 
 # Optional hooks for downstream tendering implementations (v2+). Each path: dotted ``callable(payload: dict)``.
@@ -593,7 +673,6 @@ fixtures = [
 				"name",
 				"in",
 				[
-					"Governance & Configuration",
 					"Procurement Home",
 				],
 			]
@@ -615,11 +694,21 @@ fixtures = [
 	},
 ]
 
+# REQ-CHG-001 v1.11 §9.1B — Planning emits PlanItemCorrectionOutcome.v1 to
+# these consumers inside its terminal disposition transaction; Planning never
+# imports the Requisitions lifecycle.
+kt_plan_item_correction_outcome_consumers = [
+	"kentender_procurement.procurement_requisitions.services.correction.record_plan_item_correction_outcome",
+]
 
+# BUD-CHG-001 v1.11 §8.5 / PLN-CHG-001 v1.27 §7.3 — Planning consumes
+# BudgetRevisionRequestOutcome.v1 from Budget's outbox (Budget calls the
+# consumers; it never imports Planning).
+kt_budget_revision_outcome_consumers = [
+	"kentender_procurement.procurement_planning.services.budget_revision.receive_budget_revision_outcome",
+]
 
-
-
-
-
-
-
+# BDS-CHG-001 v0.8 §12 (BDS01-AC-080): a bid's content is never a Desk read.
+for _bds_content in ("Bid Section Response", "Bid Evidence", "Bid Draft Change", "Bid Command Journal", "Bid Receipt", "Bid Submission Change"):
+	has_permission[_bds_content] = "kentender_procurement.bid_submission.services.bid_authorization.deny_desk_access"
+	permission_query_conditions[_bds_content] = "kentender_procurement.bid_submission.services.bid_authorization.deny_desk_query"

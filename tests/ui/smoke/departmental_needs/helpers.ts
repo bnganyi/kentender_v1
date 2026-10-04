@@ -77,9 +77,39 @@ export function resetFixture<T = Record<string, unknown>>(fn: string): T {
 	}
 }
 
-/** Remove every Playwright-owned row, leaving the §14 seed untouched. */
+/**
+ * Remove every Playwright-owned row, leaving the §14 seed untouched —
+ * including the Draft departmental plans Planning's own `dpp_autostart`
+ * opened when this suite accepted a Need (stamped with this suite's
+ * namespace, but Planning-owned, so Planning's purge removes them).
+ */
 export function clearFixtures(): void {
 	bench(`execute ${FIXTURES}.reset_all --kwargs "{'commit': True}"`);
+	bench(
+		`execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.purge_planning_rows_for_namespace --kwargs "{'namespace': 'KENTENDER_NDS_PLAYWRIGHT', 'commit': True}"`,
+	);
+}
+
+/**
+ * The site's own clock, in the naive local (EAT) format `creation` columns
+ * are stored in — not a JS `Date`, which is UTC-labelled and would read as
+ * ~3 hours behind real EAT wall-clock once compared against `creation`.
+ */
+export function siteNow(): string {
+	return bench(`execute ${FIXTURES}.now_marker`).trim().replace(/^"|"$/g, "");
+}
+
+/**
+ * Remove `Departmental Need` rows (and everything under them) minted through
+ * a real UI-driven create/submit/propose-change click rather than a fixture
+ * builder — so never stamped with a namespace `clearFixtures()` can find.
+ * The design-fidelity spec's DES-04/08/09 tests reach several states this
+ * way; without this they leak real-looking `NDS-MOH-2027-####` rows forever.
+ * Pass a `siteNow()` timestamp captured before any test ran, so the §14
+ * canonical seed, created long before, is never at risk.
+ */
+export function purgeUntaggedNeedsSince(since: string): void {
+	bench(`execute ${FIXTURES}.purge_untagged_needs_since --kwargs "{'since': '${since}', 'commit': True}"`);
 }
 
 /** The §10 canonical route. `/app` is rewritten to `/desk` by Frappe itself. */
@@ -117,16 +147,15 @@ export async function expectScreen(page: Page, screen: string): Promise<void> {
  * (mirrored by `DepartmentalNeeds.vue`'s own `selectionRequired`) never shows
  * a picker for a one-option scope, and the site carries exactly one Open
  * Fiscal Year at a time (CFG-BR-010), so `financialYears.length` is never
- * greater than one either. There is therefore no stable identifier for a
- * caller to supply today — the old hardcoded Organisation Unit argument is
- * gone.
+ * greater than one either.
  *
- * This helper stays deliberately defensive rather than being deleted: it
- * remains a no-op whenever the shell is not on `"context-selection"` (every
- * call today), and picks the first selectable option in each control when it
- * is — so a future fixture actor granted more than one Organisation Unit, or
- * a second concurrently-open Fiscal Year, does not silently strand every
- * calling spec at an unhandled picker.
+ * 21 Sep 2026 — the `"context-selection"` screen itself is retired
+ * (`ContextPicker.vue` deleted): NDS-CHG-001 v1.13 §12.1 forbids any
+ * pre-entry selection screen, several departments included — the workspace
+ * now always loads directly, with Department as an ordinary filter. This
+ * helper is kept as a permanent no-op (the guard below never fires any more)
+ * rather than deleted, so the many call sites across this suite do not each
+ * need editing for a screen that no longer exists.
  */
 export async function selectContext(page: Page): Promise<void> {
 	const shell = page.locator('[data-testid="nds-shell"]');
@@ -177,7 +206,16 @@ export function collectConsoleErrors(page: Page): string[] {
 		// parser-initiated Image request, no matching element in any frame).
 		// It surfaced only intermittently, poisoning unrelated specs.
 		if (url && /\/undefined$/.test(url)) return;
-		if (message.type() === "error") errors.push(url ? `${message.text()} (${url})` : message.text());
+		// Known phantom, not ours: the realtime socket.io connection is not
+		// part of any Departmental Needs page-ready contract, and a dev
+		// environment without its server running (or a slow handshake) 404s
+		// the polling transport on every Desk load — matching the same filter
+		// already established in Strategy/Requisitions/Planning/Tender
+		// Preparation's own helpers.
+		const text = message.text();
+		if (text.includes("socket.io") || text.includes("ERR_CONNECTION_REFUSED")) return;
+		if (text.includes("Failed to load resource") && url && /\/socket\.io\//.test(url)) return;
+		if (message.type() === "error") errors.push(url ? `${text} (${url})` : text);
 	});
 	page.on("pageerror", (error) => errors.push(String(error)));
 	return errors;

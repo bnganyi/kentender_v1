@@ -91,63 +91,9 @@ def probe_demo_platform_transitions(*, mutate: bool = False) -> dict[str, Any]:
 			{"error": str(exc), "std": std, "status": status},
 		)
 
-	# Bid sealed — can_open probe
-	try:
-		from kentender_procurement.tender_configurations.services.bid_submissions import (
-			get_bid_submission_sealed_status,
-			list_bid_submission_tenders,
-		)
-
-		listed = list_bid_submission_tenders(page=1, page_size=50)
-		rows = (listed or {}).get("rows") or []
-		stages = {r.get("submission_stage") for r in rows}
-		add(
-			"bid_landing_stages",
-			bool(rows)
-			and bool(
-				stages
-				& {
-					"Receiving submissions",
-					"Closed and sealed",
-					"Opened",
-					"Released to evaluation",
-				}
-			),
-			{"count": len(rows), "stages": sorted(stages)},
-		)
-		sealed_row = next(
-			(r for r in rows if r.get("submission_stage") == "Closed and sealed"), None
-		)
-		if sealed_row:
-			st = get_bid_submission_sealed_status(sealed_row["publication_id"])
-			add(
-				"bid_sealed_status",
-				bool(st.get("status_label") or st.get("submission_stage")),
-				{
-					"can_open": st.get("can_open_submitted_bids"),
-					"publication_id": sealed_row["publication_id"],
-				},
-			)
-			if mutate and st.get("can_open_submitted_bids"):
-				from kentender_procurement.tender_configurations.services.bid_submissions import (
-					open_submitted_bids,
-				)
-
-				opened = open_submitted_bids(sealed_row["publication_id"])
-				add(
-					"bid_open_mutate",
-					cstr(opened.get("submission_stage")) == "Opened"
-					or bool(opened.get("opening_ref")),
-					{
-						"submission_stage": opened.get("submission_stage"),
-						"opening_ref": opened.get("opening_ref"),
-						"active_bids_opened": opened.get("active_bids_opened"),
-					},
-				)
-		else:
-			add("bid_sealed_status", False, "no sealed row")
-	except Exception as exc:  # noqa: BLE001
-		add("bid_landing_stages", False, str(exc))
+	# Bid sealed / open probes — the legacy bid-submission slice was retired by
+	# BDS-CHG-001 v0.8 Phase 1; the new Bid Submission module owns bids.
+	add("bid_landing_stages", True, "skipped: BID_SUBMISSION_MODULE_RETIRED")
 
 	# Optional DIA submit mutate — retired with Demand Intake teardown.
 	if mutate and draft:

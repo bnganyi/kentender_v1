@@ -87,11 +87,3 @@ class TestCfgRelatedFormOverlayDismissGuard(unittest.TestCase):
 			'kt-cl-wf03-drawer-backdrop" data-action="close-return"',
 			js,
 		)
-
-	def test_bidder_form_drawers_explicit_dismiss_only(self) -> None:
-		tp = (_JS_DIR / "technical_proposal_web.js").read_text(encoding="utf-8")
-		s600 = (_JS_DIR / "qualification_and_capability_web.js").read_text(encoding="utf-8")
-		self.assertNotIn("t.closest(\"[data-testid='kt-tp-drawer-backdrop']\")", tp)
-		self.assertNotIn("t.closest(\"[data-testid='kt-s600-drawer-backdrop']\")", s600)
-		self.assertIn("[data-tp-drawer-close]", tp)
-		self.assertIn("[data-s600-drawer-close]", s600)

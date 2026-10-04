@@ -20,6 +20,9 @@ export async function frappeCall(method, args) {
 		return response.message;
 	} catch (xhr) {
 		const err = new Error(extractErrorMessage(xhr));
+		const structured = extractStructured(xhr);
+		err.code = structured.code || "";
+		err.detail = structured.detail || {};
 		// frappe.PermissionError responds with HTTP 403 (frappe/exceptions.py) —
 		// exposed so a caller can distinguish "forbidden" from any other
 		// failure (e.g. to pick the Forbidden vs Server-error empty state)
@@ -53,4 +56,20 @@ function extractErrorMessage(xhr) {
 	}
 	if (xhr && xhr.statusText && xhr.statusText !== "error") return xhr.statusText;
 	return __("Something went wrong. Please try again.");
+}
+
+// REQ-CHG-001 v1.11 §11 — the closed error code and its detail (the affected
+// row or field) ride on the server message log; see services/errors.fail().
+function extractStructured(xhr) {
+	const data = xhr && xhr.responseJSON;
+	if (!data || !data._server_messages) return {};
+	try {
+		for (const raw of JSON.parse(data._server_messages).reverse()) {
+			const m = typeof raw === "string" ? JSON.parse(raw) : raw;
+			if (m && m.kt_req) return m.kt_req;
+		}
+	} catch (e) {
+		return {};
+	}
+	return {};
 }

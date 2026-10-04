@@ -1,0 +1,186 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "§5.5 report: generated from the record; frozen as one exact version with its annexes; superseded versions stay historical.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "report_id",
+  "evaluation_case",
+  "version_number",
+  "state",
+  "narrative",
+  "content_json",
+  "content_digest",
+  "outcome",
+  "recommended_bid",
+  "recommended_total",
+  "qualifications_json",
+  "source_versions_json",
+  "frozen_by",
+  "frozen_at",
+  "record_version_reference",
+  "change_summary",
+  "supersession_kind",
+  "supersession_reason",
+  "superseded_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "report_id",
+   "fieldtype": "Data",
+   "label": "Report ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "evaluation_case",
+   "fieldtype": "Link",
+   "label": "Evaluation case",
+   "read_only": 1,
+   "options": "Evaluation Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Version number",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "read_only": 1,
+   "options": "Draft\nSigning\nDelivered\nSuperseded\nReturned",
+   "reqd": 1
+  },
+  {
+   "fieldname": "narrative",
+   "fieldtype": "Small Text",
+   "label": "Narrative",
+   "read_only": 1
+  },
+  {
+   "fieldname": "content_json",
+   "fieldtype": "Long Text",
+   "label": "Content json",
+   "read_only": 1
+  },
+  {
+   "fieldname": "content_digest",
+   "fieldtype": "Data",
+   "label": "Content digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "outcome",
+   "fieldtype": "Data",
+   "label": "Outcome",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recommended_bid",
+   "fieldtype": "Data",
+   "label": "Recommended bid",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recommended_total",
+   "fieldtype": "Data",
+   "label": "Recommended total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "qualifications_json",
+   "fieldtype": "Long Text",
+   "label": "Qualifications json",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_versions_json",
+   "fieldtype": "Long Text",
+   "label": "Source versions json",
+   "read_only": 1
+  },
+  {
+   "fieldname": "frozen_by",
+   "fieldtype": "Link",
+   "label": "Frozen by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "frozen_at",
+   "fieldtype": "Datetime",
+   "label": "Frozen at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version_reference",
+   "fieldtype": "Data",
+   "label": "Proceedings record version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "change_summary",
+   "fieldtype": "Small Text",
+   "label": "Change summary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supersession_kind",
+   "fieldtype": "Select",
+   "label": "Supersession kind",
+   "read_only": 1,
+   "options": "\nConcern\nRevision\nReturn\nSource change\nRoster change\nValidity\nCancellation"
+  },
+  {
+   "fieldname": "supersession_reason",
+   "fieldtype": "Small Text",
+   "label": "Supersession reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "superseded_at",
+   "fieldtype": "Datetime",
+   "label": "Superseded at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1,
+   "reqd": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Evaluation",
+ "name": "Evaluation Report Version",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:report_id"
+}

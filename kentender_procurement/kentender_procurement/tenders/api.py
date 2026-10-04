@@ -1,0 +1,294 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""TPR-CHG-001 v0.12 — Tenders API surface (§7.1 reads, §7.2–7.4 commands).
+
+Every endpoint keeps an explicit signature: the framework passes the whole
+`form_dict` (including `cmd`/`csrf_token`) into a whitelisted method that
+declares `**kwargs` (the NDS-914 class), and a form field named `values`
+shadows `frappe._dict.values()` — so JSON-payload parameters are named for
+what they carry (`draft_values`, `evidence_values`, ...). Record reads mask
+an unauthorised or missing record as `{"outcome": "NOT_FOUND"}` data so no
+Frappe "Not found" modal ever appears on a Vue surface (AGENTS §6.10)."""
+
+from __future__ import annotations
+
+import json
+from typing import Any
+
+import frappe
+
+from kentender_procurement.tenders.services import addenda, cancellation, candidate_notices, clarifications, correction, documents, draft_commands as cmd, history, lifecycle, open_period_read, publication, read, submission_close
+
+
+def _parse_json(value, default):
+	if value is None:
+		return default
+	if isinstance(value, str):
+		return json.loads(value) if value.strip() else default
+	return value
+
+
+def _masked_read(fn, arguments: dict[str, Any]) -> dict[str, Any]:
+	try:
+		return fn(**arguments)
+	except frappe.DoesNotExistError:
+		return {"outcome": "NOT_FOUND", "heading": "Tender not found", "text": "This Tender is unavailable or you do not have permission to view it."}
+
+
+# --------------------------------------------------------------------------
+# §7.1 Reads
+# --------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def get_tenders_workspace(search: str = "", status: str = "", fiscal_year: str = "") -> dict[str, Any]:
+	return read.get_tenders_workspace(search=search, status=status, fiscal_year=fiscal_year)
+
+
+@frappe.whitelist()
+def get_tender_start(handoff: str) -> dict[str, Any]:
+	return _masked_read(read.get_tender_start, dict(handoff=handoff))
+
+
+@frappe.whitelist()
+def get_tender(tender: str) -> dict[str, Any]:
+	return _masked_read(read.get_tender, dict(tender=tender))
+
+
+@frappe.whitelist()
+def get_tender_review(tender: str) -> dict[str, Any]:
+	return _masked_read(read.get_tender_review, dict(tender=tender))
+
+
+@frappe.whitelist()
+def get_tender_history(tender: str) -> dict[str, Any]:
+	return _masked_read(history.get_tender_history, dict(tender=tender))
+
+
+@frappe.whitelist()
+def get_tender_publication(tender: str) -> dict[str, Any]:
+	return _masked_read(publication.get_tender_publication, dict(tender=tender))
+
+
+@frappe.whitelist()
+def get_tender_document(digest: str, audience: str = "Internal") -> dict[str, Any]:
+	return _masked_read(documents.get_tender_document, dict(digest_value=digest, audience=audience))
+
+
+@frappe.whitelist()
+def preview_tender_documents(tender: str) -> dict[str, Any]:
+	"""§11.3 Preview Invitation / Preview complete Tender — a read-only
+	render of the current saved Version; freezes and submits nothing."""
+	from kentender_procurement.tenders.services import render_service, snapshot as snap
+	from kentender_procurement.tenders.services import tender_authorization as authz
+
+	def _preview(tender: str) -> dict[str, Any]:
+		actor = authz.actor()
+		root = frappe.get_doc("Tender", cmd.resolve_tender_name(tender))
+		mode = authz.reader_mode(actor, contributing_org_units=authz.contributing_units_of(root))
+		if mode == "department":
+			authz.not_found()
+		version = frappe.get_doc("Tender Version", root.current_version)
+		out = render_service.render(root, version, snap.load(version), approval=render_service.approval_block(version))
+		return {"outcome": "OK", "invitation_html": out["invitation_html"], "issued_tender_html": out["issued_tender_html"], "invitation_digest": out["invitation_digest"], "issued_tender_digest": out["issued_tender_digest"], "problems": out["problems"]}
+
+	return _masked_read(_preview, dict(tender=tender))
+
+
+# --------------------------------------------------------------------------
+# §7.2 Preparation and approval commands
+# --------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def start_tender(handoff: str, idempotency_key: str) -> dict[str, Any]:
+	return cmd.start_tender(handoff=handoff, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def save_tender_draft(tender: str, draft_values, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return cmd.save_tender_draft(tender=tender, values=_parse_json(draft_values, {}), expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def add_tender_evidence_requirement(tender: str, evidence_values, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return cmd.add_tender_evidence_requirement(tender=tender, values=_parse_json(evidence_values, {}), expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def update_tender_evidence_requirement(tender: str, evidence_requirement_id: str, evidence_values, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return cmd.update_tender_evidence_requirement(tender=tender, evidence_requirement_id=evidence_requirement_id, values=_parse_json(evidence_values, {}), expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def remove_tender_evidence_requirement(tender: str, evidence_requirement_id: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return cmd.remove_tender_evidence_requirement(tender=tender, evidence_requirement_id=evidence_requirement_id, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def submit_tender_for_approval(tender: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return lifecycle.submit_tender_for_approval(tender=tender, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def return_tender_for_correction(tender: str, reason: str, affected_task: str, expected_record_version, idempotency_key: str, task: str = "", task_token: str = "") -> dict[str, Any]:
+	return lifecycle.return_tender_for_correction(tender=tender, reason=reason, affected_task=affected_task, expected_record_version=expected_record_version, idempotency_key=idempotency_key, task=task, task_token=task_token)
+
+
+@frappe.whitelist()
+def approve_tender_package(tender: str, expected_record_version, idempotency_key: str, task: str = "", task_token: str = "") -> dict[str, Any]:
+	return lifecycle.approve_tender_package(tender=tender, expected_record_version=expected_record_version, idempotency_key=idempotency_key, task=task, task_token=task_token)
+
+
+@frappe.whitelist()
+def reopen_approved_tender(tender: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return lifecycle.reopen_approved_tender(tender=tender, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def request_requisition_correction(tender: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return correction.request_requisition_correction(tender=tender, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def start_corrected_tender_version(tender: str, handoff: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return correction.start_corrected_tender_version(tender=tender, handoff=handoff, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+# --------------------------------------------------------------------------
+# §7.3 Publication commands
+# --------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def authorise_tender_publication(tender: str, expected_record_version, idempotency_key: str, task: str = "", task_token: str = "") -> dict[str, Any]:
+	return publication.authorise_tender_publication(tender=tender, expected_record_version=expected_record_version, idempotency_key=idempotency_key, task=task, task_token=task_token)
+
+
+@frappe.whitelist()
+def confirm_publication_channel(tender: str, channel: str, available_at: str, evidence_reference: str, evidence_file: str, package_digest: str, expected_record_version, idempotency_key: str, public_url: str = "", url_not_applicable_reason: str = "", evidence_notes: str = "", attestation_confirmed=False) -> dict[str, Any]:
+	return publication.confirm_publication_channel(
+		tender=tender, channel=channel, available_at=available_at, evidence_reference=evidence_reference, evidence_file=evidence_file, package_digest=package_digest, expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, evidence_notes=evidence_notes, attestation_confirmed=str(attestation_confirmed).lower() in ("1", "true"),
+	)
+
+
+@frappe.whitelist()
+def return_approved_tender(tender: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return publication.return_approved_tender(tender=tender, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def withdraw_publication_authorisation(tender: str, reason: str, evidence: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return publication.withdraw_publication_authorisation(tender=tender, reason=reason, evidence=evidence, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+# --------------------------------------------------------------------------
+# §7.4 Open-period and cancellation
+# --------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def get_tender_addendum(tender: str, addendum: str = "") -> dict[str, Any]:
+	return _masked_read(open_period_read.get_tender_addendum, dict(tender=tender, addendum=addendum))
+
+
+@frappe.whitelist()
+def get_tender_clarification(tender: str, clarification: str) -> dict[str, Any]:
+	return _masked_read(open_period_read.get_tender_clarification, dict(tender=tender, clarification=clarification))
+
+
+@frappe.whitelist()
+def get_tender_cancellation(tender: str) -> dict[str, Any]:
+	return _masked_read(open_period_read.get_tender_cancellation, dict(tender=tender))
+
+
+@frappe.whitelist()
+def get_tender_submission_handoff(tender: str) -> dict[str, Any]:
+	return _masked_read(submission_close.get_submission_handoff, dict(tender=tender))
+
+
+@frappe.whitelist()
+def create_addendum_draft(tender: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return addenda.create_addendum_draft(tender=tender, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def update_addendum_draft(tender: str, addendum: str, addendum_values, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return addenda.update_addendum_draft(tender=tender, addendum=addendum, values=_parse_json(addendum_values, {}), expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def submit_addendum_for_issue(tender: str, addendum: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return addenda.submit_addendum_for_issue(tender=tender, addendum=addendum, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def return_addendum_for_correction(tender: str, addendum: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return addenda.return_addendum_for_correction(tender=tender, addendum=addendum, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def issue_addendum(tender: str, addendum: str, expected_record_version, idempotency_key: str, task: str = "", task_token: str = "") -> dict[str, Any]:
+	return addenda.issue_addendum(tender=tender, addendum=addendum, expected_record_version=expected_record_version, idempotency_key=idempotency_key, task=task, task_token=task_token)
+
+
+@frappe.whitelist()
+def confirm_addendum_publication_channel(tender: str, addendum: str, channel: str, available_at: str, evidence_reference: str, evidence_file: str, addendum_digest: str, expected_record_version, idempotency_key: str, public_url: str = "", url_not_applicable_reason: str = "", evidence_notes: str = "", attestation_confirmed=False) -> dict[str, Any]:
+	return addenda.confirm_addendum_publication_channel(
+		tender=tender, addendum=addendum, channel=channel, available_at=available_at, evidence_reference=evidence_reference, evidence_file=evidence_file, addendum_digest=addendum_digest, expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, evidence_notes=evidence_notes, attestation_confirmed=str(attestation_confirmed).lower() in ("1", "true"),
+	)
+
+
+@frappe.whitelist()
+def discard_addendum_draft(tender: str, addendum: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return addenda.discard_addendum_draft(tender=tender, addendum=addendum, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def request_tender_cancellation_review(tender: str, addendum: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return addenda.request_tender_cancellation_review(tender=tender, addendum=addendum, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def close_tender_cancellation_review(tender: str, addendum: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return addenda.close_tender_cancellation_review(tender=tender, addendum=addendum, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def receive_tender_clarification(tender: str, candidate_registration_id: str, question: str, inbound_event_id: str, received_at: str = "", related_addendum: str = "") -> dict[str, Any]:
+	"""Bid Submission owner event (service identity only)."""
+	return clarifications.receive_tender_clarification(tender=tender, candidate_registration_id=candidate_registration_id, question=question, inbound_event_id=inbound_event_id, received_at=received_at or None, related_addendum=related_addendum)
+
+
+@frappe.whitelist()
+def respond_to_tender_clarification(tender: str, clarification: str, response: str, affects_published_tender, expected_record_version, idempotency_key: str, response_audience: str = "", required_addendum: str = "") -> dict[str, Any]:
+	return clarifications.respond_to_tender_clarification(
+		tender=tender, clarification=clarification, response=response, affects_published_tender=affects_published_tender, response_audience=response_audience,
+		required_addendum=required_addendum, expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def retry_failed_candidate_notice(tender: str, notice: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return candidate_notices.retry_failed_candidate_notice(tender=tender, notice=notice, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def recommend_tender_cancellation(tender: str, ground: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return cancellation.recommend_tender_cancellation(tender=tender, ground=ground, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def cancel_tender(tender: str, ground: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return cancellation.cancel_tender(tender=tender, ground=ground, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def record_cancellation_compliance_evidence(tender: str, obligation_id: str, evidence_reference: str, expected_record_version, idempotency_key: str, evidence_file: str = "", available_at: str = "", public_url: str = "", url_not_applicable_reason: str = "", attestation_confirmed=False) -> dict[str, Any]:
+	return cancellation.record_cancellation_compliance_evidence(
+		tender=tender, obligation_id=obligation_id, evidence_reference=evidence_reference, evidence_file=evidence_file, expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+		available_at=available_at or None, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, attestation_confirmed=str(attestation_confirmed).lower() in ("1", "true"),
+	)

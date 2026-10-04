@@ -1,11 +1,18 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 §16 — the deterministic Ministry of Health Requisitions
-seed, chained after Procurement Planning's own §14 pack (implementation
-plan Decision D7: Requisitions is not a canonical seed stage this cycle;
-this module reuses Planning's live MOH Annual Plan rather than building a
-second world).
+"""REQ-CHG-001 v1.11 §16 (unchanged in v1.12) — the deterministic Ministry of
+Health Requisitions seed, chained after Procurement Planning's own §14 pack.
+It is the canonical `requisitions` stage of `kentender_core.seeds.canonical`
+(implementation plan Decision D7 had kept it out of the canonical chain; it
+joined on 9 Sep 2026) and reuses Planning's live MOH Annual Plan rather than
+building a second world.
+
+Every fixture-4 command runs at its §16.4 instant under the frozen seed
+clock (`kentender_core.seeds.clock`, KT-STD-001 v1.8 §8.6); nothing is
+back-stamped. Until 26 Sep 2026 the commands ran on the real clock and four
+columns were back-stamped afterwards, so the digest-protected handoff and
+most rows carried the seeding day.
 
 **Decision D10 (this module).** §16.4 names six lifecycle fixtures plus a
 stopped Version and a Planning correction request, "each its own fixture a
@@ -29,11 +36,10 @@ with its integrated baseline:
 
 - `upsert_requisitions_base()` is the one fixture `run_kentender_mvp_v1`
   builds by default, matching §16.4's exact Authorised timeline (fixture
-  4); the consumed handoff (fixture 6) is produced downstream by Tender
-  Preparation's own §16 seed through a real `PrepareTender` (TPR-CHG-001
-  plan D19 — the synthetic `seed_consumed_handoff()` is retired), which
-  also stamps this module's consumption instant via
-  `stamp_handoff_consumption_clock()`;
+  4); the consumed handoff (fixture 6) is produced downstream by the
+  Tenders seed through a real `StartTender` run at the §16.4 consumption
+  instant (TPR-CHG-001 plan D19 — the synthetic `seed_consumed_handoff()`
+  is retired);
 - `seed_draft_profile()` / `seed_department_task_profile()` /
   `seed_procurement_task_profile()` / `seed_returned_profile()` /
   `seed_upstream_correction_profile()` each tear the fixture down (revoking
@@ -41,15 +47,12 @@ with its integrated baseline:
   unconsumed) and rebuild to their own named state — on demand, never
   called by `run_kentender_mvp_v1` itself.
 
-**Technical-row label deviation (recorded, not fought).** §16.3's table
-shows Memory/Storage capacity/Storage type scoped to "Business laptops";
-the real, tested `_propose_baseline_for_item` widens every baseline row —
-valued or not — to "All items" the moment a second item's identical
-proposal would duplicate it (the fix that closed the 22-row duplication
-defect earlier this build). This seed does not fight that tested behaviour
-to chase the illustrative label; the eleven confirmed rows carry the exact
-characteristics and values §16.3 lists, all under "All items" scope. See
-FOLLOW_UPS.
+**v1.11 package.** The Draft is built exactly as a user builds it: one
+`AddSameSpecificationItems` creates both source-linked laptop rows from one
+shared definition, which generates the code-owned `LAPTOP-REQUIREMENTS-V1`
+proposal (eleven technical rows, six warranty/support values, five
+acceptance checks — the §16.3 values); one `ApplySelectedRequirementPackage`
+then confirms the whole visible proposal and marks it Reviewed.
 """
 
 from __future__ import annotations
@@ -57,8 +60,12 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Any
 
+from decimal import Decimal
+
 import frappe
-from frappe.utils import cstr, flt
+from frappe.utils import cstr
+
+from kentender_core.seeds import clock
 
 NS = "KENTENDER_MVP_1_R1_REQ"
 FY = "2027-2028"
@@ -73,48 +80,25 @@ HRMD_NAME = "Human Resources Management and Development"
 
 SINGLE_ITEM_TITLE = "National digital health infrastructure upgrade"
 COMBINED_ITEM_TITLE = "Clinical training and deployment laptops for digital health rollout"
-BL_HWD = "MOH-BL-HWD-2027"
 DELIVERY_LOCATION = "Ministry of Health Headquarters, Afya House, Nairobi"
 
-# §16.4's exact fixture-4 timeline, stored as UTC equivalents of the stated
-# EAT instants (read models render EAT).
+# §16.4's exact fixture-4 timeline. Site datetimes are naive Africa/Nairobi
+# values, rendered as stored (read.presenters.eat).
 CLOCK = {
-	"draft_opened": "2027-03-01 06:00:00",  # 1 Mar 2027, 09:00 EAT
-	"steps_completed": "2027-03-01 08:00:00",  # 1 Mar 2027, 11:00 EAT
-	"sent_for_department_approval": "2027-03-01 08:05:00",  # 1 Mar 2027, 11:05 EAT
-	"submitted_to_procurement": "2027-03-08 06:00:00",  # 8 Mar 2027, 09:00 EAT
-	"authorised": "2027-03-15 07:00:00",  # 15 Mar 2027, 10:00 EAT
-	"consumed": "2027-03-20 06:00:00",  # 20 Mar 2027, 09:00 EAT
+	"draft_opened": "2027-03-01 09:00:00",
+	"steps_completed": "2027-03-01 11:00:00",
+	"sent_for_department_approval": "2027-03-01 11:05:00",
+	"submitted_to_procurement": "2027-03-08 09:00:00",
+	"authorised": "2027-03-15 10:00:00",
+	"consumed": "2027-03-20 09:00:00",
 }
 
-# §13.7's eleven confirmed rows beyond the five auto-proposed baseline
-# characteristics (electrical_compatibility, new_unused_equipment, memory,
-# storage_capacity, storage_type — see the module docstring's label note).
-_MANUAL_TECHNICAL_ROWS = (
-	{"characteristic_key": "display_size", "value": 14.0},
-	{"characteristic_key": "battery_runtime", "value": 8},
-	{"characteristic_key": "processor_requirement", "value": "64-bit business-class processor, minimum 10 cores or equivalent benchmark"},
-	{"characteristic_key": "operating_system_compatibility", "value": "Approved organisational Windows environment"},
-	{"characteristic_key": "network_connectivity", "value": ["Wi-Fi 6", "Bluetooth 5 or later"]},
-	{
-		"characteristic_key": "required_ports",
-		"value": [
-			{"port_type": "USB-C", "minimum_count": 2},
-			{"port_type": "USB-A", "minimum_count": 2},
-			{"port_type": "HDMI", "minimum_count": 1},
-		],
-	},
-)
-
-_ACCEPTANCE_ROWS = (
-	{"check_type": "Quantity", "pass_condition": "Delivered quantities equal the authorised schedule", "evidence_type": "Inspection record"},
-	{"check_type": "Physical condition", "pass_condition": "No visible damage and all listed accessories are present", "evidence_type": "Inspection record"},
-	{"check_type": "Required specification", "pass_condition": "Every delivered unit complies with all mandatory technical rows", "evidence_type": "Inspection record"},
-	{"check_type": "Functional test", "pass_condition": "Each device powers on and completes the agreed basic functional test", "evidence_type": "Test result"},
-	{"check_type": "Documents received", "pass_condition": "Warranty and delivery documents are received and verified", "evidence_type": "Certificate"},
-)
-
-_VALUE_LESS_BASELINE_DEFAULTS = {"memory": 16, "storage_capacity": 512}
+# §16.3 — each department's equipment row (one shared laptop definition).
+_INTENDED_USE = {
+	HRMD_NAME: f"Clinical training for {HRMD_NAME} staff",
+	DHI_NAME: "Field digital-health deployment for Digital Health staff",
+}
+_SHARED_LAPTOP = {"equipment_category": "Laptop", "item_name": "Business laptops", "delivery_location": DELIVERY_LOCATION, "latest_delivery_date": "2027-09-30"}
 
 
 @contextmanager
@@ -176,7 +160,9 @@ def verify_prerequisites() -> dict[str, str]:
 	need("Charles Mutiso holds Head of Procurement Function", frappe.db.exists("User Responsibility Assignment", {"user": HOPF, "business_role": "Head of Procurement Function", "status": "Enabled"}))
 	need("Naomi Chebet holds Auditor", frappe.db.exists("User Responsibility Assignment", {"user": AUDITOR, "business_role": "Auditor", "status": "Enabled"}))
 	need(f"Delivery Location '{DELIVERY_LOCATION}'", frappe.db.get_value("Delivery Location", DELIVERY_LOCATION, "status") == "Active")
-	need(f"Procurement Budget Line {BL_HWD}", frappe.db.exists("Procurement Budget Line", {"generated_reference": BL_HWD}))
+	from kentender_budget.seeds.kentender_mvp_v1_portfolio import LINES, canonical_budget_line
+
+	need(f"Budget line '{LINES['hwd']['title']}'", canonical_budget_line("hwd"))
 	single_item = _plan_item_id(SINGLE_ITEM_TITLE)
 	combined_item = _plan_item_id(COMBINED_ITEM_TITLE)
 	need(f"Active Plan Item '{SINGLE_ITEM_TITLE}' (run make seed-kentender-mvp-v1 through Planning first)", single_item)
@@ -192,73 +178,59 @@ def verify_prerequisites() -> dict[str, str]:
 # --- shared package-building sequence (§13.5-13.9) ---------------------------
 
 
-def _build_item_package(requisition: str, item_specs: list[dict[str, Any]]) -> None:
-	"""§13.6-13.8 — one Business-laptops item row per spec, all eleven
-	confirmed technical rows, warranty/support and the five acceptance rows,
-	driven entirely through `draft_commands` (never a direct table write).
-	`item_specs` order matches the Requisition's own drawdown lines."""
+def _editor(requisition: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_requisitions.services import read
+
+	return read.get_requisition_record(requisition=requisition, user=frappe.session.user)
+
+
+def _build_item_package(requisition: str, amounts: dict[str, tuple[str, str]] | None = None) -> None:
+	"""§13.4–13.6 through the real commands, as the author: request
+	information, one same-specification laptop set (one row per approved
+	requirement), then the standard package applied once. `amounts` maps a
+	department name to an exact (quantity, KES value) smaller than what
+	remains — a partial draw; every other line keeps the full default."""
 	from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
 
-	root = frappe.get_doc("Procurement Requisition", requisition)
-	version = frappe.get_doc("Requisition Version", root.current_version)
-	lines = sorted(version.drawdown_lines, key=lambda r: r.drawdown_line_id)
-	if len(lines) != len(item_specs):
-		frappe.throw(f"Expected {len(item_specs)} drawdown line(s) on {requisition}, found {len(lines)}.")
-
-	record_version = 0
-	package_version = None
-	for line, spec in zip(lines, item_specs):
-		added = cmd.add_requisition_item(
-			requisition=requisition,
-			values={
-				"plan_item_line_id": line.drawdown_line_id, "equipment_category": "Laptop", "item_name": "Business laptops",
-				"quantity": spec["quantity"], "intended_use": spec["intended_use"],
-				"delivery_location": DELIVERY_LOCATION, "latest_delivery_date": "2027-09-30",
-			},
-			expected_record_version=record_version, idempotency_key=_key(f"{requisition}:item-{line.drawdown_line_id}"),
-		)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", added["package_version"])
-		record_version = package_version.record_version
-
-	for row in list(package_version.technical_requirements):
-		if row.row_status != "Proposed":
-			continue
-		extra = {}
-		if not row.required_value_json:
-			extra["value"] = _VALUE_LESS_BASELINE_DEFAULTS[row.characteristic_key]
-		cmd.confirm_proposed_requirement(
-			requisition=requisition, technical_requirement_id=row.technical_requirement_id,
-			expected_record_version=package_version.record_version, idempotency_key=_key(f"{requisition}:confirm-{row.technical_requirement_id}"),
-			**extra,
-		)
-		package_version.reload()
-
-	for manual in _MANUAL_TECHNICAL_ROWS:
-		cmd.add_technical_requirement(
-			requisition=requisition,
-			values={"characteristic_key": manual["characteristic_key"], "value": manual["value"], "applies_to_scope": "All items"},
-			expected_record_version=package_version.record_version, idempotency_key=_key(f"{requisition}:tech-{manual['characteristic_key']}"),
-		)
-		package_version.reload()
-
-	cmd.save_warranty_and_support(
-		requisition=requisition,
-		values={
-			"minimum_warranty_months": 36, "onsite_support_required": 1, "maximum_support_response_hours": 8,
-			"manufacturer_support_required": 1, "service_location_constraint": "Within Kenya",
-			"support_description": "Supplier to provide escalation and warranty-contact details.",
-		},
-		expected_record_version=package_version.record_version, idempotency_key=_key(f"{requisition}:warranty"),
+	view = _editor(requisition)
+	values: dict[str, Any] = {"requirement_title": COMBINED_ITEM_TITLE, "delivery_location": DELIVERY_LOCATION, "latest_delivery_date": "2027-09-30", "related_services_required": False}
+	if amounts:
+		values["drawdown_lines"] = [
+			{"drawdown_line_id": r["drawdown_line_id"], "requested_quantity": amounts[r["department"]][0], "requested_value": amounts[r["department"]][1]}
+			for r in view["amounts"] if r["department"] in amounts
+		]
+	cmd.save_requisition_summary(
+		requisition=requisition, values=values,
+		expected_record_version=view["header"]["version_record_version"], idempotency_key=_key(f"{requisition}:summary"),
 	)
-	package_version.reload()
+	view = _editor(requisition)
+	rows = [
+		{"drawdown_line_id": r["drawdown_line_id"], "quantity": str(r["quantity"]), "intended_use": _INTENDED_USE[r["department"]]}
+		for r in view["equipment"]["add_rows"]
+	]
+	cmd.add_same_specification_items(
+		requisition=requisition, shared=dict(_SHARED_LAPTOP), rows=rows,
+		expected_record_version=view["package_record_version"], idempotency_key=_key(f"{requisition}:laptops"),
+	)
+	view = _editor(requisition)
+	req = view["requirements"]
 
-	for row in _ACCEPTANCE_ROWS:
-		cmd.add_acceptance_requirement(
-			requisition=requisition,
-			values={"applies_to_scope": "All items", **row},
-			expected_record_version=package_version.record_version, idempotency_key=_key(f"{requisition}:acceptance-{row['check_type']}"),
-		)
-		package_version.reload()
+	def raw(value: dict[str, Any]):
+		return value.get("ports") or value.get("values") or value.get("value")
+
+	technical = [
+		{"technical_requirement_id": r["technical_requirement_id"], "characteristic_key": r["characteristic_key"], "value": raw(r["value"]), "selected": True, "applies_to_scope": r["applies_to_scope"] or "All items"}
+		for g in req["technical_groups"] for r in g["rows"] if r["state"] == "Proposed"
+	]
+	acceptance = [
+		{k: a[k] for k in ("acceptance_requirement_id", "check_type", "pass_condition", "evidence_type", "applies_to_scope", "applies_to_id")} | {"selected": True}
+		for a in req["acceptance"] if a["state"] == "Proposed"
+	]
+	cmd.apply_selected_requirement_package(
+		requisition=requisition, profile_key=req["profile_key"], profile_version=req["profile_version"], proposal_digest=req["proposal_digest"],
+		technical=technical, acceptance=acceptance, support=req["support"],
+		expected_record_version=view["package_record_version"], idempotency_key=_key(f"{requisition}:apply-package"),
+	)
 
 
 # --- fixture 4 (default) / fixture 6 (additive) — the combined item ----------
@@ -290,42 +262,35 @@ def upsert_requisitions_base(*, commit: bool = False) -> dict[str, Any]:
 			frappe.db.commit()
 		return {"ok": True, "idempotent": True, "requisition": row.name}
 
+	if _namespace_blocked(plan_item_id):
+		# An earlier profile left the item locked or held with no live
+		# Requisition: restore the namespace as a profile reset does.
+		_restore_planning_namespace()
+		plan_item_id = verify_prerequisites()["combined_item"]
 	with _as(AUTHOR):
-		prepared = cmd.prepare_it_equipment_requisition(plan_item_id=plan_item_id, idempotency_key=_key(f"{plan_item_id}:prepare"))
+		with clock.at(CLOCK["draft_opened"]):
+			prepared = cmd.prepare_it_equipment_requisition(plan_item_id=plan_item_id, idempotency_key=_key(f"{plan_item_id}:prepare"))
 		requisition = prepared["requisition"]
-		cmd.save_requisition_summary(
-			requisition=requisition,
-			values={
-				"requirement_title": COMBINED_ITEM_TITLE, "delivery_location": DELIVERY_LOCATION,
-				"latest_delivery_date": "2027-09-30", "related_services_required": False,
-			},
-			expected_record_version=0, idempotency_key=_key(f"{requisition}:summary"),
-		)
-		_build_item_package(
-			requisition,
-			[
-				{"quantity": 100, "intended_use": f"Clinical training for {HRMD_NAME} staff"},
-				{"quantity": 150, "intended_use": "Field digital-health deployment for Digital Health staff"},
-			],
-		)
+		with clock.at(CLOCK["steps_completed"]):
+			_build_item_package(requisition)
 		root = frappe.get_doc("Procurement Requisition", requisition)
-		sent = lifecycle.send_for_department_approval(
-			requisition=requisition, expected_record_version=root.record_version, idempotency_key=_key(f"{requisition}:send"),
-		)
+		with clock.at(CLOCK["sent_for_department_approval"]):
+			sent = lifecycle.send_for_department_approval(
+				requisition=requisition, expected_record_version=root.record_version, idempotency_key=_key(f"{requisition}:send"),
+			)
 
-	with _as(HOD):
+	with _as(HOD), clock.at(CLOCK["submitted_to_procurement"]):
 		root.reload()
 		submitted = lifecycle.submit_requisition_to_procurement(
 			requisition=requisition, task=sent["task"], expected_record_version=root.record_version, idempotency_key=_key(f"{requisition}:submit"),
 		)
 
-	with _as(HOPF):
+	with _as(HOPF), clock.at(CLOCK["authorised"]):
 		root.reload()
 		authorised = authorise.authorise_requisition(
 			requisition=requisition, task=submitted["task"], expected_record_version=root.record_version, idempotency_key=_key(f"{requisition}:authorise"),
 		)
 
-	_stamp_design_clock(requisition)
 	if commit:
 		frappe.db.commit()
 	return {
@@ -334,48 +299,17 @@ def upsert_requisitions_base(*, commit: bool = False) -> dict[str, Any]:
 	}
 
 
-def _stamp_design_clock(requisition: str) -> None:
-	root = frappe.get_doc("Procurement Requisition", requisition)
-	version = root.current_version
-	frappe.db.set_value("Requisition Version", version, "creation", CLOCK["draft_opened"], update_modified=False)
-	decisions = frappe.get_all(
-		"Requisition Decision", filters={"requisition_version": version}, fields=["name", "decision"],
-	)
-	stamp_by_decision = {
-		"Submit to Procurement": CLOCK["submitted_to_procurement"],
-		"Authorise for Tender Preparation": CLOCK["authorised"],
-	}
-	for decision in decisions:
-		when = stamp_by_decision.get(decision.decision)
-		if when:
-			frappe.db.set_value("Requisition Decision", decision.name, "decided_at", when, update_modified=False)
-	handoff = frappe.db.get_value("Authorised Requisition Handoff", {"requisition": root.name}, "name")
-	if handoff:
-		frappe.db.set_value("Authorised Requisition Handoff", handoff, "creation", CLOCK["authorised"], update_modified=False)
-
-
-def stamp_handoff_consumption_clock(requisition: str, *, when: str | None = None) -> None:
-	"""§16.4 fixture-6 instant on Requisitions' own consumption columns. The
-	consumer (Tender Preparation's §16 seed) calls this after its real
-	`PrepareTender`; it never writes these rows itself."""
-	when = when or CLOCK["consumed"]
-	handoff = frappe.db.get_value("Authorised Requisition Handoff", {"requisition": requisition}, "name")
-	if handoff and frappe.db.get_value("Authorised Requisition Handoff", handoff, "consumed_at"):
-		frappe.db.set_value("Authorised Requisition Handoff", handoff, "consumed_at", when, update_modified=False)
-		frappe.db.set_value("Procurement Requisition", requisition, "handoff_consumed_at", when, update_modified=False)
-
-
 def seed_consumed_handoff(*, commit: bool = False) -> dict[str, Any]:
-	"""Retired (TPR-CHG-001 v0.6 plan D19). §16.4 fixture 6 — the authorised
-	handoff consumed by a Tender — is now produced by a real `PrepareTender`
-	in `kentender_procurement.tender_preparation.seeds.kentender_mvp_v1
-	.upsert_tender_preparation`, which chains after this module in the core
-	orchestrator; a synthetic consumption by a Tender that does not exist
-	would contradict the live Tender Preparation module."""
+	"""Retired. §16.4 fixture 6 — the authorised handoff consumed by a
+	Tender — is produced by a real `StartTender` in
+	`kentender_procurement.tenders.seeds.kentender_mvp_v1.upsert_tenders`
+	(TPR-CHG-001 v0.8 §13), which chains after this module in the canonical
+	seed; a synthetic consumption by a Tender that does not exist would
+	contradict the live Tenders module."""
 	frappe.throw(
 		"seed_consumed_handoff() is retired: the consumed handoff is seeded by "
-		"kentender_procurement.tender_preparation.seeds.kentender_mvp_v1.upsert_tender_preparation "
-		"(a real Tender), chained after upsert_requisitions_base in the core orchestrator.",
+		"kentender_procurement.tenders.seeds.kentender_mvp_v1.upsert_tenders "
+		"(a real Tender), chained after upsert_requisitions_base in the canonical seed.",
 		frappe.ValidationError,
 	)
 	return {}  # unreachable
@@ -396,23 +330,24 @@ def seed_consumed_handoff(*, commit: bool = False) -> dict[str, Any]:
 # Planning's own §14.10 isolated profiles share one Fiscal Year.
 
 
-def _wipe_combined_item_profile() -> dict[str, int]:
+def _wipe_combined_item_profile(*, cross_module_rebuild: bool = False) -> dict[str, int]:
 	"""Tear down whatever Requisition currently sits on the combined item,
 	revoking first (through the real command) if it reached Authorised and
 	is still unconsumed — the "wipe after authorise" hazard this build
-	learned the hard way. A consumed handoff cannot be reset; this refuses
-	rather than orphaning it."""
+	learned the hard way. Every root on the item goes (a profile may leave
+	more than one, e.g. REQ-SC-SEQUENTIAL)."""
 	plan_item_id = _plan_item_id(COMBINED_ITEM_TITLE)
 	root_row = frappe.db.get_value(
-		"Procurement Requisition", {"plan_item_id": plan_item_id, "current_state": ("not in", ("Withdrawn", "Revoked", "Superseded"))},
+		"Procurement Requisition", {"plan_item_id": plan_item_id, "current_state": "Authorised", "handoff_consumed_at": ("is", "not set")},
+		["name", "current_state", "record_version", "handoff_consumed_at"], as_dict=True,
+	) or frappe.db.get_value(
+		"Procurement Requisition", {"plan_item_id": plan_item_id},
 		["name", "current_state", "record_version", "handoff_consumed_at"], as_dict=True,
 	)
 	deleted: dict[str, int] = {}
 	if not root_row:
 		return deleted
-	if root_row.current_state == "Authorised":
-		if root_row.handoff_consumed_at:
-			frappe.throw(f"{root_row.name}'s handoff is already consumed — this fixture cannot be reset to a different profile.")
+	if root_row.current_state == "Authorised" and not root_row.handoff_consumed_at:
 		from kentender_procurement.procurement_requisitions.services import authorise
 
 		with _as(HOPF):
@@ -420,12 +355,16 @@ def _wipe_combined_item_profile() -> dict[str, int]:
 				requisition=root_row.name, reason="KENTENDER_MVP_V1 profile reseed.",
 				expected_record_version=root_row.record_version, idempotency_key=_key(f"{root_row.name}:profile-revoke"),
 			)
+	# A consumed handoff (a profile's stand-in Tender, D16) cannot be revoked:
+	# its rows go, and the item's permanent scope lock then makes the next
+	# profile or base reseed restore the Planning namespace, which reverses
+	# nothing by hand — Planning and Budget are rebuilt by their own seeds.
 	# The row-shape logic (which doctype hangs off `requisition` directly vs
 	# via `task`/`package`) already lives once in `seeds.clear._delete_for_plan_items`
 	# — reuse it rather than a second, drifting copy.
 	from kentender_procurement.procurement_requisitions.seeds.clear import _delete_for_plan_items
 
-	deleted = _delete_for_plan_items([plan_item_id])
+	deleted = _delete_for_plan_items([plan_item_id], cross_module_rebuild=cross_module_rebuild)
 	journal = frappe.get_all("Requisition Command Journal", filters={"idempotency_key": ("like", "req-seed:%")}, pluck="name")
 	frappe.db.delete("Requisition Command Journal", {"name": ("in", journal or ("",))})
 	deleted["Requisition Command Journal"] = len(journal)
@@ -470,19 +409,53 @@ def recover_orphaned_drawdowns(*, commit: bool = False) -> dict[str, Any]:
 	return {"ok": True, "reversed": reversed_rows}
 
 
-def reset_requisitions_seed(*, commit: bool = False) -> dict[str, int]:
+def reset_requisitions_seed(*, commit: bool = False, cross_module_rebuild: bool = False) -> dict[str, int]:
+	"""`cross_module_rebuild` is for `canonical.clear_canonical_modules` only
+	(see `seeds.clear._delete_for_plan_items`)."""
 	_guard()
 	frappe.set_user("Administrator")
-	deleted = _wipe_combined_item_profile()
+	deleted = _wipe_combined_item_profile(cross_module_rebuild=cross_module_rebuild)
 	if commit:
 		frappe.db.commit()
 	return deleted
+
+
+def _namespace_blocked(plan_item_id: str) -> bool:
+	"""The item is not the clean §16.2 base, so it cannot carry a fresh
+	profile or the base fixture: its scope is permanently locked by an
+	earlier authorisation (§7.2), a correction request holds it (§9.1B), it
+	is no longer eligible or compatible (a demo profile published a changed
+	item), or a Planning update is left open."""
+	from kentender_procurement.procurement_requisitions.services import compatibility, eligibility_gateway
+
+	projection = eligibility_gateway.get_requisition_eligible_plan_item(plan_item_id)
+	plan = frappe.db.get_value("Annual Plan", {"plan_reference": projection.get("plan_reference")}, "open_successor_version")
+	return bool(
+		(projection.get("scope") or {}).get("locked") or (projection.get("hold") or {}).get("held") or not projection.get("eligible")
+		or compatibility.first_failure(projection) is not None or plan
+	)
+
+
+def _restore_planning_namespace() -> None:
+	"""§16.4 — profiles are mutually exclusive resets of one isolated
+	namespace. Once the combined item has been authorised its scope lock is
+	permanent (§7.2), even after revocation, so the namespace is restored the
+	way the canonical seed builds it: downstream modules cleared through their
+	own teardown, then Planning (and what it stands on) reseeded through its
+	own published seed. Nothing here writes a Planning row."""
+	from kentender_core.seeds import canonical
+
+	canonical.clear_canonical_modules()
+	canonical.seed(through="planning")
 
 
 def _fresh_combined_item_profile() -> str:
 	_guard()
 	reset_requisitions_seed()
 	prereqs = verify_prerequisites()
+	if _namespace_blocked(prereqs["combined_item"]):
+		_restore_planning_namespace()
+		prereqs = verify_prerequisites()
 	return prereqs["combined_item"]
 
 
@@ -496,27 +469,13 @@ def _build_combined_item_draft() -> str:
 	with _as(AUTHOR):
 		prepared = cmd.prepare_it_equipment_requisition(plan_item_id=plan_item_id, idempotency_key=_key(f"{plan_item_id}:prepare"))
 		requisition = prepared["requisition"]
-		cmd.save_requisition_summary(
-			requisition=requisition,
-			values={
-				"requirement_title": COMBINED_ITEM_TITLE, "delivery_location": DELIVERY_LOCATION,
-				"latest_delivery_date": "2027-09-30", "related_services_required": False,
-			},
-			expected_record_version=0, idempotency_key=_key(f"{requisition}:summary"),
-		)
-		_build_item_package(
-			requisition,
-			[
-				{"quantity": 100, "intended_use": f"Clinical training for {HRMD_NAME} staff"},
-				{"quantity": 150, "intended_use": "Field digital-health deployment for Digital Health staff"},
-			],
-		)
+		_build_item_package(requisition)
 	return requisition
 
 
 def seed_draft_profile(*, commit: bool = False) -> dict[str, Any]:
-	"""§16.4 fixture 1 — one complete Draft owned by Grace Wanjiku (through
-	Step 5, ready to submit but never sent)."""
+	"""§16.4 fixture 1 — one complete Draft owned by Grace Wanjiku (every
+	task complete, ready to send but never sent)."""
 	requisition = _build_combined_item_draft()
 	if commit:
 		frappe.db.commit()
@@ -565,7 +524,7 @@ def seed_returned_profile(*, commit: bool = False) -> dict[str, Any]:
 	with _as(HOPF):
 		task = frappe.get_doc("Requisition Task", submitted["task"])
 		returned = lifecycle.return_requisition_to_department(
-			task=submitted["task"], reason="Confirm the delivery location matches the Ministry Headquarters address on file.",
+			task=submitted["task"], reason="Confirm the delivery location matches the Ministry Headquarters address on file.", affected_section="Request details",
 			expected_record_version=task.record_version, idempotency_key=_key(f"{requisition}:return"),
 		)
 	if commit:
@@ -599,13 +558,13 @@ def seed_upstream_correction_profile(*, commit: bool = False) -> dict[str, Any]:
 
 def validate_requisitions_seed() -> list[dict[str, Any]]:
 	"""§16 — validate the default base fixture (fixture 4) through the same
-	read the UI uses, returning check rows for the core validator."""
-	from kentender_procurement.procurement_requisitions.services import read as req_read
+	reads the UI uses, returning check rows for the core validator."""
+	from kentender_procurement.procurement_requisitions.services import read as req_read, records
 
 	checks: list[dict[str, Any]] = []
 
 	def check(name: str, ok: bool, detail: str = "") -> None:
-		checks.append({"check": f"requisitions.v16.{name}", "ok": bool(ok), "detail": detail})
+		checks.append({"check": f"requisitions.v111.{name}", "ok": bool(ok), "detail": detail})
 
 	plan_item_id = _plan_item_id(COMBINED_ITEM_TITLE)
 	check("combined_item.exists", bool(plan_item_id), plan_item_id)
@@ -618,24 +577,50 @@ def validate_requisitions_seed() -> list[dict[str, Any]]:
 		return checks
 
 	root = frappe.get_doc("Procurement Requisition", root_name)
-	package_version = frappe.get_doc(
-		"IT Equipment Requirement Package Version",
-		frappe.get_doc("Requisition Version", root.current_version).package_version,
-	)
+	requisitions = frappe.db.count("Procurement Requisition")
+	check("requisition.only_one", requisitions == 1, str(requisitions))
+	version = frappe.get_doc("Requisition Version", root.authorised_version or root.current_version)
+	# §16.4 fixture 4 — each command ran at its instant (frozen seed clock).
+	check("clock.draft_opened", str(version.creation)[:19] == CLOCK["draft_opened"], str(version.creation))
+	for decision_name, actor, at in (("Submit to Procurement", HOD, CLOCK["submitted_to_procurement"]), ("Authorise requisition", HOPF, CLOCK["authorised"])):
+		row = records.decision_of(version.name, decision_name)
+		check(f"clock.{decision_name}", bool(row) and row.actor == actor and str(row.decided_at)[:19] == at, cstr(row and (row.actor, row.decided_at)))
+	package_version = frappe.get_doc("IT Equipment Requirement Package Version", version.package_version)
 	check("items.count_2", len(package_version.items) == 2, str(len(package_version.items)))
-	confirmed = [r for r in package_version.technical_requirements if r.row_status == "Confirmed"]
-	check("technical.confirmed_11", len(confirmed) == 11, str(len(confirmed)))
-	check("acceptance.count_5", len(package_version.acceptance_requirements) == 5, str(len(package_version.acceptance_requirements)))
+	confirmed = [r for r in package_version.technical_requirements if r.row_state == "Confirmed"]
+	check("technical.confirmed_11", len(confirmed) == 11 and len(package_version.technical_requirements) == 11, str(len(confirmed)))
+	check("acceptance.confirmed_5", sum(1 for r in package_version.acceptance_requirements if r.row_state == "Confirmed") == 5, str(len(package_version.acceptance_requirements)))
 	check("warranty.36_months", package_version.minimum_warranty_months == 36, str(package_version.minimum_warranty_months))
+	check("package.reviewed", package_version.standard_package_review_state == "Reviewed", cstr(package_version.standard_package_review_state))
+	check("amounts.exact_50m", sum((Decimal(cstr(l.requested_value)) for l in version.drawdown_lines), Decimal(0)) == Decimal("50000000.00"), "")
 
 	handoff = frappe.db.get_value("Authorised Requisition Handoff", {"requisition": root.name}, "name")
 	check("handoff.exists", bool(handoff), str(handoff))
 	if handoff:
-		reservations = frappe.get_all("Funding Reservation", filters={"calling_module": "Procurement Requisitions", "caller_reference": root.requisition_reference, "status": "Active"}, fields=["original_amount"])
-		check("reservations.two", len(reservations) == 2, str(len(reservations)))
-		total = sum(flt(r.original_amount) for r in reservations)
-		check("reservations.total_50m", abs(total - 50_000_000) < 0.01, str(total))
-
-	handoff_view = req_read.get_authorised_requisition_handoff(requisition=root.name, user=HOPF)
-	check("read.authorised_by_hopf", (handoff_view.get("authorised_by") or {}).get("name") == "Charles Mutiso", str(handoff_view.get("authorised_by")))
+		reservations = frappe.get_all(
+			"Funding Reservation", filters={"calling_module": "Procurement Requisitions", "caller_reference": root.requisition_reference, "status": ("in", ("Active", "Partially Converted"))},
+			fields=["original_amount", "drawdown_line_id"],
+		)
+		check("reservations.one_per_line", len(reservations) == 2 and len({r.drawdown_line_id for r in reservations}) == 2, str(len(reservations)))
+		total = sum((Decimal(cstr(r.original_amount)) for r in reservations), Decimal(0))
+		check("reservations.total_50m", total == Decimal("50000000"), str(total))
+		view = req_read.get_authorised_requisition_handoff(requisition=root.name, user=HOPF)
+		check("handoff.version_1_4", view.get("handoff_version") == "1.4", cstr(view.get("handoff_version")))
+		payload = view.get("payload") or {}
+		check("handoff.two_lines", len(payload.get("drawdown_lines") or []) == 2, "")
+		check("handoff.nine_checks", len(payload.get("compatibility") or []) == 9, "")
+		# The digest-protected payload carries the same instants as the rows.
+		certification = (payload.get("departmental_certification") or {}).get("decided_at", "")
+		authorisation = (payload.get("procurement_authorisation") or {}).get("decided_at", "")
+		check("handoff.instants", (certification[:19], authorisation[:19], cstr(payload.get("generated_at"))[:19]) == (CLOCK["submitted_to_procurement"], CLOCK["authorised"], CLOCK["authorised"]), f"{certification} {authorisation} {payload.get('generated_at')}")
+		# REQ §13.1 / SEED-001 v1.3 §3.6 — laptops complete 24 Sep 2027 (60 days).
+		check("handoff.estimated_completion_24_sep_2027", cstr(payload.get("estimated_completion_date"))[:10] == "2027-09-24", cstr(payload.get("estimated_completion_date")))
+		# NDS-CHG-001 v1.14 §14.3 — the HRMD laptops come from Need 3 Revision 2.
+		revisions = sorted(cstr(line.get("need_revision")) for line in payload.get("drawdown_lines") or [])
+		check("handoff.need_3_revision_2", "NDS-MOH-2027-0003-V002" in revisions, str(revisions))
+		consumed_at = frappe.db.get_value("Authorised Requisition Handoff", handoff, "consumed_at")
+		if consumed_at:
+			check("handoff.consumed_20_mar_2027", str(consumed_at)[:19] == CLOCK["consumed"], str(consumed_at))
+	decision = records.decision_of(version.name, "Authorise requisition")
+	check("authorised_by_hopf", bool(decision) and decision.actor == HOPF, cstr(decision.actor if decision else ""))
 	return checks

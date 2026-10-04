@@ -1,0 +1,153 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-01 09:00:00.000000",
+ "description": "\u00a74 notice batch: exact decision/version; coordinated issue; notification status (\u00a75.4).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "batch_id",
+  "award_case",
+  "decision",
+  "version",
+  "kind",
+  "state",
+  "status",
+  "profile_version",
+  "reply_deadline",
+  "authorised_by",
+  "authorised_at",
+  "issued_at",
+  "given_complete_at",
+  "stop_reason",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "batch_id",
+   "label": "Batch ID",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "award_case",
+   "label": "Award case",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "decision",
+   "label": "Decision",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "version",
+   "label": "Version",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "kind",
+   "label": "Kind",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Initial\nRevised"
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Prepared\nAuthorised\nIssuing\nIssued\nStopped"
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Not issued\nIssue in progress\nIssued\nUnknown"
+  },
+  {
+   "fieldname": "profile_version",
+   "label": "Profile version",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "reply_deadline",
+   "label": "Reply deadline",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "authorised_by",
+   "label": "Authorised by",
+   "read_only": 1,
+   "fieldtype": "Link",
+   "options": "User"
+  },
+  {
+   "fieldname": "authorised_at",
+   "label": "Authorised at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "issued_at",
+   "label": "Issued at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "given_complete_at",
+   "label": "Given complete at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "stop_reason",
+   "label": "Stop reason",
+   "read_only": 1,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "read_only": 1,
+   "fieldtype": "Data"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-01 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Award",
+ "name": "Award Notice Batch",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:batch_id"
+}

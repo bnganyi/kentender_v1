@@ -15,8 +15,12 @@ from __future__ import annotations
 
 from uuid import uuid4
 
+import time
+
 import frappe
+import frappe.defaults
 from frappe.tests import IntegrationTestCase
+from frappe.utils import add_days
 
 from kentender_core.services.responsibility_administration import grant
 from kentender_core.services.site_configuration import close_needs_submission, open_needs_submission
@@ -62,7 +66,12 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	upsert_departmental_needs,
 )
 from kentender_procurement.departmental_needs.services import events, lifecycle, workspace
-from kentender_procurement.departmental_needs.services.usage import project_planning_usage
+from kentender_procurement.departmental_needs.services.context import selectable_financial_years
+from kentender_procurement.departmental_needs.services.usage import (
+	older_revision_usage,
+	project_planning_usage,
+)
+from kentender_procurement.departmental_needs.tests import support
 
 REASON = "The department no longer requires this equipment in the target financial year."
 
@@ -77,6 +86,7 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		support.ensure_transitional_reviewer_grant(cls)
 		# Grace's real, granted Digital Health Organisation Unit (§14.2) — the
 		# fixture default this file's commands build against. Resolved from
 		# her actual assignment, never a hardcoded doc name, since the site
@@ -128,6 +138,81 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 			)
 		finally:
 			frappe.set_user(previous)
+
+	def open_window_closing_in(self, seconds: float):
+		"""AUTH-ADR-001 v1.7 §16.3 step 13 — a `closes_at` instant that is
+		reached before the hourly `close_due_needs_submissions` job could
+		possibly have run yet must already have the same effect as a manual
+		close (NDS-AC-056). `open_needs_submission` itself refuses a
+		`closes_at` already in the past (`CFG_INTAKE_CLOSE_INSTANT_INVALID`),
+		so this opens with an instant a few seconds in the future and the
+		test waits for real wall-clock time to pass it — proving the
+		*command-time* check (`needs_submission_state`'s own direct instant
+		comparison), not a mocked clock.
+		"""
+		from frappe.utils import add_to_date, now_datetime
+
+		previous = frappe.session.user
+		frappe.set_user("Administrator")
+		try:
+			open_needs_submission(
+				fiscal_year=FY,
+				closes_at=str(add_to_date(now_datetime(), seconds=seconds)),
+				reason="Test-only near-instant closure.",
+				idempotency_key=self.key(),
+			)
+		finally:
+			frappe.set_user(previous)
+		self.addCleanup(self._reopen_window)
+
+	def open_second_fiscal_year(self) -> str:
+		"""AUTH-ADR-001 v1.7 §16.3 step 9 / NDS-AC-050 (FOLLOW_UPS FU-19) — a
+		second, disposable Fiscal Year to prove multi-year browsing; this
+		site otherwise runs one canonical open year at a time (CFG-BR-006).
+		Opening it auto-closes `FY`, so cleanup restores `FY` exactly as
+		`open_window_closing_in`/`close_window` already do.
+		"""
+		name = "NDS14-MULTI-FY-TEST"
+		if not frappe.db.exists("Fiscal Year", name):
+			frappe.get_doc(
+				{
+					"doctype": "Fiscal Year",
+					"year": name,
+					"year_start_date": "2028-07-01",
+					"year_end_date": "2029-06-30",
+				}
+			).insert(ignore_permissions=True)
+		previous = frappe.session.user
+		frappe.set_user("Administrator")
+		try:
+			open_needs_submission(
+				fiscal_year=name,
+				closes_at="2028-11-25 23:59:00",
+				reason="Test-only second Fiscal Year.",
+				idempotency_key=self.key(),
+			)
+		finally:
+			frappe.set_user(previous)
+		self.addCleanup(self._reopen_window)
+		self.addCleanup(self._drop_plans_on, name)
+		return name
+
+	def _drop_plans_on(self, fiscal_year: str) -> None:
+		"""Remove anything an acceptance started on the disposable year.
+
+		Accepting a Need opens that department's Draft departmental plan —
+		Planning subscribes to the published acceptance event — so a test
+		year can outlive its own rows as a departmental plan pointing at a
+		Fiscal Year that is no longer there.
+		"""
+		roots = frappe.get_all("Departmental Plan", filters={"fiscal_year": fiscal_year}, pluck="name")
+		if not roots:
+			return
+		versions = frappe.get_all("Departmental Plan Version", filters={"departmental_plan": ("in", roots)}, pluck="name")
+		frappe.db.delete("Departmental Plan Entry", {"dpp_version": ("in", versions or ("",))})
+		frappe.db.delete("Departmental Plan Version", {"name": ("in", versions or ("",))})
+		frappe.db.delete("Departmental Plan", {"name": ("in", roots)})
+		frappe.db.delete("Planning Command Journal", {"document_name": ("in", roots)})
 
 	def key(self) -> str:
 		return f"nds-test-{uuid4().hex}"
@@ -305,6 +390,25 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 			self.version(saved["current_revision"]).title, "Revised clinical deployment laptops"
 		)
 
+	def test_save_draft_still_succeeds_once_intake_has_closed(self):
+		# NDS-AC-054 (FOLLOW_UPS FU-19) — closing intake gates *initial*
+		# creation and submission (NDS-BR-002); a Draft/Returned Need already
+		# in progress must still be saveable, since `update_need` never calls
+		# `require_open_intake`.
+		result = self.create()
+		self.close_window()
+		frappe.set_user(AUTHOR)
+		saved = lifecycle.update_need(
+			need=result["need"],
+			expected_version=result["record_version"],
+			idempotency_key=self.key(),
+			**self.content(title="Saved while intake is closed"),
+		)
+		self.assertEqual(saved["action"], "Save draft")
+		self.assertEqual(
+			self.version(saved["current_revision"]).title, "Saved while intake is closed"
+		)
+
 	def test_a_partial_draft_round_trips_through_its_own_saved_values(self):
 		"""§12.3 — a partial Draft must stay saveable with what the read returns.
 
@@ -390,6 +494,33 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 		self.assertEqual(copy.revision_status, REVISION_DRAFT)
 		self.assertEqual(copy.based_on_revision, original)
 		self.assertEqual(copy.title, self.version(original).title)
+
+	def test_get_need_history_names_each_decision_in_order(self):
+		# NDS-CHG-001 v1.13 §11.1/§11.5 — the History disclosure needs the full
+		# decision sequence, plain-language and oldest-first.
+		submitted = self.submit(self.create())
+		returned = self.decide(submitted, "return", reason=REASON)
+		read = workspace.get_need(need=returned["need"], user=AUTHOR)
+		history = read["history"]
+		self.assertEqual(len(history), 2)
+		self.assertIn("Submitted", history[0]["title"])
+		self.assertIn("Revision 1", history[0]["title"])
+		self.assertEqual(history[1]["title"], "Returned for correction")
+		self.assertTrue(history[1]["meta"])
+
+	def test_get_need_names_when_it_was_submitted(self):
+		# NDS-CHG-001 v1.13 §11.6 "Submitted at".
+		submitted = self.submit(self.create())
+		read = workspace.get_need(need=submitted["need"], user=AUTHOR)
+		self.assertIsNotNone(read["submitted"])
+		self.assertTrue(read["submitted"]["occurred_at"])
+
+	def test_get_need_names_the_accepting_capacity(self):
+		# NDS-CHG-001 v1.13 §11.8 "Capacity" — resolved from the exact
+		# assignment the accept decision snapshotted (§15), not guessed.
+		accepted = self.accepted()
+		read = workspace.get_need(need=accepted["need"], user=AUTHOR)
+		self.assertEqual(read["accepted"]["capacity"], "Head of User Department")
 
 	def test_a_resubmitted_correction_keeps_the_returned_version_intact(self):
 		# Revision integrity. The return path is asserted above; this is the other
@@ -553,6 +684,36 @@ class TestDraftContentBounds(ContentValidationCase):
 			self.save_draft(**overrides)
 		self.assertEqual(caught.exception.code, code)
 
+	def year_bounds(self):
+		row = frappe.db.get_value("Fiscal Year", FY, ["year_start_date", "year_end_date"], as_dict=True)
+		return row.year_start_date, row.year_end_date
+
+	def test_a_required_by_date_outside_the_target_year_is_refused_at_save(self):
+		# NDS-AC-005 — the Need is raised against one financial year, so a date
+		# outside it would arrive in Planning as un-plannable in its own year.
+		# UAT issue #25: the form accepted 2030 for FY 2027/28 and only the
+		# submit refused it.
+		start, end = self.year_bounds()
+		self.refuses_at_save("NDS_REQUIRED_BY_OUTSIDE_FY", required_by_date="2030-01-31")
+		self.refuses_at_save("NDS_REQUIRED_BY_OUTSIDE_FY", required_by_date=str(add_days(end, 1)))
+		self.refuses_at_save("NDS_REQUIRED_BY_OUTSIDE_FY", required_by_date=str(add_days(start, -1)))
+
+	def test_a_required_by_date_outside_the_target_year_is_refused_at_creation(self):
+		frappe.set_user(AUTHOR)
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.create(required_by_date="2030-01-31")
+		self.assertEqual(caught.exception.code, "NDS_REQUIRED_BY_OUTSIDE_FY")
+
+	def test_the_first_and_last_day_of_the_target_year_are_accepted(self):
+		start, end = self.year_bounds()
+		for day in (start, end):
+			saved = self.save_draft(required_by_date=str(day))
+			self.assertEqual(saved["current_state"], "Draft")
+
+	def test_a_draft_with_no_required_by_date_still_saves(self):
+		# Presence stays a submission rule (§12.3 / NDS-AC-004).
+		self.assertEqual(self.save_draft(required_by_date=None)["current_state"], "Draft")
+
 	def test_a_description_below_the_minimum_is_refused_at_save(self):
 		self.refuses_at_save("NDS_FIELD_REQUIRED", description="x" * (DESCRIPTION_MIN - 1))
 
@@ -640,10 +801,9 @@ class TestSubmissionValidation(ContentValidationCase):
 	def test_a_missing_required_by_date_is_refused(self):
 		self.refuses("NDS_FIELD_REQUIRED", required_by_date=None)
 
-	def test_a_required_by_date_outside_the_target_year_is_refused(self):
-		# NDS-AC-005 — the Need is raised against one financial year, so a date
-		# outside it would arrive in Planning as un-plannable in its own year.
-		self.refuses("NDS_REQUIRED_BY_OUTSIDE_FY", required_by_date="2030-01-31")
+	# NDS-AC-005 — a Required-by date outside the target year is now refused at
+	# save, not only at submission (UAT issue #25); see
+	# TestDraftContentBounds.test_a_required_by_date_outside_the_target_year_*.
 
 	def test_a_complete_draft_submits(self):
 		# The control: without this, every assertion above could pass because
@@ -905,6 +1065,28 @@ class TestAcceptedSuccessorLifecycle(DepartmentalNeedsCommandCase):
 		self.assertEqual(need.current_revision, opened["successor_revision"])
 		self.assertEqual(self.status_of(opened["successor_revision"]), REVISION_ACCEPTED)
 
+	def test_older_revision_usage_walks_back_when_current_revision_is_unprojected(self):
+		# NDS-CHG-001 v1.14 §11.8A OLDER — the current accepted revision has
+		# never itself been projected, but Planning is still using the
+		# earlier (now superseded) revision's inclusion.
+		accepted, opened = self.successor()
+		self.include_in_active_plan(accepted["need"], accepted["current_accepted_revision"])
+		result = self.decide(self.submit(opened), "accept")
+		# The new current accepted revision (the successor) has no projection
+		# of its own yet — Planning has not caught up.
+		found = older_revision_usage(result["need"], result["current_accepted_revision"])
+		self.assertIsNotNone(found)
+		self.assertEqual(found["revision"], accepted["current_accepted_revision"])
+		self.assertEqual(found["revision_number"], 1)
+		self.assertEqual(str(found["content"]["required_by_date"]), "2027-12-31")
+
+	def test_older_revision_usage_is_none_once_the_current_revision_has_its_own_projection(self):
+		accepted, opened = self.successor()
+		self.include_in_active_plan(accepted["need"], accepted["current_accepted_revision"])
+		result = self.decide(self.submit(opened), "accept")
+		self.include_in_active_plan(result["need"], result["current_accepted_revision"])
+		self.assertIsNone(older_revision_usage(result["need"], result["current_accepted_revision"]))
+
 	def test_declining_a_successor_leaves_the_earlier_version_current(self):
 		# NDS-AC-018.
 		accepted, opened = self.successor()
@@ -1099,6 +1281,79 @@ class TestAcceptedWithdrawalLifecycle(DepartmentalNeedsCommandCase):
 		)
 
 
+class TestAutoCloseInstant(DepartmentalNeedsCommandCase):
+	"""AUTH-ADR-001 v1.7 §16.3 step 13 / NDS-AC-056 — reaching
+	`kentender_needs_submission_closes_at` has the same effect as a manual
+	close, including before the hourly `close_due_needs_submissions` job has
+	had a chance to run (FOLLOW_UPS FU-25)."""
+
+	def test_create_is_refused_once_the_closes_at_instant_passes_without_the_job_running(self):
+		self.open_window_closing_in(1.5)
+		time.sleep(2)
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.create()
+		self.assertEqual(caught.exception.code, "NDS_INTAKE_NOT_OPEN")
+
+	def test_submit_is_refused_once_the_closes_at_instant_passes(self):
+		# The Draft itself was created while intake was still open — only the
+		# *submit* command is issued after the instant passes.
+		created = self.create()
+		self.open_window_closing_in(1.5)
+		time.sleep(2)
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.submit(created)
+		self.assertEqual(caught.exception.code, "NDS_INTAKE_NOT_OPEN")
+
+
+class TestMultiFiscalYearBrowsing(DepartmentalNeedsCommandCase):
+	"""AUTH-ADR-001 v1.7 §16.3 step 9 / NDS-AC-050 (FOLLOW_UPS FU-19) — no
+	test in this module had ever exercised a second Fiscal Year before;
+	`list_needs_financial_years`/the workspace's own FY filter were only ever
+	checked for being whitelisted."""
+
+	def test_selectable_years_and_workspace_filtering_span_two_fiscal_years(self):
+		# CTX-CHG-001's server-side "remembered Financial Year" is per-user and
+		# durable (`frappe.defaults`, not rolled back with the rest of a
+		# lifecycle command) — this test's own explicit-year read below would
+		# otherwise leave every *later* test in this run that reads AUTHOR's
+		# workspace with no explicit year silently filtered to this test's
+		# disposable Fiscal Year.
+		frappe.defaults.set_user_default("kt_needs_financial_year", "", user=AUTHOR)
+		self.addCleanup(frappe.defaults.set_user_default, "kt_needs_financial_year", "", user=AUTHOR)
+		first = self.accepted()
+		second_fy = self.open_second_fiscal_year()
+		frappe.set_user(AUTHOR)
+		created = lifecycle.create_need(
+			organisation_unit=self.ou,
+			financial_year=second_fy,
+			idempotency_key=self.key(),
+			**self.content(title="Second fiscal year requirement", required_by_date="2029-03-31"),
+		)
+		second = self.decide(self.submit(created), "accept")
+
+		# NDS-AC-050 — both years the author can see are offered, ordered by
+		# calendar (the canonical `FY` starts before the disposable one).
+		years = selectable_financial_years(AUTHOR)
+		self.assertEqual([row["id"] for row in years], [FY, second_fy])
+
+		# No explicit year selected — CTX-CHG-001's own rule ("several
+		# offered, none selected/remembered" -> no FY filter applied) means
+		# both years' Needs appear together, not just one.
+		combined = workspace.get_workspace(organisation_unit=self.ou, user=AUTHOR)
+		combined_refs = {row["reference"] for row in combined["needs"]}
+		self.assertIn(first["need_reference"], combined_refs)
+		self.assertIn(second["need_reference"], combined_refs)
+
+		# An explicit year filters to only that year's Need — the other
+		# year's row must not leak through.
+		only_second = workspace.get_workspace(
+			organisation_unit=self.ou, financial_year=second_fy, user=AUTHOR
+		)
+		only_second_refs = {row["reference"] for row in only_second["needs"]}
+		self.assertIn(second["need_reference"], only_second_refs)
+		self.assertNotIn(first["need_reference"], only_second_refs)
+
+
 class TestSuccessorReachesTheReviewQueue(DepartmentalNeedsCommandCase):
 	"""§12.2 — a submitted successor must appear in the reviewer's queue.
 
@@ -1176,3 +1431,51 @@ class TestSuccessorReachesTheReviewQueue(DepartmentalNeedsCommandCase):
 		reference = frappe.db.get_value("Departmental Need", accepted["need"], "need_reference")
 		row = next(row for row in result["needs"] if row["reference"] == reference)
 		self.assertNotIn("review", {action["code"] for action in row["actions"]})
+
+	def test_review_task_carries_the_previously_accepted_revision_for_a_successor(self):
+		# NDS-CHG-001 v1.13 §11.10 — the "What changed" comparison needs both
+		# the proposed and the previously accepted content on the one read.
+		accepted, _ = self.submitted_successor()
+		task = frappe.db.get_value(
+			"Departmental Need Review Task",
+			{"departmental_need": accepted["need"], "status": TASK_OPEN},
+			"name",
+		)
+		frappe.set_user(REVIEWER)
+		try:
+			read = workspace.get_review_task(task=task, user=REVIEWER)
+		finally:
+			frappe.set_user("Administrator")
+		self.assertEqual(str(read["accepted_revision"]["required_by_date"]), "2027-12-31")
+		self.assertEqual(str(read["revision"]["required_by_date"]), "2027-09-15")
+
+	def test_review_task_scope_is_named_not_raw_ids(self):
+		# The artboards show Department/Financial year by name; a raw doc name
+		# leaked through here until this row.
+		accepted, _ = self.submitted_successor()
+		task = frappe.db.get_value(
+			"Departmental Need Review Task",
+			{"departmental_need": accepted["need"], "status": TASK_OPEN},
+			"name",
+		)
+		frappe.set_user(REVIEWER)
+		try:
+			read = workspace.get_review_task(task=task, user=REVIEWER)
+		finally:
+			frappe.set_user("Administrator")
+		self.assertNotEqual(read["scope"]["organisation_unit"], self.ou)
+		self.assertNotIn("-", read["scope"]["financial_year"])
+
+	def test_review_task_carries_no_accepted_revision_for_an_initial_review(self):
+		submitted = self.submit(self.create())
+		task = frappe.db.get_value(
+			"Departmental Need Review Task",
+			{"departmental_need": submitted["need"], "status": TASK_OPEN},
+			"name",
+		)
+		frappe.set_user(REVIEWER)
+		try:
+			read = workspace.get_review_task(task=task, user=REVIEWER)
+		finally:
+			frappe.set_user("Administrator")
+		self.assertEqual(read["accepted_revision"], {})

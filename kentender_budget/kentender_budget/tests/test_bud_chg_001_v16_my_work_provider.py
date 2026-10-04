@@ -95,12 +95,13 @@ class TestBudgetMyWorkProvider(_SubmittedDraftMixin, _BudgetLifecycleTestBase):
 		fy = frappe.db.get_value("Procurement Budget", budget, "fiscal_year")
 		successor = contracts.create_budget_successor_version(budget, {"revision_type": "Correction"})["version"]["id"]
 
-		# Draft successor: the Officer continues it, the Approver gets nothing.
-		self.assertEqual(contracts.get_budget_workspace(fy)["pending_version"]["action"], "open_draft")
+		# Draft successor: the Officer continues it; the Approver, an
+		# authorised reader, may only view it (BUD-CHG-001 v1.9 §11.1B).
+		self.assertEqual(contracts.get_budget_workspace(fy)["pending_version"]["action"], "continue_update")
 		self.assertTrue(contracts.get_budget_detail(budget)["pending_version"]["is_successor"])
 		self._as(self.approver)
-		self.assertNotIn("pending_version", contracts.get_budget_workspace(fy))
-		self.assertIsNone(contracts.get_budget_detail(budget)["pending_version"])
+		self.assertEqual(contracts.get_budget_workspace(fy)["pending_version"]["action"], "view_draft")
+		self.assertEqual(contracts.get_budget_detail(budget)["pending_version"]["action"], "view_draft")
 
 		# Submitted successor: the Approver opens the task, the Officer views it.
 		self._as(self.officer)
@@ -108,9 +109,9 @@ class TestBudgetMyWorkProvider(_SubmittedDraftMixin, _BudgetLifecycleTestBase):
 		self.assertEqual(contracts.get_budget_workspace(fy)["pending_version"]["action"], "view_submission")
 		self._as(self.approver)
 		pending = contracts.get_budget_workspace(fy)["pending_version"]
-		self.assertEqual(pending["action"], "open_task")
+		self.assertEqual(pending["action"], "review")
 		self.assertEqual(pending["id"], successor)
-		self.assertEqual(contracts.get_budget_detail(budget)["pending_version"]["action"], "open_task")
+		self.assertEqual(contracts.get_budget_detail(budget)["pending_version"]["action"], "review")
 
 	def test_returned_draft_carries_the_reason_for_the_officer(self):
 		self._as(self.officer)

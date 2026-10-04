@@ -89,6 +89,19 @@ def current_accepted_revision_of(need: str, financial_year: str) -> str:
 	return cstr(payload.get("accepted_revision"))
 
 
+def need_acceptance_evidence(need: str, need_revision: str) -> dict[str, Any] | None:
+	"""Who accepted this exact pinned revision for planning, and when
+	(§10.11's "Need accepted by" evidence) — through the published contract,
+	never a direct `Departmental Need Decision` read (D5)."""
+	from kentender_procurement.departmental_needs.services.workspace import (
+		get_need_acceptance_evidence,
+	)
+
+	# System principal — the same server-side consistency-check pattern as
+	# `current_accepted_revision_of` above, not a user-facing Needs read.
+	return get_need_acceptance_evidence(need=need, need_revision=need_revision, user="Administrator")
+
+
 def _facts(payload: dict[str, Any]) -> dict[str, Any]:
 	return {
 		"title": cstr(payload.get("title")),
@@ -98,6 +111,25 @@ def _facts(payload: dict[str, Any]) -> dict[str, Any]:
 		"unit": cstr(payload.get("unit_id")),
 		"required_by_date": payload.get("required_by_date"),
 	}
+
+
+def submission_cohort(submission_name: str) -> set[str]:
+	"""§5.1.2 — the stable source keys certified by a Submission."""
+	import json
+
+	snapshots = json.loads(frappe.db.get_value("Departmental Plan Submission", submission_name, "entry_snapshots") or "[]")
+	return {cstr(row.get("source_line_id")) for row in snapshots if cstr(row.get("source_line_id"))}
+
+
+def _cohort_filter(version_doc, sources: list[dict[str, Any]]) -> list[dict[str, Any]]:
+	"""A correction Draft (copied from a returned Submission) consumes only the
+	current accepted revisions of the Needs in that Submission's cohort; a Need
+	accepted later is pending input to a subsequent update (§5.1.2)."""
+	returned_from = cstr(version_doc.get("returned_from_submission"))
+	if not returned_from:
+		return sources
+	cohort = submission_cohort(returned_from)
+	return [payload for payload in sources if cstr(payload["need_id"]) in cohort]
 
 
 def refresh_draft_entries(version_doc) -> dict[str, Any]:
@@ -118,7 +150,7 @@ def refresh_draft_entries(version_doc) -> dict[str, Any]:
 		["organisation_unit", "fiscal_year", "dpp_reference", "fixture_namespace"],
 		as_dict=True,
 	)
-	sources = current_accepted_sources(root.fiscal_year, root.organisation_unit)
+	sources = _cohort_filter(version_doc, current_accepted_sources(root.fiscal_year, root.organisation_unit))
 	by_need = {cstr(payload["need_id"]): payload for payload in sources}
 	existing = frappe.get_all(
 		"Departmental Plan Entry",
@@ -163,26 +195,151 @@ def refresh_draft_entries(version_doc) -> dict[str, Any]:
 	return {"ok": True, "added": added, "refreshed": refreshed, "removed": removed}
 
 
-def coverage_gaps(version_doc) -> list[str]:
-	"""Need references whose current accepted revision is not represented
-	exactly once on this Version — the §5.1 submission blocker."""
+def _pinned(version_name: str) -> dict[str, str]:
+	"""Need → the revision this Version carries for it."""
+	rows = frappe.get_all(
+		"Departmental Plan Entry",
+		filters={"dpp_version": version_name, "source_origin": NEED_ORIGIN},
+		fields=["need", "need_revision"],
+		limit_page_length=0,
+	)
+	return {cstr(row.need): cstr(row.need_revision) for row in rows}
+
+
+def missing_sources(version_doc) -> list[dict[str, Any]]:
+	"""The current accepted Needs whose current revision this Version does
+	not carry, as their §7.1 payloads (`need_id`, `need_reference`,
+	`accepted_version_id`) — within a correction's cohort, as `coverage_gaps`."""
 	root = frappe.db.get_value(
 		"Departmental Plan",
 		version_doc.departmental_plan,
 		["organisation_unit", "fiscal_year"],
 		as_dict=True,
 	)
-	sources = current_accepted_sources(root.fiscal_year, root.organisation_unit)
-	rows = frappe.get_all(
-		"Departmental Plan Entry",
-		filters={"dpp_version": version_doc.name, "source_origin": NEED_ORIGIN},
-		fields=["need", "need_revision"],
-		limit_page_length=0,
+	sources = _cohort_filter(version_doc, current_accepted_sources(root.fiscal_year, root.organisation_unit))
+	pinned = _pinned(version_doc.name)
+	return [payload for payload in sources if pinned.get(cstr(payload["need_id"])) != cstr(payload["accepted_version_id"])]
+
+
+def coverage_gaps(version_doc) -> list[str]:
+	"""Need references whose current accepted revision is not represented
+	exactly once on this Version — the §5.1 submission blocker."""
+	return [cstr(payload.get("need_reference") or payload["need_id"]) for payload in missing_sources(version_doc)]
+
+
+def late_needs(root) -> list[dict[str, Any]]:
+	"""An accepted departmental plan with no open candidate, and the accepted
+	Needs it does not carry: each accepted (or given a new accepted revision)
+	after the plan was, so only a departmental update can add it (§5.1.2 "a
+	different Need accepted while a submission is under review" and §5.1.3's
+	agreed clarification; owner decision 26 Sep 2026). Empty in every other
+	state — a Draft takes new Needs in by itself and a submission under review
+	is waited out."""
+	if root.current_state != "Accepted" or not root.current_accepted_version:
+		return []
+	if cstr(root.current_version) != cstr(root.current_accepted_version):
+		return []
+	return missing_sources(frappe.get_doc("Departmental Plan Version", root.current_accepted_version))
+
+
+def late_needs_since(late: list[dict[str, Any]]):
+	"""When the plan started missing a Need: the earliest acceptance among
+	them, through the published acceptance-evidence read (D5)."""
+	instants = []
+	for payload in late:
+		evidence = need_acceptance_evidence(cstr(payload["need_id"]), cstr(payload["accepted_version_id"]))
+		if evidence and evidence.get("occurred_at"):
+			instants.append(evidence["occurred_at"])
+	return min(instants) if instants else None
+
+
+def need_list(late: list[dict[str, Any]]) -> str:
+	"""`NDS-…-0005` or `NDS-…-0005 and NDS-…-0006`; three or more are counted."""
+	refs = [cstr(payload.get("need_reference") or payload["need_id"]) for payload in late]
+	if len(refs) == 1:
+		return refs[0]
+	if len(refs) == 2:
+		return f"{refs[0]} and {refs[1]}"
+	return f"{len(refs)} accepted needs"
+
+
+# --------------------------------------------------------------------------
+# Where each accepted Need stands against its department's plan, projected
+# back to Departmental Needs (owner decision 26 Sep 2026) so the need's own
+# page can say it is not in the plan yet. Planning reconciles the whole
+# department after every change to its plan and every Need acceptance; the
+# consumer ignores an unchanged position, so this is safe to repeat.
+# --------------------------------------------------------------------------
+
+POSITION_NO_UPDATE = "No update needed"
+POSITION_UPDATE_REQUIRED = "Update required"
+POSITION_AFTER_SUBMISSION = "After current submission"
+
+
+def need_positions(organisation_unit: str, fiscal_year: str) -> tuple[str, list[dict[str, str]]]:
+	"""(departmental plan reference, one position per current accepted Need)."""
+	root = frappe.db.get_value(
+		"Departmental Plan",
+		{"organisation_unit": organisation_unit, "fiscal_year": fiscal_year},
+		["name", "dpp_reference", "current_state", "current_version", "current_accepted_version"],
+		as_dict=True,
 	)
-	pinned = {cstr(row.need): cstr(row.need_revision) for row in rows}
-	gaps = []
+	if not root or not root.current_version:
+		return "", []
+	sources = current_accepted_sources(fiscal_year, organisation_unit)
+	if not sources:
+		return cstr(root.dpp_reference), []
+	version = frappe.db.get_value(
+		"Departmental Plan Version", root.current_version, ["name", "version_status", "returned_from_submission"], as_dict=True,
+	)
+	pinned = _pinned(version.name)
+	cohort = submission_cohort(version.returned_from_submission) if version.returned_from_submission else None
+	accepted_as_current = root.current_state == "Accepted" and cstr(root.current_version) == cstr(root.current_accepted_version)
+	positions = []
 	for payload in sources:
-		need = cstr(payload["need_id"])
-		if pinned.get(need) != cstr(payload["accepted_version_id"]):
-			gaps.append(cstr(payload.get("need_reference") or need))
-	return gaps
+		need, revision = cstr(payload["need_id"]), cstr(payload["accepted_version_id"])
+		carried = ""
+		if version.version_status == "Draft":
+			# A Draft takes every current accepted Need in by itself, except a
+			# correction, which keeps the cohort Procurement returned (§5.1.2).
+			position = POSITION_AFTER_SUBMISSION if cohort is not None and need not in cohort else POSITION_NO_UPDATE
+		elif version.version_status == "Submitted":
+			position = POSITION_NO_UPDATE if pinned.get(need) == revision else POSITION_AFTER_SUBMISSION
+		elif accepted_as_current and pinned.get(need) != revision:
+			position, carried = POSITION_UPDATE_REQUIRED, pinned.get(need, "")
+		else:
+			# In the accepted plan, or a first plan withdrawn before
+			# acceptance, which Start departmental plan reopens with every
+			# accepted Need in it: no update is owed on the Need.
+			position = POSITION_NO_UPDATE
+		positions.append({"need": need, "need_revision": revision, "position": position, "carried_revision": carried})
+	return cstr(root.dpp_reference), positions
+
+
+def publish_need_positions(organisation_unit: str, fiscal_year: str, *, source: str) -> int:
+	"""Project every current accepted Need's position through Departmental
+	Needs' published consumer (never a table write); returns how many it sent.
+	A Need Departmental Needs does not confirm as currently accepted is
+	skipped: an event payload can outlive the acceptance it announced."""
+	from frappe.utils import now_datetime
+
+	from kentender_procurement.departmental_needs.services import usage as needs_usage
+
+	reference, positions = need_positions(organisation_unit, fiscal_year)
+	occurred = now_datetime()
+	sent = 0
+	for row in positions:
+		if current_accepted_revision_of(row["need"], fiscal_year) != row["need_revision"]:
+			continue
+		needs_usage.project_planning_intake(
+			departmental_need=row["need"],
+			need_revision=row["need_revision"],
+			position=row["position"],
+			departmental_plan=reference,
+			carried_revision=row["carried_revision"],
+			source_event_id=f"{cstr(source)}:{row['need']}",
+			source_event_time=occurred,
+			user="Administrator",
+		)
+		sent += 1
+	return sent

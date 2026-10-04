@@ -1,0 +1,210 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:bid_reference",
+ "creation": "2026-09-27 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "bid_reference",
+  "tender",
+  "tender_reference",
+  "bidder_arrangement",
+  "active_key",
+  "lead_organisation",
+  "bid_definition_id",
+  "definition_version",
+  "definition_digest",
+  "organisation_snapshot",
+  "organisation_snapshot_version",
+  "status",
+  "status_since",
+  "current_draft_version",
+  "current_submission_version",
+  "attention_json",
+  "created_by",
+  "created_at",
+  "last_saved_by",
+  "last_saved_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "bid_reference",
+   "fieldtype": "Data",
+   "label": "Bid reference",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "label": "Tender",
+   "read_only": 1,
+   "options": "Tender",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_reference",
+   "fieldtype": "Data",
+   "label": "Tender reference",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "bidder_arrangement",
+   "fieldtype": "Link",
+   "label": "Bidder arrangement",
+   "read_only": 1,
+   "options": "Bidder Arrangement",
+   "reqd": 1
+  },
+  {
+   "fieldname": "active_key",
+   "fieldtype": "Data",
+   "label": "Active key",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "lead_organisation",
+   "fieldtype": "Data",
+   "label": "Lead organisation",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "bid_definition_id",
+   "fieldtype": "Data",
+   "label": "Bid definition",
+   "read_only": 1
+  },
+  {
+   "fieldname": "definition_version",
+   "fieldtype": "Int",
+   "label": "Definition version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "definition_digest",
+   "fieldtype": "Data",
+   "label": "Definition digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "organisation_snapshot",
+   "fieldtype": "Link",
+   "label": "Organisation snapshot",
+   "read_only": 1,
+   "options": "Bid Organisation Snapshot"
+  },
+  {
+   "fieldname": "organisation_snapshot_version",
+   "fieldtype": "Int",
+   "label": "Organisation snapshot version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Draft\nNeeds attention\nReady to submit\nSubmitted\nWithdrawn\nClosed without submission",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status_since",
+   "fieldtype": "Datetime",
+   "label": "Status since",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_draft_version",
+   "fieldtype": "Int",
+   "label": "Draft version",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "current_submission_version",
+   "fieldtype": "Data",
+   "label": "Current submitted version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attention_json",
+   "fieldtype": "Long Text",
+   "label": "Tasks to review after an addendum",
+   "read_only": 1
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "Created by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_saved_by",
+   "fieldtype": "Link",
+   "label": "Last saved by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "last_saved_at",
+   "fieldtype": "Datetime",
+   "label": "Last saved at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-27 10:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "name": "Bid Workspace",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

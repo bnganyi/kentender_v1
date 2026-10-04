@@ -1,0 +1,180 @@
+{
+ "actions": [],
+ "autoname": "field:departmental_need",
+ "creation": "2026-09-26 22:20:29.583021",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "departmental_need",
+  "need_revision",
+  "position",
+  "departmental_plan",
+  "carried_revision",
+  "source_event_id",
+  "source_event_time",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "description": "The Need this position describes. One row per Need.",
+   "fieldname": "departmental_need",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Departmental Need",
+   "options": "Departmental Need",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "The accepted revision the position is about: the Need's current accepted revision when Planning last reported.",
+   "fieldname": "need_revision",
+   "fieldtype": "Link",
+   "label": "Need Revision",
+   "options": "Departmental Need Revision",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Whether the department owes an update for this accepted revision. Update required: the department's plan was accepted without it, so the department must create an update. After current submission: the plan was submitted before it was accepted, so it goes into an update once Procurement accepts that submission.",
+   "fieldname": "position",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Position",
+   "options": "No update needed\nUpdate required\nAfter current submission",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Planning's departmental plan reference. Stored as text, not a Link: Departmental Needs must not query Procurement Planning tables.",
+   "fieldname": "departmental_plan",
+   "fieldtype": "Data",
+   "label": "Departmental Plan",
+   "read_only": 1
+  },
+  {
+   "description": "The earlier accepted revision the department's accepted plan still carries, when it carries one.",
+   "fieldname": "carried_revision",
+   "fieldtype": "Link",
+   "label": "Carried Revision",
+   "options": "Departmental Need Revision",
+   "read_only": 1
+  },
+  {
+   "description": "The Planning change that produced this position.",
+   "fieldname": "source_event_id",
+   "fieldtype": "Data",
+   "label": "Source Event ID",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Orders updates so a late-arriving older position cannot overwrite a newer one.",
+   "fieldname": "source_event_time",
+   "fieldtype": "Datetime",
+   "label": "Source Event Time",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Fixture Namespace",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-26 22:24:08.421119",
+ "modified_by": "Administrator",
+ "module": "Departmental Needs",
+ "name": "Need Planning Intake Projection",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Departmental Author",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of User Department",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "departmental_need,position",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

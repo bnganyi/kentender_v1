@@ -56,6 +56,7 @@ PROHIBITED_FIELDS = (
 	# Entity; no NDS doctype carries this field any more.
 	"procuring_entity",
 )
+from kentender_procurement.departmental_needs.tests import support
 
 
 class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
@@ -63,6 +64,7 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		support.ensure_transitional_reviewer_grant(cls)
 		# Two real, distinct Organisation Units Grace is actually granted
 		# Departmental Author over (§14.2) — used to build ad-hoc fixture
 		# records below without guessing a Procuring-Entity-scoped doc name
@@ -320,15 +322,24 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 				frappe.db.get_value("Departmental Need Revision", current, "expected_operational_result")
 			)
 
-	def test_the_harmonized_laptop_needs_are_accepted_on_their_first_version(self):
+	def test_the_harmonized_laptop_needs_are_accepted(self):
 		"""SEED-001 §3.2 — 0003/0004 (the combined item's two source Needs)
-		reach Accepted directly on V1; nothing is Returned."""
-		for reference in ("NDS-MOH-2027-0003", "NDS-MOH-2027-0004"):
+		reach Accepted directly on V1; nothing is Returned. The requisitions
+		stage then harmonizes 0003 onto a second revision on purpose (the
+		canonical check requires `handoff.need_3_revision_2`), so 0003 may
+		stand on V1 (needs stage only) or V2 (requisitions onward); 0004
+		never changes. This test once demanded V1 for both and went red the
+		day the requisitions stage was seeded."""
+		allowed = {
+			"NDS-MOH-2027-0003": {"NDS-MOH-2027-0003-V001", "NDS-MOH-2027-0003-V002"},
+			"NDS-MOH-2027-0004": {"NDS-MOH-2027-0004-V001"},
+		}
+		for reference, revisions in allowed.items():
 			row = frappe.db.get_value(
 				"Departmental Need", reference, ["current_state", "current_accepted_revision"], as_dict=True
 			)
 			self.assertEqual(row.current_state, STATE_ACCEPTED, reference)
-			self.assertEqual(row.current_accepted_revision, f"{reference}-V001", reference)
+			self.assertIn(row.current_accepted_revision, revisions, reference)
 
 	def test_accepted_seed_need_points_at_its_accepted_version(self):
 		row = frappe.db.get_value(

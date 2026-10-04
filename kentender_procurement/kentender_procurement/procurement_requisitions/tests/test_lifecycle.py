@@ -1,215 +1,165 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 §7 — lifecycle transition tests."""
+"""REQ-CHG-001 v1.11 §7 — lifecycle transitions against the real world
+(REQ19-AC-019/020/021/024/044/045/047/050/073/092, REQ-SMK-02/03/11)."""
 
 from __future__ import annotations
 
 import frappe
-from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
-from kentender_procurement.procurement_requisitions.services import lifecycle
+from kentender_procurement.procurement_requisitions.services import lifecycle, records
 from kentender_procurement.procurement_requisitions.services.errors import ProcurementRequisitionsError
 from kentender_procurement.procurement_requisitions.tests import fixtures as fx
+from kentender_procurement.procurement_requisitions.tests.test_draft_commands import RequisitionCase
+
+REASON = "Replace the processor wording with a measurable, supplier-neutral minimum."
 
 
-class RequisitionLifecycleCase(IntegrationTestCase):
-	@classmethod
-	def setUpClass(cls):
-		super().setUpClass()
-		frappe.set_user("Administrator")
-		fx.ensure_world()
-		cls.addClassCleanup(fx.restore_site)
-
-	def setUp(self):
-		super().setUp()
-		frappe.set_user("Administrator")
-		fx.wipe_requisition_rows()
-		fx.wipe_planning_rows()
-		self.addCleanup(frappe.set_user, "Administrator")
-
-	def _complete_draft(self, prepared: dict) -> None:
-		"""Fills the Draft to zero Blocking findings (single-item, single
-		drawdown-line fixture) so `_lock` can succeed."""
-		frappe.set_user(fx.AUTHOR)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		version = frappe.get_doc("Requisition Version", prepared["requisition_version"])
-		cmd.save_requisition_summary(
-			requisition=prepared["requisition"],
-			values={"delivery_location": self.location, "latest_delivery_date": "2102-04-30"},
-			expected_record_version=version.record_version, idempotency_key=fx.key(),
-		)
-		added_item = cmd.add_requisition_item(
-			requisition=prepared["requisition"],
-			values={"plan_item_line_id": "DL-001", "equipment_category": "Laptop", "item_name": "Business laptops", "quantity": 1, "intended_use": "Clinical training"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-		fx.confirm_all_proposed_requirements(prepared["requisition"], package_version)
-		cmd.add_acceptance_requirement(
-			requisition=prepared["requisition"],
-			values={"applies_to_scope": "All items", "check_type": "Quantity", "pass_condition": "Delivered quantities equal the authorised schedule", "evidence_type": "Inspection record"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-
-	def setUp_location(self):
-		if not frappe.db.exists("Delivery Location", "Test Delivery Location — Requisitions"):
-			frappe.get_doc({"doctype": "Delivery Location", "location_name": "Test Delivery Location — Requisitions", "address": "1 Test Street", "status": "Active"}).insert(ignore_permissions=True)
-		self.location = "Test Delivery Location — Requisitions"
-
-	def prepare_complete_draft(self):
-		self.setUp_location()
+class TestRouting(RequisitionCase):
+	def test_send_locks_the_exact_content_and_routes_to_the_lead_hod(self):
 		_, item_id = fx.active_item()
-		frappe.set_user(fx.AUTHOR)
-		prepared = cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=fx.key())
-		self._complete_draft(prepared)
-		return prepared
-
-
-class TestSendAndDepartmentDecision(RequisitionLifecycleCase):
-	def test_send_for_department_approval_locks_and_creates_a_hod_task(self):
-		prepared = self.prepare_complete_draft()
-		frappe.set_user(fx.AUTHOR)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		result = lifecycle.send_for_department_approval(requisition=prepared["requisition"], expected_record_version=root.record_version, idempotency_key=fx.key())
-		self.assertEqual(result["action"], "sent")
-		root.reload()
+		requisition = fx.complete_draft(item_id)
+		sent = fx.send(requisition)
+		root, version, package_version = records.load(requisition)
 		self.assertEqual(root.current_state, "Awaiting Department Approval")
-		version = frappe.get_doc("Requisition Version", result["requisition_version"])
 		self.assertEqual(version.version_status, "Awaiting Department Approval")
 		self.assertTrue(version.content_digest)
-		task = frappe.get_doc("Requisition Task", result["task"])
-		self.assertEqual(task.business_role, "Head of User Department")
-		self.assertEqual(task.status, "Open")
-
-	def test_send_blocked_by_incomplete_draft(self):
-		self.setUp_location()
-		_, item_id = fx.active_item()
-		frappe.set_user(fx.AUTHOR)
-		prepared = cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=fx.key())
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		with self.assertRaises(ProcurementRequisitionsError) as ctx:
-			lifecycle.send_for_department_approval(requisition=prepared["requisition"], expected_record_version=root.record_version, idempotency_key=fx.key())
-		self.assertEqual(ctx.exception.code, "REQ_BLOCKING_FINDINGS")
-
-	def test_hod_return_preserves_reviewed_version_and_creates_draft_successor(self):
-		prepared = self.prepare_complete_draft()
-		frappe.set_user(fx.AUTHOR)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		sent = lifecycle.send_for_department_approval(requisition=prepared["requisition"], expected_record_version=root.record_version, idempotency_key=fx.key())
-		frappe.set_user(fx.HOD)
+		self.assertEqual(version.content_digest, package_version.content_digest)
+		self.assertTrue(version.basis_snapshot_json)
 		task = frappe.get_doc("Requisition Task", sent["task"])
-		result = lifecycle.return_to_department_author(task=task.name, reason="The intended use text needs more operational detail.", expected_record_version=task.record_version, idempotency_key=fx.key())
-		self.assertEqual(result["action"], "returned")
-		reviewed = frappe.get_doc("Requisition Version", sent["requisition_version"])
-		self.assertEqual(reviewed.version_status, "Returned")
-		new_draft = frappe.get_doc("Requisition Version", result["requisition_version"])
-		self.assertEqual(new_draft.version_status, "Draft")
-		self.assertEqual(new_draft.based_on_version, reviewed.name)
-		root.reload()
-		self.assertEqual(root.current_state, "Draft")
-		self.assertEqual(root.current_version, new_draft.name)
+		self.assertEqual((task.business_role, task.organisation_unit), ("Head of User Department", root.lead_org_unit_id))
 
-	def test_hod_submit_to_procurement_creates_hopf_task(self):
-		prepared = self.prepare_complete_draft()
-		frappe.set_user(fx.AUTHOR)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		sent = lifecycle.send_for_department_approval(requisition=prepared["requisition"], expected_record_version=root.record_version, idempotency_key=fx.key())
-		frappe.set_user(fx.HOD)
-		root.reload()
-		result = lifecycle.submit_requisition_to_procurement(requisition=prepared["requisition"], expected_record_version=root.record_version, task=sent["task"], idempotency_key=fx.key())
-		self.assertEqual(result["action"], "submitted")
-		root.reload()
-		self.assertEqual(root.current_state, "Submitted to Procurement")
-		hopf_task = frappe.get_doc("Requisition Task", result["task"])
-		self.assertEqual(hopf_task.business_role, "Head of Procurement Function")
-
-
-class TestHodDirectSubmit(RequisitionLifecycleCase):
-	def test_hod_may_prepare_and_submit_directly_without_a_department_task(self):
-		self.setUp_location()
+	def test_a_review_required_package_cannot_be_sent(self):
 		_, item_id = fx.active_item()
-		frappe.set_user(fx.HOD)
-		prepared = cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=fx.key())
-		self._complete_draft(prepared)
-		frappe.set_user(fx.HOD)  # _complete_draft always acts as fx.AUTHOR internally
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		result = lifecycle.submit_requisition_to_procurement(requisition=prepared["requisition"], expected_record_version=root.record_version, idempotency_key=fx.key())
-		self.assertEqual(result["action"], "submitted")
-		root.reload()
-		self.assertEqual(root.current_state, "Submitted to Procurement")
-		self.assertEqual(frappe.db.count("Requisition Task", {"requisition": root.name, "business_role": "Head of User Department"}), 0)
-
-
-class TestProcurementReturnAndWithdraw(RequisitionLifecycleCase):
-	def _submitted(self):
-		prepared = self.prepare_complete_draft()
-		frappe.set_user(fx.AUTHOR)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		sent = lifecycle.send_for_department_approval(requisition=prepared["requisition"], expected_record_version=root.record_version, idempotency_key=fx.key())
-		frappe.set_user(fx.HOD)
-		root.reload()
-		submitted = lifecycle.submit_requisition_to_procurement(requisition=prepared["requisition"], expected_record_version=root.record_version, task=sent["task"], idempotency_key=fx.key())
-		return prepared, submitted
-
-	def test_hopf_return_preserves_submitted_version_and_creates_draft_successor(self):
-		prepared, submitted = self._submitted()
-		frappe.set_user(fx.HOPF)
-		task = frappe.get_doc("Requisition Task", submitted["task"])
-		result = lifecycle.return_requisition_to_department(task=task.name, reason="The warranty period does not match the fixture's stated need.", expected_record_version=task.record_version, idempotency_key=fx.key())
-		self.assertEqual(result["action"], "returned")
-		reviewed = frappe.get_doc("Requisition Version", submitted["requisition_version"])
-		self.assertEqual(reviewed.version_status, "Returned")
-
-	def test_hopf_may_change_lead_department_while_submitted(self):
-		prepared, submitted = self._submitted()
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		other_unit = next(iter(frappe.get_all("Requisition Contributing Unit", filters={"parent": root.name}, pluck="organisation_unit")))
-		frappe.set_user(fx.HOPF)
-		result = lifecycle.change_lead_organisation_unit(
-			requisition=prepared["requisition"], new_lead_org_unit=other_unit,
-			reason="Reassessed after review — this department bears the larger share.",
-			expected_record_version=root.record_version, idempotency_key=fx.key(),
-		)
-		self.assertEqual(result["action"], "lead_unit_changed")
-		root.reload()
-		self.assertEqual(root.lead_org_unit, other_unit)
-
-	def test_a_non_contributing_unit_is_refused_as_lead(self):
-		prepared, submitted = self._submitted()
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		frappe.set_user(fx.HOPF)
+		requisition = fx.prepare(item_id)["requisition"]
+		fx.fill_request_information(requisition)
+		fx.add_laptops(requisition)
 		with self.assertRaises(ProcurementRequisitionsError) as ctx:
-			lifecycle.change_lead_organisation_unit(
-				requisition=prepared["requisition"], new_lead_org_unit="OU-NOT-CONTRIBUTING",
-				reason="Attempted change to an unrelated department.",
-				expected_record_version=root.record_version, idempotency_key=fx.key(),
-			)
-		self.assertEqual(ctx.exception.code, "REQ_DEPARTMENT_NOT_CONTRIBUTING")
+			fx.send(requisition)
+		self.assertCode(ctx, "REQ_BLOCKING_FINDINGS")
+		self.assertIn("PACKAGE_REVIEW_REQUIRED", [f["code"] for f in ctx.exception.detail["findings"]])
 
-	def test_hod_may_withdraw_before_authorisation(self):
-		prepared, submitted = self._submitted()
+	def test_a_contributor_cannot_route(self):
+		_, item_id = fx.active_combined_item()
+		requisition = fx.complete_draft(item_id)
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			fx.send(requisition, fx.CONTRIBUTOR)
+		self.assertCode(ctx, "REQ_RESPONSIBILITY_REQUIRED")
+
+	def test_the_lead_hod_certifies_and_the_certified_lead_is_frozen(self):
+		_, item_id = fx.active_item()
+		requisition = fx.complete_draft(item_id)
+		fx.send(requisition)
+		result = fx.submit_as_hod(requisition)
+		root, version, _ = records.load(requisition)
+		self.assertEqual(root.current_state, "Submitted to Procurement")
+		self.assertEqual(version.certified_lead_org_unit_id, root.lead_org_unit_id)
+		self.assertEqual(version.submitted_by, fx.HOD)
+		self.assertEqual(frappe.get_doc("Requisition Task", result["task"]).business_role, "Head of Procurement Function")
+
+	def test_a_hod_preparing_directly_submits_without_a_self_review_task(self):
+		_, item_id = fx.active_item()
+		requisition = fx.complete_draft(item_id, fx.HOD)
 		frappe.set_user(fx.HOD)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		result = lifecycle.withdraw_requisition(requisition=prepared["requisition"], expected_record_version=root.record_version, idempotency_key=fx.key())
-		self.assertEqual(result["action"], "withdrawn")
-		root.reload()
+		lifecycle.submit_requisition_to_procurement(requisition=requisition, expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		self.assertEqual(frappe.db.count("Requisition Task", {"requisition": requisition, "business_role": "Head of User Department"}), 0)
+		self.assertEqual(frappe.db.get_value("Procurement Requisition", requisition, "current_state"), "Submitted to Procurement")
+
+
+class TestReturns(RequisitionCase):
+	def test_a_hod_return_preserves_the_version_and_opens_a_review_required_copy_at_the_section(self):
+		_, item_id = fx.active_item()
+		requisition = fx.complete_draft(item_id)
+		fx.send(requisition)
+		reviewed = frappe.db.get_value("Procurement Requisition", requisition, "current_version")
+		frappe.set_user(fx.HOD)
+		task = fx.open_task(requisition, "Head of User Department")
+		result = lifecycle.return_to_department_author(task=task, reason=REASON, affected_section="Technical requirements", expected_record_version=frappe.db.get_value("Requisition Task", task, "record_version"), idempotency_key=fx.key())
+		self.assertEqual(frappe.db.get_value("Requisition Version", reviewed, "version_status"), "Returned")
+		root, version, package_version = records.load(requisition)
+		self.assertEqual(root.current_state, "Draft")
+		self.assertEqual(version.based_on_version, reviewed)
+		self.assertEqual(package_version.standard_package_review_state, "Review required")
+		view = fx.editor(requisition)
+		self.assertEqual(view["returned"]["reason"], REASON)
+		self.assertEqual((view["returned"]["task"], view["returned"]["section"]), ("requirements", "technical"))
+		self.assertEqual(view["header"]["badge"]["label"], "Draft correction")
+		self.assertEqual(result["affected_section"], "Technical requirements")
+
+	def test_a_short_reason_is_refused(self):
+		_, item_id = fx.active_item()
+		requisition = fx.submitted(item_id)
+		frappe.set_user(fx.HOPF)
+		task = fx.open_task(requisition, "Head of Procurement Function")
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			lifecycle.return_requisition_to_department(task=task, reason="Too short", expected_record_version=0, idempotency_key=fx.key())
+		self.assertCode(ctx, "REQ_CONTROL_INVALID")
+
+
+class TestLeadChange(RequisitionCase):
+	def test_hopf_changes_the_submitting_department_as_a_return_and_the_new_lead_must_certify(self):
+		_, item_id = fx.active_combined_item()
+		requisition = fx.submitted(item_id)
+		submitted_version = frappe.db.get_value("Procurement Requisition", requisition, "current_version")
+		frappe.set_user(fx.HOPF)
+		task = fx.open_task(requisition, "Head of Procurement Function")
+		lifecycle.change_requisition_lead_department(task=task, new_lead_org_unit=fx.ou_beta(), reason="Human Resources is the correct submitting department for this combined purchase.", expected_record_version=frappe.db.get_value("Requisition Task", task, "record_version"), idempotency_key=fx.key())
+		self.assertEqual(frappe.db.get_value("Requisition Version", submitted_version, "certified_lead_org_unit_id"), fx.ou_alpha())
+		root, version, _ = records.load(requisition)
+		self.assertEqual((root.current_state, root.lead_org_unit_id, version.lead_routing_directive), ("Draft", fx.ou_beta(), fx.ou_beta()))
+		# the directive fixes the lead: Alpha's HoD can no longer certify
+		fx.apply_standard_package(requisition)
+		frappe.set_user(fx.HOD)
+		with self.assertRaises(frappe.DoesNotExistError):
+			lifecycle.submit_requisition_to_procurement(requisition=requisition, expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		frappe.set_user(fx.HOD_BETA)
+		lifecycle.submit_requisition_to_procurement(requisition=requisition, expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		self.assertEqual(records.load(requisition)[1].certified_lead_org_unit_id, fx.ou_beta())
+
+	def test_the_new_lead_must_be_a_different_contributor(self):
+		_, item_id = fx.active_item()
+		requisition = fx.submitted(item_id)
+		frappe.set_user(fx.HOPF)
+		task = fx.open_task(requisition, "Head of Procurement Function")
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			lifecycle.change_requisition_lead_department(task=task, new_lead_org_unit=fx.ou_beta(), reason="A department that never contributed to this purchase.", expected_record_version=0, idempotency_key=fx.key())
+		self.assertCode(ctx, "REQ_DEPARTMENT_NOT_CONTRIBUTING")
+
+
+class TestStops(RequisitionCase):
+	def test_withdraw_needs_a_reason_uses_nothing_and_frees_the_slot(self):
+		_, item_id = fx.active_item()
+		requisition = fx.submitted(item_id)
+		frappe.set_user(fx.HOD)
+		lifecycle.withdraw_requisition(requisition=requisition, reason="The department will restate this requirement later.", expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		root = frappe.get_doc("Procurement Requisition", requisition)
 		self.assertEqual(root.current_state, "Withdrawn")
-		self.assertEqual(frappe.db.count("Requisition Task", {"requisition": root.name, "status": "Open"}), 0)
+		self.assertFalse(root.open_slot_key)
+		self.assertEqual(frappe.db.count("Requisition Task", {"requisition": requisition, "status": "Open"}), 0)
+		self.assertEqual(frappe.db.count("Funding Reservation", {"caller_reference": root.requisition_reference}), 0)
 
+	def test_a_planning_correction_stops_the_version_closes_tasks_and_holds_the_item(self):
+		_, item_id = fx.active_item()
+		requisition = fx.submitted(item_id)
+		frappe.set_user(fx.HOPF)
+		result = lifecycle.request_upstream_plan_correction(requisition=requisition, reason="The approved source allocation refers to the wrong Budget Line.", expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		root, version, _ = records.load(requisition)
+		self.assertEqual((root.current_state, version.version_status), ("Upstream correction required", "Upstream correction required"))
+		self.assertEqual(root.planning_correction_request_id, result["correction_request"])
+		self.assertEqual(frappe.db.count("Requisition Task", {"requisition": requisition, "status": "Open"}), 0)
+		self.assertTrue(frappe.db.get_value("Plan Item", item_id, "authorisation_hold"))
 
-class TestUpstreamCorrection(RequisitionLifecycleCase):
-	def test_hod_may_request_upstream_correction_and_planning_receives_it(self):
-		prepared = self.prepare_complete_draft()
-		frappe.set_user(fx.HOD)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		result = lifecycle.request_upstream_plan_correction(
-			requisition=prepared["requisition"], reason="The Plan Item's warranty period does not match the department's actual need.",
-			expected_record_version=root.record_version, idempotency_key=fx.key(),
-		)
-		self.assertEqual(result["action"], "upstream_correction_requested")
-		root.reload()
-		self.assertEqual(root.current_state, "Upstream correction required")
-		self.assertTrue(frappe.db.exists("Plan Item Correction Request", result["correction_request"]))
-		stopped_version = frappe.get_doc("Requisition Version", prepared["requisition_version"])
-		self.assertEqual(stopped_version.version_status, "Upstream correction required")
+	def test_if_planning_refuses_the_request_nothing_here_changes(self):
+		from unittest.mock import patch
+
+		_, item_id = fx.active_item()
+		requisition = fx.submitted(item_id)
+		frappe.set_user(fx.HOPF)
+		with patch("kentender_procurement.procurement_planning.services.plan_requisition.receive_plan_item_correction_request", side_effect=frappe.ValidationError("Planning unavailable")):
+			with self.assertRaises(ProcurementRequisitionsError) as ctx:
+				lifecycle.request_upstream_plan_correction(requisition=requisition, reason="The approved source allocation refers to the wrong Budget Line.", expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		self.assertCode(ctx, "REQ_OWNER_VALIDATION_UNAVAILABLE")
+		root, version, _ = records.load(requisition)
+		self.assertEqual((root.current_state, version.version_status), ("Submitted to Procurement", "Submitted to Procurement"))
+		self.assertEqual(frappe.db.count("Requisition Task", {"requisition": requisition, "status": "Open"}), 1)

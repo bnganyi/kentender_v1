@@ -1,0 +1,233 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-01 09:00:00.000000",
+ "description": "\u00a74 issue / restriction with its \u00a75.10 disposition; source-event identity keeps retries from duplicating it.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "issue_id",
+  "award_case",
+  "cycle",
+  "source_event",
+  "issue_type",
+  "subtype",
+  "title",
+  "basis",
+  "holds",
+  "scope",
+  "source",
+  "evidence",
+  "reason",
+  "effective_at",
+  "received_at",
+  "owner_role",
+  "owner_user",
+  "state",
+  "disposition",
+  "disposition_reason",
+  "disposition_evidence",
+  "next_action",
+  "resolved_by",
+  "resolved_at",
+  "detail_json",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "issue_id",
+   "label": "Issue ID",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "award_case",
+   "label": "Award case",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cycle",
+   "label": "Cycle",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "source_event",
+   "label": "Source event",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "issue_type",
+   "label": "Issue type",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Source correction\nFunding\nValidity\nDelivery\nDebrief\nReview/order\nSupplier response\nService failure\nRules and notice audience"
+  },
+  {
+   "fieldname": "subtype",
+   "label": "Subtype",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "title",
+   "label": "Title",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "basis",
+   "label": "Basis",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "\nAuthoritative order\nReported challenge"
+  },
+  {
+   "fieldname": "holds",
+   "label": "Holds",
+   "read_only": 1,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "scope",
+   "label": "Scope",
+   "read_only": 1,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "source",
+   "label": "Source",
+   "read_only": 1,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "evidence",
+   "label": "Evidence",
+   "read_only": 1,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "reason",
+   "label": "Reason",
+   "read_only": 1,
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "effective_at",
+   "label": "Effective at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "received_at",
+   "label": "Received at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "owner_role",
+   "label": "Owner role",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "owner_user",
+   "label": "Owner user",
+   "read_only": 1,
+   "fieldtype": "Link",
+   "options": "User"
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Open\nResolved"
+  },
+  {
+   "fieldname": "disposition",
+   "label": "Disposition",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "disposition_reason",
+   "label": "Disposition reason",
+   "read_only": 1,
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "disposition_evidence",
+   "label": "Disposition evidence",
+   "read_only": 1,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "next_action",
+   "label": "Next action",
+   "read_only": 1,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "resolved_by",
+   "label": "Resolved by",
+   "read_only": 1,
+   "fieldtype": "Link",
+   "options": "User"
+  },
+  {
+   "fieldname": "resolved_at",
+   "label": "Resolved at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "detail_json",
+   "label": "Detail JSON",
+   "read_only": 1,
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "read_only": 1,
+   "fieldtype": "Data"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-01 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Award",
+ "name": "Award Issue",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:issue_id"
+}

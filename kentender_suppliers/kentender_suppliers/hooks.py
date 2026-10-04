@@ -62,7 +62,52 @@ app_include_js = [
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-doctype_js = {"KTSM Supplier Profile": "public/js/ktsm_supplier_profile.js"}
+doctype_js = {
+	"KTSM Supplier Profile": "public/js/ktsm_supplier_profile.js",
+	# BDS-CHG-001 v0.8 plan OD-D — Suspend / Restore access with a reason.
+	"Supplier Organisation": "public/js/supplier_organisation.js",
+}
+
+# BDS-CHG-001 v0.8 plan D1 — Supplier Accounts publishes the account
+# provider Bid Submission reads (kentender_core supplier_account_contract).
+kt_supplier_account_provider = ["kentender_suppliers.supplier_accounts.services.provider"]
+# The canonical supplier account (BDS-CHG-001 v0.8 §10.1), seeded before the
+# canonical Start bid (Bid Submission calls every hook entry).
+kt_canonical_supplier_accounts = ["kentender_suppliers.supplier_accounts.seeds.canonical.ensure_canonical_supplier_accounts"]
+# Any other seeded supplier account (browser-test worlds), same commands.
+kt_seed_supplier_account = ["kentender_suppliers.supplier_accounts.seeds.canonical.ensure_supplier_account"]
+# The complete business profile a seeded supplier is given (release 1.4): bids copy it.
+kt_default_supplier_profile = ["kentender_suppliers.supplier_accounts.seeds.canonical.default_profile"]
+kt_seed_supplier_account_removal = ["kentender_suppliers.supplier_accounts.seeds.canonical.remove_supplier_accounts"]
+
+# BDS-CHG-001 v0.8 plan OD-B (slices 11.3–11.4): Supplier Accounts' portal
+# surface — /account, /account/register, /account/verify. The page CSS is a
+# static file because the esbuild pipeline discards <style scoped> CSS.
+import os as _os
+
+
+def _account_asset_version(rel: str) -> str:
+	try:
+		return str(int(_os.path.getmtime(_os.path.join(_os.path.dirname(__file__), rel))))
+	except OSError:
+		return "0"
+
+
+kt_portal_surfaces = [
+	{
+		"key": "account",
+		"prefix": "/account",
+		"resolver": "kentender_suppliers.supplier_accounts.portal.resolve",
+		"bundle": "supplier_account_portal.bundle.js",
+		"css": [f"/assets/kentender_suppliers/css/supplier_account_portal.css?v={_account_asset_version('public/css/supplier_account_portal.css')}"],
+	},
+]
+
+# The portal header names the organisation a signed-in supplier acts for.
+kt_portal_identity_providers = ["kentender_suppliers.supplier_accounts.portal.identity_detail"]
+
+# BDS-CHG-001 v0.8 §5.14 — suspended-access reviews in the shared My Work.
+kt_my_work_providers = ["kentender_suppliers.supplier_accounts.services.my_work_provider.my_work_rows"]
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}

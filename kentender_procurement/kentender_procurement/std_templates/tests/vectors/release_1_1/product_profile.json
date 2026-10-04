@@ -1,0 +1,719 @@
+{
+  "applicability_rules": [
+    {
+      "meaning": "The rule always applies.",
+      "parameters": {},
+      "rule_id": "AP-ALWAYS"
+    },
+    {
+      "meaning": "The Tender requires Tender Security.",
+      "parameters": {},
+      "rule_id": "AP-TENDER-SECURITY-REQUIRED"
+    },
+    {
+      "meaning": "The officer requires manufacturer authorisation.",
+      "parameters": {},
+      "rule_id": "AP-MANUFACTURER-AUTHORISATION-REQUIRED"
+    },
+    {
+      "meaning": "The officer requires technical datasheets or brochures.",
+      "parameters": {},
+      "rule_id": "AP-DATASHEET-REQUIRED"
+    },
+    {
+      "meaning": "The officer requires comparable supply experience.",
+      "parameters": {},
+      "rule_id": "AP-COMPARABLE-EXPERIENCE-REQUIRED"
+    },
+    {
+      "meaning": "The officer requires after-sales support evidence.",
+      "parameters": {},
+      "rule_id": "AP-AFTER-SALES-REQUIRED"
+    },
+    {
+      "meaning": "The inherited reservation category is not None.",
+      "parameters": {},
+      "rule_id": "AP-RESERVATION-APPLIES"
+    },
+    {
+      "meaning": "The authorised Requisition includes related services.",
+      "parameters": {},
+      "rule_id": "AP-RELATED-SERVICES-PRESENT"
+    }
+  ],
+  "calculations": [
+    {
+      "calculation_id": "CALC-LINE-TOTAL",
+      "meaning": "Unit price multiplied by the published quantity, plus the stated tax amount, in exact decimal arithmetic at currency scale 2."
+    },
+    {
+      "calculation_id": "CALC-TENDER-TOTAL",
+      "meaning": "Sum of every published line total, in exact decimal arithmetic at currency scale 2."
+    }
+  ],
+  "characteristic_controls": {
+    "DECIMAL": {
+      "control_id": "CTL-DECIMAL",
+      "validation_id": "VAL-DECIMAL-RANGE",
+      "validation_parameters": {
+        "maximum": "1000000",
+        "minimum": "0",
+        "scale": 2
+      }
+    },
+    "INTEGER": {
+      "control_id": "CTL-INTEGER",
+      "validation_id": "VAL-INTEGER-RANGE",
+      "validation_parameters": {
+        "maximum": 1000000,
+        "minimum": 0
+      }
+    },
+    "MULTI_SELECT": {
+      "control_id": "CTL-MULTI-SELECT",
+      "validation_id": "VAL-OPTIONS-SUBSET",
+      "validation_parameters": {
+        "options": {
+          "source_fact": "options"
+        }
+      }
+    },
+    "PORT_LIST": {
+      "control_id": "CTL-PORTS-LIST",
+      "validation_id": "VAL-PORTS",
+      "validation_parameters": {
+        "port_options": {
+          "source_fact": "port_options"
+        }
+      }
+    },
+    "SELECT": {
+      "control_id": "CTL-SINGLE-CHOICE",
+      "validation_id": "VAL-OPTION-IN-LIST",
+      "validation_parameters": {
+        "options": {
+          "source_fact": "options"
+        }
+      }
+    },
+    "TEXT": {
+      "control_id": "CTL-SHORT-TEXT",
+      "validation_id": "VAL-TEXT-LENGTH",
+      "validation_parameters": {
+        "max_length": 300,
+        "min_length": 1
+      }
+    },
+    "YES_NO": {
+      "control_id": "CTL-YES-NO",
+      "validation_id": "VAL-OPTION-IN-LIST",
+      "validation_parameters": {
+        "options": [
+          "Yes",
+          "No"
+        ]
+      }
+    }
+  },
+  "compositions": [
+    {
+      "composition_id": "COMP-DOC-ACK",
+      "label": "Document and addendum acknowledgement",
+      "permitted_controls": [
+        "CTL-CONFIRMATION"
+      ],
+      "repetition": "one",
+      "task_id": "TASK-DOCUMENTS"
+    },
+    {
+      "composition_id": "COMP-SUPPLIER-DETAILS",
+      "label": "Supplier details",
+      "permitted_controls": [
+        "CTL-SHORT-TEXT",
+        "CTL-LONG-TEXT",
+        "CTL-INTEGER",
+        "CTL-SINGLE-CHOICE"
+      ],
+      "repetition": "one",
+      "task_id": "TASK-COMPANY"
+    },
+    {
+      "composition_id": "COMP-LOCKED-DECLARATION",
+      "label": "Locked declaration",
+      "permitted_controls": [
+        "CTL-CONFIRMATION",
+        "CTL-YES-NO",
+        "CTL-SINGLE-CHOICE",
+        "CTL-SHORT-TEXT",
+        "CTL-LONG-TEXT",
+        "CTL-MONEY"
+      ],
+      "repetition": "one",
+      "task_id": "TASK-COMPANY"
+    },
+    {
+      "composition_id": "COMP-RESERVATION-ELIGIBILITY",
+      "label": "Reservation eligibility",
+      "permitted_controls": [
+        "CTL-CONFIRMATION",
+        "CTL-SINGLE-CHOICE",
+        "CTL-SHORT-TEXT",
+        "CTL-DATE",
+        "CTL-EVIDENCE-REFERENCE"
+      ],
+      "repetition": "one",
+      "task_id": "TASK-COMPANY"
+    },
+    {
+      "composition_id": "COMP-TENDER-SECURITY",
+      "label": "Tender security",
+      "permitted_controls": [
+        "CTL-SINGLE-CHOICE",
+        "CTL-SHORT-TEXT",
+        "CTL-EVIDENCE-REFERENCE"
+      ],
+      "repetition": "one",
+      "task_id": "TASK-COMPANY"
+    },
+    {
+      "composition_id": "COMP-GOODS-OFFER",
+      "label": "Goods offer",
+      "permitted_controls": [
+        "CTL-SHORT-TEXT",
+        "CTL-DATE",
+        "CTL-EVIDENCE-REFERENCE"
+      ],
+      "repetition": "per_source",
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "composition_id": "COMP-TECHNICAL-COMPLIANCE",
+      "label": "Technical compliance",
+      "permitted_controls": [
+        "CTL-SINGLE-CHOICE",
+        "CTL-YES-NO",
+        "CTL-MULTI-SELECT",
+        "CTL-SHORT-TEXT",
+        "CTL-LONG-TEXT",
+        "CTL-INTEGER",
+        "CTL-DECIMAL",
+        "CTL-EVIDENCE-REFERENCE",
+        "CTL-PORTS-LIST"
+      ],
+      "repetition": "per_source",
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "composition_id": "COMP-WARRANTY-SUPPORT",
+      "label": "Warranty and support",
+      "permitted_controls": [
+        "CTL-YES-NO",
+        "CTL-INTEGER",
+        "CTL-LONG-TEXT",
+        "CTL-EVIDENCE-REFERENCE"
+      ],
+      "repetition": "one",
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "composition_id": "COMP-EXPERIENCE",
+      "label": "Comparable experience",
+      "permitted_controls": [
+        "CTL-SHORT-TEXT",
+        "CTL-LONG-TEXT",
+        "CTL-MONEY",
+        "CTL-DATE",
+        "CTL-EVIDENCE-REFERENCE"
+      ],
+      "repetition": "per_source",
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "composition_id": "COMP-RELATED-SERVICES",
+      "label": "Related-services confirmation",
+      "permitted_controls": [
+        "CTL-YES-NO",
+        "CTL-DATE",
+        "CTL-EVIDENCE-REFERENCE"
+      ],
+      "repetition": "per_source",
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "composition_id": "COMP-ACCEPTANCE",
+      "label": "Acceptance confirmation",
+      "permitted_controls": [
+        "CTL-CONFIRMATION"
+      ],
+      "repetition": "per_source",
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "composition_id": "COMP-EVIDENCE-LIST",
+      "label": "Evidence list",
+      "permitted_controls": [
+        "CTL-EVIDENCE-REFERENCE"
+      ],
+      "repetition": "per_source",
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "composition_id": "COMP-GOODS-PRICE",
+      "label": "Goods price schedule",
+      "permitted_controls": [
+        "CTL-MONEY"
+      ],
+      "repetition": "per_source",
+      "task_id": "TASK-PRICE"
+    },
+    {
+      "composition_id": "COMP-REVIEW-SIGNATURE",
+      "label": "Review and signature summary",
+      "permitted_controls": [
+        "CTL-SHORT-TEXT",
+        "CTL-CONFIRMATION"
+      ],
+      "repetition": "one",
+      "task_id": "TASK-REVIEW"
+    }
+  ],
+  "contract_destinations": [
+    {
+      "contract_destination_id": "CD-GOODS-DELIVERY-SCHEDULE",
+      "label": "Goods and delivery schedule"
+    },
+    {
+      "contract_destination_id": "CD-TECHNICAL-OBLIGATION-SCHEDULE",
+      "label": "Technical obligation schedule"
+    },
+    {
+      "contract_destination_id": "CD-SCC-WARRANTY-SUPPORT",
+      "label": "SCC and warranty/support schedule"
+    },
+    {
+      "contract_destination_id": "CD-RELATED-SERVICES-SCHEDULE",
+      "label": "Related-services schedule"
+    },
+    {
+      "contract_destination_id": "CD-INSPECTION-ACCEPTANCE-SCHEDULE",
+      "label": "Inspection and acceptance schedule"
+    },
+    {
+      "contract_destination_id": "CD-CONTRACT-PRICE-SCHEDULES",
+      "label": "Contract price schedules"
+    }
+  ],
+  "controls": [
+    {
+      "accessible_rendering": "A single checkbox whose label is the complete statement being confirmed.",
+      "control_id": "CTL-CONFIRMATION",
+      "label": "Confirmation",
+      "value_type": "true"
+    },
+    {
+      "accessible_rendering": "Two radio buttons in a fieldset whose legend is the question.",
+      "control_id": "CTL-YES-NO",
+      "label": "Yes/No",
+      "value_type": "Yes|No"
+    },
+    {
+      "accessible_rendering": "Radio group (up to five options) or a select, legend or label naming the choice.",
+      "control_id": "CTL-SINGLE-CHOICE",
+      "label": "Controlled single choice",
+      "value_type": "option code"
+    },
+    {
+      "accessible_rendering": "Checkbox group in a fieldset; option codes and their released order are preserved.",
+      "control_id": "CTL-MULTI-SELECT",
+      "label": "Controlled multi-select",
+      "value_type": "ordered list of option codes"
+    },
+    {
+      "accessible_rendering": "Single-line text input with a visible label and length hint.",
+      "control_id": "CTL-SHORT-TEXT",
+      "label": "Short text",
+      "value_type": "text (single line)"
+    },
+    {
+      "accessible_rendering": "Textarea with a visible label and remaining-length hint.",
+      "control_id": "CTL-LONG-TEXT",
+      "label": "Long text",
+      "value_type": "text (multi-line)"
+    },
+    {
+      "accessible_rendering": "Numeric input restricted to whole numbers; unit shown as a suffix.",
+      "control_id": "CTL-INTEGER",
+      "label": "Integer",
+      "value_type": "whole number"
+    },
+    {
+      "accessible_rendering": "Numeric input with the released scale; unit shown as a suffix.",
+      "control_id": "CTL-DECIMAL",
+      "label": "Decimal",
+      "value_type": "decimal string"
+    },
+    {
+      "accessible_rendering": "Amount input with the currency code as a visible prefix.",
+      "control_id": "CTL-MONEY",
+      "label": "Money",
+      "value_type": "decimal string in the published currency"
+    },
+    {
+      "accessible_rendering": "Date input with the permitted range stated in the hint.",
+      "control_id": "CTL-DATE",
+      "label": "Date",
+      "value_type": "ISO date"
+    },
+    {
+      "accessible_rendering": "Evidence picker listing the bidder's uploaded files, with the permitted count stated.",
+      "control_id": "CTL-EVIDENCE-REFERENCE",
+      "label": "Evidence reference",
+      "value_type": "list of uploaded evidence identities"
+    },
+    {
+      "accessible_rendering": "Table of port rows; each row keeps its identity, port type, quantity and required treatment.",
+      "control_id": "CTL-PORTS-LIST",
+      "label": "Structured ports list",
+      "value_type": "rows of released port type and positive count"
+    }
+  ],
+  "display_name": "IT Equipment Open Tender",
+  "document_constants": {
+    "bank_guarantee_extra_days": 30,
+    "insurance_guarantee_extra_days": 28,
+    "performance_security_form_variant": "Unconditional Demand Bank Guarantee"
+  },
+  "evaluation_groups": [
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "label": "Eligibility",
+      "order": 1,
+      "purpose": "Submission and eligibility: official declarations, eligibility evidence, Tender Security, qualification evidence and any published reservation eligibility, each pass/fail."
+    },
+    {
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
+      "label": "Technical compliance",
+      "order": 2,
+      "purpose": "One pass/fail gate fed by every mandatory goods, technical, warranty/support, related-service and acceptance check, each keeping its own evidence and reason. No weights or scores."
+    },
+    {
+      "evaluation_group_id": "EVG-FINANCIAL",
+      "label": "Financial",
+      "order": 3,
+      "purpose": "Arithmetic and financial evaluation of the published price schedules under the lowest-evaluated-responsive treatment."
+    },
+    {
+      "evaluation_group_id": "EVG-AWARD",
+      "label": "Award",
+      "order": 4,
+      "purpose": "Award under the published rule. Consumes the prior governed group results; no response maps to it directly."
+    }
+  ],
+  "product_profile_id": "GOODS-IT-SIMPLE-V1",
+  "rejected_use": [
+    {
+      "code": "WORKS",
+      "statement": "Works"
+    },
+    {
+      "code": "SERVICES",
+      "statement": "Consulting or non-consulting services"
+    },
+    {
+      "code": "SOFTWARE-MAIN-PURPOSE",
+      "statement": "Software development, integration, implementation or data migration as the main purpose"
+    },
+    {
+      "code": "MULTIPLE-LOTS",
+      "statement": "Multiple lots or award packages"
+    },
+    {
+      "code": "OTHER-RESERVATION",
+      "statement": "A reservation category outside None, Youth, Women or Persons with disabilities"
+    },
+    {
+      "code": "COUNTY-WITHOUT-RULE",
+      "statement": "A County-residents restriction without an applicable verified rule, approved overlap treatment or released rendering/evidence rule"
+    },
+    {
+      "code": "WEIGHTED-SCORING",
+      "statement": "Weighted technical scoring"
+    },
+    {
+      "code": "MULTI-CURRENCY",
+      "statement": "Multiple currencies or alternative price schedules"
+    },
+    {
+      "code": "UNSUPPORTED-METHOD",
+      "statement": "An unsupported procurement method"
+    },
+    {
+      "code": "UNSTRUCTURED-REQUIREMENTS",
+      "statement": "A Requisition without authorised structured technical requirements and objective acceptance checks"
+    },
+    {
+      "code": "UNSUPPORTED-RENDERING",
+      "statement": "Any response, validation, composition or mapping the released Bid Workspace renderer does not support"
+    }
+  ],
+  "release_id": "stdr-0e81b40c-d548-498c-855a-d4f80764af40",
+  "renderer_profile_id": "BDS-GOODS-IT-V1",
+  "required_rules": [
+    {
+      "meaning": "Always required.",
+      "parameters": {},
+      "rule_id": "RQ-ALWAYS"
+    },
+    {
+      "meaning": "Optional.",
+      "parameters": {},
+      "rule_id": "RQ-NEVER"
+    },
+    {
+      "meaning": "Required when another field of the same group holds the value.",
+      "parameters": {
+        "field_key": "field key in the same response group",
+        "value": "option code"
+      },
+      "rule_id": "RQ-WHEN-FIELD-EQUALS"
+    },
+    {
+      "meaning": "Required when any named field of the same group holds the value.",
+      "parameters": {
+        "field_keys": "field keys in the same response group",
+        "value": "option code"
+      },
+      "rule_id": "RQ-WHEN-ANY-FIELD-EQUALS"
+    },
+    {
+      "meaning": "Resolved at compile time from the published source flag to RQ-ALWAYS or RQ-NEVER.",
+      "parameters": {
+        "flag": "a boolean flag the selector publishes"
+      },
+      "rule_id": "RQ-WHEN-SOURCE-FLAG"
+    }
+  ],
+  "reservation_treatments": [
+    {
+      "category": "Youth",
+      "eligibility_evidence": "Valid Access to Government Procurement Opportunities registration certificate in the category Youth, valid at the Tender submission deadline"
+    },
+    {
+      "category": "Women",
+      "eligibility_evidence": "Valid Access to Government Procurement Opportunities registration certificate in the category Women, valid at the Tender submission deadline"
+    },
+    {
+      "category": "Persons with disabilities",
+      "eligibility_evidence": "Valid Access to Government Procurement Opportunities registration certificate in the category Persons with disabilities, valid at the Tender submission deadline"
+    }
+  ],
+  "schema_version": 1,
+  "source_families": [
+    "document",
+    "supplier",
+    "declaration",
+    "tender_security",
+    "goods",
+    "technical_requirement",
+    "warranty_support",
+    "experience",
+    "related_service",
+    "acceptance_requirement",
+    "evidence_requirement",
+    "reservation",
+    "county_residents",
+    "price_row"
+  ],
+  "source_selectors": [
+    "SEL-DOCUMENT-PACKAGE",
+    "SEL-SUPPLIER",
+    "SEL-DECLARATION",
+    "SEL-TENDER-SECURITY",
+    "SEL-RESERVATION",
+    "SEL-GOODS-GROUPS",
+    "SEL-TECHNICAL-REQUIREMENTS",
+    "SEL-WARRANTY-SUPPORT",
+    "SEL-EXPERIENCE-ENTRIES",
+    "SEL-RELATED-SERVICES",
+    "SEL-ACCEPTANCE-REQUIREMENTS",
+    "SEL-EVIDENCE",
+    "SEL-EVIDENCE-ADDITIONAL",
+    "SEL-SUBMISSION"
+  ],
+  "supported_renderer_version": "1.0.0",
+  "supported_use": {
+    "award_packages": 1,
+    "county_residents": {
+      "reason": "This candidate carries no released County-residents document wording or evidence rule; LAW-REG-001 v1.2 LAW12-AC-005 keeps the county basis blocked until verified.",
+      "released": false,
+      "supported_overlap_treatments": [],
+      "treatment": "Separate County-residents restriction, only for a county Procuring Entity with an applicable verified rule, approved overlap treatment and released document wording"
+    },
+    "currency": "KES",
+    "equipment_categories": [
+      "Laptop",
+      "Desktop computer",
+      "Tablet",
+      "Monitor",
+      "Printer",
+      "Scanner",
+      "Network equipment",
+      "Power-protection equipment"
+    ],
+    "financial_evaluation": "Arithmetic and financial evaluation under the lowest-evaluated-responsive treatment",
+    "lotting_indicator": "Single lot",
+    "plan_horizon": "Single year",
+    "price_treatment": "Fixed price",
+    "procurement_category": "Goods",
+    "procurement_method": "Open Tender",
+    "product": "Straightforward off-the-shelf IT equipment",
+    "product_pattern": "IT Equipment",
+    "related_service_boundary": "Delivery, installation, configuration, testing, training or orientation only when ancillary to the Goods",
+    "related_service_types": [
+      "Delivery",
+      "Installation",
+      "Configuration",
+      "Testing",
+      "Training",
+      "User orientation"
+    ],
+    "reservation_categories": [
+      "None",
+      "Youth",
+      "Women",
+      "Persons with disabilities"
+    ],
+    "summary": "Goods · Open Tender · single lot · KES · fixed price · straightforward IT equipment",
+    "supplier_submission": "Structured electronic responses, evidence and price schedule",
+    "technical_evaluation": "Mandatory pass/fail checks feeding one Technical compliance gate"
+  },
+  "tasks": [
+    {
+      "label": "Tender documents and addenda",
+      "order": 1,
+      "purpose": "View and acknowledge the current published package.",
+      "task_id": "TASK-DOCUMENTS"
+    },
+    {
+      "label": "Company, declarations and tender security",
+      "order": 2,
+      "purpose": "Complete supplier facts, official declarations, the applicable reservation declaration and evidence, and the security response.",
+      "task_id": "TASK-COMPANY"
+    },
+    {
+      "label": "Requirements and supporting evidence",
+      "order": 3,
+      "purpose": "Respond to goods, technical, warranty and support, experience, service, acceptance and evidence requirements.",
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "label": "Price",
+      "order": 4,
+      "purpose": "Complete the published Goods and related-service price schedules.",
+      "task_id": "TASK-PRICE"
+    },
+    {
+      "label": "Review and submit",
+      "order": 5,
+      "purpose": "Resolve blockers, review, sign and submit the exact package.",
+      "task_id": "TASK-REVIEW"
+    }
+  ],
+  "template_key": "IT-EQUIPMENT-OPEN-V1",
+  "template_release": "1.1",
+  "validations": [
+    {
+      "parameters": {},
+      "validation_id": "VAL-NONE"
+    },
+    {
+      "parameters": {},
+      "validation_id": "VAL-CONFIRMED"
+    },
+    {
+      "parameters": {
+        "max_length": "integer",
+        "min_length": "integer"
+      },
+      "validation_id": "VAL-TEXT-LENGTH"
+    },
+    {
+      "parameters": {
+        "maximum": "integer",
+        "minimum": "integer"
+      },
+      "validation_id": "VAL-INTEGER-RANGE"
+    },
+    {
+      "parameters": {
+        "maximum": "decimal",
+        "minimum": "decimal",
+        "scale": "integer"
+      },
+      "validation_id": "VAL-DECIMAL-RANGE"
+    },
+    {
+      "parameters": {
+        "currency": "text",
+        "minimum": "decimal",
+        "scale": "integer"
+      },
+      "validation_id": "VAL-MONEY"
+    },
+    {
+      "parameters": {
+        "not_after": "date",
+        "not_before": "date"
+      },
+      "validation_id": "VAL-DATE-RANGE"
+    },
+    {
+      "parameters": {
+        "options": "list[text]"
+      },
+      "validation_id": "VAL-OPTION-IN-LIST"
+    },
+    {
+      "parameters": {
+        "options": "list[text]"
+      },
+      "validation_id": "VAL-OPTIONS-SUBSET"
+    },
+    {
+      "parameters": {
+        "port_options": "list[text]"
+      },
+      "validation_id": "VAL-PORTS"
+    },
+    {
+      "parameters": {
+        "maximum": "integer",
+        "minimum": "integer"
+      },
+      "validation_id": "VAL-EVIDENCE-COUNT"
+    }
+  ],
+  "visibility_rules": [
+    {
+      "meaning": "Always shown.",
+      "parameters": {},
+      "rule_id": "VS-ALWAYS"
+    },
+    {
+      "meaning": "Shown when another field of the same group holds the value.",
+      "parameters": {
+        "field_key": "field key in the same response group",
+        "value": "option code"
+      },
+      "rule_id": "VS-WHEN-FIELD-EQUALS"
+    },
+    {
+      "meaning": "Shown when any named field of the same group holds the value.",
+      "parameters": {
+        "field_keys": "field keys in the same response group",
+        "value": "option code"
+      },
+      "rule_id": "VS-WHEN-ANY-FIELD-EQUALS"
+    }
+  ]
+}

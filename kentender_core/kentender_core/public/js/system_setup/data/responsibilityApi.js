@@ -20,4 +20,12 @@ export const responsibilityApi = {
 			reason,
 			expected_version: expectedVersion || null,
 		}),
+	// A scheduled (not yet in force) assignment may be changed in any field;
+	// the server refuses once it has started.
+	updateScheduled: (assignment, payload, expectedVersion) =>
+		frappeCall(PREFIX + "update_scheduled_responsibility", {
+			assignment,
+			...payload,
+			expected_version: expectedVersion || null,
+		}),
 };

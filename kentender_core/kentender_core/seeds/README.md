@@ -11,20 +11,26 @@ bench --site <site> execute kentender_core.seeds.canonical.validate --kwargs '{"
 ```
 
 `run` first removes every row that is not part of the canonical world
-(test/Playwright budgets, needs, plans, users on fixture e-mail domains,
-duplicate organisation units, isolation fiscal years, legacy demo journeys —
+(test/Playwright budgets, needs, plans, requisitions and Tenders, users on
+fixture e-mail domains, duplicate organisation units, isolation fiscal years,
+legacy demo journeys, and child-table rows and files whose record is gone —
 see `canonical.py`'s `collect_non_canonical`), then reseeds progressively:
 `site` (site PE, units, fiscal years, catalogues, funding source, regulatory
 reference, actors and assignments — `site_setup.run`) → `strategy`
 (`kentender_strategy.seeds.kentender_mvp_v1_strategy`) → `budget`
-(`kentender_budget.seeds.kentender_mvp_v1_portfolio`, Active baseline only).
-Later module stages are appended to `canonical.STAGES` as they land. Pass
-`"rebuild": True` to also drop the canonical module rows first (Strategy,
-Budget and any downstream Needs/Planning rows, which reference Budget lines)
-and rebuild from scratch. Leaves ERPNext-owned records and the pre-cutover
+(`kentender_budget.seeds.kentender_mvp_v1_portfolio`, Active baseline only)
+→ `needs` → `planning` → `requisitions` → `tenders` → `bid_submission` →
+`bid_opening` → `bid_evaluation` → `award`, each through its owning module's
+own seed (the last four only on a test site, since they use the simulated
+signing, tender-box and delivery services). Before the clear, any loaded demo
+profile (Requisitions, Departmental Needs, Bid Opening, Award) is undone and
+the site test clock cleared. Pass `"rebuild": True` to also drop the canonical
+module rows first (downstream first: Tenders — which takes the bid, opening,
+evaluation and award with it — Requisitions, Planning, Needs, Budget,
+Strategy) and rebuild from scratch. Leaves ERPNext-owned records and the pre-cutover
 legacy reference doctypes alone (KT-STD-001 §10).
 
-`make seed-canonical SITE=<site> THROUGH=budget` wraps `run`. The maintained runbook — options, what is removed and kept, validation, how to add the next module stage — is `docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_0.md`.
+`make seed-canonical SITE=<site> THROUGH=award` wraps `run` for the full chain (the make default stops at `requisitions`; add `REBUILD=True` for a rebuild). The maintained runbook — options, what is removed and kept, validation, demo profiles, how to add the next module stage — is `docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_24.md` (each version has its own file from v1.16; v1.0–v1.15 were kept in `…_v1_0.md`).
 
 ## Legacy entry points (`bench execute`)
 

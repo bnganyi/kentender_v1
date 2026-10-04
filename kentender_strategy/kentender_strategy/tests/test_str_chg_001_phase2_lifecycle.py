@@ -17,7 +17,7 @@ from uuid import uuid4
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from kentender_strategy.tests.fixtures import ensure_fiscal_year
+from kentender_strategy.tests.fixtures import ensure_fiscal_year, pin_review_date
 
 from kentender_core.services.responsibility_errors import ResponsibilityError
 from kentender_strategy.services.strategy_authorization import (
@@ -34,6 +34,7 @@ FY = "2040-2041"
 
 class TestPlanVersionLifecycle(FrappeTestCase):
 	def setUp(self):
+		pin_review_date(self)
 		ensure_fiscal_year(2040)
 		self.suffix = uuid4().hex[:8]
 		self._cleanup: list[tuple[str, str]] = []
@@ -266,10 +267,13 @@ class TestPlanVersionLifecycle(FrappeTestCase):
 					"based_on_plan_version_id": v1,
 					"effective_from": "2040-07-01",
 					"effective_to": "2045-06-30",
-					"status": "Submitted for approval",
 				}
 			).insert(ignore_permissions=True)
 		)
+		# STR-BR-015 — approval repeats every readiness check, so the
+		# successor needs real content before it can be submitted/approved.
+		self._fill_hierarchy(v2.name)
+		frappe.db.set_value("Strategic Plan Version", v2.name, "status", "Submitted for approval")
 		frappe.set_user(approver)
 		out = transition_plan_version(v2.name, "Approve")
 		self.assertEqual(out["status"], "Active")

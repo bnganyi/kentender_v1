@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: var(--color-neutral-200); }
+  a { color: var(--color-accent-2-800); }
+  a:hover { color: var(--color-accent-2); }
+  .navlink { display: block; padding: 3px 10px; font-size: 12.5px; text-decoration: none; color: var(--color-neutral-800); border-left: 2px solid transparent; }
+  .navlink:hover { background: var(--color-accent-100); color: var(--color-accent-800); border-left-color: var(--color-accent); }
+  .navgrp { font-family: var(--font-heading); font-size: 12px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-accent-800); padding: 14px 10px 4px; }
+</style>
+</helmet>
+
+<div style="display:flex;align-items:flex-start;font-family:var(--font-body);color:var(--color-text)">
+
+<nav style="position:sticky;top:0;flex:none;width:252px;height:100vh;overflow-y:auto;background:var(--color-surface);border-right:1px solid var(--color-divider);padding:0 0 40px">
+  <div style="padding:18px 14px 12px;border-bottom:1px solid var(--color-divider);position:sticky;top:0;background:var(--color-surface);z-index:2">
+    <div style="font-family:var(--font-heading);font-size:19px;line-height:1.1">Planning artboards</div>
+    <div style="font-size:11.5px;color:var(--color-neutral-700);margin-top:4px">PLN-CHG-001 v1.27 §10 · KT-STD-001 v1.8 §2</div>
+  </div>
+  <div class="navgrp">U01 — Planning workspace</div>
+  <a class="navlink" href="Artboards-U01.dc.html#U01" style="color:var(--color-neutral-600)">U01 · Planner, BASE draft</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-CURRENT" style="color:var(--color-neutral-600)">U01-CURRENT</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-CURRENT-UPDATE" style="color:var(--color-neutral-600)">U01-CURRENT-UPDATE</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-CURRENT-UPDATE-OVER-BUDGET" style="color:var(--color-neutral-600)">U01-CURRENT-UPDATE-OVER-BUDGET</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-CURRENT-UPDATE-WAITING-BUDGET" style="color:var(--color-neutral-600)">U01-CURRENT-UPDATE-WAITING-BUDGET</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-NO-PLAN" style="color:var(--color-neutral-600)">U01-NO-PLAN</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-DEPARTMENT-AUTHOR" style="color:var(--color-neutral-600)">U01-DEPARTMENT-AUTHOR</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-DEPARTMENT-AUTHOR-NONE" style="color:var(--color-neutral-600)">U01-DEPARTMENT-AUTHOR · no plan</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-HOD" style="color:var(--color-neutral-600)">U01-HOD</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-ASSIGNED-DECISION" style="color:var(--color-neutral-600)">U01-ASSIGNED-DECISION</a>
+  <div class="navgrp">U02–U05 — Departmental plan</div>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U02-AUTHOR-DRAFT" style="color:var(--color-neutral-600)">U02-AUTHOR-DRAFT</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U03-FUNDING" style="color:var(--color-neutral-600)">U03-FUNDING</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U03-EXCLUDE" style="color:var(--color-neutral-600)">U03-EXCLUDE</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U03-EXCLUDED-ROW" style="color:var(--color-neutral-600)">U03-EXCLUDED-ROW</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U03-REINCLUDE" style="color:var(--color-neutral-600)">U03-REINCLUDE</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U04-DIRECT" style="color:var(--color-neutral-600)">U04-DIRECT</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U04-EDIT" style="color:var(--color-neutral-600)">U04-EDIT · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U05-HOD" style="color:var(--color-neutral-600)">U05-HOD</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U05-CORRECTION" style="color:var(--color-neutral-600)">U05-CORRECTION</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U05-ALL-EXCLUDED" style="color:var(--color-neutral-600)">U05-ALL-EXCLUDED · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U02-CLOSED" style="color:var(--color-neutral-600)">U02-CLOSED</a>
+  <a class="navlink" href="Artboards-U02-U05.dc.html#U02-ACCEPTED-UPDATE" style="color:var(--color-neutral-600)">U02-ACCEPTED-UPDATE</a>
+  <div class="navgrp">U06 — Procurement review</div>
+  <a class="navlink" href="Artboards-U06.dc.html#U06" style="color:var(--color-neutral-600)">U06 · BASE validation</a>
+  <a class="navlink" href="Artboards-U06.dc.html#U06-RETURN" style="color:var(--color-neutral-600)">U06-RETURN</a>
+  <a class="navlink" href="Artboards-U06.dc.html#U06-EXCLUDED" style="color:var(--color-neutral-600)">U06-EXCLUDED</a>
+  <a class="navlink" href="Artboards-U06.dc.html#U06-CLASSIFICATION-MISSING" style="color:var(--color-neutral-600)">U06-CLASSIFICATION-MISSING</a>
+  <a class="navlink" href="Artboards-U06.dc.html#U06-ACCEPTED-CLASSIFICATION" style="color:var(--color-neutral-600)">U06-ACCEPTED-CLASSIFICATION</a>
+  <a class="navlink" href="Artboards-U06.dc.html#U06-CORRECT-CLASSIFICATION" style="color:var(--color-neutral-600)">U06-CORRECT-CLASSIFICATION</a>
+  <a class="navlink" href="Artboards-U06.dc.html#U06-STALE-SOURCE" style="color:var(--color-neutral-600)">U06-STALE-SOURCE · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U06.dc.html#U06-SEGREGATION" style="color:var(--color-neutral-600)">U06-SEGREGATION</a>
+  <div class="navgrp">U07 — Annual plan preparation</div>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U07" style="color:var(--color-neutral-600)">U07 · formed Draft</a>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U07-UNALLOCATED" style="color:var(--color-neutral-600)">U07-UNALLOCATED</a>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U07-ONE-SELECTED" style="color:var(--color-neutral-600)">U07-ONE-SELECTED</a>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U07-TWO-SELECTED" style="color:var(--color-neutral-600)">U07-TWO-SELECTED</a>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U07-WAITING-FINANCE" style="color:var(--color-neutral-600)">U07-WAITING-FINANCE · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U07-FINANCE-COMPLETE" style="color:var(--color-neutral-600)">U07-FINANCE-COMPLETE</a>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U07-UPDATE" style="color:var(--color-neutral-600)">U07-UPDATE · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U07-UPDATE-OVER-BUDGET" style="color:var(--color-neutral-600)">U07-UPDATE-OVER-BUDGET</a>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U07-WAITING-BUDGET-REVISION" style="color:var(--color-neutral-600)">U07-WAITING-BUDGET-REVISION</a>
+  <div class="navgrp">U08 — Add selected requirements</div>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U08" style="color:var(--color-neutral-600)">U08 · combine</a>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U08-SEPARATE" style="color:var(--color-neutral-600)">U08-SEPARATE</a>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U08-INCOMPATIBLE" style="color:var(--color-neutral-600)">U08-INCOMPATIBLE · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U08-DUPLICATE" style="color:var(--color-neutral-600)">U08-DUPLICATE · awaiting fixture</a>
+  <div class="navgrp">U09 — Purchase editor</div>
+  <a class="navlink" href="Artboards-U09.dc.html#U09" style="color:var(--color-neutral-600)">U09 · BASE</a>
+  <a class="navlink" href="Artboards-U09.dc.html#U09-READY" style="color:var(--color-neutral-600)">U09-READY</a>
+  <a class="navlink" href="Artboards-U09.dc.html#U09-INVALID-SCHEDULE" style="color:var(--color-neutral-600)">U09-INVALID-SCHEDULE</a>
+  <a class="navlink" href="Artboards-U09.dc.html#U09-REMOVE" style="color:var(--color-neutral-600)">U09-REMOVE</a>
+  <a class="navlink" href="Artboards-U09.dc.html#U09-CLASSIFICATION-CORRECTION" style="color:var(--color-neutral-600)">U09-CLASSIFICATION-CORRECTION</a>
+  <a class="navlink" href="Artboards-U09.dc.html#U09-LOCKED" style="color:var(--color-neutral-600)">U09-LOCKED · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U09.dc.html#U09-SOURCE-CORRECTION" style="color:var(--color-neutral-600)">U09-SOURCE-CORRECTION · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U09.dc.html#U09-CLASSIFICATION-LOCKED" style="color:var(--color-neutral-600)">U09-CLASSIFICATION-LOCKED · awaiting fixture</a>
+  <div class="navgrp">U10 — Funding review</div>
+  <a class="navlink" href="Artboards-U10.dc.html#U10" style="color:var(--color-neutral-600)">U10 · within approved</a>
+  <a class="navlink" href="Artboards-U10.dc.html#U10-LOW-AVAILABILITY" style="color:var(--color-neutral-600)">U10-LOW-AVAILABILITY</a>
+  <a class="navlink" href="Artboards-U10.dc.html#U10-OVER-APPROVED" style="color:var(--color-neutral-600)">U10-OVER-APPROVED</a>
+  <a class="navlink" href="Artboards-U10.dc.html#U10-CHANGED" style="color:var(--color-neutral-600)">U10-CHANGED</a>
+  <a class="navlink" href="Artboards-U10.dc.html#U10-RETURN" style="color:var(--color-neutral-600)">U10-RETURN</a>
+  <a class="navlink" href="Artboards-U10.dc.html#U10-HISTORY" style="color:var(--color-neutral-600)">U10-HISTORY</a>
+  <a class="navlink" href="Artboards-U10.dc.html#U10-REASSESS" style="color:var(--color-neutral-600)">U10-REASSESS · awaiting fixture</a>
+  <div class="navgrp">U11 — Annual plan review</div>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-HOPF" style="color:var(--color-neutral-600)">U11-HOPF</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-AO" style="color:var(--color-neutral-600)">U11-AO</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-STATUTORY" style="color:var(--color-neutral-600)">U11-STATUTORY</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-READER" style="color:var(--color-neutral-600)">U11-READER</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-PLANNER" style="color:var(--color-neutral-600)">U11-PLANNER</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-READER-HISTORICAL" style="color:var(--color-neutral-600)">U11-READER · historical</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-RETURN" style="color:var(--color-neutral-600)">U11-RETURN</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-STALE-EVIDENCE" style="color:var(--color-neutral-600)">U11-STALE-EVIDENCE</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-COLLECTIVE" style="color:var(--color-neutral-600)">U11-COLLECTIVE · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-LATE-ADOPTION" style="color:var(--color-neutral-600)">U11-LATE-ADOPTION · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-UPDATE" style="color:var(--color-neutral-600)">U11-UPDATE · awaiting fixture</a>
+  <div class="navgrp">U12 — Departmental evidence</div>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U12" style="color:var(--color-neutral-600)">U12 · pinned source</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U12-NEWER-SOURCE" style="color:var(--color-neutral-600)">U12-NEWER-SOURCE</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U12-HISTORICAL-PLAN" style="color:var(--color-neutral-600)">U12-HISTORICAL-PLAN</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U12-UNAVAILABLE" style="color:var(--color-neutral-600)">U12-UNAVAILABLE</a>
+  <div class="navgrp">U13 — Publication and recovery</div>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13" style="color:var(--color-neutral-600)">U13 · evidence needed</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-TREASURY-FORM" style="color:var(--color-neutral-600)">U13-TREASURY-FORM</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-TREASURY-FORM-CHECKED" style="color:var(--color-neutral-600)">U13-TREASURY-FORM · checked</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-EVIDENCE-RECORDED" style="color:var(--color-neutral-600)">U13-EVIDENCE-RECORDED</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-SENDING" style="color:var(--color-neutral-600)">U13-SENDING</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-FAILED" style="color:var(--color-neutral-600)">U13-FAILED · technical operator</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-FAILED-AO" style="color:var(--color-neutral-600)">U13-FAILED · AO / reader</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-UNKNOWN" style="color:var(--color-neutral-600)">U13-UNKNOWN</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-ACTIVE" style="color:var(--color-neutral-600)">U13-ACTIVE</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-PUBLISHED-HELD" style="color:var(--color-neutral-600)">U13-PUBLISHED-HELD</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-UNPUBLISHED-DEFECT" style="color:var(--color-neutral-600)">U13-UNPUBLISHED-DEFECT</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-WITHDRAWAL-REQUEST" style="color:var(--color-neutral-600)">U13-WITHDRAWAL-REQUEST</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-WITHDRAWN" style="color:var(--color-neutral-600)">U13-WITHDRAWN</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-CORRECT-EVIDENCE" style="color:var(--color-neutral-600)">U13-CORRECT-EVIDENCE</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-WITHDRAWAL-REQUEST-DIALOG" style="color:var(--color-neutral-600)">U13-WITHDRAWAL-REQUEST-DIALOG</a>
+  <a class="navlink" href="Artboards-U12-U13.dc.html#U13-WITHDRAWAL-DECISION-DIALOG" style="color:var(--color-neutral-600)">U13-WITHDRAWAL-DECISION-DIALOG</a>
+  <div class="navgrp">U14 — Procurement progress</div>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U14" style="color:var(--color-neutral-600)">U14 · initial</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U14-PARTIAL" style="color:var(--color-neutral-600)">U14-PARTIAL</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U14-FULL-COVERAGE" style="color:var(--color-neutral-600)">U14-FULL-COVERAGE</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U14-ACTUALS" style="color:var(--color-neutral-600)">U14-ACTUALS</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U14-HOLD" style="color:var(--color-neutral-600)">U14-HOLD</a>
+  <div class="navgrp">U15 — Update expected dates</div>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U15" style="color:var(--color-neutral-600)">U15 · deferred, no MVP artboard</a>
+  <div class="navgrp">U16 — Correction requests</div>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U16" style="color:var(--color-neutral-600)">U16 · two requests</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U16-OPEN-DETAIL" style="color:var(--color-neutral-600)">U16-OPEN-DETAIL</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U16-COMPLETE" style="color:var(--color-neutral-600)">U16-COMPLETE</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U16-NO-CHANGE" style="color:var(--color-neutral-600)">U16-NO-CHANGE</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U16-MULTIPLE" style="color:var(--color-neutral-600)">U16-MULTIPLE</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U16-ADDITIONAL-REQUIREMENT" style="color:var(--color-neutral-600)">U16-ADDITIONAL-REQUIREMENT</a>
+  <a class="navlink" href="Artboards-U14-U16.dc.html#U16-PERMANENT-SCOPE" style="color:var(--color-neutral-600)">U16-PERMANENT-SCOPE</a>
+  <div class="navgrp">C01–C04 — Setup ownership</div>
+  <a class="navlink" href="#C01-ROUTE-MISSING">C01-ROUTE-MISSING</a>
+  <a class="navlink" href="#C02-DPP-CLOSED">C02-DPP-CLOSED</a>
+  <a class="navlink" href="#C03-METHOD-MISSING">C03-METHOD-MISSING</a>
+  <a class="navlink" href="#C04-SCHEDULE-MISSING">C04-SCHEDULE-MISSING</a>
+  <div class="navgrp">U21 — Shared states</div>
+  <a class="navlink" href="#U21-LOADING-WORKSPACE">U21-LOADING-WORKSPACE</a>
+  <a class="navlink" href="#U21-LOADING-REVIEW">U21-LOADING-REVIEW</a>
+  <a class="navlink" href="#U21-DENIED">U21-DENIED</a>
+  <a class="navlink" href="#U21-MASKED">U21-MASKED</a>
+  <a class="navlink" href="#U21-LOAD-FAILURE">U21-LOAD-FAILURE</a>
+  <a class="navlink" href="#U21-NO-TASKS">U21-NO-TASKS</a>
+  <a class="navlink" href="#U21-FILTERED-EMPTY">U21-FILTERED-EMPTY</a>
+  <a class="navlink" href="#U21-CHANGED-ACTION">U21-CHANGED-ACTION</a>
+  <a class="navlink" href="#U21-SAVE-FAILED">U21-SAVE-FAILED</a>
+  <a class="navlink" href="#U21-UNCERTAIN-DECISION">U21-UNCERTAIN-DECISION</a>
+  <a class="navlink" href="#U21-HISTORICAL">U21-HISTORICAL</a>
+  <a class="navlink" href="#U21-LATE-ACTIVATION">U21-LATE-ACTIVATION</a>
+  <a class="navlink" href="#U21-REMOVE-DRAFT-ITEM">U21-REMOVE-DRAFT-ITEM</a>
+  <a class="navlink" href="#U21-TECHNICAL-WORKSPACE">U21-TECHNICAL-WORKSPACE</a>
+  <a class="navlink" href="#U21-TECHNICAL-DETAIL">U21-TECHNICAL-DETAIL</a>
+  <a class="navlink" href="#U21-CANCEL-UPDATE">U21-CANCEL-UPDATE · awaiting fixture</a>
+  <div class="navgrp">Review gate</div>
+  <a class="navlink" href="#INVENTORY">Variants held for fixtures</a>
+</nav>
+
+<main id="board" style="flex:1;min-width:0;overflow-x:auto;padding:28px 28px 120px">
+
+
+<div style="max-width:1440px;margin-bottom:36px">
+  <h1 style="font-family:var(--font-heading);font-size:34px;margin:0 0 6px">Procurement Planning — static design contract</h1>
+  <p style="margin:0;font-size:14px;color:var(--color-neutral-800);max-width:820px">Every artboard below is drawn from the closed fixture pack in PLN-CHG-001 §10.2. Fixture context — actor, scope, instant, scenario — sits on the grey plate above each frame and is not rendered inside the artboard. Frames are 1440&nbsp;px wide; height grows with content.</p>
+</div>
+
+<section id="C01-ROUTE-MISSING" data-screen-label="C01-ROUTE-MISSING" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">C01-ROUTE-MISSING</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Approval authority not configured</span>
+    <span class="tag tag-outline">Planning-side missing-setting panel</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: Amina Hassan on the annual plan review, without authorised setup access. The setup surface itself is owned by CFG v0.11 §10 and is not drawn here. No disabled setup controls appear in Planning.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Review the annual procurement plan</h1>
+        <p class="kt-page-desc">Review the proposed purchases. If you adopt the plan, it will go to the Cabinet Secretary for approval.</p>
+        <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1 · FY 2027/28</div>
+      </div></div>
+      <div data-kt="journey" aria-label="Journey" style="display:flex;align-items:flex-end;gap:var(--space-6);margin:0 0 var(--space-6)"><ol style="list-style:none;margin:0;padding:0;flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:var(--space-2)"><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Preparation</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Funding confirmation</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Signature</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-accent);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;font-weight:600;color:var(--color-text)">AO adoption</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-attention);font-weight:600">Blocked <span style="font-weight:400;color:var(--color-neutral-800)">· Amina Hassan</span></div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Cabinet Secretary approval</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Publication</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">In force</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li></ol></div>
+      <div data-kt="next-step" class="kt-notice is-warning" style="margin:0 0 var(--space-6)"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--color-neutral-800)">Your turn, blocked</div><div style="font-family:var(--font-heading);font-size:22px;line-height:1.2;margin-top:2px;color:var(--color-text)">Annual Plan approval authority is not set up</div><div class="kt-meta-row is-tight" style="gap:var(--space-8);margin-top:var(--space-3)"><div><span class="kt-label">Setting</span><span style="font-size:14px">Annual Plan approval authority</span></div><div><span class="kt-label">Affected action</span><span style="font-size:14px">Adopt and submit</span></div><div><span class="kt-label">Responsible role</span><span style="font-size:14px">Administrator or System Manager</span></div></div><div style="display:flex;gap:var(--space-3);flex-wrap:wrap;align-items:center;margin-top:var(--space-4)"><span style="font-size:14px">Ask your KenTender administrator to complete this setting.</span></div></div></div>
+      <div class="kt-region">
+        <h2>Decision summary</h2>
+        <div class="kt-meta-row">
+          <div><span class="kt-label">Estimated cost</span><span class="kt-meta-value">KES 130,000,000</span></div>
+          <div><span class="kt-label">Purchases</span><span class="kt-meta-value">2</span></div>
+          <div><span class="kt-label">Departments</span><span class="kt-meta-value">2</span></div>
+        </div>
+      </div>
+      <div class="kt-decision">
+        
+        <div style="display:flex;justify-content:flex-end;gap:var(--space-3)">
+          <a href="Artboards-U11.dc.html#U11-RETURN" class="btn btn-secondary">Return for correction</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="C02-DPP-CLOSED" data-screen-label="C02-DPP-CLOSED" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">C02-DPP-CLOSED</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Departmental plan submissions closed</span>
+    <span class="tag tag-outline">Planning-side missing-setting panel</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: Julia Njeri with authorised setup access, so Open System setup is enabled and routes to the exact CFG section. Permitted Draft save and returned correction remain visible.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Review Digital Health’s departmental plan</h1>
+        <p class="kt-page-desc">Check the requirements and submit the complete departmental plan to Procurement.</p>
+        <div class="kt-page-scope">Digital Health · FY 2027/28 <span class="kt-status is-draft" style="margin-left:6px">Draft</span></div>
+      </div></div>
+      <div data-kt="journey" aria-label="Journey" style="display:flex;align-items:flex-end;gap:var(--space-6);margin:0 0 var(--space-6)"><ol style="list-style:none;margin:0;padding:0;flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-2)"><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Preparation</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-accent);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;font-weight:600;color:var(--color-text)">Certification</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-attention);font-weight:600">Blocked <span style="font-weight:400;color:var(--color-neutral-800)">· Julia Njeri</span></div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Procurement review</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Accepted</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li></ol></div>
+      <div data-kt="next-step" class="kt-notice is-warning" style="margin:0 0 var(--space-6)"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--color-neutral-800)">Your turn, blocked</div><div style="font-family:var(--font-heading);font-size:22px;line-height:1.2;margin-top:2px;color:var(--color-text)">Initial submissions are closed</div><div class="kt-meta-row is-tight" style="gap:var(--space-8);margin-top:var(--space-3)"><div><span class="kt-label">Setting</span><span style="font-size:14px">Departmental plan submissions</span></div><div><span class="kt-label">Affected action</span><span style="font-size:14px">Submit initial departmental plan</span></div><div><span class="kt-label">Responsible role</span><span style="font-size:14px">Administrator or System Manager</span></div></div><div style="display:flex;gap:var(--space-3);flex-wrap:wrap;align-items:center;margin-top:var(--space-4)"><button type="button" class="btn btn-secondary">Open System setup</button></div></div></div>
+      <div class="kt-region">
+        <h2>Requirements</h2>
+        <table class="table">
+          <thead><tr><th>Requirement</th><th class="is-num">Quantity</th><th>Unit</th><th class="is-num">Estimated cost</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>National digital health infrastructure upgrade</td><td class="is-num">1</td><td>Programme</td><td class="is-num">KES 80,000,000</td><td><span class="kt-status is-live">Included</span></td></tr>
+            <tr><td>Clinical deployment laptops for digital health rollout</td><td class="is-num">150</td><td>Each</td><td class="is-num">KES 30,000,000</td><td><span class="kt-status is-live">Included</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="kt-decision">
+        
+        <div style="display:flex;justify-content:flex-end">
+          <button type="button" class="btn btn-primary">Save draft</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="C03-METHOD-MISSING" data-screen-label="C03-METHOD-MISSING" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">C03-METHOD-MISSING</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Applicable procurement method rule missing</span>
+    <span class="tag tag-outline">Planning-side missing-setting panel</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: Mercy Kilonzo on the infrastructure purchase, without authorised setup access. The issue sits immediately above the affected action.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">National digital health infrastructure upgrade</h1>
+        <div class="kt-page-scope">PPI-MOH-2027-021 · Plan Version 1 <span class="kt-status is-draft" style="margin-left:6px">Draft</span></div>
+      </div></div>
+      <div class="kt-region">
+        <h2>Procurement approach</h2>
+        <div class="kt-notice is-warning" style="margin-bottom:var(--space-4)">
+          <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <div style="flex:1">
+            <div class="kt-notice-body">Open Tender cannot be confirmed until the applicable method rule is verified in System setup.</div>
+            <div class="kt-meta-row is-tight" style="gap:var(--space-8);margin-top:var(--space-3)">
+              <div><span class="kt-label">Setting</span><span style="font-size:14px">Applicable procurement method rule</span></div>
+              <div><span class="kt-label">Affected purchase</span><span style="font-size:14px">National digital health infrastructure upgrade · PPI-MOH-2027-021</span></div>
+              <div><span class="kt-label">Affected action</span><span style="font-size:14px">Send plan for governance review</span></div>
+              <div><span class="kt-label">Responsible role</span><span style="font-size:14px">Administrator or System Manager</span></div>
+            </div>
+            <p style="margin:var(--space-3) 0 0;font-size:14px">Ask your KenTender administrator to complete this setting.</p>
+          </div>
+        </div>
+        <div class="field" style="max-width:320px"><label for="c03-m">Procurement method</label><select class="input" id="c03-m"><option>Open Tender</option></select></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:var(--space-3);border-top:1px solid var(--color-divider);padding-top:var(--space-5)">
+        <a href="Artboards-U07-U08.dc.html#U07" class="btn btn-secondary">Back to annual plan</a>
+        <button type="button" class="btn btn-primary">Save draft</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="C04-SCHEDULE-MISSING" data-screen-label="C04-SCHEDULE-MISSING" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">C04-SCHEDULE-MISSING</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Applicable procurement schedule missing</span>
+    <span class="tag tag-outline">Planning-side missing-setting panel</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: Mercy Kilonzo on the laptop purchase, without authorised setup access. CFG-XD-001 remains unresolved, so the May 2027 schedule is never depicted as legally ready.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Prepare the annual procurement plan</h1>
+        <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1 · FY 2027/28 <span class="kt-status is-draft" style="margin-left:6px">Draft</span></div>
+      </div></div>
+      <div data-kt="journey" aria-label="Journey" style="display:flex;align-items:flex-end;gap:var(--space-6);margin:0 0 var(--space-6)"><ol style="list-style:none;margin:0;padding:0;flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:var(--space-2)"><li style="border-top:2px solid var(--color-accent);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;font-weight:600;color:var(--color-text)">Preparation</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-attention);font-weight:600">Blocked <span style="font-weight:400;color:var(--color-neutral-800)">· Mercy Kilonzo</span></div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Funding confirmation</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Signature</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">AO adoption</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Cabinet Secretary approval</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Publication</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">In force</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li></ol></div>
+      <div data-kt="next-step" class="kt-notice is-warning" style="margin:0 0 var(--space-6)"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--color-neutral-800)">Your turn, blocked</div><div style="font-family:var(--font-heading);font-size:22px;line-height:1.2;margin-top:2px;color:var(--color-text)">Applicable procurement schedule is not set up</div><div class="kt-meta-row is-tight" style="gap:var(--space-8);margin-top:var(--space-3)"><div><span class="kt-label">Setting</span><span style="font-size:14px">Applicable procurement schedule</span></div><div><span class="kt-label">Affected purchase</span><span style="font-size:14px">Clinical training and deployment laptops for digital health rollout · PPI-MOH-2027-033</span></div><div><span class="kt-label">Affected action</span><span style="font-size:14px">Submit annual plan</span></div><div><span class="kt-label">Responsible role</span><span style="font-size:14px">Administrator or System Manager</span></div></div><div style="display:flex;gap:var(--space-3);flex-wrap:wrap;align-items:center;margin-top:var(--space-4)"><span style="font-size:14px">Ask your KenTender administrator to complete this setting.</span></div></div></div>
+      
+      <div style="display:flex;justify-content:flex-end;border-top:1px solid var(--color-divider);padding-top:var(--space-5)">
+        <button type="button" class="btn btn-primary">Save draft</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-LOADING-WORKSPACE" data-screen-label="U21-LOADING-WORKSPACE" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-LOADING-WORKSPACE</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Loading procurement planning…</span>
+    <span class="tag tag-outline">State variant of U01</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: verdict and data pending. Actual-structure skeleton only; no stale rows or actions.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <p style="margin:0;font-size:14px;color:var(--color-neutral-800)">Loading procurement planning…</p>
+      <div style="height:34px;width:420px;background:var(--color-surface-2)"></div>
+      <div style="height:16px;width:620px;background:var(--color-surface-2)"></div>
+      <div style="height:120px;background:var(--color-surface-2);margin-top:var(--space-4)"></div>
+      <div style="height:44px;background:var(--color-surface-2)"></div>
+      <div style="height:44px;background:var(--color-surface-2)"></div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-LOADING-REVIEW" data-screen-label="U21-LOADING-REVIEW" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-LOADING-REVIEW</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Loading plan review…</span>
+    <span class="tag tag-outline">State variant of U11</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: exact review pending. No Plan title and no decision controls until authorised data arrives.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <p style="margin:0;font-size:14px;color:var(--color-neutral-800)">Loading plan review…</p>
+      <div style="height:34px;width:520px;background:var(--color-surface-2)"></div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:var(--space-4)">
+        <div style="height:56px;background:var(--color-surface-2)"></div><div style="height:56px;background:var(--color-surface-2)"></div><div style="height:56px;background:var(--color-surface-2)"></div>
+        <div style="height:56px;background:var(--color-surface-2)"></div><div style="height:56px;background:var(--color-surface-2)"></div><div style="height:56px;background:var(--color-surface-2)"></div>
+      </div>
+      <div style="height:160px;background:var(--color-surface-2)"></div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-DENIED" data-screen-label="U21-DENIED" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-DENIED</span>
+    <span style="font-family:var(--font-heading);font-size:23px">You do not have access to Procurement Planning</span>
+    <span class="tag tag-outline">Inline page state</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: ordinary actor with no Planning responsibility — never a technical reader. Inline state, never a modal. No protected content or action.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="1"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <div style="font-family:var(--font-heading);font-size:23px">You do not have access to Procurement Planning.</div>
+        <p style="margin:var(--space-3) auto 0;font-size:14px;max-width:760px">This area needs one of these responsibilities: Departmental Author, Head of User Department, Procurement Planner, Head of Procurement Function, Finance Confirmation Officer, Accounting Officer, configured statutory decision-holder or Auditor.</p>
+        <p style="margin:var(--space-3) auto 0;font-size:14px;max-width:760px">Ask your KenTender administrator to check your assignment in System setup.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-MASKED" data-screen-label="U21-MASKED" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-MASKED</span>
+    <span style="font-family:var(--font-heading);font-size:23px">This record is not available to you</span>
+    <span class="tag tag-outline">Inline page state</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: ordinary actor without existence disclosure — never a technical reader. No title and no reference is shown.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.2A10 10 0 0 1 22 12a10 10 0 0 1-3.1 4.3"/><path d="M6.6 6.6A10 10 0 0 0 2 12a10 10 0 0 0 14.4 5.4"/><path d="m2 2 20 20"/></svg>
+        <div style="font-family:var(--font-heading);font-size:23px">This record is not available to you.</div>
+        <div style="margin-top:var(--space-4)"><a href="Artboards-U01.dc.html#U01" class="btn btn-primary">Go to procurement planning</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-LOAD-FAILURE" data-screen-label="U21-LOAD-FAILURE" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-LOAD-FAILURE</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Procurement Planning could not be loaded</span>
+    <span class="tag tag-outline">Inline page state</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: authorised U01 or U11 read failed. No guessed empty state and no unsupplied support reference.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+        <div style="font-family:var(--font-heading);font-size:23px">Procurement Planning could not be loaded.</div>
+        <p style="margin:var(--space-3) 0 0;font-size:14px">Try again. If the problem continues, contact support.</p>
+        <div style="margin-top:var(--space-4)"><button type="button" class="btn btn-primary">Try again</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-NO-TASKS" data-screen-label="U21-NO-TASKS" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-NO-TASKS</span>
+    <span style="font-family:var(--font-heading);font-size:23px">No additional content</span>
+    <span class="tag tag-outline">State variant of U01</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: Mercy Kilonzo with a current plan and no action. The Your actions region is omitted completely; the current plan remains.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Annual procurement planning</h1>
+        <p class="kt-page-desc">Prepare departmental requirements, organise the annual plan and follow its approval.</p>
+      </div></div>
+      <div class="kt-region">
+        <h2>Current annual procurement plan</h2>
+        <div class="kt-group">
+          <div class="kt-meta-row">
+            <div><span class="kt-label">Plan</span><span style="font-size:14px">Ministry of Health Annual Procurement Plan 2027/28</span></div>
+            <div><span class="kt-label">Reference</span><span style="font-size:14px">PLN-MOH-2027-001 · Version 1</span></div>
+            <div><span class="kt-label">Approved value</span><span class="kt-meta-value">KES 130,000,000</span></div>
+            <div><span class="kt-label">State</span><span class="kt-status is-live">In force</span></div>
+          </div>
+        </div>
+        <p style="margin:var(--space-4) 0 0;font-size:14px;color:var(--color-neutral-800)">No additional content.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-FILTERED-EMPTY" data-screen-label="U21-FILTERED-EMPTY" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-FILTERED-EMPTY</span>
+    <span style="font-family:var(--font-heading);font-size:23px">No requirements match this search</span>
+    <span class="tag tag-outline">State variant of U07</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: unmatched search in Requirements ready to add. Filters are retained, Clear filters is enabled, and no Add action appears.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Prepare the annual procurement plan</h1>
+        <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1 · FY 2027/28 <span class="kt-status is-draft" style="margin-left:6px">Draft</span></div>
+      </div></div>
+      <div class="kt-region">
+        <h2>Requirements ready to add</h2>
+        <div class="kt-filter-bar">
+          <div class="field is-wide"><label for="u21f-q">Search requirements</label><input class="input" id="u21f-q" value="tablet"></div>
+          <div class="field"><label for="u21f-d">Department</label><select class="input" id="u21f-d"><option>All</option></select></div>
+        </div>
+        <div class="kt-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <div style="font-size:15px">No requirements match this search.</div>
+          <div style="margin-top:var(--space-4)"><button type="button" class="btn btn-secondary">Clear filters</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-CHANGED-ACTION" data-screen-label="U21-CHANGED-ACTION" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-CHANGED-ACTION</span>
+    <span style="font-family:var(--font-heading);font-size:23px">This action is no longer available</span>
+    <span class="tag tag-outline">State variant of an open decision</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: the record or authority changed after the actor opened it. The decision action is absent; only currently authorised content is retained.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Review the annual procurement plan</h1>
+        <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1 · FY 2027/28</div>
+      </div></div>
+      <div class="kt-notice is-warning">
+        <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+        <div style="flex:1">
+          <div class="kt-notice-body">This action is no longer available. The record or your authority changed after you opened it.</div>
+          <button type="button" class="btn btn-secondary" style="margin-top:var(--space-3)">Refresh</button>
+        </div>
+      </div>
+      <div class="kt-region">
+        <h2>Decision summary</h2>
+        <div class="kt-meta-row">
+          <div><span class="kt-label">Estimated cost</span><span class="kt-meta-value">KES 130,000,000</span></div>
+          <div><span class="kt-label">Purchases</span><span class="kt-meta-value">2</span></div>
+          <div><span class="kt-label">Departments</span><span class="kt-meta-value">2</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-SAVE-FAILED" data-screen-label="U21-SAVE-FAILED" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-SAVE-FAILED</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Your changes were not saved</span>
+    <span class="tag tag-outline">State variant of an editable form</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: U09 editable form. Authorised inputs are retained and the same save action is available for a new explicit attempt.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Clinical training and deployment laptops for digital health rollout</h1>
+        <div class="kt-page-scope">PPI-MOH-2027-033 · Plan Version 1 <span class="kt-status is-draft" style="margin-left:6px">Draft</span></div>
+      </div></div>
+      <div class="kt-notice is-critical">
+        <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+        <div class="kt-notice-body">Your changes were not saved.</div>
+      </div>
+      <div class="kt-region">
+        <h2>Purchase details</h2>
+        <div style="display:flex;flex-direction:column;gap:var(--space-4);max-width:920px">
+          <div class="field"><label for="u21s-t">Title</label><input class="input" id="u21s-t" value="Clinical training and deployment laptops for digital health rollout"></div>
+          <div class="field">
+            <label for="u21s-c">Planned amount (KES)</label>
+            <input class="input" id="u21s-c" value="50,000,000" style="border-color:var(--status-critical);max-width:320px">
+            <div style="font-size:13px;color:var(--status-critical);font-weight:600;margin-top:5px">Enter the planned amount before saving.</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;border-top:1px solid var(--color-divider);padding-top:var(--space-5)">
+        <button type="button" class="btn btn-primary">Save draft</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-UNCERTAIN-DECISION" data-screen-label="U21-UNCERTAIN-DECISION" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-UNCERTAIN-DECISION</span>
+    <span style="font-family:var(--font-heading);font-size:23px">We could not confirm the result</span>
+    <span class="tag tag-outline">State variant of a decision</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: U10 command result unknown. All conflicting decision and write actions are disabled and the displayed snapshot is preserved.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Check funding for the annual plan</h1>
+        <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1</div>
+      </div></div>
+      <div class="kt-notice is-warning">
+        <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <div class="kt-notice-body">We could not confirm the result. Checking the existing request…</div>
+      </div>
+      <div class="kt-region">
+        <h2>Approved against planned</h2>
+        <table class="table">
+          <thead><tr><th>Budget line</th><th class="is-num">Approved amount</th><th class="is-num">Planned amount</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>MOH-BL-DHI-2027</td><td class="is-num">KES 100,000,000</td><td class="is-num">KES 80,000,000</td><td><span class="kt-status is-live">Within budget</span></td></tr>
+            <tr><td>MOH-BL-HWD-2027</td><td class="is-num">KES 60,000,000</td><td class="is-num">KES 50,000,000</td><td><span class="kt-status is-live">Within budget</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="kt-decision">
+        <div style="display:flex;justify-content:flex-end;gap:var(--space-3)">
+          <button type="button" class="btn btn-secondary" disabled="disabled">Return to planner</button>
+          <button type="button" class="btn btn-primary" disabled="disabled">Confirm plan funding</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-HISTORICAL" data-screen-label="U21-HISTORICAL" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-HISTORICAL</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Historical plan — read only</span>
+    <span class="tag tag-outline">State variant of U11 reader</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: exact older Plan Version, current target authorised. No mutation controls.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head">
+        <div>
+          <h1 class="kt-page-title">Annual procurement plan</h1>
+          <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1 · FY 2027/28</div>
+        </div>
+        <div class="kt-page-actions"><button type="button" class="btn btn-secondary">View current plan</button></div>
+      </div>
+      <div class="kt-notice is-info">
+        <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <div class="kt-notice-body">Historical plan — read only.</div>
+      </div>
+      <div class="kt-region">
+        <h2>Purchases</h2>
+        <table class="table">
+          <thead><tr><th>Purchase</th><th class="is-num">Quantity</th><th>Unit</th><th class="is-num">Estimated cost</th></tr></thead>
+          <tbody>
+            <tr><td>National digital health infrastructure upgrade</td><td class="is-num">1</td><td>Programme</td><td class="is-num">KES 80,000,000</td></tr>
+            <tr><td>Clinical training and deployment laptops for digital health rollout</td><td class="is-num">250</td><td>Each</td><td class="is-num">KES 50,000,000</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-LATE-ACTIVATION" data-screen-label="U21-LATE-ACTIVATION" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-LATE-ACTIVATION</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Explain late start of the annual plan</span>
+    <span class="tag tag-outline">Focused dialog</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: initial plan activation context. Read-only facts; no editable date and no update-plan variant.</p>
+  <div style="display:grid;width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page" style="grid-area:1/1">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Complete publication of the annual plan</h1>
+        <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1</div>
+      </div></div>
+      <div class="kt-region">
+        <h2>Publication status</h2>
+        <table class="table">
+          <thead><tr><th>Step</th><th>State</th></tr></thead>
+          <tbody>
+            <tr><td>Website publication</td><td><span class="kt-status is-live">Published</span></td></tr>
+            <tr><td>Use for procurement</td><td><span class="kt-status is-live">Current plan</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="grid-area:1/1;position:relative;z-index:10;background:color-mix(in srgb, var(--color-neutral-900) 50%, transparent);display:flex;align-items:flex-start;justify-content:center;padding:80px 0">
+      <div class="dialog" style="width:520px;max-width:520px">
+        <div class="dialog-title">Explain late start of the annual plan</div>
+        <div class="kt-group">
+          <div class="kt-meta-row is-tight" style="gap:var(--space-6)">
+            <div><span class="kt-label">Financial year started</span><span style="font-size:14px">1 Jul 2027</span></div>
+            <div><span class="kt-label">Plan became active</span><span style="font-size:14px">2 Jul 2027, 09:00 EAT</span></div>
+          </div>
+        </div>
+        <div class="field"><label for="u21la-e">Explanation</label><textarea class="input" id="u21la-e" rows="3">Publication acknowledgement was received after the financial year began.</textarea></div>
+        <div class="dialog-actions">
+          <button type="button" class="btn btn-secondary">Cancel</button>
+          <button type="button" class="btn btn-primary">Record explanation</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-REMOVE-DRAFT-ITEM" data-screen-label="U21-REMOVE-DRAFT-ITEM" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-REMOVE-DRAFT-ITEM</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Removal blocked by a server guard</span>
+    <span class="tag tag-outline">Focused dialog</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: the U09-REMOVE laptop item and source rows. When a guard blocks removal, the primary action is replaced by the concrete reason — never a disabled action without its explanation. The concrete guard reason comes from the owner fixture.</p>
+  <div style="display:grid;width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page" style="grid-area:1/1">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Clinical training and deployment laptops for digital health rollout</h1>
+        <div class="kt-page-scope">PPI-MOH-2027-033 · Plan Version 1 <span class="kt-status is-draft" style="margin-left:6px">Draft</span></div>
+      </div></div>
+      <div class="kt-region">
+        <h2>Included requirements</h2>
+        <table class="table">
+          <thead><tr><th>Requirement</th><th class="is-num">Allocation</th></tr></thead>
+          <tbody>
+            <tr><td>Clinical training laptops for digital health rollout</td><td class="is-num">KES 20,000,000</td></tr>
+            <tr><td>Clinical deployment laptops for digital health rollout</td><td class="is-num">KES 30,000,000</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="grid-area:1/1;position:relative;z-index:10;background:color-mix(in srgb, var(--color-neutral-900) 50%, transparent);display:flex;align-items:flex-start;justify-content:center;padding:80px 0">
+      <div class="dialog" style="width:520px;max-width:520px">
+        <div class="dialog-title">Remove this purchase?</div>
+        <div class="dialog-body">
+          <div style="font-weight:600;color:var(--color-text)">Clinical training and deployment laptops for digital health rollout</div>
+          <div style="font-size:12.5px;color:var(--color-neutral-700);margin-top:2px">PPI-MOH-2027-033</div>
+        </div>
+        <table class="table">
+          <thead><tr><th>Requirement</th><th class="is-num">Allocation</th></tr></thead>
+          <tbody>
+            <tr><td>Clinical training laptops for digital health rollout</td><td class="is-num">KES 20,000,000</td></tr>
+            <tr><td>Clinical deployment laptops for digital health rollout</td><td class="is-num">KES 30,000,000</td></tr>
+          </tbody>
+        </table>
+        <div class="dialog-body" style="border-left:3px solid var(--status-critical);padding-left:12px">This purchase cannot be removed. <span class="kt-status is-attention">Awaiting fixture</span> concrete server-guard reason.</div>
+        <div class="dialog-actions">
+          <button type="button" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-TECHNICAL-WORKSPACE" data-screen-label="U21-TECHNICAL-WORKSPACE" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-TECHNICAL-WORKSPACE</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Technical read — workspace</span>
+    <span class="tag tag-outline">State variant of U01</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: Administrator or System Manager · same FY and BASE data · all plans and departments site-wide. Row actions are renamed View; create, start, continue, edit and decision actions are absent. Technical search is the shared owner surface, not a Planning duplicate.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head"><div>
+        <h1 class="kt-page-title">Annual procurement planning</h1>
+        <p class="kt-page-desc">Prepare departmental requirements, organise the annual plan and follow its approval.</p>
+        <div class="kt-page-scope">FY 2027/28 · Site-wide technical read</div>
+      </div></div>
+      <div class="kt-region">
+        <h2>Annual plans</h2>
+        <table class="table">
+          <thead><tr><th>Plan</th><th>Reference</th><th>Version</th><th>Status</th><th class="is-num">Estimated cost</th><th style="text-align:right">Action</th></tr></thead>
+          <tbody>
+            <tr><td>Ministry of Health Annual Procurement Plan 2027/28</td><td>PLN-MOH-2027-001</td><td>1</td><td><span class="kt-status is-draft">Draft</span></td><td class="is-num">KES 130,000,000</td><td style="text-align:right"><a href="#U21-TECHNICAL-DETAIL" class="btn btn-ghost">View</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="kt-region is-secondary">
+        <h2>Departmental plans</h2>
+        <table class="table">
+          <thead><tr><th>Department</th><th>Status</th><th class="is-num">Requirements</th><th class="is-num">Estimated cost</th><th style="text-align:right">Action</th></tr></thead>
+          <tbody>
+            <tr><td>Digital Health</td><td><span class="kt-status is-live">Accepted</span></td><td class="is-num">2</td><td class="is-num">KES 110,000,000</td><td style="text-align:right"><a href="#U21-TECHNICAL-DETAIL" class="btn btn-ghost">View</a></td></tr>
+            <tr><td>Human Resources Management and Development</td><td><span class="kt-status is-live">Accepted</span></td><td class="is-num">1</td><td class="is-num">KES 20,000,000</td><td style="text-align:right"><a href="#U21-TECHNICAL-DETAIL" class="btn btn-ghost">View</a></td></tr>
+          </tbody>
+        </table>
+        <p style="margin:var(--space-3) 0 0;font-size:13px;color:var(--color-neutral-700)">2 departmental plans</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-TECHNICAL-DETAIL" data-screen-label="U21-TECHNICAL-DETAIL" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-accent-900);color:#fff;padding:3px 9px">U21-TECHNICAL-DETAIL</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Technical read — record detail</span>
+    <span class="tag tag-outline">State variant of a detail route</span>
+  </div>
+  <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-neutral-700);max-width:1000px">Fixture, outside the artboard: Administrator or System Manager on the U11 route. Full facts for the exact status; every business mutation and decision control is absent, while read navigation and evidence links remain.</p>
+  <div style="width:1440px;background:var(--color-bg);border:1px solid var(--color-neutral-300)">
+    <div class="kt-page">
+      <div class="kt-page-head">
+        <div>
+          <h1 class="kt-page-title">Annual procurement plan</h1>
+          <div class="kt-page-scope">PLN-MOH-2027-001 · Version 1 · FY 2027/28</div>
+        
+        <p data-kt="next-step" style="margin:var(--space-4) 0 0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:15px;line-height:1.35"><span style="font-size:12px;font-weight:600;color:var(--color-neutral-700)">Waiting</span><span style="font-weight:600;color:var(--color-text)">Waiting for Amina Hassan (Accounting Officer) to adopt or return the plan</span><span style="font-size:13px;color:var(--color-neutral-700)">since 7 Dec 2026, 10:00 EAT</span></p></div>
+        <div class="kt-page-actions"><button type="button" class="btn btn-secondary">Download review pack</button></div>
+      </div>
+      <div data-kt="journey" aria-label="Journey" style="display:flex;align-items:flex-end;gap:var(--space-6);margin:0 0 var(--space-6)"><ol style="list-style:none;margin:0;padding:0;flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:var(--space-2)"><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Preparation</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Funding confirmation</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Signature</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-accent);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;font-weight:600;color:var(--color-text)">AO adoption</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-accent-800);font-weight:600">Current <span style="font-weight:400;color:var(--color-neutral-800)">· Amina Hassan</span></div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Cabinet Secretary approval</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Publication</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">In force</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li></ol></div>
+      <div class="kt-region">
+        <h2>Decision summary</h2>
+        <div class="kt-meta-row" style="margin-bottom:var(--space-4)">
+          <div><span class="kt-label">Estimated cost</span><span class="kt-meta-value">KES 130,000,000</span></div>
+          <div><span class="kt-label">Purchases</span><span class="kt-meta-value">2</span></div>
+          <div><span class="kt-label">Departments</span><span class="kt-meta-value">2</span></div>
+          <div><span class="kt-label">Funding</span><span style="font-size:14px">Within approved budget</span></div>
+          <div><span class="kt-label">Reserved procurement</span><span style="font-size:14px">Required allocation met</span></div>
+          <div><span class="kt-label">Schedule</span><span style="font-size:14px">All purchases meet departmental deadlines</span></div>
+        </div>
+        <table class="table">
+          <thead><tr><th>Purchase</th><th class="is-num">Quantity</th><th>Unit</th><th>Required by</th><th class="is-num">Estimated cost</th><th style="text-align:right">Action</th></tr></thead>
+          <tbody>
+            <tr><td>National digital health infrastructure upgrade</td><td class="is-num">1</td><td>Programme</td><td>31 Aug 2027</td><td class="is-num">KES 80,000,000</td><td style="text-align:right"><a href="Artboards-U12-U13.dc.html#U12" class="btn btn-ghost">View departmental evidence</a></td></tr>
+            <tr><td>Clinical training and deployment laptops for digital health rollout</td><td class="is-num">250</td><td>Each</td><td>31 Dec 2027</td><td class="is-num">KES 50,000,000</td><td style="text-align:right"><a href="Artboards-U12-U13.dc.html#U12" class="btn btn-ghost">View departmental evidence</a></td></tr>
+          </tbody>
+        </table>
+        <div class="kt-disclosure" style="margin-top:var(--space-4)">
+          <div class="kt-disclosure-head" onclick="var b=this.nextElementSibling,c=this.querySelector('.kt-disclosure-chevron');var open=b.style.display!=='none';b.style.display=open?'none':'block';c.classList.toggle('is-open',!open)">
+            <div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Review Plan checks</span></div>
+            <svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="kt-disclosure-body" style="display:none">
+            <div style="display:flex;align-items:baseline;gap:var(--space-4);flex-wrap:wrap;margin-bottom:var(--space-3)"><span style="font-family:var(--font-heading);font-size:17px">Reservation allocation</span><span class="kt-status is-live">Required allocation met</span></div>
+          <div class="kt-meta-row" style="max-width:1000px"><div><span class="kt-label">Remaining allocation</span><span class="kt-meta-value">KES 0</span></div><div><span class="kt-label">Required allocation</span><span class="kt-meta-value">KES 39,000,000</span></div><div><span class="kt-label">Planned qualifying allocation</span><span class="kt-meta-value">KES 50,000,000</span></div><div><span class="kt-label">Qualifying share</span><span class="kt-meta-value">38.46%</span></div></div>
+            <div style="margin-top:var(--space-5)"><div class="kt-meta-row" style="margin-bottom:var(--space-4)"><div><span class="kt-label">Eligible planned procurement</span><span style="font-size:14px">KES 130,000,000</span></div><div><span class="kt-label">Target</span><span style="font-size:14px">30%</span></div><div><span class="kt-label">Required allocation</span><span style="font-size:14px">KES 39,000,000</span></div><div><span class="kt-label">Planned qualifying allocation</span><span style="font-size:14px">KES 50,000,000</span></div><div><span class="kt-label">Remaining allocation</span><span style="font-size:14px">KES 0</span></div><div><span class="kt-label">Qualifying share</span><span style="font-size:14px">38.46%</span></div></div>
+            <div class="kt-meta-row" style="margin-bottom:var(--space-4)"><div><span class="kt-label">Plan basis</span><span style="font-size:14px">PLN-MOH-2027-001, Version 1</span></div><div><span class="kt-label">Rule version</span><span style="font-size:14px"><span class="kt-status is-attention">Awaiting fixture</span> exact AGPO rule version</span></div><div><span class="kt-label">County requirement</span><span style="font-size:14px">Not applicable</span></div><div><span class="kt-label">Mandatory restrictions</span><span style="font-size:14px">No additional restriction applies</span></div></div>
+            <table class="table">
+              <thead><tr><th>Purchase</th><th class="is-num">Estimated cost</th><th>Applicability</th><th>Reason</th><th>Planned designation</th><th class="is-num">Qualifying allocation</th></tr></thead>
+              <tbody>
+                <tr><td><div style="font-weight:600">National digital health infrastructure upgrade</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">PPI-MOH-2027-021</div></td><td class="is-num">KES 80,000,000</td><td>Included</td><td><span class="kt-status is-attention">Awaiting fixture</span> inclusion reason</td><td>None</td><td class="is-num is-zero">KES 0</td></tr>
+                <tr><td><div style="font-weight:600">Clinical training and deployment laptops for digital health rollout</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">PPI-MOH-2027-033</div></td><td class="is-num">KES 50,000,000</td><td>Included</td><td><span class="kt-status is-attention">Awaiting fixture</span> inclusion reason</td><td>Youth</td><td class="is-num">KES 50,000,000</td></tr>
+              </tbody>
+            </table>
+            <p style="margin:var(--space-4) 0 0;font-size:13.5px;color:var(--color-neutral-800);max-width:900px">Calculated on the eligible value of this plan version. The approved budget is a separate funding ceiling, checked under Funding, and is not used here.</p></div>
+            <div class="kt-meta-row" style="margin-top:var(--space-5)"><div><span class="kt-label">Schedule</span><span style="font-size:14px">All purchases meet departmental deadlines</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="kt-region is-secondary">
+        <h2>Accountability</h2>
+        <div class="kt-group">
+          <div class="kt-meta-row">
+            <div><span class="kt-label">Funding</span><span style="font-size:14px">Within each approved budget line</span></div>
+            <div><span class="kt-label">Checked by</span><span style="font-size:14px">Josphat Mwangi</span></div>
+            <div><span class="kt-label">Checked at</span><span style="font-size:14px">4 Dec 2026, 10:00 EAT</span></div>
+            <div><span class="kt-label">Preparation</span><span style="font-size:14px">Signed by Charles Mutiso, 7 Dec 2026, 10:00 EAT</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="U21-CANCEL-UPDATE" data-screen-label="U21-CANCEL-UPDATE" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--status-attention);color:#fff;padding:3px 9px">U21-CANCEL-UPDATE</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Cancel this plan update?</span>
+    <span class="kt-status is-attention">Awaiting fixture</span>
+  </div>
+  <div style="width:1440px;background:var(--color-surface);border:1px dashed var(--color-neutral-400);padding:32px 40px">
+    <p style="margin:0 0 var(--space-4);font-size:15px;max-width:900px;color:var(--color-neutral-800)">Not generated. §10.17 states generation waits for the exact reason supplied by the UPDATE fixture, which §10.2 does not contain.</p>
+    <div class="kt-meta-row is-tight" style="gap:var(--space-8)">
+      <div><span class="kt-label">Missing value</span><span style="font-size:14px">Reason for cancelling the update</span></div>
+      <div><span class="kt-label">Resolved facts</span><span style="font-size:14px">Dialog over <a href="Artboards-U07-U08.dc.html#U07-UPDATE">U07-UPDATE</a> with PLN-MOH-2027-001 Version 2 · text “The current plan and existing procurement will remain unchanged.” · Keep update / Cancel plan update</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="INVENTORY" data-screen-label="INVENTORY" style="margin-bottom:56px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+    <span style="font-family:var(--font-heading);font-size:13px;letter-spacing:.08em;background:var(--color-neutral-700);color:#fff;padding:3px 9px">§10.18</span>
+    <span style="font-family:var(--font-heading);font-size:23px">Variants held back for exact fixtures</span>
+  </div>
+  <div style="width:1440px;background:var(--color-surface);border:1px solid var(--color-divider);padding:32px 40px">
+    <p style="margin:0 0 var(--space-5);font-size:14px;max-width:900px;color:var(--color-neutral-800)">A variant marked as waiting for an exact fixture is not sent to design until that input exists. These are the compositions not generated, each naming the value it needs.</p>
+    <table class="table">
+      <thead><tr><th>Variant</th><th>Missing input</th></tr></thead>
+      <tbody>
+        <tr><td><a href="Artboards-U02-U05.dc.html#U04-EDIT">U04-EDIT</a></td><td>Owner-generated reference for the saved direct entry</td></tr>
+        <tr><td><a href="Artboards-U02-U05.dc.html#U05-ALL-EXCLUDED">U05-ALL-EXCLUDED</a></td><td>Second exact exclusion reason</td></tr>
+        <tr><td><a href="Artboards-U06.dc.html#U06-STALE-SOURCE">U06-STALE-SOURCE</a></td><td>Changed source revision and value</td></tr>
+        <tr><td><a href="Artboards-U07-U08.dc.html#U07-WAITING-FINANCE">U07-WAITING-FINANCE</a></td><td>Funding review request instant</td></tr>
+        <tr><td><a href="Artboards-U07-U08.dc.html#U07-UPDATE">U07-UPDATE</a></td><td>Reason for updating the plan; pending unrelated sources</td></tr>
+        <tr><td><a href="Artboards-U07-U08.dc.html#U08-INCOMPATIBLE">U08-INCOMPATIBLE</a></td><td>Two sources on different budget lines</td></tr>
+        <tr><td><a href="Artboards-U07-U08.dc.html#U08-DUPLICATE">U08-DUPLICATE / INCOMPLETE</a></td><td>Named source, version and concrete problem</td></tr>
+        <tr><td><a href="Artboards-U09.dc.html#U09-LOCKED">U09-LOCKED</a></td><td>Authorised requisition reference and version</td></tr>
+        <tr><td><a href="Artboards-U09.dc.html#U09-SOURCE-CORRECTION">U09-SOURCE-CORRECTION</a></td><td>Changed source revisions and values</td></tr>
+        <tr><td><a href="Artboards-U09.dc.html#U09-CLASSIFICATION-LOCKED">U09-CLASSIFICATION-LOCKED</a></td><td>Downstream record and permitted correction route</td></tr>
+        <tr><td><a href="Artboards-U10.dc.html#U10-REASSESS">U10-REASSESS</a></td><td>Revised Budget version and as-at instant</td></tr>
+        <tr><td><a href="Artboards-U11.dc.html#U11-COLLECTIVE">U11-COLLECTIVE</a></td><td>Authorised recorder identity</td></tr>
+        <tr><td><a href="Artboards-U11.dc.html#U11-LATE-ADOPTION">U11-LATE-ADOPTION</a></td><td>Adoption date and scenario reason</td></tr>
+        <tr><td><a href="Artboards-U11.dc.html#U11-UPDATE">U11-UPDATE</a></td><td>Version 2 change rows and monetary effects</td></tr>
+        <tr><td><a href="#U21-CANCEL-UPDATE">U21-CANCEL-UPDATE</a></td><td>Reason for cancelling the update</td></tr>
+      </tbody>
+    </table>
+    <p style="margin:var(--space-5) 0 0;font-size:13.5px;color:var(--color-neutral-700);max-width:900px">Artboards elsewhere carry an inline “Awaiting fixture” chip where a single value inside an otherwise complete composition is not supplied by §10.2 — the surrounding composition is exact, the chip marks the one hole.</p>
+  </div>
+</section>
+</main>
+</div>
+
+</x-dc>
+</body>
+</html>

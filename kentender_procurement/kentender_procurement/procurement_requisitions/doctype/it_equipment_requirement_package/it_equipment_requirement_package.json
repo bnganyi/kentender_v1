@@ -12,6 +12,8 @@
   "current_version",
   "authorised_version",
   "reservation_category",
+  "county_resident_reservation",
+  "reservation_rule_snapshot_ids",
   "lotting_indicator",
   "record_version",
   "fixture_namespace"
@@ -51,6 +53,20 @@
    "fieldname": "reservation_category",
    "fieldtype": "Data",
    "label": "Reservation Category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "county_resident_reservation",
+   "fieldtype": "Check",
+   "label": "County-residents restriction",
+   "description": "\u00a75.4 \u2014 inherited independently from the Plan Item; never edited here.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reservation_rule_snapshot_ids",
+   "fieldtype": "Small Text",
+   "label": "Reservation rule snapshots",
+   "description": "\u00a75.4 \u2014 exact verified rule Versions bound by the owner contracts.",
    "read_only": 1
   },
   {

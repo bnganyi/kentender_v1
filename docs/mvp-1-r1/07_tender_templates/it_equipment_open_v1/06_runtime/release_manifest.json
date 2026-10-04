@@ -1,0 +1,1788 @@
+{
+  "addendum_identity_rules_digest": "c82d186626feee4766e5e36b82ca24b0a5d4618113b2b8ee32a67c674ca81e21",
+  "assets": [
+    {
+      "asset_role": "Source page image",
+      "byte_size": 630213,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-001.png",
+      "sha256": "412612332e16490582fc55bde90e6e862b2fad1fe7c699a3caa9d6249eacc26f"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 336180,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-002.png",
+      "sha256": "e5882fbfa05af3b0f166838d4c42674929fae51ed8cd924e7eee47d8fcccf934"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 344653,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-003.png",
+      "sha256": "8d199219a27c6086808effa6fe42add3b2795841e35d31f0fedd5e680c765d31"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 72330,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-004.png",
+      "sha256": "fe150e4565e5eb6f70f04bd5991872d185dbf1592b5a656486b2c73fc3ac2d0a"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 350441,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-005.png",
+      "sha256": "59d13caf9550a94ba990ad62ce44efa09665879f219e19270c3a7f2799cd96ce"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 508950,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-006.png",
+      "sha256": "a166e59621d57573d8dfb24f9f213e9d254d0d5b7b27d3b0665d4f64f19e1647"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 378316,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-007.png",
+      "sha256": "a635f8398cc2759315dd134bbb2812117b26d136e6879e2d735873347fd81316"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 88145,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-008.png",
+      "sha256": "1c50190599336b92a9cf35942bbdf53be4d0c3d510852059544362180dc87a7f"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 418606,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-009.png",
+      "sha256": "d304ace2e095d29f28a557154863ea6cc7ddf12c8dcada8d01377d49b985285d"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 112058,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-010.png",
+      "sha256": "0b60ca9861230e4a3d6118d3e14df5866edead800cb435e3b791a6183ed29598"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 20446,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-011.png",
+      "sha256": "ec83c05010f1c96e64be84ac456abbab74fe47ae346286931fc6e055f523633c"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 516987,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-012.png",
+      "sha256": "eee107159a2f7e11a06c17a17f6c6030191b8b1f54f4499c6597ea765c2b56d0"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 638322,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-013.png",
+      "sha256": "74f42c560a1ef50029cd27636073031328e0f36aa61f799e6b1848f61c6ce52f"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 475699,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-014.png",
+      "sha256": "9aadb038fb2190668f82a72d8698d3dd978687bd17ebccda577713eb76430235"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 508171,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-015.png",
+      "sha256": "53b9295c131b4cd846b5779c7186bd609b369091f66adee9cd6d0d603d413465"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 472876,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-016.png",
+      "sha256": "58bfed30020890945e6f86bb19327db8385fbeecb9162eabead7c96a6f1a4139"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 542108,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-017.png",
+      "sha256": "48d9832e30f764de2617e649e54b01d8b265dba86e8be170c22bcd52cff0300d"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 614708,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-018.png",
+      "sha256": "51c7771fbf965ed731c052cbdc4e22e4d0fdcc5ab9dfa3c98d8a4cbdd44fc61b"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 523221,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-019.png",
+      "sha256": "6973b30b555876be0f2835f88dadb0c9be1190bb43c77b5cf926751806afa048"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 544899,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-020.png",
+      "sha256": "20647353e118cf0c68e1e1c2543c188458eefc80e6e71da3620d681aabef1c75"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 519760,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-021.png",
+      "sha256": "7b928c6ef1e75249b5881bff8dd9cef5986dce930ddc0803cb2b12edf2a80108"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 459809,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-022.png",
+      "sha256": "5780fd8a6d33b3d1600da7729563bfe0481da12ab6c9cf792689986249f7bf7e"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 463256,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-023.png",
+      "sha256": "cb0e010a82cbde536d12acacdd94d006948f06c2bfce979a1e2bf91926982ba4"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 529083,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-024.png",
+      "sha256": "9ee294e869c3e20f52bfd34754eb08c27fb8142b65bf98e391faf2b4343dfa63"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 547354,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-025.png",
+      "sha256": "9fa7df989857b0f19a426db013238345155ca96a8967d7cfec8e7ede26ff1975"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 466413,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-026.png",
+      "sha256": "d11bcc7a323de5f5517f8014120009269b61acd8d0faab1a459da31a04663dde"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 523700,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-027.png",
+      "sha256": "b2d29853988a43d4d4ae50621a0e1522b4ae6d9de9fc3f12db3798cc55ddc25b"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 379506,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-028.png",
+      "sha256": "c0355a58c75ef1eff760dbb2905bc14a5f2b0aba46c3395bd47cacde8d7c0e83"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 437118,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-029.png",
+      "sha256": "e115b3393e35c09c5dcaee3088e94366d1992e9d206698659869775236fe9a5a"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 467740,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-030.png",
+      "sha256": "9e07bafcd8910b73af4c893a8bc66d8ec6f1aaf03fa72e4a816b3abb6adb5801"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 406972,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-031.png",
+      "sha256": "5b3c13534f028c7bc6a0b7e86b13b0e43a1eadcc3fb54b6deb7de9ef7f298749"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 452696,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-032.png",
+      "sha256": "e1b67470d52412504767d3716913404faa1d1f680ec282fe8f020248c07bd4c2"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 518259,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-033.png",
+      "sha256": "27fc826fff11914e44635870adcbb01d4d262104c3425e504a50e5226157937b"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 489160,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-034.png",
+      "sha256": "51f98a2aed5cbad85efd43ada1099c1fa98ebca6abd4d0fa9f18326a348dde12"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 555366,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-035.png",
+      "sha256": "93f18becc8803c189e4c43e90d79cee0d151767fff8a1e4a4e910f2cfb60dbcd"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 458242,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-036.png",
+      "sha256": "ec98a6ed0acaa90e168a0c2714a6cb49b1b5341ff6a21027a2953e5114de2323"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 570929,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-037.png",
+      "sha256": "e586ea345577414cbf1313737795d9603448e678f03ade02f4b7eaa9b43e3184"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 509796,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-038.png",
+      "sha256": "110d853ac4daeb9bb17745278ebac0316931e7e4c2457d010c84cb383d70b1dd"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 353128,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-039.png",
+      "sha256": "dfeaeaad65dbf51f3f2dfbd2bf15a33395c780be66d037e635210d343aad3c3c"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 83196,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-040.png",
+      "sha256": "6d7940e125ee0096d937ef4fd1880626e8ccdc4e5a0cdc7b1cd08735659b82c3"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 471482,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-041.png",
+      "sha256": "47d8506f20e01e483807423d2a871aaf54ac6b386c48189a448fedbfb7fbc62c"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 482451,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-042.png",
+      "sha256": "e4e249ba9e226fe3052b1ec4c88e44f09ea950316390e8caa0bd85fa8b9f5bdc"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 150554,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-043.png",
+      "sha256": "f91d304df69f24d440cf425c1862eb0cb77a2542cfdcb766f644813178a7fe28"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 420219,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-044.png",
+      "sha256": "0bb934616f59f1413a4bb7e669cc4081b67394a90661a3e05f46de0ae9fc2aab"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 23360,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-045.png",
+      "sha256": "2bd854dfb85ebe9bcf4d55046c32efb052eb1c1488eeba9a776fd98948808203"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 163116,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-046.png",
+      "sha256": "cb3b328ef5560948154a478f5305754c629d0590cdf623eb463854db500a96cf"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 221820,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-047.png",
+      "sha256": "7d98d7103a13a9610d837ca2051486241654535af91eccc9e868f584f9c68ec0"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 134455,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-048.png",
+      "sha256": "dd8f0a647e555f0326b1ea067dcbf5f760f0a163e020eae50bc1e4f72ece1533"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 501285,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-049.png",
+      "sha256": "e6c6d092bea91be12ad4e68dd53138fb4e967400cd6b79420451fade7f7d81eb"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 489155,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-050.png",
+      "sha256": "73386ed4ea787ab74b8186d8afebb5c5908253d134c20046de9d0f1f9cb658e2"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 208928,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-051.png",
+      "sha256": "cc093f1dcd02929b7b96508ac3013c69044bcc85d777269ebe7c16cc193b2257"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 302684,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-052.png",
+      "sha256": "4c0547d58268bc508b738707a5dba3274fd0b9a4b7c1d2eba25087e86b653dcc"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 192161,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-053.png",
+      "sha256": "4a6f3ae3e00776428f8ce6e3df42d8b9cd917ee929ab899e7a1052022120ced6"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 242772,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-054.png",
+      "sha256": "e634ec6e739ee7c21a35f3bd1870c937f5fa24fd4b4385262b34d61d850e6b0c"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 152619,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-055.png",
+      "sha256": "bdf0b6d7fd54e2ce55886212f7304694fb108825ee588c0a415d000f724612f8"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 281569,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-056.png",
+      "sha256": "6b94136eea5de93eda5e167b63e6ad1a50d08cabf4f03ce7358658d4a964b175"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 60111,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-057.png",
+      "sha256": "42dc37b9ea807e2c73e7eb5b9a1d7f1cc41f5a46f356cbf69846a74293edc85d"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 176169,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-058.png",
+      "sha256": "15bce54d0686fa1d643388ef792dd0ba0f15f96c5817b3377efa3d7686efa44b"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 262781,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-059.png",
+      "sha256": "59b9a1057710a83918a35494591a22dbe615b1eb1be0eef8f87609165d6e2548"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 170831,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-060.png",
+      "sha256": "5db38d34d64214bc0a6b858faee287350f3e70b965600d5d4516c4d007ad0d51"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 137400,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-061.png",
+      "sha256": "a9b387949e7e620bd65b2693dbf0c3fce4f3e4f1ec7db1379396f027dc30e3ae"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 282077,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-062.png",
+      "sha256": "631abe7f355fdc1e1e016590e05061da70c91c3e19e1d75a073bfd358888ff54"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 361904,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-063.png",
+      "sha256": "ab0b3d21fb3f1bf8b6dffc6c519c57de03d6df2193ba5b73e491a77767ea166f"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 291875,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-064.png",
+      "sha256": "e7d40a99bcfc2bb8a4ae3ec931f2f0fe38877753cfa535dbd2e5f2ad86b2f5a0"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 255361,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-065.png",
+      "sha256": "af38a9ce77d0fef9656ca22da9a7d03c66765f8aa541257f659131056617fae7"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 23943,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-066.png",
+      "sha256": "3456f955a2945e265fc1e5ce8ec33b3378295032a1d1a27a0b679a129a91ae54"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 162895,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-067.png",
+      "sha256": "c526e42ffc945ed2fc9814068cb84da4091a77094b84af5cf9b0e519dcbfde21"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 123632,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-068.png",
+      "sha256": "f6e9bf9dfa608e75593b16a46dcfb69268ea3c08ccc3f06b22b8cf36312ac8f6"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 94203,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-069.png",
+      "sha256": "902ed1e2415495ce695587c3547fa74a613514a191e32dc3b7b47f52dd7af843"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 508879,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-070.png",
+      "sha256": "1e3de018f74dd0270c52893399f9a25d75dc6cf3d5608463ff2e127d42f026ad"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 212036,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-071.png",
+      "sha256": "136023586ea702c7aab14450754925a77b77089245b4d55a457426c3f3761e52"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 31714,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-072.png",
+      "sha256": "9f718dad6164f7ae6968783e295c795ddab194e53b063b667110ea6a8f850a84"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 402830,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-073.png",
+      "sha256": "b4c4d1ff612e3f3927c1dc3cabdd753601b2c792bcce695905cde3ea11bf3c33"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 418131,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-074.png",
+      "sha256": "91f765a879e7807e0572aadef69ff7847519e331e1ada229e62236f1255a3463"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 479965,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-075.png",
+      "sha256": "bd3d3c85ebd62e59d39380c8ca1c865d5cfcedcb88dabdac53da33c6cb28c13d"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 538383,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-076.png",
+      "sha256": "d8f0775094e9f4e93e0f1aa5150e75160ea83f157e28a70f58472857c33dcf4d"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 431389,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-077.png",
+      "sha256": "2880b4c98499d6dfae707ab9369cf30304bbfa1d91e33a9b349b86ab8b2c335d"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 512381,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-078.png",
+      "sha256": "bb7a93212815535900b433816eb9b7ccfc186bb26b6d3f2c85746b3b362d1971"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 500387,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-079.png",
+      "sha256": "c3da21cf7eeab0b5de381e0df05b5e58a4b5295e83e3ff2a57930d07eda8c5ee"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 522479,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-080.png",
+      "sha256": "b36b6dd4e69d6a544e6504420220878eeb40bbdcd60b04df9a5404e71f87a7f2"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 553769,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-081.png",
+      "sha256": "46257b6e15ba664a25d7ba14dfcb78d64da62ce1fbcfd65988eef25103ea277d"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 543098,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-082.png",
+      "sha256": "cbe5663ebfd420705c078f10810af37416a26a6eeee337edf051970c76a837ce"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 510788,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-083.png",
+      "sha256": "cfcc83be7b2edd38b3e007cd20b5b1ca70c92c1ae499b79badd271190e7f5788"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 524706,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-084.png",
+      "sha256": "6e59bfe0d3857e3b7df4d2c72abe6d81daa3cb1f95a843733deac82cdc26cced"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 220128,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-085.png",
+      "sha256": "03a050e4573c27dc357b3c72c5b42d3fc52f96710f84d72d3ba07a5cc7ba016e"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 478263,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-086.png",
+      "sha256": "6f9cef5e636016456e944f67a2eba48b84ddb34eda1a9d2b0a26342bd4f932f7"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 462664,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-087.png",
+      "sha256": "dbfe8c9712776e351416ca772a68142894c04e26a282e44d23ee786734b3aa26"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 379125,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-088.png",
+      "sha256": "241a9d62a206ba71b92187c7a9a03b72b178bfe37ff6032460b220c40b7e44eb"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 50175,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-089.png",
+      "sha256": "a8c488f810c7150d22ddcb60770b2e87226ed9c2cde70b4cc4ce3ef7c61ee855"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 314243,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-090.png",
+      "sha256": "a8b1e94d25e1b7e34eb042a2e33b5b61c00f492a625093906321c5f30ee364dc"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 410815,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-091.png",
+      "sha256": "1d74918c5b9883282b538da83b1a07fb805cca6e1cd09da2c471d6bc97f2308d"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 156934,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-092.png",
+      "sha256": "9bfe649fdadcfad4697b1f918cc34e8165b1238dcec6bde7123fc80ee67012f6"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 139320,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-093.png",
+      "sha256": "9e4888576ba787f8cc1e450ff8ca48b1ac3c1aafec2fc7244fb928040696a0df"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 155725,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-094.png",
+      "sha256": "1d5fcc912f96b15d40c4c27559c4eba824ff02188a55141bef8df4f8171b06f1"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 432537,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-095.png",
+      "sha256": "bd6fc52212e9c2b4f38afbb0e070e20077f6bd0b1242b32395ecbb09a7a42c58"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 333022,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-096.png",
+      "sha256": "74e09ef7787dd098f2093d07d0abfec3433bd2eeeeb4f389c884ebd4844b7565"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 501277,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-097.png",
+      "sha256": "1a7e0da3abfa91349eff25bc30d0a39fabbeacf8e2f67e2ac8bdd2fbbb6ba8f9"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 39230,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-098.png",
+      "sha256": "0e89c6eed838c70f480fa13375aa769a1659c24f9c488c487e9244381f1c2f9a"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 403005,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-099.png",
+      "sha256": "6b5d1bd1d68d7ce6971f27d1c07322b0a9a5d17ffba3910635c0c34889af7de3"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 400775,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-100.png",
+      "sha256": "a88cfb046e52beaad199f73011ca8fe95af3002661c4b83f653ddb4a7fc1c7e9"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 332362,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-101.png",
+      "sha256": "aeafc2cfd95e25961d178e94611214201ef73d2b70d32de9a0d8c77236b48fbf"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 254974,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-102.png",
+      "sha256": "1e423da3db88f19004e1fa4574d0b24f71f0d36da9916b1ee84bee4a2920dbe9"
+    },
+    {
+      "asset_role": "Source page image",
+      "byte_size": 8893,
+      "mime_type": "image/png",
+      "path": "01_source/pages/page-103.png",
+      "sha256": "041f8495bd04a5f47c81978e723832d6bac8b413c466edddec73e34c43d1dc40"
+    },
+    {
+      "asset_role": "Official source",
+      "byte_size": 1959893,
+      "mime_type": "application/pdf",
+      "path": "01_source/ppra_goods_std_official.pdf",
+      "sha256": "95726a88642730e85a212389b4257f26970ecf3f23de872578d11172063ae1ee"
+    },
+    {
+      "asset_role": "Official source",
+      "byte_size": 326829,
+      "mime_type": "text/plain",
+      "path": "01_source/ppra_goods_std_official.txt",
+      "sha256": "5c4c2396ba34bda7b9b1d7c4f01ed4831a24abfdbc66b69c872a10e2ca71742c"
+    },
+    {
+      "asset_role": "Official source",
+      "byte_size": 2694,
+      "mime_type": "text/markdown",
+      "path": "01_source/source_record.md",
+      "sha256": "d08f27013dff990c13a31907950441d14297173578e5dd0b2a0e81306eef3ac4"
+    },
+    {
+      "asset_role": "Document master",
+      "byte_size": 202003,
+      "mime_type": "text/html",
+      "path": "02_master/complete_tender.html",
+      "sha256": "68ec66abf1bf3d1c871390a7a1b7e58510989b02b7430fdf634838ec928cae68"
+    },
+    {
+      "asset_role": "Document master",
+      "byte_size": 2446,
+      "mime_type": "text/html",
+      "path": "02_master/invitation_to_tender.html",
+      "sha256": "a53609f746ffdf7f0808fba2577ebcdb4241ac760168a463c8c68d3bfe9f32fb"
+    },
+    {
+      "asset_role": "Document master",
+      "byte_size": 1022,
+      "mime_type": "text/css",
+      "path": "02_master/print.css",
+      "sha256": "7a753ed264a586d0654249aaad573bae65ad5067e11184d947a55999cb80a4d4"
+    },
+    {
+      "asset_role": "Register",
+      "byte_size": 124664,
+      "mime_type": "text/csv",
+      "path": "03_registers/coverage_register.csv",
+      "sha256": "b4b6158e9d63ec9bf6fb6f7563fba36a25dcffbf17874603f66f0a540082c4a7"
+    },
+    {
+      "asset_role": "Register",
+      "byte_size": 20722,
+      "mime_type": "text/csv",
+      "path": "03_registers/forms_register.csv",
+      "sha256": "9d7672a58fadc5439ed381105e668d7170be4c1f068f52fbc3876afa7113dac1"
+    },
+    {
+      "asset_role": "Register",
+      "byte_size": 33509,
+      "mime_type": "text/csv",
+      "path": "03_registers/insertion_points.csv",
+      "sha256": "5c0743304054076e2906e9450e4e6827c700f72e0394d81950ef9c875a7f59e3"
+    },
+    {
+      "asset_role": "Fixture",
+      "byte_size": 5656,
+      "mime_type": "text/x-python",
+      "path": "04_fixture/build_definition_fixture.py",
+      "sha256": "8fcdf4bdb10ce2bfa3b14e75b3d685ee13c3f1baf251f39e532fcc4bf092e7e7"
+    },
+    {
+      "asset_role": "Fixture",
+      "byte_size": 200067,
+      "mime_type": "text/html",
+      "path": "04_fixture/moh_expected.html",
+      "sha256": "1184fbe52e50bdabb56ebcca17852a3dea17b1db9ad39fac9d2afd31333b88ce"
+    },
+    {
+      "asset_role": "Fixture",
+      "byte_size": 341313,
+      "mime_type": "application/pdf",
+      "path": "04_fixture/moh_expected.pdf",
+      "sha256": "92ac6fcf06d6f9f25cac6c2bf06b9cdf912d3ad5b11521b2a0eeebc9fd36da63"
+    },
+    {
+      "asset_role": "Fixture",
+      "byte_size": 12109,
+      "mime_type": "application/json",
+      "path": "04_fixture/moh_input.json",
+      "sha256": "8e5a36e9b4b852ceff501e620f888e4c56fa1771765d6cd89dc8b71a0d9bf662"
+    },
+    {
+      "asset_role": "Fixture",
+      "byte_size": 2171,
+      "mime_type": "text/html",
+      "path": "04_fixture/moh_invitation_expected.html",
+      "sha256": "e2d35a070325b3f8816b11cd42b422370104f41ee5f2caab0833f7777f2758b7"
+    },
+    {
+      "asset_role": "Fixture",
+      "byte_size": 20186,
+      "mime_type": "application/pdf",
+      "path": "04_fixture/moh_invitation_expected.pdf",
+      "sha256": "338e234921b968947daf3b907482e36a785886c16f6d9de9fe2ac46a639961bc"
+    },
+    {
+      "asset_role": "Fixture",
+      "byte_size": 2222,
+      "mime_type": "text/markdown",
+      "path": "04_fixture/package_index.md",
+      "sha256": "1d4adcae7047fff4e9937f4ecdb5d5f3e76e7e7268f4614de1624a35994f40b4"
+    },
+    {
+      "asset_role": "Fixture",
+      "byte_size": 3800,
+      "mime_type": "text/x-python",
+      "path": "04_fixture/render_fixture.py",
+      "sha256": "ad9e0f14107c89e821eacfcab159c9b9a7fc8bf107d1dcc805244602370d69e8"
+    },
+    {
+      "asset_role": "Reservation variant fixture",
+      "byte_size": 611,
+      "mime_type": "application/json",
+      "path": "04_fixture/reservation_variants/county_residents_expected.json",
+      "sha256": "9b2ea9fd1239957b53c604e5fef696a871151181de16620877ab9ba750fee951"
+    },
+    {
+      "asset_role": "Reservation variant fixture",
+      "byte_size": 12104,
+      "mime_type": "application/json",
+      "path": "04_fixture/reservation_variants/county_residents_input.json",
+      "sha256": "b1b2ea8c274b88baa8407387e56884a571dcd4d419ab44db9a79053ab1aa982f"
+    },
+    {
+      "asset_role": "Reservation variant fixture",
+      "byte_size": 1307,
+      "mime_type": "application/json",
+      "path": "04_fixture/reservation_variants/none_expected.json",
+      "sha256": "56521043421ab93844b10b780241e3b19df73cadf9dac474ad3b261d2018202d"
+    },
+    {
+      "asset_role": "Reservation variant fixture",
+      "byte_size": 12083,
+      "mime_type": "application/json",
+      "path": "04_fixture/reservation_variants/none_input.json",
+      "sha256": "945dc24e7062fa3d097cfde11fc3478db3d4e794cde9f4031b4b0fb09ca37104"
+    },
+    {
+      "asset_role": "Reservation variant fixture",
+      "byte_size": 2091,
+      "mime_type": "application/json",
+      "path": "04_fixture/reservation_variants/persons_with_disabilities_expected.json",
+      "sha256": "5a4e5da6e27d0406aa43f0cd86d3bc72b3bc65b018e117ecefed96cce05c2177"
+    },
+    {
+      "asset_role": "Reservation variant fixture",
+      "byte_size": 12175,
+      "mime_type": "application/json",
+      "path": "04_fixture/reservation_variants/persons_with_disabilities_input.json",
+      "sha256": "e7df029e53f18d6da00a0323fb6e0fe932e0b1f51af2e72975f14952a9df98c4"
+    },
+    {
+      "asset_role": "Reservation variant fixture",
+      "byte_size": 463,
+      "mime_type": "application/json",
+      "path": "04_fixture/reservation_variants/unsupported_overlap_expected.json",
+      "sha256": "6cea82973e5a64876584b2a2fb738a598e501a7018018121620ddb716d24ffc8"
+    },
+    {
+      "asset_role": "Reservation variant fixture",
+      "byte_size": 12164,
+      "mime_type": "application/json",
+      "path": "04_fixture/reservation_variants/unsupported_overlap_input.json",
+      "sha256": "f83447d43f2573667656d322f262785ac02421f9ce32eb7742a9efdc50cff9d6"
+    },
+    {
+      "asset_role": "Reservation variant fixture",
+      "byte_size": 2053,
+      "mime_type": "application/json",
+      "path": "04_fixture/reservation_variants/women_expected.json",
+      "sha256": "c5c99efbfc97f56712be63f35c17b348349351963dbaaf7709e50ba4beff9022"
+    },
+    {
+      "asset_role": "Reservation variant fixture",
+      "byte_size": 12117,
+      "mime_type": "application/json",
+      "path": "04_fixture/reservation_variants/women_input.json",
+      "sha256": "6e187403c5e4dd8d28795708dd3ee4a560bf981040f5d90126b6a2d656204077"
+    },
+    {
+      "asset_role": "Review evidence",
+      "byte_size": 631,
+      "mime_type": "application/json",
+      "path": "05_review/gate_reviews.json",
+      "sha256": "5802e676e8fd7b1de878dd47fa969d6284060695eb3a04245d04d8b20aff9d32"
+    },
+    {
+      "asset_role": "Review evidence",
+      "byte_size": 80621,
+      "mime_type": "text/markdown",
+      "path": "05_review/open_issues.md",
+      "sha256": "dcd9150ff6ea97ea0483408c41c917412c6a6dfa6fc55c9466a3d188c6c60963"
+    },
+    {
+      "asset_role": "Review evidence",
+      "byte_size": 43857,
+      "mime_type": "application/json",
+      "path": "05_review/preceding_release.json",
+      "sha256": "b7b92548f8ced888b82c50db76d89d89601c7a2bda6dae1799280ccca8244784"
+    },
+    {
+      "asset_role": "Review evidence",
+      "byte_size": 5592,
+      "mime_type": "application/json",
+      "path": "05_review/release_change_report.json",
+      "sha256": "b8fd095abad5a7ed82781bdc3d5871ea7c40bc694ceb543ae252c0904bd31b15"
+    },
+    {
+      "asset_role": "Review evidence",
+      "byte_size": 9303,
+      "mime_type": "application/json",
+      "path": "05_review/release_gates.json",
+      "sha256": "d92e1524b9a2c72e5ffcbe9765cac6de5e7812acba84eb6b3bf5db9434458cdd"
+    },
+    {
+      "asset_role": "Review evidence",
+      "byte_size": 8247,
+      "mime_type": "application/json",
+      "path": "05_review/validation_report.json",
+      "sha256": "0dfbfae24430765b193ed69ee9fe2d620ba859c613cf667548c9ed2f7b24faae"
+    },
+    {
+      "asset_role": "Runtime asset",
+      "byte_size": 12045,
+      "mime_type": "application/json",
+      "path": "06_runtime/addendum_identity_rules.json",
+      "sha256": "c82d186626feee4766e5e36b82ca24b0a5d4618113b2b8ee32a67c674ca81e21"
+    },
+    {
+      "asset_role": "Runtime asset",
+      "byte_size": 15523,
+      "mime_type": "application/json",
+      "path": "06_runtime/downstream_rules.json",
+      "sha256": "caed57cdf8df8a47a670b8c9f1bcd71e5f9ecf03c3fc5a589dcff5665bfb59b3"
+    },
+    {
+      "asset_role": "Runtime asset",
+      "byte_size": 387966,
+      "mime_type": "application/json",
+      "path": "06_runtime/moh_published_bid_definition_expected.json",
+      "sha256": "c9b6ee17556902a61bc3ac038d2d98bf321ee544008729029ddc371b36e36893"
+    },
+    {
+      "asset_role": "Runtime asset",
+      "byte_size": 25531,
+      "mime_type": "application/json",
+      "path": "06_runtime/product_profile.json",
+      "sha256": "def2e72ac8dd20444dd27e283ea514612d3bd849d0c10b811d67dece0f517b85"
+    },
+    {
+      "asset_role": "Runtime asset",
+      "byte_size": 109238,
+      "mime_type": "application/json",
+      "path": "06_runtime/response_rules.json",
+      "sha256": "4b47e66f70463f30067a8b8cf263f1b80c59eb92784374d1f069ddefe42ff3b7"
+    },
+    {
+      "asset_role": "Runtime asset",
+      "byte_size": 42479,
+      "mime_type": "text/x-python",
+      "path": "06_runtime/validate_release.py",
+      "sha256": "e44f3694de1bfd1c3ef49226fb1824c09510a81203b33a5d8844d08d0d6321c2"
+    }
+  ],
+  "blockers": [
+    {
+      "blocker_id": "BLK-01",
+      "gate_id": "GATE-RESERVATION",
+      "owner": "Procurement/legal reviewer",
+      "severity": "Pending",
+      "summary": "Procurement/legal review of the reservation wording, evidence and eligibility treatment."
+    },
+    {
+      "blocker_id": "BLK-02",
+      "gate_id": "GATE-COVERAGE",
+      "owner": "Procurement/legal reviewer",
+      "severity": "Pending",
+      "summary": "Review of the source rows and forms still marked Draft checked."
+    },
+    {
+      "blocker_id": "BLK-03",
+      "gate_id": "GATE-DOCUMENTS",
+      "owner": "Procurement/legal reviewer",
+      "severity": "Pending",
+      "summary": "Procurement/legal review of the rendered Invitation and issued Tender."
+    },
+    {
+      "blocker_id": "BLK-04",
+      "gate_id": "GATE-DATA-OWNERSHIP",
+      "owner": "Procurement/legal reviewer",
+      "severity": "Pending",
+      "summary": "Review of which values are inherited, entered and generated."
+    },
+    {
+      "blocker_id": "BLK-05",
+      "gate_id": "GATE-RESPONSES",
+      "owner": "Supplier-experience reviewer",
+      "severity": "Pending",
+      "summary": "Supplier-experience review of every response field."
+    },
+    {
+      "blocker_id": "BLK-06",
+      "gate_id": "GATE-EVALUATION",
+      "owner": "Procurement/legal reviewer",
+      "severity": "Pending",
+      "summary": "Procurement/legal review of the evaluation groups."
+    },
+    {
+      "blocker_id": "BLK-07",
+      "gate_id": "GATE-CONTRACT",
+      "owner": "Procurement/legal reviewer",
+      "severity": "Pending",
+      "summary": "Procurement/legal review of the contract destinations."
+    },
+    {
+      "blocker_id": "BLK-08",
+      "gate_id": "GATE-USABILITY",
+      "owner": "Supplier-experience reviewer",
+      "severity": "Pending",
+      "summary": "Walk-through of the officer and supplier journeys with representative users."
+    },
+    {
+      "blocker_id": "BLK-09",
+      "gate_id": "GATE-INSPECTION",
+      "owner": "Controlled template-release owner (bnganyi)",
+      "severity": "Pending",
+      "summary": "Confirmation that the four inspecting roles can see this release in STD Templates."
+    },
+    {
+      "blocker_id": "BLK-10",
+      "gate_id": "GATE-COMPILER-PARITY",
+      "owner": "Controlled template-release owner (bnganyi)",
+      "severity": "Pending",
+      "summary": "Recorded production compiler parity test."
+    },
+    {
+      "blocker_id": "BLK-11",
+      "gate_id": "GATE-CHANGE-CONTROL",
+      "owner": "Controlled template-release owner (bnganyi)",
+      "severity": "Pending",
+      "summary": "Release owner's review of the comparison with the preceding release."
+    },
+    {
+      "blocker_id": "BLK-12",
+      "gate_id": "GATE-RESERVATION",
+      "owner": "Procurement/legal reviewer",
+      "severity": "Pending",
+      "summary": "Decide: Reserved-procurement clause wording (Section III, before 2.2.1; Invitation eligibility sentence) (open issue 53)."
+    },
+    {
+      "blocker_id": "BLK-13",
+      "gate_id": "GATE-RESERVATION",
+      "owner": "Procurement/legal reviewer",
+      "severity": "Pending",
+      "summary": "Decide: County-residents restriction (open issue 70)."
+    },
+    {
+      "blocker_id": "BLK-14",
+      "gate_id": "GATE-RESERVATION",
+      "owner": "Procurement/legal reviewer",
+      "severity": "Pending",
+      "summary": "Complete the county residents reservation variant. No released County-residents wording, evidence rule or overlap treatment; LAW-REG-001 v1.2 LAW12-AC-005 keeps the county basis blocked (open item 70)."
+    }
+  ],
+  "built_at": "2026-10-03T08:00:00+03:00",
+  "built_by": "release 1.4 build",
+  "bundle_digest": "0c63ab3b3092c27e7ba91b32e040d2ff20a8b76e5e5543571831ecd5e3c81a1e",
+  "contract_summary": {
+    "destinations": [
+      {
+        "contract_destination_id": "CD-GOODS-DELIVERY-SCHEDULE",
+        "label": "Goods and delivery schedule",
+        "response_rule_ids": [
+          "RR-GOODS-OFFER"
+        ]
+      },
+      {
+        "contract_destination_id": "CD-TECHNICAL-OBLIGATION-SCHEDULE",
+        "label": "Technical obligation schedule",
+        "response_rule_ids": [
+          "RR-TECHNICAL"
+        ]
+      },
+      {
+        "contract_destination_id": "CD-SCC-WARRANTY-SUPPORT",
+        "label": "SCC and warranty/support schedule",
+        "response_rule_ids": [
+          "RR-WARRANTY-SUPPORT"
+        ]
+      },
+      {
+        "contract_destination_id": "CD-RELATED-SERVICES-SCHEDULE",
+        "label": "Related-services schedule",
+        "response_rule_ids": [
+          "RR-RELATED-SERVICE"
+        ]
+      },
+      {
+        "contract_destination_id": "CD-INSPECTION-ACCEPTANCE-SCHEDULE",
+        "label": "Inspection and acceptance schedule",
+        "response_rule_ids": [
+          "RR-ACCEPTANCE"
+        ]
+      },
+      {
+        "contract_destination_id": "CD-CONTRACT-PRICE-SCHEDULES",
+        "label": "Contract price schedules",
+        "response_rule_ids": [
+          "RR-PRICE-GOODS",
+          "RR-PRICE-SERVICE"
+        ]
+      }
+    ],
+    "not_carried_forward": [
+      {
+        "reason": "Document acknowledgement is administrative; the Tender documents are incorporated by the Contract Agreement, not by this response.",
+        "response_rule_id": "RR-DOC-ACK"
+      },
+      {
+        "reason": "Identity and contact facts are administrative; eligibility is assessed through the declarations and eligibility documents, and the Contract names the awarded Tenderer from its verified identity.",
+        "response_rule_id": "RR-SUPPLIER-DETAILS"
+      },
+      {
+        "reason": "Joint-venture member identity and contact facts are administrative; eligibility is assessed through the declarations and eligibility documents, and the Contract names the awarded Tenderer from its verified identity.",
+        "response_rule_id": "RR-JV-MEMBER"
+      },
+      {
+        "reason": "Declaration evidence for eligibility only; the offer's commercial content reaches the Contract through the price and schedule mappings.",
+        "response_rule_id": "RR-DECL-FORM-OF-TENDER"
+      },
+      {
+        "reason": "Eligibility-only declaration.",
+        "response_rule_id": "RR-DECL-CITD"
+      },
+      {
+        "reason": "Eligibility-only declaration.",
+        "response_rule_id": "RR-DECL-SD1"
+      },
+      {
+        "reason": "Eligibility-only declaration.",
+        "response_rule_id": "RR-DECL-SD2"
+      },
+      {
+        "reason": "Eligibility-only declaration.",
+        "response_rule_id": "RR-DECL-CODE-OF-ETHICS"
+      },
+      {
+        "reason": "Eligibility-only facts.",
+        "response_rule_id": "RR-ENTITY-PROFILE"
+      },
+      {
+        "reason": "Eligibility-only declaration.",
+        "response_rule_id": "RR-DECL-CBQ"
+      },
+      {
+        "reason": "Reservation eligibility is an evaluation and reporting fact, not a contract obligation.",
+        "response_rule_id": "RR-RESERVATION"
+      },
+      {
+        "reason": "Tender Security secures the tendering process only.",
+        "response_rule_id": "RR-TENDER-SECURITY"
+      },
+      {
+        "reason": "Eligibility-only evidence.",
+        "response_rule_id": "RR-EVIDENCE-ELIGIBILITY-DOCUMENTS"
+      },
+      {
+        "reason": "Qualification-only evidence.",
+        "response_rule_id": "RR-EXPERIENCE"
+      },
+      {
+        "reason": "Qualification-only evidence.",
+        "response_rule_id": "RR-EVIDENCE-MANUFACTURER-AUTHORISATION"
+      },
+      {
+        "reason": "Supporting evidence; the accepted technical offer itself carries forward.",
+        "response_rule_id": "RR-EVIDENCE-DATASHEET"
+      },
+      {
+        "reason": "Qualification-only evidence.",
+        "response_rule_id": "RR-EVIDENCE-AFTER-SALES"
+      },
+      {
+        "reason": "Supporting evidence for an inherited requirement; it creates no new obligation.",
+        "response_rule_id": "RR-EVIDENCE-ADDITIONAL"
+      },
+      {
+        "reason": "The signature authenticates the submission; it is not a contract obligation.",
+        "response_rule_id": "RR-SUBMISSION"
+      }
+    ],
+    "schema_version": 1
+  },
+  "display_name": "IT Equipment Open Tender",
+  "document_summary": {
+    "coverage": {
+      "forms_excluded": 5,
+      "forms_included": 23,
+      "forms_pending_review": [
+        "FORM-TCR",
+        "FORM-RSC",
+        "FORM-ARC"
+      ],
+      "forms_reviewed": 25,
+      "forms_total": 28,
+      "insertion_points_total": 80,
+      "mapping_rule": "preparer_instruction -> Not applicable; Not used by this released pattern -> Excluded with reason; Supplier response, Award-derived, Contract-derived -> Structured input; rendered and governed by a named condition key or 'rendered only when' -> Conditional; otherwise Rendered",
+      "register_treatment_totals": {
+        "Award-derived": 11,
+        "Contract-derived": 0,
+        "Generated": 31,
+        "Inherited": 18,
+        "Locked": 130,
+        "Not used by this released pattern": 64,
+        "Officer value": 23,
+        "Supplier response": 19
+      },
+      "source_rows_pending_review": [
+        "COV-291",
+        "COV-292",
+        "COV-293",
+        "COV-294",
+        "COV-295",
+        "COV-296"
+      ],
+      "source_rows_reviewed": 290,
+      "source_rows_total": 296,
+      "treatment_totals": {
+        "Conditional": 11,
+        "Excluded with reason": 60,
+        "Not applicable": 7,
+        "Rendered": 188,
+        "Structured input": 30
+      }
+    },
+    "entered_during_tender_preparation": [
+      "Additional evidence item description",
+      "Additional evidence item required",
+      "After-sales support evidence required (if justified)",
+      "Clarification deadline",
+      "Comparable supply experience required (if justified)",
+      "Contract contact office",
+      "Datasheet or brochure required",
+      "Delay damages cap (%)",
+      "Delay damages rate per week (%)",
+      "Inspection and acceptance office/location",
+      "Manufacturer authorisation required",
+      "Number of comparable supply contracts required",
+      "Payment period in days",
+      "Payment timing (descriptive rule)",
+      "Performance Security percentage",
+      "Performance Security required",
+      "Period over which comparable contracts are counted (years)",
+      "Pre-tender meeting date/location/details",
+      "Pre-tender meeting held (Yes/No)",
+      "Stated after-sales support evidence required",
+      "Submission deadline",
+      "Tender currency",
+      "Tender issue date",
+      "Tender security amount",
+      "Tender security currency",
+      "Tender security treatment",
+      "Tender title",
+      "Tender validity in days",
+      "The visible published requirement the additional evidence proves"
+    ],
+    "generated_by_kentender": [
+      "Authorised official name",
+      "Authorised official title",
+      "Bank Guarantee tender security expiry date",
+      "Contributing Requisition item ID(s) (per rendered line)",
+      "Evidence reference required for this requirement (per row)",
+      "Goods and delivery schedule (repeating rows: description, quantity, unit, destination, latest delivery date, minimum warranty)",
+      "Insurance Guarantee tender security expiry date",
+      "Platform name",
+      "Platform public URL",
+      "Quantity (per row)",
+      "Tender approval / authentication reference",
+      "Tender approval date",
+      "Tender opening date/time",
+      "Tender reference",
+      "Tender/security validity date"
+    ],
+    "inherited_from_requisition": [
+      "Acceptance requirements (repeating rows: acceptance_requirement_id, check_type, pass_condition, evidence_type, applies_to - inherited from the authorised Requisition handoff v1.3)",
+      "Applies to (per row)",
+      "Approved related-service need (gates the related-services schedule)",
+      "Authorised quantity",
+      "Authorised value",
+      "Comparison rule (per row)",
+      "Expected delivery date (latest permitted)",
+      "Final destination (per row)",
+      "Goods description (per row)",
+      "Latest delivery date (per row)",
+      "Manufacturer-backed support required",
+      "Maximum support response in hours",
+      "Minimum warranty (per row)",
+      "Minimum warranty in months (package level)",
+      "On-site support required",
+      "PE contact office (clarification, submission and contract notices)",
+      "Plan Item reference",
+      "Procurement method",
+      "Procuring Entity address",
+      "Procuring Entity name",
+      "Related services and completion schedule (repeating rows: service_requirement_id, service_type, required_result, applies_to, completion_date, acceptance_evidence - inherited from the authorised Requisition handoff v1.3)",
+      "Required value display (per row)",
+      "Requirement label (per row)",
+      "Requirement title (defaults the Tender title)",
+      "Requisition reference",
+      "Reservation category (inherited from the Plan Item through the handoff)",
+      "Service location constraint",
+      "Stable technical requirement ID (per row)",
+      "Support arrangements description",
+      "Supporting materials (repeating rows: supporting_material_id, title, document_type, treatment, linked_requirement_ids - inherited from the authorised Requisition handoff v1.3)",
+      "Technical requirements (repeating rows: technical_requirement_id, label, comparison, required_value, unit, applies_to, evidence_required - inherited from the authorised Requisition handoff v1.3)",
+      "Unit (per row)",
+      "Unit (per row; may be empty)"
+    ],
+    "outputs": [
+      {
+        "master": "02_master/invitation_to_tender.html",
+        "output_id": "invitation",
+        "preview_asset": "04_fixture/moh_invitation_expected.pdf",
+        "summary": "Separate public notice; never embedded in the issued Tender.",
+        "title": "Invitation to Tender"
+      },
+      {
+        "master": "02_master/complete_tender.html",
+        "output_id": "issued_tender",
+        "preview_asset": "04_fixture/moh_expected.pdf",
+        "summary": "Cover, contents and Sections I–VIII; 23 of 28 official forms published.",
+        "title": "Complete issued Tender"
+      }
+    ],
+    "review_pack": "Download review pack",
+    "schema_version": 1
+  },
+  "downstream_rules_digest": "caed57cdf8df8a47a670b8c9f1bcd71e5f9ecf03c3fc5a589dcff5665bfb59b3",
+  "evaluation_summary": {
+    "groups": [
+      {
+        "evaluation_group_id": "EVG-ELIGIBILITY",
+        "label": "Eligibility",
+        "purpose": "Submission and eligibility: official declarations, eligibility evidence, Tender Security, qualification evidence and any published reservation eligibility, each pass/fail.",
+        "response_rule_count": 14,
+        "response_rule_ids": [
+          "RR-DECL-CBQ",
+          "RR-DECL-CITD",
+          "RR-DECL-CODE-OF-ETHICS",
+          "RR-DECL-FORM-OF-TENDER",
+          "RR-DECL-SD1",
+          "RR-DECL-SD2",
+          "RR-ENTITY-PROFILE",
+          "RR-EVIDENCE-AFTER-SALES",
+          "RR-EVIDENCE-ELIGIBILITY-DOCUMENTS",
+          "RR-EVIDENCE-MANUFACTURER-AUTHORISATION",
+          "RR-EXPERIENCE",
+          "RR-RESERVATION",
+          "RR-SUBMISSION",
+          "RR-TENDER-SECURITY"
+        ]
+      },
+      {
+        "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
+        "label": "Technical compliance",
+        "purpose": "One pass/fail gate fed by every mandatory goods, technical, warranty/support, related-service and acceptance check, each keeping its own evidence and reason. No weights or scores.",
+        "response_rule_count": 7,
+        "response_rule_ids": [
+          "RR-ACCEPTANCE",
+          "RR-EVIDENCE-ADDITIONAL",
+          "RR-EVIDENCE-DATASHEET",
+          "RR-GOODS-OFFER",
+          "RR-RELATED-SERVICE",
+          "RR-TECHNICAL",
+          "RR-WARRANTY-SUPPORT"
+        ]
+      },
+      {
+        "evaluation_group_id": "EVG-FINANCIAL",
+        "label": "Financial",
+        "purpose": "Arithmetic and financial evaluation of the published price schedules under the lowest-evaluated-responsive treatment.",
+        "response_rule_count": 2,
+        "response_rule_ids": [
+          "RR-PRICE-GOODS",
+          "RR-PRICE-SERVICE"
+        ]
+      },
+      {
+        "evaluation_group_id": "EVG-AWARD",
+        "label": "Award",
+        "purpose": "Award under the published rule. Consumes the prior governed group results; no response maps to it directly.",
+        "response_rule_count": 0,
+        "response_rule_ids": []
+      }
+    ],
+    "not_evaluated": [
+      {
+        "reason": "Document acknowledgement is administrative; the Tender documents are incorporated by the Contract Agreement, not by this response.",
+        "response_rule_id": "RR-DOC-ACK"
+      },
+      {
+        "reason": "Identity and contact facts are administrative; eligibility is assessed through the declarations and eligibility documents, and the Contract names the awarded Tenderer from its verified identity.",
+        "response_rule_id": "RR-SUPPLIER-DETAILS"
+      },
+      {
+        "reason": "Joint-venture member identity and contact facts are administrative; eligibility is assessed through the declarations and eligibility documents, and the Contract names the awarded Tenderer from its verified identity.",
+        "response_rule_id": "RR-JV-MEMBER"
+      }
+    ],
+    "rule_count_checked": 26,
+    "schema_version": 1,
+    "technical_compliance_is_single_gate": true,
+    "weighted_criteria": 0
+  },
+  "input_bundle_digest": "83d23536685e0788c674a924cfcdfed00373b0a89cd0845d8751727c44d4a99a",
+  "official_source_digest": "95726a88642730e85a212389b4257f26970ecf3f23de872578d11172063ae1ee",
+  "official_source_title": "PPRA Standard Tender Document for Procurement of Goods",
+  "product_profile_digest": "def2e72ac8dd20444dd27e283ea514612d3bd849d0c10b811d67dece0f517b85",
+  "product_profile_id": "GOODS-IT-SIMPLE-V1",
+  "rejected_use": [
+    {
+      "code": "WORKS",
+      "statement": "Works"
+    },
+    {
+      "code": "SERVICES",
+      "statement": "Consulting or non-consulting services"
+    },
+    {
+      "code": "SOFTWARE-MAIN-PURPOSE",
+      "statement": "Software development, integration, implementation or data migration as the main purpose"
+    },
+    {
+      "code": "MULTIPLE-LOTS",
+      "statement": "Multiple lots or award packages"
+    },
+    {
+      "code": "OTHER-RESERVATION",
+      "statement": "A reservation category outside None, Youth, Women or Persons with disabilities"
+    },
+    {
+      "code": "COUNTY-WITHOUT-RULE",
+      "statement": "A County-residents restriction without an applicable verified rule, approved overlap treatment or released rendering/evidence rule"
+    },
+    {
+      "code": "WEIGHTED-SCORING",
+      "statement": "Weighted technical scoring"
+    },
+    {
+      "code": "MULTI-CURRENCY",
+      "statement": "Multiple currencies or alternative price schedules"
+    },
+    {
+      "code": "UNSUPPORTED-METHOD",
+      "statement": "An unsupported procurement method"
+    },
+    {
+      "code": "UNSTRUCTURED-REQUIREMENTS",
+      "statement": "A Requisition without authorised structured technical requirements and objective acceptance checks"
+    },
+    {
+      "code": "UNSUPPORTED-RENDERING",
+      "statement": "Any response, validation, composition or mapping the released Bid Workspace renderer does not support"
+    }
+  ],
+  "release_change_report_digest": "b8fd095abad5a7ed82781bdc3d5871ea7c40bc694ceb543ae252c0904bd31b15",
+  "release_gates_digest": "d92e1524b9a2c72e5ffcbe9765cac6de5e7812acba84eb6b3bf5db9434458cdd",
+  "release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01",
+  "renderer_profile_id": "BDS-GOODS-IT-V1",
+  "repository_commit": "128890fa1bbb2388290b0826560f038334ea1c39",
+  "reservation_support": {
+    "award_reporting_treatment": "Retain the category, rule snapshot and eligibility result for the governed award and statutory reporting handoff",
+    "categories": [
+      "None",
+      "Youth",
+      "Women",
+      "Persons with disabilities"
+    ],
+    "contract_treatment": "Not carried forward",
+    "county_residents": {
+      "reason": "This candidate carries no released County-residents document wording or evidence rule; LAW-REG-001 v1.2 LAW12-AC-005 keeps the county basis blocked until verified.",
+      "released": false,
+      "supported_overlap_treatments": [],
+      "treatment": "Separate County-residents restriction, only for a county Procuring Entity with an applicable verified rule, approved overlap treatment and released document wording"
+    },
+    "eligibility_group_id": "EVG-ELIGIBILITY",
+    "planning_designation_is_entitlement": false,
+    "schema_version": 1,
+    "variants": [
+      {
+        "expected_result": "Publishable",
+        "reason": "",
+        "release_status": "Complete",
+        "variant": "youth (MoH fixture)"
+      },
+      {
+        "expected_result": "Publishable",
+        "reason": "",
+        "release_status": "Complete",
+        "variant": "none"
+      },
+      {
+        "expected_result": "Publishable",
+        "reason": "",
+        "release_status": "Complete",
+        "variant": "women"
+      },
+      {
+        "expected_result": "Publishable",
+        "reason": "",
+        "release_status": "Complete",
+        "variant": "persons_with_disabilities"
+      },
+      {
+        "expected_result": "Blocking",
+        "reason": "No released County-residents wording, evidence rule or overlap treatment; LAW-REG-001 v1.2 LAW12-AC-005 keeps the county basis blocked (open item 70).",
+        "release_status": "Incomplete",
+        "variant": "county_residents"
+      },
+      {
+        "expected_result": "Blocking",
+        "reason": "",
+        "release_status": "Complete",
+        "variant": "unsupported_overlap"
+      }
+    ]
+  },
+  "response_rules_digest": "4b47e66f70463f30067a8b8cf263f1b80c59eb92784374d1f069ddefe42ff3b7",
+  "response_summary": {
+    "compositions": [
+      "Document and addendum acknowledgement",
+      "Supplier details",
+      "Joint-venture member",
+      "Locked declaration",
+      "Reservation eligibility",
+      "Tender security",
+      "Goods offer",
+      "Technical compliance",
+      "Warranty and support",
+      "Comparable experience",
+      "Related-services confirmation",
+      "Acceptance confirmation",
+      "Evidence list",
+      "Goods price schedule",
+      "Review and signature summary",
+      "Business profile of each entity of the bid"
+    ],
+    "controls": [
+      "Confirmation",
+      "Yes/No",
+      "Controlled single choice",
+      "Controlled multi-select",
+      "Short text",
+      "Long text",
+      "Integer",
+      "Decimal",
+      "Money",
+      "Date",
+      "Evidence reference",
+      "Structured ports list",
+      "Table of rows"
+    ],
+    "declaration_treatment": "7 locked declarations; each repeats the anchored official wording and is affirmed against its exact text version.",
+    "evidence_treatment": "12 evidence-reference fields; each states its evidence type, count and link to the exact response.",
+    "fixture": {
+      "acceptance_checks": 5,
+      "goods_lines": 1,
+      "goods_price_schedules": 1,
+      "related_services": 0,
+      "requisition_items_grouped": 2,
+      "response_groups": 42,
+      "response_rows": 175,
+      "technical_requirements": 11,
+      "tender_reference": "TND-MOH-2027-033",
+      "warranty_support_facts": 6
+    },
+    "price_treatment": "Unit price and tax per published price row; line and Tender totals are calculated and read-only.",
+    "response_family_rule_counts": {
+      "acceptance_requirement": 1,
+      "declaration": 7,
+      "document": 1,
+      "evidence_requirement": 5,
+      "experience": 1,
+      "goods": 1,
+      "price_row": 2,
+      "related_service": 1,
+      "reservation": 1,
+      "supplier": 3,
+      "technical_requirement": 1,
+      "tender_security": 1,
+      "warranty_support": 1
+    },
+    "response_rule_count": 26,
+    "schema_version": 1,
+    "tasks": [
+      {
+        "label": "Tender documents, clarifications and addenda",
+        "order": 1,
+        "purpose": "View the current published package. When an addendum is effective, acknowledge that addendum by name; when there is nothing specific to acknowledge, no acknowledgement is asked.",
+        "task_id": "TASK-DOCUMENTS"
+      },
+      {
+        "label": "Company, declarations and tender security",
+        "order": 2,
+        "purpose": "Complete supplier facts, official declarations, the applicable reservation declaration and evidence, and the security response.",
+        "task_id": "TASK-COMPANY"
+      },
+      {
+        "label": "Requirements and supporting evidence",
+        "order": 3,
+        "purpose": "Respond to goods, technical, warranty and support, experience, service, acceptance and evidence requirements.",
+        "task_id": "TASK-REQUIREMENTS"
+      },
+      {
+        "label": "Price",
+        "order": 4,
+        "purpose": "Complete the published Goods and related-service price schedules.",
+        "task_id": "TASK-PRICE"
+      },
+      {
+        "label": "Review and submit",
+        "order": 5,
+        "purpose": "Resolve blockers, review, sign and submit the exact package.",
+        "task_id": "TASK-REVIEW"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "source_check_outcome": "Passed",
+  "source_checked_at": "2026-08-28",
+  "source_checked_by": "bnganyi (product owner)",
+  "source_retrieved_at": "2026-08-28",
+  "status": "Candidate",
+  "supported_renderer_version": "1.2.0",
+  "supported_use": {
+    "award_packages": 1,
+    "county_residents": {
+      "reason": "This candidate carries no released County-residents document wording or evidence rule; LAW-REG-001 v1.2 LAW12-AC-005 keeps the county basis blocked until verified.",
+      "released": false,
+      "supported_overlap_treatments": [],
+      "treatment": "Separate County-residents restriction, only for a county Procuring Entity with an applicable verified rule, approved overlap treatment and released document wording"
+    },
+    "currency": "KES",
+    "equipment_categories": [
+      "Laptop",
+      "Desktop computer",
+      "Tablet",
+      "Monitor",
+      "Printer",
+      "Scanner",
+      "Network equipment",
+      "Power-protection equipment"
+    ],
+    "financial_evaluation": "Arithmetic and financial evaluation under the lowest-evaluated-responsive treatment",
+    "lotting_indicator": "Single lot",
+    "plan_horizon": "Single year",
+    "price_treatment": "Fixed price",
+    "procurement_category": "Goods",
+    "procurement_method": "Open Tender",
+    "product": "Straightforward off-the-shelf IT equipment",
+    "product_pattern": "IT Equipment",
+    "related_service_boundary": "Delivery, installation, configuration, testing, training or orientation only when ancillary to the Goods",
+    "related_service_types": [
+      "Delivery",
+      "Installation",
+      "Configuration",
+      "Testing",
+      "Training",
+      "User orientation"
+    ],
+    "reservation_categories": [
+      "None",
+      "Youth",
+      "Women",
+      "Persons with disabilities"
+    ],
+    "summary": "Goods · Open Tender · single lot · KES · fixed price · straightforward IT equipment",
+    "supplier_submission": "Structured electronic responses, evidence and price schedule",
+    "technical_evaluation": "Mandatory pass/fail checks feeding one Technical compliance gate"
+  },
+  "template_key": "IT-EQUIPMENT-OPEN-V1",
+  "template_release": "1.4",
+  "tool_versions": {
+    "jinja2": "3.1.6",
+    "pdftotext": "pdftotext version 22.02.0",
+    "python": "3.10.12",
+    "wkhtmltopdf": "wkhtmltopdf 0.12.6.1 (with patched qt)"
+  },
+  "validation_report_digest": "0dfbfae24430765b193ed69ee9fe2d620ba859c613cf667548c9ed2f7b24faae",
+  "verification_results": [
+    {
+      "check": "Official source",
+      "explanation": "Every check for this area passed.",
+      "gate_ids": [
+        "GATE-SOURCE"
+      ],
+      "result": "Passed"
+    },
+    {
+      "check": "Tender documents",
+      "explanation": "Automated checks passed; awaiting the procurement/legal review of the rendered Invitation and issued Tender; the review of the source rows and forms still marked Draft checked; the review of which values are inherited, entered and generated.",
+      "gate_ids": [
+        "GATE-DOCUMENTS",
+        "GATE-COVERAGE",
+        "GATE-DATA-OWNERSHIP"
+      ],
+      "result": "Pending"
+    },
+    {
+      "check": "Supplier responses",
+      "explanation": "Automated checks passed; awaiting the supplier-experience review of every response field; the walk-through of the officer and supplier journeys with representative users.",
+      "gate_ids": [
+        "GATE-RESPONSES",
+        "GATE-RENDERER",
+        "GATE-USABILITY"
+      ],
+      "result": "Incomplete"
+    },
+    {
+      "check": "Evaluation and contract mappings",
+      "explanation": "Automated checks passed; awaiting the procurement/legal review of the evaluation groups; the procurement/legal review of the contract destinations.",
+      "gate_ids": [
+        "GATE-EVALUATION",
+        "GATE-CONTRACT"
+      ],
+      "result": "Pending"
+    },
+    {
+      "check": "Reservation variants",
+      "explanation": "Automated checks passed; awaiting the procurement/legal review of the reservation wording, evidence and eligibility treatment.",
+      "gate_ids": [
+        "GATE-RESERVATION"
+      ],
+      "result": "Pending"
+    },
+    {
+      "check": "Addendum identity rules",
+      "explanation": "Every check for this area passed.",
+      "gate_ids": [
+        "GATE-ADDENDA"
+      ],
+      "result": "Passed"
+    },
+    {
+      "check": "MoH fixture",
+      "explanation": "Automated checks passed; awaiting the recorded production compiler parity test.",
+      "gate_ids": [
+        "GATE-FIXTURE",
+        "GATE-COMPILER-PARITY"
+      ],
+      "result": "Incomplete"
+    }
+  ]
+}

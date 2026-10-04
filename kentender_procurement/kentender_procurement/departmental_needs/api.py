@@ -23,10 +23,16 @@ from kentender_procurement.departmental_needs.services import lifecycle
 from kentender_procurement.departmental_needs.services.context import (
 	get_needs_submission_state as _get_needs_submission_state,
 	list_need_create_targets as _list_need_create_targets,
+	list_need_units as _list_need_units,
 	resolve_creation_context,
 	selectable_financial_years,
 )
-from kentender_procurement.departmental_needs.services.usage import project_planning_usage
+from kentender_procurement.departmental_needs.services.usage import (
+	planning_status_for_need as _planning_status_for_need,
+	project_planning_usage,
+	project_planning_disposition,
+	project_planning_intake,
+)
 from kentender_procurement.departmental_needs.services.workspace import (
 	get_current_accepted_need as _get_current_accepted_need,
 	get_need,
@@ -39,12 +45,17 @@ from kentender_procurement.departmental_needs.services.workspace import (
 resolve_needs_scope = frappe.whitelist()(resolve_creation_context)
 list_needs_financial_years = frappe.whitelist()(selectable_financial_years)
 list_need_create_targets = frappe.whitelist()(_list_need_create_targets)
+list_need_units = frappe.whitelist()(_list_need_units)
 get_needs_workspace = frappe.whitelist()(get_workspace)
 get_departmental_need = frappe.whitelist()(get_need)
 get_departmental_review_task = frappe.whitelist()(get_review_task)
 get_needs_submission_state = frappe.whitelist()(_get_needs_submission_state)
 get_current_accepted_need = frappe.whitelist()(_get_current_accepted_need)
 check_accepted_need_withdrawal_dependency = frappe.whitelist()(lifecycle.check_withdrawal_dependency)
+# §11.8A — the detail screen's own dedicated Planning-status re-check,
+# separate from get_departmental_need's atomic payload (NDS-CHG-001 v1.14
+# Phase 2: REFRESHING/UNAVAILABLE/UNAVAILABLE-NO-SNAPSHOT/OLDER).
+get_need_planning_status = frappe.whitelist()(_planning_status_for_need)
 
 
 # --- §8.2 commands ---------------------------------------------------------
@@ -85,6 +96,11 @@ cancel_accepted_need_successor = frappe.whitelist()(lifecycle.cancel_accepted_ne
 request_accepted_need_withdrawal = frappe.whitelist()(lifecycle.request_withdrawal)
 decide_accepted_need_withdrawal = frappe.whitelist()(lifecycle.decide_withdrawal)
 project_need_planning_usage = frappe.whitelist()(project_planning_usage)
+# PLN-CHG-001 v1.18 §5.1.4 — the accepted DPP disposition, separate from usage.
+project_need_planning_disposition = frappe.whitelist()(project_planning_disposition)
+# Owner decision 26 Sep 2026 — where an accepted Need stands against its
+# department's plan (not in it yet: Create update).
+project_need_planning_intake = frappe.whitelist()(project_planning_intake)
 
 
 # §8.2 names one command per acceptance outcome. They share one implementation

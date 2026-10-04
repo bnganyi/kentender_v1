@@ -29,7 +29,7 @@ import json
 from typing import Any
 
 import frappe
-from frappe.utils import cstr
+from frappe.utils import cstr, nowdate
 
 from kentender_core.services.authorization import (
 	PURPOSE_COMMAND,
@@ -225,6 +225,33 @@ def require_site_role(role: str, user: str | None = None, *, masked: bool = True
 	return decision.assignment
 
 
+def users_with_site_role(role: str) -> list[str]:
+	"""Who currently holds this Site-wide responsibility.
+
+	§6.5: "Use only actual authorised person names returned by AUTH/task
+	ownership. Where no person can be resolved, show the responsible role and a
+	configuration issue; never invent an assignee." This returns the real
+	holders so a screen can name them, and an empty list so it can say plainly
+	that nobody holds it.
+	"""
+	today = nowdate()
+	return [
+		row.user
+		for row in frappe.get_all(
+			"User Responsibility Assignment",
+			filters={
+				"business_role": role,
+				"status": "Enabled",
+				"organisation_unit": ("in", ("", None)),
+			},
+			fields=["user", "effective_from", "effective_to"],
+			limit_page_length=0,
+		)
+		if (not row.effective_from or cstr(row.effective_from) <= today)
+		and (not row.effective_to or cstr(row.effective_to) >= today)
+	]
+
+
 def has_site_role(role: str, user: str | None = None) -> bool:
 	"""Command-purpose check for read-offer parity: a control is offered only
 	to an actor the command would accept (technical users get no offer)."""
@@ -345,6 +372,9 @@ def prior_actors(chain: list[str]) -> dict[str, set[str]]:
 		# created by a governance return and its owner is not a Planner action.
 		if not v.correction_of_plan_version and v.owner and v.owner != "Administrator":
 			planner.add(cstr(v.owner))
+	# v1.18 §6.4 — signing the formal submission is an authoring-side action
+	for row in frappe.get_all("Plan Preparation Signature", filters={"plan_version": ("in", chain)}, fields=["actor"]):
+		planner.add(cstr(row.actor))
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", chain)}, pluck="name")
 	tasks = frappe.get_all("Plan Finance Task", filters={"plan_version": ("in", chain)}, pluck="name")
 	journal_targets = set(chain) | set(items) | set(tasks)

@@ -76,6 +76,11 @@ def get_organisation_structure(selected: str = "") -> dict[str, Any]:
 	if not is_configured():
 		return {"state": "no_procuring_entity", "tree": []}
 
+	conflicts = structure_conflicts()
+	if conflicts:
+		# CFG v0.14 §4.4/§10.12 — never resolved by picking one; listed for
+		# support, and the governed repair refuses it.
+		return {"state": "ambiguous", "tree": [], "conflicts": conflicts}
 	root = _root()
 	if not root:
 		return {"state": "needs_repair", "tree": []}
@@ -137,6 +142,48 @@ def get_unit_detail(unit_id: str) -> dict[str, Any]:
 			"reactivate": (not active) and (not is_root) and parent_active,
 		},
 	}
+
+
+def structure_conflicts() -> list[str]:
+	"""CFG v0.14 §4.4 — what makes the tree ambiguous, in plain sentences.
+
+	Ambiguous: more than one top-level unit; beside a root, a unit whose
+	parent no longer exists; with no root, orphans pointing at more than one
+	missing parent. A deleted root leaves exactly one missing parent, which
+	is the demonstrably missing root the governed repair may recreate.
+	"""
+	rows = frappe.get_all(
+		UNIT_DOCTYPE,
+		fields=["name", "unit_code", "unit_name", "parent_organisation_unit"],
+		order_by="creation asc",
+		limit_page_length=0,
+	)
+	names = {row.name for row in rows}
+	label = lambda row: f"{row.unit_name} ({row.unit_code})"
+	tops = [row for row in rows if not row.parent_organisation_unit]
+	dangling = [row for row in rows if row.parent_organisation_unit and row.parent_organisation_unit not in names]
+	conflicts: list[str] = []
+	if len(tops) > 1:
+		conflicts.append("More than one top-level organisation unit: " + ", ".join(label(row) for row in tops) + ".")
+	if tops:
+		conflicts.extend(f"{label(row)} belongs to an organisation unit that no longer exists." for row in dangling)
+	elif len({row.parent_organisation_unit for row in dangling}) > 1:
+		conflicts.append(
+			"Units belong to more than one organisation unit that no longer exists: "
+			+ ", ".join(label(row) for row in dangling)
+			+ "."
+		)
+	return conflicts
+
+
+def require_whole_structure() -> None:
+	"""CFG10-AC-022 — no responsibility is granted or changed while the root
+	is missing or the tree is ambiguous; the tab being disabled is not enough."""
+	if not _root() or structure_conflicts():
+		fail(
+			"AUTH_CONFIGURATION_INVALID",
+			"Organisation structure needs repair. Responsibilities can be assigned once it is repaired.",
+		)
 
 
 def _root() -> str:
@@ -226,7 +273,7 @@ def add_organisation_unit(
 	if not root:
 		fail(
 			"AUTH_CONFIGURATION_INVALID",
-			"The root organisation unit is missing. Run the governed repair before adding units.",
+			"The top-level organisation unit is missing.",
 		)
 	parent_id = parent_id or root
 	parent = frappe.db.get_value(UNIT_DOCTYPE, parent_id, ["status"], as_dict=True)

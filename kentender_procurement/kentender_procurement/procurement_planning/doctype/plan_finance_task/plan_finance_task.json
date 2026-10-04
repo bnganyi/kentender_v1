@@ -8,6 +8,7 @@
  "field_order": [
   "task_reference",
   "plan_version",
+  "financial_basis",
   "plan_value",
   "line_totals_hash",
   "affordability_statement",
@@ -37,6 +38,13 @@
    "reqd": 1
   },
   {
+   "fieldname": "financial_basis",
+   "fieldtype": "Link",
+   "label": "Financial Basis",
+   "options": "Plan Financial Basis",
+   "read_only": 1
+  },
+  {
    "fieldname": "plan_value",
    "fieldtype": "Currency",
    "label": "Plan Value",
@@ -48,14 +56,14 @@
    "fieldtype": "Data",
    "label": "Line Totals Hash",
    "read_only": 1,
-   "description": "Per-line planned totals at request time; the decision is Stale once these change (\u00a74.11)."
+   "description": "Per-line planned totals at request time; the decision is Stale once these change (§4.11)."
   },
   {
    "fieldname": "affordability_statement",
    "fieldtype": "JSON",
    "label": "Affordability Statement",
    "read_only": 1,
-   "description": "BUD v1.5 \u00a78.2 `check_plan_affordability` result as computed at request time."
+   "description": "BUD v1.5 §8.2 `check_plan_affordability` result as computed at request time."
   },
   {
    "fieldname": "status",
@@ -134,6 +142,10 @@
   },
   {
    "role": "Auditor",
+   "read": 1
+  },
+  {
+   "role": "Head of Procurement Function",
    "read": 1
   }
  ],

@@ -1,0 +1,185 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "§5.4 RecordVerificationPlan: scope, basis, participants from the current eligible committee and one lead; a change supersedes with its reason.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "plan_id",
+  "evaluation_case",
+  "version_number",
+  "scope",
+  "basis",
+  "participants_json",
+  "lead_user",
+  "change_reason",
+  "session",
+  "conclusion",
+  "recorded_by",
+  "recorded_at",
+  "status",
+  "report_state",
+  "report_version",
+  "report_digest",
+  "frozen_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "plan_id",
+   "fieldtype": "Data",
+   "label": "Plan ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "evaluation_case",
+   "fieldtype": "Link",
+   "label": "Evaluation case",
+   "read_only": 1,
+   "options": "Evaluation Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Version number",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "scope",
+   "fieldtype": "Small Text",
+   "label": "Scope",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "basis",
+   "fieldtype": "Small Text",
+   "label": "Basis",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "participants_json",
+   "fieldtype": "Long Text",
+   "label": "Participants json",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "lead_user",
+   "fieldtype": "Link",
+   "label": "Lead user",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "change_reason",
+   "fieldtype": "Small Text",
+   "label": "Change reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "session",
+   "fieldtype": "Data",
+   "label": "Session",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "conclusion",
+   "fieldtype": "Data",
+   "label": "Conclusion",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recorded_by",
+   "fieldtype": "Link",
+   "label": "Recorded by",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "recorded_at",
+   "fieldtype": "Datetime",
+   "label": "Recorded at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Current\nSuperseded\nCompleted",
+   "reqd": 1
+  },
+  {
+   "fieldname": "report_state",
+   "fieldtype": "Select",
+   "label": "Report state",
+   "read_only": 1,
+   "options": "Draft\nFrozen\nSigned\nSuperseded",
+   "default": "Draft"
+  },
+  {
+   "fieldname": "report_version",
+   "fieldtype": "Data",
+   "label": "Report version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "report_digest",
+   "fieldtype": "Data",
+   "label": "Report digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "frozen_at",
+   "fieldtype": "Datetime",
+   "label": "Frozen at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Evaluation",
+ "name": "Evaluation Verification Plan",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:plan_id"
+}

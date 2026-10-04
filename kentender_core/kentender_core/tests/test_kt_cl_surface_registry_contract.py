@@ -31,7 +31,6 @@ _A2_SCREEN_IDS: tuple[str, ...] = (
 	"PUB-A1",
 	"PUB-A2",
 	"PUB-A3",
-	"BW-A1",
 )
 
 

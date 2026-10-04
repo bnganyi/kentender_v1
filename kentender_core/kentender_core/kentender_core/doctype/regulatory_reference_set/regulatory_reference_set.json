@@ -1,0 +1,26 @@
+{
+ "actions": [],
+ "creation": "2026-09-16 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Kentender Core",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "name": "Regulatory Reference Set",
+ "autoname": "hash",
+ "naming_rule": "Random",
+ "title_field": "display_name",
+ "fields": [
+  {"fieldname": "reference_key", "fieldtype": "Data", "label": "Reference Key", "reqd": 1, "unique": 1, "in_list_view": 1, "description": "A user-defined stable key, distinct from the generated record name. Immutable once any version exists."},
+  {"fieldname": "reference_kind", "fieldtype": "Select", "label": "Reference Kind", "options": "Method eligibility\nReservation rules\nExclusive preference\nPreference margins\nMarket price index\nApproval applicability\nPublication obligations", "reqd": 1, "in_list_view": 1, "description": "Immutable once any version exists."},
+  {"fieldname": "display_name", "fieldtype": "Data", "label": "Display Name", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "fixture_namespace", "fieldtype": "Data", "label": "Fixture Namespace", "hidden": 1, "read_only": 1}
+ ],
+ "field_order": ["reference_key", "reference_kind", "display_name", "fixture_namespace"],
+ "permissions": [
+  {"create": 1, "delete": 0, "read": 1, "role": "System Manager", "write": 1},
+  {"read": 1, "role": "Desk User"}
+ ],
+ "track_changes": 1
+}

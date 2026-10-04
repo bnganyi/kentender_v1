@@ -1,0 +1,264 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "EVL-CHG-001 v0.4 §6.1 Evaluation case: one per Tender in scope; lifecycle §7.1; conditions (suspended, overdue, validity) are fields, never states.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "evaluation_id",
+  "tender",
+  "tender_reference",
+  "tender_title",
+  "state",
+  "publication",
+  "publication_version",
+  "definition_id",
+  "definition_version",
+  "definition_digest",
+  "prepared_from",
+  "prepared_at",
+  "opening_handoff",
+  "opening_completed_at",
+  "source_intake",
+  "current_run",
+  "current_appointment",
+  "secretary_appointment",
+  "proceeding",
+  "current_report",
+  "suspended",
+  "suspension_event",
+  "cancellation_event",
+  "closed_reason",
+  "validity_end",
+  "evaluation_deadline",
+  "scope_issue",
+  "last_committed_event",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "evaluation_id",
+   "fieldtype": "Data",
+   "label": "Evaluation ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "label": "Tender",
+   "read_only": 1,
+   "options": "Tender",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "tender_reference",
+   "fieldtype": "Data",
+   "label": "Tender reference",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_title",
+   "fieldtype": "Data",
+   "label": "Tender title",
+   "read_only": 1
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "read_only": 1,
+   "options": "Preparing\nReviewing\nSigning\nReport sent\nNo evaluation required\nCancelled",
+   "reqd": 1,
+   "default": "Preparing"
+  },
+  {
+   "fieldname": "publication",
+   "fieldtype": "Data",
+   "label": "Publication",
+   "read_only": 1
+  },
+  {
+   "fieldname": "publication_version",
+   "fieldtype": "Data",
+   "label": "Publication version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "definition_id",
+   "fieldtype": "Data",
+   "label": "Definition id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "definition_version",
+   "fieldtype": "Int",
+   "label": "Definition version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "definition_digest",
+   "fieldtype": "Data",
+   "label": "Definition digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_from",
+   "fieldtype": "Select",
+   "label": "Prepared from",
+   "read_only": 1,
+   "options": "Publication\nOpening intake"
+  },
+  {
+   "fieldname": "prepared_at",
+   "fieldtype": "Datetime",
+   "label": "Prepared at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "opening_handoff",
+   "fieldtype": "Data",
+   "label": "Opening handoff",
+   "read_only": 1
+  },
+  {
+   "fieldname": "opening_completed_at",
+   "fieldtype": "Datetime",
+   "label": "Opening completed at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_intake",
+   "fieldtype": "Data",
+   "label": "Source intake",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_run",
+   "fieldtype": "Data",
+   "label": "Current run",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_appointment",
+   "fieldtype": "Data",
+   "label": "Current appointment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "secretary_appointment",
+   "fieldtype": "Data",
+   "label": "Secretary appointment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proceeding",
+   "fieldtype": "Data",
+   "label": "Proceeding",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_report",
+   "fieldtype": "Data",
+   "label": "Current report",
+   "read_only": 1
+  },
+  {
+   "fieldname": "suspended",
+   "fieldtype": "Check",
+   "label": "Suspended",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "suspension_event",
+   "fieldtype": "Data",
+   "label": "Suspension event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancellation_event",
+   "fieldtype": "Data",
+   "label": "Cancellation event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_reason",
+   "fieldtype": "Small Text",
+   "label": "Closed reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "validity_end",
+   "fieldtype": "Datetime",
+   "label": "Validity end",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evaluation_deadline",
+   "fieldtype": "Datetime",
+   "label": "Evaluation deadline",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scope_issue",
+   "fieldtype": "Data",
+   "label": "Scope issue",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_committed_event",
+   "fieldtype": "Data",
+   "label": "Last committed event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1,
+   "reqd": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Evaluation",
+ "name": "Evaluation Case",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:evaluation_id"
+}

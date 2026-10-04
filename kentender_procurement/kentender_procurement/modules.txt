@@ -1,7 +1,12 @@
 Kentender Procurement
 Procurement Planning
-STD Configuration
 Tender Configurations
 Departmental Needs
 Procurement Requisitions
-Tender Preparation
+Tenders
+STD Templates
+Bid Submission
+Bid Opening
+Proceedings
+Bid Evaluation
+Award

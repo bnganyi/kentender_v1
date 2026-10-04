@@ -1,0 +1,106 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "BOP-CHG-001 v0.10 §4 Evaluation handoff: exact opened packages, mapping, register and minutes; once-only, nonempty openings only.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "handoff_id",
+  "tender",
+  "opening_case",
+  "payload_json",
+  "handoff_digest",
+  "issued_at",
+  "consumer",
+  "delivery_status",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "handoff_id",
+   "fieldtype": "Data",
+   "label": "Handoff ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "label": "Tender",
+   "read_only": 1,
+   "options": "Tender",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "opening_case",
+   "fieldtype": "Link",
+   "label": "Opening case",
+   "read_only": 1,
+   "options": "Bid Opening Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payload_json",
+   "fieldtype": "Long Text",
+   "label": "Payload json",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "handoff_digest",
+   "fieldtype": "Data",
+   "label": "Handoff digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "issued_at",
+   "fieldtype": "Datetime",
+   "label": "Issued at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "consumer",
+   "fieldtype": "Data",
+   "label": "Consumer",
+   "read_only": 1,
+   "reqd": 1,
+   "default": "evaluation"
+  },
+  {
+   "fieldname": "delivery_status",
+   "fieldtype": "Select",
+   "label": "Delivery status",
+   "read_only": 1,
+   "options": "Pending\nDelivered",
+   "reqd": 1,
+   "default": "Pending"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Opening",
+ "name": "Evaluation Handoff",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:handoff_id"
+}

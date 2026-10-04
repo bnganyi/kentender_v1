@@ -1,0 +1,216 @@
+{
+ "about": "BDS-CHG-001 v0.8 §11 (BDS01-AC-084, BDS04-AC-002): every action label a portal read emits, with the one §11 control row it performs, or where §11 has none (FU-V08-64). §10.17 catalogue actions are in common_states.json. Checked by tests/test_acceptance_gaps.py::TestActionRegister.",
+ "actions": [
+  {
+   "label": "Start bid",
+   "spec": "§11.2",
+   "control": "Start bid",
+   "maps_to": "StartBid"
+  },
+  {
+   "label": "Sign in to start bid",
+   "spec": "§11.2",
+   "control": "Sign in to start bid",
+   "maps_to": "sign-in, returning to the same Tender"
+  },
+  {
+   "label": "Continue bid",
+   "spec": "§11.2",
+   "control": "Continue bid",
+   "maps_to": "GetBidWorkspace / GetBidTask"
+  },
+  {
+   "label": "View receipt",
+   "spec": "§11.2",
+   "control": "View receipt",
+   "maps_to": "GetSubmissionReceipt"
+  },
+  {
+   "label": "View notice",
+   "spec": "§11.2",
+   "control": "View notice",
+   "maps_to": "Tenders public notice stream"
+  },
+  {
+   "label": "View addendum",
+   "spec": "§11.2",
+   "control": "View addendum / notice",
+   "maps_to": "Tenders public addendum stream"
+  },
+  {
+   "label": "View current Tender",
+   "spec": "§11.2",
+   "control": "View Tender",
+   "maps_to": "GetPublishedTenderForBidder"
+  },
+  {
+   "label": "Supplier support",
+   "spec": "§11.2",
+   "control": "Supplier support / Privacy and data use / Terms of portal use / Accessibility",
+   "maps_to": "CFG public destination"
+  },
+  {
+   "label": "Set up your supplier account",
+   "spec": "§11.2",
+   "control": "Account",
+   "maps_to": "GetSupplierAccount"
+  },
+  {
+   "label": "Finish setting up your supplier account",
+   "spec": "§11.2",
+   "control": "Account",
+   "maps_to": "GetSupplierAccount"
+  },
+  {
+   "label": "Back to My bids",
+   "spec": "§11.2",
+   "control": "My bids",
+   "maps_to": "GetMyBids"
+  },
+  {
+   "label": "Review addendum",
+   "spec": "§11.4",
+   "control": "Review addendum",
+   "maps_to": "GetBidTask (documents)"
+  },
+  {
+   "label": "View",
+   "spec": "§11.4",
+   "control": "Task View / Continue / Fix",
+   "maps_to": "GetBidTask"
+  },
+  {
+   "label": "Continue",
+   "spec": "§11.4",
+   "control": "Task View / Continue / Fix",
+   "maps_to": "GetBidTask"
+  },
+  {
+   "label": "Fix item",
+   "spec": "§11.4",
+   "control": "Task View / Continue / Fix",
+   "maps_to": "GetBidTask at the first relevant issue",
+   "note": "also the prefix of \"Fix item: {task}\""
+  },
+  {
+   "label": "Save and continue",
+   "spec": "§11.4",
+   "control": "Save and continue",
+   "maps_to": "SaveBidTask"
+  },
+  {
+   "label": "Back to bid",
+   "spec": "§11.4",
+   "control": "Back to bid",
+   "maps_to": "GetBidWorkspace (no mutation)"
+  },
+  {
+   "label": "Review bid",
+   "spec": "§11.4",
+   "control": "Review bid",
+   "maps_to": "GetBidReview"
+  },
+  {
+   "label": "Submit bid",
+   "spec": "§11.5",
+   "control": "Submit bid",
+   "maps_to": "BDS-DES-12 (PrepareBidSignature and SubmitBid on confirmation)"
+  },
+  {
+   "label": "Check certificate",
+   "spec": "§11.5",
+   "control": "Check certificate",
+   "maps_to": "certificate read (no signature request)"
+  },
+  {
+   "label": "View status",
+   "spec": "§11.5",
+   "control": "View status",
+   "maps_to": "GetSubmissionStatus"
+  },
+  {
+   "label": "Try confirmation again",
+   "spec": "§11.5",
+   "control": "Try confirmation again",
+   "maps_to": "PrepareBidSignature / SubmitBid"
+  },
+  {
+   "label": "Contact support",
+   "spec": "§11.5",
+   "control": "Contact support",
+   "maps_to": "CFG support destination"
+  },
+  {
+   "label": "Print receipt",
+   "spec": "§11.6",
+   "control": "Print receipt",
+   "maps_to": "receipt print view"
+  },
+  {
+   "label": "Prepare replacement",
+   "spec": "§11.6",
+   "control": "Prepare replacement",
+   "maps_to": "BDS-DES-14 (PrepareReplacementBid on confirmation)"
+  },
+  {
+   "label": "Create replacement Draft",
+   "spec": "§11.6",
+   "control": "Create replacement Draft",
+   "maps_to": "PrepareReplacementBid"
+  },
+  {
+   "label": "Withdraw bid",
+   "spec": "§11.6",
+   "control": "Withdraw bid",
+   "maps_to": "WithdrawBid after the dialog"
+  },
+  {
+   "label": "Start replacement",
+   "spec": "§11.6",
+   "control": "Start replacement",
+   "maps_to": "PrepareReplacementBid from Withdrawn"
+  },
+  {
+   "label": "View answer",
+   "spec": "§10.7 (board B)",
+   "control": "",
+   "maps_to": "GetBidTask (documents) at the answer",
+   "note": "§11 has no row; closest is §11.2 View question"
+  },
+  {
+   "label": "View bid",
+   "spec": "§10.6/§10.19",
+   "control": "",
+   "maps_to": "GetBidWorkspace, read-only",
+   "note": "§11 has no row; used where Continue bid would promise a change that cannot happen"
+  },
+  {
+   "label": "View acknowledgement",
+   "spec": "§10.6/§10.15",
+   "control": "",
+   "maps_to": "the withdrawal acknowledgement read",
+   "note": "§11.6 names Download receipt / acknowledgement only"
+  },
+  {
+   "label": "Continue replacement Draft",
+   "spec": "§10.15",
+   "control": "",
+   "maps_to": "GetBidWorkspace",
+   "note": "§11 has no row; alias of Continue bid"
+  },
+  {
+   "label": "View Tender documents",
+   "spec": "§10.3 BDS-DES-02-WITHDRAWN-RELEASE",
+   "control": "",
+   "maps_to": "the Tender page's documents region",
+   "note": "§11 has no row; closest is §11.2 View / Download document"
+  },
+  {
+   "label": "Continue saved bid",
+   "spec": "§10.17 catalogue",
+   "control": "",
+   "maps_to": "GetBidWorkspace / GetBidTask",
+   "note": "catalogue action (portal-information-draft)"
+  }
+ ]
+}

@@ -26,27 +26,13 @@ def clear_demo_prefixed_rows() -> dict[str, int]:
 	"""Remove prior DEMO-MOH-2026-* rows."""
 	counts: dict[str, int] = {}
 	for dt, field in (
-		("Electronic Bid Submission", "configuration_ref"),
-		("IT Bid Opening Record", "publication"),
 		("IT Tender Publication Record", "configuration_ref"),
 		("Confirmed Tender Document Package", "configuration_ref"),
 		("Tender Configuration", "configuration_ref"),
 		("Procurement Package", "package_code"),
 		("Demand", "demand_id"),
 	):
-		# Opening record keyed by publication name — clear via pubs above
-		if dt == "IT Bid Opening Record":
-			continue
 		counts[dt] = _delete_by_ref_prefix(dt, field, DEMO_PREFIX)
-	# Opening records left dangling
-	if frappe.db.exists("DocType", "IT Bid Opening Record"):
-		orphans = frappe.get_all("IT Bid Opening Record", pluck="name")
-		for name in orphans:
-			pub = frappe.db.get_value("IT Bid Opening Record", name, "publication")
-			if not pub or not frappe.db.exists("IT Tender Publication Record", pub):
-				frappe.delete_doc(
-					"IT Bid Opening Record", name, force=True, ignore_permissions=True
-				)
 	return counts
 
 

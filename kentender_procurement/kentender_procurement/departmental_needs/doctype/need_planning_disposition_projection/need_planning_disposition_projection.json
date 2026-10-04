@@ -1,0 +1,36 @@
+{
+ "actions": [],
+ "autoname": "format:NPD-{#####}",
+ "creation": "2026-09-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Departmental Needs",
+ "name": "Need Planning Disposition Projection",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "search_fields": "departmental_need,disposition",
+ "fields": [
+  {"fieldname": "departmental_need", "fieldtype": "Link", "label": "Departmental Need", "options": "Departmental Need", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "need_revision", "fieldtype": "Link", "label": "Need Revision", "options": "Departmental Need Revision", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "dpp_submission", "fieldtype": "Data", "label": "Departmental Plan Submission", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "disposition_key", "fieldtype": "Data", "label": "Disposition Key", "reqd": 1, "unique": 1, "hidden": 1},
+  {"fieldname": "disposition", "fieldtype": "Select", "label": "Disposition", "options": "Proceeding\nNot proceeding", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "reason", "fieldtype": "Small Text", "label": "Reason for Not Proceeding"},
+  {"fieldname": "actor", "fieldtype": "Link", "label": "Recorded By", "options": "User"},
+  {"fieldname": "decision_at", "fieldtype": "Datetime", "label": "Decided At"},
+  {"fieldname": "source_event_id", "fieldtype": "Data", "label": "Source Event ID", "reqd": 1, "unique": 1},
+  {"fieldname": "producer_sequence", "fieldtype": "Int", "label": "Producer Sequence", "reqd": 1},
+  {"fieldname": "fixture_namespace", "fieldtype": "Data", "label": "Fixture Namespace", "hidden": 1}
+ ],
+ "field_order": ["departmental_need", "need_revision", "dpp_submission", "disposition_key", "disposition", "reason", "actor", "decision_at", "source_event_id", "producer_sequence", "fixture_namespace"],
+ "permissions": [
+  {"create": 1, "read": 1, "role": "System Manager", "write": 1},
+  {"create": 1, "read": 1, "role": "Administrator", "write": 1},
+  {"read": 1, "role": "Departmental Author"},
+  {"read": 1, "role": "Head of User Department"},
+  {"read": 1, "role": "Procurement Planner"},
+  {"read": 1, "role": "Auditor"}
+ ],
+ "track_changes": 1
+}

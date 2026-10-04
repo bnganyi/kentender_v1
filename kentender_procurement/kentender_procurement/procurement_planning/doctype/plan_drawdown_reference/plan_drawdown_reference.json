@@ -10,6 +10,8 @@
   "plan_item_id",
   "allocation",
   "requisition_reference",
+  "requisition_version",
+  "correlation_id",
   "requesting_org_unit",
   "quantity",
   "amount",
@@ -53,6 +55,20 @@
    "reqd": 1,
    "search_index": 1,
    "description": "Procurement Requisitions' own authoritative reference (\u00a77.4) \u2014 an opaque string here, since no Requisition DocType is owned by, or exists in, this repo (\u00a72.1 scope exclusions)."
+  },
+  {
+   "fieldname": "requisition_version",
+   "fieldtype": "Data",
+   "label": "Requisition Version",
+   "read_only": 1,
+   "description": "REQ-CHG-001 v1.11 \u00a79.1 \u2014 the exact immutable Requisition Version whose authorisation made this drawdown."
+  },
+  {
+   "fieldname": "correlation_id",
+   "fieldtype": "Data",
+   "label": "Authorisation correlation",
+   "read_only": 1,
+   "description": "The one authorisation correlation shared with the Budget reservations made in the same transaction."
   },
   {
    "fieldname": "requesting_org_unit",
@@ -135,6 +151,10 @@
   },
   {
    "role": "Auditor",
+   "read": 1
+  },
+  {
+   "role": "Head of Procurement Function",
    "read": 1
   }
  ],

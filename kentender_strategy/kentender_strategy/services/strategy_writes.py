@@ -12,11 +12,12 @@ from __future__ import annotations
 import frappe
 from frappe import _
 
-from kentender_strategy.services.strategy_audit import record_event
+from kentender_strategy.services.strategy_audit import list_events, record_event
 from kentender_strategy.services.strategy_authorization import (
 	CAP_AUTHOR,
 	ROLE_STRATEGY_AUTHOR,
 	assignment_id,
+	has_ever_been_submitted,
 	require_plan_create_capability,
 	require_plan_version_capability,
 )
@@ -242,6 +243,74 @@ def create_strategy_successor_version(plan_id: str) -> dict:
 	return _version_payload(new_version)
 
 
+def discard_strategy_plan_draft(plan_version_id: str, *, expected_version: str | None = None) -> dict:
+	"""discard_strategy_plan_draft — permanently remove a Draft version that
+	has never been submitted, along with its Strategy Node/Performance
+	Indicator/Performance Target records. For a plan's only-ever version
+	(version 1), the empty Strategic Plan shell is removed with it; for a
+	Draft successor (version 2+), the plan and its Active version are left
+	untouched. Mirrors _assert_deletable's submitted-once lock (§5.1/§11.4):
+	once submitted, a draft is corrected forward, never discarded."""
+	plan_version_id = resolve_version_name(plan_version_id) or plan_version_id
+	version = frappe.get_doc("Strategic Plan Version", plan_version_id)
+	_check_expected_version(version, expected_version)
+	exercised = require_plan_version_capability(frappe.session.user, CAP_AUTHOR, version)
+
+	if version.status != "Draft":
+		frappe.throw(
+			_("Only a Draft version can be discarded."),
+			frappe.ValidationError,
+			title="STRATEGY_INVALID_STATE",
+		)
+	if has_ever_been_submitted(version.name):
+		frappe.throw(
+			_("This draft has already been submitted once and can no longer be discarded. Edit and resubmit it instead."),
+			frappe.ValidationError,
+			title="STRATEGY_INVALID_STATE",
+		)
+
+	plan_id = version.plan_id
+	version_name = version.name
+	plan_discarded = int(version.version_number) == 1
+
+	record_event(
+		entity_type="Strategic Plan Version",
+		entity_name=version_name,
+		event_type="Discard draft",
+		prior_state=version.status,
+		plan_version=version_name,
+		summary="Plan discarded" if plan_discarded else f"Draft update v{version.version_number} discarded",
+		business_role=ROLE_STRATEGY_AUTHOR,
+		assignment=assignment_id(exercised),
+	)
+
+	indicator_names = frappe.get_all("Performance Indicator", filters={"plan_version_id": version_name}, pluck="name")
+	if indicator_names:
+		for target_name in frappe.get_all(
+			"Performance Target", filters={"indicator_id": ["in", indicator_names]}, pluck="name"
+		):
+			frappe.delete_doc("Performance Target", target_name, ignore_permissions=True)
+		for indicator_name in indicator_names:
+			frappe.delete_doc("Performance Indicator", indicator_name, ignore_permissions=True)
+
+	# Leaves before parents — Strategy Node is a self-referencing tree.
+	remaining = frappe.get_all("Strategy Node", filters={"plan_version_id": version_name}, pluck="name")
+	while remaining:
+		leftover = [n for n in remaining if frappe.db.exists("Strategy Node", {"parent_node_id": n})]
+		if leftover == remaining:
+			frappe.throw(_("Could not resolve hierarchy parent chain while discarding"))
+		for node_name in remaining:
+			if node_name not in leftover:
+				frappe.delete_doc("Strategy Node", node_name, ignore_permissions=True)
+		remaining = leftover
+
+	frappe.delete_doc("Strategic Plan Version", version_name, ignore_permissions=True)
+	if plan_discarded:
+		frappe.delete_doc("Strategic Plan", plan_id, ignore_permissions=True)
+
+	return {"plan_id": None if plan_discarded else plan_id, "plan_discarded": plan_discarded, "discarded_version": version_name}
+
+
 def _resolve_client_id(id_map: dict[str, str], value):
 	if isinstance(value, str) and value.startswith("$"):
 		return id_map.get(value)
@@ -287,6 +356,17 @@ def save_strategy_structure_draft(
 	id_map: dict[str, str] = {}
 	result: dict[str, list[str]] = {"nodes": [], "indicators": [], "targets": [], "deleted": []}
 
+	if deletes and any(
+		row.get("action") == "Submit for approval" for row in list_events("Strategic Plan Version", version.name)
+	):
+		# §5.1/§11.4 — nothing may be deleted after first submission; a
+		# returned Draft keeps every record it was submitted with.
+		frappe.throw(
+			_("Items cannot be deleted after the plan has been submitted. Edit them instead."),
+			frappe.ValidationError,
+			title="STRATEGY_INVALID_STATE",
+		)
+
 	for item in deletes or []:
 		doctype, name = item.get("doctype"), item.get("name")
 		if not doctype or not name or not frappe.db.exists(doctype, name):
@@ -294,6 +374,21 @@ def save_strategy_structure_draft(
 		_assert_deletable(doctype, name)
 		frappe.delete_doc(doctype, name, ignore_permissions=True)
 		result["deleted"].append(name)
+
+	# §11.4/§12.3 (plan D7) — a sibling reorder arrives as several existing
+	# nodes with new display_order values. Applied one by one they would
+	# collide with the sibling still holding the target value, so every
+	# existing node whose order changes is first parked on a temporary
+	# negative order (no real sibling ever holds one), then saved normally.
+	parked = 0
+	for item in nodes or []:
+		name = item.get("name")
+		if not name or "display_order" not in item or not frappe.db.exists("Strategy Node", name):
+			continue
+		current = frappe.db.get_value("Strategy Node", name, "display_order")
+		if str(current) != str(item["display_order"]):
+			parked += 1
+			frappe.db.set_value("Strategy Node", name, "display_order", -1000 - parked, update_modified=False)
 
 	for item in nodes or []:
 		data = dict(item)

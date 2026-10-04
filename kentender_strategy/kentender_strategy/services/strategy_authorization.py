@@ -99,6 +99,15 @@ def _submitted_by(version_name: str) -> str | None:
 	return None
 
 
+def has_ever_been_submitted(version_name: str) -> bool:
+	"""Whether this version's own audit trail contains a "Submit for
+	approval" event, ever — the same signal `save_strategy_structure_draft`
+	uses to lock structure deletes after first submission (§5.1/§11.4), and
+	`discard_strategy_plan_draft` uses to lock the whole-draft discard the
+	same way: once submitted, a draft is corrected forward, never removed."""
+	return _submitted_by(version_name) is not None
+
+
 def _blocked_by_self_approval(user: str, capability: str, version_name: str) -> bool:
 	"""§6.2/§13.4/§18.1: "The author cannot approve the same version" / "even
 	if that user also holds the Strategy Approver role" — a same-version

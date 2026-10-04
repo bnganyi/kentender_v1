@@ -1,0 +1,75 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-09-27 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "notice_contact_version",
+  "email",
+  "contact_id",
+  "contact_version",
+  "set_by",
+  "set_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "notice_contact_version",
+   "fieldtype": "Int",
+   "label": "Notice contact version",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "contact_id",
+   "fieldtype": "Data",
+   "label": "Account contact",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contact_version",
+   "fieldtype": "Int",
+   "label": "Account contact version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "set_by",
+   "fieldtype": "Link",
+   "label": "Set by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "set_at",
+   "fieldtype": "Datetime",
+   "label": "Set at",
+   "read_only": 1,
+   "in_list_view": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-27 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "name": "Bidder Arrangement Notice Contact",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

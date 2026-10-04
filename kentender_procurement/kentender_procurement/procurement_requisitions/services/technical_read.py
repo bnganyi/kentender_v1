@@ -100,7 +100,7 @@ def _first_where(doctype: str, filters: dict | None, probe_kwarg: str, probe_cal
 
 
 def _requisition_kwargs() -> dict | None:
-	name = _first_where("Procurement Requisition", None, "requisition", api.get_requisition_editor)
+	name = _first_where("Procurement Requisition", None, "requisition", api.get_requisition_record)
 	return {"requisition": name} if name else None
 
 
@@ -137,11 +137,11 @@ def read_probes() -> list[dict]:
 	return [
 		{"label": "requisitions.get_requisition_workspace", "call": api.get_requisition_workspace, "kwargs": lambda: {}},
 		{
-			"label": "requisitions.get_eligible_plan_item_detail",
-			"call": api.get_eligible_plan_item_detail,
+			"label": "requisitions.get_start_preview",
+			"call": api.get_start_preview,
 			"kwargs": _plan_item_kwargs,
 		},
-		{"label": "requisitions.get_requisition_editor", "call": api.get_requisition_editor, "kwargs": _requisition_kwargs},
+		{"label": "requisitions.get_requisition_record", "call": api.get_requisition_record, "kwargs": _requisition_kwargs},
 		{
 			"label": "requisitions.get_department_approval_task",
 			"call": api.get_department_approval_task,

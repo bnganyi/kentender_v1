@@ -1,0 +1,40 @@
+{
+ "actions": [],
+ "creation": "2026-09-16 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Kentender Core",
+ "owner": "Administrator",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "name": "Reference Verification Event",
+ "autoname": "hash",
+ "naming_rule": "Random",
+ "fields": [
+  {"fieldname": "target_doctype", "fieldtype": "Select", "label": "Target Type", "options": "Regulatory Reference\nBusiness Day Calendar", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "target_name", "fieldtype": "Dynamic Link", "label": "Target", "options": "target_doctype", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "outcome", "fieldtype": "Select", "label": "Outcome", "options": "Pending\nVerified\nRejected", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "reviewer", "fieldtype": "Data", "label": "Reviewer", "reqd": 1, "read_only": 1},
+  {"fieldname": "column_break_a", "fieldtype": "Column Break"},
+  {"fieldname": "source_check_date", "fieldtype": "Date", "label": "Source Check Date"},
+  {"fieldname": "instrument_edition", "fieldtype": "Data", "label": "Instrument and Edition"},
+  {"fieldname": "provisions", "fieldtype": "Small Text", "label": "Provisions"},
+  {"fieldname": "source_document", "fieldtype": "Attach", "label": "Source Document"},
+  {"fieldname": "source_document_hash", "fieldtype": "Data", "label": "Source Document Hash", "read_only": 1},
+  {"fieldname": "section_findings", "fieldtype": "Section Break", "label": "What the Source Establishes"},
+  {"fieldname": "effective_dates_and_amendments", "fieldtype": "Small Text", "label": "Effective Dates and Amendments"},
+  {"fieldname": "applicability_date_basis_explanation", "fieldtype": "Small Text", "label": "Applicability and Date Basis"},
+  {"fieldname": "interpretation_evidence", "fieldtype": "Small Text", "label": "Interpretation Evidence"},
+  {"fieldname": "section_outstanding", "fieldtype": "Section Break", "label": "Outstanding Work and Record"},
+  {"fieldname": "unresolved_points", "fieldtype": "Small Text", "label": "Unresolved Points"},
+  {"fieldname": "change_reason", "fieldtype": "Small Text", "label": "Reason for This Entry"},
+  {"fieldname": "previous_event", "fieldtype": "Link", "label": "Previous Verification Event", "options": "Reference Verification Event"},
+  {"fieldname": "fixture_namespace", "fieldtype": "Data", "label": "Fixture Namespace", "hidden": 1, "read_only": 1}
+ ],
+ "field_order": ["target_doctype", "target_name", "outcome", "reviewer", "column_break_a", "source_check_date", "instrument_edition", "provisions", "source_document", "source_document_hash", "section_findings", "effective_dates_and_amendments", "applicability_date_basis_explanation", "interpretation_evidence", "section_outstanding", "unresolved_points", "change_reason", "previous_event", "fixture_namespace"],
+ "permissions": [
+  {"create": 1, "delete": 0, "read": 1, "role": "System Manager", "write": 1},
+  {"read": 1, "role": "Desk User"}
+ ],
+ "track_changes": 1
+}

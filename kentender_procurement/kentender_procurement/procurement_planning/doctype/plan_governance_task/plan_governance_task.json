@@ -139,6 +139,10 @@
   {
    "role": "Auditor",
    "read": 1
+  },
+  {
+   "role": "Head of Procurement Function",
+   "read": 1
   }
  ],
  "row_format": "Dynamic",

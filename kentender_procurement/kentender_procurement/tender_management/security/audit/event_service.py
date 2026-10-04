@@ -177,7 +177,8 @@ class AuditEventService:
 		if not _norm_text(raw.get("actor_user_code")):
 			raw["actor_user_code"] = _norm_text(getattr(frappe.session, "user", None)) or "Administrator"
 		if "timestamp" not in raw or not isinstance(raw.get("timestamp"), datetime):
-			raw["timestamp"] = datetime.utcnow()
+			# site time, like every other Audit Event row (owner decision 26 Sep 2026)
+			raw["timestamp"] = frappe.utils.now_datetime()
 		if not _norm_text(raw.get("result")):
 			raw["result"] = result.value
 		if not _norm_text(raw.get("risk_level")):

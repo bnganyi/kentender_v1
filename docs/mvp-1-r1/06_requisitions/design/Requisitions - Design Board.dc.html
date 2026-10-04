@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>
+  a{color:var(--color-accent-700)} a:hover{color:var(--color-accent-900)}
+  .kt-panel-lg{background:var(--color-surface);border:1px solid var(--color-neutral-300);padding:var(--space-8)}
+  .cap{font-size:13px;font-weight:700;color:var(--color-neutral-700);margin-bottom:12px}
+  .cap i{font-weight:400;opacity:.7;font-style:normal}
+  .board-root > div{margin-bottom:0 !important}
+  .board-root .kt-section{margin:0}
+  .board-root .kt-panel{margin-top:var(--space-3)}
+  .sub{font-size:13px;font-weight:700;color:var(--color-neutral-700);margin:0 0 10px}
+</style>
+</helmet>
+<div class="board-root" style="min-width:2600px;padding:56px;display:flex;flex-direction:column;gap:var(--space-8);font-family:var(--font-body);color:var(--color-text)">
+
+<div style="max-width:820px;margin:0 0 48px">
+<div class="text-muted" style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px">REQ-CHG-001 v1.9 · §13</div>
+<h1 style="margin:0 0 10px">Procurement Requisitions — complete screen and static design contract</h1>
+<p class="text-muted" style="font-size:15px;line-height:1.6;margin:0 0 24px">All 12 REQ-DES artboards plus their stated state variants, drawn from §13 in spec order. Full pages show the primary fixture; variant sets show only the facts that differ from their named parent. Every control is static — this is an artboard set, not a prototype.</p>
+<div class="kt-panel-lg" style="font-size:13px;line-height:1.9;columns:2;column-gap:32px">
+<div><a href="#des01">REQ-DES-01 Requisitions workspace</a></div>
+<div><a href="#des02">REQ-DES-02 Start requisition dialog</a></div>
+<div><a href="#des03">REQ-DES-03 Draft: Request details</a></div>
+<div><a href="#des04">REQ-DES-04 Add laptop request</a></div>
+<div><a href="#des05">REQ-DES-05 Draft: Requirements</a></div>
+<div><a href="#des06">REQ-DES-06 Draft: Review and submit</a></div>
+<div><a href="#des07">REQ-DES-07 Head of User Department review</a></div>
+<div><a href="#des08">REQ-DES-08 Procurement authorisation</a></div>
+<div><a href="#des09">REQ-DES-09 Authorisation confirmation</a></div>
+<div><a href="#des10">REQ-DES-10 Authorised requisition</a></div>
+<div><a href="#des11">REQ-DES-11 Returned and stopped work</a></div>
+<div><a href="#des12">REQ-DES-12 Common and access states</a></div>
+</div>
+</div>
+
+<div id="des01" style="margin-bottom:56px">
+<div class="cap">REQ-DES-01 · Requisitions workspace <i>— Grace Wanjiku, Departmental Author for both fixture departments, 1 Mar 2027 09:00 EAT, READY scenario, no existing root</i></div>
+<div class="kt-panel-lg" style="width:900px">
+<h3 style="margin:0">Procurement Requisitions</h3>
+<p class="text-muted" style="font-size:13px;margin:6px 0 var(--space-4)">Prepare and follow requests for purchases already approved in the annual plan.</p>
+<div class="kt-kpi-row" style="margin-bottom:var(--space-4)">
+<div class="kt-kpi-card"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v16H4z"/><path d="M4 9h16"/></svg><div class="kt-kpi-value">0</div><div class="kt-kpi-sub">Drafts</div></div>
+<div class="kt-kpi-card"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 14l-4-4 4-4M5 10h11a4 4 0 010 8h-1"/></svg><div class="kt-kpi-value">0</div><div class="kt-kpi-sub">Returned to me</div></div>
+<div class="kt-kpi-card"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-kpi-value">0</div><div class="kt-kpi-sub">My approvals</div></div>
+</div>
+<div style="display:flex;gap:var(--space-3);align-items:center;margin-bottom:var(--space-6)">
+<input class="input" placeholder="Search by requisition or purchase" style="flex:1" disabled="disabled" />
+<select class="input" style="width:160px" disabled="disabled"><option>All statuses</option></select>
+<select class="input" style="width:190px" disabled="disabled"><option>All my departments</option></select>
+<span class="btn btn-ghost">Clear filters</span>
+</div>
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>Ready to start</h6>
+<table class="table" style="margin-bottom:var(--space-8)"><thead><tr><th>Approved purchase</th><th>Departments</th><th>Still available</th><th>Needed by</th><th style="white-space:nowrap">Action</th></tr></thead>
+<tbody><tr>
+<td><div style="font-weight:600">Clinical training and deployment laptops for digital health rollout</div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:5px"><span class="kt-label" style="white-space:nowrap">PPI-MOH-2027-033</span><span class="tag tag-outline">Open Tender</span><span class="tag tag-neutral">IT Equipment</span></div></td>
+<td>Digital Health; HR Management and Development</td>
+<td>250 Each<div class="kt-label">KES 50,000,000.00</div></td>
+<td>31 Dec 2027</td>
+<td><span class="btn btn-primary">Start requisition</span></td>
+</tr></tbody></table>
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/></svg>My requisitions</h6>
+<div class="kt-panel" style="text-align:center;padding:var(--space-8)">
+<div style="font-family:var(--font-heading);font-weight:600;font-size:15px">You have no requisitions yet.</div>
+<p class="text-muted" style="font-size:13px;margin:6px 0 0">Start one from an approved purchase above, or wait for one to be assigned to you.</p>
+</div>
+</div>
+</div>
+
+<div style="margin-bottom:56px">
+<div class="cap">REQ-DES-01 variants <i>— only the facts that differ from the parent</i></div>
+<div style="display:flex;flex-direction:column;gap:32px;align-items:flex-start">
+<div class="kt-panel-lg" style="width:900px">
+<div class="sub">REQ-DES-01-DRAFT · Ready row absent; an in-progress Draft appears in My requisitions</div>
+<table class="table"><thead><tr><th>Requisition</th><th>Approved purchase</th><th>Status</th><th>Updated</th><th style="white-space:nowrap">Action</th></tr></thead>
+<tbody><tr><td>REQ-MOH-2027-033-001</td><td>Clinical training and deployment laptops for digital health rollout</td><td><span class="kt-status is-draft">Draft — Request details need attention</span></td><td>1 Mar 2027, 09:45 EAT</td><td><span class="btn btn-secondary">Continue</span></td></tr></tbody></table>
+</div>
+<div class="kt-panel-lg" style="width:900px">
+<div class="sub">REQ-DES-01-ACTION · An assigned record awaits Grace's approval responsibility; no separate Tasks panel</div>
+<div class="kt-kpi-row" style="margin-bottom:var(--space-4)">
+<div class="kt-kpi-card"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v16H4z"/><path d="M4 9h16"/></svg><div class="kt-kpi-value">0</div><div class="kt-kpi-sub">Drafts</div></div>
+<div class="kt-kpi-card"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 14l-4-4 4-4M5 10h11a4 4 0 010 8h-1"/></svg><div class="kt-kpi-value">0</div><div class="kt-kpi-sub">Returned to me</div></div>
+<div class="kt-kpi-card is-attention"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-kpi-value kt-figure is-attention">1</div><div class="kt-kpi-sub">My approvals</div></div>
+</div>
+<table class="table"><thead><tr><th>Requisition</th><th>Approved purchase</th><th>Status</th><th>Updated</th><th style="white-space:nowrap">Action</th></tr></thead>
+<tbody><tr><td>REQ-MOH-2027-033-001</td><td>Clinical training and deployment laptops for digital health rollout</td><td><span class="kt-status is-attention">Awaiting your approval</span></td><td>8 Mar 2027, 09:00 EAT</td><td><span class="btn btn-primary">Review</span></td></tr></tbody></table>
+</div>
+<div class="kt-panel-lg" style="width:900px">
+<div class="sub">REQ-DES-01-NONE · No approved purchases ready; My requisitions remains available</div>
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>Ready to start</h6>
+<div class="kt-panel" style="text-align:center;padding:var(--space-8)">
+<div style="font-family:var(--font-heading);font-weight:600;font-size:15px">No approved purchases are ready for a requisition.</div>
+<p class="text-muted" style="font-size:13px;margin:6px 0 0">New requisitions appear here once Planning approves a purchase.</p>
+</div>
+</div>
+<div class="kt-panel-lg" style="width:900px">
+<div class="sub">REQ-DES-01-TECHNICAL · Administrator / System Manager — four filters, all authorised rows site-wide, no work-summary counts and no business actions</div>
+<div style="display:flex;gap:var(--space-3);margin-bottom:var(--space-4)">
+<input class="input" placeholder="Search" style="flex:1" disabled="disabled" />
+<select class="input" style="width:140px" disabled="disabled"><option>All statuses</option></select>
+<select class="input" style="width:160px" disabled="disabled"><option>All departments</option></select>
+<select class="input" style="width:130px" disabled="disabled"><option>FY 2027/28</option></select>
+</div>
+<table class="table"><thead><tr><th>Requisition</th><th>Approved purchase</th><th>Department</th><th>Status</th></tr></thead>
+<tbody><tr><td>REQ-MOH-2027-033-001</td><td>Clinical training and deployment laptops for digital health rollout</td><td>Digital Health; HR Management and Development</td><td><span class="kt-status is-draft">Draft</span></td></tr></tbody></table>
+</div>
+</div>
+</div>
+
+<div id="des02" style="margin-bottom:56px">
+<div class="cap">REQ-DES-02 · Start requisition dialog <i>— same fixture as REQ-DES-01; no Requisition exists</i></div>
+<div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+<div>
+<div class="sub">Base · 520 px dialog over the workspace</div>
+<div class="dialog" style="width:520px">
+<div class="dialog-title">Start this requisition?</div>
+<div class="dialog-body">A Draft will be created from the approved purchase below.</div>
+<div class="kt-panel">
+<div class="kt-meta-row"><div><span class="kt-label">Approved purchase</span><span class="kt-meta-value" style="font-size:14px">Clinical training and deployment laptops for digital health rollout</span></div></div>
+<div class="kt-meta-row" style="margin-top:10px"><div><span class="kt-label">Departments</span><span class="kt-meta-value" style="font-size:14px">Digital Health; Human Resources Management and Development</span></div></div>
+<div class="kt-meta-row" style="margin-top:10px">
+<div><span class="kt-label">Still available</span><span class="kt-meta-value" style="font-size:14px">250 Each</span></div>
+<div><span class="kt-label">&nbsp;</span><span class="kt-meta-value" style="font-size:14px">KES 50,000,000.00</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:10px">
+<div><span class="kt-label">Plan completion boundary</span><span class="kt-meta-value" style="font-size:14px">31 Dec 2027</span></div>
+<div><span class="kt-label">Requirement product</span><span class="kt-meta-value" style="font-size:14px">IT Equipment</span></div>
+</div>
+</div>
+<div class="kt-notice is-info"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><div class="kt-notice-body">This release supports straightforward off-the-shelf IT equipment. It does not support software development, integration or migration.</div></div>
+<div class="text-muted" style="font-size:13px">Digital Health will submit this combined departmental request.</div>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Start requisition</span></div>
+</div>
+</div>
+<div>
+<div class="sub">REQ-DES-02-UNSUPPORTED · isolated reset — Requirement product is Software integration</div>
+<div class="dialog" style="width:520px">
+<div class="dialog-title">Start this requisition?</div>
+<div class="kt-meta-row"><div><span class="kt-label">Requirement product</span><span class="kt-meta-value" style="font-size:14px">Software integration</span></div></div>
+<div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body">This approved purchase requires software integration, which this release does not support.</div></div>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-secondary" style="color:var(--color-neutral-400)">Start requisition</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="des03" style="margin-bottom:56px">
+<div class="cap">REQ-DES-03 · Draft: Request details <i>— Grace Wanjiku, Draft Version 1, after creation, before adding items</i></div>
+<div class="kt-panel-lg" style="width:900px">
+<div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Clinical training and deployment laptops for digital health rollout</h3><span class="kt-status is-draft">Draft</span></div>
+<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><span class="kt-label">REQ-MOH-2027-033-001</span><span class="tag tag-outline">Open Tender</span><span class="tag tag-neutral">Goods · IT Equipment</span><span class="tag tag-accent-2">2 departments</span></div>
+<p class="text-muted" style="font-size:13px;margin:10px 0 var(--space-4)">Complete the request using the approved purchase shown below.</p>
+
+<div style="display:flex;border:1px solid var(--color-divider);margin-bottom:var(--space-6)">
+<div style="flex:1;padding:12px 16px;background:var(--color-accent-100);border-right:1px solid var(--color-divider)"><div class="kt-label">Request details</div><span class="kt-status is-attention" style="margin-top:4px">Needs attention</span></div>
+<div style="flex:1;padding:12px 16px;border-right:1px solid var(--color-divider)"><div class="kt-label">Requirements</div><span class="kt-status is-pending" style="margin-top:4px">Not started</span></div>
+<div style="flex:1;padding:12px 16px"><div class="kt-label">Review and submit</div><span class="kt-status is-pending" style="margin-top:4px">Not started</span></div>
+</div>
+
+<div class="kt-disclosure" style="margin-bottom:var(--space-6)">
+<div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Approved purchase</span></div>
+<svg class="kt-disclosure-chevron is-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg></div>
+<div class="kt-disclosure-body">
+<div class="kt-meta-row">
+<div><span class="kt-label">Plan Item reference</span><span class="kt-meta-value" style="font-size:14px">PPI-MOH-2027-033</span></div>
+<div><span class="kt-label">Method</span><span class="kt-meta-value" style="font-size:14px">Open Tender</span></div>
+<div><span class="kt-label">Plan completion boundary</span><span class="kt-meta-value" style="font-size:14px">31 Dec 2027</span></div>
+<div><span class="kt-label">Estimated completion</span><span class="kt-meta-value" style="font-size:14px">24 Sep 2027</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:12px"><div><span class="kt-label">Business need</span><span class="kt-meta-value" style="font-size:14px">Equip clinical training and field deployment staff with a common laptop specification for the national digital health rollout.</span></div></div>
+<div class="kt-meta-row" style="margin-top:12px"><div><span class="kt-label">Strategic objective</span><span class="kt-meta-value" style="font-size:14px">Strengthen interoperable national digital health services · OBJ-MOH-2023-001</span></div></div>
+<div class="text-muted" style="font-size:12px;margin-top:12px">Source details · Sources SRC-MOH-033-001, SRC-MOH-033-002</div>
+</div>
+</div>
+
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>Request information</h6>
+<div class="kt-panel" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-8)">
+<div class="field"><label>Requirement title</label><input class="input" value="Clinical training and deployment laptops for digital health rollout" disabled="disabled" /></div>
+<div class="field"><label>Delivery location</label><input class="input" value="Ministry of Health Headquarters, Afya House, Nairobi" disabled="disabled" /></div>
+<div class="field"><label>Latest delivery date</label><div class="date-field"><span>30 Sep 2027</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+<div class="field"><label>Related services required</label><div class="seg"><span class="seg-opt">Yes</span><span class="seg-opt" style="background:var(--color-accent);color:#fff">No</span></div></div>
+</div>
+
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1110.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/></svg>Amounts requested from the approved plan</h6>
+<p class="text-muted" style="font-size:13px;margin:6px 0 0">The full available amount is selected. Enter a smaller amount only when this requisition covers part of the approved purchase.</p>
+<table class="table" style="margin-bottom:var(--space-8)"><thead><tr><th>Department</th><th>Requirement</th><th class="is-num">Available quantity</th><th class="is-num">Requested quantity</th><th class="is-num">Available value</th><th class="is-num">Requested value</th></tr></thead>
+<tbody>
+<tr><td>Human Resources Management and Development</td><td>Business laptops</td><td class="is-num">100 Each</td><td class="is-num">100 Each</td><td class="is-num">KES 20,000,000.00</td><td class="is-num">KES 20,000,000.00</td></tr>
+<tr><td>Digital Health</td><td>Business laptops</td><td class="is-num">150 Each</td><td class="is-num">150 Each</td><td class="is-num">KES 30,000,000.00</td><td class="is-num">KES 30,000,000.00</td></tr>
+</tbody></table>
+
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Equipment</h6>
+<div class="kt-panel" style="text-align:center;padding:var(--space-8)">
+<div style="font-family:var(--font-heading);font-weight:600;font-size:15px">No equipment added.</div>
+<p class="text-muted" style="font-size:13px;margin:6px 0 12px">Add the equipment covered by the requested quantities above.</p>
+<span class="btn btn-primary">Add laptop request</span>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);margin-top:var(--space-6);padding-top:var(--space-4)">
+<span class="btn btn-ghost">Back to Requisitions</span>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+<span class="kt-label">Add the laptop request matching the requested quantities.</span>
+<div style="display:flex;gap:var(--space-2)"><span class="btn btn-secondary">Save draft</span><span class="btn btn-secondary" style="color:var(--color-neutral-400)">Continue to requirements</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="margin-bottom:56px">
+<div class="cap">REQ-DES-03 variants</div>
+<div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+<div class="kt-panel-lg" style="width:860px">
+<div class="sub">REQ-DES-03-COMPLETE · both source-linked equipment rows created from one shared specification</div>
+<div style="display:flex;justify-content:space-between;align-items:center"><h6 class="kt-card-title" style="margin:0;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Equipment</h6><span class="text-muted" style="font-size:13px;display:flex;align-items:center;gap:10px">One shared laptop specification · 2 approved requirements<span class="btn btn-secondary">Edit shared details</span></span></div>
+<table class="table" style="margin-top:12px"><thead><tr><th>Item</th><th>Approved requirement</th><th class="is-num">Quantity</th><th>Intended use</th><th>Delivery</th><th style="white-space:nowrap">Action</th></tr></thead>
+<tbody>
+<tr><td>Business laptops</td><td>HR Management and Development — SRC-MOH-033-001</td><td class="is-num">100 Each</td><td>Clinical training for HR Management and Development staff</td><td>Nairobi; 30 Sep 2027</td><td><span class="btn btn-ghost">Edit quantity</span></td></tr>
+<tr><td>Business laptops</td><td>Digital Health — SRC-MOH-033-002</td><td class="is-num">150 Each</td><td>Field digital-health deployment for Digital Health staff</td><td>Nairobi; 30 Sep 2027</td><td><span class="btn btn-ghost">Edit quantity</span></td></tr>
+</tbody></table>
+</div>
+<div class="kt-panel-lg" style="width:660px">
+<div class="sub">REQ-DES-03-RETURNED · copied Draft opened directly at the affected section</div>
+<div style="display:flex;gap:10px;margin-bottom:var(--space-4)"><span class="kt-status is-attention">Correction requested</span><span class="kt-status is-draft">Draft correction</span></div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body"><strong>Replace the processor wording with a measurable, supplier-neutral minimum.</strong><br/>Returned by Dr Peter Kimani · 8 Mar 2027, 09:10 EAT · <a href="#des05">Go to affected section</a> (Technical requirements)</div></div>
+<p class="text-muted" style="font-size:13px;margin:12px 0 0">Earlier decision evidence is preserved under History. No Resume or Version-selection action is offered.</p>
+</div>
+<div class="kt-panel-lg" style="width:860px">
+<div class="sub">REQ-DES-03-CONTRIBUTOR · Asha Odhiambo, Departmental Author assigned only to HR Management and Development; the combined Draft already holds both departments' rows</div>
+<table class="table"><thead><tr><th>Department</th><th>Requirement</th><th class="is-num">Requested quantity</th><th class="is-num">Requested value</th><th>Edit</th></tr></thead>
+<tbody>
+<tr style="background:var(--color-accent-100)"><td>Human Resources Management and Development</td><td>Business laptops</td><td class="is-num">100 Each</td><td class="is-num">KES 20,000,000.00</td><td><span class="tag tag-accent">Editable</span></td></tr>
+<tr><td>Digital Health</td><td>Business laptops</td><td class="is-num">150 Each</td><td class="is-num">KES 30,000,000.00</td><td><span class="tag tag-neutral">Read-only</span></td></tr>
+</tbody></table>
+<p class="text-muted" style="font-size:13px;margin:12px 0 0">Approved purchase, shared Request information and every shared Requirements value are read-only. No routing or decision action is rendered.</p>
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);margin-top:var(--space-4);padding-top:var(--space-4)">
+<span class="btn btn-ghost">Back to Requisitions</span><span class="btn btn-primary">Save my changes</span>
+</div>
+</div>
+</div>
+</div>
+
+<div id="des04" style="margin-bottom:56px">
+<div class="cap">REQ-DES-04 · Add laptop request <i>— Grace, both approved-requirement rows selected, no item saved</i></div>
+<div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+<div>
+<div class="sub">Base · shared laptop details entered once; one row per approved requirement</div>
+<div class="dialog" style="width:640px">
+<div class="dialog-title">Add laptop request</div>
+<p class="text-muted" style="font-size:13px;margin:0">Enter the shared laptop details once, then confirm the quantity and intended use for each department.</p>
+<div class="kt-label" style="margin-top:var(--space-2)">Shared details</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">
+<div class="field"><label>Equipment category</label><select class="input" disabled="disabled"><option>Laptop</option></select></div>
+<div class="field"><label>Item name</label><input class="input" value="Business laptops" disabled="disabled" /></div>
+<div class="field"><label>Delivery location</label><input class="input" value="Ministry of Health Headquarters, Afya House, Nairobi" disabled="disabled" /></div>
+<div class="field"><label>Latest delivery date</label><div class="date-field"><span>30 Sep 2027</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+</div>
+<div class="kt-label" style="margin-top:var(--space-3)">Department quantities and use</div>
+<table class="table"><thead><tr><th>Use</th><th>Department and approved requirement</th><th class="is-num">Quantity</th><th>Unit</th><th>Intended use</th></tr></thead>
+<tbody>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td>
+<td>Human Resources Management and Development<div class="kt-label">SRC-MOH-033-001</div></td>
+<td class="is-num"><input class="input" value="100" style="max-width:70px" disabled="disabled" /></td><td>Each</td>
+<td><input class="input" value="Clinical training for HRMD staff" disabled="disabled" /></td></tr>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td>
+<td>Digital Health<div class="kt-label">SRC-MOH-033-002</div></td>
+<td class="is-num"><input class="input" value="150" style="max-width:70px" disabled="disabled" /></td><td>Each</td>
+<td><input class="input" value="Field digital-health deployment" disabled="disabled" /></td></tr>
+</tbody></table>
+<p class="text-muted" style="font-size:13px;margin:0">The standard laptop requirements will be ready for review in the next task.</p>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Add 2 equipment rows</span></div>
+</div>
+</div>
+<div>
+<div class="sub">REQ-DES-04-ONE-SOURCE · only one approved requirement has a positive requested amount</div>
+<div class="dialog" style="width:640px">
+<div class="dialog-title">Add laptop request</div>
+<table class="table"><thead><tr><th>Use</th><th>Department and approved requirement</th><th class="is-num">Quantity</th><th>Unit</th><th>Intended use</th></tr></thead>
+<tbody><tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td>
+<td>Digital Health<div class="kt-label">SRC-MOH-033-002</div></td>
+<td class="is-num"><input class="input" value="150" style="max-width:70px" disabled="disabled" /></td><td>Each</td>
+<td><input class="input" value="Field digital-health deployment" disabled="disabled" /></td></tr></tbody></table>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Add equipment row</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="des05" style="margin-bottom:56px">
+<div class="cap">REQ-DES-05 · Draft: Requirements <i>— Grace, both items exist, complete standard laptop package generated but not reviewed, Related services No</i></div>
+<div class="kt-panel-lg" style="width:900px">
+<div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Clinical training and deployment laptops for digital health rollout</h3><span class="kt-status is-draft">Draft</span></div>
+<div class="kt-label" style="margin-top:6px">REQ-MOH-2027-033-001</div>
+
+<div style="display:flex;border:1px solid var(--color-divider);margin:var(--space-4) 0 var(--space-6)">
+<div style="flex:1;padding:12px 16px;border-right:1px solid var(--color-divider)"><div class="kt-label">Request details</div><span class="kt-status is-live" style="margin-top:4px">Complete</span></div>
+<div style="flex:1;padding:12px 16px;background:var(--color-accent-100);border-right:1px solid var(--color-divider)"><div class="kt-label">Requirements</div><span class="kt-status is-attention" style="margin-top:4px">Needs attention</span></div>
+<div style="flex:1;padding:12px 16px"><div class="kt-label">Review and submit</div><span class="kt-status is-pending" style="margin-top:4px">Not started</span></div>
+</div>
+
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body"><a href="#des05">Review the standard laptop requirements before continuing.</a></div></div>
+
+<div style="border:1px solid var(--color-divider);border-left:3px solid var(--status-attention);padding:var(--space-6);margin:var(--space-4) 0 var(--space-8)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--space-4)">
+<div><h6 class="kt-card-title" style="margin-bottom:6px;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Standard laptop requirements to review</h6>
+<p class="text-muted" style="font-size:13px;margin:0;max-width:66ch">These suggested requirements are not confirmed until you use the action below. Review every value, change what is necessary and clear any non-mandatory suggestion that does not apply.</p></div>
+<span class="kt-status is-attention">Review required</span>
+</div>
+
+<div class="kt-label" style="margin-bottom:6px">Basic equipment</div>
+<table class="table" style="margin-bottom:var(--space-4)"><thead><tr><th>Use</th><th>Requirement</th><th>Minimum or required value</th><th>Unit</th></tr></thead><tbody>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Electrical compatibility<div class="text-muted" style="font-size:12px">Required</div></td><td>Yes — suitable for Kenyan mains supply</td><td>—</td></tr>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>New and unused equipment<div class="text-muted" style="font-size:12px">Required</div></td><td>Yes</td><td>—</td></tr>
+</tbody></table>
+
+<div class="kt-label" style="margin-bottom:6px">Performance and storage</div>
+<table class="table" style="margin-bottom:var(--space-4)"><thead><tr><th>Use</th><th>Requirement</th><th>Minimum or required value</th><th>Unit</th></tr></thead><tbody>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Memory<div class="text-muted" style="font-size:12px">Minimum</div></td><td>16</td><td>GB</td></tr>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Storage capacity<div class="text-muted" style="font-size:12px">Minimum</div></td><td>512</td><td>GB</td></tr>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Storage type<div class="text-muted" style="font-size:12px">One of</div></td><td>NVMe SSD</td><td>—</td></tr>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Display size<div class="text-muted" style="font-size:12px">Minimum</div></td><td>14.0</td><td>inches</td></tr>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Battery runtime<div class="text-muted" style="font-size:12px">Minimum</div></td><td>8</td><td>hours</td></tr>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Processor requirement<div class="text-muted" style="font-size:12px">Minimum</div></td><td>64-bit business-class processor, minimum 10 cores or equivalent benchmark</td><td>—</td></tr>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Operating-system compatibility<div class="text-muted" style="font-size:12px">Required</div></td><td>Approved organisational Windows environment</td><td>—</td></tr>
+</tbody></table>
+
+<div class="kt-label" style="margin-bottom:6px">Connectivity</div>
+<table class="table" style="margin-bottom:var(--space-6)"><thead><tr><th>Use</th><th>Requirement</th><th>Minimum or required value</th><th>Unit</th></tr></thead><tbody>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Network connectivity<div class="text-muted" style="font-size:12px">Required · every selected capability is required</div></td><td>Wi-Fi 6 and Bluetooth 5 or later</td><td>—</td></tr>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Required ports<div class="text-muted" style="font-size:12px">Required</div></td><td>USB-C ×2; USB-A ×2; HDMI ×1</td><td>—</td></tr>
+</tbody></table>
+
+<h6 class="kt-card-title" style="font-size:14px;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Warranty and support</h6>
+<div class="kt-panel" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-6)">
+<div class="field"><label>Minimum warranty</label><input class="input" value="36" disabled="disabled" /><div class="card-meta" style="margin-top:3px">months</div></div>
+<div class="field"><label>On-site support required</label><div class="seg"><span class="seg-opt" style="background:var(--color-accent);color:#fff">Yes</span><span class="seg-opt">No</span></div></div>
+<div class="field"><label>Maximum support response</label><input class="input" value="8" disabled="disabled" /><div class="card-meta" style="margin-top:3px">hours</div></div>
+<div class="field"><label>Manufacturer support required</label><div class="seg"><span class="seg-opt" style="background:var(--color-accent);color:#fff">Yes</span><span class="seg-opt">No</span></div></div>
+<div class="field"><label>Service location constraint</label><select class="input" disabled="disabled"><option>Within Kenya</option></select></div>
+<div class="field"><label>Support description</label><textarea class="input" rows="2" disabled="disabled">Supplier to provide escalation and warranty-contact details.</textarea></div>
+</div>
+
+<h6 class="kt-card-title" style="font-size:14px;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Acceptance checks</h6>
+<table class="table"><thead><tr><th>Use</th><th>Check</th><th>Applies to</th><th>Pass condition</th><th>Evidence</th></tr></thead><tbody>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Quantity</td><td>All items</td><td>Delivered quantities equal the authorised schedule</td><td>Inspection record</td></tr>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Physical condition</td><td>All items</td><td>No visible damage and all listed accessories are present</td><td>Inspection record</td></tr>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Required specification</td><td>All items</td><td>Every delivered unit complies with all mandatory technical rows</td><td>Inspection record</td></tr>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Functional test</td><td>All items</td><td>Each device powers on and completes the agreed basic functional test</td><td>Test result</td></tr>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Documents received</td><td>All items</td><td>Warranty and delivery documents are received and verified</td><td>Certificate</td></tr>
+</tbody></table>
+
+<div style="display:flex;justify-content:flex-end;gap:var(--space-2);border-top:1px solid var(--color-divider);margin-top:var(--space-4);padding-top:var(--space-4)">
+<span class="btn btn-secondary">Reset standard values</span><span class="btn btn-primary">Use selected requirements</span>
+</div>
+</div>
+
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>Related services</h6>
+<div class="kt-panel" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-8)">
+<span style="display:flex;align-items:center;gap:10px"><span class="tag tag-neutral">None</span><span class="text-muted" style="font-size:13px">No related services requested.</span></span>
+<span class="btn btn-secondary">Change answer</span>
+</div>
+
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>Supporting materials</h6>
+<div class="kt-panel" style="text-align:center;padding:var(--space-8)">
+<div style="font-family:var(--font-heading);font-weight:600;font-size:15px">No supporting materials added.</div>
+<p class="text-muted" style="font-size:13px;margin:6px 0 12px">Files may support a structured requirement but cannot replace it.</p>
+<span class="btn btn-secondary">Add supporting material</span>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);margin-top:var(--space-6);padding-top:var(--space-4)">
+<span class="btn btn-ghost">Back to request details</span>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+<span class="kt-label">Review and use the selected standard requirements.</span>
+<div style="display:flex;gap:var(--space-2)"><span class="btn btn-secondary">Save draft</span><span class="btn btn-secondary" style="color:var(--color-neutral-400)">Continue to review</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="margin-bottom:56px">
+<div class="cap">REQ-DES-05 variants</div>
+<div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+<div class="kt-panel-lg" style="width:660px">
+<div class="sub">REQ-DES-05-COMPLETE · clean reset after "Use selected requirements" succeeds; issue summary and Review required badge removed</div>
+<div style="display:flex;gap:10px;margin-bottom:var(--space-4)"><span class="kt-status is-live">Requirements: Complete</span><span class="tag tag-accent">Reviewed</span></div>
+<p class="text-muted" style="font-size:13px;margin:0">The same eleven technical rows, six warranty/support values and five acceptance checks are shown as confirmed content. A later edit is saved normally. A category change or copied package generates a new Review required proposal without overwriting this confirmed history. Review required and Reviewed are never shown together.</p>
+<div style="display:flex;justify-content:flex-end;border-top:1px solid var(--color-divider);margin-top:var(--space-4);padding-top:var(--space-4)"><span class="btn btn-primary">Continue to review</span></div>
+</div>
+<div class="kt-panel-lg" style="width:520px">
+<div class="sub">Validation variant · exact issue above the affected section, field error bound locally</div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body"><a href="#des05">Enter the minimum warranty in months.</a></div></div>
+<div class="field" style="max-width:260px;margin-top:var(--space-4)"><label>Minimum warranty</label><input class="input" style="border-color:var(--status-critical)" disabled="disabled" /><span style="color:var(--status-critical);font-size:12px">Enter the minimum warranty in months.</span></div>
+<p class="text-muted" style="font-size:13px;margin:12px 0 0">Every other entered row and value is retained. The page is not reset and no single undifferentiated blocker count is shown.</p>
+</div>
+</div>
+</div>
+
+<div id="des06" style="margin-bottom:56px">
+<div class="cap">REQ-DES-06 · Draft: Review and submit <i>— Grace, complete Draft Version 1, no blocking issue, one delivery-date warning</i></div>
+<div class="kt-panel-lg" style="width:900px">
+<div style="display:flex;border:1px solid var(--color-divider);margin-bottom:var(--space-6)">
+<div style="flex:1;padding:12px 16px;border-right:1px solid var(--color-divider)"><div class="kt-label">Request details</div><span class="kt-status is-live" style="margin-top:4px">Complete</span></div>
+<div style="flex:1;padding:12px 16px;border-right:1px solid var(--color-divider)"><div class="kt-label">Requirements</div><span class="kt-status is-live" style="margin-top:4px">Complete</span></div>
+<div style="flex:1;padding:12px 16px;background:var(--color-accent-100)"><div class="kt-label">Review and submit</div></div>
+</div>
+
+<div class="kt-notice is-live"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-notice-body"><strong>Ready to send for department approval</strong></div></div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">The requested delivery date is 6 days after the plan's estimated completion date.</div></div>
+<div class="kt-panel" style="margin-bottom:var(--space-6)"><div class="kt-meta-row">
+<div><span class="kt-label">Estimated completion</span><span class="kt-meta-value" style="font-size:14px">24 Sep 2027</span></div>
+<div><span class="kt-label">Latest delivery date</span><span class="kt-meta-value" style="font-size:14px">30 Sep 2027</span></div>
+<div><span class="kt-label">Plan completion boundary</span><span class="kt-meta-value" style="font-size:14px">31 Dec 2027</span></div>
+</div></div>
+
+<div class="sub">Result-first review composition · exception sections open, complete non-exception sections closed with a plain-language summary and Show details</div>
+
+<div style="border:1px solid var(--color-divider);padding:var(--space-4);margin-bottom:var(--space-3)">
+<div style="display:flex;justify-content:space-between;align-items:center"><h6 class="kt-card-title" style="margin:0;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Purpose and approved purchase</h6><span class="kt-label" style="color:var(--color-accent-700)">Hide details</span></div>
+<p class="text-muted" style="font-size:13px;margin:6px 0 12px">Opens because the delivery-date warning is part of this Version.</p>
+<div class="kt-meta-row">
+<div><span class="kt-label">Requirement title</span><span class="kt-meta-value" style="font-size:14px">Clinical training and deployment laptops for digital health rollout</span></div>
+<div><span class="kt-label">Method</span><span class="kt-meta-value" style="font-size:14px">Open Tender</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:12px"><div><span class="kt-label">Business need</span><span class="kt-meta-value" style="font-size:14px">Equip clinical training and field deployment staff with a common laptop specification for the national digital health rollout.</span></div></div>
+<div class="kt-meta-row" style="margin-top:12px"><div><span class="kt-label">Expected operational result</span><span class="kt-meta-value" style="font-size:14px">Staff can use secure, supported equipment for training and field digital-health work.</span></div></div>
+</div>
+
+<div style="border:1px solid var(--color-divider);padding:var(--space-4);margin-bottom:var(--space-3);display:flex;justify-content:space-between;align-items:center">
+<div><h6 class="kt-card-title" style="margin:0;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1110.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/></svg>Amounts requested</h6><p class="text-muted" style="font-size:13px;margin:6px 0 0">2 departments · 250 Each · KES 50,000,000.00</p></div>
+<span class="kt-label" style="color:var(--color-accent-700)">Show details</span>
+</div>
+<div style="border:1px solid var(--color-divider);padding:var(--space-4);margin-bottom:var(--space-3);display:flex;justify-content:space-between;align-items:center">
+<div><h6 class="kt-card-title" style="margin:0;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Equipment</h6><p class="text-muted" style="font-size:13px;margin:6px 0 0">2 laptop rows · one shared specification</p></div>
+<span class="kt-label" style="color:var(--color-accent-700)">Show details</span>
+</div>
+<div style="border:1px solid var(--color-divider);padding:var(--space-4);margin-bottom:var(--space-3);display:flex;justify-content:space-between;align-items:center">
+<div><h6 class="kt-card-title" style="margin:0;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Requirements and support</h6><p class="text-muted" style="font-size:13px;margin:6px 0 0">11 technical requirements · 36-month warranty · support within Kenya</p></div>
+<span class="kt-label" style="color:var(--color-accent-700)">Show details</span>
+</div>
+<div style="border:1px solid var(--color-divider);padding:var(--space-4);margin-bottom:var(--space-3);display:flex;justify-content:space-between;align-items:center">
+<div><h6 class="kt-card-title" style="margin:0;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Acceptance</h6><p class="text-muted" style="font-size:13px;margin:6px 0 0">5 delivery checks</p></div>
+<span class="kt-label" style="color:var(--color-accent-700)">Show details</span>
+</div>
+<div class="kt-panel" style="display:flex;align-items:center;gap:10px;margin-bottom:var(--space-3)"><span class="kt-label">Related services</span><span class="tag tag-neutral">None</span><span class="text-muted" style="font-size:13px">None requested</span></div>
+<div class="kt-panel" style="display:flex;align-items:center;gap:10px;margin-bottom:var(--space-3)"><span class="kt-label">Supporting materials</span><span class="tag tag-neutral">None</span><span class="text-muted" style="font-size:13px">None added</span></div>
+<div class="kt-disclosure" style="margin-bottom:var(--space-6)">
+<div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Record details</span></div>
+<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg></div>
+</div>
+<p class="text-muted" style="font-size:12px;margin:0 0 var(--space-6)">Disclosure state is presentational only: it never removes content from the record, export, digest, validation or decision payload.</p>
+
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);padding-top:var(--space-4)">
+<span class="btn btn-ghost">Back to requirements</span>
+<div style="display:flex;gap:var(--space-2)"><span class="btn btn-secondary">Save draft</span><span class="btn btn-primary">Send for department approval</span></div>
+</div>
+</div>
+</div>
+
+<div style="margin-bottom:56px">
+<div class="cap">REQ-DES-06 variants</div>
+<div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+<div class="kt-panel-lg" style="width:660px">
+<div class="sub">REQ-DES-06-DIRECT-HOD · Dr Peter Kimani preparing the Draft in a current lead-HoD assignment; no self-approval action</div>
+<div class="kt-notice is-live"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-notice-body"><strong>Ready to submit to Procurement</strong></div></div>
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);margin-top:var(--space-4);padding-top:var(--space-4)">
+<div style="display:flex;gap:var(--space-2)"><span class="btn btn-ghost">Back to requirements</span><span class="btn btn-ghost">Other actions ▾</span></div>
+<div style="display:flex;gap:var(--space-2)"><span class="btn btn-secondary">Save draft</span><span class="btn btn-primary">Submit to Procurement</span></div>
+</div>
+<p class="text-muted" style="font-size:12px;margin:10px 0 0">Other actions holds quiet Request Planning correction and Withdraw requisition.</p>
+</div>
+<div>
+<div class="sub">Withdraw requisition dialog</div>
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Withdraw this requisition?</div>
+<div class="field"><label>Reason (required, 20–1,000 characters)</label><textarea class="input" rows="2" placeholder="State why this requisition is being withdrawn" disabled="disabled"></textarea></div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">The requisition will close without using approved-plan amounts or reserving funding.</div></div>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-danger">Withdraw requisition</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="des07" style="margin-bottom:56px">
+<div class="cap">REQ-DES-07 · Head of User Department review <i>— Dr Peter Kimani, lead HoD, immutable Version 1, 8 Mar 2027 09:00 EAT</i></div>
+<div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+<div class="kt-panel-lg" style="width:860px">
+<div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Review departmental requisition</h3><span class="kt-status is-attention">Awaiting your approval</span></div>
+<div class="kt-label" style="margin-top:6px">REQ-MOH-2027-033-001</div>
+<p class="text-muted" style="font-size:13px;margin:6px 0 var(--space-4)">Confirm that the request accurately states the departments' need and minimum requirements.</p>
+<div class="kt-panel" style="margin-bottom:var(--space-6)"><div class="kt-meta-row">
+<div><span class="kt-label">Result</span><span class="kt-meta-value" style="font-size:14px">Ready for departmental submission</span></div>
+<div><span class="kt-label">Prepared by</span><span class="kt-meta-value" style="font-size:14px">Grace Wanjiku</span></div>
+<div><span class="kt-label">Contributing departments</span><span class="kt-meta-value" style="font-size:14px">Digital Health; HRMD</span></div>
+<div><span class="kt-label">Submitting department</span><span class="kt-meta-value" style="font-size:14px">Digital Health</span></div>
+</div></div>
+<div class="kt-panel" style="margin-bottom:var(--space-6)">
+<div class="kt-label" style="margin-bottom:12px">Decision chain</div>
+<div class="kt-timeline">
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i><i class="kt-timeline-line"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title">Draft prepared</div><div class="kt-timeline-item-meta">1 Mar 2027 · Grace Wanjiku · Digital Health</div></div></div>
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-attention"></i><i class="kt-timeline-line is-upcoming"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title">Head of User Department approval</div><div class="kt-timeline-item-meta">Awaiting your decision</div></div></div>
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-pending"></i><i class="kt-timeline-line is-upcoming"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title is-upcoming">Procurement authorisation</div><div class="kt-timeline-item-meta">Not yet reached</div></div></div>
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-pending"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title is-upcoming">Tender Preparation</div><div class="kt-timeline-item-meta">Not started</div></div></div>
+</div>
+</div>
+<p class="text-muted" style="font-size:13px;margin:0 0 var(--space-6)">Uses the result-first ordered review and disclosure states from <a href="#des06">REQ-DES-06</a> — complete immutable rows remain available through in-page disclosure; summary-only approval is prohibited.</p>
+<div style="border:1px solid var(--color-divider);border-left:3px solid var(--color-accent);padding:var(--space-4);margin-bottom:var(--space-6)">I confirm that this requisition states the departments' operational need and minimum requirements and may be submitted to Procurement.</div>
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);padding-top:var(--space-4)">
+<span class="btn btn-ghost">Request Planning correction</span>
+<div style="display:flex;gap:var(--space-2)"><span class="btn btn-ghost">Other actions ▾</span><span class="btn btn-secondary">Return for correction</span><span class="btn btn-primary">Submit to Procurement</span></div>
+</div>
+</div>
+<div>
+<div class="sub">Return dialog</div>
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Return this requisition for correction?</div>
+<div class="field"><label>Correction required (20–1,000 characters)</label><textarea class="input" rows="2" disabled="disabled">Replace the processor wording with a measurable, supplier-neutral minimum.</textarea><div class="card-meta" style="margin-top:3px">State what must change and identify the affected section.</div></div>
+<div class="field"><label>Affected section (optional)</label><select class="input" disabled="disabled"><option>Technical requirements</option></select></div>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Return for correction</span></div>
+</div>
+</div>
+<div class="kt-panel-lg" style="width:520px">
+<div class="sub">REQ-DES-07-SUBMITTED · after submission, before authorisation — same complete Version, read-only</div>
+<span class="kt-status is-draft">Submitted to Procurement</span>
+<p class="text-muted" style="font-size:13px;margin:12px 0 0">No edit, return, submit or Procurement-decision action appears. Request Planning correction and Withdraw requisition remain available to this actor.</p>
+</div>
+</div>
+</div>
+
+<div id="des08" style="margin-bottom:56px">
+<div class="cap">REQ-DES-08 · Procurement authorisation <i>— Charles Mutiso, HOPF, immutable submitted Version 1, 15 Mar 2027 10:00 EAT, current checks pass</i></div>
+<div class="kt-panel-lg" style="width:900px">
+<div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Authorise requisition</h3><span class="kt-status is-draft">Submitted to Procurement</span></div>
+<p class="text-muted" style="font-size:13px;margin:6px 0 var(--space-4)">Review the request, current funding and procurement checks before authorising it.</p>
+
+<div class="kt-notice is-live"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-notice-body"><strong>Ready to authorise</strong><br/>Authorising will reserve KES 50,000,000.00 and allow Tender Preparation to begin.</div></div>
+
+<h6 class="kt-card-title" style="margin-top:var(--space-6);display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Current funding</h6>
+<div class="kt-panel">
+<div class="kt-meta-row">
+<div><span class="kt-label">Budget Line</span><span class="kt-meta-value" style="font-size:14px">MOH-BL-HWD-2027</span></div>
+<div><span class="kt-label">Approved</span><span class="kt-meta-value" style="font-size:14px">KES 60,000,000.00</span></div>
+<div><span class="kt-label">Available now</span><span class="kt-meta-value" style="font-size:14px">KES 60,000,000.00</span></div>
+<div><span class="kt-label">This requisition</span><span class="kt-meta-value" style="font-size:14px">KES 50,000,000.00</span></div>
+<div><span class="kt-label">Available after authorisation</span><span class="kt-meta-value kt-figure is-attention" style="font-size:14px">KES 10,000,000.00</span></div>
+</div>
+<div style="margin-top:var(--space-4)">
+<div class="kt-bar"><i class="kt-bar-reserved" style="width:83.3%"></i></div>
+<div style="display:flex;justify-content:space-between;margin-top:6px">
+<span class="kt-label">Reserved by this requisition · 83% of the Budget Line</span>
+<span class="kt-label">Free after authorisation · 17%</span>
+</div>
+</div>
+</div>
+<table class="table" style="margin:var(--space-3) 0 var(--space-8)"><thead><tr><th>Source</th><th class="is-num">Requested value</th></tr></thead><tbody>
+<tr><td>Human Resources Management and Development</td><td class="is-num">KES 20,000,000.00</td></tr>
+<tr><td>Digital Health</td><td class="is-num">KES 30,000,000.00</td></tr>
+</tbody></table>
+
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Planning availability</h6>
+<div class="kt-panel" style="margin-bottom:var(--space-8)"><div class="kt-meta-row">
+<div><span class="kt-label">Status</span><span class="kt-meta-value" style="font-size:14px"><span class="kt-status is-live">Eligible</span></span></div>
+<div><span class="kt-label">Quantity available</span><span class="kt-meta-value" style="font-size:14px">250 Each</span></div>
+<div><span class="kt-label">Value available</span><span class="kt-meta-value" style="font-size:14px">KES 50,000,000.00</span></div>
+<div><span class="kt-label">Correction hold</span><span class="kt-meta-value" style="font-size:14px">None unresolved</span></div>
+</div></div>
+
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Departmental certification</h6>
+<div class="kt-panel" style="margin-bottom:var(--space-4)"><div class="kt-meta-row">
+<div><span class="kt-label">Submitted by</span><span class="kt-meta-value" style="font-size:14px">Dr Peter Kimani</span></div>
+<div><span class="kt-label">Lead department</span><span class="kt-meta-value" style="font-size:14px">Digital Health</span></div>
+<div><span class="kt-label">Submitted at</span><span class="kt-meta-value" style="font-size:14px">8 Mar 2027, 09:00 EAT</span></div>
+<div><span class="kt-label">&nbsp;</span><a href="#des08" style="font-size:13px">Change submitting department</a></div>
+</div></div>
+
+<div class="kt-panel" style="margin-bottom:var(--space-8)">
+<div class="kt-label" style="margin-bottom:12px">Decision chain</div>
+<div class="kt-timeline">
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i><i class="kt-timeline-line"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title">Draft prepared</div><div class="kt-timeline-item-meta">1 Mar 2027 · Grace Wanjiku · Digital Health</div></div></div>
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i><i class="kt-timeline-line"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title">Certified and submitted by the department</div><div class="kt-timeline-item-meta">8 Mar 2027, 09:00 EAT · Dr Peter Kimani</div></div></div>
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-attention"></i><i class="kt-timeline-line is-upcoming"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title">Procurement authorisation</div><div class="kt-timeline-item-meta">Awaiting your decision</div></div></div>
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-pending"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title is-upcoming">Tender Preparation</div><div class="kt-timeline-item-meta">Not started</div></div></div>
+</div>
+</div>
+
+<p class="text-muted" style="font-size:13px;margin:0 0 var(--space-6)">The complete review summaries and expandable detail from <a href="#des06">REQ-DES-06</a> follow here. Purpose and approved purchase starts open because the delivery-date warning remains part of the submitted Version; other non-exception sections start closed.</p>
+
+<div style="border:1px solid var(--color-divider);padding:var(--space-4);margin-bottom:var(--space-6);display:flex;justify-content:space-between;align-items:center">
+<div><h6 class="kt-card-title" style="margin:0;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Procurement checks</h6><p class="text-muted" style="font-size:13px;margin:6px 0 0">8 checks passed</p></div>
+<span class="kt-label" style="color:var(--color-accent-700)">Show details</span>
+</div>
+
+<div style="border:1px solid var(--color-divider);border-left:3px solid var(--color-accent);padding:var(--space-4);margin-bottom:var(--space-6)">I authorise this requisition. The approved-plan amounts will be used, funding will be reserved and Tender Preparation may begin.</div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);padding-top:var(--space-4)">
+<span class="btn btn-ghost">Request Planning correction</span>
+<div style="display:flex;gap:var(--space-2)"><span class="btn btn-secondary">Return to department</span><span class="btn btn-primary">Authorise requisition</span></div>
+</div>
+</div>
+</div>
+
+<div style="margin-bottom:56px">
+<div class="cap">REQ-DES-08 variants and dialogs</div>
+<div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+<div class="kt-panel-lg" style="width:560px">
+<div class="sub">Procurement checks · expanded detail, every §13.1 compatibility row in order</div>
+<table class="table"><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody>
+<tr><td>Procurement category</td><td>Goods</td></tr>
+<tr><td>Requirement type</td><td>Straightforward off-the-shelf IT equipment</td></tr>
+<tr><td>Reservation category</td><td>Youth</td></tr>
+<tr><td>Lotting indicator</td><td>Single lot</td></tr>
+<tr><td>Currency</td><td>KES</td></tr>
+<tr><td>Award package</td><td>One</td></tr>
+<tr><td>Planned method</td><td>Open Tender</td></tr>
+<tr><td>Plan horizon</td><td>Single year</td></tr>
+</tbody></table>
+</div>
+<div class="kt-panel-lg" style="width:520px">
+<div class="sub">REQ-DES-08-BLOCKING-FUNDING · only KES 40,000,000.00 available; Authorise absent</div>
+<div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>Cannot authorise — insufficient funding</strong></div></div>
+<div class="kt-panel" style="margin-top:var(--space-4)"><div class="kt-meta-row">
+<div><span class="kt-label">Requested</span><span class="kt-meta-value" style="font-size:14px">KES 50,000,000.00</span></div>
+<div><span class="kt-label">Available</span><span class="kt-meta-value" style="font-size:14px">KES 40,000,000.00</span></div>
+<div><span class="kt-label">Shortfall</span><span class="kt-meta-value" style="font-size:14px">KES 10,000,000.00</span></div>
+</div></div>
+<div style="display:flex;justify-content:flex-end;gap:var(--space-2);border-top:1px solid var(--color-divider);margin-top:var(--space-4);padding-top:var(--space-4)"><span class="btn btn-secondary">Return to department</span><span class="btn btn-secondary">Refresh checks</span></div>
+</div>
+<div class="kt-panel-lg" style="width:520px">
+<div class="sub">REQ-DES-08-HOLD · a Planning correction is open; Authorise absent</div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body"><strong>Authorisation is on hold while Planning reviews a correction request.</strong><br/>UI-CORR-001 · Open</div></div>
+<div style="display:flex;justify-content:flex-end;gap:var(--space-2);border-top:1px solid var(--color-divider);margin-top:var(--space-4);padding-top:var(--space-4)"><span class="btn btn-ghost">View Planning request</span><span class="btn btn-secondary">Refresh checks</span><span class="btn btn-secondary">Return to department</span></div>
+</div>
+<div class="kt-panel-lg" style="width:520px">
+<div class="sub">REQ-DES-08-TECHNICAL · same complete content and result evidence; every business action and the decision statement absent</div>
+<div class="kt-notice is-live"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-notice-body">Ready to authorise</div></div>
+<p class="text-muted" style="font-size:13px;margin:12px 0 0">Read, navigation and export only.</p>
+</div>
+<div>
+<div class="sub">Return-to-department dialog</div>
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Return this requisition to the department?</div>
+<div class="field"><label>Correction required (20–1,000 characters)</label><textarea class="input" rows="2" placeholder="State what must change and identify the affected section" disabled="disabled"></textarea></div>
+<div class="field"><label>Affected section (optional)</label><select class="input" disabled="disabled"><option>Request details</option></select></div>
+<div class="kt-notice is-info"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><div class="kt-notice-body">The submitted Version will remain in history and a copied Draft will open for correction.</div></div>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Return to department</span></div>
+</div>
+</div>
+<div>
+<div class="sub">Change-submitting-department dialog</div>
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Change submitting department and return?</div>
+<div class="field"><label>Submitting department</label><select class="input" disabled="disabled"><option>Human Resources Management and Development</option><option>Digital Health</option></select></div>
+<div class="field"><label>Reason (required, 20–500 characters)</label><textarea class="input" rows="2" disabled="disabled"></textarea></div>
+<div class="kt-notice is-info"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><div class="kt-notice-body">The current submission will remain in history. A copied Draft must be certified by the new submitting department before authorisation.</div></div>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Confirm change and return</span></div>
+</div>
+</div>
+<div>
+<div class="sub">REQ-DES-08-CORRECTION · isolated reset — Budget Line MOH-BL-DHI-2027 (Digital Health only) conflicts with the HRMD source row; current checks do not pass</div>
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Request a Planning correction?</div>
+<div class="field"><label>What is wrong in the approved plan? (required, 20–1,000 characters)</label><textarea class="input" rows="3" disabled="disabled">The approved source allocation refers to the wrong Budget Line. Please review the departmental funding specification through the governed Planning correction process.</textarea></div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">This requisition will be preserved and stopped. It will not reopen automatically after Planning responds.</div></div>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Send correction request</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="des09" style="margin-bottom:56px">
+<div class="cap">REQ-DES-09 · Authorisation confirmation <i>— Charles Mutiso, confirming the material effects before authorising</i></div>
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Authorise this requisition?</div>
+<div class="kt-panel"><div class="kt-meta-row">
+<div><span class="kt-label">Quantity</span><span class="kt-meta-value" style="font-size:14px">250 Each</span></div>
+<div><span class="kt-label">Requisition value</span><span class="kt-meta-value" style="font-size:14px">KES 50,000,000.00</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:10px">
+<div><span class="kt-label">Budget line</span><span class="kt-meta-value" style="font-size:14px">MOH-BL-HWD-2027</span></div>
+<div><span class="kt-label">Available after authorisation</span><span class="kt-meta-value" style="font-size:14px">KES 10,000,000.00</span></div>
+</div></div>
+<div class="dialog-body">The approved-plan amounts will be used, two funding reservations will be created and Tender Preparation may begin.</div>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Authorise requisition</span></div>
+</div>
+<p class="text-muted" style="font-size:12px;margin:12px 0 0;max-width:480px">No command names, transaction boundaries or "handoff" terminology are displayed.</p>
+</div>
+
+<div id="des10" style="margin-bottom:56px">
+<div class="cap">REQ-DES-10 · Authorised requisition <i>— Authorised Version 1, actor Procurement Officer, handoff not consumed</i></div>
+<div class="kt-panel-lg" style="width:900px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px">
+<div>
+<div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Clinical training and deployment laptops for digital health rollout</h3><span class="kt-status is-live">Authorised</span></div>
+<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><span class="kt-label">REQ-MOH-2027-033-001</span><span class="tag tag-outline">Open Tender</span><span class="tag tag-accent">Youth reservation</span><span class="tag tag-neutral">Single lot</span></div>
+<p class="text-muted" style="font-size:13px;margin:10px 0 0">This requisition is authorised and ready for Tender Preparation.</p>
+</div>
+<span class="btn btn-primary" style="white-space:nowrap">Continue to Tender Preparation</span>
+</div>
+<div class="kt-panel" style="margin:var(--space-4) 0 var(--space-6)"><div class="kt-meta-row">
+<div><span class="kt-label">Authorised by</span><span class="kt-meta-value" style="font-size:14px">Charles Mutiso</span></div>
+<div><span class="kt-label">Authorised at</span><span class="kt-meta-value" style="font-size:14px">15 Mar 2027, 10:00 EAT</span></div>
+<div><span class="kt-label">Requisition value</span><span class="kt-meta-value" style="font-size:14px">KES 50,000,000.00</span></div>
+<div><span class="kt-label">Tender Preparation</span><span class="kt-meta-value" style="font-size:14px">Not started</span></div>
+</div></div>
+
+<div class="kt-panel" style="margin-bottom:var(--space-6)">
+<div class="kt-label" style="margin-bottom:12px">Decision chain</div>
+<div class="kt-timeline">
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i><i class="kt-timeline-line"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title">Draft prepared</div><div class="kt-timeline-item-meta">1 Mar 2027 · Grace Wanjiku · Digital Health</div></div></div>
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i><i class="kt-timeline-line"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title">Certified and submitted by the department</div><div class="kt-timeline-item-meta">8 Mar 2027, 09:00 EAT · Dr Peter Kimani</div></div></div>
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i><i class="kt-timeline-line"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title">Authorised by Procurement</div><div class="kt-timeline-item-meta">15 Mar 2027, 10:00 EAT · Charles Mutiso · funding reserved</div></div></div>
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-attention"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title">Tender Preparation</div><div class="kt-timeline-item-meta">Ready to start · not yet consumed</div></div></div>
+</div>
+</div>
+
+<p class="text-muted" style="font-size:13px;margin:0 0 var(--space-4)">The complete review sections from <a href="#des06">REQ-DES-06</a> follow, with Funding reservations inserted after Amounts requested.</p>
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>Funding reservations</h6>
+<table class="table" style="margin-bottom:var(--space-6)"><thead><tr><th>Reservation</th><th>Department</th><th class="is-num">Value</th></tr></thead><tbody>
+<tr><td>RSV-MOH-2027-033-001</td><td>Human Resources Management and Development</td><td class="is-num">KES 20,000,000.00</td></tr>
+<tr><td>RSV-MOH-2027-033-002</td><td>Digital Health</td><td class="is-num">KES 30,000,000.00</td></tr>
+</tbody></table>
+
+<div class="kt-disclosure">
+<div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Record details</span></div>
+<svg class="kt-disclosure-chevron is-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg></div>
+<div class="kt-disclosure-body">
+<p class="text-muted" style="font-size:12px;margin:0 0 12px">Each value below is supporting evidence; none is an editable command key.</p>
+<div class="kt-meta-row">
+<div><span class="kt-label">Planning drawdown display reference</span><span class="kt-meta-value" style="font-size:14px">PDR-MOH-2027-033-001</span></div>
+<div><span class="kt-label">Source references</span><span class="kt-meta-value" style="font-size:14px">SRC-MOH-033-001; SRC-MOH-033-002</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:12px">
+<div><span class="kt-label">Reservation references</span><span class="kt-meta-value" style="font-size:14px">RSV-MOH-2027-033-001; RSV-MOH-2027-033-002</span></div>
+<div><span class="kt-label">Handoff display reference</span><span class="kt-meta-value" style="font-size:14px">REQ-MOH-2027-033-001</span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="margin-bottom:56px">
+<div class="cap">REQ-DES-10 actor variants</div>
+<div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+<div class="kt-panel-lg" style="width:420px">
+<div class="sub">HOPF before consumption · no header primary; footer secondary Revoke</div>
+<span class="kt-status is-live">Authorised</span>
+<div style="display:flex;justify-content:flex-end;border-top:1px solid var(--color-divider);margin-top:var(--space-4);padding-top:var(--space-4)"><span class="btn btn-secondary">Revoke authorisation</span></div>
+</div>
+<div class="kt-panel-lg" style="width:460px">
+<div class="sub">Consumed · top status replaced; revoke absent</div>
+<div class="kt-notice is-live"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-notice-body"><strong>Tender Preparation started</strong> · TND-MOH-2027-033</div></div>
+<div style="display:flex;justify-content:flex-end;margin-top:var(--space-4)"><span class="btn btn-primary">Open Tender</span></div>
+</div>
+<div class="kt-panel-lg" style="width:560px">
+<div class="sub">Revoked · complete authorised content retained with reason, Planning reversal and both funding-release references</div>
+<span class="kt-status is-critical">Authorisation revoked</span>
+<div class="kt-meta-row" style="margin-top:var(--space-4)">
+<div><span class="kt-label">Reason</span><span class="kt-meta-value" style="font-size:14px">Departmental specification superseded before tender issue.</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:12px">
+<div><span class="kt-label">Planning reversal</span><span class="kt-meta-value" style="font-size:14px">PDR-MOH-2027-033-001-R</span></div>
+<div><span class="kt-label">Funding releases</span><span class="kt-meta-value" style="font-size:14px">RSV-…-001-R; RSV-…-002-R</span></div>
+</div>
+<p class="text-muted" style="font-size:13px;margin:12px 0 0">Start corrected Draft appears only to a currently eligible departmental actor when the pinned baseline and one-open guards pass; no Draft is created automatically.</p>
+</div>
+<div class="kt-panel-lg" style="width:420px">
+<div class="sub">Auditor / technical reader · navigation and export only</div>
+<span class="kt-status is-live">Authorised</span>
+<div style="display:flex;justify-content:flex-end;margin-top:var(--space-4)"><span class="btn btn-ghost">Export</span></div>
+</div>
+<div>
+<div class="sub">Revocation dialog · not shown once Tender Preparation has consumed the handoff</div>
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Revoke this authorisation?</div>
+<div class="field"><label>Reason (required, 20–1,000 characters)</label><textarea class="input" rows="2" disabled="disabled"></textarea></div>
+<div class="dialog-body">The approved-plan amounts and both funding reservations will be reversed. The authorised requisition will remain in history.</div>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-danger">Revoke authorisation</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="des11" style="margin-bottom:56px">
+<div class="cap">REQ-DES-11 · Returned and stopped work</div>
+<div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+<div class="kt-panel-lg" style="width:660px">
+<div class="sub">Returned Draft · reuses REQ-DES-03 or REQ-DES-05 according to the governed affected section</div>
+<span class="kt-status is-attention">Correction requested</span>
+<div class="kt-notice is-warning" style="margin-top:var(--space-4)"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body"><strong>Replace the processor wording with a measurable, supplier-neutral minimum.</strong><br/>Returned by Dr Peter Kimani · 8 Mar 2027, 09:10 EAT · <a href="#des05">Go to affected section</a> (Technical requirements)</div></div>
+<p class="text-muted" style="font-size:13px;margin:12px 0 0">The copied Draft is already open for correction; no Resume or Version-selection action.</p>
+</div>
+<div class="kt-panel-lg" style="width:660px">
+<div class="sub">Returned reviewed Version · the exact earlier Version as a complete read-only review</div>
+<div style="display:flex;gap:10px"><span class="kt-status is-critical">Returned</span></div>
+<div class="kt-meta-row" style="margin-top:var(--space-4)">
+<div><span class="kt-label">Decided by</span><span class="kt-meta-value" style="font-size:14px">Dr Peter Kimani</span></div>
+<div><span class="kt-label">Decided at</span><span class="kt-meta-value" style="font-size:14px">8 Mar 2027, 09:10 EAT</span></div>
+<div><span class="kt-label">Affected section</span><span class="kt-meta-value" style="font-size:14px">Technical requirements</span></div>
+</div>
+<p class="text-muted" style="font-size:13px;margin:12px 0 0">Carries an authorised link to the current copied Draft. It has no edit, route or decision action.</p>
+</div>
+<div class="kt-panel-lg" style="width:720px">
+<div class="sub">Planning correction requested · read-only page, Open variant</div>
+<h4 style="margin:0">Planning is reviewing an approved-plan issue.</h4>
+<p class="text-muted" style="font-size:13px;margin:6px 0 var(--space-4)">This requisition is preserved and cannot be edited or resumed.</p>
+<div class="kt-panel">
+<h6 class="kt-card-title" style="margin-bottom:10px;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Planning correction request</h6>
+<div class="kt-meta-row">
+<div><span class="kt-label">Reference</span><span class="kt-meta-value" style="font-size:14px">UI-CORR-001</span></div>
+<div><span class="kt-label">Status</span><span class="kt-meta-value" style="font-size:14px"><span class="kt-status is-attention">Awaiting Planning correction</span></span></div>
+<div><span class="kt-label">Plan Item</span><span class="kt-meta-value" style="font-size:14px">PPI-MOH-2027-033</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:12px"><div><span class="kt-label">Reason</span><span class="kt-meta-value" style="font-size:14px">The approved source allocation refers to the wrong Budget Line. Please review the departmental funding specification through the governed Planning correction process.</span></div></div>
+<div class="kt-meta-row" style="margin-top:12px">
+<div><span class="kt-label">Requested by</span><span class="kt-meta-value" style="font-size:14px">Dr Peter Kimani</span></div>
+<div><span class="kt-label">Requested at</span><span class="kt-meta-value" style="font-size:14px">10 Mar 2027, 09:00 EAT</span></div>
+</div>
+</div>
+<div class="kt-panel">
+<div class="kt-label" style="margin-bottom:12px">Correction chain</div>
+<div class="kt-timeline">
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i><i class="kt-timeline-line"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title">Requisition submitted to Procurement</div><div class="kt-timeline-item-meta">8 Mar 2027 · Dr Peter Kimani</div></div></div>
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-critical"></i><i class="kt-timeline-line"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title">Planning correction requested · work stopped</div><div class="kt-timeline-item-meta">10 Mar 2027, 09:00 EAT · UI-CORR-001</div></div></div>
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-attention"></i><i class="kt-timeline-line is-upcoming"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title">Planning review</div><div class="kt-timeline-item-meta">Awaiting Procurement Planner</div></div></div>
+<div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-pending"></i></div>
+<div class="kt-timeline-item"><div class="kt-timeline-item-title is-upcoming">Outcome recorded</div><div class="kt-timeline-item-meta">This requisition will not reopen automatically</div></div></div>
+</div>
+</div>
+<p class="text-muted" style="font-size:13px;margin:12px 0 0">The complete request follows in read-only form.</p>
+<div style="display:flex;gap:var(--space-2);border-top:1px solid var(--color-divider);margin-top:var(--space-4);padding-top:var(--space-4)"><span class="btn btn-ghost">Back to Requisitions</span><span class="btn btn-secondary">View Planning request</span></div>
+</div>
+<div class="kt-panel-lg" style="width:560px">
+<div class="sub">In progress</div>
+<span class="kt-status is-attention">Planning correction in progress</span>
+<p class="text-muted" style="font-size:13px;margin:12px 0 0">Mercy Kilonzo began review on 10 Mar 2027 at 11:00 EAT.</p>
+</div>
+<div class="kt-panel-lg" style="width:660px">
+<div class="sub">Resolved · primary Start a new requisition, only in the eligible actor fixture</div>
+<span class="kt-status is-live">Planning correction completed</span>
+<p class="text-muted" style="font-size:13px;margin:12px 0 0">PLN-MOH-2027-001 Version 2 is Active; replacement PPI-MOH-2027-033 item Version 2 is eligible for 250 Each and KES 50,000,000.00; Budget Line corrected from MOH-BL-DHI-2027 to entity-wide MOH-BL-HWD-2027; resolved by Mercy Kilonzo on 12 Mar 2027, 10:00 EAT.</p>
+<div style="display:flex;justify-content:flex-end;margin-top:var(--space-4)"><span class="btn btn-primary">Start a new requisition</span></div>
+</div>
+<div class="kt-panel-lg" style="width:660px">
+<div class="sub">Closed without change</div>
+<span class="kt-status is-pending">Planning request closed without change</span>
+<p class="text-muted" style="font-size:13px;margin:12px 0 0">The approved source allocation and Budget Line are correct. No Planning change is required. Decided by Mercy Kilonzo on 12 Mar 2027, 10:00 EAT.</p>
+<p style="font-size:13px;margin:10px 0 0">The approved Planning facts have not changed. This requisition will not restart.</p>
+<div style="display:flex;justify-content:flex-end;margin-top:var(--space-4)"><span class="btn btn-primary">Start a new requisition</span></div>
+</div>
+<div class="kt-panel-lg" style="width:560px">
+<div class="sub">Outcome unavailable · separate loading and unavailable indicators</div>
+<p class="text-muted" style="font-size:13px;margin:0">Last confirmed: UI-CORR-001 · In progress · Mercy Kilonzo · 10 Mar 2027, 11:00 EAT</p>
+<div class="kt-notice is-critical" style="margin-top:var(--space-4)"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body">Planning response is temporarily unavailable. The stopped requisition has not changed.</div></div>
+<div style="display:flex;justify-content:flex-end;margin-top:var(--space-4)"><span class="btn btn-secondary">Try again</span></div>
+</div>
+<div class="kt-panel-lg" style="width:560px">
+<div class="sub">Another request unresolved · two distinct rows; no authorise or clear-hold control</div>
+<div style="display:flex;gap:10px"><span class="kt-status is-live">UI-CORR-001 · Resolved</span><span class="kt-status is-attention">UI-CORR-002 · Open</span></div>
+<div class="kt-notice is-warning" style="margin-top:var(--space-4)"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">Authorisation remains on hold: 1 Planning request is still unresolved.</div></div>
+</div>
+<div class="kt-panel-lg" style="width:560px">
+<div class="sub">Procurement Planner variant · Mercy Kilonzo opening the stopped requisition from her Planning correction task</div>
+<p class="text-muted" style="font-size:13px;margin:0">The same complete read-only requisition and correction card. No REQ edit, return, submit, authorise, withdraw, outcome or clear-hold control appears. Planning records and disposes of the correction through its own governed screen.</p>
+<div style="display:flex;justify-content:flex-end;margin-top:var(--space-4)"><span class="btn btn-primary">Open Planning correction task</span></div>
+</div>
+<div>
+<div class="sub">Fresh-start confirmation · Resolved, eligible reset</div>
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Start a new requisition?</div>
+<div class="dialog-body">Use the Active corrected Planning facts shown. Earlier decisions and funding reservations will not be copied.</div>
+<div class="kt-panel"><div class="kt-meta-row">
+<div><span class="kt-label">Stopped requisition</span><span class="kt-meta-value" style="font-size:14px">REQ-MOH-2027-033-001</span></div>
+<div><span class="kt-label">Current Plan</span><span class="kt-meta-value" style="font-size:14px">PLN-MOH-2027-001</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:10px">
+<div><span class="kt-label">Current Plan Version</span><span class="kt-meta-value" style="font-size:14px">Version 2</span></div>
+<div><span class="kt-label">Current eligibility</span><span class="kt-meta-value" style="font-size:14px">Eligible</span></div>
+</div></div>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Start new Draft</span></div>
+</div>
+</div>
+<div>
+<div class="sub">Fresh-start confirmation · Closed-without-change text, ineligible reset removes the primary action</div>
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Start a new requisition?</div>
+<div class="dialog-body">Use the unchanged approved Planning facts. Complete departmental submission and Procurement authorisation again.</div>
+<div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body">A new requisition cannot be prepared: current Plan funding confirmation is required.</div></div>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="des12" style="margin-bottom:56px">
+<div class="cap">REQ-DES-12 · Common and access states <i>— all sixteen §13.13 rows; narrow artboards preserve table meaning and drop no columns</i></div>
+<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;max-width:2100px">
+
+<div class="kt-panel-lg" style="width:420px"><div class="sub">Loading · skeleton only; no stale header or content</div>
+<div style="display:flex;flex-direction:column;gap:8px"><div style="height:14px;width:60%;background:var(--color-neutral-200)"></div><div style="height:14px;width:90%;background:var(--color-neutral-200)"></div><div style="height:14px;width:40%;background:var(--color-neutral-200)"></div></div></div>
+
+<div class="kt-panel-lg" style="width:500px"><div class="sub">Workspace forbidden · no actions</div>
+<p style="margin:0;font-size:14px">You do not have access to Procurement Requisitions.</p>
+<p class="text-muted" style="font-size:13px;margin:8px 0 0">This area needs Departmental Author, Head of User Department, Head of Procurement Function, Procurement Planner, Procurement Officer, Auditor, Administrator or System Manager access. Ask your KenTender administrator to assign the appropriate responsibility in System setup.</p></div>
+
+<div class="kt-panel-lg" style="width:380px"><div class="sub">Record not found / masked</div>
+<p style="margin:0;font-size:14px">Requisition not found</p>
+<div style="margin-top:var(--space-4)"><span class="btn btn-secondary">Back to Requisitions</span></div></div>
+
+<div class="kt-panel-lg" style="width:380px"><div class="sub">Load failure</div>
+<p style="margin:0;font-size:14px">Procurement Requisitions could not be loaded.</p>
+<div style="margin-top:var(--space-4)"><span class="btn btn-secondary">Try again</span></div></div>
+
+<div class="kt-panel-lg" style="width:480px"><div class="sub">Stale Draft · existing page retained</div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">This requisition changed after you opened it. Review the latest version before saving.</div></div>
+<div style="margin-top:var(--space-4)"><span class="btn btn-secondary">Review latest version</span></div></div>
+
+<div class="kt-panel-lg" style="width:480px"><div class="sub">Unsupported product</div>
+<div style="font-family:var(--font-heading);font-weight:600;font-size:15px">Clinical training and deployment laptops for digital health rollout</div>
+<div class="kt-label" style="margin:4px 0 10px">Requirement product: Software integration</div>
+<div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body">This approved purchase requires software integration, which this release does not support.</div></div>
+<div style="margin-top:var(--space-4)"><span class="btn btn-secondary">Back to Requisitions</span></div></div>
+
+<div class="kt-panel-lg" style="width:440px"><div class="sub">Existing open requisition</div>
+<p style="margin:0;font-size:14px">REQ-MOH-2027-033-001 · Draft · Request details need attention</p>
+<div style="margin-top:var(--space-4)"><span class="btn btn-primary">Open existing requisition</span></div></div>
+
+<div class="kt-panel-lg" style="width:520px"><div class="sub">Existing procurement scope · no local add-source, bypass or unlock</div>
+<p style="margin:0;font-size:14px">This approved purchase already has an authorised requisition. Additional requirements must use a separate approved purchase.</p>
+<div style="margin-top:var(--space-4)"><span class="btn btn-secondary">View approved purchase</span></div></div>
+
+<div class="kt-panel-lg" style="width:560px"><div class="sub">Remaining original amount · original, used and still-available shown separately</div>
+<p style="margin:0 0 var(--space-3);font-size:14px">This request uses only the remaining amount from the original approved purchase.</p>
+<table class="table"><thead><tr><th></th><th class="is-num">Quantity</th><th class="is-num">Value</th></tr></thead><tbody>
+<tr><td>Original</td><td class="is-num">250 Each</td><td class="is-num">KES 50,000,000.00</td></tr>
+<tr><td>Previously used</td><td class="is-num">100 Each</td><td class="is-num">KES 20,000,000.00</td></tr>
+<tr><td>Still available</td><td class="is-num">150 Each</td><td class="is-num">KES 30,000,000.00</td></tr>
+</tbody></table>
+<p class="text-muted" style="font-size:13px;margin:10px 0 0">Normal Start/Authorise remains available only when every other current guard passes.</p></div>
+
+<div class="kt-panel-lg" style="width:480px"><div class="sub">Multi-year unsupported · no justification bypass</div>
+<div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body">This release supports purchases completed within one financial year.</div></div>
+<div class="kt-label" style="margin-top:10px">Failed procurement check: Plan horizon</div>
+<div style="margin-top:var(--space-4)"><span class="btn btn-secondary">Back to Requisitions</span></div></div>
+
+<div class="kt-panel-lg" style="width:560px"><div class="sub">New submitting department · the earlier Version cannot be authorised</div>
+<p style="margin:0;font-size:14px">This requisition was returned for certification by the new submitting department.</p>
+<div class="kt-meta-row" style="margin-top:var(--space-4)">
+<div><span class="kt-label">Earlier certified department</span><span class="kt-meta-value" style="font-size:14px">Digital Health</span></div>
+<div><span class="kt-label">New submitting department</span><span class="kt-meta-value" style="font-size:14px">Human Resources Management and Development</span></div>
+</div>
+<div style="margin-top:var(--space-4)"><span class="btn btn-primary">Open copied Draft</span></div></div>
+
+<div class="kt-panel-lg" style="width:520px"><div class="sub">Withdrawn · complete preserved Version; no Resume or automatic Draft</div>
+<span class="kt-status is-critical">Withdrawn</span>
+<div class="kt-meta-row" style="margin-top:var(--space-4)">
+<div><span class="kt-label">Withdrawn by</span><span class="kt-meta-value" style="font-size:14px">Dr Peter Kimani</span></div>
+<div><span class="kt-label">Withdrawn at</span><span class="kt-meta-value" style="font-size:14px">9 Mar 2027, 14:00 EAT</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:12px"><div><span class="kt-label">Reason</span><span class="kt-meta-value" style="font-size:14px">The department will restate this requirement against a revised approved purchase.</span></div></div>
+<p style="font-size:13px;margin:12px 0 0">No approved-plan amount or funding was used.</p>
+<div style="margin-top:var(--space-4)"><span class="btn btn-secondary">Back to Requisitions</span></div></div>
+
+<div class="kt-panel-lg" style="width:520px"><div class="sub">Revocation/consumption race · no funding release or retry of revocation</div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">Tender Preparation has already started. This authorisation can no longer be revoked.</div></div>
+<div class="kt-label" style="margin-top:10px">Tender reference: TND-MOH-2027-033</div>
+<div style="margin-top:var(--space-4)"><span class="btn btn-primary">Open Tender</span></div></div>
+
+<div class="kt-panel-lg" style="width:560px"><div class="sub">Save validation · all still-authorised input retained; issue above Equipment and beside the row</div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">Requested equipment quantity for Digital Health is 140 Each but the approved requirement requests 150 Each</div></div>
+<div style="margin-top:var(--space-4)"><span class="btn btn-secondary">Save again after correction</span></div></div>
+
+<div class="kt-panel-lg" style="width:520px"><div class="sub">Uncertain decision result · no second decision while unresolved</div>
+<p class="text-muted" style="font-size:13px;margin:0">Base — Checking whether your action completed…</p>
+<div style="margin-top:10px"><span class="kt-status is-live">Committed — Requisition submitted to Procurement</span></div>
+<p class="text-muted" style="font-size:13px;margin:10px 0 0">Retry-safe — The result could not be confirmed. Check the current requisition before trying again.</p></div>
+
+<div class="kt-panel-lg" style="width:420px"><div class="sub">Technical read</div>
+<p class="text-muted" style="font-size:13px;margin:0">Complete record in its actual state. Read, navigation and export only.</p></div>
+
+</div>
+</div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

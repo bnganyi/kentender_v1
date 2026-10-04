@@ -34,6 +34,7 @@ from uuid import uuid4
 import frappe
 from frappe.utils import cstr, flt, now_datetime
 
+from kentender_core.utils.instants import to_utc_iso
 from kentender_procurement.departmental_needs.errors import fail
 
 EVENT_ACCEPTED = "DepartmentalNeedAccepted.v2"
@@ -101,7 +102,9 @@ def _append(
 	body = {
 		"event_id": event_id,
 		"event_type": event_type,
-		"occurred_at": str(occurred_at),
+		# a serialized message carries UTC (owner decision 26 Sep 2026); the
+		# event row's own `occurred_at` stays in site time
+		"occurred_at": to_utc_iso(occurred_at),
 		**payload,
 	}
 	frappe.get_doc(

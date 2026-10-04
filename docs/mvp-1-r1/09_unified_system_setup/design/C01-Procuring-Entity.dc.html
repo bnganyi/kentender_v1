@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+</helmet>
+<main style="max-width:900px;margin:0 auto;padding:32px 24px 96px">
+<div class="blueprint" style="background:var(--color-surface)">
+<div style="padding:32px 32px 0">
+<div class="kt-breadcrumb" style="margin-bottom:14px">Home &gt; Configuration and Governance &gt; <strong>System setup</strong></div>
+<div style="font-family:var(--font-heading);font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700)">Configuration and governance</div>
+<h1 style="margin:6px 0 10px">System setup</h1>
+<p class="text-muted" style="max-width:62ch;margin:0">Manage this site's details, financial years, responsibilities and procurement settings.</p>
+<div class="kt-tabs" style="margin-top:26px">
+<a class="kt-tab" href="C01-Procuring-Entity.dc.html" style="color:var(--color-accent-800);font-weight:600;text-decoration:none;border-bottom:2px solid var(--color-accent);margin-bottom:-1px">Procuring entity</a>
+<a class="kt-tab" href="C02-Financial-Years.dc.html" style="color:var(--color-neutral-700);text-decoration:none">Financial years</a>
+<a class="kt-tab" href="C05-Organisation-Structure.dc.html" style="color:var(--color-neutral-700);text-decoration:none">Organisation structure</a>
+<a class="kt-tab" href="C06-Users-Responsibilities.dc.html" style="color:var(--color-neutral-700);text-decoration:none">Users and responsibilities</a>
+<a class="kt-tab" href="C03A-Funding-Sources.dc.html" style="color:var(--color-neutral-700);text-decoration:none">Procurement settings</a>
+</div>
+</div>
+<div id="configured">
+<div style="padding:32px">
+<h3>Procuring entity</h3>
+<p class="card-body">This site represents one procuring entity. Its code is fixed after setup.</p>
+<div style="display:grid;gap:16px;grid-template-columns:1fr 1fr;margin:20px 0">
+<div class="field"><label>Entity name</label><input class="input" value="Ministry of Health" /></div>
+<div class="field"><label>Entity code</label><input class="input" value="PE-MOH" disabled="disabled" /></div>
+<div class="field"><label>Entity type</label>
+<select class="input"><option selected="selected">National Government Ministry</option><option>State Department</option><option>State Corporation</option><option>County Government</option><option>County Corporation</option><option>Constitutional Commission</option><option>Public University</option><option>Other Public Entity</option></select></div>
+<div class="field"><label>PPRA registration</label><input class="input" value="PPRA/PE/2019/0114" /></div>
+<div class="field"><label>Timezone</label><input class="input" value="Africa/Nairobi" disabled="disabled" /></div>
+<div class="field"><label>Who approves the Annual Procurement Plan?</label>
+<select class="input"><option selected="selected">Cabinet Secretary</option><option>County Executive Committee Member</option><option>Board of Directors</option><option>Council</option></select></div>
+</div>
+<div class="field" style="margin-bottom:20px"><label id="ce-county-label">Is this a county entity?</label>
+<div style="display:flex;gap:16px" role="radiogroup" aria-labelledby="ce-county-label">
+<label class="radio"><input type="radio" name="county" /><span class="dot"></span>Yes</label>
+<label class="radio"><input type="radio" name="county" checked="checked" /><span class="dot"></span>No</label>
+</div></div>
+
+<div class="kt-section" style="margin-bottom:16px">
+<h6 class="kt-card-title">Setup record</h6>
+<div class="kt-panel"><div class="kt-meta-row">
+<div><span class="kt-label">Configured by</span><span class="kt-meta-value">Administrator</span></div>
+<div><span class="kt-label">Configured at</span><span class="kt-meta-value">29 Jun 2026, 10:10 EAT</span></div>
+<div><span class="kt-label">Top-level organisation unit</span><span class="kt-meta-value">Ministry of Health</span></div>
+<div><span class="kt-label">Unit code</span><span class="kt-meta-value">PE-MOH</span></div>
+</div></div>
+</div>
+
+<div class="kt-section" style="margin-bottom:20px">
+<h6 class="kt-card-title">Plan approval authority</h6>
+<div class="kt-panel">
+<div style="margin-bottom:8px"><span class="kt-status is-attention">Source check needed</span></div>
+<p class="card-body">The approval authority's supporting evidence must be completed before Plan approval.</p>
+<a href="#">View procurement rules</a>
+</div>
+</div>
+
+<div style="display:flex;justify-content:flex-end">
+<button type="button" class="btn btn-primary" disabled="disabled">Save changes</button>
+</div>
+</div>
+<div class="card-kicker" style="margin:0 28px 6px">After a saved change</div><div class="kt-notice is-live" style="margin:0 28px 28px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-notice-body">Site details saved</div></div>
+</div>
+
+<div id="first-run" style="border-top:1px solid var(--color-divider)">
+<div style="padding:32px">
+<div class="kt-tabs" style="margin-bottom:18px">
+<label class="kt-tab"><input type="radio" name="setup-tabs-fr" checked="checked" />Procuring entity</label>
+<label class="kt-tab" style="color:var(--color-neutral-400)"><input type="radio" name="setup-tabs-fr" disabled="disabled" />Financial years</label>
+<label class="kt-tab" style="color:var(--color-neutral-400)"><input type="radio" name="setup-tabs-fr" disabled="disabled" />Organisation structure</label>
+<label class="kt-tab" style="color:var(--color-neutral-400)"><input type="radio" name="setup-tabs-fr" disabled="disabled" />Users and responsibilities</label>
+<label class="kt-tab" style="color:var(--color-neutral-400)"><input type="radio" name="setup-tabs-fr" disabled="disabled" />Procurement settings</label>
+</div>
+<h3>Configure this site</h3>
+<p class="card-body">Enter the procuring entity's details to set up this site.</p>
+<div style="display:grid;gap:16px;grid-template-columns:1fr 1fr;margin:20px 0">
+<div class="field"><label>Entity name</label><input class="input" placeholder="" /></div>
+<div class="field"><label>Entity code</label><input class="input" placeholder="" /></div>
+<div class="field"><label>Entity type</label><select class="input"><option value="">— Select —</option><option>National Government Ministry</option><option>State Department</option><option>State Corporation</option><option>County Government</option><option>County Corporation</option><option>Constitutional Commission</option><option>Public University</option><option>Other Public Entity</option></select></div>
+<div class="field"><label>PPRA registration</label><input class="input" placeholder="" /></div>
+<div class="field"><label>Timezone</label><input class="input" value="Africa/Nairobi" disabled="disabled" /></div>
+<div class="field"><label>Who approves the Annual Procurement Plan?</label><select class="input"><option value="">— Select —</option><option>Cabinet Secretary</option><option>County Executive Committee Member</option><option>Board of Directors</option><option>Council</option></select></div>
+</div>
+<div class="field" style="margin-bottom:20px"><label id="fr-county-label">Is this a county entity?</label>
+<div style="display:flex;gap:16px" role="radiogroup" aria-labelledby="fr-county-label">
+<label class="radio"><input type="radio" name="county-fr" /><span class="dot"></span>Yes</label>
+<label class="radio"><input type="radio" name="county-fr" /><span class="dot"></span>No</label>
+</div></div>
+<p class="text-muted" style="font-size:13px">Other four tabs unavailable until this save succeeds.</p>
+<div style="display:flex;justify-content:flex-end">
+<button type="button" class="btn btn-primary">Configure site</button>
+</div>
+</div>
+<div class="card-kicker" style="margin:0 28px 6px">After a successful first run — followed by the Plan approval authority group</div><div class="kt-notice is-live" style="margin:0 28px 28px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-notice-body">Site configured</div></div>
+</div>
+
+<div id="conflict" style="border-top:1px solid var(--color-divider)">
+<div style="padding:32px">
+<h3>Procuring entity</h3>
+<div style="display:grid;gap:16px;grid-template-columns:1fr 1fr;margin:20px 0">
+<div class="field"><label>Entity type</label><select class="input"><option>National Government Ministry</option><option>State Department</option><option>State Corporation</option><option selected="selected">County Government</option><option>County Corporation</option><option>Constitutional Commission</option><option>Public University</option><option>Other Public Entity</option></select></div>
+<div class="field"><label id="cf-county-label">Is this a county entity?</label>
+<div style="display:flex;gap:16px" role="radiogroup" aria-labelledby="cf-county-label">
+<label class="radio"><input type="radio" name="county-cf" /><span class="dot"></span>Yes</label>
+<label class="radio"><input type="radio" name="county-cf" checked="checked" /><span class="dot"></span>No</label>
+</div></div>
+</div>
+<div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>Conflict.</strong> The county answer does not match the entity details.</div></div>
+</div>
+</div>
+
+<div id="missing-authority" style="border-top:1px solid var(--color-divider)">
+<div style="padding:32px">
+<div class="field"><label>Who approves the Annual Procurement Plan?</label><select class="input"><option value="" selected="selected">— Select —</option><option>Cabinet Secretary</option><option>County Executive Committee Member</option><option>Board of Directors</option><option>Council</option></select></div>
+<div class="kt-notice is-critical" style="margin-top:8px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>Missing.</strong> Select who approves this entity's Annual Procurement Plan.</div></div>
+</div>
+</div>
+
+</div>
+</main>
+
+</x-dc>
+</body>
+</html>

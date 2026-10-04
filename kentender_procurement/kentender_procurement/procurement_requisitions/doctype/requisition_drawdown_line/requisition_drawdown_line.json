@@ -48,35 +48,45 @@
   },
   {
    "fieldname": "approved_quantity",
-   "fieldtype": "Float",
-   "label": "Approved Quantity"
+   "fieldtype": "Data",
+   "label": "Approved Quantity",
+   "description": "Exact decimal string (\u00a75.14).",
+   "read_only": 1
   },
   {
    "fieldname": "approved_value",
-   "fieldtype": "Currency",
-   "label": "Approved Value"
+   "fieldtype": "Data",
+   "label": "Approved Value",
+   "description": "Exact decimal string (\u00a75.14).",
+   "read_only": 1
   },
   {
    "fieldname": "remaining_quantity",
-   "fieldtype": "Float",
-   "label": "Remaining Quantity"
+   "fieldtype": "Data",
+   "label": "Remaining Quantity",
+   "description": "Exact decimal string (\u00a75.14).",
+   "read_only": 1
   },
   {
    "fieldname": "remaining_value",
-   "fieldtype": "Currency",
-   "label": "Remaining Value"
+   "fieldtype": "Data",
+   "label": "Remaining Value",
+   "description": "Exact decimal string (\u00a75.14).",
+   "read_only": 1
   },
   {
    "fieldname": "requested_quantity",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "label": "Requested Quantity",
-   "reqd": 1
+   "reqd": 1,
+   "description": "Exact decimal string (\u00a75.14)."
   },
   {
    "fieldname": "requested_value",
-   "fieldtype": "Currency",
+   "fieldtype": "Data",
    "label": "Requested Value",
-   "reqd": 1
+   "reqd": 1,
+   "description": "Exact decimal string (\u00a75.14)."
   },
   {
    "fieldname": "unit",

@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 §9.2 — the transactional outbox. Copied from Departmental
+"""REQ-CHG-001 v1.11 §9.2 — the transactional outbox. Copied from Departmental
 Needs' proven pattern (`departmental_needs/services/events.py`): `publish_*`
 appends one row inside the same transaction as the state change it records;
 the event exists only if that change committed.
@@ -16,10 +16,12 @@ from uuid import uuid4
 import frappe
 from frappe.utils import cstr, now_datetime
 
-EVENT_AUTHORISED = "ProcurementRequisitionAuthorised.v1.3"
+EVENT_AUTHORISED = "ProcurementRequisitionAuthorised.v1.4"
 EVENT_REVOKED = "ProcurementRequisitionRevoked.v1"
 EVENT_WITHDRAWN = "ProcurementRequisitionWithdrawn.v1"
-EVENT_TYPES = frozenset({EVENT_AUTHORISED, EVENT_REVOKED, EVENT_WITHDRAWN})
+EVENT_CORRECTION_REQUESTED = "ProcurementRequisitionCorrectionRequested"
+EVENT_OUTCOME_RECEIVED = "PlanItemCorrectionOutcomeReceived"
+EVENT_TYPES = frozenset({EVENT_AUTHORISED, EVENT_REVOKED, EVENT_WITHDRAWN, EVENT_CORRECTION_REQUESTED, EVENT_OUTCOME_RECEIVED})
 
 
 def _next_sequence(requisition: str) -> int:
@@ -39,6 +41,10 @@ def _append(*, requisition: str, event_type: str, requisition_version: str, payl
 		}
 	).insert(ignore_permissions=True)
 	return doc.name
+
+
+def publish(*, requisition: str, requisition_version: str, event_type: str, payload: dict[str, Any]) -> str:
+	return _append(requisition=requisition, event_type=event_type, requisition_version=requisition_version, payload=payload)
 
 
 def publish_authorised(*, requisition: str, requisition_version: str, handoff_payload: dict[str, Any]) -> str:

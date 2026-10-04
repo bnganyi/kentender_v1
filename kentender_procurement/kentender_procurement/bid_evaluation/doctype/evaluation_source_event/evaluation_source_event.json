@@ -1,0 +1,203 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "§5.6–§5.7: an authoritative owner event (opening supplement, suspension, resumption, cancellation, validity extension, award decision), recorded once by its source identity.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "source_event_id",
+  "evaluation_case",
+  "event_key",
+  "source",
+  "kind",
+  "source_reference",
+  "authority",
+  "instruction_reference",
+  "reason",
+  "effective_at",
+  "received_at",
+  "detail_json",
+  "permitted_actions_json",
+  "delivered_context",
+  "impact",
+  "impact_reason",
+  "impact_by",
+  "impact_at",
+  "head_review_state",
+  "head_reviewed_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "source_event_id",
+   "fieldtype": "Data",
+   "label": "Source event ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "evaluation_case",
+   "fieldtype": "Link",
+   "label": "Evaluation case",
+   "read_only": 1,
+   "options": "Evaluation Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "event_key",
+   "fieldtype": "Data",
+   "label": "Event key",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "read_only": 1,
+   "options": "Bid Opening\nTenders\nDownstream\nSimulation",
+   "reqd": 1
+  },
+  {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "read_only": 1,
+   "options": "Opening supplement\nSuspension\nResumption\nCancellation\nValidity extension\nAward decision\nDated rule",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_reference",
+   "fieldtype": "Data",
+   "label": "Source reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "authority",
+   "fieldtype": "Data",
+   "label": "Authority",
+   "read_only": 1
+  },
+  {
+   "fieldname": "instruction_reference",
+   "fieldtype": "Data",
+   "label": "Instruction reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "effective_at",
+   "fieldtype": "Datetime",
+   "label": "Effective at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_at",
+   "fieldtype": "Datetime",
+   "label": "Received at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "detail_json",
+   "fieldtype": "Long Text",
+   "label": "Detail json",
+   "read_only": 1
+  },
+  {
+   "fieldname": "permitted_actions_json",
+   "fieldtype": "Long Text",
+   "label": "Permitted actions json",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delivered_context",
+   "fieldtype": "Select",
+   "label": "Delivered context",
+   "read_only": 1,
+   "options": "\nBefore delivery\nAfter delivery"
+  },
+  {
+   "fieldname": "impact",
+   "fieldtype": "Select",
+   "label": "Impact",
+   "read_only": 1,
+   "options": "\nPending\nNo effect on findings\nFindings need review"
+  },
+  {
+   "fieldname": "impact_reason",
+   "fieldtype": "Small Text",
+   "label": "Impact reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "impact_by",
+   "fieldtype": "Link",
+   "label": "Impact by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "impact_at",
+   "fieldtype": "Datetime",
+   "label": "Impact at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "head_review_state",
+   "fieldtype": "Select",
+   "label": "Head review state",
+   "read_only": 1,
+   "options": "\nOpen\nReviewed\nReturned\nWith Award"
+  },
+  {
+   "fieldname": "head_reviewed_at",
+   "fieldtype": "Datetime",
+   "label": "Head reviewed at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Evaluation",
+ "name": "Evaluation Source Event",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:source_event_id"
+}

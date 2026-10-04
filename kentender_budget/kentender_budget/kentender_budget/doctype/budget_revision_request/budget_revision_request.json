@@ -1,0 +1,231 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:budget_revision_request_id",
+ "creation": "2026-09-25 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "budget_revision_request_id",
+  "planning_request_id",
+  "status",
+  "budget",
+  "budget_line",
+  "budget_line_version_at_receipt",
+  "approved_amount_at_receipt",
+  "planned_amount",
+  "over_amount",
+  "plan_version_reference",
+  "plan_label",
+  "requested_by",
+  "requested_by_assignment",
+  "requested_at",
+  "linked_budget_version",
+  "outcome_by",
+  "outcome_at",
+  "decline_reason",
+  "outcome_sequence",
+  "idempotency_key",
+  "payload_digest",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "budget_revision_request_id",
+   "fieldtype": "Data",
+   "label": "Budget revision request",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "planning_request_id",
+   "fieldtype": "Data",
+   "label": "Planning request",
+   "reqd": 1,
+   "unique": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nRevised\nDeclined\nWithdrawn",
+   "default": "Open",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "budget",
+   "fieldtype": "Link",
+   "label": "Procurement Budget",
+   "options": "Procurement Budget",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "budget_line",
+   "fieldtype": "Link",
+   "label": "Procurement Budget Line",
+   "options": "Procurement Budget Line",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "budget_line_version_at_receipt",
+   "fieldtype": "Link",
+   "label": "Line Version at receipt",
+   "options": "Procurement Budget Line Version"
+  },
+  {
+   "fieldname": "approved_amount_at_receipt",
+   "fieldtype": "Currency",
+   "label": "Approved amount at receipt"
+  },
+  {
+   "fieldname": "planned_amount",
+   "fieldtype": "Currency",
+   "label": "Planned amount (Planning)"
+  },
+  {
+   "fieldname": "over_amount",
+   "fieldtype": "Currency",
+   "label": "Over by (Planning)"
+  },
+  {
+   "fieldname": "plan_version_reference",
+   "fieldtype": "Data",
+   "label": "Plan Version"
+  },
+  {
+   "fieldname": "plan_label",
+   "fieldtype": "Data",
+   "label": "Plan"
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested by",
+   "options": "User"
+  },
+  {
+   "fieldname": "requested_by_assignment",
+   "fieldtype": "Data",
+   "label": "Requester assignment"
+  },
+  {
+   "fieldname": "requested_at",
+   "fieldtype": "Datetime",
+   "label": "Requested at"
+  },
+  {
+   "fieldname": "linked_budget_version",
+   "fieldtype": "Link",
+   "label": "Linked successor",
+   "options": "Procurement Budget Version"
+  },
+  {
+   "fieldname": "outcome_by",
+   "fieldtype": "Data",
+   "label": "Outcome by"
+  },
+  {
+   "fieldname": "outcome_at",
+   "fieldtype": "Datetime",
+   "label": "Outcome at"
+  },
+  {
+   "fieldname": "decline_reason",
+   "fieldtype": "Small Text",
+   "label": "Reason for declining"
+  },
+  {
+   "fieldname": "outcome_sequence",
+   "fieldtype": "Int",
+   "label": "Outcome sequence",
+   "default": "0"
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency key"
+  },
+  {
+   "fieldname": "payload_digest",
+   "fieldtype": "Data",
+   "label": "Payload digest"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Budget",
+ "name": "Budget Revision Request",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Approver",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "requested_at",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "is_submittable": 0
+}

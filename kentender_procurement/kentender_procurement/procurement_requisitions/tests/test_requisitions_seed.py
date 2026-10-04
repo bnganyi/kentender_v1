@@ -90,13 +90,13 @@ class TestSeedContract(IntegrationTestCase):
 		self.assertEqual(again["requisition"], self.baseline["requisition"])
 		self.assertEqual(frappe.db.count("Requisition Version", {"requisition": self.baseline["requisition"]}), before)
 
-	def test_the_synthetic_consumption_is_retired_in_favour_of_tender_preparation(self):
-		"""TPR-CHG-001 plan D19 — fixture 6 is a real Tender's consumption,
-		seeded by Tender Preparation after this module; the old synthetic
+	def test_the_synthetic_consumption_is_retired_in_favour_of_tenders(self):
+		"""TPR-CHG-001 v0.8 §13 — fixture 6 is a real Tender's consumption,
+		seeded by the Tenders module after this module; the old synthetic
 		consumption refuses with the pointer."""
 		with self.assertRaises(frappe.ValidationError) as caught:
 			seed.seed_consumed_handoff(commit=False)
-		self.assertIn("tender_preparation.seeds.kentender_mvp_v1.upsert_tender_preparation", str(caught.exception))
+		self.assertIn("tenders.seeds.kentender_mvp_v1.upsert_tenders", str(caught.exception))
 
 
 @unittest.skipUnless(_world_available(), "the KENTENDER_MVP_V1 Requisitions world is not seeded on this site (make seed-kentender-mvp-v1)")
@@ -109,14 +109,14 @@ class TestLifecycleProfiles(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		# A consumed base handoff cannot be reset to another profile (one-way
-		# consumption, by design). Tender Preparation's §16 seed consumes it
-		# on a seeded site; release it there first, never from here.
+		# consumption, by design). The Tenders §13 seed consumes it on a
+		# seeded site; release it there first, never from here.
 		plan_item_id = seed._plan_item_id(seed.COMBINED_ITEM_TITLE)
 		consumed = frappe.db.get_value("Procurement Requisition", {"plan_item_id": plan_item_id, "current_state": "Authorised"}, "handoff_consumed_at")
 		if consumed:
 			raise unittest.SkipTest(
-				"the canonical handoff is consumed by Tender Preparation's seed — run "
-				"kentender_procurement.tender_preparation.seeds.kentender_mvp_v1.reset_tender_preparation_seed first"
+				"the canonical handoff is consumed by the Tenders seed — run "
+				"kentender_procurement.tenders.seeds.kentender_mvp_v1.reset_tenders_seed first"
 			)
 
 	@classmethod

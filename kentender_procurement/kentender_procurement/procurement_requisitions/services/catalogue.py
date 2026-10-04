@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 §6.3/§6.4 — the code-owned IT Equipment characteristic
+"""REQ-CHG-001 v1.11 §6.3/§6.4 — the code-owned IT Equipment characteristic
 catalogue. Not edited in Desk (§6.2): a new characteristic requires a new
 code release and document revision. Server-side control types, comparisons,
 units and options are the single source of truth the client's dialog derives
@@ -12,11 +12,13 @@ client rendered.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
-CATALOGUE_VERSION = "REQ-CAT-1.6"
+CATALOGUE_VERSION = "REQ-CAT-1.11"
 
 # Control types.
 YES_NO = "YES_NO"
@@ -133,10 +135,6 @@ CHARACTERISTICS: tuple[Characteristic, ...] = (
 
 CATALOGUE_BY_KEY: dict[str, Characteristic] = {c.key: c for c in CHARACTERISTICS}
 
-# §6.4 — automatic baseline rows proposed the moment an item is added.
-# Each entry: (characteristic_key, proposed value payload | None if the
-# operator must supply one). `None` means "propose the row, unvalued" —
-# the department confirms it with a real value, never a silently-guessed one.
 BASELINE_RULES: dict[str, tuple[tuple[str, Any], ...]] = {
 	"__all__": (("electrical_compatibility", "Yes"), ("new_unused_equipment", "Yes")),
 	"Laptop": (("memory", None), ("storage_capacity", None), ("storage_type", "NVMe SSD")),
@@ -154,29 +152,25 @@ def characteristics_for(equipment_category: str) -> list[Characteristic]:
 	return [c for c in CHARACTERISTICS if c.applies(equipment_category)]
 
 
-def propose_baseline(equipment_category: str) -> list[dict[str, Any]]:
-	"""§6.4 — the baseline rows proposed immediately after an item is added,
-	each marked `row_status=Proposed` by the caller. Returns
-	`{characteristic_key, required_value_json | None}`; a `None` value means
-	the caller must still supply one before the row can be confirmed."""
-	rules = list(BASELINE_RULES.get("__all__", ())) + list(BASELINE_RULES.get(equipment_category, ()))
-	proposed = []
-	seen: set[str] = set()
-	for key, value in rules:
-		if key in seen:
-			continue
-		seen.add(key)
-		proposed.append({
-			"characteristic_key": key,
-			"required_value_json": json.dumps({"value": value}) if value is not None else None,
-		})
-	return proposed
-
-
+#: §6.4 — the catalogue-driven starting proposal for a supported category
+#: other than Laptop (`proposal_for`). Only rows with a code-owned starting
+#: value are proposed; a `None` entry is offered in the catalogue but never
+#: pre-filled.
 class CatalogueValueError(ValueError):
 	def __init__(self, message: str, *, field: str = ""):
 		self.field = field
 		super().__init__(message)
+
+
+#: §5.14 — the code-owned scale every DECIMAL characteristic uses.
+DECIMAL_SCALE = 2
+
+
+def _check_range(characteristic: Characteristic, number: Decimal) -> None:
+	if characteristic.minimum is not None and number < Decimal(str(characteristic.minimum)):
+		raise CatalogueValueError(f"{characteristic.label} must be at least {characteristic.minimum}.")
+	if characteristic.maximum is not None and number > Decimal(str(characteristic.maximum)):
+		raise CatalogueValueError(f"{characteristic.label} must be at most {characteristic.maximum}.")
 
 
 def validate_value(characteristic: Characteristic, raw: Any, *, other_value: str = "") -> dict[str, Any]:
@@ -189,16 +183,28 @@ def validate_value(characteristic: Characteristic, raw: Any, *, other_value: str
 		if raw not in characteristic.options:
 			raise CatalogueValueError(f"{characteristic.label} must be one of {characteristic.options}.")
 		return {"value": raw}
-	if control in (INTEGER, DECIMAL):
+	if control == INTEGER:
+		if isinstance(raw, (bool, float)):
+			raise CatalogueValueError(f"{characteristic.label} must be a whole number.")
 		try:
-			number = int(raw) if control == INTEGER else float(raw)
+			number = int(str(raw).strip())
 		except (TypeError, ValueError):
-			raise CatalogueValueError(f"{characteristic.label} must be a number.")
-		if characteristic.minimum is not None and number < characteristic.minimum:
-			raise CatalogueValueError(f"{characteristic.label} must be at least {characteristic.minimum}.")
-		if characteristic.maximum is not None and number > characteristic.maximum:
-			raise CatalogueValueError(f"{characteristic.label} must be at most {characteristic.maximum}.")
+			raise CatalogueValueError(f"{characteristic.label} must be a whole number.")
+		_check_range(characteristic, Decimal(number))
 		return {"value": number}
+	if control == DECIMAL:
+		# §5.14 — exact decimal arithmetic at the declared scale; never a
+		# binary float. The canonical value is the decimal string.
+		if isinstance(raw, (bool, float)):
+			raise CatalogueValueError(f"{characteristic.label} must be an exact decimal number.")
+		try:
+			number = Decimal(str(raw).strip())
+		except (InvalidOperation, ValueError, TypeError):
+			raise CatalogueValueError(f"{characteristic.label} must be a number.")
+		if not number.is_finite() or -number.as_tuple().exponent > DECIMAL_SCALE:
+			raise CatalogueValueError(f"{characteristic.label} supports at most {DECIMAL_SCALE} decimal places.")
+		_check_range(characteristic, number)
+		return {"value": f"{number:f}"}
 	if control == SELECT:
 		if raw == "Other" and characteristic.allows_other:
 			if not other_value:
@@ -249,11 +255,108 @@ def display_value(characteristic: Characteristic, value_json: dict[str, Any]) ->
 	"""A human-readable projection of the canonical JSON, for
 	`required_value_display` (§6.2's read-only source labelling)."""
 	if "ports" in value_json:
-		return ", ".join(f"{p['port_type']} ×{p['minimum_count']}" for p in value_json["ports"])
+		return "; ".join(f"{p['port_type']} ×{p['minimum_count']}" for p in value_json["ports"])
 	if "values" in value_json:
-		return ", ".join(value_json["values"])
+		values = list(value_json["values"])
+		return values[0] if len(values) == 1 else ", ".join(values[:-1]) + " and " + values[-1]
 	value = value_json.get("value")
 	if value == "Other" and value_json.get("other"):
 		return value_json["other"]
-	unit_suffix = f" {characteristic.unit}" if characteristic.unit and characteristic.control in (INTEGER, DECIMAL) else ""
-	return f"{value}{unit_suffix}"
+	if characteristic.key == "electrical_compatibility" and value == "Yes":
+		return "Yes — suitable for Kenyan mains supply"
+	return f"{value}"
+
+
+# --------------------------------------------------------------------------
+# §6.4 / §13.1 — versioned code-owned requirement proposals
+# --------------------------------------------------------------------------
+
+STANDARD_PROFILE_KEY = "LAPTOP-REQUIREMENTS-V1"
+STANDARD_PROFILE_VERSION = "1"
+CATALOGUE_PROFILE_KEY = "IT-EQUIPMENT-CATALOGUE-V1"
+
+#: The three headings the Requirements workbench groups technical rows under.
+TECHNICAL_GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (
+	("Basic equipment", ("electrical_compatibility", "new_unused_equipment", "other_essential_characteristic")),
+	("Performance and storage", (
+		"memory", "storage_capacity", "storage_type", "display_size", "battery_runtime", "processor_requirement",
+		"operating_system_compatibility", "display_resolution", "panel_size", "print_technology", "colour_capability",
+		"print_speed", "automatic_duplex", "scan_resolution", "automatic_document_feeder_capacity", "network_function",
+		"network_port_count", "network_throughput", "power_function", "power_rated_capacity", "power_backup_runtime",
+	)),
+	("Connectivity", ("network_connectivity", "required_ports")),
+)
+GROUP_OF: dict[str, str] = {key: group for group, keys in TECHNICAL_GROUPS for key in keys}
+
+#: §13.1 — the complete Laptop package: exactly eleven technical rows, six
+#: warranty/support values and five acceptance checks.
+LAPTOP_TECHNICAL: tuple[tuple[str, Any], ...] = (
+	("electrical_compatibility", "Yes"),
+	("new_unused_equipment", "Yes"),
+	("memory", 16),
+	("storage_capacity", 512),
+	("storage_type", "NVMe SSD"),
+	("display_size", "14.0"),
+	("battery_runtime", "8"),
+	("processor_requirement", "64-bit business-class processor, minimum 10 cores or equivalent benchmark"),
+	("operating_system_compatibility", "Approved organisational Windows environment"),
+	("network_connectivity", ["Wi-Fi 6", "Bluetooth 5 or later"]),
+	("required_ports", [{"port_type": "USB-C", "minimum_count": 2}, {"port_type": "USB-A", "minimum_count": 2}, {"port_type": "HDMI", "minimum_count": 1}]),
+)
+STANDARD_SUPPORT: dict[str, Any] = {
+	"minimum_warranty_months": 36,
+	"onsite_support_required": True,
+	"maximum_support_response_hours": 8,
+	"manufacturer_support_required": True,
+	"service_location_constraint": "Within Kenya",
+	"support_description": "Supplier to provide escalation and warranty-contact details.",
+}
+STANDARD_ACCEPTANCE: tuple[dict[str, str], ...] = (
+	{"check_type": "Quantity", "pass_condition": "Delivered quantities equal the authorised schedule", "evidence_type": "Inspection record"},
+	{"check_type": "Physical condition", "pass_condition": "No visible damage and all listed accessories are present", "evidence_type": "Inspection record"},
+	{"check_type": "Required specification", "pass_condition": "Every delivered unit complies with all mandatory technical rows", "evidence_type": "Inspection record"},
+	{"check_type": "Functional test", "pass_condition": "Each device powers on and completes the agreed basic functional test", "evidence_type": "Test result"},
+	{"check_type": "Documents received", "pass_condition": "Warranty and delivery documents are received and verified", "evidence_type": "Certificate"},
+)
+
+
+def _technical_row(key: str, raw: Any) -> dict[str, Any]:
+	ch = CATALOGUE_BY_KEY[key]
+	value = validate_value(ch, raw)
+	return {
+		"characteristic_key": key, "label": ch.label, "group": GROUP_OF.get(key, "Performance and storage"),
+		"comparison": ch.comparison, "unit": ch.unit, "value": value, "display": display_value(ch, value),
+		"applies_to_scope": "All items", "applies_to_id": "",
+	}
+
+
+def proposal_for(categories: list[str] | tuple[str, ...]) -> dict[str, Any]:
+	"""§6.4 — the one complete editable proposal for the Draft's equipment.
+	Laptop gets `LAPTOP-REQUIREMENTS-V1` exactly; any other supported
+	category gets the catalogue-driven starting rows that carry a code-owned
+	starting value. `proposal_digest` identifies exactly what was shown, so
+	`ApplySelectedRequirementPackage` can refuse a stale one."""
+	categories = [c for c in dict.fromkeys(categories or []) if c in EQUIPMENT_CATEGORIES]
+	if not categories:
+		return {"profile_key": "", "profile_version": "", "technical": [], "support": {}, "acceptance": [], "proposal_digest": ""}
+	if categories == ["Laptop"]:
+		technical = [_technical_row(k, v) for k, v in LAPTOP_TECHNICAL]
+		profile_key, profile_version = STANDARD_PROFILE_KEY, STANDARD_PROFILE_VERSION
+	else:
+		technical = []
+		seen: set[str] = set()
+		for category in categories:
+			rules = list(BASELINE_RULES.get("__all__", ())) + list(BASELINE_RULES.get(category, ()))
+			for key, value in rules:
+				if value is None or key in seen:
+					continue
+				seen.add(key)
+				technical.append(_technical_row(key, value))
+		profile_key, profile_version = CATALOGUE_PROFILE_KEY, STANDARD_PROFILE_VERSION
+	payload = {
+		"profile_key": profile_key, "profile_version": profile_version, "categories": categories,
+		"technical": technical, "support": dict(STANDARD_SUPPORT),
+		"acceptance": [{**row, "applies_to_scope": "All items", "applies_to_id": ""} for row in STANDARD_ACCEPTANCE],
+	}
+	payload["proposal_digest"] = hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
+	return payload

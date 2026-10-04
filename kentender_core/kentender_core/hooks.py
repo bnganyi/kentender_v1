@@ -87,6 +87,20 @@ app_include_js = [
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "kentender_core/public/scss/website"
 
+# BDS-CHG-001 v0.8 §10.1 / plan OD-B — the public supplier portal. The three
+# header sections (Tenders, My bids, Account) all render the one Website page
+# `www/kt_portal`; which app answers a path is decided by the
+# `kt_portal_surfaces` hook (longest owned prefix), never by another route
+# rule, and a path no surface owns is the portal's own Not found page.
+website_route_rules = [
+	{"from_route": "/tenders", "to_route": "kt_portal"},
+	{"from_route": "/tenders/<path:portal_path>", "to_route": "kt_portal"},
+	{"from_route": "/my-bids", "to_route": "kt_portal"},
+	{"from_route": "/my-bids/<path:portal_path>", "to_route": "kt_portal"},
+	{"from_route": "/account", "to_route": "kt_portal"},
+	{"from_route": "/account/<path:portal_path>", "to_route": "kt_portal"},
+]
+
 # include js, css files in header of web form
 # webform_include_js = {"doctype": "public/js/doctype.js"}
 # webform_include_css = {"doctype": "public/css/doctype.css"}
@@ -256,6 +270,8 @@ scheduler_events = {
 		"kentender_core.services.site_configuration.close_due_needs_submissions",
 		# CFG-CHG-002 v0.9 §4.2 — the same closure for departmental-plan intake.
 		"kentender_core.services.site_configuration.close_due_dpp_submissions",
+		# CFG-CHG-002 v0.11 §4.3 — the same closure for disposal-plan intake.
+		"kentender_core.services.site_configuration.close_due_disposal_plan_submissions",
 	],
 	"daily": [
 		# AUTH-ADR-001 v1.6 §5.7 — remove Frappe Role projections left behind
@@ -273,6 +289,11 @@ scheduler_events = {
 # adds its own entries (and the matching permission_query_conditions /
 # has_permission rows below) in that module's hooks.py.
 kentender_scope_map: dict[str, str] = {}
+
+# The platform support issue opens to its current holders as well as the
+# technical readers (kentender_core.services.support_issues).
+has_permission = {"Support Issue": "kentender_core.services.support_issues.has_permission"}
+permission_query_conditions = {"Support Issue": "kentender_core.services.support_issues.permission_query_conditions"}
 
 # Testing
 # -------
@@ -362,3 +383,13 @@ kentender_scope_map: dict[str, str] = {}
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
+
+# CFG-CHG-002 v0.14 §7.4 / KT-STD-001 v1.7 §3A.6 — System setup's records in
+# the shared Technical record search, and its reads in the technical-read
+# conformance gate (AUTH-ADR-001 v1.9 §9).
+kt_technical_reference_resolvers = ["kentender_core.services.technical_read.reference_resolvers"]
+kt_technical_read_probes = ["kentender_core.services.technical_read.read_probes"]
+
+# EVL-CHG-001 v0.4 plan D12 (OD-B): the platform support issue's holder item
+# ("Resolve evaluation issue for {tender}"), merged with every app's providers.
+kt_my_work_providers = ["kentender_core.services.support_issues.my_work_rows"]

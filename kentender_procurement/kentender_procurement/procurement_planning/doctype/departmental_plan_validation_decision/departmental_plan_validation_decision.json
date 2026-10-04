@@ -11,6 +11,7 @@
   "submission",
   "decision",
   "classifications",
+  "derived_categories",
   "issues",
   "actor",
   "authority_snapshot",
@@ -62,6 +63,13 @@
    "description": "On acceptance: one governed requirement type per submitted entry (entry_id \u2192 Requirement Type)."
   },
   {
+   "fieldname": "derived_categories",
+   "fieldtype": "Long Text",
+   "label": "Derived Procurement Categories",
+   "read_only": 1,
+   "description": "PLN-CHG-001 v1.23 \u00a74.4 \u2014 the category the server derived from each selected requirement type, frozen with the decision. Never client-supplied."
+  },
+  {
    "fieldname": "issues",
    "fieldtype": "JSON",
    "label": "Issues",
@@ -109,7 +117,7 @@
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2026-08-30 12:00:00.000000",
+ "modified": "2026-09-18 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement Planning",
  "name": "Departmental Plan Validation Decision",

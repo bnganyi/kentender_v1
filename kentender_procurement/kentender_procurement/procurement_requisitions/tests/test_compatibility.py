@@ -1,7 +1,8 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 §5A compatibility test — pure, DB-free (REQ-AC-053)."""
+"""REQ-CHG-001 v1.11 §5A — the nine compatibility checks, pure and DB-free
+(REQ19-AC-053, REQ19-AC-055, REQ110-AC-011, REQ111-AC-005)."""
 
 from __future__ import annotations
 
@@ -9,42 +10,97 @@ import unittest
 
 from kentender_procurement.procurement_requisitions.services import compatibility
 
+TEMPLATE = {
+	"template_key": "IT-EQUIPMENT-OPEN-V1", "available": True, "county_residents": False, "method": "Open Tender",
+	"categories": ("None", "Youth", "Women", "Persons with disabilities"),
+}
 
-def _fixture_projection(**overrides):
+
+def projection(**overrides):
 	base = {
-		"procurement_category": "Goods",
-		"requirement_type": "Goods",
-		"reservation_category": "None",
-		"lotting_indicator": "Single lot",
-		"currency": "KES",
-		"award_packages": 1,
+		"procurement_category": "Goods", "requirement_type": "Goods", "reservation_category": "Youth",
+		"reservation_rule": {"snapshot_id": "RRV-1", "available": True}, "county_resident_reservation": False,
+		"county_rule": {"available": True}, "lotting_indicator": "Single lot", "currency": "KES", "award_packages": 1,
+		"procurement_method": "Open Tender", "plan_horizon": "Single year",
 	}
 	base.update(overrides)
 	return base
 
 
-class TestCompatibility(unittest.TestCase):
-	def test_the_fixture_projection_is_compatible(self):
-		self.assertTrue(compatibility.is_compatible(_fixture_projection()))
-		self.assertIsNone(compatibility.first_failure(_fixture_projection()))
+class TestNineChecks(unittest.TestCase):
+	def test_the_youth_fixture_passes_all_nine_in_table_order_with_the_board_results(self):
+		rows = compatibility.check(projection(), TEMPLATE)
+		self.assertEqual(len(rows), 9)
+		self.assertTrue(all(r.ok for r in rows))
+		self.assertEqual(
+			[(r.label, r.result) for r in rows],
+			[
+				("Procurement category", "Goods"),
+				("Requirement type", "Straightforward off-the-shelf IT equipment"),
+				("Planned designation", "Youth — supported; exact verified rule snapshot bound"),
+				("County-residents restriction", "Not applicable"),
+				("Lotting indicator", "Single lot"),
+				("Currency", "KES"),
+				("Award package", "One"),
+				("Planned method", "Open Tender"),
+				("Plan horizon", "Single year"),
+			],
+		)
 
-	def test_every_row_is_independently_named_on_failure(self):
+	def test_none_designation_is_compatible_when_every_other_guard_passes(self):
+		self.assertIsNone(compatibility.first_failure(projection(reservation_category="None"), TEMPLATE))
+
+	def test_each_check_fails_independently_and_is_named(self):
 		cases = {
-			"procurement_category": _fixture_projection(procurement_category="Works"),
-			"requirement_type": _fixture_projection(requirement_type="Consulting services"),
-			"reservation_category": _fixture_projection(reservation_category="Micro, small and medium enterprise"),
-			"lotting_indicator": _fixture_projection(lotting_indicator="Packaged into lots"),
-			"currency": _fixture_projection(currency="USD"),
-			"award_packages": _fixture_projection(award_packages=2),
+			"procurement_category": projection(procurement_category="Works"),
+			"requirement_type": projection(requirement_type="Consulting services"),
+			"reservation_category": projection(reservation_category="Other disadvantaged group"),
+			"county_resident_reservation": projection(county_resident_reservation=True),
+			"lotting_indicator": projection(lotting_indicator="Packaged into lots"),
+			"currency": projection(currency="USD"),
+			"award_packages": projection(award_packages=2),
+			"procurement_method": projection(procurement_method="Restricted Tender"),
+			"plan_horizon": projection(plan_horizon="Multi-year"),
 		}
-		for expected_test, projection in cases.items():
-			failure = compatibility.first_failure(projection)
-			self.assertIsNotNone(failure, f"{expected_test} case unexpectedly compatible")
-			self.assertEqual(failure.test, expected_test)
+		for expected, proj in cases.items():
+			with self.subTest(expected):
+				failures = [r.test for r in compatibility.check(proj, TEMPLATE) if not r.ok]
+				self.assertEqual(failures, [expected])
 
-	def test_every_tender_renderable_reservation_category_passes(self):
-		for category in ("None", "Youth", "Women", "Persons with disabilities", "Other disadvantaged group"):
-			self.assertTrue(compatibility.is_compatible(_fixture_projection(reservation_category=category)), category)
+	def test_a_supported_designation_with_no_verified_rule_is_rule_unavailable_not_unsupported(self):
+		failure = compatibility.first_failure(projection(reservation_rule={"available": False}), TEMPLATE)
+		self.assertEqual(failure.test, "reservation_category")
+		self.assertEqual(failure.code, "REQ_RESERVATION_RULE_UNAVAILABLE")
 
-	def test_a_non_renderable_reservation_category_fails(self):
-		self.assertFalse(compatibility.is_compatible(_fixture_projection(reservation_category="Regional — county")))
+	def test_an_unsupported_designation_is_product_unsupported(self):
+		failure = compatibility.first_failure(projection(reservation_category="Other disadvantaged group"), TEMPLATE)
+		self.assertEqual(failure.code, "REQ_PRODUCT_UNSUPPORTED")
+
+	def test_a_template_that_is_not_available_fails_the_designation_check(self):
+		failure = compatibility.first_failure(projection(), {**TEMPLATE, "available": False})
+		self.assertEqual(failure.test, "reservation_category")
+
+	def test_an_unavailable_template_says_so_and_why_not_that_the_designation_is_unsupported(self):
+		"""Found 4 Oct 2026: a site whose PDF renderer was the wrong build read
+		"Youth is not supported by the installed IT-equipment Tender format"."""
+		problem = "The renderer this Tender format needs is missing or incompatible (wkhtmltopdf 0.12.6 found; 0.12.6.1 (with patched qt) needed)."
+		failure = compatibility.first_failure(projection(), {**TEMPLATE, "available": False, "problem": problem})
+		self.assertEqual(failure.failure, f"The IT-equipment Tender format cannot be used on this site: {problem}")
+		self.assertNotIn("Youth", failure.failure)
+
+	def test_county_needs_template_support_and_then_a_verified_rule(self):
+		self.assertEqual(compatibility.first_failure(projection(county_resident_reservation=True), TEMPLATE).code, "REQ_PRODUCT_UNSUPPORTED")
+		with_county = {**TEMPLATE, "county_residents": True}
+		failure = compatibility.first_failure(projection(county_resident_reservation=True, county_rule={"available": False}), with_county)
+		self.assertEqual(failure.code, "REQ_RESERVATION_RULE_UNAVAILABLE")
+		self.assertIsNone(compatibility.first_failure(projection(county_resident_reservation=True), with_county))
+
+	def test_multi_year_has_no_justification_bypass(self):
+		failure = compatibility.first_failure(projection(plan_horizon="Multi-year", multi_year_justification="A long justification text."), TEMPLATE)
+		self.assertEqual(failure.test, "plan_horizon")
+		self.assertEqual(failure.failure, "This release supports purchases completed within one financial year.")
+
+	def test_no_app_wide_reservation_arithmetic_is_read(self):
+		# REQ111-AC-001: a projection carrying APP-wide fields changes nothing.
+		noisy = projection(eligible_value="1.00", target_percent=30, qualifying_share_percent=0, remaining="99.00")
+		self.assertEqual([r.as_dict() for r in compatibility.check(noisy, TEMPLATE)], [r.as_dict() for r in compatibility.check(projection(), TEMPLATE)])

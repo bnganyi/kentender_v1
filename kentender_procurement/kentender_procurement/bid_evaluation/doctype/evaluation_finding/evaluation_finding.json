@@ -1,0 +1,155 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "§4.3 human finding or concern: attributed, never overwrites a system result or a prior finding.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "finding_id",
+  "evaluation_case",
+  "evaluation_bid",
+  "requirement_key",
+  "response_id",
+  "kind",
+  "result",
+  "reason",
+  "evidence_reference",
+  "author",
+  "recorded_at",
+  "prior_finding",
+  "status",
+  "discussion_item",
+  "resolution_reference",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "finding_id",
+   "fieldtype": "Data",
+   "label": "Finding ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "evaluation_case",
+   "fieldtype": "Link",
+   "label": "Evaluation case",
+   "read_only": 1,
+   "options": "Evaluation Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "evaluation_bid",
+   "fieldtype": "Data",
+   "label": "Evaluation bid",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "requirement_key",
+   "fieldtype": "Data",
+   "label": "Requirement key",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "response_id",
+   "fieldtype": "Data",
+   "label": "Response id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "read_only": 1,
+   "options": "Evidence finding\nConcern\nContrary finding",
+   "reqd": 1
+  },
+  {
+   "fieldname": "result",
+   "fieldtype": "Select",
+   "label": "Result",
+   "read_only": 1,
+   "options": "\nMeets\nDoes not meet\nNeeds review"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "evidence_reference",
+   "fieldtype": "Data",
+   "label": "Evidence reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "author",
+   "fieldtype": "Link",
+   "label": "Author",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "recorded_at",
+   "fieldtype": "Datetime",
+   "label": "Recorded at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "prior_finding",
+   "fieldtype": "Data",
+   "label": "Prior finding",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Current\nSuperseded\nResolved",
+   "reqd": 1
+  },
+  {
+   "fieldname": "discussion_item",
+   "fieldtype": "Data",
+   "label": "Discussion item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolution_reference",
+   "fieldtype": "Data",
+   "label": "Resolution reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Evaluation",
+ "name": "Evaluation Finding",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:finding_id"
+}

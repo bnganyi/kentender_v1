@@ -1,38 +1,66 @@
 <script setup>
-// CFG-CHG-002 v0.6 §9–§11 — the one System setup page: shared header, four
-// horizontal tabs, hash-anchor tab state. Frappe supplies the Desk header and
-// breadcrumb (KT-STD-001 §2.5); this component renders only the content
-// column below it, ported from CFG-DES-01…07 and AUTH-DES-01…08.
+// CFG-CHG-002 v0.14 §9–§11 — the one System setup page. The top rail
+// (breadcrumb, notifications, user identity) is the shared
+// kentender_core.industry.mountPageRail every Industry module mounts; the
+// artboard's own breadcrumb line documents that rail and is not rendered
+// again here. Below it, the module's content area ported from the boards.
 //
-// The hash selects the tab; refresh, direct load and browser back/forward
-// preserve it (CFG-AC-024). Tab changes update the hash without a full route
-// change (§9). No remembered browser context is required or authoritative.
-import { computed, onMounted, onUnmounted, ref } from "vue";
+// Routing (AGENTS.md §6.4, plan D12): the URL is read only through
+// useRouteState, over kentender_core.desk_page.useRoute in hash mode — no
+// page-owned listener. Links follow the §9 grammar (data/routes.js); visited
+// tabs are kept alive, and the skeleton shows only while there is nothing to
+// show yet.
+import { KeepAlive, computed, onMounted, ref, watch } from "vue";
 import ProcuringEntityTab from "./tabs/ProcuringEntityTab.vue";
 import FiscalYearsTab from "./tabs/FiscalYearsTab.vue";
 import OrganisationStructureTab from "./tabs/OrganisationStructureTab.vue";
 import UserResponsibilitiesTab from "./tabs/UserResponsibilitiesTab.vue";
+import ProcurementSettingsTab from "./tabs/ProcurementSettingsTab.vue";
 import { siteConfigApi } from "./data/siteConfigApi.js";
+import { SECTIONS, legacyToRoute, routeToLegacy } from "./data/routes.js";
+import { usePageRail } from "./composables/usePageRail.js";
+import { useRouteState } from "./composables/useRouteState.js";
+
+const railEl = ref(null);
+usePageRail(
+	railEl,
+	computed(() => [
+		{ label: __("Home"), route: ["Workspaces", "Procurement Home"] },
+		{ label: __("Configuration and Governance"), route: ["Workspaces", "Platform Configuration & Governance"] },
+		{ label: __("System setup") },
+	])
+);
 
 const TABS = [
 	{ key: "procuring-entity", label: __("Procuring entity") },
-	{ key: "fiscal-years", label: __("Fiscal years") },
+	{ key: "fiscal-years", label: __("Financial years") },
 	{ key: "organisation-structure", label: __("Organisation structure") },
 	{ key: "users-and-responsibilities", label: __("Users and responsibilities") },
+	{ key: "procurement-settings", label: __("Procurement settings") },
 ];
+const COMPONENTS = {
+	"procuring-entity": ProcuringEntityTab,
+	"fiscal-years": FiscalYearsTab,
+	"organisation-structure": OrganisationStructureTab,
+	"users-and-responsibilities": UserResponsibilitiesTab,
+	"procurement-settings": ProcurementSettingsTab,
+};
+
+const { state: route, go } = useRouteState();
 
 const loading = ref(true);
 const forbidden = ref(null);
 const loadError = ref("");
 const site = ref(null);
-const activeTab = ref("procuring-entity");
 // Set when "View affected responsibilities" jumps from the structure tab to
 // the register with that unit pre-filtered. A visible, clearable filter —
 // never authority (§14.2).
 const uraUnitFilter = ref("");
 
 const configured = computed(() => !!site.value?.configured);
-const rootMissing = computed(() => configured.value && !site.value?.root_unit);
+// CFG v0.14 §4.4 — an ambiguous tree holds responsibilities back exactly as
+// a missing root does, until it is repaired.
+const rootMissing = computed(() => configured.value && (!site.value?.root_unit || !!site.value?.structure_ambiguous));
 
 function tabDisabled(key) {
 	// §11.1 — with no PE, only the Procuring entity tab is available; with a
@@ -42,54 +70,100 @@ function tabDisabled(key) {
 	return false;
 }
 
-function tabFromHash() {
-	const hash = (window.location.hash || "").replace(/^#/, "");
-	return TABS.some((tab) => tab.key === hash) ? hash : "";
-}
+// §9 — "Default is the first incomplete structural setup tab; once
+// entity/root exist, honor the requested tab, otherwise entity."
+const defaultTab = computed(() => {
+	if (!configured.value) return "procuring-entity";
+	if (rootMissing.value) return "organisation-structure";
+	return "procuring-entity";
+});
+const activeTab = computed(() => {
+	const wanted = route.value.tab;
+	return wanted && !tabDisabled(wanted) ? wanted : defaultTab.value;
+});
 
-function selectTab(key, { push = true } = {}) {
+// The address always names the tab on screen: a missing or refused tab is
+// corrected in place, without adding a Back step.
+watch(
+	() => [site.value, route.value.tab, activeTab.value],
+	() => {
+		if (!site.value) return;
+		if (route.value.tab !== activeTab.value) go({ tab: activeTab.value }, { replace: true });
+	}
+);
+
+// The older view names the tabs still switch on (until each is re-ported),
+// derived from the §9 link. Procurement settings translates its own, because
+// telling a method rule from a reference rule needs its data.
+const legacySubpath = computed(() => (activeTab.value === route.value.tab ? routeToLegacy(route.value) : ""));
+
+function selectTab(key, { sub = "" } = {}) {
 	if (tabDisabled(key)) return;
-	activeTab.value = key;
-	if (push && tabFromHash() !== key) {
-		window.location.hash = key;
-	}
+	go(sub ? legacyToRoute(key, sub) : { tab: key });
 }
 
-let active = true;
-function onHashChange() {
-	if (!active) return;
-	const key = tabFromHash();
-	if (key && key !== activeTab.value && !tabDisabled(key)) {
-		activeTab.value = key;
-	}
+function navigateWithin(sub) {
+	// A Procurement settings section named from another tab crosses to it
+	// (the Procuring entity's "View procurement rules").
+	const first = String(sub || "").split("/")[0];
+	const tab = SECTIONS.includes(first) ? "procurement-settings" : activeTab.value;
+	selectTab(tab, { sub });
 }
+
+const tabProps = computed(() => {
+	switch (activeTab.value) {
+		case "procuring-entity":
+			return { site: site.value, onUpdated: refreshSite };
+		case "fiscal-years":
+			return { subpath: legacySubpath.value };
+		case "procurement-settings":
+			return { route: route.value };
+		case "organisation-structure":
+			return { canRepair: !!site.value?.capabilities?.repair_root, unitId: route.value.id };
+		case "users-and-responsibilities":
+			return { initialUnit: uraUnitFilter.value, assignmentId: route.value.id };
+		default:
+			return {};
+	}
+});
+
+// Every read carries a sequence token; only the newest may write (§6.4).
+const sequence = kentender_core.desk_page.createSequenceGuard();
 
 async function load() {
-	loading.value = true;
+	const token = sequence.next();
+	// The skeleton is for a page with nothing on it yet; a retry after an
+	// error or a refresh keeps whatever is already shown.
+	if (!site.value) loading.value = true;
 	loadError.value = "";
 	forbidden.value = null;
 	try {
 		const result = await siteConfigApi.getConfiguration();
+		if (!sequence.isCurrent(token)) return;
 		if (result && result.outcome === "FORBIDDEN") {
 			forbidden.value = result.forbidden;
 			return;
 		}
 		site.value = result;
-		const wanted = tabFromHash();
-		if (!configured.value) selectTab("procuring-entity", { push: false });
-		else if (wanted && !tabDisabled(wanted)) selectTab(wanted, { push: false });
-		else selectTab(activeTab.value && !tabDisabled(activeTab.value) ? activeTab.value : "procuring-entity", { push: false });
 	} catch (error) {
-		loadError.value = error.message;
+		if (sequence.isCurrent(token)) loadError.value = error.message;
 	} finally {
-		loading.value = false;
+		if (sequence.isCurrent(token)) loading.value = false;
 	}
 }
 
 async function refreshSite() {
 	// After a state-changing command the page re-reads authoritative data
 	// (KT-STD §3); tab availability follows the fresh projection.
-	site.value = await siteConfigApi.getConfiguration();
+	const token = sequence.next();
+	const result = await siteConfigApi.getConfiguration();
+	if (sequence.isCurrent(token) && result && result.outcome !== "FORBIDDEN") site.value = result;
+}
+
+// An organisation unit or a responsibility opens by its own link, so reload
+// and Back return to it; an empty id returns to the tab's list.
+function openRecord(id) {
+	go({ tab: activeTab.value, id: id || "" });
 }
 
 function viewAffected(unitId) {
@@ -97,97 +171,84 @@ function viewAffected(unitId) {
 	selectTab("users-and-responsibilities");
 }
 
-function backToConfiguration() {
-	frappe.set_route("Workspaces", "Platform Configuration & Governance");
-}
+onMounted(load);
 
-onMounted(() => {
-	window.addEventListener("hashchange", onHashChange);
-	load();
-});
-onUnmounted(() => {
-	// frappe.router.off() is a framework no-op; the DOM listener here is our
-	// own, but the active flag also guards any late async callback.
-	active = false;
-	window.removeEventListener("hashchange", onHashChange);
-});
+// A page-wide state replaces the page, heading included (Common-States board).
+const pageState = computed(() => !!forbidden.value || !!loadError.value || (loading.value && !site.value));
+// The server's denial text, one sentence per line as the board draws it.
+function sentences(text) {
+	return String(text || "").split(/(?<=\.)\s+/).filter(Boolean);
+}
 </script>
 
 <template>
 	<div class="kt-industry kt-setup-root" data-testid="kt-setup-root">
+		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-setup-shell">
-			<a
-				href="#"
-				class="kt-back-link"
-				data-testid="back-to-workbench"
-				@click.prevent="backToConfiguration"
-			>← {{ __("Configuration and Governance") }}</a>
-
-			<header class="kt-setup-header">
-				<span class="kt-eyebrow">{{ __("Configuration and Governance") }}</span>
+		<div class="kt-setup-page kt-blueprint">
+			<!-- Common-States board: loading, denied and failed-to-load paint
+			     only the state — no heading, lede or tabs (and nothing of the
+			     page before a denial is known). -->
+			<header v-if="!pageState" class="kt-setup-head">
+				<span class="kt-eyebrow">{{ __("Configuration and governance") }}</span>
 				<h1 class="kt-setup-title">{{ __("System setup") }}</h1>
 				<p class="kt-setup-lede">
-					{{ __("Configure this KenTender site, its financial years, organisational structure and user responsibilities.") }}
+					{{ __("Manage this site's details, financial years, responsibilities and procurement settings.") }}
 				</p>
-			</header>
-
-			<!-- CFG-DES-07 forbidden/error/loading — never an empty success -->
-			<div v-if="forbidden" class="kt-card kt-blueprint kt-empty" data-testid="kt-setup-forbidden">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<h2>{{ __(forbidden.heading) }}</h2>
-				<p>{{ __(forbidden.text) }}</p>
-			</div>
-
-			<div v-else-if="loadError" class="kt-card kt-blueprint kt-empty" data-testid="kt-setup-error">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<h2>{{ __("System setup could not be loaded") }}</h2>
-				<p>{{ __("Try again. If the problem continues, contact support.") }}</p>
-				<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-setup-retry" @click="load">
-					{{ __("Try again") }}
-				</button>
-			</div>
-
-			<div v-else-if="loading" class="kt-card kt-blueprint" data-testid="kt-setup-loading">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<span class="kt-eyebrow">{{ __("Loading") }}</span>
-				<div class="kt-skel" style="width:88%" />
-				<div class="kt-skel" style="width:64%" />
-				<div class="kt-skel" style="width:76%" />
-			</div>
-
-			<template v-else>
-				<nav class="kt-setup-tabs" role="tablist" data-testid="kt-setup-tabs">
+				<nav v-if="!forbidden && !loadError && site" class="kt-tabs" role="tablist" data-testid="kt-setup-tabs">
 					<button
 						v-for="tab in TABS"
 						:key="tab.key"
 						type="button"
 						role="tab"
-						class="kt-setup-tab"
-						:class="{ 'is-active': activeTab === tab.key, 'is-disabled': tabDisabled(tab.key) }"
+						class="kt-tab"
 						:aria-selected="activeTab === tab.key"
 						:disabled="tabDisabled(tab.key)"
 						:data-testid="'kt-setup-tab-' + tab.key"
 						@click="selectTab(tab.key)"
 					>{{ tab.label }}</button>
 				</nav>
+			</header>
 
-				<ProcuringEntityTab
-					v-if="activeTab === 'procuring-entity'"
-					:site="site"
-					:on-updated="refreshSite"
+			<div class="kt-setup-panel">
+			<!-- Common-States #denied / #load-error / #loading — never an empty success. -->
+			<div v-if="forbidden" class="kt-notice is-critical" role="alert" data-testid="kt-setup-forbidden">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+				<div class="kt-notice-body">
+					<strong>{{ __(forbidden.heading) }}.</strong>
+					<template v-for="line in sentences(forbidden.text)" :key="line"><br>{{ line }}</template>
+				</div>
+			</div>
+
+			<div v-else-if="loadError" data-testid="kt-setup-error">
+				<div class="kt-notice is-critical" role="alert">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+					<div class="kt-notice-body"><strong>{{ __("System setup could not be loaded.") }}</strong><br>{{ __("Try again. If the problem continues, contact support.") }}</div>
+				</div>
+				<div style="margin-top:14px">
+					<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-setup-retry" @click="load">{{ __("Try again") }}</button>
+				</div>
+			</div>
+
+			<div v-else-if="loading && !site" class="kt-empty kt-setup-state-loading" role="status" aria-live="polite" data-testid="kt-setup-loading">
+				<p class="card-body" style="margin:0">{{ __("Loading System setup…") }}</p>
+			</div>
+
+			<KeepAlive v-else>
+				<component
+					:is="COMPONENTS[activeTab]"
+					:key="activeTab"
+					v-bind="tabProps"
 					@configured="refreshSite"
-				/>
-				<FiscalYearsTab v-else-if="activeTab === 'fiscal-years'" @changed="refreshSite" />
-				<OrganisationStructureTab
-					v-else-if="activeTab === 'organisation-structure'"
+					@changed="refreshSite"
 					@repaired="refreshSite"
 					@view-affected="viewAffected"
+					@navigate="navigateWithin"
+					@open="openRecord"
 				/>
-				<UserResponsibilitiesTab
-					v-else-if="activeTab === 'users-and-responsibilities'"
-					:initial-unit="uraUnitFilter"
-				/>
-			</template>
+			</KeepAlive>
+			</div>
+		</div>
 		</div>
 	</div>
 </template>

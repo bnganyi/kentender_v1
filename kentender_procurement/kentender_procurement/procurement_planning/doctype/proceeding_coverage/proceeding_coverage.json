@@ -1,0 +1,180 @@
+{
+ "actions": [],
+ "autoname": "format:PCV-{#####}",
+ "creation": "2026-09-12 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "proceeding_type",
+  "proceeding_id",
+  "requisition_reference",
+  "requisition_version",
+  "plan_version",
+  "plan_item",
+  "plan_item_id",
+  "allocation",
+  "covered_quantity",
+  "covered_value",
+  "authorisation_state",
+  "publication_state",
+  "reversal_state",
+  "last_event",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "proceeding_type",
+   "fieldtype": "Data",
+   "label": "Proceeding Type",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "proceeding_id",
+   "fieldtype": "Data",
+   "label": "Proceeding ID",
+   "reqd": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "requisition_reference",
+   "fieldtype": "Data",
+   "label": "Requisition Reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requisition_version",
+   "fieldtype": "Data",
+   "label": "Requisition Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "plan_version",
+   "fieldtype": "Link",
+   "label": "Plan Version",
+   "options": "Annual Plan Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "plan_item",
+   "fieldtype": "Link",
+   "label": "Plan Item",
+   "options": "Plan Item",
+   "reqd": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "plan_item_id",
+   "fieldtype": "Data",
+   "label": "Plan Item ID",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "allocation",
+   "fieldtype": "Link",
+   "label": "Allocation",
+   "options": "Plan Source Allocation",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "covered_quantity",
+   "fieldtype": "Float",
+   "label": "Covered Quantity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "covered_value",
+   "fieldtype": "Currency",
+   "label": "Covered Value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "authorisation_state",
+   "fieldtype": "Data",
+   "label": "Authorisation State",
+   "read_only": 1
+  },
+  {
+   "fieldname": "publication_state",
+   "fieldtype": "Data",
+   "label": "Publication State",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reversal_state",
+   "fieldtype": "Data",
+   "label": "Reversal State",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_event",
+   "fieldtype": "Link",
+   "label": "Last Event",
+   "options": "Milestone Actual Event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-09-12 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Proceeding Coverage",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Procurement Planner",
+   "read": 1
+  },
+  {
+   "role": "Head of Procurement Function",
+   "read": 1
+  },
+  {
+   "role": "Finance Confirmation Officer",
+   "read": 1
+  },
+  {
+   "role": "Accounting Officer",
+   "read": 1
+  },
+  {
+   "role": "Plan Statutory Approver",
+   "read": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

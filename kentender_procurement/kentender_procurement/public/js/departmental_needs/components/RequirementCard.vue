@@ -1,38 +1,45 @@
-<!-- The six requester-entered values, read-only (NDS-DES-05/06/07/12). -->
+<!-- The six requester-entered values, read-only. §11.1 single-sheet
+     arrangement (NDS-CHG-001 v1.14, 21 Sep 2026): Description and Expected
+     result as the main readable narrative, then Quantity/Unit/Required-by
+     collapsed into one compact "{quantity} {unit} · Required by {date}"
+     summary line — not a six-row read-only form (NDS-DES-05/06/07/09/12).
+     The title is never repeated here: the screen's own heading above this
+     component already names it, and every current caller supplies one, so
+     this component renders no heading of its own. -->
 <template>
-	<div class="kt-card kt-blueprint" style="margin-bottom: 16px; padding: 20px 24px">
-		<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-		<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-		<div class="kt-card-title" style="margin-bottom: 16px">{{ title }}</div>
-		<ReadonlyRow label="Description" :value="revision.description" />
-		<ReadonlyRow
-			label="Expected operational result"
-			:value="revision.expected_operational_result"
-		/>
-		<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px">
-			<ReadonlyRow
-				label="Indicative quantity"
-				:value="quantityLabel"
-				style="margin-top: 0"
-			/>
-			<ReadonlyRow
-				label="Required by"
-				:value="formatDate(revision.required_by_date)"
-				style="margin-top: 0"
-			/>
+	<div class="kt-factstack">
+		<div>
+			<div class="kt-label">Description</div>
+			<p class="kt-factstack-value">{{ revision.description }}</p>
+		</div>
+		<div>
+			<div class="kt-label">Expected result</div>
+			<p class="kt-factstack-value">{{ revision.expected_operational_result }}</p>
+		</div>
+		<div class="kt-factstack-summary">
+			<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1" /><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /><path d="M10 12h4" /></svg>
+			<span>{{ quantityWithUnit }}</span>
+			<span class="text-muted">·</span>
+			<span>Required by {{ formatDate(revision.required_by_date) }}</span>
 		</div>
 	</div>
 </template>
 
 <script setup>
 import { computed } from "vue";
-import ReadonlyRow from "./ReadonlyRow.vue";
-import { formatDate, quantityWithUnit } from "../data/format.js";
+import { formatDate } from "../data/format.js";
 
 const props = defineProps({
 	revision: { type: Object, required: true },
-	title: { type: String, default: "Requirement" },
 });
 
-const quantityLabel = computed(() => quantityWithUnit(props.revision));
+// "1 Programme" — Quantity and Unit read as one phrase in the compact
+// summary, not two separately labelled facts.
+const quantityWithUnit = computed(() => {
+	const value = props.revision.indicative_quantity;
+	if (value === null || value === undefined || value === "") return "";
+	const quantity = Number.isInteger(Number(value)) ? String(Number(value)) : String(value);
+	const unit = props.revision.unit_label || props.revision.unit || "";
+	return [quantity, unit].filter(Boolean).join(" ");
+});
 </script>

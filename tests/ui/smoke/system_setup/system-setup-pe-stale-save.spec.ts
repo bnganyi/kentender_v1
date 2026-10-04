@@ -56,6 +56,8 @@ test.describe("System setup — Procuring entity stale-save race", () => {
 		// currently holds, or `dirty` stays false for an unrelated, correct
 		// reason — use a fresh stamp each run.
 		const stamp = Date.now();
+		// Restored at the end: this spec edits the live site's one entity.
+		const original = await nameField.inputValue();
 		await nameField.fill(`Ministry of Health — RUN-CHG-001 check ${stamp}`);
 		await submit.click();
 
@@ -75,6 +77,16 @@ test.describe("System setup — Procuring entity stale-save race", () => {
 		// shown instead. Accepted, it re-disables once the round trip lands.
 		await expect(submit).toBeDisabled({ timeout: 10_000 });
 		await expect(page.locator('[data-testid="kt-setup-pe-error"]')).toHaveCount(0);
+
+		// Leave the entity as it was found (test data is always removed).
+		await page.unroute("**/api/method/kentender_core.api.site_configuration_api.get_system_setup_workspace");
+		await expect(success).toBeVisible({ timeout: 10_000 });
+		await nameField.fill(original);
+		await expect(submit).toBeEnabled({ timeout: 10_000 });
+		await submit.click();
+		await expect(submit).toBeDisabled({ timeout: 10_000 });
+		await page.reload({ waitUntil: "domcontentloaded" });
+		await expect(nameField).toHaveValue(original, { timeout: 20_000 });
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 });

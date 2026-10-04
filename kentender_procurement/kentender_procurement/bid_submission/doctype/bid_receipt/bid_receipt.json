@@ -1,0 +1,168 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-27 12:30:00.000000",
+ "description": "BDS-CHG-001 v0.8 §4.10: the bidder receipt, generated only from accepted custody evidence.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "receipt_reference",
+  "tender",
+  "tender_reference",
+  "tender_title",
+  "bid_workspace",
+  "bidder_name",
+  "submission_version",
+  "version_number",
+  "submitted_by",
+  "submitted_by_name",
+  "received_at",
+  "accepted_at",
+  "deadline_at",
+  "summary_json",
+  "predecessor_receipt",
+  "simulation",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "receipt_reference",
+   "fieldtype": "Data",
+   "label": "Receipt reference",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "label": "Tender",
+   "read_only": 1,
+   "options": "Tender",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_reference",
+   "fieldtype": "Data",
+   "label": "Tender reference",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "tender_title",
+   "fieldtype": "Data",
+   "label": "Tender title",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "bid_workspace",
+   "fieldtype": "Link",
+   "label": "Bid workspace",
+   "read_only": 1,
+   "options": "Bid Workspace",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_name",
+   "fieldtype": "Data",
+   "label": "Bidder",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "submission_version",
+   "fieldtype": "Data",
+   "label": "Submission version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Submitted bid version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "submitted_by",
+   "fieldtype": "Link",
+   "label": "Submitted by",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "submitted_by_name",
+   "fieldtype": "Data",
+   "label": "Submitted by name",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "received_at",
+   "fieldtype": "Datetime",
+   "label": "Received by tender-box service",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "accepted_at",
+   "fieldtype": "Datetime",
+   "label": "Accepted into tender box",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "deadline_at",
+   "fieldtype": "Datetime",
+   "label": "Deadline at submission",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "summary_json",
+   "fieldtype": "Long Text",
+   "label": "Submission summary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "predecessor_receipt",
+   "fieldtype": "Link",
+   "label": "Predecessor receipt",
+   "read_only": 1,
+   "options": "Bid Receipt"
+  },
+  {
+   "fieldname": "simulation",
+   "fieldtype": "Check",
+   "label": "Simulation",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-27 12:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "name": "Bid Receipt",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "autoname": "field:receipt_reference"
+}

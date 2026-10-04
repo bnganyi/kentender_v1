@@ -22,8 +22,6 @@ PLANNED_SIDEBAR_LABELS: frozenset[str] = frozenset(
 	{
 		"Home",
 		"Analytics",
-		"Evaluation",
-		"Awards",
 		"Contract Management",
 		"Supplier Management",
 		"Tender Configurations",
@@ -35,7 +33,6 @@ PLANNED_SIDEBAR_LABELS: frozenset[str] = frozenset(
 DISABLED_FOR_DEPLOYMENT_LABELS: frozenset[str] = frozenset(
 	{
 		"Configuration",
-		"Governance & Configuration",
 		"Strategy Alignment (full)",
 		"Budget & Funding (full)",
 		"Procurement Templates",

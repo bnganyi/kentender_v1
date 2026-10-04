@@ -3,8 +3,8 @@
 // surface (renders outside the Vue root, inherits neither state nor styles)
 // — a small in-Vue dialog instead. Verbatim copy of kentender_strategy's own
 // ConfirmDialog.vue (AGENTS.md §6.6 — each app keeps its own copy of pure,
-// non-cross-app components). Used by the Approval task's Return (with
-// reason) and Approve actions.
+// non-cross-app components). Used by the Approval task's Approve and the
+// editor's Submit for review (UAT issues #17/#22).
 import { ref, nextTick, watch, computed } from "vue";
 
 const props = defineProps({
@@ -52,6 +52,7 @@ function onConfirm() {
 	<div
 		v-if="open"
 		class="kt-dialog-backdrop"
+		data-testid="kt-confirm-dialog"
 		@keydown="onKeydown"
 		tabindex="-1"
 	>
@@ -69,8 +70,8 @@ function onConfirm() {
 				:maxlength="reasonMaxLength"
 			></textarea>
 			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-ghost" @click="$emit('cancel')">{{ __("Cancel") }}</button>
-				<button ref="confirmBtn" type="button" class="kt-btn kt-btn-primary" :disabled="!reasonValid" @click="onConfirm">
+				<button type="button" class="kt-btn kt-btn-ghost" data-testid="kt-confirm-cancel" @click="$emit('cancel')">{{ __("Cancel") }}</button>
+				<button ref="confirmBtn" type="button" class="kt-btn kt-btn-primary" :disabled="!reasonValid" data-testid="kt-confirm-ok" @click="onConfirm">
 					{{ confirmLabel }}
 				</button>
 			</div>

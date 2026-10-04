@@ -1,0 +1,238 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-01 09:00:00.000000",
+ "description": "\u00a74 decision: numbered; AO identity and time; exact opinion and report; reasons; supplier and amounts only for Award.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "decision_id",
+  "award_case",
+  "cycle",
+  "version",
+  "kind",
+  "outcome",
+  "committed",
+  "opinion",
+  "source_report",
+  "decided_by",
+  "decided_at",
+  "reason",
+  "next_action",
+  "next_action_owner",
+  "next_action_state",
+  "supplier_organisation",
+  "supplier_name",
+  "bid",
+  "bid_reference",
+  "submitted_amount",
+  "evaluated_amount",
+  "currency",
+  "notice_batch",
+  "notices_authorised",
+  "issue",
+  "predecessor_decision",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "decision_id",
+   "label": "Decision ID",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "award_case",
+   "label": "Award case",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cycle",
+   "label": "Cycle",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "version",
+   "label": "Version",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "kind",
+   "label": "Kind",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Initial\nCorrection"
+  },
+  {
+   "fieldname": "outcome",
+   "label": "Outcome",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Award\nNo award\nReturn for correction\nRequest corrected evaluation\nAuthorise reconsideration\nDecline reconsideration\nAuthorise revised notices"
+  },
+  {
+   "fieldname": "committed",
+   "label": "Committed",
+   "read_only": 1,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "opinion",
+   "label": "Opinion",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "source_report",
+   "label": "Source report",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "decided_by",
+   "label": "Decided by",
+   "read_only": 1,
+   "fieldtype": "Link",
+   "options": "User"
+  },
+  {
+   "fieldname": "decided_at",
+   "label": "Decided at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "reason",
+   "label": "Reason",
+   "read_only": 1,
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "next_action",
+   "label": "Next action",
+   "read_only": 1,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "next_action_owner",
+   "label": "Next action owner",
+   "read_only": 1,
+   "fieldtype": "Link",
+   "options": "User"
+  },
+  {
+   "fieldname": "next_action_state",
+   "label": "Next action state",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "\nOpen\nDone"
+  },
+  {
+   "fieldname": "supplier_organisation",
+   "label": "Supplier organisation",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "supplier_name",
+   "label": "Supplier name",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "bid",
+   "label": "Bid",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "bid_reference",
+   "label": "Bid reference",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "submitted_amount",
+   "label": "Submitted amount",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "evaluated_amount",
+   "label": "Evaluated amount",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "currency",
+   "label": "Currency",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "notice_batch",
+   "label": "Notice batch",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "notices_authorised",
+   "label": "Notices authorised",
+   "read_only": 1,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "issue",
+   "label": "Issue",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "predecessor_decision",
+   "label": "Predecessor decision",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "read_only": 1,
+   "fieldtype": "Data"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-01 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Award",
+ "name": "Award Decision",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:decision_id"
+}

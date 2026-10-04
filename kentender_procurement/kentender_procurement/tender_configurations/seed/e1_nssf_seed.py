@@ -37,16 +37,6 @@ PE_CODE = f"{SEED_PREFIX}-PE"
 
 
 def _clear_seed() -> None:
-	# Clear PoC electronic bids first (link to configuration)
-	if frappe.db.exists("DocType", "Electronic Bid Submission"):
-		bid_names = frappe.get_all(
-			"Electronic Bid Submission",
-			filters={"configuration": ("like", f"{SEED_PREFIX}%")},
-			pluck="name",
-		)
-		for bid in bid_names:
-			frappe.delete_doc("Electronic Bid Submission", bid, force=True, ignore_permissions=True)
-
 	config_names = set(
 		frappe.get_all(
 			"Tender Configuration",

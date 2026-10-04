@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "requisition_item_id",
+  "drawdown_line_id",
   "plan_item_line_id",
   "equipment_category",
   "item_name",
@@ -23,6 +24,13 @@
    "fieldtype": "Data",
    "label": "Requisition Item Id",
    "reqd": 1
+  },
+  {
+   "fieldname": "drawdown_line_id",
+   "fieldtype": "Data",
+   "label": "Drawdown line",
+   "description": "\u00a75.6 \u2014 the exact REQ drawdown line this item's quantity reconciles against.",
+   "read_only": 0
   },
   {
    "fieldname": "plan_item_line_id",

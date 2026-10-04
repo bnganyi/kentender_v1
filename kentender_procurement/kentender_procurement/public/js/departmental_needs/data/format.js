@@ -1,8 +1,10 @@
 // Display formatting for the Departmental Needs screens.
 //
-// §12.8: all dates display in Africa/Nairobi while service and audit instants
-// remain UTC. Frappe's own formatters already render in the site timezone, so
-// they are used rather than a second date library with its own opinion.
+// §12.8: all dates display in Africa/Nairobi. Instants are stored in the site
+// timezone (Frappe's own rule; owner decision 26 Sep 2026) and shown as
+// stored — UTC appears only in messages between modules. Frappe's own
+// formatters already render in the site timezone, so they are used rather
+// than a second date library with its own opinion.
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 

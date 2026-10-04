@@ -55,6 +55,7 @@ KENTENDER_APPS: tuple[str, ...] = (
 )
 
 CREATE_APP_RE = re.compile(r"createApp\(\s*([A-Za-z0-9_$]+)\s*[,)]")
+PORTAL_REGISTER_RE = re.compile(r"portal_page\.register\(")
 IMPORT_RE = re.compile(r"""import\s+([A-Za-z0-9_$]+)\s+from\s+["']([^"']+\.vue)["']""")
 
 
@@ -102,6 +103,21 @@ class TestIndustryDesignGate(FrappeTestCase):
 				allowlisted.append(bundle_path.name)
 				continue
 
+			if PORTAL_REGISTER_RE.search(src):
+				# A public portal surface (BDS-CHG-001 v0.8 plan OD-B) mounts
+				# inside the portal page, whose <body> carries .kt-industry; a
+				# second .kt-industry wrapper would repeat its full-viewport
+				# min-height and push the footer below the fold. The scope is
+				# checked on that one template instead.
+				portal_template = Path(frappe.get_app_path("kentender_core")) / "templates" / "kt_portal" / "base.html"
+				self.assertRegex(
+					portal_template.read_text(encoding="utf-8"),
+					r'<body class="(?:[^"]*\s)?kt-industry(?:\s[^"]*)?"',
+					f"{portal_template}: the portal page body must carry class=\"kt-industry\" for {bundle_path.name}",
+				)
+				checked += 1
+				continue
+
 			component_name = match.group(1)
 			imports = dict(IMPORT_RE.findall(src))
 			vue_rel = imports.get(component_name)
@@ -111,9 +127,11 @@ class TestIndustryDesignGate(FrappeTestCase):
 			vue_path = (bundle_path.parent / vue_rel).resolve()
 			self.assertTrue(vue_path.is_file(), vue_path)
 			vue_src = vue_path.read_text(encoding="utf-8")
-			self.assertIn(
-				'class="kt-industry"',
+			# The root carries the class; it may carry others beside it
+			# (`class="kt-industry kt-setup-root"`).
+			self.assertRegex(
 				vue_src,
+				r'class="(?:[^"]*\s)?kt-industry(?:\s[^"]*)?"',
 				f"{vue_path}: page root must wrap class=\"kt-industry\" (AGENTS.md §6.6) "
 				f"or its bundle ({bundle_path.name}) must be added to LEGACY_BUNDLE_ALLOWLIST "
 				f"in kentender_core/tests/test_industry_design_gate.py with a tracking comment",

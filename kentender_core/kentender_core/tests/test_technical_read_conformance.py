@@ -65,7 +65,16 @@ def _is_view_like_can_key(key: str) -> bool:
 	return any(word in lowered for word in _VIEW_WORDS)
 
 
-def _check_node(node: Any, path: str, failures: list[str]) -> None:
+# A probe may carry `setup_maintenance_exception` naming a controlled domain
+# exception that keeps configuration commands for the technical roles —
+# today only CFG-CHG-002 §3.1 CFG11-EX-001 (Administrator and System Manager
+# maintain System setup; otherwise nobody could). It relaxes the capability
+# check for that probe's own reads and nothing else: a denial is still a
+# failure, and every other module's probe is checked in full.
+_KNOWN_MAINTENANCE_EXCEPTIONS = {"CFG11-EX-001"}
+
+
+def _check_node(node: Any, path: str, failures: list[str], allow_commands: bool = False) -> None:
 	"""Walk one probe's result, checking every nested dict for a denial
 	outcome and every sign of decision authority handed to a technical
 	reader (KT-STD-001 v1.5 §3A.6)."""
@@ -81,28 +90,29 @@ def _check_node(node: Any, path: str, failures: list[str]) -> None:
 			# steps are keyed by step number (int). Only a string key can
 			# ever spell a `can_*` decision flag.
 			if (
-				isinstance(key, str)
+				not allow_commands
+				and isinstance(key, str)
 				and key.startswith("can_")
 				and key not in _TECHNICAL_ACTION_EXCEPTIONS
 				and not _is_view_like_can_key(key)
 				and value
 			):
 				failures.append(f"{path}.{key} == {value!r} (truthy, non-view capability) for a technical reader")
-			if key in ("actions", "available_actions") and isinstance(value, list):
+			if not allow_commands and key in ("actions", "available_actions") and isinstance(value, list):
 				for index, entry in enumerate(value):
 					if not isinstance(entry, dict):
 						continue
 					code = entry.get("code") or entry.get("name")
 					if code and not _is_view_like_can_key(str(code)):
 						failures.append(f"{path}.{key}[{index}] offers {code!r} (non-view action) to a technical reader")
-			if key == "permitted_actions" and isinstance(value, dict):
+			if not allow_commands and key == "permitted_actions" and isinstance(value, dict):
 				for action, allowed in value.items():
 					if allowed and not (isinstance(action, str) and _is_view_like_can_key(action)):
 						failures.append(f"{path}.permitted_actions.{action} == {allowed!r} (truthy) for a technical reader")
-			_check_node(value, f"{path}.{key}", failures)
+			_check_node(value, f"{path}.{key}", failures, allow_commands)
 	elif isinstance(node, (list, tuple)):
 		for index, item in enumerate(node):
-			_check_node(item, f"{path}[{index}]", failures)
+			_check_node(item, f"{path}[{index}]", failures, allow_commands)
 
 
 def _app_of(hook_path: str) -> str:
@@ -196,8 +206,11 @@ class TestTechnicalReadConformance(IntegrationTestCase):
 						except Exception as exc:  # noqa: BLE001 - re-raised with the probe label attached
 							raise AssertionError(f"probe {label} raised {exc!r}") from exc
 
+						exception = probe.get("setup_maintenance_exception")
+						if exception:
+							self.assertIn(exception, _KNOWN_MAINTENANCE_EXCEPTIONS, f"{label}: unknown exception {exception!r}")
 						failures: list[str] = []
-						_check_node(result, label, failures)
+						_check_node(result, label, failures, allow_commands=bool(exception))
 						if failures:
 							table.append(f"{label}: FAILED\n  " + "\n  ".join(failures))
 						else:

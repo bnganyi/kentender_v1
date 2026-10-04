@@ -1,54 +1,79 @@
 <script setup>
-// AUTH-ADR-001 v1.6 §13.2/§14.1 — the Organisation structure tab.
+// The Organisation structure tab, ported from C05-Organisation-Structure.dc.html
+// (AUTH-DES-01/02/08 and CFG v0.14 §10.12's missing-root and ambiguous
+// variants, D24).
 //
 // The tree is the Frappe tree control mounted inside the section — expand,
 // collapse and keyboard traversal are the framework's, never reimplemented
-// in Vue (§18.1, "Do not rebuild the Frappe tree control in Vue"). Vue owns
-// the surrounding composition: the detail panel, dialogs and states, all
-// ported from AUTH-DES-01/02 and the AUTH-DES-08 state copy.
-import { nextTick, onMounted, onUnmounted, reactive, ref } from "vue";
+// in Vue (AUTH v1.9 §13.1: the board draws it as a static list only to fix
+// the spacing around it). Vue owns the rest: the selected unit's facts and
+// actions, the dialogs and the states.
+//
+// The selected unit is part of the link (`#organisation-structure/{unit}`),
+// so reload and Back return to it.
+import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue";
+import { onSetupRevalidate } from "../composables/useRouteState.js";
 import ConfirmDialog from "../components/ConfirmDialog.vue";
 import PromptDialog from "../components/PromptDialog.vue";
 import UnitDetail from "../components/UnitDetail.vue";
 import { orgStructureApi } from "../data/orgStructureApi.js";
 import { siteConfigApi } from "../data/siteConfigApi.js";
 
-const emit = defineEmits(["repaired", "view-affected"]);
+const props = defineProps({
+	// §6/§11.1 — the Administrator-only repair authority, from the server's
+	// own capability projection rather than a role guess in the browser.
+	canRepair: { type: Boolean, default: false },
+	// The unit named by the link; empty selects the root.
+	unitId: { type: String, default: "" },
+});
+const emit = defineEmits(["repaired", "view-affected", "open"]);
 
 const loading = ref(true);
 const busy = ref(false);
 const loadError = ref("");
 const state = ref("");
+const conflicts = ref([]);
 const rootId = ref("");
-// AUTH-DES-01 renders the root row like every other: name, code chip,
-// status badge. The tree control only knows the root's label, so its code
-// and status ride along from the structure payload.
+// The tree control only knows the root's label; its code and status ride
+// along from the structure payload so the root row reads like every other.
 const rootMeta = ref(null);
 const selected = ref(null);
 const treeEl = ref(null);
 const dialog = reactive({ kind: "", value: "", error: "" });
+// The control that opened a dialog, so closing it returns focus there.
+let trigger = null;
 
 let treeWidget = null;
 let active = true;
+// frappe.ui.Tree fires on_click for a reloaded parent, and for the root as it
+// expands it on load; neither is a person choosing a unit, and following
+// them would rewrite the link (a reload on a unit's link would jump to the
+// root). Only an on_click shortly after a real click in the tree counts —
+// the control runs its own handler 100ms after the click.
+let reloading = false;
+let lastUserClick = 0;
+const USER_CLICK_WINDOW_MS = 1000;
+function noteUserClick() {
+	lastUserClick = Date.now();
+}
 
-// AUTH-DES-01 draws 12px chevrons on expandable rows and nothing on leaves —
-// not Frappe's folder/dot icons. frappe.ui.Tree accepts a custom icon_set;
-// the class="icon" hook is what tree.js swaps on expand/collapse.
+// Chevrons on expandable rows and nothing on leaves, not Frappe's folder/dot
+// icons. frappe.ui.Tree accepts a custom icon_set; the class="icon" hook is
+// what tree.js swaps on expand/collapse.
 const TREE_ICONS = {
 	open: '<svg class="icon kt-tree-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"></path></svg>',
 	closed: '<svg class="icon kt-tree-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m9 6 6 6-6 6"></path></svg>',
 	leaf: '<span class="kt-tree-leaf-spacer"></span>',
 };
 
-async function load({ keepSelection = true } = {}) {
+async function load() {
 	loading.value = true;
 	loadError.value = "";
 	try {
-		const result = await orgStructureApi.getStructure(
-			keepSelection && selected.value ? selected.value.id : ""
-		);
+		const result = await orgStructureApi.getStructure(props.unitId || "");
 		if (!active) return;
 		state.value = result.state;
+		conflicts.value = result.conflicts || [];
 		rootId.value = result.root || "";
 		rootMeta.value = (result.tree && result.tree[0]) || null;
 		selected.value = result.selected || null;
@@ -58,9 +83,8 @@ async function load({ keepSelection = true } = {}) {
 	} finally {
 		loading.value = false;
 	}
-	if (state.value === "ready" || state.value === "empty_root") {
-		// The tree host only exists once the loading card is gone, so the
-		// Frappe tree mounts after the post-loading render settles.
+	if (state.value === "ready") {
+		// The tree host only exists once the loading line is gone.
 		await nextTick();
 		mountTree();
 	}
@@ -83,8 +107,8 @@ function mountTree() {
 		with_skeleton: 0,
 		get_label: (node) => node.data?.label || node.label,
 		on_render: (node) => {
-			// AUTH-DES-01 — every row ends with its code chip and a status
-			// badge; the root uses the structure payload's own record.
+			// Every row ends with its code and a status badge; the root uses
+			// the structure payload's own record.
 			const data = node.is_root ? rootMeta.value || {} : node.data || {};
 			const code = data.unit_code || data.code || "";
 			const status = data.status || "";
@@ -105,48 +129,137 @@ function mountTree() {
 			node.$tree_link?.append(meta);
 		},
 		on_click: (node) => {
-			if (!active) return;
+			if (!active || reloading || Date.now() - lastUserClick > USER_CLICK_WINDOW_MS) return;
 			// A node's record id lives in node.data.value (the root's label is
 			// its display name, not its id).
 			const value = (node.data && node.data.value) || node.value;
-			if (value) select(value);
+			if (value && value !== selected.value?.id) emit("open", value);
 		},
 	});
+	highlight(selected.value?.id);
 }
 
 function selectedRootLabel() {
-	// The root node renders its unit name; the server projection carries it
-	// when the root is the current selection, else fall back to the id.
 	if (selected.value && selected.value.is_root) return selected.value.name;
-	return rootId.value;
+	return rootMeta.value?.name || rootId.value;
 }
 
+function highlight(unitId) {
+	const node = treeNodeFor(unitId);
+	if (!node || !treeWidget) return;
+	treeWidget.select_link(node);
+	treeWidget.set_selected_node(node);
+}
+
+// A stale response must never clobber a newer one — e.g. the framework's own
+// on_click side effect during reload_node() fires for the reloaded parent.
+let selectSeq = 0;
+
 async function select(unitId) {
+	const seq = ++selectSeq;
 	try {
-		selected.value = await orgStructureApi.getUnit(unitId);
+		const unit = await orgStructureApi.getUnit(unitId);
+		if (!active || seq !== selectSeq) return;
+		selected.value = unit;
+		highlight(unit.id);
 	} catch (error) {
+		if (!active || seq !== selectSeq) return;
+		loadError.value = error.message;
+	}
+}
+
+// The link names the selection: follow it (Back, a tree click, a reload).
+watch(
+	() => props.unitId,
+	(unitId) => {
+		if (state.value !== "ready") return;
+		const wanted = unitId || rootId.value;
+		if (wanted && wanted !== selected.value?.id) select(wanted);
+	}
+);
+
+function treeNodeFor(unitId) {
+	if (!treeWidget || !unitId) return null;
+	// The root node's key in frappe.ui.Tree is its display label, not its id.
+	if (unitId === rootId.value) return treeWidget.root_node;
+	return treeWidget.nodes[unitId] || null;
+}
+
+function updateNodeDisplay(node, unit) {
+	node.data = { ...(node.data || {}), value: node.data?.value ?? unit.id, label: unit.name, unit_code: unit.code, status: unit.status };
+	if (node.is_root) {
+		rootMeta.value = { ...(rootMeta.value || {}), name: unit.name, unit_code: unit.code, status: unit.status };
+	}
+	const label = node.$tree_link && node.$tree_link.find(".tree-label");
+	if (label && label.length) label.html(` ${treeWidget.get_node_label(node)}`);
+	node.$tree_link && node.$tree_link.find(".kt-tree-meta").remove();
+	treeWidget.on_render && treeWidget.on_render(node);
+}
+
+// Only the part of the tree that changed is refreshed. Rebuilding the whole
+// widget collapses every expanded branch back to the root and, on a long
+// tree, shrinks the page past the browser's unchanged scroll position.
+async function afterStructureChange({ parentId = null, focusUnit, updateNodeOnly = false } = {}) {
+	if (!treeWidget) {
+		await load();
+		emit("open", focusUnit);
+		return;
+	}
+	if (!updateNodeOnly) {
+		const parentNode = treeNodeFor(parentId);
+		if (!parentNode) {
+			await load();
+			emit("open", focusUnit);
+			return;
+		}
+		// A childless node renders as a leaf; force it back to "has children"
+		// before the reload, or frappe.ui.Tree's own expand logic — gated on
+		// this flag — leaves the freshly loaded child hidden.
+		parentNode.expandable = true;
+		reloading = true;
+		try {
+			await treeWidget.reload_node(parentNode);
+		} finally {
+			reloading = false;
+		}
+	}
+	const seq = ++selectSeq;
+	try {
+		const unit = await orgStructureApi.getUnit(focusUnit);
+		if (!active || seq !== selectSeq) return;
+		selected.value = unit;
+		const node = treeNodeFor(focusUnit);
+		if (node && updateNodeOnly) updateNodeDisplay(node, unit);
+		highlight(focusUnit);
+		emit("open", focusUnit);
+	} catch (error) {
+		if (!active || seq !== selectSeq) return;
 		loadError.value = error.message;
 	}
 }
 
 function openDialog(kind) {
+	trigger = document.activeElement;
 	dialog.kind = kind;
 	dialog.error = "";
 	dialog.value = kind === "rename" ? selected.value?.name || "" : "";
 }
-function closeDialog() {
+async function closeDialog() {
 	dialog.kind = "";
 	dialog.value = "";
 	dialog.error = "";
+	await nextTick();
+	if (trigger && trigger.isConnected) trigger.focus();
+	trigger = null;
 }
 
-async function run(action, { reload = true } = {}) {
+async function run(action) {
 	busy.value = true;
 	dialog.error = "";
 	try {
 		await action();
-		closeDialog();
-		if (reload) await load();
+		trigger = null;
+		await closeDialog();
 	} catch (error) {
 		dialog.error = error.message;
 	} finally {
@@ -154,13 +267,31 @@ async function run(action, { reload = true } = {}) {
 	}
 }
 
-const addUnit = () => run(() => orgStructureApi.addUnit(selected.value?.id || rootId.value, dialog.value));
+const addUnit = () =>
+	run(async () => {
+		const wasEmpty = state.value === "empty_root";
+		const parentId = selected.value?.id || rootId.value;
+		const result = await orgStructureApi.addUnit(parentId, dialog.value);
+		if (wasEmpty) {
+			// The empty state has no tree yet; the first unit brings it in.
+			await load();
+			emit("open", result.unit);
+			return;
+		}
+		await afterStructureChange({ parentId, focusUnit: result.unit });
+	});
 const renameUnit = () =>
-	run(() => orgStructureApi.renameUnit(selected.value.id, dialog.value, selected.value.expected_version));
-const deactivateUnit = () =>
-	run(() => orgStructureApi.setActive(selected.value.id, false, selected.value.expected_version));
-const reactivateUnit = () =>
-	run(() => orgStructureApi.setActive(selected.value.id, true, selected.value.expected_version));
+	run(async () => {
+		const unitId = selected.value.id;
+		await orgStructureApi.renameUnit(unitId, dialog.value, selected.value.expected_version);
+		await afterStructureChange({ focusUnit: unitId, updateNodeOnly: true });
+	});
+const setActive = (value) =>
+	run(async () => {
+		const unitId = selected.value.id;
+		await orgStructureApi.setActive(unitId, value, selected.value.expected_version);
+		await afterStructureChange({ focusUnit: unitId, updateNodeOnly: true });
+	});
 
 async function repair() {
 	busy.value = true;
@@ -168,7 +299,8 @@ async function repair() {
 	try {
 		await siteConfigApi.repairRoot();
 		emit("repaired");
-		await load({ keepSelection: false });
+		emit("open", "");
+		await load();
 	} catch (error) {
 		loadError.value = error.message;
 	} finally {
@@ -176,6 +308,12 @@ async function repair() {
 	}
 }
 
+// Kept alive by the root: a return to this tab re-reads the selected unit in
+// place. The tree keeps its expanded branches — re-mounting it would not.
+onSetupRevalidate(() => {
+	if (state.value === "ready" && selected.value) select(selected.value.id);
+	else load();
+});
 onMounted(load);
 onUnmounted(() => {
 	active = false;
@@ -184,70 +322,84 @@ onUnmounted(() => {
 </script>
 
 <template>
-	<section class="kt-setup-section" data-testid="kt-setup-org">
-		<div class="kt-section-head">
-			<div>
-				<h2 class="kt-section-title">{{ __("Organisation structure") }}</h2>
-				<p class="kt-muted">
-					{{ __("Maintain the departments and organisational units used to scope KenTender responsibilities.") }}
-				</p>
-			</div>
-		</div>
+	<section class="kt-setup-section is-flow" data-testid="kt-setup-org">
+		<div class="kt-eyebrow">{{ __("System setup") }}</div>
+		<h2 style="margin:4px 0 6px">{{ __("Organisation structure") }}</h2>
+		<p class="card-body" style="margin:0 0 24px;max-width:70ch">
+			{{ __("Maintain the departments and organisational units used to scope KenTender responsibilities.") }}
+		</p>
 
-		<div v-if="loading" class="kt-card kt-blueprint" data-testid="kt-org-loading">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<span class="kt-eyebrow">{{ __("Loading") }}</span>
+		<div v-if="loading" role="status" aria-live="polite" data-testid="kt-org-loading">
+			<p class="text-muted" style="margin:0 0 10px">{{ __("Loading organisation structure…") }}</p>
 			<div class="kt-skel" style="width:80%" />
 			<div class="kt-skel" style="width:64%" />
 		</div>
 
-		<div v-else-if="loadError" class="kt-card kt-blueprint kt-empty" data-testid="kt-org-error">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<h2>{{ __("System setup could not be loaded") }}</h2>
-			<p>{{ __("Try again. If the problem continues, contact support.") }}</p>
+		<div v-else-if="loadError" class="kt-notice is-critical" role="alert" data-testid="kt-org-error">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+			<div class="kt-notice-body"><strong>{{ __("System setup could not be loaded.") }}</strong> {{ __("Try again. If the problem continues, contact support.") }}</div>
 			<button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button>
 		</div>
 
-		<!-- AUTH-DES-08 — missing root; never an empty successful tree -->
-		<div v-else-if="state === 'needs_repair'" class="kt-card kt-blueprint kt-empty" data-testid="kt-org-needs-repair">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<h2>{{ __("Organisation structure needs repair") }}</h2>
-			<p>{{ __("The root organisation unit is missing. Run the governed repair before assigning responsibilities.") }}</p>
-			<button
-				type="button"
-				class="kt-btn kt-btn-secondary"
-				:disabled="busy"
-				data-testid="kt-org-repair"
-				@click="repair"
-			>{{ __("Run governed repair") }}</button>
+		<!-- CFG §10.12 missing root: the governed repair for the Administrator,
+		     the escalation for a System Manager; never an empty tree. -->
+		<div v-else-if="state === 'needs_repair'" class="kt-notice is-critical" role="alert" style="align-items:flex-start" data-testid="kt-org-needs-repair">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+			<div class="kt-notice-body kt-notice-stack">
+				<strong>{{ __("Organisation structure needs repair") }}</strong>
+				<span>{{ __("The top-level organisation unit is missing.") }}</span>
+				<span v-if="!canRepair" data-testid="kt-org-repair-escalation">{{ __("Ask an Administrator to repair it.") }}</span>
+				<button
+					v-if="canRepair"
+					type="button"
+					class="kt-btn kt-btn-primary"
+					style="margin-top:6px"
+					:disabled="busy"
+					data-testid="kt-org-repair"
+					@click="repair"
+				>{{ __("Repair organisation root") }}</button>
+			</div>
 		</div>
 
-		<template v-else>
-			<!-- AUTH-DES-08 — root exists with no children -->
-			<div v-if="state === 'empty_root'" class="kt-setup-notice" data-testid="kt-org-empty">
-				<h3>{{ __("No departments or units yet") }}</h3>
-				<p>{{ __("Add the first organisation unit beneath {0}.", [selected ? selected.name : rootId]) }}</p>
+		<!-- CFG §10.12 ambiguous structure: no repair action for either role. -->
+		<div v-else-if="state === 'ambiguous'" class="kt-notice is-critical" role="alert" style="align-items:flex-start" data-testid="kt-org-ambiguous">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+			<div class="kt-notice-body kt-notice-stack">
+				<strong>{{ __("Organisation structure needs repair") }}</strong>
+				<span>{{ __("The organisation structure cannot be repaired automatically.") }}</span>
+				<span>{{ __("Contact support with the listed conflicts.") }}</span>
+				<ul class="kt-org-conflicts" data-testid="kt-org-conflicts">
+					<li v-for="conflict in conflicts" :key="conflict">{{ conflict }}</li>
+				</ul>
 			</div>
+		</div>
 
-			<div class="kt-org-columns">
-				<div class="kt-card kt-blueprint kt-org-tree-card" data-testid="kt-org-tree">
-					<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-					<div class="kt-card-title">{{ __("Organisation units") }}</div>
-					<div ref="treeEl" class="kt-org-tree-host" />
-				</div>
-				<UnitDetail
-					v-if="selected"
-					:unit="selected"
-					:busy="busy"
-					@add="openDialog('add')"
-					@rename="openDialog('rename')"
-					@deactivate="openDialog('deactivate')"
-					@reactivate="openDialog('reactivate')"
-					@view-affected="emit('view-affected', selected.id)"
-				/>
-			</div>
-		</template>
+		<!-- AUTH-DES-08 empty: the root exists with nothing beneath it. -->
+		<div v-else-if="state === 'empty_root'" class="kt-org-empty" data-testid="kt-org-empty">
+			<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--kt-color-neutral-400)" stroke-width="1.5" aria-hidden="true" style="margin:0 auto 12px"><path d="M12 3v6" /><rect x="8" y="3" width="8" height="6" /><path d="M5 15v-3h14v3" /><rect x="2" y="15" width="6" height="6" /><rect x="16" y="15" width="6" height="6" /></svg>
+			<p style="font-weight:600;margin:0 0 4px">{{ __("No departments or units yet") }}</p>
+			<p class="card-body" style="margin:0 0 16px">{{ __("Add the first organisation unit beneath {0}.", [selected ? selected.name : rootId]) }}</p>
+			<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-org-empty-add" @click="openDialog('add')">
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add organisation unit") }}
+			</button>
+		</div>
 
+		<!-- AUTH-DES-01: the tree beside the selected unit. -->
+		<div v-else-if="state === 'ready'" class="kt-org-columns" data-testid="kt-org-tree">
+			<div ref="treeEl" class="kt-org-tree-host" :aria-label="__('Organisation units')" @click.capture="noteUserClick" />
+			<UnitDetail
+				v-if="selected"
+				:unit="selected"
+				:busy="busy"
+				@add="openDialog('add')"
+				@rename="openDialog('rename')"
+				@deactivate="openDialog('deactivate')"
+				@reactivate="openDialog('reactivate')"
+				@view-affected="emit('view-affected', selected.id)"
+			/>
+		</div>
+
+		<!-- AUTH-DES-02 -->
 		<PromptDialog
 			v-if="dialog.kind === 'add'"
 			v-model="dialog.value"
@@ -283,7 +435,7 @@ onUnmounted(() => {
 			destructive
 			:error="dialog.error"
 			:busy="busy"
-			@confirm="deactivateUnit"
+			@confirm="setActive(false)"
 			@cancel="closeDialog"
 		/>
 		<ConfirmDialog
@@ -293,7 +445,7 @@ onUnmounted(() => {
 			:confirm-label="__('Reactivate')"
 			:error="dialog.error"
 			:busy="busy"
-			@confirm="reactivateUnit"
+			@confirm="setActive(true)"
 			@cancel="closeDialog"
 		/>
 	</section>

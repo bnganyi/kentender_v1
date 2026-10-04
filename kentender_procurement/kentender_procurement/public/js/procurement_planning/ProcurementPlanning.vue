@@ -30,46 +30,33 @@
 				@reset-financial-year="onResetFy"
 				@open-departmental-plan="onOpenDepartmentalPlan"
 				@navigate="onNavigate"
+				@prepare-update="onPreparePlanUpdate"
 			/>
 
 			<template v-else>
-				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<div v-for="row in 3" :key="row" class="pln-skel-row">
-						<div class="kt-skel" style="width: 72%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 44%"></div>
-					</div>
-				</div>
-				<!-- §9/§11.18 — a masked "not found" (a record that exists but the
-				     actor may not read) is a calm, expected state, never the
-				     technical-failure panel below: no "Try again", no support
-				     reference (reported live 2026-09-11 as a departmental actor's
-				     direct link reading as a crash). Shares data-testid="pln-error"
-				     with the load-error panel so either state satisfies the one
-				     "this record page has an error" locator every spec already uses. -->
-				<div v-else-if="notAvailable" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<h3>This record isn't available to you</h3>
-					<p>It may not exist, or you may not have access to it.</p>
-					<button
-						type="button" class="kt-btn kt-btn-secondary"
-						data-testid="pln-not-found-back"
-						@click="frappe.set_route(WORKSPACE_PAGE)"
-					>Go to Procurement Planning</button>
-				</div>
-				<!-- PLN-DES-16 load error — one component for every record page -->
-				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<h3>Procurement Planning could not be loaded</h3>
-					<p>Try again. If the problem continues, quote the support reference shown below.</p>
-					<button type="button" class="kt-btn kt-btn-secondary" @click="load">Try again</button>
-					<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
-				</div>
+				<CommonStates v-if="loading" kind="loading-review" testid="pln-loading" />
+				<!-- §9/§11.18, U21-MASKED — a masked "not found" (a record that
+				     exists but the actor may not read) is a calm, expected state,
+				     never the technical-failure panel below: no "Try again", no
+				     support reference (reported live 2026-09-11 as a departmental
+				     actor's direct link reading as a crash). Shares
+				     testid="pln-error" with the load-error panel so either
+				     state satisfies the one "this record page has an error"
+				     locator every spec already uses. -->
+				<CommonStates
+					v-else-if="notAvailable"
+					kind="masked"
+					testid="pln-error"
+					@action="frappe.set_route(WORKSPACE_PAGE)"
+				/>
+				<!-- U21-LOAD-FAILURE — one component for every record page -->
+				<CommonStates
+					v-else-if="error"
+					kind="load-failure"
+					testid="pln-error"
+					:support-ref="supportRef"
+					@action="load"
+				/>
 
 				<template v-else-if="screen === 'dpp'">
 					<DppPlanScreen
@@ -80,12 +67,35 @@
 						@update:certified="certified = $event"
 						@view-accepted-needs="onViewAcceptedNeeds"
 						@add-direct="go(dppReference, 'add-direct')"
+						:funding-entry-id="fundingEntryId"
+						:funding-editor="editor"
+						:funding-budget-line="fundingBudgetLine"
+						:funding-amount="fundingAmount"
 						@open-entry="onOpenEntry"
+						@restore-entry="onRestoreDisposition"
+						@open-funding="onOpenFunding"
+						@save-funding="onSaveEntryFunding"
+						@close-funding="onCloseFunding"
+						@exclude-entry="onExcludeEntry"
+						@correct-source="onViewAcceptedNeeds"
+						@update:funding-budget-line="fundingBudgetLine = $event"
+						@update:funding-amount="fundingAmount = $event"
 						@back="frappe.set_route(WORKSPACE_PAGE)"
 						@save-draft="load({ quiet: true })"
 						@submit="onSubmit"
 						@create-update="onCreateUpdate"
 						@open-task="(route) => frappe.set_route(...route)"
+					/>
+					<!-- U03-EXCLUDE — the governed exclusion reason, over the
+					     plan, for the requirement whose panel is open. -->
+					<NotProceedDialog
+						v-if="notProceedDialog"
+						:pending="pending"
+						:error="errorSummary"
+						:title="notProceedEntry?.title"
+						:reference="notProceedEntry?.reference_line"
+						@confirm="onNotProceedConfirm"
+						@cancel="notProceedDialog = false; notProceedEntry = null"
 					/>
 				</template>
 
@@ -94,21 +104,21 @@
 						:editor="editor"
 						:pending="pending"
 						:error-summary="errorSummary"
-						@save-funding="onSaveFunding"
 						@save-direct="onSaveDirect"
+						@remove="onRemoveDirect"
 						@cancel="go(dppReference)"
 					/>
 				</template>
 
 				<template v-else-if="screen === 'dpp-review'">
 					<DppValidationScreen
-						:detail="validation"
+						:task="validation"
 						:classifications="classifications"
 						:pending="pending"
-						:error-summary="errorSummary"
-						@classify="onClassify"
+						@set-classification="onClassify"
 						@accept="onAccept"
-						@open-return-dialog="returnDialog = true"
+						@return-to-department="returnDialog = true"
+						@view-requirement="onViewRequirement"
 					/>
 					<ReturnIssuesDialog
 						v-if="returnDialog"
@@ -120,26 +130,75 @@
 					/>
 				</template>
 
-				<template v-else-if="screen === 'plan' && annualPlan.active_view">
-					<ActivePlanScreen
-						:plan="annualPlan"
+				<!-- PLN-CHG-001 v1.23 §10.5 — the accepted-classification record
+				     and its correction panel (U06-ACCEPTED-CLASSIFICATION /
+				     U06-CORRECT-CLASSIFICATION). -->
+				<template v-else-if="screen === 'dpp-classification'">
+					<ClassificationEvidenceScreen
+						:evidence="classificationEvidence"
+						:panel="classificationPanel"
+						:new-type="classificationNewType"
+						:reason="classificationReason"
+						:error="errorSummary"
+						:pending="pending"
+						@correct="onOpenClassificationCorrection"
+						@cancel="onCancelClassificationCorrection"
+						@save="onSaveClassificationCorrection"
+						@update:new-type="classificationNewType = $event"
+						@update:reason="classificationReason = $event"
+					/>
+				</template>
+
+				<!-- PLN-CHG-001 v1.23 §10.13 — procurement progress against the
+				     plan in force (U14). This replaces the v1.12 "active plan"
+				     screen, whose forecast column and cascade dialog the
+				     deferred forecast facility removed (PLN23-CHG-001). -->
+				<template v-else-if="screen === 'progress'">
+					<ProgressScreen
+						:progress="progress"
 						:pending="pending"
 						:error-summary="errorSummary"
-						@begin-update="onBeginUpdate"
 						@navigate="onNavigate"
-						@back="frappe.set_route(WORKSPACE_PAGE)"
-						@shift="onOpenShift"
+						@view-corrections="onViewCorrections"
+						@back="frappe.set_route(PLAN_PAGE, planReference)"
 					/>
-					<ShiftScheduleDialog
-						v-if="shift"
-						:milestone-label="shift.label"
-						:new-date="shift.newDate"
-						:rows="shift.rows"
+				</template>
+
+				<!-- §10.15 — the correction requests against one purchase (U16). -->
+				<template v-else-if="screen === 'corrections'">
+					<CorrectionRequestsScreen
+						:task="corrections"
+						:open-issue="openIssue"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@open-issue="onOpenIssue"
+						@prepare-correction="onPrepareCorrection"
+						@record-completed="completeRequest = $event"
+						@close-without-change="noChangeRequest = $event"
+						@navigate="onNavigate"
+						@back="frappe.set_route(PLAN_ITEM_PAGE, planItemId)"
+					/>
+					<RecordCorrectionDialog
+						v-if="completeRequest"
+						:request="completeRequest"
+						:correcting-plan="corrections.correcting_plan || {}"
 						:pending="pending"
 						:error="errorSummary"
-						@date-change="onShiftDateChange"
-						@confirm="onConfirmShift"
-						@cancel="shift = null"
+						@confirm="onRecordCorrectionCompleted"
+						@cancel="completeRequest = null"
+					/>
+					<ReasonDialog
+						v-if="noChangeRequest"
+						testid="cor-no-change-dialog"
+						title="Close without a plan change"
+						:intro="`${noChangeRequest.change_required} — requested from ${noChangeRequest.detail.requisition_reference || noChangeRequest.requested_from}.`"
+						label="Reason"
+						confirm-label="Close request"
+						:min-length="20"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onCloseWithoutChange"
+						@cancel="noChangeRequest = null"
 					/>
 				</template>
 
@@ -149,7 +208,40 @@
 						:pending="pending"
 						:error-summary="errorSummary"
 						@retry="onRetryPublication"
+						@reconcile="onReconcilePublication"
+						@record-treasury="treasuryDialog = true"
+						@correct-treasury="treasuryDialog = true"
+						@request-withdrawal="withdrawalDialog = 'request'"
+						@decide-withdrawal="withdrawalDialog = 'decision'"
+						@explain-late="lateExplanationDialog = true"
+						@navigate="onNavigate"
 						@back="publication.plan_reference ? frappe.set_route(PLAN_PAGE, publication.plan_reference) : frappe.set_route(WORKSPACE_PAGE)"
+					/>
+					<LateExplanationDialog
+						v-if="lateExplanationDialog"
+						:financial-year-started="publication.late_activation?.financial_year_started_display || ''"
+						:activated-at="publication.late_activation?.activated_display || ''"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onRecordLateExplanation"
+						@cancel="lateExplanationDialog = false"
+					/>
+					<TreasurySubmissionDialog
+						v-if="treasuryDialog"
+						:task="publication"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onRecordTreasury"
+						@cancel="treasuryDialog = false"
+					/>
+					<WithdrawalDialog
+						v-if="withdrawalDialog"
+						:task="publication"
+						:mode="withdrawalDialog"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onWithdrawal"
+						@cancel="withdrawalDialog = ''"
 					/>
 				</template>
 
@@ -164,19 +256,32 @@
 					</div>
 					<AnnualPlanScreen
 						:plan="annualPlan"
+						:selected="selectedSources"
 						:pending="pending"
 						:error-summary="errorSummary"
 						@open-form-dialog="formDialog = true"
 						@navigate="onNavigate"
-						@back="frappe.set_route(WORKSPACE_PAGE)"
+						@toggle-source="onToggleSource"
+						@view-requirement="onViewPlanRequirement"
 						@request-funding="onRequestPlanFunding"
 						@submit-consolidated="onSubmitPlanRequested"
-						@confirm-splitting="splittingDialog = true"
+						@cancel-update="cancelUpdateDialog = true"
 						@open-task="(route) => frappe.set_route(...route)"
+						@save-details="onSaveVersionDetails"
+						@guidance-command="onPlanGuidanceCommand"
+					/>
+					<CancelUpdateDialog
+						v-if="cancelUpdateDialog"
+						:pending="pending"
+						:error="errorSummary"
+						:reason="cancelUpdateReason"
+						@update:reason="cancelUpdateReason = $event"
+						@confirm="onCancelPlanUpdate"
+						@cancel="cancelUpdateDialog = false; cancelUpdateReason = ''"
 					/>
 					<FormPlanItemsDialog
 						v-if="formDialog"
-						:entries="annualPlan.unallocated_sources || []"
+						:entries="selectedSourceRows"
 						:pending="pending"
 						:error="errorSummary"
 						@confirm="onFormConfirm"
@@ -214,8 +319,17 @@
 						:pending="pending"
 						:error-summary="errorSummary"
 						@save="onSavePlanItem"
-						@dissolve="onDissolvePlanItem"
+						@remove="dissolveDialog = true"
 						@back="onBackToPlan"
+						@view-classification="onViewItemClassification"
+					/>
+					<DissolveItemDialog
+						v-if="dissolveDialog"
+						:sources="planItem.sources || []"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onDissolvePlanItem"
+						@cancel="dissolveDialog = false"
 					/>
 				</template>
 
@@ -237,20 +351,36 @@
 				</template>
 
 				<template v-else-if="screen === 'governance'">
-					<GovernanceTaskScreen
+					<ReviewScreen
 						:task="governanceTask"
+						:resolution="collectiveResolution"
+						:late-reason="lateReason"
 						:pending="pending"
 						:error-summary="errorSummary"
 						@confirm="onGovernanceConfirm"
 						@open-return-dialog="governanceReturnDialog = true"
+						@back="frappe.set_route(PLAN_PAGE, governanceTask.plan_reference || '')"
+						@download-pack="onDownloadReviewPack"
+						@view-evidence="onNavigate($event.route)"
+						@update:resolution="collectiveResolution = $event"
+						@update:late-reason="lateReason = $event"
 					/>
-					<GovernanceReturnDialog
+					<ReturnPlanDialog
 						v-if="governanceReturnDialog"
 						:dialog="governanceTask.return_dialog"
 						:pending="pending"
 						:error="errorSummary"
 						@confirm="onGovernanceReturn"
 						@cancel="governanceReturnDialog = false"
+					/>
+				</template>
+
+				<template v-else-if="screen === 'governance-source'">
+					<SourceEvidenceScreen
+						:evidence="sourceEvidence"
+						@navigate="onNavigate"
+						@view-newer="onViewNewerRequirement"
+						@reload="load"
 					/>
 				</template>
 			</template>
@@ -264,21 +394,34 @@ import { useRouteState } from "../pln_shared/composables/useRouteState.js";
 import { usePageRail } from "../pln_shared/composables/usePageRail.js";
 import * as api from "./data/planningApi.js";
 import WorkspaceScreen from "./components/WorkspaceScreen.vue";
+import CommonStates from "./components/CommonStates.vue";
 import DppPlanScreen from "./components/DppPlanScreen.vue";
 import DppEntryEditorScreen from "./components/DppEntryEditorScreen.vue";
 import DppValidationScreen from "./components/DppValidationScreen.vue";
+import ClassificationEvidenceScreen from "./components/ClassificationEvidenceScreen.vue";
 import ReturnIssuesDialog from "./components/ReturnIssuesDialog.vue";
+import NotProceedDialog from "./components/NotProceedDialog.vue";
 import AnnualPlanScreen from "./components/AnnualPlanScreen.vue";
 import FormPlanItemsDialog from "./components/FormPlanItemsDialog.vue";
 import ReasonDialog from "./components/ReasonDialog.vue";
-import ActivePlanScreen from "./components/ActivePlanScreen.vue";
-import ShiftScheduleDialog from "./components/ShiftScheduleDialog.vue";
+import CancelUpdateDialog from "./components/CancelUpdateDialog.vue";
+import DissolveItemDialog from "./components/DissolveItemDialog.vue";
+// U11/U12. These three were used in the template but never imported, so the
+// governance review has never actually rendered — the v1.18 cycle stopped
+// before this slice.
+import ReviewScreen from "./components/ReviewScreen.vue";
+import ReturnPlanDialog from "./components/ReturnPlanDialog.vue";
+import SourceEvidenceScreen from "./components/SourceEvidenceScreen.vue";
+import ProgressScreen from "./components/ProgressScreen.vue";
+import CorrectionRequestsScreen from "./components/CorrectionRequestsScreen.vue";
+import RecordCorrectionDialog from "./components/RecordCorrectionDialog.vue";
 import PublicationResultScreen from "./components/PublicationResultScreen.vue";
+import LateExplanationDialog from "./components/LateExplanationDialog.vue";
+import TreasurySubmissionDialog from "./components/TreasurySubmissionDialog.vue";
+import WithdrawalDialog from "./components/WithdrawalDialog.vue";
 import PlanItemEditorScreen from "./components/PlanItemEditorScreen.vue";
 import FinanceTaskScreen from "./components/FinanceTaskScreen.vue";
 import FinanceReturnDialog from "./components/FinanceReturnDialog.vue";
-import GovernanceTaskScreen from "./components/GovernanceTaskScreen.vue";
-import GovernanceReturnDialog from "./components/GovernanceReturnDialog.vue";
 
 const WORKSPACE_PAGE = "procurement-planning";
 const DPP_PAGE = "departmental-procurement-plan";
@@ -303,21 +446,56 @@ const supportRef = ref("");
 const workspace = ref({});
 const dpp = ref({});
 const editor = ref({});
+// §10.4 U03-FUNDING — which requirement's funding panel is open beneath its
+// own row, and the department's own unsaved draft of it. The inputs are bound
+// to this, never to the server echo (AGENTS.md §6.4).
+const fundingEntryId = ref("");
+const fundingBudgetLine = ref("");
+const fundingAmount = ref("");
 const certified = ref(false);
 const validation = ref({});
 const classifications = ref({});
+const classificationEvidence = ref({});
+const classificationPanel = ref(null);
+const classificationNewType = ref("");
+const classificationReason = ref("");
 const returnDialog = ref(false);
+const notProceedDialog = ref(false);
+const notProceedEntry = ref(null);
 const annualPlan = ref({});
 const planItem = ref({});
 const formDialog = ref(false);
+// §10.7 — the Planner selects sources on U07 and then chooses how they become
+// purchases in U08; the selection lives here so the dialog sees exactly what
+// was ticked.
+const selectedSources = ref([]);
+const cancelUpdateDialog = ref(false);
+const dissolveDialog = ref(false);
+// §10.10 — a collective body's resolution reference, and the AO's late-start
+// explanation, are inputs to the decision itself rather than separate dialogs.
+const collectiveResolution = ref("");
+const treasuryDialog = ref(false);
+const lateExplanationDialog = ref(false);
+// §10.12 — "" (closed), "request" (the AO's) or "decision" (the statutory
+// authority's). The two are different dialogs for different people.
+const withdrawalDialog = ref("");
+const lateReason = ref("");
+const cancelUpdateReason = ref("");
 const splittingDialog = ref(false);
 const lateActivationDialog = ref(false);
 const financeTask = ref({});
 const financeReturnDialog = ref(false);
 const governanceTask = ref({});
+// §10.11 U12 — one reviewed allocation's own departmental evidence.
+const sourceEvidence = ref({});
 const governanceReturnDialog = ref(false);
 const publication = ref({});
-const shift = ref(null);
+const progress = ref({});
+const corrections = ref({});
+// Which issue's mechanics the Planner has deliberately opened (§10.15).
+const openIssue = ref("");
+const completeRequest = ref(null);
+const noChangeRequest = ref(null);
 
 // §10/§12.1 — the Financial Year is a visible filter only; the server
 // resolves the remembered preference on a bare load.
@@ -348,22 +526,34 @@ const screen = computed(() => {
 	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "dpp-review" && segments.value[1]) {
 		return "dpp-review";
 	}
+	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "dpp-classification" && segments.value[1]) {
+		return "dpp-classification";
+	}
 	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "finance" && segments.value[1]) {
 		return "finance";
 	}
 	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "review" && segments.value[1]) {
-		return "governance";
+		// §10.11 — the evidence of one source, within its own review.
+		return segments.value[2] === "source" && segments.value[3] ? "governance-source" : "governance";
 	}
 	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "publication" && segments.value[1]) {
 		return "publication";
 	}
-	if (pageSlug.value === PLAN_PAGE && planReference.value) return "plan";
-	if (pageSlug.value === PLAN_ITEM_PAGE && planItemId.value) return "plan-item";
+	if (pageSlug.value === PLAN_PAGE && planReference.value) {
+		return segments.value[1] === "progress" ? "progress" : "plan";
+	}
+	if (pageSlug.value === PLAN_ITEM_PAGE && planItemId.value) {
+		return segments.value[1] === "corrections" ? "corrections" : "plan-item";
+	}
 	return "workspace";
 });
 
 const validationTaskId = computed(() =>
 	segments.value[0] === "dpp-review" ? segments.value[1] || "" : ""
+);
+
+const classificationSubmissionId = computed(() =>
+	segments.value[0] === "dpp-classification" ? segments.value[1] || "" : ""
 );
 
 const financeTaskId = computed(() =>
@@ -372,6 +562,10 @@ const financeTaskId = computed(() =>
 
 const governanceTaskId = computed(() =>
 	segments.value[0] === "review" ? segments.value[1] || "" : ""
+);
+
+const sourceKey = computed(() =>
+	segments.value[2] === "source" ? segments.value.slice(3).join("/") : ""
 );
 
 const publicationId = computed(() =>
@@ -390,14 +584,22 @@ const screenKey = computed(() => {
 			return `dpp-entry:${dppReference.value}:${entryId.value || "new"}`;
 		case "dpp-review":
 			return `dpp-review:${validationTaskId.value}`;
+		case "dpp-classification":
+			return `dpp-classification:${classificationSubmissionId.value}`;
 		case "plan":
 			return `plan:${planReference.value}`;
+		case "progress":
+			return `progress:${planReference.value}`;
 		case "plan-item":
 			return `plan-item:${planItemId.value}`;
+		case "corrections":
+			return `corrections:${planItemId.value}`;
 		case "finance":
 			return `finance:${financeTaskId.value}`;
 		case "governance":
 			return `governance:${governanceTaskId.value}`;
+		case "governance-source":
+			return `governance-source:${governanceTaskId.value}:${sourceKey.value}`;
 		case "publication":
 			return `publication:${publicationId.value}`;
 		default:
@@ -433,14 +635,22 @@ function fetchFor(scr) {
 			return api.getDppEntryEditor(dppReference.value, entryId.value || undefined);
 		case "dpp-review":
 			return api.getDppValidationTask(validationTaskId.value);
+		case "dpp-classification":
+			return api.getAcceptedDppClassification(classificationSubmissionId.value);
 		case "plan":
 			return api.getAnnualPlan(planReference.value);
+		case "progress":
+			return api.getProcurementProgress(planReference.value);
 		case "plan-item":
 			return api.getPlanItem(planItemId.value);
+		case "corrections":
+			return api.getPlanCorrectionRequests(planItemId.value);
 		case "finance":
 			return api.getFinanceTask(financeTaskId.value);
 		case "governance":
 			return api.getPlanGovernanceTask(governanceTaskId.value);
+		case "governance-source":
+			return api.getSourceEvidence(governanceTaskId.value, sourceKey.value);
 		case "publication":
 			return api.getPublicationTask(publicationId.value);
 		default:
@@ -459,9 +669,23 @@ function applyLoaded(scr, loaded) {
 		case "dpp":
 			dpp.value = loaded;
 			certified.value = false;
+			// A reload closes the funding panel: it was opened against an
+			// entry whose state may have moved.
+			fundingEntryId.value = "";
+			fundingBudgetLine.value = "";
+			fundingAmount.value = "";
 			break;
 		case "dpp-entry":
 			editor.value = loaded;
+			notProceedDialog.value = false;
+			break;
+		case "dpp-classification":
+			classificationEvidence.value = loaded;
+			// A reload closes the panel: it was opened against evidence that
+			// may have moved.
+			classificationPanel.value = null;
+			classificationNewType.value = "";
+			classificationReason.value = "";
 			break;
 		case "dpp-review":
 			validation.value = loaded;
@@ -470,13 +694,25 @@ function applyLoaded(scr, loaded) {
 			break;
 		case "plan":
 			annualPlan.value = loaded;
+			selectedSources.value = [];
 			formDialog.value = false;
 			splittingDialog.value = false;
 			lateActivationDialog.value = false;
-			shift.value = null;
+			break;
+		case "progress":
+			progress.value = loaded;
 			break;
 		case "plan-item":
 			planItem.value = loaded;
+			dissolveDialog.value = false;
+			break;
+		case "corrections":
+			corrections.value = loaded;
+			// A reload closes both dialogs and the open detail: they were
+			// opened against a request whose state may have moved.
+			openIssue.value = "";
+			completeRequest.value = null;
+			noChangeRequest.value = null;
 			break;
 		case "finance":
 			financeTask.value = loaded;
@@ -484,10 +720,18 @@ function applyLoaded(scr, loaded) {
 			break;
 		case "governance":
 			governanceTask.value = loaded;
+			collectiveResolution.value = "";
+			lateReason.value = "";
 			governanceReturnDialog.value = false;
+			break;
+		case "governance-source":
+			sourceEvidence.value = loaded;
 			break;
 		case "publication":
 			publication.value = loaded;
+			treasuryDialog.value = false;
+			lateExplanationDialog.value = false;
+			withdrawalDialog.value = "";
 			break;
 	}
 }
@@ -593,8 +837,59 @@ function onOpenEntry(row) {
 	go(dppReference.value, "entry", row.entry_id);
 }
 
-function onViewAcceptedNeeds() {
-	frappe.set_route("departmental-needs");
+// §10.4 U03-FUNDING — the panel opens in place. The editor read supplies the
+// eligible budget lines and the requirement's own facts; nothing navigates.
+async function onOpenFunding(row) {
+	if (fundingEntryId.value === row.entry_id) {
+		onCloseFunding();
+		return;
+	}
+	errorSummary.value = "";
+	const loaded = await api.getDppEntryEditor(dppReference.value, row.entry_id);
+	editor.value = loaded;
+	fundingEntryId.value = row.entry_id;
+	fundingBudgetLine.value = loaded.entry?.budget_line || "";
+	fundingAmount.value = loaded.entry?.indicative_amount ?? "";
+}
+
+function onCloseFunding() {
+	fundingEntryId.value = "";
+	fundingBudgetLine.value = "";
+	fundingAmount.value = "";
+	errorSummary.value = "";
+}
+
+async function onSaveEntryFunding() {
+	const result = await run("save-need-funding", async (key) => {
+		const r = await api.saveNeedFunding({
+			dpp_version: editor.value.dpp_version,
+			entry_id: fundingEntryId.value,
+			budget_line: fundingBudgetLine.value || undefined,
+			indicative_amount: fundingAmount.value || undefined,
+			expected_record_version: editor.value.record_version,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
+	if (result) onCloseFunding();
+}
+
+// U03-EXCLUDE — the exclusion is a governed reason, so it keeps its own
+// dialog rather than being a third control in the funding panel.
+function onExcludeEntry(row) {
+	fundingEntryId.value = row.entry_id;
+	notProceedEntry.value = row;
+	notProceedDialog.value = true;
+}
+
+// "Correct the source requirement" names one specific Need, so it must land
+// on that Need's own record, never the bare module list (found live 22 Sep
+// 2026: the funding panel emitted no entry identity at all, so this landed
+// on an unrelated generic list with no indication which record to look for).
+function onViewAcceptedNeeds(row) {
+	if (row && row.need) frappe.set_route("departmental-needs", row.need);
+	else frappe.set_route("departmental-needs");
 }
 
 async function onSubmit() {
@@ -625,27 +920,59 @@ async function onCreateUpdate() {
 	});
 }
 
-async function onSaveFunding(payload) {
-	const result = await run("save-need-funding", (key) =>
-		api.saveNeedFunding({
-			dpp_version: editor.value.dpp_version,
-			entry_id: payload.entry_id,
-			budget_line: payload.budget_line || undefined,
-			indicative_amount: payload.indicative_amount || undefined,
-			not_proceeding_reason: payload.not_proceeding_reason || undefined,
-			expected_record_version: editor.value.record_version,
+// PLN-CHG-001 v1.18 §5.1.4 — U03's own overlaid dialog, reached from the
+// editor's "Do not proceed this financial year" ghost button.
+async function onNotProceedConfirm(reason) {
+	// Reached from the funding panel on the plan (the ordinary path) or from
+	// the direct-entry editor page; either way it is the same command against
+	// the same entry.
+	const onPlan = screen.value === "dpp";
+	const result = await run("set-need-disposition", async (key) => {
+		const r = await api.setNeedPlanningDisposition({
+			dpp_version: onPlan ? dpp.value.version?.name : editor.value.dpp_version,
+			entry_id: onPlan ? fundingEntryId.value : editor.value.entry?.entry_id,
+			disposition: "Do not proceed",
+			reason,
+			expected_record_version: onPlan ? dpp.value.record_version : editor.value.record_version,
 			idempotency_key: key,
-		})
-	);
-	if (result) go(dppReference.value);
+		});
+		if (onPlan) await load({ quiet: true });
+		return r;
+	});
+	if (!result) return;
+	notProceedDialog.value = false;
+	notProceedEntry.value = null;
+	if (onPlan) onCloseFunding();
+	else go(dppReference.value);
 }
 
-async function onSaveDirect(payload) {
+// U03-notproceeding — Restore lives on the Plan screen's own not-proceeding
+// row, not the editor: no dialog, direct command (the frame draws no overlay).
+// U03-EXCLUDED-ROW — the screen emits the row it was clicked on; this takes
+// the entry id out of it. Passing the row straight through sent an object
+// where the command expects an id, so restoring silently did nothing.
+async function onRestoreDisposition(row) {
+	const entryId = typeof row === "string" ? row : row?.entry_id;
+	if (!entryId) return;
+	await run("restore-need-disposition", async (key) => {
+		const r = await api.setNeedPlanningDisposition({
+			dpp_version: dpp.value.version?.name,
+			entry_id: entryId,
+			disposition: "Restore",
+			expected_record_version: dpp.value.record_version,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
+}
+
+async function onSaveDirect(values) {
 	const result = await run("save-direct", (key) =>
 		api.saveDirectRequirement({
 			dpp_version: editor.value.dpp_version,
-			entry_values: JSON.stringify(payload.values),
-			entry_id: payload.entry_id || undefined,
+			entry_values: JSON.stringify(values),
+			entry_id: entryId.value || undefined,
 			expected_record_version: editor.value.record_version,
 			idempotency_key: key,
 		})
@@ -653,8 +980,193 @@ async function onSaveDirect(payload) {
 	if (result) go(dppReference.value);
 }
 
-function onClassify(entryId, value) {
+// U04-EDIT — a requirement the department added is the department's own to
+// withdraw; it leaves the draft entirely rather than being marked excluded.
+async function onRemoveDirect() {
+	const result = await run("remove-direct", (key) =>
+		api.removeDirectRequirement({
+			dpp_version: editor.value.dpp_version,
+			entry_id: entryId.value,
+			expected_record_version: editor.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) go(dppReference.value);
+}
+
+// §5.5.2 / §10.12 — the Accounting Officer records what was sent outside the
+// system. A correction supersedes the recorded evidence with a reason; it
+// never overwrites it, so the two are separate commands.
+async function onRecordTreasury(values) {
+	const correcting = Boolean(publication.value.treasury_prior);
+	const result = await run("record-treasury", async (key) => {
+		const r = correcting
+			? await api.correctTreasurySubmissionEvidence({
+				prior_evidence: publication.value.treasury_evidence_id,
+				reason: values.reason,
+				submitted_at: values.submitted_at,
+				channel: values.channel,
+				destination: values.destination,
+				dispatch_reference: values.dispatch_reference,
+				supporting_attachment: values.supporting_attachment || "",
+				idempotency_key: key,
+			})
+			: await api.recordTreasurySubmission({
+				plan_version: publication.value.version?.reference,
+				submitted_at: values.submitted_at,
+				channel: values.channel,
+				destination: values.destination,
+				dispatch_reference: values.dispatch_reference,
+				exact_document_confirmed: values.exact_document_confirmed ? 1 : 0,
+				supporting_attachment: values.supporting_attachment || "",
+				idempotency_key: key,
+			});
+		await load({ quiet: true });
+		return r;
+	});
+	if (result) treasuryDialog.value = false;
+}
+
+// §10.14 — append, never rewrite: the newest recorded explanation is named as
+// the one this supersedes, so the earlier reason stays readable beside it.
+async function onRecordLateExplanation(reason) {
+	const recorded = publication.value.late_activation?.explanations || [];
+	const latest = recorded.length ? recorded[recorded.length - 1].id : "";
+	const result = await run("record-late-explanation", async (key) => {
+		const r = await api.recordLateActivationExplanation({
+			plan_version: publication.value.version?.reference,
+			reason,
+			supersedes: latest,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
+	if (result) lateExplanationDialog.value = false;
+}
+
+// §5.5.2.4 — the AO asks and the statutory authority decides; the mode the
+// dialog was opened in is which of the two this is.
+async function onWithdrawal(reason) {
+	const deciding = withdrawalDialog.value === "decision";
+	const result = await run("plan-withdrawal", async (key) => {
+		const r = deciding
+			? await api.withdrawApprovedPlanForCorrection({
+				task: publication.value.withdrawal_task,
+				task_token: publication.value.withdrawal_task_token,
+				idempotency_key: key,
+			})
+			: await api.requestPlanWithdrawal({
+				plan_version: publication.value.version?.reference,
+				reason,
+				idempotency_key: key,
+			});
+		await load({ quiet: true });
+		return r;
+	});
+	if (result) withdrawalDialog.value = "";
+}
+
+async function onReconcilePublication() {
+	// §5.5.2.3 — reconciliation reads the authoritative destination result.
+	// It never sets success, and an unknown outcome stays unknown.
+	const result = await run("reconcile-publication", (key) =>
+		api.reconcilePublication({ publication: publication.value.publication, idempotency_key: key })
+	);
+	if (result) await load({ quiet: true });
+}
+
+function onViewItemClassification() {
+	// §10.8 — the classification evidence for this purchase's own sources,
+	// read-only: nothing on the purchase editor makes it editable.
+	const source = (planItem.value.sources || [])[0];
+	if (!source || !source.dpp_submission) return;
+	frappe.set_route(WORKSPACE_PAGE, "dpp-classification", source.dpp_submission);
+}
+
+async function onPreparePlanUpdate() {
+	// §5.2.3 / §11.9 — the guarded successor start, not a navigation. The
+	// Active predecessor stays in force; this only opens one Draft candidate.
+	const planReference = (workspace.value.annual_plan || {}).plan_reference;
+	const result = await run("begin-plan-update", (key) =>
+		api.beginPlanUpdate({ plan_reference: planReference, idempotency_key: key })
+	);
+	if (!result) return;
+	frappe.set_route(PLAN_PAGE, planReference);
+}
+
+async function onCancelPlanUpdate() {
+	const result = await run("cancel-plan-update", (key) =>
+		api.cancelPlanUpdate({
+			plan_reference: annualPlan.value.plan_reference,
+			reason: cancelUpdateReason.value,
+			expected_record_version: annualPlan.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (!result) return;
+	cancelUpdateDialog.value = false;
+	cancelUpdateReason.value = "";
+	frappe.set_route(WORKSPACE_PAGE);
+}
+
+function onToggleSource(entryId) {
+	const current = selectedSources.value;
+	selectedSources.value = current.includes(entryId)
+		? current.filter((id) => id !== entryId)
+		: [...current, entryId];
+}
+
+const selectedSourceRows = computed(() =>
+	(annualPlan.value.unallocated_sources || []).filter((row) => selectedSources.value.includes(row.entry_id))
+);
+
+function onViewPlanRequirement(row) {
+	frappe.set_route(DPP_PAGE, row.dpp_reference || "", "entry", row.entry_id);
+}
+
+function onClassify({ entry_id: entryId, requirement_type: value }) {
 	classifications.value = { ...classifications.value, [entryId]: value };
+}
+
+function onViewRequirement(row) {
+	frappe.set_route(DPP_PAGE, validation.value.dpp_reference || "", "entry", row.entry_id);
+}
+
+// --- §10.5 accepted-classification correction -----------------------------
+
+function onOpenClassificationCorrection(row) {
+	classificationPanel.value = row;
+	classificationNewType.value = "";
+	classificationReason.value = "";
+	errorSummary.value = "";
+}
+
+function onCancelClassificationCorrection() {
+	classificationPanel.value = null;
+	classificationNewType.value = "";
+	classificationReason.value = "";
+	errorSummary.value = "";
+}
+
+async function onSaveClassificationCorrection() {
+	const row = classificationPanel.value;
+	if (!row) return;
+	const result = await run("correct-classification", (key) =>
+		api.correctAcceptedRequirementClassification({
+			dpp_submission: classificationEvidence.value.dpp_submission,
+			dpp_entry_id: row.dpp_entry_id,
+			// The exact evidence head the Planner was looking at: a concurrent
+			// correction must fail rather than silently stack on a newer one.
+			expected_evidence_id: row.classification.evidence_id,
+			new_requirement_type: classificationNewType.value,
+			reason: classificationReason.value,
+			idempotency_key: key,
+		})
+	);
+	if (!result) return;
+	onCancelClassificationCorrection();
+	await load({ quiet: true });
 }
 
 async function onAccept() {
@@ -686,10 +1198,21 @@ async function onReturnConfirm(issues) {
 
 function onNavigate(routeSegments) {
 	if (!routeSegments || !routeSegments.length) return;
+	// §10.3 "Your actions" reuses the generic action-route shape for a
+	// department with no plan yet, but starting one is a command, not a
+	// screen — `screen` (above) has no case for an "open" segment, so
+	// set_route-ing there used to just re-render the same workspace. Route
+	// it through the same open-departmental-plan command the "Your
+	// departmental plan" section already uses, which creates the DPP and
+	// reloads in place.
+	if (routeSegments[0] === WORKSPACE_PAGE && routeSegments[1] === "open" && routeSegments[2]) {
+		onOpenDepartmentalPlan(routeSegments[2]);
+		return;
+	}
 	frappe.set_route(...routeSegments);
 }
 
-async function onFormConfirm(dppEntries, mode) {
+async function onFormConfirm({ dppEntries, mode, combinationReason, combinedTitle }) {
 	// RUN-CHG-001 — only the in-place branch (multiple items formed, staying
 	// on this Plan) needs its reload inside the guarded function; the
 	// single-item branch navigates away to a different screen instead.
@@ -698,6 +1221,10 @@ async function onFormConfirm(dppEntries, mode) {
 			plan_version: annualPlan.value.version_reference,
 			dpp_entries: JSON.stringify(dppEntries),
 			mode,
+			// §10.7 — asked at the moment of combining, so the combined
+			// purchase is complete the moment it exists.
+			combination_reason: combinationReason || "",
+			combined_title: combinedTitle || "",
 			expected_record_version: annualPlan.value.record_version,
 			idempotency_key: key,
 		});
@@ -739,11 +1266,59 @@ async function onDissolvePlanItem() {
 }
 
 // §5.2 — one plan-level Finance confirmation per Version
+// PLN v1.27 §11.9 — a next-step fix that is a governed command. Request budget
+// revision invokes RequestBudgetRevision for the exact over-budget line of the
+// displayed Draft (no form); the reload then shows U07-WAITING-BUDGET-REVISION.
+async function onPlanGuidanceCommand(fix) {
+	if (fix.fix_id === "request_departmental_update") {
+		// Owner decision 26 Sep 2026 — the departmental correction route: the
+		// department named on the fix is asked to update its plan for the line.
+		await run("request-departmental-update", async (key) => {
+			const r = await api.requestDepartmentalPlanUpdate({
+				plan_version: annualPlan.value.version_reference,
+				budget_line: fix.target?.budget_line,
+				organisation_unit: fix.target?.organisation_unit,
+				expected_record_version: annualPlan.value.record_version,
+				idempotency_key: key,
+			});
+			await load({ quiet: true });
+			return r;
+		});
+		return;
+	}
+	if (fix.fix_id !== "request_budget_revision") return;
+	await run("request-budget-revision", async (key) => {
+		const r = await api.requestBudgetRevision({
+			plan_version: annualPlan.value.version_reference,
+			budget_line: fix.target?.budget_line,
+			expected_record_version: annualPlan.value.record_version,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
+}
+
 async function onRequestPlanFunding() {
 	// RUN-CHG-001 — reload inside the guarded function (same-screen command).
 	await run("request-plan-funding", async (key) => {
 		const r = await api.requestPlanFundingConfirmation({
 			plan_version: annualPlan.value.version_reference,
+			expected_record_version: annualPlan.value.record_version,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
+}
+
+// U07-overview — the Preparation card's own Save draft (SavePlanVersionDetails,
+// project_name only; a successor's change_reason is set at BeginPlanUpdate).
+async function onSaveVersionDetails(values) {
+	await run("save-plan-version-details", async (key) => {
+		const r = await api.savePlanVersionDetails({
+			plan_version: annualPlan.value.version_reference,
+			detail_values: JSON.stringify(values),
 			expected_record_version: annualPlan.value.record_version,
 			idempotency_key: key,
 		});
@@ -822,52 +1397,75 @@ async function onSubmitConsolidatedPlan(lateActivationReason) {
 	}
 }
 
-// §12.12 — the cascade dialog: the server computes every proposal (PLN-AC-124)
-function onOpenShift({ item, milestone }) {
-	const row = (item.schedule || []).find((r) => r.milestone === milestone) || {};
-	shift.value = { item, milestone, label: row.label || milestone, newDate: row.forecast || "", rows: [] };
-	if (row.forecast) onShiftDateChange(row.forecast);
+// PLN-CHG-001 v1.23 §10.13 / §10.15 — progress and correction requests.
+
+// §10.11 U12-NEWER-SOURCE — the newer requirement is the department's record,
+// not this plan's; it opens where that department keeps it, and the reviewed
+// evidence behind it is left exactly as it was.
+function onViewNewerRequirement() {
+	const reference = sourceEvidence.value.departmental_plan_reference;
+	if (reference) frappe.set_route(DPP_PAGE, reference);
 }
 
-async function onShiftDateChange(value) {
-	if (!shift.value) return;
-	shift.value = { ...shift.value, newDate: value };
-	if (!value) return;
-	errorSummary.value = "";
-	try {
-		const preview = await api.previewForecastCascade({
-			plan_item: shift.value.item.plan_item_id,
-			milestone: shift.value.milestone,
-			new_forecast_date: value,
-		});
-		if (shift.value && shift.value.newDate === value) {
-			shift.value = { ...shift.value, rows: preview.rows || [], recordVersion: preview.record_version };
-		}
-	} catch (e) {
-		errorSummary.value = e.message;
-	}
+function onViewCorrections(planItemId) {
+	frappe.set_route(PLAN_ITEM_PAGE, planItemId, "corrections");
 }
 
-async function onConfirmShift({ included_milestones, reason }) {
-	if (!shift.value) return;
-	const current = shift.value;
-	// RUN-CHG-001 — reload inside the guarded function (same-screen command).
-	const result = await run("confirm-forecast-cascade", async (key) => {
-		const r = await api.confirmForecastCascade({
-			plan_item: current.item.plan_item_id,
-			milestone: current.milestone,
-			new_forecast_date: current.newDate,
-			included_milestones: JSON.stringify(included_milestones),
-			reason,
-			expected_record_version: current.recordVersion ?? current.item.record_version,
+// The mechanics of one issue open only when the Planner asks for them; the
+// required change is what the table leads with (PLN22-AC-011).
+function onOpenIssue(request) {
+	openIssue.value = openIssue.value === request ? "" : request;
+}
+
+// §7.2 StartPlanItemCorrection — Open becomes In progress. The hold stays in
+// force: starting is not resolving, and this command never edits the item.
+async function onPrepareCorrection(row) {
+	const result = await run("start-correction", async (key) => {
+		const r = await api.startPlanItemCorrection({
+			correction_request: row.request,
+			expected_record_version: row.record_version,
 			idempotency_key: key,
 		});
 		await load({ quiet: true });
 		return r;
 	});
-	if (result) {
-		shift.value = null;
-	}
+	if (result) openIssue.value = row.request;
+}
+
+// §7.2 ResolvePlanItemCorrectionRequest — recorded against the exact Active
+// version; the server refuses anything that is not Active.
+async function onRecordCorrectionCompleted() {
+	const row = completeRequest.value;
+	if (!row) return;
+	const result = await run("resolve-correction", async (key) => {
+		const r = await api.resolvePlanItemCorrectionRequest({
+			correction_request: row.request,
+			correcting_plan_version: corrections.value.correcting_plan?.correcting_plan_version,
+			expected_record_version: row.record_version,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
+	if (result) completeRequest.value = null;
+}
+
+// §7.2 ClosePlanItemCorrectionWithoutChange — a reasoned no-change outcome.
+// It resolves this request only, and revives nothing downstream.
+async function onCloseWithoutChange(reason) {
+	const row = noChangeRequest.value;
+	if (!row) return;
+	const result = await run("close-correction", async (key) => {
+		const r = await api.closePlanItemCorrectionWithoutChange({
+			correction_request: row.request,
+			reason,
+			expected_record_version: row.record_version,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
+	if (result) noChangeRequest.value = null;
 }
 
 async function onRetryPublication() {
@@ -893,23 +1491,37 @@ async function onBeginUpdate() {
 	if (result) await load({ quiet: true });
 }
 
-async function onGovernanceConfirm(resolutionReference) {
+async function onGovernanceConfirm() {
 	const command = governanceTask.value.stage === "Accounting Officer adoption" ? "adopt" : "approve";
 	const result = await run(command, (key) =>
 		command === "adopt"
 			? api.adoptAndSubmitPlan({
 					task: governanceTask.value.task,
 					task_token: governanceTask.value.task_token,
+					// §10.10 U11-LATE-ADOPTION — the AO's own explanation, given
+					// on the review rather than in a separate dialog.
+					late_activation_reason: lateReason.value || undefined,
 					idempotency_key: key,
 				})
 			: api.approveAnnualPlan({
 					task: governanceTask.value.task,
 					task_token: governanceTask.value.task_token,
-					resolution_reference: resolutionReference,
+					// Required only for a collective body; the server checks it.
+					resolution_reference: collectiveResolution.value || undefined,
 					idempotency_key: key,
 				})
 	);
 	if (result) frappe.set_route(WORKSPACE_PAGE);
+}
+
+function onDownloadReviewPack() {
+	// §11.1 — the exact authorised reviewed snapshot, and never a
+	// prerequisite to deciding.
+	window.open(
+		`/api/method/kentender_procurement.procurement_planning.api.download_review_pack`
+		+ `?task=${encodeURIComponent(governanceTask.value.task || "")}`,
+		"_blank",
+	);
 }
 
 async function onGovernanceReturn(reason) {

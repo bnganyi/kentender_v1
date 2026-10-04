@@ -33,6 +33,7 @@ from typing import Any
 from uuid import uuid4
 
 import frappe
+from frappe.utils import cstr
 from frappe.utils.password import update_password
 
 from kentender_core.seeds.constants import TEST_PASSWORD
@@ -44,8 +45,11 @@ NS_PW = "KENTENDER_PLAYWRIGHT"
 FY_START = 2098
 FY = "2098-2099"
 FY_LABEL = "FY 2098/99"
-INTAKE_CLOSES_AT = "2099-05-31 20:59:59"  # 31 May 2099, 23:59 EAT — pinned
+INTAKE_CLOSES_AT = "2099-05-31 23:59:59"  # 31 May 2099, 23:59 EAT (site time) — pinned
 PREVIOUS_FLAGS_KEY = "kt_pln_playwright_previous_flags"
+#: §13.3 Collective authority — the statutory route is one site-wide value,
+#: so a Council profile must put back whatever the site had before.
+PREVIOUS_ROUTE_KEY = "kt_pln_playwright_previous_statutory_route"
 
 OU_NAME = "Playwright — Procurement Planning"
 OUTSIDER_OU_NAME = "Playwright — Planning Outsider"
@@ -53,13 +57,15 @@ OUTSIDER_OU_NAME = "Playwright — Planning Outsider"
 AUTHOR = "pw.pln.author@example.test"
 HOD = "pw.pln.hod@example.test"
 PLANNER = "pw.pln.planner@example.test"
+HOPF = "pw.pln.hopf@example.test"  # v1.18 §6.2: signs and submits the Annual Plan
 FINANCE = "pw.pln.finance@example.test"
 ACCOUNTING_OFFICER = "pw.pln.ao@example.test"
 STATUTORY = "pw.pln.statutory@example.test"
 AUDITOR = "pw.pln.auditor@example.test"
 OUTSIDER = "pw.pln.outsider@example.test"  # Departmental Author elsewhere
 NOBODY = "pw.pln.nobody@example.test"  # a stale Frappe Role, no responsibility assignment
-ACTORS = (AUTHOR, HOD, PLANNER, FINANCE, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER, NOBODY)
+BUDGET_OFFICER = "pw.pln.budget@example.test"  # PLN v1.27 §7.7: receives a budget revision request
+ACTORS = (AUTHOR, HOD, PLANNER, HOPF, FINANCE, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER, NOBODY, BUDGET_OFFICER)
 
 PASSWORD = TEST_PASSWORD
 UNIT = "Each"
@@ -68,6 +74,14 @@ LINE_REF = "BL-PWPL-0001"
 LINE_REF_2 = "BL-PWPL-0002"
 
 CONTEXT_PREFERENCE_KEYS = ("kt_planning_financial_year", "kt_needs_org_unit", "kt_needs_financial_year")
+
+# PLN-CHG-001 v1.18 §5.5.1/§5.5.3.3 (plan D4/D9): every schedule/method rule
+# now resolves through a versioned profile — mirrors `tests/fixtures.py`'s
+# own `ensure_profiles()` for the Python world, one per fixture year.
+PROFILE_WINDOW = {"effective_from": f"{FY_START}-07-01", "effective_until": f"{FY_START + 1}-06-30"}
+PROFILE_LIMITS = {"bid_opening": (7, None), "evaluation_completion": (None, 30), "contract_signing": (14, None)}
+VERIFICATION_FIXTURE = "Fixture-verified — not production law"
+DELIVERY_DEFAULT_DAYS = 30
 
 DIRECT_CONTENT = {
 	"title": "Digital health platform security assessment",
@@ -230,9 +244,20 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	# leave no Playwright plan behind: a fixture-year plan makes that year a
 	# selectable Financial Year for every real user of the site
 	_wipe()
+	purge_profiles()
 	_clear_context_preferences()
+	# a spec may have published a reservation target for its one reset
+	if frappe.db.exists("Fiscal Year", FY):
+		_publish_reservation_target(0)
+	previous_route = frappe.defaults.get_global_default(PREVIOUS_ROUTE_KEY)
+	if previous_route:
+		# §13.3's collective profile moved one site-wide value; put it back
+		# before anything else reads it.
+		frappe.db.set_single_value("Site Procuring Entity", "statutory_approval_route", previous_route)
+		frappe.defaults.clear_default(PREVIOUS_ROUTE_KEY)
+		frappe.clear_cache()
 	raw = frappe.defaults.get_global_default(PREVIOUS_FLAGS_KEY)
-	restored = {"dpp": [], "needs": []}
+	restored = {"dpp": [], "needs": [], "statutory_route": previous_route or ""}
 	if raw:
 		previous = json.loads(raw)
 		for year in previous.get("dpp", []):
@@ -245,18 +270,50 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 				restored["needs"].append(year)
 		frappe.defaults.clear_default(PREVIOUS_FLAGS_KEY)
 	# Whatever was remembered, the site must end on the §8 seed's state: if no
-	# year holds a flag now, re-seed the flags exactly as site_setup does.
+	# year holds a flag now, re-seed the flags exactly as site_setup does —
+	# but only when the site is actually configured. A full `canonical.run
+	# (wipe=True, reseed=False)` deletes every Fiscal Year, and this same
+	# clear path runs unconditionally as part of that wipe; re-seeding an
+	# intake flag on a Fiscal Year that no longer exists throws instead of
+	# restoring anything. Nothing to restore on an unconfigured site.
 	from kentender_core.seeds import site_setup
 
-	if not _open_years(site_configuration.DPP_FLAG_OPEN):
+	dpp_target = site_configuration._fy_name(site_setup.DPP_INTAKE["start_year"])
+	needs_target = site_configuration._fy_name(site_setup.INTAKE["start_year"])
+	if not _open_years(site_configuration.DPP_FLAG_OPEN) and frappe.db.exists("Fiscal Year", dpp_target):
 		site_setup._seed_dpp_intake()
 		restored["dpp"].append("re-seeded")
-	if not _open_years(site_configuration.FLAG_OPEN):
+	if not _open_years(site_configuration.FLAG_OPEN) and frappe.db.exists("Fiscal Year", needs_target):
 		site_setup._seed_intake()
 		restored["needs"].append("re-seeded")
 	if commit:
 		frappe.db.commit()
 	return restored
+
+
+def ensure_profiles() -> None:
+	"""PLN-CHG-001 v1.18 §5.5.1/§5.5.3.3 — one fixture-verified method
+	profile per governed method and the Open Tender schedule profiles for
+	this world's fiscal year, registered through the same seeder the site
+	uses (the Python test world's `tests/fixtures.ensure_profiles` twin)."""
+	from kentender_core.seeds import site_setup
+
+	frappe.set_user("Administrator")
+	site_setup._seed_method_profiles(effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS_PW)
+	# Open Tender only — this fixture world's specs are written against a
+	# single scheduled method; the canonical site seeds every method.
+	site_setup._seed_schedule_profiles(
+		effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS_PW,
+		limits=PROFILE_LIMITS, estimated_delivery_default_days=DELIVERY_DEFAULT_DAYS,
+		methods=("Open Tender",),
+	)
+
+
+def purge_profiles() -> None:
+	from kentender_core.services import procurement_settings
+
+	frappe.set_user("Administrator")
+	procurement_settings.purge_fixture_profiles(NS_PW)
 
 
 def _clear_context_preferences() -> None:
@@ -286,7 +343,19 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 			frappe.get_doc({"doctype": "UOM", "uom_name": UNIT, "enabled": 1}).insert(ignore_permissions=True)
 	OU = _unit(OU_NAME)
 	OUTSIDER_OU = _unit(OUTSIDER_OU_NAME)
-	site_setup._seed_regulatory_reference(fiscal_year=FY, fixture_namespace=NS_PW)
+	# §5.5.3.1: an unverified regulatory reference is treated as absent, not
+	# a passing zero — the default `verification_status` ("Production
+	# verification pending") left this world's reservation data unusable by
+	# `readiness.reservation_allocations()`; mirror the Python test world's
+	# own fixture-verified call (`tests/fixtures.ensure_world`).
+	#
+	# CFG-CHG-002 v0.11 Phase 2b: `Regulatory Reference` versions are now
+	# effective-dated per reference set (no `fiscal_year` column), each new
+	# call to `_seed_regulatory_reference` for an overlapping date range
+	# genuinely supersedes the prior version, so a real override no longer
+	# needs the direct-write workaround this used to require.
+	_publish_reservation_target(0)
+	ensure_profiles()
 	if not frappe.db.exists("Currency", "KES"):
 		frappe.get_doc({"doctype": "Currency", "currency_name": "KES", "enabled": 1}).insert(ignore_permissions=True)
 	_budget_world()
@@ -294,19 +363,23 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 
 	for email, name in (
 		(AUTHOR, "Playwright Planning Author"), (HOD, "Playwright Planning HoD"), (PLANNER, "Playwright Procurement Planner"),
+		(HOPF, "Playwright Head of Procurement Function"),
 		(FINANCE, "Playwright Finance Officer"), (ACCOUNTING_OFFICER, "Playwright Accounting Officer"),
 		(STATUTORY, "Playwright Statutory Approver"), (AUDITOR, "Playwright Auditor"),
 		(OUTSIDER, "Playwright Outsider Author"), (NOBODY, "Playwright Nobody"),
+		(BUDGET_OFFICER, "Playwright Budget Officer"),
 	):
 		_user(email, name)
 	_grant(AUTHOR, "Departmental Author", OU)
 	_grant(HOD, "Departmental Author", OU)
 	_grant(HOD, "Head of User Department", OU)
 	_grant(PLANNER, "Procurement Planner")
+	_grant(HOPF, "Head of Procurement Function")
 	_grant(FINANCE, "Finance Confirmation Officer")
 	_grant(ACCOUNTING_OFFICER, "Accounting Officer")
 	_grant(STATUTORY, "Plan Statutory Approver")
 	_grant(AUDITOR, "Auditor")
+	_grant(BUDGET_OFFICER, "Budget Officer")
 	_grant(OUTSIDER, "Departmental Author", OUTSIDER_OU)
 	# PLN-AC-111..113 — a Frappe Role alone is not authority (AUTH §4): this
 	# actor reaches the Page through a stale role and must get the Forbidden
@@ -333,6 +406,10 @@ def _wipe() -> None:
 	dpp_versions = frappe.get_all("Departmental Plan Version", filters={"departmental_plan": ("in", dpp_roots or ("",))}, pluck="name")
 	submissions = frappe.get_all("Departmental Plan Submission", filters={"dpp_version": ("in", dpp_versions or ("",))}, pluck="name")
 	tasks = frappe.get_all("Departmental Plan Validation Task", filters={"fiscal_year": FY}, pluck="name")
+	# PLN-CHG-001 v1.23 §4.4 — classification corrections are keyed by
+	# submission and entry id; leaving them behind would let one test's
+	# correction reshape the next test's effective classification.
+	frappe.db.delete("DPP Classification Correction", {"dpp_submission": ("in", submissions or ("",))})
 	frappe.db.delete("Departmental Plan Validation Decision", {"task": ("in", tasks or ("",))})
 	frappe.db.delete("Departmental Plan Validation Task", {"name": ("in", tasks or ("",))})
 	frappe.db.delete("Departmental Plan Submission", {"name": ("in", submissions or ("",))})
@@ -343,15 +420,42 @@ def _wipe() -> None:
 	plans = frappe.get_all("Annual Plan", filters={"fiscal_year": FY}, pluck="name")
 	plan_versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
-	frappe.db.delete("Plan Item Forecast Revision", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Drawdown Reference", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Source Allocation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Item", {"plan_version": ("in", plan_versions or ("",))})
+	roots = frappe.get_all("Plan Item", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
+	for doctype in ("Milestone Actual Event", "Proceeding Coverage"):
+		frappe.db.delete(doctype, {"plan_item": ("in", roots or ("",))})
+	frappe.db.delete("Plan Item Correction Disposition", {"correction_request": ("in", frappe.get_all("Plan Item Correction Request", filters={"plan_item_id": ("in", roots or ("",))}, pluck="name") or ("",))})
+	frappe.db.delete("Plan Item Correction Request", {"plan_item_id": ("in", roots or ("",))})
+	frappe.db.delete("Plan Item", {"name": ("in", roots or ("",))})
+	# PLN v1.27 §7.2 — a budget revision request exists on both sides of the
+	# hand-off (BUD v1.11 §8.5); the Budget side and its outbox go with it.
+	requests = frappe.get_all("Plan Budget Revision Request", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	if requests and frappe.db.exists("DocType", "Budget Revision Request"):
+		budget_side = frappe.get_all("Budget Revision Request", filters={"planning_request_id": ("in", requests)}, pluck="name")
+		frappe.db.delete("Budget Revision Request Event", {"budget_revision_request": ("in", budget_side or ("",))})
+		frappe.db.delete("Budget Revision Request", {"name": ("in", budget_side or ("",))})
+	frappe.db.delete("Plan Budget Revision Request", {"name": ("in", requests or ("",))})
+	# owner decision 26 Sep 2026 — the departmental correction route's requests
+	frappe.db.delete("Departmental Plan Update Request", {"plan_version": ("in", plan_versions or ("",))})
 	for task_doctype, decision_doctype in (("Plan Finance Task", "Plan Finance Decision"), ("Plan Governance Task", "Plan Governance Decision")):
 		task_rows = frappe.get_all(task_doctype, filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
 		frappe.db.delete(decision_doctype, {"task": ("in", task_rows or ("",))})
 		frappe.db.delete(task_doctype, {"name": ("in", task_rows or ("",))})
-	frappe.db.delete("Annual Plan Publication", {"plan_version": ("in", plan_versions or ("",))})
+	frappe.db.delete("Plan Financial Basis", {"plan_version": ("in", plan_versions or ("",))})
+	frappe.db.delete("Plan Finance Basis Reuse", {"plan_version": ("in", plan_versions or ("",))})
+	frappe.db.delete("Plan Preparation Signature", {"plan_version": ("in", plan_versions or ("",))})
+	frappe.db.delete("Late Activation Explanation", {"plan_version": ("in", plan_versions or ("",))})
+	frappe.db.delete("Treasury Submission Evidence", {"plan_version": ("in", plan_versions or ("",))})
+	frappe.db.delete("Plan Publication Hold", {"plan_version": ("in", plan_versions or ("",))})
+	snapshots = frappe.get_all("Approved Plan Snapshot", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	publications = frappe.get_all("Plan Publication", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	frappe.db.delete("Publication Acknowledgement", {"publication": ("in", publications or ("",))})
+	frappe.db.delete("Publication Attempt", {"publication": ("in", publications or ("",))})
+	frappe.db.delete("Publication Intent", {"publication": ("in", publications or ("",))})
+	frappe.db.delete("Plan Publication", {"name": ("in", publications or ("",))})
+	frappe.db.delete("Approved Plan Snapshot", {"name": ("in", snapshots or ("",))})
 	frappe.db.delete("Annual Plan Version", {"name": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan", {"name": ("in", plans or ("",))})
 
@@ -376,6 +480,30 @@ def reset_all(*, commit: bool = True) -> dict[str, Any]:
 	return {"ok": True, "namespace": NS_PW, "fiscal_year": FY}
 
 
+def purge_planning_rows_for_namespace(*, namespace: str, commit: bool = True) -> dict[str, Any]:
+	"""Planning rows another module's Playwright run caused, by its namespace.
+
+	Accepting a Need in the Departmental Needs Playwright suite fires Planning's
+	own `dpp_autostart` subscriber, which opens a Draft departmental plan
+	stamped with that suite's namespace. Needs' cleanup removes only its own
+	rows (Needs knows nothing about Planning), so those plans accumulated —
+	one still pointed at a since-reused Need reference (found 25 Sep 2026).
+	The Needs Playwright helper calls this Planning-owned entry point too.
+	"""
+	_guard()
+	namespace = cstr(namespace).strip()
+	if not namespace or namespace == "KENTENDER_MVP_1_R1_NDS":
+		# never an empty filter, never the canonical seed's own namespace
+		return {"ok": False, "reason": "namespace required"}
+	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import clear_planning_fixture_rows
+
+	frappe.set_user("Administrator")
+	deleted = clear_planning_fixture_rows(include_canonical=False, include_playwright=False, namespaces=(namespace,))
+	if commit:
+		frappe.db.commit()
+	return {"ok": True, "namespace": namespace, "deleted": {k: v for k, v in deleted.items() if v}}
+
+
 def _pin_fixture_year() -> None:
 	"""The default year is the one whose Annual Plan is in force — on a seeded
 	site that is the §8 seed's year, not this world's. Each actor's remembered
@@ -387,9 +515,32 @@ def _pin_fixture_year() -> None:
 		working_context.select_module_fy("planning", FY, user=email, offered=[FY])
 
 
+#: The fixture budget line's own approved amount (see `ensure_world`). Profiles
+#: that move it to make a shortfall or a revised basis must not leave the next
+#: profile starting from their scenario — §13.3 wants isolated presentation
+#: profiles, not a world that drifts as the suite runs.
+CANONICAL_APPROVED_AMOUNT = 100_000_000
+
+
+def _restore_budget_baseline() -> None:
+	for line_version in frappe.get_all(
+		"Procurement Budget Line Version",
+		filters={
+			"budget_line": ("in", [x for x in (BUDGET_LINE, BUDGET_LINE_2) if x]),
+			"budget_version": ("in", frappe.get_all("Procurement Budget Version", filters={"status": "Active"}, pluck="name")),
+		},
+		pluck="name",
+	):
+		frappe.db.set_value(
+			"Procurement Budget Line Version", line_version,
+			"approved_amount", CANONICAL_APPROVED_AMOUNT, update_modified=False,
+		)
+
+
 def _reset(commit: bool) -> dict[str, Any]:
 	world = ensure_world(commit=False)
 	_wipe()
+	_restore_budget_baseline()
 	_clear_context_preferences()
 	_pin_fixture_year()
 	if commit:
@@ -481,7 +632,12 @@ def reset_review_fixture(*, need: str = "", commit: bool = True) -> dict[str, An
 	task = frappe.db.get_value("Departmental Plan Validation Task", {"task_reference": submitted["task"]}, "name")
 	if commit:
 		frappe.db.commit()
-	return {**state, "task": task, "submission": submitted["task"]}
+	# The validation task and the submission it is about are two different
+	# records; a spec reading the accepted classification needs the submission.
+	return {
+		**state, "task": task, "submission": submitted["task"],
+		"dpp_submission": frappe.db.get_value("Departmental Plan Validation Task", {"task_reference": task}, "submission"),
+	}
 
 
 def reset_accepted_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
@@ -537,6 +693,14 @@ def reset_workbench_fixture(*, need: str = "", commit: bool = True) -> dict[str,
 	return {**state, "plan_reference": accepted["annual_plan"], "plan_version": accepted["annual_plan_version"]}
 
 
+#: §10.7 U08-COMBINE — combining is only permitted with the reason for it,
+#: asked at the moment of combining.
+COMBINATION_REASON = (
+	"Both departments require the same laptop specification for the same national digital-health "
+	"rollout; combining secures better unit pricing and one delivery schedule."
+)
+
+
 def _form(plan_version: str, entries: list[str], mode: str) -> list[str]:
 	from kentender_procurement.procurement_planning.services import plan_read, plan_workbench
 
@@ -544,14 +708,40 @@ def _form(plan_version: str, entries: list[str], mode: str) -> list[str]:
 		plan = plan_read.get_annual_plan(plan_reference=frappe.db.get_value("Annual Plan Version", plan_version, "annual_plan") and frappe.db.get_value("Annual Plan", frappe.db.get_value("Annual Plan Version", plan_version, "annual_plan"), "plan_reference"))
 		formed = plan_workbench.form_plan_items(
 			plan_version=plan_version, dpp_entries=entries, mode=mode,
+			combination_reason=COMBINATION_REASON if mode == "combined" else "",
 			expected_record_version=plan["record_version"], idempotency_key=_key(),
 		)
 	return formed["created_items"]
 
 
-def reset_plan_item_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
-	"""PLN-DES-09: the single-source Plan Item formed from the accepted Need."""
+def _publish_reservation_target(percent: float) -> None:
+	"""This world's verified reservation rule, at exactly `percent`.
+
+	The seeder finds-or-creates, so a plain call keeps whatever target the
+	last caller left; a changed target is saved as a successor version, and
+	only then. Every reset's `ensure_world()` asks for 0, so a spec that
+	published a target never leaks it into the next one."""
+	from kentender_core.seeds import site_setup
+	from kentender_procurement.procurement_planning.services import readiness
+
+	current = readiness.reference_for(FY)
+	if current.get("available") and float(current["reservation"].get("target_percent") or 0) == float(percent):
+		return
+	site_setup._seed_regulatory_reference(
+		fiscal_year=FY, fixture_namespace=NS_PW, verification_status=VERIFICATION_FIXTURE,
+		reservation_target_percent=float(percent), force=bool(current.get("available")),
+	)
+
+
+def reset_plan_item_fixture(*, need: str = "", reservation_target_percent: float = 0, commit: bool = True) -> dict[str, Any]:
+	"""PLN-DES-09: the single-source Plan Item formed from the accepted Need.
+
+	`reservation_target_percent` publishes a verified reservation target for
+	this one reset (the U07 board draws the unmet Reservation allocation
+	block); the next reset's own `ensure_world()` re-seeds the world's usual
+	0, so the target never leaks into another spec."""
 	state = reset_workbench_fixture(need=need, commit=False)
+	_publish_reservation_target(reservation_target_percent)
 	entry = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": state["dpp_version"], "entry_id": state["need_entry_id"]}, "name")
 	items = _form(state["plan_version"], [entry], "each")
 	if commit:
@@ -591,6 +781,40 @@ def reset_combined_item_fixture(*, needs: list[str] | str = "", commit: bool = T
 	return {**world, "dpp_reference": opened["dpp_reference"], "plan_reference": accepted["annual_plan"], "plan_version": accepted["annual_plan_version"], "plan_item_id": items[0]}
 
 
+def reset_combinable_sources_fixture(*, needs: list[str] | str = "", commit: bool = True) -> dict[str, Any]:
+	"""§10.7 U08-COMBINE: the same two accepted Needs as the combined fixture,
+	left unallocated. The formation dialog only offers the choice between
+	keeping requirements separate and combining them when more than one is
+	selected, so a one-source world can never reach the variant."""
+	from kentender_procurement.procurement_planning.services import dpp_lifecycle
+
+	if isinstance(needs, str):
+		needs = json.loads(needs) if needs else []
+	if len(needs) != 2:
+		frappe.throw("The combinable fixture needs exactly two accepted Needs from NDS's fixture module (`needs=`).")
+	world = _reset(commit=False)
+	opened = _open_dpp()
+	record_version = opened["record_version"]
+	entries = []
+	for need, amount in ((needs[0], 48000000), (needs[1], 72000000)):
+		entry = _need_entry(opened["current_version"], need)
+		with _as(AUTHOR):
+			saved = dpp_lifecycle.save_need_funding(
+				dpp_version=opened["current_version"], entry_id=entry.entry_id, budget_line=BUDGET_LINE, indicative_amount=amount,
+				expected_record_version=record_version, idempotency_key=_key(),
+			)
+		record_version = saved["record_version"]
+		entries.append(entry)
+	task = _submit(opened["current_version"], record_version)
+	accepted = _accept({"task": task}, {e.entry_id: "Goods" for e in entries})
+	if commit:
+		frappe.db.commit()
+	return {
+		**world, "dpp_reference": opened["dpp_reference"],
+		"plan_reference": accepted["annual_plan"], "plan_version": accepted["annual_plan_version"],
+	}
+
+
 # --- Slice C journeys (Finance confirmation, governance decisions) ------------
 
 ITEM_VALUES = {
@@ -602,6 +826,10 @@ ITEM_VALUES = {
 	"reservation_category": "None",
 	"procurement_method": "Open Tender",
 	"baseline_invitation_date": "2098-09-01",
+	# PLN-CHG-001 v1.18 §4.6 — estimate basis and the estimated delivery period
+	"estimate_basis": "Market survey of the current supplier panel including delivery, installation and incidental costs.",
+	"estimate_basis_reference": "MS-2027-001",
+	"estimated_delivery_period_days": 30,
 	"tendering_period_days": 21,
 	"evaluation_period_days": 30,
 	"award_approval_buffer_days": 5,
@@ -622,6 +850,52 @@ def _complete_item(plan_item_id: str, **overrides) -> None:
 		)
 
 
+def reset_item_config_missing_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""U09 — no method/schedule profile in force for this item's category and
+	method (the base fixture-year world's own profiles removed after it is
+	built; the NEXT reset's own `ensure_world()` re-seeds them, so this does
+	not leak into later tests)."""
+	state = reset_plan_item_fixture(need=need, commit=False)
+	purge_profiles()
+	if commit:
+		frappe.db.commit()
+	return state
+
+
+def reset_item_lots_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""U09-eligibility-lots: a complete item Packaged into lots."""
+	state = reset_plan_item_fixture(need=need, commit=False)
+	_complete_item(state["plan_item_id"], lotting_indicator="Packaged into lots", lot_count=2)
+	if commit:
+		frappe.db.commit()
+	return state
+
+
+def reset_item_direct_procurement_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""U09-conditional-method: Direct Procurement with its Declaration
+	condition already evidenced (Conditions: Declared)."""
+	state = reset_plan_item_fixture(need=need, commit=False)
+	_complete_item(
+		state["plan_item_id"], procurement_method="Direct Procurement",
+		method_condition_evidence=[{"condition_id": "CIRCUMSTANCES", "evidence_reference": "Method eligibility record", "authorisation_reference": "AO/2098/DP/1"}],
+	)
+	if commit:
+		frappe.db.commit()
+	return state
+
+
+def reset_item_feasibility_fail_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""U09-feasibility-fail: a target invitation date so late the computed
+	contract signing date leaves no delivery period before the required-by
+	date from the Need (2099-03-31 — see `NEED_CONTENT` in the Playwright
+	spec's own `helpers.ts`)."""
+	state = reset_plan_item_fixture(need=need, commit=False)
+	_complete_item(state["plan_item_id"], baseline_invitation_date="2099-03-01")
+	if commit:
+		frappe.db.commit()
+	return state
+
+
 def _request_funding(plan_reference: str) -> str:
 	from kentender_procurement.procurement_planning.services import plan_finance, plan_read
 
@@ -633,12 +907,51 @@ def _request_funding(plan_reference: str) -> str:
 	return requested["task"]
 
 
+def reset_ready_for_funding_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""U07-funding-ready: the one complete Plan Item, no Plan Finance Task
+	yet — every pre-Finance readiness check passes and Request plan funding
+	confirmation is genuinely clickable (unlike `reset_finance_fixture`,
+	whose task is already open by the time it returns)."""
+	state = reset_plan_item_fixture(need=need, commit=False)
+	_complete_item(state["plan_item_id"])
+	if commit:
+		frappe.db.commit()
+	return state
+
+
 def reset_finance_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
 	"""PLN-DES-10's opening state: the one complete Plan Item, funding
 	confirmation requested — one Open Plan Finance Task for the Version."""
 	state = reset_plan_item_fixture(need=need, commit=False)
 	_complete_item(state["plan_item_id"])
 	task = _request_funding(state["plan_reference"])
+	if commit:
+		frappe.db.commit()
+	return {**state, "task": task}
+
+
+def reset_finance_excess_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""§13.3 Finance excess / §10.9 U10-OVER-APPROVED — the plan asks for more
+	than the budget line approves.
+
+	The item plans KES 80,000,000; the line's approved amount is cut to
+	70,000,000 so the excess is exactly 10,000,000, which §13.3 names. The
+	confirmation is then blocked and only the return remains — the same
+	amounts the affordability gate itself computes, never a flag set to
+	pretend a shortfall."""
+	state = reset_plan_item_fixture(need=need, commit=False)
+	_complete_item(state["plan_item_id"])
+	# The request itself checks affordability and would refuse, which is the
+	# rule working: this profile is the Officer meeting an excess that appeared
+	# on the authoritative basis after the request, not a plan that was allowed
+	# to ask for the impossible.
+	line_version = frappe.db.get_value(
+		"Procurement Budget Line Version",
+		{"budget_line": BUDGET_LINE, "budget_version": ("in", frappe.get_all("Procurement Budget Version", filters={"status": "Active"}, pluck="name"))},
+		"name",
+	)
+	task = _request_funding(state["plan_reference"])
+	frappe.db.set_value("Procurement Budget Line Version", line_version, "approved_amount", 70_000_000, update_modified=False)
 	if commit:
 		frappe.db.commit()
 	return {**state, "task": task}
@@ -653,7 +966,7 @@ def reset_governance_fixture(*, need: str = "", commit: bool = True) -> dict[str
 	task = frappe.get_doc("Plan Finance Task", state["task"])
 	with _as(FINANCE):
 		plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=_key())
-	with _as(PLANNER):
+	with _as(HOPF):
 		plan = plan_read.get_annual_plan(plan_reference=state["plan_reference"])
 		submitted = plan_governance.submit_consolidated_plan(
 			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=_key(),
@@ -676,54 +989,249 @@ def reset_statutory_fixture(*, need: str = "", commit: bool = True) -> dict[str,
 	return {**state, "ao_task": state["task"], "task": adopted["statutory_task"]}
 
 
+def reset_collective_fixture(*, need: str = "", route: str = "Council", commit: bool = True) -> dict[str, Any]:
+	"""§13.3 Collective authority — the same adopted Plan awaiting a body that
+	decides collectively rather than one Cabinet Secretary.
+
+	An isolated presentation profile, not a mutation of the shared world: the
+	route is a single site-wide value, so the previous one is saved and
+	`restore_site` puts it back. The Playwright statutory actor records the
+	body's resolution; §13.3 forbids dressing the Ministry's own Cabinet
+	Secretary up as a Council, and this world has no such actor to dress."""
+	from kentender_procurement.procurement_planning.services import plan_governance
+
+	if route not in plan_governance.COLLECTIVE_ROUTES:
+		frappe.throw(f"{route!r} is not a collective route; expected one of {sorted(plan_governance.COLLECTIVE_ROUTES)}.")
+	previous = cstr(frappe.db.get_single_value("Site Procuring Entity", "statutory_approval_route"))
+	if previous and not frappe.defaults.get_global_default(PREVIOUS_ROUTE_KEY):
+		frappe.defaults.set_global_default(PREVIOUS_ROUTE_KEY, previous)
+	frappe.db.set_single_value("Site Procuring Entity", "statutory_approval_route", route)
+	frappe.clear_cache()
+	state = reset_statutory_fixture(need=need, commit=False)
+	if commit:
+		frappe.db.commit()
+	return {**state, "statutory_route": route, "previous_route": previous}
+
+
 # --- Slice D journeys (Active plan, cascade, publication) ---------------------
 
 
-def _approve(state: dict[str, Any], *, transmit=None) -> dict[str, Any]:
-	from unittest.mock import patch
-
-	from kentender_procurement.procurement_planning.services import plan_governance, plan_publication
+def _approve(state: dict[str, Any]) -> dict[str, Any]:
+	"""§5.5.2 (plan D8): `ApproveAnnualPlan` commits the immutable snapshot,
+	publication and intent only — no external send. Returns the new
+	`snapshot`/`publication`/`intent` shape (Phase 2f; the old
+	`publication_result` key and `Annual Plan Publication` doctype are gone)."""
+	from kentender_procurement.procurement_planning.services import plan_governance
 
 	task = frappe.get_doc("Plan Governance Task", state["task"])
 	with _as(STATUTORY):
-		if transmit is None:
-			return plan_governance.approve_annual_plan(task=task.name, task_token=task.task_token, idempotency_key=_key())
-		with patch.object(plan_publication, "_transmit", return_value=transmit):
-			return plan_governance.approve_annual_plan(task=task.name, task_token=task.task_token, idempotency_key=_key())
+		return plan_governance.approve_annual_plan(task=task.name, task_token=task.task_token, idempotency_key=_key())
+
+
+def _record_treasury(plan_version: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import treasury
+
+	with _as(ACCOUNTING_OFFICER):
+		return treasury.record_treasury_submission(
+			plan_version=plan_version, submitted_at="2098-11-01 09:00:00", channel="Email", destination="treasury@example.test",
+			dispatch_reference="MOH/APP/2098/001", exact_document_confirmed=True, idempotency_key=_key(),
+		)
+
+
+def reset_approved_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""§10.13 U13-TREASURY-FORM: approved, with the publication and intent
+	committed, and nothing sent to Treasury yet. This is the only state in
+	which the Accounting Officer is offered the first-submission form — once
+	a submission exists, the same route offers the correction form instead
+	(U13-CORRECT-EVIDENCE), which is a different artboard."""
+	state = reset_statutory_fixture(need=need, commit=False)
+	approved = _approve(state)
+	if commit:
+		frappe.db.commit()
+	return {**state, "publication": approved["publication"]}
 
 
 def reset_active_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
 	"""PLN-DES-14's opening state: the approved, acknowledged, Active Plan
-	with its one item's forecasts seeded from baseline."""
+	with its one item's forecasts seeded from baseline. The worker runs
+	inline (no RQ worker on this bench), as a technical actor — publication
+	is a system worker, never a business-user action."""
+	from kentender_procurement.procurement_planning.services import publication_pipeline
+
 	state = reset_statutory_fixture(need=need, commit=False)
 	approved = _approve(state)
-	publication = frappe.db.get_value("Annual Plan Publication", {"plan_version": state["plan_version"], "result": "Acknowledged"}, "name")
+	_record_treasury(state["plan_version"])
+	with _as("Administrator"):
+		published = publication_pipeline.publish_annual_plan(plan_version=state["plan_version"], idempotency_key=_key())
 	if commit:
 		frappe.db.commit()
-	return {**state, "publication_result": approved["publication_result"], "publication": publication}
+	return {**state, "publication_result": published["result"], "publication": approved["publication"]}
+
+
+UPDATE_CHANGE_REASON = "The department's description of the package was corrected after activation."
+
+
+def reset_late_activation_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""§13.3 / §10.14 U21-LATE-ACTIVATION — the initial plan that only became
+	active after its financial year had already begun.
+
+	The fixture year starts 1 Jul 2098 and the seeded activation happens under
+	the frozen clock, so the gap is made by moving `activated_at` a month past
+	the year start — a fixture-only override, the same pattern as
+	`funding_state` in the reassessment profile. Nothing else is touched: the
+	explanation exists precisely because the activation instant is a fact that
+	may never be rewritten (§4.9)."""
+	state = reset_active_fixture(need=need, commit=False)
+	frappe.db.set_value("Annual Plan Version", state["plan_version"], "activated_at", "2098-08-01 09:00:00", update_modified=False)
+	if commit:
+		frappe.db.commit()
+	return state
+
+
+def reset_update_candidate_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""§10.3 U01-CURRENT-UPDATE: the plan in force plus an open Draft
+	successor that has actually changed something.
+
+	A bare `BeginPlanUpdate` copy is not what the artboard draws, and it is
+	not what a Planner would ever be looking at: the row names the purchase
+	the update affects and why, and neither exists until the successor
+	differs from its predecessor. So this fixture makes one real change —
+	the description of the copied purchase — and records the reason for it."""
+	from kentender_procurement.procurement_planning.services import plan_publication, plan_read, plan_workbench
+
+	state = reset_active_fixture(need=need, commit=False)
+	with _as(PLANNER):
+		successor = plan_publication.begin_plan_update(plan_reference=state["plan_reference"], idempotency_key=_key())
+		item_id = frappe.db.get_value(
+			"Annual Plan Item",
+			{"plan_version": successor["successor_version"], "item_state": ("!=", "Dissolved")},
+			"plan_item_id",
+		)
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(
+			plan_item=item_id,
+			values={"description": "The corrected description of the national digital health infrastructure package."},
+			expected_record_version=item["record_version"], idempotency_key=_key(),
+		)
+		plan = plan_read.get_annual_plan(plan_reference=state["plan_reference"])
+		plan_workbench.save_plan_version_details(
+			plan_version=successor["successor_version"], values={"change_reason": UPDATE_CHANGE_REASON},
+			expected_record_version=plan["record_version"], idempotency_key=_key(),
+		)
+	if commit:
+		frappe.db.commit()
+	return {**state, "successor_version": successor["successor_version"], "successor_item_id": item_id}
+
+
+OVER_BUDGET_PLANNED_AMOUNT = 102_000_000  # the line approves 100,000,000
+
+
+def reset_update_over_budget_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""PLN v1.27 §10.2 UPDATE-OVER-BUDGET / U07-UPDATE-OVER-BUDGET — an open
+	plan update that takes its budget line over the approved amount.
+
+	From the candidate update: a 30% reserved-procurement target is
+	published and the Planner reserves the purchase for Youth (a real edit),
+	so the allocation is met as the board draws; then the update's one
+	source allocation is raised from KES 80,000,000 to 102,000,000 — a
+	fixture-only override standing in for the added requirements §10.2
+	describes — so the live affordability check itself finds the KES
+	2,000,000 overrun on the unchanged 100,000,000 line and the update's
+	"What changed" table shows the cost change."""
+	from kentender_procurement.procurement_planning.services import plan_read, plan_workbench
+
+	state = reset_update_candidate_fixture(need=need, commit=False)
+	_publish_reservation_target(30)
+	with _as(PLANNER):
+		item = plan_read.get_plan_item(plan_item_id=state["successor_item_id"])
+		plan_workbench.save_plan_item(
+			plan_item=state["successor_item_id"], values={"reservation_category": "Youth"},
+			expected_record_version=item["record_version"], idempotency_key=_key(),
+		)
+	for allocation in frappe.get_all("Plan Source Allocation", filters={"plan_version": state["successor_version"]}, pluck="name"):
+		frappe.db.set_value("Plan Source Allocation", allocation, "indicative_amount", OVER_BUDGET_PLANNED_AMOUNT, update_modified=False)
+	if commit:
+		frappe.db.commit()
+	return {**state, "budget_line": BUDGET_LINE}
+
+
+def reset_waiting_budget_revision_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""PLN v1.27 U07-WAITING-BUDGET-REVISION — the over-budget update after
+	the Planner asked the Budget Officer to revise the line: one request on
+	each side (BUD v1.11 §8.5) and the Planner now waiting."""
+	from kentender_procurement.procurement_planning.services import budget_revision, plan_read
+
+	state = reset_update_over_budget_fixture(need=need, commit=False)
+	with _as(PLANNER):
+		plan = plan_read.get_annual_plan(plan_reference=state["plan_reference"])
+		requested = budget_revision.request_budget_revision(
+			plan_version=plan["version_reference"], budget_line=BUDGET_LINE,
+			expected_record_version=plan["record_version"], idempotency_key=_key(),
+		)
+	if commit:
+		frappe.db.commit()
+	return {**state, "request": requested["request"], "bud_request_reference": requested["bud_request_reference"]}
+
+
+def reset_finance_reassessment_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""U10-reassess-return: the Budget Line's own approved amount changed
+	after activation, making the Active Version's funding confirmation
+	stale (§5.3.4) — the Finance Confirmation Officer reassesses exact,
+	unchanged Plan content against the new financial evidence. `funding_state`
+	is set directly (a fixture-only override, same pattern as every other
+	direct state assignment in this module) since nothing re-derives it
+	lazily until the next command touches the Version."""
+	from kentender_procurement.procurement_planning.services import plan_finance
+
+	state = reset_active_fixture(need=need, commit=False)
+	line_version = frappe.db.get_value(
+		"Procurement Budget Line Version",
+		{"budget_line": BUDGET_LINE, "budget_version": ("in", frappe.get_all("Procurement Budget Version", filters={"status": "Active"}, pluck="name"))},
+		"name",
+	)
+	frappe.db.set_value("Procurement Budget Line Version", line_version, "approved_amount", 90_000_000, update_modified=False)
+	frappe.db.set_value("Annual Plan Version", state["plan_version"], "funding_state", "Stale", update_modified=False)
+	task = _request_funding(state["plan_reference"])
+	if commit:
+		frappe.db.commit()
+	return {**state, "task": task}
+
+
+def reset_publication_unknown_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""§13.3 Publication recovery — the transmission whose outcome never came
+	back. §10.12 keeps this distinct from failure: an unknown result is not a
+	failure, offers reconciliation rather than a blind retry, and must never
+	be presented as either success or defeat."""
+	from kentender_procurement.procurement_planning.services import publication_pipeline
+
+	state = reset_statutory_fixture(need=need, commit=False)
+	approved = _approve(state)
+	_record_treasury(state["plan_version"])
+	destination = frappe.get_doc("Plan Publication", approved["publication"]).destination
+	frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Indeterminate")
+	with _as("Administrator"):
+		publication_pipeline.publish_annual_plan(plan_version=state["plan_version"], idempotency_key=_key())
+	frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Acknowledge")
+	if commit:
+		frappe.db.commit()
+	return {**state, "publication": approved["publication"]}
 
 
 def reset_publication_failed_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
 	"""PLN-DES-13/16: the approved Plan whose first transmission failed —
-	approval preserved, a technical retry pending."""
+	approval preserved, a technical retry pending. The sandbox adapter's
+	own outcome drives the simulated result (Phase 2f), replacing the old
+	mock of a function `_transmit` that no longer lives in this module."""
+	from kentender_procurement.procurement_planning.services import publication_pipeline
+
 	state = reset_statutory_fixture(need=need, commit=False)
-	approved = _approve(state, transmit=("Failed", ""))
-	publication = frappe.db.get_value("Annual Plan Publication", {"plan_version": state["plan_version"]}, "name", order_by="attempt_number desc")
+	approved = _approve(state)
+	_record_treasury(state["plan_version"])
+	destination = frappe.get_doc("Plan Publication", approved["publication"]).destination
+	frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Fail")
+	with _as("Administrator"):
+		published = publication_pipeline.publish_annual_plan(plan_version=state["plan_version"], idempotency_key=_key())
+	frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Acknowledge")
 	if commit:
 		frappe.db.commit()
-	return {**state, "publication_result": approved["publication_result"], "publication": publication}
-
-
-def run_milestone_check(*, today: str = "2098-08-25", commit: bool = True) -> dict[str, Any]:
-	"""§8.3 `CheckApproachingMilestones` run for a pinned day (the fixture
-	item's invitation is 1 Sep 2098; 25 Aug is inside the 14-day window)."""
-	from kentender_procurement.procurement_planning.services import schedule
-
-	_guard()
-	frappe.set_user("Administrator")
-	first = schedule.check_approaching_milestones(today=today)
-	second = schedule.check_approaching_milestones(today=today)
-	notifications = frappe.db.count("Notification Log", {"for_user": PLANNER, "email_header": ("like", "pln:milestone:%")})
-	if commit:
-		frappe.db.commit()
-	return {"raised": [list(r) for r in first["raised"]], "raised_again": [list(r) for r in second["raised"]], "notifications": notifications}
+	return {**state, "publication_result": published["result"], "publication": approved["publication"]}

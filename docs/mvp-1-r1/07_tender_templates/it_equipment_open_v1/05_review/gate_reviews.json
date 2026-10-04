@@ -1,0 +1,19 @@
+{
+  "machine_checked_at": "2026-09-26",
+  "machine_checked_by": "06_runtime/validate_release.py",
+  "reviews": [
+    {
+      "checked_at": "2026-08-28",
+      "checked_by": "bnganyi (product owner)",
+      "evidence_refs": [
+        "01_source/source_record.md",
+        "05_review/review_record.md#Confirmations (Gate A)",
+        "05_review/preceding_release.json#assets"
+      ],
+      "gate_id": "GATE-SOURCE",
+      "message": "Gate A confirmed the official PPRA Goods STD file and SHA-256 95726a88…ae1ee on 28 August 2026; the source bytes are unchanged since.",
+      "result": "Passed"
+    }
+  ],
+  "schema_version": 1
+}

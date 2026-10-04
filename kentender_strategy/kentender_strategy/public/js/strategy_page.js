@@ -1,10 +1,10 @@
-// STR-CHG-001 v1.7 §10 — the one Strategy Alignment Desk Page. Every
+// STR-CHG-001 v1.8 §10 — the one Strategy Alignment Desk Page. Every
 // canonical route lives under it and the root Strategy.vue picks the screen
 // from the route segments:
-//   /app/strategy                                   STR-UI-01 Strategy Portfolio
-//   /app/strategy/my-work · /app/strategy/new       Portfolio tab / new-plan draft
-//   /app/strategy/plan/{plan_id}[/history]          STR-UI-02 Plan workspace
-//   /app/strategy/plan/{plan_id}/version/{n}/structure  STR-UI-03 Structure editor
+//   /app/strategy                                   STR-UI-01 Strategic plans
+//   /app/strategy/my-work · /app/strategy/new       Actions tab / Create strategic plan
+//   /app/strategy/plan/{plan_id}[/history]          STR-UI-02 Plan workspace (Current version)
+//   /app/strategy/plan/{plan_id}/version/{n}[/structure|/history]  exact version / STR-UI-03 editor
 //   /app/strategy/approval/{plan_version_id}[/tab]  STR-UI-04 Approval task
 kentender_core.desk_page.register("strategy", {
 	title: __("Strategy Alignment"),

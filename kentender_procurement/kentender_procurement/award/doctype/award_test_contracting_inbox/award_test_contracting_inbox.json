@@ -1,0 +1,118 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-01 09:00:00.000000",
+ "description": "Plan D10: the synthetic Contracting receiver (simulation only). Receipts of packages, decision events and later updates, with the Prepare contract task.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "receipt_id",
+  "kind",
+  "award_case",
+  "reference",
+  "payload_json",
+  "received_at",
+  "task_user",
+  "task_state",
+  "publication_obligation",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "receipt_id",
+   "label": "Receipt ID",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "kind",
+   "label": "Kind",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Package\nDecision event\nUpdate"
+  },
+  {
+   "fieldname": "award_case",
+   "label": "Award case",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "reference",
+   "label": "Reference",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "payload_json",
+   "label": "Payload JSON",
+   "read_only": 1,
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "received_at",
+   "label": "Received at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "task_user",
+   "label": "Task user",
+   "read_only": 1,
+   "fieldtype": "Link",
+   "options": "User"
+  },
+  {
+   "fieldname": "task_state",
+   "label": "Task state",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "\nOpen\nDone"
+  },
+  {
+   "fieldname": "publication_obligation",
+   "label": "Publication obligation",
+   "read_only": 1,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "read_only": 1,
+   "fieldtype": "Data"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-01 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Award",
+ "name": "Award Test Contracting Inbox",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:receipt_id"
+}

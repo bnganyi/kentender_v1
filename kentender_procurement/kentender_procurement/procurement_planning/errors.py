@@ -1,15 +1,23 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Stable Procurement Planning service errors (PLN-CHG-001 v1.12 §9).
+"""Stable Procurement Planning service errors (PLN-CHG-001 v1.18 §8).
 
-§9 defines a closed set of codes. They are stable service results; `fail()`
-refuses any code outside the contract — an invented code is a defect in the
-caller, not a new error type. Unauthorised detail and task reads do not use
-these codes at all: they raise the same not-found as a nonexistent record
-(`planning_authorization.not_found()`). AUTH-ADR-001 v1.6 §10 codes are
-remapped onto this set at the service boundary (tracker D4) and never reach
-a client.
+§8 defines a closed set of 51 codes with their user-facing messages;
+`fail()` refuses any code outside the contract — an invented code is a defect
+in the caller, not a new error type. The set and messages are generated from
+the specification table and pinned by `test_planning_v118_schema`.
+
+Removed by v1.18: the reservation-release code (Planning holds no
+reservation) and the three fixed-number timing codes, replaced by
+`PLN_PROFILE_PERIOD_INVALID` whose `detail` carries the resolved rule as
+labelled parameters (period, rule, limit, offered) — never a universal
+guessed constant.
+
+Unauthorised detail and task reads do not use these codes at all: they raise
+the same not-found as a nonexistent record (`planning_authorization.not_found()`).
+AUTH-ADR-001 v1.6 §10 codes are remapped onto this set at the service boundary
+and never reach a client.
 """
 
 from __future__ import annotations
@@ -25,71 +33,131 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"PLN_BUDGET_LINE_INELIGIBLE",
 		"PLN_DPP_STALE",
 		"PLN_CLASSIFICATION_INCOMPLETE",
+		"PLN_CLASSIFICATION_UNCHANGED",
+		"PLN_CLASSIFICATION_CORRECTION_STALE",
+		"PLN_CLASSIFICATION_CORRECTION_BLOCKED",
 		"PLN_SOURCE_UNAVAILABLE",
 		"PLN_SOURCE_INCOMPATIBLE",
 		"PLN_SOURCE_CORRECTION_REQUIRED",
+		"PLN_CORRECTION_COHORT_VIOLATION",
 		"PLN_DISSOLUTION_BLOCKED",
 		"PLN_OBJECTIVE_INELIGIBLE",
+		"PLN_STRATEGY_REVIEW_CHANGED",
 		"PLN_SCHEDULE_INVALID",
-		"PLN_TENDERING_PERIOD_BELOW_MINIMUM",
-		"PLN_EVALUATION_PERIOD_ABOVE_MAXIMUM",
-		"PLN_STANDSTILL_BELOW_MINIMUM",
+		"PLN_PROFILE_PERIOD_INVALID",
 		"PLN_DELIVERY_BOUNDARY_INSUFFICIENT",
+		"PLN_DELIVERY_PERIOD_REQUIRED",
+		"PLN_MULTI_YEAR_UNSUPPORTED",
+		# PLN-CHG-001 v1.23 §8 dropped these two from the user-facing table with
+		# the forecast facility (PLN23-CHG-001). They stay registered only so the
+		# dormant cascade code in `schedule.py` remains importable and its tests
+		# keep passing; nothing routed, whitelisted or scheduled can reach them.
 		"PLN_FORECAST_REASON_REQUIRED",
 		"PLN_CASCADE_INCLUDES_ACTUAL_MILESTONE",
 		"PLN_BASELINE_LOCKED",
 		"PLN_ACTUAL_NOT_WRITABLE",
 		"PLN_PLAN_NOT_AFFORDABLE",
+		"PLN_BUDGET_REVISION_NOT_REQUIRED",
+		"PLN_BUDGET_REVISION_ALREADY_REQUESTED",
+		"PLN_BUDGET_REVISION_ALREADY_DECLINED",
+		"PLN_DEPARTMENTAL_UPDATE_NOT_REQUIRED",
+		"PLN_DEPARTMENTAL_UPDATE_ALREADY_REQUESTED",
 		"PLN_FINANCE_STALE",
-		"PLN_RESERVATION_RELEASE_FAILED",
 		"PLN_REVIEW_STALE",
 		"PLN_SEGREGATION_CONFLICT",
-		"PLN_PUBLICATION_FAILED",
-		"PLN_REMOVAL_BLOCKED",
 		"PLN_STATUTORY_ROUTE_UNCONFIGURED",
+		"PLN_COLLECTIVE_RESOLUTION_REQUIRED",
 		"PLN_PLAN_CONTENTS_INCOMPLETE",
 		"PLN_METHOD_NOT_ADMISSIBLE",
+		"PLN_METHOD_EVIDENCE_REQUIRED",
 		"PLN_RESERVATION_REQUIRED",
+		"PLN_RESERVATION_SHORTFALL",
 		"PLN_REFERENCE_UNAVAILABLE",
+		"PLN_MONEY_PRECISION_INVALID",
+		"PLN_ITEM_SCOPE_LOCKED",
+		"PLN_ITEM_AUTHORISATION_HELD",
+		"PLN_CORRECTION_NOT_ACTIVE",
+		"PLN_REMOVAL_BLOCKED",
+		"PLN_ALLOWANCE_EXCEEDED",
+		"PLN_TREASURY_EVIDENCE_REQUIRED",
+		"PLN_PUBLICATION_FAILED",
+		"PLN_PUBLICATION_UNKNOWN",
+		"PLN_PUBLICATION_HELD",
+		"PLN_PUBLICATION_ACK_MISMATCH",
+		"PLN_WITHDRAWAL_NOT_PERMITTED",
+		"PLN_ACTIVATION_HELD",
+		"PLN_LATE_EXPLANATION_REQUIRED",
 		"PLN_STALE_WRITE",
+		"PLN_IDEMPOTENCY_CONFLICT",
 	}
 )
 
 MESSAGES: dict[str, str] = {
-	"PLN_NO_CONTEXT": "You do not have an assigned Procurement Planning scope, or no configured Financial Year is available.",
-	"PLN_WINDOW_CLOSED": "The initial departmental-plan submission window is closed.",
-	"PLN_NEED_COVERAGE_INCOMPLETE": "Add every current accepted Need to this departmental plan before submitting.",
+	"PLN_NO_CONTEXT": "Procurement Planning is not available for your responsibilities or the current setup.",
+	"PLN_WINDOW_CLOSED": "Initial departmental-plan submissions are closed.",
+	"PLN_NEED_COVERAGE_INCOMPLETE": "Include each required departmental need or record why it is not included this year.",
 	"PLN_ENTRY_INCOMPLETE": "Complete the highlighted requirement fields before submitting.",
-	"PLN_BUDGET_LINE_INELIGIBLE": "Select an Active Procurement Budget Line available to this department and Financial Year.",
-	"PLN_DPP_STALE": "This departmental plan changed. Reload and review the current Submission.",
-	"PLN_CLASSIFICATION_INCOMPLETE": "Classify every submitted requirement before accepting the plan.",
-	"PLN_SOURCE_UNAVAILABLE": "One or more selected departmental entries are no longer available for Plan Item formation.",
-	"PLN_SOURCE_INCOMPATIBLE": "The selected entries cannot form one Plan Item. Create separate items.",
-	"PLN_SOURCE_CORRECTION_REQUIRED": "A departmental source changed. Dissolve and re-form the affected Draft item before continuing.",
-	"PLN_DISSOLUTION_BLOCKED": "This Plan Item is no longer in a mutable Draft and cannot be dissolved.",
-	"PLN_OBJECTIVE_INELIGIBLE": "Select an Active Strategic Objective valid for this Plan.",
-	"PLN_SCHEDULE_INVALID": "Correct the highlighted dates so the schedule is chronological and meets the required-by date.",
-	"PLN_TENDERING_PERIOD_BELOW_MINIMUM": "The tendering period must be at least 7 days.",
-	"PLN_EVALUATION_PERIOD_ABOVE_MAXIMUM": "The evaluation period cannot exceed 30 days.",
-	"PLN_STANDSTILL_BELOW_MINIMUM": "The standstill period before contract signing must be at least 14 days.",
-	"PLN_DELIVERY_BOUNDARY_INSUFFICIENT": "The computed contract signing date leaves no reasonable delivery period before the required-by date. Adjust the target invitation date or the governed periods.",
+	"PLN_BUDGET_LINE_INELIGIBLE": "Choose a budget line available to this department for this financial year.",
+	"PLN_DPP_STALE": "This departmental plan has changed. Refresh before continuing.",
+	"PLN_CLASSIFICATION_INCOMPLETE": "Choose a requirement type for each included requirement.",
+	"PLN_CLASSIFICATION_UNCHANGED": "Choose a different requirement type to correct this classification.",
+	"PLN_CLASSIFICATION_CORRECTION_STALE": "This classification was already corrected. Refresh before continuing.",
+	"PLN_CLASSIFICATION_CORRECTION_BLOCKED": "This classification cannot be corrected through this action. Follow the source, plan or procurement correction shown.",
+	"PLN_SOURCE_UNAVAILABLE": "One or more selected requirements are no longer available to add.",
+	"PLN_SOURCE_INCOMPATIBLE": "These requirements cannot be combined. Add them as separate purchases.",
+	"PLN_SOURCE_CORRECTION_REQUIRED": "A departmental requirement has changed. Review the change before rebuilding the affected draft purchase.",
+	"PLN_CORRECTION_COHORT_VIOLATION": "This requirement belongs in a later update. It cannot be added to the current correction.",
+	"PLN_DISSOLUTION_BLOCKED": "This item can no longer be removed from the draft.",
+	"PLN_OBJECTIVE_INELIGIBLE": "Choose a strategic objective currently available for this plan.",
+	"PLN_STRATEGY_REVIEW_CHANGED": "The selected strategy has changed since submission. Return the plan for correction.",
+	"PLN_SCHEDULE_INVALID": "Review the highlighted dates and the rule shown for them.",
+	"PLN_PROFILE_PERIOD_INVALID": "The highlighted period does not meet the procurement rule shown.",
+	"PLN_DELIVERY_BOUNDARY_INSUFFICIENT": "Estimated completion is after the department’s required date. Review the schedule or request a departmental correction.",
+	"PLN_DELIVERY_PERIOD_REQUIRED": "Enter the estimated delivery or implementation period in calendar days.",
+	"PLN_MULTI_YEAR_UNSUPPORTED": "Multi-year procurement is not supported in this release.",
+	"PLN_BASELINE_LOCKED": "This submitted plan cannot be edited. Use the available correction or update action.",
+	"PLN_ACTUAL_NOT_WRITABLE": "Actual dates must come from the process that recorded the event.",
+	"PLN_PLAN_NOT_AFFORDABLE": "The planned amount exceeds the approved budget on the lines shown.",
+	# PLN v1.27 §8 — RequestBudgetRevision's two refusals.
+	"PLN_BUDGET_REVISION_NOT_REQUIRED": "This budget line is within its approved amount. No budget revision is needed.",
+	"PLN_BUDGET_REVISION_ALREADY_REQUESTED": "A budget revision has already been requested for this line.",
+	# Owner decision 26 Sep 2026 — the departmental correction route. A fresh
+	# budget request needs a new basis, never an endless "ask again".
+	"PLN_BUDGET_REVISION_ALREADY_DECLINED": "Budget declined a revision of this line for the same amounts. Ask the department to update its plan, or request again once the amounts change.",
+	"PLN_DEPARTMENTAL_UPDATE_NOT_REQUIRED": "This department has no requirement on a budget line that is over its approved amount.",
+	"PLN_DEPARTMENTAL_UPDATE_ALREADY_REQUESTED": "This department has already been asked to update its plan for this line.",
+	"PLN_FINANCE_STALE": "Funding needs to be checked again. Follow the action shown for this plan.",
+	"PLN_REVIEW_STALE": "This review has changed. Refresh before deciding.",
+	"PLN_SEGREGATION_CONFLICT": "You cannot make this decision because of your earlier role in this plan. An authorised, independent decision-maker is required.",
+	"PLN_STATUTORY_ROUTE_UNCONFIGURED": "The plan’s approving authority is not configured. A KenTender administrator must complete this setting.",
+	"PLN_COLLECTIVE_RESOLUTION_REQUIRED": "Enter the Board or Council resolution reference for this decision.",
+	"PLN_PLAN_CONTENTS_INCOMPLETE": "Complete the highlighted purchase details and required evidence.",
+	"PLN_METHOD_NOT_ADMISSIBLE": "The selected method does not meet the applicable procurement conditions.",
+	"PLN_METHOD_EVIDENCE_REQUIRED": "Provide the evidence required for the selected procurement method.",
+	"PLN_RESERVATION_REQUIRED": "Choose who this procurement is reserved for, or None if no designation applies.",
+	"PLN_RESERVATION_SHORTFALL": "Reserved procurement is below the required amount. Review the shortfall shown.",
+	"PLN_REFERENCE_UNAVAILABLE": "A required procurement rule or calculation basis is missing or unverified. The setting shown needs attention.",
+	"PLN_MONEY_PRECISION_INVALID": "Enter the amount using the decimal places allowed for this currency.",
+	"PLN_ITEM_SCOPE_LOCKED": "This item already has an authorised requisition. Add extra requirements as a separate item in a plan update.",
+	"PLN_ITEM_AUTHORISATION_HELD": "New requisition authorisations are on hold for this item until its correction requests are resolved.",
+	"PLN_CORRECTION_NOT_ACTIVE": "Record completion only after the corrected plan becomes the current plan.",
+	"PLN_REMOVAL_BLOCKED": "This item is already used in procurement and cannot be removed through Planning.",
+	"PLN_ALLOWANCE_EXCEEDED": "The requested quantity or amount exceeds what remains under the original plan item.",
+	"PLN_TREASURY_EVIDENCE_REQUIRED": "Record evidence that this approved plan was sent to Treasury before website publication.",
+	"PLN_PUBLICATION_FAILED": "The plan was not published. The approved document is unchanged.",
+	"PLN_PUBLICATION_UNKNOWN": "We could not confirm whether publication succeeded. Check the existing attempt before trying again.",
+	"PLN_PUBLICATION_HELD": "Publication is on hold. Review the issue shown.",
+	"PLN_PUBLICATION_ACK_MISMATCH": "The publication confirmation does not match this approved plan.",
+	"PLN_WITHDRAWAL_NOT_PERMITTED": "Withdrawal requires confirmation that the plan was not published and that no publication attempt is still pending.",
+	"PLN_ACTIVATION_HELD": "The plan was published, but it is not available for new procurement. The issues shown must be corrected.",
+	"PLN_LATE_EXPLANATION_REQUIRED": "Explain why this initial plan is being adopted after the financial year started.",
+	"PLN_STALE_WRITE": "This record changed after you opened it. Refresh before continuing.",
+	"PLN_IDEMPOTENCY_CONFLICT": "This action could not be processed. Refresh before trying again; contact support if the problem continues.",
+	# PLN-CHG-001 v1.23 §8 removed both of these from the user-facing table with
+	# the forecast facility (PLN23-CHG-001). Retained only so the dormant code
+	# that raises them still imports; nothing routed can reach them.
 	"PLN_FORECAST_REASON_REQUIRED": "State why the forecast date is changing before saving.",
-	"PLN_CASCADE_INCLUDES_ACTUAL_MILESTONE": "A milestone with a recorded actual date cannot be included in a forecast cascade.",
-	"PLN_BASELINE_LOCKED": "The baseline schedule is locked once the Plan Version is submitted. Prepare a Plan successor to change it.",
-	"PLN_ACTUAL_NOT_WRITABLE": "Actual dates cannot be entered directly. This value is populated only by the module that recorded the real event.",
-	"PLN_PLAN_NOT_AFFORDABLE": "The planned total exceeds the approved amount on one or more Procurement Budget Lines.",
-	"PLN_FINANCE_STALE": "Funding confirmation is no longer current. Request confirmation again.",
-	"PLN_RESERVATION_RELEASE_FAILED": "Funding could not be released. The Planning change was not completed. Try again or quote the support reference.",
-	"PLN_REVIEW_STALE": "This task has already changed. Reload to see the current decision.",
-	"PLN_SEGREGATION_CONFLICT": "You cannot make this decision because you performed an incompatible earlier action.",
-	"PLN_PUBLICATION_FAILED": "Publication was not acknowledged. The approved Plan remains unchanged and may be retried.",
-	"PLN_REMOVAL_BLOCKED": "This Active Plan Item has downstream use and cannot be removed through Planning.",
-	"PLN_STATUTORY_ROUTE_UNCONFIGURED": "The statutory approval route for this entity is not configured. Adoption cannot proceed; a plan cannot lawfully complete without statutory approval.",
-	"PLN_PLAN_CONTENTS_INCOMPLETE": "One or more Plan Items are missing a plan horizon, aggregation indicator, lotting indicator, multi-year justification or lot count required by the plan contents rules.",
-	"PLN_METHOD_NOT_ADMISSIBLE": "The selected procurement method is not admissible for this planned value.",
-	"PLN_RESERVATION_REQUIRED": "Record a preference and reservation category before requesting Finance confirmation. None is a valid choice.",
-	"PLN_REFERENCE_UNAVAILABLE": "The threshold matrix for this financial year has not been configured. Method admissibility cannot be checked and readiness fails closed.",
-	"PLN_STALE_WRITE": "Another user changed this record. Reload before continuing.",
+	"PLN_CASCADE_INCLUDES_ACTUAL_MILESTONE": "This activity has an actual date recorded. Its expected date cannot be changed.",
 }
 
 
@@ -103,7 +171,7 @@ class ProcurementPlanningError(frappe.ValidationError):
 def fail(code: str, message: str = "", detail: dict | None = None) -> None:
 	if code not in ERROR_CODES:
 		raise ValueError(
-			f"{code!r} is not part of the PLN-CHG-001 v1.12 §9 error contract. "
+			f"{code!r} is not part of the PLN-CHG-001 v1.18 §8 error contract. "
 			f"Map the condition onto one of: {', '.join(sorted(ERROR_CODES))}."
 		)
 	raise ProcurementPlanningError(code, message or MESSAGES[code], detail)

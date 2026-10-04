@@ -190,11 +190,24 @@
 .body-sidebar .sidebar-item-container[data-id="Demands"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "assignment_ind";
 }
+.body-sidebar .sidebar-item-container[data-id="Tender-security receipts"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	/* BDS-CHG-001 v0.8 BDS-DES-15: the Head of Procurement Function's intake of
+	   physical tender-security originals. Without a rule here the native icon is
+	   hidden (above) and the item showed no icon at all. */
+	content: "shield";
+}
 .body-sidebar .sidebar-item-container[data-id="Contract Management"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "description";
 }
 .body-sidebar .sidebar-item-container[data-id="Supplier Management"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "group";
+}
+.body-sidebar .sidebar-item-container[data-id="STD Templates"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	/* STD-TPL-IMP-001 v1.0: the installed standard tender document releases. */
+	content: "library_books";
+}
+.body-sidebar .sidebar-item-container[data-id="System setup"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	content: "settings";
 }
 
 /* Planned availability badge (suffix from boot; auth is a separate gate) */
@@ -315,9 +328,6 @@
 /* menu_book — not admin_panel_settings (that glyph reads as a heavy boxed control). */
 .body-sidebar .section-item[data-id="STD Administration"] > .standard-sidebar-item .item-anchor.section-break::before {
 	content: "menu_book";
-}
-.body-sidebar .section-item[data-id="Configuration and Governance"] > .standard-sidebar-item .item-anchor.section-break::before {
-	content: "admin_panel_settings";
 }
 /* Group chevron: quiet outline caret, no button chrome / focus plate */
 .body-sidebar .section-item .sidebar-item-control {

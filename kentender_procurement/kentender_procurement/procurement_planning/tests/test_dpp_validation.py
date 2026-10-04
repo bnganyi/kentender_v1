@@ -8,6 +8,8 @@ from __future__ import annotations
 from unittest.mock import patch
 from uuid import uuid4
 
+import json
+
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -15,6 +17,7 @@ from kentender_procurement.procurement_planning.errors import ProcurementPlannin
 from kentender_procurement.procurement_planning.services import (
 	budget_gateway,
 	dpp_lifecycle,
+	dpp_read,
 	dpp_validation,
 	needs_intake,
 )
@@ -118,6 +121,25 @@ class TestAcceptance(ValidationCase):
 		)
 		# no Plan Item, no reservation from acceptance (PLN-AC-012/023)
 		self.assertEqual(frappe.db.count("Annual Plan Item", {"fixture_namespace": fx.NS}), 0)
+
+	def test_a_decided_review_reads_back_the_recorded_classification(self):
+		"""A completed review showed empty disabled selects and still said
+		"Decision required" (found live 25 Sep 2026): the reader has to get
+		the classification the decision recorded, per requirement."""
+		task = self.submitted_task()
+		frappe.set_user(fx.PLANNER)
+		before = dpp_read.get_dpp_validation_task(task=task.name)
+		self.assertEqual(before["entries"][0]["recorded_requirement_type"], "")
+		self.accept(task)
+		frappe.set_user(fx.PLANNER)
+		after = dpp_read.get_dpp_validation_task(task=task.name)
+		self.assertEqual(after["status"], "Completed")
+		self.assertFalse(after["can_decide"])
+		row = next(r for r in after["entries"] if r["entry_id"] == self.entry_id)
+		self.assertEqual(row["recorded_requirement_type"], "Consulting services")
+		self.assertEqual(row["recorded_category"], "Services")
+		self.assertEqual(after["decided"]["decision"], "Accept departmental plan")
+		self.assertTrue(after["decided"]["decided_at_display"])
 
 	def test_second_acceptance_reuses_the_one_annual_plan_root(self):
 		task = self.submitted_task()
@@ -238,16 +260,49 @@ class TestAcceptance(ValidationCase):
 			self.accept(task, user=fx.OUTSIDER)
 
 
+class TestDispositionEvent(ValidationCase):
+	def test_acceptance_emits_one_disposition_event_per_need_source_and_none_for_direct(self):
+		"""PLN-CHG-001 v1.18 §5.1.4 — `NeedPlanningDispositionChanged.v1` after acceptance only."""
+		from kentender_procurement.departmental_needs.services import usage as needs_usage
+
+		task = self.submitted_task()
+		with patch.object(needs_usage, "project_planning_disposition") as projected:
+			self.accept(task)
+			projected.assert_not_called()  # the only source is a direct requirement
+		# a Need-origin snapshot row (proceeding) → one Proceeding event carrying the submission sequence
+		snapshots = json.loads(frappe.db.get_value("Departmental Plan Submission", task.submission, "entry_snapshots"))
+		snapshots.append({"entry_id": "NEEDROW", "source_origin": needs_intake.NEED_ORIGIN, "need": fx.NEED, "need_revision": fx.NEED_V1, "not_proceeding_reason": ""})
+		with patch.object(needs_usage, "project_planning_disposition") as projected:
+			dpp_validation._publish_dispositions(snapshots, submission=task.submission, decision_name="DEC-TEST", actor=fx.PLANNER)
+			self.assertEqual(projected.call_count, 1)
+			kwargs = projected.call_args.kwargs
+			self.assertEqual(kwargs["disposition"], "Proceeding")
+			self.assertEqual(kwargs["departmental_need"], fx.NEED)
+			self.assertEqual(kwargs["dpp_submission"], task.submission)
+			self.assertEqual(kwargs["producer_sequence"], 1)
+			self.assertEqual(kwargs["source_event_id"], f"DEC-TEST:{fx.NEED_V1}:disposition")
+
+
 class TestReturn(ValidationCase):
 	def test_return_requires_structured_issues(self):
 		task = self.submitted_task()
 		frappe.set_user(fx.PLANNER)
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			dpp_validation.return_departmental_plan(
-				task=task.name, issues=[{"entry_id": self.entry_id, "problem": "", "correction": ""}],
+				task=task.name, issues=[{"entry_id": self.entry_id, "correction_required": ""}],
 				task_token=task.task_token, idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+
+	def test_return_accepts_a_whole_plan_issue_with_no_entry(self):
+		task = self.submitted_task()
+		frappe.set_user(fx.PLANNER)
+		result = dpp_validation.return_departmental_plan(
+			task=task.name,
+			issues=[{"entry_id": "", "correction_required": "The submitted totals do not reconcile."}],
+			task_token=task.task_token, idempotency_key=key(),
+		)
+		self.assertEqual(result["action"], "returned")
 
 	def test_return_preserves_snapshot_and_creates_the_correction_draft(self):
 		task = self.submitted_task()
@@ -256,8 +311,7 @@ class TestReturn(ValidationCase):
 			task=task.name,
 			issues=[{
 				"entry_id": self.entry_id,
-				"problem": "Amount looks wrong",
-				"correction": "Confirm the indicative amount against the budget line.",
+				"correction_required": "Confirm the indicative amount against the budget line.",
 			}],
 			task_token=task.task_token,
 			idempotency_key=key(),
@@ -288,8 +342,7 @@ class TestReturn(ValidationCase):
 			task=task.name,
 			issues=[{
 				"entry_id": self.entry_id,
-				"problem": "Description too thin",
-				"correction": "Expand the requirement description.",
+				"correction_required": "Expand the requirement description.",
 			}],
 			task_token=task.task_token, idempotency_key=key(),
 		)
@@ -313,3 +366,27 @@ class TestReturn(ValidationCase):
 		self.assertEqual(resubmission.dpp_version, correction.name)
 		self.assertEqual(resubmission.submission_number, correction.version_number)
 		self.assertEqual(resubmission.submission_number, 2)
+
+
+class TestCertifyingCapacity(ValidationCase):
+	"""§10.5 — a certification by someone with no authority to give it is a
+	different fact from one given by the Head of Department, and the Planner
+	deciding on it needs to see which."""
+
+	def test_the_capacity_the_submission_froze_is_carried_to_the_reviewer(self):
+		task = self.submitted_task()
+		frappe.set_user(fx.PLANNER)
+		read = dpp_read.get_dpp_validation_task(task=task.name)
+		self.assertEqual(read["context"]["submitted_capacity"], "Head of User Department")
+
+	def test_a_submission_with_no_snapshot_yields_nothing_rather_than_a_guess(self):
+		"""The column carries a JSON constraint, so unparseable text cannot
+		reach it; an absent snapshot is the case that can actually happen."""
+		task = self.submitted_task()
+		frappe.db.set_value(
+			"Departmental Plan Submission", task.submission, "authority_snapshot", None, update_modified=False
+		)
+		frappe.set_user(fx.PLANNER)
+		read = dpp_read.get_dpp_validation_task(task=task.name)
+		self.assertEqual(read["context"]["submitted_capacity"], "")
+

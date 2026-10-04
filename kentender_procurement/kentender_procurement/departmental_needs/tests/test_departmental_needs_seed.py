@@ -21,6 +21,7 @@ from kentender_procurement.departmental_needs.constants import (
 	USAGE_FULL,
 	USAGE_NOT_INCLUDED,
 	REVISION_ACCEPTED,
+	REVISION_RETURNED,
 	REVISION_SUBMITTED,
 	REVISION_SUPERSEDED,
 )
@@ -33,12 +34,14 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	FY,
 	NS,
 	PLANNER,
+	RETURN_REASON,
 	REVIEWER,
 	_granted_units,
 	upsert_departmental_needs,
 )
 from kentender_procurement.departmental_needs.services.context import needs_submission_state
 from kentender_procurement.departmental_needs.services.usage import planning_usage
+from kentender_procurement.departmental_needs.tests import support
 
 # §14.3 — reference, department label, quantity, required-by, state. The
 # department is asserted by its real Organisation Unit *name* rather than a
@@ -71,6 +74,7 @@ class SeedCase(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		upsert_departmental_needs()
+		support.ensure_transitional_reviewer_grant(cls)
 
 	def setUp(self):
 		super().setUp()
@@ -192,12 +196,14 @@ class TestDefaultNeeds(SeedCase):
 		self.assertEqual(owners, {AUTHOR})
 
 	def test_the_design_clock_decision_times_are_applied(self):
-		# SEED-001 §3.2 (2026-09-05): 0003/0004 accept at the harmonized
-		# chain's own instants, replacing 0003's former "Return for
-		# correction" entry.
+		# NDS-CHG-001 v1.14 §14.3 / SEED-001 v1.3 §3.2: 0003 is returned on
+		# 24 Nov, corrected in Revision 2 and resubmitted on 25 Nov, then
+		# accepted (restored 26 Sep 2026; the seed had accepted Revision 1).
 		expected = {
 			("NDS-MOH-2027-0001", "Accept for planning"): "2026-11-24 14:00:00",
 			("NDS-MOH-2027-0002", "Submit"): "2026-11-24 12:20:00",
+			("NDS-MOH-2027-0003", "Return for correction"): "2026-11-24 13:35:00",
+			("NDS-MOH-2027-0003", "Resubmit"): "2026-11-25 09:00:00",
 			("NDS-MOH-2027-0003", "Accept for planning"): "2026-11-25 10:00:00",
 			("NDS-MOH-2027-0004", "Accept for planning"): "2026-11-25 09:30:00",
 		}
@@ -208,7 +214,34 @@ class TestDefaultNeeds(SeedCase):
 				"occurred_at",
 				order_by="creation desc",
 			)
-			self.assertEqual(str(occurred), when, f"{need} {action}")
+			# The frozen seed clock ticks, so the stored instant carries a
+			# fraction of a second after the fixture second.
+			self.assertEqual(str(occurred)[:19], when, f"{need} {action}")
+
+	def test_need_0003_accepts_its_corrected_revision_2(self):
+		"""NDS-CHG-001 v1.14 §14.3 and §11.5: Revision 1 asks for 200, Peter
+		returns it with the NDS-DES-04 reason, and the accepted Revision 2
+		corrects the quantity to 100."""
+		need = frappe.get_doc("Departmental Need", "NDS-MOH-2027-0003")
+		revisions = frappe.get_all(
+			"Departmental Need Revision",
+			filters={"departmental_need": need.name},
+			fields=["name", "revision_number", "revision_status", "indicative_quantity"],
+			order_by="revision_number asc",
+		)
+		self.assertEqual(
+			[(r.revision_number, r.revision_status, float(r.indicative_quantity)) for r in revisions],
+			[(1, REVISION_RETURNED, 200.0), (2, REVISION_ACCEPTED, 100.0)],
+		)
+		self.assertEqual(need.current_accepted_revision, revisions[1].name)
+		returned = frappe.db.get_value(
+			"Departmental Need Decision",
+			{"departmental_need": need.name, "action": "Return for correction"},
+			["actor", "reason"],
+			as_dict=True,
+		)
+		self.assertEqual(returned.actor, REVIEWER)
+		self.assertEqual(returned.reason, RETURN_REASON)
 
 	def test_the_default_profile_reports_planning_usage_matching_the_harmonized_chain(self):
 		# SEED-001 §3.2/§3.6 (2026-09-05) — 0001, 0003 and 0004 are the three
@@ -234,6 +267,7 @@ class TestDefaultNeeds(SeedCase):
 			frappe.db.count("Departmental Need Event"),
 		)
 		upsert_departmental_needs()
+		support.ensure_transitional_reviewer_grant()
 		after = (
 			frappe.db.count("Departmental Need"),
 			frappe.db.count("Departmental Need Revision"),
@@ -275,18 +309,26 @@ class TestSelectableProfiles(SeedCase):
 
 	def test_planning_usage_applies_and_resets(self):
 		# §14.4 — Fully included in the named Active Plan and Plan Item.
+		# The reset restores what was there: `Not included` on a Needs-only
+		# site, Planning's own projection on one seeded through Planning (the
+		# reset used to delete that projection for good — 26 Sep 2026).
 		need = self.need("NDS-MOH-2027-0001")
-		self.assertEqual(planning_usage(need.name), USAGE_NOT_INCLUDED)
+		before = frappe.db.get_value("Need Planning Usage Projection", need.current_accepted_revision, ["usage", "active_plan", "active_plan_item"], as_dict=True)
+		self.addCleanup(profiles.reset_profile, "planning_usage")
 		applied = profiles.apply_profile("planning_usage")
 		self.assertEqual(applied["plan_item"], profiles.ACTIVE_PLAN_ITEM)
 		self.assertEqual(planning_usage(need.name), USAGE_FULL)
 		profiles.reset_profile("planning_usage")
-		self.assertEqual(planning_usage(need.name), USAGE_NOT_INCLUDED)
+		after = frappe.db.get_value("Need Planning Usage Projection", need.current_accepted_revision, ["usage", "active_plan", "active_plan_item"], as_dict=True)
+		self.assertEqual(after, before)
 
 	def test_the_successor_profile_changes_only_the_required_by_date(self):
 		# §14.5 — Version 2 differs from Version 1 in one field.
 		need = self.need("NDS-MOH-2027-0001")
 		version_one = frappe.get_doc("Departmental Need Revision", need.current_accepted_revision)
+		# Found 26 Sep 2026: without this the profile stayed applied on the
+		# canonical Need after the run (tests persist on this bench).
+		self.addCleanup(profiles.reset_profile, "successor")
 		applied = profiles.apply_profile("successor")
 		version_two = frappe.get_doc("Departmental Need Revision", applied["accepted_revision"])
 		self.assertEqual(str(version_two.required_by_date), profiles.SUCCESSOR_REQUIRED_BY)
@@ -300,12 +342,14 @@ class TestSelectableProfiles(SeedCase):
 
 	def test_resetting_the_successor_restores_the_default_fixture(self):
 		before = self.default_fingerprint()
+		self.addCleanup(profiles.reset_profile, "successor")
 		profiles.apply_profile("successor")
 		self.assertNotEqual(self.default_fingerprint(), before)
 		profiles.reset_profile("successor")
 		self.assertEqual(self.default_fingerprint(), before)
 
 	def test_the_withdrawal_profile_uses_the_specified_identifier_and_reason(self):
+		self.addCleanup(profiles.reset_profile, "withdrawal_blocked")
 		applied = profiles.apply_profile("withdrawal_blocked")
 		self.assertEqual(applied["withdrawal_request"], profiles.WITHDRAWAL_REQUEST_ID)
 		request = frappe.get_doc("Need Withdrawal Request", profiles.WITHDRAWAL_REQUEST_ID)
@@ -314,12 +358,14 @@ class TestSelectableProfiles(SeedCase):
 		profiles.reset_profile("withdrawal_blocked")
 
 	def test_the_blocked_variant_carries_the_active_plan_dependency(self):
+		self.addCleanup(profiles.reset_profile, "withdrawal_blocked")
 		profiles.apply_profile("withdrawal_blocked")
 		self.assertEqual(planning_usage("NDS-MOH-2027-0001"), USAGE_FULL)
 		profiles.reset_profile("withdrawal_blocked")
 
 	def test_the_cleared_variant_supplies_no_plan_references(self):
 		# §14.5 — the cleared variant is Not included with no Plan references.
+		self.addCleanup(profiles.reset_profile, "withdrawal_cleared")
 		profiles.apply_profile("withdrawal_cleared")
 		need = self.need("NDS-MOH-2027-0001")
 		self.assertEqual(planning_usage(need.name), USAGE_NOT_INCLUDED)

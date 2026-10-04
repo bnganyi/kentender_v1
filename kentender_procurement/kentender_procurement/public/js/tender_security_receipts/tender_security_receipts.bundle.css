@@ -1,0 +1,48 @@
+/* Tender-security receipts (owner decisions OD-G/OD-H) — page layout only;
+   every component rule comes from kentender_core's kt_industry_tokens.css.
+   Loaded by the page controller through frappe.require (AGENTS.md §6.9),
+   never globally. Selectors chain .kt-industry .kt-tsr so specificity, not
+   load order, decides against the token file (AGENTS.md §6.6). */
+
+.kt-industry.kt-tsr .tsr-eyebrow {
+	margin: 0 0 6px;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	color: var(--kt-color-neutral-700);
+}
+.kt-industry.kt-tsr .tsr-state-heading { font-family: var(--kt-font-heading); font-size: 20px; margin: 12px 0 8px; }
+.kt-industry.kt-tsr .tsr-filter-actions { display: flex; align-items: end; }
+.kt-industry.kt-tsr .tsr-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.kt-industry.kt-tsr .tsr-muted { font-size: 13px; color: var(--kt-color-neutral-700); }
+.kt-industry.kt-tsr .tsr-toast { position: fixed; right: 24px; bottom: 24px; z-index: 1050; max-width: 420px; }
+.kt-industry.kt-tsr .tsr-dialog { max-width: 560px; width: 100%; max-height: calc(100vh - 48px); overflow-y: auto; }
+.kt-industry.kt-tsr .tsr-dialog-sub { font-size: 13px; color: var(--kt-color-neutral-800); margin-top: 4px; }
+.kt-industry.kt-tsr .tsr-dialog-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; }
+.kt-industry.kt-tsr .tsr-help { margin: 4px 0 0; font-size: 13px; color: var(--kt-color-neutral-700); }
+.kt-industry.kt-tsr .tsr-check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; font-weight: 400; cursor: pointer; }
+.kt-industry.kt-tsr .tsr-check input { margin-top: 3px; flex: 0 0 auto; }
+
+/* 390 px and 200% zoom (KT-STD-001 v1.8): the filter and the dialog collapse
+   to one column and the table becomes labelled cards with no horizontal
+   scrolling and no omitted fact. */
+@media (max-width: 760px) {
+	.kt-industry.kt-tsr .kt-filter-bar { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); }
+	.kt-industry.kt-tsr .kt-filter-bar > .is-wide { grid-column: auto; }
+	.kt-industry.kt-tsr .tsr-dialog-row { grid-template-columns: minmax(0, 1fr); gap: 0; }
+	.kt-industry.kt-tsr .kt-table.tsr-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+	.kt-industry.kt-tsr .kt-table.tsr-table,
+	.kt-industry.kt-tsr .kt-table.tsr-table tbody,
+	.kt-industry.kt-tsr .kt-table.tsr-table tr,
+	.kt-industry.kt-tsr .kt-table.tsr-table td { display: block; width: 100%; max-width: none !important; white-space: normal !important; }
+	.kt-industry.kt-tsr .kt-table.tsr-table tr { border: 1px solid var(--kt-color-divider); padding: 12px; margin-bottom: 12px; }
+	.kt-industry.kt-tsr .kt-table td[data-label]::before {
+		content: attr(data-label);
+		display: block;
+		font-size: 12px;
+		color: var(--kt-color-neutral-700);
+		margin-bottom: 2px;
+	}
+	.kt-industry.kt-tsr .kt-table td { border-bottom: 0 !important; padding: 6px 0 !important; }
+	.kt-industry.kt-tsr .tsr-toast { left: 16px; right: 16px; }
+}

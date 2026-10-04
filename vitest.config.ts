@@ -26,7 +26,14 @@ export default defineConfig({
 				plugins: [vue()],
 				test: {
 					name: "procurement-planning",
+					// Board comparisons parse whole .dc.html files with JSDOM; under
+					// `make ui-structure-gate`'s parallel load that legitimately
+					// exceeds the 5 s default (measured 24 Sep 2026: 5.3–9.2 s).
+					testTimeout: 30_000,
 					environment: "jsdom",
+					// The shared guidance components mount through kentender_core's
+					// real bundle (KT-STD-001 v1.8 §2.9).
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/procurement_planning/vitest.setup.js"],
 					include: [
 						"kentender_procurement/kentender_procurement/public/js/procurement_planning/**/*.spec.js",
 					],
@@ -46,15 +53,97 @@ export default defineConfig({
 				},
 			},
 			{
-				// TPR-CHG-001 v0.6 §18 — real SFC component tests for the Tender
-				// Preparation screens, alongside (never instead of) the browser layer.
+				// TPR-CHG-001 v0.8 §11 — SFC component tests for the Tenders
+				// screens and dialogs, alongside (never instead of) the browser layer.
 				plugins: [vue()],
 				test: {
-					name: "tender-preparation",
+					name: "tenders",
 					environment: "jsdom",
-					include: [
-						"kentender_procurement/kentender_procurement/public/js/tender_preparation/**/*.spec.js",
-					],
+					// TPR-CHG-001 v0.12 §10.17 — the shared guidance region mounts
+					// through kentender_core's real bundle.
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/tenders/vitest.setup.js"],
+					include: ["kentender_procurement/kentender_procurement/public/js/tenders/**/*.spec.js"],
+				},
+			},
+			{
+				plugins: [vue()],
+				test: {
+					// BOP-CHG-001 v0.10 plan Phase 8 — the Bid Opening Desk screens and their
+					// structural fidelity against the v0.9.2 boards; the shared guidance
+					// region mounts through kentender_core's real bundle.
+					name: "bid-opening",
+					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/tenders/vitest.setup.js"],
+					include: ["kentender_procurement/kentender_procurement/public/js/bid_opening/**/*.spec.js"],
+				},
+			},
+			{
+				plugins: [vue()],
+				test: {
+					// EVL-CHG-001 v0.4 plan Phase 11 — the Bid Evaluation Desk screens and
+					// their structural fidelity against the boards the design tool's own
+					// template draws; the shared guidance region mounts through
+					// kentender_core's real bundle.
+					name: "bid-evaluation",
+					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/tenders/vitest.setup.js"],
+					include: ["kentender_procurement/kentender_procurement/public/js/bid_evaluation/**/*.spec.js"],
+				},
+			},
+			{
+				plugins: [vue()],
+				test: {
+					// AWD-CHG-001 v0.4 plan D15/D16 — the Award Desk and supplier screens
+					// and their structural fidelity against the 47 boards the design
+					// tool's own template draws.
+					name: "award",
+					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/tenders/vitest.setup.js"],
+					include: ["kentender_procurement/kentender_procurement/public/js/award/**/*.spec.js"],
+				},
+			},
+			{
+				// BDS-CHG-001 v0.8 plan OD-B — the Bid Submission public portal
+				// screens, alongside (never instead of) the browser layer.
+				plugins: [vue()],
+				test: {
+					name: "bid-portal",
+					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/bid_portal/vitest.setup.js"],
+					include: ["kentender_procurement/kentender_procurement/public/js/bid_portal/**/*.spec.js"],
+				},
+			},
+			{
+				// BDS-CHG-001 v0.8 §10.4–10.5 (slices 11.3–11.4) — the supplier
+				// Account portal screens, with the shared guidance region mounted
+				// through kentender_core's real bundle.
+				plugins: [vue()],
+				test: {
+					name: "supplier-account-portal",
+					environment: "jsdom",
+					setupFiles: ["kentender_suppliers/kentender_suppliers/public/js/supplier_account_portal/vitest.setup.js"],
+					include: ["kentender_suppliers/kentender_suppliers/public/js/supplier_account_portal/**/*.spec.js"],
+				},
+			},
+			{
+				// BDS-CHG-001 v0.8 owner decisions OD-G/OD-H — the Desk page for
+				// the blind physical tender-security intake.
+				plugins: [vue()],
+				test: {
+					name: "tender-security-receipts",
+					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/tender_security_receipts/vitest.setup.js"],
+					include: ["kentender_procurement/kentender_procurement/public/js/tender_security_receipts/**/*.spec.js"],
+				},
+			},
+			{
+				// STD-TPL-IMP-001 v1.0 §11 — SFC component and structural-fidelity
+				// tests for STD Templates, alongside (never instead of) the browser layer.
+				plugins: [vue()],
+				test: {
+					name: "std-templates",
+					environment: "jsdom",
+					include: ["kentender_procurement/kentender_procurement/public/js/std_templates/**/*.spec.js"],
 				},
 			},
 			{
@@ -65,12 +154,35 @@ export default defineConfig({
 				plugins: [vue()],
 				test: {
 					name: "system-setup",
+					// Board comparisons parse whole .dc.html files with JSDOM; under
+					// `make ui-structure-gate`'s parallel load that legitimately
+					// exceeds the 5 s default (measured 24 Sep 2026: 5.3–9.2 s).
+					testTimeout: 30_000,
 					environment: "jsdom",
 					setupFiles: [
 						"kentender_core/kentender_core/public/js/system_setup/vitest.setup.js",
 					],
 					include: [
 						"kentender_core/kentender_core/public/js/system_setup/**/*.spec.js",
+					],
+				},
+			},
+			{
+				// The shared Vue-in-Desk page runtime (kt_desk_page.js): every
+				// page's route listener, pause/resume and command runner. Run by
+				// `make ui-structure-gate` beside the screens that depend on it.
+				plugins: [vue()],
+				test: {
+					name: "desk-runtime",
+					environment: "jsdom",
+					// KT-STD-001 v1.8 §2.9 — the shared journey tracker and next-step
+					// block (kt_industry_guidance.bundle.js) are shared runtime too.
+					include: [
+						"kentender_core/kentender_core/public/js/kt_desk_page.spec.js",
+						"kentender_core/kentender_core/public/js/kt_industry/**/*.spec.js",
+						// BDS-CHG-001 v0.8 plan OD-B — the public portal runtime,
+						// kept in step with kt_desk_page.js by a shared spec.
+						"kentender_core/kentender_core/public/js/kt_portal/**/*.spec.js",
 					],
 				},
 			},
@@ -91,16 +203,47 @@ export default defineConfig({
 				},
 			},
 			{
-				// NDS-906 — the Departmental Needs presentation helpers. These are
-				// plain ES modules with no Vue or frappe dependency, so they need
-				// no component toolchain; the components that consume them are
-				// asserted in the browser layer (tests/ui/smoke/departmental_needs).
+				// NDS-906 — the Departmental Needs presentation helpers (plain ES
+				// modules, no Vue/frappe dependency) run under plain Node.
 				test: {
 					name: "departmental-needs",
 					environment: "node",
 					include: [
-						"kentender_procurement/kentender_procurement/public/js/departmental_needs/**/*.spec.js",
+						"kentender_procurement/kentender_procurement/public/js/departmental_needs/data/*.spec.js",
 					],
+				},
+			},
+			{
+				// NDS-DES-14/15 boundary-state remediation — real SFC component
+				// tests for the Departmental Needs screens, alongside (never
+				// instead of) the browser layer, matching the Procurement
+				// Planning/Requisitions/Tenders precedent above.
+				plugins: [vue()],
+				test: {
+					name: "departmental-needs-components",
+					// Board comparisons parse whole .dc.html files with JSDOM; under
+					// `make ui-structure-gate`'s parallel load that legitimately
+					// exceeds the 5 s default (measured 24 Sep 2026: 5.3–9.2 s).
+					testTimeout: 30_000,
+					environment: "jsdom",
+					// NDS-CHG-001 v1.15 §5.5 — the shared guidance region mounts
+					// through kentender_core's real bundle.
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/departmental_needs/vitest.setup.js"],
+					include: [
+						"kentender_procurement/kentender_procurement/public/js/departmental_needs/components/*.spec.js",
+					],
+				},
+			},
+			{
+				// The structural half of design fidelity: the containers a
+				// board draws and how they nest, which the landmark gate in
+				// tests/ui/helpers/designFidelity.ts cannot see because it
+				// compares text. Runs in Node over HTML strings — the same
+				// comparator serves the browser gates.
+				test: {
+					name: "design-fidelity",
+					environment: "node",
+					include: ["tests/ui/fidelity/**/*.spec.js"],
 				},
 			},
 		],

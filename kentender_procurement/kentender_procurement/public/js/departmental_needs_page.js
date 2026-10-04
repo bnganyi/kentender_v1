@@ -10,7 +10,7 @@
 // why §10 can specify it.
 kentender_core.desk_page.register("departmental-needs", {
 	title: __("Departmental Needs"),
-	bundles: ["kt_industry_page_rail.bundle.js", "departmental_needs.bundle.js"],
+	bundles: ["kt_industry_page_rail.bundle.js", "kt_industry_guidance.bundle.js", "departmental_needs.bundle.js"],
 	mount: (el) => frappe.kt_mount_departmental_needs(el),
 	sidebarWorkspaceKey: "procurement",
 });

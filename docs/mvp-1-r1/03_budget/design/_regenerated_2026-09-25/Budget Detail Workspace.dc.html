@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    a { color: var(--color-accent-700); }
+    a:hover { color: var(--color-accent-900); }
+  </style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:80px;">
+
+  <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
+    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">Actor:</span>
+    <button type="button" class="{{btnAuditor}}" onclick="{{setAuditor}}" style="font-size:12px;padding:6px 12px;">04 Auditor</button>
+    <button type="button" class="{{btnOfficer}}" onclick="{{setOfficer}}" style="font-size:12px;padding:6px 12px;">04A Budget Officer</button>
+  </div>
+
+  <div data-screen-label="BUD-DES-04 Active Budget overview" style="max-width:1240px;margin:0 auto;padding:32px 40px 0;">
+    <div class="card blueprint elev-sm" style="padding:0;">
+
+      <div style="padding:28px 24px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
+          <div>
+            <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:6px;">MOH-BUD-2027-001 · VERSION 1</div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <h1 style="font-family:var(--font-heading);font-weight:600;font-size:30px;margin:0;letter-spacing:.01em;">Ministry of Health procurement budget 2027/28</h1>
+              <span class="kt-status is-live">Current</span>
+            </div>
+          </div>
+          <sc-if value="{{isOfficer}}" hint-placeholder-val="{{false}}">
+            <button type="button" class="btn btn-primary">Update registered allocation</button>
+          </sc-if>
+        </div>
+
+        <div class="kt-tabs" role="tablist" style="margin-bottom:0;">
+          <label class="kt-tab"><input type="radio" name="btab" checked="{{isOverview}}" onchange="{{setOverview}}" />Overview</label>
+          <label class="kt-tab"><input type="radio" name="btab" checked="{{isLines}}" onchange="{{setLines}}" />Budget Lines</label>
+          <label class="kt-tab"><input type="radio" name="btab" checked="{{isActivity}}" onchange="{{setActivity}}" />Funding Activity</label>
+          <label class="kt-tab"><input type="radio" name="btab" checked="{{isHistory}}" onchange="{{setHistory}}" />History</label>
+        </div>
+      </div>
+
+      <sc-if value="{{isOverview}}" hint-placeholder-val="{{true}}">
+        <div style="padding:20px 24px;border-top:1px solid var(--color-divider);">
+          <div class="kt-kpi-row" style="margin-bottom:8px;">
+            <div class="kt-kpi-card">
+              <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
+              <div class="kt-kpi-value">KES 160,000,000</div>
+              <div class="kt-kpi-sub">Registered allocation</div>
+            </div>
+            <div class="kt-kpi-card">
+              <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              <div class="kt-kpi-value">KES 80,000,000</div>
+              <div class="kt-kpi-sub">Reserved for requisitions</div>
+            </div>
+            <div class="kt-kpi-card">
+              <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg>
+              <div class="kt-kpi-value" style="color:var(--color-neutral-500);">KES 0</div>
+              <div class="kt-kpi-sub">Committed to contracts</div>
+            </div>
+            <div class="kt-kpi-card is-attention">
+              <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+              <div class="kt-kpi-value">KES 80,000,000</div>
+              <div class="kt-kpi-sub">Available to reserve</div>
+            </div>
+          </div>
+          <div class="kt-bar" style="margin-bottom:8px;"><i class="kt-bar-committed" style="width:0%"></i><i class="kt-bar-reserved" style="width:50%"></i></div>
+          <p style="font-size:12px;color:var(--color-neutral-600);margin:0;">Funding position as at 10 Dec 2026, 15:05 EAT</p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--color-divider);">
+          <div style="padding:22px;border-right:1px solid var(--color-divider);">
+            <h3 class="kt-card-title" style="margin:0 0 14px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>Budget context</h3>
+            <div style="display:grid;gap:12px;">
+              <div><div class="kt-label" style="margin-bottom:3px;">Financial Year</div><div style="font-size:14px;">FY 2027/28</div></div>
+              <div><div class="kt-label" style="margin-bottom:3px;">Currency</div><div style="font-size:14px;">KES</div></div>
+              <div><div class="kt-label" style="margin-bottom:3px;">Current version</div><div style="font-size:14px;">Version 1</div></div>
+            </div>
+          </div>
+          <div style="padding:22px;">
+            <h3 class="kt-card-title" style="margin:0 0 14px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg>External approval</h3>
+            <div style="display:grid;gap:12px;">
+              <div><div class="kt-label" style="margin-bottom:3px;">Approval reference</div><div style="font-size:14px;">MOH-FIN-BUD-2027-01 (Demo)</div></div>
+              <div><div class="kt-label" style="margin-bottom:3px;">Approval date</div><div style="font-size:14px;">30 Sep 2026</div></div>
+              <div><div class="kt-label" style="margin-bottom:3px;">Approved allocation</div><div style="font-size:14px;">KES 160,000,000</div></div>
+              <div><div class="kt-label" style="margin-bottom:3px;">Approval document</div>
+                <a href="#" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
+                  MOH Approved Procurement Budget 2027-28 (Demo).pdf
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:22px;border-top:1px solid var(--color-divider);">
+          <h3 class="kt-card-title" style="margin:0 0 14px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>Activation</h3>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+            <div><div class="kt-label" style="margin-bottom:3px;">Submitted by</div><div style="font-size:14px;">Josphat Mwangi</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Approved and activated by</div><div style="font-size:14px;">Beatrice Kamau</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Activated</div><div style="font-size:14px;">3 Oct 2026, 11:15 EAT</div></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isLines}}" hint-placeholder-val="{{false}}">
+        <div style="border-top:1px solid var(--color-divider);overflow-x:auto;">
+          <table class="table" style="table-layout:fixed;width:100%;">
+            <thead><tr><th style="width:18%;">Budget Line</th><th style="width:9%;">Available to</th><th style="width:11%;">Funding source</th><th style="width:14%;text-align:right;">Registered allocation</th><th style="width:14%;text-align:right;">Reserved for requisitions</th><th style="width:14%;text-align:right;">Committed to contracts</th><th style="width:14%;text-align:right;">Available to reserve</th><th style="width:6%;"></th></tr></thead>
+            <tbody>
+              <tr><td><div>Digital health infrastructure programme</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-DHI-2027</div></td><td>Digital Health</td><td>Government of Kenya</td><td class="is-num">KES 100,000,000</td><td class="is-num">KES 80,000,000</td><td class="is-num is-zero">KES 0</td><td class="is-num" style="color:var(--status-attention);font-weight:600;">KES 20,000,000</td><td><a href="#">View</a></td></tr>
+              <tr><td><div>Digital health workforce development</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-HWD-2027</div></td><td>All departments</td><td>Government of Kenya</td><td class="is-num">KES 60,000,000</td><td class="is-num is-zero">KES 0</td><td class="is-num is-zero">KES 0</td><td class="is-num" style="color:var(--status-live);font-weight:600;">KES 60,000,000</td><td><a href="#">View</a></td></tr>
+              <tr style="font-weight:600;"><td>Total</td><td>—</td><td>—</td><td class="is-num">KES 160,000,000</td><td class="is-num">KES 80,000,000</td><td class="is-num is-zero">KES 0</td><td class="is-num">KES 80,000,000</td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isActivity}}" hint-placeholder-val="{{false}}">
+        <div style="padding:20px 24px;border-top:1px solid var(--color-divider);display:flex;gap:12px;">
+          <select class="input" style="width:auto;min-width:170px;"><option>All Budget Lines</option></select>
+          <select class="input" style="width:auto;min-width:170px;"><option>All funding events</option></select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="table">
+            <thead><tr><th>Date and time</th><th>Event</th><th>Budget Line</th><th>Requisition / reservation</th><th class="is-num">Amount</th><th>Initiating actor</th></tr></thead>
+            <tbody>
+              <tr><td>4 Dec 2026, 10:00 EAT</td><td>Requisition funding reserved</td><td>MOH-BL-DHI-2027</td><td>PPI-MOH-2027-021 · RSV-MOH-2027-021-001</td><td class="is-num">KES 80,000,000</td><td>Josphat Mwangi</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:13px;color:var(--color-neutral-700);margin:0;padding:12px 24px 20px;">Showing 1 funding event</p>
+      </sc-if>
+
+      <sc-if value="{{isHistory}}" hint-placeholder-val="{{false}}">
+        <div style="padding:22px 24px;border-top:1px solid var(--color-divider);">
+          <div class="kt-timeline">
+            <div class="kt-timeline-row">
+              <div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i></div>
+              <div class="kt-timeline-item"><div class="kt-timeline-item-title">Version 1 approved and activated</div><div class="kt-timeline-item-meta">3 Oct 2026, 11:15 EAT · Beatrice Kamau</div></div>
+            </div>
+            <div class="kt-timeline-row">
+              <div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i><i class="kt-timeline-line"></i></div>
+              <div class="kt-timeline-item"><div class="kt-timeline-item-title">Submitted for review</div><div class="kt-timeline-item-meta">1 Oct 2026, 16:20 EAT · Josphat Mwangi</div></div>
+            </div>
+            <div class="kt-timeline-row">
+              <div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i><i class="kt-timeline-line"></i></div>
+              <div class="kt-timeline-item"><div class="kt-timeline-item-title">Draft saved</div><div class="kt-timeline-item-meta">1 Oct 2026, 15:55 EAT · Josphat Mwangi</div></div>
+            </div>
+            <div class="kt-timeline-row">
+              <div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i></div>
+              <div class="kt-timeline-item"><div class="kt-timeline-item-title">Budget Version 1 created</div><div class="kt-timeline-item-meta">1 Oct 2026, 09:20 EAT · Josphat Mwangi</div></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { actor: 'auditor', tab: 'overview' };
+  renderVals() {
+    const { actor, tab } = this.state;
+    const actorCls = (name) => actor === name ? 'btn btn-primary' : 'btn btn-secondary';
+    return {
+      setAuditor: () => this.setState({ actor: 'auditor' }),
+      setOfficer: () => this.setState({ actor: 'officer' }),
+      isOfficer: actor === 'officer',
+      btnAuditor: actorCls('auditor'),
+      btnOfficer: actorCls('officer'),
+      setOverview: () => this.setState({ tab: 'overview' }),
+      setLines: () => this.setState({ tab: 'lines' }),
+      setActivity: () => this.setState({ tab: 'activity' }),
+      setHistory: () => this.setState({ tab: 'history' }),
+      isOverview: tab === 'overview',
+      isLines: tab === 'lines',
+      isActivity: tab === 'activity',
+      isHistory: tab === 'history',
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "BOP-CHG-001 v0.10 §4 Appointment: AO identity and time, at least three named members, independent member basis, successor history.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "appointment_id",
+  "opening_case",
+  "version_number",
+  "appointed_by",
+  "appointed_at",
+  "status",
+  "supersedes_appointment",
+  "reason",
+  "members"
+ ],
+ "fields": [
+  {
+   "fieldname": "appointment_id",
+   "fieldtype": "Data",
+   "label": "Appointment ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "opening_case",
+   "fieldtype": "Link",
+   "label": "Opening case",
+   "read_only": 1,
+   "options": "Bid Opening Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Version number",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "appointed_by",
+   "fieldtype": "Link",
+   "label": "Appointed by",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "appointed_at",
+   "fieldtype": "Datetime",
+   "label": "Appointed at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Active\nSuperseded",
+   "reqd": 1
+  },
+  {
+   "fieldname": "supersedes_appointment",
+   "fieldtype": "Data",
+   "label": "Supersedes appointment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "members",
+   "fieldtype": "Table",
+   "label": "Members",
+   "options": "Opening Committee Member"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-29 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Opening",
+ "name": "Opening Committee Appointment",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:appointment_id"
+}

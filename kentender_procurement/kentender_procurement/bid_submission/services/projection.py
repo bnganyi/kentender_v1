@@ -1,0 +1,201 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""What the portal receives about a bid (BDS-CHG-001 v0.8 §4.4.5, §4.4.8 and
+plan D11). Fields travel by opaque handle; groups by an opaque group handle;
+published facts only from a vetted list of display facts; a declaration by
+its resolved published statement. No response, composition, control, rule,
+evaluation or definition identity, digest or path is ever included."""
+
+from __future__ import annotations
+
+import hashlib
+import re
+from typing import Any
+
+import frappe
+from frappe.utils import cstr
+
+from kentender_procurement.bid_submission.services import account_evidence, clock, labels, tenders_gateway
+from kentender_procurement.bid_submission.services.bid_context import BidContext
+from kentender_procurement.bid_submission.services.definition_model import Field, Group
+from kentender_procurement.bid_submission.services.product_profile import COMPOSITION_HEADINGS, FORM_HEADINGS
+from kentender_procurement.bid_submission.services.readiness import FieldState, TaskState
+
+#: Published facts a bidder may see, in display order, with their labels.
+DISPLAY_FACTS: tuple[tuple[str, str], ...] = (
+	("description", "Description"), ("equipment_category", "Category"), ("quantity", "Quantity"), ("unit", "Unit"), ("destination", "Delivery location"),
+	("latest_delivery_date", "Latest delivery"), ("minimum_warranty_months", "Minimum warranty (months)"), ("applies_to", "Applies to"),
+	("comparison", "Requirement"), ("required_value_display", "Required"), ("amount", "Amount"), ("currency", "Currency"), ("permitted_forms", "Permitted forms"),
+	("validity_date", "Valid until at least"), ("bank_guarantee_expiry_date", "Bank guarantee valid until at least"),
+	("insurance_guarantee_expiry_date", "Insurance guarantee valid until at least"), ("category", "Reservation"), ("entry_number", "Contract"),
+	("required_count", "Contracts required"), ("period_years", "Within the last (years)"), ("window_start", "From"), ("window_end", "To"),
+	("check_type", "Check"), ("pass_condition", "Passes when"), ("evidence_type", "Evidence"), ("purpose", "Purpose"), ("requirement_text", "What to provide"),
+)
+_DATE_FACTS = {"latest_delivery_date", "validity_date", "bank_guarantee_expiry_date", "insurance_guarantee_expiry_date", "window_start", "window_end"}
+SUPPLIED_FROM = {"SV-ORGANISATION": "account", "SV-ARRANGEMENT": "arrangement", "SV-ARRANGEMENT-MEMBER": "member_account", "SV-SIGNATORY": "signatory", "SV-ENTITY-PROFILE": "account"}
+
+
+def group_handle(ctx: BidContext, group: Group) -> str:
+	return "g" + hashlib.sha256(f"{ctx.model.digest}\x00{group.key}".encode("utf-8")).hexdigest()[:16]
+
+
+def _fact_value(key: str, value) -> str:
+	if isinstance(value, list):
+		return ", ".join(cstr(v) for v in value)
+	if key in _DATE_FACTS and value:
+		return labels.date_label(value)
+	if key == "amount" and value:
+		return labels.money_label(value, "")
+	return cstr(value)
+
+
+def facts(group: Group) -> list[dict[str, str]]:
+	published = group.published_facts
+	return [{"label": label, "value": _fact_value(key, published[key])} for key, label in DISPLAY_FACTS if published.get(key) not in (None, "", [])]
+
+
+# BDS01-AC-040: the Form of Tender's price line is the Price task's calculated
+# total, in figures and words — never a second entry. Until every line is
+# priced the published blank stays.
+FORM_OF_TENDER = "FORM-TENDER"
+PRICE_BLANK = re.compile(r"_{5,} \(in words and figures, indicating the currency\)")
+
+
+def _form_of_tender_price(ctx: BidContext, text: str) -> str:
+	from kentender_procurement.bid_submission.services import labels, price
+
+	calc = price.calculate(ctx)
+	if calc["total"] is None or not PRICE_BLANK.search(text):
+		return text
+	words = cstr(frappe.utils.money_in_words(calc["total"], calc["currency"]))
+	return PRICE_BLANK.sub(lambda _m: f"{labels.money_label(calc['total'], calc['currency'])} ({words})", text, count=1)
+
+
+def statement(ctx: BidContext, group: Group) -> str:
+	text_id = group.published_facts.get("text_id")
+	if not text_id:
+		return ""
+	row = next((t for t in ctx.model.definition.get("declaration_texts") or [] if t.get("text_id") == text_id), {})
+	text = cstr(row.get("resolved_text") or row.get("locked_text"))
+	if group.published_facts.get("form_id") == FORM_OF_TENDER:
+		text = _form_of_tender_price(ctx, text)
+	return text
+
+
+def heading(ctx: BidContext, group: Group) -> str:
+	published = group.published_facts
+	if published.get("label"):
+		return cstr(published["label"])
+	if published.get("form_id") in FORM_HEADINGS:
+		return FORM_HEADINGS[published["form_id"]]
+	if group.composition_id == "COMP-RESERVATION-ELIGIBILITY" and published.get("category"):
+		return f"{cstr(published['category'])} reservation declaration"
+	return COMPOSITION_HEADINGS.get(group.composition_id, "")
+
+
+def member_name(ctx: BidContext, group: Group) -> str:
+	if not group.member:
+		return ""
+	return ctx.entity_name(group.member)
+
+
+def label(ctx: BidContext, field: Field) -> str:
+	text = field.label
+	if "bidder_name" in field.label_parameters:
+		text = text.replace("{bidder_name}", ctx.tenderer_name)
+	if "addendum_reference" in field.label_parameters:
+		reference = tenders_gateway.addendum_reference(ctx.workspace.tender, cstr(field.group.published_facts.get("addendum_id")))
+		text = text.replace("{addendum_reference}", reference or "the addendum")
+	return text
+
+
+def _options(field: Field) -> list[str] | None:
+	params = field.validation_parameters
+	if field.kind == "yes_no":
+		return ["Yes", "No"]
+	if field.kind in ("single_choice", "multi_select"):
+		return list(params.get("options") or [])
+	if field.kind == "ports":
+		return list(params.get("port_options") or [])
+	return None
+
+
+def _limits(field: Field) -> dict[str, Any]:
+	params = field.validation_parameters
+	keep = {"min_length", "max_length", "minimum", "maximum", "scale", "currency"}
+	out = {k: v for k, v in params.items() if k in keep}
+	if params.get("not_before"):
+		out["not_before"] = cstr(params["not_before"])
+	if params.get("not_after"):
+		out["not_after"] = cstr(params["not_after"])
+	return out
+
+
+def _shown_when(ctx: BidContext, field: Field) -> dict[str, Any] | None:
+	rule = field.visibility_rule or {}
+	if rule.get("rule_id", "VS-ALWAYS") == "VS-ALWAYS":
+		return None
+	keys = rule.get("field_keys") or [rule.get("field_key")]
+	handles = [f.handle for f in field.group.fields if f.field_key in keys]
+	return {"handles": handles, "values": [rule.get("value")]}
+
+
+def field_view(ctx: BidContext, state: FieldState) -> dict[str, Any]:
+	field = state.field
+	view: dict[str, Any] = {
+		"handle": field.handle, "kind": field.kind, "label": label(ctx, field), "help": field.help_text, "editable": field.editable and not ctx.read_only,
+		"visible": state.visible, "required": state.required, "value": state.value, "shown_when": _shown_when(ctx, field), "issue": state.issue,
+	}
+	if field.supplied:
+		view["supplied_from"] = SUPPLIED_FROM.get(field.supplied["source_id"], "account")
+	options = _options(field)
+	if options is not None:
+		view["options"] = options
+	limits = _limits(field)
+	if limits:
+		view["limits"] = limits
+	if field.kind == "row_group":
+		params = field.validation_parameters
+		view["row_group"] = {
+			"columns": [{k: v for k, v in column.items() if k in ("key", "label", "type", "options", "max_length", "scale", "required")} for column in params.get("columns") or []],
+			"minimum_rows": int(params.get("minimum_rows") or 0), "maximum_rows": int(params.get("maximum_rows") or 10), "totals": list(params.get("totals") or []),
+		}
+	if field.kind == "evidence":
+		rule = field.evidence_rule or {}
+		view["evidence"] = {
+			"type": cstr(rule.get("evidence_type")), "minimum": int(rule.get("minimum") or 0), "maximum": int(rule.get("maximum") or 0), "mandatory": bool(rule.get("mandatory")),
+			"files": [
+				{
+					"id": e["id"], "name": e["name"], "status": e["scan_status"], "size_bytes": e["size_bytes"], **({"reason": e["scan_result"]} if e["scan_status"] == "Rejected" else {}),
+					# where the file came from: a copy of a saved Account document says so and when it was copied
+					"source": "account" if e.get("source") else "upload", "copied_on": labels.datetime_label(e["uploaded_at"]) if e.get("source") else "",
+				}
+				for e in ctx.evidence.get(field.key, [])
+			],
+		}
+		maximum = view["evidence"]["maximum"]
+		held = [e for e in ctx.evidence.get(field.key, []) if e["scan_status"] != "Rejected"]
+		if view["editable"] and account_evidence.allowed_types(field) and not (maximum and len(held) >= maximum):
+			view["evidence"]["account_options"] = account_evidence.options(ctx, field, at=clock.now())
+	return view
+
+
+def task_nav(ctx: BidContext, tasks: dict[str, TaskState]) -> list[dict[str, Any]]:
+	return [
+		{"key": t.key, "label": t.label, "purpose": t.purpose, "status": tasks[t.key].status, "must_fix": tasks[t.key].must_fix, "review_notes": tasks[t.key].review_notes}
+		for t in ctx.model.tasks
+	]
+
+
+def task_view(ctx: BidContext, tasks: dict[str, TaskState], key: str) -> dict[str, Any]:
+	state = tasks[key]
+	states = {s.field.key: s for s in state.fields}
+	groups = []
+	for group in ctx.model.groups_of(key):
+		groups.append({
+			"key": group_handle(ctx, group), "heading": heading(ctx, group), "member": member_name(ctx, group), "facts": facts(group),
+			"statement": statement(ctx, group), "fields": [field_view(ctx, states[f.key]) for f in group.fields],
+		})
+	task = ctx.model.task(key)
+	return {"task": {"key": key, "label": task.label, "purpose": task.purpose, "status": state.status, "must_fix": state.must_fix, "review_notes": state.review_notes}, "groups": groups}

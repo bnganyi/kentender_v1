@@ -16,8 +16,8 @@ def get_strategy_portfolio(search: str | None = None, plan_role: str | None = No
 
 
 @frappe.whitelist()
-def get_plan_workspace(plan_id: str):
-	return ui.get_plan_workspace(plan_id)
+def get_plan_workspace(plan_id: str, version_number: str | None = None):
+	return ui.get_plan_workspace(plan_id, version_number=version_number or None)
 
 
 @frappe.whitelist()

@@ -1,5 +1,8 @@
 import { Page, expect } from "@playwright/test";
 import * as path from "path";
+import { JSDOM } from "jsdom";
+
+import { compareSkeletons, formatMismatch, skeletonOf } from "../fidelity/skeleton.js";
 
 /**
  * Design-fidelity gate helpers (AGENTS.md §6.6).
@@ -30,8 +33,17 @@ import * as path from "path";
  */
 
 const LANDMARK_SELECTOR = [
+	// Kept for v1.23-era screens still mid-port; the v1.24 pack titles a
+	// `.kt-region` with a bare, unclassed `<h2>` instead (KT-STD-001 v1.7
+	// §2.6.7 — no uppercase/accented section headings). Drop this once no
+	// Planning screen renders `.kt-card-title` any more.
 	".kt-card-title",
+	".kt-region > h2",
 	".kt-dialog-title",
+	// A screen that renders an artboard's `.dialog` as a full sub-view titles
+	// it with `.kt-section-title`; no artboard uses that class, so listing it
+	// only lets a live title match the artboard's own title landmark.
+	".kt-section-title",
 	".dialog-title",
 	"label",
 	"legend",
@@ -87,9 +99,45 @@ export async function landmarks(page: Page, scope: string): Promise<string[]> {
  * (live landmarks). On failure, name the first artboard landmark the live
  * page is missing or has out of order.
  */
-export function expectLandmarkSubsequence(wanted: string[], got: string[], label: string): void {
+/**
+ * An artboard draws one card, row or block per entry in its own fixture; how
+ * many entries a live world holds is fixture content, which this gate never
+ * compares. `onceEach` keeps the first occurrence of each landmark so the
+ * repeated structure is still compared in full, exactly once. Use it only
+ * where the repetition is a fixture's row count, never to excuse a landmark
+ * the live page genuinely lacks.
+ */
+export function onceEach(wanted: string[]): string[] {
+	const seen = new Set<string>();
+	return wanted.filter((landmark) => (seen.has(landmark) ? false : (seen.add(landmark), true)));
+}
+
+/**
+ * A landmark an artboard still draws but the specification has since replaced.
+ * The gate excuses it and says why, rather than either failing on a gap that is
+ * not a defect or dropping the panel from the gate altogether. An exemption
+ * naming a landmark the artboard no longer draws fails as stale, so refreshing
+ * the artboard is what removes it.
+ */
+export type LandmarkExemption = { landmark: string; because: string };
+
+export function expectLandmarkSubsequence(
+	wanted: string[],
+	got: string[],
+	label: string,
+	exempt: LandmarkExemption[] = []
+): void {
+	for (const { landmark } of exempt) {
+		if (!wanted.includes(landmark)) {
+			throw new Error(
+				`${label}: the exemption for ${JSON.stringify(landmark)} is stale — the artboard no longer draws it. Delete the exemption.`
+			);
+		}
+	}
+	const excused = new Set(exempt.map((entry) => entry.landmark));
 	let cursor = 0;
 	for (const landmark of wanted) {
+		if (excused.has(landmark)) continue;
 		const found = got.indexOf(landmark, cursor);
 		if (found === -1) {
 			const seenBefore = got.includes(landmark);
@@ -210,6 +258,18 @@ export function collectPageErrors(page: Page): string[] {
 		// page load in developer mode. Framework code, read-only for this repo
 		// (AGENTS.md §2); nothing in a KenTender page can cause or fix it.
 		if (/\/undefined$/.test(url)) return;
+		// Several NDS-DES-14-* fidelity states (departmental-needs-fidelity.spec.ts)
+		// deliberately fulfil or abort an `/api/method/` route — a non-2xx status
+		// (417, this suite's own sentinel; 500, simulating an ordinary unhandled
+		// server error) or a hard `route.abort()` (simulating a dropped
+		// connection) — to prove the app's own page-notice UI surfaces that
+		// failure gracefully. Chrome always logs a "Failed to load resource: …"
+		// or "net::ERR_FAILED" console entry for that response regardless of how
+		// gracefully the app handles it, so it is the mock working as intended,
+		// not an application defect. Scoped to `/api/method/` only — a real
+		// page asset (script, style, image) failing the same way is still a
+		// genuine defect and stays caught.
+		if ((text.includes("Failed to load resource") || text.includes("net::ERR_FAILED")) && url.includes("/api/method/")) return;
 		errors.push(text);
 	});
 	return errors;
@@ -222,4 +282,230 @@ export function expectClose(actual: number, expected: number, tolerance: number,
 	expect(Math.abs(actual - expected), `${label}: live=${actual} artboard=${expected} ±${tolerance}`).toBeLessThanOrEqual(
 		tolerance
 	);
+}
+
+
+/**
+ * PLN-CHG-001 v1.18 frames (docs/mvp-1-r1/04_planning/design/*.dc.html):
+ * the artboards carry no id or data-* attribute — each `.frame` is followed
+ * by a `.caption` whose `.tag.tag-accent` text is the frame id (e.g. "U01-A",
+ * "C04-eligibility-reminder"). Locate that frame and give it a stable id so
+ * the ordinary scope-based helpers can measure it. Fails loudly when the id
+ * is missing or ambiguous (a duplicated caption would otherwise measure the
+ * wrong frame silently).
+ */
+export async function frameScope(page: Page, frameId: string): Promise<string> {
+	const selector = await page.evaluate((id) => {
+		const tags = Array.from(document.querySelectorAll<HTMLElement>(".caption .tag.tag-accent")).filter(
+			(el) => (el.textContent || "").trim() === id
+		);
+		if (tags.length !== 1) return "";
+		const caption = tags[0].closest(".caption");
+		const frame = caption?.previousElementSibling as HTMLElement | null;
+		if (!frame || !frame.classList.contains("frame")) return "";
+		const domId = "kt-frame-" + id.replace(/[^A-Za-z0-9_-]/g, "-");
+		frame.id = domId;
+		return "#" + domId;
+	}, frameId);
+	if (!selector) {
+		throw new Error(`frame ${JSON.stringify(frameId)} not found exactly once in the artboard file`);
+	}
+	return selector;
+}
+
+/**
+ * A v1.23 artboard panel's scope selector.
+ *
+ * The v1.23 design files drop the v1.18 `.frame` + `.caption` pairing: each
+ * panel is a positioned wrapper whose first child is an absolutely-positioned
+ * label carrying the panel id (e.g. "U14 — BASE (initial)"), followed by the
+ * panel's own content. The label is the oracle's index; the content is what is
+ * measured, so this returns the content, never the label.
+ */
+export async function panelScope(page: Page, label: string): Promise<string> {
+	const selector = await page.evaluate((wanted) => {
+		const labels = Array.from(document.querySelectorAll<HTMLElement>("div[style*=\"position:absolute\"]")).filter(
+			(el) => (el.textContent || "").replace(/\s+/g, " ").trim() === wanted
+		);
+		if (labels.length !== 1) return "";
+		const content = labels[0].nextElementSibling as HTMLElement | null;
+		if (!content) return "";
+		const domId = "kt-panel-" + wanted.replace(/[^A-Za-z0-9_-]/g, "-");
+		content.id = domId;
+		return "#" + domId;
+	}, label);
+	if (!selector) {
+		throw new Error(`panel ${JSON.stringify(label)} not found exactly once in the artboard file`);
+	}
+	return selector;
+}
+
+/** Open a v1.23 artboard file and return the scope selector of one panel. */
+export async function openPanel(page: Page, relPath: string, label: string): Promise<string> {
+	// v1.23 panels are plain positioned divs, so there is no `.frame` to wait
+	// for — and a panel's own label is too short to satisfy the height check.
+	// The document body is what must have painted.
+	await openArtboard(page, relPath, "body");
+	return panelScope(page, label);
+}
+
+/**
+ * One variant inside a panel that draws several side by side, keyed by the
+ * `.tag` the artboard labels each block with. Comparing a three-variant panel
+ * as one scope would demand that a single live screen carry all three at once,
+ * which is exactly what the artboard is saying it does not.
+ */
+export async function variantScope(page: Page, panel: string, tag: string): Promise<string> {
+	const selector = await page.evaluate(
+		({ panel, tag }) => {
+			const root = document.querySelector(panel);
+			if (!root) return "";
+			const tags = Array.from(root.querySelectorAll<HTMLElement>(".tag")).filter(
+				(el) => (el.textContent || "").replace(/\s+/g, " ").trim() === tag
+			);
+			if (tags.length !== 1) return "";
+			const block = tags[0].parentElement as HTMLElement | null;
+			if (!block) return "";
+			const domId = "kt-variant-" + tag.replace(/[^A-Za-z0-9_-]/g, "-");
+			block.id = domId;
+			return "#" + domId;
+		},
+		{ panel, tag }
+	);
+	if (!selector) {
+		throw new Error(`variant ${JSON.stringify(tag)} not found exactly once in panel ${panel}`);
+	}
+	return selector;
+}
+
+/** Open a v1.18 artboard file and return the scope selector of one frame. */
+export async function openFrame(page: Page, relPath: string, frameId: string): Promise<string> {
+	await openArtboard(page, relPath, ".frame");
+	return frameScope(page, frameId);
+}
+
+/**
+ * A v1.24 (KT-STD-001 §2.6) artboard's scope selector.
+ *
+ * The Stage 2 bundled `Artboards-*.dc.html` files drop the v1.23 positioned-
+ * label panel convention entirely: every variant is its own
+ * `<section id="EXACT-SPEC-ID">` (e.g. `id="U01-CURRENT-UPDATE"`), one variant
+ * per section, so the id itself is the scope — no label text or side-by-side
+ * tag lookup is needed. Fails loudly when the id is missing or duplicated,
+ * same as the older `frameScope`/`panelScope`.
+ */
+export async function sectionScope(page: Page, id: string): Promise<string> {
+	const count = await page.evaluate(
+		(wanted) => document.querySelectorAll(`section#${wanted}`).length,
+		id
+	);
+	if (count !== 1) {
+		throw new Error(`section ${JSON.stringify(id)} not found exactly once in the artboard file (found ${count})`);
+	}
+	return `#${id}`;
+}
+
+/** Open a v1.24 bundled artboard file and return the scope selector of one section. */
+export async function openSection(page: Page, relPath: string, id: string): Promise<string> {
+	await openArtboard(page, relPath, "body");
+	return sectionScope(page, id);
+}
+
+/**
+ * Structural defects a landmark comparison cannot see (23 September 2026).
+ *
+ * The fidelity gate compares an ordered subsequence of landmark *texts*:
+ * headings, labels, buttons, table headers. A screen can satisfy it while
+ * saying the same thing twice, rendering a label over nothing, or building a
+ * form out of the read-only fact primitives — none of which change the
+ * landmark sequence. The live purchase editor did all three at once, and
+ * every one of its fidelity assertions still passed.
+ *
+ * These are the rules that class of defect breaks, checked against the DOM
+ * the person actually sees:
+ *
+ *  1. No two sibling notices carry the same sentence. One problem is stated
+ *     once (the editor stacked "Complete the highlighted purchase details…"
+ *     once per incomplete field).
+ *  2. No editable control sits inside a `.kt-meta-value`. That span is the
+ *     read-only fact primitive: it sets the heading typeface and a fact's
+ *     line height, so an input inside it renders in the wrong face and the
+ *     row bottom-aligns controls of different heights.
+ *  3. No `.kt-label` or `.kt-field > label` stands with nothing after it
+ *     inside its own block — a heading over an empty section.
+ */
+export async function expectLayoutSanity(page: Page, where: string): Promise<void> {
+	const problems = await page.evaluate(() => {
+		const root = document.querySelector(".kt-industry") || document.body;
+		const found: string[] = [];
+
+		const noticeText = new Map<string, number>();
+		for (const notice of Array.from(root.querySelectorAll<HTMLElement>(".kt-notice"))) {
+			const text = (notice.innerText || "").replace(/\s+/g, " ").trim();
+			if (!text) continue;
+			noticeText.set(text, (noticeText.get(text) || 0) + 1);
+		}
+		for (const [text, count] of noticeText) {
+			if (count > 1) found.push(`the same notice ${count}×: "${text.slice(0, 80)}"`);
+		}
+
+		for (const fact of Array.from(root.querySelectorAll<HTMLElement>(".kt-meta-value"))) {
+			if (fact.querySelector("input, select, textarea")) {
+				found.push(`an editable control inside a .kt-meta-value ("${(fact.innerText || "").slice(0, 40)}")`);
+			}
+		}
+
+		for (const label of Array.from(root.querySelectorAll<HTMLElement>(".kt-label"))) {
+			const parent = label.parentElement;
+			if (!parent || parent.children.length > 1) continue;
+			const text = (parent.innerText || "").replace(/\s+/g, " ").trim();
+			const own = (label.innerText || "").replace(/\s+/g, " ").trim();
+			if (own && text === own) found.push(`a label with nothing under it: "${own.slice(0, 60)}"`);
+		}
+		return found;
+	});
+	expect(problems, `${where}: layout contract`).toEqual([]);
+}
+
+/**
+ * The structural half of the gate: what containers a screen is built from and
+ * how they nest — the question `landmarks()` above cannot ask, because it
+ * compares the *text* of headings, labels and buttons and discards every
+ * element and every nesting relationship (`landmarks`, lines 77-92).
+ *
+ * Three defect classes live in that blind spot, and all three have shipped:
+ * a container dropped (a wrapper has no text of its own), an element demoted
+ * to another element with the same words, and anything without text at all —
+ * a disclosure chevron is an SVG. See `tests/ui/fidelity/skeleton.js` for the
+ * comparator and the reasoning; it runs in Node over HTML, so the component
+ * tests and this browser gate use one implementation.
+ *
+ * Usage mirrors the landmark pair already at every call site:
+ *
+ *     const artHtml = await outerHtml(art, artScope);
+ *     await expectStructure(page, LIVE, artHtml, "U07", DEPARTURES["…#U07"]);
+ */
+export async function outerHtml(page: Page, scope: string): Promise<string> {
+	return page.evaluate((sel) => {
+		const el = document.querySelector(sel);
+		return el ? el.outerHTML : "";
+	}, scope);
+}
+
+export async function expectStructure(
+	page: Page,
+	liveScope: string,
+	artboardHtml: string,
+	label: string,
+	departures: unknown[] = []
+): Promise<void> {
+	const liveHtml = await outerHtml(page, liveScope);
+	expect(liveHtml, `${label}: live scope ${liveScope} not found`).not.toBe("");
+	const root = (html: string) => new JSDOM(`<body>${html}</body>`).window.document.body.firstElementChild!;
+
+	const result = compareSkeletons(skeletonOf(root(artboardHtml)), skeletonOf(root(liveHtml)), {
+		departures: departures as never[],
+	});
+	const message = formatMismatch(label, result);
+	expect(message, message).toBe("");
 }

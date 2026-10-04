@@ -1,277 +1,318 @@
-// PLN-CHG-001 v1.12 §15 — DppPlanScreen component tests (D14): PLN-DES-02
-// and PLN-DES-05 exact fields, absent fields, dialog copy, action visibility.
+// PLN-CHG-001 v1.23 §10.4 — DppPlanScreen component tests (U02–U05).
+//
+// The same page serves the Author and the Head of Department. What differs is
+// the claim it makes: the Author is entering a plan and is told who submits
+// it; the HoD is reviewing a complete one and certifies it here. These tests
+// pin that difference, and pin that an excluded requirement stays visible with
+// its reason rather than disappearing from the department's own plan.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import DppPlanScreen from "./DppPlanScreen.vue";
+import { AUTHOR_DRAFT_TURN, CLOSED_BLOCKED, CORRECTION_TURN, HOD_TURN, dppJourney } from "./guidance.fixtures.js";
 
-const DRAFT_PLAN = {
-	outcome: "OK",
-	access: "author",
-	mutable: true,
-	can_submit: false,
-	header: {
-		title: "Digital Health departmental plan",
-		reference_line: "DPP-MOH-DHI-2027-001 · Submission 1",
-		badge: "Draft",
-		badge_kind: "attention",
-	},
-	context: {
-		department: "OU-MOH-DHI — Digital Health",
-		financial_year: "FY 2027/28",
-		window: { state: "Open", display: "Open until 30 Nov 2026, 23:59 EAT" },
-	},
-	readiness: {
-		title: "1 requirement needs funding details",
-		text: "Select a Procurement Budget Line and enter the indicative amount for every requirement before the plan can be submitted.",
-	},
-	entries: [
-		{
-			entry_id: "E1",
-			source_origin: "Accepted Departmental Need",
-			title: "National digital health infrastructure upgrade",
-			source_label: "Accepted Need · NDS-MOH-2027-0001",
-			quantity_display: "1 programme",
-			required_by_display: "31 Aug 2027",
-			budget_line_display: "Not selected",
-			amount_display: "—",
-			status: "Funding incomplete",
-			status_kind: "attention",
-			action: "Complete",
-			issues: [],
-		},
-		{
-			entry_id: "E2",
-			source_origin: "Direct departmental requirement",
-			title: "Digital health platform security assessment",
-			source_label: "Direct requirement",
-			quantity_display: "1 service",
-			required_by_display: "31 Oct 2027",
-			budget_line_display: "MOH-BL-DHI-2027",
-			amount_display: "KES 20,000,000",
-			status: "Ready",
-			status_kind: "live",
-			action: "Edit",
-			issues: [],
-		},
-	],
-	totals_caption: "2 requirements · KES 20,000,000 specified",
-	certification: { show: false, heading: "", text: "", checkbox_label: "" },
+const INFRASTRUCTURE = {
+	entry_id: "DPPE-MOH-DHI-2027-001",
+	source_origin: "Accepted Departmental Need",
+	title: "National digital health infrastructure upgrade",
+	reference_line: "NDS-MOH-2027-0001 · Revision 1",
+	quantity_number: "1",
+	unit_label: "Programme",
+	required_by_display: "31 Aug 2027",
+	amount_display: "Not entered",
+	status: "Funding details needed",
+	status_kind: "attention",
+	disposition: "Proceeding",
+	not_proceeding_reason: "",
+	action: "Enter funding details",
+	issues: [],
 };
 
-const READY_PLAN = {
-	...DRAFT_PLAN,
-	access: "hod",
-	can_submit: true,
-	readiness: null,
-	header: { ...DRAFT_PLAN.header, badge: "Ready to submit", badge_kind: "live" },
-	entries: DRAFT_PLAN.entries.map((row) => ({
-		...row,
-		status: "Ready",
-		status_kind: "live",
-		action: "View",
-		budget_line_display: "MOH-BL-DHI-2027",
-	})),
-	totals_caption: "2 requirements · KES 100,000,000",
-	certification: {
-		show: true,
-		heading: "Departmental certification",
-		text: "I certify that this Departmental Procurement Plan contains the current procurement requirements of Digital Health for FY 2027/28, including every current accepted Departmental Need and any direct departmental requirements shown. I confirm that the quantities, required-by dates, Procurement Budget Lines and indicative amounts are ready for Procurement validation and inclusion in the Annual Procurement Plan.",
-		checkbox_label: "I confirm this certification",
-	},
+const LAPTOPS = {
+	entry_id: "DPPE-MOH-DHI-2027-002",
+	source_origin: "Accepted Departmental Need",
+	title: "Clinical deployment laptops for digital health rollout",
+	reference_line: "NDS-MOH-2027-0004 · Revision 1",
+	quantity_number: "150",
+	unit_label: "Each",
+	required_by_display: "31 Dec 2027",
+	amount_display: "KES 30,000,000",
+	status: "Included",
+	status_kind: "live",
+	disposition: "Proceeding",
+	not_proceeding_reason: "",
+	action: "Review details",
+	issues: [],
 };
 
-function make(plan, extra = {}) {
+function plan(overrides = {}) {
+	return {
+		outcome: "OK",
+		access: "author",
+		mutable: true,
+		can_submit: false,
+		can_create_update: false,
+		is_correction: false,
+		header: { badge: "Draft", badge_kind: "draft" },
+		context: {
+			department: "DHI — Digital Health",
+			department_name: "Digital Health",
+			financial_year: "FY 2027/28",
+			window: { state: "Open", display: "Open" },
+		},
+		entries: [INFRASTRUCTURE, LAPTOPS],
+		included_cost_display: "KES 30,000,000",
+		certification: { show: false },
+		submit_hint: "",
+		open_task: null,
+		next_step: AUTHOR_DRAFT_TURN,
+		journey: dppJourney("preparation", { holder: "Grace Wanjiku", reduced: true }),
+		...overrides,
+	};
+}
+
+function make(props = {}) {
 	return mount(DppPlanScreen, {
-		props: { plan, pending: false, certified: false, errorSummary: "", ...extra },
+		props: { plan: plan(), pending: false, certified: false, errorSummary: "", ...props },
 	});
 }
 
-describe("DppPlanScreen — PLN-DES-02", () => {
-	it("renders header, badge, context strip and the amber readiness notice", () => {
-		const w = make(DRAFT_PLAN);
-		expect(w.find(".kt-page-kicker").text()).toBe("DEPARTMENTAL PROCUREMENT PLAN");
-		expect(w.find(".kt-page-title").text()).toBe("Digital Health departmental plan");
-		expect(w.find(".pln-quiet-ref").text()).toBe("DPP-MOH-DHI-2027-001 · Submission 1");
-		expect(w.find('[data-testid="dpp-badge"]').text()).toBe("Draft");
-		const strip = w.find('[data-testid="dpp-context"]');
-		expect(strip.text()).toContain("Open until 30 Nov 2026, 23:59 EAT");
-		// v1.12: three columns, no Procuring Entity (§11.3)
-		expect(strip.findAll("label").map((l) => l.text())).toEqual([
-			"Department", "Financial Year", "Submission window",
-		]);
-		expect(strip.text()).not.toContain("Procuring Entity");
-		const notice = w.find('[data-testid="dpp-readiness"]');
-		expect(notice.text()).toContain("1 requirement needs funding details");
-		expect(notice.text()).toContain("Select a Procurement Budget Line and enter the indicative amount");
+describe("DppPlanScreen — U02-AUTHOR-DRAFT", () => {
+	it("says whose turn it is in the head and where the plan stands in one reduced line, instead of a Status cell", () => {
+		const w = make();
+		expect(w.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Enter funding details for 1 requirement");
+		expect(w.find(".kt-journey.is-reduced").text()).toBe("Stage 1 of 4: Preparation — Grace Wanjiku");
+		expect(w.find('[data-testid="pln-dpp-context"]').text()).not.toContain("Status");
 	});
 
-	it("renders the exact table rows with Complete/Edit actions and the caption", () => {
-		const w = make(DRAFT_PLAN);
-		const rows = w.findAll('[data-testid="dpp-entries"] tbody tr');
-		expect(rows[0].text()).toContain("Accepted Need · NDS-MOH-2027-0001");
-		expect(rows[0].text()).toContain("Not selected");
-		expect(rows[0].find("button").text()).toBe("Complete");
-		expect(rows[1].find("button").text()).toBe("Edit");
-		expect(w.find('[data-testid="dpp-totals"]').text()).toBe(
-			"2 requirements · KES 20,000,000 specified"
+	it("uses the Author's own heading and summary labels", () => {
+		const w = make();
+		expect(w.find('[data-testid="pln-dpp-title"]').text()).toBe("Your departmental procurement plan");
+		const summary = w.find('[data-testid="pln-dpp-summary"]').text();
+		expect(summary).toContain("Requirements");
+		// "entered so far" is the honest claim: no complete total exists yet.
+		expect(summary).toContain("Cost entered so far");
+		expect(summary).toContain("Requirements needing details");
+		expect(summary).not.toContain("Included cost");
+	});
+
+	it("renders each requirement with its reference beneath the name", () => {
+		const w = make();
+		const rows = w.findAll('[data-testid="pln-dpp-row"]');
+		expect(rows).toHaveLength(2);
+		expect(rows[0].text()).toContain("National digital health infrastructure upgrade");
+		expect(rows[0].text()).toContain("NDS-MOH-2027-0001 · Revision 1");
+		expect(rows[0].text()).toContain("Not entered");
+		expect(rows[0].text()).toContain("Funding details needed");
+		expect(rows[1].text()).toContain("KES 30,000,000");
+	});
+
+	it("has separate Quantity and Unit columns", () => {
+		const w = make();
+		const headers = w.findAll('[data-testid="pln-dpp-table"] th').map((th) => th.text());
+		expect(headers).toEqual(["Requirement", "Quantity", "Unit", "Required by", "Estimated cost", "Status", "Action"]);
+	});
+
+	it("tells the Author who submits, and shows no certification or submit control", () => {
+		const w = make({ plan: plan({ submit_hint: "Your Head of Department must review and submit this plan." }) });
+		expect(w.find('[data-testid="pln-dpp-submit-hint"]').text()).toBe(
+			"Your Head of Department must review and submit this plan.",
 		);
+		expect(w.find('[data-testid="pln-dpp-certification"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pln-dpp-submit"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pln-dpp-save"]').exists()).toBe(true);
+	});
+});
+
+describe("DppPlanScreen — U03 exclusions", () => {
+	it("keeps an excluded requirement in the table with its full reason visible", () => {
+		const excluded = {
+			...INFRASTRUCTURE,
+			amount_display: "Not applicable",
+			status: "Not included this year",
+			status_kind: "muted",
+			disposition: "Not proceeding",
+			not_proceeding_reason: "The department will pursue this requirement in a later annual planning cycle.",
+			action: "Include in this year's departmental plan",
+		};
+		const w = make({ plan: plan({ entries: [excluded, LAPTOPS] }) });
+		expect(w.findAll('[data-testid="pln-dpp-row"]')).toHaveLength(2);
+		const reason = w.find('[data-testid="pln-dpp-exclusion-reason"]');
+		// Always visible: the reason is the content of the exclusion, not
+		// supporting detail behind a disclosure.
+		expect(reason.text()).toContain("The department will pursue this requirement in a later annual planning cycle.");
+		expect(w.findAll('[data-testid="pln-dpp-row"]')[0].text()).toContain("Not applicable");
 	});
 
-	it("disables submit while incomplete and shows no certification card", () => {
-		const w = make(DRAFT_PLAN);
-		expect(w.find('[data-testid="dpp-submit"]').attributes("disabled")).toBeDefined();
-		expect(w.find('[data-testid="dpp-certification"]').exists()).toBe(false);
+	it("emits restore for an excluded row's include action, not the entry editor", () => {
+		const excluded = {
+			...INFRASTRUCTURE,
+			disposition: "Not proceeding",
+			not_proceeding_reason: "Deferred to a later cycle for the reasons recorded here.",
+			action: "Include in this year's departmental plan",
+		};
+		const w = make({ plan: plan({ entries: [excluded] }) });
+		w.find('[data-testid="pln-dpp-row-action"]').trigger("click");
+		expect(w.emitted("restore-entry")).toBeTruthy();
+		expect(w.emitted("open-entry")).toBeFalsy();
 	});
+});
 
-	it("shows no Strategy, requirement-type or currency-selector columns (§11.3)", () => {
-		const w = make(DRAFT_PLAN);
-		const headers = w.findAll("thead th").map((th) => th.text());
-		expect(headers).toEqual([
-			"Requirement", "Source", "Quantity", "Required by", "Procurement Budget Line",
-			"Indicative amount", "Status", "",
-		]);
+describe("DppPlanScreen — U03-FUNDING", () => {
+	it("names the open row plainly instead of repeating its live action link", () => {
+		const w = make({ fundingEntryId: INFRASTRUCTURE.entry_id });
+		const openRow = w.findAll('[data-testid="pln-dpp-row"]')[0];
+		expect(openRow.find('[data-testid="pln-dpp-row-editing"]').text()).toBe("Editing");
+		expect(openRow.find('[data-testid="pln-dpp-row-action"]').exists()).toBe(false);
+		// The other row, whose panel is not open, keeps its own action link.
+		const otherRow = w.findAll('[data-testid="pln-dpp-row"]')[1];
+		expect(otherRow.find('[data-testid="pln-dpp-row-editing"]').exists()).toBe(false);
+		expect(otherRow.find('[data-testid="pln-dpp-row-action"]').text()).toBe("Review details");
 	});
+});
 
-	it("renders returned issues next to their entry (§12.2)", () => {
-		const plan = {
-			...DRAFT_PLAN,
-			entries: [
-				{
-					...DRAFT_PLAN.entries[1],
-					issues: [{ problem: "Amount unsupported", correction: "Align with the budget line." }],
+describe("DppPlanScreen — U05-HOD", () => {
+	function hod(extra = {}) {
+		return make({
+			plan: plan({
+				access: "hod",
+				can_submit: true,
+				included_cost_display: "KES 110,000,000",
+				entries: [
+					{ ...INFRASTRUCTURE, amount_display: "KES 80,000,000", status: "Included", status_kind: "live", action: "View details" },
+					{ ...LAPTOPS, action: "View details" },
+				],
+				certification: {
+					show: true,
+					text: "I certify that this plan records Digital Health's procurement requirements for FY 2027/28.",
+					checkbox_label: "I confirm this certification",
 				},
-			],
-		};
-		const w = make(plan);
-		const issue = w.find('[data-testid="dpp-issue"]');
-		expect(issue.text()).toContain("Amount unsupported");
-		expect(issue.text()).toContain("Align with the budget line.");
-	});
-});
-
-describe("DppPlanScreen — PLN-DES-05", () => {
-	it("renders the exact certification text with the checkbox gating submit", async () => {
-		const w = make(READY_PLAN);
-		const cert = w.find('[data-testid="dpp-certification"]');
-		expect(cert.text()).toContain("Departmental certification");
-		expect(cert.text()).toContain(
-			"including every current accepted Departmental Need and any direct departmental requirements shown"
-		);
-		expect(w.find('[data-testid="dpp-submit"]').attributes("disabled")).toBeDefined();
-		await cert.find('input[type="checkbox"]').setValue(true);
-		expect(w.emitted("update:certified")[0][0]).toBe(true);
-		const armed = make(READY_PLAN, { certified: true });
-		expect(armed.find('[data-testid="dpp-submit"]').attributes("disabled")).toBeUndefined();
-	});
-
-	it("carries Submit in the header for the HoD-ready plan instead of Add direct requirement (§11.6)", () => {
-		const w = make(READY_PLAN, { certified: true });
-		expect(w.find('[data-testid="dpp-submit-header"]').exists()).toBe(true);
-		expect(w.find('[data-testid="dpp-add-direct"]').exists()).toBe(false);
-		expect(w.find('[data-testid="dpp-readiness"]').exists()).toBe(false);
-		expect(make(DRAFT_PLAN).find('[data-testid="dpp-add-direct"]').exists()).toBe(true);
-	});
-
-	it("renders a not-proceeding row with its muted status and no amount", () => {
-		const plan = {
-			...DRAFT_PLAN,
-			entries: [{ ...DRAFT_PLAN.entries[0], status: "Not proceeding", status_kind: "muted", amount_display: "—", budget_line_display: "—" }],
-		};
-		const w = make(plan);
-		const row = w.find('[data-testid="dpp-entries"] tbody tr');
-		expect(row.find(".kt-status").text()).toBe("Not proceeding");
-		expect(row.find(".kt-status").classes()).toContain("is-draft");
-	});
-
-	it("ready rows read View and the totals drop the 'specified' suffix", () => {
-		const w = make(READY_PLAN);
-		expect(w.findAll('[data-testid="dpp-entries"] tbody tr button').map((b) => b.text()))
-			.toEqual(["View", "View"]);
-		expect(w.find('[data-testid="dpp-totals"]').text()).toBe(
-			"2 requirements · KES 100,000,000"
-		);
-	});
-
-	it("routes the task holder to their open task from the record (FU-14)", async () => {
-		const submitted = {
-			...READY_PLAN, access: "planner", mutable: false, can_submit: false,
-			certification: { ...READY_PLAN.certification, show: false },
-			open_task: { label: "Review submission", route: ["procurement-planning", "dpp-review", "DPPV-1"] },
-		};
-		const w = make(submitted);
-		const button = w.find('[data-testid="dpp-open-task"]');
-		expect(button.text()).toBe("Review submission");
-		await button.trigger("click");
-		expect(w.emitted("open-task")[0][0]).toEqual(["procurement-planning", "dpp-review", "DPPV-1"]);
-		expect(make({ ...submitted, open_task: null }).find('[data-testid="dpp-open-task"]').exists()).toBe(false);
-	});
-
-	it("tells a non-HoD why the ready plan's Submit is disabled", () => {
-		const author = make({
-			...READY_PLAN, access: "author", can_submit: false,
-			certification: { ...READY_PLAN.certification, show: false },
-			submit_hint: "Only the Head of User Department, or an acting head, can submit this plan.",
+				next_step: HOD_TURN,
+				journey: dppJourney("certification", { holder: "Julia Njeri" }),
+				...extra,
+			}),
 		});
-		expect(author.find('[data-testid="dpp-submit-hint"]').text()).toContain("Head of User Department");
-		expect(author.find('[data-testid="dpp-submit"]').attributes("disabled")).toBeDefined();
-		expect(make(READY_PLAN).find('[data-testid="dpp-submit-hint"]').exists()).toBe(false);
+	}
+
+	it("asks the Head of Department to certify, keeps the Status cell and the full tracker", () => {
+		const w = hod();
+		expect(w.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Certify and submit the departmental plan");
+		expect(w.find(".kt-journey").classes()).not.toContain("is-reduced");
+		expect(w.find(".kt-journey-stage.is-current").text()).toContain("Certification");
+		expect(w.find('[data-testid="pln-dpp-context"]').text()).toContain("Status");
 	});
 
-	it("a non-mutable plan offers no editing affordances at all", () => {
-		const submitted = {
-			...READY_PLAN,
-			mutable: false,
-			can_submit: false,
-			certification: { ...READY_PLAN.certification, show: false },
-			entries: READY_PLAN.entries.map((row) => ({ ...row, action: "" })),
-			header: { ...READY_PLAN.header, badge: "Awaiting validation", badge_kind: "attention" },
-		};
-		const w = make(submitted);
-		expect(w.find('[data-testid="dpp-add-direct"]').exists()).toBe(false);
-		expect(w.find('[data-testid="dpp-submit"]').exists()).toBe(false);
-		expect(w.findAll('[data-testid="dpp-entries"] tbody tr button')).toHaveLength(0);
-	});
-});
-
-describe("DppPlanScreen — accepted plan update (§5.1)", () => {
-	const ACCEPTED_PLAN = {
-		...READY_PLAN,
-		mutable: false,
-		can_submit: false,
-		can_create_update: true,
-		update_notice: null,
-		certification: { ...READY_PLAN.certification, show: false },
-		entries: READY_PLAN.entries.map((row) => ({ ...row, action: "" })),
-		header: { ...READY_PLAN.header, badge: "Accepted", badge_kind: "live" },
-	};
-
-	it("carries Create update in the header and emits it", async () => {
-		const w = make(ACCEPTED_PLAN);
-		const button = w.find('[data-testid="dpp-create-update"]');
-		expect(button.text()).toBe("Create update");
-		expect(w.find('[data-testid="dpp-add-direct"]').exists()).toBe(false);
-		expect(w.find('[data-testid="dpp-update-notice"]').exists()).toBe(false);
-		await button.trigger("click");
-		expect(w.emitted("create-update")).toHaveLength(1);
+	it("names an accepted plan instead of asking for a review and submission (owner instruction 28 Sep 2026)", () => {
+		const w = make({ plan: plan({ access: "hod", mutable: false, current_state: "Accepted", version: { status: "Accepted" } }) });
+		expect(w.find('[data-testid="pln-dpp-title"]').text()).toBe("Digital Health's departmental plan");
+		expect(w.find(".kt-page-desc").text()).toBe("Accepted by Procurement for this financial year.");
 	});
 
-	it("names the accepted Needs the plan is missing", () => {
+	it("names a submitted plan as with Procurement", () => {
+		const w = make({ plan: plan({ access: "author", mutable: false, current_state: "Submitted", version: { status: "Submitted" } }) });
+		expect(w.find('[data-testid="pln-dpp-title"]').text()).toBe("Digital Health's departmental plan");
+		expect(w.find(".kt-page-desc").text()).toBe("Submitted to Procurement for review. It cannot be changed while Procurement reviews it.");
+	});
+
+	it("reads as a complete review of the department's plan", () => {
+		const w = hod();
+		expect(w.find('[data-testid="pln-dpp-title"]').text()).toBe("Review Digital Health's departmental plan");
+		const summary = w.find('[data-testid="pln-dpp-summary"]').text();
+		expect(summary).toContain("Included cost");
+		expect(summary).toContain("KES 110,000,000");
+		expect(summary).toContain("Excluded requirements");
+	});
+
+	it("certifies on the same page and disables submit until confirmed", () => {
+		const w = hod();
+		expect(w.find('[data-testid="pln-dpp-certification"]').exists()).toBe(true);
+		const submit = w.find('[data-testid="pln-dpp-submit"]');
+		expect(submit.text()).toBe("Submit departmental plan");
+		expect(submit.attributes("disabled")).toBeDefined();
+		expect(w.find('[data-testid="pln-dpp-certify-hint"]').text()).toBe("Confirm the certification to submit this plan.");
+	});
+
+	it("enables submit once the certification is confirmed", () => {
 		const w = make({
-			...ACCEPTED_PLAN,
-			update_notice: {
-				title: "1 accepted need is not in this plan",
-				text: "NDS-MOH-2027-0005 accepted after this plan was accepted.",
-			},
+			certified: true,
+			plan: plan({
+				access: "hod",
+				can_submit: true,
+				certification: { show: true, text: "I certify…", checkbox_label: "I confirm this certification" },
+			}),
 		});
-		const notice = w.find('[data-testid="dpp-update-notice"]');
-		expect(notice.text()).toContain("1 accepted need is not in this plan");
-		expect(notice.text()).toContain("NDS-MOH-2027-0005");
+		expect(w.find('[data-testid="pln-dpp-submit"]').attributes("disabled")).toBeUndefined();
+		expect(w.find('[data-testid="pln-dpp-certify-hint"]').exists()).toBe(false);
+	});
+});
+
+describe("DppPlanScreen — U05-CORRECTION and U02-CLOSED", () => {
+	it("leads with the correction notice, shows the comment beside its row, and resubmits", () => {
+		const w = make({
+			certified: true,
+			plan: plan({
+				access: "hod",
+				can_submit: true,
+				is_correction: true,
+				next_step: CORRECTION_TURN,
+				journey: dppJourney("preparation"),
+				returned_submission_number: 1,
+				candidate_submission_number: 2,
+				certification: { show: true, text: "I certify…", checkbox_label: "I confirm this certification" },
+				entries: [
+					{
+						...LAPTOPS,
+						issues: [{ problem: "", correction: "Explain how the KES 30,000,000 estimate for the deployment laptops was calculated, or correct the amount." }],
+					},
+				],
+			}),
+		});
+		// PLN v1.27 — the next-step line replaces the "Your plan needs a
+		// correction" notice; Procurement's comment stays beside its row.
+		expect(w.find('[data-testid="pln-dpp-correction-notice"]').exists()).toBe(false);
+		expect(w.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Correct and resubmit the departmental plan");
+		expect(w.find(".kt-journey-stage.is-current").text()).toContain("Preparation");
+		// Returned submission 1, correction submission 2 — two distinct facts,
+		// each separately labelled (§10.4's own context-row convention).
+		const context = w.find('[data-testid="pln-dpp-context"]').text();
+		expect(context).toContain("Returned submission");
+		expect(context).toContain("Correction submission");
+		const issue = w.find('[data-testid="pln-dpp-issue"]');
+		// The artboard's own display label for a returned comment shown back
+		// to the department — "What needs to change?" is the return dialog's
+		// *input* label, a different string for a different place.
+		expect(issue.text()).toContain("Procurement comment");
+		expect(issue.text()).toContain(
+			"Explain how the KES 30,000,000 estimate for the deployment laptops was calculated",
+		);
+		expect(w.find('[data-testid="pln-dpp-submit"]').text()).toBe("Resubmit departmental plan");
+		// New requirements belong in the next update, and there is no add
+		// action here to suggest otherwise.
+		expect(w.find('[data-testid="pln-dpp-next-update"]').text()).toContain(
+			"Finish this correction first. New requirements belong in the next update.",
+		);
 	});
 
-	it("is withheld from a planner and while the update is pending", () => {
-		const planner = make({ ...ACCEPTED_PLAN, access: "planner", can_create_update: false });
-		expect(planner.find('[data-testid="dpp-create-update"]').exists()).toBe(false);
-		const pending = make(ACCEPTED_PLAN, { pending: true });
-		expect(pending.find('[data-testid="dpp-create-update"]').attributes("disabled")).toBeDefined();
+	it("keeps a closed-intake draft editable while saying, once, why it cannot be submitted", () => {
+		const w = make({
+			plan: plan({
+				context: { ...plan().context, window: { state: "Closed", display: "Closed" } },
+				next_step: CLOSED_BLOCKED,
+				journey: dppJourney("preparation", { holder: "Grace Wanjiku" }),
+				missing_setting: { title: "Departmental plan submissions are closed", items: [] },
+			}),
+		});
+		// PLN v1.27 — the blocked next-step block replaces the footer sentence
+		// and carries the D3 fix; the missing-setting panel does not repeat it.
+		const block = w.find(".kt-next-step-block");
+		expect(block.text()).toContain("Initial submissions are closed");
+		expect(block.text()).toContain("You can keep editing this draft, but it cannot be submitted now.");
+		expect(block.text()).toContain("Ask your KenTender administrator to complete this setting.");
+		expect(block.find("button").exists()).toBe(false);
+		expect(w.find('[data-testid="pln-dpp-closed"]').exists()).toBe(false);
+		expect(w.text().match(/Initial submissions are closed/g)).toHaveLength(1);
+		expect(w.find('[data-testid="pln-missing-setting"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pln-dpp-context"]').text()).toContain("Status");
+		expect(w.find('[data-testid="pln-dpp-save"]').exists()).toBe(true);
+		expect(w.find('[data-testid="pln-dpp-submit"]').exists()).toBe(false);
 	});
 });

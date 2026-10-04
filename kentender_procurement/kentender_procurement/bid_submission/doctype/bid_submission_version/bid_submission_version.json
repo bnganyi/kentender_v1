@@ -1,0 +1,276 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-27 12:30:00.000000",
+ "description": "BDS-CHG-001 v0.8 §4.9: an immutable accepted submission.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "bid_submission_version_id",
+  "version_number",
+  "bid_workspace",
+  "tender",
+  "bid_definition_id",
+  "definition_version",
+  "definition_digest",
+  "organisation_snapshot",
+  "organisation_snapshot_version",
+  "draft_version",
+  "response_snapshot_digest",
+  "evidence_set_digest",
+  "package_digest",
+  "signed_by",
+  "signatory_assignment",
+  "signed_at",
+  "signature_certificate_ref",
+  "signature_verification_evidence",
+  "received_at",
+  "accepted_at",
+  "status",
+  "status_since",
+  "predecessor_submission_version",
+  "tender_box_envelope",
+  "receipt",
+  "attempt",
+  "simulation",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "bid_submission_version_id",
+   "fieldtype": "Data",
+   "label": "Submission version",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Version number",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "bid_workspace",
+   "fieldtype": "Link",
+   "label": "Bid workspace",
+   "read_only": 1,
+   "options": "Bid Workspace",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "label": "Tender",
+   "read_only": 1,
+   "options": "Tender",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bid_definition_id",
+   "fieldtype": "Data",
+   "label": "Bid definition",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "definition_version",
+   "fieldtype": "Int",
+   "label": "Definition version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "definition_digest",
+   "fieldtype": "Data",
+   "label": "Definition digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "organisation_snapshot",
+   "fieldtype": "Link",
+   "label": "Organisation snapshot",
+   "read_only": 1,
+   "options": "Bid Organisation Snapshot",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organisation_snapshot_version",
+   "fieldtype": "Int",
+   "label": "Organisation snapshot version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "draft_version",
+   "fieldtype": "Int",
+   "label": "Draft version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "response_snapshot_digest",
+   "fieldtype": "Data",
+   "label": "Response snapshot digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "evidence_set_digest",
+   "fieldtype": "Data",
+   "label": "Evidence set digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "package_digest",
+   "fieldtype": "Data",
+   "label": "Package digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "signed_by",
+   "fieldtype": "Link",
+   "label": "Signed by",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "signatory_assignment",
+   "fieldtype": "Data",
+   "label": "Signatory assignment",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "signed_at",
+   "fieldtype": "Datetime",
+   "label": "Signed at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "signature_certificate_ref",
+   "fieldtype": "Data",
+   "label": "Signature certificate",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "signature_verification_evidence",
+   "fieldtype": "Long Text",
+   "label": "Signature verification evidence",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "received_at",
+   "fieldtype": "Datetime",
+   "label": "Received at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "accepted_at",
+   "fieldtype": "Datetime",
+   "label": "Accepted at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Submitted\nSuperseded\nWithdrawn",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status_since",
+   "fieldtype": "Datetime",
+   "label": "Status since",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "predecessor_submission_version",
+   "fieldtype": "Link",
+   "label": "Predecessor submission version",
+   "read_only": 1,
+   "options": "Bid Submission Version"
+  },
+  {
+   "fieldname": "tender_box_envelope",
+   "fieldtype": "Link",
+   "label": "Tender-box envelope",
+   "read_only": 1,
+   "options": "Tender Box Envelope",
+   "reqd": 1
+  },
+  {
+   "fieldname": "receipt",
+   "fieldtype": "Link",
+   "label": "Receipt",
+   "read_only": 1,
+   "options": "Bid Receipt",
+   "reqd": 1
+  },
+  {
+   "fieldname": "attempt",
+   "fieldtype": "Link",
+   "label": "Attempt",
+   "read_only": 1,
+   "options": "Bid Submission Attempt",
+   "reqd": 1
+  },
+  {
+   "fieldname": "simulation",
+   "fieldtype": "Check",
+   "label": "Simulation",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-27 12:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "name": "Bid Submission Version",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:bid_submission_version_id"
+}

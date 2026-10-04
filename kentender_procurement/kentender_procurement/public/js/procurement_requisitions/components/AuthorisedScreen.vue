@@ -1,121 +1,150 @@
-<!-- REQ-DES-10 Authorised Requisition (§13.12), ported class-for-class: the
-     eyebrow+title+status+reference (with handoff id) header, the "Open
-     Tender Preparation" action in the masthead's own corner, Planning-
-     drawdown and Tender-status cards, the Budget-reservations table (real
-     reservation/Budget-Line references, never internal docnames), the
-     complete-structured-package summary cards, the authorised-by line, the
-     digest line, and the Revoke action — hidden entirely once consumed,
-     never merely disabled (§13.12: "Hide revocation action after
-     consumption"). -->
+<!-- REQ-DES-10 — Authorised requisition (Procurement Officer base, HOPF,
+     Consumed, Revoked, Auditor, revocation dialog; the REQ-DES-12
+     revocation/consumption race). Which controls appear is the server's
+     `actions` for this actor and state. -->
 <template>
-	<div class="req-step-content">
-		<div class="req-masthead">
-			<div class="req-editor-titlebar">
-				<div class="kt-eyebrow">AUTHORISED REQUISITION</div>
-				<button v-if="handoff.consumption && !handoff.consumption.consumed_at" type="button" class="kt-btn kt-btn-primary req-open-tender" data-testid="req-open-tender" @click="$emit('open-tender')">Open Tender Preparation</button>
-			</div>
-			<div class="req-editor-titlebar">
-				<h1 class="req-editor-title">{{ (handoff.payload || {}).requirement_title }}</h1>
-				<span class="kt-status is-live">Authorised for Tender Preparation</span>
-			</div>
-			<div class="req-editor-reference">{{ reference }}</div>
-		</div>
-
-		<div class="req-field-grid">
-			<div class="kt-card kt-blueprint req-card-pad">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-eyebrow">Planning drawdown</div>
-				<div class="req-summary-title">{{ (handoff.requisition || {}).plan_item_id }}</div>
-				<p class="req-context-body">{{ sourceLineIds }}</p>
-			</div>
-			<div class="kt-card kt-blueprint req-card-pad">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-eyebrow">Tender status</div>
-				<div class="req-summary-title">
-					<span class="kt-status" :class="isConsumed ? 'is-live' : 'is-pending'">{{ isConsumed ? consumedLabel : "Not yet consumed" }}</span>
+	<div class="kt-panel-lg req-page" data-testid="req-authorised" :data-mode="view.mode" :data-state="view.state">
+		<div class="req-authorised-head">
+			<div>
+				<div class="req-title-row">
+					<h3>{{ view.header.title }}</h3>
+					<span v-if="!view.consumed" class="kt-status" :class="view.header.badge.tone" data-testid="req-badge">{{ view.header.badge.label }}</span>
 				</div>
+				<div class="req-reference req-actions" style="align-items: center"><span class="kt-label">{{ view.header.reference }}</span><span class="kt-muted" style="font-size: 13px">{{ view.header.tagline }}</span></div>
+				<p v-if="view.header.description" class="kt-muted" style="font-size: 13px; margin: 10px 0 0">{{ view.header.description }}</p>
+			</div>
+			<button v-if="actions.continue_to_tender_preparation" type="button" class="kt-btn kt-btn-primary" style="white-space: nowrap" data-testid="req-continue-tender" @click="ctx.goPath(view.tender_route)">Continue to Tender Preparation</button>
+		</div>
+
+		<template v-if="view.consumed">
+			<Notice tone="live"><span data-testid="req-consumed"><strong>Tender Preparation started</strong> · {{ view.consumed.tender_reference }}</span></Notice>
+			<div class="req-actions" style="justify-content: flex-end; margin-top: var(--kt-space-4)">
+				<button type="button" class="kt-btn kt-btn-primary" data-testid="req-open-tender" @click="ctx.goPath(view.consumed.route)">Open Tender</button>
+			</div>
+		</template>
+		<template v-if="race">
+			<Notice tone="warning"><span data-testid="req-revoke-race">Tender Preparation has already started. This authorisation can no longer be revoked.</span></Notice>
+		</template>
+
+		<div class="req-rule" style="margin: var(--kt-space-4) 0 var(--kt-space-6)">
+			<div class="kt-meta-row">
+				<div v-for="fact in view.facts" :key="fact.label"><span class="kt-label">{{ fact.label }}</span><span class="kt-meta-value" style="font-size: 14px">{{ fact.value }}</span></div>
 			</div>
 		</div>
 
-		<div class="kt-card-title">Budget reservations</div>
-		<table class="kt-table" data-testid="req-reservations-table">
-			<thead>
-				<tr>
-					<th>Reservation</th>
-					<th>Drawdown line</th>
-					<th class="req-num">Value</th>
-					<th>Budget Line</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr v-for="row in drawdownDisplay" :key="row.reservation_label">
-					<td>{{ row.reservation_label }}</td>
-					<td>{{ row.organisation_unit_label }}</td>
-					<td class="req-num">{{ money(row.requested_value) }}</td>
-					<td>{{ row.budget_line_label }}</td>
-				</tr>
-			</tbody>
-		</table>
-
-		<div class="kt-card-title">Complete structured package</div>
-		<div class="req-summary-grid">
-			<div class="kt-card kt-blueprint req-card-pad-tight">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-eyebrow">Equipment</div>
-				<div class="req-summary-title">{{ packageSummary.items || 0 }} item{{ (packageSummary.items || 0) === 1 ? "" : "s" }}</div>
+		<div v-if="view.revoked" class="req-rule" style="margin-bottom: var(--kt-space-6)" data-testid="req-revoked">
+			<div class="kt-meta-row">
+				<div><span class="kt-label">Reason</span><span class="kt-meta-value" style="font-size: 14px">{{ view.revoked.reason }}</span></div>
+				<div><span class="kt-label">Revoked by</span><span class="kt-meta-value" style="font-size: 14px">{{ view.revoked.by }} · {{ view.revoked.at }}</span></div>
 			</div>
-			<div class="kt-card kt-blueprint req-card-pad-tight">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-eyebrow">Technical requirements</div>
-				<div class="req-summary-title">{{ packageSummary.technical_requirements || 0 }} row{{ (packageSummary.technical_requirements || 0) === 1 ? "" : "s" }}</div>
-			</div>
-			<div class="kt-card kt-blueprint req-card-pad-tight">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-eyebrow">Acceptance</div>
-				<div class="req-summary-title">{{ packageSummary.acceptance_requirements || 0 }} row{{ (packageSummary.acceptance_requirements || 0) === 1 ? "" : "s" }}</div>
+			<div class="kt-meta-row" style="margin-top: 12px">
+				<div><span class="kt-label">Planning reversal</span><span class="kt-meta-value" style="font-size: 14px">{{ view.revoked.planning_reversal }}</span></div>
+				<div><span class="kt-label">Funding releases</span><span class="kt-meta-value" style="font-size: 14px">{{ view.revoked.funding_releases }}</span></div>
 			</div>
 		</div>
 
-		<p v-if="authorisedBy.name" class="req-table-caption">Authorised by {{ authorisedBy.name }}, {{ authorisedBy.role }} · {{ authorisedBy.decided_at }}</p>
-		<p class="req-table-caption">Authorised version digest — Generated by KenTender · <span class="req-digest">{{ handoff.handoff_digest }}</span></p>
+		<DecisionChain :rows="view.decision_chain || []" style="margin-bottom: var(--kt-space-6)" />
 
-		<div v-if="handoff.can_revoke" class="req-actions">
-			<button type="button" class="kt-btn kt-btn-secondary kt-danger" :disabled="pending" data-testid="req-revoke" @click="$emit('revoke')">Revoke authorisation</button>
+		<ReviewSections :sections="leading" />
+		<section v-if="(view.reservations || []).length" style="margin: var(--kt-space-3) 0 var(--kt-space-6)">
+			<CardTitle title="Funding reservations" icon="wallet" />
+			<table class="kt-table" data-testid="req-reservations">
+				<thead><tr><th>Funding reservation (financial hold)</th><th>Department</th><th class="is-num">Value</th></tr></thead>
+				<tbody><tr v-for="r in view.reservations" :key="r.reservation"><td>{{ r.reservation }}</td><td>{{ r.department }}</td><td class="is-num">{{ r.value }}</td></tr></tbody>
+			</table>
+		</section>
+		<ReviewSections :sections="trailing" />
+
+		<Disclosure title="Record details" testid="req-record-details">
+			<p class="kt-muted" style="font-size: 12px; margin: 0 0 12px">Each value below is supporting evidence; none is an editable command key.</p>
+			<div class="kt-meta-row" style="flex-wrap: wrap">
+				<div v-for="fact in view.record_details || []" :key="fact.label"><span class="kt-label">{{ fact.label }}</span><span class="kt-meta-value" style="font-size: 14px">{{ fact.value }}</span></div>
+			</div>
+		</Disclosure>
+
+		<Notice v-if="error" tone="critical"><span data-testid="req-authorised-error">{{ error }}</span></Notice>
+
+		<div class="req-footer">
+			<button type="button" class="kt-btn kt-btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
+			<div class="req-actions">
+				<button v-if="actions.export" type="button" class="kt-btn kt-btn-ghost" :disabled="busy" data-testid="req-export" @click="downloadExport(ctx, view.requisition, view.header.version)">Export</button>
+				<button v-if="actions.revoke && !race" type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="req-revoke" @click="dialog = 'revoke'">Revoke authorisation</button>
+				<button v-if="actions.start_corrected_draft" type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="req-start-corrected" @click="startCorrected">Start corrected Draft</button>
+			</div>
 		</div>
+
+		<ReasonDialog
+			v-if="dialog === 'revoke'"
+			title="Revoke this authorisation?"
+			confirm-label="Revoke authorisation"
+			:body-text="`The approved-plan amounts and ${reservationWords} will be reversed. The authorised requisition will remain in history.`"
+			danger
+			:busy="busy"
+			:error="dialogError"
+			testid="req-revoke-dialog"
+			@close="dialog = null"
+			@confirm="revoke"
+		/>
 	</div>
 </template>
 
 <script setup>
-import { computed } from "vue";
-import { formatMoney } from "../data/format.js";
+import { computed, ref } from "vue";
+import { useReq } from "../data/context.js";
+import { downloadExport } from "../data/export.js";
+import CardTitle from "./shared/CardTitle.vue";
+import DecisionChain from "./shared/DecisionChain.vue";
+import Disclosure from "./shared/Disclosure.vue";
+import Notice from "./shared/Notice.vue";
+import ReasonDialog from "./shared/ReasonDialog.vue";
+import ReviewSections from "./shared/ReviewSections.vue";
 
-const props = defineProps({
-	handoff: { type: Object, required: true },
-	pending: Boolean,
+const props = defineProps({ view: { type: Object, required: true } });
+const ctx = useReq();
+const busy = computed(() => ctx.pending.value);
+const actions = computed(() => props.view.actions || {});
+
+// Funding reservations sit after Amounts requested (REQ-DES-10 note).
+const split = computed(() => {
+	const sections = props.view.sections || [];
+	const at = sections.findIndex((s) => s.key === "amounts");
+	return at < 0 ? [sections, []] : [sections.slice(0, at + 1), sections.slice(at + 1)];
+});
+const leading = computed(() => split.value[0]);
+const trailing = computed(() => split.value[1]);
+const reservationWords = computed(() => {
+	const n = (props.view.reservations || []).length;
+	return n === 2 ? "both funding reservations" : n === 1 ? "the funding reservation" : `all ${n} funding reservations`;
 });
 
-defineEmits(["open-tender", "revoke"]);
-
-const reference = computed(() => {
-	const r = props.handoff.requisition || {};
-	return [r.requisition_reference, r.plan_item_id, `Handoff ${props.handoff.handoff}`].filter(Boolean).join(" · ");
+const dialog = ref(null);
+const race = ref(false);
+const error = computed(() => {
+	const e = ctx.commandError.value;
+	return e && (e.label === "corrected" || e.label === "export") ? e.message : "";
+});
+const dialogError = computed(() => {
+	const e = ctx.commandError.value;
+	return e && e.label === "revoke" && e.code !== "REQ_HANDOFF_CONSUMED" ? e.message : "";
 });
 
-const drawdownDisplay = computed(() => props.handoff.drawdown_display || []);
-const packageSummary = computed(() => props.handoff.package_summary || {});
-const authorisedBy = computed(() => props.handoff.authorised_by || {});
-const isConsumed = computed(() => !!(props.handoff.consumption || {}).consumed_at);
-const consumedLabel = computed(() => {
-	const c = props.handoff.consumption || {};
-	return `Consumed by ${c.tender} · ${c.template_key} ${c.template_version}`;
-});
-
-const sourceLineIds = computed(() => {
-	const lines = (props.handoff.payload || {}).drawdown_lines || [];
-	return [...new Set(lines.map((l) => l.source_line_id).filter(Boolean))].join(" · ");
-});
-
-function money(amount) {
-	return formatMoney(amount);
+async function revoke({ reason }) {
+	race.value = false;
+	const done = await ctx.run("revoke", (key) => ctx.api.revoke({ requisition: props.view.requisition, reason, expected_record_version: props.view.root_record_version, idempotency_key: key }));
+	if (done) {
+		dialog.value = null;
+		return;
+	}
+	// Revocation lost the race to Tender Preparation (REQ-DES-12): say so and
+	// show the consumed state; no funding release and no retry.
+	if (ctx.commandError.value && ctx.commandError.value.code === "REQ_HANDOFF_CONSUMED") {
+		dialog.value = null;
+		race.value = true;
+		ctx.clearError();
+		await ctx.reload();
+	}
+}
+async function startCorrected() {
+	await ctx.run("corrected", (key) => ctx.api.createCorrectionDraft({ requisition: props.view.requisition, expected_record_version: props.view.root_record_version, idempotency_key: key }));
 }
 </script>

@@ -1,0 +1,239 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-01 09:00:00.000000",
+ "description": "\u00a74 Award case: one per tender and lot; the current decision cycle's stage; conditions are fields, never stages (\u00a75.9).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "award_id",
+  "tender",
+  "tender_reference",
+  "tender_title",
+  "lot",
+  "procuring_entity",
+  "source_kind",
+  "source_case",
+  "current_cycle",
+  "current_report",
+  "stage",
+  "outcome",
+  "closed_reason",
+  "closed_at",
+  "decision_status",
+  "current_decision",
+  "notification_status",
+  "current_batch",
+  "cancelled",
+  "cancellation_event",
+  "received_at",
+  "delivered_at",
+  "current_package",
+  "eligibility_json",
+  "eligibility_checked_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "award_id",
+   "label": "Award ID",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender",
+   "label": "Tender",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_reference",
+   "label": "Tender reference",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_title",
+   "label": "Tender title",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "lot",
+   "label": "Lot",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "procuring_entity",
+   "label": "Procuring entity",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "source_kind",
+   "label": "Source kind",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Evaluation\nSynthetic"
+  },
+  {
+   "fieldname": "source_case",
+   "label": "Source case",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "current_cycle",
+   "label": "Current cycle",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "current_report",
+   "label": "Current report",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "stage",
+   "label": "Stage",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Opinion\nDecision\nNotices\nWaiting to proceed\nSent to Contracting\nClosed"
+  },
+  {
+   "fieldname": "outcome",
+   "label": "Outcome",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "\nAward\nNo award\nCancelled"
+  },
+  {
+   "fieldname": "closed_reason",
+   "label": "Closed reason",
+   "read_only": 1,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "closed_at",
+   "label": "Closed at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "decision_status",
+   "label": "Decision status",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "No decision recorded\nAward recorded\nNo award recorded"
+  },
+  {
+   "fieldname": "current_decision",
+   "label": "Current decision",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "notification_status",
+   "label": "Notification status",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Not issued\nIssue in progress\nIssued\nUnknown"
+  },
+  {
+   "fieldname": "current_batch",
+   "label": "Current batch",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "cancelled",
+   "label": "Cancelled",
+   "read_only": 1,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "cancellation_event",
+   "label": "Cancellation event",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "received_at",
+   "label": "Received at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "delivered_at",
+   "label": "Delivered at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "current_package",
+   "label": "Current package",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "eligibility_json",
+   "label": "Eligibility JSON",
+   "read_only": 1,
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "eligibility_checked_at",
+   "label": "Eligibility checked at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "read_only": 1,
+   "fieldtype": "Data"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-01 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Award",
+ "name": "Award Case",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:award_id"
+}

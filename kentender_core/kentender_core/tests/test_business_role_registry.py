@@ -70,10 +70,21 @@ class TestBusinessRoleRegistry(IntegrationTestCase):
 		self.assertEqual(entry.owning_document, "REQ-CHG-001 v1.6 §8")
 		self.assertIn("Head of Procurement Function", registry.roles_with_scope_type(registry.SCOPE_SITE))
 
+	def test_evaluation_technical_support_is_registered_site_wide(self):
+		"""KT-STD-001 v1.13 §8.3 and EVL-CHG-001 v0.4 §9.1 — the holder of Bid
+		Evaluation's technical issues, separate from the Technical Operator
+		(Project Owner, 1 Oct 2026: "Own responsibility")."""
+		entry = registry.REGISTRY["Evaluation Technical Support"]
+		self.assertEqual(entry.scope_type, registry.SCOPE_SITE)
+		self.assertIn("KT-STD-001 v1.13", entry.owning_document)
+		self.assertEqual(entry.frappe_roles, ("Evaluation Technical Support",))
+
 	def test_procurement_officer_is_registered_site_wide(self):
-		"""TPR-CHG-001 v0.6 §5 — Procurement Officer is Site-wide, owned by TPR,
+		"""TPR-CHG-001 v0.8 §6 — Procurement Officer is Site-wide, owned by TPR,
 		and carries the tender_preparation segregation tag; the approving
-		office carries tender_approval on the same single HoPF entry."""
+		office carries tender_approval (plus channel_confirmation and
+		addendum_issue) on the same single HoPF entry, and the Accounting
+		Officer carries publication_authorisation and tender_cancellation."""
 		entry = registry.REGISTRY["Procurement Officer"]
 		self.assertEqual(entry.scope_type, registry.SCOPE_SITE)
 		self.assertIn("TPR-CHG-001", entry.owning_document)
@@ -81,6 +92,10 @@ class TestBusinessRoleRegistry(IntegrationTestCase):
 		self.assertIn("Procurement Officer", registry.roles_with_sod_tag("tender_preparation"))
 		self.assertIn("Head of Procurement Function", registry.roles_with_sod_tag("tender_approval"))
 		self.assertEqual(registry.roles_with_sod_tag("tender_approval"), ("Head of Procurement Function",))
+		self.assertEqual(registry.roles_with_sod_tag("channel_confirmation"), ("Head of Procurement Function",))
+		self.assertEqual(registry.roles_with_sod_tag("addendum_issue"), ("Head of Procurement Function",))
+		self.assertEqual(registry.roles_with_sod_tag("publication_authorisation"), ("Accounting Officer",))
+		self.assertEqual(registry.roles_with_sod_tag("tender_cancellation"), ("Accounting Officer",))
 
 	def test_requisition_preparer_remains_unregistered(self):
 		"""KT-STD-001 §7 default-to-omit — illustrative in ADR §4.4, but
@@ -126,3 +141,11 @@ class TestBusinessRoleRegistry(IntegrationTestCase):
 		for name in registry.REGISTRY:
 			self.assertTrue(registry.may_administer(name, {"System Manager"}))
 			self.assertFalse(registry.may_administer(name, {"Desk User"}))
+
+	def test_the_head_of_procurement_function_signs_the_annual_plan_preparation(self):
+		"""PLN-CHG-001 v1.18 §6.2 / plan D6 — Sign and submit Annual Plan is
+		the Head of Procurement Function's preparation accountability; the
+		Planner keeps consolidation and never inherits the signature tag."""
+		self.assertIn("plan_preparation_signature", registry.REGISTRY["Head of Procurement Function"].sod_tags)
+		self.assertNotIn("plan_preparation_signature", registry.REGISTRY["Procurement Planner"].sod_tags)
+		self.assertEqual(registry.REGISTRY["Head of Procurement Function"].scope_type, registry.SCOPE_SITE)

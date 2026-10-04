@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 """Playwright fixtures for the Procurement Requisitions browser specs
-(REQ-CHG-001 v1.6, tracker REQ-402). Invoked via `bench execute`; never
+(REQ-CHG-001 v1.11, tracker REQ11-502). Invoked via `bench execute`; never
 imported by `api.py`.
 
 Self-contained world, entirely independent of both the canonical MOH seed
@@ -36,26 +36,35 @@ from typing import Any
 from uuid import uuid4
 
 import frappe
+from frappe.utils import cstr
 from frappe.utils.password import update_password
 
 from kentender_core.seeds.constants import TEST_PASSWORD
 from kentender_core.services import organisation_structure as structure
 from kentender_core.services import responsibility_administration as administration
 from kentender_core.services import site_configuration
+from kentender_core.utils.raw_delete import delete_rows
 
 NS_PW = "KENTENDER_REQ_PLAYWRIGHT"
 FY_START = 2099
 FY = "2099-2100"
-INTAKE_CLOSES_AT = f"{FY_START}-12-31 20:59:59"  # 31 Dec, 23:59 EAT — pinned
+INTAKE_CLOSES_AT = f"{FY_START}-12-31 23:59:59"  # 31 Dec, 23:59 EAT (site time) — pinned
 PREVIOUS_FLAGS_KEY = "kt_req_playwright_previous_flags"
 UNIT = "Each"
 DELIVERY_LOCATION = "Playwright — Requisitions Delivery Location"
 
-OU_NAME = "Playwright — Procurement Requisitions"
+OU_NAME = "Playwright — Digital Health"  # the lead department (larger value)
+OU_B_NAME = "Playwright — HR Management and Development"
+PROFILE_WINDOW = {"effective_from": f"{FY_START}-07-01", "effective_until": f"{FY_START + 1}-06-30"}
+PROFILE_LIMITS = {"bid_opening": (7, None), "evaluation_completion": (None, 30), "contract_signing": (14, None)}
+VERIFICATION_FIXTURE = "Fixture-verified — not production law"
+DELIVERY_DEFAULT_DAYS = 30
 
 # Requisitions-facing actors (the ones a spec actually logs in as).
-AUTHOR = "pw.req.author@example.test"
-HOD = "pw.req.hod@example.test"
+AUTHOR = "pw.req.author@example.test"  # Departmental Author in both departments (§13.1 Grace)
+HOD = "pw.req.hod@example.test"  # lead Head of User Department (§13.1 Peter)
+CONTRIBUTOR = "pw.req.contributor@example.test"  # Author in the second department only (§13.1 Asha)
+HOD_B = "pw.req.hodb@example.test"
 HOPF = "pw.req.hopf@example.test"
 AUDITOR = "pw.req.auditor@example.test"
 OUTSIDER = "pw.req.outsider@example.test"  # a Departmental Author elsewhere, no standing here
@@ -64,27 +73,36 @@ NOBODY = "pw.req.nobody@example.test"  # a stale Frappe Role, no responsibility 
 # Planning-role actors: pure plumbing to build the one eligible Plan Item
 # this world needs — never logged into by a Requisitions spec.
 PLN_PLANNER = "pw.req.pln.planner@example.test"
+PLN_HOPF = "pw.req.pln.hopf@example.test"  # v1.18 §6.2: signs and submits the Annual Plan
 PLN_FINANCE = "pw.req.pln.finance@example.test"
 PLN_AO = "pw.req.pln.ao@example.test"
 PLN_STATUTORY = "pw.req.pln.statutory@example.test"
 
-ACTORS = (AUTHOR, HOD, HOPF, AUDITOR, OUTSIDER, NOBODY, PLN_PLANNER, PLN_FINANCE, PLN_AO, PLN_STATUTORY)
+OFFICER = "pw.req.officer@example.test"  # Procurement Officer (REQ-DES-10 base actor)
+
+ACTORS = (AUTHOR, HOD, CONTRIBUTOR, HOD_B, HOPF, AUDITOR, OFFICER, OUTSIDER, NOBODY, PLN_PLANNER, PLN_HOPF, PLN_FINANCE, PLN_AO, PLN_STATUTORY)
 
 BUDGET_REF = "BUD-PWREQ-0001"
 LINE_REF = "BL-PWREQ-0001"
 
 # the world's ids, filled by ensure_world()
 OU = ""
+OU_B = ""
 BUDGET_LINE = ""
 
 DIRECT_ITEM_VALUES = {
-	"title": "Playwright laptop deployment programme",
-	"description": "Procure business laptops for the Playwright fixture world's own deployment programme.",
+	"title": "Clinical training and deployment laptops for digital health rollout",
+	"description": "Procure business laptops for clinical training and field digital-health deployment.",
 	"plan_horizon": "Single year",
 	"aggregation_indicator": "Not aggregated",
 	"lotting_indicator": "Single lot",
-	"reservation_category": "None",
+	"reservation_category": "Youth",
 	"procurement_method": "Open Tender",
+	# PLN-CHG-001 v1.23 readiness: the estimate basis is required before a
+	# funding request (plan_read.plan_readiness) — added 19 Sep 2026 when the
+	# Tenders Playwright world, which builds on this one, first ran.
+	"estimate_basis": "Market survey of three suppliers in July 2099 including delivery and installation.",
+	"estimate_basis_reference": "MS-PWREQ-2099-001",
 	"baseline_invitation_date": f"{FY_START}-09-01",
 	"tendering_period_days": 21,
 	"evaluation_period_days": 30,
@@ -96,7 +114,7 @@ DIRECT_ITEM_VALUES = {
 # §16.4's own timeline instants, reused verbatim for the authorised fixture
 # (a screen that renders an exact date/time needs a pinned one, not `now`).
 CLOCK = {
-	"authorised": f"{FY_START}-09-15 07:00:00",  # 15 Sep, 10:00 EAT
+	"authorised": f"{FY_START}-09-15 10:00:00",  # 15 Sep, 10:00 EAT (site time)
 }
 
 
@@ -185,7 +203,7 @@ def _budget_world() -> None:
 			{
 				"doctype": "Procurement Budget Line Version", "generated_reference": "BLV-PWREQ-0001", "budget_version": bv,
 				"budget_line": BUDGET_LINE, "title": "Playwright ICT programme", "funding_source": fs[0] if fs else None,
-				"approved_amount": 80000000, "currency": "KES",
+				"approved_amount": 60000000, "currency": "KES",
 			}
 		).insert(ignore_permissions=True)
 
@@ -232,6 +250,12 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	Safe to call when nothing was moved."""
 	_guard()
 	frappe.set_user("Administrator")
+	# The fixture-verified profiles this world seeds for its own year leave
+	# with it (they are test data; the Python suite's own world seeds and
+	# purges its twin the same way).
+	from kentender_core.services import procurement_settings
+
+	procurement_settings.purge_fixture_profiles(NS_PW)
 	raw = frappe.defaults.get_global_default(PREVIOUS_FLAGS_KEY)
 	restored: list[str] = []
 	if raw:
@@ -250,7 +274,7 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 	"""The fixture year, one Organisation Unit, Budget/Strategy graphs, six
 	Requisitions-facing actors plus four Planning-plumbing actors, all with
 	their responsibilities."""
-	global OU
+	global OU, OU_B
 	from kentender_core.seeds import site_setup
 
 	_guard()
@@ -266,7 +290,24 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 		else:
 			frappe.get_doc({"doctype": "UOM", "uom_name": UNIT, "enabled": 1}).insert(ignore_permissions=True)
 	OU = _unit(OU_NAME)
-	site_setup._seed_regulatory_reference(fiscal_year=FY, fixture_namespace=NS_PW)
+	OU_B = _unit(OU_B_NAME)
+	# A reservation rule still at "Production verification pending" blocks
+	# Sign and submit (plan_read.plan_readiness → PLN_REFERENCE_UNAVAILABLE);
+	# the seeder is find-or-create, so an earlier pending version for this
+	# year is removed first and the fixture-verified one seeded, target 0,
+	# exactly as Planning's own worlds do.
+	fy_start = frappe.db.get_value("Fiscal Year", FY, "year_start_date")
+	frappe.db.delete("Regulatory Reference", {"reference_key": "RESERVATION-RULES", "effective_from": fy_start, "verification_status": ("!=", VERIFICATION_FIXTURE)})
+	site_setup._seed_regulatory_reference(fiscal_year=FY, fixture_namespace=NS_PW, verification_status=VERIFICATION_FIXTURE, reservation_target_percent=0)
+	# PLN-CHG-001 v1.23 (D10): method admissibility and the schedule now
+	# resolve from Procurement Method / Schedule Profiles in force on the
+	# package's applicable date — the site's own profiles cover 2027-2028
+	# only, so this world seeds fixture-verified ones for its own year the
+	# way Planning's Playwright world does (added 19 Sep 2026).
+	site_setup._seed_method_profiles(effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS_PW)
+	# Open Tender only, like Planning's Playwright world; the canonical site
+	# seeds every method.
+	site_setup._seed_schedule_profiles(effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS_PW, limits=PROFILE_LIMITS, estimated_delivery_default_days=DELIVERY_DEFAULT_DAYS, methods=("Open Tender",))
 	if not frappe.db.exists("Currency", "KES"):
 		frappe.get_doc({"doctype": "Currency", "currency_name": "KES", "enabled": 1}).insert(ignore_permissions=True)
 	_delivery_location()
@@ -274,20 +315,27 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 	_strategy_world()
 
 	for email, name in (
-		(AUTHOR, "Playwright Requisitions Author"), (HOD, "Playwright Requisitions HoD"),
-		(HOPF, "Playwright Requisitions HoPF"), (AUDITOR, "Playwright Requisitions Auditor"),
+		(AUTHOR, "Grace Wanjiku"), (HOD, "Peter Kimani"), (CONTRIBUTOR, "Asha Odhiambo"), (HOD_B, "Playwright HRMD Head"),
+		(OFFICER, "Playwright Procurement Officer"),
+		(HOPF, "Charles Mutiso"), (AUDITOR, "Playwright Requisitions Auditor"),
 		(OUTSIDER, "Playwright Requisitions Outsider"), (NOBODY, "Playwright Requisitions Nobody"),
-		(PLN_PLANNER, "Playwright Requisitions Planner"), (PLN_FINANCE, "Playwright Requisitions Finance"),
+		(PLN_PLANNER, "Playwright Requisitions Planner"), (PLN_HOPF, "Playwright Requisitions Planning HoPF"), (PLN_FINANCE, "Playwright Requisitions Finance"),
 		(PLN_AO, "Playwright Requisitions AO"), (PLN_STATUTORY, "Playwright Requisitions Statutory"),
 	):
 		_user(email, name)
 	_grant(AUTHOR, "Departmental Author", OU)
+	_grant(AUTHOR, "Departmental Author", OU_B)
 	_grant(HOD, "Departmental Author", OU)
 	_grant(HOD, "Head of User Department", OU)
+	_grant(CONTRIBUTOR, "Departmental Author", OU_B)
+	_grant(HOD_B, "Departmental Author", OU_B)
+	_grant(HOD_B, "Head of User Department", OU_B)
 	_grant(HOPF, "Head of Procurement Function")
+	_grant(OFFICER, "Procurement Officer")
 	_grant(AUDITOR, "Auditor")
 	_grant(OUTSIDER, "Departmental Author", _unit("Playwright — Requisitions Outsider"))
 	_grant(PLN_PLANNER, "Procurement Planner")
+	_grant(PLN_HOPF, "Head of Procurement Function")
 	_grant(PLN_FINANCE, "Finance Confirmation Officer")
 	_grant(PLN_AO, "Accounting Officer")
 	_grant(PLN_STATUTORY, "Plan Statutory Approver")
@@ -301,7 +349,7 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 	_move_flags()
 	if commit:
 		frappe.db.commit()
-	return {"fy": FY, "ou": OU, "ou_name": OU_NAME}
+	return {"fy": FY, "ou": OU, "ou_name": OU_NAME, "ou_b": OU_B, "ou_b_name": OU_B_NAME}
 
 
 # --- reset --------------------------------------------------------------------
@@ -325,15 +373,34 @@ def _wipe_planning_side() -> None:
 	plans = frappe.get_all("Annual Plan", filters={"fiscal_year": FY}, pluck="name")
 	plan_versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
-	frappe.db.delete("Plan Item Forecast Revision", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Drawdown Reference", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Source Allocation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Item", {"plan_version": ("in", plan_versions or ("",))})
+	# Activation (Treasury evidence + publish, added 19 Sep 2026) writes the
+	# published Plan Item roots and their publication trail — the same rows
+	# Planning's own `wipe_planning_rows()` removes, in the same order.
+	roots = frappe.get_all("Plan Item", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
+	for doctype in ("Milestone Actual Event", "Proceeding Coverage"):
+		if frappe.db.exists("DocType", doctype):
+			frappe.db.delete(doctype, {"plan_item": ("in", roots or ("",))})
+	frappe.db.delete("Plan Item Correction Disposition", {"correction_request": ("in", frappe.get_all("Plan Item Correction Request", filters={"plan_item_id": ("in", roots or ("",))}, pluck="name") or ("",))})
+	frappe.db.delete("Plan Item Correction Request", {"plan_item_id": ("in", roots or ("",))})
+	frappe.db.delete("Plan Item", {"name": ("in", roots or ("",))})
 	for task_doctype, decision_doctype in (("Plan Finance Task", "Plan Finance Decision"), ("Plan Governance Task", "Plan Governance Decision")):
 		task_rows = frappe.get_all(task_doctype, filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
 		frappe.db.delete(decision_doctype, {"task": ("in", task_rows or ("",))})
 		frappe.db.delete(task_doctype, {"name": ("in", task_rows or ("",))})
 	frappe.db.delete("Annual Plan Publication", {"plan_version": ("in", plan_versions or ("",))})
+	for doctype in ("Plan Preparation Signature", "Plan Financial Basis", "Plan Finance Basis Reuse", "Treasury Submission Evidence", "Plan Publication Hold", "Late Activation Explanation"):
+		if frappe.db.exists("DocType", doctype):
+			frappe.db.delete(doctype, {"plan_version": ("in", plan_versions or ("",))})
+	snapshots = frappe.get_all("Approved Plan Snapshot", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	publications = frappe.get_all("Plan Publication", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	for doctype in ("Publication Intent", "Publication Attempt", "Publication Acknowledgement"):
+		if frappe.db.exists("DocType", doctype):
+			frappe.db.delete(doctype, {"publication": ("in", publications or ("",))})
+	frappe.db.delete("Plan Publication", {"name": ("in", publications or ("",))})
+	frappe.db.delete("Approved Plan Snapshot", {"name": ("in", snapshots or ("",))})
 	frappe.db.delete("Annual Plan Version", {"name": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan", {"name": ("in", plans or ("",))})
 	frappe.db.delete("Planning Command Journal", {"actor": ("in", ACTORS)})
@@ -344,9 +411,9 @@ def _wipe_requisitions_side() -> None:
 	for doctype in (
 		"Requisition Event", "Requisition Decision", "Requisition Task", "Authorised Requisition Handoff",
 		"Requisition Version", "IT Equipment Requirement Package Version", "IT Equipment Requirement Package",
-		"Procurement Requisition",
+		"Procurement Requisition", "Requisition Correction Outcome",
 	):
-		frappe.db.delete(doctype, {"owner": ("in", ACTORS)})
+		delete_rows(doctype, {"owner": ("in", ACTORS)})
 	frappe.db.delete("Requisition Command Journal", {"idempotency_key": ("like", "req-pw-%")})
 	frappe.db.delete("Plan Item Correction Request", {"reason": ("like", "%Playwright%")})
 	frappe.db.delete("Notification Log", {"for_user": ("in", ACTORS)})
@@ -373,77 +440,94 @@ def _reset(commit: bool) -> dict[str, Any]:
 	return world
 
 
-# --- the one eligible Plan Item, built through Planning's own commands ------
 
 
-def _build_eligible_plan_item(*, indicative_amount: float = 40_000_000) -> tuple[str, str]:
-	"""One direct-requirement DPP entry, funded, accepted as Goods, formed,
-	completed, funding-confirmed, governed and published — an Active,
-	Requisition-eligible Plan Item, driven entirely through Planning's own
-	real commands as named Planning-role actors."""
-	from kentender_procurement.procurement_planning.services import (
-		dpp_lifecycle, dpp_validation, plan_finance, plan_governance, plan_read, plan_workbench, strategy_gateway,
-	)
+# --- the §13.1 combined purchase, built through Planning's own commands ----
 
-	with _as(AUTHOR):
-		opened = dpp_lifecycle.open_departmental_plan(organisation_unit=OU, fiscal_year=FY, idempotency_key=_key(), fixture_namespace=NS_PW)
+
+def _direct_entry(*, unit: str, author: str, hod: str, amount: int, quantity: int, title: str) -> tuple[dict, str]:
+	from kentender_procurement.procurement_planning.services import dpp_lifecycle, dpp_validation
+
+	with _as(author):
+		opened = dpp_lifecycle.open_departmental_plan(organisation_unit=unit, fiscal_year=FY, idempotency_key=_key(), fixture_namespace=NS_PW)
 		added = dpp_lifecycle.save_direct_requirement(
 			dpp_version=opened["current_version"],
 			values={
-				"title": DIRECT_ITEM_VALUES["title"], "description": DIRECT_ITEM_VALUES["description"],
-				"expected_operational_result": "The Playwright fixture world has one Active, eligible Plan Item to prepare a Requisition against.",
-				"quantity": 1, "unit": UNIT, "required_by_date": f"{FY_START}-12-31", "indicative_amount": indicative_amount,
-				"budget_line": BUDGET_LINE,
+				"title": title, "description": "Equip clinical training and field deployment staff with a common laptop specification for the national digital health rollout.",
+				"expected_operational_result": "Staff can use secure, supported equipment for training and field digital-health work.",
+				"quantity": quantity, "unit": UNIT, "required_by_date": f"{FY_START}-12-31", "indicative_amount": amount, "budget_line": BUDGET_LINE,
 			},
 			expected_record_version=opened["record_version"], idempotency_key=_key(),
 		)
-	with _as(HOD):
-		submitted = dpp_lifecycle.submit_departmental_plan(
-			dpp_version=opened["current_version"], certification_confirmed=True,
-			expected_record_version=added["record_version"], idempotency_key=_key(),
-		)
+	with _as(hod):
+		submitted = dpp_lifecycle.submit_departmental_plan(dpp_version=opened["current_version"], certification_confirmed=True, expected_record_version=added["record_version"], idempotency_key=_key())
 	task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
 	with _as(PLN_PLANNER):
-		accepted = dpp_validation.accept_departmental_plan(
-			task=task.name, classifications={added["entry_id"]: "Goods"}, task_token=task.task_token, idempotency_key=_key(),
-		)
-		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
-		formed = plan_workbench.form_plan_items(
-			plan_version=accepted["annual_plan_version"], dpp_entries=[plan["unallocated_sources"][0]["dpp_entry"]],
-			mode="each", expected_record_version=plan["record_version"], idempotency_key=_key(),
-		)
-		item_id = formed["created_items"][0]
-		item = plan_read.get_plan_item(plan_item_id=item_id)
-		objective = strategy_gateway.list_eligible_strategic_objectives()[0]["id"]
-		plan_workbench.save_plan_item(
-			plan_item=item_id, values={**DIRECT_ITEM_VALUES, "strategic_objective": objective},
-			expected_record_version=item["record_version"], idempotency_key=_key(),
-		)
-		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
-		requested = plan_finance.request_plan_funding_confirmation(
-			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=_key(),
-		)
+		accepted = dpp_validation.accept_departmental_plan(task=task.name, classifications={added["entry_id"]: "Goods"}, task_token=task.task_token, idempotency_key=_key())
+	entry = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": opened["current_version"], "entry_id": added["entry_id"]}, "name")
+	return accepted, entry
+
+
+def _activate(plan_reference: str) -> None:
+	from kentender_procurement.procurement_planning.services import plan_finance, plan_governance, plan_read, publication_pipeline, treasury
+
+	with _as(PLN_PLANNER):
+		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
+		requested = plan_finance.request_plan_funding_confirmation(plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=_key())
 	with _as(PLN_FINANCE):
 		plan_finance.confirm_plan_funding(task=requested["task"], task_token=frappe.get_doc("Plan Finance Task", requested["task"]).task_token, idempotency_key=_key())
-	with _as(PLN_PLANNER):
-		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
-		submitted_plan = plan_governance.submit_consolidated_plan(
-			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=_key(),
-		)
+	with _as(PLN_HOPF):
+		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
+		submitted_plan = plan_governance.submit_consolidated_plan(plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=_key())
 	ao_task = frappe.get_doc("Plan Governance Task", submitted_plan["task"])
 	with _as(PLN_AO):
 		adopted = plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=_key())
 	statutory_task = frappe.get_doc("Plan Governance Task", adopted["statutory_task"])
 	with _as(PLN_STATUTORY):
-		plan_governance.approve_annual_plan(task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=_key())
+		approved = plan_governance.approve_annual_plan(task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=_key())
+	version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+	with _as(PLN_AO):
+		treasury.record_treasury_submission(
+			plan_version=version_name, submitted_at=f"{FY_START}-11-01 09:00:00", channel="Email", destination="treasury@example.test",
+			dispatch_reference=f"MOH/APP/{FY_START}/001", exact_document_confirmed=True, idempotency_key=_key(),
+		)
+	frappe.set_user("Administrator")
+	publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=_key())
+
+
+def _build_eligible_plan_item(*, overrides: dict[str, Any] | None = None, single: bool = False) -> tuple[str, str]:
+	"""§13.1 in the Playwright year: Digital Health 150 Each / KES 30m and HR
+	Management and Development 100 Each / KES 20m, combined by Planning into
+	one Youth-reserved laptop purchase and activated."""
+	from kentender_procurement.procurement_planning.services import plan_read, plan_workbench, strategy_gateway
+
+	accepted, lead_entry = _direct_entry(unit=OU, author=AUTHOR, hod=HOD, amount=30_000_000, quantity=150, title="Business laptops")
+	entries = [lead_entry]
+	if not single:
+		accepted, second_entry = _direct_entry(unit=OU_B, author=HOD_B, hod=HOD_B, amount=20_000_000, quantity=100, title="Business laptops")
+		entries.append(second_entry)
+	with _as(PLN_PLANNER):
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		formed = plan_workbench.form_plan_items(
+			plan_version=accepted["annual_plan_version"], dpp_entries=entries, mode="combined" if len(entries) > 1 else "each",
+			combination_reason="Both departments require the same laptop specification for one programme; combining secures better unit pricing and one delivery schedule." if len(entries) > 1 else None,
+			expected_record_version=plan["record_version"], idempotency_key=_key(),
+		)
+		item_id = formed["created_items"][0]
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		objective = strategy_gateway.list_eligible_strategic_objectives()[0]["id"]
+		values = {**DIRECT_ITEM_VALUES, "strategic_objective": objective, **(overrides or {})}
+		if len(entries) > 1:
+			values.update({"aggregation_indicator": "Aggregated into this package", "aggregation_reason": "Both laptop batches ship in a single combined tender lot."})
+		plan_workbench.save_plan_item(plan_item=item_id, values=values, expected_record_version=item["record_version"], idempotency_key=_key())
+	_activate(accepted["annual_plan"])
 	return accepted["annual_plan"], item_id
 
 
-def reset_eligible_item_world(*, commit: bool = True) -> dict[str, Any]:
-	"""The bare world plus one Active, eligible Plan Item — the Workspace and
-	Start screens' own opening state."""
+def reset_eligible_item_world(*, commit: bool = True, single: bool = False) -> dict[str, Any]:
+	"""REQ-DES-01 READY / REQ-DES-02 base: the world plus the eligible purchase."""
 	world = _reset(commit=False)
-	plan_reference, item_id = _build_eligible_plan_item()
+	plan_reference, item_id = _build_eligible_plan_item(single=single)
 	if commit:
 		frappe.db.commit()
 	return {**world, "plan_reference": plan_reference, "plan_item_id": item_id}
@@ -452,160 +536,234 @@ def reset_eligible_item_world(*, commit: bool = True) -> dict[str, Any]:
 # --- Requisitions journeys (real commands as the fixture actors) ------------
 
 
-def _prepare(plan_item_id: str) -> dict[str, Any]:
-	from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
+def _cmd():
+	from kentender_procurement.procurement_requisitions.services import draft_commands
 
-	with _as(AUTHOR):
-		return cmd.prepare_it_equipment_requisition(plan_item_id=plan_item_id, idempotency_key=_key())
+	return draft_commands
 
 
-def _save_summary(requisition: str) -> None:
-	from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
+def _view(requisition: str, user: str = AUTHOR) -> dict[str, Any]:
+	from kentender_procurement.procurement_requisitions.services import read
 
-	with _as(AUTHOR):
-		cmd.save_requisition_summary(
-			requisition=requisition,
-			values={
-				"requirement_title": DIRECT_ITEM_VALUES["title"], "delivery_location": DELIVERY_LOCATION,
-				"latest_delivery_date": f"{FY_START}-12-31", "related_services_required": False,
-			},
-			expected_record_version=0, idempotency_key=_key(),
+	with _as(user):
+		return read.get_requisition_record(requisition=requisition)
+
+
+def _prepare(plan_item_id: str, user: str = AUTHOR) -> str:
+	with _as(user):
+		return _cmd().prepare_it_equipment_requisition(plan_item_id=plan_item_id, idempotency_key=_key())["requisition"]
+
+
+def _request_information(requisition: str, user: str = AUTHOR) -> None:
+	view = _view(requisition, user)
+	with _as(user):
+		_cmd().save_requisition_summary(
+			requisition=requisition, values={"delivery_location": DELIVERY_LOCATION, "latest_delivery_date": f"{FY_START}-12-31"},
+			expected_record_version=view["header"]["version_record_version"], idempotency_key=_key(),
 		)
 
 
-def reset_start_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""REQ-DES-02's opening state: the eligible item, no Requisition yet."""
-	return reset_eligible_item_world(commit=commit)
-
-
-def reset_editor_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""REQ-DES-03/04's opening state: a fresh Draft with its one drawdown
-	line, no item added yet."""
-	world = reset_eligible_item_world(commit=False)
-	prepared = _prepare(world["plan_item_id"])
-	_save_summary(prepared["requisition"])
-	if commit:
-		frappe.db.commit()
-	return {**world, "requisition": prepared["requisition"]}
-
-
-def reset_editor_review_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""REQ-DES-05/06/07's opening state: the complete package (item,
-	confirmed technical rows, warranty, one acceptance row) — ready for
-	Steps 3-5 and the review screen."""
-	from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
-
-	state = reset_editor_fixture(commit=False)
-	requisition = state["requisition"]
-	with _as(AUTHOR):
-		root = frappe.get_doc("Procurement Requisition", requisition)
-		version = frappe.get_doc("Requisition Version", root.current_version)
-		line = version.drawdown_lines[0]
-		added = cmd.add_requisition_item(
-			requisition=requisition,
-			values={
-				"plan_item_line_id": line.drawdown_line_id, "equipment_category": "Laptop", "item_name": "Business laptops",
-				"quantity": int(line.remaining_quantity or 1), "intended_use": "Playwright fixture deployment",
-				"delivery_location": DELIVERY_LOCATION, "latest_delivery_date": f"{FY_START}-12-31",
-			},
-			expected_record_version=0, idempotency_key=_key(),
+def _add_laptops(requisition: str, user: str = AUTHOR) -> None:
+	view = _view(requisition, user)
+	uses = {OU: "Field digital-health deployment for Digital Health staff", OU_B: "Clinical training for Human Resources Management and Development staff"}
+	lines = {l["drawdown_line_id"]: l for l in view["amounts"]}
+	rows = [{"drawdown_line_id": r["drawdown_line_id"], "quantity": r["quantity"], "intended_use": uses.get(lines[r["drawdown_line_id"]]["contributing_org_unit"], "Field deployment for department staff")} for r in view["equipment"]["add_rows"] if r["quantity"] > 0]
+	with _as(user):
+		_cmd().add_same_specification_items(
+			requisition=requisition, shared={"equipment_category": "Laptop", "item_name": "Business laptops", "delivery_location": DELIVERY_LOCATION},
+			rows=rows, expected_record_version=view["package_record_version"], idempotency_key=_key(),
 		)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", added["package_version"])
-		for row in list(package_version.technical_requirements):
-			if row.row_status != "Proposed":
-				continue
-			extra = {}
-			if not row.required_value_json:
-				extra["value"] = {"memory": 16, "storage_capacity": 512}[row.characteristic_key]
-			cmd.confirm_proposed_requirement(
-				requisition=requisition, technical_requirement_id=row.technical_requirement_id,
-				expected_record_version=package_version.record_version, idempotency_key=_key(), **extra,
-			)
-			package_version.reload()
-		cmd.save_warranty_and_support(
-			requisition=requisition,
-			values={
-				"minimum_warranty_months": 24, "onsite_support_required": 1, "maximum_support_response_hours": 8,
-				"manufacturer_support_required": 1, "service_location_constraint": "Within Kenya",
-				"support_description": "Playwright fixture support description.",
-			},
-			expected_record_version=package_version.record_version, idempotency_key=_key(),
-		)
-		package_version.reload()
-		cmd.add_acceptance_requirement(
-			requisition=requisition,
-			values={
-				"applies_to_scope": "All items", "check_type": "Quantity",
-				"pass_condition": "Delivered quantities equal the authorised schedule", "evidence_type": "Inspection record",
-			},
-			expected_record_version=package_version.record_version, idempotency_key=_key(),
-		)
-	if commit:
-		frappe.db.commit()
-	return {**state, "requisition_item_id": added.get("row_id")}
 
 
-def reset_department_task_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""REQ-DES-08's opening state: sent for Dr-Peter-Kimani-equivalent's
-	department decision."""
+def _apply_package(requisition: str, user: str = AUTHOR) -> None:
+	view = _view(requisition, user)
+	req = view["requirements"]
+
+	def raw(value):
+		return value.get("ports") or value.get("values") or value.get("value")
+
+	technical = [{"technical_requirement_id": r["technical_requirement_id"], "characteristic_key": r["characteristic_key"], "value": raw(r["value"]), "selected": True} for g in req["technical_groups"] for r in g["rows"]]
+	acceptance = [{k: a[k] for k in ("acceptance_requirement_id", "check_type", "pass_condition", "evidence_type", "applies_to_scope", "applies_to_id")} | {"selected": True} for a in req["acceptance"]]
+	with _as(user):
+		_cmd().apply_selected_requirement_package(
+			requisition=requisition, profile_key=req["profile_key"], profile_version=req["profile_version"], proposal_digest=req["proposal_digest"],
+			technical=technical, acceptance=acceptance, support=req["support"], expected_record_version=view["package_record_version"], idempotency_key=_key(),
+		)
+
+
+def _root_version(requisition: str) -> int:
+	return int(frappe.db.get_value("Procurement Requisition", requisition, "record_version"))
+
+
+def _task(requisition: str, role: str) -> str:
+	return frappe.db.get_value("Requisition Task", {"requisition": requisition, "business_role": role, "status": "Open"}, "name")
+
+
+def _send(requisition: str) -> None:
 	from kentender_procurement.procurement_requisitions.services import lifecycle
 
-	state = reset_editor_review_fixture(commit=False)
-	requisition = state["requisition"]
 	with _as(AUTHOR):
-		root = frappe.get_doc("Procurement Requisition", requisition)
-		sent = lifecycle.send_for_department_approval(requisition=requisition, expected_record_version=root.record_version, idempotency_key=_key())
-	if commit:
-		frappe.db.commit()
-	return {**state, "task": sent["task"]}
+		lifecycle.send_for_department_approval(requisition=requisition, expected_record_version=_root_version(requisition), idempotency_key=_key())
 
 
-def reset_procurement_task_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""REQ-DES-09's opening state: submitted to the HoPF for authorisation."""
+def _submit(requisition: str) -> None:
 	from kentender_procurement.procurement_requisitions.services import lifecycle
 
-	state = reset_department_task_fixture(commit=False)
-	requisition = state["requisition"]
 	with _as(HOD):
-		root = frappe.get_doc("Procurement Requisition", requisition)
-		submitted = lifecycle.submit_requisition_to_procurement(
-			requisition=requisition, task=state["task"], expected_record_version=root.record_version, idempotency_key=_key(),
-		)
-	if commit:
-		frappe.db.commit()
-	return {**state, "task": submitted["task"]}
+		lifecycle.submit_requisition_to_procurement(requisition=requisition, task=_task(requisition, "Head of User Department"), expected_record_version=_root_version(requisition), idempotency_key=_key())
 
 
-def reset_authorised_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""REQ-DES-10's opening state: authorised, unconsumed handoff."""
+def _authorise(requisition: str) -> None:
 	from kentender_procurement.procurement_requisitions.services import authorise
 
-	state = reset_procurement_task_fixture(commit=False)
-	requisition = state["requisition"]
 	with _as(HOPF):
-		root = frappe.get_doc("Procurement Requisition", requisition)
-		authorised = authorise.authorise_requisition(
-			requisition=requisition, task=state["task"], expected_record_version=root.record_version, idempotency_key=_key(),
-		)
-	frappe.db.set_value("Requisition Decision", {"requisition_version": root.current_version, "decision": "Authorise for Tender Preparation"}, "decided_at", CLOCK["authorised"], update_modified=False)
+		authorise.authorise_requisition(requisition=requisition, task=_task(requisition, "Head of Procurement Function"), expected_record_version=_root_version(requisition), idempotency_key=_key())
+
+
+def _state(stage: str, **kwargs) -> dict[str, Any]:
+	"""Build the world up to one named stage; each reset below is one call."""
+	world = reset_eligible_item_world(commit=False, single=kwargs.get("single", False))
+	out = {**world}
+	if stage == "eligible":
+		return out
+	requisition = _prepare(world["plan_item_id"])
+	out["requisition"] = requisition
+	if stage == "draft":
+		return out
+	_request_information(requisition)
+	if stage == "request_information":
+		return out
+	_add_laptops(requisition)
+	if stage == "review_required":
+		return out
+	_apply_package(requisition)
+	if stage == "complete":
+		return out
+	_send(requisition)
+	out["department_task"] = _task(requisition, "Head of User Department")
+	if stage == "awaiting":
+		return out
+	_submit(requisition)
+	out["procurement_task"] = _task(requisition, "Head of Procurement Function")
+	if stage == "submitted":
+		return out
+	_authorise(requisition)
+	out["handoff"] = frappe.db.get_value("Procurement Requisition", requisition, "handoff")
+	return out
+
+
+def _done(state: dict[str, Any], commit: bool) -> dict[str, Any]:
 	if commit:
 		frappe.db.commit()
-	return {**state, "handoff": authorised.get("handoff"), "reservations": authorised.get("reservations")}
+	return state
 
 
-def reset_returned_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""The Procurement task returned to the department for correction — a
-	Draft successor Version, the original preserved."""
+def reset_workspace_ready(*, commit: bool = True) -> dict[str, Any]:
+	return _done(_state("eligible"), commit)
+
+
+def reset_draft(*, commit: bool = True) -> dict[str, Any]:
+	"""REQ-DES-01-DRAFT and REQ-DES-03 base: a fresh Draft, request information filled, no equipment."""
+	return _done(_state("request_information"), commit)
+
+
+def reset_review_required(*, commit: bool = True) -> dict[str, Any]:
+	"""REQ-DES-03-COMPLETE / REQ-DES-05 base: equipment added, standard package Review required."""
+	return _done(_state("review_required"), commit)
+
+
+def reset_complete_draft(*, commit: bool = True) -> dict[str, Any]:
+	"""REQ-DES-05-COMPLETE / REQ-DES-06: every task complete, ready to send."""
+	return _done(_state("complete"), commit)
+
+
+def reset_department_task(*, commit: bool = True) -> dict[str, Any]:
+	"""REQ-DES-01-ACTION (HoD) / REQ-DES-07."""
+	return _done(_state("awaiting"), commit)
+
+
+def reset_procurement_task(*, commit: bool = True) -> dict[str, Any]:
+	"""REQ-DES-08 / REQ-DES-09."""
+	return _done(_state("submitted"), commit)
+
+
+def reset_authorised(*, commit: bool = True) -> dict[str, Any]:
+	"""REQ-DES-10."""
+	return _done(_state("authorised"), commit)
+
+
+# --- REQ-DES-10 / REQ-DES-11 states, each through the real commands ---
+
+
+def _request_planning_correction(requisition: str) -> str:
 	from kentender_procurement.procurement_requisitions.services import lifecycle
 
-	state = reset_procurement_task_fixture(commit=False)
-	requisition = state["requisition"]
-	with _as(HOPF):
-		task = frappe.get_doc("Requisition Task", state["task"])
-		returned = lifecycle.return_requisition_to_department(
-			task=state["task"], reason="Playwright fixture: confirm the delivery location.",
-			expected_record_version=task.record_version, idempotency_key=_key(),
+	with _as(HOD):
+		lifecycle.request_upstream_plan_correction(
+			requisition=requisition,
+			reason="The approved source allocation refers to the wrong Budget Line. Please review the departmental funding specification.",
+			expected_record_version=_root_version(requisition), idempotency_key=_key(),
 		)
-	if commit:
-		frappe.db.commit()
-	return {**state, "correction_version": returned["requisition_version"]}
+	return cstr(frappe.db.get_value("Procurement Requisition", requisition, "planning_correction_request_id"))
+
+
+def reset_stopped(*, commit: bool = True) -> dict[str, Any]:
+	"""REQ-DES-11 Open: submitted, then the lead HoD requests a Planning correction."""
+	state = _state("submitted")
+	state["correction_request"] = _request_planning_correction(state["requisition"])
+	return _done(state, commit)
+
+
+def reset_stopped_closed(*, commit: bool = True) -> dict[str, Any]:
+	"""REQ-DES-11 Closed without change: the Planner closes the request; the
+	outcome reaches Requisitions through Planning's published event."""
+	from kentender_procurement.procurement_planning.services import plan_requisition
+
+	state = _state("submitted")
+	request = _request_planning_correction(state["requisition"])
+	with _as(PLN_PLANNER):
+		version = frappe.db.get_value("Plan Item Correction Request", request, "record_version")
+		plan_requisition.close_plan_item_correction_without_change(
+			correction_request=request, reason="The approved source allocation and Budget Line are correct. No Planning change is required.",
+			expected_record_version=version, idempotency_key=_key(),
+		)
+	state["correction_request"] = request
+	return _done(state, commit)
+
+
+def reset_revoked(*, commit: bool = True) -> dict[str, Any]:
+	"""REQ-DES-10 Revoked: authorised, then the HOPF revokes before consumption."""
+	from kentender_procurement.procurement_requisitions.services import authorise
+
+	state = _state("authorised")
+	with _as(HOPF):
+		authorise.revoke_unconsumed_authorisation(
+			requisition=state["requisition"], reason="The authorised warranty terms must be corrected before tendering.",
+			expected_record_version=_root_version(state["requisition"]), idempotency_key=_key(),
+		)
+	return _done(state, commit)
+
+
+def reset_consumed(*, commit: bool = True) -> dict[str, Any]:
+	"""REQ-DES-10 Consumed: authorised, then consumed by one Tender through the
+	guarded Requisitions command (Tenders itself is out of scope, D15)."""
+	from kentender_procurement.procurement_requisitions.services import handoff
+
+	state = _state("authorised")
+	handoff.record_handoff_consumption(
+		handoff=state["handoff"], tender="TND-PW-REQ-1", tender_version="TNV-PW-REQ-1",
+		template_key="IT-EQUIPMENT-OPEN-V1", template_version="1.1", idempotency_key=_key(),
+	)
+	return _done(state, commit)
+
+
+def reset_direct_hod_draft(*, commit: bool = True) -> dict[str, Any]:
+	"""REQ-DES-06-DIRECT-HOD: the lead Head of User Department prepares the
+	complete Draft themselves, so they submit directly (no self-approval)."""
+	# Single-department item: the HoD's own authority covers every row.
+	world = reset_eligible_item_world(commit=False, single=True)
+	requisition = _prepare(world["plan_item_id"], user=HOD)
+	_request_information(requisition, user=HOD)
+	_add_laptops(requisition, user=HOD)
+	_apply_package(requisition, user=HOD)
+	return _done({**world, "requisition": requisition}, commit)

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>body{margin:0;} a{color:var(--color-accent-700);} a:hover{color:var(--color-accent-900);} .table th,.table thead th{text-transform:none;letter-spacing:0;} .kt-disclosure-title{text-transform:none;letter-spacing:0;font-size:15px;}
+  </style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:100px;position:relative;">
+  <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
+    <span style="color:#fff;opacity:.7;font-size:12px;">TPR-DES-10:</span>
+    <sc-for list="{{variants}}" as="vv" hint-placeholder-count="7">
+      <button type="button" class="{{vv.cls}}" onclick="{{vv.select}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">{{vv.label}}</button>
+    </sc-for>
+  </div>
+
+  <div data-screen-label="TPR-DES-10 Prepare and issue addendum" style="max-width:1100px;margin:0 auto;padding:32px 40px 0;">
+    <div class="card blueprint elev-sm" style="padding:0;">
+
+      <div style="padding:28px 24px 20px;border-bottom:1px solid var(--color-divider);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
+          <h1 style="font-family:var(--font-heading);font-weight:600;font-size:28px;margin:0;letter-spacing:.01em;">Prepare addendum</h1>
+          <span class="{{badgeCls}}">{{badge}}</span>
+        </div>
+        <p style="font-size:13px;color:var(--color-neutral-600);margin:0 0 10px;">{{refLine}}</p>
+        <p style="font-size:14px;color:var(--color-neutral-700);margin:0;">Identify the published wording that needs a non-material correction.</p>
+      </div>
+
+      <dc-import name="TenderGuidance" markers="{{g.markers}}" holder="{{g.holder}}" kind="{{g.kind}}" headline="{{g.headline}}" sentence="{{g.sentence}}" fixes="{{g.fixes}}" hint-size="100%,96px"></dc-import>
+
+      <sc-if value="{{isDraft}}" hint-placeholder-val="{{true}}">
+        <div style="padding:20px 24px 0;">
+          <div class="kt-notice is-warning">
+            <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <div class="kt-notice-body">An addendum cannot expand the purchase, add a requirement or change the evaluation basis. A material change requires cancellation and a newly governed Tender.</div>
+          </div>
+        </div>
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;gap:14px;">
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;">
+            <div class="field" style="margin:0;"><label>Change class</label><select class="input"><option selected="selected">Administrative clarification</option><option>Non-material correction</option><option>Submission deadline extension</option></select></div>
+            <div class="field" style="margin:0;"><label>Affected area</label><select class="input"><option selected="selected">Goods/delivery schedule</option><option>Invitation detail</option><option>Technical requirement</option><option>Submission or opening detail</option><option>Evaluation or contract term</option><option>Other stated location</option></select></div>
+            <div class="field" style="margin:0;"><label>Affected reference</label><select class="input"><option selected="selected">Goods and delivery — delivery location</option></select></div>
+          </div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Current published value</div><div style="font-size:14px;">Ministry of Health Headquarters, Afya House, Nairobi</div></div>
+          <div class="field" style="margin:0;"><label>Revised value</label><textarea class="input" rows="2">Ministry of Health Headquarters, Afya House, 3rd Floor Procurement Stores, Nairobi</textarea></div>
+          <div class="field" style="margin:0;"><label>Reason</label><textarea class="input" rows="2">The published address omitted the internal delivery point</textarea></div>
+          <div class="field" style="margin:0;"><label>Why this is not material</label><textarea class="input" rows="2"></textarea></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{showComparison}}" hint-placeholder-val="{{false}}">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
+          <h2 style="font-family:var(--font-heading);font-size:19px;font-weight:600;margin:0 0 12px;">Changed fields</h2>
+          <table class="table">
+            <thead><tr><th>Field</th><th>Current published</th><th>Revised</th></tr></thead>
+            <tbody>
+              <tr><td>{{cmp.field}}</td><td>{{cmp.before}}</td><td style="font-weight:600;">{{cmp.after}}</td></tr>
+            </tbody>
+          </table>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:14px;">
+            <div><div class="kt-label" style="margin-bottom:3px;">Change class</div><div style="font-size:14px;">{{cmp.cls}}</div></div>
+            <div style="grid-column:span 2;"><div class="kt-label" style="margin-bottom:3px;">Reason</div><div style="font-size:14px;">{{cmp.reason}}</div></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{showDeadlineEdit}}" hint-placeholder-val="{{true}}">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
+          <h2 style="font-family:var(--font-heading);font-size:19px;font-weight:600;margin:0 0 4px;">Submission deadline must be extended</h2>
+          <p style="font-size:13px;color:var(--color-neutral-700);margin:0 0 14px;">This addendum is being issued within the governed late-amendment period.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div><div class="kt-label" style="margin-bottom:3px;">Current deadline</div><div style="font-size:14px;">5 Jun 2027, 11:00 EAT</div></div>
+            <sc-if value="{{isDraft}}" hint-placeholder-val="{{true}}"><div class="field" style="margin:0;"><label>Revised submission deadline</label><input class="input" value="12 Jun 2027, 11:00 EAT" /></div></sc-if>
+            <sc-if value="{{isHopf}}" hint-placeholder-val="{{false}}"><div><div class="kt-label" style="margin-bottom:3px;">Revised submission deadline</div><div style="font-size:14px;font-weight:600;">12 Jun 2027, 11:00 EAT</div></div></sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{showFacts}}" hint-placeholder-val="{{false}}">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;">
+          <sc-for list="{{facts}}" as="fa" hint-placeholder-count="3">
+            <div><div class="kt-label" style="margin-bottom:3px;">{{fa.label}}</div><div style="font-size:14px;">{{fa.value}}</div></div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{showChannelsPlain}}" hint-placeholder-val="{{true}}">
+        <div style="padding:20px 24px;">
+          <h2 style="font-family:var(--font-heading);font-size:19px;font-weight:600;margin:0 0 4px;">Publication</h2>
+          <p style="font-size:13px;color:var(--color-neutral-700);margin:0 0 12px;">The addendum is published through the four original channels.</p>
+          <table class="table">
+            <thead><tr><th>Channel</th></tr></thead>
+            <tbody><tr><td>State Portal</td></tr><tr><td>Ministry website</td></tr><tr><td>Notice board</td></tr><tr><td>Two national newspapers</td></tr></tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{showChannelTable}}" hint-placeholder-val="{{false}}">
+        <div style="padding:20px 24px;">
+          <h2 style="font-family:var(--font-heading);font-size:19px;font-weight:600;margin:0 0 12px;">Publication channels</h2>
+          <table class="table">
+            <thead><tr><th>Channel</th><th>Result</th><th>Available at</th><th>Confirmation/action</th></tr></thead>
+            <tbody>
+              <sc-for list="{{channels}}" as="ch" hint-placeholder-count="4">
+                <tr>
+                  <td>{{ch.name}}</td>
+                  <td><span class="{{ch.statusCls}}">{{ch.status}}</span></td>
+                  <td>{{ch.at}}</td>
+                  <td><sc-if value="{{ch.done}}" hint-placeholder-val="{{false}}"><a href="#">View confirmation</a></sc-if><sc-if value="{{ch.pending}}" hint-placeholder-val="{{true}}"><button type="button" class="btn btn-secondary" onclick="{{ch.open}}">Confirm publication</button></sc-if></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+
+  <div style="position:sticky;bottom:0;background:var(--color-surface);border-top:1px solid var(--color-divider);padding:16px 40px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+    <div style="display:flex;gap:20px;align-items:center;">
+      <a href="Published Tender.dc.html" style="font-size:13px;">Back</a>
+      <sc-if value="{{isMaterialAny}}" hint-placeholder-val="{{false}}"><a href="#" style="font-size:13px;">View cancellation requirements</a></sc-if>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <sc-if value="{{isDraft}}" hint-placeholder-val="{{true}}">
+        <button type="button" class="btn btn-secondary">Save draft</button>
+        <button type="button" class="btn btn-primary">Submit for issue</button>
+      </sc-if>
+      <sc-if value="{{isHopf}}" hint-placeholder-val="{{false}}">
+        <button type="button" class="btn btn-secondary">Return for correction</button>
+        <button type="button" class="btn btn-primary" onclick="{{openIssue}}">Issue addendum</button>
+      </sc-if>
+    </div>
+  </div>
+
+  <sc-if value="{{issueOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position:fixed;inset:0;z-index:50;">
+      <div class="dialog-backdrop" style="position:fixed;">
+        <div class="dialog" role="dialog" aria-modal="true">
+          <div class="dialog-title">Issue this addendum?</div>
+          <div class="dialog-body">The issue decision is immutable. Accountable publication confirmation for every original channel follows separately; the addendum takes effect only when all four are confirmed.</div>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-secondary" onclick="{{closeDialogs}}">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="{{closeDialogs}}">Issue addendum</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{chOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position:fixed;inset:0;z-index:50;">
+      <div class="dialog-backdrop" style="position:fixed;">
+        <div class="dialog" role="dialog" aria-modal="true">
+          <div class="dialog-title">Confirm addendum publication — {{dlg.name}}</div>
+          <div class="dialog-body">
+            <p style="font-size:13px;color:var(--color-neutral-700);margin:0 0 14px;">Confirm only after ADD-MOH-2027-033-001 was publicly available through this channel.</p>
+            <div class="field"><label>Available date/time</label><input class="input" value="{{dlg.at}}" /></div>
+            <div class="field"><label>Publication reference</label><input class="input" value="{{dlg.ref}}" /></div>
+            <sc-if value="{{dlg.hasUrl}}" hint-placeholder-val="{{false}}"><div class="field"><label>Public URL</label><input class="input" value="{{dlg.url}}" /></div></sc-if>
+            <div class="field"><label>Evidence file</label><input class="input" value="{{dlg.file}}" /></div>
+            <div class="field"><label>Notes (optional, maximum 500)</label><textarea class="input" rows="2"></textarea></div>
+            <label class="kt-checkbox" style="display:flex;gap:10px;align-items:flex-start;margin-top:10px;font-size:13px;"><input type="checkbox" /><span class="box"></span>I confirm that ADD-MOH-2027-033-001 was publicly available through {{dlg.name}} at the date and time stated above.</label>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-secondary" onclick="{{closeDialogs}}">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="{{closeDialogs}}">Confirm publication</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { v: 'draft', issueOpen: false, ch: null };
+  renderVals() {
+    const v = this.state.v;
+    const list = [['draft','Draft addendum'],['hopf','HOPF issue'],['awaiting','Awaiting publication'],['issued','Issued'],['material','Material change blocked'],['matWait','After cancellation-review request'],['matClosed','After AO closes review']];
+    const mat = v === 'material' || v === 'matWait' || v === 'matClosed';
+    const G = {
+      draft: ['D/D/D/D/C','Brian Wafula','turn','Submit the non-material addendum for issue.'],
+      hopf: ['D/D/D/D/C','Charles Mutiso','turn','Decide whether to issue this addendum.'],
+      awaiting: ['D/D/D/D/C','Charles Mutiso','turn','Confirm publication of ADD-MOH-2027-033-001 through the remaining original channels.'],
+      issued: ['D/D/D/D/C','','done','Charles Mutiso completed addendum publication on 31 May 2027, 09:07 EAT.'],
+      material: ['D/D/D/D/B','Brian Wafula','blocked','Increasing the laptop quantity from 250 to 300 cannot be issued as an addendum.','Cancel the Tender and start a newly governed Tender if procurement must continue.',[{label:'Ask Amina Hassan (Accounting Officer) to consider cancellation',primary:true},'Discard addendum draft']],
+      matWait: ['D/D/D/D/B','Amina Hassan','waiting','Accounting Officer Amina Hassan is considering cancellation of TND-MOH-2027-039.'],
+      matClosed: ['D/D/D/D/B','Brian Wafula','blocked','The 250-to-300 Each addendum remains unissuable; Amina Hassan closed the cancellation review with a recorded reason.','',[{label:'Discard addendum draft',primary:true}]],
+    }[v];
+    const chData = [
+      { name: 'State Portal', at: '31 May 2027, 08:50 EAT', ref: 'PPIP-MOH-2027-033-A1', url: 'https://portal.example.test/tenders/PPIP-MOH-2027-033/addenda/1', file: 'PPIP-MOH-2027-033-A1.pdf' },
+      { name: 'Ministry website', at: '31 May 2027, 08:50 EAT', ref: 'WEB-MOH-2027-033-A1', url: 'https://health.example.test/tenders/TND-MOH-2027-033/addenda/1', file: 'WEB-MOH-2027-033-A1.pdf' },
+      { name: 'Notice board', at: '31 May 2027, 08:55 EAT', ref: 'NB-MOH-2027-033-A1', url: '', file: 'NB-MOH-2027-033-A1.jpg' },
+      { name: 'Two national newspapers', at: '31 May 2027, 09:00 EAT', ref: 'NP-MOH-2027-033-A1', url: '', file: 'NP-MOH-2027-033-A1.pdf' },
+    ];
+    const issued = v === 'issued';
+    const badge = { draft: 'Draft addendum', hopf: 'Awaiting issue', awaiting: 'Awaiting publication confirmation', issued: 'Issued' }[v] || 'Draft addendum';
+    const badgeCls = issued ? 'kt-status is-live' : v === 'draft' || mat ? 'kt-status is-draft' : 'kt-status is-attention';
+    const facts = v === 'awaiting'
+      ? [{ label: 'Issue decided by', value: 'Charles Mutiso' }, { label: 'Issue decided at', value: '31 May 2027, 08:30 EAT' }, { label: 'Successor submission deadline', value: '12 Jun 2027, 11:00 EAT' }]
+      : [{ label: 'Effective', value: '31 May 2027, 09:00 EAT' }, { label: 'Confirmation completed', value: '31 May 2027, 09:07 EAT' }, { label: 'Revised submission deadline', value: '12 Jun 2027, 11:00 EAT' }];
+    const dlg = this.state.ch != null ? chData[this.state.ch] : chData[0];
+    return {
+      variants: list.map(([k, label]) => ({ label, cls: k === v ? 'btn btn-primary' : 'btn', select: () => this.setState({ v: k, issueOpen: false, ch: null }) })),
+      badge, badgeCls,
+      refLine: mat ? 'TND-MOH-2027-039 · Supply and delivery of field laptops' : 'TND-MOH-2027-033 · ADD-MOH-2027-033-001 · Current deadline 5 Jun 2027, 11:00 EAT',
+      g: { markers: G[0], holder: G[1], kind: G[2], headline: G[3], sentence: G[4] || '', fixes: G[5] || [] },
+      isDraft: v === 'draft', isHopf: v === 'hopf', isMaterialAny: mat,
+      showComparison: v !== 'draft',
+      cmp: mat
+        ? { field: 'Business laptops — Quantity', before: '250 Each', after: '300 Each', cls: 'Proposed change', reason: 'Additional deployment sites require 50 more laptops' }
+        : { field: 'Goods and delivery — delivery location', before: 'Ministry of Health Headquarters, Afya House, Nairobi', after: 'Ministry of Health Headquarters, Afya House, 3rd Floor Procurement Stores, Nairobi', cls: 'Administrative clarification', reason: 'The published address omitted the internal delivery point' },
+      showDeadlineEdit: v === 'draft' || v === 'hopf',
+      showFacts: v === 'awaiting' || issued, facts,
+      showChannelsPlain: v === 'draft' || v === 'hopf',
+      showChannelTable: v === 'awaiting' || issued,
+      channels: chData.map((c, i) => ({ name: c.name, status: issued ? 'Confirmed' : 'Awaiting confirmation', statusCls: issued ? 'kt-status is-live' : 'kt-status is-attention', at: issued ? c.at.split(', ')[1] : '—', done: issued, pending: !issued, open: () => this.setState({ ch: i }) })),
+      openIssue: () => this.setState({ issueOpen: true }),
+      closeDialogs: () => this.setState({ issueOpen: false, ch: null }),
+      issueOpen: this.state.issueOpen,
+      chOpen: this.state.ch != null,
+      dlg: { ...dlg, hasUrl: !!dlg.url },
+    };
+  }
+}
+</script>
+</body>
+</html>
