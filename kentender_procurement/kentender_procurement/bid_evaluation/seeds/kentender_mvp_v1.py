@@ -122,6 +122,18 @@ def canonical_tender() -> str:
 class _Story:
 	def __init__(self, tender: str):
 		self.tender = tender
+		self.present: list[str] = []
+
+	def at(self, instant: str) -> None:
+		"""Every clock at `instant`, and everyone in the discussion checks in, as
+		a member's open page does: the presence lapse (Bid Evaluation Settings,
+		90 s by default) would otherwise mark them absent between steps (found
+		4 Oct 2026 on a new site; the dev site had the lapse off)."""
+		from kentender_procurement.bid_evaluation.services import discussion
+
+		_at(instant)
+		for user in self.present:
+			discussion.heartbeat(tender=self.tender, user=user)
 
 	def case(self) -> str:
 		return cstr(frappe.db.get_value("Evaluation Case", {"tender": self.tender}, "name"))
@@ -160,11 +172,15 @@ class _Story:
 	def session(self, instant: str, joins: tuple[str, str], subject: str) -> None:
 		from kentender_procurement.bid_evaluation.services import discussion
 
-		_at(instant)
+		self.present = [CHAIR]
+		self.at(instant)
 		_ok(discussion.start_discussion(tender=self.tender, subject=subject, idempotency_key=_key("start"), user=CHAIR), "start the discussion")
+		self.present.append(SECRETARY)
+		self.at(instant)
 		_ok(discussion.join_discussion(tender=self.tender, idempotency_key=_key("join-secretary"), user=SECRETARY), "join as the secretary")
 		for user, at in zip((MEMBER, MEMBER_2), joins):
-			_at(at)
+			self.present.append(user)
+			self.at(at)
 			_ok(discussion.join_discussion(tender=self.tender, idempotency_key=_key(f"join-{user}"), user=user), f"join as {user}")
 
 	def run(self) -> None:
@@ -202,30 +218,32 @@ class _Story:
 				evidence_reference="Kenya service-centre details" if service else "Submitted evidence", idempotency_key=_key(f"finding-{r['requirement_key']}"),
 				user=MEMBER_2 if eligibility else MEMBER), f"review {r['label']}")
 		self.session(CLOCK["start"], CLOCK["join"], "Afya service-location evidence")
-		_at(CLOCK["note"])
+		self.at(CLOCK["note"])
 		_ok(discussion.record_note(tender=self.tender, subject="Afya service-location evidence", note=NOTE, reason=REASON, idempotency_key=_key("note"), user=SECRETARY),
 			"record the note")
-		_at(CLOCK["authorise"])
+		self.at(CLOCK["authorise"])
 		service_key = next(r["requirement_key"] for r in aggregate.bid_results(case, checks.current_run(case), self.bid())["requirements"]
 			if r["label"] == "Service location")
 		_ok(clarification.authorise(tender=self.tender, bid=self.bid(), requirement_key=service_key, question=Q1, reply_scope=SCOPE, reply_deadline=CLOCK["deadline"],
 			idempotency_key=_key("authorise"), user=CHAIR), "authorise the clarification")
-		_at(CLOCK["end"])
+		self.at(CLOCK["end"])
 		_ok(discussion.end_discussion(tender=self.tender, idempotency_key=_key("end"), user=CHAIR), "end the discussion")
+		self.present = []
 		_at(CLOCK["send"])
 		_ok(clarification.send(tender=self.tender, clarification=self.request(), idempotency_key=_key("send"), user=SECRETARY), "send the clarification")
 		_at(CLOCK["reply"])
 		_ok(clarification.submit_reply(tender=self.tender, clarification=self.request(), body=REPLY, idempotency_key=_key("reply"), user=bds_canonical.DAVID),
 			"reply as David Ouma")
 		self.session(CLOCK["restart"], CLOCK["rejoin"], "Resolve reply and complete findings")
-		_at(CLOCK["dispose"])
+		self.at(CLOCK["dispose"])
 		_ok(clarification.record_disposition(tender=self.tender, clarification=self.request(), disposition="Considered", result="Meets", reason=OUTCOME,
 			idempotency_key=_key("dispose"), user=CHAIR), "record the reply outcome")
-		_at(CLOCK["basis"])
+		self.at(CLOCK["basis"])
 		_ok(conclusion.record_case_conclusion(tender=self.tender, kind="Due diligence basis", reason=BASIS, idempotency_key=_key("basis"), user=CHAIR),
 			"record the due-diligence basis")
-		_at(CLOCK["end2"])
+		self.at(CLOCK["end2"])
 		_ok(discussion.end_discussion(tender=self.tender, idempotency_key=_key("end2"), user=CHAIR), "end the second discussion")
+		self.present = []
 		_at(CLOCK["narrative"])
 		draft = report.draft(frappe.get_doc("Evaluation Case", case))
 		_ok(report.save_narrative(tender=self.tender, narrative=SUMMARY, expected_version=draft.record_version, idempotency_key=_key("narrative"), user=SECRETARY),
