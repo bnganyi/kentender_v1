@@ -79,7 +79,7 @@ def correction_state(root, *, user: str | None = None) -> dict[str, Any]:
 	"""§10.14 — the stopped Version's request facts, the Requisition's
 	current state and owner, and any authorised successor handoff."""
 	version = frappe.get_doc("Tender Version", root.current_version) if root.current_version else None
-	requisition = frappe.db.get_value("Procurement Requisition", root.requisition, ["current_state", "lead_org_unit", "authorised_version", "handoff", "requisition_reference"], as_dict=True) or {}
+	requisition = frappe.db.get_value("Procurement Requisition", root.requisition, ["current_state", "lead_org_unit_id", "authorised_version", "handoff", "requisition_reference"], as_dict=True) or {}
 	successors = handoff_gateway.successors(plan_item_id=cstr(root.plan_item_id), user=user) if root.overall_status == CORRECTION_REQUESTED else []
 	successor = successors[0] if successors else None
 	# §10.14: the current owner is the correction hand-off's holder (§5.11),
@@ -94,7 +94,7 @@ def correction_state(root, *, user: str | None = None) -> dict[str, Any]:
 		"requested_by": cstr(version.stopped_by) if version else "", "requested_by_name": cstr(frappe.db.get_value("User", version.stopped_by, "full_name") or version.stopped_by) if version and version.stopped_by else "",
 		"requested_at": cstr(version.stopped_at) if version else "", "requested_at_label": serializer.fmt_datetime_short(version.stopped_at) if version and version.stopped_at else "",
 		"reason": cstr(version.stop_reason) if version else "",
-		"requisition": {"name": root.requisition, "reference": requisition.get("requisition_reference") or root.requisition_reference, "state": requisition.get("current_state", ""), "lead_org_unit": requisition.get("lead_org_unit", ""), "owner_label": cstr(frappe.db.get_value("Organisation Unit", requisition.get("lead_org_unit"), "unit_name") or "") if requisition.get("lead_org_unit") and frappe.db.has_column("Organisation Unit", "unit_name") else cstr(requisition.get("lead_org_unit") or "")},
+		"requisition": {"name": root.requisition, "reference": requisition.get("requisition_reference") or root.requisition_reference, "state": requisition.get("current_state", ""), "lead_org_unit": requisition.get("lead_org_unit_id", ""), "owner_label": cstr(frappe.db.get_value("Organisation Unit", requisition.get("lead_org_unit_id"), "unit_name") or "") if requisition.get("lead_org_unit_id") and frappe.db.has_column("Organisation Unit", "unit_name") else cstr(requisition.get("lead_org_unit_id") or "")},
 		"owner_label": f"{cstr(frappe.db.get_value('User', holder, 'full_name') or holder)}, Departmental Author" if holder else "",
 		"basis_requisition_version_number": int(basis) if basis else None,
 		"successor": {

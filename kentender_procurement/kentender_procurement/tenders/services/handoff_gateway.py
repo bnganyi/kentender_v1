@@ -52,8 +52,8 @@ def requisition_state(handoff_doc) -> str:
 
 
 def requisition_summary(handoff_doc) -> dict[str, Any]:
-	row = frappe.db.get_value(REQUISITION_DOCTYPE, handoff_doc.requisition, ["name", "requisition_reference", "plan_item_id", "current_state", "lead_org_unit", "handoff_consumed_at"], as_dict=True)
-	return dict(row) if row else {}
+	row = frappe.db.get_value(REQUISITION_DOCTYPE, handoff_doc.requisition, ["name", "requisition_reference", "plan_item_id", "current_state", "lead_org_unit_id", "handoff_consumed_at"], as_dict=True)
+	return {**row, "lead_org_unit": row.get("lead_org_unit_id")} if row else {}
 
 
 def require_startable(handoff_doc) -> None:
