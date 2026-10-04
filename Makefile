@@ -1,8 +1,10 @@
-# KenTender monorepo helpers — bench root: /home/midasuser/frappe-bench
+# KenTender monorepo helpers. This repository sits in the bench's apps folder
+# (<bench>/apps/kentender_v1), so the bench root is two folders up from this
+# Makefile, whoever the user and wherever the bench; BENCH_ROOT=... overrides.
 # Default site matches sites/common_site_config.json → default_site
 
 SITE ?= kentender.midas.com
-BENCH_ROOT ?= /home/midasuser/frappe-bench
+BENCH_ROOT ?= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../..)
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
 
