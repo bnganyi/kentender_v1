@@ -147,9 +147,9 @@ help:
 	@echo "  make seed-req-profiles SITE=$(SITE) — list the REQ-CHG-001 §16.4A Requisitions demo profiles"
 	@echo "  make seed-req-profile SITE=$(SITE) PROFILE=REQ-SC-HOLD — load one profile on the canonical MOH item (replaces any loaded one) and print its report"
 	@echo "  make seed-req-profile-restore SITE=$(SITE) — undo the loaded profile and restore the base authorised requisition"
-	@echo "  make seed-canonical SITE=$(SITE) [THROUGH=tenders] [REBUILD=True] [WIPE=True] [FORCE=True] — clear every non-canonical row, then reseed KT-STD-001 §8 configuration + SEED-001 modules progressively (site → strategy → budget → needs → planning → requisitions → tenders → bid_submission → bid_opening → bid_evaluation → award; THROUGH=award is the full chain) and validate, draining the background-job queue before and after; WIPE=True also drops and rebuilds the site stage itself (needs FORCE=True outside developer_mode)"
+	@echo "  make seed-canonical SITE=$(SITE) [THROUGH=tenders] [OPEN=True] [REBUILD=True] [WIPE=True] [FORCE=True] — clear every non-canonical row, then reseed KT-STD-001 §8 configuration + SEED-001 modules progressively (site → strategy → budget → needs → planning → requisitions → tenders → bid_submission → bid_opening → bid_evaluation → award; THROUGH=award is the full chain) and validate, draining the background-job queue before and after; OPEN=True (with THROUGH=tenders or bid_submission) leaves the Tender open for bids, listed on /tenders for anyone; WIPE=True also drops and rebuilds the site stage itself (needs FORCE=True outside developer_mode)"
 	@echo "  make seed-canonical-dry-run SITE=$(SITE) — report what seed-canonical would remove, delete nothing"
-	@echo "  make seed-canonical-validate SITE=$(SITE) [THROUGH=requisitions] — validate the canonical world only"
+	@echo "  make seed-canonical-validate SITE=$(SITE) [THROUGH=requisitions] [OPEN=True] — validate the canonical world only"
 	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — fixture-scoped reset + full KENTENDER_MVP_V1 seed + Playwright purge + validate"
 	@echo "  make seed-kentender-mvp-v1-validate SITE=$(SITE) — validate full KENTENDER_MVP_V1 stack"
 	@echo "  make purge-kentender-playwright-data SITE=$(SITE) — remove owned Playwright/Gate fixtures without deleting canonical or business records"
@@ -1362,6 +1362,9 @@ e1-nssf-poc-gate:
 # bid_submission builds the Tenders stage with the canonical bid's lifecycle interleaved (BDS-CHG-001 v0.8 D19);
 # over a world seeded only through tenders it needs REBUILD=True, and it runs only on a test site (the simulated services);
 # so do bid_opening, bid_evaluation and award. A plain run first undoes any loaded demo profile and clears the test clock.
+# OPEN=True (THROUGH=tenders or bid_submission only) stops the Tender's story before its 12 Jun 2027 deadline: the
+# Tender stays open, listed on /tenders for anyone, and suppliers can start bids on it (with bid_submission the four
+# canonical bids are already in). Switching a world between open and closed rebuilds it by itself.
 # WIPE=True also drops the site stage itself (Procuring Entity, Organisation
 # Units, Fiscal Years, actors) before rebuilding from nothing — see
 # docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_24.md §4. FORCE=True bypasses
@@ -1380,6 +1383,7 @@ RESEED ?= None
 # needed once a canonical Plan Item's scope is permanently locked by an
 # authorisation whose Requisition no longer exists (REQ-CHG-001 v1.11 §7.2).
 REBUILD ?= False
+OPEN ?= False
 # Make variables are case-sensitive: `force=True`/`wipe=True`/`through=budget`
 # on the command line silently set a DIFFERENT variable from FORCE/WIPE/
 # THROUGH above and are otherwise ignored - a very natural mistake since
@@ -1400,6 +1404,9 @@ endif
 ifdef reseed
 RESEED := $(reseed)
 endif
+ifdef open
+OPEN := $(open)
+endif
 # The clear deletes many documents and each deletion enqueues background
 # jobs; past Frappe's ceiling the next enqueue fails and `bench execute`
 # reports it as a misleading NameError (SEED-OPS-001 §7). Drain before and
@@ -1418,7 +1425,7 @@ seed-canonical:
 	@$(SEED_QUEUE_DRAIN)
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.canonical.run \
-		--kwargs '{"through": "$(THROUGH)", "reset": True, "rebuild": $(REBUILD), "wipe": $(WIPE), "reseed": $(RESEED), "force": $(FORCE), "validate": True}'
+		--kwargs '{"through": "$(THROUGH)", "reset": True, "rebuild": $(REBUILD), "wipe": $(WIPE), "reseed": $(RESEED), "force": $(FORCE), "validate": True, "open_tender": $(OPEN)}'
 	@$(SEED_QUEUE_DRAIN)
 
 seed-canonical-dry-run:
@@ -1427,7 +1434,7 @@ seed-canonical-dry-run:
 
 seed-canonical-validate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_core.seeds.canonical.validate --kwargs '{"through": "$(THROUGH)"}'
+		kentender_core.seeds.canonical.validate --kwargs '{"through": "$(THROUGH)", "open_tender": $(OPEN)}'
 
 # REQ-CHG-001 v1.11 §16.4A — named, mutually exclusive Requisitions demo
 # profiles on the canonical MOH item (runbook SEED-OPS-001 §9).
