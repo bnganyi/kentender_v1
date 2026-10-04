@@ -353,22 +353,36 @@
     {
       "document_id": "SEED-OPS-001",
       "title": "Canonical Site Seed Runbook",
-      "version": "1.21",
+      "version": "1.24",
       "category": "Operational runbook",
       "module": "Cross-module",
-      "requirement_status": "Approved reference",
-      "approval_date": "2026-10-03",
-      "supersedes": "v1.20 and v1.19; v1.0–v1.15 retained in KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_0.md",
+      "requirement_status": "Approved requirement",
+      "approval_date": "2026-10-04",
+      "supersedes": "v1.23 and v1.22; v1.0–v1.15 retained in KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_0.md",
       "implementation_status": "Implemented",
       "verification_status": "Passed",
       "release_status": "Not applicable",
-      "normative": "No",
+      "normative": "Yes",
       "library_file_id": "",
-      "filename": "KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_21.md",
+      "filename": "KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_24.md",
       "scope": "Resetting a site to the canonical seed world (KT-STD-001 §8 and SEED-001), stage by stage from site to award: options, what the clear removes, validation, demo profiles and troubleshooting.",
       "dependencies": "KT-STD-001 v1.12 approved; supplied v1.13 proposed fixture amendment used under recorded owner direction; SEED-001 v1.3 pending reconciliation; EVL v0.4 approved; AWD v0.4 proposed",
-      "action": "Approved 3 October 2026 with v1.20 (Project Owner: \"All docs approved.\"). Keep in step with the seed code; the canonical Tender has four bids (DEC-038). Seed test success is reported evidence only; full module evidence is tracked under AUD-020. Repository file only (the library holds v1.19).",
-      "proposed_revision": null
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v1.24 approved 4 October 2026 (Project Owner: \"v1.24 is approved\"; it covers v1.23): seeding a new server (§1.2) and its troubleshooting (§7).",
+      "source_sha256": "f840b30ffdddec59dfd2a53b297c03953351abc1eb770244970af39831cbe732",
+      "prior_approved_baseline": {
+        "version": "1.21",
+        "approval_date": "2026-10-03",
+        "filename": "KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_21.md",
+        "requirement_status": "Approved reference"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "1.22",
+        "proposed_filename": "KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_22.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "1.21",
+        "proposed_revision": null
+      }
     },
     {
       "document_id": "G1-REG-001",
