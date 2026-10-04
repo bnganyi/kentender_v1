@@ -528,6 +528,18 @@ class TestFreshSite(IntegrationTestCase):
 			canonical.prepare_site(through="budget")
 			ensure.assert_not_called()
 
+	def test_an_open_tender_switches_on_the_simulated_bid_services(self):
+		"""A Tender left open is there to be bid on: signing and submitting need
+		the simulated services, even seeded only through `tenders`."""
+		from unittest import mock
+
+		with mock.patch("kentender_procurement.std_templates.services.installer.ensure_site_release"), \
+				mock.patch("kentender_procurement.std_templates.services.binding.require"), \
+				mock.patch("frappe.installer.update_site_config") as update, mock.patch.dict(frappe.conf, {"kt_bds_simulation_environment": 0}):
+			out = canonical.prepare_site(through="tenders", open_tender=True)
+		update.assert_called_once_with("kt_bds_simulation_environment", 1)
+		self.assertTrue(out["simulation_switched_on"])
+
 	def test_an_unusable_template_stops_the_run_at_once_and_says_why(self):
 		"""Found 4 Oct 2026: with the wrong wkhtmltopdf build the run went on to
 		fail at the requisition with "Youth is not supported"."""
@@ -569,7 +581,7 @@ class TestPartialBidWorld(IntegrationTestCase):
 
 		calls = []
 
-		def fake_run_seed(*, through):
+		def fake_run_seed(*, through, **_kwargs):
 			calls.append(through)
 			if len(calls) == 1:
 				raise CanonicalTenderIncomplete("The canonical Tender TND-X was seeded without the bid lifecycle.")
@@ -582,3 +594,44 @@ class TestPartialBidWorld(IntegrationTestCase):
 		self.assertEqual(calls, ["award", "award"])
 		rebuild.assert_called_once()
 		self.assertTrue(out["rebuilt_after_partial_world"])
+
+
+class TestOpenTender(IntegrationTestCase):
+	"""Owner, 4 Oct 2026: a demo site needs a Tender anyone can see on
+	/tenders and start a bid on. `open_tender` (make `OPEN=True`) stops the
+	canonical story before the submission deadline; a run asking for the
+	other shape rebuilds by itself. Runs only on a test site."""
+
+	def test_open_goes_only_with_the_stages_before_the_deadline(self):
+		frappe.set_user("Administrator")
+		for through in ("requisitions", "bid_opening", "award"):
+			with self.assertRaisesRegex(frappe.ValidationError, "OPEN=True"):
+				canonical.run(through=through, open_tender=True, reseed=True, validate=False, force=True, commit=False)
+
+	def test_an_open_tender_is_listed_for_anyone_and_a_closed_run_rebuilds_it(self):
+		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import BIDDERS, bidder_bid, canonical_bid
+		from kentender_procurement.bid_submission.services import reads
+
+		frappe.set_user("Administrator")
+		out = canonical.run(through="tenders", open_tender=True, validate=True, force=True, commit=True)
+		tender = out["seeded"]["tenders"]["tender"]
+		self.assertEqual(frappe.db.get_value("Tender", tender, "overall_status"), "Published — open")
+		reference = frappe.db.get_value("Tender", tender, "tender_reference")
+		frappe.set_user("Guest")
+		self.assertIn(reference, [r["reference"] for r in reads.get_available_tenders()["rows"]])
+		frappe.set_user("Administrator")
+		again = canonical.run(through="tenders", open_tender=True, validate=True, force=True, commit=True)
+		self.assertTrue(again["seeded"]["tenders"]["idempotent"])
+
+		# with the bids: all four submitted, the Tender still open
+		out = canonical.run(through="bid_submission", open_tender=True, validate=True, force=True, commit=True)
+		tender = out["seeded"]["bid_submission"]["tender"]
+		self.assertEqual(frappe.db.get_value("Tender", tender, "overall_status"), "Published — open")
+		bids = [canonical_bid(tender)] + [bidder_bid(tender, b) for b in BIDDERS]
+		self.assertEqual([frappe.db.get_value("Bid Workspace", b, "status") for b in bids], ["Submitted"] * 4)
+		again = canonical.run(through="bid_submission", open_tender=True, validate=True, force=True, commit=True)
+		self.assertTrue(again["seeded"]["bid_submission"]["idempotent"])
+
+		# the ordinary story again: the Tender closes at its deadline
+		out = canonical.run(through="tenders", validate=True, force=True, commit=True)
+		self.assertEqual(frappe.db.get_value("Tender", out["seeded"]["tenders"]["tender"], "overall_status"), "Submission period ended")

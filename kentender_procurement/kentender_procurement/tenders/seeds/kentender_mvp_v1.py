@@ -120,6 +120,16 @@ ADDENDUM_VALUES = {
 }
 
 
+OPEN_STATUS = "Published — open"
+CLOSED_STATUS = "Submission period ended"
+
+
+class CanonicalTenderNeedsRebuild(frappe.ValidationError):
+	"""The canonical Tender exists but not in the shape this run builds on
+	(left open for bids, closed, or half-built by a failed run). The
+	Requisition's hand-off is consumed once, so `canonical.run` rebuilds."""
+
+
 def _guard() -> None:
 	if frappe.flags.in_test or frappe.conf.get("developer_mode") or frappe.conf.get("allow_tests"):
 		return
@@ -265,11 +275,16 @@ def register_candidate(*, tender_reference: str, at, supplier: dict[str, Any] | 
 	return frappe.get_attr(hooks[-1])(tender_reference=tender_reference, at=at, supplier=supplier)
 
 
-def upsert_tenders_base(*, commit: bool = False, interleave=None) -> dict[str, Any]:
+def upsert_tenders_base(*, commit: bool = False, interleave=None, stop_before_close: bool = False) -> dict[str, Any]:
 	"""§13.3 fixture — the primary Tender lifecycle through to a closed
 	submission period, built through the real commands. Idempotent: a
 	rerun that finds the canonical Tender already ended returns it
 	untouched.
+
+	`stop_before_close` (owner, 4 Oct 2026: a demo Tender anyone can see and
+	bid on) ends the story just before the 12 Jun 2027 deadline, leaving the
+	Tender published and open. A Tender in the other shape raises
+	`CanonicalTenderNeedsRebuild`.
 
 	`interleave(step, tender=…, tender_reference=…)` lets a downstream seed
 	act at named moments of this chronology without this module knowing
@@ -296,8 +311,12 @@ def upsert_tenders_base(*, commit: bool = False, interleave=None) -> dict[str, A
 
 	existing = frappe.db.get_value("Tender", {"requisition": prereqs["requisition"]}, ["name", "overall_status", "fixture_namespace"], as_dict=True)
 	if existing:
-		if existing.overall_status != "Submission period ended":
-			frappe.throw(f"{existing.name} exists mid-lifecycle on the canonical Requisition ({existing.overall_status}) — run reset_tenders_seed() before reseeding the base fixture.")
+		wanted = OPEN_STATUS if stop_before_close else CLOSED_STATUS
+		if existing.overall_status != wanted:
+			frappe.throw(
+				f"The canonical Tender {existing.name} is {existing.overall_status!r}, not {wanted!r}. Rebuild the canonical world: make seed-canonical REBUILD=True.",
+				exc=CanonicalTenderNeedsRebuild,
+			)
 		# Seeded before 26 Sep 2026 without the stamp; its other rows keep
 		# theirs until the next rebuild.
 		if existing.fixture_namespace != NS:
@@ -423,6 +442,11 @@ def upsert_tenders_base(*, commit: bool = False, interleave=None) -> dict[str, A
 	_step("addendum_effective")
 	_step("before_close")
 	root.reload()
+	frappe.flags.kt_tenders_clock = None
+	if stop_before_close:
+		if commit:
+			frappe.db.commit()
+		return {"ok": True, "idempotent": False, "open": True, "tender": name, "addendum": addendum, "clarification": clarification, "interleaved": interleaved}
 
 	_clock("close")
 	closed = submission_close.close_tender_submission_period(tender=name, idempotency_key=_key("close"), user="Administrator", force=True)
@@ -472,9 +496,11 @@ def wipe_all_tenders() -> dict[str, int]:
 	return clear.wipe_all_tender_rows()
 
 
-def validate_tenders_seed() -> list[dict[str, Any]]:
+def validate_tenders_seed(*, open_tender: bool = False) -> list[dict[str, Any]]:
 	"""One row per §13.3 event this fixture must have produced, plus the
-	digest/idempotency facts the plan's own gate names. Never mutates."""
+	digest/idempotency facts the plan's own gate names. Never mutates.
+	`open_tender`: the story stopped before the deadline, so the Tender is
+	open and nothing about its close is expected."""
 	from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import COMBINED_ITEM_TITLE, _plan_item_id
 
 	rows: list[dict[str, Any]] = []
@@ -490,7 +516,8 @@ def validate_tenders_seed() -> list[dict[str, Any]]:
 	if not tender:
 		return rows
 	check(frappe.db.get_value("Tender", tender.name, "fixture_namespace") == NS, f"the Tender carries the {NS} stamp")
-	check(tender.overall_status == "Submission period ended", f"overall_status is 'Submission period ended' (got {tender.overall_status!r})")
+	wanted = OPEN_STATUS if open_tender else CLOSED_STATUS
+	check(tender.overall_status == wanted, f"overall_status is {wanted!r} (got {tender.overall_status!r})")
 	versions = frappe.get_all("Tender Version", filters={"tender": tender.name}, fields=["version_number", "status"], order_by="version_number asc")
 	check(len(versions) == 2, f"exactly two Tender Versions exist (got {len(versions)})")
 	check(bool(versions) and versions[0]["status"] == "Returned", "Version 1 is Returned")
@@ -521,13 +548,16 @@ def validate_tenders_seed() -> list[dict[str, Any]]:
 	notices = frappe.get_all("Tender Candidate Notice", filters={"tender": tender.name}, fields=["notice_type", "status"], order_by="creation asc")
 	check([(n["notice_type"], n["status"]) for n in notices] == [("Clarification response", "Delivered"), ("Addendum issued", "Delivered")], f"one Delivered clarification notice and one Delivered addendum notice (got {notices})")
 	handoff = frappe.db.get_value("Tender Submission Handoff", {"tender": tender.name}, "name")
-	check(bool(handoff), "one Tender Submission Handoff was written")
-	check(tender.name == frappe.db.get_value("Tender Submission Handoff", handoff, "tender") if handoff else False, "the handoff references this Tender")
+	if open_tender:
+		check(not handoff, "no Tender Submission Handoff yet (the Tender is open)")
+	else:
+		check(bool(handoff), "one Tender Submission Handoff was written")
+		check(tender.name == frappe.db.get_value("Tender Submission Handoff", handoff, "tender") if handoff else False, "the handoff references this Tender")
 	events = frappe.get_all("Tender Event", filters={"tender": tender.name}, pluck="event_type")
-	for expected in ("PublicationAuthorised", "AddendumIssued", "ClarificationReceived", "ClarificationAnswered", "TenderSubmissionPeriodEnded"):
+	for expected in ("PublicationAuthorised", "AddendumIssued", "ClarificationReceived", "ClarificationAnswered", *(() if open_tender else ("TenderSubmissionPeriodEnded",))):
 		check(expected in events, f"the outbox carries a {expected} event")
-	# second-run idempotency: the base upsert must be a no-op on an already-ended Tender
-	rerun = upsert_tenders_base(commit=False)
+	# second-run idempotency: the base upsert must be a no-op on a Tender already in this shape
+	rerun = upsert_tenders_base(commit=False, stop_before_close=open_tender)
 	check(rerun.get("idempotent") is True, "a second upsert_tenders_base() call is idempotent")
 	check(rerun.get("tender") == tender.name, "the idempotent rerun names the same Tender")
 	return rows

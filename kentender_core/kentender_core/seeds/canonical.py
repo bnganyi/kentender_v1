@@ -680,14 +680,15 @@ def _stage_index(through: str) -> int:
 	return STAGES.index(through)
 
 
-def prepare_site(*, through: str) -> dict[str, Any]:
+def prepare_site(*, through: str, open_tender: bool = False) -> dict[str, Any]:
 	"""What the stages need from the site itself, so one allowed run is enough
 	on a new demo or test site (found 4 Oct 2026: a new server failed one
 	missing piece at a time). From `requisitions`: this repository's
 	IT-equipment tender template, installed and switched on if the site has
 	none. From `bid_submission`: the simulated signing, tender-box and
 	delivery services (site_config `kt_bds_simulation_environment`), switched
-	on with a notice — the canonical bids exist only on a demo or test site."""
+	on with a notice — the canonical bids exist only on a demo or test site.
+	The same for a Tender left open (`open_tender`), which is there to be bid on."""
 	last = _stage_index(through)
 	out: dict[str, Any] = {"template_release": None, "simulation_switched_on": False}
 	if last >= STAGES.index("requisitions"):
@@ -705,22 +706,37 @@ def prepare_site(*, through: str) -> dict[str, Any]:
 				"The seed needs it from the requisitions stage on; fix this and run the seed again.")
 	from frappe.utils import cint
 
-	if last >= STAGES.index("bid_submission") and not cint(frappe.conf.get("kt_bds_simulation_environment")):
+	if (last >= STAGES.index("bid_submission") or open_tender) and not cint(frappe.conf.get("kt_bds_simulation_environment")):
 		from frappe.installer import update_site_config
 
 		update_site_config("kt_bds_simulation_environment", 1)
 		frappe.conf.kt_bds_simulation_environment = 1
 		out["simulation_switched_on"] = True
 		print("NOTICE: switched on the simulated bid services for this site (site_config kt_bds_simulation_environment = 1); "
-			"the canonical bids need them. Never set this on a site that takes real bids.")
+			"the canonical bids, and bids on a Tender left open, need them. Never set this on a site that takes real bids.")
 	return out
 
 
-def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
-	"""Reseed the canonical world up to and including `through`. No commit."""
+#: The stages that can stop before the canonical Tender's deadline (`open_tender`).
+OPEN_TENDER_STAGES = ("tenders", "bid_submission")
+
+
+def _check_open_tender(through: str, open_tender: bool) -> None:
+	if open_tender and through not in OPEN_TENDER_STAGES:
+		frappe.throw(
+			f"OPEN=True leaves the canonical Tender open for bids, before its deadline, so it goes only with THROUGH=tenders "
+			f"or THROUGH=bid_submission (asked for THROUGH={through}): the later stages need the Tender closed."
+		)
+
+
+def seed(*, through: str = STAGES[-1], open_tender: bool = False) -> dict[str, Any]:
+	"""Reseed the canonical world up to and including `through`. No commit.
+	`open_tender` (owner, 4 Oct 2026: a Tender anyone can see on /tenders and
+	bid on) stops the Tender's story before its 12 Jun 2027 deadline."""
 	last = _stage_index(through)
+	_check_open_tender(through, open_tender)
 	report: dict[str, Any] = {"site": site_setup.run(commit=False)}
-	report["site"]["prepared"] = prepare_site(through=through)
+	report["site"]["prepared"] = prepare_site(through=through, open_tender=open_tender)
 	# Independent of `through`: the fixture world's Procurement Rules must
 	# be usable whichever stage the caller stops at, not only once the
 	# Planning stage's own seed happens to run (see
@@ -768,7 +784,7 @@ def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
 	if last >= STAGES.index("tenders") and last < STAGES.index("bid_submission"):
 		from kentender_procurement.tenders.seeds.kentender_mvp_v1 import upsert_tenders_base
 
-		report["tenders"] = upsert_tenders_base(commit=False)
+		report["tenders"] = upsert_tenders_base(commit=False, stop_before_close=open_tender)
 	if last >= STAGES.index("bid_submission"):
 		# BDS-CHG-001 v0.8 plan D19: the canonical Tender's chronology with the
 		# bid's own lifecycle interleaved (Start bid 19 May … Mary's accepted
@@ -777,7 +793,7 @@ def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
 		# with the bid still a Draft.
 		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import upsert_bid_submission_base
 
-		report["bid_submission"] = upsert_bid_submission_base(commit=False)
+		report["bid_submission"] = upsert_bid_submission_base(commit=False, open_tender=open_tender)
 		report["tenders"] = {"ok": True, "via": "bid_submission", "tender": report["bid_submission"].get("tender")}
 	if last >= STAGES.index("bid_opening"):
 		# BOP-CHG-001 v0.10 plan D14: the canonical Tender's opening, after the
@@ -805,10 +821,12 @@ def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
 # --------------------------------------------------------------------------
 
 
-def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
+def validate(*, through: str = STAGES[-1], open_tender: bool = False) -> dict[str, Any]:
 	"""Assert the canonical facts for every stage up to `through`; raise on
-	the first stage that fails, listing every failed check."""
+	the first stage that fails, listing every failed check. `open_tender`:
+	the world was seeded with the Tender left open (see `seed`)."""
 	last = _stage_index(through)
+	_check_open_tender(through, open_tender)
 	failures: list[str] = []
 
 	def check(ok: bool, message: str) -> None:
@@ -958,12 +976,12 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 	if last >= STAGES.index("tenders"):
 		from kentender_procurement.tenders.seeds.kentender_mvp_v1 import validate_tenders_seed
 
-		for row in validate_tenders_seed():
+		for row in validate_tenders_seed(open_tender=open_tender):
 			check(row["ok"], f"{row['check']}: {row['detail']}")
 	if last >= STAGES.index("bid_submission"):
 		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import validate_bid_submission_seed
 
-		for row in validate_bid_submission_seed():
+		for row in validate_bid_submission_seed(open_tender=open_tender):
 			check(row["ok"], row["check"])
 	if last >= STAGES.index("bid_opening"):
 		from kentender_procurement.bid_opening.seeds.kentender_mvp_v1 import validate_bid_opening_seed
@@ -1019,6 +1037,7 @@ def run(
 	validate: bool = True,
 	force: bool = False,
 	commit: bool = True,
+	open_tender: bool = False,
 ) -> dict[str, Any]:
 	"""Clear everything non-canonical (``reset``), optionally the canonical
 	module rows too (``rebuild``), optionally the site stage itself
@@ -1037,12 +1056,17 @@ def run(
 	says — clear everything and stop, no stage rebuilt, ``through``/
 	``validate`` ignored, nothing left on the site to validate against.
 	Pass ``reseed=True`` explicitly with ``wipe=True`` for the old
-	"wipe then immediately rebuild the whole chain" behaviour."""
+	"wipe then immediately rebuild the whole chain" behaviour.
+
+	``open_tender`` leaves the canonical Tender open for bids (``seed``);
+	switching a world between open and closed rebuilds it by itself."""
 	if reseed is None:
 		reseed = not wipe
 	frappe.only_for(("System Manager", "Administrator"))
 	_assert_allowed(force)
 	_stage_index(through)
+	if reseed is not False:
+		_check_open_tender(through, open_tender)
 	frappe.set_user("Administrator")
 	result: dict[str, Any] = {"ok": True, "through": through if reseed else None, "reseed": reseed}
 	# One permission for the whole run. The needs/planning/requisitions/
@@ -1103,9 +1127,9 @@ def run(
 		if reset:
 			result["removed"] = clear_non_canonical()
 		if reseed:
-			result["seeded"] = seed(through=through)
+			result["seeded"] = seed(through=through, open_tender=open_tender)
 			if validate:
-				result["validate"] = globals()["validate"](through=through)
+				result["validate"] = globals()["validate"](through=through, open_tender=open_tender)
 		if commit:
 			frappe.db.commit()
 		print(
@@ -1114,7 +1138,7 @@ def run(
 		return result
 	except Exception as exc:
 		frappe.db.rollback()
-		if not _partial_bid_world(exc) or rebuild or wipe:
+		if not _tender_needs_rebuild(exc) or rebuild or wipe:
 			raise
 	finally:
 		frappe.flags.in_test = in_test_before
@@ -1122,19 +1146,24 @@ def run(
 		frappe.flags.kt_fixture_passwords = False
 	# A bid submission commits at once (the attempt must survive a crash), so a
 	# run that failed after the bids left the canonical Tender without its
-	# lifecycle (found 4 Oct 2026 on a new server). Rebuild, once.
-	print("NOTICE: the canonical Tender was left half-built by an earlier failed run; rebuilding the canonical module records.")
-	out = run(through=through, reset=reset, rebuild=True, wipe=False, reseed=reseed, validate=validate, force=force, commit=commit)
+	# lifecycle (found 4 Oct 2026 on a new server); and a Tender left open for
+	# bids (`open_tender`) cannot be closed into the canonical story, nor a
+	# closed one reopened. Rebuild, once.
+	print(
+		"NOTICE: the canonical Tender is not in the shape this run builds on (left open for bids, closed, "
+		"or half-built by an earlier failed run); rebuilding the canonical module records."
+	)
+	out = run(through=through, reset=reset, rebuild=True, wipe=False, reseed=reseed, validate=validate, force=force, commit=commit, open_tender=open_tender)
 	out["rebuilt_after_partial_world"] = True
 	return out
 
 
-def _partial_bid_world(exc: Exception) -> bool:
+def _tender_needs_rebuild(exc: Exception) -> bool:
 	try:
-		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import CanonicalTenderIncomplete
+		from kentender_procurement.tenders.seeds.kentender_mvp_v1 import CanonicalTenderNeedsRebuild
 	except ImportError:
 		return False
-	return isinstance(exc, CanonicalTenderIncomplete)
+	return isinstance(exc, CanonicalTenderNeedsRebuild)
 
 
 def release_demo_profiles() -> dict[str, Any]:
