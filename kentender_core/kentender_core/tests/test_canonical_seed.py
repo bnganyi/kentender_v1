@@ -554,3 +554,31 @@ class TestFreshSite(IntegrationTestCase):
 			out = canonical.run(through="planning", reset=False, validate=False, force=False, commit=False)
 		self.assertTrue(out["ok"])
 		self.assertIn("planning", out["seeded"])
+
+
+class TestPartialBidWorld(IntegrationTestCase):
+	"""Found 4 Oct 2026: submitting a bid commits at once (the attempt must
+	survive a crash), so a run that failed after the bids left a canonical
+	Tender without its lifecycle, and the next run stopped asking for
+	REBUILD=True. The run now rebuilds by itself, once."""
+
+	def test_a_tender_left_without_its_bid_lifecycle_is_rebuilt_automatically(self):
+		from unittest import mock
+
+		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import CanonicalTenderIncomplete
+
+		calls = []
+
+		def fake_run_seed(*, through):
+			calls.append(through)
+			if len(calls) == 1:
+				raise CanonicalTenderIncomplete("The canonical Tender TND-X was seeded without the bid lifecycle.")
+			return {"ok": True}
+
+		frappe.set_user("Administrator")
+		with mock.patch.object(canonical, "seed", side_effect=fake_run_seed), mock.patch.object(canonical, "clear_canonical_modules", return_value={}) as rebuild, \
+				mock.patch.object(canonical, "clear_non_canonical", return_value={}), mock.patch("kentender_strategy.services.strategy_reference.reset_reference_series"):
+			out = canonical.run(through="award", validate=False, force=True, commit=False)
+		self.assertEqual(calls, ["award", "award"])
+		rebuild.assert_called_once()
+		self.assertTrue(out["rebuilt_after_partial_world"])

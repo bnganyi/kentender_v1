@@ -148,6 +148,12 @@ BIDDERS: tuple[dict[str, Any], ...] = (
 BIDDER_PEOPLE: tuple[str, ...] = tuple(email for b in BIDDERS for email in (b["signatory"], b["representative"]))
 
 
+class CanonicalTenderIncomplete(frappe.ValidationError):
+	"""The canonical Tender exists without its bid lifecycle. A bid submission
+	commits at once (the attempt must survive a crash), so a run that failed
+	after the bids leaves this behind; `canonical.run` rebuilds on it."""
+
+
 def _key(step: str) -> str:
 	return f"bds-seed:{step}:{uuid4().hex[:8]}"
 
@@ -456,7 +462,8 @@ def upsert_bid_submission_base(*, commit: bool = False) -> dict[str, Any]:
 	elif tender:
 		frappe.throw(
 			f"The canonical Tender {tender} was seeded without the bid lifecycle. Rebuild the canonical world through this stage: "
-			"make seed-canonical THROUGH=bid_submission REBUILD=True."
+			"make seed-canonical THROUGH=bid_submission REBUILD=True.",
+			exc=CanonicalTenderIncomplete,
 		)
 	else:
 		built = tenders_seed.upsert_tenders_base(commit=False, interleave=interleave)

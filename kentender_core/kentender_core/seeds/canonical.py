@@ -1112,13 +1112,29 @@ def run(
 			"CANONICAL_SEED_OK through=%s removed=%s" % (result["through"], result.get("removed") or {}),
 		)
 		return result
-	except Exception:
+	except Exception as exc:
 		frappe.db.rollback()
-		raise
+		if not _partial_bid_world(exc) or rebuild or wipe:
+			raise
 	finally:
 		frappe.flags.in_test = in_test_before
 		frappe.conf.max_queued_jobs = max_jobs_before
 		frappe.flags.kt_fixture_passwords = False
+	# A bid submission commits at once (the attempt must survive a crash), so a
+	# run that failed after the bids left the canonical Tender without its
+	# lifecycle (found 4 Oct 2026 on a new server). Rebuild, once.
+	print("NOTICE: the canonical Tender was left half-built by an earlier failed run; rebuilding the canonical module records.")
+	out = run(through=through, reset=reset, rebuild=True, wipe=False, reseed=reseed, validate=validate, force=force, commit=commit)
+	out["rebuilt_after_partial_world"] = True
+	return out
+
+
+def _partial_bid_world(exc: Exception) -> bool:
+	try:
+		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import CanonicalTenderIncomplete
+	except ImportError:
+		return False
+	return isinstance(exc, CanonicalTenderIncomplete)
 
 
 def release_demo_profiles() -> dict[str, Any]:
