@@ -33,8 +33,9 @@ The target world is read **as at 18 June 2027, 10:00 EAT**:
 | D9 | T6 title "Supply of medical-grade tablets" | Owner "2. Accepted", 4 Oct 2026 |
 | D10 | Year 2 Need titles: Health information exchange platform upgrade; Training centre audio-visual equipment; Clinical decision-support software licences | Owner "3. Accepted", 4 Oct 2026 |
 | D11 | The documentation revamp is one task; the current seed documents may be retired and replaced by a clean successor | Owner, 4 Oct 2026: "include documentation revamp as one task. If it is easier, the current document can be retired completely so the next version can start on a clean slate without the previous baggage." |
+| D12 | **One** new document replaces both SEED-001 (fixture, v1.4) and SEED-OPS-001 (runbook, v1.25 proposed). It has three parts: the world, how to seed it, and how a module adds to it. KT-STD-001 §8.4/§8.4A shrinks to a pointer to it. | Owner, 4 Oct 2026: "one new document to replace both the fixture document and the runbook" (answering OQ-1) |
 
-Open owner question **OQ-1**. Recommended answer: **one** new document replaces both SEED-001 (fixture, v1.4) and SEED-OPS-001 (runbook, v1.25 proposed), in three parts: the world, how to seed it, and how a module adds to it. KT-STD-001 §8.4/§8.4A would then shrink to a pointer to it. Not yet answered.
+(OQ-1 answered; recorded as D12 above.)
 
 ## Rules for working alongside other sessions
 
@@ -112,7 +113,7 @@ Every phase follows the AGENTS.md loop: smallest failing check first, smallest c
 **Phase 5 — Home and Analytics state check.** Add a validation step that asserts each state named in proposal §5 at the as-at instant, and a binding table from each HOME H-scenario and ANL A1 record to the generated reference that serves it. **Gate SW-G05:** the check is green; the binding table is filed in this folder.
 
 **Phase 6 — Documentation revamp (one task, D11).**
-- Write the clean successor: one document if OQ-1 is answered as recommended.
+- Write the clean successor: one document replacing SEED-001 and SEED-OPS-001 (D12).
 - Write a carry-over register listing every rule in SEED-001 v1.4 and SEED-OPS-001 v1.25 as carried, superseded or dropped, each with a reason, so nothing approved disappears silently.
 - Mark the old documents Retired and move them under `20_seed_data/retired/`.
 - Update every link (`CLAUDE.md`, `Makefile`, `kentender_core/seeds/README.md`, the register, cross-references in other folders).

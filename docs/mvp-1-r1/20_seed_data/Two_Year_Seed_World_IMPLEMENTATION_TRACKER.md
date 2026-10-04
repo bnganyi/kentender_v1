@@ -30,7 +30,7 @@
 | SW-0101 | Proposal with D1–D7 | Done | Accepted 4 Oct 2026; committed fec5ebba. |
 | SW-0102 | Finding: planned dates must fit their own year | Done | Corrections §1, from the three owner checks cited there (source read, nothing run). |
 | SW-0103 | Replacement text for KT-STD-001 §8.4/§8.4A and SEED-001 | Done | Corrections §3–§5; committed fec5ebba. |
-| SW-0104 | Owner applies the KT-STD-001 §8.4/§8.4A correction in their library | Blocked — owner | If OQ-1 is answered as recommended, this becomes a pointer to the new document (SW-0603). |
+| SW-0104 | Owner applies the KT-STD-001 §8.4/§8.4A correction in their library | Blocked — owner | Under D12 this becomes a pointer to the new document (SW-0603). |
 | SW-0105 | Gate SW-G01 | Done | 4 Oct 2026. |
 
 ## Phase 2 — Seed site, calendar and Year 1 base
@@ -86,8 +86,8 @@
 
 | ID | Work | Status | Evidence |
 |---|---|---|---|
-| SW-0600 | OQ-1: one document replacing SEED-001 and SEED-OPS-001? | Blocked — owner | Recommendation in the plan. |
-| SW-0601 | Clean successor document(s) in this folder | On hold | — |
+| SW-0600 | OQ-1: one document replacing SEED-001 and SEED-OPS-001? | Done | Owner, 4 Oct 2026: "one new document to replace both the fixture document and the runbook". Plan D12. |
+| SW-0601 | One clean successor document in this folder, replacing SEED-001 and SEED-OPS-001 (D12) | On hold | — |
 | SW-0602 | Carry-over register: every SEED-001 v1.4 and SEED-OPS-001 v1.25 rule carried, superseded or dropped, each with a reason | On hold | — |
 | SW-0603 | KT-STD-001 §8.4/§8.4A pointer text for the owner | On hold | — |
 | SW-0604 | Retire the old documents to `20_seed_data/retired/`; update every link and the register | On hold | — |
