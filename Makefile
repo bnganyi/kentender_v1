@@ -1402,12 +1402,22 @@ endif
 # jobs; past Frappe's ceiling the next enqueue fails and `bench execute`
 # reports it as a misleading NameError (SEED-OPS-001 §7). Drain before and
 # after, so neither this run nor the next one trips it.
+# The queue check is browser-test tooling (it needs esbuild from `npm install`).
+# A server without it — a new or production-like site — still drains the
+# queue, with a plain burst worker, so the seed never depends on test tooling.
+SEED_QUEUE_DRAIN = if node -e "require.resolve('esbuild')" >/dev/null 2>&1; then \
+		node tests/ui/helpers/queueCheck.cjs --fix; \
+	else \
+		echo "Queue check skipped (no test tooling here; run npm install for it): draining the background queue with a bench worker."; \
+		(cd $(BENCH_ROOT) && bench worker --queue default --burst --quiet); \
+	fi
+
 seed-canonical:
-	node tests/ui/helpers/queueCheck.cjs --fix
+	@$(SEED_QUEUE_DRAIN)
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.canonical.run \
 		--kwargs '{"through": "$(THROUGH)", "reset": True, "rebuild": $(REBUILD), "wipe": $(WIPE), "reseed": $(RESEED), "force": $(FORCE), "validate": True}'
-	node tests/ui/helpers/queueCheck.cjs --fix
+	@$(SEED_QUEUE_DRAIN)
 
 seed-canonical-dry-run:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
