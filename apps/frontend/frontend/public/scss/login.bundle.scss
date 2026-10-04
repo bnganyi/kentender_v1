@@ -36,7 +36,7 @@ body {
 }
 
 
-$hero-image: "/assets/frontend/kentender.svg";
+$hero-image: "/assets/frontend/images/kentender_login.png";
 
 html::before {
 	content: "";
@@ -49,12 +49,52 @@ html::before {
 		width: $hero-width;
 		height: 100vh;
 		z-index: 0;
-		background-color: $hero-bg; 
+		background-color: $hero-bg;
 		background-image: url($hero-image);
-		border-radius: 0 24px 24px 0 ;
+		border-radius: 0 24px 24px 0;
 		background-repeat: no-repeat;
 		background-position: center;
 		background-size: cover;
+	}
+}
+
+// Hero copy, layered on top of the html::before background image.
+// Positioned bottom-left to match the screenshot; both pseudo-elements
+// share the same stacking context (z-index: 0) as the background so
+// they never bleed over the form side (.page-content-wrapper is z-index: 1).
+body::before {
+	content: "Kentender";
+	display: none;
+
+	@include media-breakpoint-up(md) {
+		display: block;
+		position: fixed;
+		inset: auto auto 220px 48px;
+		width: calc(#{$hero-width} - 96px);
+		z-index: 0;
+		color: #fff;
+		font-size: 28px;
+		font-weight: var(--weight-bold, 700);
+		letter-spacing: 0.5px;
+		text-transform: uppercase;
+	}
+}
+
+body::after {
+	content: "Welcome back sign in to\Ayour account to continue";
+	white-space: pre-line;
+	display: none;
+
+	@include media-breakpoint-up(md) {
+		display: block;
+		position: fixed;
+		inset: auto auto 140px 48px;
+		width: calc(#{$hero-width} - 96px);
+		z-index: 0;
+		color: rgba(255, 255, 255, 0.8);
+		font-size: 20px;
+		font-weight: var(--weight-regular, 400);
+		line-height: 1.4;
 	}
 }
 
@@ -342,4 +382,3 @@ html::before {
 		}
 	}
 }
-
