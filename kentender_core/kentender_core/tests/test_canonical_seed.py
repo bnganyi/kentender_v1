@@ -514,6 +514,7 @@ class TestFreshSite(IntegrationTestCase):
 		from unittest import mock
 
 		with mock.patch("kentender_procurement.std_templates.services.installer.ensure_site_release") as ensure, \
+				mock.patch("kentender_procurement.std_templates.services.binding.require"), \
 				mock.patch("frappe.installer.update_site_config") as update, mock.patch.dict(frappe.conf, {"kt_bds_simulation_environment": 0}):
 			out = canonical.prepare_site(through="tenders")
 			ensure.assert_called_once()  # the tender template, before requisitions
@@ -526,6 +527,21 @@ class TestFreshSite(IntegrationTestCase):
 		with mock.patch("kentender_procurement.std_templates.services.installer.ensure_site_release") as ensure:
 			canonical.prepare_site(through="budget")
 			ensure.assert_not_called()
+
+	def test_an_unusable_template_stops_the_run_at_once_and_says_why(self):
+		"""Found 4 Oct 2026: with the wrong wkhtmltopdf build the run went on to
+		fail at the requisition with "Youth is not supported"."""
+		from unittest import mock
+
+		from kentender_procurement.std_templates.compiler.errors import STDTemplateError
+
+		renderer = STDTemplateError("STD_RENDERER_UNSUPPORTED", detail={"health": {"document": {
+			"engine": "wkhtmltopdf", "found_version": "wkhtmltopdf 0.12.6", "expected_version": "wkhtmltopdf 0.12.6.1 (with patched qt)"}}})
+		with mock.patch("kentender_procurement.std_templates.services.installer.ensure_site_release", return_value="stdr-x"), \
+				mock.patch("kentender_procurement.std_templates.services.binding.require", side_effect=renderer):
+			with self.assertRaises(frappe.ValidationError) as ctx:
+				canonical.prepare_site(through="requisitions")
+		self.assertIn("wkhtmltopdf 0.12.6 found; wkhtmltopdf 0.12.6.1 (with patched qt) needed", str(ctx.exception))
 
 	def test_allow_canonical_seed_alone_lets_every_stage_run(self):
 		"""Each module seed keeps its own demo-data guard; an allowed run

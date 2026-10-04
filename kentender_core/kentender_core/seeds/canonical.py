@@ -691,9 +691,18 @@ def prepare_site(*, through: str) -> dict[str, Any]:
 	last = _stage_index(through)
 	out: dict[str, Any] = {"template_release": None, "simulation_switched_on": False}
 	if last >= STAGES.index("requisitions"):
-		from kentender_procurement.std_templates.services import installer
+		from kentender_procurement.procurement_requisitions.services.compatibility import template_problem
+		from kentender_procurement.std_templates.compiler.errors import STDTemplateError
+		from kentender_procurement.std_templates.services import binding, installer
 
 		out["template_release"] = installer.ensure_site_release()
+		# usable, not merely installed: a wrong PDF renderer build otherwise
+		# surfaces three stages later as a misleading requisition refusal
+		try:
+			binding.require(out["template_release"], "new_binding")
+		except STDTemplateError as exc:
+			frappe.throw(f"The IT-equipment tender template cannot be used on this site: {template_problem(exc)} "
+				"The seed needs it from the requisitions stage on; fix this and run the seed again.")
 	from frappe.utils import cint
 
 	if last >= STAGES.index("bid_submission") and not cint(frappe.conf.get("kt_bds_simulation_environment")):

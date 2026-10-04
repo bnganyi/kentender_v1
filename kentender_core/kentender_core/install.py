@@ -18,11 +18,44 @@ def after_install():
 
 
 def after_migrate():
+	repair_module_defs()
 	_ensure_user_kt_scope_fields()
 	_hide_auto_generated_module_desktop_icons()
 	_ensure_default_pe_types()
 	_ensure_business_role_projections()
 	_ensure_fiscal_year_flag_fields()
+
+
+def repair_module_defs() -> list[str]:
+	"""Put every KenTender module back under its own app, and sync its
+	DocTypes. A migrate on a running site can register a newly added module
+	under Frappe (`Module Def.app_name = "frappe"`: the app→module map comes
+	from the cache), after which every DocType in it fails with "No module
+	named 'frappe.core.doctype.…'" (found 4 Oct 2026 on a new server,
+	Supplier Accounts). Returns the modules repaired; idempotent."""
+	from frappe.model.sync import sync_for
+
+	fixed: list[str] = []
+	apps: set[str] = set()
+	for app in frappe.get_installed_apps():
+		if not app.startswith("kentender"):
+			continue
+		for module in frappe.get_module_list(app):
+			current = frappe.db.get_value("Module Def", module, "app_name")
+			if current == app:
+				continue
+			if current is None:
+				frappe.get_doc({"doctype": "Module Def", "module_name": module, "app_name": app}).insert(ignore_permissions=True)
+			else:
+				frappe.db.set_value("Module Def", module, "app_name", app, update_modified=False)
+			fixed.append(module)
+			apps.add(app)
+	if fixed:
+		frappe.clear_cache()
+		for app in sorted(apps):
+			sync_for(app)  # the DocTypes the mis-registered module's migrate skipped
+		print(f"KenTender: re-registered {', '.join(fixed)} under their own app")
+	return fixed
 
 
 def _ensure_fiscal_year_flag_fields():

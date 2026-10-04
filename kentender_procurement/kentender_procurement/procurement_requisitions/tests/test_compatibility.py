@@ -80,6 +80,14 @@ class TestNineChecks(unittest.TestCase):
 		failure = compatibility.first_failure(projection(), {**TEMPLATE, "available": False})
 		self.assertEqual(failure.test, "reservation_category")
 
+	def test_an_unavailable_template_says_so_and_why_not_that_the_designation_is_unsupported(self):
+		"""Found 4 Oct 2026: a site whose PDF renderer was the wrong build read
+		"Youth is not supported by the installed IT-equipment Tender format"."""
+		problem = "The renderer this Tender format needs is missing or incompatible (wkhtmltopdf 0.12.6 found; 0.12.6.1 (with patched qt) needed)."
+		failure = compatibility.first_failure(projection(), {**TEMPLATE, "available": False, "problem": problem})
+		self.assertEqual(failure.failure, f"The IT-equipment Tender format cannot be used on this site: {problem}")
+		self.assertNotIn("Youth", failure.failure)
+
 	def test_county_needs_template_support_and_then_a_verified_rule(self):
 		self.assertEqual(compatibility.first_failure(projection(county_resident_reservation=True), TEMPLATE).code, "REQ_PRODUCT_UNSUPPORTED")
 		with_county = {**TEMPLATE, "county_residents": True}

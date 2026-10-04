@@ -42,6 +42,16 @@ class Check:
 		return {"test": self.test, "check": self.label, "ok": self.ok, "result": self.result, "failure": self.failure, "code": "" if self.ok else self.code}
 
 
+def template_problem(exc) -> str:
+	"""Why the installed Tender format cannot be used, in words a person can act
+	on (the renderer case names the build found and the build needed)."""
+	document = ((exc.detail or {}).get("health") or {}).get("document") or {}
+	if document.get("expected_version"):
+		found = document.get("found_version") or f"no {document.get('engine') or 'renderer'}"
+		return f"{exc.message.rstrip('.')} ({found} found; {document['expected_version']} needed)."
+	return exc.message
+
+
 def template_support() -> dict[str, Any]:
 	"""The switched-on installed release's own declared treatment, read
 	through the STD Templates owner's published binding service (REQ-CHG-001
@@ -54,8 +64,9 @@ def template_support() -> dict[str, Any]:
 	try:
 		release = binding.available_release(TEMPLATE_KEY)
 		binding.require(release.name, "new_binding")
-	except STDTemplateError:
-		return {"template_key": TEMPLATE_KEY, "available": False, "categories": (), "county_residents": False, "method": "Open Tender", "template_release_id": ""}
+	except STDTemplateError as exc:
+		return {"template_key": TEMPLATE_KEY, "available": False, "categories": (), "county_residents": False, "method": "Open Tender", "template_release_id": "",
+			"problem": template_problem(exc)}
 	use = load_json(release.supported_use_summary) or {}
 	county = use.get("county_residents") or {}
 	return {
@@ -72,7 +83,10 @@ def _designation(projection: dict[str, Any], template: dict[str, Any]) -> Check:
 	designation = (projection.get("reservation_category") or "None").strip() or "None"
 	rule = projection.get("reservation_rule") or {}
 	label = "Planned designation"
-	if designation not in BASE_DESIGNATIONS or designation not in template["categories"] or not template["available"]:
+	if not template["available"]:
+		problem = template.get("problem") or "it is not installed or not switched on."
+		return Check("reservation_category", label, False, designation, f"The IT-equipment Tender format cannot be used on this site: {problem}")
+	if designation not in BASE_DESIGNATIONS or designation not in template["categories"]:
 		return Check("reservation_category", label, False, designation, f"{designation} is not supported by the installed IT-equipment Tender format.")
 	if not rule.get("available"):
 		return Check("reservation_category", label, False, designation, "The applicable reservation rule is not ready.", RULE_UNAVAILABLE)
