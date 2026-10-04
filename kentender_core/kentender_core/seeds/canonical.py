@@ -680,10 +680,38 @@ def _stage_index(through: str) -> int:
 	return STAGES.index(through)
 
 
+def prepare_site(*, through: str) -> dict[str, Any]:
+	"""What the stages need from the site itself, so one allowed run is enough
+	on a new demo or test site (found 4 Oct 2026: a new server failed one
+	missing piece at a time). From `requisitions`: this repository's
+	IT-equipment tender template, installed and switched on if the site has
+	none. From `bid_submission`: the simulated signing, tender-box and
+	delivery services (site_config `kt_bds_simulation_environment`), switched
+	on with a notice — the canonical bids exist only on a demo or test site."""
+	last = _stage_index(through)
+	out: dict[str, Any] = {"template_release": None, "simulation_switched_on": False}
+	if last >= STAGES.index("requisitions"):
+		from kentender_procurement.std_templates.services import installer
+
+		out["template_release"] = installer.ensure_site_release()
+	from frappe.utils import cint
+
+	if last >= STAGES.index("bid_submission") and not cint(frappe.conf.get("kt_bds_simulation_environment")):
+		from frappe.installer import update_site_config
+
+		update_site_config("kt_bds_simulation_environment", 1)
+		frappe.conf.kt_bds_simulation_environment = 1
+		out["simulation_switched_on"] = True
+		print("NOTICE: switched on the simulated bid services for this site (site_config kt_bds_simulation_environment = 1); "
+			"the canonical bids need them. Never set this on a site that takes real bids.")
+	return out
+
+
 def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
 	"""Reseed the canonical world up to and including `through`. No commit."""
 	last = _stage_index(through)
 	report: dict[str, Any] = {"site": site_setup.run(commit=False)}
+	report["site"]["prepared"] = prepare_site(through=through)
 	# Independent of `through`: the fixture world's Procurement Rules must
 	# be usable whichever stage the caller stops at, not only once the
 	# Planning stage's own seed happens to run (see
@@ -1008,17 +1036,14 @@ def run(
 	_stage_index(through)
 	frappe.set_user("Administrator")
 	result: dict[str, Any] = {"ok": True, "through": through if reseed else None, "reseed": reseed}
-	# `force` is meant to mean "bypass every fixture-build guard this run
-	# touches," not just this orchestrator's own (§1.1) — the needs/
-	# planning/requisitions/tenders module seeds each carry an
-	# independent developer_mode/allow_tests guard of their own that this
-	# function's `force` parameter cannot otherwise reach. All of them
-	# already accept `frappe.flags.in_test` as an equally valid bypass, so
-	# set it for the duration of this run rather than making the caller
-	# separately enable developer_mode on the site.
+	# One permission for the whole run. The needs/planning/requisitions/
+	# tenders module seeds each carry their own developer_mode/allow_tests
+	# guard; all of them accept `frappe.flags.in_test`, so an allowed run
+	# (`_assert_allowed`: developer_mode, allow_canonical_seed or force) sets
+	# it for its own duration. (Until 4 Oct 2026 only `force` did, so a site
+	# allowed by allow_canonical_seed still stopped at the Planning stage.)
 	in_test_before = frappe.flags.in_test
-	if force:
-		frappe.flags.in_test = True
+	frappe.flags.in_test = True
 	# Frappe refuses any new background job once 500+ are queued, and a
 	# full wipe deletes enough documents to pass that inside this one run
 	# (found 26 Sep 2026: 650 queued before the site stage recreated its

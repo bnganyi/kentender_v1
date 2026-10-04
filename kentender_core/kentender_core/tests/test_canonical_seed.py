@@ -504,3 +504,37 @@ class TestCanonicalReservationNamespace(IntegrationTestCase):
 		self.assertIn(self._reservations[0], plan.get("Funding Reservation", []))
 		with self.assertRaises(frappe.ValidationError):
 			canonical.validate(through="budget")
+
+
+class TestFreshSite(IntegrationTestCase):
+	"""Found 4 Oct 2026 on a new server: the seed ran only where the dev site
+	already had everything set by hand. One allowed run must be enough."""
+
+	def test_the_run_prepares_what_the_stages_need(self):
+		from unittest import mock
+
+		with mock.patch("kentender_procurement.std_templates.services.installer.ensure_site_release") as ensure, \
+				mock.patch("frappe.installer.update_site_config") as update, mock.patch.dict(frappe.conf, {"kt_bds_simulation_environment": 0}):
+			out = canonical.prepare_site(through="tenders")
+			ensure.assert_called_once()  # the tender template, before requisitions
+			update.assert_not_called()  # no bid stage, no simulated services
+			self.assertFalse(out["simulation_switched_on"])
+			out = canonical.prepare_site(through="bid_opening")
+			update.assert_called_once_with("kt_bds_simulation_environment", 1)
+			self.assertTrue(out["simulation_switched_on"])
+			self.assertEqual(frappe.conf.get("kt_bds_simulation_environment"), 1)
+		with mock.patch("kentender_procurement.std_templates.services.installer.ensure_site_release") as ensure:
+			canonical.prepare_site(through="budget")
+			ensure.assert_not_called()
+
+	def test_allow_canonical_seed_alone_lets_every_stage_run(self):
+		"""Each module seed keeps its own demo-data guard; an allowed run
+		(developer_mode, allow_canonical_seed or force) satisfies them all."""
+		from unittest import mock
+
+		frappe.set_user("Administrator")
+		# the test runner sets in_test itself, which the module guards accept; take it away
+		with mock.patch.dict(frappe.conf, {"developer_mode": 0, "allow_tests": 0, "allow_canonical_seed": 1}), mock.patch.dict(frappe.flags, {"in_test": False}):
+			out = canonical.run(through="planning", reset=False, validate=False, force=False, commit=False)
+		self.assertTrue(out["ok"])
+		self.assertIn("planning", out["seeded"])
