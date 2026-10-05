@@ -68,7 +68,7 @@
 			<button type="button" class="btn btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
 			<div class="req-actions">
 				<button v-if="actions.export" type="button" class="btn btn-ghost" :disabled="busy" data-testid="req-export" @click="downloadExport(ctx, view.requisition, view.header.version)">Export</button>
-				<button v-if="actions.revoke && !race" type="button" class="btn btn-secondary" :disabled="busy" data-testid="req-revoke" @click="dialog = 'revoke'">Revoke authorisation</button>
+				<button v-if="actions.revoke && !race" type="button" class="btn btn-secondary kt-danger" :disabled="busy" data-testid="req-revoke" @click="dialog = 'revoke'">Revoke authorisation</button>
 				<button v-if="actions.start_corrected_draft" type="button" class="btn btn-primary" :disabled="busy" data-testid="req-start-corrected" @click="startCorrected">Start corrected Draft</button>
 			</div>
 		</div>

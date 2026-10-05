@@ -50,12 +50,13 @@ export function chipOf(s) {
 	return m ? { t: m[2], chip: `kt-status ${m[1]}`, hasChip: true, noChip: false } : { t: String(s ?? ""), chip: "", hasChip: false, noChip: true };
 }
 
-// A button: "*Label" is primary, "!Label" danger, otherwise secondary; the
-// live action it runs rides alongside.
+// A button: "*Label" is primary, "!Label" danger, "~Label" a secondary that is
+// drastic (red outline, for an action beside a primary), otherwise secondary;
+// the live action it runs rides alongside.
 export function btn(spec, action, args, extra) {
 	const s = String(spec);
-	const cls = s[0] === "*" ? "btn btn-primary" : s[0] === "!" ? "btn btn-danger" : "btn btn-secondary";
-	const label = /^[*!]/.test(s) ? s.slice(1) : s;
+	const cls = s[0] === "*" ? "btn btn-primary" : s[0] === "!" ? "btn btn-danger" : s[0] === "~" ? "btn btn-secondary kt-danger" : "btn btn-secondary";
+	const label = /^[*!~]/.test(s) ? s.slice(1) : s;
 	return { label, cls, action: action || "noop", args: args || {}, ...(extra || {}) };
 }
 

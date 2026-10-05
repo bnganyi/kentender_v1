@@ -439,7 +439,7 @@ function openLine(line) {
 									</div>
 								</div>
 								<div class="bud-revision-request-actions">
-									<button v-if="request.can_decline" type="button" class="btn btn-secondary" data-testid="budget-revision-decline" @click="openDecline(request)">{{ __("Decline request") }}</button>
+									<button v-if="request.can_decline" type="button" class="btn btn-secondary kt-danger" data-testid="budget-revision-decline" @click="openDecline(request)">{{ __("Decline request") }}</button>
 									<button type="button" class="btn btn-primary" data-testid="budget-revision-primary" :disabled="updating" @click="runRequestAction(request)">{{ request.primary_label }}</button>
 								</div>
 							</div>
