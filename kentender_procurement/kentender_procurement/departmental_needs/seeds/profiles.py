@@ -39,7 +39,7 @@ from kentender_procurement.departmental_needs.constants import (
 from kentender_procurement.departmental_needs.services import lifecycle
 from kentender_procurement.departmental_needs.services.usage import project_planning_usage
 
-from kentender_core.seeds import clock
+from kentender_core.seeds import calendar, clock
 
 from . import kentender_mvp_r1 as base
 
@@ -145,6 +145,12 @@ def _record_version(need: str) -> int:
 
 _SAVED_USAGE_KEY = "kt_nds_profile_saved_usage"
 
+# The profiles' usage events happen at the canonical world's "now". Planning's
+# own projection is dated in the story (the FY 2027/28 Plan, 10 Dec 2026), and
+# usage is ordered on event time, so a profile event stamped with real time
+# would be older and ignored (two-year seed world, found 5 Oct 2026).
+PROFILE_USAGE_INSTANT = calendar.AS_AT
+
 
 def _preserve_canonical_usage(revision: str) -> None:
 	"""The planning-usage and withdrawal profiles rewrite NDS-MOH-2027-0001's
@@ -185,6 +191,7 @@ def apply_planning_usage() -> dict[str, Any]:
 			accepted_revision=need.current_accepted_revision,
 			usage=USAGE_FULL,
 			source_event_id=key("usage", need.name, need.current_accepted_revision),
+			source_event_time=PROFILE_USAGE_INSTANT,
 			active_plan=ACTIVE_PLAN,
 			active_plan_item=ACTIVE_PLAN_ITEM,
 		)
@@ -318,6 +325,7 @@ def apply_withdrawal(*, cleared: bool = False) -> dict[str, Any]:
 				accepted_revision=need.current_accepted_revision,
 				usage=USAGE_NOT_INCLUDED,
 				source_event_id=key("usage", "cleared", need.current_accepted_revision),
+				source_event_time=PROFILE_USAGE_INSTANT,
 			)
 		_namespace("Need Planning Usage Projection", need.current_accepted_revision, NS_USAGE)
 	else:

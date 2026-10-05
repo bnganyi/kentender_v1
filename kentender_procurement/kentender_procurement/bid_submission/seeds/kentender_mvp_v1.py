@@ -51,7 +51,7 @@ import frappe
 from frappe.utils import cstr
 
 from kentender_procurement.bid_submission.seeds import canonical as bds_canonical
-from kentender_procurement.tenders.seeds.kentender_mvp_v1 import OPEN_STATUS, CanonicalTenderNeedsRebuild
+from kentender_procurement.tenders.seeds.kentender_mvp_v1 import CanonicalTenderNeedsRebuild
 
 NAMESPACE = bds_canonical.NAMESPACE
 DAVID = bds_canonical.DAVID
@@ -511,24 +511,20 @@ def bids_submitted(tender: str) -> bool:
 	return bool(bids) and all(bid and frappe.db.exists("Bid Receipt", {"bid_workspace": bid}) for bid in bids)
 
 
-def lifecycle_complete(tender: str, *, open_tender: bool = False) -> bool:
-	"""Every canonical bid submitted, and the box closed at the deadline — or,
-	`open_tender`, the Tender still open and nothing closed."""
+def lifecycle_complete(tender: str) -> bool:
+	"""Every canonical bid submitted, and the box closed at the deadline."""
 	if not bids_submitted(tender):
 		return False
-	if open_tender:
-		return frappe.db.get_value("Tender", tender, "overall_status") == OPEN_STATUS and not frappe.db.exists("Bid Submission Close", {"tender": tender})
 	return bool(frappe.db.exists("Bid Submission Close", {"tender": tender}))
 
 
-def upsert_bid_submission_base(*, commit: bool = False, open_tender: bool = False) -> dict[str, Any]:
+def upsert_bid_submission_base(*, commit: bool = False) -> dict[str, Any]:
 	"""The `bid_submission` stage: the canonical Tender built through the
 	Tenders seed with the bid's steps interleaved. One already carrying the
 	lifecycle is returned untouched. A Tender the `tenders` stage built alone
 	(its bid a Draft when the period closed) cannot be given the lifecycle
 	afterwards — the Requisition's hand-off is consumed once — so that world
-	needs a rebuild. `open_tender` stops before the deadline: all four bids
-	submitted, the Tender still open for more."""
+	needs a rebuild."""
 	from kentender_procurement.tenders.seeds import kentender_mvp_v1 as tenders_seed
 
 	_guard()
@@ -539,25 +535,24 @@ def upsert_bid_submission_base(*, commit: bool = False, open_tender: bool = Fals
 	ensure_bidder_accounts()
 	prerequisites = tenders_seed.verify_prerequisites()
 	tender = cstr(frappe.db.get_value("Tender", {"requisition": prerequisites["requisition"]}, "name"))
-	if tender and lifecycle_complete(tender, open_tender=open_tender):
+	if tender and lifecycle_complete(tender):
 		result = {"ok": True, "idempotent": True, "tender": tender, "bid": canonical_bid(tender)}
 	elif tender:
 		frappe.throw(
-			f"The canonical Tender {tender} was seeded without the bid lifecycle{' (asked for it open, with the four bids)' if open_tender else ''}. Rebuild the canonical world through this stage: "
-			"make seed-canonical THROUGH=bid_submission REBUILD=True.",
+			f"The canonical Tender {tender} was seeded without the bid lifecycle. Rebuild the canonical world through this stage: "
+			"make seed-canonical CURRENT=bid_submission REBUILD=True.",
 			exc=CanonicalTenderIncomplete,
 		)
 	else:
-		built = tenders_seed.upsert_tenders_base(commit=False, interleave=interleave, stop_before_close=open_tender)
+		built = tenders_seed.upsert_tenders_base(commit=False, interleave=interleave)
 		result = {"ok": True, "idempotent": False, "tender": built["tender"], "bid": canonical_bid(built["tender"]), "steps": built.get("interleaved", {})}
 	if commit:
 		frappe.db.commit()
 	return result
 
 
-def validate_bid_submission_seed(*, open_tender: bool = False) -> list[dict[str, Any]]:
-	"""One row per §13.3 fact the canonical bid must carry. Never mutates.
-	`open_tender`: the box is still open, so nothing about its close."""
+def validate_bid_submission_seed() -> list[dict[str, Any]]:
+	"""One row per §13.3 fact the canonical bid must carry. Never mutates."""
 	from kentender_procurement.tenders.seeds import kentender_mvp_v1 as tenders_seed
 
 	rows: list[dict[str, Any]] = []
@@ -602,12 +597,9 @@ def validate_bid_submission_seed(*, open_tender: bool = False) -> list[dict[str,
 		check(bool(match) and bool(frappe.db.exists("Tender Security Intake Match", {"intake": match, "bid_workspace": other})),
 			f"Charles's physical original for {name} privately matches its bid")
 	close = frappe.db.get_value("Bid Submission Close", {"tender": tender}, ["name", "bid_opening_handoff", "envelopes_sealed"], as_dict=True)
-	if open_tender:
-		check(not close, "Bid Submission is still open (no close yet)")
-	else:
-		check(bool(close), "Bid Submission closed at the deadline")
-		check(bool(close) and int(close.envelopes_sealed or 0) == 1 + len(BIDDERS), f"{1 + len(BIDDERS)} sealed envelopes were handed over")
-		check(bool(close) and bool(close.bid_opening_handoff), "a Bid Opening hand-off was written")
-	rerun = upsert_bid_submission_base(commit=False, open_tender=open_tender)
+	check(bool(close), "Bid Submission closed at the deadline")
+	check(bool(close) and int(close.envelopes_sealed or 0) == 1 + len(BIDDERS), f"{1 + len(BIDDERS)} sealed envelopes were handed over")
+	check(bool(close) and bool(close.bid_opening_handoff), "a Bid Opening hand-off was written")
+	rerun = upsert_bid_submission_base(commit=False)
 	check(rerun.get("idempotent") is True and rerun.get("bid") == bid, "a second run is idempotent")
 	return rows

@@ -478,3 +478,49 @@ def validate_portfolio(*, current: str) -> list[dict[str, Any]]:
 			stage = frappe.db.get_value("Award Case", {"tender": tender.name}, "stage")
 			check(stage == want["award"], f"{spec['ref']} award at {want['award']} (got {stage})")
 	return rows
+
+
+#: Which Home and Analytics fixture each executed-year record serves (plan
+#: SW-0502). The HOME/ANL datasets are illustrative (HOME-CHG-001 v0.6 §13,
+#: ANL-CHG-001 v0.8 §13): the seed supplies their states, and its generated
+#: references replace the fixtures' numbers.
+SERVES = {
+	"laptops": "ANL Award bucket and award amount; HOME H12 recently completed (Amina's award decision); AWD-DEMO-* profiles",
+	"printers": "HOME H2/H10 Prepare professional opinion (Charles); ANL 044 shape",
+	"lab_desktops": "HOME H12 Decide award (Amina)",
+	"scanners": "HOME H10–H12 committee review outstanding and evaluation deadline; ANL 043 shape",
+	"switches": "HOME H12 Appoint the evaluation committee (Amina)",
+	"tablets": "Anonymous /tenders list; HOME H1 clarification, H3 addendum guard, H8 paging; H10 Start opening (Coming up); ANL Open bucket",
+	"ups": "HOME H1 completed submission, H10 waiting on Amina, H12 Authorise publication",
+	"access_points": "ANL preparation bucket and warranty outstanding matter (041 shape); combined Digital Health + HRMD item",
+	"field_laptops": "HOME H1 waiting on Amina, H12 Consider cancellation",
+	"desktops": "HOME H1/H12 cancellation compliance evidence pending (034 shape)",
+	"routers": "ANL Closed bucket, cancellation complete (046 shape); Women reservation",
+	"clinic_desktops": "HOME H10 Authorise requisition (Charles); ANL R-A",
+	"monitors": "ANL requisition authorised but not taken up (T2 transition open)",
+}
+
+
+def binding_rows() -> list[dict[str, Any]]:
+	"""The generated references and states of the executed year's records at
+	the as-at instant, for the binding table (plan SW-0502). Read-only."""
+	from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import COMBINED_ITEM_TITLE, _plan_item_id
+
+	items = [{"key": "laptops", "ref": "T1", "item": COMBINED_ITEM_TITLE}] + [{"key": s["key"], "ref": s["ref"], "item": s["item"]} for s in PORTFOLIO]
+	rows = []
+	for spec in items:
+		plan_item = _plan_item_id(spec["item"])
+		requisition = frappe.db.get_value("Procurement Requisition", {"plan_item_id": plan_item}, ["name", "requisition_reference", "current_state"], as_dict=True) if plan_item else None
+		tender = frappe.db.get_value("Tender", {"requisition": requisition.name}, ["name", "tender_reference", "overall_status", "requirement_title"], as_dict=True) if requisition else None
+		row = {
+			"ref": spec["ref"], "plan_item": plan_item, "item": spec["item"],
+			"requisition": requisition.requisition_reference if requisition else "", "requisition_state": requisition.current_state if requisition else "",
+			"tender": tender.tender_reference if tender else "", "tender_status": tender.overall_status if tender else "",
+			"opening": "", "evaluation": "", "award": "", "serves": SERVES.get(spec["key"], ""),
+		}
+		if tender:
+			row["opening"] = frappe.db.get_value("Bid Opening Case", {"tender": tender.name}, "state") or ""
+			row["evaluation"] = frappe.db.get_value("Evaluation Case", {"tender": tender.name}, "state") or ""
+			row["award"] = frappe.db.get_value("Award Case", {"tender": tender.name}, "stage") or ""
+		rows.append(row)
+	return rows

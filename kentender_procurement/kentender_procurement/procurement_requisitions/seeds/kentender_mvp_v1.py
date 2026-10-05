@@ -502,12 +502,17 @@ def recover_orphaned_drawdowns(*, commit: bool = False) -> dict[str, Any]:
 
 
 def reset_requisitions_seed(*, commit: bool = False, cross_module_rebuild: bool = False) -> dict[str, int]:
-	"""`cross_module_rebuild` is for `canonical.clear_canonical_modules` only
-	(see `seeds.clear._delete_for_plan_items`)."""
+	"""The laptops Requisition on the combined item, which the base fixture
+	and every demo profile share. `cross_module_rebuild` is for
+	`canonical.clear_canonical_modules` only (see
+	`seeds.clear._delete_for_plan_items`): that rebuild clears every canonical
+	Requisition, the executed portfolio's too. A profile or a module test
+	never touches the portfolio (found 5 Oct 2026: a profile load revoked or
+	refused on the portfolio's Authorised Requisitions)."""
 	_guard()
 	frappe.set_user("Administrator")
-	# every canonical Requisition: the laptops' and the executed portfolio's
-	deleted = _wipe_combined_item_profile(cross_module_rebuild=cross_module_rebuild, plan_item_ids=canonical_plan_item_ids())
+	plan_item_ids = canonical_plan_item_ids() if cross_module_rebuild else None
+	deleted = _wipe_combined_item_profile(cross_module_rebuild=cross_module_rebuild, plan_item_ids=plan_item_ids)
 	if commit:
 		frappe.db.commit()
 	return deleted

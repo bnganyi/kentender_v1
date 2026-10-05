@@ -40,6 +40,11 @@ import frappe
 from frappe.utils import cstr
 
 NAMESPACE = "KENTENDER_MVP_1_R1_EVL"
+# The executed portfolio's evaluations (two-year seed world). Their own tag,
+# so retelling the canonical evaluation — which clears NAMESPACE — never
+# removes them (found 5 Oct 2026). The canonical rebuild clears them with
+# their Tenders.
+PORTFOLIO_NAMESPACE = "KENTENDER_MVP_1_R1_EVL_PORTFOLIO"
 DOMAIN = "moh.example.test"
 AO = f"amina.hassan@{DOMAIN}"
 HOP = f"charles.mutiso@{DOMAIN}"
@@ -290,7 +295,7 @@ def evaluate_portfolio_tender(tender: str, clock_map: dict[str, str], *, stop: s
 	if done[stop]:
 		return {"ok": True, "idempotent": True, "evaluation": frappe.db.get_value("Evaluation Case", {"tender": tender}, "name")}
 	saved = {flag: frappe.flags.get(flag) for flag in (*CLOCKS, "kt_evl_fixture_namespace", "kt_prc_fixture_namespace")}
-	frappe.flags.kt_evl_fixture_namespace = frappe.flags.kt_prc_fixture_namespace = NAMESPACE
+	frappe.flags.kt_evl_fixture_namespace = frappe.flags.kt_prc_fixture_namespace = PORTFOLIO_NAMESPACE
 	story = _Story(tender)
 	try:
 		_at(clock_map["prepare"])

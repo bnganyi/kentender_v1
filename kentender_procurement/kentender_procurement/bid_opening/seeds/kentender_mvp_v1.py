@@ -40,6 +40,11 @@ import frappe
 from frappe.utils import cstr, get_datetime
 
 NAMESPACE = "KENTENDER_MVP_1_R1_BOP"
+# The executed portfolio's openings (two-year seed world). Their own tag, so
+# retelling the canonical opening or resetting a demo profile — both clear
+# NAMESPACE — never removes them (found 5 Oct 2026). The canonical rebuild
+# clears them with their Tenders.
+PORTFOLIO_NAMESPACE = "KENTENDER_MVP_1_R1_BOP_PORTFOLIO"
 DOMAIN = "moh.example.test"
 AO = f"amina.hassan@{DOMAIN}"
 CHAIR = f"charles.mutiso@{DOMAIN}"
@@ -198,7 +203,7 @@ def open_portfolio_tender(tender: str, clock_map: dict[str, str], bids: int) -> 
 	if frappe.db.get_value("Bid Opening Case", {"tender": tender}, "state") == "Opening complete":
 		return {"ok": True, "idempotent": True, "opening": frappe.db.get_value("Bid Opening Case", {"tender": tender}, "name")}
 	saved = {flag: frappe.flags.get(flag) for flag in ("kt_bop_clock", "kt_prc_clock", "kt_bop_fixture_namespace", "kt_prc_fixture_namespace")}
-	frappe.flags.kt_bop_fixture_namespace = frappe.flags.kt_prc_fixture_namespace = NAMESPACE
+	frappe.flags.kt_bop_fixture_namespace = frappe.flags.kt_prc_fixture_namespace = PORTFOLIO_NAMESPACE
 	try:
 		clock = _Clock(tender)
 		clock.at(clock_map["prepare"])

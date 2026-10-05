@@ -90,11 +90,19 @@ class TestSeedContract(IntegrationTestCase):
 	def test_the_design_clock_instants_render_exactly(self):
 		from kentender_procurement.procurement_planning.services import plan_read
 
-		plan = plan_read.get_annual_plan(plan_reference=self.baseline["plan_reference"], user=seed.PLANNER)
-		card = plan["active_view"]["governance_card"]
-		self.assertEqual(card["ao_adoption_line"], "Amina Hassan · 8 Dec 2026, 10:00 EAT")
-		self.assertIn("9 Dec 2026, 11:00 EAT", card["statutory_approval_line"])
-		self.assertEqual(card["publication_line"], "Acknowledged · 10 Dec 2026, 15:00 EAT")
+		# FY 2027/28's Plan keeps the PLN-CHG-001 instants; FY 2026/27's (the
+		# executed year, `self.baseline`) is the same journey 364 days earlier,
+		# so each event keeps its weekday (two-year seed world, D8).
+		expected = {
+			self.baseline["plan_reference"]: ("9 Dec 2025, 10:00 EAT", "10 Dec 2025, 11:00 EAT", "11 Dec 2025, 15:00 EAT"),
+			"PLN-MOH-2027-001": ("8 Dec 2026, 10:00 EAT", "9 Dec 2026, 11:00 EAT", "10 Dec 2026, 15:00 EAT"),
+		}
+		for reference, (adopted, approved, published) in expected.items():
+			plan = plan_read.get_annual_plan(plan_reference=reference, user=seed.PLANNER)
+			card = plan["active_view"]["governance_card"]
+			self.assertEqual(card["ao_adoption_line"], f"Amina Hassan · {adopted}", reference)
+			self.assertIn(approved, card["statutory_approval_line"], reference)
+			self.assertEqual(card["publication_line"], f"Acknowledged · {published}", reference)
 
 	def test_a_rerun_is_idempotent(self):
 		before = frappe.db.count("Annual Plan Version", {"annual_plan": ("in", frappe.get_all("Annual Plan", filters={"fiscal_year": seed.FY}, pluck="name") or ("",))})

@@ -466,6 +466,18 @@ SUPERSEDED_STOPGAP_ASSIGNMENTS = (
 STOPGAP_REVOCATION_REASON = (
 	"PLN-CHG-001 v1.18 §13.1 fixture correction (plan D19): replaced by the dated assignment the shared register now specifies."
 )
+# Two-year seed world (plan D8, 5 Oct 2026): the dated terms moved 364 days
+# earlier. A plain reseed revokes the earlier rows, exactly as they were
+# granted, and grants the new terms, so a site needs no wipe to converge.
+SUPERSEDED_BY_TWO_YEAR_WORLD = (
+	("peter.kimani", "Head of User Department", "Digital Health", "2026-12-01 00:00:00", None),
+	("julia.njeri", "Head of User Department", "Digital Health", "2026-10-01 00:00:00", "2026-11-30 23:59:59"),
+	("samuel.otieno", "Head of User Department", "Directorate of Digital Health and Policy", "2026-01-01 00:00:00", "2026-08-31 23:59:59"),
+	("peter.kimani", "Head of User Department", "Directorate of Digital Health and Policy", "2026-09-01 00:00:00", None),
+)
+TWO_YEAR_REVOCATION_REASON = (
+	"Two-year seed world (plan D8): the fixture's dated terms moved 364 days earlier; replaced by the term the seed now grants."
+)
 
 # REQ-CHG-001 v1.6 D2 — the one governed delivery/inspection location
 # the Ministry of Health fixture uses (§13.2, §16.1).
@@ -1488,14 +1500,16 @@ def _seed_public_portal_settings() -> dict:
 
 def _reconcile_superseded_fixture_assignments() -> list[str]:
 	"""Revoke, with a reason, exactly the two stop-gap rows the 5 Sep 2026
-	seed granted (§13.1 / plan D19). Matched on user, role, unit and the
-	exact period they carried; any other row is left alone."""
+	seed granted (§13.1 / plan D19) and the four terms the two-year seed world
+	moved (plan D8). Matched on user, role, unit and the exact period they
+	carried; any other row is left alone."""
 	units = {
 		row["unit_name"]: row["name"]
 		for row in frappe.get_all("Organisation Unit", fields=["name", "unit_name"], limit_page_length=0)
 	}
 	revoked: list[str] = []
-	for local, role, unit_name, effective_from, effective_to in SUPERSEDED_STOPGAP_ASSIGNMENTS:
+	retired = [(*row, STOPGAP_REVOCATION_REASON) for row in SUPERSEDED_STOPGAP_ASSIGNMENTS] + [(*row, TWO_YEAR_REVOCATION_REASON) for row in SUPERSEDED_BY_TWO_YEAR_WORLD]
+	for local, role, unit_name, effective_from, effective_to, reason in retired:
 		unit = units.get(unit_name)
 		if not unit:
 			continue
@@ -1508,7 +1522,7 @@ def _reconcile_superseded_fixture_assignments() -> list[str]:
 			row_from = str(row["effective_from"] or "") or None
 			row_to = str(row["effective_to"] or "") or None
 			if row_from == effective_from and row_to == effective_to:
-				administration.revoke(row["name"], reason=STOPGAP_REVOCATION_REASON, actor="Administrator")
+				administration.revoke(row["name"], reason=reason, actor="Administrator")
 				revoked.append(row["name"])
 	return revoked
 

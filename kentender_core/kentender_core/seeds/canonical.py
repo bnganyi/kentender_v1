@@ -1,35 +1,26 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""The canonical site world — KT-STD-001 v1.3 §8 configuration and the
-SEED-001 v1.0 module chain — cleared of everything else and reseeded
-progressively, one module stage at a time.
+"""The canonical site world (SEED-002, proposed to replace SEED-001 and
+SEED-OPS-001): two financial years read as at 18 Jun 2027, 10:00 EAT, cleared
+of everything else and reseeded through the owning modules' own seeds.
 
 	bench --site <site> execute kentender_core.seeds.canonical.run \\
-		--kwargs '{"through": "budget"}'
+		--kwargs '{"current": "award", "next_year": "annual_plan"}'
 	bench --site <site> execute kentender_core.seeds.canonical.dry_run
 	bench --site <site> execute kentender_core.seeds.canonical.validate \\
-		--kwargs '{"through": "budget"}'
+		--kwargs '{"current": "award", "next_year": "annual_plan"}'
 
-Stages (``STAGES``) are cumulative: ``site`` is the KT-STD-001 §8 world
-(site Procuring Entity, Organisation Units, ERPNext Fiscal Years, intake
-windows, catalogues, the governed funding source, the regulatory reference,
-UOMs, actors and their responsibility assignments), ``strategy`` the
-STR-CHG-001 §14 plan, ``budget`` the BUD-CHG-001 §15.3 Active baseline,
-``needs`` the NDS-CHG-001 §14.3 default Needs, ``planning`` the
-PLN-CHG-001 §14 integrated baseline, ``requisitions`` the REQ-CHG-001 v1.11
-§16 Authorised Requisition on the one eligible combined Plan Item,
-``tenders`` the TPR-CHG-001 v0.12 §13.3 primary Tender lifecycle on that
-Requisition's handoff, ``bid_submission`` the same Tender built with Afya
-Digital Supplies Limited's bid interleaved (BDS-CHG-001 v0.8), ``bid_opening``
-its opening (BOP-CHG-001 v0.10), ``bid_evaluation`` its evaluation, to the
-report sent to Charles Mutiso (EVL-CHG-001 v0.4), and ``award`` its award, to
-the package Contracting received (AWD-CHG-001 v0.4). The last four use the
-simulated trust, custody and delivery services, so they run only on a test
-site. Each stage calls the owning
+FY 2026/27 is carried out: the site (KT-STD-001 §8: site Procuring Entity,
+units, years, catalogues, rules, people), the Strategy, its budget, Needs,
+departmental plans and Active Annual Plan always, then `current` — the
+laptops Tender's chain and the executed portfolio (`portfolio.py`), each
+record as far as that stage takes it. FY 2027/28 is prepared as far as
+`next_year`. The bid stages use the simulated trust, custody and delivery
+services, so they run only on a test site. Each stage calls the owning
 module's own canonical-shaped seed function directly — never the legacy
 multi-PE `kentender_core.seeds.kentender_mvp_v1.orchestrator` — so seeding
-through any stage never creates `PE-CGKIS` or any second Procuring Entity.
+never creates `PE-CGKIS` or any second Procuring Entity.
 
 A Funding Reservation / Procurement Commitment stamped `REQUISITIONS_NS` is
 canonical evidence of an authorised Requisition, not disposable test
@@ -113,9 +104,14 @@ REQUISITIONS_NS = "KENTENDER_MVP_1_R1_REQ"  # not stamped on Requisitions' own r
 TENDERS_NS = "KENTENDER_MVP_1_R1_TND"
 BID_OPENING_NS = "KENTENDER_MVP_1_R1_BOP"  # BOP-CHG-001 v0.10 plan D14
 BID_EVALUATION_NS = "KENTENDER_MVP_1_R1_EVL"  # EVL-CHG-001 v0.4 plan D18
+# The executed portfolio's openings and evaluations carry their own tags, so a
+# retold canonical opening or evaluation (which clears its module's tag) keeps
+# them (two-year seed world, found 5 Oct 2026).
+PORTFOLIO_OPENING_NS = "KENTENDER_MVP_1_R1_BOP_PORTFOLIO"
+PORTFOLIO_EVALUATION_NS = "KENTENDER_MVP_1_R1_EVL_PORTFOLIO"
 BIDS_NS = "KENTENDER_MVP_1_R1_BDS"  # BDS-CHG-001 v0.8 plan D19: the canonical bids and supplier accounts
 CANONICAL_NAMESPACES = frozenset(
-	{site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS, TENDERS_NS, BID_OPENING_NS, BID_EVALUATION_NS}
+	{site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS, TENDERS_NS, BID_OPENING_NS, BID_EVALUATION_NS, PORTFOLIO_OPENING_NS, PORTFOLIO_EVALUATION_NS}
 )
 
 # KT-STD-001 §8.3 — the whole shared register, whatever stage is seeded.
@@ -702,7 +698,9 @@ def clear_canonical_modules() -> dict[str, Any]:
 
 		out["award"] = award_clear.wipe(tenders=tenders)
 		out["bid_evaluation"] = evaluation_clear.wipe(tenders=tenders, namespace=BID_EVALUATION_NS)
+		out["bid_evaluation"] += evaluation_clear.wipe(namespace=PORTFOLIO_EVALUATION_NS)
 		out["bid_opening"] = opening_clear.wipe(tenders=tenders, namespace=BID_OPENING_NS)
+		out["bid_opening_portfolio"] = opening_clear.wipe(namespace=PORTFOLIO_OPENING_NS)
 		out["bid_submission"] = bids_clear.wipe(tenders=tenders, namespace=BIDS_NS)
 	out["tenders"] = reset_tenders_seed(commit=False)
 	# The canonical supplier accounts go too, so a rebuild recreates them at
@@ -759,15 +757,14 @@ def _stage_index(through: str) -> int:
 	return STAGES.index(through)
 
 
-def prepare_site(*, current: str = DEFAULT_CURRENT, open_tender: bool = False, through: str | None = None) -> dict[str, Any]:
+def prepare_site(*, current: str = DEFAULT_CURRENT, through: str | None = None) -> dict[str, Any]:
 	"""What the stages need from the site itself, so one allowed run is enough
 	on a new demo or test site (found 4 Oct 2026: a new server failed one
 	missing piece at a time). From `requisitions`: this repository's
 	IT-equipment tender template, installed and switched on if the site has
 	none. From `bid_submission`: the simulated signing, tender-box and
 	delivery services (site_config `kt_bds_simulation_environment`), switched
-	on with a notice — the canonical bids exist only on a demo or test site.
-	The same for a Tender left open (`open_tender`), which is there to be bid on."""
+	on with a notice — the canonical bids exist only on a demo or test site."""
 	if through:
 		current, _next = resolve_years(through=through)
 	out: dict[str, Any] = {"template_release": None, "simulation_switched_on": False}
@@ -786,42 +783,30 @@ def prepare_site(*, current: str = DEFAULT_CURRENT, open_tender: bool = False, t
 				"The seed needs it from the requisitions stage on; fix this and run the seed again.")
 	from frappe.utils import cint
 
-	if (_reaches("bid_submission", current=current) or open_tender) and not cint(frappe.conf.get("kt_bds_simulation_environment")):
+	if _reaches("bid_submission", current=current) and not cint(frappe.conf.get("kt_bds_simulation_environment")):
 		from frappe.installer import update_site_config
 
 		update_site_config("kt_bds_simulation_environment", 1)
 		frappe.conf.kt_bds_simulation_environment = 1
 		out["simulation_switched_on"] = True
 		print("NOTICE: switched on the simulated bid services for this site (site_config kt_bds_simulation_environment = 1); "
-			"the canonical bids, and bids on a Tender left open, need them. Never set this on a site that takes real bids.")
+			"the canonical bids need them. Never set this on a site that takes real bids.")
 	return out
 
 
-#: The stages that can stop before the canonical Tender's deadline (`open_tender`).
-OPEN_TENDER_STAGES = ("tenders", "bid_submission")
-
-
-def _check_open_tender(current: str, open_tender: bool) -> None:
-	if open_tender and current not in OPEN_TENDER_STAGES:
-		frappe.throw(
-			f"OPEN=True leaves the canonical Tender open for bids, before its deadline, so it goes only with CURRENT=tenders "
-			f"or CURRENT=bid_submission (asked for CURRENT={current}): the later stages need the Tender closed."
-		)
-
-
-def seed(*, current: str | None = None, next_year: str | None = None, open_tender: bool = False, through: str | None = None) -> dict[str, Any]:
+def seed(*, current: str | None = None, next_year: str | None = None, through: str | None = None) -> dict[str, Any]:
 	"""Reseed the canonical world: the executed year through `current`, the
-	prepared year through `next_year`. No commit. `open_tender` (owner,
-	4 Oct 2026: a Tender anyone can see on /tenders and bid on) stops the
-	canonical Tender's story before its 12 Jun 2027 deadline. The site test
-	clock is left at the as-at instant (a test site only)."""
+	prepared year through `next_year`. No commit. The site test clock is left
+	at the as-at instant (a test site only). (`OPEN=True`, which stopped the
+	canonical Tender before its deadline, was retired on 5 Oct 2026: the
+	executed portfolio's Medical-grade tablets Tender is open past the as-at
+	instant, so the public Tenders page always lists a Tender.)"""
 	current, next_year = resolve_years(current=current, next_year=next_year, through=through)
-	_check_open_tender(current, open_tender)
 	ahead = world_ahead(current=current, next_year=next_year)
 	if ahead:
 		frappe.throw(f"The site holds more than CURRENT={current} NEXT={next_year} asks for: {'; '.join(ahead)}.", exc=CanonicalWorldNeedsRebuild)
 	report: dict[str, Any] = {"current": current, "next_year": next_year, "site": site_setup.run(commit=False)}
-	report["site"]["prepared"] = prepare_site(current=current, open_tender=open_tender)
+	report["site"]["prepared"] = prepare_site(current=current)
 	# Independent of the stages: the fixture world's Procurement Rules must be
 	# usable whatever is seeded, not only once the Planning stage's own seed
 	# happens to run (see `stamp_procurement_rules_fixture_verified`'s docstring).
@@ -861,7 +846,7 @@ def seed(*, current: str | None = None, next_year: str | None = None, open_tende
 	if _reaches("tenders", current=current) and not _reaches("bid_submission", current=current):
 		from kentender_procurement.tenders.seeds.kentender_mvp_v1 import upsert_tenders_base
 
-		report["tenders"] = upsert_tenders_base(commit=False, stop_before_close=open_tender)
+		report["tenders"] = upsert_tenders_base(commit=False)
 	if _reaches("bid_submission", current=current):
 		# BDS-CHG-001 v0.8 plan D19: the canonical Tender's chronology with the
 		# bid's own lifecycle interleaved (Start bid 19 May … Mary's accepted
@@ -870,7 +855,7 @@ def seed(*, current: str | None = None, next_year: str | None = None, open_tende
 		# with the bid still a Draft.
 		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import upsert_bid_submission_base
 
-		report["bid_submission"] = upsert_bid_submission_base(commit=False, open_tender=open_tender)
+		report["bid_submission"] = upsert_bid_submission_base(commit=False)
 		report["tenders"] = {"ok": True, "via": "bid_submission", "tender": report["bid_submission"].get("tender")}
 	if _reaches("bid_opening", current=current):
 		# BOP-CHG-001 v0.10 plan D14: the canonical Tender's opening, after the
@@ -975,12 +960,10 @@ def set_as_at() -> bool:
 # --------------------------------------------------------------------------
 
 
-def validate(*, current: str | None = None, next_year: str | None = None, open_tender: bool = False, through: str | None = None) -> dict[str, Any]:
+def validate(*, current: str | None = None, next_year: str | None = None, through: str | None = None) -> dict[str, Any]:
 	"""Assert the canonical facts of both years as far as `current` and
-	`next_year` reach; raise listing every failed check. `open_tender`: the
-	world was seeded with the canonical Tender left open (see `seed`)."""
+	`next_year` reach; raise listing every failed check."""
 	current, next_year = resolve_years(current=current, next_year=next_year, through=through)
-	_check_open_tender(current, open_tender)
 	failures: list[str] = []
 
 	def check(ok: bool, message: str) -> None:
@@ -1120,12 +1103,12 @@ def validate(*, current: str | None = None, next_year: str | None = None, open_t
 	if _reaches("tenders", current=current):
 		from kentender_procurement.tenders.seeds.kentender_mvp_v1 import validate_tenders_seed
 
-		for row in validate_tenders_seed(open_tender=open_tender):
+		for row in validate_tenders_seed():
 			check(row["ok"], f"{row['check']}: {row['detail']}")
 	if _reaches("bid_submission", current=current):
 		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import validate_bid_submission_seed
 
-		for row in validate_bid_submission_seed(open_tender=open_tender):
+		for row in validate_bid_submission_seed():
 			check(row["ok"], row["check"])
 	if _reaches("bid_opening", current=current):
 		from kentender_procurement.bid_opening.seeds.kentender_mvp_v1 import validate_bid_opening_seed
@@ -1195,7 +1178,6 @@ def run(
 	validate: bool = True,
 	force: bool = False,
 	commit: bool = True,
-	open_tender: bool = False,
 ) -> dict[str, Any]:
 	"""Clear everything non-canonical (``reset``), optionally the canonical
 	module rows too (``rebuild``), optionally the site stage itself
@@ -1216,17 +1198,12 @@ def run(
 	says — clear everything and stop, no stage rebuilt, ``through``/
 	``validate`` ignored, nothing left on the site to validate against.
 	Pass ``reseed=True`` explicitly with ``wipe=True`` for the old
-	"wipe then immediately rebuild the whole chain" behaviour.
-
-	``open_tender`` leaves the canonical Tender open for bids (``seed``);
-	switching a world between open and closed rebuilds it by itself."""
+	"wipe then immediately rebuild the whole chain" behaviour."""
 	if reseed is None:
 		reseed = not wipe
 	frappe.only_for(("System Manager", "Administrator"))
 	_assert_allowed(force)
 	current, next_year = resolve_years(current=current, next_year=next_year, through=through)
-	if reseed is not False:
-		_check_open_tender(current, open_tender)
 	frappe.set_user("Administrator")
 	result: dict[str, Any] = {"ok": True, "current": current if reseed else None, "next_year": next_year if reseed else None, "reseed": reseed}
 	# One permission for the whole run. The needs/planning/requisitions/
@@ -1287,9 +1264,9 @@ def run(
 		if reset:
 			result["removed"] = clear_non_canonical()
 		if reseed:
-			result["seeded"] = seed(current=current, next_year=next_year, open_tender=open_tender)
+			result["seeded"] = seed(current=current, next_year=next_year)
 			if validate:
-				result["validate"] = globals()["validate"](current=current, next_year=next_year, open_tender=open_tender)
+				result["validate"] = globals()["validate"](current=current, next_year=next_year)
 		if commit:
 			frappe.db.commit()
 		print(
@@ -1306,14 +1283,14 @@ def run(
 		frappe.flags.kt_fixture_passwords = False
 	# A bid submission commits at once (the attempt must survive a crash), so a
 	# run that failed after the bids left the canonical Tender without its
-	# lifecycle (found 4 Oct 2026 on a new server); and a Tender left open for
-	# bids (`open_tender`) cannot be closed into the canonical story, nor a
-	# closed one reopened. Rebuild, once.
+	# lifecycle (found 4 Oct 2026 on a new server); a Tender told without its
+	# bids cannot be given them afterwards; and the site may hold more of a year
+	# than this run asks for. Rebuild, once.
 	print(
 		"NOTICE: the canonical world is not in the shape this run builds on (more of a year than CURRENT/NEXT ask for, "
-		"a Tender left open for bids or closed, or half-built by an earlier failed run); rebuilding the canonical module records."
+		"a Tender told without the bids this run asks for, or half-built by an earlier failed run); rebuilding the canonical module records."
 	)
-	out = run(current=current, next_year=next_year, reset=reset, rebuild=True, wipe=False, reseed=reseed, validate=validate, force=force, commit=commit, open_tender=open_tender)
+	out = run(current=current, next_year=next_year, reset=reset, rebuild=True, wipe=False, reseed=reseed, validate=validate, force=force, commit=commit)
 	out["rebuilt_after_partial_world"] = True
 	return out
 

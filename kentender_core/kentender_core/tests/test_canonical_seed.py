@@ -410,30 +410,41 @@ class TestCanonicalSeedRun(IntegrationTestCase):
 
 class TestTwoYearLadders(IntegrationTestCase):
 	"""The two controls move independently, and a run asking for less of a
-	year than the site holds rebuilds by itself. Ends with the full world."""
+	year than the site holds rebuilds by itself. The steps run in name order
+	(each stays inside the runner's five-minute limit per test) and the last
+	one leaves the full world."""
 
-	def test_the_years_move_independently_and_a_lower_stage_rebuilds(self):
+	def setUp(self):
+		frappe.set_user("Administrator")
+
+	def test_1_a_lower_stage_on_both_ladders_rebuilds(self):
 		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import year_plan
 
-		frappe.set_user("Administrator")
-		y2 = calendar.YEAR2.fiscal_year
-		try:
-			# lower than the full world on both ladders: rebuilt by itself
-			out = canonical.run(current="annual_plan", next_year="budget", force=True, commit=True)
-			self.assertTrue(out.get("rebuilt_after_partial_world"))
-			self.assertTrue(year_plan("year1").active_version)
-			self.assertTrue(frappe.db.exists("Procurement Budget", {"fiscal_year": y2}))
-			self.assertFalse(frappe.db.exists("Departmental Need", {"financial_year": y2}))
-			self.assertEqual(frappe.db.count("Procurement Requisition"), 0)
-			# higher on both: built on what is there, no rebuild
-			out = canonical.run(current="requisitions", next_year="departmental_plans", force=True, commit=True)
-			self.assertFalse(out.get("rebuilt_after_partial_world"))
-			self.assertGreater(frappe.db.count("Procurement Requisition"), 0)
-			self.assertEqual(frappe.db.count("Tender"), 0)
-			self.assertTrue(year_plan("year2") and not year_plan("year2").active_version)
-		finally:
-			# the full world again, the prepared year's plan taken on from its accepted departmental plans
-			out = canonical.run(current="award", next_year="annual_plan", force=True, commit=True)
+		out = canonical.run(current="annual_plan", next_year="budget", force=True, commit=True)
+		self.assertTrue(out.get("rebuilt_after_partial_world"))
+		self.assertTrue(year_plan("year1").active_version)
+		self.assertTrue(frappe.db.exists("Procurement Budget", {"fiscal_year": calendar.YEAR2.fiscal_year}))
+		self.assertFalse(frappe.db.exists("Departmental Need", {"financial_year": calendar.YEAR2.fiscal_year}))
+		self.assertEqual(frappe.db.count("Procurement Requisition"), 0)
+
+	def test_2_a_higher_stage_builds_on_what_is_there(self):
+		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import year_plan
+
+		out = canonical.run(current="requisitions", next_year="departmental_plans", force=True, commit=True)
+		self.assertFalse(out.get("rebuilt_after_partial_world"))
+		self.assertGreater(frappe.db.count("Procurement Requisition"), 0)
+		self.assertEqual(frappe.db.count("Tender"), 0)
+		self.assertTrue(year_plan("year2") and not year_plan("year2").active_version)
+
+	def test_3_the_bid_stage_tells_every_tender_with_its_bids(self):
+		out = canonical.run(current="bid_submission", next_year="annual_plan", force=True, commit=True)
+		self.assertFalse(out.get("rebuilt_after_partial_world"))
+		self.assertGreater(frappe.db.count("Bid Workspace", {"status": "Submitted"}), 4)
+
+	def test_4_the_full_world_again(self):
+		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import year_plan
+
+		out = canonical.run(force=True, commit=True)
 		self.assertTrue(out["ok"])
 		self.assertTrue(year_plan("year2").active_version)
 
@@ -555,18 +566,6 @@ class TestFreshSite(IntegrationTestCase):
 			canonical.prepare_site(current="annual_plan")
 			ensure.assert_not_called()
 
-	def test_an_open_tender_switches_on_the_simulated_bid_services(self):
-		"""A Tender left open is there to be bid on: signing and submitting need
-		the simulated services, even seeded only through `tenders`."""
-		from unittest import mock
-
-		with mock.patch("kentender_procurement.std_templates.services.installer.ensure_site_release"), \
-				mock.patch("kentender_procurement.std_templates.services.binding.require"), \
-				mock.patch("frappe.installer.update_site_config") as update, mock.patch.dict(frappe.conf, {"kt_bds_simulation_environment": 0}):
-			out = canonical.prepare_site(current="tenders", open_tender=True)
-		update.assert_called_once_with("kt_bds_simulation_environment", 1)
-		self.assertTrue(out["simulation_switched_on"])
-
 	def test_an_unusable_template_stops_the_run_at_once_and_says_why(self):
 		"""Found 4 Oct 2026: with the wrong wkhtmltopdf build the run went on to
 		fail at the requisition with "Youth is not supported"."""
@@ -623,52 +622,21 @@ class TestPartialBidWorld(IntegrationTestCase):
 		self.assertTrue(out["rebuilt_after_partial_world"])
 
 
-class TestOpenTender(IntegrationTestCase):
+class TestPublicTenders(IntegrationTestCase):
 	"""Owner, 4 Oct 2026: a demo site needs a Tender anyone can see on
-	/tenders and start a bid on. `open_tender` (make `OPEN=True`) stops the
-	canonical story before the submission deadline; a run asking for the
-	other shape rebuilds by itself. Runs only on a test site."""
+	/tenders. The executed portfolio's Medical-grade tablets Tender is open
+	past the as-at instant (deadline 25 Jun 2027), so the full world always
+	lists one (OPEN=True, which stopped the canonical Tender before its
+	deadline, was retired on 5 Oct 2026)."""
 
-	def test_open_goes_only_with_the_stages_before_the_deadline(self):
-		frappe.set_user("Administrator")
-		for current in ("requisitions", "bid_opening", "award"):
-			with self.assertRaisesRegex(frappe.ValidationError, "OPEN=True"):
-				canonical.run(current=current, open_tender=True, reseed=True, validate=False, force=True, commit=False)
-
-	def test_an_open_tender_is_listed_for_anyone_and_a_closed_run_rebuilds_it(self):
-		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import BIDDERS, bidder_bid, canonical_bid
+	def test_the_open_portfolio_tender_is_listed_for_anyone(self):
 		from kentender_procurement.bid_submission.services import reads
 
-		frappe.set_user("Administrator")
-		out = canonical.run(current="tenders", open_tender=True, validate=True, force=True, commit=True)
-		tender = out["seeded"]["tenders"]["tender"]
-		self.assertEqual(frappe.db.get_value("Tender", tender, "overall_status"), "Published — open")
-		reference = frappe.db.get_value("Tender", tender, "tender_reference")
-		# read on the real clock: the test site's pages sit on 18 Jun 2027 (plan
-		# D1), after this Tender's 12 Jun deadline
-		from kentender_core.services import test_clock
-
-		test_clock.set_instant(None)
+		_full()
+		tender = frappe.db.get_value("Tender", {"overall_status": "Published — open", "submission_deadline": (">", calendar.AS_AT)}, "tender_reference")
+		self.assertTrue(tender)
 		try:
 			frappe.set_user("Guest")
-			self.assertIn(reference, [r["reference"] for r in reads.get_available_tenders()["rows"]])
+			self.assertIn(tender, [r["reference"] for r in reads.get_available_tenders()["rows"]])
 		finally:
 			frappe.set_user("Administrator")
-			canonical.set_as_at()
-		again = canonical.run(current="tenders", open_tender=True, validate=True, force=True, commit=True)
-		self.assertTrue(again["seeded"]["tenders"]["idempotent"])
-
-		# with the bids: all four submitted, the Tender still open
-		out = canonical.run(current="bid_submission", open_tender=True, validate=True, force=True, commit=True)
-		tender = out["seeded"]["bid_submission"]["tender"]
-		self.assertEqual(frappe.db.get_value("Tender", tender, "overall_status"), "Published — open")
-		bids = [canonical_bid(tender)] + [bidder_bid(tender, b) for b in BIDDERS]
-		self.assertEqual([frappe.db.get_value("Bid Workspace", b, "status") for b in bids], ["Submitted"] * 4)
-		again = canonical.run(current="bid_submission", open_tender=True, validate=True, force=True, commit=True)
-		self.assertTrue(again["seeded"]["bid_submission"]["idempotent"])
-
-		# the ordinary story again: the Tender closes at its deadline
-		out = canonical.run(current="tenders", validate=True, force=True, commit=True)
-		self.assertEqual(frappe.db.get_value("Tender", out["seeded"]["tenders"]["tender"], "overall_status"), "Submission period ended")
-		# and the full world back, as the module leaves the site
-		self.assertTrue(canonical.run(validate=True, force=True, commit=True)["ok"])
