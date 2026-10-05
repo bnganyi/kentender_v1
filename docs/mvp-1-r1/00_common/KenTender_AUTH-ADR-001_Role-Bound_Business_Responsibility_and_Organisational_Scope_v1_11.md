@@ -1,13 +1,21 @@
 # AUTH-ADR-001 — Role-Bound Business Responsibility and Organisational Scope
 
+**Controlling approval — 3 October 2026.** The Project Owner instructed: “Mark the documents as approved”. This approves this version in the coordinated OVS v0.6 package, including its incorporated amendments. OVS-P01–P05 are approved. The incorporated REQ v1.13, CFG v0.17 and TPR v0.16 changes are accepted within their approved successors; this does not create separate retrospective approvals of those intermediate versions. Earlier proposed/pending wording is drafting history superseded by this record. Static design work and conformance matrices remain open; CM and the separate template walkthrough remain deferred. Approval does not establish implementation, seed execution, testing, legal clearance or production readiness.
+
+**OVS reference and owner-specific amendment (§§4.4, 5.3–5.4, 8).** Implement the owner-defined OVS v0.6 §4.1 read additions through existing responsibility registry and registered query/direct-read predicates. Match each valid role-scope pair without Cartesian privilege expansion. Resolve Tender lead/contributor scope through its immutable source handoff, not a new Frappe User Permission or permission store. Apply identical scope to rows, totals, evidence and search suggestions. Technical-read reconciliation follows the explicit proposed OVS v0.6 §4.2 distinction and requires coordinated approval.
+
+Shared usability rules are owned once by **OVS-CHG-001 v0.6**, especially §§3–8 and 12–15. This module retains its domain lifecycle, facts, commands and existing authority except the explicit proposed read additions above. Implement the named changes in the cited owner surfaces; do not copy shared usability chapters into this document. This amendment takes effect under the controlling approval above.
+
+**Predecessor approval record — 1 October 2026.** The Project Owner instructed: “Mark all the proposed documents as approved”. This approves AUTH-ADR-001 v1.10 in full, including its incorporated amendments. This record supersedes earlier pending/proposed approval wording and conditional predecessor-authority statements retained below as drafting history. Earlier versions remain historical. Approval does not establish implementation completion, test success, legal verification or production release; existing operating gates and substantive follow-ups remain in force.
+
 | Control | Value |
 |---|---|
 | Document ID | AUTH-ADR-001 |
-| Version | 1.10 |
-| Date | 25 September 2026 |
-| Approved | Pending |
-| Status | **Proposed for approval** |
-| Supersedes | v1.9 after approval; v1.9 remains effective until then |
+| Version | 1.11 |
+| Date | 3 October 2026 |
+| Approved on | 3 October 2026 |
+| Status | Approved — 3 October 2026 |
+| Supersedes | On approval only: source v1.10; approved baseline and pending chain listed in OVS impact schedule |
 | Change type | Narrow successor adding module-specific, non-authoritative STD-template inspection and concern reporting for Procurement Officer and HOPF. It does not alter assignments, scope, business authority, template ownership or technical-read rights. Active standards references move to KT-STD-001 v1.8 and CFG-CHG-002 v0.16. |
 | Applies to | Every KenTender module, list, count, detail, task, file, export, report, screen and business command |
 | Standards | Governed by **KT-STD-001 v1.8** for design input, page behaviour, implementation, verification, release evidence, shared fixtures, universal prohibitions and error-contract conventions |

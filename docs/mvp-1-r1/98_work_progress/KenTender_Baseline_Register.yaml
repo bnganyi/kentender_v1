@@ -59,167 +59,275 @@
     {
       "document_id": "STR-CHG-001",
       "title": "Clean Strategy Alignment",
-      "version": "1.8",
+      "version": "1.9",
       "category": "Module requirements",
       "module": "Strategy Alignment",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-13",
+      "approval_date": "2026-10-03",
       "supersedes": "v1.7 and earlier",
       "implementation_status": "Not evidenced",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "libfile_f5502a30807c8191b8d3f2910b96a9dc",
-      "filename": "KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_8.md",
+      "filename": "KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_9.md",
       "scope": "Strategy objectives and accepted alignment evidence consumed by Planning.",
       "dependencies": "KT-STD-001; AUTH-ADR-001",
-      "action": "Retain as current controlled baseline."
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "source_sha256": "1ea70ef6ab97675c3b5dc75990e36276be9bb9ab8f3848173fe9665cefa72ce6",
+      "prior_approved_baseline": {
+        "version": "1.8",
+        "approval_date": "2026-09-13",
+        "filename": "KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_8.md",
+        "requirement_status": "Approved requirement"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "1.9",
+        "proposed_filename": "KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_9.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "1.8"
+      }
     },
     {
       "document_id": "BUD-CHG-001",
       "title": "Clean Budget and Funding",
-      "version": "1.11",
+      "version": "1.12",
       "category": "Module requirements",
       "module": "Budget and Funding",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-25",
+      "approval_date": "2026-10-03",
       "supersedes": "v1.10 approved 23 September 2026; v1.9 and earlier",
       "implementation_status": "Not evidenced",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "libfile_9ee7baefbc088191af5a27ce1d7f7aff",
-      "filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_11.md",
+      "filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_12.md",
       "scope": "Funding ceilings, affordability, reservations and commitments, plus the Budget-owned receiving side of a Planning budget revision request. Budget remains separate from the statutory APP reservation denominator.",
       "dependencies": "PLN-CHG-001 v1.27; LAW-REG-001 v1.2; KT-STD-001 v1.8",
-      "action": "Implement the budget revision request receive, decline, withdraw and outcome contracts without treating the request as a revision, reservation or amount change."
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "source_sha256": "71ea6ca83c54841cbf18e2e4d978ea3769f9ceed64a7663b7744e186b043b4d4",
+      "prior_approved_baseline": {
+        "version": "1.11",
+        "approval_date": "2026-09-25",
+        "filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_11.md",
+        "requirement_status": "Approved requirement"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "1.12",
+        "proposed_filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_12.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "1.11"
+      }
     },
     {
       "document_id": "NDS-CHG-001",
       "title": "Clean Departmental Needs",
-      "version": "1.14",
+      "version": "1.16",
       "category": "Module requirements",
       "module": "Departmental Needs",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-21",
-      "supersedes": "v1.13 and earlier",
+      "approval_date": "2026-10-03",
+      "supersedes": "v1.14",
       "implementation_status": "Not evidenced",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "libfile_43204a8a82548191a05d0c20cabf0283",
-      "filename": "KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_14.md",
+      "filename": "KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_16.md",
       "scope": "Simple need capture, review and acceptance; consultation is optional and is not a gate.",
       "dependencies": "PLN-CHG-001; KT-STD-001",
-      "action": "Retain as current controlled baseline."
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "source_bundle": "files.zip; supplied control block",
+      "source_sha256": "23fe428b9200b60b760c0b838bd4a9db2dd91cf7fae356296418700c9d5722f4",
+      "prior_approved_baseline": {
+        "version": "1.15",
+        "approval_date": "2026-09-28",
+        "filename": "KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_15.md",
+        "requirement_status": "Approved requirement"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "1.16",
+        "proposed_filename": "KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_16.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "1.15"
+      }
     },
     {
       "document_id": "PLN-CHG-001",
       "title": "Clean Procurement Planning",
-      "version": "1.27",
+      "version": "1.29",
       "category": "Module requirements",
       "module": "Procurement Planning",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-25",
-      "supersedes": "v1.26 approved 25 September 2026; v1.25 approved 23 September 2026; all earlier Planning specifications",
+      "approval_date": "2026-10-03",
+      "supersedes": "v1.27",
       "implementation_status": "Not implemented",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "libfile_efd27d9b04ac8191bb06e17aef384d2e",
-      "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_27.md",
+      "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_29.md",
       "scope": "Complete Planning authority including the current-complete-APP reservation denominator, next-step and journey contract, corrected funding-request blockers, Planning-side budget revision request, hand-off register and Purchase-ready-for-requisition item.",
       "dependencies": "STR-CHG-001 v1.8; BUD-CHG-001 v1.11; NDS-CHG-001 v1.14; CFG-CHG-002 v0.13+; REQ-CHG-001 v1.12; KT-STD-001 v1.8",
-      "action": "Implement the approved v1.27 runtime and design contracts, including blocker explanations, budget revision hand-off and no-dead-end acceptance."
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "source_bundle": "files.zip; supplied control block",
+      "source_sha256": "e366d67a71365b236f852c631c35a14d5263833db1ca767c27994270e0606c8e",
+      "prior_approved_baseline": {
+        "version": "1.28",
+        "approval_date": "2026-09-28",
+        "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_28.md",
+        "requirement_status": "Approved requirement"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "1.29",
+        "proposed_filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_29.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "1.28"
+      }
     },
     {
       "document_id": "REQ-CHG-001",
       "title": "Structured Procurement Requisitions",
-      "version": "1.12",
+      "version": "1.14",
       "category": "Module requirements",
       "module": "Procurement Requisitions",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-25",
+      "approval_date": "2026-10-03",
       "supersedes": "v1.11 approved 24 September 2026; v1.9 and earlier; v1.10 remains withdrawn",
       "implementation_status": "Not evidenced",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "libfile_7fc3b6d8360c8191b1156d352993f7c3",
-      "filename": "KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_12.md",
+      "filename": "KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_14.md",
       "scope": "Structured requisition preparation, Planning-created Purchase ready for requisition hand-off, Budget reservation at authorisation and authorised handoff to Tenders.",
       "dependencies": "PLN-CHG-001 v1.27; BUD-CHG-001 v1.11; TPR-CHG-001; STD-TPL-001; STD-STD-001 v1.1",
-      "action": "Implement the REQ-owned ready-to-start item and verify exact Planning, Budget and Tender contracts."
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "source_sha256": "1dcc7b04f3fe6d4b9f25b2d34622133d586ab05eaa42b2a3c83daaf8fefd70f5",
+      "prior_approved_baseline": {
+        "version": "1.12",
+        "approval_date": "2026-09-25",
+        "filename": "KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_12.md",
+        "requirement_status": "Approved requirement"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "1.14",
+        "proposed_filename": "KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_14.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "1.13",
+        "pending_predecessor_version": "1.13",
+        "pending_predecessor_filename": "KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_13.md"
+      }
     },
     {
       "document_id": "CFG-CHG-002",
       "title": "Site Configuration and System Setup",
-      "version": "0.16",
+      "version": "0.18",
       "category": "Module requirements",
       "module": "System Setup",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-01",
+      "approval_date": "2026-10-03",
       "supersedes": "v0.15; prior approved v0.13 retained",
       "implementation_status": "Planned",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "libfile_e587a6e7587081918df85fee00004930",
-      "filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_16.md",
+      "filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_18.md",
       "scope": "Site, responsibilities, procurement rules, schedules, STD Templates inspection and supplier portal operating settings.",
       "dependencies": "AUTH-ADR-001; PLN-CHG-001; TPR-CHG-001; BDS-CHG-001; STD-TPL-001",
-      "action": "Approved 1 October 2026. Implement and verify the approved contract; retain existing release gates and open substantive findings.",
-      "proposed_revision": "v0.17 — KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_17.md; not approved; not yet in the document library; Open Tender bid-opening minimum 7 days beside the 21-day default"
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "source_sha256": "9edffbb3e185d43c0f6b748184fc17d582581e2feb266389f83da07383ddeede",
+      "prior_approved_baseline": {
+        "version": "0.16",
+        "approval_date": "2026-10-01",
+        "filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_16.md",
+        "requirement_status": "Approved requirement"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "0.18",
+        "proposed_filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_18.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "0.17",
+        "proposed_revision": "v0.17 — KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_17.md; not approved; not yet in the document library; Open Tender bid-opening minimum 7 days beside the 21-day default",
+        "pending_predecessor_version": "0.17",
+        "pending_predecessor_filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_17.md"
+      }
     },
     {
       "document_id": "TPR-CHG-001",
       "title": "Tenders",
-      "version": "0.15",
+      "version": "0.17",
       "category": "Module requirements",
       "module": "Tender Preparation and Publication",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-01",
+      "approval_date": "2026-10-03",
       "supersedes": "v0.13; prior approvals retained",
       "implementation_status": "Planned",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "libfile_000ff3f0efe881918a374f6f15819fbb",
-      "filename": "KenTender_TPR-CHG-001_Tenders_v0_15.md",
+      "filename": "KenTender_TPR-CHG-001_Tenders_v0_17.md",
       "scope": "Approved Tender preparation, approval, publication, clarifications, addenda, cancellation, exact bound STD-release lifecycle including published Superseded/Withdrawn behavior, and KT-STD-001 v1.8 journey guidance.",
       "dependencies": "REQ-CHG-001 v1.12; CFG-CHG-002 v0.16; STD-TPL-001 v0.10; STD-TPL-IMP-001 v1.1; BDS-CHG-001 v0.8; BOP-CHG-001 v0.10 and PRC-CHG-001 v0.9 proposed for post-close cancellation; Award-status owner pending",
-      "action": "Approved 1 October 2026. Implement and verify the approved contract; retain existing release gates and open substantive findings.",
-      "proposed_revision": "v0.16 — KenTender_TPR-CHG-001_Tenders_v0_16.md; not approved; not yet in the document library; a patch on approved v0.15",
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
       "prior_approved_baseline": {
-        "version": "0.13",
-        "approval_date": "2026-09-28",
-        "library_file_id": "libfile_6aaf080652a08191a8796a086f31b59c",
-        "filename": "KenTender_TPR-CHG-001_Tenders_v0_13.md"
+        "version": "0.15",
+        "approval_date": "2026-10-01",
+        "filename": "KenTender_TPR-CHG-001_Tenders_v0_15.md",
+        "requirement_status": "Approved requirement"
+      },
+      "source_sha256": "4a085fc2a369c9501cb3765b075e76e032defc1ff4c35fa5b91c3abea51674e5",
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "0.17",
+        "proposed_filename": "KenTender_TPR-CHG-001_Tenders_v0_17.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "0.16",
+        "proposed_revision": "v0.16 — KenTender_TPR-CHG-001_Tenders_v0_16.md; not approved; not yet in the document library; a patch on approved v0.15",
+        "pending_predecessor_version": "0.16",
+        "pending_predecessor_filename": "KenTender_TPR-CHG-001_Tenders_v0_16.md"
       }
     },
     {
       "document_id": "BDS-CHG-001",
       "title": "Supplier Portal and Electronic Bid Submission",
-      "version": "0.10",
+      "version": "0.11",
       "category": "Module requirements",
       "module": "Supplier/Bidder Workspace and Bid Submission",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-01",
+      "approval_date": "2026-10-03",
       "supersedes": "v0.8; prior approvals retained",
       "implementation_status": "In progress",
       "verification_status": "Pending",
       "release_status": "Blocked",
       "normative": "Yes",
       "library_file_id": "libfile_f8038abb4ed08191983a122d03a31c1f",
-      "filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_10.md",
+      "filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_11.md",
       "scope": "Public discovery, supplier Account, structured Goods/IT bid preparation, signature, receipt, replacement and sealed Bid Opening handoff, with actor-specific guidance and bound STD-release controls.",
       "dependencies": "TPR-CHG-001 v0.13; STD-TPL-001 v0.10; STD-TPL-IMP-001 v1.1; CFG-CHG-002 v0.16; AUTH-ADR-001 v1.10; KT-STD-001 v1.8; G1-REG-001 v1.1",
-      "action": "Approved 1 October 2026. Implement and verify the approved contract; retain existing release gates and open substantive findings.",
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
       "prior_approved_baseline": {
-        "version": "0.8",
-        "approval_date": "2026-09-26",
-        "library_file_id": "libfile_7252e90793e4819199bca1d68fab4457",
-        "filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_8.md"
+        "version": "0.10",
+        "approval_date": "2026-10-01",
+        "filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_10.md",
+        "requirement_status": "Approved requirement"
+      },
+      "source_sha256": "cba604f8d7f973f0c625cf4c7ca6cdd0b43003e4c8a445f93521106df2149fba",
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "0.11",
+        "proposed_filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_11.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "0.10"
       }
     },
     {
@@ -235,18 +343,19 @@
       "verification_status": "Pending",
       "release_status": "Candidate",
       "normative": "Yes",
-      "library_file_id": "",
+      "library_file_id": "libfile_b28f18acf8c481919a9107d5d50954dc",
       "filename": "KenTender_STD-TPL-001_IT_Equipment_Tender_Template_Curation_and_Release_Pack_v0_15.md",
       "scope": "Controlled template content and construction, installed integrity, administrative inspection and Administrator On/Off switch for new Tender binding. v0.12 and v0.13 add, from template release 1.2, the first supplier task wording, supplied values, label parameters, the joint-venture member composition, the tender security amount and expiry response and per-obligation warranty/support responses. v0.14 and v0.15 add, from template releases 1.3 and 1.4, content-quality checks and the official wording, the table control, and each Tenderer's business profile held on its supplier Account and copied into each bid per entity.",
       "dependencies": "KT-STD-001 v1.8; REQ-CHG-001 v1.12; TPR-CHG-001 v0.11; BDS-CHG-001 v0.7 and v0.8; STD-TPL-IMP-001 v1.0; CFG-CHG-002 v0.16 (as cited in v0.13; see AUD-022)",
-      "action": "Approved v0.15 governs from 3 October 2026 (Project Owner: \"Mark template specification v0.15 as approved, and commit all pending work\"); it carries v0.14 forward and specifies release 1.4 (renderer 1.2.0), which is built, installed On and switched on at the dev and test sites. Approval does not install or change a release and is not evidence of implementation or verification. (Before 3 October 2026 read: Approved v0.13 governs (register corrected 2 October 2026 from v0.10; AUD-021). Release 1.2 shows Confidential Business Questionnaire defects found in QA on 2 October 2026; Parts A and B are to be made in successor versions (DEC-035). v0.14 adds the template walkthrough and validator checks 22 and 23 (DEC-036). (Before 2 October 2026 read: Finish and verify release 1.1 assets; install the compatible digest-matched bundle On by default or Off by deployment request. No separate manifest approval.))",
+      "action": "Approved v0.15 source confirmed. Apply scoped OVS amendment in impact schedule at next coordinated successor; numbering awaits separate walkthrough rebase. No new template successor allocated.",
       "proposed_revision": "",
       "prior_approved_baseline": {
         "version": "0.13",
         "approval_date": "2026-09-27",
         "library_file_id": "",
         "filename": "KenTender_STD-TPL-001_IT_Equipment_Tender_Template_Curation_and_Release_Pack_v0_13.md"
-      }
+      },
+      "source_sha256": "9d34e53e11bbb695ddfb0be83e5a3e38411cf81c4d434a56512174227d159366"
     },
     {
       "document_id": "STD-TPL-IMP-001",
@@ -270,47 +379,69 @@
     {
       "document_id": "KT-STD-001",
       "title": "Document, Design and Verification Standards",
-      "version": "1.14",
+      "version": "1.22",
       "category": "Cross-cutting standard",
       "module": "All",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-03",
-      "supersedes": "v1.13 and earlier",
+      "approval_date": "2026-10-04",
+      "supersedes": "v1.21 on approval; v1.15 was the approved baseline",
       "implementation_status": "Not applicable",
       "verification_status": "Passed",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "",
-      "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_14.md",
-      "scope": "Current cross-cutting standard, including plain language, minimum steps, Scheduled next step and actor/state/event conformance; v1.11 adds the §8.3 fixture actors Daniel Otieno (technical operator) and Jane Wanjiku (public observer), and v1.12 adds Nadia Kamau (release operator); retains earlier design and verification rules. v1.14 adds eight supplier people: Afya's Mary Wanjiku and David Ouma, and the people of Jirani, Pwani and Mlima.",
+      "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_22.md",
+      "scope": "v1.22 (approved 4 October 2026): Frappe v16 surfaces, one bordered white sheet on a neutral ground, the Home and Analytics archetypes; earlier content retained. Current cross-cutting standard, including plain language, minimum steps, Scheduled next step and actor/state/event conformance; v1.11 adds the §8.3 fixture actors Daniel Otieno (technical operator) and Jane Wanjiku (public observer), and v1.12 adds Nadia Kamau (release operator); retains earlier design and verification rules. v1.14 adds eight supplier people: Afya's Mary Wanjiku and David Ouma, and the people of Jirani, Pwani and Mlima.",
       "dependencies": "Workflow Guidance Standard; all controlled change documents",
-      "action": "Approved 3 October 2026 (Project Owner: \"All docs approved.\"). Apply to future and revised contracts; use its registered actors, including the eight supplier people in §8.3. Repository file only (no library file).",
+      "action": "Approved 4 October 2026 (v1.22). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
       "prior_approved_baseline": {
-        "version": "1.12",
-        "approval_date": "2026-09-30",
-        "library_file_id": "libfile_4f7bf3bc8c0c8191b1e3ff2e2f3916da",
-        "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_12.md"
+        "version": "1.15",
+        "approval_date": "2026-10-03",
+        "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_15.md",
+        "requirement_status": "Approved requirement"
       },
-      "proposed_revision": null
+      "source_sha256": "904eba283646caa6f964a3b43f2f259c38a1fc61e87bc22b78273d123c4d526b",
+      "approval_record": "Project Owner, 4 October 2026, verbatim: “Yes”, answering “Shall I apply this pass, and then approve KT-STD v1.22, HOME v0.6 and ANL v0.8 together?”",
+      "approval_history": {
+        "proposed_version": "1.22",
+        "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_22.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "1.15",
+        "proposed_revision": null
+      }
     },
     {
       "document_id": "AUTH-ADR-001",
       "title": "Role-Bound Business Responsibility and Organisational Scope",
-      "version": "1.10",
+      "version": "1.11",
       "category": "Architecture decision record",
       "module": "Identity and Access",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-01",
+      "approval_date": "2026-10-03",
       "supersedes": "v1.9; prior approvals retained",
       "implementation_status": "Not evidenced",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "libfile_177096acafa48191a78718d3872b3d79",
-      "filename": "KenTender_AUTH-ADR-001_Role-Bound_Business_Responsibility_and_Organisational_Scope_v1_10.md",
+      "filename": "KenTender_AUTH-ADR-001_Role-Bound_Business_Responsibility_and_Organisational_Scope_v1_11.md",
       "scope": "Approved v1.9 responsibility model plus bounded, non-authoritative STD-template inspection and concern access for Procurement Officer and HOPF.",
       "dependencies": "CFG-CHG-002 v0.16; STD-TPL-001 v0.10; all role-aware modules",
-      "action": "Approved 1 October 2026. Implement and verify the approved contract; retain existing release gates and open substantive findings."
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "source_sha256": "68737c1f1dfabf7f466c668661a1f5835a3b8af1bc0c2ca384beb1c37a3c8ba3",
+      "prior_approved_baseline": {
+        "version": "1.10",
+        "approval_date": "2026-10-01",
+        "filename": "KenTender_AUTH-ADR-001_Role-Bound_Business_Responsibility_and_Organisational_Scope_v1_10.md",
+        "requirement_status": "Approved requirement"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "1.11",
+        "proposed_filename": "KenTender_AUTH-ADR-001_Role-Bound_Business_Responsibility_and_Organisational_Scope_v1_11.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "1.10"
+      }
     },
     {
       "document_id": "LAW-REG-001",
@@ -334,21 +465,34 @@
     {
       "document_id": "SEED-001",
       "title": "Harmonized End-to-End Fixture",
-      "version": "1.3",
+      "version": "1.4",
       "category": "Fixture standard",
       "module": "Cross-module",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-12",
+      "approval_date": "2026-10-03",
       "supersedes": "v1.2 and earlier",
       "implementation_status": "Not evidenced",
       "verification_status": "Pending",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "libfile_a5c959436ba48191912c97c010513fdb",
-      "filename": "KenTender_SEED-001_Harmonized_End_to_End_Fixture_v1_3.md",
+      "filename": "KenTender_SEED-001_Harmonized_End_to_End_Fixture_v1_4.md",
       "scope": "Shared deterministic actors, dates, values and identities across modules.",
       "dependencies": "All modules",
-      "action": "Reconcile to the reservation correction and Gate 1 public/vendor documents before integrated verification."
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "prior_approved_baseline": {
+        "version": "1.3",
+        "approval_date": "2026-09-12",
+        "filename": "KenTender_SEED-001_Harmonized_End_to_End_Fixture_v1_3.md",
+        "requirement_status": "Approved requirement"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "1.4",
+        "proposed_filename": "KenTender_SEED-001_Harmonized_End_to_End_Fixture_v1_4.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "1.3"
+      }
     },
     {
       "document_id": "SEED-OPS-001",
@@ -426,21 +570,35 @@
     {
       "document_id": "KT-RCA-001",
       "title": "Roadmap Coverage Assessment",
-      "version": "1.2",
+      "version": "1.3",
       "category": "Programme assessment",
       "module": "Programme",
-      "requirement_status": "Directional",
-      "approval_date": "",
+      "requirement_status": "Approved requirement",
+      "approval_date": "2026-10-03",
       "supersedes": "v1.1",
       "implementation_status": "Not applicable",
       "verification_status": "Not applicable",
       "release_status": "Not applicable",
-      "normative": "No",
+      "normative": "Yes",
       "library_file_id": "libfile_483ff064d904819188eaf4179672fb39",
-      "filename": "KenTender_Roadmap_Coverage_Assessment_v1_2.md",
+      "filename": "KenTender_Roadmap_Coverage_Assessment_v1_3.md",
       "scope": "Coverage through approved Bid Opening v0.10 and Evaluation v0.4; Award next, followed by Supplier Management. Proposed coordinated amendments and production gates remain distinct.",
       "dependencies": "Source roadmap; current controlled baseline",
-      "action": "Use v1.2 for programme sequencing: Award next. Directional assessment only; preserves owner approvals, Gate 1 boundary and outstanding integration/release work."
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "source_sha256": "959f9fa4d3d57263159ab2f0996789d011e1664c998e6a9aa5a24df9f0f5a747",
+      "prior_approved_baseline": {
+        "version": "1.2",
+        "approval_date": "",
+        "filename": "KenTender_Roadmap_Coverage_Assessment_v1_2.md",
+        "requirement_status": "Directional"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "1.3",
+        "proposed_filename": "KenTender_Roadmap_Coverage_Assessment_v1_3.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "1.2"
+      }
     },
     {
       "document_id": "RES-IMP-001",
@@ -597,103 +755,265 @@
     {
       "document_id": "TRUST-ADR-001",
       "title": "Shared Signing and Sealed Custody",
-      "version": "0.1",
+      "version": "0.2",
       "category": "Architecture decision",
       "module": "Shared Trust Infrastructure",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-27",
+      "approval_date": "2026-10-03",
       "supersedes": "",
       "implementation_status": "Not started",
       "verification_status": "Not started",
       "release_status": "Blocked",
       "normative": "Yes",
       "library_file_id": "libfile_d1eb23c985808191b4a6e33a29af86b5",
-      "filename": "KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_1.md",
+      "filename": "KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_2.md",
       "scope": "Locks two distinct signing/decision semantics and separate multi-person sealed-bid custody, defers actual production mechanisms to a shared support module, and permits synthetic test proxies only.",
       "dependencies": "BDS-CHG-001 v0.8 (v0.9 proposed); BOP-CHG-001 v0.10 proposed; PRC-CHG-001 v0.9 proposed; LAW-V-001",
-      "action": "Approved v0.1 remains architecture authority. Its static Consumers row cites historical BOP v0.1/PRC v0.2; update by a later controlled revision. Test infrastructure administrator is outside proxy confidentiality guarantee. Production support module and operating profile remain separate."
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "prior_approved_baseline": {
+        "version": "0.1",
+        "approval_date": "2026-09-27",
+        "filename": "KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_1.md",
+        "requirement_status": "Approved requirement"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "0.2",
+        "proposed_filename": "KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_2.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "0.1"
+      }
     },
     {
       "document_id": "BOP-CHG-001",
       "title": "Electronic Bid Opening",
-      "version": "0.10",
+      "version": "0.11",
       "category": "Module requirements",
       "module": "Bid Opening",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-29",
+      "approval_date": "2026-10-03",
       "supersedes": "v0.9 approved 29 September 2026, retained as historical evidence",
       "implementation_status": "In progress",
       "verification_status": "Pending",
       "release_status": "Not approved",
       "normative": "Yes",
       "library_file_id": "libfile_a398ef6e43f08191981ed3372ee79e29",
-      "filename": "KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_10.md",
+      "filename": "KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_11.md",
       "scope": "Approved design and development contract. v0.10 adds the opening-access-unavailable scenario, four completed-record correction kinds, the AO Your turn state and a unified Tender route.",
       "dependencies": "KT-STD-001 v1.10 approved; TPR-CHG-001 v0.13 approved (v0.14 post-close seam proposed); BDS-CHG-001 v0.8 approved (v0.9 correction proposed); PRC-CHG-001 v0.9 approved; TRUST-ADR-001 v0.1 approved; LAW-V-001; future Evaluation intake",
-      "action": "Implement approved v0.10 under KT-STD-001 v1.10 with PRC v0.9. Preserve deferred signing/custody support and the separate TPR v0.14 dependency. SEED-OPS v1.18 reports a built canonical stage; this supports In progress, not full implementation or acceptance completion. Verify module-wide evidence under AUD-020."
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "source_sha256": "a3c3f61bcc12b9992831b9fd1948356dedcc803bae53c29403b9079ef375ac99",
+      "prior_approved_baseline": {
+        "version": "0.10",
+        "approval_date": "2026-09-29",
+        "filename": "KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_10.md",
+        "requirement_status": "Approved requirement"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "0.11",
+        "proposed_filename": "KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_11.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "0.10"
+      }
     },
     {
       "document_id": "PRC-CHG-001",
       "title": "Minimal Procurement Proceedings",
-      "version": "0.10",
+      "version": "0.11",
       "category": "Module requirements",
       "module": "Procurement Proceedings",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-01",
+      "approval_date": "2026-10-03",
       "supersedes": "v0.9; prior approvals retained",
       "implementation_status": "Not started",
       "verification_status": "Not started",
       "release_status": "Not approved",
       "normative": "Yes",
       "library_file_id": "libfile_f70200e4567c8191b2aceb304a458557",
-      "filename": "KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_10.md",
+      "filename": "KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_11.md",
       "scope": "Approved minimal shared service bound to BOP v0.10: attributed pre-session arrivals carried into actual session view, owner events, versioned opening record, personal target proof, one-action empty outcome and terminal partial/never-held records. No standalone UI.",
       "dependencies": "BOP-CHG-001 v0.10 approved; KT-STD-001 v1.10 approved; TPR-CHG-001 v0.13 approved (v0.14 proposed); TRUST-ADR-001 v0.1 approved; LAW-V-001",
-      "action": "Approved 1 October 2026. Implement and verify the approved contract; retain existing release gates and open substantive findings.",
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
       "prior_approved_baseline": {
-        "version": "0.9",
-        "approval_date": "2026-09-29",
-        "library_file_id": "libfile_e3c0b33a03448191b9463fc13f4a9c0f",
-        "filename": "KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_9.md"
+        "version": "0.10",
+        "approval_date": "2026-10-01",
+        "filename": "KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_10.md",
+        "requirement_status": "Approved requirement"
+      },
+      "source_sha256": "668994a42f85d7e5aa73bea98a49a573f61a7f0f944f15dc485eb6cb1abb790e",
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "0.11",
+        "proposed_filename": "KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_11.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "0.10"
       }
     },
     {
       "document_id": "EVL-CHG-001",
       "title": "Bid Evaluation",
-      "version": "0.4",
+      "version": "0.5",
       "category": "Module requirements",
       "module": "Bid Evaluation",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-30",
+      "approval_date": "2026-10-03",
       "supersedes": "v0.3 proposed detail; approved high-level automation approach retained",
       "implementation_status": "In progress",
       "verification_status": "Pending",
       "release_status": "Not approved",
       "normative": "Yes",
       "library_file_id": "libfile_afeac7a8387c81918c95b97accf8734e",
-      "filename": "KenTender_EVL-CHG-001_Bid_Evaluation_v0_4.md",
+      "filename": "KenTender_EVL-CHG-001_Bid_Evaluation_v0_5.md",
       "scope": "Automatic evaluation, focused committee review and signed report. Second-review corrections align commands, tasks, source issues, scope gates and dated fixtures.",
       "dependencies": "KT-STD-001 v1.12; BOP v0.10; BDS v0.8; PRC v0.9; TRUST v0.1; TPR v0.13; STD-TPL v0.10. Coordinated owner amendments drafted: PRC v0.10, TPR v0.15, BDS v0.10, KT-STD v1.13; approval/integration outstanding.",
-      "action": "Approved EVL v0.4 retained. Four coordinated owner successors drafted and linked in their register entries. Review amendments and implement/test the bindings; executable template rules and legal/Trust work remain open. Gate 1 unchanged. SEED-OPS v1.18 reports a built canonical stage; this supports In progress, not full implementation or acceptance completion. Verify module-wide evidence under AUD-020."
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "source_sha256": "9d99092e12554aed6017458e790f68537a614f195c7e6f878769cd13829474ae",
+      "prior_approved_baseline": {
+        "version": "0.4",
+        "approval_date": "2026-09-30",
+        "filename": "KenTender_EVL-CHG-001_Bid_Evaluation_v0_4.md",
+        "requirement_status": "Approved requirement"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "0.5",
+        "proposed_filename": "KenTender_EVL-CHG-001_Bid_Evaluation_v0_5.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "0.4"
+      }
     },
     {
       "document_id": "AWD-CHG-001",
       "title": "Award",
-      "version": "0.4",
+      "version": "0.5",
       "category": "Module requirements",
       "module": "Award",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-01",
+      "approval_date": "2026-10-03",
       "supersedes": "v0.3; prior versions retained",
       "implementation_status": "In progress",
       "verification_status": "Pending",
       "release_status": "Not approved",
       "normative": "Yes",
       "library_file_id": "libfile_6c148e829bc08191aa40b7f399460732",
-      "filename": "KenTender_AWD-CHG-001_Award_v0_4.md",
+      "filename": "KenTender_AWD-CHG-001_Award_v0_5.md",
       "scope": "Professional opinion, AO decision, bidder notices, acceptance, waiting conditions and delivery to Contracting.",
       "dependencies": "EVL v0.4; STD-TPL v0.10; KT-STD v1.12; TPR v0.13; BDS v0.8; PRC v0.9; TRUST v0.1; effective AUTH/Budget. Proposed owner interfaces: AWD-IF-01–07.",
-      "action": "Approved 1 October 2026. Implement and verify the approved contract; retain existing release gates and open substantive findings."
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "source_sha256": "db64d9e3b0f8c3a5b18cd3d1aee16194651cfcd66efa9358416dc36cb6596c55",
+      "prior_approved_baseline": {
+        "version": "0.4",
+        "approval_date": "2026-10-01",
+        "filename": "KenTender_AWD-CHG-001_Award_v0_4.md",
+        "requirement_status": "Approved requirement"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "0.5",
+        "proposed_filename": "KenTender_AWD-CHG-001_Award_v0_5.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "0.4"
+      }
+    },
+    {
+      "document_id": "OVS-CHG-001",
+      "title": "System Usability and Decision Visibility",
+      "version": "0.6",
+      "category": "Cross-module change",
+      "module": "All MVP 1 modules",
+      "requirement_status": "Approved requirement",
+      "approval_date": "2026-10-03",
+      "supersedes": "v0.5 proposed",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "release_status": "Not released",
+      "normative": "Yes",
+      "library_file_id": "libfile_da261d7f56c48191b1e72927c1156931",
+      "filename": "KenTender_OVS-CHG-001_System_Usability_and_Decision_Visibility_v0_6.md",
+      "scope": "Shared usability; owner-specific read additions; independent CM",
+      "dependencies": "Current owners in supplied archive; source gaps in impact schedule",
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "prior_approved_baseline": {
+        "version": "0.6",
+        "approval_date": "",
+        "filename": "KenTender_OVS-CHG-001_System_Usability_and_Decision_Visibility_v0_6.md",
+        "requirement_status": "Project Owner review"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026"
+    },
+    {
+      "document_id": "HOME-CHG-001",
+      "title": "Home",
+      "version": "0.6",
+      "category": "Cross-module change",
+      "module": "Core (Home page)",
+      "requirement_status": "Approved requirement",
+      "approval_date": "2026-10-04",
+      "supersedes": "v0.4 approved baseline; v0.5 proposed",
+      "implementation_status": "In progress",
+      "verification_status": "Pending",
+      "release_status": "Not approved",
+      "normative": "Yes",
+      "library_file_id": "",
+      "filename": "KenTender_HOME-CHG-001_Home_v0_6.md",
+      "scope": "Cross-module Home page at /app/home: header, three summary columns, My work, Coming up, Waiting on others, Records you oversee and Recently completed actions; read-only and server-composed.",
+      "dependencies": "KT-STD-001 v1.22; OVS-CHG-001 v0.6; AUTH-ADR-001 v1.11; CTX-CHG-001 v1.1; owner documents named in its Sources",
+      "action": "Approved 4 October 2026. Built through Phase 5 (implementation tracker docs/mvp-1-r1/18_home_page); release gate, fidelity gate and owner-gated rows open.",
+      "source_sha256": "68a2c69065e1a1bbe5975408c65da0e316ff184a61947e7cb6d968006b85387f",
+      "approval_record": "Project Owner, 4 October 2026, verbatim: “Yes”, answering “Shall I apply this pass, and then approve KT-STD v1.22, HOME v0.6 and ANL v0.8 together?”"
+    },
+    {
+      "document_id": "ANL-CHG-001",
+      "title": "Procurement Analytics",
+      "version": "0.8",
+      "category": "Cross-module change",
+      "module": "Core (Analytics)",
+      "requirement_status": "Approved requirement",
+      "approval_date": "2026-10-04",
+      "supersedes": "v0.6 approved baseline; v0.7 proposed",
+      "implementation_status": "In progress",
+      "verification_status": "Pending",
+      "release_status": "Not approved",
+      "normative": "Yes",
+      "library_file_id": "",
+      "filename": "KenTender_ANL-CHG-001_Procurement_Analytics_v0_8.md",
+      "scope": "Read-only Procurement Analytics at /app/analytics over published owner reads.",
+      "dependencies": "KT-STD-001 v1.22; OVS-CHG-001 v0.6; AUTH-ADR-001 v1.11; CTX-CHG-001 v1.1; owner documents named in its Sources",
+      "action": "Approved 4 October 2026. Built and walked on the test site (implementation tracker docs/mvp-1-r1/19_analytics); owner-gated rows open.",
+      "source_sha256": "907a3fb2c5ad912f8fb7c00897cc5caaab192d1027d036b4260051ba5b36214d",
+      "approval_record": "Project Owner, 4 October 2026, verbatim: “Yes”, answering “Shall I apply this pass, and then approve KT-STD v1.22, HOME v0.6 and ANL v0.8 together?”"
+    },
+    {
+      "document_id": "CTX-CHG-001",
+      "title": "Working Context",
+      "version": "1.1",
+      "category": "Cross-module context",
+      "module": "Shared context",
+      "requirement_status": "Approved requirement",
+      "approval_date": "2026-10-03",
+      "supersedes": "",
+      "implementation_status": "v1.0 claims implemented; not reverified",
+      "verification_status": "Not reverified",
+      "release_status": "Not established",
+      "normative": "Yes",
+      "filename": "KenTender_CTX-CHG-001_Working_Context_v1_1.md",
+      "scope": "Working filters; proposed retirement of obsolete PE and permission model",
+      "dependencies": "AUTH v1.10; CFG; KT-STD v1.14; OVS v0.6",
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "prior_approved_baseline": {
+        "version": "1.0",
+        "approval_date": "",
+        "filename": "KenTender_CTX-CHG-001_Working_Context_v1.0.md",
+        "requirement_status": "Historical implemented source"
+      },
+      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_history": {
+        "proposed_version": "1.1",
+        "proposed_filename": "KenTender_CTX-CHG-001_Working_Context_v1_1.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "1.0"
+      }
     }
   ],
   "interfaces": [
@@ -768,10 +1088,10 @@
       "upstream": "STD Templates",
       "downstream": "Requisitions/Tenders/Bids",
       "contract": "Digest-matched installed template, construction evidence, shared compiler, renderer adapter and site On/Off switch",
-      "status": "STD v0.13 and runtime v1.1 approved; bundle pending",
+      "status": "STD v0.15 approved; runtime implementation not reverified",
       "implementation_status": "Planned",
       "test_status": "Pending",
-      "owner_doc": "STD-TPL-001 v0.13 / STD-TPL-IMP-001 v1.1",
+      "owner_doc": "STD-TPL-001 v0.15 / STD-TPL-IMP-001 v1.1",
       "failure_rule": "No module may infer missing semantics, bypass integrity/renderer checks, or bind a new Tender while the site switch is Off."
     },
     {
@@ -848,7 +1168,7 @@
       "status": "Closed in requirements",
       "implementation_status": "Planned",
       "test_status": "Not evidenced",
-      "owner_doc": "STD-TPL-001 v0.13 / STD-TPL-IMP-001 v1.1 / TPR-CHG-001 v0.13",
+      "owner_doc": "STD-TPL-001 v0.15 / STD-TPL-IMP-001 v1.1 / TPR-CHG-001 v0.13",
       "failure_rule": "New binding requires site On and valid integrity/renderer; Off preserves existing bindings, safety/legal withdrawal blocks affected unpublished publication; never automatically rebind."
     },
     {
@@ -911,11 +1231,55 @@
       "upstream": "STD Templates / Tenders",
       "downstream": "Template walkthrough (STD Templates and Tender record)",
       "contract": "TemplateWalkthroughProjection v1 compiled at installation from the release fixture; walkthrough preview of an unpublished Tender Version from the shared compiler; frozen Published Bid Definition for a published Tender; registered renderer in walkthrough mode",
-      "status": "Proposed interface",
+      "status": "Separate change approval reported; integration/rebase pending",
       "implementation_status": "Not started",
       "test_status": "Not started",
-      "owner_doc": "STD-TPL-001 proposed v0.14 / TPR-CHG-001 and BDS-CHG-001 successors not yet drafted / STD-TPL-IMP-001 v1.1",
+      "owner_doc": "STD-TPL v0.15 control block references approved 2 October walkthrough change; separate source not supplied; successor numbering pending",
       "failure_rule": "No substitute renderer, raw view or partial workspace; a preview is never stored as a Published Bid Definition or shown to a supplier; no supplier Draft or submitted content is read; nothing is saved and no gate result is recorded."
+    },
+    {
+      "interface_id": "IF-021",
+      "upstream": "Stage owners",
+      "downstream": "Tender record",
+      "contract": "Owner-filtered Decisions and progress summary; version, reason, actor/date, outstanding matter and links",
+      "status": "Approved interface",
+      "implementation_status": "Not started",
+      "test_status": "Not started",
+      "owner_doc": "OVS-CHG-001 v0.6 and limited owner successors",
+      "failure_rule": "Hide denied stages; isolate authorised load failures; preserve TPR whole-queue summary counts."
+    },
+    {
+      "interface_id": "IF-022",
+      "upstream": "Evaluation",
+      "downstream": "AO/HOPF and scoped department readers",
+      "contract": "Exact delivered-version evidence projection and restricted departmental outcome summary",
+      "status": "Approved interface",
+      "implementation_status": "Not started",
+      "test_status": "Not started",
+      "owner_doc": "OVS-CHG-001 v0.6 and limited owner successors",
+      "failure_rule": "No unfinished correction or cross-scope evidence; retain earlier delivered version."
+    },
+    {
+      "interface_id": "IF-023",
+      "upstream": "Opening/Evaluation owners",
+      "downstream": "Procurement meetings register",
+      "contract": "Scoped session metadata and counts through authoritative Tender source attribution",
+      "status": "Approved interface",
+      "implementation_status": "Not started",
+      "test_status": "Not started",
+      "owner_doc": "OVS-CHG-001 v0.6 and limited owner successors",
+      "failure_rule": "Unavailable verdict yields incomplete totals; no denied rows or duplicate sessions."
+    },
+    {
+      "interface_id": "IF-024",
+      "upstream": "AUTH and module owners",
+      "downstream": "Module registers, history and search",
+      "contract": "OVS §4.1 explicit read additions through registered owner predicates",
+      "status": "Approved interface",
+      "implementation_status": "Not started",
+      "test_status": "Not started",
+      "owner_doc": "OVS-CHG-001 v0.6 and limited owner successors",
+      "failure_rule": "No new role/scope store; no Draft or bid access beyond explicit owner rule."
     }
   ],
   "decisions": [
@@ -1222,6 +1586,22 @@
       "owner_doc": "SEED-OPS-001 v1.21 §11 D23; Project Owner, 2026-10-03: \"Four bids\"",
       "implementation_effect": "Bid Submission, Bid Opening, Bid Evaluation and Award seeds build and validate four bids; every unsuccessful bidder receives a notice. BDS-CHG-001 §13.3, BOP-CHG-001 §10, EVL-CHG-001 §11.1, AWD-CHG-001 §13 and SEED-001's successor state the four-bid story in their next versions. New supplier names are proposed in KT-STD-001 v1.14.",
       "design_effect": "None."
+    },
+    {
+      "decision_id": "DEC-039",
+      "decision": "Complete MVP 1 usability change; common rules consolidated in OVS, limited owner references/conflict corrections, approved history preserved.",
+      "status": "Approved 3 October 2026",
+      "owner_doc": "Project Owner instructions 3 October 2026; OVS v0.6 §18",
+      "implementation_effect": "No silent changes to authority or workflow; verify all applicable modules.",
+      "design_effect": "Persistent decisions, evidence, navigation and outstanding work."
+    },
+    {
+      "decision_id": "DEC-040",
+      "decision": "OVS v0.6 §4.1 proposed read additions and departmental downstream visibility.",
+      "status": "Approved 3 October 2026",
+      "owner_doc": "OVS-CHG-001 v0.6 §4.1",
+      "implementation_effect": "Requires matching owner read predicates and coordinated approval.",
+      "design_effect": "Scoped progress and outcomes without committee appointment or broad bid access."
     }
   ],
   "delivery_items": [
@@ -1825,6 +2205,97 @@
       "implementation_status": "Not started",
       "verification_status": "Not started",
       "release_gate": "No"
+    },
+    {
+      "item_id": "OVS-001",
+      "area": "Evaluation",
+      "change": "Restore delivered report/evidence visibility through corrections and Award hand-off",
+      "functional": "OVS v0.6 and matching owner amendments",
+      "design": "Current KT-STD pattern; canonical fixtures; no duplicate workflow",
+      "owner_doc": "OVS-CHG-001 v0.6",
+      "requirement_status": "Approved requirement",
+      "release_gate": "Yes — affected feature only",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "evidence": "No runtime verification claimed."
+    },
+    {
+      "item_id": "OVS-002",
+      "area": "Shared usability",
+      "change": "Persistent registers, records, scoped search, history and existing action links",
+      "functional": "OVS v0.6 and matching owner amendments",
+      "design": "Current KT-STD pattern; canonical fixtures; no duplicate workflow",
+      "owner_doc": "OVS-CHG-001 v0.6",
+      "requirement_status": "Approved requirement",
+      "release_gate": "Yes — affected feature only",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "evidence": "No runtime verification claimed."
+    },
+    {
+      "item_id": "OVS-003",
+      "area": "Departmental oversight",
+      "change": "Implement explicit OVS §4.1 owner reads and immutable source scope",
+      "functional": "OVS v0.6 and matching owner amendments",
+      "design": "Current KT-STD pattern; canonical fixtures; no duplicate workflow",
+      "owner_doc": "OVS-CHG-001 v0.6",
+      "requirement_status": "Approved requirement",
+      "release_gate": "Yes — affected feature only",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "evidence": "No runtime verification claimed."
+    },
+    {
+      "item_id": "OVS-004",
+      "area": "Tender and Proceedings",
+      "change": "Stage summaries and correctly filtered meeting register",
+      "functional": "OVS v0.6 and matching owner amendments",
+      "design": "Current KT-STD pattern; canonical fixtures; no duplicate workflow",
+      "owner_doc": "OVS-CHG-001 v0.6",
+      "requirement_status": "Approved requirement",
+      "release_gate": "Yes — affected feature only",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "evidence": "No runtime verification claimed."
+    },
+    {
+      "item_id": "OVS-005",
+      "area": "Contract Management",
+      "change": "Apply all-stage usability with independent external contract entry; source reconciliation pending",
+      "functional": "OVS v0.6 and matching owner amendments",
+      "design": "Current KT-STD pattern; canonical fixtures; no duplicate workflow",
+      "owner_doc": "OVS-CHG-001 v0.6",
+      "requirement_status": "Approved requirement",
+      "release_gate": "Yes — affected feature only",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "evidence": "No runtime verification claimed."
+    },
+    {
+      "item_id": "OVS-006",
+      "area": "Verification",
+      "change": "Complete cross-role usability, correction, permission, search and recovery journeys",
+      "functional": "OVS v0.6 and matching owner amendments",
+      "design": "Current KT-STD pattern; canonical fixtures; no duplicate workflow",
+      "owner_doc": "OVS-CHG-001 v0.6",
+      "requirement_status": "Approved requirement",
+      "release_gate": "Yes — affected feature only",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "evidence": "No runtime verification claimed."
+    },
+    {
+      "item_id": "OVS-007",
+      "area": "Working context",
+      "change": "Align context with single-site identity and current AUTH; remove obsolete permission/context prerequisites",
+      "functional": "Proposed CTX v1.1 and OVS v0.6",
+      "design": "Local reversible filters; direct records open from their own context",
+      "owner_doc": "CTX-CHG-001 v1.1",
+      "requirement_status": "Approved requirement",
+      "release_gate": "Yes — affected context only",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "evidence": "No repository verification claimed"
     }
   ],
   "future_work": [
@@ -2195,12 +2666,89 @@
       "finding_id": "AUD-024",
       "severity": "Low",
       "type": "Version coordination",
-      "finding": "STD-TPL-001 proposed v0.14 (template walkthrough) was drafted from v0.13 while successor versions for questionnaire Parts A and B are being prepared separately; two successors could claim v0.14.",
+      "finding": "Questionnaire Parts A and B occupy approved v0.14 and v0.15. The separate walkthrough successor drafted from v0.13 needs rebase and renumbering.",
       "status": "Open",
       "owner": "Requirements owner",
-      "action": "Settle the numbering before approval; renumber and rebase the later one without changing its content (STD-TPL-001 proposed v0.14 control table, 'Version coordination (v0.14)').",
-      "blocks": "Approval of STD-TPL-001 v0.14",
-      "evidence": "KenTender_STD-TPL-001_IT_Equipment_Tender_Template_Curation_and_Release_Pack_v0_14.md control table"
+      "action": "Obtain the separate approved walkthrough change and rebase onto v0.15; allocate its successor before coordinated publication.",
+      "blocks": "Clean walkthrough integration and successor numbering",
+      "evidence": "Supplied STD-TPL v0.15 control block"
+    },
+    {
+      "finding_id": "AUD-025",
+      "severity": "High",
+      "type": "Permission conflict",
+      "finding": "KT-STD v1.14 §3A.6 broad technical read conflicts with BOP §6, PRC §6, AWD §6 and sealed-bid restrictions; OVS cannot silently settle this.",
+      "status": "Resolved in requirements",
+      "owner": "Requirements owner / Project Owner",
+      "action": "Policy approved 3 October 2026; verify owner implementation and sealed-custody boundaries.",
+      "blocks": "Implementation verification only",
+      "evidence": "Supplied KT-STD, BOP, PRC, AWD and BDS permission sections"
+    },
+    {
+      "finding_id": "AUD-026",
+      "severity": "High",
+      "type": "Missing sources",
+      "finding": "CTX, TRUST, SEED and approved STD-TPL v0.15 have been supplied. Current CM basis, all-stage requirements and ERPNext fit-gap remain absent.",
+      "status": "Deferred by owner",
+      "owner": "Documentation owner",
+      "action": "Supply current CM sources; reconcile independent CM and canonical fixtures.",
+      "blocks": "Affected deferred scope only; not supplied-module review",
+      "evidence": "Both archive inventories and standalone STD-TPL v0.15"
+    },
+    {
+      "finding_id": "AUD-027",
+      "severity": "Medium",
+      "type": "Register reconciliation",
+      "finding": "Register lagged approved NDS v1.15 and PLN v1.28; REQ v1.13, CFG v0.17 and TPR v0.16 are pending, not approved.",
+      "status": "Closed",
+      "owner": "Documentation owner",
+      "action": "Updated known approved baselines and tracked pending source chains plus OVS proposals without approving them.",
+      "blocks": "None for corrected metadata",
+      "evidence": "Supplied control blocks; approved predecessor history retained"
+    },
+    {
+      "finding_id": "AUD-028",
+      "severity": "Medium",
+      "type": "Pending change preservation",
+      "finding": "STD-TPL v0.15 confirms separate walkthrough change approval but excludes its incorporation; separate source remains unavailable.",
+      "status": "Deferred by owner",
+      "owner": "Documentation owner",
+      "action": "Reconcile the separate walkthrough change with OVS and IF-020; preserve approval history and rebase version numbering.",
+      "blocks": "Affected deferred scope only; not supplied-module review",
+      "evidence": "STD-TPL v0.15 control block; IF-020; AUD-024"
+    },
+    {
+      "finding_id": "AUD-029",
+      "severity": "High",
+      "type": "Context conflict",
+      "finding": "CTX v1.0 prescribes multi-PE context and obsolete User Permission/User Scope Assignment access, contradicting later AUTH/CFG.",
+      "status": "Correction approved; implementation unverified",
+      "owner": "Shared context owner",
+      "action": "Approve CTX v1.1 alignment and verify obsolete preference/gate consumers are removed.",
+      "blocks": "Affected context implementation",
+      "evidence": "CTX v1.0 §§2–5; AUTH v1.10; supplied CFG/NDS"
+    },
+    {
+      "finding_id": "AUD-030",
+      "severity": "Medium",
+      "type": "Fixture chronology",
+      "finding": "Older SEED/KT-STD fixtures lag approved SEED-OPS decisions; Julia is not an in-force HoD in June 2027 and mnemonic OU codes must not be forced.",
+      "status": "Correction approved; implementation unverified",
+      "owner": "Seed/documentation owner",
+      "action": "Apply corrected OVS fixtures; retain generated IDs and approved seed decisions. Finish broader seed harmonisation separately.",
+      "blocks": "Affected design/seed verification",
+      "evidence": "SEED v1.3 §3.1; SEED-OPS v1.21 §11 D3/D4/D7/D8/D23"
+    },
+    {
+      "finding_id": "AUD-031",
+      "severity": "High",
+      "type": "Design readiness",
+      "finding": "OVS requirements are not a closed-input design contract. D1–D5 and D7 remain open.",
+      "status": "Open",
+      "owner": "Requirements/design owner",
+      "action": "Complete EVL/TPR/PRC static sections first, then remaining changed owner views; record conformance matrices.",
+      "blocks": "Design handoff of affected views",
+      "evidence": "v0.5 design-readiness review; OVS v0.6 §14.1"
     }
   ],
   "approval_record": {
@@ -2269,5 +2817,20 @@
       }
     ],
     "effect": "Document authority only; implementation, verification, legal applicability and production release remain independently tracked."
+  },
+  "usability_reconciliation": {
+    "source": "files.zip plus files(1).zip supplied 3 October 2026; standalone STD-TPL v0.15",
+    "status": "Approved requirements package, 3 October 2026; design handoff outstanding",
+    "OVS": "0.6",
+    "missing": [
+      "Current CM basis, all-stage requirements and ERPNext fit-gap",
+      "Separate template walkthrough change request referenced in STD-TPL v0.15"
+    ],
+    "design_status": "Not ready; owner static design sections and conformance matrices outstanding",
+    "deferred_by_owner": [
+      "Current CM sources",
+      "Separate template walkthrough"
+    ],
+    "approval_record": "Mark the documents as approved"
   }
 }

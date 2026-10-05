@@ -1,12 +1,26 @@
 # CFG-CHG-002 — Site Configuration and System Setup
 
+**Controlling approval — 3 October 2026.** The Project Owner instructed: “Mark the documents as approved”. This approves this version in the coordinated OVS v0.6 package, including its incorporated amendments. OVS-P01–P05 are approved. The incorporated REQ v1.13, CFG v0.17 and TPR v0.16 changes are accepted within their approved successors; this does not create separate retrospective approvals of those intermediate versions. Earlier proposed/pending wording is drafting history superseded by this record. Static design work and conformance matrices remain open; CM and the separate template walkthrough remain deferred. Approval does not establish implementation, seed execution, testing, legal clearance or production readiness.
+
+**OVS reference and owner-specific amendment (§§6, 8.1, 10).** Apply OVS v0.6 finding/history/recovery requirements to the existing setup surfaces and owner-authorised business configuration context. No new setup read or mutation audience is added. Preserve all pending v0.17 schedule changes; this usability reference does not approve or independently verify them.
+
+Shared usability rules are owned once by **OVS-CHG-001 v0.6**, especially §§3–8 and 12–15. This module retains its domain lifecycle, facts, commands and existing authority except the explicit proposed read additions above. Implement the named changes in the cited owner surfaces; do not copy shared usability chapters into this document. This amendment takes effect under the controlling approval above.
+
+**Historical source status — v0.17 proposed, 2 October 2026.** This version proposes one narrow change: the Open Tender bid-opening interval holds a **minimum** and a **default** as two separate numbers (§4.8, §10.9, §13, §14.9), so a consumer can tell a legal bound from a planning default. It is not approved. Approved v0.16 remains the configuration baseline until the Project Owner approves v0.17. The v0.16 approval record below is retained as history.
+
+**Predecessor approval record — 1 October 2026.** *(This is the v0.16 record, retained as history; the v0.17 status is stated above.)* The Project Owner instructed: “Mark all the proposed documents as approved”. This approves CFG-CHG-002 v0.16 in full, including its incorporated amendments. This record supersedes earlier pending/proposed approval wording and conditional predecessor-authority statements retained below as drafting history. Earlier versions remain historical. Approval does not establish implementation completion, test success, legal verification or production release; existing operating gates and substantive follow-ups remain in force.
+
 | Control | Value |
 |---|---|
 | Document ID | CFG-CHG-002 |
-| Version | 0.16 |
-| Date | 25 September 2026 |
-| Status | **Proposed for approval** |
-| Approval record | Not yet approved. |
+| Version | 0.18 |
+| Date | 3 October 2026 |
+| Status | Approved — 3 October 2026 |
+| Approved on | 3 October 2026 |
+| v0.17 approval record | None for v0.17. The v0.16 approval record below is retained. |
+| v0.17 predecessor | CFG v0.16, approved 1 October 2026; retained unchanged as historical evidence. |
+| v0.17 change basis | Raised from Tenders testing and the Project Owner's decision of 2 October 2026 (TPR-CHG-001 v0.16 §21): the Open Tender bid-opening interval carries a minimum of 7 days and a default of 21 days as separate numbers. No other configuration rule changes. |
+| Approval record | Project Owner: “Mark the documents as approved” — 3 October 2026 |
 | Approval basis | Retains the complete CFG v0.15 ownership correction and adds the minimum public portal support/legal-link configuration required by TPR v0.10 and BDS v0.7. |
 | Predecessor | CFG v0.15, proposed 24 September 2026; retained unchanged as historical evidence. |
 | Module / implementation owner | Configuration and Governance / `kentender_core`, with native ERPNext/Frappe records where they exist. |
@@ -203,6 +217,8 @@ A ScheduleProfile has stable ID/name and immutable numbered versions. Versions c
 | `default_basis` | LegalRequirement or PlanningAssumption; legal defaults link exact sources, internal defaults labelled as assumptions. |
 | `allows_override` | Boolean; an override still satisfies all bounds/counting rules and the owning module's amendment authority. |
 | `estimated_delivery_default_days` | Optional nonnegative calendar-day integer. Null means not configured; never silently zero. Planner's explicit period remains required by PLN. |
+
+**v0.17 — the Open Tender bid-opening interval.** The invitation-to-bid-opening interval of the Open Tender schedule carries two separate numbers that no consumer may conflate. The **minimum** is 7 days, with the reference PPADA 2015 s.97(1) and PPADR 2020 reg. 86, recorded from the Project Owner's research of 2 October 2026. The **default** is 21 days, with the default basis PlanningAssumption. Tenders (TPR-CHG-001 v0.16 §3) reads the minimum as the blocking legal minimum, and reads the default as the usual period that pre-fills the deadline and, when the officer goes below it, requires a stated reason; it never treats the default as a bound. A schedule with no minimum gives a consumer nothing to block on. The author of this version did not verify the minimum against the primary text, so the profile's source-check status stays **Fixture-verified — not production law** until the legal owner confirms it.
 
 Invitation is the anchor. Completion is the source-derived boundary; do not calculate it as merely signing plus profile delivery days. Estimated completion is calculated separately and compared with the boundary. Preserve profile/version and calendar IDs in each reviewed baseline. Later forecasts use the specified owner rules and retain their comparison bases; profiles cannot overwrite actuals.
 
@@ -655,13 +671,13 @@ The interval table has **From**, **To**, **Days counted**, **Minimum status**, *
 
 | From | To | Days counted | Minimum status | Maximum status | Default days | Default basis |
 |---|---|---|---|---|---|---|
-| Not yet established | Bid opening | Calendar days | Not yet established | Not yet established | 21 | Not yet established |
+| Not yet established | Bid opening | Calendar days | Source check needed (v0.16 read: Not yet established) | Not yet established | 21 | Planning assumption (v0.16 read: Not yet established) |
 | Not yet established | Evaluation completion | Calendar days | Not yet established | Not yet established | 30 | Not yet established |
 | Not yet established | Tender award approval | Calendar days | Not yet established | Not yet established | 5 | Planning assumption |
 | Not yet established | Notification of award | Calendar days | Not yet established | Not yet established | 2 | Planning assumption |
 | Not yet established | Contract signing | Calendar days | Not yet established | Not yet established | 14 | Not yet established |
 
-Minimum/Maximum days fields are blank in this pending specimen. Missing endpoint/default-basis values remain visible under **Details to complete**. Display **Estimated delivery period default: Not set** as a separate labelled fact. Notice **This schedule cannot support Plan submission until its required details and source checks are complete.** Legal-default basis options are **Legal requirement** and **Planning assumption**. The figures above remain illustrative, not production deadlines or legal defaults.
+Minimum/Maximum days fields are blank in this pending specimen. v0.17: except Bid opening, whose Minimum days field shows **7** and whose Source reference shows **PPADA s.97(1); PPADR 2020 reg. 86**, both marked **Source check needed**; its Default days field shows **21** as a Planning assumption. Missing endpoint/default-basis values remain visible under **Details to complete**. Display **Estimated delivery period default: Not set** as a separate labelled fact. Notice **This schedule cannot support Plan submission until its required details and source checks are complete.** Legal-default basis options are **Legal requirement** and **Planning assumption**. The figures above remain illustrative, not production deadlines or legal defaults.
 
 New editor heading **Add procurement schedule**; controls Name, Method, Procedure, Category; common version/date/applicability/source fields from §10.6; milestone and interval controls above. Footer **Cancel** / **Save schedule version**. Saved detail actions **Create new version**, **Check sources**, **View usage and history**. New-version footer **Cancel** / **Save new version** with Earlier versions this replaces and Reason for change. Empty heading **No procurement schedules yet**; text **Add a schedule for a procedure supported by this release.**; action **Add procurement schedule**.
 
@@ -827,7 +843,7 @@ Use shared AUTH/KT-STD identities, ERPNext Company Ministry of Health, two nativ
 
 At the 24 November 2026 visual fixture instant, Needs intake for FY 2027/28 closes 25 November 2026 at 23:59 EAT; DPP initial intake closes 30 November 2026 at 23:59 EAT; disposal Closed. These advance-year close instants are valid configuration and do not change the FY's July–June dates. Dispose timing examples remain separate pending the DSP owner amendment.
 
-Seed Government of Kenya, Development partner and Appropriation in Aid funding records by stable owner IDs; keep the approved shared UOM choices selectable without disabling unrelated shared units. Calendar/profile examples and historical numeric thresholds remain Production verification pending. The approved SEED v1.3 test provenance label does not map to Verified production configuration.
+Seed Government of Kenya, Development partner and Appropriation in Aid funding records by stable owner IDs; keep the approved shared UOM choices selectable without disabling unrelated shared units. Calendar/profile examples and historical numeric thresholds remain Production verification pending. v0.17: the one exception is the Open Tender bid-opening minimum of 7 days, recorded from the Project Owner's research of 2 October 2026 and still marked source check needed; its 21-day default is a Planning assumption. The seed writes both, and a patch writes the minimum on a site seeded earlier without overwriting an administrator's own value. The approved SEED v1.3 test provenance label does not map to Verified production configuration.
 
 **Concrete cross-document date conflict:** FY 2027/28 begins 1 July 2027. The shared laptop procurement example has invitation 15 May 2027 and bid opening 5 June 2027; infrastructure has invitation 1 May 2027 and opening 22 May 2027. These dates precede the configured FY. The supplier/profile examples also start rule applicability on 1 July 2027, so an InvitationDate resolver cannot select those versions for the May dates. Advance departmental planning in November 2026 is a different fact and does not automatically authorize pre-FY procurement proceedings.
 
@@ -1006,6 +1022,15 @@ These supplement §14.3 and the retained configuration criteria. No test complet
 | CFG16-AC-010 | TPR v0.10 and BDS v0.7 render the exact allowlisted projection; neither hard-codes placeholder contact details nor stores a second editable copy. |
 | CFG16-AC-011 | C05 complete, incomplete, invalid-link and saved variants satisfy KT-STD desktop, 200% zoom, keyboard/focus/error and narrow-width evidence requirements. |
 | CFG16-AC-012 | The complete and isolated incomplete/invalid fixtures are created through the owner command and are never installed as production defaults or represented as legal approval. |
+
+### 14.9 v0.17 submission-period acceptance criteria
+
+| ID | Required result |
+|---|---|
+| CFG17-AC-001 | The Open Tender bid-opening interval can hold a minimum and a default as separate values, each with its own basis or reference. A default is never required to satisfy, or taken as, a minimum. |
+| CFG17-AC-002 | The seeded Open Tender schedules for Goods, Services and Works carry minimum 7, default 21 as a Planning assumption and the reference PPADA s.97(1); PPADR 2020 reg. 86, and keep the status Fixture-verified — not production law. |
+| CFG17-AC-003 | A consumer reads the minimum as the legal bound and the default as the usual period. A schedule with no minimum gives no blocking bound (TPR-CHG-001 v0.16 TPR16-AC-012). |
+| CFG17-AC-004 | A site seeded before this version receives the minimum without overwriting a minimum an administrator entered, and its profile's source-check status is unchanged. |
 
 ## 15. Implementation constraints and required owner work
 
@@ -1187,7 +1212,23 @@ The v0.12 and v0.14 register entries below their historical headings explain how
 | Shared consumer copy | NDS/PLN/DSP and other consumers adopt readable activity/problem labels while preserving owner action predicates; changes to their controlled documents require their own amendment. |
 | Latest standard going forward | Use approved KT-STD-001 v1.7 and AUTH-ADR-001 v1.9 for subsequent work. Older citations preserved inside historical registers do not select an obsolete current authority. |
 
+### 17.10 v0.17 submission-period numbers
+
+| ID | v0.16 gap | v0.17 correction | Verification |
+|---|---|---|---|
+| CFG17-CHG-001 | The specimen and the seed recorded 21 days for bid opening with no minimum, and a consumer had no way to tell a legal bound from a planning default. Tenders enforced the default as a floor. | State the minimum (7) and the default (21) as separate numbers for the Open Tender bid-opening interval (§4.8, §10.9). | Schedule read tests; TPR-CHG-001 v0.16 TPR16-AC-012. |
+| CFG17-CHG-002 | The default's basis read Not yet established or Statutory. | Label the 21-day default a Planning assumption; the minimum carries its own reference. | Seeded row inspection. |
+| CFG17-CHG-003 | Sites seeded before the decision carry no minimum. | Add one patch that writes the minimum only where none is set (§13). | Patch run on a seeded site; an administrator's value untouched. |
+
+**Required corrections elsewhere (named, not assumed).** SEED-OPS-001 v1.20 states the seeded values and the patch. The legal basis is the Project Owner's research and is not verified against the primary text by the author of this version; counsel confirms it before the schedule's source-check status is raised.
+
 ## 18. Approval effect
+
+### 18.0 v0.17 approval effect (proposed)
+
+CFG v0.17 is **proposed and not approved**. If approved, it changes only the Open Tender bid-opening interval as described in §§4.8, 10.9, 13, 14.9 and 17.10. Until then approved CFG v0.16 is the configuration baseline. Approval would not verify the minimum against the primary text, raise any schedule's source-check status, or prove that software has been implemented, deployed or accepted.
+
+### 18.1 v0.16 approval effect (retained)
 
 CFG v0.16 is **proposed for Project Owner approval** as the complete successor to approved CFG v0.15.
 

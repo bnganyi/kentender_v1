@@ -1,22 +1,38 @@
 # BDS-CHG-001 — Supplier Portal and Electronic Bid Submission
 
+**Controlling approval — 3 October 2026.** The Project Owner instructed: “Mark the documents as approved”. This approves this version in the coordinated OVS v0.6 package, including its incorporated amendments. OVS-P01–P05 are approved. The incorporated REQ v1.13, CFG v0.17 and TPR v0.16 changes are accepted within their approved successors; this does not create separate retrospective approvals of those intermediate versions. Earlier proposed/pending wording is drafting history superseded by this record. Static design work and conformance matrices remain open; CM and the separate template walkthrough remain deferred. Approval does not establish implementation, seed execution, testing, legal clearance or production readiness.
+
+**OVS reference and owner-specific amendment (§§6, 7.1, 11.8, 14.7).** Apply OVS v0.6 own-organisation history, navigation and recovery requirements to existing permitted supplier surfaces. Preserve sealed-bid boundaries, signatory/representative separation, receipt evidence and all production gates. No supplier access to internal decision records or competitors is added. Existing submitted-version and receipt sources remain canonical.
+
+Shared usability rules are owned once by **OVS-CHG-001 v0.6**, especially §§3–8 and 12–15. This module retains its domain lifecycle, facts, commands and existing authority except the explicit proposed read additions above. Implement the named changes in the cited owner surfaces; do not copy shared usability chapters into this document. This amendment takes effect under the controlling approval above.
+
+**Predecessor approval record — 1 October 2026.** The Project Owner instructed: “Mark all the proposed documents as approved”. This approves BDS-CHG-001 v0.10 in full, including its incorporated amendments. This record supersedes earlier pending/proposed approval wording and conditional predecessor-authority statements retained below as drafting history. Earlier versions remain historical. Approval does not establish implementation completion, test success, legal verification or production release; existing operating gates and substantive follow-ups remain in force.
+
 | Control | Value |
 |---|---|
 | Document ID | BDS-CHG-001 |
-| Version | **0.7** |
-| Date | 25 September 2026 |
-| Status | **Proposed for Project Owner review** |
-| Supersedes | On approval, v0.6 in full |
+| Version | 0.11 |
+| Date | 3 October 2026 |
+| Status | Approved — 3 October 2026 |
+| Revision record | v0.9 proposed 28 September 2026: reconcile the physical-security receipt-owner pre-opening supplier visibility; update the TPR v0.13 approval condition without changing the approved v0.8 submission gate. Historical v0.8 record: 26 September 2026, initial v0.8 proposal: owner alignment, OD5, KT-STD-001 v1.8 and supplier guidance. Same-day design-readiness corrections: fixture chronology, variant inventory, recovery, receipt history and distinct certificate/custody outcomes. Same-day follow-up correction: split signing and custody outage results, align Draft Version terminology and close the remaining actor/time/notice fixtures. These were revisions within the unapproved v0.8 proposal before the subsequent Project Owner approval recorded above. |
+| Approved on | 3 October 2026 |
+| Approval record | Project Owner: “Mark the documents as approved” — 3 October 2026 |
+| Supersedes | On approval only: source v0.10; approved baseline and pending chain listed in OVS impact schedule |
 | User-facing areas | **Tenders**, **My bids**, **Account** |
 | Product | `IT-EQUIPMENT-OPEN-V1` — straightforward off-the-shelf IT equipment using the PPRA Goods Standard Tender Document |
 | Starts from | One Published — open Tender and one authenticated supplier arrangement |
 | Ends at | One current bid that is Draft, Submitted into the electronic tender box, Withdrawn before deadline, or closed without submission |
-| Governing standard | KT-STD-001 v1.7 |
-| Owner contracts | TPR-CHG-001 v0.10, STD-TPL-001 v0.9, CFG-CHG-002 v0.16, LAW-REG-001 v1.2, AUTH-ADR-001 v1.9 and SEED-001 v1.3; approved upstream REQ-CHG-001 v1.11; coordinated measure boundaries in PLN-CHG-001 v1.25 and BUD-CHG-001 v1.10 |
-| Implementation authority | None until Project Owner approval and satisfaction of the production gates in §§5.10 and 15 |
-| v0.7 closure scope | Closes the public/vendor MVP through sealed Bid Submission: **Start bid** atomically creates the Tender-bound candidate registration and workspace; BDS submits general pre-bid questions through Tenders; mandatory notice contacts and delivery-safe presentation are explicit; public support/legal links come from CFG; and one controlled deployment flag keeps production submission disabled until the approved operating profile is complete. Future Bid Opening, Evaluation/Award, Supplier Management/prequalification and additional method/product releases remain outside this contract. |
+| Governing standard | KT-STD-001 v1.8 |
+| Owner contracts | Approved TPR-CHG-001 v0.12, STD-TPL-001 v0.10 and STD-TPL-IMP-001 v1.1; CFG-CHG-002 v0.16, LAW-REG-001 v1.2, AUTH-ADR-001 v1.10 and SEED-001 v1.3; approved upstream REQ-CHG-001 v1.12; PLN-CHG-001 v1.27 and BUD-CHG-001 v1.11. TPR-CHG-001 v0.13 is now approved; its published-state clarification is implementation authority after v0.9 approval and the existing release gates. Historical v0.12 references below identify the previous boundary. |
+| Implementation authority | Approved v0.8 requirements remain the operative authority while this v0.10 successor is proposed. Its receipt-visibility correction is not yet approved. Approved v0.8 authorises implementation of the unconditional contract. Production submission remains disabled until the operating and release gates in §§5.10 and 15 pass. The published-Tender Superseded/Withdrawn branch is owned by approved TPR-CHG-001 v0.13; this proposed v0.9 records the aligned BDS contract without waiving the production gate. |
+| Change type | Proposed targeted correction to the approved v0.8 receipt-owner privacy boundary and TPR v0.13 references. Historical v0.8 added OD5 release checks and the supplier journey. No new supplier qualification or approval stage. |
+| v0.8 decision basis | Owner decision OD5, Project Owner, 26 September 2026: “I don't want this complicated admin overhead regarding approvals and commissioning of templates. It is unnecessary, adds no value and is vexing. Allow development work to contine without this friction. Template release is purely an on and off switch on an affected site. Update this decision as a follow up to reflect in affected documents if necessary”. Project Owner instruction, 26 September 2026: “Close the open issues”. OD5 is recorded in the STD-TPL-IMP-001 v1.1 implementation tracker decision log and in the release 1.1 review record. |
+| v0.8 change scope | Tenders alone binds the one Available release switched On for a new Tender. Bid work on an already-bound release uses exact integrity, adapter and effective-definition checks. Published-state Supersession and Withdrawal follow the proposed TPR v0.13 clarification only after its approval. §§5.12–5.14 and 10.19 add the required actor-specific guidance without turning the five supplier tasks into approval stages. §18.1 records the remaining G1 reconciliation. Retained “v0.7 read” notes identify superseded wording only. |
+| v0.7 closure scope (retained) | Closes the public/vendor MVP through sealed Bid Submission: **Start bid** atomically creates the Tender-bound candidate registration and workspace; BDS submits general pre-bid questions through Tenders; mandatory notice contacts and delivery-safe presentation are explicit; public support/legal links come from CFG; and one controlled deployment flag keeps production submission disabled until the approved operating profile is complete. Future Bid Opening, Evaluation/Award, Supplier Management/prequalification and additional method/product releases remain outside this contract. |
 
 **Controlling decision:** KenTender provides one simple supplier portal and one structured electronic bid for each supplier arrangement and Tender. A separately curated, code-owned STD release defines the product-specific response content and mappings; the exact Published Tender materialises them into one immutable bid definition. Bidders complete ordinary business tasks; they do not upload a filled Tender PDF, choose a template, interpret a schema or re-enter published requirements. A bid becomes Submitted only after server-authoritative validation, a valid licensed digital signature, immutable receipt evidence and successful deposit into the approved electronic tender box before the deadline.
+
+**v0.10 scope and precedence.** Sections describing the sealed-submission endpoint and exclusions retain their original submission-workflow meaning. This revision adds only the EVL-owned post-opening read and post-close supplier-correspondence bindings in §5.15, §7.5, §10.21 and §11.9. It does not implement Evaluation decisions within BDS, change pre-bid Tenders Q&A, permit post-deadline bid edits, or extend the approved G1 release boundary. Historical v0.9 pending-approval statements below describe that retained amendment; neither it nor this successor is represented as approved. The existing production signing/custody gate remains unchanged.
 
 ## 1. Governing decision
 
@@ -75,7 +91,7 @@ The module shall:
 - one single-entity or permitted joint-venture supplier arrangement;
 - Open Tender;
 - one Published `IT-EQUIPMENT-OPEN-V1` Tender;
-- unreserved procurement and reserved procurement for `Youth`, `Women` and `Persons with disabilities`, with an independently applicable County-residents restriction, only where the exact Available template release and Published Tender carry the verified supported rule, evidence treatment and overlap treatment;
+- unreserved procurement and reserved procurement for `Youth`, `Women` and `Persons with disabilities`, with an independently applicable County-residents restriction, only where the exact template release bound to the Tender, used in a lifecycle state permitted by §4.4.4, and the Published Tender carry the verified supported rule, evidence treatment and overlap treatment (v0.7 read: “only where the exact Available template release and Published Tender carry the verified supported rule, evidence treatment and overlap treatment”);
 - Single lot;
 - KES only;
 - fixed-price treatment;
@@ -84,7 +100,8 @@ The module shall:
 - pre-deadline replacement and withdrawal;
 - electronic acknowledgement and bidder receipt;
 - closed electronic-tender-box deposit; and
-- immutable handoff to Bid Opening.
+- immutable handoff to Bid Opening; and
+- the narrowly scoped Evaluation-service read and supplier clarification projection in §5.15, owned by EVL v0.4.
 
 ### 2.3 Excluded
 
@@ -198,7 +215,7 @@ reservation_treatment,evaluation_mappings,contract_mappings,definition_digest
 | `tender_id`, `tender_version_id`, `publication_id` | Exact published source. |
 | `effective_addendum_ids` | Exact ordered set incorporated into this definition. |
 | `submission_deadline` | Effective published deadline. |
-| `template_family`, `template_release_id`, `product_profile_id`, `renderer_profile_id`, `package_digest` | Exact Available code-owned STD release, approved composition/renderer profiles and published package binding. |
+| `template_family`, `template_release_id`, `product_profile_id`, `renderer_profile_id`, `package_digest` | Exact code-owned STD release bound to the Tender (Available and switched On on this site when Tenders bound it; afterwards used in a lifecycle state permitted by §4.4.4), approved composition/renderer profiles and published package binding (v0.7 read: “Exact Available code-owned STD release, approved composition/renderer profiles and published package binding.”). |
 | `official_source_digest`, `bundle_digest`, `response_rules_digest`, `downstream_rules_digest`, `addendum_identity_rules_digest` | Exact immutable template assets frozen at Tender publication. |
 | `sections` | Finite ordered task/group definitions supplied by the selected product profile; five visible tasks for the current Goods/IT release. |
 | `response_rows` | Stable published identifiers, response types, applicability and evidence requirements. |
@@ -266,10 +283,24 @@ Before publication, the definition builder shall:
 5. prove that every bidder-visible obligation is present in the Published Tender and that no hidden obligation has been introduced;
 6. prove that every required response has its validation and an evaluation/contract destination or explicit N/A disposition;
 7. reconcile quantities, units, currency, tax and calculation sources across the human-readable Tender and structured definition;
-8. verify that the exact template release is Available and every referenced renderer component, control and rule is supported by the deployed release; and
+8. verify that the exact template release bound to the Tender is in a lifecycle state permitted for Bid work by the bound-release rule below (Available with its site switch On or Off, or Superseded), that its manifest, assets and digests still verify, and that every referenced renderer component, control and rule is supported by the deployed release; a Withdrawn bound release fails this check (v0.7 read: “verify that the exact template release is Available and every referenced renderer component, control and rule is supported by the deployed release”); and
 9. freeze the exact definition, ordered addendum set, mappings and package identity atomically with original publication authorisation; for an addendum, freeze a complete successor at issue and expose it as current only after all required publication channels are confirmed.
 
 Failure of any check blocks publication. It does not create an officer override, editable schema or bidder-visible incomplete form.
+
+**Bound-release rule for Bid work (v0.8).** Tenders binds the template release when it creates a Tender's first Draft. A new binding needs the Available release switched On on this site (OD5; approved TPR-CHG-001 v0.12 §5.3). Nothing in Bid Submission binds or rebinds a release: every definition build, **Start bid**, Draft submission and replacement uses the Tender's exact bound release and current effective definition. The published-Tender Superseded/Withdrawn branches below follow approved TPR-CHG-001 v0.13; v0.12 alone did not resolve that branch.
+
+| Bound release on this site | Published Tender: definition build and bidder actions after TPR v0.13 approval |
+|---|---|
+| Available, site switch On | Definition build, Start, Draft submission and replacement permitted while exact manifest, assets, digests, current definition and renderer verify. |
+| Available, site switch Off | The same permitted actions continue; Off governs only a new Tender's binding. |
+| Superseded | The same permitted actions continue while exact checks pass; no rebinding, successor substitution or alteration of an earlier definition or submission. |
+| Withdrawn | No new Start, definition build, Draft submission or replacement acceptance. Existing Drafts, submitted receipts and historical public reads remain; pre-deadline withdrawal of the current Submitted bid remains available without a new definition. |
+| Any state whose integrity or renderer check fails | No new definition build, Start, Draft submission or replacement acceptance; preserve earlier submissions and readable history. |
+
+In this document **Available** is the installed lifecycle state, separate from the site's On/Off switch. STD-TPL-001 v0.10 and STD-TPL-IMP-001 v1.1 already implement OD5: installation requires intact assets, not an owner approval or commissioning step. Recorded construction gates and optional owner decisions remain evidence; integrity and renderer checks remain enforceable. The switch is set outside Bid Submission. A lifecycle or switch change never alters a frozen Published Bid Definition.
+
+Sources: owner decision OD5; approved TPR-CHG-001 v0.12 §§4.5.4, 5.1, 5.3 and 5.8; approved STD-TPL-IMP-001 v1.1 §9; and approved TPR-CHG-001 v0.13 §5.8 for the published-state clarification. The v0.9 proposal still requires approval before its corrected BDS text becomes normative.
 
 #### 4.4.5 Runtime rendering and saving
 
@@ -469,7 +500,7 @@ The **Review and submit** task is **Complete** when the server derives readiness
 2. BDS receives only the exact base reservation category, any separately applicable County-residents restriction, the effective rule/overlap snapshots and the bidder declaration/evidence rules frozen into the Published Bid Definition.
 3. A planned designation, supplier Account status, organisation address, reusable certificate or successful upload does not establish reservation entitlement.
 4. The bidder completes only the declarations and evidence required by the published treatment. Those responses map to the governed eligibility evaluation; they are not evaluated by BDS merely because the Draft is complete or Submitted.
-5. If a reserved treatment, County-residents restriction, evidence rule or overlap treatment is missing, unverified or unsupported by the exact Available template release, Tender publication and **Start bid** fail closed through the existing definition error. The system must not silently change the category to `None`, omit the requirement or substitute a generic upload.
+5. If a reserved treatment, County-residents restriction, evidence rule or overlap treatment is missing, unverified or unsupported by the exact template release bound to the Tender, used in a lifecycle state permitted by §4.4.4 (v0.7 read: “unsupported by the exact Available template release”), Tender publication and **Start bid** fail closed through the existing definition error. The system must not silently change the category to `None`, omit the requirement or substitute a generic upload.
 6. The published category, separately applicable County-residents treatment and later authorised eligibility result may pass to Award and statutory reporting. Eligibility-only evidence is not converted into a contract obligation.
 
 ### 5.4 Addendum and clarification rules
@@ -482,9 +513,9 @@ The **Review and submit** task is **Complete** when the server derives readiness
 6. A current Submitted bid remains sealed. The bidder must submit a replacement before the revised deadline if the addendum requires changed responses.
 7. A registered candidate may ask a general Tender question before the clarification deadline. BDS sends the exact question and arrangement identity through `ReceiveTenderClarification`; it keeps no independent message or response store.
 8. The candidate sees **Question received** only after Tenders returns the immutable clarification identity and receipt time. Saving text locally or receiving a client response is not receipt.
-9. Tenders decides whether the answer changes published content. If it does, the answer remains unavailable until the required linked addendum is Issued; BDS never presents an informal answer as a Tender change.
+9. Tenders decides whether the answer changes published content. If it does, the answer remains unavailable until the linked addendum is effective after every required channel confirmation, with its successor definition and deadline active together. An HOPF issue decision awaiting channel confirmation is not enough. BDS never presents an informal answer as a Tender change.
 10. A general response is displayed without identifying the questioner. All public readers may see authoritative answers; only the source candidate and authorised procurement roles may see the source relationship.
-11. Addendum, general-answer, effective-deadline and cancellation notices use the Tenders-owned dispatch evidence. BDS displays Delivered only from authoritative delivery evidence and otherwise shows **Sent** or **Delivery problem** truthfully. Notice failure does not change the Tender/addendum/cancellation state.
+11. Addendum, general-answer, effective-deadline and cancellation notices use Tenders-owned dispatch evidence. BDS displays **Queued** before dispatch, **Sent** after provider acceptance without delivery proof, **Delivered** only from authoritative delivery evidence, and **Delivery problem** when Tenders reports Failed. The current public Tender information is available independently of notice delivery. Failure does not change the Tender/addendum/cancellation state.
 
 ### 5.5 Evidence and tender-security rules
 
@@ -535,7 +566,7 @@ The **Review and submit** task is **Complete** when the server derives readiness
 3. The system accepts no bid received after the deadline and returns no misleading receipt.
 4. At the deadline the electronic tender box closes automatically. An ordinary user, Administrator or System Manager cannot extend, reopen or backdate it.
 5. Drafts that were never submitted are marked Closed without submission and never enter the opening inventory.
-6. Before governed opening, Procuring Entity business users see no supplier identity, bid count, prices, responses, filenames or evidence from the box.
+6. Before governed opening, general Procuring Entity opening users see no bidder identity, bid count, prices, responses, filenames or evidence **from the sealed box**. One separately authorized physical-security receipt owner may see supplier identity, Tender, security reference and required amount to record an original presented before deadline (§10.16). This receipt fact must not expose whether any bid was submitted, its box count, price, response or content; neither appointment to opening nor administrative access grants the receipt permission.
 7. Technical operators may see service health and non-content envelope/custody identifiers only. They cannot decrypt, render, export or search bid content.
 8. The Bid Opening handoff contains the closed-box identity, deadline evidence, sealed envelope identities, submission/withdrawal lineage and custody proofs. Opening credentials and ceremony are owned by Bid Opening.
 9. Submitted bid content remains protected from unauthorised access throughout opening, evaluation and award. Downstream owners receive only the access their governed stage permits.
@@ -558,7 +589,11 @@ KenTender must not assume that a State Portal, government E-GPS, certifying agen
 
 If another system is authoritative, KenTender may show **Submission being confirmed** only with truthful correlation evidence and may show **Submitted** only after the authoritative receipt is obtained. No blind retry, staff success flag, duplicate submission path or internal-only receipt is permitted. Without an approved profile, Draft preparation may operate in a labelled test environment, but production **Submit bid** remains unavailable.
 
-One server-side deployment flag, `production_bid_submission_enabled`, defaults to false and is checked by the single submission-availability service used by signature preparation, initial submission and replacement submission. It is not a System setup field, business action, browser flag or per-Tender override. The controlled release process may set it true only after every §15.4 approval/evidence item is recorded and the exact configured trust, time and custody dependencies pass health checks. A false flag or unhealthy dependency returns `BDS_SUBMISSION_SERVICE_UNAVAILABLE`, preserves the Draft and creates no signature request, envelope or receipt. Changing the flag is deployment evidence and audit configuration, not procurement authority.
+One server-side deployment flag, `production_bid_submission_enabled`, defaults to false and is checked by the single submission-availability service used by signature preparation, initial submission and replacement submission. It is not a System setup field, business action, browser flag or per-Tender override. The controlled release process may set it true only after every §15.4 approval/evidence item is recorded and the exact configured trust, time and custody dependencies pass health checks. A false flag returns `BDS_PRODUCTION_SUBMISSION_NOT_ENABLED`; an unhealthy approved signing/trust service when enabled returns `BDS_SIGNATURE_UNAVAILABLE`; an unhealthy trusted-time or custody/deposit service when enabled returns `BDS_SUBMISSION_SERVICE_UNAVAILABLE`. Each result preserves the Draft and creates no signature request, envelope or receipt. A missing certificate for Mary is separately `BDS_SIGNATORY_CERTIFICATE_REQUIRED`; a definitively rejected deposit is separately `BDS_CUSTODY_REJECTED`. Changing the flag is deployment evidence and audit configuration, not procurement authority.
+
+For supplier guidance, the availability result distinguishes a production gate that has never been enabled from an enabled signing-service failure and an enabled submission-service failure. All preserve the Draft and create no submission. The public site must not call a disabled production gate “temporary”, promise it will be enabled before the deadline, or show a successful submission affordance. The supplier can continue permitted Draft work, see the exact deadline, and use the configured support contact. A recorded uncertain deposit is a separate state: its existing correlation is reconciled without a second dispatch, and the supplier may leave the page and later use **View status**.
+
+The same truthful availability is shown before a supplier spends time preparing a bid: on the public Tender overview and existing Bid workspace/review, show **Electronic bid submission is not available yet** and the current deadline whenever the production gate is false. Explain that preparation can be saved but cannot be submitted in this state, and provide the active support route if available. On an enabled outage show **Electronic submission is temporarily unavailable**. A page read never treats either notice as a submitted bid or guarantees the service will be ready by the deadline.
 
 ### 5.11 Core invariants
 
@@ -574,6 +609,97 @@ One server-side deployment flag, `production_bid_submission_enabled`, defaults t
 10. No Procuring Entity user can read bid content before governed opening.
 11. A technical operator cannot exercise supplier or opening authority.
 12. Bid Opening and Evaluation receive the exact published mappings; they cannot introduce a criterion absent from the published Tender.
+
+### 5.12 Server next step and formal journey (KT-STD-001 v1.8 §3B)
+
+`GetSupplierAccount`, `GetBidWorkspace`, `GetBidReview` and `GetSubmissionReceipt` return one actor-specific `next_step` with `kind`, plain-language `headline`, `stage`, named `holder` where work belongs to someone else, recorded `since` where the fixture supplies it, complete `blockers`/`fixes`, and one permitted `primary_action`. The server computes it from the same guards used by commands; the client renders the shared component and never infers work from a badge or five-task count. A public Tender read is a discovery page, not a supplier-owned bid record: it shows **Start bid** only when available and does not fabricate a personal tracker for an anonymous visitor. My bids is a list, not a duplicate tracker on every row.
+
+The Account record has three stages: `ACCOUNT_SETUP` (organisation details), `CONTACT_VERIFICATION` (prove control of the required email) and `ACTIVE` (account ready). Suspended is a truthful blocked access state, not an approval stage. The Bid record has three formal stages: `BID_PREPARATION` (the five ordinary Goods/IT tasks), `SIGN_AND_SUBMIT` (authorised signatory and server submission), and `RECEIPT` (accepted submission or explicit no-submission outcome). The five tasks stay a task checklist inside preparation; an addendum review and a replacement Draft return to preparation without inventing a new whole-bid stage. A submitted predecessor remains a separately identified valid receipt while a replacement Draft is open. A withdrawal is a separate acknowledged outcome, never a retroactive deletion. Show the current stage and completed markers once, without a second status paragraph.
+
+| Record state and viewer | Stage markers (Account S/V/A or Bid P/S/R; C=current, D=done, N=not reached, B=blocked) | Exact next-step guidance and holder | Action location |
+|---|---|---|---|
+| New Account; Mary Wanjiku | C/N/N | **Your turn:** Enter the supplier organisation details. | **Create account** in the registration form; no qualification claim. |
+| Account incomplete; Mary | B/N/N | **Your turn, blocked:** Add the missing official phone before continuing. | **Edit organisation** opens the exact Account field; no Start bid. |
+| Account Pending verification; registering owner | D/C/N | **Your turn:** Verify your email to finish setting up the supplier account. | **Resend verification link** beside the verification instruction; verification link completes the stage. |
+| Account Active; assigned supplier user | D/D/D | **Done:** The supplier account is ready. Do not call the organisation qualified or approved. | **My bids** in normal navigation. |
+| Account Suspended; assigned user | D/D/B | **Waiting on someone:** Supplier Account support officer Amina Yusuf is reviewing suspended access; no supplier self-activation. | **View receipts** stays an ordinary read link outside the waiting line; **Supplier support** opens the active CFG contact. |
+| Draft in progress; David Ouma | C/N/N | **Your turn:** Continue the requirements and evidence task. Show the exact outstanding task and the 12 Jun 2027, 11:00 EAT deadline. | **Continue bid** opens that task; no Submit control. |
+| Draft affected by ADD-MOH-2027-033-001; David | B/N/N | **Your turn, blocked:** Review the changed delivery location and acknowledge the current addendum before submitting. | **Review addendum** opens the exact addendum and affected response; no duplicate status panel. |
+| Draft evidence rejected; David | B/N/N | **Your turn, blocked:** Replace the rejected product datasheet before submitting. | **Fix item** opens the exact evidence row. |
+| Ready Draft; Mary Wanjiku | D/C/N | **Your turn:** Review, sign and submit this bid before 12 Jun 2027, 11:00 EAT. | **Review bid**, then the governed **Submit bid** action. |
+| Ready Draft; David Ouma | D/C/N | **Waiting on someone:** Authorised Signatory Mary Wanjiku must submit this bid. The fixture has no ready-state event time, so omit since. | **Review bid** remains a read link outside the waiting line; David has no Submit action. |
+| Mary has no valid approved certificate | D/B/N | **Your turn, blocked:** Obtain a valid digital signature certificate from an approved licensed certifying agency before submitting. Your bid remains saved. | **Check certificate** rechecks the approved trust service after Mary obtains a certificate; **Supplier support** is separate help, not the fix. No Submit until the check passes. |
+| Production submission not enabled; Mary | D/B/N | **Waiting on someone:** Release operator Nadia Kamau holds the verified production-submission release. Your bid remains saved and no receipt exists. Do not imply a time of restoration. | **Supplier support** and **Back to bid** remain separate links, not a retry or a signatory fix. |
+| Enabled signing/trust service unhealthy; Mary | D/B/N | **Waiting on someone:** Technical operator Daniel Otieno is restoring digital signing. Mary has a valid certificate; this is a service incident, not a certificate request. | **Supplier support** and **Back to bid** are read/help links; show deadline, saved Draft and no receipt. No Submit or retry. |
+| Enabled time/custody service unhealthy; Mary | D/B/N | **Waiting on someone:** Technical operator Daniel Otieno is restoring electronic submission. Your bid remains saved. | **View status** reads the current service result; show the deadline and support contact separately. |
+| Custody result uncertain; Mary | D/B/N | **Waiting on someone:** Technical operator Daniel Otieno is checking the same submission attempt. No new Submit or retry action. | **View status** reads correlation `COR-BDS-2027-033-01`; the bidder may safely leave and return. |
+| Definitive custody rejection; Mary | D/B/N | **Your turn, blocked:** The tender box rejected this attempt; no bid was submitted. | **Try confirmation again** only after the server permits a new attempt before deadline; **Contact support** remains a separate route. |
+| Accepted Submitted Version 1; Mary before deadline | D/D/D | **Your turn:** You may prepare a replacement or withdraw before 12 Jun 2027, 11:00 EAT. Version 1 remains submitted. These are options, not assigned overdue work. | **Prepare replacement**, **Withdraw bid**; **View receipt** is a read link. No My Work or due marker. |
+| Accepted Submitted Version 1; David before deadline | D/D/D | **Done:** Bid Version 1 was accepted on 10 Jun 2027, 14:32:01 EAT. | **View receipt**; no signatory action. |
+| Replacement Draft; Mary | C/N/N | **Your turn:** Finish and submit the replacement before the deadline. Version 1 remains submitted. | **Continue bid**; prior **View receipt** stays a read link. |
+| Withdrawn before deadline; signatory | D/D/D | **Your turn:** You may start a new bid before the deadline. This bid was withdrawn; no bid is currently submitted. This is an available option, not overdue work. | **Start replacement**; **View acknowledgement** is read-only. No My Work or due marker. |
+| Deadline passed with unsubmitted Draft | D/N/N | **Done:** Submission closed at 12 Jun 2027, 11:00 EAT; this Draft was not submitted. | **Back to My bids**; no Submit, replacement or withdrawal. |
+| Submitted receipt after deadline | D/D/D | **Done:** Bid Version 1 remains submitted; submission changes closed at 12 Jun 2027, 11:00 EAT. | **View receipt**; no change action. |
+| Bound release Withdrawn; existing Draft | B/N/N | **Waiting on someone:** Procurement Officer Brian Wafula holds the governed Tender resolution; this Draft is saved but cannot be submitted against the withdrawn format. Do not promise reactivation or automatic rebinding. | **View current Tender** and **Supplier support** are read/navigation links. No Submit or replacement acceptance. |
+| Public portal information incomplete; Draft still has preparation work | C/N/N | **Your turn:** Continue your saved bid. Submission is blocked until supplier portal information is restored; show this guard separately. | **Continue saved bid** opens the existing Draft for review/save, with no Submit. |
+| Public portal information incomplete; otherwise ready Draft | D/B/N | **Waiting on someone:** CFG System Manager Daniel Otieno is restoring supplier portal information. Your ready Draft remains saved. | **Continue saved bid** is a read/save route outside the waiting line; no Submit or replacement acceptance. |
+
+`since` is displayed only from a recorded state-entry instant, never derived from a page visit or estimated due date. A viewer outside the organisation receives a masked forbidden result rather than a bid `next_step`. Technical readers receive no supplier business action. The tracker and next-step `stage` always agree. The exact artboard variants in §10.19 replace duplicate readiness/status narrative while retaining factual task states, deadline, receipt and notice evidence.
+
+### 5.13 Guard reasons and supplier fixes
+
+Every guarded command and affected record read returns `allowed`, stable reason code, relevant figures and each real fix with its responsible holder and route. The UI never leaves a disabled or absent action unexplained. Multiple blockers are returned together.
+
+| Guard | Reason and figures | Fix / responsible holder |
+|---|---|---|
+| Start without an Active Account or verified notice email | `BDS_ACCOUNT_REQUIRED` or `BDS_NOTICE_CONTACT_REQUIRED`; current Account/contact status | **Open Account** to finish details and verify an email; supplier Account owner. No partial arrangement. |
+| Save or submit with incomplete current definition | `BDS_MUST_FIX`; exact task, response identity and visible issue count | **Fix item** to the exact task/row; assigned supplier preparer or signatory. |
+| Addendum affects responses | `BDS_ADDENDUM_REVIEW_REQUIRED`; addendum, changed published value and affected tasks | **Review addendum**, then exact affected response; supplier preparer. No silent copy of changed responses. |
+| Representative attempts Submit | `BDS_SIGNATORY_REQUIRED`; active signatory Mary Wanjiku | Automatic ready-state hand-off to Mary; David sees waiting. No representative override. |
+| Mary lacks a valid approved signing certificate | `BDS_SIGNATORY_CERTIFICATE_REQUIRED`; certificate result and exact deadline | Mary obtains a certificate from an approved licensed certifying agency and selects **Check certificate**; no substitute typed name/image/password. Support can explain the route but cannot issue or waive the certificate. |
+| Public portal settings incomplete | `BDS_PORTAL_INFORMATION_UNAVAILABLE`; missing public information category, no private CFG value | System Manager Daniel Otieno owns the CFG correction through System setup; suppliers retain Draft/receipt reads and use the configured support route. |
+| Production gate false | `BDS_PRODUCTION_SUBMISSION_NOT_ENABLED`; gate false and deadline | Release operator Nadia Kamau owns the verified operating-profile gate; no supplier retry or promise of restoration. |
+| Enabled signing/trust service unhealthy | `BDS_SIGNATURE_UNAVAILABLE`; safe service incident reference, not Mary’s certificate status | Technical operator Daniel Otieno owns recovery; supplier sees the exact deadline, saved Draft and **Supplier support**. |
+| Enabled trusted-time or custody/deposit service unhealthy | `BDS_SUBMISSION_SERVICE_UNAVAILABLE`; failed service and incident reference safe for supplier | Technical operator Daniel Otieno owns recovery; supplier **View status** or **Contact support**. |
+| Custody result uncertain | `BDS_SUBMISSION_UNCERTAIN`; same safe correlation | Daniel reconciles the one attempt; supplier **View status**, no second dispatch. |
+| Definite rejection | `BDS_CUSTODY_REJECTED`; definite rejection reference and no accepted custody result | After the server confirms no acceptance, Mary can **Try confirmation again** before deadline only if the availability guard permits a new attempt; support route also available. |
+| Bound release Withdrawn or failed integrity | `BDS_DEFINITION_UNSUPPORTED`; release condition, no internal digest | Procurement Officer Brian Wafula holds the Tender resolution, with STD technical verification routed to its controlled operator queue as needed; supplier sees current Tender and saved Draft, no new submission. |
+| Deadline reached | `BDS_DEADLINE_PASSED`; effective deadline and trusted server time | No fix or override; show unsubmitted outcome or existing receipt truthfully. |
+
+An absent physical security original is a **Review note**, not a false electronic-submission blocker. Supplier support and page navigation never masquerade as a fix for a Tender-owner or deployment-owner condition.
+
+### 5.14 Hand-offs and work items
+
+Each row clears from the underlying event, not a notification read. Technical/configuration/release queues are governed operational queues, not Administrator or System Manager business My Work; their `next_step` never gives a supplier business action under KT-STD-001 §3B.6. Support incidents contain a safe correlation and no bid responses, evidence, price or sealed content. The named test holders below are fixture assignments; production resolves the current responsible person.
+
+| Event | Next holder | Their My Work item | Sender waiting item | Notification | Clears when |
+|---|---|---|---|---|---|
+| Account challenge issued | Registering Account owner | **Verify supplier account email** | None | Yes, Account owner | Challenge verified or superseded/expired. |
+| Account access suspended | Supplier Account support officer Amina Yusuf | **Review suspended supplier account access** | Assigned supplier users: **Waiting for Account support** | Yes, Amina | Governed Account access is restored or final decision recorded; no self-activation. |
+| Draft becomes Ready to submit | Authorised Signatory Mary Wanjiku | **Review and submit BID-MOH-2027-033-001** | David Ouma: **Waiting for Mary Wanjiku to submit BID-MOH-2027-033-001** | Yes, Mary | Submitted, changed back to Needs attention, withdrawn or deadline closes. |
+| Effective addendum makes Draft need review | Supplier preparer David Ouma | **Review ADD-MOH-2027-033-001 for BID-MOH-2027-033-001** | Mary: **Waiting for David Ouma to review the addendum** if a prior ready item existed | Yes, David | Acknowledgement and affected responses complete, or submission deadline closes. |
+| Public portal information becomes incomplete | CFG System Manager Daniel Otieno | None in supplier My Work; controlled CFG configuration queue | Affected signatory: **Waiting for supplier portal information** | Governed CFG incident to Daniel; no supplier notice | CFG active projection is complete and validated. |
+| Production gate remains disabled when a bid is ready | Release operator Nadia Kamau | None in supplier My Work; controlled deployment release queue | Signatory: **Waiting for production submission availability** | Yes, Nadia | Approved operating profile and healthy dependencies permit enablement, or deadline closes. |
+| Enabled submission service fails | Technical operator Daniel Otieno | None in supplier My Work; technical incident queue with non-content reference | Mary: **Waiting for electronic submission recovery** | Yes, Daniel | Service health restored or deadline closes; no success inference. |
+| Submission result uncertain | Technical operator Daniel Otieno | None in supplier My Work; technical reconciliation queue for COR-BDS-2027-033-01 | Mary: **Waiting for the result of this submission attempt** | Yes, Daniel | Same correlation resolves accepted or definitively failed. |
+
+No item asks a supplier to obtain a template approval or contact an officer outside the product to progress an internal guard. The public footer remains available for human support, including accessibility and deadline concerns.
+
+### 5.15 Evaluation owner integration — v0.10
+
+**Opened-bid read.** `ReadOpenedBidForEvaluation` is an authenticated, tender-scoped Evaluation service read of the exact immutable submitted version admitted by the completed BOP package. It requires the BOP completion identity/version, exact bid/submission version, opened-package reference/digest and PublishedBidDefinition identity/version/digest. The BOP source must demonstrate successful governed opening and inclusion of that version; deadline expiry, a deposit receipt, committee appointment or a guessed package ID is insufficient. BDS never opens/decrypts a box or creates an alternative opening handoff. Resolve only already-opened evidence through the custody/BOP-authorised read, and recheck every evidence fetch. The response preserves typed response IDs, values, units, price rows/calculation inputs, evidence references/digests, submitted sum, signature/receipt lineage and exact published evaluation mappings. No re-keying, mutable Account refresh, write-back, inferred rule or new criterion is allowed.
+
+Source unavailable, unreadable content, missing mappings or digest mismatch returns an explicit unavailable/incomplete source result with its correlation identity, never an empty-bid result or compliance failure. EVL owns automatic source-issue creation/reconciliation under its §5.1. BDS returns source facts; EVL alone evaluates them. BOP supplements remain separate events and never overwrite the submitted projection. BOP final empty/cancellation outcomes provide no opened-bid read entitlement. Other bidders, suppliers, technical users and unappointed humans cannot invoke this service or reuse its evidence references as general file URLs. Human access still requires the current EVL appointment/eligibility verdict; successful backend checks do not grant human access.
+
+**Supplier clarification.** EVL owns the question, authorised version, sending, notice delivery, reply draft, immutable sent reply, final disposition and closure. BDS renders `ReadOwnClarification` and routes `SaveClarificationDraft` / `SubmitClarificationReply` to EVL using the current authenticated supplier user. No BDS clarification store, new organisation role, duplicate signature step or pre-bid Tenders question is created. The post-close route is a child of the existing own-bid workspace, addressed by the exact EVL request identity; opening it has no business effect. It does not expose Evaluation rankings, other bids, member discussions, internal findings or the report.
+
+The Account and user assignment must still be active and the actor must be a current Supplier Representative or Authorised Signatory for the exact submitted bidder arrangement. The arrangement’s historical **Closed** state following the deadline does not block this narrow correspondence entitlement, and does not reopen Start bid, edit, replace, withdraw or notice-contact commands. A nonmember or revoked/expired assignment receives Not found; JV scope follows the submitted arrangement and existing authority rather than a current mutable Account roster. Never require the closed arrangement to become Active for a reply.
+
+Allowlist: tender/title, own bidder/bid/version, request identity and exact question, permissible scope, reply deadline, sent time, own draft/reply and permitted attachments, reply receipt/timeliness, closed/withdrawn status and supplier-safe reason, and linked replacement request if any. Internal committee reasoning is not included by default. Optional explanatory uploads use the shared file-security controls and EVL scope limits; they do not amend the submitted bid or become an Accepted eligibility result.
+
+EVL accepts at most one sent reply per request. Draft saves remain separate from sending. Deadline expiry alone permits a clearly marked late reply while the request remains open. Final disposition, withdrawal or authoritative tender cancellation atomically closes reply writes; the server rechecks closure and version on both Save and Send. In a reply/closure race, a reply committed first must be included in the committee disposition; otherwise reject the reply, preserve the unsent text for reading and never alter findings or a report being signed. Sent replies are immutable; further explanation needs a new linked request. A material price/specification change remains correspondence and is excluded by EVL, never written into BDS bid data.
+
+A supplier’s **Reply to clarification for {tender}** item is EVL-owned and keyed to request/arrangement, with access checked for each user. It clears on the one committed reply or final closure/withdrawal/cancellation, never on view or expiry alone. Publication of the request in the workspace is independent of email success. The secretary retries the same notice through EVL; BDS does not create a second request or notification store. Support failures have safe messages and owner recovery, not a bidder pass/fail result. Cancellation retains read-only correspondence and original bid evidence.
 
 ## 6. Responsibilities and permissions
 
@@ -655,9 +781,20 @@ These are server-internal or owner-to-owner contracts. They are never bidder-fac
 | `BuildCanonicalBidPackage` | BDS orders the exact definition, current typed responses, locked declarations and accepted evidence into the one package signed and deposited; no client-supplied schema or total is trusted |
 | `GetTenderCandidateAudience` | Owner-authenticated Tenders call returns the exact Active arrangement IDs and current verified mandatory-notice destination Versions at the requested audience-freeze instant; no Draft/submission content or eligibility claim. |
 | `GetPublicPortalInformation` | CFG supplies active support contact and privacy/terms/accessibility links; public rendering fails safely rather than hard-coding placeholders. |
-| `GetSubmissionAvailability` | Server-internal release gate checks the controlled deployment flag plus exact trust/time/custody health once for signature and submission commands; the browser cannot override it. |
+| `GetSubmissionAvailability` | Server-internal release gate checks the controlled deployment flag plus exact signing/trust, time and custody health for signature and submission commands; returns the distinct §5.10 reason for each failed dependency. The browser cannot override it. |
 
-The first two services are release/publication dependencies, not runtime template administration. Their inputs come only from an exact Available code-owned release and governed Tender data. They create no editable Desk surface. Administrator and System Manager inspect the installed release through the separate read-only **STD Templates** module at `/app/std-templates/{release_id}`.
+The first two services are release/publication dependencies, not runtime template administration. Their inputs come only from the exact code-owned release bound to the Tender, used in a lifecycle state permitted by §4.4.4, and governed Tender data (v0.7 read: “Their inputs come only from an exact Available code-owned release and governed Tender data.”). They create no editable Desk surface. Administrator and System Manager inspect the installed release through the separate read-only **STD Templates** module at `/app/std-templates/{release_id}`.
+
+### 7.5 Evaluation integration reads and command routing
+
+| Read/action | Input, owner and committed effect |
+|---|---|
+| `ReadOpenedBidForEvaluation` | Authenticated Evaluation service, completed BOP reference and exact source tuple under §5.15 → immutable source projection or explicit source error. No evaluation decision, decryption or human-access grant. |
+| `ReadOwnClarification` | Current supplier authority, exact own bid and EVL request → allowlisted EVL projection and permitted actions, even though the submission arrangement is Closed. Read creates nothing. |
+| `SaveClarificationDraft` | Current authorised supplier, request/expected version, draft and scoped uploads → EVL-owned saved draft; no sent reply or receipt. |
+| `SubmitClarificationReply` | Same scope plus idempotency key → EVL commits one immutable reply, trusted receipt time and timely/late status; closure and replay guards are atomic. |
+
+These names are the EVL owner operations, not parallel BDS implementations. Owner errors retain EVL’s safe closure/version/access/service distinctions. Show **This clarification is closed** for final closure; **This clarification has been withdrawn** for withdrawal; neither offers Save or Send. No reply error changes the original bid state. Implementation must connect its public method names to this logical owner contract.
 
 ## 8. Error contract
 
@@ -675,7 +812,7 @@ The first two services are release/publication dependencies, not runtime templat
 | `BDS_ADDENDUM_REVIEW_REQUIRED` | **Review the latest addendum and the affected bid responses.** Link each affected task. |
 | `BDS_CLARIFICATION_DEADLINE_PASSED` | **The clarification deadline has passed.** Preserve entered text locally for copy only; create no question record. |
 | `BDS_CLARIFICATION_NOT_REGISTERED` | **Start a bid before asking a question about this Tender.** Return to the Tender overview. |
-| `BDS_PORTAL_INFORMATION_UNAVAILABLE` | **Supplier support information is temporarily unavailable.** Keep public Tender reading available; disable production Start/Submit actions until the required support and legal links resolve. |
+| `BDS_PORTAL_INFORMATION_UNAVAILABLE` | **Supplier support information is temporarily unavailable.** Keep public Tender reading, an existing Draft and existing receipts available. Block new Start and production Submit or replacement acceptance until required support and legal links resolve; show **Continue saved bid** or **View receipts** to an authorised existing supplier, and **Try again** for a new visitor. |
 | `BDS_FIELD_INVALID` | **Check the highlighted value.** Bind each exact field error. |
 | `BDS_UNKNOWN_RESPONSE` | **This response is not part of the published Tender.** Reject without saving. |
 | `BDS_EVIDENCE_REQUIRED` | **Add the required supporting evidence.** Link the published requirement. |
@@ -685,9 +822,12 @@ The first two services are release/publication dependencies, not runtime templat
 | `BDS_MUST_FIX` | **Fix the listed items before submitting.** Link every issue. |
 | `BDS_STALE_VERSION` | **Another person changed this bid. Reload before continuing.** |
 | `BDS_SIGNATORY_REQUIRED` | **Only an active Authorised Signatory can submit this bid.** |
-| `BDS_SIGNATURE_UNAVAILABLE` | **Digital signing is not available.** Keep the bid Draft and show the approved support route. |
+| `BDS_SIGNATORY_CERTIFICATE_REQUIRED` | **A valid digital signature certificate is required before you can submit.** Keep the Draft; show **Check certificate** for the signatory after obtaining one from an approved licensed certifying agency. |
+| `BDS_SIGNATURE_UNAVAILABLE` | **Digital signing is temporarily unavailable. Your bid remains saved and has not been submitted.** This is an enabled trust-service failure, not a missing bidder certificate. Show deadline and approved support route. |
 | `BDS_SIGNATURE_INVALID` | **The digital signature could not be verified for this bid.** Nothing is submitted. |
+| `BDS_PRODUCTION_SUBMISSION_NOT_ENABLED` | **Electronic bid submission is not available yet. Your bid remains saved and has not been submitted.** Show the exact deadline and configured supplier support contact; do not promise an enablement time or offer a retry. |
 | `BDS_SUBMISSION_SERVICE_UNAVAILABLE` | **Electronic submission is temporarily unavailable. Your bid remains saved.** Never imply receipt. |
+| `BDS_CUSTODY_REJECTED` | **The tender box rejected this attempt. Your bid remains saved and was not submitted.** Show the safe rejection reference; offer **Try confirmation again** only when the server has definitively established no acceptance, permits another attempt and the deadline remains open. |
 | `BDS_SUBMISSION_UNCERTAIN` | **Submission confirmation is still pending. Do not submit again.** Show correlation/support route; no receipt or success claim. |
 | `BDS_DEADLINE_PASSED` | **The submission deadline has passed. This bid was not submitted.** Show authoritative deadline/time. |
 | `BDS_ALREADY_SUBMITTED` | **This bid Version has already been submitted.** Show its receipt. |
@@ -719,7 +859,7 @@ Public header links are **Tenders**, **My bids** and **Account**. Signed-out sel
 
 ## 10. Static design contract
 
-Supply **KT-STD-001 v1.7 §2 plus this section only** to the design tool. Apply KT-STD-001 §2.2, §2.6–2.8. Supplier artboards use the Website portal shell below; BDS-DES-15 alone uses the internal Desk shell below. Fixture metadata remains outside the artboard. Every variant is an isolated reset unless the primary lifecycle explicitly links it.
+Supply **KT-STD-001 v1.8 §2 plus this section only** to the design tool. Apply KT-STD-001 §2.2, §2.6–2.8. Supplier artboards use the Website portal shell below; BDS-DES-15 alone uses the internal Desk shell below. Fixture metadata remains outside the artboard. Every variant is an isolated reset unless the primary lifecycle explicitly links it.
 
 This design contract renders only the `IT-EQUIPMENT-OPEN-V1` Goods profile. It is not the universal appearance of every future STD family. A Works or Services release must provide its own complete self-contained artboards using the same plain-language and usability rules; a designer must not extrapolate such screens from these Goods fixtures.
 
@@ -727,14 +867,14 @@ This design contract renders only the `IT-EQUIPMENT-OPEN-V1` Goods profile. It i
 
 #### Supplier Website shell
 
-- 1440 × 1024 px desktop artboard; 1200 px maximum-width centred content column; warm-white background.
+- 1440 × 1024 px desktop artboard; 1200 px maximum-width centred content column; background uses the bound design-system `--color-bg` token.
 - Provide a 390 × 844 px narrow-width derivative for every supplier artboard and dialog. At narrow width, grids stack, table rows become labelled cards, actions remain adjacent to their subject and no value or action is omitted or hidden by horizontal scrolling.
 - Compact white public header above the content: **KenTender** at left; **Tenders**, **My bids**, **Account** at right in that order. Show the selected item with text and underline, not a large tab card.
 - Use one quiet footer on every public/supplier page: **Supplier support**, **Privacy and data use**, **Terms of portal use**, **Accessibility**. Values and destinations come only from CFG v0.16. Do not repeat these links as cards or place legal paragraphs in the task flow.
 - Below the header use 32 px vertical page padding, 24 px after each page header and 16 px between sections.
-- Dialogs are 520 px over a dimmed parent artboard.
+- Dialogs are 520 px over a dimmed parent artboard. The technical-response drawer is 480 px wide at desktop and a full-width overlay at 390 px, with its own scrollable body, visible heading and fixed action footer; focus is trapped and returns to the row on close.
 - No Frappe Desk header, breadcrumb, officer module navigation, custom permanent sidebar, charts, hero illustration or promotional content.
-- On bid pages, place **Back to bid** above the page title. The bid workspace itself contains the five-task table; task pages do not repeat a large progress stepper.
+- On bid pages, place **Back to bid** above the page title. The bid workspace itself contains the five-task table; task pages do not repeat the five-task progress as a stepper. The compact three-stage formal journey in §10.19 is different and appears only on the permitted record/editor archetypes.
 
 #### Internal Desk shell — BDS-DES-15 only
 
@@ -767,6 +907,20 @@ Published documents: **Invitation to Tender.pdf** and **Complete Tender.pdf**. T
 
 Published clarification: question **May the two comparable contracts be from different customers?** Answer **Yes. The Tender requires two comparable contracts and does not require both contracts to be from the same customer.** Answered 26 May 2027, 11:00 EAT. Candidate notice Delivered 26 May 2027, 11:01 EAT to the arrangement's protected Tender notice email.
 
+#### Isolated Tender and arrangement facts
+
+| Variant | Exact fixture fact |
+|---|---|
+| DES-02 base after addendum | Peter Mwangi is an active Supplier Representative for Kisiwa Digital Limited, with no workspace for TND-MOH-2027-033, on 1 Jun 2027, 12:15 EAT. He is not assigned to Afya Digital Supplies Limited. |
+| DES-02 joint venture start | On 20 May 2027, 10:05 EAT, this Tender's published arrangement rules permit a joint venture; original submission deadline is 5 Jun 2027, 11:00 EAT. Peter's permitted JV example is **Kisiwa–Jua Technology JV**; lead **Kisiwa Digital Limited**; member **Jua Technology Limited** (Active Account); accepted agreement evidence `kisiwa-jua-jv-agreement.pdf`; assigned Authorised Signatory **Grace Njeri** for the lead. The verified lead-Account Tender notice email is `tenders@kisiwadigital.example`. Peter selects **Start bid** at 20 May 2027, 10:10 EAT: `ARR-MOH-2027-033-002` and `BID-MOH-2027-033-002` Draft Version 1 are created atomically for the JV. This isolated fixture creates no Afya workspace. |
+| DES-02 Draft before addendum | David Ouma views the current Tender at 20 May 2027, 10:05 EAT with his Afya Draft Version 3 and three of five preparation tasks Complete; the original 5 Jun deadline applies; no later answer or addendum is shown. |
+| DES-02 Submitted | Mary Wanjiku views the current Tender and Afya receipt `RCPT-MOH-2027-033-001` at 10 Jun 2027, 14:33 EAT. Current addendum and 12 Jun deadline apply; Peter sees none of Afya’s bid facts. |
+| DES-02 candidate question | David Ouma views the current Tender at 26 May 2027, 08:50 EAT with Active Afya candidate registration, before the clarification deadline; original 5 Jun deadline applies; no answer or addendum exists yet. |
+| Pre-deadline question | David Ouma opens the documents task on 26 May 2027, 08:50 EAT; the existing Afya arrangement is Active; no addendum or published answer yet; original submission deadline remains 5 Jun 2027, 11:00 EAT. His question is sent at 09:00 EAT. |
+| Addendum notice states | One Tenders-owned dispatch for ADD-MOH-2027-033-001 to Afya’s frozen `tenders@afyadigital.example`: Queued 31 May 2027, 09:01 EAT; Sent on provider acceptance 09:02 EAT without delivery proof; Failed/Delivery problem after three recorded attempts by 09:15 EAT in the isolated failure branch. The current addendum is public and effective from 09:00 independently of delivery. The separate 26 May general-answer notice is Delivered at 11:01 EAT in the primary fixture; never show its Delivered label on the failing addendum notice. |
+| Clarifications closed before addendum | David opens documents on 28 May 2027, 12:00 EAT; the public answer of 26 May is readable, clarification is closed, no addendum exists and the original submission deadline still applies. |
+| Withdrawal Tender | TND-MOH-2027-041, **Supply and delivery of network switches**, closes 12 Jun 2027, 11:00 EAT; BID-MOH-2027-041-001 is Afya's Submitted Version 1 with receipt `RCPT-MOH-2027-041-001`, received at 10 Jun 2027, 14:41:58 EAT and accepted at 14:42:01 EAT. Mary withdraws at 10 Jun 2027, 15:00 EAT; acknowledgement `WD-MOH-2027-041-001`. This is a separate isolated Tender and receipt. |
+
 #### Public portal information
 
 | Link | Exact visible destination |
@@ -791,6 +945,7 @@ These are CFG fixture values, not hard-coded BDS constants. The design tool uses
 | Official phone | +254 709 555 014 |
 | Reservation evidence | AGPO Youth Certificate AGPO-Y-2026-04172; expires 30 Jun 2027 |
 | Supplier Representative | David Ouma · Bid Coordinator |
+| Tender notice email | tenders@afyadigital.example · Verified |
 | Authorised Signatory | Mary Wanjiku · Managing Director |
 | Signatory authority | Board authority dated 5 May 2027; evidence `mary-wanjiku-signing-authority.pdf` |
 
@@ -813,7 +968,7 @@ The Account is Active. Values are self-declared or supplier-provided unless a na
 | Accepted into tender box | 10 Jun 2027, 14:32:01 EAT |
 | Receipt | RCPT-MOH-2027-033-001 |
 
-The fixture certificate and tender-box acknowledgements are labelled synthetic test evidence in the seed. The visible artboards show ordinary **Digital certificate ready** and **Submitted** states; they never imply that test evidence is production accreditation.
+Draft Version 7 is the seventh saved working Draft revision; Submitted bid Version 1 is the first accepted, immutable tender-box submission. They are independent counters and the UI always includes the words Draft or Submitted bid when displaying them. The fixture certificate and tender-box acknowledgements are labelled synthetic test evidence in the seed. The visible artboards show ordinary **Digital certificate ready** and **Submitted** states; they never imply that test evidence is production accreditation.
 
 #### Company forms and declarations
 
@@ -910,11 +1065,13 @@ Subtotal excluding tax is **KES 40,000,000.00**. Tax is **KES 6,400,000.00**. Bi
 | Organisation incomplete | Official phone is empty; Account task shows one Must fix. |
 | Account pending verification | Organisation details are saved; verification challenge sent to `tenders@afyadigital.example`; Account cannot start a bid until the challenge succeeds. |
 | Account suspended | Afya Digital Supplies Limited is Suspended; preparation and change commands are unavailable; existing receipts remain reachable through the authorised recovery route. |
-| Cross-organisation denial | Peter Mwangi, with no assignment to Afya Digital Supplies Limited, requests `BID-MOH-2027-033-001` at 10 Jun 2027, 14:20 EAT; the response masks record existence and exposes no Tender-specific bid fact. |
+| Cross-organisation denial | Peter Mwangi of Kisiwa Digital Limited, with no assignment to Afya Digital Supplies Limited, requests `BID-MOH-2027-033-001` at 10 Jun 2027, 14:20 EAT; the response masks record existence and exposes no Tender-specific bid fact. |
 | Needs attention | Product datasheet is Rejected after malware scan; Requirements task has one Must fix. |
 | Addendum review | Addendum is issued; old delivery response remains saved but acknowledgement/review is outstanding. |
 | Security outstanding | Electronic proof Accepted; physical original status Not recorded; submission remains allowed with a prominent warning. |
-| Signature unavailable | Bid is otherwise Ready; no approved certificate is available for Mary. |
+| Certificate required | Bid is otherwise Ready; Mary has no valid approved test certificate; no submission. |
+| Signing service unavailable | Mary has a valid approved test certificate but the test trust service is unhealthy; technical incident held by Daniel, no submission. |
+| Production gate disabled | Draft is Ready; the default-false production flag has never been enabled; no restoration time exists. |
 | Submission service unavailable | Draft is Ready; approved tender-box service cannot return acceptance. |
 | Custody definitely failed | Mary submits at 10 Jun 2027, 14:30 EAT; test tender box returns definitive rejection `TBX-REJECT-033-01`; Draft remains Ready to submit and no receipt or envelope is created. |
 | Custody uncertain | Mary submits at 10 Jun 2027, 14:30 EAT; correlation `COR-BDS-2027-033-01` remains pending; support reference `SUP-BDS-2027-033-01`; no retry, receipt or Submitted state is available. |
@@ -949,7 +1106,7 @@ Subtotal excluding tax is **KES 40,000,000.00**. Tax is **KES 6,400,000.00**. Bi
 
 **Purpose.** Let the supplier understand the opportunity, current notices and deadline before starting or continuing a bid.
 
-**Fixture context — outside the artboard.** David Ouma; Supplier Representative; Afya Digital Supplies Limited; no workspace; 20 May 2027, 10:05 EAT.
+**Fixture context — outside the artboard.** Peter Mwangi; Supplier Representative for Kisiwa Digital Limited; Active Account; no workspace for this Tender; 1 Jun 2027, 12:15 EAT. The current published addendum and revised deadline are effective. This public page exposes no Afya bid fact.
 
 **Page header.** Title **Supply and delivery of business laptops**. Place `TND-MOH-2027-033` beneath it. Description **Ministry of Health · Open Tender · Youth reservation.** Place primary **Start bid** at the right of the title.
 
@@ -961,15 +1118,19 @@ Subtotal excluding tax is **KES 40,000,000.00**. Tax is **KES 6,400,000.00**. Bi
 4. Section **Addenda and clarification answers**. Show ADD-MOH-2027-033-001 with issued date, summary **Delivery point clarified**, current deadline and **View**. Beneath it show the shared clarification question/answer with answered date.
 5. Section **Before you start** with three short bullets: sign in; use one supplier organisation or permitted joint venture; an Authorised Signatory and valid digital certificate are needed only when submitting.
 
-For an existing candidate registration before the clarification deadline, show secondary **Ask a question** beside the Addenda and clarification answers heading. Before Start bid, show no question form; helper **Start a bid to ask a question about this Tender. Starting does not submit a bid.** After the clarification deadline, omit the action and show **Clarifications closed 27 May 2027, 17:00 EAT.**
+If the production gate is false, place the exact §5.10 **Electronic bid submission is not available yet** guidance beside the deadline before **Before you start**; **Start bid** may still prepare a Draft if the other guards permit it. If the enabled submission service is unhealthy, use the distinct temporary-outage guidance. A submitted bidder sees the receipt state separately; do not make an existing accepted bid appear unsubmitted.
+
+**BDS-DES-02-CANDIDATE-QUESTION** uses David at 26 May 2027, 08:50 EAT, the original deadline and no later answer/addendum. For this existing candidate registration before the clarification deadline, show secondary **Ask a question** beside the Addenda and clarification answers heading. Before Start bid, show no question form; helper **Start a bid to ask a question about this Tender. Starting does not submit a bid.** After the clarification deadline, omit the action and show **Clarifications closed 27 May 2027, 17:00 EAT.**
 
 **Variants.**
 
-- **BDS-DES-02-SIGNED-OUT:** replace Start bid with **Sign in to start bid**.
-- **BDS-DES-02-JV-START:** after an active Account user selects Start bid and the Tender permits joint ventures, open a short step titled **Who is bidding?** Choices are **My organisation** and **A joint venture**. For a joint venture show Joint-venture name; Lead organisation; member organisations; agreement evidence; Authorised Signatory. For both choices show **Tender notice email** selected from verified Account contacts and helper **Mandatory Tender notices will be sent here. You can change this later to another verified Account email.** Primary **Start bid**. The arrangement/candidate registration and workspace are committed together; neither survives validation failure.
-- **BDS-DES-02-DRAFT:** primary **Continue bid**; secondary status **Draft · 3 of 5 tasks complete**.
-- **BDS-DES-02-SUBMITTED:** primary **View receipt**; status **Submitted 10 Jun 2027, 14:32 EAT**.
+- **BDS-DES-02-SIGNED-OUT:** same current public Tender at 1 Jun 2027, 12:15 EAT, with no identity; replace Start bid with **Sign in to start bid**.
+- **BDS-DES-02-JV-START:** use the isolated 20 May joint-venture fixture, original deadline and no future addendum or answer. After an active Account user selects Start bid and the Tender permits joint ventures, open a short step titled **Who is bidding?** Choices are **My organisation** and **A joint venture**. For a joint venture show the exact §10.1 JV name, lead, member, agreement filename and signatory. For both choices show **Tender notice email** selected from verified Account contacts and helper **Mandatory Tender notices will be sent here. You can change this later to another verified Account email.** Primary **Start bid**. The arrangement/candidate registration and workspace are committed together; neither survives validation failure.
+- **BDS-DES-02-DRAFT:** use David at 20 May 2027, 10:05 EAT, Afya Draft Version 3, original deadline and no future answer/addendum. Primary **Continue bid**; secondary status **Draft · 3 of 5 tasks complete**. Never expose this fact to Peter.
+- **BDS-DES-02-SUBMITTED:** use Mary at 10 Jun 2027, 14:33 EAT for Afya’s own accepted bid. Primary **View receipt**; status **Submitted 10 Jun 2027, 14:32 EAT**. No Peter or cross-organisation receipt view.
 - **BDS-DES-02-CANCELLED:** use Cancelled Tender fixture; red status **Cancelled**; no bid action; show cancellation notice action **View notice**.
+- **BDS-DES-02-SUPERSEDED** (per approved TPR v0.13): informational text **This published Tender remains on its existing format. You can read the current documents and, while the Tender is open and the format verifies, start or continue a bid. Check the deadline and addenda.** Show **Start bid** or **Continue bid** only when the server permits it; never offer a template upgrade.
+- **BDS-DES-02-WITHDRAWN-RELEASE** (per approved TPR v0.13): blocked text **The current Tender documents and any existing bid receipt remain available. You cannot start or submit a bid against this format. An existing submitted bid has not been automatically withdrawn.** Keep **View Tender documents** and an authorised **View receipt**; only an authorised signatory with a current Submitted bid before the deadline may see **Withdraw bid**. Do not confuse release withdrawal with supplier bid withdrawal.
 
 **Visual check.** The decision to bid is based on current Tender facts and notices; account or system internals do not compete with the opportunity.
 
@@ -1007,9 +1168,11 @@ For an existing candidate registration before the clarification deadline, show s
 2. Section **People** with table columns Person; Responsibility; Effective period; Action. Rows David Ouma / Supplier Representative / From 18 May 2027 / View; Mary Wanjiku / Authorised Signatory / From 18 May 2027 / View. Secondary **Add person** beneath table.
 3. Section **Reusable evidence** with columns Evidence; Reference; Valid until; Status; Action. Rows Certificate of incorporation / PVT-9X7K2M / — / Available / View; Tax compliance certificate / P051234567X / 31 Dec 2027 / Available / View; Youth reservation evidence / AGPO-Y-2026-04172 / 30 Jun 2027 / Available / View.
 4. Text below evidence: **A bid uses an exact copy of linked evidence. Updating this list does not change a submitted bid.** Secondary **Add evidence**.
-5. Section **Tender notice contacts** with verified organisation emails and verification status. Helper **Each bid chooses one verified email for mandatory notices. Changing an Account email does not rewrite notices already sent.** This section is contact maintenance, not a notification-preference or opt-out screen.
+5. Section **Tender notice contacts** with one fixture row **tenders@afyadigital.example · Verified** and no invented second address. Helper **Each bid chooses one verified email for mandatory notices. Changing an Account email does not rewrite notices already sent.** This section is contact maintenance, not a notification-preference or opt-out screen.
 
 **Incomplete variant BDS-DES-04-ATTENTION.** Amber result **Complete 1 item before starting a bid**; list **Enter the official phone number** with **Edit organisation**. Do not call the Account unverified.
+
+**Suspended variant BDS-DES-04-SUSPENDED.** Replace the Active badge and Edit organisation action with **Account suspended** and the §10.19 Amina Yusuf waiting line. Preserve the labelled organisation facts and existing receipt history access; omit edits, bid start and bid-change actions. Show **View receipts** and **Supplier support** as separate read/help links. Do not expose another supplier's bid or promise self-activation.
 
 **Pending-verification variant BDS-DES-04-VERIFY.** Badge **Pending verification**. Information result **Verify tenders@afyadigital.example before starting a bid.** Action **Resend verification link**. Organisation facts remain editable; bid start/edit/submit actions are absent.
 
@@ -1041,13 +1204,13 @@ For an existing candidate registration before the clarification deadline, show s
 
 **Purpose.** Show exactly what remains before the bid can be submitted.
 
-**Fixture context — outside the artboard.** David Ouma; Supplier Representative; BID-MOH-2027-033-001 Draft Version 7; 10 Jun 2027, 14:20 EAT; all preparation tasks complete and Mary reviewed at 14:15 EAT.
+**Fixture context — outside the artboard.** David Ouma; Supplier Representative; BID-MOH-2027-033-001 Draft Version 7; 10 Jun 2027, 14:20 EAT; all preparation tasks complete. Mary opened review at 14:15 without changing the Draft.
 
-**Page header.** Title **Your bid**. Place Tender title and references beneath on separate muted lines. Description **Complete the five tasks below before an Authorised Signatory submits the bid.** Badge **Ready to submit**. Primary **Review bid** at right.
+**Page header.** Title **Your bid**. Place Tender title and references beneath on separate muted lines. The §10.19 next-step line explains that Mary must submit this ready Draft. Primary **Review bid** at right; no duplicate Ready badge or status paragraph.
 
 **Composition, top to bottom.**
 
-1. Deadline strip **Submissions close 12 Jun 2027, 11:00 EAT** with text **2 days remaining**.
+1. Deadline strip **Submissions close 12 Jun 2027, 11:00 EAT** with text **Closes in 1 day 20 hours 40 minutes** at the 10 Jun 14:20 fixture instant. The live display derives its remaining time from trusted server time; the exact deadline is always shown.
 2. Current notice panel: Clarification answer **Delivered** with **View answer**; ADD-MOH-2027-033-001 **Acknowledged** with **View addendum**. Delivery describes the arrangement notice only; public availability is shown separately.
 3. Five-row task table with columns Task; Status; Updated; Action. Rows:
    - Tender documents, clarifications and addenda / Complete / 1 Jun 2027, 12:10 / View;
@@ -1057,11 +1220,22 @@ For an existing candidate registration before the clarification deadline, show s
    - Review and submit / Complete / 10 Jun 2027, 13:50 / **Review bid**.
 4. Beneath table show **Saved 10 Jun 2027, 13:50 EAT by David Ouma.** The Review-and-submit row uses this underlying Draft mutation time; merely opening the review never changes an Updated value. Do not show a percentage, system counts, manifest version or technical validation keys.
 
+When §5.10 reports a disabled production gate or enabled outage, show that reason, saved-work fact, deadline and permitted support/read link above the task table. Keep preparation controls available where the server allows them; omit the Submit action. The §10.19 next-step block replaces any repeated Ready-to-submit status language.
+
 **Variants.**
 
-- **BDS-DES-06-IN-PROGRESS:** Requirements status Needs attention; Price status In progress; header badge **Needs attention**; supporting summary **2 tasks need attention**; primary **Continue bid** opens Requirements.
-- **BDS-DES-06-ADDENDUM:** use Addendum review facts; amber panel **Review the latest addendum before submitting**; Documents Needs attention; Requirements Needs attention; primary **Review addendum**.
-- **BDS-DES-06-REPRESENTATIVE:** same Ready fixture for David; primary **Review bid**, and beneath it text **Mary Wanjiku must submit this bid.** No Submit action.
+- **BDS-DES-06-SIGNATORY:** Use Mary at 10 Jun 2027, 14:20 EAT with the same saved Draft, §10.19 Your turn and **Review bid**; do not imply that opening the review saved the Draft.
+- **BDS-DES-06-IN-PROGRESS:** Requirements status Needs attention; Price status In progress; the task table contains the two affected rows. §10.19 supplies the single next-step line; primary **Continue bid** opens Requirements. No second task-count summary.
+- **BDS-DES-06-ADDENDUM:** use Addendum review facts; §10.19 supplies the one blocked container and **Review addendum** fix. Documents and Requirements retain factual Needs attention row states; no separate amber status panel.
+- **BDS-DES-06-REPRESENTATIVE:** the base is David in the Ready fixture; this named variant is its actor-specific §10.19 waiting line, with primary **Review bid** and no Submit. Do not produce a second identical artboard. The corresponding Mary-ready state is BDS-DES-06-SIGNATORY, with §10.19 Your turn and permitted **Review bid**.
+
+**BDS-DES-06-GATE:** Use Mary Wanjiku as viewer of the Ready Draft at 10 Jun 2027, 14:20 EAT and the isolated disabled production gate, overriding the David base actor. Keep task table and saved Draft; show §10.19 Nadia waiting line, deadline and no Submit. **BDS-DES-06-OUTAGE:** use Mary at 10 Jun 2027, 14:20 EAT and the enabled custody-service outage with Daniel as technical holder; show distinct temporary guidance.
+
+**BDS-DES-06-CLOSED-UNSUBMITTED:** Use the isolated Late submission/closed unsubmitted Draft at 12 Jun 2027, 11:00:01 EAT. Show the §10.19 Done headline, saved Draft and **Back to My bids**, no Submit or receipt.
+
+**BDS-DES-06-WITHDRAWN-RELEASE:** Conditional on TPR v0.13 approval, use an existing Draft after its bound release is Withdrawn. Preserve task rows for reading; show the §10.19 blocked guidance, **View current Tender** and available support, no Submit/replacement.
+
+**BDS-DES-06-CFG-INCOMPLETE:** Use David at 10 Jun 2027, 14:20 EAT for an in-progress Draft; keep **Continue saved bid** and a separate blocked-Submit explanation; for the otherwise Ready variant use Mary at the same instant and show Daniel waiting with saved Draft and no Submit. David viewing the Ready Draft instead sees his Mary-signatory waiting line plus the factual CFG blocker; no Daniel action is assigned to David. Public support links are shown only if the active projection supplies them.
 
 **Visual check.** The bidder sees five ordinary tasks, current notices, deadline and one next action without a dense dashboard.
 
@@ -1069,7 +1243,7 @@ For an existing candidate registration before the clarification deadline, show s
 
 **Purpose.** Review the exact documents and notices controlling the bid, ask a governed question and acknowledge issued addenda.
 
-**Fixture context — outside the artboard.** David Ouma; Supplier Representative; BID-MOH-2027-033-001 Draft Version 7; 1 Jun 2027, 12:05 EAT; addendum not yet acknowledged.
+**Fixture context — outside the artboard.** David Ouma; Supplier Representative; BID-MOH-2027-033-001 Draft Version 4; 1 Jun 2027, 12:05 EAT; addendum effective but not yet acknowledged; clarification closed.
 
 **Page header.** Back to bid. Title **Tender documents, clarifications and addenda**. Description **Review the current Tender, ask questions before the clarification deadline and acknowledge issued addenda.** Badge **Needs attention**. No header action.
 
@@ -1078,18 +1252,20 @@ For an existing candidate registration before the clarification deadline, show s
 1. Section **Official Tender documents** with table columns Document; Published; Action. Rows Invitation to Tender / 15 May 2027 / View, Download; Complete Tender / 15 May 2027 / View, Download.
 2. Section **Issued addendum** with one bordered row: ADD-MOH-2027-033-001; Delivery point clarified; Issued 31 May 2027, 09:00 EAT; revised deadline 12 Jun 2027, 11:00 EAT; actions **View** and **Download**.
 3. Below the row show required checkbox **I have reviewed ADD-MOH-2027-033-001 and understand that the delivery point and submission deadline changed.** It starts unchecked.
-4. Section **Questions and answers** with the exact shared question, answer, answered time and notice result **Delivered**. Place secondary **Ask a question** in the section heading only before the clarification deadline.
+4. Section **Questions and answers** with the exact shared question, answer, answered time and notice result **Delivered**. Do not show **Ask a question** in this base fixture; clarification closed on 27 May. The pre-deadline question action belongs to BDS-DES-07-QUESTION-OPEN.
 5. Footer: secondary **Back to bid**; primary **Save and continue**, disabled until acknowledgement; explanation beside it **Acknowledge the addendum to continue.**
 
-**Ask-a-question dialog.** Heading **Ask a question about this Tender**. Supporting text **Questions must be sent before 27 May 2027, 17:00 EAT. Your organisation will be known to the procurement team but will not be identified in a general answer.** Read-only Tender and **Afya Digital Supplies Limited**; textarea **Your question**, 10–2,000 characters; footer Cancel / **Send question**. Successful result **Question received 26 May 2027, 09:00 EAT** with action **View question**. Saving/closing the dialog without Send creates nothing.
+**Ask-a-question dialog BDS-DES-07-QUESTION-OPEN-DIALOG.** From the isolated 26 May QUESTION-OPEN state only. Heading **Ask a question about this Tender**. Supporting text **Questions must be sent before 27 May 2027, 17:00 EAT. Your organisation will be known to the procurement team but will not be identified in a general answer.** Read-only Tender and **Afya Digital Supplies Limited**; textarea **Your question**, 10–2,000 characters; footer Cancel / **Send question**. Successful result **Question received 26 May 2027, 09:00 EAT** with action **View question**. Saving/closing the dialog without Send creates nothing.
 
 **Complete variant BDS-DES-07-COMPLETE.** Checkbox checked; badge Complete; primary Save and continue enabled. Display **Acknowledged by David Ouma on 1 Jun 2027, 12:10 EAT** beneath checkbox.
 
-**No-addendum variant BDS-DES-07-NONE.** Omit only the addendum row/acknowledgement and show **No addenda have been issued.** Retain Questions and answers and **Ask a question** while the clarification period is open. Task is Complete after the bidder opens the current Tender documents; no empty acknowledgement control.
+**Question-open/no-addendum variant BDS-DES-07-QUESTION-OPEN (also BDS-DES-07-NONE).** Use 26 May 2027, 08:50 EAT, the original deadline and the active Afya candidate. Omit addendum and answer, show **No addenda have been issued** and **No answers published yet**; show **Ask a question** and its dialog. After David opens the current documents the task can be Complete; no empty acknowledgement control.
 
-**Clarifications-closed variant BDS-DES-07-CLOSED.** Omit **Ask a question** and show **Clarifications closed 27 May 2027, 17:00 EAT.** Existing public answers remain readable.
+**Clarifications-closed variant BDS-DES-07-CLOSED.** Use the isolated 28 May 2027 fixture, before the addendum. Omit its row and **Ask a question**; show **No addenda have been issued** and **Clarifications closed 27 May 2027, 17:00 EAT.** The 26 May public answer remains readable. The base 1 Jun state instead requires the new addendum acknowledgement.
 
-**Notice-problem variant BDS-DES-07-NOTICE.** Show **Delivery problem** beside the arrangement's clarification/addendum notice and helper **The notice could not be delivered to your selected Tender notice email. The current Tender information remains available here.** Action **Update notice email** opens only verified Account contacts. No resend or Tender-state control is exposed to the supplier.
+**Notice-problem variant BDS-DES-07-NOTICE.** David views the addendum documents at 31 May 2027, 09:15 EAT, before his 1 Jun acknowledgement; use the failed addendum notice in §10.1, not the Delivered 26 May general-answer notice. Show **Delivery problem** beside ADD-MOH-2027-033-001 and helper **The notice could not be delivered to your selected Tender notice email. The current Tender information remains available here.** Action **Update notice email** opens only verified Account contacts. No resend or Tender-state control is exposed to the supplier.
+
+**Notice-pending variants.** David views the current addendum documents before acknowledgement. For the same addendum notice to Afya in §10.1, show **Queued** at 31 May 2027, 09:01 EAT and **This notice is waiting to be sent. You can read the current Tender information here now.** before dispatch. At 31 May 2027, 09:02 EAT after provider acceptance without recipient delivery proof, show **Sent** and **Delivery has not been confirmed. You can read the current Tender information here now.** These snapshots do not use the later 1 Jun Draft Version 4/5 or acknowledgement. Neither variant presents delivery as proven, asks the supplier to acknowledge a missing email, or blocks access to current documents.
 
 **Visual check.** Current documents, questions/answers, changed facts and acknowledgement are obvious; asking a question is short and deadline-aware; internal package inventory, delivery internals and hashes are absent.
 
@@ -1113,7 +1289,7 @@ For an existing candidate registration before the clarification deadline, show s
 
 **Security-outstanding variant BDS-DES-08-SECURITY.** Amber panel **Physical original not yet recorded**. Text **Deliver the original bank guarantee to the Ministry of Health Procurement Office before 12 Jun 2027, 11:00 EAT. You may submit electronically, but failure to deliver the original before closing may disqualify the bid.** Keep Submit readiness as Review note, not Must fix.
 
-**Joint-venture variant BDS-DES-08-JV.** Replace Bidding organisation values with JV name; lead organisation; member table; agreement evidence; signatory. Declarations remain arrangement-specific. No free-text member list.
+**Joint-venture variant BDS-DES-08-JV.** Use Peter Mwangi on 20 May 2027, 10:15 EAT in the isolated `BID-MOH-2027-033-002` Draft Version 1 created at 10:10. Replace Afya values with **Kisiwa–Jua Technology JV**, lead Kisiwa Digital Limited, member Jua Technology Limited, accepted `kisiwa-jua-jv-agreement.pdf`, Grace Njeri as lead Authorised Signatory and verified notice email `tenders@kisiwadigital.example`. The original 5 Jun deadline applies; no later answer/addendum is shown. Declarations are arrangement-specific and initially incomplete; no Afya account values, receipt or free-text member list.
 
 **Account-update variant BDS-DES-08-ACCOUNT-UPDATE.** The Account address changed after bid start. Keep the Draft value and current Account value in a two-row comparison; show **Use updated details** and **Keep bid details**. Neither action edits the Account. **Use updated details** refreshes only the Draft snapshot and revalidates affected forms; **Keep bid details** closes the comparison without mutation. A submitted Version never shows the refresh action.
 
@@ -1137,7 +1313,7 @@ For an existing candidate registration before the clarification deadline, show s
 6. Section **Supporting evidence** with the ten evidence-set rows and columns Evidence; File; Status; Action. Accepted rows offer View/Replace. No digest or file-storage metadata.
 7. Footer: secondary **Back to bid**; primary **Save and continue**.
 
-**Response drawer.** Opens from a technical row. Heading is the requirement name. Show Tender requirement; response control appropriate to the published type; evidence selector/upload; optional comment only if published. Footer Cancel / **Save response**.
+**Response drawer.** Use the exact desktop/narrow dimensions and focus behavior in §10.1. Opens from a technical row. Heading is the requirement name. Show Tender requirement; response control appropriate to the published type; evidence selector/upload; optional comment only if published. Footer Cancel / **Save response**.
 
 **Needs-attention variant BDS-DES-09-ATTENTION.** Use Rejected product datasheet fixture. Red summary **Fix 1 item**; issue **Replace the rejected product datasheet** links Evidence. Technical rows using that file show Needs evidence; task badge Needs attention.
 
@@ -1171,22 +1347,24 @@ For an existing candidate registration before the clarification deadline, show s
 
 **Fixture context — outside the artboard.** Mary Wanjiku; Authorised Signatory; primary Draft Version 7; 10 Jun 2027, 14:15 EAT.
 
-**Page header.** Back to bid. Title **Review bid**. Description **Check the complete bid before submitting it to the electronic tender box.** Badge **Ready to submit**. Primary **Submit bid** at right.
+**Page header.** Back to bid. Title **Review bid**. Description **Check the complete bid before submitting it to the electronic tender box.** The §10.19 next-step line accompanies primary **Submit bid**; no Ready badge.
 
 **Composition, top to bottom.**
 
-1. Green result **Ready to submit** with text **All required bid information is complete.**
+1. Compact factual validation result **All required bid information is complete.** This is the live computed validation outcome, separate from the §10.19 actor-specific next action; no second Ready-to-submit status heading.
 2. Green supporting fact **Physical tender-security original recorded as received on 10 Jun 2027, 10:00 EAT.** This satisfied fact is not a Review note. Only the Security-outstanding variant uses the amber warning copy from BDS-DES-08.
 3. Summary grid with separately labelled Tender; Bidder; Bid; Current deadline; Signatory; Bid total.
 4. Section **Bid tasks** with all five rows using the exact §4.6 section statuses; the complete fixture shows **Complete** for every row. Each preparation task offers **Review**.
 5. Section **What you are offering**: ApexBook Pro 14; 250 Each; delivery 15 Sep 2027; warranty 36 months; support response 4 hours.
-6. Section **Declarations and evidence**: seven declarations confirmed; ten evidence items accepted; tender security reference and physical receipt separately labelled.
+6. Section **Declarations and evidence**: five declarations Confirmed and two forms Complete as the seven exact §10.1 rows state; ten evidence items accepted; tender security reference and physical receipt separately labelled.
 7. Section **Price summary** with subtotal, tax and total separately labelled.
 8. Footer: secondary **Back to bid**; primary **Submit bid**.
 
 **Evidence-attention variant BDS-DES-11-EVIDENCE-ATTENTION.** Use only the Evidence rejected fixture. Red result **Fix 1 item before submitting** with exact issue link **Replace the rejected product datasheet**. Submit absent; primary **Fix item**.
 
-**Addendum-attention variant BDS-DES-11-ADDENDUM-ATTENTION.** Use only the Addendum review fixture. Red result **Fix 1 item before submitting** with exact issue link **Confirm the current delivery location**. Submit absent; primary **Fix item**.
+**Addendum-attention variant BDS-DES-11-ADDENDUM-ATTENTION.** Use only the Addendum review fixture. The §10.19 blocked next step names both acknowledgement and the changed delivery response. In the issue list show **Confirm the current delivery location** at the affected row; Submit absent; primary **Review addendum** opens the exact addendum and then the affected response.
+
+**CFG-incomplete variant BDS-DES-11-CFG.** Keep the exact saved Draft and readiness results, replace Submit with §10.19 waiting guidance when otherwise Ready; a still-incomplete Draft may continue preparation. Show no fabricated support destination.
 
 **Representative variant BDS-DES-11-REPRESENTATIVE.** David sees the same complete review; no Submit action. Visible text at header right **Mary Wanjiku must submit this bid.**
 
@@ -1198,7 +1376,7 @@ For an existing candidate registration before the clarification deadline, show s
 
 **Fixture context — outside the artboard.** Mary Wanjiku; active Authorised Signatory; primary Draft Version 7; 10 Jun 2027, 14:30 EAT; approved digital certificate available.
 
-**Page header.** Back to review. Title **Submit bid**. Description **Digitally sign and place this bid in the electronic tender box.** Badge **Ready to submit**. No header action.
+**Page header.** Back to review. Title **Submit bid**. Description **Digitally sign and place this bid in the electronic tender box.** The §10.19 next-step line replaces a Ready badge. No header action.
 
 **Composition, top to bottom.**
 
@@ -1209,15 +1387,23 @@ For an existing candidate registration before the clarification deadline, show s
 5. Required final confirmation: **I confirm that the information, declarations and evidence in this bid are correct and that I am authorised to submit it for Afya Digital Supplies Limited.** Starts unchecked.
 6. Footer: secondary **Cancel**; primary **Submit bid**, disabled until confirmation.
 
-**Confirmation dialog.** Heading **Submit this bid?** Show Tender; Bidder; Bid total; Deadline as four labelled rows. Text **KenTender will apply your digital signature and submit this exact Version to the electronic tender box. Wait for the submission receipt before leaving.** Footer Cancel / primary **Submit bid**.
+**Confirmation dialog.** Heading **Submit this bid?** Show Tender; Bidder; Bid total; Deadline as four labelled rows. Text **KenTender will apply your digital signature and submit this exact Version to the electronic tender box. Wait for the submission receipt to confirm acceptance. If confirmation takes longer, you can return through View status; do not submit again while the same attempt is being checked.** Footer Cancel / primary **Submit bid**.
 
-**Pending state BDS-DES-12-PENDING.** Replace footer with disabled **Submitting bid…** and text **Do not close this page or submit again.** Do not show success until receipt.
+**Pending state BDS-DES-12-PENDING.** Replace footer with disabled **Submitting bid…** and text **We are checking this submission attempt. You may leave and return through View status. Do not submit again while this attempt is pending.** Provide **View status** as a read link when the server has recorded a correlation. Do not show success until an authoritative receipt.
 
-**Signature-unavailable variant BDS-DES-12-SIGNATURE.** Red result **Digital signing is not available** with text **Your bid remains saved and has not been submitted. Contact the configured support service before the deadline.** No Submit action.
+**Certificate-required variant BDS-DES-12-CERTIFICATE.** Use Mary's isolated no-certificate fixture. Blocked result **A valid digital signature certificate is required before you can submit.** Explain that Mary must obtain one from an approved licensed certifying agency before the deadline, then use **Check certificate**. The bid remains saved and has not been submitted; support explains the process but cannot waive it. No Submit action.
 
-**Service-unavailable variant BDS-DES-12-SERVICE.** Red result **Electronic submission is temporarily unavailable**; show current time/deadline and **Try confirmation again** only when the server says the earlier attempt definitely failed. An uncertain result uses the common state in §10.17 and offers no retry.
+**Signing-service-unavailable variant BDS-DES-12-SIGNATURE.** Use a separate fixture where Mary has a valid certificate but the approved trust service is unhealthy. Red result **Digital signing is temporarily unavailable**; the bid remains saved and has not been submitted. Daniel Otieno owns the technical incident. Show the deadline and **Supplier support**; no Submit or certificate instruction.
 
-**Visual check.** The final act is explicit and calm; signature, deadline, custody and receipt are clear without exposing cryptographic internals.
+**Service-unavailable variant BDS-DES-12-SERVICE.** The enabled custody service is unhealthy before a deposit. Red result **Electronic submission is temporarily unavailable**; show current time/deadline, saved Draft and support route. Do not offer a retry of an uncertain attempt. A definite custody rejection has its own variant.
+
+**Definitive-rejection variant BDS-DES-12-REJECTED.** Use the separate `TBX-REJECT-033-01` fixture. Blocked result **The tender box rejected this attempt. Your bid remains saved and was not submitted.** Show the reference, current server time and deadline. **Try confirmation again** is available only on the server's definitive no-acceptance and new-attempt verdict before deadline; otherwise show **Contact support**. Never call this an outage or show a receipt.
+
+**CFG-incomplete variant BDS-DES-12-CFG.** For an otherwise Ready Draft, replace Submit with the §10.19 Daniel waiting line and explain that saved work and receipts remain available while required supplier portal information is restored. **Continue saved bid** is a read/save route, not a submission.
+
+**Production-disabled variant BDS-DES-12-GATE.** Red result **Electronic bid submission is not available yet**. Explain **Your bid remains saved and has not been submitted.** Show the exact deadline and configured **Supplier support**; provide **Back to bid** for permitted Draft work. No Submit, retry or promised enablement time.
+
+**Visual check.** The final act is explicit and calm; certificate missing, signing service unhealthy, custody service unhealthy and definite rejection each have distinct owners and guidance. Deadline and receipt truth remain clear without exposing cryptographic internals.
 
 ### 10.14 BDS-DES-13 — Submission receipt
 
@@ -1229,17 +1415,19 @@ For an existing candidate registration before the clarification deadline, show s
 
 **Composition, top to bottom.**
 
-1. Receipt card with separately labelled Receipt reference `RCPT-MOH-2027-033-001`; Tender; Bidder; Bid; Submission Version 1; Submitted by Mary Wanjiku; Received by tender-box service 10 Jun 2027, 14:31:58 EAT; Accepted into tender box 10 Jun 2027, 14:32:01 EAT; Status Submitted.
+1. Receipt card with separately labelled Receipt reference `RCPT-MOH-2027-033-001`; Tender; Bidder; Bid; Submitted bid Version 1; Submitted by Mary Wanjiku; Received by tender-box service 10 Jun 2027, 14:31:58 EAT; Accepted into tender box 10 Jun 2027, 14:32:01 EAT; Status Submitted.
 2. Section **Submission summary** with Bid total; Offered item; Quantity; Delivery date; Current deadline.
 3. Information panel **This receipt confirms submission only. It is not an opening, evaluation or award result.**
-4. Section **Before the deadline** with secondary actions **Prepare replacement** and destructive **Withdraw bid**; show text **The current submitted bid remains valid until a replacement is accepted or a withdrawal is acknowledged.**
+4. In the existing action area place secondary **Prepare replacement** and destructive **Withdraw bid** for Mary before deadline. Retain the factual sentence **The current submitted bid remains valid until a replacement is accepted or a withdrawal is acknowledged.** Do not add a second Before the deadline status panel; §10.19 names the optional next actions once.
 5. Footer: secondary **Back to My bids**; secondary **Download receipt**.
 
 Do not show a hash, encryption key, certificate serial, package digest, schema identity, database ID or storage location.
 
-**Deadline-passed variant BDS-DES-13-CLOSED.** Use only the Submitted receipt after deadline fixture. Omit replacement/withdraw actions; show **Submission changes closed on 12 Jun 2027, 11:00 EAT.** Receipt remains downloadable. Do not use the never-submitted Late submission fixture for this receipt state.
+**David receipt variant BDS-DES-13-REPRESENTATIVE.** David may read the organisation receipt but cannot Prepare replacement or Withdraw bid; show §10.19 Done line, Print/Download and Back to My bids only.
 
-**Visual check.** The bidder can prove when and what Version was accepted while the receipt reveals no confidential technical internals.
+**Deadline-passed variant BDS-DES-13-CLOSED.** Use only the Submitted receipt after deadline fixture with Mary as viewer at trusted current time 12 Jun 2027, 11:00:01 EAT. Omit replacement/withdraw actions; show **Submission changes closed on 12 Jun 2027, 11:00 EAT.** Receipt remains downloadable. Do not use the never-submitted Late submission fixture for this receipt state.
+
+**Visual check.** The bidder can prove when and what Version was accepted while the receipt reveals no confidential technical internals. The after-deadline Done headline says submission changes closed; it does not reuse the earlier David headline.
 
 ### 10.15 BDS-DES-14 — Replacement and withdrawal
 
@@ -1259,7 +1447,7 @@ Do not show a hash, encryption key, certificate serial, package digest, schema i
 
 **Withdrawal dialog.** Heading **Withdraw this bid?** Show Tender; Bid; current receipt; deadline. Required textarea label **Reason for withdrawal** with helper **Enter 10–500 characters.** Consequence **The bid will no longer be considered. You may submit a new replacement before the deadline. The submitted history will not be deleted.** Footer Keep bid / destructive **Withdraw bid**.
 
-**Withdrawal acknowledgement variant BDS-DES-14-WITHDRAWN.** Use isolated Withdrawal facts. Heading **Bid withdrawn**; acknowledgement reference; Tender; Bidder; Withdrawn by; Withdrawn at; status Withdrawn. Actions Download acknowledgement / Start replacement / Back to My bids.
+**Withdrawal acknowledgement variant BDS-DES-14-WITHDRAWN.** Use the isolated TND-MOH-2027-041 title, deadline, bid, receipt and acknowledgement facts in §10.1; do not reuse TND-MOH-2027-033. Heading **Bid withdrawn**; acknowledgement reference; Tender; Bidder; Withdrawn by; Withdrawn at; status Withdrawn. Actions Download acknowledgement / Start replacement / Back to My bids.
 
 **Visual check.** Replacement preserves the current bid until success; withdrawal is deliberate, acknowledged and never presented as deletion.
 
@@ -1284,7 +1472,7 @@ Do not show a hash, encryption key, certificate serial, package digest, schema i
 
 **Recorded variant BDS-DES-15-RECORDED.** Row status Recorded before deadline; action View receipt. Immutable detail names Charles/time/reference.
 
-**Visual check.** Receipt recording is operationally complete but discloses no bid content and makes no responsiveness decision.
+**Visual check.** This restricted physical-receipt view intentionally discloses Afya’s supplier identity to Charles before opening, but no tender-box submission fact, count, price or bid content. It makes no responsiveness decision. This narrow disclosure is audited and not available to general PE opening users.
 
 ### 10.17 BDS-DES-16 — Common states
 
@@ -1301,10 +1489,14 @@ Do not show a hash, encryption key, certificate serial, package digest, schema i
 | Clarification closed | The clarification deadline has passed. | Existing answers remain available; no question was sent. | Back to Tender documents |
 | Notice contact missing | Choose a verified email for Tender notices. | Add or verify an Account email before starting the bid. | Open Account |
 | Notice delivery problem | A Tender notice could not be delivered to your selected email. | The current Tender documents and notices remain available in this bid. | Update notice email |
-| Supplier information unavailable | Supplier support information is temporarily unavailable. | Tender information remains readable; protected start/submission actions are unavailable. | Try again |
+| Supplier information unavailable — new visitor | Supplier support information is temporarily unavailable. | You can read this Tender. Starting a new bid is unavailable until support and legal information is restored. | **Try again** |
+| Supplier information unavailable — existing Draft holder | Supplier support information is temporarily unavailable. | Your saved bid is still here. You can review and save it; submitting or replacing a bid is unavailable until this information is restored. | **Continue saved bid** |
+| Supplier information unavailable — submitted bidder | Supplier support information is temporarily unavailable. | Your submitted bid and receipt remain available. This message does not change its status. | **View receipts** |
+| Production submission not enabled | Electronic bid submission is not available yet. Your bid remains saved and has not been submitted. | Show the current deadline and configured Supplier support; preparation may continue. Do not suggest a restoration time. | **Back to bid** |
 | Submission unavailable | Electronic submission is temporarily unavailable. Your bid remains saved. | Nothing was submitted. | Contact support |
-| Definitive custody failure | Electronic submission is temporarily unavailable. Your bid remains saved. | Reference `TBX-REJECT-033-01`. Nothing was submitted; contact support or retry only when the server permits it. | Contact support |
-| Confirmation pending | Submission confirmation is still pending. Do not submit again. | Correlation `COR-BDS-2027-033-01`; support reference `SUP-BDS-2027-033-01`. KenTender is checking this same attempt. | View status |
+| Signing service unavailable | Digital signing is temporarily unavailable. Your bid remains saved and has not been submitted. | Your certificate is valid; the signing service is being restored. Show deadline and configured support route. | Contact support |
+| Definitive custody failure | The tender box rejected this attempt. Your bid remains saved and was not submitted. | Reference `TBX-REJECT-033-01`; current server time and deadline. | **Try confirmation again** only if the server permits a new attempt before deadline; otherwise **Contact support** |
+| Confirmation pending | Submission confirmation is still pending. Do not submit again. | Correlation `COR-BDS-2027-033-01`; support reference `SUP-BDS-2027-033-01`. KenTender is checking this same attempt. You may leave and return to View status. | View status |
 | Deadline passed | The submission deadline has passed. This bid was not submitted. | Deadline 12 Jun 2027, 11:00 EAT; trusted server time 12 Jun 2027, 11:00:01 EAT. | Back to My bids |
 | Idempotency conflict | This request was already used with different information. Stop and refresh. | The original attempt is unchanged. | Refresh |
 | Replacement conflict | A newer submitted bid already exists. | Show receipt `RCPT-MOH-2027-033-002`; do not change either Version. | View current receipt |
@@ -1317,27 +1509,97 @@ Each state replaces the affected content surface. No state renders a successful 
 | Artboard | Primary actor | Purpose | Required variants | Required render sizes |
 |---|---|---|---|---|
 | BDS-DES-01 | Public visitor | Find Tenders | Filtered empty. | 1440 × 1024 and 390 × 844 |
-| BDS-DES-02 | Public / supplier | Review current Tender | Signed out; Joint-venture start with notice email; Draft; Submitted; Cancelled; candidate/general question. | 1440 × 1024 and 390 × 844 |
+| BDS-DES-02 | Public / supplier | Review current Tender | Signed out; Joint-venture start with notice email; Draft at 20 May; Submitted for Mary at 10 Jun; Cancelled; candidate question at 26 May; bound Superseded; bound Withdrawn. Last two follow approved TPR v0.13; this v0.9 BDS text remains proposed. | 1440 × 1024 and 390 × 844 |
 | BDS-DES-03 | Authenticated person | Register supplier organisation | Verification. | 1440 × 1024 and 390 × 844 |
-| BDS-DES-04 | Authorised Signatory | Manage Account | Incomplete Account; Pending verification. | 1440 × 1024 and 390 × 844 |
+| BDS-DES-04 | Authorised Signatory / assigned supplier user | Manage Account | Incomplete Account; Pending verification; Suspended. | 1440 × 1024 and 390 × 844 |
 | BDS-DES-05 | Supplier user | Find organisation bids | Submitted; Withdrawn; Empty. | 1440 × 1024 and 390 × 844 |
-| BDS-DES-06 | Supplier user | Understand remaining bid work | In progress; Addendum review; Representative-ready. | 1440 × 1024 and 390 × 844 |
-| BDS-DES-07 | Supplier Representative | Review documents/clarifications/addenda | Complete; No addendum; Ask-question dialog/success; Clarifications closed; Notice delivery problem. | 1440 × 1024 and 390 × 844 |
+| BDS-DES-06 | Supplier user | Understand remaining bid work | In progress; Addendum review; David-ready base; Mary-ready; production disabled; enabled outage; CFG incomplete in-progress/ready; closed unsubmitted; bound Withdrawn (conditional TPR v0.13). | 1440 × 1024 and 390 × 844 |
+| BDS-DES-07 | Supplier Representative | Review documents/clarifications/addenda | Complete; pre-deadline question-open/no-addendum and dialog/success; post-deadline before-addendum closed; Addendum notice Queued 31 May 09:01; Sent 09:02 without delivery proof; Failed 09:15/Delivery problem. | 1440 × 1024 and 390 × 844 |
 | BDS-DES-08 | Supplier Representative | Complete company/declarations/security | Security outstanding; Joint venture; Account update comparison. | 1440 × 1024 and 390 × 844 |
 | BDS-DES-09 | Supplier Representative | Respond to requirements/evidence | Response drawer; Needs attention; Addendum changed. | 1440 × 1024 and 390 × 844 |
 | BDS-DES-10 | Supplier Representative | Enter price | Incomplete. | 1440 × 1024 and 390 × 844 |
-| BDS-DES-11 | Supplier / Signatory | Review complete bid | Evidence attention; Addendum attention; Representative. | 1440 × 1024 and 390 × 844 |
-| BDS-DES-12 | Authorised Signatory | Submit the reviewed bid | Confirmation; Pending; Signature unavailable; Service unavailable. | 1440 × 1024 and 390 × 844 |
-| BDS-DES-13 | Authorised Signatory | Prove submission | Deadline closed. | 1440 × 1024 and 390 × 844 |
+| BDS-DES-11 | Supplier / Signatory | Review complete bid | Evidence attention; Addendum attention; Representative; CFG incomplete during preparation/ready. | 1440 × 1024 and 390 × 844 |
+| BDS-DES-12 | Authorised Signatory | Submit the reviewed bid | Confirmation; Pending; certificate required; signing service unavailable; custody service unavailable; definitive rejection; CFG incomplete; Production disabled. | 1440 × 1024 and 390 × 844 |
+| BDS-DES-13 | Assigned supplier user | Prove submission | David representative receipt; Mary after deadline closed. | 1440 × 1024 and 390 × 844 |
 | BDS-DES-14 | Authorised Signatory | Replace or withdraw | Replacement receipt; Withdrawal dialog/acknowledgement. | 1440 × 1024 and 390 × 844 |
 | BDS-DES-15 | Procurement receipt owner | Record physical security receipt | Recorded. | 1440 × 1024 Desk and 390 × 844 Desk |
-| BDS-DES-16 | All | Recover from common states | All table variants. | 1440 × 1024 and 390 × 844 |
+| BDS-DES-16 | All | Recover from common states | All §10.17 variants, including suspended Account, CFG gaps, production disabled, unhealthy service, definite rejection and uncertain submission. | 1440 × 1024 and 390 × 844 |
+| BDS-DES-17 | Assigned supplier user, including Suspended Account read | Find existing receipts | Submitted and withdrawal receipt rows; empty history; suspended read-only. | 1440 × 1024 and 390 × 844 |
 
 The design set is complete only when every base artboard, named variant and dialog has been rendered at both listed sizes and checked against its Visual check. A desktop-only render does not complete an inventory row.
 
+### 10.19 Next-step and journey content for design
+
+The shared KT-STD-001 v1.8 §2.9 components use the exact state and actor wording in §5.12, with the following closed placement map. This §10.19 map controls over earlier repeated status, badge and banner wording in §§10.3–10.14; keep factual task states, validation results, notice evidence, deadlines and receipt facts, but remove any duplicate narrative named in the last column. Each named row is a required variant of its §10.18 artboard; it does not create a new standalone page unless §10.18 names one. `P/S/R` means **Prepare bid / Sign and submit / Receipt**; `S/V/A` means **Set up account / Verify email / Account ready**. Marker letters have the §5.12 meanings. Render the single-line reduced tracker **Stage {current label} of 3** if the ordinary one-row tracker would displace the first working region below the first 1440 × 1024 view. At 390 × 844 and 200% zoom, keep the same order and semantic labels; do not make a horizontally scrolling progress control. No past actor, event date or task count appears inside the tracker. `since` appears in a waiting line only when its state-entry instant is actually recorded.
+
+| Screen and variant | Next-step block in the existing header/action area | Tracker, holder and placement | Replaces / supporting action |
+|---|---|---|---|
+| DES-01 public list; DES-02 signed-out/public Tender, cancelled Tender | None: discovery is not a supplier-owned record. | None. | Keep the current published status/deadline and permitted **Start bid** or cancellation notice; no personal progress invented. |
+| DES-03 registration form | **Your turn:** Enter the supplier organisation details. | S(C)/V(N)/A(N); registering Account owner; above the first form group. | Replace generic account setup status; primary **Create account**. |
+| DES-04 Incomplete Account | **Your turn, blocked:** Add the missing official phone before continuing. | S(B)/V(N)/A(N); Mary Wanjiku. | Replace generic incomplete status; **Edit organisation** opens official phone. |
+| DES-03 verification; DES-04 Pending verification | **Your turn:** Verify your email to finish setting up the supplier account. | S(D)/V(C)/A(N); registering Account owner. | Replace Pending verification narrative; **Resend verification link** beside instruction, no Start bid. |
+| DES-04 Active | **Done:** The supplier account is ready. | S(D)/V(D)/A(D); no current holder. | Replace approval/qualified sounding account status; **My bids** normal navigation. |
+| DES-04 Suspended; DES-16 suspended recovery | **Waiting on someone:** Supplier Account support officer Amina Yusuf is reviewing suspended access. | S(D)/V(D)/A(B) on Account record only; no tracker on DES-16 full-page state. | Replace account status paragraph. **View receipts** and **Supplier support** are separate read/support links; no self-activation. |
+| DES-05 My bids list | No shared component. | None; no tracker in rows. | Each row retains plain status, deadline and one allowed next action. |
+| DES-06 Draft in progress; DES-08–10 task editor | **Your turn:** Continue the requirements and evidence task, or the exact current task named by the server. | P(C)/S(N)/R(N); David Ouma or assigned preparer. | Replace top Ready/Incomplete narrative; keep five-task checklist within preparation, with **Continue bid** to the exact task. |
+| DES-06 Addendum review; DES-07 changed addendum; DES-09 changed response; DES-11 addendum attention | **Your turn, blocked:** Review the changed delivery location and acknowledge the current addendum before submitting. | P(B)/S(N)/R(N); David Ouma. | Replace duplicate attention banner; keep changed value at the affected task and **Review addendum** as fix. |
+| DES-07 ordinary documents and notice states | Same actor-specific bid `next_step` as DES-06; notice Queued/Sent/Delivered/Delivery problem stays factual inside documents. | Same markers as current bid record; no second document journey. | Replace only repeated bid status prose; notices remain in document history and never claim delivery without proof. |
+| DES-11 Ready, Mary; DES-12 before confirmation | **Your turn:** Review, sign and submit this bid before 12 Jun 2027, 11:00 EAT. | P(D)/S(C)/R(N); Mary Wanjiku. | Replace Ready-to-submit narrative/badge that repeats next step; keep completeness results and exact deadline once. **Review bid**, then **Submit bid**. |
+| DES-06/11 Ready, David | **Waiting on someone:** Authorised Signatory Mary Wanjiku must submit this bid. | P(D)/S(C)/R(N); Mary. | Replace Representative-ready status text; David may **Review bid** but cannot Submit. |
+| DES-11 evidence rejected | **Your turn, blocked:** Replace the rejected product datasheet before submitting. | P(B)/S(N)/R(N); assigned preparer. | Replace generic attention heading; show the exact issue once at evidence and **Fix item**. |
+| DES-06-GATE; DES-12 production disabled, Mary | **Waiting on someone:** Release operator Nadia Kamau holds the verified production-submission release. | P(D)/S(B)/R(N); Nadia. | Replace Ready badge and generic temporary outage. Show deadline, saved-bid/no-receipt fact, **Back to bid** and **Supplier support** separately; no retry. |
+| DES-06/11 CFG information incomplete, Draft still in preparation | **Your turn:** Continue your saved bid. Submission is blocked until supplier portal information is restored. | P(C)/S(N)/R(N); assigned preparer. | Replace generic status; **Continue saved bid** and the separate blocked-Submit reason; do not remove existing work. |
+| DES-06/11/12 CFG information incomplete, otherwise ready Draft; Mary viewer | **Waiting on someone:** CFG System Manager Daniel Otieno is restoring supplier portal information. | P(D)/S(B)/R(N); Daniel. | Replace Ready badge. **Continue saved bid** is a read/save route; no Submit or replacement acceptance. |
+| DES-06-OUTAGE; DES-12-SERVICE, Mary | **Waiting on someone:** Technical operator Daniel Otieno is restoring electronic submission. | P(D)/S(B)/R(N); Daniel. | Replace Ready badge. Show saved Draft, no receipt, deadline and **View status** or **Supplier support** separately. |
+| DES-12-SIGNATURE signing-service outage, Mary | **Waiting on someone:** Technical operator Daniel Otieno is restoring digital signing. | P(D)/S(B)/R(N); Daniel. | Replace Ready badge. Show valid certificate, saved Draft, no receipt, deadline and **Supplier support** separately; no certificate fix or Submit. |
+| DES-12 pending; DES-16 confirmation pending | **Waiting on someone:** Technical operator Daniel Otieno is checking the same submission attempt. | P(D)/S(B)/R(N) on record; no tracker in full-page DES-16. | Replace Submitting status prose; **View status**, safe correlation and safe-leave guidance; no new Submit. |
+| DES-12 certificate required | **Your turn, blocked:** Obtain a valid digital signature certificate from an approved licensed certifying agency before submitting. | P(D)/S(B)/R(N); Mary. | Replace Ready badge; saved-bid/no-receipt fact and deadline. **Check certificate** after Mary obtains one; support cannot waive it. |
+| DES-12 definitive rejection | **Your turn, blocked:** The tender box rejected this attempt; no bid was submitted. | P(D)/S(B)/R(N); Mary. | Replace generic outage status; **Try confirmation again** only on server permission and before deadline. |
+| DES-13 accepted receipt, Mary before deadline | **Your turn:** You may prepare a replacement or withdraw before 12 Jun 2027, 11:00 EAT. Version 1 remains submitted. | P(D)/S(D)/R(D); no current holder. | Replace the repeated Before the deadline status line. Options **Prepare replacement** and **Withdraw bid** carry no assigned My Work or due marker; receipt facts remain. |
+| DES-13 accepted receipt, David before deadline | **Done:** Bid Version 1 was accepted on 10 Jun 2027, 14:32:01 EAT. | P(D)/S(D)/R(D); no current holder. | Replace Submitted status narrative; Print/Download only, no signatory change actions. |
+| DES-13-CLOSED, Mary after deadline | **Done:** Bid Version 1 remains submitted; submission changes closed at 12 Jun 2027, 11:00 EAT. | P(D)/S(D)/R(D); no current holder. | Replace Before the deadline section/status narrative; keep receipt and exact accepted time. No replacement or withdrawal. |
+| DES-14 replacement Draft | **Your turn:** Finish and submit the replacement before the deadline. Version 1 remains submitted. | P(C)/S(N)/R(N) for replacement; Mary. | Replace separate replacement status banner. Keep prior receipt as factual read link; **Continue bid**. |
+| DES-14 withdrawn acknowledgement | **Your turn:** You may start a new bid before the deadline. This bid was withdrawn; no bid is currently submitted. | P(D)/S(D)/R(D) for withdrawn attempt; no current holder. | Replace repeated Withdrawn status narrative; optional **Start replacement** has no My Work or due marker. |
+| DES-06 unsubmitted Draft after deadline | **Done:** Submission closed at 12 Jun 2027, 11:00 EAT; this Draft was not submitted. | P(D)/S(N)/R(N); no current holder. | Replace generic deadline banner; **Back to My bids**, no Submit. |
+| DES-06 existing Draft bound to Withdrawn release | **Waiting on someone:** Procurement Officer Brian Wafula holds the governed Tender resolution; this Draft is saved but cannot be submitted against the withdrawn format. | P(B)/S(N)/R(N); Brian Wafula, Procurement Officer from the coordinated Tender fixture. | Replace format/status banner; **View current Tender** and **Supplier support** are navigation only. |
+| DES-15 physical security receipt; DES-16 other full-page errors; focused dialogs | No bid journey component. DES-15 uses its ordinary Desk result and actions; full-page errors use the exact §10.17 message/action. | None. | No invented tracker in a Work workspace, dialog, register or error page. |
+
+DES-17 receipt history is a Register: no tracker or next-step block in its rows. A blocker with several causes shows every reason and fix from the same read, with each exact action available only to its named holder. The submission gate, support information, release integrity and deadline may coincide: do not hide the deadline or imply that fixing one reason resolves the others. A public visitor never sees a named supplier holder or private bid status.
+
+### 10.20 BDS-DES-17 — Receipt history
+
+**Purpose and shell.** At `/account/receipts`, give assigned supplier users a read-only recovery list of their organisation's existing submission and withdrawal receipts. Use the supplier Website shell, not Desk. A Suspended Account can read its own receipts but cannot prepare, submit, replace or withdraw. This is a Register, so §2.9 does not place a tracker or next-step block in table rows.
+
+**Fixture context — outside the artboard.** David Ouma; Afya Digital Supplies Limited; 12 Jun 2027, 11:00:01 EAT. Authorised receipt history contains `RCPT-MOH-2027-033-001` accepted 10 Jun 2027, 14:32:01 EAT and, in the isolated other-Tender fixture, withdrawal acknowledgement `WD-MOH-2027-041-001` at 10 Jun 2027, 15:00 EAT. These are different Tenders; do not merge their submission lineage.
+
+**Page header.** **Receipts**. Description **View submission and withdrawal records for this supplier organisation.** Back to Account. No bid-change action.
+
+**Composition.** One table with Tender (title and reference), Document (receipt/acknowledgement reference), Event (Submitted or Withdrawn), Date and time EAT, and **View**. The primary submitted row links to the exact BDS-DES-13 receipt; the withdrawal row links to the exact BDS-DES-14 acknowledgement. Each detail has **Download** and **Back to receipts**. Do not expose prices or contents in the register.
+
+**Empty variant BDS-DES-17-EMPTY.** **No submission or withdrawal receipts for this organisation.** Back to Account; no fabricated document. **Suspended variant BDS-DES-17-SUSPENDED.** Same authorised rows with **Account suspended** context and no bid-change or edit controls. Cross-organisation requests mask existence under §8.
+
+**Visual check.** A supplier can retrieve an authoritative record despite Account suspension or CFG information failure, with no way to use this read route to change a bid.
+
+### 10.21 BDS-DES-18 — Evaluation clarification (EVL-D06 supplier projection)
+
+Use the existing supplier shell at desktop and 390 × 844; no internal Evaluation navigation or journey tracker. This is a post-close child view of My bids, with **Back to bid**. Separate the immutable submitted bid from the correspondence. Design scenario: `TND-MOH-2027-033`, Supply and delivery of business laptops; Afya Digital Supplies Limited; submitted Version 1. Actor David Ouma, `david.ouma@afyadigital.example`, existing authorised supplier user. These are the approved EVL v0.4 §9.7 facts; the supplier screen never shows an internal member or support actor.
+
+| Variant / instant | Exact visible content and actions |
+|---|---|
+| Open request · 15 Jun 2027 09:55 EAT | Title **Reply to clarification**. Tender/title and own organisation. Guidance **Your turn — Reply by 15 Jun 2027, 17:00 EAT.** Holder David. Sent **14 Jun 2027, 09:10 EAT**. Question **Please identify the page and section of your submitted Kenya service-centre details that gives the Nairobi service address.** Scope **Explain the submitted evidence. Do not change your offer or add a new service arrangement.** Required **Your reply** multiline: **The service address is on page 2, section 3 of Kenya service-centre details: Westlands Business Park, Waiyaki Way, Nairobi.** Optional **Supporting explanation** file control, empty; helper **Attach only evidence explaining this question. Your submitted bid will not change.** Primary Send reply; secondary Save draft and Back to bid. |
+| Received · 15 Jun 10:00 | Same immutable question/reply; **Reply received 15 Jun 2027, 10:00 EAT**; **Done — Your reply has been received for committee review.** Back to bid only; no editing/send controls. |
+| Late · separate branch, 15 Jun 17:05 | Same question/form. **Your turn — The reply deadline has passed.** Detail **You can send a late reply; the committee will decide whether it can be considered.** Primary Send late reply; secondary Save draft and Back to bid. Received variant: **Received late, 15 Jun 2027, 17:06 EAT**; no acceptance promise. |
+| Closed after disposition · ordinary continuation, 16 Jun 09:05 | Read-only question and 15 Jun reply/receipt. **Done — This clarification is closed.** Closed **16 Jun 2027, 09:05 EAT**. Back to bid only. No committee finding or internal disposition reason shown. |
+| Withdrawn/replaced · separate branch, 15 Jun 09:55 | **Done — This clarification has been withdrawn.** Reason **Request withdrawn: question replaced to clarify the document reference.** Old draft labelled **Your unsent draft**; no Save/Send. Back to bid and **View new question**. Replacement sent **15 Jun 09:50**, reply deadline **16 Jun 17:00 EAT**; question **In the document titled Kenya service-centre details submitted with your bid, identify the page and section containing the Nairobi service address. Refer only to the original submitted document.** Same scope as ordinary request. The ordinary 10:00 reply does not exist in this branch. |
+| Tender cancelled · independent branch | **Done — This clarification is closed.** Detail **This tender was cancelled.** Read-only correspondence/unsent draft; Back to bid and the existing public cancellation notice. No supplier reply controls or internal partial report. |
+
+My bids/own bid workspace shows the open request as **Reply to clarification**, linking to this screen without changing the bid’s closed/submitted status or adding an internal Evaluation tracker. Saved-draft feedback is **Draft saved** and never Reply received. For unavailable owner service, keep safe tender context and **The clarification could not be loaded. Try again.**, with Try again / Back to bid; do not display an empty request as success. Preserve entered text after a failed save/send and offer the owner’s current truthful recovery. No bid comparisons or generic Approve button.
+
+
+
 ## 11. Functional interaction contract
 
-Section 10 defines appearance and content. This section maps every visible control to its exact read or command. It is not supplied to the design tool.
+Section 10 defines appearance and content, including BDS-DES-17. This section maps every visible control to its exact read or command. It is not supplied to the design tool.
 
 ### 11.1 General interaction rules
 
@@ -1367,6 +1629,8 @@ Section 10 defines appearance and content. This section maps every visible contr
 | Clear filters | Restores the default open-Tender list. |
 | View Tender | Opens the current `GetPublishedTenderForBidder` projection. |
 | View / Download document | Opens or streams the exact published document from Tenders by bidder-safe reference. |
+| View question | Opens the exact Tenders-owned candidate question/receipt in the current Tender's Questions and answers section; only the source candidate and authorised roles see its source relationship. |
+| View notice | Opens the exact Tenders-owned public cancellation or addendum notice for this Tender, not an editable BDS record. |
 | View addendum / notice | Opens the exact current public record; no acknowledgement is implied. |
 | Supplier support / Privacy and data use / Terms of portal use / Accessibility | Opens the exact active CFG-owned public destination in the same/new safe browser context; creates no business fact. |
 | Sign in to start bid | Authenticates and returns to the same Tender overview. |
@@ -1391,7 +1655,7 @@ Section 10 defines appearance and content. This section maps every visible contr
 | Add evidence | Uploads through the Account evidence service; it creates no bid evidence until explicitly linked. |
 | View evidence | Opens the authorised Account evidence and its self-declared metadata. |
 
-Changing the active organisation reloads My bids and Account under that organisation. It does not copy, expose or move another organisation's records.
+Changing the active organisation reloads My bids, Account and receipt history under that organisation. It does not copy, expose or move another organisation's records.
 
 ### 11.4 Bid workspace and preparation actions
 
@@ -1422,7 +1686,8 @@ Changing the active organisation reloads My bids and Account under that organisa
 | Submit bid | Available only to an active Authorised Signatory with server readiness; opens BDS-DES-12. |
 | Final confirmation | Local required control for this submission attempt; it does not sign or submit by itself. |
 | Submit bid in confirmation dialog | Calls `PrepareBidSignature`, completes the approved signature flow and then calls `SubmitBid` with the signed exact package and one idempotency key. |
-| View status | Reads the existing uncertain correlation; it never dispatches another submission. |
+| Check certificate | Performs a fresh approved trust-service certificate/authority read for the current signatory; creates no signature request or submission, and changes readiness only from the authoritative result. |
+| View status | Reads the existing uncertain correlation or enabled-service health result; it never dispatches another submission. |
 | Try confirmation again | Available only after a definitive failed attempt with no accepted custody result; reuses the safe server correlation rule. |
 | Contact support | Opens the configured support instructions and correlation reference; grants no authority and changes nothing. |
 
@@ -1455,7 +1720,8 @@ The receipt owner cannot edit or reverse a committed receipt. A correction is an
 
 | Visible control | Behaviour |
 |---|---|
-| View receipts | Opens `/account/receipts` and reads only the authorised organisation's existing receipts. A Suspended Account gains no preparation or change action. |
+| View receipts | Opens BDS-DES-17 at `/account/receipts` and reads only the authorised organisation's existing receipts. A Suspended Account gains no preparation or change action. |
+| Continue saved bid | Opens the authorised existing Draft for review and saving; it does not create a workspace or bypass production submission availability. |
 | Refresh | Repeats the current authoritative read and changes no business fact. |
 | View current receipt | Calls `GetSubmissionReceipt` for the organisation-owned current receipt and changes nothing. |
 | Choose another file | Reopens the file chooser for the exact evidence requirement. Selection alone changes nothing; the existing upload command runs only after the user confirms the replacement. |
@@ -1469,7 +1735,18 @@ The receipt owner cannot edit or reverse a committed receipt. A correction is an
 - Dialog focus is trapped and returns to the initiating control. Error focus goes to the summary or exact invalid field.
 - Files show accessible filename, format, size and View/Download action; no filename is the only statement of purpose.
 - Destructive withdrawal uses both a destructive label and explicit consequence.
-- Portal pages meet the applicable KT-STD-001 v1.7 accessibility and responsive release gates.
+- Portal pages meet the applicable KT-STD-001 v1.8 accessibility and responsive release gates.
+
+### 11.9 Evaluation clarification interaction map
+
+| Visible control | Owner result and failure behaviour |
+|---|---|
+| Reply to clarification / View new question | Open own-request route; `ReadOwnClarification`; recheck current supplier scope, no mutation. |
+| Save draft | EVL `SaveClarificationDraft`; show Draft saved only after commit; retain input/error on failure. Closed/version conflict reloads authoritative request without sending. |
+| Send reply / Send late reply | EVL `SubmitClarificationReply`; same one-reply command, trusted server timeliness. On success show immutable receipt; timeout reconciles the same key. No duplicate reply or signature ceremony. |
+| Supporting explanation | Existing secure upload controls; EVL receives scoped evidence references, never a bid edit. Failed upload does not create a sent reply. |
+| Back to bid | Existing own-bid route; no reopen, save or task clearing. |
+| Try again | Repeat scoped read or reconcile the same failed operation; no manufactured request/reply. |
 
 ## 12. Audit, confidentiality and custody
 
@@ -1508,6 +1785,10 @@ Rejected commands create a security/operational audit fact where policy requires
 | Bid withdrawn | Exact current Version, signatory, reason, trusted time and electronic acknowledgement. |
 | Submission closed | Effective deadline/timezone, automatic close evidence, sealed envelope inventory and Bid Opening handoff. |
 
+### 12.2A Physical-security receipt disclosure boundary (v0.9 correction)
+
+Before the deadline, Charles as the specifically assigned procurement receipt owner can see Afya Digital Supplies Limited’s identity and physical bank-guarantee reference in BDS-DES-15 because the supplier presents an original. The receipt is a separate business fact, not evidence that an electronic bid was submitted. The receipt route, search, notification, report, audit export and API cannot reveal a box envelope, submission status/count, bid total or contents, including through joins or cross-record counts. A BOP chair/member without this independently assigned receipt responsibility has no receipt-owner access. The same person may hold both capacities; their receipt knowledge is not a licence to disclose or pre-open a bid. Test the scope and side channels with Charles, a different appointed member, AO, Auditor and Administrator. BOP v0.2 consumes the factual receipt only after governed reveal and maintains the public readout boundary.
+
 ### 12.3 Confidentiality and custody rules
 
 1. Draft responses and evidence are visible only to assigned users of the supplier arrangement and narrowly authorised support under a separately approved process.
@@ -1534,10 +1815,15 @@ Synthetic evidence files contain real deterministic test bytes and recorded dige
 | Actor | Responsibility |
 |---|---|
 | David Ouma | Supplier Representative for Afya Digital Supplies Limited. |
+| Peter Mwangi | Active Supplier Representative for Kisiwa Digital Limited, not assigned to Afya; used for public Start and cross-organisation denial. |
+| Grace Njeri | Authorised Signatory for Kisiwa Digital Limited in the isolated joint-venture start fixture; synthetic authority evidence present. |
 | Mary Wanjiku | Authorised Signatory for Afya Digital Supplies Limited from 18 May 2027; authority evidence present. |
 | Charles Mutiso | Procurement receipt owner for the physical tender-security fixture; no bid-content access. |
 | Alice Njeri | Auditor; metadata/evidence access only under approved test scope. |
-| Daniel Otieno | Administrator/System Manager; non-content technical read. |
+| Daniel Otieno | Administrator/System Manager, CFG configuration and non-content technical incident holder; no supplier business action or bid content. |
+| Amina Yusuf | Supplier Account support officer for the suspended-access fixture; follows the governed Account access workflow without self-activation by supplier. |
+| Brian Wafula | Procurement Officer for TND-MOH-2027-033 and named holder of governed Tender resolution in the bound-release fixture; no supplier bid-content access. |
+| Nadia Kamau | Deployment release operator for the production-submission gate fixture; no bid-content access or supplier business action. |
 | Test Trust Service | Simulated licensed-certificate verification for isolated testing only. |
 | Test Tender Box | Simulated approved custody receipt and closed-box behavior for isolated testing only. |
 
@@ -1554,7 +1840,8 @@ Synthetic evidence files contain real deterministic test bytes and recorded dige
 | 26 May 2027 09:00 | David sends general Tender question | Tenders records the authenticated clarification before deadline; no BDS response record. |
 | 26 May 2027 11:00–11:01 | Tenders answers all candidates | Public answer hides the asker; arrangement notice becomes Delivered at 11:01 EAT. |
 | 31 May 2027 09:00 | Tender owner issues addendum | Definition Version 2 and revised deadline 12 Jun 2027, 11:00 EAT. |
-| 1 Jun 2027 12:10 | David acknowledges addendum | Affected delivery response reviewed; unrelated responses preserved. |
+| 1 Jun 2027 12:05 | David opens documents | Draft Version 4 needs addendum acknowledgement and affected delivery review; read creates no mutation. |
+| 1 Jun 2027 12:10 | David acknowledges addendum | Draft Version 5 saves the affected delivery response and acknowledgement; unrelated responses preserved. |
 | 10 Jun 2027 10:00 | Charles records physical security | `MOH-SEC-2027-033-017`, Recorded before deadline; no bid content exposed. |
 | 10 Jun 2027 13:50 | David saves complete Draft Version 7 | All preparation tasks Complete; David cannot submit. |
 | 10 Jun 2027 14:15 | Mary opens review | Readiness is returned as Ready to submit; this read creates no business fact and does not change the 13:50 `last_saved_at`. |
@@ -1566,6 +1853,10 @@ Synthetic evidence files contain real deterministic test bytes and recorded dige
 | Fixture | Required state |
 |---|---|
 | Public signed out | Tender is readable; sign-in required only on Start bid. |
+| Public Tender Draft | David at 20 May 2027, 10:05 EAT sees only his Afya Draft Version 3 with three of five tasks Complete and original 5 Jun deadline; no future answer/addendum. |
+| Public Tender Submitted | Mary at 10 Jun 2027, 14:33 EAT sees only her organisation's accepted Version 1 and current addendum/deadline; Peter cannot read its receipt. |
+| Public Tender candidate question | David at 26 May 2027, 08:50 EAT sees Ask a question against the original deadline, with no future answer/addendum. |
+| Isolated JV workspace | Peter starts Kisiwa–Jua Technology JV at 20 May 2027, 10:10 EAT; arrangement `ARR-MOH-2027-033-002`, bid `BID-MOH-2027-033-002` Draft Version 1 and accepted agreement are atomic; DES-08-JV at 10:15 shows only that JV's facts. |
 | Account incomplete | Organisation has no official phone; no bid workspace created. |
 | Account pending verification | Afya Digital Supplies Limited is Pending verification at 18 May 2027, 09:05 EAT; start is blocked until the configured email challenge succeeds. |
 | Account suspended | Afya Digital Supplies Limited is Suspended at 10 Jun 2027, 14:20 EAT; all preparation/change commands are blocked while its existing receipt remains recoverable. |
@@ -1573,19 +1864,21 @@ Synthetic evidence files contain real deterministic test bytes and recorded dige
 | Addendum review | Definition Version 2 exists; acknowledgement and delivery-location review outstanding. |
 | Clarification deadline | Candidate enters a question at 27 May 2027, 17:00:00 EAT; no clarification is created. |
 | Notice delivery problem | Tenders reports Failed after three attempts to the exact frozen notice destination; current public information remains accessible and no Tender state changes. |
+| Addendum notice snapshots | Afya addendum notice is Queued 31 May 2027, 09:01 EAT, Sent at 09:02 without delivery proof, and Failed at 09:15 in the isolated failure branch. The separate 26 May general-answer notice remains Delivered. |
 | Atomic start rollback | Arrangement payload is valid but definition compatibility fails; no arrangement/candidate registration or workspace is created. |
 | Portal information unavailable | CFG public support/legal projection is incomplete; public Tender remains readable; Start bid and production Submit are absent. |
 | Evidence rejected | Product datasheet fails test malware scan; no Accepted evidence binding. |
 | Security outstanding | Proof accepted; no physical receipt; Review note only at electronic submission. |
 | Supplier Representative ready | David sees complete review but no Submit action. |
-| Signature unavailable | Mary has authority but no valid approved test certificate; nothing submitted. |
+| Certificate required | Mary has authority but no valid approved test certificate; nothing submitted; Check certificate re-evaluates after she obtains one. |
+| Signing service unavailable | Mary has a valid approved test certificate but test trust service is unhealthy; Daniel owns recovery, no submission. |
 | Custody definitely failed | Mary submits at 10 Jun 2027, 14:30 EAT; rejection `TBX-REJECT-033-01`; Draft preserved; no envelope or receipt. |
 | Custody uncertain | Mary submits at 10 Jun 2027, 14:30 EAT; correlation `COR-BDS-2027-033-01` and support reference `SUP-BDS-2027-033-01` remain pending; no retry, receipt or Submitted state until reconciled. |
 | Late submission | Mary's complete request reaches the trusted server at 12 Jun 2027, 11:00:01 EAT; rejected; no envelope or receipt. |
 | Submitted receipt after deadline | Version 1 received 10 Jun 2027, 14:31:58 EAT and accepted 14:32:01 EAT; current trusted time 12 Jun 2027, 11:00:01 EAT; receipt remains readable and change actions are closed. |
 | Replacement | Continue primary after Version 1; Version 2 accepted 11 Jun 2027 09:15 with `RCPT-MOH-2027-033-002`; Version 1 Superseded atomically. |
 | Replacement Draft abandoned | Version 1 remains current when the deadline passes; unsent successor closes without submission. |
-| Withdrawal | Separate Tender/Bid from §10.1; `WD-MOH-2027-041-001` acknowledged; envelope/history retained; no current bid. |
+| Withdrawal | Separate TND-MOH-2027-041 Tender/Bid and deadline from §10.1; `WD-MOH-2027-041-001` acknowledged; envelope/history retained; no current bid. |
 | Concurrent submission | Two Version-7 requests share one idempotency key; one Version/receipt results. |
 | Conflicting replay | Same idempotency key with changed price; rejected; original receipt unchanged. |
 | Replacement conflict | Version 2 is already current with receipt `RCPT-MOH-2027-033-002`; a stale Version-3 replacement attempt changes neither Version. |
@@ -1715,11 +2008,11 @@ Each criterion is independently testable. A visually correct page without its au
 
 | ID | Acceptance criterion |
 |---|---|
-| BDS01-AC-079 | Before governed opening, Procuring Entity business users cannot see bidder identities, bid count, responses, evidence filenames, prices or content from the tender box. |
+| BDS01-AC-079 | Before governed opening, general PE opening users cannot see tender-box bidder identities, bid count, responses, evidence filenames, prices or content. A specifically authorized receipt owner can see only the supplier/security facts needed to record an independently presented physical original; receipt view and API cannot infer whether that supplier submitted an electronic bid. |
 | BDS01-AC-080 | Technical and administrator views expose only authorised service/custody metadata and cannot decrypt, preview, download or search submitted content. |
 | BDS01-AC-081 | Draft and submitted-content values never appear in logs, search indexes, analytics, traces or error messages. |
 | BDS01-AC-082 | Submitted content is protected under the approved custody design and secrets/private keys are absent from application data/configuration/fixtures. |
-| BDS01-AC-083 | Every artboard can be produced from §10 plus KT-STD-001 v1.7 §2 without invented content or behavior. |
+| BDS01-AC-083 | Every artboard can be produced from §10 plus KT-STD-001 v1.8 §2 without invented content or behavior. |
 | BDS01-AC-084 | Every visible action has exactly one mapping in §11 and is absent when the server does not permit it. |
 | BDS01-AC-085 | Public and supplier tasks use ordinary language and expose no internal workflow, schema, rendering, package or cryptographic terminology. |
 | BDS01-AC-086 | For the current Goods/IT product, a representative user can find a Tender, set up an Account, prepare the five tasks and understand who must submit without moderator explanation. |
@@ -1781,7 +2074,7 @@ Each criterion is independently testable. A visually correct page without its au
 
 | ID | Acceptance criterion |
 |---|---|
-| BDS05-AC-001 | Publication and Start bid fail closed unless the exact template release is Available and all bound source, bundle, response, downstream, identity and profile digests verify. |
+| BDS05-AC-001 | Publication and Start bid fail closed unless the exact template release bound to the Tender is in a lifecycle state permitted by §4.4.4 — Available with its site switch On or Off, or Superseded — and all bound source, bundle, response, downstream, identity and profile digests verify and its renderer is supported. A Withdrawn bound release blocks both. Switching a release Off never blocks an already-bound Tender, and no lifecycle or switch change rebinds a Tender (v0.7 read: “Publication and Start bid fail closed unless the exact template release is Available and all bound source, bundle, response, downstream, identity and profile digests verify.”). |
 | BDS05-AC-002 | The Goods/IT workspace is generated from the released response rules and exact Published Bid Definition, never by parsing the issued PDF. |
 | BDS05-AC-003 | Every bidder-editable response has one supported final control type, stable identity, validation and visible published source. |
 | BDS05-AC-004 | Multiple mandatory technical responses may feed one shared Technical compliance group while retaining individual results and reasons; no weight or runtime criterion builder exists. |
@@ -1794,17 +2087,17 @@ Each criterion is independently testable. A visually correct page without its au
 
 | ID | Acceptance criterion |
 |---|---|
-| BDS06-AC-001 | Every owner reference and integration test uses STD-TPL-001 v0.9, CFG-CHG-002 v0.16, TPR-CHG-001 v0.10, LAW-REG-001 v1.2, PLN-CHG-001 v1.25, BUD-CHG-001 v1.10 and REQ-CHG-001 v1.11 for the boundaries those documents own; no obsolete template-inspection, clarification or denominator contract remains active. |
+| BDS06-AC-001 | Every owner reference and integration test uses STD-TPL-001 v0.10, CFG-CHG-002 v0.16, TPR-CHG-001 v0.12, LAW-REG-001 v1.2, PLN-CHG-001 v1.27, BUD-CHG-001 v1.11 and REQ-CHG-001 v1.12 for the boundaries those documents own; no obsolete template-inspection, clarification or denominator contract remains active. The published-Tender Superseded/Withdrawn branch in §4.4.4 follows approved TPR-CHG-001 v0.13; this v0.10 BDS successor remains proposed, while approved v0.8 and its production gates remain authoritative. |
 | BDS06-AC-002 | No BDS persistence field, service payload, portal projection, readiness rule, signed package or downstream eligibility result contains or derives the eligible-current-APP denominator, 30% target, planned qualifying share, Planning shortfall, Budget ceiling or unused Budget headroom. |
 | BDS06-AC-003 | The Published Bid Definition carries only the exact Tender-specific reservation category, separately applicable County-residents treatment, verified rule/overlap snapshots and bidder declaration/evidence rules. A Planning designation never proves bidder entitlement. |
-| BDS06-AC-004 | A reserved treatment unsupported by the exact Available template release or lacking its verified declaration, evidence or overlap treatment fails closed before a bid workspace is created; there is no silent `None` fallback or generic evidence field. |
+| BDS06-AC-004 | A reserved treatment unsupported by the exact template release bound to the Tender (v0.7 read: “the exact Available template release”) or lacking its verified declaration, evidence or overlap treatment fails closed before a bid workspace is created; there is no silent `None` fallback or generic evidence field. |
 | BDS06-AC-005 | The earlier residual corrections remain mandatory: canonical workspace/task statuses; recorded physical security shown as satisfied; exact common-state error copy; BDS-DES-15 in the internal Desk shell only; Tender-bound joint-venture creation; and trusted current server time on Submit. |
 
 ### 14.13 Coordinated STD/Tenders/BDS contract acceptance
 
 | ID | Acceptance criterion |
 |---|---|
-| BDS06-AC-006 | BDS consumes the exact `PublishedBidDefinition v1` field contract shared with STD-TPL v0.9 and TPR v0.10; no alias, omitted digest or BDS-only row is introduced. |
+| BDS06-AC-006 | BDS consumes the exact `PublishedBidDefinition v1` field contract shared with STD-TPL v0.10 and TPR v0.12; no alias, omitted digest or BDS-only row is introduced. |
 | BDS06-AC-007 | `template_family` equals the installed STD `template_key`; `template_release_id` is the opaque installed `release_id`; product/renderer identities and `supported_renderer_version` match exactly. |
 | BDS06-AC-008 | Addendum migration accepts only `unchanged`, `converted`, `fresh_response_required`, `removed` and `new` and implements their exact copy/re-entry semantics. |
 | BDS06-AC-009 | Controlled multi-select and structured ports response compositions render, save, review, sign and submit without flattening, arbitrary nesting or a generic fallback. |
@@ -1828,14 +2121,29 @@ Each criterion is independently testable. A visually correct page without its au
 | BDS07-AC-005 | A notice-contact change is versioned, affects future Tenders audience snapshots only and does not rewrite or automatically resend earlier notice evidence. |
 | BDS07-AC-006 | A registered candidate can send one 10–2,000-character question before the clarification deadline and receives the authoritative Tenders identity/time; no BDS response store is created. |
 | BDS07-AC-007 | Public readers see all authoritative general answers. The source relationship is visible only to the source candidate and authorised procurement/audit roles. |
-| BDS07-AC-008 | A published-changing answer appears only after its linked addendum is Issued and the effective definition/deadline have changed atomically. |
-| BDS07-AC-009 | Supplier notice status uses Tenders evidence and never collapses Sent, Delivered and Delivery problem. A delivery problem leaves the authoritative Tender information accessible in the portal. |
+| BDS07-AC-008 | A published-changing answer appears only after final required channel confirmation makes the linked addendum, definition and deadline effective together. |
+| BDS07-AC-009 | Supplier notice status uses Tenders evidence and never collapses Queued, Sent, Delivered and Delivery problem. A delivery problem leaves the authoritative Tender information accessible in the portal. |
 | BDS07-AC-010 | Every supplier/public page shows CFG-owned Supplier support, Privacy and data use, Terms of portal use and Accessibility links without hard-coded placeholder destinations. |
-| BDS07-AC-011 | Missing required public portal information keeps Tender reading available but blocks new Start/production Submit actions with the canonical safe state. |
-| BDS07-AC-012 | The server-side `production_bid_submission_enabled` flag defaults false, has no Desk/portal control and cannot be overridden by a client, business role or Tender record. |
-| BDS07-AC-013 | Signature preparation, initial submission and replacement use one authoritative submission-availability check; false/unhealthy creates no signature request, envelope, receipt or Submitted state. |
+| BDS07-AC-011 | Missing required public portal information keeps Tender reading and existing Draft/receipt reads available but blocks new Start, production Submit and replacement acceptance with the canonical safe state. |
+| BDS07-AC-012 | The server-side `production_bid_submission_enabled` flag defaults false, has no Desk/portal control and cannot be overridden by a client, business role or Tender record. Its disabled message never calls this a temporary outage. |
+| BDS07-AC-013 | Signature preparation, initial submission and replacement use one authoritative submission-availability check; false/unhealthy creates no signature request, envelope, receipt or Submitted state. Distinct failed dependencies return the §5.10 codes. |
 | BDS07-AC-014 | All new question, notice-contact, delivery-state, footer and unavailable variants are rendered at desktop and 390 × 844 and pass keyboard/focus/content tests. |
 | BDS07-AC-015 | The complete current MVP ends with the sealed Bid Opening handoff. Approval creates no Bid Opening, Evaluation/Award, Supplier Management/prequalification or unsupported product/method behavior. |
+
+### 14.15 v0.8 public guidance and owner-boundary acceptance
+
+| ID | Acceptance criterion |
+|---|---|
+| BDS08-AC-001 | Every signed-in Account and Bid record read returns the server-derived KT-STD-001 v1.8 §3B `next_step`, all applicable guard reasons and fixes; §5.12 stage and §10.19 tracker agree for every actor/state fixture, including denial and technical read. Public discovery does not fabricate a personal journey. |
+| BDS08-AC-002 | The dead-end matrix covers every state, record read and permitted actor: an action or named holder with reason, a reason for each withheld workflow action, a real fix route for its holder, and matching stage. The browser renders the server answer without recomputation. |
+| BDS08-AC-003 | Every §5.14 hand-off creates and clears the precise holder/waiting items on state change, not on notification read; technical incidents remain in their governed queue and never grant Administrator/System Manager business action. Optional replacement/withdrawal after acceptance creates no overdue My Work. |
+| BDS08-AC-004 | All §10.19 variants render at the §10.18 sizes and 200% zoom with the first working region visible, no second status narrative, and keyboard/focus accessibility; the tracker is absent on public lists, registers, dialogs, Work workspace and full-page error states. |
+| BDS08-AC-005 | Tenders Queued, Sent without delivery proof, Delivered and Failed/Delivery problem remain distinct; changed-content answers appear only when the linked addendum is effective after final required channel confirmation. Supplier copy identifies where to read authoritative information independent of notice delivery. |
+| BDS08-AC-006 | Incomplete CFG projection blocks new Start, Submit and replacement acceptance while authorised public Tender, existing Draft and receipt reads remain available; each of the three §10.17 supplier variants gives its correct recovery action. |
+| BDS08-AC-007 | A false production flag returns `BDS_PRODUCTION_SUBMISSION_NOT_ENABLED` and the non-temporary §10.13/§10.17 guidance. Enabled signing/trust and time/custody outages return `BDS_SIGNATURE_UNAVAILABLE` and `BDS_SUBMISSION_SERVICE_UNAVAILABLE` respectively; a pending correlation never offers retry, allows safe page exit and resolves to one authoritative receipt or definitive failure. No branch invents acceptance. |
+| BDS08-AC-008 | For already-bound published Tenders, the Superseded/Withdrawn state-action matrix in §4.4.4 is implemented only after approval of TPR-CHG-001 v0.13. Until then, approved TPR v0.12 controls; no implementation infers broader published continuation from this BDS proposal. Existing Drafts, receipts and public history are preserved in every denied branch. |
+| BDS08-AC-009 | Every §10.18 variant and dialog has complete, chronologically valid §10.1/§13 facts and a direct action map. DES-02 shows only information already published at its fixture instant; DES-07 question, closed and addendum states are distinct; DES-17 preserves authorised receipt retrieval under Account suspension. No designer invents a time, supplier, JV fact or destination. |
+| BDS08-AC-010 | Missing signatory certificate, signing-service outage, custody-service outage and definitive custody rejection have distinct reason codes, actor/holder, copy and recovery actions. Only the definitive, server-authorised pre-deadline rejection offers another attempt. The §10.19 replacement rule removes contradictory badges and banners while keeping factual validation, task and receipt states. |
 
 ## 15. Implementation and verification constraints
 
@@ -1844,7 +2152,7 @@ Each criterion is independently testable. A visually correct page without its au
 Implementation shall proceed in this order:
 
 1. approve the current-law and production operating profile in §5.10;
-2. install and verify the exact Available `IT-EQUIPMENT-OPEN-V1` release, document/response/mapping digests, definition units and supported product/renderer profiles under §4.4;
+2. install and verify the `IT-EQUIPMENT-OPEN-V1` release that is Available and switched On for a new Tender binding, document/response/mapping digests, definition units and supported product/renderer profiles under §4.4;
 3. implement the publication-time definition builder and block every incomplete, hidden or unsupported definition;
 4. publish the immutable Tender-to-bid definition and bidder-safe read projections, including CFG v0.16 public support/legal links;
 5. implement organisation isolation, responsibilities and Account controls;
@@ -1863,7 +2171,8 @@ A prototype may stop after step 9 only if every surface is labelled **Test envir
 
 The test suite shall prove at least:
 
-- the exact Available STD/Tender inputs and frozen digests deterministically materialise the same ordered definition, human-readable Tender content and downstream mappings;
+- the exact bound STD release, Tender inputs and frozen digests deterministically materialise the same ordered definition, human-readable Tender content and downstream mappings (v0.7 read: “the exact Available STD/Tender inputs and frozen digests deterministically materialise the same ordered definition, human-readable Tender content and downstream mappings”);
+- the v0.8 bound-release rule in §4.4.4: definition builds and **Start bid** succeed for a bound release that is Available with its site switch On or Off, or Superseded, while its integrity and renderer checks pass; they fail closed for a Withdrawn release or a failed integrity or renderer check; and no case rebinds a Tender or alters a frozen definition;
 - multiple mandatory technical rows may feed one shared Technical compliance group while retaining their individual results and reasons and creating no weights;
 - every response family has an evaluation and contract destination or an explicit N/A disposition;
 - every response, evidence, declaration and price/schedule row has one stable published identity, valid supported type and visible source obligation;
@@ -1912,7 +2221,7 @@ Before production **Submit bid** is enabled, the Project Owner shall hold record
 - the approved electronic tender-box, custody, opening-credential and bidder-encryption treatment;
 - the authoritative receipt, deadline/time source and uncertain-result reconciliation contract;
 - the handling of original physical tender security and any lawful disqualification decision owner;
-- for every reserved-Tender treatment enabled in production, the current category eligibility, declaration/evidence, County-residents applicability and overlap rules, together with the exact Available template release and publication checks that enforce them;
+- for every reserved-Tender treatment enabled in production, the current category eligibility, declaration/evidence, County-residents applicability and overlap rules, together with the exact permitted bound template release and publication checks that enforce them;
 - the applicable data-protection, retention, incident and support controls; and
 - end-to-end evidence from a production-equivalent certification environment.
 
@@ -1980,18 +2289,35 @@ This contract shall be interpreted with:
 - the Kenya Information and Communications Act and applicable rules for advanced electronic signatures and licensed electronic certification services;
 - the Data Protection Act, 2019;
 - LAW-REG-001 v1.2 for identified legal corrections, the controlled reservation interpretation, currency limitations and release gates;
-- TPR-CHG-001 v0.10 for the Published Tender, clarification, candidate-notice, release-digest and addendum boundary;
-- STD-TPL-001 v0.9 for the `IT-EQUIPMENT-OPEN-V1` product profile, response rules, mappings, `PublishedBidDefinition v1`, **STD Templates** inspection, release gates and operational-record boundary;
+- TPR-CHG-001 v0.12 for the Published Tender, clarification, candidate-notice, release-digest and addendum boundary;
+- TPR-CHG-001 v0.12 and STD-TPL-IMP-001 v1.1, as affected by owner decision OD5 of 26 September 2026, for the bound-release rule in §4.4.4 only (added in v0.8);
+- STD-TPL-001 v0.10 for the `IT-EQUIPMENT-OPEN-V1` product profile, response rules, mappings, `PublishedBidDefinition v1`, **STD Templates** inspection, release gates and operational-record boundary;
 - CFG-CHG-002 v0.16 for rule resolution, reservation-measure separation, public portal support/legal links and site configuration;
-- REQ-CHG-001 v1.11 for the approved `AuthorisedRequisitionHandoff v1.3` upstream source contract;
-- PLN-CHG-001 v1.25 for the eligible-current-APP planned-allocation measure, which BDS does not reproduce or use as bidder entitlement;
-- BUD-CHG-001 v1.10 for the Budget ceiling, affordability and financial-reservation boundary, none of which supplies a BDS eligibility input;
-- AUTH-ADR-001 v1.9 for authentication, responsibility and segregation-of-duty foundations; and
-- KT-STD-001 v1.7 for document, artboard, interaction and verification rules.
+- REQ-CHG-001 v1.12 for the approved `AuthorisedRequisitionHandoff v1.3` upstream source contract;
+- PLN-CHG-001 v1.27 for the eligible-current-APP planned-allocation measure, which BDS does not reproduce or use as bidder entitlement;
+- BUD-CHG-001 v1.11 for the Budget ceiling, affordability and financial-reservation boundary, none of which supplies a BDS eligibility input;
+- AUTH-ADR-001 v1.10 for authentication, responsibility and segregation-of-duty foundations; and
+- KT-STD-001 v1.8 for document, artboard, interaction and verification rules.
 
 The locally available 2020 Regulations text is a historical official source, not proof of the consolidated law or current government operating directions on 25 September 2026. The responsible legal and institutional owners must verify the current position before production approval. This document does not assert that KenTender is an authorised government e-procurement system or that any named integration presently exists.
 
 ## 18. Approval effect
+
+### 18.1 v0.8 approval effect
+
+v0.8 is **approved** as the successor to v0.7. Its approval:
+
+1. have every effect listed for v0.7 in §18.2, with the unapproved v0.7 also retained only as reference history;
+2. establish the bound-release rule for publication, addendum definition builds and **Start bid** in §4.4.4 and BDS05-AC-001; and
+3. confirm that release gate results, review records and any owner decision recorded for a release are evidence only for Bid Submission and never a condition of Bid work (owner decision OD5).
+
+Approval of v0.8 does not install, approve or switch on a template release, change the release bound to any Tender, or approve a production operating profile.
+
+**Owner-document dependency.** STD-TPL-001 v0.10 and STD-TPL-IMP-001 v1.1 already incorporate OD5: an intact installed Available release has an On/Off site switch; On is needed for new binding, while Off does not strand an already-bound Tender. Historical v0.8 context: approved TPR-CHG-001 v0.12 controlled Tender actions before v0.13 approval. Its §5.8 item 14 limited the Superseded continuation to an unpublished Tender, while item 16 and the STD runtime allowed a broader continuation. Approved TPR-CHG-001 v0.13 now resolves the published-Tender branch, including addendum issue, Bid start and submission, and the Withdrawn boundary. The §4.4.4 published-state branch and tests now have owner approval through TPR v0.13; the separate BDS production submission gate and this proposed v0.9 approval remain required. G1-REG-001 v1.2 is a proposed coordination register and cannot override a module owner.
+
+### 18.2 v0.7 proposed approval effect (retained as history)
+
+The following is retained v0.7 proposal wording. v0.7 was never approved; v0.8 approval gives effect to the applicable outcomes through §18.1.
 
 This document is **Proposed for Project Owner review**. Approval will:
 
@@ -2129,12 +2455,12 @@ The register below is the minimum reimplementation scope. **Completion evidence*
 
 | ID | Required implementation | Contract | Completion evidence |
 |---|---|---|---|
-| BDS01-IMP-077 | Prevent Procuring Entity business users from seeing pre-opening bidder identity, bid count, prices, responses, filenames or evidence content. | §§5.9, 12.3 | Role/API/UI/side-channel tests. |
+| BDS01-IMP-077 | Deny general PE pre-opening tender-box bidder identity/count/price/content; permit separately scoped physical receipt owner only supplier/security facts without any box submission inference. | §§5.9, 10.16, 12.3 | Role/API/UI/side-channel tests for receipt-owner versus chair, auditor, other PE user and Administrator. |
 | BDS01-IMP-078 | Restrict technical operators to authorised service and custody metadata; prohibit decrypt, render, download, export and content search. | §§6, 12.3 | Technical-role penetration tests. |
 | BDS01-IMP-079 | Exclude Draft and submitted values from logs, traces, analytics, search indexes, alerts, emails and support exports. | §§12.3, 16 | Observability and data-flow inspection. |
 | BDS01-IMP-080 | Protect submitted content and backups using the independently approved custody design; keep private keys and production secrets out of application data, code, configuration and fixtures. | §§12.3, 15.3 | Architecture review, secret scan and recovery test. |
 | BDS01-IMP-081 | Record the minimum event and business evidence for Account changes, responses, files, addenda, validation, security receipt, signature, deposit, replacement, withdrawal and close. | §§12.1–12.2 | Audit completeness and immutability tests. |
-| BDS01-IMP-082 | Implement all 16 artboards and every isolated state from the self-contained §10 design contract at both §10.18 render sizes, using KT-STD-001 v1.7 §2. | §§10–11 | Desktop/narrow artboard inventory and visual acceptance. |
+| BDS01-IMP-082 | Implement all 17 artboards and every isolated state from the self-contained §10 design contract at both §10.18 render sizes, using KT-STD-001 v1.8 §2. | §§10–11 | Desktop/narrow artboard inventory and visual acceptance. |
 | BDS01-IMP-083 | Provide keyboard operation, visible focus, programmatic labels, status text independent of colour, error summary links and usable small-screen reflow. | §§10.1, 11.8 | Accessibility audit and device tests. |
 | BDS01-IMP-084 | Map every visible action to exactly one service/command and omit it when not server-permitted; page refresh must reproduce authoritative state. | §11 | Action-map and stale-client tests. |
 | BDS01-IMP-085 | Use the §13 deterministic seed for primary, opposing and recovery states; keep simulated signature/custody data unmistakably non-production. | §13 | Repeatable seed and isolation tests. |
@@ -2182,7 +2508,7 @@ The register below is the minimum reimplementation scope. **Completion evidence*
 
 | ID | Required implementation | Contract | Completion evidence |
 |---|---|---|---|
-| BDS05-IMP-001 | Verify exact template status, profiles and all frozen release digests before publication and Start bid. | §§4.4, 7.4, 14.11 | Available/unavailable, mismatch and stale-release tests. |
+| BDS05-IMP-001 | Verify exact template status, profiles and all frozen release digests before publication and Start bid. | §§4.4, 7.4, 14.11 | Available/unavailable, mismatch and stale-release tests; from v0.8 also Available with site switch On and Off, Superseded with passing and failing integrity or renderer checks, and Withdrawn, per §4.4.4. |
 | BDS05-IMP-002 | Generate the Goods/IT workspace only from released response rules and the exact Published Bid Definition. | §§4.4.1–4.4.5 | Structured fixture and no-PDF-parser tests. |
 | BDS05-IMP-003 | Resolve every source-derived response to one supported final control type before publication. | §§4.4.2–4.4.4 | Catalogue-control and unknown-type tests. |
 | BDS05-IMP-004 | Preserve row-level mandatory checks while deriving one shared Technical compliance group result with no weights. | §§4.4, 5.3, 14.11 | Multi-row group-result and evaluator-contract tests. |
@@ -2197,7 +2523,7 @@ The register below is the minimum reimplementation scope. **Completion evidence*
 
 | ID | Required implementation | Contract | Completion evidence |
 |---|---|---|---|
-| BDS06-IMP-001 | Use STD-TPL v0.9, CFG v0.16, TPR v0.10, LAW v1.2, REQ v1.11, PLN v1.25 and BUD v1.10 at their exact owner boundaries; remove obsolete template-inspection, clarification and denominator dependencies. | Control table, §§3, 17 | Dependency scan and owner-contract integration matrix. |
+| BDS06-IMP-001 | Use STD-TPL v0.10 and IMP v1.1, CFG v0.16, approved TPR v0.12, LAW v1.2, REQ v1.12, PLN v1.27 and BUD v1.11 at their exact owner boundaries; remove obsolete template-inspection, clarification and denominator dependencies. | Control table, §§3, 17 | Dependency scan and owner-contract integration matrix. |
 | BDS06-IMP-002 | Keep every APP denominator, 30% target, planned qualifying share, Planning shortfall, Budget ceiling and unused-headroom value outside BDS schema, services, portal projections, readiness, packages and eligibility handoffs. | §§3, 4.4, 5.3.1, 5.6, 14.12 | Schema/API/package negative assertions and supplier-output scan. |
 | BDS06-IMP-003 | Materialise only the exact Tender-specific reservation treatment and category/County declaration-evidence rules; never infer entitlement from Planning, Account, address or an uploaded certificate. | §§4.4, 5.3.1, 14.2, 14.12 | None/Youth/Women/PWD/County fixtures and no-inference tests. |
 | BDS06-IMP-004 | Fail publication and Start bid when the affected reserved treatment is unsupported, unverified or missing its evidence/overlap treatment; preserve any existing Draft and never downgrade to unreserved. | §§4.4, 5.3.1, 8, 14.12 | Unsupported-rule, missing-evidence, overlap and Draft-preservation tests. |
@@ -2211,7 +2537,7 @@ The register below is the minimum reimplementation scope. **Completion evidence*
 | BDS06-IMP-012 | Replace any System setup Tender-format recovery link with `/app/std-templates/{release_id}` for authorised Administrator/System Manager users. | §§7.4, 14.13 | Route and permission tests plus absent-old-route scan. |
 | BDS06-IMP-013 | Run the closed REQ→TPR→STD→BDS fixture through sealed Bid Opening handoff with exact identities, digests, obligations and published downstream mappings; do not invoke a future Evaluation/Contract workflow. | §§13–15 | Signed coordinated end-to-end report and mapping-payload inspection. |
 | BDS06-IMP-014 | Require and verify `definition_digest` at every definition boundary and include it in canonical signed/downstream lineage. | §§4.4, 4.9, 14.13 | Missing/mismatch, signature-binding and handoff tests. |
-| BDS06-IMP-015 | Align the runtime allowlist with STD-TPL v0.9 for controlled multi-select and the bounded structured-ports composition. | §§4.4.3–4.4.5, 14.13 | Valid/invalid option, row-shape and no-fallback tests. |
+| BDS06-IMP-015 | Align the runtime allowlist with STD-TPL v0.10 for controlled multi-select and the bounded structured-ports composition. | §§4.4.3–4.4.5, 14.13 | Valid/invalid option, row-shape and no-fallback tests. |
 | BDS06-IMP-016 | Create a versioned organisation snapshot at Start bid; implement the explicit compare-and-refresh flow; and keep the Tender contact bid-specific without Account or submitted-Version mutation. | §§4.3, 4.4.8, 4.5, 7.2, 10.9, 11.4 | Account-change comparison, refresh, Tender-contact scope, keep-current and submission-immutability tests. |
 
 ### 19.12 v0.7 public/vendor closure implementation
@@ -2228,3 +2554,30 @@ The register below is the minimum reimplementation scope. **Completion evidence*
 | BDS07-IMP-008 | Implement one server-side default-false `production_bid_submission_enabled` deployment flag and central submission-availability service used by signature, initial submission and replacement. | §§5.10, 7.4, 14.14–15 | No-UI/client override scan, false/true/health transition tests and release evidence. |
 | BDS07-IMP-009 | Re-run the complete public Tender→Start bid→question/answer→addendum notice→five tasks→signature→receipt→replacement/withdrawal→automatic close→sealed handoff journey. | §§13–15 | Signed end-to-end report with no Bid Opening/Evaluation/Supplier Management runtime dependency. |
 | BDS07-IMP-010 | Remove or quarantine superseded addendum-only inquiry endpoints, standalone arrangement creation, placeholder portal contacts and any per-Tender/user-controlled submission switch. | §§5, 7, 16 | Repository/API/UI negative inventory and migration tests. |
+
+### 19.13 v0.8 next-step, guidance and boundary implementation
+
+| ID | Required implementation | Contract | Completion evidence |
+|---|---|---|---|
+| BDS08-IMP-001 | Return actor-specific `next_step`, all guard reasons, fixes and stage markers from Account/Bid reads; never calculate them in the browser. | §§5.12–5.13, 7.1, 14.15 | Full state/actor/read dead-end matrix, cross-organisation masking and technical-reader negative checks. |
+| BDS08-IMP-002 | Produce the §5.14 business hand-off and waiting items, and separately route CFG/deployment/technical events into controlled operational queues without giving a technical reader supplier business authority. | §§5.14, 6, 14.15 | Creation, clearing, notification, no-bid-content and no-mark-read-as-clear checks. |
+| BDS08-IMP-003 | Render the exact §10.19 block/tracker content on permitted archetypes, replacing duplicate status narratives; complete both render sizes, 200% zoom and keyboard checks for each named variant. | §§10.1–10.19, 14.15 | Artboard inventory, first-view, responsive, visual and accessibility review. |
+| BDS08-IMP-004 | Separate default-off production flag, enabled-service outage, definite failure and uncertain attempt; preserve Draft/receipt reads and route only permitted recovery actions. | §§5.10, 8, 10.13, 10.17, 14.15 | False/true/unhealthy/indeterminate matrix, no-double-dispatch and definitive custody reconciliation. |
+| BDS08-IMP-005 | Reconcile final-channel addendum effectiveness, four notice states and CFG incomplete projection against TPR and CFG owners. | §§5.4, 5.13, 8, 10.7–10.8, 14.15 | Owner integration and public/supplier copy tests; existing Draft and receipt recovery. |
+| BDS08-IMP-006 | Gate the published Tender Superseded/Withdrawn branch on Project Owner approval of TPR v0.13, then test every §4.4.4 state/action boundary without rebinding or rewriting history. | §§4.4.4, 18.1 | Approval dependency and lifecycle/integrity/renderer/definition matrix. |
+| BDS08-IMP-007 | Render all distinct §10.18 variants including DES-17 receipt history; bind public/question/addendum/JV fixtures to their exact instants and verify every visible recovery action's destination. | §§10.1–10.20, 11, 13, 14.15 | Chronology and cross-organisation tests, artboard/route inventory, narrow/zoom/focus and saved-receipt access. |
+| BDS08-IMP-008 | Separate missing certificate from signing-service failure and definitive custody rejection from enabled outage in guards, next steps, error catalogue and submission UI. | §§5.7, 5.12–5.13, 8, 10.13, 10.17–10.19 | Actor/guard/copy snapshots, certificate recheck, no-receipt and no-duplicate-deposit tests. |
+
+## 20. v0.10 coordinated acceptance and change account
+
+| ID | Required evidence |
+|---|---|
+| BDS10-AC-001 | A closed submission arrangement with an active authorised representative/signatory can read/save/send its EVL clarification; revoked/expired/other-organisation users cannot. Closed state still prevents bid mutation. |
+| BDS10-AC-002 | One-reply, draft/send distinction, late reply, both closure-race orders, replacement, cancellation and replay preserve immutable bid data and supplier-safe receipts. |
+| BDS10-AC-003 | Failed email leaves the same question available; retry does not duplicate request/task. View and deadline expiry do not clear the reply task. |
+| BDS10-AC-004 | Completed BOP source allows only the exact opened submitted tuple; pre-opening, wrong version, other tender, withdrawn/superseded envelope, digest mismatch and missing mapping cannot produce an authorised successful read. Never decrypt through BDS. |
+| BDS10-AC-005 | Source failure becomes explicit EVL source recovery, not empty intake or bidder failure; backend reads grant no human access. Scoped attachments cannot escape owner authorization. |
+| BDS10-AC-006 | Supplier projection and every DES-18 variant at desktop/mobile contain no competing bids, internal findings, ranks or report. Every action resolves through §11.9. |
+| BDS10-AC-007 | Retain all v0.8 submission, signature/custody and release guards; pre-bid Q&A stays Tenders-owned; retained proposed v0.9 receipt correction is not silently marked approved. |
+
+Implementation: add the §7.5 service adapter, shared supplier-authority resolver for the historical submitted arrangement, EVL projection/route and DES-18 variants, then verify BDS10-AC-001–007 with EVL-A02/A07/A14. No runtime tests or production deployment are claimed here. Approved EVL v0.4 governs the added behaviour; this BDS successor remains proposed. Prior v0.9 pending work is retained with its original approval limits. No new criteria, supplier role or bid-edit route is introduced.
