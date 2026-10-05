@@ -3,7 +3,9 @@
    controller (frappe.require, after kt_home_ds.bundle.css), never globally. Every selector sits under
    .kt-industry.kt-home, so no other page is affected. */
 
-.kt-industry.kt-home { padding: 24px 0 40px; }
+.kt-industry.kt-home { padding: 24px 40px 40px; position: relative; }
+/* 40 px side gutter, the same as the other Industry pages: the board's 1440 px canvas left 120 px each side, Desk's narrower content area let the
+   sheet meet the sidebar. The root is positioned so absolutely positioned content cannot stretch the body into a second scrollbar. */
 /* Desk sets 0.26px of letter spacing on its body; the boards set in Inter with none (found 5 Oct 2026, Phase 8 board comparison). */
 .kt-industry.kt-home { letter-spacing: normal; }
 

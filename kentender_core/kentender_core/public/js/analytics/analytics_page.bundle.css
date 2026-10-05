@@ -4,7 +4,11 @@
    never globally. Every selector sits under .kt-industry.kt-analytics, so no other page is affected. The chart
    rules (kt-anl-*) belong to kt_analytics_ds.bundle.css; this file owns only the page composition (kt-ap-*). */
 
-.kt-industry.kt-analytics { padding: 24px 0 48px; }
+.kt-industry.kt-analytics { padding: 24px 40px 48px; }
+/* The boards draw the sheet on a 1440 px canvas, so its 0 side padding left 120 px each side; in Desk the content area is narrower and the sheet
+   met the sidebar. 40 px side gutter, the same as the other Industry pages. The root is also the containing block for the absolutely
+   positioned screen-reader tables: without it they sat against the body, stretched it past the window and drew a second scrollbar. */
+.kt-industry.kt-analytics { position: relative; }
 
 /* The sheet: one white sheet with a 1px border on Frappe's grey ground. It is the size container the narrow
    rules ask about: "the sheet's content width is below 960 px" (rule 12). */
