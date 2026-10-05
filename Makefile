@@ -147,9 +147,9 @@ help:
 	@echo "  make seed-req-profiles SITE=$(SITE) — list the REQ-CHG-001 §16.4A Requisitions demo profiles"
 	@echo "  make seed-req-profile SITE=$(SITE) PROFILE=REQ-SC-HOLD — load one profile on the canonical MOH item (replaces any loaded one) and print its report"
 	@echo "  make seed-req-profile-restore SITE=$(SITE) — undo the loaded profile and restore the base authorised requisition"
-	@echo "  make seed-canonical SITE=$(SITE) [THROUGH=tenders] [OPEN=True] [REBUILD=True] [WIPE=True] [FORCE=True] — clear every non-canonical row, then reseed KT-STD-001 §8 configuration + SEED-001 modules progressively (site → strategy → budget → needs → planning → requisitions → tenders → bid_submission → bid_opening → bid_evaluation → award; THROUGH=award is the full chain) and validate, draining the background-job queue before and after; OPEN=True (with THROUGH=tenders or bid_submission) leaves the Tender open for bids, listed on /tenders for anyone; WIPE=True also drops and rebuilds the site stage itself (needs FORCE=True outside developer_mode)"
+	@echo "  make seed-canonical SITE=$(SITE) [CURRENT=award] [NEXT=annual_plan] [REBUILD=True] [WIPE=True] [FORCE=True] — clear every non-canonical row, then reseed the two-year world read as at 18 Jun 2027 10:00 and validate, draining the background-job queue before and after. CURRENT moves FY 2026/27, the year carried out (annual_plan → requisitions → tenders → bid_submission → bid_opening → bid_evaluation → award; its Active plan is always built); NEXT moves FY 2027/28, the year being prepared (none → budget → needs → departmental_plans → annual_plan). Default: the full world. THROUGH= (retired) still maps onto them; OPEN=True (CURRENT=tenders or bid_submission) leaves the canonical Tender open; WIPE=True also drops and rebuilds the site stage itself (needs FORCE=True outside developer_mode)"
 	@echo "  make seed-canonical-dry-run SITE=$(SITE) — report what seed-canonical would remove, delete nothing"
-	@echo "  make seed-canonical-validate SITE=$(SITE) [THROUGH=requisitions] [OPEN=True] — validate the canonical world only"
+	@echo "  make seed-canonical-validate SITE=$(SITE) [CURRENT=award] [NEXT=annual_plan] — validate the canonical world only"
 	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — fixture-scoped reset + full KENTENDER_MVP_V1 seed + Playwright purge + validate"
 	@echo "  make seed-kentender-mvp-v1-validate SITE=$(SITE) — validate full KENTENDER_MVP_V1 stack"
 	@echo "  make purge-kentender-playwright-data SITE=$(SITE) — remove owned Playwright/Gate fixtures without deleting canonical or business records"
@@ -1356,9 +1356,13 @@ e1-nssf-poc-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_e1_nssf_seed
 
-# Canonical world (KT-STD-001 §8 + SEED-001), progressive by module stage.
-# THROUGH: site | strategy | budget | needs | planning | requisitions | tenders | bid_submission | bid_opening | bid_evaluation | award
-# (THROUGH=award is the full chain; later stages are added as they land).
+# Canonical world (KT-STD-001 §8 + SEED-001): two financial years read as at 18 Jun 2027, 10:00 EAT (two-year seed world,
+# docs/mvp-1-r1/20_seed_data/), each moved by its own control:
+# CURRENT (FY 2026/27, carried out): annual_plan | requisitions | tenders | bid_submission | bid_opening | bid_evaluation | award
+#   — its budget, Needs, departmental plans and Active, locked Annual Plan are always built (annual_plan).
+# NEXT (FY 2027/28, being prepared): none | budget | needs | departmental_plans | annual_plan — never past an approved plan.
+# Default: the full world, CURRENT=award NEXT=annual_plan. A test site's live pages are left on 18 Jun 2027, 10:00.
+# THROUGH (the retired single-year ladder: site … planning … award) still maps onto CURRENT/NEXT for one release.
 # bid_submission builds the Tenders stage with the canonical bid's lifecycle interleaved (BDS-CHG-001 v0.8 D19);
 # over a world seeded only through tenders it needs REBUILD=True, and it runs only on a test site (the simulated services);
 # so do bid_opening, bid_evaluation and award. A plain run first undoes any loaded demo profile and clears the test clock.
@@ -1375,7 +1379,9 @@ e1-nssf-poc-gate:
 # clear and stop, empty database. Pass RESEED=True to also force the old
 # "wipe then immediately rebuild everything" behaviour. All three must stay
 # Python-literal True/False/None, not JSON true/false/null.
-THROUGH ?= requisitions
+CURRENT ?= award
+NEXT ?= annual_plan
+THROUGH ?=
 WIPE ?= False
 FORCE ?= False
 RESEED ?= None
@@ -1391,6 +1397,12 @@ OPEN ?= False
 # as an alias, command-line value wins either way.
 ifdef through
 THROUGH := $(through)
+endif
+ifdef current
+CURRENT := $(current)
+endif
+ifdef next
+NEXT := $(next)
 endif
 ifdef wipe
 WIPE := $(wipe)
@@ -1421,11 +1433,15 @@ SEED_QUEUE_DRAIN = if node -e "require.resolve('esbuild')" >/dev/null 2>&1; then
 		(cd $(BENCH_ROOT) && bench worker --queue default --burst --quiet); \
 	fi
 
+# THROUGH, when given, is passed alone (the seed maps it); otherwise CURRENT and NEXT.
+comma := ,
+SEED_YEARS = $(if $(THROUGH),"through": "$(THROUGH)","current": "$(CURRENT)"$(comma) "next_year": "$(NEXT)")
+
 seed-canonical:
 	@$(SEED_QUEUE_DRAIN)
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.canonical.run \
-		--kwargs '{"through": "$(THROUGH)", "reset": True, "rebuild": $(REBUILD), "wipe": $(WIPE), "reseed": $(RESEED), "force": $(FORCE), "validate": True, "open_tender": $(OPEN)}'
+		--kwargs '{$(SEED_YEARS), "reset": True, "rebuild": $(REBUILD), "wipe": $(WIPE), "reseed": $(RESEED), "force": $(FORCE), "validate": True, "open_tender": $(OPEN)}'
 	@$(SEED_QUEUE_DRAIN)
 
 seed-canonical-dry-run:
@@ -1434,7 +1450,7 @@ seed-canonical-dry-run:
 
 seed-canonical-validate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_core.seeds.canonical.validate --kwargs '{"through": "$(THROUGH)", "open_tender": $(OPEN)}'
+		kentender_core.seeds.canonical.validate --kwargs '{$(SEED_YEARS), "open_tender": $(OPEN)}'
 
 # REQ-CHG-001 v1.11 §16.4A — named, mutually exclusive Requisitions demo
 # profiles on the canonical MOH item (runbook SEED-OPS-001 §9).

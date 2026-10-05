@@ -182,6 +182,69 @@ def _build(tender: str) -> dict[str, Any]:
 	return {"entry": entry, "others": others}
 
 
+def open_portfolio_tender(tender: str, clock_map: dict[str, str], bids: int) -> dict[str, Any]:
+	"""An executed-portfolio Tender's opening (two-year seed world proposal
+	§5.1), the canonical ceremony without its public attendance: Amina Hassan
+	appoints the same committee and publishes how to attend; the members join;
+	Charles Mutiso opens each of the `bids` and records what Brian Wafula read
+	aloud; the opening ends, the record is finished and signed, and the last
+	signature hands the bids to Evaluation. `clock_map` holds prepare, appoint,
+	publish, join, receive, begin, open (one instant per bid, a list), end,
+	freeze and sign (a list of three). Idempotent: a completed opening is
+	returned untouched."""
+	from kentender_procurement.bid_opening.services import appointment, arrangements, case, ceremony, close_intake, finish, presence, readout, record, signing
+
+	_guard()
+	if frappe.db.get_value("Bid Opening Case", {"tender": tender}, "state") == "Opening complete":
+		return {"ok": True, "idempotent": True, "opening": frappe.db.get_value("Bid Opening Case", {"tender": tender}, "name")}
+	saved = {flag: frappe.flags.get(flag) for flag in ("kt_bop_clock", "kt_prc_clock", "kt_bop_fixture_namespace", "kt_prc_fixture_namespace")}
+	frappe.flags.kt_bop_fixture_namespace = frappe.flags.kt_prc_fixture_namespace = NAMESPACE
+	try:
+		clock = _Clock(tender)
+		clock.at(clock_map["prepare"])
+		case.prepare_opening_case(tender=tender)
+		clock.at(clock_map["appoint"])
+		_ok(appointment.appoint_opening_committee(tender=tender, members=[dict(r) for r in ROSTER], expected_version=_version(tender), idempotency_key=_key("appoint"), user=AO),
+			"appoint the committee")
+		clock.at(clock_map["publish"])
+		_ok(arrangements.publish_opening_arrangements(tender=tender, expected_version=_version(tender), idempotency_key=_key("publish"), user=AO,
+			attendance_method=ARRANGEMENTS["attendance_method"], access_instructions="Select Join public opening on this Tender’s page at the opening time."), "publish how to attend")
+		if clock_map.get("join") is None:
+			return {"ok": True, "idempotent": False, "opening": frappe.db.get_value("Bid Opening Case", {"tender": tender}, "name"), "stopped": "arranged"}
+		for user, instant in zip((CHAIR, MEMBER, INDEPENDENT), clock_map["join"]):
+			clock.at(instant)
+			_ok(presence.join_opening(tender=tender, idempotency_key=_key(f"join-{user}"), user=user), f"join as {user}")
+			clock.present.append(user)
+		clock.at(clock_map["receive"])
+		close_intake.receive_closed_box(tender=tender)
+		clock.at(clock_map["begin"])
+		_ok(ceremony.begin_opening(tender=tender, expected_version=_version(tender), idempotency_key=_key("begin"), user=CHAIR), "start the opening")
+		entries = []
+		for index in range(bids):
+			opened, spoken, recorded = clock_map["open"][index]
+			clock.at(opened)
+			entry = _ok(ceremony.open_next_tender(tender=tender, expected_version=_version(tender), idempotency_key=_key(f"open-{index}"), user=CHAIR), f"open bid {index + 1}")["entry"]
+			clock.at(recorded)
+			_ok(readout.record_readout(tender=tender, entry=entry, speaker=MEMBER, designated_pages=[1], expected_version=_version(tender), idempotency_key=_key(f"readout-{index}"),
+				user=CHAIR, reported_speech_at=spoken), f"record what was read aloud for bid {index + 1}")
+			entries.append(entry)
+		clock.at(clock_map["end"])
+		_ok(finish.finish_ceremony(tender=tender, expected_version=_version(tender), idempotency_key=_key("end"), user=CHAIR), "end the opening")
+		clock.present = []
+		clock.at(clock_map["freeze"])
+		_ok(record.freeze_opening_minutes(tender=tender, expected_version=_version(tender), idempotency_key=_key("freeze"), user=CHAIR), "finish the record")
+		doc = frappe.get_doc("Bid Opening Case", {"tender": tender})
+		for user, instant in zip((MEMBER, INDEPENDENT, CHAIR), clock_map["sign"]):
+			clock.at(instant)
+			version, mine = signing.my_targets(doc, user)
+			_ok(signing.sign_opening_record(tender=tender, minutes_version=version, targets=[{"target_id": t["target_id"], "target_digest": t["target_digest"]}
+				for t in mine], idempotency_key=_key(f"sign-{user}"), user=user), f"sign as {user}")
+		return {"ok": True, "idempotent": False, "opening": doc.name, "entries": entries}
+	finally:
+		for flag, value in saved.items():
+			frappe.flags[flag] = value
+
+
 def lifecycle_complete(tender: str) -> bool:
 	"""Complete and carrying every canonical fact (an opening told before a
 	fact was added, such as Jane Wanjiku's attendance, is told again)."""

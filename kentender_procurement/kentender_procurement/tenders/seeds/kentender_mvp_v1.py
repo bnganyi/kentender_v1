@@ -458,6 +458,186 @@ def upsert_tenders_base(*, commit: bool = False, interleave=None, stop_before_cl
 	return {"ok": True, "idempotent": False, "tender": name, "addendum": addendum, "clarification": clarification, "handoff": closed.get("handoff"), "interleaved": interleaved}
 
 
+#: How far a portfolio Tender's story goes (two-year seed world proposal §5.1),
+#: with the status its root then shows.
+TENDER_STOPS = {
+	"returned": "Draft",
+	"approved": "Approved",
+	"published": OPEN_STATUS,
+	"cancellation_recommended": OPEN_STATUS,
+	"cancelled": "Cancelled",
+	"closed": CLOSED_STATUS,
+}
+CANCELLATION_GROUND = "NEED_CEASED"
+
+
+def _notice_url(obligation_id: str, reference: str) -> str:
+	return {
+		"NOTICE-STATE_PORTAL": f"https://portal.example.test/notices/{reference}",
+		"NOTICE-MINISTRY_WEBSITE": f"https://health.example.test/notices/{reference}",
+	}.get(obligation_id, "")
+
+
+def _portfolio_tender(requisition: str) -> dict[str, Any] | None:
+	return frappe.db.get_value("Tender", {"requisition": requisition}, ["name", "overall_status", "tender_reference"], as_dict=True)
+
+
+def build_tender(story: dict[str, Any], *, interleave=None) -> dict[str, Any]:
+	"""One executed-portfolio Tender on its own authorised Requisition, through
+	the same commands as the canonical one, as Brian Wafula, Charles Mutiso and
+	Amina Hassan at the story's own instants (`story["clock"]`), to
+	`story["stop"]` (see TENDER_STOPS):
+
+	- "returned": submitted, then returned to Brian for correction;
+	- "approved": approved, the publication decision is the Accounting
+	  Officer's;
+	- "published": published, open for bids;
+	- "cancellation_recommended" / "cancelled": published, then Charles
+	  recommends cancellation and (cancelled) Amina decides it, with the
+	  compliance evidence the story lists recorded;
+	- "closed": the submission period ended at the deadline.
+
+	`story` keys: key, requisition (its root name), values (officer values
+	over `officer_values()`), clock, stop, and per stop return_reason,
+	cancellation_reason, evidence (obligation ids to evidence). `interleave(step,
+	tender=…, tender_reference=…)` acts at "published", "before_close" and
+	"closed". Idempotent: a Tender already at its stop is returned untouched."""
+	from kentender_core.seeds import clock as core_clock
+	from kentender_procurement.tenders.services import cancellation, draft_commands as cmd, lifecycle, publication, submission_close
+
+	_guard()
+	key, stop, clock_map = story["key"], story["stop"], story["clock"]
+	if stop not in TENDER_STOPS:
+		frappe.throw(f"Unknown Tender stop {stop!r}; expected one of {', '.join(TENDER_STOPS)}.")
+	requisition = story["requisition"]
+	existing = _portfolio_tender(requisition)
+	if existing:
+		if existing.overall_status != TENDER_STOPS[stop]:
+			frappe.throw(f"The portfolio Tender {existing.name} ({key}) is {existing.overall_status!r}, not {TENDER_STOPS[stop]!r}: rebuild the canonical world.", exc=CanonicalTenderNeedsRebuild)
+		return {"ok": True, "idempotent": True, "tender": existing.name, "tender_reference": existing.tender_reference}
+	handoff = frappe.db.get_value("Authorised Requisition Handoff", {"requisition": requisition, "consumed_at": ("is", "not set")}, "name")
+	if not handoff:
+		frappe.throw(f"The portfolio Requisition {requisition} ({key}) has no unconsumed handoff: rebuild the canonical world.")
+
+	def at(step: str) -> None:
+		frappe.flags.kt_tenders_clock = clock_map[step]
+
+	def k(step: str) -> str:
+		return _key(f"{key}:{step}")
+
+	interleaved: dict[str, Any] = {}
+
+	def step_callback(step: str) -> None:
+		if interleave is not None:
+			interleaved[step] = interleave(step, tender=name, tender_reference=frappe.db.get_value("Tender", name, "tender_reference"))
+
+	try:
+		at("start")
+		with _as(OFFICER), core_clock.at(clock_map["start"]):
+			started = cmd.start_tender(handoff=handoff, idempotency_key=k("start"), fixture_namespace=NS)
+		name = started["tender"]
+		root = frappe.get_doc("Tender", name)
+		with _as(OFFICER), core_clock.at(clock_map["start"]):
+			saved = cmd.save_tender_draft(tender=name, values=officer_values(**story["values"]), expected_record_version=root.record_version, idempotency_key=k("save"))
+			if not saved.get("ok", True):
+				frappe.throw(f"Tenders seed ({key}): officer values refused {saved.get('errors')}")
+		root.reload()
+		at("submit")
+		with _as(OFFICER), core_clock.at(clock_map["submit"]):
+			submitted = lifecycle.submit_tender_for_approval(tender=name, expected_record_version=root.record_version, idempotency_key=k("submit"))
+		root.reload()
+		if stop == "returned":
+			at("return")
+			with _as(HOPF), core_clock.at(clock_map["return"]):
+				lifecycle.return_tender_for_correction(
+					tender=name, task=submitted["task"], reason=story["return_reason"], affected_task=story.get("return_task", "Supplier and contract requirements"),
+					expected_record_version=root.record_version, idempotency_key=k("return"),
+				)
+			return {"ok": True, "idempotent": False, "tender": name, "tender_reference": root.tender_reference}
+		at("approve")
+		with _as(HOPF), core_clock.at(clock_map["approve"]):
+			approved = lifecycle.approve_tender_package(tender=name, task=submitted["task"], expected_record_version=root.record_version, idempotency_key=k("approve"))
+		root.reload()
+		if stop == "approved":
+			return {"ok": True, "idempotent": False, "tender": name, "tender_reference": root.tender_reference}
+		at("authorise")
+		with _as(AO), core_clock.at(clock_map["authorise"]):
+			authorised = publication.authorise_tender_publication(tender=name, task=approved["task"], expected_record_version=root.record_version, idempotency_key=k("authorise"))
+		root.reload()
+		for index, channel in enumerate(CHANNELS, start=1):
+			reference = f"{channel.replace('_', '-')}-{key.upper()}"
+			url = f"https://portal.example.test/tenders/{key}" if channel == "STATE_PORTAL" else (f"https://health.example.test/tenders/{key}" if channel == "MINISTRY_WEBSITE" else "")
+			at(f"confirm_{index}")
+			with _as(HOPF), core_clock.at(clock_map[f"confirm_{index}"]):
+				publication.confirm_publication_channel(
+					tender=name, channel=channel, available_at=clock_map["available_at"], evidence_reference=reference,
+					evidence_file=_evidence_file(f"{reference}.{'jpg' if channel == 'NOTICE_BOARD' else 'pdf'}"),
+					package_digest=frappe.db.get_value("Tender Publication", authorised["publication"], "package_digest"), public_url=url,
+					attestation_confirmed=True, expected_record_version=root.record_version, idempotency_key=k(f"confirm-{channel}"),
+				)
+			root.reload()
+		step_callback("published")
+		root.reload()
+		if stop in ("cancellation_recommended", "cancelled"):
+			at("recommend_cancellation")
+			with _as(HOPF), core_clock.at(clock_map["recommend_cancellation"]):
+				cancellation.recommend_tender_cancellation(
+					tender=name, ground=CANCELLATION_GROUND, reason=story["cancellation_reason"], expected_record_version=root.record_version, idempotency_key=k("recommend-cancel"),
+				)
+			root.reload()
+			if stop == "cancelled":
+				at("cancel")
+				with _as(AO), core_clock.at(clock_map["cancel"]):
+					cancellation.cancel_tender(
+						tender=name, ground=CANCELLATION_GROUND, reason=story["cancellation_reason"], expected_record_version=root.record_version, idempotency_key=k("cancel"),
+					)
+				root.reload()
+				for obligation_id, (when, reference, extension) in (story.get("evidence") or {}).items():
+					frappe.flags.kt_tenders_clock = when
+					with _as(HOPF), core_clock.at(when):
+						cancellation.record_cancellation_compliance_evidence(
+							tender=name, obligation_id=obligation_id, evidence_reference=reference, evidence_file=_evidence_file(f"{reference}.{extension}"),
+							expected_record_version=root.record_version, idempotency_key=k(f"evidence-{obligation_id}"), available_at=when,
+							public_url=_notice_url(obligation_id, reference),
+							url_not_applicable_reason="" if _notice_url(obligation_id, reference) or not obligation_id.startswith("NOTICE-") else "A physical or printed notice has no public address.",
+							attestation_confirmed=True,
+						)
+					root.reload()
+			return {"ok": True, "idempotent": False, "tender": name, "tender_reference": root.tender_reference, "interleaved": interleaved}
+		if stop == "published":
+			return {"ok": True, "idempotent": False, "tender": name, "tender_reference": root.tender_reference, "interleaved": interleaved}
+		step_callback("before_close")
+		at("close")
+		submission_close.close_tender_submission_period(tender=name, idempotency_key=k("close"), user="Administrator", force=True)
+		step_callback("closed")
+		return {"ok": True, "idempotent": False, "tender": name, "tender_reference": root.tender_reference, "interleaved": interleaved}
+	finally:
+		frappe.flags.kt_tenders_clock = None
+
+
+def receive_portfolio_clarifications(tender: str, rows: list[tuple[str, str, str]], *, key: str) -> list[str]:
+	"""Supplier clarifications on a portfolio Tender, each received from its
+	registered candidate through the bidder-facing service identity at its
+	instant and left unanswered: Brian Wafula's work at the as-at instant.
+	`rows` holds (candidate registration, question, received at)."""
+	from kentender_core.seeds import clock as core_clock
+	from kentender_procurement.tenders.services import clarifications
+
+	ensure_producer_role()
+	out = []
+	try:
+		for index, (candidate, question, received_at) in enumerate(rows, start=1):
+			frappe.flags.kt_tenders_clock = received_at
+			with _as(PRODUCER), core_clock.at(received_at):
+				received = clarifications.receive_tender_clarification(
+					tender=tender, candidate_registration_id=candidate, question=question, received_at=received_at, inbound_event_id=_key(f"{key}:clarification-{index}"),
+				)
+			out.append(received["clarification"])
+	finally:
+		frappe.flags.kt_tenders_clock = None
+	return out
+
+
 def reset_tenders_seed(*, commit: bool = False) -> dict[str, int]:
 	"""Removes the canonical Tender (every child row, then the root). Never
 	touches the Requisitions stage's own rows — this stage owns only what it
@@ -468,11 +648,10 @@ def reset_tenders_seed(*, commit: bool = False) -> dict[str, int]:
 	_guard()
 	frappe.set_user("Administrator")
 	deleted: dict[str, int] = {}
-	plan_item_id = _plan_item_id(COMBINED_ITEM_TITLE)
-	requisition = frappe.db.get_value("Procurement Requisition", {"plan_item_id": plan_item_id}, "name") if plan_item_id else None
-	tender = frappe.db.get_value("Tender", {"requisition": requisition}, "name") if requisition else None
-	if tender:
-		deleted = clear.delete_tenders([tender])
+	# every canonical Tender: the laptops' and the executed portfolio's
+	tenders = clear.canonical_tenders()
+	if tenders:
+		deleted = clear.delete_tenders(tenders)
 	frappe.db.delete("Tender Command Journal", {"idempotency_key": ("like", "tnd-seed:%")})
 	# REQ-CHG-001 v1.11 (handoff v1.4) has no command that releases a consumed
 	# handoff: consumption is final. This stage therefore never touches the

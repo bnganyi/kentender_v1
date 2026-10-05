@@ -33,12 +33,11 @@ import frappe
 from frappe.utils import add_days, cstr, now_datetime, nowdate
 
 from kentender_budget.services.budget_authorization import ensure_budget_governance_roles
-from kentender_core.seeds import clock
+from kentender_core.seeds import calendar, clock
 from kentender_core.seeds._common import ensure_currency_kes
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
 
 FIXTURE_NS = C.FIXTURE_NS
-FY = "2027-2028"
 FUNDING_SOURCE = "Government of Kenya"
 
 # KT-STD-001 §8.3 — resolved via her real assignment (see _unit_for below),
@@ -46,48 +45,98 @@ FUNDING_SOURCE = "Government of Kenya"
 # Unit historically named "Digital Health" (FU-11).
 GRACE = "grace.wanjiku@moh.example.test"
 
-# BUD-CHG-001 v1.11 §15.1 / §15.3.
-BASELINE_CLOCK = {
+# BUD-CHG-001 v1.11 §15.1 / §15.3 — the FY 2027/28 budget (two-year seed
+# world: Year 2, the year being prepared), at its documented instants.
+_YEAR2_CLOCK = {
 	"create": "2026-10-01 09:20:00",
 	"draft": "2026-10-01 15:55:00",
 	"submit": "2026-10-01 16:20:00",
 	"approve": "2026-10-03 11:15:00",
 }
-APPROVAL_DATE = "2026-09-30"
-APPROVAL_REFERENCE = "MOH-FIN-BUD-2027-01 (Demo)"
-APPROVAL_DOCUMENT = "MOH Approved Procurement Budget 2027-28 (Demo).pdf"
-AUTHORISED_TOTAL = 160_000_000
-#: §15.3's two lines by role. Their references are the ones the system
-#: generates (Project Owner decision, 26 Sep 2026 — until then the seed
-#: overwrote them with `MOH-BL-DHI-2027` / `MOH-BL-HWD-2027`), so callers find
-#: a line by its title within the canonical budget (`canonical_budget_line`).
-LINES = {
-	"dhi": {"title": "Digital health infrastructure programme", "owner": "Digital Health", "amount": 100_000_000},
-	"hwd": {"title": "Digital health workforce development", "owner": None, "amount": 60_000_000},
+#: One budget per seeded year (two-year seed world plan D1, D8). Each line's
+#: reference is the one the system generates (Project Owner decision, 26 Sep
+#: 2026 — until then the seed overwrote them with `MOH-BL-DHI-2027` /
+#: `MOH-BL-HWD-2027`), so callers find a line by its title within the year's
+#: budget (`canonical_budget_line`). `owner` None makes a line available to
+#: all departments.
+#:
+#: Year 1 (FY 2026/27, the year being carried out) is the same journey 364
+#: days earlier, and carries the money its executed portfolio draws on: the
+#: two §15.3 lines (the Digital Health line raised to KES 120m) plus a
+#: ministry-wide ICT line and an HRMD office-equipment line, as ANL-CHG-001
+#: v0.8 §10A.2 pictures a department line, an HRMD line and a line available
+#: to all departments (two-year seed world proposal §5.2; new content).
+BUDGETS = {
+	"year1": {
+		"year": calendar.YEAR1,
+		"clock": {step: calendar.YEAR1.at(at) for step, at in _YEAR2_CLOCK.items()},
+		"approval_date": calendar.YEAR1.at("2026-09-30"),
+		"approval_reference": "MOH-FIN-BUD-2026-01 (Demo)",
+		"approval_document": "MOH Approved Procurement Budget 2026-27 (Demo).pdf",
+		"authorised_total": 290_000_000,
+		"lines": {
+			"dhi": {"title": "Digital health infrastructure programme", "owner": "Digital Health", "amount": 120_000_000},
+			"hwd": {"title": "Digital health workforce development", "owner": None, "amount": 60_000_000},
+			"ict": {"title": "Ministry-wide ICT infrastructure", "owner": None, "amount": 80_000_000},
+			"hrmd": {
+				"title": "Office equipment for Human Resources Management and Development",
+				"owner": "Human Resources Management and Development",
+				"amount": 30_000_000,
+			},
+		},
+	},
+	"year2": {
+		"year": calendar.YEAR2,
+		"clock": _YEAR2_CLOCK,
+		"approval_date": "2026-09-30",
+		"approval_reference": "MOH-FIN-BUD-2027-01 (Demo)",
+		"approval_document": "MOH Approved Procurement Budget 2027-28 (Demo).pdf",
+		"authorised_total": 160_000_000,
+		"lines": {
+			"dhi": {"title": "Digital health infrastructure programme", "owner": "Digital Health", "amount": 100_000_000},
+			"hwd": {"title": "Digital health workforce development", "owner": None, "amount": 60_000_000},
+		},
+	},
 }
+#: The executed year's budget (Year 1) under the names callers have always
+#: read: Requisitions reserve against it, and its lines fund the executed plan.
+_EXECUTED = BUDGETS["year1"]
+FY = _EXECUTED["year"].fiscal_year
+BASELINE_CLOCK = _EXECUTED["clock"]
+APPROVAL_DATE = _EXECUTED["approval_date"]
+APPROVAL_REFERENCE = _EXECUTED["approval_reference"]
+APPROVAL_DOCUMENT = _EXECUTED["approval_document"]
+AUTHORISED_TOTAL = _EXECUTED["authorised_total"]
+LINES = _EXECUTED["lines"]
 
 
-def canonical_budget() -> str:
-	"""The FY 2027-2028 budget whose Version 1 carries the §15.3 external
-	approval reference — found by content, not by its generated reference,
-	and whatever that version's status (a Budget browser run may close or
+def canonical_budget(year: str = "year1") -> str:
+	"""The `year`'s budget whose Version 1 carries its external approval
+	reference — found by content, not by its generated reference, and
+	whatever that version's status (a Budget browser run may close or
 	supersede it; `reset` must still recognise the budget, not delete it)."""
+	spec = BUDGETS[year]
 	for budget in frappe.get_all(
-		"Procurement Budget Version", filters={"approval_reference": APPROVAL_REFERENCE, "version_number": 1}, pluck="budget"
+		"Procurement Budget Version", filters={"approval_reference": spec["approval_reference"], "version_number": 1}, pluck="budget"
 	):
-		if frappe.db.get_value("Procurement Budget", budget, "fiscal_year") == FY:
+		if frappe.db.get_value("Procurement Budget", budget, "fiscal_year") == spec["year"].fiscal_year:
 			return budget
 	return ""
 
 
-def canonical_budget_line(key: str) -> str:
-	"""The Procurement Budget Line of `LINES[key]` in the canonical Active
-	version, or ''."""
-	budget = canonical_budget()
+def canonical_budgets() -> list[str]:
+	"""Every seeded year's budget that exists (Year 1 first)."""
+	return [budget for budget in (canonical_budget(year) for year in BUDGETS) if budget]
+
+
+def canonical_budget_line(key: str, year: str = "year1") -> str:
+	"""The Procurement Budget Line of `BUDGETS[year]["lines"][key]` in that
+	year's Active version, or ''."""
+	budget = canonical_budget(year)
 	version = frappe.db.get_value("Procurement Budget Version", {"budget": budget, "status": "Active"}, "name") if budget else None
 	if not version:
 		return ""
-	return cstr(frappe.db.get_value("Procurement Budget Line Version", {"budget_version": version, "title": LINES[key]["title"]}, "budget_line"))
+	return cstr(frappe.db.get_value("Procurement Budget Line Version", {"budget_version": version, "title": BUDGETS[year]["lines"][key]["title"]}, "budget_line"))
 
 
 def _unit_for(user: str, role: str, unit_name: str) -> str:
@@ -181,6 +230,7 @@ def ensure_budget_actor_assignments() -> list[str]:
 
 def _upsert_active_baseline(
 	*,
+	year: str,
 	fy: str,
 	officer: str,
 	approver: str,
@@ -199,11 +249,12 @@ def _upsert_active_baseline(
 	from kentender_budget.services import budget_line_contracts as lines_svc
 	from kentender_budget.services import budget_readiness_contracts as readiness
 
-	existing = canonical_budget()
+	existing = canonical_budget(year)
+	baseline_clock = BUDGETS[year]["clock"]
 	if existing:
 		version = frappe.db.get_value("Procurement Budget Version", {"budget": existing, "status": "Active"}, "name")
 		if not version:
-			frappe.throw("Budget seed: the canonical budget has no Active version (a Budget browser run may have closed it) — run make seed-canonical with REBUILD=True.")
+			frappe.throw(f"Budget seed: the {BUDGETS[year]['year'].label} budget has no Active version (a Budget browser run may have closed it) — run make seed-canonical with REBUILD=True.")
 		return {"budget": existing, "version": version, "created": False}
 	# A rebuilt world numbers from 001/0001 again; a prefix still in use
 	# keeps its counter (budget_reference.reset_unused_series).
@@ -214,7 +265,7 @@ def _upsert_active_baseline(
 	prior_user = frappe.session.user
 	try:
 		_as_user(officer)
-		with clock.at(BASELINE_CLOCK["create"]):
+		with clock.at(baseline_clock["create"]):
 			result = contracts.save_budget_version_draft(
 				{
 					"fiscal_year": fy,
@@ -229,7 +280,7 @@ def _upsert_active_baseline(
 		budget_name = result["budget"]["id"]
 		version_name = result["version"]["id"]
 
-		with clock.at(BASELINE_CLOCK["draft"]):
+		with clock.at(baseline_clock["draft"]):
 			lines_result = lines_svc.save_budget_lines_draft(
 				{
 					"budget_version": version_name,
@@ -257,13 +308,13 @@ def _upsert_active_baseline(
 			for name in names:
 				frappe.db.set_value(doctype, name, "fixture_namespace", FIXTURE_NS, update_modified=False)
 
-		with clock.at(BASELINE_CLOCK["submit"]):
+		with clock.at(baseline_clock["submit"]):
 			submit_result = readiness.submit_budget_version({"budget_version": version_name})
 		if not submit_result.get("ok"):
 			frappe.throw(f"Budget seed: could not submit the canonical budget: {submit_result.get('blockers')}")
 
 		_as_user(approver)
-		with clock.at(BASELINE_CLOCK["approve"]):
+		with clock.at(baseline_clock["approve"]):
 			approve_result = readiness.approve_budget_version({"budget_version": version_name})
 		if not approve_result.get("ok"):
 			frappe.throw(f"Budget seed: could not approve the canonical budget: {approve_result.get('blockers')}")
@@ -295,7 +346,7 @@ def _require_configuration() -> None:
 		frappe.throw(f"Budget seed: missing {', '.join(missing)} — run the site stage first (§15.2) — BUDGET_CONFIG_MISSING")
 
 
-def ensure_approval_document() -> str:
+def ensure_approval_document(year: str = "year1") -> str:
 	"""§15.3 / SEED-001 v1.3 SEED-AC-028 — the approval document exists as
 	real bytes under its exact filename (the screen shows the file name from
 	the address), labelled inside as a fixture, not a real instrument."""
@@ -305,23 +356,28 @@ def ensure_approval_document() -> str:
 
 	public = os.path.join(frappe.utils.get_bench_path(), "sites", frappe.local.site, "public", "files")
 	os.makedirs(public, exist_ok=True)
-	path = os.path.join(public, APPROVAL_DOCUMENT)
+	document = BUDGETS[year]["approval_document"]
+	path = os.path.join(public, document)
 	if not os.path.exists(path):
 		with open(path, "wb") as fh:
 			fh.write(_MINIMAL_PDF)
-	return f"/files/{APPROVAL_DOCUMENT}"
+	return f"/files/{document}"
 
 
-def validate_budget_seed() -> list[dict[str, Any]]:
-	"""One row per BUD-CHG-001 v1.11 §15.1/§15.3 fact. Never mutates."""
+def validate_budget_seed(year: str = "year1") -> list[dict[str, Any]]:
+	"""One row per BUD-CHG-001 v1.11 §15.1/§15.3 fact of `year`'s budget.
+	Never mutates."""
 	import os
 
 	rows: list[dict[str, Any]] = []
+	spec = BUDGETS[year]
+	FY, APPROVAL_REFERENCE, APPROVAL_DATE, AUTHORISED_TOTAL = spec["year"].fiscal_year, spec["approval_reference"], spec["approval_date"], spec["authorised_total"]
+	APPROVAL_DOCUMENT, LINES, BASELINE_CLOCK = spec["approval_document"], spec["lines"], spec["clock"]
 
 	def check(ok: bool, label: str) -> None:
 		rows.append({"ok": bool(ok), "check": label, "detail": "" if ok else "failed"})
 
-	budget_name = canonical_budget()
+	budget_name = canonical_budget(year)
 	check(bool(budget_name), f"the FY {FY} budget approved as {APPROVAL_REFERENCE} exists with an Active version")
 	if not budget_name:
 		return rows
@@ -337,7 +393,7 @@ def validate_budget_seed() -> list[dict[str, Any]]:
 	if not version:
 		return rows
 	# Generated references (Project Owner decision, 26 Sep 2026).
-	check(bool(re.fullmatch(r"[A-Z]+-BUD-2027-\d{3}", budget.generated_reference or "")) and version.generated_reference == f"{budget.generated_reference}-V1", f"generated references {budget.generated_reference} / {version.generated_reference}")
+	check(bool(re.fullmatch(rf"[A-Z]+-BUD-{spec['year'].start_year}-\d{{3}}", budget.generated_reference or "")) and version.generated_reference == f"{budget.generated_reference}-V1", f"generated references {budget.generated_reference} / {version.generated_reference}")
 	check(
 		(version.approval_reference, str(version.approval_date), float(version.authorised_total or 0)) == (APPROVAL_REFERENCE, APPROVAL_DATE, float(AUTHORISED_TOTAL)),
 		f"approved externally as {APPROVAL_REFERENCE} on {APPROVAL_DATE} for KES {AUTHORISED_TOTAL:,}",
@@ -381,7 +437,7 @@ def validate_budget_seed() -> list[dict[str, Any]]:
 	return rows
 
 
-def upsert_kentender_mvp_v1_portfolio(*, include_test_edges: bool = True, commit: bool = True) -> dict[str, Any]:
+def upsert_kentender_mvp_v1_portfolio(*, include_test_edges: bool = True, commit: bool = True, years: tuple[str, ...] = ("year1",)) -> dict[str, Any]:
 	"""Idempotent canonical Budget portfolio seed.
 
 	`include_test_edges=False` (the canonical orchestrator's own call shape,
@@ -406,44 +462,44 @@ def upsert_kentender_mvp_v1_portfolio(*, include_test_edges: bool = True, commit
 	else:
 		_require_configuration()
 
-	if not frappe.db.exists("Fiscal Year", FY):
-		frappe.throw(f"Budget seed: ERPNext Fiscal Year {FY} must already be configured (§15.2) — BUDGET_CONFIG_MISSING")
+	for year in years:
+		fy = BUDGETS[year]["year"].fiscal_year
+		if not frappe.db.exists("Fiscal Year", fy):
+			frappe.throw(f"Budget seed: ERPNext Fiscal Year {fy} must already be configured (§15.2) — BUDGET_CONFIG_MISSING")
 	# FU-11 (SEED-001, 2026-09-05): resolved to Grace's real granted "Digital
 	# Health" unit, not the legacy C.OU_DIR_DHP code — the code named a unit
 	# `list_eligible_budget_lines` never matched against the actor's actual
 	# assignment scope. BUD-CHG-001 v1.11 §15.2: no fallback — an unresolved
 	# unit fails the seed instead of silently making the line Entity-wide.
-	dhi_unit = _unit_for(GRACE, "Departmental Author", "Digital Health")
-	if not dhi_unit:
-		frappe.throw("Budget seed: the Digital Health unit is not resolvable from the site's assignments (§15.2) — BUDGET_CONFIG_MISSING")
+	units = {name: _unit_for(GRACE, "Departmental Author", name) for name in ("Digital Health", "Human Resources Management and Development")}
+	for name, unit in units.items():
+		if not unit:
+			frappe.throw(f"Budget seed: the {name} unit is not resolvable from the site's assignments (§15.2) — BUDGET_CONFIG_MISSING")
 
-	moh = _upsert_active_baseline(
-		fy=FY,
-		officer=C.USER_BUD_OFFICER,
-		approver=C.USER_BUD_APPROVER,
-		approval_reference=APPROVAL_REFERENCE,
-		authorised_total=AUTHORISED_TOTAL,
-		approval_document=ensure_approval_document(),
-		approval_date=APPROVAL_DATE,
-		lines=(
-			{
-				"title": LINES["dhi"]["title"],
-				"owner_org_unit": dhi_unit,
-				"approved_amount": LINES["dhi"]["amount"],
-			},
-			{
-				"title": LINES["hwd"]["title"],
-				# SEED-001 §3.5/§3.6: this line is the shared combining line for
-				# PPI-MOH-2027-033's two source allocations — HRMD's Need-3 entry
-				# and Digital Health's Need-4 entry. Giving it a single
-				# department's owner_org_unit would make it ineligible for the
-				# other department's funding call (BUD-BR-007's own scoping
-				# rule); leaving it unset makes it Entity-wide, eligible for both.
-				"owner_org_unit": "",
-				"approved_amount": LINES["hwd"]["amount"],
-			},
-		),
-	)
+	built: dict[str, Any] = {}
+	for year in years:
+		spec = BUDGETS[year]
+		built[year] = _upsert_active_baseline(
+			year=year,
+			fy=spec["year"].fiscal_year,
+			officer=C.USER_BUD_OFFICER,
+			approver=C.USER_BUD_APPROVER,
+			approval_reference=spec["approval_reference"],
+			authorised_total=spec["authorised_total"],
+			approval_document=ensure_approval_document(year),
+			approval_date=spec["approval_date"],
+			# SEED-001 §3.5/§3.6: the workforce line (`owner` None) is the shared
+			# combining line for the laptop item's two source allocations — HRMD's
+			# entry and Digital Health's. Giving it a single department's
+			# owner_org_unit would make it ineligible for the other department's
+			# funding call (BUD-BR-007's own scoping rule); leaving it unset makes
+			# it Entity-wide, eligible for both.
+			lines=tuple(
+				{"title": line["title"], "owner_org_unit": units[line["owner"]] if line["owner"] else "", "approved_amount": line["amount"]}
+				for line in spec["lines"].values()
+			),
+		)
+	moh = built.get("year1") or next(iter(built.values()), {})
 
 	successor: dict[str, Any] | None = None
 	if include_test_edges:
@@ -456,7 +512,8 @@ def upsert_kentender_mvp_v1_portfolio(*, include_test_edges: bool = True, commit
 		"ok": True,
 		"fixture_namespace": FIXTURE_NS,
 		"fiscal_year": FY,
-		"budgets": [b for b in (moh.get("budget"),) if b],
+		"budgets": [b.get("budget") for b in built.values() if b.get("budget")],
+		"years": built,
 		"codes": [C.BUD_ACTIVE],
 		"moh": moh,
 		"successor": successor,
@@ -479,7 +536,10 @@ def upsert_isolated_successor_version() -> dict[str, Any]:
 	if existing:
 		return {"version": existing, "created": False}
 
-	canonical = canonical_budget()
+	# The isolated successor works on the FY 2027/28 budget (Year 2): its
+	# transfer (DHI 100m -> 90m, HWD 60m -> 70m) is written for that budget's
+	# two lines and KES 160m total.
+	canonical = canonical_budget("year2")
 	active_name = frappe.db.get_value("Procurement Budget Version", {"budget": canonical, "status": "Active"}, "name") if canonical else None
 	if not active_name:
 		frappe.throw("Budget seed: MOH Active baseline (Version 1) must exist before seeding the successor.")
@@ -505,7 +565,7 @@ def upsert_isolated_successor_version() -> dict[str, Any]:
 		_set_event_timestamps(version_name, "Budget version created", _offset_datetime(15, "13:10:00"))
 
 		# The canonical lines by role (their references are generated).
-		by_code = {key: canonical_budget_line(key) for key in LINES}
+		by_code = {key: canonical_budget_line(key, "year2") for key in BUDGETS["year2"]["lines"]}
 		# A previously-Active line is identity-locked (BUD-BR-019): the server
 		# silently holds title/owner_org_unit/funding_source at their prior
 		# values regardless of what's sent, but the payload validation still

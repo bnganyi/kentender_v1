@@ -50,9 +50,59 @@ from typing import Any
 
 import frappe
 
-from kentender_core.seeds import site_setup
+from kentender_core.seeds import calendar, site_setup
 
+#: Two-year seed world (owner, 4 Oct 2026: "Decisions for the owner:
+#: recommendations accepted"; plan D1–D7). The world is read as at
+#: `calendar.AS_AT` and carries two financial years, each moved by its own
+#: control:
+#:
+#: - `current` — Year 1, FY 2026/27, the year being carried out. Its budget,
+#:   Needs, departmental plans and Active, locked Annual Plan are always built
+#:   (`annual_plan`); each later stage adds that step of the executed chain.
+#: - `next_year` — Year 2, FY 2027/28, the year being prepared: nothing done
+#:   (`none`), then its budget, its Needs, its accepted departmental plans,
+#:   and at most its approved, Active Annual Plan.
+#:
+#: The site, its people and the Strategy are shared and always built.
+CURRENT_STAGES: tuple[str, ...] = ("annual_plan", "requisitions", "tenders", "bid_submission", "bid_opening", "bid_evaluation", "award")
+NEXT_STAGES: tuple[str, ...] = ("none", "budget", "needs", "departmental_plans", "annual_plan")
+#: The plain seed's world (plan D6): Home and Analytics need all of it.
+DEFAULT_CURRENT, DEFAULT_NEXT = CURRENT_STAGES[-1], NEXT_STAGES[-1]
+
+#: The single-year ladder `THROUGH` named until 4 Oct 2026, kept one release
+#: as an alias (`resolve_years`).
 STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders", "bid_submission", "bid_opening", "bid_evaluation", "award")
+_THROUGH_TO_NEXT = {"site": "none", "strategy": "none", "budget": "budget", "needs": "needs", "planning": "annual_plan"}
+
+
+def resolve_years(*, current: str | None = None, next_year: str | None = None, through: str | None = None) -> tuple[str, str]:
+	"""The (current, next_year) pair a call asks for. `through` (the retired
+	single-year ladder) maps onto the two: a stage up to `planning` moves only
+	the prepared year (the executed year always has its Active plan); a later
+	stage moves the executed year with the prepared year complete."""
+	if through:
+		if through not in STAGES:
+			frappe.throw(f"Unknown seed stage {through!r}; expected one of {', '.join(STAGES)}")
+		print(f"NOTICE: THROUGH={through} is retired; use CURRENT= and NEXT= (two-year seed world). Mapping it for this release.")
+		if through in _THROUGH_TO_NEXT:
+			current, next_year = current or CURRENT_STAGES[0], next_year or _THROUGH_TO_NEXT[through]
+		else:
+			current, next_year = current or through, next_year or DEFAULT_NEXT
+	current, next_year = current or DEFAULT_CURRENT, next_year or DEFAULT_NEXT
+	if current not in CURRENT_STAGES:
+		frappe.throw(f"Unknown CURRENT={current!r} for {calendar.YEAR1.label}; expected one of {', '.join(CURRENT_STAGES)}")
+	if next_year not in NEXT_STAGES:
+		frappe.throw(f"Unknown NEXT={next_year!r} for {calendar.YEAR2.label} (it never goes past an approved Annual Plan); expected one of {', '.join(NEXT_STAGES)}")
+	return current, next_year
+
+
+def _reaches(stage: str, *, current: str) -> bool:
+	return CURRENT_STAGES.index(current) >= CURRENT_STAGES.index(stage)
+
+
+def _next_reaches(stage: str, *, next_year: str) -> bool:
+	return NEXT_STAGES.index(next_year) >= NEXT_STAGES.index(stage)
 
 # Namespaces whose rows are canonical and survive `reset`.
 STRATEGY_NS = "str-chg-001-mvp1"
@@ -63,6 +113,7 @@ REQUISITIONS_NS = "KENTENDER_MVP_1_R1_REQ"  # not stamped on Requisitions' own r
 TENDERS_NS = "KENTENDER_MVP_1_R1_TND"
 BID_OPENING_NS = "KENTENDER_MVP_1_R1_BOP"  # BOP-CHG-001 v0.10 plan D14
 BID_EVALUATION_NS = "KENTENDER_MVP_1_R1_EVL"  # EVL-CHG-001 v0.4 plan D18
+BIDS_NS = "KENTENDER_MVP_1_R1_BDS"  # BDS-CHG-001 v0.8 plan D19: the canonical bids and supplier accounts
 CANONICAL_NAMESPACES = frozenset(
 	{site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS, TENDERS_NS, BID_OPENING_NS, BID_EVALUATION_NS}
 )
@@ -229,6 +280,14 @@ def _orphaned_child_rows() -> dict[str, list[str]]:
 	return out
 
 
+#: Planning's projections onto Needs, written unstamped (see below). The usage
+#: projection is ordered on its event time, so one a rebuild's reset left at
+#: the real clock outranks the rebuilt plan's activation under the frozen
+#: fixture clock (found 5 Oct 2026: the rebuilt FY 2026/27 Needs read Not
+#: included); it goes with its Need like the others.
+_NEED_PROJECTIONS = ("Need Planning Disposition Projection", "Need Planning Intake Projection", "Need Planning Usage Projection")
+
+
 def _projections_without_a_need(doctype: str = "Need Planning Disposition Projection") -> list[str]:
 	"""Planning's projection rows for Needs that no longer exist (found
 	26 Sep 2026: 11 disposition rows on the dev site; Planning writes them
@@ -289,11 +348,10 @@ def collect_non_canonical() -> dict[str, list[str]]:
 	# version that is not Active, and any reservation — §15.4A's reservation
 	# exists only once a Procurement Requisition module creates it.
 	if frappe.db.exists("DocType", "Procurement Budget"):
-		from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budget
+		from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budgets
 
-		kept = canonical_budget()
-		add("Procurement Budget", [name for name in frappe.get_all("Procurement Budget", pluck="name") if name != kept])
-		canonical = [kept] if kept else []
+		canonical = canonical_budgets()
+		add("Procurement Budget", [name for name in frappe.get_all("Procurement Budget", pluck="name") if name not in canonical])
 		if canonical:
 			add(
 				"Procurement Budget Version",
@@ -403,8 +461,8 @@ def collect_non_canonical() -> dict[str, list[str]]:
 	for child, names in _orphaned_child_rows().items():
 		add(child, names)
 	add("File", _orphaned_attachments())
-	add("Need Planning Disposition Projection", _projections_without_a_need())
-	add("Need Planning Intake Projection", _projections_without_a_need("Need Planning Intake Projection"))
+	for projection in _NEED_PROJECTIONS:
+		add(projection, _projections_without_a_need(projection))
 	return plan
 
 
@@ -608,7 +666,7 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 			frappe.db.delete(child, {"name": ("in", names[start : start + 500])})
 		deleted[child] = deleted.get(child, 0) + len(names)
 	_delete_docs("File", _orphaned_attachments(), deleted)
-	for projection in ("Need Planning Disposition Projection", "Need Planning Intake Projection"):
+	for projection in _NEED_PROJECTIONS:
 		orphans = _projections_without_a_need(projection)
 		if orphans:
 			frappe.db.delete(projection, {"name": ("in", orphans)})
@@ -629,9 +687,30 @@ def clear_canonical_modules() -> dict[str, Any]:
 	# the real command, then does the same delete — the safe rebuild path.
 	from kentender_procurement.procurement_requisitions.seeds.clear import clear_requisition_fixture_rows
 	from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import reset_requisitions_seed
+	from kentender_procurement.tenders.seeds.clear import canonical_tenders
 	from kentender_procurement.tenders.seeds.kentender_mvp_v1 import reset_tenders_seed
 
+	# The canonical Tenders' downstream records first (the laptops' and the
+	# executed portfolio's bids, openings, evaluations and awards): deleting a
+	# Tender leaves them to their own modules' clears.
+	tenders = canonical_tenders()
+	if tenders:
+		from kentender_procurement.award.seeds import clear as award_clear
+		from kentender_procurement.bid_evaluation.seeds import clear as evaluation_clear
+		from kentender_procurement.bid_opening.seeds import clear as opening_clear
+		from kentender_procurement.bid_submission.seeds import clear as bids_clear
+
+		out["award"] = award_clear.wipe(tenders=tenders)
+		out["bid_evaluation"] = evaluation_clear.wipe(tenders=tenders, namespace=BID_EVALUATION_NS)
+		out["bid_opening"] = opening_clear.wipe(tenders=tenders, namespace=BID_OPENING_NS)
+		out["bid_submission"] = bids_clear.wipe(tenders=tenders, namespace=BIDS_NS)
 	out["tenders"] = reset_tenders_seed(commit=False)
+	# The canonical supplier accounts go too, so a rebuild recreates them at
+	# their seed's own instants (found 5 Oct 2026: accounts seeded with the
+	# earlier May–June dates refused the executed portfolio's April bids).
+	removal = frappe.get_hooks("kt_seed_supplier_account_removal") or []
+	if removal:
+		out["supplier_accounts"] = frappe.get_attr(removal[-1])(namespace=BIDS_NS)
 	# Tenders is already cleared, so a handoff it consumed has no Tender left;
 	# Planning and Budget are cleared below in this same transaction.
 	out["requisitions"] = reset_requisitions_seed(commit=False, cross_module_rebuild=True)
@@ -680,7 +759,7 @@ def _stage_index(through: str) -> int:
 	return STAGES.index(through)
 
 
-def prepare_site(*, through: str, open_tender: bool = False) -> dict[str, Any]:
+def prepare_site(*, current: str = DEFAULT_CURRENT, open_tender: bool = False, through: str | None = None) -> dict[str, Any]:
 	"""What the stages need from the site itself, so one allowed run is enough
 	on a new demo or test site (found 4 Oct 2026: a new server failed one
 	missing piece at a time). From `requisitions`: this repository's
@@ -689,9 +768,10 @@ def prepare_site(*, through: str, open_tender: bool = False) -> dict[str, Any]:
 	delivery services (site_config `kt_bds_simulation_environment`), switched
 	on with a notice — the canonical bids exist only on a demo or test site.
 	The same for a Tender left open (`open_tender`), which is there to be bid on."""
-	last = _stage_index(through)
+	if through:
+		current, _next = resolve_years(through=through)
 	out: dict[str, Any] = {"template_release": None, "simulation_switched_on": False}
-	if last >= STAGES.index("requisitions"):
+	if _reaches("requisitions", current=current):
 		from kentender_procurement.procurement_requisitions.services.compatibility import template_problem
 		from kentender_procurement.std_templates.compiler.errors import STDTemplateError
 		from kentender_procurement.std_templates.services import binding, installer
@@ -706,7 +786,7 @@ def prepare_site(*, through: str, open_tender: bool = False) -> dict[str, Any]:
 				"The seed needs it from the requisitions stage on; fix this and run the seed again.")
 	from frappe.utils import cint
 
-	if (last >= STAGES.index("bid_submission") or open_tender) and not cint(frappe.conf.get("kt_bds_simulation_environment")):
+	if (_reaches("bid_submission", current=current) or open_tender) and not cint(frappe.conf.get("kt_bds_simulation_environment")):
 		from frappe.installer import update_site_config
 
 		update_site_config("kt_bds_simulation_environment", 1)
@@ -721,46 +801,51 @@ def prepare_site(*, through: str, open_tender: bool = False) -> dict[str, Any]:
 OPEN_TENDER_STAGES = ("tenders", "bid_submission")
 
 
-def _check_open_tender(through: str, open_tender: bool) -> None:
-	if open_tender and through not in OPEN_TENDER_STAGES:
+def _check_open_tender(current: str, open_tender: bool) -> None:
+	if open_tender and current not in OPEN_TENDER_STAGES:
 		frappe.throw(
-			f"OPEN=True leaves the canonical Tender open for bids, before its deadline, so it goes only with THROUGH=tenders "
-			f"or THROUGH=bid_submission (asked for THROUGH={through}): the later stages need the Tender closed."
+			f"OPEN=True leaves the canonical Tender open for bids, before its deadline, so it goes only with CURRENT=tenders "
+			f"or CURRENT=bid_submission (asked for CURRENT={current}): the later stages need the Tender closed."
 		)
 
 
-def seed(*, through: str = STAGES[-1], open_tender: bool = False) -> dict[str, Any]:
-	"""Reseed the canonical world up to and including `through`. No commit.
-	`open_tender` (owner, 4 Oct 2026: a Tender anyone can see on /tenders and
-	bid on) stops the Tender's story before its 12 Jun 2027 deadline."""
-	last = _stage_index(through)
-	_check_open_tender(through, open_tender)
-	report: dict[str, Any] = {"site": site_setup.run(commit=False)}
-	report["site"]["prepared"] = prepare_site(through=through, open_tender=open_tender)
-	# Independent of `through`: the fixture world's Procurement Rules must
-	# be usable whichever stage the caller stops at, not only once the
-	# Planning stage's own seed happens to run (see
-	# `stamp_procurement_rules_fixture_verified`'s docstring).
+def seed(*, current: str | None = None, next_year: str | None = None, open_tender: bool = False, through: str | None = None) -> dict[str, Any]:
+	"""Reseed the canonical world: the executed year through `current`, the
+	prepared year through `next_year`. No commit. `open_tender` (owner,
+	4 Oct 2026: a Tender anyone can see on /tenders and bid on) stops the
+	canonical Tender's story before its 12 Jun 2027 deadline. The site test
+	clock is left at the as-at instant (a test site only)."""
+	current, next_year = resolve_years(current=current, next_year=next_year, through=through)
+	_check_open_tender(current, open_tender)
+	ahead = world_ahead(current=current, next_year=next_year)
+	if ahead:
+		frappe.throw(f"The site holds more than CURRENT={current} NEXT={next_year} asks for: {'; '.join(ahead)}.", exc=CanonicalWorldNeedsRebuild)
+	report: dict[str, Any] = {"current": current, "next_year": next_year, "site": site_setup.run(commit=False)}
+	report["site"]["prepared"] = prepare_site(current=current, open_tender=open_tender)
+	# Independent of the stages: the fixture world's Procurement Rules must be
+	# usable whatever is seeded, not only once the Planning stage's own seed
+	# happens to run (see `stamp_procurement_rules_fixture_verified`'s docstring).
 	report["site"]["rules_stamped_fixture_verified"] = site_setup.stamp_procurement_rules_fixture_verified()
-	if last >= STAGES.index("strategy"):
-		from kentender_strategy.seeds.kentender_mvp_v1_strategy import upsert_kentender_mvp_v1_strategy
+	from kentender_strategy.seeds.kentender_mvp_v1_strategy import upsert_kentender_mvp_v1_strategy
 
-		report["strategy"] = upsert_kentender_mvp_v1_strategy()
-	if last >= STAGES.index("budget"):
-		from kentender_budget.seeds.kentender_mvp_v1_portfolio import upsert_kentender_mvp_v1_portfolio
+	report["strategy"] = upsert_kentender_mvp_v1_strategy()
+	from kentender_budget.seeds.kentender_mvp_v1_portfolio import upsert_kentender_mvp_v1_portfolio
 
-		# The §15.3 Active baseline only — §15.5/§15.6 profiles are created and
-		# removed by the tests that need them (§15.7).
-		report["budget"] = upsert_kentender_mvp_v1_portfolio(include_test_edges=False, commit=False)
-	if last >= STAGES.index("needs"):
-		from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import upsert_departmental_needs
+	# The §15.3 Active baselines only — §15.5/§15.6 profiles are created and
+	# removed by the tests that need them (§15.7).
+	budget_years = ("year1", "year2") if _next_reaches("budget", next_year=next_year) else ("year1",)
+	report["budget"] = upsert_kentender_mvp_v1_portfolio(include_test_edges=False, commit=False, years=budget_years)
+	from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import upsert_departmental_needs
 
-		report["needs"] = upsert_departmental_needs(commit=False)
-	if last >= STAGES.index("planning"):
-		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import upsert_planning_base
+	needs_years = ("year1", "year2") if _next_reaches("needs", next_year=next_year) else ("year1",)
+	report["needs"] = upsert_departmental_needs(commit=False, years=needs_years)
+	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import upsert_planning_base
 
-		report["planning"] = upsert_planning_base(commit=False)
-	if last >= STAGES.index("requisitions"):
+	planning_years = {"year1": "annual_plan"}
+	if _next_reaches("departmental_plans", next_year=next_year):
+		planning_years["year2"] = next_year
+	report["planning"] = upsert_planning_base(commit=False, years=planning_years)
+	if _reaches("requisitions", current=current):
 		from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import upsert_requisitions_base
 
 		report["requisitions"] = upsert_requisitions_base(commit=False)
@@ -772,20 +857,12 @@ def seed(*, through: str = STAGES[-1], open_tender: bool = False) -> dict[str, A
 		# KT-STD-001 cross-app rule). Runs on every seed, not just a fresh
 		# build, so a reservation opened before this stamping existed is
 		# healed on the next canonical seed too.
-		root_name = report["requisitions"].get("requisition")
-		if root_name:
-			reference = frappe.db.get_value("Procurement Requisition", root_name, "requisition_reference")
-			for reservation in frappe.get_all(
-				"Funding Reservation",
-				filters={"calling_module": "Procurement Requisitions", "caller_reference": reference, "status": "Active"},
-				pluck="name",
-			):
-				frappe.db.set_value("Funding Reservation", reservation, "fixture_namespace", REQUISITIONS_NS, update_modified=False)
-	if last >= STAGES.index("tenders") and last < STAGES.index("bid_submission"):
+		stamp_requisition_reservations()
+	if _reaches("tenders", current=current) and not _reaches("bid_submission", current=current):
 		from kentender_procurement.tenders.seeds.kentender_mvp_v1 import upsert_tenders_base
 
 		report["tenders"] = upsert_tenders_base(commit=False, stop_before_close=open_tender)
-	if last >= STAGES.index("bid_submission"):
+	if _reaches("bid_submission", current=current):
 		# BDS-CHG-001 v0.8 plan D19: the canonical Tender's chronology with the
 		# bid's own lifecycle interleaved (Start bid 19 May … Mary's accepted
 		# submission 10 Jun … the close and Bid Opening hand-off 12 Jun). It
@@ -795,25 +872,102 @@ def seed(*, through: str = STAGES[-1], open_tender: bool = False) -> dict[str, A
 
 		report["bid_submission"] = upsert_bid_submission_base(commit=False, open_tender=open_tender)
 		report["tenders"] = {"ok": True, "via": "bid_submission", "tender": report["bid_submission"].get("tender")}
-	if last >= STAGES.index("bid_opening"):
+	if _reaches("bid_opening", current=current):
 		# BOP-CHG-001 v0.10 plan D14: the canonical Tender's opening, after the
 		# bid_submission stage closed its box at 11:00.
 		from kentender_procurement.bid_opening.seeds.kentender_mvp_v1 import upsert_bid_opening_base
 
 		report["bid_opening"] = upsert_bid_opening_base(commit=False)
-	if last >= STAGES.index("bid_evaluation"):
+	if _reaches("bid_evaluation", current=current):
 		# EVL-CHG-001 v0.4 plan D18: the canonical Tender's evaluation (§11.1),
 		# from appointment on 11 Jun to the report sent on 16 Jun.
 		from kentender_procurement.bid_evaluation.seeds.kentender_mvp_v1 import upsert_bid_evaluation_base
 
 		report["bid_evaluation"] = upsert_bid_evaluation_base(commit=False)
-	if last >= STAGES.index("award"):
+	if _reaches("award", current=current):
 		# AWD-CHG-001 v0.4 §13: the canonical award, from the report received on
-		# 16 Jun to the package Contracting received on 2 Jul.
+		# 16 Jun to Mary Wanjiku's acceptance on 18 Jun (the waiting period runs
+		# at the as-at instant).
 		from kentender_procurement.award.seeds.kentender_mvp_v1 import upsert_award_base
 
 		report["award"] = upsert_award_base(commit=False)
+	# The executed year's portfolio beside the laptops (two-year seed world
+	# proposal §5), each record as far as CURRENT lets it go.
+	from kentender_core.seeds import portfolio
+
+	report["portfolio"] = portfolio.seed_portfolio(current=current)
+	if _reaches("requisitions", current=current):
+		stamp_requisition_reservations()
+	report["test_clock"] = set_as_at()
 	return report
+
+
+class CanonicalWorldNeedsRebuild(frappe.ValidationError):
+	"""The site holds more of a year than this run asks for (a lower CURRENT
+	or NEXT than the last run's). Canonical rows are kept by `reset`, so
+	`run` rebuilds the canonical module rows once."""
+
+
+def world_ahead(*, current: str, next_year: str) -> list[str]:
+	"""What the site already holds beyond the requested stages."""
+	y2 = calendar.YEAR2.fiscal_year
+	ahead: list[str] = []
+
+	def has(doctype: str, filters: dict | None = None) -> bool:
+		return bool(frappe.db.exists("DocType", doctype)) and bool(frappe.db.exists(doctype, filters or {}))
+
+	if not _next_reaches("budget", next_year=next_year) and has("Procurement Budget", {"fiscal_year": y2}):
+		ahead.append(f"a {calendar.YEAR2.label} budget")
+	if not _next_reaches("needs", next_year=next_year) and has("Departmental Need", {"financial_year": y2}):
+		ahead.append(f"{calendar.YEAR2.label} Needs")
+	if not _next_reaches("departmental_plans", next_year=next_year) and has("Departmental Plan", {"fiscal_year": y2, "current_state": ("!=", "Draft")}):
+		ahead.append(f"{calendar.YEAR2.label} departmental plans past Draft")
+	if not _next_reaches("annual_plan", next_year=next_year) and has("Annual Plan", {"fiscal_year": y2, "active_version": ("is", "set")}):
+		ahead.append(f"an Active {calendar.YEAR2.label} Annual Plan")
+	if not _reaches("requisitions", current=current) and has("Procurement Requisition"):
+		ahead.append(f"Requisitions (CURRENT={current} stops before requisitions)")
+	tenders = frappe.get_all("Tender", pluck="name") if frappe.db.exists("DocType", "Tender") else []
+	if not _reaches("tenders", current=current) and tenders:
+		ahead.append(f"Tenders (CURRENT={current} stops before tenders)")
+	# Only rows of a Tender that still exists: a rebuild deletes the Tenders and
+	# leaves its downstream modules' rows to their own clears.
+	# A Draft bid is the Tenders stage's own (its candidate registers through
+	# Start bid); a submitted one is the bid_submission stage's.
+	# Likewise Award takes a delivered evaluation report up by itself: a case
+	# still at Opinion is the evaluation stage's consequence.
+	for stage, doctype, extra in (
+		("bid_submission", "Bid Workspace", {"status": "Submitted"}), ("bid_opening", "Bid Opening Case", {}), ("bid_evaluation", "Evaluation Case", {}),
+		("award", "Award Case", {"stage": ("!=", "Opinion")}),
+	):
+		if not _reaches(stage, current=current) and tenders and has(doctype, {"tender": ("in", tenders), **extra}):
+			ahead.append(f"{doctype} rows (CURRENT={current} stops before {stage})")
+	return ahead
+
+
+def stamp_requisition_reservations() -> int:
+	"""Stamp every Active reservation a seeded Requisition opened with
+	REQUISITIONS_NS (see `seed`)."""
+	from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import seeded_requisition_references
+
+	stamped = 0
+	for reference in seeded_requisition_references():
+		for reservation in frappe.get_all(
+			"Funding Reservation",
+			filters={"calling_module": "Procurement Requisitions", "caller_reference": reference, "status": "Active"},
+			pluck="name",
+		):
+			frappe.db.set_value("Funding Reservation", reservation, "fixture_namespace", REQUISITIONS_NS, update_modified=False)
+			stamped += 1
+	return stamped
+
+
+def set_as_at() -> bool:
+	"""Put a test site's live pages on the as-at instant (two-year seed world
+	plan D1). False on a site that is not a test environment: it reads the
+	real clock."""
+	from kentender_core.services import test_clock
+
+	return test_clock.set_instant(calendar.AS_AT)
 
 
 # --------------------------------------------------------------------------
@@ -821,12 +975,12 @@ def seed(*, through: str = STAGES[-1], open_tender: bool = False) -> dict[str, A
 # --------------------------------------------------------------------------
 
 
-def validate(*, through: str = STAGES[-1], open_tender: bool = False) -> dict[str, Any]:
-	"""Assert the canonical facts for every stage up to `through`; raise on
-	the first stage that fails, listing every failed check. `open_tender`:
-	the world was seeded with the Tender left open (see `seed`)."""
-	last = _stage_index(through)
-	_check_open_tender(through, open_tender)
+def validate(*, current: str | None = None, next_year: str | None = None, open_tender: bool = False, through: str | None = None) -> dict[str, Any]:
+	"""Assert the canonical facts of both years as far as `current` and
+	`next_year` reach; raise listing every failed check. `open_tender`: the
+	world was seeded with the canonical Tender left open (see `seed`)."""
+	current, next_year = resolve_years(current=current, next_year=next_year, through=through)
+	_check_open_tender(current, open_tender)
 	failures: list[str] = []
 
 	def check(ok: bool, message: str) -> None:
@@ -906,100 +1060,102 @@ def validate(*, through: str = STAGES[-1], open_tender: bool = False) -> dict[st
 		]
 		check(bool(holders), f"{role} in force today for {unit_name}")
 
-	if last >= STAGES.index("strategy"):
-		from kentender_strategy.seeds.kentender_mvp_v1_strategy import validate_strategy_seed
+	from kentender_strategy.seeds.kentender_mvp_v1_strategy import validate_strategy_seed
 
-		for row in validate_strategy_seed():
-			check(row["ok"], f"strategy: {row['check']}")
+	for row in validate_strategy_seed():
+		check(row["ok"], f"strategy: {row['check']}")
 
-	if last >= STAGES.index("budget"):
-		from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budget
+	from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budget, validate_budget_seed
 
-		budgets = frappe.get_all("Procurement Budget", fields=["name", "generated_reference"])
-		check([b.name for b in budgets] == [canonical_budget()], f"the canonical budget is the only one, found {[b.generated_reference for b in budgets]}")
-		if budgets:
-			# The version, lines, references and history are the module's
-			# own checks (`validate_budget_seed`, below).
-			# §15.4: reservation begins at Requisition. REQ-CHG-001 v1.6 is the
-			# first live caller and is not yet a canonical stage, so a reservation
-			# stamped REQUISITIONS_NS is expected canonical evidence, not a stray;
-			# anything else is a defect (a caller reserving outside that namespace).
-			stray_reservations = [
-				r.name
-				for r in frappe.get_all("Funding Reservation", fields=["name", "fixture_namespace"])
-				if (r.fixture_namespace or "") != REQUISITIONS_NS
-			]
-			check(not stray_reservations, f"no Funding Reservation outside {REQUISITIONS_NS!r}, found {stray_reservations}")
-			stray_commitments = [
-				r.name
-				for r in frappe.get_all("Procurement Commitment", fields=["name", "fixture_namespace"])
-				if (r.fixture_namespace or "") != REQUISITIONS_NS
-			]
-			check(not stray_commitments, f"no Procurement Commitment outside {REQUISITIONS_NS!r}, found {stray_commitments}")
-		from kentender_budget.seeds.kentender_mvp_v1_portfolio import validate_budget_seed
+	budget_years = ("year1", "year2") if _next_reaches("budget", next_year=next_year) else ("year1",)
+	budgets = frappe.get_all("Procurement Budget", fields=["name", "generated_reference"])
+	expected_budgets = sorted(b for b in (canonical_budget(year) for year in budget_years) if b)
+	check(sorted(b.name for b in budgets) == expected_budgets and len(expected_budgets) == len(budget_years),
+		f"the canonical budgets ({', '.join(calendar.year(y).label for y in budget_years)}) are the only ones, found {[b.generated_reference for b in budgets]}")
+	# §15.4: reservation begins at Requisition. A reservation stamped
+	# REQUISITIONS_NS is canonical evidence of an authorised Requisition, not
+	# a stray; anything else is a defect (a caller reserving outside that namespace).
+	stray_reservations = [r.name for r in frappe.get_all("Funding Reservation", fields=["name", "fixture_namespace"]) if (r.fixture_namespace or "") != REQUISITIONS_NS]
+	check(not stray_reservations, f"no Funding Reservation outside {REQUISITIONS_NS!r}, found {stray_reservations}")
+	stray_commitments = [r.name for r in frappe.get_all("Procurement Commitment", fields=["name", "fixture_namespace"]) if (r.fixture_namespace or "") != REQUISITIONS_NS]
+	check(not stray_commitments, f"no Procurement Commitment outside {REQUISITIONS_NS!r}, found {stray_commitments}")
+	for year in budget_years:
+		for row in validate_budget_seed(year):
+			check(row["ok"], f"budget {calendar.year(year).label}: {row['check']}")
 
-		for row in validate_budget_seed():
-			check(row["ok"], f"budget: {row['check']}")
+	from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import validate_needs_seed
 
-	if last >= STAGES.index("needs"):
-		from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import validate_needs_seed
+	for year in ("year1", "year2") if _next_reaches("needs", next_year=next_year) else ("year1",):
+		for row in validate_needs_seed(year):
+			check(row["ok"], f"needs {calendar.year(year).label}: {row['check']}")
+	if not _next_reaches("needs", next_year=next_year):
+		stray = frappe.get_all("Departmental Need", filters={"financial_year": calendar.YEAR2.fiscal_year}, pluck="name")
+		check(not stray, f"no {calendar.YEAR2.label} Needs at NEXT={next_year}, found {stray}")
 
-		for row in validate_needs_seed():
-			check(row["ok"], f"needs: {row['check']}")
+	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import validate_planning_history, validate_planning_seed, year_plan
 
-	if last >= STAGES.index("planning"):
-		plan_row = frappe.db.get_value("Annual Plan", {"fiscal_year": "2027-2028"}, ["name", "active_version"], as_dict=True)
-		check(bool(plan_row and plan_row.active_version), f"canonical FY 2027-2028 Annual Plan Active, found {plan_row}")
-		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import validate_planning_history
-
-		for row in validate_planning_history():
+	for row in validate_planning_history("year1"):
+		check(row["ok"], f"{row['check']}: {row['detail']}")
+	if _next_reaches("departmental_plans", next_year=next_year):
+		for row in validate_planning_history("year2", through=next_year):
 			check(row["ok"], f"{row['check']}: {row['detail']}")
-		if through == "planning":
-			# Only when Planning is the last stage seeded. Once Requisitions'
-			# combined item is later consumed through a real Tenders
-			# build, the Tenders seed legitimately writes a real
-			# `actual_invitation_date` onto this same Plan Item (FU-16,
-			# `record_tender_milestone_actual`) — `validate_planning_seed()`
-			# was written for Planning seeded alone and would misread that
-			# real downstream progress as drift.
-			from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import validate_planning_seed
+	else:
+		# Accepting a Need starts its department's Draft plan by itself, so
+		# Draft plans are expected at NEXT=needs; nothing further.
+		further = frappe.get_all("Departmental Plan", filters={"fiscal_year": calendar.YEAR2.fiscal_year, "current_state": ("!=", "Draft")}, pluck="name")
+		check(not year_plan("year2") and not further, f"no {calendar.YEAR2.label} departmental plan past Draft and no Annual Plan at NEXT={next_year}")
+	if current == "annual_plan":
+		# Only while nothing downstream has drawn on the executed plan: a
+		# Requisition legitimately draws its items down and a Tender records
+		# an actual invitation date on them (FU-16).
+		for row in validate_planning_seed():
+			check(row["ok"], f"{row['check']}: {row['detail']}")
 
-			for row in validate_planning_seed():
-				check(row["ok"], f"{row['check']}: {row['detail']}")
-
-	if last >= STAGES.index("requisitions"):
+	if _reaches("requisitions", current=current):
 		from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import validate_requisitions_seed
 
 		for row in validate_requisitions_seed():
 			check(row["ok"], f"{row['check']}: {row['detail']}")
 
-	if last >= STAGES.index("tenders"):
+	if _reaches("tenders", current=current):
 		from kentender_procurement.tenders.seeds.kentender_mvp_v1 import validate_tenders_seed
 
 		for row in validate_tenders_seed(open_tender=open_tender):
 			check(row["ok"], f"{row['check']}: {row['detail']}")
-	if last >= STAGES.index("bid_submission"):
+	if _reaches("bid_submission", current=current):
 		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import validate_bid_submission_seed
 
 		for row in validate_bid_submission_seed(open_tender=open_tender):
 			check(row["ok"], row["check"])
-	if last >= STAGES.index("bid_opening"):
+	if _reaches("bid_opening", current=current):
 		from kentender_procurement.bid_opening.seeds.kentender_mvp_v1 import validate_bid_opening_seed
 
 		for row in validate_bid_opening_seed():
 			check(row["ok"], row["check"])
-	if last >= STAGES.index("bid_evaluation"):
+	if _reaches("bid_evaluation", current=current):
 		from kentender_procurement.bid_evaluation.seeds.kentender_mvp_v1 import validate_bid_evaluation_seed
 
 		for row in validate_bid_evaluation_seed():
 			check(row["ok"], row["check"])
-	if last >= STAGES.index("award"):
+	if _reaches("award", current=current):
 		from kentender_procurement.award.seeds.kentender_mvp_v1 import validate_award_seed
 
 		for row in validate_award_seed():
 			check(row["ok"], row["check"])
+	from kentender_core.seeds import portfolio
 
-	report = {"ok": not failures, "through": through, "failures": failures}
+	for row in portfolio.validate_portfolio(current=current):
+		check(row["ok"], row["check"])
+
+	from frappe.utils import cint
+
+	from kentender_core.services import test_clock
+
+	if cint(frappe.conf.get("kt_bds_simulation_environment")):
+		# a test environment runs its live pages on the as-at instant (plan D1)
+		check(str(test_clock.current_instant() or "")[:19] == calendar.AS_AT, f"the site test clock is at {calendar.AS_AT} (found {test_clock.current_instant()!r})")
+
+	report = {"ok": not failures, "current": current, "next_year": next_year, "failures": failures}
 	if failures:
 		frappe.throw("Canonical seed validation failed:\n- " + "\n- ".join(failures))
 	return report
@@ -1029,7 +1185,9 @@ def dry_run() -> dict[str, Any]:
 
 def run(
 	*,
-	through: str = STAGES[-1],
+	current: str | None = None,
+	next_year: str | None = None,
+	through: str | None = None,
 	reset: bool = True,
 	rebuild: bool = False,
 	wipe: bool = False,
@@ -1043,7 +1201,9 @@ def run(
 	module rows too (``rebuild``), optionally the site stage itself
 	(``wipe`` — the Procuring Entity, Organisation Units, Fiscal Years and
 	the §8.3 actors ``rebuild`` alone never touches, since every other
-	stage's canonical rows reference them), reseed up to ``through`` and
+	stage's canonical rows reference them), reseed the executed year through
+	``current`` and the prepared year through ``next_year`` (``through``, the
+	retired single-year ladder, maps onto them for one release) and
 	validate. One transaction: any failure rolls the whole run back.
 
 	``wipe`` implies ``rebuild``: the site stage is the foundation every
@@ -1064,11 +1224,11 @@ def run(
 		reseed = not wipe
 	frappe.only_for(("System Manager", "Administrator"))
 	_assert_allowed(force)
-	_stage_index(through)
+	current, next_year = resolve_years(current=current, next_year=next_year, through=through)
 	if reseed is not False:
-		_check_open_tender(through, open_tender)
+		_check_open_tender(current, open_tender)
 	frappe.set_user("Administrator")
-	result: dict[str, Any] = {"ok": True, "through": through if reseed else None, "reseed": reseed}
+	result: dict[str, Any] = {"ok": True, "current": current if reseed else None, "next_year": next_year if reseed else None, "reseed": reseed}
 	# One permission for the whole run. The needs/planning/requisitions/
 	# tenders module seeds each carry their own developer_mode/allow_tests
 	# guard; all of them accept `frappe.flags.in_test`, so an allowed run
@@ -1127,13 +1287,13 @@ def run(
 		if reset:
 			result["removed"] = clear_non_canonical()
 		if reseed:
-			result["seeded"] = seed(through=through, open_tender=open_tender)
+			result["seeded"] = seed(current=current, next_year=next_year, open_tender=open_tender)
 			if validate:
-				result["validate"] = globals()["validate"](through=through, open_tender=open_tender)
+				result["validate"] = globals()["validate"](current=current, next_year=next_year, open_tender=open_tender)
 		if commit:
 			frappe.db.commit()
 		print(
-			"CANONICAL_SEED_OK through=%s removed=%s" % (result["through"], result.get("removed") or {}),
+			"CANONICAL_SEED_OK current=%s next=%s removed=%s" % (result["current"], result["next_year"], result.get("removed") or {}),
 		)
 		return result
 	except Exception as exc:
@@ -1150,15 +1310,17 @@ def run(
 	# bids (`open_tender`) cannot be closed into the canonical story, nor a
 	# closed one reopened. Rebuild, once.
 	print(
-		"NOTICE: the canonical Tender is not in the shape this run builds on (left open for bids, closed, "
-		"or half-built by an earlier failed run); rebuilding the canonical module records."
+		"NOTICE: the canonical world is not in the shape this run builds on (more of a year than CURRENT/NEXT ask for, "
+		"a Tender left open for bids or closed, or half-built by an earlier failed run); rebuilding the canonical module records."
 	)
-	out = run(through=through, reset=reset, rebuild=True, wipe=False, reseed=reseed, validate=validate, force=force, commit=commit, open_tender=open_tender)
+	out = run(current=current, next_year=next_year, reset=reset, rebuild=True, wipe=False, reseed=reseed, validate=validate, force=force, commit=commit, open_tender=open_tender)
 	out["rebuilt_after_partial_world"] = True
 	return out
 
 
 def _tender_needs_rebuild(exc: Exception) -> bool:
+	if isinstance(exc, CanonicalWorldNeedsRebuild):
+		return True
 	try:
 		from kentender_procurement.tenders.seeds.kentender_mvp_v1 import CanonicalTenderNeedsRebuild
 	except ImportError:

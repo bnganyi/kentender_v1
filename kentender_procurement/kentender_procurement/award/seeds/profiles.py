@@ -40,9 +40,11 @@ def load_profile(*, profile: str) -> dict[str, Any]:
 
 
 def restore_base() -> dict[str, Any]:
+	from kentender_core.seeds.calendar import AS_AT
 	from kentender_core.services.test_clock import set_instant
 
 	out = base.upsert_award_base(commit=False)
-	set_instant("")
+	# the canonical world's own moment (two-year seed world plan D1)
+	set_instant(AS_AT)
 	frappe.db.commit()
 	return out

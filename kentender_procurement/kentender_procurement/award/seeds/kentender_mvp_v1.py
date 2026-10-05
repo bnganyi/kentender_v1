@@ -15,7 +15,12 @@ profile's waiting period ends and the package reaches the test Contracting
 receiver at 2 Jul 09:00. Synthetic Trust, delivery and Contracting adapters
 only (test environment). A complete canonical award is returned untouched;
 a partial one is removed and told again. `through` stops the story at a
-named step (the demo profiles)."""
+named step (the demo profiles).
+
+The canonical world stops at Mary's acceptance (two-year seed world plan D1:
+the world is read as at 18 Jun 2027, 10:00, and every recorded event is at
+or before it), so the waiting period is running; the delivery to Contracting
+on 2 Jul is the AWD-DEMO-DELIVERED profile."""
 
 from __future__ import annotations
 
@@ -41,6 +46,8 @@ UNSUCCESSFUL = {
 	"Mlima Computer Solutions Limited": "Your tender did not meet the published requirements recorded in the signed evaluation report.",
 }
 STEPS = ("received", "signed", "notified", "accepted", "delivered")
+#: Where the canonical world's award stands at the as-at instant.
+CANONICAL_STEP = "accepted"
 CLOCK = {"opinion": "2027-06-17 09:00:00", "sign": "2027-06-17 09:10:00", "decide": "2027-06-17 10:00:00", "accept": "2027-06-18 09:00:00",
 	"deliver": "2027-07-02 09:00:00"}
 
@@ -83,8 +90,10 @@ def _version(award: str) -> int:
 	return int(frappe.db.get_value(records.CASE, award, "record_version"))
 
 
-def tell(tender: str, through: str = STEPS[-1]) -> str:
-	"""The §13 story up to `through`; returns the award id."""
+def tell(tender: str, through: str = STEPS[-1], clock_map: dict[str, str] | None = None) -> str:
+	"""The §13 story up to `through`; returns the award id. `clock_map`
+	replaces the canonical instants (an executed-portfolio Tender's own)."""
+	CLOCK = clock_map or globals()["CLOCK"]
 	upto = STEPS.index(through)
 	delivery = _delivery(tender)
 	if not delivery:
@@ -110,8 +119,32 @@ def tell(tender: str, through: str = STEPS[-1]) -> str:
 	return award
 
 
+def award_portfolio_tender(tender: str, *, through: str, clock_map: dict[str, str]) -> dict[str, Any]:
+	"""An executed-portfolio Tender's award to `through` ("received": the
+	professional opinion is Charles Mutiso's to prepare; "signed": the award
+	decision is Amina Hassan's). Idempotent: an award case already there is
+	returned untouched. Award takes a delivered report up by itself, so a case
+	short of `through` is told again from the receipt at the story's instants."""
+	_guard()
+	wanted = {"received": "Opinion", "signed": "Decision"}[through]
+	existing = frappe.db.get_value(records.CASE, {"tender": tender}, ["name", "stage"], as_dict=True)
+	if existing and existing.stage == wanted and (through == "received" or state.signed_opinion(frappe.get_doc(records.CASE, existing.name))):
+		return {"ok": True, "idempotent": True, "award": existing.name}
+	if not _delivery(tender):
+		frappe.throw(f"The evaluation report of {tender} has not been delivered.")
+	if existing:
+		clear.wipe(tenders=[tender])
+	profile.install_test_profile(contracting_owner=HOP, technical_operator=DANIEL)
+	saved = frappe.flags.get("kt_awd_clock")
+	try:
+		award = tell(tender, through, clock_map=clock_map)
+	finally:
+		frappe.flags.kt_awd_clock = saved
+	return {"ok": True, "idempotent": False, "award": award, "through": through}
+
+
 def lifecycle_complete(tender: str) -> bool:
-	return frappe.db.get_value(records.CASE, {"tender": tender}, "stage") == "Sent to Contracting" and all(r["ok"] for r in validate_award_seed())
+	return frappe.db.get_value(records.CASE, {"tender": tender}, "stage") == "Waiting to proceed" and all(r["ok"] for r in validate_award_seed())
 
 
 def reset(tender: str) -> None:
@@ -119,13 +152,14 @@ def reset(tender: str) -> None:
 	simulation.reset_controls()
 
 
-def upsert_award_base(*, commit: bool = False, through: str = STEPS[-1]) -> dict[str, Any]:
-	"""The `award` stage. A complete canonical award is returned untouched."""
+def upsert_award_base(*, commit: bool = False, through: str = CANONICAL_STEP) -> dict[str, Any]:
+	"""The `award` stage, to `through` (the canonical world: Mary's
+	acceptance). A complete canonical award is returned untouched."""
 	_guard()
 	tender = canonical_tender()
 	if not tender or not _delivery(tender):
 		frappe.throw("The canonical evaluation report has not been delivered. Seed through the bid_evaluation stage first.")
-	if through == STEPS[-1] and lifecycle_complete(tender):
+	if through == CANONICAL_STEP and lifecycle_complete(tender):
 		result = {"ok": True, "idempotent": True, "award": frappe.db.get_value(records.CASE, {"tender": tender}, "name")}
 	else:
 		reset(tender)
@@ -179,8 +213,6 @@ def validate_award_seed() -> list[dict[str, Any]]:
 	check(bool(response) and (response.response, response.responder, cstr(response.received_at)) == ("Accept", MARY, CLOCK["accept"]),
 		"Mary Wanjiku accepted at 18 Jun 2027, 09:00 EAT")
 	pkg = eligibility.current_package(doc)
-	check(bool(pkg) and pkg.status == "Delivered" and cstr(pkg.received_at) == CLOCK["deliver"] and pkg.recipient_user == HOP,
-		"Contracting received the award at 2 Jul 2027, 09:00 EAT (Prepare contract: Charles Mutiso)")
-	check(frappe.db.get_value(state.EVENT, {"decision": d.name if d else ""}, "status") == "Delivered", "the award decision event reached Contracting")
-	check(doc.stage == "Sent to Contracting", f"the award is Sent to Contracting (got {doc.stage!r})")
+	check(not pkg or pkg.status != "Delivered", "nothing has reached Contracting yet (its 2 Jul 2027 delivery is after the as-at instant)")
+	check(doc.stage == "Waiting to proceed", f"the waiting period is running (got {doc.stage!r})")
 	return rows

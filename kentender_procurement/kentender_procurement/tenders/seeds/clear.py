@@ -93,10 +93,12 @@ def _delete_family(removed: dict[str, list[str]]) -> dict[str, int]:
 
 
 def canonical_tenders() -> list[str]:
-	from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import COMBINED_ITEM_TITLE, _plan_item_id
+	"""Every Tender on a canonical Requisition: the laptops' and the executed
+	portfolio's (two-year seed world)."""
+	from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import canonical_plan_item_ids
 
-	plan_item_id = _plan_item_id(COMBINED_ITEM_TITLE)
-	requisitions = frappe.get_all("Procurement Requisition", filters={"plan_item_id": plan_item_id}, pluck="name") if plan_item_id else []
+	plan_items = canonical_plan_item_ids()
+	requisitions = frappe.get_all("Procurement Requisition", filters={"plan_item_id": ("in", plan_items)}, pluck="name") if plan_items else []
 	return frappe.get_all("Tender", filters={"requisition": ("in", requisitions)}, pluck="name") if requisitions else []
 
 

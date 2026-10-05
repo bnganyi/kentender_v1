@@ -209,14 +209,20 @@ ASSIGNMENTS = (
 	# Health over from Julia's acting period — dated, not open-ended, so the
 	# fixture chronology (Julia certifies DHI on 25 Nov 2026, Peter may act
 	# from December) is real at command time under the frozen seed clock.
-	("peter.kimani", "Head of User Department", "Digital Health", {"effective_from": "2026-12-01 00:00:00"}),
+	# Two-year seed world (plan D8, 4 Oct 2026): the SEED-001 chronology is
+	# Year 1's planning history, 364 days before its 2026 instants (was
+	# 1 Dec 2026), so Peter also decides Year 2's Digital Health Needs.
+	("peter.kimani", "Head of User Department", "Digital Health", {"effective_from": "2025-12-02 00:00:00"}),
 	(
 		"julia.njeri",
 		"Head of User Department",
 		"Digital Health",
 		{
 			"appointment_type": "Acting",
-			"authority_reference": "MOH/HR/ACT/2026/041",
+			"authority_reference": "MOH/HR/ACT/2025/041",
+			# Two-year seed world (plan D8, 4 Oct 2026): the window below is
+			# 364 days before its 1 Oct–30 Nov 2026 dates — Year 1's planning
+			# history, so her 26 Nov 2025 decisions are authorised for real.
 			# PLN-CHG-001 v1.18 §13.1 / SEED-001 §3.1 — 1 Oct through 30 Nov
 			# 2026 inclusive. The 5 Sep 2026 stop-gap that widened this window
 			# (so a real-clock seed could act as Julia) is retired by plan D19:
@@ -224,8 +230,8 @@ ASSIGNMENTS = (
 			# instant (kentender_core.seeds.clock), so her 25 Nov 2026
 			# decisions are authorised for real. The retired stop-gap row is
 			# revoked by `_reconcile_superseded_fixture_assignments`.
-			"effective_from": "2026-10-01 00:00:00",
-			"effective_to": "2026-11-30 23:59:59",
+			"effective_from": "2025-10-02 00:00:00",
+			"effective_to": "2025-12-01 23:59:59",
 		},
 	),
 	("mercy.kilonzo", "Procurement Planner", None, {}),
@@ -275,8 +281,9 @@ ASSIGNMENTS = (
 		"Head of User Department",
 		"Directorate of Digital Health and Policy",
 		{
-			"effective_from": "2026-01-01 00:00:00",
-			"effective_to": "2026-08-31 23:59:59",
+			# 364 days before 1 Jan–31 Aug 2026 (two-year seed world plan D8).
+			"effective_from": "2025-01-02 00:00:00",
+			"effective_to": "2025-09-01 23:59:59",
 		},
 	),
 	# Samuel's Directorate term above ends 31 Aug 2026 and is deliberately
@@ -301,7 +308,8 @@ ASSIGNMENTS = (
 		"peter.kimani",
 		"Head of User Department",
 		"Directorate of Digital Health and Policy",
-		{"effective_from": "2026-09-01 00:00:00"},
+		# 364 days before 1 Sep 2026 (two-year seed world plan D8).
+		{"effective_from": "2025-09-02 00:00:00"},
 	),
 )
 
