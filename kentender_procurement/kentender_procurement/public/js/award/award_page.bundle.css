@@ -4,5 +4,4 @@
    Industry stylesheet has no rule for it. The test-environment notice sits
    above the page, never inside the ported board. */
 .kt-industry .awd-board .kt-empty svg { width: 30px; height: 30px; color: var(--kt-color-neutral-600); margin-bottom: var(--kt-space-3); }
-.kt-industry .kt-awd .awd-test-environment { margin-bottom: var(--kt-space-4); }
 .kt-industry .awd-board .kt-disclosure-body { padding-top: var(--kt-space-3); }
