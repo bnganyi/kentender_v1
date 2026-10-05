@@ -23,23 +23,17 @@
 				<tr v-for="row in needs" :key="row.name" data-testid="nds-need-row" :data-reference="row.reference" :data-status="row.status">
 					<td v-for="column in columns" :key="column.key" :style="cellStyle(column)">
 						<template v-if="column.key === 'need'">
-							<span style="font-weight: 500">{{ row.title || "Untitled need" }}</span>
-							<br />
+							<div>{{ row.title || "Untitled need" }}</div>
 							<!-- Fixture-build data: a generated reference differs on every
 							     build, so an unmasked visual baseline churns on run order
 							     rather than on design (found live 24 Sep 2026). -->
-							<span style="color: var(--kt-color-neutral-600); font-size: 13px" data-volatile="true">{{
-								row.reference
-							}}</span>
+							<div class="kt-muted" data-volatile="true">{{ row.reference }}</div>
 						</template>
 						<!-- KT-STD-001 §2.2 — related facts grouped into one readable unit;
 						     the artboard's "Quantity and required by" column, not two. -->
 						<template v-else-if="column.key === 'quantity_required_by'">
-							<span>{{ row.quantity_label }}</span>
-							<br />
-							<span style="color: var(--kt-color-neutral-600); font-size: 13px">{{
-								row.required_by_label
-							}}</span>
+							<div>{{ row.quantity_label }}</div>
+							<div class="kt-muted">{{ row.required_by_label }}</div>
 						</template>
 						<template v-else-if="column.key === 'action'">
 							<!-- §12.1/§12.2 — one row exposes one action, and the server
@@ -48,7 +42,7 @@
 							<button
 								v-if="primaryAction(row)"
 								type="button"
-								class="kt-action-link"
+								class="btn btn-ghost"
 								data-testid="nds-row-action"
 								:data-action="primaryAction(row).code"
 								@click="$emit('action', row, primaryAction(row))"

@@ -28,7 +28,7 @@
 				<div class="kt-card-title" style="margin-bottom: 12px">Documents</div>
 				<table class="table" data-testid="tnd-history-documents">
 					<thead><tr><th>Document</th><th>Generated</th><th></th></tr></thead>
-					<tbody><tr v-for="d in data.documents" :key="d.document"><td>{{ d.kind }}<div v-if="d.addendum || d.cancellation" class="tnd-sub">{{ d.addendum || d.cancellation }}</div></td><td>{{ d.generated_at_label }}</td><td><button type="button" class="tnd-link-btn" @click="$emit('view-digest', d)">View</button></td></tr></tbody>
+					<tbody><tr v-for="d in data.documents" :key="d.document"><td>{{ d.kind }}<div v-if="d.addendum || d.cancellation" class="tnd-sub">{{ d.addendum || d.cancellation }}</div></td><td>{{ d.generated_at_label }}</td><td><button type="button" class="btn btn-ghost" @click="$emit('view-digest', d)">View</button></td></tr></tbody>
 				</table>
 				<div class="kt-disclosure" style="margin-top: 12px">
 					<div class="kt-disclosure-head" role="button" tabindex="0" :aria-expanded="technicalOpen ? 'true' : 'false'" data-testid="tnd-history-technical" @click="technicalOpen = !technicalOpen" @keydown.enter.prevent="technicalOpen = !technicalOpen"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Technical details</span></div><svg class="kt-disclosure-chevron" :class="{ 'is-open': technicalOpen }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div>

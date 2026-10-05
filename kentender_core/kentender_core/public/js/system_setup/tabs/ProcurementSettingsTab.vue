@@ -470,7 +470,7 @@ async function confirmRemoveSource() {
 								<a
 									v-if="!row.referenced"
 									href="#"
-									class="kt-procset-remove"
+									class="btn btn-ghost kt-danger"
 									:data-testid="'kt-procset-source-remove-' + row.name"
 									@click.prevent="askRemoveSource(row)"
 								>{{ __("Remove") }}</a>

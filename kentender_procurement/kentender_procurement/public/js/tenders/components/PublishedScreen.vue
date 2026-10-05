@@ -46,7 +46,7 @@
 				<table class="table" data-testid="tnd-published-channels">
 					<thead><tr><th>Channel</th><th>Result</th><th>Available at</th><th>Confirmation</th></tr></thead>
 					<tbody>
-						<tr v-for="c in channels" :key="c.channel"><td>{{ c.channel_label }}</td><td><span class="kt-status" :class="c.status === 'Confirmed' ? 'is-live' : 'is-attention'">{{ c.result_label }}</span></td><td>{{ c.available_at_label || "—" }}</td><td><button v-if="c.status === 'Confirmed'" type="button" class="tnd-link-btn" @click="$emit('view-confirmation', c)">View confirmation</button><span v-else>—</span></td></tr>
+						<tr v-for="c in channels" :key="c.channel"><td>{{ c.channel_label }}</td><td><span class="kt-status" :class="c.status === 'Confirmed' ? 'is-live' : 'is-attention'">{{ c.result_label }}</span></td><td>{{ c.available_at_label || "—" }}</td><td><button v-if="c.status === 'Confirmed'" type="button" class="btn btn-ghost" @click="$emit('view-confirmation', c)">View confirmation</button><span v-else>—</span></td></tr>
 					</tbody>
 				</table>
 			</div>
@@ -54,7 +54,7 @@
 				<div class="tnd-block-title tnd-block-title--section">Changes and notices</div>
 				<table v-if="addenda.length" class="table" style="margin-bottom: 16px" data-testid="tnd-addenda-table">
 					<thead><tr><th>Addendum</th><th>Change</th><th>Issued</th><th>Deadline</th><th></th></tr></thead>
-					<tbody><tr v-for="a in addenda" :key="a.name" :data-status="a.status"><td>{{ a.addendum_reference }}</td><td>{{ a.change_summary }}<span v-if="a.status !== 'Issued'" class="tnd-sub">{{ a.status }}</span></td><td>{{ a.issued_at_label || "—" }}</td><td>{{ a.revised_submission_deadline_label || tender.submission_deadline_label }}</td><td><button type="button" class="tnd-link-btn" data-testid="tnd-open-addendum" @click="$emit('open-addendum', a.name)">View</button></td></tr></tbody>
+					<tbody><tr v-for="a in addenda" :key="a.name" :data-status="a.status"><td>{{ a.addendum_reference }}</td><td>{{ a.change_summary }}<span v-if="a.status !== 'Issued'" class="tnd-sub">{{ a.status }}</span></td><td>{{ a.issued_at_label || "—" }}</td><td>{{ a.revised_submission_deadline_label || tender.submission_deadline_label }}</td><td><button type="button" class="btn btn-ghost" data-testid="tnd-open-addendum" @click="$emit('open-addendum', a.name)">View</button></td></tr></tbody>
 				</table>
 				<p v-else class="tnd-card-body" data-testid="tnd-no-addenda">{{ openPeriod.empty_addenda_text || "No addenda have been issued." }}</p>
 				<table v-if="clarifications.length" class="table" data-testid="tnd-clarifications-table">
@@ -64,7 +64,7 @@
 							<td>{{ q.question }}</td><td>{{ q.related_notice }}</td><td>{{ q.received_at_label }}</td>
 							<td><span class="kt-status" :class="q.status === 'Answered' ? 'is-live' : q.status === 'Closed with reason' ? 'is-pending' : 'is-attention'">{{ q.response_status }}</span></td>
 							<td>{{ q.candidate_notice || "—" }}</td>
-							<td><button type="button" class="tnd-link-btn" data-testid="tnd-open-clarification" @click="$emit('open-clarification', q.name)">View</button></td>
+							<td><button type="button" class="btn btn-ghost" data-testid="tnd-open-clarification" @click="$emit('open-clarification', q.name)">View</button></td>
 						</tr>
 					</tbody>
 				</table>

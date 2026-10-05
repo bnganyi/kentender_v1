@@ -52,7 +52,7 @@
 				<tbody>
 					<tr v-for="row in evidence" :key="row.evidence_requirement_id" :data-testid="`tnd-evidence-${row.evidence_requirement_id}`">
 						<td>{{ row.label }}</td><td>{{ row.evidence_type }}</td><td>{{ row.proves }}</td><td>{{ row.mandatory ? "Yes" : "No" }}</td>
-						<td class="tnd-cell-right tnd-nowrap"><button type="button" class="tnd-link-btn" :disabled="pending" data-testid="tnd-evidence-edit" @click="$emit('edit-evidence', row)">Edit</button> · <button type="button" class="tnd-link-btn is-critical" :disabled="pending" data-testid="tnd-evidence-remove" @click="$emit('remove-evidence', row)">Remove</button></td>
+						<td class="tnd-cell-right tnd-nowrap"><button type="button" class="btn btn-ghost" :disabled="pending" data-testid="tnd-evidence-edit" @click="$emit('edit-evidence', row)">Edit</button> · <button type="button" class="btn btn-ghost kt-danger" :disabled="pending" data-testid="tnd-evidence-remove" @click="$emit('remove-evidence', row)">Remove</button></td>
 					</tr>
 				</tbody>
 			</table>

@@ -275,7 +275,7 @@ onMounted(() => {
 						<tr v-for="row in data.declarations" :key="row.key" :data-testid="'bds-declaration-' + row.key">
 							<td class="bds-strong">{{ row.label }}</td>
 							<td><span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span><div v-if="row.confirmed_text" class="kt-label bds-confirmed">{{ row.confirmed_text }}</div></td>
-							<td><button type="button" class="bds-link-button" @click="drawer = row">{{ __(row.action_label || "View declaration") }}</button><a v-if="row.account_href" :href="row.account_href" class="bds-account-link" data-testid="bds-open-account">{{ __("Open Account") }}</a></td>
+							<td><button type="button" class="btn btn-ghost" @click="drawer = row">{{ __(row.action_label || "View declaration") }}</button><a v-if="row.account_href" :href="row.account_href" class="bds-account-link" data-testid="bds-open-account">{{ __("Open Account") }}</a></td>
 						</tr>
 					</tbody>
 				</table>

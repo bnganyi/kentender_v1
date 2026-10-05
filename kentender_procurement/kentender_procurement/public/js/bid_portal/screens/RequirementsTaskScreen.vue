@@ -193,7 +193,7 @@ onMounted(() => {
 							<td>{{ row.response }}</td>
 							<td><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></td>
 							<td><span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span></td>
-							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ __(actionLabel(row)) }}</button></td>
+							<td><button type="button" class="btn btn-ghost" @click="open(row.key)">{{ __(actionLabel(row)) }}</button></td>
 						</tr>
 					</tbody>
 				</table>
@@ -224,7 +224,7 @@ onMounted(() => {
 							<td>{{ row.supply }}</td>
 							<td>{{ row.completed }}</td>
 							<td><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></td>
-							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ canEdit ? __("Edit") : __("View") }}</button></td>
+							<td><button type="button" class="btn btn-ghost" @click="open(row.key)">{{ canEdit ? __("Edit") : __("View") }}</button></td>
 						</tr>
 					</tbody>
 				</table>
@@ -252,7 +252,7 @@ onMounted(() => {
 							<td><span class="bds-strong">{{ row.term.check || row.label }}</span><div v-if="row.term.passes_when" class="bds-muted">{{ row.term.passes_when }}</div><div v-if="row.term.applies_to && row.term.applies_to !== 'All items'" class="bds-muted">{{ __("Applies to {0}", [row.term.applies_to]) }}</div></td>
 							<td>{{ row.term.evidence }}</td>
 							<td><span class="kt-status" :class="'is-' + row.accept_tone">{{ __(row.accept_status) }}</span></td>
-							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ __(termAction(row)) }}</button></td>
+							<td><button type="button" class="btn btn-ghost" @click="open(row.key)">{{ __(termAction(row)) }}</button></td>
 						</tr>
 					</tbody>
 				</table>
@@ -279,7 +279,7 @@ onMounted(() => {
 							<td class="bds-strong">{{ row.label }}</td>
 							<td><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></td>
 							<td><span class="kt-status" :class="'is-' + row.file_tone">{{ row.file_status }}</span></td>
-							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ !canEdit ? __("View") : row.file ? __("Edit") : __("Upload") }}</button></td>
+							<td><button type="button" class="btn btn-ghost" @click="open(row.key)">{{ !canEdit ? __("View") : row.file ? __("Edit") : __("Upload") }}</button></td>
 						</tr>
 					</tbody>
 				</table>

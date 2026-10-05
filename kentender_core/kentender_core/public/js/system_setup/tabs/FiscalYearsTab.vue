@@ -394,9 +394,9 @@ function openUomList() {
 									<template v-if="detailRow[key + '_submission_open']">
 										<button type="button" class="btn btn-ghost" :data-testid="'kt-fy-deadline-' + key" @click="openDeadlineDialog(key)">{{ __("Change closing time") }}</button>
 										{{ " " }}
-										<button type="button" class="btn btn-secondary" :data-testid="'kt-fy-close-' + key" @click="openCloseDialog(key)">{{ __("Close submissions") }}</button>
+										<button type="button" class="btn btn-ghost" :data-testid="'kt-fy-close-' + key" @click="openCloseDialog(key)">{{ __("Close submissions") }}</button>
 									</template>
-									<button v-else type="button" class="btn btn-secondary" :data-testid="'kt-fy-open-' + key" @click="openOpenDialog(key)">{{ __("Open submissions") }}</button>
+									<button v-else type="button" class="btn btn-ghost" :data-testid="'kt-fy-open-' + key" @click="openOpenDialog(key)">{{ __("Open submissions") }}</button>
 								</template>
 							</td>
 						</tr>

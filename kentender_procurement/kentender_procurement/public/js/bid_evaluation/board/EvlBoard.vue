@@ -54,7 +54,7 @@
 								<template v-if="c.txt">{{ c.t }}</template>
 								<strong v-if="c.strong">{{ c.t }}</strong><span v-if="c.person" style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap"><span class="kt-sidebar-avatar">{{ c.ini }}</span>{{ c.t }}</span>
 								<span v-if="c.chip" class="kt-status" :class="c.cls">{{ c.t }}</span>
-								<button v-if="c.btn" type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:13px" :disabled="pending" :data-testid="c.testid || undefined" @click="emit('action', { action: c.action, args: c.args })">{{ c.t }}</button>
+								<button v-if="c.btn" type="button" class="btn btn-ghost" style="padding:4px 10px;font-size:13px" :disabled="pending" :data-testid="c.testid || undefined" @click="emit('action', { action: c.action, args: c.args })">{{ c.t }}</button>
 								<div v-if="c.inp" class="input" style="padding:6px 10px">{{ c.t }}</div>
 								<select v-if="c.sel" class="input" style="padding:6px 10px" :value="form[c.name] ?? ''" :data-testid="c.testid || undefined" @change="set(c.name, $event.target.value)"><option v-for="o in c.options" :key="o.value" :value="o.value">{{ o.label }}</option></select>
 								<input v-if="c.field" class="input" style="padding:6px 10px" :value="form[c.name] ?? ''" :data-testid="c.testid || undefined" @input="set(c.name, $event.target.value)">

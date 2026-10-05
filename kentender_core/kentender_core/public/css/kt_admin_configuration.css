@@ -68,8 +68,7 @@
 	font-size: 13px;
 	color: var(--kt-color-neutral-800);
 }
-/* Row actions are links in the artboards, not buttons. */
-.kt-industry .table a,
+/* A row action is the ghost button the boards draw (.btn.btn-ghost); this is the plain link style kept for .kt-action-link outside tables. */
 .kt-industry .kt-action-link {
 	color: var(--kt-color-accent);
 	text-decoration: none;
@@ -80,7 +79,6 @@
 	font-family: inherit;
 	cursor: pointer;
 }
-.kt-industry .table a:hover,
 .kt-industry .kt-action-link:hover {
 	color: var(--kt-color-accent-800);
 	text-decoration: underline;

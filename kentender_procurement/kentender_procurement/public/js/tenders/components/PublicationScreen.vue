@@ -25,13 +25,13 @@
 								<td><span class="kt-status" :class="c.status === 'Confirmed' ? 'is-live' : 'is-attention'">{{ c.result_label }}</span></td>
 								<td>{{ c.available_at_label || "—" }}</td>
 								<td>
-									<button v-if="c.status === 'Confirmed'" type="button" class="tnd-link-btn" data-testid="tnd-view-confirmation" @click="$emit('view-confirmation', c)">View confirmation</button>
-									<button v-else-if="canConfirm" type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-confirm-channel" @click="$emit('confirm-channel', c)">Confirm publication</button>
+									<button v-if="c.status === 'Confirmed'" type="button" class="btn btn-ghost" data-testid="tnd-view-confirmation" @click="$emit('view-confirmation', c)">View confirmation</button>
+									<button v-else-if="canConfirm" type="button" class="btn btn-ghost" :disabled="pending" data-testid="tnd-confirm-channel" @click="$emit('confirm-channel', c)">Confirm publication</button>
 									<span v-else class="tnd-status-text">Awaiting the Head of Procurement Function</span>
 								</td>
 							</tr>
 							<tr v-if="conflict && conflict.channel === c.channel" data-testid="tnd-already-confirmed">
-								<td colspan="4"><strong>This channel is already confirmed.</strong> The later confirmation request changed nothing. <button type="button" class="tnd-link-btn" @click="$emit('view-confirmation', c)">View confirmation</button></td>
+								<td colspan="4"><strong>This channel is already confirmed.</strong> The later confirmation request changed nothing. <button type="button" class="btn btn-ghost" @click="$emit('view-confirmation', c)">View confirmation</button></td>
 							</tr>
 						</template>
 					</tbody>

@@ -663,7 +663,7 @@ function restoreLine(o) {
 										</td>
 										<td v-if="isSuccessor" class="is-num">{{ formatSignedKes((Number(row.approved_amount) || 0) - (Number(row.current_amount) || 0), currency) }}</td>
 										<td style="white-space: nowrap">
-											<button v-if="canEdit && row.can_remove && !row.identity_locked" type="button" class="btn btn-secondary kt-danger" style="font-size: 13px; padding: 5px 10px" @click="removeLine(row)">{{ __("Remove") }}</button>
+											<button v-if="canEdit && row.can_remove && !row.identity_locked" type="button" class="btn btn-ghost kt-danger" style="font-size: 13px; padding: 5px 10px" @click="removeLine(row)">{{ __("Remove") }}</button>
 										</td>
 									</tr>
 								</tbody>

@@ -115,3 +115,9 @@ class TestIndustryStylesheet(IntegrationTestCase):
 	def test_the_page_has_a_ground_and_links_are_underlined(self):
 		self.assertRegex(self.css, r"\.kt-industry \{\s*background: var\(--color-bg\);")
 		self.assertRegex(self.css, r"\.kt-industry a:not\(\.btn\)[^{]*\{\s*text-decoration: underline;")
+
+	def test_the_page_sheet_has_no_horizontal_auto_margin(self):
+		# `.kt-page` is a flex item of `.kt-shell`; a horizontal auto margin shrinks it to its content width (a narrow card until a
+		# wide table opens). The pack draws it with `margin: auto`, so the generator must reset it, after the pack's rule.
+		last = self.css.rfind(".kt-industry .kt-page {")
+		self.assertRegex(self.css[last:last + 80], r"margin-inline: 0;")

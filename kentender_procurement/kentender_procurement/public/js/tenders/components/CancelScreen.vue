@@ -85,7 +85,7 @@
 								<td>{{ row.label }}<span v-if="row.detail" class="tnd-sub">{{ row.detail }}</span></td>
 								<td>{{ row.due_by }}</td>
 								<td><span class="kt-status" :class="row.status === 'Recorded' ? 'is-live' : row.status === 'Overdue' ? 'is-critical' : 'is-attention'">{{ row.status }}</span></td>
-								<td v-if="canRecord"><button v-if="row.action" type="button" class="btn btn-secondary" :disabled="pending" :data-testid="`tnd-${row.action.replace(/_/g, '-')}`" @click="$emit('record-evidence', obligationFor(row))">{{ row.action_label }}</button></td>
+								<td v-if="canRecord"><button v-if="row.action" type="button" class="btn btn-ghost" :disabled="pending" :data-testid="`tnd-${row.action.replace(/_/g, '-')}`" @click="$emit('record-evidence', obligationFor(row))">{{ row.action_label }}</button></td>
 							</tr>
 						</tbody>
 					</table>

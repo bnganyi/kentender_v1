@@ -265,7 +265,7 @@ async function submitDraft() {
 								<button type="button" class="btn btn-secondary" data-testid="str-clear-filters" @click="clearFilters">{{ __("Clear filters") }}</button>
 							</div>
 							<template v-else>
-								<table class="table" data-testid="str-plans-table">
+								<table class="table" style="width: calc(100% - 40.8px); margin: 0 20.4px" data-testid="str-plans-table">
 									<thead>
 										<tr>
 											<th>{{ __("Strategic plan") }}</th>
@@ -278,12 +278,12 @@ async function submitDraft() {
 									</thead>
 									<tbody>
 										<tr v-for="p in plans" :key="p.id" data-testid="str-plan-row" :data-plan-reference="p.reference">
-											<td>{{ p.title }} <span class="kt-muted">&middot; {{ p.reference }}</span></td>
+											<td><div>{{ p.title }}</div><div class="kt-muted">{{ p.reference }}</div></td>
 											<td>{{ p.plan_type_label }}</td>
 											<td>{{ p.period_fy_label || p.period_label || "—" }}</td>
 											<td>{{ p.current_version ? p.current_version.version_number : "—" }}</td>
 											<td><span class="kt-status" :class="p.status_tone" data-testid="str-row-status">{{ p.status_label }}</span></td>
-											<td><a href="#" class="btn btn-ghost" style="padding: 4px 10px; height: auto" data-testid="str-row-action" @click.prevent="openRoute(p.action_route)">{{ p.available_action || __("View") }}</a></td>
+											<td><a href="#" class="btn btn-ghost" data-testid="str-row-action" @click.prevent="openRoute(p.action_route)">{{ p.available_action || __("View") }}</a></td>
 										</tr>
 									</tbody>
 								</table>
@@ -299,7 +299,7 @@ async function submitDraft() {
 							{{ __("Nothing needs your action right now.") }}
 						</div>
 						<template v-else>
-							<table class="table" data-testid="str-my-work-table">
+							<table class="table" style="width: calc(100% - 40.8px); margin: 0 20.4px" data-testid="str-my-work-table">
 								<thead>
 									<tr>
 										<th>{{ __("Plan") }}</th>
@@ -312,12 +312,12 @@ async function submitDraft() {
 								</thead>
 								<tbody>
 									<tr v-for="w in myWork" :key="w.version_id" data-testid="str-my-work-row" :data-version-reference="w.version_reference">
-										<td>{{ w.plan_title }} <span class="kt-muted">&middot; {{ w.plan_reference }} &middot; {{ __("Version") }} {{ w.version_number }}</span></td>
+										<td><div>{{ w.plan_title }}</div><div class="kt-muted">{{ w.plan_reference }} &middot; {{ __("Version") }} {{ w.version_number }}</div></td>
 										<td>{{ w.review_type }}</td>
 										<td>{{ w.submitted_by || "—" }}</td>
 										<td>{{ w.submitted_at_label || "—" }}</td>
 										<td><span class="kt-status" :class="w.status_tone">{{ w.status_label }}</span></td>
-										<td><a href="#" class="btn btn-ghost" style="padding: 4px 10px; height: auto" data-testid="str-my-work-action" @click.prevent="openRoute(w.action_route)">{{ w.action_label }}</a></td>
+										<td><a href="#" class="btn btn-ghost" data-testid="str-my-work-action" @click.prevent="openRoute(w.action_route)">{{ w.action_label }}</a></td>
 									</tr>
 								</tbody>
 							</table>
