@@ -107,14 +107,14 @@
 				<table class="table" data-testid="req-register-table">
 					<thead>
 						<tr>
-							<th>Requisition</th><th>Approved purchase</th><th v-if="technical">Departments</th><th>Status</th><th>Updated</th>
+							<th>Requisition</th><th>Approved purchase</th><th>Departments</th><th>Status</th><th>Updated</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr v-for="row in register" :key="row.requisition" class="req-row-link" data-testid="req-register-row" @click="ctx.goPath(row.route)">
-							<td><a :href="row.route" @click.stop.prevent="ctx.goPath(row.route)">{{ row.reference }}</a></td>
+							<td style="white-space: nowrap"><a :href="row.route" @click.stop.prevent="ctx.goPath(row.route)">{{ row.reference }}</a></td>
 							<td>{{ row.title }}<div v-if="technical" class="kt-label">{{ row.plan_item_reference }}</div></td>
-							<td v-if="technical">{{ row.departments }}</td>
+							<td>{{ row.departments }}</td>
 							<td>{{ row.status }}</td>
 							<td>{{ row.updated }}</td>
 						</tr>
@@ -125,6 +125,7 @@
 						<a :href="row.route" style="font-weight: 600" @click.stop.prevent="ctx.goPath(row.route)">{{ row.reference }}</a>
 						<dl>
 							<dt class="kt-label">Approved purchase</dt><dd>{{ row.title }}</dd>
+							<dt class="kt-label">Departments</dt><dd>{{ row.departments }}</dd>
 							<dt class="kt-label">Status</dt><dd>{{ row.status }}</dd>
 							<dt class="kt-label">Updated</dt><dd>{{ row.updated }}</dd>
 						</dl>

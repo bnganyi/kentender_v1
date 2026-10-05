@@ -422,6 +422,7 @@ const registerColumns = computed(() =>
 				// author's own "Requested by" phrasing once a decision section
 				// already leads the page.
 				{ key: "need", label: "Requirement" },
+				{ key: "organisation_unit_label", label: "Department" },
 				{ key: "author_label", label: "Requester" },
 				{ key: "quantity_required_by", label: "Quantity and required by" },
 				{ key: "status", label: "Status", status: true },
@@ -430,6 +431,7 @@ const registerColumns = computed(() =>
 		: [
 				// §11.2 — the author's own list.
 				{ key: "need", label: "Requirement" },
+				{ key: "organisation_unit_label", label: "Department" },
 				{ key: "quantity_required_by", label: "Quantity and required by" },
 				{ key: "status", label: "Status", status: true },
 				{ key: "action", label: "Action", align: "right" },

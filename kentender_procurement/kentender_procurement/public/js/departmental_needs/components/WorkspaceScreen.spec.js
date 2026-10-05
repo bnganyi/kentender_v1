@@ -133,3 +133,37 @@ describe("WorkspaceScreen — NDS-DES-14-CLOSED-WORKSPACE / NO-OPEN-YEAR", () =>
 		expect(notice.text()).toContain("Closed at");
 	});
 });
+
+// The register names each need's department, straight after the requirement —
+// with several departments combined, the page filter no longer says which
+// department a row belongs to.
+describe("WorkspaceScreen — Department column", () => {
+	const need = (overrides = {}) => ({
+		name: "n1",
+		reference: "NDS-MOH-2027-0001",
+		title: "Health information exchange platform upgrade",
+		organisation_unit: "OU-MOH-02501",
+		organisation_unit_label: "Digital Health",
+		author_label: "Grace Wanjiku",
+		quantity_label: "1 programme",
+		required_by_label: "31 Aug 2027",
+		status: "Accepted for planning",
+		actions: [{ code: "view", label: "View" }],
+		...overrides,
+	});
+	const headers = (w) => w.findAll("thead th").map((th) => th.text());
+
+	it("sits straight after Requirement in the author's own list", () => {
+		const w = make({ needs: [need()] });
+		expect(headers(w)).toEqual(["Requirement", "Department", "Quantity and required by", "Status", "Action"]);
+		expect(w.get('[data-testid="nds-need-row"]').findAll("td")[1].text()).toBe("Digital Health");
+	});
+
+	it("sits straight after Requirement, before Requester, in the reviewer's register", () => {
+		const queued = need({ name: "n2", reference: "NDS-MOH-2027-0002", actions: [{ code: "review", label: "Review", review_kind: "Initial requirement" }] });
+		const w = make({ needs: [queued, need()] });
+		expect(headers(w.get('[data-testid="nds-needs-table"]'))).toEqual([
+			"Requirement", "Department", "Requester", "Quantity and required by", "Status", "Action",
+		]);
+	});
+});

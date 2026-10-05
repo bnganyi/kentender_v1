@@ -539,6 +539,23 @@ class TestServerSideContextPreferences(DepartmentalNeedsPermissionCase):
 		self.assertTrue(only_hrmd_refs, "expected at least one seeded Need in HR Management and Development")
 		self.assertEqual(combined_refs, only_ou_refs | only_hrmd_refs)
 
+	def test_every_row_names_its_own_department(self):
+		"""The register's Department column — with several departments combined
+		a row must say which one it belongs to, taken from the Need's own
+		Organisation Unit rather than from whichever department the page is
+		filtered to (nothing is, in the combined view)."""
+		frappe.set_user(AUTHOR)
+		combined = workspace.get_workspace()
+		self.assertEqual(combined["context"]["organisation_unit"], "")
+		seen = set()
+		for row in combined["needs"]:
+			expected_unit = frappe.db.get_value("Departmental Need", row["name"], "organisation_unit")
+			expected_label = frappe.db.get_value("Organisation Unit", expected_unit, "unit_name")
+			self.assertEqual(row["organisation_unit"], expected_unit, row["reference"])
+			self.assertEqual(row["organisation_unit_label"], expected_label, row["reference"])
+			seen.add(row["organisation_unit"])
+		self.assertEqual(seen, {self.ou, self.ou_hrmd}, "expected rows from both of Grace's departments")
+
 	def test_an_explicit_all_departments_choice_overrides_the_remembered_one(self):
 		"""The workspace's "All departments" filter option sends an explicit,
 		empty `organisation_unit` — found live 21 Sep 2026 to snap straight

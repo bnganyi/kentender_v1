@@ -52,6 +52,15 @@ describe("WorkspaceScreen (REQ-DES-01)", () => {
 		expect(w.find('[data-testid="req-filter-fiscal-year"]').text()).toContain("FY 2027/28");
 	});
 
+	it.each(["DRAFT", "TECHNICAL"])("%s: the register names each requisition's departments straight after the approved purchase", (mode) => {
+		const { global } = context();
+		const ws = workspace(mode);
+		const w = mount(WorkspaceScreen, { props: { workspace: ws, filters: FILTERS }, global });
+		const table = w.get('[data-testid="req-register-table"]');
+		expect(table.findAll("thead th").map((th) => th.text())).toEqual(["Requisition", "Approved purchase", "Departments", "Status", "Updated"]);
+		expect(w.get('[data-testid="req-register-row"]').findAll("td")[2].text()).toBe(ws.register[0].departments);
+	});
+
 	it("an existing open requisition replaces Start requisition rather than sitting beside it", () => {
 		const { global } = context();
 		const ws = workspace();
