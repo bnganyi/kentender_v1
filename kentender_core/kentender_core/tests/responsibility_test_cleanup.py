@@ -155,6 +155,18 @@ def purge(*, commit: bool = True) -> dict[str, int]:
 		frappe.delete_doc("Procuring Entity", name, force=1, ignore_permissions=True)
 	removed["Procuring Entity"] = len(test_entities)
 
+	# Frappe makes a Contact for every User it inserts and does not remove it
+	# with the User; a leftover one makes the next run's same-named fixture
+	# user fail on "Contact … not found" (4 Oct 2026, Home tests).
+	contacts = set(
+		frappe.get_all(
+			"Contact Email", filters={"email_id": ("like", USER_PATTERN)}, pluck="parent"
+		)
+	)
+	for name in contacts:
+		frappe.delete_doc("Contact", name, force=1, ignore_permissions=True)
+	removed["Contact"] = len(contacts)
+
 	users = frappe.get_all("User", filters={"name": ("like", USER_PATTERN)}, pluck="name")
 	for name in users:
 		frappe.delete_doc("User", name, force=1, ignore_permissions=True)

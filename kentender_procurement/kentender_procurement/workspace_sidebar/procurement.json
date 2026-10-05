@@ -13,11 +13,11 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Home",
-   "link_to": "coming-soon",
+   "link_to": "home",
    "link_type": "Page",
-   "route_options": "{\"feature\": \"Home\"}",
    "show_arrow": 0,
-   "type": "Link"
+   "type": "Link",
+   "url": "/desk/home"
   },
   {
    "child": 0,

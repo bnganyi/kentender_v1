@@ -1,0 +1,114 @@
+/* Home page layout (HOME-CHG-001 v0.6 §10B.1). Every value is the one drawn on design/Home/Home.dc.html,
+   named once here because the board draws them as inline styles. Loaded only by the Home page's own
+   controller (frappe.require, after kt_home_ds.bundle.css), never globally. Every selector sits under
+   .kt-industry.kt-home, so no other page is affected. */
+
+.kt-industry.kt-home { padding: 24px 0 40px; }
+/* Desk sets 0.26px of letter spacing on its body; the boards set in Inter with none (found 5 Oct 2026, Phase 8 board comparison). */
+.kt-industry.kt-home { letter-spacing: normal; }
+
+/* The sheet: one white sheet with a 1px border on Frappe's grey ground, a 12-column grid inside (§10B.1, KT-STD-001 v1.22 §2.4). */
+.kt-industry.kt-home .kt-home-frame { container: kt-home / inline-size; }
+.kt-industry.kt-home .kt-home-sheet {
+	margin: 0 auto; max-width: 1200px; box-sizing: border-box; padding: 32px;
+	background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: 12px;
+	display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 28px 24px; align-items: start;
+}
+
+/* Header row */
+.kt-industry.kt-home .kt-home-header { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px 24px; }
+.kt-industry.kt-home .kt-home-heading { display: flex; flex-direction: column; gap: 6px; }
+.kt-industry.kt-home .kt-home-title { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 600; color: var(--color-heading); }
+.kt-industry.kt-home .kt-home-title.is-plain { grid-column: 1 / -1; }
+.kt-industry.kt-home .kt-home-sub { margin: 0; font-size: 14px; color: var(--color-text-muted); }
+.kt-industry.kt-home .kt-home-meta { display: flex; align-items: center; gap: 20px; }
+.kt-industry.kt-home .kt-home-updated { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--color-text-muted); }
+.kt-industry.kt-home .kt-home-meta-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; }
+
+/* Summary row: one column per applicable count, no box, a rule at the left (the accent for My work) */
+.kt-industry.kt-home .kt-home-summary { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(var(--kt-home-columns, 3), minmax(0, 1fr)); gap: 24px; }
+.kt-industry.kt-home .kt-home-kpi { text-decoration: none; color: inherit; }
+/* A summary column is a link the board draws plain, in the page's own text colour; the generated rules for links (specificity 0,5,1) must not reach it. */
+.kt-industry.kt-home a.kt-home-kpi:not(.kt-btn):not(.kt-tab):not(.kt-add-child) { text-decoration: none; color: inherit; }
+.kt-industry.kt-home .kt-home-kpi.is-task { --kt-kpi-bar: var(--color-accent); }
+.kt-industry.kt-home .kt-home-kpi-line { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.kt-industry.kt-home .kt-home-figure { font-size: 34px; }
+.kt-industry.kt-home .kt-home-figure.is-unavailable { font-size: 15px; color: var(--color-text-muted); }
+.kt-industry.kt-home .kt-home-figure-label { font-size: 14px; }
+
+/* The module chip in the main column and the summary's task column: tinted, 32 px (board). The design
+   system's own chip is glyph-only; FU-HOME-09 delta 1 records this departure for the owner. */
+.kt-industry.kt-home .kt-home-chip-main { color: var(--color-accent-700); background: var(--color-accent-100); border-radius: 8px; width: 32px; height: 32px; }
+.kt-industry.kt-home .kt-home-chip-rail { width: 20px; height: 20px; margin-top: 1px; }
+
+/* Main column and rail */
+.kt-industry.kt-home .kt-home-main { grid-column: 1 / span 8; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.kt-industry.kt-home .kt-home-main.is-full { grid-column: 1 / -1; }
+.kt-industry.kt-home .kt-home-rail {
+	grid-column: 9 / span 4; display: flex; flex-direction: column; gap: 20px; min-width: 0; padding-left: 24px;
+	background: linear-gradient(to bottom, transparent 0, var(--color-neutral-300) 15%, var(--color-neutral-300) 85%, transparent 100%) no-repeat left top / 1px 100%;
+}
+.kt-industry.kt-home .kt-home-span { grid-column: 1 / -1; }
+.kt-industry.kt-home .kt-home-region { display: flex; flex-direction: column; }
+.kt-industry.kt-home .kt-home-region:not(:first-child) { padding-top: 20px; border-top: 1px solid var(--color-divider); }
+.kt-industry.kt-home .kt-home-h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 18px; font-weight: 600; color: var(--color-heading); }
+.kt-industry.kt-home .kt-home-h2.is-rail { font-size: 15px; }
+.kt-industry.kt-home .kt-home-h2 .kt-icon { color: var(--color-accent-700); }
+
+/* Main-column work row */
+.kt-industry.kt-home .kt-home-row { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 4px 14px; align-items: center; padding: 14px 0; }
+.kt-industry.kt-home .kt-home-row + .kt-home-row { border-top: 1px solid var(--color-divider); }
+.kt-industry.kt-home .kt-home-row-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kt-industry.kt-home .kt-home-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.kt-industry.kt-home .kt-home-line.is-centered { align-items: center; }
+.kt-industry.kt-home .kt-home-row-title { font-size: 15px; font-weight: 600; color: var(--color-heading); }
+.kt-industry.kt-home .kt-home-quiet { font-size: 13px; color: var(--color-text-muted); }
+.kt-industry.kt-home .kt-home-action { font-size: 14px; color: var(--color-text); }
+.kt-industry.kt-home .kt-home-badge {
+	display: inline-flex; align-items: center; white-space: nowrap; padding: 2px 8px; border-radius: 6px;
+	background: var(--data-seq-1); color: var(--data-seq-4); font-size: 12px; font-weight: 600;
+}
+.kt-industry.kt-home .kt-home-callout {
+	display: flex; align-items: flex-start; gap: 8px; font-size: 13px; font-weight: 600; color: var(--status-attention);
+	background: var(--status-attention-bg); padding: 5px 10px; border-radius: 8px; align-self: flex-start; margin-top: 2px;
+}
+.kt-industry.kt-home .kt-home-callout .kt-icon { margin-top: 2px; color: var(--status-attention); }
+.kt-industry.kt-home .kt-home-row-action { display: flex; justify-content: flex-end; }
+.kt-industry.kt-home .kt-home-link { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; white-space: nowrap; }
+
+/* Rail row: neutral icon, the title as the link, the state, the timing on its own quiet line */
+.kt-industry.kt-home .kt-home-rail-row { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px 0; }
+.kt-industry.kt-home .kt-home-rail-row + .kt-home-rail-row { border-top: 1px solid var(--color-divider); }
+.kt-industry.kt-home .kt-home-rail-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.kt-industry.kt-home .kt-home-rail-title { font-size: 14px; font-weight: 600; }
+.kt-industry.kt-home .kt-home-rail-state { font-size: 13px; line-height: 1.45; color: var(--color-text); text-wrap: pretty; }
+.kt-industry.kt-home .kt-home-rail-time { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12px; color: var(--color-text-muted); }
+
+/* Show more footer (HOME-DES-26) and a region's own failure message (HOME-DES-28B, 28C) */
+.kt-industry.kt-home .kt-home-more { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0 0 46px; border-top: 1px solid var(--color-divider); }
+.kt-industry.kt-home .kt-home-region.is-rail .kt-home-more { padding-left: 32px; }
+.kt-industry.kt-home .kt-home-failure { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 0; }
+.kt-industry.kt-home .kt-home-failure-text { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; color: var(--color-text); }
+.kt-industry.kt-home .kt-home-failure-text .kt-icon { color: var(--status-critical); }
+.kt-industry.kt-home .kt-home-failure.is-compact .kt-home-retry { height: 28px; padding: 0 10px; font-size: 13px; }
+
+/* State panels: empty, failed, denied; loading (HOME-DES-28A, 28D, 28E, 28F) */
+.kt-industry.kt-home .kt-home-panel { grid-column: 1 / -1; display: grid; justify-items: center; gap: 14px; padding: 48px 24px; text-align: center; border-top: 1px solid var(--color-divider); }
+.kt-industry.kt-home .kt-home-panel-text { margin: 0; font-size: 16px; font-weight: 600; color: var(--color-heading); }
+.kt-industry.kt-home .kt-home-nothing { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 16px; font-weight: 600; color: var(--color-heading); }
+.kt-industry.kt-home .kt-home-nothing .kt-icon { color: var(--status-live); }
+.kt-industry.kt-home .kt-home-loading { grid-column: 1 / -1; margin: 0; font-size: 15px; color: var(--color-text-muted); }
+
+/* Visually hidden, for the polite live region */
+.kt-industry.kt-home .kt-home-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Narrow sheet (HOME-DES-21N): below 960 px of content width the rail stacks under the main column in the same
+   order and the summary columns wrap two to a row. The sheet's content is its frame minus 64 px of padding and 2 px of border. */
+@container kt-home (max-width: 1025px) {
+	.kt-industry.kt-home .kt-home-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.kt-industry.kt-home .kt-home-main, .kt-industry.kt-home .kt-home-rail { grid-column: 1 / -1; }
+	.kt-industry.kt-home .kt-home-rail { padding-left: 0; background: none; }
+}
+
+/* An owner's own named link under a rail row's timing (View report, HOME-DES-23) */
+.kt-industry.kt-home .kt-home-rail-body .kt-home-link { align-self: flex-start; font-size: 13px; }

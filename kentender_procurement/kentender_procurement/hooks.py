@@ -636,6 +636,17 @@ kt_my_work_providers = [
 	"kentender_procurement.award.services.tasks.my_work_rows",
 ]
 
+# HOME-CHG-001 v0.6 §7 — each owner's feed to the Home page (core collects them; it never imports this app).
+kt_home_providers = [
+	"kentender_procurement.tenders.services.home_provider.entries",
+	"kentender_procurement.bid_opening.services.home_provider.entries",
+	"kentender_procurement.bid_evaluation.services.home_provider.entries",
+	"kentender_procurement.award.services.home_provider.entries",
+	"kentender_procurement.procurement_requisitions.services.home_provider.entries",
+	"kentender_procurement.departmental_needs.services.home_provider.entries",
+	"kentender_procurement.procurement_planning.services.home_provider.entries",
+]
+
 # AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical
 # search page/service and the technical-read conformance gate collect every
 # module's reference resolvers and read probes through these two hooks; core

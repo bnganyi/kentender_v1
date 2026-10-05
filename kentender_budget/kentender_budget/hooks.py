@@ -49,6 +49,9 @@ kt_my_work_providers = [
 	"kentender_budget.services.budget_my_work_provider.my_work_rows",
 ]
 
+# HOME-CHG-001 v0.6 §7 — Budget's feed to the Home page (core collects, never imports this app).
+kt_home_providers = ["kentender_budget.services.home_provider.entries"]
+
 # AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical
 # search page/service and the technical-read conformance gate collect a
 # module's reference resolvers and read probes through these two hooks;

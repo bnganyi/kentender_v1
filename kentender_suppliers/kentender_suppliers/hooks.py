@@ -108,6 +108,9 @@ kt_portal_identity_providers = ["kentender_suppliers.supplier_accounts.portal.id
 
 # BDS-CHG-001 v0.8 §5.14 — suspended-access reviews in the shared My Work.
 kt_my_work_providers = ["kentender_suppliers.supplier_accounts.services.my_work_provider.my_work_rows"]
+
+# HOME-CHG-001 v0.6 / FU-HOME-46 — the same work on the Home page (core collects it; it never imports this app).
+kt_home_providers = ["kentender_suppliers.supplier_accounts.services.home_provider.entries"]
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}

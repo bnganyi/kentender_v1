@@ -119,6 +119,8 @@ page_js = {
 	# search. Roles empty on the Page; the screen gates in-page per KT-STD-001
 	# §3A.3 and this same convention.
 	"technical-search": "public/js/technical_search_page.js",
+	# HOME-CHG-001 v0.6 §9 — Home, the internal landing page.
+	"home": "public/js/home_page.js",
 	"user-operational-acc": "public/js/authorization_admin_pages.js",
 	"workflow-routing-rul": "public/js/authorization_admin_pages.js",
 	"access-diagnostic": "public/js/authorization_admin_pages.js",
@@ -393,3 +395,6 @@ kt_technical_read_probes = ["kentender_core.services.technical_read.read_probes"
 # EVL-CHG-001 v0.4 plan D12 (OD-B): the platform support issue's holder item
 # ("Resolve evaluation issue for {tender}"), merged with every app's providers.
 kt_my_work_providers = ["kentender_core.services.support_issues.my_work_rows"]
+
+# HOME-CHG-001 v0.6 / FU-HOME-46 — a technical reader is read through these providers only (technical work, never a business action).
+kt_home_technical_providers = ["kentender_core.services.home_support_issues.entries"]

@@ -59,6 +59,8 @@ while IFS= read -r f; do
 			add ui-bop-fidelity-gate "$f" ;;
 		*/public/js/award/*|docs/mvp-1-r1/16_award/design/*.dc.html)
 			add ui-awd-fidelity-gate "$f" ;;
+		kentender_core/*/public/js/home/*|kentender_core/*/public/js/home_page.js|docs/mvp-1-r1/18_home_page/design/Home/*.dc.html)
+			add ui-home-fidelity-gate "$f" ;;
 		# Bid Evaluation has no module gate of its own: its boards are covered by
 		# the shared structure gate below.
 		*/public/js/bid_evaluation/*|docs/mvp-1-r1/15_bid_evaluation/design/*.dc.html)

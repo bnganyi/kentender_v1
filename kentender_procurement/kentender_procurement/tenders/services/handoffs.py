@@ -76,6 +76,31 @@ REGISTER: dict[str, tuple[str, str, str | None, str, str]] = {
 #: clarification or a returned addendum may be handled by either).
 SHARED_HOLDERS = {CLARIFICATION_RESPONSE: (ROLE_PROCUREMENT_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)}
 
+#: HOME-CHG-001 v0.6 §5 — what Home says about each register row, in one place (the Home provider adds no wording of its own).
+#: task_type → (the holder's action, the line other readers see with `{holder}` named — a sender's Waiting row and an overseer's
+#: row — and the neutral line a Head of User Department sees, "" when that reader is shown nothing). The action has no reference:
+#: Home shows the Tender's reference separately. The same fields as `_labels` fill `{task}` and `{subject}`; `{of_subject}` is
+#: " of addendum X" for an addendum hand-off and nothing for the Tender.
+HOME_TEXT: dict[str, tuple[str, str, str]] = {
+	HOPF_APPROVAL: ("Review Tender", "Waiting for {holder} to review this Tender", "Awaiting procurement approval"),
+	CORRECT_RETURNED: ("Correct Tender — {task}", "Returned for correction; awaiting correction by {holder}", "Returned for correction"),
+	AO_AUTHORISATION: ("Authorise publication", "Waiting for {holder} to decide publication", "Awaiting publication authorisation"),
+	CORRECT_REOPENED: ("Correct reopened Tender", "Reopened for correction; awaiting correction by {holder}", "Reopened for correction"),
+	CHANNEL_CONFIRMATION: ("Confirm publication{of_subject}", "Waiting for {holder} to confirm publication{of_subject}", "Publication confirmation required"),
+	REVIEW_WITHDRAWN: ("Review withdrawn publication authorisation", "Waiting for {holder} to review the withdrawn publication authorisation", "Publication authorisation withdrawn"),
+	RETURNED_BY_AO: ("Review Tender returned by the Accounting Officer", "Waiting for {holder} to reopen this Tender", "Returned before publication authorisation"),
+	ADDENDUM_ISSUE: ("Decide addendum {subject}", "Waiting for {holder} to decide addendum {subject}", ""),
+	CORRECT_ADDENDUM: ("Correct addendum {subject}", "Addendum {subject} returned for correction; awaiting correction by {holder}", ""),
+	CLARIFICATION_RESPONSE: ("Respond to clarification", "Waiting for {holder} to respond to a clarification", ""),
+	REQUISITION_CORRECTION: ("Correct Requisition {subject}", "Waiting for {holder} to correct the requisition", "Requisition correction requested"),
+	CANCELLATION_REVIEW: ("Consider cancellation", "Waiting for {holder} to consider cancellation", ""),
+	CANCELLATION_COMPLIANCE: ("Record cancellation notices and PPRA report", "Waiting for cancellation compliance evidence from {holder}", ""),
+}
+#: The two derived rows (`my_work_provider`: no Tender Task behind them).
+HOME_SUCCESSOR_ACTION = "Start corrected Tender Version"
+HOME_PERIOD_ACTION = "Reopen Tender — submission deadline too short"
+HOME_PERIOD_WAITING = "Waiting for {holder} to reopen this Tender"
+
 
 def full_name(user: str) -> str:
 	return cstr(frappe.db.get_value("User", user, "full_name") or user) if user else ""
@@ -173,6 +198,29 @@ def title_for(root, task) -> str:
 def waiting_title_for(root, task) -> str:
 	template = REGISTER[cstr(task.task_type)][2]
 	return template.format(**_labels(root, task)) if template else ""
+
+
+def _home_labels(root, task) -> dict[str, str]:
+	labels = _labels(root, task)
+	return {**labels, "of_subject": f" of addendum {labels['subject']}" if cstr(task.subject_type) == "Tender Addendum" else ""}
+
+
+def home_action_for(root, task) -> str:
+	"""The holder's action as Home words it (HOME §5): the owner's wording, no reference."""
+	return HOME_TEXT[cstr(task.task_type)][0].format(**_home_labels(root, task))
+
+
+def home_line_for(root, task, holder: str) -> str:
+	"""What a sender or an overseer reads while someone else holds the item; `holder` is the people (or the responsibility)."""
+	return HOME_TEXT[cstr(task.task_type)][1].format(**{**_home_labels(root, task), "holder": holder})
+
+
+def home_neutral_for(task) -> str:
+	"""What a Head of User Department reads: the Tender's stage and nothing about who holds it. "" when this reader is told nothing
+	(an addendum, a clarification or a cancellation matter, or an addendum's publication confirmation)."""
+	if cstr(task.subject_type) == "Tender Addendum":
+		return ""
+	return HOME_TEXT[cstr(task.task_type)][2]
 
 
 def _labels(root, task) -> dict[str, str]:

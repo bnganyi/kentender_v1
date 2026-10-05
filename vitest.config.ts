@@ -90,6 +90,7 @@ export default defineConfig({
 					include: ["kentender_procurement/kentender_procurement/public/js/bid_evaluation/**/*.spec.js"],
 				},
 			},
+			},
 			{
 				plugins: [vue()],
 				test: {
@@ -201,6 +202,17 @@ export default defineConfig({
 						"kentender_core/kentender_core/public/js/technical_search/**/*.spec.js",
 					],
 				},
+			},
+			{
+				// HOME-CHG-001 v0.6 — the Home page: component tests for the board's states and interactions.
+				plugins: [vue()],
+				test: {
+					name: "home",
+					environment: "jsdom",
+					setupFiles: ["kentender_core/kentender_core/public/js/home/vitest.setup.js"],
+					include: ["kentender_core/kentender_core/public/js/home/**/*.spec.js"],
+				},
+			},
 			},
 			{
 				// NDS-906 — the Departmental Needs presentation helpers (plain ES

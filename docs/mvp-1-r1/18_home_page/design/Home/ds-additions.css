@@ -1,0 +1,53 @@
+/* DS-REV-002 proposed additions — workspace fact card, two-line work row, main-column-plus-rail workspace.
+   Proposed with HOME-CHG-001 v0.6 §10B (Option C). Not approved. Reads only existing tokens; sets no Frappe variable. */
+
+/* ── Workspace fact card ── a supplied count, inside the sheet (KT-STD-001 v1.22 §2.6.11 item 3) */
+.kt-fact-card {
+  display: flex; flex-direction: column; gap: 4px; min-width: 0;
+  padding: 16px 20px; background: var(--color-surface);
+  border: 1px solid var(--color-divider); border-radius: var(--radius-lg);
+  color: inherit; text-decoration: none;
+  transition: border-color var(--motion-fast) var(--ease-standard);
+}
+.kt-fact-card:hover { border-color: var(--color-neutral-400); }
+.kt-fact-card:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.kt-fact-card-value { font-size: 34px; line-height: 1.1; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-heading); }
+.kt-fact-card-label { font-size: 14px; color: var(--color-text-muted); }
+.kt-fact-card.is-unavailable .kt-fact-card-value { font-size: 15px; line-height: 37px; color: var(--color-text-muted); }
+.kt-fact-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+
+/* ── Two-line work row ── main column: chip · lead · one action */
+.kt-work-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 4px 14px; align-items: center; padding: 14px 0; }
+.kt-work-row + .kt-work-row { border-top: 1px solid var(--color-divider); }
+.kt-work-row > .kt-icon-chip { color: var(--color-accent-700); }          /* indigo glyph in the main column */
+.kt-work-row-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kt-work-row-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }  /* spacing separates items; no delimiter */
+.kt-work-row-title { font-size: 15px; font-weight: 600; color: var(--color-heading); }
+.kt-work-row-action-text { font-size: 14px; color: var(--color-text); }
+.kt-work-row-quiet { font-size: 13px; color: var(--color-text-muted); }
+.kt-work-row-reason { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; font-weight: 500; }
+.kt-work-row-reason .kt-icon { width: 16px; height: 16px; margin-top: 2px; color: var(--status-attention); }
+.kt-work-row-end { display: flex; justify-content: flex-end; }
+
+/* Rail row: neutral chip, title is the link, one quiet line */
+.kt-rail-row { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px 0; }
+.kt-rail-row + .kt-rail-row { border-top: 1px solid var(--color-divider); }
+.kt-rail-row-title { font-size: 14px; font-weight: 600; }
+.kt-rail-row-state { font-size: 13px; color: var(--color-text); text-wrap: pretty; }
+.kt-rail-row-state .kt-work-row-quiet { margin-left: 8px; white-space: nowrap; }
+
+/* ── Workspace template ── 12 columns in the sheet: header, fact row, main 1–8, rail 9–12 */
+.kt-workspace { container-type: inline-size; }
+.kt-workspace-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 28px 24px; align-items: start; }
+.kt-workspace-head, .kt-workspace-facts { grid-column: 1 / -1; }
+.kt-workspace-main { grid-column: 1 / span 8; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.kt-workspace-rail { grid-column: 9 / span 4; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.kt-workspace-region + .kt-workspace-region { padding-top: 20px; border-top: 1px solid var(--color-divider); }
+.kt-workspace-region > h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 18px; font-weight: 600; color: var(--color-heading); }
+.kt-workspace-rail .kt-workspace-region > h2 { font-size: 15px; }
+.kt-workspace-region > h2 .kt-icon { color: var(--color-text-muted); }
+@container (max-width: 959px) {
+  .kt-workspace-main, .kt-workspace-rail { grid-column: 1 / -1; }
+  .kt-workspace-rail { padding-top: 20px; border-top: 1px solid var(--color-divider); }
+  .kt-fact-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
