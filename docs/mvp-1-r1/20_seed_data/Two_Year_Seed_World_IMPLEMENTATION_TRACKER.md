@@ -3,7 +3,7 @@
 | Control | Value |
 |---|---|
 | Plan | `Two_Year_Seed_World_Implementation_Plan.md` (plan.1) |
-| Status | **In progress** (hold released 5 October 2026). Phases 0–5 built and checked; Phase 6 documentation proposed (owner approval pending); Phase 7 roll-out under way. |
+| Status | **In progress** (hold released 5 October 2026). Phases 0–5 built and checked; Phase 6 documentation proposed (owner approval pending); Phase 7 roll-out done (5 October 2026); SEED-002 approval and the old documents' retirement wait for the owner. |
 | Updated | 5 October 2026 |
 
 ## Rules
@@ -98,7 +98,7 @@
 
 | ID | Work | Status | Evidence |
 |---|---|---|---|
-| SW-0701 | Tell the owner; reseed `kentender.midas.com`; rebuild `kentender-test.local` | On hold | — |
-| SW-0702 | Hand-over note to module sessions (references, as-at instant, test clock) | On hold | — |
-| SW-0703 | Memory updated | On hold | — |
-| SW-0704 | Gate SW-G07 | On hold | — |
+| SW-0701 | Tell the owner; reseed `kentender.midas.com`; rebuild `kentender-test.local` | Done | 5 Oct 2026: dev migrated (Analytics page installed; sidebar exports backed up, the one timestamp-only rewrite of `procurement.json` restored) and rebuilt — `REBUILD=True`, validates, 3 min 38 s, clock 18 Jun 2027 10:00; test site reseeded and validated, same clock; both sites carry identical generated references. Owner told in the closing report. |
+| SW-0702 | Hand-over note to module sessions (references, as-at instant, test clock) | Done | 5 Oct 2026: sent to the Analytics session (ANL8-0701–0712 runnable; binding table location; usage-ordering, T9 task gap, portfolio tags, Julia's term). Home is paused: its notes go through the owner (SW-0408). |
+| SW-0703 | Memory updated | Done | 5 Oct 2026. |
+| SW-0704 | Gate SW-G07 | Done (owner items open) | Rolled out to dev and the test site. Owner-gated and still open: SEED-002 approval (SW-0606), retiring the old documents (SW-0604), the KT-STD-001 correction (SW-0104). |
