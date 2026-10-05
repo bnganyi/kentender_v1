@@ -89,8 +89,33 @@ RESETS = (
 	".kt-industry .btn-ghost:not(.btn-md):not(.btn-lg):not(.btn-xs):not(.btn-sm) {\n\tpadding-inline: var(--space-1);\n}",
 	# Frappe: `a { text-decoration: none }` removed the underline KT-STD-001 v1.22 section 2.4 requires of links.
 	f".kt-industry a{gen.LINK_GUARD} {{\n\ttext-decoration: underline;\n}}",
+	# The pack draws `.kt-page` in a block parent with `margin: 24px auto`. In Desk it is the sole child of `.kt-shell`, a flex column, and a
+	# horizontal auto margin on a stretched flex item cancels the stretch: the sheet shrinks to its content width (a narrow card until a wide
+	# table is opened). Found live 22 Sep 2026 and fixed in the old stylesheet; the switch to the pack dropped the fix (reported 6 Oct 2026,
+	# Needs detail and Award record). `.kt-shell` already centres and caps the column.
+	# The pack's top margin is also dropped: `.kt-shell` already pads 16px under the Desk header, and the two stacked to 36px of empty band above
+	# the sheet on every module built on `.kt-page` (owner, 6 Oct 2026; Strategy and Budget, which draw their sheet without it, sit at 16px).
+	".kt-industry .kt-page {\n\tmargin-inline: 0;\n\tmargin-top: 0;\n}",
 	# Frappe: `svg { vertical-align: middle }` moved inline icons off the baseline the board draws them on.
 	".kt-industry .kt-icon {\n\tvertical-align: baseline;\n}",
+)
+
+#: Table structure (owner, 6 Oct 2026: after the switch a register read as flat). Inside the pack's own rules: no tinted header, no accent rule, no
+#: capitals. The pack's final table rules drew a 1 px header rule; its earlier 2 px rule was too strong, so it is a 1 px neutral-500 rule,
+#: the identifying first column takes the heading weight with its reference beneath it in muted text, and one size for the row action.
+STRUCTURE = (
+	".kt-industry .table thead th {\n\tcolor: var(--color-heading);\n\tborder-bottom: 1px solid var(--color-neutral-500);\n}",
+	".kt-industry .table tbody td:first-child {\n\tfont-weight: 600;\n\tcolor: var(--color-heading);\n}",
+	# The lines under a primary cell's title: the reference, a sub-line, a note. Every screen's own class for them reads the same.
+	",\n".join(f".kt-industry .table tbody td:first-child {c}" for c in (".kt-muted", ".kt-label", ".text-muted", ".tnd-sub", ".bds-tender-ref", ".bds-muted", ".pln-row-ref", ".tsr-muted"))
+	+ " {\n\tfont-weight: 400;\n\tfont-size: 13px;\n\tcolor: var(--color-text-muted);\n}",
+	".kt-industry .table tbody td:first-child .input {\n\tfont-weight: 400;\n}",
+	# One row action: the ghost button the boards draw, one size in every register (the global reset gives it 4 px sides, set for a lone link).
+	".kt-industry .table td .btn-ghost:not(.btn-md):not(.btn-lg):not(.btn-xs):not(.btn-sm) {\n\tpadding: 4px 10px;\n}",
+	".kt-industry .btn-ghost.kt-danger {\n\tcolor: var(--status-critical);\n}",
+	".kt-industry .btn-ghost.kt-danger:hover:not(:disabled) {\n\tbackground: var(--status-critical-bg);\n}",
+	# A link in a table keeps the link colour on a hovered row (the old stylesheet turned it rust; the pack bars rust from links).
+	f".kt-industry .table tbody tr:hover a{gen.LINK_GUARD} {{\n\tcolor: var(--color-accent-900);\n}}",
 )
 
 HEADER = (
@@ -222,6 +247,8 @@ def build() -> str:
 	if space7:
 		parts.append(space7)
 	parts += ["/* Part 4: Frappe Desk rules that outrank the pack's, reset to what the board draws */", *RESETS]
+	parts += ["/* Part 5: table structure inside the pack's rules */", *STRUCTURE]
+	parts += ["/* Part 6: buttons and fields are rectangular and outlined, so they cannot be mistaken for a status pill */", *gen.control_shape(".kt-industry", fields=True)]
 	return HEADER.format(source=source.relative_to(ROOT)) + "\n\n".join(parts) + "\n"
 
 

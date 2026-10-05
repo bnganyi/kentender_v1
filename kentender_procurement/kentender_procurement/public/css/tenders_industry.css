@@ -15,8 +15,9 @@
 }
 
 /* ---------- page frames (artboard max-widths) ---------- */
-.kt-tnd .tnd-page { width: 100%; max-width: 1100px; margin: 0 auto; padding: 32px 0 0; box-sizing: border-box; }
-.kt-tnd .tnd-page--wide { max-width: 1240px; padding-top: 36px; }
+/* No top padding of its own: `.kt-shell` already leaves 16px under the Desk header, like every other module. */
+.kt-tnd .tnd-page { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0; box-sizing: border-box; }
+.kt-tnd .tnd-page--wide { max-width: 1240px; }
 .kt-tnd .tnd-page--narrow { max-width: 900px; }
 .kt-tnd .tnd-page--tight { max-width: 760px; }
 
@@ -181,12 +182,14 @@
 .kt-tnd .tnd-ws-counts .tnd-kpi-btn .kt-kpi-value { grid-area: value; font-size: 24px; }
 .kt-tnd .tnd-ws-counts .tnd-kpi-btn .kt-kpi-icon { grid-area: icon; justify-self: end; }
 .kt-tnd .tnd-ws-counts .tnd-kpi-btn .tnd-kpi-label { grid-area: label; font-size: 11px; line-height: 1.25; letter-spacing: 0.04em; }
-.kt-tnd .tnd-ws-counts .tnd-kpi-btn.is-selected { padding: 9px 11px; }
 @media (max-width: 899px) { .kt-tnd .tnd-ws-counts .tnd-kpi-row { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); } }
-.kt-tnd .tnd-kpi-btn { font: inherit; color: inherit; text-align: left; width: 100%; cursor: pointer; }
-.kt-tnd .tnd-kpi-btn:hover { border-color: var(--color-accent-700); }
+/* The count cards are buttons, so the browser's own button border has to be cleared: the shared flat card (coloured left bar, no outline) no longer sets one. */
+.kt-tnd .tnd-kpi-btn { font: inherit; color: inherit; text-align: left; width: 100%; cursor: pointer; border: 0; }
+.kt-tnd .tnd-kpi-btn:hover { background: var(--color-neutral-100); }
 .kt-tnd .tnd-kpi-btn:focus-visible { outline: 2px solid var(--color-accent-700); outline-offset: 2px; }
-.kt-tnd .tnd-kpi-btn.is-selected { background: var(--color-accent-100); border-color: var(--color-accent-500); border-width: 2px; padding: calc(var(--kt-space-4) - 1px); }
+.kt-tnd .tnd-kpi-btn.is-selected { background: var(--color-accent-100); }
+@media (forced-colors: active) { .kt-tnd .tnd-kpi-btn { border: 1px solid CanvasText; border-left: 4px solid CanvasText; } }
+@media print { .kt-tnd .tnd-kpi-btn { border: 1px solid #000; border-left: 4px solid #000; } }
 .kt-tnd .tnd-kpi-label { font-family: var(--font-heading); font-size: 14px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text); }
 .kt-tnd .tnd-ws-filters { padding: 16px 24px; border-bottom: 1px solid var(--color-divider); display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
 .kt-tnd .tnd-ws-filters .field { margin: 0; }
@@ -197,7 +200,8 @@
 .kt-tnd .tnd-empty { padding: 64px 24px; text-align: center; }
 .kt-tnd .tnd-empty svg { margin-bottom: 12px; }
 .kt-tnd .tnd-empty p { font-size: 14px; color: var(--color-neutral-700); margin: 0 0 16px; }
-.kt-tnd .tnd-table-wrap { overflow-x: auto; }
+/* Inset to the 24 px the card gives its filters and heading, so the header rule and row lines span the table, not the card edge to edge. */
+.kt-tnd .tnd-table-wrap { overflow-x: auto; margin: 0 24px; }
 .kt-tnd .tnd-table-wrap .table { width: 100%; }
 .kt-tnd .tnd-row-purchase { display: flex; align-items: center; gap: 8px; }
 .kt-tnd .tnd-cell-right { text-align: right; }

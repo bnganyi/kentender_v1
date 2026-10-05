@@ -1337,3 +1337,39 @@
 .kt-industry.kt-analytics .kt-icon {
 	vertical-align: baseline;
 }
+
+.kt-industry.kt-analytics {
+	--radius-control: 2px;
+}
+
+.kt-industry.kt-analytics .btn {
+	border-radius: var(--radius-control);
+}
+
+.kt-industry.kt-analytics .btn-secondary {
+	background: var(--color-surface);
+	border-color: var(--color-neutral-600);
+}
+
+.kt-industry.kt-analytics .btn-secondary:hover:not(:disabled) {
+	background: var(--color-neutral-100);
+}
+
+.kt-industry.kt-analytics .btn-secondary:active:not(:disabled) {
+	background: var(--color-neutral-200);
+}
+
+.kt-industry.kt-analytics .btn-secondary:disabled {
+	background: transparent;
+	border-color: var(--color-neutral-300);
+}
+
+.kt-industry.kt-analytics .input,
+.kt-industry.kt-analytics .date-field {
+	border-radius: var(--radius-control);
+	border-color: var(--color-neutral-600);
+}
+
+.kt-industry.kt-analytics .input:hover:not(:disabled):not(:focus-visible) {
+	border-color: var(--color-neutral-700);
+}

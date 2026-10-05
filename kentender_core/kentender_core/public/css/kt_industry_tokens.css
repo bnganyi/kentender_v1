@@ -3299,6 +3299,94 @@
 	text-decoration: underline;
 }
 
+.kt-industry .kt-page {
+	margin-inline: 0;
+	margin-top: 0;
+}
+
 .kt-industry .kt-icon {
 	vertical-align: baseline;
+}
+
+/* Part 5: table structure inside the pack's rules */
+
+.kt-industry .table thead th {
+	color: var(--color-heading);
+	border-bottom: 1px solid var(--color-neutral-500);
+}
+
+.kt-industry .table tbody td:first-child {
+	font-weight: 600;
+	color: var(--color-heading);
+}
+
+.kt-industry .table tbody td:first-child .kt-muted,
+.kt-industry .table tbody td:first-child .kt-label,
+.kt-industry .table tbody td:first-child .text-muted,
+.kt-industry .table tbody td:first-child .tnd-sub,
+.kt-industry .table tbody td:first-child .bds-tender-ref,
+.kt-industry .table tbody td:first-child .bds-muted,
+.kt-industry .table tbody td:first-child .pln-row-ref,
+.kt-industry .table tbody td:first-child .tsr-muted {
+	font-weight: 400;
+	font-size: 13px;
+	color: var(--color-text-muted);
+}
+
+.kt-industry .table tbody td:first-child .input {
+	font-weight: 400;
+}
+
+.kt-industry .table td .btn-ghost:not(.btn-md):not(.btn-lg):not(.btn-xs):not(.btn-sm) {
+	padding: 4px 10px;
+}
+
+.kt-industry .btn-ghost.kt-danger {
+	color: var(--status-critical);
+}
+
+.kt-industry .btn-ghost.kt-danger:hover:not(:disabled) {
+	background: var(--status-critical-bg);
+}
+
+.kt-industry .table tbody tr:hover a:not(.btn):not(.kt-tab):not(.kt-add-child) {
+	color: var(--color-accent-900);
+}
+
+/* Part 6: buttons and fields are rectangular and outlined, so they cannot be mistaken for a status pill */
+
+.kt-industry {
+	--radius-control: 2px;
+}
+
+.kt-industry .btn {
+	border-radius: var(--radius-control);
+}
+
+.kt-industry .btn-secondary {
+	background: var(--color-surface);
+	border-color: var(--color-neutral-600);
+}
+
+.kt-industry .btn-secondary:hover:not(:disabled) {
+	background: var(--color-neutral-100);
+}
+
+.kt-industry .btn-secondary:active:not(:disabled) {
+	background: var(--color-neutral-200);
+}
+
+.kt-industry .btn-secondary:disabled {
+	background: transparent;
+	border-color: var(--color-neutral-300);
+}
+
+.kt-industry .input,
+.kt-industry .date-field {
+	border-radius: var(--radius-control);
+	border-color: var(--color-neutral-600);
+}
+
+.kt-industry .input:hover:not(:disabled):not(:focus-visible) {
+	border-color: var(--color-neutral-700);
 }
