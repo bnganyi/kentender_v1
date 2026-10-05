@@ -24,17 +24,12 @@ kentender_core.industry.mountPageRail = function (el, opts) {
 	opts = opts || {};
 	const state = reactive({
 		trail: opts.trail || [],
-		// CTX-CHG-001 — dormant unless the page opts in, so unconverted pages
-		// never show a switcher whose change they would ignore.
-		showPeSwitcher: !!opts.showPeSwitcher,
 		epoch: 0,
 	});
 	const app = createApp({
 		render() {
 			return h(PageRail, {
 				trail: state.trail,
-				showPeSwitcher: state.showPeSwitcher,
-				onPeChange: opts.onPeChange || null,
 				epoch: state.epoch,
 			});
 		},
