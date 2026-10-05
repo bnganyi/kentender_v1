@@ -381,8 +381,28 @@
         "proposed_filename": "KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_22.md",
         "proposal_status": "Project Owner review",
         "proposed_base_version": "1.21",
-        "proposed_revision": "v1.25 — KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_25.md; not approved; OPEN=True leaves the canonical Tender open for bids (THROUGH=tenders or bid_submission), new §1.3"
+        "proposed_revision": "v1.25 — KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_25.md; not approved; OPEN=True leaves the canonical Tender open for bids (THROUGH=tenders or bid_submission), new §1.3",
+        "proposed_replacement": "SEED-002 v0.1 (proposed, 5 October 2026) replaces SEED-OPS-001 and SEED-001 on approval (Project Owner, 4 October 2026: \"one new document to replace both the fixture document and the runbook\"); v1.25's OPEN=True is retired by it"
       }
+    },
+    {
+      "document_id": "SEED-002",
+      "title": "Canonical Seed World",
+      "version": "0.1",
+      "category": "Fixture standard and operational runbook",
+      "module": "Cross-module",
+      "requirement_status": "Proposed",
+      "approval_date": "",
+      "supersedes": "On approval: SEED-001 (v1.4 approved) and SEED-OPS-001 (v1.24 approved; v1.25 proposed)",
+      "implementation_status": "Implemented",
+      "verification_status": "Pending",
+      "release_status": "Not applicable",
+      "normative": "Yes",
+      "library_file_id": "",
+      "filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_1.md",
+      "scope": "The canonical world — FY 2026/27 carried out (Active plan, laptops Tender and an executed portfolio of eleven more items) and FY 2027/28 prepared, read as at 18 June 2027 10:00 EAT — how to seed it (make seed-canonical CURRENT=/NEXT=) and how a module adds to it; carry-over register of every SEED-001 and SEED-OPS-001 rule.",
+      "dependencies": "Two-year seed world proposal decisions D1–D12 (4 October 2026); KT-STD-001 §8.1–§8.3; KT-STD-001 §8.4/§8.4A correction (Appendix C) owed by the Project Owner",
+      "action": "Project Owner review. Built and validated on kentender-test.local on 5 October 2026 (commit bedf8a5b and later); approval does not establish verification."
     },
     {
       "document_id": "G1-REG-001",
