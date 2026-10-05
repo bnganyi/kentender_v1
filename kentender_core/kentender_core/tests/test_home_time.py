@@ -110,13 +110,38 @@ class TestLongInstants(IntegrationTestCase):
 
 
 class TestTrustedClock(IntegrationTestCase):
-	def test_the_shared_test_clock_wins_when_a_test_world_set_one(self):
-		with patch("kentender_core.services.home_time.test_clock.current_instant", return_value=datetime(2027, 6, 18, 10, 0)):
+	"""Home reads the real site time (owner decision 5 Oct 2026: a greeting set by a seeded 2027 clock is disconcerting to
+	test and demo with). A test site that needs the seeded world's instant turns it on with `kt_home_follow_test_clock`."""
+
+	def test_the_real_site_time_is_used_even_when_a_test_world_set_a_clock(self):
+		with patch("kentender_core.services.home_time.test_clock.current_instant", return_value=datetime(2027, 6, 18, 10, 0)), patch.dict(
+			ht.frappe.conf, {"kt_home_follow_test_clock": 0}
+		):
+			self.assertLess(abs((ht.now() - datetime.now()).total_seconds()), 86400)
+
+	def test_a_site_that_opts_in_follows_the_shared_test_clock(self):
+		with patch("kentender_core.services.home_time.test_clock.current_instant", return_value=datetime(2027, 6, 18, 10, 0)), patch.dict(
+			ht.frappe.conf, {"kt_home_follow_test_clock": 1}
+		):
 			self.assertEqual(ht.now(), datetime(2027, 6, 18, 10, 0))
 
-	def test_the_site_clock_is_used_when_no_test_world_set_one(self):
-		with patch("kentender_core.services.home_time.test_clock.current_instant", return_value=None):
+	def test_an_opted_in_site_with_no_test_clock_still_reads_the_site_time(self):
+		with patch("kentender_core.services.home_time.test_clock.current_instant", return_value=None), patch.dict(ht.frappe.conf, {"kt_home_follow_test_clock": 1}):
 			self.assertLess(abs((ht.now() - datetime.now()).total_seconds()), 86400)
+
+
+class TestFutureInstants(IntegrationTestCase):
+	"""A seeded world dated after the real date: an instant later than the read is never "today", "yesterday" or "2 days ago"."""
+
+	def test_a_future_instant_is_given_by_its_date_not_by_a_relative_word(self):
+		later = datetime(2027, 6, 16, 14, 0)
+		self.assertEqual(ht.entered("Received", later, datetime(2026, 10, 5, 22, 3)), "Received 16 June 2027, 14:00")
+		self.assertEqual(ht.waiting(later, datetime(2026, 10, 5, 22, 3)), "Waiting (since 16 June 2027, 14:00)")
+		self.assertEqual(ht.outstanding(later, datetime(2026, 10, 5, 22, 3)), "Outstanding (since 16 June 2027, 14:00)")
+
+	def test_today_and_the_past_read_as_before(self):
+		self.assertEqual(ht.entered("Received", datetime(2027, 6, 18, 8, 0), NOW), "Received today (18 June, 08:00)")
+		self.assertEqual(ht.waiting(datetime(2027, 6, 18, 8, 0), NOW), "Waiting today (since 18 June, 08:00)")
 
 
 class TestCompleted(IntegrationTestCase):

@@ -365,7 +365,9 @@ def get_strategy_portfolio(
 		row_status = latest["status"] if latest else "No version"
 		if status and row_status != status:
 			continue
-		action = _row_action(p.plan_id, latest) if not approved_only else {"label": "", "route": ""}
+		# An approved-versions reader decides nothing here: the row only opens the plan
+		# (a blank route left a View button that did nothing).
+		action = _row_action(p.plan_id, latest) if not approved_only else {"label": _("View"), "route": plan_route(p.plan_id)}
 		rows.append(
 			{
 				**_plan_dto(p),

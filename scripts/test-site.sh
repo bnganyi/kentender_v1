@@ -89,6 +89,8 @@ for k in ("developer_mode", "server_script_enabled", "kt_bds_clarification_produ
 	if k in dev:
 		test[k] = dev[k]
 test["maintenance_mode"] = 0
+# Home reads the real site time everywhere else; the test site's browser specs read the seeded world at its own instant (HOME-CHG-001 v0.6)
+test["kt_home_follow_test_clock"] = 1
 test.pop("domains", None)
 json.dump(test, open(path, "w"), indent=1)
 PY

@@ -249,8 +249,19 @@ def holds_approved_read_responsibility(user: str) -> bool:
 	return bool(permitted_ou_scopes(user, ROLE_HEAD_OF_USER_DEPARTMENT))
 
 
+def holds_internal_read(user: str) -> bool:
+	"""Strategy is a universally readable module (owner, 5 Oct 2026): any enabled internal (System) user
+	reads the approved plans, with or without a Strategy responsibility. Supplier, bidder and other Website
+	accounts are not internal users and read nothing here."""
+	if not user or user == "Guest":
+		return False
+	row = frappe.db.get_value("User", user, ["enabled", "user_type"], as_dict=True)
+	return bool(row and row.enabled and row.user_type == "System User")
+
+
 def read_scope(user: str) -> str:
-	"""`"full"` for the existing readers, `"approved"` for the approved-versions-only readers, else `""`."""
+	"""`"full"` for the Strategy readers (technical, Auditor, Author, Approver); `"approved"` for every other
+	internal user and for the approved-versions readers; else `""`."""
 	if holds_strategy_read_responsibility(user):
 		return "full"
-	return "approved" if holds_approved_read_responsibility(user) else ""
+	return "approved" if holds_internal_read(user) or holds_approved_read_responsibility(user) else ""

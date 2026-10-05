@@ -63,31 +63,27 @@ test.describe("Strategy access states", () => {
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test("an actor with no Strategy assignment lands on the inline Forbidden state everywhere", async ({ page }) => {
+	test("an actor with no Strategy assignment reads approved plans and nothing else", async ({ page }) => {
+		// Owner, 5 Oct 2026: Strategy is universally readable, approved versions only.
 		const errors = collectConsoleErrors(page);
 		await login(page, NOBODY, PASSWORD);
 		await gotoStrategy(page);
 		await expectScreen(page, "portfolio");
-		const forbidden = page.locator('[data-testid="str-forbidden"]');
-		await expect(forbidden).toContainText("You do not have access to Strategy Alignment.");
-		await expect(forbidden).toContainText("This area needs Strategy Author, Strategy Approver or Auditor responsibility, or Administrator/System Manager technical access.");
-		await expect(forbidden).toContainText("Ask your KenTender administrator to check your access in System setup.");
-		// §3A.1 — no header, filter, content or count is painted alongside the refusal.
-		await expect(page.locator('[data-testid="str-plan-row"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="str-tab-plans"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="str-search"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="str-forbidden"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="str-plan-row"]').first()).toBeVisible();
+		// A reader decides and creates nothing.
 		await expect(page.locator('[data-testid="str-new-plan"]')).toHaveCount(0);
 		await expectNoFrappeModal(page);
-		// §3A.3 — the module stays in navigation and its own route was pushed.
-		await expect(page).toHaveURL(/\/strategy$/);
 		await expect(page.locator("a", { hasText: "Strategy Alignment" }).first()).toBeVisible();
 
-		await gotoStrategy(page, `/plan/${fixture.plan_reference}`);
+		// View opens the plan, read-only.
+		await page.locator('[data-testid="str-row-action"]').first().click();
 		await expectScreen(page, "plan");
-		await expect(page.locator('[data-testid="str-forbidden"]')).toBeVisible();
-		await expect(page.locator('[data-testid="str-plan-title-heading"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="str-forbidden"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="str-update-plan"]')).toHaveCount(0);
 		await expectNoFrappeModal(page);
 
+		// The approval task stays with the people who hold it.
 		await gotoStrategy(page, `/approval/${fixture.version_reference}`);
 		await expectScreen(page, "approval");
 		await expect(page.locator('[data-testid="str-forbidden"]')).toBeVisible();

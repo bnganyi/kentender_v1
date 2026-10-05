@@ -32,10 +32,16 @@ COMPLETED_DAYS = 30
 
 
 def now() -> datetime:
-	"""The trusted read instant: the shared test-environment clock when a test
-	world has set one (the 2027 canonical timeline), else the site clock."""
-	instant = test_clock.current_instant()
-	return get_datetime(instant) if instant else now_datetime()
+	"""The read instant: the real site time.
+
+	Owner decision 5 Oct 2026: a greeting and an "Updated" line set by a seeded 2027 clock are disconcerting to test and
+	demo with, so Home does not follow the shared test clock. A test site whose browser specs read the seeded world at its
+	own instant turns it back on with site_config `kt_home_follow_test_clock`."""
+	if frappe.conf.get("kt_home_follow_test_clock"):
+		instant = test_clock.current_instant()
+		if instant:
+			return get_datetime(instant)
+	return now_datetime()
 
 
 def greeting(at: datetime) -> str:
@@ -99,7 +105,9 @@ def entered(verb: str, value: Any, at: datetime) -> str:
 	the owner's own word (Received, Submitted)."""
 	ago = -_days(value, at)
 	exact = _exact(value, at)
-	if ago <= 0:
+	if ago < 0:  # later than the read (a seeded world dated ahead of the real date): never "today"
+		return _("{0} {1}").format(verb, exact)
+	if ago == 0:
 		return _("{0} today ({1})").format(verb, exact)
 	if ago == 1:
 		return _("{0} yesterday ({1})").format(verb, exact)
@@ -112,8 +120,10 @@ def stated(label: str, value: Any, at: datetime) -> str:
 
 
 def _since(word: str, value: Any, at: datetime) -> str:
-	ago = max(-_days(value, at), 0)
+	ago = -_days(value, at)
 	exact = _exact(value, at)
+	if ago < 0:
+		return _("{0} (since {1})").format(word, exact)
 	if ago == 0:
 		return _("{0} today (since {1})").format(word, exact)
 	return _("{0} {1} (since {2})").format(word, _plural_days(ago), exact)

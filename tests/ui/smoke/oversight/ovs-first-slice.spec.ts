@@ -222,3 +222,22 @@ test.describe("CTX v1.1: no route asks for a Procuring Entity", () => {
 		await expect(page.locator('[data-testid="kt-rail-pe"], [data-testid="kt-rail-pe-select"]')).toHaveCount(0);
 	});
 });
+
+test.describe("Strategic plans for the readers of approved Strategy", () => {
+	test("a Head of User Department opens an approved plan with View", async ({ page }) => {
+		// UAT: the list drew a View button for this reader but the row had no route, so it did nothing.
+		await login(page, PETER, PASSWORD);
+		await gotoDesk(page, "strategy");
+		const view = page.locator('[data-testid="str-row-action"]').first();
+		await expect(view).toBeVisible({ timeout: 60_000 });
+		await expect(view).toHaveText("View");
+		await view.click();
+		await expect(page).toHaveURL(/\/desk\/strategy\/plan\/[^/]+/);
+		const shell = page.locator('[data-testid="str-shell"]');
+		await expect(shell).toHaveAttribute("data-screen", "plan", { timeout: 30_000 });
+		await expect(page.locator('[data-testid="str-plan"]')).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
+		// A reader decides nothing: no way to update or submit the plan.
+		await expect(page.locator('[data-testid="str-update-plan"]')).toHaveCount(0);
+	});
+});
+
