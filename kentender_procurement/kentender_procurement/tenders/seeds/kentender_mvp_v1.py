@@ -458,6 +458,7 @@ TENDER_STOPS = {
 	"approved": "Approved",
 	"published": OPEN_STATUS,
 	"cancellation_recommended": OPEN_STATUS,
+	"cancellation_review": OPEN_STATUS,
 	"cancelled": "Cancelled",
 	"closed": CLOSED_STATUS,
 }
@@ -488,15 +489,21 @@ def build_tender(story: dict[str, Any], *, interleave=None) -> dict[str, Any]:
 	- "cancellation_recommended" / "cancelled": published, then Charles
 	  recommends cancellation and (cancelled) Amina decides it, with the
 	  compliance evidence the story lists recorded;
+	- "cancellation_review": published, then Brian drafts an addendum that
+	  raises a goods line's quantity — a material change no addendum may
+	  issue — and asks Amina to consider cancellation (TPR-CHG-001 v0.17
+	  §5.11: the only route that gives her a "Consider cancellation" item;
+	  a recommendation is optional and opens none);
 	- "closed": the submission period ended at the deadline.
 
 	`story` keys: key, requisition (its root name), values (officer values
 	over `officer_values()`), clock, stop, and per stop return_reason,
-	cancellation_reason, evidence (obligation ids to evidence). `interleave(step,
+	cancellation_reason, evidence (obligation ids to evidence), review
+	(increase, addendum_reason, review_reason). `interleave(step,
 	tender=…, tender_reference=…)` acts at "published", "before_close" and
 	"closed". Idempotent: a Tender already at its stop is returned untouched."""
 	from kentender_core.seeds import clock as core_clock
-	from kentender_procurement.tenders.services import cancellation, draft_commands as cmd, lifecycle, publication, submission_close
+	from kentender_procurement.tenders.services import addenda, cancellation, draft_commands as cmd, lifecycle, publication, submission_close
 
 	_guard()
 	key, stop, clock_map = story["key"], story["stop"], story["clock"]
@@ -507,6 +514,9 @@ def build_tender(story: dict[str, Any], *, interleave=None) -> dict[str, Any]:
 	if existing:
 		if existing.overall_status != TENDER_STOPS[stop]:
 			frappe.throw(f"The portfolio Tender {existing.name} ({key}) is {existing.overall_status!r}, not {TENDER_STOPS[stop]!r}: rebuild the canonical world.", exc=CanonicalTenderNeedsRebuild)
+		# An open Tender told to another stop (before 5 Oct 2026 the field laptops were a recommendation) cannot be retold in place.
+		if stop == "cancellation_review" and not frappe.db.exists("Tender Task", {"tender": existing.name, "task_type": "AO cancellation review"}):
+			frappe.throw(f"The portfolio Tender {existing.name} ({key}) has no cancellation review: rebuild the canonical world.", exc=CanonicalTenderNeedsRebuild)
 		return {"ok": True, "idempotent": True, "tender": existing.name, "tender_reference": existing.tender_reference}
 	handoff = frappe.db.get_value("Authorised Requisition Handoff", {"requisition": requisition, "consumed_at": ("is", "not set")}, "name")
 	if not handoff:
@@ -571,6 +581,29 @@ def build_tender(story: dict[str, Any], *, interleave=None) -> dict[str, Any]:
 			root.reload()
 		step_callback("published")
 		root.reload()
+		if stop == "cancellation_review":
+			review = story["review"]
+			line = next(r for r in addenda.affected_references(root) if r["key"].startswith("goods:") and r["material"])
+			quantity, unit = line["value"].split(" ", 1)
+			at("addendum")
+			with _as(OFFICER), core_clock.at(clock_map["addendum"]):
+				draft = addenda.create_addendum_draft(tender=name, expected_record_version=root.record_version, idempotency_key=k("addendum"))["addendum"]["name"]
+				root.reload()
+				saved = addenda.update_addendum_draft(
+					tender=name, addendum=draft, expected_record_version=root.record_version, idempotency_key=k("addendum-save"),
+					values={
+						"change_class": "Administrative clarification", "affected_area": "Goods/delivery schedule", "affected_reference_key": line["key"],
+						"revised_value": f"{int(float(quantity.replace(',', ''))) + review['increase']} {unit}", "reason": review["addendum_reason"],
+						"materiality_statement": "", "revised_submission_deadline": None,
+					},
+				)
+				if not saved.get("ok", True):
+					frappe.throw(f"Tenders seed ({key}): addendum draft refused {saved.get('errors')}")
+			root.reload()
+			at("review")
+			with _as(OFFICER), core_clock.at(clock_map["review"]):
+				addenda.request_tender_cancellation_review(tender=name, addendum=draft, reason=review["review_reason"], expected_record_version=root.record_version, idempotency_key=k("cancellation-review"))
+			return {"ok": True, "idempotent": False, "tender": name, "tender_reference": root.tender_reference, "interleaved": interleaved}
 		if stop in ("cancellation_recommended", "cancelled"):
 			at("recommend_cancellation")
 			with _as(HOPF), core_clock.at(clock_map["recommend_cancellation"]):

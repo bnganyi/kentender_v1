@@ -640,3 +640,35 @@ class TestPublicTenders(IntegrationTestCase):
 			self.assertIn(tender, [r["reference"] for r in reads.get_available_tenders()["rows"]])
 		finally:
 			frappe.set_user("Administrator")
+
+
+class TestFieldLaptopsCancellationReview(IntegrationTestCase):
+	"""HOME-CHG-001 v0.6 H1/H12 and TPR-CHG-001 v0.17 §5.11: Supply of field
+	laptops waits on the Accounting Officer to consider cancellation. That
+	work item exists only on the material-addendum route (a quantity change no
+	addendum may issue, sent by the Procurement Officer); a Head of
+	Procurement recommendation is optional and opens none (found 5 Oct 2026:
+	the seed used the recommendation, so Amina had nothing to do)."""
+
+	def test_amina_holds_consider_cancellation_and_brian_waits(self):
+		from kentender_core.services.my_work import get_my_work
+
+		_full()
+		from kentender_core.seeds import portfolio
+
+		reference = next(r["tender"] for r in portfolio.binding_rows() if r["ref"] == "T9")
+		tender = frappe.db.get_value("Tender", {"tender_reference": reference}, ["name", "tender_reference"], as_dict=True) if reference else None
+		self.assertTrue(tender, "the field laptops Tender exists")
+		task = frappe.db.get_value("Tender Task", {"tender": tender.name, "task_type": "AO cancellation review", "status": "Open"}, ["sender", "creation"], as_dict=True)
+		self.assertTrue(task, "an open cancellation review on the field laptops Tender")
+		self.assertEqual(task.sender, "brian.wafula@moh.example.test")
+		self.assertEqual(str(task.creation)[:19], "2027-06-16 14:00:00")
+		try:
+			frappe.set_user("amina.hassan@moh.example.test")
+			mine = [r["title"] for r in get_my_work()["buckets"].get("assigned", [])]
+			frappe.set_user("brian.wafula@moh.example.test")
+			waiting = [r["title"] for r in get_my_work()["buckets"].get("waiting", [])]
+		finally:
+			frappe.set_user("Administrator")
+		self.assertIn(f"Consider cancellation of {tender.tender_reference}", mine)
+		self.assertIn(f"Waiting for Amina Hassan to consider cancellation of {tender.tender_reference}", waiting)

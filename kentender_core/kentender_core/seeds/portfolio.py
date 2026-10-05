@@ -250,10 +250,16 @@ PORTFOLIO: tuple[dict[str, Any], ...] = (
 		"uses": {DHI: "County digital health officers in the field"},
 		"requisition": {"stop": "authorised", "clock": _req_clock("2027-04-05", "2027-04-07 09:00:00", "2027-04-12 11:00:00")},
 		"tender": {
-			"stop": "cancellation_recommended",
-			"clock": _tender_clock("2027-04-13 10:00:00", "2027-04-13 15:00:00", "2027-04-27 10:00:00", "2027-05-10", "2027-06-21 11:00:00", recommend_cancellation="2027-06-16 14:00:00"),
+			# HOME-CHG-001 v0.6 H1/H12: Brian waits on Amina to consider cancellation from 16 Jun 14:00 — the
+			# material-addendum route (TPR-CHG-001 v0.17 §5.11), the only one that gives her that work item.
+			"stop": "cancellation_review",
+			"clock": _tender_clock("2027-04-13 10:00:00", "2027-04-13 15:00:00", "2027-04-27 10:00:00", "2027-05-10", "2027-06-21 11:00:00", addendum="2027-06-16 11:00:00", review="2027-06-16 14:00:00"),
 			"values": _values("Supply of field laptops", "2027-05-10", "2027-06-21 11:00:00", 140_000),
-			"cancellation_reason": CANCELLATION_REASON,
+			"review": {
+				"increase": 20,
+				"addendum_reason": "Additional county deployment sites require 20 more field laptops",
+				"review_reason": "Additional county deployment sites require 20 more field laptops; an addendum cannot increase the quantity, so please consider cancellation.",
+			},
 		},
 	},
 	{
@@ -420,6 +426,8 @@ def expected_state(spec: dict[str, Any], current: str) -> dict[str, Any]:
 	out: dict[str, Any] = {"requisition": REQUISITION_STOPS[spec["requisition"]["stop"]] if _reaches("requisitions", current) else None}
 	if spec.get("tender") and _reaches("tenders", current):
 		out["tender"] = TENDER_STOPS[spec["tender"]["stop"]]
+		if spec["tender"]["stop"] == "cancellation_review":
+			out["cancellation_review"] = True
 		if spec.get("bids"):
 			out["bids"] = len(spec["bids"]) if _reaches("bid_submission", current) else 0
 			out["opening"] = "Opening complete" if _reaches("bid_opening", current) else None
@@ -455,6 +463,9 @@ def validate_portfolio(*, current: str) -> list[dict[str, Any]]:
 		check(bool(tender) and tender.overall_status == want["tender"], f"{spec['ref']} Tender {want['tender']} (got {tender and tender.overall_status})")
 		if not tender:
 			continue
+		if want.get("cancellation_review"):
+			sender = frappe.db.get_value("Tender Task", {"tender": tender.name, "task_type": "AO cancellation review", "status": "Open"}, "sender")
+			check(sender == "brian.wafula@moh.example.test", f"{spec['ref']} waits on the Accounting Officer to consider cancellation, sent by Brian Wafula (got {sender})")
 		if "bids" in want:
 			submitted = frappe.db.count("Bid Workspace", {"tender": tender.name, "status": "Submitted"})
 			check(submitted == want["bids"], f"{spec['ref']} {want['bids']} submitted bids (got {submitted})")

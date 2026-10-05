@@ -128,7 +128,7 @@ Every record below is built through the owning module's real commands by the nam
 | T6 | Medical-grade tablets — Authorised 20 Apr | Supply of medical-grade tablets (24 May – **25 Jun 2027 11:00**) | Open for bids; four candidate Draft bids; six supplier clarifications received 2–17 Jun, unanswered; opening committee appointed 15 Jun | Answer the clarifications — Brian Wafula; Start opening on 25 Jun — Charles Mutiso |
 | T7 | UPS units — Authorised 10 May | Supply of UPS units | Submitted 8 Jun; approved by Charles Mutiso 16 Jun 15:30 | Authorise publication — Amina Hassan |
 | T8 | Wireless access points (both departments) — Authorised 15 Mar | Supply of wireless access points | Submitted 14 Jun; returned 16 Jun 09:00: "State the warranty period required from suppliers." | Correct and resubmit — Brian Wafula |
-| T9 | Field laptops — Authorised 12 Apr | Supply of field laptops (10 May – 21 Jun) | Cancellation recommended by Charles Mutiso 16 Jun 14:00 (the need has ceased) | Consider cancellation — Amina Hassan |
+| T9 | Field laptops — Authorised 12 Apr | Supply of field laptops (10 May – 21 Jun) | Brian Wafula drafts an addendum adding 20 laptops on 16 Jun 11:00 — a quantity change no addendum may issue — and asks Amina Hassan to consider cancellation at 14:00 (TPR-CHG-001 v0.17 §5.11; earlier draft of this row read: "Cancellation recommended by Charles Mutiso 16 Jun 14:00", which gives no work item) | Consider cancellation — Amina Hassan; Brian waits |
 | T10 | Desktop computers — Authorised 22 Mar | Supply of desktop computers (26 Apr – 28 Jun) | Recommended 14 Jun; cancelled by Amina Hassan 15 Jun 12:00 | Record the cancellation compliance evidence (notices, PPRA report, candidate notice; due within 14 days) — Brian Wafula |
 | T11 | Core network routers — Authorised 15 Mar | Supply of core network routers (12 Apr – 30 Jun) | Recommended 14 Jun; cancelled 16 Jun 12:00; all six obligations evidenced 16 Jun 14:00–15:30 | None |
 | — | Clinic desktop computers — **Submitted to Procurement** 16 Jun 11:00 | — | Awaiting authorisation | Authorise requisition — Charles Mutiso |
@@ -440,7 +440,7 @@ Generated 5 October 2026 from a full seed (`CURRENT=award NEXT=annual_plan`), re
 
 Notes:
 
-- T9's "Consider cancellation" (Amina Hassan) is not on her work list. The recommendation is recorded and the Tender shows it, but Tenders' direct recommendation command opens no Accounting Officer task; only the addendum route opens one. This is a Tenders module gap found while checking the binding, not a seed fault. It is reported to the Project Owner.
+- T9 is told through the material-addendum route, the only one TPR-CHG-001 v0.17 §5.11 gives a "Consider cancellation" work item; a Head of Procurement recommendation is optional and opens none (the first generation of this table used the recommendation, so the item was missing — corrected 5 October 2026). Amina Hassan holds **Consider cancellation of TND-MOH-2026-006**; Brian Wafula waits on her. New fixture content for review: the 20-laptop increase and its reason.
 - FY 2027/28 has no executed records: its budget, needs, departmental plans and Annual Plan (PLN-MOH-2027-001) are listed in Part A.
 
 
