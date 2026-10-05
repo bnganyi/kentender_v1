@@ -135,8 +135,8 @@ describe("NextStep", () => {
 		expect(block.get(".kt-next-step-block-headline").text()).toBe("Over budget by KES 2,000,000 on Digital health workforce development");
 		const buttons = block.findAll("button");
 		expect(buttons.map((b) => b.text())).toEqual(["Request budget revision from Josphat Mwangi", "Reduce a purchase"]);
-		expect(buttons[0].classes()).toContain("kt-btn-primary");
-		expect(buttons[1].classes()).toContain("kt-btn-secondary");
+		expect(buttons[0].classes()).toContain("btn-primary");
+		expect(buttons[1].classes()).toContain("btn-secondary");
 		await buttons[0].trigger("click");
 		expect(w.emitted("fix")[0][0].fix_id).toBe("request_budget_revision");
 		expect(mount(NextStep, { props: { answer: OVER, placement: "head" } }).find("[data-kt=next-step]").exists()).toBe(false);

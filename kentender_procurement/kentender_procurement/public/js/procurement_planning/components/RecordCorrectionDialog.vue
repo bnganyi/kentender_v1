@@ -7,9 +7,9 @@
      editable: the plan was corrected elsewhere, and this only records that
      it was. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="cor-complete-dialog">
-		<div class="kt-dialog" role="dialog" aria-modal="true" aria-labelledby="cor-complete-title">
-			<div id="cor-complete-title" class="kt-dialog-title">Record correction completed</div>
+	<div class="dialog-backdrop" data-testid="cor-complete-dialog">
+		<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="cor-complete-title">
+			<div id="cor-complete-title" class="dialog-title">Record correction completed</div>
 			<p class="pln-dialog-lede">{{ request.change_required }}</p>
 			<div class="kt-meta-row">
 				<div>
@@ -35,11 +35,11 @@
 				This resolves only this request. Any other unresolved request keeps the purchase on hold.
 			</p>
 			<p v-if="error" class="pln-dialog-error" role="alert">{{ error }}</p>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">Cancel</button>
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" :disabled="pending" @click="$emit('cancel')">Cancel</button>
 				<button
 					type="button"
-					class="kt-btn kt-btn-primary"
+					class="btn btn-primary"
 					data-testid="cor-complete-confirm"
 					:disabled="pending"
 					@click="$emit('confirm')"

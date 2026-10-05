@@ -18,7 +18,7 @@
 						<div class="req-work-title">{{ row.title }}</div>
 						<div v-if="row.detail" class="kt-muted req-work-detail">{{ row.detail }}</div>
 					</div>
-					<button type="button" class="kt-btn kt-btn-primary" @click="ctx.goPath(row.route)">{{ row.action }}</button>
+					<button type="button" class="btn btn-primary" @click="ctx.goPath(row.route)">{{ row.action }}</button>
 				</div>
 			</section>
 
@@ -26,7 +26,7 @@
 				<CardTitle title="Ready to start" icon="inbox" />
 				<template v-if="readyRows.length">
 					<div class="req-has-cards" style="margin-bottom: var(--kt-space-8)">
-						<table class="kt-table">
+						<table class="table">
 							<thead>
 								<tr><th>Approved purchase</th><th>Departments</th><th>Still available</th><th>Needed by</th><th style="white-space: nowrap">Action</th></tr>
 							</thead>
@@ -36,7 +36,7 @@
 									<td>{{ row.departments }}</td>
 									<td>{{ row.available_quantity }}<div class="kt-label">{{ row.available_value }}</div></td>
 									<td>{{ row.needed_by }}</td>
-									<td><button type="button" class="kt-btn kt-btn-primary" data-testid="req-start" @click="ctx.goPath(row.route)">Start requisition</button></td>
+									<td><button type="button" class="btn btn-primary" data-testid="req-start" @click="ctx.goPath(row.route)">Start requisition</button></td>
 								</tr>
 							</tbody>
 						</table>
@@ -49,7 +49,7 @@
 									<dt class="kt-label">Still available</dt><dd>{{ row.available_quantity }} · {{ row.available_value }}</dd>
 									<dt class="kt-label">Needed by</dt><dd>{{ row.needed_by }}</dd>
 								</dl>
-								<div style="margin-top: 12px"><button type="button" class="kt-btn kt-btn-primary req-btn-block" @click="ctx.goPath(row.route)">Start requisition</button></div>
+								<div style="margin-top: 12px"><button type="button" class="btn btn-primary req-btn-block" @click="ctx.goPath(row.route)">Start requisition</button></div>
 							</div>
 						</div>
 					</div>
@@ -61,7 +61,7 @@
 						<p style="font-size: 14px; margin: 6px 0 0">{{ row.existing.summary }}</p>
 					</div>
 					<div class="req-actions" style="margin-top: var(--kt-space-4)">
-						<button type="button" class="kt-btn kt-btn-primary" @click="ctx.goPath(row.existing.route)">Open existing requisition</button>
+						<button type="button" class="btn btn-primary" @click="ctx.goPath(row.existing.route)">Open existing requisition</button>
 					</div>
 				</div>
 				<div v-if="!readyRows.length && !existingRows.length" class="req-empty" data-testid="req-ready-none">
@@ -81,7 +81,7 @@
 			</div>
 			<div class="req-filters" :class="{ 'is-technical': technical }">
 				<input
-					class="kt-input"
+					class="input"
 					type="search"
 					aria-label="Search by requisition or purchase"
 					placeholder="Search by requisition or purchase"
@@ -89,22 +89,22 @@
 					data-testid="req-filter-search"
 					@input="onSearch($event.target.value)"
 				/>
-				<select class="kt-input" aria-label="Status" :value="filters.status" data-testid="req-filter-status" @change="$emit('filters', { status: $event.target.value })">
+				<select class="input" aria-label="Status" :value="filters.status" data-testid="req-filter-status" @change="$emit('filters', { status: $event.target.value })">
 					<option value="">All statuses</option>
 					<option v-for="o in options.statuses || []" :key="o.value" :value="o.value">{{ o.label }}</option>
 				</select>
-				<select class="kt-input" aria-label="Department" :value="filters.department" data-testid="req-filter-department" @change="$emit('filters', { department: $event.target.value })">
+				<select class="input" aria-label="Department" :value="filters.department" data-testid="req-filter-department" @change="$emit('filters', { department: $event.target.value })">
 					<option value="">{{ workspace.department_filter_label || "All my departments" }}</option>
 					<option v-for="o in options.departments || []" :key="o.value" :value="o.value">{{ o.label }}</option>
 				</select>
-				<select v-if="technical" class="kt-input" aria-label="Financial year" :value="filters.fiscal_year" data-testid="req-filter-fiscal-year" @change="$emit('filters', { fiscal_year: $event.target.value })">
+				<select v-if="technical" class="input" aria-label="Financial year" :value="filters.fiscal_year" data-testid="req-filter-fiscal-year" @change="$emit('filters', { fiscal_year: $event.target.value })">
 					<option value="">All financial years</option>
 					<option v-for="o in options.fiscal_years || []" :key="o.value" :value="o.value">{{ o.label }}</option>
 				</select>
-				<button v-else type="button" class="kt-btn kt-btn-ghost" data-testid="req-clear-filters" @click="clearFilters">Clear filters</button>
+				<button v-else type="button" class="btn btn-ghost" data-testid="req-clear-filters" @click="clearFilters">Clear filters</button>
 			</div>
 			<div v-if="register.length" class="req-has-cards">
-				<table class="kt-table" data-testid="req-register-table">
+				<table class="table" data-testid="req-register-table">
 					<thead>
 						<tr>
 							<th>Requisition</th><th>Approved purchase</th><th v-if="technical">Departments</th><th>Status</th><th>Updated</th>

@@ -24,7 +24,7 @@ describe("WorkspaceScreen — TPR-DES-01", () => {
 		expect(row.text()).toContain("Draft — Tender details need attention");
 		const action = row.find('[data-testid="tnd-action-continue"]');
 		expect(action.text()).toBe("Continue");
-		expect(action.classes()).toContain("kt-btn-primary");
+		expect(action.classes()).toContain("btn-primary");
 		await action.trigger("click");
 		expect(w.emitted("navigate")[0][0]).toEqual(["tenders", "TND-MOH-2027-033", "details"]);
 	});
@@ -56,7 +56,7 @@ describe("WorkspaceScreen — TPR-DES-01", () => {
 	it("shows no count cards for a reader and a secondary View action", () => {
 		const w = make({ workspace: { ...WS, counts: [], rows: [{ ...ROW, status_key: "published", status_label: "Published — open", action_key: "view", action_label: "View" }] } });
 		expect(w.find('[data-testid="tnd-counts"]').exists()).toBe(false);
-		expect(w.find('[data-testid="tnd-action-view"]').classes()).toContain("kt-btn-secondary");
+		expect(w.find('[data-testid="tnd-action-view"]').classes()).toContain("btn-secondary");
 		expect(w.find('[data-testid="tnd-row-published"] .kt-status').classes()).toContain("is-live");
 	});
 

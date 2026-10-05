@@ -30,7 +30,7 @@ describe("WorkspaceScreen (REQ-DES-01)", () => {
 	it("ACTION: the exact decision leads with Review, and only a non-zero Approvals label annotates the register", () => {
 		const { global } = context();
 		const w = mount(WorkspaceScreen, { props: { workspace: workspace("ACTION"), filters: FILTERS }, global });
-		expect(w.find('[data-testid="req-work-row"] .kt-btn').text()).toBe("Review");
+		expect(w.find('[data-testid="req-work-row"] .btn').text()).toBe("Review");
 		expect(w.find('[data-testid="req-count-approvals"]').text()).toBe("Approvals 1");
 		const draft = mount(WorkspaceScreen, { props: { workspace: workspace("DRAFT"), filters: FILTERS }, global });
 		expect(draft.find('[data-testid="req-count-approvals"]').exists()).toBe(false);
@@ -46,7 +46,7 @@ describe("WorkspaceScreen (REQ-DES-01)", () => {
 	it("TECHNICAL: four filters, the site-wide register and no business action", () => {
 		const { global } = context();
 		const w = mount(WorkspaceScreen, { props: { workspace: workspace("TECHNICAL"), filters: FILTERS }, global });
-		expect(w.findAll(".req-filters .kt-input")).toHaveLength(4);
+		expect(w.findAll(".req-filters .input")).toHaveLength(4);
 		expect(w.find('[data-testid="req-clear-filters"]').exists()).toBe(false);
 		expect(w.text()).not.toMatch(/Your work|Ready to start|Start requisition|Continue/);
 		expect(w.find('[data-testid="req-filter-fiscal-year"]').text()).toContain("FY 2027/28");

@@ -5,18 +5,18 @@
 <template>
 	<div data-testid="stdt-coverage-details">
 		<div class="kt-filter-bar" role="search">
-			<div class="kt-field is-wide"><label for="stdt-cq">Search source rows</label><input id="stdt-cq" v-model="draft" class="kt-input" type="search" data-testid="stdt-coverage-search" @keydown.enter.prevent="apply" /></div>
-			<div class="kt-field"><label for="stdt-ct">Treatment</label>
-				<select id="stdt-ct" :value="treatment" class="kt-input" data-testid="stdt-coverage-treatment" @change="(e) => emitHash({ ct: e.target.value, cp: '' })">
+			<div class="field is-wide"><label for="stdt-cq">Search source rows</label><input id="stdt-cq" v-model="draft" class="input" type="search" data-testid="stdt-coverage-search" @keydown.enter.prevent="apply" /></div>
+			<div class="field"><label for="stdt-ct">Treatment</label>
+				<select id="stdt-ct" :value="treatment" class="input" data-testid="stdt-coverage-treatment" @change="(e) => emitHash({ ct: e.target.value, cp: '' })">
 					<option value="">All treatments</option>
 					<option v-for="t in treatments" :key="t" :value="t">{{ t }}</option>
 				</select>
 			</div>
 			<div></div>
 		</div>
-		<div v-if="failed" class="kt-notice is-critical" role="alert"><div class="kt-notice-body"><strong>Coverage details could not be loaded. Try again.</strong></div><button type="button" class="kt-btn kt-btn-secondary" @click="load">Try again</button></div>
+		<div v-if="failed" class="kt-notice is-critical" role="alert"><div class="kt-notice-body"><strong>Coverage details could not be loaded. Try again.</strong></div><button type="button" class="btn btn-secondary" @click="load">Try again</button></div>
 		<p v-else-if="!loading && !rows.length" style="margin: 0; font-size: 14px">No source rows match these filters.</p>
-		<table v-else class="kt-table stdt-sub-table" style="width: 100%" :aria-busy="loading ? 'true' : 'false'">
+		<table v-else class="table stdt-sub-table" style="width: 100%" :aria-busy="loading ? 'true' : 'false'">
 			<thead><tr><th style="text-transform: none; letter-spacing: 0">Source locator</th><th style="text-transform: none; letter-spacing: 0">Title</th><th style="text-transform: none; letter-spacing: 0">Treatment</th><th style="text-transform: none; letter-spacing: 0">Output anchor</th><th style="text-transform: none; letter-spacing: 0">Reason</th></tr></thead>
 			<tbody>
 				<tr v-for="r in rows" :key="r.coverage_id" :data-testid="`stdt-coverage-row-${r.coverage_id}`">
@@ -30,8 +30,8 @@
 		</table>
 		<div v-if="pages > 1" class="stdt-pager" data-testid="stdt-coverage-pager">
 			<span style="font-size: 13px">Page {{ page }} of {{ pages }} · {{ total }} rows</span>
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="page <= 1" @click="emitHash({ cp: String(page - 1) })">Previous</button>
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="page >= pages" @click="emitHash({ cp: String(page + 1) })">Next</button>
+			<button type="button" class="btn btn-secondary" :disabled="page <= 1" @click="emitHash({ cp: String(page - 1) })">Previous</button>
+			<button type="button" class="btn btn-secondary" :disabled="page >= pages" @click="emitHash({ cp: String(page + 1) })">Next</button>
 		</div>
 	</div>
 </template>

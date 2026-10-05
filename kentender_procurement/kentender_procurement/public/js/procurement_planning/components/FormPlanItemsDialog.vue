@@ -12,9 +12,9 @@
      a readiness blocker in the purchase editor. There is no partial quantity
      control and no implicit combining. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="pln-form-dialog">
-		<div class="kt-dialog pln-form-dialog" role="dialog" aria-modal="true" aria-labelledby="pln-form-title">
-			<div id="pln-form-title" class="kt-dialog-title" data-testid="pln-form-title">How should these requirements be added?</div>
+	<div class="dialog-backdrop" data-testid="pln-form-dialog">
+		<div class="dialog pln-form-dialog" role="dialog" aria-modal="true" aria-labelledby="pln-form-title">
+			<div id="pln-form-title" class="dialog-title" data-testid="pln-form-title">How should these requirements be added?</div>
 
 			<!-- U08-DUPLICATE/INCOMPLETE — a named source and its concrete
 			     problem, above the choice. There is nothing to add, so nothing
@@ -27,7 +27,7 @@
 			</div>
 
 			<template v-else>
-				<table class="kt-table" data-testid="pln-form-sources">
+				<table class="table" data-testid="pln-form-sources">
 					<thead>
 						<tr>
 							<th>Requirement</th><th>Department</th>
@@ -78,20 +78,20 @@
 				</div>
 
 				<template v-if="effectiveMode === 'combined'">
-					<div class="kt-field">
+					<div class="field">
 						<label for="pln-form-reason" class="kt-label">Reason for combining</label>
 						<textarea
 							id="pln-form-reason"
-							class="kt-input"
+							class="input"
 							rows="3"
 							data-testid="pln-form-reason"
 							v-model="reason"
 						></textarea>
 						<div class="kt-field-hint">20–500 characters.</div>
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="pln-form-title-input" class="kt-label">Purchase title</label>
-						<input id="pln-form-title-input" class="kt-input" data-testid="pln-form-title-input" v-model="combinedTitle">
+						<input id="pln-form-title-input" class="input" data-testid="pln-form-title-input" v-model="combinedTitle">
 					</div>
 				</template>
 
@@ -119,7 +119,7 @@
 					</div>
 					<!-- Keeping them separate produces one purchase per source,
 					     each with its own scope; the rows say so. -->
-					<table v-if="effectiveMode === 'each'" class="kt-table" data-testid="pln-form-preview-rows">
+					<table v-if="effectiveMode === 'each'" class="table" data-testid="pln-form-preview-rows">
 						<thead>
 							<tr>
 								<th>Purchase</th>
@@ -142,12 +142,12 @@
 
 			<p v-if="error" class="pln-dialog-error" role="alert" data-testid="pln-form-error">{{ error }}</p>
 
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">Cancel</button>
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" :disabled="pending" @click="$emit('cancel')">Cancel</button>
 				<button
 					v-if="!blocked"
 					type="button"
-					class="kt-btn kt-btn-primary"
+					class="btn btn-primary"
 					data-testid="pln-form-confirm"
 					:disabled="pending || !canAdd"
 					@click="confirm"

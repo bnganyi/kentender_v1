@@ -6,7 +6,7 @@ import NotProceedDialog from "./NotProceedDialog.vue";
 describe("NotProceedDialog", () => {
 	it("renders the exact frame copy and starts with an empty reason", () => {
 		const wrapper = mount(NotProceedDialog, { props: { pending: false, error: "" } });
-		expect(wrapper.get(".kt-dialog-title").text()).toBe("Exclude from this year's departmental plan");
+		expect(wrapper.get(".dialog-title").text()).toBe("Exclude from this year's departmental plan");
 		expect(wrapper.get('[data-testid="pln-not-proceed-reason"]').element.value).toBe("");
 	});
 

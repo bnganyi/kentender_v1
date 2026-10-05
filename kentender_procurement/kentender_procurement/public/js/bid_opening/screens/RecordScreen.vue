@@ -13,12 +13,12 @@
 			<RegisterTable :rows="register" empty-text="Empty register. There were no current bids." />
 			<SessionTable :rows="chronology" title="What happened" />
 			<div class="kt-region is-secondary"><h2>Attendance</h2>
-				<table class="kt-table" data-testid="bop-attendance"><thead><tr><th>Name</th><th>Attended as</th><th>Joined</th><th>Left</th></tr></thead><tbody>
+				<table class="table" data-testid="bop-attendance"><thead><tr><th>Name</th><th>Attended as</th><th>Joined</th><th>Left</th></tr></thead><tbody>
 					<tr v-for="(a, i) in data.attendees || []" :key="i"><td>{{ a.person_name }}</td><td>{{ a.represents ? `Representing ${a.represents}` : a.capacity }}</td><td>{{ a.joined_label }}</td><td>{{ endedLabel }}</td></tr>
 				</tbody></table>
 				<p v-if="!(data.attendees || []).length" style="margin:10px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">No attendees joined.</p>
 			</div>
-			<div v-if="viewer.is_recorder" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="kt-btn kt-btn-primary" data-testid="bop-prepare-record" @click="drafting = true">Prepare opening record</button></div>
+			<div v-if="viewer.is_recorder" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-primary" data-testid="bop-prepare-record" @click="drafting = true">Prepare opening record</button></div>
 		</template>
 
 		<!-- r2: the generated draft -->
@@ -33,7 +33,7 @@
 			<div class="kt-decision">
 				<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">After finishing, the record cannot be changed without making a new version, which every member must sign again.</p>
 				<p v-if="error" class="bop-field-error" role="alert">{{ error }}</p>
-				<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="kt-btn kt-btn-secondary" @click="drafting = false">Back</button><button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bop-finish-record" @click="$emit('command', { method: 'finish_opening_record', args: {} })">Finish opening record</button></div>
+				<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-secondary" @click="drafting = false">Back</button><button type="button" class="btn btn-primary" :disabled="pending" data-testid="bop-finish-record" @click="$emit('command', { method: 'finish_opening_record', args: {} })">Finish opening record</button></div>
 			</div>
 		</template>
 
@@ -45,12 +45,12 @@
 			</div>
 			<div class="kt-region" :class="{ 'is-secondary': changed }"><h2>What you are signing</h2>
 				<SigningTable :rows="mineRows" with-status :version="changed ? current.version_number : 0" />
-				<div v-if="!changed" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><a class="kt-btn kt-btn-secondary" :href="recordPagesUrl" target="_blank" rel="noopener" data-testid="bop-read-record">Read opening record</a><a v-for="e in register.slice(0, 1)" :key="e.entry" class="kt-btn kt-btn-secondary" :href="bidPagesUrl(e)" target="_blank" rel="noopener">View bid pages</a></div>
+				<div v-if="!changed" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><a class="btn btn-secondary" :href="recordPagesUrl" target="_blank" rel="noopener" data-testid="bop-read-record">Read opening record</a><a v-for="e in register.slice(0, 1)" :key="e.entry" class="btn btn-secondary" :href="bidPagesUrl(e)" target="_blank" rel="noopener">View bid pages</a></div>
 			</div>
 			<div class="kt-decision">
 				<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">{{ changed ? `You sign version ${current.version_number} exactly as shown.` : `You sign for yourself only, against version ${current.version_number} exactly as shown.` }}</p>
 				<p v-if="error" class="bop-field-error" role="alert">{{ error }}</p>
-				<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bop-sign" @click="sign">Review and sign opening record</button></div>
+				<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary" :disabled="pending" data-testid="bop-sign" @click="sign">Review and sign opening record</button></div>
 			</div>
 			<SignaturesTable v-if="!changed" :rows="signatures" :version="current.version_number" secondary />
 		</template>
@@ -58,16 +58,16 @@
 		<!-- r4, and every other reader while signatures are collected -->
 		<template v-else>
 			<SignaturesTable :rows="signatures" :version="current.version_number">
-				<button v-if="viewer.is_recorder && !superseding" type="button" class="kt-btn kt-btn-secondary" data-testid="bop-new-version" @click="superseding = true">Make a new version</button>
+				<button v-if="viewer.is_recorder && !superseding" type="button" class="btn btn-secondary" data-testid="bop-new-version" @click="superseding = true">Make a new version</button>
 			</SignaturesTable>
 			<div v-if="superseding" class="kt-region" data-testid="bop-supersede-form"><h2>Make a new version</h2>
 				<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;max-width:1000px">
-					<div class="kt-field" style="grid-column:1 / -1"><label for="bop-supersede-reason">Reason</label><input id="bop-supersede-reason" v-model="reason" class="kt-input" data-testid="bop-supersede-reason"></div>
-					<div class="kt-field" style="grid-column:1 / -1"><label for="bop-supersede-note">What the new version adds</label><textarea id="bop-supersede-note" v-model="note" class="kt-input" rows="2" data-testid="bop-supersede-note"></textarea></div>
+					<div class="field" style="grid-column:1 / -1"><label for="bop-supersede-reason">Reason</label><input id="bop-supersede-reason" v-model="reason" class="input" data-testid="bop-supersede-reason"></div>
+					<div class="field" style="grid-column:1 / -1"><label for="bop-supersede-note">What the new version adds</label><textarea id="bop-supersede-note" v-model="note" class="input" rows="2" data-testid="bop-supersede-note"></textarea></div>
 				</div>
 				<p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">Signatures on the current version are kept in the history but do not count for the new one. Every member signs again.</p>
 				<p v-if="error" class="bop-field-error" role="alert">{{ error }}</p>
-				<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="kt-btn kt-btn-primary" :disabled="pending || !reason.trim() || !note.trim()" data-testid="bop-supersede" @click="supersede">Make new version</button><button type="button" class="kt-btn kt-btn-secondary" @click="superseding = false">Cancel</button></div>
+				<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-primary" :disabled="pending || !reason.trim() || !note.trim()" data-testid="bop-supersede" @click="supersede">Make new version</button><button type="button" class="btn btn-secondary" @click="superseding = false">Cancel</button></div>
 			</div>
 			<RegisterTable :rows="register" secondary empty-text="Empty register. There were no current bids." />
 		</template>

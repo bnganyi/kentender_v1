@@ -8,11 +8,11 @@
 // deleting an enhancement the spec requires.
 
 // The boards export the frame as `card blueprint elev-sm` without its four
-// corner marks; the Industry `.kt-blueprint` frame draws them (BlueprintCard).
+// corner marks; the Industry `.blueprint` frame draws them (BlueprintCard).
 const CORNERS = {
 	path: "card+blueprint > corner",
 	because: "The Industry blueprint frame's four corner marks; the board export draws the frame without them.",
-	authority: "KenTender Industry design system — .kt-blueprint + .kt-corner (AGENTS.md §6.6 shipped defect: frame without corners)",
+	authority: "KenTender Industry design system — .blueprint + .corner (AGENTS.md §6.6 shipped defect: frame without corners)",
 };
 
 // TPR-CHG-001 v0.12 plan W1: where the board regeneration dropped approved

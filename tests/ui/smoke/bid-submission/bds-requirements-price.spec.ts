@@ -46,7 +46,7 @@ test.describe("BDS-DES-09 Requirements / BDS-DES-10 Price", () => {
 		const drawer = page.getByTestId("bds-response-drawer");
 		await expect(drawer.getByRole("dialog")).toHaveAccessibleName("Battery runtime");
 		await drawer.locator("select").first().selectOption({ index: 1 });
-		await drawer.locator("input.kt-input[inputmode=decimal]").first().fill("10");
+		await drawer.locator("input.input[inputmode=decimal]").first().fill("10");
 		// a refused file is the Evidence rejected state; Choose another file reopens the picker
 		await drawer.locator("input[type=file]").setInputFiles({ name: "empty-datasheet.pdf", mimeType: "application/pdf", buffer: Buffer.alloc(0) });
 		const rejected = drawer.getByTestId("bds-state-evidence-rejected");
@@ -64,7 +64,7 @@ test.describe("BDS-DES-09 Requirements / BDS-DES-10 Price", () => {
 
 		// the offered goods, then Save and continue
 		const goods = page.locator("#bds-region-goods");
-		await goods.locator("input.kt-input:not([type=date])").first().fill("ApexBook Pro 14");
+		await goods.locator("input.input:not([type=date])").first().fill("ApexBook Pro 14");
 		await goods.locator("input[type=date]").fill("2027-09-15");
 		await page.getByTestId("bds-requirements-save").click();
 		await expect(page).toHaveURL(new RegExp(`/tenders/${world.tender_reference}/bid/price$`));
@@ -83,7 +83,7 @@ test.describe("BDS-DES-09 Requirements / BDS-DES-10 Price", () => {
 		await expect(page.getByTestId("bds-bid-total")).toHaveText("KES 46,400,000.00");
 		await page.goBack({ waitUntil: "domcontentloaded" });
 		await waitForPortal(page);
-		await expect(page.getByTestId("bds-requirements-task").locator("#bds-region-goods input.kt-input").first()).toHaveValue("ApexBook Pro 14");
+		await expect(page.getByTestId("bds-requirements-task").locator("#bds-region-goods input.input").first()).toHaveValue("ApexBook Pro 14");
 		await page.setViewportSize({ width: 390, height: 844 });
 		await expect(page.getByTestId("bds-technical-cards")).toBeVisible();
 		await expectNoHorizontalOverflow(page);

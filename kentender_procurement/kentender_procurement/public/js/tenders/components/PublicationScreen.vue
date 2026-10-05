@@ -16,7 +16,7 @@
 				<div class="kt-notice is-attention" data-testid="tnd-withdrawn-notice"><div class="kt-notice-body"><strong>Publication authorisation was withdrawn.</strong> {{ withdrawn }}</div></div>
 			</div>
 			<div class="tnd-section">
-				<table class="kt-table" data-testid="tnd-confirmation-table">
+				<table class="table" data-testid="tnd-confirmation-table">
 					<thead><tr><th>Channel</th><th>Result</th><th>Available at</th><th>Confirmation / action</th></tr></thead>
 					<tbody>
 						<template v-for="c in channels" :key="c.channel">
@@ -26,7 +26,7 @@
 								<td>{{ c.available_at_label || "—" }}</td>
 								<td>
 									<button v-if="c.status === 'Confirmed'" type="button" class="tnd-link-btn" data-testid="tnd-view-confirmation" @click="$emit('view-confirmation', c)">View confirmation</button>
-									<button v-else-if="canConfirm" type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-confirm-channel" @click="$emit('confirm-channel', c)">Confirm publication</button>
+									<button v-else-if="canConfirm" type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-confirm-channel" @click="$emit('confirm-channel', c)">Confirm publication</button>
 									<span v-else class="tnd-status-text">Awaiting the Head of Procurement Function</span>
 								</td>
 							</tr>
@@ -38,9 +38,9 @@
 				</table>
 			</div>
 			<div class="tnd-section tnd-section--tight tnd-actions" data-testid="tnd-approved-documents">
-				<button type="button" class="kt-btn kt-btn-secondary tnd-inline-btn" :disabled="pending" data-testid="tnd-view-invitation" @click="$emit('view-document', 'Invitation')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>View Invitation</button>
-				<button type="button" class="kt-btn kt-btn-secondary tnd-inline-btn" :disabled="pending" data-testid="tnd-view-complete" @click="$emit('view-document', 'Complete Tender')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>View complete Tender</button>
-				<button v-if="canWithdraw" type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-withdraw-authorisation" @click="$emit('withdraw')">Withdraw authorisation</button>
+				<button type="button" class="btn btn-secondary tnd-inline-btn" :disabled="pending" data-testid="tnd-view-invitation" @click="$emit('view-document', 'Invitation')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>View Invitation</button>
+				<button type="button" class="btn btn-secondary tnd-inline-btn" :disabled="pending" data-testid="tnd-view-complete" @click="$emit('view-document', 'Complete Tender')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>View complete Tender</button>
+				<button v-if="canWithdraw" type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-withdraw-authorisation" @click="$emit('withdraw')">Withdraw authorisation</button>
 			</div>
 			<div class="tnd-section tnd-section--content tnd-section--last">
 				<div class="kt-disclosure">

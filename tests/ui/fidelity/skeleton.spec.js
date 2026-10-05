@@ -77,10 +77,10 @@ describe("what the contract deliberately tolerates", () => {
 
 	it("treats the board's own class vocabulary as the live one", () => {
 		// Planning's boards draw `.field` and `table.table`; the live app uses
-		// the Industry `.kt-field` and `.kt-table`. That is the porting
+		// the Industry `.field` and `.table`. That is the porting
 		// convention, not a defect.
 		const board = `<div class="kt-region"><div class="field"></div><table class="table"></table></div>`;
-		const built = `<div class="kt-region"><div class="kt-field"></div><table class="kt-table"></table></div>`;
+		const built = `<div class="kt-region"><div class="field"></div><table class="table"></table></div>`;
 		expect(compare(board, built)).toEqual({ missing: [], extra: [] });
 	});
 
@@ -138,7 +138,7 @@ describe("order and nesting, not just presence", () => {
 /**
  * Strategy and Budget are framed differently from Planning and Departmental
  * Needs. Neither uses `.kt-page`/`.kt-region`/`.kt-group` at all: their boards
- * and their live screens both frame content with `.kt-blueprint`/`.kt-card`,
+ * and their live screens both frame content with `.blueprint`/`.card`,
  * summarise with a `.kt-kpi-row` of `.kt-kpi-card`s, switch with `.kt-tabs`,
  * and — in Budget — draw an expandable `.kt-record` whose detail is revealed
  * by a toggle. Those containers carry the same weight for these two modules
@@ -148,9 +148,9 @@ describe("order and nesting, not just presence", () => {
 describe("the Strategy and Budget frame vocabulary", () => {
 	it("catches a blueprint frame dropped around a card", () => {
 		// AGENTS.md §6.6 records this exact shipped defect for the STD screens:
-		// "real content in bare .kt-card with no .kt-blueprint/.kt-corner frame".
-		const board = `<div class="kt-blueprint"><div class="kt-card"><h3 class="kt-card-title">Allocations</h3></div></div>`;
-		const built = `<div class="kt-card"><h3 class="kt-card-title">Allocations</h3></div>`;
+		// "real content in bare .card with no .blueprint/.corner frame".
+		const board = `<div class="blueprint"><div class="card"><h3 class="kt-card-title">Allocations</h3></div></div>`;
+		const built = `<div class="card"><h3 class="kt-card-title">Allocations</h3></div>`;
 		const result = compare(board, built);
 		expect(result.missing.map((m) => m.path)).toEqual(["blueprint"]);
 	});
@@ -193,7 +193,7 @@ describe("the Strategy and Budget frame vocabulary", () => {
 
 	it("passes when all four are built as the board draws them", () => {
 		const board = `
-			<div class="kt-blueprint"><div class="kt-card">
+			<div class="blueprint"><div class="card">
 				<div class="kt-kpi-row"><div class="kt-kpi-card">Approved</div></div>
 				<div class="kt-tabs"><button class="kt-tab">Overview</button></div>
 				<div class="kt-record">
@@ -206,11 +206,11 @@ describe("the Strategy and Budget frame vocabulary", () => {
 
 	it("treats the Strategy board's bare frame classes as the live kt- ones", () => {
 		// STR-DES-05 draws `class="blueprint"` and `class="card"`; the live
-		// screens render `.kt-blueprint`/`.kt-card`. Same container, and the
+		// screens render `.blueprint`/`.card`. Same container, and the
 		// porting convention is the only difference — exactly as `.field` and
 		// `table.table` are already aliased above.
 		const board = `<div class="blueprint"><div class="card"><h3 class="kt-card-title">Structure</h3></div></div>`;
-		const built = `<div class="kt-blueprint"><div class="kt-card"><h3 class="kt-card-title">Structure</h3></div></div>`;
+		const built = `<div class="blueprint"><div class="card"><h3 class="kt-card-title">Structure</h3></div></div>`;
 		expect(compare(board, built)).toEqual({ missing: [], extra: [] });
 	});
 });
@@ -236,7 +236,7 @@ describe("how many of a repeated thing the live world holds", () => {
 	it("still reports a repeat whose own insides differ from the board's", () => {
 		// A second card that has grown a table inside it is not a repeat of the
 		// first — it is a different structure wearing the same class.
-		const built = `<div class="kt-kpi-row"><div class="kt-kpi-card"><span class="kt-label">X</span></div><div class="kt-kpi-card"><table class="kt-table"></table></div></div>`;
+		const built = `<div class="kt-kpi-row"><div class="kt-kpi-card"><span class="kt-label">X</span></div><div class="kt-kpi-card"><table class="table"></table></div></div>`;
 		const result = compare(BOARD_KPIS, built);
 		expect(result.extra.map((e) => e.path)).toEqual(["kpi-row > kpi-card"]);
 	});
@@ -245,27 +245,27 @@ describe("how many of a repeated thing the live world holds", () => {
 describe("an element that is several landmarks at once", () => {
 	it("recognises every landmark class on one element, not just the first listed", () => {
 		// How the frame is actually written in both modules: one element
-		// carrying `kt-card kt-blueprint`, not a blueprint wrapping a card.
+		// carrying `card blueprint`, not a blueprint wrapping a card.
 		// Classifying it by whichever class this module happened to list first
 		// made the live Budget "no baseline" panel read as an `empty` with no
 		// card at all, and reported the board's card as missing.
-		const board = `<div class="kt-card kt-blueprint"><h2>No allocation</h2></div>`;
-		const built = `<div class="kt-card kt-blueprint kt-empty"><h2>No allocation</h2></div>`;
+		const board = `<div class="card blueprint"><h2>No allocation</h2></div>`;
+		const built = `<div class="card blueprint kt-empty"><h2>No allocation</h2></div>`;
 		expect(compare(board, built)).toEqual({ missing: [], extra: [] });
 	});
 
 	it("still fails when the build drops one of the classes the board draws", () => {
 		// The AGENTS.md §6.6 defect in its real form: content left in a bare
-		// `.kt-card` with the `.kt-blueprint` frame dropped.
-		const board = `<div class="kt-card kt-blueprint"><h2>Allocations</h2></div>`;
-		const built = `<div class="kt-card"><h2>Allocations</h2></div>`;
+		// `.card` with the `.blueprint` frame dropped.
+		const board = `<div class="card blueprint"><h2>Allocations</h2></div>`;
+		const built = `<div class="card"><h2>Allocations</h2></div>`;
 		const result = compare(board, built);
 		expect(result.missing.map((m) => m.path)).toEqual(["card+blueprint"]);
 	});
 
 	it("lets the build add a landmark class the board did not draw", () => {
-		const board = `<div class="kt-card"><h2>Allocations</h2></div>`;
-		const built = `<div class="kt-card kt-empty"><h2>Allocations</h2></div>`;
+		const board = `<div class="card"><h2>Allocations</h2></div>`;
+		const built = `<div class="card kt-empty"><h2>Allocations</h2></div>`;
 		expect(compare(board, built)).toEqual({ missing: [], extra: [] });
 	});
 });
@@ -320,7 +320,7 @@ describe("names the design system does not define", () => {
 		// container put the board's fields one level above the build's and
 		// reported every one of them missing on BUD-DES-02.
 		const board = `<div class="kt-facts"><div class="field"><span class="kt-label">Approval reference</span></div></div>`;
-		const built = `<div class="kt-grid-2"><div class="kt-field"><span class="kt-label">Approval reference</span></div></div>`;
+		const built = `<div class="kt-grid-2"><div class="field"><span class="kt-label">Approval reference</span></div></div>`;
 		expect(compare(board, built)).toEqual({ missing: [], extra: [] });
 	});
 

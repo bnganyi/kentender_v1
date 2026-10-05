@@ -6,76 +6,76 @@
      entered and names each field (AGENTS.md §6.10). One request key per
      opened dialog, so a retried click cannot record twice. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="tsr-dialog" @keydown.esc.stop="$emit('cancel')">
-		<div class="kt-dialog tsr-dialog" role="dialog" aria-modal="true" aria-labelledby="tsr-d-title" tabindex="-1">
+	<div class="dialog-backdrop" data-testid="tsr-dialog" @keydown.esc.stop="$emit('cancel')">
+		<div class="dialog tsr-dialog" role="dialog" aria-modal="true" aria-labelledby="tsr-d-title" tabindex="-1">
 			<div>
-				<div id="tsr-d-title" class="kt-dialog-title">{{ correcting ? `Correct receipt ${correcting.intake_reference}` : "Record receipt" }}</div>
+				<div id="tsr-d-title" class="dialog-title">{{ correcting ? `Correct receipt ${correcting.intake_reference}` : "Record receipt" }}</div>
 				<div class="tsr-dialog-sub">{{ correcting ? "Record the corrected details. The first receipt stays in the record, marked Corrected." : "Record a physical tender-security original received by the procuring entity." }}</div>
 			</div>
 
-			<div class="kt-field">
+			<div class="field">
 				<label for="tsr-d-tender">Tender reference</label>
-				<input id="tsr-d-tender" ref="firstEl" v-model="form.tender_reference" class="kt-input" maxlength="40" autocomplete="off" :aria-invalid="!!errors.tender_reference" data-testid="tsr-d-tender" @change="lookUp" />
+				<input id="tsr-d-tender" ref="firstEl" v-model="form.tender_reference" class="input" maxlength="40" autocomplete="off" :aria-invalid="!!errors.tender_reference" data-testid="tsr-d-tender" @change="lookUp" />
 				<p v-if="errors.tender_reference" class="kt-field-error">{{ errors.tender_reference }}</p>
 				<p v-else-if="lookup.text" class="tsr-help" data-testid="tsr-d-requirement">{{ lookup.text }}</p>
 				<p v-else-if="lookup.required" class="tsr-help" data-testid="tsr-d-requirement">Required: {{ lookup.required_amount }} as {{ lookup.permitted_forms.join(" or ") }}. Submission deadline {{ lookup.deadline }}.</p>
 			</div>
 
-			<div class="kt-field">
+			<div class="field">
 				<label for="tsr-d-type">Instrument type</label>
-				<select id="tsr-d-type" v-model="form.instrument_type" class="kt-input" :aria-invalid="!!errors.instrument_type" data-testid="tsr-d-type">
+				<select id="tsr-d-type" v-model="form.instrument_type" class="input" :aria-invalid="!!errors.instrument_type" data-testid="tsr-d-type">
 					<option value="" disabled>Choose the instrument type</option>
 					<option v-for="form_name in forms" :key="form_name" :value="form_name">{{ form_name }}</option>
 				</select>
 				<p v-if="errors.instrument_type" class="kt-field-error">{{ errors.instrument_type }}</p>
 			</div>
 
-			<div class="kt-field">
+			<div class="field">
 				<label for="tsr-d-issuer">Issuing bank or insurer</label>
-				<input id="tsr-d-issuer" v-model="form.issuer" class="kt-input" maxlength="160" :aria-invalid="!!errors.issuer" data-testid="tsr-d-issuer" />
+				<input id="tsr-d-issuer" v-model="form.issuer" class="input" maxlength="160" :aria-invalid="!!errors.issuer" data-testid="tsr-d-issuer" />
 				<p v-if="errors.issuer" class="kt-field-error">{{ errors.issuer }}</p>
 			</div>
 
-			<div class="kt-field">
+			<div class="field">
 				<label for="tsr-d-ref">Instrument reference</label>
-				<input id="tsr-d-ref" v-model="form.instrument_reference" class="kt-input" maxlength="80" :aria-invalid="!!errors.instrument_reference" data-testid="tsr-d-reference" />
+				<input id="tsr-d-ref" v-model="form.instrument_reference" class="input" maxlength="80" :aria-invalid="!!errors.instrument_reference" data-testid="tsr-d-reference" />
 				<p v-if="errors.instrument_reference" class="kt-field-error">{{ errors.instrument_reference }}</p>
 			</div>
 
 			<div class="tsr-dialog-row">
-				<div class="kt-field">
+				<div class="field">
 					<label for="tsr-d-amount">Amount on the instrument</label>
-					<input id="tsr-d-amount" v-model="form.amount" class="kt-input" inputmode="decimal" :aria-invalid="!!errors.amount" data-testid="tsr-d-amount" />
+					<input id="tsr-d-amount" v-model="form.amount" class="input" inputmode="decimal" :aria-invalid="!!errors.amount" data-testid="tsr-d-amount" />
 					<p v-if="errors.amount" class="kt-field-error">{{ errors.amount }}</p>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="tsr-d-currency">Currency</label>
-					<input id="tsr-d-currency" v-model="form.currency" class="kt-input" maxlength="3" :aria-invalid="!!errors.currency" data-testid="tsr-d-currency" />
+					<input id="tsr-d-currency" v-model="form.currency" class="input" maxlength="3" :aria-invalid="!!errors.currency" data-testid="tsr-d-currency" />
 					<p v-if="errors.currency" class="kt-field-error">{{ errors.currency }}</p>
 				</div>
 			</div>
 
-			<div class="kt-field">
+			<div class="field">
 				<label for="tsr-d-received">Date and time received</label>
-				<input id="tsr-d-received" v-model="form.received_at" class="kt-input" type="datetime-local" step="60" :aria-invalid="!!errors.received_at" data-testid="tsr-d-received" />
+				<input id="tsr-d-received" v-model="form.received_at" class="input" type="datetime-local" step="60" :aria-invalid="!!errors.received_at" data-testid="tsr-d-received" />
 				<p v-if="errors.received_at" class="kt-field-error">{{ errors.received_at }}</p>
 			</div>
 
-			<div class="kt-field">
+			<div class="field">
 				<label for="tsr-d-notes">Notes (optional)</label>
-				<textarea id="tsr-d-notes" v-model="form.notes" class="kt-input" rows="3" maxlength="500" style="resize: vertical; height: auto" :aria-invalid="!!errors.notes" data-testid="tsr-d-notes"></textarea>
+				<textarea id="tsr-d-notes" v-model="form.notes" class="input" rows="3" maxlength="500" style="resize: vertical; height: auto" :aria-invalid="!!errors.notes" data-testid="tsr-d-notes"></textarea>
 				<p v-if="errors.notes" class="kt-field-error">{{ errors.notes }}</p>
 			</div>
 
-			<div v-if="correcting" class="kt-field">
+			<div v-if="correcting" class="field">
 				<label for="tsr-d-reason">Reason for correction</label>
-				<textarea id="tsr-d-reason" v-model="form.correction_reason" class="kt-input" rows="2" maxlength="500" style="resize: vertical; height: auto" :aria-invalid="!!errors.correction_reason" aria-describedby="tsr-d-reason-help" data-testid="tsr-d-reason"></textarea>
+				<textarea id="tsr-d-reason" v-model="form.correction_reason" class="input" rows="2" maxlength="500" style="resize: vertical; height: auto" :aria-invalid="!!errors.correction_reason" aria-describedby="tsr-d-reason-help" data-testid="tsr-d-reason"></textarea>
 				<p v-if="errors.correction_reason" class="kt-field-error">{{ errors.correction_reason }}</p>
 				<p v-else id="tsr-d-reason-help" class="tsr-help">Enter 10–500 characters.</p>
 				<p v-if="errors.corrects" class="kt-field-error">{{ errors.corrects }}</p>
 			</div>
 
-			<div class="kt-field">
+			<div class="field">
 				<label class="tsr-check">
 					<input v-model="form.confirmed" type="checkbox" :aria-invalid="!!errors.confirmed" data-testid="tsr-d-confirm" />
 					<span>{{ confirmation }}</span>
@@ -84,9 +84,9 @@
 			</div>
 
 			<div v-if="error" class="kt-notice is-critical" role="alert" data-testid="tsr-d-error"><div class="kt-notice-body">{{ error }}</div></div>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tsr-d-cancel" @click="$emit('cancel')">Cancel</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tsr-d-submit" @click="submit">{{ pending ? "Recording…" : correcting ? "Record correction" : "Record receipt" }}</button>
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" :disabled="pending" data-testid="tsr-d-cancel" @click="$emit('cancel')">Cancel</button>
+				<button type="button" class="btn btn-primary" :disabled="pending" data-testid="tsr-d-submit" @click="submit">{{ pending ? "Recording…" : correcting ? "Record correction" : "Record receipt" }}</button>
 			</div>
 		</div>
 	</div>

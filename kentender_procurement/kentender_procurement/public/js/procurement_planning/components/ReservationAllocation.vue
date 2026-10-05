@@ -46,7 +46,7 @@
 					<div><span class="kt-label">County requirement</span><span style="font-size: 14px">{{ block.county_display }}</span></div>
 					<div><span class="kt-label">Mandatory restrictions</span><span style="font-size: 14px">{{ block.restrictions_line }}</span></div>
 				</div>
-				<table class="kt-table" data-testid="reservation-items">
+				<table class="table" data-testid="reservation-items">
 					<thead>
 						<tr>
 							<th>Purchase</th>

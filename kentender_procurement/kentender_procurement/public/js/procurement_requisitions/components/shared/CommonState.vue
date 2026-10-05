@@ -21,14 +21,14 @@
 		<template v-else-if="kind === 'not-found'">
 			<div style="border-top: 1px solid var(--kt-color-divider); padding-top: var(--kt-space-4)">
 				<div class="req-question" style="margin: 0">Requisition not found</div>
-				<div class="req-actions" style="margin-top: var(--kt-space-4)"><button type="button" class="kt-btn kt-btn-secondary" @click="$emit('back')">Back to Requisitions</button></div>
+				<div class="req-actions" style="margin-top: var(--kt-space-4)"><button type="button" class="btn btn-secondary" @click="$emit('back')">Back to Requisitions</button></div>
 			</div>
 		</template>
 		<template v-else-if="kind === 'error'">
 			<h3 style="margin: 0">Procurement Requisitions</h3>
 			<p class="kt-muted req-lede" style="margin-top: 6px">Prepare and follow requests for purchases already approved in the annual plan.</p>
 			<Notice tone="critical">Procurement Requisitions could not be loaded.</Notice>
-			<div class="req-actions" style="margin-top: var(--kt-space-4)"><button type="button" class="kt-btn kt-btn-secondary" data-testid="req-try-again" @click="$emit('retry')">Try again</button></div>
+			<div class="req-actions" style="margin-top: var(--kt-space-4)"><button type="button" class="btn btn-secondary" data-testid="req-try-again" @click="$emit('retry')">Try again</button></div>
 		</template>
 	</div>
 </template>

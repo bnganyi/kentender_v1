@@ -5,17 +5,17 @@
      nothing about the plan currently in force or any procurement already under
      way. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="pln-cancel-update-dialog">
-		<div class="kt-dialog" role="dialog" aria-modal="true" aria-labelledby="pln-cancel-update-title">
-			<div id="pln-cancel-update-title" class="kt-dialog-title">Cancel this plan update?</div>
+	<div class="dialog-backdrop" data-testid="pln-cancel-update-dialog">
+		<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="pln-cancel-update-title">
+			<div id="pln-cancel-update-title" class="dialog-title">Cancel this plan update?</div>
 			<p class="pln-dialog-lede">
 				The current plan and existing procurement will remain unchanged.
 			</p>
-			<div class="kt-field">
+			<div class="field">
 				<label for="pln-cancel-update-reason" class="kt-label">Reason</label>
 				<textarea
 					id="pln-cancel-update-reason"
-					class="kt-input"
+					class="input"
 					rows="2"
 					data-testid="pln-cancel-update-reason"
 					:value="reason"
@@ -25,12 +25,12 @@
 			<p v-if="error" class="pln-dialog-error" role="alert" data-testid="pln-cancel-update-error">
 				{{ error }}
 			</p>
-			<div class="kt-dialog-actions">
-				<button class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">
+			<div class="dialog-actions">
+				<button class="btn btn-secondary" :disabled="pending" @click="$emit('cancel')">
 					Keep update
 				</button>
 				<button
-					class="kt-btn kt-btn-primary" data-testid="pln-cancel-update-confirm"
+					class="btn btn-primary" data-testid="pln-cancel-update-confirm"
 					:disabled="pending || reason.trim().length < 20" @click="$emit('confirm')"
 				>
 					Cancel plan update

@@ -29,7 +29,7 @@
 .kt-industry.kt-home .kt-home-summary { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(var(--kt-home-columns, 3), minmax(0, 1fr)); gap: 24px; }
 .kt-industry.kt-home .kt-home-kpi { text-decoration: none; color: inherit; }
 /* A summary column is a link the board draws plain, in the page's own text colour; the generated rules for links (specificity 0,5,1) must not reach it. */
-.kt-industry.kt-home a.kt-home-kpi:not(.kt-btn):not(.kt-tab):not(.kt-add-child) { text-decoration: none; color: inherit; }
+.kt-industry.kt-home a.kt-home-kpi:not(.btn):not(.kt-tab):not(.kt-add-child) { text-decoration: none; color: inherit; }
 .kt-industry.kt-home .kt-home-kpi.is-task { --kt-kpi-bar: var(--color-accent); }
 .kt-industry.kt-home .kt-home-kpi-line { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .kt-industry.kt-home .kt-home-figure { font-size: 34px; }
@@ -85,7 +85,7 @@
 .kt-industry.kt-home .kt-home-rail-time { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12px; color: var(--color-text-muted); }
 
 /* Show more footer (HOME-DES-26) and a region's own failure message (HOME-DES-28B, 28C) */
-.kt-industry.kt-home .kt-home-more { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0 0 46px; border-top: 1px solid var(--color-divider); }
+.kt-industry.kt-home .kt-home-more { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 0 0 46px; border-top: 1px solid var(--color-divider); }
 .kt-industry.kt-home .kt-home-region.is-rail .kt-home-more { padding-left: 32px; }
 .kt-industry.kt-home .kt-home-failure { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 0; }
 .kt-industry.kt-home .kt-home-failure-text { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; color: var(--color-text); }
@@ -105,6 +105,8 @@
 /* Narrow sheet (HOME-DES-21N): below 960 px of content width the rail stacks under the main column in the same
    order and the summary columns wrap two to a row. The sheet's content is its frame minus 64 px of padding and 2 px of border. */
 @container kt-home (max-width: 1025px) {
+	/* One column: twelve columns with their 24 px gaps need 264 px before any content, more than a phone leaves inside the 40 px gutters. */
+	.kt-industry.kt-home .kt-home-sheet { grid-template-columns: minmax(0, 1fr); }
 	.kt-industry.kt-home .kt-home-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 	.kt-industry.kt-home .kt-home-main, .kt-industry.kt-home .kt-home-rail { grid-column: 1 / -1; }
 	.kt-industry.kt-home .kt-home-rail { padding-left: 0; background: none; }

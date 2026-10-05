@@ -23,7 +23,7 @@
 					</div>
 					<template v-else-if="block.kind === 'table'">
 						<h4 v-if="block.title" class="tnd-block-title" :class="{ 'tnd-block-title--later': index > 0 }">{{ block.title }}</h4>
-						<table class="kt-table">
+						<table class="table">
 							<thead><tr><th v-for="column in block.columns" :key="column.label" :class="{ 'is-num': column.num }">{{ column.label }}</th></tr></thead>
 							<tbody>
 								<tr v-for="(row, r) in block.rows" :key="r"><td v-for="(cell, c) in row" :key="c" :class="{ 'is-num': block.columns[c] && block.columns[c].num, 'tnd-muted-700': (block.muted || []).includes(c) }">{{ cell }}</td></tr>

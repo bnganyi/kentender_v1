@@ -129,8 +129,8 @@ onMounted(() => {
 				<p class="kt-page-desc">{{ __("Manage the organisation information and people used for bids.") }}</p>
 			</div>
 			<div v-if="allowed.has('edit_organisation')" class="kt-page-actions" :class="{ 'acc-actions-stack': narrow }">
-				<button v-if="allowed.has('send_account_verification')" type="button" class="kt-btn kt-btn-secondary" :class="{ 'acc-btn-block': narrow }" :disabled="pending" data-testid="acc-resend" @click="resend">{{ __("Resend verification link") }}</button>
-				<button type="button" class="kt-btn kt-btn-primary" :class="{ 'acc-btn-block': narrow }" data-testid="acc-edit" @click="dialog = { kind: 'edit' }">{{ __("Edit organisation") }}</button>
+				<button v-if="allowed.has('send_account_verification')" type="button" class="btn btn-secondary" :class="{ 'acc-btn-block': narrow }" :disabled="pending" data-testid="acc-resend" @click="resend">{{ __("Resend verification link") }}</button>
+				<button type="button" class="btn btn-primary" :class="{ 'acc-btn-block': narrow }" data-testid="acc-edit" @click="dialog = { kind: 'edit' }">{{ __("Edit organisation") }}</button>
 			</div>
 		</div>
 
@@ -141,7 +141,7 @@ onMounted(() => {
 
 		<div v-if="failure" class="kt-notice is-critical acc-load-failure" role="alert">
 			<div class="kt-notice-body">{{ failure }}</div>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button>
+			<button type="button" class="btn btn-secondary" @click="load">{{ __("Try again") }}</button>
 		</div>
 		<p v-if="message" class="acc-muted" role="status" data-testid="acc-message">{{ message }}</p>
 
@@ -161,7 +161,7 @@ onMounted(() => {
 					<div v-for="f in profileFacts" :key="f.key" class="acc-fact"><span class="kt-label">{{ __(f.label) }}</span><span class="acc-fact-value" :data-testid="`acc-profile-fact-${f.key}`">{{ profileValues[f.key] || "—" }}</span></div>
 				</div>
 				<template v-if="owners && profileValues[owners].length">
-					<table v-if="!narrow" class="kt-table acc-owners" :data-testid="`acc-profile-${owners}-table`">
+					<table v-if="!narrow" class="table acc-owners" :data-testid="`acc-profile-${owners}-table`">
 						<caption class="kt-label">{{ owners === "partners" ? __("Partners") : __("Directors") }}</caption>
 						<thead><tr><th>{{ __("Name") }}</th><th>{{ __("Nationality") }}</th><th>{{ __("Citizenship") }}</th><th>{{ __("Shares owned (%)") }}</th></tr></thead>
 						<tbody><tr v-for="(r, i) in profileValues[owners]" :key="i"><td class="acc-strong">{{ r.name }}</td><td>{{ r.nationality }}</td><td>{{ r.citizenship }}</td><td>{{ r.shares }}</td></tr></tbody>
@@ -179,7 +179,7 @@ onMounted(() => {
 				<p v-if="profile.missing.length" class="acc-muted" data-testid="acc-profile-missing">{{ __("Still needed: {0}.", [profile.missing.map((m) => m.text.toLowerCase()).join("; ")]) }}</p>
 				<p class="acc-muted">{{ __("A bid copies these facts when you start it. Changing them here does not change a bid already prepared until you choose to refresh it.") }}</p>
 				<div v-if="allowed.has('edit_business_profile')">
-					<button type="button" class="kt-btn kt-btn-secondary" :class="{ 'acc-btn-touch': narrow }" data-testid="acc-edit-profile" @click="dialog = { kind: 'profile' }">{{ __("Edit business profile") }}</button>
+					<button type="button" class="btn btn-secondary" :class="{ 'acc-btn-touch': narrow }" data-testid="acc-edit-profile" @click="dialog = { kind: 'profile' }">{{ __("Edit business profile") }}</button>
 				</div>
 			</div>
 		</div>
@@ -187,7 +187,7 @@ onMounted(() => {
 		<div class="kt-region">
 			<h2>{{ __("People") }}</h2>
 			<div class="acc-region-body">
-				<table v-if="!narrow" class="kt-table" data-testid="acc-people">
+				<table v-if="!narrow" class="table" data-testid="acc-people">
 					<thead><tr><th>{{ __("Person") }}</th><th>{{ __("Responsibility") }}</th><th>{{ __("Effective period") }}</th><th>{{ __("Action") }}</th></tr></thead>
 					<tbody>
 						<tr v-for="p in data.people" :key="p.assignment">
@@ -207,7 +207,7 @@ onMounted(() => {
 					</div>
 				</div>
 				<div v-if="allowed.has('add_person')">
-					<button type="button" class="kt-btn kt-btn-secondary" :class="{ 'acc-btn-touch': narrow }" data-testid="acc-add-person" @click="dialog = { kind: 'add-person' }">
+					<button type="button" class="btn btn-secondary" :class="{ 'acc-btn-touch': narrow }" data-testid="acc-add-person" @click="dialog = { kind: 'add-person' }">
 						<span class="acc-btn-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add person") }}</span>
 					</button>
 				</div>
@@ -218,7 +218,7 @@ onMounted(() => {
 			<h2>{{ __("Reusable evidence") }}</h2>
 			<div class="acc-region-body">
 				<template v-if="data.evidence.length">
-					<table v-if="!narrow" class="kt-table" data-testid="acc-evidence">
+					<table v-if="!narrow" class="table" data-testid="acc-evidence">
 						<thead><tr><th>{{ __("Evidence") }}</th><th>{{ __("Reference") }}</th><th>{{ __("Valid until") }}</th><th>{{ __("Status") }}</th><th>{{ __("Action") }}</th></tr></thead>
 						<tbody>
 							<tr v-for="e in data.evidence" :key="e.evidence">
@@ -242,7 +242,7 @@ onMounted(() => {
 				</template>
 				<p class="acc-muted">{{ __("A bid uses an exact copy of linked evidence. Updating this list does not change a submitted bid.") }}</p>
 				<div v-if="allowed.has('add_evidence')">
-					<button type="button" class="kt-btn kt-btn-secondary" :class="{ 'acc-btn-touch': narrow }" data-testid="acc-add-evidence" @click="dialog = { kind: 'add-evidence' }">
+					<button type="button" class="btn btn-secondary" :class="{ 'acc-btn-touch': narrow }" data-testid="acc-add-evidence" @click="dialog = { kind: 'add-evidence' }">
 						<span class="acc-btn-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5-5 5 5" /><path d="M12 5v12" /></svg>{{ __("Add evidence") }}</span>
 					</button>
 				</div>
@@ -253,7 +253,7 @@ onMounted(() => {
 			<h2>{{ __("Tender notice contacts") }}</h2>
 			<div class="acc-region-body">
 				<template v-if="data.notice_contacts.length">
-					<table v-if="!narrow" class="kt-table" data-testid="acc-contacts">
+					<table v-if="!narrow" class="table" data-testid="acc-contacts">
 						<thead><tr><th>{{ __("Email") }}</th><th>{{ __("Verification") }}</th></tr></thead>
 						<tbody>
 							<tr v-for="c in data.notice_contacts" :key="c.email">
@@ -283,7 +283,7 @@ onMounted(() => {
 	<div v-else-if="failure" class="kt-page">
 		<div class="kt-notice is-critical acc-load-failure" role="alert">
 			<div class="kt-notice-body">{{ failure }}</div>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button>
+			<button type="button" class="btn btn-secondary" @click="load">{{ __("Try again") }}</button>
 		</div>
 	</div>
 	<div v-else class="kt-page" aria-hidden="true"><div class="acc-skeleton" data-testid="acc-loading"></div></div>

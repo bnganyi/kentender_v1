@@ -124,7 +124,7 @@ describe.each(SCREENS)("$board — $viewer on the $stage world", (screen) => {
 		const wrapper = mount(AwdBoard, { props: { board, form: {} }, attachTo: document.body });
 		await settle();
 		const dialogOnly = screen.board.startsWith("X");
-		const live = dialogOnly ? wrapper.element.querySelector(".kt-dialog") : wrapper.element;
+		const live = dialogOnly ? wrapper.element.querySelector(".dialog") : wrapper.element;
 		const result = compareSkeletons(oracle(screen.board, dialogOnly), skeletonOf(live), { departures: DEPARTURES[screen.board] || [] });
 		const message = formatMismatch(`${screen.board} (${screen.stage}, ${screen.viewer})`, result);
 		wrapper.unmount();

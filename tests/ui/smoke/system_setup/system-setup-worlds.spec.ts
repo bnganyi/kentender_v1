@@ -48,7 +48,7 @@ test.describe.serial("System setup — fixture worlds", () => {
 		const empty = page.locator('[data-testid="kt-org-empty"]');
 		await expect(empty).toContainText("No departments or units yet", { timeout: 20_000 });
 		await page.click('[data-testid="kt-org-empty-add"]');
-		await expect(page.locator(".kt-dialog-title")).toHaveText("Add organisation unit");
+		await expect(page.locator(".dialog-title")).toHaveText("Add organisation unit");
 		await page.keyboard.press("Escape");
 		// Nothing was added.
 		expect(errors, "console errors").toEqual([]);

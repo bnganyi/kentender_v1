@@ -110,7 +110,7 @@ const contextLine = computed(() =>
 					v-for="label in detail.available_actions"
 					:key="label"
 					type="button"
-					:class="['kt-btn', label === 'Reinstate' || label === 'Reopen' ? 'kt-btn-primary' : 'kt-btn-secondary', label === 'Close' ? 'kt-danger' : '']"
+					:class="['btn', label === 'Reinstate' || label === 'Reopen' ? 'btn-primary' : 'btn-secondary', label === 'Close' ? 'kt-danger' : '']"
 					@click="openAction(label)"
 				>
 					{{ label }}
@@ -119,7 +119,7 @@ const contextLine = computed(() =>
 		</div>
 
 		<div style="margin:32px 48px 0;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-content:start">
-			<div class="kt-card kt-blueprint">
+			<div class="card blueprint">
 				<h2 class="kt-card-title">{{ __("Context") }}</h2>
 				<dl style="margin:0">
 					<div class="kt-row"><dt>{{ __("Context ID") }}</dt><dd class="kt-tabular">{{ detail.context_id }}</dd></div>
@@ -128,10 +128,10 @@ const contextLine = computed(() =>
 					<div class="kt-row"><dt>{{ __("Active from") }}</dt><dd>{{ frappe.datetime.str_to_user(detail.active_from) }}</dd></div>
 					<div class="kt-row"><dt>{{ __("Active to") }}</dt><dd>{{ frappe.datetime.str_to_user(detail.active_to) }}</dd></div>
 				</dl>
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
 			</div>
 
-			<div class="kt-card kt-blueprint">
+			<div class="card blueprint">
 				<h2 class="kt-card-title">{{ __("Core readiness") }}</h2>
 				<dl style="margin:0">
 					<div class="kt-row" v-for="c in detail.core_readiness" :key="c.label">
@@ -139,12 +139,12 @@ const contextLine = computed(() =>
 						<dd><StatusPill :status="c.status" /></dd>
 					</div>
 				</dl>
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
 			</div>
 
-			<div class="kt-card kt-blueprint">
+			<div class="card blueprint">
 				<h2 class="kt-card-title">{{ __("Governance history") }}</h2>
-				<table class="kt-table" style="border:0">
+				<table class="table" style="border:0">
 					<thead>
 						<tr>
 							<th style="width:190px">{{ __("Date and time") }}</th>
@@ -160,7 +160,7 @@ const contextLine = computed(() =>
 						</tr>
 					</tbody>
 				</table>
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
 			</div>
 		</div>
 

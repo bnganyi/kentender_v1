@@ -41,16 +41,16 @@ useDialogFocus(field, dialogBox);
 </script>
 
 <template>
-	<div ref="dialogBox" class="kt-dialog-backdrop" data-testid="bds-question-dialog" @keydown.esc.stop="emit('close')">
-		<div class="kt-dialog bds-dialog" role="dialog" aria-modal="true" :aria-label="__('Ask a question about this Tender')">
-			<div class="kt-dialog-title">{{ __("Ask a question about this Tender") }}</div>
+	<div ref="dialogBox" class="dialog-backdrop" data-testid="bds-question-dialog" @keydown.esc.stop="emit('close')">
+		<div class="dialog bds-dialog" role="dialog" aria-modal="true" :aria-label="__('Ask a question about this Tender')">
+			<div class="dialog-title">{{ __("Ask a question about this Tender") }}</div>
 			<template v-if="sent">
 				<div class="kt-notice is-live" role="status" data-testid="bds-question-sent">
 					<svg class="kt-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8.5 12.5 2.5 2.5 4.5-5" /></svg>
 					<div class="kt-notice-body"><strong>{{ __("Question received {0}", [sent.received_at]) }}</strong></div>
 				</div>
-				<div class="kt-dialog-actions">
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="bds-question-close" @click="emit('close')">{{ __("Close") }}</button>
+				<div class="dialog-actions">
+					<button type="button" class="btn btn-secondary" data-testid="bds-question-close" @click="emit('close')">{{ __("Close") }}</button>
 				</div>
 			</template>
 			<template v-else>
@@ -59,16 +59,16 @@ useDialogFocus(field, dialogBox);
 					<div class="bds-dialog-fact"><span class="kt-label">{{ __("Tender") }}</span><span>{{ tender.title }} · {{ tender.reference }}</span></div>
 					<div v-if="organisation" class="bds-dialog-fact"><span class="kt-label">{{ __("Organisation") }}</span><span>{{ organisation.legal_name }}</span></div>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="bds-question">{{ __("Your question") }}</label>
-					<textarea id="bds-question" ref="field" v-model="question" class="kt-input" rows="4" maxlength="2000" :aria-invalid="!!error" aria-describedby="bds-question-help" data-testid="bds-question-text"></textarea>
+					<textarea id="bds-question" ref="field" v-model="question" class="input" rows="4" maxlength="2000" :aria-invalid="!!error" aria-describedby="bds-question-help" data-testid="bds-question-text"></textarea>
 					<p v-if="error" class="kt-field-error">{{ error }}</p>
 					<p v-else id="bds-question-help" class="bds-help">{{ __("10–2,000 characters.") }}</p>
 				</div>
 				<div v-if="failure" class="kt-notice is-critical" role="alert"><div class="kt-notice-body">{{ failure }}</div></div>
-				<div class="kt-dialog-actions">
-					<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="bds-question-cancel" @click="emit('close')">{{ __("Cancel") }}</button>
-					<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-question-send" @click="send">{{ pending ? __("Sending…") : __("Send question") }}</button>
+				<div class="dialog-actions">
+					<button type="button" class="btn btn-secondary" :disabled="pending" data-testid="bds-question-cancel" @click="emit('close')">{{ __("Cancel") }}</button>
+					<button type="button" class="btn btn-primary" :disabled="pending" data-testid="bds-question-send" @click="send">{{ pending ? __("Sending…") : __("Send question") }}</button>
 				</div>
 			</template>
 		</div>

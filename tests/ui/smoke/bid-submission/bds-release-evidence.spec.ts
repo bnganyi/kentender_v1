@@ -184,7 +184,7 @@ test.describe("BDS-CHG-001 v0.8 — persona release pass", () => {
 		expect(closed.payload_text).toContain('"intakes"');
 		await loginToPortal(page, world.signatory, world.password, `${base}/bid/receipt/${receipt}`);
 		await expect(page.getByTestId("bds-receipt-sentence")).toContainText("Submission changes closed on ");
-		await expect(page.getByTestId("bds-receipt-actions").locator(".kt-btn")).toHaveText(["Print receipt"]);
+		await expect(page.getByTestId("bds-receipt-actions").locator(".btn")).toHaveText(["Print receipt"]);
 		await capture(page, "receipt-closed");
 		await expectNoFrappeDialog(page);
 		expect(errors.filter((e) => !/404 \(Not Found\)/.test(e)), errors.join(" | ")).toEqual([]);

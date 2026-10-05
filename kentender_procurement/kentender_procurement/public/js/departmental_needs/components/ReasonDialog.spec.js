@@ -25,7 +25,7 @@ describe("ReasonDialog", () => {
 				modelValue: "",
 			},
 		});
-		expect(wrapper.get(".kt-dialog-title").text()).toBe("What needs to change?");
+		expect(wrapper.get(".dialog-title").text()).toBe("What needs to change?");
 		expect(wrapper.get(".kt-dialog-body p").text()).toBe("Clinical training laptops for digital health rollout");
 		const rows = wrapper.findAll(".kt-meta-row > div");
 		expect(rows).toHaveLength(2);
@@ -55,7 +55,7 @@ describe("ReasonDialog", () => {
 		const rows = wrapper.findAll(".kt-meta-row > div");
 		expect(rows[1].get(".kt-label").text()).toBe("Accepted revision");
 		expect(wrapper.get("label").text()).toBe("Reason");
-		expect(wrapper.get('[data-testid="nds-dialog-confirm"]').classes()).toContain("kt-btn-destructive");
+		expect(wrapper.get('[data-testid="nds-dialog-confirm"]').classes()).toContain("btn-destructive");
 	});
 
 	it("falls back to the single-line subjectMeta when no meta rows are given (NDS-DES-11)", () => {

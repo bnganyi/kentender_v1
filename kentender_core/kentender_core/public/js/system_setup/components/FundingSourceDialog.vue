@@ -73,24 +73,24 @@ function save() {
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop">
+	<div class="dialog-backdrop">
 		<div
-			class="kt-dialog kt-narrow"
+			class="dialog kt-narrow"
 			role="dialog"
 			aria-modal="true"
 			:aria-label="title"
 			data-testid="kt-procset-source-editor"
 			@keydown.esc.stop="emit('cancel')"
 		>
-			<h2 class="kt-dialog-title">{{ title }}</h2>
+			<h2 class="dialog-title">{{ title }}</h2>
 			<div class="dialog-body">
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-fs-name">{{ __("Funding source name") }}</label>
 					<input
 						id="kt-fs-name"
 						ref="field"
 						v-model="label"
-						class="kt-input"
+						class="input"
 						:disabled="locked"
 						:aria-invalid="duplicate ? 'true' : 'false'"
 						data-testid="kt-fs-name"
@@ -102,14 +102,14 @@ function save() {
 				</p>
 				<!-- §10.5 — an explicit Yes/No choice stating what it governs,
 				     never a bare "Enabled" checkbox. -->
-				<div class="kt-field" style="margin-top:10px">
+				<div class="field" style="margin-top:10px">
 					<label id="kt-fs-avail-label">{{ __("Available for new selection") }}</label>
 					<div style="display:flex;gap:16px" role="radiogroup" aria-labelledby="kt-fs-avail-label">
-						<label class="kt-radio" data-testid="kt-fs-enabled-yes">
+						<label class="radio" data-testid="kt-fs-enabled-yes">
 							<input ref="yes" type="radio" name="kt-fs-avail" :checked="enabled" @change="enabled = true">
 							<span class="dot" />{{ __("Yes") }}
 						</label>
-						<label class="kt-radio" data-testid="kt-fs-enabled-no">
+						<label class="radio" data-testid="kt-fs-enabled-no">
 							<input type="radio" name="kt-fs-avail" :checked="!enabled" @change="enabled = false">
 							<span class="dot" />{{ __("No") }}
 						</label>
@@ -125,9 +125,9 @@ function save() {
 					<div class="kt-notice-body">{{ error }}</div>
 				</div>
 			</div>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="kt-fs-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-fs-save" @click="save">
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="kt-fs-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
+				<button type="button" class="btn btn-primary" :disabled="!canSave" data-testid="kt-fs-save" @click="save">
 					<svg v-if="creating" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ creating ? __("Add funding source") : __("Save changes") }}
 				</button>
 			</div>

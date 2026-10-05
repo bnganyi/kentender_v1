@@ -59,7 +59,7 @@ describe("ProcuringEntityTab", () => {
 		expect(code.attributes("disabled")).toBeDefined();
 		// The title is the board's h3, not a styled div; no card within the card.
 		expect(wrapper.find("h3").text()).toBe("Procuring entity");
-		expect(wrapper.find(".kt-card").exists()).toBe(false);
+		expect(wrapper.find(".card").exists()).toBe(false);
 		expect(wrapper.find('[data-testid="kt-setup-pe-submit"]').text()).toBe("Save changes");
 		expect(wrapper.find('[data-testid="kt-setup-pe-submit"]').attributes("disabled")).toBeDefined();
 	});

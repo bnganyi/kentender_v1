@@ -605,19 +605,19 @@ const hasPendingSave = computed(() => hasPendingAttempt(saveScope.value) || hasP
 					<p v-if="errors[selected.id]" class="kt-field-error" data-testid="str-field-error" style="font-size: 13px; margin: 0 0 10px">{{ errors[selected.id] }}</p>
 
 					<template v-if="selected.node_type === 'Performance Indicator'">
-						<div class="kt-field">
+						<div class="field">
 							<label for="str-indicator-name">{{ __("Indicator") }}</label>
-							<input id="str-indicator-name" v-model="selected.title" class="kt-input" data-testid="str-indicator-name" :disabled="!editable" />
+							<input id="str-indicator-name" v-model="selected.title" class="input" data-testid="str-indicator-name" :disabled="!editable" />
 							<div class="kt-field-hint">{{ __("What will show progress towards this objective?") }}</div>
 						</div>
-						<div class="kt-field" style="margin-top: 10px">
+						<div class="field" style="margin-top: 10px">
 							<label for="str-indicator-definition">{{ __("How it is measured") }}</label>
-							<textarea id="str-indicator-definition" v-model="selected.definition" class="kt-input" rows="3" style="height: auto" data-testid="str-indicator-definition" :disabled="!editable"></textarea>
+							<textarea id="str-indicator-definition" v-model="selected.definition" class="input" rows="3" style="height: auto" data-testid="str-indicator-definition" :disabled="!editable"></textarea>
 							<div class="kt-field-hint">{{ __("Explain exactly what this indicator counts or calculates.") }}</div>
 						</div>
-						<div class="kt-field" style="margin-top: 10px; max-width: 220px">
+						<div class="field" style="margin-top: 10px; max-width: 220px">
 							<label for="str-indicator-unit">{{ __("Unit") }}</label>
-							<input id="str-indicator-unit" v-model="selected.unit" class="kt-input" data-testid="str-indicator-unit" :disabled="!editable" />
+							<input id="str-indicator-unit" v-model="selected.unit" class="input" data-testid="str-indicator-unit" :disabled="!editable" />
 						</div>
 						<!-- GitHub #18 — the suggestions sit on show instead of in the browser's
 						     own datalist, which only lists entries matching the text already in
@@ -630,7 +630,7 @@ const hasPendingSave = computed(() => hasPendingAttempt(saveScope.value) || hasP
 									v-for="u in indicatorUnits"
 									:key="u"
 									type="button"
-									class="kt-tag kt-tag-neutral"
+									class="tag tag-neutral"
 									data-testid="str-unit-option"
 									:aria-pressed="(selected.unit || '').trim().toLowerCase() === u.toLowerCase() ? 'true' : 'false'"
 									:style="(selected.unit || '').trim().toLowerCase() === u.toLowerCase() ? 'cursor: pointer; border: 0; font-weight: 600; outline: 2px solid var(--kt-color-accent)' : 'cursor: pointer; border: 0'"
@@ -641,66 +641,66 @@ const hasPendingSave = computed(() => hasPendingAttempt(saveScope.value) || hasP
 
 						<div style="margin-top: 20.4px">
 							<div class="kt-label" style="margin-bottom: 6.8px">{{ __("Targets") }}</div>
-							<table class="kt-table" data-testid="str-targets-table">
+							<table class="table" data-testid="str-targets-table">
 								<thead><tr><th>{{ __("Period") }}</th><th>{{ __("Target") }}</th><th v-if="editable">{{ __("Action") }}</th></tr></thead>
 								<tbody>
 									<tr v-for="t in selected.children" :key="t.id" data-testid="str-target-row" :data-pending="isPending(t.id) ? 'true' : 'false'">
 										<td>{{ t.period_label || "—" }}</td>
 										<td data-testid="str-target-result">{{ t.result_label || "—" }}</td>
 										<td v-if="editable">
-											<button type="button" class="kt-btn kt-btn-ghost" style="padding: 2px 8px; font-size: 12px; height: auto" data-testid="str-target-edit" @click="openTargetEditor(t)">{{ __("Edit") }}</button>
-											<button v-if="deletionAllowed || isPending(t.id)" type="button" class="kt-btn kt-btn-ghost" style="padding: 2px 8px; font-size: 12px; height: auto; color: var(--kt-status-critical)" data-testid="str-target-delete" @click="removeTarget(t)">{{ __("Remove") }}</button>
+											<button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 12px; height: auto" data-testid="str-target-edit" @click="openTargetEditor(t)">{{ __("Edit") }}</button>
+											<button v-if="deletionAllowed || isPending(t.id)" type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 12px; height: auto; color: var(--kt-status-critical)" data-testid="str-target-delete" @click="removeTarget(t)">{{ __("Remove") }}</button>
 										</td>
 									</tr>
 									<tr v-if="!selected.children.length"><td :colspan="editable ? 3 : 2" class="kt-muted">{{ __("No target yet.") }}</td></tr>
 								</tbody>
 							</table>
 							<div v-if="editable" style="display: flex; justify-content: flex-end; margin-top: 6.8px">
-								<button type="button" class="kt-btn kt-btn-secondary" style="font-size: 12px; padding: 5px 12px; height: auto" data-testid="str-add-target" @click="addChild({ parent: selected, childType: 'Performance Target' })">{{ __("Add target") }}</button>
+								<button type="button" class="btn btn-secondary" style="font-size: 12px; padding: 5px 12px; height: auto" data-testid="str-add-target" @click="addChild({ parent: selected, childType: 'Performance Target' })">{{ __("Add target") }}</button>
 							</div>
 
 							<!-- STR-DES-05-AddTarget — inline pending target editor; the page's Save changes commits it. -->
 							<div v-if="targetEditor.open && editingTarget" class="kt-panel" style="margin-top: 10px" data-testid="str-target-editor">
-								<div class="kt-dialog-title" style="font-size: 16px">{{ targetEditor.isNew ? __("Add performance target") : __("Edit performance target") }}</div>
+								<div class="dialog-title" style="font-size: 16px">{{ targetEditor.isNew ? __("Add performance target") : __("Edit performance target") }}</div>
 								<p class="kt-muted" style="font-size: 13px; margin: 4px 0 10px">{{ __("Set the expected value and period for this indicator.") }}</p>
-								<div class="kt-field">
+								<div class="field">
 									<label for="str-target-mode">{{ __("Set target for") }}</label>
 									<div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
-										<select id="str-target-mode" v-model="targetEditor.mode" class="kt-input" style="width: 170px" data-testid="str-target-mode">
+										<select id="str-target-mode" v-model="targetEditor.mode" class="input" style="width: 170px" data-testid="str-target-mode">
 											<option value="fiscal_year">{{ __("Financial year") }}</option>
 											<option value="target_by_date">{{ __("Target date") }}</option>
 										</select>
-										<select v-if="targetEditor.mode === 'fiscal_year'" v-model="targetEditor.fiscal_year" class="kt-input" style="width: 200px" data-testid="str-target-period" :aria-label="__('Financial year')">
+										<select v-if="targetEditor.mode === 'fiscal_year'" v-model="targetEditor.fiscal_year" class="input" style="width: 200px" data-testid="str-target-period" :aria-label="__('Financial year')">
 											<option value="">{{ __("Select a financial year") }}</option>
 											<option v-for="fy in fiscalYears" :key="fy.name" :value="fy.name">{{ fy.label }}</option>
 										</select>
-										<input v-else v-model="targetEditor.target_by_date" class="kt-input" type="date" style="width: 200px" data-testid="str-target-date" :aria-label="__('Target date')" />
+										<input v-else v-model="targetEditor.target_by_date" class="input" type="date" style="width: 200px" data-testid="str-target-date" :aria-label="__('Target date')" />
 									</div>
 								</div>
-								<div class="kt-field" style="margin-top: 10px">
+								<div class="field" style="margin-top: 10px">
 									<label for="str-target-comparison">{{ __("Target") }}</label>
 									<div style="display: flex; gap: 8px; align-items: center">
-										<select id="str-target-comparison" v-model="targetEditor.comparison" class="kt-input" style="width: 130px" data-testid="str-target-comparison">
+										<select id="str-target-comparison" v-model="targetEditor.comparison" class="input" style="width: 130px" data-testid="str-target-comparison">
 											<option>At least</option><option>At most</option><option>Equal to</option>
 										</select>
-										<input v-model="targetEditor.target_value" class="kt-input" type="number" style="width: 110px" data-testid="str-target-value" :aria-label="__('Target value')" />
+										<input v-model="targetEditor.target_value" class="input" type="number" style="width: 110px" data-testid="str-target-value" :aria-label="__('Target value')" />
 										<span class="kt-label" data-testid="str-target-unit">{{ unitSuffix || "—" }}</span>
 									</div>
 								</div>
 								<p v-if="targetEditor.error" class="kt-field-error" data-testid="str-add-target-error" style="font-size: 13px">{{ targetEditor.error }}</p>
 								<div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px">
-									<button v-if="targetEditor.isNew" type="button" class="kt-btn kt-btn-ghost" style="margin-right: auto" data-testid="str-target-discard" @click="discardNewTarget">{{ __("Discard new target") }}</button>
-									<button type="button" class="kt-btn kt-btn-secondary" @click="targetEditor.isNew ? discardNewTarget() : closeTargetEditor()">{{ __("Cancel") }}</button>
-									<button type="button" class="kt-btn kt-btn-primary" data-testid="str-target-confirm" @click="applyTargetEditor">{{ targetEditor.isNew ? __("Add target") : __("Update target") }}</button>
+									<button v-if="targetEditor.isNew" type="button" class="btn btn-ghost" style="margin-right: auto" data-testid="str-target-discard" @click="discardNewTarget">{{ __("Discard new target") }}</button>
+									<button type="button" class="btn btn-secondary" @click="targetEditor.isNew ? discardNewTarget() : closeTargetEditor()">{{ __("Cancel") }}</button>
+									<button type="button" class="btn btn-primary" data-testid="str-target-confirm" @click="applyTargetEditor">{{ targetEditor.isNew ? __("Add target") : __("Update target") }}</button>
 								</div>
 							</div>
 						</div>
 					</template>
 
 					<template v-else>
-						<div class="kt-field">
+						<div class="field">
 							<label for="str-node-title">{{ selectedTypeLabel }}</label>
-							<input id="str-node-title" v-model="selected.title" class="kt-input" data-testid="str-node-title" :disabled="!editable" />
+							<input id="str-node-title" v-model="selected.title" class="input" data-testid="str-node-title" :disabled="!editable" />
 							<div v-if="selected.node_type === 'Strategic Objective'" class="kt-field-hint">{{ __("State what the plan aims to achieve.") }}</div>
 						</div>
 						<div v-if="editable" style="display: flex; gap: 6.8px; margin-top: 13.6px">
@@ -710,10 +710,10 @@ const hasPendingSave = computed(() => hasPendingAttempt(saveScope.value) || hasP
 					</template>
 
 					<div v-if="editable" style="display: flex; justify-content: space-between; gap: 10.2px; margin-top: 20.4px">
-						<button type="button" class="kt-btn kt-btn-secondary kt-danger" :disabled="saving || submitting" data-testid="str-node-delete" @click="askDelete">
+						<button type="button" class="btn btn-secondary kt-danger" :disabled="saving || submitting" data-testid="str-node-delete" @click="askDelete">
 							{{ __("Delete {0}", [selectedTypeLabel.toLowerCase()]) }}
 						</button>
-						<button type="button" class="kt-btn kt-btn-primary" :disabled="saving || submitting" data-testid="str-node-save" @click="save">{{ __("Save changes") }}</button>
+						<button type="button" class="btn btn-primary" :disabled="saving || submitting" data-testid="str-node-save" @click="save">{{ __("Save changes") }}</button>
 					</div>
 				</template>
 				<p v-else class="kt-muted" style="margin: 0">{{ working.length ? __("Select an item to view or edit it.") : __("Add a pillar to start the plan structure.") }}</p>

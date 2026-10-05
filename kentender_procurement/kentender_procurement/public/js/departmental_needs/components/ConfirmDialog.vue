@@ -5,17 +5,17 @@
      (content and structure; the mockup's own raw `dialog`/`field`/`btn`
      classes are not carried over). -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="nds-dialog" @mousedown.self="$emit('cancel')">
+	<div class="dialog-backdrop" data-testid="nds-dialog" @mousedown.self="$emit('cancel')">
 		<div
 			ref="dialogEl"
-			class="kt-dialog"
+			class="dialog"
 			role="dialog"
 			aria-modal="true"
 			:aria-labelledby="titleId"
 			@keydown.esc.prevent="$emit('cancel')"
 			@keydown.tab="trapFocus"
 		>
-			<div :id="titleId" class="kt-dialog-title">{{ title }}</div>
+			<div :id="titleId" class="dialog-title">{{ title }}</div>
 			<div class="kt-dialog-body">
 				<p v-if="subject" style="margin: 0 0 8px; font-size: 14.5px; font-weight: 500">
 					{{ subject }}
@@ -33,12 +33,12 @@
 					{{ message }}
 				</p>
 			</div>
-			<div class="kt-dialog-actions">
-				<button class="kt-btn kt-btn-secondary" data-testid="nds-dialog-cancel" :disabled="pending" @click="$emit('cancel')">
+			<div class="dialog-actions">
+				<button class="btn btn-secondary" data-testid="nds-dialog-cancel" :disabled="pending" @click="$emit('cancel')">
 					Cancel
 				</button>
 				<button
-					:class="destructive ? 'kt-btn-destructive' : 'kt-btn kt-btn-primary'"
+					:class="destructive ? 'btn-destructive' : 'btn btn-primary'"
 					ref="confirmEl"
 					data-testid="nds-dialog-confirm"
 					:disabled="pending"

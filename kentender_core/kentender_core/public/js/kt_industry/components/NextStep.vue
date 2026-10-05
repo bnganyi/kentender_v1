@@ -51,8 +51,8 @@
 						<button
 							v-else
 							type="button"
-							class="kt-btn"
-							:class="item.primary || (index === 0 && !hasPrimary(blockFixes)) ? 'kt-btn-primary' : 'kt-btn-secondary'"
+							class="btn"
+							:class="item.primary || (index === 0 && !hasPrimary(blockFixes)) ? 'btn-primary' : 'btn-secondary'"
 							:disabled="pending"
 							:data-fix="item.fix_id"
 							@click="$emit('fix', item)"
@@ -74,7 +74,7 @@
 						<button
 							v-else
 							type="button"
-							class="kt-btn kt-btn-secondary"
+							class="btn btn-secondary"
 							:disabled="pending"
 							:data-fix="item.fix_id"
 							@click="$emit('fix', item)"

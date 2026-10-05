@@ -47,7 +47,7 @@ test.describe("Award, walked from the menu, the bell and the portal on the canon
 		const root = page.locator('[data-testid="awd-root"]');
 		await expect(root.locator('[data-testid="awd-desc"]')).toContainText(REF);
 		await expect(root.locator('[data-testid="awd-fact-supplier"]')).toHaveText("Afya Digital Supplies Limited");
-		await root.locator("label.kt-radio", { hasText: "Recommend award" }).click();
+		await root.locator("label.radio", { hasText: "Recommend award" }).click();
 		await root.locator('[data-testid="awd-field-reason"]').fill("The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.");
 		await root.locator('[data-testid="awd-action-sign-opinion"]').click();
 		await expectScreen(page, "decision-read");

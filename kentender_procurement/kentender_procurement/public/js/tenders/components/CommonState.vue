@@ -8,8 +8,8 @@
      templates, Open System setup only for a System Manager). -->
 <template>
 	<div class="tnd-page">
-		<div class="kt-card kt-blueprint tnd-state-card" :data-testid="`tnd-state-${kind}`" data-screen-label="TPR-DES-14 Common states">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+		<div class="card blueprint tnd-state-card" :data-testid="`tnd-state-${kind}`" data-screen-label="TPR-DES-14 Common states">
+			<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
 			<div class="tnd-state-head">
 				<div class="tnd-state-icon" :class="toneClass">
 					<svg v-if="toneClass === 'is-critical'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
@@ -21,7 +21,7 @@
 			<h2>{{ heading || copy.heading }}</h2>
 			<p class="tnd-card-body" data-testid="tnd-state-text">{{ text || copy.text }}</p>
 			<div v-if="shownActions.length" class="tnd-actions">
-				<button v-for="action in shownActions" :key="action.key" type="button" class="kt-btn" :class="action.primary ? 'kt-btn-primary' : 'kt-btn-secondary'" :data-testid="`tnd-state-action-${action.key}`" @click="$emit('action', action)">{{ action.label }}</button>
+				<button v-for="action in shownActions" :key="action.key" type="button" class="btn" :class="action.primary ? 'btn-primary' : 'btn-secondary'" :data-testid="`tnd-state-action-${action.key}`" @click="$emit('action', action)">{{ action.label }}</button>
 			</div>
 			<p v-if="supportRef" class="tnd-support-ref">Support reference: {{ supportRef }}</p>
 		</div>

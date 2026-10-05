@@ -89,7 +89,7 @@ function confirm() {
 
 <template>
 	<div
-		class="kt-card kt-intake-form"
+		class="card kt-intake-form"
 		role="group"
 		:aria-label="title"
 		data-testid="kt-fy-intake"
@@ -103,13 +103,13 @@ function confirm() {
 			<div v-if="mode === 'deadline'"><span class="kt-label">{{ __("Activity") }}</span><span class="kt-meta-value">{{ activity }}</span></div>
 		</div>
 		<template v-if="mode !== 'close'">
-			<div class="kt-field">
+			<div class="field">
 				<label for="kt-intake-closes">{{ __("Close automatically on (EAT)") }}</label>
 				<input
 					id="kt-intake-closes"
 					ref="firstField"
 					v-model="closesAt"
-					class="kt-input"
+					class="input"
 					type="datetime-local"
 					:aria-invalid="deadlineError ? 'true' : 'false'"
 					data-testid="kt-fy-intake-closes"
@@ -119,13 +119,13 @@ function confirm() {
 				{{ __("Leave the closing date blank to keep submissions open until you close them.") }}
 			</p>
 		</template>
-		<div class="kt-field">
+		<div class="field">
 			<label for="kt-intake-reason">{{ __("Reason") }}</label>
 			<textarea
 				id="kt-intake-reason"
 				:ref="mode === 'close' ? 'firstField' : undefined"
 				v-model="reason"
-				class="kt-input"
+				class="input"
 				rows="2"
 				data-testid="kt-fy-intake-reason"
 			/>
@@ -163,8 +163,8 @@ function confirm() {
 		</div>
 
 		<div style="display:flex;gap:8px;justify-content:flex-end">
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="kt-fy-intake-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
-			<button type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="kt-fy-intake-confirm" @click="confirm">{{ confirmLabel }}</button>
+			<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="kt-fy-intake-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
+			<button type="button" class="btn btn-primary" :disabled="busy" data-testid="kt-fy-intake-confirm" @click="confirm">{{ confirmLabel }}</button>
 		</div>
 	</div>
 </template>

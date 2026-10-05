@@ -36,12 +36,12 @@ const isEmpty = computed(() => !props.loading && !props.error && props.rows.leng
 
 <template>
 	<div style="margin:28px 48px 0;display:grid;grid-template-columns:minmax(0,1fr) 260px 260px;gap:16px">
-		<input class="kt-input" type="text" v-model="filters.q" :placeholder="__('Search code or name')" />
-		<select class="kt-input" v-model="filters.peType">
+		<input class="input" type="text" v-model="filters.q" :placeholder="__('Search code or name')" />
+		<select class="input" v-model="filters.peType">
 			<option value="">{{ __("All PE types") }}</option>
 			<option v-for="t in peTypes" :key="t.type_code" :value="t.type_code">{{ t.label }}</option>
 		</select>
-		<select class="kt-input" v-model="filters.status">
+		<select class="input" v-model="filters.status">
 			<option value="">{{ __("All statuses") }}</option>
 			<option v-for="s in statusOptions" :key="s" :value="s">{{ s }}</option>
 		</select>
@@ -49,7 +49,7 @@ const isEmpty = computed(() => !props.loading && !props.error && props.rows.leng
 
 	<div style="margin:28px 48px 0">
 		<RegisterStates :loading="loading" :error="error" :is-empty="isEmpty" @clear-filters="clearFilters" @retry="emit('retry')">
-			<table class="kt-table">
+			<table class="table">
 				<thead>
 					<tr>
 						<th style="width:120px">{{ __("Code") }}</th>
@@ -68,7 +68,7 @@ const isEmpty = computed(() => !props.loading && !props.error && props.rows.leng
 						<td><StatusPill :status="row.status" /></td>
 						<td class="kt-muted">{{ frappe.datetime.str_to_user(row.effective_from) || "—" }}</td>
 						<td style="text-align:right">
-							<button type="button" class="kt-btn kt-btn-ghost" @click="emit('open', row.pe_id)">{{ __("View") }}</button>
+							<button type="button" class="btn btn-ghost" @click="emit('open', row.pe_id)">{{ __("View") }}</button>
 						</td>
 					</tr>
 				</tbody>

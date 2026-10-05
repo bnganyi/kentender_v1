@@ -101,28 +101,28 @@ onMounted(() => {
 		</div>
 		<div>
 			<div class="kt-filter-bar" :class="{ 'bds-filter-stack': narrow }" role="search" :aria-label="__('Filter bids')">
-				<div class="kt-field">
+				<div class="field">
 					<label for="bds-bids-search">{{ __("Search Tender or bid") }}</label>
-					<input id="bds-bids-search" v-model="filters.search" class="kt-input" type="search" :placeholder="__('Tender or bid')" data-testid="bds-bids-search" @input="onSearch" @keydown.enter.prevent="apply">
+					<input id="bds-bids-search" v-model="filters.search" class="input" type="search" :placeholder="__('Tender or bid')" data-testid="bds-bids-search" @input="onSearch" @keydown.enter.prevent="apply">
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="bds-bids-status">{{ __("Status") }}</label>
-					<select id="bds-bids-status" v-model="filters.status" class="kt-input" data-testid="bds-bids-status" @change="apply">
+					<select id="bds-bids-status" v-model="filters.status" class="input" data-testid="bds-bids-status" @change="apply">
 						<option v-for="o in options.status" :key="'s' + o.value" :value="o.value">{{ __(o.label) }}</option>
 					</select>
 				</div>
 				<div>
-					<button type="button" class="kt-btn kt-btn-ghost" :class="{ 'bds-btn-block': narrow }" data-testid="bds-bids-clear" @click="clearFilters">{{ __("Clear filters") }}</button>
+					<button type="button" class="btn btn-ghost" :class="{ 'bds-btn-block': narrow }" data-testid="bds-bids-clear" @click="clearFilters">{{ __("Clear filters") }}</button>
 				</div>
 			</div>
 
 			<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure">
 				<div class="kt-notice-body">{{ failure }}</div>
-				<button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button>
+				<button type="button" class="btn btn-secondary" @click="load">{{ __("Try again") }}</button>
 			</div>
 
 			<template v-if="rows.length">
-				<table v-if="!narrow" class="kt-table" data-testid="bds-bids-table">
+				<table v-if="!narrow" class="table" data-testid="bds-bids-table">
 					<thead>
 						<tr>
 							<th>{{ __("Tender") }}</th>
@@ -143,8 +143,8 @@ onMounted(() => {
 							<td>
 								<div class="bds-row-actions">
 									<template v-for="(a, i) in row.actions" :key="a.label">
-										<button v-if="a.command" type="button" class="kt-btn" :class="i === 0 ? 'kt-btn-primary' : 'kt-btn-secondary'" :disabled="pending" :data-testid="'bds-bid-action-' + i" @click="runAction(row, a)">{{ __(a.label) }}</button>
-										<a v-else :href="a.href" class="kt-btn" :class="i === 0 ? 'kt-btn-primary' : 'kt-btn-secondary'" :data-testid="'bds-bid-action-' + i">{{ __(a.label) }}</a>
+										<button v-if="a.command" type="button" class="btn" :class="i === 0 ? 'btn-primary' : 'btn-secondary'" :disabled="pending" :data-testid="'bds-bid-action-' + i" @click="runAction(row, a)">{{ __(a.label) }}</button>
+										<a v-else :href="a.href" class="btn" :class="i === 0 ? 'btn-primary' : 'btn-secondary'" :data-testid="'bds-bid-action-' + i">{{ __(a.label) }}</a>
 									</template>
 								</div>
 							</td>
@@ -161,8 +161,8 @@ onMounted(() => {
 						<div class="bds-card-actions">
 							<div class="bds-row-actions">
 								<template v-for="(a, i) in row.actions" :key="a.label">
-									<button v-if="a.command" type="button" class="kt-btn bds-btn-touch" :class="i === 0 ? 'kt-btn-primary' : 'kt-btn-secondary'" :disabled="pending" :data-testid="'bds-bid-action-' + i" @click="runAction(row, a)">{{ __(a.label) }}</button>
-									<a v-else :href="a.href" class="kt-btn bds-btn-touch" :class="i === 0 ? 'kt-btn-primary' : 'kt-btn-secondary'" :data-testid="'bds-bid-action-' + i">{{ __(a.label) }}</a>
+									<button v-if="a.command" type="button" class="btn bds-btn-touch" :class="i === 0 ? 'btn-primary' : 'btn-secondary'" :disabled="pending" :data-testid="'bds-bid-action-' + i" @click="runAction(row, a)">{{ __(a.label) }}</button>
+									<a v-else :href="a.href" class="btn bds-btn-touch" :class="i === 0 ? 'btn-primary' : 'btn-secondary'" :data-testid="'bds-bid-action-' + i">{{ __(a.label) }}</a>
 								</template>
 							</div>
 						</div>
@@ -172,8 +172,8 @@ onMounted(() => {
 			</template>
 			<div v-else-if="data" class="kt-empty" data-testid="bds-bids-empty">
 				<p class="bds-empty-text">{{ filtered ? __("No bids match these filters.") : data.empty_text }}</p>
-				<button v-if="filtered" type="button" class="kt-btn kt-btn-secondary" :class="{ 'bds-btn-touch': narrow }" @click="clearFilters">{{ __("Clear filters") }}</button>
-				<a v-else href="/tenders" class="kt-btn kt-btn-primary" :class="{ 'bds-btn-touch': narrow }" data-testid="bds-bids-view-tenders">{{ __("View Tenders") }}</a>
+				<button v-if="filtered" type="button" class="btn btn-secondary" :class="{ 'bds-btn-touch': narrow }" @click="clearFilters">{{ __("Clear filters") }}</button>
+				<a v-else href="/tenders" class="btn btn-primary" :class="{ 'bds-btn-touch': narrow }" data-testid="bds-bids-view-tenders">{{ __("View Tenders") }}</a>
 			</div>
 			<div v-else-if="!failure" class="bds-skeleton" aria-hidden="true" data-testid="bds-bids-loading"></div>
 		</div>

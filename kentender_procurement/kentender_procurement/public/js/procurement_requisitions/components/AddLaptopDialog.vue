@@ -10,27 +10,27 @@
 		<template v-if="mode === 'shared' || !mismatch">
 			<div class="kt-label" style="margin-top: var(--kt-space-2)">Shared details</div>
 			<div class="req-grid-2-tight">
-				<div class="kt-field">
+				<div class="field">
 					<label for="req-add-category">Equipment category</label>
-					<select id="req-add-category" v-model="shared.equipment_category" class="kt-input" :class="{ 'is-invalid': sharedError('equipment_category') }" data-testid="req-add-category">
+					<select id="req-add-category" v-model="shared.equipment_category" class="input" :class="{ 'is-invalid': sharedError('equipment_category') }" data-testid="req-add-category">
 						<option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
 					</select>
 					<span v-if="sharedError('equipment_category')" class="req-field-error">{{ sharedError("equipment_category") }}</span>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="req-add-name">Item name</label>
-					<input id="req-add-name" v-model="shared.item_name" class="kt-input" :class="{ 'is-invalid': sharedError('item_name') }" data-testid="req-add-name" />
+					<input id="req-add-name" v-model="shared.item_name" class="input" :class="{ 'is-invalid': sharedError('item_name') }" data-testid="req-add-name" />
 					<span v-if="sharedError('item_name')" class="req-field-error">{{ sharedError("item_name") }}</span>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="req-add-location">Delivery location</label>
-					<select id="req-add-location" v-model="shared.delivery_location" class="kt-input" :class="{ 'is-invalid': sharedError('delivery_location') }" data-testid="req-add-location">
+					<select id="req-add-location" v-model="shared.delivery_location" class="input" :class="{ 'is-invalid': sharedError('delivery_location') }" data-testid="req-add-location">
 						<option value="">Same as the requisition</option>
 						<option v-for="l in locations" :key="l.name" :value="l.name">{{ l.address || l.location_name }}</option>
 					</select>
 					<span v-if="sharedError('delivery_location')" class="req-field-error">{{ sharedError("delivery_location") }}</span>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="req-add-latest">Latest delivery date</label>
 					<DateField id="req-add-latest" v-model="shared.latest_delivery_date" :max="requisitionLatest" :invalid="!!sharedError('latest_delivery_date')" />
 					<span v-if="sharedError('latest_delivery_date')" class="req-field-error">{{ sharedError("latest_delivery_date") }}</span>
@@ -39,26 +39,26 @@
 		</template>
 		<template v-if="mode === 'add'">
 			<div v-if="rows.length > 1 || mismatch" class="kt-label" style="margin-top: var(--kt-space-3)">Department quantities and use</div>
-			<table class="kt-table" data-testid="req-add-rows">
+			<table class="table" data-testid="req-add-rows">
 				<thead><tr><th>Use</th><th>Department and approved requirement</th><th class="is-num">Quantity</th><th>Unit</th><th>Intended use</th></tr></thead>
 				<tbody>
 					<tr v-for="row in rows" :key="row.drawdown_line_id" data-testid="req-add-row">
 						<td><label class="kt-checkbox"><input v-model="entry(row).use" type="checkbox" :aria-label="`Use ${row.department}`" /><span class="box"></span></label></td>
 						<td>{{ row.department }}<div class="kt-label">{{ row.source_reference }}</div></td>
 						<td class="is-num">
-							<input v-model="entry(row).quantity" class="kt-input" :class="{ 'is-invalid': rowError(row) }" style="max-width: 70px" inputmode="numeric" :aria-label="`Quantity for ${row.department}`" :disabled="!entry(row).use" data-testid="req-add-quantity" />
+							<input v-model="entry(row).quantity" class="input" :class="{ 'is-invalid': rowError(row) }" style="max-width: 70px" inputmode="numeric" :aria-label="`Quantity for ${row.department}`" :disabled="!entry(row).use" data-testid="req-add-quantity" />
 							<div v-if="rowError(row)" class="req-field-error" style="margin-top: 3px; white-space: nowrap" data-testid="req-add-row-error">{{ rowError(row) }}</div>
 						</td>
 						<td>{{ row.unit }}</td>
-						<td><input v-model="entry(row).intended_use" class="kt-input" :aria-label="`Intended use for ${row.department}`" :disabled="!entry(row).use" data-testid="req-add-use" /></td>
+						<td><input v-model="entry(row).intended_use" class="input" :aria-label="`Intended use for ${row.department}`" :disabled="!entry(row).use" data-testid="req-add-use" /></td>
 					</tr>
 				</tbody>
 			</table>
 			<p class="kt-muted" style="font-size: 13px; margin: 0">{{ mismatch ? "Shared details are unchanged and retained. No equipment row is created until both rows are valid." : "The standard laptop requirements will be ready for review in the next task." }}</p>
 		</template>
 		<template #actions>
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
-			<button type="button" class="kt-btn" :class="ready ? 'kt-btn-primary' : 'kt-btn-secondary'" :disabled="busy || !ready" data-testid="req-add-confirm" @click="submit">{{ confirmLabel }}</button>
+			<button type="button" class="btn btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
+			<button type="button" class="btn" :class="ready ? 'btn-primary' : 'btn-secondary'" :disabled="busy || !ready" data-testid="req-add-confirm" @click="submit">{{ confirmLabel }}</button>
 		</template>
 	</DialogFrame>
 </template>

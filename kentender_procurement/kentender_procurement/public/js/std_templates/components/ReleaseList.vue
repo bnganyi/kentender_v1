@@ -1,7 +1,7 @@
 <!-- STD-DES-01 Installed template list, with 01F (filtered empty), 01E
      (installed empty) and 01R (read failure) — ported class-for-class from
      "STD Templates Artboards.dc.html" (DS .field/.input/.table/.btn ->
-     .kt-field/.kt-input/.kt-table/.kt-btn). At 390 px or 200% zoom the table
+     .field/.input/.table/.btn). At 390 px or 200% zoom the table
      becomes labelled cards (std_templates.bundle.css; STD-TPL-001 §11.4). -->
 <template>
 	<div class="kt-page stdt-page" data-testid="stdt-list" data-screen-label="STD-DES-01 Installed template list">
@@ -16,7 +16,7 @@
 		<div v-if="failed" class="kt-notice is-critical" style="align-items: center" role="alert" data-testid="stdt-list-failure">
 			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></svg>
 			<div class="kt-notice-body" style="flex: 1"><strong>STD Templates could not be loaded. Try again.</strong></div>
-			<button type="button" class="kt-btn kt-btn-secondary" data-testid="stdt-list-retry" @click="$emit('retry')">Try again</button>
+			<button type="button" class="btn btn-secondary" data-testid="stdt-list-retry" @click="$emit('retry')">Try again</button>
 		</div>
 
 		<div v-else-if="loading" data-testid="stdt-list-loading">
@@ -31,29 +31,29 @@
 
 		<div v-else>
 			<div class="kt-filter-bar" role="search">
-				<div class="kt-field is-wide">
+				<div class="field is-wide">
 					<label for="stdt-q">Search Tender format</label>
-					<input id="stdt-q" v-model="draftSearch" class="kt-input" type="search" data-testid="stdt-filter-search" @keydown.enter.prevent="emitFilter" />
+					<input id="stdt-q" v-model="draftSearch" class="input" type="search" data-testid="stdt-filter-search" @keydown.enter.prevent="emitFilter" />
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="stdt-s">Status</label>
-					<select id="stdt-s" v-model="draftStatus" class="kt-input" data-testid="stdt-filter-status" @change="emitFilter">
+					<select id="stdt-s" v-model="draftStatus" class="input" data-testid="stdt-filter-status" @change="emitFilter">
 						<option value="">All statuses</option>
 						<option v-for="s in statuses" :key="s" :value="s">{{ s }}</option>
 					</select>
 				</div>
 				<div class="stdt-filter-actions">
-					<button v-if="filtersActive" type="button" class="kt-btn kt-btn-secondary" data-testid="stdt-clear-filters" @click="clear">Clear filters</button>
+					<button v-if="filtersActive" type="button" class="btn btn-secondary" data-testid="stdt-clear-filters" @click="clear">Clear filters</button>
 				</div>
 			</div>
 
 			<div v-if="data.empty_kind === 'filtered'" class="kt-empty" data-testid="stdt-list-filtered-empty">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m13.5 8.5-5 5"></path><path d="m8.5 8.5 5 5"></path><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
 				<p style="margin: 0 0 16px; font-size: 15px">{{ data.empty }}</p>
-				<button type="button" class="kt-btn kt-btn-secondary" @click="clear">Clear filters</button>
+				<button type="button" class="btn btn-secondary" @click="clear">Clear filters</button>
 			</div>
 
-			<table v-else class="kt-table stdt-table" style="width: 100%" data-testid="stdt-list-table">
+			<table v-else class="table stdt-table" style="width: 100%" data-testid="stdt-list-table">
 				<thead>
 					<tr>
 						<th style="text-transform: none; letter-spacing: 0">Tender format</th>

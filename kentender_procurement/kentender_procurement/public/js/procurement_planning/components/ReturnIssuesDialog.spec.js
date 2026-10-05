@@ -18,7 +18,7 @@ function make(props = {}) {
 describe("ReturnIssuesDialog", () => {
 	it("renders the frame's exact title and field labels, with the plan as an option", () => {
 		const w = make();
-		expect(w.get(".kt-dialog-title").text()).toBe("What needs to change?");
+		expect(w.get(".dialog-title").text()).toBe("What needs to change?");
 		expect(w.findAll("label").map((l) => l.text())).toEqual(["Context", "Comment"]);
 		const options = w.find('[data-testid="dppv-issue-context-0"]').findAll("option").map((o) => o.text());
 		expect(options).toEqual(["Whole departmental plan", ...ENTRIES.map((e) => e.title)]);

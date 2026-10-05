@@ -52,7 +52,7 @@
 
 			<div class="kt-region">
 				<h2>Accepted classifications</h2>
-				<table class="kt-table" data-testid="pln-class-table">
+				<table class="table" data-testid="pln-class-table">
 				<thead>
 					<tr>
 						<th>Requirement</th>
@@ -122,9 +122,9 @@
 			</div>
 
 			<!-- U06-CORRECT-CLASSIFICATION — a focused panel over this screen. -->
-			<div v-if="panel" class="kt-dialog-backdrop" data-testid="pln-class-panel">
-				<div class="kt-dialog pln-class-dialog">
-					<div class="kt-dialog-title">Correct requirement classification</div>
+			<div v-if="panel" class="dialog-backdrop" data-testid="pln-class-panel">
+				<div class="dialog pln-class-dialog">
+					<div class="dialog-title">Correct requirement classification</div>
 					<div class="pln-dialog-body">
 						<p class="pln-class-subject">
 							<strong>{{ panel.title }}</strong><br>
@@ -142,11 +142,11 @@
 							</div>
 						</div>
 
-						<div class="kt-field">
+						<div class="field">
 							<label for="pln-class-new-type" class="kt-label">New requirement type</label>
 							<select
 								id="pln-class-new-type"
-								class="kt-input"
+								class="input"
 								data-testid="pln-class-new-type"
 								:value="newType"
 								@change="$emit('update:newType', $event.target.value)"
@@ -165,11 +165,11 @@
 							<span class="kt-meta-value" data-testid="pln-class-new-category">{{ derivedCategory }}</span>
 						</div>
 
-						<div class="kt-field">
+						<div class="field">
 							<label for="pln-class-reason" class="kt-label">Reason for correction</label>
 							<textarea
 								id="pln-class-reason"
-								class="kt-input"
+								class="input"
 								rows="3"
 								data-testid="pln-class-reason"
 								:value="reason"
@@ -180,13 +180,13 @@
 						<p class="kt-muted" data-testid="pln-class-impact">{{ impactText }}</p>
 						<p v-if="error" class="pln-error-summary" data-testid="pln-class-error">{{ error }}</p>
 					</div>
-					<div class="kt-dialog-actions">
-						<button type="button" class="kt-btn kt-btn-secondary" data-testid="pln-class-cancel" @click="$emit('cancel')">
+					<div class="dialog-actions">
+						<button type="button" class="btn btn-secondary" data-testid="pln-class-cancel" @click="$emit('cancel')">
 							Cancel
 						</button>
 						<button
 							type="button"
-							class="kt-btn kt-btn-primary"
+							class="btn btn-primary"
 							data-testid="pln-class-save"
 							:disabled="pending || !canSave"
 							@click="$emit('save')"

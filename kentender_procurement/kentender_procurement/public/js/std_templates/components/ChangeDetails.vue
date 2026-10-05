@@ -5,17 +5,17 @@
 <template>
 	<div data-testid="stdt-change-details">
 		<div class="kt-filter-bar">
-			<div class="kt-field"><label for="stdt-cc">Change area</label>
-				<select id="stdt-cc" :value="category" class="kt-input" data-testid="stdt-change-category" @change="(e) => emitHash({ cc: e.target.value, chp: '' })">
+			<div class="field"><label for="stdt-cc">Change area</label>
+				<select id="stdt-cc" :value="category" class="input" data-testid="stdt-change-category" @change="(e) => emitHash({ cc: e.target.value, chp: '' })">
 					<option value="">All change areas</option>
 					<option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
 				</select>
 			</div>
 			<div></div><div></div>
 		</div>
-		<div v-if="failed" class="kt-notice is-critical" role="alert"><div class="kt-notice-body"><strong>Change details could not be loaded. Try again.</strong></div><button type="button" class="kt-btn kt-btn-secondary" @click="load">Try again</button></div>
+		<div v-if="failed" class="kt-notice is-critical" role="alert"><div class="kt-notice-body"><strong>Change details could not be loaded. Try again.</strong></div><button type="button" class="btn btn-secondary" @click="load">Try again</button></div>
 		<p v-else-if="!loading && !rows.length" style="margin: 0; font-size: 14px">No changes in this area.</p>
-		<table v-else class="kt-table stdt-sub-table" style="width: 100%" :aria-busy="loading ? 'true' : 'false'">
+		<table v-else class="table stdt-sub-table" style="width: 100%" :aria-busy="loading ? 'true' : 'false'">
 			<thead><tr><th style="text-transform: none; letter-spacing: 0">Change area</th><th style="text-transform: none; letter-spacing: 0">Change</th><th style="text-transform: none; letter-spacing: 0">Identity</th><th style="text-transform: none; letter-spacing: 0">Summary</th><th style="text-transform: none; letter-spacing: 0">Consequence</th></tr></thead>
 			<tbody>
 				<tr v-for="(r, i) in rows" :key="`${r.category}-${r.identity}-${i}`">
@@ -29,8 +29,8 @@
 		</table>
 		<div v-if="pages > 1" class="stdt-pager" data-testid="stdt-change-pager">
 			<span style="font-size: 13px">Page {{ page }} of {{ pages }} · {{ total }} changes</span>
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="page <= 1" @click="emitHash({ chp: String(page - 1) })">Previous</button>
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="page >= pages" @click="emitHash({ chp: String(page + 1) })">Next</button>
+			<button type="button" class="btn btn-secondary" :disabled="page <= 1" @click="emitHash({ chp: String(page - 1) })">Previous</button>
+			<button type="button" class="btn btn-secondary" :disabled="page >= pages" @click="emitHash({ chp: String(page + 1) })">Next</button>
 		</div>
 	</div>
 </template>

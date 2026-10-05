@@ -1,0 +1,1041 @@
+/*
+ * Shared "Industry" design-system tokens and component classes, ported from
+ * docs/mvp-1-r1/05_pe_and_fy_maintenance/design/_ds/industry-.../styles.css
+ * (the Claude Design export used for CFG-CHG-002 and, going forward, other
+ * Vue-in-Desk-page modules). Namespaced under .kt-industry, never :root, so
+ * this stylesheet can never leak into Desk chrome or any other screen.
+ *
+ * Tokens re-tuned (STR-CHG-001 v1.8, 14 Sep 2026, owner decision) from the
+ * regenerated Strategy artboard bundle
+ * (docs/mvp-1-r1/02_strategy/strategy_design/_ds/kentender-industry-.../styles.css
+ * + readme.md — the current source of truth for the system's look): royal
+ * indigo accent with a rust/amber second accent, a cooler paper ground and
+ * regenerated OKLCH ramps; corner registration marks and status/figure dots
+ * removed system-wide (state is carried by label text and fill alone); a
+ * banded table header on an accent rule; a 1px accent-700 focus ring; a
+ * type-size floor; and the disclosure, timeline, KPI card, notice, checkbox
+ * and tag components the v1.8 artboards compose with. Earlier re-tunes
+ * (PLN-CHG-001 v1.2 bundle: white sheets on a tinted ground, solid hairlines,
+ * solid disabled tokens, solid status tints) are retained underneath.
+ *
+ * Fonts: Barlow / Barlow Condensed, self-hosted (kt_cl_fonts.css, Phase 6 of
+ * CFG-CHG-002) — no CDN @import, unlike the raw Claude Design artboard export.
+ */
+
+.kt-industry {
+	--kt-color-bg: #f0f2f7;
+	--kt-color-surface: #ffffff;
+	--kt-color-surface-2: #eef0f3;
+	--kt-color-text: #16181a;
+	--kt-color-accent: #2b46b0; /* royal indigo — the one solid-fill action colour */
+	--kt-color-accent-2: #d9691a; /* rust/amber — links and secondary emphasis */
+	/* Solid hairline (neutral-300), not a transparency mix — a mix against
+	   the old dark text washes out on the new white surfaces. */
+	--kt-color-divider: #d4d8e3;
+
+	/* Categorical data-viz palette — chart series only, never UI chrome or
+	   state (each palette encodes exactly one thing). */
+	--kt-chart-1: #0891b2;
+	--kt-chart-2: #ea580c;
+	--kt-chart-3: #65a30d;
+	--kt-chart-4: #c026d3;
+	--kt-chart-5: #5a5ce2;
+	--kt-chart-6: #b77c00;
+
+	/* Neutral ramp — generated in OKLCH with a whisper of the accent's hue
+	   angle (~0.008 chroma) so greys read as cool paper, not dead concrete. */
+	--kt-color-neutral-100: #f5f6f9;
+	--kt-color-neutral-200: #e7e9f0;
+	--kt-color-neutral-300: #d4d8e3;
+	--kt-color-neutral-400: #b3b9cc;
+	--kt-color-neutral-500: #8f97ad;
+	--kt-color-neutral-600: #70788d;
+	--kt-color-neutral-700: #525a6c;
+	--kt-color-neutral-800: #343a49;
+	--kt-color-neutral-900: #1c2030;
+
+	--kt-color-accent-100: #e5e9fb;
+	--kt-color-accent-200: #c4cdf5;
+	--kt-color-accent-300: #98a6ee;
+	--kt-color-accent-400: #6d80e6;
+	--kt-color-accent-500: #4c63cb;
+	--kt-color-accent-600: #2b46b0;
+	--kt-color-accent-700: #233784;
+	--kt-color-accent-800: #1b2c68;
+	--kt-color-accent-900: #131f4a;
+
+	--kt-color-accent-2-100: #faede4;
+	--kt-color-accent-2-200: #f4d5bf;
+	--kt-color-accent-2-300: #ecb48d;
+	--kt-color-accent-2-400: #e4965f;
+	--kt-color-accent-2-500: #df803c;
+	--kt-color-accent-2-600: #d9691a;
+	--kt-color-accent-2-700: #ad5314;
+	--kt-color-accent-2-800: #8a4310;
+	--kt-color-accent-2-900: #66320c;
+
+	/* Status vocabulary (see .kt-status below) — solid precomputed tints,
+	   not alpha, so a chip renders identically on a white card and the grey
+	   ground. --kt-color-attention/-critical alias the two hues so callers
+	   that need a single-hue emphasis colour (a notice, an inline error)
+	   don't duplicate the palette. */
+	--kt-status-live: #047857; --kt-status-live-bg: #e7f8f2;
+	--kt-status-draft: #003d9b; --kt-status-draft-bg: #e6eefa;
+	--kt-status-pending: #434654; --kt-status-pending-bg: #f1f1f3;
+	--kt-status-attention: #92610a; --kt-status-attention-bg: #fdf0da;
+	--kt-status-critical: #b0143a; --kt-status-critical-bg: #fce8ec;
+	--kt-color-attention: var(--kt-status-attention);
+	--kt-color-critical: var(--kt-status-critical);
+
+	--kt-font-heading: "Barlow Condensed", "Arial Narrow", sans-serif;
+	--kt-font-heading-weight: 600;
+	--kt-font-body: "Barlow", system-ui, sans-serif;
+
+	--kt-space-1: 3.4px;
+	--kt-space-2: 6.8px;
+	--kt-space-3: 10.2px;
+	--kt-space-4: 13.6px;
+	/* rungs 5 and 7 were missing entirely — not approximated, not aliased,
+	   simply absent — so every `var(--kt-space-5)`/`var(--kt-space-7))` in
+	   the app (a dozen-plus call sites, at least two screens) silently
+	   resolved to nothing: a `gap` or `margin` set from an undefined custom
+	   property with no fallback resets to its initial value, which for both
+	   is effectively zero, collapsing the intended spacing without an error
+	   anywhere (found live 22 Sep 2026, as adjacent facts on the DPP review
+	   screen running together with no visible gap at all). The existing six
+	   rungs are exactly 3.4px × their number; completing that same
+	   progression is not a guess at the missing values, it is the only
+	   value each one can consistently be. A prior comment here deferred
+	   resolving this to "the token-scale owner" over a genuine ambiguity in
+	   the design tool's own export (20px vs 24px for two different uses of
+	   "space-5") — that ambiguity was about which rung a given artboard
+	   inset should be *approximated onto*, not about what number rung 5
+	   itself is in this scale, so it does not block filling the gap here. */
+	--kt-space-5: 17px;
+	--kt-space-6: 20.4px;
+	--kt-space-7: 23.8px;
+	--kt-space-8: 27.2px;
+
+	--kt-radius-sm: 2px;
+	--kt-radius-md: 4px;
+	--kt-radius-lg: 7px;
+
+	--kt-shadow-sm: 0 1px 2px color-mix(in srgb, #2a2d32 12%, transparent);
+	--kt-shadow-md: 0 3px 10px color-mix(in srgb, #2a2d32 14%, transparent);
+	--kt-shadow-lg: 0 12px 32px color-mix(in srgb, #2a2d32 20%, transparent);
+
+	background: var(--kt-color-bg);
+	color: var(--kt-color-text);
+	font-family: var(--kt-font-body);
+	font-size: 15px;
+	line-height: 1.55;
+	/* `100%` only resolves against a sized ancestor; every ancestor Frappe
+	   gives a mounted Vue-in-Desk page (.layout-main-section and up) is
+	   auto-height, so this was a no-op the moment a screen's own content was
+	   shorter than the viewport — the page's own body colour (kt_cl_shell's
+	   #f7f9fb) showed through below it as a visibly different grey (found
+	   live 21 Sep 2026 on Departmental Needs, but structural to every
+	   Industry page). `vh` needs no ancestor sizing, matching the
+	   .kt-desk-page-placeholder rule below, which already had this right. */
+	min-height: 100vh;
+}
+
+.kt-industry,
+.kt-industry *,
+.kt-industry *::before,
+.kt-industry *::after {
+	box-sizing: border-box;
+}
+
+.kt-industry h1,
+.kt-industry h2,
+.kt-industry h3,
+.kt-industry h4 {
+	font-family: var(--kt-font-heading);
+	font-weight: var(--kt-font-heading-weight);
+	line-height: 1.12;
+	letter-spacing: -0.015em;
+	margin: 0;
+}
+
+.kt-industry :focus {
+	outline: none;
+}
+.kt-industry :focus-visible {
+	outline: 1px solid var(--kt-color-accent-700);
+	outline-offset: 2px;
+}
+.kt-industry ::selection { background: color-mix(in srgb, var(--kt-color-accent) 30%, transparent); }
+/* Links are the second accent (rust); indigo stays reserved for actions. */
+.kt-industry a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) { color: var(--kt-color-accent-2-700); text-underline-offset: 3px; }
+.kt-industry a:not(.kt-btn):not(.kt-tab):not(.kt-add-child):hover { color: var(--kt-color-accent-2-800); }
+
+/* — blueprint frame: square, hairline-bordered — a plain hairline and
+     nothing more. Corner registration marks were removed system-wide by
+     the v1.8 design system; the rule below silences the markup other apps
+     still emit (FOLLOW_UPS FU-09) until it is cleaned up. — */
+.kt-industry .kt-blueprint {
+	position: relative;
+	border: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-corner { display: none !important; }
+
+/* — buttons — */
+.kt-industry .kt-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	cursor: pointer;
+	text-decoration: none;
+	font-family: var(--kt-font-heading);
+	font-weight: var(--kt-font-heading-weight);
+	font-size: 14px;
+	line-height: 1.2;
+	color: var(--kt-color-text);
+	background: transparent;
+	border: 1px solid var(--kt-color-divider);
+	height: 40px;
+	padding: 0 20px;
+	white-space: nowrap;
+}
+/* Disabled is a SOLID treatment, not opacity — 45% opacity goes near-
+   invisible on the new white surfaces. Specificity (.kt-btn:disabled) beats
+   every single-class variant below regardless of source order, so this wins
+   over .kt-btn-primary's fill too. */
+.kt-industry .kt-btn:disabled {
+	cursor: not-allowed;
+	color: var(--kt-color-neutral-400);
+	background: var(--kt-color-surface-2);
+	border-color: var(--kt-color-neutral-200);
+}
+.kt-industry .kt-btn-primary { background: var(--kt-color-accent); color: #fff; border-color: var(--kt-color-accent); }
+.kt-industry .kt-btn-primary:hover:not(:disabled) { background: var(--kt-color-accent-800); }
+.kt-industry .kt-btn-primary:active:not(:disabled) { background: var(--kt-color-accent-900); }
+.kt-industry .kt-btn-secondary { border-color: var(--kt-color-neutral-400); }
+/* Destructive action is derived from the rose status hue — destruction IS
+   state semantics, so it stays inside the "no colour beyond steel except to
+   encode state" rule rather than inventing its own red. */
+.kt-industry .kt-btn-primary.kt-danger { background: var(--kt-status-critical); border-color: var(--kt-status-critical); }
+.kt-industry .kt-btn-secondary:hover:not(:disabled) { background: var(--kt-color-neutral-100); }
+.kt-industry .kt-btn-secondary:active:not(:disabled) { background: var(--kt-color-neutral-200); }
+.kt-industry .kt-btn-secondary.kt-danger { color: var(--kt-status-critical); border-color: var(--kt-status-critical); }
+.kt-industry .kt-btn-secondary.kt-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--kt-status-critical) 8%, transparent); }
+.kt-industry .kt-btn-ghost { color: var(--kt-color-accent); border-color: transparent; padding-inline: var(--kt-space-1); }
+.kt-industry .kt-btn-ghost:hover:not(:disabled) { background: var(--kt-color-accent-100); }
+.kt-industry .kt-btn-ghost:active:not(:disabled) { background: var(--kt-color-accent-200); }
+/* Small square hairline control (the artboards' .move-btn — Move up / Move
+   down beside a selected tree item). Disabled reads solid, never faded. */
+.kt-industry .kt-move-btn {
+	font-family: var(--kt-font-heading);
+	font-weight: var(--kt-font-heading-weight);
+	font-size: 12px;
+	padding: 4px 9px;
+	border: 1px solid var(--kt-color-divider);
+	background: transparent;
+	color: var(--kt-color-text);
+	cursor: pointer;
+}
+.kt-industry .kt-move-btn:hover:not(:disabled) { background: var(--kt-color-neutral-100); }
+.kt-industry .kt-move-btn:disabled { color: var(--kt-color-neutral-400); cursor: default; }
+
+/* — forms — */
+.kt-industry .kt-field > label {
+	display: block;
+	font-size: 12px;
+	margin-bottom: 5px;
+	color: var(--kt-color-neutral-800);
+}
+/* Guidance line under a field (the artboards' 12px neutral-700 hint). */
+.kt-industry .kt-field-hint { font-size: 12px; color: var(--kt-color-neutral-700); margin-top: 4px; }
+.kt-industry .kt-field-error { font-size: 12px; color: var(--kt-status-critical); margin: 4px 0 0; }
+.kt-industry .kt-input {
+	width: 100%;
+	height: 40px;
+	padding: 6px 10px;
+	font: inherit;
+	font-size: 14px;
+	color: var(--kt-color-text);
+	caret-color: var(--kt-color-accent);
+	background: var(--kt-color-surface);
+	border: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-input:hover { border-color: color-mix(in srgb, var(--kt-color-text) 45%, transparent); }
+.kt-industry .kt-input:focus-visible { border-color: var(--kt-color-accent); outline-offset: 0; }
+.kt-industry .kt-input:disabled {
+	color: var(--kt-color-neutral-500);
+	background: var(--kt-color-surface-2);
+	border-color: var(--kt-color-neutral-200);
+}
+.kt-industry select.kt-input {
+	appearance: none;
+	background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+	background-position: right 14px center, right 9px center;
+	background-size: 5px 5px, 5px 5px;
+	background-repeat: no-repeat;
+	padding-right: 30px;
+}
+.kt-industry .kt-ro {
+	height: 40px;
+	display: flex;
+	align-items: center;
+	font-size: 14px;
+	border-bottom: 1px solid var(--kt-color-divider);
+	color: var(--kt-color-neutral-700);
+}
+/* Square checkbox (certification-style confirmations). */
+.kt-industry .kt-checkbox { display: inline-flex; align-items: flex-start; gap: 8px; cursor: pointer; font-size: 14px; }
+.kt-industry .kt-checkbox input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.kt-industry .kt-checkbox .box { width: 16px; height: 16px; flex: none; margin-top: 2px; border: 1.5px solid var(--kt-color-divider); background: var(--kt-color-surface); position: relative; }
+.kt-industry .kt-checkbox:hover .box { border-color: var(--kt-color-accent); }
+.kt-industry .kt-checkbox input:checked + .box { background: var(--kt-color-accent); border-color: var(--kt-color-accent); }
+.kt-industry .kt-checkbox input:checked + .box::after { content: ""; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.kt-industry .kt-checkbox input:focus-visible + .box { outline: 1px solid var(--kt-color-accent-700); outline-offset: 2px; }
+
+/* Round radio button (an explicit, mutually-exclusive choice — e.g. County
+   entity Yes/No — CFG-CHG-002 v0.11 C01, never a checkbox stand-in). */
+.kt-industry .kt-radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; }
+.kt-industry .kt-radio input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.kt-industry .kt-radio .dot { width: 16px; height: 16px; flex: none; border-radius: 50%; border: 1.5px solid var(--kt-color-divider); }
+.kt-industry .kt-radio:hover .dot { border-color: var(--kt-color-accent); }
+.kt-industry .kt-radio input:checked + .dot { border-color: var(--kt-color-accent); background: var(--kt-color-accent); box-shadow: inset 0 0 0 4px var(--kt-color-surface); }
+.kt-industry .kt-radio input:focus-visible + .dot { outline: 2px solid var(--kt-color-accent); outline-offset: 2px; }
+
+/* — cards — */
+/* Cards are filled white sheets pinned to the drawing board, not transparent
+   outlines — the hairline border does the "blueprint" work, the fill reads
+   as paper. This was the one rule that made every earlier bg/
+   surface tune invisible: with background:transparent no surface colour was
+   ever painted here at all. */
+.kt-industry .kt-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--kt-space-2);
+	padding: 24px 26px;
+	background: var(--kt-color-surface);
+	border: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-card-title {
+	font-family: var(--kt-font-heading);
+	font-weight: var(--kt-font-heading-weight);
+	font-size: 15px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--kt-color-text);
+	padding-bottom: 10px;
+	border-bottom: 2px solid var(--kt-color-accent);
+	align-self: flex-start;
+	margin: 0 0 16px;
+}
+/* Caption label beside a figure or under a value. Dimmed 11px text failed
+   contrast (~2.5:1); a solid neutral-700 step at 13px/600 does not. */
+.kt-industry .kt-label { font-size: 13px; font-weight: 600; color: var(--kt-color-neutral-700); }
+/* Decorative tags — labels only, never state (state is .kt-status). */
+.kt-industry .kt-tag { display: inline-flex; align-items: center; white-space: nowrap; font-size: 12px; letter-spacing: 0.02em; padding: 3px 10px; border-radius: 0; }
+.kt-industry .kt-tag-accent { background: var(--kt-color-accent-100); color: var(--kt-color-accent-800); }
+.kt-industry .kt-tag-accent-2 { background: var(--kt-color-accent-2-100); color: var(--kt-color-accent-2-800); }
+.kt-industry .kt-tag-neutral { background: var(--kt-color-neutral-200); color: var(--kt-color-neutral-800); }
+.kt-industry .kt-tag-outline { border: 1px solid var(--kt-color-accent); color: var(--kt-color-accent); }
+
+/* — key/value rows — */
+.kt-industry .kt-row {
+	display: grid;
+	grid-template-columns: 190px minmax(0, 1fr);
+	gap: 20px;
+	padding: 12px 0;
+	border-top: 1px solid var(--kt-color-divider);
+	font-size: 14px;
+	align-items: center;
+}
+.kt-industry .kt-row dt { color: var(--kt-color-neutral-700); margin: 0; }
+.kt-industry .kt-row dd { margin: 0; }
+
+/* — tables — the header is a banded row on an accent rule, promoted to
+     condensed uppercase at full strength; rows hover in accent-100. Numeric
+     cells right-align in tabular figures; true zeros recede. Markup must
+     carry <thead>/<tbody> or the header rules silently no-op. — */
+.kt-industry .kt-table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--kt-color-surface); }
+.kt-industry .kt-table th {
+	text-align: left;
+	font-family: var(--kt-font-heading);
+	font-weight: var(--kt-font-heading-weight);
+	font-size: 13px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--kt-color-text);
+	padding: 10px var(--kt-space-4);
+	background: var(--kt-color-neutral-100);
+	border-bottom: 2px solid var(--kt-color-accent);
+}
+.kt-industry .kt-table thead th { position: sticky; top: 0; z-index: 1; }
+.kt-industry .kt-table td {
+	padding: 10px var(--kt-space-4);
+	border-bottom: 1px solid color-mix(in srgb, var(--kt-color-text) 8%, transparent);
+}
+.kt-industry .kt-table td:first-child { min-width: 100px; }
+.kt-industry .kt-table tbody tr:hover { background: var(--kt-color-accent-100); }
+/* WCAG 1.4.3: on a hovered row's tint the link colour falls to 4.3:1; the next shade keeps it above 4.5:1 */
+.kt-industry .kt-table tbody tr:hover a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) { color: var(--kt-color-accent-2-800); }
+.kt-industry .kt-table .is-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kt-industry .kt-table td.is-num { font-weight: 600; }
+.kt-industry .kt-table .is-num.is-zero, .kt-industry .kt-figure.is-zero { color: var(--kt-color-neutral-500); font-weight: 400; }
+.kt-industry .kt-muted { color: var(--kt-color-neutral-700); }
+.kt-industry .kt-tabular { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+
+/* — eyebrow (small uppercase label above a value/heading) — */
+.kt-industry .kt-eyebrow {
+	display: block;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--kt-color-neutral-700);
+	margin-bottom: 8px;
+}
+
+/* — page shell (centered max-width column) — */
+.kt-industry .kt-shell {
+	max-width: 1200px;
+	width: 100%;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	padding: 16px 40px 60px;
+}
+
+/* — top page rail mount point (kentender_core.industry.mountPageRail's target
+     element). The mounted <header class="kt-rail"> is itself position:sticky,
+     but a sticky element can only travel within its containing block (its
+     immediate parent) — this mount div otherwise collapses to the rail's own
+     64px height, giving it nowhere to stick. Sticky is set here instead, one
+     level up, whose parent (.kt-industry) spans the full page height. — */
+.kt-industry > .kt-rail-mount {
+	position: sticky;
+	top: 0;
+	z-index: 20;
+}
+
+/* — small add-child pill (tree row actions) — */
+.kt-industry .kt-add-child {
+	font-family: var(--kt-font-body);
+	font-size: 12px;
+	padding: 3px 10px;
+	border-radius: var(--kt-radius-md);
+	border: 1px solid var(--kt-color-divider);
+	background: transparent;
+	color: var(--kt-color-text);
+	cursor: pointer;
+}
+.kt-industry .kt-add-child:hover { background: var(--kt-color-neutral-100); }
+
+/* — sticky footer (dialog / create-mode action bar) — */
+.kt-industry .kt-sticky-footer {
+	position: sticky;
+	bottom: 0;
+	background: var(--kt-color-bg);
+	border-top: 1px solid var(--kt-color-divider);
+	padding: 14px 40px;
+	display: flex;
+	justify-content: flex-end;
+	gap: 12px;
+}
+
+/* — hierarchy tree row — STR-DES-04.dc.html ported class-for-class: each
+   node is two stacked lines (icon+title, then "· Type" + trailing action)
+   inside one clickable/selectable .kt-tree-node, and the parent/child
+   connector is a single border-left on the recursive children wrapper
+   (.kt-tree-kids), not a line segment drawn per row. — */
+.kt-industry .kt-tree-node {
+	padding: 7px 8px;
+	border: 1px solid transparent;
+	border-radius: var(--kt-radius-sm);
+	cursor: pointer;
+}
+.kt-industry .kt-tree-node.selected {
+	background: var(--kt-color-accent-100);
+	border-color: var(--kt-color-accent);
+}
+.kt-industry .kt-tree-node:hover { background: var(--kt-color-neutral-100); }
+.kt-industry .kt-tree-row {
+	display: flex;
+	align-items: flex-start;
+}
+.kt-industry .kt-tree-title { font-weight: 600; line-height: 1.3; }
+.kt-industry .kt-tree-meta {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-top: 3px;
+}
+.kt-industry .kt-tree-kids {
+	margin-top: 6px;
+	margin-left: 9px;
+	padding-left: 11px;
+	border-left: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-tree-type { font-size: 11px; color: var(--kt-color-neutral-700); white-space: nowrap; }
+.kt-industry .kt-tree-toggle {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 12px;
+	height: 12px;
+	margin-top: 3px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	opacity: 0.5;
+	color: var(--kt-color-text);
+	cursor: pointer;
+	transition: transform 0.12s ease;
+}
+.kt-industry .kt-tree-toggle.collapsed { transform: rotate(0deg); }
+.kt-industry .kt-tree-toggle:not(.collapsed) { transform: rotate(90deg); }
+.kt-industry .kt-tree-hidden-count { font-size: 11px; color: var(--kt-color-neutral-700); }
+
+/* — tabs — a flat row on a hairline; the selected tab is accent-800 at
+     600 weight on a 2px accent underline (the v1.8 .kt-tabs/.kt-tab). — */
+.kt-industry .kt-tabs {
+	display: flex;
+	gap: var(--kt-space-6);
+	border-bottom: 1px solid var(--kt-color-divider);
+	flex-wrap: wrap;
+}
+.kt-industry .kt-tab {
+	position: relative;
+	font-family: var(--kt-font-body);
+	font-weight: 400;
+	font-size: 14px;
+	padding: 0 0 var(--kt-space-3);
+	color: var(--kt-color-neutral-700);
+	display: inline-flex;
+	align-items: baseline;
+	gap: 8px;
+	cursor: pointer;
+	white-space: nowrap;
+	background: none;
+	border: 0;
+}
+.kt-industry .kt-tab:hover:not([aria-selected="true"]) { color: var(--kt-color-text); }
+.kt-industry .kt-tab:disabled { color: var(--kt-color-neutral-400); cursor: not-allowed; }
+.kt-industry .kt-tab[aria-selected="true"] { color: var(--kt-color-accent-800); font-weight: 600; }
+.kt-industry .kt-tab[aria-selected="true"]::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: -1px;
+	height: 2px;
+	background: var(--kt-color-accent);
+}
+.kt-industry .kt-tab .kt-count {
+	font-family: var(--kt-font-body);
+	font-size: 12px;
+	font-weight: 400;
+	padding: 2px 7px;
+	background: var(--kt-color-neutral-100);
+	color: var(--kt-color-neutral-700);
+}
+.kt-industry .kt-tab[aria-selected="true"] .kt-count {
+	background: var(--kt-color-accent-100);
+	color: var(--kt-color-accent-800);
+}
+
+/* — figures (summary card numbers) — */
+.kt-industry .kt-figure { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 44px; line-height: 1; }
+.kt-industry .kt-figure.is-live { color: var(--kt-status-live); }
+.kt-industry .kt-figure.is-attention { color: var(--kt-status-attention); }
+.kt-industry .kt-figure.is-critical { color: var(--kt-status-critical); }
+.kt-industry .kt-figure::after { content: none !important; }
+
+/* — dialog — */
+.kt-industry .kt-dialog-backdrop {
+	position: fixed;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	padding: var(--kt-space-4);
+	background: color-mix(in srgb, var(--kt-color-neutral-900) 50%, transparent);
+	z-index: 100;
+}
+/* The dialog is a sheet like a card, not the page ground — white-on-scrim,
+   matching .kt-card's fill. */
+.kt-industry .kt-dialog {
+	width: min(620px, 100%);
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	padding: 30px 32px;
+	background: var(--kt-color-surface);
+	box-shadow: var(--kt-shadow-lg);
+}
+.kt-industry .kt-dialog-title { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 26px; margin: 0; }
+.kt-industry .kt-dialog-actions { display: flex; justify-content: flex-end; gap: 14px; padding-top: 6px; }
+
+/* — status pills (semantic vocabulary; see kt-status.css in the design pack) — */
+.kt-industry .kt-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	font-family: var(--kt-font-body);
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.5;
+	letter-spacing: 0.01em;
+	padding: 4px 12px;
+	border: 0;
+	border-radius: 6px;
+	white-space: nowrap;
+}
+/* Dots removed system-wide (v1.8): state is carried by label text and
+   fill alone. The pseudo-element stays declared so older markup that
+   relied on the gap renders identically. */
+.kt-industry .kt-status::before { display: none; }
+/* Solid precomputed tints, not alpha — an alpha tint over #e9e9ea (the old,
+   darker-than-ground surface) read as a soft wash; the same alpha over white
+   goes chalky, and is-pending's neutral tint in particular nearly vanished.
+   Solid --kt-status-*-bg values render identically on a white card. */
+.kt-industry .kt-status.is-live { background: var(--kt-status-live-bg); color: var(--kt-status-live); }
+.kt-industry .kt-status.is-draft { background: var(--kt-status-draft-bg); color: var(--kt-status-draft); }
+.kt-industry .kt-status.is-pending { background: var(--kt-status-pending-bg); color: var(--kt-status-pending); }
+.kt-industry .kt-status.is-attention { background: var(--kt-status-attention-bg); color: var(--kt-status-attention); }
+.kt-industry .kt-status.is-critical { background: var(--kt-status-critical-bg); color: var(--kt-status-critical); }
+
+/* — empty / loading / error register states — */
+.kt-industry .kt-skel {
+	height: 14px;
+	background: var(--kt-color-neutral-200);
+	animation: kt-skel-pulse 1.4s ease-in-out infinite;
+}
+@keyframes kt-skel-pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.5; }
+}
+.kt-industry .kt-empty {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	text-align: center;
+	padding: 60px 48px 80px;
+}
+.kt-industry .kt-empty h2 { font-size: 28px; }
+.kt-industry .kt-empty p { margin: 0; font-size: 15px; color: var(--kt-color-neutral-700); }
+
+/* — Vue-in-Desk page runtime (kentender_core.desk_page) — */
+/* First paint of a page whose bundle is still loading: the page ground and a
+   rail-height band, so the frame before Vue mounts is not a white hole. */
+.kt-desk-page-mount {
+	/* Same fix as `.kt-industry` above, on the mount point itself — the
+	   ancestor Frappe actually appends into `.layout-main-section` — so the
+	   guarantee holds regardless of what a given page mounts inside it. */
+	min-height: 100vh;
+}
+.kt-industry.kt-desk-page-placeholder {
+	min-height: 100vh;
+	background: var(--kt-color-bg);
+}
+.kt-industry .kt-rail-placeholder {
+	height: 64px;
+	background: var(--kt-color-neutral-100);
+	border-bottom: 1px solid var(--kt-color-divider);
+}
+/* In-place revalidation of a screen that already has content: a 2px bar at
+   the top of the shell, no layout impact, so a refresh never masquerades as
+   a reload. */
+.kt-industry .kt-shell {
+	position: relative;
+}
+.kt-industry .kt-shell[data-refreshing="true"]::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 2px;
+	pointer-events: none;
+	background: linear-gradient(90deg, transparent 0%, var(--kt-color-accent) 50%, transparent 100%);
+	background-size: 50% 100%;
+	background-repeat: no-repeat;
+	animation: kt-refreshing 1.1s linear infinite;
+}
+@keyframes kt-refreshing {
+	from { background-position: -50% 0; }
+	to { background-position: 150% 0; }
+}
+
+/* ── v1.8 components (Strategy artboard bundle, 14 Sep 2026) ── */
+
+/* Page-level advisory banner, five variants. */
+.kt-industry .kt-notice { display: flex; gap: var(--kt-space-3); align-items: flex-start; padding: var(--kt-space-4); border-left: 3px solid var(--kt-color-accent); background: var(--kt-color-accent-100); }
+/* Stacked notices (several issues, several missing settings) touch with no
+   gap otherwise, reading as one repeated block instead of as many distinct
+   ones — found live 23 Sep 2026 on a purchase missing two rules at once. */
+.kt-industry .kt-notice + .kt-notice { margin-top: var(--kt-space-3); }
+.kt-industry .kt-notice-icon { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; color: var(--kt-color-accent-700); }
+.kt-industry .kt-notice-body { font-size: 14px; color: var(--kt-color-neutral-800); }
+.kt-industry .kt-notice-body strong { color: var(--kt-color-text); }
+.kt-industry .kt-notice.is-info { border-left-color: var(--kt-color-accent-700); background: var(--kt-color-accent-100); }
+.kt-industry .kt-notice.is-info .kt-notice-icon { color: var(--kt-color-accent-700); }
+.kt-industry .kt-notice.is-warning { border-left-color: var(--kt-status-attention); background: var(--kt-status-attention-bg); }
+.kt-industry .kt-notice.is-warning .kt-notice-icon { color: var(--kt-status-attention); }
+.kt-industry .kt-notice.is-critical { border-left-color: var(--kt-status-critical); background: var(--kt-status-critical-bg); }
+.kt-industry .kt-notice.is-critical .kt-notice-icon { color: var(--kt-status-critical); }
+.kt-industry .kt-notice.is-live { border-left-color: var(--kt-status-live); background: var(--kt-status-live-bg); }
+.kt-industry .kt-notice.is-live .kt-notice-icon { color: var(--kt-status-live); }
+
+/* A record's decision/approval chain — not a chart. */
+.kt-industry .kt-timeline { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); padding: var(--kt-space-4) var(--kt-space-4) 4px; }
+.kt-industry .kt-timeline-row { display: grid; grid-template-columns: 20px 1fr; column-gap: var(--kt-space-4); }
+.kt-industry .kt-timeline-dot-col { display: flex; flex-direction: column; align-items: center; align-self: stretch; }
+.kt-industry .kt-timeline-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--kt-color-neutral-400); flex-shrink: 0; margin-top: 5px; }
+.kt-industry .kt-timeline-dot.is-live { background: var(--kt-status-live); }
+.kt-industry .kt-timeline-dot.is-draft { background: var(--kt-status-draft); }
+.kt-industry .kt-timeline-dot.is-attention { background: var(--kt-status-attention); }
+.kt-industry .kt-timeline-dot.is-critical { background: var(--kt-status-critical); }
+.kt-industry .kt-timeline-dot.is-pending { background: transparent; box-shadow: inset 0 0 0 1.5px var(--kt-color-neutral-500); }
+.kt-industry .kt-timeline-line { width: 2px; flex: 1; margin: 4px 0; background: var(--kt-color-accent-400); min-height: 16px; }
+.kt-industry .kt-timeline-line.is-upcoming { background: var(--kt-color-neutral-300); }
+.kt-industry .kt-timeline-item { padding-bottom: var(--kt-space-6); }
+.kt-industry .kt-timeline-item-title { font-size: 13px; font-weight: 600; }
+.kt-industry .kt-timeline-item-title.is-upcoming { color: var(--kt-color-neutral-700); }
+.kt-industry .kt-timeline-item-meta { font-size: 12px; color: var(--kt-color-neutral-700); margin-top: 2px; }
+
+/* Summary metric card; the top accent appears only past a threshold. */
+.kt-industry .kt-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--kt-space-3); }
+.kt-industry .kt-kpi-card { position: relative; background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); padding: var(--kt-space-4); display: flex; flex-direction: column; gap: var(--kt-space-2); }
+.kt-industry .kt-kpi-card.is-attention { box-shadow: inset 0 3px 0 var(--kt-status-attention); }
+.kt-industry .kt-kpi-card.is-critical { box-shadow: inset 0 3px 0 var(--kt-status-critical); }
+.kt-industry .kt-kpi-card.is-live { box-shadow: inset 0 3px 0 var(--kt-status-live); }
+.kt-industry .kt-kpi-icon { width: 18px; height: 18px; color: var(--kt-color-accent-700); }
+.kt-industry .kt-kpi-value { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 26px; line-height: 1.1; display: flex; align-items: baseline; gap: 8px; }
+.kt-industry .kt-kpi-sub { font-size: 12px; color: var(--kt-color-neutral-700); }
+
+/* Expand/collapse panel. */
+.kt-industry .kt-disclosure { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); }
+.kt-industry .kt-disclosure-head { display: flex; align-items: center; justify-content: space-between; padding: var(--kt-space-4); cursor: pointer; }
+.kt-industry .kt-disclosure-head:hover { background: var(--kt-color-neutral-100); }
+.kt-industry .kt-disclosure-title-row { display: flex; align-items: center; gap: var(--kt-space-3); }
+.kt-industry .kt-disclosure-title { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 14px; letter-spacing: 0.01em; text-transform: uppercase; }
+.kt-industry .kt-disclosure-chevron { color: var(--kt-color-accent-700); flex-shrink: 0; transition: transform 0.15s ease; }
+.kt-industry .kt-disclosure-chevron.is-open { transform: rotate(180deg); }
+.kt-industry .kt-disclosure-body { border-top: 1px solid var(--kt-color-divider); padding: var(--kt-space-4); }
+
+/* Page sections for content with no ruled structure of its own. */
+.kt-industry .kt-section { margin-bottom: var(--kt-space-8); }
+.kt-industry .kt-panel { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); padding: var(--kt-space-4); margin-top: var(--kt-space-3); }
+/* Inline segmented control (REQ-CHG-001 v1.11 board: Yes/No answers). The
+   board draws it inline with a solid accent selection; `.kt-seg-inline` keeps
+   that look distinct from System setup's full-width `.kt-seg`. Options are
+   real radio inputs (keyboard and screen readers) visually hidden. */
+.kt-industry .kt-seg.kt-seg-inline { display: inline-flex; width: auto; overflow: hidden; background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); }
+.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt { flex: none; position: relative; padding: 7px 12px; font-size: 13px; font-weight: 400; background: transparent; color: var(--kt-color-text); border: 0; }
+.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt + .kt-seg-opt { border-left: 1px solid var(--kt-color-divider); }
+.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:has(input:checked) { background: var(--kt-color-accent); color: #fff; }
+.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:not(:has(input:checked)):hover { background: var(--kt-color-neutral-100); }
+.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:has(input:focus-visible) { outline: 2px solid var(--kt-color-accent); outline-offset: -2px; }
+.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:has(input:disabled) { cursor: default; }
+@media (forced-colors: active) {
+	.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:has(input:checked) { background: Highlight; color: HighlightText; }
+}
+.kt-industry .kt-meta-row { display: flex; gap: var(--kt-space-6); flex-wrap: wrap; align-items: flex-end; }
+.kt-industry .kt-meta-row > div { display: flex; flex-direction: column; gap: 4px; }
+/* The inline opt-out the Industry design system added with its grid fact row
+   (design/HANDOFF-kt-meta-row.md). Identical to the base rule here, where the
+   base is still the flex row, so it changes nothing until a module adopts the
+   grid (System setup: kt_admin_configuration.css). */
+.kt-industry .kt-meta-row.is-tight { display: flex; flex-wrap: wrap; }
+.kt-industry .kt-meta-value { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 18px; }
+
+/* ── v1.13 components (Departmental Needs artboard bundle, 15 Sep 2026) ── */
+
+/* A full-screen page frame — the same fill/border as .kt-card, larger
+   padding for a top-level workspace/editor/detail composition rather than a
+   nested content block. */
+/* The artboard centres every capped-width panel within its own frame
+   (`.ab-body > div{margin:0 auto}` — canvas-only, never ported), but each
+   live screen only ever ported the max-width value onto .kt-panel-lg
+   itself, never the centring — so on any viewport wider than the panel's
+   own cap, it sat flush against the left edge with a bare grey gap on the
+   right instead (found live 21 Sep 2026). `margin: 0 auto` only has a
+   visible effect once a max-width actually constrains the panel below its
+   container's width, so this is a no-op for anything already full-width. */
+.kt-industry .kt-panel-lg { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); padding: var(--kt-space-8); margin: 0 auto; }
+
+/* A vertical stack of labelled read-only facts (the six-fact requirement
+   review block). */
+.kt-industry .kt-factstack { display: flex; flex-direction: column; gap: var(--kt-space-4); }
+.kt-industry .kt-factstack .kt-label { margin-bottom: 3px; }
+.kt-industry .kt-factstack .kt-factstack-value { font-size: 15px; line-height: 1.55; margin: 0; }
+
+/* Requirement-details layout within a .kt-factstack (single-sheet migration,
+   21 Sep 2026, NDS-CHG-001 v1.14 §11.1): "present Description and Expected
+   result as the main readable narrative" — stacked full-width paragraphs,
+   not the 18 Sep two/three-column grids this replaces — then Quantity, Unit
+   and Required by collapse into the one compact summary line §11.1 asks
+   for, not three separately labelled facts. The screen's own heading (e.g.
+   "What the department needs", "Accepted requirement") sits above this
+   block; the title is never repeated here. NDS-DES-05/07/09/12 all use this
+   same quiet hairline-rule summary; DES-06 alone renders it as a bolder
+   accent-tinted pill — treated here as the artboard's own outlier (like the
+   21px/23px region-title size mismatch) rather than a fourth visual variant. */
+.kt-industry .kt-factstack-summary { display: flex; align-items: center; gap: 10px; padding-top: 18px; border-top: 1px solid var(--kt-color-divider); font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 18px; }
+.kt-industry .kt-factstack-summary svg { color: var(--kt-color-accent-700); flex: none; }
+
+/* A small colour-tinted square housing a heading icon (21 Sep 2026 design-board
+   refresh) — generic and reusable, not Departmental-Needs-specific, so it
+   lives here rather than in that module's own CSS file. */
+.kt-industry .kt-icon-tile { display: inline-flex; width: 32px; height: 32px; flex: none; align-items: center; justify-content: center; background: var(--kt-color-accent-100); color: var(--kt-color-accent-900); }
+.kt-industry .kt-icon-tile svg { flex: none; }
+
+/* ── v1.14 single-sheet page pattern (NDS-CHG-001 v1.14 §11 / KT-PAT-001 /
+     DS-REV-001, 21 Sep 2026): a KenTender page is one white sheet on the
+     grey ground. The sheet carries the header and every region; hierarchy
+     inside it comes from section titles, whitespace and hairline/accent
+     rules, never nested .kt-panel/.kt-panel-lg boxes. Spacing values below
+     are literal pixels matching what the reference artboard renders, not
+     approximated onto the --kt-space-N scale: the design-tool export's own
+     --space-5 disagrees with itself between a 20px task-row inset and a
+     24px region gap, and neither is exactly this scale's own --kt-space-5
+     (17px) or --kt-space-6 (20.4px)/--kt-space-7 (23.8px) rungs. The rungs
+     themselves were simply missing before 22 Sep 2026 (every var(--kt-
+     space-5)) elsewhere in the app was silently resolving to nothing, not
+     to either 20px or 24px) and now exist as the scale's own consistent
+     3.4px progression; this section's own two literal pixel values remain
+     a deliberate local exception to that scale, not something this fix
+     retroactively resolves — still flagged to the token-scale owner. */
+/* `margin` is vertical-only, not `32px auto`: every caller mounts `.kt-page`
+   as the sole child of `.kt-shell` (kentender_core.industry.mountPageRail's
+   own centered max-width column, already `display:flex; flex-direction:
+   column`), so `.kt-page` is a flex item, not a plain block box. A
+   horizontal auto margin on a stretch-context flex item cancels the stretch
+   and sizes the item to its own content width instead — every `.kt-page`
+   screen quietly collapsed to a narrow, content-sized card floating in
+   `.kt-shell`'s middle rather than filling it (found live 22 Sep 2026, most
+   visible on the need editor's comparatively narrow form content; masked on
+   table-heavy screens like the workspace, whose wide rows happen to reach
+   close to `.kt-shell`'s own width anyway). `.kt-shell` already centers and
+   caps the column; `.kt-page` only needs its own max-width as a ceiling
+   inside that already-narrower parent, never its own second centering. */
+.kt-industry .kt-page { max-width: 1200px; margin: 32px 0; padding: 32px; background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); box-shadow: var(--kt-shadow-sm); display: flex; flex-direction: column; gap: 24px; }
+.kt-industry .kt-page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--kt-space-6); }
+.kt-industry .kt-page-title { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 32px; line-height: 1.1; margin: 0; }
+.kt-industry .kt-page-desc { margin: 8px 0 0; font-size: 14px; color: var(--kt-color-neutral-800); }
+.kt-industry .kt-page-scope { display: flex; align-items: center; gap: var(--kt-space-2); margin-top: 12px; font-size: 13px; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-page-actions { display: flex; gap: var(--kt-space-3); flex: none; }
+
+/* A region inside the sheet: title + open content, no box. */
+.kt-industry .kt-region > h2 { font-family: var(--kt-font-heading); font-size: 21px; margin: 0 0 var(--kt-space-3); }
+.kt-industry .kt-region.is-secondary > h2 { font-size: 17px; color: var(--kt-color-neutral-800); }
+
+/* Quiet supporting group: a hairline rule, not a card. */
+.kt-industry .kt-group { border-left: 2px solid var(--kt-color-divider); padding: 2px 0 2px 16px; }
+
+/* Level-1 task row and decision area: accent rule, no box. */
+.kt-industry .kt-task-row { border-left: 3px solid var(--kt-color-accent); padding: 4px 0 4px 20px; display: flex; align-items: center; gap: var(--kt-space-6); }
+.kt-industry .kt-decision { border-top: 2px solid var(--kt-color-accent); padding: 20px 0 0; }
+
+/* KT-STD-001 v1.8 §2.9 — the journey tracker and the next-step block, drawn by
+   kt_industry_guidance.bundle.js to the Industry design-system handoff
+   "Journey tracker and next-step block" (Project Owner approved for
+   formalisation 26 Sep 2026; applied to every module by TPR-CHG-001 v0.12
+   plan OD-1). Quiet by default (§2.9.3 rule 6): accent only on the current
+   stage and the Your-turn rule (which counts as the page's task rule),
+   status colour only on Done and Blocked, always with text; the blocked kind
+   is the only one with a container. */
+/* A host element a module mounts the components into: no box of its own, so
+   an empty host (Not involved, no tracker) adds no gap to the page column. */
+.kt-industry .kt-guidance-mount { display: contents; }
+/* One guidance region below the page header (handoff §2). */
+.kt-industry .kt-guidance { display: grid; gap: 18px; padding: 20px 24px 22px; border-bottom: 1px solid var(--kt-color-divider); }
+/* Tracker: N equal columns of bar / numbered label / state line (§3). */
+.kt-industry .kt-journey-host { container-type: inline-size; display: grid; gap: var(--kt-space-2); min-width: 0; }
+.kt-industry .kt-journey { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--kt-journey-n, 5), minmax(0, 1fr)); gap: 6px; }
+.kt-industry .kt-journey-stage { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.kt-industry .kt-journey-bar { display: block; height: 4px; background: var(--kt-color-neutral-300); }
+.kt-industry .kt-journey-title { display: flex; gap: 6px; align-items: baseline; font-size: 14px; line-height: 1.3; font-weight: 500; color: var(--kt-color-neutral-700); text-wrap: pretty; min-width: 0; }
+.kt-industry .kt-journey-num { flex: none; font-family: var(--kt-font-heading); font-size: 15px; font-weight: 600; color: var(--kt-color-neutral-600); }
+.kt-industry .kt-journey-state { padding-left: 16px; font-size: 12px; line-height: 1.3; font-weight: 600; color: var(--kt-color-neutral-600); }
+.kt-industry .kt-journey-stage.is-done .kt-journey-bar { background: var(--kt-status-live); }
+.kt-industry .kt-journey-stage.is-done .kt-journey-title,
+.kt-industry .kt-journey-stage.is-done .kt-journey-num { color: var(--kt-color-text); }
+.kt-industry .kt-journey-stage.is-done .kt-journey-state { color: var(--kt-status-live); }
+.kt-industry .kt-journey-stage.is-current .kt-journey-bar { background: var(--kt-color-accent); }
+.kt-industry .kt-journey-stage.is-current .kt-journey-title,
+.kt-industry .kt-journey-stage.is-current .kt-journey-num,
+.kt-industry .kt-journey-stage.is-current .kt-journey-state { color: var(--kt-color-accent-700); }
+.kt-industry .kt-journey-stage.is-current .kt-journey-title { font-weight: 700; }
+.kt-industry .kt-journey-stage.is-blocked .kt-journey-bar { background: var(--kt-status-attention); }
+.kt-industry .kt-journey-stage.is-blocked .kt-journey-num,
+.kt-industry .kt-journey-stage.is-blocked .kt-journey-state { color: var(--kt-status-attention); }
+.kt-industry .kt-journey-stage.is-blocked .kt-journey-title { color: var(--kt-color-text); font-weight: 700; }
+/* Reduced one-line form: mini bars + "{stage} · {n} of {N} · {holder}" (§3). */
+.kt-industry .kt-journey.is-reduced,
+.kt-industry .kt-journey-compact { display: grid; gap: 8px; }
+.kt-industry .kt-journey-compact { display: none; }
+.kt-industry .kt-journey-bars { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; }
+.kt-industry .kt-journey-bars > span { display: block; height: 4px; background: var(--kt-color-neutral-300); }
+.kt-industry .kt-journey-bars > .is-done { background: var(--kt-status-live); }
+.kt-industry .kt-journey-bars > .is-current { background: var(--kt-color-accent); }
+.kt-industry .kt-journey-bars > .is-blocked { background: var(--kt-status-attention); }
+.kt-industry .kt-journey-reduced-text { margin: 0; font-size: 14px; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-journey-current { font-weight: 700; color: var(--kt-color-accent-700); }
+.kt-industry .kt-journey-links { display: flex; gap: var(--kt-space-6); }
+.kt-industry .kt-journey-link { font-size: 13px; white-space: nowrap; }
+/* Under 600px of host width the row becomes the one line, never a sideways
+   scroll (handoff §7; TPR-CHG-001 v0.12 §10.17 at 390px). */
+@container (max-width: 600px) {
+	.kt-industry .kt-journey-host > .kt-journey:not(.is-reduced) { display: none; }
+	.kt-industry .kt-journey-host > .kt-journey-compact { display: grid; }
+}
+/* Next step (§4): Your turn / Waiting on someone / Done carry a 3px rule
+   and no container; the blocked kind is a warning notice. */
+.kt-industry .kt-next-step { display: grid; gap: 3px; margin: 0; }
+.kt-industry .kt-next-step.is-turn,
+.kt-industry .kt-next-step.is-waiting,
+.kt-industry .kt-next-step.is-done { border-left: 3px solid var(--kt-color-neutral-400); padding: 2px 0 2px 14px; }
+.kt-industry .kt-next-step.is-turn { border-left-color: var(--kt-color-accent); }
+.kt-industry .kt-next-step-label { font-size: 12px; font-weight: 700; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-next-step.is-turn .kt-next-step-label { color: var(--kt-color-accent-700); }
+.kt-industry .kt-next-step-headline { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.4; color: var(--kt-color-text); text-wrap: pretty; }
+.kt-industry .kt-next-step-sentence { margin: 0; font-size: 14px; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-next-step-since { font-size: 14px; font-weight: 400; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-next-step-links { display: flex; gap: var(--kt-space-4); flex-wrap: wrap; margin-top: 4px; }
+.kt-industry .kt-next-step-link { background: none; border: 0; padding: 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--kt-color-accent-2-700); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.kt-industry .kt-next-step-link:hover { color: var(--kt-color-accent-2-800); }
+.kt-industry .kt-next-step-link:focus-visible { outline: 2px solid var(--kt-color-accent); outline-offset: 2px; }
+.kt-industry .kt-notice.kt-next-step { margin: 0; display: flex; }
+.kt-industry .kt-notice.kt-next-step .kt-next-step-label,
+.kt-industry .kt-notice.kt-next-step .kt-next-step-sentence { color: inherit; }
+.kt-industry .kt-next-step-block-body { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.kt-industry .kt-meta-row.kt-next-step-facts { gap: var(--kt-space-8); margin-top: var(--kt-space-3); }
+.kt-industry .kt-next-step-fact { font-size: 14px; }
+.kt-industry .kt-next-step-fixes { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 7px; }
+.kt-industry .kt-next-step-fix-text { font-size: 14px; }
+.kt-industry .kt-next-step-blockers { list-style: none; margin: var(--kt-space-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--kt-space-3); }
+.kt-industry .kt-next-step-blockers > li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--kt-space-3); }
+.kt-industry .kt-next-step-blocker-headline { font-size: 14px; font-weight: 600; color: var(--kt-color-text); }
+.kt-industry .kt-next-step-blocker-facts { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 2px var(--kt-space-6); font-size: 14px; color: var(--kt-color-text); }
+.kt-industry .kt-next-step-blocker-facts .kt-label { margin-right: 4px; }
+/* Forced colours and print: the bars keep a visible edge; the state stays in
+   the state line's text (handoff §6). */
+@media (forced-colors: active) {
+	.kt-industry .kt-journey-bar,
+	.kt-industry .kt-journey-bars > span { background: none; border-top: 4px solid CanvasText; }
+}
+@media print {
+	.kt-industry .kt-journey-bar,
+	.kt-industry .kt-journey-bars > span { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+/* Companion pattern (handoff §8): a Yes/No switch in a fixed right column;
+   its dependent fields directly beneath, behind a 2px rule. */
+.kt-industry .kt-choice-row { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 8px 24px; align-items: center; padding: 12px 0; border-top: 1px solid var(--kt-color-divider); }
+.kt-industry .kt-choice-row .seg,
+.kt-industry .kt-choice-row .kt-seg { width: fit-content; }
+.kt-industry .kt-dependent { grid-column: 1 / -1; border-left: 2px solid var(--kt-color-divider); padding: 4px 0 4px 16px; margin-top: 4px; }
+
+/* Filter bar: controls local to the records they filter. */
+.kt-industry .kt-filter-bar { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--kt-space-3); align-items: end; margin-bottom: var(--kt-space-4); }
+.kt-industry .kt-filter-bar > .is-wide { grid-column: span 2; }
+
+/* Inside a page sheet, a disclosure is a rule band, not a nested card;
+   .kt-notice/.kt-status/.table keep their own fill or rule unchanged. */
+.kt-industry .kt-page .kt-disclosure { border-left: 0; border-right: 0; border-bottom: 0; }
+
+/* Empty / filtered-empty inside the sheet — scoped so the existing
+   full-panel .kt-empty rule other modules (Planning, Tenders, system
+   setup) already consume is untouched outside a page sheet. */
+.kt-industry .kt-page .kt-empty { padding: 27px 20px; border-top: 1px solid var(--kt-color-divider); color: var(--kt-color-neutral-800); }
+
+/* Media hardening — keep when trimming (see the design-system readme). */
+@media (forced-colors: active) {
+	.kt-industry .kt-status, .kt-industry .kt-tag { border: 1px solid currentColor; }
+	.kt-industry .kt-timeline-dot { border: 1px solid currentColor; }
+	.kt-industry .kt-timeline-dot.is-pending { box-shadow: none; border: 1.5px solid currentColor; }
+	.kt-industry .kt-notice { border: 1px solid CanvasText; border-left-width: 3px; }
+	.kt-industry .kt-checkbox .box { border-color: CanvasText; }
+	.kt-industry .kt-checkbox input:checked + .box { background: CanvasText; border-color: CanvasText; }
+	.kt-industry .kt-checkbox input:checked + .box::after { border-color: Canvas; }
+	.kt-industry .kt-radio .dot { border-color: CanvasText; }
+	.kt-industry .kt-radio input:checked + .dot { background: CanvasText; border-color: CanvasText; }
+	.kt-industry .kt-kpi-card { border-color: CanvasText; }
+	.kt-industry .kt-kpi-card.is-attention, .kt-industry .kt-kpi-card.is-critical, .kt-industry .kt-kpi-card.is-live { box-shadow: none; border-top: 3px solid CanvasText; }
+}
+@media print {
+	.kt-industry { background: #fff; color: #000; }
+	.kt-industry .kt-btn, .kt-industry .kt-dialog-backdrop, .kt-industry .kt-tabs, .kt-industry .kt-sticky-footer { display: none; }
+	.kt-industry .kt-card, .kt-industry .kt-dialog, .kt-industry .kt-panel-lg { box-shadow: none; background: #fff; border-color: #000; }
+	.kt-industry .kt-page { box-shadow: none; border-color: #000; margin: 0; }
+	.kt-industry .kt-status { background: none; color: #000; border: 1px solid #000; }
+	.kt-industry a { color: #000; }
+	.kt-industry .kt-table thead th { position: static; border-bottom-color: #000; }
+	.kt-industry .kt-notice { background: #fff; border-color: #000; }
+	.kt-industry .kt-notice-icon { display: none; }
+	.kt-industry .kt-kpi-card { border-color: #000; box-shadow: none; }
+	.kt-industry .kt-kpi-card.is-attention, .kt-industry .kt-kpi-card.is-critical, .kt-industry .kt-kpi-card.is-live { border-top: 3px solid #000; }
+}
+@media (max-width: 480px) {
+	.kt-industry .kt-input { font-size: 16px; }
+}
+
+/* ── Responsive card grids (KT-STD-001 §3, STR-CHG-001 v1.8 §11.4/§11.11):
+     two-column compositions stack on narrow screens; the editor's
+     tree/selected-item split stacks with the tree first. ── */
+.kt-industry .kt-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--kt-space-6); align-items: start; }
+.kt-industry .kt-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--kt-space-6); }
+.kt-industry .kt-editor-grid { display: grid; grid-template-columns: 42% 58%; gap: var(--kt-space-6); align-items: start; }
+.kt-industry .kt-objective-grid { display: grid; grid-template-columns: 1fr 200px; gap: var(--kt-space-6); align-items: start; }
+@media (max-width: 900px) {
+	.kt-industry .kt-grid-2, .kt-industry .kt-grid-3, .kt-industry .kt-editor-grid, .kt-industry .kt-objective-grid { grid-template-columns: 1fr; }
+	.kt-industry .kt-editor-grid > .kt-card { position: static !important; }
+	.kt-industry .kt-shell { padding-left: 16px; padding-right: 16px; }
+	.kt-industry .kt-sticky-footer { flex-wrap: wrap; padding-left: 16px; padding-right: 16px; }
+}
+
+/* ── BUD-CHG-001 v1.9 (15 Sep 2026): record disclosure rows and the
+     part-to-whole utilisation bar, ported from the Budget artboard bundle
+     (docs/mvp-1-r1/03_budget/design/_ds/kentender-industry-.../styles.css).
+     .kt-record is a <details> whose <summary> carries the row (index, ref,
+     title, meta, amount) and a footer with links + toggle; .kt-bar draws
+     committed (deep) and reserved (mid) against the free track. ── */
+.kt-industry .kt-record { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); display: block; }
+.kt-industry .kt-record summary { list-style: none; cursor: pointer; }
+.kt-industry .kt-record summary::-webkit-details-marker { display: none; }
+.kt-industry .kt-record-main { display: flex; gap: var(--kt-space-4); padding: var(--kt-space-4); align-items: flex-start; }
+.kt-industry .kt-record-index { width: 32px; height: 32px; flex: none; display: flex; align-items: center; justify-content: center; background: var(--kt-color-neutral-100); border: 1px solid var(--kt-color-divider); font-family: var(--kt-font-heading); font-weight: 600; font-size: 13px; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-record-body { flex: 1; min-width: 0; }
+.kt-industry .kt-record-ref { font-size: 12px; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-record-title { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 17px; margin-top: 2px; }
+.kt-industry .kt-record-meta { display: flex; gap: var(--kt-space-3); align-items: center; flex-wrap: wrap; margin-top: 8px; font-size: 13px; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-record-value { text-align: right; flex: none; }
+.kt-industry .kt-record-amount { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 20px; }
+.kt-industry .kt-record-sub { font-size: 12px; color: var(--kt-color-neutral-700); margin-top: 2px; }
+.kt-industry .kt-record-footer { display: flex; align-items: center; justify-content: space-between; padding: var(--kt-space-3) var(--kt-space-4); border-top: 1px solid var(--kt-color-divider); font-size: 13px; }
+.kt-industry .kt-record-footer-label { color: var(--kt-color-neutral-700); margin-right: 6px; }
+.kt-industry .kt-record-footer > span:first-child { white-space: nowrap; }
+.kt-industry .kt-record-toggle { display: inline-flex; align-items: center; gap: 6px; color: var(--kt-color-accent-700); font-weight: 600; flex-shrink: 0; }
+.kt-industry .kt-record .kt-disclosure-chevron { transition: transform 0.15s ease; }
+.kt-industry .kt-record[open] .kt-disclosure-chevron { transform: rotate(180deg); }
+.kt-industry .kt-record:not([open]) .when-open { display: none; }
+.kt-industry .kt-record[open] .when-closed { display: none; }
+.kt-industry .kt-record-detail { border-top: 1px solid var(--kt-color-divider); padding: var(--kt-space-4); }
+.kt-industry .kt-record-list { display: flex; flex-direction: column; gap: var(--kt-space-3); }
+.kt-industry .kt-bar { display: flex; height: 6px; background: var(--kt-color-neutral-200); overflow: hidden; }
+.kt-industry .kt-bar > i { display: block; height: 100%; }
+.kt-industry .kt-bar-committed { background: var(--kt-color-accent-800); }
+.kt-industry .kt-bar-reserved { background: var(--kt-color-accent-400); }
+@media (forced-colors: active) {
+	.kt-industry .kt-record, .kt-industry .kt-record-index { border-color: CanvasText; }
+	.kt-industry .kt-bar { background: var(--kt-color-neutral-400); border: 1px solid var(--kt-color-neutral-500); }
+}
+@media print {
+	.kt-industry .kt-record { border-color: #000; }
+	.kt-industry .kt-record-index { background: #fff; border-color: #000; }
+	.kt-industry .kt-record-detail { display: block !important; }
+}

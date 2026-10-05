@@ -99,7 +99,7 @@ function panelScope(id: string): string {
  * calls) — a working precedent for scoping an overlay dialog rather than a
  * full page. The mockup's own `.dialog` class is used only as a slicing
  * selector here, never ported into live markup (ReasonDialog.vue/
- * ConfirmDialog.vue render `.kt-dialog`, the live design system's own class).
+ * ConfirmDialog.vue render `.dialog`, the live design system's own class).
  */
 function dialogScope(id: string): string {
 	return `#${id} .dialog`;
@@ -115,8 +115,8 @@ async function dialogLandmarks(browser: any, id: string): Promise<{ wanted: stri
 // ReasonDialog.vue/ConfirmDialog.vue render outside `[data-testid="nds-shell"]`
 // (a sibling of the shell, so a dialog can overlay the rail too) — both carry
 // `data-testid="nds-dialog"` on their backdrop, scoped down to the visible
-// `.kt-dialog` box itself so the dimmed background page is never compared.
-const LIVE_DIALOG_SCOPE = '[data-testid="nds-dialog"] .kt-dialog';
+// `.dialog` box itself so the dimmed background page is never compared.
+const LIVE_DIALOG_SCOPE = '[data-testid="nds-dialog"] .dialog';
 
 async function liveDialogLandmarks(page: Page): Promise<string[]> {
 	return stripFixtureReferences(await panelLandmarks(page, LIVE_DIALOG_SCOPE));
@@ -154,7 +154,7 @@ async function panelLandmarks(page: Page, scope: string): Promise<string[]> {
 	return page.evaluate((scope) => {
 		const root = document.querySelector(scope);
 		if (!root) return [] as string[];
-		const selector = ".kt-card-title, .kt-dialog-title, .dialog-title, label, legend, .kt-label, th, button, .btn, h2";
+		const selector = ".kt-card-title, .dialog-title, .dialog-title, label, legend, .kt-label, th, button, .btn, h2";
 		const texts: string[] = [];
 		for (const el of Array.from(root.querySelectorAll<HTMLElement>(selector))) {
 			if (!el.getClientRects().length) continue;

@@ -142,13 +142,13 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 	<div class="kt-industry" data-testid="bud-detail" :data-loading="loading ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : 'false'">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell">
-			<div v-if="loading" class="kt-card kt-blueprint"><div class="kt-skel" style="width: 280px; height: 20px"></div></div>
-			<div v-else-if="notFound" class="kt-card kt-blueprint kt-empty" data-testid="budget-detail-not-found"><h2>{{ __("This budget could not be found.") }}</h2></div>
-			<div v-else-if="forbidden" class="kt-card kt-blueprint kt-empty" data-testid="budget-detail-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p v-if="forbidden.text" class="kt-muted">{{ __(forbidden.text) }}</p></div>
-			<div v-else-if="serverError" class="kt-card kt-blueprint kt-empty" data-testid="budget-detail-server-error"><h2>{{ __("This budget could not be loaded.") }}</h2><button type="button" class="kt-btn kt-btn-primary" @click="loadDetail()">{{ __("Try again") }}</button></div>
+			<div v-if="loading" class="card blueprint"><div class="kt-skel" style="width: 280px; height: 20px"></div></div>
+			<div v-else-if="notFound" class="card blueprint kt-empty" data-testid="budget-detail-not-found"><h2>{{ __("This budget could not be found.") }}</h2></div>
+			<div v-else-if="forbidden" class="card blueprint kt-empty" data-testid="budget-detail-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p v-if="forbidden.text" class="kt-muted">{{ __(forbidden.text) }}</p></div>
+			<div v-else-if="serverError" class="card blueprint kt-empty" data-testid="budget-detail-server-error"><h2>{{ __("This budget could not be loaded.") }}</h2><button type="button" class="btn btn-primary" @click="loadDetail()">{{ __("Try again") }}</button></div>
 
 			<template v-else-if="detail">
-				<div class="kt-card kt-blueprint" style="padding: 0">
+				<div class="card blueprint" style="padding: 0">
 				<div style="padding: 28px 24px 0">
 				<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px" data-testid="budget-detail-header">
 					<div>
@@ -159,9 +159,9 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 						</div>
 					</div>
 					<div style="display: flex; gap: 10px; flex: none; flex-wrap: wrap">
-						<button v-if="pending" type="button" class="kt-btn kt-btn-secondary" data-testid="budget-detail-pending-action-btn" @click="openPending">{{ PENDING_LABELS[pending.action] || __("Open") }}</button>
-						<button v-if="actions.includes('update_allocation')" type="button" class="kt-btn kt-btn-primary" :disabled="updating" data-testid="budget-detail-update-btn" @click="updateAllocation">{{ __("Update registered allocation") }}</button>
-						<button v-if="actions.includes('close_budget')" type="button" class="kt-btn kt-btn-secondary" data-testid="budget-detail-close-btn" @click="go(budgetIdParam, 'close')">{{ __("Close budget") }}</button>
+						<button v-if="pending" type="button" class="btn btn-secondary" data-testid="budget-detail-pending-action-btn" @click="openPending">{{ PENDING_LABELS[pending.action] || __("Open") }}</button>
+						<button v-if="actions.includes('update_allocation')" type="button" class="btn btn-primary" :disabled="updating" data-testid="budget-detail-update-btn" @click="updateAllocation">{{ __("Update registered allocation") }}</button>
+						<button v-if="actions.includes('close_budget')" type="button" class="btn btn-secondary" data-testid="budget-detail-close-btn" @click="go(budgetIdParam, 'close')">{{ __("Close budget") }}</button>
 					</div>
 				</div>
 				<KtErrorBanner :message="actingError" style="margin-bottom: 12px" @dismiss="actingError = null" />
@@ -240,7 +240,7 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 				<template v-else-if="tab === 'lines'">
 					<div v-if="!linesActive" style="padding: 20px 24px; border-top: 1px solid var(--kt-color-divider)"><div class="kt-skel" style="width: 240px; height: 16px"></div></div>
 					<div v-else style="border-top: 1px solid var(--kt-color-divider); overflow-x: auto">
-						<table class="kt-table" data-testid="budget-detail-lines-table">
+						<table class="table" data-testid="budget-detail-lines-table">
 							<thead>
 								<tr>
 									<th>{{ __("Budget Line") }}</th>
@@ -279,11 +279,11 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 				<!-- Funding Activity (BUD-DES-07) -->
 				<template v-else-if="tab === 'activity'">
 					<div style="padding: 20px 24px; border-top: 1px solid var(--kt-color-divider); display: flex; gap: 12px; flex-wrap: wrap">
-						<select v-model="activityFilterLine" class="kt-input" style="width: 220px" data-testid="budget-detail-activity-filter-line">
+						<select v-model="activityFilterLine" class="input" style="width: 220px" data-testid="budget-detail-activity-filter-line">
 							<option value="">{{ __("All Budget Lines") }}</option>
 							<option v-for="l in activity?.budget_lines || []" :key="l.id" :value="l.id">{{ l.title }}</option>
 						</select>
-						<select v-model="activityFilterEvent" class="kt-input" style="width: 220px" data-testid="budget-detail-activity-filter-event">
+						<select v-model="activityFilterEvent" class="input" style="width: 220px" data-testid="budget-detail-activity-filter-event">
 							<option value="">{{ __("All funding events") }}</option>
 							<option v-for="opt in activity?.event_type_options || []" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
 						</select>
@@ -297,7 +297,7 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 						</div>
 					</div>
 					<div v-else style="border-top: 1px solid var(--kt-color-divider); overflow-x: auto">
-						<table class="kt-table" data-testid="budget-detail-activity-table">
+						<table class="table" data-testid="budget-detail-activity-table">
 							<thead><tr><th>{{ __("Date and time") }}</th><th>{{ __("Event") }}</th><th>{{ __("Budget Line") }}</th><th>{{ __("Requisition / reservation") }}</th><th class="is-num">{{ __("Amount") }}</th><th>{{ __("Initiating actor") }}</th></tr></thead>
 							<tbody>
 								<tr v-for="row in activity.rows" :key="row.id">

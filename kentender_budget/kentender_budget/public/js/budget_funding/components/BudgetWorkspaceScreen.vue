@@ -247,7 +247,7 @@ function openLine(line) {
 
 		<!-- BUD-DES-16 Forbidden: only the inline panel — no header, filter or protected content painted. -->
 		<div v-if="!loading && forbidden" class="kt-shell">
-			<div class="kt-card kt-blueprint kt-empty" data-testid="bud-forbidden">
+			<div class="card blueprint kt-empty" data-testid="bud-forbidden">
 				<h2>{{ __(forbidden.heading) }}</h2>
 				<p class="kt-muted">{{ __(forbidden.text) }}</p>
 			</div>
@@ -263,19 +263,19 @@ function openLine(line) {
 				</header>
 				<div style="display: flex; align-items: center; gap: 10px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--kt-color-divider)">
 					<label class="kt-label" style="margin: 0" for="bud-ws-fy">{{ __("Financial year") }}</label>
-					<select id="bud-ws-fy" class="kt-input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
+					<select id="bud-ws-fy" class="input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
 						<option value="" disabled>{{ __("Select a financial year") }}</option>
 						<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
 					</select>
 				</div>
-				<div class="kt-card kt-blueprint" data-testid="bud-ws-skeleton">
+				<div class="card blueprint" data-testid="bud-ws-skeleton">
 					<div class="kt-skel" style="width: 300px; height: 16px; margin-bottom: 14px"></div>
 					<div class="kt-skel" style="width: 200px; height: 12px"></div>
 				</div>
 				<div class="kt-kpi-row" style="margin-bottom: 16px">
 					<div v-for="i in 4" :key="i" class="kt-kpi-card"><div class="kt-skel" style="width: 70%; height: 14px"></div></div>
 				</div>
-				<div class="kt-card kt-blueprint">
+				<div class="card blueprint">
 					<div class="kt-skel" style="height: 14px; margin-bottom: 16px"></div>
 					<div class="kt-skel" style="height: 14px"></div>
 				</div>
@@ -290,15 +290,15 @@ function openLine(line) {
 				</header>
 				<div style="display: flex; align-items: center; gap: 10px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--kt-color-divider)">
 					<label class="kt-label" style="margin: 0" for="bud-ws-fy">{{ __("Financial year") }}</label>
-					<select id="bud-ws-fy" class="kt-input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
+					<select id="bud-ws-fy" class="input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
 						<option value="" disabled>{{ __("Select a financial year") }}</option>
 						<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
 					</select>
 				</div>
-				<div class="kt-card kt-blueprint kt-empty" data-testid="bud-ws-server-error">
+				<div class="card blueprint kt-empty" data-testid="bud-ws-server-error">
 					<h2>{{ __("Budget & Funding could not be loaded.") }}</h2>
 					<p class="kt-muted">{{ __("Try again. If the problem continues, contact KenTender support.") }}</p>
-					<button type="button" class="kt-btn kt-btn-primary" @click="refresh()">{{ __("Try again") }}</button>
+					<button type="button" class="btn btn-primary" @click="refresh()">{{ __("Try again") }}</button>
 				</div>
 			</template>
 
@@ -311,12 +311,12 @@ function openLine(line) {
 				</header>
 				<div style="display: flex; align-items: center; gap: 10px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--kt-color-divider)">
 					<label class="kt-label" style="margin: 0" for="bud-ws-fy">{{ __("Financial year") }}</label>
-					<select id="bud-ws-fy" class="kt-input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
+					<select id="bud-ws-fy" class="input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
 						<option value="" disabled>{{ __("Select a financial year") }}</option>
 						<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
 					</select>
 				</div>
-				<div class="kt-card kt-blueprint kt-empty" data-testid="budget-select-fy">
+				<div class="card blueprint kt-empty" data-testid="budget-select-fy">
 					<h2>{{ __("Select a financial year to view its procurement budget.") }}</h2>
 				</div>
 			</template>
@@ -330,15 +330,15 @@ function openLine(line) {
 				</header>
 				<div style="display: flex; align-items: center; gap: 10px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--kt-color-divider)">
 					<label class="kt-label" style="margin: 0" for="bud-ws-fy">{{ __("Financial year") }}</label>
-					<select id="bud-ws-fy" class="kt-input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
+					<select id="bud-ws-fy" class="input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
 						<option value="" disabled>{{ __("Select a financial year") }}</option>
 						<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
 					</select>
 				</div>
-				<div class="kt-card kt-blueprint kt-empty" data-testid="budget-no-baseline">
+				<div class="card blueprint kt-empty" data-testid="budget-no-baseline">
 					<h2>{{ __("No procurement allocation has been recorded for FY {0}.", [workspace?.fiscal_year?.label || fyFilter.selected.value]) }}</h2>
 					<p class="kt-muted">{{ __("Record the externally approved allocation for this financial year.") }}</p>
-					<button v-if="canRecord" type="button" class="kt-btn kt-btn-primary" data-testid="budget-register-btn" @click="runAction('record_allocation')">
+					<button v-if="canRecord" type="button" class="btn btn-primary" data-testid="budget-register-btn" @click="runAction('record_allocation')">
 						{{ ACTION_LABELS.record_allocation }}
 					</button>
 				</div>
@@ -346,12 +346,12 @@ function openLine(line) {
 
 			<!-- Active/pending (BUD-DES-01/01A/01B): header + filter are the FIRST section of the one card, matching the board. -->
 			<template v-else>
-				<div class="kt-card kt-blueprint" style="padding: 0">
+				<div class="card blueprint" style="padding: 0">
 					<div style="padding: 28px 24px 20px; border-bottom: 1px solid var(--kt-color-divider)">
 						<span class="kt-eyebrow">{{ __("BUDGET & FUNDING") }}</span>
 						<h1 style="margin: 0 0 8px 0; font-size: 32px">{{ __("Budget & Funding") }}</h1>
 						<p class="kt-page-lede" style="margin: 0 0 16px">{{ __("View the registered procurement budget and the funding position used by Procurement Planning.") }}</p>
-						<select id="bud-ws-fy" class="kt-input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
+						<select id="bud-ws-fy" class="input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
 							<option value="" disabled>{{ __("Select a financial year") }}</option>
 							<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
 						</select>
@@ -365,7 +365,7 @@ function openLine(line) {
 								<h2 style="margin: 0; font-size: 19px">{{ pendingCopy.heading }}</h2>
 								<span class="kt-status" :class="pendingCopy.statusClass">{{ pendingCopy.status }}</span>
 							</div>
-							<button type="button" class="kt-btn" :class="pendingIsPrimary ? 'kt-btn-primary' : 'kt-btn-secondary'" data-testid="budget-pending-action-btn" @click="runAction(pendingAction)">
+							<button type="button" class="btn" :class="pendingIsPrimary ? 'btn-primary' : 'btn-secondary'" data-testid="budget-pending-action-btn" @click="runAction(pendingAction)">
 								{{ pendingActionLabel }}
 							</button>
 						</div>
@@ -400,7 +400,7 @@ function openLine(line) {
 									<h2 style="margin: 0; font-size: 19px">{{ workspace.budget.title }}</h2>
 									<span class="kt-status" :class="isClosed ? 'is-critical' : 'is-live'">{{ isClosed ? __("Closed") : __("Current") }}</span>
 								</div>
-								<button type="button" class="kt-btn kt-btn-secondary" data-testid="budget-view-btn" @click="runAction('view_budget')">{{ ACTION_LABELS.view_budget }}</button>
+								<button type="button" class="btn btn-secondary" data-testid="budget-view-btn" @click="runAction('view_budget')">{{ ACTION_LABELS.view_budget }}</button>
 							</div>
 							<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px 24px" class="kt-ws-facts">
 								<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Budget reference") }}</div><div style="font-size: 14px">{{ workspace.budget.code }}</div></div>
@@ -417,7 +417,7 @@ function openLine(line) {
 								</div>
 							</div>
 							<div v-else-if="actions.includes('update_allocation')" style="margin-top: 14px">
-								<button type="button" class="kt-btn kt-btn-secondary" data-testid="budget-update-btn" :disabled="updating" @click="runAction('update_allocation')">{{ ACTION_LABELS.update_allocation }}</button>
+								<button type="button" class="btn btn-secondary" data-testid="budget-update-btn" :disabled="updating" @click="runAction('update_allocation')">{{ ACTION_LABELS.update_allocation }}</button>
 							</div>
 						</div>
 
@@ -439,8 +439,8 @@ function openLine(line) {
 									</div>
 								</div>
 								<div class="bud-revision-request-actions">
-									<button v-if="request.can_decline" type="button" class="kt-btn kt-btn-secondary" data-testid="budget-revision-decline" @click="openDecline(request)">{{ __("Decline request") }}</button>
-									<button type="button" class="kt-btn kt-btn-primary" data-testid="budget-revision-primary" :disabled="updating" @click="runRequestAction(request)">{{ request.primary_label }}</button>
+									<button v-if="request.can_decline" type="button" class="btn btn-secondary" data-testid="budget-revision-decline" @click="openDecline(request)">{{ __("Decline request") }}</button>
+									<button type="button" class="btn btn-primary" data-testid="budget-revision-primary" :disabled="updating" @click="runRequestAction(request)">{{ request.primary_label }}</button>
 								</div>
 							</div>
 						</div>
@@ -477,7 +477,7 @@ function openLine(line) {
 								{{ __("Budget Lines") }}
 							</h3>
 							<div style="overflow-x: auto">
-								<table class="kt-table" data-testid="budget-lines-preview">
+								<table class="table" data-testid="budget-lines-preview">
 									<thead>
 										<tr>
 											<th>{{ __("Budget Line") }}</th>
@@ -509,24 +509,24 @@ function openLine(line) {
 			</template>
 		</div>
 			<!-- BUD-DES-19 — decline a budget revision request. -->
-		<div v-if="declining" class="kt-dialog-backdrop" tabindex="-1" @keydown.esc.stop="declining = null">
-			<div class="kt-dialog" style="width: min(520px, 100%)" role="dialog" aria-modal="true" aria-labelledby="bud-decline-title" data-testid="budget-decline-dialog">
-				<h2 id="bud-decline-title" class="kt-dialog-title">{{ __("Decline this budget revision request?") }}</h2>
+		<div v-if="declining" class="dialog-backdrop" tabindex="-1" @keydown.esc.stop="declining = null">
+			<div class="dialog" style="width: min(520px, 100%)" role="dialog" aria-modal="true" aria-labelledby="bud-decline-title" data-testid="budget-decline-dialog">
+				<h2 id="bud-decline-title" class="dialog-title">{{ __("Decline this budget revision request?") }}</h2>
 				<div class="bud-decline-facts">
 					<div><div class="kt-label">{{ __("Line") }}</div><div>{{ declining.line_title }}</div></div>
 					<div><div class="kt-label">{{ __("Over by") }}</div><div>{{ declining.over_display }}</div></div>
 					<div><div class="kt-label">{{ __("Requested by") }}</div><div>{{ declining.requested_by_name }}</div></div>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="bud-decline-reason">{{ __("Reason for declining") }}</label>
-					<textarea id="bud-decline-reason" ref="declineInput" v-model="declineReason" class="kt-input" style="width: 100%; height: auto" rows="4" maxlength="500" aria-describedby="bud-decline-help" data-testid="budget-decline-reason"></textarea>
+					<textarea id="bud-decline-reason" ref="declineInput" v-model="declineReason" class="input" style="width: 100%; height: auto" rows="4" maxlength="500" aria-describedby="bud-decline-help" data-testid="budget-decline-reason"></textarea>
 					<div class="bud-decline-count"><span>{{ __("10–500 characters") }}</span><span data-testid="budget-decline-count">{{ declineLength }}</span></div>
 				</div>
 				<p id="bud-decline-help" class="kt-dialog-body" style="margin: 0">{{ __("The plan update stays over budget. Procurement Planning will see your reason.") }}</p>
 				<p v-if="declineError" class="kt-field-error" data-testid="budget-decline-error">{{ declineError }}</p>
-				<div class="kt-dialog-actions">
-					<button type="button" class="kt-btn kt-btn-secondary" @click="declining = null">{{ __("Cancel") }}</button>
-					<button type="button" class="kt-btn kt-btn-primary" :disabled="!declineValid || declineBusy" data-testid="budget-decline-confirm" @click="submitDecline">{{ __("Decline request") }}</button>
+				<div class="dialog-actions">
+					<button type="button" class="btn btn-secondary" @click="declining = null">{{ __("Cancel") }}</button>
+					<button type="button" class="btn btn-primary" :disabled="!declineValid || declineBusy" data-testid="budget-decline-confirm" @click="submitDecline">{{ __("Decline request") }}</button>
 				</div>
 			</div>
 		</div>

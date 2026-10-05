@@ -48,12 +48,12 @@
 					<div v-for="de in sec.d" :key="de.l" style="display:grid;gap:4px"><span class="kt-label">{{ de.l }}</span><p style="margin:0;font-size:15px;line-height:1.5;max-width:72ch;text-wrap:pretty" :data-testid="`awd-def-${slug(de.l)}`">{{ de.v }}</p></div>
 				</div>
 				<div v-if="sec.hasTbl" style="overflow-x:auto">
-					<table class="kt-table">
+					<table class="table">
 						<thead><tr><th v-for="h in sec.th" :key="h.t" :class="h.cls">{{ h.t }}</th></tr></thead>
 						<tbody>
 							<tr v-for="(r, ri) in sec.rows" :key="ri">
 								<td v-for="(c, ci) in r.cells" :key="ci" :class="c.cls"><span v-if="c.hasChip" :class="c.chip">{{ c.t }}</span><template v-if="c.noChip">{{ c.t }}</template></td>
-								<td v-if="r.hasA" style="text-align:right"><button type="button" class="kt-btn kt-btn-primary" :disabled="pending" :data-testid="`awd-row-action-${ri}`" @click="emit('action', r.action)">{{ r.a }}</button></td>
+								<td v-if="r.hasA" style="text-align:right"><button type="button" class="btn btn-primary" :disabled="pending" :data-testid="`awd-row-action-${ri}`" @click="emit('action', r.action)">{{ r.a }}</button></td>
 							</tr>
 						</tbody>
 					</table>
@@ -63,13 +63,13 @@
 					<p style="margin:0" data-testid="awd-empty">{{ sec.empty }}</p>
 				</div>
 				<div v-if="sec.hasFld" style="display:grid;gap:16px;max-width:720px">
-					<div v-for="fd in sec.fld" :key="fd.label" class="kt-field">
+					<div v-for="fd in sec.fld" :key="fd.label" class="field">
 						<label :for="fd.name ? `awd-${fd.name}` : undefined">{{ fd.label }}</label>
 						<div v-if="fd.isRadio" style="display:flex;gap:20px;flex-wrap:wrap;padding-top:4px">
-							<label v-for="o in fd.opts" :key="o.label" class="kt-radio"><input type="radio" :name="o.name" :checked="o.checked" :data-testid="`awd-choice-${slug(o.label)}`" @change="set(fd.name, o.value)"><span class="dot"></span>{{ o.label }}</label>
+							<label v-for="o in fd.opts" :key="o.label" class="radio"><input type="radio" :name="o.name" :checked="o.checked" :data-testid="`awd-choice-${slug(o.label)}`" @change="set(fd.name, o.value)"><span class="dot"></span>{{ o.label }}</label>
 						</div>
-						<textarea v-if="fd.isArea" :id="`awd-${fd.name}`" class="kt-input" :value="fd.value" :readonly="!fd.name" :data-testid="`awd-field-${fd.name || slug(fd.label)}`" @input="set(fd.name, $event.target.value)"></textarea>
-						<input v-if="fd.isInput" :id="`awd-${fd.name}`" class="kt-input" :value="fd.value" :readonly="!fd.name" :data-testid="`awd-field-${fd.name || slug(fd.label)}`" @input="set(fd.name, $event.target.value)">
+						<textarea v-if="fd.isArea" :id="`awd-${fd.name}`" class="input" :value="fd.value" :readonly="!fd.name" :data-testid="`awd-field-${fd.name || slug(fd.label)}`" @input="set(fd.name, $event.target.value)"></textarea>
+						<input v-if="fd.isInput" :id="`awd-${fd.name}`" class="input" :value="fd.value" :readonly="!fd.name" :data-testid="`awd-field-${fd.name || slug(fd.label)}`" @input="set(fd.name, $event.target.value)">
 						<p v-if="fieldError(fd)" style="margin:0;font-size:14px;font-weight:600;color:var(--kt-status-critical)" :data-testid="`awd-error-${fd.name}`">{{ fieldError(fd) }}</p>
 					</div>
 				</div>
@@ -96,27 +96,27 @@
 				</div>
 				<div v-if="open[dc.key]" class="kt-disclosure-body" style="display:grid;gap:8px">
 					<p v-for="(ln, li) in dc.lines" :key="li" style="margin:0;font-size:14px">{{ ln }}</p>
-					<div v-if="dc.a"><button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" :data-testid="`awd-disclosure-action-${slug(dc.a.label)}`" @click="emit('action', dc.a)">{{ dc.a.label }}</button></div>
+					<div v-if="dc.a"><button type="button" class="btn btn-secondary" :disabled="pending" :data-testid="`awd-disclosure-action-${slug(dc.a.label)}`" @click="emit('action', dc.a)">{{ dc.a.label }}</button></div>
 				</div>
 			</div>
 		</div>
 
-		<div v-if="m.isDialog" class="kt-dialog-backdrop" data-testid="awd-dialog" style="position:fixed;inset:0;align-items:start;padding-top:160px" @click.self="emit('action', { action: 'close-dialog' })" @keydown.esc.stop="emit('action', { action: 'close-dialog' })">
-			<div class="kt-dialog" role="dialog" aria-modal="true" style="width:520px;max-width:calc(100% - 32px)">
-				<div class="kt-dialog-title">{{ m.dt }}</div>
+		<div v-if="m.isDialog" class="dialog-backdrop" data-testid="awd-dialog" style="position:fixed;inset:0;align-items:start;padding-top:160px" @click.self="emit('action', { action: 'close-dialog' })" @keydown.esc.stop="emit('action', { action: 'close-dialog' })">
+			<div class="dialog" role="dialog" aria-modal="true" style="width:520px;max-width:calc(100% - 32px)">
+				<div class="dialog-title">{{ m.dt }}</div>
 				<div v-if="m.hasDb" class="dialog-body" data-testid="awd-dialog-body">{{ m.db }}</div>
-				<div v-for="fd in m.dfld" :key="fd.label" class="kt-field">
+				<div v-for="fd in m.dfld" :key="fd.label" class="field">
 					<label :for="fd.name ? `awd-dlg-${fd.name}` : undefined">{{ fd.label }}</label>
 					<p v-if="fd.isRo" style="margin:0;font-size:14px;font-weight:600">{{ fd.value }}</p>
 					<div v-if="fd.isRadio" style="display:grid;gap:8px;padding-top:4px">
-						<label v-for="o in fd.opts" :key="o.label" class="kt-radio"><input type="radio" :name="o.name" :checked="o.checked" :data-testid="`awd-dialog-choice-${slug(o.label)}`" @change="set(fd.name, o.value)"><span class="dot"></span>{{ o.label }}</label>
+						<label v-for="o in fd.opts" :key="o.label" class="radio"><input type="radio" :name="o.name" :checked="o.checked" :data-testid="`awd-dialog-choice-${slug(o.label)}`" @change="set(fd.name, o.value)"><span class="dot"></span>{{ o.label }}</label>
 					</div>
-					<textarea v-if="fd.isArea" :id="`awd-dlg-${fd.name}`" class="kt-input" :value="fd.value" :data-testid="`awd-dialog-field-${fd.name}`" @input="set(fd.name, $event.target.value)"></textarea>
-					<input v-if="fd.isInput" :id="`awd-dlg-${fd.name}`" class="kt-input" :value="fd.value" :data-testid="`awd-dialog-field-${fd.name}`" @input="set(fd.name, $event.target.value)">
+					<textarea v-if="fd.isArea" :id="`awd-dlg-${fd.name}`" class="input" :value="fd.value" :data-testid="`awd-dialog-field-${fd.name}`" @input="set(fd.name, $event.target.value)"></textarea>
+					<input v-if="fd.isInput" :id="`awd-dlg-${fd.name}`" class="input" :value="fd.value" :data-testid="`awd-dialog-field-${fd.name}`" @input="set(fd.name, $event.target.value)">
 					<p v-if="fieldError(fd)" style="margin:0;font-size:14px;font-weight:600;color:var(--kt-status-critical)" :data-testid="`awd-dialog-error-${fd.name}`">{{ fieldError(fd) }}</p>
 				</div>
 				<div v-if="error" class="kt-notice is-critical" role="alert" data-testid="awd-dialog-refusal"><div class="kt-notice-body"><strong>{{ error }}</strong><div v-for="(r, ri) in reasons" :key="ri" style="margin-top:2px">{{ r }}</div></div></div>
-				<div class="kt-dialog-actions">
+				<div class="dialog-actions">
 					<button v-for="a in m.dacts" :key="a.label" type="button" :class="a.cls" :disabled="a.action !== 'close-dialog' && pending" :data-testid="`awd-dialog-${slug(a.label)}`" @click="emit('action', a)">{{ a.label }}</button>
 				</div>
 			</div>

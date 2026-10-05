@@ -45,7 +45,7 @@ import {
 
 const DESIGN_DIR = "docs/mvp-1-r1/09_unified_system_setup/design";
 const LIVE_SCOPE = ".kt-setup-shell";
-const DIALOG_SCOPE = ".kt-dialog";
+const DIALOG_SCOPE = ".dialog";
 // The focused open/close/deadline form is an inline panel in the year detail (D18).
 const FORM_SCOPE = '[data-testid="kt-fy-intake"]';
 // The tab body: the board's artboard is the content under the shared header

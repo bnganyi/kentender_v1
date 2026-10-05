@@ -45,12 +45,12 @@ function save() {
 <template>
 	<div class="kt-reminders" data-testid="kt-procset-reminder">
 		<h3>{{ __("Reminders") }}</h3>
-		<div class="kt-field">
+		<div class="field">
 			<label for="kt-reminder-days">{{ __("Remind users this many days before a milestone") }}</label>
 			<input
 				id="kt-reminder-days"
 				v-model="value"
-				class="kt-input"
+				class="input"
 				type="number"
 				min="0"
 				max="365"
@@ -72,7 +72,7 @@ function save() {
 			<div class="kt-notice-body">{{ notice }}</div>
 		</div>
 		<div style="display:flex;justify-content:flex-end;margin-top:12px">
-			<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-reminder-save" @click="save">{{ __("Save changes") }}</button>
+			<button type="button" class="btn btn-primary" :disabled="!canSave" data-testid="kt-reminder-save" @click="save">{{ __("Save changes") }}</button>
 		</div>
 	</div>
 </template>

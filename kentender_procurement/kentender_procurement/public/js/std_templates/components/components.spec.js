@@ -148,7 +148,7 @@ describe("ReportConcernDialog", () => {
 	it("shows each field error next to its field and keeps the entered text", async () => {
 		const w = mount(ReportConcernDialog, { props: { ...props, errors: { summary: "Enter a summary of at least 5 characters." } }, ...g });
 		await w.find('[data-testid="stdt-rc-summary"]').setValue("abc");
-		const field = w.find('[data-testid="stdt-rc-summary"]').element.closest(".kt-field");
+		const field = w.find('[data-testid="stdt-rc-summary"]').element.closest(".field");
 		expect(field.textContent).toContain("Enter a summary of at least 5 characters.");
 		expect(w.find('[data-testid="stdt-rc-summary"]').element.value).toBe("abc");
 	});

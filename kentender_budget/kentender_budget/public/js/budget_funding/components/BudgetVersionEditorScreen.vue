@@ -472,14 +472,14 @@ function restoreLine(o) {
 	<div class="kt-industry kt-bud-editor" data-testid="bud-editor" :data-loading="loading ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : 'false'">
 		<div ref="railEl" class="kt-rail-mount"></div>
 
-		<div v-if="loading" class="kt-shell"><div class="kt-card kt-blueprint"><div class="kt-skel" style="width: 240px; height: 20px"></div></div></div>
-		<div v-else-if="notFound" class="kt-shell"><div class="kt-card kt-blueprint kt-empty" data-testid="bud-editor-not-found"><h2>{{ __("This budget version could not be found.") }}</h2></div></div>
-		<div v-else-if="forbidden" class="kt-shell"><div class="kt-card kt-blueprint kt-empty" data-testid="bud-editor-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p v-if="forbidden.text" class="kt-muted">{{ __(forbidden.text) }}</p></div></div>
-		<div v-else-if="serverError" class="kt-shell"><div class="kt-card kt-blueprint kt-empty"><h2>{{ __("This budget version could not be loaded.") }}</h2><button type="button" class="kt-btn kt-btn-primary" @click="loadDraft()">{{ __("Try again") }}</button></div></div>
+		<div v-if="loading" class="kt-shell"><div class="card blueprint"><div class="kt-skel" style="width: 240px; height: 20px"></div></div></div>
+		<div v-else-if="notFound" class="kt-shell"><div class="card blueprint kt-empty" data-testid="bud-editor-not-found"><h2>{{ __("This budget version could not be found.") }}</h2></div></div>
+		<div v-else-if="forbidden" class="kt-shell"><div class="card blueprint kt-empty" data-testid="bud-editor-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p v-if="forbidden.text" class="kt-muted">{{ __(forbidden.text) }}</p></div></div>
+		<div v-else-if="serverError" class="kt-shell"><div class="card blueprint kt-empty"><h2>{{ __("This budget version could not be loaded.") }}</h2><button type="button" class="btn btn-primary" @click="loadDraft()">{{ __("Try again") }}</button></div></div>
 
 		<template v-else-if="draft">
 			<div class="kt-shell" style="padding-bottom: 32px">
-				<div class="kt-card kt-blueprint" style="padding: 0">
+				<div class="card blueprint" style="padding: 0">
 				<div style="padding: 24px 24px 0">
 				<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px" data-testid="bud-editor-header">
 					<div>
@@ -495,12 +495,12 @@ function restoreLine(o) {
 						     which fields a save persists, not UI copy; no artboard shows
 						     it. A prior pass rendered it verbatim as a visible label —
 						     removed; the active tab already tells the user this. -->
-						<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="bud-editor-save-btn" @click="saveChanges">{{ __("Save changes") }}</button>
-						<button type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="bud-editor-submit-btn" @click="submitOpen = true">{{ __("Submit for review") }}</button>
+						<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="bud-editor-save-btn" @click="saveChanges">{{ __("Save changes") }}</button>
+						<button type="button" class="btn btn-primary" :disabled="busy" data-testid="bud-editor-submit-btn" @click="submitOpen = true">{{ __("Submit for review") }}</button>
 					</div>
 					<div v-else-if="canReview" style="display: flex; align-items: center; gap: 10px; flex: none">
 						<span class="kt-muted" style="font-size: 12px" data-testid="bud-editor-readonly">{{ __("Read-only") }}</span>
-						<button type="button" class="kt-btn kt-btn-primary" data-testid="bud-editor-review-btn" @click="openReview">{{ __("Review this allocation") }}</button>
+						<button type="button" class="btn btn-primary" data-testid="bud-editor-review-btn" @click="openReview">{{ __("Review this allocation") }}</button>
 					</div>
 					<span v-else class="kt-muted" style="font-size: 13px" data-testid="bud-editor-readonly">{{ __("Read-only") }}</span>
 				</div>
@@ -514,7 +514,7 @@ function restoreLine(o) {
 					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 					<div class="kt-notice-body"><strong>{{ __("Your changes were saved, but the allocation was not submitted.") }}</strong> {{ __("Resolve the items below and submit again.") }}</div>
 				</div>
-				<ul v-if="blockers.length" class="kt-card kt-blueprint" style="margin: 0 0 12px; padding: 14px 14px 14px 30px; font-size: 14px" data-testid="bud-editor-blockers">
+				<ul v-if="blockers.length" class="card blueprint" style="margin: 0 0 12px; padding: 14px 14px 14px 30px; font-size: 14px" data-testid="bud-editor-blockers">
 					<li v-for="b in blockers" :key="b.code">{{ b.message }}</li>
 				</ul>
 
@@ -547,13 +547,13 @@ function restoreLine(o) {
 							{{ isSuccessor ? __("Version context") : __("Budget context") }}
 						</h3>
 						<div class="kt-grid-2" style="gap: 16px">
-							<div class="kt-field"><label>{{ __("Financial Year") }}</label><input class="kt-input" type="text" :value="draft.budget.fiscal_year.label" disabled /></div>
-							<div class="kt-field"><label>{{ __("Currency") }}</label><input class="kt-input" type="text" :value="draft.budget.currency" disabled /></div>
+							<div class="field"><label>{{ __("Financial Year") }}</label><input class="input" type="text" :value="draft.budget.fiscal_year.label" disabled /></div>
+							<div class="field"><label>{{ __("Currency") }}</label><input class="input" type="text" :value="draft.budget.currency" disabled /></div>
 							<template v-if="isSuccessor">
-								<div class="kt-field"><label>{{ __("Based on") }}</label><input class="kt-input" type="text" :value="__('Active Version {0}', [draft.based_on.version_number])" disabled /></div>
-								<div class="kt-field">
+								<div class="field"><label>{{ __("Based on") }}</label><input class="input" type="text" :value="__('Active Version {0}', [draft.based_on.version_number])" disabled /></div>
+								<div class="field">
 									<label for="bud-editor-type">{{ __("Type of change") }}</label>
-									<select id="bud-editor-type" v-model="form.revision_type" class="kt-input" :disabled="!canEdit" data-testid="bud-editor-revision-type">
+									<select id="bud-editor-type" v-model="form.revision_type" class="input" :disabled="!canEdit" data-testid="bud-editor-revision-type">
 										<option>Supplementary allocation</option>
 										<option>Reduction</option>
 										<option>Transfer</option>
@@ -569,25 +569,25 @@ function restoreLine(o) {
 							{{ __("External approval") }}
 						</h3>
 						<div class="kt-grid-2" style="gap: 16px">
-							<div class="kt-field">
+							<div class="field">
 								<label for="bud-editor-approval-ref">{{ __("Approval reference") }}</label>
-								<input id="bud-editor-approval-ref" v-model="form.approval_reference" class="kt-input" type="text" :disabled="!canEdit" data-testid="bud-editor-approval-ref" />
+								<input id="bud-editor-approval-ref" v-model="form.approval_reference" class="input" type="text" :disabled="!canEdit" data-testid="bud-editor-approval-ref" />
 							</div>
-							<div class="kt-field">
+							<div class="field">
 								<label for="bud-editor-approval-date">{{ __("Approval date") }}</label>
-								<input id="bud-editor-approval-date" v-model="form.approval_date" class="kt-input" type="date" :disabled="!canEdit" data-testid="bud-editor-approval-date" />
+								<input id="bud-editor-approval-date" v-model="form.approval_date" class="input" type="date" :disabled="!canEdit" data-testid="bud-editor-approval-date" />
 							</div>
-							<div class="kt-field">
+							<div class="field">
 								<label for="bud-editor-approved-allocation">{{ __("Approved allocation") }}</label>
 								<div class="kt-input-prefix"><span class="prefix">{{ currency }}</span><input id="bud-editor-approved-allocation" v-model="form.authorised_total" type="number" min="0" :disabled="!canEdit || allocationLocked" data-testid="bud-editor-approved-allocation" /></div>
 								<p v-if="allocationLocked" class="kt-field-hint" data-testid="bud-editor-allocation-locked-hint">{{ __("A transfer moves money between budget lines; the approved allocation itself does not change.") }}</p>
 							</div>
-							<div class="kt-field">
+							<div class="field">
 								<label>{{ __("Approval document") }}</label>
 								<div class="kt-file-row" style="justify-content: space-between">
 									<a v-if="form.approval_document" :href="form.approval_document" target="_blank" rel="noopener" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis" data-testid="bud-editor-document-name">{{ form.approval_document_name }}</a>
 									<span v-else data-testid="bud-editor-document-name">{{ __("No file attached") }}</span>
-									<button v-if="canEdit" id="bud-editor-upload-btn" type="button" class="kt-btn kt-btn-ghost" style="flex: none; font-size: 13px" data-testid="bud-editor-upload-btn" @click="openFileUploader">{{ form.approval_document ? __("Replace") : __("Attach") }}</button>
+									<button v-if="canEdit" id="bud-editor-upload-btn" type="button" class="btn btn-ghost" style="flex: none; font-size: 13px" data-testid="bud-editor-upload-btn" @click="openFileUploader">{{ form.approval_document ? __("Replace") : __("Attach") }}</button>
 								</div>
 								<p class="kt-field-hint">{{ __("Exactly one document. Replacing it in this draft keeps every earlier submitted attempt's evidence.") }}</p>
 							</div>
@@ -616,14 +616,14 @@ function restoreLine(o) {
 						</div>
 						</div>
 						<div v-if="isSuccessor && form.revision_type === 'Transfer'" style="padding: 16px 24px; border-top: 1px solid var(--kt-color-divider); display: flex; gap: 12px; flex-wrap: wrap" data-testid="bud-editor-transfer-totals">
-							<span class="kt-tag kt-tag-neutral">{{ __("Total moved out: {0}", [formatKes(previewTotals.movedOut, currency)]) }}</span>
-							<span class="kt-tag kt-tag-accent-2">{{ __("Total moved in: {0}", [formatKes(previewTotals.movedIn, currency)]) }}</span>
+							<span class="tag tag-neutral">{{ __("Total moved out: {0}", [formatKes(previewTotals.movedOut, currency)]) }}</span>
+							<span class="tag tag-accent-2">{{ __("Total moved in: {0}", [formatKes(previewTotals.movedIn, currency)]) }}</span>
 						</div>
 						<p v-if="canEdit && !isSuccessor" class="kt-label" style="margin: 0; padding: 16px 24px 10px; border-top: 1px solid var(--kt-color-divider)">{{ __("Which department may use this budget line?") }}</p>
 						<div v-if="isSuccessor" class="kt-muted" style="font-size: 13px; padding: 16px 24px 10px; border-top: 1px solid var(--kt-color-divider)">{{ __("Existing lines keep their name, department and funding source. Add a new budget line for a changed purpose, department or funding source.") }}</div>
 
 						<div style="overflow-x: auto">
-							<table class="kt-table" data-testid="bud-editor-lines-table">
+							<table class="table" data-testid="bud-editor-lines-table">
 								<thead>
 									<tr>
 										<th>{{ isSuccessor ? __("Budget line") : __("Budget Line") }}</th>
@@ -638,20 +638,20 @@ function restoreLine(o) {
 								<tbody>
 									<tr v-for="(row, i) in linesEditor.rows" :key="row.budget_line || 'new-' + i">
 										<td style="min-width: 240px">
-											<input v-if="canEdit && !row.identity_locked" v-model="row.title" class="kt-input" style="min-width: 240px" :aria-label="__('Budget line')" @input="markLinesDirty" />
+											<input v-if="canEdit && !row.identity_locked" v-model="row.title" class="input" style="min-width: 240px" :aria-label="__('Budget line')" @input="markLinesDirty" />
 											<div v-else>{{ row.title }}</div>
 											<div class="kt-muted" style="font-size: 11px; margin-top: 2px">{{ row.budget_line_code || __("Reference assigned on save") }}</div>
 											<a v-if="canEdit && row.can_omit" href="#" style="font-size: 11px" data-testid="bud-editor-omit-link" @click.prevent="omitLine(row)">{{ __("Omit from this update") }}</a>
 										</td>
 										<td>
-											<select v-if="canEdit && !row.identity_locked" v-model="row.owner_org_unit" class="kt-input" :aria-label="__('Available to')" @change="markLinesDirty">
+											<select v-if="canEdit && !row.identity_locked" v-model="row.owner_org_unit" class="input" :aria-label="__('Available to')" @change="markLinesDirty">
 												<option value="">{{ __("All departments") }}</option>
 												<option v-for="o in orgUnits" :key="o.id" :value="o.id">{{ o.label }}</option>
 											</select>
 											<span v-else>{{ row.owner_org_unit_label || __("All departments") }}</span>
 										</td>
 										<td>
-											<select v-if="canEdit && !row.identity_locked" v-model="row.funding_source" class="kt-input" :aria-label="__('Funding source')" @change="markLinesDirty">
+											<select v-if="canEdit && !row.identity_locked" v-model="row.funding_source" class="input" :aria-label="__('Funding source')" @change="markLinesDirty">
 												<option v-for="f in fundingSources" :key="f.id" :value="f.id">{{ f.label }}</option>
 											</select>
 											<span v-else>{{ row.funding_source }}</span>
@@ -663,7 +663,7 @@ function restoreLine(o) {
 										</td>
 										<td v-if="isSuccessor" class="is-num">{{ formatSignedKes((Number(row.approved_amount) || 0) - (Number(row.current_amount) || 0), currency) }}</td>
 										<td style="white-space: nowrap">
-											<button v-if="canEdit && row.can_remove && !row.identity_locked" type="button" class="kt-btn kt-btn-secondary kt-danger" style="font-size: 13px; padding: 5px 10px" @click="removeLine(row)">{{ __("Remove") }}</button>
+											<button v-if="canEdit && row.can_remove && !row.identity_locked" type="button" class="btn btn-secondary kt-danger" style="font-size: 13px; padding: 5px 10px" @click="removeLine(row)">{{ __("Remove") }}</button>
 										</td>
 									</tr>
 								</tbody>
@@ -678,7 +678,7 @@ function restoreLine(o) {
 							<p class="kt-muted" style="font-size: 12px; margin: 8px 0 0">{{ __("The line and its history remain; it is left out of the proposed version only.") }}</p>
 						</div>
 						<div v-if="canEdit" style="padding: 16px 24px; border-top: 1px solid var(--kt-color-divider)">
-							<button type="button" class="kt-btn kt-btn-secondary" data-testid="bud-editor-add-line-btn" @click="addLine">{{ __("Add Budget Line") }}</button>
+							<button type="button" class="btn btn-secondary" data-testid="bud-editor-add-line-btn" @click="addLine">{{ __("Add Budget Line") }}</button>
 						</div>
 					</template>
 				</template>
@@ -701,14 +701,14 @@ function restoreLine(o) {
 				</div>
 			</div>
 
-			<div v-if="navGuard" class="kt-dialog-backdrop" tabindex="-1" @keydown.esc="navGuard = null">
-				<div class="kt-dialog" style="width: 440px" role="dialog" aria-modal="true" data-testid="bud-editor-unsaved-dialog">
-					<h2 class="kt-dialog-title">{{ __("Unsaved changes") }}</h2>
+			<div v-if="navGuard" class="dialog-backdrop" tabindex="-1" @keydown.esc="navGuard = null">
+				<div class="dialog" style="width: 440px" role="dialog" aria-modal="true" data-testid="bud-editor-unsaved-dialog">
+					<h2 class="dialog-title">{{ __("Unsaved changes") }}</h2>
 					<p class="kt-muted">{{ __("Your {0} changes are not saved yet.", [navGuard.scope === "lines" ? __("budget line") : __("approval detail")]) }}</p>
-					<div class="kt-dialog-actions">
-						<button type="button" class="kt-btn kt-btn-ghost" @click="navGuard = null">{{ __("Stay here") }}</button>
-						<button type="button" class="kt-btn kt-btn-secondary" @click="navDiscard">{{ __("Discard unsaved changes") }}</button>
-						<button type="button" class="kt-btn kt-btn-primary" @click="navSave">{{ __("Save changes") }}</button>
+					<div class="dialog-actions">
+						<button type="button" class="btn btn-ghost" @click="navGuard = null">{{ __("Stay here") }}</button>
+						<button type="button" class="btn btn-secondary" @click="navDiscard">{{ __("Discard unsaved changes") }}</button>
+						<button type="button" class="btn btn-primary" @click="navSave">{{ __("Save changes") }}</button>
 					</div>
 				</div>
 			</div>

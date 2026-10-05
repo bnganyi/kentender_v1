@@ -230,7 +230,7 @@ async function submitRevocation(reason) {
 			<div v-else-if="detailError" class="kt-ura-state" role="alert" data-testid="kt-ura-detail-error">
 				<p style="font-weight:600;margin:0 0 4px">{{ __("Responsibilities could not be loaded") }}</p>
 				<p class="card-body" style="margin:0 0 16px">{{ __("Try again. If the problem continues, contact support.") }}</p>
-				<button type="button" class="kt-btn kt-btn-secondary" @click="loadDetail()">{{ __("Try again") }}</button>
+				<button type="button" class="btn btn-secondary" @click="loadDetail()">{{ __("Try again") }}</button>
 			</div>
 			<ResponsibilityDetail
 				v-else-if="detail"
@@ -247,7 +247,7 @@ async function submitRevocation(reason) {
 			<div v-if="registerState === 'loading'" role="status" aria-live="polite" data-testid="kt-ura-loading">
 				<p class="text-muted" style="margin:0 0 10px">{{ __("Loading responsibilities…") }}</p>
 				<div class="kt-table-scroll">
-					<table class="kt-table">
+					<table class="table">
 						<thead><tr><th>{{ __("User") }}</th><th>{{ __("Responsibility") }}</th><th>{{ __("Scope") }}</th><th>{{ __("Status") }}</th></tr></thead>
 						<tbody>
 							<tr v-for="n in 3" :key="n">
@@ -269,13 +269,13 @@ async function submitRevocation(reason) {
 				<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--kt-color-neutral-400)" stroke-width="1.5" aria-hidden="true" style="margin:0 auto 12px"><circle cx="12" cy="12" r="9" /><path d="M12 8v5" /><path d="M12 16h.01" /></svg>
 				<p style="font-weight:600;margin:0 0 4px">{{ __("Responsibilities could not be loaded") }}</p>
 				<p class="card-body" style="margin:0 0 16px">{{ __("Try again. If the problem continues, contact support.") }}</p>
-				<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-ura-retry" @click="loadRows()">{{ __("Try again") }}</button>
+				<button type="button" class="btn btn-secondary" data-testid="kt-ura-retry" @click="loadRows()">{{ __("Try again") }}</button>
 			</div>
 			<div v-else class="kt-ura-state" data-testid="kt-ura-empty">
 				<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--kt-color-neutral-400)" stroke-width="1.5" aria-hidden="true" style="margin:0 auto 12px"><circle cx="9" cy="8" r="4" /><path d="M2 21a7 7 0 0 1 14 0" /><path d="M19 8v6M16 11h6" /></svg>
 				<p style="font-weight:600;margin:0 0 4px">{{ __("No responsibilities assigned yet") }}</p>
 				<p class="card-body" style="margin:0 0 16px">{{ __("Assign the first business responsibility for this entity.") }}</p>
-				<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-ura-empty-assign" @click="openDialog('assign')">{{ __("Assign responsibility") }}</button>
+				<button type="button" class="btn btn-primary" data-testid="kt-ura-empty-assign" @click="openDialog('assign')">{{ __("Assign responsibility") }}</button>
 			</div>
 		</template>
 
@@ -287,48 +287,48 @@ async function submitRevocation(reason) {
 					<h2 style="margin:4px 0 6px">{{ __("Users and responsibilities") }}</h2>
 					<p class="card-body" style="margin:0">{{ __("Assign each user a business responsibility in its exact organisational scope.") }}</p>
 				</div>
-				<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-ura-assign-open" @click="openDialog('assign')">
+				<button type="button" class="btn btn-primary" data-testid="kt-ura-assign-open" @click="openDialog('assign')">
 					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Assign responsibility") }}
 				</button>
 			</div>
 
 			<div class="kt-filter-bar kt-ura-filters">
-				<div class="kt-field is-wide">
+				<div class="field is-wide">
 					<label for="kt-ura-search">{{ __("Search") }}</label>
 					<div class="kt-input-icon">
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
 						<input
 							id="kt-ura-search"
 							v-model="filters.search"
-							class="kt-input"
+							class="input"
 							type="search"
 							:placeholder="__('Search user or responsibility')"
 							data-testid="kt-ura-search"
 						>
 					</div>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-ura-filter-ou">{{ __("Organisation unit") }}</label>
-					<select id="kt-ura-filter-ou" v-model="filters.organisation_unit" class="kt-input" data-testid="kt-ura-filter-ou">
+					<select id="kt-ura-filter-ou" v-model="filters.organisation_unit" class="input" data-testid="kt-ura-filter-ou">
 						<option value="">{{ __("All organisation units") }}</option>
 						<option v-for="unit in options.organisation_units" :key="unit.id" :value="unit.id">{{ unit.label }}</option>
 					</select>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-ura-filter-role">{{ __("Responsibility") }}</label>
-					<select id="kt-ura-filter-role" v-model="filters.business_role" class="kt-input" data-testid="kt-ura-filter-role">
+					<select id="kt-ura-filter-role" v-model="filters.business_role" class="input" data-testid="kt-ura-filter-role">
 						<option value="">{{ __("All responsibilities") }}</option>
 						<option v-for="role in options.responsibilities" :key="role.business_role" :value="role.business_role">{{ role.business_role }}</option>
 					</select>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-ura-filter-status">{{ __("Status") }}</label>
-					<select id="kt-ura-filter-status" v-model="filters.status" class="kt-input" data-testid="kt-ura-filter-status">
+					<select id="kt-ura-filter-status" v-model="filters.status" class="input" data-testid="kt-ura-filter-status">
 						<option value="">{{ __("All statuses") }}</option>
 						<option v-for="status in options.statuses" :key="status" :value="status">{{ status }}</option>
 					</select>
 				</div>
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="!hasFilters" data-testid="kt-ura-clear" @click="clearFilters">{{ __("Clear filters") }}</button>
+				<button type="button" class="btn btn-secondary" :disabled="!hasFilters" data-testid="kt-ura-clear" @click="clearFilters">{{ __("Clear filters") }}</button>
 			</div>
 
 			<div v-if="!rows.length" class="kt-ura-state" data-testid="kt-ura-no-match">
@@ -337,7 +337,7 @@ async function submitRevocation(reason) {
 			</div>
 			<template v-else>
 				<div class="kt-table-scroll" data-testid="kt-ura-table">
-					<table class="kt-table">
+					<table class="table">
 						<thead>
 							<tr>
 								<th>{{ __("User") }}</th>

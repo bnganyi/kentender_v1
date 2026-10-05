@@ -36,7 +36,7 @@
 		</BlueprintCard>
 		<div class="tnd-footer">
 			<a href="#" class="tnd-footer-back" data-testid="tnd-back" @click.prevent="$emit('back')">Back to Tenders</a>
-			<button v-if="successor && canStart" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tnd-start-corrected" @click="$emit('start-corrected', successor.handoff)">Start corrected Tender Version</button>
+			<button v-if="successor && canStart" type="button" class="btn btn-primary" :disabled="pending" data-testid="tnd-start-corrected" @click="$emit('start-corrected', successor.handoff)">Start corrected Tender Version</button>
 		</div>
 	</div>
 </template>

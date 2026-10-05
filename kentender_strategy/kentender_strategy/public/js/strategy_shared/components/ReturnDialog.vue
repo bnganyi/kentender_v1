@@ -35,16 +35,16 @@ function onKeydown(e) {
 </script>
 
 <template>
-	<div v-if="open" class="kt-dialog-backdrop" tabindex="-1" @keydown="onKeydown">
-		<div class="kt-dialog" role="dialog" aria-modal="true" style="width: 520px" data-testid="str-return-dialog">
-			<h2 class="kt-dialog-title">{{ __("What needs to change?") }}</h2>
-			<div class="kt-field" style="margin: 0">
+	<div v-if="open" class="dialog-backdrop" tabindex="-1" @keydown="onKeydown">
+		<div class="dialog" role="dialog" aria-modal="true" style="width: 520px" data-testid="str-return-dialog">
+			<h2 class="dialog-title">{{ __("What needs to change?") }}</h2>
+			<div class="field" style="margin: 0">
 				<label for="str-return-reason">{{ __("Correction required") }}</label>
 				<textarea
 					id="str-return-reason"
 					ref="input"
 					v-model="reason"
-					class="kt-input"
+					class="input"
 					rows="4"
 					style="height: auto"
 					:maxlength="MAX"
@@ -54,11 +54,11 @@ function onKeydown(e) {
 				<div class="kt-field-hint" data-testid="str-return-count">{{ __("{0}–{1} characters", [MIN, MAX]) }} · {{ length }}</div>
 				<p v-if="error" class="kt-field-error" data-testid="str-return-error">{{ error }}</p>
 			</div>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('cancel')">{{ __("Cancel") }}</button>
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" @click="$emit('cancel')">{{ __("Cancel") }}</button>
 				<button
 					type="button"
-					class="kt-btn kt-btn-primary kt-danger"
+					class="btn btn-primary kt-danger"
 					:disabled="!valid || busy"
 					data-testid="str-confirm-ok"
 					@click="$emit('confirm', reason.trim())"

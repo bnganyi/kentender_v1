@@ -99,7 +99,7 @@ test.describe("EVL ordinary path", () => {
 		await as(p.chair);
 		await expectScreen(page, "discussion");
 		await expect(root(page)).toContainText("Supplier reply");
-		await page.locator('[data-testid="evl-root"] label.kt-seg-opt', { hasText: /^Meets$/ }).click();
+		await page.locator('[data-testid="evl-root"] label.seg-opt', { hasText: /^Meets$/ }).click();
 		await expect(inRoot(page, "evl-seg-meets")).toBeChecked();
 		await shot(page, "D06-OUTCOME");
 		await inRoot(page, "evl-field-reason").fill("The address is present in the original submitted document and is within Kenya.");

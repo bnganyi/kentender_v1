@@ -182,21 +182,21 @@ function cancel() {
 		<div ref="railEl" class="kt-rail-mount"></div>
 
 		<div v-if="loading" class="kt-shell">
-			<div class="kt-card kt-blueprint"><div class="kt-skel" style="width: 240px; height: 20px"></div></div>
+			<div class="card blueprint"><div class="kt-skel" style="width: 240px; height: 20px"></div></div>
 		</div>
 
 		<div v-else-if="forbidden" class="kt-shell">
-			<div class="kt-card kt-blueprint kt-empty" data-testid="bud-reg-forbidden">
+			<div class="card blueprint kt-empty" data-testid="bud-reg-forbidden">
 				<h2>{{ __(forbidden.heading) }}</h2>
 				<p class="kt-muted">{{ __(forbidden.text) }}</p>
 			</div>
 		</div>
 
 		<div v-else-if="serverError" class="kt-shell">
-			<div class="kt-card kt-blueprint kt-empty">
+			<div class="card blueprint kt-empty">
 				<h2>{{ __("Budget & Funding could not be loaded.") }}</h2>
 				<p class="kt-muted">{{ __("Try again. If the problem continues, contact KenTender support.") }}</p>
-				<button type="button" class="kt-btn kt-btn-primary" @click="loadContext">{{ __("Try again") }}</button>
+				<button type="button" class="btn btn-primary" @click="loadContext">{{ __("Try again") }}</button>
 			</div>
 		</div>
 
@@ -204,22 +204,22 @@ function cancel() {
 		<div v-else-if="!fyFilter.selected.value" class="kt-shell">
 			<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px">
 				<label class="kt-label" style="margin: 0" for="bud-new-fy">{{ __("Financial year") }}</label>
-				<select id="bud-new-fy" class="kt-input" style="width: auto; min-width: 160px" :value="fyFilter.selected.value" data-testid="bud-reg-fy" @change="onSelectFy($event.target.value)">
+				<select id="bud-new-fy" class="input" style="width: auto; min-width: 160px" :value="fyFilter.selected.value" data-testid="bud-reg-fy" @change="onSelectFy($event.target.value)">
 					<option value="" disabled>{{ __("Select a financial year") }}</option>
 					<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
 				</select>
 			</div>
-			<div class="kt-card kt-blueprint kt-empty"><h2>{{ __("Select the financial year whose approved allocation you are recording.") }}</h2></div>
+			<div class="card blueprint kt-empty"><h2>{{ __("Select the financial year whose approved allocation you are recording.") }}</h2></div>
 		</div>
 
 		<!-- §13 BUDGET_ALREADY_EXISTS — never a second registration. -->
 		<div v-else-if="existing" class="kt-shell">
-			<div class="kt-card kt-blueprint kt-empty" data-testid="bud-reg-exists">
+			<div class="card blueprint kt-empty" data-testid="bud-reg-exists">
 				<h2>{{ __("An allocation record already exists for FY {0}.", [fyFilter.selected.value]) }}</h2>
 				<p class="kt-muted">{{ __("Open it to continue.") }}</p>
 				<div style="display: flex; gap: 12px; justify-content: center">
-					<button type="button" class="kt-btn kt-btn-secondary" @click="cancel">{{ __("Back to Budget & Funding") }}</button>
-					<button type="button" class="kt-btn kt-btn-primary" data-testid="bud-reg-open-existing" @click="openExisting">{{ __("Open existing record") }}</button>
+					<button type="button" class="btn btn-secondary" @click="cancel">{{ __("Back to Budget & Funding") }}</button>
+					<button type="button" class="btn btn-primary" data-testid="bud-reg-open-existing" @click="openExisting">{{ __("Open existing record") }}</button>
 				</div>
 			</div>
 		</div>
@@ -236,7 +236,7 @@ function cancel() {
 					</div>
 				</div>
 
-				<div class="kt-card kt-blueprint" style="padding: 0">
+				<div class="card blueprint" style="padding: 0">
 					<div style="padding: 24px 24px 20px; border-bottom: 1px solid var(--kt-color-divider)">
 						<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px">
 							<h1 style="margin: 0">{{ __("Record approved allocation") }}</h1>
@@ -251,16 +251,16 @@ function cancel() {
 							{{ __("Budget context") }}
 						</h3>
 						<div class="kt-grid-2" style="gap: 16px">
-							<div class="kt-field">
+							<div class="field">
 								<label for="bud-reg-year">{{ __("Financial Year") }}</label>
-								<select id="bud-reg-year" class="kt-input" :value="fyFilter.selected.value" data-testid="bud-reg-fy" @change="onSelectFy($event.target.value)">
+								<select id="bud-reg-year" class="input" :value="fyFilter.selected.value" data-testid="bud-reg-fy" @change="onSelectFy($event.target.value)">
 									<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
 								</select>
 								<p class="kt-field-hint">{{ __("The year becomes fixed once the allocation is saved.") }}</p>
 							</div>
-							<div class="kt-field">
+							<div class="field">
 								<label>{{ __("Currency") }}</label>
-								<input class="kt-input" type="text" value="KES" disabled data-testid="bud-reg-currency" />
+								<input class="input" type="text" value="KES" disabled data-testid="bud-reg-currency" />
 							</div>
 						</div>
 					</div>
@@ -271,26 +271,26 @@ function cancel() {
 							{{ __("External approval") }}
 						</h3>
 						<div class="kt-grid-2" style="gap: 16px">
-							<div class="kt-field">
+							<div class="field">
 								<label for="bud-reg-ref">{{ __("Approval reference") }}</label>
-								<input id="bud-reg-ref" v-model="form.approval_reference" class="kt-input" type="text" data-testid="bud-reg-approval-ref" />
+								<input id="bud-reg-ref" v-model="form.approval_reference" class="input" type="text" data-testid="bud-reg-approval-ref" />
 								<p v-if="fieldErrors.approval_reference" class="kt-field-error">{{ fieldErrors.approval_reference }}</p>
 							</div>
-							<div class="kt-field">
+							<div class="field">
 								<label for="bud-reg-date">{{ __("Approval date") }}</label>
-								<input id="bud-reg-date" v-model="form.approval_date" class="kt-input" type="date" data-testid="bud-reg-approval-date" />
+								<input id="bud-reg-date" v-model="form.approval_date" class="input" type="date" data-testid="bud-reg-approval-date" />
 								<p v-if="fieldErrors.approval_date" class="kt-field-error">{{ fieldErrors.approval_date }}</p>
 							</div>
-							<div class="kt-field">
+							<div class="field">
 								<label for="bud-reg-total">{{ __("Approved allocation") }}</label>
 								<div class="kt-input-prefix"><span class="prefix">KES</span><input id="bud-reg-total" v-model="form.authorised_total" type="number" min="0" data-testid="bud-reg-approved-allocation" /></div>
 								<p v-if="fieldErrors.authorised_total" class="kt-field-error">{{ fieldErrors.authorised_total }}</p>
 							</div>
-							<div class="kt-field">
+							<div class="field">
 								<label>{{ __("Approval document") }}</label>
 								<div class="kt-file-row" style="justify-content: space-between">
 									<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis" data-testid="bud-reg-document-name">{{ form.approval_document_name || __("No file attached") }}</span>
-									<button type="button" class="kt-btn kt-btn-ghost" style="flex: none; font-size: 13px" data-testid="bud-reg-upload-btn" @click="openFileUploader">
+									<button type="button" class="btn btn-ghost" style="flex: none; font-size: 13px" data-testid="bud-reg-upload-btn" @click="openFileUploader">
 										{{ form.approval_document ? __("Replace") : __("Attach") }}
 									</button>
 								</div>
@@ -302,8 +302,8 @@ function cancel() {
 				</div>
 			</div>
 			<div class="kt-sticky-footer">
-				<button type="button" class="kt-btn kt-btn-secondary" @click="cancel">{{ __("Cancel") }}</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="saving" data-testid="bud-reg-save-btn" @click="saveAndAddLines">{{ __("Save and add budget lines") }}</button>
+				<button type="button" class="btn btn-secondary" @click="cancel">{{ __("Cancel") }}</button>
+				<button type="button" class="btn btn-primary" :disabled="saving" data-testid="bud-reg-save-btn" @click="saveAndAddLines">{{ __("Save and add budget lines") }}</button>
 			</div>
 		</template>
 	</div>

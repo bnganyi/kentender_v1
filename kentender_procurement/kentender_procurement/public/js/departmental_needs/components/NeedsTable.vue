@@ -6,7 +6,7 @@
      card of its own. -->
 <template>
 	<div>
-		<table class="kt-table" data-testid="nds-needs-table" style="width: 100%">
+		<table class="table" data-testid="nds-needs-table" style="width: 100%">
 			<thead>
 				<tr>
 					<th

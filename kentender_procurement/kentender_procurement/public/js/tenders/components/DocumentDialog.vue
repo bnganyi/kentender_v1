@@ -3,9 +3,9 @@
      Download control when a stored PDF exists. A preview of an unfrozen
      Draft freezes nothing (the server renders read-only). -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="tnd-document-dialog" @keydown.esc="$emit('close')">
-		<div ref="dialogEl" class="kt-dialog tnd-dialog tnd-dialog--doc" role="dialog" aria-modal="true" aria-labelledby="tnd-doc-title" tabindex="-1">
-			<div id="tnd-doc-title" class="kt-dialog-title">{{ title }}</div>
+	<div class="dialog-backdrop" data-testid="tnd-document-dialog" @keydown.esc="$emit('close')">
+		<div ref="dialogEl" class="dialog tnd-dialog tnd-dialog--doc" role="dialog" aria-modal="true" aria-labelledby="tnd-doc-title" tabindex="-1">
+			<div id="tnd-doc-title" class="dialog-title">{{ title }}</div>
 			<div class="tnd-doc-meta">
 				<span data-testid="tnd-doc-name">{{ fileName }}</span>
 				<span>{{ format }}</span>
@@ -14,9 +14,9 @@
 			<div v-if="loading" class="tnd-doc-frame"><div class="kt-skel" style="width: 60%"></div></div>
 			<div v-else-if="error" class="kt-notice is-critical"><div class="kt-notice-body">{{ error }}</div></div>
 			<div v-else class="tnd-doc-frame" data-testid="tnd-doc-frame" v-html="html"></div>
-			<div class="kt-dialog-actions">
-				<a v-if="downloadUrl" class="kt-btn kt-btn-secondary" :href="downloadUrl" target="_blank" rel="noopener" data-testid="tnd-doc-download">Download</a>
-				<button type="button" class="kt-btn kt-btn-primary" data-testid="tnd-doc-close" @click="$emit('close')">Close</button>
+			<div class="dialog-actions">
+				<a v-if="downloadUrl" class="btn btn-secondary" :href="downloadUrl" target="_blank" rel="noopener" data-testid="tnd-doc-download">Download</a>
+				<button type="button" class="btn btn-primary" data-testid="tnd-doc-close" @click="$emit('close')">Close</button>
 			</div>
 		</div>
 	</div>

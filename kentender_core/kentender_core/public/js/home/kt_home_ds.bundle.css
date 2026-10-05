@@ -171,12 +171,12 @@
 	margin: 0 0 var(--space-3);
 }
 
-.kt-industry.kt-home a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) {
+.kt-industry.kt-home a:not(.btn):not(.kt-tab):not(.kt-add-child) {
 	color: var(--color-accent-700);
 	text-underline-offset: 3px;
 }
 
-.kt-industry.kt-home a:not(.kt-btn):not(.kt-tab):not(.kt-add-child):hover {
+.kt-industry.kt-home a:not(.btn):not(.kt-tab):not(.kt-add-child):hover {
 	color: var(--color-accent-900);
 }
 
@@ -346,7 +346,7 @@
 		color: #000;
 		border: 1px solid #000;
 	}
-	.kt-industry.kt-home a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) {
+	.kt-industry.kt-home a:not(.btn):not(.kt-tab):not(.kt-add-child) {
 		color: #000;
 	}
 }
@@ -545,11 +545,11 @@
 	--data-family-3: #c2ccfa;
 }
 
-.kt-industry.kt-home a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) {
+.kt-industry.kt-home a:not(.btn):not(.kt-tab):not(.kt-add-child) {
 	color: var(--color-accent-700);
 }
 
-.kt-industry.kt-home a:not(.kt-btn):not(.kt-tab):not(.kt-add-child):hover {
+.kt-industry.kt-home a:not(.btn):not(.kt-tab):not(.kt-add-child):hover {
 	color: var(--color-accent-800);
 }
 
@@ -566,7 +566,7 @@
 	padding-inline: var(--space-1);
 }
 
-.kt-industry.kt-home a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) {
+.kt-industry.kt-home a:not(.btn):not(.kt-tab):not(.kt-add-child) {
 	text-decoration: underline;
 }
 

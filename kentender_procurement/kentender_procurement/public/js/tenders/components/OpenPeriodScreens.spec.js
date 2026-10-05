@@ -133,7 +133,7 @@ describe("CancelScreen — TPR-DES-12", () => {
 describe("ChannelConfirmationDialog + EvidenceDialog", () => {
 	it("refuses to confirm without the attestation and file, inline, and asks for a URL on an online channel", async () => {
 		const w = mount(ChannelConfirmationDialog, { props: { channel: { channel: "STATE_PORTAL", channel_label: "State Portal" }, attestation: "I confirm.", pending: false, error: "" } });
-		expect(w.find(".kt-dialog-title").text()).toBe("Confirm State Portal publication");
+		expect(w.find(".dialog-title").text()).toBe("Confirm State Portal publication");
 		expect(w.find('[data-testid="tnd-ch-url"]').exists()).toBe(true);
 		await w.find('[data-testid="tnd-ch-confirm"]').trigger("click");
 		expect(w.emitted("confirm")).toBeUndefined();

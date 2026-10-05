@@ -506,7 +506,7 @@ describe("AnnualPlanScreen — the next step and its fixes", () => {
 		const [fix] = w.emitted("guidance-command")[0];
 		expect(fix.fix_id).toBe("request_budget_revision");
 		expect(fix.target).toEqual({ budget_line: "MOH-BL-HWD-2027" });
-		expect(w.find('[data-fix="request_budget_revision"]').classes()).toContain("kt-btn-primary");
+		expect(w.find('[data-fix="request_budget_revision"]').classes()).toContain("btn-primary");
 	});
 
 	it("hands Request departmental plan update to the page as a command, with the line and the department", async () => {

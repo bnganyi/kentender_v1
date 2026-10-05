@@ -45,51 +45,51 @@
 				</div>
 			</div>
 
-			<div class="kt-field">
+			<div class="field">
 				<label for="dpp-title" class="kt-label">Requirement title</label>
-				<input id="dpp-title" class="kt-input" data-testid="dpp-f-title" :disabled="!canEdit" v-model="form.title">
+				<input id="dpp-title" class="input" data-testid="dpp-f-title" :disabled="!canEdit" v-model="form.title">
 			</div>
-			<div class="kt-field">
+			<div class="field">
 				<label for="dpp-description" class="kt-label">Description</label>
-				<textarea id="dpp-description" class="kt-input" rows="2" data-testid="dpp-f-description" :disabled="!canEdit" v-model="form.description"></textarea>
+				<textarea id="dpp-description" class="input" rows="2" data-testid="dpp-f-description" :disabled="!canEdit" v-model="form.description"></textarea>
 			</div>
-			<div class="kt-field">
+			<div class="field">
 				<label for="dpp-result" class="kt-label">Expected result</label>
-				<textarea id="dpp-result" class="kt-input" rows="2" data-testid="dpp-f-result" :disabled="!canEdit" v-model="form.expected_operational_result"></textarea>
+				<textarea id="dpp-result" class="input" rows="2" data-testid="dpp-f-result" :disabled="!canEdit" v-model="form.expected_operational_result"></textarea>
 			</div>
 
 			<!-- Quantity and Unit side by side, and never merged into one field. -->
 			<div class="pln-entry-pair">
-				<div class="kt-field">
+				<div class="field">
 					<label for="dpp-quantity" class="kt-label">Quantity</label>
-					<input id="dpp-quantity" class="kt-input" type="number" min="1" step="1" data-testid="dpp-f-quantity" :disabled="!canEdit" v-model="form.quantity">
+					<input id="dpp-quantity" class="input" type="number" min="1" step="1" data-testid="dpp-f-quantity" :disabled="!canEdit" v-model="form.quantity">
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="dpp-unit" class="kt-label">Unit</label>
-					<select id="dpp-unit" class="kt-input" data-testid="dpp-f-unit" :disabled="!canEdit" v-model="form.unit">
+					<select id="dpp-unit" class="input" data-testid="dpp-f-unit" :disabled="!canEdit" v-model="form.unit">
 						<option value="">Select a unit</option>
 						<option v-for="unit in editor.units || []" :key="unit.id" :value="unit.id">{{ unit.label }}</option>
 					</select>
 				</div>
 			</div>
 
-			<div class="kt-field">
+			<div class="field">
 				<label for="dpp-required-by" class="kt-label">Required by</label>
-				<input id="dpp-required-by" class="kt-input" type="date" data-testid="dpp-f-required-by" :disabled="!canEdit" v-model="form.required_by_date">
+				<input id="dpp-required-by" class="input" type="date" data-testid="dpp-f-required-by" :disabled="!canEdit" v-model="form.required_by_date">
 			</div>
 
-			<div class="kt-field">
+			<div class="field">
 				<label for="dpp-budget-line" class="kt-label">Budget line</label>
-				<select id="dpp-budget-line" class="kt-input" data-testid="dpp-f-budget-line" :disabled="!canEdit" v-model="form.budget_line">
+				<select id="dpp-budget-line" class="input" data-testid="dpp-f-budget-line" :disabled="!canEdit" v-model="form.budget_line">
 					<option value="">Select a budget line</option>
 					<option v-for="line in editor.budget_lines || []" :key="line.id" :value="line.id">{{ line.title || line.label }}</option>
 				</select>
 				<div v-if="selectedLineReference" class="kt-muted" data-testid="dpp-f-budget-line-code">{{ selectedLineReference }}</div>
 			</div>
 
-			<div class="kt-field">
+			<div class="field">
 				<label for="dpp-amount" class="kt-label">Estimated cost (KES)</label>
-				<input id="dpp-amount" class="kt-input" type="number" min="1" data-testid="dpp-f-amount" :disabled="!canEdit" v-model="form.indicative_amount">
+				<input id="dpp-amount" class="input" type="number" min="1" data-testid="dpp-f-amount" :disabled="!canEdit" v-model="form.indicative_amount">
 			</div>
 
 			<p v-if="errorSummary" class="pln-error-summary" data-testid="dpp-editor-error">{{ errorSummary }}</p>
@@ -100,7 +100,7 @@
 				<button
 					v-if="!isNew && canEdit"
 					type="button"
-					class="kt-btn kt-btn-ghost"
+					class="btn btn-ghost"
 					data-testid="dpp-editor-remove"
 					:disabled="pending"
 					@click="$emit('remove')"
@@ -109,13 +109,13 @@
 				</button>
 				<span v-else></span>
 				<div class="pln-footer-right">
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="dpp-editor-cancel" :disabled="pending" @click="$emit('cancel')">
+					<button type="button" class="btn btn-secondary" data-testid="dpp-editor-cancel" :disabled="pending" @click="$emit('cancel')">
 						{{ isNew ? "Cancel" : "Back to departmental plan" }}
 					</button>
 					<button
 						v-if="canEdit"
 						type="button"
-						class="kt-btn kt-btn-primary"
+						class="btn btn-primary"
 						data-testid="dpp-editor-save"
 						:disabled="pending || !complete"
 						@click="$emit('save-direct', { ...form })"

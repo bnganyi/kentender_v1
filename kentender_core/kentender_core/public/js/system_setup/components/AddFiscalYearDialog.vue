@@ -34,24 +34,24 @@ watch(startYear, async (value) => {
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop">
+	<div class="dialog-backdrop">
 		<div
-			class="kt-dialog kt-narrow"
+			class="dialog kt-narrow"
 			role="dialog"
 			aria-modal="true"
 			:aria-label="__('Add financial year')"
 			data-testid="kt-fy-add"
 			@keydown.esc="emit('cancel')"
 		>
-			<h2 class="kt-dialog-title">{{ __("Add financial year") }}</h2>
+			<h2 class="dialog-title">{{ __("Add financial year") }}</h2>
 			<div class="kt-dialog-fields">
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-fy-start">{{ __("Start year") }}</label>
 					<input
 						id="kt-fy-start"
 						ref="field"
 						v-model="startYear"
-						class="kt-input"
+						class="input"
 						inputmode="numeric"
 						maxlength="4"
 						data-testid="kt-fy-start-year"
@@ -107,13 +107,13 @@ watch(startYear, async (value) => {
 					<div class="kt-notice-body">{{ error }}</div>
 				</div>
 			</div>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="emit('cancel')">
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" :disabled="busy" @click="emit('cancel')">
 					{{ __("Cancel") }}
 				</button>
 				<button
 					type="button"
-					class="kt-btn kt-btn-primary"
+					class="btn btn-primary"
 					:disabled="busy || !preview || preview.exists || preview.company_missing"
 					data-testid="kt-fy-add-confirm"
 					@click="emit('confirm', Number(startYear))"

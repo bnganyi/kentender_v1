@@ -4,7 +4,7 @@
  * .kt-industry (kt_industry_tokens.css, the one canonical design system —
  * AGENTS.md §6.6): buttons/cards/tables/status pills/eyebrow labels reuse
  * Industry's own classes directly (authorization_admin_pages.js emits
- * kt-btn/kt-card/kt-table/kt-eyebrow etc.). Only the handful of layout
+ * btn/card/table/kt-eyebrow etc.). Only the handful of layout
  * patterns Industry has no equivalent for (breadcrumb line, stat grid,
  * definition-list grid, note/banner box, link row) stay here, built from
  * Industry's own CSS custom properties rather than a separate palette.
@@ -60,7 +60,7 @@
 	color: var(--kt-color-accent);
 	font-weight: 600;
 }
-.kt-industry table.kt-table tr.failed td {
+.kt-industry table.table tr.failed td {
 	background: color-mix(in srgb, oklch(0.45 0.13 28) 6%, transparent);
 }
 

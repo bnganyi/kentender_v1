@@ -66,7 +66,7 @@ describe("AssignDialog", () => {
 	it("never dismisses on a click outside the dialog — only Cancel or Escape do", async () => {
 		const wrapper = mountDialog();
 		await flushPromises();
-		await wrapper.find(".kt-dialog-backdrop").trigger("click");
+		await wrapper.find(".dialog-backdrop").trigger("click");
 		expect(wrapper.emitted("cancel")).toBeUndefined();
 
 		await wrapper.find('[data-testid="kt-ura-assign"]').trigger("keydown.esc");
@@ -173,7 +173,7 @@ describe("AssignDialog", () => {
 			global: globalMocks(),
 		});
 		await flushPromises();
-		expect(wrapper.find(".kt-dialog-title").text()).toBe("Edit scheduled assignment");
+		expect(wrapper.find(".dialog-title").text()).toBe("Edit scheduled assignment");
 		expect(wrapper.find('[data-testid="kt-ura-edit-notice"]').text()).toContain("has not started yet");
 		expect(wrapper.find('[data-testid="kt-ura-user-picked"]').element.value).toBe("Dr Peter Kimani · peter.kimani@moh.example.test");
 		expect(wrapper.find('[data-testid="kt-ura-role"]').text()).toContain("Departmental Author");

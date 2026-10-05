@@ -423,7 +423,7 @@ describe("WorkspaceScreen — U01-CURRENT-UPDATE-OVER-BUDGET and -WAITING-BUDGET
 		expect(narrative.text()).toContain("since 15 Dec 2026, 10:00 EAT");
 		const button = w.find('[data-testid="pln-plan-row-candidate"] button');
 		expect(button.text()).toBe("View update");
-		expect(button.classes()).toContain("kt-btn-secondary");
+		expect(button.classes()).toContain("btn-secondary");
 	});
 });
 

@@ -69,7 +69,7 @@ test.describe("TPR-DES-10 Prepare and issue addendum", () => {
 		await expect(page.locator('[data-testid="tnd-ad-confirm-channel"]')).toHaveCount(4);
 		await expect(page.locator('[data-testid="tnd-ad-issue"]')).toHaveCount(0);
 		await page.locator('[data-testid="tnd-ad-confirm-channel"]').first().click();
-		await expect(page.locator('[data-testid="tnd-channel-dialog"] .kt-dialog-title')).toHaveText("Confirm addendum publication — State Portal");
+		await expect(page.locator('[data-testid="tnd-channel-dialog"] .dialog-title')).toHaveText("Confirm addendum publication — State Portal");
 		await expect(page.locator('[data-testid="tnd-channel-dialog"]')).toContainText(/Confirm only after ADD-.+ was publicly available through this channel\./);
 	});
 

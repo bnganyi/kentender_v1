@@ -187,7 +187,7 @@ onMounted(() => {
 				<div class="bds-facts" data-testid="bds-company-facts">
 					<div v-for="fact in org.facts" :key="fact.label" class="bds-fact"><span class="kt-label">{{ fact.label }}</span><span class="bds-fact-value">{{ fact.value }}</span></div>
 				</div>
-				<table v-if="org.members && !narrow" class="kt-table" data-testid="bds-company-members">
+				<table v-if="org.members && !narrow" class="table" data-testid="bds-company-members">
 					<thead><tr><th>{{ __("Organisation") }}</th><th>{{ __("Role") }}</th><th>{{ __("Account") }}</th></tr></thead>
 					<tbody><tr v-for="m in org.members" :key="m.name"><td class="bds-strong">{{ m.name }}</td><td>{{ m.role }}</td><td><span class="kt-status is-live">{{ m.status }}</span></td></tr></tbody>
 				</table>
@@ -201,7 +201,7 @@ onMounted(() => {
 				</div>
 				<div v-if="org.update && !keepBid" class="kt-group bds-account-update" data-testid="bds-account-update">
 					<span class="bds-strong">{{ __("Updated Account details are available") }}</span>
-					<table v-if="!narrow" class="kt-table">
+					<table v-if="!narrow" class="table">
 						<thead><tr><th>{{ org.update.fact }}</th><th>{{ __("Value") }}</th></tr></thead>
 						<tbody><tr v-for="row in org.update.rows" :key="row.label"><td>{{ row.label }}</td><td>{{ row.value }}</td></tr></tbody>
 					</table>
@@ -210,7 +210,7 @@ onMounted(() => {
 					</div>
 					<div v-if="org.update.changes && org.update.changes.length > 1" class="bds-also-changed" data-testid="bds-account-changes">
 						<span class="kt-label">{{ __("Everything that changed ({0})", [org.update.changes.length]) }}</span>
-						<table v-if="!narrow" class="kt-table">
+						<table v-if="!narrow" class="table">
 							<thead><tr><th>{{ __("Fact") }}</th><th>{{ __("This bid") }}</th><th>{{ __("Current Account") }}</th></tr></thead>
 							<tbody><tr v-for="c in org.update.changes" :key="c.fact"><td class="bds-strong">{{ c.fact }}</td><td>{{ c.this_bid || "—" }}</td><td>{{ c.current || "—" }}</td></tr></tbody>
 						</table>
@@ -219,8 +219,8 @@ onMounted(() => {
 						</div>
 					</div>
 					<div class="bds-row-actions">
-						<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="bds-use-updated" @click="useUpdated">{{ __("Use updated details") }}</button>
-						<button type="button" class="kt-btn kt-btn-ghost" :disabled="pending" data-testid="bds-keep-bid" @click="keepBid = true">{{ __("Keep bid details") }}</button>
+						<button type="button" class="btn btn-secondary" :disabled="pending" data-testid="bds-use-updated" @click="useUpdated">{{ __("Use updated details") }}</button>
+						<button type="button" class="btn btn-ghost" :disabled="pending" data-testid="bds-keep-bid" @click="keepBid = true">{{ __("Keep bid details") }}</button>
 					</div>
 					<p class="bds-muted">{{ org.update.note }}</p>
 				</div>
@@ -231,34 +231,34 @@ onMounted(() => {
 			<h2>{{ __("Tender contact") }}</h2>
 			<div class="bds-region-body">
 				<div class="bds-grid-2">
-					<div class="kt-field">
+					<div class="field">
 						<label for="bds-contact-person">{{ __("Assigned person") }}</label>
-						<select v-if="data.contact.people && data.contact.people.length > 1 && canEdit" id="bds-contact-person" v-model="contact.person" class="kt-input" :aria-invalid="!!errors.assignment_id" data-testid="bds-contact-person">
+						<select v-if="data.contact.people && data.contact.people.length > 1 && canEdit" id="bds-contact-person" v-model="contact.person" class="input" :aria-invalid="!!errors.assignment_id" data-testid="bds-contact-person">
 							<option v-for="p in data.contact.people" :key="p.assignment_id" :value="p.assignment_id">{{ p.name }}</option>
 						</select>
-						<select v-else id="bds-contact-person" class="kt-input" disabled><option>{{ data.contact.assigned }}</option></select>
+						<select v-else id="bds-contact-person" class="input" disabled><option>{{ data.contact.assigned }}</option></select>
 						<p v-if="errors.assignment_id" class="kt-field-error">{{ errors.assignment_id }}</p>
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="bds-contact-notice">{{ __("Tender notice email") }}</label>
 						<div class="bds-inline-status">
-							<select v-if="data.contact.notice && data.contact.notice.options.length" id="bds-contact-notice" v-model="contact.notice" class="kt-input" :aria-invalid="!!errors.notice_contact_id" data-testid="bds-contact-notice">
+							<select v-if="data.contact.notice && data.contact.notice.options.length" id="bds-contact-notice" v-model="contact.notice" class="input" :aria-invalid="!!errors.notice_contact_id" data-testid="bds-contact-notice">
 								<option v-for="o in data.contact.notice.options" :key="o.contact_id" :value="o.contact_id">{{ o.value }}</option>
 							</select>
-							<select v-else id="bds-contact-notice" class="kt-input" disabled><option>{{ data.contact.notice_email }}</option></select>
+							<select v-else id="bds-contact-notice" class="input" disabled><option>{{ data.contact.notice_email }}</option></select>
 							<span v-if="data.contact.notice_verified" class="kt-status is-live">{{ __("Verified") }}</span>
 						</div>
 						<p v-if="errors.notice_contact_id" class="kt-field-error">{{ errors.notice_contact_id }}</p>
 						<p v-else class="bds-help">{{ data.contact.notice_help }}</p>
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="bds-contact-email">{{ __("Email") }}</label>
-						<input id="bds-contact-email" v-model="contact.email" class="kt-input" type="email" :aria-invalid="!!errors.email" data-testid="bds-contact-email" />
+						<input id="bds-contact-email" v-model="contact.email" class="input" type="email" :aria-invalid="!!errors.email" data-testid="bds-contact-email" />
 						<p v-if="errors.email" class="kt-field-error">{{ errors.email }}</p>
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="bds-contact-phone">{{ __("Phone") }}</label>
-						<input id="bds-contact-phone" v-model="contact.phone" class="kt-input" type="tel" :aria-invalid="!!errors.phone" data-testid="bds-contact-phone" />
+						<input id="bds-contact-phone" v-model="contact.phone" class="input" type="tel" :aria-invalid="!!errors.phone" data-testid="bds-contact-phone" />
 						<p v-if="errors.phone" class="kt-field-error">{{ errors.phone }}</p>
 					</div>
 				</div>
@@ -269,7 +269,7 @@ onMounted(() => {
 		<div class="kt-region">
 			<h2>{{ __("Declarations") }}</h2>
 			<div class="bds-region-body">
-				<table v-if="!narrow" class="kt-table" data-testid="bds-declarations-table">
+				<table v-if="!narrow" class="table" data-testid="bds-declarations-table">
 					<thead><tr><th>{{ __("Declaration") }}</th><th>{{ __("Status") }}</th><th>{{ __("Action") }}</th></tr></thead>
 					<tbody>
 						<tr v-for="row in data.declarations" :key="row.key" :data-testid="'bds-declaration-' + row.key">
@@ -335,12 +335,12 @@ onMounted(() => {
 		<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure"><div class="kt-notice-body">{{ failure }}</div></div>
 
 		<div v-if="narrow" class="bds-footer-stack">
-			<button v-if="canEdit" type="button" class="kt-btn kt-btn-primary bds-btn-block" :disabled="pending" data-testid="bds-company-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
-			<a :href="data.page.back_href" class="kt-btn kt-btn-secondary bds-btn-block">{{ __("Back to bid") }}</a>
+			<button v-if="canEdit" type="button" class="btn btn-primary bds-btn-block" :disabled="pending" data-testid="bds-company-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
+			<a :href="data.page.back_href" class="btn btn-secondary bds-btn-block">{{ __("Back to bid") }}</a>
 		</div>
 		<div v-else class="bds-footer">
-			<a :href="data.page.back_href" class="kt-btn kt-btn-secondary">{{ __("Back to bid") }}</a>
-			<div class="bds-footer-end"><button v-if="canEdit" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-company-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button></div>
+			<a :href="data.page.back_href" class="btn btn-secondary">{{ __("Back to bid") }}</a>
+			<div class="bds-footer-end"><button v-if="canEdit" type="button" class="btn btn-primary" :disabled="pending" data-testid="bds-company-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button></div>
 		</div>
 
 		<ResponseDrawer v-if="drawer" :group="drawer" task="company" :bid="bid" @close="drawer = null" @saved="afterDrawer" @changed="drawerChanged" />

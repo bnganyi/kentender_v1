@@ -71,7 +71,7 @@ test.describe("BDS-DES-13 receipt / BDS-DES-14 replacement and withdrawal", () =
 		const base = `/tenders/${world.tender_reference}/bid`;
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await loginToPortal(page, world.representative, world.password, `${base}/receipt/${world.receipt_reference}`);
-		await expect(page.getByTestId("bds-receipt-actions").locator(".kt-btn")).toHaveText(["Print receipt"]);
+		await expect(page.getByTestId("bds-receipt-actions").locator(".btn")).toHaveText(["Print receipt"]);
 		await page.context().clearCookies();
 
 		await loginToPortal(page, world.signatory, world.password, base);
@@ -99,7 +99,7 @@ test.describe("BDS-DES-13 receipt / BDS-DES-14 replacement and withdrawal", () =
 		const receipt = `/tenders/${world.tender_reference}/bid/receipt/${world.receipt_reference}`;
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await loginToPortal(page, world.signatory, world.password, receipt);
-		await expect(page.getByTestId("bds-receipt-actions").locator(".kt-btn")).toHaveText(["Print receipt"]);
+		await expect(page.getByTestId("bds-receipt-actions").locator(".btn")).toHaveText(["Print receipt"]);
 		await expect(page.getByTestId("bds-receipt-sentence")).toContainText("Submission changes closed on ");
 		await page.context().clearCookies();
 		await loginToPortal(page, world.other_user, world.password, receipt);

@@ -119,7 +119,7 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await page.locator('[data-testid="rev-secondary"]').click();
 		const dialog = page.locator('[data-testid="rvw-return-dialog"]');
 		await expect(dialog).toBeVisible();
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("What needs to change?");
+		await expect(dialog.locator(".dialog-title")).toHaveText("What needs to change?");
 		// §10.10 U11-RETURN's own drawn copy (re-diffed 22 Sep 2026, plan_read.py)
 		await expect(dialog).toContainText(
 			"The plan will return to Procurement for correction and will be submitted for review again. The plan you reviewed and your comment will remain in history.",
@@ -156,7 +156,7 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await expectReady(page, "governance");
 		await page.locator('[data-testid="rev-secondary"]').click();
 		const dialog = page.locator('[data-testid="rvw-return-dialog"]');
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("What needs to change?");
+		await expect(dialog.locator(".dialog-title")).toHaveText("What needs to change?");
 		await expect(dialog).toContainText("State the correction required. The Accounting-Officer-adopted Version 1 remains unchanged.");
 		await expect(dialog.locator("label")).toHaveText(["Comment"]);
 		await expect(dialog.locator("textarea")).toHaveCount(1);

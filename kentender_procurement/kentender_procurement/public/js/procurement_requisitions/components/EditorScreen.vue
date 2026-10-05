@@ -35,7 +35,7 @@
 		<template v-if="stale">
 			<Notice tone="warning">This requisition changed after you opened it. Review the latest version before saving.</Notice>
 			<div class="req-actions" style="margin: var(--kt-space-4) 0 var(--kt-space-6)">
-				<button type="button" class="kt-btn kt-btn-primary" data-testid="req-review-latest" @click="reviewLatest">Review latest version</button>
+				<button type="button" class="btn btn-primary" data-testid="req-review-latest" @click="reviewLatest">Review latest version</button>
 			</div>
 		</template>
 

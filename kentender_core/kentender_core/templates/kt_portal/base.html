@@ -57,7 +57,7 @@
 				{%- if kt_portal.verdict == "NOT_FOUND" and not kt_portal.surface.bundle %}
 				<div class="kt-page kt-portal-state" data-testid="kt-portal-not-found">
 					<div class="kt-page-head"><div><h1 class="kt-page-title">{{ _("Page not found") }}</h1><p class="kt-page-desc">{{ _("This page is unavailable. Check the address or go to the list of available Tenders.") }}</p></div></div>
-					<div><a class="kt-btn kt-btn-secondary" href="/tenders">{{ _("View available Tenders") }}</a></div>
+					<div><a class="btn btn-secondary" href="/tenders">{{ _("View available Tenders") }}</a></div>
 				</div>
 				{%- else %}
 				<div class="kt-portal-loading" aria-hidden="true"></div>

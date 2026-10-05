@@ -36,7 +36,7 @@ const SCREENS = [
 ];
 
 function built(wrapper, dialog) {
-	if (dialog) return { children: [wrapper.element.querySelector(".kt-dialog")] };
+	if (dialog) return { children: [wrapper.element.querySelector(".dialog")] };
 	return wrapper.element;
 }
 

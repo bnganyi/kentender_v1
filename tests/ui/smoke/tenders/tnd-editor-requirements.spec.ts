@@ -38,7 +38,7 @@ test.describe("TPR-DES-04 Supplier and contract requirements", () => {
 
 		await page.locator('[data-testid="tnd-add-evidence"]').click();
 		const dialog = page.locator('[data-testid="tnd-evidence-dialog"]');
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Add supplier evidence");
+		await expect(dialog.locator(".dialog-title")).toHaveText("Add supplier evidence");
 		await dialog.locator('[data-testid="tnd-ev-confirm"]').click();
 		await expect(dialog.locator(".tnd-field-error").first()).toBeVisible();
 		await dialog.locator('[data-testid="tnd-ev-label"]').fill("Electrical compatibility certificate");
@@ -52,7 +52,7 @@ test.describe("TPR-DES-04 Supplier and contract requirements", () => {
 		await expect(rows.first()).toContainText("Certificate");
 
 		await rows.first().locator('[data-testid="tnd-evidence-edit"]').click();
-		await expect(page.locator('[data-testid="tnd-evidence-dialog"] .kt-dialog-title')).toHaveText("Edit supplier evidence");
+		await expect(page.locator('[data-testid="tnd-evidence-dialog"] .dialog-title')).toHaveText("Edit supplier evidence");
 		await page.locator('[data-testid="tnd-ev-label"]').fill("Electrical compatibility certificate (KEBS)");
 		await expect(page.locator('[data-testid="tnd-ev-confirm"]')).toHaveText("Save changes");
 		await page.locator('[data-testid="tnd-ev-confirm"]').click();

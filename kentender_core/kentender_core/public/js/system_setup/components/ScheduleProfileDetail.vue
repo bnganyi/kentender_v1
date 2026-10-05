@@ -23,7 +23,7 @@
 			</div>
 
 			<h6 class="kt-card-title">{{ __("Milestones") }}</h6>
-			<table class="kt-table" style="margin-bottom:16px">
+			<table class="table" style="margin-bottom:16px">
 				<thead><tr><th>{{ __("Milestone") }}</th><th>{{ __("Order") }}</th><th>{{ __("Applies") }}</th><th>{{ __("Role in this schedule") }}</th></tr></thead>
 				<tbody>
 					<tr v-for="row in profile.milestones" :key="row.milestone" :data-testid="'kt-procset-milestone-' + row.milestone">
@@ -37,7 +37,7 @@
 
 			<h6 class="kt-card-title">{{ __("Time intervals") }}</h6>
 			<div class="kt-table-scroll">
-				<table class="kt-table" data-testid="kt-procset-profile-intervals">
+				<table class="table" data-testid="kt-procset-profile-intervals">
 					<thead><tr><th>{{ __("From") }}</th><th>{{ __("To") }}</th><th>{{ __("Days counted") }}</th><th>{{ __("Minimum status") }}</th><th>{{ __("Minimum days") }}</th><th>{{ __("Maximum status") }}</th><th>{{ __("Maximum days") }}</th><th>{{ __("Default days") }}</th><th>{{ __("Default basis") }}</th></tr></thead>
 					<tbody>
 						<tr v-for="row in intervals" :key="row.to.milestone" :data-testid="'kt-procset-interval-' + row.to.milestone">
@@ -104,10 +104,10 @@
 
 			<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
 				<!-- D15: correctable in place while nothing depends on it. -->
-				<button v-if="profile.can_edit" type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-profile-edit" @click="emit('edit-schedule')">{{ __("Edit schedule") }}</button>
-				<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-profile-new-version" @click="emit('new-version')">{{ __("Create new version") }}</button>
+				<button v-if="profile.can_edit" type="button" class="btn btn-secondary" data-testid="kt-procset-profile-edit" @click="emit('edit-schedule')">{{ __("Edit schedule") }}</button>
+				<button type="button" class="btn btn-secondary" data-testid="kt-procset-profile-new-version" @click="emit('new-version')">{{ __("Create new version") }}</button>
 				<!-- D20: a schedule's validity is the administrator's own statement. -->
-				<button v-if="canSetValidity" type="button" class="kt-btn kt-btn-secondary" :disabled="validityBusy" data-testid="kt-procset-profile-validity" @click="setValidity(!valid)">{{ valid ? __("Remove valid mark") : __("Mark as valid") }}</button>
+				<button v-if="canSetValidity" type="button" class="btn btn-secondary" :disabled="validityBusy" data-testid="kt-procset-profile-validity" @click="setValidity(!valid)">{{ valid ? __("Remove valid mark") : __("Mark as valid") }}</button>
 			</div>
 			<div v-if="validityError" class="kt-notice is-critical" role="alert" style="margin-top:12px" data-testid="kt-procset-profile-validity-error">
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>

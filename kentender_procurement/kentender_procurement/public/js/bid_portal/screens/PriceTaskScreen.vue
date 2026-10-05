@@ -141,7 +141,7 @@ onMounted(() => {
 		<div class="kt-region">
 			<h2>{{ __("Price schedule") }}</h2>
 			<div class="bds-region-body">
-				<table v-if="!narrow" class="kt-table" data-testid="bds-price-table">
+				<table v-if="!narrow" class="table" data-testid="bds-price-table">
 					<thead><tr><th>{{ __("Item") }}</th><th class="is-num">{{ __("Quantity") }}</th><th>{{ __("Unit") }}</th><th class="is-num">{{ __("Unit price excluding tax") }}</th><th class="is-num">{{ __("Tax on this line") }}</th><th class="is-num">{{ __("Line amount before tax") }}</th></tr></thead>
 					<tbody>
 						<tr v-for="line in data.lines" :key="line.line" :data-testid="'bds-price-line-' + line.line">
@@ -149,11 +149,11 @@ onMounted(() => {
 							<td class="is-num">{{ line.quantity }}</td>
 							<td>{{ line.unit }}</td>
 							<td class="is-num">
-								<input v-if="line.unit_price" v-model="prices[line.unit_price.handle]" class="kt-input bds-money" inputmode="decimal" :disabled="!line.unit_price.editable" :aria-label="__('Unit price excluding tax')" @change="savePrices" :aria-invalid="!!errors[line.unit_price.handle]" :data-testid="'bds-unit-price-' + line.line" />
+								<input v-if="line.unit_price" v-model="prices[line.unit_price.handle]" class="input bds-money" inputmode="decimal" :disabled="!line.unit_price.editable" :aria-label="__('Unit price excluding tax')" @change="savePrices" :aria-invalid="!!errors[line.unit_price.handle]" :data-testid="'bds-unit-price-' + line.line" />
 								<p v-if="line.unit_price && errors[line.unit_price.handle]" class="kt-field-error">{{ errors[line.unit_price.handle] }}</p>
 							</td>
 							<td class="is-num">
-								<input v-if="line.tax" v-model="prices[line.tax.handle]" class="kt-input bds-money" inputmode="decimal" :disabled="!line.tax.editable" :aria-label="__('Tax on this line')" @change="savePrices" :aria-invalid="!!errors[line.tax.handle]" :data-testid="'bds-tax-' + line.line" />
+								<input v-if="line.tax" v-model="prices[line.tax.handle]" class="input bds-money" inputmode="decimal" :disabled="!line.tax.editable" :aria-label="__('Tax on this line')" @change="savePrices" :aria-invalid="!!errors[line.tax.handle]" :data-testid="'bds-tax-' + line.line" />
 								<p v-if="line.tax && errors[line.tax.handle]" class="kt-field-error">{{ errors[line.tax.handle] }}</p>
 							</td>
 							<td class="is-num"><strong>{{ line.amount_before_tax }}</strong></td>
@@ -165,8 +165,8 @@ onMounted(() => {
 						<div class="bds-card-title">{{ line.description }}</div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Quantity") }}</span><span>{{ line.quantity }}</span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Unit") }}</span><span>{{ line.unit }}</span></div>
-						<div class="bds-card-fact"><span class="kt-label">{{ __("Unit price excluding tax") }}</span><span><input v-if="line.unit_price" v-model="prices[line.unit_price.handle]" class="kt-input bds-money" inputmode="decimal" :disabled="!line.unit_price.editable" :aria-label="__('Unit price excluding tax')" /></span></div>
-						<div class="bds-card-fact"><span class="kt-label">{{ __("Tax on this line") }}</span><span><input v-if="line.tax" v-model="prices[line.tax.handle]" class="kt-input bds-money" inputmode="decimal" :disabled="!line.tax.editable" :aria-label="__('Tax on this line')" /></span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Unit price excluding tax") }}</span><span><input v-if="line.unit_price" v-model="prices[line.unit_price.handle]" class="input bds-money" inputmode="decimal" :disabled="!line.unit_price.editable" :aria-label="__('Unit price excluding tax')" /></span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Tax on this line") }}</span><span><input v-if="line.tax" v-model="prices[line.tax.handle]" class="input bds-money" inputmode="decimal" :disabled="!line.tax.editable" :aria-label="__('Tax on this line')" /></span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Line amount before tax") }}</span><span><strong>{{ line.amount_before_tax }}</strong></span></div>
 					</div>
 				</div>
@@ -183,14 +183,14 @@ onMounted(() => {
 
 		<div v-if="narrow" class="bds-footer-stack">
 			<p v-if="unpriced" class="bds-muted">{{ __("Enter the unit price before continuing.") }}</p>
-			<button v-if="canEdit" type="button" class="kt-btn kt-btn-primary bds-btn-block" :disabled="pending" data-testid="bds-price-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
-			<a :href="data.page.back_href" class="kt-btn kt-btn-secondary bds-btn-block">{{ __("Back to bid") }}</a>
+			<button v-if="canEdit" type="button" class="btn btn-primary bds-btn-block" :disabled="pending" data-testid="bds-price-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
+			<a :href="data.page.back_href" class="btn btn-secondary bds-btn-block">{{ __("Back to bid") }}</a>
 		</div>
 		<div v-else class="bds-footer">
-			<a :href="data.page.back_href" class="kt-btn kt-btn-secondary">{{ __("Back to bid") }}</a>
+			<a :href="data.page.back_href" class="btn btn-secondary">{{ __("Back to bid") }}</a>
 			<div class="bds-footer-end">
 				<p v-if="unpriced" class="bds-muted" data-testid="bds-price-missing">{{ __("Enter the unit price before continuing.") }}</p>
-				<button v-if="canEdit" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-price-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
+				<button v-if="canEdit" type="button" class="btn btn-primary" :disabled="pending" data-testid="bds-price-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
 			</div>
 		</div>
 	</div>

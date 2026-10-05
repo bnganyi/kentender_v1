@@ -3,9 +3,9 @@
      two disclosures, and Start Tender — disabled, with the reason shown,
      when the requisition is unsupported or the actor cannot start. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="tnd-start-dialog" @keydown.esc="$emit('cancel')">
-		<div ref="dialogEl" class="kt-dialog tnd-dialog tnd-dialog--start" role="dialog" aria-modal="true" aria-labelledby="tnd-start-title" tabindex="-1" data-screen-label="TPR-DES-02 Start Tender dialog">
-			<div id="tnd-start-title" class="kt-dialog-title">
+	<div class="dialog-backdrop" data-testid="tnd-start-dialog" @keydown.esc="$emit('cancel')">
+		<div ref="dialogEl" class="dialog tnd-dialog tnd-dialog--start" role="dialog" aria-modal="true" aria-labelledby="tnd-start-title" tabindex="-1" data-screen-label="TPR-DES-02 Start Tender dialog">
+			<div id="tnd-start-title" class="dialog-title">
 				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9 15 2 2 4-4"/></svg>
 				Start this Tender?
 			</div>
@@ -53,9 +53,9 @@
 				</div>
 				<p v-if="error" class="tnd-field-error" role="alert" data-testid="tnd-start-error">{{ error }}</p>
 			</div>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" data-testid="tnd-start-cancel" @click="$emit('cancel')">Cancel</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="!detail.can_start || pending" :title="detail.can_start ? '' : 'Only a Procurement Officer can start a supported requisition.'" data-testid="tnd-start-confirm" @click="$emit('confirm')">Start Tender</button>
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" data-testid="tnd-start-cancel" @click="$emit('cancel')">Cancel</button>
+				<button type="button" class="btn btn-primary" :disabled="!detail.can_start || pending" :title="detail.can_start ? '' : 'Only a Procurement Officer can start a supported requisition.'" data-testid="tnd-start-confirm" @click="$emit('confirm')">Start Tender</button>
 			</div>
 		</div>
 	</div>

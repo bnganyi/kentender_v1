@@ -43,9 +43,9 @@ ROOT = Path(__file__).resolve().parent.parent
 BASE = {"h1", "h2", "h3", "h4", "h5", "h6", "p", "a", "a:hover", ":focus", ":focus-visible", "::selection"}
 #: `body` carries the page ground and margin, which belong to Frappe; the rest is the page's text.
 BODY_KEEP = {"color", "font-family", "font-size", "line-height", "font-weight"}
-#: The repository's old stylesheet colours links with `.kt-industry a:not(.kt-btn):not(.kt-tab):not(.kt-add-child)`
+#: The shared stylesheet colours links with `.kt-industry a:not(.btn):not(.kt-tab):not(.kt-add-child)`
 #: (specificity 0,4,1). Links use the same exclusions so they outrank it and stay indigo.
-LINK_GUARD = ":not(.kt-btn):not(.kt-tab):not(.kt-add-child)"
+LINK_GUARD = ":not(.btn):not(.kt-tab):not(.kt-add-child)"
 
 
 class Target(NamedTuple):

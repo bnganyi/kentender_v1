@@ -26,16 +26,16 @@ onMounted(async () => {
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop">
+	<div class="dialog-backdrop">
 		<div
-			class="kt-dialog kt-narrow"
+			class="dialog kt-narrow"
 			:role="destructive ? 'alertdialog' : 'dialog'"
 			aria-modal="true"
 			:aria-label="title"
 			:data-testid="testid"
 			@keydown.esc.stop="emit('cancel')"
 		>
-			<h2 class="kt-dialog-title">{{ title }}</h2>
+			<h2 class="dialog-title">{{ title }}</h2>
 			<div class="dialog-body" style="display:flex;flex-direction:column;gap:14px">
 				<p style="margin:0">{{ body }}</p>
 				<div v-if="error" class="kt-notice is-critical" role="alert">
@@ -43,11 +43,11 @@ onMounted(async () => {
 					<div class="kt-notice-body">{{ error }}</div>
 				</div>
 			</div>
-			<div class="kt-dialog-actions">
-				<button ref="cancelButton" type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
+			<div class="dialog-actions">
+				<button ref="cancelButton" type="button" class="btn btn-secondary" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
 				<button
 					type="button"
-					class="kt-btn kt-btn-primary"
+					class="btn btn-primary"
 					:class="{ 'kt-danger': destructive }"
 					:disabled="busy"
 					data-testid="kt-ou-confirm-accept"

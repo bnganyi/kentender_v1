@@ -495,7 +495,7 @@ const ARTBOARDS = [
 		key: "C03A#add",
 		self: true,
 		select: "#add",
-		live: ".kt-dialog",
+		live: ".dialog",
 		mount: async () => {
 			const wrapper = mount(FundingSourceDialog, { props: { creating: true }, global: globalMocks() });
 			await wrapper.find('[data-testid="kt-fs-name"]').setValue("Development partner");
@@ -506,7 +506,7 @@ const ARTBOARDS = [
 		key: "C03A#edit",
 		self: true,
 		select: "#edit",
-		live: ".kt-dialog",
+		live: ".dialog",
 		mount: () =>
 			mount(FundingSourceDialog, {
 				props: { source: { name: "FS-2", label: "Development partner", enabled: false, referenced: false, expected_version: "v1" } },
@@ -593,7 +593,7 @@ const ARTBOARDS = [
 		key: "C03BC#rename",
 		self: true,
 		select: "#rename .dialog",
-		live: ".kt-dialog",
+		live: ".dialog",
 		mount: () => mount(RuleRenameDialog, { props: { referenceSet: "rs-me", name: "Method eligibility" }, global: globalMocks() }),
 	},
 	{
@@ -682,7 +682,7 @@ const ARTBOARDS = [
 		key: "C04#add~version-footer",
 		self: true,
 		select: "#add .card > .field",
-		live: '[data-testid="kt-sve-replacement"] .kt-field',
+		live: '[data-testid="kt-sve-replacement"] .field',
 		mount: () => scheduleEditor({ name: SCHEDULE.profile, mode: "version" }),
 	},
 	{

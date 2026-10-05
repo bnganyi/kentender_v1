@@ -34,26 +34,26 @@
 				</div>
 
 				<div class="tnd-ws-filters">
-					<div class="kt-field tnd-search"><label for="tnd-search">Search</label><input id="tnd-search" class="kt-input" placeholder="Tender, requisition or purchase" :value="filters.search" data-testid="tnd-filter-search" @input="update('search', $event.target.value)" /></div>
-					<div class="kt-field"><label for="tnd-status">Status</label><select id="tnd-status" class="kt-input" :value="filters.status" data-testid="tnd-filter-status" @change="update('status', $event.target.value)">
+					<div class="field tnd-search"><label for="tnd-search">Search</label><input id="tnd-search" class="input" placeholder="Tender, requisition or purchase" :value="filters.search" data-testid="tnd-filter-search" @input="update('search', $event.target.value)" /></div>
+					<div class="field"><label for="tnd-status">Status</label><select id="tnd-status" class="input" :value="filters.status" data-testid="tnd-filter-status" @change="update('status', $event.target.value)">
 						<option value="">All statuses</option>
 						<option v-for="s in statusOptions" :key="s.key" :value="s.key">{{ s.label }}</option>
 					</select></div>
-					<div class="kt-field"><label for="tnd-fy">Financial year</label><select id="tnd-fy" class="kt-input" :value="filters.fiscal_year" data-testid="tnd-filter-fy" @change="update('fiscal_year', $event.target.value)">
+					<div class="field"><label for="tnd-fy">Financial year</label><select id="tnd-fy" class="input" :value="filters.fiscal_year" data-testid="tnd-filter-fy" @change="update('fiscal_year', $event.target.value)">
 						<option value="">All financial years</option>
 						<option v-for="fy in fiscalYears" :key="fy" :value="fy">{{ fy }}</option>
 					</select></div>
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="tnd-clear-filters" @click="$emit('clear-filters')">Clear filters</button>
+					<button type="button" class="btn btn-secondary" data-testid="tnd-clear-filters" @click="$emit('clear-filters')">Clear filters</button>
 				</div>
 
 				<div v-if="!rows.length" class="tnd-empty" data-testid="tnd-empty">
 					<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-500)" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
 					<p>{{ workspace.empty_text || "No Tenders match these filters." }}</p>
-					<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('clear-filters')">Clear filters</button>
+					<button type="button" class="btn btn-secondary" @click="$emit('clear-filters')">Clear filters</button>
 				</div>
 
 				<div v-else class="tnd-table-wrap">
-					<table class="kt-table" data-testid="tnd-queue">
+					<table class="table" data-testid="tnd-queue">
 						<thead><tr><th style="width: 32%">Purchase</th><th style="width: 22%">Tender</th><th style="width: 22%">Status</th><th style="width: 14%">Required by</th><th style="width: 10%" class="tnd-cell-right">Action</th></tr></thead>
 						<tbody>
 							<tr v-for="row in rows" :key="row.kind + ':' + (row.tender || row.handoff)" :data-testid="`tnd-row-${row.status_key}`" :data-tender="row.tender_reference">
@@ -61,7 +61,7 @@
 								<td>{{ row.tender_reference }}<div class="tnd-sub">{{ row.requisition_reference }}</div></td>
 								<td><span class="kt-status" :class="statusClass(row.status_key)">{{ row.status_label }}</span><div v-if="row.secondary" class="tnd-sub tnd-sub--4">{{ row.secondary }}</div></td>
 								<td>{{ row.required_by }}</td>
-								<td class="tnd-cell-right"><button type="button" class="kt-btn" :class="row.action_key === 'view' ? 'kt-btn-secondary' : 'kt-btn-primary'" :disabled="pending" :data-testid="`tnd-action-${row.action_key}`" @click="$emit('navigate', row.route)">{{ row.action_label }}</button></td>
+								<td class="tnd-cell-right"><button type="button" class="btn" :class="row.action_key === 'view' ? 'btn-secondary' : 'btn-primary'" :disabled="pending" :data-testid="`tnd-action-${row.action_key}`" @click="$emit('navigate', row.route)">{{ row.action_label }}</button></td>
 							</tr>
 						</tbody>
 					</table>

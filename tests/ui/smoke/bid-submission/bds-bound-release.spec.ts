@@ -45,7 +45,7 @@ test.describe("BDS-DES-02 / BDS-DES-06 on a superseded or withdrawn Tender forma
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await loginToPortal(page, world.signatory, world.password, base);
 		await expect(page.getByTestId("bds-overview-release")).toHaveText(WITHDRAWN);
-		await expect(page.locator(".kt-page-actions .kt-btn")).toHaveText(["View Tender documents", "View receipt", "Withdraw bid"]);
+		await expect(page.locator(".kt-page-actions .btn")).toHaveText(["View Tender documents", "View receipt", "Withdraw bid"]);
 		await expect(page.getByTestId("bds-overview-status")).toHaveCount(0);
 		await page.getByRole("link", { name: "View Tender documents" }).click();
 		await expect(page).toHaveURL(new RegExp(`${base}#bds-tender-documents$`));
@@ -69,7 +69,7 @@ test.describe("BDS-DES-02 / BDS-DES-06 on a superseded or withdrawn Tender forma
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await loginToPortal(page, world.other_user, world.password, base);
 		await expect(page.getByTestId("bds-overview-release")).toHaveText(WITHDRAWN);
-		await expect(page.locator(".kt-page-actions .kt-btn")).toHaveText(["View Tender documents"]);
+		await expect(page.locator(".kt-page-actions .btn")).toHaveText(["View Tender documents"]);
 	});
 
 	test("withdrawn: David's Draft is kept for reading and waits on the Tender's Procurement Officer", async ({ page }) => {

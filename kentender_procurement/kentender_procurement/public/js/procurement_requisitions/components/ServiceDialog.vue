@@ -4,48 +4,48 @@
 <template>
 	<DialogFrame :title="row ? 'Edit related service' : 'Add related service'" :width="520" :busy="busy" testid="req-service-dialog" @close="$emit('close')">
 		<div class="req-grid-2-tight">
-			<div class="kt-field">
+			<div class="field">
 				<label :for="`${id}-type`">Service</label>
-				<select :id="`${id}-type`" v-model="form.service_type" class="kt-input" :class="{ 'is-invalid': fieldError('service_type') }" data-testid="req-service-type">
+				<select :id="`${id}-type`" v-model="form.service_type" class="input" :class="{ 'is-invalid': fieldError('service_type') }" data-testid="req-service-type">
 					<option value="">Select a service</option>
 					<option v-for="t in catalogue.service_types || []" :key="t" :value="t">{{ t }}</option>
 				</select>
 				<span v-if="fieldError('service_type')" class="req-field-error">{{ fieldError("service_type") }}</span>
 			</div>
-			<div class="kt-field">
+			<div class="field">
 				<label :for="`${id}-coverage`">Quantity or coverage</label>
-				<input :id="`${id}-coverage`" v-model="form.quantity_or_coverage" class="kt-input" :class="{ 'is-invalid': fieldError('quantity_or_coverage') }" data-testid="req-service-coverage" />
+				<input :id="`${id}-coverage`" v-model="form.quantity_or_coverage" class="input" :class="{ 'is-invalid': fieldError('quantity_or_coverage') }" data-testid="req-service-coverage" />
 				<span v-if="fieldError('quantity_or_coverage')" class="req-field-error">{{ fieldError("quantity_or_coverage") }}</span>
 			</div>
 		</div>
-		<div class="kt-field">
+		<div class="field">
 			<label :for="`${id}-result`">Required result</label>
-			<textarea :id="`${id}-result`" v-model="form.required_result" class="kt-input" rows="2" :class="{ 'is-invalid': fieldError('required_result') }" data-testid="req-service-result"></textarea>
+			<textarea :id="`${id}-result`" v-model="form.required_result" class="input" rows="2" :class="{ 'is-invalid': fieldError('required_result') }" data-testid="req-service-result"></textarea>
 			<span v-if="fieldError('required_result')" class="req-field-error">{{ fieldError("required_result") }}</span>
 		</div>
 		<div class="req-grid-2-tight">
-			<div class="kt-field">
+			<div class="field">
 				<label :for="`${id}-date`">Completion date</label>
 				<DateField :id="`${id}-date`" v-model="form.completion_date" :max="(view.request_information || {}).latest_delivery_date || ''" :invalid="!!fieldError('completion_date')" />
 				<span v-if="fieldError('completion_date')" class="req-field-error">{{ fieldError("completion_date") }}</span>
 			</div>
-			<div class="kt-field">
+			<div class="field">
 				<label :for="`${id}-evidence`">Acceptance evidence</label>
-				<select :id="`${id}-evidence`" v-model="form.acceptance_evidence" class="kt-input" :class="{ 'is-invalid': fieldError('acceptance_evidence') }">
+				<select :id="`${id}-evidence`" v-model="form.acceptance_evidence" class="input" :class="{ 'is-invalid': fieldError('acceptance_evidence') }">
 					<option value="">Select the evidence</option>
 					<option v-for="t in catalogue.service_evidence || []" :key="t" :value="t">{{ t }}</option>
 				</select>
 				<span v-if="fieldError('acceptance_evidence')" class="req-field-error">{{ fieldError("acceptance_evidence") }}</span>
 			</div>
 		</div>
-		<div v-if="form.acceptance_evidence === 'Other stated record'" class="kt-field">
+		<div v-if="form.acceptance_evidence === 'Other stated record'" class="field">
 			<label :for="`${id}-other`">Name of the evidence record</label>
-			<input :id="`${id}-other`" v-model="form.other_evidence_name" class="kt-input" />
+			<input :id="`${id}-other`" v-model="form.other_evidence_name" class="input" />
 		</div>
 		<Notice v-if="otherError" tone="critical">{{ otherError }}</Notice>
 		<template #actions>
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
-			<button type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="req-service-confirm" @click="confirm">Save related service</button>
+			<button type="button" class="btn btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
+			<button type="button" class="btn btn-primary" :disabled="busy" data-testid="req-service-confirm" @click="confirm">Save related service</button>
 		</template>
 	</DialogFrame>
 </template>

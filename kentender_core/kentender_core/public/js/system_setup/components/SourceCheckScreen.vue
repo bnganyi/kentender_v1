@@ -148,38 +148,38 @@ async function record() {
 					<div><span class="kt-label">{{ isCalendar ? __("Calendar") : __("Rule") }}</span><span class="kt-meta-value" data-testid="kt-source-check-rule">{{ isCalendar ? version.calendar_name : version.display_name || version.reference_kind }}</span></div>
 					<div><span class="kt-label">{{ __("Version") }}</span><span class="kt-meta-value" data-testid="kt-source-check-version">{{ version.version_number }}</span></div>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-sc-result">{{ __("Result") }}</label>
-					<select id="kt-sc-result" v-model="form.outcome" class="kt-input" data-testid="kt-sc-result">
+					<select id="kt-sc-result" v-model="form.outcome" class="input" data-testid="kt-sc-result">
 						<option v-for="option in OUTCOMES" :key="option.value" :value="option.value">{{ option.label }}</option>
 					</select>
 				</div>
-				<div class="kt-field" style="margin-top:10px">
+				<div class="field" style="margin-top:10px">
 					<label for="kt-sc-date">{{ __("Source-check date") }}</label>
-					<input id="kt-sc-date" v-model="form.source_check_date" class="kt-input" type="date" data-testid="kt-sc-date">
+					<input id="kt-sc-date" v-model="form.source_check_date" class="input" type="date" data-testid="kt-sc-date">
 				</div>
 
 				<h6 class="kt-card-title" style="margin-top:16px">{{ __("1. Source documents") }}</h6>
 				<div class="kt-panel" style="margin-bottom:10px">
 					<div class="kt-sc-grid">
-						<div class="kt-field"><label for="kt-sc-instrument">{{ __("Instrument and edition") }}</label><input id="kt-sc-instrument" v-model="form.instrument_edition" class="kt-input" :aria-invalid="invalid('instrument_edition') ? 'true' : 'false'" data-testid="kt-sc-instrument"></div>
-						<div class="kt-field"><label for="kt-sc-provisions">{{ __("Provisions") }}</label><input id="kt-sc-provisions" v-model="form.provisions" class="kt-input" data-testid="kt-sc-provisions"></div>
-						<div class="kt-field"><label for="kt-sc-document">{{ __("Source document") }}</label><input id="kt-sc-document" v-model="form.source_document" class="kt-input" :placeholder="__('Not attached')" data-testid="kt-sc-document"></div>
+						<div class="field"><label for="kt-sc-instrument">{{ __("Instrument and edition") }}</label><input id="kt-sc-instrument" v-model="form.instrument_edition" class="input" :aria-invalid="invalid('instrument_edition') ? 'true' : 'false'" data-testid="kt-sc-instrument"></div>
+						<div class="field"><label for="kt-sc-provisions">{{ __("Provisions") }}</label><input id="kt-sc-provisions" v-model="form.provisions" class="input" data-testid="kt-sc-provisions"></div>
+						<div class="field"><label for="kt-sc-document">{{ __("Source document") }}</label><input id="kt-sc-document" v-model="form.source_document" class="input" :placeholder="__('Not attached')" data-testid="kt-sc-document"></div>
 					</div>
 				</div>
 				<h6 class="kt-card-title">{{ __("2. What the source establishes") }}</h6>
 				<div class="kt-panel" style="margin-bottom:10px">
 					<div class="kt-sc-grid">
-						<div class="kt-field"><label for="kt-sc-dates">{{ __("Effective dates and amendments") }}</label><input id="kt-sc-dates" v-model="form.effective_dates_and_amendments" class="kt-input" :aria-invalid="invalid('effective_dates_and_amendments') ? 'true' : 'false'" data-testid="kt-sc-dates"></div>
-						<div class="kt-field"><label for="kt-sc-applicability">{{ __("Applicability and date basis") }}</label><input id="kt-sc-applicability" v-model="form.applicability_date_basis_explanation" class="kt-input" :aria-invalid="invalid('applicability_date_basis_explanation') ? 'true' : 'false'" data-testid="kt-sc-applicability"></div>
-						<div class="kt-field"><label for="kt-sc-interpretation">{{ __("Interpretation evidence") }}</label><textarea id="kt-sc-interpretation" v-model="form.interpretation_evidence" class="kt-input" rows="2" :aria-invalid="invalid('interpretation_evidence') ? 'true' : 'false'" data-testid="kt-sc-interpretation" /></div>
+						<div class="field"><label for="kt-sc-dates">{{ __("Effective dates and amendments") }}</label><input id="kt-sc-dates" v-model="form.effective_dates_and_amendments" class="input" :aria-invalid="invalid('effective_dates_and_amendments') ? 'true' : 'false'" data-testid="kt-sc-dates"></div>
+						<div class="field"><label for="kt-sc-applicability">{{ __("Applicability and date basis") }}</label><input id="kt-sc-applicability" v-model="form.applicability_date_basis_explanation" class="input" :aria-invalid="invalid('applicability_date_basis_explanation') ? 'true' : 'false'" data-testid="kt-sc-applicability"></div>
+						<div class="field"><label for="kt-sc-interpretation">{{ __("Interpretation evidence") }}</label><textarea id="kt-sc-interpretation" v-model="form.interpretation_evidence" class="input" rows="2" :aria-invalid="invalid('interpretation_evidence') ? 'true' : 'false'" data-testid="kt-sc-interpretation" /></div>
 					</div>
 				</div>
 				<h6 class="kt-card-title">{{ __("3. Outstanding work and record") }}</h6>
 				<div class="kt-panel">
 					<div class="kt-sc-grid">
-						<div class="kt-field"><label for="kt-sc-unresolved">{{ __("Unresolved points") }}</label><textarea id="kt-sc-unresolved" v-model="form.unresolved_points" class="kt-input" rows="2" :aria-invalid="needsUnresolved ? 'true' : 'false'" data-testid="kt-sc-unresolved" /></div>
-						<div class="kt-field"><label for="kt-sc-reason">{{ form.outcome === "Rejected" ? __("Reason") : __("Reason for this entry") }}</label><textarea id="kt-sc-reason" v-model="form.change_reason" class="kt-input" rows="2" data-testid="kt-sc-reason" /></div>
+						<div class="field"><label for="kt-sc-unresolved">{{ __("Unresolved points") }}</label><textarea id="kt-sc-unresolved" v-model="form.unresolved_points" class="input" rows="2" :aria-invalid="needsUnresolved ? 'true' : 'false'" data-testid="kt-sc-unresolved" /></div>
+						<div class="field"><label for="kt-sc-reason">{{ form.outcome === "Rejected" ? __("Reason") : __("Reason for this entry") }}</label><textarea id="kt-sc-reason" v-model="form.change_reason" class="input" rows="2" data-testid="kt-sc-reason" /></div>
 					</div>
 				</div>
 
@@ -205,8 +205,8 @@ async function record() {
 				<RuleFormError :error="error" style="margin-top:10px" @refresh="load" />
 
 				<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-					<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="kt-sc-cancel" @click="emit('back')">{{ __("Cancel") }}</button>
-					<button type="button" class="kt-btn kt-btn-primary" :disabled="!canRecord" data-testid="kt-sc-record" @click="record">{{ __("Record source check") }}</button>
+					<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="kt-sc-cancel" @click="emit('back')">{{ __("Cancel") }}</button>
+					<button type="button" class="btn btn-primary" :disabled="!canRecord" data-testid="kt-sc-record" @click="record">{{ __("Record source check") }}</button>
 				</div>
 			</div>
 

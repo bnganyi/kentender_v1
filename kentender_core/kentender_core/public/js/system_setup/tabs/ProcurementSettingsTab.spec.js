@@ -129,7 +129,7 @@ describe("ProcurementSettingsTab", () => {
 	it("add and edit open the dialog over the list; Cancel returns to the section, and a save re-reads it", async () => {
 		const adding = await mountTab("new-source");
 		expect(adding.find('[data-testid="kt-procset-sources"]').exists()).toBe(true);
-		expect(adding.find('[data-testid="kt-procset-source-editor"] .kt-dialog-title').text()).toBe("Add funding source");
+		expect(adding.find('[data-testid="kt-procset-source-editor"] .dialog-title').text()).toBe("Add funding source");
 		await adding.find('[data-testid="kt-fs-cancel"]').trigger("click");
 		expect(adding.emitted("navigate").at(-1)).toEqual(["funding-sources"]);
 

@@ -56,7 +56,7 @@ test.describe("Award — the supplier's notice", () => {
 		await page.screenshot({ path: `${EVIDENCE}/D04.png`, fullPage: true });
 		await portal.locator('[data-testid="awd-action-accept-award"]').click();
 		const dialog = portal.locator('[data-testid="awd-dialog"]');
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Accept this award?");
+		await expect(dialog.locator(".dialog-title")).toHaveText("Accept this award?");
 		await expect(dialog.locator('[data-testid="awd-dialog-body"]')).toHaveText("I accept Award notice 1 on behalf of Afya Digital Supplies Limited.");
 		await page.screenshot({ path: `${EVIDENCE}/X01.png`, fullPage: true });
 		await dialog.locator('[data-testid="awd-dialog-accept-award"]').click();

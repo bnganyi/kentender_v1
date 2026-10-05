@@ -86,9 +86,16 @@ function compareBoard(board, root, departures = departuresFor(board)) {
 
 const messageOf = (board, { skeleton, texts }) => [formatMismatch(`${board} skeleton`, skeleton), formatTexts(`${board} text`, texts)].filter(Boolean).join("\n");
 
+// The sixteen boards, by name (tests/ui/fidelity/covered.spec.js checks that every COVERED board is named here).
+const BOARDS = [
+	"HOME-DES-21", "HOME-DES-21N", "HOME-DES-29", "HOME-DES-22", "HOME-DES-23", "HOME-DES-24", "HOME-DES-25", "HOME-DES-26",
+	"HOME-DES-26B", "HOME-DES-27", "HOME-DES-28A", "HOME-DES-28B", "HOME-DES-28C", "HOME-DES-28D", "HOME-DES-28E", "HOME-DES-28F",
+];
+
 describe("the boards", () => {
 	it("are the sixteen the page compares, no more and no fewer", () => {
-		expect(homeBoardIds()).toEqual(COVERED);
+		expect(BOARDS).toEqual(COVERED);
+		expect(homeBoardIds()).toEqual(BOARDS);
 		expect(Object.keys(BOARD_STATES)).toEqual(COVERED);
 	});
 });

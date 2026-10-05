@@ -1,8 +1,8 @@
 /* Tenders — TPR-CHG-001 v0.8 supplementary Industry classes.
  *
- * kentender_core's kt_industry_tokens.css carries the shared system (.kt-card,
- * .kt-btn, .kt-blueprint, .kt-corner, .kt-status, .kt-input, .kt-table,
- * .kt-notice, .kt-kpi-*, .kt-disclosure, .kt-dialog, .kt-timeline, .kt-skel …).
+ * kentender_core's kt_industry_tokens.css carries the shared system (.card,
+ * .btn, .blueprint, .corner, .kt-status, .input, .table,
+ * .kt-notice, .kt-kpi-*, .kt-disclosure, .dialog, .kt-timeline, .kt-skel …).
  * The TPR-DES artboards compose their screens from inline layout styles on
  * top of it; those compositions are ported here as named classes, scoped
  * under .kt-tnd so no rule can collide with another module's port (every
@@ -10,36 +10,7 @@
  */
 
 .kt-industry.kt-tnd {
-	--color-bg: var(--kt-color-bg);
-	--color-text: var(--kt-color-text);
-	--color-surface: var(--kt-color-surface);
-	--color-surface-2: var(--kt-color-surface-2, var(--kt-color-neutral-100));
-	--color-accent: var(--kt-color-accent);
-	--color-accent-100: var(--kt-color-accent-100);
-	--color-accent-500: var(--kt-color-accent-500, var(--kt-color-accent));
-	--color-accent-700: var(--kt-color-accent-700);
-	--color-accent-800: var(--kt-color-accent-800);
-	--color-accent-900: var(--kt-color-accent-900, var(--kt-color-accent-800));
-	--color-neutral-100: var(--kt-color-neutral-100);
-	--color-neutral-200: var(--kt-color-neutral-200);
-	--color-neutral-300: var(--kt-color-neutral-300, var(--kt-color-neutral-200));
-	--color-neutral-500: var(--kt-color-neutral-500);
-	--color-neutral-600: var(--kt-color-neutral-600);
-	--color-neutral-700: var(--kt-color-neutral-700);
-	--color-neutral-800: var(--kt-color-neutral-800);
-	--color-divider: var(--kt-color-divider);
-	--status-critical: var(--kt-status-critical);
-	--status-critical-bg: var(--kt-status-critical-bg);
-	--status-attention: var(--kt-status-attention);
-	--status-attention-bg: var(--kt-status-attention-bg);
-	--status-live: var(--kt-status-live);
-	--status-live-bg: var(--kt-status-live-bg);
-	--status-draft: var(--kt-status-draft, var(--kt-color-neutral-700));
-	--status-draft-bg: var(--kt-status-draft-bg, var(--kt-color-neutral-100));
-	--font-heading: var(--kt-font-heading);
-	--font-body: var(--kt-font-body);
-	--radius-md: var(--kt-radius-md);
-	--shadow-lg: var(--kt-shadow-lg);
+	--color-surface-2: var(--color-control);
 	padding-bottom: 80px;
 }
 
@@ -50,7 +21,7 @@
 .kt-tnd .tnd-page--tight { max-width: 760px; }
 
 .kt-tnd .tnd-card { padding: 0; position: relative; }
-.kt-tnd .tnd-card > .kt-corner { pointer-events: none; }
+.kt-tnd .tnd-card > .corner { pointer-events: none; }
 
 /* ---------- record head ---------- */
 .kt-tnd .tnd-head { padding: 28px 24px 20px; border-bottom: 1px solid var(--color-divider); }
@@ -77,7 +48,7 @@
    and table headers (`.kt-disclosure-title{text-transform:none;…}` in each
    board's own style block). */
 .kt-tnd .kt-disclosure-title { text-transform: none; letter-spacing: 0; font-size: 15px; }
-.kt-tnd .kt-table th, .kt-tnd .kt-table thead th { text-transform: none; letter-spacing: 0; }
+.kt-tnd .table th, .kt-tnd .table thead th { text-transform: none; letter-spacing: 0; }
 .kt-tnd .tnd-section-title--tight { margin: 0 0 12px; }
 .kt-tnd .tnd-section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 12px; flex-wrap: wrap; }
 .kt-tnd .tnd-actions { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -189,9 +160,9 @@
 .kt-tnd .tnd-dialog { width: min(440px, 100%); padding: 24px; gap: 12px; }
 .kt-tnd .tnd-dialog--start { width: min(520px, 100%); }
 .kt-tnd .tnd-dialog--doc { width: min(920px, 100%); max-height: 90vh; }
-.kt-tnd .tnd-dialog .kt-dialog-title { font-size: 20px; display: flex; align-items: center; gap: 8px; }
+.kt-tnd .tnd-dialog .dialog-title { font-size: 20px; display: flex; align-items: center; gap: 8px; }
 .kt-tnd .tnd-dialog-body { font-size: 14px; color: var(--color-neutral-800); }
-.kt-tnd .tnd-dialog-body .kt-field { margin-bottom: 12px; }
+.kt-tnd .tnd-dialog-body .field { margin-bottom: 12px; }
 .kt-tnd .tnd-dialog-note { font-size: 13px; color: var(--color-neutral-700); margin: 12px 0 0; }
 .kt-tnd .tnd-doc-frame { border: 1px solid var(--color-divider); background: #fff; height: 60vh; overflow: auto; padding: 16px; }
 .kt-tnd .tnd-doc-meta { font-size: 12px; color: var(--color-neutral-600); display: flex; gap: 12px; flex-wrap: wrap; }
@@ -218,16 +189,16 @@
 .kt-tnd .tnd-kpi-btn.is-selected { background: var(--color-accent-100); border-color: var(--color-accent-500); border-width: 2px; padding: calc(var(--kt-space-4) - 1px); }
 .kt-tnd .tnd-kpi-label { font-family: var(--font-heading); font-size: 14px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text); }
 .kt-tnd .tnd-ws-filters { padding: 16px 24px; border-bottom: 1px solid var(--color-divider); display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
-.kt-tnd .tnd-ws-filters .kt-field { margin: 0; }
-.kt-tnd .tnd-ws-filters .kt-field label { font-size: 11px; }
+.kt-tnd .tnd-ws-filters .field { margin: 0; }
+.kt-tnd .tnd-ws-filters .field label { font-size: 11px; }
 .kt-tnd .tnd-ws-filters .tnd-search { flex: 1 1 220px; min-width: 220px; }
-.kt-tnd .tnd-ws-filters .tnd-search .kt-input { width: 100%; }
-.kt-tnd .tnd-ws-filters select.kt-input { width: auto; }
+.kt-tnd .tnd-ws-filters .tnd-search .input { width: 100%; }
+.kt-tnd .tnd-ws-filters select.input { width: auto; }
 .kt-tnd .tnd-empty { padding: 64px 24px; text-align: center; }
 .kt-tnd .tnd-empty svg { margin-bottom: 12px; }
 .kt-tnd .tnd-empty p { font-size: 14px; color: var(--color-neutral-700); margin: 0 0 16px; }
 .kt-tnd .tnd-table-wrap { overflow-x: auto; }
-.kt-tnd .tnd-table-wrap .kt-table { width: 100%; }
+.kt-tnd .tnd-table-wrap .table { width: 100%; }
 .kt-tnd .tnd-row-purchase { display: flex; align-items: center; gap: 8px; }
 .kt-tnd .tnd-cell-right { text-align: right; }
 .kt-tnd .tnd-empty-inline { font-size: 13px; color: var(--color-neutral-600); text-align: center; padding: 16px 0; margin: 0; }

@@ -23,17 +23,17 @@ const n = computed(() => props.current.version_number);
 <template>
 	<div class="kt-rule-version-head" data-testid="kt-rule-version-head">
 		<h3 style="margin-bottom:4px" data-testid="kt-rule-version-title">{{ __("{0} — new version", [ruleName]) }}</h3>
-		<span class="kt-tag kt-tag-neutral" data-testid="kt-rule-unsaved">{{ __("Unsaved changes") }}</span>
+		<span class="tag tag-neutral" data-testid="kt-rule-unsaved">{{ __("Unsaved changes") }}</span>
 		<div class="kt-meta-row" style="margin:12px 0">
 			<div><span class="kt-label">{{ __("Earlier version") }}</span><span class="kt-meta-value">{{ n }}</span></div>
 			<div><span class="kt-label">{{ __("Applies from") }}</span><span class="kt-meta-value">{{ fmtDate(current.effective_from) }}</span></div>
 			<div><span class="kt-label">{{ __("Applies until") }}</span><span class="kt-meta-value">{{ fmtDate(current.effective_until) }}</span></div>
 		</div>
-		<div class="kt-field">
+		<div class="field">
 			<label for="kt-rule-reason">{{ __("Reason for change") }}</label>
 			<textarea
 				id="kt-rule-reason"
-				class="kt-input"
+				class="input"
 				rows="2"
 				:value="modelValue"
 				data-testid="kt-rule-reason"

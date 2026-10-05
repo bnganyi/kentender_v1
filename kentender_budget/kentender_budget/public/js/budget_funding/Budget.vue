@@ -61,7 +61,7 @@ usePageRail(railEl, trail, { showPeSwitcher: false });
 			<component :is="screenComponent" />
 		</KeepAlive>
 		<div v-if="!screenComponent" class="kt-shell">
-			<div class="kt-card kt-blueprint kt-empty">
+			<div class="card blueprint kt-empty">
 				<h2>{{ __("This screen is not available yet.") }}</h2>
 				<p class="kt-muted">{{ __("This part of Budget & Funding is still being built.") }}</p>
 			</div>

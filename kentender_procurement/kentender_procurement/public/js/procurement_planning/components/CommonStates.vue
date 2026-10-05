@@ -3,7 +3,7 @@
      hidden) and load-failure, ported class-for-class from
      Artboards-C01-U21.dc.html. Each is one bare `.kt-page` sheet holding
      either the live skeleton or a `.kt-empty` block — never the older
-     `.kt-card.kt-blueprint` bordered-rectangle treatment, which the v1.24
+     `.card.blueprint` bordered-rectangle treatment, which the v1.24
      artboards use nowhere (KT-STD-001 v1.7 §2.6.7/PLN24-CHG-007: no excessive
      cards, borders or equal emphasis).
 
@@ -41,7 +41,7 @@
 			</h3>
 			<p v-for="(line, index) in copy.text" :key="index">{{ line }}</p>
 			<div v-if="copy.action">
-				<button type="button" class="kt-btn kt-btn-primary" :data-testid="`${resolvedTestid}-action`" @click="$emit('action')">
+				<button type="button" class="btn btn-primary" :data-testid="`${resolvedTestid}-action`" @click="$emit('action')">
 					{{ copy.action }}
 				</button>
 			</div>

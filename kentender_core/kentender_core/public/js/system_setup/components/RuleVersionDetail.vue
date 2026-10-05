@@ -198,7 +198,7 @@ const applicabilityBasis = computed(
 						<!-- What the rule says, beyond the board's pending specimen: a
 						     method rule's conditions and a reference rule's typed rows
 						     (never raw JSON). See DEPARTURES. -->
-						<table v-if="kind === 'method' && conditions.length" class="kt-table" style="margin-top:12px" data-testid="kt-procset-rule-values">
+						<table v-if="kind === 'method' && conditions.length" class="table" style="margin-top:12px" data-testid="kt-procset-rule-values">
 							<thead><tr><th>{{ __("Condition") }}</th><th>{{ __("Kind") }}</th><th>{{ __("Category") }}</th><th>{{ __("Limit") }}</th><th>{{ __("Evidence") }}</th><th>{{ __("Authorisation") }}</th></tr></thead>
 							<tbody>
 								<tr v-for="row in conditions" :key="row.condition_id">
@@ -216,7 +216,7 @@ const applicabilityBasis = computed(
 						</table>
 						<template v-for="table in (kind === 'method' ? [] : payloadTables)" :key="table.key">
 							<h6 class="kt-card-title" style="margin-top:12px">{{ table.label }}</h6>
-							<table class="kt-table" data-testid="kt-procset-rule-values" :data-key="table.key">
+							<table class="table" data-testid="kt-procset-rule-values" :data-key="table.key">
 								<thead><tr><th v-for="column in table.columns" :key="column.key">{{ column.label }}</th></tr></thead>
 								<tbody>
 									<tr v-for="(row, index) in table.rows" :key="index">
@@ -276,22 +276,22 @@ const applicabilityBasis = computed(
 
 			<!-- §10.6 saved-detail actions, then the decided extras. -->
 			<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
-				<button v-if="rule.can_edit" type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-edit" @click="emit('edit-rule')">{{ __("Edit rule") }}</button>
-				<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-new-version" @click="emit('new-version')">{{ __("Create new version") }}</button>
-				<button v-if="kind !== 'method'" type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-check-sources" @click="emit('check-sources')">{{ __("Check sources") }}</button>
+				<button v-if="rule.can_edit" type="button" class="btn btn-secondary" data-testid="kt-procset-rule-edit" @click="emit('edit-rule')">{{ __("Edit rule") }}</button>
+				<button type="button" class="btn btn-secondary" data-testid="kt-procset-rule-new-version" @click="emit('new-version')">{{ __("Create new version") }}</button>
+				<button v-if="kind !== 'method'" type="button" class="btn btn-secondary" data-testid="kt-procset-rule-check-sources" @click="emit('check-sources')">{{ __("Check sources") }}</button>
 				<!-- Owner, 23 Sep 2026 (D20): a method rule has no source check
 				     behind it; its validity is the administrator's own statement,
 				     allowed while the version is in force and in use. -->
 				<button
 					v-if="canSetValidity"
 					type="button"
-					class="kt-btn kt-btn-secondary"
+					class="btn btn-secondary"
 					:disabled="validityBusy"
 					data-testid="kt-procset-rule-validity"
 					@click="setValidity(!valid)"
 				>{{ valid ? __("Remove valid mark") : __("Mark as valid") }}</button>
-				<button v-if="kind !== 'method'" type="button" class="kt-btn kt-btn-ghost" data-testid="kt-procset-rule-usage" @click="emit('check-sources')">{{ __("View usage and history") }}</button>
-				<button v-if="kind !== 'method'" type="button" class="kt-btn kt-btn-ghost" data-testid="kt-procset-rule-rename" @click="renaming = true">{{ __("Edit rule name") }}</button>
+				<button v-if="kind !== 'method'" type="button" class="btn btn-ghost" data-testid="kt-procset-rule-usage" @click="emit('check-sources')">{{ __("View usage and history") }}</button>
+				<button v-if="kind !== 'method'" type="button" class="btn btn-ghost" data-testid="kt-procset-rule-rename" @click="renaming = true">{{ __("Edit rule name") }}</button>
 			</div>
 			<div v-if="validityError" class="kt-notice is-critical" role="alert" style="margin-top:12px" data-testid="kt-procset-rule-validity-error">
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>

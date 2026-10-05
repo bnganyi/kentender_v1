@@ -247,12 +247,12 @@
 
 				<template v-else-if="screen === 'plan'">
 					<!-- PLN-DES-16 — publication was not acknowledged; the Draft is untouched -->
-					<div v-if="annualPlan.latest_publication && annualPlan.latest_publication.result === 'Failed'" class="kt-card kt-blueprint pln-state-card" data-testid="pln-publication-failed">
-						<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-						<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+					<div v-if="annualPlan.latest_publication && annualPlan.latest_publication.result === 'Failed'" class="card blueprint pln-state-card" data-testid="pln-publication-failed">
+						<i class="corner tl"></i><i class="corner tr"></i>
+						<i class="corner bl"></i><i class="corner br"></i>
 						<h3>Publication was not acknowledged</h3>
 						<p>The approved Plan is unchanged. Retry the same publication when the destination is available.</p>
-						<button type="button" class="kt-btn kt-btn-secondary" data-testid="pln-open-publication" @click="onNavigate(annualPlan.latest_publication.route)">Retry publication</button>
+						<button type="button" class="btn btn-secondary" data-testid="pln-open-publication" @click="onNavigate(annualPlan.latest_publication.route)">Retry publication</button>
 					</div>
 					<AnnualPlanScreen
 						:plan="annualPlan"

@@ -13,13 +13,13 @@
      (the `dialog.lede` this template binds below) carried invented copy
      that never appeared on the artboard; fixed there, not here. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="rvw-return-dialog">
-		<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="rvw-return-title">
-			<div id="rvw-return-title" class="kt-dialog-title">What needs to change?</div>
+	<div class="dialog-backdrop" data-testid="rvw-return-dialog">
+		<div class="dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="rvw-return-title">
+			<div id="rvw-return-title" class="dialog-title">What needs to change?</div>
 			<div class="pln-field">
 				<label for="rvw-return-reason">Comment</label>
 				<textarea
-					id="rvw-return-reason" class="kt-input" rows="4"
+					id="rvw-return-reason" class="input" rows="4"
 					data-testid="rvw-return-reason" v-model="reason"
 				></textarea>
 			</div>
@@ -27,12 +27,12 @@
 			<p v-if="error" class="pln-dialog-error" role="alert" data-testid="rvw-return-error">
 				{{ error }}
 			</p>
-			<div class="kt-dialog-actions">
-				<button class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">
+			<div class="dialog-actions">
+				<button class="btn btn-secondary" :disabled="pending" @click="$emit('cancel')">
 					Cancel
 				</button>
 				<button
-					class="kt-btn kt-btn-primary" data-testid="rvw-return-confirm"
+					class="btn btn-primary" data-testid="rvw-return-confirm"
 					:disabled="pending || reason.trim().length < 10"
 					@click="$emit('confirm', reason.trim())"
 				>

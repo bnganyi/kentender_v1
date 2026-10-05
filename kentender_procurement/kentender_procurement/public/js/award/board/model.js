@@ -54,7 +54,7 @@ export function chipOf(s) {
 // live action it runs rides alongside.
 export function btn(spec, action, args, extra) {
 	const s = String(spec);
-	const cls = s[0] === "*" ? "kt-btn kt-btn-primary" : s[0] === "!" ? "kt-btn kt-btn-danger" : "kt-btn kt-btn-secondary";
+	const cls = s[0] === "*" ? "btn btn-primary" : s[0] === "!" ? "btn btn-danger" : "btn btn-secondary";
 	const label = /^[*!]/.test(s) ? s.slice(1) : s;
 	return { label, cls, action: action || "noop", args: args || {}, ...(extra || {}) };
 }

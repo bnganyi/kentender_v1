@@ -11,16 +11,16 @@
      literal §4.4 "one or more" contract a static mockup cannot depict by
      itself — kept, not a fidelity gap. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="dppv-return-dialog">
-		<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="dppv-return-title">
-			<div id="dppv-return-title" class="kt-dialog-title">What needs to change?</div>
+	<div class="dialog-backdrop" data-testid="dppv-return-dialog">
+		<div class="dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="dppv-return-title">
+			<div id="dppv-return-title" class="dialog-title">What needs to change?</div>
 
 			<div v-for="(issue, index) in issues" :key="index" class="pln-issue-row">
 				<div class="pln-field">
 					<label :for="`dppv-issue-context-${index}`">Context</label>
 					<select
 						:id="`dppv-issue-context-${index}`"
-						class="kt-input"
+						class="input"
 						:data-testid="`dppv-issue-context-${index}`"
 						v-model="issue.entry_id"
 					>
@@ -34,7 +34,7 @@
 					<label :for="`dppv-issue-comment-${index}`">Comment</label>
 					<textarea
 						:id="`dppv-issue-comment-${index}`"
-						class="kt-input"
+						class="input"
 						rows="4"
 						:data-testid="`dppv-issue-comment-${index}`"
 						v-model="issue.correction_required"
@@ -42,7 +42,7 @@
 				</div>
 			</div>
 
-			<button type="button" class="kt-btn kt-btn-ghost" data-testid="dppv-issue-add" @click="addIssue">
+			<button type="button" class="btn btn-ghost" data-testid="dppv-issue-add" @click="addIssue">
 				Add another issue
 			</button>
 
@@ -50,13 +50,13 @@
 				{{ error }}
 			</p>
 
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" :disabled="pending" @click="$emit('cancel')">
 					Cancel
 				</button>
 				<button
 					type="button"
-					class="kt-btn kt-btn-primary"
+					class="btn btn-primary"
 					data-testid="dppv-return-confirm"
 					:disabled="pending || !complete"
 					@click="onConfirm"

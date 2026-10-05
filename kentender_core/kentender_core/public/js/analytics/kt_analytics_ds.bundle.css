@@ -174,12 +174,12 @@
 	margin: 0 0 var(--space-3);
 }
 
-.kt-industry.kt-analytics a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) {
+.kt-industry.kt-analytics a:not(.btn):not(.kt-tab):not(.kt-add-child) {
 	color: var(--color-accent-700);
 	text-underline-offset: 3px;
 }
 
-.kt-industry.kt-analytics a:not(.kt-btn):not(.kt-tab):not(.kt-add-child):hover {
+.kt-industry.kt-analytics a:not(.btn):not(.kt-tab):not(.kt-add-child):hover {
 	color: var(--color-accent-900);
 }
 
@@ -372,7 +372,7 @@
 	.kt-industry.kt-analytics .btn {
 		display: none;
 	}
-	.kt-industry.kt-analytics a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) {
+	.kt-industry.kt-analytics a:not(.btn):not(.kt-tab):not(.kt-add-child) {
 		color: #000;
 	}
 	.kt-industry.kt-analytics .table thead th {
@@ -807,11 +807,11 @@
 	--data-family-3: #c2ccfa;
 }
 
-.kt-industry.kt-analytics a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) {
+.kt-industry.kt-analytics a:not(.btn):not(.kt-tab):not(.kt-add-child) {
 	color: var(--color-accent-700);
 }
 
-.kt-industry.kt-analytics a:not(.kt-btn):not(.kt-tab):not(.kt-add-child):hover {
+.kt-industry.kt-analytics a:not(.btn):not(.kt-tab):not(.kt-add-child):hover {
 	color: var(--color-accent-800);
 }
 
@@ -1330,7 +1330,7 @@
 	margin-bottom: 0;
 }
 
-.kt-industry.kt-analytics a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) {
+.kt-industry.kt-analytics a:not(.btn):not(.kt-tab):not(.kt-add-child) {
 	text-decoration: underline;
 }
 

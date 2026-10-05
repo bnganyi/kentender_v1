@@ -104,40 +104,40 @@ onMounted(() => {
 		</div>
 		<div>
 			<div class="kt-filter-bar" :class="{ 'bds-filter-stack': narrow }" role="search" :aria-label="__('Filter Tenders')">
-				<div class="kt-field">
+				<div class="field">
 					<label for="bds-filter-search">{{ __("Search title or reference") }}</label>
-					<input id="bds-filter-search" v-model="filters.search" class="kt-input" type="search" :placeholder="__('Title or reference')" data-testid="bds-filter-search" @input="onSearch" @keydown.enter.prevent="apply">
+					<input id="bds-filter-search" v-model="filters.search" class="input" type="search" :placeholder="__('Title or reference')" data-testid="bds-filter-search" @input="onSearch" @keydown.enter.prevent="apply">
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="bds-filter-method">{{ __("Method") }}</label>
-					<select id="bds-filter-method" v-model="filters.method" class="kt-input" data-testid="bds-filter-method" @change="apply">
+					<select id="bds-filter-method" v-model="filters.method" class="input" data-testid="bds-filter-method" @change="apply">
 						<option v-for="o in options.method" :key="'m' + o.value" :value="o.value">{{ __(o.label) }}</option>
 					</select>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="bds-filter-reservation">{{ __("Reservation") }}</label>
-					<select id="bds-filter-reservation" v-model="filters.reservation" class="kt-input" data-testid="bds-filter-reservation" @change="apply">
+					<select id="bds-filter-reservation" v-model="filters.reservation" class="input" data-testid="bds-filter-reservation" @change="apply">
 						<option v-for="o in options.reservation" :key="'r' + o.value" :value="o.value">{{ __(o.label) }}</option>
 					</select>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="bds-filter-closing">{{ __("Closing") }}</label>
-					<select id="bds-filter-closing" v-model="filters.closing" class="kt-input" data-testid="bds-filter-closing" @change="apply">
+					<select id="bds-filter-closing" v-model="filters.closing" class="input" data-testid="bds-filter-closing" @change="apply">
 						<option v-for="o in options.closing" :key="'c' + o.value" :value="o.value">{{ __(o.label) }}</option>
 					</select>
 				</div>
 				<div>
-					<button type="button" class="kt-btn kt-btn-ghost" :class="{ 'bds-btn-block': narrow }" data-testid="bds-filter-clear" @click="clearFilters">{{ __("Clear filters") }}</button>
+					<button type="button" class="btn btn-ghost" :class="{ 'bds-btn-block': narrow }" data-testid="bds-filter-clear" @click="clearFilters">{{ __("Clear filters") }}</button>
 				</div>
 			</div>
 
 			<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure">
 				<div class="kt-notice-body">{{ failure }}</div>
-				<button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button>
+				<button type="button" class="btn btn-secondary" @click="load">{{ __("Try again") }}</button>
 			</div>
 
 			<template v-if="rows.length">
-				<table v-if="!narrow" class="kt-table" data-testid="bds-tenders-table">
+				<table v-if="!narrow" class="table" data-testid="bds-tenders-table">
 					<thead>
 						<tr>
 							<th>{{ __("Tender") }}</th>
@@ -174,7 +174,7 @@ onMounted(() => {
 			<div v-else-if="data" class="kt-empty" data-testid="bds-tenders-empty">
 				<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
 				<p class="bds-empty-text">{{ data.empty_text || __("No Tenders match these filters.") }}</p>
-				<button type="button" class="kt-btn kt-btn-secondary" :class="{ 'bds-btn-touch': narrow }" @click="clearFilters">{{ __("Clear filters") }}</button>
+				<button type="button" class="btn btn-secondary" :class="{ 'bds-btn-touch': narrow }" @click="clearFilters">{{ __("Clear filters") }}</button>
 			</div>
 			<div v-else-if="!failure" class="bds-skeleton" aria-hidden="true" data-testid="bds-tenders-loading"></div>
 		</div>

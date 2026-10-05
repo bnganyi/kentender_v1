@@ -8,17 +8,17 @@
 
      §12.8 requires focus to be trapped and restored. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="nds-dialog" @mousedown.self="$emit('cancel')">
+	<div class="dialog-backdrop" data-testid="nds-dialog" @mousedown.self="$emit('cancel')">
 		<div
 			ref="dialogEl"
-			class="kt-dialog"
+			class="dialog"
 			role="dialog"
 			aria-modal="true"
 			:aria-labelledby="titleId"
 			@keydown.esc.prevent="$emit('cancel')"
 			@keydown.tab="trapFocus"
 		>
-			<div :id="titleId" class="kt-dialog-title">{{ title }}</div>
+			<div :id="titleId" class="dialog-title">{{ title }}</div>
 			<div class="kt-dialog-body">
 				<!-- NDS-DES-11 / 13 — the requirement name/reference/revision, so the
 				     target is unambiguous before the reason field. `meta` (an ordered
@@ -42,13 +42,13 @@
 				<p v-if="lede" style="margin: 0 0 16px; font-size: 14.5px; color: var(--color-neutral-700)">
 					{{ lede }}
 				</p>
-				<div class="kt-field">
+				<div class="field">
 					<label :for="fieldId">{{ fieldLabel }}</label>
 					<textarea
 						:id="fieldId"
 						ref="reasonEl"
 						data-testid="nds-dialog-reason"
-						class="kt-input"
+						class="input"
 						rows="4"
 						:value="modelValue"
 						@input="$emit('update:modelValue', $event.target.value)"
@@ -59,12 +59,12 @@
 					</div>
 				</div>
 			</div>
-			<div class="kt-dialog-actions">
-				<button class="kt-btn kt-btn-secondary" data-testid="nds-dialog-cancel" :disabled="pending" @click="$emit('cancel')">
+			<div class="dialog-actions">
+				<button class="btn btn-secondary" data-testid="nds-dialog-cancel" :disabled="pending" @click="$emit('cancel')">
 					Cancel
 				</button>
 				<button
-					:class="destructive ? 'kt-btn-destructive' : 'kt-btn kt-btn-primary'"
+					:class="destructive ? 'btn-destructive' : 'btn btn-primary'"
 					data-testid="nds-dialog-confirm"
 					:disabled="pending"
 					@click="$emit('confirm')"

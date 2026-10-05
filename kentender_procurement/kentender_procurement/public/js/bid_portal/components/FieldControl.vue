@@ -126,7 +126,7 @@ function remove(file) {
 </script>
 
 <template>
-	<fieldset v-if="field.kind === 'confirmation'" class="kt-field bds-field-bare" :data-testid="'bds-field-' + field.handle">
+	<fieldset v-if="field.kind === 'confirmation'" class="field bds-field-bare" :data-testid="'bds-field-' + field.handle">
 		<legend class="bds-visually-hidden">{{ field.label }}</legend>
 		<label class="kt-checkbox bds-acknowledge">
 			<input :id="id" type="checkbox" :checked="!!modelValue" :disabled="disabled" :aria-invalid="!!issue" @change="set($event.target.checked)" />
@@ -136,7 +136,7 @@ function remove(file) {
 		<p v-if="issue" class="kt-field-error">{{ issue }}</p>
 	</fieldset>
 
-	<div v-else-if="field.kind === 'evidence'" class="kt-field" :data-testid="'bds-field-' + field.handle">
+	<div v-else-if="field.kind === 'evidence'" class="field" :data-testid="'bds-field-' + field.handle">
 		<label :for="id">{{ field.label }}</label>
 		<input :id="id" ref="picker" class="bds-file-input" type="file" tabindex="-1" accept=".pdf,.png,.jpg,.jpeg" :disabled="disabled || pending" @change="upload" />
 		<div v-for="file in files" :key="file.id" class="bds-file-row" :data-testid="'bds-file-' + file.id">
@@ -152,10 +152,10 @@ function remove(file) {
 			<p v-if="file.source === 'account' && file.copied_on" class="bds-muted" :data-testid="'bds-file-source-' + file.id">{{ __("From your Account · copied on {0}", [file.copied_on]) }}</p>
 		</div>
 		<div v-if="!disabled && addLabel">
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" :data-testid="'bds-upload-' + field.handle" @click="choose()">{{ __(addLabel) }}</button>
+			<button type="button" class="btn btn-secondary" :disabled="pending" :data-testid="'bds-upload-' + field.handle" @click="choose()">{{ __(addLabel) }}</button>
 		</div>
 		<div v-if="canAddSaved">
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" :aria-expanded="showSaved" :data-testid="'bds-saved-' + field.handle" @click="showSaved = !showSaved">{{ __("Add from your Account") }}</button>
+			<button type="button" class="btn btn-secondary" :disabled="pending" :aria-expanded="showSaved" :data-testid="'bds-saved-' + field.handle" @click="showSaved = !showSaved">{{ __("Add from your Account") }}</button>
 		</div>
 		<ul v-if="canAddSaved && showSaved" class="bds-saved-list" :data-testid="'bds-saved-list-' + field.handle">
 			<li v-for="option in saved" :key="option.id" class="bds-saved-option">
@@ -170,7 +170,7 @@ function remove(file) {
 
 	<RowGroupControl v-else-if="field.kind === 'row_group'" :model-value="modelValue" :field="field" :disabled="disabled" :issue="issue" :errors="errors" :id-prefix="idPrefix" @update:model-value="set" />
 
-	<fieldset v-else-if="field.kind === 'yes_no'" class="kt-field bds-choice-field" :data-testid="'bds-field-' + field.handle">
+	<fieldset v-else-if="field.kind === 'yes_no'" class="field bds-choice-field" :data-testid="'bds-field-' + field.handle">
 		<legend>{{ field.label }}</legend>
 		<div class="bds-radio-row">
 			<label v-for="option in field.options" :key="option" class="bds-radio"><input type="radio" :name="id" :value="option" :checked="modelValue === option" :disabled="disabled" @change="set(option)" /> {{ __(option) }}</label>
@@ -179,35 +179,35 @@ function remove(file) {
 		<p v-else-if="field.help" class="bds-help">{{ field.help }}</p>
 	</fieldset>
 
-	<fieldset v-else-if="field.kind === 'multi_select'" class="kt-field bds-choice-field" :data-testid="'bds-field-' + field.handle">
+	<fieldset v-else-if="field.kind === 'multi_select'" class="field bds-choice-field" :data-testid="'bds-field-' + field.handle">
 		<legend>{{ field.label }}</legend>
 		<label v-for="option in field.options" :key="option" class="kt-checkbox"><input type="checkbox" :checked="Array.isArray(modelValue) && modelValue.includes(option)" :disabled="disabled" @change="toggle(option, $event.target.checked)" /><span class="box"></span><span>{{ option }}</span></label>
 		<p v-if="issue" class="kt-field-error">{{ issue }}</p>
 	</fieldset>
 
-	<div v-else-if="field.kind === 'ports'" class="kt-field" :data-testid="'bds-field-' + field.handle">
+	<div v-else-if="field.kind === 'ports'" class="field" :data-testid="'bds-field-' + field.handle">
 		<label :for="id + '-0'">{{ field.label }}</label>
 		<div v-for="(row, index) in ports()" :key="index" class="bds-port-row">
-			<select :id="id + '-' + index" class="kt-input" :value="row.port_type" :disabled="disabled" @change="setPort(index, 'port_type', $event.target.value)">
+			<select :id="id + '-' + index" class="input" :value="row.port_type" :disabled="disabled" @change="setPort(index, 'port_type', $event.target.value)">
 				<option value="" disabled>{{ __("Select") }}</option>
 				<option v-for="option in field.options" :key="option" :value="option">{{ option }}</option>
 			</select>
-			<input class="kt-input" type="number" min="1" :value="row.count ?? ''" :disabled="disabled" :placeholder="__('Number')" :aria-label="__('Number of ports')" @input="setPort(index, 'count', $event.target.value)" />
+			<input class="input" type="number" min="1" :value="row.count ?? ''" :disabled="disabled" :placeholder="__('Number')" :aria-label="__('Number of ports')" @input="setPort(index, 'count', $event.target.value)" />
 		</div>
-		<button v-if="!disabled" type="button" class="kt-btn kt-btn-ghost" @click="addPort">{{ __("Add port type") }}</button>
+		<button v-if="!disabled" type="button" class="btn btn-ghost" @click="addPort">{{ __("Add port type") }}</button>
 		<p v-if="issue" class="kt-field-error">{{ issue }}</p>
 	</div>
 
-	<div v-else class="kt-field" :data-testid="'bds-field-' + field.handle">
+	<div v-else class="field" :data-testid="'bds-field-' + field.handle">
 		<label :for="id">{{ field.label }}</label>
-		<select v-if="field.kind === 'single_choice'" :id="id" class="kt-input" :value="modelValue ?? ''" :disabled="disabled" :aria-invalid="!!issue" @change="set($event.target.value)">
+		<select v-if="field.kind === 'single_choice'" :id="id" class="input" :value="modelValue ?? ''" :disabled="disabled" :aria-invalid="!!issue" @change="set($event.target.value)">
 			<option value="" disabled>{{ __("Select") }}</option>
 			<option v-for="option in field.options" :key="option" :value="option">{{ option }}</option>
 		</select>
-		<textarea v-else-if="field.kind === 'long_text'" :id="id" class="kt-input" rows="3" :value="modelValue ?? ''" :maxlength="limits.max_length || null" :disabled="disabled" :aria-invalid="!!issue" @input="set($event.target.value)"></textarea>
-		<input v-else-if="field.kind === 'date'" :id="id" class="kt-input" type="date" :value="modelValue ?? ''" :min="limits.not_before || null" :max="limits.not_after || null" :disabled="disabled" :aria-invalid="!!issue" @input="set($event.target.value)" />
-		<input v-else-if="['integer', 'decimal', 'money'].includes(field.kind)" :id="id" class="kt-input" inputmode="decimal" :value="modelValue ?? ''" :disabled="disabled" :aria-invalid="!!issue" @input="set($event.target.value)" />
-		<input v-else :id="id" class="kt-input" :value="modelValue ?? ''" :maxlength="limits.max_length || null" :disabled="disabled" :aria-invalid="!!issue" @input="set($event.target.value)" />
+		<textarea v-else-if="field.kind === 'long_text'" :id="id" class="input" rows="3" :value="modelValue ?? ''" :maxlength="limits.max_length || null" :disabled="disabled" :aria-invalid="!!issue" @input="set($event.target.value)"></textarea>
+		<input v-else-if="field.kind === 'date'" :id="id" class="input" type="date" :value="modelValue ?? ''" :min="limits.not_before || null" :max="limits.not_after || null" :disabled="disabled" :aria-invalid="!!issue" @input="set($event.target.value)" />
+		<input v-else-if="['integer', 'decimal', 'money'].includes(field.kind)" :id="id" class="input" inputmode="decimal" :value="modelValue ?? ''" :disabled="disabled" :aria-invalid="!!issue" @input="set($event.target.value)" />
+		<input v-else :id="id" class="input" :value="modelValue ?? ''" :maxlength="limits.max_length || null" :disabled="disabled" :aria-invalid="!!issue" @input="set($event.target.value)" />
 		<p v-if="issue" class="kt-field-error">{{ issue }}</p>
 		<p v-else-if="field.supplied_from" class="bds-help">{{ __("From your Account; change it there.") }}</p>
 		<p v-else-if="field.help" class="bds-help">{{ field.help }}</p>

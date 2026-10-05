@@ -29,7 +29,7 @@
 			</template>
 
 			<template v-else-if="kind === 'record'">
-				<div v-if="loading" class="tnd-page"><div class="kt-card kt-blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div><div class="kt-skel" style="width: 52%"></div><div class="kt-skel" style="width: 44%"></div></div></div></div>
+				<div v-if="loading" class="tnd-page"><div class="card blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div><div class="kt-skel" style="width: 52%"></div><div class="kt-skel" style="width: 44%"></div></div></div></div>
 				<EditorScreen v-else-if="screen === 'details' || screen === 'requirements'" ref="editorRef" :record="record" :task="screen" :field-errors="fieldErrors" :error="error" :pending="pending" @open-drawer="drawer = 'context'" @add-evidence="evidenceDialog = { row: null }" @edit-evidence="evidenceDialog = { row: $event }" @remove-evidence="removeEvidenceDialog = $event" @save="onSaveDraft(false)" @continue="onSaveDraft(true)" @back="onEditorBack" @request-correction="correctionDialog = true" @fix="onFix" />
 				<ReviewScreen v-else-if="screen === 'review'" :record="record" :review="review" :pending="pending" @back="goTask('requirements')" @submit="submitDialog = true" @preview="onPreview" @go-finding="onGoFinding" @fix="onFix" />
 				<ApprovalScreen v-else-if="screen === 'approval'" :record="record" :review="review" :pending="pending" @back="go()" @return="returnDialog = true" @approve="approveDialog = true" @preview="onPreview" @request-correction="correctionDialog = true" />
@@ -41,23 +41,23 @@
 			</template>
 
 			<template v-else-if="kind === 'addendum'">
-				<div v-if="loading" class="tnd-page"><div class="kt-card kt-blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div><div class="kt-skel" style="width: 52%"></div></div></div></div>
+				<div v-if="loading" class="tnd-page"><div class="card blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div><div class="kt-skel" style="width: 52%"></div></div></div></div>
 				<AddendumScreen v-else :data="addendumData" :identity="addendumIdentity" :errors="fieldErrors" :pending="pending" @back="go(tenderRef)" @save="onSaveAddendum($event, false)" @submit="onSaveAddendum($event, true)" @return="addendumReturnDialog = true" @issue="issueDialog = true" @confirm-channel="channelDialog = { row: $event, subject: 'addendum' }" @view-confirmation="confirmationView = $event" @cancel-screen="go(tenderRef, 'cancel')" @fix="onFix" />
 				<div v-if="error && !loading" class="tnd-page" style="padding-top: 12px"><div class="kt-notice is-critical" role="alert" data-testid="tnd-command-error"><div class="kt-notice-body">{{ error }}</div></div></div>
 			</template>
 
 			<template v-else-if="kind === 'clarification'">
-				<div v-if="loading" class="tnd-page"><div class="kt-card kt-blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div></div></div></div>
+				<div v-if="loading" class="tnd-page"><div class="card blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div></div></div></div>
 				<ClarificationScreen v-else ref="clarificationRef" :data="clarificationData" :errors="fieldErrors" :pending="pending" :error="error" @back="go(tenderRef)" @send="onSendResponse" @fix="onFix" />
 			</template>
 
 			<template v-else-if="kind === 'cancel'">
-				<div v-if="loading" class="tnd-page"><div class="kt-card kt-blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div></div></div></div>
+				<div v-if="loading" class="tnd-page"><div class="card blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div></div></div></div>
 				<CancelScreen v-else :data="cancelData" :pending="pending" :error="error" :focus-decision="cancelFocus" @back="go(tenderRef)" @recommend="recommendDialog = $event" @cancel="cancelDialog = $event" @record-evidence="obligationDialog = { row: $event }" @close-review="reviewCloseDialog = { addendum: $event }" @fix="onFix" />
 			</template>
 
 			<template v-else-if="kind === 'history'">
-				<div v-if="loading" class="tnd-page"><div class="kt-card kt-blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div></div></div></div>
+				<div v-if="loading" class="tnd-page"><div class="card blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div></div></div></div>
 				<HistoryScreen v-else :data="historyData" @back="go(tenderRef)" @view-digest="onViewDigest" />
 			</template>
 

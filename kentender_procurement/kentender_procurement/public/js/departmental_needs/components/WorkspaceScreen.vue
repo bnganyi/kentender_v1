@@ -32,7 +32,7 @@
 				<p style="margin: 0; font-size: 14.5px; color: var(--kt-color-neutral-700)">
 					Try again. If the problem continues, contact support.
 				</p>
-				<button class="kt-btn kt-btn-secondary" @click="$emit('reload')">Try again</button>
+				<button class="btn btn-secondary" @click="$emit('reload')">Try again</button>
 			</div>
 		</div>
 
@@ -83,7 +83,7 @@
 					</div>
 				</div>
 				<div v-if="canCreate" class="kt-page-actions">
-					<button class="kt-btn kt-btn-primary" data-testid="nds-create-need" @click="$emit('create')">
+					<button class="btn btn-primary" data-testid="nds-create-need" @click="$emit('create')">
 						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14" /></svg>Create need
 					</button>
 				</div>
@@ -152,7 +152,7 @@
 					<button
 						v-if="row.actions[0]"
 						type="button"
-						class="kt-btn kt-btn-primary"
+						class="btn btn-primary"
 						data-testid="nds-continue-action"
 						:data-action="row.actions[0].code"
 						@click="$emit('action', row, row.actions[0])"
@@ -190,7 +190,7 @@
 					</div>
 					<button
 						type="button"
-						class="kt-btn kt-btn-primary"
+						class="btn btn-primary"
 						data-testid="nds-row-action"
 						:data-action="row.actions[0].code"
 						@click="$emit('action', row, row.actions[0])"
@@ -216,7 +216,7 @@
 							><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg
 							><input
 								id="nds-workspace-search"
-								class="kt-input"
+								class="input"
 								placeholder="Search title or reference"
 								data-testid="nds-search"
 								:value="search"
@@ -235,7 +235,7 @@
 						<label for="nds-workspace-status">Status</label>
 						<select
 							id="nds-workspace-status"
-							class="kt-input"
+							class="input"
 							data-testid="nds-status-filter"
 							:value="status"
 							@change="$emit('update:status', $event.target.value)"
@@ -248,7 +248,7 @@
 						<label for="nds-workspace-fy">Financial year</label>
 						<select
 							id="nds-workspace-fy"
-							class="kt-input"
+							class="input"
 							data-testid="nds-fy-filter"
 							:value="selectedFinancialYear || context.financial_year || ''"
 							@change="$emit('select-financial-year', $event.target.value)"
@@ -267,7 +267,7 @@
 						     back to every authorised department combined. -->
 						<select
 							id="nds-workspace-department"
-							class="kt-input"
+							class="input"
 							data-testid="nds-department-filter"
 							:value="context.organisation_unit || ''"
 							@change="$emit('select-context', $event.target.value)"
@@ -282,7 +282,7 @@
 							</option>
 						</select>
 					</div>
-					<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('clear-filters')">
+					<button type="button" class="btn btn-secondary" @click="$emit('clear-filters')">
 						Clear filters
 					</button>
 				</div>

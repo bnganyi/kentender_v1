@@ -83,43 +83,43 @@ async function makeAvailable() {
 	<div style="margin:36px 48px 0;flex:1">
 		<KtErrorBanner :message="bannerError" @dismiss="bannerError = ''" style="max-width:920px;margin-bottom:24px" />
 
-		<div class="kt-card kt-blueprint" style="max-width:920px">
+		<div class="card blueprint" style="max-width:920px">
 			<h2 class="kt-card-title">{{ __("Financial year") }}</h2>
 			<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 28px">
-				<div class="kt-field">
+				<div class="field">
 					<label>{{ __("Start year") }}</label>
 					<input
-						class="kt-input"
+						class="input"
 						type="number"
 						v-model="form.startYear"
 						:style="fieldErrors.startYear ? 'border-color:#b0143a' : ''"
 					/>
 					<div v-if="fieldErrors.startYear" style="color:#b0143a;font-size:12px;margin-top:4px">{{ fieldErrors.startYear }}</div>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label>{{ __("Financial year") }}</label>
 					<div class="kt-ro">{{ preview?.label || "—" }}</div>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label>{{ __("Start date") }}</label>
 					<div class="kt-ro">{{ preview?.startDate || "—" }}</div>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label>{{ __("End date") }}</label>
 					<div class="kt-ro">{{ preview?.endDate || "—" }}</div>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label>{{ __("Timezone") }}</label>
 					<div class="kt-ro">Africa/Nairobi</div>
 				</div>
 			</div>
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+			<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
 		</div>
 	</div>
 
 	<div style="border-top:1px solid var(--kt-color-divider);padding:20px 48px;display:flex;justify-content:flex-end;gap:14px">
-		<button type="button" class="kt-btn kt-btn-ghost" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
-		<button type="button" class="kt-btn kt-btn-secondary" :disabled="!canSave || busy" @click="saveDraft">{{ __("Save draft") }}</button>
-		<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave || busy" @click="makeAvailable">{{ __("Make available") }}</button>
+		<button type="button" class="btn btn-ghost" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
+		<button type="button" class="btn btn-secondary" :disabled="!canSave || busy" @click="saveDraft">{{ __("Save draft") }}</button>
+		<button type="button" class="btn btn-primary" :disabled="!canSave || busy" @click="makeAvailable">{{ __("Make available") }}</button>
 	</div>
 </template>

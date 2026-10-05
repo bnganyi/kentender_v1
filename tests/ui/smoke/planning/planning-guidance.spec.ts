@@ -111,7 +111,7 @@ test.describe("Over budget: the Planner asks, the Budget Officer decides", () =>
 		await expectReady(page, "plan");
 		await expect(block).toContainText("Over budget by KES 2,000,000");
 		await expect(block).toContainText("No further allocation is available on this line this year.");
-		await expect(block.getByRole("button", { name: /^Request departmental plan update from / })).toHaveClass(/kt-btn-primary/);
+		await expect(block.getByRole("button", { name: /^Request departmental plan update from / })).toHaveClass(/btn-primary/);
 		await expect(block.getByRole("button", { name: /^Request budget revision/ })).toHaveCount(0);
 		rows = await myWork(page, "assigned");
 		await expect(rows.filter({ hasText: "Continue plan update" }).filter({ hasText: state.plan_reference })).toHaveCount(1);

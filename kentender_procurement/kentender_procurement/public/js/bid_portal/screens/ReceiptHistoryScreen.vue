@@ -63,11 +63,11 @@ onMounted(() => {
 		</div>
 		<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure">
 			<div class="kt-notice-body">{{ failure }}</div>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button>
+			<button type="button" class="btn btn-secondary" @click="load">{{ __("Try again") }}</button>
 		</div>
 
 		<template v-if="rows.length">
-			<table v-if="!narrow" class="kt-table" data-testid="bds-receipts-table">
+			<table v-if="!narrow" class="table" data-testid="bds-receipts-table">
 				<thead>
 					<tr>
 						<th>{{ __("Tender") }}</th>
@@ -100,7 +100,7 @@ onMounted(() => {
 		</template>
 		<div v-else-if="data" class="kt-empty" data-testid="bds-receipts-empty">
 			<p class="bds-empty-text">{{ data.empty_text }}</p>
-			<a href="/account" class="kt-btn kt-btn-secondary" :class="{ 'bds-btn-touch': narrow }">{{ __("Back to Account") }}</a>
+			<a href="/account" class="btn btn-secondary" :class="{ 'bds-btn-touch': narrow }">{{ __("Back to Account") }}</a>
 		</div>
 		<div v-else-if="!failure" class="bds-skeleton" aria-hidden="true" data-testid="bds-receipts-loading"></div>
 	</div>

@@ -19,7 +19,7 @@ test.describe("BOP-DES-01 Prepare opening", () => {
 		await expectNextStep(page, "your_turn", "Appoint opening committee");
 		await expect(page.locator('[data-testid="bop-title"]')).toHaveText("Supply and delivery of business laptops");
 		await expect(page.locator('[data-testid="bop-committee-draft"] thead th')).toHaveText(["Member", "Designation", "Role on committee", "Eligibility"]);
-		await expect(page.locator('[data-testid="bop-history"] .kt-tag')).toHaveText("No appointments yet");
+		await expect(page.locator('[data-testid="bop-history"] .tag')).toHaveText("No appointments yet");
 
 		const add = async (user: string, role: string) => {
 			await page.locator('[data-testid="bop-add-member"]').click();
@@ -52,7 +52,7 @@ test.describe("BOP-DES-01 Prepare opening", () => {
 		await expectScreen(page, "prepare");
 		await expectNextStep(page, "your_turn", "Publish how to attend");
 		await expect(page.locator('[data-testid="bop-committee"] tbody tr td:last-child')).toHaveText(["Sent", "Sent", "Sent"]);
-		await expect(page.locator('[data-testid="bop-history"] .kt-tag')).toContainText("Appointed");
+		await expect(page.locator('[data-testid="bop-history"] .tag')).toContainText("Appointed");
 
 		// a4 → a5
 		await page.locator('[data-testid="bop-open-arrangements"]').click();

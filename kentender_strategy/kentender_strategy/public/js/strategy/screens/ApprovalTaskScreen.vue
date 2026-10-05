@@ -128,7 +128,7 @@ const previousByTargetId = computed(() => {
 	}
 	return out;
 });
-const tagClass = (c) => (c.kind === "date" ? "kt-tag kt-tag-accent-2" : "kt-tag kt-tag-accent");
+const tagClass = (c) => (c.kind === "date" ? "tag tag-accent-2" : "tag tag-accent");
 
 function selectNode(node) {
 	selectedNode.value = node;
@@ -190,7 +190,7 @@ async function submitApprove() {
 		:data-refreshing="refreshing ? 'true' : 'false'"
 		style="padding-bottom: 120px"
 	>
-		<div v-if="loading" class="kt-card kt-blueprint" data-testid="str-loading">
+		<div v-if="loading" class="card blueprint" data-testid="str-loading">
 			<p class="kt-muted" style="margin: 0 0 8px; font-size: 12px">{{ __("Loading strategic plans…") }}</p>
 			<div v-for="i in 5" :key="i" class="kt-skel" style="height: 16px; margin-bottom: 10px"></div>
 		</div>
@@ -210,7 +210,7 @@ async function submitApprove() {
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 				<div class="kt-notice-body"><strong>{{ __("Strategy information could not be loaded.") }}</strong> {{ __("Try again. If the problem continues, contact KenTender support.") }}</div>
 			</div>
-			<div style="margin-top: 10px"><button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button></div>
+			<div style="margin-top: 10px"><button type="button" class="btn btn-secondary" @click="load">{{ __("Try again") }}</button></div>
 		</div>
 		<template v-else-if="overview">
 			<!-- The title, the notices, the tabs and every tab's content now sit
@@ -218,7 +218,7 @@ async function submitApprove() {
 			     instead of a gap between separate boxes — matching the current
 			     design. The decision bar at the very bottom stays a separate,
 			     sticky strip, as it always has. -->
-			<div class="kt-card kt-blueprint" style="padding: 0">
+			<div class="card blueprint" style="padding: 0">
 				<div style="padding: 20.4px 20.4px 0">
 					<header style="margin-bottom: 20.4px">
 						<div class="kt-eyebrow" style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.1em; color: var(--kt-color-accent); margin-bottom: 6px" data-testid="str-approval-eyebrow">
@@ -276,7 +276,7 @@ async function submitApprove() {
 					<div v-if="comparison" style="padding: 20.4px" data-testid="str-what-changed">
 						<div class="kt-card-title">{{ __("What changed") }}</div>
 						<template v-if="comparison.available">
-							<table v-if="comparison.changes.length" class="kt-table">
+							<table v-if="comparison.changes.length" class="table">
 								<thead><tr><th>{{ __("Item") }}</th><th>{{ __("Previous accepted baseline") }} &middot; V{{ comparison.base_version_number }}</th><th>{{ __("Proposed") }} &middot; V{{ overview.version.version_number }}</th></tr></thead>
 								<tbody>
 									<tr v-for="(c, i) in comparison.changes" :key="i" data-testid="str-changes-row" :data-kind="c.kind">
@@ -292,7 +292,7 @@ async function submitApprove() {
 						</template>
 						<template v-else>
 							<p class="kt-field-error" style="font-size: 14px; margin: 0" data-testid="str-comparison-failed">{{ __("The changes could not be loaded. Try again.") }}</p>
-							<div><button type="button" class="kt-btn kt-btn-secondary" @click="load({ quiet: true })">{{ __("Try again") }}</button></div>
+							<div><button type="button" class="btn btn-secondary" @click="load({ quiet: true })">{{ __("Try again") }}</button></div>
 						</template>
 					</div>
 
@@ -365,11 +365,11 @@ async function submitApprove() {
 						<template v-else-if="!comparison.available">
 							<div class="kt-card-title">{{ __("Changes") }}</div>
 							<p class="kt-field-error" style="font-size: 14px; margin: 0" data-testid="str-comparison-failed">{{ __("The changes could not be loaded. Try again.") }}</p>
-							<div><button type="button" class="kt-btn kt-btn-secondary" @click="load({ quiet: true })">{{ __("Try again") }}</button></div>
+							<div><button type="button" class="btn btn-secondary" @click="load({ quiet: true })">{{ __("Try again") }}</button></div>
 						</template>
 						<template v-else>
 							<div class="kt-card-title">{{ comparison.heading }}</div>
-							<table v-if="comparison.changes.length" class="kt-table">
+							<table v-if="comparison.changes.length" class="table">
 								<thead><tr><th>{{ __("Item") }}</th><th>{{ __("Previous accepted baseline") }} &middot; V{{ comparison.base_version_number }}</th><th>{{ __("Proposed") }} &middot; V{{ overview.version.version_number }}</th></tr></thead>
 								<tbody>
 									<tr v-for="(c, i) in comparison.changes" :key="i" data-testid="str-changes-row" :data-kind="c.kind">
@@ -398,13 +398,13 @@ async function submitApprove() {
 		<div v-if="showFooter" class="kt-sticky-footer" style="align-items: center; gap: 13.6px" data-testid="str-decision-footer">
 			<div style="font-size: 12px; color: var(--kt-color-neutral-700); max-width: 480px; text-align: right" data-testid="str-decision-consequence">{{ decision.consequence }}</div>
 			<div style="display: flex; gap: 10.2px; flex: none">
-				<button v-if="decision.can_return" type="button" class="kt-btn kt-btn-secondary kt-danger" :disabled="acting" data-testid="str-return" @click="showReturnDialog = true">
+				<button v-if="decision.can_return" type="button" class="btn btn-secondary kt-danger" :disabled="acting" data-testid="str-return" @click="showReturnDialog = true">
 					{{ decision.return_label }}
 				</button>
 				<button
 					v-if="decision.can_approve || blockers.blocked"
 					type="button"
-					class="kt-btn kt-btn-primary"
+					class="btn btn-primary"
 					:disabled="acting || !decision.can_approve"
 					:data-blocked="blockers.blocked ? 'true' : 'false'"
 					data-testid="str-approve"

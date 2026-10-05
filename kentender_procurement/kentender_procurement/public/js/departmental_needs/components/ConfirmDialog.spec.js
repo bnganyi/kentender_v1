@@ -25,7 +25,7 @@ describe("ConfirmDialog", () => {
 				destructive: true,
 			},
 		});
-		expect(wrapper.get(".kt-dialog-title").text()).toBe("Withdraw this need?");
+		expect(wrapper.get(".dialog-title").text()).toBe("Withdraw this need?");
 		expect(wrapper.get(".kt-dialog-body > p").text()).toBe("Clinical training laptops for digital health rollout");
 		const rows = wrapper.findAll(".kt-meta-row > div");
 		expect(rows).toHaveLength(2);
@@ -37,7 +37,7 @@ describe("ConfirmDialog", () => {
 			"This withdraws the unaccepted requirement. Earlier submissions and decisions remain in history."
 		);
 		expect(wrapper.get('[data-testid="nds-dialog-confirm"]').text()).toContain("Withdraw need");
-		expect(wrapper.get('[data-testid="nds-dialog-confirm"]').classes()).toContain("kt-btn-destructive");
+		expect(wrapper.get('[data-testid="nds-dialog-confirm"]').classes()).toContain("btn-destructive");
 	});
 
 	it("renders NDS-DES-13-CANCEL-UPDATE's 'Proposed revision' meta label", () => {
@@ -73,7 +73,7 @@ describe("ConfirmDialog", () => {
 		});
 		const rows = wrapper.findAll(".kt-meta-row > div");
 		expect(rows[1].get(".kt-label").text()).toBe("Accepted revision");
-		expect(wrapper.get('[data-testid="nds-dialog-confirm"]').classes()).not.toContain("kt-btn-destructive");
+		expect(wrapper.get('[data-testid="nds-dialog-confirm"]').classes()).not.toContain("btn-destructive");
 	});
 
 	it("renders no meta row when none is given (e.g. the NDS-DES-06/09 Accept confirmation)", () => {

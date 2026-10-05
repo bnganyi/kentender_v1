@@ -104,13 +104,13 @@ onMounted(() => {
 		<CommonState v-if="problem" inline :state="problem.key" :figures="problem.figures" :action-href="problem.href" @action="problem = null; load()" />
 
 		<div v-if="data.decision && !problem" :class="narrow ? 'bds-footer-stack' : 'bds-footer'">
-			<a :href="data.decision.cancel_href" class="kt-btn kt-btn-secondary" :class="{ 'bds-btn-block': narrow }">{{ __("Cancel") }}</a>
+			<a :href="data.decision.cancel_href" class="btn btn-secondary" :class="{ 'bds-btn-block': narrow }">{{ __("Cancel") }}</a>
 			<div :class="narrow ? '' : 'bds-footer-end'">
-				<button type="button" class="kt-btn kt-btn-primary" :class="{ 'bds-btn-block': narrow }" :disabled="pending" data-testid="bds-replacement-create" @click="create">{{ pending ? __("Creating…") : __(data.decision.create_label) }}</button>
+				<button type="button" class="btn btn-primary" :class="{ 'bds-btn-block': narrow }" :disabled="pending" data-testid="bds-replacement-create" @click="create">{{ pending ? __("Creating…") : __(data.decision.create_label) }}</button>
 			</div>
 		</div>
 		<div v-else-if="data.continue" :class="narrow ? 'bds-footer-stack' : 'bds-footer'">
-			<a :href="data.continue.href" class="kt-btn kt-btn-primary" :class="{ 'bds-btn-block': narrow }" data-testid="bds-replacement-continue">{{ __(data.continue.label) }}</a>
+			<a :href="data.continue.href" class="btn btn-primary" :class="{ 'bds-btn-block': narrow }" data-testid="bds-replacement-continue">{{ __(data.continue.label) }}</a>
 		</div>
 	</div>
 	<CommonState v-else-if="failure" state="load-failure" @action="load" />

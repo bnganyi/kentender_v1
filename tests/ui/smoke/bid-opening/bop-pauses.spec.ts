@@ -77,6 +77,6 @@ test.describe("BOP-DES-02 Open bids — pauses and cancellation", () => {
 		await expectScreen(page, "open-bids");
 		await expect(page.locator('[data-testid="bop-desc"] .kt-status')).toHaveText("Ended — Tender cancelled");
 		await expect(page.locator('[data-testid="bop-cancelled"]')).toContainText("There is no opening record to sign");
-		await expect(page.locator("button.kt-btn-primary")).toHaveCount(0);
+		await expect(page.locator("button.btn-primary")).toHaveCount(0);
 	});
 });

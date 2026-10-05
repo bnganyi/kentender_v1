@@ -19,7 +19,7 @@
 		>
 			<div v-if="refreshFailed && !loading && !error" class="req-refresh-failed" data-testid="req-refresh-failed">
 				<Notice tone="warning">The latest state could not be loaded. What is shown may be out of date.</Notice>
-				<button type="button" class="kt-btn kt-btn-secondary" @click="load({ quiet: true })">Try again</button>
+				<button type="button" class="btn btn-secondary" @click="load({ quiet: true })">Try again</button>
 			</div>
 			<CommonState v-if="loading" kind="loading" />
 			<CommonState v-else-if="error" kind="error" @retry="load()" />

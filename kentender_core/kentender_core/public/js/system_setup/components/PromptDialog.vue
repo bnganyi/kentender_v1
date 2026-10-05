@@ -30,27 +30,27 @@ onMounted(async () => {
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop">
+	<div class="dialog-backdrop">
 		<div
-			class="kt-dialog kt-narrow"
+			class="dialog kt-narrow"
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="kt-prompt-title"
 			data-testid="kt-ou-prompt"
 			@keydown.esc.stop="emit('cancel')"
 		>
-			<h2 id="kt-prompt-title" class="kt-dialog-title">{{ title }}</h2>
+			<h2 id="kt-prompt-title" class="dialog-title">{{ title }}</h2>
 			<div class="dialog-body" style="display:flex;flex-direction:column;gap:14px">
-				<div v-for="(row, index) in context" :key="row.label" class="kt-field">
+				<div v-for="(row, index) in context" :key="row.label" class="field">
 					<label :for="'kt-prompt-context-' + index">{{ row.label }}</label>
-					<input :id="'kt-prompt-context-' + index" class="kt-input" type="text" readonly :value="row.value" style="background:var(--kt-color-surface-2)">
+					<input :id="'kt-prompt-context-' + index" class="input" type="text" readonly :value="row.value" style="background:var(--kt-color-surface-2)">
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-prompt-input">{{ label }}</label>
 					<input
 						id="kt-prompt-input"
 						ref="field"
-						class="kt-input"
+						class="input"
 						type="text"
 						:value="modelValue"
 						:aria-invalid="error ? 'true' : 'false'"
@@ -65,11 +65,11 @@ onMounted(async () => {
 					<div class="kt-notice-body">{{ error }}</div>
 				</div>
 			</div>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
 				<button
 					type="button"
-					class="kt-btn kt-btn-primary"
+					class="btn btn-primary"
 					:disabled="busy || !modelValue.trim()"
 					data-testid="kt-ou-prompt-confirm"
 					@click="emit('confirm')"

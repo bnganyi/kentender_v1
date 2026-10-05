@@ -64,27 +64,27 @@
 				<!-- The artboard's own form column: one field per line, a real
 				     gap between them and a reading width. -->
 				<div class="pln-form-column">
-					<div class="kt-field" :class="flagged('title')">
+					<div class="field" :class="flagged('title')">
 						<label for="ppi-title-input" class="kt-label">Title</label>
-						<input id="ppi-title-input" class="kt-input" data-testid="ppi-title-input" :value="draft.title" :disabled="!item.mutable" @input="onField('title', $event.target.value)">
+						<input id="ppi-title-input" class="input" data-testid="ppi-title-input" :value="draft.title" :disabled="!item.mutable" @input="onField('title', $event.target.value)">
 					</div>
-					<div class="kt-field" :class="flagged('description')">
+					<div class="field" :class="flagged('description')">
 						<label for="ppi-description" class="kt-label">Description</label>
-						<textarea id="ppi-description" class="kt-input" rows="3" data-testid="ppi-description" :value="draft.description" :disabled="!item.mutable" @input="onField('description', $event.target.value)"></textarea>
+						<textarea id="ppi-description" class="input" rows="3" data-testid="ppi-description" :value="draft.description" :disabled="!item.mutable" @input="onField('description', $event.target.value)"></textarea>
 					</div>
 				</div>
 				<div class="kt-group pln-summary-line">
 					<!-- Derived from the included requirements; not editable here, and
 					     Plan horizon is a fixed literal so it is not shown at all. -->
 					<span class="kt-muted" data-testid="ppi-summary-line">{{ item.summary_line }}</span>
-					<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppi-view-classification" @click.prevent="$emit('view-classification')">View classification details</a>
+					<a href="#" class="btn btn-ghost" data-testid="ppi-view-classification" @click.prevent="$emit('view-classification')">View classification details</a>
 				</div>
 			</div>
 
 			<!-- 2. Included requirements -->
 			<div class="kt-region">
 				<h2>Included requirements</h2>
-				<table class="kt-table" data-testid="ppi-sources">
+				<table class="table" data-testid="ppi-sources">
 					<thead>
 						<tr>
 							<th>Requirement</th><th>Department</th><th class="is-num">Quantity</th>
@@ -107,7 +107,7 @@
 				</table>
 				<div v-if="item.combined" class="kt-group pln-summary-line" data-testid="ppi-combined">
 					<span>
-						<span class="kt-tag kt-tag-neutral">Combined purchase</span>
+						<span class="tag tag-neutral">Combined purchase</span>
 						<span class="kt-muted">{{ item.aggregation_reason_preview }}</span>
 					</span>
 					<a href="#" data-testid="ppi-read-reason" @click.prevent="fullReason = !fullReason">Read full reason</a>
@@ -130,11 +130,11 @@
 					<span class="kt-meta-value" data-testid="ppi-planned-value">{{ item.planned_value_display }}</span>
 				</div>
 				<div class="pln-form-column pln-region-gap">
-					<div v-if="item.mutable" class="kt-field" :class="flagged('estimate_basis')">
+					<div v-if="item.mutable" class="field" :class="flagged('estimate_basis')">
 						<label for="ppi-estimate-basis" class="kt-label">Estimate basis</label>
 						<textarea
 							id="ppi-estimate-basis"
-							class="kt-input"
+							class="input"
 							rows="2"
 							data-testid="ppi-estimate-basis"
 							:value="draft.estimate_basis"
@@ -152,11 +152,11 @@
 					     reference, not an attached file (the spec's own words); the
 					     placeholder carries that distinction instead of a permanent
 					     hint line, since nothing else on this form gets one by default. -->
-					<div v-if="item.mutable" class="kt-field pln-field-320" :class="flagged('estimate_basis_reference')">
+					<div v-if="item.mutable" class="field pln-field-320" :class="flagged('estimate_basis_reference')">
 						<label for="ppi-basis-reference" class="kt-label">Supporting document reference</label>
 						<input
 							id="ppi-basis-reference"
-							class="kt-input"
+							class="input"
 							data-testid="ppi-basis-reference"
 							placeholder="A market-survey document or working-paper reference — not a file upload"
 							:value="draft.estimate_basis_reference"
@@ -188,9 +188,9 @@
 				     the condition inputs and the designation at different
 				     heights. -->
 				<div class="pln-field-grid">
-					<div class="kt-field" :class="flagged('procurement_method')">
+					<div class="field" :class="flagged('procurement_method')">
 						<label for="ppi-method" class="kt-label">Procurement method</label>
-						<select id="ppi-method" class="kt-input" data-testid="ppi-method" :value="draft.procurement_method" :disabled="!item.mutable" @change="onField('procurement_method', $event.target.value)">
+						<select id="ppi-method" class="input" data-testid="ppi-method" :value="draft.procurement_method" :disabled="!item.mutable" @change="onField('procurement_method', $event.target.value)">
 							<option value="">Select a procurement method</option>
 							<option v-for="method in classification.admissible_methods || []" :key="method" :value="method">{{ method }}</option>
 						</select>
@@ -204,9 +204,9 @@
 					</div>
 					<!-- Shown only when the Planner must choose one or one is set;
 					     "None" is never displayed to prove the field exists. -->
-					<div v-if="showReservation" class="kt-field" :class="flagged('reservation_category')">
+					<div v-if="showReservation" class="field" :class="flagged('reservation_category')">
 						<label for="ppi-reservation" class="kt-label">Planned designation</label>
-						<select id="ppi-reservation" class="kt-input" data-testid="ppi-reservation" :value="draft.reservation_category" :disabled="!item.mutable" @change="onField('reservation_category', $event.target.value)">
+						<select id="ppi-reservation" class="input" data-testid="ppi-reservation" :value="draft.reservation_category" :disabled="!item.mutable" @change="onField('reservation_category', $event.target.value)">
 							<option value="">Select a designation</option>
 							<option v-for="option in preference.reservation_categories || []" :key="option" :value="option">{{ option }}</option>
 						</select>
@@ -226,7 +226,7 @@
 					<div
 						v-for="condition in declarableConditions"
 						:key="condition.condition_id"
-						class="kt-field pln-condition"
+						class="field pln-condition"
 						:data-testid="`ppi-condition-${condition.condition_id}`"
 					>
 						<label :for="`ppi-evidence-${condition.condition_id}`" class="kt-label">
@@ -234,7 +234,7 @@
 						</label>
 						<input
 							:id="`ppi-evidence-${condition.condition_id}`"
-							class="kt-input"
+							class="input"
 							:data-testid="`ppi-evidence-${condition.condition_id}`"
 							:value="conditionEvidence[condition.condition_id]?.evidence_reference || ''"
 							:disabled="!item.mutable"
@@ -247,7 +247,7 @@
 							</label>
 							<input
 								:id="`ppi-authorisation-${condition.condition_id}`"
-								class="kt-input"
+								class="input"
 								:data-testid="`ppi-authorisation-${condition.condition_id}`"
 								:value="conditionEvidence[condition.condition_id]?.authorisation_reference || ''"
 								:disabled="!item.mutable"
@@ -260,7 +260,7 @@
 					</div>
 					<!-- Only for an applicable county entity, and only when it changes
 					     the item decision. -->
-					<div v-if="preference.county_control_available" class="kt-field">
+					<div v-if="preference.county_control_available" class="field">
 						<label class="kt-label">County requirement</label>
 						<label class="kt-checkbox">
 							<input type="checkbox" data-testid="ppi-county" :checked="draft.county_resident_reservation" :disabled="!item.mutable" @change="onField('county_resident_reservation', $event.target.checked)">
@@ -269,15 +269,15 @@
 					</div>
 					<!-- Only when the Planner chooses multiple lots or must resolve a
 					     lotting issue; Single lot and Lot count 1 are omitted. -->
-					<div v-if="showLotting" class="kt-field" :class="flagged('lot_count')">
+					<div v-if="showLotting" class="field" :class="flagged('lot_count')">
 						<label for="ppi-lots" class="kt-label">Lots</label>
-						<input id="ppi-lots" class="kt-input" type="number" min="2" data-testid="ppi-lot-count" :value="draft.lot_count" :disabled="!item.mutable" @input="onField('lot_count', $event.target.value)">
+						<input id="ppi-lots" class="input" type="number" min="2" data-testid="ppi-lot-count" :value="draft.lot_count" :disabled="!item.mutable" @input="onField('lot_count', $event.target.value)">
 					</div>
 				</div>
 				<button
 					v-if="!showReservation && item.mutable"
 					type="button"
-					class="kt-btn kt-btn-ghost"
+					class="btn btn-ghost"
 					data-testid="ppi-add-reservation"
 					@click="forceReservation = true"
 				>
@@ -297,7 +297,7 @@
 						<div class="kt-notice-body">{{ boundaryText }}</div>
 						<button
 							type="button"
-							class="kt-btn kt-btn-secondary"
+							class="btn btn-secondary"
 							style="margin-top: var(--kt-space-3)"
 							data-testid="ppi-review-dates"
 							@click="scrollToDates"
@@ -313,17 +313,17 @@
 				     top-aligned, rather than a flex row that bottom-aligned a
 				     hint-bearing input against a bare figure. -->
 				<div class="pln-field-grid pln-dates-grid">
-					<div class="kt-field" :class="flagged('baseline_invitation_date')">
+					<div class="field" :class="flagged('baseline_invitation_date')">
 						<label for="ppi-invitation" class="kt-label">Target invitation date</label>
-						<input id="ppi-invitation" class="kt-input" type="date" data-testid="ppi-invitation" :value="draft.baseline_invitation_date" :disabled="!item.mutable" @input="onField('baseline_invitation_date', $event.target.value)">
+						<input id="ppi-invitation" class="input" type="date" data-testid="ppi-invitation" :value="draft.baseline_invitation_date" :disabled="!item.mutable" @input="onField('baseline_invitation_date', $event.target.value)">
 					</div>
 					<!-- The board's own label text is the landmark the fidelity gate
 					     checks; the unit still needs saying for a bare number input,
 					     so it stays a hint (unlike Estimate basis's removed one,
 					     this one disambiguates the value itself, not instructs). -->
-					<div class="kt-field" :class="flagged('estimated_delivery_period_days')">
+					<div class="field" :class="flagged('estimated_delivery_period_days')">
 						<label for="ppi-delivery" class="kt-label">Expected delivery period</label>
-						<input id="ppi-delivery" class="kt-input" type="number" min="0" data-testid="ppi-delivery-days" :value="draft.estimated_delivery_period_days" :disabled="!item.mutable" @input="onField('estimated_delivery_period_days', $event.target.value)">
+						<input id="ppi-delivery" class="input" type="number" min="0" data-testid="ppi-delivery-days" :value="draft.estimated_delivery_period_days" :disabled="!item.mutable" @input="onField('estimated_delivery_period_days', $event.target.value)">
 						<div class="kt-field-hint">Calendar days</div>
 					</div>
 					<div class="pln-fact">
@@ -350,7 +350,7 @@
 					{{ boundaryText }}
 				</p>
 				<div class="pln-region-gap">
-					<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppi-view-dates" @click.prevent="viewCalculatedDates">View calculated dates</a>
+					<a href="#" class="btn btn-ghost" data-testid="ppi-view-dates" @click.prevent="viewCalculatedDates">View calculated dates</a>
 				</div>
 			</div>
 
@@ -361,16 +361,16 @@
 						<span class="kt-disclosure-title">Supporting details</span>
 						<!-- The board's own chip: what is inside, so the disclosure can
 						     stay closed without hiding what it holds. -->
-						<span class="kt-tag kt-tag-neutral">Strategy, classification, rule evidence, milestone calculations</span>
+						<span class="tag tag-neutral">Strategy, classification, rule evidence, milestone calculations</span>
 					</div>
 					<svg class="kt-disclosure-chevron" :class="{ 'is-open': supporting }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 						<path d="M6 9l6 6 6-6"></path>
 					</svg>
 				</summary>
 				<div class="kt-disclosure-body pln-supporting">
-					<div class="kt-field pln-field-480" :class="flagged('strategic_objective')">
+					<div class="field pln-field-480" :class="flagged('strategic_objective')">
 						<label for="ppi-objective" class="kt-label">Strategy</label>
-						<select id="ppi-objective" class="kt-input" data-testid="ppi-objective" :value="draft.strategic_objective" :disabled="!item.mutable" @change="onField('strategic_objective', $event.target.value)">
+						<select id="ppi-objective" class="input" data-testid="ppi-objective" :value="draft.strategic_objective" :disabled="!item.mutable" @change="onField('strategic_objective', $event.target.value)">
 							<option value="">Select a strategic objective</option>
 							<option v-for="objective in classification.strategic_objectives || []" :key="objective.id" :value="objective.id">{{ objective.title }}</option>
 						</select>
@@ -403,7 +403,7 @@
 						<h4 class="kt-label">Calculated dates</h4>
 						<!-- A table of dashes states nothing. Until the Planner sets
 						     the target invitation date there is no schedule to show. -->
-						<table v-if="hasCalculatedDates" class="kt-table pln-region-gap" data-testid="ppi-milestones">
+						<table v-if="hasCalculatedDates" class="table pln-region-gap" data-testid="ppi-milestones">
 							<thead><tr><th>Milestone</th><th>Baseline date</th></tr></thead>
 							<tbody>
 								<tr v-for="row in baseline.rows || []" :key="row.milestone">
@@ -425,7 +425,7 @@
 				<button
 					v-if="item.mutable && !item.scope_lock?.locked"
 					type="button"
-					class="kt-btn kt-btn-primary kt-danger"
+					class="btn btn-primary kt-danger"
 					data-testid="ppi-remove"
 					:disabled="pending"
 					@click="$emit('remove')"
@@ -434,13 +434,13 @@
 				</button>
 				<span v-else></span>
 				<div class="pln-footer-right">
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="ppi-back" @click="$emit('back')">
+					<button type="button" class="btn btn-secondary" data-testid="ppi-back" @click="$emit('back')">
 						Back to annual plan
 					</button>
 					<button
 						v-if="item.mutable"
 						type="button"
-						class="kt-btn kt-btn-primary"
+						class="btn btn-primary"
 						data-testid="ppi-save"
 						:disabled="pending || saveBlocked"
 						@click="$emit('save', draft)"

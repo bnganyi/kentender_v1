@@ -51,7 +51,7 @@
 
 			<div v-if="requests.length" class="kt-region">
 				<h2>Issues</h2>
-				<table class="kt-table" data-testid="cor-issues">
+				<table class="table" data-testid="cor-issues">
 				<thead>
 					<tr><th>What needs to change</th><th>Status</th><th>Requested from</th><th>Action</th></tr>
 				</thead>
@@ -62,7 +62,7 @@
 							<td><span class="kt-status" :class="`is-${row.status_kind}`">{{ row.status }}</span></td>
 							<td>{{ row.requested_from }}</td>
 							<td>
-								<a href="#" class="kt-btn kt-btn-ghost" data-testid="cor-issue-action" @click.prevent="$emit('open-issue', row.request)">{{ row.action }}</a>
+								<a href="#" class="btn btn-ghost" data-testid="cor-issue-action" @click.prevent="$emit('open-issue', row.request)">{{ row.action }}</a>
 							</td>
 						</tr>
 						<!-- U16-OPEN-DETAIL — the mechanics, under the issue they
@@ -154,7 +154,7 @@
 										<button
 											v-if="row.can_close_without_change"
 											type="button"
-											class="kt-btn kt-btn-secondary"
+											class="btn btn-secondary"
 											data-testid="cor-close-no-change"
 											:disabled="pending"
 											@click="$emit('close-without-change', row)"
@@ -164,7 +164,7 @@
 										<button
 											v-if="row.can_start"
 											type="button"
-											class="kt-btn kt-btn-primary"
+											class="btn btn-primary"
 											data-testid="cor-prepare-correction"
 											:disabled="pending"
 											@click="$emit('prepare-correction', row)"
@@ -174,7 +174,7 @@
 										<button
 											v-if="row.can_record_completed"
 											type="button"
-											class="kt-btn kt-btn-primary"
+											class="btn btn-primary"
 											data-testid="cor-record-completed"
 											:disabled="pending"
 											@click="$emit('record-completed', row)"
@@ -232,7 +232,7 @@
 						</div>
 					</div>
 				</div>
-				<a href="#" class="kt-btn kt-btn-secondary" data-testid="cor-add-separate" @click.prevent="$emit('navigate', additional.route)">{{ additional.action }}</a>
+				<a href="#" class="btn btn-secondary" data-testid="cor-add-separate" @click.prevent="$emit('navigate', additional.route)">{{ additional.action }}</a>
 			</div>
 
 			<p v-if="errorSummary" class="pln-error-summary" data-testid="cor-error">{{ errorSummary }}</p>

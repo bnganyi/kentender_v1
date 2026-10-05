@@ -121,12 +121,12 @@ function openLink(url) {
 
 		<section class="kt-portal-group" :aria-label="__('Supplier support')">
 			<h4>{{ __("Supplier support") }}</h4>
-			<div v-for="field in SUPPORT_FIELDS" :key="field.key" class="kt-field">
+			<div v-for="field in SUPPORT_FIELDS" :key="field.key" class="field">
 				<label :for="'kt-portal-' + field.key">{{ __(field.label) }}</label>
 				<input
 					:id="'kt-portal-' + field.key"
 					v-model="form[field.key]"
-					class="kt-input"
+					class="input"
 					:type="field.type"
 					:aria-invalid="problemFor(field.key) ? 'true' : 'false'"
 					:aria-describedby="problemFor(field.key) ? 'kt-portal-' + field.key + '-error' : undefined"
@@ -139,13 +139,13 @@ function openLink(url) {
 
 		<section class="kt-portal-group" :aria-label="__('Public information')">
 			<h4>{{ __("Public information") }}</h4>
-			<div v-for="field in LINK_FIELDS" :key="field.key" class="kt-field kt-portal-link">
+			<div v-for="field in LINK_FIELDS" :key="field.key" class="field kt-portal-link">
 				<label :for="'kt-portal-' + field.key">{{ __(field.label) }}</label>
 				<div class="kt-portal-link-row">
 					<input
 						:id="'kt-portal-' + field.key"
 						v-model="form[field.key]"
-						class="kt-input"
+						class="input"
 						type="url"
 						inputmode="url"
 						:aria-invalid="problemFor(field.key) ? 'true' : 'false'"
@@ -155,7 +155,7 @@ function openLink(url) {
 					<button
 						v-if="isHttps(form[field.key])"
 						type="button"
-						class="kt-btn kt-btn-secondary"
+						class="btn btn-secondary"
 						:data-testid="'kt-portal-open-' + field.key"
 						@click="openLink(form[field.key])"
 					>{{ __("Open link") }}</button>
@@ -174,7 +174,7 @@ function openLink(url) {
 		</div>
 
 		<div class="kt-portal-actions">
-			<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-portal-save" @click="save">{{ __("Save changes") }}</button>
+			<button type="button" class="btn btn-primary" :disabled="!canSave" data-testid="kt-portal-save" @click="save">{{ __("Save changes") }}</button>
 		</div>
 	</div>
 </template>

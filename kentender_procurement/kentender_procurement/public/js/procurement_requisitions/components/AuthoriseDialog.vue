@@ -15,8 +15,8 @@
 		<p class="req-dialog-body">{{ confirmation.text }}</p>
 		<Notice v-if="error" tone="critical"><span data-testid="req-authorise-error">{{ error }}</span></Notice>
 		<template #actions>
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
-			<button type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="req-authorise-confirm" @click="$emit('confirm')">{{ busy ? "Authorising…" : "Authorise requisition" }}</button>
+			<button type="button" class="btn btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
+			<button type="button" class="btn btn-primary" :disabled="busy" data-testid="req-authorise-confirm" @click="$emit('confirm')">{{ busy ? "Authorising…" : "Authorise requisition" }}</button>
 		</template>
 	</DialogFrame>
 </template>

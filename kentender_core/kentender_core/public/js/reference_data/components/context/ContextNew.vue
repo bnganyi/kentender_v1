@@ -90,63 +90,63 @@ async function enableContext() {
 	<div style="margin:32px 48px 0;flex:1;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:24px;align-items:start">
 		<div style="grid-column:1 / -1"><KtErrorBanner :message="bannerError" @dismiss="bannerError = ''" /></div>
 
-		<div class="kt-card kt-blueprint">
+		<div class="card blueprint">
 			<h2 class="kt-card-title">{{ __("Context") }}</h2>
 			<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 28px">
-				<div class="kt-field">
+				<div class="field">
 					<label>{{ __("Context ID") }}</label>
 					<div class="kt-ro">{{ __("Not assigned") }}</div>
 				</div>
 				<div></div>
-				<div class="kt-field">
+				<div class="field">
 					<label>{{ __("Procuring Entity") }}</label>
 					<div style="display:flex;gap:8px;align-items:center">
-						<select class="kt-input" v-model="form.pe" style="flex:1" :style="fieldErrors.pe ? 'border-color:#b0143a' : ''">
+						<select class="input" v-model="form.pe" style="flex:1" :style="fieldErrors.pe ? 'border-color:#b0143a' : ''">
 							<option value="" disabled>{{ __("Select procuring entity") }}</option>
 							<option v-for="p in peOptions" :key="p.pe_id" :value="p.pe_id">{{ p.code }} — {{ p.legal_name }}</option>
 						</select>
-						<button type="button" class="kt-btn kt-btn-ghost" style="white-space:nowrap" @click="createProcuringEntity">
+						<button type="button" class="btn btn-ghost" style="white-space:nowrap" @click="createProcuringEntity">
 							{{ __("+ New") }}
 						</button>
 					</div>
 					<div v-if="fieldErrors.pe" style="color:#b0143a;font-size:12px;margin-top:4px">{{ fieldErrors.pe }}</div>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label>{{ __("Financial Year") }}</label>
 					<div style="display:flex;gap:8px;align-items:center">
-						<select class="kt-input" v-model="form.fy" style="flex:1" :style="fieldErrors.fy ? 'border-color:#b0143a' : ''">
+						<select class="input" v-model="form.fy" style="flex:1" :style="fieldErrors.fy ? 'border-color:#b0143a' : ''">
 							<option value="" disabled>{{ __("Select financial year") }}</option>
 							<option v-for="f in fyOptions" :key="f.financial_year_id" :value="f.financial_year_id">{{ f.label }}</option>
 						</select>
-						<button type="button" class="kt-btn kt-btn-ghost" style="white-space:nowrap" @click="createFinancialYear">
+						<button type="button" class="btn btn-ghost" style="white-space:nowrap" @click="createFinancialYear">
 							{{ __("+ New") }}
 						</button>
 					</div>
 					<div v-if="fieldErrors.fy" style="color:#b0143a;font-size:12px;margin-top:4px">{{ fieldErrors.fy }}</div>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label>{{ __("Active from") }}</label>
-					<input class="kt-input" type="datetime-local" v-model="form.activeFrom" />
+					<input class="input" type="datetime-local" v-model="form.activeFrom" />
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label>{{ __("Active to") }}</label>
 					<input
-						class="kt-input"
+						class="input"
 						type="datetime-local"
 						v-model="form.activeTo"
 						:style="fieldErrors.activeTo ? 'border-color:#b0143a' : ''"
 					/>
 					<div v-if="fieldErrors.activeTo" style="color:#b0143a;font-size:12px;margin-top:4px">{{ fieldErrors.activeTo }}</div>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label>{{ __("Timezone") }}</label>
 					<div class="kt-ro">Africa/Nairobi</div>
 				</div>
 			</div>
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+			<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
 		</div>
 
-		<div class="kt-card kt-blueprint">
+		<div class="card blueprint">
 			<h2 class="kt-card-title">{{ __("Core readiness") }}</h2>
 			<dl style="margin:0">
 				<div class="kt-row" v-for="c in CORE_READINESS_UNASSESSED" :key="c.label">
@@ -154,12 +154,12 @@ async function enableContext() {
 					<dd><span class="kt-status is-pending">{{ __(c.status) }}</span></dd>
 				</div>
 			</dl>
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+			<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
 		</div>
 	</div>
 
 	<div style="border-top:1px solid var(--kt-color-divider);padding:20px 48px;display:flex;justify-content:flex-end;gap:14px;margin-top:32px">
-		<button type="button" class="kt-btn kt-btn-ghost" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
-		<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave || busy" @click="enableContext">{{ __("Enable context") }}</button>
+		<button type="button" class="btn btn-ghost" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
+		<button type="button" class="btn btn-primary" :disabled="!canSave || busy" @click="enableContext">{{ __("Enable context") }}</button>
 	</div>
 </template>

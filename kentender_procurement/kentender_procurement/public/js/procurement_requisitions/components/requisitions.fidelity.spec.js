@@ -106,7 +106,7 @@ function built(wrapper, pick) {
 		if (!region) throw new Error(`${pick} is not rendered`);
 		return region.classList.contains("kt-disclosure-body") ? region : { children: [region] };
 	}
-	const dialog = wrapper.element.querySelector && wrapper.element.querySelector(".kt-dialog");
+	const dialog = wrapper.element.querySelector && wrapper.element.querySelector(".dialog");
 	return dialog ? { children: [dialog] } : wrapper.element;
 }
 

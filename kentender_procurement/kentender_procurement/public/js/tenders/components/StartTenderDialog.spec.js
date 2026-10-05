@@ -10,7 +10,7 @@ const DETAIL = startDetail("SUPPORTED");
 describe("StartTenderDialog — TPR-DES-02", () => {
 	it("renders the six facts, the Supported notice and both disclosures", async () => {
 		const w = mount(StartTenderDialog, { props: { detail: DETAIL, pending: false, error: "" } });
-		expect(w.find(".kt-dialog-title").text()).toContain("Start this Tender?");
+		expect(w.find(".dialog-title").text()).toContain("Start this Tender?");
 		expect(w.findAll(".kt-label").map((l) => l.text())).toEqual(["Purchase", "Requisition", "Quantity", "Approved value", "Method", "Latest delivery"]);
 		expect(w.find('[data-testid="tnd-start-supported"]').text()).toContain("Supported");
 		expect(w.findAll(".kt-disclosure-title").map((t) => t.text())).toEqual(["Why this requisition is supported", "Template and source details"]);

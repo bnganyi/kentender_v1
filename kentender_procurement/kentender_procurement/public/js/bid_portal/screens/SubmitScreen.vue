@@ -153,7 +153,7 @@ onMounted(() => {
 				</div>
 			</div>
 		</div>
-		<div v-if="data.action"><a :href="data.action.href" class="kt-btn" :class="[data.action.tone === 'primary' ? 'kt-btn-primary' : 'kt-btn-secondary', narrow ? 'bds-btn-block' : '']" data-testid="bds-submit-action">{{ __(data.action.label) }}</a></div>
+		<div v-if="data.action"><a :href="data.action.href" class="btn" :class="[data.action.tone === 'primary' ? 'btn-primary' : 'btn-secondary', narrow ? 'bds-btn-block' : '']" data-testid="bds-submit-action">{{ __(data.action.label) }}</a></div>
 
 		<div class="kt-meta-row is-tight bds-meta-tight" data-testid="bds-submit-time">
 			<div v-for="fact in data.meta" :key="fact.label"><span class="kt-label">{{ __(fact.label) }}</span><span class="kt-meta-value">{{ fact.value }}</span></div>
@@ -191,15 +191,15 @@ onMounted(() => {
 			</label>
 			<p v-if="confirmError" class="kt-field-error">{{ confirmError }}</p>
 			<div class="bds-decision-actions">
-				<a :href="decision.cancel_href" class="kt-btn kt-btn-secondary" :class="{ 'bds-btn-block': narrow }">{{ __("Cancel") }}</a>
-				<button type="button" class="kt-btn kt-btn-primary" :class="{ 'bds-btn-block': narrow }" :disabled="!confirmed || pending" data-testid="bds-submit-open" @click="openDialog">{{ __(decision.submit_label) }}</button>
+				<a :href="decision.cancel_href" class="btn btn-secondary" :class="{ 'bds-btn-block': narrow }">{{ __("Cancel") }}</a>
+				<button type="button" class="btn btn-primary" :class="{ 'bds-btn-block': narrow }" :disabled="!confirmed || pending" data-testid="bds-submit-open" @click="openDialog">{{ __(decision.submit_label) }}</button>
 			</div>
 		</div>
 		<div v-else-if="decision && decision.kind === 'pending'" class="kt-decision bds-decision" data-testid="bds-submit-pending">
 			<p class="bds-muted">{{ decision.text }}</p>
 			<div class="bds-decision-actions">
 				<a :href="decision.status_href">{{ __("View status") }}</a>
-				<button type="button" class="kt-btn kt-btn-primary" :class="{ 'bds-btn-block': narrow }" disabled>{{ __(decision.submit_label) }}</button>
+				<button type="button" class="btn btn-primary" :class="{ 'bds-btn-block': narrow }" disabled>{{ __(decision.submit_label) }}</button>
 			</div>
 		</div>
 

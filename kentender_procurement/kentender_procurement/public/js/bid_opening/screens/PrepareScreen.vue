@@ -10,18 +10,18 @@
 		<!-- a1 / a2: naming the committee -->
 		<template v-if="!committee.appointed">
 			<div class="kt-region"><h2>Opening committee</h2>
-				<table class="kt-table" data-testid="bop-committee-draft"><thead><tr><th>Member</th><th>Designation</th><th>Role on committee</th><th>Eligibility</th></tr></thead><tbody>
+				<table class="table" data-testid="bop-committee-draft"><thead><tr><th>Member</th><th>Designation</th><th>Role on committee</th><th>Eligibility</th></tr></thead><tbody>
 					<tr v-for="row in draftRows" :key="row.user" :data-user="row.user">
 						<td>{{ row.full_name }}</td><td>{{ row.designation }}</td><td>{{ row.committee_role }}</td>
 						<td><span class="kt-status is-live">Eligible</span><template v-if="row.committee_role === 'Independent member'"> <span style="font-size:13px;color:var(--color-neutral-800)">Not involved in processing this Tender and will not evaluate it</span></template>
-							<button v-if="!blocked" type="button" class="kt-btn kt-btn-ghost bop-row-action" :data-testid="`bop-remove-${row.user}`" @click="removeRow(row.user)">Remove</button></td>
+							<button v-if="!blocked" type="button" class="btn btn-ghost bop-row-action" :data-testid="`bop-remove-${row.user}`" @click="removeRow(row.user)">Remove</button></td>
 					</tr>
 				</tbody></table>
-				<div v-if="!blocked" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="kt-btn kt-btn-secondary" data-testid="bop-add-member" @click="adding = true">Add member</button></div>
+				<div v-if="!blocked" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary" data-testid="bop-add-member" @click="adding = true">Add member</button></div>
 			</div>
 			<div v-if="draft.length && !blocked" class="kt-decision">
 				<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">Each member gets their own task to join the opening at {{ opening.deadline_label }}.<template v-if="independentName"> As the independent member, {{ independentName }} cannot later be appointed to evaluate this Tender.</template></p>
-				<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bop-appoint" @click="$emit('appoint', draft)">Appoint committee</button></div>
+				<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary" :disabled="pending" data-testid="bop-appoint" @click="$emit('appoint', draft)">Appoint committee</button></div>
 			</div>
 			<History title="Appointment history" summary="No appointments yet" />
 		</template>
@@ -34,12 +34,12 @@
 		<!-- a3: appointed, not yet published -->
 		<template v-else-if="!arrangements.published">
 			<div class="kt-region"><h2>Opening committee</h2>
-				<table class="kt-table" data-testid="bop-committee"><thead><tr><th>Member</th><th>Designation</th><th>Role on committee</th><th>Task to join</th></tr></thead><tbody>
+				<table class="table" data-testid="bop-committee"><thead><tr><th>Member</th><th>Designation</th><th>Role on committee</th><th>Task to join</th></tr></thead><tbody>
 					<tr v-for="m in committee.members" :key="m.member_user"><td>{{ m.full_name }}</td><td>{{ m.designation }}</td><td>{{ m.committee_role }}</td><td>Sent</td></tr>
 				</tbody></table>
 			</div>
 			<div class="kt-region is-secondary"><h2>How to attend</h2>
-				<div class="kt-group"><p style="margin:0 0 12px;font-size:14px;max-width:75ch;text-wrap:pretty">Not published. The public Tender page says “{{ arrangements.message }}”.</p><button type="button" class="kt-btn kt-btn-primary" data-testid="bop-open-arrangements" @click="showForm = true">Publish how to attend</button></div>
+				<div class="kt-group"><p style="margin:0 0 12px;font-size:14px;max-width:75ch;text-wrap:pretty">Not published. The public Tender page says “{{ arrangements.message }}”.</p><button type="button" class="btn btn-primary" data-testid="bop-open-arrangements" @click="showForm = true">Publish how to attend</button></div>
 			</div>
 			<History title="Appointment history" :summary="`Appointed ${committee.appointed_label} by ${committee.appointed_by}`" :rows="historyRows" />
 		</template>
@@ -48,7 +48,7 @@
 		<template v-else>
 			<div class="kt-region"><h2>How to attend</h2>
 				<div class="kt-meta-row" data-testid="bop-arrangements"><div><span class="kt-label">Attendance method</span><span class="kt-meta-value">{{ arrangements.attendance_method }}</span></div><div><span class="kt-label">Join opens</span><span class="kt-meta-value">{{ arrangements.join_opens_label }}</span></div><div><span class="kt-label">Opening time</span><span class="kt-meta-value">{{ arrangements.scheduled_label }}</span></div><div><span class="kt-label">Published</span><span class="kt-meta-value">{{ arrangements.published_label }}</span></div></div>
-				<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="kt-btn kt-btn-secondary" data-testid="bop-update-arrangements" @click="editingArrangements = true">Update instructions</button></div>
+				<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary" data-testid="bop-update-arrangements" @click="editingArrangements = true">Update instructions</button></div>
 			</div>
 			<div class="kt-region is-secondary"><h2>Opening committee</h2>
 				<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty" data-testid="bop-committee-summary">{{ committeeSentence }} Appointed {{ committee.appointed_label }}.</p></div>

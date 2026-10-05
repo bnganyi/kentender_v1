@@ -1,7 +1,7 @@
 <!-- PLN-CHG-001 v1.24 §10.3 (KT-STD-001 v1.7 §2.6) — the Planning workspace
      (U01), ported class-for-class from Artboards-U01.dc.html.
 
-     One bare `.kt-page` sheet, never a `.kt-card.kt-blueprint` box per row
+     One bare `.kt-page` sheet, never a `.card.blueprint` box per row
      (PLN24-CHG-007). The order is fixed: header with the Financial year
      field inline, a decision-required region when one exists, the actor's
      own departmental plan, the Planner's own Annual plan work (task row plus
@@ -47,11 +47,11 @@
 					<p class="kt-page-desc">{{ header.description }}</p>
 					<!-- Bound to the caller's own selection, never the server echo, so
 					     it never snaps back while a new year is still loading. -->
-					<div class="kt-field" style="margin-top: var(--kt-space-4); width: 190px" data-testid="pln-context-strip">
+					<div class="field" style="margin-top: var(--kt-space-4); width: 190px" data-testid="pln-context-strip">
 						<label for="pln-fy-select">Financial year</label>
 						<select
 							id="pln-fy-select"
-							class="kt-input"
+							class="input"
 							data-testid="pln-fy-select"
 							:value="selectedFinancialYear || context.financial_year || ''"
 							@change="$emit('select-financial-year', $event.target.value)"
@@ -63,7 +63,7 @@
 						<button
 							v-if="context.resolved_financial_year_source === 'saved_default'"
 							type="button"
-							class="kt-btn kt-btn-ghost"
+							class="btn btn-ghost"
 							data-testid="pln-fy-reset"
 							style="margin-top: 6px"
 							@click="$emit('reset-financial-year')"
@@ -83,7 +83,7 @@
 						<div class="pln-task-title">{{ actionTitle(row) }}</div>
 						<p class="pln-task-desc">{{ actionDescription(row) }}</p>
 					</div>
-					<button type="button" class="kt-btn kt-btn-primary" data-testid="pln-action-button" @click="onAction(row)">
+					<button type="button" class="btn btn-primary" data-testid="pln-action-button" @click="onAction(row)">
 						{{ row.action }}
 					</button>
 				</div>
@@ -97,7 +97,7 @@
 						<div class="pln-task-title" data-testid="pln-own-plan-empty">{{ ownPlan.empty_text }}</div>
 						<button
 							type="button"
-							class="kt-btn kt-btn-primary"
+							class="btn btn-primary"
 							data-testid="pln-start-departmental-plan"
 							style="margin-top: var(--kt-space-4)"
 							:disabled="pending"
@@ -114,7 +114,7 @@
 						<button
 							v-if="ownPlan.route"
 							type="button"
-							class="kt-btn kt-btn-primary"
+							class="btn btn-primary"
 							data-testid="pln-own-plan-action"
 							@click="$emit('navigate', ownPlan.route)"
 						>
@@ -210,7 +210,7 @@
 							<button
 								v-if="dominantRow.kind === 'current' && annualPlan.can_prepare_update"
 								type="button"
-								class="kt-btn kt-btn-secondary"
+								class="btn btn-secondary"
 								data-testid="pln-prepare-update"
 								:disabled="pending"
 								@click="$emit('prepare-update')"
@@ -220,8 +220,8 @@
 							<button
 								v-if="dominantRow.action"
 								type="button"
-								class="kt-btn"
-								:class="dominantRow.action_kind === 'primary' ? 'kt-btn-primary' : 'kt-btn-secondary'"
+								class="btn"
+								:class="dominantRow.action_kind === 'primary' ? 'btn-primary' : 'btn-secondary'"
 								:data-testid="`pln-plan-action-${dominantRow.kind}`"
 								@click="$emit('navigate', dominantRow.route)"
 							>
@@ -248,7 +248,7 @@
 							<div class="kt-notice-body"><template v-for="(part, i) in issueParts(issue)" :key="i"><strong v-if="part.strong">{{ part.text }}</strong><template v-else>{{ part.text }}</template></template></div>
 							<button
 								type="button"
-								class="kt-btn kt-btn-secondary"
+								class="btn btn-secondary"
 								style="margin-top: var(--kt-space-3)"
 								data-testid="pln-issue-action"
 								@click="$emit('navigate', issue.route)"
@@ -257,7 +257,7 @@
 					</div>
 					<div v-else class="pln-quiet-issue" data-testid="pln-issue">
 						<p><template v-for="(part, i) in issueParts(issue)" :key="i"><strong v-if="part.strong">{{ part.text }}</strong><template v-else>{{ part.text }}</template></template></p>
-						<button type="button" class="kt-btn kt-btn-secondary" data-testid="pln-issue-action" @click="$emit('navigate', issue.route)">{{ issue.action }}</button>
+						<button type="button" class="btn btn-secondary" data-testid="pln-issue-action" @click="$emit('navigate', issue.route)">{{ issue.action }}</button>
 					</div>
 				</template>
 
@@ -293,7 +293,7 @@
 			<!-- Second section — Departmental plans, a quieter register. -->
 			<div class="kt-region is-secondary">
 				<h2>{{ table.heading }}</h2>
-				<table v-if="table.rows.length" class="kt-table" data-testid="pln-departmental-table">
+				<table v-if="table.rows.length" class="table" data-testid="pln-departmental-table">
 					<thead>
 						<tr>
 							<th v-for="column in table.columns" :key="column" :class="{ 'is-num': isNumeric(column) }">
@@ -311,7 +311,7 @@
 								<a
 									v-if="row.route"
 									href="#"
-									class="kt-btn kt-btn-ghost"
+									class="btn btn-ghost"
 									data-testid="pln-departmental-open"
 									@click.prevent="$emit('navigate', row.route)"
 								>{{ row.action }}</a>

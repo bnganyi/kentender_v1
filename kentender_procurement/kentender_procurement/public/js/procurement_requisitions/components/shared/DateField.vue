@@ -2,7 +2,7 @@
      control stays keyboard- and picker-native while reading as drawn. -->
 <template>
 	<div class="req-date-field">
-		<input :id="id" type="date" class="kt-input" :class="{ 'is-invalid': invalid }" :value="modelValue" :max="max" :disabled="disabled" :aria-invalid="invalid ? 'true' : 'false'" @input="$emit('update:modelValue', $event.target.value)" />
+		<input :id="id" type="date" class="input" :class="{ 'is-invalid': invalid }" :value="modelValue" :max="max" :disabled="disabled" :aria-invalid="invalid ? 'true' : 'false'" @input="$emit('update:modelValue', $event.target.value)" />
 		<span class="req-date-display">{{ label }}</span>
 	</div>
 </template>

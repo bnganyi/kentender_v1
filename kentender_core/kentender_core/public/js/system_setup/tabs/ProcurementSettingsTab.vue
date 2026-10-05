@@ -307,7 +307,7 @@ async function confirmRemoveSource() {
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
 				<div class="kt-notice-body"><strong>{{ __("Procurement settings could not be loaded.") }}</strong><br>{{ __("Try again. If the problem continues, contact support.") }}</div>
 			</div>
-			<div style="margin-top:14px"><button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-retry" @click="load">{{ __("Try again") }}</button></div>
+			<div style="margin-top:14px"><button type="button" class="btn btn-secondary" data-testid="kt-procset-retry" @click="load">{{ __("Try again") }}</button></div>
 		</div>
 
 		<!-- C03-B "add" / "version" — one editor for a new rule and a new version -->
@@ -451,11 +451,11 @@ async function confirmRemoveSource() {
 						<h3 style="margin-bottom:4px">{{ __("Funding sources") }}</h3>
 						<p class="card-body" style="margin-bottom:0">{{ __("Maintain the sources used in procurement budgets.") }}</p>
 					</div>
-					<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-procset-source-add" @click="openSource('new-source', $event)">
+					<button type="button" class="btn btn-primary" data-testid="kt-procset-source-add" @click="openSource('new-source', $event)">
 						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add funding source") }}
 					</button>
 				</div>
-				<table v-if="fundingSources.length" class="kt-table">
+				<table v-if="fundingSources.length" class="table">
 					<thead>
 						<tr><th>{{ __("Name") }}</th><th>{{ __("Available for new selection") }}</th><th>{{ __("Action") }}</th></tr>
 					</thead>
@@ -482,7 +482,7 @@ async function confirmRemoveSource() {
 					<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--kt-color-neutral-400)" stroke-width="1.5" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></svg>
 					<p style="font-weight:600;margin-bottom:4px">{{ __("No funding sources yet") }}</p>
 					<p class="card-body">{{ __("Add the sources used by this site's procurement budgets.") }}</p>
-					<button type="button" class="kt-btn kt-btn-primary" @click="openSource('new-source', $event)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add funding source") }}</button>
+					<button type="button" class="btn btn-primary" @click="openSource('new-source', $event)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add funding source") }}</button>
 				</div>
 			</div>
 
@@ -497,32 +497,32 @@ async function confirmRemoveSource() {
 						<h3 style="margin-bottom:4px">{{ __("Procurement rules") }}</h3>
 						<p class="card-body" style="margin-bottom:0">{{ __("Maintain procurement rules and their supporting sources.") }}</p>
 					</div>
-					<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-procset-rule-add" @click="go('new-rule')">
+					<button type="button" class="btn btn-primary" data-testid="kt-procset-rule-add" @click="go('new-rule')">
 						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add rule") }}
 					</button>
 				</div>
 				<template v-if="versionedRules.length">
 					<div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0">
-						<div class="kt-field" style="flex:1;min-width:200px">
+						<div class="field" style="flex:1;min-width:200px">
 							<label for="kt-procset-rule-search">{{ __("Search") }}</label>
-							<input id="kt-procset-rule-search" v-model="ruleSearch" class="kt-input" data-testid="kt-procset-rule-search">
+							<input id="kt-procset-rule-search" v-model="ruleSearch" class="input" data-testid="kt-procset-rule-search">
 						</div>
-						<div class="kt-field" style="min-width:160px">
+						<div class="field" style="min-width:160px">
 							<label for="kt-procset-rule-kind">{{ __("Rule kind") }}</label>
-							<select id="kt-procset-rule-kind" v-model="ruleKind" class="kt-input" data-testid="kt-procset-rule-kind">
+							<select id="kt-procset-rule-kind" v-model="ruleKind" class="input" data-testid="kt-procset-rule-kind">
 								<option value="All">{{ __("All") }}</option>
 								<option v-for="kind in ruleKinds" :key="kind" :value="kind">{{ kind }}</option>
 							</select>
 						</div>
-						<div class="kt-field" style="min-width:160px">
+						<div class="field" style="min-width:160px">
 							<label for="kt-procset-rule-check">{{ __("Source check") }}</label>
-							<select id="kt-procset-rule-check" v-model="ruleCheck" class="kt-input" data-testid="kt-procset-rule-check">
+							<select id="kt-procset-rule-check" v-model="ruleCheck" class="input" data-testid="kt-procset-rule-check">
 								<option value="All">{{ __("All") }}</option>
 								<option v-for="status in verificationOptions" :key="status" :value="status">{{ verificationLabel(status) }}</option>
 							</select>
 						</div>
 					</div>
-					<table class="kt-table">
+					<table class="table">
 						<thead>
 							<tr><th>{{ __("Rule") }}</th><th>{{ __("Applies from") }}</th><th>{{ __("Applies until") }}</th><th>{{ __("Version") }}</th><th>{{ __("Source check") }}</th><th>{{ __("Details") }}</th><th>{{ __("Action") }}</th></tr>
 						</thead>
@@ -530,7 +530,7 @@ async function confirmRemoveSource() {
 							<tr v-for="row in visibleRules" :key="row.key" :data-testid="'kt-procset-rule-' + row.name" :data-status="row.status">
 								<!-- Only an explicitly non-active status is superseded; the set
 								     projection carries no status for its current version. -->
-								<td>{{ row.rule }}<span v-if="row.status && row.status !== 'Active'" class="kt-tag kt-tag-neutral kt-procset-superseded">{{ __("Superseded") }}</span></td>
+								<td>{{ row.rule }}<span v-if="row.status && row.status !== 'Active'" class="tag tag-neutral kt-procset-superseded">{{ __("Superseded") }}</span></td>
 								<td>{{ fmtDate(row.effective_from) }}</td>
 								<td>{{ fmtDate(row.effective_until) }}</td>
 								<td>{{ row.version_number }}</td>
@@ -549,27 +549,27 @@ async function confirmRemoveSource() {
 					</table>
 				</template>
 				<div v-if="!rules.length || unversionedRules.length" class="kt-procset-rule-cards">
-					<div v-if="!rules.length" class="kt-card kt-procset-empty-card" data-testid="kt-procset-rules-empty">
+					<div v-if="!rules.length" class="card kt-procset-empty-card" data-testid="kt-procset-rules-empty">
 						<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--kt-color-neutral-400)" stroke-width="1.5" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></svg>
 						<p style="font-weight:600;margin-bottom:4px">{{ __("No procurement rules yet") }}</p>
 						<p class="card-body">{{ __("Add rules for the procurement procedures supported by this release.") }}</p>
-						<button type="button" class="kt-btn kt-btn-primary kt-btn-block" @click="go('new-rule')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add rule") }}</button>
+						<button type="button" class="btn btn-primary btn-block" @click="go('new-rule')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add rule") }}</button>
 					</div>
 					<template v-for="row in unversionedRules" :key="row.key">
 						<!-- §8.1 — an optional price index with nothing published is
 						     informational, not a missing version. -->
-						<div v-if="row.kind === 'Market price index'" class="kt-card" :data-testid="'kt-procset-rule-unpublished-' + row.name">
+						<div v-if="row.kind === 'Market price index'" class="card" :data-testid="'kt-procset-rule-unpublished-' + row.name">
 							<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
-								<span class="kt-tag kt-tag-neutral">{{ __("Not published") }}</span>
+								<span class="tag tag-neutral">{{ __("Not published") }}</span>
 							</div>
 							<p class="card-body">{{ __("No price index has been published for this period.") }}</p>
 						</div>
 						<!-- §7.3 — a rule saved with no version is recoverable in place. -->
-						<div v-else class="kt-card" :data-testid="'kt-procset-rule-noversion-' + row.name">
+						<div v-else class="card" :data-testid="'kt-procset-rule-noversion-' + row.name">
 							<div class="kt-status is-pending" style="margin-bottom:6px">{{ __("No version saved") }}</div>
 							<div class="kt-meta-row"><div><span class="kt-label">{{ __("Rule") }}</span><span class="kt-meta-value">{{ row.rule }}</span></div></div>
-							<button type="button" class="kt-btn kt-btn-secondary" style="margin-top:8px" :data-testid="'kt-procset-rule-first-version-' + row.name" @click="go('new-rule-version/' + row.name)">{{ __("Add first version") }}</button>
+							<button type="button" class="btn btn-secondary" style="margin-top:8px" :data-testid="'kt-procset-rule-first-version-' + row.name" @click="go('new-rule-version/' + row.name)">{{ __("Add first version") }}</button>
 						</div>
 					</template>
 				</div>
@@ -584,18 +584,18 @@ async function confirmRemoveSource() {
 						<h3 style="margin-bottom:4px">{{ __("Procurement schedules") }}</h3>
 						<p class="card-body" style="margin-bottom:0">{{ __("Set the time intervals used to prepare procurement schedules.") }}</p>
 					</div>
-					<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-procset-schedule-add" @click="go('new-schedule')">
+					<button type="button" class="btn btn-primary" data-testid="kt-procset-schedule-add" @click="go('new-schedule')">
 						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add procurement schedule") }}
 					</button>
 				</div>
 				<div v-if="scheduleProfiles.length" class="kt-table-scroll">
-					<table class="kt-table">
+					<table class="table">
 						<thead>
 							<tr><th>{{ __("Name") }}</th><th>{{ __("Method") }}</th><th>{{ __("Procedure") }}</th><th>{{ __("Category") }}</th><th>{{ __("Version") }}</th><th>{{ __("Applies from") }}</th><th>{{ __("Applies until") }}</th><th>{{ __("Source check") }}</th><th>{{ __("Action") }}</th></tr>
 						</thead>
 						<tbody>
 							<tr v-for="row in scheduleProfiles" :key="row.profile" :data-testid="'kt-procset-profile-' + row.profile" :data-status="row.status">
-								<td>{{ row.profile_name }}<span v-if="row.status !== 'Active'" class="kt-tag kt-tag-neutral kt-procset-superseded">{{ __("Superseded") }}</span></td>
+								<td>{{ row.profile_name }}<span v-if="row.status !== 'Active'" class="tag tag-neutral kt-procset-superseded">{{ __("Superseded") }}</span></td>
 								<td>{{ row.procurement_method }}</td>
 								<td>{{ row.procedure || "—" }}</td>
 								<td>{{ row.procurement_category }}</td>
@@ -612,7 +612,7 @@ async function confirmRemoveSource() {
 					<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--kt-color-neutral-400)" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" /></svg>
 					<p style="font-weight:600;margin-bottom:4px">{{ __("No procurement schedules yet") }}</p>
 					<p class="card-body">{{ __("Add a schedule for a procedure supported by this release.") }}</p>
-					<button type="button" class="kt-btn kt-btn-primary" @click="go('new-schedule')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add procurement schedule") }}</button>
+					<button type="button" class="btn btn-primary" @click="go('new-schedule')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add procurement schedule") }}</button>
 				</div>
 			</div>
 
@@ -625,17 +625,17 @@ async function confirmRemoveSource() {
 						<h3 style="margin-bottom:4px">{{ __("Working-day calendars") }}</h3>
 						<p class="card-body" style="margin-bottom:0">{{ __("Set the weekends and holidays that working-day intervals count against.") }}</p>
 					</div>
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-calendar-add" @click="go('new-calendar')">
+					<button type="button" class="btn btn-secondary" data-testid="kt-procset-calendar-add" @click="go('new-calendar')">
 						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add calendar") }}
 					</button>
 				</div>
-				<table v-if="calendars.length" class="kt-table">
+				<table v-if="calendars.length" class="table">
 					<thead>
 						<tr><th>{{ __("Calendar name") }}</th><th>{{ __("Version") }}</th><th>{{ __("Applies from") }}</th><th>{{ __("Applies until") }}</th><th>{{ __("Source check") }}</th><th>{{ __("Action") }}</th></tr>
 					</thead>
 					<tbody>
 						<tr v-for="row in calendars" :key="row.calendar" :data-testid="'kt-procset-calendar-' + row.calendar">
-							<td>{{ row.calendar_name }}<span v-if="row.status !== 'Active'" class="kt-tag kt-tag-neutral kt-procset-superseded">{{ __("Superseded") }}</span></td>
+							<td>{{ row.calendar_name }}<span v-if="row.status !== 'Active'" class="tag tag-neutral kt-procset-superseded">{{ __("Superseded") }}</span></td>
 							<td>{{ row.version_number }}</td>
 							<td>{{ fmtDate(row.effective_from) }}</td>
 							<td>{{ fmtDate(row.effective_until) }}</td>

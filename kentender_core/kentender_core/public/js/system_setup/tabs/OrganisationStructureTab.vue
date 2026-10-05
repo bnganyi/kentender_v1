@@ -338,7 +338,7 @@ onUnmounted(() => {
 		<div v-else-if="loadError" class="kt-notice is-critical" role="alert" data-testid="kt-org-error">
 			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
 			<div class="kt-notice-body"><strong>{{ __("System setup could not be loaded.") }}</strong> {{ __("Try again. If the problem continues, contact support.") }}</div>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button>
+			<button type="button" class="btn btn-secondary" @click="load">{{ __("Try again") }}</button>
 		</div>
 
 		<!-- CFG §10.12 missing root: the governed repair for the Administrator,
@@ -352,7 +352,7 @@ onUnmounted(() => {
 				<button
 					v-if="canRepair"
 					type="button"
-					class="kt-btn kt-btn-primary"
+					class="btn btn-primary"
 					style="margin-top:6px"
 					:disabled="busy"
 					data-testid="kt-org-repair"
@@ -379,7 +379,7 @@ onUnmounted(() => {
 			<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--kt-color-neutral-400)" stroke-width="1.5" aria-hidden="true" style="margin:0 auto 12px"><path d="M12 3v6" /><rect x="8" y="3" width="8" height="6" /><path d="M5 15v-3h14v3" /><rect x="2" y="15" width="6" height="6" /><rect x="16" y="15" width="6" height="6" /></svg>
 			<p style="font-weight:600;margin:0 0 4px">{{ __("No departments or units yet") }}</p>
 			<p class="card-body" style="margin:0 0 16px">{{ __("Add the first organisation unit beneath {0}.", [selected ? selected.name : rootId]) }}</p>
-			<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-org-empty-add" @click="openDialog('add')">
+			<button type="button" class="btn btn-primary" data-testid="kt-org-empty-add" @click="openDialog('add')">
 				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add organisation unit") }}
 			</button>
 		</div>

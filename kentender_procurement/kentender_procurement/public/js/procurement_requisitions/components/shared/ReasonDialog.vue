@@ -2,21 +2,21 @@
      correction and a lead change all use it (§13.7–§13.11). -->
 <template>
 	<DialogFrame :title="title" :width="480" :busy="busy" :testid="testid" @close="$emit('close')">
-		<div v-if="options" class="kt-field">
+		<div v-if="options" class="field">
 			<label :for="`${id}-option`">{{ optionLabel }}</label>
-			<select :id="`${id}-option`" v-model="option" class="kt-input" :disabled="busy">
+			<select :id="`${id}-option`" v-model="option" class="input" :disabled="busy">
 				<option v-for="o in options" :key="o.value" :value="o.value">{{ o.label }}</option>
 			</select>
 		</div>
-		<div class="kt-field">
+		<div class="field">
 			<label :for="`${id}-reason`">{{ reasonLabel }}</label>
-			<textarea :id="`${id}-reason`" v-model="reason" class="kt-input" :class="{ 'is-invalid': showError }" :rows="rows" :placeholder="placeholder" :disabled="busy" :aria-describedby="`${id}-hint`" :aria-invalid="showError ? 'true' : 'false'"></textarea>
+			<textarea :id="`${id}-reason`" v-model="reason" class="input" :class="{ 'is-invalid': showError }" :rows="rows" :placeholder="placeholder" :disabled="busy" :aria-describedby="`${id}-hint`" :aria-invalid="showError ? 'true' : 'false'"></textarea>
 			<div v-if="hint" :id="`${id}-hint`" class="kt-field-hint">{{ hint }}</div>
 			<span v-if="showError" class="req-field-error" role="alert">Enter {{ min }}–{{ max.toLocaleString("en-GB") }} characters.</span>
 		</div>
-		<div v-if="sections" class="kt-field">
+		<div v-if="sections" class="field">
 			<label :for="`${id}-section`">Affected section (optional)</label>
-			<select :id="`${id}-section`" v-model="section" class="kt-input" :disabled="busy">
+			<select :id="`${id}-section`" v-model="section" class="input" :disabled="busy">
 				<option value="">Not specified</option>
 				<option v-for="s in sections" :key="s" :value="s">{{ s }}</option>
 			</select>
@@ -25,8 +25,8 @@
 		<p v-if="bodyText" class="req-dialog-body">{{ bodyText }}</p>
 		<Notice v-if="error" tone="critical">{{ error }}</Notice>
 		<template #actions>
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
-			<button type="button" class="kt-btn kt-btn-primary" :class="{ 'kt-danger': danger }" :disabled="busy" :data-testid="`${testid}-confirm`" @click="submit">{{ confirmLabel }}</button>
+			<button type="button" class="btn btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
+			<button type="button" class="btn btn-primary" :class="{ 'kt-danger': danger }" :disabled="busy" :data-testid="`${testid}-confirm`" @click="submit">{{ confirmLabel }}</button>
 		</template>
 	</DialogFrame>
 </template>

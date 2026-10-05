@@ -15,7 +15,7 @@
 .kt-industry.kt-portal .bds-tender-cell { font-weight: 600; }
 .kt-industry.kt-portal .bds-tender-ref { font-weight: 600; margin-top: 2px; }
 .kt-industry.kt-portal .bds-count { margin: 0; font-size: 13px; color: var(--kt-color-neutral-700); text-wrap: pretty; }
-.kt-industry.kt-portal .kt-table + .bds-count,
+.kt-industry.kt-portal .table + .bds-count,
 .kt-industry.kt-portal [data-testid="bds-tenders-cards"] + .bds-count { margin-top: var(--kt-space-3); }
 .kt-industry.kt-portal .bds-empty-text { margin: 0 0 var(--kt-space-4); font-size: 14px; }
 .kt-industry.kt-portal .bds-load-failure { align-items: center; justify-content: space-between; margin-bottom: var(--kt-space-4); }
@@ -80,7 +80,7 @@
 	.kt-industry.kt-portal .bds-dialog-facts,
 	.kt-industry.kt-portal .bds-member-row { grid-template-columns: minmax(0, 1fr); }
 	/* Inputs at 16 px so a phone does not zoom on focus (board 390 frame). */
-	.kt-industry.kt-portal .kt-filter-bar .kt-input { font-size: 16px; }
+	.kt-industry.kt-portal .kt-filter-bar .input { font-size: 16px; }
 }
 
 /* DES-05 My bids: a row's actions (primary first, then e.g. Start replacement). */
@@ -192,7 +192,7 @@
 
 /* A checkbox choice inside a field: the field's own `label` rule (block, 12px, margin) outranks the checkbox kit's, which
    left the box an inline span with no size. Restore the kit's layout for the labels that are checkboxes. */
-.kt-industry.kt-portal .kt-field > label.kt-checkbox { display: inline-flex; align-items: flex-start; gap: 8px; margin-bottom: 0; font-size: 14px; color: var(--kt-color-text); min-height: 32px; }
+.kt-industry.kt-portal .field > label.kt-checkbox { display: inline-flex; align-items: flex-start; gap: 8px; margin-bottom: 0; font-size: 14px; color: var(--kt-color-text); min-height: 32px; }
 /* The evidence column: a paperclip and a count badge, whatever the file names are */
 .kt-industry.kt-portal .bds-attachments { display: inline-flex; align-items: center; gap: 6px; color: var(--kt-color-neutral-700); white-space: nowrap; }
 .kt-industry.kt-portal .bds-attachments svg { flex: none; }
@@ -210,7 +210,7 @@
 /* Acceptance terms are contract terms to confirm, so they sit apart from the responses above them */
 .kt-industry.kt-portal .bds-terms { border-left: 3px solid var(--kt-color-accent); background: var(--kt-color-neutral-100); padding: var(--kt-space-4) var(--kt-space-4) var(--kt-space-4) var(--kt-space-6); margin-top: var(--kt-space-6); }
 .kt-industry.kt-portal .bds-terms-intro { margin: 0 0 var(--kt-space-3); }
-.kt-industry.kt-portal .bds-terms .kt-table th { background: transparent; }
+.kt-industry.kt-portal .bds-terms .table th { background: transparent; }
 
 /* The bid's task order made visible: a numbered strip on every task page, Previous / Next beneath it, and the same
    numbers and a Next tag on the bid page's task list */

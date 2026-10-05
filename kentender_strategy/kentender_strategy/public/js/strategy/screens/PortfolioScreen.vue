@@ -186,7 +186,7 @@ async function submitDraft() {
 	>
 		<template v-if="mode === 'list'">
 			<!-- KT-STD-001 §3A.1: nothing but the verdict's own state paints. -->
-			<div v-if="loading" class="kt-card kt-blueprint" style="padding: 0" data-testid="str-loading">
+			<div v-if="loading" class="card blueprint" style="padding: 0" data-testid="str-loading">
 				<div style="padding: 13.6px 13.6px 0">
 					<h2 style="font-size: 19px; margin: 0">{{ __("Strategic plans") }}</h2>
 					<p class="kt-muted" style="font-size: 12px; margin: 4px 0 0">{{ __("Loading strategic plans…") }}</p>
@@ -209,14 +209,14 @@ async function submitDraft() {
 					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 					<div class="kt-notice-body"><strong>{{ __("Strategy information could not be loaded.") }}</strong> {{ __("Try again. If the problem continues, contact KenTender support.") }}</div>
 				</div>
-				<div style="margin-top: 10px"><button type="button" class="kt-btn kt-btn-secondary" @click="refresh">{{ __("Try again") }}</button></div>
+				<div style="margin-top: 10px"><button type="button" class="btn btn-secondary" @click="refresh">{{ __("Try again") }}</button></div>
 			</div>
 
 			<template v-else>
 				<!-- The title, the tabs and the table below now sit inside one
 				     bordered panel instead of floating as separate boxes, matching
 				     the current design. -->
-				<div class="kt-card kt-blueprint" style="padding: 0">
+				<div class="card blueprint" style="padding: 0">
 					<header style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 20.4px 20.4px 0">
 						<div>
 							<div class="kt-eyebrow" style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.1em; color: var(--kt-color-accent); margin-bottom: 6px">
@@ -227,7 +227,7 @@ async function submitDraft() {
 								{{ __("Create and maintain the strategy used for budget and procurement planning.") }}
 							</p>
 						</div>
-						<button v-if="canCreatePlan" type="button" class="kt-btn kt-btn-primary" style="margin-top: 2px" data-testid="str-new-plan" @click="openCreateForm">
+						<button v-if="canCreatePlan" type="button" class="btn btn-primary" style="margin-top: 2px" data-testid="str-new-plan" @click="openCreateForm">
 							{{ __("Create strategic plan") }}
 						</button>
 					</header>
@@ -249,12 +249,12 @@ async function submitDraft() {
 						</div>
 						<template v-else>
 							<div style="display: flex; gap: 10.2px; padding: 13.6px 20.4px">
-								<input v-model="filters.q" class="kt-input" style="flex: 1" data-testid="str-search" :placeholder="__('Search plan or reference')" :aria-label="__('Search plan or reference')" />
-								<select v-model="filters.role" class="kt-input" style="width: 200px" data-testid="str-role-filter" :aria-label="__('Plan type')">
+								<input v-model="filters.q" class="input" style="flex: 1" data-testid="str-search" :placeholder="__('Search plan or reference')" :aria-label="__('Search plan or reference')" />
+								<select v-model="filters.role" class="input" style="width: 200px" data-testid="str-role-filter" :aria-label="__('Plan type')">
 									<option value="">{{ __("All plan types") }}</option>
 									<option v-for="o in planTypeOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
 								</select>
-								<select v-model="filters.status" class="kt-input" style="width: 180px" data-testid="str-status-filter" :aria-label="__('Status')">
+								<select v-model="filters.status" class="input" style="width: 180px" data-testid="str-status-filter" :aria-label="__('Status')">
 									<option value="">{{ __("All statuses") }}</option>
 									<option v-for="o in statusOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
 								</select>
@@ -262,10 +262,10 @@ async function submitDraft() {
 							<div v-if="plans.length === 0" style="padding: 20.4px 13.6px; text-align: center" data-testid="str-no-match">
 								<div style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 15px; margin-bottom: 4px">{{ __("No plans match these filters.") }}</div>
 								<div style="font-size: 13px; color: var(--kt-color-neutral-700); margin-bottom: 10px">{{ __("Change or clear the filters to see other strategic plans.") }}</div>
-								<button type="button" class="kt-btn kt-btn-secondary" data-testid="str-clear-filters" @click="clearFilters">{{ __("Clear filters") }}</button>
+								<button type="button" class="btn btn-secondary" data-testid="str-clear-filters" @click="clearFilters">{{ __("Clear filters") }}</button>
 							</div>
 							<template v-else>
-								<table class="kt-table" data-testid="str-plans-table">
+								<table class="table" data-testid="str-plans-table">
 									<thead>
 										<tr>
 											<th>{{ __("Strategic plan") }}</th>
@@ -283,7 +283,7 @@ async function submitDraft() {
 											<td>{{ p.period_fy_label || p.period_label || "—" }}</td>
 											<td>{{ p.current_version ? p.current_version.version_number : "—" }}</td>
 											<td><span class="kt-status" :class="p.status_tone" data-testid="str-row-status">{{ p.status_label }}</span></td>
-											<td><a href="#" class="kt-btn kt-btn-ghost" style="padding: 4px 10px; height: auto" data-testid="str-row-action" @click.prevent="openRoute(p.action_route)">{{ p.available_action || __("View") }}</a></td>
+											<td><a href="#" class="btn btn-ghost" style="padding: 4px 10px; height: auto" data-testid="str-row-action" @click.prevent="openRoute(p.action_route)">{{ p.available_action || __("View") }}</a></td>
 										</tr>
 									</tbody>
 								</table>
@@ -299,7 +299,7 @@ async function submitDraft() {
 							{{ __("Nothing needs your action right now.") }}
 						</div>
 						<template v-else>
-							<table class="kt-table" data-testid="str-my-work-table">
+							<table class="table" data-testid="str-my-work-table">
 								<thead>
 									<tr>
 										<th>{{ __("Plan") }}</th>
@@ -317,7 +317,7 @@ async function submitDraft() {
 										<td>{{ w.submitted_by || "—" }}</td>
 										<td>{{ w.submitted_at_label || "—" }}</td>
 										<td><span class="kt-status" :class="w.status_tone">{{ w.status_label }}</span></td>
-										<td><a href="#" class="kt-btn kt-btn-ghost" style="padding: 4px 10px; height: auto" data-testid="str-my-work-action" @click.prevent="openRoute(w.action_route)">{{ w.action_label }}</a></td>
+										<td><a href="#" class="btn btn-ghost" style="padding: 4px 10px; height: auto" data-testid="str-my-work-action" @click.prevent="openRoute(w.action_route)">{{ w.action_label }}</a></td>
 									</tr>
 								</tbody>
 							</table>
@@ -330,7 +330,7 @@ async function submitDraft() {
 
 		<template v-else>
 			<div style="padding-bottom: 90px; max-width: 820px">
-				<div class="kt-card kt-blueprint" style="padding: 0; max-width: 820px">
+				<div class="card blueprint" style="padding: 0; max-width: 820px">
 					<div style="padding: 24px">
 						<div class="kt-eyebrow" style="margin-bottom: 6px">{{ __("Strategy Alignment") }}</div>
 						<h1 style="font-size: 30px; margin: 0 0 8px">{{ __("Create strategic plan") }}</h1>
@@ -340,21 +340,21 @@ async function submitDraft() {
 						<div style="max-width: 640px" data-testid="str-new-plan-form">
 							<div class="kt-card-title">{{ __("Plan identity") }}</div>
 							<div style="display: grid; gap: 13.6px">
-								<div class="kt-field">
+								<div class="field">
 									<label for="str-plan-title">{{ __("Plan title") }}</label>
-									<input id="str-plan-title" v-model="draft.title" class="kt-input" type="text" data-testid="str-plan-title" :aria-invalid="fieldErrors.title ? 'true' : 'false'" />
+									<input id="str-plan-title" v-model="draft.title" class="input" type="text" data-testid="str-plan-title" :aria-invalid="fieldErrors.title ? 'true' : 'false'" />
 									<p v-if="fieldErrors.title" class="kt-field-error" data-testid="str-field-error-title">{{ fieldErrors.title }}</p>
 								</div>
-								<div class="kt-field">
+								<div class="field">
 									<label for="str-plan-role">{{ __("Plan type") }}</label>
-									<select id="str-plan-role" v-model="draft.plan_role" class="kt-input" style="max-width: 260px" data-testid="str-plan-role">
+									<select id="str-plan-role" v-model="draft.plan_role" class="input" style="max-width: 260px" data-testid="str-plan-role">
 										<option value="Primary">{{ __("Main strategic plan") }}</option>
 										<option value="Supporting Framework">{{ __("Supporting framework") }}</option>
 									</select>
 								</div>
-								<div v-if="draft.plan_role === 'Supporting Framework'" class="kt-field">
+								<div v-if="draft.plan_role === 'Supporting Framework'" class="field">
 									<label for="str-plan-parent">{{ __("Main plan") }}</label>
-									<select id="str-plan-parent" v-model="draft.parent_primary_plan_id" class="kt-input" data-testid="str-plan-parent">
+									<select id="str-plan-parent" v-model="draft.parent_primary_plan_id" class="input" data-testid="str-plan-parent">
 										<option value="">{{ __("Select a main strategic plan") }}</option>
 										<option v-for="p in primaryPlans" :key="p.id" :value="p.id">{{ p.title }} · {{ p.reference }}</option>
 									</select>
@@ -362,14 +362,14 @@ async function submitDraft() {
 									<p v-if="fieldErrors.parent_primary_plan_id" class="kt-field-error" data-testid="str-field-error-parent">{{ fieldErrors.parent_primary_plan_id }}</p>
 								</div>
 								<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 13.6px">
-									<div class="kt-field">
+									<div class="field">
 										<label for="str-period-start">{{ __("Start date") }}</label>
-										<input id="str-period-start" v-model="draft.period_start" class="kt-input" type="date" data-testid="str-period-start" />
+										<input id="str-period-start" v-model="draft.period_start" class="input" type="date" data-testid="str-period-start" />
 										<p v-if="fieldErrors.period_start" class="kt-field-error" data-testid="str-field-error-period-start">{{ fieldErrors.period_start }}</p>
 									</div>
-									<div class="kt-field">
+									<div class="field">
 										<label for="str-period-end">{{ __("End date") }}</label>
-										<input id="str-period-end" v-model="draft.period_end" class="kt-input" type="date" data-testid="str-period-end" />
+										<input id="str-period-end" v-model="draft.period_end" class="input" type="date" data-testid="str-period-end" />
 										<p v-if="fieldErrors.period_end" class="kt-field-error" data-testid="str-field-error-period-end">{{ fieldErrors.period_end }}</p>
 									</div>
 								</div>
@@ -384,8 +384,8 @@ async function submitDraft() {
 				</div>
 			</div>
 			<div class="kt-sticky-footer">
-				<button type="button" class="kt-btn kt-btn-secondary" data-testid="str-cancel-draft" @click="go()">{{ __("Cancel") }}</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="saving" data-testid="str-save-draft" @click="submitDraft">
+				<button type="button" class="btn btn-secondary" data-testid="str-cancel-draft" @click="go()">{{ __("Cancel") }}</button>
+				<button type="button" class="btn btn-primary" :disabled="saving" data-testid="str-save-draft" @click="submitDraft">
 					{{ __("Create plan and add objectives") }}
 				</button>
 			</div>

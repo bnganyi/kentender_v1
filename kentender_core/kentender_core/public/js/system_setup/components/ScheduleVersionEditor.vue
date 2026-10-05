@@ -236,7 +236,7 @@ function save() {
 
 		<div v-else data-testid="kt-sve-card" :data-mode="mode">
 			<h3 data-testid="kt-sve-title">{{ title }}</h3>
-			<span v-if="!creating" class="kt-tag kt-tag-neutral" data-testid="kt-sve-unsaved">{{ __("Unsaved changes") }}</span>
+			<span v-if="!creating" class="tag tag-neutral" data-testid="kt-sve-unsaved">{{ __("Unsaved changes") }}</span>
 			<div v-if="correcting" class="kt-notice is-info" style="margin-top:12px" data-testid="kt-sve-correcting-notice">
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
 				<div class="kt-notice-body">{{ __("This schedule has not taken effect and no plan uses it yet, so it can be changed here. Once either happens, changing it means a new version.") }}</div>
@@ -246,18 +246,18 @@ function save() {
 			     what it covers: fixed once saved (a different pair is a
 			     different schedule). -->
 			<div class="kt-sve-grid" data-testid="kt-sve-identity">
-				<div class="kt-field"><label for="kt-sve-name">{{ __("Name") }}</label><input id="kt-sve-name" v-model="form.profile_name" class="kt-input" data-testid="kt-sve-name"></div>
-				<div class="kt-field">
+				<div class="field"><label for="kt-sve-name">{{ __("Name") }}</label><input id="kt-sve-name" v-model="form.profile_name" class="input" data-testid="kt-sve-name"></div>
+				<div class="field">
 					<label for="kt-sve-method">{{ __("Method") }}</label>
-					<select id="kt-sve-method" v-model="form.procurement_method" class="kt-input" :disabled="!creating" data-testid="kt-sve-method">
+					<select id="kt-sve-method" v-model="form.procurement_method" class="input" :disabled="!creating" data-testid="kt-sve-method">
 						<option value="">{{ __("— Select —") }}</option>
 						<option v-for="method in (creating ? methods : [form.procurement_method])" :key="method" :value="method">{{ method }}</option>
 					</select>
 				</div>
-				<div class="kt-field"><label for="kt-sve-procedure">{{ __("Procedure") }}</label><input id="kt-sve-procedure" v-model="form.procedure" class="kt-input" data-testid="kt-sve-procedure"></div>
-				<div class="kt-field">
+				<div class="field"><label for="kt-sve-procedure">{{ __("Procedure") }}</label><input id="kt-sve-procedure" v-model="form.procedure" class="input" data-testid="kt-sve-procedure"></div>
+				<div class="field">
 					<label for="kt-sve-category">{{ __("Category") }}</label>
-					<select id="kt-sve-category" v-model="form.procurement_category" class="kt-input" :disabled="!creating" data-testid="kt-sve-category">
+					<select id="kt-sve-category" v-model="form.procurement_category" class="input" :disabled="!creating" data-testid="kt-sve-category">
 						<option value="">{{ __("— Select —") }}</option>
 						<option v-for="category in (creating ? categories : [form.procurement_category])" :key="category" :value="category">{{ category }}</option>
 					</select>
@@ -273,29 +273,29 @@ function save() {
 
 			<h6 class="kt-card-title">{{ __("When this schedule applies") }}</h6>
 			<div class="kt-sve-grid">
-				<div class="kt-field"><label for="kt-sve-from">{{ __("Applies from") }}</label><input id="kt-sve-from" v-model="form.effective_from" class="kt-input" type="date" data-testid="kt-sve-from"></div>
-				<div class="kt-field"><label for="kt-sve-until">{{ __("Applies until") }}</label><input id="kt-sve-until" v-model="form.effective_until" class="kt-input" type="date" data-testid="kt-sve-until"></div>
-				<div class="kt-field" style="grid-column:1/-1">
+				<div class="field"><label for="kt-sve-from">{{ __("Applies from") }}</label><input id="kt-sve-from" v-model="form.effective_from" class="input" type="date" data-testid="kt-sve-from"></div>
+				<div class="field"><label for="kt-sve-until">{{ __("Applies until") }}</label><input id="kt-sve-until" v-model="form.effective_until" class="input" type="date" data-testid="kt-sve-until"></div>
+				<div class="field" style="grid-column:1/-1">
 					<label for="kt-sve-basis">{{ __("Which date determines the rule to use?") }}</label>
-					<select id="kt-sve-basis" v-model="form.applicability_basis" class="kt-input" data-testid="kt-sve-basis">
+					<select id="kt-sve-basis" v-model="form.applicability_basis" class="input" data-testid="kt-sve-basis">
 						<option value="">{{ __("— Select —") }}</option>
 						<option v-for="basis in basisOptions" :key="basis" :value="basis">{{ basis }}</option>
 					</select>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-sve-counting">{{ __("Days counted") }}</label>
-					<select id="kt-sve-counting" v-model="form.counting_rule" class="kt-input" data-testid="kt-sve-counting">
+					<select id="kt-sve-counting" v-model="form.counting_rule" class="input" data-testid="kt-sve-counting">
 						<option v-for="rule in COUNTING_RULES" :key="rule" :value="rule">{{ __(rule) }}</option>
 					</select>
 				</div>
-				<div v-if="form.counting_rule === 'Working days'" class="kt-field">
+				<div v-if="form.counting_rule === 'Working days'" class="field">
 					<label for="kt-sve-calendar">{{ __("Working-day calendar") }}</label>
-					<select id="kt-sve-calendar" v-model="form.calendar" class="kt-input" :aria-invalid="form.calendar ? 'false' : 'true'" data-testid="kt-sve-calendar">
+					<select id="kt-sve-calendar" v-model="form.calendar" class="input" :aria-invalid="form.calendar ? 'false' : 'true'" data-testid="kt-sve-calendar">
 						<option value="">{{ __("— Select —") }}</option>
 						<option v-for="row in usableCalendars" :key="row.calendar" :value="row.calendar">{{ row.calendar_name }} · {{ __("Version {0}", [row.version_number]) }}</option>
 					</select>
 				</div>
-				<div class="kt-field"><label for="kt-sve-delivery">{{ __("Estimated delivery period default") }}</label><input id="kt-sve-delivery" v-model="form.estimated_delivery_period_default_days" class="kt-input" type="number" min="0" :placeholder="__('Not set')" data-testid="kt-sve-delivery"></div>
+				<div class="field"><label for="kt-sve-delivery">{{ __("Estimated delivery period default") }}</label><input id="kt-sve-delivery" v-model="form.estimated_delivery_period_default_days" class="input" type="number" min="0" :placeholder="__('Not set')" data-testid="kt-sve-delivery"></div>
 			</div>
 			<div v-if="form.counting_rule === 'Working days' && !form.calendar" class="kt-notice is-critical" style="margin-bottom:12px" data-testid="kt-sve-calendar-missing">
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
@@ -303,7 +303,7 @@ function save() {
 			</div>
 
 			<h6 class="kt-card-title">{{ __("Milestones") }}</h6>
-			<table class="kt-table" style="margin-bottom:16px" data-testid="kt-sve-milestones">
+			<table class="table" style="margin-bottom:16px" data-testid="kt-sve-milestones">
 				<thead><tr><th>{{ __("Milestone") }}</th><th>{{ __("Order") }}</th><th>{{ __("Applies") }}</th></tr></thead>
 				<tbody>
 					<tr v-for="(row, index) in milestones" :key="row.milestone" :data-testid="'kt-sve-milestone-' + row.milestone">
@@ -316,7 +316,7 @@ function save() {
 
 			<h6 class="kt-card-title">{{ __("Time intervals") }}</h6>
 			<div class="kt-table-scroll">
-				<table class="kt-table" data-testid="kt-sve-intervals">
+				<table class="table" data-testid="kt-sve-intervals">
 					<thead><tr><th>{{ __("From") }}</th><th>{{ __("To") }}</th><th>{{ __("Days counted") }}</th><th>{{ __("Minimum status") }}</th><th>{{ __("Minimum days") }}</th><th>{{ __("Maximum status") }}</th><th>{{ __("Maximum days") }}</th><th>{{ __("Default days") }}</th><th>{{ __("Default basis") }}</th><th><span class="kt-visually-hidden">{{ __("Action") }}</span></th></tr></thead>
 					<tbody>
 						<tr v-for="row in intervals" :key="row.to.milestone" :class="{ 'is-selected': selected === row.to.milestone }" :data-testid="'kt-sve-interval-' + row.to.milestone">
@@ -339,41 +339,41 @@ function save() {
 			<template v-if="selectedInterval">
 				<h6 class="kt-card-title" style="margin-top:20px" data-testid="kt-sve-selected-title">{{ __("Selected interval — {0}", [selectedInterval.to.label]) }}</h6>
 				<div class="kt-sve-interval-grid" data-testid="kt-sve-selected">
-					<div class="kt-field"><label for="kt-sve-i-from">{{ __("From") }}</label><select id="kt-sve-i-from" class="kt-input" disabled><option>{{ selectedInterval.from.label }}</option></select></div>
-					<div class="kt-field"><label for="kt-sve-i-to">{{ __("To") }}</label><select id="kt-sve-i-to" class="kt-input" disabled><option>{{ selectedInterval.to.label }}</option></select></div>
-					<div class="kt-field">
+					<div class="field"><label for="kt-sve-i-from">{{ __("From") }}</label><select id="kt-sve-i-from" class="input" disabled><option>{{ selectedInterval.from.label }}</option></select></div>
+					<div class="field"><label for="kt-sve-i-to">{{ __("To") }}</label><select id="kt-sve-i-to" class="input" disabled><option>{{ selectedInterval.to.label }}</option></select></div>
+					<div class="field">
 						<label for="kt-sve-i-counting">{{ __("Days counted") }}</label>
-						<select id="kt-sve-i-counting" v-model="selectedInterval.to.counting_rule" class="kt-input" data-testid="kt-sve-i-counting">
+						<select id="kt-sve-i-counting" v-model="selectedInterval.to.counting_rule" class="input" data-testid="kt-sve-i-counting">
 							<option value="">{{ __("As the schedule ({0})", [__(form.counting_rule)]) }}</option>
 							<option v-for="rule in COUNTING_RULES" :key="rule" :value="rule">{{ __(rule) }}</option>
 						</select>
 					</div>
-					<div class="kt-field"><label for="kt-sve-i-convention">{{ __("Counting convention") }}</label><input id="kt-sve-i-convention" class="kt-input" :value="__('Excludes the start date; includes the end date')" readonly></div>
-					<div class="kt-field">
+					<div class="field"><label for="kt-sve-i-convention">{{ __("Counting convention") }}</label><input id="kt-sve-i-convention" class="input" :value="__('Excludes the start date; includes the end date')" readonly></div>
+					<div class="field">
 						<label for="kt-sve-i-min-status">{{ __("Minimum status") }}</label>
-						<select id="kt-sve-i-min-status" class="kt-input" :value="boundStatus(selectedInterval.to.minimum_days)" data-testid="kt-sve-i-min-status" @change="setBound(selectedInterval.to, 'minimum_days', $event.target.value)">
+						<select id="kt-sve-i-min-status" class="input" :value="boundStatus(selectedInterval.to.minimum_days)" data-testid="kt-sve-i-min-status" @change="setBound(selectedInterval.to, 'minimum_days', $event.target.value)">
 							<option value="Value specified">{{ __("Value specified") }}</option>
 							<option value="Not yet established">{{ __("Not yet established") }}</option>
 						</select>
 					</div>
-					<div class="kt-field"><label for="kt-sve-i-min">{{ __("Minimum days") }}</label><input id="kt-sve-i-min" v-model="selectedInterval.to.minimum_days" class="kt-input" type="number" min="1" :disabled="selectedInterval.to.minimum_days === ''" data-testid="kt-sve-i-min"></div>
-					<div class="kt-field">
+					<div class="field"><label for="kt-sve-i-min">{{ __("Minimum days") }}</label><input id="kt-sve-i-min" v-model="selectedInterval.to.minimum_days" class="input" type="number" min="1" :disabled="selectedInterval.to.minimum_days === ''" data-testid="kt-sve-i-min"></div>
+					<div class="field">
 						<label for="kt-sve-i-max-status">{{ __("Maximum status") }}</label>
-						<select id="kt-sve-i-max-status" class="kt-input" :value="boundStatus(selectedInterval.to.maximum_days)" data-testid="kt-sve-i-max-status" @change="setBound(selectedInterval.to, 'maximum_days', $event.target.value)">
+						<select id="kt-sve-i-max-status" class="input" :value="boundStatus(selectedInterval.to.maximum_days)" data-testid="kt-sve-i-max-status" @change="setBound(selectedInterval.to, 'maximum_days', $event.target.value)">
 							<option value="Value specified">{{ __("Value specified") }}</option>
 							<option value="Not yet established">{{ __("Not yet established") }}</option>
 						</select>
 					</div>
-					<div class="kt-field"><label for="kt-sve-i-max">{{ __("Maximum days") }}</label><input id="kt-sve-i-max" v-model="selectedInterval.to.maximum_days" class="kt-input" type="number" min="1" :disabled="selectedInterval.to.maximum_days === ''" data-testid="kt-sve-i-max"></div>
-					<div class="kt-field"><label for="kt-sve-i-default">{{ __("Default days") }}</label><input id="kt-sve-i-default" v-model="selectedInterval.to.default_days" class="kt-input" type="number" min="0" data-testid="kt-sve-i-default"></div>
-					<div class="kt-field">
+					<div class="field"><label for="kt-sve-i-max">{{ __("Maximum days") }}</label><input id="kt-sve-i-max" v-model="selectedInterval.to.maximum_days" class="input" type="number" min="1" :disabled="selectedInterval.to.maximum_days === ''" data-testid="kt-sve-i-max"></div>
+					<div class="field"><label for="kt-sve-i-default">{{ __("Default days") }}</label><input id="kt-sve-i-default" v-model="selectedInterval.to.default_days" class="input" type="number" min="0" data-testid="kt-sve-i-default"></div>
+					<div class="field">
 						<label for="kt-sve-i-basis">{{ __("Default basis") }}</label>
-						<select id="kt-sve-i-basis" v-model="selectedInterval.to.basis" class="kt-input" data-testid="kt-sve-i-basis">
+						<select id="kt-sve-i-basis" v-model="selectedInterval.to.basis" class="input" data-testid="kt-sve-i-basis">
 							<option value="">{{ __("Not yet established") }}</option>
 							<option v-for="basis in BASES" :key="basis.value" :value="basis.value">{{ basis.label }}</option>
 						</select>
 					</div>
-					<div class="kt-field"><label for="kt-sve-i-reference">{{ __("Source reference") }}</label><input id="kt-sve-i-reference" v-model="selectedInterval.to.statutory_reference" class="kt-input" data-testid="kt-sve-i-reference"></div>
+					<div class="field"><label for="kt-sve-i-reference">{{ __("Source reference") }}</label><input id="kt-sve-i-reference" v-model="selectedInterval.to.statutory_reference" class="input" data-testid="kt-sve-i-reference"></div>
 				</div>
 			</template>
 
@@ -384,12 +384,12 @@ function save() {
 
 			<h6 class="kt-card-title" style="margin-top:20px">{{ __("Sources and interpretation") }}</h6>
 			<div class="kt-sve-grid">
-				<div class="kt-field"><label for="kt-sve-instrument">{{ __("Instrument") }}</label><input id="kt-sve-instrument" v-model="form.source_instrument" class="kt-input" data-testid="kt-sve-instrument"></div>
-				<div class="kt-field"><label for="kt-sve-provisions">{{ __("Provisions") }}</label><input id="kt-sve-provisions" v-model="form.provision" class="kt-input" data-testid="kt-sve-provisions"></div>
-				<div class="kt-field"><label for="kt-sve-url">{{ __("Source URL") }}</label><input id="kt-sve-url" v-model="form.source_document" class="kt-input" data-testid="kt-sve-url"></div>
-				<div v-if="verificationStatuses.length" class="kt-field">
+				<div class="field"><label for="kt-sve-instrument">{{ __("Instrument") }}</label><input id="kt-sve-instrument" v-model="form.source_instrument" class="input" data-testid="kt-sve-instrument"></div>
+				<div class="field"><label for="kt-sve-provisions">{{ __("Provisions") }}</label><input id="kt-sve-provisions" v-model="form.provision" class="input" data-testid="kt-sve-provisions"></div>
+				<div class="field"><label for="kt-sve-url">{{ __("Source URL") }}</label><input id="kt-sve-url" v-model="form.source_document" class="input" data-testid="kt-sve-url"></div>
+				<div v-if="verificationStatuses.length" class="field">
 					<label for="kt-sve-check">{{ __("Source check") }}</label>
-					<select id="kt-sve-check" v-model="form.verification_status" class="kt-input" data-testid="kt-sve-check">
+					<select id="kt-sve-check" v-model="form.verification_status" class="input" data-testid="kt-sve-check">
 						<option value="">{{ __("— Select —") }}</option>
 						<option v-for="status in verificationStatuses" :key="status" :value="status">{{ __(sourceCheckLabel(status)) }}</option>
 					</select>
@@ -403,12 +403,12 @@ function save() {
 				<p class="card-body" data-testid="kt-sve-replaces">
 					{{ replaces ? __("Earlier versions this replaces: {0} Version {1}.", [ruleName, current.version_number]) : __("These dates do not overlap Version {0}, so it is not replaced.", [current.version_number]) }}
 				</p>
-				<div class="kt-field"><label for="kt-sve-reason">{{ __("Reason for change") }}</label><textarea id="kt-sve-reason" v-model="form.change_reason" class="kt-input" rows="2" data-testid="kt-sve-reason" /></div>
+				<div class="field"><label for="kt-sve-reason">{{ __("Reason for change") }}</label><textarea id="kt-sve-reason" v-model="form.change_reason" class="input" rows="2" data-testid="kt-sve-reason" /></div>
 			</div>
 			<div style="display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:12px;flex-wrap:wrap">
 				<span v-if="blocked" class="kt-blocked" data-testid="kt-sve-blocked">{{ blocked }}</span>
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="kt-sve-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-sve-save" @click="save">
+				<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="kt-sve-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
+				<button type="button" class="btn btn-primary" :disabled="!canSave" data-testid="kt-sve-save" @click="save">
 					{{ correcting ? __("Save changes") : creating ? __("Save schedule version") : __("Save new version") }}
 				</button>
 			</div>

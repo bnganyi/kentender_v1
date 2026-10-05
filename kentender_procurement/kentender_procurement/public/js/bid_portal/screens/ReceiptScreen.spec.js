@@ -61,12 +61,12 @@ describe("Receipt", () => {
 		globalThis.__narrow = true;
 		const wrapper = mountWith(receiptPage());
 		expect(wrapper.get('[data-testid="bds-receipt-actions"]').classes()).toContain("bds-actions-stack");
-		expect(wrapper.findAll('[data-testid="bds-receipt-actions"] .kt-btn').every((b) => b.classes().includes("bds-btn-block"))).toBe(true);
+		expect(wrapper.findAll('[data-testid="bds-receipt-actions"] .btn').every((b) => b.classes().includes("bds-btn-block"))).toBe(true);
 	});
 
 	it("lets the representative only read, print and download", () => {
 		const wrapper = mountWith(receiptPage("REPRESENTATIVE"));
-		expect(wrapper.findAll('[data-testid="bds-receipt-actions"] .kt-btn').map((b) => b.text())).toEqual(["Print receipt"]);
+		expect(wrapper.findAll('[data-testid="bds-receipt-actions"] .btn').map((b) => b.text())).toEqual(["Print receipt"]);
 		expect(wrapper.find('[data-testid="bds-receipt-sentence"]').exists()).toBe(false);
 		expect(wrapper.get('[data-testid="bds-receipt-download"]').attributes("href")).toContain("download_bid_receipt");
 	});

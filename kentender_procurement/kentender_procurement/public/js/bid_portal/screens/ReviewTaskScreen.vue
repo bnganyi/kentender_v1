@@ -63,7 +63,7 @@ onMounted(() => {
 				<p class="kt-page-desc">{{ __(data.page.description) }}</p>
 			</div>
 			<div v-if="data.page.action" class="kt-page-actions" :class="{ 'bds-actions-stack': narrow }">
-				<a :href="data.page.action.href" class="kt-btn" :class="[data.page.action.tone === 'primary' ? 'kt-btn-primary' : 'kt-btn-secondary', narrow ? 'bds-btn-block' : '']" data-testid="bds-review-action">{{ __(data.page.action.label) }}</a>
+				<a :href="data.page.action.href" class="btn" :class="[data.page.action.tone === 'primary' ? 'btn-primary' : 'btn-secondary', narrow ? 'bds-btn-block' : '']" data-testid="bds-review-action">{{ __(data.page.action.label) }}</a>
 			</div>
 		</div>
 
@@ -97,7 +97,7 @@ onMounted(() => {
 		<div class="kt-region">
 			<h2>{{ __("Bid tasks") }}</h2>
 			<div class="bds-region-body">
-				<table v-if="!narrow" class="kt-table" data-testid="bds-review-tasks">
+				<table v-if="!narrow" class="table" data-testid="bds-review-tasks">
 					<thead><tr><th>{{ __("Task") }}</th><th>{{ __("Status") }}</th><th>{{ __("Action") }}</th></tr></thead>
 					<tbody>
 						<tr v-for="row in data.task_rows" :key="row.key" :data-testid="'bds-review-task-' + row.key">
@@ -153,12 +153,12 @@ onMounted(() => {
 		<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure"><div class="kt-notice-body">{{ failure }}</div></div>
 
 		<div v-if="narrow" class="bds-footer-stack">
-			<a v-if="data.footer.submit" :href="data.footer.submit.href" class="kt-btn kt-btn-primary bds-btn-block" data-testid="bds-review-submit">{{ __(data.footer.submit.label) }}</a>
-			<a :href="data.footer.back_href" class="kt-btn kt-btn-secondary bds-btn-block">{{ __("Back to bid") }}</a>
+			<a v-if="data.footer.submit" :href="data.footer.submit.href" class="btn btn-primary bds-btn-block" data-testid="bds-review-submit">{{ __(data.footer.submit.label) }}</a>
+			<a :href="data.footer.back_href" class="btn btn-secondary bds-btn-block">{{ __("Back to bid") }}</a>
 		</div>
 		<div v-else class="bds-footer">
-			<a :href="data.footer.back_href" class="kt-btn kt-btn-secondary">{{ __("Back to bid") }}</a>
-			<div v-if="data.footer.submit" class="bds-footer-end"><a :href="data.footer.submit.href" class="kt-btn kt-btn-primary" data-testid="bds-review-submit">{{ __(data.footer.submit.label) }}</a></div>
+			<a :href="data.footer.back_href" class="btn btn-secondary">{{ __("Back to bid") }}</a>
+			<div v-if="data.footer.submit" class="bds-footer-end"><a :href="data.footer.submit.href" class="btn btn-primary" data-testid="bds-review-submit">{{ __(data.footer.submit.label) }}</a></div>
 		</div>
 	</div>
 	<CommonState v-else-if="failure" state="load-failure" @action="load" />

@@ -35,21 +35,21 @@ function onKeydown(e) {
 </script>
 
 <template>
-	<div v-if="open" class="kt-dialog-backdrop" tabindex="-1" @keydown="onKeydown">
-		<div class="kt-dialog" role="dialog" aria-modal="true" style="width: 480px" :data-testid="testid">
-			<h2 class="kt-dialog-title">{{ title }}</h2>
+	<div v-if="open" class="dialog-backdrop" tabindex="-1" @keydown="onKeydown">
+		<div class="dialog" role="dialog" aria-modal="true" style="width: 480px" :data-testid="testid">
+			<h2 class="dialog-title">{{ title }}</h2>
 			<p v-if="message" class="kt-muted" style="margin: 0; font-size: 14px">{{ message }}</p>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" data-testid="str-confirm-cancel" @click="$emit('cancel')">
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" data-testid="str-confirm-cancel" @click="$emit('cancel')">
 					{{ cancelLabel || __("Cancel") }}
 				</button>
-				<button v-if="secondaryLabel" type="button" class="kt-btn kt-btn-secondary" data-testid="str-confirm-secondary" @click="$emit('secondary')">
+				<button v-if="secondaryLabel" type="button" class="btn btn-secondary" data-testid="str-confirm-secondary" @click="$emit('secondary')">
 					{{ secondaryLabel }}
 				</button>
 				<button
 					ref="confirmBtn"
 					type="button"
-					class="kt-btn kt-btn-primary"
+					class="btn btn-primary"
 					:class="{ 'kt-danger': danger }"
 					data-testid="str-confirm-ok"
 					@click="$emit('confirm')"
