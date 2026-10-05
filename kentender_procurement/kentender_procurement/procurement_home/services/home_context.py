@@ -11,10 +11,6 @@ from typing import Any
 import frappe
 from frappe import _
 
-from kentender_procurement.procurement_lifecycle.demand_module_gate import (
-	demand_doctype_available,
-)
-
 _YEAR_RE = re.compile(r"(\d{4})")
 
 
@@ -51,38 +47,22 @@ def _entity_display(name: str) -> dict[str, str]:
 	return {"id": name, "code": code or name, "name": label}
 
 
-def list_available_entities(user: str | None = None) -> list[dict[str, str]]:
-	# CTX-CHG-001 rule 1 — the offer is permission-derived: the one canonical
-	# eligibility rule (permitted_procuring_entities; None = unrestricted).
-	# The previous version offered EVERY user the same unfiltered list.
-	from kentender_core.services.org_scope_access import permitted_procuring_entities
+def _site_entity() -> str:
+	"""The Procuring Entity this site is (AUTH-ADR-001 v1.11: one site is one Procuring Entity, configured once
+	and never selected), as the name of its Procuring Entity record. Empty when the site has none configured."""
+	code = _norm(frappe.db.get_single_value("Site Procuring Entity", "pe_code"))
+	if not code:
+		return ""
+	if frappe.db.exists("Procuring Entity", code):
+		return code
+	return _norm(frappe.db.get_value("Procuring Entity", {"entity_code": code}, "name"))
 
-	allowed = permitted_procuring_entities(_norm(user) or frappe.session.user)
-	if allowed is None:
-		# Unrestricted users: prefer operational entities over demo PE clutter.
-		preferred = ["PE-MOH", "PE-MOE"]
-		active: set[str] = set()
-		if demand_doctype_available():
-			active = set(
-				frappe.get_all("Demand", pluck="procuring_entity", distinct=True, limit=50)
-				or []
-			)
-		if frappe.db.exists("DocType", "Procurement Budget") and frappe.db.has_column("Procurement Budget", "procuring_entity"):
-			active |= set(
-				frappe.get_all("Procurement Budget", pluck="procuring_entity", distinct=True, limit=50) or []
-			)
-		names = [p for p in preferred if frappe.db.exists("Procuring Entity", p)]
-		for n in sorted(active):
-			if n and n not in names and frappe.db.exists("Procuring Entity", n):
-				names.append(n)
-		if not names:
-			names = frappe.get_all("Procuring Entity", pluck="name", order_by="entity_name asc", limit=20)
-	else:
-		names = [
-			n for n in sorted(allowed)
-			if frappe.db.get_value("Procuring Entity", n, "status") == "Active"
-		]
-	return [_entity_display(n) for n in names if n]
+
+def list_available_entities(user: str | None = None) -> list[dict[str, str]]:
+	"""CTX-CHG-001 v1.1 §2: the site's own Procuring Entity, shown and never chosen. Who may read what Home
+	composes is decided by the services Home calls, not by an entity picker."""
+	name = _site_entity()
+	return [_entity_display(name)] if name else []
 
 
 def list_available_fiscal_years(procuring_entity: str | None = None) -> list[int]:
@@ -118,48 +98,20 @@ def resolve_home_context(
 	fiscal_year: int | str | None = None,
 	user: str | None = None,
 ) -> dict[str, Any]:
-	"""Resolve and validate PE/FY for Home. Raises PermissionError on unauthorized selection."""
+	"""Resolve and validate the entity and Financial Year for Home. The entity is the site's own (CTX-CHG-001
+	v1.1 §2); an explicit request for any other is refused. No global working-entity preference is read or written."""
 	user = _norm(user) or _norm(frappe.session.user)
 	entities = list_available_entities(user)
 	if not entities:
-		frappe.throw(_("No Procuring Entity is available for this user."), frappe.PermissionError)
-
-	from kentender_core.services.working_context import get_working_pe, select_working_pe
-
-	allowed_ids = {e["id"] for e in entities}
+		frappe.throw(_("No Procuring Entity is configured for this site."), frappe.PermissionError)
+	selected_pe = entities[0]["id"]
 	requested_pe = _norm(procuring_entity)
-	if requested_pe:
-		if requested_pe not in allowed_ids:
-			frappe.throw(_("You do not have access to that Procuring Entity."), frappe.PermissionError)
-		selected_pe = requested_pe
-		# CTX-CHG-001 rule 5 — an explicit pick is remembered as the GLOBAL
-		# working PE (persistence never breaks a read).
-		try:
-			select_working_pe(selected_pe, user)
-		except frappe.PermissionError:
-			frappe.clear_last_message()
-	else:
-		# CTX-CHG-001 rule 2 — the global working PE preference; the retired
-		# User.kt_procuring_entity custom field is migrated into it.
-		try:
-			working = get_working_pe(user)["selected"]
-		except frappe.PermissionError:
-			working = None
-		if working and working["id"] in allowed_ids:
-			selected_pe = working["id"]
-		else:
-			# Prefer canonical MOH codes over alphabetically-first demo entities.
-			ids = {e["id"] for e in entities}
-			selected_pe = next(
-				(c for c in ("PE-MOH", "PE-MOE") if c in ids),
-				entities[0]["id"],
-			)
+	if requested_pe and requested_pe != selected_pe:
+		frappe.throw(_("You do not have access to that Procuring Entity."), frappe.PermissionError)
 
 	years = list_available_fiscal_years(selected_pe)
-	# CTX-CHG-001 rule 3 — Home's own per-module FY memory
-	# (kt_home_financial_year). The vocabulary stays Home's int start year for
-	# now (opaque to the core service); unifying onto governed Financial Year
-	# docnames is the recorded CTX-FU-02 follow-up.
+	# CTX-CHG-001 rule 3 — Home's own per-module FY memory (kt_home_financial_year), a reversible filter that a
+	# direct link or an explicit choice overrides. The vocabulary stays Home's int start year for now (CTX-FU-02).
 	from kentender_core.services.working_context import get_module_fy
 
 	requested_fy = None
@@ -178,12 +130,11 @@ def resolve_home_context(
 	)
 	selected_fy = int(fy_state["selected"]["id"]) if fy_state["selected"] else years[0]
 
-	pe_display = next((e for e in entities if e["id"] == selected_pe), _entity_display(selected_pe))
 	return {
-		"procuring_entity": pe_display,
+		"procuring_entity": entities[0],
 		"fiscal_year": selected_fy,
 		"available_entities": entities,
 		"available_fiscal_years": years,
-		"show_entity_selector": len(entities) > 1,
+		"show_entity_selector": False,
 		"show_fiscal_year_selector": len(years) > 1,
 	}

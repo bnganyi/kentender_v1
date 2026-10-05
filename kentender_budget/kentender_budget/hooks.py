@@ -92,17 +92,17 @@ kentender_scope_map = {
 }
 
 permission_query_conditions = {
-	"Procurement Budget": "kentender_core.services.authorization.permission_query_conditions",
-	"Procurement Budget Version": "kentender_core.services.authorization.permission_query_conditions",
-	"Procurement Budget Line": "kentender_core.services.authorization.permission_query_conditions",
-	"Procurement Budget Line Version": "kentender_core.services.authorization.permission_query_conditions",
+	"Procurement Budget": "kentender_budget.services.budget_read_scope.permission_query_conditions",
+	"Procurement Budget Version": "kentender_budget.services.budget_read_scope.permission_query_conditions",
+	"Procurement Budget Line": "kentender_budget.services.budget_read_scope.permission_query_conditions",
+	"Procurement Budget Line Version": "kentender_budget.services.budget_read_scope.permission_query_conditions",
 }
 
 has_permission = {
-	"Procurement Budget": "kentender_core.services.authorization.has_permission",
-	"Procurement Budget Version": "kentender_core.services.authorization.has_permission",
-	"Procurement Budget Line": "kentender_core.services.authorization.has_permission",
-	"Procurement Budget Line Version": "kentender_core.services.authorization.has_permission",
+	"Procurement Budget": "kentender_budget.services.budget_read_scope.has_permission",
+	"Procurement Budget Version": "kentender_budget.services.budget_read_scope.has_permission",
+	"Procurement Budget Line": "kentender_budget.services.budget_read_scope.has_permission",
+	"Procurement Budget Line Version": "kentender_budget.services.budget_read_scope.has_permission",
 }
 
 

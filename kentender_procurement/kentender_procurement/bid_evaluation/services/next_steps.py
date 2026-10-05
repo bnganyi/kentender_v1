@@ -165,8 +165,13 @@ def answer(doc, user: str, *, extra: dict[str, Any] | None = None) -> dict[str, 
 				candidates.append(ns.answer(ns.KIND_YOUR_TURN, headline="Review the committee's report.", primary_action="open_report"))
 		# Once Award has received the report (AWD-CHG-001 v0.4 §3), the recipient's
 		# review is Award's "Prepare professional opinion"; here it is done.
-		if delivery and (v["member"] or v["secretary"] or v["auditor"] or (user == delivery.recipient_user and delivery.review_state == "With Award")):
-			candidates.append(ns.answer(ns.KIND_DONE, headline=f"The committee report was sent to {people.full_name(delivery.recipient_user)} on {when(delivery.delivered_at)}."))
+		# The Accounting Officer and the Head of Procurement Function read the delivered report,
+		# read-only (OVS-CHG-001 v0.6 §4): their done line names the report and offers to open it.
+		oversight = (v["ao"] or v["hop"]) and not v["technical"]
+		committee = v["member"] or v["secretary"] or v["auditor"]
+		if delivery and (committee or oversight or (user == delivery.recipient_user and delivery.review_state == "With Award")):
+			candidates.append(ns.answer(ns.KIND_DONE, headline=f"The committee report was sent to {people.full_name(delivery.recipient_user)} on {when(delivery.delivered_at)}.",
+				primary_action="view_report" if oversight and not committee else ""))
 	chosen = ns.choose(*candidates) if candidates else reader
 	return ns.for_viewer(chosen, technical=v["technical"], reader=ns.not_involved())
 

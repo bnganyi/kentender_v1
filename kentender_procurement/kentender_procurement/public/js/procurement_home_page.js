@@ -73,17 +73,10 @@
 		var root = host.querySelector("#kt-ph-root");
 		if (!root || root.__ktPhBound) return;
 		root.__ktPhBound = true;
-		// CTX-CHG-001 — a PE switched from the shared rail on any Vue page
-		// moves the same global preference this page resolves from.
-		document.addEventListener("kt:working-pe-changed", function () {
-			if (!root.isConnected) return;
-			_state.context = null;
-			_loadHome();
-		});
 		root.addEventListener("change", function (e) {
 			var t = e.target;
 			if (!t || !t.getAttribute) return;
-			if (t.getAttribute("data-testid") === "kt-ph-entity" || t.getAttribute("data-testid") === "kt-ph-fy") {
+			if (t.getAttribute("data-testid") === "kt-ph-fy") {
 				_loadHome();
 			}
 		});
@@ -103,11 +96,10 @@
 	}
 
 	function _selectedContextArgs() {
-		var peEl = document.querySelector('[data-testid="kt-ph-entity"]');
 		var fyEl = document.querySelector('[data-testid="kt-ph-fy"]');
 		var args = {};
-		if (peEl && peEl.tagName === "SELECT") args.procuring_entity = peEl.value;
-		else if (_state.context && _state.context.procuring_entity) args.procuring_entity = _state.context.procuring_entity.id;
+		// the Procuring Entity is the site's own (CTX-CHG-001 v1.1 §2): sent back as read, never chosen
+		if (_state.context && _state.context.procuring_entity) args.procuring_entity = _state.context.procuring_entity.id;
 		if (fyEl && fyEl.tagName === "SELECT") args.fiscal_year = fyEl.value;
 		else if (_state.context) args.fiscal_year = _state.context.fiscal_year;
 		return args;
@@ -117,33 +109,11 @@
 		var el = document.querySelector('[data-testid="kt-ph-context"]');
 		if (!el || !ctx) return;
 		var pe = ctx.procuring_entity || {};
-		var peHtml;
-		if (ctx.show_entity_selector && (ctx.available_entities || []).length > 1) {
-			peHtml =
-				'<select data-testid="kt-ph-entity">' +
-				(ctx.available_entities || [])
-					.map(function (e) {
-						var sel = e.id === pe.id ? " selected" : "";
-						return (
-							'<option value="' +
-							_esc(e.id) +
-							'"' +
-							sel +
-							">" +
-							_esc(e.name) +
-							(e.code ? " (" + _esc(e.code) + ")" : "") +
-							"</option>"
-						);
-					})
-					.join("") +
-				"</select>";
-		} else {
-			peHtml =
-				'<p class="kt-ph-context__value" data-testid="kt-ph-entity">' +
-				_esc(pe.name || pe.code || "") +
-				(pe.code && pe.name !== pe.code ? " (" + _esc(pe.code) + ")" : "") +
-				"</p>";
-		}
+		var peHtml =
+			'<p class="kt-ph-context__value" data-testid="kt-ph-entity">' +
+			_esc(pe.name || pe.code || "") +
+			(pe.code && pe.name !== pe.code ? " (" + _esc(pe.code) + ")" : "") +
+			"</p>";
 		var fyHtml;
 		if (ctx.show_fiscal_year_selector && (ctx.available_fiscal_years || []).length > 1) {
 			fyHtml =

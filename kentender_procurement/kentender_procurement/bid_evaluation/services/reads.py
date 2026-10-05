@@ -13,9 +13,15 @@ opening membership:
   read the bids, results and correspondence;
 - an appointed member who has not declared, or has declared a conflict,
   reads no bid content;
-- the Accounting Officer reads setup and history but no bid facts;
-- the Head of Procurement reads setup, and the exact delivered report;
-- a technical reader sees status only (KT-STD-001 §3A.6);
+- the Accounting Officer and the Head of Procurement Function read setup and
+  history and nothing of the bids until a report version is delivered; from
+  then on they read every delivered version, read-only, from its frozen
+  content (OVS-CHG-001 v0.6 §4, §7; `oversight.py`);
+- a Head of User Department whose unit contributed to the Tender reads the
+  administrative facts, and after delivery a department-level summary;
+- a technical reader sees status only, and once a version is delivered the
+  delivered report, read-only, but nothing of the bids (KT-STD-001 §3A.6;
+  EVL-CHG-001 v0.5 §9.10; OVS-CHG-001 v0.6 §4.2);
 - anyone else, and any protected record outside scope, is Not found.
 
 No count, name, amount or finding reaches anyone who may not read bids,
@@ -31,7 +37,7 @@ import frappe
 from frappe.utils import cstr
 
 from kentender_procurement.bid_evaluation.services import (
-	aggregate, checks, comparison, next_steps, people, records, report, roster, signing, sources, timers,
+	aggregate, checks, comparison, evidence_manifest, next_steps, oversight, people, records, report, roster, signing, sources, timers,
 )
 
 WORK_STATES = ("Preparing", "Reviewing", "Signing", "Report sent", "No evaluation required", "Cancelled")
@@ -48,10 +54,18 @@ def access(doc, user: str) -> dict[str, Any]:
 	v = next_steps.viewer(doc, user)
 	former = user in [m.member_user for a in frappe.get_all("Evaluation Appointment", filters={"evaluation_case": doc.name}, pluck="name")
 		for m in frappe.get_doc("Evaluation Appointment", a).members]
-	delivered = frappe.db.exists("Evaluation Report Delivery", {"evaluation_case": doc.name, "recipient_user": user, "status": "Delivered"})
-	read = v["technical"] or v["ao"] or v["hop"] or v["auditor"] or v["member"] or v["secretary"] or former
+	rows = oversight.deliveries(doc.name)
+	delivered = [d.report_version for d in rows]
+	recipient = any(d.recipient_user == user for d in rows)
+	read_other = v["technical"] or v["ao"] or v["hop"] or v["auditor"] or v["member"] or v["secretary"] or former
+	department = not read_other and oversight.department_scope(doc, user)
 	bids = (v["eligible"] or v["secretary"] or v["auditor"]) and not v["technical"]
-	return {**v, "read": read, "bids": bids, "report": bids or bool(delivered), "former": former and not v["member"]}
+	# OVS v0.6 §4: the AO and HOPF see status only before delivery, all details after
+	oversight_full = bool((v["ao"] or v["hop"]) and not v["technical"] and delivered)
+	# OVS-P05 and EVL-CHG-001 v0.5 §9.10: Administrator and System Manager read the delivered report, read-only, and nothing of the bids
+	technical_report = bool(v["technical"] and delivered)
+	return {**v, "read": read_other or department, "bids": bids, "report": bids or recipient or oversight_full or technical_report, "former": former and not v["member"],
+		"department": department, "oversight_full": oversight_full, "delivered": delivered, "delivered_read": oversight_full or technical_report}
 
 
 def require(doc, user: str) -> dict[str, Any]:
@@ -98,13 +112,23 @@ def resolve(*, tender_reference: str, user: str) -> dict[str, Any]:
 	out: dict[str, Any] = {
 		"evaluation": doc.name, "tender": doc.tender_reference, "title": doc.tender_title, "state": doc.state, "record_version": doc.record_version,
 		"guidance": guidance, "tracker": next_steps.tracker(doc, a, holder), "viewer": {k: a[k] for k in ("ao", "hop", "chair", "member", "secretary", "auditor",
-			"eligible", "undeclared", "conflicted", "technical", "bids")},
+			"eligible", "undeclared", "conflicted", "technical", "bids", "department", "oversight_full", "report")},
 		"conditions": conditions(doc), "closed_reason": cstr(doc.closed_reason),
 	}
 	if a["technical"]:
+		if a["delivered_read"]:
+			out["delivered_report"] = oversight.delivered_report(doc)
+		return out
+	if a["department"]:
+		# a department head: administrative facts, then the department-level summary after delivery
+		out["committee"] = oversight.committee_for_department(committee(doc))
+		out["department_summary"] = oversight.department_summary(doc)
 		return out
 	out["committee"] = committee(doc)
 	out["source"] = _source(doc)
+	if a["oversight_full"] and not a["bids"]:
+		# the decision and the report, from the frozen delivered version (never the live case)
+		out["delivered_report"] = oversight.delivered_report(doc)
 	if a["bids"]:
 		table = comparison.compare(doc.name)
 		out["comparison"] = table
@@ -282,12 +306,55 @@ def bid(*, tender_reference: str, bid: str, user: str) -> dict[str, Any]:
 		"groups": res["groups"], "responsiveness": res["responsiveness"], "requirements": requirements, "state": doc.state, "record_version": doc.record_version}
 
 
-def evidence(*, tender_reference: str, bid: str, digest: str, user: str) -> dict[str, Any]:
-	"""ReadEvaluationEvidence: one submitted file of an opened bid, by its digest; never a file URL."""
+def _delivered_choice(a: dict[str, Any], version: str) -> str:
+	"""The delivered version a reader asks for (default the latest); anything else is not theirs."""
+	if version:
+		if version not in a["delivered"]:
+			raise frappe.DoesNotExistError("Not found")
+		return version
+	if not a["delivered"]:
+		raise frappe.DoesNotExistError("Not found")
+	return a["delivered"][0]
+
+
+def delivered_bid(*, tender_reference: str, bid: str, user: str, version: str = "") -> dict[str, Any]:
+	"""One evaluated bid as the delivered report held it: its findings from the
+	frozen content, and its submitted documents from the version's evidence
+	manifest (OVS-CHG-001 v0.6 §7). For the Accounting Officer and the Head of
+	Procurement Function after delivery; never the live case."""
 	doc = _case(tender_reference)
 	a = require(doc, user)
-	if not a["bids"] or not frappe.db.exists("Evaluation Bid", {"name": bid, "evaluation_case": doc.name}):
+	if not a["oversight_full"]:
 		raise frappe.DoesNotExistError("Not found")
+	chosen = _delivered_choice(a, version)
+	manifest = evidence_manifest.of(chosen)
+	if not evidence_manifest.lists_bid(manifest, bid):
+		raise frappe.DoesNotExistError("Not found")
+	entry = next(b for b in manifest["bids"] if b["bid"] == bid)
+	findings = next((b for b in oversight.content(chosen).get("bid_findings") or [] if b.get("bid") == bid), {})
+	row = frappe.db.get_value(evidence_manifest.VERSION, chosen, ["version_number", "state", "evidence_manifest_basis"], as_dict=True)
+	return {"evaluation": doc.name, "tender": doc.tender_reference, "report": chosen, "version_number": row.version_number, "report_state": row.state, "bid": bid,
+		"bidder": entry["tenderer_name"], "submitted_version": entry["submission_version"], "receipt_reference": entry["receipt_reference"], "findings": findings,
+		"documents": [{"name": d["filename"], "digest": d["file_digest"], "media_type": d["media_type"], "size_bytes": d["size_bytes"], "response_id": d["response_id"]}
+			for d in manifest["documents"].get(bid, [])], "basis": row.evidence_manifest_basis}
+
+
+def evidence(*, tender_reference: str, bid: str, digest: str, user: str, version: str = "") -> dict[str, Any]:
+	"""ReadEvaluationEvidence: one submitted file of an opened bid, by its digest; never a file URL.
+
+	A committee reader asks for the live case. With a `version`, or for the
+	Accounting Officer or Head of Procurement Function, the file must be one
+	the delivered version's evidence manifest lists for that bid, so a later
+	submission or an unfinished correction never inherits the disclosure."""
+	doc = _case(tender_reference)
+	a = require(doc, user)
+	if not frappe.db.exists("Evaluation Bid", {"name": bid, "evaluation_case": doc.name}):
+		raise frappe.DoesNotExistError("Not found")
+	if version or not a["bids"]:
+		if not (a["oversight_full"] or a["bids"]):
+			raise frappe.DoesNotExistError("Not found")
+		if not evidence_manifest.covers(evidence_manifest.of(_delivered_choice(a, version)), bid, digest):
+			raise frappe.DoesNotExistError("Not found")
 	source = sources.cached_package(doc, frappe.get_doc("Evaluation Bid", bid))
 	for e in (source.get("body") or {}).get("evidence") or []:
 		for f in e.get("files") or []:
@@ -307,13 +374,22 @@ def report_view(*, tender_reference: str, user: str, version: str = "") -> dict[
 	versions = frappe.get_all("Evaluation Report Version", filters={"evaluation_case": doc.name}, fields=["name", "version_number", "state", "frozen_at",
 		"supersession_kind", "supersession_reason"], order_by="version_number asc")
 	frozen = [v for v in versions if v.state != "Draft"]
+	if not a["bids"]:
+		# a reader outside the committee (the recipient, the AO, the Head) reads delivered versions only:
+		# a version being signed, or a correction being prepared, is not theirs to read (OVS v0.6 §7)
+		frozen = [v for v in frozen if v.name in a["delivered"]]
 	if version:
 		chosen = next((v for v in frozen if v.name == version), None)
 		if chosen is None:
 			raise frappe.DoesNotExistError("Not found")
+	elif not a["bids"]:
+		latest = a["delivered"][0] if a["delivered"] else ""
+		chosen = next((v for v in frozen if v.name == latest), None)
+		if chosen is None:
+			raise frappe.DoesNotExistError("Not found")
 	else:
 		chosen = next((v for v in reversed(frozen) if v.state == "Signing"), None) or (
-			next((v for v in reversed(frozen) if v.state in ("Delivered", "Returned")), None) if doc.state == "Report sent" or not a["bids"] else None)
+			next((v for v in reversed(frozen) if v.state in ("Delivered", "Returned")), None) if doc.state == "Report sent" else None)
 	if chosen is not None:
 		row = frappe.get_doc("Evaluation Report Version", chosen.name)
 		content, live = json.loads(row.content_json or "{}"), False
@@ -347,6 +423,8 @@ def committee_record(*, tender_reference: str, user: str) -> dict[str, Any]:
 	"""The Committee record: roster, sessions and attendance, correspondence, disagreement, history."""
 	doc = _case(tender_reference)
 	a = require(doc, user)
+	if a["department"]:
+		raise frappe.DoesNotExistError("Not found")  # a department head reads the department-level summary, not the committee record
 	out = {"evaluation": doc.name, "tender": doc.tender_reference, "committee": committee(doc),
 		"appointments": report._committee(doc)["history"],
 		"declarations": [{"member": people.full_name(d.member_user), "choice": d.choice, "at": next_steps.when(d.declared_at), "status": d.status,
@@ -357,6 +435,9 @@ def committee_record(*, tender_reference: str, user: str) -> dict[str, Any]:
 	if a["bids"]:
 		built = report.build(doc)
 		out.update(built["clarifications_and_record"])
+	elif a["delivered_read"]:
+		# the record as it stood in the latest delivered version, not as it is now
+		out.update(oversight.content(a["delivered"][0]).get("clarifications_and_record") or {})
 	return out
 
 
@@ -369,9 +450,12 @@ def list_work(*, user: str, query: str = "", state: str = "") -> dict[str, Any]:
 	register = []
 	for name in frappe.get_all(records.CASE, pluck="name", order_by="creation desc"):
 		doc = frappe.get_doc(records.CASE, name)
-		if not access(doc, user)["read"] or people.technical(user):
+		a = access(doc, user)
+		if not a["read"] or people.technical(user):
 			continue
-		register.append({"tender": doc.tender_reference, "title": doc.tender_title, "state": doc.state})
+		# the outcome of the latest delivered report, for a reader who may read it (OVS v0.6 §13)
+		outcome = cstr(frappe.db.get_value("Evaluation Report Version", a["delivered"][0], "outcome")) if a["delivered"] and (a["report"] or a["bids"]) else ""
+		register.append({"tender": doc.tender_reference, "title": doc.tender_title, "state": doc.state, "outcome": outcome})
 	matched = [r for r in register if (not state or r["state"] == state) and (not query or query.lower() in (r["tender"] + " " + r["title"]).lower())]
 	# S-FORBIDDEN: no evaluation responsibility, appointment or readable record
 	offices = any(people.holds(user, r) for r in (people.ACCOUNTING_OFFICER, people.HEAD_OF_PROCUREMENT, people.AUDITOR))

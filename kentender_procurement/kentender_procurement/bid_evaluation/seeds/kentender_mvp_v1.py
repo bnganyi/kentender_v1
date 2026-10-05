@@ -347,6 +347,18 @@ def lifecycle_complete(tender: str) -> bool:
 	return frappe.db.get_value("Evaluation Case", {"tender": tender}, "state") == "Report sent" and all(row["ok"] for row in validate_bid_evaluation_seed())
 
 
+def stamp_proceeding(tender: str) -> int:
+	"""Give the canonical evaluation's Proceeding the evaluation namespace (OVS-CHG-001 v0.6 FU-OVS-34). It was
+	created without one, so a purge keyed on the namespace did not reach it. Idempotent; only a canonical case's row."""
+	case = frappe.db.get_value("Evaluation Case", {"tender": tender}, ["name", "fixture_namespace"], as_dict=True) if tender else None
+	if not case or case.fixture_namespace != NAMESPACE:
+		return 0
+	rows = frappe.get_all("Proceeding", filters={"owner_type": "Evaluation Case", "owner_id": case.name, "fixture_namespace": ("in", ("", None))}, pluck="name")
+	for name in rows:
+		frappe.db.set_value("Proceeding", name, "fixture_namespace", NAMESPACE, update_modified=False)
+	return len(rows)
+
+
 def upsert_bid_evaluation_base(*, commit: bool = False) -> dict[str, Any]:
 	"""The `bid_evaluation` stage. A complete canonical evaluation is returned
 	untouched; a partial one (an interrupted seed, or a browser pass) is removed
@@ -358,14 +370,15 @@ def upsert_bid_evaluation_base(*, commit: bool = False) -> dict[str, Any]:
 	tender = canonical_tender()
 	if not tender or frappe.db.get_value("Bid Opening Case", {"tender": tender}, "state") != "Opening complete":
 		frappe.throw("The canonical Tender's opening is not complete. Seed through the bid_opening stage first.")
+	stamp_proceeding(tender)
 	if lifecycle_complete(tender):
 		result = {"ok": True, "idempotent": True, "tender": tender, "evaluation": frappe.db.get_value("Evaluation Case", {"tender": tender}, "name")}
 	else:
 		clear.wipe(tenders=[tender], namespace=NAMESPACE)
 		frappe.db.set_value("Evaluation Handoff", {"tender": tender, "consumer": "evaluation"}, "delivery_status", "Pending", update_modified=False)
 		simulation.reset_controls()
-		saved = {flag: frappe.flags.get(flag) for flag in (*CLOCKS, "kt_evl_fixture_namespace")}
-		frappe.flags.kt_evl_fixture_namespace = NAMESPACE
+		saved = {flag: frappe.flags.get(flag) for flag in (*CLOCKS, "kt_evl_fixture_namespace", "kt_prc_fixture_namespace")}
+		frappe.flags.kt_evl_fixture_namespace = frappe.flags.kt_prc_fixture_namespace = NAMESPACE
 		try:
 			_Story(tender).run()
 		finally:
@@ -415,4 +428,7 @@ def validate_bid_evaluation_seed() -> list[dict[str, Any]]:
 	delivery = frappe.db.get_value("Evaluation Report Delivery", {"evaluation_case": doc.name, "status": "Delivered"}, ["recipient_user", "delivered_at"], as_dict=True)
 	check(bool(delivery) and delivery.recipient_user == HOP and cstr(delivery.delivered_at) == CLOCK["sign"][2],
 		"the report was delivered to Charles Mutiso at 16 Jun 2027, 14:07 EAT")
+	# OVS-CHG-001 v0.6 FU-OVS-34: the evaluation's Proceeding carries the evaluation namespace, so a purge keyed on it reaches it
+	proceeding = frappe.db.get_value("Proceeding", {"owner_type": "Evaluation Case", "owner_id": doc.name}, "fixture_namespace")
+	check(proceeding == NAMESPACE, f"the evaluation's Proceeding carries the evaluation namespace (got {proceeding!r})")
 	return rows

@@ -90,6 +90,15 @@ export default defineConfig({
 					include: ["kentender_procurement/kentender_procurement/public/js/bid_evaluation/**/*.spec.js"],
 				},
 			},
+			{
+				plugins: [vue()],
+				test: {
+					// OVS-CHG-001 v0.6 §11 — the Procurement meetings register page.
+					name: "procurement-meetings",
+					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/tenders/vitest.setup.js"],
+					include: ["kentender_procurement/kentender_procurement/public/js/procurement_meetings/**/*.spec.js"],
+				},
 			},
 			{
 				plugins: [vue()],

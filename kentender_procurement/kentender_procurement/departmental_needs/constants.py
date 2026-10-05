@@ -150,6 +150,13 @@ ROLE_DEPARTMENTAL_AUTHOR = "Departmental Author"
 ROLE_HEAD_OF_USER_DEPARTMENT = "Head of User Department"
 ROLE_PROCUREMENT_PLANNER = "Procurement Planner"
 ROLE_AUDITOR = "Auditor"
+ROLE_ACCOUNTING_OFFICER = "Accounting Officer"
+ROLE_HEAD_OF_PROCUREMENT_FUNCTION = "Head of Procurement Function"
+
+# OVS-CHG-001 v0.6 §4.1 / NDS-CHG-001 v1.16 §6: a neutral, site-wide read of a Need that was sent for review or
+# decided. Not a Draft, not a Need returned for correction (its revision is the author's again), not a withdrawn one.
+OVERSIGHT_READ_ROLES = (ROLE_ACCOUNTING_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
+OVERSIGHT_READ_STATES = (STATE_SUBMITTED, STATE_ACCEPTED, STATE_NOT_TAKEN_FORWARD)
 
 # No capability identifiers are defined here. §6 requires the shared
 # AUTH-ADR-001 v1.6 resolver (`kentender_core.services.authorization`) and its

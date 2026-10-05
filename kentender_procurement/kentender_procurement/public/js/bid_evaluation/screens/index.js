@@ -52,7 +52,9 @@ function pick(ctx) {
 	const v = data.viewer || {};
 	const primary = (data.guidance || {}).primary_action || "";
 	const nf = record.states("not-found");
-	if (v.technical) return ["setup-only", record.setupOnly(ctx)];
+	// a technical reader acts in no business capacity: status only, and once a version is delivered the delivered
+	// record, report and committee record read-only (OVS-CHG-001 v0.6 §4.2)
+	if (v.technical && !(record.isOversight(data) && ["", "report", "record"].includes(sub))) return ["setup-only", record.setupOnly(ctx)];
 	switch (sub) {
 		case "appoint": return ["appoint", committee.appoint(ctx)];
 		case "secretary": return ["secretary", committee.secretary(ctx)];
@@ -76,6 +78,7 @@ function pick(ctx) {
 	if (primary === "assign_secretary") return ["secretary", committee.secretary(ctx)];
 	if (v.undeclared) return ["declare-first", committee.declareFirst(ctx)];
 	if (data.state === "Preparing") return ["preparing", record.preparing(ctx)];
+	if (record.isOversight(data)) return ["results", record.results({ ...ctx, data: record.oversightRecord(data) })];
 	if (!v.bids) return ["setup-only", record.setupOnly(ctx)];
 	if ((data.work || {}).session && (v.member || v.secretary)) {
 		const live = discussion(ctx);

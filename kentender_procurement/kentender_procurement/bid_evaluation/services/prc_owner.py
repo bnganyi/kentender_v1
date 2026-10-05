@@ -41,6 +41,16 @@ class EvaluationOwner:
 	def allows(self, owner_id: str, user: str, capacity: str) -> bool:
 		return owner_id in (getattr(frappe.local, "kt_evl_owner_context", None) or frozenset())
 
+	def can_read_row(self, owner_id: str, user: str) -> bool:
+		"""May this reader see this evaluation's sessions as rows of the Procurement
+		meetings register (OVS-CHG-001 v0.6 §11)? Anyone who may read the evaluation
+		at all (an office, a member, the secretary, an auditor, a technical reader, a
+		department head whose unit contributed). A row never carries a session's
+		subject or notes; the evaluation applies its own disclosure again."""
+		from kentender_procurement.bid_evaluation.services import reads
+
+		return bool(reads.access(frappe.get_doc(CASE, owner_id), user)["read"])
+
 
 def adapters() -> dict[str, Any]:
 	return {OWNER_TYPE: EvaluationOwner()}

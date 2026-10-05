@@ -142,6 +142,9 @@ kt_portal_surfaces = [
 # BOP-CHG-001 v0.10 plan D10 — Bid Opening answers /tenders/{ref}/opening
 # inside Bid Submission's portal surface above.
 kt_tender_opening_portal = ["kentender_procurement.bid_opening.portal.resolve"]
+# OVS-CHG-001 v0.6 §8, §13 — each later stage tells the Tender record what it discloses to this reader.
+kt_tender_stage_summaries = ["kentender_procurement.bid_opening.desk_links.tender_stage_summary",
+	"kentender_procurement.bid_evaluation.desk_links.tender_stage_summary", "kentender_procurement.award.desk_links.tender_stage_summary"]
 # BOP-CHG-001 v0.10 §9 — the Tender record links to its bid opening.
 kt_tender_record_links = ["kentender_procurement.bid_opening.desk_links.tender_record_links",
 	"kentender_procurement.bid_evaluation.desk_links.tender_record_links", "kentender_procurement.award.desk_links.tender_record_links"]
@@ -275,6 +278,7 @@ page_js = {
 	"tender-security-receipts": "public/js/tender_security_receipts_page.js",
 	# EVL-CHG-001 v0.4 plan D13 — the Bid evaluation workspace.
 	"bid-evaluation": "public/js/bid_evaluation_page.js",
+	"procurement-meetings": "public/js/procurement_meetings_page.js",
 	"award": "public/js/award_page.js",
 	"departmental-procurement-plan": "public/js/departmental_procurement_plan_page.js",
 	"annual-procurement-plan": "public/js/annual_procurement_plan_page.js",

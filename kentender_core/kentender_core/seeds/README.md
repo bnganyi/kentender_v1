@@ -36,6 +36,8 @@ legacy reference doctypes alone (KT-STD-001 §10).
 
 `make seed-canonical SITE=<site>` wraps `run` for the full world (`CURRENT=award NEXT=annual_plan`; set either lower to stop a year earlier, add `REBUILD=True` for a rebuild; `THROUGH=` still maps for one release). Until SEED-002 is approved, the approved runbook is `docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_24.md` (each version has its own file from v1.16; v1.0–v1.15 were kept in `…_v1_0.md`); its stage ladder is superseded by the two controls.
 
+**Procurement meetings branch (OVS-CHG-001 v0.6, runbook v1.23 §9C).** `make seed-ovs-register-branch SITE=<site>` adds Tender B beside the canonical Tender: a second department's Tender whose opening was recorded Not held, so the register shows four rows and counts three meetings held. `make seed-ovs-register-branch-restore SITE=<site>` removes it. Opt-in, test-site use; the canonical rows are never touched.
+
 ## Legacy entry points (`bench execute`)
 
 Run as **Administrator** or **System Manager** on the target site.

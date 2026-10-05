@@ -19,6 +19,9 @@
   "recommended_total",
   "qualifications_json",
   "source_versions_json",
+  "evidence_manifest_json",
+  "evidence_manifest_digest",
+  "evidence_manifest_basis",
   "frozen_by",
   "frozen_at",
   "record_version_reference",
@@ -110,6 +113,26 @@
    "read_only": 1
   },
   {
+   "fieldname": "evidence_manifest_json",
+   "fieldtype": "Long Text",
+   "label": "Evidence manifest",
+   "read_only": 1,
+   "description": "Bids and submitted documents this version is based on (OVS-CHG-001 v0.6 §7); written when the report is frozen, or reconstructed for a version delivered earlier."
+  },
+  {
+   "fieldname": "evidence_manifest_digest",
+   "fieldtype": "Data",
+   "label": "Evidence manifest digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_manifest_basis",
+   "fieldtype": "Select",
+   "label": "Evidence manifest basis",
+   "options": "\nFrozen at signing\nReconstructed after delivery",
+   "read_only": 1
+  },
+  {
    "fieldname": "frozen_by",
    "fieldtype": "Link",
    "label": "Frozen by",
@@ -171,7 +194,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-30 18:00:00.000000",
+ "modified": "2026-10-04 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Bid Evaluation",
  "name": "Evaluation Report Version",

@@ -300,3 +300,22 @@
 	.kt-tnd .tnd-step-label, .kt-tnd .tnd-step-label:nth-child(2), .kt-tnd .tnd-step-label:nth-child(3) { text-align: left; }
 	.kt-tnd .tnd-drawer { width: 100%; }
 }
+
+/* Decisions and progress (OVS-CHG-001 v0.6 §8): ported from the review board's OVS-TPR views. One row per
+   later stage, in a titled working section: no tracker, stepper or card. */
+.kt-tnd .tnd-stages-title { margin: 0 0 4px; font-family: var(--font-heading); font-size: 20px; font-weight: 600; }
+.kt-tnd .tnd-stage { display: grid; grid-template-columns: 220px minmax(0, 1fr) 200px; gap: 24px; padding: 20px 0; border-top: 1px solid var(--color-divider); }
+.kt-tnd .tnd-stage-head { display: grid; gap: 8px; align-content: start; }
+.kt-tnd .tnd-stage-name { font-family: var(--font-heading); font-weight: 600; font-size: 20px; }
+.kt-tnd .tnd-stage-body { display: grid; gap: 12px; align-content: start; }
+.kt-tnd .tnd-stage-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.kt-tnd .tnd-stage-facts .kt-label { display: block; margin-bottom: 3px; }
+.kt-tnd .tnd-stage-value { font-size: 15px; }
+.kt-tnd .tnd-stage-line { margin: 2px 0 0; font-size: 15px; }
+.kt-tnd .tnd-stage-muted { color: var(--color-neutral-800); }
+.kt-tnd .tnd-stage-actions { display: grid; gap: 8px; align-content: start; justify-items: start; }
+@media (max-width: 900px) {
+	.kt-tnd .tnd-stage { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+	.kt-tnd .tnd-stage-facts { grid-template-columns: minmax(0, 1fr); }
+}
+

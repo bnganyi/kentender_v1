@@ -34,6 +34,8 @@ from kentender_procurement.departmental_needs.constants import (
 	ROLE_DEPARTMENTAL_AUTHOR,
 	ROLE_HEAD_OF_USER_DEPARTMENT,
 	ROLE_PROCUREMENT_PLANNER,
+	OVERSIGHT_READ_ROLES,
+	OVERSIGHT_READ_STATES,
 	STATE_ACCEPTED,
 )
 from kentender_procurement.departmental_needs.errors import fail
@@ -134,7 +136,17 @@ def can_view(need: Any, user: str) -> tuple[bool, str]:
 		user=user, business_role=ROLE_AUDITOR, organisation_unit="", purpose=PURPOSE_READ
 	).allowed:
 		return True, "oversight"
+	if _oversight_office(user) and cstr(need.current_state) in OVERSIGHT_READ_STATES:
+		return True, "oversight"
 	return False, "none"
+
+
+def _oversight_office(user: str) -> bool:
+	"""The Accounting Officer or the Head of Procurement Function, site-wide, read purpose (OVS v0.6 §4.1)."""
+	return any(
+		authorise_record(user=user, business_role=role, organisation_unit="", purpose=PURPOSE_READ).allowed
+		for role in OVERSIGHT_READ_ROLES
+	)
 
 
 def require_view(need: Any, user: str) -> str:
@@ -201,6 +213,8 @@ def require_review_read(need: Any, user: str) -> str:
 	if authorise_record(
 		user=user, business_role=ROLE_AUDITOR, organisation_unit="", purpose=PURPOSE_READ
 	).allowed:
+		return "oversight"
+	if _oversight_office(user) and cstr(need.current_state) in OVERSIGHT_READ_STATES:
 		return "oversight"
 	decision = authorise_record(
 		user=user,
@@ -289,7 +303,7 @@ def viewing_contexts(user: str | None = None) -> list[dict[str, str]]:
 	# `permitted_ou_scopes` returns None for a held Site-wide assignment
 	# (unrestricted) and an empty set for no assignment at all — only the
 	# former should widen the offer to every unit.
-	if any(permitted_ou_scopes(principal, role) is None for role in SITE_WIDE_ROLES):
+	if any(permitted_ou_scopes(principal, role) is None for role in SITE_WIDE_ROLES + OVERSIGHT_READ_ROLES):
 		return _all_active_units()
 	units: set[str] = set()
 	for role in DEPARTMENTAL_ROLES:
@@ -313,7 +327,7 @@ def scope_diagnostic(user: str | None = None) -> str:
 	principal = actor(user)
 	if is_technical(principal):
 		return "no_responsibility"
-	if any(permitted_ou_scopes(principal, role) is None for role in SITE_WIDE_ROLES):
+	if any(permitted_ou_scopes(principal, role) is None for role in SITE_WIDE_ROLES + OVERSIGHT_READ_ROLES):
 		return "no_responsibility"
 	raw_units: set[str] = set()
 	for role in DEPARTMENTAL_ROLES:

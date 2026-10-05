@@ -76,7 +76,7 @@ def _forbidden() -> dict[str, Any]:
 
 def _reader(requisition: str, actor: str):
 	root = records.require_root(requisition, lock=False)
-	authz.require_requisition_reader(actor, contributing_org_units=records.contributing_units(root))
+	authz.require_requisition_reader(actor, contributing_org_units=records.contributing_units(root), state=root.current_state)
 	return root
 
 

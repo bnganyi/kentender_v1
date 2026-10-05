@@ -48,6 +48,16 @@ ROLE_STRATEGY_APPROVER = "Strategy Approver"
 # inventing a Strategy-local one.
 ROLE_AUDITOR = "Auditor"
 
+# OVS-CHG-001 v0.6 §4.1: the Accounting Officer, the Head of Procurement Function and a Head of User Department
+# read approved current and historical Strategy versions with their recorded approval reasons. Never a Draft,
+# a version awaiting approval or the approval task. Strategy has no department attribution, so the
+# department head's read is of the approved versions, as the two offices' is.
+ROLE_ACCOUNTING_OFFICER = "Accounting Officer"
+ROLE_HEAD_OF_PROCUREMENT_FUNCTION = "Head of Procurement Function"
+ROLE_HEAD_OF_USER_DEPARTMENT = "Head of User Department"
+APPROVED_READ_SITE_ROLES = (ROLE_ACCOUNTING_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
+APPROVED_STATUSES = ("Active", "Superseded")
+
 STRATEGY_GOVERNANCE_ROLES = (
 	ROLE_STRATEGY_AUTHOR,
 	ROLE_STRATEGY_APPROVER,
@@ -226,3 +236,21 @@ def holds_strategy_read_responsibility(user: str) -> bool:
 		).allowed
 		for role in STRATEGY_READ_ELIGIBLE_ROLES
 	)
+
+
+def holds_approved_read_responsibility(user: str) -> bool:
+	"""AO or HOPF (Site-wide), or a Head of User Department in any unit: the approved-version read only."""
+	from kentender_core.services.authorization import permitted_ou_scopes
+
+	if not user or user == "Guest":
+		return False
+	if any(authorise_record(user=user, business_role=role, organisation_unit="", purpose=PURPOSE_READ).allowed for role in APPROVED_READ_SITE_ROLES):
+		return True
+	return bool(permitted_ou_scopes(user, ROLE_HEAD_OF_USER_DEPARTMENT))
+
+
+def read_scope(user: str) -> str:
+	"""`"full"` for the existing readers, `"approved"` for the approved-versions-only readers, else `""`."""
+	if holds_strategy_read_responsibility(user):
+		return "full"
+	return "approved" if holds_approved_read_responsibility(user) else ""

@@ -226,8 +226,20 @@ export function technicalBoard(d) {
 		act: [btn("View service history", "view", { what: "service" }), btn("*Retry operation", "retry-operation")], place: "decision" };
 }
 
+// What a Head of User Department whose unit contributed reads of the Award (OVS-CHG-001 v0.6 P03; owner
+// decision 4 Oct 2026): the stage, who it is with, and once the decision is recorded its outcome, date and
+// reason. The server sends nothing else; no opinion, report, bidder or notice is asked for here.
+export function departmentBoard(d) {
+	const dec = d.decision;
+	const sec = [{ t: dec ? "Decision" : "Award stage", f: dec ? [["Outcome", dec.outcome], ["Decision recorded", dec.at], ["Decided by", dec.by], ["Notices", d.notification_status]]
+		: [["Stage", d.stage]], d: dec && dec.reason ? [["Reason", dec.reason]] : [],
+		p: [d.cancelled ? "This tender was cancelled. Award ended." : d.outstanding, dec ? "" : "Details are shared with you when the Accounting Officer records the decision."].filter(Boolean) }];
+	return { ...header(d, { guidance: null }), screen: "department", sec, act: [], place: "row" };
+}
+
 export function recordBoard(d, ctx = {}) {
 	if (d.technical) return technicalBoard(d);
+	if (d.department) return departmentBoard(d);
 	if (ctx.sub === "requests" && ctx.id) return { screen: "request", ...requestBoard(d, first(d.correspondence, (c) => c.request === ctx.id)) };
 	const screen = screenOf(d);
 	const build = BUILD[screen] || BUILD.wait;

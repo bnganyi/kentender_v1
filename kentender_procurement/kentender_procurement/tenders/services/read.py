@@ -630,6 +630,21 @@ def record_links(root, actor: str) -> list[dict[str, Any]]:
 	return out
 
 
+def stage_summaries(root, actor: str) -> list[dict[str, Any]]:
+	"""What each later stage discloses to this reader (`kt_tender_stage_summaries`,
+	OVS-CHG-001 v0.6 §8). Each owner decides whether the reader may know its
+	stage exists and how much to show; Tenders reads nothing of theirs. A
+	provider that fails before it has settled permission is logged and its stage
+	omitted: existence is never inferred from an exception."""
+	out: list[dict[str, Any]] = []
+	for path in frappe.get_hooks("kt_tender_stage_summaries") or []:
+		try:
+			out += frappe.get_attr(path)(tender=root.name, user=actor) or []
+		except Exception:
+			frappe.log_error(title=f"Tender stage summary provider failed: {path}")
+	return out
+
+
 def get_tender(*, tender: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	name = draft_commands.resolve_tender_name(tender)
@@ -679,6 +694,7 @@ def get_tender(*, tender: str, user: str | None = None) -> dict[str, Any]:
 		"task_steps": guide.task_steps(root, actor=actor, roles=roles, mode=mode) if root.overall_status == "Draft" and roles["officer"] and mode != "department" else {},
 		"key_facts": key_facts(root, version, snapshot, internal=internal),
 		"record_links": record_links(root, actor),
+		"stage_summaries": stage_summaries(root, actor),
 		"publication": publication_read.publication_summary(root, actor=actor, roles=roles) if internal else None,
 		"open_period": publication_read.open_period_summary(root, actor=actor, roles=roles) if internal else None,
 		"options": {

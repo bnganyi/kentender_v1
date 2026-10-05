@@ -32,6 +32,15 @@ export function peopleOf(data) {
 	return out;
 }
 
+// The delivered versions of the report, for a reader outside the committee (OVS-CHG-001 v0.6 §7): each is
+// readable on its own, and the one on screen is marked. Absent when only one version was ever delivered.
+export function versionsBlock(data, current) {
+	const list = ((data.delivered_report || {}).versions) || [];
+	if (list.length < 2) return null;
+	return tb(["Report", "Sent", "Review", ""], list.map((v) => [`Report ${v.version_number}${v.report === current ? " (shown)" : ""}`, v.delivered, v.review_state || "",
+		v.report === current ? "" : { label: "View", action: "nav", args: { to: ["report", v.report] }, testid: `evl-version-${v.version_number}` }]), { title: "Report versions", testid: "evl-versions", sec: true });
+}
+
 export function head(data, o) {
 	return { title: data.title, desc: data.tender, ...(o || {}) };
 }

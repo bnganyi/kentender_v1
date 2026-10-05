@@ -173,12 +173,34 @@ def technical_view(doc) -> dict[str, Any]:
 		"holder_name": people.full_name(holder) if holder else ""}
 
 
+def department_record(doc) -> dict[str, Any]:
+	"""What a Head of User Department whose unit contributed reads of the Award (OVS-CHG-001 v0.6 P03; owner
+	decision 4 Oct 2026, "a department-level view"): the stage, who the stage is with, and once the Accounting
+	Officer's decision is recorded its outcome, date and reason. Never the opinion, the report, the comparison,
+	notices, correspondence, supplier names or amounts."""
+	from kentender_core.utils.display import display_datetime
+
+	from kentender_procurement.award.services import stage_summary
+
+	d = state.committed_decision(doc)
+	decided = {"outcome": doc.outcome, "by": people.full_name(d.decided_by) if d.decided_by else "", "at": display_datetime(d.decided_at) if d.decided_at else "",
+		"reason": cstr(d.reason)} if d else None
+	waiting = stage_summary.outstanding(doc)
+	return {"ok": True, "department": True, "award": doc.name, "tender_reference": doc.tender_reference, "tender_title": doc.tender_title, "stage": doc.stage,
+		"cancelled": bool(doc.cancelled), "decision": decided, "outstanding": waiting["text"] if waiting else "",
+		"notification_status": doc.notification_status if d else ""}
+
+
 def record(*, award: str, user: str) -> dict[str, Any]:
 	if not award or not frappe.db.exists(records.CASE, award):
 		raise frappe.DoesNotExistError("Not found")
 	doc = frappe.get_doc(records.CASE, award)
 	if people.technical(user):
 		return technical_view(doc)
+	from kentender_procurement.award.services import stage_summary
+
+	if stage_summary.department_of(doc.tender, user):
+		return department_record(doc)
 	guards.require_reader(user)
 	v = next_steps.viewer(user)
 	c = state.cycle(doc)

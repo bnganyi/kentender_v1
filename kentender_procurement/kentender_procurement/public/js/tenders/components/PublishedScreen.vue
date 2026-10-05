@@ -30,12 +30,13 @@
 			<div v-if="published" class="tnd-section tnd-grid-4" data-testid="tnd-published-facts">
 				<div class="tnd-fact"><div class="kt-label">Published at</div><div class="tnd-fact-value">{{ tender.published_at_label }}</div></div>
 				<div class="tnd-fact"><div class="kt-label">Current submission deadline</div><div class="tnd-fact-value">{{ tender.submission_deadline_label }}{{ ended ? " (ended)" : "" }}</div></div>
-				<div class="tnd-fact"><div class="kt-label">Publication authorised by</div><div class="tnd-fact-value">{{ publication.authorised_by_name }}</div></div>
+				<div v-if="publication" class="tnd-fact"><div class="kt-label">Publication authorised by</div><div class="tnd-fact-value">{{ publication.authorised_by_name }}</div></div>
 				<div class="tnd-fact"><div class="kt-label">Effective addenda</div><div class="tnd-fact-value" data-testid="tnd-effective-addenda">{{ openPeriod.effective_addenda_count || 0 }}</div></div>
 			</div>
 			<div v-else class="tnd-section tnd-grid-4" data-testid="tnd-record-facts">
 				<div v-for="f in (record.key_facts || []).slice(0, 4)" :key="f.label" class="tnd-fact"><div class="kt-label">{{ f.label }}</div><div class="tnd-fact-value">{{ f.value || "—" }}</div></div>
 			</div>
+			<DecisionsAndProgress v-if="stages.length" :stages="stages" @open-link="$emit('open-link', $event)" @refresh="$emit('refresh')" />
 			<div v-if="documents.length" class="tnd-section tnd-section--tight tnd-actions">
 				<button v-for="d in headlineDocuments" :key="d.digest" type="button" class="btn btn-secondary" :data-testid="`tnd-view-${d.kind === 'Invitation' ? 'invitation' : 'complete'}`" @click="$emit('view-document', d.kind)">View {{ d.kind === "Invitation" ? "Invitation" : "complete Tender" }}</button>
 				<button v-if="openPeriod.current_addendum" type="button" class="btn btn-secondary" data-testid="tnd-view-current-addendum" @click="$emit('open-addendum', openPeriod.current_addendum.name)">View current addendum</button>
@@ -108,17 +109,23 @@ import BlueprintCard from "./BlueprintCard.vue";
 import RecordHead from "./RecordHead.vue";
 import TenderGuidance from "./TenderGuidance.vue";
 import ContentSections from "./ContentSections.vue";
+import DecisionsAndProgress from "./DecisionsAndProgress.vue";
 
 const props = defineProps({
 	record: { type: Object, default: () => ({ tender: {} }) },
 	review: { type: Object, default: () => ({}) },
 	pending: Boolean,
 });
-defineEmits(["view-document", "view-confirmation", "open-addendum", "open-clarification", "prepare-addendum", "cancel-screen", "history", "reopen", "request-correction", "publication", "fix", "open-link"]);
+defineEmits(["view-document", "view-confirmation", "open-addendum", "open-clarification", "prepare-addendum", "cancel-screen", "history", "reopen", "request-correction", "publication", "fix", "open-link", "refresh"]);
 
 const historyOpen = ref(false);
 const tender = computed(() => props.record.tender || {});
-const recordLinks = computed(() => props.record.record_links || []);
+const stages = computed(() => props.record.stage_summaries || []);
+// OVS-CHG-001 v0.6 §8: a header link gives way only to a stage block that carries the same way in
+const recordLinks = computed(() => {
+	const covered = new Set(stages.value.filter((s) => s.state === "ok" && (s.links || []).some((l) => l.key === "view-record")).map((s) => s.key));
+	return (props.record.record_links || []).filter((l) => !covered.has(l.key));
+});
 const publication = computed(() => props.record.publication || null);
 const openPeriod = computed(() => props.record.open_period || {});
 const releaseInfo = computed(() => {

@@ -50,6 +50,13 @@ ROLE_FINANCE_CONFIRMATION_OFFICER = "Finance Confirmation Officer"
 
 ROLE_AUDITOR = "Auditor"
 
+# OVS-CHG-001 v0.6 §4.1: the Accounting Officer and the Head of Procurement Function read approved current and
+# historical allocations and the authoritative position, read-only. Never a Draft or a version awaiting approval.
+ROLE_ACCOUNTING_OFFICER = "Accounting Officer"
+ROLE_HEAD_OF_PROCUREMENT_FUNCTION = "Head of Procurement Function"
+APPROVED_READ_ROLES = (ROLE_ACCOUNTING_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
+APPROVED_VERSION_STATUSES = ("Active", "Superseded", "Closed")
+
 BUDGET_GOVERNANCE_ROLES = (
 	ROLE_BUDGET_OFFICER,
 	ROLE_BUDGET_APPROVER,
@@ -206,5 +213,16 @@ def holds_any_budget_responsibility(user: str | None = None) -> bool:
 		return True
 	return any(
 		authorise_record(user=principal, business_role=role, organisation_unit="", purpose=PURPOSE_READ).allowed
-		for role in BUDGET_READ_ROLES
+		for role in BUDGET_READ_ROLES + APPROVED_READ_ROLES
 	)
+
+
+def approved_only_reader(user: str | None = None) -> bool:
+	"""A reader of approved versions only: holds the Accounting Officer or Head of Procurement Function
+	responsibility and none of the Budget responsibilities, and is not a technical reader."""
+	principal = cstr(user or frappe.session.user)
+	if not principal or principal == "Guest" or is_technical(principal):
+		return False
+	if any(authorise_record(user=principal, business_role=role, organisation_unit="", purpose=PURPOSE_READ).allowed for role in BUDGET_READ_ROLES):
+		return False
+	return any(authorise_record(user=principal, business_role=role, organisation_unit="", purpose=PURPOSE_READ).allowed for role in APPROVED_READ_ROLES)
