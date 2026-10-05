@@ -121,6 +121,7 @@ page_js = {
 	"technical-search": "public/js/technical_search_page.js",
 	# HOME-CHG-001 v0.6 §9 — Home, the internal landing page.
 	"home": "public/js/home_page.js",
+	"analytics": "public/js/analytics_page.js",
 	"user-operational-acc": "public/js/authorization_admin_pages.js",
 	"workflow-routing-rul": "public/js/authorization_admin_pages.js",
 	"access-diagnostic": "public/js/authorization_admin_pages.js",
@@ -390,7 +391,11 @@ permission_query_conditions = {"Support Issue": "kentender_core.services.support
 # the shared Technical record search, and its reads in the technical-read
 # conformance gate (AUTH-ADR-001 v1.9 §9).
 kt_technical_reference_resolvers = ["kentender_core.services.technical_read.reference_resolvers"]
-kt_technical_read_probes = ["kentender_core.services.technical_read.read_probes"]
+kt_technical_read_probes = [
+	"kentender_core.services.technical_read.read_probes",
+	# ANL-CHG-001 v0.8 plan D12 — Analytics reads for a technical reader.
+	"kentender_core.services.analytics_probes.read_probes",
+]
 
 # EVL-CHG-001 v0.4 plan D12 (OD-B): the platform support issue's holder item
 # ("Resolve evaluation issue for {tender}"), merged with every app's providers.

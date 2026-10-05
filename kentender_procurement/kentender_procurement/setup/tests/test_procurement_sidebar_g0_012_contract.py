@@ -137,6 +137,17 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 
 		self.assertNotIn("Home", PLANNED_SIDEBAR_LABELS, "Home is built: it must not carry the Planned badge")
 
+	def test_procurement_sidebar_analytics_opens_the_analytics_page(self):
+		path = os.path.join(frappe.get_app_path("kentender_procurement"), "workspace_sidebar", "procurement.json")
+		with open(path, encoding="utf-8") as f:
+			data = json.load(f)
+		analytics = next(row for row in data.get("items") or [] if row.get("label") == "Analytics")
+		self.assertEqual((analytics.get("link_type"), analytics.get("link_to")), ("Page", "analytics"))
+		self.assertNotIn("feature", json.loads(analytics.get("route_options") or "{}"))
+		from kentender_procurement.setup.sidebar_availability import PLANNED_SIDEBAR_LABELS
+
+		self.assertNotIn("Analytics", PLANNED_SIDEBAR_LABELS, "Analytics is built: it must not carry the Planned badge")
+
 	def test_procurement_sidebar_planned_items_route_to_coming_soon(self):
 		path = os.path.join(
 			frappe.get_app_path("kentender_procurement"),
@@ -147,7 +158,7 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 			data = json.load(f)
 		planned = {
 			# "Home" is built (HOME-CHG-001 v0.6): see test_procurement_sidebar_home_opens_the_home_page.
-			"Analytics",
+			# "Analytics" is built (ANL-CHG-001 v0.8): see test_procurement_sidebar_analytics_opens_the_analytics_page.
 			# "Evaluation" (EVL-CHG-001 v0.4) and "Awards" (AWD-CHG-001 v0.4) are built.
 			"Contract Management",
 			"Supplier Management",

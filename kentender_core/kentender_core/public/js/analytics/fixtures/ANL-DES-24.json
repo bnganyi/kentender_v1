@@ -1,0 +1,595 @@
+{
+ "verdict": "ok",
+ "message": "",
+ "title": "Procurement Analytics",
+ "description": "See where procurement work stands, how long key steps take and how much planned value is covered.",
+ "read_at": "2027-06-18T07:00:00Z",
+ "updated": "Updated 18 June 2027, 10:00 EAT",
+ "scope": "All departments",
+ "tab": "requisitions",
+ "tabs": [
+  {
+   "key": "overview",
+   "label": "Overview",
+   "icon": "",
+   "route": [
+    "analytics"
+   ],
+   "selected": false
+  },
+  {
+   "key": "needs",
+   "label": "Needs",
+   "icon": "needs",
+   "route": [
+    "analytics",
+    "needs"
+   ],
+   "selected": false
+  },
+  {
+   "key": "departmental-planning",
+   "label": "Departmental planning",
+   "icon": "departmental-planning",
+   "route": [
+    "analytics",
+    "departmental-planning"
+   ],
+   "selected": false
+  },
+  {
+   "key": "annual-planning",
+   "label": "Annual planning",
+   "icon": "annual-planning",
+   "route": [
+    "analytics",
+    "annual-planning"
+   ],
+   "selected": false
+  },
+  {
+   "key": "requisitions",
+   "label": "Requisitions",
+   "icon": "requisitions",
+   "route": [
+    "analytics",
+    "requisitions"
+   ],
+   "selected": true
+  },
+  {
+   "key": "tender-proceedings",
+   "label": "Tender proceedings",
+   "icon": "tender-proceedings",
+   "route": [
+    "analytics",
+    "tender-proceedings"
+   ],
+   "selected": false
+  }
+ ],
+ "filters": {
+  "fy": "",
+  "dept": "",
+  "state": "",
+  "fy_options": [
+   {
+    "id": "FY-2027-28",
+    "label": "FY 2027/28"
+   }
+  ],
+  "dept_options": [
+   {
+    "id": "OU-DH",
+    "label": "Digital Health"
+   },
+   {
+    "id": "OU-HR",
+    "label": "Human Resources Management and Development"
+   }
+  ],
+  "messages": [],
+  "applied": false
+ },
+ "empty": false,
+ "overview": null,
+ "area": {
+  "key": "requisitions",
+  "tab": "requisitions",
+  "label": "Requisitions",
+  "icon": "requisitions",
+  "status": "ok",
+  "result_text": "7 Requisitions",
+  "figure": "7",
+  "unit": "Requisitions",
+  "incomplete_text": "",
+  "outstanding": {
+   "title": "Outstanding work",
+   "rows": [
+    {
+     "key": "R-A",
+     "title": "Clinic equipment requisition",
+     "text": "Awaiting authorisation by Charles Mutiso.",
+     "waiting": "Waiting 2 days",
+     "since": "since 16 June, 11:00",
+     "route": [
+      "technical-search",
+      "R-A"
+     ]
+    }
+   ]
+  },
+  "secondary": "",
+  "scope_label": "",
+  "charts": {
+   "states": {
+    "title": "Requisitions by current state",
+    "value_header": "Requisition value",
+    "rows": [
+     {
+      "key": "submitted_to_procurement",
+      "label": "Submitted to Procurement",
+      "count": 1,
+      "value_text": "KES 12,000,000 requested",
+      "tone": "cat-1"
+     },
+     {
+      "key": "authorised",
+      "label": "Authorised",
+      "count": 6,
+      "value_text": "KES 55,500,000 authorised",
+      "tone": "cat-2"
+     }
+    ]
+   },
+   "monthly": {
+    "title": "Recorded each month",
+    "months": [
+     {
+      "key": "2026-07",
+      "label": "Jul 2026",
+      "axis_lines": [
+       "Jul",
+       "2026"
+      ]
+     },
+     {
+      "key": "2026-08",
+      "label": "Aug 2026",
+      "axis_lines": [
+       "Aug"
+      ]
+     },
+     {
+      "key": "2026-09",
+      "label": "Sep 2026",
+      "axis_lines": [
+       "Sep"
+      ]
+     },
+     {
+      "key": "2026-10",
+      "label": "Oct 2026",
+      "axis_lines": [
+       "Oct"
+      ]
+     },
+     {
+      "key": "2026-11",
+      "label": "Nov 2026",
+      "axis_lines": [
+       "Nov"
+      ]
+     },
+     {
+      "key": "2026-12",
+      "label": "Dec 2026",
+      "axis_lines": [
+       "Dec"
+      ]
+     },
+     {
+      "key": "2027-01",
+      "label": "Jan 2027",
+      "axis_lines": [
+       "Jan",
+       "2027"
+      ]
+     },
+     {
+      "key": "2027-02",
+      "label": "Feb 2027",
+      "axis_lines": [
+       "Feb"
+      ]
+     },
+     {
+      "key": "2027-03",
+      "label": "Mar 2027",
+      "axis_lines": [
+       "Mar"
+      ]
+     },
+     {
+      "key": "2027-04",
+      "label": "Apr 2027",
+      "axis_lines": [
+       "Apr"
+      ]
+     },
+     {
+      "key": "2027-05",
+      "label": "May 2027",
+      "axis_lines": [
+       "May"
+      ]
+     },
+     {
+      "key": "2027-06",
+      "label": "Jun 2027 (to date)",
+      "axis_lines": [
+       "Jun",
+       "(to date)"
+      ]
+     }
+    ],
+    "series": [
+     {
+      "key": "submitted",
+      "label": "Submitted to Procurement",
+      "counts": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       6,
+       0,
+       0,
+       1
+      ],
+      "tone": "cat-1"
+     },
+     {
+      "key": "authorised",
+      "label": "Authorised",
+      "counts": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       6,
+       0,
+       0,
+       0
+      ],
+      "tone": "cat-2"
+     }
+    ],
+    "empty_text": ""
+   }
+  },
+  "steps": {
+   "status": "ok",
+   "incomplete_text": "",
+   "rows": [
+    {
+     "key": "T1",
+     "label": "Requisition submitted to authorised",
+     "status": "ok",
+     "completed": 6,
+     "median": 8.5,
+     "shortest": 6,
+     "longest": 14,
+     "median_text": "8.5 days",
+     "shortest_text": "6 days",
+     "longest_text": "14 days"
+    },
+    {
+     "key": "T2",
+     "label": "Requisition authorised to Tender started",
+     "status": "ok",
+     "completed": 6,
+     "median": 3.5,
+     "shortest": 1,
+     "longest": 5,
+     "median_text": "3.5 days",
+     "shortest_text": "1 day",
+     "longest_text": "5 days"
+    }
+   ],
+   "axis": {
+    "max": 60,
+    "ticks": [
+     0,
+     10,
+     20,
+     30,
+     40,
+     50,
+     60
+    ]
+   },
+   "caption": "Calendar days, last 12 months.",
+   "empty_text": ""
+  },
+  "register": {
+   "layout": "table",
+   "title": "Requisitions",
+   "search_label": "Search Requisition",
+   "state_options": [
+    {
+     "key": "submitted_to_procurement",
+     "label": "Submitted to Procurement"
+    },
+    {
+     "key": "authorised",
+     "label": "Authorised"
+    }
+   ],
+   "state_all": "All states",
+   "columns": [
+    {
+     "key": "requisition",
+     "label": "Requisition"
+    },
+    {
+     "key": "current_position",
+     "label": "Current position"
+    },
+    {
+     "key": "requisition_value",
+     "label": "Requisition value"
+    },
+    {
+     "key": "tender_relationship",
+     "label": "Tender relationship"
+    },
+    {
+     "key": "action",
+     "label": "Action"
+    }
+   ],
+   "rows": [
+    {
+     "key": "R-A",
+     "action": {
+      "label": "View record",
+      "route": [
+       "technical-search",
+       "R-A"
+      ]
+     },
+     "cells": {
+      "requisition": {
+       "text": "Clinic equipment requisition",
+       "secondary": "",
+       "quiet": false
+      },
+      "current_position": {
+       "text": "Submitted to Procurement",
+       "secondary": "",
+       "quiet": false
+      },
+      "requisition_value": {
+       "text": "KES 12,000,000 requested",
+       "secondary": "",
+       "quiet": false
+      },
+      "tender_relationship": {
+       "text": "No Tender created",
+       "secondary": "",
+       "quiet": false
+      }
+     }
+    },
+    {
+     "key": "R-B",
+     "action": {
+      "label": "View record",
+      "route": [
+       "technical-search",
+       "R-B"
+      ]
+     },
+     "cells": {
+      "requisition": {
+       "text": "IT peripherals requisition",
+       "secondary": "",
+       "quiet": false
+      },
+      "current_position": {
+       "text": "Authorised",
+       "secondary": "",
+       "quiet": false
+      },
+      "requisition_value": {
+       "text": "KES 6,500,000 authorised",
+       "secondary": "",
+       "quiet": false
+      },
+      "tender_relationship": {
+       "text": "TND-MOH-2027-041 created",
+       "secondary": "",
+       "quiet": false
+      }
+     }
+    },
+    {
+     "key": "R-F",
+     "action": {
+      "label": "View record",
+      "route": [
+       "technical-search",
+       "R-F"
+      ]
+     },
+     "cells": {
+      "requisition": {
+       "text": "Monitors requisition",
+       "secondary": "",
+       "quiet": false
+      },
+      "current_position": {
+       "text": "Authorised",
+       "secondary": "",
+       "quiet": false
+      },
+      "requisition_value": {
+       "text": "KES 7,500,000 authorised",
+       "secondary": "",
+       "quiet": false
+      },
+      "tender_relationship": {
+       "text": "TND-MOH-2027-045 created",
+       "secondary": "",
+       "quiet": false
+      }
+     }
+    },
+    {
+     "key": "R-C",
+     "action": {
+      "label": "View record",
+      "route": [
+       "technical-search",
+       "R-C"
+      ]
+     },
+     "cells": {
+      "requisition": {
+       "text": "Network switches requisition",
+       "secondary": "",
+       "quiet": false
+      },
+      "current_position": {
+       "text": "Authorised",
+       "secondary": "",
+       "quiet": false
+      },
+      "requisition_value": {
+       "text": "KES 8,000,000 authorised",
+       "secondary": "",
+       "quiet": false
+      },
+      "tender_relationship": {
+       "text": "TND-MOH-2027-042 created",
+       "secondary": "",
+       "quiet": false
+      }
+     }
+    },
+    {
+     "key": "R-D",
+     "action": {
+      "label": "View record",
+      "route": [
+       "technical-search",
+       "R-D"
+      ]
+     },
+     "cells": {
+      "requisition": {
+       "text": "Office desks requisition",
+       "secondary": "",
+       "quiet": false
+      },
+      "current_position": {
+       "text": "Authorised",
+       "secondary": "",
+       "quiet": false
+      },
+      "requisition_value": {
+       "text": "KES 3,500,000 authorised",
+       "secondary": "",
+       "quiet": false
+      },
+      "tender_relationship": {
+       "text": "TND-MOH-2027-043 created",
+       "secondary": "",
+       "quiet": false
+      }
+     }
+    },
+    {
+     "key": "R-E",
+     "action": {
+      "label": "View record",
+      "route": [
+       "technical-search",
+       "R-E"
+      ]
+     },
+     "cells": {
+      "requisition": {
+       "text": "Printers requisition",
+       "secondary": "",
+       "quiet": false
+      },
+      "current_position": {
+       "text": "Authorised",
+       "secondary": "",
+       "quiet": false
+      },
+      "requisition_value": {
+       "text": "KES 5,000,000 authorised",
+       "secondary": "",
+       "quiet": false
+      },
+      "tender_relationship": {
+       "text": "TND-MOH-2027-044 created",
+       "secondary": "",
+       "quiet": false
+      }
+     }
+    },
+    {
+     "key": "R-G",
+     "action": {
+      "label": "View record",
+      "route": [
+       "technical-search",
+       "R-G"
+      ]
+     },
+     "cells": {
+      "requisition": {
+       "text": "Servers requisition",
+       "secondary": "",
+       "quiet": false
+      },
+      "current_position": {
+       "text": "Authorised",
+       "secondary": "",
+       "quiet": false
+      },
+      "requisition_value": {
+       "text": "KES 25,000,000 authorised",
+       "secondary": "",
+       "quiet": false
+      },
+      "tender_relationship": {
+       "text": "TND-MOH-2027-046 created",
+       "secondary": "",
+       "quiet": false
+      }
+     }
+    }
+   ],
+   "footer": "Showing 7 of 7 Requisitions",
+   "empty_text": "",
+   "clear": null,
+   "total": 7,
+   "next_cursor": null,
+   "partial": false
+  }
+ },
+ "definitions": "Each area counts its own permitted records once. Financial year follows the record's Planning source, not its creation date. Annual planning counts items in the Active Plan. Versions and contributing departments do not add records. An award decision does not mean notices or contract work are complete. Waiting time runs from when a matter reached its current holder; it is not a judgement that work is late. Time between key steps counts calendar days between recorded events completed in the 12 months to 18 June 2027; these are not statutory periods. Plan coverage uses the Annual Plan's own record of value covered by authorised requisitions. Amounts are in Kenya shillings, and different kinds of amount are never added together. Counts and positions describe current position when loaded. All area reads completed at 10:00 EAT."
+}

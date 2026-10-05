@@ -647,6 +647,15 @@ kt_home_providers = [
 	"kentender_procurement.procurement_planning.services.home_provider.entries",
 ]
 
+# ANL-CHG-001 v0.8 §7.1 — each owner's facts for Procurement Analytics (core collects them; it never imports this app).
+# Module paths: each exposes `applies(user, at)` and `facts(user, kind, at, **params)` (kentender_core.services.analytics_contract).
+kt_analytics_providers = [
+	"kentender_procurement.departmental_needs.services.analytics_provider",
+	"kentender_procurement.procurement_planning.services.analytics_provider",
+	"kentender_procurement.procurement_requisitions.services.analytics_provider",
+	"kentender_procurement.tenders.services.analytics_provider",
+]
+
 # AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical
 # search page/service and the technical-read conformance gate collect every
 # module's reference resolvers and read probes through these two hooks; core

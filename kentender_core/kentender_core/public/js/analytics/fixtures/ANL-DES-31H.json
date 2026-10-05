@@ -1,0 +1,84 @@
+{
+ "verdict": "no_area",
+ "message": "No Analytics records are available to your responsibilities.",
+ "title": "Procurement Analytics",
+ "description": "See where procurement work stands, how long key steps take and how much planned value is covered.",
+ "read_at": "2027-06-18T07:00:00Z",
+ "updated": "Updated 18 June 2027, 10:00 EAT",
+ "scope": "All departments",
+ "tab": "overview",
+ "tabs": [
+  {
+   "key": "overview",
+   "label": "Overview",
+   "icon": "",
+   "route": [
+    "analytics"
+   ],
+   "selected": true
+  },
+  {
+   "key": "needs",
+   "label": "Needs",
+   "icon": "needs",
+   "route": [
+    "analytics",
+    "needs"
+   ],
+   "selected": false
+  },
+  {
+   "key": "departmental-planning",
+   "label": "Departmental planning",
+   "icon": "departmental-planning",
+   "route": [
+    "analytics",
+    "departmental-planning"
+   ],
+   "selected": false
+  },
+  {
+   "key": "annual-planning",
+   "label": "Annual planning",
+   "icon": "annual-planning",
+   "route": [
+    "analytics",
+    "annual-planning"
+   ],
+   "selected": false
+  },
+  {
+   "key": "requisitions",
+   "label": "Requisitions",
+   "icon": "requisitions",
+   "route": [
+    "analytics",
+    "requisitions"
+   ],
+   "selected": false
+  },
+  {
+   "key": "tender-proceedings",
+   "label": "Tender proceedings",
+   "icon": "tender-proceedings",
+   "route": [
+    "analytics",
+    "tender-proceedings"
+   ],
+   "selected": false
+  }
+ ],
+ "filters": {
+  "fy": "",
+  "dept": "",
+  "state": "",
+  "fy_options": [],
+  "dept_options": [],
+  "messages": [],
+  "applied": false
+ },
+ "empty": false,
+ "overview": null,
+ "area": null,
+ "definitions": ""
+}

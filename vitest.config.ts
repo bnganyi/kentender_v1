@@ -213,6 +213,16 @@ export default defineConfig({
 					include: ["kentender_core/kentender_core/public/js/home/**/*.spec.js"],
 				},
 			},
+			{
+				// ANL-CHG-001 v0.8 plan Phase 4 (D8) — the Analytics chart components: values as a table,
+				// zero segments omitted, twelve month slots, range-strip columns, from-zero bars.
+				plugins: [vue()],
+				test: {
+					name: "analytics",
+					environment: "jsdom",
+					setupFiles: ["kentender_core/kentender_core/public/js/analytics/vitest.setup.js"],
+					include: ["kentender_core/kentender_core/public/js/analytics/**/*.spec.js"],
+				},
 			},
 			{
 				// NDS-906 — the Departmental Needs presentation helpers (plain ES

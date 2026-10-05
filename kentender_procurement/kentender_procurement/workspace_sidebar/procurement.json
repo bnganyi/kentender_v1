@@ -26,11 +26,11 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Analytics",
-   "link_to": "coming-soon",
+   "link_to": "analytics",
    "link_type": "Page",
-   "route_options": "{\"feature\": \"Analytics\"}",
    "show_arrow": 0,
-   "type": "Link"
+   "type": "Link",
+   "url": "/desk/analytics"
   },
   {
    "child": 0,

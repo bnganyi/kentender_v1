@@ -501,6 +501,51 @@ export function awardDialogSkeleton(id, relPath = AWARD_BOARDS) {
 }
 
 /**
+ * Analytics (ANL-CHG-001 v0.8 §10A): six files of plain markup (no template),
+ * each board a `<div id="ANL-DES-21">` holding the screen as one `<main>`. The
+ * board's `<main>` is the screen; the live page's `main.kt-ap-sheet` is its
+ * counterpart. `.sub`-style design-tool captions sit outside the `<main>`, so
+ * nothing needs stripping. The boards use the design system's own classes for
+ * the structure that matters (`kt-tabs`, `kt-kpi-card`, `.field`, `table.table`,
+ * `kt-empty`, `kt-disclosure`) and inline styles for layout, so the container
+ * skeleton is those plus the headings.
+ */
+export const ANALYTICS_BOARD_FILES = [
+	"docs/mvp-1-r1/19_analytics/design/Analytics/Analytics Overview.dc.html",
+	"docs/mvp-1-r1/19_analytics/design/Analytics/Analytics Tenders and Requisitions.dc.html",
+	"docs/mvp-1-r1/19_analytics/design/Analytics/Analytics Planning and Needs.dc.html",
+	"docs/mvp-1-r1/19_analytics/design/Analytics/Analytics Peter HRMD.dc.html",
+	"docs/mvp-1-r1/19_analytics/design/Analytics/Analytics States.dc.html",
+];
+
+/** The board's `<main>` (the screen), whichever file draws it. */
+export function analyticsScope(id) {
+	for (const relPath of ANALYTICS_BOARD_FILES) {
+		const board = documentFor(relPath).getElementById(id);
+		if (board) {
+			const main = board.querySelector("main");
+			if (!main) throw new Error(`Analytics board ${id} draws no <main>`);
+			return main;
+		}
+	}
+	throw new Error(`Analytics board ${id} not found in the board files`);
+}
+
+/** Every Analytics board id drawn by the board files. */
+export function analyticsBoardIds() {
+	const ids = [];
+	for (const relPath of ANALYTICS_BOARD_FILES) {
+		for (const el of documentFor(relPath).querySelectorAll('div[id^="ANL-DES-"]')) ids.push(el.id);
+	}
+	return ids;
+}
+
+/** One Analytics board's landmark skeleton. */
+export function analyticsSkeleton(id) {
+	return skeletonOf(analyticsScope(id));
+}
+
+/**
  * Home (HOME-CHG-001 v0.6 §10B): one file of plain markup, sixteen boards, each a `<div id="HOME-DES-21">` holding the
  * screen as one `<main>` (the sheet). The boards are almost all inline style, so the design system's class vocabulary
  * in `skeleton.js` sees almost nothing of them; Home reads its structure from the elements the boards use for it
