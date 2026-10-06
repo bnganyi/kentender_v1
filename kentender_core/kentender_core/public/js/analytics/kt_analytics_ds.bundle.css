@@ -1364,6 +1364,19 @@
 	border-color: var(--color-neutral-300);
 }
 
+.kt-industry.kt-analytics .btn:focus {
+	box-shadow: none;
+}
+
+.kt-industry.kt-analytics .btn:focus-visible,
+.kt-industry.kt-analytics .btn:active {
+	box-shadow: none !important;
+}
+
+.kt-industry.kt-analytics .btn-secondary:focus:not(:hover):not(:active):not(:disabled) {
+	background: var(--color-surface);
+}
+
 .kt-industry.kt-analytics .input,
 .kt-industry.kt-analytics .date-field {
 	border-radius: var(--radius-control);

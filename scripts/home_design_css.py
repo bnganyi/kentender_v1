@@ -86,6 +86,13 @@ def control_shape(scope: str, fields: bool = False) -> tuple:
 		f"{scope} .btn-secondary:hover:not(:disabled) {{\n\tbackground: var(--color-neutral-100);\n}}",
 		f"{scope} .btn-secondary:active:not(:disabled) {{\n\tbackground: var(--color-neutral-200);\n}}",
 		f"{scope} .btn-secondary:disabled {{\n\tbackground: transparent;\n\tborder-color: var(--color-neutral-300);\n}}",
+		# Frappe's own `.btn:focus` / `.btn:active` add an inset highlight, a drop shadow and a 2px grey ring (and a grey fill) on top
+		# of the control's outline: after a mouse click a secondary button read as a doubled dark border (found live 6 Oct 2026).
+		# The design system marks keyboard focus with the one accent outline (`:focus-visible`) and nothing else.
+		# Frappe sets its ring on `.btn.btn-secondary:focus-visible` and `.btn:active` with `!important`, so the reset must too.
+		f"{scope} .btn:focus {{\n\tbox-shadow: none;\n}}",
+		f"{scope} .btn:focus-visible,\n{scope} .btn:active {{\n\tbox-shadow: none !important;\n}}",
+		f"{scope} .btn-secondary:focus:not(:hover):not(:active):not(:disabled) {{\n\tbackground: var(--color-surface);\n}}",
 	]
 	if fields:
 		rules += [
