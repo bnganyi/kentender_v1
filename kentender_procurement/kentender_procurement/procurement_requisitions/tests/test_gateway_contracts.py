@@ -40,7 +40,7 @@ class TestPlanningContracts(unittest.TestCase):
 
 class TestBudgetContracts(unittest.TestCase):
 	def test_check_funding_takes_the_complete_array_with_caller_identity(self):
-		self.assertTrue({"plan_item", "plan_version", "source_set_hash", "allocations", "correlation_id", "calling_module", "caller_reference"} <= _params(budget_cr.check_funding))
+		self.assertTrue({"plan_item", "plan_version", "source_set_hash", "allocations", "correlation_id", "caller", "caller_reference"} <= _params(budget_cr.check_funding))
 
 	def test_reservation_results_carry_the_drawdown_line(self):
 		tree = ast.parse(inspect.getsource(budget_cr._reservation_result))

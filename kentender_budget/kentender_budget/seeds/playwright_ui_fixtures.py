@@ -231,21 +231,30 @@ def reset_default(*, commit: bool = True) -> dict[str, Any]:
 	return {**_canonical_ids(), "removed": removed}
 
 
+def _contract_caller(contract: str):
+	"""The fixtures stand in for Contract Management, which has no module yet."""
+	from kentender_budget.services.budget_service_principal import PRINCIPAL_CONTRACT, service_caller
+
+	return service_caller(PRINCIPAL_CONTRACT, reference=contract)
+
+
 def _reserve(line: str, amount: float, *, ref: str, source_allocation: str | None = None) -> str:
 	"""A real authorised-requisition hold through check/reserve, as Josphat
 	(Finance Confirmation Officer). Returns the reservation name."""
 	from kentender_budget.services import budget_check_reserve_contracts as check_reserve
+	from kentender_budget.services.budget_service_principal import PRINCIPAL_REQUISITIONS, service_caller
 
 	tag = frappe.generate_hash(length=6)
+	requisitions = service_caller(PRINCIPAL_REQUISITIONS, reference=ref)
 	prior = frappe.session.user
 	try:
 		_as(OFFICER)
 		token = check_reserve.check_funding(
 			plan_item=f"PPI-{tag}", plan_version=f"PLN-{tag}", finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}",
 			allocations=[{"budget_line": line, "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": source_allocation or f"PSA-{tag}"}],
-			correlation_id=frappe.generate_hash(length=12), calling_module="Procurement Requisitions", caller_reference=ref,
+			correlation_id=frappe.generate_hash(length=12), caller=requisitions,
 		)
-		result = check_reserve.reserve_funding(token=token["token"], finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}", idempotency_key=f"IDEM-{tag}")
+		result = check_reserve.reserve_funding(token=token["token"], finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}", idempotency_key=f"IDEM-{tag}", caller=requisitions)
 		if not result.get("ok"):
 			frappe.throw(f"Budget fixtures: could not reserve {amount} on {line}: {result}")
 		return result["reservations"][0]["reservation_id"]
@@ -432,8 +441,9 @@ def reset_close_ready(*, commit: bool = True) -> dict[str, Any]:
 	iso = _isolated_budget(code="BUD19-CLOSE", fy_start_year=1990, dhi=100_000_000, hwd=60_000_000)
 	hold = _reserve(iso["dhi_line"], 80_000_000, ref="REQ-MOH-2027-031-001")
 	_as(OFFICER)
-	commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12))
-	commit_svc.release_reservation(reservation=hold, amount=20_000_000, downstream_event_id="REQ-REV-2027-031", downstream_event_type="Requisition revocation", idempotency_key=frappe.generate_hash(length=12))
+	contract = _contract_caller("KT-CON-2027-004")
+	commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12), contract_event_id="KT-CON-2027-004:signed", contract_event_type="ContractSigned", caller=contract)
+	commit_svc.release_reservation(reservation=hold, amount=20_000_000, downstream_event_id="KT-CON-2027-004:unused", downstream_event_type="ContractUnusedAmount", idempotency_key=frappe.generate_hash(length=12), caller=contract)
 	return _finish(base, {"closure": iso, "reservation": hold, "active_commitments_total": 60_000_000}, commit=commit)
 
 
@@ -446,7 +456,7 @@ def reset_partial_conversion(*, commit: bool = True) -> dict[str, Any]:
 	iso = _isolated_budget(code="BUD19-CONVERT", fy_start_year=2043, dhi=100_000_000, hwd=None)
 	hold = _reserve(iso["dhi_line"], 80_000_000, ref="REQ-MOH-2027-021-001")
 	_as(OFFICER)
-	commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12))
+	commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12), contract_event_id="KT-CON-2027-004:signed", contract_event_type="ContractSigned", caller=_contract_caller("KT-CON-2027-004"))
 	return _finish(base, {"conversion": iso, "reservation": hold}, commit=commit)
 
 
@@ -455,12 +465,13 @@ def reset_requires_review(*, commit: bool = True) -> dict[str, Any]:
 	review by an owner revalidation (a floor breach observed and then
 	corrected, leaving the typed reason on the ledger)."""
 	from kentender_budget.services import budget_commitment_contracts as commit_svc
+	from kentender_budget.services.budget_service_principal import PRINCIPAL_BUDGET, service_caller
 
 	fixture = reset_partial_conversion(commit=False)
 	line, version = fixture["conversion"]["dhi_line"], fixture["conversion"]["version"]
 	frappe.db.set_value("Procurement Budget Line Version", {"budget_version": version, "budget_line": line}, "approved_amount", 50_000_000, update_modified=False)
 	_as(OFFICER)
-	commit_svc.revalidate_reservations(reservations=[fixture["reservation"]], downstream_event_id="CON-VAR-2027-004-01", downstream_event_type="Contract variation", idempotency_key=frappe.generate_hash(length=12))
+	commit_svc.revalidate_reservations(reservations=[fixture["reservation"]], downstream_event_id="CON-VAR-2027-004-01", downstream_event_type="Contract variation", idempotency_key=frappe.generate_hash(length=12), caller=service_caller(PRINCIPAL_BUDGET))
 	frappe.db.set_value("Procurement Budget Line Version", {"budget_version": version, "budget_line": line}, "approved_amount", 100_000_000, update_modified=False)
 	return _finish(fixture, {"requires_review": True}, commit=commit)
 

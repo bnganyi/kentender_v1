@@ -11,21 +11,24 @@ Planning-era callers with no drawdown line), all or none, inside the caller's
 transaction — it never commits. Same key + same payload returns the original
 mapping; same key + changed payload is refused (BUD-BR-011).
 
-Caller authority — the assigned Finance Confirmation Officer or Head of
-Procurement Function Site-wide responsibility, task, source-set and amount
-scope — is authorised here directly via `authorise_record()`; Budget never
-trusts a caller's own route visibility as authority (§12.6). No Procuring
-Entity or Fiscal Year scope participates (BUD-BR-001).
+Caller authority (AUD-XC-012, AUD-BUD-012) — these two functions are
+in-process calls made only by the Procurement Requisitions service
+principal (`budget_service_principal`), never a web endpoint and never a
+session role: a Finance Confirmation Officer or Head of Procurement Function
+session without the principal is refused with `BUDGET_DOWNSTREAM_FORBIDDEN`.
+The caller identity recorded on the reservation (`calling_module`,
+`caller_reference`) comes from the authenticated principal, not from a value
+the caller declares. The check token is bound to the actor who checked, the
+requisition it was checked for and the Budget Version each line was on
+(BUD-013); a different actor, requisition or a Budget revision in between is
+`BUDGET_CHECK_STALE` / refused. No Procuring Entity or Fiscal Year scope
+participates (BUD-BR-001).
 
-Two callers exist as of REQ-CHG-001 v1.6 D1: Procurement Planning's own
-`check_plan_affordability` path never reaches these two functions at all
-(BUD-CHG-001 v1.6 §8.1 — Planning checks, never reserves); Procurement
-Requisitions is the first and only module that calls `check_funding` then
-`reserve_funding` for real, at `AuthoriseRequisition` (REQ-CHG-001 v1.6
-§9.1A). `calling_module` and `caller_reference` are recorded rather than
-hard-coded so the audit trail and the reservation-conflict rule both name
-the actual caller. `finance_task` is optional: Planning-era callers supply
-one, Requisitions does not (it has no Finance task at all).
+Procurement Planning's own `check_plan_affordability` path never reaches
+these two functions (BUD-CHG-001 v1.6 §8.1 — Planning checks, never
+reserves); Procurement Requisitions is the only module that calls
+`check_funding` then `reserve_funding`, at `AuthoriseRequisition`.
+`finance_task` is optional and unused by Requisitions.
 """
 
 from __future__ import annotations
@@ -96,34 +99,18 @@ def _payload_digest(context: dict[str, Any], rows: list[dict[str, Any]]) -> str:
 	return hashlib.sha256(body.encode()).hexdigest()
 
 
-# REQ-CHG-001 v1.6 D1 — either Site-wide responsibility may call
-# check_funding/reserve_funding: Finance Confirmation Officer (the original
-# Planning-era caller) or Head of Procurement Function (Procurement
-# Requisitions' authorising office). The error title stays
-# BUDGET_FINANCE_TASK_DENIED — it is a closed vocabulary (§13) naming the
-# funding boundary's own denial, not either caller's identity.
-ROLE_HEAD_OF_PROCUREMENT_FUNCTION = "Head of Procurement Function"
-_CHECK_RESERVE_CALLER_ROLES = (
-	"Finance Confirmation Officer",
-	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
-)
+def _authenticate(caller, action: str, caller_reference: str = "") -> tuple[str, str]:
+	"""BUD v1.12 §7 — Budget authenticates the calling service principal, not
+	the session role. Returns (calling module label, caller reference)."""
+	from kentender_budget.services.budget_service_principal import PRINCIPAL_LABEL, refuse, require_principal
 
-
-def _require_check_reserve_capability() -> None:
-	"""§7/§17.1 / REQ-CHG-001 v1.6 D1 — Finance Confirmation Officer or Head
-	of Procurement Function, via `authorise_record()`. No Procuring Entity,
-	Fiscal Year or capability string participates (BUD-BR-001)."""
-	from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
-
-	user = frappe.session.user
-	for role in _CHECK_RESERVE_CALLER_ROLES:
-		if authorise_record(user=user, business_role=role, organisation_unit="", purpose=PURPOSE_COMMAND).allowed:
-			return
-	frappe.throw(
-		_("Not permitted to confirm or reserve funding — requires Finance Confirmation Officer or Head of Procurement Function"),
-		frappe.PermissionError,
-		title="BUDGET_FINANCE_TASK_DENIED",
-	)
+	caller = require_principal(caller, action)
+	reference = caller.reference
+	if not reference:
+		refuse(_("The calling service must name the requisition it acts for."))
+	if caller_reference and caller_reference != reference:
+		refuse(_("The caller reference does not match the authenticated requisition."))
+	return PRINCIPAL_LABEL[caller.principal], reference
 
 
 def _resolve_line(budget_line: str) -> Any:
@@ -210,18 +197,20 @@ def check_funding(
 	allocations: list[dict[str, Any]],
 	correlation_id: str,
 	*,
+	caller=None,
 	finance_task: str | None = None,
-	calling_module: str = "Procurement Planning",
 	caller_reference: str = "",
 ) -> dict[str, Any]:
 	"""§9.1 `check_funding` — non-mutating, complete-array check. Rows sharing a
 	Budget Line are totalled before availability is tested (BUD-CHG-001 v1.10
 	§8.3); returns per-row and per-line results and one token bound to the
 	exact payload digest."""
+	from kentender_budget.services.budget_service_principal import ACTION_CHECK
+
+	calling_module, caller_reference = _authenticate(caller, ACTION_CHECK, caller_reference)
 	allocations = allocations or []
 	if not allocations:
 		frappe.throw(_("At least one allocation is required"), frappe.ValidationError)
-	_require_check_reserve_capability()
 
 	rows = _normalise_rows(allocations)
 	line_docs = {r["budget_line"]: _resolve_line(r["budget_line"]) for r in rows}
@@ -270,7 +259,17 @@ def check_funding(
 	token = frappe.generate_hash(length=24)
 	frappe.cache().set_value(
 		f"budget_check_token:{token}",
-		{**context, "correlation_id": correlation_id, "allocations": rows, "payload_digest": _payload_digest(context, rows)},
+		{
+			**context,
+			"correlation_id": correlation_id,
+			"allocations": rows,
+			"payload_digest": _payload_digest(context, rows),
+			# BUD-013 — bound to who checked and the Budget Version each line
+			# was on; kept out of the digest so a same-key replay by a
+			# different session of the same requisition still replays.
+			"actor": frappe.session.user,
+			"line_versions": {name: totals[name]["version"].name for name in totals},
+		},
 		expires_in_sec=_CHECK_TOKEN_TTL_SECONDS,
 	)
 
@@ -300,19 +299,23 @@ def reserve_funding(
 	source_set_hash: str,
 	idempotency_key: str,
 	*,
+	caller=None,
 	finance_task: str | None = None,
-	actor: str | None = None,
 ) -> dict[str, Any]:
 	"""§9.1/§8.3 `reserve_funding` — validates the same token and exact payload
 	inside the caller's transaction, locks the affected lines in stable ID
 	order, rechecks the per-line totals and creates one reservation per
 	drawdown line or none. Never commits (BUD-CHG-001 v1.10 §8.3: the REQ
 	authorisation commits every owner's effects together or none of them)."""
-	_require_check_reserve_capability()
+	from kentender_budget.services.budget_service_principal import ACTION_RESERVE, refuse
+
+	authenticated_reference = _authenticate(caller, ACTION_RESERVE)[1]
 	correlation_id = idempotency_key
 	cached = frappe.cache().get_value(f"budget_check_token:{token}")
 	existing = _existing_reservations_for_correlation(correlation_id)
 	if existing:
+		if any((r.caller_reference or "") != authenticated_reference for r in existing):
+			refuse(_("This reservation belongs to another requisition."))
 		# Same key + same payload replays the original mapping, even after a
 		# later release; same key + changed payload is refused (§8.3).
 		stored = {r.payload_digest for r in existing if r.payload_digest}
@@ -330,7 +333,12 @@ def reserve_funding(
 	# either — supplying one where the check had none is itself a mismatch.
 	if not cached or cached.get("finance_task") != finance_task or cached.get("source_set_hash") != source_set_hash:
 		frappe.throw(_("The funding check has expired or no longer matches this task"), frappe.ValidationError, title="BUDGET_CHECK_STALE")
-	calling_module = cached.get("calling_module") or "Procurement Planning"
+	# BUD-013 — the token belongs to the actor and requisition that checked.
+	if (cached.get("caller_reference") or "") != authenticated_reference:
+		refuse(_("This funding check was made for another requisition."))
+	if cached.get("actor") != frappe.session.user:
+		frappe.throw(_("The funding check was made by another user and no longer matches"), frappe.ValidationError, title="BUDGET_CHECK_STALE")
+	calling_module = cached.get("calling_module") or ""
 	caller_reference = cached.get("caller_reference") or ""
 	rows = cached["allocations"]
 
@@ -370,6 +378,11 @@ def reserve_funding(
 			)
 
 	totals, _budget = _line_totals(rows, line_docs)
+	# BUD-013 / §13 BUDGET_CHECK_STALE — the owner revisions the check saw
+	# must still be current.
+	checked_versions = cached.get("line_versions") or {}
+	if any(checked_versions.get(name) != totals[name]["version"].name for name in totals):
+		frappe.throw(_("The Budget changed after the funding check; check again"), frappe.ValidationError, title="BUDGET_CHECK_STALE")
 	for name in sorted(totals):
 		entry = totals[name]
 		if entry["available"] < entry["required"]:
@@ -384,7 +397,7 @@ def reserve_funding(
 				title="BUDGET_INSUFFICIENT_FUNDS",
 			)
 
-	actor_name = (actor or frappe.session.user or "System").strip()
+	actor_name = (frappe.session.user or "System").strip()
 	created = []
 	for row in rows:
 		line_doc = line_docs[row["budget_line"]]

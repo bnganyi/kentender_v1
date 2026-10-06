@@ -1,9 +1,10 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 D1 — Procurement Requisitions as a live check_funding/
-reserve_funding caller: the Head of Procurement Function caller gate,
-calling_module/caller_reference recording, and the relaxed per-allocation
+"""REQ-CHG-001 v1.6 D1 / AUD-XC-012 — Procurement Requisitions as the only
+check_funding/reserve_funding caller (the Requisitions service principal, not
+a session role), calling_module/caller_reference recorded from the principal,
+and the relaxed per-allocation
 uniqueness (reserve after release; two independent callers on one allocation;
 same-caller double-authorise still refused).
 """
@@ -13,10 +14,15 @@ from __future__ import annotations
 import frappe
 from kentender_budget.services import budget_check_reserve_contracts as check_reserve
 from kentender_budget.services import budget_commitment_contracts as commitment_svc
+from kentender_budget.services.budget_service_principal import PRINCIPAL_REQUISITIONS, service_caller
 from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import (
 	FUNDING_SOURCE,
 	_FinanceTestBase,
 )
+
+
+def _req(reference: str):
+	return service_caller(PRINCIPAL_REQUISITIONS, reference=reference)
 
 
 class _RequisitionCallerTestBase(_FinanceTestBase):
@@ -28,7 +34,7 @@ class _RequisitionCallerTestBase(_FinanceTestBase):
 
 
 class TestCheckReserveCallerGate(_RequisitionCallerTestBase):
-	def test_head_of_procurement_function_may_check_and_reserve(self):
+	def test_the_requisitions_principal_may_check_and_reserve(self):
 		_, line = self._new_dhi_line()
 		self._as(self.hopf_officer)
 		token = check_reserve.check_funding(
@@ -37,12 +43,11 @@ class TestCheckReserveCallerGate(_RequisitionCallerTestBase):
 			source_set_hash="TEST-HASH-REQ-1",
 			allocations=[{"budget_line": line, "amount": 10_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-REQ-1"}],
 			correlation_id=frappe.generate_hash(length=12),
-			calling_module="Procurement Requisitions",
-			caller_reference="REQ-TEST-1",
+			caller=_req("REQ-TEST-1"),
 		)
 		self.assertTrue(token["all_sufficient"])
 		result = check_reserve.reserve_funding(
-			token=token["token"], source_set_hash="TEST-HASH-REQ-1", idempotency_key="TEST-IDEM-REQ-1"
+			token=token["token"], source_set_hash="TEST-HASH-REQ-1", idempotency_key="TEST-IDEM-REQ-1", caller=_req("REQ-TEST-1")
 		)
 		self.assertTrue(result["ok"])
 		self.assertFalse(result["reused"])
@@ -50,31 +55,29 @@ class TestCheckReserveCallerGate(_RequisitionCallerTestBase):
 		self.assertEqual(row["calling_module"], "Procurement Requisitions")
 		self.assertEqual(row["caller_reference"], "REQ-TEST-1")
 
-	def test_finance_confirmation_officer_still_permitted(self):
+	def test_finance_confirmation_officer_session_is_refused(self):
+		"""AUD-XC-012 — a session role is not a Budget caller; a Finance
+		Confirmation Officer cannot place a hold, with or without declaring a
+		caller."""
 		_, line = self._new_dhi_line()
 		self._as(self.finance_officer)
-		token = check_reserve.check_funding(
-			plan_item="TEST-PPI-REQ-2", plan_version="TEST-PLN-REQ-2", source_set_hash="TEST-HASH-REQ-2",
-			allocations=[{"budget_line": line, "amount": 10_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-REQ-2"}],
-			correlation_id=frappe.generate_hash(length=12), finance_task="TEST-FNT-REQ-2",
-		)
-		self.assertTrue(token["all_sufficient"])
-		result = check_reserve.reserve_funding(
-			token=token["token"], source_set_hash="TEST-HASH-REQ-2", idempotency_key="TEST-IDEM-REQ-2", finance_task="TEST-FNT-REQ-2"
-		)
-		self.assertTrue(result["ok"])
-		self.assertEqual(result["reservations"][0]["calling_module"], "Procurement Planning")
+		with self.assertRaises(frappe.PermissionError):
+			check_reserve.check_funding(
+				plan_item="TEST-PPI-REQ-2", plan_version="TEST-PLN-REQ-2", source_set_hash="TEST-HASH-REQ-2",
+				allocations=[{"budget_line": line, "amount": 10_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-REQ-2"}],
+				correlation_id=frappe.generate_hash(length=12), finance_task="TEST-FNT-REQ-2",
+			)
+		self.assertEqual(frappe.db.count("Funding Reservation", {"budget_line": line}), 0)
 
-	def test_budget_officer_is_refused(self):
+	def test_a_session_without_the_principal_is_refused_whatever_its_role(self):
 		_, line = self._new_dhi_line()
 		self._as(self.budget_officer_only)
-		with self.assertRaises(frappe.PermissionError) as ctx:
+		with self.assertRaises(frappe.PermissionError):
 			check_reserve.check_funding(
 				plan_item="TEST-PPI-REQ-3", plan_version="TEST-PLN-REQ-3", source_set_hash="TEST-HASH-REQ-3",
 				allocations=[{"budget_line": line, "amount": 1, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-REQ-3"}],
 				correlation_id=frappe.generate_hash(length=12),
 			)
-		self.assertIn("Finance Confirmation Officer or Head of Procurement Function", str(ctx.exception))
 
 	def test_a_check_with_no_finance_task_must_reserve_with_none_too(self):
 		_, line = self._new_dhi_line()
@@ -82,11 +85,11 @@ class TestCheckReserveCallerGate(_RequisitionCallerTestBase):
 		token = check_reserve.check_funding(
 			plan_item="TEST-PPI-REQ-4", plan_version="TEST-PLN-REQ-4", source_set_hash="TEST-HASH-REQ-4",
 			allocations=[{"budget_line": line, "amount": 1, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-REQ-4"}],
-			correlation_id=frappe.generate_hash(length=12), calling_module="Procurement Requisitions",
+			correlation_id=frappe.generate_hash(length=12), caller=_req("REQ-TEST-4"),
 		)
 		with self.assertRaises(frappe.ValidationError) as ctx:
 			check_reserve.reserve_funding(
-				token=token["token"], source_set_hash="TEST-HASH-REQ-4", idempotency_key="TEST-IDEM-REQ-4", finance_task="UNEXPECTED"
+				token=token["token"], source_set_hash="TEST-HASH-REQ-4", idempotency_key="TEST-IDEM-REQ-4", finance_task="UNEXPECTED", caller=_req("REQ-TEST-4")
 			)
 		self.assertIn("expired or no longer matches", str(ctx.exception))
 
@@ -97,10 +100,10 @@ class TestReservationUniquenessRelaxed(_RequisitionCallerTestBase):
 		token = check_reserve.check_funding(
 			plan_item="TEST-PPI-REQ-U", plan_version="TEST-PLN-REQ-U", source_set_hash=f"HASH-{correlation}",
 			allocations=[{"budget_line": line, "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": allocation}],
-			correlation_id=correlation, calling_module="Procurement Requisitions", caller_reference=caller_reference,
+			correlation_id=correlation, caller=_req(caller_reference),
 		)
 		return check_reserve.reserve_funding(
-			token=token["token"], source_set_hash=f"HASH-{correlation}", idempotency_key=correlation
+			token=token["token"], source_set_hash=f"HASH-{correlation}", idempotency_key=correlation, caller=_req(caller_reference)
 		)
 
 	def test_reserve_after_release_on_the_same_allocation_succeeds(self):
@@ -111,7 +114,7 @@ class TestReservationUniquenessRelaxed(_RequisitionCallerTestBase):
 		self._as(self.hopf_officer)
 		commitment_svc.release_reservation(
 			reservation=reservation_id, amount=None, downstream_event_id="TEST-EVT-REL-1",
-			downstream_event_type="TestRevocation", idempotency_key="TEST-REL-IDEM-1",
+			downstream_event_type="TestRevocation", idempotency_key="TEST-REL-IDEM-1", caller=_req("REQ-REL-1"),
 		)
 		self.assertEqual(frappe.db.get_value("Funding Reservation", reservation_id, "status"), "Released")
 		second = self._reserve(line=line, amount=5_000_000, allocation=allocation, correlation=frappe.generate_hash(12), caller_reference="REQ-REL-2")

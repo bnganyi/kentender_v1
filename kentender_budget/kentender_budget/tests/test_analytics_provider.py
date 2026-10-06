@@ -47,6 +47,11 @@ TABLES = (
 )
 
 
+from kentender_budget.services.budget_service_principal import PRINCIPAL_REQUISITIONS, service_caller
+
+ANL_REQ = service_caller(PRINCIPAL_REQUISITIONS, reference="REQ-ANL-1")
+
+
 class TestFundingProvider(_BudgetLifecycleTestBase):
 	@classmethod
 	def setUpClass(cls):
@@ -414,9 +419,9 @@ class TestFundingMatchesBudgetsOwnPosition(_FinanceTestBase):
 				{"budget_line": dhi, "amount": "72000000.25", "funding_source": FUNDING_SOURCE, "plan_source_allocation": "ANL-PSA-1A", "source_organisation_unit": self.ou_dhp},
 				{"budget_line": hwd, "amount": "48000000", "funding_source": FUNDING_SOURCE, "plan_source_allocation": "ANL-PSA-1B", "source_organisation_unit": self.ou_hrmd},
 			],
-			correlation_id=frappe.generate_hash(length=12),
+			correlation_id=frappe.generate_hash(length=12), caller=ANL_REQ
 		)
-		self.assertTrue(check_reserve.reserve_funding(token=token["token"], finance_task="ANL-FNT-1", source_set_hash="ANL-HASH-1", idempotency_key="ANL-IDEM-1")["ok"])
+		self.assertTrue(check_reserve.reserve_funding(token=token["token"], finance_task="ANL-FNT-1", source_set_hash="ANL-HASH-1", idempotency_key="ANL-IDEM-1", caller=ANL_REQ)["ok"])
 		frappe.set_user("Administrator")
 
 		result = provider.facts(user=self.officer, kind=ac.FUNDING, at=AT, fiscal_year=fy)

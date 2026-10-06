@@ -717,6 +717,13 @@ def upsert_isolated_finance_profiles() -> dict[str, Any]:
 	Playwright tests that need one specific profile's exact precondition."""
 	from kentender_budget.services import budget_check_reserve_contracts as check_reserve
 	from kentender_budget.services import budget_commitment_contracts as commitment_svc
+	from kentender_budget.services.budget_service_principal import PRINCIPAL_CONTRACT, PRINCIPAL_REQUISITIONS, service_caller
+
+	# The seed stands in for the two downstream services, exactly as they would
+	# call Budget (AUD-XC-002): a requisition for each hold, a contract for the
+	# conversion. The references are the seed's own, never a live record's.
+	def _requisitions(ref: str):
+		return service_caller(PRINCIPAL_REQUISITIONS, reference=ref)
 
 	out: dict[str, Any] = {}
 
@@ -742,10 +749,11 @@ def upsert_isolated_finance_profiles() -> dict[str, Any]:
 					}
 				],
 				correlation_id=frappe.generate_hash(length=12),
+				caller=_requisitions("BUD-SC-FIN-SINGLE-HOLD"),
 			)
 			check_reserve.reserve_funding(
 				token=token["token"], finance_task="BUD-SC-FIN-SINGLE-FNT", source_set_hash="BUD-SC-FIN-SINGLE-HASH-PRECOND",
-				idempotency_key=frappe.generate_hash(length=12),
+				idempotency_key=frappe.generate_hash(length=12), caller=_requisitions("BUD-SC-FIN-SINGLE-HOLD"),
 			)
 		finally:
 			frappe.set_user(prior_user)
@@ -786,10 +794,11 @@ def upsert_isolated_finance_profiles() -> dict[str, Any]:
 					}
 				],
 				correlation_id=frappe.generate_hash(length=12),
+				caller=_requisitions("BUD-SC-FIN-SHORT-HOLD"),
 			)
 			check_reserve.reserve_funding(
 				token=token["token"], finance_task="BUD-SC-FIN-SHORT-FNT", source_set_hash="BUD-SC-FIN-SHORT-HASH-PRECOND",
-				idempotency_key=frappe.generate_hash(length=12),
+				idempotency_key=frappe.generate_hash(length=12), caller=_requisitions("BUD-SC-FIN-SHORT-HOLD"),
 			)
 		finally:
 			frappe.set_user(prior_user)
@@ -818,15 +827,18 @@ def upsert_isolated_finance_profiles() -> dict[str, Any]:
 					}
 				],
 				correlation_id=frappe.generate_hash(length=12),
+				caller=_requisitions("BUD-SC-CONVERT-PARTIAL-HOLD"),
 			)
 			reserve_result = check_reserve.reserve_funding(
 				token=token["token"], finance_task="BUD-SC-CONVERT-PARTIAL-FNT", source_set_hash="BUD-SC-CONVERT-PARTIAL-HASH",
-				idempotency_key=frappe.generate_hash(length=12),
+				idempotency_key=frappe.generate_hash(length=12), caller=_requisitions("BUD-SC-CONVERT-PARTIAL-HOLD"),
 			)
 			reservation_name = (reserve_result.get("reservations") or [{}])[0].get("reservation_id")
 			commitment_svc.convert_reservation(
 				reservation=reservation_name, contract="BUD-SC-CONVERT-PARTIAL-CTR", amount=60_000_000,
 				idempotency_key=frappe.generate_hash(length=12),
+				contract_event_id="BUD-SC-CONVERT-PARTIAL-CTR:signed", contract_event_type="ContractSigned",
+				caller=service_caller(PRINCIPAL_CONTRACT, reference="BUD-SC-CONVERT-PARTIAL-CTR"),
 			)
 		finally:
 			frappe.set_user(prior_user)

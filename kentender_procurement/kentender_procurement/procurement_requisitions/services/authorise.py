@@ -115,7 +115,7 @@ def authorise_requisition(*, requisition: str, task: str, expected_record_versio
 		)
 		if not checked.get("all_sufficient"):
 			fail("REQ_FUNDING_UNAVAILABLE", detail={"lines": [l for l in checked.get("lines", []) if not l.get("sufficient")]})
-		reserved = funding_gateway.reserve_funding(token=checked["token"], source_set_hash=source_set_hash(version), idempotency_key=correlation)
+		reserved = funding_gateway.reserve_funding(token=checked["token"], source_set_hash=source_set_hash(version), idempotency_key=correlation, caller_reference=root.requisition_reference)
 		reservation_by_line = {r["drawdown_line_id"]: r for r in reserved["reservations"]}
 		if set(reservation_by_line) != {line.drawdown_line_id for line in version.drawdown_lines}:
 			fail("REQ_OWNER_VALIDATION_UNAVAILABLE", detail={"reason": "Budget did not return one reservation per drawdown line."})
@@ -189,7 +189,7 @@ def revoke_unconsumed_authorisation(*, requisition: str, reason: str, expected_r
 	with envelope.atomic("revoke"):
 		for line in version.drawdown_lines:
 			if line.reservation_id:
-				funding_gateway.release_reservation(reservation=line.reservation_id, downstream_event_id=f"{root.requisition_reference}:revoked", idempotency_key=f"{idempotency_key}:budget:{line.reservation_id}")
+				funding_gateway.release_reservation(reservation=line.reservation_id, requisition_reference=root.requisition_reference, downstream_event_id=f"{root.requisition_reference}:revoked", idempotency_key=f"{idempotency_key}:budget:{line.reservation_id}")
 		for row in eligibility_gateway.list_requisition_drawdowns(root.requisition_reference):
 			if row["requisition_version"] == version.name and row["drawdown_state"] == "Active":
 				eligibility_gateway.reverse_requisition_drawdown(drawdown_reference=row["drawdown_reference"], expected_record_version=row["record_version"], idempotency_key=f"{idempotency_key}:planning:{row['drawdown_reference']}")

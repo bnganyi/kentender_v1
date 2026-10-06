@@ -13,10 +13,16 @@ from frappe.tests.utils import FrappeTestCase
 
 from kentender_budget.services import budget_check_reserve_contracts as check_reserve
 from kentender_budget.services import budget_commitment_contracts as commitment_svc
+from kentender_budget.services.budget_service_principal import PRINCIPAL_BUDGET, PRINCIPAL_CONTRACT, PRINCIPAL_REQUISITIONS, service_caller
 from kentender_budget.tests.test_bud_chg_001_phase3_lifecycle import (
 	FUNDING_SOURCE,
 	_BudgetLifecycleTestBase,
 )
+
+
+# The only caller Budget accepts for check/reserve: the Requisitions principal
+# (AUD-XC-012). One fixed reference for the arithmetic tests below.
+REQ_CALLER = service_caller(PRINCIPAL_REQUISITIONS, reference="REQ-TEST-FIN")
 
 
 class _FinanceTestBase(_BudgetLifecycleTestBase):
@@ -50,7 +56,7 @@ class TestCheckFundingNonMutating(_FinanceTestBase):
 			finance_task="TEST-FNT-1",
 			source_set_hash="TEST-HASH-1",
 			allocations=[{"budget_line": line, "amount": 40_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-1"}],
-			correlation_id=frappe.generate_hash(length=12),
+			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
 		self.assertTrue(result["all_sufficient"])
 		self.assertEqual(result["allocations"][0]["available_before"], "100000000.00")
@@ -66,10 +72,10 @@ class TestSingleSourceReservation(_FinanceTestBase):
 		token = check_reserve.check_funding(
 			plan_item="TEST-PPI-2", plan_version="TEST-PLN-2", finance_task="TEST-FNT-2", source_set_hash="TEST-HASH-2",
 			allocations=[{"budget_line": line, "amount": 80_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-2"}],
-			correlation_id=frappe.generate_hash(length=12),
+			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
 		result = check_reserve.reserve_funding(
-			token=token["token"], finance_task="TEST-FNT-2", source_set_hash="TEST-HASH-2", idempotency_key="TEST-IDEM-2"
+			token=token["token"], finance_task="TEST-FNT-2", source_set_hash="TEST-HASH-2", idempotency_key="TEST-IDEM-2", caller=REQ_CALLER
 		)
 		self.assertTrue(result["ok"])
 		self.assertFalse(result["reused"])
@@ -96,10 +102,10 @@ class TestCombinedSourceAtomicity(_FinanceTestBase):
 				{"budget_line": dhi, "amount": 72_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-3A"},
 				{"budget_line": hwd, "amount": 48_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-3B"},
 			],
-			correlation_id=frappe.generate_hash(length=12),
+			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
 		result = check_reserve.reserve_funding(
-			token=token["token"], finance_task="TEST-FNT-3", source_set_hash="TEST-HASH-3", idempotency_key="TEST-IDEM-3"
+			token=token["token"], finance_task="TEST-FNT-3", source_set_hash="TEST-HASH-3", idempotency_key="TEST-IDEM-3", caller=REQ_CALLER
 		)
 		self.assertTrue(result["ok"])
 		self.assertEqual(len(result["reservations"]), 2)
@@ -116,22 +122,22 @@ class TestShortfallRejection(_FinanceTestBase):
 		token1 = check_reserve.check_funding(
 			plan_item="TEST-PPI-4", plan_version="TEST-PLN-4", finance_task="TEST-FNT-4A", source_set_hash="TEST-HASH-4A",
 			allocations=[{"budget_line": line, "amount": 30_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-4A"}],
-			correlation_id=frappe.generate_hash(length=12),
+			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
-		check_reserve.reserve_funding(token=token1["token"], finance_task="TEST-FNT-4A", source_set_hash="TEST-HASH-4A", idempotency_key="TEST-IDEM-4A")
+		check_reserve.reserve_funding(token=token1["token"], finance_task="TEST-FNT-4A", source_set_hash="TEST-HASH-4A", idempotency_key="TEST-IDEM-4A", caller=REQ_CALLER)
 
 		# Now request 80m against only 70m available — 10m short.
 		token2 = check_reserve.check_funding(
 			plan_item="TEST-PPI-4", plan_version="TEST-PLN-4", finance_task="TEST-FNT-4B", source_set_hash="TEST-HASH-4B",
 			allocations=[{"budget_line": line, "amount": 80_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-4B"}],
-			correlation_id=frappe.generate_hash(length=12),
+			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
 		self.assertFalse(token2["all_sufficient"])
 		self.assertEqual(token2["lines"][0]["shortfall"], "10000000.00")
 
 		before = frappe.db.count("Funding Reservation", {"budget_line": line})
 		with self.assertRaises(frappe.ValidationError):
-			check_reserve.reserve_funding(token=token2["token"], finance_task="TEST-FNT-4B", source_set_hash="TEST-HASH-4B", idempotency_key="TEST-IDEM-4B")
+			check_reserve.reserve_funding(token=token2["token"], finance_task="TEST-FNT-4B", source_set_hash="TEST-HASH-4B", idempotency_key="TEST-IDEM-4B", caller=REQ_CALLER)
 		self.assertEqual(frappe.db.count("Funding Reservation", {"budget_line": line}), before)
 
 
@@ -145,10 +151,10 @@ class TestDuplicateCorrelationIdempotency(_FinanceTestBase):
 		token = check_reserve.check_funding(
 			plan_item="TEST-PPI-5", plan_version="TEST-PLN-5", finance_task="TEST-FNT-5", source_set_hash="TEST-HASH-5",
 			allocations=[{"budget_line": line, "amount": 50_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-5"}],
-			correlation_id=correlation_id,
+			correlation_id=correlation_id, caller=REQ_CALLER
 		)
-		first = check_reserve.reserve_funding(token=token["token"], finance_task="TEST-FNT-5", source_set_hash="TEST-HASH-5", idempotency_key=correlation_id)
-		second = check_reserve.reserve_funding(token=token["token"], finance_task="TEST-FNT-5", source_set_hash="TEST-HASH-5", idempotency_key=correlation_id)
+		first = check_reserve.reserve_funding(token=token["token"], finance_task="TEST-FNT-5", source_set_hash="TEST-HASH-5", idempotency_key=correlation_id, caller=REQ_CALLER)
+		second = check_reserve.reserve_funding(token=token["token"], finance_task="TEST-FNT-5", source_set_hash="TEST-HASH-5", idempotency_key=correlation_id, caller=REQ_CALLER)
 		self.assertFalse(first["reused"])
 		self.assertTrue(second["reused"])
 		self.assertEqual(first["reservations"][0]["reservation_id"], second["reservations"][0]["reservation_id"])
@@ -161,17 +167,17 @@ class TestDuplicateCorrelationIdempotency(_FinanceTestBase):
 		token1 = check_reserve.check_funding(
 			plan_item="TEST-PPI-6", plan_version="TEST-PLN-6", finance_task="TEST-FNT-6A", source_set_hash="TEST-HASH-6A",
 			allocations=[{"budget_line": line, "amount": 10_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-SHARED-6"}],
-			correlation_id=frappe.generate_hash(length=12),
+			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
-		check_reserve.reserve_funding(token=token1["token"], finance_task="TEST-FNT-6A", source_set_hash="TEST-HASH-6A", idempotency_key="TEST-IDEM-6A")
+		check_reserve.reserve_funding(token=token1["token"], finance_task="TEST-FNT-6A", source_set_hash="TEST-HASH-6A", idempotency_key="TEST-IDEM-6A", caller=REQ_CALLER)
 
 		token2 = check_reserve.check_funding(
 			plan_item="TEST-PPI-6", plan_version="TEST-PLN-6", finance_task="TEST-FNT-6B", source_set_hash="TEST-HASH-6B",
 			allocations=[{"budget_line": line, "amount": 10_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-SHARED-6"}],
-			correlation_id=frappe.generate_hash(length=12),
+			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
 		with self.assertRaises(frappe.ValidationError) as ctx:
-			check_reserve.reserve_funding(token=token2["token"], finance_task="TEST-FNT-6B", source_set_hash="TEST-HASH-6B", idempotency_key="TEST-IDEM-6B")
+			check_reserve.reserve_funding(token=token2["token"], finance_task="TEST-FNT-6B", source_set_hash="TEST-HASH-6B", idempotency_key="TEST-IDEM-6B", caller=REQ_CALLER)
 		self.assertIn("different effective reservation", str(ctx.exception))
 
 
@@ -185,12 +191,12 @@ class TestPartialConversion(_FinanceTestBase):
 		token = check_reserve.check_funding(
 			plan_item="TEST-PPI-7", plan_version="TEST-PLN-7", finance_task="TEST-FNT-7", source_set_hash="TEST-HASH-7",
 			allocations=[{"budget_line": line, "amount": 80_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-7"}],
-			correlation_id=frappe.generate_hash(length=12),
+			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
-		reserve_result = check_reserve.reserve_funding(token=token["token"], finance_task="TEST-FNT-7", source_set_hash="TEST-HASH-7", idempotency_key="TEST-IDEM-7")
+		reserve_result = check_reserve.reserve_funding(token=token["token"], finance_task="TEST-FNT-7", source_set_hash="TEST-HASH-7", idempotency_key="TEST-IDEM-7", caller=REQ_CALLER)
 		reservation_id = reserve_result["reservations"][0]["reservation_id"]
 
-		commitment_svc.convert_reservation(reservation=reservation_id, contract="TEST-CTR-7", amount=60_000_000, idempotency_key="TEST-CONV-7")
+		commitment_svc.convert_reservation(reservation=reservation_id, contract="TEST-CTR-7", amount=60_000_000, idempotency_key="TEST-CONV-7", contract_event_id="TEST-CTR-7:signed", contract_event_type="ContractSigned", caller=service_caller(PRINCIPAL_CONTRACT, reference="TEST-CTR-7"))
 
 		from kentender_budget.services.budget_contracts import get_budget_line_position
 
@@ -222,6 +228,6 @@ class TestClosedBudgetRejectsNewReservations(_FinanceTestBase):
 			check_reserve.check_funding(
 				plan_item="TEST-PPI-8", plan_version="TEST-PLN-8", finance_task="TEST-FNT-8", source_set_hash="TEST-HASH-8",
 				allocations=[{"budget_line": line, "amount": 1_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-8"}],
-				correlation_id=frappe.generate_hash(length=12),
+				correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 			)
 		self.assertIn("Closed", str(ctx.exception))

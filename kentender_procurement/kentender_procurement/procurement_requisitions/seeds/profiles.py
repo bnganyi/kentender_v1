@@ -171,7 +171,7 @@ def _release_profile_holds() -> list[str]:
 		)
 	for row in rows:
 		with _as(base.HOPF):
-			_svc().funding.release_reservation(reservation=row, downstream_event_id=f"REQ-SC-RELEASE-{row}", idempotency_key=f"req-seed:release:{row}")
+			_svc().funding.release_reservation(reservation=row, requisition_reference=frappe.db.get_value("Funding Reservation", row, "caller_reference"), downstream_event_id=f"REQ-SC-RELEASE-{row}", idempotency_key=f"req-seed:release:{row}")
 		released.append(row)
 	return released
 
@@ -482,7 +482,7 @@ def shared_line_short(item: str) -> Report:
 			allocations=[{"budget_line": hwd, "plan_source_allocation": "REQ-SC-HOLD-ALLOCATION", "drawdown_line_id": "REQ-SC-HOLD-LINE", "source_organisation_unit": "", "amount": "20000000.00"}],
 			correlation_id=_key("SHORT", "hold"), caller_reference="REQ-SC-SHARED-LINE-SHORT-HOLD",
 		)
-		svc.funding.reserve_funding(token=token["token"], source_set_hash="REQ-SC-SHARED-LINE-SHORT", idempotency_key=_key("SHORT", "hold-reserve"))
+		svc.funding.reserve_funding(token=token["token"], source_set_hash="REQ-SC-SHARED-LINE-SHORT", idempotency_key=_key("SHORT", "hold-reserve"), caller_reference="REQ-SC-SHARED-LINE-SHORT-HOLD")
 	requisition = _submitted("SHORT", item)
 	reference = _reference(requisition)
 	try:

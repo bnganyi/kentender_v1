@@ -27,6 +27,8 @@ from kentender_budget.services.budget_audit_contracts import get_funding_activit
 from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import FUNDING_SOURCE, _FinanceTestBase, check_reserve
 
 
+from kentender_budget.services.budget_service_principal import PRINCIPAL_BUDGET, PRINCIPAL_CONTRACT, PRINCIPAL_REQUISITIONS, service_caller
+
 class _V19Base(_FinanceTestBase):
 	@classmethod
 	def setUpClass(cls):
@@ -105,9 +107,9 @@ class _V19Base(_FinanceTestBase):
 		token = check_reserve.check_funding(
 			plan_item=f"PPI-{tag}", plan_version=f"PLN-{tag}", finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}",
 			allocations=[{"budget_line": line, "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": f"PSA-{tag}"}],
-			correlation_id=frappe.generate_hash(length=12), calling_module="Procurement Requisitions", caller_reference=ref,
+			correlation_id=frappe.generate_hash(length=12), caller=service_caller(PRINCIPAL_REQUISITIONS, reference=ref),
 		)
-		result = check_reserve.reserve_funding(token=token["token"], finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}", idempotency_key=f"IDEM-{tag}")
+		result = check_reserve.reserve_funding(token=token["token"], finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}", idempotency_key=f"IDEM-{tag}", caller=service_caller(PRINCIPAL_REQUISITIONS, reference=ref))
 		self.assertTrue(result["ok"])
 		return result["reservations"][0]["reservation_id"]
 
@@ -381,7 +383,7 @@ class TestYearEndClosure(_V19Base):
 		fy, budget, v1 = self._active(fiscal_year=self._past_fy())
 		dhi = self._line(v1, "Digital health infrastructure programme")
 		reservation = self._reserve(dhi, 80_000_000, ref="REQ-V19-004")
-		converted = commit.convert_reservation(reservation=reservation, contract="KT-CON-V19-1", amount=60_000_000, idempotency_key=f"conv-{frappe.generate_hash(length=6)}")
+		converted = commit.convert_reservation(reservation=reservation, contract="KT-CON-V19-1", amount=60_000_000, idempotency_key=f"conv-{frappe.generate_hash(length=6)}", contract_event_id="KT-CON-V19-1:signed", contract_event_type="ContractSigned", caller=service_caller(PRINCIPAL_CONTRACT, reference="KT-CON-V19-1"))
 		self.assertTrue(converted["ok"])
 		self._as(self.approver)
 		status = readiness.get_budget_closure_status(budget)
@@ -392,7 +394,7 @@ class TestYearEndClosure(_V19Base):
 		self.assertFalse(blocked["ok"])
 		self.assertIn("KES 20,000,000 remains reserved", blocked["errors"]["reservations"])
 		# Release the remainder through the owner event; the 60m commitment stays.
-		released = commit.release_reservation(reservation=reservation, amount=20_000_000, downstream_event_id="REV-V19-1", downstream_event_type="Requisition revocation", idempotency_key=f"rel-{frappe.generate_hash(length=6)}")
+		released = commit.release_reservation(reservation=reservation, amount=20_000_000, downstream_event_id="KT-CON-V19-1:unused", downstream_event_type="ContractUnusedAmount", idempotency_key=f"rel-{frappe.generate_hash(length=6)}", caller=service_caller(PRINCIPAL_CONTRACT, reference="KT-CON-V19-1"))
 		self.assertTrue(released["ok"])
 		status = readiness.get_budget_closure_status(budget)
 		self.assertEqual(status["state"], "ready")
@@ -422,7 +424,7 @@ class TestLineDetailReads(_V19Base):
 		fy, budget, v1 = self._active()
 		dhi = self._line(v1, "Digital health infrastructure programme")
 		reservation = self._reserve(dhi, 80_000_000, ref="REQ-V19-005")
-		commit.convert_reservation(reservation=reservation, contract="KT-CON-V19-2", amount=60_000_000, idempotency_key=f"conv-{frappe.generate_hash(length=6)}")
+		commit.convert_reservation(reservation=reservation, contract="KT-CON-V19-2", amount=60_000_000, idempotency_key=f"conv-{frappe.generate_hash(length=6)}", contract_event_id="KT-CON-V19-2:signed", contract_event_type="ContractSigned", caller=service_caller(PRINCIPAL_CONTRACT, reference="KT-CON-V19-2"))
 		self._as(self.auditor)
 		line = contracts.get_budget_line_position(dhi)
 		self.assertEqual(line["positions"], {"approved": 100_000_000, "reserved": 20_000_000, "committed": 60_000_000, "available": 20_000_000})
@@ -446,7 +448,7 @@ class TestLineDetailReads(_V19Base):
 		# Force a floor breach outside the governed path (a test-only lever),
 		# then let the owner revalidation flag the hold.
 		frappe.db.set_value("Procurement Budget Line Version", {"budget_version": v1, "budget_line": dhi}, "approved_amount", 50_000_000)
-		commit.revalidate_reservations(reservations=[reservation], downstream_event_id="EVT-V19-1", downstream_event_type="Contract variation", idempotency_key=f"rev-{frappe.generate_hash(length=6)}")
+		commit.revalidate_reservations(reservations=[reservation], downstream_event_id="EVT-V19-1", downstream_event_type="Contract variation", idempotency_key=f"rev-{frappe.generate_hash(length=6)}", caller=service_caller(PRINCIPAL_BUDGET))
 		self._as(self.auditor)
 		row = contracts.get_budget_line_position(dhi)["reservations"][0]
 		self.assertEqual(row["status"], "Needs Attention")

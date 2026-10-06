@@ -42,27 +42,38 @@ def _call(fn, **kwargs):
 		fail("REQ_OWNER_VALIDATION_UNAVAILABLE", detail={"budget_code": code, "budget_message": str(exc)})
 
 
+def _principal(requisition_reference: str):
+	"""Budget authenticates the Requisitions service principal, naming the
+	requisition it acts for (BUD v1.12 §7, AUD-XC-002). Only this gateway
+	mints it."""
+	from kentender_budget.services.budget_service_principal import PRINCIPAL_REQUISITIONS, service_caller
+
+	return service_caller(PRINCIPAL_REQUISITIONS, reference=requisition_reference)
+
+
 def check_funding(*, plan_item: str, plan_version: str, source_set_hash: str, allocations: list[dict[str, Any]], correlation_id: str, caller_reference: str) -> dict[str, Any]:
 	from kentender_budget.services.budget_check_reserve_contracts import check_funding as contract
 
 	return _call(
 		contract, plan_item=plan_item, plan_version=plan_version, source_set_hash=source_set_hash, allocations=allocations,
-		correlation_id=correlation_id, calling_module=CALLING_MODULE, caller_reference=caller_reference,
+		correlation_id=correlation_id, caller=_principal(caller_reference), caller_reference=caller_reference,
 	)
 
 
-def reserve_funding(*, token: str, source_set_hash: str, idempotency_key: str) -> dict[str, Any]:
+def reserve_funding(*, token: str, source_set_hash: str, idempotency_key: str, caller_reference: str) -> dict[str, Any]:
 	from kentender_budget.services.budget_check_reserve_contracts import reserve_funding as contract
 
-	return _call(contract, token=token, source_set_hash=source_set_hash, idempotency_key=idempotency_key)
+	return _call(contract, token=token, source_set_hash=source_set_hash, idempotency_key=idempotency_key, caller=_principal(caller_reference))
 
 
-def release_reservation(*, reservation: str, downstream_event_id: str, idempotency_key: str) -> dict[str, Any]:
+def release_reservation(*, reservation: str, requisition_reference: str, downstream_event_id: str, idempotency_key: str) -> dict[str, Any]:
+	"""Revocation only: Budget releases the whole reservation if, and only if,
+	this requisition created it and nothing was converted."""
 	from kentender_budget.services.budget_commitment_contracts import release_reservation as contract
 
 	return _call(
 		contract, reservation=reservation, amount=None, downstream_event_id=downstream_event_id,
-		downstream_event_type="ProcurementRequisitionRevoked", idempotency_key=idempotency_key,
+		downstream_event_type="ProcurementRequisitionRevoked", idempotency_key=idempotency_key, caller=_principal(requisition_reference),
 	)
 
 
