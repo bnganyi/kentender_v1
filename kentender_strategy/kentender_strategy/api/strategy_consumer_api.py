@@ -15,6 +15,7 @@ import json
 import frappe
 
 from kentender_strategy.services import strategy_consumer as consumer
+from kentender_strategy.services.strategy_authorization import require_downstream_read
 from kentender_strategy.services import strategy_transitions as transitions
 from kentender_strategy.services import strategy_writes as writes
 from kentender_strategy.services.strategy_idempotency import run_idempotent
@@ -44,6 +45,7 @@ def resolve_strategy_context(
 ):
 	"""STR-CHG-001 v1.7 §7/§8 — exactly one of `as_of_date` or `fiscal_year`;
 	no Procuring Entity or organisation-unit input exists."""
+	require_downstream_read()
 	return consumer.resolve_strategy_context(
 		as_of_date=as_of_date or None,
 		fiscal_year=fiscal_year or None,
@@ -59,6 +61,7 @@ def list_strategy_objectives(
 	limit_start: int = 0,
 	limit_page_length: int = 20,
 ):
+	require_downstream_read()
 	return consumer.list_strategy_objectives(
 		plan_version_id,
 		parent_node_id=parent_node_id or None,
@@ -70,6 +73,7 @@ def list_strategy_objectives(
 
 @frappe.whitelist()
 def get_strategy_lineage(node_id: str):
+	require_downstream_read()
 	return consumer.get_strategy_lineage(node_id)
 
 
@@ -78,11 +82,13 @@ def list_active_targets(plan_code: str | None = None):
 	"""Relocated from the retired `strategy_api.py` (STR-CHG-001 v1.6 cleanup)
 	— the Budget Line "primary target" picker's live dropdown source
 	(`kentender_budget`'s `budget_live_bind.js::loadTargetOptions`)."""
+	require_downstream_read()
 	return consumer.active_target_options(plan_code=plan_code or None)
 
 
 @frappe.whitelist()
 def create_strategy_snapshot(plan_version_id: str, objective_id: str, correlation_key: str):
+	require_downstream_read()
 	return run_idempotent(
 		correlation_key,
 		"Strategy Node",

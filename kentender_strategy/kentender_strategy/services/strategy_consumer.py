@@ -222,14 +222,37 @@ def list_strategy_objectives(
 	return {"rows": out, "count": total}
 
 
-def get_strategy_lineage(node_id: str) -> dict:
+def _version_status_of(node_id: str) -> str | None:
+	"""Status of the plan version a node, indicator or target belongs to."""
+	if frappe.db.exists("Strategy Node", node_id):
+		version = frappe.db.get_value("Strategy Node", node_id, "plan_version_id")
+	elif frappe.db.exists("Performance Indicator", node_id):
+		version = frappe.db.get_value("Performance Indicator", node_id, "plan_version_id")
+	elif frappe.db.exists("Performance Target", node_id):
+		indicator = frappe.db.get_value("Performance Target", node_id, "indicator_id")
+		version = frappe.db.get_value("Performance Indicator", indicator, "plan_version_id") if indicator else None
+	else:
+		return None
+	return frappe.db.get_value("Strategic Plan Version", version, "status") if version else None
+
+
+def get_strategy_lineage(node_id: str, *, user: str | None = None) -> dict:
 	"""STR-CHG-001 §8 — get_strategy_lineage.
 
 	Ordered path with stable IDs, types and titles from plan to the
 	requested Strategic Objective, Performance Indicator or Performance
 	Target — auto-detecting which of the three the id belongs to rather
 	than requiring the caller to state it.
+
+	A reference inside a Draft, returned or pending version is shown only to
+	the Strategy readers (`read_scope == "full"`); anyone else gets the same
+	not-found as an unknown id (STR-BR-018, STR-AC-020; AUD-STR-005).
 	"""
+	from kentender_strategy.services.strategy_authorization import APPROVED_STATUSES, read_scope
+
+	status = _version_status_of(node_id)
+	if status and status not in APPROVED_STATUSES and read_scope(user or frappe.session.user) != "full":
+		frappe.throw(_("Unknown Strategy reference"), frappe.DoesNotExistError)
 	if frappe.db.exists("Strategy Node", node_id):
 		path = _node_ancestor_path(node_id)
 	elif frappe.db.exists("Performance Indicator", node_id):

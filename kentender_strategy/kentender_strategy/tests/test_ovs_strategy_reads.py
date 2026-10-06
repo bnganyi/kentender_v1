@@ -159,3 +159,58 @@ class TestApprovedStrategyReads(TechnicalReadTestBase):
 	def test_the_existing_readers_still_see_the_pending_plan(self):
 		ids = [p["id"] for p in self.as_user(self.approver, ui.get_strategy_portfolio)["plans"]]
 		self.assertIn(self.pending_plan.name, ids)
+
+
+	# AUD-STR-005 — the whitelisted downstream contracts follow the owner's read ruling: every internal user
+	# reads the approved plans; portal accounts read nothing; a Draft or pending version's lineage stays with
+	# the Strategy readers. In-process callers (Planning, Requisitions) use the services and are unaffected.
+
+	def _nodes(self, version):
+		return frappe.get_all("Strategy Node", filters={"plan_version_id": version.name}, pluck="name", order_by="display_order asc")
+
+	def _website_user(self):
+		email = f"kt.test.str.portal.{self.suffix}@test.local"
+		doc = frappe.get_doc({"doctype": "User", "email": email, "first_name": "portal", "enabled": 1, "send_welcome_email": 0, "user_type": "Website User"}).insert(ignore_permissions=True)
+		self._track(doc)
+		return email
+
+	def test_a_portal_account_is_refused_every_consumer_endpoint(self):
+		from kentender_strategy.api import strategy_consumer_api as api
+
+		portal = self._website_user()
+		node = self._nodes(self.approved)[0]
+		calls = (
+			lambda: api.resolve_strategy_context(as_of_date=START),
+			lambda: api.list_strategy_objectives(self.approved.name),
+			lambda: api.get_strategy_lineage(node),
+			lambda: api.list_active_targets(),
+			lambda: api.create_strategy_snapshot(self.approved.name, node, f"kt-test-{self.suffix}"),
+		)
+		for i, call in enumerate(calls):
+			with self.assertRaises(frappe.PermissionError, msg=f"call #{i}"):
+				self.as_user(portal, call)
+		self.assertFalse(frappe.db.exists("Audit Event", {"reason": f"kt-test-{self.suffix}"}))
+
+	def test_an_internal_user_without_a_responsibility_reads_the_approved_plan_through_the_api(self):
+		from kentender_strategy.api import strategy_consumer_api as api
+
+		out = self.as_user(self.outsider, api.list_strategy_objectives, self.approved.name)
+		self.assertIn("rows", out)
+		node = self._nodes(self.approved)[0]
+		self.assertEqual(self.as_user(self.outsider, api.get_strategy_lineage, node)["node_id"], node)
+
+	def test_lineage_of_a_version_awaiting_approval_is_refused_to_a_plain_internal_user(self):
+		from kentender_strategy.api import strategy_consumer_api as api
+
+		node = self._nodes(self.pending)[0]
+		with self.assertRaises(frappe.DoesNotExistError):
+			self.as_user(self.outsider, api.get_strategy_lineage, node)
+		# the Strategy readers keep their view of it
+		self.assertEqual(self.as_user(self.approver, api.get_strategy_lineage, node)["node_id"], node)
+
+	def test_the_in_process_service_still_answers_for_system_callers(self):
+		from kentender_strategy.services import strategy_consumer as consumer
+
+		node = self._nodes(self.pending)[0]
+		# Administrator (a background job, a seed) is a technical reader
+		self.assertEqual(consumer.get_strategy_lineage(node)["node_id"], node)
