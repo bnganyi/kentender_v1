@@ -153,3 +153,6 @@
 /* Authorised (REQ-DES-10). */
 .kt-req .req-authorised-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
 @media (max-width: 640px) { .kt-req .req-authorised-head { flex-direction: column; } }
+
+/* A filter-row button is as tall as the fields beside it. */
+.kt-req .req-filters .btn { min-height: 36px; }

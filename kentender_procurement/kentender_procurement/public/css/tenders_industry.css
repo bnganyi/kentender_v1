@@ -323,3 +323,5 @@
 	.kt-tnd .tnd-stage-facts { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* A filter-row button is as tall as the fields beside it, so "Clear filters" lines up with them. */
+.kt-tnd .tnd-ws-filters .btn { min-height: 36px; }

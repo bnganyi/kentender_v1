@@ -3413,6 +3413,17 @@
 	border-color: var(--color-neutral-600);
 }
 
+.kt-industry .input:focus-visible,
+.kt-industry .date-field:focus-visible {
+	border-color: var(--color-accent);
+	outline: 0 !important;
+	box-shadow: 0 0 0 3px var(--color-accent-100);
+}
+
+.kt-industry .kt-filter-bar .btn {
+	min-height: 36px;
+}
+
 /* Part 7: the table pager (table-pagination standard) */
 
 .kt-industry .kt-pager {

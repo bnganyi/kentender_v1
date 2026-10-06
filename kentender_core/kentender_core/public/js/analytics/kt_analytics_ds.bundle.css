@@ -1395,3 +1395,14 @@
 .kt-industry.kt-analytics .input:hover:not(:disabled):not(:focus-visible) {
 	border-color: var(--color-neutral-600);
 }
+
+.kt-industry.kt-analytics .input:focus-visible,
+.kt-industry.kt-analytics .date-field:focus-visible {
+	border-color: var(--color-accent);
+	outline: 0 !important;
+	box-shadow: 0 0 0 3px var(--color-accent-100);
+}
+
+.kt-industry.kt-analytics .kt-filter-bar .btn {
+	min-height: 36px;
+}
