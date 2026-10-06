@@ -102,9 +102,10 @@ def control_shape(scope: str, fields: bool = False) -> tuple:
 			f"{scope} .input,\n{scope} .date-field {{\n\tborder-radius: var(--radius-control);\n\tborder-color: var(--color-control-border);\n}}",
 			f"{scope} .input:hover:not(:disabled):not(:focus-visible) {{\n\tborder-color: var(--color-neutral-600);\n}}",
 			# Focus on a field: the pack stacks a 1px accent border and a 1px accent-700 outline with no gap, which read as a heavy 2px navy frame
-			# beside the soft resting edge (owner, 6 Oct 2026). One accent border and a soft halo instead; the border change (3.2:1 -> 8:1) and the
-			# halo are the focus indicator. Overrides the pack's `outline-width: 1px !important`, so it must be important too.
-			f"{scope} .input:focus-visible,\n{scope} .date-field:focus-visible {{\n\tborder-color: var(--color-accent);\n\toutline: 0 !important;\n\tbox-shadow: 0 0 0 3px var(--color-accent-100);\n}}",
+			# beside the soft resting edge, and an outer halo added noise (owner, 6 Oct 2026). The edge itself changes instead: the border turns
+			# accent and thickens to 2px with an inset ring (nothing outside the box, no layout shift) and the grey fill goes white. The edge
+			# change (3.2:1 -> 8:1) is the focus indicator. Overrides the pack's `outline-width: 1px !important`, so it must be important too.
+			f"{scope} .input:focus-visible,\n{scope} .date-field:focus-visible {{\n\tborder-color: var(--color-accent);\n\tbackground: var(--color-surface);\n\toutline: 0 !important;\n\tbox-shadow: inset 0 0 0 1px var(--color-accent);\n}}",
 			# A button in a filter row is as tall as the fields beside it (36px, not 32px), so "Clear filters" lines up with them.
 			f"{scope} .kt-filter-bar .btn {{\n\tmin-height: 36px;\n}}",
 		]
