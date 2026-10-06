@@ -3423,10 +3423,15 @@
 	border-color: var(--color-neutral-600);
 }
 
+.kt-industry .input:not(:disabled):not([readonly]),
+.kt-industry .date-field {
+	background-color: var(--color-surface);
+}
+
 .kt-industry .input:focus-visible,
 .kt-industry .date-field:focus-visible {
 	border-color: var(--color-accent);
-	background: var(--color-surface);
+	background-color: var(--color-surface);
 	outline: 0 !important;
 	box-shadow: inset 0 0 0 1px var(--color-accent);
 }
