@@ -49,7 +49,7 @@ Inter, through Frappe's `--font-stack` ("InterVariable", "Inter", system stack).
 
 ## Icons
 
-Lucide at stroke 1.75 on `currentColor`, at 16, 20 and 24px (`.kt-icon`, `.is-sm`, `.is-lg`). The KenTender icon list is in `foundations/icons.html` and the sprite `assets/icons/kt-icons.svg` (`#kt-<module>`): one icon per module; Analytics areas and record types take their source module's icon. Show a module or area icon in its `.kt-icon-chip` (glyph only, no fill) on tabs, section titles, summary columns and page headers. Icons may lead action and status labels; they never replace a label, and they never repeat in every table row.
+Lucide at stroke 1.75 on `currentColor`, at 16, 20 and 24px (`.kt-icon`, `.is-sm`, `.is-lg`). One exception (DS-REV-004, Project Owner, 6 Oct 2026): the done-stage tick of the journey tracker (`.kt-journey-check`) is 12px at stroke 2.5, so it sits at the height of the 13px stage label; a 16px tick would stand taller than its label. No other icon is exempt. The KenTender icon list is in `foundations/icons.html` and the sprite `assets/icons/kt-icons.svg` (`#kt-<module>`): one icon per module; Analytics areas and record types take their source module's icon. Show a module or area icon in its `.kt-icon-chip` (glyph only, no fill) on tabs, section titles, summary columns and page headers. Icons may lead action and status labels; they never replace a label, and they never repeat in every table row.
 
 ## Motion
 
