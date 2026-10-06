@@ -51,12 +51,21 @@
 					<table class="table">
 						<thead><tr><th v-for="h in sec.th" :key="h.t" :class="h.cls">{{ h.t }}</th></tr></thead>
 						<tbody>
-							<tr v-for="(r, ri) in sec.rows" :key="ri">
+							<tr v-for="(r, ri) in rowsOf(sec)" :key="ri">
 								<td v-for="(c, ci) in r.cells" :key="ci" :class="c.cls"><span v-if="c.hasChip" :class="c.chip">{{ c.t }}</span><template v-if="c.noChip">{{ c.t }}</template></td>
 								<td v-if="r.hasA" style="text-align:right"><button type="button" class="btn btn-primary" :disabled="pending" :data-testid="`awd-row-action-${ri}`" @click="emit('action', r.action)">{{ r.a }}</button></td>
 							</tr>
 						</tbody>
 					</table>
+					<TablePagerHost
+						v-if="sec.paged"
+						:total="sec.rows.length"
+						:page="pagedView(sec.paged, sec.rows).page"
+						:page-size="pagedView(sec.paged, sec.rows).pageSize"
+						noun="award task"
+						@update:page="(n) => setPagedPage(sec.paged, n)"
+						@update:page-size="(n) => setPagedSize(sec.paged, n)"
+					/>
 				</div>
 				<div v-if="sec.hasEmpty" class="kt-empty">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1"></rect><path d="M3 10h18"></path></svg>
@@ -128,6 +137,8 @@
 import { computed, reactive } from "vue";
 import { norm, slug } from "./model.js";
 import AwdGuidance from "./AwdGuidance.vue";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { pagedView, setPagedPage, setPagedSize } from "../../pager_shared/usePagedRows.js";
 
 const props = defineProps({
 	board: { type: Object, required: true },
@@ -139,6 +150,8 @@ const props = defineProps({
 });
 const emit = defineEmits(["action", "update"]);
 const m = computed(() => norm(props.board, props.form));
+// The table-pagination standard (AGENTS.md §6.11): a table the screen marks `paged` shows one page of its rows.
+const rowsOf = (sec) => (sec.paged ? pagedView(sec.paged, sec.rows).rows : sec.rows);
 const open = reactive({});
 
 const toggle = (key) => { open[key] = !open[key]; };

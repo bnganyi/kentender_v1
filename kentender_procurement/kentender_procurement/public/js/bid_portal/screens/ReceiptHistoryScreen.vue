@@ -7,6 +7,8 @@
 // opens its own receipt or acknowledgement.
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import { useNarrow } from "../composables/useNarrow.js";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 
 const METHOD = "kentender_procurement.bid_submission.api.get_receipt_history";
 const props = defineProps({ initial: { type: Object, default: null } });
@@ -18,6 +20,8 @@ const data = ref(props.initial);
 const failure = ref("");
 const guard = portal.createSequenceGuard();
 const rows = computed(() => (data.value && data.value.rows) || []);
+// The table-pagination standard (AGENTS.md §6.11): the wide table and the narrow cards draw the same page.
+const { pagedRows, total, page, pageSize, setPage, setPageSize } = usePagedRows(rows, "portal-receipts");
 
 function tone(row) {
 	return row.event_tone ? `is-${row.event_tone}` : "";
@@ -78,7 +82,7 @@ onMounted(() => {
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="row in rows" :key="row.document" :data-testid="'bds-receipt-row-' + row.document">
+					<tr v-for="row in pagedRows" :key="row.document" :data-testid="'bds-receipt-row-' + row.document">
 						<td class="bds-tender-cell">{{ row.tender_title }}<div class="kt-label bds-tender-ref">{{ row.tender_reference }}</div></td>
 						<td>{{ row.document }}</td>
 						<td><span class="kt-status" :class="tone(row)">{{ row.event }}</span></td>
@@ -88,7 +92,7 @@ onMounted(() => {
 				</tbody>
 			</table>
 			<div v-else data-testid="bds-receipts-cards">
-				<div v-for="row in rows" :key="row.document" class="bds-card" :data-testid="'bds-receipt-row-' + row.document">
+				<div v-for="row in pagedRows" :key="row.document" class="bds-card" :data-testid="'bds-receipt-row-' + row.document">
 					<div class="bds-card-title">{{ row.tender_title }}<div class="kt-label bds-tender-ref">{{ row.tender_reference }}</div></div>
 					<div class="bds-card-fact"><span class="kt-label">{{ __("Document") }}</span><span>{{ row.document }}</span></div>
 					<div class="bds-card-fact"><span class="kt-label">{{ __("Event") }}</span><span><span class="kt-status" :class="tone(row)">{{ row.event }}</span></span></div>
@@ -96,7 +100,7 @@ onMounted(() => {
 					<div class="bds-card-actions"><a :href="row.href">{{ __("View") }}</a></div>
 				</div>
 			</div>
-			<p class="bds-count" data-testid="bds-receipts-count">{{ data.count_text }}</p>
+			<TablePagerHost :total="total" :page="page" :page-size="pageSize" noun="record" @update:page="setPage" @update:page-size="setPageSize" />
 		</template>
 		<div v-else-if="data" class="kt-empty" data-testid="bds-receipts-empty">
 			<p class="bds-empty-text">{{ data.empty_text }}</p>

@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, onActivated, onMounted, watch } from "vue";
 import KtErrorBanner from "./KtErrorBanner.vue";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { formatKes, mintKey } from "../../budget_shared/data/formatKes.js";
@@ -83,7 +85,21 @@ async function loadTab(t) {
 	else if (t === "history" && !history.value) history.value = await getBudgetVersionHistory(detail.value.version.id);
 }
 watch(tab, (t) => loadTab(t));
-watch([activityFilterLine, activityFilterEvent], () => tab.value === "activity" && loadTab("activity"));
+// The table-pagination standard (AGENTS.md §6.11): a version's budget lines are paged per budget; the activity list is paged
+// and goes back to its first page when the reader changes its filters.
+const linesRows = computed(() => linesActive.value?.rows || []);
+const {
+	pagedRows: pagedLines, total: linesTotal, page: linesPage, pageSize: linesPageSize, setPage: setLinesPage, setPageSize: setLinesPageSize,
+} = usePagedRows(linesRows, () => `budget-lines:${budgetIdParam.value}`);
+const activityRows = computed(() => activity.value?.rows || []);
+const {
+	pagedRows: pagedActivity, total: activityTotal, page: activityPage, pageSize: activityPageSize,
+	setPage: setActivityPage, setPageSize: setActivityPageSize, reset: resetActivity,
+} = usePagedRows(activityRows, () => `budget-activity:${budgetIdParam.value}`);
+watch([activityFilterLine, activityFilterEvent], () => {
+	resetActivity();
+	if (tab.value === "activity") loadTab("activity");
+});
 function clearActivityFilters() {
 	activityFilterLine.value = "";
 	activityFilterEvent.value = "";
@@ -254,7 +270,7 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="line in linesActive.rows" :key="line.budget_line">
+								<tr v-for="line in pagedLines" :key="line.budget_line">
 									<td><div>{{ line.title }}</div><div class="kt-muted" style="font-size: 11px; margin-top: 2px">{{ line.code }}</div></td>
 									<td>{{ line.owner_org_unit }}</td>
 									<td>{{ line.funding_source }}</td>
@@ -273,6 +289,7 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 								</tr>
 							</tbody>
 						</table>
+						<TablePagerHost :total="linesTotal" :page="linesPage" :page-size="linesPageSize" noun="budget line" style="margin: 0 24px; padding-bottom: 12px" @update:page="setLinesPage" @update:page-size="setLinesPageSize" />
 					</div>
 				</template>
 
@@ -300,7 +317,7 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 						<table class="table" data-testid="budget-detail-activity-table">
 							<thead><tr><th>{{ __("Date and time") }}</th><th>{{ __("Event") }}</th><th>{{ __("Budget Line") }}</th><th>{{ __("Requisition / reservation") }}</th><th class="is-num">{{ __("Amount") }}</th><th>{{ __("Initiating actor") }}</th></tr></thead>
 							<tbody>
-								<tr v-for="row in activity.rows" :key="row.id">
+								<tr v-for="row in pagedActivity" :key="row.id">
 									<td style="white-space: nowrap">{{ row.event_at_display }}</td>
 									<td>{{ row.event_type_label }}</td>
 									<td>{{ row.budget_line_code }}</td>
@@ -310,6 +327,7 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 								</tr>
 							</tbody>
 						</table>
+						<TablePagerHost :total="activityTotal" :page="activityPage" :page-size="activityPageSize" noun="event" style="margin: 0 24px" @update:page="setActivityPage" @update:page-size="setActivityPageSize" />
 						<p class="kt-muted" style="font-size: 13px; padding: 12px 16px; margin: 0">{{ activity.summary_label }}</p>
 					</div>
 				</template>

@@ -299,19 +299,20 @@
 
 				<NeedsTable
 					v-else
-					:needs="registerRows"
+					:needs="pagedRows"
 					:columns="registerColumns"
 					@action="(row, action) => $emit('action', row, action)"
 				/>
 
-				<div
+				<TablePagerHost
 					v-if="registerRows.length"
-					data-testid="nds-count"
-					class="text-muted"
-					style="margin-top: var(--kt-space-3); font-size: 13px"
-				>
-					{{ registerCountLabel }}
-				</div>
+					:total="registerRows.length"
+					:page="currentPage"
+					:page-size="pageSize"
+					:noun="registerNoun"
+					@update:page="(n) => $emit('update:page', n)"
+					@update:page-size="changePageSize"
+				/>
 			</div>
 		</div>
 	</div>
@@ -320,6 +321,7 @@
 <script setup>
 import { computed } from "vue";
 import NeedsTable from "./NeedsTable.vue";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
 import StatusPill from "./StatusPill.vue";
 import { formatInstant } from "../data/format.js";
 
@@ -337,9 +339,15 @@ const props = defineProps({
 	status: { type: String, default: "" },
 	financialYears: { type: Array, default: () => [] },
 	selectedFinancialYear: { type: String, default: "" },
+	// The table-pagination standard: the root keeps these so a visit to a need
+	// and back lands on the same page.
+	page: { type: Number, default: 1 },
+	pageSize: { type: Number, default: 10 },
 });
 
-defineEmits([
+const emit = defineEmits([
+	"update:page",
+	"update:pageSize",
 	"create",
 	"reload",
 	"action",
@@ -446,14 +454,25 @@ const registerRows = computed(() => {
 	return props.needs.filter((row) => !queued.has(row.name));
 });
 
-// §11.2 "2 needs" (the author's own list) vs. §11.3 "2 department needs"
-// (the register beneath a decision queue) — computed from what is actually
-// rendered in this table, not the server's raw total across both sections.
-const registerCountLabel = computed(() => {
-	const n = registerRows.value.length;
-	const noun = decisionQueue.value.length ? "department need" : "need";
-	return `${n} ${noun}${n === 1 ? "" : "s"}`;
+// The noun the pager counts in: §11.2 "2 needs" (the author's own list) vs.
+// §11.3 "2 department needs" (the register beneath a decision queue) — counted
+// from what is actually rendered in this table, not the server's raw total
+// across both sections.
+const registerNoun = computed(() => (decisionQueue.value.length ? "department need" : "need"));
+
+// The register is paged in the browser: the decision queue and "continue"
+// sections above it need every row, so the server sends the whole list.
+const pageCount = computed(() => Math.max(1, Math.ceil(registerRows.value.length / props.pageSize)));
+const currentPage = computed(() => Math.min(Math.max(props.page, 1), pageCount.value));
+const pagedRows = computed(() => {
+	const start = (currentPage.value - 1) * props.pageSize;
+	return registerRows.value.slice(start, start + props.pageSize);
 });
+
+function changePageSize(size) {
+	emit("update:pageSize", size);
+	emit("update:page", 1);
+}
 
 // An empty list under active filters means "nothing matched", not "nothing
 // exists" — the create-first copy would misstate the workspace.

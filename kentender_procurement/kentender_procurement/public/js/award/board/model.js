@@ -96,7 +96,7 @@ export function norm(b, form = {}) {
 			hasP: !!s.p, p: (s.p || []).map((x) => ({ t: /^[+!]/.test(x) ? x.slice(1) : x, ok: x[0] === "+", warn: x[0] === "!" })),
 			hasF: !!s.f, f: (s.f || []).map((x) => { const c = chipOf(x[1]); return { l: x[0], v: c.t, chip: c.chip, hasChip: c.hasChip, noChip: c.noChip }; }),
 			hasD: !!s.d, d: (s.d || []).map((x) => ({ l: x[0], v: x[1] })),
-			hasTbl: !!t,
+			hasTbl: !!t, paged: (t && t.paged) || "",
 			th: t ? t.h.map((h, k) => ({ t: h, cls: nums.includes(k) ? "is-num" : "" })).concat(t.a ? [{ t: "Action", cls: "" }] : []) : [],
 			rows: t ? t.r.map((r, ri) => ({ cells: r.map((c, k) => ({ ...chipOf(c), cls: nums.includes(k) ? "is-num" : "" })), hasA: !!t.a,
 				a: t.a || "—", action: (t.actions && t.actions[ri]) || { action: "noop" } })) : [],

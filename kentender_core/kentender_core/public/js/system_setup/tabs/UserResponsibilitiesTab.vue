@@ -12,6 +12,8 @@
 import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import { onSetupRevalidate } from "../composables/useRouteState.js";
 import AssignDialog from "../components/AssignDialog.vue";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 import ResponsibilityDetail from "../components/ResponsibilityDetail.vue";
 import RevokeDialog from "../components/RevokeDialog.vue";
 import { responsibilityApi } from "../data/responsibilityApi.js";
@@ -30,6 +32,8 @@ const loadError = ref("");
 const forbidden = ref(false);
 const rows = ref([]);
 const total = ref(0);
+// The table-pagination standard (AGENTS.md §6.11): the register is paged and goes back to page 1 on the reader's own filters.
+const { pagedRows, page, pageSize, setPage, setPageSize, reset } = usePagedRows(rows, "system-setup-responsibilities");
 const options = ref({ responsibilities: [], organisation_units: [], statuses: [] });
 const detail = ref(null);
 const detailLoading = ref(false);
@@ -144,10 +148,16 @@ watch(() => props.initialUnit, (unit) => {
 	filters.organisation_unit = unit || "";
 	loadRows({ quiet: true });
 });
-watch(() => filters.search, loadRowsDebounced);
+watch(() => filters.search, () => {
+	reset();
+	loadRowsDebounced();
+});
 watch(
 	() => [filters.organisation_unit, filters.business_role, filters.status],
-	() => loadRows({ quiet: true })
+	() => {
+		reset();
+		loadRows({ quiet: true });
+	}
 );
 
 function clearFilters() {
@@ -351,7 +361,7 @@ async function submitRevocation(reason) {
 							</tr>
 						</thead>
 						<tbody>
-							<tr v-for="row in rows" :key="row.assignment" :data-testid="'kt-ura-row-' + row.assignment">
+							<tr v-for="row in pagedRows" :key="row.assignment" :data-testid="'kt-ura-row-' + row.assignment">
 								<td>
 									<div style="font-weight:600">{{ row.user_full_name }}</div>
 									<div class="text-muted" style="font-size:13px">{{ row.user }}</div>
@@ -373,9 +383,7 @@ async function submitRevocation(reason) {
 						</tbody>
 					</table>
 				</div>
-				<p class="text-muted" style="font-size:13px;margin:12px 0 0" data-testid="kt-ura-count">
-					{{ total === 1 ? __("1 responsibility") : __("{0} responsibilities", [total]) }}
-				</p>
+				<TablePagerHost :total="rows.length" :page="page" :page-size="pageSize" noun="responsibility" noun-plural="responsibilities" @update:page="setPage" @update:page-size="setPageSize" />
 			</template>
 		</template>
 

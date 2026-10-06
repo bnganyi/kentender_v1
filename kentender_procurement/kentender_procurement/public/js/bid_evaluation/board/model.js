@@ -114,6 +114,7 @@ export function normBlock(b, { mobile = false, people = {} } = {}) {
 		o.ths = b.cols.map((t, i) => ({ t, td: numIdx.indexOf(i) >= 0 ? "is-num" : "" }));
 		o.trs = b.rows.map((r) => ({ cells: r.map((c, i) => cellOf(c, numIdx.indexOf(i) >= 0, people)) }));
 		o.hasCaption = !!b.caption;
+		o.paged = b.paged || "";
 	}
 	if (b.k === "notice") { o.cls = "is-" + b.tone; o.iWarn = b.tone === "warning"; o.iCrit = b.tone === "critical"; o.iInfo = b.tone === "info" || b.tone === "live"; o.hasD = !!b.d; }
 	if (b.k === "field") {

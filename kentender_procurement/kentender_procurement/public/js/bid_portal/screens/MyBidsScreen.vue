@@ -7,6 +7,8 @@
 // filters are the caller's own selection and live in the URL query.
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import { useNarrow } from "../composables/useNarrow.js";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 
 const METHOD = "kentender_procurement.bid_submission.api.get_my_bids";
 // Row commands the read may offer; each then opens the bid it changed.
@@ -34,6 +36,8 @@ const runner = portal.createCommandRunner({ ref }, { onError: (e) => (failure.va
 const pending = computed(() => runner.pending.value);
 
 const rows = computed(() => (data.value && data.value.rows) || []);
+// The table-pagination standard (AGENTS.md §6.11): the wide table and the narrow cards draw the same page.
+const { pagedRows, total, page, pageSize, setPage, setPageSize, reset } = usePagedRows(rows, "portal-my-bids");
 const options = computed(() => (data.value && data.value.options) || DEFAULT_OPTIONS);
 const filtered = computed(() => !!(filters.value.search || filters.value.status));
 
@@ -52,6 +56,7 @@ async function load() {
 	}
 }
 function apply() {
+	reset();
 	go("/my-bids", { replace: true, query: { ...filters.value }, keepFocus: true });
 	return load();
 }
@@ -80,6 +85,7 @@ watch(
 		const next = fromQuery(query);
 		if (!same(next, filters.value)) {
 			filters.value = next;
+			reset();
 			load();
 		}
 	},
@@ -134,7 +140,7 @@ onMounted(() => {
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="row in rows" :key="row.bid_reference" :data-testid="'bds-bid-row-' + row.bid_reference">
+						<tr v-for="row in pagedRows" :key="row.bid_reference" :data-testid="'bds-bid-row-' + row.bid_reference">
 							<td class="bds-tender-cell">{{ row.tender_title }}<div class="kt-label bds-tender-ref">{{ row.tender_reference }}</div><div v-for="a in row.alerts" :key="a.title" class="bds-row-alert"><a :href="a.href" data-testid="bds-bid-alert">{{ __(a.title) }}</a></div></td>
 							<td><span class="bds-nowrap">{{ row.bid_reference }}</span><div v-if="row.version_label" class="kt-label">{{ row.version_label }}</div></td>
 							<td><span class="kt-status" :class="tone(row)">{{ row.status_label }}</span></td>
@@ -152,7 +158,7 @@ onMounted(() => {
 					</tbody>
 				</table>
 				<div v-else data-testid="bds-bids-cards">
-					<div v-for="row in rows" :key="row.bid_reference" class="bds-card" :data-testid="'bds-bid-row-' + row.bid_reference">
+					<div v-for="row in pagedRows" :key="row.bid_reference" class="bds-card" :data-testid="'bds-bid-row-' + row.bid_reference">
 						<div class="bds-card-title">{{ row.tender_title }}<div class="kt-label bds-tender-ref">{{ row.tender_reference }}</div><div v-for="a in row.alerts" :key="a.title" class="bds-row-alert"><a :href="a.href" data-testid="bds-bid-alert">{{ __(a.title) }}</a></div></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Bid") }}</span><span>{{ row.bid_reference }}</span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="tone(row)">{{ row.status_label }}</span></span></div>
@@ -168,7 +174,7 @@ onMounted(() => {
 						</div>
 					</div>
 				</div>
-				<p class="bds-count" data-testid="bds-bids-count">{{ data.count_text }}</p>
+				<TablePagerHost :total="total" :page="page" :page-size="pageSize" noun="bid" @update:page="setPage" @update:page-size="setPageSize" />
 			</template>
 			<div v-else-if="data" class="kt-empty" data-testid="bds-bids-empty">
 				<p class="bds-empty-text">{{ filtered ? __("No bids match these filters.") : data.empty_text }}</p>

@@ -17,3 +17,14 @@ globalThis.kentender_core = {
 		},
 	},
 };
+// The register hosts kentender_core's shared table pager (kt_industry_pager.bundle.js in the browser).
+globalThis.frappe.provide = (path) => {
+	let node = globalThis;
+	for (const part of path.split(".")) {
+		node[part] = node[part] || {};
+		node = node[part];
+	}
+	return node;
+};
+globalThis.window.kentender_core = globalThis.kentender_core;
+await import("../../../../../kentender_core/kentender_core/public/js/kt_industry/kt_industry_pager.bundle.js");

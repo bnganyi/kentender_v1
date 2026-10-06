@@ -43,20 +43,20 @@
 						<option value="">All financial years</option>
 						<option v-for="fy in fiscalYears" :key="fy" :value="fy">{{ fy }}</option>
 					</select></div>
-					<button type="button" class="btn btn-secondary" data-testid="tnd-clear-filters" @click="$emit('clear-filters')">Clear filters</button>
+					<button type="button" class="btn btn-secondary" data-testid="tnd-clear-filters" @click="clearFilters">Clear filters</button>
 				</div>
 
 				<div v-if="!rows.length" class="tnd-empty" data-testid="tnd-empty">
 					<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-500)" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
 					<p>{{ workspace.empty_text || "No Tenders match these filters." }}</p>
-					<button type="button" class="btn btn-secondary" @click="$emit('clear-filters')">Clear filters</button>
+					<button type="button" class="btn btn-secondary" @click="clearFilters">Clear filters</button>
 				</div>
 
 				<div v-else class="tnd-table-wrap">
 					<table class="table" data-testid="tnd-queue">
 						<thead><tr><th style="width: 32%">Purchase</th><th style="width: 22%">Tender</th><th style="width: 22%">Status</th><th style="width: 14%">Required by</th><th style="width: 10%" class="tnd-cell-right">Action</th></tr></thead>
 						<tbody>
-							<tr v-for="row in rows" :key="row.kind + ':' + (row.tender || row.handoff)" :data-testid="`tnd-row-${row.status_key}`" :data-tender="row.tender_reference">
+							<tr v-for="row in pagedRows" :key="row.kind + ':' + (row.tender || row.handoff)" :data-testid="`tnd-row-${row.status_key}`" :data-tender="row.tender_reference">
 								<td><div class="tnd-row-purchase"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.29 7 12 12l8.71-5"/><path d="M12 22V12"/></svg><div>{{ row.purchase }}<div class="tnd-sub">{{ row.plan_item_id }}</div></div></div></td>
 								<td>{{ row.tender_reference }}<div class="tnd-sub">{{ row.requisition_reference }}</div></td>
 								<td><span class="kt-status" :class="statusClass(row.status_key)">{{ row.status_label }}</span><div v-if="row.secondary" class="tnd-sub tnd-sub--4">{{ row.secondary }}</div></td>
@@ -65,6 +65,7 @@
 							</tr>
 						</tbody>
 					</table>
+					<TablePagerHost :total="total" :page="page" :page-size="pageSize" noun="tender" @update:page="setPage" @update:page-size="setPageSize" />
 				</div>
 			</template>
 		</BlueprintCard>
@@ -74,6 +75,8 @@
 <script setup>
 import { computed } from "vue";
 import BlueprintCard from "./BlueprintCard.vue";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 
 const props = defineProps({
 	loading: Boolean,
@@ -84,6 +87,8 @@ const props = defineProps({
 const emit = defineEmits(["navigate", "filter", "clear-filters"]);
 
 const rows = computed(() => props.workspace.rows || []);
+// The table-pagination standard (AGENTS.md §6.11): ten rows by default, the page kept across a visit to a record.
+const { pagedRows, total, page, pageSize, setPage, setPageSize, reset } = usePagedRows(rows, "tenders");
 const counts = computed(() => props.workspace.counts || []);
 const showCounts = computed(() => counts.value.length > 0);
 const statusOptions = computed(() => (props.workspace.filters || {}).statuses || []);
@@ -93,7 +98,12 @@ const fiscalYears = computed(() => (props.workspace.filters || {}).fiscal_years 
 function pickCount(key) {
 	update("status", props.filters.status === key ? "" : key);
 }
+function clearFilters() {
+	reset();
+	emit("clear-filters");
+}
 function update(name, value) {
+	reset();
 	emit("filter", { ...props.filters, [name]: value });
 }
 

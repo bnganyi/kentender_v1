@@ -58,6 +58,9 @@
 				:selected-financial-year="financialYear"
 				v-model:search="search"
 				v-model:status="status"
+				v-model:page="page"
+				:page-size="pageSize"
+				@update:page-size="onPageSize"
 				@clear-filters="clearFilters"
 				@create="onCreateClick"
 				@reload="load"
@@ -223,6 +226,7 @@ import ReasonDialog from "./components/ReasonDialog.vue";
 import ReviewTaskScreen from "./components/ReviewTaskScreen.vue";
 import WithdrawalReviewScreen from "./components/WithdrawalReviewScreen.vue";
 import WorkspaceScreen from "./components/WorkspaceScreen.vue";
+import { savePageSize, savedPageSize } from "../pager_shared/pageSize.js";
 
 const PAGE = "departmental-needs";
 const { route, go, epoch } = useRouteState(PAGE);
@@ -245,6 +249,14 @@ const errorSummary = ref("");
 const fieldErrors = ref({});
 const search = ref("");
 const status = ref("");
+// The table-pagination standard: the register's page lives here, not in the
+// screen, so going into a need and back keeps it. The size is remembered.
+const page = ref(1);
+const pageSize = ref(savedPageSize("needs"));
+function onPageSize(size) {
+	pageSize.value = size;
+	savePageSize("needs", size);
+}
 
 const workspace = ref({});
 const detail = ref({});
@@ -321,11 +333,13 @@ const financialYear = ref("");
 // back to the remembered department/year instead (found live 21 Sep 2026:
 // the option visibly snapped back to the old department).
 function onSelectContext(value) {
+	page.value = 1;
 	contextKey.value = value;
 	load({ quiet: true, clearOrganisationUnit: !value });
 }
 
 function onSelectFinancialYear(value) {
+	page.value = 1;
 	financialYear.value = value;
 	load({ quiet: true, clearFinancialYear: !value });
 }
@@ -691,8 +705,16 @@ function refreshFilters(debounced) {
 		load({ quiet: true });
 	}
 }
-watch(search, () => refreshFilters(true));
-watch(status, () => refreshFilters(false));
+// A new search, status, year or department is a new list: back to its first page. Done here,
+// on the reader's own actions — not by watching the screen's props, which also move when a load lands.
+watch(search, () => {
+	page.value = 1;
+	refreshFilters(true);
+});
+watch(status, () => {
+	page.value = 1;
+	refreshFilters(false);
+});
 
 // AUTH-ADR-001 v1.6 §1.1 — the site is exactly one implicit Procuring Entity,
 // so the rail's PE switcher stays dormant here (matching Budget's and
@@ -1291,6 +1313,7 @@ async function withdrawDraft() {
 }
 
 function clearFilters() {
+	page.value = 1;
 	search.value = "";
 	status.value = "";
 	contextKey.value = "";

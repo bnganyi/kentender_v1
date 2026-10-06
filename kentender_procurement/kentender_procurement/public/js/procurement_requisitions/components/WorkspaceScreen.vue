@@ -131,6 +131,14 @@
 						</dl>
 					</div>
 				</div>
+				<TablePagerHost
+					:total="paging.total"
+					:page="paging.page"
+					:page-size="paging.page_size"
+					noun="requisition"
+					@update:page="(n) => emit('filters', { page: n })"
+					@update:page-size="(n) => emit('filters', { page_size: n, page: 1 })"
+				/>
 			</div>
 			<p v-else-if="filtered" style="font-size: 14px; margin: 0" data-testid="req-register-no-match">No requisitions match these filters.</p>
 			<p v-else style="font-size: 14px; margin: 0" data-testid="req-register-empty">You have no requisitions yet.</p>
@@ -142,6 +150,7 @@
 import { computed, onBeforeUnmount, ref } from "vue";
 import { useReq } from "../data/context.js";
 import CardTitle from "./shared/CardTitle.vue";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
 
 const props = defineProps({
 	workspace: { type: Object, required: true },
@@ -159,6 +168,8 @@ const existingRows = computed(() => ready.value.filter((r) => r.existing));
 // start, the Ready section is absent rather than an empty state (§13.2).
 const showReady = computed(() => ready.value.length > 0 || work.value.length === 0);
 const register = computed(() => props.workspace.register || []);
+// One page of the register and how many matched, from the server.
+const paging = computed(() => props.workspace.paging || { page: 1, page_size: 10, total: register.value.length });
 const options = computed(() => props.workspace.filters || {});
 const approvals = computed(() => (props.workspace.counts || {}).Approvals || 0);
 const filtered = computed(() => !!search.value || ["search", "status", "department", "fiscal_year"].some((k) => props.filters[k]));

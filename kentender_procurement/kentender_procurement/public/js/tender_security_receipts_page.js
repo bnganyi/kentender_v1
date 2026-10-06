@@ -5,7 +5,7 @@
 // (AGENTS.md §6.9). Not registered in cl_surface_registry (AGENTS.md §6.5).
 kentender_core.desk_page.register("tender-security-receipts", {
 	title: __("Tender-security receipts"),
-	bundles: ["kt_industry_page_rail.bundle.js", "tender_security_receipts.bundle.js", "tender_security_receipts.bundle.css"],
+	bundles: ["kt_industry_page_rail.bundle.js", "kt_industry_pager.bundle.js", "tender_security_receipts.bundle.js", "tender_security_receipts.bundle.css"],
 	mount: (el) => frappe.kt_mount_tender_security_receipts(el),
 	sidebarWorkspaceKey: "procurement",
 });

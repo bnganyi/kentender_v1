@@ -105,7 +105,7 @@
 								</tr>
 							</tbody>
 						</table>
-						<div v-if="data.rows.length < data.matched" style="margin-top:12px"><button type="button" class="btn btn-secondary" data-testid="pmt-more" @click="more()">Show more</button></div>
+						<TablePagerHost v-if="data.matched" :total="data.matched" :page="page" :page-size="pageSize" noun="meeting" @update:page="setPage" @update:page-size="setPageSize" />
 
 						<div v-if="!data.rows.length" class="kt-empty" data-testid="pmt-empty">
 							<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
@@ -123,8 +123,9 @@
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { frappeCall } from "./data/frappeCall.js";
 import { usePageRail } from "../tnd_shared/composables/usePageRail.js";
+import TablePagerHost from "../pager_shared/TablePagerHost.vue";
+import { savePageSize, savedPageSize } from "../pager_shared/pageSize.js";
 
-const PAGE_SIZE = 50;
 const railEl = ref(null);
 const loading = ref(true); // a skeleton only until the first answer: later loads revalidate in place
 const refreshing = ref(false);
@@ -132,7 +133,9 @@ const failure = ref(false);
 const stale = ref(false); // a later load failed: the last answer stays, labelled
 const forbidden = ref(false);
 const data = ref(null);
-const limit = ref(PAGE_SIZE);
+// The table-pagination standard (AGENTS.md §6.11): the server cuts the page (`start`, `limit`) and says how many matched.
+const page = ref(1);
+const pageSize = ref(savedPageSize("meetings"));
 // the controls bind to the reader's own choices, never to the server's echo
 const form = reactive({ type: "", department: "", state: "", date_from: "", date_to: "", query: "" });
 let seq = 0;
@@ -143,15 +146,21 @@ const countLabel = computed(() => {
 	if (!data.value) return "";
 	const m = data.value.matched;
 	const noun = `${m} meeting${m === 1 ? "" : "s"}`;
-	return data.value.rows.length < m ? `Showing ${data.value.rows.length} of ${noun}` : filtered.value ? `${noun} match these filters` : noun;
+	return filtered.value ? `${noun} match these filters` : noun;
 });
 
 async function load(opts = {}) {
 	const token = ++seq;
 	if (data.value) refreshing.value = true;
 	try {
-		const out = await frappeCall("kentender_procurement.proceedings.api.list_procurement_meetings", { ...form, limit: limit.value, start: 0 }, "GET");
+		const out = await frappeCall("kentender_procurement.proceedings.api.list_procurement_meetings", { ...form, limit: pageSize.value, start: (page.value - 1) * pageSize.value }, "GET");
 		if (token !== seq) return;
+		// A filter or a refresh can leave the reader past the last page: go to the last one.
+		const last = Math.max(1, Math.ceil((out.matched || 0) / pageSize.value));
+		if (page.value > last) {
+			page.value = last;
+			return load(opts);
+		}
 		forbidden.value = !!out.forbidden;
 		data.value = out;
 		failure.value = false;
@@ -171,7 +180,7 @@ async function load(opts = {}) {
 
 load();
 watch(form, () => {
-	limit.value = PAGE_SIZE;
+	page.value = 1;
 	clearTimeout(timer);
 	timer = setTimeout(load, 250);
 });
@@ -180,8 +189,14 @@ onBeforeUnmount(() => clearTimeout(timer));
 function clear() {
 	Object.assign(form, { type: "", department: "", state: "", date_from: "", date_to: "", query: "" });
 }
-function more() {
-	limit.value += PAGE_SIZE;
+function setPage(n) {
+	page.value = n;
+	load({ quiet: true });
+}
+function setPageSize(size) {
+	pageSize.value = size;
+	page.value = 1;
+	savePageSize("meetings", size);
 	load({ quiet: true });
 }
 function open(r) {

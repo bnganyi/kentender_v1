@@ -7,7 +7,7 @@ export function workspaceBoard(work) {
 	if (work && work.forbidden) return { hdr, sec: [{ t: "Your award tasks", empty: "You have no award tasks." }], screen: "workspace-forbidden" };
 	const tasks = (work && work.tasks) || [];
 	if (!tasks.length) return { hdr, sec: [{ t: "Your award tasks", empty: "You have no award tasks." }], screen: "workspace-empty" };
-	return { hdr, screen: "workspace", sec: [{ t: "Your award tasks", tbl: { h: ["Award record", "Tender", "Task", "Holder"], a: "Open award",
+	return { hdr, screen: "workspace", sec: [{ t: "Your award tasks", tbl: { h: ["Award record", "Tender", "Task", "Holder"], a: "Open award", paged: "award-tasks",
 		r: tasks.map((t) => [t.award, t.tender_title, t.task, t.holder]), actions: tasks.map((t) => ({ action: "open", args: { award: t.award } })) } }] };
 }
 

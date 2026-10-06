@@ -68,7 +68,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr v-for="row in rows" :key="row.intake_reference" data-testid="tsr-row">
+							<tr v-for="row in pagedRows" :key="row.intake_reference" data-testid="tsr-row">
 								<td data-label="Intake reference">
 									<strong>{{ row.intake_reference }}</strong>
 									<br v-if="row.status === 'Corrected' || row.corrects" />
@@ -86,6 +86,7 @@
 							</tr>
 						</tbody>
 					</table>
+					<TablePagerHost :total="total" :page="page" :page-size="pageSize" noun="receipt" @update:page="setPage" @update:page-size="setPageSize" />
 				</template>
 			</div>
 
@@ -104,6 +105,8 @@ import { useRouteState } from "./composables/useRouteState.js";
 import { usePageRail } from "../tnd_shared/composables/usePageRail.js";
 import * as api from "./data/api.js";
 import IntakeDialog from "./IntakeDialog.vue";
+import TablePagerHost from "../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../pager_shared/usePagedRows.js";
 
 const PAGE = "tender-security-receipts";
 const { epoch, hash, goHash } = useRouteState(PAGE);
@@ -127,16 +130,20 @@ const tenderFilter = computed(() => new URLSearchParams(hash.value || "").get("t
 const draftTender = ref(tenderFilter.value);
 watch(tenderFilter, (value) => (draftTender.value = value));
 const rows = computed(() => (data.value && data.value.rows) || []);
+// The table-pagination standard (AGENTS.md §6.11): the receipts register is paged; a new Tender filter is a new list.
+const { pagedRows, total, page, pageSize, setPage, setPageSize, reset } = usePagedRows(rows, "security-receipts");
 
 function goHome() {
 	frappe.set_route("Workspaces", "Procurement Home");
 }
 function applyFilter() {
 	const value = (draftTender.value || "").trim();
+	reset();
 	goHash(value ? `tender=${encodeURIComponent(value)}` : "", { replace: true });
 }
 function clearFilter() {
 	draftTender.value = "";
+	reset();
 	goHash("", { replace: true });
 }
 

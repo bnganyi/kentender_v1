@@ -148,7 +148,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					<template v-for="row in entries" :key="row.entry_id">
+					<template v-for="row in pagedEntries" :key="row.entry_id">
 						<tr data-testid="pln-dpp-row">
 							<td>
 								{{ row.title }}
@@ -216,6 +216,7 @@
 					</tr>
 				</tbody>
 				</table>
+				<TablePagerHost :total="entriesTotal" :page="entriesPage" :page-size="entriesPageSize" noun="requirement" @update:page="setEntriesPage" @update:page-size="setEntriesPageSize" />
 
 				<div v-if="plan.mutable" class="pln-dpp-add">
 					<button type="button" class="btn btn-secondary" data-testid="pln-dpp-add" @click="$emit('add-direct')">
@@ -320,6 +321,8 @@ import { computed, ref } from "vue";
 import { useGuidance } from "../../pln_shared/composables/useGuidance.js";
 import MissingSettingPanel from "./MissingSettingPanel.vue";
 import EntryFundingPanel from "./EntryFundingPanel.vue";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 
 const props = defineProps({
 	plan: { type: Object, default: () => ({}) },
@@ -357,6 +360,10 @@ const emit = defineEmits([
 const context = computed(() => props.plan.context || {});
 const certification = computed(() => props.plan.certification || {});
 const entries = computed(() => props.plan.entries || []);
+// The table-pagination standard (AGENTS.md §6.11): a departmental plan's requirements, paged per plan submission.
+const {
+	pagedRows: pagedEntries, total: entriesTotal, page: entriesPage, pageSize: entriesPageSize, setPage: setEntriesPage, setPageSize: setEntriesPageSize,
+} = usePagedRows(entries, () => `planning-dpp:${props.plan.header?.reference_line || ""}`);
 const isHod = computed(() => props.plan.access === "hod");
 
 const heading = computed(() => {

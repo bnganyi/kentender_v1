@@ -47,6 +47,7 @@ export default defineConfig({
 				test: {
 					name: "procurement-requisitions",
 					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/procurement_requisitions/vitest.setup.js"],
 					include: [
 						"kentender_procurement/kentender_procurement/public/js/procurement_requisitions/**/*.spec.js",
 					],
@@ -263,6 +264,14 @@ export default defineConfig({
 					include: [
 						"kentender_procurement/kentender_procurement/public/js/departmental_needs/components/*.spec.js",
 					],
+				},
+			},
+			{
+				// The shared paging logic and the guard that its per-app copies match.
+				test: {
+					name: "pager-shared",
+					environment: "node",
+					include: ["kentender_procurement/kentender_procurement/public/js/pager_shared/*.spec.js"],
 				},
 			},
 			{

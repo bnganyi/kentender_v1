@@ -126,6 +126,23 @@ HEADER = (
 	"   Do not edit by hand: change the generator or its sources, then rerun it. Inter is Frappe's own font (--font-stack), so\n"
 	"   no @font-face is shipped. Loaded app-wide by the apps' hooks, scoped to .kt-industry so it cannot reach Desk chrome. */\n\n"
 )
+#: The table pager (table-pagination standard). Not in the pack yet: the pack should own it, so the rules are written to read
+#: from its tokens only. Count at the far left, "Rows per page" and the numbered pages to the right; the current page is a solid
+#: accent square, every other control is a ghost button. On a narrow screen the numbers give way to "Page n of m".
+PAGER = (
+	".kt-industry .kt-pager {\n\tdisplay: flex;\n\talign-items: center;\n\tflex-wrap: wrap;\n\tgap: var(--space-3) var(--space-5);\n\tmargin-top: var(--space-4);\n\tpadding-top: var(--space-3);\n\tborder-top: 1px solid var(--color-divider);\n}",
+	".kt-industry .kt-pager-count {\n\tmargin: 0 auto 0 0;\n\tfont-size: 13px;\n\tcolor: var(--color-neutral-700);\n}",
+	".kt-industry .kt-pager-size {\n\tdisplay: inline-flex;\n\talign-items: center;\n\tgap: var(--space-2);\n\tmargin: 0;\n\tfont-size: 13px;\n\tcolor: var(--color-neutral-700);\n}",
+	".kt-industry .kt-pager-size .input {\n\twidth: auto;\n\tmin-height: 32px;\n\tpadding-block: 4px;\n}",
+	".kt-industry .kt-pager-nav {\n\tdisplay: inline-flex;\n\talign-items: center;\n\tgap: 4px;\n}",
+	".kt-industry .kt-pager-page {\n\tmin-width: 32px;\n\tpadding-inline: var(--space-2);\n\tfont-variant-numeric: tabular-nums;\n}",
+	".kt-industry .kt-pager-page.is-current,\n.kt-industry .kt-pager-page.is-current:hover:not(:disabled) {\n\tbackground: var(--color-accent);\n\tcolor: #fff;\n\tcursor: default;\n}",
+	".kt-industry .kt-pager-step {\n\tpadding-inline: var(--space-2);\n}",
+	".kt-industry .kt-pager-gap {\n\tpadding-inline: 2px;\n\tcolor: var(--color-neutral-600);\n}",
+	".kt-industry .kt-pager-status {\n\tdisplay: none;\n\tfont-size: 13px;\n\tcolor: var(--color-neutral-700);\n}",
+	"@media (max-width: 640px) {\n\t.kt-industry .kt-pager-count {\n\t\tflex-basis: 100%;\n\t}\n\t.kt-industry .kt-pager-nav {\n\t\tmargin-left: auto;\n\t}\n\t.kt-industry .kt-pager-page,\n\t.kt-industry .kt-pager-gap {\n\t\tdisplay: none;\n\t}\n\t.kt-industry .kt-pager-status {\n\t\tdisplay: inline;\n\t\tpadding-inline: var(--space-2);\n\t}\n}",
+)
+
 
 
 def _pack_nodes():
@@ -249,6 +266,7 @@ def build() -> str:
 	parts += ["/* Part 4: Frappe Desk rules that outrank the pack's, reset to what the board draws */", *RESETS]
 	parts += ["/* Part 5: table structure inside the pack's rules */", *STRUCTURE]
 	parts += ["/* Part 6: buttons and fields are rectangular and outlined, so they cannot be mistaken for a status pill */", *gen.control_shape(".kt-industry", fields=True)]
+	parts += ["/* Part 7: the table pager (table-pagination standard) */", *PAGER]
 	return HEADER.format(source=source.relative_to(ROOT)) + "\n\n".join(parts) + "\n"
 
 

@@ -9,6 +9,8 @@ import { ref, reactive, computed, onMounted, onActivated, watch } from "vue";
 import { useRouteState } from "../../strategy_shared/composables/useRouteState.js";
 import { usePageRail } from "../../strategy_shared/composables/usePageRail.js";
 import { runAttempt } from "../../strategy_shared/data/attempts.js";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 import { fetchPortfolio, savePlanDraft } from "../data/strategyApi.js";
 
 const { route, go, epoch } = useRouteState("strategy");
@@ -34,6 +36,14 @@ const error = ref(null);
 const forbidden = ref(false);
 const plans = ref([]);
 const myWork = ref([]);
+// The table-pagination standard (AGENTS.md §6.11): the plans register and the reader's own work are each paged.
+const {
+	pagedRows: pagedPlans, total: plansTotal, page: plansPage, pageSize: plansPageSize,
+	setPage: setPlansPage, setPageSize: setPlansPageSize, reset: resetPlans,
+} = usePagedRows(plans, "strategy-plans");
+const {
+	pagedRows: pagedWork, total: workTotal, page: workPage, pageSize: workPageSize, setPage: setWorkPage, setPageSize: setWorkPageSize,
+} = usePagedRows(myWork, "strategy-my-work");
 const canCreate = ref(false);
 const statusOptions = ref([]);
 const planTypeOptions = ref([]);
@@ -86,6 +96,7 @@ let filterTimer = null;
 watch(
 	() => [filters.q, filters.role, filters.status],
 	() => {
+		resetPlans();
 		clearTimeout(filterTimer);
 		filterTimer = setTimeout(() => refresh({ quiet: true }), 250);
 	}
@@ -277,7 +288,7 @@ async function submitDraft() {
 										</tr>
 									</thead>
 									<tbody>
-										<tr v-for="p in plans" :key="p.id" data-testid="str-plan-row" :data-plan-reference="p.reference">
+										<tr v-for="p in pagedPlans" :key="p.id" data-testid="str-plan-row" :data-plan-reference="p.reference">
 											<td><div>{{ p.title }}</div><div class="kt-muted">{{ p.reference }}</div></td>
 											<td>{{ p.plan_type_label }}</td>
 											<td>{{ p.period_fy_label || p.period_label || "—" }}</td>
@@ -287,9 +298,7 @@ async function submitDraft() {
 										</tr>
 									</tbody>
 								</table>
-								<div style="padding: 10.2px 20.4px" data-testid="str-count-label">
-									<span style="font-size: 12px; color: var(--kt-color-neutral-700)">{{ plans.length === 1 ? __("Showing 1 of 1 plan") : __("Showing {0} of {1} plans", [plans.length, plans.length]) }}</span>
-								</div>
+								<TablePagerHost :total="plansTotal" :page="plansPage" :page-size="plansPageSize" noun="plan" style="margin: 0 20.4px" @update:page="setPlansPage" @update:page-size="setPlansPageSize" />
 							</template>
 						</template>
 					</template>
@@ -311,7 +320,7 @@ async function submitDraft() {
 									</tr>
 								</thead>
 								<tbody>
-									<tr v-for="w in myWork" :key="w.version_id" data-testid="str-my-work-row" :data-version-reference="w.version_reference">
+									<tr v-for="w in pagedWork" :key="w.version_id" data-testid="str-my-work-row" :data-version-reference="w.version_reference">
 										<td><div>{{ w.plan_title }}</div><div class="kt-muted">{{ w.plan_reference }} &middot; {{ __("Version") }} {{ w.version_number }}</div></td>
 										<td>{{ w.review_type }}</td>
 										<td>{{ w.submitted_by || "—" }}</td>
@@ -321,7 +330,7 @@ async function submitDraft() {
 									</tr>
 								</tbody>
 							</table>
-							<div style="padding: 10.2px 20.4px; font-size: 12px; color: var(--kt-color-neutral-700)">{{ __("Showing {0} item(s)", [myWork.length]) }}</div>
+							<TablePagerHost :total="workTotal" :page="workPage" :page-size="workPageSize" noun="item" style="margin: 0 20.4px" @update:page="setWorkPage" @update:page-size="setWorkPageSize" />
 						</template>
 					</template>
 				</div>

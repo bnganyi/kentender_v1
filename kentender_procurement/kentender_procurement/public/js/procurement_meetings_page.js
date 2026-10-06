@@ -5,7 +5,7 @@
 // cl_surface_registry (AGENTS.md §6.5).
 kentender_core.desk_page.register("procurement-meetings", {
 	title: __("Procurement meetings"),
-	bundles: ["kt_industry_page_rail.bundle.js", "kt_industry_guidance.bundle.js", "procurement_meetings.bundle.js", "procurement_meetings_page.bundle.css"],
+	bundles: ["kt_industry_page_rail.bundle.js", "kt_industry_guidance.bundle.js", "kt_industry_pager.bundle.js", "procurement_meetings.bundle.js", "procurement_meetings_page.bundle.css"],
 	mount: (el) => frappe.kt_mount_procurement_meetings(el),
 	sidebarWorkspaceKey: "procurement",
 });

@@ -99,7 +99,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr v-for="row in items" :key="row.plan_item_id" data-testid="ppl-purchase-row">
+							<tr v-for="row in pagedItems" :key="row.plan_item_id" data-testid="ppl-purchase-row">
 								<td>
 									{{ row.title }}
 									<div class="kt-muted pln-row-ref">{{ row.plan_item_id }}</div>
@@ -122,6 +122,7 @@
 							</tr>
 						</tbody>
 					</table>
+					<TablePagerHost :total="itemsTotal" :page="itemsPage" :page-size="itemsPageSize" noun="purchase" @update:page="setItemsPage" @update:page-size="setItemsPageSize" />
 					<!-- Right beside the table its own "Current work" column is read
 					     from, not a footer sentence several sections and a scroll away
 					     that just said "shown above" — a Planner should not have to
@@ -159,7 +160,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr v-for="row in unallocated" :key="row.entry_id" data-testid="ppl-unallocated-row">
+							<tr v-for="row in pagedUnallocated" :key="row.entry_id" data-testid="ppl-unallocated-row">
 								<td v-if="plan.mutable">
 									<label class="kt-checkbox">
 										<input
@@ -185,6 +186,7 @@
 							</tr>
 						</tbody>
 					</table>
+					<TablePagerHost :total="unallocatedTotal" :page="unallocatedPage" :page-size="unallocatedPageSize" noun="requirement" @update:page="setUnallocatedPage" @update:page-size="setUnallocatedPageSize" />
 					<!-- A reader who cannot form purchases is not offered the control
 					     at all: this cycle shows no control a reader cannot use. -->
 					<div v-if="plan.mutable" class="pln-add-selected">
@@ -469,6 +471,8 @@ import { computed, nextTick, ref, watch } from "vue";
 import { settingsStated, useGuidance } from "../../pln_shared/composables/useGuidance.js";
 import MissingSettingGroup from "./MissingSettingGroup.vue";
 import ReservationAllocation from "./ReservationAllocation.vue";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 
 const props = defineProps({
 	plan: { type: Object, default: () => ({}) },
@@ -551,6 +555,15 @@ const missingSettings = computed(() => {
 	return (props.plan.missing_settings || []).filter((panel) => !stated.has(panel.setting));
 });
 const unallocated = computed(() => props.plan.unallocated_sources || []);
+// The table-pagination standard (AGENTS.md §6.11): a plan's purchases and ready requirements are paged per plan, and the
+// selection (`selected`, held by the root) is by entry id, so it survives a change of page.
+const {
+	pagedRows: pagedItems, total: itemsTotal, page: itemsPage, pageSize: itemsPageSize, setPage: setItemsPage, setPageSize: setItemsPageSize,
+} = usePagedRows(items, () => `planning-purchases:${props.plan.plan_reference}`);
+const {
+	pagedRows: pagedUnallocated, total: unallocatedTotal, page: unallocatedPage, pageSize: unallocatedPageSize,
+	setPage: setUnallocatedPage, setPageSize: setUnallocatedPageSize,
+} = usePagedRows(unallocated, () => `planning-requirements:${props.plan.plan_reference}`);
 const planChecks = computed(() => props.plan.plan_checks || []);
 const failingChecks = computed(() => planChecks.value.filter((check) => check.kind === "critical"));
 const budgetFit = computed(() => props.plan.budget_fit || null);

@@ -21,7 +21,7 @@ export function workspaceBoard({ work, form, loading = false }) {
 		["State", form.state || "", { select: true, name: "state", options: STATES.map((s) => ({ value: s === "All states" ? "" : s, label: s })) }]], { title: "Evaluations", sec: true }));
 	if (register.length) {
 		blocks.push(tb(["Tender", "Title", "Work state", "Action"], register.map((r) => [r.tender, r.title, r.state,
-			{ label: "View", action: "open", args: { route: ["tenders", r.tender, "evaluation"] }, testid: `evl-view-${r.tender}` }]), { testid: "evl-register" }));
+			{ label: "View", action: "open", args: { route: ["tenders", r.tender, "evaluation"] }, testid: `evl-view-${r.tender}` }]), { testid: "evl-register", paged: "evl-register" }));
 	} else if (form.query || form.state) {
 		blocks.push({ ...em("No evaluations match your search.", "Clear search", "search"), btnAction: "clear" });
 	} else {

@@ -232,7 +232,7 @@ describe("WorkspaceScreen — U01 BASE", () => {
 		const headers = w.findAll('[data-testid="pln-departmental-table"] th').map((th) => th.text());
 		expect(headers).toEqual(["Department", "Status", "Requirements", "Estimated cost", "Action"]);
 		expect(w.findAll('[data-testid="pln-departmental-row"]')).toHaveLength(2);
-		expect(w.find('[data-testid="pln-count-label"]').text()).toBe("2 departmental plans");
+		expect(w.find('[data-testid="kt-pager-count"]').text()).toBe("2 departmental plans");
 		expect(w.text()).not.toContain("Submission");
 	});
 

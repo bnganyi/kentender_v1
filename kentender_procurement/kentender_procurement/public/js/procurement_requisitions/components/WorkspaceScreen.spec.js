@@ -61,6 +61,26 @@ describe("WorkspaceScreen (REQ-DES-01)", () => {
 		expect(w.get('[data-testid="req-register-row"]').findAll("td")[2].text()).toBe(ws.register[0].departments);
 	});
 
+	it("the register's pager draws the server's page and total, and reports picks as filter changes", async () => {
+		const { global } = context();
+		const ws = workspace("TECHNICAL");
+		ws.paging = { page: 2, page_size: 10, total: 34, pages: 4 };
+		const w = mount(WorkspaceScreen, { props: { workspace: ws, filters: FILTERS }, global });
+		expect(w.get('[data-testid="kt-pager-count"]').text()).toBe("Showing 11–20 of 34 requisitions");
+		expect(w.get('[data-testid="kt-pager-page-2"]').attributes("aria-current")).toBe("page");
+		await w.get('[data-testid="kt-pager-page-3"]').trigger("click");
+		expect(w.emitted("filters").at(-1)).toEqual([{ page: 3 }]);
+		await w.get('[data-testid="kt-pager-size"]').setValue("25");
+		expect(w.emitted("filters").at(-1)).toEqual([{ page_size: 25, page: 1 }]);
+	});
+
+	it("a short register shows only its total", () => {
+		const { global } = context();
+		const w = mount(WorkspaceScreen, { props: { workspace: workspace("DRAFT"), filters: FILTERS }, global });
+		expect(w.get('[data-testid="kt-pager-count"]').text()).toBe("1 requisition");
+		expect(w.find('[data-testid="kt-pager-nav"]').exists()).toBe(false);
+	});
+
 	it("an existing open requisition replaces Start requisition rather than sitting beside it", () => {
 		const { global } = context();
 		const ws = workspace();

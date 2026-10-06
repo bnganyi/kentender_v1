@@ -32,7 +32,7 @@ describe("My bids", () => {
 		expect(row.text()).toContain("Ready to submit");
 		expect(row.get('[data-testid="bds-bid-action-0"]').text()).toBe("Review bid");
 		expect(row.get('[data-testid="bds-bid-action-0"]').attributes("href")).toBe("/tenders/TND-MOH-2027-033/bid/review");
-		expect(wrapper.get('[data-testid="bds-bids-count"]').text()).toBe("1 bid");
+		expect(wrapper.get('[data-testid="kt-pager-count"]').text()).toBe("1 bid");
 		expect(wrapper.find('[data-kt="journey"]').exists()).toBe(false); // a list, not a tracker
 	});
 

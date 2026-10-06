@@ -167,3 +167,56 @@ describe("WorkspaceScreen — Department column", () => {
 		]);
 	});
 });
+
+// The table-pagination standard: the register shows ten rows by default, the
+// pager says the total, and the reader's page and size belong to the caller.
+describe("WorkspaceScreen — pagination", () => {
+	const many = (n) =>
+		Array.from({ length: n }, (_, i) => ({
+			name: `n${i + 1}`,
+			reference: `NDS-MOH-2027-${String(i + 1).padStart(4, "0")}`,
+			title: `Need ${i + 1}`,
+			organisation_unit_label: "Digital Health",
+			quantity_label: "1",
+			required_by_label: "31 Aug 2027",
+			status: "Accepted for planning",
+			actions: [{ code: "view", label: "View" }],
+		}));
+	const rowsOf = (w) => w.findAll('[data-testid="nds-need-row"]').map((r) => r.attributes("data-reference"));
+
+	it("shows ten rows by default and says how many there are", () => {
+		const w = make({ needs: many(25) });
+		expect(rowsOf(w)).toHaveLength(10);
+		expect(rowsOf(w)[0]).toBe("NDS-MOH-2027-0001");
+		expect(w.get('[data-testid="kt-pager-count"]').text()).toBe("Showing 1–10 of 25 needs");
+	});
+
+	it("shows the page the caller holds", () => {
+		const w = make({ needs: many(25), page: 3 });
+		expect(rowsOf(w)).toEqual(["NDS-MOH-2027-0021", "NDS-MOH-2027-0022", "NDS-MOH-2027-0023", "NDS-MOH-2027-0024", "NDS-MOH-2027-0025"]);
+		expect(w.get('[data-testid="kt-pager-count"]').text()).toBe("Showing 21–25 of 25 needs");
+	});
+
+	it("a page past the end shows the last page instead of an empty table", () => {
+		expect(rowsOf(make({ needs: many(25), page: 9 }))).toHaveLength(5);
+	});
+
+	it("reports a page pick and a size pick (which returns to page 1)", async () => {
+		const w = make({ needs: many(25) });
+		await w.get('[data-testid="kt-pager-page-2"]').trigger("click");
+		expect(w.emitted("update:page").at(-1)).toEqual([2]);
+		await w.get('[data-testid="kt-pager-size"]').setValue("25");
+		expect(w.emitted("update:pageSize").at(-1)).toEqual([25]);
+		expect(w.emitted("update:page").at(-1)).toEqual([1]);
+	});
+
+	it("a wider page size shows more rows", () => {
+		expect(rowsOf(make({ needs: many(25), pageSize: 25 }))).toHaveLength(25);
+	});
+
+	it("shows only the total when ten or fewer rows exist", () => {
+		const w = make({ needs: many(7) });
+		expect(w.get('[data-testid="kt-pager-count"]').text()).toBe("7 needs");
+		expect(w.find('[data-testid="kt-pager-nav"]').exists()).toBe(false);
+	});
+});

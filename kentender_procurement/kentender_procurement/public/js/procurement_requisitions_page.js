@@ -5,7 +5,7 @@
 // multi-Page group like Procurement Planning's four routes.
 kentender_core.desk_page.register("procurement-requisitions", {
 	title: __("Procurement Requisitions"),
-	bundles: ["kt_industry_page_rail.bundle.js", "procurement_requisitions.bundle.js"],
+	bundles: ["kt_industry_page_rail.bundle.js", "kt_industry_pager.bundle.js", "procurement_requisitions.bundle.js"],
 	mount: (el) => frappe.kt_mount_procurement_requisitions(el),
 	sidebarWorkspaceKey: "procurement",
 });

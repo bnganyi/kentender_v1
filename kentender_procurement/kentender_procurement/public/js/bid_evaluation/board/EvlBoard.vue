@@ -49,7 +49,7 @@
 				<table class="table">
 					<thead><tr><th v-for="h in b.ths" :key="h.t" :class="h.td">{{ h.t }}</th></tr></thead>
 					<tbody>
-						<tr v-for="(r, ri) in b.trs" :key="ri">
+						<tr v-for="(r, ri) in rowsOf(b)" :key="ri">
 							<td v-for="(c, ci) in r.cells" :key="ci" :class="c.td">
 								<template v-if="c.txt">{{ c.t }}</template>
 								<strong v-if="c.strong">{{ c.t }}</strong><span v-if="c.person" style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap"><span class="kt-sidebar-avatar">{{ c.ini }}</span>{{ c.t }}</span>
@@ -63,6 +63,15 @@
 						</tr>
 					</tbody>
 				</table>
+				<TablePagerHost
+					v-if="b.paged"
+					:total="b.trs.length"
+					:page="pageOf(b)"
+					:page-size="sizeOf(b)"
+					noun="evaluation"
+					@update:page="(n) => setPagedPage(b.paged, n)"
+					@update:page-size="(n) => setPagedSize(b.paged, n)"
+				/>
 				<p v-if="b.hasCaption" style="margin:0;font-size:14px;color:var(--kt-color-neutral-700)">{{ b.caption }}</p>
 			</template>
 
@@ -187,9 +196,11 @@
 </template>
 
 <script setup>
-import { computed, reactive } from "vue";
+import { computed, reactive, watch } from "vue";
 import { norm } from "./model.js";
 import EvlGuidance from "./EvlGuidance.vue";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { pagedView, resetPaged, setPagedPage, setPagedSize } from "../../pager_shared/usePagedRows.js";
 
 const props = defineProps({
 	board: { type: Object, required: true },
@@ -203,6 +214,16 @@ const props = defineProps({
 const emit = defineEmits(["action", "update"]);
 const m = computed(() => norm(props.board, { people: props.people }));
 const open = reactive({});
+
+// The table-pagination standard (AGENTS.md §6.11): a table the screen marks `paged` shows one page of its rows.
+const rowsOf = (b) => (b.paged ? pagedView(b.paged, b.trs).rows : b.trs);
+const pageOf = (b) => pagedView(b.paged, b.trs).page;
+const sizeOf = (b) => pagedView(b.paged, b.trs).pageSize;
+// A new search or state is a new list. These are the reader's own fields (`form`), which a load never writes.
+watch(
+	() => [props.form.query, props.form.state],
+	() => (props.board.blocks || []).forEach((b) => b.paged && resetPaged(b.paged))
+);
 
 const slug = (t) => String(t || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 const isOpen = (b, i) => (open[i] === undefined ? !!b.open : open[i]);

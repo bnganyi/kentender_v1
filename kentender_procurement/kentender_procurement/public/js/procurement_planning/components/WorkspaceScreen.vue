@@ -54,7 +54,7 @@
 							class="input"
 							data-testid="pln-fy-select"
 							:value="selectedFinancialYear || context.financial_year || ''"
-							@change="$emit('select-financial-year', $event.target.value)"
+							@change="onSelectYear($event.target.value)"
 						>
 							<option v-for="year in context.financial_years || []" :key="year.id" :value="year.id">
 								{{ year.label }}
@@ -66,7 +66,7 @@
 							class="btn btn-ghost"
 							data-testid="pln-fy-reset"
 							style="margin-top: 6px"
-							@click="$emit('reset-financial-year')"
+							@click="onResetYear"
 						>
 							Reset
 						</button>
@@ -302,7 +302,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="row in table.rows" :key="row.department" data-testid="pln-departmental-row">
+						<tr v-for="row in pagedDepartments" :key="row.department" data-testid="pln-departmental-row">
 							<td>{{ row.department }}</td>
 							<td><span class="kt-status" :class="statusClass(row.status)">{{ row.status }}</span></td>
 							<td class="is-num">{{ row.requirements }}</td>
@@ -321,9 +321,8 @@
 					</tbody>
 				</table>
 				<p v-else data-testid="pln-departmental-empty">{{ table.empty_text }}</p>
-				<p v-if="table.rows.length" style="margin: var(--kt-space-3) 0 0; font-size: 13px; color: var(--kt-color-neutral-700)" data-testid="pln-count-label">
-					{{ table.count_label }}
-				</p>
+				<!-- The pager carries the count (it replaces the old "n departmental plans" line). -->
+				<TablePagerHost v-if="table.rows.length" :total="departmentsTotal" :page="departmentsPage" :page-size="departmentsPageSize" noun="departmental plan" @update:page="setDepartmentsPage" @update:page-size="setDepartmentsPageSize" />
 			</div>
 
 			<!-- Waiting work: neutral read-only text, never a queue with controls. -->
@@ -341,6 +340,8 @@
 <script setup>
 import { computed } from "vue";
 import CommonStates from "./CommonStates.vue";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 
 const props = defineProps({
 	loading: Boolean,
@@ -387,6 +388,20 @@ function issueParts(issue) {
 }
 const ownPlan = computed(() => props.workspace.your_departmental_plan || null);
 const table = computed(() => props.workspace.departmental_table || { columns: [], rows: [] });
+// The table-pagination standard (AGENTS.md §6.11): the departmental plans are paged; a new year is a new list.
+const departmentalRows = computed(() => table.value.rows || []);
+const {
+	pagedRows: pagedDepartments, total: departmentsTotal, page: departmentsPage, pageSize: departmentsPageSize,
+	setPage: setDepartmentsPage, setPageSize: setDepartmentsPageSize, reset: resetDepartments,
+} = usePagedRows(departmentalRows, "planning-departmental");
+function onSelectYear(value) {
+	resetDepartments();
+	emit("select-financial-year", value);
+}
+function onResetYear() {
+	resetDepartments();
+	emit("reset-financial-year");
+}
 
 function isNumeric(column) {
 	return column === "Requirements" || column === "Estimated cost";

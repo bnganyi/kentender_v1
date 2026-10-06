@@ -28,7 +28,7 @@ function stub() {
 		set_route: vi.fn(), session: { user: "amina.hassan@moh.example.test" },
 	});
 	globalThis.__ = (s) => s;
-	globalThis.kentender_core = Object.assign(globalThis.kentender_core || {}, { industry: { mountPageRail: () => ({ unmount() {}, update() {} }) } });
+	globalThis.kentender_core = Object.assign(globalThis.kentender_core || {}, { industry: { ...(globalThis.kentender_core?.industry || {}), mountPageRail: () => ({ unmount() {}, update() {} }) } });
 }
 async function page() {
 	const w = mount(ProcurementMeetings, { attachTo: document.body, global: { config: { globalProperties: { __: (s) => s, frappe: globalThis.frappe } } } });
@@ -81,7 +81,7 @@ describe("Procurement meetings", () => {
 		await w.find("#pmt-q").setValue("TND-MOH-2027-002");
 		vi.advanceTimersByTime(300);
 		await flushPromises();
-		expect(calls.at(-1)).toMatchObject({ type: "Bid evaluation", query: "TND-MOH-2027-002", start: 0, limit: 50 });
+		expect(calls.at(-1)).toMatchObject({ type: "Bid evaluation", query: "TND-MOH-2027-002", start: 0, limit: 10 });
 		expect(w.find("#pmt-type").element.value).toBe("Bid evaluation"); // bound to the reader's choice, not the server's echo
 		expect(w.find('[data-testid="pmt-clear"]').exists()).toBe(true);
 		await w.find('[data-testid="pmt-clear"]').trigger("click");
@@ -118,13 +118,17 @@ describe("Procurement meetings", () => {
 		expect(w.find('[data-testid="pmt-empty"]').text()).toContain("No meetings match these filters.");
 		w.unmount();
 	});
-	it("shows more without changing a total", async () => {
-		respond = async (a) => answer({ matched: 120, held_total: 90, rows: answer().rows.slice(0, a.limit >= 100 ? 4 : 2) });
+	it("pages on the server: the page asks for its own slice and the total stays the matched count", async () => {
+		respond = async (a) => answer({ matched: 120, held_total: 90, rows: answer().rows.slice(0, 2) });
 		const w = await page();
-		expect(w.find('[data-testid="pmt-count"]').text()).toBe("Showing 2 of 120 meetings");
-		await w.find('[data-testid="pmt-more"]').trigger("click");
+		expect(calls.at(-1)).toMatchObject({ limit: 10, start: 0 });
+		expect(w.find('[data-testid="kt-pager-count"]').text()).toBe("Showing 1–10 of 120 meetings");
+		await w.find('[data-testid="kt-pager-page-3"]').trigger("click");
 		await flushPromises();
-		expect(calls.at(-1)).toMatchObject({ limit: 100 });
+		expect(calls.at(-1)).toMatchObject({ limit: 10, start: 20 });
+		await w.find('[data-testid="kt-pager-size"]').setValue("50");
+		await flushPromises();
+		expect(calls.at(-1)).toMatchObject({ limit: 50, start: 0 });
 		expect(w.find('[data-testid="pmt-held-total"]').text()).toBe("90");
 		w.unmount();
 	});

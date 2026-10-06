@@ -7,6 +7,8 @@
 // every row. No Start bid, account status, value or document count here.
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import { useNarrow } from "../composables/useNarrow.js";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 
 const METHOD = "kentender_procurement.bid_submission.api.get_available_tenders";
 const DEFAULT_OPTIONS = {
@@ -39,6 +41,8 @@ const failure = ref("");
 const guard = portal.createSequenceGuard();
 
 const rows = computed(() => (data.value && data.value.rows) || []);
+// The table-pagination standard (AGENTS.md §6.11): the wide table and the narrow cards draw the same page.
+const { pagedRows, total, page, pageSize, setPage, setPageSize, reset } = usePagedRows(rows, "portal-tenders");
 const options = computed(() => (data.value && data.value.options) || DEFAULT_OPTIONS);
 
 async function load() {
@@ -55,6 +59,7 @@ async function load() {
 }
 
 function apply() {
+	reset();
 	go("/tenders", { replace: true, query: toQuery(filters.value), keepFocus: true });
 	return load();
 }
@@ -79,6 +84,7 @@ watch(
 		const next = fromQuery(query);
 		if (!same(next, filters.value)) {
 			filters.value = next;
+			reset();
 			load();
 		}
 	},
@@ -149,7 +155,7 @@ onMounted(() => {
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="row in rows" :key="row.reference" :data-testid="'bds-tender-row-' + row.reference">
+						<tr v-for="row in pagedRows" :key="row.reference" :data-testid="'bds-tender-row-' + row.reference">
 							<td class="bds-tender-cell">{{ row.title }}<div class="kt-label bds-tender-ref">{{ row.reference }}</div></td>
 							<td>{{ row.procuring_entity }}</td>
 							<td>{{ row.method }}</td>
@@ -160,7 +166,7 @@ onMounted(() => {
 					</tbody>
 				</table>
 				<div v-else data-testid="bds-tenders-cards">
-					<div v-for="row in rows" :key="row.reference" class="bds-card" :data-testid="'bds-tender-row-' + row.reference">
+					<div v-for="row in pagedRows" :key="row.reference" class="bds-card" :data-testid="'bds-tender-row-' + row.reference">
 						<div class="bds-card-title">{{ row.title }}<div class="kt-label bds-tender-ref">{{ row.reference }}</div></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Procuring Entity") }}</span><span>{{ row.procuring_entity }}</span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Method") }}</span><span>{{ row.method }}</span></div>
@@ -169,7 +175,7 @@ onMounted(() => {
 						<div class="bds-card-actions"><a :href="row.href">{{ __("View Tender") }}</a></div>
 					</div>
 				</div>
-				<p class="bds-count" data-testid="bds-tenders-count">{{ data.count_text }}</p>
+				<TablePagerHost :total="total" :page="page" :page-size="pageSize" noun="available Tender" @update:page="setPage" @update:page-size="setPageSize" />
 			</template>
 			<div v-else-if="data" class="kt-empty" data-testid="bds-tenders-empty">
 				<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>

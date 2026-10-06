@@ -41,7 +41,7 @@ test.describe("BDS-DES-05 My bids / BDS-DES-17 Receipts", () => {
 		// David prepares the bid and the signatory signs it, so his action is the hand-over, not a submission
 		await expect(row.getByTestId("bds-bid-action-0")).toHaveText("Hand over bid");
 		await expect(row.getByTestId("bds-bid-action-0")).toHaveAttribute("href", `/tenders/${world.tender_reference}/bid`); // the bid page says who signs
-		await expect(page.getByTestId("bds-bids-count")).toHaveText("1 bid");
+		await expect(page.getByTestId("kt-pager-count")).toHaveText("1 bid");
 		await expect(page.locator('[data-kt="journey"]')).toHaveCount(0);
 		await page.getByTestId("bds-bids-status").selectOption("Submitted");
 		await expect(page).toHaveURL(/status=Submitted/);
@@ -72,7 +72,7 @@ test.describe("BDS-DES-05 My bids / BDS-DES-17 Receipts", () => {
 		await waitForPortal(page);
 		await expect(page.getByTestId(`bds-receipt-row-${world.receipt_reference}`)).toContainText("Submitted");
 		await expect(page.getByTestId(`bds-receipt-row-${world.acknowledgement_reference}`)).toContainText("Withdrawn");
-		await expect(page.getByTestId("bds-receipts-count")).toHaveText("2 records");
+		await expect(page.getByTestId("kt-pager-count")).toHaveText("2 records");
 		await expect(page.getByTestId("bds-receipts")).not.toContainText(/KES|Start replacement|Withdraw bid/);
 		await page.setViewportSize({ width: 390, height: 844 });
 		await expect(page.getByTestId("bds-receipts-cards")).toBeVisible();
