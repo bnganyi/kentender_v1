@@ -731,7 +731,7 @@ textarea.input { min-height: 90px; resize: vertical; }
   .kt-next-step.is-turn, .kt-next-step.is-waiting, .kt-next-step.is-done { border-left-color: #000; }
 }
 /* DS-REV-004 (Project Owner approved 6 Oct 2026, "2e it is. Approved"): journey position figure, compact track, blocked next step.
-   Opt-in: `.kt-journey-lead` and `.kt-journey.is-compact`; the 4px `.kt-journey` stays the default until KT-STD-001 v1.23 is approved. */
+   KT-STD-001 v1.23 approved 6 Oct 2026. The app draws the compact form everywhere; whether `.kt-journey-lead` and `.is-compact` replace the 4px `.kt-journey` as the pack default is for the design system to decide. */
 .kt-journey-lead { display: grid; gap: 32px; align-items: start; }
 .kt-journey-lead.has-position { grid-template-columns: 200px minmax(0, 1fr); }
 .kt-journey-position { display: grid; gap: 4px; padding-right: 24px; border-right: 1px solid var(--color-divider); }
