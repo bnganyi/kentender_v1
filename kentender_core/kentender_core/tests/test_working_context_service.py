@@ -50,10 +50,12 @@ class WorkingContextCase(IntegrationTestCase):
 		return code
 
 	def _permit(self, user: str, pe: str) -> None:
+		# A scope row, not a Frappe User Permission: AUD-XC-021 retired the
+		# User Permission fallback (see test_pe_scope_without_user_permission).
 		name = frappe.get_doc(
-			{"doctype": "User Permission", "user": user, "allow": "Procuring Entity", "for_value": pe}
+			{"doctype": "User Scope Assignment", "user": user, "role": "Desk User", "procuring_entity": pe}
 		).insert(ignore_permissions=True).name
-		self.addCleanup(frappe.delete_doc, "User Permission", name, force=True, ignore_permissions=True)
+		self.addCleanup(frappe.delete_doc, "User Scope Assignment", name, force=True, ignore_permissions=True)
 		frappe.clear_cache(user=user)
 		self.addCleanup(frappe.clear_cache, user=user)
 
@@ -79,8 +81,8 @@ class TestKeyDiscipline(WorkingContextCase):
 
 
 class TestEligibilityRule(WorkingContextCase):
-	def test_multiple_user_permission_rows_all_count(self):
-		"""permitted_procuring_entities must return EVERY User Permission PE.
+	def test_multiple_scope_rows_all_count(self):
+		"""permitted_procuring_entities must return EVERY scoped PE.
 
 		The previous fallback read one arbitrary row (frappe.db.get_value), so
 		a user permitted three entities was silently narrowed to one — the
