@@ -228,6 +228,17 @@ dev-mail-status:
 ui-queue-check:
 	node tests/ui/helpers/queueCheck.cjs $(if $(FIX),--fix,)
 
+# The generated design-system stylesheets must match their generators (a merge once dropped them;
+# AGENTS.md section 6.6). Run it after any merge or pull that touches them, and on production after a pull.
+.PHONY: design-css-check install-git-hooks
+design-css-check:
+	scripts/check-generated-css.sh
+
+# Turns on the tracked hooks in .githooks: pre-commit and pre-push run design-css-check.
+install-git-hooks:
+	git config core.hooksPath .githooks
+	@echo "git hooks enabled (.githooks): pre-commit and pre-push check the generated stylesheets"
+
 list:
 	cd $(BENCH_ROOT) && bench --site $(SITE) list-apps
 

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Block a commit that stages a generated stylesheet, its generator or its source pack while the
+# stylesheet no longer matches the generator. This is the moment a bad merge-conflict resolution
+# is committed. Bypass only with --no-verify, and say why in the commit message.
+root="$(git rev-parse --show-toplevel)"
+if git diff --cached --name-only | grep -Eq 'kt_industry_tokens\.css$|kt_home_ds\.bundle\.css$|kt_analytics_ds\.bundle\.css$|scripts/(industry|home)_design_css\.py$|scripts/analytics_charts\.css$|/_ds/kentender-industry-[^/]*/styles\.css$|/design/(Home|Analytics)/'; then
+	exec "$root/scripts/check-generated-css.sh"
+fi

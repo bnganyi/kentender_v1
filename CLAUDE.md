@@ -115,6 +115,15 @@ Frappe's asset build requires Node ≥ 24; the wrapper loads it from fnm/nvm and
 
 After CSS or JavaScript changes, clear the target site's cache and hard-refresh Desk. Do not mistake stale assets for a code defect. Confirm the rebuild actually landed by checking that the bundle's content hash changed — an edit that silently failed to apply looks exactly like a caching problem otherwise.
 
+### Generated stylesheets
+
+```bash
+make install-git-hooks     # once per clone: pre-commit and pre-push check the generated stylesheets
+make design-css-check      # after any merge or pull that touches them, and on production after every pull
+```
+
+`kt_industry_tokens.css` and the Home and Analytics design-system bundles are generated: never hand-merge them, regenerate (`AGENTS.md` §6.6).
+
 ### Bench lifecycle and seed data
 
 ```bash
