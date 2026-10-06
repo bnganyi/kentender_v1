@@ -80,13 +80,11 @@ COMMAND_CONTRACTS = (
 	"cancel_accepted_need_successor",
 	"request_accepted_need_withdrawal",
 	"decide_accepted_need_withdrawal",
-	"project_need_planning_usage",
-	# PLN-CHG-001 v1.18 §5.1.4 — the accepted DPP disposition, separate from usage.
-	"project_need_planning_disposition",
-	# Owner decision 26 Sep 2026 — where an accepted Need stands against its
-	# department's plan (not in it yet: Create update).
-	"project_need_planning_intake",
 )
+
+# AUD-XC-016 — Planning's three projection commands (usage, disposition,
+# intake) are service-to-service seams in `services/usage.py`, not web
+# endpoints: see `test_departmental_needs_principal`.
 from kentender_procurement.departmental_needs.tests import support
 
 
@@ -138,18 +136,7 @@ class TestContractSurface(ContractCase):
 		self.assertEqual(exposed, set(READ_CONTRACTS) | set(COMMAND_CONTRACTS))
 
 	def test_every_mutating_command_requires_an_idempotency_key(self):
-		exempt = {
-			# A usage projection is made idempotent by its own source event ID.
-			"project_need_planning_usage",
-			# PLN-CHG-001 v1.18 §7.3 — likewise keyed on the producer's event ID.
-			"project_need_planning_disposition",
-			# Owner decision 26 Sep 2026 — Planning's reconciled position: an
-			# unchanged position is a no-op, ordered on the source time.
-			"project_need_planning_intake",
-		}
 		for name in COMMAND_CONTRACTS:
-			if name in exempt:
-				continue
 			handler = getattr(api, name)
 			target = getattr(handler, "__wrapped__", handler)
 			params = inspect.signature(target).parameters

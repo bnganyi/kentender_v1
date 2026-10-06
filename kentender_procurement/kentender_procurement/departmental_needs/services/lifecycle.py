@@ -87,6 +87,7 @@ from kentender_procurement.departmental_needs.services.permissions import (
 	require_author_command,
 	require_create,
 	require_review_command,
+	require_view,
 )
 from kentender_procurement.departmental_needs.services.events import (
 	publish_accepted,
@@ -995,6 +996,22 @@ def check_withdrawal_dependency(need: str, accepted_revision: str) -> dict[str, 
 		"active_plan_item": detail["active_plan_item"],
 		"dependency_version": fingerprint,
 	}
+
+
+def read_withdrawal_dependency(need: str, accepted_revision: str, user: str | None = None) -> dict[str, Any]:
+	"""§8.1 `check_accepted_need_withdrawal_dependency` for a reader.
+
+	The same view scope as `get_departmental_need` (NDS-BR-019): a person who
+	cannot read the Need learns nothing about it, not even that it exists (§9).
+	The commands that already hold the right to act call
+	`check_withdrawal_dependency` directly.
+	"""
+	principal = actor(user)
+	name = cstr(need).strip()
+	if not frappe.db.exists("Departmental Need", name):
+		fail("NDS_SCOPE_DENIED", "Departmental Need not found.")
+	require_view(frappe.get_doc("Departmental Need", name), principal)
+	return check_withdrawal_dependency(name, accepted_revision)
 
 
 def request_withdrawal(
