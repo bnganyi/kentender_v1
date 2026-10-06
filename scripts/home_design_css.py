@@ -82,6 +82,10 @@ def control_shape(scope: str, fields: bool = False) -> tuple:
 	"""
 	rules = [
 		f"{scope} {{\n\t--radius-control: 2px;\n\t--color-control-border: #909090;\n}}",
+		# DS-REV-005 (Project Owner, 6 Oct 2026: "Multiple elements are too rounded"): containers are 4px, notice banners 2px like the controls, status
+		# chips stay 6px. The radius tokens no longer read Frappe's --border-radius, so a Frappe theme change does not alter KenTender corners.
+		f"{scope} {{\n\t--radius-md: 4px;\n\t--radius-lg: 4px;\n\t--radius-xl: var(--radius-lg);\n}}",
+		f"{scope} .kt-notice {{\n\tborder-radius: var(--radius-control);\n}}",
 		f"{scope} .btn {{\n\tborder-radius: var(--radius-control);\n}}",
 		f"{scope} .btn-secondary {{\n\tbackground: var(--color-surface);\n\tborder-color: var(--color-control-border);\n}}",
 		f"{scope} .btn-secondary:hover:not(:disabled) {{\n\tborder-color: var(--color-neutral-600);\n}}",

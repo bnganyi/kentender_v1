@@ -61,10 +61,10 @@
   --space-1: 3.4px; --space-2: 6.8px; --space-3: 10.2px; --space-4: 13.6px; --space-5: 17px; --space-6: 20.4px; --space-8: 27.2px;
 
   --radius-sm: var(--border-radius-tiny, 4px); /* @kind radius */ /* tags, checkboxes */
-  --radius-md: var(--border-radius, 8px);      /* @kind radius */ /* cards and other soft surfaces (no longer controls — see --radius-control) */
+  --radius-md: 4px;                            /* @kind radius */ /* DS-REV-005: legacy, prefer --radius-lg; no longer reads Frappe's --border-radius */
   --radius-control: 2px;                       /* @kind radius */ /* DS-REV-003: buttons, inputs, selects, textareas, date field, segmented control */
-  --radius-lg: var(--border-radius-lg, 12px);  /* @kind radius */ /* sheet, cards, dialogs */
-  --radius-xl: var(--border-radius-lg, 12px);  /* @kind radius */ /* legacy alias of --radius-lg */
+  --radius-lg: 4px;                            /* @kind radius */ /* DS-REV-005: sheet, cards, dialogs, panels, disclosures, record cards, figure frames */
+  --radius-xl: var(--radius-lg);               /* @kind radius */ /* legacy alias of --radius-lg */
 
   --motion-fast: 120ms; /* @kind other */
   --motion-base: 180ms; /* @kind other */
@@ -538,7 +538,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 @media print { .kt-kpi-card { box-shadow: none; border: 1px solid #000; border-left: 4px solid #000; } }
 
 /* ── New component: notice / advisory banner ── */
-.kt-notice { display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-4); border-radius: var(--radius-lg); background: var(--color-accent-100); }
+.kt-notice { display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-4); border-radius: var(--radius-control); background: var(--color-accent-100); }
 .kt-notice-icon { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; color: var(--color-accent-700); }
 .kt-notice-body { font-size: 14px; color: var(--color-neutral-800); }
 .kt-notice-body strong { color: var(--color-text); }
@@ -773,7 +773,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 /* Blocked next step: a 3px warning rule over the warning tint, square on the rule side, no icon. The rule is a status mark, not an accent rule. */
 .kt-notice.is-warning.kt-next-step { display: grid; gap: 3px; padding: 12px 16px 14px 14px;
-  border-left: 3px solid var(--status-attention); border-radius: 0 6px 6px 0; background: var(--status-attention-bg); }
+  border-left: 3px solid var(--status-attention); border-radius: 0 var(--radius-lg) var(--radius-lg) 0; background: var(--status-attention-bg); }
 .kt-notice.is-warning.kt-next-step .kt-notice-icon { display: none; }
 .kt-notice.is-warning.kt-next-step .kt-next-step-label { color: var(--status-attention); }
 @media (forced-colors: active) { .kt-notice.is-warning.kt-next-step { border: 1px solid CanvasText; border-left-width: 3px; } }

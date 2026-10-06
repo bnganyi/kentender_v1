@@ -403,18 +403,26 @@
       "source_sha256": "7dad357f21be498e2ca1f7f1537d32cc41017676ffca3048a0128066bf16ceae",
       "approval_record": "Project Owner, 6 October 2026, verbatim: “KT-STD-001 v1.23 is approved”. (v1.22: Project Owner, 4 October 2026, verbatim: “Yes”, answering “Shall I apply this pass, and then approve KT-STD v1.22, HOME v0.6 and ANL v0.8 together?”)",
       "approval_history": {
-        "proposed_version": "1.23",
-        "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_23.md",
-        "proposal_status": "Approved 6 October 2026",
-        "proposed_base_version": "1.22",
+        "proposed_version": "1.24",
+        "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_24.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "1.23",
         "proposed_revision": null,
-        "proposed_scope": "Journey position figure, compact tracker and blocked next-step shape (sections 2.9.1 to 2.9.3); design option 2e approved 6 October 2026 (DS-REV-004). v1.22 remains the approved standard.",
-        "previous_proposal": {
-          "proposed_version": "1.22",
-          "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_22.md",
-          "proposed_base_version": "1.15",
-          "outcome": "Approved 4 October 2026"
-        }
+        "proposed_scope": "KenTender corner and control values in section 2.4: controls and notice banners 2px and outlined, containers 4px, status chips 6px, replacing the Frappe radius row on KenTender screens (DS-REV-003, DS-REV-005). v1.23 remains the approved standard.",
+        "earlier_proposals": [
+          {
+            "proposed_version": "1.23",
+            "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_23.md",
+            "proposed_base_version": "1.22",
+            "outcome": "Approved 6 October 2026"
+          },
+          {
+            "proposed_version": "1.22",
+            "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_22.md",
+            "proposed_base_version": "1.15",
+            "outcome": "Approved 4 October 2026"
+          }
+        ]
       }
     },
     {

@@ -1343,6 +1343,16 @@
 	--color-control-border: #909090;
 }
 
+.kt-industry.kt-analytics {
+	--radius-md: 4px;
+	--radius-lg: 4px;
+	--radius-xl: var(--radius-lg);
+}
+
+.kt-industry.kt-analytics .kt-notice {
+	border-radius: var(--radius-control);
+}
+
 .kt-industry.kt-analytics .btn {
 	border-radius: var(--radius-control);
 }

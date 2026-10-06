@@ -11,7 +11,7 @@ Industry is KenTender's working surface inside Frappe Desk. Pages sit on Frappe'
 
 ## Direction
 
-A KenTender page is one white sheet (`.kt-page`: `--color-surface`, 1px `--color-divider` border, 12px radius) on the `--color-bg` ground, below the Frappe Desk header. Nothing inside the sheet has a tinted fill: regions (`.kt-region-tint`, name kept for compatibility), summary strips (`.kt-band`), KPI and fact cards and empty states all sit on white and are separated by section headings, spacing and 1px rules. Forms, registers and dialogs sit on the sheet. Register row separators and chart baselines stay. The only tinted fills inside the sheet are state marks — `.kt-status` chips, `.kt-notice` banners and `.tag` labels — and chart marks. Icon chips and spot illustrations are glyph or outline only.
+A KenTender page is one white sheet (`.kt-page`: `--color-surface`, 1px `--color-divider` border, 4px radius) on the `--color-bg` ground, below the Frappe Desk header. Nothing inside the sheet has a tinted fill: regions (`.kt-region-tint`, name kept for compatibility), summary strips (`.kt-band`), KPI and fact cards and empty states all sit on white and are separated by section headings, spacing and 1px rules. Forms, registers and dialogs sit on the sheet. Register row separators and chart baselines stay. The only tinted fills inside the sheet are state marks — `.kt-status` chips, `.kt-notice` banners and `.tag` labels — and chart marks. Icon chips and spot illustrations are glyph or outline only.
 
 ## Color
 
@@ -26,6 +26,7 @@ A KenTender page is one white sheet (`.kt-page`: `--color-surface`, 1px `--color
 - Disabled or read-only input: `--color-input-disabled` ← `--input-disabled-bg` #ededed, text `--color-text-muted` ← `--text-muted` #525252
 - Inside an editable table row (Frappe `.grid-body .editable-row`, common/grid.scss): editable inputs are white (`--control-bg` re-set to `--neutral`) with square corners; disabled inputs take #f8f8f8 (`--input-disabled-bg` re-set to `--gray-50`); buttons keep the default button fill. KenTender: `.table td .input` and `.table td .input:disabled`
 - Controls are outlined and rectangular (DS-REV-003): `.btn`, `.input`, `.date-field`, `.seg` take `--radius-control` 2px and a 1px `--color-control-border` outline on white. This departs from Frappe's `.form-control { border: none }` and from the "no border" wording of KT-STD-001 v1.22 §2.4; the standard needs a matching amendment. Inputs inside editable table rows stay borderless and square.
+- Corner scale (DS-REV-005): 2px `--radius-control` for buttons, inputs, selects, textareas, the date field, the segmented control and notice banners; 4px `--radius-lg`/`--radius-sm` for the sheet, cards, dialogs, panels, disclosures, record cards, figure frames, tags and checkboxes; 6px literal on `.kt-status` so a chip stays the softest element on the page. Circles and 2–3px bar marks are marks, not containers. The radius tokens do not read Frappe's `--border-radius` variables.
 - Disabled buttons: `--color-control-disabled-text` #7c7c7c, `--color-control-border-disabled` outline, no fill.
 - `.kt-status` is the only soft (6px), tinted, filled element on a page. Never give a control a resting fill other than the primary or solid danger.
 - `--color-heading` / `--color-text` / `--color-text-muted` ← #171717 / #383838 / #525252
@@ -70,12 +71,12 @@ Interactive states are themed, never browser defaults: give every interactive el
 | `.btn-danger`; `.kt-danger` on `.btn-primary` / `.btn-secondary` / `.btn-ghost` | Destructive action (Withdraw bid, Delete draft) — derived from the rose status hue; `.btn-danger` = `.btn-primary.kt-danger` (solid red), `.btn-secondary.kt-danger` = red outline, `.btn-ghost.kt-danger` = red text. Always paired with a `.btn-secondary` cancel, never two in a row | components/buttons.html, proof/control-states.html |
 | `.tag` with `.tag-accent`, `.tag-accent-2`, `.tag-neutral`, `.tag-outline` | Small labels tinted from the ramps — accent-2 is the rust identity tint | components/buttons.html |
 | `.field` + `label`, `.input`, `.radio` + `.dot`, `.seg` + `.seg-opt` | Form fields and choices on native elements — no script | components/forms.html |
-| `.card` with `.card-kicker`, `.card-title`, `.card-body`, `.card-meta`; `.elev-sm/md/lg` | White card, 12px radius, 1px border, no shadow. Inside a page sheet, only when it carries a supplied fact | components/cards.html |
+| `.card` with `.card-kicker`, `.card-title`, `.card-body`, `.card-meta`; `.elev-sm/md/lg` | White card, 4px radius, 1px border, no shadow. Inside a page sheet, only when it carries a supplied fact | components/cards.html |
 | `.nav` + `.nav-brand` | The header bar | components/navigation.html |
 | `.table` (+ `.is-num` on numeric cells) | Data tables with themed header and row rules; headers stick on scroll, `.is-num` sets right-aligned tabular numerals for amounts and counts | components/table.html |
 | `.dialog-backdrop` + `.dialog` (+ `.dialog-title/-body/-actions`) | A modal at the top elevation | components/dialog.html |
 | `.hr` | A horizontal rule — present, but this system prefers whitespace; avoid it | — |
-| `.blueprint` | Figure frame: 10px radius, clipped, no hairline | foundations/image.html |
+| `.blueprint` | Figure frame: 4px radius, clipped, no hairline | foundations/image.html |
 | `.duotone` | The image wrapper — every content photograph goes through it | foundations/image.html |
 | `.kt-disclosure` (+ `-head`, `-title-row`, `-title`, `-chevron`, `-body`) | Expand/collapse panel, no corner marks | components/disclosure.html |
 | `.kt-timeline` (+ `-row`, `-dot-col`, `-dot`, `-line`, `-item`, `-item-title`, `-item-meta`) | A record's decision/approval chain — not a chart | components/timeline.html |

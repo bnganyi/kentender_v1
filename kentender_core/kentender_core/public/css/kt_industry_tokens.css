@@ -3360,6 +3360,16 @@
 	--color-control-border: #909090;
 }
 
+.kt-industry {
+	--radius-md: 4px;
+	--radius-lg: 4px;
+	--radius-xl: var(--radius-lg);
+}
+
+.kt-industry .kt-notice {
+	border-radius: var(--radius-control);
+}
+
 .kt-industry .btn {
 	border-radius: var(--radius-control);
 }
@@ -3681,7 +3691,7 @@
 	gap: 3px;
 	padding: 12px 16px 14px 14px;
 	border-left: 3px solid var(--status-attention);
-	border-radius: 0 6px 6px 0;
+	border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
 	background: var(--status-attention-bg);
 }
 
