@@ -30,7 +30,8 @@ Shared usability rules are owned once by **OVS-CHG-001 v0.6**, especially §§3�
 |---|---|
 | Document ID | KT-STD-001 |
 | Version | 1.24 |
-| Status | Proposed — 6 October 2026; v1.23 is the approved standard |
+| Status | Approved — 6 October 2026 |
+| v1.24 proposed status (retained) | Proposed — 6 October 2026; v1.23 is the approved standard |
 | v1.23 status (retained) | Approved — 6 October 2026 |
 | v1.23 proposed status (retained) | Proposed — 6 October 2026; v1.22 is the approved standard |
 | v1.22 status (retained) | Approved — 4 October 2026 |
@@ -42,10 +43,10 @@ Shared usability rules are owned once by **OVS-CHG-001 v0.6**, especially §§3�
 | v1.18 status (retained) | Proposed — 4 October 2026; v1.17 and v1.16 were Proposed and not approved; v1.15 is the approved baseline |
 | v1.17 status (retained) | Proposed — 4 October 2026; v1.16 was Proposed and not approved; v1.15 is the approved baseline |
 | v1.16 status (retained) | Proposed — 4 October 2026 |
-| Approved on | Not yet approved (v1.24); v1.23 approved on 6 October 2026; v1.22 approved on 4 October 2026; v1.21 approved on 4 October 2026 |
-| v1.24 approval record | None for v1.24. The v1.23 approval record is retained in its own row below. |
+| Approved on | 6 October 2026 (v1.23 approved on 6 October 2026; v1.22 approved on 4 October 2026; v1.21 approved on 4 October 2026) |
+| v1.24 approval record | Project Owner, 6 October 2026, verbatim: “KT-STD-001 v1.24 is approved”. The v1.23 approval record is retained in its own row below. |
 | v1.23 approval record | Project Owner, 6 October 2026, verbatim: “KT-STD-001 v1.23 is approved”. The v1.22 approval record is retained in the Prior approval record row below. |
-| Approved baseline | v1.23 — 6 October 2026 (previous: v1.22 — 4 October 2026; v1.21 — 4 October 2026; v1.15 — 3 October 2026) |
+| Approved baseline | v1.24 — 6 October 2026 (previous: v1.23 — 6 October 2026; v1.22 — 4 October 2026; v1.21 — 4 October 2026; v1.15 — 3 October 2026) |
 | Prior approval record | Project Owner approved v1.9 on 26 September 2026 and v1.8 on 25 September 2026; v1.10 approved 29 September 2026. v1.11 approved 30 September 2026; Project Owner instruction, verbatim: "Register approval: approve". v1.12 approved 30 September 2026; Project Owner instruction, verbatim: "approve v1.12". v1.13 approved 1 October 2026 (historical approval record above). v1.14 approved 3 October 2026; Project Owner instruction, verbatim: "All docs approved." v1.21 approved 4 October 2026; Project Owner instruction, verbatim: “Mark the three documents as approved and give them to me to download”. This approves v1.21 including the v1.16 to v1.20 content it incorporates; it creates no separate approval of v1.16 to v1.20. v1.22 approved 4 October 2026; Project Owner, verbatim: “Yes”, answering “Shall I apply this pass, and then approve KT-STD v1.22, HOME v0.6 and ANL v0.8 together?” |
 | Date | 6 October 2026 (v1.23: 6 October 2026; v1.22: 4 October 2026) |
 | Supersedes | v1.23 on approval only. (v1.23 read: v1.22 on approval only.) (v1.22 read: v1.21 on approval only.) v1.21 read: v1.20, v1.19, v1.18, v1.17, v1.16 and v1.15 on approval only. v1.20 read: v1.19, v1.18, v1.17, v1.16 and v1.15 on approval only. v1.19 read: v1.18, v1.17, v1.16 and v1.15 on approval only. v1.18 read: v1.17, v1.16 and v1.15 on approval only. v1.17 read: v1.16 and v1.15 on approval only. v1.16 read: v1.15 on approval only     |
@@ -848,6 +849,8 @@ These apply to every document and every layer, not only to artboards. Section 2.
 
 ## 12. Approval effect
 
+**Approved v1.24 effect — 6 October 2026.** v1.24 is approved by the Project Owner and supersedes v1.23 as the governing standard. The §2.4 KenTender corner and control values — controls and notice banners 2px and outlined, containers 4px, status chips 6px — are controlling and replace the Frappe corner-radius row for KenTender screens; the “soft radius” of §2.6.11 item 3 reads as 4px. It does not approve the design-system pack changes in DS-REV-003 or DS-REV-005, an artboard or an implementation, and it changes no content, permission, workflow, fixture or verification rule. The input-fill row of §2.4 is unchanged. (The Proposed v1.24 effect below is retained as drafting history.)
+
 **Proposed v1.24 effect.** On approval, v1.24 supersedes v1.23 as the governing standard. The §2.4 KenTender corner and control values become controlling and replace the Frappe corner-radius row for KenTender screens. It does not approve the design-system pack changes in DS-REV-003 or DS-REV-005, an artboard or an implementation, and it changes no content, permission, workflow, fixture or verification rule. The v1.23 approved effect below is retained.
 
 **Approved v1.23 effect — 6 October 2026.** v1.23 is approved by the Project Owner and supersedes v1.22 as the governing standard. The §2.9.2 position figure, its “{N} of {N}” and Done form when every stage is done, and its exception to §2.6.7 for the tracker's per-stage state text; the §2.9.1 blocked-container shape and its label “Your turn, blocked”; and the notes in §2.9.3 rules 3 and 6 are controlling for the journey tracker and next-step block on every record screen that carries them. It does not approve the design-system pack changes in DS-REV-004, an artboard or an implementation, and it changes no content, permission, workflow, fixture or verification rule. (The Proposed v1.23 effect below is retained as drafting history.)
@@ -949,7 +952,7 @@ Version history addition: v1.19 proposed 4 October 2026 adds the Home orientatio
 
 Version history addition: v1.23 proposed 6 October 2026 adds the journey position figure, the compact tracker and the blocked next-step shape and label (§§2.9.1–2.9.3), on the Project Owner's approval of design option 2e (“2e it is. Approved”). Awaiting approval; v1.22 remains the approved standard. Approved 6 October 2026 by the Project Owner; v1.23 is now the governing standard.
 
-Version history addition: v1.24 proposed 6 October 2026 states the KenTender corner and control values in §2.4, on the Project Owner's request recorded in DS-REV-003 and DS-REV-005. Awaiting approval; v1.23 remains the approved standard.
+Version history addition: v1.24 proposed 6 October 2026 states the KenTender corner and control values in §2.4, on the Project Owner's request recorded in DS-REV-003 and DS-REV-005. Awaiting approval; v1.23 remains the approved standard. Approved 6 October 2026 by the Project Owner; v1.24 is now the governing standard.
 
 Version history addition: v1.20 proposed 4 October 2026 permits theming Frappe Desk through its theme variables and fixes two page surfaces. Awaiting approval; v1.15 remains the approved standard.
 
