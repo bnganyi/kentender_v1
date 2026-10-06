@@ -31,11 +31,13 @@ from kentender_procurement.departmental_needs.constants import (
 	TASK_SUCCESSOR_ACCEPTANCE,
 	TASK_WITHDRAWAL,
 	REVISION_CONTENT_FIELDS,
+	REVISION_DRAFT,
 )
 from kentender_procurement.departmental_needs.errors import fail
 from kentender_procurement.departmental_needs.services.context import fy_label, selectable_financial_years
 from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
+	can_read_unsent_draft,
 	can_view,
 	creation_contexts,
 	is_owner,
@@ -97,6 +99,22 @@ def _version_facts(version: str) -> dict[str, Any]:
 		frappe.db.get_value("UOM", facts.get("unit"), "uom_name") or facts.get("unit") or ""
 	)
 	return facts
+
+
+def _shown_revision(doc, principal: str) -> str:
+	"""The revision whose content `principal` may see as the Need's current one.
+
+	An author's unsent Draft successor is theirs (and the Head of Department's,
+	the Auditor's) alone; everyone else reads the accepted revision (AUD-NDS-003).
+	"""
+	current = cstr(doc.current_revision)
+	accepted = cstr(doc.current_accepted_revision)
+	if not current or current == accepted or not accepted:
+		return current
+	status = frappe.db.get_value("Departmental Need Revision", current, "revision_status")
+	if status == REVISION_DRAFT and not can_read_unsent_draft(doc, principal):
+		return accepted
+	return current
 
 
 def _quantity_label(version: dict[str, Any]) -> str:
@@ -318,7 +336,7 @@ def get_workspace(
 		allowed, profile = can_view(doc, principal)
 		if not allowed or doc.current_state == STATE_WITHDRAWN:
 			continue
-		version = _version_facts(doc.current_revision)
+		version = _version_facts(_shown_revision(doc, principal))
 		title = cstr(version.get("title"))
 		if term and term not in title.lower() and term not in cstr(doc.need_reference).lower():
 			continue
@@ -746,7 +764,7 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 		"financial_year_window": _financial_year_window(doc),
 		"accepted": accepted,
 		"submitted": submitted,
-		"current_revision": _version_facts(doc.current_revision),
+		"current_revision": _version_facts(_shown_revision(doc, principal)),
 		"accepted_revision": _version_facts(doc.current_accepted_revision),
 		"latest_return": latest_return,
 		"terminal_decision": terminal_decision,

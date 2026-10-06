@@ -141,6 +141,25 @@ def can_view(need: Any, user: str) -> tuple[bool, str]:
 	return False, "none"
 
 
+def can_read_unsent_draft(need: Any, user: str) -> bool:
+	"""Whether `user` may read the content of an author's unsent Draft successor.
+
+	NDS v1.16 §6.1 / OVS v0.6 §4.1: unsent author Draft access is unchanged — the
+	author, the Head of the User Department over the unit, the Auditor and a
+	technical reader. The Planner (who reads the *accepted* source) and the
+	Accounting Officer / Head of Procurement Function (who observe decided
+	Needs) are not on that list.
+	"""
+	allowed, profile = can_view(need, user)
+	if not allowed:
+		return False
+	if profile in ("owner", "department") or is_technical(user):
+		return True
+	return authorise_record(
+		user=user, business_role=ROLE_AUDITOR, organisation_unit="", purpose=PURPOSE_READ
+	).allowed
+
+
 def _oversight_office(user: str) -> bool:
 	"""The Accounting Officer or the Head of Procurement Function, site-wide, read purpose (OVS v0.6 §4.1)."""
 	return any(
