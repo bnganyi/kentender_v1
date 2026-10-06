@@ -35,7 +35,6 @@ body {
 	}
 }
 
-
 $hero-image: "/assets/frontend/images/kentender_login.png";
 
 html::before {
@@ -310,6 +309,26 @@ body::after {
 				}
 			}
 
+			.btn-signup {
+				background: var(--blue-600, #2490ef);
+				border-color: var(--blue-600, #2490ef);
+				color: #fff;
+				border-radius: 999px;
+				height: 38px;
+				font-size: 0; // visually match the login CTA while retaining its accessible label
+
+				&::after {
+					content: "Sign Up  →";
+					font-size: var(--text-base);
+					font-weight: var(--weight-medium);
+				}
+
+				&:hover {
+					background: var(--blue-700, #1978c8);
+					border-color: var(--blue-700, #1978c8);
+				}
+			}
+
 			.btn-ldap-login {
 				font-size: var(--text-base); // keep LDAP button's own label
 			}
@@ -380,5 +399,13 @@ body::after {
 			font-size: var(--text-3xl, 32px);
 			font-weight: var(--weight-bold, 700);
 		}
+	}
+}
+
+.for-signup .page-card-head h4 {
+	font-size: 0;
+
+	&::after {
+		content: "Create Account";
 	}
 }

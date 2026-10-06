@@ -1,93 +1,231 @@
-<!DOCTYPE html>
-{#- BDS-CHG-001 v0.8 §10.1 Supplier Website shell (plan OD-B): a standalone
-    document, not Frappe's website base, so the website theme, navbar and
-    Bootstrap never reach a supplier page. The header, skip link and footer
-    are server-rendered; the owning surface's Vue app mounts on #kt-portal-app. -#}
+<!doctype html>
+{#- BDS-CHG-001 v0.8 §10.1 Supplier Website shell (plan OD-B): a standalone document, not Frappe's
+website base, so the website theme, navbar and Bootstrap never reach a supplier page. The header,
+skip link and footer are server-rendered; the owning surface's Vue app mounts on #kt-portal-app.
+-#}
 <html lang="{{ boot.lang or 'en' }}">
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="robots" content="noindex">
-	<title>{{ title | striptags }} · KenTender</title>
-	<link rel="icon" href="/assets/frappe/images/frappe-favicon.svg">
-	<link rel="stylesheet" href="/assets/kentender_core/css/kt_cl_fonts.css?v={{ kt_portal_asset_version('kt_cl_fonts.css') }}">
-	<link rel="stylesheet" href="/assets/kentender_core/css/kt_industry_tokens.css?v={{ kt_portal_asset_version('kt_industry_tokens.css') }}">
-	<link rel="stylesheet" href="/assets/kentender_core/css/kt_portal_shell.css?v={{ kt_portal_asset_version('kt_portal_shell.css') }}">
-	{%- for href in kt_portal.surface.css %}
-	<link rel="stylesheet" href="{{ href }}">
-	{%- endfor %}
-	<script>
-		window.frappe = {};
-		window._version_number = "{{ build_version }}";
-		frappe.ready_events = [];
-		frappe.ready = function (fn) { frappe.ready_events.push(fn); };
-		window.dev_server = {{ dev_server }};
-		window.socketio_port = {{ (frappe.socketio_port or 9000) }};
-	</script>
-</head>
-<body class="kt-industry kt-portal" data-kt-portal-surface="{{ kt_portal.surface.key | e }}" data-kt-portal-verdict="{{ kt_portal.verdict }}">
-	<a class="kt-portal-skip" href="#kt-portal-main">{{ _("Skip to main content") }}</a>
-	{%- for notice in kt_portal.shell.notices %}
-	<div class="kt-portal-environment" role="note" data-testid="kt-portal-environment"><strong>{{ notice.label }}</strong>{% if notice.text %} <span>{{ notice.text }}</span>{% endif %}</div>
-	{%- endfor %}
-	<header class="kt-portal-header">
-		<div class="kt-portal-bar">
-			<a class="kt-portal-brand" href="/tenders">KenTender</a>
-			<nav class="kt-portal-nav" aria-label="{{ _('Main') }}">
-				{%- for item in kt_portal.shell.nav %}
-				<a href="{{ item.href }}" data-kt-portal-nav="{{ item.key }}"{% if item.current %} aria-current="page"{% endif %}>{{ _(item.label) }}</a>
-				{%- endfor %}
-			</nav>
-			{%- if kt_portal.shell.identity %}
-			<div class="kt-portal-identity" data-testid="kt-portal-identity" title="{{ kt_portal.shell.identity.name }}{% if kt_portal.shell.identity.detail %} · {{ kt_portal.shell.identity.detail }}{% endif %}">
-				<span class="kt-portal-avatar" aria-hidden="true">{{ kt_portal.shell.identity.initials }}</span>
-				<span class="kt-portal-identity-text">
-					<span class="kt-portal-identity-name" data-testid="kt-portal-identity-name">{{ kt_portal.shell.identity.name }}</span>
-					{%- if kt_portal.shell.identity.detail %}
-					<span class="kt-portal-identity-detail" data-testid="kt-portal-identity-detail">{{ kt_portal.shell.identity.detail }}</span>
-					{%- endif %}
-				</span>
-			</div>
-			{%- endif %}
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<title>{{ title | striptags }} · KenTender</title>
+		<link rel="icon" href="/assets/frappe/images/frappe-favicon.svg" />
+		<link
+			rel="stylesheet"
+			href="/assets/kentender_core/css/kt_cl_fonts.css?v={{ kt_portal_asset_version('kt_cl_fonts.css') }}"
+		/>
+		<link
+			rel="stylesheet"
+			href="/assets/kentender_core/css/kt_industry_tokens.css?v={{ kt_portal_asset_version('kt_industry_tokens.css') }}"
+		/>
+		<link
+			rel="stylesheet"
+			href="/assets/kentender_core/css/kt_portal_shell.css?v={{ kt_portal_asset_version('kt_portal_shell.css') }}"
+		/>
+		{%- for href in kt_portal.surface.css %}
+		<link rel="stylesheet" href="{{ href }}" />
+		{%- endfor %}
+		<script>
+			window.frappe = {};
+			window._version_number = "{{ build_version }}";
+			frappe.ready_events = [];
+			frappe.ready = function (fn) { frappe.ready_events.push(fn); };
+			window.dev_server = {{ dev_server }};
+			window.socketio_port = {{ (frappe.socketio_port or 9000) }};
+		</script>
+	</head>
+	<body
+		class="kt-industry kt-portal"
+		data-kt-portal-surface="{{ kt_portal.surface.key | e }}"
+		data-kt-portal-verdict="{{ kt_portal.verdict }}"
+	>
+		<a class="kt-portal-skip" href="#kt-portal-main">{{ _("Skip to main content") }}</a>
+		{%- for notice in kt_portal.shell.notices %}
+		<div class="kt-portal-environment" role="note" data-testid="kt-portal-environment">
+			<strong>{{ notice.label }}</strong>{% if notice.text %}
+			<span>{{ notice.text }}</span>{% endif %}
 		</div>
-	</header>
-	<div class="kt-portal-body">
-		<main id="kt-portal-main" tabindex="-1">
-			<div id="kt-portal-app" data-kt-portal-app>
-				{%- if kt_portal.verdict == "NOT_FOUND" and not kt_portal.surface.bundle %}
-				<div class="kt-page kt-portal-state" data-testid="kt-portal-not-found">
-					<div class="kt-page-head"><div><h1 class="kt-page-title">{{ _("Page not found") }}</h1><p class="kt-page-desc">{{ _("This page is unavailable. Check the address or go to the list of available Tenders.") }}</p></div></div>
-					<div><a class="kt-btn kt-btn-secondary" href="/tenders">{{ _("View available Tenders") }}</a></div>
+		{%- endfor %}
+		<header class="kt-portal-header">
+			<div class="kt-portal-bar">
+				<a class="kt-portal-brand" href="/tenders" aria-label="KenTender home">
+					<img
+						src="https://ik.imagekit.io/kltovsgah/kentender_logo.png"
+						alt="KenTender logo"
+					/>
+					<!-- <span>KenTender</span> -->
+				</a>
+				<nav class="kt-portal-nav" aria-label="{{ _('Main') }}">
+					{%- for item in kt_portal.shell.nav %}
+					<a
+						href="{{ item.href }}"
+						data-kt-portal-nav="{{ item.key }}"
+						{%
+						if
+						item.current
+						%}
+						aria-current="page"
+						{%
+						endif
+						%}
+						>{{ _(item.label) }}</a
+					>
+					{%- endfor %}
+				</nav>
+				{%- if kt_portal.shell.identity %}
+				<div
+					class="kt-portal-identity"
+					data-testid="kt-portal-identity"
+					title="{{ kt_portal.shell.identity.name }}{% if kt_portal.shell.identity.detail %} · {{ kt_portal.shell.identity.detail }}{% endif %}"
+				>
+					<span class="kt-portal-avatar" aria-hidden="true"
+						>{{ kt_portal.shell.identity.initials }}</span
+					>
+					<span class="kt-portal-identity-text">
+						<span class="kt-portal-identity-name" data-testid="kt-portal-identity-name"
+							>{{ kt_portal.shell.identity.name }}</span
+						>
+						{%- if kt_portal.shell.identity.detail %}
+						<span
+							class="kt-portal-identity-detail"
+							data-testid="kt-portal-identity-detail"
+							>{{ kt_portal.shell.identity.detail }}</span
+						>
+						{%- endif %}
+					</span>
 				</div>
-				{%- else %}
-				<div class="kt-portal-loading" aria-hidden="true"></div>
 				{%- endif %}
 			</div>
-		</main>
-	</div>
-	{%- if kt_portal.shell.footer %}
-	<footer class="kt-portal-footer">
-		<nav aria-label="{{ _('Support and legal') }}">
-			{%- for link in kt_portal.shell.footer %}
-			<a href="{{ link.href | e }}" data-kt-portal-footer="{{ link.key }}"{% if link.key != 'support' %} rel="noopener"{% endif %}>{{ _(link.label) }}</a>
-			{%- endfor %}
+		</header>
+		<nav class="kt-portal-breadcrumbs" aria-label="Breadcrumb" hidden>
+			<div class="kt-portal-bar kt-portal-breadcrumb-inner" id="kt-portal-breadcrumbs"></div>
 		</nav>
-	</footer>
-	{%- endif %}
-	<script type="application/json" id="kt-portal-initial">{{ kt_portal_initial }}</script>
-	<script>
-		frappe.boot = {{ frappe.utils.orjson_dumps(boot, default=frappe.json_handler) }};
-		frappe.sys_defaults = frappe.boot.sysdefaults;
-	</script>
-	{{ include_script('frappe-web.bundle.js') }}
-	{%- if kt_portal_messages %}
-	<script>frappe._messages = Object.assign(frappe._messages || {}, {{ kt_portal_messages }});</script>
-	{%- endif %}
-	{%- if kt_portal.surface.bundle %}
-	{{ include_script('kt_portal_runtime.bundle.js') }}
-	{{ include_script('kt_industry_guidance.bundle.js') }}
-	{{ include_script(kt_portal.surface.bundle) }}
-	{%- endif %}
-	<!-- csrf_token -->
-</body>
+		<div class="kt-portal-body">
+			<main id="kt-portal-main" tabindex="-1">
+				<div id="kt-portal-app" data-kt-portal-app>
+					{%- if kt_portal.verdict == "NOT_FOUND" and not kt_portal.surface.bundle %}
+					<div class="kt-page kt-portal-state" data-testid="kt-portal-not-found">
+						<div class="kt-page-head">
+							<div>
+								<h1 class="kt-page-title">{{ _("Page not found") }}</h1>
+								<p class="kt-page-desc">
+									{{ _("This page is unavailable. Check the address or go to the
+									list of available Tenders.") }}
+								</p>
+							</div>
+						</div>
+						<div>
+							<a class="kt-btn kt-btn-secondary" href="/tenders"
+								>{{ _("View available Tenders") }}</a
+							>
+						</div>
+					</div>
+					{%- else %}
+					<div class="kt-portal-loading" aria-hidden="true"></div>
+					{%- endif %}
+				</div>
+			</main>
+		</div>
+		{%- if kt_portal.shell.footer %}
+		<footer class="kt-portal-footer">
+			<div class="kt-portal-footer-inner">
+				<a class="kt-portal-footer-brand" href="/tenders" aria-label="KenTender home">
+					<img
+						src="https://ik.imagekit.io/kltovsgah/kentender_logo.png"
+						alt="KenTender logo"
+					/>
+					<!-- <span>KenTender</span> -->
+				</a>
+				<nav aria-label="{{ _('Support and legal') }}">
+					{%- for link in kt_portal.shell.footer %}
+					<a
+						href="{{ link.href | e }}"
+						data-kt-portal-footer="{{ link.key }}"
+						{%
+						if
+						link.key
+						!="support"
+						%}
+						rel="noopener"
+						{%
+						endif
+						%}
+						>{{ _(link.label) }}</a
+					>
+					{%- endfor %}
+				</nav>
+			</div>
+		</footer>
+		{%- endif %}
+		<script type="application/json" id="kt-portal-initial">
+			{{ kt_portal_initial }}
+		</script>
+		<script>
+			frappe.boot = {{ frappe.utils.orjson_dumps(boot, default=frappe.json_handler) }};
+			frappe.sys_defaults = frappe.boot.sysdefaults;
+		</script>
+		{{ include_script('frappe-web.bundle.js') }}
+		<script>
+			(function () {
+				var path = (window.location.pathname || "/").replace(/^\/+|\/+$/g, "");
+				var parts = path ? path.split("/").filter(Boolean) : [];
+				var host = document.getElementById("kt-portal-breadcrumbs");
+				if (!host) return;
+
+				var items = [];
+				var root = { label: "Home", href: "/" };
+				items.push(root);
+
+				if (parts.length && parts[0] === "tenders") {
+					items.push({ label: "Tenders", href: "/tenders" });
+					if (parts.length > 1 && parts[1]) {
+						items.push({
+							label: decodeURIComponent(parts[1]).replace(/-/g, " "),
+							href: null,
+						});
+					}
+				} else if (parts.length) {
+					parts.forEach(function (part, index) {
+						var href = "/" + parts.slice(0, index + 1).join("/");
+						items.push({
+							label: decodeURIComponent(part).replace(/-/g, " "),
+							href: index === parts.length - 1 ? null : href,
+						});
+					});
+				}
+
+				var list = items
+					.map(function (item, index) {
+						var isCurrent = index === items.length - 1 || item.href === null;
+						if (isCurrent) {
+							return (
+								'<li class="kt-portal-breadcrumb-item is-current"><span class="kt-portal-breadcrumb-current" aria-current="page">' +
+								item.label +
+								"</span></li>"
+							);
+						}
+						return (
+							'<li class="kt-portal-breadcrumb-item"><a href="' +
+							item.href +
+							'" class="kt-portal-breadcrumb-link">' +
+							item.label +
+							"</a></li>"
+						);
+					})
+					.join("");
+
+				host.innerHTML = '<ol class="kt-portal-breadcrumb-list">' + list + "</ol>";
+				host.parentNode.hidden = false;
+			})();
+		</script>
+		{%- if kt_portal_messages %}
+		<script>
+			frappe._messages = Object.assign(frappe._messages || {}, {{ kt_portal_messages }});
+		</script>
+		{%- endif %} {%- if kt_portal.surface.bundle %} {{
+		include_script('kt_portal_runtime.bundle.js') }} {{
+		include_script('kt_industry_guidance.bundle.js') }} {{
+		include_script(kt_portal.surface.bundle) }} {%- endif %}
+		<!-- csrf_token -->
+	</body>
 </html>

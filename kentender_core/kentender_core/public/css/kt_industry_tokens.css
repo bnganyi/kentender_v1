@@ -87,9 +87,9 @@
 	--kt-color-attention: var(--kt-status-attention);
 	--kt-color-critical: var(--kt-status-critical);
 
-	--kt-font-heading: "Barlow Condensed", "Arial Narrow", sans-serif;
+	--kt-font-heading: "Inter", sans-serif;
 	--kt-font-heading-weight: 600;
-	--kt-font-body: "Barlow", system-ui, sans-serif;
+	--kt-font-body: "Inter", system-ui, sans-serif;
 
 	--kt-space-1: 3.4px;
 	--kt-space-2: 6.8px;
@@ -167,8 +167,8 @@
 }
 .kt-industry ::selection { background: color-mix(in srgb, var(--kt-color-accent) 30%, transparent); }
 /* Links are the second accent (rust); indigo stays reserved for actions. */
-.kt-industry a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) { color: var(--kt-color-accent-2-700); text-underline-offset: 3px; }
-.kt-industry a:not(.kt-btn):not(.kt-tab):not(.kt-add-child):hover { color: var(--kt-color-accent-2-800); }
+.kt-industry a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) { color: var(--kt-color-accent-700); text-underline-offset: 3px; }
+.kt-industry a:not(.kt-btn):not(.kt-tab):not(.kt-add-child):hover { color: var(--kt-color-accent-800); }
 
 /* — blueprint frame: square, hairline-bordered — a plain hairline and
      nothing more. Corner registration marks were removed system-wide by
@@ -375,7 +375,7 @@
 .kt-industry .kt-table td:first-child { min-width: 100px; }
 .kt-industry .kt-table tbody tr:hover { background: var(--kt-color-accent-100); }
 /* WCAG 1.4.3: on a hovered row's tint the link colour falls to 4.3:1; the next shade keeps it above 4.5:1 */
-.kt-industry .kt-table tbody tr:hover a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) { color: var(--kt-color-accent-2-800); }
+.kt-industry .kt-table tbody tr:hover a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) { color: var(--kt-color-accent-800); }
 .kt-industry .kt-table .is-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .kt-industry .kt-table td.is-num { font-weight: 600; }
 .kt-industry .kt-table .is-num.is-zero, .kt-industry .kt-figure.is-zero { color: var(--kt-color-neutral-500); font-weight: 400; }
@@ -907,8 +907,8 @@
 .kt-industry .kt-next-step-sentence { margin: 0; font-size: 14px; color: var(--kt-color-neutral-700); }
 .kt-industry .kt-next-step-since { font-size: 14px; font-weight: 400; color: var(--kt-color-neutral-700); }
 .kt-industry .kt-next-step-links { display: flex; gap: var(--kt-space-4); flex-wrap: wrap; margin-top: 4px; }
-.kt-industry .kt-next-step-link { background: none; border: 0; padding: 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--kt-color-accent-2-700); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-.kt-industry .kt-next-step-link:hover { color: var(--kt-color-accent-2-800); }
+.kt-industry .kt-next-step-link { background: none; border: 0; padding: 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--kt-color-accent-700); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.kt-industry .kt-next-step-link:hover { color: var(--kt-color-accent-800); }
 .kt-industry .kt-next-step-link:focus-visible { outline: 2px solid var(--kt-color-accent); outline-offset: 2px; }
 .kt-industry .kt-notice.kt-next-step { margin: 0; display: flex; }
 .kt-industry .kt-notice.kt-next-step .kt-next-step-label,
