@@ -34,6 +34,24 @@ def _audit(pe_name: str, action: str, actor: str, metadata: dict | None = None) 
 	)
 
 
+def require_single_entity(entity_code: str) -> None:
+	"""AUTH-ADR-001 §19 / CFG10-AC-003 — one site, one Procuring Entity.
+
+	Refuses a Procuring Entity other than the site's own. The site's entity is
+	the configured `Site Procuring Entity`; on a site that has not been
+	configured yet, the entity already on file (if any) is the only one allowed.
+	Called by the reference-data API; the lifecycle services below stay callable
+	for the seeds and the legacy lifecycle tests."""
+	code = (entity_code or "").strip()
+	site_pe = frappe.db.get_single_value("Site Procuring Entity", "pe_code")
+	allowed = {site_pe} if site_pe else set(frappe.get_all("Procuring Entity", pluck="name", limit=2))
+	if allowed and code not in allowed:
+		frappe.throw(
+			_("This site has one Procuring Entity. A second Procuring Entity cannot be created or used."),
+			title="PE_SINGLE_ENTITY",
+		)
+
+
 def create_pe_draft(payload: dict, *, user: str | None = None) -> dict:
 	"""§6.1 '— | Create draft | DRAFT'. payload: entity_code, legal_name, display_name,
 	pe_type_code, timezone (optional, defaults Africa/Nairobi), effective_from (optional)."""

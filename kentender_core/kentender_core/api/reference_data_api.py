@@ -47,6 +47,9 @@ def list_pe_types():
 
 @frappe.whitelist()
 def list_organisation_units(procuring_entity: str | None = None):
+	# AUD-XC-029: the service reads with permissions ignored, so the doctype's
+	# own read rule (Desk User, never a portal account) is asserted here.
+	frappe.has_permission("Organisation Unit", "read", throw=True)
 	return queries.list_organisation_units(procuring_entity or "")
 
 
@@ -73,7 +76,9 @@ def create_or_revise_pe(payload=None, pe_id: str | None = None, change_reason: s
 	"""Create when pe_id is omitted; revise (propose amendment) when given."""
 	if pe_id:
 		return txn.propose_amendment(pe_id, change_reason or "", user=frappe.session.user)
-	return txn.create_pe_draft(_obj(payload), user=frappe.session.user)
+	body = _obj(payload)
+	txn.require_single_entity(body.get("entity_code") or "")
+	return txn.create_pe_draft(body, user=frappe.session.user)
 
 
 @frappe.whitelist()
@@ -174,6 +179,7 @@ def enable_pe_fy_context(
 	active_to=None,
 	idempotency_key: str | None = None,
 ):
+	txn.require_single_entity(procuring_entity)
 	return run_idempotent(
 		idempotency_key,
 		"PE Fiscal Year Context",
