@@ -23,7 +23,7 @@ Two Frappe-whitelisted methods covering the handoff card endpoints from pack §1
   "target_module": "Tender Management",
   "source_object_type": "Procurement Package",
   "source_object_code": "PKG-MOH-2026-001",
-  "target_object_type": "TM2 Tender",
+  "target_object_type": "Tender",
   "target_object_code": "TND-MOH-2026-001",
   "journey_code": "JRN-MOH-2026-001",
   "locked_summary": {},

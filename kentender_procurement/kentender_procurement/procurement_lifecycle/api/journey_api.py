@@ -39,7 +39,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import cint, cstr
+from frappe.utils import cstr
 
 from kentender_procurement.procurement_lifecycle.journey_aggregate import (
     get_procurement_journey,
@@ -63,9 +63,6 @@ from kentender_procurement.procurement_lifecycle.budget_line_procurement_use imp
 from kentender_procurement.procurement_lifecycle.api.permission_guard import (
     require_journey_read,
 )
-from kentender_procurement.tender_management.services.tm2_handoff_panel import (
-    build_tm2_handoff_panel_payload,
-)
 
 # Status categories considered "terminal / not active"
 _INACTIVE_STATUSES: frozenset[str] = frozenset(
@@ -88,8 +85,7 @@ def _require_journey_read_permission() -> None:
 def _primary_object_code(row: dict) -> str:
     """Derive the primary object code for a journey list item."""
     return (
-        row.get("tm2_tender_ref")
-        or row.get("procurement_package_ref")
+        row.get("procurement_package_ref")
         or row.get("demand_ref")
         or ""
     )
@@ -177,7 +173,6 @@ def list_journeys(
             next_action,
             blocker_count,
             critical_blocker_count,
-            tm2_tender_ref,
             procurement_package_ref,
             demand_ref
         FROM `tabProcurement Journey`
@@ -247,7 +242,7 @@ def get_journey_by_object(
 ) -> dict[str, Any] | None:
     """Return the full journey aggregate for an object's associated journey.
 
-    :param object_type: Source module object type (e.g. ``"TM2 Tender"``).
+    :param object_type: Source module object type (e.g. ``"Budget Line"``).
     :param object_code: Source module object code.
     :returns: Full journey aggregate dict, or ``None`` if no journey is linked.
     :raises frappe.PermissionError: If the user lacks read access.
@@ -260,57 +255,6 @@ def get_journey_by_object(
     if not ocode:
         frappe.throw("object_code is required.", frappe.ValidationError)
     return get_procurement_journey_by_object(otype, ocode)
-
-
-# ---------------------------------------------------------------------------
-# 3b. get_tm2_handoff_panel — TM2 Tender Form (R5-011 / LV-R5-011-01)
-# ---------------------------------------------------------------------------
-
-@frappe.whitelist()
-def get_tm2_handoff_panel(
-    tender_code: str | None = None,
-    include_optional_opening: str | int | bool | None = None,
-) -> dict[str, Any] | None:
-    """Return lifecycle handoffs relevant to ``tender_code`` for TM2 desk panel.
-
-    :param tender_code: Business code / TM2 document name.
-    :param include_optional_opening: When truthy (``1``, ``True``),
-        include Tender Closing Certificate + Opening Readiness Record summaries
-        when present on the linked journey aggregate.
-    :returns: Payload with ``handoffs`` list or ``None`` when the tender /
-        linkage is missing or inaccessible.
-    :raises frappe.PermissionError: If the caller cannot read Procurement
-        Journey or the TM2 tender document.
-    """
-    _require_journey_read_permission()
-    tc = cstr(tender_code or "").strip()
-    if not tc:
-        frappe.throw("tender_code is required.", frappe.ValidationError)
-    if not frappe.db.exists("TM2 Tender", tc):
-        return None
-    if not frappe.has_permission("TM2 Tender", "read", doc=tc):
-        frappe.throw(
-            frappe._("You are not permitted to read this TM2 Tender."),
-            frappe.PermissionError,
-        )
-
-    include_open = False
-    raw = include_optional_opening
-    if isinstance(raw, bool):
-        include_open = raw
-    elif isinstance(raw, (int, float)) and raw:
-        include_open = True
-    elif raw not in (None, ""):
-        rs = str(raw).strip().lower()
-        include_open = (
-            rs not in {"", "false", "0", "none", "no"}
-            and (rs in {"true", "yes", "1", "on"} or bool(cint(raw)))
-        )
-
-    return build_tm2_handoff_panel_payload(
-        tc,
-        include_optional_opening=include_open,
-    )
 
 
 # ---------------------------------------------------------------------------

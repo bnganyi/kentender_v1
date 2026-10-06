@@ -85,7 +85,6 @@ class TestKtClSurfaceRegistryContract(IntegrationTestCase):
 		self.assertIn("showSearch: false", source)
 		self.assertIn("crumbDashboard", source)
 		self.assertIn('["coming-soon"', source)
-		self.assertIn('["tender-management-v2"]', source)
 		self.assertNotIn("pageTitle: pageTitle", source)
 
 	def test_cfg05_cfg06_trails_include_step_leaf(self) -> None:

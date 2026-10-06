@@ -20,7 +20,7 @@ frappe.provide("kentender_core.cl_surface_registry");
 		return crumb(__("Home"), ["coming-soon"]);
 	}
 	function crumbTenderManagement() {
-		return crumb(__("Tender Management"), ["tender-management-v2"]);
+		return crumb(__("Tender Management"), ["tenders"]);
 	}
 	function crumbTenderConfigurations() {
 		return crumb(__("Tender Configurations"), ["it-tender-configuration-dashboard"]);

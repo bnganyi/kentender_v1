@@ -41,10 +41,10 @@ class TestHomeServiceContract(IntegrationTestCase):
 		self.assertEqual(items[1]["urgency"], "Due soon")
 
 	def test_pipeline_stops_before_evaluation_award_and_contract(self):
-		# Five since NDS-CHG-001 v1.1: the two Demand-era stages were replaced by
-		# one Accepted-needs stage. The count is incidental; the invariant this
-		# test exists for is that the funnel stops at publication.
-		self.assertEqual(len(PIPELINE_STAGES), 5)
+		# Two now: the tender-side stages read the retired tender workbench. The
+		# count is incidental; the invariant this test exists for is that the
+		# funnel stops before evaluation, award and contract.
+		self.assertEqual(len(PIPELINE_STAGES), 2)
 		labels = " ".join(s[1].lower() for s in PIPELINE_STAGES)
 		self.assertNotIn("evaluation", labels)
 		self.assertNotIn("award", labels)
@@ -107,7 +107,7 @@ class TestHomeServiceContract(IntegrationTestCase):
 			self.assertNotIn("Approve", item.get("action_label") or "")
 			self.assertNotIn("Reject", item.get("action_label") or "")
 		stages = (payload.get("pipeline") or {}).get("stages") or []
-		self.assertEqual(len(stages), 5)
+		self.assertEqual(len(stages), 2)
 		# Bid confidentiality — no bid counts in JSON
 		blob = frappe.as_json(payload).lower()
 		self.assertNotIn("bid_count", blob)
@@ -133,7 +133,7 @@ class TestHomeServiceContract(IntegrationTestCase):
 
 		payload = get_procurement_home()
 		self.assertTrue(payload.get("ok"))
-		self.assertEqual(len((payload.get("pipeline") or {}).get("stages") or []), 5)
+		self.assertEqual(len((payload.get("pipeline") or {}).get("stages") or []), 2)
 
 	def test_deadline_items_include_stitch_action_icons(self):
 		frappe.set_user("Administrator")

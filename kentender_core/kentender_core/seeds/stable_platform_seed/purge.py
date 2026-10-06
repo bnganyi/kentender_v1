@@ -23,14 +23,8 @@ from kentender_core.seeds.stable_platform_seed.constants import (
 	WORKS_PKG_CODE,
 	WORKS_PLAN_CODE,
 )
-from kentender_procurement.procurement_lifecycle.seeds.works_master_handoff_payloads import (
-	BASE_HANDOFF_CODES,
-	JOURNEY_CODE,
-	OPENING_HANDOFF_CODES,
-)
 WORKS_PKG_CODE_LEGACY = "PKG-MOH-2026-001"
 PLAN_CODE = "PLAN-MOH-2026"
-from kentender_procurement.tender_management.seeds.purge_smoke_test_tenders import run as purge_smoke_tenders
 from kentender_strategy.seeds.works_master_strategy_purge import purge_non_works_strategy_hierarchy
 
 _KEEP_DEMAND_CODES: Final[frozenset[str]] = frozenset({WORKS_DEMAND_CODE, IT_DEMAND_CODE})
@@ -38,34 +32,8 @@ _KEEP_BUDGET_NAMES: Final[frozenset[str]] = frozenset({BUDGET_NAME})
 _KEEP_BUDGET_LINE_CODES: Final[frozenset[str]] = frozenset({WORKS_BUDGET_LINE_CODE, IT_BUDGET_LINE_CODE})
 _KEEP_PLAN_CODES: Final[frozenset[str]] = frozenset({WORKS_PLAN_CODE, PLAN_CODE})
 _KEEP_PKG_CODES: Final[frozenset[str]] = frozenset({WORKS_PKG_CODE, WORKS_PKG_CODE_LEGACY, IT_PKG_CODE})
-_KEEP_TENDER: Final[str] = "TND-MOH-2026-001"
-_KEEP_STD_INSTANCE: Final[str] = "STDINST-TND-MOH-2026-001"
-_KEEP_JOURNEYS: Final[frozenset[str]] = frozenset({WORKS_JOURNEY_CODE, JOURNEY_CODE})
-_KEEP_HANDOFF_CODES: Final[frozenset[str]] = frozenset(
-	tuple(BASE_HANDOFF_CODES) + tuple(OPENING_HANDOFF_CODES) + (IT_INCLUSION_CODE,)
-)
-
-_TM2_DOCTYPES: Final[tuple[str, ...]] = (
-	"TM2 Tender",
-	"TM2 Addendum",
-	"TM2 Addendum Impact Record",
-	"Tender Publication Snapshot",
-	"TM2 Tender Timeline",
-	"TM2 Tender Access Rule",
-	"TM2 Tender Audit Event",
-	"TM2 Tender STD Binding",
-	"TM2 Tender Closing Record",
-	"TM2 Tender Invitation",
-	"Tender STD Instance",
-	"Tender STD Generated Output",
-	"Tender STD Instance BOQ",
-	"Tender STD Instance Snapshot",
-)
-
-
-def _tm2_module_available() -> bool:
-	return bool(frappe.db.exists("DocType", "TM2 Tender"))
-
+_KEEP_JOURNEYS: Final[frozenset[str]] = frozenset({WORKS_JOURNEY_CODE})
+_KEEP_HANDOFF_CODES: Final[frozenset[str]] = frozenset((IT_INCLUSION_CODE,))
 
 def _doctype_exists(doctype: str) -> bool:
 	return bool(frappe.db.exists("DocType", doctype))
@@ -177,60 +145,6 @@ def _purge_procurement_packages(*, dry_run: bool) -> list[str]:
 	return []
 
 
-def _purge_non_master_tenders(*, dry_run: bool) -> list[str]:
-	if not _tm2_module_available():
-		return []
-	removed: list[str] = []
-	for row in frappe.get_all("TM2 Tender", fields=["name", "tender_code"]):
-		code = (row.get("tender_code") or row.get("name") or "").strip()
-		if code == _KEEP_TENDER:
-			continue
-		removed.append(row["name"])
-		if dry_run:
-			continue
-		tm2 = row["name"]
-		if _doctype_exists("TM2 Addendum"):
-			for addendum in frappe.get_all("TM2 Addendum", filters={"tm2_tender": tm2}, pluck="name"):
-				if _doctype_exists("TM2 Addendum Impact Record"):
-					for air in frappe.get_all(
-						"TM2 Addendum Impact Record",
-						filters={"tm2_addendum": addendum},
-						pluck="name",
-					):
-						if frappe.db.exists("TM2 Addendum Impact Record", air):
-							frappe.delete_doc("TM2 Addendum Impact Record", air, force=True, ignore_permissions=True)
-				if frappe.db.exists("TM2 Addendum", addendum):
-					frappe.delete_doc("TM2 Addendum", addendum, force=True, ignore_permissions=True)
-		if _doctype_exists("Tender Publication Snapshot"):
-			frappe.db.delete("Tender Publication Snapshot", {"tm2_tender": tm2})
-		for tbl in (
-			"TM2 Tender Timeline",
-			"TM2 Tender Access Rule",
-			"TM2 Tender Audit Event",
-			"TM2 Tender STD Binding",
-			"TM2 Tender Closing Record",
-			"TM2 Tender Invitation",
-		):
-			if _doctype_exists(tbl):
-				frappe.db.delete(tbl, {"tm2_tender": tm2})
-		if _doctype_exists("Tender STD Instance"):
-			for inst in frappe.get_all("Tender STD Instance", filters={"tm2_tender": tm2}, pluck="name"):
-				if inst == _KEEP_STD_INSTANCE:
-					continue
-				for tbl in (
-					"Tender STD Generated Output",
-					"Tender STD Instance BOQ",
-					"Tender STD Instance Snapshot",
-				):
-					if _doctype_exists(tbl):
-						frappe.db.delete(tbl, {"tender_std_instance": inst})
-				if frappe.db.exists("Tender STD Instance", inst):
-					frappe.delete_doc("Tender STD Instance", inst, force=True, ignore_permissions=True)
-		if frappe.db.exists("TM2 Tender", tm2):
-			frappe.delete_doc("TM2 Tender", tm2, force=True, ignore_permissions=True)
-	return removed
-
-
 def _handoff_is_canonical(row: dict[str, Any]) -> bool:
 	code = (row.get("handoff_code") or row.get("name") or "").strip()
 	jc = (row.get("journey_code") or "").strip()
@@ -311,19 +225,11 @@ def purge_non_stable_platform_seed(*, dry_run: bool = False) -> dict[str, Any]:
 	result["removed"]["demands"] = _purge_demands(dry_run=dry_run)
 	result["removed"]["procurement_plans"] = _purge_procurement_plans(dry_run=dry_run)
 	result["removed"]["procurement_packages"] = _purge_procurement_packages(dry_run=dry_run)
-	result["removed"]["tm2_tenders"] = _purge_non_master_tenders(dry_run=dry_run)
 	result["removed"]["std_versions"] = _purge_std_versions(dry_run=dry_run)
 
 	if dry_run:
-		result["would_run"] = {
-			"purge_smoke_test_tenders": _tm2_module_available(),
-			"purge_plc_outside_registry": True,
-		}
+		result["would_run"] = {"purge_plc_outside_registry": True}
 	else:
-		if _tm2_module_available():
-			result["purge_smoke_test_tenders"] = purge_smoke_tenders()
-		else:
-			result["purge_smoke_test_tenders"] = {"skipped": True, "reason": "tm2_module_unavailable"}
 		result["purge_plc_outside_registry"] = _purge_plc_outside_stable_registry(dry_run=False)
 		frappe.db.commit()
 		result["ok"] = bool(strategy.get("ok")) and not strategy.get("skipped_strategic_plans")

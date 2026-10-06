@@ -62,9 +62,6 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/procurement_home_page.css?v={_desk_asset_v('public/css/procurement_home_page.css')}",
 	f"/assets/kentender_procurement/css/procurement_journey_page.css?v={_desk_asset_v('public/css/procurement_journey_page.css')}",
 	f"/assets/kentender_procurement/css/module_journey_context_header.css?v={_desk_asset_v('public/css/module_journey_context_header.css')}",
-	f"/assets/kentender_procurement/css/tm2_tender_handoff_panel.css?v={_desk_asset_v('public/css/tm2_tender_handoff_panel.css')}",
-	f"/assets/kentender_procurement/css/business_readiness_summary.css?v={_desk_asset_v('public/css/business_readiness_summary.css')}",
-	f"/assets/kentender_procurement/css/tender_management_v2_workbench.css?v={_desk_asset_v('public/css/tender_management_v2_workbench.css')}",
 	# coming_soon_page.css: now lazy-loaded by coming_soon_page.js's own
 	# on_page_load.
 	f"/assets/kentender_procurement/css/departmental_needs_industry.css?v={_desk_asset_v('public/css/departmental_needs_industry.css')}",
@@ -82,11 +79,8 @@ app_include_js = [
 	# planning_builder_page.js, planning_item_editor_page.js,
 	# planning_review_page.js, planning_approved_page.js).
 	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
-	f"/assets/kentender_procurement/js/business_readiness_summary.js?v={_desk_asset_v('public/js/business_readiness_summary.js')}",
-	f"/assets/kentender_procurement/js/tm2_tender_handoff_panel.js?v={_desk_asset_v('public/js/tm2_tender_handoff_panel.js')}",
 	f"/assets/kentender_procurement/js/workspace_list_selection_utils.js?v={_desk_asset_v('public/js/workspace_list_selection_utils.js')}",
 	f"/assets/kentender_procurement/js/procurement_home_workspace.js?v={_desk_asset_v('public/js/procurement_home_workspace.js')}",
-	f"/assets/kentender_procurement/js/tm2_workbench_lifecycle.js?v={_desk_asset_v('public/js/tm2_workbench_lifecycle.js')}",
 	f"/assets/kentender_procurement/js/it_tender_configuration_create_modal.js?v={_desk_asset_v('public/js/it_tender_configuration_create_modal.js')}",
 ]
 
@@ -248,7 +242,6 @@ page_js = {
 	"kt-procurement-home": "public/js/procurement_home_page.js",
 	"plc-procurement-journey": "public/js/procurement_journey_page.js",
 	"plc-module-journey-context": "public/js/plc_module_journey_context_page.js",
-	"tender-management-v2": "public/js/tender_management_v2_workbench_page.js",
 	"it-std-wizard-retired": "public/js/it_std_wizard_retired_page.js",
 	"kt-cl-shell-poc": "public/js/kt_cl_shell_poc_page.js",
 	"it-tender-configuration-dashboard": "public/js/it_tender_configurations_dashboard_page.js",

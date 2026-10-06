@@ -30,7 +30,7 @@ class ProcurementHandoffCard(Document):
 		"""R1-005 — guardrails only; R3 services own authoritative module state.
 
 		R1-010 / ADR-PLC-002: this DocType must **never** persist changes to source modules
-		(Demand, Procurement Package, TM2 Tender, …). Stale/conflict handling uses
+		(Demand, Procurement Package, …). Stale/conflict handling uses
 		``procurement_lifecycle.source_module_authority`` helpers — handoff fields only.
 		"""
 		if (self.status or "") not in HANDOFF_CARD_STATUS_VALUES:

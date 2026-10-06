@@ -48,7 +48,6 @@ def _rewrite_code_fields(old: str, new: str) -> dict[str, int]:
 		("Procurement Package", "procuring_entity_code"),
 		("Tender Configuration", "procuring_entity_code"),
 		("IT Tender Publication Record", "procuring_entity_code"),
-		("TM2 Tender", "procuring_entity_code"),
 		("Procurement Journey", "procuring_entity_code"),
 	)
 	for dt, field in candidates:

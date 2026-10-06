@@ -4,8 +4,8 @@
 """Post-removal cleanup for the retired IT STD Wizard (KenTender v1).
 
 Deletes IT wizard DocTypes, wizard-only roles, related data rows, legacy Desk
-page records (replaced by ``it-std-wizard-retired`` + shared retirement JS),
-and TM2 binding rows that reference removed instances. Idempotent.
+page records (replaced by ``it-std-wizard-retired`` + shared retirement JS).
+Idempotent.
 """
 
 from __future__ import annotations
@@ -65,17 +65,6 @@ LEGACY_WIZARD_PAGES: tuple[str, ...] = (
 
 def _table_exists(table_name: str) -> bool:
 	return bool(frappe.db.sql(f"SHOW TABLES LIKE %s", (table_name,)))
-
-
-def _purge_tm2_std_bindings() -> None:
-	if not _table_exists("tabTM2 Tender STD Binding"):
-		return
-	if _table_exists("tabTender STD Instance"):
-		frappe.db.sql("DELETE FROM `tabTM2 Tender STD Binding`")
-	else:
-		frappe.db.sql(
-			"DELETE FROM `tabTM2 Tender STD Binding` WHERE tender_std_instance IS NOT NULL"
-		)
 
 
 def _delete_custom_docperms_for_doctypes(doctypes: tuple[str, ...]) -> None:
@@ -146,7 +135,6 @@ def _remove_sidebar_link() -> None:
 
 
 def execute() -> None:
-	_purge_tm2_std_bindings()
 	_delete_custom_docperms_for_doctypes(WIZARD_DOCTYPES_ORDERED)
 	_delete_property_setters_for_doctypes(WIZARD_DOCTYPES_ORDERED)
 	_delete_doctypes_multi_pass(WIZARD_DOCTYPES_ORDERED)

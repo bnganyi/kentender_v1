@@ -52,13 +52,6 @@ def seed_procurement_home_demo() -> dict:
 		summary["demands"] = []
 		summary["notes"].append("Demand DocType unavailable — Home demand actions empty.")
 
-	tm_count = 0
-	if frappe.db.exists("DocType", "TM2 Tender"):
-		tm_count = frappe.db.count(
-			"TM2 Tender",
-			{"procuring_entity_code": ["in", [pe, "MOH", "PE-MOH"]]},
-		)
-	summary["tm2_tenders"] = tm_count
 	summary["as_of"] = str(now_datetime())
 	summary["deadline_horizon"] = str(add_days(now_datetime(), 14))
 	return summary

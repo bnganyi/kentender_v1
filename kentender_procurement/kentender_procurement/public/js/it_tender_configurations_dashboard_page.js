@@ -419,7 +419,7 @@
 				toolbar: {
 					breadcrumbs: [
 						{ label: __("Dashboard"), route: ["Workspaces", "Procurement Home"] },
-						{ label: __("Tender Management"), route: ["tender-management-v2"] },
+						{ label: __("Tenders"), route: ["tenders"] },
 					],
 					showSearch: false,
 					showUserMeta: true,

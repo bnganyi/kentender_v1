@@ -8,8 +8,7 @@ legacy_inventory.md` (plan BDS-CHG-001 v0.8 Phase 1, owner decision OD-F; spec
 BDS01-IMP-090, BDS07-IMP-010): no retired route, page, asset, service, test,
 seed, make target or DocType survives, and no remaining module imports one.
 The retirement patch itself is the only code allowed to name the retired
-DocTypes. The TM2 bid DocTypes are out of scope here (they go with the OD-F
-TM2 clean-up), as is the kept BWMF/STD-wizard machinery (FU-05).
+DocTypes. The kept BWMF/STD-wizard machinery (FU-05) is out of scope here.
 """
 
 from __future__ import annotations

@@ -6,7 +6,6 @@
 
 	/** R4-012 — must stay aligned with ``journey_aggregate._OPEN_MODULE_ROUTE_ALLOWED_DOCTYPES``. */
 	const _OPEN_MODULE_ALLOWED_DOCTYPES = {
-		"TM2 Tender": true,
 		"Tender STD Instance": true,
 		Demand: true,
 		"Procurement Package": true,
@@ -936,21 +935,12 @@
 		const stage = (item && item.current_stage_label) || "";
 		const next = (item && item.next_action) || __("—");
 		const blockers = formatBlockersLabel(item);
-		const tenderCode = (item && item.primary_object_code) || "";
 		let actions =
 			'<button type="button" class="btn btn-primary btn-sm plc-journey-list-open-journey" data-testid="plc-journey-list-open-journey" data-journey-code="' +
 			escapeHtml(code) +
 			'">' +
 			escapeHtml(__("Open Journey")) +
 			"</button>";
-		if (tenderCode) {
-			actions +=
-				'<button type="button" class="btn btn-default btn-sm plc-journey-list-open-tender" data-tender-code="' +
-				escapeHtml(tenderCode) +
-				'">' +
-				escapeHtml(__("Open Tender")) +
-				"</button>";
-		}
 		actions +=
 			'<button type="button" class="btn btn-default btn-sm plc-journey-list-view-evidence" data-journey-code="' +
 			escapeHtml(code) +
@@ -1071,13 +1061,6 @@
 				}
 				return;
 			}
-			const openTender = t.closest(".plc-journey-list-open-tender");
-			if (openTender) {
-				const tc = openTender.getAttribute("data-tender-code");
-				if (tc) {
-					frappe.set_route("Form", "TM2 Tender", tc);
-				}
-			}
 		});
 	}
 
@@ -1139,7 +1122,7 @@
 			$("<h4>").attr("data-testid", "plc-journeys-page-title").text(__("Procurement Journeys")),
 			$("<p class='text-muted small mb-3'>")
 				.attr("data-testid", "plc-journeys-page-intro")
-				.text(__("Browse active procurement journeys, open a journey detail view, or jump to related tender work.")),
+				.text(__("Browse active procurement journeys or open a journey detail view.")),
 		);
 
 		const section = function (title, sectionTestId, hostTestId) {

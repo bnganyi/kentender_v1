@@ -12,7 +12,6 @@
 		"kt-procurement-home": "KenTender - Procurement Home",
 		"planning-hub": "KenTender - Planning Hub",
 		"budget-management": "KenTender | Budget & Funding",
-		"tender-management-v2": "KenTender - Tender Management",
 		"coming-soon": "KenTender - Coming Soon",
 		"std-library": "KenTender - STD Library",
 	};

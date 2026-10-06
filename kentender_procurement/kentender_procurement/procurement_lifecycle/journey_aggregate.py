@@ -12,7 +12,7 @@
 - Aggregated step list from R3-013 (``aggregate_procurement_journey_steps``).
 - All associated ``Procurement Handoff Card`` records in a compact summary shape.
 - ``evidence_summary`` from ``get_journey_evidence_timeline`` (§9.5 / **R7-001**) —
-  handoffs, tender addenda, TM2 Tender Audit Events, parity with ``get_journey_evidence``.
+  handoffs, parity with ``get_journey_evidence``.
 - Re-derived blocker counts from live step data (overrides stored counts for accuracy).
 
 This is the primary read API for the Journey Detail view and any module that displays
@@ -55,7 +55,7 @@ a Journey Context Header.
   ``passed_forward_summary``, ``evidence_links``, and ``technical_refs``.
 
 - **evidence_summary**: pack §9.5 timeline from ``get_journey_evidence_timeline``
-  — handoffs, real tender addenda, and TM2 audit rows (**R7-001**, **R7-003**).
+  — handoffs (**R7-001**).
 
 - **R4-012** — ``open_module_route`` on each step is **sanitized** for the session user:
   only strict ``["Form", <Doctype>, <name>]`` JSON (allowlisted DocTypes) is retained
@@ -89,7 +89,6 @@ from kentender_procurement.procurement_lifecycle.journey_step_aggregator import 
 # must stay aligned with ``procurement_journey_page.js`` ``_OPEN_MODULE_ALLOWED_DOCTYPES``).
 _OPEN_MODULE_ROUTE_ALLOWED_DOCTYPES: Final[frozenset[str]] = frozenset(
     {
-        "TM2 Tender",
         "Tender STD Instance",
         "Demand",
         "Procurement Package",
@@ -174,7 +173,6 @@ _JOURNEY_FIELDS = (
     "procurement_package_ref",
     "std_template_version_ref",
     "tender_std_instance_ref",
-    "tm2_tender_ref",
     "publication_snapshot_ref",
     "opening_readiness_ref",
     "is_master_seed",
@@ -334,7 +332,6 @@ def get_procurement_journey(journey_code: str) -> dict[str, Any]:
 
     # 6. Build the primary object ref (latest non-null ref in journey spine order)
     _spine_refs = (
-        "tm2_tender_ref",
         "procurement_package_ref",
         "demand_ref",
         "budget_line_ref",
@@ -371,7 +368,6 @@ def get_procurement_journey(journey_code: str) -> dict[str, Any]:
             "procurement_package_ref": journey.get("procurement_package_ref") or None,
             "std_template_version_ref": journey.get("std_template_version_ref") or None,
             "tender_std_instance_ref": journey.get("tender_std_instance_ref") or None,
-            "tm2_tender_ref": journey.get("tm2_tender_ref") or None,
             "publication_snapshot_ref": journey.get("publication_snapshot_ref") or None,
             "opening_readiness_ref": journey.get("opening_readiness_ref") or None,
         },

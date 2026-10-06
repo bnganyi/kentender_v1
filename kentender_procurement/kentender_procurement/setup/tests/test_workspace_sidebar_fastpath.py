@@ -165,7 +165,6 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 			"strategy-builder",
 			"procurement-home",
 			"plc-procurement-journey",
-			"tender-management-v2",
 			"audit-event",
 		):
 			self.assertIn(

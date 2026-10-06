@@ -154,7 +154,6 @@ _KT_ROUTE_TO_SIDEBAR.update(
 	{
 		"procurement-home": "Procurement",
 		"plc-procurement-journey": "Procurement",
-		"tender-management-v2": "Procurement",
 		"audit-event": "Procurement",
 		"audit event": "Procurement",
 		"coming-soon": "Procurement",

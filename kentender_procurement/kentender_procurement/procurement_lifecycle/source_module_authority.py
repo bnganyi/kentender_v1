@@ -9,7 +9,7 @@ aggregates. They must **not** overwrite workflow or legal state on owning DocTyp
 This module holds **pure helpers** for R3 stale/conflict handling: recommendations and
 handoff-only field patches. Any transition that marks a handoff **Stale** must apply
 changes **only** to the handoff document (or dedicated PLC tables), never to Demand,
-Procurement Package, TM2 Tender, etc.
+Procurement Package, etc.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from typing import Final
 # DocTypes that own binding workflow / legal state for PLC spine objects (non-exhaustive;
 # extend when new source modules join the journey).
 AUTHORITATIVE_SOURCE_DOCTYPES: Final[frozenset[str]] = frozenset(
-	("Demand", "Procurement Package", "TM2 Tender")
+	("Demand", "Procurement Package")
 )
 
 # Handoff statuses where we still surface source drift as a stale recommendation (ADR-PLC-002).

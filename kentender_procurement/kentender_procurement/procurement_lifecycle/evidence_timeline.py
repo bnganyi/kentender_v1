@@ -8,13 +8,9 @@
 ``get_journey_evidence_timeline(journey_code)`` returns a **chronologically ordered list
 of evidence events** for a Procurement Journey, drawing from:
 
-1. Handoff cards (primary source — one event per ``Procurement Handoff Card``).
-2. ``Tender Addendum`` records linked to the journey's TM2 Tender (when they exist).
-3. ``TM2 Tender Audit Event`` rows for the journey's TM2 tender business code (**R7-003 /
-   LV-G0-001-05** append-only façade). Rows include ``audit_event_code`` for filtering and
-   are ordered after lifecycle handoffs at the same ``occurred_at`` (tie-break).
+1. Handoff cards (one event per ``Procurement Handoff Card``) — the only source.
 
-Sources 4–6 from pack §9.5 (publication snapshots, readiness records, release/approval
+Sources 2–6 from pack §9.5 (publication snapshots, readiness records, release/approval
 certificates, closing/opening readiness records) are surfaced **through** the handoff
 card evidence links at this stage; fabricated events from non-existent source records
 are never emitted.
@@ -24,7 +20,6 @@ are never emitted.
 For the base ``TENDER_PUBLISHED`` checkpoint:
 
 - ``CLOSECERT`` and ``OPENREADY`` handoff cards do not exist → no closing/opening events.
-- Addendum events are only emitted when real ``Tender Addendum`` records exist in the DB.
 
 ## Event shape (pack §9.5)
 
@@ -41,7 +36,7 @@ For the base ``TENDER_PUBLISHED`` checkpoint:
   "handoff_status": str | None,  # Procurement Handoff Card status (handoff lane only)
   "stale_reason": str | None,   # when card is Stale (NEG-PKGREL-STALE-001 / **R7-005**)
   "stale_warning": bool,        # true when stale_reason or status imply staleness for UI
-  "audit_event_code": str | None,  # TAE-{tender}-{seq} when event is from TM2 audit (**R7-003**)
+  "audit_event_code": str | None,
 }
 ```
 
@@ -177,86 +172,6 @@ def get_journey_evidence_timeline(journey_code: str) -> list[dict[str, Any]]:
                 "_sort_order": step_order,  # removed before return
             }
         )
-
-    # --- 3. Addendum events from Tender Addendum records ---------------------
-    tender_code = frappe.db.get_value("Procurement Journey", code, "tm2_tender_ref") or ""
-    if tender_code:
-        addendum_rows = frappe.db.sql(
-            """
-            SELECT addendum_code, issued_at, approved_at, creation
-            FROM `tabTender Addendum`
-            WHERE tender_id = %s
-            ORDER BY issued_at ASC
-            """,
-            (tender_code,),
-            as_dict=True,
-        )
-        for add in addendum_rows:
-            occurred_at = _best_timestamp(add.issued_at, add.approved_at, add.creation)
-            events.append(
-                {
-                    "occurred_at": occurred_at,
-                    "module": "Tender Management",
-                    "event_type": "Addendum Issued",
-                    "business_label": f"{add.addendum_code} issued",
-                    "object_type": "Tender Addendum",
-                    "object_code": add.addendum_code or "",
-                    "handoff_code": None,
-                    "evidence_refs": [],
-                    "handoff_status": None,
-                    "stale_reason": None,
-                    "stale_warning": False,
-                    "audit_event_code": None,
-                    "_sort_order": 9999,  # addendum events sort after same-timestamp handoff events
-                }
-            )
-
-    # --- 3b. TM2 Tender Audit Event rows (LV-G0-001-05 / **R7-003**) ---------
-    tender_code_strip = tender_code.strip() if tender_code else ""
-    if tender_code_strip:
-        audit_rows = frappe.db.sql(
-            """
-            SELECT
-                audit_event_code,
-                event_type,
-                occurred_at,
-                publication_snapshot_code,
-                related_object_type,
-                related_object_id
-            FROM `tabTM2 Tender Audit Event`
-            WHERE tender_code = %s
-            ORDER BY occurred_at ASC, audit_event_code ASC
-            """,
-            (tender_code_strip,),
-            as_dict=True,
-        )
-        for i, aud in enumerate(audit_rows or []):
-            refs: list[str] = []
-            ps = aud.publication_snapshot_code or ""
-            if str(ps).strip():
-                refs.append(str(ps).strip())
-            oid = aud.related_object_id or ""
-            if str(oid).strip() and str(oid).strip() not in refs:
-                refs.append(str(oid).strip())
-
-            biz = f"{aud.audit_event_code or '?'} · {aud.event_type or 'Audit'}"
-            events.append(
-                {
-                    "occurred_at": _best_timestamp(aud.occurred_at, None, None),
-                    "module": "Tender Management",
-                    "event_type": aud.event_type or "Audit Event",
-                    "business_label": biz,
-                    "object_type": aud.related_object_type or "TM2 Tender",
-                    "object_code": tender_code_strip,
-                    "handoff_code": None,
-                    "evidence_refs": refs,
-                    "handoff_status": None,
-                    "stale_reason": None,
-                    "stale_warning": False,
-                    "audit_event_code": aud.audit_event_code or "",
-                    "_sort_order": 15_000 + i,
-                }
-            )
 
     # --- 4. Sort: primarily by occurred_at, tie-break by step order ----------
     events.sort(key=lambda e: (_dt_sort_key(e["occurred_at"]), e["_sort_order"]))

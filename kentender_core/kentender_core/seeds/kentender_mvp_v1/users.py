@@ -27,7 +27,7 @@ from kentender_strategy.services.strategy_authorization import ensure_strategy_g
 # `ensure_planning_roles`; the §14.2 Planning personas themselves are
 # provisioned by the NDS and Planning module seeds with native roles and
 # User Permission rows only. "Planning Authority" is NOT retired here — it
-# remains a live role owned by procurement_lifecycle / tender-management.
+# remains a live role owned by procurement_lifecycle.
 ROLE_PLANNER = "Procurement Planner"
 ROLE_ACCOUNTING_OFFICER = "Accounting Officer"
 

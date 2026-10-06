@@ -29,9 +29,6 @@ from kentender_core.seeds.stable_platform_seed.constants import (
 from kentender_core.seeds.stable_platform_seed.it_budget import upsert_it_budget_supplement
 from kentender_core.seeds.stable_platform_seed.it_strategy import upsert_it_strategy_supplement
 from kentender_budget.seeds.works_master_budget_seed import upsert_works_master_budget
-from kentender_procurement.procurement_lifecycle.seeds.works_master_journey_seed import (
-	upsert_works_master_journey,
-)
 from kentender_strategy.seeds.works_master_strategy_hierarchy import upsert_works_master_strategy_hierarchy
 
 
@@ -50,7 +47,6 @@ def load_stable_platform_seed(
 	2. Core prerequisites (entity, users)
 	3. Strategy (WORKS + IT supplement)
 	4. Budget (WORKS + IT supplement)
-	5. Journey (required for PP2 upstream)
 	6. DIA / Demand (WORKS + IT supplement)
 	7. Planning PP2 WORKS checkpoint
 	8. Planning IT supplement (inclusion + package draft)
@@ -116,12 +112,6 @@ def load_stable_platform_seed(
 		stages["budget_it"] = it_budget
 		if not it_budget.get("ok"):
 			return {**it_budget, "stage_failed": "budget_it", "warnings": warnings}
-
-	journey = upsert_works_master_journey(reset=reset)
-	stages["journey"] = journey
-	if not journey.get("ok"):
-		return {**journey, "stage_failed": "journey", "warnings": warnings}
-	warnings.extend(journey.get("warnings") or [])
 
 	# DIA Demand domain retired pending Demands MVP-1 rebuild.
 	stages["demand_works"] = {

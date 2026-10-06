@@ -2,8 +2,7 @@
  * R5-001 / LV-R5-001-01 — Shared **Module Journey Context** header for source objects.
  *
  * Calls ``get_journey_by_object`` (pack §9.2) and renders a compact card with
- * ``data-testid="plc-module-journey-context-header"``. Other modules (e.g. TM2 Tender
- * R5-010) mount the same component by invoking ``render`` on a container element.
+ * ``data-testid="plc-module-journey-context-header"``. Other modules mount the same component by invoking ``render`` on a container element.
  */
 (function () {
 	frappe.provide("kentender_procurement");

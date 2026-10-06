@@ -46,9 +46,7 @@ _OBJECT_TYPE_TO_REF_FIELD: Final[dict[str, str]] = {
 	"std template version": "std_template_version_ref",
 	"tender std instance": "tender_std_instance_ref",
 	"tender std instance / binding": "tender_std_instance_ref",
-	"tm2 tender": "tm2_tender_ref",
 	"publication snapshot": "publication_snapshot_ref",
-	"tm2 opening readiness record": "opening_readiness_ref",
 	"opening readiness": "opening_readiness_ref",
 }
 

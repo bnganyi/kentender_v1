@@ -29,7 +29,7 @@
 				"      </p>",
 				"      <p>",
 				__(
-					"Use Tender Management and STD Library workflows that remain available. TM2 publication paths that depended on wizard instances are unavailable until the replacement module ships.",
+					"Use Tender Management and STD Library workflows that remain available. Publication paths that depended on wizard instances are unavailable until the replacement module ships.",
 				),
 				"      </p>",
 				'      <p class="text-muted">',

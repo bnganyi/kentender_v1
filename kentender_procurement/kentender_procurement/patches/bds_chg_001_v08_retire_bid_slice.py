@@ -12,8 +12,7 @@ spec BDS01-IMP-090, BDS07-IMP-010):
   are deleted outright, with no migration.
 - the three legacy bidder/bid Desk Pages.
 
-The TM2 bid DocTypes are not touched: TM2's officer workbench still reads them,
-so they go with the owner's OD-F TM2 clean-up. Every deletion is
+Every deletion is
 exists-guarded, so the patch is idempotent and safe on a site that never had
 these rows. Follows `std_tpl_imp_001_retire_std_configuration`.
 """

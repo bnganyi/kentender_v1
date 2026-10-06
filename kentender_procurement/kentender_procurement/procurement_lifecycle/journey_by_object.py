@@ -6,13 +6,12 @@
 ## Goal
 
 ``get_procurement_journey_by_object(object_type, object_code)`` resolves a source
-module object (Demand, Procurement Package, TM2 Tender, etc.) to its parent
+module object (Demand, Procurement Package, Budget Line, etc.) to its parent
 ``Procurement Journey`` and returns the **full aggregated journey view** (same shape as
 ``get_procurement_journey`` from R3-011).
 
 This is the primary entry point for module-context headers (R5-001) and any API call
-that needs the complete journey state from a source object reference (e.g. the TM2
-Tender detail page showing which journey it belongs to).
+that needs the complete journey state from a source object reference (e.g. a detail page showing which journey it belongs to).
 
 ## Relation to R1-009 ``get_procurement_journey_by_object``
 
@@ -31,14 +30,13 @@ All types registered in ``_OBJECT_TYPE_TO_REF_FIELD`` in ``journey_object_lookup
 |---|---|
 | ``Demand`` | ``DEM-MOH-2026-001`` |
 | ``Procurement Package`` | ``PKG-MOH-2026-001`` |
-| ``TM2 Tender`` | ``TND-MOH-2026-001`` |
 | ``Budget Line`` | ``BUD-MOH-INFRA-2026-001`` |
 | ``Strategic Plan / Programme / Objective`` | ``OBJ-MOH-HOSP-RENOV`` |
 | ``Procurement Plan`` | ``PLAN-MOH-2026`` |
 | ``STD Template Version`` | ``STDTV-WORKS-BUILDING-CIVIL-APR2022`` |
 | ``Tender STD Instance`` | ``STDINST-TND-MOH-2026-001`` |
 | ``Publication Snapshot`` | ``PUBSNAP-TND-MOH-2026-001-V2`` |
-| ``TM2 Opening Readiness Record`` / ``Opening Readiness`` | ``ORR-TND-MOH-2026-001`` |
+| ``Opening Readiness`` | ``ORR-TND-MOH-2026-001`` |
 
 ## Response
 
