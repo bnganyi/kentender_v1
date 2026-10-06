@@ -25,3 +25,8 @@ kentender_budget.patches.bud_chg_001_v1_3_phase4_active_version_unique_index
 # plan_source_allocation (revoke-then-correct and a later Requisition on
 # the same allocation must both be able to reserve again).
 kentender_budget.patches.req_chg_001_v1_6_drop_reservation_allocation_unique
+
+# BUD v1.12 §4.6 (AUD-BUD-004) — Procurement Commitment.contract is unique per
+# reservation, not table-wide: one contract may be funded from several
+# reservations.
+kentender_budget.patches.bud_chg_001_v1_12_commitment_contract_unique_per_reservation
