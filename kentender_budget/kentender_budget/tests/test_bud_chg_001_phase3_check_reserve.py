@@ -17,6 +17,7 @@ from kentender_budget.services.budget_service_principal import PRINCIPAL_BUDGET,
 from kentender_budget.tests.test_bud_chg_001_phase3_lifecycle import (
 	FUNDING_SOURCE,
 	_BudgetLifecycleTestBase,
+	owner_ou,
 )
 
 
@@ -55,7 +56,7 @@ class TestCheckFundingNonMutating(_FinanceTestBase):
 			plan_version="TEST-PLN-1",
 			finance_task="TEST-FNT-1",
 			source_set_hash="TEST-HASH-1",
-			allocations=[{"budget_line": line, "amount": 40_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-1"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": 40_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-1"}],
 			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
 		self.assertTrue(result["all_sufficient"])
@@ -71,7 +72,7 @@ class TestSingleSourceReservation(_FinanceTestBase):
 		self._as(self.finance_officer)
 		token = check_reserve.check_funding(
 			plan_item="TEST-PPI-2", plan_version="TEST-PLN-2", finance_task="TEST-FNT-2", source_set_hash="TEST-HASH-2",
-			allocations=[{"budget_line": line, "amount": 80_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-2"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": 80_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-2"}],
 			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
 		result = check_reserve.reserve_funding(
@@ -99,8 +100,8 @@ class TestCombinedSourceAtomicity(_FinanceTestBase):
 		token = check_reserve.check_funding(
 			plan_item="TEST-PPI-3", plan_version="TEST-PLN-3", finance_task="TEST-FNT-3", source_set_hash="TEST-HASH-3",
 			allocations=[
-				{"budget_line": dhi, "amount": 72_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-3A"},
-				{"budget_line": hwd, "amount": 48_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-3B"},
+				{"budget_line": dhi, "source_organisation_unit": owner_ou(dhi), "amount": 72_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-3A"},
+				{"budget_line": hwd, "source_organisation_unit": owner_ou(hwd), "amount": 48_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-3B"},
 			],
 			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
@@ -121,7 +122,7 @@ class TestShortfallRejection(_FinanceTestBase):
 		# Pre-reserve 30m, leaving 70m available.
 		token1 = check_reserve.check_funding(
 			plan_item="TEST-PPI-4", plan_version="TEST-PLN-4", finance_task="TEST-FNT-4A", source_set_hash="TEST-HASH-4A",
-			allocations=[{"budget_line": line, "amount": 30_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-4A"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": 30_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-4A"}],
 			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
 		check_reserve.reserve_funding(token=token1["token"], finance_task="TEST-FNT-4A", source_set_hash="TEST-HASH-4A", idempotency_key="TEST-IDEM-4A", caller=REQ_CALLER)
@@ -129,7 +130,7 @@ class TestShortfallRejection(_FinanceTestBase):
 		# Now request 80m against only 70m available — 10m short.
 		token2 = check_reserve.check_funding(
 			plan_item="TEST-PPI-4", plan_version="TEST-PLN-4", finance_task="TEST-FNT-4B", source_set_hash="TEST-HASH-4B",
-			allocations=[{"budget_line": line, "amount": 80_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-4B"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": 80_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-4B"}],
 			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
 		self.assertFalse(token2["all_sufficient"])
@@ -150,7 +151,7 @@ class TestDuplicateCorrelationIdempotency(_FinanceTestBase):
 		correlation_id = frappe.generate_hash(length=12)
 		token = check_reserve.check_funding(
 			plan_item="TEST-PPI-5", plan_version="TEST-PLN-5", finance_task="TEST-FNT-5", source_set_hash="TEST-HASH-5",
-			allocations=[{"budget_line": line, "amount": 50_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-5"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": 50_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-5"}],
 			correlation_id=correlation_id, caller=REQ_CALLER
 		)
 		first = check_reserve.reserve_funding(token=token["token"], finance_task="TEST-FNT-5", source_set_hash="TEST-HASH-5", idempotency_key=correlation_id, caller=REQ_CALLER)
@@ -166,14 +167,14 @@ class TestDuplicateCorrelationIdempotency(_FinanceTestBase):
 		self._as(self.finance_officer)
 		token1 = check_reserve.check_funding(
 			plan_item="TEST-PPI-6", plan_version="TEST-PLN-6", finance_task="TEST-FNT-6A", source_set_hash="TEST-HASH-6A",
-			allocations=[{"budget_line": line, "amount": 10_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-SHARED-6"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": 10_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-SHARED-6"}],
 			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
 		check_reserve.reserve_funding(token=token1["token"], finance_task="TEST-FNT-6A", source_set_hash="TEST-HASH-6A", idempotency_key="TEST-IDEM-6A", caller=REQ_CALLER)
 
 		token2 = check_reserve.check_funding(
 			plan_item="TEST-PPI-6", plan_version="TEST-PLN-6", finance_task="TEST-FNT-6B", source_set_hash="TEST-HASH-6B",
-			allocations=[{"budget_line": line, "amount": 10_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-SHARED-6"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": 10_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-SHARED-6"}],
 			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
 		with self.assertRaises(frappe.ValidationError) as ctx:
@@ -190,7 +191,7 @@ class TestPartialConversion(_FinanceTestBase):
 		self._as(self.finance_officer)
 		token = check_reserve.check_funding(
 			plan_item="TEST-PPI-7", plan_version="TEST-PLN-7", finance_task="TEST-FNT-7", source_set_hash="TEST-HASH-7",
-			allocations=[{"budget_line": line, "amount": 80_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-7"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": 80_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-7"}],
 			correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 		)
 		reserve_result = check_reserve.reserve_funding(token=token["token"], finance_task="TEST-FNT-7", source_set_hash="TEST-HASH-7", idempotency_key="TEST-IDEM-7", caller=REQ_CALLER)
@@ -227,7 +228,7 @@ class TestClosedBudgetRejectsNewReservations(_FinanceTestBase):
 		with self.assertRaises(frappe.ValidationError) as ctx:
 			check_reserve.check_funding(
 				plan_item="TEST-PPI-8", plan_version="TEST-PLN-8", finance_task="TEST-FNT-8", source_set_hash="TEST-HASH-8",
-				allocations=[{"budget_line": line, "amount": 1_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-8"}],
+				allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": 1_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-8"}],
 				correlation_id=frappe.generate_hash(length=12), caller=REQ_CALLER
 			)
 		self.assertIn("Closed", str(ctx.exception))

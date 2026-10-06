@@ -479,7 +479,7 @@ def shared_line_short(item: str) -> Report:
 	with _as(base.HOPF):
 		token = svc.funding.check_funding(
 			plan_item="REQ-SC-SHARED-LINE-SHORT", plan_version="REQ-SC-SHARED-LINE-SHORT", source_set_hash="REQ-SC-SHARED-LINE-SHORT",
-			allocations=[{"budget_line": hwd, "plan_source_allocation": "REQ-SC-HOLD-ALLOCATION", "drawdown_line_id": "REQ-SC-HOLD-LINE", "source_organisation_unit": "", "amount": "20000000.00"}],
+			allocations=[{"budget_line": hwd, "plan_source_allocation": "REQ-SC-HOLD-ALLOCATION", "drawdown_line_id": "REQ-SC-HOLD-LINE", "source_organisation_unit": projection["sources"][0]["organisation_unit"], "amount": "20000000.00"}],
 			correlation_id=_key("SHORT", "hold"), caller_reference="REQ-SC-SHARED-LINE-SHORT-HOLD",
 		)
 		svc.funding.reserve_funding(token=token["token"], source_set_hash="REQ-SC-SHARED-LINE-SHORT", idempotency_key=_key("SHORT", "hold-reserve"), caller_reference="REQ-SC-SHARED-LINE-SHORT-HOLD")

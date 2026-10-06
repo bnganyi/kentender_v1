@@ -34,7 +34,7 @@ from kentender_budget.services.budget_service_principal import (
 	PRINCIPAL_TENDERS,
 	service_caller,
 )
-from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import FUNDING_SOURCE, _FinanceTestBase
+from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import FUNDING_SOURCE, _FinanceTestBase, owner_ou
 
 FORBIDDEN = "BUDGET_DOWNSTREAM_FORBIDDEN"
 
@@ -89,7 +89,7 @@ class _PrincipalBase(_FinanceTestBase):
 		correlation = self._key("corr")
 		checked = check_reserve.check_funding(
 			plan_item=plan_item, plan_version="TEST-PLN-SP", source_set_hash=f"HASH-{correlation}",
-			allocations=[{"budget_line": line, "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": f"PSA-{correlation}", "drawdown_line_id": f"DDL-{correlation}"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": f"PSA-{correlation}", "drawdown_line_id": f"DDL-{correlation}"}],
 			correlation_id=correlation, caller=req(reference), caller_reference=reference,
 		)
 		result = check_reserve.reserve_funding(
@@ -370,7 +370,7 @@ class TestCheckReserveCaller(_PrincipalBase):
 		correlation = correlation or self._key("corr")
 		return correlation, check_reserve.check_funding(
 			plan_item="TEST-PPI-CR", plan_version="TEST-PLN-CR", source_set_hash="HASH-CR",
-			allocations=[{"budget_line": line, "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": f"PSA-{correlation}", "drawdown_line_id": f"DDL-{correlation}"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": f"PSA-{correlation}", "drawdown_line_id": f"DDL-{correlation}"}],
 			correlation_id=correlation, caller=caller, caller_reference=reference,
 		)
 
@@ -379,7 +379,7 @@ class TestCheckReserveCaller(_PrincipalBase):
 		self._as(self.finance_officer)
 		self.assert_forbidden(
 			check_reserve.check_funding, plan_item="p", plan_version="v", source_set_hash="h",
-			allocations=[{"budget_line": line, "amount": 1, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "PSA-FCO"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": 1, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "PSA-FCO"}],
 			correlation_id=self._key("corr"),
 		)
 		self.assertEqual(frappe.db.count("Funding Reservation", {"budget_line": line}), 0)

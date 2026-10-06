@@ -37,6 +37,12 @@ from kentender_budget.services.budget_authorization import ensure_budget_governa
 FUNDING_SOURCE = "Government of Kenya"
 
 
+def owner_ou(budget_line: str) -> str:
+	"""The line's owner organisation unit — the source unit an eligible
+	allocation names (BUD-BR-007)."""
+	return frappe.db.get_value("Procurement Budget Line Version", {"budget_line": budget_line}, "owner_org_unit")
+
+
 class _BudgetLifecycleTestBase(FrappeTestCase):
 	"""Shared disposable-fixture scaffolding — a fresh Fiscal Year plus
 	Officer/Approver users per test class, granted through the real
@@ -95,11 +101,24 @@ class _BudgetLifecycleTestBase(FrappeTestCase):
 	@classmethod
 	def tearDownClass(cls):
 		frappe.set_user("Administrator")
+		versions = [name for doctype, name in cls._cleanup if doctype == "Procurement Budget Version"]
+		if versions:
+			# Submission attempts are append-only records of every submit.
+			frappe.flags.allow_budget_audit_purge = True
+			try:
+				frappe.db.delete("Budget Submission Attempt", {"budget_version": ["in", versions]})
+			finally:
+				frappe.flags.allow_budget_audit_purge = False
 		for doctype, name in reversed(cls._cleanup):
 			if doctype == "Budget Audit Event":
 				frappe.flags.allow_budget_audit_purge = True
 			try:
-				if frappe.db.exists(doctype, name):
+				if doctype == "User Responsibility Assignment":
+					# Command-only doctype (AUD-XC-010): clean-up opens its own maintenance window.
+					from kentender_core.services.command_write_guard import purge_doc
+
+					purge_doc(doctype, name)
+				elif frappe.db.exists(doctype, name):
 					frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
 			finally:
 				frappe.flags.allow_budget_audit_purge = False

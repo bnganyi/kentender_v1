@@ -110,25 +110,42 @@ def _version_name(version) -> str:
 
 
 def _submitted_by(version_name: str) -> str | None:
-	"""The user who performed this version's own "Submit for review" — read
-	from its ledger trail (§17.1: "the version's submission audit event"),
-	not a stored field."""
+	"""The user who performed this version's CURRENT submission attempt — the
+	latest "Budget version submitted" event on its ledger trail (§6/§17.1:
+	"the version's submission audit event"; BUD18-AC-062: "approval checks the
+	current attempt's submitter"). Never the first-ever submission: a version
+	that was returned and resubmitted by someone else is decided against the
+	resubmitter. Newest first by instant, then by creation, so two events in the
+	same second still resolve to the latest."""
 	event = frappe.db.get_value(
 		"Budget Audit Event",
 		{"budget_version": version_name, "event_type": "Budget version submitted"},
 		["actor"],
-		order_by="event_at asc",
+		order_by="event_at desc, creation desc",
 	)
 	return event or None
 
 
 def _blocked_by_self_approval(user: str, capability: str, version_name: str) -> bool:
 	"""§6/§17.1: "the submitting Officer cannot approve the same version" — a
-	same-version self-check, not a general capability-pair rule. Return is
-	not restricted by self-submission (only Approve is)."""
+	same-version self-check against the submission being decided, not a general
+	capability-pair rule. Return is not restricted by self-submission (only
+	Approve is).
+
+	While the version is Submitted for approval this fails CLOSED (AUD-XC-105):
+	if the current attempt's submission event cannot be found nobody can be shown
+	to be independent of it, so the decision is blocked. The stored
+	`submitted_by` of the current attempt is checked as well, so a lost event
+	cannot open the gate."""
 	if capability != CAP_APPROVE:
 		return False
-	return _submitted_by(version_name) == user
+	status, stored = frappe.db.get_value("Procurement Budget Version", version_name, ["status", "submitted_by"]) or (None, None)
+	submitter = _submitted_by(version_name)
+	if status == "Submitted for approval":
+		if not submitter:
+			return True
+		return user in (submitter, stored)
+	return submitter == user
 
 
 def require_budget_version_capability(

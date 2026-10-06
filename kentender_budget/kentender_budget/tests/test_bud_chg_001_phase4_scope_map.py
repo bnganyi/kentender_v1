@@ -77,8 +77,12 @@ class TestScopeMapProofOfEffect(FrappeTestCase):
 	@classmethod
 	def tearDownClass(cls):
 		frappe.set_user("Administrator")
+		from kentender_core.services.command_write_guard import purge_doc
+
 		for doctype, name in reversed(cls._cleanup):
-			if frappe.db.exists(doctype, name):
+			if doctype == "User Responsibility Assignment":
+				purge_doc(doctype, name)  # command-only doctype: clean-up opens its own window
+			elif frappe.db.exists(doctype, name):
 				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
 		super().tearDownClass()
 

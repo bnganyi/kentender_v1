@@ -26,9 +26,11 @@ from kentender_budget.services.budget_contracts import (
 	_line_position,
 	_resolve_budget_version,
 	_version_totals,
+	catalogue_problem,
 	format_kes_full,
 )
 from kentender_budget.services.budget_idempotency import run_idempotent
+from kentender_budget.services.budget_locking import lock_budget
 from kentender_budget.services.budget_reference import allocate_budget_line_reference, allocate_budget_line_version_reference
 
 
@@ -168,6 +170,13 @@ def _save_budget_lines_draft(payload: dict[str, Any]) -> dict[str, Any]:
 		# or permission check (§17.1/§18) — only existence is validated here.
 		if owner_org_unit and not frappe.db.exists("Organisation Unit", owner_org_unit):
 			errors[f"lines.{i}.owner_org_unit"] = _("Organisation unit not found")
+		elif not (budget_line_key and budget_line_key in locked):
+			# AUD-BUD-010 / BUD18-AC-056 — a NEW line may not name an inactive
+			# unit or an unavailable funding source; a previously approved line
+			# keeps its frozen identity.
+			problem = catalogue_problem(owner_org_unit, funding_source) if funding_source else ""
+			if problem:
+				errors[f"lines.{i}.owner_org_unit" if "rganisation" in str(problem) else f"lines.{i}.funding_source"] = problem
 
 		seen.add(budget_line_key)
 		if errors:
@@ -605,23 +614,32 @@ def validate_plan_affordability_for_decision(
 		frappe.throw(f"No Active Procurement Budget Version exists for {fiscal_year}.", title="BUD_BASIS_UNAVAILABLE")
 	require_budget_version_read_scope(version)
 
-	# Serialise the authoritative basis for the rest of the caller's transaction.
-	frappe.db.sql("select name from `tabProcurement Budget Version` where name = %s for update", version.name)
-	frappe.db.sql("select name from `tabProcurement Budget Line Version` where budget_version = %s for update", version.name)
-	if frappe.db.get_value("Procurement Budget Version", version.name, "status") != "Active":
+	# AUD-XC-104 / BUD §8.2A steps 2-3 — serialise the authoritative basis for
+	# the rest of the caller's transaction with the lock order shared by
+	# approve, close and reserve (Version rows, then line rows), and re-read the
+	# Active Version, its line revisions and every position as locking reads: a
+	# plain read would still show the basis this transaction saw before it
+	# waited behind an approval.
+	lock_budget(budget_name)
+	locked_active = _active_version(budget_name, for_update=True)
+	if not locked_active:
 		frappe.throw("The Budget basis changed while the decision was being recorded.", title="BUD_BASIS_STALE")
+	version = locked_active
 	if expected_version and expected_version != version.name:
 		frappe.throw(
 			f"The reviewed Budget Version {expected_version} is no longer the Active one ({version.name}).",
 			title="BUD_BASIS_STALE",
 		)
 
-	rows = frappe.get_all(
-		"Procurement Budget Line Version",
-		filters={"budget_version": version.name},
-		fields=["name", "budget_line", "title", "owner_org_unit", "funding_source", "approved_amount", "modified"],
-		order_by="title asc",
-	)
+	rows = [
+		frappe._dict(r)
+		for r in frappe.db.sql(
+			"select name, budget_line, title, owner_org_unit, funding_source, approved_amount, modified "
+			"from `tabProcurement Budget Line Version` where budget_version = %s order by title asc for update",
+			(version.name,),
+			as_dict=True,
+		)
+	]
 	line_versions = {r.budget_line: r.name for r in rows}
 	stale = sorted(line for line, reviewed in expected.items() if line_versions.get(line) != reviewed)
 	if stale:
@@ -641,7 +659,7 @@ def validate_plan_affordability_for_decision(
 	digest_rows = []
 	for r in rows:
 		seen.add(r.budget_line)
-		pos = _line_position(r.budget_line, r)
+		pos = _line_position(r.budget_line, r, for_update=True)
 		planned = flt(totals.get(r.budget_line, 0.0))
 		within_approved = planned <= pos["approved"] + 1e-9
 		within_available = planned <= pos["available"] + 1e-9

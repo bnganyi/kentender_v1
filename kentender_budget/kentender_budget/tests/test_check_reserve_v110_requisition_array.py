@@ -23,6 +23,7 @@ from kentender_budget.services import budget_check_reserve_contracts as check_re
 from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import (
 	FUNDING_SOURCE,
 	_FinanceTestBase,
+	owner_ou,
 )
 
 
@@ -42,7 +43,7 @@ class _ArrayTestBase(_FinanceTestBase):
 				"funding_source": FUNDING_SOURCE,
 				"plan_source_allocation": f"TEST-PSA-{drawdown}",
 				"drawdown_line_id": drawdown,
-				"source_organisation_unit": f"TEST-OU-{drawdown}",
+				"source_organisation_unit": owner_ou(line),
 			}
 			for drawdown, amount in pairs
 		]

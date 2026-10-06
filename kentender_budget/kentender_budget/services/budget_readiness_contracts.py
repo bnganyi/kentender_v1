@@ -15,6 +15,7 @@ from frappe import _
 from frappe.utils import flt, getdate, now_datetime
 
 from kentender_budget.services.budget_idempotency import run_idempotent
+from kentender_budget.services.budget_locking import lock_budget, locked_doc
 
 from kentender_budget.services.budget_authorization import (
 	CAP_APPROVE,
@@ -37,6 +38,7 @@ from kentender_budget.services.budget_contracts import (
 	_user_label,
 	_version_summary,
 	_version_totals,
+	catalogue_problem,
 	forbidden_task_verdict,
 	forbidden_verdict,
 	format_kes_full,
@@ -74,10 +76,30 @@ def _reconcile(authorised_total: float, line_total: float) -> dict[str, Any]:
 	}
 
 
-def _evaluate_readiness(version) -> list[dict[str, Any]]:
+def _line_version_rows(version_name: str, *, locked: bool, fields: str) -> list[Any]:
+	"""A Version's Line Versions. `locked=True` is a locking read (the latest
+	committed rows; a plain read can miss rows committed after this
+	transaction's snapshot)."""
+	if locked:
+		rows = frappe.db.sql(
+			f"select {fields} from `tabProcurement Budget Line Version` where budget_version = %s order by name for update",
+			(version_name,),
+			as_dict=True,
+		)
+		return [frappe._dict(r) for r in rows]
+	return frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version_name}, fields=[f.strip() for f in fields.split(",")])
+
+
+_LINE_FIELDS = "name, budget_line, title, owner_org_unit, funding_source, approved_amount"
+
+
+def _evaluate_readiness(version, *, locked: bool = False) -> list[dict[str, Any]]:
 	"""§9.2/§12.2/BUD-BR-004/017/018/019/020 — full readiness/activation guard
 	set, reused by both `submit_budget_version` (pre-submission) and
-	`approve_budget_version` (BUD-BR-021 full recheck)."""
+	`approve_budget_version` (BUD-BR-021 full recheck). `locked=True` is the
+	decision-time recheck: every read below is a locking read taken after the
+	Budget lock (AUD-XC-103), so a reservation or Version change committed since
+	this transaction's snapshot is seen."""
 	issues: list[dict[str, Any]] = []
 	currency = version.currency or "KES"
 	ev = "BUDGET_APPROVAL_EVIDENCE_REQUIRED"
@@ -94,11 +116,7 @@ def _evaluate_readiness(version) -> list[dict[str, Any]]:
 	if not version.authorised_total or flt(version.authorised_total) <= 0:
 		issues.append(_issue("evidence.authorised_total", _("Approved allocation must be greater than zero"), ev, {"field": "authorised_total"}))
 
-	lines = frappe.get_all(
-		"Procurement Budget Line Version",
-		filters={"budget_version": version.name},
-		fields=["name", "budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
-	)
+	lines = _line_version_rows(version.name, locked=locked, fields=_LINE_FIELDS)
 	if not lines:
 		issues.append(_issue("lines.empty", _("At least one budget line is required"), "BUDGET_NOT_READY", {"field": "lines"}))
 
@@ -113,29 +131,41 @@ def _evaluate_readiness(version) -> list[dict[str, Any]]:
 			issues.append(_issue("lines.total_mismatch", message, "BUDGET_TOTAL_MISMATCH", rec))
 
 	based_on = frappe.get_doc("Procurement Budget Version", version.based_on_budget_version) if version.based_on_budget_version else None
+	carried = set()
 	if based_on:
-		issues.extend(_evaluate_successor_guards(version, based_on, lines))
+		issues.extend(_evaluate_successor_guards(version, based_on, lines, locked=locked))
+		carried = {l.budget_line for l in _line_version_rows(based_on.name, locked=locked, fields="budget_line")}
+
+	# AUD-BUD-010 / BUD18-AC-056 — a NEW line may not name an inactive
+	# organisation unit or an unavailable funding source; lines carried from the
+	# prior Active Version keep their frozen identity.
+	for line in lines:
+		if line.budget_line in carried:
+			continue
+		problem = catalogue_problem(line.owner_org_unit, line.funding_source)
+		if problem:
+			issues.append(
+				_issue(
+					f"lines.not_eligible.{line.budget_line}",
+					_("{0}: {1}").format(line.title, problem),
+					"BUDGET_LINE_NOT_ELIGIBLE",
+					{"budget_line": line.budget_line, "title": line.title},
+				)
+			)
 
 	return issues
 
 
-def _evaluate_successor_guards(version, based_on, lines: list[dict]) -> list[dict[str, Any]]:
+def _evaluate_successor_guards(version, based_on, lines: list[dict], *, locked: bool = False) -> list[dict[str, Any]]:
 	issues: list[dict[str, Any]] = []
 	currency = version.currency or "KES"
-	prior_lines = {
-		l.budget_line: l
-		for l in frappe.get_all(
-			"Procurement Budget Line Version",
-			filters={"budget_version": based_on.name},
-			fields=["budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
-		)
-	}
+	prior_lines = {l.budget_line: l for l in _line_version_rows(based_on.name, locked=locked, fields=_LINE_FIELDS)}
 	this_lines = {l.budget_line: l for l in lines}
 
 	total_increase = total_decrease = 0.0
 	for budget_line, prior in prior_lines.items():
 		current = this_lines.get(budget_line)
-		protected = _reserved_plus_committed(budget_line)
+		protected = _reserved_plus_committed(budget_line, for_update=locked)
 		if current is None:
 			# BUD-BR-020 — a line may be omitted only when it has no remaining
 			# reservation or active commitment.
@@ -218,10 +248,10 @@ def _evaluate_successor_guards(version, based_on, lines: list[dict]) -> list[dic
 	return issues
 
 
-def _reserved_plus_committed(budget_line: str) -> float:
+def _reserved_plus_committed(budget_line: str, *, for_update: bool = False) -> float:
 	from kentender_budget.services.budget_contracts import _line_position
 
-	pos = _line_position(budget_line, None)
+	pos = _line_position(budget_line, None, for_update=for_update)
 	return pos["reserved"] + pos["committed"]
 
 
@@ -564,29 +594,65 @@ def _submit_budget_version(payload: dict[str, Any]) -> dict[str, Any]:
 	if _is_stale(version, payload):
 		return _stale(version)
 
-	issues = _evaluate_readiness(version)
+	# AUD-XC-103 — Version decisions take the Budget lock first and decide from
+	# locked reads (Closed Budgets admit no new approval work: AUD-BUD-003).
+	lock_budget(version.budget, lines=False)
+	version = locked_doc("Procurement Budget Version", version.name)
+	if version.status != "Draft":
+		return {"ok": False, "code": "BUDGET_INVALID_STATE", "errors": {"status": _("This budget has changed. Refresh to see the available actions.")}, "version": _version_summary(version)}
+	if _is_stale(version, payload):
+		return _stale(version)
+	if _budget_is_closed(version.budget):
+		return _closed(version)
+
+	issues = _evaluate_readiness(version, locked=True)
 	if issues:
 		return {"ok": False, "code": "BUDGET_NOT_READY", "blockers": issues, "version": _version_summary(version)}
 
-	version.status = "Submitted for approval"
-	version.submitted_by = frappe.session.user
-	version.submitted_at = now_datetime()
-	version.decided_by = None
-	version.decided_at = None
-	version.return_reason = ""
-	version.save(ignore_permissions=True)
+	from kentender_budget.services.budget_audit_contracts import EVENT_SUBMITTED, record_event
+	from kentender_budget.services.budget_submission_attempts import open_attempt
 
-	from kentender_budget.services.budget_audit_contracts import EVENT_SUBMITTED, safe_record_event
-
-	safe_record_event(
-		budget=version.budget,
-		budget_version=version.name,
-		event_type=EVENT_SUBMITTED,
-		actor=frappe.session.user,
-		correlation_id=frappe.generate_hash(length=12),
-		calling_module="Budget & Funding",
-	)
+	# AUD-XC-105 / AUD-BUD-002 — the submission event and the immutable attempt
+	# are part of the submission: if either cannot be written the submit fails
+	# and nothing is kept (a swallowed audit write would leave an approval with
+	# no submitter to segregate against).
+	savepoint = "budget_submit"
+	frappe.db.savepoint(savepoint)
+	try:
+		version.status = "Submitted for approval"
+		version.submitted_by = frappe.session.user
+		version.submitted_at = now_datetime()
+		version.decided_by = None
+		version.decided_at = None
+		version.return_reason = ""
+		version.save(ignore_permissions=True)
+		open_attempt(version)
+		record_event(
+			budget=version.budget,
+			budget_version=version.name,
+			event_type=EVENT_SUBMITTED,
+			actor=frappe.session.user,
+			correlation_id=frappe.generate_hash(length=12),
+			calling_module="Budget & Funding",
+		)
+	except Exception:
+		frappe.db.rollback(save_point=savepoint)
+		raise
 	return {"ok": True, "version": _version_summary(version)}
+
+
+def _budget_is_closed(budget: str) -> bool:
+	"""BUD-BR-023 — a Budget with a Closed Version is Closed (locking read)."""
+	return bool(frappe.db.get_value("Procurement Budget Version", {"budget": budget, "status": "Closed"}, "name", for_update=True))
+
+
+def _closed(version) -> dict[str, Any]:
+	return {
+		"ok": False,
+		"code": "BUDGET_CLOSED",
+		"errors": {"status": _("This budget is closed and cannot be updated or approved.")},
+		"version": _version_summary(version),
+	}
 
 
 def return_budget_version(payload: dict | str | None = None) -> dict[str, Any]:
@@ -611,11 +677,21 @@ def _return_budget_version(payload: dict[str, Any]) -> dict[str, Any]:
 			"errors": {"return_reason": _("Return reason must be between {0} and {1} characters").format(_MIN_RETURN_REASON, _MAX_RETURN_REASON)},
 		}
 
+	lock_budget(version.budget, lines=False)
+	version = locked_doc("Procurement Budget Version", version.name)
+	if version.status != "Submitted for approval":
+		return {"ok": False, "code": "BUDGET_INVALID_STATE", "errors": {"status": _("This budget has changed. Refresh to see the available actions.")}, "version": _version_summary(version)}
+
 	version.status = "Draft"
 	version.decided_by = frappe.session.user
 	version.decided_at = now_datetime()
 	version.return_reason = reason
 	version.save(ignore_permissions=True)
+	from kentender_budget.services.budget_submission_attempts import record_decision
+
+	# AUD-BUD-002 — the decision lands on the attempt it decided; the version's
+	# own fields are cleared again by the next submission.
+	record_decision(version, "Returned", reason)
 
 	from kentender_budget.services.budget_audit_contracts import EVENT_RETURNED, safe_record_event
 
@@ -649,20 +725,35 @@ def _approve_budget_version(payload: dict[str, Any]) -> dict[str, Any]:
 	if _is_stale(version, payload):
 		return _stale(version)
 
-	# BUD-BR-021 — "under one transaction lock": lock every version row for
-	# this Budget before revalidating readiness against a lock-free read
-	# above and flipping status, so a concurrent approval on a sibling
-	# successor cannot race this one.
-	frappe.db.sql(
-		"select name from `tabProcurement Budget Version` where budget=%s for update",
-		(version.budget,),
-	)
+	# BUD-BR-021 / §8.2A step 2 (AUD-XC-103, AUD-BUD-003) — "under one
+	# transaction lock": the Budget's Version rows then its Line rows, in the
+	# order reserve/adjust/close/the Finance decision use, so none of them can
+	# interleave with this activation. Everything decided below is re-read with
+	# locking reads: a plain read would still show the position and status this
+	# transaction saw before it waited.
+	lock_budget(version.budget)
+	version = locked_doc("Procurement Budget Version", version.name)
+	if version.status != "Submitted for approval":
+		return {"ok": False, "code": "BUDGET_INVALID_STATE", "errors": {"status": _("This budget has changed. Refresh to see the available actions.")}, "version": _version_summary(version)}
+	if _is_stale(version, payload):
+		return _stale(version)
+	# AUD-XC-105 — the locked row names the submitter of the attempt actually
+	# being decided; a resubmission that landed while this call waited for the
+	# lock cannot slip past the earlier segregation check.
+	if version.submitted_by and version.submitted_by == frappe.session.user:
+		from kentender_core.services.responsibility_errors import fail
 
-	issues = _evaluate_readiness(version)
+		fail("AUTH_SEGREGATION_BLOCKED")
+	# BUD-BR-023 — a Closed Budget cannot be re-activated by an already-open
+	# successor.
+	if _budget_is_closed(version.budget):
+		return _closed(version)
+
+	issues = _evaluate_readiness(version, locked=True)
 	if issues:
 		return {"ok": False, "code": "BUDGET_NOT_READY", "blockers": issues, "version": _version_summary(version)}
 
-	prior_active = _active_version(version.budget)
+	prior_active = _active_version(version.budget, for_update=True)
 
 	# BUD-BR-002's database-level unique guard admits at most one Active
 	# version per Budget at any instant — the prior Active version must be
@@ -678,6 +769,9 @@ def _approve_budget_version(payload: dict[str, Any]) -> dict[str, Any]:
 	version.decided_by = frappe.session.user
 	version.decided_at = now_datetime()
 	version.save(ignore_permissions=True)
+	from kentender_budget.services.budget_submission_attempts import record_decision
+
+	record_decision(version, "Approved")
 	# BUD-BR-029 — in this activation transaction: every Open budget revision
 	# request on a line this successor changed or omitted becomes Revised.
 	from kentender_budget.services.budget_revision_request_contracts import revise_on_activation
@@ -712,25 +806,32 @@ def _fy_end(fiscal_year: str):
 	return getdate(end_date) if end_date else None
 
 
-def _remaining_holds(version_name: str) -> tuple[list[dict[str, Any]], float, bool]:
+def _remaining_holds(version_name: str, *, locked: bool = False) -> tuple[list[dict[str, Any]], float, bool]:
 	"""Every remaining reservation on the Version's lines, including Needs
 	Attention (still reserved). Returns (rows, total, needs_attention)."""
 	from kentender_budget.services.budget_contracts import _ACTIVE_RESERVATION_STATUSES, _line_active_reservations
 
-	totals = _version_totals(version_name)
+	totals = _version_totals(version_name, for_update=locked)
 	rows = []
 	total = 0.0
 	needs_attention = False
 	for line in totals["lines"]:
-		reservations = [
-			r
-			for r in frappe.get_all(
+		if locked:
+			held = [
+				frappe._dict(r)
+				for r in frappe.db.sql(
+					"select name, generated_reference, status, remaining_amount from `tabFunding Reservation` where budget_line = %s and status in %s for update",
+					(line["budget_line"], tuple(_ACTIVE_RESERVATION_STATUSES)),
+					as_dict=True,
+				)
+			]
+		else:
+			held = frappe.get_all(
 				"Funding Reservation",
 				filters={"budget_line": line["budget_line"], "status": ["in", _ACTIVE_RESERVATION_STATUSES]},
 				fields=["name", "generated_reference", "status", "remaining_amount"],
 			)
-			if flt(r.remaining_amount) > 0
-		]
+		reservations = [r for r in held if flt(r.remaining_amount) > 0]
 		if not reservations:
 			continue
 		still = sum(flt(r.remaining_amount) for r in reservations)
@@ -751,7 +852,7 @@ def _remaining_holds(version_name: str) -> tuple[list[dict[str, Any]], float, bo
 	return rows, total, needs_attention
 
 
-def _closure_status_for(doc, version) -> dict[str, Any]:
+def _closure_status_for(doc, version, *, locked: bool = False) -> dict[str, Any]:
 	currency = doc.currency or "KES"
 	end = _fy_end(doc.fiscal_year)
 	as_at = now_datetime()
@@ -775,8 +876,8 @@ def _closure_status_for(doc, version) -> dict[str, Any]:
 		base["state"] = "before_year_end"
 		return base
 	try:
-		rows, total, needs_attention = _remaining_holds(version.name)
-		totals = _version_totals(version.name)
+		rows, total, needs_attention = _remaining_holds(version.name, locked=locked)
+		totals = _version_totals(version.name, for_update=locked)
 	except Exception:
 		frappe.log_error(title="Budget closure: funding position unavailable")
 		base["state"] = "unavailable"
@@ -834,12 +935,17 @@ def _close_budget(payload: dict[str, Any]) -> dict[str, Any]:
 	if _is_stale(version, payload):
 		return _stale(version)
 
-	frappe.db.sql("select name from `tabProcurement Budget Version` where budget=%s for update", (doc.name,))
-	version.reload()
+	# AUD-XC-103 — same lock order as reserve/approve (Version rows, then line
+	# rows); the Version is re-read as a locking read (a plain reload would show
+	# the snapshot) and every remaining hold is read with locking reads, so a
+	# reservation committed while this call waited blocks the closure and a
+	# reservation arriving after it is refused as BUDGET_CLOSED.
+	lock_budget(doc.name)
+	version = locked_doc("Procurement Budget Version", version.name)
 	if version.status != "Active":
 		return {"ok": False, "code": "BUDGET_INVALID_STATE", "errors": {"status": _("This budget has changed. Refresh to see the available actions.")}, "version": _version_summary(version)}
 
-	status = _closure_status_for(doc, version)
+	status = _closure_status_for(doc, version, locked=True)
 	if status["state"] == "before_year_end":
 		return {"ok": False, "code": "BUDGET_INVALID_STATE", "errors": {"fiscal_year": _("This budget can be closed only after {0}.").format(status["fiscal_year"]["end_date_display"])}, "closure": status, "version": _version_summary(version)}
 	if status["state"] == "unavailable":

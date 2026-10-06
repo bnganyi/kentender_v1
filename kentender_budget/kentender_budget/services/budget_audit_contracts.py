@@ -317,4 +317,8 @@ def get_budget_version_history(budget_version: str) -> dict[str, Any]:
 		fields=_ACTIVITY_FIELDS,
 		order_by="event_at desc",
 	)
-	return {"rows": [_row_dto(r) for r in rows], "row_count": len(rows)}
+	from kentender_budget.services.budget_submission_attempts import attempts_for_history
+
+	# BUD18-AC-062 — each immutable submission attempt with its evidence,
+	# lines as submitted and decision.
+	return {"rows": [_row_dto(r) for r in rows], "row_count": len(rows), "attempts": attempts_for_history(version.name)}

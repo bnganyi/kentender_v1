@@ -24,7 +24,7 @@ from kentender_budget.services import budget_contracts as contracts
 from kentender_budget.services import budget_line_contracts as lines_svc
 from kentender_budget.services import budget_readiness_contracts as readiness
 from kentender_budget.services.budget_audit_contracts import get_funding_activity
-from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import FUNDING_SOURCE, _FinanceTestBase, check_reserve
+from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import FUNDING_SOURCE, _FinanceTestBase, owner_ou, check_reserve
 
 
 from kentender_budget.services.budget_service_principal import PRINCIPAL_BUDGET, PRINCIPAL_CONTRACT, PRINCIPAL_REQUISITIONS, service_caller
@@ -106,7 +106,7 @@ class _V19Base(_FinanceTestBase):
 		tag = frappe.generate_hash(length=6)
 		token = check_reserve.check_funding(
 			plan_item=f"PPI-{tag}", plan_version=f"PLN-{tag}", finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}",
-			allocations=[{"budget_line": line, "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": f"PSA-{tag}"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": f"PSA-{tag}"}],
 			correlation_id=frappe.generate_hash(length=12), caller=service_caller(PRINCIPAL_REQUISITIONS, reference=ref),
 		)
 		result = check_reserve.reserve_funding(token=token["token"], finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}", idempotency_key=f"IDEM-{tag}", caller=service_caller(PRINCIPAL_REQUISITIONS, reference=ref))

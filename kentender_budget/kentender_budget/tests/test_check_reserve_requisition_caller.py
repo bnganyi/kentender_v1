@@ -18,6 +18,7 @@ from kentender_budget.services.budget_service_principal import PRINCIPAL_REQUISI
 from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import (
 	FUNDING_SOURCE,
 	_FinanceTestBase,
+	owner_ou,
 )
 
 
@@ -41,7 +42,7 @@ class TestCheckReserveCallerGate(_RequisitionCallerTestBase):
 			plan_item="TEST-PPI-REQ-1",
 			plan_version="TEST-PLN-REQ-1",
 			source_set_hash="TEST-HASH-REQ-1",
-			allocations=[{"budget_line": line, "amount": 10_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-REQ-1"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": 10_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-REQ-1"}],
 			correlation_id=frappe.generate_hash(length=12),
 			caller=_req("REQ-TEST-1"),
 		)
@@ -64,7 +65,7 @@ class TestCheckReserveCallerGate(_RequisitionCallerTestBase):
 		with self.assertRaises(frappe.PermissionError):
 			check_reserve.check_funding(
 				plan_item="TEST-PPI-REQ-2", plan_version="TEST-PLN-REQ-2", source_set_hash="TEST-HASH-REQ-2",
-				allocations=[{"budget_line": line, "amount": 10_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-REQ-2"}],
+				allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": 10_000_000, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-REQ-2"}],
 				correlation_id=frappe.generate_hash(length=12), finance_task="TEST-FNT-REQ-2",
 			)
 		self.assertEqual(frappe.db.count("Funding Reservation", {"budget_line": line}), 0)
@@ -75,7 +76,7 @@ class TestCheckReserveCallerGate(_RequisitionCallerTestBase):
 		with self.assertRaises(frappe.PermissionError):
 			check_reserve.check_funding(
 				plan_item="TEST-PPI-REQ-3", plan_version="TEST-PLN-REQ-3", source_set_hash="TEST-HASH-REQ-3",
-				allocations=[{"budget_line": line, "amount": 1, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-REQ-3"}],
+				allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": 1, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-REQ-3"}],
 				correlation_id=frappe.generate_hash(length=12),
 			)
 
@@ -84,7 +85,7 @@ class TestCheckReserveCallerGate(_RequisitionCallerTestBase):
 		self._as(self.hopf_officer)
 		token = check_reserve.check_funding(
 			plan_item="TEST-PPI-REQ-4", plan_version="TEST-PLN-REQ-4", source_set_hash="TEST-HASH-REQ-4",
-			allocations=[{"budget_line": line, "amount": 1, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-REQ-4"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": 1, "funding_source": FUNDING_SOURCE, "plan_source_allocation": "TEST-PSA-REQ-4"}],
 			correlation_id=frappe.generate_hash(length=12), caller=_req("REQ-TEST-4"),
 		)
 		with self.assertRaises(frappe.ValidationError) as ctx:
@@ -99,7 +100,7 @@ class TestReservationUniquenessRelaxed(_RequisitionCallerTestBase):
 		self._as(self.hopf_officer)
 		token = check_reserve.check_funding(
 			plan_item="TEST-PPI-REQ-U", plan_version="TEST-PLN-REQ-U", source_set_hash=f"HASH-{correlation}",
-			allocations=[{"budget_line": line, "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": allocation}],
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": allocation}],
 			correlation_id=correlation, caller=_req(caller_reference),
 		)
 		return check_reserve.reserve_funding(

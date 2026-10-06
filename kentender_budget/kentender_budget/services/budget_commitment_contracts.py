@@ -20,6 +20,7 @@ from frappe.utils import flt
 
 from kentender_budget.services.budget_check_reserve_contracts import _resolve_reservation
 from kentender_budget.services.budget_line_contracts import format_kes_full
+from kentender_budget.services.budget_locking import locked_doc, lock_budgets_of_lines
 from kentender_budget.services.budget_reference import allocate_commitment_reference
 from kentender_budget.services.budget_service_principal import (
 	ACTION_ADJUST,
@@ -151,12 +152,12 @@ def revalidate_reservations(
 	return {"ok": True, "reservations": results}
 
 
-def _current_line_version(budget_line: str):
+def _current_line_version(budget_line: str, *, for_update: bool = False):
 	from kentender_budget.services.budget_contracts import _active_version, _line_version_for
 
 	budget = frappe.db.get_value("Procurement Budget Line", budget_line, "budget")
-	version = _active_version(budget) if budget else None
-	return _line_version_for(version.name, budget_line) if version else None
+	version = _active_version(budget, for_update=for_update) if budget else None
+	return _line_version_for(version.name, budget_line, for_update=for_update) if version else None
 
 
 def release_reservation(
@@ -205,12 +206,13 @@ def _require_release_scope(caller, doc, amount) -> None:
 
 
 def _release(reservation: str, amount, downstream_event_id: str, downstream_event_type: str, idempotency_key: str, caller) -> dict[str, Any]:
-	doc = frappe.get_doc("Funding Reservation", reservation)
+	# AUD-XC-101..103 — the Budget's shared lock order first (Version rows, the
+	# line row), then the reservation row; the state is decided only from the
+	# locked, latest-committed reservation, never the snapshot read above it.
+	lock_budgets_of_lines([frappe.db.get_value("Funding Reservation", reservation, "budget_line")])
+	doc = locked_doc("Funding Reservation", reservation)
 	if doc.status in ("Converted", "Released"):
 		return {"ok": True, "reused": True, "reservation": _reservation_result(doc)}
-
-	frappe.db.sql("select name from `tabFunding Reservation` where name=%s for update", (doc.name,))
-	doc.reload()
 
 	release_amount = flt(amount) if amount is not None else flt(doc.remaining_amount)
 	if release_amount > flt(doc.remaining_amount) + 0.0001:
@@ -281,16 +283,20 @@ def convert_reservation(
 
 
 def _convert(reservation: str, contract: str, amount, idempotency_key: str, contract_event_id: str, contract_event_type: str) -> dict[str, Any]:
-	doc = frappe.get_doc("Funding Reservation", reservation)
 	amount = flt(amount)
+	# AUD-XC-101..103/BUD-004 — shared lock order, then every read below is a
+	# locking read of the latest committed state.
+	lock_budgets_of_lines([frappe.db.get_value("Funding Reservation", reservation, "budget_line")])
+	doc = locked_doc("Funding Reservation", reservation)
 
 	# §4.6 — contract is unique within the reservation lineage, so (reservation,
 	# contract) is also a natural key: the same pair and amount returns the
 	# existing commitment; the same pair with a different amount is a changed
-	# request, not a replay.
-	existing = frappe.db.get_value("Procurement Commitment", {"contract": contract, "reservation": doc.name}, "name")
+	# request, not a replay. One contract may hold a commitment on each of
+	# several reservations (AUD-BUD-004).
+	existing = frappe.db.get_value("Procurement Commitment", {"contract": contract, "reservation": doc.name}, "name", for_update=True)
 	if existing:
-		existing_doc = frappe.get_doc("Procurement Commitment", existing)
+		existing_doc = locked_doc("Procurement Commitment", existing)
 		if abs(flt(existing_doc.current_amount) - amount) > 0.0001:
 			frappe.throw(
 				_("This contract already holds a commitment on this reservation for a different amount. Adjust the commitment instead."),
@@ -304,9 +310,6 @@ def _convert(reservation: str, contract: str, amount, idempotency_key: str, cont
 
 	if amount <= 0:
 		frappe.throw(_("Commitment amount must be positive"))
-
-	frappe.db.sql("select name from `tabFunding Reservation` where name=%s for update", (doc.name,))
-	doc.reload()
 
 	remaining = flt(doc.remaining_amount)
 	if amount > remaining + 0.0001:
@@ -392,24 +395,28 @@ def adjust_commitment(
 
 
 def _adjust(commitment: str, new_total: float, variation_event_id: str, variation_event_type: str, idempotency_key: str) -> dict[str, Any]:
-	doc = frappe.get_doc("Procurement Commitment", commitment)
-	if doc.status != "Active":
-		frappe.throw(_("Only an Active commitment can be adjusted"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
-
 	new_amt = flt(new_total)
 	if new_amt < 0:
 		frappe.throw(_("Adjusted commitment amount cannot be negative"))
 
-	frappe.db.sql("select name from `tabProcurement Commitment` where name=%s for update", (doc.name,))
-	doc.reload()
+	# AUD-XC-102 — an increase must be serialised against the Budget Line and
+	# every reservation on it, not only this commitment row: take the shared
+	# lock order (Version rows, the line row), then the commitment, then decide
+	# from locked, latest-committed reads.
+	reservation_name = frappe.db.get_value("Procurement Commitment", commitment, "reservation")
+	budget_line = frappe.db.get_value("Funding Reservation", reservation_name, "budget_line")
+	lock_budgets_of_lines([budget_line])
+	doc = locked_doc("Procurement Commitment", commitment)
+	if doc.status != "Active":
+		frappe.throw(_("Only an Active commitment can be adjusted"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
 
-	reservation = frappe.get_doc("Funding Reservation", doc.reservation)
+	reservation = locked_doc("Funding Reservation", doc.reservation)
 	prior_amount = flt(doc.current_amount)
 	delta = new_amt - prior_amount
 	if delta > 0:
 		from kentender_budget.services.budget_contracts import _line_position
 
-		pos = _line_position(reservation.budget_line, _current_line_version(reservation.budget_line))
+		pos = _line_position(reservation.budget_line, _current_line_version(reservation.budget_line, for_update=True), for_update=True)
 		if delta > pos["available"] + 0.0001:
 			frappe.throw(
 				_("Increase of {0} exceeds the Budget Line's available balance ({1})").format(

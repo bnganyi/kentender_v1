@@ -154,6 +154,13 @@ def _unit_for(user: str, role: str, unit_name: str) -> str:
 	return ""
 
 
+def _line_owner_unit(budget_line: str) -> str:
+	"""The source organisation unit these seed reservations name (BUD-BR-007):
+	the line's owner, or any Active unit for an Entity-wide line."""
+	unit = frappe.db.get_value("Procurement Budget Line Version", {"budget_line": budget_line}, "owner_org_unit")
+	return unit or frappe.db.get_value("Organisation Unit", {"status": "Active"}, "name", order_by="creation asc")
+
+
 def _offset_date(days_ago: int) -> str:
 	return add_days(nowdate(), -days_ago)
 
@@ -743,6 +750,7 @@ def upsert_isolated_finance_profiles() -> dict[str, Any]:
 				allocations=[
 					{
 						"budget_line": line_name,
+						"source_organisation_unit": _line_owner_unit(line_name),
 						"amount": 80_000_000,
 						"funding_source": FUNDING_SOURCE,
 						"plan_source_allocation": "BUD-SC-FIN-SINGLE-PSA-PRECOND",
@@ -788,6 +796,7 @@ def upsert_isolated_finance_profiles() -> dict[str, Any]:
 				allocations=[
 					{
 						"budget_line": line_name,
+						"source_organisation_unit": _line_owner_unit(line_name),
 						"amount": 30_000_000,
 						"funding_source": FUNDING_SOURCE,
 						"plan_source_allocation": "BUD-SC-FIN-SHORT-PSA-PRECOND",
@@ -821,6 +830,7 @@ def upsert_isolated_finance_profiles() -> dict[str, Any]:
 				allocations=[
 					{
 						"budget_line": line_name,
+						"source_organisation_unit": _line_owner_unit(line_name),
 						"amount": 80_000_000,
 						"funding_source": FUNDING_SOURCE,
 						"plan_source_allocation": "BUD-SC-CONVERT-PARTIAL-PSA",

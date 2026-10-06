@@ -238,6 +238,13 @@ def _contract_caller(contract: str):
 	return service_caller(PRINCIPAL_CONTRACT, reference=contract)
 
 
+def _line_owner_unit(budget_line: str) -> str:
+	"""The source organisation unit these seed reservations name (BUD-BR-007):
+	the line's owner, or any Active unit for an Entity-wide line."""
+	unit = frappe.db.get_value("Procurement Budget Line Version", {"budget_line": budget_line}, "owner_org_unit")
+	return unit or frappe.db.get_value("Organisation Unit", {"status": "Active"}, "name", order_by="creation asc")
+
+
 def _reserve(line: str, amount: float, *, ref: str, source_allocation: str | None = None) -> str:
 	"""A real authorised-requisition hold through check/reserve, as Josphat
 	(Finance Confirmation Officer). Returns the reservation name."""
@@ -251,7 +258,7 @@ def _reserve(line: str, amount: float, *, ref: str, source_allocation: str | Non
 		_as(OFFICER)
 		token = check_reserve.check_funding(
 			plan_item=f"PPI-{tag}", plan_version=f"PLN-{tag}", finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}",
-			allocations=[{"budget_line": line, "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": source_allocation or f"PSA-{tag}"}],
+			allocations=[{"budget_line": line, "source_organisation_unit": _line_owner_unit(line), "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": source_allocation or f"PSA-{tag}"}],
 			correlation_id=frappe.generate_hash(length=12), caller=requisitions,
 		)
 		result = check_reserve.reserve_funding(token=token["token"], finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}", idempotency_key=f"IDEM-{tag}", caller=requisitions)

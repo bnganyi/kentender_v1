@@ -44,6 +44,7 @@ from frappe import _
 from frappe.utils import flt
 
 from kentender_budget.services.budget_line_contracts import format_kes_full
+from kentender_budget.services.budget_locking import lock_budgets_of_lines
 from kentender_budget.services.budget_reference import allocate_reservation_reference
 
 _CHECK_TOKEN_TTL_SECONDS = 300
@@ -123,22 +124,27 @@ def _resolve_line(budget_line: str) -> Any:
 	return frappe.get_doc("Procurement Budget Line", name)
 
 
-def _line_active_version_and_position(budget_line_doc):
+def _line_active_version_and_position(budget_line_doc, *, for_update: bool = False):
+	"""The line's Active Version, its Line Version and its position. With
+	`for_update=True` (after the Budget lock, AUD-XC-101/103) all of it is read
+	as locking reads, so a Version approved or closed since this transaction's
+	snapshot is seen."""
 	from kentender_budget.services.budget_contracts import _active_version, _line_position, _line_version_for
 
-	version = _active_version(budget_line_doc.budget)
+	version = _active_version(budget_line_doc.budget, for_update=for_update)
 	if not version:
 		# BUD-BR-023 — a Closed Budget admits no new reservations. A Closed
 		# Budget Version means the Budget itself is Closed (no other Active
 		# version exists for it); distinguish that from the generic "not
 		# eligible" case so callers get the specific documented error code.
-		if frappe.db.exists("Procurement Budget Version", {"budget": budget_line_doc.budget, "status": "Closed"}):
+		closed = frappe.db.get_value("Procurement Budget Version", {"budget": budget_line_doc.budget, "status": "Closed"}, "name", for_update=for_update)
+		if closed:
 			frappe.throw(_("The Budget is Closed and cannot accept a new reservation"), frappe.ValidationError, title="BUDGET_CLOSED")
 		frappe.throw(_("Budget Line has no Active Budget Version"), frappe.ValidationError, title="BUDGET_LINE_NOT_ELIGIBLE")
-	line_version = _line_version_for(version.name, budget_line_doc.name)
+	line_version = _line_version_for(version.name, budget_line_doc.name, for_update=for_update)
 	if not line_version:
 		frappe.throw(_("Budget Line is not eligible under the Active Version"), frappe.ValidationError, title="BUDGET_LINE_NOT_ELIGIBLE")
-	return version, line_version, _line_position(budget_line_doc.name, line_version)
+	return version, line_version, _line_position(budget_line_doc.name, line_version, for_update=for_update)
 
 
 def _normalise_rows(allocations: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -160,9 +166,38 @@ def _normalise_rows(allocations: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	return rows
 
 
-def _line_totals(rows: list[dict[str, Any]], line_docs: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], Any]:
+def _require_eligible_source(row: dict[str, Any], line_version) -> None:
+	"""BUD-BR-007 (AUD-BUD-001) — a line is eligible for an allocation only when
+	its owner scope is Entity-wide (no owner unit) or exactly matches the
+	allocation's explicit source organisation unit. A missing or unknown source
+	unit fails even for an Entity-wide line; no descendant is inferred. This is
+	record eligibility, never a permission check."""
+	source = (row.get("source_organisation_unit") or "").strip()
+	if not source:
+		frappe.throw(
+			_("A source department is required to use {0}").format(line_version.title),
+			frappe.ValidationError,
+			title="BUDGET_SOURCE_OU_REQUIRED",
+		)
+	if not frappe.db.exists("Organisation Unit", source):
+		frappe.throw(
+			_("The source department for {0} is not a known organisation unit").format(line_version.title),
+			frappe.ValidationError,
+			title="BUDGET_LINE_NOT_ELIGIBLE",
+		)
+	owner = (line_version.owner_org_unit or "").strip()
+	if owner and owner != source:
+		frappe.throw(
+			_("{0} belongs to another department and cannot fund this allocation").format(line_version.title),
+			frappe.ValidationError,
+			title="BUDGET_LINE_NOT_ELIGIBLE",
+		)
+
+
+def _line_totals(rows: list[dict[str, Any]], line_docs: dict[str, Any], *, for_update: bool = False) -> tuple[dict[str, dict[str, Any]], Any]:
 	"""BUD-CHG-001 v1.10 §8.3 — total every row that shares a Budget Line,
-	then test the total against that line's availability."""
+	then test the total against that line's availability. `for_update=True`
+	is `reserve_funding`'s locked recheck (AUD-XC-101)."""
 	totals: dict[str, dict[str, Any]] = {}
 	budget = None
 	for row in rows:
@@ -171,7 +206,7 @@ def _line_totals(rows: list[dict[str, Any]], line_docs: dict[str, Any]) -> tuple
 			budget = frappe.get_doc("Procurement Budget", line_doc.budget)
 		entry = totals.get(line_doc.name)
 		if entry is None:
-			version, line_version, position = _line_active_version_and_position(line_doc)
+			version, line_version, position = _line_active_version_and_position(line_doc, for_update=for_update)
 			entry = totals[line_doc.name] = {
 				"version": version,
 				"line_version": line_version,
@@ -186,6 +221,7 @@ def _line_totals(rows: list[dict[str, Any]], line_docs: dict[str, Any]) -> tuple
 				frappe.ValidationError,
 				title="BUDGET_LINE_NOT_ELIGIBLE",
 			)
+		_require_eligible_source(row, entry["line_version"])
 		entry["required"] += Decimal(row["amount"])
 	return totals, budget
 
@@ -287,11 +323,14 @@ def check_funding(
 	return {"token": token, "all_sufficient": all_sufficient, "allocations": results, "lines": lines, "token_ttl_seconds": _CHECK_TOKEN_TTL_SECONDS}
 
 
-def _existing_reservations_for_correlation(correlation_id: str) -> list[Any] | None:
-	names = frappe.get_all("Funding Reservation", filters={"correlation_id": correlation_id}, pluck="name")
+def _existing_reservations_for_correlation(correlation_id: str, *, for_update: bool = False) -> list[Any] | None:
+	if for_update:
+		names = [r[0] for r in frappe.db.sql("select name from `tabFunding Reservation` where correlation_id = %s order by name for update", (correlation_id,))]
+	else:
+		names = frappe.get_all("Funding Reservation", filters={"correlation_id": correlation_id}, pluck="name")
 	if not names:
 		return None
-	return [frappe.get_doc("Funding Reservation", n) for n in names]
+	return [frappe.get_doc("Funding Reservation", n, for_update=for_update) for n in names]
 
 
 def reserve_funding(
@@ -312,8 +351,8 @@ def reserve_funding(
 	authenticated_reference = _authenticate(caller, ACTION_RESERVE)[1]
 	correlation_id = idempotency_key
 	cached = frappe.cache().get_value(f"budget_check_token:{token}")
-	existing = _existing_reservations_for_correlation(correlation_id)
-	if existing:
+
+	def replay(existing):
 		if any((r.caller_reference or "") != authenticated_reference for r in existing):
 			refuse(_("This reservation belongs to another requisition."))
 		# Same key + same payload replays the original mapping, even after a
@@ -326,6 +365,10 @@ def reserve_funding(
 				title="BUDGET_IDEMPOTENCY_CONFLICT",
 			)
 		return {"ok": True, "reused": True, "reservations": [_reservation_result(r) for r in existing]}
+
+	existing = _existing_reservations_for_correlation(correlation_id)
+	if existing:
+		return replay(existing)
 
 	# finance_task is optional (REQ-CHG-001 v1.6 D1): compare only when the
 	# check actually recorded one. A caller with no finance_task at check
@@ -343,18 +386,21 @@ def reserve_funding(
 	rows = cached["allocations"]
 
 	line_docs = {r["budget_line"]: _resolve_line(r["budget_line"]) for r in rows}
-	# Lock all affected lines in stable ID order (§8.2 step 5) before reloading
-	# any position, to prevent concurrent oversubscription (BUD-BR-013).
-	frappe.db.sql(
-		"select name from `tabProcurement Budget Line` where name in %s order by name for update",
-		(tuple(sorted(line_docs)),),
-	)
+	# BUD-BR-013 / §8.2A step 2 (AUD-XC-101, -103) — take the Budget's Version
+	# rows then the affected Line rows in the fixed order shared with approve,
+	# close, adjust and the Finance decision (`budget_locking`). Everything
+	# below is a locking read: under REPEATABLE READ a plain read would still
+	# show the position this transaction saw before it waited for the lock.
+	lock_budgets_of_lines(sorted(line_docs))
+	existing = _existing_reservations_for_correlation(correlation_id, for_update=True)
+	if existing:
+		return replay(existing)
 
 	for row in rows:
 		if row.get("drawdown_line_id"):
 			# BUD-BR-011 — each authorised REQ drawdown line receives exactly
 			# one reservation; a new key cannot duplicate it.
-			if frappe.db.exists("Funding Reservation", {"drawdown_line_id": row["drawdown_line_id"]}):
+			if frappe.db.get_value("Funding Reservation", {"drawdown_line_id": row["drawdown_line_id"]}, "name", for_update=True):
 				frappe.throw(
 					_("This drawdown line already has funding reserved"),
 					frappe.ValidationError,
@@ -369,6 +415,7 @@ def reserve_funding(
 			{"plan_source_allocation": row["plan_source_allocation"], "status": ["in", ("Active", "Partially Converted")]},
 			["name", "correlation_id", "caller_reference"],
 			as_dict=True,
+			for_update=True,
 		)
 		if clashing and clashing.correlation_id != correlation_id and (clashing.caller_reference or "") == caller_reference:
 			frappe.throw(
@@ -377,7 +424,7 @@ def reserve_funding(
 				title="BUDGET_RESERVATION_CONFLICT",
 			)
 
-	totals, _budget = _line_totals(rows, line_docs)
+	totals, _budget = _line_totals(rows, line_docs, for_update=True)
 	# BUD-013 / §13 BUDGET_CHECK_STALE — the owner revisions the check saw
 	# must still be current.
 	checked_versions = cached.get("line_versions") or {}
