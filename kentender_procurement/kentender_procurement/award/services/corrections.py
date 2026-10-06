@@ -130,6 +130,7 @@ def record(*, award: str, outcome: str, reason: str = "", next_action: str = "",
 	def body() -> dict[str, Any]:
 		doc = records.lock(award)
 		guards.require_ao(user)
+		guards.require_ao_not_opinion_author(user, doc)
 		if doc.cancelled:
 			fail("AWD_ON_HOLD", {"reason": "cancelled"})
 		records.check_version(doc, expected_version)
@@ -235,6 +236,7 @@ def _award_guards(doc, opinion) -> None:
 	v = checks.validity(doc)
 	if v["expired"]:
 		g.add("AWD_VALIDITY_EXPIRED", valid_until=clock.when(v["end"]))
+	guards.funding(doc, g)
 	g.raise_if_any()
 
 

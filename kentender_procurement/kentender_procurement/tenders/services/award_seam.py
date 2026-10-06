@@ -35,6 +35,13 @@ def validity(tender: str) -> dict[str, Any]:
 	return {"validity_end": rules.get("validity_end"), "rule": rules.get("validity_rule")}
 
 
+def funding_reservations(tender: str) -> list[str]:
+	"""The Budget reservations this Tender draws on, for Award's decision-time
+	funding read (AWD-IF-07). Award reads their amounts through Budget's
+	published contract; this only names them."""
+	return list(evaluation_seam.funding_reservations(tender)["reservation_ids"] or [])
+
+
 def status_events(tender: str) -> list[dict[str, Any]]:
 	return evaluation_seam.status_events(tender)
 

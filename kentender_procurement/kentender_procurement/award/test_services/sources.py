@@ -195,6 +195,8 @@ class SyntheticSource:
 		snap = state.get("deliveries", {}).get(delivery)
 		if not snap:
 			return {"ok": False, "message": "Not found"}
+		if snap.get("recipient") and user != snap["recipient"]:  # Evaluation answers only its recorded recipient
+			raise frappe.DoesNotExistError("Not found")
 		snap.update(returned=True, return_comment=comment)
 		_save(state)
 		return {"ok": True, "report": snap["report"], "returned": True}
@@ -231,6 +233,14 @@ class SyntheticSource:
 	def status_events(self, tender: str) -> list[dict[str, Any]]:
 		self._check(tender)
 		return list(self._tender(tender).get("events") or [])
+
+	def funding(self, tender: str) -> dict[str, Any]:
+		"""Budget's current funding position: `funding_down` makes it unreadable,
+		`funding_available` changes the amount (default: enough for every world)."""
+		t = self._tender(tender)
+		if t.get("funding_down"):
+			return {"known": False, "reason": "The synthetic Budget service is down."}
+		return {"known": True, "available": cstr(t.get("funding_available") or "50000000.00"), "reservations": ["SYN-RSV"], "source": "Budget (synthetic)"}
 
 	def audience(self, tender: str) -> list[dict[str, Any]]:
 		state = _state()

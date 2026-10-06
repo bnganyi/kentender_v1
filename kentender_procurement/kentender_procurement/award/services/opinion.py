@@ -39,6 +39,7 @@ def save(*, award: str, conclusion: str = "", reason: str = "", addressed_issues
 	def body() -> dict[str, Any]:
 		doc = records.lock(award)
 		guards.require_hop(user)
+		guards.require_hop_not_decider(user, doc)
 		guards.open_case(doc).raise_if_any()
 		records.check_version(doc, expected_version)
 		guards.stage(doc, "Opinion")
@@ -79,6 +80,7 @@ def sign(*, award: str, expected_version=None, idempotency_key: str, user: str) 
 	def body() -> dict[str, Any]:
 		doc = records.lock(award)
 		guards.require_hop(user)
+		guards.require_hop_not_decider(user, doc)
 		guards.open_case(doc).raise_if_any()
 		guards.stage(doc, "Opinion")
 		guards.cycle_ready(doc)
@@ -116,7 +118,7 @@ def sign(*, award: str, expected_version=None, idempotency_key: str, user: str) 
 				"message": "Signing is unavailable. Your draft has been saved.", "outcome": proof.get("outcome"), "attempt": attempt}
 		now = clock.now()
 		records.update(opinion, state="Signed", signing_outcome="Accepted/Verified", proof_reference=cstr(proof.get("proof_reference")),
-			proof_label=cstr(proof.get("label") or SIGNING_LABEL), signed_at=now)
+			proof_label=cstr(proof.get("label") or SIGNING_LABEL), signed_at=now, signed_by=user)
 		checks.support_resolved(f"signing:{attempt}")
 		c = state.cycle(doc)
 		records.update(c, opinion=opinion.name)
@@ -147,8 +149,17 @@ def return_report(*, award: str, reason: str, expected_version=None, idempotency
 		if state.committed_decision(doc):
 			fail("AWD_RECORD_CHANGED", {"reason": "decision_committed"})
 		rep = state.current_report(doc)
-		result = sources.for_case(doc).return_report(delivery=rep.source_delivery, comment=cstr(reason).strip(), idempotency_key=f"awd-return:{idempotency_key}",
-			user=user)
+		comment, seam_user = cstr(reason).strip(), user
+		recipient = cstr(state.snapshot(rep).get("recipient"))
+		if recipient and recipient != user and not people.holds(recipient, people.HEAD_OF_PROCUREMENT):
+			# The Head of Procurement who received the report no longer holds the
+			# responsibility; the current holder (checked above) acts in their place
+			# (§5.9). Evaluation answers only its recorded recipient, so the
+			# successor is named in the comment and in Award's own audit.
+			seam_user = recipient
+			comment = f"{comment}\n(Returned by {people.full_name(user)}, the current Head of Procurement Function, who succeeded {people.full_name(recipient)}.)"
+		result = sources.for_case(doc).return_report(delivery=rep.source_delivery, comment=comment, idempotency_key=f"awd-return:{idempotency_key}",
+			user=seam_user)
 		if result.get("ok") is False:
 			return {**records.summary(doc), **result, "ok": False}
 		records.update(rep, state="Returned")
@@ -162,7 +173,7 @@ def return_report(*, award: str, reason: str, expected_version=None, idempotency
 		for i in issues.open_issues(doc, subtype="Returned decision"):
 			issues.resolve(i, disposition="Owner correction confirmed", reason="The report was returned to Evaluation.", evidence=rep.name, user=user)
 		state.set_stage(doc, "Opinion")
-		records.audit(doc.name, "ReturnEvaluationReport", user, report=rep.name, reason=reason)
+		records.audit(doc.name, "ReturnEvaluationReport", user, report=rep.name, reason=reason, evaluation_recipient=recipient)
 		return records.summary(state.reload(doc), returned=rep.name)
 
 	return records.command("ReturnEvaluationReport", case=award, idempotency_key=idempotency_key, actor=user, payload={"reason": reason, "expected": cstr(expected_version)},

@@ -49,7 +49,7 @@ def retry_operation(*, award: str, idempotency_key: str, user: str) -> dict[str,
 	"""The technical operator's **Retry operation** for this award's failed technical work."""
 
 	def body() -> dict[str, Any]:
-		if user not in people.technical_operators():
+		if not people.is_technical_operator(user):
 			raise frappe.DoesNotExistError("Not found")
 		doc = records.lock(award)
 		done = {"notices": 0, "events": 0, "package": ""}

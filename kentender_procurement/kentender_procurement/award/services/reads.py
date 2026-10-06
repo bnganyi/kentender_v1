@@ -128,21 +128,23 @@ def _history(doc) -> list[dict[str, Any]]:
 
 def _actions(doc, v: dict[str, Any]) -> dict[str, Any]:
 	hop, ao = v["hop"] and not v["technical"], v["ao"] and not v["technical"]
+	hop_prepares = hop and not guards.hop_is_decider(v["user"], doc)  # segregation of duties: the decider does not prepare the opinion
+	ao_decides = ao and not guards.ao_is_opinion_author(v["user"], doc)
 	c = state.cycle(doc)
 	open_ = not doc.cancelled and doc.stage != "Closed"
 	opinion_stage = open_ and doc.stage == "Opinion" and not cint(c.awaiting_report)
 	committed = state.committed_decision(doc, c.number)
 	w = state.working_opinion(doc)
 	return {
-		"save_opinion": hop and opinion_stage,
-		"sign_opinion": hop and opinion_stage and not any(i.subtype in (checks.SOURCE_INCOMPLETE, checks.RULES_UNVERIFIED, checks.STATUS_UNAVAILABLE) for i in issues.holding(doc))
+		"save_opinion": hop_prepares and opinion_stage,
+		"sign_opinion": hop_prepares and opinion_stage and not any(i.subtype in (checks.SOURCE_INCOMPLETE, checks.RULES_UNVERIFIED, checks.STATUS_UNAVAILABLE) for i in issues.holding(doc))
 			and not (w and w.state == "Signing" and w.signing_outcome and w.signing_outcome != "Accepted/Verified" and simulation.flag("signing_outcome")),
 		"return_report": hop and open_ and doc.stage in ("Opinion", "Decision") and not cint(c.awaiting_report) and not state.committed_decision(doc),
-		"decide": ao and open_ and doc.stage == "Decision" and not committed and cint(c.number) == 1 and not state.latest_committed(doc),
-		"decide_correction": ao and open_ and doc.stage == "Decision" and not committed and (cint(c.number) > 1 or bool(state.latest_committed(doc))),
+		"decide": ao_decides and open_ and doc.stage == "Decision" and not committed and cint(c.number) == 1 and not state.latest_committed(doc),
+		"decide_correction": ao_decides and open_ and doc.stage == "Decision" and not committed and (cint(c.number) > 1 or bool(state.latest_committed(doc))),
 		"award_supported": not next_steps_positive_blocked(doc),
-		"correction_proposals": ao and bool(restrictions.proposals(doc)) and bool(state.latest_committed(doc)) and doc.stage != "Decision",
-		"authorise_revised": ao and doc.stage == "Notices" and bool(committed and committed.kind == "Correction" and committed.outcome == "Award" and
+		"correction_proposals": ao_decides and bool(restrictions.proposals(doc)) and bool(state.latest_committed(doc)) and doc.stage != "Decision",
+		"authorise_revised": ao_decides and doc.stage == "Notices" and bool(committed and committed.kind == "Correction" and committed.outcome == "Award" and
 			not committed.notices_authorised and profile.revised_treatment_verified()),
 		"record_restriction": hop and not doc.cancelled,
 		"record_outcome": hop and not doc.cancelled,

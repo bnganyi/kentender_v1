@@ -113,6 +113,10 @@ def deliver(doc) -> dict[str, Any]:
 	pkg = _prepare_package(doc)
 	if pkg.status == "Delivered":
 		return {"status": "Delivered", "package": pkg.name}
+	stop = checks.funding_stop(doc)
+	if stop:  # funding is rechecked at delivery (§5.5); unreadable is not "not restricted"
+		records.update(pkg, status="Held")
+		return {"status": "Waiting", "conditions": cond, "funding": stop}
 	payload = {**records.loads(pkg.content_json), "reference": pkg.name, "package_digest": pkg.digest}
 	attempt = {"at": str(clock.now())}
 	try:

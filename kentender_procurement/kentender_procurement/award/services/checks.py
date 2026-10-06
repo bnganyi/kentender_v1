@@ -13,10 +13,11 @@ Evaluation's own automatic checks (§16) — they read its signed result."""
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 import frappe
-from frappe.utils import cstr, flt, get_datetime
+from frappe.utils import cstr, get_datetime
 
 from kentender_procurement.award.services import clock, issues, people, profile, simulation, sources, state
 
@@ -75,9 +76,31 @@ def recommendation(doc) -> dict[str, Any]:
 
 
 def funding(doc) -> dict[str, Any]:
-	f = state.snapshot(state.current_report(doc)).get("funding") or {}
-	short = flt(f.get("shortfall") or 0)
-	return {"restricted": bool(cstr(f.get("qualification")) or short > 0), "detail": f}
+	"""The funding position read from Budget now (AWD-IF-07), against the
+	recommended supplier's evaluated amount. `known` is False when Budget
+	cannot answer: that is an unavailable check, never "not restricted" (§5.1).
+	The figure frozen in the signed report is history, not today's position."""
+	rep = state.current_report(doc)
+	rec = (state.snapshot(rep).get("recommended") or {}) if rep else {}
+	needed = Decimal(cstr(rec.get("evaluated_total") or 0))
+	try:
+		read = sources.for_case(doc).funding(doc.tender)
+	except (sources.SourceUnavailable, AttributeError) as exc:
+		read = {"known": False, "reason": cstr(exc)}
+	if not read or not read.get("known"):
+		return {"known": False, "restricted": False, "detail": {}, "reason": cstr((read or {}).get("reason")) or "Budget did not answer."}
+	available = Decimal(cstr(read.get("available") or 0))
+	short = max(needed - available, Decimal("0"))
+	detail = {"available": str(available), "needed": str(needed), "shortfall": str(short), "reservations": read.get("reservations") or [], "as_at": str(clock.now()),
+		"qualification": "Funding needs resolution before award." if short > 0 else ""}
+	return {"known": True, "restricted": short > 0, "detail": detail, "reason": ""}
+
+
+def funding_stop(doc) -> str:
+	""""" when funding is confirmed sufficient now; else why a positive step
+	must not proceed: "unknown" (Budget unavailable) or "restricted"."""
+	f = funding(doc)
+	return "unknown" if not f["known"] else "restricted" if f["restricted"] else ""
 
 
 def sync(doc) -> dict[str, Any]:
@@ -116,9 +139,14 @@ def sync(doc) -> dict[str, Any]:
 			title="Tender validity has expired. No award can proceed.", reason=f"Tender validity ended {clock.when(v['end'])}.", effective_at=v["end"])
 	out["validity"] = v
 	fund = funding(doc)
-	if fund["restricted"] and rep:
-		issues.open_issue(doc, source_event=f"funding:{rep.name}", issue_type="Funding", subtype=FUNDING, title="Funding needs resolution before award.",
-			reason=cstr(fund["detail"].get("qualification")) or "The recorded funding is less than the evaluated amount.", detail={"owner": "Budget"})
+	if rep and fund["known"]:
+		if fund["restricted"]:
+			if not issues.open_issues(doc, subtype=FUNDING):
+				number = frappe.db.count(issues.ISSUE, {"award_case": doc.name, "subtype": FUNDING}) + 1
+				issues.open_issue(doc, source_event=f"funding:{rep.name}:{number}", issue_type="Funding", subtype=FUNDING, title="Funding needs resolution before award.",
+					reason="The funding Budget now holds for this tender is less than the evaluated amount.", detail={"owner": "Budget", "funding": fund["detail"]})
+		else:
+			issues.resolve_automatic(doc, subtype=FUNDING, note="Budget now confirms the funding.")
 	out["funding"] = fund
 	return out
 

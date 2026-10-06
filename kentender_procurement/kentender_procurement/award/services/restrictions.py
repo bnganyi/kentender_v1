@@ -147,6 +147,15 @@ def disposition(*, award: str, issue: str, outcome: str = "", reason: str = "", 
 		if row.issue_type == "Supplier response":
 			detail = records.loads(row.detail_json)
 			proof = proof or cstr(detail.get("response") or detail.get("late_response") or f"Reply deadline {detail.get('deadline', '')}")
+		if chosen == ENDED and cstr(row.source_event).startswith("tender-event:"):
+			# An order Tenders sent ends only on the release Tenders itself reported
+			# (AWD §5.6, §5.10, AC-030): the evidence is that owner event, never free text.
+			released = records.loads(row.detail_json).get("release_evidence") or []
+			if not released:
+				fail("AWD_ON_HOLD", {"reason": "no_release_evidence", "issue": row.name})
+			proof = f"Tenders release {cstr(released[-1].get('reference')) or cstr(released[-1].get('event'))}"
+		if chosen == OWNER_CONFIRMED and row.issue_type == "Funding":
+			proof = "Budget confirmation read"  # the evidence is Budget's own answer, taken below
 		invalid({
 			"outcome": "Choose an outcome." if chosen not in allowed else "",
 			"reason": "Enter the reason." if not cstr(reason).strip() else "",
@@ -157,13 +166,23 @@ def disposition(*, award: str, issue: str, outcome: str = "", reason: str = "", 
 			others = [i for i in issues.open_issues(doc, issue_type="Review/order") if i.name != row.name and i.basis == "Authoritative order"]
 			if others:
 				fail("AWD_ON_HOLD", {"reason": "continuing_restriction", "issues": [i.name for i in others]})
+		funding_gate = chosen == OWNER_CONFIRMED and row.issue_type == "Funding"
+		if funding_gate:
+			# A funding restriction is cleared by Budget's own confirmation read now, not
+			# by what the Head of Procurement writes (AWD §5.10: authoritative owner receipt).
+			checks.sync(state.reload(doc))
+			row = frappe.get_doc(state.ISSUE, row.name)
+			if row.state == "Open":
+				fail("AWD_ON_HOLD", {"reason": "funding_not_confirmed", "issue": row.name})
+			proof = "Budget confirmation read"
 		history = records.loads(row.detail_json)
 		history.setdefault("dispositions", []).append({"outcome": chosen, "reason": cstr(reason).strip(), "evidence": proof, "next_action": cstr(next_action).strip(),
 			"by": user, "at": str(clock.now())})
 		if chosen in (NO_MATERIAL, ENDED, NOT_SUBSTANTIATED, OWNER_CONFIRMED):
 			records.update(row, detail_json=records.dumps(history))
-			issues.resolve(row, disposition=chosen, reason=reason, evidence=proof, next_action=next_action, user=user)
-			if chosen == OWNER_CONFIRMED:
+			if not funding_gate:  # Budget's confirmation already closed it
+				issues.resolve(row, disposition=chosen, reason=reason, evidence=proof, next_action=next_action, user=user)
+			if chosen == OWNER_CONFIRMED and not funding_gate:
 				checks.sync(state.reload(doc))
 		elif chosen in PROPOSALS:
 			history["proposal"] = {"outcome": chosen, "reason": cstr(reason).strip(), "next_action": cstr(next_action).strip(), "by": user, "at": str(clock.now()),
