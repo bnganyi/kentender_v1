@@ -77,12 +77,15 @@ def control_shape(scope: str, fields: bool = False) -> tuple:
 	Owner, 6 Oct 2026: a grey-filled, 8px-cornered secondary button read as the same kind of object as a grey status pill, and the soft
 	corners felt too playful. So a button is a 2px-cornered rectangle, a secondary is outlined on white (grey fill only on hover), and
 	a field shares that corner and carries a visible border. Pills, cards and sheets keep their own rounding. Contrast of the 1px rule
-	against white (neutral-600) is 4.2:1, above the 3:1 non-text minimum.
+	against white is 3.2:1 (#909090), just above the 3:1 non-text minimum; neutral-600 (4.2:1) read as black next to the label (owner, 6 Oct
+	2026), so it is now only the hover edge.
 	"""
 	rules = [
-		f"{scope} {{\n\t--radius-control: 2px;\n}}",
+		f"{scope} {{\n\t--radius-control: 2px;\n\t--color-control-border: #909090;\n}}",
 		f"{scope} .btn {{\n\tborder-radius: var(--radius-control);\n}}",
-		f"{scope} .btn-secondary {{\n\tbackground: var(--color-surface);\n\tborder-color: var(--color-neutral-600);\n}}",
+		f"{scope} .btn-secondary {{\n\tbackground: var(--color-surface);\n\tborder-color: var(--color-control-border);\n}}",
+		f"{scope} .btn-secondary:hover:not(:disabled) {{\n\tborder-color: var(--color-neutral-600);\n}}",
+		f"{scope} .btn-secondary.kt-danger:hover:not(:disabled) {{\n\tborder-color: var(--status-critical);\n}}",
 		f"{scope} .btn-secondary:hover:not(:disabled) {{\n\tbackground: var(--color-neutral-100);\n}}",
 		f"{scope} .btn-secondary:active:not(:disabled) {{\n\tbackground: var(--color-neutral-200);\n}}",
 		f"{scope} .btn-secondary:disabled {{\n\tbackground: transparent;\n\tborder-color: var(--color-neutral-300);\n}}",
@@ -96,8 +99,8 @@ def control_shape(scope: str, fields: bool = False) -> tuple:
 	]
 	if fields:
 		rules += [
-			f"{scope} .input,\n{scope} .date-field {{\n\tborder-radius: var(--radius-control);\n\tborder-color: var(--color-neutral-600);\n}}",
-			f"{scope} .input:hover:not(:disabled):not(:focus-visible) {{\n\tborder-color: var(--color-neutral-700);\n}}",
+			f"{scope} .input,\n{scope} .date-field {{\n\tborder-radius: var(--radius-control);\n\tborder-color: var(--color-control-border);\n}}",
+			f"{scope} .input:hover:not(:disabled):not(:focus-visible) {{\n\tborder-color: var(--color-neutral-600);\n}}",
 		]
 	return tuple(rules)
 

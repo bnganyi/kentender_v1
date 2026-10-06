@@ -3357,6 +3357,7 @@
 
 .kt-industry {
 	--radius-control: 2px;
+	--color-control-border: #909090;
 }
 
 .kt-industry .btn {
@@ -3365,7 +3366,15 @@
 
 .kt-industry .btn-secondary {
 	background: var(--color-surface);
+	border-color: var(--color-control-border);
+}
+
+.kt-industry .btn-secondary:hover:not(:disabled) {
 	border-color: var(--color-neutral-600);
+}
+
+.kt-industry .btn-secondary.kt-danger:hover:not(:disabled) {
+	border-color: var(--status-critical);
 }
 
 .kt-industry .btn-secondary:hover:not(:disabled) {
@@ -3397,11 +3406,11 @@
 .kt-industry .input,
 .kt-industry .date-field {
 	border-radius: var(--radius-control);
-	border-color: var(--color-neutral-600);
+	border-color: var(--color-control-border);
 }
 
 .kt-industry .input:hover:not(:disabled):not(:focus-visible) {
-	border-color: var(--color-neutral-700);
+	border-color: var(--color-neutral-600);
 }
 
 /* Part 7: the table pager (table-pagination standard) */

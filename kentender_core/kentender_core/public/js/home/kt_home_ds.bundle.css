@@ -576,6 +576,7 @@
 
 .kt-industry.kt-home {
 	--radius-control: 2px;
+	--color-control-border: #909090;
 }
 
 .kt-industry.kt-home .btn {
@@ -584,7 +585,15 @@
 
 .kt-industry.kt-home .btn-secondary {
 	background: var(--color-surface);
+	border-color: var(--color-control-border);
+}
+
+.kt-industry.kt-home .btn-secondary:hover:not(:disabled) {
 	border-color: var(--color-neutral-600);
+}
+
+.kt-industry.kt-home .btn-secondary.kt-danger:hover:not(:disabled) {
+	border-color: var(--status-critical);
 }
 
 .kt-industry.kt-home .btn-secondary:hover:not(:disabled) {
