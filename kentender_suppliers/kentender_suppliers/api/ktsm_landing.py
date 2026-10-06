@@ -4,8 +4,10 @@
 import json
 
 import frappe
+from frappe import _
 
 from kentender_suppliers.api import smw_workflow
+from kentender_suppliers.services import registry_access
 
 
 _OWNERSHIP_QUEUES = frozenset({"my_work", "all", "approved", "blocked"})
@@ -24,6 +26,7 @@ _STATE_QUEUES = frozenset(
 @frappe.whitelist()
 def get_landing() -> dict:
 	"""Workbench shell payload: KPI, queue counters, and filter metadata."""
+	_assert_registry_access()
 	dt = "KTSM Supplier Profile"
 	category_rows = frappe.get_all(
 		"KTSM Supplier Category",
@@ -153,6 +156,7 @@ def _code_for_profile(profile_name: str) -> str:
 @frappe.whitelist()
 def get_suppliers(filters: str | dict | None = None) -> dict:
 	"""Filterable list payload for left workbench panel."""
+	_assert_registry_access()
 	fx = _parse_filters(filters)
 	db_filters = _profile_filters(fx)
 	rows = frappe.get_all(
@@ -256,19 +260,9 @@ def _next_supplier_code() -> str:
 
 
 def _assert_registry_access() -> None:
-	roles = set(frappe.get_roles())
-	if roles & {
-		"System Manager",
-		"Administrator",
-		"KenTender Supplier Registry Officer",
-		"KenTender Compliance Officer",
-		"KenTender Approving Authority",
-		"Procurement Officer",
-		"Procurement Planner",
-		"Planning Authority",
-	}:
-		return
-	frappe.throw("Not permitted for supplier builder operations.")
+	registry_access.require_capability(
+		"read_registry", _("Not permitted for supplier builder operations.")
+	)
 
 
 def _action_defs(approval_status: str, operational_status: str, compliance_status: str, docs_missing: bool) -> list[dict]:
@@ -304,6 +298,7 @@ def _action_defs(approval_status: str, operational_status: str, compliance_statu
 @frappe.whitelist()
 def get_supplier_detail(supplier_code: str) -> dict:
 	"""Detail payload for right workbench panel."""
+	_assert_registry_access()
 	pname = _resolve_profile_name_by_code((supplier_code or "").strip())
 	if not pname:
 		return {"ok": False, "error": "NOT_FOUND"}
@@ -424,6 +419,7 @@ def get_supplier_detail(supplier_code: str) -> dict:
 @frappe.whitelist()
 def perform_action(action: str, supplier_code: str, reason: str | None = None) -> dict:
 	"""Dispatch workbench actions by business code then return fresh detail."""
+	_assert_registry_access()
 	pname = _resolve_profile_name_by_code((supplier_code or "").strip())
 	if not pname:
 		return {"ok": False, "error": "NOT_FOUND"}

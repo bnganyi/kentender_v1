@@ -8,6 +8,7 @@ import time
 import frappe
 from frappe import _
 from frappe.exceptions import PermissionError
+from frappe.rate_limiter import rate_limit
 from frappe.utils import now_datetime
 from frappe.utils.file_manager import save_file
 
@@ -20,14 +21,24 @@ def _require_login() -> None:
 		frappe.throw(_("Log in to use this method."), exc=PermissionError)
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=5, seconds=60 * 60)
 def ktsm_register(
 	supplier_name: str,
 	primary_email: str,
 	primary_contact_name: str = "",
 	supplier_type: str = "Company",
 ) -> dict:
-	"""E1: public registration; Supplier + Profile + (optional) Website user + API access; smoke §SCENARIO 1."""
+	"""E1: public registration; Supplier + Profile + (optional) Website user + API access; smoke §SCENARIO 1.
+
+	AUD-XC-020 (owner default Q5, 6 Oct 2026): a public, unauthenticated write
+	with no verified e-mail. The writes still need `ignore_permissions` because
+	a Guest holds no DocPerm on Supplier/User, so the guard is the content, not
+	the permission: the throttle above (5 per hour per address), POST only, a
+	login that already exists is never bound to the new profile, and a new
+	login is created disabled until the address is verified. The supported
+	onboarding route is `supplier_accounts.register_supplier_organisation`.
+	"""
 	uname = _ensure_website_user_for_registration(
 		primary_email, (primary_contact_name or supplier_name or "Supplier")
 	)
@@ -79,6 +90,11 @@ def _ensure_website_user_for_registration(email: str, display_first_name: str) -
 	if not email or "@" not in email:
 		return None
 	# Frappe `User` name is typically the email for login.
+	if frappe.db.exists("User", email):
+		# An existing login is never bound to a profile created by an
+		# unauthenticated caller: that would hand someone else's account a
+		# supplier identity they did not ask for (AUD-XC-020).
+		return None
 	if not frappe.db.exists("User", email):
 		usr = frappe.get_doc(
 			{
@@ -87,6 +103,8 @@ def _ensure_website_user_for_registration(email: str, display_first_name: str) -
 				"first_name": (display_first_name or "Supplier")[:140],
 				"send_welcome_email": 0,
 				"user_type": "Website User",
+				# Not usable until the address is verified.
+				"enabled": 0,
 			}
 		)
 		if frappe.db.exists("Role", "KenTender External Supplier"):
@@ -210,7 +228,7 @@ def ktsm_get_status(supplier_code: str) -> dict:
 	"""E2: operational + approval + compliance snapshot (no internal ids)."""
 	_require_login()
 	_assert_may_access_supplier(supplier_code)
-	return eligibility.check_supplier_eligibility(supplier_code, None)
+	return eligibility.compute_eligibility(supplier_code, None)
 
 
 @frappe.whitelist()
