@@ -403,11 +403,18 @@
       "source_sha256": "904eba283646caa6f964a3b43f2f259c38a1fc61e87bc22b78273d123c4d526b",
       "approval_record": "Project Owner, 4 October 2026, verbatim: “Yes”, answering “Shall I apply this pass, and then approve KT-STD v1.22, HOME v0.6 and ANL v0.8 together?”",
       "approval_history": {
-        "proposed_version": "1.22",
-        "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_22.md",
+        "proposed_version": "1.23",
+        "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_23.md",
         "proposal_status": "Project Owner review",
-        "proposed_base_version": "1.15",
-        "proposed_revision": null
+        "proposed_base_version": "1.22",
+        "proposed_revision": null,
+        "proposed_scope": "Journey position figure, compact tracker and blocked next-step shape (sections 2.9.1 to 2.9.3); design option 2e approved 6 October 2026 (DS-REV-004). v1.22 remains the approved standard.",
+        "previous_proposal": {
+          "proposed_version": "1.22",
+          "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_22.md",
+          "proposed_base_version": "1.15",
+          "outcome": "Approved 4 October 2026"
+        }
       }
     },
     {

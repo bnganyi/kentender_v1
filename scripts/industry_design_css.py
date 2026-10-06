@@ -145,6 +145,40 @@ PAGER = (
 
 
 
+#: DS-REV-004 (Project Owner approved 6 Oct 2026, "2e it is. Approved"): the journey position figure, the compact track and the blocked next step.
+#: The pack does not carry these yet; the rules are the handoff's, scoped to `.kt-industry`, with the narrow-screen, forced-colours and print handling
+#: it asks for. They sit after the pack's `.kt-journey-*` rules, so the compact form (`.is-compact`) overrides the 4px slabs.
+JOURNEY = (
+	".kt-industry .kt-journey-lead {\n\tdisplay: grid;\n\tgap: 32px;\n\talign-items: start;\n}",
+	".kt-industry .kt-journey-lead.has-position {\n\tgrid-template-columns: 200px minmax(0, 1fr);\n}",
+	".kt-industry .kt-journey-position {\n\tdisplay: grid;\n\tgap: 4px;\n\tpadding-right: 24px;\n\tborder-right: 1px solid var(--color-divider);\n}",
+	".kt-industry .kt-journey-position-label {\n\tfont-size: 12px;\n\tfont-weight: 600;\n\tcolor: var(--color-neutral-700);\n}",
+	".kt-industry .kt-journey-position-value {\n\tdisplay: flex;\n\talign-items: baseline;\n\tgap: 6px;\n\tline-height: 1;\n\tfont-variant-numeric: tabular-nums;\n}",
+	".kt-industry .kt-journey-position-n {\n\tfont-size: 44px;\n\tfont-weight: 600;\n\tcolor: var(--color-figure);\n}",
+	".kt-industry .kt-journey-position-of {\n\tfont-size: 20px;\n\tfont-weight: 500;\n\tcolor: var(--color-neutral-600);\n}",
+	".kt-industry .kt-journey-position-state {\n\tmargin-top: 6px;\n\tfont-size: 12px;\n\tfont-weight: 600;\n\tcolor: var(--color-figure);\n}",
+	".kt-industry .kt-journey-position.is-blocked .kt-journey-position-n,\n.kt-industry .kt-journey-position.is-blocked .kt-journey-position-state {\n\tcolor: var(--status-attention);\n}",
+	"/* D1/K3, applied as recommended: with every stage done the figure reads \"N of N\" and the word Done in the live status colour. */\n.kt-industry .kt-journey-position.is-done .kt-journey-position-state {\n\tcolor: var(--status-live);\n}",
+	".kt-industry .kt-journey.is-compact {\n\tgap: 3px;\n\tpadding-top: 6px;\n}",
+	".kt-industry .kt-journey.is-compact .kt-journey-stage {\n\tgap: 10px;\n}",
+	".kt-industry .kt-journey.is-compact .kt-journey-bar {\n\theight: 6px;\n\tborder-radius: 3px;\n}",
+	".kt-industry .kt-journey.is-compact .kt-journey-title {\n\tgap: 5px;\n\tpadding-right: 12px;\n\tfont-size: 13px;\n}",
+	".kt-industry .kt-journey.is-compact .kt-journey-num {\n\tfont-family: inherit;\n\tfont-size: inherit;\n\tfont-variant-numeric: tabular-nums;\n}",
+	".kt-industry .kt-journey.is-compact .is-current .kt-journey-title,\n.kt-industry .kt-journey.is-compact .is-blocked .kt-journey-title {\n\tfont-weight: 600;\n}",
+	".kt-industry .kt-journey-check {\n\tflex: none;\n\twidth: 12px;\n\theight: 12px;\n\ttransform: translateY(1px);\n\tfill: none;\n\tstroke: var(--status-live);\n\tstroke-width: 2.5;\n\tstroke-linecap: round;\n\tstroke-linejoin: round;\n}",
+	"/* The per-stage state stays in the markup for assistive technology; the figure and the check carry it on screen (KT-STD-001 section 2.9.2, v1.23). */\n.kt-industry .kt-journey.is-compact .kt-journey-state {\n\tposition: absolute;\n\twidth: 1px;\n\theight: 1px;\n\toverflow: hidden;\n\tclip: rect(0 0 0 0);\n\twhite-space: nowrap;\n}",
+	".kt-industry .kt-journey.is-compact .kt-journey-stage {\n\tposition: relative;\n}",
+	"/* Between 600 and about 760px five labels would sit in about 350px: stack the figure above the track (proposed in the handoff; checked at 700px). */\n@container (max-width: 760px) {\n\t.kt-industry .kt-journey-lead.has-position {\n\t\tgrid-template-columns: 1fr;\n\t\tgap: 16px;\n\t}\n\t.kt-industry .kt-journey-position {\n\t\tborder-right: 0;\n\t\tpadding-right: 0;\n\t}\n}",
+	"/* Under 600px the one-line form takes over, as before; the figure goes with the row it leads. */\n@container (max-width: 600px) {\n\t.kt-industry .kt-journey-host > .kt-journey-lead {\n\t\tdisplay: none;\n\t}\n}",
+	"@media (forced-colors: active) {\n\t.kt-industry .kt-journey.is-compact .kt-journey-bar {\n\t\theight: 0;\n\t\tborder-top-width: 6px;\n\t}\n\t.kt-industry .kt-journey-check {\n\t\tstroke: CanvasText;\n\t}\n}",
+	"@media print {\n\t.kt-industry .kt-journey.is-compact .kt-journey-state {\n\t\tposition: static;\n\t\twidth: auto;\n\t\theight: auto;\n\t\toverflow: visible;\n\t\tclip: auto;\n\t\twhite-space: normal;\n\t}\n\t.kt-industry .kt-journey-check {\n\t\tstroke: #000;\n\t}\n\t.kt-industry .kt-journey-position-n,\n\t.kt-industry .kt-journey-position-state {\n\t\tcolor: #000 !important;\n\t}\n}",
+	"/* The blocked next step: a 3px warning rule over the warning tint, square on the rule side, no icon. The rule is a status mark, not an accent rule. */\n.kt-industry .kt-notice.is-warning.kt-next-step {\n\tdisplay: grid;\n\tgap: 3px;\n\tpadding: 12px 16px 14px 14px;\n\tborder-left: 3px solid var(--status-attention);\n\tborder-radius: 0 6px 6px 0;\n\tbackground: var(--status-attention-bg);\n}",
+	".kt-industry .kt-notice.is-warning.kt-next-step .kt-notice-icon {\n\tdisplay: none;\n}",
+	".kt-industry .kt-notice.is-warning.kt-next-step .kt-next-step-label {\n\tcolor: var(--status-attention);\n}",
+	"@media (forced-colors: active) {\n\t.kt-industry .kt-notice.is-warning.kt-next-step {\n\t\tborder: 1px solid CanvasText;\n\t\tborder-left-width: 3px;\n\t}\n}",
+)
+
+
 def _pack_nodes():
 	source = Path(sorted(glob.glob(str(ROOT / SOURCE)))[0])
 	return source, tinycss2.parse_stylesheet(source.read_text(encoding="utf-8"), skip_comments=True, skip_whitespace=True)
@@ -267,6 +301,7 @@ def build() -> str:
 	parts += ["/* Part 5: table structure inside the pack's rules */", *STRUCTURE]
 	parts += ["/* Part 6: buttons and fields are rectangular and outlined, so they cannot be mistaken for a status pill */", *gen.control_shape(".kt-industry", fields=True)]
 	parts += ["/* Part 7: the table pager (table-pagination standard) */", *PAGER]
+	parts += ["/* Part 8: journey position figure, compact track and blocked next step (DS-REV-004) */", *JOURNEY]
 	return HEADER.format(source=source.relative_to(ROOT)) + "\n\n".join(parts) + "\n"
 
 

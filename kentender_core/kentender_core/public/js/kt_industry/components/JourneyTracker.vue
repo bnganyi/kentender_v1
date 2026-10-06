@@ -13,6 +13,16 @@
      the host is narrower than 600px (a container query on the host), so a
      390px screen never scrolls sideways.
 
+     DS-REV-004 (Project Owner approved 6 Oct 2026, "2e it is. Approved"): the
+     row leads with one position figure, "{n} of {N}" with "Current · {holder}"
+     or "Blocked · {holder}" beneath, and the track is the compact form: 6px
+     bars rounded on every segment, a check in place of the number on done
+     stages, and each stage's state kept as text for assistive technology and
+     print only (the figure states the current state). The figure is derived
+     from the supplied stages and adds no fact. With every stage done it reads
+     "N of N · Done"; with none started it is left out (decision D1/K3,
+     applied as recommended).
+
      Everything shown comes from the server's `journey` answer
      (kentender_core.services.next_step.journey); nothing is composed here,
      and an absent journey draws nothing (§2.9.3 rule 8). -->
@@ -25,20 +35,33 @@
 			<p v-if="journey.reduced_parts" class="kt-journey-reduced-text">{{ journey.reduced_parts.prefix }}<span class="kt-journey-current">{{ journey.reduced_parts.label }}</span>{{ journey.reduced_parts.suffix }}</p>
 		</div>
 		<template v-else>
-			<ol class="kt-journey" :aria-label="ariaLabel" :style="{ '--kt-journey-n': journey.stages.length }">
-				<li
-					v-for="(stage, index) in journey.stages"
-					:key="stage.code"
-					class="kt-journey-stage"
-					:class="markerClass(stage)"
-					:data-stage="stage.code"
-					:aria-current="stage.marker === 'current' || stage.marker === 'blocked' ? 'step' : null"
-				>
-					<span class="kt-journey-bar" aria-hidden="true"></span>
-					<span class="kt-journey-title"><span class="kt-journey-num">{{ index + 1 }}</span>{{ stage.label }}</span>
-					<span class="kt-journey-state">{{ stateLine(stage) }}</span>
-				</li>
-			</ol>
+			<div class="kt-journey-lead" :class="{ 'has-position': !!position }">
+				<div v-if="position" class="kt-journey-position" :class="{ 'is-blocked': position.blocked, 'is-done': position.done }" aria-hidden="true" data-testid="kt-journey-position">
+					<span class="kt-journey-position-label">{{ t("Stage") }}</span>
+					<span class="kt-journey-position-value">
+						<span class="kt-journey-position-n">{{ position.n }}</span>
+						<span class="kt-journey-position-of">{{ t("of") }} {{ position.total }}</span>
+					</span>
+					<span class="kt-journey-position-state">{{ position.state }}</span>
+				</div>
+				<ol class="kt-journey is-compact" :aria-label="ariaLabel" :style="{ '--kt-journey-n': journey.stages.length }">
+					<li
+						v-for="(stage, index) in journey.stages"
+						:key="stage.code"
+						class="kt-journey-stage"
+						:class="markerClass(stage)"
+						:data-stage="stage.code"
+						:aria-current="stage.marker === 'current' || stage.marker === 'blocked' ? 'step' : null"
+					>
+						<span class="kt-journey-bar" aria-hidden="true"></span>
+						<span class="kt-journey-title">
+							<svg v-if="stage.marker === 'done'" class="kt-journey-check" aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg>
+							<span v-else class="kt-journey-num">{{ index + 1 }}</span>{{ stage.label }}
+						</span>
+						<span class="kt-journey-state">{{ stateLine(stage) }}</span>
+					</li>
+				</ol>
+			</div>
 			<!-- the same answer, one line: shown instead of the row under 600px -->
 			<div class="kt-journey-compact" aria-hidden="true">
 				<div class="kt-journey-bars">
@@ -65,14 +88,34 @@ defineEmits(["link"]);
 
 const ariaLabel = computed(() => props.label || "Journey");
 
+const t = (text) => (typeof window !== "undefined" && typeof window.__ === "function" ? window.__(text) : text);
+
+// The position figure: the blocked stage, else the current one; with every
+// stage done, the last; with none started, nothing.
+const position = computed(() => {
+	const stages = (props.journey && props.journey.stages) || [];
+	if (!stages.length) return null;
+	let at = stages.findIndex((stage) => stage.marker === "blocked");
+	if (at < 0) at = stages.findIndex((stage) => stage.marker === "current");
+	if (at >= 0) {
+		const stage = stages[at];
+		const state = stage.holder ? `${stage.marker_label} · ${stage.holder}` : stage.marker_label;
+		return { n: at + 1, total: stages.length, blocked: stage.marker === "blocked", done: false, state };
+	}
+	if (stages.every((stage) => stage.marker === "done")) {
+		return { n: stages.length, total: stages.length, blocked: false, done: true, state: stages[stages.length - 1].marker_label };
+	}
+	return null;
+});
+
 function markerClass(stage) {
 	return `is-${String(stage.marker || "not_started").replace("_", "-")}`;
 }
 
-// The marker words are the server's (`marker_label`); the check mark and the
-// holder separator are the design system's state-line form.
+// The marker words are the server's (`marker_label`); the holder separator is
+// the design system's state-line form. In the compact track this line is for
+// assistive technology and print only: a done stage shows its check instead.
 function stateLine(stage) {
-	if (stage.marker === "done") return `✓ ${stage.marker_label}`;
 	if ((stage.marker === "current" || stage.marker === "blocked") && stage.holder) return `${stage.marker_label} · ${stage.holder}`;
 	return stage.marker_label;
 }

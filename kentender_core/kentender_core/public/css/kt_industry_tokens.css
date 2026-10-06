@@ -3508,3 +3508,194 @@
 		padding-inline: var(--space-2);
 	}
 }
+
+/* Part 8: journey position figure, compact track and blocked next step (DS-REV-004) */
+
+.kt-industry .kt-journey-lead {
+	display: grid;
+	gap: 32px;
+	align-items: start;
+}
+
+.kt-industry .kt-journey-lead.has-position {
+	grid-template-columns: 200px minmax(0, 1fr);
+}
+
+.kt-industry .kt-journey-position {
+	display: grid;
+	gap: 4px;
+	padding-right: 24px;
+	border-right: 1px solid var(--color-divider);
+}
+
+.kt-industry .kt-journey-position-label {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--color-neutral-700);
+}
+
+.kt-industry .kt-journey-position-value {
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+
+.kt-industry .kt-journey-position-n {
+	font-size: 44px;
+	font-weight: 600;
+	color: var(--color-figure);
+}
+
+.kt-industry .kt-journey-position-of {
+	font-size: 20px;
+	font-weight: 500;
+	color: var(--color-neutral-600);
+}
+
+.kt-industry .kt-journey-position-state {
+	margin-top: 6px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--color-figure);
+}
+
+.kt-industry .kt-journey-position.is-blocked .kt-journey-position-n,
+.kt-industry .kt-journey-position.is-blocked .kt-journey-position-state {
+	color: var(--status-attention);
+}
+
+/* D1/K3, applied as recommended: with every stage done the figure reads "N of N" and the word Done in the live status colour. */
+.kt-industry .kt-journey-position.is-done .kt-journey-position-state {
+	color: var(--status-live);
+}
+
+.kt-industry .kt-journey.is-compact {
+	gap: 3px;
+	padding-top: 6px;
+}
+
+.kt-industry .kt-journey.is-compact .kt-journey-stage {
+	gap: 10px;
+}
+
+.kt-industry .kt-journey.is-compact .kt-journey-bar {
+	height: 6px;
+	border-radius: 3px;
+}
+
+.kt-industry .kt-journey.is-compact .kt-journey-title {
+	gap: 5px;
+	padding-right: 12px;
+	font-size: 13px;
+}
+
+.kt-industry .kt-journey.is-compact .kt-journey-num {
+	font-family: inherit;
+	font-size: inherit;
+	font-variant-numeric: tabular-nums;
+}
+
+.kt-industry .kt-journey.is-compact .is-current .kt-journey-title,
+.kt-industry .kt-journey.is-compact .is-blocked .kt-journey-title {
+	font-weight: 600;
+}
+
+.kt-industry .kt-journey-check {
+	flex: none;
+	width: 12px;
+	height: 12px;
+	transform: translateY(1px);
+	fill: none;
+	stroke: var(--status-live);
+	stroke-width: 2.5;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+/* The per-stage state stays in the markup for assistive technology; the figure and the check carry it on screen (KT-STD-001 section 2.9.2, v1.23). */
+.kt-industry .kt-journey.is-compact .kt-journey-state {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+.kt-industry .kt-journey.is-compact .kt-journey-stage {
+	position: relative;
+}
+
+/* Between 600 and about 760px five labels would sit in about 350px: stack the figure above the track (proposed in the handoff; checked at 700px). */
+@container (max-width: 760px) {
+	.kt-industry .kt-journey-lead.has-position {
+		grid-template-columns: 1fr;
+		gap: 16px;
+	}
+	.kt-industry .kt-journey-position {
+		border-right: 0;
+		padding-right: 0;
+	}
+}
+
+/* Under 600px the one-line form takes over, as before; the figure goes with the row it leads. */
+@container (max-width: 600px) {
+	.kt-industry .kt-journey-host > .kt-journey-lead {
+		display: none;
+	}
+}
+
+@media (forced-colors: active) {
+	.kt-industry .kt-journey.is-compact .kt-journey-bar {
+		height: 0;
+		border-top-width: 6px;
+	}
+	.kt-industry .kt-journey-check {
+		stroke: CanvasText;
+	}
+}
+
+@media print {
+	.kt-industry .kt-journey.is-compact .kt-journey-state {
+		position: static;
+		width: auto;
+		height: auto;
+		overflow: visible;
+		clip: auto;
+		white-space: normal;
+	}
+	.kt-industry .kt-journey-check {
+		stroke: #000;
+	}
+	.kt-industry .kt-journey-position-n,
+	.kt-industry .kt-journey-position-state {
+		color: #000 !important;
+	}
+}
+
+/* The blocked next step: a 3px warning rule over the warning tint, square on the rule side, no icon. The rule is a status mark, not an accent rule. */
+.kt-industry .kt-notice.is-warning.kt-next-step {
+	display: grid;
+	gap: 3px;
+	padding: 12px 16px 14px 14px;
+	border-left: 3px solid var(--status-attention);
+	border-radius: 0 6px 6px 0;
+	background: var(--status-attention-bg);
+}
+
+.kt-industry .kt-notice.is-warning.kt-next-step .kt-notice-icon {
+	display: none;
+}
+
+.kt-industry .kt-notice.is-warning.kt-next-step .kt-next-step-label {
+	color: var(--status-attention);
+}
+
+@media (forced-colors: active) {
+	.kt-industry .kt-notice.is-warning.kt-next-step {
+		border: 1px solid CanvasText;
+		border-left-width: 3px;
+	}
+}

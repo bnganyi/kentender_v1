@@ -98,8 +98,10 @@ class TestIndustryStylesheet(IntegrationTestCase):
 		old = _at_rules((REPO / "scripts/industry_old_stylesheet.css").read_text(encoding="utf-8"))
 		pack = _at_rules(Path(sorted(glob.glob(str(REPO / self.ids.SOURCE)))[0]).read_text(encoding="utf-8"))
 		built = _at_rules(self.css)
+		# Rules the generator itself authors (JOURNEY, DS-REV-004: the stacked and narrow journey layouts) are not in either source.
+		authored = {"container": sum(len(re.findall(r"^\s*@container", rule, flags=re.M)) for rule in self.ids.JOURNEY), "keyframes": 0}
 		for kind in ("container", "keyframes"):
-			self.assertEqual(built.get(kind, 0), old.get(kind, 0) + pack.get(kind, 0), f"@{kind} rules were dropped")
+			self.assertEqual(built.get(kind, 0), old.get(kind, 0) + pack.get(kind, 0) + authored[kind], f"@{kind} rules were dropped")
 
 	def test_no_module_stylesheet_defines_a_design_token_in_terms_of_the_old_ones(self):
 		"""`--color-bg: var(--kt-color-bg)` while `--kt-color-bg` is `var(--color-bg)` is a cycle: both become invalid and the page ground vanishes (found 5 Oct 2026)."""
