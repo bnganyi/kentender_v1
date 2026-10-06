@@ -72,6 +72,13 @@ class ITTenderPublicationRecord(Document):
 		if self.is_new() or getattr(self.flags, "ignore_publication_boundary", False):
 			return
 		prior_status = cstr(frappe.db.get_value(self.doctype, self.name, "status") or "")
+		# AUD-XC-011: status moves only through the publication services, which set
+		# `ignore_publication_boundary`; a direct write may not mark a record Published.
+		if cstr(self.status or "") != prior_status:
+			frappe.throw(
+				frappe._("Publication status changes only through the publication actions."),
+				title="PUBLICATION_STATUS_COMMAND_ONLY",
+			)
 		if prior_status in TERMINAL_STATUSES and not getattr(
 			self.flags, "ignore_publication_lock", False
 		):

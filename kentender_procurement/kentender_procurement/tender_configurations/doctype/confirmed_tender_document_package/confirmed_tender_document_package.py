@@ -29,6 +29,13 @@ class ConfirmedTenderDocumentPackage(Document):
 		# Confirmed / awaiting packages: lock artifact fields (handoff APIs use flags).
 		if getattr(self.flags, "ignore_package_immutability", False):
 			return
+		# AUD-XC-011: package status moves only through the handoff service, which sets
+		# `ignore_package_immutability`; a direct write may not invalidate a package.
+		if cstr(self.package_status or "") != cstr(prior.package_status):
+			frappe.throw(
+				frappe._("Package status changes only through the publication handoff."),
+				title="PACKAGE_STATUS_COMMAND_ONLY",
+			)
 		if cstr(prior.package_status) in ("Confirmed", "Awaiting Publication Setup"):
 			locked = (
 				"tender_html",

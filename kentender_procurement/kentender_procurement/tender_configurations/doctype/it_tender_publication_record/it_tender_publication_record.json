@@ -314,7 +314,19 @@
    "print": 1,
    "read": 1,
    "report": 0,
-   "role": "All",
+   "role": "Tender Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 1,
+   "read": 1,
+   "report": 0,
+   "role": "Planning Authority",
    "share": 0,
    "write": 1
   }
