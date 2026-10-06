@@ -6,6 +6,8 @@ import frappe
 
 
 def execute() -> None:
+	if not frappe.db.table_exists("Procurement Plan Item"):
+		return
 	index = frappe.db.sql(
 		"show index from `tabProcurement Plan Item` where Key_name='uniq_pln_formation_batch'",
 		as_dict=True,

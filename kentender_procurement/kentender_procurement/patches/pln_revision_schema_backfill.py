@@ -6,18 +6,27 @@ import frappe
 
 
 def _has_index(table: str, name: str) -> bool:
+	if not frappe.db.table_exists(table.removeprefix("tab")):
+		return True  # nothing to index: the table was dropped by an earlier patch
 	return bool(frappe.db.sql(f"show index from `{table}` where Key_name=%s", name))
 
 
 def _add_index(table: str, name: str, columns: str, *, unique: bool = False) -> None:
+	if not frappe.db.table_exists(table.removeprefix("tab")):
+		return
 	if _has_index(table, name):
 		return
 	keyword = "unique " if unique else ""
 	frappe.db.sql_ddl(f"alter table `{table}` add {keyword}index `{name}` ({columns})")
 
 
+def _has_column(doctype: str, column: str) -> bool:
+	"""``has_column`` raises ``TableMissingError`` for a dropped table; treat that as absent."""
+	return frappe.db.table_exists(doctype) and frappe.db.has_column(doctype, column)
+
+
 def execute() -> None:
-	if frappe.db.has_column("Procurement Plan Version", "open_version_slot"):
+	if _has_column("Procurement Plan Version", "open_version_slot"):
 		frappe.db.sql(
 			"""
 			update `tabProcurement Plan Version`
@@ -25,7 +34,7 @@ def execute() -> None:
 				when status in ('Draft', 'In review', 'Returned') then plan else null end
 			"""
 		)
-	if frappe.db.has_column("Plan Demand Allocation", "source_org_unit"):
+	if _has_column("Plan Demand Allocation", "source_org_unit") and frappe.db.table_exists("Demand"):
 		frappe.db.sql(
 			"""
 			update `tabPlan Demand Allocation` a
@@ -34,7 +43,7 @@ def execute() -> None:
 			where coalesce(a.source_org_unit, '') = ''
 			"""
 		)
-	if frappe.db.has_column("Plan Demand Allocation", "source_funding_allocation"):
+	if _has_column("Plan Demand Allocation", "source_funding_allocation") and frappe.db.table_exists("Demand Funding Allocation"):
 		frappe.db.sql(
 			"""
 			update `tabPlan Demand Allocation` a
@@ -43,7 +52,7 @@ def execute() -> None:
 			where coalesce(a.source_funding_allocation, '') = ''
 			"""
 		)
-	if frappe.db.has_column("Plan Demand Allocation", "active_hold_key"):
+	if _has_column("Plan Demand Allocation", "active_hold_key"):
 		frappe.db.sql(
 			"""
 			update `tabPlan Demand Allocation`
@@ -67,5 +76,5 @@ def execute() -> None:
 	_add_index("tabPlan Demand Allocation", "idx_pln_alloc_version", "`proposed_in_version`, `status`")
 
 	# Frappe model sync does not remove orphaned physical columns.
-	if frappe.db.has_column("Procurement Plan", "coordinating_org_unit"):
+	if _has_column("Procurement Plan", "coordinating_org_unit"):
 		frappe.db.sql_ddl("alter table `tabProcurement Plan` drop column `coordinating_org_unit`")
