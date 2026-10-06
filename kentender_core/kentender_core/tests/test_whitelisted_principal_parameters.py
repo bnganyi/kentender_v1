@@ -43,12 +43,6 @@ SUBJECT_NOT_ACTOR = {
 	("kentender_core.api.responsibility_api", "preview_responsibility_assignment", "user"),
 }
 
-# Retired Tender Management v2 (AUD-XC-003): its publication/availability API takes
-# a client `actor`. The surface is being removed, not repaired; until that lands
-# these modules are tolerated here and nowhere else. Delete this entry with the
-# code.
-RETIRED_TENDER_MANAGEMENT_V2 = "kentender_procurement.tender_management"
-
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[3]
 
 
@@ -84,7 +78,7 @@ def _acting_parameters(names) -> list[str]:
 
 
 def _is_tolerated(module: str, function: str, parameter: str) -> bool:
-	return (module, function, parameter) in SUBJECT_NOT_ACTOR or module.startswith(RETIRED_TENDER_MANAGEMENT_V2)
+	return (module, function, parameter) in SUBJECT_NOT_ACTOR
 
 
 def static_offenders(source: str, module: str) -> list[tuple[str, str, str]]:
@@ -132,12 +126,7 @@ class TestNoWhitelistedFunctionNamesTheActingPrincipal(IntegrationTestCase):
 			if "whitelist" not in path.read_text():
 				continue
 			module = _module_name(app, path)
-			try:
-				importlib.import_module(module)
-			except ImportError:
-				# Only the retired Tender Management v2 tree is allowed to be half-removed.
-				if not module.startswith(RETIRED_TENDER_MANAGEMENT_V2):
-					raise
+			importlib.import_module(module)
 		offenders = []
 		inspected = 0
 		for function in list(frappe.whitelisted):
