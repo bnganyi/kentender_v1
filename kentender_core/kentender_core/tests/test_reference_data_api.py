@@ -13,6 +13,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from kentender_core.api import reference_data_api as api
+from kentender_core.services.audit_event_service import purge_audit_events
 from kentender_core.services.reference_data_permissions import REFERENCE_DATA_MANAGER_ROLE
 
 
@@ -31,10 +32,10 @@ class TestReferenceDataApi(IntegrationTestCase):
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
+		purge_audit_events({"document_name": self.entity_code}, reason="reference data API test clean-up")
 		for doctype, filters in (
 			("Procuring Entity Version", [["procuring_entity", "=", self.entity_code]]),
 			("Procuring Entity", [["name", "=", self.entity_code]]),
-			("Audit Event", [["document_name", "=", self.entity_code]]),
 			("Reference Data Command Journal", [["document_name", "=", self.entity_code]]),
 			("PE Type", [["name", "like", f"%{self.suffix}%"]]),
 		):

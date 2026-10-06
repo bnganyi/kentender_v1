@@ -10,6 +10,7 @@ from uuid import uuid4
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.audit_event_service import purge_audit_events
 from kentender_core.services.reference_data_permissions import REFERENCE_DATA_MANAGER_ROLE
 from kentender_core.services.reference_data_queries import get_procuring_entity
 from kentender_core.services.reference_data_transitions import (
@@ -37,10 +38,10 @@ class TestReferenceDataPELifecycle(IntegrationTestCase):
 		frappe.get_doc("User", self.manager).add_roles(REFERENCE_DATA_MANAGER_ROLE)
 
 	def tearDown(self):
+		purge_audit_events({"document_name": ["like", f"PE-TEST-{self.suffix}%"]}, reason="PE lifecycle test clean-up")
 		for doctype, filters in (
 			("Procuring Entity Version", [["procuring_entity", "like", f"PE-TEST-{self.suffix}%"]]),
 			("Procuring Entity", [["entity_code", "like", f"PE-TEST-{self.suffix}%"]]),
-			("Audit Event", [["document_name", "like", f"PE-TEST-{self.suffix}%"]]),
 			("PE Type", [["name", "like", f"%{self.suffix}%"]]),
 		):
 			for name in frappe.get_all(doctype, filters=filters, pluck="name"):

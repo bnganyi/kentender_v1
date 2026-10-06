@@ -5,6 +5,7 @@ import json
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.audit_event_service import purge_audit_events
 from kentender_core.services.business_action_service import execute_business_action
 
 
@@ -50,6 +51,6 @@ class TestBusinessAction(IntegrationTestCase):
 		meta = row.metadata if isinstance(row.metadata, dict) else json.loads(row.metadata)
 		self.assertEqual(meta.get("action"), action)
 
-		frappe.delete_doc("Audit Event", rows[0], force=True, ignore_permissions=True)
+		purge_audit_events({"name": rows[0]}, reason="business action test clean-up")
 		frappe.delete_doc("Procuring Entity", pe.name, force=1)
 		frappe.db.commit()

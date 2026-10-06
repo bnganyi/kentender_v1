@@ -9,6 +9,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, now_datetime
 
+from kentender_core.services.audit_event_service import purge_audit_events
 from kentender_core.services.authorization_administration import activate_revised_routing_rule, change_assignment_state, create_draft_assignment, create_queue_membership, create_revised_routing_rule
 from kentender_core.services.authorization_diagnostics import authorize_support_record_view, diagnose_access
 from kentender_core.services.authorization_policy import ResourceContext
@@ -26,10 +27,10 @@ class TestAuthorizationGate04(IntegrationTestCase):
 		self.resource = ResourceContext("Procuring Entity", self.pe, self.pe, "2027/28")
 
 	def tearDown(self):
-		frappe.db.delete("Audit Event", {"performed_by": ["in", [self.user, self.support]]})
-		for doctype in ("Audit Event", "Workflow Routing Rule", "Workflow Queue Membership", "Workflow Queue", "Separation of Duties Rule", "Operational Scope Assignment", "Capability Profile"):
-			field = "document_name" if doctype == "Audit Event" else "name"
-			for name in frappe.get_all(doctype, filters=[[field, "like", f"%{self.suffix}%"]], pluck="name"):
+		purge_audit_events({"performed_by": ["in", [self.user, self.support]]}, reason="authorization gate 04 test clean-up")
+		purge_audit_events({"document_name": ["like", f"%{self.suffix}%"]}, reason="authorization gate 04 test clean-up")
+		for doctype in ("Workflow Routing Rule", "Workflow Queue Membership", "Workflow Queue", "Separation of Duties Rule", "Operational Scope Assignment", "Capability Profile"):
+			for name in frappe.get_all(doctype, filters=[["name", "like", f"%{self.suffix}%"]], pluck="name"):
 				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
 		for user in (self.user, self.support):
 			if frappe.db.exists("User", user):

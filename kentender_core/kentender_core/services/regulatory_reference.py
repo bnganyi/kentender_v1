@@ -41,7 +41,7 @@ from typing import Any
 import frappe
 from frappe.utils import flt, getdate
 
-from kentender_core.services.audit_event_service import log_audit_event
+from kentender_core.services.audit_event_service import log_audit_event, purge_audit_events
 from kentender_core.services.configuration_errors import ConfigurationError, fail_cfg
 from kentender_core.services.configuration_versions import version_editable
 from kentender_core.services.procurement_settings import (
@@ -1272,7 +1272,7 @@ def purge_playwright_rules(prefix: str = "PW-") -> int:
 				doc.flags.kt_fixture_purge = True
 				doc.delete(ignore_permissions=True)
 				for audit in frappe.get_all("Audit Event", filters={"document_type": doctype, "document_name": name}, pluck="name"):
-					frappe.delete_doc("Audit Event", audit, force=True, ignore_permissions=True, delete_permanently=True)
+					purge_audit_events({"name": audit}, reason="fixture profile purge")
 				count += 1
 	return count
 

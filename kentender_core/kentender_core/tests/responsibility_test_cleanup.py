@@ -28,6 +28,8 @@ from __future__ import annotations
 
 import frappe
 
+from kentender_core.services.audit_event_service import purge_audit_events
+
 PE_PATTERN = "KT-TEST-%"
 USER_PATTERN = "kt.test.%"
 UNIT_TYPE_PATTERN = "KT-TEST-%"
@@ -122,8 +124,8 @@ def purge(*, commit: bool = True) -> dict[str, int]:
 					pluck="name",
 				)
 			)
-		for name in audit:
-			frappe.delete_doc("Audit Event", name, force=1, ignore_permissions=True)
+		if audit:
+			purge_audit_events({"name": ["in", sorted(audit)]}, reason="responsibility test clean-up")
 		audit_rows = len(audit)
 	removed["Audit Event"] = audit_rows
 	for name in fiscal_years:

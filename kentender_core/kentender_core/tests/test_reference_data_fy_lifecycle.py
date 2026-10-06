@@ -11,6 +11,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import getdate
 
+from kentender_core.services.audit_event_service import purge_audit_events
 from kentender_core.services.reference_data_permissions import REFERENCE_DATA_MANAGER_ROLE
 from kentender_core.services.reference_data_transitions import (
 	create_fy_draft,
@@ -34,9 +35,9 @@ class TestReferenceDataFYLifecycle(IntegrationTestCase):
 		self.fy_name = f"FY-{self.start_year}-{self.start_year + 1}"
 
 	def tearDown(self):
+		purge_audit_events({"document_name": self.fy_name}, reason="FY lifecycle test clean-up")
 		for doctype, filters in (
 			("Financial Year", [["name", "=", self.fy_name]]),
-			("Audit Event", [["document_name", "=", self.fy_name]]),
 		):
 			for name in frappe.get_all(doctype, filters=filters, pluck="name"):
 				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)

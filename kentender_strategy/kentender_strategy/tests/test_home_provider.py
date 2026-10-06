@@ -34,6 +34,7 @@ from kentender_core.services import home_entries as he
 from kentender_core.services import home_support, home_time
 from kentender_core.services import home_workspace as hw
 from kentender_core.services import responsibility_administration as administration
+from kentender_core.services.audit_event_service import purge_audit_events
 from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
 from kentender_strategy.services import strategy_readiness as readiness
 from kentender_strategy.services.home_provider import entries
@@ -60,8 +61,7 @@ class TestStrategyHomeProvider(TechnicalReadTestBase):
 		frappe.set_user("Administrator")
 		cleanup = WORLD.get("cleanup", [])
 		names = [name for doctype, name in cleanup if doctype in ("Strategic Plan Version", "Strategic Plan")]
-		for name in frappe.get_all("Audit Event", filters={"document_name": ("in", names or ["-"])}, pluck="name"):
-			frappe.delete_doc("Audit Event", name, force=True, ignore_permissions=True)
+		purge_audit_events({"document_name": ("in", names or ["-"])}, reason="strategy home provider test clean-up")
 		for doctype, name in reversed(cleanup):
 			if frappe.db.exists(doctype, name):
 				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)

@@ -26,7 +26,7 @@ from typing import Any
 import frappe
 from frappe.utils import flt, getdate, now_datetime
 
-from kentender_core.services.audit_event_service import log_audit_event
+from kentender_core.services.audit_event_service import log_audit_event, purge_audit_events
 from kentender_core.services.configuration_versions import version_editable
 from kentender_core.services.configuration_errors import fail_cfg
 from kentender_core.services.reference_data_idempotency import request_payload, run_idempotent
@@ -1226,7 +1226,7 @@ def purge_fixture_profiles(fixture_namespace: str) -> int:
 			doc.flags.kt_fixture_purge = True
 			doc.delete(ignore_permissions=True)
 			for event in frappe.get_all("Audit Event", filters={"document_type": doctype, "document_name": name}, pluck="name"):
-				frappe.delete_doc("Audit Event", event, force=True, ignore_permissions=True, delete_permanently=True)
+				purge_audit_events({"name": event}, reason="fixture profile purge")
 			count += 1
 	return count
 
@@ -1243,7 +1243,7 @@ def purge_playwright_schedules(prefix: str = "Playwright") -> int:
 		doc.flags.kt_fixture_purge = True
 		doc.delete(ignore_permissions=True)
 		for audit in frappe.get_all("Audit Event", filters={"document_type": SCHEDULE_PROFILE, "document_name": name}, pluck="name"):
-			frappe.delete_doc("Audit Event", audit, force=True, ignore_permissions=True, delete_permanently=True)
+			purge_audit_events({"name": audit}, reason="fixture profile purge")
 		count += 1
 	return count
 
@@ -1265,7 +1265,7 @@ def purge_playwright_calendars(prefix: str = "Playwright") -> int:
 		doc.flags.kt_fixture_purge = True
 		doc.delete(ignore_permissions=True)
 		for audit in frappe.get_all("Audit Event", filters={"document_type": CALENDAR, "document_name": name}, pluck="name"):
-			frappe.delete_doc("Audit Event", audit, force=True, ignore_permissions=True, delete_permanently=True)
+			purge_audit_events({"name": audit}, reason="fixture profile purge")
 		count += 1
 	return count
 
