@@ -1,8 +1,8 @@
 /* Procurement Requisitions — REQ-CHG-001 v1.11 board v2 compositions.
  *
- * kt_industry_tokens.css carries the shared system (.kt-panel-lg, .kt-btn,
- * .kt-table, .kt-field, .kt-input, .kt-status, .kt-notice, .kt-meta-row,
- * .kt-timeline, .kt-disclosure, .kt-dialog, .kt-bar, .kt-seg-inline …). The
+ * kt_industry_tokens.css carries the shared system (.kt-panel-lg, .btn,
+ * .table, .field, .input, .kt-status, .kt-notice, .kt-meta-row,
+ * .kt-timeline, .kt-disclosure, .dialog, .kt-bar, .kt-seg-inline …). The
  * board draws a handful of compositions inline in its artboards (the progress
  * row, the work row, bordered review sections, the left-rule fact block, the
  * footer bar); they are named here once, scoped under .kt-req so no rule can
@@ -11,15 +11,6 @@
  */
 
 .kt-industry.kt-req {
-	--color-accent: var(--kt-color-accent);
-	--color-accent-100: var(--kt-color-accent-100);
-	--color-accent-700: var(--kt-color-accent-700);
-	--color-divider: var(--kt-color-divider);
-	--color-neutral-200: var(--kt-color-neutral-200);
-	--color-neutral-300: var(--kt-color-neutral-300);
-	--color-neutral-400: var(--kt-color-neutral-400);
-	--status-critical: var(--kt-status-critical);
-	--status-attention: var(--kt-status-attention);
 }
 
 /* The board frames each screen at 900 px; the live page keeps the frame and
@@ -93,21 +84,21 @@
 .kt-req .req-grid-2-tight { display: grid; grid-template-columns: 1fr 1fr; gap: var(--kt-space-3); }
 .kt-req .req-field-suffix { margin-top: 3px; }
 .kt-req .req-field-error { color: var(--kt-status-critical); font-size: 12px; }
-.kt-req .kt-input.is-invalid { border-color: var(--kt-status-critical); }
+.kt-req .input.is-invalid { border-color: var(--kt-status-critical); }
 
 /* The board's date field: the formatted date over a native date input. */
 .kt-req .req-date-field { position: relative; }
-.kt-req .req-date-field .kt-input { width: 100%; }
+.kt-req .req-date-field .input { width: 100%; }
 .kt-req .req-date-field .req-date-display { position: absolute; inset: 0 34px 0 11px; display: flex; align-items: center; font-size: 14px; pointer-events: none; }
-.kt-req .req-date-field .kt-input:not(:focus) { color: transparent; }
-.kt-req .req-date-field .kt-input:focus + .req-date-display { display: none; }
+.kt-req .req-date-field .input:not(:focus) { color: transparent; }
+.kt-req .req-date-field .input:focus + .req-date-display { display: none; }
 
 /* Dialogs. */
-.kt-req .kt-dialog .req-dialog-body { font-size: 14px; margin: 0; }
-.kt-req .kt-dialog.req-dialog-520 { width: min(520px, calc(100vw - 32px)); }
-.kt-req .kt-dialog.req-dialog-640 { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 64px); overflow-y: auto; }
-.kt-req .kt-dialog.req-dialog-480 { width: min(480px, calc(100vw - 32px)); }
-.kt-req .kt-btn.is-disabled-look, .kt-req .kt-btn:disabled { color: var(--kt-color-neutral-400); }
+.kt-req .dialog .req-dialog-body { font-size: 14px; margin: 0; }
+.kt-req .dialog.req-dialog-520 { width: min(520px, calc(100vw - 32px)); }
+.kt-req .dialog.req-dialog-640 { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 64px); overflow-y: auto; }
+.kt-req .dialog.req-dialog-480 { width: min(480px, calc(100vw - 32px)); }
+.kt-req .btn.is-disabled-look, .kt-req .btn:disabled { color: var(--kt-color-neutral-400); }
 
 /* Funding bar labels (REQ-DES-08). */
 .kt-req .req-bar-labels { display: flex; justify-content: space-between; margin-top: 6px; }
@@ -119,7 +110,7 @@
 	.kt-req .req-grid-2, .kt-req .req-grid-2-tight, .kt-req .req-filters, .kt-req .req-filters.is-technical { grid-template-columns: 1fr; }
 	.kt-req .req-progress { flex-direction: column; }
 	.kt-req .req-progress-task { border-right: 0; border-bottom: 1px solid var(--kt-color-divider); }
-	.kt-req .req-has-cards > .kt-table { display: none; }
+	.kt-req .req-has-cards > .table { display: none; }
 	.kt-req .req-has-cards > .req-row-cards { display: block; }
 	.kt-req .req-row-card { border-top: 1px solid var(--kt-color-divider); padding: var(--kt-space-3) 0; }
 	.kt-req .req-row-card dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; margin: 8px 0 0; }
@@ -140,8 +131,8 @@
 /* Request details (REQ-DES-03). */
 .kt-req .req-num-input { max-width: 90px; text-align: right; margin-left: auto; }
 .kt-req .req-num-input.is-wide { max-width: 160px; }
-.kt-req .kt-table td.is-num .req-field-suffix { text-align: right; }
-.kt-req .kt-table tr.is-own td { background: var(--kt-color-accent-100); }
+.kt-req .table td.is-num .req-field-suffix { text-align: right; }
+.kt-req .table tr.is-own td { background: var(--kt-color-accent-100); }
 .kt-req [data-section]:focus { outline: none; }
 .kt-req .req-register-head > .kt-card-title { flex: 1; }
 .kt-req .kt-panel-lg.req-page { width: 100%; box-sizing: border-box; }
@@ -151,13 +142,13 @@
 /* Requirements (REQ-DES-05). */
 .kt-req .req-subhead { font-family: var(--kt-font-heading); font-weight: 600; font-size: 16px; }
 .kt-req .req-title-note { font-family: var(--kt-font-body); font-size: 13px; font-weight: 400; text-transform: none; letter-spacing: 0; }
-.kt-req .kt-table tr.is-cleared td { color: var(--kt-color-neutral-400); }
-.kt-req .kt-table tr.is-cleared td:first-child, .kt-req .kt-table tr.is-cleared td:last-child { color: inherit; }
+.kt-req .table tr.is-cleared td { color: var(--kt-color-neutral-400); }
+.kt-req .table tr.is-cleared td:first-child, .kt-req .table tr.is-cleared td:last-child { color: inherit; }
 .kt-req .req-fieldset { border: 0; padding: 0; margin: 0; }
 .kt-req .req-fieldset legend { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
 .kt-req .req-check-line { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 14px; }
 .kt-req .req-port-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
-.kt-req .kt-table tr.is-failed td { color: var(--kt-status-critical); }
+.kt-req .table tr.is-failed td { color: var(--kt-status-critical); }
 
 /* Authorised (REQ-DES-10). */
 .kt-req .req-authorised-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }

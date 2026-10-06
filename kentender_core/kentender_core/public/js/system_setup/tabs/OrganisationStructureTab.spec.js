@@ -47,11 +47,11 @@ describe("OrganisationStructureTab — AUTH-DES-08 states", () => {
 		expect(wrapper.find('[data-testid="kt-org-tree"]').exists()).toBe(false);
 		const add = empty.find('[data-testid="kt-org-empty-add"]');
 		expect(add.text()).toBe("Add organisation unit");
-		expect(add.classes()).toContain("kt-btn-primary");
+		expect(add.classes()).toContain("btn-primary");
 
 		await add.trigger("click");
 		const dialog = wrapper.find('[data-testid="kt-ou-prompt"]');
-		expect(dialog.find(".kt-dialog-title").text()).toBe("Add organisation unit");
+		expect(dialog.find(".dialog-title").text()).toBe("Add organisation unit");
 		expect(dialog.find("#kt-prompt-context-0").element.value).toBe("Ministry of Health");
 		expect(dialog.find("#kt-prompt-context-0").attributes("readonly")).toBeDefined();
 		expect(dialog.text()).toContain("The unit code is generated when you save.");

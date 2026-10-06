@@ -86,10 +86,17 @@ def get_bid(tender_reference: str, bid: str) -> dict[str, Any]:
 
 
 @frappe.whitelist(methods=["GET"])
-def get_evidence(tender_reference: str, bid: str, digest: str) -> None:
+def get_delivered_bid(tender_reference: str, bid: str, version: str = "") -> dict[str, Any]:
 	from kentender_procurement.bid_evaluation.services import reads
 
-	result = _call("ReadEvaluationEvidence", tender_reference, reads.evidence, by_reference=True, bid=bid, digest=digest)
+	return _call("ReadDeliveredEvaluationBid", tender_reference, reads.delivered_bid, by_reference=True, bid=bid, version=version)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_evidence(tender_reference: str, bid: str, digest: str, version: str = "") -> None:
+	from kentender_procurement.bid_evaluation.services import reads
+
+	result = _call("ReadEvaluationEvidence", tender_reference, reads.evidence, by_reference=True, bid=bid, digest=digest, version=version)
 	if result.get("ok") is False:
 		raise frappe.DoesNotExistError(NOT_FOUND)
 	frappe.local.response.filename = result["filename"]

@@ -253,21 +253,23 @@ class TestUniversalReaders(TechnicalReadTestBase):
 
 class TestBusinessActorWithoutAssignmentStaysForbidden(TechnicalReadTestBase):
 	def test_denied_business_user_gets_forbidden_or_masked_not_found(self):
+		# Strategy is universally readable (owner, 5 Oct 2026), approved versions only: a user with no
+		# Strategy responsibility opens the register, but a submitted version is masked and the approval
+		# task stays closed.
 		plan, version = self._submitted_version()
 		outsider = self._user("outsider")
 		frappe.set_user(outsider)
 		try:
-			self.assertTrue(ui.get_strategy_portfolio()["forbidden"])
+			self.assertFalse(ui.get_strategy_portfolio()["forbidden"])
+			self.assertNotIn(plan.name, [p["id"] for p in ui.get_strategy_portfolio()["plans"]])
 
 			workspace = ui.get_plan_workspace(plan.plan_id)
-			self.assertTrue(workspace["forbidden"])
+			self.assertTrue(workspace["not_found"])
 
-			# This outsider has no Strategy read access at all, so
-			# `_can_read()` denies them before the approval task's own
-			# `approver_required` reason is ever computed — that specific
-			# reason, for a reader who can read but lacks the Approver
-			# assignment, is asserted by `TestUniversalReaders`'s Auditor
-			# case above (STR-AC-021).
+			# This outsider reads approved versions only, so the approval task is
+			# refused before its own `approver_required` reason is computed — that
+			# reason, for a full reader who lacks the Approver assignment, is
+			# asserted by `TestUniversalReaders`'s Auditor case above (STR-AC-021).
 			overview = ui.get_version_review_overview(version.plan_version_id)
 			self.assertTrue(overview["forbidden"])
 

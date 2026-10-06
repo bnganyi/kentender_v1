@@ -17,7 +17,7 @@
 			<button
 				v-if="actionLabel"
 				type="button"
-				class="kt-btn kt-btn-secondary"
+				class="btn btn-secondary"
 				style="margin-top: 6px"
 				data-testid="nds-page-notice-action"
 				@click="$emit('action')"

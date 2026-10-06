@@ -67,7 +67,7 @@ test.describe("BDS-DES-08 Company, declarations and tender security", () => {
 		await expect(page.getByTestId("bds-security-empty")).toBeVisible();
 		const region = page.locator(".kt-region", { has: page.getByRole("heading", { name: "Tender security" }) });
 		await region.locator("select").first().selectOption("Demand Bank Guarantee");
-		const inputs = region.locator("input.kt-input:not([type=date])");
+		const inputs = region.locator("input.input:not([type=date])");
 		await inputs.nth(0).fill("KCB Bank Kenya");
 		await inputs.nth(1).fill("KCB/TG/2099/7788");
 		await inputs.nth(2).fill("500000");

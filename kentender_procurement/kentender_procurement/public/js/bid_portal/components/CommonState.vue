@@ -31,8 +31,8 @@ const action = computed(() => (props.retry && entry.value.retry_action) || entry
 			<strong>{{ __(entry.heading) }}</strong>
 			<div v-if="message">{{ message }}</div>
 			<div v-if="action" class="bds-state-action">
-				<a v-if="actionHref" class="kt-btn kt-btn-secondary" :href="actionHref">{{ __(action) }}</a>
-				<button v-else type="button" class="kt-btn kt-btn-secondary" @click="emit('action')">{{ __(action) }}</button>
+				<a v-if="actionHref" class="btn btn-secondary" :href="actionHref">{{ __(action) }}</a>
+				<button v-else type="button" class="btn btn-secondary" @click="emit('action')">{{ __(action) }}</button>
 			</div>
 		</div>
 	</div>
@@ -40,8 +40,8 @@ const action = computed(() => (props.retry && entry.value.retry_action) || entry
 		<h1 class="bds-state-heading">{{ __(entry.heading) }}</h1>
 		<p v-if="message" class="bds-state-message">{{ message }}</p>
 		<div v-if="action" class="bds-state-action">
-			<a v-if="actionHref" class="kt-btn kt-btn-secondary" :href="actionHref">{{ __(action) }}</a>
-			<button v-else type="button" class="kt-btn kt-btn-secondary" @click="emit('action')">{{ __(action) }}</button>
+			<a v-if="actionHref" class="btn btn-secondary" :href="actionHref">{{ __(action) }}</a>
+			<button v-else type="button" class="btn btn-secondary" @click="emit('action')">{{ __(action) }}</button>
 		</div>
 	</div>
 </template>

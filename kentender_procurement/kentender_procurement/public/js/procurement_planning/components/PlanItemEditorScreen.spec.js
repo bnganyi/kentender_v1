@@ -231,9 +231,9 @@ describe("PlanItemEditorScreen — footer and flagged fields", () => {
 	it("Remove purchase is the artboard's solid danger button, not an outlined one", () => {
 		const w = make();
 		const remove = w.find('[data-testid="ppi-remove"]');
-		expect(remove.classes()).toContain("kt-btn-primary");
+		expect(remove.classes()).toContain("btn-primary");
 		expect(remove.classes()).toContain("kt-danger");
-		expect(remove.classes()).not.toContain("kt-btn-secondary");
+		expect(remove.classes()).not.toContain("btn-secondary");
 	});
 
 	// A Planner sent here by "Choose a strategic objective" (the current-work
@@ -244,7 +244,7 @@ describe("PlanItemEditorScreen — footer and flagged fields", () => {
 			item: item({ blockers: [{ code: "PLN_OBJECTIVE_INELIGIBLE", field: "strategic_objective", message: "Complete the highlighted purchase details and required evidence." }] }),
 		});
 		expect(w.find('[data-testid="ppi-supporting"]').attributes("open")).toBeDefined();
-		const field = w.find('[data-testid="ppi-objective"]').element.closest(".kt-field");
+		const field = w.find('[data-testid="ppi-objective"]').element.closest(".field");
 		expect(field.classList).toContain("pln-field-flagged");
 	});
 
@@ -257,7 +257,7 @@ describe("PlanItemEditorScreen — footer and flagged fields", () => {
 				blockers: [{ code: "PLN_PLAN_CONTENTS_INCOMPLETE", field: "estimate_basis", message: "Complete the highlighted purchase details and required evidence." }],
 			}),
 		});
-		const field = w.find('[data-testid="ppi-estimate-basis"]').element.closest(".kt-field");
+		const field = w.find('[data-testid="ppi-estimate-basis"]').element.closest(".field");
 		expect(field.classList).toContain("pln-field-flagged");
 		await w.find('[data-testid="ppi-estimate-basis"]').setValue("A market survey conducted across three qualified suppliers in the region.");
 		expect(field.classList).not.toContain("pln-field-flagged");

@@ -134,7 +134,7 @@ const BUILD = {
 	"opinion-read": (d) => header(d, { sec: [{ t: "Evaluation report", sec: true, f: reportFacts(d) }, recSection(d)], disc: discs(d, ["Evaluation report", "Bid comparison", "History"]) }),
 	decision: (d) => header(d, { sec: [recSection(d), { t: "Professional opinion", sec: true, f: [["Opinion", d.opinion.signed.label]], p: [d.opinion.signed.signed], d: [["Reason", d.opinion.signed.reason]] },
 		{ t: "Decision", fld: [{ label: "Decision reason", area: true, name: "decision_reason" }], d: [["Notice preview", (d.notices.preview || []).map((p) => p.label || p.problem).join("; ")]] }],
-		act: [btn("Record no award", "dialog", { name: "record-no-award" }), btn("Return for correction", "dialog", { name: "return-for-correction" }),
+		act: [btn("~Record no award", "dialog", { name: "record-no-award" }), btn("Return for correction", "dialog", { name: "return-for-correction" }),
 			btn("*Award and notify bidders", "award", {}, { disabled: !d.actions.award_supported })], place: "decision",
 		disc: discs(d, ["Professional opinion", "Evaluation report", "Notice preview"]) }),
 	"decision-read": (d) => header(d, { sec: [recSection(d), { t: "Professional opinion", sec: true, f: [["Opinion", (d.opinion.signed || {}).label]], p: [(d.opinion.signed || {}).signed],
@@ -143,7 +143,7 @@ const BUILD = {
 		btn("Return for correction", "dialog", { name: "correction-return" }), btn("*Record no award", "dialog", { name: "correction-no-award" })], place: "decision" }),
 	"correction-positive": (d) => header(d, { sec: [opinionTwo(d, true), { t: "Revised notice", sec: true, f: [["Notice", d.revised.label], ["Reply by", d.revised.reply_by]], p: [d.revised.wait] },
 		{ t: "Decision", fld: [{ label: "Decision reason", area: true, name: "decision_reason" }] }],
-		act: [btn("Record no award", "dialog", { name: "correction-no-award" }), btn("Return for correction", "dialog", { name: "correction-return" }),
+		act: [btn("~Record no award", "dialog", { name: "correction-no-award" }), btn("Return for correction", "dialog", { name: "correction-return" }),
 			btn("*Record corrected award and notify bidders", "corrected-award", {}, { disabled: !d.actions.award_supported })], place: "decision" }),
 	"revised-held": (d) => header(d, { sec: [{ t: "Corrected award", f: corrFacts(d) }], act: [btn("View corrected decision", "view", { what: "decision" })], place: "row" }),
 	"revised-ready": (d) => header(d, { sec: [{ t: "Corrected award", sec: true, f: corrFacts(d) }, { t: "Revised notice", f: [["Notice", d.revised.label], ["Reply by", d.revised.reply_by]], p: [d.revised.wait] }],
@@ -163,7 +163,7 @@ const BUILD = {
 		return header(d, { sec: [{ t: "Reported correction", d: [["Issue", o.reason], ["Proposal", p.next_action], ["Reason", p.reason]] }],
 			act: evaluation ? [btn("View original decision", "view", { what: "prior-decision" }), btn("View correction", "view", { what: "issues" }),
 				btn("*Request corrected evaluation", "correction", { outcome: "Request corrected evaluation", reason: p.reason })]
-				: [btn("View original decision", "view", { what: "prior-decision" }), btn("Decline reconsideration", "correction", { outcome: "Decline reconsideration", reason: p.reason }),
+				: [btn("View original decision", "view", { what: "prior-decision" }), btn("~Decline reconsideration", "correction", { outcome: "Decline reconsideration", reason: p.reason }),
 					btn("*Authorise reconsideration", "correction", { outcome: "Authorise reconsideration", reason: p.reason })], place: "decision" }); },
 	declined: (d) => { const r = d.notices.response || {}; const o = outstandingIssue(d, (x) => x.subtype === "Declined") || {}; return header(d, { sec: [{ t: "Supplier response",
 		p: [`!Declined by ${r.by}, ${r.at}`], d: [["Reason", r.reason]], note: "The Accounting Officer must decide the next procurement action." }],
@@ -226,8 +226,20 @@ export function technicalBoard(d) {
 		act: [btn("View service history", "view", { what: "service" }), btn("*Retry operation", "retry-operation")], place: "decision" };
 }
 
+// What a Head of User Department whose unit contributed reads of the Award (OVS-CHG-001 v0.6 P03; owner
+// decision 4 Oct 2026): the stage, who it is with, and once the decision is recorded its outcome, date and
+// reason. The server sends nothing else; no opinion, report, bidder or notice is asked for here.
+export function departmentBoard(d) {
+	const dec = d.decision;
+	const sec = [{ t: dec ? "Decision" : "Award stage", f: dec ? [["Outcome", dec.outcome], ["Decision recorded", dec.at], ["Decided by", dec.by], ["Notices", d.notification_status]]
+		: [["Stage", d.stage]], d: dec && dec.reason ? [["Reason", dec.reason]] : [],
+		p: [d.cancelled ? "This tender was cancelled. Award ended." : d.outstanding, dec ? "" : "Details are shared with you when the Accounting Officer records the decision."].filter(Boolean) }];
+	return { ...header(d, { guidance: null }), screen: "department", sec, act: [], place: "row" };
+}
+
 export function recordBoard(d, ctx = {}) {
 	if (d.technical) return technicalBoard(d);
+	if (d.department) return departmentBoard(d);
 	if (ctx.sub === "requests" && ctx.id) return { screen: "request", ...requestBoard(d, first(d.correspondence, (c) => c.request === ctx.id)) };
 	const screen = screenOf(d);
 	const build = BUILD[screen] || BUILD.wait;

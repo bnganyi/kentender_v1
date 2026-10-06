@@ -119,18 +119,18 @@ onMounted(() => {
 		<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure"><div class="kt-notice-body">{{ failure }}</div></div>
 
 		<div v-if="narrow" class="bds-footer-stack">
-			<button v-if="data.footer.start" type="button" class="kt-btn kt-btn-primary bds-btn-block" :disabled="pending" data-testid="bds-start-replacement" @click="startReplacement">{{ __(data.footer.start.label) }}</button>
-			<a :href="data.footer.download_href" class="kt-btn kt-btn-secondary bds-btn-block" data-testid="bds-acknowledgement-download">{{ __("Download acknowledgement") }}</a>
-			<a :href="data.footer.back_href" class="kt-btn kt-btn-secondary bds-btn-block">{{ __("Back to My bids") }}</a>
+			<button v-if="data.footer.start" type="button" class="btn btn-primary bds-btn-block" :disabled="pending" data-testid="bds-start-replacement" @click="startReplacement">{{ __(data.footer.start.label) }}</button>
+			<a :href="data.footer.download_href" class="btn btn-secondary bds-btn-block" data-testid="bds-acknowledgement-download">{{ __("Download acknowledgement") }}</a>
+			<a :href="data.footer.back_href" class="btn btn-secondary bds-btn-block">{{ __("Back to My bids") }}</a>
 		</div>
 		<div v-else class="bds-footer">
-			<a :href="data.footer.back_href" class="kt-btn kt-btn-secondary">{{ __("Back to My bids") }}</a>
+			<a :href="data.footer.back_href" class="btn btn-secondary">{{ __("Back to My bids") }}</a>
 			<div class="bds-footer-end">
-				<a :href="data.footer.download_href" class="kt-btn kt-btn-secondary" data-testid="bds-acknowledgement-download">
+				<a :href="data.footer.download_href" class="btn btn-secondary" data-testid="bds-acknowledgement-download">
 					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" /><path d="M12 15V3" /></svg>
 					{{ __("Download acknowledgement") }}
 				</a>
-				<button v-if="data.footer.start" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-start-replacement" @click="startReplacement">{{ pending ? __("Starting…") : __(data.footer.start.label) }}</button>
+				<button v-if="data.footer.start" type="button" class="btn btn-primary" :disabled="pending" data-testid="bds-start-replacement" @click="startReplacement">{{ pending ? __("Starting…") : __(data.footer.start.label) }}</button>
 			</div>
 		</div>
 	</div>
@@ -148,7 +148,7 @@ onMounted(() => {
 					<button
 						v-if="action.key === 'withdraw_bid'"
 						type="button"
-						class="kt-btn kt-btn-primary kt-danger"
+						class="btn btn-primary kt-danger"
 						:class="{ 'bds-btn-block': narrow }"
 						data-testid="bds-receipt-withdraw"
 						@click="onAction(action)"
@@ -158,8 +158,8 @@ onMounted(() => {
 					<a
 						v-else
 						:href="action.href"
-						class="kt-btn"
-						:class="[action.tone === 'primary' ? 'kt-btn-primary' : 'kt-btn-secondary', narrow ? 'bds-btn-block' : '']"
+						class="btn"
+						:class="[action.tone === 'primary' ? 'btn-primary' : 'btn-secondary', narrow ? 'bds-btn-block' : '']"
 						:target="action.key === 'print' ? '_blank' : null"
 						:rel="action.key === 'print' ? 'noopener' : null"
 						:data-testid="'bds-receipt-' + action.key"
@@ -213,13 +213,13 @@ onMounted(() => {
 		<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure"><div class="kt-notice-body">{{ failure }}</div></div>
 
 		<div v-if="narrow" class="bds-footer-stack">
-			<a :href="data.footer.download_href" class="kt-btn kt-btn-secondary bds-btn-block" data-testid="bds-receipt-download">{{ __("Download receipt") }}</a>
-			<a :href="data.footer.back_href" class="kt-btn kt-btn-secondary bds-btn-block">{{ __("Back to My bids") }}</a>
+			<a :href="data.footer.download_href" class="btn btn-secondary bds-btn-block" data-testid="bds-receipt-download">{{ __("Download receipt") }}</a>
+			<a :href="data.footer.back_href" class="btn btn-secondary bds-btn-block">{{ __("Back to My bids") }}</a>
 		</div>
 		<div v-else class="bds-footer">
-			<a :href="data.footer.back_href" class="kt-btn kt-btn-secondary">{{ __("Back to My bids") }}</a>
+			<a :href="data.footer.back_href" class="btn btn-secondary">{{ __("Back to My bids") }}</a>
 			<div class="bds-footer-end">
-				<a :href="data.footer.download_href" class="kt-btn kt-btn-secondary" data-testid="bds-receipt-download">
+				<a :href="data.footer.download_href" class="btn btn-secondary" data-testid="bds-receipt-download">
 					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" /><path d="M12 15V3" /></svg>
 					{{ __("Download receipt") }}
 				</a>

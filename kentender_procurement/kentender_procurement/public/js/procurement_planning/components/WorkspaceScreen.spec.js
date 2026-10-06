@@ -232,7 +232,7 @@ describe("WorkspaceScreen — U01 BASE", () => {
 		const headers = w.findAll('[data-testid="pln-departmental-table"] th').map((th) => th.text());
 		expect(headers).toEqual(["Department", "Status", "Requirements", "Estimated cost", "Action"]);
 		expect(w.findAll('[data-testid="pln-departmental-row"]')).toHaveLength(2);
-		expect(w.find('[data-testid="pln-count-label"]').text()).toBe("2 departmental plans");
+		expect(w.find('[data-testid="kt-pager-count"]').text()).toBe("2 departmental plans");
 		expect(w.text()).not.toContain("Submission");
 	});
 
@@ -423,7 +423,7 @@ describe("WorkspaceScreen — U01-CURRENT-UPDATE-OVER-BUDGET and -WAITING-BUDGET
 		expect(narrative.text()).toContain("since 15 Dec 2026, 10:00 EAT");
 		const button = w.find('[data-testid="pln-plan-row-candidate"] button');
 		expect(button.text()).toBe("View update");
-		expect(button.classes()).toContain("kt-btn-secondary");
+		expect(button.classes()).toContain("btn-secondary");
 	});
 });
 

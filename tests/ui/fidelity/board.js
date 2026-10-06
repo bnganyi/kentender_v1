@@ -499,3 +499,152 @@ export function awardDialogSkeleton(id, relPath = AWARD_BOARDS) {
 	if (!dialog) throw new Error(`Award board ${id} draws no dialog`);
 	return skeletonOf(dialog);
 }
+
+/**
+ * Analytics (ANL-CHG-001 v0.8 §10A): six files of plain markup (no template),
+ * each board a `<div id="ANL-DES-21">` holding the screen as one `<main>`. The
+ * board's `<main>` is the screen; the live page's `main.kt-ap-sheet` is its
+ * counterpart. `.sub`-style design-tool captions sit outside the `<main>`, so
+ * nothing needs stripping. The boards use the design system's own classes for
+ * the structure that matters (`kt-tabs`, `kt-kpi-card`, `.field`, `table.table`,
+ * `kt-empty`, `kt-disclosure`) and inline styles for layout, so the container
+ * skeleton is those plus the headings.
+ */
+export const ANALYTICS_BOARD_FILES = [
+	"docs/mvp-1-r1/19_analytics/design/Analytics/Analytics Overview.dc.html",
+	"docs/mvp-1-r1/19_analytics/design/Analytics/Analytics Tenders and Requisitions.dc.html",
+	"docs/mvp-1-r1/19_analytics/design/Analytics/Analytics Planning and Needs.dc.html",
+	"docs/mvp-1-r1/19_analytics/design/Analytics/Analytics Peter HRMD.dc.html",
+	"docs/mvp-1-r1/19_analytics/design/Analytics/Analytics States.dc.html",
+];
+
+/** The board's `<main>` (the screen), whichever file draws it. */
+export function analyticsScope(id) {
+	for (const relPath of ANALYTICS_BOARD_FILES) {
+		const board = documentFor(relPath).getElementById(id);
+		if (board) {
+			const main = board.querySelector("main");
+			if (!main) throw new Error(`Analytics board ${id} draws no <main>`);
+			return main;
+		}
+	}
+	throw new Error(`Analytics board ${id} not found in the board files`);
+}
+
+/** Every Analytics board id drawn by the board files. */
+export function analyticsBoardIds() {
+	const ids = [];
+	for (const relPath of ANALYTICS_BOARD_FILES) {
+		for (const el of documentFor(relPath).querySelectorAll('div[id^="ANL-DES-"]')) ids.push(el.id);
+	}
+	return ids;
+}
+
+/** One Analytics board's landmark skeleton. */
+export function analyticsSkeleton(id) {
+	return skeletonOf(analyticsScope(id));
+}
+
+/**
+ * Home (HOME-CHG-001 v0.6 §10B): one file of plain markup, sixteen boards, each a `<div id="HOME-DES-21">` holding the
+ * screen as one `<main>` (the sheet). The boards are almost all inline style, so the design system's class vocabulary
+ * in `skeleton.js` sees almost nothing of them; Home reads its structure from the elements the boards use for it
+ * (`header`, `section`, `aside`, `h1`, `h2`) and from the few design-system classes they draw (`kt-kpi-card`,
+ * `kt-icon-chip`, `kt-spot`, `kt-status`, `btn`). See `homeSkeletonOf`.
+ */
+export const HOME_BOARD_FILE = "docs/mvp-1-r1/18_home_page/design/Home/Home.dc.html";
+
+/** The board's `<main>` (the sheet). */
+export function homeScope(id) {
+	const board = documentFor(HOME_BOARD_FILE).getElementById(id);
+	if (!board) throw new Error(`Home board ${id} not found in ${HOME_BOARD_FILE}`);
+	const main = board.querySelector("main");
+	if (!main) throw new Error(`Home board ${id} draws no <main>`);
+	return main;
+}
+
+/** Every Home board id the file draws, in file order. */
+export function homeBoardIds() {
+	return Array.from(documentFor(HOME_BOARD_FILE).querySelectorAll('div[id^="HOME-DES-"]')).map((el) => el.id);
+}
+
+const HOME_CLASS_LANDMARKS = [
+	{ name: "kpi-card", classes: ["kt-kpi-card"] },
+	{ name: "icon-chip", classes: ["kt-icon-chip"] },
+	{ name: "spot", classes: ["kt-spot"] },
+	{ name: "status", classes: ["kt-status"] },
+];
+const HOME_ELEMENT_LANDMARKS = { HEADER: "header", ASIDE: "aside", SECTION: "region", H1: "h1", H2: "h2", H3: "h3" };
+
+/**
+ * Home's landmark skeleton, in the node shape `compareSkeletons` reads. Landmarks: `header`, `aside` (the rail),
+ * `section` (a region), the headings, the design-system classes above, and a `btn` (its variant, primary / secondary /
+ * ghost, is a modifier: a primary Continue is not the same landmark as a standard one). Everything else is
+ * transparent, so the page may wrap and style as it likes. Icons inside a chip are not landmarks.
+ */
+export function homeSkeletonOf(root) {
+	function classesOf(el) {
+		return String(el.getAttribute("class") || "").split(/\s+/).filter(Boolean);
+	}
+	function landmark(el) {
+		const names = [];
+		const mods = [];
+		if (HOME_ELEMENT_LANDMARKS[el.tagName]) names.push(HOME_ELEMENT_LANDMARKS[el.tagName]);
+		const classes = classesOf(el);
+		for (const entry of HOME_CLASS_LANDMARKS) if (entry.classes.some((c) => classes.includes(c))) names.push(entry.name);
+		if (classes.includes("btn")) {
+			names.push("btn");
+			for (const variant of ["btn-primary", "btn-secondary", "btn-ghost"]) if (classes.includes(variant)) mods.push(variant);
+		}
+		if (names.includes("status")) for (const mod of ["is-attention", "is-success", "is-error", "is-neutral"]) if (classes.includes(mod)) mods.push(mod);
+		return names.length ? { names, mods } : null;
+	}
+	function walk(el, into) {
+		for (const child of Array.from(el.children || [])) {
+			if (child.tagName === "svg") continue;
+			const found = landmark(child);
+			if (found) {
+				const node = { names: found.names, mods: found.mods, tag: child.tagName.toLowerCase(), testid: child.getAttribute("data-testid") || "", children: [] };
+				into.push(node);
+				if (!found.names.includes("icon-chip")) walk(child, node.children);
+			} else walk(child, into);
+		}
+		return into;
+	}
+	return walk(root, []);
+}
+
+/** One Home board's landmark skeleton. */
+export function homeSkeleton(id) {
+	return homeSkeletonOf(homeScope(id));
+}
+
+/**
+ * The ordered landmark texts of a screen: headings, field labels, tabs, table
+ * headings, buttons, links, a summary column's heading, the disclosure title, an
+ * empty state's sentence and an outstanding-work row's sentence. Table cells and option lists are data, left out; so
+ * are the screen-reader chart tables (`.sr-only`), which the boards do not draw.
+ * Typographic apostrophes are written plain so a board's and the server's agree.
+ */
+export function landmarkTexts(root) {
+	const out = [];
+	const norm = (text) => String(text || "").replace(/[’‘]/g, "'").replace(/\s+/g, " ").trim();
+	const isLandmark = (el) => {
+		const tag = el.tagName;
+		const cls = el.classList;
+		if (["H1", "H2", "H3", "LABEL", "TH", "BUTTON", "A"].includes(tag)) return true;
+		if (cls.contains("kt-kpi-head") || cls.contains("kt-disclosure-title")) return true;
+		if (tag === "P" && el.querySelector(":scope > strong")) return true; // an outstanding-work row: the record, then its matter
+		return tag === "P" && !!el.closest(".kt-empty");
+	};
+	(function walk(el) {
+		for (const child of Array.from(el.children || [])) {
+			if (child.classList.contains("sr-only") || child.tagName === "OPTION" || child.tagName === "TD") continue;
+			if (isLandmark(child)) {
+				const text = norm(child.textContent);
+				if (text) out.push({ tag: child.tagName.toLowerCase(), text });
+			} else walk(child);
+		}
+	})(root);
+	return out;
+}

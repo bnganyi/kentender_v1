@@ -51,27 +51,27 @@ function onConfirm() {
 <template>
 	<div
 		v-if="open"
-		class="kt-dialog-backdrop"
+		class="dialog-backdrop"
 		data-testid="kt-confirm-dialog"
 		@keydown="onKeydown"
 		tabindex="-1"
 	>
-		<div class="kt-dialog" style="width: 420px" role="dialog" aria-modal="true" :aria-label="title">
-			<h2 class="kt-dialog-title">{{ title }}</h2>
+		<div class="dialog" style="width: 420px" role="dialog" aria-modal="true" :aria-label="title">
+			<h2 class="dialog-title">{{ title }}</h2>
 			<p v-if="message" class="kt-muted">{{ message }}</p>
 			<textarea
 				v-if="requireReason"
 				ref="reasonInput"
 				v-model="reason"
-				class="kt-input"
+				class="input"
 				style="width: 100%"
 				rows="3"
 				:placeholder="reasonPlaceholder"
 				:maxlength="reasonMaxLength"
 			></textarea>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-ghost" data-testid="kt-confirm-cancel" @click="$emit('cancel')">{{ __("Cancel") }}</button>
-				<button ref="confirmBtn" type="button" class="kt-btn kt-btn-primary" :disabled="!reasonValid" data-testid="kt-confirm-ok" @click="onConfirm">
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-ghost" data-testid="kt-confirm-cancel" @click="$emit('cancel')">{{ __("Cancel") }}</button>
+				<button ref="confirmBtn" type="button" class="btn btn-primary" :disabled="!reasonValid" data-testid="kt-confirm-ok" @click="onConfirm">
 					{{ confirmLabel }}
 				</button>
 			</div>

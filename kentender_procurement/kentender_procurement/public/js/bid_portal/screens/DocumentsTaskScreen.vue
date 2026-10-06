@@ -142,7 +142,7 @@ onMounted(() => {
 		<div class="kt-region">
 			<h2>{{ __("Official Tender documents") }}</h2>
 			<div class="bds-region-body">
-				<table v-if="!narrow" class="kt-table" data-testid="bds-task-documents-table">
+				<table v-if="!narrow" class="table" data-testid="bds-task-documents-table">
 					<thead><tr><th>{{ __("Document") }}</th><th>{{ __("Published") }}</th><th>{{ __("Action") }}</th></tr></thead>
 					<tbody>
 						<tr v-for="d in data.documents" :key="d.key">
@@ -166,7 +166,7 @@ onMounted(() => {
 			<h2>{{ addendaHeading }}</h2>
 			<div class="bds-region-body">
 				<template v-if="data.addenda.length">
-					<table v-if="!narrow" class="kt-table" data-testid="bds-task-addenda-table">
+					<table v-if="!narrow" class="table" data-testid="bds-task-addenda-table">
 						<thead><tr><th>{{ __("Addendum") }}</th><th>{{ __("Issued") }}</th><th>{{ __("Revised deadline") }}</th><th>{{ __("Action") }}</th></tr></thead>
 						<tbody>
 							<tr v-for="a in data.addenda" :key="a.reference">
@@ -189,7 +189,7 @@ onMounted(() => {
 						<div v-if="a.notice" class="kt-group bds-notice-group" :data-testid="'bds-addendum-notice-' + a.reference">
 							<div class="bds-notice-line"><span class="kt-label">{{ a.notice.destination }}</span><span class="kt-status" :class="'is-' + a.notice.tone">{{ a.notice.status }}</span></div>
 							<p class="bds-muted">{{ a.notice.text }}</p>
-							<div v-if="a.notice.can_update_contact"><button type="button" class="kt-btn kt-btn-secondary" :class="{ 'bds-btn-touch': narrow }" data-testid="bds-update-notice-email" @click="updatingContact = true">{{ __("Update notice email") }}</button></div>
+							<div v-if="a.notice.can_update_contact"><button type="button" class="btn btn-secondary" :class="{ 'bds-btn-touch': narrow }" data-testid="bds-update-notice-email" @click="updatingContact = true">{{ __("Update notice email") }}</button></div>
 						</div>
 						<template v-if="a.acknowledgement">
 							<label class="kt-checkbox bds-acknowledge" :data-testid="'bds-acknowledge-' + a.reference">
@@ -209,7 +209,7 @@ onMounted(() => {
 		<div class="kt-region">
 			<div v-if="data.clarification.can_ask" class="bds-region-head">
 				<h2>{{ __("Questions and answers") }}</h2>
-				<div class="bds-region-actions"><button type="button" class="kt-btn kt-btn-secondary" :class="{ 'bds-btn-touch': narrow }" data-testid="bds-task-ask" @click="asking = true">{{ __("Ask a question") }}</button></div>
+				<div class="bds-region-actions"><button type="button" class="btn btn-secondary" :class="{ 'bds-btn-touch': narrow }" data-testid="bds-task-ask" @click="asking = true">{{ __("Ask a question") }}</button></div>
 			</div>
 			<h2 v-else>{{ __("Questions and answers") }}</h2>
 			<div class="bds-region-body">
@@ -230,14 +230,14 @@ onMounted(() => {
 
 		<div v-if="narrow" class="bds-footer-stack">
 			<p v-if="waiting" class="bds-muted" data-testid="bds-documents-blocked">{{ data.footer.blocked_text || __("Acknowledge the addendum to continue.") }}</p>
-			<button v-if="canEdit" type="button" class="kt-btn kt-btn-primary bds-btn-block" :disabled="waiting || pending" data-testid="bds-documents-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
-			<a :href="data.page.back_href" class="kt-btn kt-btn-secondary bds-btn-block">{{ __("Back to bid") }}</a>
+			<button v-if="canEdit" type="button" class="btn btn-primary bds-btn-block" :disabled="waiting || pending" data-testid="bds-documents-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
+			<a :href="data.page.back_href" class="btn btn-secondary bds-btn-block">{{ __("Back to bid") }}</a>
 		</div>
 		<div v-else class="bds-footer">
-			<a :href="data.page.back_href" class="kt-btn kt-btn-secondary">{{ __("Back to bid") }}</a>
+			<a :href="data.page.back_href" class="btn btn-secondary">{{ __("Back to bid") }}</a>
 			<div class="bds-footer-end">
 				<p v-if="waiting" class="bds-muted" data-testid="bds-documents-blocked">{{ data.footer.blocked_text || __("Acknowledge the addendum to continue.") }}</p>
-				<button v-if="canEdit" type="button" class="kt-btn kt-btn-primary" :disabled="waiting || pending" data-testid="bds-documents-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
+				<button v-if="canEdit" type="button" class="btn btn-primary" :disabled="waiting || pending" data-testid="bds-documents-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
 			</div>
 		</div>
 

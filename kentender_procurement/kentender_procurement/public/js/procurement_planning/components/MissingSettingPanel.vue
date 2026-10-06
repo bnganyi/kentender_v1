@@ -49,7 +49,7 @@
 			     else. Never a disabled control. -->
 			<a
 				v-if="panel.can_open_setup"
-				class="kt-btn kt-btn-secondary"
+				class="btn btn-secondary"
 				data-testid="pln-open-setup"
 				:href="panel.href"
 			>{{ panel.action }}</a>

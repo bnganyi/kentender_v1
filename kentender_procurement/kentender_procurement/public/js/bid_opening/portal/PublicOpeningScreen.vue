@@ -78,9 +78,9 @@ onUnmounted(() => clearInterval(poll));
 				<div v-else class="kt-meta-row" data-testid="bop-public-arrangements"><div><span class="kt-label">How to attend</span><span class="kt-meta-value">{{ arrangements.attendance_method }}</span></div><div><span class="kt-label">Join opens</span><span class="kt-meta-value">{{ arrangements.join_opens_label }}</span></div><div><span class="kt-label">Opening time</span><span class="kt-meta-value">{{ arrangements.scheduled_label }}</span></div><div><span class="kt-label">Published</span><span class="kt-meta-value">{{ arrangements.published_label }}</span></div></div>
 				<p v-if="arrangements.published && arrangements.access_instructions" style="margin:16px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty" data-testid="bop-public-instructions">{{ arrangements.access_instructions }}</p>
 				<div v-if="phase === 'join'" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px">
-					<button v-if="data.can_join" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bop-public-join" @click="join">Join public opening</button>
+					<button v-if="data.can_join" type="button" class="btn btn-primary" :disabled="pending" data-testid="bop-public-join" @click="join">Join public opening</button>
 					<span v-else-if="data.joined_label" class="kt-status is-live" data-testid="bop-public-joined">Joined {{ data.joined_label }}</span>
-					<a v-else-if="!data.signed_in" class="kt-btn kt-btn-secondary" :href="`/login?redirect-to=${encodeURIComponent(`/tenders/${reference}/opening`)}`" data-testid="bop-public-sign-in">Sign in to join</a>
+					<a v-else-if="!data.signed_in" class="btn btn-secondary" :href="`/login?redirect-to=${encodeURIComponent(`/tenders/${reference}/opening`)}`" data-testid="bop-public-sign-in">Sign in to join</a>
 				</div>
 				<p v-if="error" class="kt-field-error" role="alert">{{ error }}</p>
 			</div>
@@ -93,16 +93,16 @@ onUnmounted(() => clearInterval(poll));
 		<template v-else-if="['in-session', 'ended', 'complete'].includes(phase)">
 			<div class="kt-region"><h2>Read aloud at the opening</h2>
 				<p v-if="phase === 'in-session'" style="margin:0 0 16px;font-size:16px;max-width:70ch"><template v-if="data.joined_label">You joined at {{ data.joined_label }}. </template>Each bid appears here once the committee has recorded what was read aloud.</p>
-				<table class="kt-table" data-testid="bop-public-readout"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Tender security given</th><th>Recorded at</th></tr></thead><tbody>
+				<table class="table" data-testid="bop-public-readout"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Tender security given</th><th>Recorded at</th></tr></thead><tbody>
 					<tr v-for="r in readout" :key="r.number"><td>{{ r.number }}</td><td>{{ r.tenderer }}</td><td class="is-num">{{ r.submitted_total }}</td><td>{{ r.security_given }}</td><td>{{ r.recorded_label }}</td></tr>
 				</tbody></table>
 				<p v-if="!readout.length" style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty" data-testid="bop-public-readout-none">{{ phase === "in-session" ? "No bid has been read aloud yet." : "There were no bids to open." }}</p>
 				<p v-for="(line, i) in phase === 'in-session' ? data.repeats : []" :key="i" style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">{{ line }}</p>
 			</div>
 			<div class="kt-region" :class="{ 'is-secondary': !['can-request', 'preparing', 'ready'].includes(register.state) }" data-testid="bop-public-register" :data-state="register.state"><h2>Opening register</h2>
-				<template v-if="register.state === 'can-request'"><p style="margin:0 0 12px;font-size:14px;max-width:75ch;text-wrap:pretty">{{ register.message }}</p><button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bop-public-request" @click="requestRegister">Request opening register</button></template>
+				<template v-if="register.state === 'can-request'"><p style="margin:0 0 12px;font-size:14px;max-width:75ch;text-wrap:pretty">{{ register.message }}</p><button type="button" class="btn btn-primary" :disabled="pending" data-testid="bop-public-request" @click="requestRegister">Request opening register</button></template>
 				<div v-else-if="register.state === 'preparing'" class="kt-group"><p style="margin:0 0 4px;font-size:16px;font-weight:600">The opening register is being prepared</p><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">{{ register.message }}</p></div>
-				<template v-else-if="register.state === 'ready'"><p style="margin:0 0 12px;font-size:14px;max-width:75ch;text-wrap:pretty">{{ register.message }}</p><a class="kt-btn kt-btn-primary" :href="downloadUrl" data-testid="bop-public-download">Download opening register</a></template>
+				<template v-else-if="register.state === 'ready'"><p style="margin:0 0 12px;font-size:14px;max-width:75ch;text-wrap:pretty">{{ register.message }}</p><a class="btn btn-primary" :href="downloadUrl" data-testid="bop-public-download">Download opening register</a></template>
 				<div v-else class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">{{ register.message }}</p></div>
 				<p v-if="error" class="kt-field-error" role="alert">{{ error }}</p>
 			</div>
@@ -114,7 +114,7 @@ onUnmounted(() => clearInterval(poll));
 				<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">{{ phase === "not-held" ? "No bids were opened. Any next step for the Tender will be published on its page." : "What was read aloud before the cancellation is shown here. Cancellation notices are published with the Tender." }}</p></div>
 			</div>
 			<div v-if="readout.length" class="kt-region is-secondary"><h2>Read aloud at the opening</h2>
-				<table class="kt-table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Tender security given</th><th>Recorded at</th></tr></thead><tbody>
+				<table class="table"><thead><tr><th>No.</th><th>Tenderer</th><th class="is-num">Submitted total</th><th>Tender security given</th><th>Recorded at</th></tr></thead><tbody>
 					<tr v-for="r in readout" :key="r.number"><td>{{ r.number }}</td><td>{{ r.tenderer }}</td><td class="is-num">{{ r.submitted_total }}</td><td>{{ r.security_given }}</td><td>{{ r.recorded_label }}</td></tr>
 				</tbody></table>
 			</div>

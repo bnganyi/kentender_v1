@@ -2,9 +2,9 @@
      channel, available at, reference, URL, evidence file (name, format,
      verification), notes, attestation text and who attested when. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="tnd-confirmation-view" @keydown.esc="$emit('close')">
-		<div ref="dialogEl" class="kt-dialog tnd-dialog" role="dialog" aria-modal="true" aria-labelledby="tnd-cv-title" tabindex="-1">
-			<div id="tnd-cv-title" class="kt-dialog-title">{{ row.channel_label }} confirmation</div>
+	<div class="dialog-backdrop" data-testid="tnd-confirmation-view" @keydown.esc="$emit('close')">
+		<div ref="dialogEl" class="dialog tnd-dialog" role="dialog" aria-modal="true" aria-labelledby="tnd-cv-title" tabindex="-1">
+			<div id="tnd-cv-title" class="dialog-title">{{ row.channel_label }} confirmation</div>
 			<div class="tnd-dialog-body">
 				<div class="tnd-grid-2" style="gap: 12px">
 					<div class="tnd-fact"><div class="kt-label">Result</div><div class="tnd-fact-value"><span class="kt-status is-live">{{ row.result_label }}</span></div></div>
@@ -17,8 +17,8 @@
 				<p v-if="row.evidence_notes" class="tnd-small tnd-muted-700" style="margin: 12px 0 0">{{ row.evidence_notes }}</p>
 				<p class="tnd-xs tnd-muted" style="margin: 12px 0 0">{{ row.attestation_text }}</p>
 			</div>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-primary" data-testid="tnd-cv-close" @click="$emit('close')">Close</button>
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-primary" data-testid="tnd-cv-close" @click="$emit('close')">Close</button>
 			</div>
 		</div>
 	</div>

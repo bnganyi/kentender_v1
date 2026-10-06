@@ -39,7 +39,7 @@ const LANDMARK_SELECTOR = [
 	// Planning screen renders `.kt-card-title` any more.
 	".kt-card-title",
 	".kt-region > h2",
-	".kt-dialog-title",
+	".dialog-title",
 	// A screen that renders an artboard's `.dialog` as a full sub-view titles
 	// it with `.kt-section-title`; no artboard uses that class, so listing it
 	// only lets a live title match the artboard's own title landmark.
@@ -431,7 +431,7 @@ export async function openSection(page: Page, relPath: string, id: string): Prom
  *     read-only fact primitive: it sets the heading typeface and a fact's
  *     line height, so an input inside it renders in the wrong face and the
  *     row bottom-aligns controls of different heights.
- *  3. No `.kt-label` or `.kt-field > label` stands with nothing after it
+ *  3. No `.kt-label` or `.field > label` stands with nothing after it
  *     inside its own block — a heading over an empty section.
  */
 export async function expectLayoutSanity(page: Page, where: string): Promise<void> {

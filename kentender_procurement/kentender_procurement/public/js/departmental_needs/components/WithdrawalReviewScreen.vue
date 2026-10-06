@@ -122,7 +122,7 @@
 			     primary action. -->
 			<button
 				v-if="dependency.included || dependency.unavailable"
-				class="kt-btn kt-btn-secondary"
+				class="btn btn-secondary"
 				data-testid="nds-withdrawal-close"
 				:disabled="pending"
 				@click="$emit('close')"
@@ -131,7 +131,7 @@
 			</button>
 			<button
 				v-if="canDecline"
-				class="kt-btn kt-btn-secondary"
+				class="btn btn-secondary"
 				:disabled="pending"
 				data-testid="nds-withdrawal-decline"
 				@click="$emit('decline')"
@@ -141,7 +141,7 @@
 			</button>
 			<button
 				v-if="!(dependency.included || dependency.unavailable) && canApprove"
-				class="kt-btn kt-btn-primary"
+				class="btn btn-primary"
 				:disabled="pending"
 				data-testid="nds-withdrawal-approve"
 				@click="$emit('approve')"

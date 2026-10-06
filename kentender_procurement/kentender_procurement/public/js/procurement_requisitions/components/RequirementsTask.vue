@@ -26,7 +26,7 @@
 			</CardTitle>
 			<template v-for="group in groups" :key="group.group">
 				<div class="kt-label req-group-label">{{ group.group }}</div>
-				<table class="kt-table" style="margin-bottom: var(--kt-space-4)" :data-testid="`req-technical-${group.group}`">
+				<table class="table" style="margin-bottom: var(--kt-space-4)" :data-testid="`req-technical-${group.group}`">
 					<thead>
 						<tr><th v-if="reviewRequired">Use</th><th>Requirement</th><th>Minimum or required value</th><th>Unit</th><th>Action</th></tr>
 					</thead>
@@ -40,9 +40,9 @@
 							<td>{{ row.unit }}</td>
 							<td>
 								<div v-if="canEdit" class="req-row-actions">
-									<button type="button" class="kt-btn kt-btn-ghost" data-testid="req-technical-edit" @click="dialog = { kind: 'technical', row }">Edit</button>
-									<button v-if="isProposed(row)" type="button" class="kt-btn kt-btn-ghost" data-testid="req-technical-clear" @click="techCopy[row.technical_requirement_id].selected = !techCopy[row.technical_requirement_id].selected">{{ techCopy[row.technical_requirement_id].selected ? "Clear" : "Use" }}</button>
-									<button v-else type="button" class="kt-btn kt-btn-ghost" data-testid="req-technical-remove" @click="removeRow('technical', row)">Remove</button>
+									<button type="button" class="btn btn-ghost" data-testid="req-technical-edit" @click="dialog = { kind: 'technical', row }">Edit</button>
+									<button v-if="isProposed(row)" type="button" class="btn btn-ghost" data-testid="req-technical-clear" @click="techCopy[row.technical_requirement_id].selected = !techCopy[row.technical_requirement_id].selected">{{ techCopy[row.technical_requirement_id].selected ? "Clear" : "Use" }}</button>
+									<button v-else type="button" class="btn btn-ghost" data-testid="req-technical-remove" @click="removeRow('technical', row)">Remove</button>
 								</div>
 							</td>
 						</tr>
@@ -53,35 +53,35 @@
 			<section data-section="warranty_support" tabindex="-1">
 				<CardTitle title="Warranty and support" icon="sliders" class="req-register-title" />
 				<div class="req-grid-2" style="margin-bottom: var(--kt-space-6)">
-					<div class="kt-field">
+					<div class="field">
 						<label for="req-warranty">Minimum warranty</label>
-						<input id="req-warranty" v-model="support.minimum_warranty_months" class="kt-input" inputmode="numeric" :class="{ 'is-invalid': supportError('minimum_warranty_months') }" :disabled="!canEdit" data-testid="req-support-warranty" />
+						<input id="req-warranty" v-model="support.minimum_warranty_months" class="input" inputmode="numeric" :class="{ 'is-invalid': supportError('minimum_warranty_months') }" :disabled="!canEdit" data-testid="req-support-warranty" />
 						<div class="kt-field-hint req-field-suffix">months</div>
 						<span v-if="supportError('minimum_warranty_months')" class="req-field-error">{{ supportError("minimum_warranty_months") }}</span>
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label id="req-onsite-label">On-site support required</label>
 						<SegYesNo v-model="support.onsite_support_required" name="req-onsite" labelledby="req-onsite-label" :disabled="!canEdit" />
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="req-response">Maximum support response</label>
-						<input id="req-response" v-model="support.maximum_support_response_hours" class="kt-input" inputmode="numeric" :class="{ 'is-invalid': supportError('maximum_support_response_hours') }" :disabled="!canEdit" />
+						<input id="req-response" v-model="support.maximum_support_response_hours" class="input" inputmode="numeric" :class="{ 'is-invalid': supportError('maximum_support_response_hours') }" :disabled="!canEdit" />
 						<div class="kt-field-hint req-field-suffix">hours</div>
 						<span v-if="supportError('maximum_support_response_hours')" class="req-field-error">{{ supportError("maximum_support_response_hours") }}</span>
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label id="req-manufacturer-label">Manufacturer support required</label>
 						<SegYesNo v-model="support.manufacturer_support_required" name="req-manufacturer" labelledby="req-manufacturer-label" :disabled="!canEdit" />
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="req-service-location">Service location constraint</label>
-						<select id="req-service-location" v-model="support.service_location_constraint" class="kt-input" :disabled="!canEdit">
+						<select id="req-service-location" v-model="support.service_location_constraint" class="input" :disabled="!canEdit">
 							<option v-for="l in catalogue.service_locations || []" :key="l" :value="l">{{ l }}</option>
 						</select>
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="req-support-description">Support description</label>
-						<textarea id="req-support-description" v-model="support.support_description" class="kt-input" rows="2" :disabled="!canEdit"></textarea>
+						<textarea id="req-support-description" v-model="support.support_description" class="input" rows="2" :disabled="!canEdit"></textarea>
 					</div>
 				</div>
 			</section>
@@ -89,7 +89,7 @@
 			<section data-section="acceptance" tabindex="-1">
 				<CardTitle title="Acceptance checks" icon="check-square" class="req-register-title" />
 				<div class="req-has-cards">
-					<table class="kt-table" data-testid="req-acceptance">
+					<table class="table" data-testid="req-acceptance">
 						<thead><tr><th v-if="reviewRequired">Use</th><th>Check</th><th>Applies to</th><th>Pass condition</th><th>Evidence</th><th>Action</th></tr></thead>
 						<tbody>
 							<tr v-for="row in acceptance" :key="row.acceptance_requirement_id" :class="{ 'is-cleared': isProposed(row) && !accCopy[row.acceptance_requirement_id].selected }" data-testid="req-acceptance-row">
@@ -102,9 +102,9 @@
 								<td>{{ accOf(row).evidence_type === "Other stated record" ? accOf(row).other_evidence_name : accOf(row).evidence_type }}</td>
 								<td>
 									<div v-if="canEdit" class="req-row-actions">
-										<button type="button" class="kt-btn kt-btn-ghost" data-testid="req-acceptance-edit" @click="dialog = { kind: 'acceptance', row }">Edit</button>
-										<button v-if="isProposed(row)" type="button" class="kt-btn kt-btn-ghost" data-testid="req-acceptance-clear" @click="accCopy[row.acceptance_requirement_id].selected = !accCopy[row.acceptance_requirement_id].selected">{{ accCopy[row.acceptance_requirement_id].selected ? "Clear" : "Use" }}</button>
-										<button v-else type="button" class="kt-btn kt-btn-ghost" data-testid="req-acceptance-remove" @click="removeRow('acceptance', row)">Remove</button>
+										<button type="button" class="btn btn-ghost" data-testid="req-acceptance-edit" @click="dialog = { kind: 'acceptance', row }">Edit</button>
+										<button v-if="isProposed(row)" type="button" class="btn btn-ghost" data-testid="req-acceptance-clear" @click="accCopy[row.acceptance_requirement_id].selected = !accCopy[row.acceptance_requirement_id].selected">{{ accCopy[row.acceptance_requirement_id].selected ? "Clear" : "Use" }}</button>
+										<button v-else type="button" class="btn btn-ghost" data-testid="req-acceptance-remove" @click="removeRow('acceptance', row)">Remove</button>
 									</div>
 								</td>
 							</tr>
@@ -122,15 +122,15 @@
 					</div>
 				</div>
 				<div v-if="canEdit && !reviewRequired" style="margin-top: var(--kt-space-3)">
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="req-acceptance-add" @click="dialog = { kind: 'acceptance', row: null }">Add acceptance check</button>
+					<button type="button" class="btn btn-secondary" data-testid="req-acceptance-add" @click="dialog = { kind: 'acceptance', row: null }">Add acceptance check</button>
 				</div>
 			</section>
 
 			<Notice v-if="packageError" tone="warning"><span data-testid="req-package-error">{{ packageError }}</span></Notice>
 			<div v-if="reviewRequired && canEdit" class="req-footer" style="justify-content: flex-end; margin-top: var(--kt-space-4)">
 				<div class="req-actions">
-					<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="req-reset-standard" @click="reset">Reset standard values</button>
-					<button type="button" class="kt-btn kt-btn-primary" :disabled="busy || !canApply" data-testid="req-use-selected" @click="apply">Use selected requirements</button>
+					<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="req-reset-standard" @click="reset">Reset standard values</button>
+					<button type="button" class="btn btn-primary" :disabled="busy || !canApply" data-testid="req-use-selected" @click="apply">Use selected requirements</button>
 				</div>
 			</div>
 		</div>
@@ -139,49 +139,49 @@
 			<CardTitle title="Related services" icon="wrench" />
 			<div v-if="!servicesRequired" class="req-compact-row" style="justify-content: space-between; margin-bottom: var(--kt-space-8)">
 				<span class="kt-muted" style="font-size: 13px">No related services requested.</span>
-				<button v-if="canEdit" type="button" class="kt-btn kt-btn-secondary" data-testid="req-services-change" @click="$emit('back')">Change answer</button>
+				<button v-if="canEdit" type="button" class="btn btn-secondary" data-testid="req-services-change" @click="$emit('back')">Change answer</button>
 			</div>
 			<template v-else>
-				<table v-if="services.length" class="kt-table" data-testid="req-services">
+				<table v-if="services.length" class="table" data-testid="req-services">
 					<thead><tr><th>Service</th><th>Applies to</th><th>Required result</th><th>Quantity or coverage</th><th>Completion</th><th>Action</th></tr></thead>
 					<tbody>
 						<tr v-for="s in services" :key="s.service_requirement_id" data-testid="req-service-row">
 							<td>{{ s.service_type }}</td><td>{{ s.applies_to }}</td><td>{{ s.required_result }}</td><td>{{ s.quantity_or_coverage }}</td><td>{{ s.completion_date_label }}</td>
-							<td><div v-if="canEdit" class="req-row-actions"><button type="button" class="kt-btn kt-btn-ghost" @click="dialog = { kind: 'service', row: s }">Edit</button><button type="button" class="kt-btn kt-btn-ghost" @click="removeRow('service', s)">Remove</button></div></td>
+							<td><div v-if="canEdit" class="req-row-actions"><button type="button" class="btn btn-ghost" @click="dialog = { kind: 'service', row: s }">Edit</button><button type="button" class="btn btn-ghost" @click="removeRow('service', s)">Remove</button></div></td>
 						</tr>
 					</tbody>
 				</table>
 				<p v-else class="kt-muted" style="font-size: 13px">Add each related service the supplier must perform.</p>
-				<div v-if="canEdit" style="margin: var(--kt-space-3) 0 var(--kt-space-8)"><button type="button" class="kt-btn kt-btn-secondary" data-testid="req-service-add" @click="dialog = { kind: 'service', row: null }">Add service</button></div>
+				<div v-if="canEdit" style="margin: var(--kt-space-3) 0 var(--kt-space-8)"><button type="button" class="btn btn-secondary" data-testid="req-service-add" @click="dialog = { kind: 'service', row: null }">Add service</button></div>
 			</template>
 		</section>
 
 		<section data-section="supporting_materials" tabindex="-1">
 			<CardTitle title="Supporting materials" icon="paperclip" />
-			<table v-if="materials.length" class="kt-table" data-testid="req-materials">
+			<table v-if="materials.length" class="table" data-testid="req-materials">
 				<thead><tr><th>Title</th><th>Type</th><th>Treatment</th><th>Version</th><th>Action</th></tr></thead>
 				<tbody>
 					<tr v-for="m in materials" :key="m.supporting_material_id" data-testid="req-material-row">
 						<td>{{ m.title }}</td><td>{{ m.document_type }}</td><td>{{ m.treatment }}</td><td>{{ m.document_version }}</td>
-						<td><button v-if="canEdit" type="button" class="kt-btn kt-btn-ghost" @click="removeRow('material', m)">Remove</button></td>
+						<td><button v-if="canEdit" type="button" class="btn btn-ghost" @click="removeRow('material', m)">Remove</button></td>
 					</tr>
 				</tbody>
 			</table>
 			<div v-else class="req-empty">
 				<div class="req-empty-title">No supporting materials added.</div>
 				<p class="kt-muted" style="font-size: 13px; margin: 6px 0 12px">Files may support a structured requirement but cannot replace it.</p>
-				<button v-if="canEdit" type="button" class="kt-btn kt-btn-secondary" data-testid="req-material-add" @click="dialog = { kind: 'material' }">Add supporting material</button>
+				<button v-if="canEdit" type="button" class="btn btn-secondary" data-testid="req-material-add" @click="dialog = { kind: 'material' }">Add supporting material</button>
 			</div>
-			<div v-if="materials.length && canEdit" style="margin-top: var(--kt-space-3)"><button type="button" class="kt-btn kt-btn-secondary" data-testid="req-material-add" @click="dialog = { kind: 'material' }">Add supporting material</button></div>
+			<div v-if="materials.length && canEdit" style="margin-top: var(--kt-space-3)"><button type="button" class="btn btn-secondary" data-testid="req-material-add" @click="dialog = { kind: 'material' }">Add supporting material</button></div>
 		</section>
 
 		<div class="req-footer">
-			<button type="button" class="kt-btn kt-btn-ghost" @click="$emit('back')">Back to request details</button>
+			<button type="button" class="btn btn-ghost" @click="$emit('back')">Back to request details</button>
 			<div v-if="canEdit" class="req-footer-right">
 				<span v-if="hint" class="kt-label" data-testid="req-footer-hint">{{ hint }}</span>
 				<div class="req-actions">
-					<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="req-save" @click="saveDraft">Save draft</button>
-					<button type="button" class="kt-btn" :class="canContinue ? 'kt-btn-primary' : 'kt-btn-secondary'" :disabled="busy || !canContinue" data-testid="req-continue" @click="saveAndContinue">Continue to review</button>
+					<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="req-save" @click="saveDraft">Save draft</button>
+					<button type="button" class="btn" :class="canContinue ? 'btn-primary' : 'btn-secondary'" :disabled="busy || !canContinue" data-testid="req-continue" @click="saveAndContinue">Continue to review</button>
 				</div>
 			</div>
 		</div>

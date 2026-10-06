@@ -183,42 +183,42 @@ function goToProcurementRules() {
 			</p>
 
 			<div class="kt-setup-grid">
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-pe-name">{{ __("Entity name") }}</label>
-					<input id="kt-pe-name" v-model="form.pe_name" class="kt-input" data-testid="kt-setup-pe-name">
+					<input id="kt-pe-name" v-model="form.pe_name" class="input" data-testid="kt-setup-pe-name">
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-pe-code">{{ __("Entity code") }}</label>
 					<input
 						id="kt-pe-code"
 						v-model="form.pe_code"
-						class="kt-input"
+						class="input"
 						:disabled="configured"
 						data-testid="kt-setup-pe-code"
 					>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-pe-type">{{ __("Entity type") }}</label>
-					<select id="kt-pe-type" v-model="form.pe_type" class="kt-input" data-testid="kt-setup-pe-type">
+					<select id="kt-pe-type" v-model="form.pe_type" class="input" data-testid="kt-setup-pe-type">
 						<option v-if="!form.pe_type" value="">{{ __("— Select —") }}</option>
 						<option v-for="kind in peTypes" :key="kind" :value="kind">{{ kind }}</option>
 					</select>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-pe-ppra">{{ __("PPRA registration") }}</label>
-					<input id="kt-pe-ppra" v-model="form.ppra_registration" class="kt-input" data-testid="kt-setup-pe-ppra">
+					<input id="kt-pe-ppra" v-model="form.ppra_registration" class="input" data-testid="kt-setup-pe-ppra">
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-pe-tz">{{ __("Timezone") }}</label>
-					<input id="kt-pe-tz" :value="form.timezone" class="kt-input" disabled data-testid="kt-setup-pe-tz">
+					<input id="kt-pe-tz" :value="form.timezone" class="input" disabled data-testid="kt-setup-pe-tz">
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-pe-route">{{ __("Who approves the Annual Procurement Plan?") }}</label>
 					<select
 						id="kt-pe-route"
 						ref="routeSelect"
 						v-model="form.statutory_approval_route"
-						class="kt-input"
+						class="input"
 						:aria-invalid="routeMissing ? 'true' : 'false'"
 						:aria-describedby="routeMissing ? 'kt-pe-route-missing' : undefined"
 						data-testid="kt-setup-pe-route"
@@ -241,10 +241,10 @@ function goToProcurementRules() {
 			</div>
 
 			<!-- An explicit Yes/No choice (regulation 40(5)), never a checkbox. -->
-			<div class="kt-field" style="margin-bottom:20px" data-testid="kt-setup-pe-county">
+			<div class="field" style="margin-bottom:20px" data-testid="kt-setup-pe-county">
 				<label id="kt-pe-county-label">{{ __("Is this a county entity?") }}</label>
 				<div style="display:flex;gap:16px" role="radiogroup" aria-labelledby="kt-pe-county-label">
-					<label class="kt-radio" data-testid="kt-setup-pe-county-yes">
+					<label class="radio" data-testid="kt-setup-pe-county-yes">
 						<input
 							type="radio"
 							name="kt-pe-county"
@@ -253,7 +253,7 @@ function goToProcurementRules() {
 						>
 						<span class="dot" />{{ __("Yes") }}
 					</label>
-					<label class="kt-radio" data-testid="kt-setup-pe-county-no">
+					<label class="radio" data-testid="kt-setup-pe-county-no">
 						<input
 							type="radio"
 							name="kt-pe-county"
@@ -308,7 +308,7 @@ function goToProcurementRules() {
 			<div style="display:flex;justify-content:flex-end">
 				<button
 					type="button"
-					class="kt-btn kt-btn-primary"
+					class="btn btn-primary"
 					:disabled="!canSubmit"
 					data-testid="kt-setup-pe-submit"
 					@click="submit"

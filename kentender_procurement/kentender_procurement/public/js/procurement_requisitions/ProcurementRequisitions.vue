@@ -19,7 +19,7 @@
 		>
 			<div v-if="refreshFailed && !loading && !error" class="req-refresh-failed" data-testid="req-refresh-failed">
 				<Notice tone="warning">The latest state could not be loaded. What is shown may be out of date.</Notice>
-				<button type="button" class="kt-btn kt-btn-secondary" @click="load({ quiet: true })">Try again</button>
+				<button type="button" class="btn btn-secondary" @click="load({ quiet: true })">Try again</button>
 			</div>
 			<CommonState v-if="loading" kind="loading" />
 			<CommonState v-else-if="error" kind="error" @retry="load()" />
@@ -58,6 +58,7 @@ import AuthorisedScreen from "./components/AuthorisedScreen.vue";
 import StoppedScreen from "./components/StoppedScreen.vue";
 import DepartmentTaskScreen from "./components/DepartmentTaskScreen.vue";
 import ProcurementTaskScreen from "./components/ProcurementTaskScreen.vue";
+import { savePageSize, savedPageSize } from "../pager_shared/pageSize.js";
 
 const PAGE = "procurement-requisitions";
 const RESERVED = new Set(["new", "department-task", "procurement-task"]);
@@ -78,7 +79,9 @@ const start = ref(null);
 const refreshFailed = ref(false);
 // The caller's own filter selection — the inputs bind to this, never to the
 // server's echo of it (AGENTS.md §6.4).
-const workspaceFilters = ref({ search: "", status: "", department: "", fiscal_year: "" });
+// `page` and `page_size` ride along (the table-pagination standard): the server
+// returns one page of the register and how many matched.
+const workspaceFilters = ref({ search: "", status: "", department: "", fiscal_year: "", page: 1, page_size: savedPageSize("requisitions") });
 
 const segments = computed(() => route.value.slice(1).filter(Boolean));
 const parsed = computed(() => {
@@ -173,7 +176,10 @@ watch(
 watch(epoch, () => load({ quiet: true }));
 
 function onFilters(next) {
-	workspaceFilters.value = { ...workspaceFilters.value, ...next };
+	// A new search, status, department or year is a new list: back to its first page.
+	const newList = Object.keys(next).some((key) => key !== "page" && key !== "page_size");
+	if (next.page_size) savePageSize("requisitions", next.page_size);
+	workspaceFilters.value = { ...workspaceFilters.value, ...(newList ? { page: 1 } : {}), ...next };
 	load({ quiet: true });
 }
 

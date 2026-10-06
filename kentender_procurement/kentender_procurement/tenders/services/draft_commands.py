@@ -108,7 +108,7 @@ def start_tender(*, handoff: str, idempotency_key: str, user: str | None = None,
 	with envelope.atomic("start"):
 		reference = references.tender_reference(fiscal_year=cstr(snapshot.get("fiscal_year")), plan_item_id_value=cstr(snapshot.get("plan_item_id")))
 		units = snapshot.get("contributing_org_unit_ids") or []
-		lead = cstr(handoff_gateway.requisition_summary(handoff_doc).get("lead_org_unit")) or snap.lead_unit(snapshot)
+		lead = snap.lead_unit(snapshot)  # the certified lead of the consumed Requisition Version (OVS plan D15)
 		root = envelope.insert(
 			frappe.get_doc(
 				{

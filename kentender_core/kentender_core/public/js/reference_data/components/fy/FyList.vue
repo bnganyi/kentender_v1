@@ -36,12 +36,12 @@ const isEmpty = computed(() => !props.loading && !props.error && props.rows.leng
 
 <template>
 	<div style="margin:28px 48px 0;display:grid;grid-template-columns:minmax(0,1fr) 260px 260px;gap:16px">
-		<input class="kt-input" type="text" v-model="filters.q" :placeholder="__('Search financial year')" />
-		<select class="kt-input" v-model="filters.phase">
+		<input class="input" type="text" v-model="filters.q" :placeholder="__('Search financial year')" />
+		<select class="input" v-model="filters.phase">
 			<option value="">{{ __("All calendar phases") }}</option>
 			<option v-for="p in phaseOptions" :key="p" :value="p">{{ p }}</option>
 		</select>
-		<select class="kt-input" v-model="filters.status">
+		<select class="input" v-model="filters.status">
 			<option value="">{{ __("All reference statuses") }}</option>
 			<option v-for="s in statusOptions" :key="s" :value="s">{{ s }}</option>
 		</select>
@@ -49,7 +49,7 @@ const isEmpty = computed(() => !props.loading && !props.error && props.rows.leng
 
 	<div style="margin:28px 48px 0">
 		<RegisterStates :loading="loading" :error="error" :is-empty="isEmpty" @clear-filters="clearFilters" @retry="emit('retry')">
-			<table class="kt-table">
+			<table class="table">
 				<thead>
 					<tr>
 						<th style="width:150px">{{ __("Financial year") }}</th>
@@ -68,7 +68,7 @@ const isEmpty = computed(() => !props.loading && !props.error && props.rows.leng
 						<td><StatusPill :status="row.record_status" /></td>
 						<td style="text-align:right" class="kt-tabular">{{ row.context_count }}</td>
 						<td style="text-align:right">
-							<button type="button" class="kt-btn kt-btn-ghost" @click="emit('open', row.financial_year_id)">{{ __("View") }}</button>
+							<button type="button" class="btn btn-ghost" @click="emit('open', row.financial_year_id)">{{ __("View") }}</button>
 						</td>
 					</tr>
 				</tbody>

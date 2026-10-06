@@ -13,8 +13,8 @@
 					<!-- records other modules keep under this Tender (server
 					     `record_links`), e.g. its bid opening (BOP-CHG-001 v0.10 §9) -->
 					<div style="display: flex; gap: 12px; flex-shrink: 0">
-						<button v-for="l in recordLinks" :key="l.key" type="button" class="kt-btn kt-btn-secondary" :data-testid="`tnd-link-${l.key}`" @click="$emit('open-link', l.route)">{{ l.label }}</button>
-						<button v-if="published" type="button" class="kt-btn kt-btn-secondary" data-testid="tnd-view-public" @click="$emit('view-document', 'Complete Tender', 'Public')">View public Tender</button>
+						<button v-for="l in recordLinks" :key="l.key" type="button" class="btn btn-secondary" :data-testid="`tnd-link-${l.key}`" @click="$emit('open-link', l.route)">{{ l.label }}</button>
+						<button v-if="published" type="button" class="btn btn-secondary" data-testid="tnd-view-public" @click="$emit('view-document', 'Complete Tender', 'Public')">View public Tender</button>
 					</div>
 				</template>
 			</RecordHead>
@@ -30,40 +30,41 @@
 			<div v-if="published" class="tnd-section tnd-grid-4" data-testid="tnd-published-facts">
 				<div class="tnd-fact"><div class="kt-label">Published at</div><div class="tnd-fact-value">{{ tender.published_at_label }}</div></div>
 				<div class="tnd-fact"><div class="kt-label">Current submission deadline</div><div class="tnd-fact-value">{{ tender.submission_deadline_label }}{{ ended ? " (ended)" : "" }}</div></div>
-				<div class="tnd-fact"><div class="kt-label">Publication authorised by</div><div class="tnd-fact-value">{{ publication.authorised_by_name }}</div></div>
+				<div v-if="publication" class="tnd-fact"><div class="kt-label">Publication authorised by</div><div class="tnd-fact-value">{{ publication.authorised_by_name }}</div></div>
 				<div class="tnd-fact"><div class="kt-label">Effective addenda</div><div class="tnd-fact-value" data-testid="tnd-effective-addenda">{{ openPeriod.effective_addenda_count || 0 }}</div></div>
 			</div>
 			<div v-else class="tnd-section tnd-grid-4" data-testid="tnd-record-facts">
 				<div v-for="f in (record.key_facts || []).slice(0, 4)" :key="f.label" class="tnd-fact"><div class="kt-label">{{ f.label }}</div><div class="tnd-fact-value">{{ f.value || "—" }}</div></div>
 			</div>
+			<DecisionsAndProgress v-if="stages.length" :stages="stages" @open-link="$emit('open-link', $event)" @refresh="$emit('refresh')" />
 			<div v-if="documents.length" class="tnd-section tnd-section--tight tnd-actions">
-				<button v-for="d in headlineDocuments" :key="d.digest" type="button" class="kt-btn kt-btn-secondary" :data-testid="`tnd-view-${d.kind === 'Invitation' ? 'invitation' : 'complete'}`" @click="$emit('view-document', d.kind)">View {{ d.kind === "Invitation" ? "Invitation" : "complete Tender" }}</button>
-				<button v-if="openPeriod.current_addendum" type="button" class="kt-btn kt-btn-secondary" data-testid="tnd-view-current-addendum" @click="$emit('open-addendum', openPeriod.current_addendum.name)">View current addendum</button>
+				<button v-for="d in headlineDocuments" :key="d.digest" type="button" class="btn btn-secondary" :data-testid="`tnd-view-${d.kind === 'Invitation' ? 'invitation' : 'complete'}`" @click="$emit('view-document', d.kind)">View {{ d.kind === "Invitation" ? "Invitation" : "complete Tender" }}</button>
+				<button v-if="openPeriod.current_addendum" type="button" class="btn btn-secondary" data-testid="tnd-view-current-addendum" @click="$emit('open-addendum', openPeriod.current_addendum.name)">View current addendum</button>
 			</div>
 			<div v-if="publication" class="tnd-section">
 				<div class="tnd-block-title tnd-block-title--section">Publication channels</div>
-				<table class="kt-table" data-testid="tnd-published-channels">
+				<table class="table" data-testid="tnd-published-channels">
 					<thead><tr><th>Channel</th><th>Result</th><th>Available at</th><th>Confirmation</th></tr></thead>
 					<tbody>
-						<tr v-for="c in channels" :key="c.channel"><td>{{ c.channel_label }}</td><td><span class="kt-status" :class="c.status === 'Confirmed' ? 'is-live' : 'is-attention'">{{ c.result_label }}</span></td><td>{{ c.available_at_label || "—" }}</td><td><button v-if="c.status === 'Confirmed'" type="button" class="tnd-link-btn" @click="$emit('view-confirmation', c)">View confirmation</button><span v-else>—</span></td></tr>
+						<tr v-for="c in channels" :key="c.channel"><td>{{ c.channel_label }}</td><td><span class="kt-status" :class="c.status === 'Confirmed' ? 'is-live' : 'is-attention'">{{ c.result_label }}</span></td><td>{{ c.available_at_label || "—" }}</td><td><button v-if="c.status === 'Confirmed'" type="button" class="btn btn-ghost" @click="$emit('view-confirmation', c)">View confirmation</button><span v-else>—</span></td></tr>
 					</tbody>
 				</table>
 			</div>
 			<div v-if="publication" class="tnd-section">
 				<div class="tnd-block-title tnd-block-title--section">Changes and notices</div>
-				<table v-if="addenda.length" class="kt-table" style="margin-bottom: 16px" data-testid="tnd-addenda-table">
+				<table v-if="addenda.length" class="table" style="margin-bottom: 16px" data-testid="tnd-addenda-table">
 					<thead><tr><th>Addendum</th><th>Change</th><th>Issued</th><th>Deadline</th><th></th></tr></thead>
-					<tbody><tr v-for="a in addenda" :key="a.name" :data-status="a.status"><td>{{ a.addendum_reference }}</td><td>{{ a.change_summary }}<span v-if="a.status !== 'Issued'" class="tnd-sub">{{ a.status }}</span></td><td>{{ a.issued_at_label || "—" }}</td><td>{{ a.revised_submission_deadline_label || tender.submission_deadline_label }}</td><td><button type="button" class="tnd-link-btn" data-testid="tnd-open-addendum" @click="$emit('open-addendum', a.name)">View</button></td></tr></tbody>
+					<tbody><tr v-for="a in addenda" :key="a.name" :data-status="a.status"><td>{{ a.addendum_reference }}</td><td>{{ a.change_summary }}<span v-if="a.status !== 'Issued'" class="tnd-sub">{{ a.status }}</span></td><td>{{ a.issued_at_label || "—" }}</td><td>{{ a.revised_submission_deadline_label || tender.submission_deadline_label }}</td><td><button type="button" class="btn btn-ghost" data-testid="tnd-open-addendum" @click="$emit('open-addendum', a.name)">View</button></td></tr></tbody>
 				</table>
 				<p v-else class="tnd-card-body" data-testid="tnd-no-addenda">{{ openPeriod.empty_addenda_text || "No addenda have been issued." }}</p>
-				<table v-if="clarifications.length" class="kt-table" data-testid="tnd-clarifications-table">
+				<table v-if="clarifications.length" class="table" data-testid="tnd-clarifications-table">
 					<thead><tr><th>Question</th><th>Related notice</th><th>Received</th><th>Response status</th><th>Candidate notice</th><th>Action</th></tr></thead>
 					<tbody>
 						<tr v-for="q in clarifications" :key="q.name" :data-status="q.status">
 							<td>{{ q.question }}</td><td>{{ q.related_notice }}</td><td>{{ q.received_at_label }}</td>
 							<td><span class="kt-status" :class="q.status === 'Answered' ? 'is-live' : q.status === 'Closed with reason' ? 'is-pending' : 'is-attention'">{{ q.response_status }}</span></td>
 							<td>{{ q.candidate_notice || "—" }}</td>
-							<td><button type="button" class="tnd-link-btn" data-testid="tnd-open-clarification" @click="$emit('open-clarification', q.name)">View</button></td>
+							<td><button type="button" class="btn btn-ghost" data-testid="tnd-open-clarification" @click="$emit('open-clarification', q.name)">View</button></td>
 						</tr>
 					</tbody>
 				</table>
@@ -79,23 +80,23 @@
 						<div class="kt-timeline" data-testid="tnd-timeline">
 							<div v-for="(d, i) in timeline" :key="i" class="kt-timeline-row"><div class="kt-timeline-dot-col"><div class="kt-timeline-dot"></div><div v-if="i < timeline.length - 1" class="kt-timeline-line"></div></div><div class="kt-timeline-item"><div class="kt-timeline-item-title">{{ d.title }}</div><div class="kt-timeline-item-meta">{{ d.meta }}</div></div></div>
 						</div>
-						<button type="button" class="kt-btn kt-btn-ghost" style="padding: 8px 0 0" data-testid="tnd-view-history" @click="$emit('history')">View full history</button>
+						<button type="button" class="btn btn-ghost" style="padding: 8px 0 0" data-testid="tnd-view-history" @click="$emit('history')">View full history</button>
 					</div>
 				</div>
 			</div>
 		</BlueprintCard>
 		<div class="tnd-footer tnd-footer--end" data-testid="tnd-published-footer">
 			<template v-if="published && !ended">
-				<button v-if="has('recommend_cancellation')" type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-recommend-cancellation" @click="$emit('cancel-screen')">Recommend cancellation</button>
-				<button v-if="has('prepare_addendum')" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tnd-prepare-addendum" @click="$emit('prepare-addendum')">Prepare addendum</button>
-				<button v-if="has('cancel_tender')" type="button" class="kt-btn tnd-btn-danger" :disabled="pending" data-testid="tnd-cancel-tender" @click="$emit('cancel-screen')">Cancel Tender</button>
+				<button v-if="has('recommend_cancellation')" type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-recommend-cancellation" @click="$emit('cancel-screen')">Recommend cancellation</button>
+				<button v-if="has('prepare_addendum')" type="button" class="btn btn-primary" :disabled="pending" data-testid="tnd-prepare-addendum" @click="$emit('prepare-addendum')">Prepare addendum</button>
+				<button v-if="has('cancel_tender')" type="button" class="btn tnd-btn-danger" :disabled="pending" data-testid="tnd-cancel-tender" @click="$emit('cancel-screen')">Cancel Tender</button>
 				<span v-if="!has('recommend_cancellation') && !has('prepare_addendum') && !has('cancel_tender')" class="tnd-status-text" data-testid="tnd-no-action">No business action available for this role.</span>
 			</template>
 			<template v-else>
-				<button v-if="has('record_cancellation_evidence') || tender.overall_status === 'Cancelled'" type="button" class="kt-btn kt-btn-secondary" data-testid="tnd-open-cancellation" @click="$emit('cancel-screen')">View cancellation</button>
-				<button v-if="has('reopen_tender')" type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-reopen" @click="$emit('reopen')">Reopen for correction</button>
-				<button v-if="has('request_requisition_correction')" type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-request-correction" @click="$emit('request-correction')">Request requisition correction</button>
-				<button v-if="has('view_publication')" type="button" class="kt-btn kt-btn-secondary" data-testid="tnd-view-publication" @click="$emit('publication')">View publication</button>
+				<button v-if="has('record_cancellation_evidence') || tender.overall_status === 'Cancelled'" type="button" class="btn btn-secondary" data-testid="tnd-open-cancellation" @click="$emit('cancel-screen')">View cancellation</button>
+				<button v-if="has('reopen_tender')" type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-reopen" @click="$emit('reopen')">Reopen for correction</button>
+				<button v-if="has('request_requisition_correction')" type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-request-correction" @click="$emit('request-correction')">Request requisition correction</button>
+				<button v-if="has('view_publication')" type="button" class="btn btn-secondary" data-testid="tnd-view-publication" @click="$emit('publication')">View publication</button>
 				<span v-if="!hasAnyAction" class="tnd-status-text" data-testid="tnd-no-action">No business action available for this role.</span>
 			</template>
 		</div>
@@ -108,17 +109,23 @@ import BlueprintCard from "./BlueprintCard.vue";
 import RecordHead from "./RecordHead.vue";
 import TenderGuidance from "./TenderGuidance.vue";
 import ContentSections from "./ContentSections.vue";
+import DecisionsAndProgress from "./DecisionsAndProgress.vue";
 
 const props = defineProps({
 	record: { type: Object, default: () => ({ tender: {} }) },
 	review: { type: Object, default: () => ({}) },
 	pending: Boolean,
 });
-defineEmits(["view-document", "view-confirmation", "open-addendum", "open-clarification", "prepare-addendum", "cancel-screen", "history", "reopen", "request-correction", "publication", "fix", "open-link"]);
+defineEmits(["view-document", "view-confirmation", "open-addendum", "open-clarification", "prepare-addendum", "cancel-screen", "history", "reopen", "request-correction", "publication", "fix", "open-link", "refresh"]);
 
 const historyOpen = ref(false);
 const tender = computed(() => props.record.tender || {});
-const recordLinks = computed(() => props.record.record_links || []);
+const stages = computed(() => props.record.stage_summaries || []);
+// OVS-CHG-001 v0.6 §8: a header link gives way only to a stage block that carries the same way in
+const recordLinks = computed(() => {
+	const covered = new Set(stages.value.filter((s) => s.state === "ok" && (s.links || []).some((l) => l.key === "view-record")).map((s) => s.key));
+	return (props.record.record_links || []).filter((l) => !covered.has(l.key));
+});
 const publication = computed(() => props.record.publication || null);
 const openPeriod = computed(() => props.record.open_period || {});
 const releaseInfo = computed(() => {

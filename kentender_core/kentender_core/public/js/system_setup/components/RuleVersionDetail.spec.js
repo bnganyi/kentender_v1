@@ -165,7 +165,7 @@ describe("RuleVersionDetail", () => {
 
 		await wrapper.find('[data-testid="kt-procset-rule-rename"]').trigger("click");
 		const dialog = wrapper.find('[data-testid="kt-procset-rule-rename-dialog"]');
-		expect(dialog.find(".kt-dialog-title").text()).toBe("Edit rule name");
+		expect(dialog.find(".dialog-title").text()).toBe("Edit rule name");
 		expect(document.activeElement?.getAttribute("data-testid")).toBe("kt-procset-rule-rename-input");
 		api.renameRegulatoryReference.mockResolvedValue({ reference_set: "rs-res", display_name: "AGPO reservation" });
 		await dialog.find('[data-testid="kt-procset-rule-rename-input"]').setValue("AGPO reservation");

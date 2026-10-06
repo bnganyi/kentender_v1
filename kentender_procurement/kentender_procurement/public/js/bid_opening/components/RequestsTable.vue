@@ -2,7 +2,7 @@
      asked or said during the opening, and its outcome. -->
 <template>
 	<div class="kt-region" :class="{ 'is-secondary': secondary }"><h2>Requests and comments</h2>
-		<table class="kt-table" data-testid="bop-requests"><thead><tr><th>Time</th><th>Who</th><th>What</th><th v-if="withResponse">Response</th><th>Outcome</th></tr></thead><tbody>
+		<table class="table" data-testid="bop-requests"><thead><tr><th>Time</th><th>Who</th><th>What</th><th v-if="withResponse">Response</th><th>Outcome</th></tr></thead><tbody>
 			<tr v-for="r in rows" :key="r.exception_id"><td>{{ r.recorded_label }}</td><td>{{ r.speaker_name }}</td><td>{{ r.observed_fact }}</td><td v-if="withResponse">{{ r.response }}</td>
 				<td><span class="kt-status" :class="r.outcome === 'Recorded for Evaluation' ? 'is-pending' : 'is-live'">{{ r.outcome }}</span></td></tr>
 		</tbody></table>

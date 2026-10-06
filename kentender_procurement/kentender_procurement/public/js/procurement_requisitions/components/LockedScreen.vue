@@ -34,10 +34,10 @@
 
 		<div class="req-footer">
 			<div class="req-actions">
-				<button type="button" class="kt-btn kt-btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
+				<button type="button" class="btn btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
 				<ActionsMenu v-if="menu.length" :actions="menu" :disabled="busy" @choose="(k) => (dialog = k)" />
 			</div>
-			<button v-if="actions.export" type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="req-export" @click="downloadExport(ctx, view.requisition)">Export</button>
+			<button v-if="actions.export" type="button" class="btn btn-secondary" :disabled="busy" data-testid="req-export" @click="downloadExport(ctx, view.requisition)">Export</button>
 		</div>
 
 		<ReasonDialog v-if="dialog === 'withdraw'" v-bind="WITHDRAW" :busy="busy" :error="dialogError('withdraw')" @close="dialog = null" @confirm="withdraw" />

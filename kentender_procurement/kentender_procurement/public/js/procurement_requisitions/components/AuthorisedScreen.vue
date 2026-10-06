@@ -13,13 +13,13 @@
 				<div class="req-reference req-actions" style="align-items: center"><span class="kt-label">{{ view.header.reference }}</span><span class="kt-muted" style="font-size: 13px">{{ view.header.tagline }}</span></div>
 				<p v-if="view.header.description" class="kt-muted" style="font-size: 13px; margin: 10px 0 0">{{ view.header.description }}</p>
 			</div>
-			<button v-if="actions.continue_to_tender_preparation" type="button" class="kt-btn kt-btn-primary" style="white-space: nowrap" data-testid="req-continue-tender" @click="ctx.goPath(view.tender_route)">Continue to Tender Preparation</button>
+			<button v-if="actions.continue_to_tender_preparation" type="button" class="btn btn-primary" style="white-space: nowrap" data-testid="req-continue-tender" @click="ctx.goPath(view.tender_route)">Continue to Tender Preparation</button>
 		</div>
 
 		<template v-if="view.consumed">
 			<Notice tone="live"><span data-testid="req-consumed"><strong>Tender Preparation started</strong> · {{ view.consumed.tender_reference }}</span></Notice>
 			<div class="req-actions" style="justify-content: flex-end; margin-top: var(--kt-space-4)">
-				<button type="button" class="kt-btn kt-btn-primary" data-testid="req-open-tender" @click="ctx.goPath(view.consumed.route)">Open Tender</button>
+				<button type="button" class="btn btn-primary" data-testid="req-open-tender" @click="ctx.goPath(view.consumed.route)">Open Tender</button>
 			</div>
 		</template>
 		<template v-if="race">
@@ -48,7 +48,7 @@
 		<ReviewSections :sections="leading" />
 		<section v-if="(view.reservations || []).length" style="margin: var(--kt-space-3) 0 var(--kt-space-6)">
 			<CardTitle title="Funding reservations" icon="wallet" />
-			<table class="kt-table" data-testid="req-reservations">
+			<table class="table" data-testid="req-reservations">
 				<thead><tr><th>Funding reservation (financial hold)</th><th>Department</th><th class="is-num">Value</th></tr></thead>
 				<tbody><tr v-for="r in view.reservations" :key="r.reservation"><td>{{ r.reservation }}</td><td>{{ r.department }}</td><td class="is-num">{{ r.value }}</td></tr></tbody>
 			</table>
@@ -65,11 +65,11 @@
 		<Notice v-if="error" tone="critical"><span data-testid="req-authorised-error">{{ error }}</span></Notice>
 
 		<div class="req-footer">
-			<button type="button" class="kt-btn kt-btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
+			<button type="button" class="btn btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
 			<div class="req-actions">
-				<button v-if="actions.export" type="button" class="kt-btn kt-btn-ghost" :disabled="busy" data-testid="req-export" @click="downloadExport(ctx, view.requisition, view.header.version)">Export</button>
-				<button v-if="actions.revoke && !race" type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="req-revoke" @click="dialog = 'revoke'">Revoke authorisation</button>
-				<button v-if="actions.start_corrected_draft" type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="req-start-corrected" @click="startCorrected">Start corrected Draft</button>
+				<button v-if="actions.export" type="button" class="btn btn-ghost" :disabled="busy" data-testid="req-export" @click="downloadExport(ctx, view.requisition, view.header.version)">Export</button>
+				<button v-if="actions.revoke && !race" type="button" class="btn btn-secondary kt-danger" :disabled="busy" data-testid="req-revoke" @click="dialog = 'revoke'">Revoke authorisation</button>
+				<button v-if="actions.start_corrected_draft" type="button" class="btn btn-primary" :disabled="busy" data-testid="req-start-corrected" @click="startCorrected">Start corrected Draft</button>
 			</div>
 		</div>
 

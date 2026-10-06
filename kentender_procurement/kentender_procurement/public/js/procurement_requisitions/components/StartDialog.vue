@@ -56,19 +56,19 @@
 		<Notice v-if="error" tone="critical"><span data-testid="req-start-error">{{ error.message }}</span></Notice>
 
 		<template #actions>
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="ctx.pending.value" data-testid="req-start-cancel" @click="$emit('close')">Cancel</button>
+			<button type="button" class="btn btn-secondary" :disabled="ctx.pending.value" data-testid="req-start-cancel" @click="$emit('close')">Cancel</button>
 			<button
 				v-if="preview.state === 'existing_open' && preview.existing"
 				type="button"
-				class="kt-btn kt-btn-primary"
+				class="btn btn-primary"
 				data-testid="req-open-existing"
 				@click="ctx.goPath(preview.existing.route)"
 			>Open existing requisition</button>
 			<button
 				v-else
 				type="button"
-				class="kt-btn"
-				:class="preview.may_start ? 'kt-btn-primary' : 'kt-btn-secondary'"
+				class="btn"
+				:class="preview.may_start ? 'btn-primary' : 'btn-secondary'"
 				:disabled="!preview.may_start || ctx.pending.value"
 				data-testid="req-start-confirm"
 				@click="start"

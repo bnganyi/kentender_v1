@@ -22,17 +22,17 @@
 				<div class="tnd-fact"><div class="kt-label">Question</div><p class="tnd-body-text" data-testid="tnd-clarification-question">{{ clarification.question }}</p></div>
 			</div>
 			<div v-if="editable" class="tnd-section tnd-section--form">
-				<div class="kt-field"><label for="tnd-clar-response">Response</label>
-					<textarea id="tnd-clar-response" class="kt-input" rows="3" maxlength="2000" v-model="form.response" :readonly="awaitingAddendum" data-testid="tnd-clar-response"></textarea>
+				<div class="field"><label for="tnd-clar-response">Response</label>
+					<textarea id="tnd-clar-response" class="input" rows="3" maxlength="2000" v-model="form.response" :readonly="awaitingAddendum" data-testid="tnd-clar-response"></textarea>
 					<p v-if="errors.response" class="tnd-field-error" data-testid="tnd-clar-error-response">{{ errors.response }}</p>
 				</div>
-				<div class="kt-field"><label id="tnd-clar-changes-label">Would this response change the published Tender?</label>
+				<div class="field"><label id="tnd-clar-changes-label">Would this response change the published Tender?</label>
 					<div class="tnd-seg" role="radiogroup" aria-labelledby="tnd-clar-changes-label">
 						<label class="tnd-seg-opt"><input type="radio" name="tnd-clar-changes" :checked="!form.changes" :disabled="awaitingAddendum" data-testid="tnd-clar-changes-no" @change="form.changes = false" />No</label>
 						<label class="tnd-seg-opt"><input type="radio" name="tnd-clar-changes" :checked="form.changes" :disabled="awaitingAddendum" data-testid="tnd-clar-changes-yes" @change="form.changes = true" />Yes</label>
 					</div>
 				</div>
-				<div v-if="!form.changes" class="kt-field" data-testid="tnd-clar-audience"><label id="tnd-clar-audience-label">Who should receive this answer?</label>
+				<div v-if="!form.changes" class="field" data-testid="tnd-clar-audience"><label id="tnd-clar-audience-label">Who should receive this answer?</label>
 					<div class="tnd-radio-list" role="radiogroup" aria-labelledby="tnd-clar-audience-label">
 						<label v-for="a in data.audiences || []" :key="a.value" class="tnd-radio"><input type="radio" name="tnd-clar-audience" :value="a.value" v-model="form.audience" :data-testid="`tnd-clar-audience-${a.value === 'Asker only' ? 'asker' : 'all'}`" /><span class="dot"></span>{{ a.label }}</label>
 					</div>
@@ -53,7 +53,7 @@
 				</div>
 				<div class="tnd-section tnd-section--last">
 					<h2 class="tnd-h2">Candidate notice delivery</h2>
-					<table class="kt-table" data-testid="tnd-clar-notices">
+					<table class="table" data-testid="tnd-clar-notices">
 						<thead><tr><th>Candidate</th><th>Destination</th><th class="is-num">Attempts</th><th>Result</th></tr></thead>
 						<tbody>
 							<tr v-for="n in data.notices || []" :key="n.name" :data-status="n.status">
@@ -70,8 +70,8 @@
 		<div class="tnd-footer">
 			<a href="#" class="tnd-footer-back" data-testid="tnd-back" @click.prevent="$emit('back')">Back to Tender</a>
 			<div v-if="editable && canSend && (!form.changes || addendumEffective)" class="tnd-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-clar-cancel" @click="$emit('back')">Cancel</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tnd-clar-send" @click="send">{{ addendumEffective ? "Send response to all registered candidates" : "Send response" }}</button>
+				<button type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-clar-cancel" @click="$emit('back')">Cancel</button>
+				<button type="button" class="btn btn-primary" :disabled="pending" data-testid="tnd-clar-send" @click="send">{{ addendumEffective ? "Send response to all registered candidates" : "Send response" }}</button>
 			</div>
 		</div>
 	</div>

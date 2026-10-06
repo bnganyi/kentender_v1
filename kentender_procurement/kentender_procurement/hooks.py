@@ -142,6 +142,9 @@ kt_portal_surfaces = [
 # BOP-CHG-001 v0.10 plan D10 — Bid Opening answers /tenders/{ref}/opening
 # inside Bid Submission's portal surface above.
 kt_tender_opening_portal = ["kentender_procurement.bid_opening.portal.resolve"]
+# OVS-CHG-001 v0.6 §8, §13 — each later stage tells the Tender record what it discloses to this reader.
+kt_tender_stage_summaries = ["kentender_procurement.bid_opening.desk_links.tender_stage_summary",
+	"kentender_procurement.bid_evaluation.desk_links.tender_stage_summary", "kentender_procurement.award.desk_links.tender_stage_summary"]
 # BOP-CHG-001 v0.10 §9 — the Tender record links to its bid opening.
 kt_tender_record_links = ["kentender_procurement.bid_opening.desk_links.tender_record_links",
 	"kentender_procurement.bid_evaluation.desk_links.tender_record_links", "kentender_procurement.award.desk_links.tender_record_links"]
@@ -275,6 +278,7 @@ page_js = {
 	"tender-security-receipts": "public/js/tender_security_receipts_page.js",
 	# EVL-CHG-001 v0.4 plan D13 — the Bid evaluation workspace.
 	"bid-evaluation": "public/js/bid_evaluation_page.js",
+	"procurement-meetings": "public/js/procurement_meetings_page.js",
 	"award": "public/js/award_page.js",
 	"departmental-procurement-plan": "public/js/departmental_procurement_plan_page.js",
 	"annual-procurement-plan": "public/js/annual_procurement_plan_page.js",
@@ -634,6 +638,26 @@ kt_my_work_providers = [
 	"kentender_procurement.bid_evaluation.services.my_work_provider.my_work_rows",
 	# AWD-CHG-001 v0.4 §5.9 work items (plan D12).
 	"kentender_procurement.award.services.tasks.my_work_rows",
+]
+
+# HOME-CHG-001 v0.6 §7 — each owner's feed to the Home page (core collects them; it never imports this app).
+kt_home_providers = [
+	"kentender_procurement.tenders.services.home_provider.entries",
+	"kentender_procurement.bid_opening.services.home_provider.entries",
+	"kentender_procurement.bid_evaluation.services.home_provider.entries",
+	"kentender_procurement.award.services.home_provider.entries",
+	"kentender_procurement.procurement_requisitions.services.home_provider.entries",
+	"kentender_procurement.departmental_needs.services.home_provider.entries",
+	"kentender_procurement.procurement_planning.services.home_provider.entries",
+]
+
+# ANL-CHG-001 v0.8 §7.1 — each owner's facts for Procurement Analytics (core collects them; it never imports this app).
+# Module paths: each exposes `applies(user, at)` and `facts(user, kind, at, **params)` (kentender_core.services.analytics_contract).
+kt_analytics_providers = [
+	"kentender_procurement.departmental_needs.services.analytics_provider",
+	"kentender_procurement.procurement_planning.services.analytics_provider",
+	"kentender_procurement.procurement_requisitions.services.analytics_provider",
+	"kentender_procurement.tenders.services.analytics_provider",
 ]
 
 # AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical

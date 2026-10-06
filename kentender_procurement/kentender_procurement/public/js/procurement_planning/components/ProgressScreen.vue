@@ -40,7 +40,7 @@
 
 				<div v-if="items.length" class="kt-region">
 					<h2>Purchases</h2>
-					<table class="kt-table" data-testid="prg-purchases">
+					<table class="table" data-testid="prg-purchases">
 						<thead>
 							<tr>
 								<th>Purchase</th>
@@ -81,7 +81,7 @@
 									<td>{{ row.not_covered_display }}</td>
 									<td>{{ row.procurement_stage }}</td>
 									<td style="text-align: right">
-										<a href="#" class="kt-btn kt-btn-ghost" data-testid="prg-view-purchase" @click.prevent="$emit('navigate', row.route)">View purchase details</a>
+										<a href="#" class="btn btn-ghost" data-testid="prg-view-purchase" @click.prevent="$emit('navigate', row.route)">View purchase details</a>
 									</td>
 								</tr>
 								<!-- U14-FULL-COVERAGE — the proceedings behind the coverage,
@@ -94,7 +94,7 @@
 												<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
 											</summary>
 											<div class="kt-disclosure-body">
-												<table class="kt-table">
+												<table class="table">
 													<thead>
 														<tr><th>Proceeding</th><th>Requisition</th><th>Covered</th><th>Stage</th></tr>
 													</thead>
@@ -113,7 +113,7 @@
 												     reported something. -->
 												<template v-for="proceeding in datedProceedings(row)" :key="`d-${proceeding.proceeding_id}`">
 													<h6 class="kt-card-title pln-progress-dates-head">{{ proceeding.proceeding_id }}</h6>
-													<table class="kt-table" data-testid="prg-milestones">
+													<table class="table" data-testid="prg-milestones">
 														<thead>
 															<tr>
 																<th>Milestone</th><th>Approved date</th><th>Actual date</th>
@@ -130,7 +130,7 @@
 														</tbody>
 													</table>
 													<!-- Only where both endpoints actually exist. -->
-													<table v-if="proceeding.durations.length" class="kt-table" data-testid="prg-durations">
+													<table v-if="proceeding.durations.length" class="table" data-testid="prg-durations">
 														<thead>
 															<tr>
 																<th>From</th><th>To</th><th class="is-num">Planned elapsed days</th>

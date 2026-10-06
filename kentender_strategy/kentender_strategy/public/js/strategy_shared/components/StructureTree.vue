@@ -118,7 +118,7 @@ function onRowKeydown(node, event) {
 			<div class="kt-tree-meta" :style="{ paddingLeft: canCollapse(node) ? '33px' : '23px' }">
 				<span class="kt-tree-type">
 					&middot; {{ node.node_type }}
-					<span v-if="node.pending" class="kt-tag kt-tag-accent" style="margin-left: 6px" data-testid="str-tree-pending">{{ __("Unsaved") }}</span>
+					<span v-if="node.pending" class="tag tag-accent" style="margin-left: 6px" data-testid="str-tree-pending">{{ __("Unsaved") }}</span>
 					<span v-if="isCollapsed(node)" class="kt-tree-hidden-count">({{ countDescendants(node) }} {{ __("hidden") }})</span>
 				</span>
 				<span v-if="addActions(node).length" style="display: inline-flex; gap: 6px">

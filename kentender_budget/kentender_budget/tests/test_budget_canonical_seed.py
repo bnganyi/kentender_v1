@@ -21,17 +21,24 @@ from kentender_budget.seeds import kentender_mvp_v1_portfolio as seed
 
 
 class TestCanonicalBudgetSeed(IntegrationTestCase):
+	"""Two-year seed world: one budget per seeded year (FY 2026/27, carried
+	out; FY 2027/28, being prepared)."""
+
 	def test_the_seeded_world_validates(self):
-		failed = [row["check"] for row in seed.validate_budget_seed() if not row["ok"]]
-		self.assertEqual(failed, [])
+		for year in seed.BUDGETS:
+			failed = [row["check"] for row in seed.validate_budget_seed(year) if not row["ok"]]
+			self.assertEqual(failed, [], year)
 
 	def test_the_lines_keep_their_generated_references(self):
-		for key in seed.LINES:
-			line = seed.canonical_budget_line(key)
-			self.assertTrue(line, key)
-			reference = frappe.db.get_value("Procurement Budget Line", line, "generated_reference")
-			self.assertRegex(reference, r"^[A-Z]+-BL-\d{4}$", key)
+		for year, spec in seed.BUDGETS.items():
+			for key in spec["lines"]:
+				line = seed.canonical_budget_line(key, year)
+				self.assertTrue(line, (year, key))
+				reference = frappe.db.get_value("Procurement Budget Line", line, "generated_reference")
+				self.assertRegex(reference, r"^[A-Z]+-BL-\d{4}$", (year, key))
 
 	def test_the_budget_and_version_references_are_generated(self):
-		budget = seed.canonical_budget()
-		self.assertTrue(re.fullmatch(r"[A-Z]+-BUD-2027-\d{3}", frappe.db.get_value("Procurement Budget", budget, "generated_reference") or ""))
+		for year, spec in seed.BUDGETS.items():
+			budget = seed.canonical_budget(year)
+			pattern = rf"[A-Z]+-BUD-{spec['year'].start_year}-\d{{3}}"
+			self.assertTrue(re.fullmatch(pattern, frappe.db.get_value("Procurement Budget", budget, "generated_reference") or ""), year)

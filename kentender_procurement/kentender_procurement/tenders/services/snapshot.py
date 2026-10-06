@@ -114,5 +114,12 @@ def total_value(snapshot: dict[str, Any]) -> float:
 
 
 def lead_unit(snapshot: dict[str, Any]) -> str:
+	"""The Tender's lead department: the certified lead of the exact consumed
+	Requisition Version (REQ-CHG-001 v1.14 §5.1, `lead_org_unit_id`; OVS-CHG-001
+	v0.6 §4.1, plan D15). The handoff lists contributors alphabetically, so the
+	first of them is not the lead; it stands only when no certification is carried."""
+	certified = (snapshot.get("departmental_certification") or {}).get("lead_org_unit_id")
+	if certified:
+		return str(certified)
 	units = snapshot.get("contributing_org_unit_ids") or []
 	return units[0] if units else ""

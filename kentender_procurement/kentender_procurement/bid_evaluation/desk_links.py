@@ -23,3 +23,10 @@ def tender_record_links(*, tender: str, user: str) -> list[dict[str, Any]]:
 	if not reads.access(doc, user)["read"]:
 		return []
 	return [{"key": "bid-evaluation", "label": "Bid evaluation", "route": ["tenders", doc.tender_reference, "evaluation"]}]
+
+
+def tender_stage_summary(*, tender: str, user: str) -> list[dict[str, Any]]:
+	"""What the evaluation discloses to this reader on the Tender record (`kt_tender_stage_summaries`, OVS-CHG-001 v0.6 §8)."""
+	from kentender_procurement.bid_evaluation.services import stage_summary
+
+	return stage_summary.for_tender(tender=tender, user=user)

@@ -60,7 +60,7 @@ cmd_stop() {
 
 cmd_status() {
 	if up; then echo "server: up at $BASE_URL"; else echo "server: down (scripts/test-site.sh serve)"; fi
-	bench --site "$TEST_SITE" execute kentender_core.seeds.canonical.validate --kwargs '{"through": "award"}' 2>&1 | tail -1
+	bench --site "$TEST_SITE" execute kentender_core.seeds.canonical.validate --kwargs '{"current": "award", "next_year": "annual_plan"}' 2>&1 | tail -1
 }
 
 cmd_rebuild() {
@@ -89,6 +89,8 @@ for k in ("developer_mode", "server_script_enabled", "kt_bds_clarification_produ
 	if k in dev:
 		test[k] = dev[k]
 test["maintenance_mode"] = 0
+# Home reads the real site time everywhere else; the test site's browser specs read the seeded world at its own instant (HOME-CHG-001 v0.6)
+test["kt_home_follow_test_clock"] = 1
 test.pop("domains", None)
 json.dump(test, open(path, "w"), indent=1)
 PY
@@ -148,7 +150,7 @@ PY
 	node "$BENCH_ROOT/apps/kentender_v1/tests/ui/helpers/queueCheck.cjs" --fix | tail -1
 
 	echo "== 6/6 validate the canonical world"
-	bench --site "$TEST_SITE" execute kentender_core.seeds.canonical.validate --kwargs '{"through": "award"}' 2>&1 | tail -1
+	bench --site "$TEST_SITE" execute kentender_core.seeds.canonical.validate --kwargs '{"current": "award", "next_year": "annual_plan"}' 2>&1 | tail -1
 }
 
 cmd_run() {

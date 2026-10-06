@@ -262,23 +262,23 @@ async function save() {
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3l9 16H3z" /><path d="M12 10v4M12 17h.01" /></svg>
 				<div class="kt-notice-body"><strong>{{ __("Rule created; version not saved.") }}</strong> {{ __("Your entries are retained so you can finish saving this version.") }}</div>
 			</div>
-			<button type="button" class="kt-btn kt-btn-primary" style="margin-left:30px" :disabled="!canSave" data-testid="kt-procset-rule-partial-save" @click="save">{{ __("Save rule version") }}</button>
+			<button type="button" class="btn btn-primary" style="margin-left:30px" :disabled="!canSave" data-testid="kt-procset-rule-partial-save" @click="save">{{ __("Save rule version") }}</button>
 		</div>
 
 		<template v-if="creating">
 			<h3 data-testid="kt-rule-editor-title">{{ __("Add procurement rule") }}</h3>
 			<div class="kt-rule-grid" style="margin:16px 0">
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-rule-name">{{ __("Rule name") }}</label>
-					<input id="kt-rule-name" v-model="form.display_name" class="kt-input" :disabled="partial" data-testid="kt-rule-name">
+					<input id="kt-rule-name" v-model="form.display_name" class="input" :disabled="partial" data-testid="kt-rule-name">
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-rule-key">{{ __("Rule identifier") }}</label>
-					<input id="kt-rule-key" v-model="form.reference_key" class="kt-input" :disabled="partial" data-testid="kt-rule-key">
+					<input id="kt-rule-key" v-model="form.reference_key" class="input" :disabled="partial" data-testid="kt-rule-key">
 				</div>
-				<div class="kt-field" style="grid-column:1/-1">
+				<div class="field" style="grid-column:1/-1">
 					<label for="kt-rule-kind">{{ __("Rule kind") }}</label>
-					<select id="kt-rule-kind" v-model="kind" class="kt-input" :disabled="partial" data-testid="kt-rule-kind">
+					<select id="kt-rule-kind" v-model="kind" class="input" :disabled="partial" data-testid="kt-rule-kind">
 						<option v-for="option in kinds" :key="option" :value="option">{{ option }}</option>
 					</select>
 				</div>
@@ -286,7 +286,7 @@ async function save() {
 		</template>
 		<template v-else-if="correcting">
 			<h3 style="margin-bottom:4px" data-testid="kt-rule-editor-title">{{ __("{0} — edit rule", [ruleName]) }}</h3>
-			<span class="kt-tag kt-tag-neutral">{{ __("Unsaved changes") }}</span>
+			<span class="tag tag-neutral">{{ __("Unsaved changes") }}</span>
 			<div class="kt-notice is-info" style="margin:12px 0" data-testid="kt-rule-correcting-notice">
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
 				<div class="kt-notice-body">{{ __("No source check has been recorded against this rule and it has not taken effect, so it can be changed here. Once either happens, changing it means a new version.") }}</div>
@@ -298,9 +298,9 @@ async function save() {
 		     a rule opens it, a new one opens the full method editor. -->
 		<template v-if="delegated">
 			<div class="kt-rule-grid" style="margin-bottom:12px">
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-rule-method">{{ __("Method") }}</label>
-					<select id="kt-rule-method" v-model="methodChoice" class="kt-input" data-testid="kt-rule-method">
+					<select id="kt-rule-method" v-model="methodChoice" class="input" data-testid="kt-rule-method">
 						<option value="">{{ __("— Select —") }}</option>
 						<option v-for="method in methods" :key="method" :value="method">{{ method }}</option>
 					</select>
@@ -328,7 +328,7 @@ async function save() {
 				@cancel="emit('cancel')"
 			/>
 			<div v-else style="display:flex;gap:8px;justify-content:flex-end">
-				<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-rule-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
+				<button type="button" class="btn btn-secondary" data-testid="kt-rule-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
 			</div>
 		</template>
 
@@ -345,22 +345,22 @@ async function save() {
 
 			<h6 class="kt-card-title" style="margin-top:20px">{{ __("When this rule applies") }}</h6>
 			<div class="kt-rule-grid" style="gap:14px;margin-bottom:14px">
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-rule-from">{{ __("Applies from") }}</label>
-					<input id="kt-rule-from" v-model="form.effective_from" class="kt-input" type="date" data-testid="kt-rule-from">
+					<input id="kt-rule-from" v-model="form.effective_from" class="input" type="date" data-testid="kt-rule-from">
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-rule-until">{{ __("Applies until") }}</label>
-					<input id="kt-rule-until" v-model="form.effective_until" class="kt-input" type="date" data-testid="kt-rule-until">
+					<input id="kt-rule-until" v-model="form.effective_until" class="input" type="date" data-testid="kt-rule-until">
 				</div>
-				<div class="kt-field" style="grid-column:1/-1">
+				<div class="field" style="grid-column:1/-1">
 					<label for="kt-rule-basis">{{ __("Which date determines the rule to use?") }}</label>
-					<select id="kt-rule-basis" v-model="form.applicability_basis" class="kt-input" data-testid="kt-rule-basis">
+					<select id="kt-rule-basis" v-model="form.applicability_basis" class="input" data-testid="kt-rule-basis">
 						<option value="">{{ __("— Select —") }}</option>
 						<option v-for="basis in APPLICABILITY_BASES" :key="basis" :value="basis">{{ applicabilityBasisLabel(basis) }}</option>
 					</select>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label id="kt-rule-entity-types">{{ __("Entity types") }}</label>
 					<div style="display:flex;flex-direction:column;gap:4px" role="group" aria-labelledby="kt-rule-entity-types">
 						<label v-for="type in entityTypes" :key="type" class="kt-checkbox">
@@ -374,13 +374,13 @@ async function save() {
 						</label>
 					</div>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-rule-county">{{ __("County applicability") }}</label>
-					<select id="kt-rule-county" v-model="form.applicability_county" class="kt-input" data-testid="kt-rule-county">
+					<select id="kt-rule-county" v-model="form.applicability_county" class="input" data-testid="kt-rule-county">
 						<option v-for="option in COUNTY_APPLICABILITY" :key="option.value" :value="option.value">{{ option.label }}</option>
 					</select>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label id="kt-rule-categories">{{ __("Categories") }}</label>
 					<div style="display:flex;gap:14px;flex-wrap:wrap" role="group" aria-labelledby="kt-rule-categories">
 						<label v-for="category in categories" :key="category" class="kt-checkbox">
@@ -394,9 +394,9 @@ async function save() {
 						</label>
 					</div>
 				</div>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-rule-currency">{{ __("Currency") }}</label>
-					<select id="kt-rule-currency" v-model="form.applicability_currency" class="kt-input" data-testid="kt-rule-currency">
+					<select id="kt-rule-currency" v-model="form.applicability_currency" class="input" data-testid="kt-rule-currency">
 						<option value="">{{ __("— Select —") }}</option>
 						<option value="KES">KES</option>
 					</select>
@@ -405,22 +405,22 @@ async function save() {
 
 			<h6 class="kt-card-title">{{ __("Sources and interpretation") }}</h6>
 			<div class="kt-rule-grid" style="gap:14px">
-				<div class="kt-field"><label for="kt-rule-instrument">{{ __("Instrument") }}</label><input id="kt-rule-instrument" v-model="form.source_instrument" class="kt-input" data-testid="kt-rule-instrument"></div>
+				<div class="field"><label for="kt-rule-instrument">{{ __("Instrument") }}</label><input id="kt-rule-instrument" v-model="form.source_instrument" class="input" data-testid="kt-rule-instrument"></div>
 				<!-- §4.6 — edition and amendment history are verification evidence,
 				     appended by a source check; the version itself is immutable. -->
-				<div class="kt-field"><label for="kt-rule-edition">{{ __("Edition") }}</label><input id="kt-rule-edition" class="kt-input" :value="__('Recorded with the source check')" disabled data-testid="kt-rule-edition"></div>
-				<div class="kt-field" style="grid-column:1/-1"><label for="kt-rule-provisions">{{ __("Provisions") }}</label><input id="kt-rule-provisions" v-model="form.provision" class="kt-input" data-testid="kt-rule-provisions"></div>
-				<div class="kt-field"><label for="kt-rule-url">{{ __("Source URL") }}</label><input id="kt-rule-url" v-model="form.source_document" class="kt-input" data-testid="kt-rule-url"></div>
-				<div class="kt-field"><label for="kt-rule-document">{{ __("Source document") }}</label><input id="kt-rule-document" class="kt-input" :value="__('Not attached')" disabled data-testid="kt-rule-document"></div>
-				<div class="kt-field" style="grid-column:1/-1"><label for="kt-rule-amendments">{{ __("Effective dates and amendments") }}</label><input id="kt-rule-amendments" class="kt-input" :value="__('Recorded with the source check')" disabled data-testid="kt-rule-amendments"></div>
-				<div class="kt-field" style="grid-column:1/-1"><label for="kt-rule-interpretation">{{ __("Interpretation") }}</label><textarea id="kt-rule-interpretation" v-model="form.interpretation" class="kt-input" rows="2" data-testid="kt-rule-interpretation" /></div>
+				<div class="field"><label for="kt-rule-edition">{{ __("Edition") }}</label><input id="kt-rule-edition" class="input" :value="__('Recorded with the source check')" disabled data-testid="kt-rule-edition"></div>
+				<div class="field" style="grid-column:1/-1"><label for="kt-rule-provisions">{{ __("Provisions") }}</label><input id="kt-rule-provisions" v-model="form.provision" class="input" data-testid="kt-rule-provisions"></div>
+				<div class="field"><label for="kt-rule-url">{{ __("Source URL") }}</label><input id="kt-rule-url" v-model="form.source_document" class="input" data-testid="kt-rule-url"></div>
+				<div class="field"><label for="kt-rule-document">{{ __("Source document") }}</label><input id="kt-rule-document" class="input" :value="__('Not attached')" disabled data-testid="kt-rule-document"></div>
+				<div class="field" style="grid-column:1/-1"><label for="kt-rule-amendments">{{ __("Effective dates and amendments") }}</label><input id="kt-rule-amendments" class="input" :value="__('Recorded with the source check')" disabled data-testid="kt-rule-amendments"></div>
+				<div class="field" style="grid-column:1/-1"><label for="kt-rule-interpretation">{{ __("Interpretation") }}</label><textarea id="kt-rule-interpretation" v-model="form.interpretation" class="input" rows="2" data-testid="kt-rule-interpretation" /></div>
 			</div>
 
 			<RuleFormError :error="error" style="margin-top:16px" @refresh="emit('refresh')" @review="emit('review')" />
 
 			<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="kt-rule-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-rule-save" @click="save">
+				<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="kt-rule-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
+				<button type="button" class="btn btn-primary" :disabled="!canSave" data-testid="kt-rule-save" @click="save">
 					{{ creating ? __("Save rule version") : correcting ? __("Save changes") : __("Save new version") }}
 				</button>
 			</div>

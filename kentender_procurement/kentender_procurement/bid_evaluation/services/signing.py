@@ -31,7 +31,7 @@ import frappe
 from frappe.utils import cstr
 
 from kentender_procurement.bid_evaluation.services import (
-	clock, comparison, discussion, findings, guards, lifecycle, notify, people, prc, prc_owner, records, report, roster, simulation, timers,
+	clock, comparison, discussion, evidence_manifest, findings, guards, lifecycle, notify, people, prc, prc_owner, records, report, roster, simulation, timers,
 )
 from kentender_procurement.bid_evaluation.services.errors import Guards, fail, invalid
 
@@ -94,6 +94,8 @@ def send_for_signing(*, tender: str, expected_version: int, idempotency_key: str
 		built = report.build(doc)
 		content = json.dumps({**built, "narrative": cstr(draft.narrative)}, sort_keys=True, default=str)
 		digest = records.digest(content)
+		# the bids and every submitted document this version rests on, written beside the content (OVS-CHG-001 v0.6 §7)
+		manifest = evidence_manifest.values(evidence_manifest.build(doc), evidence_manifest.FROZEN)
 		members = roster.member_users(doc.name)
 		targets = [{"target_id": f"{draft.name}-SIG-{u.split('@')[0]}", "target_type": "Report signature", "target_reference": draft.name, "target_digest": digest,
 			"required_member": u} for u in members]
@@ -104,7 +106,7 @@ def send_for_signing(*, tender: str, expected_version: int, idempotency_key: str
 		draft.update({"state": "Signing", "content_json": content, "content_digest": digest, "outcome": cstr(rec["outcome"]),
 			"recommended_bid": cstr((rec.get("recommended") or {}).get("bid")), "recommended_total": cstr((rec.get("recommended") or {}).get("evaluated_total")),
 			"qualifications_json": json.dumps(rec["qualifications"]), "source_versions_json": json.dumps({"run": doc.current_run, "definition": doc.definition_digest,
-			"intake": doc.source_intake}), "frozen_by": user, "frozen_at": clock.now(), "record_version_reference": frozen["record_version"]})
+			"intake": doc.source_intake}), "frozen_by": user, "frozen_at": clock.now(), "record_version_reference": frozen["record_version"], **manifest})
 		records.bump(draft)
 		records.bump(doc, state="Signing", current_report=draft.name, last_committed_event=frozen["event_id"])
 		notify.tell(doc, members, subject=f"Review and sign report for {doc.tender_reference}", message=f"Evaluation report {draft.version_number} is ready to sign.",

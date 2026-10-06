@@ -40,6 +40,11 @@ import frappe
 from frappe.utils import cstr
 
 NAMESPACE = "KENTENDER_MVP_1_R1_EVL"
+# The executed portfolio's evaluations (two-year seed world). Their own tag,
+# so retelling the canonical evaluation — which clears NAMESPACE — never
+# removes them (found 5 Oct 2026). The canonical rebuild clears them with
+# their Tenders.
+PORTFOLIO_NAMESPACE = "KENTENDER_MVP_1_R1_EVL_PORTFOLIO"
 DOMAIN = "moh.example.test"
 AO = f"amina.hassan@{DOMAIN}"
 HOP = f"charles.mutiso@{DOMAIN}"
@@ -257,8 +262,101 @@ class _Story:
 			_ok(signing.sign(tender=self.tender, report_version=version, idempotency_key=_key(f"sign-{user}"), user=user), f"sign as {user}")
 
 
+#: Where a portfolio evaluation stops (two-year seed world proposal §5.1).
+EVALUATION_STOPS = ("prepared", "intake", "report_sent")
+
+
+def evaluate_portfolio_tender(tender: str, clock_map: dict[str, str], *, stop: str, reference: str, summary: str) -> dict[str, Any]:
+	"""An executed-portfolio Tender's evaluation, the canonical committee
+	without the clarification, to `stop`:
+
+	- "prepared": prepared from the published Tender; the committee
+	  appointment is the Accounting Officer's;
+	- "intake": appointed, the secretary assigned, each member declared, and
+	  the completed opening taken up — the automatic checks done, the
+	  committee's review outstanding;
+	- "report_sent": every bid's evidence reviewed as meeting, the
+	  no-additional-due-diligence basis recorded in a discussion, the summary
+	  written, and the three signatures delivering the report to Charles Mutiso.
+
+	`clock_map` holds prepare, appoint, secretary, declare (three), intake,
+	review, start, join (two), basis, end, narrative, freeze and sign (three).
+	`reference` numbers the appointment. Idempotent: a case already at `stop`
+	is returned untouched."""
+	from kentender_procurement.bid_evaluation.services import (
+		aggregate, appointment, checks, conclusion, declaration, discussion, findings, intake, preparation, report, secretary, signing,
+	)
+
+	_guard()
+	if stop not in EVALUATION_STOPS:
+		frappe.throw(f"Unknown evaluation stop {stop!r}; expected one of {', '.join(EVALUATION_STOPS)}.")
+	state = frappe.db.get_value("Evaluation Case", {"tender": tender}, "state")
+	done = {"prepared": bool(state), "intake": bool(frappe.db.get_value("Evaluation Case", {"tender": tender}, "source_intake")), "report_sent": state == "Report sent"}
+	if done[stop]:
+		return {"ok": True, "idempotent": True, "evaluation": frappe.db.get_value("Evaluation Case", {"tender": tender}, "name")}
+	saved = {flag: frappe.flags.get(flag) for flag in (*CLOCKS, "kt_evl_fixture_namespace", "kt_prc_fixture_namespace")}
+	frappe.flags.kt_evl_fixture_namespace = frappe.flags.kt_prc_fixture_namespace = PORTFOLIO_NAMESPACE
+	story = _Story(tender)
+	try:
+		_at(clock_map["prepare"])
+		_ok(preparation.ensure_preparation(tender=tender), "prepare")
+		if stop == "prepared":
+			return {"ok": True, "idempotent": False, "evaluation": story.case(), "stopped": stop}
+		_at(clock_map["appoint"])
+		_ok(appointment.appoint_committee(tender=tender, members=ROSTER, appointment_reference=f"MOH/EVAL/{reference}/2027", expected_version=story.version(),
+			idempotency_key=_key("appoint"), user=AO), "appoint the committee")
+		_at(clock_map["secretary"])
+		_ok(secretary.assign_secretary(tender=tender, secretary=SECRETARY, appointment_reference=f"MOH/EVAL/SEC/{reference}/2027", expected_version=story.version(),
+			idempotency_key=_key("secretary"), user=HOP), "assign the secretary")
+		for user, at in zip((CHAIR, MEMBER, MEMBER_2), clock_map["declare"]):
+			_at(at)
+			_ok(declaration.declare_interest(tender=tender, choice="No conflict to declare", confidentiality_accepted=True, idempotency_key=_key(f"declare-{user}"),
+				user=user), f"declare as {user}")
+		_at(clock_map["intake"])
+		_ok(intake.receive_opening_package(tender=tender), "take up the completed opening")
+		if stop == "intake":
+			return {"ok": True, "idempotent": False, "evaluation": story.case(), "stopped": stop}
+		case = story.case()
+		for bid in frappe.get_all("Evaluation Bid", filters={"evaluation_case": case}, pluck="tenderer_name"):
+			story.review(bid, clock_map["review"], clock_map["review"], None)
+		story.session(clock_map["start"], clock_map["join"], "Complete the findings")
+		story.at(clock_map["basis"])
+		_ok(conclusion.record_case_conclusion(tender=tender, kind="Due diligence basis", reason=BASIS, idempotency_key=_key("basis"), user=CHAIR),
+			"record the due-diligence basis")
+		story.at(clock_map["end"])
+		_ok(discussion.end_discussion(tender=tender, idempotency_key=_key("end"), user=CHAIR), "end the discussion")
+		story.present = []
+		_at(clock_map["narrative"])
+		draft = report.draft(frappe.get_doc("Evaluation Case", case))
+		_ok(report.save_narrative(tender=tender, narrative=summary, expected_version=draft.record_version, idempotency_key=_key("narrative"), user=SECRETARY),
+			"write the committee summary")
+		_at(clock_map["freeze"])
+		draft.reload()
+		_ok(signing.send_for_signing(tender=tender, expected_version=draft.record_version, idempotency_key=_key("freeze"), user=SECRETARY), "send for signing")
+		for user, at in zip((CHAIR, MEMBER, MEMBER_2), clock_map["sign"]):
+			_at(at)
+			version = signing.signing_version(frappe.get_doc("Evaluation Case", case)).name
+			_ok(signing.sign(tender=tender, report_version=version, idempotency_key=_key(f"sign-{user}"), user=user), f"sign as {user}")
+		return {"ok": True, "idempotent": False, "evaluation": case, "stopped": stop}
+	finally:
+		for flag, value in saved.items():
+			frappe.flags[flag] = value
+
+
 def lifecycle_complete(tender: str) -> bool:
 	return frappe.db.get_value("Evaluation Case", {"tender": tender}, "state") == "Report sent" and all(row["ok"] for row in validate_bid_evaluation_seed())
+
+
+def stamp_proceeding(tender: str) -> int:
+	"""Give the canonical evaluation's Proceeding the evaluation namespace (OVS-CHG-001 v0.6 FU-OVS-34). It was
+	created without one, so a purge keyed on the namespace did not reach it. Idempotent; only a canonical case's row."""
+	case = frappe.db.get_value("Evaluation Case", {"tender": tender}, ["name", "fixture_namespace"], as_dict=True) if tender else None
+	if not case or case.fixture_namespace != NAMESPACE:
+		return 0
+	rows = frappe.get_all("Proceeding", filters={"owner_type": "Evaluation Case", "owner_id": case.name, "fixture_namespace": ("in", ("", None))}, pluck="name")
+	for name in rows:
+		frappe.db.set_value("Proceeding", name, "fixture_namespace", NAMESPACE, update_modified=False)
+	return len(rows)
 
 
 def upsert_bid_evaluation_base(*, commit: bool = False) -> dict[str, Any]:
@@ -272,14 +370,15 @@ def upsert_bid_evaluation_base(*, commit: bool = False) -> dict[str, Any]:
 	tender = canonical_tender()
 	if not tender or frappe.db.get_value("Bid Opening Case", {"tender": tender}, "state") != "Opening complete":
 		frappe.throw("The canonical Tender's opening is not complete. Seed through the bid_opening stage first.")
+	stamp_proceeding(tender)
 	if lifecycle_complete(tender):
 		result = {"ok": True, "idempotent": True, "tender": tender, "evaluation": frappe.db.get_value("Evaluation Case", {"tender": tender}, "name")}
 	else:
 		clear.wipe(tenders=[tender], namespace=NAMESPACE)
 		frappe.db.set_value("Evaluation Handoff", {"tender": tender, "consumer": "evaluation"}, "delivery_status", "Pending", update_modified=False)
 		simulation.reset_controls()
-		saved = {flag: frappe.flags.get(flag) for flag in (*CLOCKS, "kt_evl_fixture_namespace")}
-		frappe.flags.kt_evl_fixture_namespace = NAMESPACE
+		saved = {flag: frappe.flags.get(flag) for flag in (*CLOCKS, "kt_evl_fixture_namespace", "kt_prc_fixture_namespace")}
+		frappe.flags.kt_evl_fixture_namespace = frappe.flags.kt_prc_fixture_namespace = NAMESPACE
 		try:
 			_Story(tender).run()
 		finally:
@@ -329,4 +428,7 @@ def validate_bid_evaluation_seed() -> list[dict[str, Any]]:
 	delivery = frappe.db.get_value("Evaluation Report Delivery", {"evaluation_case": doc.name, "status": "Delivered"}, ["recipient_user", "delivered_at"], as_dict=True)
 	check(bool(delivery) and delivery.recipient_user == HOP and cstr(delivery.delivered_at) == CLOCK["sign"][2],
 		"the report was delivered to Charles Mutiso at 16 Jun 2027, 14:07 EAT")
+	# OVS-CHG-001 v0.6 FU-OVS-34: the evaluation's Proceeding carries the evaluation namespace, so a purge keyed on it reaches it
+	proceeding = frappe.db.get_value("Proceeding", {"owner_type": "Evaluation Case", "owner_id": doc.name}, "fixture_namespace")
+	check(proceeding == NAMESPACE, f"the evaluation's Proceeding carries the evaluation namespace (got {proceeding!r})")
 	return rows

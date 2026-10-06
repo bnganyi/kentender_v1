@@ -9,7 +9,6 @@
 	<div class="kt-industry kt-awd">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell" data-testid="awd-root" :data-screen="board ? board.screen || '' : 'loading'" :data-loading="loading ? 'true' : 'false'" :data-pending="pending ? 'true' : 'false'">
-			<div v-if="testLabel" class="kt-notice is-info awd-test-environment" data-testid="awd-test-environment"><div class="kt-notice-body">{{ testLabel }}</div></div>
 			<AwdBoard v-if="board" :key="screenKey" :board="board" :form="form" :pending="pending" :error="error" :reasons="reasons" :fields="fields"
 				@action="onAction" @update="onUpdate" />
 		</div>
@@ -49,7 +48,6 @@ const dialog = ref(null);
 const signKeys = {};
 let seq = 0;
 
-const testLabel = computed(() => (data.value && data.value.test_environment) || (work.value && work.value.test_environment) || "");
 
 const board = computed(() => {
 	if (failure.value) return { hdr: { title: failure.value === "not-found" ? "Not found" : "Award" }, screen: failure.value,

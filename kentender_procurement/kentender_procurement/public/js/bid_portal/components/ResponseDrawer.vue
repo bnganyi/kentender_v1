@@ -59,8 +59,8 @@ onMounted(() => nextTick(() => panel.value && panel.value.focus()));
 				<div v-if="failure" class="kt-notice is-critical" role="alert"><div class="kt-notice-body">{{ failure }}</div></div>
 			</div>
 			<div class="bds-drawer-foot">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="emit('close')">{{ editable ? __("Cancel") : __("Close") }}</button>
-				<button v-if="editable" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-drawer-save" @click="save">{{ pending ? __("Saving…") : __("Save response") }}</button>
+				<button type="button" class="btn btn-secondary" :disabled="pending" @click="emit('close')">{{ editable ? __("Cancel") : __("Close") }}</button>
+				<button v-if="editable" type="button" class="btn btn-primary" :disabled="pending" data-testid="bds-drawer-save" @click="save">{{ pending ? __("Saving…") : __("Save response") }}</button>
 			</div>
 		</aside>
 	</div>

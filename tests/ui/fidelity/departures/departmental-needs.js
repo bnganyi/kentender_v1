@@ -3,7 +3,7 @@
  *
  * `NDS Artboards.dc.html` is an earlier export than Planning's boards and
  * carries almost none of the container vocabulary — `.kt-page`, `.kt-region`,
- * `.kt-group`, `.kt-field`, `.kt-table` appear nowhere in it, because those
+ * `.kt-group`, `.field`, `.table` appear nowhere in it, because those
  * names were extracted from this very board afterwards. So the board contract
  * here is thin by nature, and most of this module's structural assurance comes
  * from the shared-vocabulary rules in the spec beside this file.

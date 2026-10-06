@@ -54,7 +54,7 @@ const weekend = computed(() => (calendar.value?.weekend_days || []).join(", ") |
 				<div><span class="kt-label">{{ __("Source check") }}</span><span class="kt-meta-value"><span :class="sourceCheckClass(calendar.verification_status)" data-testid="kt-cal-verification">{{ __(sourceCheckLabel(calendar.verification_status)) }}</span></span></div>
 			</div>
 			<h6 class="kt-card-title">{{ __("Holidays") }}</h6>
-			<table class="kt-table" data-testid="kt-cal-holidays">
+			<table class="table" data-testid="kt-cal-holidays">
 				<thead><tr><th>{{ __("Holiday date") }}</th><th>{{ __("Holiday name") }}</th><th>{{ __("Source evidence") }}</th></tr></thead>
 				<tbody>
 					<tr v-for="row in calendar.holidays" :key="row.holiday_date">
@@ -75,10 +75,10 @@ const weekend = computed(() => (calendar.value?.weekend_days || []).join(", ") |
 			</div>
 			<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
 				<!-- D15: a version nothing depends on yet is corrected in place. -->
-				<button v-if="calendar.can_edit" type="button" class="kt-btn kt-btn-secondary" data-testid="kt-cal-edit" @click="emit('edit')">{{ __("Edit calendar") }}</button>
-				<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-cal-new-version" @click="emit('new-version')">{{ __("Create new version") }}</button>
-				<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-cal-check-sources" @click="emit('check-sources')">{{ __("Check sources") }}</button>
-				<button type="button" class="kt-btn kt-btn-ghost" data-testid="kt-cal-history" @click="emit('history')">{{ __("View usage and history") }}</button>
+				<button v-if="calendar.can_edit" type="button" class="btn btn-secondary" data-testid="kt-cal-edit" @click="emit('edit')">{{ __("Edit calendar") }}</button>
+				<button type="button" class="btn btn-secondary" data-testid="kt-cal-new-version" @click="emit('new-version')">{{ __("Create new version") }}</button>
+				<button type="button" class="btn btn-secondary" data-testid="kt-cal-check-sources" @click="emit('check-sources')">{{ __("Check sources") }}</button>
+				<button type="button" class="btn btn-ghost" data-testid="kt-cal-history" @click="emit('history')">{{ __("View usage and history") }}</button>
 			</div>
 		</div>
 	</div>

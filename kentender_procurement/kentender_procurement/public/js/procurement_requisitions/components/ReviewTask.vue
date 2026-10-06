@@ -30,18 +30,18 @@
 
 		<div class="req-footer">
 			<div class="req-actions">
-				<button type="button" class="kt-btn kt-btn-ghost" @click="$emit('select', 'requirements')">Back to requirements</button>
+				<button type="button" class="btn btn-ghost" @click="$emit('select', 'requirements')">Back to requirements</button>
 				<ActionsMenu v-if="menu.length" :actions="menu" :disabled="busy" @choose="(k) => (dialog = k)" />
 			</div>
 			<div v-if="actions.save" class="req-footer-right">
 				<span v-if="primaryLabel && !ready" class="kt-label" data-testid="req-footer-hint">{{ (view.footer_hints || {}).review_submit || (blocking[0] || {}).message || "" }}</span>
 				<div class="req-actions">
-					<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="req-save" @click="confirmSaved">Save draft</button>
+					<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="req-save" @click="confirmSaved">Save draft</button>
 					<button
 						v-if="primaryLabel"
 						type="button"
-						class="kt-btn"
-						:class="ready ? 'kt-btn-primary' : 'kt-btn-secondary'"
+						class="btn"
+						:class="ready ? 'btn-primary' : 'btn-secondary'"
 						:disabled="busy || !ready"
 						data-testid="req-send"
 						@click="send"

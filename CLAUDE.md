@@ -32,6 +32,7 @@ Do **not** rerun hundreds of tests after each small edit. When a broad run fails
 - Use Frappe's normal document, permission, migration, background-job, and transaction mechanisms. Do not build parallel framework substitutes.
 - For complex screens, build Vue 3 mounted inside a real Frappe Desk Page (validated standard — see `AGENTS.md` §6). Routine CRUD/administration uses standard Frappe Form/List/Report/Workflow APIs; module landing uses a standard Workspace. Do not add `frappe-ui` without explicit approval.
 - Route record identifiers in URL path segments, preserve context across direct load, forward navigation, refresh, and browser back/forward. Every Vue-in-Desk page controller is one `kentender_core.desk_page.register(...)` call (`AGENTS.md` §6.1) — the app stays mounted across navigations; read the route only via the app's `useRouteState()` adapter; show a skeleton only for a screen with nothing to show yet and revalidate in place otherwise; bind controlled inputs to the caller's own selection, never the server echo (`AGENTS.md` §6.4). Do not add Industry pages to `kentender_core.cl_surface_registry.js` (§6.5).
+- A table that can grow is paged with the shared pager (`kentender_core.industry.mountPager`, `AGENTS.md` §6.11): never build a pager or a bespoke row-count line, and reset the page to 1 only on the reader's own filter actions.
 - After server-side state changes, refresh or reconcile the visible page state. Verify both first paint and at least one interactive re-render.
 - Never mark work complete from a passing narrow test alone. Match the full acceptance criteria and report exactly what was and was not run.
 
@@ -121,7 +122,7 @@ make validate-links
 make migrate SITE=<site>
 make clear SITE=<site>
 make doctor
-make seed-canonical SITE=<site> [THROUGH=award] [REBUILD=True]    # clear non-canonical rows, reseed KT-STD-001 §8 + SEED-001 up to a stage (site/strategy/budget/needs/planning/requisitions/tenders/bid_submission/bid_opening/bid_evaluation/award; default requisitions; THROUGH=award is the full chain), validate; REBUILD=True also drops and rebuilds the canonical module rows — runbook: docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_24.md
+make seed-canonical SITE=<site> [CURRENT=award] [NEXT=annual_plan] [REBUILD=True]    # clear non-canonical rows, reseed the two-year world read as at 18 Jun 2027 10:00 and validate: CURRENT moves FY 2026/27, carried out (annual_plan/requisitions/tenders/bid_submission/bid_opening/bid_evaluation/award), NEXT moves FY 2027/28, being prepared (none/budget/needs/departmental_plans/annual_plan); default the full world; a lower stage rebuilds by itself; REBUILD=True drops and rebuilds the canonical module rows — SEED-002 (proposed): docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_1.md; approved runbook until then: docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_24.md
 make seed-canonical-dry-run SITE=<site>             # what seed-canonical would remove, deletes nothing
 make seed-canonical-validate SITE=<site>
 make seed-kentender-mvp-v1 SITE=<site>              # legacy KENTENDER_MVP_V1 pack (multi-PE era); prefer seed-canonical

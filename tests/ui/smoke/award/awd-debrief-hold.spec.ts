@@ -55,11 +55,11 @@ test.describe("Award — debrief and holds", () => {
 		await page.screenshot({ path: `${EVIDENCE}/V08.png`, fullPage: true });
 		await root.locator('[data-testid="awd-guidance"] [data-fix^="record_outcome:"]').click();
 		const dialog = root.locator('[data-testid="awd-dialog"]');
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Record outcome");
+		await expect(dialog.locator(".dialog-title")).toHaveText("Record outcome");
 		await expect(dialog).toContainText("Authoritative order");
 		await expect(dialog.locator('[data-testid="awd-dialog-choice-reported-challenge-not-substantiated"]')).toHaveCount(0);
 		await page.screenshot({ path: `${EVIDENCE}/X04.png`, fullPage: true });
-		await dialog.locator("label.kt-radio", { hasText: "Restriction ended" }).click();
+		await dialog.locator("label.radio", { hasText: "Restriction ended" }).click();
 		await dialog.locator('[data-testid="awd-dialog-field-dlg_reason"]').fill("The Review Board released the suspension.");
 		await dialog.locator('[data-testid="awd-dialog-field-dlg_evidence"]').fill("PPARB/2027/33 release");
 		await dialog.locator('[data-testid="awd-dialog-save-outcome"]').click();
@@ -76,9 +76,9 @@ test.describe("Award — debrief and holds", () => {
 		await root.locator('[data-testid="awd-disclosure-outstanding-issues"] .kt-disclosure-head').click();
 		await root.locator('[data-testid="awd-disclosure-action-record-restriction"]').click();
 		const dialog = root.locator('[data-testid="awd-dialog"]');
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Record restriction");
+		await expect(dialog.locator(".dialog-title")).toHaveText("Record restriction");
 		await page.screenshot({ path: `${EVIDENCE}/X03.png`, fullPage: true });
-		await dialog.locator("label.kt-radio", { hasText: "Reported challenge" }).click();
+		await dialog.locator("label.radio", { hasText: "Reported challenge" }).click();
 		await dialog.locator('[data-testid="awd-dialog-field-dlg_source"]').fill("Complaint letter from a bidder");
 		await dialog.locator('[data-testid="awd-dialog-field-dlg_received_at"]').fill("2027-06-17 09:30:00");
 		await dialog.locator('[data-testid="awd-dialog-field-dlg_reason"]').fill("A bidder reported a challenge.");

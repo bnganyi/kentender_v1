@@ -1331,10 +1331,13 @@ class TestMultiFiscalYearBrowsing(DepartmentalNeedsCommandCase):
 		)
 		second = self.decide(self.submit(created), "accept")
 
-		# NDS-AC-050 — both years the author can see are offered, ordered by
-		# calendar (the canonical `FY` starts before the disposable one).
+		# NDS-AC-050 — every year the author can see is offered, ordered by
+		# calendar: the seeded world's two years (FY 2026/27 carried out,
+		# `FY` = FY 2027/28 being prepared) and then the disposable one.
+		from kentender_core.seeds.calendar import YEAR1
+
 		years = selectable_financial_years(AUTHOR)
-		self.assertEqual([row["id"] for row in years], [FY, second_fy])
+		self.assertEqual([row["id"] for row in years], [YEAR1.fiscal_year, FY, second_fy])
 
 		# No explicit year selected — CTX-CHG-001's own rule ("several
 		# offered, none selected/remembered" -> no FY filter applied) means

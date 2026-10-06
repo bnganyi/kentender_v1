@@ -83,8 +83,8 @@ const availableFyOptionsForContext = computed(() =>
 	<div class="kt-industry" style="min-height:100vh;display:flex;flex-direction:column">
 		<PageRail :trail="railTrail" />
 
-		<div v-if="forbidden" class="kt-card kt-blueprint kt-empty" data-testid="rd-forbidden" style="margin:36px 48px">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
+		<div v-if="forbidden" class="card blueprint kt-empty" data-testid="rd-forbidden" style="margin:36px 48px">
+			<i class="corner tl" /><i class="corner tr" /><i class="corner bl" /><i class="corner br" />
 			<h2>{{ __(forbidden.heading) }}</h2>
 			<p>{{ __(forbidden.text) }}</p>
 		</div>
@@ -97,7 +97,7 @@ const availableFyOptionsForContext = computed(() =>
 						{{ __("Maintain Procuring Entities, Financial Years and PE/FY Contexts used across KenTender.") }}
 					</p>
 				</div>
-				<button type="button" class="kt-btn kt-btn-primary" style="margin-top:6px" @click="openNew(route.tab)">
+				<button type="button" class="btn btn-primary" style="margin-top:6px" @click="openNew(route.tab)">
 					{{ __(NEW_LABEL[route.tab]) }}
 				</button>
 			</div>

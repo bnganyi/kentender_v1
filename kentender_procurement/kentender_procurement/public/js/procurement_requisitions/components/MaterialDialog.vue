@@ -5,56 +5,56 @@
 <template>
 	<DialogFrame title="Add supporting material" :width="520" :busy="busy || uploading" testid="req-material-dialog" @close="$emit('close')">
 		<p class="req-dialog-body kt-muted">Files may support a structured requirement but cannot replace it.</p>
-		<div class="kt-field">
+		<div class="field">
 			<label :for="`${id}-file`">File</label>
-			<input :id="`${id}-file`" type="file" class="kt-input" :class="{ 'is-invalid': uploadError }" data-testid="req-material-file" @change="pick" />
+			<input :id="`${id}-file`" type="file" class="input" :class="{ 'is-invalid': uploadError }" data-testid="req-material-file" @change="pick" />
 			<span v-if="uploadError" class="req-field-error">{{ uploadError }}</span>
 		</div>
 		<div class="req-grid-2-tight">
-			<div class="kt-field">
+			<div class="field">
 				<label :for="`${id}-title`">Title</label>
-				<input :id="`${id}-title`" v-model="form.title" class="kt-input" :class="{ 'is-invalid': fieldError('title') }" data-testid="req-material-title" />
+				<input :id="`${id}-title`" v-model="form.title" class="input" :class="{ 'is-invalid': fieldError('title') }" data-testid="req-material-title" />
 				<span v-if="fieldError('title')" class="req-field-error">{{ fieldError("title") }}</span>
 			</div>
-			<div class="kt-field">
+			<div class="field">
 				<label :for="`${id}-version`">Document version</label>
-				<input :id="`${id}-version`" v-model="form.document_version" class="kt-input" :class="{ 'is-invalid': fieldError('document_version') }" />
+				<input :id="`${id}-version`" v-model="form.document_version" class="input" :class="{ 'is-invalid': fieldError('document_version') }" />
 				<span v-if="fieldError('document_version')" class="req-field-error">{{ fieldError("document_version") }}</span>
 			</div>
-			<div class="kt-field">
+			<div class="field">
 				<label :for="`${id}-type`">Document type</label>
-				<select :id="`${id}-type`" v-model="form.document_type" class="kt-input" :class="{ 'is-invalid': fieldError('document_type') }">
+				<select :id="`${id}-type`" v-model="form.document_type" class="input" :class="{ 'is-invalid': fieldError('document_type') }">
 					<option value="">Select a type</option>
 					<option v-for="t in (view.catalogue || {}).material_types || []" :key="t" :value="t">{{ t }}</option>
 				</select>
 				<span v-if="fieldError('document_type')" class="req-field-error">{{ fieldError("document_type") }}</span>
 			</div>
-			<div class="kt-field">
+			<div class="field">
 				<label :for="`${id}-treatment`">Treatment</label>
-				<select :id="`${id}-treatment`" v-model="form.treatment" class="kt-input" :class="{ 'is-invalid': fieldError('treatment') }">
+				<select :id="`${id}-treatment`" v-model="form.treatment" class="input" :class="{ 'is-invalid': fieldError('treatment') }">
 					<option value="Informational">Informational</option>
 					<option value="Forms part of requirement">Forms part of requirement</option>
 				</select>
 			</div>
 		</div>
-		<div v-if="form.document_type === 'Other supporting material'" class="kt-field">
+		<div v-if="form.document_type === 'Other supporting material'" class="field">
 			<label :for="`${id}-other`">Name the document type</label>
-			<input :id="`${id}-other`" v-model="form.other_document_type" class="kt-input" />
+			<input :id="`${id}-other`" v-model="form.other_document_type" class="input" />
 		</div>
-		<div class="kt-field">
+		<div class="field">
 			<label :for="`${id}-purpose`">Purpose</label>
-			<textarea :id="`${id}-purpose`" v-model="form.purpose" class="kt-input" rows="2" :class="{ 'is-invalid': fieldError('purpose') }"></textarea>
+			<textarea :id="`${id}-purpose`" v-model="form.purpose" class="input" rows="2" :class="{ 'is-invalid': fieldError('purpose') }"></textarea>
 			<span v-if="fieldError('purpose')" class="req-field-error">{{ fieldError("purpose") }}</span>
 		</div>
-		<fieldset v-if="form.treatment === 'Forms part of requirement'" class="kt-field req-fieldset">
+		<fieldset v-if="form.treatment === 'Forms part of requirement'" class="field req-fieldset">
 			<legend>Structured requirements this file supports</legend>
 			<label v-for="t in linkable" :key="t.id" class="kt-checkbox req-check-line"><input v-model="form.linked_requirement_ids" type="checkbox" :value="t.id" /><span class="box"></span>{{ t.label }}</label>
 			<span v-if="fieldError('linked_requirement_ids')" class="req-field-error">{{ fieldError("linked_requirement_ids") }}</span>
 		</fieldset>
 		<Notice v-if="otherError" tone="critical">{{ otherError }}</Notice>
 		<template #actions>
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy || uploading" @click="$emit('close')">Cancel</button>
-			<button type="button" class="kt-btn kt-btn-primary" :disabled="busy || uploading || !file" data-testid="req-material-confirm" @click="confirm">{{ uploading ? "Uploading…" : "Add supporting material" }}</button>
+			<button type="button" class="btn btn-secondary" :disabled="busy || uploading" @click="$emit('close')">Cancel</button>
+			<button type="button" class="btn btn-primary" :disabled="busy || uploading || !file" data-testid="req-material-confirm" @click="confirm">{{ uploading ? "Uploading…" : "Add supporting material" }}</button>
 		</template>
 	</DialogFrame>
 </template>

@@ -50,12 +50,13 @@ export function chipOf(s) {
 	return m ? { t: m[2], chip: `kt-status ${m[1]}`, hasChip: true, noChip: false } : { t: String(s ?? ""), chip: "", hasChip: false, noChip: true };
 }
 
-// A button: "*Label" is primary, "!Label" danger, otherwise secondary; the
-// live action it runs rides alongside.
+// A button: "*Label" is primary, "!Label" danger, "~Label" a secondary that is
+// drastic (red outline, for an action beside a primary), otherwise secondary;
+// the live action it runs rides alongside.
 export function btn(spec, action, args, extra) {
 	const s = String(spec);
-	const cls = s[0] === "*" ? "kt-btn kt-btn-primary" : s[0] === "!" ? "kt-btn kt-btn-danger" : "kt-btn kt-btn-secondary";
-	const label = /^[*!]/.test(s) ? s.slice(1) : s;
+	const cls = s[0] === "*" ? "btn btn-primary" : s[0] === "!" ? "btn btn-danger" : s[0] === "~" ? "btn btn-secondary kt-danger" : "btn btn-secondary";
+	const label = /^[*!~]/.test(s) ? s.slice(1) : s;
 	return { label, cls, action: action || "noop", args: args || {}, ...(extra || {}) };
 }
 
@@ -95,7 +96,7 @@ export function norm(b, form = {}) {
 			hasP: !!s.p, p: (s.p || []).map((x) => ({ t: /^[+!]/.test(x) ? x.slice(1) : x, ok: x[0] === "+", warn: x[0] === "!" })),
 			hasF: !!s.f, f: (s.f || []).map((x) => { const c = chipOf(x[1]); return { l: x[0], v: c.t, chip: c.chip, hasChip: c.hasChip, noChip: c.noChip }; }),
 			hasD: !!s.d, d: (s.d || []).map((x) => ({ l: x[0], v: x[1] })),
-			hasTbl: !!t,
+			hasTbl: !!t, paged: (t && t.paged) || "",
 			th: t ? t.h.map((h, k) => ({ t: h, cls: nums.includes(k) ? "is-num" : "" })).concat(t.a ? [{ t: "Action", cls: "" }] : []) : [],
 			rows: t ? t.r.map((r, ri) => ({ cells: r.map((c, k) => ({ ...chipOf(c), cls: nums.includes(k) ? "is-num" : "" })), hasA: !!t.a,
 				a: t.a || "—", action: (t.actions && t.actions[ri]) || { action: "noop" } })) : [],

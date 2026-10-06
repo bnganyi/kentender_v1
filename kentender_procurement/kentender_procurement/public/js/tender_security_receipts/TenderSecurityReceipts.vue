@@ -15,7 +15,7 @@
 					<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
 					<h2 class="tsr-state-heading">{{ data.heading }}</h2>
 					<p style="margin: 0 auto 16px; max-width: 520px">{{ data.text }}</p>
-					<button type="button" class="kt-btn kt-btn-secondary" @click="goHome">Back to Procurement</button>
+					<button type="button" class="btn btn-secondary" @click="goHome">Back to Procurement</button>
 				</div>
 			</div>
 
@@ -26,12 +26,12 @@
 						<h1 class="kt-page-title">Tender-security receipts</h1>
 						<p class="kt-page-desc">Record physical tender-security originals as they are received. Bids are never shown here.</p>
 					</div>
-					<button type="button" class="kt-btn kt-btn-primary" data-testid="tsr-record" @click="openDialog">Record receipt</button>
+					<button type="button" class="btn btn-primary" data-testid="tsr-record" @click="openDialog">Record receipt</button>
 				</div>
 
 				<div v-if="error" class="kt-notice is-critical" style="align-items: center" role="alert" data-testid="tsr-failure">
 					<div class="kt-notice-body" style="flex: 1"><strong>Tender-security receipts could not be loaded. Try again.</strong></div>
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="tsr-retry" @click="retry">Try again</button>
+					<button type="button" class="btn btn-secondary" data-testid="tsr-retry" @click="retry">Try again</button>
 				</div>
 
 				<div v-else-if="loading && !data.outcome" data-testid="tsr-loading">
@@ -41,12 +41,12 @@
 
 				<template v-else>
 					<div class="kt-filter-bar" role="search">
-						<div class="kt-field is-wide">
+						<div class="field is-wide">
 							<label for="tsr-q">Tender reference</label>
-							<input id="tsr-q" v-model="draftTender" class="kt-input" type="search" data-testid="tsr-filter-tender" @keydown.enter.prevent="applyFilter" @change="applyFilter" />
+							<input id="tsr-q" v-model="draftTender" class="input" type="search" data-testid="tsr-filter-tender" @keydown.enter.prevent="applyFilter" @change="applyFilter" />
 						</div>
 						<div class="tsr-filter-actions">
-							<button v-if="tenderFilter" type="button" class="kt-btn kt-btn-secondary" data-testid="tsr-clear-filters" @click="clearFilter">Clear filters</button>
+							<button v-if="tenderFilter" type="button" class="btn btn-secondary" data-testid="tsr-clear-filters" @click="clearFilter">Clear filters</button>
 						</div>
 					</div>
 
@@ -55,7 +55,7 @@
 						<p style="margin: 0 auto; font-size: 15px; max-width: 520px">{{ tenderFilter ? "No receipts match this Tender reference." : data.empty_text }}</p>
 					</div>
 
-					<table v-else class="kt-table tsr-table" style="width: 100%" data-testid="tsr-table">
+					<table v-else class="table tsr-table" style="width: 100%" data-testid="tsr-table">
 						<thead>
 							<tr>
 								<th>Intake reference</th>
@@ -68,7 +68,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr v-for="row in rows" :key="row.intake_reference" data-testid="tsr-row">
+							<tr v-for="row in pagedRows" :key="row.intake_reference" data-testid="tsr-row">
 								<td data-label="Intake reference">
 									<strong>{{ row.intake_reference }}</strong>
 									<br v-if="row.status === 'Corrected' || row.corrects" />
@@ -81,11 +81,12 @@
 								<td data-label="Received">{{ row.received_at }}<br /><span class="tsr-muted">{{ row.deadline_class }}</span></td>
 								<td data-label="Recorded">{{ row.recorded_at }}</td>
 								<td data-label="Actions">
-									<button v-if="row.status === 'Current'" type="button" class="kt-btn kt-btn-ghost" data-testid="tsr-correct" @click="openCorrection(row)">Correct</button>
+									<button v-if="row.status === 'Current'" type="button" class="btn btn-ghost" data-testid="tsr-correct" @click="openCorrection(row)">Correct</button>
 								</td>
 							</tr>
 						</tbody>
 					</table>
+					<TablePagerHost :total="total" :page="page" :page-size="pageSize" noun="receipt" @update:page="setPage" @update:page-size="setPageSize" />
 				</template>
 			</div>
 
@@ -104,6 +105,8 @@ import { useRouteState } from "./composables/useRouteState.js";
 import { usePageRail } from "../tnd_shared/composables/usePageRail.js";
 import * as api from "./data/api.js";
 import IntakeDialog from "./IntakeDialog.vue";
+import TablePagerHost from "../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../pager_shared/usePagedRows.js";
 
 const PAGE = "tender-security-receipts";
 const { epoch, hash, goHash } = useRouteState(PAGE);
@@ -127,16 +130,20 @@ const tenderFilter = computed(() => new URLSearchParams(hash.value || "").get("t
 const draftTender = ref(tenderFilter.value);
 watch(tenderFilter, (value) => (draftTender.value = value));
 const rows = computed(() => (data.value && data.value.rows) || []);
+// The table-pagination standard (AGENTS.md §6.11): the receipts register is paged; a new Tender filter is a new list.
+const { pagedRows, total, page, pageSize, setPage, setPageSize, reset } = usePagedRows(rows, "security-receipts");
 
 function goHome() {
 	frappe.set_route("Workspaces", "Procurement Home");
 }
 function applyFilter() {
 	const value = (draftTender.value || "").trim();
+	reset();
 	goHash(value ? `tender=${encodeURIComponent(value)}` : "", { replace: true });
 }
 function clearFilter() {
 	draftTender.value = "";
+	reset();
 	goHash("", { replace: true });
 }
 

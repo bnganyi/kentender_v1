@@ -19,7 +19,7 @@ describe("FundingSourceDialog", () => {
 			props: { source: { name: "Development partner", label: "Development partner", enabled: true, referenced: false, expected_version: "v2" } },
 			global: globalMocks(),
 		});
-		expect(wrapper.find(".kt-dialog-title").text()).toBe("Edit funding source");
+		expect(wrapper.find(".dialog-title").text()).toBe("Edit funding source");
 		expect(wrapper.find('[data-testid="kt-fs-name"]').element.value).toBe("Development partner");
 		expect(wrapper.find('[data-testid="kt-fs-enabled-yes"] input').element.checked).toBe(true);
 		expect(wrapper.text()).toContain("Turning this off prevents new selection; existing records keep their funding history.");
@@ -33,7 +33,7 @@ describe("FundingSourceDialog", () => {
 	it("creating uses the add command and a referenced source explains it cannot be renamed", async () => {
 		api.addFundingSource.mockResolvedValue({ name: "Donor", created: true });
 		const creating = mount(FundingSourceDialog, { props: { creating: true }, global: globalMocks() });
-		expect(creating.find(".kt-dialog-title").text()).toBe("Add funding source");
+		expect(creating.find(".dialog-title").text()).toBe("Add funding source");
 		expect(creating.find('[data-testid="kt-fs-save"]').text()).toBe("Add funding source");
 		expect(creating.find('[data-testid="kt-fs-save"]').attributes("disabled")).toBeDefined();
 		await creating.find('[data-testid="kt-fs-name"]').setValue("Donor");

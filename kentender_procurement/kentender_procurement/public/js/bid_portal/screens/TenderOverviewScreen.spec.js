@@ -127,10 +127,10 @@ describe("Not found", () => {
 		it("withdrawn: keeps documents and the receipt, offers the signatory Withdraw bid and drops the status badge", () => {
 			const { wrapper } = render(overview("WITHDRAWN-RELEASE"));
 			expect(wrapper.get('[data-testid="bds-overview-release"]').classes()).toContain("is-warning");
-			const buttons = wrapper.findAll(".kt-page-actions .kt-btn");
+			const buttons = wrapper.findAll(".kt-page-actions .btn");
 			expect(buttons.map((b) => b.text())).toEqual(["View Tender documents", "View receipt", "Withdraw bid"]);
 			expect(buttons[0].attributes("href")).toBe("#bds-tender-documents");
-			expect(buttons[2].classes()).toEqual(expect.arrayContaining(["kt-btn-primary", "kt-danger"]));
+			expect(buttons[2].classes()).toEqual(expect.arrayContaining(["btn-primary", "kt-danger"]));
 			expect(buttons[2].attributes("href")).toMatch(/\?action=withdraw$/);
 			expect(wrapper.find('[data-testid="bds-overview-status"]').exists()).toBe(false);
 			expect(wrapper.find("#bds-tender-documents").exists()).toBe(true);

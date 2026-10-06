@@ -26,8 +26,8 @@
 					<div class="kt-notice-body">Departmental requirement evidence could not be loaded.</div>
 				</div>
 				<div class="pln-footer-right">
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="src-retry" @click="$emit('reload')">Try again</button>
-					<button type="button" class="kt-btn kt-btn-primary" data-testid="src-back-bottom" @click="$emit('navigate', evidence.back_route)">
+					<button type="button" class="btn btn-secondary" data-testid="src-retry" @click="$emit('reload')">Try again</button>
+					<button type="button" class="btn btn-primary" data-testid="src-back-bottom" @click="$emit('navigate', evidence.back_route)">
 						Return to plan review
 					</button>
 				</div>
@@ -42,7 +42,7 @@
 					</svg>
 					<div class="kt-notice-body pln-notice-split">
 						<span>Historical plan — read only</span>
-						<button type="button" class="kt-btn kt-btn-secondary" data-testid="src-view-current" @click="$emit('navigate', evidence.current_plan_route)">
+						<button type="button" class="btn btn-secondary" data-testid="src-view-current" @click="$emit('navigate', evidence.current_plan_route)">
 							View current plan
 						</button>
 					</div>
@@ -231,7 +231,7 @@
 				<div class="pln-footer" data-testid="src-footer">
 					<span></span>
 					<div class="pln-footer-right">
-						<button type="button" class="kt-btn kt-btn-primary" data-testid="src-back-bottom" @click="$emit('navigate', evidence.back_route)">
+						<button type="button" class="btn btn-primary" data-testid="src-back-bottom" @click="$emit('navigate', evidence.back_route)">
 							Return to plan review
 						</button>
 					</div>

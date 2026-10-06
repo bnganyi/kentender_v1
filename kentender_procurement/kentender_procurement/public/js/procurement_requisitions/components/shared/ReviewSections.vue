@@ -33,7 +33,7 @@
 						</div>
 					</template>
 
-					<table v-else-if="section.key === 'amounts'" class="kt-table">
+					<table v-else-if="section.key === 'amounts'" class="table">
 						<thead><tr><th>Department and requirement</th><th class="is-num">Requested quantity</th><th class="is-num">Requested value</th></tr></thead>
 						<tbody>
 							<tr v-for="row in section.rows" :key="row.drawdown_line_id"><td><div style="font-weight: 600">{{ row.department }}</div><div class="kt-label">{{ row.requirement }}</div></td><td class="is-num">{{ row.requested_quantity }}</td><td class="is-num">{{ row.requested_value }}</td></tr>
@@ -41,7 +41,7 @@
 						</tbody>
 					</table>
 
-					<table v-else-if="section.key === 'equipment'" class="kt-table" style="font-size: 13px">
+					<table v-else-if="section.key === 'equipment'" class="table" style="font-size: 13px">
 						<thead><tr><th>Item</th><th>Approved requirement</th><th class="is-num">Quantity</th><th>Intended use</th><th>Delivery</th></tr></thead>
 						<tbody>
 							<tr v-for="item in section.rows" :key="item.requisition_item_id"><td>{{ item.item_name }}</td><td>{{ item.approved_requirement }}</td><td class="is-num">{{ item.quantity }}</td><td>{{ item.intended_use }}</td><td>{{ item.delivery }}</td></tr>
@@ -51,7 +51,7 @@
 					<template v-else-if="section.key === 'requirements'">
 						<template v-for="group in section.groups" :key="group.group">
 							<div class="kt-label req-group-label">{{ group.group }}</div>
-							<table class="kt-table" style="margin-bottom: var(--kt-space-4)">
+							<table class="table" style="margin-bottom: var(--kt-space-4)">
 								<thead><tr><th>Requirement</th><th>Minimum or required value</th><th>Unit</th></tr></thead>
 								<tbody>
 									<tr v-for="row in group.rows" :key="row.technical_requirement_id"><td>{{ row.label }}<div class="kt-muted req-comparison">{{ row.comparison }}</div></td><td>{{ row.display }}</td><td>{{ row.unit }}</td></tr>
@@ -63,21 +63,21 @@
 						</div>
 					</template>
 
-					<table v-else-if="section.key === 'services'" class="kt-table">
+					<table v-else-if="section.key === 'services'" class="table">
 						<thead><tr><th>Service</th><th>Applies to</th><th>Required result</th><th>Quantity or coverage</th><th>Completion</th></tr></thead>
 						<tbody>
 							<tr v-for="s in section.rows" :key="s.service_requirement_id"><td>{{ s.service_type }}</td><td>{{ s.applies_to }}</td><td>{{ s.required_result }}</td><td>{{ s.quantity_or_coverage }}</td><td>{{ s.completion_date_label }}</td></tr>
 						</tbody>
 					</table>
 
-					<table v-else-if="section.key === 'acceptance'" class="kt-table">
+					<table v-else-if="section.key === 'acceptance'" class="table">
 						<thead><tr><th>Check</th><th>Applies to</th><th>Pass condition</th><th>Evidence</th></tr></thead>
 						<tbody>
 							<tr v-for="row in section.rows" :key="row.acceptance_requirement_id"><td>{{ row.check_type }}</td><td>{{ row.applies_to }}</td><td>{{ row.pass_condition }}</td><td>{{ row.evidence }}</td></tr>
 						</tbody>
 					</table>
 
-					<table v-else-if="section.key === 'supporting_materials'" class="kt-table">
+					<table v-else-if="section.key === 'supporting_materials'" class="table">
 						<thead><tr><th>Title</th><th>Type</th><th>Treatment</th><th>Version</th></tr></thead>
 						<tbody>
 							<tr v-for="m in section.rows" :key="m.supporting_material_id"><td>{{ m.title }}</td><td>{{ m.document_type }}</td><td>{{ m.treatment }}</td><td>{{ m.document_version }}</td></tr>

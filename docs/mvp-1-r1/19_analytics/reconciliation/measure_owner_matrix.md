@@ -1,0 +1,26 @@
+# ANL-CHG-001 v0.8: measure and owner matrix (row ANL8-0004)
+
+Written 5 October 2026 after the owner providers were built. Each row says where the fact comes from in code, what the provider returns, and what differs from the spec's names. Spec section references are ANL v0.8. "Read" is the provider module under each app's `services/`.
+
+| Measure | Owner and provider | Source fact in code | Contract field | Difference from the spec's wording |
+|---|---|---|---|---|
+| ANL-M-01 Needs | NDS: `departmental_needs/services/analytics_provider.py` | Need root `current_state`; accepted revision pointer | `state`, `pending_successor` | Draft and Withdrawn Needs contribute no record to anyone. `title` is the accepted revision's title when one exists. |
+| ANL-M-01 Departmental plans | PLN: `procurement_planning/services/analytics_provider.py` | DPP root with an accepted submission | `state` = "Accepted" | Title is "<unit> departmental plan". |
+| ANL-M-01 / M-06 / M-07 Plan items | PLN, same module | Active Annual Plan Version items; Plan Source Allocation `indicative_amount`; Plan Drawdown Reference | `planned_value`, `allocations[{org_unit, planned, covered}]`, `has_proceeding` | `planned_value` is derived (sum of Active allocations), not stored. Coverage is the authorised drawdown (U14 basis), not `ProceedingCoverage` (C1). Planning records no lead department, so `org_units` are ordered by largest share. |
+| ANL-M-01 / M-08 Requisitions | REQ: `procurement_requisitions/services/analytics_provider.py` | Requisition root `current_state`; current or authorised Version drawdown lines (`requested_value`, a Data string) | `state`, `value_kind`, `value_lines` | A Draft that is the successor of a returned Version reads "Returned". Site-wide readers never see Drafts. |
+| ANL-M-01 / M-09 Tenders | TPR: `tenders/services/analytics_provider.py` and `analytics_buckets.py` | `Tender.overall_status`, deadline against the read instant, stage owners' facts | `bucket`, `position`, `authorised_lines` | No "Closed" status exists; the classifier derives it. `requisition_handoff` (not `requisition_handoff_id`). Tender route uses the reference. |
+| ANL-M-02 Outstanding matters | Each owner's record `outstanding` (REQ, TPR, EVL, AWD) | Raw `since` instants from owner tables, not `next_step` display strings | `outstanding{text, holder, since}` | Needs, Planning and Budget have no outstanding concept in the contract. |
+| ANL-M-03 Needs accepted each month | NDS | `Departmental Need Decision.occurred_at`, action "Accept for planning" (first acceptance) | `accepted_at` | "Accept successor" is not a first acceptance. |
+| ANL-M-03 Plans accepted each month | PLN | `Departmental Plan Validation Decision.decided_at`, "Accept departmental plan" | `accepted_at` | One instant per plan (the latest accept), not one per decision. |
+| ANL-M-03 Requisitions submitted, authorised | REQ | `Requisition Version.submitted_at`; `Requisition Decision` "Authorise requisition" | `submission_events`, `authorisation_events` | Every Version is counted for submissions, as the spec says. |
+| ANL-M-03 Tenders published, cancelled, AO decisions | TPR, AWD | `Tender.published_at`; `Tender Cancellation.decided_at`; committed `Award Decision.decided_at` | `published_at`, `cancellation_events`, `decision_events` | Return for correction is not a decision event. |
+| ANL-M-04 T1 | REQ | Version `submitted_at` (authorised Version) to authorise decision | `submitted_at`, `authorised_at` | — |
+| ANL-M-04 T2 | REQ | authorise decision to `handoff_consumed_at` | `authorised_at`, `consumed_at` | Read through the Requisitions kind, also on the Tender tab. |
+| ANL-M-04 T3 | TPR | handoff `consumed_at` to `published_at` | `started_at`, `published_at` | — |
+| ANL-M-04 T4 | BOP, EVL (read by TPR provider) | `Bid Opening Case.completed_at` (outcome "Bids opened") to earliest delivered `Evaluation Report Delivery.delivered_at` | `opening_complete_at`, `report_sent_at` | Empty openings have no instant. |
+| ANL-M-04 T5 | AWD | `Award Case.received_at` to the FIRST committed decision of cycle 1 | `award_received_at`, `decision_at` | `state.committed_decision` returns the latest, so the facts read picks the first. |
+| ANL-M-05 Invitation timing | PLN | `Milestone Actual Event` (invitation) against the baseline of the exact Plan Version; earliest actual per item | `invitation_days`, `has_proceeding` | `has_proceeding` means an authorised drawdown exists, so an item whose Tender is unpublished reads "No date recorded". |
+| ANL-M-10 Award amount | AWD: `award/services/analytics_facts.py` | `Award Decision.submitted_amount` of the current committed Award decision | `award_amount`, `award_amount_visible` | Field choice is a build interpretation (C6). Head of User Department gets no amount. |
+| ANL-M-11 Funding position | BUD: `kentender_budget/services/analytics_provider.py` | Active Version lines; Funding Reservation `source_organisation_unit` | `funding(...)` | Totals rebuilt exactly as Decimal (the existing totals are floats). `source_organisation_unit` is the field name in code (the spec says `_id`). Head of User Department gets the department view only; no Budget read was added. |
+
+Not in the matrix because no provider supplies it: Contract Management, delivery, inspection, performance and Accounts measures (deferred by ANL §2).

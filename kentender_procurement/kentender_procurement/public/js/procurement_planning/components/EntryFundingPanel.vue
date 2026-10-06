@@ -68,11 +68,11 @@
 			</div>
 		</details>
 
-		<div class="kt-field">
+		<div class="field">
 			<label for="dpp-funding-line" class="kt-label">Budget line</label>
 			<select
 				id="dpp-funding-line"
-				class="kt-input"
+				class="input"
 				data-testid="dpp-funding-line"
 				:disabled="!canEdit || pending"
 				:value="budgetLine"
@@ -86,11 +86,11 @@
 			<div v-if="selectedLineReference" class="kt-muted" data-testid="dpp-funding-line-code">{{ selectedLineReference }}</div>
 		</div>
 
-		<div class="kt-field">
+		<div class="field">
 			<label for="dpp-funding-amount" class="kt-label">Estimated cost (KES)</label>
 			<input
 				id="dpp-funding-amount"
-				class="kt-input"
+				class="input"
 				type="number"
 				min="1"
 				data-testid="dpp-funding-amount"
@@ -111,7 +111,7 @@
 			<button
 				v-if="canEdit"
 				type="button"
-				class="kt-btn kt-btn-ghost"
+				class="btn btn-ghost"
 				data-testid="dpp-funding-exclude"
 				:disabled="pending"
 				@click="$emit('exclude')"
@@ -120,11 +120,11 @@
 			</button>
 			<span v-else></span>
 			<div class="pln-footer-right">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">Cancel</button>
+				<button type="button" class="btn btn-secondary" :disabled="pending" @click="$emit('cancel')">Cancel</button>
 				<button
 					v-if="canEdit"
 					type="button"
-					class="kt-btn kt-btn-primary"
+					class="btn btn-primary"
 					data-testid="dpp-funding-save"
 					:disabled="pending || !canSave"
 					@click="$emit('save')"

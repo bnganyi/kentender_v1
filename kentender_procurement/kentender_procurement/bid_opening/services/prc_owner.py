@@ -40,6 +40,19 @@ class BidOpeningOwner:
 	def allows(self, owner_id: str, user: str, capacity: str) -> bool:
 		return owner_id in (getattr(frappe.local, "kt_bop_owner_context", None) or frozenset())
 
+	def can_read_row(self, owner_id: str, user: str) -> bool:
+		"""May this reader see this opening as a row of the Procurement meetings
+		register (OVS-CHG-001 v0.6 §11)? The opening's own readers, and a Head of
+		User Department whose unit contributed to the Tender. A row carries facts
+		about the meeting only; the opening record applies its own rule again."""
+		from kentender_procurement.bid_opening.services import reads
+		from kentender_procurement.tenders.services import tender_authorization as authz
+
+		if reads.can_read(owner_id, user):
+			return True
+		tender = frappe.db.get_value(CASE, owner_id, "tender")
+		return bool(tender) and authz.is_department_head_of(frappe.get_doc("Tender", tender), user)
+
 
 def adapters() -> dict[str, Any]:
 	return {OWNER_TYPE: BidOpeningOwner()}

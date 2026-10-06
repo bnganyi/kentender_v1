@@ -17,7 +17,7 @@
 // prefix for good (D5, tracker decision log).
 kentender_core.desk_page.register("budget-funding", {
 	title: __("Budget & Funding"),
-	bundles: ["kt_industry_page_rail.bundle.js", "budget_funding.bundle.js"],
+	bundles: ["kt_industry_page_rail.bundle.js", "kt_industry_pager.bundle.js", "budget_funding.bundle.js"],
 	mount: (el) => frappe.kt_mount_budget_funding(el),
 	sidebarWorkspaceKey: "procurement",
 });

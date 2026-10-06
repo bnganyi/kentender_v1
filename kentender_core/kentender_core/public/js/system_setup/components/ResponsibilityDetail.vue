@@ -122,7 +122,7 @@ const STATUS_KIND = {
 
 		<h3 style="margin:24px 0 10px;font-size:17px">{{ __("Administrative history") }}</h3>
 		<div class="kt-table-scroll" data-testid="kt-ura-history">
-			<table class="kt-table">
+			<table class="table">
 				<thead>
 					<tr>
 						<th>{{ __("When") }}</th>
@@ -150,14 +150,14 @@ const STATUS_KIND = {
 			<button
 				v-if="assignment.can_edit"
 				type="button"
-				class="kt-btn kt-btn-secondary"
+				class="btn btn-secondary"
 				data-testid="kt-ura-open-edit"
 				@click="emit('edit')"
 			>{{ __("Edit scheduled assignment") }}</button>
 			<button
 				v-if="assignment.can_revoke"
 				type="button"
-				class="kt-btn kt-btn-primary kt-danger"
+				class="btn btn-primary kt-danger"
 				data-testid="kt-ura-open-revoke"
 				@click="emit('revoke')"
 			>{{ __("Revoke responsibility") }}</button>

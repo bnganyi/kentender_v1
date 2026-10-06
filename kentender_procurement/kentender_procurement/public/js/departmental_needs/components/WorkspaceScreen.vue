@@ -32,7 +32,7 @@
 				<p style="margin: 0; font-size: 14.5px; color: var(--kt-color-neutral-700)">
 					Try again. If the problem continues, contact support.
 				</p>
-				<button class="kt-btn kt-btn-secondary" @click="$emit('reload')">Try again</button>
+				<button class="btn btn-secondary" @click="$emit('reload')">Try again</button>
 			</div>
 		</div>
 
@@ -83,7 +83,7 @@
 					</div>
 				</div>
 				<div v-if="canCreate" class="kt-page-actions">
-					<button class="kt-btn kt-btn-primary" data-testid="nds-create-need" @click="$emit('create')">
+					<button class="btn btn-primary" data-testid="nds-create-need" @click="$emit('create')">
 						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14" /></svg>Create need
 					</button>
 				</div>
@@ -152,7 +152,7 @@
 					<button
 						v-if="row.actions[0]"
 						type="button"
-						class="kt-btn kt-btn-primary"
+						class="btn btn-primary"
 						data-testid="nds-continue-action"
 						:data-action="row.actions[0].code"
 						@click="$emit('action', row, row.actions[0])"
@@ -190,7 +190,7 @@
 					</div>
 					<button
 						type="button"
-						class="kt-btn kt-btn-primary"
+						class="btn btn-primary"
 						data-testid="nds-row-action"
 						:data-action="row.actions[0].code"
 						@click="$emit('action', row, row.actions[0])"
@@ -216,7 +216,7 @@
 							><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg
 							><input
 								id="nds-workspace-search"
-								class="kt-input"
+								class="input"
 								placeholder="Search title or reference"
 								data-testid="nds-search"
 								:value="search"
@@ -235,7 +235,7 @@
 						<label for="nds-workspace-status">Status</label>
 						<select
 							id="nds-workspace-status"
-							class="kt-input"
+							class="input"
 							data-testid="nds-status-filter"
 							:value="status"
 							@change="$emit('update:status', $event.target.value)"
@@ -248,7 +248,7 @@
 						<label for="nds-workspace-fy">Financial year</label>
 						<select
 							id="nds-workspace-fy"
-							class="kt-input"
+							class="input"
 							data-testid="nds-fy-filter"
 							:value="selectedFinancialYear || context.financial_year || ''"
 							@change="$emit('select-financial-year', $event.target.value)"
@@ -267,7 +267,7 @@
 						     back to every authorised department combined. -->
 						<select
 							id="nds-workspace-department"
-							class="kt-input"
+							class="input"
 							data-testid="nds-department-filter"
 							:value="context.organisation_unit || ''"
 							@change="$emit('select-context', $event.target.value)"
@@ -282,7 +282,7 @@
 							</option>
 						</select>
 					</div>
-					<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('clear-filters')">
+					<button type="button" class="btn btn-secondary" @click="$emit('clear-filters')">
 						Clear filters
 					</button>
 				</div>
@@ -299,19 +299,20 @@
 
 				<NeedsTable
 					v-else
-					:needs="registerRows"
+					:needs="pagedRows"
 					:columns="registerColumns"
 					@action="(row, action) => $emit('action', row, action)"
 				/>
 
-				<div
+				<TablePagerHost
 					v-if="registerRows.length"
-					data-testid="nds-count"
-					class="text-muted"
-					style="margin-top: var(--kt-space-3); font-size: 13px"
-				>
-					{{ registerCountLabel }}
-				</div>
+					:total="registerRows.length"
+					:page="currentPage"
+					:page-size="pageSize"
+					:noun="registerNoun"
+					@update:page="(n) => $emit('update:page', n)"
+					@update:page-size="changePageSize"
+				/>
 			</div>
 		</div>
 	</div>
@@ -320,6 +321,7 @@
 <script setup>
 import { computed } from "vue";
 import NeedsTable from "./NeedsTable.vue";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
 import StatusPill from "./StatusPill.vue";
 import { formatInstant } from "../data/format.js";
 
@@ -337,9 +339,15 @@ const props = defineProps({
 	status: { type: String, default: "" },
 	financialYears: { type: Array, default: () => [] },
 	selectedFinancialYear: { type: String, default: "" },
+	// The table-pagination standard: the root keeps these so a visit to a need
+	// and back lands on the same page.
+	page: { type: Number, default: 1 },
+	pageSize: { type: Number, default: 10 },
 });
 
-defineEmits([
+const emit = defineEmits([
+	"update:page",
+	"update:pageSize",
 	"create",
 	"reload",
 	"action",
@@ -422,6 +430,7 @@ const registerColumns = computed(() =>
 				// author's own "Requested by" phrasing once a decision section
 				// already leads the page.
 				{ key: "need", label: "Requirement" },
+				{ key: "organisation_unit_label", label: "Department" },
 				{ key: "author_label", label: "Requester" },
 				{ key: "quantity_required_by", label: "Quantity and required by" },
 				{ key: "status", label: "Status", status: true },
@@ -430,6 +439,7 @@ const registerColumns = computed(() =>
 		: [
 				// §11.2 — the author's own list.
 				{ key: "need", label: "Requirement" },
+				{ key: "organisation_unit_label", label: "Department" },
 				{ key: "quantity_required_by", label: "Quantity and required by" },
 				{ key: "status", label: "Status", status: true },
 				{ key: "action", label: "Action", align: "right" },
@@ -444,14 +454,25 @@ const registerRows = computed(() => {
 	return props.needs.filter((row) => !queued.has(row.name));
 });
 
-// §11.2 "2 needs" (the author's own list) vs. §11.3 "2 department needs"
-// (the register beneath a decision queue) — computed from what is actually
-// rendered in this table, not the server's raw total across both sections.
-const registerCountLabel = computed(() => {
-	const n = registerRows.value.length;
-	const noun = decisionQueue.value.length ? "department need" : "need";
-	return `${n} ${noun}${n === 1 ? "" : "s"}`;
+// The noun the pager counts in: §11.2 "2 needs" (the author's own list) vs.
+// §11.3 "2 department needs" (the register beneath a decision queue) — counted
+// from what is actually rendered in this table, not the server's raw total
+// across both sections.
+const registerNoun = computed(() => (decisionQueue.value.length ? "department need" : "need"));
+
+// The register is paged in the browser: the decision queue and "continue"
+// sections above it need every row, so the server sends the whole list.
+const pageCount = computed(() => Math.max(1, Math.ceil(registerRows.value.length / props.pageSize)));
+const currentPage = computed(() => Math.min(Math.max(props.page, 1), pageCount.value));
+const pagedRows = computed(() => {
+	const start = (currentPage.value - 1) * props.pageSize;
+	return registerRows.value.slice(start, start + props.pageSize);
 });
+
+function changePageSize(size) {
+	emit("update:pageSize", size);
+	emit("update:page", 1);
+}
 
 // An empty list under active filters means "nothing matched", not "nothing
 // exists" — the create-first copy would misstate the workspace.

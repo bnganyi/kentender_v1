@@ -9,8 +9,8 @@ import { collectConsoleErrors, expectScreen, gotoNeeds, resetFixture, selectCont
  *
  * The dedicated queue landing (`/review` with no task) was removed on
  * 2026-08-30: the "Review tasks" sidebar entry was a §10 specification defect.
- * A reviewer reaches an open decision through the shared My Work queue, a
- * notification deep link, or the workspace's own role-aware rows — all three
+ * A reviewer reaches an open decision through Home (My Work was retired into
+ * it, 5 Oct 2026), a notification deep link, or the workspace's own role-aware rows — all three
  * end on the same protected task route, which is unchanged.
  *
  * Fixture: `reset_review_task_fixture` — a Submitted Need under the dedicated
@@ -28,21 +28,25 @@ test.describe("NDS-UI-05 review task", () => {
 		NEED = resetFixture<{ need: string }>("reset_review_task_fixture").need;
 	});
 
-	test("reviewer opens the task from My Work and sees the full submitted revision", async ({
+	test("reviewer opens the task from Home and sees the full submitted revision", async ({
 		page,
 	}) => {
 		/**
-		 * The corrected pattern: submitted Needs register with the established
-		 * My Work queue (kt_my_work_providers), and the row's action lands on
-		 * the exact decision screen.
+		 * The corrected pattern: submitted Needs register with Home's feed
+		 * (kt_home_providers), and the row's action lands on the exact
+		 * decision screen.
 		 */
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureReviewer(page);
-		await page.goto("/app/my-work");
-		const row = page.locator(".kt-mw-row", { hasText: NEED });
+		await page.goto("/app/home");
+		await expect(page.locator('[data-testid="kt-home-root"]')).toBeVisible({ timeout: 60_000 });
+		// the fixture reviewer holds the review site-wide, so the live world's Needs queue is on the page too: find this Need's row
+		const more = page.locator('#my-work [data-testid="kt-home-show-more"]');
+		while (await more.count()) await more.click();
+		const row = page.locator('#my-work [data-testid="kt-home-row"]', { hasText: NEED });
 		await expect(row).toBeVisible();
-		await expect(row).toContainText("Departmental Needs");
-		await row.locator("[data-open]").click();
+		await expect(row).toContainText("Needs");
+		await row.locator('[data-testid="kt-home-continue"]').click();
 
 		await expectScreen(page, "task");
 		// §12.5 — the complete submitted revision, not a summary. Scoped to the

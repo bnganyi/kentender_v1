@@ -47,6 +47,7 @@ export default defineConfig({
 				test: {
 					name: "procurement-requisitions",
 					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/procurement_requisitions/vitest.setup.js"],
 					include: [
 						"kentender_procurement/kentender_procurement/public/js/procurement_requisitions/**/*.spec.js",
 					],
@@ -88,6 +89,16 @@ export default defineConfig({
 					environment: "jsdom",
 					setupFiles: ["kentender_procurement/kentender_procurement/public/js/tenders/vitest.setup.js"],
 					include: ["kentender_procurement/kentender_procurement/public/js/bid_evaluation/**/*.spec.js"],
+				},
+			},
+			{
+				plugins: [vue()],
+				test: {
+					// OVS-CHG-001 v0.6 §11 — the Procurement meetings register page.
+					name: "procurement-meetings",
+					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/tenders/vitest.setup.js"],
+					include: ["kentender_procurement/kentender_procurement/public/js/procurement_meetings/**/*.spec.js"],
 				},
 			},
 			{
@@ -203,6 +214,27 @@ export default defineConfig({
 				},
 			},
 			{
+				// HOME-CHG-001 v0.6 — the Home page: component tests for the board's states and interactions.
+				plugins: [vue()],
+				test: {
+					name: "home",
+					environment: "jsdom",
+					setupFiles: ["kentender_core/kentender_core/public/js/home/vitest.setup.js"],
+					include: ["kentender_core/kentender_core/public/js/home/**/*.spec.js"],
+				},
+			},
+			{
+				// ANL-CHG-001 v0.8 plan Phase 4 (D8) — the Analytics chart components: values as a table,
+				// zero segments omitted, twelve month slots, range-strip columns, from-zero bars.
+				plugins: [vue()],
+				test: {
+					name: "analytics",
+					environment: "jsdom",
+					setupFiles: ["kentender_core/kentender_core/public/js/analytics/vitest.setup.js"],
+					include: ["kentender_core/kentender_core/public/js/analytics/**/*.spec.js"],
+				},
+			},
+			{
 				// NDS-906 — the Departmental Needs presentation helpers (plain ES
 				// modules, no Vue/frappe dependency) run under plain Node.
 				test: {
@@ -232,6 +264,14 @@ export default defineConfig({
 					include: [
 						"kentender_procurement/kentender_procurement/public/js/departmental_needs/components/*.spec.js",
 					],
+				},
+			},
+			{
+				// The shared paging logic and the guard that its per-app copies match.
+				test: {
+					name: "pager-shared",
+					environment: "node",
+					include: ["kentender_procurement/kentender_procurement/public/js/pager_shared/*.spec.js"],
 				},
 			},
 			{

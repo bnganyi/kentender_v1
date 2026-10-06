@@ -388,7 +388,7 @@ function nodePath(node) {
 		:data-loading="loading ? 'true' : 'false'"
 		:data-refreshing="refreshing ? 'true' : 'false'"
 	>
-		<div v-if="loading" class="kt-card kt-blueprint" data-testid="str-loading">
+		<div v-if="loading" class="card blueprint" data-testid="str-loading">
 			<p class="kt-muted" style="margin: 0 0 8px; font-size: 12px">{{ __("Loading strategic plans…") }}</p>
 			<div v-for="i in 5" :key="i" class="kt-skel" style="height: 16px; margin-bottom: 10px"></div>
 		</div>
@@ -408,7 +408,7 @@ function nodePath(node) {
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 				<div class="kt-notice-body"><strong>{{ __("Strategy information could not be loaded.") }}</strong> {{ __("Try again. If the problem continues, contact KenTender support.") }}</div>
 			</div>
-			<div style="margin-top: 10px"><button type="button" class="kt-btn kt-btn-secondary" @click="loadWorkspace">{{ __("Try again") }}</button></div>
+			<div style="margin-top: 10px"><button type="button" class="btn btn-secondary" @click="loadWorkspace">{{ __("Try again") }}</button></div>
 		</div>
 		<template v-else-if="workspace">
 			<!-- The page title, its tabs and (for Overview/History) everything below
@@ -417,7 +417,7 @@ function nodePath(node) {
 			     design. The Structure tab is the one exception: the panel ends
 			     right after the tabs, and the tree/selected-item boxes below it
 			     stay as their own separate boxes. -->
-			<div class="kt-card kt-blueprint" style="padding: 0">
+			<div class="card blueprint" style="padding: 0">
 				<div style="padding: 20.4px 20.4px 0">
 					<header style="display: flex; justify-content: space-between; align-items: flex-start; gap: 13.6px; margin-bottom: 20.4px">
 						<div>
@@ -428,18 +428,18 @@ function nodePath(node) {
 							<div style="display: flex; align-items: center; gap: 10.2px; flex-wrap: wrap">
 								<span v-if="tab === 'structure' && editable" style="font-size: 15px; font-weight: 600">{{ workspace.plan.title }}</span>
 								<span v-if="version" class="kt-status" :class="version.status_tone" data-testid="str-plan-status">{{ version.status_label }}</span>
-								<span v-if="hasUnsavedChanges" class="kt-tag kt-tag-neutral" data-testid="str-unsaved-indicator">{{ __("Unsaved changes") }}</span>
+								<span v-if="hasUnsavedChanges" class="tag tag-neutral" data-testid="str-unsaved-indicator">{{ __("Unsaved changes") }}</span>
 								<a v-if="isPrevious && workspace.routes.current" href="#" data-testid="str-view-current" @click.prevent="navigate(workspace.routes.current)">{{ __("View current plan") }}</a>
 							</div>
 						</div>
 						<div style="display: flex; gap: 6.8px; align-items: flex-start">
-							<button v-if="canDiscardDraft" type="button" class="kt-btn kt-btn-secondary kt-danger" :disabled="acting" data-testid="str-discard-draft" @click="confirmDialog = 'discard-draft'">{{ __("Discard draft") }}</button>
+							<button v-if="canDiscardDraft" type="button" class="btn btn-secondary kt-danger" :disabled="acting" data-testid="str-discard-draft" @click="confirmDialog = 'discard-draft'">{{ __("Discard draft") }}</button>
 							<template v-if="tab === 'structure' && editable">
-								<button type="button" class="kt-btn kt-btn-secondary" :disabled="acting" data-testid="str-save-changes" @click="editorRef?.save()">{{ __("Save changes") }}</button>
-								<button type="button" class="kt-btn kt-btn-primary" :disabled="acting" data-testid="str-submit" @click="confirmDialog = 'submit'">{{ __("Submit for approval") }}</button>
+								<button type="button" class="btn btn-secondary" :disabled="acting" data-testid="str-save-changes" @click="editorRef?.save()">{{ __("Save changes") }}</button>
+								<button type="button" class="btn btn-primary" :disabled="acting" data-testid="str-submit" @click="confirmDialog = 'submit'">{{ __("Submit for approval") }}</button>
 							</template>
 							<div v-else-if="workspace.capabilities.update_plan" style="text-align: right; max-width: 360px">
-								<button type="button" class="kt-btn kt-btn-secondary" :disabled="acting" data-testid="str-update-plan" @click="confirmDialog = 'update-plan'">{{ __("Update plan") }}</button>
+								<button type="button" class="btn btn-secondary" :disabled="acting" data-testid="str-update-plan" @click="confirmDialog = 'update-plan'">{{ __("Update plan") }}</button>
 								<div class="kt-field-hint" style="margin-top: 6px">{{ __("Start a draft from the current plan. The current plan remains in use until the changes are approved.") }}</div>
 							</div>
 						</div>
@@ -487,28 +487,28 @@ function nodePath(node) {
 						<div v-if="isDraft && (canEditIdentity || canEditDates)" style="padding: 20.4px" data-testid="str-draft-details">
 							<div class="kt-card-title">{{ __("Plan details") }}</div>
 							<div v-if="canEditIdentity" style="display: grid; gap: 13.6px; max-width: 640px">
-								<div class="kt-field">
+								<div class="field">
 									<label for="str-detail-title">{{ __("Plan title") }}</label>
-									<input id="str-detail-title" v-model="detailForm.title" class="kt-input" data-testid="str-identity-title" />
+									<input id="str-detail-title" v-model="detailForm.title" class="input" data-testid="str-identity-title" />
 									<p v-if="detailErrors.title" class="kt-field-error">{{ detailErrors.title }}</p>
 								</div>
-								<div class="kt-field">
+								<div class="field">
 									<label>{{ __("Plan type") }}</label>
 									<div class="kt-ro" data-testid="str-detail-plan-type">{{ workspace.plan.plan_type_label }}</div>
 								</div>
-								<div v-if="workspace.plan.parent_primary_plan_id" class="kt-field">
+								<div v-if="workspace.plan.parent_primary_plan_id" class="field">
 									<label>{{ __("Main plan") }}</label>
 									<div class="kt-ro">{{ workspace.plan.parent_primary_plan_title }}</div>
 								</div>
 								<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 13.6px">
-									<div class="kt-field">
+									<div class="field">
 										<label for="str-detail-start">{{ __("Start date") }}</label>
-										<input id="str-detail-start" v-model="detailForm.period_start" class="kt-input" type="date" data-testid="str-identity-start" />
+										<input id="str-detail-start" v-model="detailForm.period_start" class="input" type="date" data-testid="str-identity-start" />
 										<p v-if="detailErrors.period_start" class="kt-field-error">{{ detailErrors.period_start }}</p>
 									</div>
-									<div class="kt-field">
+									<div class="field">
 										<label for="str-detail-end">{{ __("End date") }}</label>
-										<input id="str-detail-end" v-model="detailForm.period_end" class="kt-input" type="date" data-testid="str-identity-end" />
+										<input id="str-detail-end" v-model="detailForm.period_end" class="input" type="date" data-testid="str-identity-end" />
 										<p v-if="detailErrors.period_end" class="kt-field-error">{{ detailErrors.period_end }}</p>
 									</div>
 								</div>
@@ -520,22 +520,22 @@ function nodePath(node) {
 									<div><div class="kt-label">{{ __("Based on") }}</div><div style="font-size: 14px; margin-top: 3px">{{ __("Version {0}", [version.version_number - 1]) }}</div></div>
 								</div>
 								<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 13.6px">
-									<div class="kt-field">
+									<div class="field">
 										<label for="str-use-from">{{ __("Use from") }}</label>
-										<input id="str-use-from" v-model="detailForm.effective_from" class="kt-input" type="date" data-testid="str-use-from" />
+										<input id="str-use-from" v-model="detailForm.effective_from" class="input" type="date" data-testid="str-use-from" />
 										<p v-if="detailErrors.effective_from" class="kt-field-error">{{ detailErrors.effective_from }}</p>
 									</div>
-									<div class="kt-field">
+									<div class="field">
 										<label for="str-use-until">{{ __("Use until") }}</label>
-										<input id="str-use-until" v-model="detailForm.effective_to" class="kt-input" type="date" data-testid="str-use-until" />
+										<input id="str-use-until" v-model="detailForm.effective_to" class="input" type="date" data-testid="str-use-until" />
 										<p v-if="detailErrors.effective_to" class="kt-field-error">{{ detailErrors.effective_to }}</p>
 									</div>
 								</div>
 								<div class="kt-field-hint">{{ __("These dates must fall within the plan period. Approval makes this version current immediately; a future start date prevents approval until that date.") }}</div>
 							</div>
 							<div style="display: flex; justify-content: flex-end; gap: 10.2px; margin-top: 13.6px">
-								<button type="button" class="kt-btn kt-btn-secondary" :disabled="acting || !detailsDirty" data-testid="str-save-plan-details" @click="savePlanDetails">{{ __("Save plan details") }}</button>
-								<button type="button" class="kt-btn kt-btn-primary" :disabled="acting" data-testid="str-edit-structure" @click="editStructure">{{ __("Edit structure") }}</button>
+								<button type="button" class="btn btn-secondary" :disabled="acting || !detailsDirty" data-testid="str-save-plan-details" @click="savePlanDetails">{{ __("Save plan details") }}</button>
+								<button type="button" class="btn btn-primary" :disabled="acting" data-testid="str-edit-structure" @click="editStructure">{{ __("Edit structure") }}</button>
 							</div>
 						</div>
 
@@ -577,7 +577,7 @@ function nodePath(node) {
 								<p v-else class="kt-muted" style="margin: 0" data-testid="str-no-approval">{{ __("Not yet approved.") }}</p>
 								<div v-if="workspace.versions.length > 1" style="margin-top: 13.6px">
 									<div class="kt-label" style="margin-bottom: 6px">{{ __("Versions") }}</div>
-									<table class="kt-table" data-testid="str-versions-table">
+									<table class="table" data-testid="str-versions-table">
 										<thead><tr><th>{{ __("Version") }}</th><th>{{ __("Status") }}</th><th>{{ __("Applies") }}</th></tr></thead>
 										<tbody>
 											<tr v-for="v in workspace.versions" :key="v.id" data-testid="str-version-row">

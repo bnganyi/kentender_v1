@@ -29,7 +29,7 @@
 				<button
 					v-for="action in ownerActions"
 					:key="action.code"
-					class="kt-btn kt-btn-secondary"
+					class="btn btn-secondary"
 					data-testid="nds-owner-action"
 					:data-action="action.code"
 					@click="$emit(action.code)"
@@ -111,12 +111,12 @@
 					</div>
 				</div>
 			</div>
-			<button class="kt-btn kt-btn-primary" style="margin-top: var(--kt-space-3)" data-testid="nds-detail-edit" @click="$emit('edit')">
+			<button class="btn btn-primary" style="margin-top: var(--kt-space-3)" data-testid="nds-detail-edit" @click="$emit('edit')">
 				{{ editAction.label }}
 			</button>
 		</div>
 		<div v-if="reviewAction">
-			<button class="kt-btn kt-btn-primary" data-testid="nds-detail-review" @click="$emit('review', reviewAction)">
+			<button class="btn btn-primary" data-testid="nds-detail-review" @click="$emit('review', reviewAction)">
 				{{ reviewAction.label }}
 			</button>
 		</div>

@@ -1,0 +1,7 @@
+/* Procurement meetings page styles (OVS-CHG-001 v0.6 §11). Loaded only by this page's own
+   bundle (AGENTS.md §6.9), never globally. The board draws the totals as a narrow table
+   beside a wide one. */
+.kt-industry.kt-pmt .pmt-totals { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; }
+@media (max-width: 900px) {
+	.kt-industry.kt-pmt .pmt-totals { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+}

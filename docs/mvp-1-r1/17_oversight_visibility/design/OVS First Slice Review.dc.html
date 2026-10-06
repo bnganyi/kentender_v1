@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>OVS first slice — review board</title>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>
+html,body{margin:0;padding:0;background:var(--color-bg);}
+a{color:var(--color-accent-2-700);}
+a:hover{color:var(--color-accent-2-800);}
+</style>
+</helmet>
+<div style="display:grid;grid-template-columns:280px minmax(0,1fr);height:100vh;font-family:var(--font-body);color:var(--color-text);background:var(--color-bg);">
+
+<nav aria-label="Review navigation" style="background:var(--color-surface);border-right:1px solid var(--color-divider);overflow-y:auto;padding:20px 0 32px;">
+  <div style="padding:0 20px 16px;border-bottom:1px solid var(--color-divider);">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:22px;line-height:1.1;">OVS first slice</div>
+    <div style="font-size:13px;color:var(--color-neutral-700);margin-top:4px;">Review board · OVS v0.6, EVL v0.5, TPR v0.17, PRC v0.11</div>
+  </div>
+  <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+    <div style="padding:16px 0 4px;">
+      <div style="padding:0 20px 6px;font-size:13px;font-weight:600;color:var(--color-neutral-700);">{{ g.label }}</div>
+      <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+        <button type="button" onClick="{{ it.go }}" aria-current="{{ it.current }}" style="{{ it.style }}">
+          <span style="font-size:12px;font-weight:600;color:var(--color-neutral-700);min-width:74px;">{{ it.code }}</span>
+          <span>{{ it.label }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </sc-for>
+  <div style="padding:20px;font-size:12px;color:var(--color-neutral-700);border-top:1px solid var(--color-divider);margin-top:12px;display:grid;gap:8px;">
+    <div style="display:flex;gap:8px;align-items:center;"><span style="display:inline-block;padding:0 6px;border:1px dashed var(--color-accent-2-600);background:var(--color-accent-2-100);color:var(--color-accent-2-800);font-weight:600;">[ … ]</span><span>Value not supplied by any source</span></div>
+    <div>Keys ← → move between artboards.</div>
+  </div>
+</nav>
+
+<main ref="{{ mainRef }}" style="overflow:auto;padding:24px;">
+  <section aria-label="Artboard context" style="background:var(--color-surface);border:1px solid var(--color-divider);padding:16px 20px;margin-bottom:20px;max-width:1440px;">
+    <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--color-neutral-700);">{{ meta.code }} · {{ meta.group }}</div>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.15;">{{ meta.label }}</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn btn-secondary" onClick="{{ prev }}">Previous</button>
+        <button type="button" class="btn btn-secondary" onClick="{{ next }}">Next</button>
+        <button type="button" class="btn btn-ghost" onClick="{{ toggleFit }}">{{ fitLabel }}</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 24px;margin-top:12px;">
+      <div style="display:flex;flex-direction:column;gap:2px;"><span class="kt-label">Actor (outside artboard)</span><span style="font-size:14px;">{{ meta.actor }}</span></div>
+      <div style="display:flex;flex-direction:column;gap:2px;"><span class="kt-label">Pictured instant</span><span style="font-size:14px;">{{ meta.instant }}</span></div>
+      <div style="display:flex;flex-direction:column;gap:2px;"><span class="kt-label">Archetype</span><span style="font-size:14px;">{{ meta.archetype }}</span></div>
+      <div style="display:flex;flex-direction:column;gap:2px;"><span class="kt-label">Source basis</span><span style="font-size:14px;">{{ meta.basis }}</span></div>
+    </div>
+    <sc-if value="{{ meta.hasNotes }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--color-divider);">
+        <div class="kt-label" style="margin-bottom:4px;">New or proposed content on this artboard — for owner review</div>
+        <ul style="margin:0;padding-left:18px;font-size:14px;display:grid;gap:2px;">
+          <sc-for list="{{ meta.notes }}" as="n" hint-placeholder-count="2"><li>{{ n }}</li></sc-for>
+        </ul>
+      </div>
+    </sc-if>
+  </section>
+
+  <div style="width:1440px;zoom:{{ zoom }};">
+
+  <!-- ============ FINDINGS ============ -->
+  <sc-if value="{{ is.findings }}" hint-placeholder-val="{{ false }}">
+    <div class="kt-page" style="max-width:none;width:1440px;box-sizing:border-box;margin:0;padding:32px 120px;min-height:1024px;">
+      <div class="kt-page-head"><div><h1 class="kt-page-title">What the sources do and do not supply</h1><p class="kt-page-desc">Read before reviewing the artboards. Everything here is from EVL v0.5, TPR v0.17, PRC v0.11, OVS v0.6 and KT-STD v1.14/v1.15 as uploaded.</p></div></div>
+      <div class="kt-region">
+        <h2>Gaps that forced proposals</h2>
+        <table class="table">
+          <thead><tr><th>Source</th><th>Finding</th><th>How the artboards handle it</th></tr></thead>
+          <tbody>
+            <tr><td>EVL v0.5 §9</td><td>The OVS amendment is only in the preamble. §9 has no Accounting Officer or Head of Procurement oversight variant; §9.10 gives only the auditor/technical reader D07-SENT read.</td><td>OVS-EVL-01 to 04 reuse D07-SENT and §9.12 content. New headlines and lines are listed per artboard.</td></tr>
+            <tr><td>EVL v0.5 §9.1 vs KT-STD v1.14 §8.3 and OVS v0.6 §14</td><td>EVL's design scenario has one bid (Afya). KT-STD v1.14 and OVS §14 say the canonical Tender receives four bids.</td><td>Artboards follow EVL's drawable single-bid content. Needs reconciling in EVL before hand-off.</td></tr>
+            <tr><td>TPR v0.17 §10.10</td><td>DES-09 composition is unchanged; Decisions and progress is named only in the preamble and §10.17. No placement, block content or copy.</td><td>Section placed after current facts (as OVS v0.1 proposed). Block content from OVS v0.6 §8.</td></tr>
+            <tr><td>PRC v0.11 §10</td><td>"Its populated canonical design brief must be completed before design hand-off." No title, description, empty copy or fixture rows.</td><td>Rows built from the OVS §14 counting test and EVL session times. Missing values shown as [ … ].</td></tr>
+            <tr><td>AWD v0.5</td><td>Not supplied. Award status, outcome and reason wording unknown.</td><td>Shown as [ … ] in Award blocks.</td></tr>
+            <tr><td>BOP v0.11</td><td>Not supplied. Opening session start, duration and attendance count unknown.</td><td>Shown as [ … ] in opening facts and meeting rows.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="kt-region is-secondary">
+        <h2>Pending owner decisions these artboards depend on</h2>
+        <div class="kt-group">
+          <div class="kt-meta-row" style="align-items:start;">
+            <div><span class="kt-label">OVS-P01</span><span style="font-size:15px;">HoD Tender progress and opening summary — OVS-TPR-02</span></div>
+            <div><span class="kt-label">OVS-P02</span><span style="font-size:15px;">HoD evaluation summary — not drawn</span></div>
+            <div><span class="kt-label">OVS-P05</span><span style="font-size:15px;">Technical reader on the register — not drawn</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ EVALUATION ============ -->
+  <sc-if value="{{ is.evl }}" hint-placeholder-val="{{ true }}">
+    <div class="kt-page" style="max-width:none;width:1440px;box-sizing:border-box;margin:0;padding:32px 120px 48px;">
+      <div class="kt-page-head">
+        <div>
+          <h1 class="kt-page-title">Supply and delivery of business laptops</h1>
+          <p class="kt-page-desc">TND-MOH-2027-033</p>
+        </div>
+      </div>
+
+      <div class="kt-guidance">
+        <ol class="kt-journey" aria-label="Evaluation journey" style="--kt-journey-n:3;">
+          <li class="kt-journey-stage is-done"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare</span><span class="kt-journey-state">✓ Done</span></li>
+          <sc-if value="{{ ev.reviewCurrent }}" hint-placeholder-val="{{ false }}">
+            <li class="kt-journey-stage is-current" aria-current="step"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Review</span><span class="kt-journey-state">Current · {{ ev.reviewHolder }}</span></li>
+            <li class="kt-journey-stage"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Report</span><span class="kt-journey-state">Not started</span></li>
+          </sc-if>
+          <sc-if value="{{ ev.allDone }}" hint-placeholder-val="{{ true }}">
+            <li class="kt-journey-stage is-done"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Review</span><span class="kt-journey-state">✓ Done</span></li>
+            <li class="kt-journey-stage is-done"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Report</span><span class="kt-journey-state">✓ Done</span></li>
+          </sc-if>
+        </ol>
+
+        <sc-if value="{{ is.e1 }}" hint-placeholder-val="{{ true }}">
+          <div class="kt-next-step is-done"><div class="kt-next-step-label">Done</div><p class="kt-next-step-headline">The committee report was sent to Charles Mutiso on 16 Jun 2027, 14:07 EAT.</p><p class="kt-next-step-sentence">The Head of Procurement will review the report. No award decision has been recorded here.</p></div>
+        </sc-if>
+        <sc-if value="{{ is.e2 }}" hint-placeholder-val="{{ false }}">
+          <div class="kt-next-step is-done"><div class="kt-next-step-label">Done</div><p class="kt-next-step-headline">The committee report was sent to Charles Mutiso on 16 Jun 2027, 14:07 EAT.</p><p class="kt-next-step-sentence">Charles Mutiso is preparing the professional opinion.</p></div>
+        </sc-if>
+        <sc-if value="{{ is.e3 }}" hint-placeholder-val="{{ false }}">
+          <div class="kt-next-step is-waiting"><div class="kt-next-step-label">Waiting on someone</div><p class="kt-next-step-headline">Chair Grace Wambui is leading the committee's review since 12 Jun 2027, 11:10 EAT.</p><p class="kt-next-step-sentence">Bid details are shared with you when the committee's report is sent.</p></div>
+        </sc-if>
+        <sc-if value="{{ is.e4 }}" hint-placeholder-val="{{ false }}">
+          <div class="kt-next-step is-waiting"><div class="kt-next-step-label">Waiting on someone</div><p class="kt-next-step-headline">Secretary Brian Wafula is preparing report 2 since 16 Jun 2027, <span style="display:inline-block;padding:0 6px;border:1px dashed var(--color-accent-2-600);background:var(--color-accent-2-100);color:var(--color-accent-2-800);font-size:13px;font-weight:600;">[return time]</span>.</p><p class="kt-next-step-sentence">Report 1 remains available below.</p></div>
+        </sc-if>
+      </div>
+
+      <!-- Status only (before delivery) -->
+      <sc-if value="{{ is.e3 }}" hint-placeholder-val="{{ false }}">
+        <div class="kt-region">
+          <h2>Evaluation status</h2>
+          <div class="kt-meta-row" style="align-items:start;">
+            <div><span class="kt-label">Current state</span><span class="kt-meta-value">Reviewing</span></div>
+            <div><span class="kt-label">Opening completed</span><span class="kt-meta-value">12 Jun 2027, 11:10 EAT</span></div>
+            <div><span class="kt-label">Evaluation deadline</span><span class="kt-meta-value">12 Jul 2027, 11:00 EAT</span></div>
+          </div>
+        </div>
+        <div class="kt-region">
+          <h2>Committee</h2>
+          <table class="table">
+            <thead><tr><th>Person</th><th>Department</th><th>Capacity</th><th>Declaration</th></tr></thead>
+            <tbody>
+              <tr><td>Grace Wambui</td><td>Human Resource Management and Development</td><td>Chair</td><td>No conflict to declare · 11 Jun 2027, 09:10 EAT</td></tr>
+              <tr><td>Peter Mugo</td><td>ICT</td><td>Member</td><td>No conflict to declare · 11 Jun 2027, 09:12 EAT</td></tr>
+              <tr><td>Ruth Achieng</td><td>Finance</td><td>Member</td><td>No conflict to declare · 11 Jun 2027, 09:14 EAT</td></tr>
+              <tr><td>Brian Wafula</td><td>Procurement</td><td>Secretary — not a voting or signing member</td><td>Not required</td></tr>
+            </tbody>
+          </table>
+          <div class="kt-meta-row is-tight" style="margin-top:12px;gap:32px;">
+            <div><span class="kt-label">Committee appointed</span><span style="font-size:15px;">11 Jun 2027, 09:00 EAT · MOH/EVAL/033/2027</span></div>
+            <div><span class="kt-label">Secretary assigned</span><span style="font-size:15px;">11 Jun 2027, 09:05 EAT · MOH/EVAL/SEC/033/2027</span></div>
+          </div>
+        </div>
+        <div class="kt-region is-secondary">
+          <h2>Committee meetings</h2>
+          <table class="table">
+            <thead><tr><th>Session</th><th>Meeting date</th><th class="is-num">Duration</th><th class="is-num">Present</th><th>State</th></tr></thead>
+            <tbody><tr><td>1</td><td style="white-space:nowrap;">14 Jun 2027, 09:00 EAT</td><td class="is-num"></td><td class="is-num">4</td><td><span class="kt-status is-live">In session</span></td></tr></tbody>
+          </table>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:24px;"><button type="button" class="btn btn-secondary">Back to evaluations</button></div>
+      </sc-if>
+
+      <!-- Delivered content -->
+      <sc-if value="{{ ev.full }}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ is.e4 }}" hint-placeholder-val="{{ false }}">
+          <div class="kt-region">
+            <div style="display:flex;gap:24px;align-items:flex-end;flex-wrap:wrap;">
+              <div class="field" style="min-width:300px;margin:0;"><label for="rv">Report version</label><select id="rv" class="input"><option>Report 1 — Returned for correction</option></select></div>
+              <span class="kt-status is-attention">Returned for correction</span>
+            </div>
+            <div class="kt-group" style="margin-top:16px;">
+              <div class="kt-label">Return reason — Charles Mutiso, Head of Procurement</div>
+              <p style="margin:4px 0 8px;font-size:16px;">Correct the service-address page reference from page 3 to page 2.</p>
+              <p style="margin:0;font-size:15px;color:var(--color-neutral-800);">A corrected report is being prepared.</p>
+            </div>
+          </div>
+        </sc-if>
+
+        <div class="kt-region">
+          <h2>Report summary</h2>
+          <div class="kt-meta-row" style="align-items:start;">
+            <div><span class="kt-label">Recommendation</span><span class="kt-meta-value">Afya Digital Supplies Limited</span></div>
+            <div><span class="kt-label">Evaluated total</span><span class="kt-meta-value">KES 46,400,000.00</span></div>
+            <div><span class="kt-label">Eligibility</span><span class="kt-meta-value">Meets</span></div>
+            <div><span class="kt-label">Technical compliance</span><span class="kt-meta-value">Meets</span></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 32px;margin-top:16px;">
+            <div><span class="kt-label">Clarification</span><p style="margin:4px 0 0;font-size:15px;">Resolved — the address is present in the submitted evidence.</p></div>
+            <div><span class="kt-label">Due diligence</span><p style="margin:4px 0 0;font-size:15px;">No additional exercise undertaken; no separate exercise required by the published tender and no outstanding verification concern recorded by the committee.</p></div>
+          </div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:16px;font-size:14px;">
+            <a href="#r-tc">Tender and committee</a><a href="#r-bf">Bid findings</a><a href="#r-fc">Financial comparison</a><a href="#r-cl">Clarifications and committee record</a><a href="#r-rec">Recommendation and reasons</a>
+          </div>
+        </div>
+
+        <div class="kt-region">
+          <h2>Signatures — report 1</h2>
+          <table class="table">
+            <thead><tr><th>Member</th><th>Capacity</th><th>Signature</th></tr></thead>
+            <tbody>
+              <tr><td>Grace Wambui</td><td>Chair</td><td style="white-space:nowrap;">Signed 16 Jun 2027, 14:05 EAT</td></tr>
+              <tr><td>Peter Mugo</td><td>Member</td><td style="white-space:nowrap;">Signed 16 Jun 2027, 14:06 EAT</td></tr>
+              <tr><td>Ruth Achieng</td><td>Member</td><td style="white-space:nowrap;">Signed 16 Jun 2027, 14:07 EAT</td></tr>
+            </tbody>
+          </table>
+          <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+            <sc-if value="{{ is.e2 }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-secondary">View award record</button></sc-if>
+            <button type="button" class="btn btn-secondary">View committee record</button>
+            <button type="button" class="btn btn-secondary">Download report</button>
+            <button type="button" class="btn btn-ghost">Back to evaluations</button>
+          </div>
+        </div>
+
+        <div class="kt-region is-secondary" id="r-tc">
+          <h2>Tender and committee</h2>
+          <div class="kt-meta-row" style="align-items:start;grid-template-columns:repeat(3,minmax(0,1fr));">
+            <div><span class="kt-label">Procedure</span><span style="font-size:15px;">Open Tender, single lot</span></div>
+            <div><span class="kt-label">Reservation</span><span style="font-size:15px;">Youth</span></div>
+            <div><span class="kt-label">Quantity</span><span style="font-size:15px;">250 Each</span></div>
+            <div><span class="kt-label">Published requirements</span><span style="font-size:15px;">Issued tender with addendum ADD-MOH-2027-033-001</span></div>
+            <div><span class="kt-label">Bid</span><span style="font-size:15px;">Afya Digital Supplies Limited, Submitted Version 1</span></div>
+            <div><span class="kt-label">Opening</span><span style="font-size:15px;">Completed 12 Jun 2027, 11:10:30 EAT</span></div>
+          </div>
+          <p style="margin:12px 0 0;font-size:15px;">Committee appointed 11 Jun 2027, 09:00 EAT, reference MOH/EVAL/033/2027: Grace Wambui, Chair, Human Resource Management and Development; Peter Mugo, Member, ICT; Ruth Achieng, Member, Finance. Secretary Brian Wafula, appointed by Charles Mutiso 11 Jun 2027, 09:05 EAT, reference MOH/EVAL/SEC/033/2027.</p>
+        </div>
+
+        <div class="kt-region is-secondary" id="r-bf">
+          <h2>Bid findings</h2>
+          <p style="font-size:14px;color:var(--color-neutral-800);">Responsive means the bid meets the applicable mandatory requirements.</p>
+          <h3 style="font-size:16px;margin:12px 0 8px;">Eligibility</h3>
+          <table class="table">
+            <thead><tr><th>Requirement</th><th>Offered or recorded evidence</th><th>Finding</th></tr></thead>
+            <tbody>
+              <tr><td>Supplier identity</td><td>Certificate of incorporation PVT-9X7K2M; reviewed by Ruth, 14 Jun 08:45</td><td>Meets</td></tr>
+              <tr><td>Required declarations</td><td>Tenderer information complete; Form of Tender, independent tender determination, not debarred, no corrupt or fraudulent practice and code of ethics confirmed; reviewed by Ruth, 14 Jun 08:45</td><td>Meets</td></tr>
+              <tr><td>Youth reservation</td><td>Declaration complete; AGPO-Y-2026-04172, valid to 30 Jun 2027; required eligibility evidence reviewed by Ruth, 14 Jun 08:45</td><td>Meets</td></tr>
+              <tr><td>Tax compliance</td><td>Tax compliance certificate P051234567X, valid to 31 Dec 2027; required evidence reviewed by Ruth, 14 Jun 08:45</td><td>Meets</td></tr>
+              <tr><td>Tender security</td><td>KCB/TG/2027/8841, KES 500,000.00, valid to 15 Nov 2027; physical receipt MOH-SEC-2027-033-017; published security conditions and original reviewed by Ruth, 14 Jun 08:50</td><td>Meets</td></tr>
+            </tbody>
+          </table>
+          <h3 style="font-size:16px;margin:20px 0 8px;">Technical compliance</h3>
+          <table class="table">
+            <thead><tr><th>Requirement</th><th>Offered or recorded evidence</th><th>Finding</th></tr></thead>
+            <tbody>
+              <tr><td>Quantity and delivery</td><td>250 Each; 15 Sep 2027, before 30 Sep 2027; Ministry of Health Headquarters, Afya House, 3rd Floor Procurement Stores, Nairobi</td><td>Meets</td></tr>
+              <tr><td>Electrical compatibility</td><td>240 V, 50 Hz adaptor; suitable for Kenyan mains supply</td><td>Meets</td></tr>
+              <tr><td>New and unused</td><td>All units new and unused; manufacturer authorisation</td><td>Meets</td></tr>
+              <tr><td>Memory / storage</td><td>16 GB, minimum 16 GB; 512 GB, minimum 512 GB; NVMe SSD as required</td><td>Meets</td></tr>
+              <tr><td>Display / battery</td><td>14.0 inches, minimum 14.0; 10 hours, minimum 8</td><td>Meets</td></tr>
+              <tr><td>Processor</td><td>64-bit business-class, 12 cores; requirement minimum 10 cores or equivalent</td><td>Meets</td></tr>
+              <tr><td>Operating system</td><td>Windows 11 Pro compatible with the required organisational environment</td><td>Meets</td></tr>
+              <tr><td>Connectivity / ports</td><td>Wi-Fi 6E and Bluetooth 5.3; USB-C ×2, USB-A ×2, HDMI ×1; published minimums satisfied</td><td>Meets</td></tr>
+              <tr><td>Warranty / support</td><td>36 months, minimum 36; on-site support Yes; response 4 hours, maximum 8; manufacturer support Yes</td><td>Meets</td></tr>
+              <tr><td>Service location and contacts</td><td>Nairobi service centre; escalation/warranty contacts supplied; original address confirmed on page 2, section 3</td><td>Meets</td></tr>
+              <tr><td>Comparable experience</td><td>Kenyatta National Hospital, 180 laptops, completed 30 Nov 2026; Kenya Medical Training College, 220 laptops, completed 15 Mar 2027; two submitted evidence records reviewed</td><td>Meets</td></tr>
+            </tbody>
+          </table>
+          <div style="display:flex;gap:8px 20px;flex-wrap:wrap;margin-top:12px;font-size:14px;">
+            <a href="#">Certificate of incorporation</a><a href="#">Tax compliance certificate</a><a href="#">Youth reservation evidence</a><a href="#">Tender-security proof</a><a href="#">Manufacturer authorisation</a><a href="#">Product datasheet</a><a href="#">Warranty and support commitment</a><a href="#">Kenya service-centre details</a><a href="#">KNH contract evidence</a><a href="#">KMTC contract evidence</a>
+          </div>
+        </div>
+
+        <div class="kt-region is-secondary" id="r-fc">
+          <h2>Financial comparison</h2>
+          <table class="table">
+            <thead><tr><th>Bidder</th><th class="is-num">Quantity</th><th class="is-num">Unit price</th><th class="is-num">Subtotal</th><th class="is-num">VAT</th><th class="is-num">Submitted total</th><th>Adjustments</th><th class="is-num">Evaluated total</th><th class="is-num">Position</th></tr></thead>
+            <tbody><tr><td>Afya Digital Supplies Limited</td><td class="is-num">250</td><td class="is-num">KES 160,000.00</td><td class="is-num">KES 40,000,000.00</td><td class="is-num">KES 6,400,000.00</td><td class="is-num">KES 46,400,000.00</td><td>None</td><td class="is-num">KES 46,400,000.00</td><td class="is-num">1</td></tr></tbody>
+          </table>
+          <p style="margin:8px 0 0;font-size:14px;color:var(--color-neutral-800);">One responsive bid; no evaluation adjustment.</p>
+        </div>
+
+        <div class="kt-region is-secondary" id="r-cl">
+          <h2>Clarifications and committee record</h2>
+          <div class="kt-group">
+            <div class="kt-label">Question — sent 14 Jun 2027, 09:10 EAT; reply by 15 Jun 2027, 17:00 EAT</div>
+            <p style="margin:4px 0 12px;font-size:15px;">Please identify the page and section of your submitted Kenya service-centre details that gives the Nairobi service address.</p>
+            <div class="kt-label">Reply — David Ouma, received 15 Jun 2027, 10:00 EAT</div>
+            <p style="margin:4px 0 12px;font-size:15px;">The service address is on page 2, section 3 of Kenya service-centre details: Westlands Business Park, Waiyaki Way, Nairobi.</p>
+            <div class="kt-label">Committee outcome — 16 Jun 2027, 09:05 EAT</div>
+            <p style="margin:4px 0 0;font-size:15px;">The address is present in the original submitted document and is within Kenya.</p>
+          </div>
+          <table class="table" style="margin-top:16px;">
+            <thead><tr><th>Session</th><th>Time</th><th>Subject</th><th>Present</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td style="white-space:nowrap;">14 Jun 2027, 09:00–09:06 EAT</td><td>Clarify service address</td><td>Grace Wambui (joined 09:00), Peter Mugo (09:02), Ruth Achieng (09:03), Brian Wafula, secretary (from start)</td></tr>
+              <tr><td>2</td><td style="white-space:nowrap;">16 Jun 2027, 09:00–09:06 EAT</td><td>Resolve reply and complete findings</td><td>Grace Wambui, Peter Mugo, Ruth Achieng, Brian Wafula, secretary</td></tr>
+            </tbody>
+          </table>
+          <p style="margin:8px 0 0;font-size:15px;">No disagreement recorded.</p>
+        </div>
+
+        <div class="kt-region is-secondary" id="r-rec">
+          <h2>Recommendation and reasons</h2>
+          <p style="margin:0;font-size:16px;max-width:80ch;">Recommend Afya Digital Supplies Limited at KES 46,400,000.00. The only bid received meets the published requirements. Clarification confirmed existing evidence without changing the offer. This report does not constitute an award.</p>
+        </div>
+
+        <div class="kt-disclosure" style="margin-top:24px;">
+          <div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Report history</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- ============ TENDER — DECISIONS AND PROGRESS ============ -->
+  <sc-if value="{{ is.tpr }}" hint-placeholder-val="{{ false }}">
+    <div class="kt-page" style="max-width:none;width:1440px;box-sizing:border-box;margin:0;padding:32px 120px 48px;">
+      <div class="kt-page-head">
+        <div>
+          <h1 class="kt-page-title">Supply and delivery of business laptops</h1>
+          <p class="kt-page-desc">Supplier submission is closed. The proceeding has moved to the next procurement stage. <span class="kt-status is-pending">Submission period ended</span></p>
+          <div class="kt-page-scope">TND-MOH-2027-033</div>
+        </div>
+        <div class="kt-page-actions"><button type="button" class="btn btn-secondary">View public Tender</button></div>
+      </div>
+
+      <div class="kt-guidance">
+        <ol class="kt-journey" aria-label="Tender journey">
+          <li class="kt-journey-stage is-done"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Prepare Tender</span><span class="kt-journey-state">✓ Done</span></li>
+          <li class="kt-journey-stage is-done"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>HOPF approval</span><span class="kt-journey-state">✓ Done</span></li>
+          <li class="kt-journey-stage is-done"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>AO publication authorisation</span><span class="kt-journey-state">✓ Done</span></li>
+          <li class="kt-journey-stage is-done"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">4</span>Confirm publication</span><span class="kt-journey-state">✓ Done</span></li>
+          <li class="kt-journey-stage is-done"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">5</span>Manage open Tender</span><span class="kt-journey-state">✓ Done</span></li>
+        </ol>
+        <div class="kt-next-step is-done"><div class="kt-next-step-label">Done</div><p class="kt-next-step-headline">The system closed supplier submission at 12 Jun 2027, 11:00 EAT.</p></div>
+      </div>
+
+      <div class="kt-region">
+        <div class="kt-meta-row" style="align-items:start;">
+          <div><span class="kt-label">Published at</span><span class="kt-meta-value">15 May 2027, 08:00 EAT</span></div>
+          <div><span class="kt-label">Submission deadline</span><span class="kt-meta-value">12 Jun 2027, 11:00 EAT</span></div>
+          <div><span class="kt-label">Publication authorised by</span><span class="kt-meta-value">Amina Hassan</span></div>
+          <div><span class="kt-label">Effective addenda</span><span class="kt-meta-value">1</span></div>
+        </div>
+      </div>
+
+      <div class="kt-region">
+        <h2>Decisions and progress</h2>
+
+        <!-- Bid opening -->
+        <div style="display:grid;grid-template-columns:220px minmax(0,1fr) 200px;gap:24px;padding:20px 0;border-top:1px solid var(--color-divider);">
+          <div style="display:grid;gap:8px;align-content:start;">
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:20px;">Bid opening</div>
+            <div><span class="kt-status is-pending">Finalized</span></div>
+          </div>
+          <div class="kt-meta-row" style="align-items:start;align-content:start;grid-template-columns:repeat(3,minmax(0,1fr));">
+            <div><span class="kt-label">Opening completed</span><span style="font-size:15px;">12 Jun 2027, 11:10:30 EAT</span></div>
+            <div><span class="kt-label">Bids opened</span><span style="font-size:15px;">1</span></div>
+            <div><span class="kt-label">Minutes</span><span style="display:inline-block;padding:0 6px;border:1px dashed var(--color-accent-2-600);background:var(--color-accent-2-100);color:var(--color-accent-2-800);font-size:13px;font-weight:600;width:max-content;">[minutes state — BOP]</span></div>
+          </div>
+          <div style="display:grid;gap:8px;align-content:start;justify-items:start;"><button type="button" class="btn btn-secondary">View record</button></div>
+        </div>
+
+        <!-- Bid evaluation: delivered -->
+        <sc-if value="{{ tp.evDelivered }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:220px minmax(0,1fr) 200px;gap:24px;padding:20px 0;border-top:1px solid var(--color-divider);">
+            <div style="display:grid;gap:8px;align-content:start;">
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:20px;">Bid evaluation</div>
+              <div><span class="kt-status is-pending">Report sent</span></div>
+            </div>
+            <div style="display:grid;gap:12px;">
+              <div class="kt-meta-row" style="align-items:start;grid-template-columns:repeat(3,minmax(0,1fr));">
+                <div><span class="kt-label">Recommendation</span><span style="font-size:15px;">Afya Digital Supplies Limited</span></div>
+                <div><span class="kt-label">Evaluated total</span><span style="font-size:15px;">KES 46,400,000.00</span></div>
+                <div><span class="kt-label">Report sent</span><span style="font-size:15px;">16 Jun 2027, 14:07 EAT</span></div>
+                <div><span class="kt-label">Sent to</span><span style="font-size:15px;">Charles Mutiso</span></div>
+              </div>
+              <div><span class="kt-label">Recorded reason</span><p style="margin:2px 0 0;font-size:15px;">The only bid received meets the published requirements.</p></div>
+              <sc-if value="{{ tp.evPending }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:15px;color:var(--color-neutral-800);">The Head of Procurement will review the report.</p></sc-if>
+            </div>
+            <div style="display:grid;gap:8px;align-content:start;justify-items:start;"><button type="button" class="btn btn-secondary">View record</button><button type="button" class="btn btn-ghost">View report</button></div>
+          </div>
+        </sc-if>
+
+        <!-- Bid evaluation: protected -->
+        <sc-if value="{{ is.t3 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:220px minmax(0,1fr) 200px;gap:24px;padding:20px 0;border-top:1px solid var(--color-divider);">
+            <div style="display:grid;gap:8px;align-content:start;">
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:20px;">Bid evaluation</div>
+              <div><span class="kt-status is-draft">Reviewing</span></div>
+            </div>
+            <div style="display:grid;gap:12px;">
+              <div class="kt-meta-row" style="align-items:start;grid-template-columns:repeat(3,minmax(0,1fr));">
+                <div><span class="kt-label">Committee appointed</span><span style="font-size:15px;">11 Jun 2027, 09:00 EAT</span></div>
+                <div><span class="kt-label">Evaluation deadline</span><span style="font-size:15px;">12 Jul 2027, 11:00 EAT</span></div>
+                <div><span class="kt-label">Chair</span><span style="font-size:15px;">Grace Wambui</span></div>
+              </div>
+              <p style="margin:0;font-size:15px;">Chair Grace Wambui is leading the committee's review.</p>
+              <p style="margin:0;font-size:15px;color:var(--color-neutral-800);">Bid details are shared with you when the committee's report is sent.</p>
+            </div>
+            <div style="display:grid;gap:8px;align-content:start;justify-items:start;"><button type="button" class="btn btn-secondary">View record</button></div>
+          </div>
+        </sc-if>
+
+        <!-- Bid evaluation: returned -->
+        <sc-if value="{{ is.t4 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:220px minmax(0,1fr) 200px;gap:24px;padding:20px 0;border-top:1px solid var(--color-divider);">
+            <div style="display:grid;gap:8px;align-content:start;">
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:20px;">Bid evaluation</div>
+              <div><span class="kt-status is-attention">Returned for correction</span></div>
+            </div>
+            <div style="display:grid;gap:12px;">
+              <div class="kt-meta-row" style="align-items:start;grid-template-columns:repeat(3,minmax(0,1fr));">
+                <div><span class="kt-label">Report 1 recommendation</span><span style="font-size:15px;">Afya Digital Supplies Limited</span></div>
+                <div><span class="kt-label">Evaluated total</span><span style="font-size:15px;">KES 46,400,000.00</span></div>
+                <div><span class="kt-label">Returned by</span><span style="font-size:15px;">Charles Mutiso</span></div>
+              </div>
+              <div><span class="kt-label">Return reason</span><p style="margin:2px 0 0;font-size:15px;">Correct the service-address page reference from page 3 to page 2.</p></div>
+              <p style="margin:0;font-size:15px;color:var(--color-neutral-800);">A corrected report is being prepared.</p>
+            </div>
+            <div style="display:grid;gap:8px;align-content:start;justify-items:start;"><button type="button" class="btn btn-secondary">View record</button><button type="button" class="btn btn-ghost">View report 1</button></div>
+          </div>
+        </sc-if>
+
+        <!-- Award: opinion in preparation -->
+        <sc-if value="{{ tp.awOpinion }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:220px minmax(0,1fr) 200px;gap:24px;padding:20px 0;border-top:1px solid var(--color-divider);">
+            <div style="display:grid;gap:8px;align-content:start;">
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:20px;">Award</div>
+              <div><span style="display:inline-block;padding:0 6px;border:1px dashed var(--color-accent-2-600);background:var(--color-accent-2-100);color:var(--color-accent-2-800);font-size:13px;font-weight:600;">[Award status — AWD]</span></div>
+            </div>
+            <div style="display:grid;gap:12px;align-content:start;"><p style="margin:0;font-size:15px;">Charles Mutiso is preparing the professional opinion.</p></div>
+            <div style="display:grid;gap:8px;align-content:start;justify-items:start;"><button type="button" class="btn btn-secondary">View record</button></div>
+          </div>
+        </sc-if>
+
+        <!-- Award: decision recorded -->
+        <sc-if value="{{ is.t5 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:220px minmax(0,1fr) 200px;gap:24px;padding:20px 0;border-top:1px solid var(--color-divider);">
+            <div style="display:grid;gap:8px;align-content:start;">
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:20px;">Award</div>
+              <div><span style="display:inline-block;padding:0 6px;border:1px dashed var(--color-accent-2-600);background:var(--color-accent-2-100);color:var(--color-accent-2-800);font-size:13px;font-weight:600;">[Award status — AWD]</span></div>
+            </div>
+            <div style="display:grid;gap:12px;">
+              <div class="kt-meta-row" style="align-items:start;grid-template-columns:repeat(3,minmax(0,1fr));">
+                <div><span class="kt-label">Decision recorded</span><span style="font-size:15px;">17 Jun 2027, 09:00 EAT</span></div>
+                <div><span class="kt-label">Decision by</span><span style="font-size:15px;">Amina Hassan, Accounting Officer</span></div>
+                <div><span class="kt-label">Outcome</span><span style="display:inline-block;padding:0 6px;border:1px dashed var(--color-accent-2-600);background:var(--color-accent-2-100);color:var(--color-accent-2-800);font-size:13px;font-weight:600;width:max-content;">[outcome — AWD]</span></div>
+              </div>
+              <div><span class="kt-label">Recorded reason</span><div style="margin-top:4px;"><span style="display:inline-block;padding:0 6px;border:1px dashed var(--color-accent-2-600);background:var(--color-accent-2-100);color:var(--color-accent-2-800);font-size:13px;font-weight:600;">[decision reason summary — AWD]</span></div></div>
+            </div>
+            <div style="display:grid;gap:8px;align-content:start;justify-items:start;"><button type="button" class="btn btn-secondary">View record</button><button type="button" class="btn btn-ghost">View supporting records</button></div>
+          </div>
+        </sc-if>
+
+        <!-- Award: failed -->
+        <sc-if value="{{ is.t6 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:220px minmax(0,1fr) 200px;gap:24px;padding:20px 0;border-top:1px solid var(--color-divider);">
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:20px;">Award</div>
+            <p style="margin:0;font-size:15px;">We could not load this stage</p>
+            <div style="display:grid;justify-items:start;"><button type="button" class="btn btn-secondary">Try again</button></div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div class="kt-region is-secondary">
+        <h2>Documents</h2>
+        <div style="display:flex;gap:20px;font-size:15px;"><a href="#">View Invitation</a><a href="#">View complete Tender</a><a href="#">View current addendum</a></div>
+      </div>
+      <div class="kt-disclosure" style="margin-top:16px;"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Changes and notices</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+      <div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Tender content</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+      <div class="kt-disclosure"><div class="kt-disclosure-head"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">History and evidence</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+    </div>
+  </sc-if>
+
+  <!-- ============ PROCUREMENT MEETINGS ============ -->
+  <sc-if value="{{ is.prc }}" hint-placeholder-val="{{ false }}">
+    <div class="kt-page" style="max-width:none;width:1440px;box-sizing:border-box;margin:0;padding:32px 120px 48px;min-height:1024px;">
+      <div class="kt-page-head">
+        <div>
+          <h1 class="kt-page-title">Procurement meetings</h1>
+          <p class="kt-page-desc">Bid opening and evaluation sessions, with the department each Tender belongs to.</p>
+        </div>
+      </div>
+
+      <sc-if value="{{ pr.incomplete }}" hint-placeholder-val="{{ false }}">
+        <div class="kt-notice is-warning" role="status" style="margin-bottom:16px;">
+          <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+          <div class="kt-notice-body" style="display:flex;justify-content:space-between;align-items:center;gap:16px;width:100%;"><p style="margin:0;font-size:15px;">Some meeting records could not be loaded. Totals are incomplete.</p><button type="button" class="btn btn-secondary">Try again</button></div>
+        </div>
+      </sc-if>
+
+      <div class="kt-region">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+          <h2>Meetings held</h2>
+          <span style="font-size:13px;color:var(--color-neutral-700);">Grouped by lead department</span>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:32px;">
+          <table class="table">
+            <thead><tr><th>Type</th><th class="is-num">Held</th></tr></thead>
+            <tbody>
+              <tr><td>Bid opening</td><td class="is-num">{{ pr.tOpen }}</td></tr>
+              <tr><td>Bid evaluation</td><td class="is-num">{{ pr.tEval }}</td></tr>
+              <tr><td style="font-weight:600;">{{ pr.totalLabel }}</td><td class="is-num">{{ pr.tAll }}</td></tr>
+            </tbody>
+          </table>
+          <table class="table">
+            <thead><tr><th>Lead department</th><th class="is-num">Bid opening</th><th class="is-num">Bid evaluation</th><th class="is-num">Total</th></tr></thead>
+            <tbody>
+              <sc-for list="{{ pr.depts }}" as="d" hint-placeholder-count="2">
+                <tr><td>{{ d.name }}</td><td class="is-num">{{ d.o }}</td><td class="is-num">{{ d.e }}</td><td class="is-num">{{ d.t }}</td></tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="kt-region">
+        <div class="kt-filter-bar">
+          <div class="field"><label for="f-type">Type</label><select id="f-type" class="input"><option>All types</option></select></div>
+          <div class="field"><label for="f-dept">Department</label><select id="f-dept" class="input"><option>{{ pr.fDept }}</option></select></div>
+          <div class="field"><label for="f-state">State</label><select id="f-state" class="input"><option>{{ pr.fState }}</option></select></div>
+          <div class="field"><label for="f-from">From</label><input id="f-from" class="input" placeholder="Date"></div>
+          <div class="field"><label for="f-to">To</label><input id="f-to" class="input" placeholder="Date"></div>
+          <div class="field is-wide"><label for="f-q">Find a tender</label><input id="f-q" class="input" placeholder="Reference or title" value="{{ pr.fQ }}"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0;">
+          <span style="font-size:14px;color:var(--color-neutral-800);">{{ pr.countLabel }}</span>
+          <sc-if value="{{ pr.filtered }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost">Clear filters</button></sc-if>
+        </div>
+
+        <sc-if value="{{ pr.hasRows }}" hint-placeholder-val="{{ true }}">
+          <table class="table">
+            <thead><tr><th>Type</th><th style="width:26%;">Tender</th><th style="width:24%;">Department</th><th class="is-num">Session</th><th>Meeting date</th><th class="is-num">Duration</th><th class="is-num">Present</th><th>State</th><th></th></tr></thead>
+            <tbody>
+              <sc-for list="{{ pr.rows }}" as="r" hint-placeholder-count="4">
+                <tr>
+                  <td style="white-space:nowrap;">{{ r.type }}</td>
+                  <td><div>{{ r.title }}</div><div style="font-size:13px;color:var(--color-neutral-700);">{{ r.ref }}</div></td>
+                  <td><div>{{ r.dept }}</div><sc-if value="{{ r.hasContrib }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--color-neutral-700);">Contributor: Human Resources Management and Development</div></sc-if></td>
+                  <td class="is-num" style="white-space:nowrap;">{{ r.session }}</td>
+                  <td style="white-space:nowrap;">{{ r.date }}</td>
+                  <td class="is-num" style="white-space:nowrap;"><sc-if value="{{ r.durPh }}" hint-placeholder-val="{{ false }}"><span style="display:inline-block;padding:0 6px;border:1px dashed var(--color-accent-2-600);background:var(--color-accent-2-100);color:var(--color-accent-2-800);font-size:13px;font-weight:600;">[BOP]</span></sc-if>{{ r.dur }}</td>
+                  <td class="is-num" style="white-space:nowrap;"><sc-if value="{{ r.presPh }}" hint-placeholder-val="{{ false }}"><span style="display:inline-block;padding:0 6px;border:1px dashed var(--color-accent-2-600);background:var(--color-accent-2-100);color:var(--color-accent-2-800);font-size:13px;font-weight:600;">[BOP]</span></sc-if>{{ r.present }}</td>
+                  <td><span class="{{ r.stateClass }}">{{ r.state }}</span></td>
+                  <td style="white-space:nowrap;"><a href="#">View record</a></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </sc-if>
+        <sc-if value="{{ pr.empty }}" hint-placeholder-val="{{ false }}">
+          <div class="kt-empty">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+            <p>No meetings match these filters.</p>
+            <button type="button" class="btn btn-secondary">Clear filters</button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  </div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { v: 'e1', fit: true, zoom: 1 };
+  mainRef = React.createRef();
+
+  componentDidMount() {
+    const saved = localStorage.getItem('ovs-review-v');
+    if (saved && this.meta()[saved]) this.setState({ v: saved });
+    this.ro = new ResizeObserver(() => this.calc());
+    if (this.mainRef.current) this.ro.observe(this.mainRef.current);
+    this.calc();
+    this.onKey = (e) => {
+      if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+      if (e.key === 'ArrowRight') this.step(1);
+      if (e.key === 'ArrowLeft') this.step(-1);
+    };
+    window.addEventListener('keydown', this.onKey);
+  }
+  componentWillUnmount() { this.ro && this.ro.disconnect(); window.removeEventListener('keydown', this.onKey); }
+  calc() {
+    const el = this.mainRef.current; if (!el) return;
+    const z = Math.min(1, (el.clientWidth - 48) / 1440);
+    if (Math.abs(z - this.state.zoom) > 0.005) this.setState({ zoom: z });
+  }
+  order() { return ['findings','e1','e2','e3','e4','t1','t2','t3','t4','t5','t6','p1','p2','p3','p4','p5','p6']; }
+  go(v) { localStorage.setItem('ovs-review-v', v); this.setState({ v }); if (this.mainRef.current) this.mainRef.current.scrollTop = 0; }
+  step(d) { const o = this.order(); const i = o.indexOf(this.state.v); this.go(o[(i + d + o.length) % o.length]); }
+
+  meta() {
+    const EV = 'Bid evaluation — oversight reader', TP = 'Tender — Decisions and progress', PR = 'Procurement meetings';
+    const evBasis = 'EVL v0.5 §9.8 D07-SENT, §9.12; OVS v0.6 §§4, 7';
+    const tpBasis = 'TPR v0.17 §10.10 DES-09 submission-ended, §10.17; OVS v0.6 §8';
+    const prBasis = 'PRC v0.11 §§9–10; OVS v0.6 §§11, 14 counting test; EVL v0.5 §9.12 sessions';
+    const placement = 'Placement of Decisions and progress after the current facts (TPR v0.17 does not place it)';
+    const blockLayout = 'Block layout: stage and status / facts / links, separated by hairline rules (no card per stage)';
+    return {
+      findings: { code: 'READ FIRST', group: 'Review', label: 'Source gaps and findings', actor: '—', instant: '—', archetype: '—', basis: 'All uploaded documents', notes: [] },
+      e1: { code: 'OVS-EVL-01', group: EV, label: 'Report sent', actor: 'Amina Hassan, Accounting Officer (not appointed)', instant: '16 Jun 2027, 14:08 EAT', archetype: 'Record detail', basis: evBasis,
+        notes: ['Variant itself: EVL §9 has no AO/HOPF oversight variant; content reused from D07-SENT and §9.12', 'Report summary and signatures placed above the full report sections', 'Back to evaluations as tertiary action'] },
+      e2: { code: 'OVS-EVL-02', group: EV, label: 'Report with Award', actor: 'Amina Hassan, Accounting Officer', instant: 'After Award takes the review — instant not supplied', archetype: 'Record detail', basis: evBasis + '; OVS v0.6 §8 hand-off example',
+        notes: ['Sentence "Charles Mutiso is preparing the professional opinion." replaces D07-SENT "The Head of Procurement will review the report." (OVS §8 wording)', 'Action "View award record" (label not in any source)'] },
+      e3: { code: 'OVS-EVL-03', group: EV, label: 'Status only (before delivery)', actor: 'Amina Hassan, Accounting Officer', instant: '14 Jun 2027, 09:04 EAT', archetype: 'Record detail', basis: 'EVL v0.5 §9.1, §9.3, §9.6, §9.11 D07-OVERDUE; OVS v0.6 §4 administrative facts',
+        notes: ['Waiting headline "Chair Grace Wambui is leading the committee\'s review since 12 Jun 2027, 11:10 EAT."', 'Sentence "Bid details are shared with you when the committee\'s report is sent." (from OVS v0.1, not in v0.6)', 'Region titles "Evaluation status", "Committee", "Committee meetings"', 'Brian Wafula department shown as "Procurement"', 'Declaration column "Not required" for the secretary', 'Tracker holder Grace Wambui for an AO viewer'] },
+      e4: { code: 'OVS-EVL-04', group: EV, label: 'Returned for correction', actor: 'Amina Hassan, Accounting Officer', instant: '16 Jun 2027, 15:00 EAT (D07-HOP-RETURN branch)', archetype: 'Record detail', basis: evBasis + '; EVL §9.8 D07-RETURNED; OVS v0.6 §7',
+        notes: ['Waiting headline naming Brian Wafula and report 2; return time not supplied', 'Sentence "Report 1 remains available below."', 'Version selector label "Report version" and option wording', 'Branch report 1 states page 3; the drawn report text is the ordinary report'] },
+      t1: { code: 'OVS-TPR-01', group: TP, label: 'Delivered outcome', actor: 'Amina Hassan, Accounting Officer', instant: 'After Award takes the review — instant not supplied', archetype: 'Record detail (section)', basis: tpBasis,
+        notes: [placement, blockLayout, 'Opening status word "Finalized" taken from PRC state list', 'Bids opened 1 follows EVL single-bid scenario (conflicts with four-bid canonical story)', 'Award status wording not supplied (AWD)'] },
+      t2: { code: 'OVS-TPR-02', group: TP, label: 'Opening only', actor: 'Dr Peter Kimani, Head of User Department — depends on OVS-P01', instant: '12 Jun 2027, 11:15 EAT', archetype: 'Record detail (section)', basis: tpBasis + '; OVS v0.6 §14 variant list',
+        notes: ['In the canonical story the Evaluation record exists from 11 Jun 2027, so "Opening only" arises only for a reader EVL does not let know it exists. Pictured as a HoD with OVS-P01 approved and OVS-P02 not approved — owner decision needed', 'Tracker and Done line repeat DES-09 submission-ended'] },
+      t3: { code: 'OVS-TPR-03', group: TP, label: 'Evaluation protected', actor: 'Amina Hassan, Accounting Officer', instant: '14 Jun 2027, 09:04 EAT', archetype: 'Record detail (section)', basis: tpBasis + '; OVS v0.6 §4',
+        notes: ['Evaluation status chip "Reviewing" in draft (blue) tone', 'Line "Chair Grace Wambui is leading the committee\'s review."', 'Line "Bid details are shared with you when the committee\'s report is sent."'] },
+      t4: { code: 'OVS-TPR-04', group: TP, label: 'Corrected version pending', actor: 'Amina Hassan, Accounting Officer', instant: '16 Jun 2027, 15:00 EAT (D07-HOP-RETURN branch)', archetype: 'Record detail (section)', basis: tpBasis + '; OVS v0.6 §7',
+        notes: ['Label "Report 1 recommendation"', 'Link "View report 1"', 'No Award block: branch records "No award decision recorded"'] },
+      t5: { code: 'OVS-TPR-05', group: TP, label: 'Award decision recorded', actor: 'Amina Hassan, Accounting Officer', instant: '17 Jun 2027, 10:00 EAT (EVL D08-CORRECTION branch)', archetype: 'Record detail (section)', basis: tpBasis + '; EVL §9.9 "Award decision recorded 17 Jun 2027, 09:00 EAT"',
+        notes: ['Decision maker Amina Hassan inferred from OVS §4.1 AWD row ("final AO decision")', 'Award status, outcome and reason wording not supplied (AWD)'] },
+      t6: { code: 'OVS-TPR-06', group: TP, label: 'One stage failed to load', actor: 'Amina Hassan, Accounting Officer', instant: 'After Award takes the review', archetype: 'Record detail (section)', basis: tpBasis + '; OVS v0.6 §18.2 OVS_STAGE_UNAVAILABLE', notes: [] },
+      p1: { code: 'OVS-PRC-01', group: PR, label: 'Populated', actor: 'Amina Hassan, Accounting Officer', instant: '16 Jun 2027, 14:10 EAT', archetype: 'Register', basis: prBasis,
+        notes: ['Page description', 'Tender B title and reference not supplied; scheduled date not supplied', 'Opening duration and present count not supplied (BOP)', 'Result count wording', 'Contributor secondary text "Contributor: …"', 'State chip tones'] },
+      p2: { code: 'OVS-PRC-02', group: PR, label: 'Contributor department filter', actor: 'Dr Peter Kimani, Head of User Department (HRMD and Digital Health per OVS §14)', instant: '16 Jun 2027, 14:10 EAT', archetype: 'Register', basis: prBasis,
+        notes: ['Peter Kimani\'s Digital Health assignment comes from seed sources not supplied; KT-STD §8.3 lists HRMD only'] },
+      p3: { code: 'OVS-PRC-03', group: PR, label: 'Session in progress', actor: 'Amina Hassan, Accounting Officer', instant: '14 Jun 2027, 09:04 EAT', archetype: 'Register', basis: prBasis + '; EVL §9.6 attendance', notes: ['Duration blank while in session (OVS §11)'] },
+      p4: { code: 'OVS-PRC-04', group: PR, label: 'Not held only', actor: 'Amina Hassan, Accounting Officer', instant: '16 Jun 2027, 14:10 EAT', archetype: 'Register', basis: prBasis, notes: ['Totals follow filters, so held totals are zero'] },
+      p5: { code: 'OVS-PRC-05', group: PR, label: 'Incomplete totals', actor: 'Amina Hassan, Accounting Officer', instant: '16 Jun 2027, 14:10 EAT', archetype: 'Register', basis: prBasis + '; OVS v0.6 §18.2 OVS_MEETINGS_INCOMPLETE',
+        notes: ['Which row is missing is a design choice (session 2 omitted)', 'Totals labelled "Total (incomplete)"'] },
+      p6: { code: 'OVS-PRC-06', group: PR, label: 'No matches', actor: 'Amina Hassan, Accounting Officer', instant: '16 Jun 2027, 14:10 EAT', archetype: 'Register', basis: prBasis,
+        notes: ['Empty copy "No meetings match these filters." comes from OVS v0.1; v0.6 and PRC v0.11 supply none', 'Search value "printers" from EVL D01-FILTERED'] }
+    };
+  }
+
+  rows(v) {
+    const A = { title: 'Supply and delivery of business laptops', ref: 'TND-MOH-2027-033', dept: 'Digital Health', hasContrib: true };
+    const open = { ...A, type: 'Bid opening', session: '1', date: '12 Jun 2027', dur: '', durPh: true, present: '', presPh: true, state: 'Finalized', stateClass: 'kt-status is-pending' };
+    const e1 = { ...A, type: 'Bid evaluation', session: '1', date: '14 Jun 2027', dur: '6 min', durPh: false, present: '4', presPh: false, state: 'Session ended', stateClass: 'kt-status is-pending' };
+    const e2 = { ...A, type: 'Bid evaluation', session: '2', date: '16 Jun 2027', dur: '6 min', durPh: false, present: '4', presPh: false, state: 'Session ended', stateClass: 'kt-status is-pending' };
+    const nh = { type: 'Bid opening', title: '[Tender B title]', ref: '[Tender B reference]', dept: 'Human Resources Management and Development', hasContrib: false, session: '1', date: 'Scheduled [date]', dur: '', durPh: false, present: '', presPh: false, state: 'Not held', stateClass: 'kt-status is-critical' };
+    if (v === 'p3') return [open, { ...e1, dur: '', present: '4', state: 'In session', stateClass: 'kt-status is-live' }, nh];
+    if (v === 'p4') return [nh];
+    if (v === 'p5') return [open, e1, nh];
+    if (v === 'p6') return [];
+    return [open, e1, e2, nh];
+  }
+
+  renderVals() {
+    const v = this.state.v;
+    const M = this.meta();
+    const m = M[v];
+    const groupsDef = [['Review', ['findings']], ['Bid evaluation — oversight reader', ['e1','e2','e3','e4']], ['Tender — Decisions and progress', ['t1','t2','t3','t4','t5','t6']], ['Procurement meetings', ['p1','p2','p3','p4','p5','p6']]];
+    const base = 'display:flex;gap:10px;align-items:baseline;width:100%;text-align:left;border:0;cursor:pointer;padding:8px 20px;font:inherit;font-size:14px;line-height:1.3;';
+    const groups = groupsDef.map(([label, ids]) => ({ label, items: ids.map(id => ({
+      code: M[id].code, label: M[id].label, go: () => this.go(id), current: id === v ? 'page' : undefined,
+      style: base + (id === v ? 'background:var(--color-accent-100);color:var(--color-accent-800);font-weight:600;box-shadow:inset -3px 0 0 var(--color-accent);' : 'background:transparent;color:var(--color-text);')
+    })) }));
+    const is = { findings: v === 'findings' };
+    this.order().forEach(k => is[k] = v === k);
+    is.evl = v[0] === 'e'; is.tpr = v[0] === 't'; is.prc = v[0] === 'p';
+    const ev = { full: ['e1','e2','e4'].includes(v), allDone: ['e1','e2'].includes(v), reviewCurrent: ['e3','e4'].includes(v), reviewHolder: v === 'e4' ? 'Brian Wafula' : 'Grace Wambui' };
+    const tp = { evDelivered: ['t1','t5','t6'].includes(v), evPending: false, awOpinion: v === 't1' };
+    const rows = this.rows(v);
+    const held = rows.filter(r => r.state !== 'Not held');
+    const o = held.filter(r => r.type === 'Bid opening').length, e = held.filter(r => r.type === 'Bid evaluation').length;
+    const pr = {
+      rows, hasRows: rows.length > 0, empty: rows.length === 0, incomplete: v === 'p5',
+      tOpen: String(v === 'p6' ? 0 : o), tEval: String(v === 'p6' ? 0 : e), tAll: String(v === 'p6' ? 0 : o + e),
+      totalLabel: v === 'p5' ? 'Total (incomplete)' : 'Total',
+      depts: [{ name: 'Digital Health', o: String(v === 'p6' ? 0 : o), e: String(v === 'p6' ? 0 : e), t: String(v === 'p6' ? 0 : o + e) }, { name: 'Human Resources Management and Development', o: '0', e: '0', t: '0' }],
+      fDept: v === 'p2' ? 'Human Resources Management and Development' : 'All departments',
+      fState: v === 'p4' ? 'Not held' : 'All states',
+      fQ: v === 'p6' ? 'printers' : '',
+      filtered: ['p2','p4','p6'].includes(v),
+      countLabel: rows.length === 1 ? 'Showing 1 record' : 'Showing ' + rows.length + ' records'
+    };
+    return {
+      groups, is, ev, tp, pr, mainRef: this.mainRef,
+      meta: { ...m, hasNotes: (m.notes || []).length > 0 },
+      zoom: this.state.fit ? this.state.zoom : 1,
+      fitLabel: this.state.fit ? 'Actual size' : 'Fit to width',
+      toggleFit: () => this.setState(s => ({ fit: !s.fit })),
+      prev: () => this.step(-1), next: () => this.step(1)
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -60,7 +60,7 @@ test.describe("BOP release evidence — the canonical opening, person by person"
 			await expect(page.locator('[data-testid="bop-summary"]')).toContainText("EV-IN-");
 			await expect(page.locator('[data-testid="bop-session"]')).toContainText("Started the opening");
 			await expect(page.locator('[data-testid="bop-requests"] tbody tr')).toHaveCount(1);
-			await expect(page.locator(".kt-page button.kt-btn-primary")).toHaveCount(0);
+			await expect(page.locator(".kt-page button.btn-primary")).toHaveCount(0);
 		}
 	});
 

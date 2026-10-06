@@ -209,6 +209,15 @@ def resolve_assignments(
 	return tuple(_as_assignment(row) for row in rows)
 
 
+def active_assignment_rows(user: str | None = None, at=None) -> list[dict[str, Any]]:
+	"""§9.1 — every assignment the user holds at `at`, any role, with its scope.
+
+	For a read-only "what do I hold" display (Home's orientation line, HOME-CHG-001
+	§5.1 item 2 and KT-STD-001 §3A.5). It explains; it never authorises.
+	"""
+	return _effective_rows(_actor(user), at)
+
+
 def permitted_ou_scopes(
 	user: str | None = None, business_role: str = "", at=None
 ) -> set[str] | None:

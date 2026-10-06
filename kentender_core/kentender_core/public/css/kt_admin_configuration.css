@@ -12,7 +12,7 @@
  *
  * Every rule is scoped under .kt-industry and uses page-unique kt-ou-* /
  * kt-ura-* / dialog class names, so nothing here can restyle a shared class
- * or another screen. If a rule ever needs to change a .kt-card or .kt-btn,
+ * or another screen. If a rule ever needs to change a .card or .btn,
  * it belongs in kt_industry_tokens.css instead.
  */
 
@@ -41,8 +41,8 @@
 
 /* — dialogs — */
 /* KT-STD-001 §2.2 — dialogs are 520px over the dimmed parent. */
-.kt-industry .kt-dialog.kt-narrow {
-	/* Must out-rank the tokens sheet's 620px .kt-dialog base (it is loaded
+.kt-industry .dialog.kt-narrow {
+	/* Must out-rank the tokens sheet's 620px .dialog base (it is loaded
 	   twice, after this file). */
 	width: min(520px, 100%);
 }
@@ -54,7 +54,7 @@
 
 /* AUTH-DES-03 — a bordered surface panel with a label above every control. */
 
-.kt-industry .kt-card.kt-table-card {
+.kt-industry .card.kt-table-card {
 	padding: 0;
 	gap: 0;
 }
@@ -68,8 +68,7 @@
 	font-size: 13px;
 	color: var(--kt-color-neutral-800);
 }
-/* Row actions are links in the artboards, not buttons. */
-.kt-industry .kt-table a,
+/* A row action is the ghost button the boards draw (.btn.btn-ghost); this is the plain link style kept for .kt-action-link outside tables. */
 .kt-industry .kt-action-link {
 	color: var(--kt-color-accent);
 	text-decoration: none;
@@ -80,7 +79,6 @@
 	font-family: inherit;
 	cursor: pointer;
 }
-.kt-industry .kt-table a:hover,
 .kt-industry .kt-action-link:hover {
 	color: var(--kt-color-accent-800);
 	text-decoration: underline;
@@ -91,7 +89,7 @@
 	font-weight: 600;
 	color: var(--kt-color-neutral-700);
 }
-.kt-industry .kt-tag {
+.kt-industry .tag {
 	display: inline-flex;
 	align-items: center;
 	font-size: 11px;
@@ -99,11 +97,11 @@
 	padding: 3px 10px;
 	border-radius: calc(var(--kt-radius-md) * 0.75);
 }
-.kt-industry .kt-tag-neutral {
+.kt-industry .tag-neutral {
 	background: var(--kt-color-neutral-200);
 	color: var(--kt-color-neutral-800);
 }
-.kt-industry .kt-tag-accent {
+.kt-industry .tag-accent {
 	background: var(--kt-color-accent-100);
 	color: var(--kt-color-accent-800);
 }
@@ -151,7 +149,7 @@
 	width: 100%;
 	border: 1px solid var(--kt-color-divider);
 }
-.kt-industry .kt-seg-opt {
+.kt-industry .seg-opt {
 	flex: 1;
 	display: flex;
 	align-items: center;
@@ -162,10 +160,10 @@
 	cursor: pointer;
 	margin: 0;
 }
-.kt-industry .kt-seg-opt:first-child {
+.kt-industry .seg-opt:first-child {
 	border-right: 1px solid var(--kt-color-divider);
 }
-.kt-industry .kt-seg-opt.is-selected {
+.kt-industry .seg-opt.is-selected {
 	background: var(--kt-color-accent-100);
 	color: var(--kt-color-accent-800);
 	font-weight: 600;
@@ -208,7 +206,7 @@
 	text-align: right;
 }
 
-.kt-industry .kt-input.is-error {
+.kt-industry .input.is-error {
 	border-color: var(--kt-status-critical);
 }
 
@@ -299,7 +297,7 @@
 .kt-industry .kt-setup-head .kt-tab:focus:not(:focus-visible) { outline: none; }
 
 /* The panel is the rest of the card. Each tab renders its blocks as
-   `.kt-card.kt-blueprint`; inside this card they are flat sections on a
+   `.card.blueprint`; inside this card they are flat sections on a
    hairline, not nested bordered cards, and a section's direct card title is
    the boards' plain h3, not the small uppercase panel label (which h6 sub-
    section titles such as "Setup record" keep). */
@@ -316,18 +314,18 @@
 .kt-industry .kt-setup-panel .kt-setup-section.is-flow {
 	display: block;
 }
-.kt-industry .kt-setup-panel .kt-card.kt-blueprint {
+.kt-industry .kt-setup-panel .card.blueprint {
 	border: 0;
 	padding: 0;
 }
-.kt-industry .kt-setup-panel .kt-card.kt-blueprint + .kt-card.kt-blueprint,
-.kt-industry .kt-setup-panel .kt-procset .kt-card.kt-table-card + .kt-card.kt-table-card {
+.kt-industry .kt-setup-panel .card.blueprint + .card.blueprint,
+.kt-industry .kt-setup-panel .kt-procset .card.kt-table-card + .card.kt-table-card {
 	margin-top: 0;
 	border-top: 1px solid var(--kt-color-divider);
 	padding-top: 24px;
 }
-.kt-industry .kt-setup-panel .kt-card.kt-blueprint > .kt-card-title,
-.kt-industry .kt-setup-panel .kt-card.kt-blueprint > .kt-section-head .kt-card-title {
+.kt-industry .kt-setup-panel .card.blueprint > .kt-card-title,
+.kt-industry .kt-setup-panel .card.blueprint > .kt-section-head .kt-card-title {
 	font-size: 25px;
 	letter-spacing: normal;
 	text-transform: none;
@@ -437,7 +435,7 @@
    unit name, a monospace code chip and a status badge. The rows are the
    Frappe tree control's own; only their presentation is restyled here,
    scoped under this page root. */
-.kt-industry .kt-card.kt-org-tree-card {
+.kt-industry .card.kt-org-tree-card {
 	padding: 0;
 	gap: 0;
 }
@@ -584,7 +582,7 @@
 	align-items: center;
 	margin-top: 18px;
 }
-.kt-industry .kt-unit-actions .kt-btn { display: inline-flex; align-items: center; gap: 6px; }
+.kt-industry .kt-unit-actions .btn { display: inline-flex; align-items: center; gap: 6px; }
 .kt-industry .kt-unit-actions .kt-affected { margin-left: 8px; font-size: 14px; }
 /* A stacked notice body: heading, lines, then its action (C05 #auth-des-08-*). */
 .kt-industry .kt-notice-body.kt-notice-stack { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
@@ -596,8 +594,8 @@
 	text-align: center;
 }
 .kt-industry .kt-ura-state { padding: 36px 16px; }
-.kt-industry .kt-org-empty .kt-btn,
-.kt-industry .kt-ura-state .kt-btn { display: inline-flex; align-items: center; gap: 6px; }
+.kt-industry .kt-org-empty .btn,
+.kt-industry .kt-ura-state .btn { display: inline-flex; align-items: center; gap: 6px; }
 .kt-industry .kt-ura-head {
 	display: flex;
 	justify-content: space-between;
@@ -606,7 +604,7 @@
 	flex-wrap: wrap;
 	margin-bottom: 20px;
 }
-.kt-industry .kt-ura-head .kt-btn { display: inline-flex; align-items: center; gap: 6px; }
+.kt-industry .kt-ura-head .btn { display: inline-flex; align-items: center; gap: 6px; }
 .kt-industry .kt-filter-bar.kt-ura-filters {
 	display: grid;
 	/* C06 #auth-des-03 wraps its filters on a 200px grid rather than the
@@ -617,8 +615,8 @@
 	align-items: end;
 	margin-bottom: 16px;
 }
-.kt-industry .kt-ura-filters .kt-field { margin: 0; }
-.kt-industry .kt-ura-filters > .kt-btn { justify-self: start; }
+.kt-industry .kt-ura-filters .field { margin: 0; }
+.kt-industry .kt-ura-filters > .btn { justify-self: start; }
 /* An input with an icon inside it: leading (search) or trailing (tree). */
 .kt-industry .kt-input-icon { position: relative; }
 .kt-industry .kt-input-icon > svg {
@@ -629,9 +627,9 @@
 	color: var(--kt-color-neutral-700);
 	pointer-events: none;
 }
-.kt-industry .kt-input-icon > .kt-input { width: 100%; padding-left: 32px; }
+.kt-industry .kt-input-icon > .input { width: 100%; padding-left: 32px; }
 .kt-industry .kt-input-icon.is-trailing > svg { left: auto; right: 10px; }
-.kt-industry .kt-input-icon.is-trailing > .kt-input { padding-left: 10px; padding-right: 32px; cursor: pointer; }
+.kt-industry .kt-input-icon.is-trailing > .input { padding-left: 10px; padding-right: 32px; cursor: pointer; }
 .kt-industry .kt-ura-detail-grid {
 	display: grid;
 	grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
@@ -672,12 +670,12 @@
 .kt-industry .kt-setup-subnav { display: flex; gap: var(--kt-space-6, 24px); font-size: 13px; margin-bottom: var(--kt-space-6, 24px); }
 .kt-industry .kt-setup-subnav a { color: var(--kt-color-neutral-800, #2c3440); text-decoration: none; }
 .kt-industry .kt-setup-subnav a.is-active { font-weight: 600; color: var(--kt-color-accent-800, #1f4f7a); }
-.kt-industry .kt-procset .kt-card.kt-table-card + .kt-card.kt-table-card { margin-top: var(--kt-space-6, 24px); }
+.kt-industry .kt-procset .card.kt-table-card + .card.kt-table-card { margin-top: var(--kt-space-6, 24px); }
 .kt-industry .kt-procset-card-actions { margin-top: var(--kt-space-3, 12px); display: flex; gap: var(--kt-space-3, 12px); }
 .kt-industry .kt-procset-superseded { margin-left: 8px; }
 .kt-industry .kt-procset-narrow { max-width: 480px; }
 .kt-industry .kt-procset-wide { max-width: 720px; }
-.kt-industry .kt-procset-view .kt-card + .kt-card { margin-top: var(--kt-space-6, 24px); }
+.kt-industry .kt-procset-view .card + .card { margin-top: var(--kt-space-6, 24px); }
 .kt-industry .kt-procset-footer { display: flex; justify-content: flex-end; gap: var(--kt-space-3, 12px); margin-top: var(--kt-space-4, 16px); }
 .kt-industry .kt-facts-row { display: flex; gap: var(--kt-space-6, 24px); flex-wrap: wrap; margin-bottom: var(--kt-space-3, 12px); }
 .kt-industry .kt-fact { display: flex; flex-direction: column; gap: 2px; }
@@ -685,10 +683,10 @@
 .kt-industry .kt-procset-fact { margin: var(--kt-space-4, 16px) 0; }
 .kt-industry .kt-procset-meta { display: flex; gap: var(--kt-space-6, 24px); font-size: 13px; margin-top: 6px; }
 .kt-industry .kt-procset-meta .kt-label { margin-right: 4px; }
-.kt-industry .kt-card.kt-procset-attention { border-color: var(--kt-status-attention, #b7791f); padding: var(--kt-space-4, 16px) var(--kt-space-6, 24px); }
+.kt-industry .card.kt-procset-attention { border-color: var(--kt-status-attention, #b7791f); padding: var(--kt-space-4, 16px) var(--kt-space-6, 24px); }
 .kt-industry .kt-procset-attention .kt-card-body { margin: 0; }
 .kt-industry .kt-procset-days { max-width: 160px; }
-.kt-industry .kt-dialog.kt-procset-dialog { width: 640px; max-height: 90vh; overflow: auto; }
+.kt-industry .dialog.kt-procset-dialog { width: 640px; max-height: 90vh; overflow: auto; }
 .kt-industry .kt-procset-rows { display: flex; flex-direction: column; gap: 8px; margin-top: var(--kt-space-3, 12px); }
 .kt-industry .kt-procset-row { display: grid; grid-template-columns: 1.4fr 2fr 1fr 1.4fr; gap: 8px; align-items: center; }
 .kt-industry .kt-procset-row .kt-procset-num { max-width: 110px; }
@@ -699,7 +697,7 @@
 .kt-industry .kt-mve-condition-head { display: flex; align-items: center; justify-content: space-between; gap: var(--kt-space-3, 12px); margin-bottom: var(--kt-space-3, 12px); }
 
 .kt-industry .kt-visually-hidden-th { width: 1px; }
-.kt-industry .kt-btn.kt-btn-sm { padding: 4px 10px; font-size: 12px; }
+.kt-industry .btn.btn-sm { padding: 4px 10px; font-size: 12px; }
 
 /* CFG-CHG-002 v0.14 boards (design/HANDOFF-kt-meta-row.md): the fact row is a
    grid of equal cells, not a shrink-to-fit flex run that leaves most of a
@@ -726,7 +724,7 @@
 }
 .kt-industry.kt-setup-root .text-muted { color: var(--kt-color-neutral-700); }
 /* Board links: the rust link colour with the browser underline, offset. */
-.kt-industry.kt-setup-root .kt-setup-panel a:not(.kt-btn):not(.kt-tab) {
+.kt-industry.kt-setup-root .kt-setup-panel a:not(.btn):not(.kt-tab) {
 	text-decoration: underline;
 	text-underline-offset: 3px;
 }
@@ -741,9 +739,9 @@
 	.kt-industry.kt-setup-root .kt-fy-wide { display: none; }
 	.kt-industry.kt-setup-root .kt-fy-narrow { display: grid; gap: 12px; }
 }
-.kt-industry.kt-setup-root .kt-card.kt-fy-card { padding: var(--kt-space-3); gap: var(--kt-space-2); }
+.kt-industry.kt-setup-root .card.kt-fy-card { padding: var(--kt-space-3); gap: var(--kt-space-2); }
 /* #forms — the focused open/close/deadline form, the board's plain card. */
-.kt-industry.kt-setup-root .kt-card.kt-intake-form { padding: var(--kt-space-3); gap: var(--kt-space-2); max-width: 560px; }
+.kt-industry.kt-setup-root .card.kt-intake-form { padding: var(--kt-space-3); gap: var(--kt-space-2); max-width: 560px; }
 .kt-industry.kt-setup-root .kt-intake-title {
 	font-family: var(--kt-font-heading);
 	font-weight: var(--kt-font-heading-weight);
@@ -775,8 +773,8 @@
    cards grid under the list, the centred empty card, and the detail's
    two-column supporting groups (one column when narrow). */
 .kt-industry.kt-setup-root .kt-procset-rule-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; align-items: start; margin-top: 20px; }
-.kt-industry.kt-setup-root .kt-card.kt-procset-empty-card { align-items: center; text-align: center; }
-.kt-industry.kt-setup-root .kt-card.kt-procset-empty-card svg { display: block; margin: 0 auto 12px; }
+.kt-industry.kt-setup-root .card.kt-procset-empty-card { align-items: center; text-align: center; }
+.kt-industry.kt-setup-root .card.kt-procset-empty-card svg { display: block; margin: 0 auto 12px; }
 .kt-industry.kt-setup-root .kt-procset-rule-groups { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
 .kt-industry.kt-setup-root .kt-procset-rule-groups.has-values { grid-template-columns: 1fr; }
 @media (max-width: 700px) { .kt-industry.kt-setup-root .kt-procset-rule-groups { grid-template-columns: 1fr; } }
@@ -790,7 +788,7 @@
 	.kt-industry.kt-setup-root .kt-rule-grid,
 	.kt-industry.kt-setup-root .kt-rule-kind-grid { grid-template-columns: 1fr; }
 }
-.kt-industry.kt-setup-root .kt-card.kt-rule-kind { margin-top: 8px; }
+.kt-industry.kt-setup-root .card.kt-rule-kind { margin-top: 8px; }
 .kt-industry.kt-setup-root .card-kicker { font-family: var(--kt-font-heading); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--kt-color-accent-800); margin-bottom: 6px; }
 
 /* C03D (tracker CFG14-5E) — the evidence panels' field grid and the three
@@ -809,18 +807,18 @@
 .kt-industry.kt-setup-root .kt-sve-grid { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; margin: 12px 0; }
 .kt-industry.kt-setup-root .kt-sve-interval-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 @media (max-width: 700px) { .kt-industry.kt-setup-root .kt-sve-grid { grid-template-columns: 1fr; } }
-.kt-industry.kt-setup-root .kt-table tr.is-selected td { background: var(--kt-color-accent-50, #eef1fb); }
+.kt-industry.kt-setup-root .table tr.is-selected td { background: var(--kt-color-accent-50, #eef1fb); }
 .kt-industry.kt-setup-root .kt-sve-version-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--kt-color-divider); }
 /* Reminders (tracker CFG14-5G) — a small whole number; the field keeps the
    board's card width rather than stretching across the page. */
-.kt-industry.kt-setup-root .kt-reminders .kt-field { max-width: 320px; }
+.kt-industry.kt-setup-root .kt-reminders .field { max-width: 320px; }
 /* CFG-CHG-002 v0.16 §10.10A — Supplier portal settings (C05). */
 .kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-group { margin-top: 16px; }
 .kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-group h4 { font-size: 14px; font-weight: 600; margin: 0 0 8px; }
-.kt-industry.kt-setup-root .kt-supplier-portal .kt-field { max-width: 560px; }
+.kt-industry.kt-setup-root .kt-supplier-portal .field { max-width: 560px; }
 .kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-link { max-width: none; }
 .kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-link-row { display: flex; gap: 8px; align-items: center; }
-.kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-link-row .kt-input { flex: 1 1 auto; min-width: 0; }
+.kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-link-row .input { flex: 1 1 auto; min-width: 0; }
 .kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
 @media (max-width: 600px) {
 	.kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-link-row { flex-direction: column; align-items: stretch; }

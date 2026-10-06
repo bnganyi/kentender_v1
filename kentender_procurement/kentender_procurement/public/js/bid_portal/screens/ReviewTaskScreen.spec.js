@@ -59,7 +59,7 @@ describe("Review bid", () => {
 	it("keeps preparation open while portal information is restored", () => {
 		const wrapper = mountWith(reviewTask("CFG-PREP"));
 		const action = wrapper.get('[data-testid="bds-review-action"]');
-		expect([action.text(), action.classes()]).toEqual(["Continue saved bid", expect.arrayContaining(["kt-btn-primary"])]);
+		expect([action.text(), action.classes()]).toEqual(["Continue saved bid", expect.arrayContaining(["btn-primary"])]);
 		expect(wrapper.get('[data-testid="bds-review-availability"]').text()).toContain("Submission is unavailable");
 		expect(wrapper.find('[data-testid="bds-review-result"]').exists()).toBe(false);
 	});

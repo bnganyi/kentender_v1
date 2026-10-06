@@ -217,10 +217,10 @@ function approve() {
 	<div class="kt-industry" data-testid="bud-task" :data-loading="loading ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : 'false'">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell" :style="{ paddingBottom: showFooter ? '96px' : '32px' }">
-			<div v-if="loading" class="kt-card kt-blueprint"><div class="kt-skel" style="width: 280px; height: 20px"></div></div>
-			<div v-else-if="notFound" class="kt-card kt-blueprint kt-empty" data-testid="bud-task-not-found"><h2>{{ __("This approval task could not be found.") }}</h2></div>
-			<div v-else-if="forbidden" class="kt-card kt-blueprint kt-empty" data-testid="bud-task-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p v-if="forbidden.text" class="kt-muted">{{ __(forbidden.text) }}</p></div>
-			<div v-else-if="serverError" class="kt-card kt-blueprint kt-empty" data-testid="bud-task-server-error"><h2>{{ __("This approval task could not be loaded.") }}</h2><button type="button" class="kt-btn kt-btn-primary" @click="load()">{{ __("Try again") }}</button></div>
+			<div v-if="loading" class="card blueprint"><div class="kt-skel" style="width: 280px; height: 20px"></div></div>
+			<div v-else-if="notFound" class="card blueprint kt-empty" data-testid="bud-task-not-found"><h2>{{ __("This approval task could not be found.") }}</h2></div>
+			<div v-else-if="forbidden" class="card blueprint kt-empty" data-testid="bud-task-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p v-if="forbidden.text" class="kt-muted">{{ __(forbidden.text) }}</p></div>
+			<div v-else-if="serverError" class="card blueprint kt-empty" data-testid="bud-task-server-error"><h2>{{ __("This approval task could not be loaded.") }}</h2><button type="button" class="btn btn-primary" @click="load()">{{ __("Try again") }}</button></div>
 
 			<template v-else-if="task">
 				<!-- Live breach banner: the board draws it ABOVE the card, full width, not inside
@@ -231,7 +231,7 @@ function approve() {
 					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
 					<div class="kt-notice-body"><strong>{{ breach.message }}</strong> {{ __("Approval is unavailable until the update covers this amount; you can still return it for correction.") }}</div>
 				</div>
-				<div class="kt-card kt-blueprint" style="padding: 0">
+				<div class="card blueprint" style="padding: 0">
 				<div style="padding: 28px 24px 0">
 				<div style="margin-bottom: 20px" data-testid="bud-task-header">
 					<div class="kt-eyebrow" style="margin-bottom: 6px">{{ __("FY {0}", [task.budget.fiscal_year.label]) }} · {{ task.budget.title }}</div>
@@ -280,12 +280,12 @@ function approve() {
 					<template v-if="isSuccessor">
 						<div style="padding: 22px 24px; border-top: 1px solid var(--kt-color-divider)">
 							<h3 class="kt-card-title" style="margin: 0 0 12px; display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><path d="M13 6h3a2 2 0 0 1 2 2v7" /><path d="M11 18H8a2 2 0 0 1-2-2V9" /></svg>{{ __("What changed") }}</h3>
-							<div class="kt-card kt-blueprint" style="padding: 0; overflow-x: auto; margin-bottom: 12px">
-								<table class="kt-table" data-testid="bud-task-changes-table">
+							<div class="card blueprint" style="padding: 0; overflow-x: auto; margin-bottom: 12px">
+								<table class="table" data-testid="bud-task-changes-table">
 									<thead><tr><th>{{ __("Budget line") }}</th><th class="is-num">{{ __("Current allocation") }}</th><th class="is-num">{{ __("Proposed allocation") }}</th><th class="is-num">{{ __("Change") }}</th></tr></thead>
 									<tbody>
 										<tr v-for="r in task.changes.rows" :key="r.budget_line">
-											<td>{{ r.title }} <span v-if="r.omitted" class="kt-tag kt-tag-neutral" style="margin-left: 6px">{{ __("Omitted from this update") }}</span></td>
+											<td>{{ r.title }} <span v-if="r.omitted" class="tag tag-neutral" style="margin-left: 6px">{{ __("Omitted from this update") }}</span></td>
 											<td class="is-num">{{ formatKes(r.current_amount, currency) }}</td>
 											<td class="is-num">{{ formatKes(r.proposed_amount, currency) }}</td>
 											<td class="is-num">{{ formatSignedKes(r.change, currency) }}</td>
@@ -299,8 +299,8 @@ function approve() {
 
 						<div style="padding: 22px 24px; border-top: 1px solid var(--kt-color-divider)">
 							<h3 class="kt-card-title" style="margin: 0 0 12px; display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>{{ __("Amounts already reserved or committed") }}</h3>
-							<div class="kt-card kt-blueprint" style="padding: 0; overflow-x: auto; margin-bottom: 8px">
-								<table class="kt-table" data-testid="bud-task-protection-table">
+							<div class="card blueprint" style="padding: 0; overflow-x: auto; margin-bottom: 8px">
+								<table class="table" data-testid="bud-task-protection-table">
 									<thead><tr><th>{{ __("Budget line") }}</th><th class="is-num">{{ __("Reserved + committed") }}</th><th class="is-num">{{ breach ? __("Available after update / Shortfall") : __("Available after update") }}</th></tr></thead>
 									<tbody>
 										<tr v-for="r in task.protection.rows" :key="r.budget_line">
@@ -322,8 +322,8 @@ function approve() {
 					<template v-else>
 						<div style="padding: 22px 24px; border-top: 1px solid var(--kt-color-divider)">
 							<h3 class="kt-card-title" style="margin: 0 0 12px; display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" x2="21" y1="6" y2="6" /><line x1="8" x2="21" y1="12" y2="12" /><line x1="8" x2="21" y1="18" y2="18" /><line x1="3" x2="3.01" y1="6" y2="6" /><line x1="3" x2="3.01" y1="12" y2="12" /><line x1="3" x2="3.01" y1="18" y2="18" /></svg>{{ __("Submitted budget lines") }}</h3>
-							<div class="kt-card kt-blueprint" style="padding: 0; overflow-x: auto">
-								<table class="kt-table" data-testid="bud-task-initial-table">
+							<div class="card blueprint" style="padding: 0; overflow-x: auto">
+								<table class="table" data-testid="bud-task-initial-table">
 									<thead><tr><th>{{ __("Budget line") }}</th><th>{{ __("Available to") }}</th><th>{{ __("Funding source") }}</th><th class="is-num">{{ __("Submitted amount") }}</th></tr></thead>
 									<tbody>
 										<tr v-for="r in task.line_details" :key="r.budget_line">
@@ -337,7 +337,7 @@ function approve() {
 						</div>
 					</template>
 
-					<ul v-if="otherBlockers.length" class="kt-card kt-blueprint" style="margin: 16px 24px 0; padding: 14px 14px 14px 30px; font-size: 14px" data-testid="bud-task-blockers">
+					<ul v-if="otherBlockers.length" class="card blueprint" style="margin: 16px 24px 0; padding: 14px 14px 14px 30px; font-size: 14px" data-testid="bud-task-blockers">
 						<li v-for="b in otherBlockers" :key="b.code">{{ b.message }}</li>
 					</ul>
 
@@ -350,7 +350,7 @@ function approve() {
 							<div>
 								<div class="kt-label" style="margin-bottom: 3px">{{ __("Approval document") }}</div>
 								<div style="font-size: 14px; margin-bottom: 8px">{{ task.evidence.document.name || __("No document attached") }}</div>
-								<button v-if="task.evidence.document.url" type="button" class="kt-btn kt-btn-secondary" style="font-size: 13px; padding: 6px 12px" data-testid="bud-task-open-document" @click="window.open(task.evidence.document.url, '_blank', 'noopener')">{{ __("Open approval document") }}</button>
+								<button v-if="task.evidence.document.url" type="button" class="btn btn-secondary" style="font-size: 13px; padding: 6px 12px" data-testid="bud-task-open-document" @click="window.open(task.evidence.document.url, '_blank', 'noopener')">{{ __("Open approval document") }}</button>
 							</div>
 						</div>
 						<div v-if="task.evidence.document.url && docAvailable === false" class="kt-notice is-warning" style="margin-top: 16px" data-testid="bud-task-document-unavailable">
@@ -366,7 +366,7 @@ function approve() {
 						<details class="kt-record" data-testid="bud-task-line-details">
 							<summary><div class="kt-record-main"><div class="kt-record-body"><div class="kt-record-title">{{ __("Budget line details") }}</div><div class="kt-record-meta"><span>{{ __("Department and funding source") }}</span></div></div><div class="kt-record-toggle"><span class="when-closed">{{ __("Show") }}</span><span class="when-open">{{ __("Hide") }}</span><svg class="kt-disclosure-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg></div></div></summary>
 							<div class="kt-record-detail" style="padding: 0; overflow-x: auto">
-								<table class="kt-table">
+								<table class="table">
 									<thead><tr><th>{{ __("Budget line") }}</th><th>{{ __("Available to") }}</th><th>{{ __("Funding source") }}</th></tr></thead>
 									<tbody>
 										<tr v-for="r in task.line_details" :key="r.budget_line"><td><div>{{ r.title }}</div><div class="kt-muted" style="font-size: 11px; margin-top: 2px">{{ r.budget_line_code }}</div></td><td>{{ r.available_to }}</td><td>{{ r.funding_source }}</td></tr>
@@ -377,7 +377,7 @@ function approve() {
 						<details class="kt-record" data-testid="bud-task-submission">
 							<summary><div class="kt-record-main"><div class="kt-record-body"><div class="kt-record-title">{{ __("Submission and history") }}</div><div class="kt-record-meta"><span>{{ __("Submitted by {0} · {1}", [task.submission.submitted_by || "—", task.submission.submitted_at_display || "—"]) }}</span></div></div><div class="kt-record-toggle"><span class="when-closed">{{ __("Show") }}</span><span class="when-open">{{ __("Hide") }}</span><svg class="kt-disclosure-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg></div></div></summary>
 							<div class="kt-record-detail">
-								<table v-if="history" class="kt-table">
+								<table v-if="history" class="table">
 									<thead><tr><th>{{ __("When") }}</th><th>{{ __("Event") }}</th><th>{{ __("Actor") }}</th></tr></thead>
 									<tbody><tr v-for="row in history.rows" :key="row.id"><td style="white-space: nowrap">{{ row.event_at_display }}</td><td>{{ row.event_type_label }}</td><td>{{ row.actor }}</td></tr></tbody>
 								</table>
@@ -393,7 +393,7 @@ function approve() {
 				<template v-else-if="tab === 'lines'">
 					<div v-if="!lines" style="padding: 20px 24px; border-top: 1px solid var(--kt-color-divider)"><div class="kt-skel" style="width: 240px; height: 16px"></div></div>
 					<div v-else style="border-top: 1px solid var(--kt-color-divider); overflow-x: auto">
-						<table class="kt-table" data-testid="bud-task-lines-table">
+						<table class="table" data-testid="bud-task-lines-table">
 							<thead>
 								<tr>
 									<th>{{ __("Budget Line") }}</th><th>{{ __("Available to") }}</th><th>{{ __("Funding source") }}</th>
@@ -430,7 +430,7 @@ function approve() {
 							<p class="kt-muted" style="margin: 0">{{ __("Review the complete submitted budget lines.") }}</p>
 						</div>
 						<div style="overflow-x: auto" data-testid="bud-task-changes-baseline">
-							<table class="kt-table">
+							<table class="table">
 								<thead><tr><th>{{ __("Budget Line") }}</th><th class="is-num">{{ __("Submitted Version {0}", [task.version.version_number]) }}</th></tr></thead>
 								<tbody>
 									<tr v-for="row in changes.rows" :key="row.budget_line"><td><div>{{ row.title }}</div><div class="kt-muted" style="font-size: 11px; margin-top: 2px">{{ row.budget_line_code }}</div></td><td class="is-num">{{ formatKes(row.submitted_amount, currency) }}</td></tr>
@@ -442,7 +442,7 @@ function approve() {
 					<template v-else>
 						<h3 class="kt-card-title" style="margin: 0; padding: 22px 24px 14px; border-top: 1px solid var(--kt-color-divider); display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><path d="M13 6h3a2 2 0 0 1 2 2v7" /><path d="M11 18H8a2 2 0 0 1-2-2V9" /></svg>{{ __("Changes from Active Version {0}", [task.based_on.version_number]) }}</h3>
 						<div style="overflow-x: auto" data-testid="bud-task-changes-diff">
-							<table class="kt-table">
+							<table class="table">
 								<thead><tr><th>{{ __("Budget Line") }}</th><th class="is-num">{{ __("Active Version {0}", [task.based_on.version_number]) }}</th><th class="is-num">{{ __("Submitted Version {0}", [task.version.version_number]) }}</th><th class="is-num">{{ __("Change") }}</th></tr></thead>
 								<tbody>
 									<tr v-for="row in changes.rows" :key="row.budget_line"><td><div>{{ row.title }}</div><div class="kt-muted" style="font-size: 11px; margin-top: 2px">{{ row.budget_line_code }}</div></td><td class="is-num">{{ formatKes(row.active_amount, currency) }}</td><td class="is-num">{{ formatKes(row.submitted_amount, currency) }}</td><td class="is-num">{{ formatSignedKes(row.change, currency) }}</td></tr>
@@ -452,7 +452,7 @@ function approve() {
 						</div>
 						<h3 class="kt-card-title" style="margin: 0; padding: 22px 24px 14px; border-top: 1px solid var(--kt-color-divider); display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" /><path d="m9 12 2 2 4-4" /></svg>{{ __("External approval changes") }}</h3>
 						<div style="overflow-x: auto" data-testid="bud-task-evidence-changes">
-							<table class="kt-table">
+							<table class="table">
 								<thead><tr><th>{{ __("Evidence") }}</th><th>{{ __("Active Version {0}", [task.based_on.version_number]) }}</th><th>{{ __("Submitted Version {0}", [task.version.version_number]) }}</th></tr></thead>
 								<tbody>
 									<tr><td>{{ __("Approval reference") }}</td><td>{{ changes.evidence_changes.approval_reference.from }}</td><td :style="changes.evidence_changes.approval_reference.changed ? 'font-weight: 600' : ''">{{ changes.evidence_changes.approval_reference.to }}</td></tr>
@@ -463,8 +463,8 @@ function approve() {
 						</div>
 						<div style="padding: 22px 24px; border-top: 1px solid var(--kt-color-divider)">
 							<h3 class="kt-card-title" style="margin: 0 0 12px; display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>{{ __("Funding impact") }}</h3>
-							<div class="kt-card kt-blueprint" style="padding: 0; overflow-x: auto; margin-bottom: 8px">
-								<table class="kt-table">
+							<div class="card blueprint" style="padding: 0; overflow-x: auto; margin-bottom: 8px">
+								<table class="table">
 									<thead><tr><th>{{ __("Budget line") }}</th><th class="is-num">{{ __("Reserved + committed") }}</th><th class="is-num">{{ __("Available after update") }}</th></tr></thead>
 									<tbody>
 										<tr v-for="r in changes.protection.rows" :key="r.budget_line"><td>{{ r.title }}</td><td class="is-num" :class="{ 'is-zero': !r.protected_amount }">{{ r.protected_amount === null ? __("Unavailable") : formatKes(r.protected_amount, currency) }}</td><td class="is-num" :style="r.breached ? 'color: var(--kt-status-critical)' : ''">{{ r.breached ? __("Shortfall {0}", [formatKes(r.shortfall, currency)]) : r.available_after_update === null ? __("Unavailable") : formatKes(r.available_after_update, currency) }}</td></tr>
@@ -494,8 +494,8 @@ function approve() {
 		</div>
 
 		<div v-if="showFooter" class="kt-sticky-footer" data-testid="bud-task-footer">
-			<button v-if="task.capabilities.can_return" type="button" class="kt-btn kt-btn-secondary kt-danger" :disabled="busy" data-testid="bud-task-return-btn" @click="openReturn">{{ __("Return for correction") }}</button>
-			<button type="button" class="kt-btn kt-btn-primary" :disabled="busy || !canApprove" :title="approveReason" data-testid="bud-task-approve-btn" @click="approveOpen = true">{{ approveLabel }}</button>
+			<button v-if="task.capabilities.can_return" type="button" class="btn btn-secondary kt-danger" :disabled="busy" data-testid="bud-task-return-btn" @click="openReturn">{{ __("Return for correction") }}</button>
+			<button type="button" class="btn btn-primary" :disabled="busy || !canApprove" :title="approveReason" data-testid="bud-task-approve-btn" @click="approveOpen = true">{{ approveLabel }}</button>
 		</div>
 
 		<ConfirmDialog
@@ -507,17 +507,17 @@ function approve() {
 			@cancel="approveOpen = false"
 		/>
 
-		<div v-if="returnOpen" class="kt-dialog-backdrop" tabindex="-1" @keydown.esc="returnOpen = false">
-			<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" :aria-label="__('What needs to change?')" data-testid="bud-task-return-dialog">
-				<h2 class="kt-dialog-title">{{ __("What needs to change?") }}</h2>
-				<div class="kt-field">
+		<div v-if="returnOpen" class="dialog-backdrop" tabindex="-1" @keydown.esc="returnOpen = false">
+			<div class="dialog" style="width: 520px" role="dialog" aria-modal="true" :aria-label="__('What needs to change?')" data-testid="bud-task-return-dialog">
+				<h2 class="dialog-title">{{ __("What needs to change?") }}</h2>
+				<div class="field">
 					<label for="bud-task-return-reason">{{ __("Correction required") }}</label>
-					<textarea id="bud-task-return-reason" ref="returnInput" v-model="returnReason" class="kt-input" style="width: 100%; height: auto" rows="4" maxlength="500" data-testid="bud-task-return-reason"></textarea>
+					<textarea id="bud-task-return-reason" ref="returnInput" v-model="returnReason" class="input" style="width: 100%; height: auto" rows="4" maxlength="500" data-testid="bud-task-return-reason"></textarea>
 					<p class="kt-field-hint">{{ __("10–500 characters. The Officer sees this reason on the returned draft; the submitted attempt and its document are retained.") }}</p>
 				</div>
-				<div class="kt-dialog-actions">
-					<button type="button" class="kt-btn kt-btn-ghost" @click="returnOpen = false">{{ __("Cancel") }}</button>
-					<button type="button" class="kt-btn kt-btn-primary" :disabled="!returnValid" data-testid="bud-task-return-confirm" @click="submitReturn">{{ __("Return for correction") }}</button>
+				<div class="dialog-actions">
+					<button type="button" class="btn btn-ghost" @click="returnOpen = false">{{ __("Cancel") }}</button>
+					<button type="button" class="btn btn-primary" :disabled="!returnValid" data-testid="bud-task-return-confirm" @click="submitReturn">{{ __("Return for correction") }}</button>
 				</div>
 			</div>
 		</div>

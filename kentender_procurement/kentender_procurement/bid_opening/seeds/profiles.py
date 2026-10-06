@@ -258,7 +258,8 @@ def release_loaded_profile() -> dict[str, Any]:
 
 def restore_base(*, commit: bool = True) -> dict[str, Any]:
 	"""Remove the loaded profile, tell the canonical opening again to
-	completion, and clear the test clock."""
+	completion, and put the test clock back on the canonical world's as-at
+	instant."""
 	from kentender_procurement.bid_opening.seeds import clear
 	from kentender_procurement.bid_opening.seeds import kentender_mvp_v1 as base
 
@@ -269,6 +270,11 @@ def restore_base(*, commit: bool = True) -> dict[str, Any]:
 	clear.wipe(tenders=[tender], namespace=base.NAMESPACE)
 	built = base.upsert_bid_opening_base(commit=False)
 	failures = [r["check"] for r in base.validate_bid_opening_seed() if not r["ok"]]
+	# the canonical world's own moment, not the profile's (two-year seed world plan D1)
+	from kentender_core.seeds.calendar import AS_AT
+	from kentender_core.services import test_clock
+
+	test_clock.set_instant(AS_AT)
 	if commit:
 		frappe.db.commit()
 	return {"restored": True, "was": was or None, "tender": reference, "opening": built.get("opening"), "failures": failures}

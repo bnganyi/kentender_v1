@@ -41,8 +41,8 @@ const DESIGN_DIR = "docs/mvp-1-r1/03_budget/design";
 const ART = "x-dc";
 const LIVE = ".kt-industry";
 
-const LIVE_SELECTOR = [".kt-card-title", ".kt-dialog-title", "label", "legend", ".kt-label", "th", "button", ".kt-tab"].join(", ");
-const ART_SELECTOR = [".kt-card-title", ".kt-dialog-title", ".dialog-title", "label", "legend", ".kt-label", "th", "button"].join(", ");
+const LIVE_SELECTOR = [".kt-card-title", ".dialog-title", "label", "legend", ".kt-label", "th", "button", ".kt-tab"].join(", ");
+const ART_SELECTOR = [".kt-card-title", ".dialog-title", ".dialog-title", "label", "legend", ".kt-label", "th", "button"].join(", ");
 
 type Vals = Record<string, string | boolean>;
 

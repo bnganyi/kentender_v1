@@ -52,12 +52,12 @@ function send() {
 				<div class="kt-notice-body">{{ sent }}</div>
 			</div>
 			<template v-if="handover.can_notify">
-				<div class="kt-field">
+				<div class="field">
 					<label for="bds-handover-note">{{ __("Message (optional)") }}</label>
-					<textarea id="bds-handover-note" v-model="note" class="kt-input" rows="2" :maxlength="handover.max_note" :aria-invalid="!!error" data-testid="bds-handover-note"></textarea>
+					<textarea id="bds-handover-note" v-model="note" class="input" rows="2" :maxlength="handover.max_note" :aria-invalid="!!error" data-testid="bds-handover-note"></textarea>
 					<p v-if="error" class="kt-field-error" data-testid="bds-handover-error">{{ error }}</p>
 				</div>
-				<div><button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-handover-send" @click="send">{{ pending ? __("Sending…") : __("Notify {0}", [names]) }}</button></div>
+				<div><button type="button" class="btn btn-primary" :disabled="pending" data-testid="bds-handover-send" @click="send">{{ pending ? __("Sending…") : __("Notify {0}", [names]) }}</button></div>
 			</template>
 			<p v-else-if="handover.wait_text" class="bds-muted" data-testid="bds-handover-wait">{{ handover.wait_text }}</p>
 			<div v-if="failure" class="kt-notice is-critical" role="alert"><div class="kt-notice-body">{{ failure }}</div></div>

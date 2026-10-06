@@ -67,7 +67,7 @@ onMounted(() => {
 				<p class="kt-page-desc">{{ header.description }}</p>
 			</div>
 			<div v-if="header.action" class="kt-page-actions" :class="{ 'bds-actions-stack': narrow }">
-				<a :href="header.action.href" class="kt-btn" :class="[header.action.tone === 'secondary' ? 'kt-btn-secondary' : 'kt-btn-primary', { 'bds-btn-block': narrow }]" data-testid="bds-workspace-action">{{ __(header.action.label) }}</a>
+				<a :href="header.action.href" class="btn" :class="[header.action.tone === 'secondary' ? 'btn-secondary' : 'btn-primary', { 'bds-btn-block': narrow }]" data-testid="bds-workspace-action">{{ __(header.action.label) }}</a>
 			</div>
 		</div>
 
@@ -81,7 +81,7 @@ onMounted(() => {
 
 		<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure">
 			<div class="kt-notice-body">{{ failure }}</div>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button>
+			<button type="button" class="btn btn-secondary" @click="load">{{ __("Try again") }}</button>
 		</div>
 
 		<div class="kt-region">
@@ -105,7 +105,7 @@ onMounted(() => {
 			<h2>{{ __("Current notices") }}</h2>
 			<div class="bds-region-body">
 				<template v-if="data.notices.length">
-					<table v-if="!narrow" class="kt-table" data-testid="bds-notices-table">
+					<table v-if="!narrow" class="table" data-testid="bds-notices-table">
 						<thead><tr><th>{{ __("Notice") }}</th><th>{{ __("Status") }}</th><th>{{ __("Action") }}</th></tr></thead>
 						<tbody>
 							<tr v-for="n in data.notices" :key="n.key">
@@ -132,7 +132,7 @@ onMounted(() => {
 			<h2>{{ __("Bid tasks") }}</h2>
 			<div class="bds-region-body">
 				<p v-if="data.progress" class="bds-muted bds-progress" data-testid="bds-workspace-progress">{{ data.progress.text }}<template v-if="data.progress.next"> · {{ __("Next: {0}", [data.progress.next]) }}</template><template v-else-if="data.progress.waiting"> · {{ data.progress.waiting }}</template></p>
-				<table v-if="!narrow" class="kt-table" data-testid="bds-tasks-table">
+				<table v-if="!narrow" class="table" data-testid="bds-tasks-table">
 					<thead><tr><th>{{ __("Task") }}</th><th>{{ __("Status") }}</th><th>{{ __("Updated") }}</th><th>{{ __("Action") }}</th></tr></thead>
 					<tbody>
 						<tr v-for="t in data.tasks" :key="t.key" :data-testid="'bds-task-' + t.key">
@@ -140,7 +140,7 @@ onMounted(() => {
 							<td><span class="kt-status" :class="TASK_TONES[t.status] || 'is-draft'">{{ t.status }}</span></td>
 							<td>{{ t.updated_label }}</td>
 							<td>
-								<a v-if="t.action.primary" :href="t.action.href" class="kt-btn kt-btn-primary">{{ __(t.action.label) }}</a>
+								<a v-if="t.action.primary" :href="t.action.href" class="btn btn-primary">{{ __(t.action.label) }}</a>
 								<a v-else :href="t.action.href">{{ __(t.action.label) }}</a>
 							</td>
 						</tr>
@@ -153,7 +153,7 @@ onMounted(() => {
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="TASK_TONES[t.status] || 'is-draft'">{{ t.status }}</span></span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Updated") }}</span><span>{{ t.updated_label }}</span></div>
 						<div class="bds-card-actions">
-							<a v-if="t.action.primary" :href="t.action.href" class="kt-btn kt-btn-primary bds-btn-touch">{{ __(t.action.label) }}</a>
+							<a v-if="t.action.primary" :href="t.action.href" class="btn btn-primary bds-btn-touch">{{ __(t.action.label) }}</a>
 							<a v-else :href="t.action.href">{{ __(t.action.label) }}</a>
 						</div>
 					</div>

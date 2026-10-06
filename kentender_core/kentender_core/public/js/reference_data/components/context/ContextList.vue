@@ -39,16 +39,16 @@ const isEmpty = computed(() => !props.loading && !props.error && props.rows.leng
 
 <template>
 	<div style="margin:28px 48px 0;display:grid;grid-template-columns:minmax(0,1fr) 220px 200px 200px;gap:16px">
-		<input class="kt-input" type="text" v-model="filters.q" :placeholder="__('Search context or procuring entity')" />
-		<select class="kt-input" v-model="filters.pe">
+		<input class="input" type="text" v-model="filters.q" :placeholder="__('Search context or procuring entity')" />
+		<select class="input" v-model="filters.pe">
 			<option value="">{{ __("All procuring entities") }}</option>
 			<option v-for="p in peOptions" :key="p.code" :value="p.legal_name">{{ p.legal_name }}</option>
 		</select>
-		<select class="kt-input" v-model="filters.fy">
+		<select class="input" v-model="filters.fy">
 			<option value="">{{ __("All financial years") }}</option>
 			<option v-for="f in fyOptions" :key="f.label" :value="f.label">{{ f.label }}</option>
 		</select>
-		<select class="kt-input" v-model="filters.status">
+		<select class="input" v-model="filters.status">
 			<option value="">{{ __("All statuses") }}</option>
 			<option v-for="s in statusOptions" :key="s" :value="s">{{ s }}</option>
 		</select>
@@ -56,7 +56,7 @@ const isEmpty = computed(() => !props.loading && !props.error && props.rows.leng
 
 	<div style="margin:28px 48px 0">
 		<RegisterStates :loading="loading" :error="error" :is-empty="isEmpty" @clear-filters="clearFilters" @retry="emit('retry')">
-			<table class="kt-table">
+			<table class="table">
 				<thead>
 					<tr>
 						<th style="width:210px">{{ __("Context") }}</th>
@@ -77,7 +77,7 @@ const isEmpty = computed(() => !props.loading && !props.error && props.rows.leng
 						<td><StatusPill :status="row.status" /></td>
 						<td><StatusPill :status="row.readiness" /></td>
 						<td style="text-align:right">
-							<button type="button" class="kt-btn kt-btn-ghost" @click="emit('open', row.context_id)">{{ __("View") }}</button>
+							<button type="button" class="btn btn-ghost" @click="emit('open', row.context_id)">{{ __("View") }}</button>
 						</td>
 					</tr>
 				</tbody>

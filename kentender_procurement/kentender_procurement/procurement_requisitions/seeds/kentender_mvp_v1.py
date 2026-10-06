@@ -65,10 +65,16 @@ from decimal import Decimal
 import frappe
 from frappe.utils import cstr
 
-from kentender_core.seeds import clock
+from kentender_core.seeds import calendar, clock
 
 NS = "KENTENDER_MVP_1_R1_REQ"
-FY = "2027-2028"
+#: The executed Annual Plan's year (two-year seed world: Year 1, FY 2026/27).
+FY = calendar.YEAR1.fiscal_year
+#: §13.1's operational required-by date for the laptops: the plan's 30 Jun
+#: 2027 boundary (a Requisition refuses a later one, DATE_BEYOND_BOUNDARY), so
+#: the executed year's laptops are delivered inside FY 2026/27 (two-year seed
+#: world build finding: was 30 Sep 2027; the bids offer late-June delivery).
+LATEST_DELIVERY = "2027-06-30"
 
 AUTHOR = "grace.wanjiku@moh.example.test"
 HOD = "peter.kimani@moh.example.test"
@@ -98,7 +104,7 @@ _INTENDED_USE = {
 	HRMD_NAME: f"Clinical training for {HRMD_NAME} staff",
 	DHI_NAME: "Field digital-health deployment for Digital Health staff",
 }
-_SHARED_LAPTOP = {"equipment_category": "Laptop", "item_name": "Business laptops", "delivery_location": DELIVERY_LOCATION, "latest_delivery_date": "2027-09-30"}
+_SHARED_LAPTOP = {"equipment_category": "Laptop", "item_name": "Business laptops", "delivery_location": DELIVERY_LOCATION, "latest_delivery_date": LATEST_DELIVERY}
 
 
 @contextmanager
@@ -131,6 +137,23 @@ def _unit_for(user: str, role: str, unit_name: str) -> str:
 		if unit and frappe.db.get_value("Organisation Unit", unit, "unit_name") == unit_name:
 			return unit
 	return ""
+
+
+def canonical_plan_item_ids() -> list[str]:
+	"""Every stable Plan Item of the executed year's canonical Annual Plan
+	(two-year seed world: the laptops and the portfolio). A Requisition on one
+	of them is canonical; any other is a stray."""
+	plan_name = frappe.db.get_value("Annual Plan", {"fiscal_year": FY}, "name")
+	if not plan_name:
+		return []
+	versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": plan_name}, pluck="name")
+	return sorted(set(frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", versions or ("",))}, pluck="plan_item_id")))
+
+
+def seeded_requisition_references() -> list[str]:
+	"""The canonical Requisitions' references (the laptops and the executed
+	portfolio's), for the orchestrator's reservation stamp."""
+	return frappe.get_all("Procurement Requisition", filters={"plan_item_id": ("in", canonical_plan_item_ids() or ("",))}, pluck="requisition_reference")
 
 
 def _plan_item_id(title: str) -> str:
@@ -184,16 +207,24 @@ def _editor(requisition: str) -> dict[str, Any]:
 	return read.get_requisition_record(requisition=requisition, user=frappe.session.user)
 
 
-def _build_item_package(requisition: str, amounts: dict[str, tuple[str, str]] | None = None) -> None:
+def _build_item_package(
+	requisition: str, amounts: dict[str, tuple[str, str]] | None = None, *, title: str = COMBINED_ITEM_TITLE, shared: dict[str, Any] | None = None,
+	uses: dict[str, str] | None = None, key: str = "",
+) -> None:
 	"""§13.4–13.6 through the real commands, as the author: request
-	information, one same-specification laptop set (one row per approved
+	information, one same-specification equipment set (one row per approved
 	requirement), then the standard package applied once. `amounts` maps a
 	department name to an exact (quantity, KES value) smaller than what
-	remains — a partial draw; every other line keeps the full default."""
+	remains — a partial draw; every other line keeps the full default.
+	`title`, `shared` and `uses` describe the equipment (the canonical laptops
+	by default); `key` keeps each Requisition's command keys its own."""
 	from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
 
+	shared = shared or _SHARED_LAPTOP
+	uses = uses or _INTENDED_USE
+	key = key or requisition
 	view = _editor(requisition)
-	values: dict[str, Any] = {"requirement_title": COMBINED_ITEM_TITLE, "delivery_location": DELIVERY_LOCATION, "latest_delivery_date": "2027-09-30", "related_services_required": False}
+	values: dict[str, Any] = {"requirement_title": title, "delivery_location": DELIVERY_LOCATION, "latest_delivery_date": shared["latest_delivery_date"], "related_services_required": False}
 	if amounts:
 		values["drawdown_lines"] = [
 			{"drawdown_line_id": r["drawdown_line_id"], "requested_quantity": amounts[r["department"]][0], "requested_value": amounts[r["department"]][1]}
@@ -201,16 +232,16 @@ def _build_item_package(requisition: str, amounts: dict[str, tuple[str, str]] | 
 		]
 	cmd.save_requisition_summary(
 		requisition=requisition, values=values,
-		expected_record_version=view["header"]["version_record_version"], idempotency_key=_key(f"{requisition}:summary"),
+		expected_record_version=view["header"]["version_record_version"], idempotency_key=_key(f"{key}:summary"),
 	)
 	view = _editor(requisition)
 	rows = [
-		{"drawdown_line_id": r["drawdown_line_id"], "quantity": str(r["quantity"]), "intended_use": _INTENDED_USE[r["department"]]}
+		{"drawdown_line_id": r["drawdown_line_id"], "quantity": str(r["quantity"]), "intended_use": uses[r["department"]]}
 		for r in view["equipment"]["add_rows"]
 	]
 	cmd.add_same_specification_items(
-		requisition=requisition, shared=dict(_SHARED_LAPTOP), rows=rows,
-		expected_record_version=view["package_record_version"], idempotency_key=_key(f"{requisition}:laptops"),
+		requisition=requisition, shared=dict(shared), rows=rows,
+		expected_record_version=view["package_record_version"], idempotency_key=_key(f"{key}:laptops" if shared is _SHARED_LAPTOP else f"{key}:items"),
 	)
 	view = _editor(requisition)
 	req = view["requirements"]
@@ -229,7 +260,7 @@ def _build_item_package(requisition: str, amounts: dict[str, tuple[str, str]] | 
 	cmd.apply_selected_requirement_package(
 		requisition=requisition, profile_key=req["profile_key"], profile_version=req["profile_version"], proposal_digest=req["proposal_digest"],
 		technical=technical, acceptance=acceptance, support=req["support"],
-		expected_record_version=view["package_record_version"], idempotency_key=_key(f"{requisition}:apply-package"),
+		expected_record_version=view["package_record_version"], idempotency_key=_key(f"{key}:apply-package"),
 	)
 
 
@@ -299,6 +330,71 @@ def upsert_requisitions_base(*, commit: bool = False) -> dict[str, Any]:
 	}
 
 
+#: Where a portfolio Requisition stops (two-year seed world proposal §5.2),
+#: with the state its root then shows.
+REQUISITION_STOPS = {"department": "Awaiting Department Approval", "procurement": "Submitted to Procurement", "authorised": "Authorised"}
+
+
+def build_requisition(
+	*, key: str, plan_item_title: str, requirement_title: str, shared: dict[str, Any], uses: dict[str, str], clock_map: dict[str, str],
+	stop: str = "authorised", amounts: dict[str, tuple[str, str]] | None = None,
+) -> dict[str, Any]:
+	"""One executed-portfolio Requisition on its own Plan Item, through the
+	same commands as the canonical one (§16.4), as the named actors at its
+	own instants, to `stop` ("department", "procurement" or "authorised").
+	`shared` is the one equipment definition (category, item name, delivery
+	location, latest delivery date); `uses` the intended use by department;
+	`amounts` a partial draw by department. Idempotent: a Requisition already
+	at `stop` on the item is returned untouched; one elsewhere in its
+	lifecycle needs the canonical world rebuilt."""
+	from kentender_procurement.procurement_requisitions.services import authorise, draft_commands as cmd, lifecycle
+
+	_guard()
+	if stop not in REQUISITION_STOPS:
+		frappe.throw(f"Unknown Requisition stop {stop!r}; expected one of {', '.join(REQUISITION_STOPS)}.")
+	plan_item_id = _plan_item_id(plan_item_title)
+	if not plan_item_id:
+		frappe.throw(f"Requisitions seed: no Active Plan Item '{plan_item_title}' in the {FY} Annual Plan (seed the executed year's plan first).")
+	existing = frappe.get_all(
+		"Procurement Requisition", filters={"plan_item_id": plan_item_id, "current_state": ("not in", ("Withdrawn", "Revoked", "Superseded"))},
+		fields=["name", "current_state"], limit_page_length=1,
+	)
+	if existing:
+		row = existing[0]
+		if row.current_state != REQUISITION_STOPS[stop]:
+			frappe.throw(f"{row.name} on '{plan_item_title}' is {row.current_state}, not {REQUISITION_STOPS[stop]}: rebuild the canonical world (make seed-canonical REBUILD=True).")
+		return {"ok": True, "idempotent": True, "requisition": row.name}
+	with _as(AUTHOR):
+		with clock.at(clock_map["draft_opened"]):
+			prepared = cmd.prepare_it_equipment_requisition(plan_item_id=plan_item_id, idempotency_key=_key(f"{key}:prepare"))
+		requisition = prepared["requisition"]
+		# Every later key carries the Requisition itself, as the canonical
+		# one's do: Planning keeps its drawdown journal across a rebuild, so a
+		# rebuilt Requisition must not replay its predecessor's keys.
+		key = f"{key}:{requisition}"
+		with clock.at(clock_map["steps_completed"]):
+			_build_item_package(requisition, amounts, title=requirement_title, shared=shared, uses=uses, key=key)
+		root = frappe.get_doc("Procurement Requisition", requisition)
+		with clock.at(clock_map["sent_for_department_approval"]):
+			sent = lifecycle.send_for_department_approval(requisition=requisition, expected_record_version=root.record_version, idempotency_key=_key(f"{key}:send"))
+	out: dict[str, Any] = {"ok": True, "idempotent": False, "requisition": requisition}
+	if stop == "department":
+		return out
+	with _as(HOD), clock.at(clock_map["submitted_to_procurement"]):
+		root.reload()
+		submitted = lifecycle.submit_requisition_to_procurement(
+			requisition=requisition, task=sent["task"], expected_record_version=root.record_version, idempotency_key=_key(f"{key}:submit"),
+		)
+	if stop == "procurement":
+		return out
+	with _as(HOPF), clock.at(clock_map["authorised"]):
+		root.reload()
+		authorised = authorise.authorise_requisition(
+			requisition=requisition, task=submitted["task"], expected_record_version=root.record_version, idempotency_key=_key(f"{key}:authorise"),
+		)
+	return {**out, "handoff": authorised.get("handoff"), "reservations": authorised.get("reservations")}
+
+
 def seed_consumed_handoff(*, commit: bool = False) -> dict[str, Any]:
 	"""Retired. §16.4 fixture 6 — the authorised handoff consumed by a
 	Tender — is produced by a real `StartTender` in
@@ -330,26 +426,22 @@ def seed_consumed_handoff(*, commit: bool = False) -> dict[str, Any]:
 # Planning's own §14.10 isolated profiles share one Fiscal Year.
 
 
-def _wipe_combined_item_profile(*, cross_module_rebuild: bool = False) -> dict[str, int]:
-	"""Tear down whatever Requisition currently sits on the combined item,
-	revoking first (through the real command) if it reached Authorised and
-	is still unconsumed — the "wipe after authorise" hazard this build
-	learned the hard way. Every root on the item goes (a profile may leave
-	more than one, e.g. REQ-SC-SEQUENTIAL)."""
-	plan_item_id = _plan_item_id(COMBINED_ITEM_TITLE)
-	root_row = frappe.db.get_value(
-		"Procurement Requisition", {"plan_item_id": plan_item_id, "current_state": "Authorised", "handoff_consumed_at": ("is", "not set")},
-		["name", "current_state", "record_version", "handoff_consumed_at"], as_dict=True,
-	) or frappe.db.get_value(
-		"Procurement Requisition", {"plan_item_id": plan_item_id},
-		["name", "current_state", "record_version", "handoff_consumed_at"], as_dict=True,
-	)
-	deleted: dict[str, int] = {}
-	if not root_row:
-		return deleted
-	if root_row.current_state == "Authorised" and not root_row.handoff_consumed_at:
-		from kentender_procurement.procurement_requisitions.services import authorise
+def _wipe_combined_item_profile(*, cross_module_rebuild: bool = False, plan_item_ids: list[str] | None = None) -> dict[str, int]:
+	"""Tear down whatever Requisition currently sits on the combined item (or
+	on each of `plan_item_ids`), revoking first (through the real command) if
+	it reached Authorised and is still unconsumed — the "wipe after
+	authorise" hazard this build learned the hard way. Every root on the item
+	goes (a profile may leave more than one, e.g. REQ-SC-SEQUENTIAL)."""
+	from kentender_procurement.procurement_requisitions.services import authorise
 
+	plan_item_ids = [item for item in (plan_item_ids if plan_item_ids is not None else [_plan_item_id(COMBINED_ITEM_TITLE)]) if item]
+	deleted: dict[str, int] = {}
+	if not plan_item_ids:
+		return deleted
+	for root_row in frappe.get_all(
+		"Procurement Requisition", filters={"plan_item_id": ("in", plan_item_ids), "current_state": "Authorised", "handoff_consumed_at": ("is", "not set")},
+		fields=["name", "record_version"],
+	):
 		with _as(HOPF):
 			authorise.revoke_unconsumed_authorisation(
 				requisition=root_row.name, reason="KENTENDER_MVP_V1 profile reseed.",
@@ -364,7 +456,7 @@ def _wipe_combined_item_profile(*, cross_module_rebuild: bool = False) -> dict[s
 	# — reuse it rather than a second, drifting copy.
 	from kentender_procurement.procurement_requisitions.seeds.clear import _delete_for_plan_items
 
-	deleted = _delete_for_plan_items([plan_item_id], cross_module_rebuild=cross_module_rebuild)
+	deleted = _delete_for_plan_items(plan_item_ids, cross_module_rebuild=cross_module_rebuild)
 	journal = frappe.get_all("Requisition Command Journal", filters={"idempotency_key": ("like", "req-seed:%")}, pluck="name")
 	frappe.db.delete("Requisition Command Journal", {"name": ("in", journal or ("",))})
 	deleted["Requisition Command Journal"] = len(journal)
@@ -410,11 +502,17 @@ def recover_orphaned_drawdowns(*, commit: bool = False) -> dict[str, Any]:
 
 
 def reset_requisitions_seed(*, commit: bool = False, cross_module_rebuild: bool = False) -> dict[str, int]:
-	"""`cross_module_rebuild` is for `canonical.clear_canonical_modules` only
-	(see `seeds.clear._delete_for_plan_items`)."""
+	"""The laptops Requisition on the combined item, which the base fixture
+	and every demo profile share. `cross_module_rebuild` is for
+	`canonical.clear_canonical_modules` only (see
+	`seeds.clear._delete_for_plan_items`): that rebuild clears every canonical
+	Requisition, the executed portfolio's too. A profile or a module test
+	never touches the portfolio (found 5 Oct 2026: a profile load revoked or
+	refused on the portfolio's Authorised Requisitions)."""
 	_guard()
 	frappe.set_user("Administrator")
-	deleted = _wipe_combined_item_profile(cross_module_rebuild=cross_module_rebuild)
+	plan_item_ids = canonical_plan_item_ids() if cross_module_rebuild else None
+	deleted = _wipe_combined_item_profile(cross_module_rebuild=cross_module_rebuild, plan_item_ids=plan_item_ids)
 	if commit:
 		frappe.db.commit()
 	return deleted
@@ -446,7 +544,7 @@ def _restore_planning_namespace() -> None:
 	from kentender_core.seeds import canonical
 
 	canonical.clear_canonical_modules()
-	canonical.seed(through="planning")
+	canonical.seed(current="annual_plan")
 
 
 def _fresh_combined_item_profile() -> str:
@@ -577,8 +675,8 @@ def validate_requisitions_seed() -> list[dict[str, Any]]:
 		return checks
 
 	root = frappe.get_doc("Procurement Requisition", root_name)
-	requisitions = frappe.db.count("Procurement Requisition")
-	check("requisition.only_one", requisitions == 1, str(requisitions))
+	requisitions = frappe.db.count("Procurement Requisition", {"plan_item_id": plan_item_id})
+	check("requisition.only_one_on_the_item", requisitions == 1, str(requisitions))
 	version = frappe.get_doc("Requisition Version", root.authorised_version or root.current_version)
 	# §16.4 fixture 4 — each command ran at its instant (frozen seed clock).
 	check("clock.draft_opened", str(version.creation)[:19] == CLOCK["draft_opened"], str(version.creation))
@@ -613,11 +711,14 @@ def validate_requisitions_seed() -> list[dict[str, Any]]:
 		certification = (payload.get("departmental_certification") or {}).get("decided_at", "")
 		authorisation = (payload.get("procurement_authorisation") or {}).get("decided_at", "")
 		check("handoff.instants", (certification[:19], authorisation[:19], cstr(payload.get("generated_at"))[:19]) == (CLOCK["submitted_to_procurement"], CLOCK["authorised"], CLOCK["authorised"]), f"{certification} {authorisation} {payload.get('generated_at')}")
-		# REQ §13.1 / SEED-001 v1.3 §3.6 — laptops complete 24 Sep 2027 (60 days).
-		check("handoff.estimated_completion_24_sep_2027", cstr(payload.get("estimated_completion_date"))[:10] == "2027-09-24", cstr(payload.get("estimated_completion_date")))
-		# NDS-CHG-001 v1.14 §14.3 — the HRMD laptops come from Need 3 Revision 2.
+		# REQ §13.1 / SEED-001 v1.3 §3.6 with the two-year corrections: the
+		# laptops' baseline (invited 1 Feb 2027, signed 14 Apr) completes
+		# 13 Jun 2027 (60 days), inside FY 2026/27.
+		check("handoff.estimated_completion_13_jun_2027", cstr(payload.get("estimated_completion_date"))[:10] == "2027-06-13", cstr(payload.get("estimated_completion_date")))
+		# NDS-CHG-001 v1.14 §14.3 — the HRMD laptops come from the returned
+		# and corrected Need's Revision 2 (Year 1's NDS-MOH-2026-0002).
 		revisions = sorted(cstr(line.get("need_revision")) for line in payload.get("drawdown_lines") or [])
-		check("handoff.need_3_revision_2", "NDS-MOH-2027-0003-V002" in revisions, str(revisions))
+		check("handoff.hrmd_need_revision_2", "NDS-MOH-2026-0002-V002" in revisions, str(revisions))
 		consumed_at = frappe.db.get_value("Authorised Requisition Handoff", handoff, "consumed_at")
 		if consumed_at:
 			check("handoff.consumed_20_mar_2027", str(consumed_at)[:19] == CLOCK["consumed"], str(consumed_at))

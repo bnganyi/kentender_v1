@@ -1,13 +1,13 @@
 /* Procurement Planning — PLN-CHG-001 v1.12 §11 supplementary Industry classes.
  *
- * kentender_core's kt_industry_tokens.css carries the shared system (.kt-card,
- * .kt-btn, .kt-blueprint, .kt-corner, .kt-status, .kt-input, .kt-skel …). The
+ * kentender_core's kt_industry_tokens.css carries the shared system (.card,
+ * .btn, .blueprint, .corner, .kt-status, .input, .kt-skel …). The
  * PLN-DES artboards define a handful of layout classes on top of it in their
  * <helmet><style> blocks; those are ported here, scoped under .kt-pln so no
  * rule can collide with another module's port of similarly named artboard
  * classes (every app_include_css file is global).
  *
- * Nothing here restyles a shared class; a change to .kt-card or .kt-btn
+ * Nothing here restyles a shared class; a change to .card or .btn
  * belongs in kt_industry_tokens.css.
  */
 
@@ -15,19 +15,6 @@
  * the shared system defines only --kt-* tokens; every such var() would
  * silently resolve to nothing (the NDS lesson). Alias the family once. */
 .kt-industry.kt-pln {
-	--color-bg: var(--kt-color-bg);
-	--color-text: var(--kt-color-text);
-	--color-accent: var(--kt-color-accent);
-	--color-accent-700: var(--kt-color-accent-800);
-	--color-neutral-100: var(--kt-color-neutral-100);
-	--color-neutral-200: var(--kt-color-neutral-200);
-	--color-neutral-600: var(--kt-color-neutral-600);
-	--color-neutral-700: var(--kt-color-neutral-700);
-	--color-neutral-800: var(--kt-color-neutral-800);
-	--color-divider: var(--kt-color-divider);
-	--font-heading: var(--kt-font-heading);
-	--font-body: var(--kt-font-body);
-	--radius-md: var(--kt-radius-md);
 }
 
 .kt-pln .pln-masthead {
@@ -40,13 +27,13 @@
 /* The whole screen's own outer sheet: title, filter and every section sit
  * inside one bordered, shadowed surface — not a bare header on the grey
  * page background with separate cards floating loose beneath it. Every
- * PLN-DES panel draws this same plain sheet (no `.kt-blueprint` corner
+ * PLN-DES panel draws this same plain sheet (no `.blueprint` corner
  * marks — Planning's own artboards never draw those on the page shell,
  * only on loading/error/empty state cards). `kt_industry_tokens.css` has
- * no shared "page sheet" class for this — plain `.kt-card` is a flex
+ * no shared "page sheet" class for this — plain `.card` is a flex
  * column with its own `gap`, which would double up against every child's
  * existing margin, so this is a standalone block box, not composed from
- * `.kt-card`. */
+ * `.card`. */
 .kt-pln .pln-sheet {
 	background: var(--kt-color-surface);
 	border: 1px solid var(--color-divider);
@@ -56,8 +43,8 @@
 
 /* §10.3/U01 Financial Year filter: one neutral tag fusing the label and the
  * value, same as every other on-page fact — never a bordered, corner-marked
- * card (§11.2; that rule is about `.kt-blueprint`/`.kt-corner`, not this
- * lighter `.kt-tag` pill). The retired v1.12 artboard (PLN-DES-01) drew this
+ * card (§11.2; that rule is about `.blueprint`/`.corner`, not this
+ * lighter `.tag` pill). The retired v1.12 artboard (PLN-DES-01) drew this
  * as a plain unboxed label+select; the current pack redrew it as a chip and
  * this rule was never updated to follow — a `<select>` still has to sit
  * inside it functioning as a real control, so it is un-styled to inherit the
@@ -456,7 +443,7 @@
 .kt-pln .pln-field .pln-helper-text {
 	margin-top: 6px;
 }
-.kt-pln .kt-input[aria-invalid="true"] {
+.kt-pln .input[aria-invalid="true"] {
 	border-color: var(--kt-color-critical, #b3261e);
 }
 
@@ -664,7 +651,7 @@
 
 /* PLN-DES-08 / PLN-DES-14A — Planning dialogs are 640px wide (the shared
  * Industry dialog is 620px) */
-.kt-pln .kt-dialog {
+.kt-pln .dialog {
 	width: min(640px, 100%);
 }
 
@@ -834,9 +821,9 @@
 	flex: 1 1 320px;
 	min-width: 0;
 }
-.kt-pln .pln-plan-row .kt-btn,
-.kt-pln .pln-own-plan .kt-btn,
-.kt-pln .pln-action-card .kt-btn {
+.kt-pln .pln-plan-row .btn,
+.kt-pln .pln-own-plan .btn,
+.kt-pln .pln-action-card .btn {
 	flex-shrink: 0;
 }
 
@@ -864,7 +851,7 @@
 	gap: var(--kt-space-4);
 	flex-wrap: wrap;
 }
-.kt-pln .pln-notice-split .kt-btn {
+.kt-pln .pln-notice-split .btn {
 	flex-shrink: 0;
 }
 
@@ -962,7 +949,7 @@
 	font-size: 15px;
 	max-width: 960px;
 }
-.kt-pln .kt-decision .kt-field {
+.kt-pln .kt-decision .field {
 	margin-bottom: var(--kt-space-4);
 	max-width: 480px;
 }
@@ -1017,7 +1004,7 @@
 .kt-pln .pln-missing-setting .kt-meta-row {
 	margin-bottom: var(--kt-space-3);
 }
-.kt-pln .pln-missing-setting .kt-btn {
+.kt-pln .pln-missing-setting .btn {
 	align-self: flex-start;
 }
 .kt-pln .pln-missing-setting-body > *:last-child {
@@ -1103,7 +1090,7 @@
 .kt-pln .pln-funding-panel {
 	padding: var(--kt-space-4) 0 var(--kt-space-2);
 }
-.kt-pln .pln-funding-panel .kt-field {
+.kt-pln .pln-funding-panel .field {
 	max-width: 480px;
 }
 /* §10.4 U03-FUNDING — right-aligned under the Cancel/Save row, with its
@@ -1220,7 +1207,7 @@
 
 /* The field a blocker names — this is what "the highlighted purchase details"
    in the §8 message refers to. */
-.kt-pln .pln-field-flagged > .kt-input {
+.kt-pln .pln-field-flagged > .input {
 	border-color: var(--kt-status-critical);
 }
 .kt-pln .pln-field-flagged > label {
@@ -1244,7 +1231,7 @@
 	flex-wrap: wrap;
 	margin-top: var(--kt-space-4);
 }
-.kt-pln .kt-group.pln-summary-line .kt-tag { margin-right: var(--kt-space-2); }
+.kt-pln .kt-group.pln-summary-line .tag { margin-right: var(--kt-space-2); }
 
 .kt-pln .pln-region-gap { margin-top: var(--kt-space-4); }
 /* The board's own state line: a tick and the live colour when the schedule
@@ -1327,7 +1314,7 @@
 .kt-pln .pln-review-classify.is-missing { border-left-color: var(--kt-status-critical); }
 .kt-pln .pln-review-classify-title { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--kt-color-neutral-800); margin-bottom: 10px; }
 .kt-pln .pln-review-classify-grid { display: grid; grid-template-columns: 260px 200px 1fr; gap: var(--kt-space-5); align-items: end; }
-.kt-pln .pln-review-classify-grid .kt-input { background-color: var(--kt-color-surface); }
+.kt-pln .pln-review-classify-grid .input { background-color: var(--kt-color-surface); }
 @media (max-width: 900px) {
 	.kt-pln .pln-review-classify-grid { grid-template-columns: 1fr; gap: var(--kt-space-3); }
 	.kt-pln .pln-review-row-head { flex-direction: column; gap: var(--kt-space-3); }
@@ -1341,7 +1328,7 @@
 .kt-pln .pln-fit-over { font-size: 14px; font-weight: 600; color: var(--kt-status-attention); }
 .kt-pln .pln-fit-line { font-weight: 600; }
 .kt-pln .pln-row-ref { font-size: 12px; margin-top: 2px; }
-.kt-pln .kt-table td.pln-fit-over-cell { color: var(--kt-status-attention); font-weight: 600; }
+.kt-pln .table td.pln-fit-over-cell { color: var(--kt-status-attention); font-weight: 600; }
 .kt-pln .pln-check-value { font-size: 14px; }
 .kt-pln .pln-check-row { display: flex; align-items: center; justify-content: space-between; gap: var(--kt-space-5); flex-wrap: wrap; }
 .kt-pln .pln-check-row + .pln-check-row { margin-top: var(--kt-space-4); }

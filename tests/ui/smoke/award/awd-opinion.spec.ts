@@ -38,9 +38,9 @@ test.describe("Award — professional opinion", () => {
 		await expectJourney(page, ["Current", "Not started", "Not started", "Not started", "Not started"]);
 		await expect(root.locator('[data-testid="awd-fact-committee-signatures"]')).toHaveText("3 of 3");
 		await expect(root.locator('[data-testid="awd-fact-submitted-tender-sum"]')).toHaveText("KES 46,400,000");
-		await expect(root.locator('[data-testid="awd-test-environment"]')).toHaveText("Test environment — no live award notices are sent.");
+		await expect(root.locator('[data-testid="awd-test-environment"]')).toHaveCount(0);
 
-		await root.locator("label.kt-radio", { hasText: "Recommend award" }).click();
+		await root.locator("label.radio", { hasText: "Recommend award" }).click();
 		await root.locator('[data-testid="awd-field-reason"]').fill("The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.");
 		await root.locator('[data-testid="awd-action-save-draft"]').click();
 		await expectScreen(page, "opinion");

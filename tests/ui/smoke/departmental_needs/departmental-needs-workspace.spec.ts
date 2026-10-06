@@ -64,7 +64,7 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 			"data-action",
 			"edit",
 		);
-		await expect(page.locator('[data-testid="nds-count"]')).toContainText("need");
+		await expect(page.locator('[data-testid="kt-pager-count"]')).toContainText("need");
 
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});

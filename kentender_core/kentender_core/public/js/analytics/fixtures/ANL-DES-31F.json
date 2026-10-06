@@ -1,0 +1,690 @@
+{
+ "verdict": "ok",
+ "message": "",
+ "title": "Procurement Analytics",
+ "description": "See where procurement work stands, how long key steps take and how much planned value is covered.",
+ "read_at": "2027-06-18T07:00:00Z",
+ "updated": "Updated 18 June 2027, 10:00 EAT",
+ "scope": "All departments",
+ "tab": "tender-proceedings",
+ "tabs": [
+  {
+   "key": "overview",
+   "label": "Overview",
+   "icon": "",
+   "route": [
+    "analytics"
+   ],
+   "selected": false
+  },
+  {
+   "key": "needs",
+   "label": "Needs",
+   "icon": "needs",
+   "route": [
+    "analytics",
+    "needs"
+   ],
+   "selected": false
+  },
+  {
+   "key": "departmental-planning",
+   "label": "Departmental planning",
+   "icon": "departmental-planning",
+   "route": [
+    "analytics",
+    "departmental-planning"
+   ],
+   "selected": false
+  },
+  {
+   "key": "annual-planning",
+   "label": "Annual planning",
+   "icon": "annual-planning",
+   "route": [
+    "analytics",
+    "annual-planning"
+   ],
+   "selected": false
+  },
+  {
+   "key": "requisitions",
+   "label": "Requisitions",
+   "icon": "requisitions",
+   "route": [
+    "analytics",
+    "requisitions"
+   ],
+   "selected": false
+  },
+  {
+   "key": "tender-proceedings",
+   "label": "Tender proceedings",
+   "icon": "tender-proceedings",
+   "route": [
+    "analytics",
+    "tender-proceedings"
+   ],
+   "selected": true
+  }
+ ],
+ "filters": {
+  "fy": "",
+  "dept": "",
+  "state": "",
+  "fy_options": [
+   {
+    "id": "FY-2027-28",
+    "label": "FY 2027/28"
+   }
+  ],
+  "dept_options": [
+   {
+    "id": "OU-DH",
+    "label": "Digital Health"
+   },
+   {
+    "id": "OU-HR",
+    "label": "Human Resources Management and Development"
+   }
+  ],
+  "messages": [],
+  "applied": false
+ },
+ "empty": false,
+ "overview": null,
+ "area": {
+  "key": "tender_proceedings",
+  "tab": "tender-proceedings",
+  "label": "Tender proceedings",
+  "icon": "tender-proceedings",
+  "status": "ok",
+  "result_text": "6 Tenders",
+  "figure": "6",
+  "unit": "Tenders",
+  "incomplete_text": "",
+  "outstanding": {
+   "title": "Outstanding work",
+   "rows": [
+    {
+     "key": "T-041",
+     "title": "Supply of IT peripherals",
+     "text": "State the warranty period required from suppliers. Awaiting correction by Brian Wafula.",
+     "waiting": "Waiting 2 days",
+     "since": "since 16 June, 09:00",
+     "route": [
+      "technical-search",
+      "T-041"
+     ]
+    },
+    {
+     "key": "T-043",
+     "title": "Supply of office desks",
+     "text": "Automatic checks complete; committee review outstanding. Grace Wambui chairs the appointed committee.",
+     "waiting": "Waiting 15 days",
+     "since": "since 3 June, 10:00",
+     "route": [
+      "technical-search",
+      "T-043"
+     ]
+    },
+    {
+     "key": "T-044",
+     "title": "Supply of printers",
+     "text": "We could not load the current position.",
+     "waiting": "",
+     "since": "",
+     "route": [
+      "technical-search",
+      "T-044"
+     ]
+    },
+    {
+     "key": "T-045",
+     "title": "Supply of monitors",
+     "text": "Award decision recorded. Required bidder notices are awaiting delivery.",
+     "waiting": "Waiting 1 day",
+     "since": "since 17 June, 11:00",
+     "route": [
+      "technical-search",
+      "T-045"
+     ]
+    }
+   ]
+  },
+  "secondary": "",
+  "scope_label": "",
+  "charts": {
+   "stages": {
+    "title": "Tenders by stage",
+    "value_header": "Authorised requisition value",
+    "rows": [
+     {
+      "key": "preparation",
+      "label": "Tender preparation and publication",
+      "count": 1,
+      "tone": "cat-1",
+      "selected": false,
+      "value_text": "KES 6,500,000"
+     },
+     {
+      "key": "open",
+      "label": "Open for bids",
+      "count": 1,
+      "tone": "cat-2",
+      "selected": false,
+      "value_text": "KES 8,000,000"
+     },
+     {
+      "key": "evaluation",
+      "label": "Evaluation",
+      "count": 1,
+      "tone": "cat-4",
+      "selected": false,
+      "value_text": "KES 3,500,000"
+     },
+     {
+      "key": "award",
+      "label": "Award",
+      "count": 1,
+      "tone": "cat-5",
+      "selected": false,
+      "value_text": "KES 7,500,000"
+     },
+     {
+      "key": "closed",
+      "label": "Closed",
+      "count": 1,
+      "tone": "muted",
+      "selected": false,
+      "value_text": "KES 25,000,000"
+     },
+     {
+      "key": "unavailable",
+      "label": "Status unavailable",
+      "count": 1,
+      "tone": "muted",
+      "selected": false,
+      "value_text": "KES 5,000,000"
+     }
+    ],
+    "note": "1 AO award decision recorded. Award amount KES 7,185,000."
+   },
+   "monthly": {
+    "title": "Recorded each month",
+    "months": [
+     {
+      "key": "2026-07",
+      "label": "Jul 2026",
+      "axis_lines": [
+       "Jul",
+       "2026"
+      ]
+     },
+     {
+      "key": "2026-08",
+      "label": "Aug 2026",
+      "axis_lines": [
+       "Aug"
+      ]
+     },
+     {
+      "key": "2026-09",
+      "label": "Sep 2026",
+      "axis_lines": [
+       "Sep"
+      ]
+     },
+     {
+      "key": "2026-10",
+      "label": "Oct 2026",
+      "axis_lines": [
+       "Oct"
+      ]
+     },
+     {
+      "key": "2026-11",
+      "label": "Nov 2026",
+      "axis_lines": [
+       "Nov"
+      ]
+     },
+     {
+      "key": "2026-12",
+      "label": "Dec 2026",
+      "axis_lines": [
+       "Dec"
+      ]
+     },
+     {
+      "key": "2027-01",
+      "label": "Jan 2027",
+      "axis_lines": [
+       "Jan",
+       "2027"
+      ]
+     },
+     {
+      "key": "2027-02",
+      "label": "Feb 2027",
+      "axis_lines": [
+       "Feb"
+      ]
+     },
+     {
+      "key": "2027-03",
+      "label": "Mar 2027",
+      "axis_lines": [
+       "Mar"
+      ]
+     },
+     {
+      "key": "2027-04",
+      "label": "Apr 2027",
+      "axis_lines": [
+       "Apr"
+      ]
+     },
+     {
+      "key": "2027-05",
+      "label": "May 2027",
+      "axis_lines": [
+       "May"
+      ]
+     },
+     {
+      "key": "2027-06",
+      "label": "Jun 2027 (to date)",
+      "axis_lines": [
+       "Jun",
+       "(to date)"
+      ]
+     }
+    ],
+    "series": [
+     {
+      "key": "published",
+      "label": "Published",
+      "counts": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       4,
+       1,
+       0
+      ],
+      "tone": "cat-1"
+     },
+     {
+      "key": "cancelled",
+      "label": "Cancelled",
+      "counts": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       1
+      ],
+      "tone": "cat-2"
+     },
+     {
+      "key": "decisions",
+      "label": "AO award decisions",
+      "counts": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       1
+      ],
+      "tone": "cat-3"
+     }
+    ],
+    "empty_text": ""
+   }
+  },
+  "steps": {
+   "status": "ok",
+   "incomplete_text": "",
+   "rows": [
+    {
+     "key": "T2",
+     "label": "Requisition authorised to Tender started",
+     "status": "ok",
+     "completed": 6,
+     "median": 3.5,
+     "shortest": 1,
+     "longest": 5,
+     "median_text": "3.5 days",
+     "shortest_text": "1 day",
+     "longest_text": "5 days"
+    },
+    {
+     "key": "T3",
+     "label": "Tender started to published",
+     "status": "ok",
+     "completed": 5,
+     "median": 26,
+     "shortest": 21,
+     "longest": 56,
+     "median_text": "26 days",
+     "shortest_text": "21 days",
+     "longest_text": "56 days"
+    },
+    {
+     "key": "T4",
+     "label": "Bid opening complete to evaluation report sent",
+     "status": "ok",
+     "completed": 2,
+     "median": 32.5,
+     "shortest": 28,
+     "longest": 37,
+     "median_text": "32.5 days",
+     "shortest_text": "28 days",
+     "longest_text": "37 days"
+    },
+    {
+     "key": "T5",
+     "label": "Evaluation report sent to AO decision recorded",
+     "status": "ok",
+     "completed": 1,
+     "median": 13,
+     "shortest": 13,
+     "longest": 13,
+     "median_text": "13 days",
+     "shortest_text": "13 days",
+     "longest_text": "13 days"
+    }
+   ],
+   "axis": {
+    "max": 60,
+    "ticks": [
+     0,
+     10,
+     20,
+     30,
+     40,
+     50,
+     60
+    ]
+   },
+   "caption": "Calendar days, last 12 months.",
+   "empty_text": ""
+  },
+  "register": {
+   "layout": "table",
+   "title": "Tenders",
+   "search_label": "Search Tender or reference",
+   "state_options": [
+    {
+     "key": "preparation",
+     "label": "Tender preparation and publication"
+    },
+    {
+     "key": "open",
+     "label": "Open for bids"
+    },
+    {
+     "key": "evaluation",
+     "label": "Evaluation"
+    },
+    {
+     "key": "award",
+     "label": "Award"
+    },
+    {
+     "key": "closed",
+     "label": "Closed"
+    },
+    {
+     "key": "unavailable",
+     "label": "Status unavailable"
+    }
+   ],
+   "state_all": "All stages",
+   "columns": [
+    {
+     "key": "tender",
+     "label": "Tender"
+    },
+    {
+     "key": "current_position",
+     "label": "Current position"
+    },
+    {
+     "key": "authorised_requisition_value",
+     "label": "Authorised requisition value"
+    },
+    {
+     "key": "recorded_ao_outcome",
+     "label": "Recorded AO outcome"
+    },
+    {
+     "key": "action",
+     "label": "Action"
+    }
+   ],
+   "rows": [
+    {
+     "key": "T-041",
+     "action": {
+      "label": "View record",
+      "route": [
+       "technical-search",
+       "T-041"
+      ]
+     },
+     "cells": {
+      "tender": {
+       "text": "Supply of IT peripherals",
+       "secondary": "TND-MOH-2027-041",
+       "quiet": false
+      },
+      "current_position": {
+       "text": "Tender preparation — warranty requirement returned for correction",
+       "secondary": "",
+       "quiet": false
+      },
+      "authorised_requisition_value": {
+       "text": "KES 6,500,000",
+       "secondary": "",
+       "quiet": false
+      },
+      "recorded_ao_outcome": {
+       "text": "No AO award decision recorded",
+       "secondary": "",
+       "quiet": true
+      }
+     }
+    },
+    {
+     "key": "T-042",
+     "action": {
+      "label": "View record",
+      "route": [
+       "technical-search",
+       "T-042"
+      ]
+     },
+     "cells": {
+      "tender": {
+       "text": "Supply of network switches",
+       "secondary": "TND-MOH-2027-042",
+       "quiet": false
+      },
+      "current_position": {
+       "text": "Open for bids",
+       "secondary": "",
+       "quiet": false
+      },
+      "authorised_requisition_value": {
+       "text": "KES 8,000,000",
+       "secondary": "",
+       "quiet": false
+      },
+      "recorded_ao_outcome": {
+       "text": "No AO award decision recorded",
+       "secondary": "",
+       "quiet": true
+      }
+     }
+    },
+    {
+     "key": "T-043",
+     "action": {
+      "label": "View record",
+      "route": [
+       "technical-search",
+       "T-043"
+      ]
+     },
+     "cells": {
+      "tender": {
+       "text": "Supply of office desks",
+       "secondary": "TND-MOH-2027-043",
+       "quiet": false
+      },
+      "current_position": {
+       "text": "Evaluation — automatic checks complete; committee review outstanding",
+       "secondary": "",
+       "quiet": false
+      },
+      "authorised_requisition_value": {
+       "text": "KES 3,500,000",
+       "secondary": "",
+       "quiet": false
+      },
+      "recorded_ao_outcome": {
+       "text": "No AO award decision recorded",
+       "secondary": "",
+       "quiet": true
+      }
+     }
+    },
+    {
+     "key": "T-044",
+     "action": {
+      "label": "View record",
+      "route": [
+       "technical-search",
+       "T-044"
+      ]
+     },
+     "cells": {
+      "tender": {
+       "text": "Supply of printers",
+       "secondary": "TND-MOH-2027-044",
+       "quiet": false
+      },
+      "current_position": {
+       "text": "Status unavailable",
+       "secondary": "",
+       "quiet": false
+      },
+      "authorised_requisition_value": {
+       "text": "KES 5,000,000",
+       "secondary": "",
+       "quiet": false
+      },
+      "recorded_ao_outcome": {
+       "text": "Could not be loaded",
+       "secondary": "",
+       "quiet": false
+      }
+     }
+    },
+    {
+     "key": "T-045",
+     "action": {
+      "label": "View record",
+      "route": [
+       "technical-search",
+       "T-045"
+      ]
+     },
+     "cells": {
+      "tender": {
+       "text": "Supply of monitors",
+       "secondary": "TND-MOH-2027-045",
+       "quiet": false
+      },
+      "current_position": {
+       "text": "Award — required bidder notices awaiting delivery",
+       "secondary": "",
+       "quiet": false
+      },
+      "authorised_requisition_value": {
+       "text": "KES 7,500,000",
+       "secondary": "",
+       "quiet": false
+      },
+      "recorded_ao_outcome": {
+       "text": "Award decision recorded 17 June 2027, 11:00 EAT",
+       "secondary": "Award amount KES 7,185,000",
+       "quiet": false
+      }
+     }
+    },
+    {
+     "key": "T-046",
+     "action": {
+      "label": "View record",
+      "route": [
+       "technical-search",
+       "T-046"
+      ]
+     },
+     "cells": {
+      "tender": {
+       "text": "Supply of servers",
+       "secondary": "TND-MOH-2027-046",
+       "quiet": false
+      },
+      "current_position": {
+       "text": "Closed — cancelled; cancellation compliance evidence complete",
+       "secondary": "",
+       "quiet": false
+      },
+      "authorised_requisition_value": {
+       "text": "KES 25,000,000",
+       "secondary": "",
+       "quiet": false
+      },
+      "recorded_ao_outcome": {
+       "text": "Cancellation recorded 16 June 2027, 12:00 EAT",
+       "secondary": "",
+       "quiet": false
+      }
+     }
+    }
+   ],
+   "footer": "Showing 6 of 6 Tenders",
+   "empty_text": "",
+   "clear": null,
+   "total": 6,
+   "next_cursor": null,
+   "partial": false
+  }
+ },
+ "definitions": "Each area counts its own permitted records once. Financial year follows the record's Planning source, not its creation date. Annual planning counts items in the Active Plan. Versions and contributing departments do not add records. An award decision does not mean notices or contract work are complete. Waiting time runs from when a matter reached its current holder; it is not a judgement that work is late. Time between key steps counts calendar days between recorded events completed in the 12 months to 18 June 2027; these are not statutory periods. Plan coverage uses the Annual Plan's own record of value covered by authorised requisitions. Amounts are in Kenya shillings, and different kinds of amount are never added together. Counts and positions describe current position when loaded. All area reads completed at 10:00 EAT."
+}

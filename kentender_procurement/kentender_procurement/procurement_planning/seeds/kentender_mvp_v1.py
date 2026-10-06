@@ -47,7 +47,7 @@ import frappe
 from frappe.utils import cstr, now_datetime
 from frappe.utils.password import update_password
 
-from kentender_core.seeds import clock
+from kentender_core.seeds import calendar, clock
 from kentender_core.seeds.constants import TEST_PASSWORD
 from kentender_core.services import responsibility_administration as administration
 from kentender_core.services import site_configuration
@@ -74,16 +74,23 @@ PROFILE_LIMITS = {"bid_opening": (7, None), "evaluation_completion": (None, 30),
 # `docs/mvp-1-r1/99_other/thirty_percent_reservation_rule.pdf`).
 RESERVATION_TARGET_PERCENT = 30
 
-FY = "2027-2028"
+#: The executed Annual Plan's year (two-year seed world: Year 1, FY 2026/27):
+#: the plan the Requisitions and later stages consume.
+FY = calendar.YEAR1.fiscal_year
+#: The isolated profiles (§14.10) rebuild a Planning world on the prepared
+#: year (Year 2, FY 2027/28), mutually exclusive with the canonical plans.
+PROFILE_FY = calendar.YEAR2.fiscal_year
 DHI_NAME = "Digital Health"  # spec: OU-MOH-DHI
 HRMD_NAME = "Human Resources Management and Development"  # spec: OU-MOH-HRMD
 
+#: The profiles' accepted Digital Health Need (Year 2's first).
 NEED = "NDS-MOH-2027-0001"
 # SEED-001 §3.2/§3.6, PLN-CHG-001 v1.13 §14.5 (2026-09-05) — the harmonized
-# combined item's two real, Need-backed sources. Both Needs are Accepted by
+# combined item's two real, Need-backed sources, now Year 1's (two-year seed
+# world plan D8). Both Needs are Accepted by
 # `departmental_needs.seeds.kentender_mvp_r1` before this seed runs.
-NEED_HRMD_LAPTOPS = "NDS-MOH-2027-0003"
-NEED_DHI_LAPTOPS = "NDS-MOH-2027-0004"
+NEED_HRMD_LAPTOPS = "NDS-MOH-2026-0002"
+NEED_DHI_LAPTOPS = "NDS-MOH-2026-0003"
 OBJECTIVE_TITLE = "Strengthen interoperable national digital health services"
 DESTINATION_ID = "MOH-APP-SANDBOX-v1"
 
@@ -223,6 +230,184 @@ CLOCK_BEFORE_SITE_TIME = {
 	"publication_acknowledged": "2026-12-10 12:00:00",
 	"treasury_submitted": "2026-12-10 11:00:00",
 }
+
+# --- the two-year seed world (owner, 4 Oct 2026; plan D1, D8, D10) ---------
+#
+# Each seeded year's departmental plans and Annual Plan, built through the
+# same commands from data. Year 2 (FY 2027/28, being prepared) runs at the
+# §14.4–14.6 instants above; Year 1 (FY 2026/27, carried out) runs the same
+# journey 364 days earlier (`calendar.YEAR1`), so its Plan is Active from
+# 11 Dec 2025, before the year it plans for begins.
+#
+# A year's planned dates fit inside that year (two-year seed world
+# corrections §1): Needs and direct requirements are required by 30 Jun 2027
+# at the latest in Year 1, and each item's baseline invitation leaves its
+# signing plus delivery inside that boundary (PLN_DELIVERY_BOUNDARY_INSUFFICIENT
+# otherwise). Year 1's Tenders then publish later than their approved dates,
+# which Planning reads as Baseline lateness.
+
+#: Steps the §14 clock leaves unstated, at instants between their neighbours.
+_YEAR2_STEPS = {
+	**CLOCK,
+	"dpp_opened_dhi": "2026-11-25 09:50:00",
+	"dpp_opened_hrmd": "2026-11-25 10:40:00",
+	"items_formed": "2026-12-01 10:00:00",
+	"funding_requested": "2026-12-03 10:00:00",
+}
+
+
+def year_clock(year: str) -> dict[str, str]:
+	y = calendar.year(year)
+	return {step: y.at(at) for step, at in _YEAR2_STEPS.items()}
+
+
+def _item(title: str, description: str, invitation: str, delivery_days: int, *, designation: str = "None", **extra: Any) -> dict[str, Any]:
+	return {
+		**ITEM_VALUES, "title": title, "description": description, "reservation_category": designation,
+		"baseline_invitation_date": invitation, "estimated_delivery_period_days": delivery_days, **extra,
+	}
+
+
+def _direct(source: str, title: str, purpose: str, quantity: int, amount: int, line: str, *, required_by: str = "2027-06-30") -> dict[str, Any]:
+	"""A direct departmental requirement (no Need behind it): IT equipment the
+	executed portfolio's Requisitions draw on (two-year seed world proposal §5;
+	the only installed Tender format is IT equipment, so each one is)."""
+	return {
+		"source": source, "line": line, "amount": amount, "classification": "Goods",
+		"values": {
+			"title": title, "description": f"{title} for {purpose}.",
+			"expected_operational_result": f"Staff have working {title.lower()} for {purpose}.",
+			"quantity": quantity, "unit": "Each", "required_by_date": required_by, "indicative_amount": amount,
+		},
+	}
+
+
+_YEAR1_DESCRIPTION = "Procure and implement the national digital health infrastructure upgrade as one integrated FY 2026/27 programme."
+
+#: Year 1's portfolio of IT equipment, beside the two SEED-001 items: one
+#: departmental requirement and Plan Item per Tender or Requisition of the
+#: executed portfolio (two-year seed world proposal §5.1–§5.2; titles from the
+#: HOME-CHG-001 v0.6 / ANL-CHG-001 v0.8 fixtures where they are IT equipment,
+#: IT substitutes where they are not). (source key, item title, department
+#: key, purpose, quantity, KES, budget line, invitation, delivery days,
+#: designation)
+PORTFOLIO = (
+	("printers", "Printers", "dhi", "Digital Health offices", 40, 5_000_000, "dhi", "2027-02-15", 30, "None"),
+	("lab_desktops", "Laboratory desktop computers", "dhi", "hospital laboratory systems", 60, 9_000_000, "ict", "2027-02-22", 30, "None"),
+	("tablets", "Medical-grade tablets", "dhi", "clinical teams at priority facilities", 100, 6_000_000, "dhi", "2027-03-15", 21, "None"),
+	("field_laptops", "Field laptops", "dhi", "county digital health officers", 50, 7_000_000, "dhi", "2027-03-01", 30, "None"),
+	("routers", "Core network routers", "dhi", "the national digital health data centre", 10, 25_000_000, "ict", "2027-02-01", 60, "Women"),
+	("clinic_desktops", "Clinic desktop computers", "dhi", "outpatient clinics", 80, 12_000_000, "dhi", "2027-03-15", 21, "None"),
+	("scanners", "Document scanners", "hrmd", "staff records digitisation", 25, 3_500_000, "hrmd", "2027-03-01", 21, "None"),
+	("switches", "Network switches", "hrmd", "the training centres' networks", 30, 9_000_000, "ict", "2027-02-08", 45, "None"),
+	("ups", "UPS units", "hrmd", "power protection in training centres", 40, 4_000_000, "ict", "2027-03-08", 21, "None"),
+	("desktops", "Desktop computers", "hrmd", "human resources offices", 80, 12_000_000, "hrmd", "2027-02-22", 30, "None"),
+	("monitors", "Monitors", "hrmd", "human resources offices", 150, 7_500_000, "hrmd", "2027-03-01", 21, "None"),
+)
+#: The one portfolio item both departments contribute to (ANL-CHG-001 v0.8
+#: A1's "IT peripherals" shape, as equipment the Tender format supports): one
+#: combined item from two direct requirements.
+PERIPHERALS = {
+	"title": "Wireless access points",
+	"dhi": ("peripherals_dhi", 80, 4_000_000),
+	"hrmd": ("peripherals_hrmd", 50, 2_500_000),
+	"line": "ict", "invitation": "2027-02-15", "delivery_days": 30,
+	"reason": "Both departments need the same wireless access points for the digital health rollout; one package secures one price and one delivery.",
+}
+
+
+def _portfolio_direct(department: str) -> list[dict[str, Any]]:
+	rows = [_direct(key, title, purpose, quantity, amount, line) for key, title, dept, purpose, quantity, amount, line, *_ in PORTFOLIO if dept == department]
+	key, quantity, amount = PERIPHERALS[department]
+	rows.append(_direct(key, PERIPHERALS["title"], "the digital health rollout", quantity, amount, PERIPHERALS["line"]))
+	return rows
+
+
+def _portfolio_items() -> list[dict[str, Any]]:
+	items = [
+		{"sources": (key,), "values": _item(title, f"{title} for {purpose}.", invitation, days, designation=designation)}
+		for key, title, _dept, purpose, _quantity, _amount, _line, invitation, days, designation in PORTFOLIO
+	]
+	items.append({
+		"sources": (PERIPHERALS["dhi"][0], PERIPHERALS["hrmd"][0]), "mode": "combined",
+		"values": _item(
+			PERIPHERALS["title"], "Common wireless access points for Digital Health and Human Resources Management and Development offices.",
+			PERIPHERALS["invitation"], PERIPHERALS["delivery_days"],
+			aggregation_indicator="Aggregated into this package", aggregation_reason=PERIPHERALS["reason"],
+		),
+	})
+	return items
+
+
+def plan_spec(year: str) -> dict[str, Any]:
+	"""`year`'s departmental plans, Plan Items and Treasury reference. Need
+	sources name the Need by its position in the Needs seed's list for that
+	year (`departmental_needs.seeds.kentender_mvp_r1.references`)."""
+	from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import references
+
+	needs = references(year)
+	if year == "year1":
+		return {
+			"dpps": (
+				{
+					"key": "dhi", "unit": DHI_NAME, "submitter": ACTING_HOD,
+					"needs": (
+						{"source": "infra", "need": needs[0], "line": "dhi", "amount": 80_000_000, "classification": "Non-consulting services"},
+						{"source": "laptops_dhi", "need": needs[2], "line": "hwd", "amount": NEED_DHI_LAPTOPS_AMOUNT, "classification": "Goods"},
+					),
+					"direct": _portfolio_direct("dhi"),
+				},
+				{
+					"key": "hrmd", "unit": HRMD_NAME, "submitter": HOD,
+					"needs": ({"source": "laptops_hrmd", "need": needs[1], "line": "hwd", "amount": NEED_HRMD_LAPTOPS_AMOUNT, "classification": "Goods"},),
+					"direct": _portfolio_direct("hrmd"),
+				},
+			),
+			"items": (
+				# SEED-001 §3.6 / §5.2 with the two-year corrections: baselines
+				# moved so signing plus delivery ends by 30 Jun 2027.
+				{"sources": ("infra",), "values": {**ITEM_VALUES, "description": _YEAR1_DESCRIPTION, "baseline_invitation_date": "2027-03-01"}},
+				{
+					"sources": ("laptops_hrmd", "laptops_dhi"), "mode": "combined",
+					"values": {**COMBINED_ITEM_VALUES, "baseline_invitation_date": "2027-02-01"},
+				},
+				*_portfolio_items(),
+			),
+			"treasury_reference": "MOH/APP/2026/001",
+		}
+	return {
+		"dpps": (
+			{
+				"key": "dhi", "unit": DHI_NAME, "submitter": HOD,
+				"needs": (
+					{"source": "hie", "need": needs[0], "line": "dhi", "amount": 70_000_000, "classification": "Non-consulting services"},
+					{"source": "cds", "need": needs[3], "line": "hwd", "amount": 20_000_000, "classification": "Goods"},
+				),
+				"direct": (),
+			},
+			{
+				"key": "hrmd", "unit": HRMD_NAME, "submitter": HOD,
+				"needs": ({"source": "av", "need": needs[2], "line": "hwd", "amount": 12_000_000, "classification": "Goods"},),
+				"direct": (),
+			},
+		),
+		"items": (
+			{"sources": ("hie",), "values": _item(
+				"Health information exchange platform upgrade",
+				"Upgrade the national health information exchange platform as one FY 2027/28 programme.", "2027-05-03", 30,
+			)},
+			{"sources": ("av",), "values": _item(
+				"Training centre audio-visual equipment", "Projectors, displays and sound equipment for the staff training centres.",
+				"2027-08-02", 45, designation="Women",
+			)},
+			{"sources": ("cds",), "values": _item(
+				"Clinical decision-support software licences", "Decision-support software licences for clinicians at priority facilities.",
+				"2027-07-15", 60, designation="Youth",
+			)},
+		),
+		"treasury_reference": "MOH/APP/2027/001",
+	}
+
 
 _DOCTYPES = (
 	# dependents first, roots last
@@ -370,8 +555,11 @@ def ensure_profiles() -> dict[str, Any]:
 
 
 def verify_prerequisites() -> dict[str, str]:
-	"""§14.1/§14.3 — every authoritative prerequisite present and usable, or
-	one loud failure naming exactly what is absent. Nothing is invented."""
+	"""§14.1/§14.3 for the isolated profiles' year (`PROFILE_FY`, Year 2) —
+	every authoritative prerequisite present and usable, or one loud failure
+	naming exactly what is absent. Nothing is invented. The canonical years
+	use `_verify_year`."""
+	FY = PROFILE_FY
 	missing: list[str] = []
 
 	def need(label: str, ok) -> None:
@@ -400,10 +588,11 @@ def verify_prerequisites() -> dict[str, str]:
 	need(f"Regulatory Reference for {FY} (threshold matrix)", get_regulatory_reference(FY).get("available"))
 	# The canonical Budget's lines by role — their references are generated
 	# (Project Owner decision, 26 Sep 2026), so they are found by title.
-	from kentender_budget.seeds.kentender_mvp_v1_portfolio import LINES, canonical_budget_line
+	from kentender_budget.seeds.kentender_mvp_v1_portfolio import BUDGETS, canonical_budget_line
 
-	bl_dhi = canonical_budget_line("dhi")
-	bl_hwd = canonical_budget_line("hwd")
+	LINES = BUDGETS["year2"]["lines"]
+	bl_dhi = canonical_budget_line("dhi", "year2")
+	bl_hwd = canonical_budget_line("hwd", "year2")
 	need(f"Budget line '{LINES['dhi']['title']}' with an Active Budget Version", bl_dhi)
 	need(f"Budget line '{LINES['hwd']['title']}' with an Active Budget Version", bl_hwd)
 	objective = _objective()
@@ -470,8 +659,10 @@ def _actors() -> None:
 
 @contextmanager
 def _intake_open():
-	"""The §14.1 window closes 30 Nov 2026; after that the flag is re-opened
-	for the build and closed again afterwards (CFG v0.9 §4.2)."""
+	"""The isolated profiles' year (`PROFILE_FY`): the §14.1 window closes
+	30 Nov 2026; after that the flag is re-opened for the build and closed
+	again afterwards (CFG v0.9 §4.2)."""
+	FY = PROFILE_FY
 	was_open = bool(frappe.db.get_value("Fiscal Year", FY, site_configuration.DPP_FLAG_OPEN))
 	if not was_open:
 		site_configuration.open_dpp_submission(fiscal_year=FY, reason="Planning §14 seed build")
@@ -502,7 +693,7 @@ def _build_accepted_dpp(
 
 	with _as(AUTHOR):
 		opened = dpp_lifecycle.open_departmental_plan(
-			organisation_unit=prereqs["dhi"], fiscal_year=FY, idempotency_key=_key("open-dhi-dpp"), fixture_namespace=NS,
+			organisation_unit=prereqs["dhi"], fiscal_year=PROFILE_FY, idempotency_key=_key("open-dhi-dpp"), fixture_namespace=NS,
 		)
 		entry_id = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": opened["current_version"], "need": NEED}, "entry_id")
 		if not entry_id:
@@ -558,95 +749,6 @@ def _build_accepted_dpp(
 	return {"accepted": accepted, "plan": plan, "entry_id": entry_id, "opened": opened}
 
 
-def _build_hrmd_laptops_dpp(prereqs: dict[str, str]) -> str:
-	"""PLN-CHG-001 v1.13 §14.4/SEED-001 §3.3 — a new HRMD departmental plan
-	carrying only Need-3 (`NEED_HRMD_LAPTOPS`), submitted and accepted the
-	same way as the DHI plan. Accepting a second department's DPP for the
-	same Fiscal Year attaches to the one existing Annual Plan (§5.2 is keyed
-	by Fiscal Year, not by department), the same behaviour the two-department
-	combined item always relied on."""
-	from kentender_procurement.procurement_planning.services import dpp_lifecycle, dpp_validation
-
-	with _as(AUTHOR):
-		opened = dpp_lifecycle.open_departmental_plan(
-			organisation_unit=prereqs["hrmd"], fiscal_year=FY, idempotency_key=_key("open-hrmd-dpp"), fixture_namespace=NS,
-		)
-		entry_id = frappe.db.get_value(
-			"Departmental Plan Entry", {"dpp_version": opened["current_version"], "need": NEED_HRMD_LAPTOPS}, "entry_id"
-		)
-		if not entry_id:
-			frappe.throw(
-				f"The accepted Need {NEED_HRMD_LAPTOPS} did not project into the Draft DPP — "
-				"run the Departmental Needs seed first (§14.10)."
-			)
-		funded = dpp_lifecycle.save_need_funding(
-			dpp_version=opened["current_version"], entry_id=entry_id, budget_line=prereqs["bl_hwd"],
-			indicative_amount=NEED_HRMD_LAPTOPS_AMOUNT, expected_record_version=opened["record_version"],
-			idempotency_key=_key("fund-hrmd-laptops"),
-		)
-	with _as(HOD), clock.at(CLOCK["dpp_submitted_hrmd"]):
-		submitted = dpp_lifecycle.submit_departmental_plan(
-			dpp_version=opened["current_version"], certification_confirmed=True,
-			expected_record_version=funded["record_version"], idempotency_key=_key("submit-hrmd-dpp"),
-		)
-	task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
-	with _as(PLANNER), clock.at(CLOCK["dpp_accepted_hrmd"]):
-		dpp_validation.accept_departmental_plan(
-			task=task.name, classifications={entry_id: "Goods"}, task_token=task.task_token,
-			idempotency_key=_key("accept-hrmd-dpp"),
-		)
-	return entry_id
-
-
-def _form_each_and_combined_items(plan_reference: str, prereqs: dict[str, str]) -> tuple[str, str]:
-	"""PLN-CHG-001 v1.13 §14.5 — two Plan Items formed into the same Draft
-	Annual Plan Version before its one finance/governance/publication cycle
-	runs: Need-1's item (unchanged) and the harmonized combined item from
-	Need-3 (HRMD) + Need-4 (Digital Health). Both DHI and HRMD DPPs must
-	already be accepted (their entries are "laptops"-titled; Need-1's is
-	not) so this always selects the right entries regardless of row order."""
-	from kentender_procurement.procurement_planning.services import plan_read, plan_workbench
-
-	with _as(PLANNER):
-		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
-		sources = plan["unallocated_sources"]
-		single_source = next(s for s in sources if "laptops" not in s["title"])
-		laptop_sources = [s["dpp_entry"] for s in sources if "laptops" in s["title"]]
-		if len(laptop_sources) != 2:
-			frappe.throw(
-				f"Expected exactly 2 unallocated laptop sources for the combined item, found {len(laptop_sources)}."
-			)
-
-		formed_each = plan_workbench.form_plan_items(
-			plan_version=plan["version_reference"], dpp_entries=[single_source["dpp_entry"]],
-			mode="each", expected_record_version=plan["record_version"], idempotency_key=_key("form-item"),
-		)
-		item_id = formed_each["created_items"][0]
-		item = plan_read.get_plan_item(plan_item_id=item_id)
-		plan_workbench.save_plan_item(
-			plan_item=item_id, values={**ITEM_VALUES, "strategic_objective": prereqs["objective"]},
-			expected_record_version=item["record_version"], idempotency_key=_key("save-item"),
-		)
-
-		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
-		formed_combined = plan_workbench.form_plan_items(
-			plan_version=plan["version_reference"], dpp_entries=laptop_sources,
-			mode="combined",
-			# §10.7 — the combination is named and justified where it is made,
-			# exactly as U08 asks the Planner for it.
-			combination_reason=COMBINED_ITEM_VALUES["aggregation_reason"],
-			combined_title=COMBINED_ITEM_VALUES["title"],
-			expected_record_version=plan["record_version"], idempotency_key=_key("form-combined"),
-		)
-		combined_item_id = formed_combined["created_items"][0]
-		combined_item = plan_read.get_plan_item(plan_item_id=combined_item_id)
-		plan_workbench.save_plan_item(
-			plan_item=combined_item_id, values={**COMBINED_ITEM_VALUES, "strategic_objective": prereqs["objective"]},
-			expected_record_version=combined_item["record_version"], idempotency_key=_key("save-combined"),
-		)
-	return item_id, combined_item_id
-
-
 def _form_item(plan: dict[str, Any], prereqs: dict[str, str], *, values: dict[str, Any] | None = None) -> str:
 	from kentender_procurement.procurement_planning.services import plan_read, plan_workbench
 
@@ -688,18 +790,19 @@ def _form_and_confirm(plan: dict[str, Any], prereqs: dict[str, str]) -> str:
 	return item_id
 
 
-def _submit_plan(plan_reference: str) -> Any:
+def _submit_plan(plan_reference: str, *, steps: dict[str, str] | None = None, key=None) -> Any:
 	from kentender_procurement.procurement_planning.services import plan_governance, plan_read
 
-	with _as(HOPF), clock.at(CLOCK["plan_submitted"]):
+	steps, key = steps or CLOCK, key or _key
+	with _as(HOPF), clock.at(steps["plan_submitted"]):
 		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
 		submitted = plan_governance.submit_consolidated_plan(
-			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=_key("submit-plan"),
+			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=key("submit-plan"),
 		)
 	return frappe.get_doc("Plan Governance Task", submitted["task"])
 
 
-def _govern_and_publish(plan_reference: str) -> dict[str, Any]:
+def _govern_and_publish(plan_reference: str, *, steps: dict[str, str] | None = None, treasury_reference: str = "MOH/APP/2027/001", key=None) -> dict[str, Any]:
 	"""§14.6 / §5.5.2 — Charles signs and submits, Amina adopts, Daniel
 	approves in the entity's configured route.
 
@@ -712,13 +815,24 @@ def _govern_and_publish(plan_reference: str) -> dict[str, Any]:
 	"""
 	from kentender_procurement.procurement_planning.services import plan_governance, publication_pipeline, treasury
 
-	ao_task = _submit_plan(plan_reference)
-	with _as(ACCOUNTING_OFFICER):
-		adopted = plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=_key("adopt-plan"))
+	frozen = steps is not None
+	steps, key = steps or CLOCK, key or _key
+
+	def at(step: str):
+		# The canonical years run every governance step at its instant under
+		# the frozen clock (plan D19); the isolated profiles keep the real
+		# clock and the design-clock stamp afterwards, as they always have.
+		from contextlib import nullcontext
+
+		return clock.at(steps[step]) if frozen else nullcontext()
+
+	ao_task = _submit_plan(plan_reference, steps=steps, key=key)
+	with _as(ACCOUNTING_OFFICER), at("ao_adopted"):
+		adopted = plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=key("adopt-plan"))
 	statutory_task = frappe.get_doc("Plan Governance Task", adopted["statutory_task"])
-	with _as(STATUTORY):
+	with _as(STATUTORY), at("statutory_approved"):
 		approved = plan_governance.approve_annual_plan(
-			task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=_key("approve-plan"),
+			task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=key("approve-plan"),
 		)
 
 	plan_version = approved["plan_version"]
@@ -730,26 +844,30 @@ def _govern_and_publish(plan_reference: str) -> dict[str, Any]:
 	from kentender_core.seeds.fixture_files import attached_pdf
 
 	evidence = attached_pdf(
-		TREASURY_EVIDENCE_FILE, label="Treasury dispatch evidence MOH/APP/2027/001", doctype="Annual Plan Version", name=plan_version,
+		TREASURY_EVIDENCE_FILE, label=f"Treasury dispatch evidence {treasury_reference}", doctype="Annual Plan Version", name=plan_version,
 	)
-	with _as(ACCOUNTING_OFFICER):
+	with _as(ACCOUNTING_OFFICER), at("treasury_submitted"):
 		treasury.record_treasury_submission(
 			plan_version=plan_version,
-			submitted_at=CLOCK["treasury_submitted"],
+			submitted_at=steps["treasury_submitted"],
 			channel="Official correspondence",
 			destination="National Treasury",
-			dispatch_reference="MOH/APP/2027/001",
+			dispatch_reference=treasury_reference,
 			exact_document_confirmed=True,
 			supporting_attachment=evidence,
-			idempotency_key=_key("treasury-submission"),
+			idempotency_key=key("treasury-submission"),
 		)
 	frappe.set_user("Administrator")
-	published = publication_pipeline.publish_annual_plan(plan_version=plan_version, idempotency_key=_key("publish-plan"))
+	with at("publication_acknowledged"):
+		published = publication_pipeline.publish_annual_plan(plan_version=plan_version, idempotency_key=key("publish-plan"))
 	return {**approved, "publication_result": published.get("result"), "publication": published.get("publication")}
 
 
-def _stamp_design_clock(plan_reference: str) -> None:
-	"""§14.4–14.6 exact instants onto the evidence rows the commands wrote."""
+def _stamp_design_clock(plan_reference: str, *, steps: dict[str, str] | None = None) -> None:
+	"""§14.4–14.6 exact instants onto the evidence rows the commands wrote
+	(the publication attempt's own two instants, which one inline worker run
+	cannot both hold)."""
+	CLOCK = steps or globals()["CLOCK"]
 	plan_name = frappe.db.get_value("Annual Plan", {"plan_reference": plan_reference})
 	version = frappe.db.get_value("Annual Plan", plan_name, "active_version") or frappe.db.get_value("Annual Plan", plan_name, "open_successor_version")
 	# The departmental submissions and acceptances, and the Head of
@@ -793,69 +911,265 @@ def _stamp_design_clock(plan_reference: str) -> None:
 			)
 
 
-def upsert_planning_base(*, commit: bool = False) -> dict[str, Any]:
-	"""The §14.4–14.6 integrated baseline. Idempotent by stable state: a rerun
-	that finds the FY 2027/28 Annual Plan already Active returns it untouched
-	(§14.10 — no duplicate root, Version, entry, allocation, task, decision
-	or publication attempt)."""
+def _verify_year(year: str) -> dict[str, Any]:
+	"""§14.1/§14.3 for one seeded year: its Fiscal Year, its budget's lines,
+	the Objective and the accepted Needs its departmental plans fund — or one
+	loud failure naming exactly what is absent. Nothing is invented."""
+	from kentender_budget.seeds.kentender_mvp_v1_portfolio import BUDGETS, canonical_budget_line
+	from kentender_procurement.procurement_planning.services import needs_intake
+
+	y = calendar.year(year)
+	spec = plan_spec(year)
+	missing: list[str] = []
+
+	def need(label: str, ok) -> None:
+		if not ok:
+			missing.append(label)
+
+	need("configured site (System setup)", site_configuration.is_configured())
+	need(f"Fiscal Year {y.fiscal_year}", frappe.db.exists("Fiscal Year", y.fiscal_year))
+	lines = {key: canonical_budget_line(key, year) for key in BUDGETS[year]["lines"]}
+	for key, line in lines.items():
+		need(f"{y.label} budget line '{BUDGETS[year]['lines'][key]['title']}' with an Active Budget Version", line)
+	objective = _objective()
+	need(f"Active Strategic Objective '{OBJECTIVE_TITLE}'", objective)
+	units = {DHI_NAME: _unit_for(AUTHOR, "Departmental Author", DHI_NAME), HRMD_NAME: _unit_for(AUTHOR, "Departmental Author", HRMD_NAME)}
+	for name, unit in units.items():
+		need(f"Grace's Departmental Author assignment in '{name}'", unit)
+	for dpp in spec["dpps"]:
+		for row in dpp["needs"]:
+			need(f"Departmental Need {row['need']} Accepted for planning", needs_intake.current_accepted_revision_of(row["need"], y.fiscal_year))
+	for actor, role in ((PLANNER, "Procurement Planner"), (FINANCE, "Finance Confirmation Officer"), (AUDITOR, "Auditor")):
+		need(f"{actor} holds {role}", frappe.db.exists("User Responsibility Assignment", {"user": actor, "business_role": role, "status": "Enabled"}))
+	if missing:
+		frappe.throw(f"PLN §14 seed prerequisites for {y.label} are absent or differ — seeds never invent a substitute (§14.1). Missing: " + "; ".join(missing))
+	return {"lines": lines, "objective": objective, "units": units}
+
+
+@contextmanager
+def _year_intake(year: str):
+	"""The year's departmental-plan intake, opened at its documented instant
+	with its close instant (CFG-BR-013: opening it closes any other year's).
+	The site stage's Year 2 intake is restored afterwards."""
+	from kentender_core.seeds import site_setup
+
+	y = calendar.year(year)
+	with clock.at(y.at("2026-11-25 09:00:00")):
+		site_configuration.open_dpp_submission(
+			fiscal_year=y.fiscal_year, closes_at=y.at(site_setup.DPP_INTAKE["closes_at"]),
+			reason=f"Departmental procurement plans called for {y.label} under regulation 40(3).",
+		)
+	try:
+		yield
+	finally:
+		site_setup._seed_dpp_intake()
+
+
+def _ykey(year: str, step: str) -> str:
+	# Year 2 keeps the keys the seed has always used, so a world seeded before
+	# the two-year change replays its own journal rather than duplicating it.
+	return _key(step if year == "year2" else f"{year}:{step}")
+
+
+def _build_dpp(year: str, dpp: dict[str, Any], prereqs: dict[str, Any], steps: dict[str, str]) -> dict[str, str]:
+	"""One departmental plan through the real commands: Grace funds each
+	projected accepted Need and adds each direct requirement, the department's
+	head certifies it, Mercy classifies and accepts it (the first acceptance
+	of the year creates its Draft Annual Plan, §5.2). Returns
+	`{source key: entry_id}`."""
+	from kentender_procurement.procurement_planning.services import dpp_lifecycle, dpp_validation
+
+	y = calendar.year(year)
+	key = dpp["key"]
+	entries: dict[str, str] = {}
+	classifications: dict[str, str] = {}
+	with _as(AUTHOR), clock.at(steps[f"dpp_opened_{key}"]):
+		opened = dpp_lifecycle.open_departmental_plan(
+			organisation_unit=prereqs["units"][dpp["unit"]], fiscal_year=y.fiscal_year,
+			idempotency_key=_ykey(year, "open-dhi-dpp" if key == "dhi" else "open-hrmd-dpp"), fixture_namespace=NS,
+		)
+		record_version = opened["record_version"]
+		# Accepting the year's Needs already started this Draft (`dpp_autostart`)
+		# without the seed's stamp: stamp it now, so the submission, its task
+		# and the Annual Plan the acceptance creates inherit it, and `reset`
+		# keeps them as canonical.
+		_stamp_namespace("Departmental Plan", opened["departmental_plan"])
+		for version_name in frappe.get_all("Departmental Plan Version", filters={"departmental_plan": opened["departmental_plan"]}, pluck="name"):
+			_stamp_namespace("Departmental Plan Version", version_name)
+		for row in dpp["needs"]:
+			entry_id = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": opened["current_version"], "need": row["need"]}, "entry_id")
+			if not entry_id:
+				frappe.throw(f"The accepted Need {row['need']} did not project into the Draft {dpp['unit']} plan — run the Departmental Needs seed first (§14.10).")
+			funded = dpp_lifecycle.save_need_funding(
+				dpp_version=opened["current_version"], entry_id=entry_id, budget_line=prereqs["lines"][row["line"]], indicative_amount=row["amount"],
+				expected_record_version=record_version, idempotency_key=_ykey(year, f"fund-{row['source']}"),
+			)
+			record_version = funded["record_version"]
+			entries[row["source"]] = entry_id
+			classifications[entry_id] = row["classification"]
+		for row in dpp["direct"]:
+			added = dpp_lifecycle.save_direct_requirement(
+				dpp_version=opened["current_version"], values={**row["values"], "budget_line": prereqs["lines"][row["line"]]},
+				expected_record_version=record_version, idempotency_key=_ykey(year, f"add-{row['source']}"),
+			)
+			record_version = added["record_version"]
+			entries[row["source"]] = added["entry_id"]
+			classifications[added["entry_id"]] = row["classification"]
+	with _as(dpp["submitter"]), clock.at(steps[f"dpp_submitted_{key}"]):
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True,
+			expected_record_version=record_version, idempotency_key=_ykey(year, "submit-dpp" if key == "dhi" else "submit-hrmd-dpp"),
+		)
+	task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+	with _as(PLANNER), clock.at(steps[f"dpp_accepted_{key}"]):
+		dpp_validation.accept_departmental_plan(
+			task=task.name, classifications=classifications, task_token=task.task_token,
+			idempotency_key=_ykey(year, "accept-dpp" if key == "dhi" else "accept-hrmd-dpp"),
+		)
+	return entries
+
+
+def _form_year_items(year: str, plan_reference: str, entries: dict[str, str], prereqs: dict[str, Any], steps: dict[str, str]) -> list[str]:
+	"""Every Plan Item of the year's spec, formed from its exact sources and
+	given its package, in the one Draft Annual Plan Version."""
+	from kentender_procurement.procurement_planning.services import plan_read, plan_workbench
+
+	formed_ids: list[str] = []
+	with _as(PLANNER), clock.at(steps["items_formed"]):
+		for index, item in enumerate(plan_spec(year)["items"]):
+			plan = plan_read.get_annual_plan(plan_reference=plan_reference)
+			by_entry = {row["entry_id"]: row["dpp_entry"] for row in plan["unallocated_sources"]}
+			sources = [by_entry.get(entries.get(source, "")) for source in item["sources"]]
+			if not all(sources):
+				frappe.throw(f"Planning seed: {item['values']['title']} has no unallocated source for {item['sources']} in {plan_reference}.")
+			combined = item.get("mode") == "combined"
+			formed = plan_workbench.form_plan_items(
+				plan_version=plan["version_reference"], dpp_entries=sources, mode="combined" if combined else "each",
+				**({"combination_reason": item["values"]["aggregation_reason"], "combined_title": item["values"]["title"]} if combined else {}),
+				expected_record_version=plan["record_version"], idempotency_key=_ykey(year, f"form-item-{index}"),
+			)
+			item_id = formed["created_items"][0]
+			detail = plan_read.get_plan_item(plan_item_id=item_id)
+			plan_workbench.save_plan_item(
+				plan_item=item_id, values={**item["values"], "strategic_objective": prereqs["objective"]},
+				expected_record_version=detail["record_version"], idempotency_key=_ykey(year, f"save-item-{index}"),
+			)
+			formed_ids.append(item_id)
+	return formed_ids
+
+
+def _confirm_year_funding(year: str, plan_reference: str, steps: dict[str, str]) -> None:
+	from kentender_procurement.procurement_planning.services import plan_finance, plan_read
+
+	with _as(PLANNER), clock.at(steps["funding_requested"]):
+		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
+		requested = plan_finance.request_plan_funding_confirmation(
+			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=_ykey(year, "request-funding"),
+		)
+	task = frappe.get_doc("Plan Finance Task", requested["task"])
+	with _as(FINANCE), clock.at(steps["finance_confirmed"]):
+		plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=_ykey(year, "confirm-funding"))
+
+
+def _stamp_namespace(doctype: str, name: str) -> None:
+	if frappe.db.get_value(doctype, name, "fixture_namespace") != NS:
+		frappe.db.set_value(doctype, name, "fixture_namespace", NS, update_modified=False)
+
+
+def _accepted_entries(year: str) -> dict[str, str]:
+	"""`{source key: entry_id}` of a year's accepted departmental plans, found
+	by each spec row's Need or direct-requirement title."""
+	y = calendar.year(year)
+	out: dict[str, str] = {}
+	for dpp in plan_spec(year)["dpps"]:
+		unit = _unit_for(AUTHOR, "Departmental Author", dpp["unit"])
+		version = frappe.db.get_value("Departmental Plan", {"organisation_unit": unit, "fiscal_year": y.fiscal_year}, "current_accepted_version")
+		for row in dpp["needs"]:
+			out[row["source"]] = cstr(frappe.db.get_value("Departmental Plan Entry", {"dpp_version": version, "need": row["need"]}, "entry_id"))
+		for row in dpp["direct"]:
+			out[row["source"]] = cstr(frappe.db.get_value("Departmental Plan Entry", {"dpp_version": version, "title": row["values"]["title"], "need": ("in", ("", None))}, "entry_id"))
+	return out
+
+
+def year_plan(year: str) -> dict[str, Any] | None:
+	return frappe.db.get_value("Annual Plan", {"fiscal_year": calendar.year(year).fiscal_year}, ["name", "plan_reference", "active_version"], as_dict=True)
+
+
+def upsert_year_plan(year: str, *, through: str = "annual_plan") -> dict[str, Any]:
+	"""One seeded year's Planning journey, through `through`:
+	"departmental_plans" (both departmental plans accepted; the Draft Annual
+	Plan exists) or "annual_plan" (its items formed, funding confirmed,
+	signed, adopted, approved, sent to the Treasury and published: Active).
+	Idempotent by stable state."""
+	if through not in ("departmental_plans", "annual_plan"):
+		frappe.throw(f"Unknown Planning stop {through!r}; expected departmental_plans or annual_plan.")
+	y = calendar.year(year)
+	existing = year_plan(year)
+	spec = plan_spec(year)
+	if existing and existing.active_version:
+		return {"ok": True, "idempotent": True, "year": year, "plan_reference": existing.plan_reference, "active_version": existing.active_version}
+	roots = frappe.get_all("Departmental Plan", filters={"fiscal_year": y.fiscal_year}, fields=["name", "current_state", "current_accepted_version"])
+	accepted = [r for r in roots if r.current_accepted_version]
+	dpps_done = bool(existing) and len(accepted) == len(spec["dpps"]) == len(roots)
+	if through == "departmental_plans" and dpps_done:
+		return {"ok": True, "idempotent": True, "year": year, "plan_reference": existing.plan_reference, "active_version": ""}
+	# Accepting a Need starts its department's Draft plan by itself
+	# (`dpp_autostart`), so Draft roots are expected; anything further along
+	# than the spec's own journey is a profile's or a failed run's world.
+	versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": existing.name}, pluck="name") if existing else []
+	items = frappe.db.count("Annual Plan Item", {"plan_version": ("in", versions or ("",))}) if existing else 0
+	if (existing and not dpps_done) or items or (accepted and not dpps_done) or any(r.current_state not in ("Draft", "Accepted") for r in roots):
+		frappe.throw(
+			f"The {y.label} Planning world exists mid-lifecycle ({existing.plan_reference if existing else 'departmental plans only'}) — "
+			"an isolated profile or a failed run left it. Rebuild the canonical world: make seed-canonical REBUILD=True."
+		)
+	prereqs = _verify_year(year)
+	steps = year_clock(year)
+	entries: dict[str, str] = {}
+	if dpps_done:
+		# A world seeded to its departmental plans, now taken on to its Annual
+		# Plan: the accepted entries are the sources, keyed as the spec keys them.
+		entries = _accepted_entries(year)
+	else:
+		with _year_intake(year):
+			for dpp in spec["dpps"]:
+				entries.update(_build_dpp(year, dpp, prereqs, steps))
+	plan = year_plan(year)
+	if not plan:
+		frappe.throw(f"Accepting the {y.label} departmental plans created no Draft Annual Plan (§5.2).")
+	out: dict[str, Any] = {"ok": True, "idempotent": False, "year": year, "plan_reference": plan.plan_reference, "entries": entries}
+	if through == "departmental_plans":
+		return out
+	out["plan_items"] = _form_year_items(year, plan.plan_reference, entries, prereqs, steps)
+	_confirm_year_funding(year, plan.plan_reference, steps)
+	approved = _govern_and_publish(plan.plan_reference, steps=steps, treasury_reference=spec["treasury_reference"], key=lambda step: _ykey(year, step))
+	_stamp_design_clock(plan.plan_reference, steps=steps)
+	out["publication_result"] = approved["publication_result"]
+	return out
+
+
+def upsert_planning_base(*, commit: bool = False, years: dict[str, str] | None = None) -> dict[str, Any]:
+	"""Each seeded year's Planning journey (`years` maps a year to how far it
+	goes; Year 1, the executed year, always to its Active Annual Plan).
+	Idempotent by stable state: a rerun that finds a year's Annual Plan
+	already Active returns it untouched (§14.10 — no duplicate root, Version,
+	entry, allocation, task, decision or publication attempt)."""
 	_guard()
 	_actors()
 	# §13: the canonical world's own fixture-verified rules, before anything
 	# that has to resolve one.
 	ensure_profiles()
-	prereqs = verify_prerequisites()
 	_destination()
-
-	existing = frappe.db.get_value("Annual Plan", {"fiscal_year": FY}, ["name", "plan_reference", "active_version"], as_dict=True)
-	if existing and existing.active_version:
-		if commit:
-			frappe.db.commit()
-		return {"ok": True, "idempotent": True, "plan_reference": existing.plan_reference, "active_version": existing.active_version}
-	if existing:
-		frappe.throw(
-			f"An Annual Plan exists mid-lifecycle ({existing.plan_reference}) — an isolated profile is loaded. "
-			"Run reset_planning_seed() before reseeding the integrated baseline (§14.10)."
-		)
-	if frappe.db.exists("Departmental Plan", {"fiscal_year": FY}):
-		# a leftover pre-Plan profile world: reset, then build (stale journal rows replay otherwise)
-		reset_planning_seed()
-		_destination()
-
-	with _intake_open():
-		# PLN-CHG-001 v1.13 §14.4/§14.5 (SEED-001) — the DHI departmental plan
-		# carries both Need-1 (the existing single-department item) and
-		# Need-4 (Digital Health's half of the harmonized combined item) as
-		# two entries in the same DPP, submitted and accepted together.
-		built = _build_accepted_dpp(
-			prereqs,
-			extra_need_fundings=[
-				{
-					"need": NEED_DHI_LAPTOPS,
-					"budget_line": prereqs["bl_hwd"],
-					"amount": NEED_DHI_LAPTOPS_AMOUNT,
-					"classification": "Goods",
-				}
-			],
-		)
-		hrmd_entry_id = _build_hrmd_laptops_dpp(prereqs)
-		item_id, combined_item_id = _form_each_and_combined_items(built["accepted"]["annual_plan"], prereqs)
-		task = frappe.get_doc("Plan Finance Task", _request_funding(built["accepted"]["annual_plan"]))
-		with _as(FINANCE):
-			from kentender_procurement.procurement_planning.services import plan_finance
-
-			plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=_key("confirm-funding"))
-		approved = _govern_and_publish(built["accepted"]["annual_plan"])
-	_stamp_design_clock(built["accepted"]["annual_plan"])
+	years = years if years is not None else {"year1": "annual_plan"}
+	out: dict[str, Any] = {"ok": True, "years": {}}
+	for year in ("year1", "year2"):
+		if year in years:
+			out["years"][year] = upsert_year_plan(year, through=years[year])
+	executed = out["years"].get("year1") or {}
+	out.update({"plan_reference": executed.get("plan_reference"), "idempotent": all(r.get("idempotent") for r in out["years"].values())})
 	if commit:
 		frappe.db.commit()
-	return {
-		"ok": True, "idempotent": False,
-		"plan_reference": built["accepted"]["annual_plan"],
-		"plan_item": item_id,
-		"combined_plan_item": combined_item_id,
-		"hrmd_entry": hrmd_entry_id,
-		"publication_result": approved["publication_result"],
-	}
+	return out
 
 
 def wipe_all_planning() -> dict[str, int]:
@@ -883,9 +1197,10 @@ def wipe_all_planning() -> dict[str, int]:
 
 
 def reset_planning_seed(*, commit: bool = False) -> dict[str, int]:
-	"""Remove every Planning row on FY 2027/28 and every NS-stamped row, the
-	Need usage projection activation published (reversed through the same
-	published channel), and the seed's own command-journal rows."""
+	"""Remove every Planning row on both seeded years (FY 2026/27 and
+	FY 2027/28) and every NS-stamped row, each Need usage projection an
+	activation published (reversed through the same published channel), and
+	the seed's own command-journal rows."""
 	from uuid import uuid4
 
 	from kentender_procurement.departmental_needs.services import usage as needs_usage
@@ -893,13 +1208,18 @@ def reset_planning_seed(*, commit: bool = False) -> dict[str, int]:
 
 	_guard()
 	frappe.set_user("Administrator")
-	accepted_revision = needs_intake.current_accepted_revision_of(NEED, FY)
-	if accepted_revision and needs_usage.is_actively_included(accepted_revision):
-		needs_usage.project_planning_usage(
-			departmental_need=NEED, accepted_revision=accepted_revision, usage="Not included",
-			source_event_id=f"pln-seed-reset:{uuid4().hex}", source_event_time=now_datetime(), user="Administrator",
-		)
-	deleted = _wipe_fiscal_year(FY)
+	for year in calendar.YEARS:
+		for need in frappe.get_all("Departmental Need", filters={"financial_year": year.fiscal_year}, pluck="name"):
+			accepted_revision = needs_intake.current_accepted_revision_of(need, year.fiscal_year)
+			if accepted_revision and needs_usage.is_actively_included(accepted_revision):
+				needs_usage.project_planning_usage(
+					departmental_need=need, accepted_revision=accepted_revision, usage="Not included",
+					source_event_id=f"pln-seed-reset:{uuid4().hex}", source_event_time=now_datetime(), user="Administrator",
+				)
+	deleted: dict[str, int] = {}
+	for year in calendar.YEARS:
+		for doctype, count in _wipe_fiscal_year(year.fiscal_year).items():
+			deleted[doctype] = deleted.get(doctype, 0) + count
 	deleted.update(clear_planning_fixture_rows(include_playwright=False, namespaces=(NS,)))
 	journal = frappe.get_all("Planning Command Journal", filters={"idempotency_key": ("like", "pln-seed:%")}, pluck="name")
 	frappe.db.delete("Planning Command Journal", {"name": ("in", journal or ("",))})
@@ -1028,7 +1348,7 @@ def seed_direct_profile(*, commit: bool = False) -> dict[str, Any]:
 	prereqs = _fresh_profile_world()
 	with _intake_open(), _as(AUTHOR):
 		opened = dpp_lifecycle.open_departmental_plan(
-			organisation_unit=prereqs["dhi"], fiscal_year=FY, idempotency_key=_key("open-dhi-dpp"), fixture_namespace=NS,
+			organisation_unit=prereqs["dhi"], fiscal_year=PROFILE_FY, idempotency_key=_key("open-dhi-dpp"), fixture_namespace=NS,
 		)
 		need_entry_id = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": opened["current_version"], "need": NEED}, "entry_id")
 		funded = dpp_lifecycle.save_need_funding(
@@ -1221,72 +1541,95 @@ def clear_planning_fixture_rows(
 	return deleted
 
 
-def validate_planning_history() -> list[dict[str, Any]]:
-	"""PLN-CHG-001 v1.27 §10.2 / SEED-001 v1.3 §3.3 and §3.6–§3.7 facts that
-	no later stage changes, so the core validator asserts them whatever
-	stage it seeds through (unlike `validate_planning_seed`). Never mutates."""
+def validate_planning_history(year: str = "year1", *, through: str = "annual_plan") -> list[dict[str, Any]]:
+	"""PLN-CHG-001 v1.27 §10.2 / SEED-001 v1.3 §3.3 and §3.6–§3.7 facts of
+	one seeded year that no later stage changes, so the core validator
+	asserts them whatever stage it seeds through (unlike
+	`validate_planning_seed`). `through` "departmental_plans": only the
+	departmental plans. Never mutates."""
+	from kentender_procurement.departmental_needs.services.usage import planning_usage
+
 	checks: list[dict[str, Any]] = []
+	y = calendar.year(year)
+	steps = year_clock(year)
+	spec = plan_spec(year)
 
 	def check(name: str, ok: bool, detail: str = "") -> None:
-		checks.append({"check": f"planning.history.{name}", "ok": bool(ok), "detail": detail})
+		checks.append({"check": f"planning.{year}.{name}", "ok": bool(ok), "detail": detail})
 
-	plan_row = frappe.db.get_value("Annual Plan", {"fiscal_year": FY}, ["name", "active_version"], as_dict=True)
+	for dpp in spec["dpps"]:
+		department = dpp["unit"]
+		unit = frappe.db.get_value("Organisation Unit", {"unit_name": department}, "name")
+		root = frappe.db.get_value("Departmental Plan", {"organisation_unit": unit, "fiscal_year": y.fiscal_year}, "name")
+		submission = frappe.db.get_value(
+			"Departmental Plan Submission",
+			{"dpp_version": ("in", frappe.get_all("Departmental Plan Version", filters={"departmental_plan": root}, pluck="name") or ("",))},
+			["name", "submitted_by_user", "submitted_at"], as_dict=True,
+		)
+		check(f"{department}.certified", bool(submission) and submission.submitted_by_user == dpp["submitter"] and str(submission.submitted_at)[:19] == steps[f"dpp_submitted_{dpp['key']}"], str(submission))
+		decision = frappe.db.get_value(
+			"Departmental Plan Validation Decision", {"submission": submission.name if submission else "", "decision": "Accept departmental plan"}, ["actor", "decided_at"], as_dict=True,
+		)
+		check(f"{department}.accepted", bool(decision) and decision.actor == PLANNER and str(decision.decided_at)[:19] == steps[f"dpp_accepted_{dpp['key']}"], str(decision))
+	plan_row = year_plan(year)
+	if through == "departmental_plans":
+		check("plan.draft", bool(plan_row) and not plan_row.active_version, str(plan_row))
+		return checks
 	check("plan.active", bool(plan_row and plan_row.active_version))
 	if not (plan_row and plan_row.active_version):
 		return checks
 	version = plan_row.active_version
-	for department, actor, submitted, accepted in (
-		("Digital Health", ACTING_HOD, CLOCK["dpp_submitted_dhi"], CLOCK["dpp_accepted_dhi"]),
-		("Human Resources Management and Development", HOD, CLOCK["dpp_submitted_hrmd"], CLOCK["dpp_accepted_hrmd"]),
-	):
-		unit = frappe.db.get_value("Organisation Unit", {"unit_name": department}, "name")
-		dpp = frappe.db.get_value("Departmental Plan", {"organisation_unit": unit, "fiscal_year": FY}, "name")
-		submission = frappe.db.get_value(
-			"Departmental Plan Submission",
-			{"dpp_version": ("in", frappe.get_all("Departmental Plan Version", filters={"departmental_plan": dpp}, pluck="name") or ("",))},
-			["name", "submitted_by_user", "submitted_at"], as_dict=True,
-		)
-		check(f"{department}.certified", bool(submission) and submission.submitted_by_user == actor and str(submission.submitted_at)[:19] == submitted, str(submission))
-		decision = frappe.db.get_value(
-			"Departmental Plan Validation Decision", {"submission": submission.name if submission else "", "decision": "Accept departmental plan"}, ["actor", "decided_at"], as_dict=True,
-		)
-		check(f"{department}.accepted", bool(decision) and decision.actor == PLANNER and str(decision.decided_at)[:19] == accepted, str(decision))
 	signature = frappe.db.get_value("Plan Preparation Signature", {"plan_version": version}, ["actor", "signed_at"], as_dict=True)
-	check("signature", bool(signature) and signature.actor == HOPF and str(signature.signed_at)[:19] == CLOCK["plan_submitted"], str(signature))
+	check("signature", bool(signature) and signature.actor == HOPF and str(signature.signed_at)[:19] == steps["plan_submitted"], str(signature))
 	items = {row.title: row for row in frappe.get_all(
-		"Annual Plan Item", filters={"plan_version": version}, fields=["title", "estimate_basis", "estimate_basis_reference", "estimated_delivery_period_days", "estimated_completion_date"],
+		"Annual Plan Item", filters={"plan_version": version},
+		fields=["title", "estimate_basis", "estimate_basis_reference", "estimated_delivery_period_days", "estimated_completion_date", "baseline_invitation_date"],
 	)}
-	for title, days, completion in ((ITEM_VALUES["title"], 30, "2027-08-11"), (COMBINED_ITEM_VALUES["title"], 60, "2027-09-24")):
-		item = items.get(title)
+	check("items.count", len(items) == len(spec["items"]), f"{len(items)} of {len(spec['items'])}")
+	for item in spec["items"]:
+		values = item["values"]
+		row = items.get(values["title"])
 		check(
-			f"{title}.delivery",
-			bool(item) and (item.estimated_delivery_period_days, str(item.estimated_completion_date)) == (days, completion),
-			str(item and (item.estimated_delivery_period_days, item.estimated_completion_date)),
+			f"{values['title']}.baseline",
+			bool(row) and (str(row.baseline_invitation_date), row.estimated_delivery_period_days) == (values["baseline_invitation_date"], values["estimated_delivery_period_days"]),
+			str(row and (row.baseline_invitation_date, row.estimated_delivery_period_days)),
 		)
-		check(f"{title}.estimate_basis", bool(item) and (item.estimate_basis, item.estimate_basis_reference) == (ITEM_VALUES["estimate_basis"], ITEM_VALUES["estimate_basis_reference"]))
-	evidence = frappe.db.get_value("Treasury Submission Evidence", {"plan_version": version, "evidence_state": "Current"}, "supporting_attachment")
-	check("treasury.attachment", bool(evidence) and bool(frappe.db.exists("File", {"file_url": evidence})), str(evidence))
+		check(f"{values['title']}.estimate_basis", bool(row) and (row.estimate_basis, row.estimate_basis_reference) == (ITEM_VALUES["estimate_basis"], ITEM_VALUES["estimate_basis_reference"]))
+		check(
+			f"{values['title']}.completes_inside_the_year",
+			bool(row) and bool(row.estimated_completion_date) and str(row.estimated_completion_date) <= str(frappe.db.get_value("Fiscal Year", y.fiscal_year, "year_end_date")),
+			str(row and row.estimated_completion_date),
+		)
+	activated = frappe.db.get_value("Annual Plan Version", version, "activated_at")
+	check("activated", str(activated)[:19] == steps["publication_acknowledged"], str(activated))
+	evidence = frappe.db.get_value("Treasury Submission Evidence", {"plan_version": version, "evidence_state": "Current"}, ["supporting_attachment", "dispatch_reference"], as_dict=True)
+	check("treasury.attachment", bool(evidence) and bool(frappe.db.exists("File", {"file_url": evidence.supporting_attachment})), str(evidence))
+	check("treasury.reference", bool(evidence) and evidence.dispatch_reference == spec["treasury_reference"], str(evidence and evidence.dispatch_reference))
 	# Each funded Need reports its accepted revision as Fully included (found
 	# 26 Sep 2026: a Departmental Needs profile reset had deleted Need 1's).
-	from kentender_procurement.departmental_needs.services.usage import planning_usage
-
-	for need in ("NDS-MOH-2027-0001", "NDS-MOH-2027-0003", "NDS-MOH-2027-0004"):
-		check(f"{need}.fully_included", planning_usage(need) == "Fully included", planning_usage(need))
+	for dpp in spec["dpps"]:
+		for row in dpp["needs"]:
+			check(f"{row['need']}.fully_included", planning_usage(row["need"]) == "Fully included", planning_usage(row["need"]))
 	return checks
 
 
 def validate_planning_seed() -> list[dict[str, Any]]:
-	"""§14.10 — validate the integrated baseline through the same domain
-	services commands use, returning check rows for the core validator."""
+	"""§14.10 — validate the executed year's integrated baseline (Year 1)
+	through the same domain services commands use, while no Requisition has
+	drawn on it yet. Returns check rows for the core validator."""
+	from decimal import Decimal
+
 	from kentender_procurement.departmental_needs.services import usage as needs_usage
 	from kentender_procurement.procurement_planning.services import needs_intake, plan_read, plan_requisition
 
 	checks: list[dict[str, Any]] = []
+	spec = plan_spec("year1")
+	steps = year_clock("year1")
 
 	def check(name: str, ok: bool, detail: str = "") -> None:
 		checks.append({"check": f"planning.v112.{name}", "ok": bool(ok), "detail": detail})
 
-	plan_row = frappe.db.get_value("Annual Plan", {"fiscal_year": FY}, ["name", "plan_reference", "active_version"], as_dict=True)
+	plan_row = year_plan("year1")
 	check("plan.exists", bool(plan_row), str(plan_row))
 	if not plan_row:
 		return checks
@@ -1297,44 +1640,25 @@ def validate_planning_seed() -> list[dict[str, Any]]:
 	plan = plan_read.get_annual_plan(plan_reference=plan_row.plan_reference, user=PLANNER)
 	view = plan["active_view"]
 	check("active_view", view is not None)
-	# PLN-CHG-001 v1.13 §14.5/SEED-001 §3.6 — the integrated baseline now
-	# carries the pre-existing single-department item plus the harmonized
-	# two-department combined item: 2 items, KES 130,000,000 combined.
-	check("active.two_items", bool(view and view["summary"]["plan_items"] == 2), str(view and view["summary"]))
-	check("active.value_130m", bool(view and "130,000,000" in view["summary"]["value_display"]))
-	check("active.activated_display_15_00_eat", bool(view and view["summary"]["activated_display"] == "10 Dec 2026, 15:00 EAT"), str(view and view["summary"]["activated_display"]))
-	check("active.two_items", bool(view and view["summary"]["plan_items"] == 2))
-	if view and view["items"]:
-		item = view["items"][0]
-		# PLN-CHG-001 v1.23 — the approved baseline is the only schedule the
-		# MVP keeps, and it lives on the item detail, not on the Active row
-		# (which carries planned scope and remaining allowance).
-		detail = plan_read.get_plan_item(plan_item_id=item["plan_item_id"], user=PLANNER)
-		check("item.baseline_1_may_2027", any(
-			r["milestone"] == "invitation" and r["date"] == "2027-05-01" for r in detail["baseline"]["rows"]
-		))
-		eligibility = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item["plan_item_id"], user=PLANNER)
-		check("eligibility.eligible", eligibility["eligible"])
-		check("eligibility.remaining_80m", eligibility["remaining_value"] == "80000000.00")
-		check("eligibility.qty_1", eligibility["remaining_quantity"] == "1")
-	if view and len(view["items"]) > 1:
-		combined = view["items"][1]
-		combined_detail = plan_read.get_plan_item(plan_item_id=combined["plan_item_id"], user=PLANNER)
-		check("combined.baseline_15_may_2027", any(
-			r["milestone"] == "invitation" and r["date"] == "2027-05-15" for r in combined_detail["baseline"]["rows"]
-		))
-		combined_eligibility = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=combined["plan_item_id"], user=PLANNER)
-		# REQ-CHG-001 v1.6 D7 chains its own seed straight after this one in
-		# `make seed-kentender-mvp-v1` and authorises a Requisition against this
-		# exact combined item — once that has run, "eligible with the full
-		# 250/50m remaining" is no longer the true position (it is legitimately
-		# fully drawn down), so these three checks only apply to a
-		# Planning-only world with no Requisition against this item yet.
-		drawn_down = bool(frappe.db.exists("Plan Drawdown Reference", {"plan_item_id": combined["plan_item_id"], "drawdown_state": "Active"}))
-		if not drawn_down:
-			check("combined.eligibility.eligible", combined_eligibility["eligible"])
-			check("combined.eligibility.remaining_50m", combined_eligibility["remaining_value"] == "50000000.00")
-			check("combined.eligibility.qty_250", combined_eligibility["remaining_quantity"] == "250")
+	expected_value = sum(
+		Decimal(str(row["amount"])) for dpp in spec["dpps"] for row in (*dpp["needs"], *dpp["direct"])
+	)
+	check("active.items", bool(view and view["summary"]["plan_items"] == len(spec["items"])), str(view and view["summary"]))
+	check("active.value", bool(view and f"{int(expected_value):,}" in view["summary"]["value_display"]), str(view and view["summary"]["value_display"]))
+	activated = frappe.utils.get_datetime(steps["publication_acknowledged"])
+	check("active.activated_display", bool(view and view["summary"]["activated_display"] == f"{activated.day} {activated:%b %Y, %H:%M} EAT"), str(view and view["summary"]["activated_display"]))
+	by_title = {item["title"]: item for item in (view or {}).get("items") or []}
+	for item in spec["items"]:
+		values = item["values"]
+		row = by_title.get(values["title"])
+		check(f"{values['title']}.listed", bool(row))
+		if not row:
+			continue
+		detail = plan_read.get_plan_item(plan_item_id=row["plan_item_id"], user=PLANNER)
+		check(f"{values['title']}.baseline", any(r["milestone"] == "invitation" and r["date"] == values["baseline_invitation_date"] for r in detail["baseline"]["rows"]))
+		if not frappe.db.exists("Plan Drawdown Reference", {"plan_item_id": row["plan_item_id"], "drawdown_state": "Active"}):
+			eligibility = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=row["plan_item_id"], user=PLANNER)
+			check(f"{values['title']}.eligible", eligibility["eligible"], str(eligibility.get("reason") or ""))
 	version = plan_row.active_version
 	finance = frappe.db.get_value(
 		"Plan Finance Decision",
@@ -1354,6 +1678,8 @@ def validate_planning_seed() -> list[dict[str, Any]]:
 		"publication.treasury_evidence_current",
 		bool(frappe.db.get_value("Treasury Submission Evidence", {"plan_version": version, "evidence_state": "Current"}, "name")),
 	)
-	accepted_revision = needs_intake.current_accepted_revision_of(NEED, FY)
-	check("need_usage.fully_included", bool(accepted_revision) and needs_usage.is_actively_included(accepted_revision), str(accepted_revision))
+	for dpp in spec["dpps"]:
+		for row in dpp["needs"]:
+			accepted_revision = needs_intake.current_accepted_revision_of(row["need"], FY)
+			check(f"{row['need']}.usage_fully_included", bool(accepted_revision) and needs_usage.is_actively_included(accepted_revision), str(accepted_revision))
 	return checks

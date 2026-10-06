@@ -41,17 +41,17 @@
 		<Notice v-if="error" tone="critical"><span data-testid="req-decision-error">{{ error }}</span></Notice>
 
 		<div v-if="decider && uncertain !== 'checking' && uncertain !== 'committed'" class="req-footer">
-			<button v-if="actions.request_planning_correction" type="button" class="kt-btn kt-btn-ghost" :disabled="busy" data-testid="req-action-planning" @click="dialog = 'planning'">Request Planning correction</button>
+			<button v-if="actions.request_planning_correction" type="button" class="btn btn-ghost" :disabled="busy" data-testid="req-action-planning" @click="dialog = 'planning'">Request Planning correction</button>
 			<div class="req-actions">
 				<ActionsMenu v-if="menu.length" :actions="menu" :disabled="busy" @choose="(k) => (dialog = k)" />
-				<button v-if="actions.return_for_correction" type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="req-return" @click="dialog = 'return'">Return for correction</button>
-				<button type="button" class="kt-btn" :class="actions.submit_to_procurement ? 'kt-btn-primary' : 'kt-btn-secondary'" :disabled="busy || !actions.submit_to_procurement" data-testid="req-submit" @click="submit">
+				<button v-if="actions.return_for_correction" type="button" class="btn btn-secondary" :disabled="busy" data-testid="req-return" @click="dialog = 'return'">Return for correction</button>
+				<button type="button" class="btn" :class="actions.submit_to_procurement ? 'btn-primary' : 'btn-secondary'" :disabled="busy || !actions.submit_to_procurement" data-testid="req-submit" @click="submit">
 					{{ busy && acting === 'submit' ? "Submitting…" : "Submit to Procurement" }}
 				</button>
 			</div>
 		</div>
 		<div v-else-if="uncertain !== 'checking'" class="req-footer">
-			<button type="button" class="kt-btn kt-btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
+			<button type="button" class="btn btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
 			<ActionsMenu v-if="readerMenu.length" :actions="readerMenu" :disabled="busy" @choose="(k) => (dialog = k)" />
 		</div>
 

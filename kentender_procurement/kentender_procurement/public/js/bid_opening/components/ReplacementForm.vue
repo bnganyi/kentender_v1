@@ -5,12 +5,12 @@
 <template>
 	<div class="kt-region" data-testid="bop-replacement"><h2>Appoint a replacement</h2>
 		<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;max-width:1000px">
-			<div class="kt-field"><label for="bop-replace-who">Replace</label><select id="bop-replace-who" v-model="replaced" class="kt-input"><option v-for="m in absent" :key="m.member_user" :value="m.member_user">{{ m.full_name }} · {{ m.committee_role }}</option></select></div>
-			<div class="kt-field"><label for="bop-replace-with">With</label><select id="bop-replace-with" v-model="successor" class="kt-input" data-testid="bop-replace-with"><option value="" disabled>Choose a person</option><option v-for="c in available" :key="c.user" :value="c.user">{{ c.full_name }} · {{ c.designation }}</option></select></div>
-			<div class="kt-field" style="grid-column:1 / -1"><label for="bop-replace-reason">Reason</label><input id="bop-replace-reason" v-model="reason" class="kt-input" data-testid="bop-replace-reason"></div>
+			<div class="field"><label for="bop-replace-who">Replace</label><select id="bop-replace-who" v-model="replaced" class="input"><option v-for="m in absent" :key="m.member_user" :value="m.member_user">{{ m.full_name }} · {{ m.committee_role }}</option></select></div>
+			<div class="field"><label for="bop-replace-with">With</label><select id="bop-replace-with" v-model="successor" class="input" data-testid="bop-replace-with"><option value="" disabled>Choose a person</option><option v-for="c in available" :key="c.user" :value="c.user">{{ c.full_name }} · {{ c.designation }}</option></select></div>
+			<div class="field" style="grid-column:1 / -1"><label for="bop-replace-reason">Reason</label><input id="bop-replace-reason" v-model="reason" class="input" data-testid="bop-replace-reason"></div>
 		</div>
 		<p v-if="error" class="bop-field-error" role="alert">{{ error }}</p>
-		<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="kt-btn kt-btn-primary" :disabled="pending || !successor || !reason.trim()" data-testid="bop-replace-confirm" @click="appoint">Appoint replacement</button></div>
+		<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-primary" :disabled="pending || !successor || !reason.trim()" data-testid="bop-replace-confirm" @click="appoint">Appoint replacement</button></div>
 	</div>
 </template>
 

@@ -37,10 +37,10 @@ onMounted(() => {
 		</div>
 		<div v-if="failure" class="kt-notice is-critical acc-load-failure" role="alert">
 			<div class="kt-notice-body">{{ failure }}</div>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="verify">{{ __("Try again") }}</button>
+			<button type="button" class="btn btn-secondary" @click="verify">{{ __("Try again") }}</button>
 		</div>
 		<div v-if="!pending" class="acc-actions">
-			<a href="/account" class="kt-btn kt-btn-primary" data-testid="acc-verify-continue" @click.prevent="portal.go('/account')">{{ __("Go to Account") }}</a>
+			<a href="/account" class="btn btn-primary" data-testid="acc-verify-continue" @click.prevent="portal.go('/account')">{{ __("Go to Account") }}</a>
 		</div>
 	</div>
 </template>

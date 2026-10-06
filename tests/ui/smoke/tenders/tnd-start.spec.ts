@@ -17,7 +17,7 @@ test.describe("TPR-DES-02 Start Tender dialog", () => {
 		await gotoTenders(page, `/new/${state.handoff}`);
 		await expectReady(page, "start");
 		const dialog = page.locator('[data-testid="tnd-start-dialog"]');
-		await expect(dialog.locator(".kt-dialog-title")).toContainText("Start this Tender?");
+		await expect(dialog.locator(".dialog-title")).toContainText("Start this Tender?");
 		await expect(dialog.locator(".kt-label")).toHaveText(["Purchase", "Requisition", "Quantity", "Approved value", "Method", "Latest delivery"]);
 		await expect(dialog.locator('[data-testid="tnd-start-supported"]')).toContainText("Supported");
 		await dialog.locator(".kt-disclosure-head").first().click();

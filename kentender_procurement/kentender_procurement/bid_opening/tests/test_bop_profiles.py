@@ -31,10 +31,12 @@ class TestDemoProfiles(IntegrationTestCase):
 				self.assertTrue(report["do"] or profiles.PROFILES[profile].get("world") == "browser")
 
 	def test_restore_puts_the_finished_opening_back(self):
+		from kentender_core.seeds.calendar import AS_AT
 		from kentender_core.services.test_clock import current_instant
 
 		profiles.load_profile(profile="BOP-DEMO-READ-ALOUD")
 		restored = profiles.restore_base()
 		self.assertEqual(restored["failures"], [])
-		self.assertIsNone(current_instant())
+		# Restoring returns the site to the canonical world's "now", not real time.
+		self.assertEqual(str(current_instant() or ""), AS_AT)
 		self.assertEqual(frappe.db.get_value("Bid Opening Case", {"tender_reference": restored["tender"]}, "state"), "Opening complete")

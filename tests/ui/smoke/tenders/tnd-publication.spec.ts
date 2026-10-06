@@ -41,7 +41,7 @@ test.describe("TPR-DES-08 Publication confirmation", () => {
 
 		await page.locator('[data-testid="tnd-channel-NOTICE_BOARD"] [data-testid="tnd-confirm-channel"]').click();
 		const dialog = page.locator('[data-testid="tnd-channel-dialog"]');
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Confirm notice-board publication");
+		await expect(dialog.locator(".dialog-title")).toHaveText("Confirm notice-board publication");
 		await expect(dialog.locator('[data-testid="tnd-ch-url"]')).toHaveCount(0);
 		await dialog.locator('[data-testid="tnd-ch-confirm"]').click();
 		await expect(dialog.locator('[data-testid="tnd-ch-error-available_at"]')).toBeVisible();
@@ -94,7 +94,7 @@ test.describe("TPR-DES-08 Publication confirmation", () => {
 		});
 		await page.locator('[data-testid="tnd-channel-NATIONAL_NEWSPAPERS"] [data-testid="tnd-confirm-channel"]').click();
 		const dialog = page.locator('[data-testid="tnd-channel-dialog"]');
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Confirm newspaper publication — Two national newspapers");
+		await expect(dialog.locator(".dialog-title")).toHaveText("Confirm newspaper publication — Two national newspapers");
 		await dialog.locator('[data-testid="tnd-ch-available"]').fill("2027-05-15T08:20");
 		await dialog.locator('[data-testid="tnd-ch-reference"]').fill("NP-MOH-2027-033");
 		await uploadEvidence(page, '[data-testid="tnd-ch-choose-file"]');

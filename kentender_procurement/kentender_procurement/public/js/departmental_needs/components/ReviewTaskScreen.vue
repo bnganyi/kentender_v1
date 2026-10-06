@@ -47,7 +47,7 @@
 		>
 			<div class="kt-notice-body">
 				<p style="margin: 0">This review has already changed. Refresh to see the current result.</p>
-				<button type="button" class="kt-btn kt-btn-secondary" style="margin-top: 12px" data-testid="nds-review-refresh" @click="$emit('refresh')">
+				<button type="button" class="btn btn-secondary" style="margin-top: 12px" data-testid="nds-review-refresh" @click="$emit('refresh')">
 					Refresh
 				</button>
 			</div>
@@ -61,7 +61,7 @@
 		     (found live 24 Sep 2026). -->
 		<div v-if="isSuccessor && changedFields.length" class="kt-region">
 			<h2>What changed</h2>
-			<table class="kt-table" style="max-width: 900px; width: 100%">
+			<table class="table" style="max-width: 900px; width: 100%">
 				<thead><tr><th>Field</th><th>Previously accepted</th><th>Proposed</th></tr></thead>
 				<tbody>
 					<tr v-for="row in changedFields" :key="row.label">
@@ -91,15 +91,15 @@
 				does not approve spending or start procurement.
 			</p>
 			<div style="display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap">
-				<button class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="nds-decision-return" @click="$emit('return')">
+				<button class="btn btn-secondary" :disabled="pending" data-testid="nds-decision-return" @click="$emit('return')">
 					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" /></svg
 					>Return for correction
 				</button>
-				<button class="kt-btn kt-btn-secondary kt-danger" :disabled="pending" data-testid="nds-decision-decline" @click="$emit('decline')">
+				<button class="btn btn-secondary kt-danger" :disabled="pending" data-testid="nds-decision-decline" @click="$emit('decline')">
 					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg
 					>{{ declineLabel }}
 				</button>
-				<button class="kt-btn kt-btn-primary" :disabled="pending" data-testid="nds-decision-accept" @click="$emit('accept')">
+				<button class="btn btn-primary" :disabled="pending" data-testid="nds-decision-accept" @click="$emit('accept')">
 					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg
 					>{{ acceptLabel }}
 				</button>

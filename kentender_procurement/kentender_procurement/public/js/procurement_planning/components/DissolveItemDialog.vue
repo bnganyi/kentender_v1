@@ -10,14 +10,14 @@
      The requirements table itself stays to identity and allocation only —
      department is a page-level fact already visible behind this dialog. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="pln-dissolve-item-dialog">
-		<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="pln-dissolve-item-title">
-			<div id="pln-dissolve-item-title" class="kt-dialog-title">Remove this purchase?</div>
+	<div class="dialog-backdrop" data-testid="pln-dissolve-item-dialog">
+		<div class="dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="pln-dissolve-item-title">
+			<div id="pln-dissolve-item-title" class="dialog-title">Remove this purchase?</div>
 			<div v-if="item.title" class="pln-dialog-item" data-testid="pln-dissolve-item-summary">
 				<div class="pln-task-title">{{ item.title }}</div>
 				<div class="kt-muted pln-row-ref">{{ item.plan_item_id }}</div>
 			</div>
-			<table v-if="sources.length" class="kt-table" data-testid="pln-dissolve-sources">
+			<table v-if="sources.length" class="table" data-testid="pln-dissolve-sources">
 				<thead><tr><th>Requirement</th><th class="is-num">Allocation</th></tr></thead>
 				<tbody>
 					<tr v-for="row in sources" :key="row.requirement + row.department">
@@ -32,12 +32,12 @@
 			<p v-if="error" class="pln-dialog-error" role="alert" data-testid="pln-dissolve-item-error">
 				{{ error }}
 			</p>
-			<div class="kt-dialog-actions">
-				<button class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">
+			<div class="dialog-actions">
+				<button class="btn btn-secondary" :disabled="pending" @click="$emit('cancel')">
 					Cancel
 				</button>
 				<button
-					class="kt-btn kt-btn-primary kt-danger" data-testid="pln-dissolve-item-confirm"
+					class="btn btn-primary kt-danger" data-testid="pln-dissolve-item-confirm"
 					:disabled="pending" @click="$emit('confirm')"
 				>
 					Remove purchase

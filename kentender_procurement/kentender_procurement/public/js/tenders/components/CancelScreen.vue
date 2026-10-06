@@ -35,7 +35,7 @@
 				<div v-if="review && !deciding" class="tnd-section tnd-section--last" data-testid="tnd-review-proposal">
 					<h2 class="tnd-h2">Proposed change that cannot be made by addendum</h2>
 					<p class="tnd-small tnd-muted-700 tnd-h2-lede">An addendum cannot expand the purchase. This is a request to consider cancellation, not a cancellation decision.</p>
-					<table class="kt-table">
+					<table class="table">
 						<thead><tr><th>Field</th><th>Current published</th><th>Proposed</th><th>Reason</th></tr></thead>
 						<tbody><tr><td>{{ review.field }}</td><td>{{ review.current }}</td><td>{{ review.proposed }}</td><td>{{ review.reason }}</td></tr></tbody>
 					</table>
@@ -47,11 +47,11 @@
 				</div>
 				<template v-if="deciding">
 					<div class="tnd-section tnd-section--form">
-						<div class="kt-field tnd-form-row"><label for="tnd-cancel-ground">Ground</label>
-							<select id="tnd-cancel-ground" class="kt-input" v-model="ground" :disabled="!canDecide && !canRecommend" data-testid="tnd-cancel-ground"><option v-for="g in data.grounds || []" :key="g.key" :value="g.key">{{ g.label }}</option></select>
+						<div class="field tnd-form-row"><label for="tnd-cancel-ground">Ground</label>
+							<select id="tnd-cancel-ground" class="input" v-model="ground" :disabled="!canDecide && !canRecommend" data-testid="tnd-cancel-ground"><option v-for="g in data.grounds || []" :key="g.key" :value="g.key">{{ g.label }}</option></select>
 						</div>
-						<div class="kt-field" style="margin: 0"><label for="tnd-cancel-reason">Reason</label>
-							<textarea id="tnd-cancel-reason" class="kt-input" rows="3" v-model="reason" :disabled="!canDecide && !canRecommend" data-testid="tnd-cancel-reason"></textarea>
+						<div class="field" style="margin: 0"><label for="tnd-cancel-reason">Reason</label>
+							<textarea id="tnd-cancel-reason" class="input" rows="3" v-model="reason" :disabled="!canDecide && !canRecommend" data-testid="tnd-cancel-reason"></textarea>
 							<p v-if="fieldError" class="tnd-field-error" data-testid="tnd-cancel-error">{{ fieldError }}</p>
 						</div>
 					</div>
@@ -78,14 +78,14 @@
 				</div>
 				<div class="tnd-section tnd-section--last">
 					<h2 class="tnd-h2">Compliance obligations</h2>
-					<table class="kt-table" data-testid="tnd-obligations">
+					<table class="table" data-testid="tnd-obligations">
 						<thead><tr><th>Obligation</th><th>Due</th><th>Status</th><th v-if="canRecord">Action</th></tr></thead>
 						<tbody>
 							<tr v-for="row in data.compliance || []" :key="row.key" :data-testid="`tnd-obligation-${row.key}`" :data-status="row.status">
 								<td>{{ row.label }}<span v-if="row.detail" class="tnd-sub">{{ row.detail }}</span></td>
 								<td>{{ row.due_by }}</td>
 								<td><span class="kt-status" :class="row.status === 'Recorded' ? 'is-live' : row.status === 'Overdue' ? 'is-critical' : 'is-attention'">{{ row.status }}</span></td>
-								<td v-if="canRecord"><button v-if="row.action" type="button" class="kt-btn kt-btn-secondary" :disabled="pending" :data-testid="`tnd-${row.action.replace(/_/g, '-')}`" @click="$emit('record-evidence', obligationFor(row))">{{ row.action_label }}</button></td>
+								<td v-if="canRecord"><button v-if="row.action" type="button" class="btn btn-ghost" :disabled="pending" :data-testid="`tnd-${row.action.replace(/_/g, '-')}`" @click="$emit('record-evidence', obligationFor(row))">{{ row.action_label }}</button></td>
 							</tr>
 						</tbody>
 					</table>
@@ -95,9 +95,9 @@
 		<div class="tnd-footer">
 			<a href="#" class="tnd-footer-back" data-testid="tnd-back" @click.prevent="$emit('back')">Back</a>
 			<div v-if="!cancelled" class="tnd-actions">
-				<button v-if="canClose && !deciding" type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-close-review" @click="$emit('close-review', review.addendum)">Close cancellation review</button>
-				<button v-if="canRecommend" type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-recommend" @click="recommend">Recommend cancellation</button>
-				<button v-if="canDecide" type="button" class="kt-btn tnd-btn-danger" :disabled="pending" data-testid="tnd-cancel-open-dialog" @click="decide">Cancel Tender</button>
+				<button v-if="canClose && !deciding" type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-close-review" @click="$emit('close-review', review.addendum)">Close cancellation review</button>
+				<button v-if="canRecommend" type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-recommend" @click="recommend">Recommend cancellation</button>
+				<button v-if="canDecide" type="button" class="btn tnd-btn-danger" :disabled="pending" data-testid="tnd-cancel-open-dialog" @click="decide">Cancel Tender</button>
 			</div>
 		</div>
 	</div>

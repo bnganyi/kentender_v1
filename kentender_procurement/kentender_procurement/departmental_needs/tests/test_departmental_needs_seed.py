@@ -3,7 +3,8 @@
 Asserts the §14.1 prerequisites, the §14.2 actors and assignments, the exact
 §14.3 default Needs, and that the §14.4/§14.5/§14.6 profiles are independently
 selectable and resettable (§14.7) — including that applying and resetting one
-leaves the four-row default fixture untouched.
+leaves the default fixture (three FY 2026/27 Needs, four FY 2027/28 Needs)
+untouched.
 """
 
 from __future__ import annotations
@@ -36,36 +37,51 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	PLANNER,
 	RETURN_REASON,
 	REVIEWER,
+	YEAR2_RETURN_REASON,
 	_granted_units,
 	upsert_departmental_needs,
+	validate_needs_seed,
 )
 from kentender_procurement.departmental_needs.services.context import needs_submission_state
 from kentender_procurement.departmental_needs.services.usage import planning_usage
 from kentender_procurement.departmental_needs.tests import support
 
-# §14.3 — reference, department label, quantity, required-by, state. The
-# department is asserted by its real Organisation Unit *name* rather than a
-# hardcoded id: `kentender_mvp_r1.py` resolves the two departments from
+# §14.3 — reference, department label, quantity, required-by, state, per
+# financial year of the two-year seed world (owner, 4 Oct 2026, D8–D10).
+# The department is asserted by its real Organisation Unit *name* rather than
+# a hardcoded id: `kentender_mvp_r1.py` resolves the two departments from
 # Grace's actual grants at build time (the site carries a documented
 # pre-existing Organisation Unit naming duplication — see
 # AUTH_IMPLEMENTATION_TRACKER_v2.0.md conflict C4 — so a hardcoded id would be
 # a guess about which duplicate).
-DEFAULT_NEEDS = {
+#
+# FY 2026/27 (carried out): the infrastructure Need and the two laptop Needs
+# the executed Annual Plan takes up, all due inside the year.
+YEAR1_NEEDS = {
+	"NDS-MOH-2026-0001": ("Digital Health", 1, "2027-06-30", STATE_ACCEPTED),
+	# Revision 1 asks for 200 and is returned; Revision 2 corrects it to 100.
+	"NDS-MOH-2026-0002": ("Human Resources Management and Development", 100, "2027-06-30", STATE_ACCEPTED),
+	"NDS-MOH-2026-0003": ("Digital Health", 150, "2027-06-30", STATE_ACCEPTED),
+}
+# FY 2027/28 (being prepared): the same journeys with the year's own
+# requirements; 0002 still waits for review, 0003 returned once (20 -> 12).
+YEAR2_NEEDS = {
 	"NDS-MOH-2027-0001": ("Digital Health", 1, "2027-08-31", STATE_ACCEPTED),
 	"NDS-MOH-2027-0002": ("Human Resources Management and Development", 1, "2027-12-31", STATE_SUBMITTED),
-	# SEED-001 §3.2 (2026-09-05): 0003/0004 are the two source Needs the
-	# harmonized combined Plan Item PPI-MOH-2027-033 draws from, so both are
-	# now Accepted at their corrected quantities, not Returned/Draft.
-	"NDS-MOH-2027-0003": ("Human Resources Management and Development", 100, "2027-12-31", STATE_ACCEPTED),
+	"NDS-MOH-2027-0003": ("Human Resources Management and Development", 12, "2027-12-31", STATE_ACCEPTED),
 	"NDS-MOH-2027-0004": ("Digital Health", 150, "2027-12-31", STATE_ACCEPTED),
 }
+DEFAULT_NEEDS = {**YEAR1_NEEDS, **YEAR2_NEEDS}
 
 # §14.3 exact expected operational results.
 EXPECTED_RESULTS = {
-	"NDS-MOH-2027-0001": "Priority health facilities can use secure and interoperable digital health services.",
+	"NDS-MOH-2026-0001": "Priority health facilities can use secure and interoperable digital health services.",
+	"NDS-MOH-2026-0002": "Provide the equipment required for staff training on the deployed digital health services.",
+	"NDS-MOH-2026-0003": "Provide endpoint equipment required to use the deployed digital health services.",
+	"NDS-MOH-2027-0001": "Health facilities exchange patient records through one secure, interoperable platform.",
 	"NDS-MOH-2027-0002": "Build internal capacity to operate and support national digital health platforms.",
-	"NDS-MOH-2027-0003": "Provide the equipment required for staff training on the deployed digital health services.",
-	"NDS-MOH-2027-0004": "Provide endpoint equipment required to use the deployed digital health services.",
+	"NDS-MOH-2027-0003": "Training rooms can run digital health courses with working presentation and sound equipment.",
+	"NDS-MOH-2027-0004": "Clinicians at priority facilities use decision-support tools within the digital health services.",
 }
 
 
@@ -158,7 +174,7 @@ class TestDefaultNeeds(SeedCase):
 	def default_references(self) -> set[str]:
 		return set(frappe.get_all("Departmental Need", filters={"fixture_namespace": NS}, pluck="name"))
 
-	def test_exactly_the_four_specified_needs_exist(self):
+	def test_exactly_the_specified_needs_of_both_years_exist(self):
 		self.assertEqual(self.default_references(), set(DEFAULT_NEEDS))
 
 	def test_each_need_matches_its_specified_row(self):
@@ -196,33 +212,37 @@ class TestDefaultNeeds(SeedCase):
 		self.assertEqual(owners, {AUTHOR})
 
 	def test_the_design_clock_decision_times_are_applied(self):
-		# NDS-CHG-001 v1.14 §14.3 / SEED-001 v1.3 §3.2: 0003 is returned on
-		# 24 Nov, corrected in Revision 2 and resubmitted on 25 Nov, then
-		# accepted (restored 26 Sep 2026; the seed had accepted Revision 1).
+		# NDS-CHG-001 v1.14 §14.3 / SEED-001 v1.3 §3.2 instants for FY 2027/28;
+		# FY 2026/27 runs the same journey 364 days earlier (same weekdays),
+		# with Julia Njeri accepting the Digital Health Needs while acting.
 		expected = {
-			("NDS-MOH-2027-0001", "Accept for planning"): "2026-11-24 14:00:00",
-			("NDS-MOH-2027-0002", "Submit"): "2026-11-24 12:20:00",
-			("NDS-MOH-2027-0003", "Return for correction"): "2026-11-24 13:35:00",
-			("NDS-MOH-2027-0003", "Resubmit"): "2026-11-25 09:00:00",
-			("NDS-MOH-2027-0003", "Accept for planning"): "2026-11-25 10:00:00",
-			("NDS-MOH-2027-0004", "Accept for planning"): "2026-11-25 09:30:00",
+			("NDS-MOH-2027-0001", "Accept for planning"): ("2026-11-24 14:00:00", REVIEWER),
+			("NDS-MOH-2027-0002", "Submit"): ("2026-11-24 12:20:00", AUTHOR),
+			("NDS-MOH-2027-0003", "Return for correction"): ("2026-11-24 13:35:00", REVIEWER),
+			("NDS-MOH-2027-0003", "Resubmit"): ("2026-11-25 09:00:00", AUTHOR),
+			("NDS-MOH-2027-0003", "Accept for planning"): ("2026-11-25 10:00:00", REVIEWER),
+			("NDS-MOH-2027-0004", "Accept for planning"): ("2026-11-25 09:30:00", REVIEWER),
+			("NDS-MOH-2026-0001", "Accept for planning"): ("2025-11-25 14:00:00", ACTING_REVIEWER),
+			("NDS-MOH-2026-0002", "Return for correction"): ("2025-11-25 13:35:00", REVIEWER),
+			("NDS-MOH-2026-0002", "Resubmit"): ("2025-11-26 09:00:00", AUTHOR),
+			("NDS-MOH-2026-0002", "Accept for planning"): ("2025-11-26 10:00:00", REVIEWER),
+			("NDS-MOH-2026-0003", "Accept for planning"): ("2025-11-26 09:30:00", ACTING_REVIEWER),
 		}
-		for (need, action), when in expected.items():
+		for (need, action), (when, actor) in expected.items():
 			occurred = frappe.db.get_value(
 				"Departmental Need Decision",
 				{"departmental_need": need, "action": action},
-				"occurred_at",
+				["occurred_at", "actor"],
 				order_by="creation desc",
+				as_dict=True,
 			)
+			self.assertTrue(occurred, f"{need} {action}")
 			# The frozen seed clock ticks, so the stored instant carries a
 			# fraction of a second after the fixture second.
-			self.assertEqual(str(occurred)[:19], when, f"{need} {action}")
+			self.assertEqual((str(occurred.occurred_at)[:19], occurred.actor), (when, actor), f"{need} {action}")
 
-	def test_need_0003_accepts_its_corrected_revision_2(self):
-		"""NDS-CHG-001 v1.14 §14.3 and §11.5: Revision 1 asks for 200, Peter
-		returns it with the NDS-DES-04 reason, and the accepted Revision 2
-		corrects the quantity to 100."""
-		need = frappe.get_doc("Departmental Need", "NDS-MOH-2027-0003")
+	def assert_corrected(self, reference, asked, corrected, reason):
+		need = frappe.get_doc("Departmental Need", reference)
 		revisions = frappe.get_all(
 			"Departmental Need Revision",
 			filters={"departmental_need": need.name},
@@ -231,7 +251,7 @@ class TestDefaultNeeds(SeedCase):
 		)
 		self.assertEqual(
 			[(r.revision_number, r.revision_status, float(r.indicative_quantity)) for r in revisions],
-			[(1, REVISION_RETURNED, 200.0), (2, REVISION_ACCEPTED, 100.0)],
+			[(1, REVISION_RETURNED, asked), (2, REVISION_ACCEPTED, corrected)],
 		)
 		self.assertEqual(need.current_accepted_revision, revisions[1].name)
 		returned = frappe.db.get_value(
@@ -241,23 +261,31 @@ class TestDefaultNeeds(SeedCase):
 			as_dict=True,
 		)
 		self.assertEqual(returned.actor, REVIEWER)
-		self.assertEqual(returned.reason, RETURN_REASON)
+		self.assertEqual(returned.reason, reason)
+
+	def test_the_training_laptops_need_accepts_its_corrected_revision_2(self):
+		"""NDS-CHG-001 v1.14 §14.3 and §11.5, now FY 2026/27's: Revision 1
+		asks for 200, Peter returns it with the NDS-DES-04 reason, and the
+		accepted Revision 2 corrects the quantity to 100."""
+		self.assert_corrected("NDS-MOH-2026-0002", 200.0, 100.0, RETURN_REASON)
+
+	def test_the_year_2_returned_need_accepts_its_corrected_revision_2(self):
+		self.assert_corrected("NDS-MOH-2027-0003", 20.0, 12.0, YEAR2_RETURN_REASON)
 
 	def test_the_default_profile_reports_planning_usage_matching_the_harmonized_chain(self):
-		# SEED-001 §3.2/§3.6 (2026-09-05) — 0001, 0003 and 0004 are the three
-		# source Needs the harmonized Planning baseline (kentender_procurement.
-		# procurement_planning.seeds.kentender_mvp_v1.upsert_planning_base)
-		# fully allocates once the whole chain is seeded; 0002 is never
-		# funded into any Departmental Plan Entry, so it stays unconsumed
-		# regardless of what else has been seeded on the site.
-		expected = {
-			"NDS-MOH-2027-0001": USAGE_FULL,
-			"NDS-MOH-2027-0002": USAGE_NOT_INCLUDED,
-			"NDS-MOH-2027-0003": USAGE_FULL,
-			"NDS-MOH-2027-0004": USAGE_FULL,
-		}
+		# Once the whole world is seeded every accepted Need of both years is
+		# fully allocated by its year's Annual Plan; NDS-MOH-2027-0002 is still
+		# waiting for review, so it is never included. (A site seeded short of
+		# the Plans reads Not included throughout; the canonical test site
+		# carries the whole world.)
+		expected = {reference: USAGE_FULL for reference, row in DEFAULT_NEEDS.items() if row[3] == STATE_ACCEPTED}
+		expected["NDS-MOH-2027-0002"] = USAGE_NOT_INCLUDED
 		for reference, usage in expected.items():
 			self.assertEqual(planning_usage(reference), usage, reference)
+
+	def test_the_seed_validates_both_years(self):
+		for year in ("year1", "year2"):
+			self.assertEqual([r["check"] for r in validate_needs_seed(year) if not r["ok"]], [], year)
 
 	def test_reseeding_creates_nothing_new(self):
 		before = (

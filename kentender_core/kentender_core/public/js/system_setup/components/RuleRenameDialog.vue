@@ -37,24 +37,24 @@ function save() {
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop">
+	<div class="dialog-backdrop">
 		<div
-			class="kt-dialog kt-narrow"
+			class="dialog kt-narrow"
 			role="dialog"
 			aria-modal="true"
 			:aria-label="__('Edit rule name')"
 			data-testid="kt-procset-rule-rename-dialog"
 			@keydown.esc.stop="emit('cancel')"
 		>
-			<h2 class="kt-dialog-title">{{ __("Edit rule name") }}</h2>
+			<h2 class="dialog-title">{{ __("Edit rule name") }}</h2>
 			<div class="dialog-body">
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-rule-rename">{{ __("Rule name") }}</label>
 					<input
 						id="kt-rule-rename"
 						ref="field"
 						v-model="value"
-						class="kt-input"
+						class="input"
 						data-testid="kt-procset-rule-rename-input"
 						@keydown.enter.prevent="save"
 					>
@@ -64,9 +64,9 @@ function save() {
 					<div class="kt-notice-body">{{ error }}</div>
 				</div>
 			</div>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="kt-procset-rule-rename-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="busy || !value.trim()" data-testid="kt-procset-rule-rename-save" @click="save">{{ __("Save changes") }}</button>
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="kt-procset-rule-rename-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
+				<button type="button" class="btn btn-primary" :disabled="busy || !value.trim()" data-testid="kt-procset-rule-rename-save" @click="save">{{ __("Save changes") }}</button>
 			</div>
 		</div>
 	</div>

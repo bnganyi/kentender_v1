@@ -18,6 +18,7 @@ ROLE_HEAD_OF_USER_DEPARTMENT = "Head of User Department"
 ROLE_HEAD_OF_PROCUREMENT_FUNCTION = "Head of Procurement Function"
 ROLE_PROCUREMENT_PLANNER = "Procurement Planner"
 ROLE_AUDITOR = "Auditor"
+ROLE_ACCOUNTING_OFFICER = "Accounting Officer"
 ROLE_PROCUREMENT_OFFICER = "Procurement Officer"
 
 # §8 — Organisation Unit scoped responsibilities.
@@ -25,6 +26,11 @@ DEPARTMENTAL_ROLES = (ROLE_DEPARTMENTAL_AUTHOR, ROLE_HEAD_OF_USER_DEPARTMENT)
 # §8 — Site-wide responsibilities (neutral read; decisions stay with HOPF).
 SITE_WIDE_ROLES = (ROLE_HEAD_OF_PROCUREMENT_FUNCTION, ROLE_PROCUREMENT_PLANNER, ROLE_PROCUREMENT_OFFICER, ROLE_AUDITOR)
 ALL_REQUISITION_ROLES = DEPARTMENTAL_ROLES + SITE_WIDE_ROLES
+
+# OVS-CHG-001 v0.6 §4.1: the Accounting Officer reads authorised Requisitions and their decision and history,
+# read-only. Never a Draft or one still in review, and never a command.
+OVERSIGHT_READ_ROLES = (ROLE_ACCOUNTING_OFFICER,)
+OVERSIGHT_READ_STATES = ("Authorised", "Revoked")
 
 # The Tender Preparation responsibilities that consume this module's handoff
 # (command purpose), and those that may only list it (read purpose).

@@ -18,7 +18,7 @@ import { AUTHOR, HOD, HOPF, PASSWORD, expectReady, gotoRequisitions, resetFixtur
 const BOARD = "docs/mvp-1-r1/06_requisitions/design/Requisitions - Design Board v2.dc.html";
 const LIVE_PAGE = '.kt-req [data-testid="req-shell"] > .kt-panel-lg';
 // The dialog must be a child of the compared root on both sides.
-const LIVE_DIALOG = ".kt-req .kt-dialog-backdrop";
+const LIVE_DIALOG = ".kt-req .dialog-backdrop";
 
 const DATA = [
 	[/\b(REQ|PPI|SRC|DPER|RSV|PDR|UI-CORR|TND|PLN|RQV|PRQ)-[A-Z0-9-]+/g, "<ref>"],

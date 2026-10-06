@@ -5,7 +5,7 @@
 // the server's state and this viewer's place in it; the primary action is
 // the server's guidance, never inferred here.
 import { at, ds, em, f, kv, n, tb } from "../board/model.js";
-import { cmd, comparisonTable, conditionNotices, dialog, guidance, head, money, nav, ownerEvent, recordTabs, rosterTable, signaturesTable, sourceDisclosure } from "./common.js";
+import { cmd, comparisonTable, conditionNotices, dialog, guidance, head, money, nav, ownerEvent, recordTabs, rosterTable, signaturesTable, sourceDisclosure, versionsBlock } from "./common.js";
 
 // The primary action the server's guidance names, as the button that does it
 // here (a command) or opens the screen where it is done (a navigation).
@@ -60,14 +60,35 @@ function outcomeBlocks(data) {
 	return out;
 }
 
+// The Accounting Officer and the Head of Procurement Function, once a report
+// version is delivered, read it as an auditor does (EVL-CHG-001 v0.5 §9.10,
+// D07-SENT; OVS-CHG-001 v0.6 §4): read-only, from the delivered version the
+// server froze, never the live case. The server sends that version as
+// `delivered_report`; the record screen below is built from it unchanged.
+export function oversightRecord(data) {
+	const d = data.delivered_report || {};
+	return { ...data, comparison: { label: "", ...(d.comparison || {}) }, outcome: d.recommendation || {}, attention: [] };
+}
+
+// the two offices and a technical reader, once a version is delivered; a reader of bids keeps the working record
+export const isOversight = (data) => !!(data.viewer && (data.viewer.oversight_full || data.viewer.technical) && !data.viewer.bids && data.delivered_report);
+
 // D03 family: the record as a reader of bids sees it.
 export function results(ctx) {
 	const { data } = ctx;
+	const oversight = isOversight(data);
 	const table = data.comparison || { rows: [] };
 	const blocks = [...conditionNotices(data)];
 	const caption = table.label === "Provisional comparison" ? "Provisional comparison." : (data.attention || []).length ? "The offered values have been checked. One supporting-evidence question remains." : "";
-	blocks.push(comparisonTable(data, caption ? { caption } : {}));
+	const returned = oversight ? (data.delivered_report || {}).correction : null;
+	if (returned) {
+		blocks.unshift(n("info", `Report ${data.delivered_report.version_number} was returned for correction.`, `${returned.headline} ${returned.reason || ""}`.trim()));
+	}
+	// an overseeing reader has no bid to review: the comparison carries no action
+	blocks.push(comparisonTable(data, { ...(caption ? { caption } : {}), ...(oversight ? { noAction: true } : {}) }));
 	blocks.push(...attentionBlocks(data), ...outcomeBlocks(data));
+	const versions = oversight ? versionsBlock(data, (data.delivered_report || {}).report) : null;
+	if (versions) blocks.push(versions);
 	const source = sourceDisclosure(data);
 	if (source) blocks.push(source);
 	const pri = primaryFor(data, ctx);
@@ -145,6 +166,26 @@ export function cancelled(ctx) {
 	return { ...head(data), guidance: { answer: { ...(data.guidance || {}), sentence: e.received ? `Cancelled on ${e.received}.` : "" }, journey: data.tracker }, blocks, sec };
 }
 
+// What a reader outside the committee is told about the bids (OVS-CHG-001 v0.6
+// §4, §4.1; owner decision 4 Oct 2026, "a department-level view"). Before a report is
+// delivered, a plain line says why there is nothing more. A Head of User
+// Department whose unit contributed then reads the outcome, the recommendation
+// and its recorded reason, never the bids, the findings or the report.
+export function departmentBlocks(data) {
+	const v = data.viewer || {};
+	const s = data.department_summary;
+	if (v.department && s && s.outcome) {
+		const out = [f([s.recommended_bidder ? "Recommendation" : "Outcome", s.recommended_bidder || s.outcome], ["Evaluated total", s.evaluated_total || ""],
+			["Report", `Report ${s.version_number}`], ["Report sent", s.delivered || ""])];
+		if (s.reason) out.push(at(s.reason, "Recorded reason"));
+		if (s.not_an_award) out.push(n("info", s.not_an_award));
+		if (s.correction) out.push(n("info", `Report ${s.version_number} was returned for correction.`, s.correction.headline));
+		return out;
+	}
+	if ((v.department || v.ao || v.hop) && !data.delivered_report) return [n("info", "Bid details are shared with you when the committee's report is sent.")];
+	return [];
+}
+
 // A reader with no bid access (Accounting Officer, Head of Procurement before
 // delivery, a technical reader): setup and status only.
 export function setupOnly(ctx) {
@@ -154,6 +195,7 @@ export function setupOnly(ctx) {
 	else blocks.push(rosterTable(data));
 	const delivery = (data.work || {}).delivery;
 	if (delivery && delivery.status === "Delivered") blocks.push(f(["Report", `Report ${delivery.report_version ? "" : ""}delivered`.trim()], ["Delivered", delivery.delivered]));
+	blocks.push(...departmentBlocks(data));
 	return { ...head(data), guidance: guidance(data), blocks, pri: data.viewer.technical ? null : primaryFor(data, ctx), sec: [nav("Back to evaluations", "workspace")] };
 }
 

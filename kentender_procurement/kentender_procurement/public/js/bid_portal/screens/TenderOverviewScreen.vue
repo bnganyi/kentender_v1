@@ -36,7 +36,7 @@ const action = computed(() => (data.value && data.value.action) || null);
 // Every action the server offers, in order; one unless the bound release is
 // withdrawn (View Tender documents, View receipt, Withdraw bid).
 const actions = computed(() => (data.value && data.value.actions) || (action.value ? [{ ...action.value, tone: "primary" }] : []));
-const BUTTON = { primary: "kt-btn-primary", secondary: "kt-btn-secondary", danger: "kt-btn-primary kt-danger" };
+const BUTTON = { primary: "btn-primary", secondary: "btn-secondary", danger: "btn-primary kt-danger" };
 const bid = computed(() => (data.value && data.value.bid) || null);
 const statusClass = computed(() => (bid.value && bid.value.status === "Submitted" ? "is-live" : "is-draft"));
 // BDS-DES-02-WITHDRAWN-RELEASE draws no status badge: the notice and View receipt say it
@@ -84,7 +84,7 @@ onMounted(() => {
 				<p class="kt-page-desc">{{ __("This Tender is not accepting bids.") }}</p>
 			</div>
 			<div v-if="action" class="kt-page-actions" :class="{ 'bds-actions-stack': narrow }">
-				<a :href="action.href" class="kt-btn kt-btn-secondary" :class="{ 'bds-btn-block': narrow }" data-testid="bds-overview-action">{{ __(action.label) }}</a>
+				<a :href="action.href" class="btn btn-secondary" :class="{ 'bds-btn-block': narrow }" data-testid="bds-overview-action">{{ __(action.label) }}</a>
 			</div>
 		</div>
 	</div>
@@ -102,15 +102,15 @@ onMounted(() => {
 			</div>
 			<div v-if="actions.length" class="kt-page-actions" :class="{ 'bds-actions-stack': narrow }">
 				<template v-for="(a, i) in actions" :key="a.kind">
-					<button v-if="a.kind === 'start_bid'" type="button" class="kt-btn" :class="[BUTTON[a.tone] || BUTTON.primary, { 'bds-btn-block': narrow }]" :data-testid="i === 0 ? 'bds-overview-action' : 'bds-overview-action-' + a.kind" @click="starting = true">{{ __(a.label) }}</button>
-					<a v-else :href="a.href" class="kt-btn" :class="[BUTTON[a.tone] || BUTTON.primary, { 'bds-btn-block': narrow }]" :data-testid="i === 0 ? 'bds-overview-action' : 'bds-overview-action-' + a.kind">{{ __(a.label) }}</a>
+					<button v-if="a.kind === 'start_bid'" type="button" class="btn" :class="[BUTTON[a.tone] || BUTTON.primary, { 'bds-btn-block': narrow }]" :data-testid="i === 0 ? 'bds-overview-action' : 'bds-overview-action-' + a.kind" @click="starting = true">{{ __(a.label) }}</button>
+					<a v-else :href="a.href" class="btn" :class="[BUTTON[a.tone] || BUTTON.primary, { 'bds-btn-block': narrow }]" :data-testid="i === 0 ? 'bds-overview-action' : 'bds-overview-action-' + a.kind">{{ __(a.label) }}</a>
 				</template>
 			</div>
 		</div>
 
 		<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert">
 			<div class="kt-notice-body">{{ failure }}</div>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button>
+			<button type="button" class="btn btn-secondary" @click="load">{{ __("Try again") }}</button>
 		</div>
 		<div v-if="data.notice" class="kt-notice" :class="data.notice.kind === 'outage' ? 'is-critical' : 'is-warning'" role="status" data-testid="bds-overview-notice">
 			<div class="kt-notice-body"><strong>{{ data.notice.title }}</strong> {{ data.notice.text }}</div>
@@ -152,7 +152,7 @@ onMounted(() => {
 		<div id="bds-tender-documents" class="kt-region">
 			<h2>{{ __("Tender documents") }}</h2>
 			<div class="bds-region-body">
-				<table v-if="!narrow" class="kt-table" data-testid="bds-documents-table">
+				<table v-if="!narrow" class="table" data-testid="bds-documents-table">
 					<thead><tr><th>{{ __("Document") }}</th><th>{{ __("Published") }}</th><th>{{ __("Action") }}</th></tr></thead>
 					<tbody>
 						<tr v-for="d in data.documents" :key="d.key">
@@ -176,13 +176,13 @@ onMounted(() => {
 			<div v-if="data.clarification.can_ask" class="bds-region-head">
 				<h2>{{ __("Addenda and clarification answers") }}</h2>
 				<div class="bds-region-actions">
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="bds-ask-question" @click="asking = true">{{ __("Ask a question") }}</button>
+					<button type="button" class="btn btn-secondary" data-testid="bds-ask-question" @click="asking = true">{{ __("Ask a question") }}</button>
 				</div>
 			</div>
 			<h2 v-else>{{ __("Addenda and clarification answers") }}</h2>
 			<div class="bds-region-body">
 				<template v-if="data.addenda.length">
-					<table v-if="!narrow" class="kt-table" data-testid="bds-addenda-table">
+					<table v-if="!narrow" class="table" data-testid="bds-addenda-table">
 						<thead><tr><th>{{ __("Addendum") }}</th><th>{{ __("Issued") }}</th><th>{{ __("Current deadline") }}</th><th>{{ __("Action") }}</th></tr></thead>
 						<tbody>
 							<tr v-for="a in data.addenda" :key="a.reference">
@@ -230,7 +230,7 @@ onMounted(() => {
 	<div v-else-if="failure" class="kt-page">
 		<div class="kt-notice is-critical bds-load-failure" role="alert">
 			<div class="kt-notice-body">{{ failure }}</div>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button>
+			<button type="button" class="btn btn-secondary" @click="load">{{ __("Try again") }}</button>
 		</div>
 	</div>
 	<div v-else class="kt-page" aria-hidden="true"><div class="bds-skeleton" data-testid="bds-overview-loading"></div></div>

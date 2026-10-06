@@ -18,3 +18,10 @@ def tender_record_links(*, tender: str, user: str) -> list[dict[str, Any]]:
 	if not name or not guards.can_read(user):
 		return []
 	return [{"key": "award", "label": "Award", "route": ["award", name]}]
+
+
+def tender_stage_summary(*, tender: str, user: str) -> list[dict[str, Any]]:
+	"""What this stage discloses to this reader on the Tender record (`kt_tender_stage_summaries`, OVS-CHG-001 v0.6 §8)."""
+	from kentender_procurement.award.services import stage_summary
+
+	return stage_summary.for_tender(tender=tender, user=user)

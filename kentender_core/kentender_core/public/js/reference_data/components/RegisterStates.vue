@@ -30,13 +30,13 @@ const emit = defineEmits(["clear-filters", "retry"]);
 	<div v-else-if="error" class="kt-empty">
 		<h2>{{ error.message }}</h2>
 		<p>{{ __("Try again. If the problem continues, contact KenTender support.") }}</p>
-		<button type="button" class="kt-btn kt-btn-secondary" @click="emit('retry')">{{ __("Try again") }}</button>
+		<button type="button" class="btn btn-secondary" @click="emit('retry')">{{ __("Try again") }}</button>
 	</div>
 
 	<div v-else-if="isEmpty" class="kt-empty">
 		<h2>{{ __("No records match these filters.") }}</h2>
 		<p>{{ __("Change or clear the filters to see other records.") }}</p>
-		<button type="button" class="kt-btn kt-btn-secondary" @click="emit('clear-filters')">{{ __("Clear filters") }}</button>
+		<button type="button" class="btn btn-secondary" @click="emit('clear-filters')">{{ __("Clear filters") }}</button>
 	</div>
 
 	<slot v-else></slot>

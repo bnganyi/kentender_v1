@@ -3,26 +3,26 @@
      Reopen, Withdraw, Recommend cancellation. One textarea bounded by the
      server's rule (shown inline), an optional select, a note, two actions. -->
 <template>
-	<div class="kt-dialog-backdrop" :data-testid="testid" @keydown.esc="$emit('cancel')">
-		<div ref="dialogEl" class="kt-dialog tnd-dialog" role="dialog" aria-modal="true" :aria-labelledby="`${testid}-title`" tabindex="-1">
-			<div :id="`${testid}-title`" class="kt-dialog-title">{{ title }}</div>
+	<div class="dialog-backdrop" :data-testid="testid" @keydown.esc="$emit('cancel')">
+		<div ref="dialogEl" class="dialog tnd-dialog" role="dialog" aria-modal="true" :aria-labelledby="`${testid}-title`" tabindex="-1">
+			<div :id="`${testid}-title`" class="dialog-title">{{ title }}</div>
 			<div class="tnd-dialog-body">
-				<div v-if="selectLabel" class="kt-field"><label :for="`${testid}-select`">{{ selectLabel }}</label>
-					<select :id="`${testid}-select`" class="kt-input" v-model="choice" :data-testid="`${testid}-select`"><option v-for="o in options" :key="o.key || o" :value="o.key || o">{{ o.label || o }}</option></select>
+				<div v-if="selectLabel" class="field"><label :for="`${testid}-select`">{{ selectLabel }}</label>
+					<select :id="`${testid}-select`" class="input" v-model="choice" :data-testid="`${testid}-select`"><option v-for="o in options" :key="o.key || o" :value="o.key || o">{{ o.label || o }}</option></select>
 				</div>
-				<div class="kt-field"><label :for="`${testid}-reason`">{{ reasonLabel }}</label>
-					<textarea :id="`${testid}-reason`" class="kt-input" rows="3" :placeholder="placeholder" v-model="reason" :data-testid="`${testid}-reason`"></textarea>
+				<div class="field"><label :for="`${testid}-reason`">{{ reasonLabel }}</label>
+					<textarea :id="`${testid}-reason`" class="input" rows="3" :placeholder="placeholder" v-model="reason" :data-testid="`${testid}-reason`"></textarea>
 					<p v-if="fieldError" class="tnd-field-error" :data-testid="`${testid}-field-error`">{{ fieldError }}</p>
 				</div>
-				<div v-if="afterLabel" class="kt-field"><label :for="`${testid}-after`">{{ afterLabel }}</label>
-					<select :id="`${testid}-after`" class="kt-input" v-model="choice" :data-testid="`${testid}-select`"><option v-for="o in options" :key="o.key || o" :value="o.key || o">{{ o.label || o }}</option></select>
+				<div v-if="afterLabel" class="field"><label :for="`${testid}-after`">{{ afterLabel }}</label>
+					<select :id="`${testid}-after`" class="input" v-model="choice" :data-testid="`${testid}-select`"><option v-for="o in options" :key="o.key || o" :value="o.key || o">{{ o.label || o }}</option></select>
 				</div>
 				<p v-if="note" class="tnd-dialog-note">{{ note }}</p>
 				<p v-if="error" class="tnd-field-error" role="alert" :data-testid="`${testid}-error`">{{ error }}</p>
 			</div>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('cancel')">Cancel</button>
-				<button type="button" class="kt-btn" :class="danger ? 'tnd-btn-danger' : 'kt-btn-primary'" :disabled="pending" :data-testid="`${testid}-confirm`" @click="confirm">{{ confirmLabel }}</button>
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" @click="$emit('cancel')">Cancel</button>
+				<button type="button" class="btn" :class="danger ? 'tnd-btn-danger' : 'btn-primary'" :disabled="pending" :data-testid="`${testid}-confirm`" @click="confirm">{{ confirmLabel }}</button>
 			</div>
 		</div>
 	</div>

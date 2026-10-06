@@ -12,9 +12,9 @@
      visible above the new values, and a reason is required, because the
      record of what was sent to the Treasury is itself evidence. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="pub-treasury-dialog">
-		<div class="kt-dialog pln-treasury-dialog" role="dialog" aria-modal="true" aria-labelledby="pub-treasury-title">
-			<div id="pub-treasury-title" class="kt-dialog-title" data-testid="pub-treasury-title">
+	<div class="dialog-backdrop" data-testid="pub-treasury-dialog">
+		<div class="dialog pln-treasury-dialog" role="dialog" aria-modal="true" aria-labelledby="pub-treasury-title">
+			<div id="pub-treasury-title" class="dialog-title" data-testid="pub-treasury-title">
 				{{ isCorrection ? "Correct submission details" : "Record Treasury submission" }}
 			</div>
 
@@ -75,32 +75,32 @@
 				     on a two-column grid, matching the artboard; only the evidence
 				     file and the reason/confirmation below run full width. -->
 				<div class="pln-treasury-grid">
-					<div class="kt-field">
+					<div class="field">
 						<label for="pub-treasury-sent" class="kt-label">Date and time sent</label>
-						<input id="pub-treasury-sent" class="kt-input" type="datetime-local" data-testid="pub-treasury-sent" v-model="form.submitted_at">
+						<input id="pub-treasury-sent" class="input" type="datetime-local" data-testid="pub-treasury-sent" v-model="form.submitted_at">
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="pub-treasury-channel" class="kt-label">Submission channel</label>
-						<input id="pub-treasury-channel" class="kt-input" data-testid="pub-treasury-channel" v-model="form.channel">
+						<input id="pub-treasury-channel" class="input" data-testid="pub-treasury-channel" v-model="form.channel">
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="pub-treasury-destination" class="kt-label">Destination</label>
-						<input id="pub-treasury-destination" class="kt-input" data-testid="pub-treasury-destination" v-model="form.destination">
+						<input id="pub-treasury-destination" class="input" data-testid="pub-treasury-destination" v-model="form.destination">
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="pub-treasury-dispatch" class="kt-label">Dispatch/reference number</label>
-						<input id="pub-treasury-dispatch" class="kt-input" data-testid="pub-treasury-dispatch" v-model="form.dispatch_reference">
+						<input id="pub-treasury-dispatch" class="input" data-testid="pub-treasury-dispatch" v-model="form.dispatch_reference">
 					</div>
 				</div>
 
 				<!-- §10.12 — the evidence itself. It is optional because the
 				     dispatch is recorded whether or not a copy is to hand, and
 				     recording it is what the plan's publication waits on. -->
-				<div class="kt-field pln-treasury-file">
+				<div class="field pln-treasury-file">
 					<label for="pub-treasury-file" class="kt-label">Submission evidence file</label>
 					<input
 						id="pub-treasury-file"
-						class="kt-input"
+						class="input"
 						type="text"
 						data-testid="pub-treasury-file"
 						placeholder="A link or file reference for the dispatch evidence"
@@ -108,9 +108,9 @@
 					>
 				</div>
 
-				<div v-if="isCorrection" class="kt-field pln-treasury-file">
+				<div v-if="isCorrection" class="field pln-treasury-file">
 					<label for="pub-treasury-reason" class="kt-label">Reason for correction</label>
-					<textarea id="pub-treasury-reason" class="kt-input" rows="3" data-testid="pub-treasury-reason" v-model="form.reason"></textarea>
+					<textarea id="pub-treasury-reason" class="input" rows="3" data-testid="pub-treasury-reason" v-model="form.reason"></textarea>
 				</div>
 
 				<!-- Not a formality: the whole record rests on this being the same
@@ -123,19 +123,19 @@
 
 			<p v-if="error" class="pln-dialog-error" role="alert" data-testid="pub-treasury-error">{{ error }}</p>
 
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">Cancel</button>
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" :disabled="pending" @click="$emit('cancel')">Cancel</button>
 				<div v-if="!ready" class="pln-treasury-hint-group">
 					<!-- Says what is missing, rather than leaving a dead button. -->
 					<p class="kt-muted" data-testid="pub-treasury-hint">{{ hint }}</p>
-					<button type="button" class="kt-btn kt-btn-primary" data-testid="pub-treasury-submit" disabled>
+					<button type="button" class="btn btn-primary" data-testid="pub-treasury-submit" disabled>
 						{{ isCorrection ? "Save corrected details" : "Record submission" }}
 					</button>
 				</div>
 				<button
 					v-else
 					type="button"
-					class="kt-btn kt-btn-primary"
+					class="btn btn-primary"
 					data-testid="pub-treasury-submit"
 					:disabled="pending"
 					@click="$emit('confirm', { ...form })"

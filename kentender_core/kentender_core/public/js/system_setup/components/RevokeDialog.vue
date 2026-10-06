@@ -24,28 +24,28 @@ onMounted(async () => {
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop">
+	<div class="dialog-backdrop">
 		<div
-			class="kt-dialog kt-narrow"
+			class="dialog kt-narrow"
 			role="alertdialog"
 			aria-modal="true"
 			aria-labelledby="kt-revoke-title"
 			data-testid="kt-ura-revoke"
 			@keydown.esc.stop="emit('cancel')"
 		>
-			<h2 id="kt-revoke-title" class="kt-dialog-title">{{ __("Revoke responsibility?") }}</h2>
+			<h2 id="kt-revoke-title" class="dialog-title">{{ __("Revoke responsibility?") }}</h2>
 			<div class="dialog-body" style="display:flex;flex-direction:column;gap:14px">
 				<p style="margin:0">
 					{{ __("{0} will immediately lose {1} authority for {2}. Existing decisions and audit history will remain unchanged.",
 						[assignment.user_full_name, assignment.business_role, assignment.organisation_unit_label || __("the entire entity")]) }}
 				</p>
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-revoke-reason">{{ __("Reason for revocation") }}</label>
 					<textarea
 						id="kt-revoke-reason"
 						ref="field"
 						v-model="reason"
-						class="kt-input kt-textarea"
+						class="input kt-textarea"
 						rows="3"
 						:maxlength="REASON_MAX"
 						data-testid="kt-ura-revoke-reason"
@@ -56,11 +56,11 @@ onMounted(async () => {
 					<div class="kt-notice-body">{{ error }}</div>
 				</div>
 			</div>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
 				<button
 					type="button"
-					class="kt-btn kt-btn-primary kt-danger"
+					class="btn btn-primary kt-danger"
 					:disabled="busy || reason.trim().length < REASON_MIN"
 					data-testid="kt-ura-revoke-confirm"
 					@click="emit('confirm', reason.trim())"

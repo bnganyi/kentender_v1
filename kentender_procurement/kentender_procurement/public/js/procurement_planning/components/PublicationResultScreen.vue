@@ -31,15 +31,15 @@
 					<div ref="headEl" class="kt-guidance-mount" data-testid="pub-next-step-line"></div>
 				</div>
 				<div class="kt-page-actions">
-					<button type="button" class="kt-btn kt-btn-ghost" data-testid="pub-view-plan" @click="$emit('navigate', ['annual-procurement-plan', task.plan_reference])">
+					<button type="button" class="btn btn-ghost" data-testid="pub-view-plan" @click="$emit('navigate', ['annual-procurement-plan', task.plan_reference])">
 						View approved plan
 					</button>
 					<!-- §10.12 header — enabled alongside View approved plan; the
 					     export itself is a separate concern from this screen. -->
-					<button type="button" class="kt-btn kt-btn-ghost" data-testid="pub-download-plan" @click="$emit('download-plan')">
+					<button type="button" class="btn btn-ghost" data-testid="pub-download-plan" @click="$emit('download-plan')">
 						Download approved plan
 					</button>
-					<button type="button" class="kt-btn kt-btn-ghost" data-testid="pub-download-plan-data" @click="$emit('download-plan-data')">
+					<button type="button" class="btn btn-ghost" data-testid="pub-download-plan-data" @click="$emit('download-plan-data')">
 						Download Plan data
 					</button>
 				</div>
@@ -53,7 +53,7 @@
 			<!-- The four facts, each with its own label and state. -->
 			<div class="kt-region">
 				<h2>Publication status</h2>
-				<table class="kt-table" data-testid="pub-status">
+				<table class="table" data-testid="pub-status">
 					<thead>
 						<tr><th>Step</th><th>State</th></tr>
 					</thead>
@@ -100,7 +100,7 @@
 				<a
 					v-if="treasury.supporting_attachment"
 					href="#"
-					class="kt-btn kt-btn-ghost"
+					class="btn btn-ghost"
 					data-testid="pub-view-evidence"
 					@click.prevent="$emit('view-evidence', treasury)"
 				>View submission evidence</a>
@@ -150,7 +150,7 @@
 					<button
 						v-if="task.can_record_treasury && !treasury"
 						type="button"
-						class="kt-btn kt-btn-primary"
+						class="btn btn-primary"
 						data-testid="pub-record-treasury"
 						:disabled="pending"
 						@click="$emit('record-treasury')"
@@ -160,7 +160,7 @@
 					<button
 						v-else-if="task.can_record_treasury && treasury"
 						type="button"
-						class="kt-btn kt-btn-secondary"
+						class="btn btn-secondary"
 						data-testid="pub-correct-treasury"
 						:disabled="pending"
 						@click="$emit('correct-treasury')"
@@ -172,7 +172,7 @@
 					<button
 						v-if="task.can_retry"
 						type="button"
-						class="kt-btn kt-btn-secondary"
+						class="btn btn-secondary"
 						data-testid="pub-retry"
 						:disabled="pending"
 						@click="$emit('retry')"
@@ -182,7 +182,7 @@
 					<button
 						v-if="task.can_reconcile"
 						type="button"
-						class="kt-btn kt-btn-secondary"
+						class="btn btn-secondary"
 						data-testid="pub-reconcile"
 						:disabled="pending"
 						@click="$emit('reconcile')"
@@ -197,7 +197,7 @@
 					<button
 						v-if="task.can_request_withdrawal"
 						type="button"
-						class="kt-btn kt-btn-secondary"
+						class="btn btn-secondary"
 						data-testid="pub-request-withdrawal"
 						:disabled="pending"
 						@click="$emit('request-withdrawal')"
@@ -207,7 +207,7 @@
 					<button
 						v-if="task.can_decide_withdrawal"
 						type="button"
-						class="kt-btn kt-btn-primary"
+						class="btn btn-primary"
 						data-testid="pub-decide-withdrawal"
 						:disabled="pending"
 						@click="$emit('decide-withdrawal')"
@@ -247,7 +247,7 @@
 				<button
 					v-if="lateActivation.can_explain"
 					type="button"
-					class="kt-btn kt-btn-secondary"
+					class="btn btn-secondary"
 					data-testid="pub-explain-late"
 					:disabled="pending"
 					@click="$emit('explain-late')"
@@ -262,7 +262,7 @@
 	<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
 </summary>
 				<div class="kt-disclosure-body">
-					<table class="kt-table">
+					<table class="table">
 						<thead><tr><th>Attempt</th><th>Result</th><th>Attempted</th><th>External reference</th></tr></thead>
 						<tbody>
 							<tr v-for="row in attempts" :key="row.name">

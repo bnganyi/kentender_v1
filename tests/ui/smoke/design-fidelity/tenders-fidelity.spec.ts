@@ -37,7 +37,7 @@ function dropUnresolvedTemplateText(list: string[]): string[] {
 	return list.filter((text) => !/^\{\{.*\}\}$/.test(text));
 }
 
-const LANDMARK_SELECTOR = ".kt-card-title, .kt-dialog-title, .kt-section-title, .dialog-title, label, legend, .kt-label, th, button";
+const LANDMARK_SELECTOR = ".kt-card-title, .dialog-title, .kt-section-title, .dialog-title, label, legend, .kt-label, th, button";
 
 /**
  * `sc-if` is the design tool's own runtime conditional; with support.js

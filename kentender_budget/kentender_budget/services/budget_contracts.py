@@ -29,6 +29,7 @@ from kentender_budget.services.budget_authorization import (
 	CAP_APPROVE,
 	CAP_EDIT,
 	has_budget_version_capability,
+	approved_only_reader,
 	holds_any_budget_responsibility,
 	holds_budget_approver_assignment,
 	is_technical,
@@ -642,7 +643,13 @@ def get_budget_workspace(fiscal_year: str | None = None) -> dict[str, Any]:
 		return result
 
 	budget = frappe.get_doc("Procurement Budget", budget_name)
-	require_budget_read_scope("Procurement Budget", budget.name)
+	try:
+		require_budget_read_scope("Procurement Budget", budget.name)
+	except frappe.PermissionError:
+		if approved_only_reader(frappe.session.user):
+			frappe.clear_last_message()
+			return result  # nothing of this year's budget is approved yet: for this reader there is no record to show
+		raise
 	active = _active_version(budget_name)
 	closed = None if active else _closed_version(budget_name)
 	result["has_budget"] = True
@@ -784,7 +791,13 @@ def get_budget_version_draft(budget_version: str) -> dict[str, Any]:
 	except frappe.DoesNotExistError:
 		frappe.clear_last_message()
 		return dict(NOT_FOUND)
-	require_budget_version_read_scope(version)
+	try:
+		require_budget_version_read_scope(version)
+	except frappe.PermissionError:
+		if approved_only_reader(frappe.session.user):
+			frappe.clear_last_message()
+			return dict(NOT_FOUND)  # a version not yet approved answers like a missing one
+		raise
 	budget = frappe.get_doc("Procurement Budget", version.budget)
 	return {
 		"budget": _budget_summary(budget),

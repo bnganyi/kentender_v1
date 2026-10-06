@@ -60,7 +60,7 @@ test.describe("REQ-DES-01 workspace and REQ-DES-02 start", () => {
 		await gotoRequisitions(page);
 		await expectReady(page, "workspace");
 		await expect(page.getByTestId("req-work-row")).toContainText("Complete request details");
-		await expect(page.getByTestId("req-work-row").locator(".kt-btn")).toHaveText("Continue");
+		await expect(page.getByTestId("req-work-row").locator(".btn")).toHaveText("Continue");
 		await expect(page.getByTestId("req-ready")).toHaveCount(0);
 		await expect(page.getByTestId("req-register-row")).toHaveCount(1);
 		expect(errors, errors.join(" | ")).toEqual([]);
@@ -91,7 +91,7 @@ test.describe("REQ-DES-01 workspace and REQ-DES-02 start", () => {
 		const work = page.getByTestId("req-work-row");
 		await expect(work).toContainText("Review departmental requisition");
 		await expect(page.getByTestId("req-count-approvals")).toHaveText(/Approvals [1-9]/);
-		await work.locator(".kt-btn").click();
+		await work.locator(".btn").click();
 		await expect(page).toHaveURL(new RegExp(`/procurement-requisitions/department-task/${world.department_task}$`));
 	});
 

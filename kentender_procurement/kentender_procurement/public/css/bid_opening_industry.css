@@ -2,10 +2,6 @@
    (.kt-industry.kt-tnd), which already maps the artboards' --color-* names.
    Only what the Industry tokens sheet does not already give the boards. */
 .kt-industry .kt-bop {
-	--space-2: var(--kt-space-2);
-	--space-3: var(--kt-space-3);
-	--space-4: var(--kt-space-4);
-	--space-6: var(--kt-space-6);
 	display: flex;
 	flex-direction: column;
 }

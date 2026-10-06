@@ -19,12 +19,12 @@
 			<ReviewNote :notes="(pub.review || {}).review_notes || []" :linkable="false" />
 			<KeyFacts :facts="pub.key_facts || []" />
 			<div class="tnd-section tnd-section--tight tnd-actions">
-				<button type="button" class="kt-btn kt-btn-secondary tnd-inline-btn" :disabled="pending" data-testid="tnd-view-invitation" @click="$emit('view-document', 'Invitation')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>View Invitation</button>
-				<button type="button" class="kt-btn kt-btn-secondary tnd-inline-btn" :disabled="pending" data-testid="tnd-view-complete" @click="$emit('view-document', 'Complete Tender')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>View complete Tender</button>
+				<button type="button" class="btn btn-secondary tnd-inline-btn" :disabled="pending" data-testid="tnd-view-invitation" @click="$emit('view-document', 'Invitation')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>View Invitation</button>
+				<button type="button" class="btn btn-secondary tnd-inline-btn" :disabled="pending" data-testid="tnd-view-complete" @click="$emit('view-document', 'Complete Tender')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>View complete Tender</button>
 			</div>
 			<div class="tnd-section">
 				<div class="tnd-block-title tnd-block-title--section">Required publication channels</div>
-				<table class="kt-table" data-testid="tnd-channel-table">
+				<table class="table" data-testid="tnd-channel-table">
 					<thead><tr><th>Channel</th><th>How confirmation is obtained</th><th>Current result</th></tr></thead>
 					<tbody>
 						<tr v-for="c in pub.proposed_channels || []" :key="c.channel"><td>{{ c.label }}</td><td>{{ c.how }}</td><td><span class="kt-status is-pending">{{ c.result }}</span></td></tr>
@@ -43,8 +43,8 @@
 		<div class="tnd-footer">
 			<a href="#" class="tnd-footer-back" data-testid="tnd-back" @click.prevent="$emit('back')">Back to Tenders</a>
 			<div class="tnd-footer-actions">
-				<button v-if="canReturn" type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-return-to-hopf" @click="$emit('return')">Return to Head of Procurement Function</button>
-				<button v-if="canAuthorise" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tnd-authorise-publication" @click="$emit('authorise')">Authorise publication</button>
+				<button v-if="canReturn" type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-return-to-hopf" @click="$emit('return')">Return to Head of Procurement Function</button>
+				<button v-if="canAuthorise" type="button" class="btn btn-primary" :disabled="pending" data-testid="tnd-authorise-publication" @click="$emit('authorise')">Authorise publication</button>
 			</div>
 		</div>
 	</div>

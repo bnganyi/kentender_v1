@@ -91,7 +91,7 @@
 				<select
 					id="nds-department"
 					data-testid="nds-department"
-					class="kt-input"
+					class="input"
 					:value="selectedDepartment"
 					@change="$emit('select-department', $event.target.value)"
 				>
@@ -136,7 +136,7 @@
 					id="nds-title"
 					ref="titleEl"
 					data-testid="nds-title"
-					class="kt-input"
+					class="input"
 					type="text"
 					v-model="form.title"
 				/>
@@ -150,7 +150,7 @@
 				<textarea
 					id="nds-description"
 					data-testid="nds-description"
-					class="kt-input"
+					class="input"
 					rows="2"
 					v-model="form.description"
 				></textarea>
@@ -161,7 +161,7 @@
 				<textarea
 					id="nds-result"
 					data-testid="nds-result"
-					class="kt-input"
+					class="input"
 					rows="2"
 					v-model="form.expected_operational_result"
 				></textarea>
@@ -176,7 +176,7 @@
 						id="nds-quantity"
 						ref="quantityEl"
 						data-testid="nds-quantity"
-						class="kt-input"
+						class="input"
 						type="number"
 						min="0"
 						step="0.001"
@@ -193,7 +193,7 @@
 				<div class="field">
 					<label class="kt-label" for="nds-unit">Unit</label>
 					<div style="display: flex; gap: 8px; align-items: center">
-						<select id="nds-unit" data-testid="nds-unit" class="kt-input" v-model="form.unit" style="flex: 1">
+						<select id="nds-unit" data-testid="nds-unit" class="input" v-model="form.unit" style="flex: 1">
 							<option value="">Select a unit</option>
 							<option v-for="unit in units" :key="unit.name" :value="unit.name">
 								{{ unit.unit_label }}
@@ -201,7 +201,7 @@
 						</select>
 						<button
 							type="button"
-							class="kt-btn kt-btn-secondary"
+							class="btn btn-secondary"
 							style="white-space: nowrap"
 							data-testid="nds-unit-new"
 							@click="createUnit"
@@ -211,7 +211,7 @@
 					</div>
 					<div v-if="unitsError" class="kt-field-error" data-testid="nds-units-error" style="margin-top: 5px">
 						The list of units could not be loaded.
-						<button type="button" class="kt-btn kt-btn-ghost" style="padding: 0 4px" data-testid="nds-units-retry" @click="emit('retry-units')">Try again</button>
+						<button type="button" class="btn btn-ghost" style="padding: 0 4px" data-testid="nds-units-retry" @click="emit('retry-units')">Try again</button>
 					</div>
 					<div v-else class="text-muted" style="font-size: 12px; margin-top: 5px">
 						Select the unit that describes the quantity.
@@ -224,7 +224,7 @@
 					id="nds-required-by"
 					ref="requiredByEl"
 					data-testid="nds-required-by"
-					class="kt-input"
+					class="input"
 					type="date"
 					:min="context.financial_year_start || undefined"
 					:max="context.financial_year_end || undefined"
@@ -292,13 +292,13 @@
 			v-if="mode === 'create'"
 			style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 20px; border-top: 1px solid var(--kt-color-divider); max-width: 860px"
 		>
-			<button class="kt-btn kt-btn-secondary" data-testid="nds-editor-cancel" :disabled="pending" @click="$emit('cancel')">
+			<button class="btn btn-secondary" data-testid="nds-editor-cancel" :disabled="pending" @click="$emit('cancel')">
 				{{ cancelLabel }}
 			</button>
-			<button class="kt-btn kt-btn-secondary" data-testid="nds-save-draft" :disabled="pending || departmentRequired || submitUnknown" @click="guardedEmit('save')">
+			<button class="btn btn-secondary" data-testid="nds-save-draft" :disabled="pending || departmentRequired || submitUnknown" @click="guardedEmit('save')">
 				{{ saveLabel }}
 			</button>
-			<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending || departmentRequired || !!partialSubmit?.intake_closed || submitUnknown" @click="guardedEmit('submit')">
+			<button class="btn btn-primary" data-testid="nds-submit" :disabled="pending || departmentRequired || !!partialSubmit?.intake_closed || submitUnknown" @click="guardedEmit('submit')">
 				{{ submitLabel }}
 			</button>
 		</div>
@@ -307,7 +307,7 @@
 			style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 20px; border-top: 1px solid var(--kt-color-divider); max-width: 860px"
 		>
 			<button
-				class="kt-btn kt-btn-secondary"
+				class="btn btn-secondary"
 				:class="{ 'kt-danger': cancelLabel === 'Withdraw need' }"
 				data-testid="nds-editor-cancel"
 				:disabled="pending"
@@ -316,10 +316,10 @@
 				{{ cancelLabel }}
 			</button>
 			<div style="display: flex; gap: 12px">
-				<button class="kt-btn kt-btn-secondary" data-testid="nds-save-draft" :disabled="pending || departmentRequired" @click="guardedEmit('save')">
+				<button class="btn btn-secondary" data-testid="nds-save-draft" :disabled="pending || departmentRequired" @click="guardedEmit('save')">
 					{{ saveLabel }}
 				</button>
-				<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending || departmentRequired || (mode === 'draft' && submissionClosed) || !!partialSubmit?.intake_closed || submitUnknown" @click="guardedEmit('submit')">
+				<button class="btn btn-primary" data-testid="nds-submit" :disabled="pending || departmentRequired || (mode === 'draft' && submissionClosed) || !!partialSubmit?.intake_closed || submitUnknown" @click="guardedEmit('submit')">
 					{{ submitLabel }}
 				</button>
 			</div>

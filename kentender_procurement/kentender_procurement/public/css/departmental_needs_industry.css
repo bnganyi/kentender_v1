@@ -1,14 +1,14 @@
 /* Departmental Needs — NDS-CHG-001 v1.1 §11 supplementary Industry classes.
  *
  * kentender_core's kt_industry_tokens.css carries the shared Industry system
- * (.kt-card, .kt-btn, .kt-table, .kt-field, .kt-input, .kt-corner, .kt-dialog…).
+ * (.card, .btn, .table, .field, .input, .corner, .dialog…).
  * The NDS-DES artboards define a handful of classes on top of it in their own
  * <helmet><style> blocks; those are ported here verbatim so the screens render
  * exactly what the artboards specify, scoped under .kt-industry like the rest
  * of the system.
  *
  * Nothing here restyles a shared class. If a rule below ever needs to change a
- * .kt-card or .kt-btn, it belongs in kt_industry_tokens.css instead.
+ * .card or .btn, it belongs in kt_industry_tokens.css instead.
  */
 
 /* The NDS-DES artboard helmet styles below were ported verbatim, and they use
@@ -20,17 +20,6 @@
  * onto the shared tokens (with a small neutral scale the shared set lacks),
  * so each rule below resolves the value the artboard intended. */
 .kt-industry {
-	--color-bg: var(--kt-color-bg);
-	--color-text: var(--kt-color-text);
-	--color-accent: var(--kt-color-accent);
-	--color-accent-700: var(--kt-color-accent-800);
-	--color-neutral-100: var(--kt-color-neutral-100);
-	--color-neutral-200: var(--kt-color-neutral-200);
-	--color-neutral-600: var(--kt-color-neutral-600);
-	--color-neutral-700: var(--kt-color-neutral-700);
-	--font-heading: var(--kt-font-heading);
-	--font-body: var(--kt-font-body);
-	--radius-md: var(--kt-radius-md);
 }
 
 /* NDS-DES-01/02/05/06/07/10/12 — status pill. Colour is never the only carrier
@@ -98,7 +87,7 @@
 }
 
 /* NDS-DES-06/12b — the destructive decision, distinct from the primary one. */
-.kt-industry .kt-btn-destructive {
+.kt-industry .btn-destructive {
 	background: none;
 	border: 1px solid oklch(55% 0.18 25);
 	color: oklch(45% 0.16 25);
@@ -109,10 +98,10 @@
 	cursor: pointer;
 	padding: 10px 18px;
 }
-.kt-industry .kt-btn-destructive:hover:not(:disabled) {
+.kt-industry .btn-destructive:hover:not(:disabled) {
 	background: oklch(95% 0.03 25);
 }
-.kt-industry .kt-btn-destructive:disabled {
+.kt-industry .btn-destructive:disabled {
 	opacity: 0.55;
 	cursor: not-allowed;
 }
@@ -143,7 +132,7 @@
  * file's dead local 30px rule, since this stylesheet loads globally via
  * app_include_css, not scoped to the Departmental Needs page. See
  * KT-PAT-001 / DS-REV-001 in docs/mvp-1-r1/01_departmental_needs/design/handoff/. */
-.kt-industry textarea.kt-input {
+.kt-industry textarea.input {
 	resize: vertical;
 	min-height: 72px;
 	font-family: var(--font-body);
@@ -169,6 +158,6 @@
 	color: var(--color-neutral-700);
 	pointer-events: none;
 }
-.kt-industry .nds-search-field .kt-input {
+.kt-industry .nds-search-field .input {
 	padding-left: 32px;
 }

@@ -45,6 +45,7 @@ from kentender_procurement.tenders.services.tender_roles import (
 	ROLE_ACCOUNTING_OFFICER,
 	ROLE_AUDITOR,
 	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
+	ROLE_HEAD_OF_USER_DEPARTMENT,
 	ROLE_PROCUREMENT_OFFICER,
 	SITE_WIDE_ROLES,
 )
@@ -188,6 +189,18 @@ def authority_snapshot(assignment: Assignment | None) -> str:
 	payload = json.loads(assignment_snapshot(assignment))
 	payload["site_pe_code"] = cstr(frappe.db.get_single_value("Site Procuring Entity", "pe_code"))
 	return json.dumps(payload, sort_keys=True)
+
+
+def is_department_head_of(root, user: str | None = None) -> bool:
+	"""A Head of User Department whose scope (with descendants, AUTH-ADR-001
+	v1.11 §4.3) covers a unit that contributed to this Tender. The one test
+	every later-stage owner uses for a department-level reader (OVS-CHG-001
+	v0.6 §4.1); the Head of User Department role only, not the Author."""
+	principal = cstr(user or frappe.session.user)
+	if not principal or principal in ("Guest", "Administrator"):
+		return False
+	scopes = permitted_ou_scopes(principal, ROLE_HEAD_OF_USER_DEPARTMENT)
+	return bool(scopes) and bool(scopes & contributing_units_of(root))
 
 
 def contributing_units_of(root) -> set[str]:

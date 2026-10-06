@@ -61,6 +61,19 @@ class TestHandoffV14(unittest.TestCase):
 		snapshot, _digest = snap.build(handoff(payload))
 		self.assertEqual(snapshot["reservation_category_value"], "None")
 
+	def test_the_tenders_lead_unit_is_the_certified_lead_not_the_first_contributing_unit(self):
+		# OVS-CHG-001 v0.6 plan D15: the handoff lists contributors alphabetically, so the first is not the lead
+		payload = dict(V14_PAYLOAD, contributing_org_unit_ids=["OU-1", "OU-2"],
+			departmental_certification={**V14_PAYLOAD["departmental_certification"], "lead_org_unit_id": "OU-2"})
+		snapshot, _digest = snap.build(handoff(payload))
+		self.assertEqual(snap.lead_unit(snapshot), "OU-2")
+
+	def test_without_a_certification_the_first_contributing_unit_stands(self):
+		payload = {k: v for k, v in dict(V14_PAYLOAD, contributing_org_unit_ids=["OU-1", "OU-2"]).items() if k != "departmental_certification"}
+		snapshot, _digest = snap.build(handoff(payload))
+		self.assertEqual(snap.lead_unit(snapshot), "OU-1")
+		self.assertEqual(snap.lead_unit({}), "")
+
 	def test_the_translation_is_deterministic(self):
 		self.assertEqual(snap.build(handoff(V14_PAYLOAD))[1], snap.build(handoff(V14_PAYLOAD))[1])
 

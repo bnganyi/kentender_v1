@@ -42,10 +42,10 @@
  * convention, not a defect:
  *
  *   - Planning's boards draw `.field` and `table.table`; the live app uses the
- *     Industry `.kt-field` and `.kt-table` (0 occurrences of `kt-field` or
- *     `kt-table` across all ten Planning boards).
+ *     Industry `.field` and `.table` (0 occurrences of `field` or
+ *     `table` across all ten Planning boards).
  *   - The boards' `.dialog` is a design-tool class the live code deliberately
- *     never ports, rendering `.kt-dialog` instead — stated at
+ *     never ports, rendering `.dialog` instead — stated at
  *     `ConfirmDialog.vue` and `ReasonDialog.vue` in Departmental Needs.
  *
  * Two things are deliberately NOT in this vocabulary, for the same reason:
@@ -72,8 +72,8 @@ const LANDMARKS = [
 	{ name: "decision", classes: ["kt-decision"] },
 	{ name: "filter-bar", classes: ["kt-filter-bar"] },
 	{ name: "meta-row", classes: ["kt-meta-row"] },
-	{ name: "field", classes: ["kt-field", "field"] },
-	{ name: "table", classes: ["kt-table", "table"] },
+	{ name: "field", classes: ["field"] },
+	{ name: "table", classes: ["table"] },
 	{ name: "notice", classes: ["kt-notice"] },
 	// Part of the notice primitive, not decoration: `kt_industry_tokens.css`
 	// colours `.kt-notice.is-warning .kt-notice-icon` and its siblings per
@@ -89,17 +89,17 @@ const LANDMARKS = [
 	{ name: "disclosure-body", classes: ["kt-disclosure-body"] },
 	{ name: "timeline", classes: ["kt-timeline"] },
 	{ name: "empty", classes: ["kt-empty"] },
-	{ name: "card", classes: ["kt-card", "card"] },
+	{ name: "card", classes: ["card"] },
 	{ name: "card-title", classes: ["kt-card-title"] },
 	{ name: "factstack", classes: ["kt-factstack"] },
-	// Strategy and Budget frame content with `.kt-blueprint` + `.kt-card`
+	// Strategy and Budget frame content with `.blueprint` + `.card`
 	// rather than `.kt-page` + `.kt-region` + `.kt-group`. Neither module uses
 	// a single one of the Planning containers; both boards and both live
 	// screens are built from these. AGENTS.md §6.6 already records a shipped
-	// defect of exactly this shape — real content in a bare `.kt-card` with
-	// the `.kt-blueprint`/`.kt-corner` frame dropped.
-	{ name: "blueprint", classes: ["kt-blueprint", "blueprint"] },
-	{ name: "corner", classes: ["kt-corner"] },
+	// defect of exactly this shape — real content in a bare `.card` with
+	// the `.blueprint`/`.corner` frame dropped.
+	{ name: "blueprint", classes: ["blueprint"] },
+	{ name: "corner", classes: ["corner"] },
 	{ name: "kpi-row", classes: ["kt-kpi-row"] },
 	{ name: "kpi-card", classes: ["kt-kpi-card"] },
 	{ name: "tabs", classes: ["kt-tabs"] },
@@ -115,8 +115,8 @@ const LANDMARKS = [
 	{ name: "record-detail", classes: ["kt-record-detail"] },
 	{ name: "record-footer", classes: ["kt-record-footer"] },
 	{ name: "bar", classes: ["kt-bar"] },
-	{ name: "dialog", classes: ["kt-dialog", "dialog"] },
-	{ name: "dialog-actions", classes: ["kt-dialog-actions", "dialog-actions"] },
+	{ name: "dialog", classes: ["dialog"] },
+	{ name: "dialog-actions", classes: ["dialog-actions"] },
 ];
 
 /**
@@ -176,8 +176,8 @@ function landmarkOf(el) {
 	const guidanceNames = GUIDANCE.includes(guidance) ? [guidance] : [];
 	if (!classes.length && !guidanceNames.length) return null;
 	// An element is usually several landmarks at once — the frame in both
-	// Strategy and Budget is a single element carrying `kt-card kt-blueprint`,
-	// and an empty state is `kt-card kt-blueprint kt-empty`. Taking only the
+	// Strategy and Budget is a single element carrying `card blueprint`,
+	// and an empty state is `card blueprint kt-empty`. Taking only the
 	// first match in this list's order made that panel read as an `empty` with
 	// no card, and reported the board's card as missing. Collect them all, in
 	// the vocabulary's own order so the rendered path is stable.

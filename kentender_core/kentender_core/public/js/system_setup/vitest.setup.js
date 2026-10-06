@@ -34,3 +34,19 @@ globalThis.kentender_core.desk_page = globalThis.kentender_core.desk_page || {
 		return { next: () => ++token, isCurrent: (candidate) => candidate === token };
 	},
 };
+
+// The register tabs host kentender_core's shared table pager through
+// pager_shared/TablePagerHost.vue; in the browser the helper comes from
+// kt_industry_pager.bundle.js, so the same bundle module is loaded here.
+globalThis.frappe.provide =
+	globalThis.frappe.provide ||
+	((path) => {
+		let node = globalThis;
+		for (const part of path.split(".")) {
+			node[part] = node[part] || {};
+			node = node[part];
+		}
+		return node;
+	});
+globalThis.window.kentender_core = globalThis.kentender_core;
+await import("./../kt_industry/kt_industry_pager.bundle.js");

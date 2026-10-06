@@ -1,0 +1,455 @@
+{
+ "verdict": "ok",
+ "message": "",
+ "title": "Procurement Analytics",
+ "description": "See where procurement work stands, how long key steps take and how much planned value is covered.",
+ "read_at": "2027-06-18T07:00:00Z",
+ "updated": "Updated 18 June 2027, 10:00 EAT",
+ "scope": "Human Resources Management and Development",
+ "tab": "overview",
+ "tabs": [
+  {
+   "key": "overview",
+   "label": "Overview",
+   "icon": "",
+   "route": [
+    "analytics"
+   ],
+   "selected": true
+  },
+  {
+   "key": "needs",
+   "label": "Needs",
+   "icon": "needs",
+   "route": [
+    "analytics",
+    "needs"
+   ],
+   "selected": false
+  },
+  {
+   "key": "departmental-planning",
+   "label": "Departmental planning",
+   "icon": "departmental-planning",
+   "route": [
+    "analytics",
+    "departmental-planning"
+   ],
+   "selected": false
+  },
+  {
+   "key": "annual-planning",
+   "label": "Annual planning",
+   "icon": "annual-planning",
+   "route": [
+    "analytics",
+    "annual-planning"
+   ],
+   "selected": false
+  },
+  {
+   "key": "requisitions",
+   "label": "Requisitions",
+   "icon": "requisitions",
+   "route": [
+    "analytics",
+    "requisitions"
+   ],
+   "selected": false
+  },
+  {
+   "key": "tender-proceedings",
+   "label": "Tender proceedings",
+   "icon": "tender-proceedings",
+   "route": [
+    "analytics",
+    "tender-proceedings"
+   ],
+   "selected": false
+  }
+ ],
+ "filters": {
+  "fy": "FY-2027-28",
+  "dept": "OU-HR",
+  "state": "",
+  "fy_options": [
+   {
+    "id": "FY-2027-28",
+    "label": "FY 2027/28"
+   }
+  ],
+  "dept_options": [
+   {
+    "id": "OU-DH",
+    "label": "Digital Health"
+   },
+   {
+    "id": "OU-HR",
+    "label": "Human Resources Management and Development"
+   }
+  ],
+  "messages": [],
+  "applied": true
+ },
+ "empty": false,
+ "overview": {
+  "strip": {
+   "columns": [
+    {
+     "key": "needs",
+     "tab": "needs",
+     "label": "Needs",
+     "icon": "needs",
+     "status": "ok",
+     "link": {
+      "label": "View Needs",
+      "tab": "needs"
+     },
+     "figure": "1",
+     "unit": "Need",
+     "segments": [
+      {
+       "key": "accepted_for_planning",
+       "label": "Accepted for planning",
+       "count": 1,
+       "tone": "cat-1"
+      }
+     ],
+     "outstanding": "No outstanding matters recorded",
+     "has_matters": false,
+     "incomplete": false
+    },
+    {
+     "key": "departmental_planning",
+     "tab": "departmental-planning",
+     "label": "Departmental planning",
+     "icon": "departmental-planning",
+     "status": "ok",
+     "link": {
+      "label": "View departmental planning",
+      "tab": "departmental-planning"
+     },
+     "figure": "1",
+     "unit": "departmental plan",
+     "segments": [
+      {
+       "key": "accepted",
+       "label": "Accepted",
+       "count": 1,
+       "tone": "cat-1"
+      }
+     ],
+     "outstanding": "No outstanding matters recorded",
+     "has_matters": false,
+     "incomplete": false
+    },
+    {
+     "key": "annual_planning",
+     "tab": "annual-planning",
+     "label": "Annual planning",
+     "icon": "annual-planning",
+     "status": "ok",
+     "link": {
+      "label": "View annual planning",
+      "tab": "annual-planning"
+     },
+     "figure": "4",
+     "unit": "Plan items in the Active Plan",
+     "segments": [
+      {
+       "key": "full",
+       "label": "Fully covered",
+       "count": 3,
+       "tone": "pair-strong"
+      },
+      {
+       "key": "partly",
+       "label": "Partly covered",
+       "count": 1,
+       "tone": "pair-mid"
+      }
+     ],
+     "outstanding": "No outstanding matters recorded",
+     "has_matters": false,
+     "incomplete": false
+    },
+    {
+     "key": "requisitions",
+     "tab": "requisitions",
+     "label": "Requisitions",
+     "icon": "requisitions",
+     "status": "ok",
+     "link": {
+      "label": "View Requisitions",
+      "tab": "requisitions"
+     },
+     "figure": "4",
+     "unit": "Requisitions",
+     "segments": [
+      {
+       "key": "authorised",
+       "label": "Authorised",
+       "count": 4,
+       "tone": "cat-1"
+      }
+     ],
+     "outstanding": "No outstanding matters recorded",
+     "has_matters": false,
+     "incomplete": false
+    },
+    {
+     "key": "tender_proceedings",
+     "tab": "tender-proceedings",
+     "label": "Tender proceedings",
+     "icon": "tender-proceedings",
+     "status": "ok",
+     "link": {
+      "label": "View Tender proceedings",
+      "tab": "tender-proceedings"
+     },
+     "figure": "4",
+     "unit": "Tenders",
+     "segments": [
+      {
+       "key": "preparation",
+       "label": "Preparation",
+       "count": 1,
+       "tone": "cat-1"
+      },
+      {
+       "key": "open",
+       "label": "Open",
+       "count": 1,
+       "tone": "cat-2"
+      },
+      {
+       "key": "evaluation",
+       "label": "Evaluation",
+       "count": 1,
+       "tone": "cat-4"
+      },
+      {
+       "key": "award",
+       "label": "Award",
+       "count": 1,
+       "tone": "cat-5"
+      }
+     ],
+     "outstanding": "3 outstanding matters",
+     "has_matters": true,
+     "incomplete": false
+    }
+   ],
+   "note": "These counts describe different records and are not added together."
+  },
+  "waiting": {
+   "status": "ok",
+   "incomplete_text": "",
+   "legend": [
+    {
+     "key": "0_7",
+     "label": "0–7 days",
+     "tone": "seq-1"
+    },
+    {
+     "key": "8_30",
+     "label": "8–30 days",
+     "tone": "seq-2"
+    },
+    {
+     "key": "31_90",
+     "label": "31–90 days",
+     "tone": "seq-3"
+    },
+    {
+     "key": "over_90",
+     "label": "Over 90 days",
+     "tone": "seq-4"
+    }
+   ],
+   "rows": [
+    {
+     "key": "tender_proceedings",
+     "label": "Tender proceedings",
+     "icon": "tender-proceedings",
+     "segments": [
+      {
+       "key": "0_7",
+       "label": "0–7 days",
+       "count": 2,
+       "tone": "seq-1"
+      },
+      {
+       "key": "8_30",
+       "label": "8–30 days",
+       "count": 1,
+       "tone": "seq-2"
+      }
+     ]
+    }
+   ],
+   "none_text": "Needs, departmental planning, annual planning and requisitions: no outstanding matters recorded.",
+   "caption": "Days since each matter reached its current holder."
+  },
+  "coverage": {
+   "status": "ok",
+   "incomplete_text": "",
+   "percent": 96,
+   "result": "96% of planned value is covered by authorised requisitions",
+   "planned": "Planned value KES 22,500,000 in the Active Plan",
+   "segments": [
+    {
+     "key": "covered",
+     "label": "Covered by authorised requisitions",
+     "text": "KES 21,500,000",
+     "value": 21500000.0,
+     "tone": "pair-strong"
+    },
+    {
+     "key": "not_covered",
+     "label": "Not yet covered",
+     "text": "KES 1,000,000",
+     "value": 1000000.0,
+     "tone": "pair-tint"
+    }
+   ],
+   "link": {
+    "label": "View annual planning",
+    "tab": "annual-planning"
+   },
+   "items": "3 Plan items fully covered, 1 partly covered, 0 not covered."
+  },
+  "steps": {
+   "status": "ok",
+   "incomplete_text": "",
+   "rows": [
+    {
+     "key": "T1",
+     "label": "Requisition submitted to authorised",
+     "status": "ok",
+     "completed": 4,
+     "median": 7,
+     "shortest": 6,
+     "longest": 12,
+     "median_text": "7 days",
+     "shortest_text": "6 days",
+     "longest_text": "12 days"
+    },
+    {
+     "key": "T2",
+     "label": "Requisition authorised to Tender started",
+     "status": "ok",
+     "completed": 4,
+     "median": 3.5,
+     "shortest": 1,
+     "longest": 5,
+     "median_text": "3.5 days",
+     "shortest_text": "1 day",
+     "longest_text": "5 days"
+    },
+    {
+     "key": "T3",
+     "label": "Tender started to published",
+     "status": "ok",
+     "completed": 3,
+     "median": 29,
+     "shortest": 21,
+     "longest": 56,
+     "median_text": "29 days",
+     "shortest_text": "21 days",
+     "longest_text": "56 days"
+    },
+    {
+     "key": "T4",
+     "label": "Bid opening complete to evaluation report sent",
+     "status": "ok",
+     "completed": 1,
+     "median": 28,
+     "shortest": 28,
+     "longest": 28,
+     "median_text": "28 days",
+     "shortest_text": "28 days",
+     "longest_text": "28 days"
+    },
+    {
+     "key": "T5",
+     "label": "Evaluation report sent to AO decision recorded",
+     "status": "ok",
+     "completed": 1,
+     "median": 13,
+     "shortest": 13,
+     "longest": 13,
+     "median_text": "13 days",
+     "shortest_text": "13 days",
+     "longest_text": "13 days"
+    }
+   ],
+   "axis": {
+    "max": 60,
+    "ticks": [
+     0,
+     10,
+     20,
+     30,
+     40,
+     50,
+     60
+    ]
+   },
+   "caption": "Calendar days, last 12 months.",
+   "empty_text": ""
+  },
+  "funding": {
+   "status": "ok",
+   "title": "Ministry of Health procurement budget FY 2027/28",
+   "version_text": "Current version 1",
+   "scope": "Human Resources Management and Development",
+   "own": {
+    "heading": "Budget lines available to Human Resources Management and Development",
+    "registered": "KES 30,000,000",
+    "segments": [
+     {
+      "key": "reserved",
+      "label": "Reserved for requisitions",
+      "text": "KES 13,500,000",
+      "value": 13500000.0,
+      "tone": "family-1",
+      "keep_zero": false
+     },
+     {
+      "key": "committed",
+      "label": "Committed to contracts",
+      "text": "KES 0",
+      "value": 0.0,
+      "tone": "family-2",
+      "keep_zero": true
+     },
+     {
+      "key": "available",
+      "label": "Available to reserve",
+      "text": "KES 16,500,000",
+      "value": 16500000.0,
+      "tone": "family-3",
+      "keep_zero": false
+     }
+    ]
+   },
+   "shared": {
+    "heading": "Budget lines available to all departments",
+    "figures": [
+     {
+      "label": "Reserved for this department's requisitions",
+      "value": "KES 8,000,000"
+     },
+     {
+      "label": "Committed to contracts for this department",
+      "value": "KES 0"
+     }
+    ]
+   },
+   "caption": "Budget lines available to all departments are shared, so their allocation and available amount are not divided by department. Available to reserve is not a cash balance."
+  }
+ },
+ "area": null,
+ "definitions": "Each area counts its own permitted records once. Financial year follows the record's Planning source, not its creation date. Annual planning counts items in the Active Plan. Versions and contributing departments do not add records. An award decision does not mean notices or contract work are complete. Waiting time runs from when a matter reached its current holder; it is not a judgement that work is late. Time between key steps counts calendar days between recorded events completed in the 12 months to 18 June 2027; these are not statutory periods. Plan coverage uses the Annual Plan's own record of value covered by authorised requisitions. Amounts are in Kenya shillings, and different kinds of amount are never added together. Counts and positions describe current position when loaded. All area reads completed at 10:00 EAT."
+}

@@ -33,7 +33,7 @@ function replacedLabel(row) {
 		<div>
 			<h6 class="kt-card-title">{{ __("Version history") }}</h6>
 			<div class="kt-table-scroll">
-				<table class="kt-table">
+				<table class="table">
 					<thead>
 						<tr><th>{{ __("Version") }}</th><th>{{ __("Applies from") }}</th><th>{{ __("Applies until") }}</th><th>{{ __("Recorded at") }}</th><th>{{ __("Recorded by") }}</th><th>{{ __("Earlier versions replaced") }}</th><th>{{ __("Source check") }}</th><th>{{ __("Action") }}</th></tr>
 					</thead>
@@ -55,7 +55,7 @@ function replacedLabel(row) {
 		<div>
 			<h6 class="kt-card-title">{{ __("Source-check history") }}</h6>
 			<div class="kt-table-scroll">
-				<table class="kt-table">
+				<table class="table">
 					<thead>
 						<tr><th>{{ __("Result") }}</th><th>{{ __("Source-check date") }}</th><th>{{ __("Recorded at") }}</th><th>{{ __("Recorded by") }}</th><th>{{ __("Evidence") }}</th><th>{{ __("Reason") }}</th></tr>
 					</thead>
@@ -76,7 +76,7 @@ function replacedLabel(row) {
 		<div>
 			<h6 class="kt-card-title">{{ __("Usage") }}</h6>
 			<div class="kt-table-scroll">
-				<table class="kt-table">
+				<table class="table">
 					<thead>
 						<tr><th>{{ __("Consumer") }}</th><th>{{ __("Record reference") }}</th><th>{{ __("Exact version") }}</th><th>{{ __("Decision date") }}</th><th>{{ __("Action") }}</th></tr>
 					</thead>

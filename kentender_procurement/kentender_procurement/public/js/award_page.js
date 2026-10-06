@@ -4,7 +4,7 @@
 // (AGENTS.md §6.5).
 kentender_core.desk_page.register("award", {
 	title: __("Award"),
-	bundles: ["kt_industry_page_rail.bundle.js", "kt_industry_guidance.bundle.js", "award.bundle.js", "award_page.bundle.css"],
+	bundles: ["kt_industry_page_rail.bundle.js", "kt_industry_guidance.bundle.js", "kt_industry_pager.bundle.js", "award.bundle.js", "award_page.bundle.css"],
 	mount: (el) => frappe.kt_mount_award(el),
 	sidebarWorkspaceKey: "procurement",
 });

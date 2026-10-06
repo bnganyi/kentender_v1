@@ -52,22 +52,22 @@ onMounted(() => nextTick(() => {
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop" data-testid="acc-edit-dialog" @keydown.esc.stop="emit('close')">
-		<div class="kt-dialog acc-dialog" role="dialog" aria-modal="true" aria-labelledby="acc-edit-title">
-			<div id="acc-edit-title" class="kt-dialog-title">{{ __("Edit organisation") }}</div>
-			<div v-for="f in FIELDS" :key="f.key" class="kt-field">
+	<div class="dialog-backdrop" data-testid="acc-edit-dialog" @keydown.esc.stop="emit('close')">
+		<div class="dialog acc-dialog" role="dialog" aria-modal="true" aria-labelledby="acc-edit-title">
+			<div id="acc-edit-title" class="dialog-title">{{ __("Edit organisation") }}</div>
+			<div v-for="f in FIELDS" :key="f.key" class="field">
 				<label :for="`acc-edit-${f.key}`">{{ __(f.label) }}</label>
-				<select v-if="f.options" :id="`acc-edit-${f.key}`" :ref="bind(f.key)" v-model="form[f.key]" class="kt-input" :aria-invalid="!!errors[f.key]">
+				<select v-if="f.options" :id="`acc-edit-${f.key}`" :ref="bind(f.key)" v-model="form[f.key]" class="input" :aria-invalid="!!errors[f.key]">
 					<option v-for="o in f.options" :key="o">{{ o }}</option>
 				</select>
-				<input v-else :id="`acc-edit-${f.key}`" :ref="bind(f.key)" v-model="form[f.key]" class="kt-input" :type="f.type || 'text'" :aria-invalid="!!errors[f.key]" :data-testid="`acc-edit-${f.key}`" />
+				<input v-else :id="`acc-edit-${f.key}`" :ref="bind(f.key)" v-model="form[f.key]" class="input" :type="f.type || 'text'" :aria-invalid="!!errors[f.key]" :data-testid="`acc-edit-${f.key}`" />
 				<p v-if="errors[f.key]" class="kt-field-error">{{ errors[f.key] }}</p>
 			</div>
 			<p class="acc-help">{{ __("Changing the official email sends a verification link to the new address. Bids already submitted keep the details they were submitted with.") }}</p>
 			<div v-if="failure" class="kt-notice is-critical" role="alert"><div class="kt-notice-body">{{ failure }}</div></div>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="emit('close')">{{ __("Cancel") }}</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="acc-edit-save" @click="save">{{ pending ? __("Saving…") : __("Save organisation") }}</button>
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" :disabled="pending" @click="emit('close')">{{ __("Cancel") }}</button>
+				<button type="button" class="btn btn-primary" :disabled="pending" data-testid="acc-edit-save" @click="save">{{ pending ? __("Saving…") : __("Save organisation") }}</button>
 			</div>
 		</div>
 	</div>

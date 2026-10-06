@@ -5,32 +5,32 @@
      attestation checkbox whose wording the server supplies. Used for the
      original publication and for an addendum's own confirmations. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="tnd-channel-dialog" @keydown.esc="$emit('cancel')">
-		<div ref="dialogEl" class="kt-dialog tnd-dialog" role="dialog" aria-modal="true" aria-labelledby="tnd-channel-title" tabindex="-1">
-			<div id="tnd-channel-title" class="kt-dialog-title">{{ channel.dialog_title || `Confirm ${channelWord} publication` }}</div>
+	<div class="dialog-backdrop" data-testid="tnd-channel-dialog" @keydown.esc="$emit('cancel')">
+		<div ref="dialogEl" class="dialog tnd-dialog" role="dialog" aria-modal="true" aria-labelledby="tnd-channel-title" tabindex="-1">
+			<div id="tnd-channel-title" class="dialog-title">{{ channel.dialog_title || `Confirm ${channelWord} publication` }}</div>
 			<div class="tnd-dialog-body">
 				<p class="tnd-small tnd-muted-700" style="margin: 0 0 14px">{{ intro || `Confirm only after the exact approved ${subjectWord} ${subjectWord === "Invitation and complete Tender" ? "were" : "was"} publicly available through this channel.` }}</p>
-				<div class="kt-field"><label for="tnd-ch-available">Available date/time</label><input id="tnd-ch-available" type="datetime-local" class="kt-input" v-model="form.available_at" data-testid="tnd-ch-available" /><p v-if="fieldErrors.available_at" class="tnd-field-error" data-testid="tnd-ch-error-available_at">{{ fieldErrors.available_at }}</p></div>
-				<div class="kt-field"><label for="tnd-ch-reference">Publication reference</label><input id="tnd-ch-reference" class="kt-input" maxlength="160" v-model="form.evidence_reference" data-testid="tnd-ch-reference" /><p v-if="fieldErrors.evidence_reference" class="tnd-field-error" data-testid="tnd-ch-error-evidence_reference">{{ fieldErrors.evidence_reference }}</p></div>
+				<div class="field"><label for="tnd-ch-available">Available date/time</label><input id="tnd-ch-available" type="datetime-local" class="input" v-model="form.available_at" data-testid="tnd-ch-available" /><p v-if="fieldErrors.available_at" class="tnd-field-error" data-testid="tnd-ch-error-available_at">{{ fieldErrors.available_at }}</p></div>
+				<div class="field"><label for="tnd-ch-reference">Publication reference</label><input id="tnd-ch-reference" class="input" maxlength="160" v-model="form.evidence_reference" data-testid="tnd-ch-reference" /><p v-if="fieldErrors.evidence_reference" class="tnd-field-error" data-testid="tnd-ch-error-evidence_reference">{{ fieldErrors.evidence_reference }}</p></div>
 				<template v-if="online">
-					<div class="kt-field"><label for="tnd-ch-url">Public URL</label><input id="tnd-ch-url" class="kt-input" placeholder="https://" v-model="form.public_url" data-testid="tnd-ch-url" /><p v-if="fieldErrors.public_url" class="tnd-field-error" data-testid="tnd-ch-error-public_url">{{ fieldErrors.public_url }}</p></div>
-					<div v-if="!form.public_url" class="kt-field"><label for="tnd-ch-noturl">Why no stable public URL exists</label><input id="tnd-ch-noturl" class="kt-input" v-model="form.url_not_applicable_reason" data-testid="tnd-ch-noturl" /></div>
+					<div class="field"><label for="tnd-ch-url">Public URL</label><input id="tnd-ch-url" class="input" placeholder="https://" v-model="form.public_url" data-testid="tnd-ch-url" /><p v-if="fieldErrors.public_url" class="tnd-field-error" data-testid="tnd-ch-error-public_url">{{ fieldErrors.public_url }}</p></div>
+					<div v-if="!form.public_url" class="field"><label for="tnd-ch-noturl">Why no stable public URL exists</label><input id="tnd-ch-noturl" class="input" v-model="form.url_not_applicable_reason" data-testid="tnd-ch-noturl" /></div>
 				</template>
-				<div class="kt-field"><label>Evidence file (required)</label>
+				<div class="field"><label>Evidence file (required)</label>
 					<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
-						<button type="button" class="kt-btn kt-btn-secondary" data-testid="tnd-ch-choose-file" @click="chooseFile">{{ fileName ? "Replace file" : "Choose file" }}</button>
+						<button type="button" class="btn btn-secondary" data-testid="tnd-ch-choose-file" @click="chooseFile">{{ fileName ? "Replace file" : "Choose file" }}</button>
 						<span v-if="fileName" class="tnd-small" data-testid="tnd-ch-filename">{{ fileName }}</span>
 					</div>
 					<p v-if="fieldErrors.evidence_file" class="tnd-field-error" data-testid="tnd-ch-error-evidence_file">{{ fieldErrors.evidence_file }}</p>
 				</div>
-				<div class="kt-field"><label for="tnd-ch-notes">Notes (optional, maximum 500)</label><textarea id="tnd-ch-notes" class="kt-input" rows="2" maxlength="500" v-model="form.evidence_notes" data-testid="tnd-ch-notes"></textarea><p v-if="fieldErrors.evidence_notes" class="tnd-field-error">{{ fieldErrors.evidence_notes }}</p></div>
+				<div class="field"><label for="tnd-ch-notes">Notes (optional, maximum 500)</label><textarea id="tnd-ch-notes" class="input" rows="2" maxlength="500" v-model="form.evidence_notes" data-testid="tnd-ch-notes"></textarea><p v-if="fieldErrors.evidence_notes" class="tnd-field-error">{{ fieldErrors.evidence_notes }}</p></div>
 				<label class="kt-checkbox" style="margin-top: 14px; font-size: 13px"><input type="checkbox" v-model="form.attestation_confirmed" data-testid="tnd-ch-attest" /><span class="box"></span>{{ attestation }}</label>
 				<p v-if="fieldErrors.attestation_confirmed" class="tnd-field-error" data-testid="tnd-ch-error-attestation">{{ fieldErrors.attestation_confirmed }}</p>
 				<p v-if="error" class="tnd-field-error" role="alert" data-testid="tnd-ch-error">{{ error }}</p>
 			</div>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('cancel')">Cancel</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tnd-ch-confirm" @click="confirm">Confirm publication</button>
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" @click="$emit('cancel')">Cancel</button>
+				<button type="button" class="btn btn-primary" :disabled="pending" data-testid="tnd-ch-confirm" @click="confirm">Confirm publication</button>
 			</div>
 		</div>
 	</div>

@@ -69,7 +69,7 @@ async function confirmAction() {
 					v-for="label in detail.available_actions"
 					:key="label"
 					type="button"
-					:class="['kt-btn', label === 'Retire' ? 'kt-btn-secondary kt-danger' : 'kt-btn-primary']"
+					:class="['btn', label === 'Retire' ? 'btn-secondary kt-danger' : 'btn-primary']"
 					@click="openAction(label)"
 				>
 					{{ label }}
@@ -78,7 +78,7 @@ async function confirmAction() {
 		</div>
 
 		<div style="margin:36px 48px 0;display:grid;grid-template-columns:minmax(0,0.85fr) minmax(0,1.15fr);gap:24px;align-items:start">
-			<div class="kt-card kt-blueprint">
+			<div class="card blueprint">
 				<h2 class="kt-card-title">{{ __("Calendar") }}</h2>
 				<dl style="margin:0">
 					<div class="kt-row"><dt>{{ __("Financial Year ID") }}</dt><dd class="kt-tabular">{{ detail.financial_year_id }}</dd></div>
@@ -87,12 +87,12 @@ async function confirmAction() {
 					<div class="kt-row"><dt>{{ __("Timezone") }}</dt><dd>{{ detail.timezone }}</dd></div>
 					<div class="kt-row"><dt>{{ __("Calendar phase") }}</dt><dd>{{ detail.calendar_phase }}</dd></div>
 				</dl>
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
 			</div>
 
-			<div class="kt-card kt-blueprint">
+			<div class="card blueprint">
 				<h2 class="kt-card-title">{{ __("Declared PE/FY Contexts") }}</h2>
-				<table class="kt-table" style="border:0">
+				<table class="table" style="border:0">
 					<thead>
 						<tr>
 							<th style="width:210px">{{ __("Context") }}</th>
@@ -106,14 +106,14 @@ async function confirmAction() {
 							<td class="kt-tabular">{{ c.context_id }}</td>
 							<td>{{ c.procuring_entity }}</td>
 							<td><StatusPill :status="c.status" /></td>
-							<td style="text-align:right"><button type="button" class="kt-btn kt-btn-ghost" @click="emit('open-context', c.context_id)">{{ __("View") }}</button></td>
+							<td style="text-align:right"><button type="button" class="btn btn-ghost" @click="emit('open-context', c.context_id)">{{ __("View") }}</button></td>
 						</tr>
 					</tbody>
 				</table>
 				<div style="padding-top:16px;font-size:13px;color:color-mix(in srgb, var(--kt-color-text) 60%, transparent)">
 					{{ __("{0} declared contexts", [detail.contexts.length]) }}
 				</div>
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
 			</div>
 		</div>
 

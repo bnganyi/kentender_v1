@@ -76,6 +76,6 @@
 	.kt-industry.kt-portal .acc-people-row { grid-template-columns: minmax(0, 1fr); }
 	.kt-industry.kt-portal .acc-row-remove { margin-top: 0; justify-self: start; }
 	/* Inputs at 16 px so a phone does not zoom on focus (board 390 frame). */
-	.kt-industry.kt-portal .kt-page .kt-input,
-	.kt-industry.kt-portal .acc-dialog .kt-input { font-size: 16px; }
+	.kt-industry.kt-portal .kt-page .input,
+	.kt-industry.kt-portal .acc-dialog .input { font-size: 16px; }
 }

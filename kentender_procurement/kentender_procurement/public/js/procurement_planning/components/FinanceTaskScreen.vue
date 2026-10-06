@@ -124,7 +124,7 @@
 			<!-- The comparison. Approved versus planned, per line. -->
 			<div class="kt-region">
 				<h2>Approved against planned</h2>
-				<table class="kt-table" data-testid="fnt-comparison">
+				<table class="table" data-testid="fnt-comparison">
 					<thead>
 						<tr>
 							<th>Budget line</th><th>Line name</th>
@@ -142,7 +142,7 @@
 								<td class="is-num">{{ row.difference_display }}</td>
 								<td><span class="kt-status" :class="`is-${row.result_kind}`">{{ row.result }}</span></td>
 								<td>
-									<a href="#" class="kt-btn kt-btn-ghost" data-testid="fnt-line-details" @click.prevent="openLine = openLine === index ? null : index">View details</a>
+									<a href="#" class="btn btn-ghost" data-testid="fnt-line-details" @click.prevent="openLine = openLine === index ? null : index">View details</a>
 								</td>
 							</tr>
 							<!-- U10-LOW-AVAILABILITY — advisory, said beside the line it
@@ -194,7 +194,7 @@
 					<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
 				</summary>
 				<div class="kt-disclosure-body">
-					<table class="kt-table">
+					<table class="table">
 						<thead>
 							<tr>
 								<th>Budget line</th><th>Funding source</th>
@@ -240,7 +240,7 @@
 				<button
 					v-if="task.can_decide"
 					type="button"
-					class="kt-btn kt-btn-secondary"
+					class="btn btn-secondary"
 					data-testid="fnt-return"
 					:disabled="pending"
 					@click="$emit('open-return-dialog')"
@@ -255,7 +255,7 @@
 					<button
 						v-if="task.can_confirm"
 						type="button"
-						class="kt-btn kt-btn-primary"
+						class="btn btn-primary"
 						data-testid="fnt-confirm"
 						:disabled="pending"
 						@click="$emit('confirm')"

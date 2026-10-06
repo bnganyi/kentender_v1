@@ -40,7 +40,7 @@ function includedLabel(count) {
 			<button
 				v-if="unit.actions.add_child"
 				type="button"
-				class="kt-btn kt-btn-primary"
+				class="btn btn-primary"
 				:disabled="busy"
 				data-testid="kt-ou-add"
 				@click="emit('add')"
@@ -50,7 +50,7 @@ function includedLabel(count) {
 			<button
 				v-if="unit.actions.rename"
 				type="button"
-				class="kt-btn kt-btn-secondary"
+				class="btn btn-secondary"
 				:disabled="busy"
 				data-testid="kt-ou-rename"
 				@click="emit('rename')"
@@ -58,7 +58,7 @@ function includedLabel(count) {
 			<button
 				v-if="unit.actions.deactivate"
 				type="button"
-				class="kt-btn kt-btn-secondary"
+				class="btn btn-secondary"
 				:disabled="busy"
 				data-testid="kt-ou-deactivate"
 				@click="emit('deactivate')"
@@ -66,7 +66,7 @@ function includedLabel(count) {
 			<button
 				v-if="unit.actions.reactivate"
 				type="button"
-				class="kt-btn kt-btn-secondary"
+				class="btn btn-secondary"
 				:disabled="busy"
 				data-testid="kt-ou-reactivate"
 				@click="emit('reactivate')"

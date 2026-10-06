@@ -119,16 +119,16 @@ class TestTransitionNotificationRecipients(NotificationCase):
 
 	def test_submission_reaches_the_reviewers_and_not_the_author(self):
 		# The author already knows they submitted; the point of the effect is to
-		# raise the task with whoever can act on it. Julia (ACTING_REVIEWER)
-		# holds a real Digital Health grant for 1 Oct–30 Nov 2026 only
-		# (PLN-CHG-001 v1.18 §13.1), so the submission runs at a fixture
-		# instant inside that window under the frozen clock; she is then a
-		# genuine third reviewer beside Peter and the second HoD.
+		# raise the task with whoever can act on it now: Peter and the second
+		# HoD. Julia (ACTING_REVIEWER) held a real Digital Health grant for
+		# 2 Oct–1 Dec 2025 only (the PLN-CHG-001 v1.18 §13.1 term, moved into
+		# FY 2026/27's planning history by the two-year seed world); once it
+		# ended her Role projection went with it, so she is not told.
 		second = self.ensure_second_hod()
 		with clock.at("2026-11-24 10:00:00"):
 			submitted = self.submit(self.create_in(self.ou))
 		told = self.recipients(submitted["need"], notifications.EVENT_SUBMITTED)
-		self.assertEqual(told, sorted([ACTING_REVIEWER, REVIEWER, second]))
+		self.assertEqual(told, sorted([REVIEWER, second]))
 		self.assertNotIn(AUTHOR, told)
 
 	def test_a_reviewer_scoped_to_another_unit_is_never_told(self):

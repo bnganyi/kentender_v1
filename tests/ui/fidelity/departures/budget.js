@@ -66,12 +66,12 @@ const DIALOG_TITLE_IS_A_HEADING = [
 		path: "dialog > h2",
 		because:
 			"The board draws `<div class=\"dialog-title\">`; the build renders `<h2 " +
-			"class=\"kt-dialog-title\">`. A dialog needs an accessible name, and a heading is how " +
+			"class=\"dialog-title\">`. A dialog needs an accessible name, and a heading is how " +
 			"one is given — the same reason this instrument treats a region titled by an `h2` and a " +
 			"region titled by a styled `div` as different structures. This is that rule pointing the " +
 			"other way: the build is MORE structured than the board, not less, and the design tool " +
 			"simply has no heading element in its dialog template.",
-		authority: "KT-STD-001 §2.5 modal pattern; `.kt-dialog-title` is the design system's own class, which the build carries",
+		authority: "KT-STD-001 §2.5 modal pattern; `.dialog-title` is the design system's own class, which the build carries",
 	},
 ];
 

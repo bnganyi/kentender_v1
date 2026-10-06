@@ -13,7 +13,7 @@ from uuid import uuid4
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.utils import add_days, now_datetime
+from frappe.utils import add_days, add_to_date, now_datetime
 
 from kentender_procurement.departmental_needs import api
 from kentender_procurement.departmental_needs.services.context import list_need_create_targets
@@ -412,6 +412,15 @@ class TestAcceptedSourceContract(ContractCase):
 class TestPlanningUsageProjection(ContractCase):
 	"""§4.7 / §8.2 `project_need_planning_usage` — idempotent and ordered."""
 
+	@staticmethod
+	def later():
+		# The seeded world's own Planning events are dated in its story (the
+		# FY 2027/28 Plan on 10 Dec 2026, read as at 18 Jun 2027), which can be
+		# after real time; a test event dated "now" would be an older event
+		# and correctly ignored. A year ahead is after every seeded instant
+		# and still increases call by call.
+		return add_to_date(now_datetime(), years=1)
+
 	def project(self, **kwargs):
 		frappe.set_user(PLANNER)
 		need = self.accepted_need()
@@ -420,6 +429,7 @@ class TestPlanningUsageProjection(ContractCase):
 			"accepted_revision": need.current_accepted_revision,
 			"usage": USAGE_FULL,
 			"source_event_id": self.key(),
+			"source_event_time": self.later(),
 			"active_plan": "PLN-MOH-2027-001",
 			"active_plan_item": "PPI-MOH-2027-021",
 		}
@@ -467,7 +477,7 @@ class TestPlanningUsageProjection(ContractCase):
 		)
 
 	def test_an_older_event_cannot_overwrite_a_newer_projection(self):
-		now = now_datetime()
+		now = self.later()
 		self.project(source_event_time=now)
 		late = self.project(
 			usage=USAGE_NOT_INCLUDED, source_event_time=add_days(now, -1), active_plan_item=""

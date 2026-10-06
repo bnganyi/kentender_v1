@@ -11,17 +11,17 @@ onMounted(() => nextTick(() => close.value && close.value.focus()));
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop" data-testid="acc-view-person" @keydown.esc.stop="emit('close')">
-		<div class="kt-dialog acc-dialog" role="dialog" aria-modal="true" aria-labelledby="acc-view-person-title">
-			<div id="acc-view-person-title" class="kt-dialog-title">{{ person.person }}</div>
+	<div class="dialog-backdrop" data-testid="acc-view-person" @keydown.esc.stop="emit('close')">
+		<div class="dialog acc-dialog" role="dialog" aria-modal="true" aria-labelledby="acc-view-person-title">
+			<div id="acc-view-person-title" class="dialog-title">{{ person.person }}</div>
 			<div class="acc-dialog-facts">
 				<div class="acc-fact"><span class="kt-label">{{ __("Responsibility") }}</span><span>{{ person.responsibility }}</span></div>
 				<div class="acc-fact"><span class="kt-label">{{ __("Job title") }}</span><span>{{ person.job_title || "—" }}</span></div>
 				<div class="acc-fact"><span class="kt-label">{{ __("Effective period") }}</span><span>{{ person.effective_period }}</span></div>
 				<div class="acc-fact"><span class="kt-label">{{ __("Status") }}</span><span>{{ person.active ? __("In effect") : __("Not yet in effect") }}</span></div>
 			</div>
-			<div class="kt-dialog-actions">
-				<button ref="close" type="button" class="kt-btn kt-btn-secondary" @click="emit('close')">{{ __("Close") }}</button>
+			<div class="dialog-actions">
+				<button ref="close" type="button" class="btn btn-secondary" @click="emit('close')">{{ __("Close") }}</button>
 			</div>
 		</div>
 	</div>

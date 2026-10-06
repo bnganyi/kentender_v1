@@ -24,11 +24,11 @@
 		<div class="tnd-footer">
 			<div class="tnd-actions" style="align-items: center">
 				<a href="#" class="tnd-footer-back" data-testid="tnd-back" @click.prevent="$emit('back')">{{ task === "details" ? "Back to Tenders" : "Back" }}</a>
-				<button v-if="canRequestCorrection" type="button" class="kt-btn kt-btn-ghost" :disabled="pending" data-testid="tnd-request-correction" @click="$emit('request-correction')">Request requisition correction</button>
+				<button v-if="canRequestCorrection" type="button" class="btn btn-ghost" :disabled="pending" data-testid="tnd-request-correction" @click="$emit('request-correction')">Request requisition correction</button>
 			</div>
 			<div class="tnd-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-save-draft" @click="$emit('save')">Save draft</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tnd-continue" @click="$emit('continue')">{{ task === "details" ? "Continue" : "Review Tender" }}</button>
+				<button type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-save-draft" @click="$emit('save')">Save draft</button>
+				<button type="button" class="btn btn-primary" :disabled="pending" data-testid="tnd-continue" @click="$emit('continue')">{{ task === "details" ? "Continue" : "Review Tender" }}</button>
 			</div>
 		</div>
 	</div>

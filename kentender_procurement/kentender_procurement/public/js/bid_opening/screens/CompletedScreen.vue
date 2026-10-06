@@ -21,18 +21,18 @@
 		<template v-else-if="mode === 'correct'">
 			<div class="kt-region" data-testid="bop-correct-form"><h2>Add a correction</h2>
 				<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;max-width:1000px">
-					<div class="kt-field" style="grid-column:1 / -1"><label id="bop-correct-kind-label">What needs correcting?</label>
+					<div class="field" style="grid-column:1 / -1"><label id="bop-correct-kind-label">What needs correcting?</label>
 						<div role="radiogroup" aria-labelledby="bop-correct-kind-label" style="display:flex;flex-wrap:wrap;gap:12px 24px;padding-top:4px">
-							<label v-for="k in KINDS" :key="k" class="kt-radio"><input v-model="kind" type="radio" name="bop-correct-kind" :value="k" :data-testid="`bop-correct-kind-${KINDS.indexOf(k)}`"><span class="dot"></span>{{ k }}</label>
+							<label v-for="k in KINDS" :key="k" class="radio"><input v-model="kind" type="radio" name="bop-correct-kind" :value="k" :data-testid="`bop-correct-kind-${KINDS.indexOf(k)}`"><span class="dot"></span>{{ k }}</label>
 						</div>
 					</div>
-					<div class="kt-field"><label for="bop-correct-info">Correct information</label><input id="bop-correct-info" v-model="info" class="kt-input" data-testid="bop-correct-info"></div>
-					<div class="kt-field"><label for="bop-correct-reason">Reason for correction</label><input id="bop-correct-reason" v-model="reason" class="kt-input" data-testid="bop-correct-reason"></div>
+					<div class="field"><label for="bop-correct-info">Correct information</label><input id="bop-correct-info" v-model="info" class="input" data-testid="bop-correct-info"></div>
+					<div class="field"><label for="bop-correct-reason">Reason for correction</label><input id="bop-correct-reason" v-model="reason" class="input" data-testid="bop-correct-reason"></div>
 				</div>
 				<p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">You can correct only these four kinds of information. A correction cannot change a bid, the register or anything the members signed.</p>
 				<p v-if="error" class="bop-field-error" role="alert" data-testid="bop-correct-error">{{ error }}</p>
 			</div>
-			<div class="kt-decision"><p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">The correction is added under your name with the time you submit it. Version {{ versionNumber }} and its signatures stay as they are.</p><div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="kt-btn kt-btn-secondary" data-testid="bop-correct-cancel" @click="$emit('navigate', '')">Cancel</button><button type="button" class="kt-btn kt-btn-primary" :disabled="pending || !info.trim() || !reason.trim()" data-testid="bop-correct-add" @click="add">Add correction</button></div></div>
+			<div class="kt-decision"><p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">The correction is added under your name with the time you submit it. Version {{ versionNumber }} and its signatures stay as they are.</p><div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-secondary" data-testid="bop-correct-cancel" @click="$emit('navigate', '')">Cancel</button><button type="button" class="btn btn-primary" :disabled="pending || !info.trim() || !reason.trim()" data-testid="bop-correct-add" @click="add">Add correction</button></div></div>
 			<div class="kt-region is-secondary"><h2>Original opening record</h2>
 				<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">Version {{ versionNumber }}, signed by every member. Read only.</p><a :href="recordPagesUrl" target="_blank" rel="noopener" style="font-size:14px">View version {{ versionNumber }}</a></div>
 			</div>
@@ -61,7 +61,7 @@
 		<template v-else>
 			<CorrectionsTable v-if="corrections.length" :rows="corrections" />
 			<SignaturesTable :rows="signatures" :version="versionNumber" :secondary="corrections.length > 0">
-				<button v-if="viewer.is_recorder" type="button" class="kt-btn kt-btn-secondary" data-testid="bop-correct-open" @click="$emit('navigate', 'correct')">Correct opening record</button>
+				<button v-if="viewer.is_recorder" type="button" class="btn btn-secondary" data-testid="bop-correct-open" @click="$emit('navigate', 'correct')">Correct opening record</button>
 			</SignaturesTable>
 			<RegisterTable v-if="!corrections.length" :rows="register" secondary />
 			<div v-if="corrections.length" class="kt-notice is-critical" style="margin-top:8px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg><div class="kt-notice-body"><p style="margin:0;font-size:14px"><strong>If a request uses any other kind, or tries to change a bid or a signed page:</strong> This correction cannot change a bid or replace the signed opening record.</p></div></div>

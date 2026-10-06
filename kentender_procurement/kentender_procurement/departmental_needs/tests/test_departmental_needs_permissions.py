@@ -399,10 +399,14 @@ class TestActingHeadOfDepartment(DepartmentalNeedsPermissionCase):
 			as_dict=True,
 		)
 		self.assertEqual(row.appointment_type, "Acting")
-		self.assertTrue(row.effective_from and row.effective_to)
-		# The synced Frappe Role projection exists too — a UI convenience, not
-		# an independent authority source (§6).
-		self.assertTrue(
+		# The two-year seed world puts the acting term in FY 2026/27's planning
+		# history (2 Oct–1 Dec 2025, the PLN-CHG-001 v1.18 §13.1 term moved
+		# 364 days earlier), so it is a real, dated, expired assignment.
+		self.assertEqual((str(row.effective_from)[:10], str(row.effective_to)[:10]), ("2025-10-02", "2025-12-01"))
+		# The synced Frappe Role projection — a UI convenience, not an
+		# independent authority source (§6) — follows the term: it is gone
+		# once the term has ended.
+		self.assertFalse(
 			frappe.db.exists(
 				"Has Role",
 				{"parent": ACTING_REVIEWER, "parenttype": "User", "role": ROLE_HEAD_OF_USER_DEPARTMENT},
@@ -534,6 +538,23 @@ class TestServerSideContextPreferences(DepartmentalNeedsPermissionCase):
 		self.assertTrue(only_ou_refs, "expected at least one seeded Need in Digital Health")
 		self.assertTrue(only_hrmd_refs, "expected at least one seeded Need in HR Management and Development")
 		self.assertEqual(combined_refs, only_ou_refs | only_hrmd_refs)
+
+	def test_every_row_names_its_own_department(self):
+		"""The register's Department column — with several departments combined
+		a row must say which one it belongs to, taken from the Need's own
+		Organisation Unit rather than from whichever department the page is
+		filtered to (nothing is, in the combined view)."""
+		frappe.set_user(AUTHOR)
+		combined = workspace.get_workspace()
+		self.assertEqual(combined["context"]["organisation_unit"], "")
+		seen = set()
+		for row in combined["needs"]:
+			expected_unit = frappe.db.get_value("Departmental Need", row["name"], "organisation_unit")
+			expected_label = frappe.db.get_value("Organisation Unit", expected_unit, "unit_name")
+			self.assertEqual(row["organisation_unit"], expected_unit, row["reference"])
+			self.assertEqual(row["organisation_unit_label"], expected_label, row["reference"])
+			seen.add(row["organisation_unit"])
+		self.assertEqual(seen, {self.ou, self.ou_hrmd}, "expected rows from both of Grace's departments")
 
 	def test_an_explicit_all_departments_choice_overrides_the_remembered_one(self):
 		"""The workspace's "All departments" filter option sends an explicit,

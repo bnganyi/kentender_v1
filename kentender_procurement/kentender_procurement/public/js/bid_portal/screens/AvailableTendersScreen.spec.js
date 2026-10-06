@@ -47,7 +47,7 @@ describe("AvailableTendersScreen", () => {
 		const cells = wrapper.findAll("tbody td");
 		expect(cells[0].find(".kt-label").text()).toBe("TND-MOH-2027-033");
 		expect(cells[5].find("a").attributes("href")).toBe("/tenders/TND-MOH-2027-033");
-		expect(wrapper.find('[data-testid="bds-tenders-count"]').text()).toBe("1 available Tender");
+		expect(wrapper.find('[data-testid="kt-pager-count"]').text()).toBe("1 available Tender");
 		expect(wrapper.text()).not.toMatch(/Start bid/);
 	});
 

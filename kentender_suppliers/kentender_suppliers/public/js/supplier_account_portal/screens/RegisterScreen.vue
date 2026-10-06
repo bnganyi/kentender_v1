@@ -69,8 +69,8 @@ onMounted(() => portal.setTitle(__("Set up your supplier account")));
 					<div><span class="kt-status is-attention">{{ __("Pending verification") }}</span></div>
 					<p v-if="resent" class="acc-muted" role="status">{{ resent }}</p>
 					<div class="acc-actions">
-						<button type="button" class="kt-btn kt-btn-primary" :class="{ 'acc-btn-touch': narrow }" :disabled="pending" data-testid="acc-resend" @click="resend">{{ __("Resend verification link") }}</button>
-						<a href="/account" class="kt-btn kt-btn-secondary" :class="{ 'acc-btn-touch': narrow }" data-testid="acc-back" @click.prevent="emit('registered')">{{ __("Back to Account") }}</a>
+						<button type="button" class="btn btn-primary" :class="{ 'acc-btn-touch': narrow }" :disabled="pending" data-testid="acc-resend" @click="resend">{{ __("Resend verification link") }}</button>
+						<a href="/account" class="btn btn-secondary" :class="{ 'acc-btn-touch': narrow }" data-testid="acc-back" @click.prevent="emit('registered')">{{ __("Back to Account") }}</a>
 					</div>
 				</div>
 			</div>
@@ -84,33 +84,33 @@ onMounted(() => portal.setTitle(__("Set up your supplier account")));
 			<div class="kt-region">
 				<h2>{{ __("Organisation details") }}</h2>
 				<div class="acc-region-body">
-					<div class="kt-field">
+					<div class="field">
 						<label for="acc-legal-name">{{ __("Legal name") }}</label>
-						<input id="acc-legal-name" v-model="form.legal_name" class="kt-input" :placeholder="__('Registered name of the organisation')" :aria-invalid="!!errors.legal_name" data-testid="acc-legal-name" />
+						<input id="acc-legal-name" v-model="form.legal_name" class="input" :placeholder="__('Registered name of the organisation')" :aria-invalid="!!errors.legal_name" data-testid="acc-legal-name" />
 						<p v-if="errors.legal_name" class="kt-field-error">{{ errors.legal_name }}</p>
 					</div>
 					<div class="acc-grid-2">
-						<div class="kt-field">
+						<div class="field">
 							<label for="acc-country">{{ __("Country") }}</label>
-							<select id="acc-country" v-model="form.country" class="kt-input" data-testid="acc-country"><option>Kenya</option></select>
+							<select id="acc-country" v-model="form.country" class="input" data-testid="acc-country"><option>Kenya</option></select>
 							<p v-if="errors.country" class="kt-field-error">{{ errors.country }}</p>
 						</div>
-						<div class="kt-field">
+						<div class="field">
 							<label for="acc-registration">{{ __("Registration number") }}</label>
-							<input id="acc-registration" v-model="form.registration_number" class="kt-input" :aria-invalid="!!errors.registration_number" data-testid="acc-registration" />
+							<input id="acc-registration" v-model="form.registration_number" class="input" :aria-invalid="!!errors.registration_number" data-testid="acc-registration" />
 							<p v-if="errors.registration_number" class="kt-field-error">{{ errors.registration_number }}</p>
 						</div>
 					</div>
 					<div class="acc-grid-2">
-						<div class="kt-field">
+						<div class="field">
 							<label for="acc-kra">{{ __("KRA PIN") }}</label>
-							<input id="acc-kra" v-model="form.tax_identifier" class="kt-input" :aria-invalid="!!errors.tax_identifier" data-testid="acc-kra" />
+							<input id="acc-kra" v-model="form.tax_identifier" class="input" :aria-invalid="!!errors.tax_identifier" data-testid="acc-kra" />
 							<p v-if="errors.tax_identifier" class="kt-field-error">{{ errors.tax_identifier }}</p>
 						</div>
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="acc-address">{{ __("Registered address") }}</label>
-						<input id="acc-address" v-model="form.registered_address" class="kt-input" :aria-invalid="!!errors.registered_address" data-testid="acc-address" />
+						<input id="acc-address" v-model="form.registered_address" class="input" :aria-invalid="!!errors.registered_address" data-testid="acc-address" />
 						<p v-if="errors.registered_address" class="kt-field-error">{{ errors.registered_address }}</p>
 					</div>
 				</div>
@@ -119,15 +119,15 @@ onMounted(() => portal.setTitle(__("Set up your supplier account")));
 				<h2>{{ __("Official contact") }}</h2>
 				<div class="acc-region-body">
 					<div class="acc-grid-2">
-						<div class="kt-field">
+						<div class="field">
 							<label for="acc-email">{{ __("Official email") }}</label>
-							<input id="acc-email" v-model="form.official_email" class="kt-input" type="email" :aria-invalid="!!errors.official_email" aria-describedby="acc-email-help" data-testid="acc-email" />
+							<input id="acc-email" v-model="form.official_email" class="input" type="email" :aria-invalid="!!errors.official_email" aria-describedby="acc-email-help" data-testid="acc-email" />
 							<p v-if="errors.official_email" class="kt-field-error">{{ errors.official_email }}</p>
 							<p v-else id="acc-email-help" class="acc-help">{{ __("You are signed in as {0}. Enter the organisation’s official email, not your personal sign-in email.", [userName]) }}</p>
 						</div>
-						<div class="kt-field">
+						<div class="field">
 							<label for="acc-phone">{{ __("Official phone") }}</label>
-							<input id="acc-phone" v-model="form.official_phone" class="kt-input" type="tel" :aria-invalid="!!errors.official_phone" data-testid="acc-phone" />
+							<input id="acc-phone" v-model="form.official_phone" class="input" type="tel" :aria-invalid="!!errors.official_phone" data-testid="acc-phone" />
 							<p v-if="errors.official_phone" class="kt-field-error">{{ errors.official_phone }}</p>
 						</div>
 					</div>
@@ -137,21 +137,21 @@ onMounted(() => portal.setTitle(__("Set up your supplier account")));
 				<h2>{{ __("Your responsibility") }}</h2>
 				<div class="acc-region-body">
 					<div class="acc-grid-2">
-						<div class="kt-field">
+						<div class="field">
 							<label for="acc-responsibility">{{ __("Responsibility") }}</label>
-							<input id="acc-responsibility" class="kt-input" :value="__('Authorised Signatory')" disabled />
+							<input id="acc-responsibility" class="input" :value="__('Authorised Signatory')" disabled />
 						</div>
-						<div class="kt-field">
+						<div class="field">
 							<label for="acc-job-title">{{ __("Job title") }}</label>
-							<input id="acc-job-title" v-model="form.job_title" class="kt-input" :aria-invalid="!!errors.job_title" data-testid="acc-job-title" />
+							<input id="acc-job-title" v-model="form.job_title" class="input" :aria-invalid="!!errors.job_title" data-testid="acc-job-title" />
 							<p v-if="errors.job_title" class="kt-field-error">{{ errors.job_title }}</p>
 						</div>
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="acc-authority">{{ __("Authority evidence") }}</label>
 						<input id="acc-authority" ref="picker" class="acc-file-input" type="file" tabindex="-1" accept=".pdf,.png,.jpg,.jpeg" :aria-invalid="!!errors.authority_evidence" data-testid="acc-authority" @change="chooseFile" />
 						<div class="acc-upload">
-							<button type="button" class="kt-btn kt-btn-secondary" :class="{ 'acc-btn-touch': narrow }" data-testid="acc-authority-choose" @click="picker && picker.click()">
+							<button type="button" class="btn btn-secondary" :class="{ 'acc-btn-touch': narrow }" data-testid="acc-authority-choose" @click="picker && picker.click()">
 								<span class="acc-btn-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5-5 5 5" /><path d="M12 5v12" /></svg>{{ __("Upload evidence") }}</span>
 							</button>
 							<span class="acc-file-name" data-testid="acc-authority-name">{{ file ? file.name : __("No file chosen") }}</span>
@@ -162,12 +162,12 @@ onMounted(() => portal.setTitle(__("Set up your supplier account")));
 			</div>
 			<div v-if="failure" class="kt-notice is-critical" role="alert"><div class="kt-notice-body">{{ failure }}</div></div>
 			<div v-if="narrow" class="acc-footer-stack">
-				<button type="button" class="kt-btn kt-btn-primary acc-btn-block" :disabled="pending" data-testid="acc-create" @click="create">{{ pending ? __("Creating…") : __("Create account") }}</button>
-				<a href="/tenders" class="kt-btn kt-btn-secondary acc-btn-block">{{ __("Cancel") }}</a>
+				<button type="button" class="btn btn-primary acc-btn-block" :disabled="pending" data-testid="acc-create" @click="create">{{ pending ? __("Creating…") : __("Create account") }}</button>
+				<a href="/tenders" class="btn btn-secondary acc-btn-block">{{ __("Cancel") }}</a>
 			</div>
 			<div v-else class="acc-footer">
-				<a href="/tenders" class="kt-btn kt-btn-secondary">{{ __("Cancel") }}</a>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="acc-create" @click="create">{{ pending ? __("Creating…") : __("Create account") }}</button>
+				<a href="/tenders" class="btn btn-secondary">{{ __("Cancel") }}</a>
+				<button type="button" class="btn btn-primary" :disabled="pending" data-testid="acc-create" @click="create">{{ pending ? __("Creating…") : __("Create account") }}</button>
 			</div>
 		</template>
 	</div>

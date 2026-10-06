@@ -135,7 +135,7 @@
 
 			<div class="kt-region">
 				<h2>Requirements</h2>
-				<table class="kt-table pln-dpp-table" data-testid="pln-dpp-table">
+				<table class="table pln-dpp-table" data-testid="pln-dpp-table">
 				<thead>
 					<tr>
 						<th>Requirement</th>
@@ -148,7 +148,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					<template v-for="row in entries" :key="row.entry_id">
+					<template v-for="row in pagedEntries" :key="row.entry_id">
 						<tr data-testid="pln-dpp-row">
 							<td>
 								{{ row.title }}
@@ -163,11 +163,11 @@
 								<!-- U03-FUNDING — the row whose panel is already open beneath
 								     it names that fact instead of repeating a now-redundant
 								     live action link. -->
-								<span v-if="fundingEntryId === row.entry_id" class="kt-btn kt-btn-ghost kt-muted" data-testid="pln-dpp-row-editing">Editing</span>
+								<span v-if="fundingEntryId === row.entry_id" class="btn btn-ghost kt-muted" data-testid="pln-dpp-row-editing">Editing</span>
 								<a
 									v-else-if="row.action"
 									href="#"
-									class="kt-btn kt-btn-ghost"
+									class="btn btn-ghost"
 									data-testid="pln-dpp-row-action"
 									@click.prevent="onRowAction(row)"
 								>{{ row.action }}</a>
@@ -216,9 +216,10 @@
 					</tr>
 				</tbody>
 				</table>
+				<TablePagerHost :total="entriesTotal" :page="entriesPage" :page-size="entriesPageSize" noun="requirement" @update:page="setEntriesPage" @update:page-size="setEntriesPageSize" />
 
 				<div v-if="plan.mutable" class="pln-dpp-add">
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="pln-dpp-add" @click="$emit('add-direct')">
+					<button type="button" class="btn btn-secondary" data-testid="pln-dpp-add" @click="$emit('add-direct')">
 						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
 						Add a requirement
 					</button>
@@ -257,7 +258,7 @@
 
 			<!-- Action area, after all decision content. -->
 			<div class="pln-footer" data-testid="pln-dpp-footer">
-				<button type="button" class="kt-btn kt-btn-secondary" data-testid="pln-dpp-back" @click="$emit('back')">
+				<button type="button" class="btn btn-secondary" data-testid="pln-dpp-back" @click="$emit('back')">
 					Back
 				</button>
 				<div class="pln-footer-right">
@@ -275,7 +276,7 @@
 					<button
 						v-if="plan.mutable"
 						type="button"
-						class="kt-btn kt-btn-secondary"
+						class="btn btn-secondary"
 						data-testid="pln-dpp-save"
 						:disabled="pending"
 						@click="$emit('save-draft')"
@@ -285,7 +286,7 @@
 					<button
 						v-if="plan.can_submit"
 						type="button"
-						class="kt-btn kt-btn-primary"
+						class="btn btn-primary"
 						data-testid="pln-dpp-submit"
 						:disabled="pending || !certified"
 						@click="$emit('submit')"
@@ -295,7 +296,7 @@
 					<button
 						v-if="plan.can_create_update"
 						type="button"
-						class="kt-btn kt-btn-primary"
+						class="btn btn-primary"
 						data-testid="pln-dpp-create-update"
 						:disabled="pending"
 						@click="$emit('create-update')"
@@ -307,7 +308,7 @@
 
 			<!-- The Planner holding the open task is never stranded on the record. -->
 			<div v-if="plan.open_task" class="pln-dpp-task" data-testid="pln-dpp-open-task">
-				<button type="button" class="kt-btn kt-btn-primary" @click="$emit('open-task', plan.open_task.route)">
+				<button type="button" class="btn btn-primary" @click="$emit('open-task', plan.open_task.route)">
 					{{ plan.open_task.label }}
 				</button>
 			</div>
@@ -320,6 +321,8 @@ import { computed, ref } from "vue";
 import { useGuidance } from "../../pln_shared/composables/useGuidance.js";
 import MissingSettingPanel from "./MissingSettingPanel.vue";
 import EntryFundingPanel from "./EntryFundingPanel.vue";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 
 const props = defineProps({
 	plan: { type: Object, default: () => ({}) },
@@ -357,6 +360,10 @@ const emit = defineEmits([
 const context = computed(() => props.plan.context || {});
 const certification = computed(() => props.plan.certification || {});
 const entries = computed(() => props.plan.entries || []);
+// The table-pagination standard (AGENTS.md §6.11): a departmental plan's requirements, paged per plan submission.
+const {
+	pagedRows: pagedEntries, total: entriesTotal, page: entriesPage, pageSize: entriesPageSize, setPage: setEntriesPage, setPageSize: setEntriesPageSize,
+} = usePagedRows(entries, () => `planning-dpp:${props.plan.header?.reference_line || ""}`);
 const isHod = computed(() => props.plan.access === "hod");
 
 const heading = computed(() => {

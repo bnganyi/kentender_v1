@@ -2,7 +2,7 @@
 //
 // This module's board is an earlier export than Planning's and carries almost
 // none of the container vocabulary: `.kt-page`, `.kt-region`, `.kt-group`,
-// `.kt-field`, `.kt-table` do not appear in `NDS Artboards.dc.html` at all —
+// `.field`, `.table` do not appear in `NDS Artboards.dc.html` at all —
 // they were extracted *from* that board afterwards and added to the live
 // stylesheet, so the board draws them as unclassed divs with inline styles.
 //

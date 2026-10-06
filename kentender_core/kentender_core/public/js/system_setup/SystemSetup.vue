@@ -185,7 +185,7 @@ function sentences(text) {
 	<div class="kt-industry kt-setup-root" data-testid="kt-setup-root">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-setup-shell">
-		<div class="kt-setup-page kt-blueprint">
+		<div class="kt-setup-page blueprint">
 			<!-- Common-States board: loading, denied and failed-to-load paint
 			     only the state — no heading, lede or tabs (and nothing of the
 			     page before a denial is known). -->
@@ -226,7 +226,7 @@ function sentences(text) {
 					<div class="kt-notice-body"><strong>{{ __("System setup could not be loaded.") }}</strong><br>{{ __("Try again. If the problem continues, contact support.") }}</div>
 				</div>
 				<div style="margin-top:14px">
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-setup-retry" @click="load">{{ __("Try again") }}</button>
+					<button type="button" class="btn btn-secondary" data-testid="kt-setup-retry" @click="load">{{ __("Try again") }}</button>
 				</div>
 			</div>
 

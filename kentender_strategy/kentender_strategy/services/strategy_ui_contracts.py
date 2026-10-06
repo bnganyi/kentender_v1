@@ -36,7 +36,9 @@ from kentender_strategy.services.strategy_authorization import (
 	has_plan_create_capability,
 	has_plan_version_capability,
 	holds_approver_responsibility,
+	APPROVED_STATUSES,
 	holds_strategy_read_responsibility,
+	read_scope,
 )
 from kentender_strategy.services.strategy_readiness import (
 	get_version_approval_blockers,
@@ -65,6 +67,17 @@ def _can_read() -> bool:
 	check plus the technical-read allowance. Delegates to the shared
 	`strategy_authorization` gate rather than testing bare Frappe Roles."""
 	return holds_strategy_read_responsibility(frappe.session.user)
+
+
+def _read_scope() -> str:
+	return read_scope(frappe.session.user)
+
+
+def _version_readable(version_name: str, scope: str) -> bool:
+	"""The full readers read every version; the approved-versions readers only a Current or Previous one."""
+	if scope == "full":
+		return True
+	return scope == "approved" and frappe.db.get_value("Strategic Plan Version", version_name, "status") in APPROVED_STATUSES
 
 
 # --------------------------------------------------------------------------
@@ -295,20 +308,24 @@ def _latest_version_row(plan_name: str) -> dict | None:
 	return rows[0] if rows else None
 
 
-def _register_status_row(plan_name: str) -> dict | None:
+def _register_status_row(plan_name: str, *, approved_only: bool = False) -> dict | None:
 	"""The version whose status the register row shows: the open successor
-	when one exists (that is where the work is), else the latest."""
+	when one exists (that is where the work is), else the latest. An
+	approved-versions reader sees the latest approved version only."""
 	rows = frappe.get_all(
 		"Strategic Plan Version",
 		filters={"plan_id": plan_name},
 		fields=["name", "plan_version_id", "version_number", "status", "return_reason"],
 		order_by="version_number desc",
 	)
+	if approved_only:
+		rows = [r for r in rows if r.status in APPROVED_STATUSES]
 	if not rows:
 		return None
-	for r in rows:
-		if r.status in (STATUS_DRAFT, STATUS_SUBMITTED):
-			return r
+	if not approved_only:
+		for r in rows:
+			if r.status in (STATUS_DRAFT, STATUS_SUBMITTED):
+				return r
 	return rows[0]
 
 
@@ -320,8 +337,10 @@ def get_strategy_portfolio(
 	read-eligible assignments (KT-STD-001 §3A). §12.1: search matches plan
 	reference and title; plan type and status filters are server-side; the
 	counts use the same predicate as the rows."""
-	if not _can_read():
+	scope = _read_scope()
+	if not scope:
 		return {"forbidden": True}
+	approved_only = scope == "approved"
 
 	filters: dict = {}
 	if plan_role:
@@ -340,11 +359,15 @@ def get_strategy_portfolio(
 	)
 	rows = []
 	for p in plans:
-		latest = _register_status_row(p.name)
+		latest = _register_status_row(p.name, approved_only=approved_only)
+		if approved_only and not latest:
+			continue  # nothing of this plan has been approved yet
 		row_status = latest["status"] if latest else "No version"
 		if status and row_status != status:
 			continue
-		action = _row_action(p.plan_id, latest)
+		# An approved-versions reader decides nothing here: the row only opens the plan
+		# (a blank route left a View button that did nothing).
+		action = _row_action(p.plan_id, latest) if not approved_only else {"label": _("View"), "route": plan_route(p.plan_id)}
 		rows.append(
 			{
 				**_plan_dto(p),
@@ -372,18 +395,17 @@ def get_strategy_portfolio(
 			}
 		)
 
-	my_work = _my_work_versions()
+	my_work = [] if approved_only else _my_work_versions()
 	return {
 		"forbidden": False,
 		# Read-offer-vs-command parity: the create action is offered only
 		# when save_strategy_plan_draft's own gate would pass.
-		"can_create_plan": has_plan_create_capability(frappe.session.user),
+		"can_create_plan": False if approved_only else has_plan_create_capability(frappe.session.user),
 		"plans": rows,
 		"my_work": my_work,
 		"counts": {"plans": len(rows), "my_work": len(my_work)},
 		"status_options": [
-			{"value": STATUS_DRAFT, "label": _("Draft")},
-			{"value": STATUS_SUBMITTED, "label": _("Awaiting approval")},
+			*([] if approved_only else [{"value": STATUS_DRAFT, "label": _("Draft")}, {"value": STATUS_SUBMITTED, "label": _("Awaiting approval")}]),
 			{"value": STATUS_ACTIVE, "label": _("Current")},
 			{"value": STATUS_SUPERSEDED, "label": _("Previous version")},
 		],
@@ -451,9 +473,12 @@ def get_strategy_tree(plan_version_id: str) -> dict:
 	# already-gated caller), so it carries the same read gate; a non-reader
 	# gets a masked not-found rather than a Forbidden that would confirm the
 	# version exists. Technical readers always pass.
-	if not _can_read():
+	scope = _read_scope()
+	if not scope:
 		return {"not_found": True}
 	plan_version_id = resolve_version_name(plan_version_id) or plan_version_id
+	if not _version_readable(plan_version_id, scope):
+		return {"not_found": True}
 	nodes = frappe.get_all(
 		"Strategy Node",
 		filters={"plan_version_id": plan_version_id},
@@ -666,7 +691,8 @@ def get_plan_workspace(plan_id: str, version_number: str | int | None = None) ->
 	plan_name = resolve_plan_name(plan_id)
 	if not plan_name:
 		return {"not_found": True}
-	if not _can_read():
+	scope = _read_scope()
+	if not scope:
 		return {"forbidden": True}
 	plan = frappe.get_doc("Strategic Plan", plan_name)
 
@@ -685,6 +711,10 @@ def get_plan_workspace(plan_id: str, version_number: str | int | None = None) ->
 		],
 		order_by="version_number desc",
 	)
+	if scope == "approved":
+		versions = [v for v in versions if v.status in APPROVED_STATUSES]
+		if not versions:
+			return {"not_found": True}  # nothing of this plan has been approved: it is not theirs to know
 	if not versions:
 		return {
 			"forbidden": False,
@@ -825,7 +855,7 @@ def _event_tone(action: str | None) -> str:
 
 def get_plan_history(plan_id: str) -> list[dict]:
 	plan_name = resolve_plan_name(plan_id)
-	if not plan_name or not _can_read():
+	if not plan_name or not _read_scope():
 		return []
 	version_names = frappe.get_all("Strategic Plan Version", filters={"plan_id": plan_name}, pluck="name")
 	out: list[dict] = []
@@ -841,7 +871,8 @@ def get_version_history(plan_version_id: str) -> list[dict]:
 	Stored actions stay verbatim in `event`; `event_label` is the readable
 	form (§4.7: historical evidence is never rewritten)."""
 	version_name = resolve_version_name(plan_version_id)
-	if not version_name or not _can_read():
+	scope = _read_scope()
+	if not version_name or not scope or not _version_readable(version_name, scope):
 		return []
 	out = []
 	for row in list_events("Strategic Plan Version", version_name):

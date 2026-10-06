@@ -53,14 +53,14 @@
 
 		<div class="req-footer">
 			<div class="req-actions">
-				<button type="button" class="kt-btn kt-btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
-				<button v-if="actions.view_planning_request && !actions.start_new_requisition" type="button" class="kt-btn kt-btn-secondary" data-testid="req-view-planning-request" @click="ctx.goPath(view.planning_route)">View Planning request</button>
-				<button v-if="actions.export" type="button" class="kt-btn kt-btn-ghost" :disabled="busy" data-testid="req-export" @click="downloadExport(ctx, view.requisition)">Export</button>
+				<button type="button" class="btn btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
+				<button v-if="actions.view_planning_request && !actions.start_new_requisition" type="button" class="btn btn-secondary" data-testid="req-view-planning-request" @click="ctx.goPath(view.planning_route)">View Planning request</button>
+				<button v-if="actions.export" type="button" class="btn btn-ghost" :disabled="busy" data-testid="req-export" @click="downloadExport(ctx, view.requisition)">Export</button>
 			</div>
 			<div class="req-actions">
-				<button v-if="actions.try_again" type="button" class="kt-btn kt-btn-secondary" data-testid="req-try-again" @click="ctx.reload()">Try again</button>
-				<button v-if="actions.open_planning_task" type="button" class="kt-btn kt-btn-primary" data-testid="req-open-planning-task" @click="ctx.goPath(view.planning_route)">Open Planning correction task</button>
-				<button v-if="view.fresh_start" type="button" class="kt-btn kt-btn-primary" data-testid="req-start-new" @click="dialog = true">Start a new requisition</button>
+				<button v-if="actions.try_again" type="button" class="btn btn-secondary" data-testid="req-try-again" @click="ctx.reload()">Try again</button>
+				<button v-if="actions.open_planning_task" type="button" class="btn btn-primary" data-testid="req-open-planning-task" @click="ctx.goPath(view.planning_route)">Open Planning correction task</button>
+				<button v-if="view.fresh_start" type="button" class="btn btn-primary" data-testid="req-start-new" @click="dialog = true">Start a new requisition</button>
 			</div>
 		</div>
 
@@ -77,8 +77,8 @@
 			</div>
 			<Notice v-if="dialogError" tone="critical">{{ dialogError }}</Notice>
 			<template #actions>
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="dialog = false">Cancel</button>
-				<button v-if="actions.start_new_requisition" type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="req-fresh-start-confirm" @click="startNew">Start new Draft</button>
+				<button type="button" class="btn btn-secondary" :disabled="busy" @click="dialog = false">Cancel</button>
+				<button v-if="actions.start_new_requisition" type="button" class="btn btn-primary" :disabled="busy" data-testid="req-fresh-start-confirm" @click="startNew">Start new Draft</button>
 			</template>
 		</DialogFrame>
 	</div>

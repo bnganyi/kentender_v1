@@ -35,9 +35,13 @@ SOURCE = os.path.abspath(profiles.__file__)
 def _world_available() -> bool:
 	try:
 		base.verify_prerequisites()
-		return True
 	except Exception:
 		return False
+	# A consumed laptops handoff cannot be reset to a profile (one-way
+	# consumption, by design): on the full world the canonical Tender has
+	# consumed it, so the profiles need `CURRENT=requisitions`.
+	plan_item_id = base._plan_item_id(base.COMBINED_ITEM_TITLE)
+	return not frappe.db.get_value("Procurement Requisition", {"plan_item_id": plan_item_id, "current_state": "Authorised"}, "handoff_consumed_at")
 
 
 class TestProfileContract(IntegrationTestCase):
@@ -62,7 +66,7 @@ class TestProfileContract(IntegrationTestCase):
 			profiles.load_profile(profile="REQ-SC-NOT-A-PROFILE", commit=False)
 
 
-@unittest.skipUnless(_world_available(), "the canonical Requisitions world is not seeded (make seed-canonical THROUGH=requisitions)")
+@unittest.skipUnless(_world_available(), "the canonical Requisitions world is not seeded, or its laptops handoff is consumed by the canonical Tender (make seed-canonical CURRENT=requisitions)")
 class TestEveryProfile(IntegrationTestCase):
 	@classmethod
 	def tearDownClass(cls):

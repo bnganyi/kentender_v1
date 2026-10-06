@@ -71,13 +71,13 @@ describe("Requirements and supporting evidence", () => {
 		task.warranty[0].status = "Not started";
 		const wrapper = mountWith(task, portalFor({ call: vi.fn(async () => task) }));
 		await flushPromises();
-		const action = (key) => wrapper.get(`[data-testid="bds-row-${key}"] .bds-link-button`).text();
+		const action = (key) => wrapper.get(`[data-testid="bds-row-${key}"] .btn-ghost`).text();
 		expect([action(task.technical[0].key), action(task.technical[1].key), action(task.warranty[0].key), action(task.warranty[1].key)]).toEqual(["Respond", "Edit", "Respond", "Edit"]);
 		expect(wrapper.findAll('[data-testid="bds-technical-table"] thead th').map((th) => th.text()).at(-1)).toBe("Action");
 		task.bid = { ...task.bid, editable: false };
 		const fixed = mountWith(task, portalFor({ call: vi.fn(async () => task) }));
 		await flushPromises();
-		expect(fixed.findAll("tbody .bds-link-button").map((b) => b.text()).filter((t) => t !== "View")).toEqual([]);
+		expect(fixed.findAll("tbody .btn-ghost").map((b) => b.text()).filter((t) => t !== "View")).toEqual([]);
 	});
 
 	const TERMS = [
@@ -99,14 +99,14 @@ describe("Requirements and supporting evidence", () => {
 		expect(rows[0].get(".bds-muted").text()).toBe("Delivered quantities equal the authorised schedule");
 		expect(rows[0].text()).toContain("Inspection record");
 		expect(rows.map((tr) => tr.get(".kt-status").text())).toEqual(["Not accepted yet", "Accepted"]);
-		expect(rows.map((tr) => tr.get(".bds-link-button").text())).toEqual(["Confirm", "Review"]);
+		expect(rows.map((tr) => tr.get(".btn-ghost").text())).toEqual(["Confirm", "Review"]);
 		expect(region.text()).not.toContain("Respond");
 		expect(region.text()).not.toContain("Not started");
 		// read-only when the bid cannot change
 		task.bid = { ...task.bid, editable: false };
 		const fixed = mountWith(task, portalFor({ call: vi.fn(async () => task) }));
 		await flushPromises();
-		expect(fixed.findAll('[data-testid="bds-acceptance"] tbody .bds-link-button').map((b) => b.text())).toEqual(["View", "View"]);
+		expect(fixed.findAll('[data-testid="bds-acceptance"] tbody .btn-ghost').map((b) => b.text())).toEqual(["View", "View"]);
 		// narrow cards say the same
 		globalThis.__narrow = true;
 		const narrow = mountWith(requirementsTask() && { ...task, bid: { ...task.bid, editable: true } }, portalFor({ call: vi.fn(async () => task) }));
@@ -178,7 +178,7 @@ describe("Requirements and supporting evidence", () => {
 		expect(wrapper.get('[data-testid="bds-technical-table"]').text()).not.toContain("WhatsApp");
 		expect(wrapper.find(`[data-testid="bds-row-${task.technical[1].key}"] [data-testid="bds-attachments"]`).exists()).toBe(false);
 		// the evidence table's button opens the files; Replace belongs to each file inside, so the button never says it
-		const verbs = wrapper.findAll('[data-testid="bds-evidence-table"] tbody .bds-link-button').map((b) => b.text());
+		const verbs = wrapper.findAll('[data-testid="bds-evidence-table"] tbody .btn-ghost').map((b) => b.text());
 		expect(verbs[0]).toBe("Upload");
 		expect(verbs.slice(1).every((v) => v === "Edit")).toBe(true);
 	});
@@ -253,7 +253,7 @@ describe("Requirements and supporting evidence", () => {
 		const wrapper = mountWith(task, portalFor({ call: vi.fn(async () => task) }));
 		await flushPromises();
 		expect(wrapper.find('[data-testid="bds-requirements-save"]').exists()).toBe(false);
-		const labels = wrapper.findAll(".bds-link-button").map((b) => b.text());
+		const labels = wrapper.findAll(".btn-ghost").map((b) => b.text());
 		expect(labels.length).toBeGreaterThan(0);
 		expect(labels.filter((l) => ["Edit", "Upload", "Replace"].includes(l))).toEqual([]);
 	});

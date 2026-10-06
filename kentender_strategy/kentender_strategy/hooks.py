@@ -70,3 +70,6 @@ kt_technical_reference_resolvers = [
 kt_technical_read_probes = [
 	"kentender_strategy.services.technical_read.read_probes",
 ]
+
+# HOME-CHG-001 v0.6 §7 — Strategy's feed to the Home page (core collects, never imports this app).
+kt_home_providers = ["kentender_strategy.services.home_provider.entries"]

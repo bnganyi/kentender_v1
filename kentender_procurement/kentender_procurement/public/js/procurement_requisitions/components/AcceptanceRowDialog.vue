@@ -2,32 +2,32 @@
      not this dialog; built from the shared dialog and field primitives. -->
 <template>
 	<DialogFrame :title="row ? 'Edit acceptance check' : 'Add acceptance check'" :width="480" :busy="busy" testid="req-acceptance-dialog" @close="$emit('close')">
-		<div class="kt-field">
+		<div class="field">
 			<label :for="`${id}-type`">Check</label>
-			<select :id="`${id}-type`" v-model="form.check_type" class="kt-input">
+			<select :id="`${id}-type`" v-model="form.check_type" class="input">
 				<option v-for="t in catalogue.check_types || []" :key="t" :value="t">{{ t }}</option>
 			</select>
 		</div>
-		<div class="kt-field">
+		<div class="field">
 			<label :for="`${id}-condition`">Pass condition</label>
-			<textarea :id="`${id}-condition`" v-model="form.pass_condition" class="kt-input" rows="2" :class="{ 'is-invalid': fieldError('pass_condition') }" data-testid="req-acceptance-condition"></textarea>
+			<textarea :id="`${id}-condition`" v-model="form.pass_condition" class="input" rows="2" :class="{ 'is-invalid': fieldError('pass_condition') }" data-testid="req-acceptance-condition"></textarea>
 			<div class="kt-field-hint">State what an inspector can observe, in 10–500 characters.</div>
 			<span v-if="fieldError('pass_condition')" class="req-field-error">{{ fieldError("pass_condition") }}</span>
 		</div>
-		<div class="kt-field">
+		<div class="field">
 			<label :for="`${id}-evidence`">Evidence</label>
-			<select :id="`${id}-evidence`" v-model="form.evidence_type" class="kt-input">
+			<select :id="`${id}-evidence`" v-model="form.evidence_type" class="input">
 				<option v-for="t in catalogue.evidence_types || []" :key="t" :value="t">{{ t }}</option>
 			</select>
 		</div>
-		<div v-if="form.evidence_type === 'Other stated record'" class="kt-field">
+		<div v-if="form.evidence_type === 'Other stated record'" class="field">
 			<label :for="`${id}-other`">Name of the evidence record</label>
-			<input :id="`${id}-other`" v-model="form.other_evidence_name" class="kt-input" />
+			<input :id="`${id}-other`" v-model="form.other_evidence_name" class="input" />
 		</div>
 		<Notice v-if="otherError" tone="critical">{{ otherError }}</Notice>
 		<template #actions>
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
-			<button type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="req-acceptance-confirm" @click="confirm">{{ local ? "Use this check" : "Save acceptance check" }}</button>
+			<button type="button" class="btn btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
+			<button type="button" class="btn btn-primary" :disabled="busy" data-testid="req-acceptance-confirm" @click="confirm">{{ local ? "Use this check" : "Save acceptance check" }}</button>
 		</template>
 	</DialogFrame>
 </template>

@@ -76,7 +76,7 @@ def _forbidden() -> dict[str, Any]:
 
 def _reader(requisition: str, actor: str):
 	root = records.require_root(requisition, lock=False)
-	authz.require_requisition_reader(actor, contributing_org_units=records.contributing_units(root))
+	authz.require_requisition_reader(actor, contributing_org_units=records.contributing_units(root), state=root.current_state)
 	return root
 
 
@@ -255,9 +255,13 @@ def get_requisition_workspace(*, filters: dict[str, Any] | None = None, user: st
 		and (not search or search in (r["reference"] + " " + r["title"]).lower())
 	]
 	departments = sorted({u for r in register for u in r["units"]} | (set() if technical else draft_units | hod_units))
+	# The table-pagination standard: one page of what matched, and how many matched.
+	from kentender_core.services.paging import page_of
+
+	page_rows, paging = page_of(shown, filters.get("page"), filters.get("page_size"))
 	return {
 		"outcome": "OK", "actor": actor, "mode": "technical" if technical else "business",
-		"your_work": [] if technical else your_work, "ready_to_start": ready, "register": shown, "register_total": len(register),
+		"your_work": [] if technical else your_work, "ready_to_start": ready, "register": page_rows, "paging": paging, "register_total": len(register),
 		"counts": {k: v for k, v in counts.items() if (k != "Approvals" or is_hopf or hod_units) and not technical},
 		"filters": {
 			"statuses": [{"value": s, "label": STATE_BADGES[s][0]} for s in STATE_BADGES],

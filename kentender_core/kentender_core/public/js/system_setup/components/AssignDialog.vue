@@ -184,16 +184,16 @@ const blockedReason = computed(() => {
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop">
+	<div class="dialog-backdrop">
 		<div
-			class="kt-dialog kt-narrow"
+			class="dialog kt-narrow"
 			role="dialog"
 			aria-modal="true"
 			:aria-labelledby="titleId"
 			data-testid="kt-ura-assign"
 			@keydown.esc.stop="onEscape"
 		>
-			<h2 :id="titleId" class="kt-dialog-title">{{ isEdit ? __("Edit scheduled assignment") : __("Assign responsibility") }}</h2>
+			<h2 :id="titleId" class="dialog-title">{{ isEdit ? __("Edit scheduled assignment") : __("Assign responsibility") }}</h2>
 
 			<div class="dialog-body kt-assign-body">
 				<div v-if="isEdit" class="kt-notice is-info" style="align-items:flex-start" data-testid="kt-ura-edit-notice">
@@ -202,14 +202,14 @@ const blockedReason = computed(() => {
 				</div>
 
 				<!-- User: a person search showing "Name · login" once chosen -->
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-assign-user">{{ __("User") }}</label>
 					<div class="kt-input-icon">
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
 						<input
 							id="kt-assign-user"
 							ref="firstField"
-							class="kt-input"
+							class="input"
 							type="text"
 							autocomplete="off"
 							:value="userText"
@@ -231,11 +231,11 @@ const blockedReason = computed(() => {
 				</div>
 
 				<!-- Responsibility: "Role · Scope", as the board's select -->
-				<div class="kt-field">
+				<div class="field">
 					<label for="kt-assign-role">{{ __("Responsibility") }}</label>
 					<select
 						id="kt-assign-role"
-						class="kt-input"
+						class="input"
 						:value="form.business_role"
 						:aria-invalid="problemFor('business_role') ? 'true' : 'false'"
 						data-testid="kt-ura-role"
@@ -251,12 +251,12 @@ const blockedReason = computed(() => {
 
 				<!-- Organisation Unit: OU-scoped roles only; its full path, opening
 				     the list of active units -->
-				<div v-if="needsUnit" class="kt-field" data-testid="kt-ura-ou">
+				<div v-if="needsUnit" class="field" data-testid="kt-ura-ou">
 					<label for="kt-assign-ou">{{ __("Organisation Unit") }}</label>
 					<div class="kt-input-icon is-trailing">
 						<input
 							id="kt-assign-ou"
-							class="kt-input"
+							class="input"
 							type="text"
 							readonly
 							role="combobox"
@@ -285,10 +285,10 @@ const blockedReason = computed(() => {
 					<p v-if="problemFor('organisation_unit')" class="kt-field-error">{{ problemFor("organisation_unit") }}</p>
 				</div>
 
-				<div class="kt-field">
+				<div class="field">
 					<label id="kt-assign-appointment">{{ __("Appointment") }}</label>
 					<div class="kt-seg kt-seg-inline" role="radiogroup" aria-labelledby="kt-assign-appointment" style="align-self:flex-start">
-						<label v-for="kind in ['Permanent', 'Acting']" :key="kind" class="kt-seg-opt">
+						<label v-for="kind in ['Permanent', 'Acting']" :key="kind" class="seg-opt">
 							<input
 								v-model="form.appointment_type"
 								type="radio"
@@ -302,33 +302,33 @@ const blockedReason = computed(() => {
 				</div>
 
 				<!-- Permanent: one optional start; Acting: the period side by side -->
-				<div v-if="!isActing" class="kt-field">
+				<div v-if="!isActing" class="field">
 						<label for="kt-assign-from">{{ __("Effective from") }} <span class="text-muted" style="font-weight:400">{{ __("(optional)") }}</span></label>
 						<div class="kt-date-field" :class="{ 'is-empty': !form.effective_from }">
-							<input id="kt-assign-from" v-model="form.effective_from" class="kt-input" type="date" data-testid="kt-ura-from">
+							<input id="kt-assign-from" v-model="form.effective_from" class="input" type="date" data-testid="kt-ura-from">
 							<span class="kt-date-placeholder">{{ __("Leave blank to start immediately") }}</span>
 						</div>
 					<p v-if="problemFor('effective_from')" class="kt-field-error">{{ problemFor("effective_from") }}</p>
 				</div>
 				<div v-if="isActing" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-					<div class="kt-field">
+					<div class="field">
 						<label for="kt-assign-from-acting">{{ __("Effective from") }}</label>
-						<input id="kt-assign-from-acting" v-model="form.effective_from" class="kt-input" type="date" data-testid="kt-ura-from">
+						<input id="kt-assign-from-acting" v-model="form.effective_from" class="input" type="date" data-testid="kt-ura-from">
 						<p v-if="problemFor('effective_from')" class="kt-field-error">{{ problemFor("effective_from") }}</p>
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="kt-assign-to">{{ __("Effective to") }}</label>
-						<input id="kt-assign-to" v-model="form.effective_to" class="kt-input" type="date" data-testid="kt-ura-to">
+						<input id="kt-assign-to" v-model="form.effective_to" class="input" type="date" data-testid="kt-ura-to">
 						<p v-if="problemFor('effective_to')" class="kt-field-error">{{ problemFor("effective_to") }}</p>
 					</div>
 				</div>
 
-				<div v-if="isActing" class="kt-field">
+				<div v-if="isActing" class="field">
 					<label for="kt-assign-authority">{{ __("Authority reference") }}</label>
 					<input
 						id="kt-assign-authority"
 						v-model="form.authority_reference"
-						class="kt-input"
+						class="input"
 						:aria-invalid="problemFor('authority_reference') ? 'true' : 'false'"
 						:placeholder="__('Required for Acting assignments')"
 						data-testid="kt-ura-authority"
@@ -361,12 +361,12 @@ const blockedReason = computed(() => {
 				</div>
 			</div>
 
-			<div class="kt-dialog-actions">
+			<div class="dialog-actions">
 				<span v-if="blockedReason" class="kt-blocked" data-testid="kt-ura-blocked">{{ blockedReason }}</span>
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
+				<button type="button" class="btn btn-secondary" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
 				<button
 					type="button"
-					class="kt-btn kt-btn-primary"
+					class="btn btn-primary"
 					:disabled="!canSubmit"
 					data-testid="kt-ura-assign-confirm"
 					@click="emit('submit', { ...form })"

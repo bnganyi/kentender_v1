@@ -103,7 +103,9 @@ def requisition_rows_to_clear() -> dict[str, list[str]]:
 	(the same "tied to the canonical item" rule the rest of this module
 	uses). Found 26 Sep 2026: a test world's Authorised Requisition whose
 	plan had gone survived every reseed. Read-only."""
-	keep = {item for item in (_plan_item_id(SINGLE_ITEM_TITLE), _plan_item_id(COMBINED_ITEM_TITLE)) if item}
+	from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import canonical_plan_item_ids
+
+	keep = set(canonical_plan_item_ids())
 	roots = [row.name for row in frappe.get_all("Procurement Requisition", fields=["name", "plan_item_id"]) if row.plan_item_id not in keep]
 	return {"Procurement Requisition": roots} if roots else {}
 
@@ -120,7 +122,9 @@ def clear_requisition_fixture_rows(
 ) -> dict[str, Any]:
 	deleted: dict[str, int] = {}
 	if include_canonical:
-		plan_items = [_plan_item_id(SINGLE_ITEM_TITLE), _plan_item_id(COMBINED_ITEM_TITLE)]
+		from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import canonical_plan_item_ids
+
+		plan_items = canonical_plan_item_ids()
 		for doctype, count in _delete_for_plan_items(plan_items).items():
 			deleted[doctype] = deleted.get(doctype, 0) + count
 	if include_playwright:

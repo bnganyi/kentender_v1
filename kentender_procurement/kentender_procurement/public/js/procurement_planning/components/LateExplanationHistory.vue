@@ -4,7 +4,7 @@
      the most recent first and marks any earlier, superseded explanation. -->
 <template>
 	<div class="pln-late-explanation-history" data-testid="pln-late-explanation-history">
-		<div v-for="(entry, index) in ordered" :key="entry.name || index" class="kt-card" style="padding: 24px; max-width: 560px; margin-bottom: 16px">
+		<div v-for="(entry, index) in ordered" :key="entry.name || index" class="card" style="padding: 24px; max-width: 560px; margin-bottom: 16px">
 			<span v-if="index > 0" class="kt-status is-pending" data-testid="pln-late-explanation-superseded">Superseded</span>
 			<div class="pln-facts-row" style="margin-bottom: 16px">
 				<div class="pln-fact">

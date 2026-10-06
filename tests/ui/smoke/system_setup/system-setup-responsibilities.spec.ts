@@ -47,7 +47,7 @@ test.describe.serial("System setup — Users and responsibilities, Organisation 
 		const trigger = page.locator('[data-testid="kt-ura-assign-open"]');
 		await trigger.click();
 		const dialog = page.locator('[data-testid="kt-ura-assign"]');
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Assign responsibility");
+		await expect(dialog.locator(".dialog-title")).toHaveText("Assign responsibility");
 		await expect(page.locator("#kt-assign-user")).toBeFocused();
 		await page.fill("#kt-assign-user", "Playwright Grantee");
 		await dialog.locator(".kt-matches button", { hasText: world.user }).click();
@@ -55,7 +55,7 @@ test.describe.serial("System setup — Users and responsibilities, Organisation 
 		await page.selectOption('[data-testid="kt-ura-role"]', "Departmental Author");
 		await page.click('[data-testid="kt-ura-ou-toggle"]');
 		await page.click(`[data-testid="kt-ura-ou-option-${world.unit}"]`);
-		await dialog.locator("label.kt-seg-opt", { hasText: "Acting" }).click();
+		await dialog.locator("label.seg-opt", { hasText: "Acting" }).click();
 		await expect(page.locator('[data-testid="kt-ura-appointment-acting"]')).toBeChecked();
 		// The primary stays off, saying why, until the server says the form is whole.
 		await expect(page.locator('[data-testid="kt-ura-assign-confirm"]')).toBeDisabled();
@@ -78,7 +78,7 @@ test.describe.serial("System setup — Users and responsibilities, Organisation 
 
 		// Change it before it starts: one history event, a line per field.
 		await page.click('[data-testid="kt-ura-open-edit"]');
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Edit scheduled assignment");
+		await expect(dialog.locator(".dialog-title")).toHaveText("Edit scheduled assignment");
 		await expect(page.locator('[data-testid="kt-ura-edit-notice"]')).toContainText("Clear Effective from to bring it into force now.");
 		await page.fill('[data-testid="kt-ura-to"]', "2027-01-31");
 		await expect(page.locator('[data-testid="kt-ura-assign-confirm"]')).toBeEnabled(SERVER);

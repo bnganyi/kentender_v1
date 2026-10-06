@@ -80,25 +80,25 @@ onMounted(verify);
 				</p>
 			</header>
 
-			<div v-if="phase === 'loading'" class="kt-card kt-blueprint" data-testid="kt-ts-loading">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
+			<div v-if="phase === 'loading'" class="card blueprint" data-testid="kt-ts-loading">
+				<i class="corner tl" /><i class="corner tr" /><i class="corner bl" /><i class="corner br" />
 				<span class="kt-eyebrow">{{ __("Loading") }}</span>
 				<div class="kt-skel" style="width:88%" />
 				<div class="kt-skel" style="width:64%" />
 				<div class="kt-skel" style="width:76%" />
 			</div>
 
-			<div v-else-if="phase === 'forbidden'" class="kt-card kt-blueprint kt-empty" data-testid="kt-ts-forbidden">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
+			<div v-else-if="phase === 'forbidden'" class="card blueprint kt-empty" data-testid="kt-ts-forbidden">
+				<i class="corner tl" /><i class="corner tr" /><i class="corner bl" /><i class="corner br" />
 				<h2>{{ __("You do not have access to Technical record search") }}</h2>
 				<p>{{ __("This area needs Administrator or System Manager access. Ask your KenTender administrator to grant it.") }}</p>
 			</div>
 
-			<div v-else-if="phase === 'error'" class="kt-card kt-blueprint kt-empty" data-testid="kt-ts-error">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
+			<div v-else-if="phase === 'error'" class="card blueprint kt-empty" data-testid="kt-ts-error">
+				<i class="corner tl" /><i class="corner tr" /><i class="corner bl" /><i class="corner br" />
 				<h2>{{ __("Technical record search could not be loaded") }}</h2>
 				<p>{{ __("Try again. If the problem continues, contact support.") }}</p>
-				<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-ts-retry" @click="verify">
+				<button type="button" class="btn btn-secondary" data-testid="kt-ts-retry" @click="verify">
 					{{ __("Try again") }}
 				</button>
 			</div>
@@ -107,7 +107,7 @@ onMounted(verify);
 				<div class="kt-search-row">
 					<input
 						v-model="query"
-						class="kt-input"
+						class="input"
 						type="search"
 						:placeholder="__('Search by reference or title')"
 						data-testid="kt-ts-input"
@@ -115,38 +115,38 @@ onMounted(verify);
 					>
 					<button
 						type="button"
-						class="kt-btn kt-btn-primary"
+						class="btn btn-primary"
 						:disabled="searching"
 						data-testid="kt-ts-search"
 						@click="runSearch"
 					>{{ __("Search") }}</button>
 				</div>
 
-				<div v-if="searchError" class="kt-card kt-blueprint kt-empty" data-testid="kt-ts-error">
-					<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
+				<div v-if="searchError" class="card blueprint kt-empty" data-testid="kt-ts-error">
+					<i class="corner tl" /><i class="corner tr" /><i class="corner bl" /><i class="corner br" />
 					<h2>{{ __("Technical record search could not be loaded") }}</h2>
 					<p>{{ __("Try again. If the problem continues, contact support.") }}</p>
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-ts-retry" @click="runSearch">
+					<button type="button" class="btn btn-secondary" data-testid="kt-ts-retry" @click="runSearch">
 						{{ __("Try again") }}
 					</button>
 				</div>
 
-				<div v-else-if="!searchedQuery" class="kt-card kt-blueprint kt-empty" data-testid="kt-ts-empty">
-					<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
+				<div v-else-if="!searchedQuery" class="card blueprint kt-empty" data-testid="kt-ts-empty">
+					<i class="corner tl" /><i class="corner tr" /><i class="corner bl" /><i class="corner br" />
 					<h2>{{ __("Enter a reference or title") }}</h2>
 					<p>{{ __("Any KenTender record — need, plan, budget, requisition or tender — opens read-only from here.") }}</p>
 				</div>
 
-				<div v-else-if="!rows.length" class="kt-card kt-blueprint kt-empty" data-testid="kt-ts-nomatch">
-					<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
+				<div v-else-if="!rows.length" class="card blueprint kt-empty" data-testid="kt-ts-nomatch">
+					<i class="corner tl" /><i class="corner tr" /><i class="corner bl" /><i class="corner br" />
 					<h2>{{ __('No record matches "{0}"', [searchedQuery]) }}</h2>
 					<p>{{ __("Check the reference and try again.") }}</p>
 				</div>
 
-				<div v-else class="kt-card kt-blueprint kt-table-card" data-testid="kt-ts-results">
-					<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
+				<div v-else class="card blueprint kt-table-card" data-testid="kt-ts-results">
+					<i class="corner tl" /><i class="corner tr" /><i class="corner bl" /><i class="corner br" />
 					<div class="kt-table-scroll">
-						<table class="kt-table">
+						<table class="table">
 							<thead>
 								<tr>
 									<th>{{ __("Reference") }}</th>
@@ -186,7 +186,7 @@ onMounted(verify);
 	align-items: stretch;
 	margin-bottom: 20px;
 }
-.kt-search-row .kt-input {
+.kt-search-row .input {
 	flex: 1 1 auto;
 }
 </style>

@@ -175,12 +175,15 @@ class Phase7TestBase(FrappeTestCase):
 
 
 class TestPortfolio(Phase7TestBase):
-	def test_forbidden_when_no_role_or_capability(self):
+	def test_a_user_with_no_strategy_role_reads_approved_plans_only(self):
+		# Owner, 5 Oct 2026: Strategy is universally readable (approved versions only).
 		user = self._user("norole")
 		frappe.set_user(user)
 		result = ui.get_strategy_portfolio()
 		frappe.set_user("Administrator")
-		self.assertTrue(result["forbidden"])
+		self.assertFalse(result["forbidden"])
+		self.assertFalse(result["can_create_plan"])
+		self.assertEqual(result["my_work"], [])
 
 	def test_lists_scoped_plan_for_author(self):
 		plan_id, version_id = self._plan_and_version()
@@ -253,13 +256,15 @@ class TestPlanWorkspaceAndTree(Phase7TestBase):
 		self.assertIsNotNone(result["current_authority"]["approved_by"])
 		self.assertEqual(result["structure_summary"]["performance_targets"], 1)
 
-	def test_workspace_forbidden_for_unrelated_user(self):
+	def test_workspace_of_an_unapproved_plan_is_not_found_to_an_unrelated_user(self):
+		# The plan here has only a Draft version: an unrelated internal user reads approved versions only.
 		plan_id, version_id = self._plan_and_version()
 		user = self._user("outsider")
 		frappe.set_user(user)
 		result = ui.get_plan_workspace(plan_id)
 		frappe.set_user("Administrator")
-		self.assertTrue(result["forbidden"])
+		self.assertFalse(result.get("forbidden"))
+		self.assertTrue(result["not_found"])
 
 	def test_plan_history_lists_events_newest_first(self):
 		plan_id, version_id = self._plan_and_version()

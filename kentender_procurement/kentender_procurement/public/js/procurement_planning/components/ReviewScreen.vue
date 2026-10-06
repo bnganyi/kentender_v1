@@ -49,7 +49,7 @@
 				<div v-if="task.can_download_review_pack" class="kt-page-actions">
 					<button
 						type="button"
-						class="kt-btn kt-btn-secondary"
+						class="btn btn-secondary"
 						data-testid="rev-download"
 						@click="$emit('download-pack')"
 					>
@@ -122,7 +122,7 @@
 					<div class="kt-notice-body">{{ issue }}</div>
 				</div>
 
-				<table class="kt-table" data-testid="rev-purchases">
+				<table class="table" data-testid="rev-purchases">
 					<thead>
 						<tr>
 							<th>Purchase</th><th>Purpose</th><th class="is-num">Quantity</th>
@@ -139,7 +139,7 @@
 								<td>{{ row.delivery_completion_display }}</td>
 								<td class="is-num">{{ row.value_display }}</td>
 								<td>
-									<a href="#" class="kt-btn kt-btn-ghost" data-testid="rev-review-purchase" @click.prevent="toggle(row.plan_item_id)">Review purchase</a>
+									<a href="#" class="btn btn-ghost" data-testid="rev-review-purchase" @click.prevent="toggle(row.plan_item_id)">Review purchase</a>
 								</td>
 							</tr>
 							<!-- One level of detail, opened deliberately. -->
@@ -185,7 +185,7 @@
 											v-for="source in row.sources || []"
 											:key="source.source_key"
 											href="#"
-											class="kt-btn kt-btn-ghost"
+											class="btn btn-ghost"
 											data-testid="rev-view-evidence"
 											@click.prevent="$emit('view-evidence', source)"
 										>{{ (row.sources || []).length > 1 ? source.title : "View departmental evidence" }}</a>
@@ -249,7 +249,7 @@
 			     Between Accountability and the decision, matching the artboard. -->
 			<div class="kt-region is-secondary" data-testid="rev-funding-evidence">
 				<h2>Funding evidence</h2>
-				<table class="kt-table">
+				<table class="table">
 					<thead>
 						<tr><th>Budget line</th><th class="is-num">Approved</th><th class="is-num">Planned</th><th class="is-num">Difference</th><th>Result</th></tr>
 					</thead>
@@ -269,13 +269,13 @@
 				<div style="margin-top: var(--kt-space-3)">
 					<a
 						href="#"
-						class="kt-btn kt-btn-ghost"
+						class="btn btn-ghost"
 						data-testid="rev-view-balances"
 						@click.prevent="showBalances = !showBalances"
 					>View current balances</a>
 				</div>
 				<div v-if="showBalances" class="pln-row-detail" data-testid="rev-balances">
-					<table class="kt-table">
+					<table class="table">
 						<thead>
 							<tr>
 								<th>Budget line</th><th>Funding source</th>
@@ -324,11 +324,11 @@
 				<div class="kt-decision" data-testid="rev-decision">
 					<!-- U11-COLLECTIVE — required before the body's decision can be
 					     recorded; an editable field, kept out of the facts above. -->
-					<div v-if="authority.is_board" class="kt-field" data-testid="rev-resolution-field">
+					<div v-if="authority.is_board" class="field" data-testid="rev-resolution-field">
 						<label for="rev-resolution" class="kt-label">Resolution reference</label>
 						<input
 							id="rev-resolution"
-							class="kt-input"
+							class="input"
 							data-testid="rev-resolution"
 							:value="resolution"
 							@input="$emit('update:resolution', $event.target.value)"
@@ -337,11 +337,11 @@
 
 					<!-- U11-LATE-ADOPTION — the AO must say why, before deciding,
 					     immediately above the decision statement. -->
-					<div v-if="task.late_activation_required" class="kt-field" data-testid="rev-late-reason-field">
+					<div v-if="task.late_activation_required" class="field" data-testid="rev-late-reason-field">
 						<label for="rev-late-reason" class="kt-label">Why is this initial plan being submitted after the financial year started?</label>
 						<textarea
 							id="rev-late-reason"
-							class="kt-input"
+							class="input"
 							rows="2"
 							data-testid="rev-late-reason"
 							:value="lateReason"
@@ -363,7 +363,7 @@
 						<button
 							v-if="actor.secondary"
 							type="button"
-							class="kt-btn kt-btn-secondary"
+							class="btn btn-secondary"
 							data-testid="rev-secondary"
 							:disabled="pending"
 							@click="actor.secondary_is_return ? $emit('open-return-dialog') : $emit('back')"
@@ -375,7 +375,7 @@
 						<button
 							v-if="task.can_decide_positive && !issues.length"
 							type="button"
-							class="kt-btn kt-btn-primary"
+							class="btn btn-primary"
 							data-testid="rev-confirm"
 							:disabled="pending"
 							@click="$emit('confirm')"
@@ -393,7 +393,7 @@
 </summary>
 				<div class="kt-disclosure-body">
 					<p class="kt-muted">{{ task.changes?.is_initial ? "First annual plan" : "" }}</p>
-					<table class="kt-table">
+					<table class="table">
 						<!-- §10.10 — which decision, what came of it, in what
 						     capacity, by whom and when. The outcome sits next to the
 						     decision it belongs to, and the time is part of the

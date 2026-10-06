@@ -21,9 +21,9 @@ const SAVED_NOTICE_IS_A_LATER_STATE = {
 
 const DIALOG_TITLE_REASON = {
 	because:
-		"The board titles a dialog with a styled <div class=\"dialog-title\">; the build uses <h2 class=\"kt-dialog-title\"> " +
+		"The board titles a dialog with a styled <div class=\"dialog-title\">; the build uses <h2 class=\"dialog-title\"> " +
 		"so the dialog has an accessible name — more structure than the board, not less (Budget records the same).",
-	authority: "KT-STD-001 §3 (dialog focus and naming); design system's own .kt-dialog-title",
+	authority: "KT-STD-001 §3 (dialog focus and naming); design system's own .dialog-title",
 };
 // The component harness roots the skeleton above the dialog; the browser
 // gate scopes to the dialog itself, where the title's path is just "h2".

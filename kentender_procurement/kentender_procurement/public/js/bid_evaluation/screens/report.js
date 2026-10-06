@@ -9,7 +9,7 @@
 // only by the secretary while Reviewing. Signing is personal and exact to
 // one frozen version; the last proof delivers with no further click.
 import { at, ds, f, fi, kv, lk, n, p, tb } from "../board/model.js";
-import { cmd, conditionNotices, dialog, guidance, money, nav, sectionLinks, signaturesTable, summaryBlock } from "./common.js";
+import { cmd, conditionNotices, dialog, guidance, money, nav, sectionLinks, signaturesTable, summaryBlock, versionsBlock } from "./common.js";
 
 const unknownNotice = (n0) => n("warning", "The later decision could not be checked.", `Report ${n0} remains unchanged. A return cannot proceed until the later decision is known.`);
 
@@ -54,7 +54,22 @@ export function reportScreen(ctx) {
 	const n0 = report.version_number;
 	const draftDesc = `${data.tender} · Draft report ${n0}`;
 	const crumbHead = { title: "Evaluation report", desc: draftDesc };
+	const vb = !v.bids ? versionsBlock(data, report.report) : null; // a reader outside the committee may open any delivered version
+	const versions = vb ? [vb] : [];
+	// an earlier version that was returned and replaced, read by someone outside the committee
+	const current = (data.delivered_report || {}).report;
+	const replaced = !v.bids && report.report_state === "Returned" && current && current !== report.report
+		? [n("info", `Report ${n0} was returned for correction and replaced by Report ${data.delivered_report.version_number}.`, "This report stays available.")] : [];
 	const noticeBlocks = conditionNotices(data).filter((b) => !(report.content && (report.content.recommendation || {}).outcome === "No current recommendation — tender validity expired" && b.k === "facts"));
+
+	// A delivered version that was returned, while a corrected one is being prepared, read by someone outside the
+	// committee (OVS-CHG-001 v0.6 §7): read-only, with no action on a report that has already been returned.
+	if (report.report_state === "Returned" && data.state !== "Report sent" && !v.bids) {
+		return { title: `Evaluation report ${n0}`, desc: data.tender, guidance: guidance(data),
+			blocks: [n("info", `Report ${n0} was returned for correction.`, "A corrected report is being prepared. This report stays available."), ...outcomeBlocks(report), sectionLinks(),
+				signaturesTable(report.signatures, user, data), ...versions, f(["Report", `Report ${n0} · Returned`])],
+			sec: [{ label: "Download report", action: "download" }, nav("View committee record", "record")] };
+	}
 
 	// Report sent (D07-SENT, D07-HOP, D07-DECISION-UNKNOWN, S-AUDITOR)
 	if (report.report_state === "Delivered" || report.report_state === "Returned" && data.state === "Report sent") {
@@ -67,7 +82,7 @@ export function reportScreen(ctx) {
 					blocks: [unknownNotice(n0), ...sent.slice(0, -2)],
 					pri: dialog("Report issue", "status-issue"), sec: [nav("Open report", ["report", "preview"]), { label: "~Return for correction" }] };
 			}
-			return { ...base, blocks: sent.slice(0, -1), pri: nav("Open report", ["report", "preview"]),
+			return { ...base, blocks: [...sent.slice(0, -1), ...versions], pri: nav("Open report", ["report", "preview"]),
 				sec: report.downstream === "Award decision recorded" ? [] : [dialog("Return for correction", "return")] };
 		}
 		if (v.chair && report.downstream === "Unknown") {
@@ -79,7 +94,7 @@ export function reportScreen(ctx) {
 		if (v.chair && report.downstream === "Award decision recorded") {
 			return { ...base, blocks: sent, pri: nav("Send correction notice", "correction"), sec: [nav("Open report", ["report", "preview"])] };
 		}
-		return { ...base, blocks: [...noticeBlocks.filter((b) => b.k === "notice"), ...sent], sec: [{ label: "Download report", action: "download" }, nav("View committee record", "record")] };
+		return { ...base, blocks: [...replaced, ...noticeBlocks.filter((b) => b.k === "notice"), ...sent, ...versions], sec: [{ label: "Download report", action: "download" }, nav("View committee record", "record")] };
 	}
 
 	// Signing (D07-SIGN, D07-WAIT, D07-REVISE, D07-DELIVERY, D07-EXPIRED-SIGN, S-STALE-REPORT, S-UNCONFIRMED)

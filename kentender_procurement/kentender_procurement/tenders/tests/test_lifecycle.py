@@ -84,6 +84,37 @@ class TestStartTender(TenderLifecycleCase):
 		self.assertEqual(json.loads(version.officer_payload_json)["tender_validity_days"], 120)
 		self.assertEqual([e.event_type for e in frappe.get_all("Tender Event", filters={"tender": root.name}, fields=["event_type"])], ["TenderStarted"])
 
+	def test_the_tenders_lead_is_the_certified_lead_not_the_first_contributing_unit(self):
+		# OVS-CHG-001 v0.6 plan D15: the handoff lists contributors in sorted order; the lead is the certified one
+		authorised = fx.authorised_handoff()
+		handoff = frappe.get_doc("Authorised Requisition Handoff", authorised["handoff"])
+		payload = json.loads(handoff.payload_json)
+		units = sorted([payload["contributing_org_unit_ids"][0], fx.req_fx.pln_fx.OU_BETA])
+		self.assertEqual(len(units), 2)
+		payload.update(contributing_org_unit_ids=units, departmental_certification={**payload["departmental_certification"], "lead_org_unit_id": units[-1]})
+		frappe.db.set_value("Authorised Requisition Handoff", handoff.name, "payload_json", json.dumps(payload))
+		started = cmd.start_tender(handoff=handoff.name, idempotency_key=fx.key(), user=fx.OFFICER)
+		root = frappe.get_doc("Tender", started["tender"])
+		self.assertEqual(root.lead_org_unit, units[-1])
+		self.assertEqual(json.loads(root.contributing_org_unit_ids), units)
+
+	def test_the_patch_corrects_a_tender_whose_lead_was_the_first_unit_and_changes_nothing_else(self):
+		from kentender_procurement.patches import ovs_chg_001_v06_tender_lead_from_certification as patch
+
+		authorised, started = self._started()
+		root = frappe.get_doc("Tender", started["tender"])
+		certified = json.loads(frappe.db.get_value("Authorised Requisition Handoff", authorised["handoff"], "payload_json"))["departmental_certification"]["lead_org_unit_id"]
+		self.assertEqual(patch.reconcile(), [])  # already right: nothing to do
+		wrong = fx.req_fx.pln_fx.OU_BETA
+		self.assertNotEqual(wrong, certified)
+		frappe.db.set_value("Tender", root.name, "lead_org_unit", wrong, update_modified=False)
+		before = frappe.db.get_value("Tender", root.name, ["modified", "record_version", "overall_status"], as_dict=True)
+		self.assertEqual(patch.reconcile(), [{"tender": root.tender_reference, "was": wrong, "now": certified}])
+		after = frappe.db.get_value("Tender", root.name, ["lead_org_unit", "modified", "record_version", "overall_status"], as_dict=True)
+		self.assertEqual(after.lead_org_unit, certified)
+		self.assertEqual((after.modified, after.record_version, after.overall_status), (before.modified, before.record_version, before.overall_status))
+		self.assertEqual(patch.reconcile(), [])  # safe to run again
+
 	def test_a_repeated_or_concurrent_start_returns_the_one_tender(self):
 		authorised, started = self._started()
 		again = cmd.start_tender(handoff=authorised["handoff"], idempotency_key=fx.key(), user=fx.OFFICER)

@@ -48,7 +48,9 @@ def default_profile(owner: str) -> dict[str, Any]:
 
 
 AUTHORITY_FILE = "mary-wanjiku-signing-authority.pdf"
-CLOCK = {"register": "2027-05-18 09:00:00", "verify": "2027-05-18 09:10:00", "representative": "2027-05-18 09:20:00"}
+# Two-year seed world (4 Oct 2026): registered before the executed portfolio's
+# first bids in April 2027 (was 18 May 2027).
+CLOCK = {"register": "2027-03-01 09:00:00", "verify": "2027-03-01 09:10:00", "representative": "2027-03-01 09:20:00"}
 
 
 def _pdf() -> bytes:

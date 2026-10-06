@@ -343,14 +343,23 @@ def _handoff_row(*, task_id: str, task_type: str, title: str, reference: str, st
 
 
 def _plan_handoff_rows(user: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+	assigned: list[dict[str, Any]] = []
+	waiting: list[dict[str, Any]] = []
+	for bucket, row, _doc, _plan, _guidance in plan_handoff_items(user):
+		(assigned if bucket == "assigned" else waiting).append(row)
+	return assigned, waiting
+
+
+def plan_handoff_items(user: str):
+	"""Each plan hand-off row with what produced it — `(bucket, row, version,
+	plan, guidance)` — so a caller that also needs the owner's answer (Home's
+	blocked reason) reads the heavy guidance once, not twice."""
 	from kentender_procurement.procurement_planning.services import next_step as plan_next_step
 	from kentender_procurement.procurement_planning.services import plan_read
 
-	assigned: list[dict[str, Any]] = []
-	waiting: list[dict[str, Any]] = []
 	roles = {role: authz.has_site_role(role, user) for role in plan_next_step.PLAN_PARTICIPANTS}
 	if not any(roles.values()):
-		return assigned, waiting
+		return
 	for version in frappe.get_all(
 		"Annual Plan Version", filters={"version_status": ("in", _OPEN_PLAN_STATES)},
 		fields=["name"], order_by="creation asc", limit_page_length=0,
@@ -364,25 +373,23 @@ def _plan_handoff_rows(user: str) -> tuple[list[dict[str, Any]], list[dict[str, 
 		route = ["annual-procurement-plan", plan.plan_reference]
 		base = {"reference": reference, "fiscal_year": plan.fiscal_year, "route": route}
 		turn = step["kind"] in ("your_turn", "your_turn_blocked")
-		status = doc.version_status
 
 		if turn:
 			row = _assigned_for(doc, plan, step, roles, base)
 			if row:
-				assigned.append(row)
+				yield "assigned", row, doc, plan, guidance
 		elif step["kind"] == "waiting":
 			title = _waiting_title(doc, stage, roles)
 			if title and stage == "preparation" and step["headline"].endswith("to update its departmental plan"):
 				title = _("Waiting for the departmental plan update")
 			if title:
-				waiting.append(_handoff_row(
+				yield "waiting", _handoff_row(
 					task_id=f"{doc.name}:waiting:{stage}", task_type="planning.waiting", title=title,
 					# the stage by name: the holder line already says who and since
 					stage=dict(plan_next_step.plan_stages()).get(stage, step["headline"]),
 					assignment=ROLE_PROCUREMENT_PLANNER if roles[ROLE_PROCUREMENT_PLANNER] else "",
 					action_label=_("View plan"), status="Waiting", holder=step.get("holder"), since=step.get("since"), **base,
-				))
-	return assigned, waiting
+				), doc, plan, guidance
 
 
 def _assigned_for(doc, plan, step, roles, base) -> dict[str, Any] | None:

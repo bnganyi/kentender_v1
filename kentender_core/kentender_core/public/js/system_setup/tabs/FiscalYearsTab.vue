@@ -231,7 +231,7 @@ function openUomList() {
 				<h3 style="margin-bottom:4px">{{ __("Financial years") }}</h3>
 				<p class="card-body" style="margin-bottom:0">{{ __("Set when departments can submit needs and plans.") }}</p>
 			</div>
-			<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-fy-add-open" @click="openDialog('add')">
+			<button type="button" class="btn btn-primary" data-testid="kt-fy-add-open" @click="openDialog('add')">
 				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add financial year") }}
 			</button>
 		</div>
@@ -244,7 +244,7 @@ function openUomList() {
 		<div v-else-if="loadError" class="kt-notice is-critical" role="alert" style="margin-top:16px" data-testid="kt-fy-error">
 			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
 			<div class="kt-notice-body"><strong>{{ __("System setup could not be loaded.") }}</strong> {{ __("Try again. If the problem continues, contact support.") }}</div>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button>
+			<button type="button" class="btn btn-secondary" @click="load">{{ __("Try again") }}</button>
 		</div>
 
 		<!-- C02 #empty -->
@@ -252,7 +252,7 @@ function openUomList() {
 			<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--kt-color-neutral-400)" stroke-width="1.5" aria-hidden="true" style="margin:0 auto 12px"><rect x="3" y="4" width="18" height="18" rx="0" /><path d="M16 2v4" /><path d="M8 2v4" /><path d="M3 10h18" /></svg>
 			<p style="font-weight:600;margin-bottom:4px">{{ __("No financial years yet.") }}</p>
 			<p class="card-body">{{ __("Add the first financial year for this site.") }}</p>
-			<button type="button" class="kt-btn kt-btn-primary" @click="openDialog('add')">
+			<button type="button" class="btn btn-primary" @click="openDialog('add')">
 				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add financial year") }}
 			</button>
 		</div>
@@ -264,7 +264,7 @@ function openUomList() {
 			</label>
 
 			<div class="kt-table-scroll kt-fy-wide" data-testid="kt-fy-table">
-				<table class="kt-table">
+				<table class="table">
 					<thead>
 						<tr>
 							<th>{{ __("Financial year") }}</th>
@@ -278,10 +278,10 @@ function openUomList() {
 						<tr v-for="row in visibleRows" :key="row.fiscal_year" :data-testid="'kt-fy-row-' + row.fiscal_year">
 							<td>
 								{{ row.label }}
-								<template v-if="row.disabled"><br><span class="kt-tag kt-tag-neutral">{{ __("Disabled") }}</span></template>
+								<template v-if="row.disabled"><br><span class="tag tag-neutral">{{ __("Disabled") }}</span></template>
 							</td>
 							<td>{{ row.period_label }}</td>
-							<td><span class="kt-tag kt-tag-neutral">{{ __(row.phase) }}</span></td>
+							<td><span class="tag tag-neutral">{{ __(row.phase) }}</span></td>
 							<td v-for="key in MODULE_ORDER" :key="key" :data-testid="'kt-fy-' + key + '-' + row.fiscal_year">
 								<template v-if="row[key + '_submission_open']">
 									<span class="kt-status is-live">{{ __("Open") }}</span>
@@ -301,13 +301,13 @@ function openUomList() {
 
 			<!-- C02 #narrow — one card per year, every activity and its deadline kept. -->
 			<div class="kt-fy-narrow" data-testid="kt-fy-cards">
-				<div v-for="row in visibleRows" :key="row.fiscal_year" class="kt-card kt-fy-card" :data-testid="'kt-fy-card-' + row.fiscal_year">
+				<div v-for="row in visibleRows" :key="row.fiscal_year" class="card kt-fy-card" :data-testid="'kt-fy-card-' + row.fiscal_year">
 					<div class="kt-meta-row">
 						<div><span class="kt-label">{{ __("Year") }}</span><span class="kt-meta-value">{{ row.label }}</span></div>
 						<div><span class="kt-label">{{ __("Period") }}</span><span class="kt-meta-value">{{ row.period_label }}</span></div>
-						<div><span class="kt-label">{{ __("Phase") }}</span><span class="kt-meta-value"><span class="kt-tag kt-tag-neutral">{{ __(row.phase) }}</span></span></div>
+						<div><span class="kt-label">{{ __("Phase") }}</span><span class="kt-meta-value"><span class="tag tag-neutral">{{ __(row.phase) }}</span></span></div>
 					</div>
-					<table class="kt-table" style="margin-top:12px">
+					<table class="table" style="margin-top:12px">
 						<tbody>
 							<tr v-for="key in MODULE_ORDER" :key="key" :data-testid="'kt-fy-card-' + key + '-' + row.fiscal_year">
 								<td>{{ ACTIVITY_LABELS[key] }}</td>
@@ -368,7 +368,7 @@ function openUomList() {
 			</div>
 
 			<div class="kt-table-scroll">
-				<table class="kt-table">
+				<table class="table">
 					<thead>
 						<tr>
 							<th>{{ __("Activity") }}</th>
@@ -392,11 +392,11 @@ function openUomList() {
 							<td>
 								<template v-if="!detailRow.disabled">
 									<template v-if="detailRow[key + '_submission_open']">
-										<button type="button" class="kt-btn kt-btn-ghost" :data-testid="'kt-fy-deadline-' + key" @click="openDeadlineDialog(key)">{{ __("Change closing time") }}</button>
+										<button type="button" class="btn btn-ghost" :data-testid="'kt-fy-deadline-' + key" @click="openDeadlineDialog(key)">{{ __("Change closing time") }}</button>
 										{{ " " }}
-										<button type="button" class="kt-btn kt-btn-secondary" :data-testid="'kt-fy-close-' + key" @click="openCloseDialog(key)">{{ __("Close submissions") }}</button>
+										<button type="button" class="btn btn-ghost" :data-testid="'kt-fy-close-' + key" @click="openCloseDialog(key)">{{ __("Close submissions") }}</button>
 									</template>
-									<button v-else type="button" class="kt-btn kt-btn-secondary" :data-testid="'kt-fy-open-' + key" @click="openOpenDialog(key)">{{ __("Open submissions") }}</button>
+									<button v-else type="button" class="btn btn-ghost" :data-testid="'kt-fy-open-' + key" @click="openOpenDialog(key)">{{ __("Open submissions") }}</button>
 								</template>
 							</td>
 						</tr>
@@ -425,12 +425,12 @@ function openUomList() {
 				<button
 					v-if="detailRow.disabled"
 					type="button"
-					class="kt-btn kt-btn-secondary"
+					class="btn btn-secondary"
 					:disabled="enableBusy"
 					data-testid="kt-fy-enable"
 					@click="enableYear(detailRow)"
 				>{{ __("Enable financial year") }}</button>
-				<button v-else type="button" class="kt-btn kt-btn-secondary" data-testid="kt-fy-disable-open" @click="openDisableDialog(detailRow)">{{ __("Disable financial year") }}</button>
+				<button v-else type="button" class="btn btn-secondary" data-testid="kt-fy-disable-open" @click="openDisableDialog(detailRow)">{{ __("Disable financial year") }}</button>
 				<div v-if="enableError" class="kt-notice is-critical" role="alert" style="margin-top:8px">
 					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
 					<div class="kt-notice-body">{{ enableError }}</div>
@@ -450,14 +450,14 @@ function openUomList() {
 				>
 					<div class="kt-disclosure-title-row">
 						<span class="kt-disclosure-title">{{ __("Change history") }}</span>
-						<span class="kt-tag kt-tag-neutral">{{ history && history.count === 1 ? __("1 entry") : __("{0} entries", [history ? history.count : 0]) }}</span>
+						<span class="tag tag-neutral">{{ history && history.count === 1 ? __("1 entry") : __("{0} entries", [history ? history.count : 0]) }}</span>
 					</div>
 					<svg class="kt-disclosure-chevron" :class="{ 'is-open': historyOpen }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
 				</div>
 				<div v-show="historyOpen" class="kt-disclosure-body" data-testid="kt-fy-history-body">
 					<p v-if="historyLoading" class="text-muted">{{ __("Loading…") }}</p>
 					<div v-else-if="history && history.entries.length" class="kt-table-scroll">
-						<table class="kt-table">
+						<table class="table">
 							<thead>
 								<tr>
 									<th>{{ __("Activity") }}</th>

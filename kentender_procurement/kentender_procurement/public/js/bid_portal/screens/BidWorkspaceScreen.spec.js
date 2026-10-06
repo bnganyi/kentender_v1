@@ -41,7 +41,7 @@ describe("Your bid", () => {
 		expect(rows.map((r) => r.get(".bds-task-number").text())).toEqual(["1", "2", "3", "4", "5"]);
 		expect(rows.map((r) => r.find('[data-testid="bds-task-next"]').exists())).toEqual([false, true, false, false, false]);
 		expect(rows.map((r) => r.get("a").text())).toEqual(["Review", "Continue", "Review", "Review", "View"]);
-		expect(rows.map((r) => r.get("a").classes().includes("kt-btn-primary"))).toEqual([false, true, false, false, false]);
+		expect(rows.map((r) => r.get("a").classes().includes("btn-primary"))).toEqual([false, true, false, false, false]);
 		globalThis.__narrow = true;
 		const narrow = mountWith({ initial: data }, portalFor({ call: vi.fn(async () => data) }));
 		await flushPromises();
@@ -63,7 +63,7 @@ describe("Your bid", () => {
 		await nextTick();
 		expect(wrapper.get('[data-testid="bds-workspace-refs"]').text()).toContain("TND-MOH-2027-033 · BID-MOH-2027-033-001 · Draft Version 7");
 		expect(wrapper.get('[data-testid="bds-workspace-action"]').text()).toBe("View complete bid");
-		expect(wrapper.get('[data-testid="bds-workspace-action"]').classes()).not.toContain("kt-btn-primary"); // he cannot submit: nothing here is the way on
+		expect(wrapper.get('[data-testid="bds-workspace-action"]').classes()).not.toContain("btn-primary"); // he cannot submit: nothing here is the way on
 		expect(wrapper.get('[data-testid="bds-workspace-progress"]').text()).toBe("4 of 4 tasks done · Mary Wanjiku signs and submits");
 		expect(wrapper.find('[data-testid="bds-task-next"]').exists()).toBe(false);
 		expect(wrapper.get('[data-testid="bds-task-note"]').text()).toBe("Mary Wanjiku signs and submits");
@@ -71,7 +71,7 @@ describe("Your bid", () => {
 		expect(wrapper.get('[data-testid="bds-workspace-deadline"]').text()).toContain("Closes in 1 day 20 hours 40 minutes");
 		expect(wrapper.findAll('[data-testid="bds-tasks-table"] tbody tr')).toHaveLength(5);
 		expect(wrapper.get('[data-testid="bds-task-review"] a').text()).toBe("View");
-		expect(wrapper.get('[data-testid="bds-task-review"] a').classes()).not.toContain("kt-btn-primary");
+		expect(wrapper.get('[data-testid="bds-task-review"] a').classes()).not.toContain("btn-primary");
 		expect(wrapper.text()).not.toMatch(/Submit bid|%|manifest/);
 		expect(wrapper.get('[data-testid="bds-workspace-saved"]').text()).toBe("Saved 10 Jun 2027, 13:50 EAT by David Ouma.");
 	});
@@ -108,7 +108,7 @@ describe("Your bid", () => {
 		const wrapper = mountWith({ initial: workspace("CLOSED") }, portalFor());
 		expect(wrapper.get('[data-testid="bds-workspace-deadline"]').text()).toContain("Trusted server time");
 		const action = wrapper.get('[data-testid="bds-workspace-action"]');
-		expect([action.text(), action.attributes("href"), action.classes().includes("kt-btn-secondary")]).toEqual(["Back to My bids", "/my-bids", true]);
+		expect([action.text(), action.attributes("href"), action.classes().includes("btn-secondary")]).toEqual(["Back to My bids", "/my-bids", true]);
 	});
 
 	it("draws labelled cards at the narrow frame", () => {

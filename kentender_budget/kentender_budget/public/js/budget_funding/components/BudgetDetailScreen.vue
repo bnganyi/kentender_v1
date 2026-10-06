@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, onActivated, onMounted, watch } from "vue";
 import KtErrorBanner from "./KtErrorBanner.vue";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { formatKes, mintKey } from "../../budget_shared/data/formatKes.js";
@@ -83,7 +85,21 @@ async function loadTab(t) {
 	else if (t === "history" && !history.value) history.value = await getBudgetVersionHistory(detail.value.version.id);
 }
 watch(tab, (t) => loadTab(t));
-watch([activityFilterLine, activityFilterEvent], () => tab.value === "activity" && loadTab("activity"));
+// The table-pagination standard (AGENTS.md §6.11): a version's budget lines are paged per budget; the activity list is paged
+// and goes back to its first page when the reader changes its filters.
+const linesRows = computed(() => linesActive.value?.rows || []);
+const {
+	pagedRows: pagedLines, total: linesTotal, page: linesPage, pageSize: linesPageSize, setPage: setLinesPage, setPageSize: setLinesPageSize,
+} = usePagedRows(linesRows, () => `budget-lines:${budgetIdParam.value}`);
+const activityRows = computed(() => activity.value?.rows || []);
+const {
+	pagedRows: pagedActivity, total: activityTotal, page: activityPage, pageSize: activityPageSize,
+	setPage: setActivityPage, setPageSize: setActivityPageSize, reset: resetActivity,
+} = usePagedRows(activityRows, () => `budget-activity:${budgetIdParam.value}`);
+watch([activityFilterLine, activityFilterEvent], () => {
+	resetActivity();
+	if (tab.value === "activity") loadTab("activity");
+});
 function clearActivityFilters() {
 	activityFilterLine.value = "";
 	activityFilterEvent.value = "";
@@ -142,13 +158,13 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 	<div class="kt-industry" data-testid="bud-detail" :data-loading="loading ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : 'false'">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell">
-			<div v-if="loading" class="kt-card kt-blueprint"><div class="kt-skel" style="width: 280px; height: 20px"></div></div>
-			<div v-else-if="notFound" class="kt-card kt-blueprint kt-empty" data-testid="budget-detail-not-found"><h2>{{ __("This budget could not be found.") }}</h2></div>
-			<div v-else-if="forbidden" class="kt-card kt-blueprint kt-empty" data-testid="budget-detail-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p v-if="forbidden.text" class="kt-muted">{{ __(forbidden.text) }}</p></div>
-			<div v-else-if="serverError" class="kt-card kt-blueprint kt-empty" data-testid="budget-detail-server-error"><h2>{{ __("This budget could not be loaded.") }}</h2><button type="button" class="kt-btn kt-btn-primary" @click="loadDetail()">{{ __("Try again") }}</button></div>
+			<div v-if="loading" class="card blueprint"><div class="kt-skel" style="width: 280px; height: 20px"></div></div>
+			<div v-else-if="notFound" class="card blueprint kt-empty" data-testid="budget-detail-not-found"><h2>{{ __("This budget could not be found.") }}</h2></div>
+			<div v-else-if="forbidden" class="card blueprint kt-empty" data-testid="budget-detail-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p v-if="forbidden.text" class="kt-muted">{{ __(forbidden.text) }}</p></div>
+			<div v-else-if="serverError" class="card blueprint kt-empty" data-testid="budget-detail-server-error"><h2>{{ __("This budget could not be loaded.") }}</h2><button type="button" class="btn btn-primary" @click="loadDetail()">{{ __("Try again") }}</button></div>
 
 			<template v-else-if="detail">
-				<div class="kt-card kt-blueprint" style="padding: 0">
+				<div class="card blueprint" style="padding: 0">
 				<div style="padding: 28px 24px 0">
 				<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px" data-testid="budget-detail-header">
 					<div>
@@ -159,9 +175,9 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 						</div>
 					</div>
 					<div style="display: flex; gap: 10px; flex: none; flex-wrap: wrap">
-						<button v-if="pending" type="button" class="kt-btn kt-btn-secondary" data-testid="budget-detail-pending-action-btn" @click="openPending">{{ PENDING_LABELS[pending.action] || __("Open") }}</button>
-						<button v-if="actions.includes('update_allocation')" type="button" class="kt-btn kt-btn-primary" :disabled="updating" data-testid="budget-detail-update-btn" @click="updateAllocation">{{ __("Update registered allocation") }}</button>
-						<button v-if="actions.includes('close_budget')" type="button" class="kt-btn kt-btn-secondary" data-testid="budget-detail-close-btn" @click="go(budgetIdParam, 'close')">{{ __("Close budget") }}</button>
+						<button v-if="pending" type="button" class="btn btn-secondary" data-testid="budget-detail-pending-action-btn" @click="openPending">{{ PENDING_LABELS[pending.action] || __("Open") }}</button>
+						<button v-if="actions.includes('update_allocation')" type="button" class="btn btn-primary" :disabled="updating" data-testid="budget-detail-update-btn" @click="updateAllocation">{{ __("Update registered allocation") }}</button>
+						<button v-if="actions.includes('close_budget')" type="button" class="btn btn-secondary" data-testid="budget-detail-close-btn" @click="go(budgetIdParam, 'close')">{{ __("Close budget") }}</button>
 					</div>
 				</div>
 				<KtErrorBanner :message="actingError" style="margin-bottom: 12px" @dismiss="actingError = null" />
@@ -240,7 +256,7 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 				<template v-else-if="tab === 'lines'">
 					<div v-if="!linesActive" style="padding: 20px 24px; border-top: 1px solid var(--kt-color-divider)"><div class="kt-skel" style="width: 240px; height: 16px"></div></div>
 					<div v-else style="border-top: 1px solid var(--kt-color-divider); overflow-x: auto">
-						<table class="kt-table" data-testid="budget-detail-lines-table">
+						<table class="table" data-testid="budget-detail-lines-table">
 							<thead>
 								<tr>
 									<th>{{ __("Budget Line") }}</th>
@@ -254,7 +270,7 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="line in linesActive.rows" :key="line.budget_line">
+								<tr v-for="line in pagedLines" :key="line.budget_line">
 									<td><div>{{ line.title }}</div><div class="kt-muted" style="font-size: 11px; margin-top: 2px">{{ line.code }}</div></td>
 									<td>{{ line.owner_org_unit }}</td>
 									<td>{{ line.funding_source }}</td>
@@ -273,17 +289,18 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 								</tr>
 							</tbody>
 						</table>
+						<TablePagerHost :total="linesTotal" :page="linesPage" :page-size="linesPageSize" noun="budget line" style="margin: 0 24px; padding-bottom: 12px" @update:page="setLinesPage" @update:page-size="setLinesPageSize" />
 					</div>
 				</template>
 
 				<!-- Funding Activity (BUD-DES-07) -->
 				<template v-else-if="tab === 'activity'">
 					<div style="padding: 20px 24px; border-top: 1px solid var(--kt-color-divider); display: flex; gap: 12px; flex-wrap: wrap">
-						<select v-model="activityFilterLine" class="kt-input" style="width: 220px" data-testid="budget-detail-activity-filter-line">
+						<select v-model="activityFilterLine" class="input" style="width: 220px" data-testid="budget-detail-activity-filter-line">
 							<option value="">{{ __("All Budget Lines") }}</option>
 							<option v-for="l in activity?.budget_lines || []" :key="l.id" :value="l.id">{{ l.title }}</option>
 						</select>
-						<select v-model="activityFilterEvent" class="kt-input" style="width: 220px" data-testid="budget-detail-activity-filter-event">
+						<select v-model="activityFilterEvent" class="input" style="width: 220px" data-testid="budget-detail-activity-filter-event">
 							<option value="">{{ __("All funding events") }}</option>
 							<option v-for="opt in activity?.event_type_options || []" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
 						</select>
@@ -297,10 +314,10 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 						</div>
 					</div>
 					<div v-else style="border-top: 1px solid var(--kt-color-divider); overflow-x: auto">
-						<table class="kt-table" data-testid="budget-detail-activity-table">
+						<table class="table" data-testid="budget-detail-activity-table">
 							<thead><tr><th>{{ __("Date and time") }}</th><th>{{ __("Event") }}</th><th>{{ __("Budget Line") }}</th><th>{{ __("Requisition / reservation") }}</th><th class="is-num">{{ __("Amount") }}</th><th>{{ __("Initiating actor") }}</th></tr></thead>
 							<tbody>
-								<tr v-for="row in activity.rows" :key="row.id">
+								<tr v-for="row in pagedActivity" :key="row.id">
 									<td style="white-space: nowrap">{{ row.event_at_display }}</td>
 									<td>{{ row.event_type_label }}</td>
 									<td>{{ row.budget_line_code }}</td>
@@ -310,6 +327,7 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 								</tr>
 							</tbody>
 						</table>
+						<TablePagerHost :total="activityTotal" :page="activityPage" :page-size="activityPageSize" noun="event" style="margin: 0 24px" @update:page="setActivityPage" @update:page-size="setActivityPageSize" />
 						<p class="kt-muted" style="font-size: 13px; padding: 12px 16px; margin: 0">{{ activity.summary_label }}</p>
 					</div>
 				</template>

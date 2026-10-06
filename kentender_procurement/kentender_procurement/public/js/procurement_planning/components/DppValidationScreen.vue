@@ -48,7 +48,7 @@
 					<span style="font-size: 13.5px; color: var(--kt-color-neutral-800)">Certified by {{ context.submitted_by }} on {{ context.submitted_at }}</span>
 					<button
 						type="button"
-						class="kt-btn kt-btn-ghost"
+						class="btn btn-ghost"
 						data-testid="pln-review-certification-toggle"
 						:aria-expanded="showCertification"
 						@click="showCertification = !showCertification"
@@ -85,7 +85,7 @@
 						A source requirement changed after this submission was certified. Return it to the department for correction.
 					</div>
 				</div>
-				<table class="kt-table" data-testid="pln-review-stale-table">
+				<table class="table" data-testid="pln-review-stale-table">
 					<thead>
 						<tr><th>Requirement</th><th>Revision certified</th><th>Current revision</th></tr>
 					</thead>
@@ -136,7 +136,7 @@
 									<span>{{ row.budget_line_display }}</span>
 								</div>
 							</div>
-							<a href="#" class="kt-btn kt-btn-ghost" data-testid="pln-review-view" @click.prevent="$emit('view-requirement', row)">View requirement</a>
+							<a href="#" class="btn btn-ghost" data-testid="pln-review-view" @click.prevent="$emit('view-requirement', row)">View requirement</a>
 						</div>
 
 						<div v-if="row.not_proceeding" class="pln-review-classify is-muted" data-testid="pln-review-excluded">
@@ -169,14 +169,14 @@
 						<div v-else-if="!task.maker_checker_blocked" class="pln-review-classify" :class="{ 'is-missing': missingClassification(row) }">
 							<div class="pln-review-classify-title">Your classification</div>
 							<div class="pln-review-classify-grid">
-								<div class="kt-field">
+								<div class="field">
 									<label :for="`type-${row.entry_id}`">Requirement type</label>
 									<!-- Addressable per requirement: a submission with several
 									     needs one classification each, and a test (or a
 									     screen-reader) has to be able to tell them apart. -->
 									<select
 										:id="`type-${row.entry_id}`"
-										class="kt-input"
+										class="input"
 										data-testid="pln-review-type"
 										:data-entry="row.entry_id"
 										:disabled="!canDecide"
@@ -219,7 +219,7 @@
 					<div class="pln-footer-actions" data-testid="pln-review-footer">
 						<button
 							type="button"
-							class="kt-btn kt-btn-secondary"
+							class="btn btn-secondary"
 							data-testid="pln-review-return"
 							:disabled="pending || !canDecide"
 							@click="$emit('return-to-department')"
@@ -230,7 +230,7 @@
 						<button
 							v-if="canAccept"
 							type="button"
-							class="kt-btn kt-btn-primary"
+							class="btn btn-primary"
 							data-testid="pln-review-accept"
 							:disabled="pending"
 							@click="$emit('accept')"

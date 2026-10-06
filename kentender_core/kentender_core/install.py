@@ -24,6 +24,40 @@ def after_migrate():
 	_ensure_default_pe_types()
 	_ensure_business_role_projections()
 	_ensure_fiscal_year_flag_fields()
+	retire_erpnext_home_workspace()
+
+
+# ERPNext's own "Home" records, in the order they can be removed (the icon and the workspace both point at the sidebar).
+_ERPNEXT_HOME_RECORDS = (("Desktop Icon", "Home"), ("Workspace Sidebar", "Home"), ("Workspace", "Home"))
+
+
+def retire_erpnext_home_workspace() -> dict[str, list[str]]:
+	"""Remove ERPNext's `Home` workspace, its sidebar and its desktop icon, so `/app/home` opens KenTender's Home page.
+
+	Frappe's router resolves a workspace slug before a Page, so ERPNext's workspace named "Home" hides a Page named
+	`home`. Hiding it is not enough: Frappe lists hidden workspaces for anyone who can manage workspaces
+	(Administrator, System Manager), and those are the technical readers Home must serve (HOME-CHG-001 v0.6 §9,
+	FU-HOME-34). ERPNext re-imports its own JSON on every migrate, so this runs after every migrate and is
+	idempotent. Only records ERPNext owns are removed: a "Home" belonging to another app is left alone. Returns what
+	was removed, by DocType."""
+	removed: dict[str, list[str]] = {}
+	# On a developer-mode site Frappe deletes a standard record's exported JSON file together with the record. These
+	# files belong to the ERPNext app, not to KenTender, so developer mode is off for the length of the delete. (Without
+	# this, a migrate deleted three files from the ERPNext app directory: found 5 Oct 2026.)
+	developer_mode = frappe.conf.get("developer_mode")
+	frappe.conf.developer_mode = 0
+	try:
+		for doctype, name in _ERPNEXT_HOME_RECORDS:
+			if frappe.db.get_value(doctype, name, "app") != "erpnext":
+				continue
+			frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+			removed.setdefault(doctype, []).append(name)
+	finally:
+		frappe.conf.developer_mode = developer_mode
+	if removed:
+		frappe.clear_cache()
+		print(f"KenTender: removed ERPNext's Home ({', '.join(sorted(removed))}) so /app/home opens KenTender's Home page")
+	return removed
 
 
 def repair_module_defs() -> list[str]:

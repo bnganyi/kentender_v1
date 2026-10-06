@@ -309,6 +309,9 @@ def get_workspace(
 		limit_page_length=0,
 	)
 	term = cstr(search).strip().lower()
+	# The Department column: every returned row's unit is one of `contexts`
+	# (the filter above is built from them), so the label needs no query.
+	unit_labels = {row["organisation_unit"]: row["organisation_unit_label"] for row in contexts}
 	needs = []
 	for row in rows:
 		doc = frappe._dict(row)
@@ -326,6 +329,8 @@ def get_workspace(
 				"name": doc.name,
 				"reference": doc.need_reference,
 				"title": title,
+				"organisation_unit": doc.organisation_unit,
+				"organisation_unit_label": unit_labels.get(doc.organisation_unit, doc.organisation_unit),
 				"author_label": frappe.db.get_value("User", doc.owner, "full_name") or doc.owner,
 				"quantity_label": _quantity_label(version),
 				"required_by": str(required_by or ""),

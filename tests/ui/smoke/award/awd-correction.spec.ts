@@ -28,10 +28,10 @@ test.describe("Award — post-decision correction", () => {
 		await page.screenshot({ path: `${EVIDENCE}/V09.png`, fullPage: true });
 		await root.locator('[data-testid="awd-action-review-correction"]').click();
 		const dialog = root.locator('[data-testid="awd-dialog"]');
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Review correction");
+		await expect(dialog.locator(".dialog-title")).toHaveText("Review correction");
 		await expect(dialog.locator('input[type="radio"]:checked')).toHaveCount(0);
 		await page.screenshot({ path: `${EVIDENCE}/X06.png`, fullPage: true });
-		await dialog.locator("label.kt-radio", { hasText: "Request corrected evaluation" }).click();
+		await dialog.locator("label.radio", { hasText: "Request corrected evaluation" }).click();
 		await dialog.locator('[data-testid="awd-dialog-field-dlg_reason"]').fill("The reported calculation issue may affect the recommendation.");
 		await dialog.locator('[data-testid="awd-dialog-field-dlg_evidence"]').fill("Correction notice PW-CN-1");
 		await dialog.locator('[data-testid="awd-dialog-field-dlg_next_action"]').fill("Request a corrected evaluation report addressing the calculation issue.");

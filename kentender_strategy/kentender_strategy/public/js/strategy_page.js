@@ -8,7 +8,7 @@
 //   /app/strategy/approval/{plan_version_id}[/tab]  STR-UI-04 Approval task
 kentender_core.desk_page.register("strategy", {
 	title: __("Strategy Alignment"),
-	bundles: ["kt_industry_page_rail.bundle.js", "strategy.bundle.js"],
+	bundles: ["kt_industry_page_rail.bundle.js", "kt_industry_pager.bundle.js", "strategy.bundle.js"],
 	mount: (el) => frappe.kt_mount_strategy(el),
 	sidebarWorkspaceKey: "procurement",
 });

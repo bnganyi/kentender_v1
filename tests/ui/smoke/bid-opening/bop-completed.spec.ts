@@ -20,7 +20,7 @@ test.describe("BOP-DES-05 Completed record", () => {
 		await expect(page).toHaveURL(new RegExp(`/(app|desk)/tenders/${world.tender_reference}/opening/correct$`));
 		await expectScreen(page, "completed");
 		await expectNextStep(page, "your_turn", "Correct opening record");
-		await expect(page.locator(".kt-radio")).toHaveText(["Attendance note", "Procedural note", "Typographical error in a note", "Observer name or organisation"]);
+		await expect(page.locator(".radio")).toHaveText(["Attendance note", "Procedural note", "Typographical error in a note", "Observer name or organisation"]);
 		await page.locator('[data-testid="bop-correct-info"]').fill("Jane Wanjiku left at 11:03 EAT");
 		await page.locator('[data-testid="bop-correct-reason"]').fill("Add the departure noted during the opening");
 		await page.locator('[data-testid="bop-correct-add"]').click();
@@ -39,7 +39,7 @@ test.describe("BOP-DES-05 Completed record", () => {
 		await expectScreen(page, "completed");
 		await expect(page.locator('[data-testid="bop-guidance"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="bop-summary"]')).toContainText("Bids opened");
-		await expect(page.locator(".kt-page button.kt-btn-primary")).toHaveCount(0);
+		await expect(page.locator(".kt-page button.btn-primary")).toHaveCount(0);
 		await login(page, process.env.UI_ADMIN_USER || "Administrator", process.env.UI_ADMIN_PASSWORD || "admin");
 		await gotoOpening(page, world.tender_reference);
 		await expectScreen(page, "completed");

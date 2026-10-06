@@ -101,13 +101,13 @@ function confirmClose() {
 	<div class="kt-industry" data-testid="bud-close" :data-loading="loading ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : 'false'">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell" style="max-width: 900px">
-			<div v-if="loading" class="kt-card kt-blueprint"><div class="kt-skel" style="width: 280px; height: 20px"></div></div>
-			<div v-else-if="forbidden" class="kt-card kt-blueprint kt-empty" data-testid="bud-close-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p class="kt-muted">{{ __(forbidden.text) }}</p></div>
-			<div v-else-if="notFound" class="kt-card kt-blueprint kt-empty"><h2>{{ __("This budget could not be found.") }}</h2></div>
-			<div v-else-if="serverError" class="kt-card kt-blueprint kt-empty"><h2>{{ __("The funding position could not be checked. Try again before closing this budget.") }}</h2><button type="button" class="kt-btn kt-btn-primary" @click="load()">{{ __("Try again") }}</button></div>
+			<div v-if="loading" class="card blueprint"><div class="kt-skel" style="width: 280px; height: 20px"></div></div>
+			<div v-else-if="forbidden" class="card blueprint kt-empty" data-testid="bud-close-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p class="kt-muted">{{ __(forbidden.text) }}</p></div>
+			<div v-else-if="notFound" class="card blueprint kt-empty"><h2>{{ __("This budget could not be found.") }}</h2></div>
+			<div v-else-if="serverError" class="card blueprint kt-empty"><h2>{{ __("The funding position could not be checked. Try again before closing this budget.") }}</h2><button type="button" class="btn btn-primary" @click="load()">{{ __("Try again") }}</button></div>
 
 			<template v-else-if="status">
-				<div class="kt-card kt-blueprint" style="padding: 0">
+				<div class="card blueprint" style="padding: 0">
 					<div style="padding: 28px 24px 20px; border-bottom: 1px solid var(--kt-color-divider)">
 						<h1 style="margin: 0 0 6px" data-testid="bud-close-heading">{{ __("Close budget for FY {0}", [fyLabel]) }}</h1>
 						<p class="kt-muted" style="margin: 0">{{ status.budget.title }} · {{ status.budget.code }}</p>
@@ -128,8 +128,8 @@ function confirmClose() {
 									{{ __("{0} remains reserved for requisitions. Resolve the remaining reservations through their owning Requisition or Contract process, then check again.", [formatKes(status.remaining_total, currency)]) }}
 								</div>
 							</div>
-							<div class="kt-card kt-blueprint" style="padding: 0; overflow-x: auto; margin-bottom: 12px">
-								<table class="kt-table" data-testid="bud-close-rows">
+							<div class="card blueprint" style="padding: 0; overflow-x: auto; margin-bottom: 12px">
+								<table class="table" data-testid="bud-close-rows">
 									<thead><tr><th>{{ __("Budget line") }}</th><th class="is-num">{{ __("Still reserved") }}</th><th>{{ __("Next step") }}</th></tr></thead>
 									<tbody>
 										<tr v-for="row in status.rows" :key="row.budget_line">
@@ -153,7 +153,7 @@ function confirmClose() {
 								<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
 								<div class="kt-notice-body"><strong>{{ __("The financial year has ended and no reservation remains.") }}</strong> {{ __("Closing stops new reservations, conversions and commitment increases. Existing commitments and history remain.") }}</div>
 							</div>
-							<div class="kt-card kt-blueprint" style="margin: 0">
+							<div class="card blueprint" style="margin: 0">
 								<h3 class="kt-card-title" style="display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" x2="21" y1="22" y2="22" /><line x1="6" x2="6" y1="18" y2="11" /><line x1="10" x2="10" y1="18" y2="11" /><line x1="14" x2="14" y1="18" y2="11" /><line x1="18" x2="18" y1="18" y2="11" /><polygon points="12 2 20 7 4 7" /></svg>{{ __("Funding position") }}</h3>
 								<p class="kt-muted" style="font-size: 12px; margin: 0 0 12px">{{ __("As at {0}", [status.as_at_display]) }}</p>
 								<div class="kt-grid-3" style="gap: 16px">
@@ -175,20 +175,20 @@ function confirmClose() {
 						</div>
 					</div>
 					<div style="padding: 16px 24px; display: flex; gap: 12px; flex-wrap: wrap">
-						<button type="button" class="kt-btn kt-btn-secondary" data-testid="bud-close-back" @click="go(budgetIdParam)">{{ __("Back to budget") }}</button>
-						<button v-if="state !== 'closed'" type="button" class="kt-btn kt-btn-secondary" data-testid="bud-close-check" :disabled="busy" @click="load({ quiet: true })">{{ __("Check again") }}</button>
-						<button v-if="state !== 'closed'" type="button" class="kt-btn kt-btn-primary" data-testid="bud-close-btn" :disabled="busy || state !== 'ready' || !status.can_close" :title="state !== 'ready' ? __('Closure is unavailable until every guard passes') : ''" @click="confirmOpen = true">{{ __("Close budget") }}</button>
+						<button type="button" class="btn btn-secondary" data-testid="bud-close-back" @click="go(budgetIdParam)">{{ __("Back to budget") }}</button>
+						<button v-if="state !== 'closed'" type="button" class="btn btn-secondary" data-testid="bud-close-check" :disabled="busy" @click="load({ quiet: true })">{{ __("Check again") }}</button>
+						<button v-if="state !== 'closed'" type="button" class="btn btn-primary" data-testid="bud-close-btn" :disabled="busy || state !== 'ready' || !status.can_close" :title="state !== 'ready' ? __('Closure is unavailable until every guard passes') : ''" @click="confirmOpen = true">{{ __("Close budget") }}</button>
 					</div>
 				</div>
 
-				<div v-if="confirmOpen" class="kt-dialog-backdrop" tabindex="-1" @keydown.esc="confirmOpen = false">
-					<div class="kt-dialog" style="width: 480px" role="dialog" aria-modal="true" data-testid="bud-close-confirm">
-						<h2 class="kt-dialog-title">{{ __("Close budget for FY {0}?", [fyLabel]) }}</h2>
+				<div v-if="confirmOpen" class="dialog-backdrop" tabindex="-1" @keydown.esc="confirmOpen = false">
+					<div class="dialog" style="width: 480px" role="dialog" aria-modal="true" data-testid="bud-close-confirm">
+						<h2 class="dialog-title">{{ __("Close budget for FY {0}?", [fyLabel]) }}</h2>
 						<p style="margin: 0 0 8px">{{ status.budget.title }} · {{ status.budget.code }}</p>
 						<p class="kt-muted">{{ __("Closing stops new reservations, conversions and commitment increases. Existing commitments and history remain.") }}</p>
-						<div class="kt-dialog-actions">
-							<button type="button" class="kt-btn kt-btn-ghost" @click="confirmOpen = false">{{ __("Cancel") }}</button>
-							<button type="button" class="kt-btn kt-btn-primary" data-testid="bud-close-confirm-btn" @click="confirmClose">{{ __("Close budget") }}</button>
+						<div class="dialog-actions">
+							<button type="button" class="btn btn-ghost" @click="confirmOpen = false">{{ __("Cancel") }}</button>
+							<button type="button" class="btn btn-primary" data-testid="bud-close-confirm-btn" @click="confirmClose">{{ __("Close budget") }}</button>
 						</div>
 					</div>
 				</div>

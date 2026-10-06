@@ -1,11 +1,11 @@
 <!-- In-Vue dialog (AGENTS.md §6.3): backdrop, focus on open, Escape closes,
      focus returns to the opener. -->
 <template>
-	<div class="kt-dialog-backdrop" @click.self="!busy && $emit('close')" @keydown.esc="!busy && $emit('close')">
-		<div ref="dialog" class="kt-dialog" :class="widthClass" role="dialog" aria-modal="true" :aria-labelledby="titleId" tabindex="-1" :data-testid="testid">
-			<div :id="titleId" class="kt-dialog-title">{{ title }}</div>
+	<div class="dialog-backdrop" @click.self="!busy && $emit('close')" @keydown.esc="!busy && $emit('close')">
+		<div ref="dialog" class="dialog" :class="widthClass" role="dialog" aria-modal="true" :aria-labelledby="titleId" tabindex="-1" :data-testid="testid">
+			<div :id="titleId" class="dialog-title">{{ title }}</div>
 			<slot />
-			<div class="kt-dialog-actions"><slot name="actions" /></div>
+			<div class="dialog-actions"><slot name="actions" /></div>
 		</div>
 	</div>
 </template>

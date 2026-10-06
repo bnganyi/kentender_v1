@@ -219,7 +219,7 @@ async function save() {
 			<div data-testid="kt-mve-card">
 				<template v-if="correcting">
 					<h3 style="margin-bottom:4px" data-testid="kt-mve-title">{{ __("{0} — edit rule", [ruleName]) }}</h3>
-					<span class="kt-tag kt-tag-neutral" data-testid="kt-mve-unsaved">{{ __("Unsaved changes") }}</span>
+					<span class="tag tag-neutral" data-testid="kt-mve-unsaved">{{ __("Unsaved changes") }}</span>
 				</template>
 				<RuleVersionHeader v-else-if="!creating" v-model="form.change_reason" :rule-name="ruleName" :current="current" :replaces="replaces" />
 
@@ -238,11 +238,11 @@ async function save() {
 				<div class="kt-section">
 					<h6 class="kt-card-title">{{ __("Which purchases qualify?") }}</h6>
 					<div class="kt-setup-grid">
-						<div class="kt-field">
+						<div class="field">
 							<label for="kt-mve-method">{{ __("Method") }}</label>
 							<div id="kt-mve-method" class="kt-ro" data-testid="kt-mve-method">{{ current.procurement_method || method }}</div>
 						</div>
-						<div class="kt-field">
+						<div class="field">
 							<label for="kt-mve-currency">{{ __("Currency") }}</label>
 							<div id="kt-mve-currency" class="kt-ro" data-testid="kt-mve-currency">{{ __("KES") }}</div>
 						</div>
@@ -255,18 +255,18 @@ async function save() {
 				<div class="kt-section">
 					<h6 class="kt-card-title">{{ __("When this rule applies") }}</h6>
 					<div class="kt-setup-grid">
-						<div class="kt-field">
+						<div class="field">
 							<label for="kt-mve-from">{{ __("Applies from") }}</label>
-							<input id="kt-mve-from" v-model="form.effective_from" class="kt-input" type="date" data-testid="kt-mve-from">
+							<input id="kt-mve-from" v-model="form.effective_from" class="input" type="date" data-testid="kt-mve-from">
 						</div>
-						<div class="kt-field">
+						<div class="field">
 							<label for="kt-mve-until">{{ __("Applies until") }}</label>
-							<input id="kt-mve-until" v-model="form.effective_until" class="kt-input" type="date" data-testid="kt-mve-until">
+							<input id="kt-mve-until" v-model="form.effective_until" class="input" type="date" data-testid="kt-mve-until">
 						</div>
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="kt-mve-basis">{{ __("Which date determines the rule to use?") }}</label>
-						<select id="kt-mve-basis" v-model="form.applicability_basis" class="kt-input" data-testid="kt-mve-basis">
+						<select id="kt-mve-basis" v-model="form.applicability_basis" class="input" data-testid="kt-mve-basis">
 							<option value="">{{ __("— Select —") }}</option>
 							<option v-for="basis in basisOptions" :key="basis" :value="basis">{{ basis }}</option>
 						</select>
@@ -291,7 +291,7 @@ async function save() {
 							<span class="kt-label">{{ __("Condition {0}", [index + 1]) }}</span>
 							<button
 								type="button"
-								class="kt-btn kt-btn-ghost kt-btn-sm"
+								class="btn btn-ghost btn-sm"
 								:data-testid="'kt-mve-remove-' + index"
 								@click="removeCondition(index)"
 							>
@@ -299,27 +299,27 @@ async function save() {
 							</button>
 						</div>
 						<div class="kt-setup-grid">
-							<div class="kt-field">
+							<div class="field">
 								<label :for="'kt-mve-id-' + index">{{ __("Condition identifier") }}</label>
-								<input :id="'kt-mve-id-' + index" v-model="row.condition_id" class="kt-input" :data-testid="'kt-mve-id-' + index">
+								<input :id="'kt-mve-id-' + index" v-model="row.condition_id" class="input" :data-testid="'kt-mve-id-' + index">
 							</div>
-							<div class="kt-field">
+							<div class="field">
 								<label :for="'kt-mve-kind-' + index">{{ __("Kind") }}</label>
-								<select :id="'kt-mve-kind-' + index" v-model="row.kind" class="kt-input" :data-testid="'kt-mve-kind-' + index">
+								<select :id="'kt-mve-kind-' + index" v-model="row.kind" class="input" :data-testid="'kt-mve-kind-' + index">
 									<option v-for="option in conditionKinds" :key="option" :value="option">{{ option }}</option>
 								</select>
 							</div>
-							<div class="kt-field">
+							<div class="field">
 								<label :for="'kt-mve-category-' + index">{{ __("Category") }}</label>
-								<select :id="'kt-mve-category-' + index" v-model="row.procurement_category" class="kt-input" :data-testid="'kt-mve-category-' + index">
+								<select :id="'kt-mve-category-' + index" v-model="row.procurement_category" class="input" :data-testid="'kt-mve-category-' + index">
 									<option value="">{{ __("All categories") }}</option>
 									<option v-for="category in categories" :key="category" :value="category">{{ category }}</option>
 								</select>
 							</div>
-							<!-- The checkbox sits in its own wrapper: `.kt-field > label`
+							<!-- The checkbox sits in its own wrapper: `.field > label`
 							     is a block field caption, and applying it to the
 							     checkbox's own label flattens the box out of sight. -->
-							<div class="kt-field">
+							<div class="field">
 								<label :id="'kt-mve-requirement-' + index">{{ __("Requirement") }}</label>
 								<div role="group" :aria-labelledby="'kt-mve-requirement-' + index">
 									<label class="kt-checkbox">
@@ -329,47 +329,47 @@ async function save() {
 								</div>
 							</div>
 						</div>
-						<div class="kt-field">
+						<div class="field">
 							<label :for="'kt-mve-description-' + index">{{ __("Condition") }}</label>
-							<textarea :id="'kt-mve-description-' + index" v-model="row.description" class="kt-input kt-textarea" rows="2" :data-testid="'kt-mve-description-' + index" />
+							<textarea :id="'kt-mve-description-' + index" v-model="row.description" class="input kt-textarea" rows="2" :data-testid="'kt-mve-description-' + index" />
 						</div>
 						<div class="kt-setup-grid">
-							<div class="kt-field">
+							<div class="field">
 								<label :for="'kt-mve-basis-' + index">{{ __("Value measured against") }}</label>
-								<select :id="'kt-mve-basis-' + index" v-model="row.cumulative_basis" class="kt-input" :data-testid="'kt-mve-basis-' + index">
+								<select :id="'kt-mve-basis-' + index" v-model="row.cumulative_basis" class="input" :data-testid="'kt-mve-basis-' + index">
 									<option v-for="option in cumulativeBases" :key="option" :value="option">{{ option }}</option>
 								</select>
 							</div>
-							<div class="kt-field">
+							<div class="field">
 								<label :for="'kt-mve-min-' + index">{{ __("Minimum amount") }}</label>
-								<input :id="'kt-mve-min-' + index" v-model="row.minimum_amount" class="kt-input" type="number" min="0" :data-testid="'kt-mve-min-' + index">
+								<input :id="'kt-mve-min-' + index" v-model="row.minimum_amount" class="input" type="number" min="0" :data-testid="'kt-mve-min-' + index">
 							</div>
-							<div class="kt-field">
+							<div class="field">
 								<label :for="'kt-mve-max-' + index">{{ __("Maximum amount") }}</label>
-								<input :id="'kt-mve-max-' + index" v-model="row.maximum_amount" class="kt-input" type="number" min="0" :data-testid="'kt-mve-max-' + index">
+								<input :id="'kt-mve-max-' + index" v-model="row.maximum_amount" class="input" type="number" min="0" :data-testid="'kt-mve-max-' + index">
 							</div>
 						</div>
 						<p class="kt-muted" style="font-size:12px;margin:0 0 8px">{{ __("Leave an amount at 0 where the source states no limit.") }}</p>
 						<div class="kt-setup-grid">
-							<div class="kt-field">
+							<div class="field">
 								<label :for="'kt-mve-evidence-' + index">{{ __("Required evidence") }}</label>
-								<input :id="'kt-mve-evidence-' + index" v-model="row.required_evidence" class="kt-input" :data-testid="'kt-mve-evidence-' + index">
+								<input :id="'kt-mve-evidence-' + index" v-model="row.required_evidence" class="input" :data-testid="'kt-mve-evidence-' + index">
 							</div>
-							<div class="kt-field">
+							<div class="field">
 								<label :for="'kt-mve-actor-' + index">{{ __("Required authority") }}</label>
-								<input :id="'kt-mve-actor-' + index" v-model="row.authorisation_actor" class="kt-input" :data-testid="'kt-mve-actor-' + index">
+								<input :id="'kt-mve-actor-' + index" v-model="row.authorisation_actor" class="input" :data-testid="'kt-mve-actor-' + index">
 							</div>
-							<div class="kt-field">
+							<div class="field">
 								<label :for="'kt-mve-stage-' + index">{{ __("Checked at") }}</label>
-								<input :id="'kt-mve-stage-' + index" v-model="row.authorisation_stage" class="kt-input" :data-testid="'kt-mve-stage-' + index">
+								<input :id="'kt-mve-stage-' + index" v-model="row.authorisation_stage" class="input" :data-testid="'kt-mve-stage-' + index">
 							</div>
-							<div class="kt-field">
+							<div class="field">
 								<label :for="'kt-mve-reference-' + index">{{ __("Source reference") }}</label>
-								<input :id="'kt-mve-reference-' + index" v-model="row.statutory_reference" class="kt-input" :data-testid="'kt-mve-reference-' + index">
+								<input :id="'kt-mve-reference-' + index" v-model="row.statutory_reference" class="input" :data-testid="'kt-mve-reference-' + index">
 							</div>
 						</div>
 					</div>
-					<button type="button" class="kt-btn kt-btn-ghost kt-btn-sm" style="margin-top:8px" data-testid="kt-mve-add" @click="addCondition">
+					<button type="button" class="btn btn-ghost btn-sm" style="margin-top:8px" data-testid="kt-mve-add" @click="addCondition">
 						{{ __("Add condition") }}
 					</button>
 				</div>
@@ -377,21 +377,21 @@ async function save() {
 				<div class="kt-section">
 					<h6 class="kt-card-title">{{ __("Sources and interpretation") }}</h6>
 					<div class="kt-setup-grid">
-						<div class="kt-field">
+						<div class="field">
 							<label for="kt-mve-instrument">{{ __("Instrument") }}</label>
-							<input id="kt-mve-instrument" v-model="form.source_instrument" class="kt-input" data-testid="kt-mve-instrument">
+							<input id="kt-mve-instrument" v-model="form.source_instrument" class="input" data-testid="kt-mve-instrument">
 						</div>
-						<div class="kt-field">
+						<div class="field">
 							<label for="kt-mve-provisions">{{ __("Provisions") }}</label>
-							<input id="kt-mve-provisions" v-model="form.provision" class="kt-input" data-testid="kt-mve-provisions">
+							<input id="kt-mve-provisions" v-model="form.provision" class="input" data-testid="kt-mve-provisions">
 						</div>
-						<div class="kt-field">
+						<div class="field">
 							<label for="kt-mve-url">{{ __("Source URL") }}</label>
-							<input id="kt-mve-url" v-model="form.source_document" class="kt-input" data-testid="kt-mve-url">
+							<input id="kt-mve-url" v-model="form.source_document" class="input" data-testid="kt-mve-url">
 						</div>
-						<div class="kt-field">
+						<div class="field">
 							<label for="kt-mve-check">{{ __("Source check") }}</label>
-							<select id="kt-mve-check" v-model="form.verification_status" class="kt-input" data-testid="kt-mve-check">
+							<select id="kt-mve-check" v-model="form.verification_status" class="input" data-testid="kt-mve-check">
 								<option v-for="status in verificationStatuses" :key="status" :value="status">{{ __(sourceCheckLabel(status)) }}</option>
 							</select>
 						</div>
@@ -403,8 +403,8 @@ async function save() {
 
 			<div style="display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:16px;flex-wrap:wrap">
 				<span v-if="blocked" class="kt-blocked" data-testid="kt-mve-blocked">{{ blocked }}</span>
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="kt-mve-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-mve-save" @click="save">{{ correcting ? __("Save changes") : creating ? __("Save rule version") : __("Save new version") }}</button>
+				<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="kt-mve-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
+				<button type="button" class="btn btn-primary" :disabled="!canSave" data-testid="kt-mve-save" @click="save">{{ correcting ? __("Save changes") : creating ? __("Save rule version") : __("Save new version") }}</button>
 			</div>
 		</template>
 	</div>

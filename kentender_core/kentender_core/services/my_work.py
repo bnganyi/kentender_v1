@@ -233,8 +233,22 @@ def claim_my_work_task(task_id: str, expected_token: str) -> dict[str, Any]:
 	return result
 
 
+def _home_page_exists() -> bool:
+	return bool(frappe.db.exists("Page", "home"))
+
+
 def patch_bootinfo_home(bootinfo) -> None:
-	"""Use shared My Work as the role-neutral Desk entry for operational users."""
+	"""The landing page of an internal user.
+
+	HOME-CHG-001 v0.6 §9 and owner decision OD-2: Home is the internal landing page, so every internal user
+	(a System User, technical readers included: Home shows them the orientation and the Technical record search
+	link, no business action) lands on it. Only once the Page exists, so code that is live before the Page is
+	installed never sends anyone to a page that is not there. Supplier and public (Website) users and Guest are
+	left alone. The shared My Work page, which used to be the landing page of a user with an active Operational
+	Scope Assignment, is retired (HOME6-0607, owner decision 5 Oct 2026).
+	"""
 	user = frappe.session.user
-	if user not in (None, "Guest", "Administrator") and _assignments(user):
-		bootinfo.home_page = "my-work"
+	if user in (None, "Guest"):
+		return
+	if _home_page_exists() and frappe.db.get_value("User", user, "user_type") == "System User":
+		bootinfo.home_page = "home"

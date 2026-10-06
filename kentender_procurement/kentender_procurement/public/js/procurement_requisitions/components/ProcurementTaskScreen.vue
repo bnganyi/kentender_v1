@@ -40,7 +40,7 @@
 					</div>
 				</div>
 			</div>
-			<table class="kt-table" style="margin: var(--kt-space-3) 0 var(--kt-space-8)">
+			<table class="table" style="margin: var(--kt-space-3) 0 var(--kt-space-8)">
 				<thead><tr><th>Source</th><th class="is-num">Requested value</th></tr></thead>
 				<tbody><tr v-for="s in funding.sources" :key="s.department"><td>{{ s.department }}</td><td class="is-num">{{ s.requested_value }}</td></tr></tbody>
 			</table>
@@ -78,7 +78,7 @@
 				</div>
 				<button type="button" class="req-review-toggle" :aria-expanded="checksOpen ? 'true' : 'false'" data-testid="req-checks-toggle" @click="checksOpen = !checksOpen">{{ checksOpen ? "Hide details" : "Show details" }}</button>
 			</div>
-			<table v-if="checksOpen" class="kt-table req-review-body">
+			<table v-if="checksOpen" class="table req-review-body">
 				<thead><tr><th>Check</th><th>Result</th></tr></thead>
 				<tbody>
 					<tr v-for="c in view.checks.rows" :key="c.test" :class="{ 'is-failed': !c.ok }"><td>{{ c.label }}</td><td>{{ c.ok ? c.result : c.failure }}</td></tr>
@@ -101,16 +101,16 @@
 		</template>
 
 		<div v-if="decider && uncertain !== 'checking' && uncertain !== 'committed'" class="req-footer">
-			<button v-if="actions.request_planning_correction" type="button" class="kt-btn kt-btn-ghost" :disabled="busy" data-testid="req-action-planning" @click="dialog = 'planning'">Request Planning correction</button>
+			<button v-if="actions.request_planning_correction" type="button" class="btn btn-ghost" :disabled="busy" data-testid="req-action-planning" @click="dialog = 'planning'">Request Planning correction</button>
 			<div class="req-actions">
-				<button v-if="actions.view_planning_request" type="button" class="kt-btn kt-btn-ghost" data-testid="req-view-planning-request" @click="viewPlanningRequest">View Planning request</button>
-				<button v-if="!actions.authorise && actions.refresh" type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="req-refresh-checks" @click="ctx.reload()">Refresh checks</button>
-				<button v-if="actions.return_to_department" type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="req-return" @click="dialog = 'return'">Return to department</button>
-				<button v-if="actions.authorise" type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="req-authorise" @click="dialog = 'authorise'">Authorise requisition</button>
+				<button v-if="actions.view_planning_request" type="button" class="btn btn-ghost" data-testid="req-view-planning-request" @click="viewPlanningRequest">View Planning request</button>
+				<button v-if="!actions.authorise && actions.refresh" type="button" class="btn btn-secondary" :disabled="busy" data-testid="req-refresh-checks" @click="ctx.reload()">Refresh checks</button>
+				<button v-if="actions.return_to_department" type="button" class="btn btn-secondary" :disabled="busy" data-testid="req-return" @click="dialog = 'return'">Return to department</button>
+				<button v-if="actions.authorise" type="button" class="btn btn-primary" :disabled="busy" data-testid="req-authorise" @click="dialog = 'authorise'">Authorise requisition</button>
 			</div>
 		</div>
 		<div v-else-if="uncertain !== 'checking'" class="req-footer">
-			<button type="button" class="kt-btn kt-btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
+			<button type="button" class="btn btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
 		</div>
 
 		<AuthoriseDialog v-if="dialog === 'authorise'" :confirmation="view.confirmation" :busy="busy" :error="dialogError('authorise')" @close="dialog = null" @confirm="authorise" />

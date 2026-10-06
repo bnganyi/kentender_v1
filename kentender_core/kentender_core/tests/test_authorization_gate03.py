@@ -84,10 +84,24 @@ class TestAuthorizationGate03(IntegrationTestCase):
 		self.assertEqual(result["counts"]["waiting"],1)
 		self.assertEqual((row["task_id"],row["route"],row["action_label"]),(waiting.name,[],""))
 
-	def test_operational_user_lands_on_my_work(self):
-		self._assignment(); frappe.set_user(self.user); boot=frappe._dict(home_page="desktop"); patch_bootinfo_home(boot)
-		self.assertEqual(boot.home_page,"my-work")
+	def test_operational_user_lands_on_home_and_on_nothing_of_ours_until_it_exists(self):
+		# HOME-CHG-001 §9 / owner OD-2: Home replaced My Work as the landing page; My Work is retired (HOME6-0607).
+		from unittest.mock import patch
+		from kentender_core.services import my_work
+		self._assignment(); frappe.set_user(self.user)
+		with patch.object(my_work, "_home_page_exists", return_value=False):
+			boot=frappe._dict(home_page="desktop"); patch_bootinfo_home(boot)
+		self.assertEqual(boot.home_page,"desktop")
+		# the fixture user is role-less, so Frappe made it a Website User; Home is for internal (System) users
+		frappe.db.set_value("User", self.user, "user_type", "System User")
+		with patch.object(my_work, "_home_page_exists", return_value=True):
+			boot=frappe._dict(home_page="desktop"); patch_bootinfo_home(boot)
+		self.assertEqual(boot.home_page,"home")
 
-	def test_administrator_home_is_unchanged(self):
-		frappe.set_user("Administrator"); boot=frappe._dict(home_page="desktop"); patch_bootinfo_home(boot)
+	def test_administrator_home_is_unchanged_until_home_exists(self):
+		from unittest.mock import patch
+		from kentender_core.services import my_work
+		frappe.set_user("Administrator")
+		with patch.object(my_work, "_home_page_exists", return_value=False):
+			boot=frappe._dict(home_page="desktop"); patch_bootinfo_home(boot)
 		self.assertEqual(boot.home_page,"desktop")

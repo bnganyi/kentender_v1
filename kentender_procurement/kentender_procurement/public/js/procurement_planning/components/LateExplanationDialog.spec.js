@@ -18,7 +18,7 @@ function make(props = {}) {
 describe("LateExplanationDialog", () => {
 	it("§10.14: heads the dialog with the outcome and states only the two read-only facts", () => {
 		const wrapper = make();
-		expect(wrapper.get(".kt-dialog-title").text()).toBe("Explain late start of the annual plan");
+		expect(wrapper.get(".dialog-title").text()).toBe("Explain late start of the annual plan");
 		const facts = wrapper.findAll(".pln-fact-val").map((f) => f.text());
 		expect(facts).toEqual(["1 Jul 2027", "2 Jul 2027, 09:00 EAT"]);
 		expect(wrapper.get('[data-testid="pln-late-explanation-reason"]').element.value).toBe("");

@@ -49,6 +49,12 @@ kt_my_work_providers = [
 	"kentender_budget.services.budget_my_work_provider.my_work_rows",
 ]
 
+# HOME-CHG-001 v0.6 §7 — Budget's feed to the Home page (core collects, never imports this app).
+kt_home_providers = ["kentender_budget.services.home_provider.entries"]
+
+# ANL-CHG-001 v0.8 §7.1 — Budget's funding position for Procurement Analytics (core collects, never imports this app).
+kt_analytics_providers = ["kentender_budget.services.analytics_provider"]
+
 # AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical
 # search page/service and the technical-read conformance gate collect a
 # module's reference resolvers and read probes through these two hooks;
@@ -86,17 +92,17 @@ kentender_scope_map = {
 }
 
 permission_query_conditions = {
-	"Procurement Budget": "kentender_core.services.authorization.permission_query_conditions",
-	"Procurement Budget Version": "kentender_core.services.authorization.permission_query_conditions",
-	"Procurement Budget Line": "kentender_core.services.authorization.permission_query_conditions",
-	"Procurement Budget Line Version": "kentender_core.services.authorization.permission_query_conditions",
+	"Procurement Budget": "kentender_budget.services.budget_read_scope.permission_query_conditions",
+	"Procurement Budget Version": "kentender_budget.services.budget_read_scope.permission_query_conditions",
+	"Procurement Budget Line": "kentender_budget.services.budget_read_scope.permission_query_conditions",
+	"Procurement Budget Line Version": "kentender_budget.services.budget_read_scope.permission_query_conditions",
 }
 
 has_permission = {
-	"Procurement Budget": "kentender_core.services.authorization.has_permission",
-	"Procurement Budget Version": "kentender_core.services.authorization.has_permission",
-	"Procurement Budget Line": "kentender_core.services.authorization.has_permission",
-	"Procurement Budget Line Version": "kentender_core.services.authorization.has_permission",
+	"Procurement Budget": "kentender_budget.services.budget_read_scope.has_permission",
+	"Procurement Budget Version": "kentender_budget.services.budget_read_scope.has_permission",
+	"Procurement Budget Line": "kentender_budget.services.budget_read_scope.has_permission",
+	"Procurement Budget Line Version": "kentender_budget.services.budget_read_scope.has_permission",
 }
 
 

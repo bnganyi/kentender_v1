@@ -33,7 +33,7 @@ test.describe("TPR-DES-09 Published Tender", () => {
 		await page.locator('[data-testid="tnd-view-complete"]').click();
 		await expect(page.locator('[data-testid="tnd-doc-frame"]')).toContainText(/Tender/i, { timeout: 30_000 });
 		await page.locator('[data-testid="tnd-doc-close"]').click();
-		await page.locator('[data-testid="tnd-published-channels"] .tnd-link-btn').first().click();
+		await page.locator('[data-testid="tnd-published-channels"] .btn-ghost').first().click();
 		await expect(page.locator('[data-testid="tnd-confirmation-view"]')).toContainText("Confirmed");
 		await page.locator('[data-testid="tnd-cv-close"]').click();
 

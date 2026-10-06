@@ -28,25 +28,25 @@
 			<section data-section="request_information" tabindex="-1">
 				<CardTitle title="Request information" icon="file" />
 				<div class="req-grid-2" style="margin-bottom: var(--kt-space-8)">
-					<div class="kt-field">
+					<div class="field">
 						<label for="req-title">Requirement title</label>
-						<input id="req-title" v-model="form.requirement_title" class="kt-input" :class="{ 'is-invalid': fieldError('requirement_title') }" :disabled="!canShared" data-testid="req-field-title" />
+						<input id="req-title" v-model="form.requirement_title" class="input" :class="{ 'is-invalid': fieldError('requirement_title') }" :disabled="!canShared" data-testid="req-field-title" />
 						<span v-if="fieldError('requirement_title')" class="req-field-error">{{ fieldError("requirement_title") }}</span>
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="req-location">Delivery location</label>
-						<select id="req-location" v-model="form.delivery_location" class="kt-input" :class="{ 'is-invalid': fieldError('delivery_location') }" :disabled="!canShared" data-testid="req-field-location">
+						<select id="req-location" v-model="form.delivery_location" class="input" :class="{ 'is-invalid': fieldError('delivery_location') }" :disabled="!canShared" data-testid="req-field-location">
 							<option value="">Select a delivery location</option>
 							<option v-for="l in info.locations || []" :key="l.name" :value="l.name">{{ l.address || l.location_name }}</option>
 						</select>
 						<span v-if="fieldError('delivery_location')" class="req-field-error">{{ fieldError("delivery_location") }}</span>
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label for="req-latest">Latest delivery date</label>
 						<DateField id="req-latest" v-model="form.latest_delivery_date" :disabled="!canShared" :invalid="!!fieldError('latest_delivery_date')" />
 						<span v-if="fieldError('latest_delivery_date')" class="req-field-error">{{ fieldError("latest_delivery_date") }}</span>
 					</div>
-					<div class="kt-field">
+					<div class="field">
 						<label id="req-services-label">Related services required</label>
 						<SegYesNo v-model="form.related_services_required" name="req-services" labelledby="req-services-label" :disabled="!canShared" />
 					</div>
@@ -57,7 +57,7 @@
 		<section data-section="amounts" tabindex="-1">
 			<CardTitle title="Amounts requested from the approved plan" icon="coins" />
 			<p class="kt-muted" style="font-size: 13px; margin: 6px 0 0">{{ remainingOnly ? "This request uses only the remaining amount from the original approved purchase." : "The full available amount is selected. Enter a smaller amount only when this requisition covers part of the approved purchase." }}</p>
-			<table v-if="remainingOnly" class="kt-table" style="margin-top: var(--kt-space-3)" data-testid="req-remaining-original">
+			<table v-if="remainingOnly" class="table" style="margin-top: var(--kt-space-3)" data-testid="req-remaining-original">
 				<thead><tr><th>Approved purchase</th><th class="is-num">Quantity</th><th class="is-num">Value</th></tr></thead>
 				<tbody>
 					<tr><td>Original</td><td class="is-num">{{ remaining.original.quantity }}</td><td class="is-num">{{ remaining.original.value }}</td></tr>
@@ -66,7 +66,7 @@
 				</tbody>
 			</table>
 			<div class="req-has-cards" style="margin-bottom: var(--kt-space-8)">
-				<table class="kt-table" data-testid="req-amounts">
+				<table class="table" data-testid="req-amounts">
 					<thead>
 						<tr v-if="contributor">
 							<th>Department and requirement</th><th class="is-num">Requested quantity</th><th class="is-num">Requested value</th><th>Access</th>
@@ -81,7 +81,7 @@
 							<td v-if="!contributor" class="is-num">{{ row.available_quantity }}</td>
 							<td class="is-num">
 								<template v-if="row.editable && !locked">
-									<input v-model="amounts[row.drawdown_line_id].quantity" class="kt-input req-num-input" inputmode="numeric" :aria-label="`Requested quantity for ${row.department}`" data-testid="req-amount-quantity" />
+									<input v-model="amounts[row.drawdown_line_id].quantity" class="input req-num-input" inputmode="numeric" :aria-label="`Requested quantity for ${row.department}`" data-testid="req-amount-quantity" />
 									<div class="kt-label req-field-suffix">Each</div>
 								</template>
 								<template v-else>{{ row.requested_quantity }}</template>
@@ -89,9 +89,9 @@
 							<td v-if="!contributor" class="is-num">{{ row.available_value }}</td>
 							<td class="is-num">
 								<template v-if="row.editable && !locked">
-									<input v-model="amounts[row.drawdown_line_id].value" class="kt-input req-num-input is-wide" inputmode="decimal" :aria-label="`Requested value for ${row.department} in KES`" data-testid="req-amount-value" />
+									<input v-model="amounts[row.drawdown_line_id].value" class="input req-num-input is-wide" inputmode="decimal" :aria-label="`Requested value for ${row.department} in KES`" data-testid="req-amount-value" />
 									<div class="kt-label req-field-suffix">KES</div>
-									<button v-if="changed(row)" type="button" class="kt-btn kt-btn-ghost" data-testid="req-use-full" @click="useFull(row)">Use full available amount</button>
+									<button v-if="changed(row)" type="button" class="btn btn-ghost" data-testid="req-use-full" @click="useFull(row)">Use full available amount</button>
 								</template>
 								<template v-else>{{ row.requested_value }}</template>
 								<div v-if="amountError(row)" class="req-field-error">{{ amountError(row) }}</div>
@@ -121,10 +121,10 @@
 					<CardTitle title="Equipment" icon="monitor" style="margin: 0" />
 					<span v-if="spec" class="kt-muted" style="font-size: 13px; display: flex; align-items: center; gap: 10px">
 						{{ spec.label }}
-						<button v-if="canShared && !locked" type="button" class="kt-btn kt-btn-secondary" data-testid="req-edit-shared" @click="dialog = { kind: 'shared' }">Edit shared details</button>
+						<button v-if="canShared && !locked" type="button" class="btn btn-secondary" data-testid="req-edit-shared" @click="dialog = { kind: 'shared' }">Edit shared details</button>
 					</span>
 				</div>
-				<table class="kt-table" style="margin-top: 12px; font-size: 13px" data-testid="req-equipment">
+				<table class="table" style="margin-top: 12px; font-size: 13px" data-testid="req-equipment">
 					<thead><tr><th>Item</th><th>Approved requirement</th><th class="is-num">Quantity</th><th>Intended use</th><th>Delivery</th><th style="white-space: nowrap">Action</th></tr></thead>
 					<tbody>
 						<tr v-for="item in items" :key="item.requisition_item_id" data-testid="req-equipment-row">
@@ -135,15 +135,15 @@
 							<td>{{ item.delivery }}</td>
 							<td>
 								<div v-if="item.editable && !locked" class="req-row-actions">
-									<button type="button" class="kt-btn kt-btn-ghost" data-testid="req-edit-item" @click="dialog = { kind: 'item', item }">Edit quantity and use</button>
-									<button type="button" class="kt-btn kt-btn-ghost" data-testid="req-remove-item" @click="dialog = { kind: 'remove', item }">Remove</button>
+									<button type="button" class="btn btn-ghost" data-testid="req-edit-item" @click="dialog = { kind: 'item', item }">Edit quantity and use</button>
+									<button type="button" class="btn btn-ghost" data-testid="req-remove-item" @click="dialog = { kind: 'remove', item }">Remove</button>
 								</div>
 							</td>
 						</tr>
 					</tbody>
 				</table>
 				<div v-if="canAdd" style="margin-top: 12px">
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="req-add-laptops" @click="dialog = { kind: 'add' }">Add laptop request</button>
+					<button type="button" class="btn btn-secondary" data-testid="req-add-laptops" @click="dialog = { kind: 'add' }">Add laptop request</button>
 				</div>
 			</template>
 			<template v-else>
@@ -151,7 +151,7 @@
 				<div class="req-empty">
 					<div class="req-empty-title">No equipment added.</div>
 					<p class="kt-muted" style="font-size: 13px; margin: 6px 0 12px">Add the equipment covered by the requested quantities above.</p>
-					<button v-if="canAdd" type="button" class="kt-btn kt-btn-primary" data-testid="req-add-laptops" @click="dialog = { kind: 'add' }">Add laptop request</button>
+					<button v-if="canAdd" type="button" class="btn btn-primary" data-testid="req-add-laptops" @click="dialog = { kind: 'add' }">Add laptop request</button>
 				</div>
 			</template>
 		</section>
@@ -160,16 +160,16 @@
 		<Notice v-if="savedNotice" tone="live"><span data-testid="req-saved">{{ savedNotice }}</span></Notice>
 
 		<div class="req-footer">
-			<button type="button" class="kt-btn kt-btn-ghost" @click="ctx.go()">Back to Requisitions</button>
+			<button type="button" class="btn btn-ghost" @click="ctx.go()">Back to Requisitions</button>
 			<div v-if="actions.save" class="req-footer-right">
 				<span v-if="!contributor && hint" class="kt-label" data-testid="req-footer-hint">{{ hint }}</span>
 				<div class="req-actions">
 					<template v-if="contributor">
-						<button type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="req-save" @click="save()">{{ actions.save_label }}</button>
+						<button type="button" class="btn btn-primary" :disabled="busy" data-testid="req-save" @click="save()">{{ actions.save_label }}</button>
 					</template>
 					<template v-else>
-						<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="req-save" @click="save()">{{ actions.save_label }}</button>
-						<button type="button" class="kt-btn" :class="canContinue ? 'kt-btn-primary' : 'kt-btn-secondary'" :disabled="busy || !canContinue" data-testid="req-continue" @click="saveAndContinue">Continue to requirements</button>
+						<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="req-save" @click="save()">{{ actions.save_label }}</button>
+						<button type="button" class="btn" :class="canContinue ? 'btn-primary' : 'btn-secondary'" :disabled="busy || !canContinue" data-testid="req-continue" @click="saveAndContinue">Continue to requirements</button>
 					</template>
 				</div>
 			</div>
@@ -181,15 +181,15 @@
 			<p class="req-dialog-body">{{ dialog.item.item_name }} for {{ dialog.item.department }} ({{ dialog.item.quantity }}) will be removed from this Draft. Requirements that apply only to it are removed with it.</p>
 			<Notice v-if="dialogError" tone="critical">{{ dialogError }}</Notice>
 			<template #actions>
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="dialog = null">Cancel</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="req-remove-dialog-confirm" @click="removeItem(dialog.item)">Remove equipment row</button>
+				<button type="button" class="btn btn-secondary" :disabled="busy" @click="dialog = null">Cancel</button>
+				<button type="button" class="btn btn-primary" :disabled="busy" data-testid="req-remove-dialog-confirm" @click="removeItem(dialog.item)">Remove equipment row</button>
 			</template>
 		</DialogFrame>
 		<DialogFrame v-if="dialog && dialog.kind === 'confirm-services'" title="Remove related services?" :width="480" :busy="busy" testid="req-services-dialog" @close="dialog = null">
 			<p class="req-dialog-body">This Draft has {{ dialog.count }} related service{{ dialog.count === 1 ? "" : "s" }}. Answering No removes {{ dialog.count === 1 ? "it" : "them" }} from the Draft.</p>
 			<template #actions>
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="dialog = null">Keep related services</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="req-services-dialog-confirm" @click="confirmRemoveServices">Remove related services</button>
+				<button type="button" class="btn btn-secondary" :disabled="busy" @click="dialog = null">Keep related services</button>
+				<button type="button" class="btn btn-primary" :disabled="busy" data-testid="req-services-dialog-confirm" @click="confirmRemoveServices">Remove related services</button>
 			</template>
 		</DialogFrame>
 	</div>

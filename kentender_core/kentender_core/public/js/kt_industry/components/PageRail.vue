@@ -4,62 +4,14 @@
 // a different design system (Tailwind/Material Symbols) — kt_industry_tokens.css is
 // explicitly scoped to never leak into Desk chrome, and the inverse holds too: this
 // rail never leaks into Desk chrome either, it only exists inside the Vue mount root.
-import { ref, watch, onMounted } from "vue";
 
 const props = defineProps({
 	trail: { type: Array, required: true }, // [{label, route?}] — last item has no route (current)
-	// CTX-CHG-001 — global working Procuring Entity switcher. Dormant unless
-	// the hosting page opts in; renders a plain chip when the user cannot
-	// genuinely switch (single permitted PE), a selector otherwise.
-	showPeSwitcher: { type: Boolean, default: false },
-	onPeChange: { type: Function, default: null },
 	epoch: { type: Number, default: 0 }, // bump to re-fetch (handle.refreshContext)
 });
 
-// --- CTX-CHG-001 working PE ------------------------------------------------
-const workingPe = ref(null); // {mode, options, selected, can_switch, selection_required}
-
-async function fetchWorkingPe() {
-	if (!props.showPeSwitcher) return;
-	try {
-		const r = await frappe.call({
-			method: "kentender_core.api.working_context_api.get_working_context",
-			args: {},
-			freeze: false,
-			silent: true,
-		});
-		workingPe.value = (r.message && r.message.pe) || null;
-	} catch (e) {
-		workingPe.value = null; // no chip beats a broken chip
-	}
-}
-
-async function onPePick(event) {
-	const peId = event.target.value;
-	if (!peId || (workingPe.value?.selected && peId === workingPe.value.selected.id)) return;
-	try {
-		const r = await frappe.call({
-			method: "kentender_core.api.working_context_api.select_working_pe",
-			args: { pe_id: peId },
-			freeze: false,
-			silent: true,
-		});
-		workingPe.value = r.message || workingPe.value;
-		const selected = workingPe.value && workingPe.value.selected;
-		// Both propagation paths: the Vue host's callback, and a DOM event for
-		// the non-Vue pages (Planning static, Procurement Home).
-		document.dispatchEvent(
-			new CustomEvent("kt:working-pe-changed", { detail: { procuring_entity: selected && selected.id } })
-		);
-		if (props.onPeChange) props.onPeChange(selected);
-	} catch (e) {
-		await fetchWorkingPe(); // server refused — re-sync to the truth
-	}
-}
-
-onMounted(fetchWorkingPe);
-watch(() => props.epoch, fetchWorkingPe);
-watch(() => props.showPeSwitcher, fetchWorkingPe);
+// CTX-CHG-001 v1.1 §2: there is no Procuring Entity switcher. A site is one Procuring Entity, shown where useful
+// and never chosen; the global working-entity preference and its picker are retired.
 
 function initials(name) {
 	const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
@@ -135,22 +87,6 @@ function openProfile() {
 				<span v-if="i < trail.length - 1" class="kt-rail-sep">/</span>
 			</template>
 		</nav>
-		<div v-if="showPeSwitcher && workingPe" class="kt-rail-pe" data-testid="kt-rail-pe">
-			<span class="kt-rail-pe-label">{{ __("Entity") }}</span>
-			<select
-				v-if="workingPe.can_switch"
-				class="kt-rail-pe-select"
-				data-testid="kt-rail-pe-select"
-				:value="workingPe.selected ? workingPe.selected.id : ''"
-				@change="onPePick"
-			>
-				<option v-if="!workingPe.selected" value="" disabled>{{ __("Select entity…") }}</option>
-				<option v-for="opt in workingPe.options" :key="opt.id" :value="opt.id">{{ opt.name }}</option>
-			</select>
-			<span v-else-if="workingPe.selected" class="kt-rail-pe-current" data-testid="kt-rail-pe-current">
-				{{ workingPe.selected.name }}
-			</span>
-		</div>
 		<div class="kt-rail-actions">
 			<button type="button" class="kt-rail-btn" :aria-label="__('Notifications')" @click="frappe.set_route('List', 'Notification Log')">
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg>

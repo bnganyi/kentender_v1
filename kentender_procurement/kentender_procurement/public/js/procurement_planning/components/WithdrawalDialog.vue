@@ -11,9 +11,9 @@
      person needs to know: the approved plan stays in history, and a correction
      repeats the review and approval it already passed. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="pub-withdrawal-dialog">
-		<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="pub-withdrawal-title">
-			<div id="pub-withdrawal-title" class="kt-dialog-title" data-testid="pub-withdrawal-title">
+	<div class="dialog-backdrop" data-testid="pub-withdrawal-dialog">
+		<div class="dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="pub-withdrawal-title">
+			<div id="pub-withdrawal-title" class="dialog-title" data-testid="pub-withdrawal-title">
 				{{ isDecision ? "Withdraw this plan for correction?" : "Request withdrawal for correction" }}
 			</div>
 
@@ -52,9 +52,9 @@
 					<span class="kt-meta-value">{{ request.requested_display }}</span>
 				</div>
 			</div>
-			<div v-else class="kt-field">
+			<div v-else class="field">
 				<label for="pub-withdrawal-reason" class="kt-label">Reason for withdrawal</label>
-				<textarea id="pub-withdrawal-reason" class="kt-input" rows="3" data-testid="pub-withdrawal-reason" v-model="reason"></textarea>
+				<textarea id="pub-withdrawal-reason" class="input" rows="3" data-testid="pub-withdrawal-reason" v-model="reason"></textarea>
 			</div>
 
 			<p class="pln-dialog-lede" data-testid="pub-withdrawal-consequence">
@@ -68,11 +68,11 @@
 
 			<p v-if="error" class="pln-dialog-error" role="alert" data-testid="pub-withdrawal-error">{{ error }}</p>
 
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">Cancel</button>
+			<div class="dialog-actions">
+				<button type="button" class="btn btn-secondary" :disabled="pending" @click="$emit('cancel')">Cancel</button>
 				<button
 					type="button"
-					class="kt-btn kt-btn-primary"
+					class="btn btn-primary"
 					data-testid="pub-withdrawal-confirm"
 					:disabled="pending || !ready"
 					@click="$emit('confirm', reason.trim())"

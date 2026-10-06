@@ -13,7 +13,7 @@ describe("FinanceReturnDialog — §12.9", () => {
 	it("matches U10-reassess-return's own title and confirm button text", () => {
 		const w = make();
 		// §10.9 U10-RETURN — the heading is the question being answered.
-		expect(w.find(".kt-dialog-title").text()).toBe("What needs to change?");
+		expect(w.find(".dialog-title").text()).toBe("What needs to change?");
 		expect(w.find('[data-testid="fnt-return-context"]').text()).toBe("Whole annual plan");
 		expect(w.find('[data-testid="fnt-return-confirm"]').text()).toBe("Return to planner");
 		// U10-RETURN draws no lede paragraph — only heading, Context and Reason.

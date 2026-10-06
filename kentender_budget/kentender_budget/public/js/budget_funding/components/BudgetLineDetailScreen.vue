@@ -83,13 +83,13 @@ function pad(i) {
 	<div class="kt-industry" data-testid="bud-line" :data-loading="loading ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : 'false'">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell" style="max-width: 1000px">
-			<div v-if="loading" class="kt-card kt-blueprint"><div class="kt-skel" style="width: 280px; height: 20px"></div></div>
-			<div v-else-if="notFound" class="kt-card kt-blueprint kt-empty" data-testid="bud-line-not-found"><h2>{{ __("This budget line could not be found.") }}</h2></div>
-			<div v-else-if="forbidden" class="kt-card kt-blueprint kt-empty" data-testid="bud-line-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p v-if="forbidden.text" class="kt-muted">{{ __(forbidden.text) }}</p></div>
-			<div v-else-if="serverError" class="kt-card kt-blueprint kt-empty" data-testid="bud-line-server-error"><h2>{{ __("This budget line could not be loaded.") }}</h2><button type="button" class="kt-btn kt-btn-primary" @click="load()">{{ __("Try again") }}</button></div>
+			<div v-if="loading" class="card blueprint"><div class="kt-skel" style="width: 280px; height: 20px"></div></div>
+			<div v-else-if="notFound" class="card blueprint kt-empty" data-testid="bud-line-not-found"><h2>{{ __("This budget line could not be found.") }}</h2></div>
+			<div v-else-if="forbidden" class="card blueprint kt-empty" data-testid="bud-line-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p v-if="forbidden.text" class="kt-muted">{{ __(forbidden.text) }}</p></div>
+			<div v-else-if="serverError" class="card blueprint kt-empty" data-testid="bud-line-server-error"><h2>{{ __("This budget line could not be loaded.") }}</h2><button type="button" class="btn btn-primary" @click="load()">{{ __("Try again") }}</button></div>
 
 			<template v-else-if="line">
-				<div class="kt-card kt-blueprint" style="padding: 0">
+				<div class="card blueprint" style="padding: 0">
 					<div style="padding: 28px 28px 20px; border-bottom: 1px solid var(--kt-color-divider)" data-testid="bud-line-header">
 						<div class="kt-eyebrow" style="margin-bottom: 6px">{{ line.code }}</div>
 						<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
@@ -184,7 +184,7 @@ function pad(i) {
 									     record's own row already states. The board draws this table under hasPartial
 									     alone; it was built unconditional, so a plain reservation showed three rows
 									     of KES 0. -->
-									<table v-if="rsv.converted || rsv.released" class="kt-table">
+									<table v-if="rsv.converted || rsv.released" class="table">
 										<thead><tr><th>{{ __("Value") }}</th><th class="is-num">{{ __("Amount") }}</th></tr></thead>
 										<tbody>
 											<tr><td>{{ __("Originally reserved") }}</td><td class="is-num">{{ formatKes(rsv.originally_reserved, currency) }}</td></tr>

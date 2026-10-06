@@ -55,7 +55,8 @@ class TestWorkspace(RequisitionCase):
 		_, item_id = fx.active_item()
 		fx.prepare(item_id)
 		frappe.set_user("Administrator")
-		result = read.get_requisition_workspace()
+		# The register is paged (ten by default); the row just built sorts by its own modified time.
+		result = read.get_requisition_workspace(filters={"page_size": 100})
 		self.assertEqual((result["mode"], result["your_work"]), ("technical", []))
 		self.assertTrue(any(r["title"] for r in result["register"]))
 		# REQ-DES-01-TECHNICAL: the purchase reference under its title and a
@@ -67,6 +68,38 @@ class TestWorkspace(RequisitionCase):
 		self.assertTrue(all(o["label"].startswith("FY ") for o in result["filters"]["fiscal_years"]))
 		self.assertTrue(read.get_requisition_workspace(filters={"fiscal_year": fy})["register"])
 		self.assertEqual(read.get_requisition_workspace(filters={"fiscal_year": "no-such-year"})["register"], [])
+
+
+	def test_the_register_is_paged_and_says_how_many_rows_match(self):
+		"""The table-pagination standard: ten rows by default, a page size from the
+		fixed offer, the matching total, and a page past the end clamps to the last
+		one. Reads the technical register as it stands rather than building rows."""
+		frappe.set_user("Administrator")
+		everything = read.get_requisition_workspace(filters={"page_size": 100})
+		total = everything["paging"]["total"]
+		if total <= 10:
+			self.skipTest("needs more than ten requisitions in the register to page")
+		self.assertEqual(len(everything["register"]), min(total, 100))
+		first = read.get_requisition_workspace()
+		self.assertEqual(first["paging"], {"page": 1, "page_size": 10, "total": total, "pages": -(-total // 10)})
+		self.assertEqual(len(first["register"]), 10)
+		second = read.get_requisition_workspace(filters={"page": 2})
+		self.assertEqual(second["paging"]["page"], 2)
+		self.assertFalse({r["requisition"] for r in first["register"]} & {r["requisition"] for r in second["register"]})
+		self.assertEqual(
+			[r["requisition"] for r in first["register"] + second["register"]],
+			[r["requisition"] for r in everything["register"]][: len(first["register"]) + len(second["register"])],
+		)
+		past = read.get_requisition_workspace(filters={"page": 999})
+		self.assertEqual(past["paging"]["page"], past["paging"]["pages"])
+		self.assertTrue(past["register"])
+		# A page size outside the offer falls back to ten rather than being honoured.
+		self.assertEqual(read.get_requisition_workspace(filters={"page_size": 7})["paging"]["page_size"], 10)
+		# The total follows the filters, not the whole register.
+		none = read.get_requisition_workspace(filters={"fiscal_year": "no-such-year"})
+		self.assertEqual((none["register"], none["paging"]["total"], none["paging"]["page"]), ([], 0, 1))
+		# `register_total` keeps meaning "every row before filtering".
+		self.assertEqual(none["register_total"], everything["register_total"])
 
 
 class TestRecordAndTasks(RequisitionCase):

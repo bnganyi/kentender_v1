@@ -50,7 +50,7 @@ test.describe("Award — the Accounting Officer's decision", () => {
 		const root = page.locator('[data-testid="awd-root"]');
 		await root.locator('[data-testid="awd-action-return-for-correction"]').click();
 		const dialog = root.locator('[data-testid="awd-dialog"]');
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Return for correction");
+		await expect(dialog.locator(".dialog-title")).toHaveText("Return for correction");
 		await page.screenshot({ path: `${EVIDENCE}/X08.png`, fullPage: true });
 		await dialog.locator('[data-testid="awd-dialog-field-dlg_reason"]').fill("Explain the unresolved funding concern before recommending an award.");
 		await dialog.locator('[data-testid="awd-dialog-return-for-correction"]').click();

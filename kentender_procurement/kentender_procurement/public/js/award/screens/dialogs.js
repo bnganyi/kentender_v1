@@ -11,11 +11,11 @@ export const DIALOGS = {
 	"return-for-correction": () => ({ t: "Return for correction", f: [{ label: "Reason", area: true, name: "dlg_reason" }],
 		a: [back(), btn("*Return for correction", "decide", { outcome: "Return for correction" })] }),
 	"record-no-award": () => ({ t: "Record no award", f: [{ label: "Reason", area: true, name: "dlg_reason" }, { label: "Next action", name: "dlg_next_action" }],
-		a: [back(), btn("*Record no award", "decide", { outcome: "No award" })] }),
+		a: [back(), btn("!Record no award", "decide", { outcome: "No award" })] }),
 	"correction-return": () => ({ t: "Return for correction", f: [{ label: "Reason", area: true, name: "dlg_reason" }],
 		a: [back(), btn("*Return for correction", "correction", { outcome: "Return for correction" })] }),
 	"correction-no-award": () => ({ t: "Record no award", f: [{ label: "Reason", area: true, name: "dlg_reason" }, { label: "Next action", name: "dlg_next_action" }],
-		a: [back(), btn("*Record no award", "correction", { outcome: "Record no award" })] }),
+		a: [back(), btn("!Record no award", "correction", { outcome: "Record no award" })] }),
 	"record-next-action": (args) => ({ t: "Record next action", f: [{ label: "Reason", area: true, name: "dlg_reason" }, { label: "Next action", name: "dlg_next_action" }],
 		a: [back(), btn("*Save", "disposition", { issue: args.issue })] }),
 	"record-outcome": (args, d) => {

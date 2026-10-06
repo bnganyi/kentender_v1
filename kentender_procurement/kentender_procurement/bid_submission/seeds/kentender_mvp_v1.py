@@ -8,7 +8,8 @@ the spec's own instants, interleaved with the Tenders chronology:
 - 19 May 2027 09:20 — David Ouma starts Afya's bid (the Tenders stage's
   candidate step, `canonical.seed_candidate`);
 - 20 May 10:10 — David completes the company and requirements tasks with the
-  §10.1 facts (ApexBook Pro 14, delivery 15 Sep 2027, 36 months' warranty,
+  §10.1 facts (ApexBook Pro 14, delivery 24 Jun 2027 — inside the published
+  30 Jun latest delivery, two-year seed world; was 15 Sep — 36 months' warranty,
   4 hours' support response; the KCB Bank Kenya guarantee KCB/TG/2027/8841);
 - 1 Jun 12:10 — after the 31 May addendum, David's next change moves the
   Draft to the current definition and he acknowledges the addendum;
@@ -50,7 +51,7 @@ import frappe
 from frappe.utils import cstr
 
 from kentender_procurement.bid_submission.seeds import canonical as bds_canonical
-from kentender_procurement.tenders.seeds.kentender_mvp_v1 import OPEN_STATUS, CanonicalTenderNeedsRebuild
+from kentender_procurement.tenders.seeds.kentender_mvp_v1 import CanonicalTenderNeedsRebuild
 
 NAMESPACE = bds_canonical.NAMESPACE
 DAVID = bds_canonical.DAVID
@@ -65,7 +66,7 @@ CLOCK = {
 	"close": "2027-06-12 11:00:00",
 }
 ACCEPT_AFTER_SECONDS = 3  # received 14:31:58, accepted 14:32:01 (§10.1)
-GOODS = {"offered_make_model": "ApexBook Pro 14", "offered_delivery_date": "2027-09-15"}
+GOODS = {"offered_make_model": "ApexBook Pro 14", "offered_delivery_date": "2027-06-24"}
 WARRANTY = {"minimum_warranty_months": 36, "maximum_support_response_hours": 4}
 PRICE = {"unit_price": "160000", "tax_amount": "6400000"}
 SECURITY = {"security_form": "Demand Bank Guarantee", "issuer": "KCB Bank Kenya", "guarantee_reference": "KCB/TG/2027/8841"}
@@ -91,13 +92,14 @@ BIDDERS: tuple[dict[str, Any], ...] = (
 		"signatory": "faith.atieno@jirani.example", "signatory_name": "Faith Atieno",
 		"representative": "kevin.kiprono@jirani.example", "representative_name": "Kevin Kiprono", "representative_title": "Tenders Officer",
 		"profile": ("TL-2027-1187", "Faith Atieno", 2011),
-		"goods": {"offered_make_model": "Vertex Book 14 G3", "offered_delivery_date": "2027-09-20"},
+		"goods": {"offered_make_model": "Vertex Book 14 G3", "offered_delivery_date": "2027-06-28"},
 		"warranty": {"minimum_warranty_months": 36, "maximum_support_response_hours": 6},
 		"price": {"unit_price": "168000", "tax_amount": "6720000"},  # 250 × 168,000 + 6,720,000 = KES 48,720,000
 		"security": {"security_form": "Demand Bank Guarantee", "issuer": "Equity Bank Kenya", "guarantee_reference": "EQ/BG/2027/3317"},
 		"overrides": {}, "security_amount": "",
 		"clock": {
-			"account": {"register": "2027-06-01 09:00:00", "verify": "2027-06-01 09:10:00", "representative": "2027-06-01 09:20:00"},
+			# two-year seed world: registered before the executed portfolio's first bids (was 1 Jun 2027)
+			"account": {"register": "2027-03-02 09:00:00", "verify": "2027-03-02 09:10:00", "representative": "2027-03-02 09:20:00"},
 			"start": "2027-06-02 09:15:00", "fill": "2027-06-03 11:00:00", "intake": "2027-06-11 09:30:00", "complete": "2027-06-11 10:05:00",
 			"submit": "2027-06-11 10:20:00",
 		},
@@ -112,14 +114,14 @@ BIDDERS: tuple[dict[str, Any], ...] = (
 		"signatory": "salim.omar@pwanitech.example", "signatory_name": "Salim Omar",
 		"representative": "lucy.wairimu@pwanitech.example", "representative_name": "Lucy Wairimu", "representative_title": "Sales Executive",
 		"profile": ("TL-2027-2245", "Salim Omar", 2018),
-		"goods": {"offered_make_model": "LiteBook 14S", "offered_delivery_date": "2027-09-10"},
+		"goods": {"offered_make_model": "LiteBook 14S", "offered_delivery_date": "2027-06-22"},
 		"warranty": {"minimum_warranty_months": 36, "maximum_support_response_hours": 8},
 		"price": {"unit_price": "150000", "tax_amount": "6000000"},  # 250 × 150,000 + 6,000,000 = KES 43,500,000
 		"security": {"security_form": "Demand Bank Guarantee", "issuer": "Co-operative Bank of Kenya", "guarantee_reference": "COOP/TG/2027/0562"},
 		"overrides": {"memory": 8},  # 8 GB against the required 16 GB
 		"security_amount": "",
 		"clock": {
-			"account": {"register": "2027-06-02 10:00:00", "verify": "2027-06-02 10:10:00", "representative": "2027-06-02 10:20:00"},
+			"account": {"register": "2027-03-03 10:00:00", "verify": "2027-03-03 10:10:00", "representative": "2027-03-03 10:20:00"},
 			"start": "2027-06-03 10:00:00", "fill": "2027-06-04 10:30:00", "intake": "2027-06-11 15:00:00", "complete": "2027-06-11 15:30:00",
 			"submit": "2027-06-11 16:45:00",
 		},
@@ -134,13 +136,13 @@ BIDDERS: tuple[dict[str, Any], ...] = (
 		"signatory": "joseph.kimutai@mlimacomputers.example", "signatory_name": "Joseph Kimutai",
 		"representative": "agnes.moraa@mlimacomputers.example", "representative_name": "Agnes Moraa", "representative_title": "Tenders Coordinator",
 		"profile": ("TL-2027-3310", "Joseph Kimutai", 2016),
-		"goods": {"offered_make_model": "ApexBook Pro 14", "offered_delivery_date": "2027-09-25"},
+		"goods": {"offered_make_model": "ApexBook Pro 14", "offered_delivery_date": "2027-06-30"},
 		"warranty": {"minimum_warranty_months": 36, "maximum_support_response_hours": 4},
 		"price": {"unit_price": "162000", "tax_amount": "6480000"},  # 250 × 162,000 + 6,480,000 = KES 46,980,000
 		"security": {"security_form": "Demand Bank Guarantee", "issuer": "NCBA Bank Kenya", "guarantee_reference": "NCBA/BG/2027/7710"},
 		"overrides": {}, "security_amount": "",
 		"clock": {
-			"account": {"register": "2027-06-03 14:00:00", "verify": "2027-06-03 14:10:00", "representative": "2027-06-03 14:20:00"},
+			"account": {"register": "2027-03-04 14:00:00", "verify": "2027-03-04 14:10:00", "representative": "2027-03-04 14:20:00"},
 			"start": "2027-06-04 14:00:00", "fill": "2027-06-07 10:00:00", "intake": "2027-06-12 09:15:00", "complete": "2027-06-12 09:40:00",
 			"submit": "2027-06-12 10:05:00",
 		},
@@ -436,29 +438,93 @@ def interleave(step: str, *, tender: str, tender_reference: str) -> dict[str, An
 	return None
 
 
+#: Afya Digital Supplies Limited in the shape `BIDDERS` uses (its account is the
+#: canonical one Supplier Accounts seeds; `facts` is unused for it).
+AFYA_BIDDER: dict[str, Any] = {
+	"key": "afya", "facts": None, "signatory": MARY, "signatory_name": "Mary Wanjiku", "representative": DAVID, "representative_name": "David Ouma",
+	"warranty": WARRANTY, "security": SECURITY, "overrides": {}, "security_amount": "",
+}
+
+
+def portfolio_bidder(key: str) -> dict[str, Any]:
+	return AFYA_BIDDER if key == "afya" else next(b for b in BIDDERS if b["key"] == key)
+
+
+def portfolio_bid(
+	*, tender: str, tender_reference: str, bidder_key: str, clock_map: dict[str, str], goods: dict[str, Any], price: dict[str, Any], submit: bool = True,
+	security: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+	"""One bid on an executed-portfolio Tender (two-year seed world proposal
+	§5.1), through the same commands as the canonical bids, as the company's
+	own people at the story's instants: Start bid (`clock_map["start"]`), the
+	documents, company and requirements tasks (`fill`), and — `submit` — the
+	physical security original recorded by Charles Mutiso (`intake`), the price
+	(`complete`) and the signed submission (`submit`). Without `submit` the bid
+	stays a Draft (a registered candidate). Idempotent per step: a submitted
+	bid is returned untouched."""
+	from kentender_procurement.bid_submission.seeds import filling
+	from kentender_procurement.bid_submission.services import reads, save
+
+	_guard()
+	bidder = {**portfolio_bidder(bidder_key), "goods": goods, "price": price}
+	if security:
+		bidder["security"] = {**bidder["security"], **security}
+	afya = bidder_key == "afya"
+	ensure_bidder_accounts()
+	existing = canonical_bid(tender) if afya else bidder_bid(tender, bidder)
+	if existing and frappe.db.exists("Bid Receipt", {"bid_workspace": existing}):
+		return {"ok": True, "idempotent": True, "bid": existing}
+	arrangement = bds_canonical.seed_candidate(tender_reference=tender_reference, at=clock_map["start"], supplier=None if afya else {
+		"facts": bidder["facts"], "registrant": bidder["signatory"], "registrant_name": bidder["signatory_name"], "representative": bidder["representative"],
+		"representative_name": bidder["representative_name"], "namespace": NAMESPACE,
+	})
+	bid = canonical_bid(tender) if afya else bidder_bid(tender, bidder)
+	person = bidder["representative"]
+	with _at(clock_map["fill"]):
+		documents = reads.get_bid_task(bid_reference=bid, task="documents", user=person)
+		ticks = {f["handle"]: True for g in documents["groups"] for f in g["fields"] if f["kind"] == "confirmation" and f["editable"] and f["visible"]}
+		if ticks:
+			saved = save.save_bid_task(bid_reference=bid, task="documents", values=ticks, expected_record_version=_version(bid), idempotency_key=_key(f"documents-{bidder_key}"), user=person)
+			if not saved.get("ok"):
+				frappe.throw(f"{bidder_key} could not confirm the tender documents of {tender_reference}: {saved}")
+		filling.fill_everything(bid, user=person, tasks=("company", "requirements"), answers=_answers(bidder, bid, clock_map["fill"]))
+	out: dict[str, Any] = {"ok": True, "idempotent": False, "bid": bid, "candidate": arrangement}
+	if not submit:
+		return out
+	out["intake"] = _record_original(tender_reference, bid, actor=person, at=clock_map["intake"])
+	with _at(clock_map["complete"]):
+		filling.fill_everything(bid, user=person, tasks=("price",), answers=_answers(bidder, bid, clock_map["complete"]))
+	out["receipt"] = _submit(bid, signatory=bidder["signatory"], certificate={**CERTIFICATE, "subject_name": bidder["signatory_name"]}, at=clock_map["submit"])
+	return out
+
+
+def close_portfolio_box(tender: str, at: str) -> dict[str, Any]:
+	"""Bid Submission's close of a portfolio Tender's box, after Tenders ends
+	its submission period (the scheduler consumer's work)."""
+	if frappe.db.exists("Bid Submission Close", {"tender": tender}):
+		return {"ok": True, "idempotent": True}
+	return _close(tender, at=at)
+
+
 def bids_submitted(tender: str) -> bool:
 	bids = [canonical_bid(tender)] + [bidder_bid(tender, b) for b in BIDDERS] if tender else []
 	return bool(bids) and all(bid and frappe.db.exists("Bid Receipt", {"bid_workspace": bid}) for bid in bids)
 
 
-def lifecycle_complete(tender: str, *, open_tender: bool = False) -> bool:
-	"""Every canonical bid submitted, and the box closed at the deadline — or,
-	`open_tender`, the Tender still open and nothing closed."""
+def lifecycle_complete(tender: str) -> bool:
+	"""Every canonical bid submitted, and the box closed at the deadline."""
 	if not bids_submitted(tender):
 		return False
-	if open_tender:
-		return frappe.db.get_value("Tender", tender, "overall_status") == OPEN_STATUS and not frappe.db.exists("Bid Submission Close", {"tender": tender})
 	return bool(frappe.db.exists("Bid Submission Close", {"tender": tender}))
 
 
-def upsert_bid_submission_base(*, commit: bool = False, open_tender: bool = False) -> dict[str, Any]:
+def upsert_bid_submission_base(*, commit: bool = False) -> dict[str, Any]:
 	"""The `bid_submission` stage: the canonical Tender built through the
 	Tenders seed with the bid's steps interleaved. One already carrying the
 	lifecycle is returned untouched. A Tender the `tenders` stage built alone
 	(its bid a Draft when the period closed) cannot be given the lifecycle
 	afterwards — the Requisition's hand-off is consumed once — so that world
-	needs a rebuild. `open_tender` stops before the deadline: all four bids
-	submitted, the Tender still open for more."""
+	needs a rebuild."""
 	from kentender_procurement.tenders.seeds import kentender_mvp_v1 as tenders_seed
 
 	_guard()
@@ -469,25 +535,24 @@ def upsert_bid_submission_base(*, commit: bool = False, open_tender: bool = Fals
 	ensure_bidder_accounts()
 	prerequisites = tenders_seed.verify_prerequisites()
 	tender = cstr(frappe.db.get_value("Tender", {"requisition": prerequisites["requisition"]}, "name"))
-	if tender and lifecycle_complete(tender, open_tender=open_tender):
+	if tender and lifecycle_complete(tender):
 		result = {"ok": True, "idempotent": True, "tender": tender, "bid": canonical_bid(tender)}
 	elif tender:
 		frappe.throw(
-			f"The canonical Tender {tender} was seeded without the bid lifecycle{' (asked for it open, with the four bids)' if open_tender else ''}. Rebuild the canonical world through this stage: "
-			"make seed-canonical THROUGH=bid_submission REBUILD=True.",
+			f"The canonical Tender {tender} was seeded without the bid lifecycle. Rebuild the canonical world through this stage: "
+			"make seed-canonical CURRENT=bid_submission REBUILD=True.",
 			exc=CanonicalTenderIncomplete,
 		)
 	else:
-		built = tenders_seed.upsert_tenders_base(commit=False, interleave=interleave, stop_before_close=open_tender)
+		built = tenders_seed.upsert_tenders_base(commit=False, interleave=interleave)
 		result = {"ok": True, "idempotent": False, "tender": built["tender"], "bid": canonical_bid(built["tender"]), "steps": built.get("interleaved", {})}
 	if commit:
 		frappe.db.commit()
 	return result
 
 
-def validate_bid_submission_seed(*, open_tender: bool = False) -> list[dict[str, Any]]:
-	"""One row per §13.3 fact the canonical bid must carry. Never mutates.
-	`open_tender`: the box is still open, so nothing about its close."""
+def validate_bid_submission_seed() -> list[dict[str, Any]]:
+	"""One row per §13.3 fact the canonical bid must carry. Never mutates."""
 	from kentender_procurement.tenders.seeds import kentender_mvp_v1 as tenders_seed
 
 	rows: list[dict[str, Any]] = []
@@ -532,12 +597,9 @@ def validate_bid_submission_seed(*, open_tender: bool = False) -> list[dict[str,
 		check(bool(match) and bool(frappe.db.exists("Tender Security Intake Match", {"intake": match, "bid_workspace": other})),
 			f"Charles's physical original for {name} privately matches its bid")
 	close = frappe.db.get_value("Bid Submission Close", {"tender": tender}, ["name", "bid_opening_handoff", "envelopes_sealed"], as_dict=True)
-	if open_tender:
-		check(not close, "Bid Submission is still open (no close yet)")
-	else:
-		check(bool(close), "Bid Submission closed at the deadline")
-		check(bool(close) and int(close.envelopes_sealed or 0) == 1 + len(BIDDERS), f"{1 + len(BIDDERS)} sealed envelopes were handed over")
-		check(bool(close) and bool(close.bid_opening_handoff), "a Bid Opening hand-off was written")
-	rerun = upsert_bid_submission_base(commit=False, open_tender=open_tender)
+	check(bool(close), "Bid Submission closed at the deadline")
+	check(bool(close) and int(close.envelopes_sealed or 0) == 1 + len(BIDDERS), f"{1 + len(BIDDERS)} sealed envelopes were handed over")
+	check(bool(close) and bool(close.bid_opening_handoff), "a Bid Opening hand-off was written")
+	rerun = upsert_bid_submission_base(commit=False)
 	check(rerun.get("idempotent") is True and rerun.get("bid") == bid, "a second run is idempotent")
 	return rows

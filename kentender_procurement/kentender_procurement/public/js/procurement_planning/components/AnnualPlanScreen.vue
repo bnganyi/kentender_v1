@@ -46,11 +46,11 @@
 			<!-- U07-UPDATE — a successor must say why it exists. The board holds
 			     the field in its own region (U07 update family). -->
 			<div v-if="plan.is_successor" class="kt-region">
-			<div class="kt-field pln-plan-field" data-testid="ppl-change-reason">
+			<div class="field pln-plan-field" data-testid="ppl-change-reason">
 				<label for="ppl-change-reason" class="kt-label">Reason for updating the plan</label>
 				<textarea
 					id="ppl-change-reason"
-					class="kt-input"
+					class="input"
 					rows="2"
 					:value="changeReasonDraft"
 					:disabled="!plan.mutable"
@@ -61,11 +61,11 @@
 
 			<!-- §10.6 — Project name is omitted when blank. A whole-plan field with
 			     nothing in it is not worth a control on every visit. -->
-			<div v-if="plan.project_name || showProjectName" class="kt-field pln-plan-field" data-testid="ppl-project-name">
+			<div v-if="plan.project_name || showProjectName" class="field pln-plan-field" data-testid="ppl-project-name">
 				<label for="ppl-project" class="kt-label">Project name (if applicable)</label>
 				<input
 					id="ppl-project"
-					class="kt-input"
+					class="input"
 					data-testid="ppl-project-input"
 					:value="projectNameDraft"
 					:disabled="!plan.mutable"
@@ -76,7 +76,7 @@
 			<button
 				v-else-if="plan.mutable"
 				type="button"
-				class="kt-btn kt-btn-ghost pln-plan-field"
+				class="btn btn-ghost pln-plan-field"
 				data-testid="ppl-add-project-name"
 				@click="showProjectName = true"
 			>
@@ -86,7 +86,7 @@
 			<div ref="purchasesEl" class="kt-region" tabindex="-1" data-testid="ppl-purchases-region">
 				<h2>Purchases</h2>
 				<template v-if="items.length">
-					<table class="kt-table" data-testid="ppl-purchases">
+					<table class="table" data-testid="ppl-purchases">
 						<thead>
 							<tr>
 								<th>Purchase</th>
@@ -99,7 +99,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr v-for="row in items" :key="row.plan_item_id" data-testid="ppl-purchase-row">
+							<tr v-for="row in pagedItems" :key="row.plan_item_id" data-testid="ppl-purchase-row">
 								<td>
 									{{ row.title }}
 									<div class="kt-muted pln-row-ref">{{ row.plan_item_id }}</div>
@@ -117,11 +117,12 @@
 									     read-only editor — but the row's own label must not
 									     promise a control the viewer does not have (found
 									     live 23 Sep 2026). -->
-									<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppl-purchase-action" @click.prevent="$emit('navigate', row.route)">{{ plan.mutable ? "Edit purchase" : "View purchase" }}</a>
+									<a href="#" class="btn btn-ghost" data-testid="ppl-purchase-action" @click.prevent="$emit('navigate', row.route)">{{ plan.mutable ? "Edit purchase" : "View purchase" }}</a>
 								</td>
 							</tr>
 						</tbody>
 					</table>
+					<TablePagerHost :total="itemsTotal" :page="itemsPage" :page-size="itemsPageSize" noun="purchase" @update:page="setItemsPage" @update:page-size="setItemsPageSize" />
 					<!-- Right beside the table its own "Current work" column is read
 					     from, not a footer sentence several sections and a scroll away
 					     that just said "shown above" — a Planner should not have to
@@ -146,7 +147,7 @@
 			<div ref="requirementsEl" class="kt-region" :class="{ 'is-secondary': !unallocated.length }" tabindex="-1" data-testid="ppl-requirements">
 				<h2>Requirements ready to add</h2>
 				<template v-if="unallocated.length">
-					<table class="kt-table" data-testid="ppl-unallocated">
+					<table class="table" data-testid="ppl-unallocated">
 						<thead>
 							<tr>
 								<th v-if="plan.mutable">Select</th>
@@ -159,7 +160,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr v-for="row in unallocated" :key="row.entry_id" data-testid="ppl-unallocated-row">
+							<tr v-for="row in pagedUnallocated" :key="row.entry_id" data-testid="ppl-unallocated-row">
 								<td v-if="plan.mutable">
 									<label class="kt-checkbox">
 										<input
@@ -180,18 +181,19 @@
 								<td>{{ row.unit_label }}</td>
 								<td class="is-num">{{ row.amount_display }}</td>
 								<td>
-									<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppl-view-requirement" @click.prevent="$emit('view-requirement', row)">View requirement</a>
+									<a href="#" class="btn btn-ghost" data-testid="ppl-view-requirement" @click.prevent="$emit('view-requirement', row)">View requirement</a>
 								</td>
 							</tr>
 						</tbody>
 					</table>
+					<TablePagerHost :total="unallocatedTotal" :page="unallocatedPage" :page-size="unallocatedPageSize" noun="requirement" @update:page="setUnallocatedPage" @update:page-size="setUnallocatedPageSize" />
 					<!-- A reader who cannot form purchases is not offered the control
 					     at all: this cycle shows no control a reader cannot use. -->
 					<div v-if="plan.mutable" class="pln-add-selected">
 						<p v-if="!selected.length" class="kt-muted" data-testid="ppl-select-hint">Select at least one requirement.</p>
 						<button
 							type="button"
-							class="kt-btn kt-btn-primary"
+							class="btn btn-primary"
 							data-testid="ppl-add-selected"
 							:disabled="pending || !selected.length"
 							@click="$emit('open-form-dialog')"
@@ -218,7 +220,7 @@
 						<span class="pln-fit-title">Budget fit, checked now</span>
 						<span class="pln-fit-over">{{ budgetFit.result }}</span>
 					</div>
-					<table class="kt-table" data-testid="ppl-budget-fit-table">
+					<table class="table" data-testid="ppl-budget-fit-table">
 						<thead><tr><th>Budget line</th><th class="is-num">Approved</th><th class="is-num">This plan</th><th class="is-num">Difference</th></tr></thead>
 						<tbody>
 							<tr v-for="line in budgetFit.lines" :key="line.budget_line">
@@ -235,7 +237,7 @@
 					<button
 						v-if="check.action"
 						type="button"
-						class="kt-btn kt-btn-secondary"
+						class="btn btn-secondary"
 						data-testid="ppl-check-action"
 						@click="focusRegion('reservation')"
 					>{{ check.action }}</button>
@@ -268,7 +270,7 @@
 							<svg class="kt-disclosure-chevron" :class="{ 'is-open': linesOpen }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
 						</summary>
 						<div class="kt-disclosure-body">
-							<table class="kt-table">
+							<table class="table">
 								<thead><tr><th>Budget line</th><th class="is-num">Approved</th><th class="is-num">This plan</th><th class="is-num">Difference</th></tr></thead>
 								<tbody>
 									<tr v-for="line in budgetFit.lines" :key="line.budget_line">
@@ -352,7 +354,7 @@
 					<!-- §10.6 update family — what this update adds, changes or
 					     removes against the plan in force; the section starts open
 					     when there is any. -->
-					<table v-if="changeRows.length" class="kt-table" data-testid="ppl-changes">
+					<table v-if="changeRows.length" class="table" data-testid="ppl-changes">
 						<thead><tr><th>Purchase</th><th>Field</th><th>Current value</th><th>Proposed value</th></tr></thead>
 						<tbody>
 							<tr v-for="row in changeRows" :key="row.plan_item_id + row.field">
@@ -411,7 +413,7 @@
 				<button
 					v-if="plan.can_cancel_update"
 					type="button"
-					class="kt-btn kt-btn-secondary"
+					class="btn btn-secondary"
 					data-testid="ppl-cancel-update"
 					:disabled="pending"
 					@click="$emit('cancel-update')"
@@ -423,7 +425,7 @@
 					<button
 						v-if="plan.mutable"
 						type="button"
-						class="kt-btn kt-btn-secondary"
+						class="btn btn-secondary"
 						data-testid="ppl-save"
 						:disabled="pending"
 						@click="onSave"
@@ -434,7 +436,7 @@
 					<button
 						v-if="plan.can_request_funding"
 						type="button"
-						class="kt-btn kt-btn-primary"
+						class="btn btn-primary"
 						data-testid="ppl-request-funding"
 						:disabled="pending"
 						@click="$emit('request-funding')"
@@ -445,7 +447,7 @@
 					<button
 						v-if="plan.can_sign_and_submit"
 						type="button"
-						class="kt-btn kt-btn-primary"
+						class="btn btn-primary"
 						data-testid="ppl-sign-submit"
 						:disabled="pending"
 						@click="$emit('submit-consolidated')"
@@ -456,7 +458,7 @@
 			</div>
 
 			<div v-if="plan.open_task" class="pln-dpp-task">
-				<button type="button" class="kt-btn kt-btn-primary" data-testid="ppl-open-task" @click="$emit('open-task', plan.open_task.route)">
+				<button type="button" class="btn btn-primary" data-testid="ppl-open-task" @click="$emit('open-task', plan.open_task.route)">
 					{{ plan.open_task.label }}
 				</button>
 			</div>
@@ -469,6 +471,8 @@ import { computed, nextTick, ref, watch } from "vue";
 import { settingsStated, useGuidance } from "../../pln_shared/composables/useGuidance.js";
 import MissingSettingGroup from "./MissingSettingGroup.vue";
 import ReservationAllocation from "./ReservationAllocation.vue";
+import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 
 const props = defineProps({
 	plan: { type: Object, default: () => ({}) },
@@ -551,6 +555,15 @@ const missingSettings = computed(() => {
 	return (props.plan.missing_settings || []).filter((panel) => !stated.has(panel.setting));
 });
 const unallocated = computed(() => props.plan.unallocated_sources || []);
+// The table-pagination standard (AGENTS.md §6.11): a plan's purchases and ready requirements are paged per plan, and the
+// selection (`selected`, held by the root) is by entry id, so it survives a change of page.
+const {
+	pagedRows: pagedItems, total: itemsTotal, page: itemsPage, pageSize: itemsPageSize, setPage: setItemsPage, setPageSize: setItemsPageSize,
+} = usePagedRows(items, () => `planning-purchases:${props.plan.plan_reference}`);
+const {
+	pagedRows: pagedUnallocated, total: unallocatedTotal, page: unallocatedPage, pageSize: unallocatedPageSize,
+	setPage: setUnallocatedPage, setPageSize: setUnallocatedPageSize,
+} = usePagedRows(unallocated, () => `planning-requirements:${props.plan.plan_reference}`);
 const planChecks = computed(() => props.plan.plan_checks || []);
 const failingChecks = computed(() => planChecks.value.filter((check) => check.kind === "critical"));
 const budgetFit = computed(() => props.plan.budget_fit || null);

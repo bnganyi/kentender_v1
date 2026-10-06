@@ -29,8 +29,8 @@
 		</Disclosure>
 
 		<div class="req-footer">
-			<button type="button" class="kt-btn kt-btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
-			<button v-if="(view.actions || {}).export" type="button" class="kt-btn kt-btn-secondary" :disabled="ctx.pending.value" data-testid="req-export" @click="downloadExport(ctx, view.requisition, view.header.version)">Export</button>
+			<button type="button" class="btn btn-ghost" data-testid="req-back" @click="ctx.go()">Back to Requisitions</button>
+			<button v-if="(view.actions || {}).export" type="button" class="btn btn-secondary" :disabled="ctx.pending.value" data-testid="req-export" @click="downloadExport(ctx, view.requisition, view.header.version)">Export</button>
 		</div>
 	</div>
 </template>

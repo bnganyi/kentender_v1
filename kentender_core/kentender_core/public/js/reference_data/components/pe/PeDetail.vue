@@ -116,7 +116,7 @@ const dialogContextLine = computed(() => (detail.value ? `${detail.value.pe_id} 
 					v-for="label in detail.available_actions"
 					:key="label"
 					type="button"
-					:class="['kt-btn', label === 'Propose amendment' || label === 'Reinstate' || label === 'Suspend' || label === 'Edit draft' ? 'kt-btn-secondary' : 'kt-btn-primary', label === 'Retire' ? 'kt-danger' : '']"
+					:class="['btn', label === 'Propose amendment' || label === 'Reinstate' || label === 'Suspend' || label === 'Edit draft' ? 'btn-secondary' : 'btn-primary', label === 'Retire' ? 'kt-danger' : '']"
 					@click="openAction(label)"
 				>
 					{{ label }}
@@ -125,7 +125,7 @@ const dialogContextLine = computed(() => (detail.value ? `${detail.value.pe_id} 
 		</div>
 
 		<div style="margin:36px 48px 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;align-content:start">
-			<div class="kt-card kt-blueprint">
+			<div class="card blueprint">
 				<h2 class="kt-card-title">{{ __("Identity") }}</h2>
 				<dl style="margin:0">
 					<div class="kt-row"><dt>{{ __("PE code") }}</dt><dd class="kt-tabular">{{ detail.pe_id }}</dd></div>
@@ -134,21 +134,21 @@ const dialogContextLine = computed(() => (detail.value ? `${detail.value.pe_id} 
 					<div class="kt-row"><dt>{{ __("PE type") }}</dt><dd>{{ detail.version?.pe_type_code || "—" }}</dd></div>
 					<div class="kt-row"><dt>{{ __("Version") }}</dt><dd>{{ detail.version?.version_no }} ({{ detail.version?.version_state }})</dd></div>
 				</dl>
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
 			</div>
 
-			<div class="kt-card kt-blueprint">
+			<div class="card blueprint">
 				<h2 class="kt-card-title">{{ __("Operational setting") }}</h2>
 				<dl style="margin:0">
 					<div class="kt-row"><dt>{{ __("Timezone") }}</dt><dd>{{ detail.version?.timezone || "Africa/Nairobi" }}</dd></div>
 					<div class="kt-row"><dt>{{ __("Effective from") }}</dt><dd>{{ detail.effective_from ? frappe.datetime.str_to_user(detail.effective_from) : "—" }}</dd></div>
 				</dl>
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
 			</div>
 
-			<div class="kt-card kt-blueprint" style="grid-column:1 / -1">
+			<div class="card blueprint" style="grid-column:1 / -1">
 				<h2 class="kt-card-title">{{ __("History") }}</h2>
-				<table class="kt-table" style="border:0">
+				<table class="table" style="border:0">
 					<thead>
 						<tr>
 							<th style="width:210px">{{ __("Date and time") }}</th>
@@ -164,7 +164,7 @@ const dialogContextLine = computed(() => (detail.value ? `${detail.value.pe_id} 
 						</tr>
 					</tbody>
 				</table>
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
 			</div>
 		</div>
 

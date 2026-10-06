@@ -30,30 +30,30 @@
 				</div>
 				<div class="tnd-section tnd-section--form" data-testid="tnd-addendum-form">
 					<div class="tnd-grid-3 tnd-form-row">
-						<div class="kt-field" style="margin: 0"><label for="tnd-ad-change-class">Change class</label>
-							<select id="tnd-ad-change-class" class="kt-input" v-model="form.change_class" data-testid="tnd-ad-change-class"><option v-for="c in data.change_classes || []" :key="c" :value="c">{{ c }}</option></select>
+						<div class="field" style="margin: 0"><label for="tnd-ad-change-class">Change class</label>
+							<select id="tnd-ad-change-class" class="input" v-model="form.change_class" data-testid="tnd-ad-change-class"><option v-for="c in data.change_classes || []" :key="c" :value="c">{{ c }}</option></select>
 							<p v-if="errors.change_class" class="tnd-field-error">{{ errors.change_class }}</p>
 						</div>
-						<div class="kt-field" style="margin: 0"><label for="tnd-ad-area">Affected area</label>
-							<select id="tnd-ad-area" class="kt-input" v-model="form.affected_area" data-testid="tnd-ad-area"><option v-for="a in data.affected_areas || []" :key="a" :value="a">{{ a }}</option></select>
+						<div class="field" style="margin: 0"><label for="tnd-ad-area">Affected area</label>
+							<select id="tnd-ad-area" class="input" v-model="form.affected_area" data-testid="tnd-ad-area"><option v-for="a in data.affected_areas || []" :key="a" :value="a">{{ a }}</option></select>
 							<p v-if="errors.affected_area" class="tnd-field-error">{{ errors.affected_area }}</p>
 						</div>
-						<div class="kt-field" style="margin: 0"><label for="tnd-ad-reference">Affected reference</label>
-							<select id="tnd-ad-reference" class="kt-input" v-model="form.affected_reference_key" data-testid="tnd-ad-reference" @change="onReferenceChange"><option value="">Choose the published wording</option><option v-for="r in references" :key="r.key" :value="r.key">{{ r.label }}</option></select>
+						<div class="field" style="margin: 0"><label for="tnd-ad-reference">Affected reference</label>
+							<select id="tnd-ad-reference" class="input" v-model="form.affected_reference_key" data-testid="tnd-ad-reference" @change="onReferenceChange"><option value="">Choose the published wording</option><option v-for="r in references" :key="r.key" :value="r.key">{{ r.label }}</option></select>
 							<p v-if="errors.affected_reference_key" class="tnd-field-error" data-testid="tnd-ad-error-reference">{{ errors.affected_reference_key }}</p>
 						</div>
 					</div>
 					<div class="tnd-fact tnd-form-row"><div class="kt-label">Current published value</div><div class="tnd-fact-value" data-testid="tnd-ad-previous">{{ previousValue || "—" }}</div></div>
-					<div class="kt-field tnd-form-row"><label for="tnd-ad-revised">Revised value</label>
-						<textarea id="tnd-ad-revised" class="kt-input" rows="2" v-model="form.revised_value" data-testid="tnd-ad-revised"></textarea>
+					<div class="field tnd-form-row"><label for="tnd-ad-revised">Revised value</label>
+						<textarea id="tnd-ad-revised" class="input" rows="2" v-model="form.revised_value" data-testid="tnd-ad-revised"></textarea>
 						<p v-if="errors.revised_value" class="tnd-field-error" data-testid="tnd-ad-error-revised">{{ errors.revised_value }}</p>
 					</div>
-					<div class="kt-field tnd-form-row"><label for="tnd-ad-reason">Reason</label>
-						<textarea id="tnd-ad-reason" class="kt-input" rows="2" v-model="form.reason" data-testid="tnd-ad-reason"></textarea>
+					<div class="field tnd-form-row"><label for="tnd-ad-reason">Reason</label>
+						<textarea id="tnd-ad-reason" class="input" rows="2" v-model="form.reason" data-testid="tnd-ad-reason"></textarea>
 						<p v-if="errors.reason" class="tnd-field-error">{{ errors.reason }}</p>
 					</div>
-					<div class="kt-field" style="margin: 0"><label for="tnd-ad-materiality">Why this is not material</label>
-						<textarea id="tnd-ad-materiality" class="kt-input" rows="2" v-model="form.materiality_statement" data-testid="tnd-ad-materiality"></textarea>
+					<div class="field" style="margin: 0"><label for="tnd-ad-materiality">Why this is not material</label>
+						<textarea id="tnd-ad-materiality" class="input" rows="2" v-model="form.materiality_statement" data-testid="tnd-ad-materiality"></textarea>
 						<p v-if="errors.materiality_statement" class="tnd-field-error">{{ errors.materiality_statement }}</p>
 					</div>
 				</div>
@@ -61,7 +61,7 @@
 
 			<div v-else class="tnd-section" data-testid="tnd-addendum-comparison">
 				<h2 class="tnd-h2">Changed fields</h2>
-				<table class="kt-table">
+				<table class="table">
 					<thead><tr><th>Field</th><th>Current published</th><th>Revised</th></tr></thead>
 					<tbody><tr><td>{{ addendum.affected_reference }}</td><td>{{ addendum.previous_value }}</td><td>{{ addendum.revised_value }}</td></tr></tbody>
 				</table>
@@ -77,8 +77,8 @@
 				<p v-if="rule.explanation" class="tnd-small tnd-muted-700 tnd-h2-lede">{{ rule.explanation }}</p>
 				<div class="tnd-grid-2 tnd-grid-start">
 					<div class="tnd-fact"><div class="kt-label">Current deadline</div><div class="tnd-fact-value">{{ rule.current_deadline_label || data.tender.current_deadline_label }}</div></div>
-					<div v-if="editable && (rule.required || form.change_class === 'Submission deadline extension')" class="kt-field" style="margin: 0"><label for="tnd-ad-deadline">Revised submission deadline</label>
-						<input id="tnd-ad-deadline" type="datetime-local" class="kt-input" v-model="form.revised_submission_deadline" data-testid="tnd-ad-deadline" />
+					<div v-if="editable && (rule.required || form.change_class === 'Submission deadline extension')" class="field" style="margin: 0"><label for="tnd-ad-deadline">Revised submission deadline</label>
+						<input id="tnd-ad-deadline" type="datetime-local" class="input" v-model="form.revised_submission_deadline" data-testid="tnd-ad-deadline" />
 						<p v-if="errors.revised_submission_deadline" class="tnd-field-error" data-testid="tnd-ad-error-deadline">{{ errors.revised_submission_deadline }}</p>
 					</div>
 					<div v-else-if="addendum.revised_submission_deadline_label" class="tnd-fact"><div class="kt-label">Revised submission deadline</div><div class="tnd-fact-value">{{ addendum.revised_submission_deadline_label }}</div></div>
@@ -101,7 +101,7 @@
 			<div v-if="!material && (editable || awaitingIssue)" class="tnd-section tnd-section--last" data-testid="tnd-addendum-channels-plain">
 				<h2 class="tnd-h2">Publication</h2>
 				<p class="tnd-small tnd-muted-700 tnd-h2-lede">The addendum is published through the {{ originalChannels.length === 4 ? "four" : originalChannels.length }} original channels.</p>
-				<table class="kt-table" data-testid="tnd-addendum-channels">
+				<table class="table" data-testid="tnd-addendum-channels">
 					<thead><tr><th>Channel</th></tr></thead>
 					<tbody><tr v-for="c in originalChannels" :key="c.channel"><td>{{ c.label }}</td></tr></tbody>
 				</table>
@@ -109,7 +109,7 @@
 
 			<div v-if="confirming || issued" class="tnd-section tnd-section--last">
 				<h2 class="tnd-h2">Publication channels</h2>
-				<table class="kt-table" data-testid="tnd-addendum-channels">
+				<table class="table" data-testid="tnd-addendum-channels">
 					<thead><tr><th>Channel</th><th>Result</th><th>Available at</th><th>Confirmation/action</th></tr></thead>
 					<tbody>
 						<tr v-for="c in channels" :key="c.channel" :data-testid="`tnd-ad-channel-${c.channel}`" :data-status="c.status">
@@ -117,8 +117,8 @@
 							<td><span class="kt-status" :class="c.status === 'Confirmed' ? 'is-live' : 'is-attention'">{{ c.result_label }}</span></td>
 							<td>{{ c.available_at_label || "—" }}</td>
 							<td>
-								<button v-if="c.status === 'Confirmed'" type="button" class="tnd-link-btn" data-testid="tnd-ad-view-confirmation" @click="$emit('view-confirmation', c)">View confirmation</button>
-								<button v-else-if="canConfirm" type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-ad-confirm-channel" @click="$emit('confirm-channel', c)">Confirm publication</button>
+								<button v-if="c.status === 'Confirmed'" type="button" class="btn btn-ghost" data-testid="tnd-ad-view-confirmation" @click="$emit('view-confirmation', c)">View confirmation</button>
+								<button v-else-if="canConfirm" type="button" class="btn btn-ghost" :disabled="pending" data-testid="tnd-ad-confirm-channel" @click="$emit('confirm-channel', c)">Confirm publication</button>
 								<span v-else class="tnd-status-text">Awaiting the Head of Procurement Function</span>
 							</td>
 						</tr>
@@ -133,18 +133,18 @@
 			</div>
 			<div class="tnd-actions">
 				<template v-if="editable">
-					<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-ad-save" @click="$emit('save', payload())">Save draft</button>
-					<button v-if="actions.includes('submit_addendum_for_issue')" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tnd-ad-submit" @click="$emit('submit', payload())">Submit for issue</button>
+					<button type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-ad-save" @click="$emit('save', payload())">Save draft</button>
+					<button v-if="actions.includes('submit_addendum_for_issue')" type="button" class="btn btn-primary" :disabled="pending" data-testid="tnd-ad-submit" @click="$emit('submit', payload())">Submit for issue</button>
 				</template>
 				<!-- the Accounting Officer's open cancellation review (§10.17 DES-12
 				     request row): close it here, or decide on the Cancel Tender screen -->
 				<template v-else-if="actions.includes('close_cancellation_review')">
-					<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-ad-close-review" @click="$emit('fix', { fix_id: 'close_cancellation_review', target: { addendum: addendum.name } })">Close cancellation review</button>
-					<button type="button" class="kt-btn tnd-btn-danger" :disabled="pending" data-testid="tnd-ad-cancel-tender" @click="$emit('cancel-screen')">Cancel Tender</button>
+					<button type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-ad-close-review" @click="$emit('fix', { fix_id: 'close_cancellation_review', target: { addendum: addendum.name } })">Close cancellation review</button>
+					<button type="button" class="btn tnd-btn-danger" :disabled="pending" data-testid="tnd-ad-cancel-tender" @click="$emit('cancel-screen')">Cancel Tender</button>
 				</template>
 				<template v-else-if="actions.includes('issue_addendum')">
-					<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-ad-return" @click="$emit('return')">Return for correction</button>
-					<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tnd-ad-issue" @click="$emit('issue')">Issue addendum</button>
+					<button type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-ad-return" @click="$emit('return')">Return for correction</button>
+					<button type="button" class="btn btn-primary" :disabled="pending" data-testid="tnd-ad-issue" @click="$emit('issue')">Issue addendum</button>
 				</template>
 			</div>
 		</div>

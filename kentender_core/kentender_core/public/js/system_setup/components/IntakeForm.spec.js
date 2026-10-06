@@ -17,14 +17,14 @@ describe("IntakeForm", () => {
 	it("open: the spec's title, a Year fact, the EAT closing time with its helper, a reason, and Open submissions", async () => {
 		const wrapper = mountForm({ mode: "open" });
 		await flushPromises();
-		expect(wrapper.classes()).toContain("kt-card");
+		expect(wrapper.classes()).toContain("card");
 		expect(wrapper.find(".kt-intake-title").text()).toBe("Open departmental needs submissions");
 		expect(wrapper.find(".kt-meta-row").text()).toBe("YearFY 2027/28");
 		expect(wrapper.find('label[for="kt-intake-closes"]').text()).toBe("Close automatically on (EAT)");
 		expect(wrapper.text()).toContain("Leave the closing date blank to keep submissions open until you close them.");
 		expect(wrapper.find('[data-testid="kt-fy-intake-confirm"]').text()).toBe("Open submissions");
 		// Not a modal, and it takes focus on its first field.
-		expect(wrapper.find(".kt-dialog").exists()).toBe(false);
+		expect(wrapper.find(".dialog").exists()).toBe(false);
 		expect(document.activeElement?.getAttribute("data-testid")).toBe("kt-fy-intake-closes");
 		wrapper.unmount();
 	});
