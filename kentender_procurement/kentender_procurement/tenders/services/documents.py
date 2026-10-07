@@ -104,6 +104,10 @@ def get_tender_document(*, digest_value: str, audience: str = "Internal", user: 
 	mode = authz.reader_mode(actor, contributing_org_units=authz.contributing_units_of(root))
 	if audience == "Audit" and mode not in ("site", "technical"):
 		authz.not_found()
+	if mode == "department" and not root.published_at:
+		# TPR §6: a contributing department sees neutral status, never the
+		# unpublished Invitation or complete Tender text (AUD-XC-022).
+		authz.not_found()
 	if audience == "Public" and not root.published_at:
 		# The supplier-visible package exists only once the Tender is published.
 		authz.not_found()

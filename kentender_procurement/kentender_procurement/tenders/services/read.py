@@ -579,6 +579,23 @@ def version_summary(version) -> dict[str, Any]:
 	}
 
 
+# What a department reader never sees of a Version: the digests that address the
+# unpublished documents and who prepared, submitted or approved it (AUD-XC-022).
+_DEPARTMENT_BLANKED_VERSION_KEYS = (
+	"prepared_by", "prepared_by_name", "submitted_by", "submitted_by_name", "approved_by", "approved_by_name", "returned_by", "returned_by_name",
+	"package_digest", "invitation_digest", "issued_tender_digest", "response_schema_digest", "evaluation_contract_digest",
+	"contract_projection_digest", "requisition_snapshot_digest", "bundle_digest", "official_source_digest",
+)
+
+
+def _department_version(summary: dict[str, Any]) -> dict[str, Any]:
+	return {k: ("" if k in _DEPARTMENT_BLANKED_VERSION_KEYS else v) for k, v in summary.items()}
+
+
+def _department_review(summary: dict[str, Any]) -> dict[str, Any]:
+	return {**summary, "findings": [], "must_fix": [], "review_notes": [], "must_fix_count": 0, "review_note_count": 0, "review_result_digest": ""}
+
+
 def documents_for(root, version) -> list[dict[str, Any]]:
 	out = []
 	for row in documents.list_for_tender(root.name):
@@ -671,14 +688,14 @@ def get_tender(*, tender: str, user: str | None = None) -> dict[str, Any]:
 			"template_release": cstr(root.template_release), "std_template_route": template_binding.inspection_route(actor, cstr(root.template_release_id)) if root.template_key else [],
 			"template_notice": template_binding.release_notice(root, actor),
 		},
-		"version": version_summary(version),
+		"version": version_summary(version) if mode != "department" else _department_version(version_summary(version)),
 		"tasks": draft_commands.task_statuses(version),
 		"task_labels": controls.TASK_LABELS,
 		"officer_values": state if internal else {k: v for k, v in state.items() if k in ("tender_title", "issue_date", "clarification_deadline", "submission_deadline")},
 		"catalogue": controls.catalogue_for_client() if roles["officer"] else {},
 		"evidence_requirements": [{**r, "proves": evidence.proves_label(r, snapshot)} for r in evidence.rows_as_dicts(version)],
 		"inherited": inherited_projection(snapshot, internal=internal),
-		"review": review.summary(version),
+		"review": review.summary(version) if mode != "department" else _department_review(review.summary(version)),
 		"returned": _returned_panel(version) if root.overall_status == "Draft" else None,
 		"evaluation_stages": list(serializer.EVALUATION_STAGES),
 		"documents": documents_for(root, version) if internal else [],
