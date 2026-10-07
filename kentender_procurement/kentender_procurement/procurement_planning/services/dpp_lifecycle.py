@@ -26,6 +26,7 @@ import frappe
 from frappe.utils import cstr, flt, getdate, now_datetime
 
 from kentender_core.services import site_configuration
+from kentender_core.utils.series import allocation_lock
 from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.services import (
 	budget_gateway,
@@ -60,15 +61,15 @@ def _root_by_scope(organisation_unit: str, fiscal_year: str, *, creating: bool =
 	"""The department's plan root for the year, or `None`.
 
 	`creating=True` is for a command that will create the root when there is
-	none: it first takes an advisory lock for the department and year, then
+	none: it first takes the Departmental Plan allocation lock, then
 	reads the latest committed row. Two requests starting the same plan then
 	run one after the other and the second finds the first's root instead of
 	making another (MariaDB REPEATABLE READ would hide the committed row from a
 	plain read taken before the wait: AUD-XC-130)."""
 	if creating:
-		lock = f"pln:dpp:{organisation_unit}:{fiscal_year}"[:64]
-		if not frappe.db.sql("select get_lock(%s, 10)", lock)[0][0]:
-			fail("PLN_STALE_WRITE", "Departmental plan creation is busy. Try again.")
+		# the table's allocation lock, not one per unit: the read below locks an absent key and
+		# the new root's reference is allocated under the same lock (RG-21)
+		allocation_lock("Departmental Plan", busy=lambda _t: fail("PLN_STALE_WRITE", "Departmental plan creation is busy. Try again."))
 	name = frappe.db.get_value(
 		"Departmental Plan", {"fiscal_year": fiscal_year, "organisation_unit": organisation_unit}, "name", for_update=creating
 	)

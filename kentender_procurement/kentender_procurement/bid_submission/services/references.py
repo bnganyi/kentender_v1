@@ -15,6 +15,8 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cstr
 
+from kentender_core.utils.series import allocation_lock
+
 
 def _suffix(tender_reference: str) -> str:
 	reference = cstr(tender_reference).strip()
@@ -24,6 +26,7 @@ def _suffix(tender_reference: str) -> str:
 def _committed_count(doctype: str, tender_name: str, extra: str = "") -> int:
 	"""How many rows of `doctype` the Tender has as of the latest committed state: a locking read
 	(`for update`) sees what another bidder committed while this transaction waited for the Tender lock."""
+	allocation_lock(doctype)  # RG-21: after the Tender lock, before the locking read of a range that may be empty
 	rows = frappe.db.sql(f"select count(*) from `tab{doctype}` where tender=%s{extra} for update", tender_name)
 	return int(rows[0][0])
 

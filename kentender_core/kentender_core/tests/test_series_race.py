@@ -98,3 +98,11 @@ class TestSeriesRace(IntegrationTestCase):
 		raise_series_to(PREFIX, 12)
 		raise_series_to(PREFIX, 3)
 		self.assertEqual(make_autoname(f"{PREFIX}.####"), f"{PREFIX}0013")
+
+	def test_a_prefix_with_nothing_in_use_still_gets_its_counter_row(self):
+		"""RG-21: without the row, make_autoname reads an absent key `for update` (a gap lock) and two first
+		allocations of different prefixes deadlock on their inserts."""
+		frappe.db.delete("Series", {"name": PREFIX})
+		raise_series_to(PREFIX, 0)
+		self.assertEqual(frappe.db.sql("select `current` from `tabSeries` where `name`=%s", (PREFIX,)), ((0,),))
+		self.assertEqual(make_autoname(f"{PREFIX}.####"), f"{PREFIX}0001")

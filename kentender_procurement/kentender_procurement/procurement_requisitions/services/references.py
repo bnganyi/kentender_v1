@@ -24,7 +24,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cstr, getdate
 
-from kentender_core.utils.series import next_free_reference
+from kentender_core.utils.series import allocation_lock, next_free_reference
 from kentender_procurement.procurement_requisitions.services.errors import fail
 
 
@@ -52,10 +52,12 @@ def plan_item_number(plan_item_id_value: str) -> str:
 	return value.rsplit("-", 1)[1]
 
 
+def _busy(_table: str):
+	fail("REQ_STALE_VERSION", "Reference generation is busy. Try again.")
+
+
 def _next_requisition_sequence(prefix: str) -> str:
-	lock = f"req:ref:{prefix}"[:64]
-	if not frappe.db.sql("select get_lock(%s, 10)", lock)[0][0]:
-		fail("REQ_STALE_VERSION", "Reference generation is busy. Try again.")
+	allocation_lock("Procurement Requisition", busy=_busy)
 	rows = frappe.get_all(
 		"Procurement Requisition", filters={"requisition_reference": ["like", f"{prefix}%"]},
 		pluck="requisition_reference", limit_page_length=0,
@@ -63,7 +65,7 @@ def _next_requisition_sequence(prefix: str) -> str:
 	highest = max([int(ref[len(prefix):]) for ref in rows if cstr(ref)[len(prefix):].isdigit()] or [0])
 	# `rows` is this transaction's snapshot: a number another request committed
 	# while this one waited for the lock is not in it (AUD-XC-130).
-	return next_free_reference("Procurement Requisition", "requisition_reference", prefix, highest, 3)
+	return next_free_reference("Procurement Requisition", "requisition_reference", prefix, highest, 3, busy=_busy)
 
 
 def requisition_reference(*, fiscal_year: str, plan_item_id_value: str) -> str:

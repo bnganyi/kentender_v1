@@ -196,5 +196,5 @@ class TestNeedsCommandEnvelope(base.DepartmentalNeedsCommandCase):
 		self.assertTrue(conn_b.finished.wait(WAIT))
 		self.assertIsNone(conn_b.error, repr(conn_b.error))
 		taken = frappe.db.get_value("Departmental Need", conn_a.value["need"], "need_reference")
-		self.assertNotEqual(conn_b.value[0], taken)
-		self.assertGreater(conn_b.value[0], taken)
+		self.assertNotEqual(conn_b.value, taken)
+		self.assertGreater(conn_b.value, taken)

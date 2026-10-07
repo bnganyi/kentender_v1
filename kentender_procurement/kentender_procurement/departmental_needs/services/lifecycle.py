@@ -23,7 +23,7 @@ from uuid import uuid4
 import frappe
 from frappe.utils import cstr, flt, formatdate, getdate, now_datetime
 
-from kentender_core.utils.series import next_free_reference
+from kentender_core.utils.series import allocation_lock, next_free_reference
 from kentender_procurement.departmental_needs.constants import (
 	ACTION_ACCEPT,
 	ACTION_ACCEPT_SUCCESSOR,
@@ -384,7 +384,11 @@ def _require_open_successor(need):
 	return frappe.get_doc("Departmental Need Revision", successor)
 
 
-def _next_reference(financial_year: str) -> tuple[str, str]:
+def _creation_busy(_table: str):
+	fail("NDS_STATE_CONFLICT", "Departmental Need creation is busy. Try again.")
+
+
+def _next_reference(financial_year: str) -> str:
 	"""`NDS-{site PE code}-{FY start year}-{4 digits}` (§4.2).
 
 	The site Procuring Entity is a Frappe Single (AUTH-ADR-001 v1.6 §4.1) —
@@ -397,9 +401,7 @@ def _next_reference(financial_year: str) -> tuple[str, str]:
 	start_date = frappe.db.get_value(FY_DOCTYPE, financial_year, "year_start_date")
 	year = cstr(getdate(start_date).year) if start_date else ""
 	prefix = f"NDS-{entity_code}-{year}-"
-	lock_name = f"nds:create:{entity_code}:{year}"[:64]
-	if not frappe.db.sql("select get_lock(%s, 10)", lock_name)[0][0]:
-		fail("NDS_STATE_CONFLICT", "Departmental Need creation is busy. Try again.")
+	allocation_lock("Departmental Need", busy=_creation_busy)
 	refs = frappe.get_all(
 		"Departmental Need",
 		filters={"need_reference": ["like", f"{prefix}%"]},
@@ -408,7 +410,7 @@ def _next_reference(financial_year: str) -> tuple[str, str]:
 	highest = max([int(ref.rsplit("-", 1)[-1]) for ref in refs if ref.rsplit("-", 1)[-1].isdigit()] or [0])
 	# The list above is this transaction's snapshot: a Need another request
 	# committed while this one waited for the lock is not in it (AUD-XC-130).
-	return next_free_reference("Departmental Need", "need_reference", prefix, highest, 4), lock_name
+	return next_free_reference("Departmental Need", "need_reference", prefix, highest, 4, busy=_creation_busy)
 
 
 def _result(need, *, idempotent: bool = False, action: str = "", task: str = "") -> dict[str, Any]:
@@ -614,49 +616,47 @@ def create_need(
 	# NDS-BR-002 / NDS-AC-003 — initial creation requires the flag Open.
 	require_open_intake(fy["id"])
 	_require_required_by_in_year(fy, required_by_date)
-	reference, lock_name = _next_reference(fy["id"])
-	try:
-		# A duplicate of a create that committed while this request waited for
-		# the creation lock is answered with the original Need (AUD-XC-130).
-		if replay := command.replay(locking=True):
-			return replay
-		need = frappe.get_doc(
-			{
-				"doctype": "Departmental Need",
-				"need_reference": reference,
-				"organisation_unit": ou,
-				"financial_year": fy["id"],
-				"current_state": STATE_DRAFT,
-				"record_version": 1,
-			}
-		).insert(ignore_permissions=True)
-		version = _create_version(
-			need,
-			values=_content_values(
-				title=title,
-				description=description,
-				expected_operational_result=expected_operational_result,
-				indicative_quantity=indicative_quantity,
-				unit=unit,
-				required_by_date=required_by_date,
-			),
-		)
-		need.current_revision = version.name
-		need.save(ignore_permissions=True)
-		_record_decision(
-			need,
-			fingerprint=command.fingerprint,
-			action=ACTION_CREATE,
-			prior=STATE_DRAFT,
-			result=STATE_DRAFT,
-			principal=principal,
-			idempotency_key=idempotency_key,
-			assignment=assignment,
-			version=version.name,
-		)
-		return _result(need, action=ACTION_CREATE)
-	finally:
-		frappe.db.sql("select release_lock(%s)", lock_name)
+	reference = _next_reference(fy["id"])
+	# the Departmental Need allocation lock is held to commit, so the creation, the reference and the insert are one unit (RG-21)
+	# A duplicate of a create that committed while this request waited for
+	# the creation lock is answered with the original Need (AUD-XC-130).
+	if replay := command.replay(locking=True):
+		return replay
+	need = frappe.get_doc(
+		{
+			"doctype": "Departmental Need",
+			"need_reference": reference,
+			"organisation_unit": ou,
+			"financial_year": fy["id"],
+			"current_state": STATE_DRAFT,
+			"record_version": 1,
+		}
+	).insert(ignore_permissions=True)
+	version = _create_version(
+		need,
+		values=_content_values(
+			title=title,
+			description=description,
+			expected_operational_result=expected_operational_result,
+			indicative_quantity=indicative_quantity,
+			unit=unit,
+			required_by_date=required_by_date,
+		),
+	)
+	need.current_revision = version.name
+	need.save(ignore_permissions=True)
+	_record_decision(
+		need,
+		fingerprint=command.fingerprint,
+		action=ACTION_CREATE,
+		prior=STATE_DRAFT,
+		result=STATE_DRAFT,
+		principal=principal,
+		idempotency_key=idempotency_key,
+		assignment=assignment,
+		version=version.name,
+	)
+	return _result(need, action=ACTION_CREATE)
 
 
 @needs_command
