@@ -126,7 +126,11 @@ def revalidate_reservations(
 
 	results = []
 	for name in reservations or []:
-		doc = _resolve_reservation(name)
+		resolved = _resolve_reservation(name)
+		# RG-25 — the shared lock order, then the reservation and the line position as last committed: a plain
+		# read here would act on the snapshot and overwrite a status another command had just committed.
+		lock_budgets_of_lines([resolved.budget_line])
+		doc = locked_doc("Funding Reservation", resolved.name)
 		if doc.status in ("Converted", "Released"):
 			results.append(_reservation_result(doc))
 			continue
@@ -134,7 +138,7 @@ def revalidate_reservations(
 		# AUD-XC-116 — exact decimals: a line whose approved amount equals its
 		# reserved plus committed amount has an available balance of exactly
 		# zero and is not in breach.
-		pos = _line_position_exact(doc.budget_line, _current_line_version(doc.budget_line))
+		pos = _line_position_exact(doc.budget_line, _current_line_version(doc.budget_line, for_update=True), for_update=True)
 		scale = scale_for(doc.currency)
 		# The reservation's own remaining_amount is already inside pos["reserved"];
 		# a floor breach shows up as negative available once approved_amount fell.
@@ -203,16 +207,19 @@ def release_reservation(
 	)
 
 
-def _require_release_scope(caller, doc, amount) -> None:
+def _require_release_scope(caller, doc, amount, *, locked: bool = False) -> None:
+	"""Who may release what. Decided twice (RG-25, AUD-XC-002): once on the resolved reservation, to
+	refuse early, and again in `_release` on the locked reservation with `locked=True`, so a conversion
+	another command committed in between is seen (a plain read would answer from the older snapshot)."""
 	if not caller.reference:
 		refuse(_("The calling service must name what it acts for."))
 	if caller.principal == PRINCIPAL_REQUISITIONS:
 		created_by_requisition = doc.calling_module == PRINCIPAL_LABEL[PRINCIPAL_REQUISITIONS] and (doc.caller_reference or "") == caller.reference
-		converted = doc.status in ("Converted", "Partially Converted") or frappe.db.exists("Procurement Commitment", {"reservation": doc.name})
+		converted = doc.status in ("Converted", "Partially Converted") or frappe.db.get_value("Procurement Commitment", {"reservation": doc.name}, "name", for_update=locked)
 		if not created_by_requisition or converted or amount is not None:
 			refuse(_("Requisitions may release only the whole, unconverted reservation its own requisition created."))
 	elif caller.principal == PRINCIPAL_CONTRACT:
-		linked = frappe.db.exists("Procurement Commitment", {"reservation": doc.name, "contract": caller.reference})
+		linked = frappe.db.get_value("Procurement Commitment", {"reservation": doc.name, "contract": caller.reference}, "name", for_update=locked)
 		if not linked or amount is None:
 			refuse(_("Contract Management may release only an explicit unused amount of a reservation it converted for its own contract."))
 
@@ -223,6 +230,7 @@ def _release(reservation: str, amount, downstream_event_id: str, downstream_even
 	# locked, latest-committed reservation, never the snapshot read above it.
 	lock_budgets_of_lines([frappe.db.get_value("Funding Reservation", reservation, "budget_line")])
 	doc = locked_doc("Funding Reservation", reservation)
+	_require_release_scope(caller, doc, amount, locked=True)
 	if doc.status in ("Converted", "Released"):
 		return {"ok": True, "reused": True, "reservation": _reservation_result(doc)}
 

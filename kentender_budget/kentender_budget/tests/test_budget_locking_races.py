@@ -200,6 +200,33 @@ class TestBudgetLockingRaces(_PrincipalBase):
 		frappe.db.commit()
 		self.assertEqual(frappe.db.get_value("Funding Reservation", reservation, "remaining_amount"), 3_000_000)
 
+	def test_a_requisition_release_waiting_for_a_conversion_is_refused_on_the_converted_reservation(self):
+		"""RG-25 / AUD-XC-002 (D3) — Requisitions may never release a converted reservation. Its scope is
+		decided again after the lock, from the latest committed state: a conversion that commits while
+		the release waits is seen, and the release is refused instead of freeing the unconverted rest."""
+		_budget, _version, dhi, _hwd = self._world()
+		reference = "REQ-RACE-S"
+		reservation = self._reserve_now(dhi, 10_000_000, reference)
+		contract = self._key("CTR-S")
+		convert = lambda: commitment_svc.convert_reservation(  # noqa: E731
+			reservation, contract, 6_000_000, self._key("CONV"),
+			contract_event_id=f"{contract}:signed", contract_event_type="ContractSigned", caller=service_caller(PRINCIPAL_CONTRACT, reference=contract),
+		)
+		release = lambda: commitment_svc.release_reservation(  # noqa: E731
+			reservation, None, f"{reference}:revoked", "RequisitionRevoked", self._key("REL"), caller=service_caller(PRINCIPAL_REQUISITIONS, reference=reference)
+		)
+		conn_a = _Conn(self.hopf, convert, hold=True)
+		self.assertTrue(conn_a.ran.wait(_WAIT))
+		self.assertIsNone(conn_a.error, conn_a.error)
+		conn_b = _Conn(self.hopf, release)
+		self.assertFalse(conn_b.finished.wait(_BLOCKED_FOR), "the release must wait for the conversion's lock")
+		conn_a.commit()
+		self.assertTrue(conn_b.finished.wait(_WAIT))
+		self.assertIsNotNone(conn_b.error, "the release of a converted reservation must be refused")
+		frappe.db.commit()
+		self.assertEqual(frappe.db.get_value("Funding Reservation", reservation, "remaining_amount"), 4_000_000)
+		self.assertEqual(frappe.db.get_value("Funding Reservation", reservation, "status"), "Partially Converted")
+
 	# ----- AUD-XC-101 -----------------------------------------------------
 
 	def test_two_80m_reservations_on_a_100m_line_cannot_both_succeed(self):
