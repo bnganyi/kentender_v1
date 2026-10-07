@@ -44,6 +44,7 @@ from kentender_core.services import organisation_structure as structure
 from kentender_core.services import responsibility_administration as administration
 from kentender_core.services import site_configuration
 from kentender_core.utils.raw_delete import delete_rows
+from kentender_core.services.command_write_guard import fixture_insert
 
 NS_PW = "KENTENDER_REQ_PLAYWRIGHT"
 FY_START = 2099
@@ -181,31 +182,31 @@ def _budget_world() -> None:
 	global BUDGET_LINE
 	budget = frappe.db.get_value("Procurement Budget", {"generated_reference": BUDGET_REF}, "name")
 	if not budget:
-		budget = frappe.get_doc(
+		budget = fixture_insert(frappe.get_doc(
 			{"doctype": "Procurement Budget", "generated_reference": BUDGET_REF, "fiscal_year": FY, "currency": "KES"}
-		).insert(ignore_permissions=True).name
+		)).name
 	if not frappe.db.exists("Procurement Budget Line", {"generated_reference": LINE_REF}):
-		frappe.get_doc({"doctype": "Procurement Budget Line", "generated_reference": LINE_REF, "budget": budget}).insert(ignore_permissions=True)
+		fixture_insert(frappe.get_doc({"doctype": "Procurement Budget Line", "generated_reference": LINE_REF, "budget": budget}))
 	BUDGET_LINE = frappe.db.get_value("Procurement Budget Line", {"generated_reference": LINE_REF}, "name")
 	bv = frappe.db.get_value("Procurement Budget Version", {"budget": budget, "status": "Active"}, "name")
 	if not bv:
-		bv = frappe.get_doc(
+		bv = fixture_insert(frappe.get_doc(
 			{
 				"doctype": "Procurement Budget Version", "generated_reference": "BUDV-PWREQ-0001", "budget": budget,
 				"version_number": 1, "status": "Active", "approval_reference": "PWREQ-APPROVAL-1",
 				"approval_date": "2026-06-30", "authorised_total": 100000000, "currency": "KES",
 				"approval_document": "/files/pwreq-approval.pdf",
 			}
-		).insert(ignore_permissions=True).name
+		)).name
 	fs = frappe.get_all("Funding Source", limit=1, pluck="name")
 	if not frappe.db.exists("Procurement Budget Line Version", {"budget_version": bv, "budget_line": BUDGET_LINE}):
-		frappe.get_doc(
+		fixture_insert(frappe.get_doc(
 			{
 				"doctype": "Procurement Budget Line Version", "generated_reference": "BLV-PWREQ-0001", "budget_version": bv,
 				"budget_line": BUDGET_LINE, "title": "Playwright ICT programme", "funding_source": fs[0] if fs else None,
 				"approved_amount": 60000000, "currency": "KES",
 			}
-		).insert(ignore_permissions=True)
+		))
 
 
 def _strategy_world() -> None:

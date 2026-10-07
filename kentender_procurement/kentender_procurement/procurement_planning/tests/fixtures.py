@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import frappe
 from frappe.utils import cstr
+from kentender_core.services.command_write_guard import fixture_insert
 
 NS = "KENTENDER_TEST"
 
@@ -364,33 +365,33 @@ def _link_targets() -> None:
 	published contracts."""
 	global BUDGET_LINE, BUDGET_LINE_2
 	if not frappe.db.exists("Procurement Budget", {"generated_reference": "BUD-PLNT-0001"}):
-		frappe.get_doc({"doctype": "Procurement Budget", "generated_reference": "BUD-PLNT-0001", "fiscal_year": BUDGET_FISCAL_YEAR, "currency": "KES"}).insert(ignore_permissions=True)
+		fixture_insert(frappe.get_doc({"doctype": "Procurement Budget", "generated_reference": "BUD-PLNT-0001", "fiscal_year": BUDGET_FISCAL_YEAR, "currency": "KES"}))
 	budget = frappe.db.get_value("Procurement Budget", {"generated_reference": "BUD-PLNT-0001"}, "name")
 	for ref in (BUDGET_LINE_REF, BUDGET_LINE_REF_2):
 		if not frappe.db.exists("Procurement Budget Line", {"generated_reference": ref}):
-			frappe.get_doc({"doctype": "Procurement Budget Line", "generated_reference": ref, "budget": budget}).insert(ignore_permissions=True)
+			fixture_insert(frappe.get_doc({"doctype": "Procurement Budget Line", "generated_reference": ref, "budget": budget}))
 	BUDGET_LINE = frappe.db.get_value("Procurement Budget Line", {"generated_reference": BUDGET_LINE_REF}, "name")
 	BUDGET_LINE_2 = frappe.db.get_value("Procurement Budget Line", {"generated_reference": BUDGET_LINE_REF_2}, "name")
 	bv = frappe.db.get_value("Procurement Budget Version", {"budget": budget, "status": "Active"}, "name")
 	if not bv:
-		bv = frappe.get_doc(
+		bv = fixture_insert(frappe.get_doc(
 			{
 				"doctype": "Procurement Budget Version", "generated_reference": "BUDV-PLNT-0001", "budget": budget,
 				"version_number": 1, "status": "Active", "approval_reference": "PLNT-APPROVAL-1",
 				"approval_date": "2026-06-30", "authorised_total": 200000000, "currency": "KES",
 				"approval_document": "/files/plnt-approval.pdf",
 			}
-		).insert(ignore_permissions=True).name
+		)).name
 	fs = frappe.get_all("Funding Source", limit=1, pluck="name")
 	for line, ref, title in ((BUDGET_LINE, "BLV-PLNT-0001", "Digital health programme"), (BUDGET_LINE_2, "BLV-PLNT-0002", "Health workforce programme")):
 		if not frappe.db.exists("Procurement Budget Line Version", {"budget_version": bv, "budget_line": line}):
-			frappe.get_doc(
+			fixture_insert(frappe.get_doc(
 				{
 					"doctype": "Procurement Budget Line Version", "generated_reference": ref, "budget_version": bv,
 					"budget_line": line, "title": title, "funding_source": fs[0] if fs else None,
 					"approved_amount": 100000000, "currency": "KES",
 				}
-			).insert(ignore_permissions=True)
+			))
 	if not frappe.db.exists("Departmental Need", NEED):
 		frappe.get_doc(
 			{
