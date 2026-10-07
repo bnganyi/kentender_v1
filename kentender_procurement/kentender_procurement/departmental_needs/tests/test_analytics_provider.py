@@ -27,6 +27,8 @@ from kentender_core.services import analytics_contract as ac
 from kentender_core.services import responsibility_administration as administration
 from kentender_procurement.departmental_needs.constants import REASON_REQUIRED_ACTIONS
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import AUTHOR, DEPARTMENTAL_AUTHOR, upsert_departmental_needs, _granted_units
+from kentender_core.services.command_write_guard import maintenance_write
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
 from kentender_procurement.departmental_needs.services import analytics_provider as provider
 
 NS = "KT_TEST_NDSANL"
@@ -72,7 +74,8 @@ class TestNeedsAnalytics(IntegrationTestCase):
 		cls.before = _counts()
 		cls.addClassCleanup(cls.remove_world)
 		cls.build_users()
-		cls.needs = cls.build_needs()
+		with maintenance_write(NEEDS_WRITE_FAMILY, reason="Needs analytics test: a world of Needs in states the commands reach slowly"):
+			cls.needs = cls.build_needs()
 		frappe.db.commit()
 		cls.at = now_datetime()
 

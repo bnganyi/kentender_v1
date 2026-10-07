@@ -146,3 +146,16 @@ def release_transitional_reviewer_grant() -> int:
 		return len(names)
 	finally:
 		frappe.set_user(previous)
+
+
+def open_needs_maintenance(testcase, reason: str) -> None:
+	"""Test-only: let this test write Need records directly (domain-model and
+	projection fixtures the commands cannot produce). The window is the guard's
+	own maintenance path, closed when the test ends; it is refused over HTTP
+	and on a production site (`command_write_guard.maintenance_write`)."""
+	from kentender_core.services.command_write_guard import maintenance_write
+	from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
+
+	window = maintenance_write(NEEDS_WRITE_FAMILY, reason=reason)
+	window.__enter__()
+	testcase.addCleanup(window.__exit__, None, None, None)

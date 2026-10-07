@@ -651,17 +651,21 @@ class TestRoleSurface(DepartmentalNeedsPermissionCase):
 		}
 		self.assertEqual(writable, set())
 
-	def test_only_the_author_and_head_of_department_write_needs(self):
-		# NDS-AC-041 — lifecycle actions belong to those two roles only.
-		writable = {
-			row.role
-			for row in frappe.get_meta("Departmental Need").permissions
-			if row.write or row.create
-		}
-		self.assertEqual(
-			writable,
-			{"Administrator", "System Manager", ROLE_DEPARTMENTAL_AUTHOR, ROLE_HEAD_OF_USER_DEPARTMENT},
-		)
+	def test_no_role_writes_a_need_record_directly(self):
+		# NDS-AC-041 / AUD-XC-008 — lifecycle actions belong to the Author and
+		# Head of User Department through the commands; DocPerm grants no role a
+		# direct write, create or delete on any command-only Need record.
+		for doctype in (
+			"Departmental Need",
+			"Departmental Need Revision",
+			"Departmental Need Review Task",
+			"Need Withdrawal Request",
+			"Need Planning Usage Projection",
+			"Need Planning Intake Projection",
+			"Need Planning Disposition Projection",
+		):
+			writable = {row.role for row in frappe.get_meta(doctype).permissions if row.write or row.create or row.delete}
+			self.assertEqual(writable, set(), f"{doctype} grants a direct write to {writable}")
 
 	def test_nothing_may_be_deleted_through_a_role(self):
 		for doctype in NDS_DOCTYPES:

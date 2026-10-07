@@ -22,6 +22,8 @@ from uuid import uuid4
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.command_write_guard import maintenance_write
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
 from kentender_procurement.departmental_needs.services import events as nds_events
 from kentender_procurement.procurement_planning.services import dpp_lifecycle
 from kentender_procurement.procurement_planning.tests import fixtures as fx
@@ -65,25 +67,26 @@ class DppAutostartCase(IntegrationTestCase):
 
 	def second_need(self) -> None:
 		"""A second accepted Need in the same department and year."""
-		if not frappe.db.exists("Departmental Need", NEED_TWO):
-			frappe.get_doc(
-				{
-					"doctype": "Departmental Need", "need_reference": NEED_TWO, "organisation_unit": fx.OU_ALPHA,
-					"financial_year": fx.FY_OPEN, "current_state": "Accepted for planning", "record_version": 1,
-					"fixture_namespace": fx.NS,
-				}
-			).insert(ignore_permissions=True)
-		if not frappe.db.exists("Departmental Need Revision", NEED_TWO_V1):
-			frappe.get_doc(
-				{
-					"doctype": "Departmental Need Revision", "need_revision_id": NEED_TWO_V1, "departmental_need": NEED_TWO,
-					"revision_number": 1, "revision_status": "Accepted", "title": "Second test requirement",
-					"description": "Procure and implement the second test requirement.",
-					"expected_operational_result": "The department can operate the second tested capability.",
-					"indicative_quantity": 2, "unit": fx.UNIT, "required_by_date": "2102-05-31",
-					"fixture_namespace": fx.NS,
-				}
-			).insert(ignore_permissions=True)
+		with maintenance_write(NEEDS_WRITE_FAMILY, reason="Planning test: a second accepted Need"):
+			if not frappe.db.exists("Departmental Need", NEED_TWO):
+				frappe.get_doc(
+					{
+						"doctype": "Departmental Need", "need_reference": NEED_TWO, "organisation_unit": fx.OU_ALPHA,
+						"financial_year": fx.FY_OPEN, "current_state": "Accepted for planning", "record_version": 1,
+						"fixture_namespace": fx.NS,
+					}
+				).insert(ignore_permissions=True)
+			if not frappe.db.exists("Departmental Need Revision", NEED_TWO_V1):
+				frappe.get_doc(
+					{
+						"doctype": "Departmental Need Revision", "need_revision_id": NEED_TWO_V1, "departmental_need": NEED_TWO,
+						"revision_number": 1, "revision_status": "Accepted", "title": "Second test requirement",
+						"description": "Procure and implement the second test requirement.",
+						"expected_operational_result": "The department can operate the second tested capability.",
+						"indicative_quantity": 2, "unit": fx.UNIT, "required_by_date": "2102-05-31",
+						"fixture_namespace": fx.NS,
+					}
+				).insert(ignore_permissions=True)
 		frappe.db.set_value(
 			"Departmental Need", NEED_TWO,
 			{"current_revision": NEED_TWO_V1, "current_accepted_revision": NEED_TWO_V1}, update_modified=False,

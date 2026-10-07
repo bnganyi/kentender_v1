@@ -19,11 +19,20 @@ reference is carried by Planning and never resolved here.
 import frappe
 from frappe.model.document import Document
 
+from kentender_core.services.command_write_guard import CommandWriteGuardMixin
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
+
 from kentender_procurement.departmental_needs.errors import fail
 
 
-class NeedPlanningIntakeProjection(Document):
+class NeedPlanningIntakeProjection(CommandWriteGuardMixin, Document):
+	"""Writable only by the Departmental Needs commands (AUD-XC-008/014): the
+	command-only write guard refuses every user save, insert and delete."""
+
+	command_write_family = NEEDS_WRITE_FAMILY
+
 	def validate(self):
+		super().validate()
 		for field in ("need_revision", "carried_revision"):
 			revision = self.get(field)
 			if not revision:

@@ -23,6 +23,9 @@ from __future__ import annotations
 
 import frappe
 from frappe.utils import cstr
+
+from kentender_core.services.command_write_guard import maintenance_write
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
 from kentender_core.services.command_write_guard import fixture_insert
 
 NS = "KENTENDER_TEST"
@@ -393,24 +396,26 @@ def _link_targets() -> None:
 				}
 			))
 	if not frappe.db.exists("Departmental Need", NEED):
-		frappe.get_doc(
-			{
-				"doctype": "Departmental Need", "need_reference": NEED, "organisation_unit": OU_ALPHA,
-				"financial_year": FY_OPEN, "current_state": "Accepted for planning", "record_version": 1, "fixture_namespace": NS,
-			}
-		).insert(ignore_permissions=True)
+		with maintenance_write(NEEDS_WRITE_FAMILY, reason="Planning test world: an accepted Need to plan from"):
+			frappe.get_doc(
+				{
+					"doctype": "Departmental Need", "need_reference": NEED, "organisation_unit": OU_ALPHA,
+					"financial_year": FY_OPEN, "current_state": "Accepted for planning", "record_version": 1, "fixture_namespace": NS,
+				}
+			).insert(ignore_permissions=True)
 	else:
 		frappe.db.set_value("Departmental Need", NEED, {"organisation_unit": OU_ALPHA, "financial_year": FY_OPEN}, update_modified=False)
 	if not frappe.db.exists("Departmental Need Revision", NEED_V1):
-		frappe.get_doc(
-			{
-				"doctype": "Departmental Need Revision", "need_revision_id": NEED_V1, "departmental_need": NEED,
-				"revision_number": 1, "revision_status": "Accepted", "title": "Test requirement",
-				"description": "Procure and implement the test requirement.",
-				"expected_operational_result": "The department can operate the tested capability.",
-				"indicative_quantity": 1, "unit": UNIT, "required_by_date": "2102-05-31", "fixture_namespace": NS,
-			}
-		).insert(ignore_permissions=True)
+		with maintenance_write(NEEDS_WRITE_FAMILY, reason="Planning test world: the accepted revision of that Need"):
+			frappe.get_doc(
+				{
+					"doctype": "Departmental Need Revision", "need_revision_id": NEED_V1, "departmental_need": NEED,
+					"revision_number": 1, "revision_status": "Accepted", "title": "Test requirement",
+					"description": "Procure and implement the test requirement.",
+					"expected_operational_result": "The department can operate the tested capability.",
+					"indicative_quantity": 1, "unit": UNIT, "required_by_date": "2102-05-31", "fixture_namespace": NS,
+				}
+			).insert(ignore_permissions=True)
 	frappe.db.set_value("Departmental Need", NEED, {"current_revision": NEED_V1, "current_accepted_revision": NEED_V1}, update_modified=False)
 
 

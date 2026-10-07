@@ -12,22 +12,30 @@ from __future__ import annotations
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import flt
+
+from kentender_core.services.command_write_guard import CommandWriteGuardMixin
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
 
 from kentender_procurement.departmental_needs.constants import (
 	DESCRIPTION_MAX,
 	DESCRIPTION_MIN,
 	MUTABLE_REVISION_STATUSES,
-	QUANTITY_DECIMALS,
 	TITLE_MAX,
 	TITLE_MIN,
 	REVISION_CONTENT_FIELDS,
 )
 from kentender_procurement.departmental_needs.errors import fail
+from kentender_procurement.departmental_needs.services.quantity import require_valid_quantity
 
 
-class DepartmentalNeedRevision(Document):
+class DepartmentalNeedRevision(CommandWriteGuardMixin, Document):
+	"""Writable only by the Departmental Needs commands (AUD-XC-008/014): the
+	command-only write guard refuses every user save, insert and delete."""
+
+	command_write_family = NEEDS_WRITE_FAMILY
+
 	def validate(self):
+		super().validate()
 		self._guard_immutable_content()
 		self._validate_title()
 		self._validate_free_text("description", "Description")
@@ -63,16 +71,8 @@ class DepartmentalNeedRevision(Document):
 			fail("NDS_FIELD_REQUIRED", f"{label} must be {DESCRIPTION_MIN}-{DESCRIPTION_MAX} characters.")
 
 	def _validate_quantity(self):
-		if self.indicative_quantity in (None, ""):
-			return
-		quantity = flt(self.indicative_quantity)
-		if quantity <= 0:
-			fail("NDS_FIELD_REQUIRED", "Indicative quantity must be greater than zero.")
-		if flt(quantity, QUANTITY_DECIMALS) != quantity:
-			fail(
-				"NDS_FIELD_REQUIRED",
-				f"Indicative quantity allows at most {QUANTITY_DECIMALS} decimals.",
-			)
+		"""Exact quantity under the unit's precision and whole-number rule (§4.9)."""
+		require_valid_quantity(self.indicative_quantity, self.unit)
 
 	def on_trash(self):
 		fail("NDS_STATE_CONFLICT", "Departmental Need Revisions are retained permanently.")

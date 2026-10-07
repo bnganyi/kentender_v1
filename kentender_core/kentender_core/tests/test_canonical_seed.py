@@ -17,7 +17,7 @@ from frappe.tests import IntegrationTestCase
 
 from kentender_core.seeds import calendar, canonical
 from kentender_core.services.command_write_guard import fixture_insert
-from kentender_core.services.command_write_guard import purge_doc
+from kentender_core.services.command_write_guard import maintenance_write, purge_doc
 
 
 def _full(**kwargs):
@@ -160,7 +160,8 @@ class TestCanonicalSelection(IntegrationTestCase):
 		# would fail on this doctype's own required fields, so bypass them —
 		# `collect_non_canonical()` reads the raw db row, not the full doc.
 		need.flags.ignore_mandatory = True
-		need.insert(ignore_permissions=True)
+		with maintenance_write("Departmental Needs", reason="canonical seed test: a stray Need outside the namespace"):
+			need.insert(ignore_permissions=True)
 		try:
 			self.assertIn(need.name, canonical.collect_non_canonical().get("Departmental Need", []))
 		finally:

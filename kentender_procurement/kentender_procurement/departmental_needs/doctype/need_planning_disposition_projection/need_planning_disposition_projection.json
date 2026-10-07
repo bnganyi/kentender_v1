@@ -25,8 +25,8 @@
  ],
  "field_order": ["departmental_need", "need_revision", "dpp_submission", "disposition_key", "disposition", "reason", "actor", "decision_at", "source_event_id", "producer_sequence", "fixture_namespace"],
  "permissions": [
-  {"create": 1, "read": 1, "role": "System Manager", "write": 1},
-  {"create": 1, "read": 1, "role": "Administrator", "write": 1},
+  {"read": 1, "role": "System Manager"},
+  {"read": 1, "role": "Administrator"},
   {"read": 1, "role": "Departmental Author"},
   {"read": 1, "role": "Head of User Department"},
   {"read": 1, "role": "Procurement Planner"},

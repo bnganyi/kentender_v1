@@ -11,6 +11,11 @@ from __future__ import annotations
 
 from frappe.model.document import Document
 
+from kentender_core.services.command_write_guard import CommandWriteGuardMixin
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
 
-class NeedPlanningDispositionProjection(Document):
-	pass
+
+class NeedPlanningDispositionProjection(CommandWriteGuardMixin, Document):
+	"""Written only by the Needs projection command (AUD-XC-014)."""
+
+	command_write_family = NEEDS_WRITE_FAMILY

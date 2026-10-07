@@ -381,9 +381,22 @@ kentender_scope_map = {
 
 _PLN_AUTHZ = "kentender_procurement.procurement_planning.services.planning_authorization"
 
+_NDS_AUTHZ = "kentender_procurement.departmental_needs.services.need_authorization"
+_NDS_FAMILY = (
+	"Departmental Need",
+	"Departmental Need Revision",
+	"Departmental Need Review Task",
+	"Need Withdrawal Request",
+	"Need Planning Usage Projection",
+	"Need Planning Intake Projection",
+	"Need Planning Disposition Projection",
+)
+
 permission_query_conditions = {
-	"Departmental Need": "kentender_core.services.authorization.permission_query_conditions",
-	"Departmental Need Review Task": "kentender_core.services.authorization.permission_query_conditions",
+	# AUD-XC-015 — the Needs read matrix of NDS §6 (own / department / accepted
+	# only), one predicate for the root, its children and the Planning
+	# projections; the generic Organisation-Unit predicate was wider.
+	**{doctype: f"{_NDS_AUTHZ}.permission_query_conditions" for doctype in _NDS_FAMILY},
 	"Departmental Plan": "kentender_core.services.authorization.permission_query_conditions",
 	"Departmental Plan Validation Task": "kentender_core.services.authorization.permission_query_conditions",
 	# DPP children carry no OU column; Planning resolves through the parent
@@ -395,8 +408,7 @@ permission_query_conditions = {
 }
 
 has_permission = {
-	"Departmental Need": "kentender_core.services.authorization.has_permission",
-	"Departmental Need Review Task": "kentender_core.services.authorization.has_permission",
+	**{doctype: f"{_NDS_AUTHZ}.has_permission" for doctype in _NDS_FAMILY},
 	"Departmental Plan": "kentender_core.services.authorization.has_permission",
 	"Departmental Plan Validation Task": "kentender_core.services.authorization.has_permission",
 	"Departmental Plan Version": f"{_PLN_AUTHZ}.has_permission",

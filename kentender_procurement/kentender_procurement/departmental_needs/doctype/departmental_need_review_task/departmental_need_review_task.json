@@ -137,15 +137,11 @@
  "permissions": [
   {
    "role": "System Manager",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Administrator",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Departmental Author",
@@ -153,8 +149,7 @@
   },
   {
    "role": "Head of User Department",
-   "read": 1,
-   "write": 1
+   "read": 1
   },
   {
    "role": "Auditor",

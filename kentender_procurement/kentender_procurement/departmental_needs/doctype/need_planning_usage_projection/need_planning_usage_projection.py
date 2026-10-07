@@ -16,12 +16,21 @@ tables, so these identifiers are carried by the event and never resolved here.
 import frappe
 from frappe.model.document import Document
 
+from kentender_core.services.command_write_guard import CommandWriteGuardMixin
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
+
 from kentender_procurement.departmental_needs.constants import USAGE_FULL, USAGE_NOT_INCLUDED
 from kentender_procurement.departmental_needs.errors import fail
 
 
-class NeedPlanningUsageProjection(Document):
+class NeedPlanningUsageProjection(CommandWriteGuardMixin, Document):
+	"""Writable only by the Departmental Needs commands (AUD-XC-008/014): the
+	command-only write guard refuses every user save, insert and delete."""
+
+	command_write_family = NEEDS_WRITE_FAMILY
+
 	def validate(self):
+		super().validate()
 		version = frappe.db.get_value(
 			"Departmental Need Revision",
 			self.accepted_revision,

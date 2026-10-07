@@ -12,6 +12,9 @@ from __future__ import annotations
 import frappe
 from frappe.model.document import Document
 
+from kentender_core.services.command_write_guard import CommandWriteGuardMixin
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
+
 from kentender_procurement.departmental_needs.constants import (
 	OPEN_WITHDRAWAL_STATUSES,
 	REASON_MAX,
@@ -20,8 +23,14 @@ from kentender_procurement.departmental_needs.constants import (
 from kentender_procurement.departmental_needs.errors import fail
 
 
-class NeedWithdrawalRequest(Document):
+class NeedWithdrawalRequest(CommandWriteGuardMixin, Document):
+	"""Writable only by the Departmental Needs commands (AUD-XC-008/014): the
+	command-only write guard refuses every user save, insert and delete."""
+
+	command_write_family = NEEDS_WRITE_FAMILY
+
 	def validate(self):
+		super().validate()
 		self._validate_reason()
 		self._require_single_open_request()
 

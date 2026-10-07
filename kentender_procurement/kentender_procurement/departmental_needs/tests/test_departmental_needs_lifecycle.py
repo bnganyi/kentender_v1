@@ -20,7 +20,7 @@ import time
 import frappe
 import frappe.defaults
 from frappe.tests import IntegrationTestCase
-from frappe.utils import add_days
+from frappe.utils import add_days, flt
 
 from kentender_core.services.responsibility_administration import grant
 from kentender_core.services.site_configuration import close_needs_submission, open_needs_submission
@@ -735,7 +735,43 @@ class TestDraftContentBounds(ContentValidationCase):
 	def test_a_quantity_beyond_the_allowed_precision_is_refused_at_save(self):
 		# §4.3 allows three decimals; a fourth would be silently rounded into a
 		# different requirement than the one the requester entered.
-		self.refuses_at_save("NDS_FIELD_REQUIRED", indicative_quantity=2.5555)
+		self.refuses_at_save("NDS_QUANTITY_PRECISION_INVALID", indicative_quantity=2.5555)
+
+	def whole_number_unit(self, unit: str, whole: int = 1):
+		before = frappe.db.get_value("UOM", unit, "must_be_whole_number")
+		frappe.db.set_value("UOM", unit, "must_be_whole_number", whole, update_modified=False)
+		self.addCleanup(frappe.db.set_value, "UOM", unit, "must_be_whole_number", before, update_modified=False)
+
+	def test_the_seed_declares_the_each_whole_number_fixture(self):
+		self.assertEqual(frappe.db.get_value("UOM", "Each", "must_be_whole_number"), 1)
+
+	def test_a_fractional_quantity_for_a_whole_number_unit_is_refused_not_rounded(self):
+		# AUD-XC-118 / NDS-SC-UOM-PRECISION — the Each fixture rejects 1.5.
+		self.whole_number_unit("Each")
+		self.refuses_at_save("NDS_QUANTITY_PRECISION_INVALID", indicative_quantity=1.5, unit="Each")
+		saved = self.save_draft(indicative_quantity=2, unit="Each")
+		self.assertEqual(flt(self.version(saved["current_revision"]).indicative_quantity), 2)
+
+	def test_a_fractional_unit_accepts_its_exact_scale_and_refuses_one_more_digit(self):
+		self.whole_number_unit("Programme", 0)
+		saved = self.save_draft(indicative_quantity=1.125, unit="Programme")
+		self.assertEqual(flt(self.version(saved["current_revision"]).indicative_quantity), 1.125)
+		self.refuses_at_save("NDS_QUANTITY_PRECISION_INVALID", indicative_quantity=0.0004, unit="Programme")
+
+	def test_a_quantity_that_is_not_a_plain_decimal_or_overflows_is_refused(self):
+		for offered in ("1e3", "NaN", "Infinity", "1,5", 10**13):
+			with self.subTest(offered=offered):
+				self.refuses_at_save("NDS_QUANTITY_PRECISION_INVALID", indicative_quantity=offered)
+
+	def test_submission_rechecks_the_quantity_against_the_unit_as_it_is_now(self):
+		# §4.9 — changing the unit's rule after the Draft was saved never rounds
+		# the stored quantity; submission refuses until it is corrected.
+		self.whole_number_unit("Programme", 0)
+		saved = self.save_draft(indicative_quantity=1.5, unit="Programme")
+		self.whole_number_unit("Programme", 1)
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			lifecycle.submit_need(need=saved["need"], expected_version=saved["record_version"], idempotency_key=self.key())
+		self.assertEqual(caught.exception.code, "NDS_QUANTITY_PRECISION_INVALID")
 
 	def test_an_empty_free_text_value_still_saves(self):
 		# The boundary itself: bounds apply only to a supplied value, or the

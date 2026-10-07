@@ -24,6 +24,9 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"NDS_FIELD_REQUIRED",
 		"NDS_REQUIRED_BY_OUTSIDE_FY",
 		"NDS_UNIT_INELIGIBLE",
+		# v1.16 §9 — quantity exceeds the unit's precision/whole-number/range
+		# rule or is not an exact decimal. Never rounded.
+		"NDS_QUANTITY_PRECISION_INVALID",
 		# Version maker attempted its own decision.
 		"NDS_MAKER_CHECKER",
 		# Command is invalid for the current Need/version state.

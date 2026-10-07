@@ -75,11 +75,13 @@ from kentender_procurement.departmental_needs.constants import (
 	WITHDRAWAL_DECLINED,
 )
 from kentender_procurement.departmental_needs.errors import fail
+from kentender_procurement.departmental_needs.write_family import needs_command
 from kentender_procurement.departmental_needs.services.context import (
 	FY_DOCTYPE,
 	require_open_intake,
 	selectable_financial_year,
 )
+from kentender_procurement.departmental_needs.services.quantity import require_valid_quantity
 from kentender_procurement.departmental_needs.services.notifications import notify_need_transition
 from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
@@ -457,6 +459,8 @@ def _validate_submission(need, version) -> None:
 		fail("NDS_FIELD_REQUIRED", "Unit is required.")
 	if not frappe.db.get_value("UOM", version.unit, "enabled"):
 		fail("NDS_UNIT_INELIGIBLE", "The selected unit is not an active governed unit.")
+	# The unit may have changed since the Draft was saved (§4.9): recheck.
+	require_valid_quantity(version.indicative_quantity, version.unit)
 	if not version.required_by_date:
 		fail("NDS_FIELD_REQUIRED", "Required-by date is required.")
 	_require_required_by_in_year(selectable_financial_year(need.financial_year), version.required_by_date)
@@ -496,7 +500,9 @@ def _content_values(
 	unit: str = "",
 	required_by_date: str | None = None,
 ) -> dict[str, Any]:
-	"""A partial Draft is valid once the title is (§12.3, NDS-AC-004)."""
+	"""A partial Draft is valid once the title is (§12.3, NDS-AC-004). A supplied
+	quantity must be exact for its unit before it is stored (§4.9)."""
+	require_valid_quantity(indicative_quantity, cstr(unit).strip() or None)
 	return {
 		"title": cstr(title).strip(),
 		"description": cstr(description).strip(),
@@ -510,6 +516,7 @@ def _content_values(
 # --- §5.1 initial lifecycle ------------------------------------------------
 
 
+@needs_command
 def create_need(
 	*,
 	organisation_unit: str,
@@ -581,6 +588,7 @@ def create_need(
 		frappe.db.sql("select release_lock(%s)", lock_name)
 
 
+@needs_command
 def update_need(
 	*,
 	need: str,
@@ -641,6 +649,7 @@ def update_need(
 	return _result(doc, action=action)
 
 
+@needs_command
 def submit_need(
 	*, need: str, expected_version: int, idempotency_key: str, user: str | None = None
 ) -> dict[str, Any]:
@@ -701,6 +710,7 @@ def submit_need(
 	return _result(doc, action=action, task=task.name)
 
 
+@needs_command
 def review_need(
 	*,
 	need: str,
@@ -822,6 +832,7 @@ def _content_payload_for_copy(version) -> dict[str, Any]:
 	return {field: version.get(field) for field in REVISION_CONTENT_FIELDS}
 
 
+@needs_command
 def withdraw_need(
 	*,
 	need: str,
@@ -867,6 +878,7 @@ def withdraw_need(
 # --- §5.2 accepted successor lifecycle -------------------------------------
 
 
+@needs_command
 def create_accepted_need_successor(
 	*, need: str, expected_version: int, idempotency_key: str, user: str | None = None
 ) -> dict[str, Any]:
@@ -915,6 +927,7 @@ def create_accepted_need_successor(
 	return result
 
 
+@needs_command
 def cancel_accepted_need_successor(
 	*,
 	need: str,
@@ -1014,6 +1027,7 @@ def read_withdrawal_dependency(need: str, accepted_revision: str, user: str | No
 	return check_withdrawal_dependency(name, accepted_revision)
 
 
+@needs_command
 def request_withdrawal(
 	*,
 	need: str,
@@ -1083,6 +1097,7 @@ def request_withdrawal(
 	return result
 
 
+@needs_command
 def decide_withdrawal(
 	*,
 	need: str,

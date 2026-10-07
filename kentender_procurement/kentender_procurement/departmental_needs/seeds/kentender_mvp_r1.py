@@ -488,6 +488,17 @@ def _open_intake(year: str):
 		)
 
 
+#: NDS v1.16 NDS-SC-UOM-PRECISION — "the Each whole-number fixture". The native
+#: ERPNext UOM carries the rule (`must_be_whole_number`); the fixture declares it.
+WHOLE_NUMBER_UNITS = ("Each",)
+
+
+def _declare_whole_number_units() -> None:
+	for unit in WHOLE_NUMBER_UNITS:
+		if frappe.db.exists("UOM", unit) and not frappe.db.get_value("UOM", unit, "must_be_whole_number"):
+			frappe.db.set_value("UOM", unit, "must_be_whole_number", 1, update_modified=False)
+
+
 def upsert_departmental_needs(*, commit: bool = False, years: tuple[str, ...] = ("year1", "year2")) -> dict[str, list[str]]:
 	"""Idempotent §14.3 Needs of each seeded year, built through the real
 	commands (§14.7). A year with Needs still to build has its intake opened
@@ -496,6 +507,7 @@ def upsert_departmental_needs(*, commit: bool = False, years: tuple[str, ...] = 
 	from kentender_core.seeds import site_setup
 
 	author_units = _require_prerequisites()
+	_declare_whole_number_units()
 	created: dict[str, list[str]] = {}
 	for year in years:
 		specs = need_specs(year)

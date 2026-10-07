@@ -238,7 +238,7 @@ class TestNeedUnits(ContractCase):
 class TestErrorContract(ContractCase):
 	"""§9 — a closed set of stable codes."""
 
-	def test_the_contract_holds_exactly_the_fifteen_specified_codes(self):
+	def test_the_contract_holds_exactly_the_specified_codes(self):
 		self.assertEqual(
 			ERROR_CODES,
 			frozenset(
@@ -249,6 +249,7 @@ class TestErrorContract(ContractCase):
 					"NDS_FIELD_REQUIRED",
 					"NDS_REQUIRED_BY_OUTSIDE_FY",
 					"NDS_UNIT_INELIGIBLE",
+					"NDS_QUANTITY_PRECISION_INVALID",
 					"NDS_MAKER_CHECKER",
 					"NDS_STATE_CONFLICT",
 					"NDS_OPEN_SUCCESSOR_EXISTS",
