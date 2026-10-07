@@ -62,3 +62,28 @@ def require_valid_quantity(value, unit: str | None = None) -> Decimal | None:
 	if quantity != quantity.quantize(Decimal(1).scaleb(-QUANTITY_DECIMALS)):
 		fail("NDS_QUANTITY_PRECISION_INVALID", f"The quantity can have at most {QUANTITY_DECIMALS} decimal places.")
 	return quantity
+
+
+def wire_text(value) -> str:
+	"""The quantity as an exact plain-decimal string for a published contract
+	(NDS v1.16 §4.9 "exact Quantity strings"): no float, no exponent, no
+	trailing zeros, so 10 -> "10" and 1.5 -> "1.5". Blank stays blank."""
+	if value in (None, ""):
+		return ""
+	return format(_exact(value).normalize(), "f")
+
+
+def normalise_wire_payload(body: dict) -> dict:
+	"""Replay-side companion of `wire_text`: events appended before the
+	decimal-string cutover carry `indicative_quantity` as a JSON number. Every
+	consumer-facing replay passes the stored body through here so a consumer
+	sees one type, whatever era the event is from. The stored row (and the
+	content hash, which is over the stored column) are untouched."""
+	if not isinstance(body, dict):
+		return body
+	if "indicative_quantity" in body and not isinstance(body["indicative_quantity"], str):
+		body = {**body, "indicative_quantity": wire_text(body["indicative_quantity"])}
+	nested = body.get("successor_accepted_payload")
+	if isinstance(nested, dict):
+		body = {**body, "successor_accepted_payload": normalise_wire_payload(nested)}
+	return body

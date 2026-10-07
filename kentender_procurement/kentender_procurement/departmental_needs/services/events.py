@@ -32,10 +32,11 @@ from typing import Any
 from uuid import uuid4
 
 import frappe
-from frappe.utils import cstr, flt, now_datetime
+from frappe.utils import cstr, now_datetime
 
 from kentender_core.utils.instants import to_utc_iso
 from kentender_procurement.departmental_needs.errors import fail
+from kentender_procurement.departmental_needs.services.quantity import normalise_wire_payload, wire_text
 
 EVENT_ACCEPTED = "DepartmentalNeedAccepted.v2"
 EVENT_SUPERSEDED = "DepartmentalNeedSuperseded.v1"
@@ -80,7 +81,7 @@ def accepted_payload(need, version) -> dict[str, Any]:
 		"title": cstr(version.title),
 		"description": cstr(version.description),
 		"expected_operational_result": cstr(version.expected_operational_result),
-		"indicative_quantity": flt(version.indicative_quantity),
+		"indicative_quantity": wire_text(version.indicative_quantity),
 		"unit_id": cstr(version.unit),
 		"unit_display_value": unit_label,
 		"required_by_date": str(version.required_by_date or ""),
@@ -219,7 +220,7 @@ def consume_events(
 				"event_type": row.event_type,
 				"need_id": row.departmental_need,
 				"sequence": row.sequence,
-				"payload": json.loads(row.payload),
+				"payload": normalise_wire_payload(json.loads(row.payload)),
 			}
 			for row in rows
 		],
@@ -285,5 +286,5 @@ def current_accepted_events(*, financial_year: str, organisation_unit: str = "")
 			order_by="sequence desc",
 		)
 		if event:
-			out.append(json.loads(event))
+			out.append(normalise_wire_payload(json.loads(event)))
 	return out

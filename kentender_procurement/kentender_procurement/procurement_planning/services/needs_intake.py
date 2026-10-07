@@ -18,7 +18,10 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import cstr, flt
+from decimal import Decimal, InvalidOperation
+
+from frappe.utils import cstr
+from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.write_family import planning_command
 
 CONSUMER = "procurement_planning"
@@ -103,12 +106,30 @@ def need_acceptance_evidence(need: str, need_revision: str) -> dict[str, Any] | 
 	return get_need_acceptance_evidence(need=need, need_revision=need_revision, user="Administrator")
 
 
+def _quantity(payload: dict[str, Any]) -> float:
+	"""`indicative_quantity` arrives as an exact decimal string
+	(DepartmentalNeedAccepted.v2, NDS v1.16 §4.9). It is parsed exactly and only
+	then narrowed to the entry's Float column; text that is not a decimal is a
+	broken source, never a silent zero. A JSON number from an older replay is
+	accepted by the same parse."""
+	raw = payload.get("indicative_quantity")
+	if raw in (None, ""):
+		return 0.0
+	try:
+		quantity = Decimal(cstr(raw).strip())
+	except InvalidOperation:
+		fail("PLN_REFERENCE_UNAVAILABLE", "The accepted Need's quantity is not an exact decimal.", {"need": cstr(payload.get("need_id"))})
+	if not quantity.is_finite():
+		fail("PLN_REFERENCE_UNAVAILABLE", "The accepted Need's quantity is not an exact decimal.", {"need": cstr(payload.get("need_id"))})
+	return float(quantity)
+
+
 def _facts(payload: dict[str, Any]) -> dict[str, Any]:
 	return {
 		"title": cstr(payload.get("title")),
 		"description": cstr(payload.get("description")),
 		"expected_operational_result": cstr(payload.get("expected_operational_result")),
-		"quantity": flt(payload.get("indicative_quantity")),
+		"quantity": _quantity(payload),
 		"unit": cstr(payload.get("unit_id")),
 		"required_by_date": payload.get("required_by_date"),
 	}

@@ -23,7 +23,7 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	_granted_units,
 	upsert_departmental_needs,
 )
-from kentender_procurement.departmental_needs.services import events, lifecycle
+from kentender_procurement.departmental_needs.services import events, lifecycle, workspace
 
 # §7.1 — the exact `DepartmentalNeedAccepted.v2` field set, plus event
 # identity. AUTH-ADR-001 v1.6 §1.1 — the site is exactly one implicit
@@ -188,6 +188,44 @@ class TestAcceptedEvent(EventCase):
 			reason="The department will meet this requirement from existing stock this year.",
 		)
 		self.assertEqual(self.events_for(created["need"]), [])
+
+
+class TestQuantityIsAnExactDecimalString(EventCase):
+	"""NDS v1.16 §4.9 (AUD-XC-118 follow-up) — `indicative_quantity` crosses the
+	published contract as an exact decimal string, never a float, on the event
+	and on the §8.1 read, and a replay of an older numeric event reads the same."""
+
+	def test_the_accepted_event_carries_the_quantity_as_a_string(self):
+		payload = self.payload_of(self.accepted()["event_id"])
+		self.assertEqual(payload["indicative_quantity"], "10")
+
+	def test_a_fractional_quantity_is_exact_on_the_event_and_on_the_read(self):
+		result = self.accepted(unit="Programme", indicative_quantity=1.125)
+		self.assertEqual(self.payload_of(result["event_id"])["indicative_quantity"], "1.125")
+		frappe.set_user("Administrator")
+		read = workspace.get_current_accepted_need(need=result["need"], user="Administrator")
+		self.assertEqual(read["indicative_quantity"], "1.125")
+
+	def test_the_consumer_replays_see_a_string_even_for_an_older_numeric_event(self):
+		result = self.accepted(unit="Programme", indicative_quantity=2.5)
+		row = frappe.db.get_value("Departmental Need Event", result["event_id"], "name")
+		body = self.payload_of(result["event_id"])
+		body["indicative_quantity"] = 2.5  # as written before the cutover
+		frappe.db.set_value("Departmental Need Event", row, "payload", json.dumps(body), update_modified=False)
+		replayed = events.current_accepted_events(financial_year=FY, organisation_unit=self.ou)
+		mine = [p for p in replayed if p["need_id"] == result["need"]]
+		self.assertEqual([p["indicative_quantity"] for p in mine], ["2.5"])
+		drained = events.consume_events(consumer="qty-test", need=result["need"])["events"]
+		self.assertEqual([e["payload"]["indicative_quantity"] for e in drained], ["2.5"])
+
+	def test_planning_stores_the_quantity_it_reads_from_the_string(self):
+		from kentender_procurement.procurement_planning.services import needs_intake
+
+		self.assertEqual(needs_intake._facts({"indicative_quantity": "1.125"})["quantity"], 1.125)
+		self.assertEqual(needs_intake._facts({"indicative_quantity": 7})["quantity"], 7.0)
+		with self.assertRaises(Exception) as caught:
+			needs_intake._facts({"indicative_quantity": "ten"})
+		self.assertEqual(getattr(caught.exception, "code", ""), "PLN_REFERENCE_UNAVAILABLE")
 
 
 class TestSupersededEvent(EventCase):

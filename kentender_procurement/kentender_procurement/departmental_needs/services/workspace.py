@@ -34,6 +34,7 @@ from kentender_procurement.departmental_needs.constants import (
 	REVISION_DRAFT,
 )
 from kentender_procurement.departmental_needs.errors import fail
+from kentender_procurement.departmental_needs.services.quantity import wire_text
 from kentender_procurement.departmental_needs.services.context import fy_label, selectable_financial_years
 from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
@@ -529,7 +530,7 @@ def get_current_accepted_need(
 		"title": version.title,
 		"description": version.description,
 		"expected_operational_result": version.expected_operational_result,
-		"indicative_quantity": flt(version.indicative_quantity),
+		"indicative_quantity": wire_text(version.indicative_quantity),
 		"unit": version.unit,
 		"unit_label": unit_label,
 		"required_by_date": str(version.required_by_date or ""),
