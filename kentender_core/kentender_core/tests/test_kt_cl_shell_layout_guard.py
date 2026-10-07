@@ -273,12 +273,13 @@ class TestKtClShellLayoutGuard(IntegrationTestCase):
 		):
 			self.assertIn(fn, source)
 
-	def test_surface_registry_exports_ui00(self) -> None:
+	def test_surface_registry_keeps_the_mechanism_and_no_wizard_surface(self) -> None:
 		source = _core_public("js", "kt_cl_surface_registry.js").read_text(encoding="utf-8")
-		self.assertIn('"UI-00"', source)
-		self.assertIn("it-tender-configuration-dashboard", source)
 		self.assertIn("resolveFromRoute", source)
-		self.assertIn("sidebarWorkspaceKey", source)
+		self.assertIn("allIds", source)
+		# The legacy tender-configuration wizard surfaces were retired with that module.
+		self.assertNotIn('"UI-00"', source)
+		self.assertNotIn("it-tender-configuration", source)
 
 	def test_shell_router_is_wired(self) -> None:
 		source = _core_public("js", "kt_cl_shell_router.js").read_text(encoding="utf-8")

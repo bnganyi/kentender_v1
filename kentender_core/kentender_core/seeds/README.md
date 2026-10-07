@@ -60,19 +60,9 @@ bench --site <site> execute kentender_core.seeds.reset_strategy_seed.run
 bench --site <site> execute kentender_core.seeds.reset_core_seed.run
 ```
 
-## Demo platform seed (linked IT STD demo)
-
-Preferred **demo / UAT** pack: clean PEs (`PE-MOH`, `PE-MOE`), purge conflicting CFG noise, load stable WORKS+IT chain, then actionable DIA/CFG/publication/bid stages. See [docs/data/DEMO_PLATFORM_SEED.md](../../docs/data/DEMO_PLATFORM_SEED.md).
-
-```bash
-bench --site <site> execute kentender_core.seeds.seed_demo_platform.run --kwargs '{"reset": true}'
-# or: ./apps/kentender_v1/scripts/seed_demo_platform.sh
-make -C apps/kentender_v1 seed-demo-platform-reset SITE=kentender.midas.com
-```
-
 ## Stable platform seed (Works + IT STD)
 
-Canonical MOH domain pack covering **Strategy**, **Budget**, **DIA (Demand)**, **Planning**, and **IT STD** import (used inside the demo platform loader).
+Canonical MOH domain pack covering **Strategy**, **Budget**, **DIA (Demand)**, **Planning**, and **IT STD** import.
 
 ```bash
 # Load (idempotent upsert)

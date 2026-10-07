@@ -68,31 +68,11 @@ OPEN_FINDINGS = frozenset(
 		"Exception Record",
 		"Annual Plan Publication Destination",
 		"KTSM Status History",
-		# The legacy Tender Configurations / Journey surfaces (RG-04, RG-05, RG-33).
-		"Confirmed Tender Document Package",
-		"IT Tender Publication Record",
-		"Tender Configuration",
+		# The legacy Journey surfaces (RG-33).
 		"Procurement Handoff Card",
 		"Procurement Journey",
 	}
 )
-
-# The BWMF workspace/compiler tables are System Manager rwcd; they hold the legacy electronic-document
-# workflow and are listed one by one so a new BWMF table is noticed.
-BWMF_TABLES = frozenset(
-	{
-		"BWMF Addendum Impact Plan", "BWMF Approval Decision", "BWMF Artifact Resource Binding", "BWMF Audit Event",
-		"BWMF Authority Reference", "BWMF Compile Artifact", "BWMF Compile Request", "BWMF Compile Run",
-		"BWMF Compiler Diagnostic", "BWMF Confirmation", "BWMF Content Object", "BWMF Dependency Snapshot",
-		"BWMF Evidence Item", "BWMF Evidence Link", "BWMF Evidence Version", "BWMF Idempotency Record",
-		"BWMF Invalidation Event", "BWMF Lifecycle Event", "BWMF Manifest Approval", "BWMF Manifest Publication",
-		"BWMF Manifest Resource", "BWMF Manifest Resource Binding", "BWMF Manifest Version",
-		"BWMF Materialization Report", "BWMF Publication Request", "BWMF Response Version", "BWMF Review Package",
-		"BWMF Submission", "BWMF Submission Receipt", "BWMF Tender Publication State", "BWMF Validation Report",
-		"BWMF Validation Snapshot", "BWMF Workspace", "BWMF Workspace Manifest Binding",
-	}
-)
-
 
 def _kentender_doctype_files():
 	for app in frappe.get_installed_apps():
@@ -117,7 +97,7 @@ def _family(doctype: str) -> str:
 
 class TestEveryWritableDoctypeIsCommandOnlyOrReviewed(IntegrationTestCase):
 	def test_no_unreviewed_doctype_is_user_writable_without_the_guard(self):
-		reviewed = REFERENCE_AND_SETUP | OPEN_FINDINGS | BWMF_TABLES
+		reviewed = REFERENCE_AND_SETUP | OPEN_FINDINGS
 		offenders = {}
 		for app, meta in _kentender_doctype_files():
 			if meta.get("istable") or meta.get("issingle") or meta.get("is_virtual"):
