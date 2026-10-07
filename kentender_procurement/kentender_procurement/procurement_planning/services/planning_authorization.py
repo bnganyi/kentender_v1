@@ -69,6 +69,7 @@ PLANNER_CHAIN_COMMANDS = (
 	"FormPlanItems",
 	"DissolvePlanItem",
 	"SavePlanItem",
+	"SavePlanVersionDetails",
 	"ConfirmSplittingAdvisory",
 	"RequestPlanFundingConfirmation",
 	"SubmitConsolidatedPlan",
@@ -377,7 +378,10 @@ def prior_actors(chain: list[str]) -> dict[str, set[str]]:
 		planner.add(cstr(row.actor))
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", chain)}, pluck="name")
 	tasks = frappe.get_all("Plan Finance Task", filters={"plan_version": ("in", chain)}, pluck="name")
-	journal_targets = set(chain) | set(items) | set(tasks)
+	# `RequestPlanFundingConfirmation` that reuses an earlier confirmation is
+	# journaled against the reuse record, not the task (AUD-PLN-010).
+	reuses = frappe.get_all("Plan Finance Basis Reuse", filters={"plan_version": ("in", chain)}, pluck="name")
+	journal_targets = set(chain) | set(items) | set(tasks) | set(reuses)
 	if journal_targets:
 		for row in frappe.get_all(
 			"Planning Command Journal",

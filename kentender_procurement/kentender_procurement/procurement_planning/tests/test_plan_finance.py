@@ -27,6 +27,7 @@ from kentender_procurement.procurement_planning.services import (
 	plan_finance,
 	plan_read,
 	plan_workbench,
+	planning_authorization,
 )
 from kentender_procurement.procurement_planning.tests import fixtures as fx
 
@@ -365,3 +366,50 @@ class TestConfirmPlanFunding(PlanFinanceCase):
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 		frappe.set_user(fx.HOPF)
 		self.assertFalse(plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])["can_sign_and_submit"])
+
+
+class TestPlannerChainCoverage(PlanFinanceCase):
+	"""PLN v1.29 §6.4 (AUD-PLN-010, AUD-XC-134) — whoever authored plan content
+	or asked Finance is on the Planner side of the chain, whichever command it
+	was, including the saving of the version details and the funding-reuse
+	request."""
+
+	def test_saving_the_version_details_puts_the_actor_on_the_planner_side(self):
+		accepted, item_id = self.ready_item()
+		version = accepted["annual_plan_version"]
+		self.assertFalse(planning_authorization.is_segregated(fx.HYBRID_FINANCE, planning_authorization.ACTION_FINANCE_DECIDE, plan_version=version))
+		frappe.set_user(fx.HYBRID_FINANCE)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		plan_workbench.save_plan_version_details(
+			plan_version=version, values={"project_name": "Digital health rollout"},
+			expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		self.assertTrue(planning_authorization.is_segregated(fx.HYBRID_FINANCE, planning_authorization.ACTION_FINANCE_DECIDE, plan_version=version))
+		requested = self.request(accepted["annual_plan"], user=fx.PLANNER)
+		task = frappe.get_doc("Plan Finance Task", requested["task"])
+		frappe.set_user(fx.HYBRID_FINANCE)
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_SEGREGATION_CONFLICT")
+
+	def test_the_user_who_asked_for_a_reused_confirmation_cannot_confirm_funding(self):
+		accepted, item_id = self.ready_item()
+		version = accepted["annual_plan_version"]
+		requested = self.request(accepted["annual_plan"])
+		task = frappe.get_doc("Plan Finance Task", requested["task"])
+		frappe.set_user(fx.FINANCE_OFFICER)
+		plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=key())
+		frappe.set_user(fx.PLANNER)
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.dissolve_plan_item(plan_item=item_id, expected_record_version=item["record_version"], idempotency_key=key())
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		formed = plan_workbench.form_plan_items(
+			plan_version=version, dpp_entries=[plan["unallocated_sources"][0]["dpp_entry"]],
+			mode="each", expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		new_item = plan_read.get_plan_item(plan_item_id=formed["created_items"][0])
+		plan_workbench.save_plan_item(plan_item=formed["created_items"][0], values=fx.item_values(), expected_record_version=new_item["record_version"], idempotency_key=key())
+		self.assertFalse(planning_authorization.is_segregated(fx.HYBRID_FINANCE, planning_authorization.ACTION_FINANCE_DECIDE, plan_version=version))
+		reused = self.request(accepted["annual_plan"], user=fx.HYBRID_FINANCE)
+		self.assertEqual(reused["action"], "confirmation_reused")
+		self.assertTrue(planning_authorization.is_segregated(fx.HYBRID_FINANCE, planning_authorization.ACTION_FINANCE_DECIDE, plan_version=version))
