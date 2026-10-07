@@ -45,6 +45,19 @@ PACKAGE_LOCKED_FIELDS = frozenset(
 
 TERMINAL_STATUSES = frozenset({"Cancelled", "Returned", "Published"})
 
+#: RG-05 — what a record created outside the publication services may carry.
+INSERT_STATUSES = frozenset({"", "Awaiting Publication Setup"})
+INSERT_FORBIDDEN_FIELDS = (
+	"electronic_template_id",
+	"electronic_template_version",
+	"electronic_template_snapshot",
+	"electronic_template_hash",
+	"published_at",
+	"published_by",
+	"setup_locked",
+	"prior_publication_version",
+)
+
 
 def allocate_publication_ref() -> str:
 	"""Business code for UI (mock: PUB-2026-00018). Internal name stays hash."""
@@ -69,7 +82,22 @@ class ITTenderPublicationRecord(Document):
 		if not cstr(self.publication_ref or "").strip():
 			self.publication_ref = allocate_publication_ref()
 
-		if self.is_new() or getattr(self.flags, "ignore_publication_boundary", False):
+		if getattr(self.flags, "ignore_publication_boundary", False):
+			return
+		if self.is_new():
+			# RG-05 / AUD-XC-011: the boundary holds on insert too. A record made outside the publication
+			# services starts at the default status and carries no sealed template or publication stamp, so
+			# it can never be created already Published.
+			if cstr(self.status or "") not in INSERT_STATUSES:
+				frappe.throw(
+					frappe._("Publication status changes only through the publication actions."),
+					title="PUBLICATION_STATUS_COMMAND_ONLY",
+				)
+			if any(self.get(field) for field in INSERT_FORBIDDEN_FIELDS):
+				frappe.throw(
+					frappe._("A publication record cannot be created with a sealed template or publication stamp."),
+					title="PUBLICATION_BOUNDARY",
+				)
 			return
 		prior_status = cstr(frappe.db.get_value(self.doctype, self.name, "status") or "")
 		# AUD-XC-011: status moves only through the publication services, which set

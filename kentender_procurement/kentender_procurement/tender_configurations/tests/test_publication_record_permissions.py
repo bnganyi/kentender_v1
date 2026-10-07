@@ -98,3 +98,60 @@ class TestPublicationRecordPermissions(IntegrationTestCase):
 		pkg.package_status = "Invalidated"
 		pkg.save(ignore_permissions=True)
 		self.assertEqual(frappe.db.get_value(PACKAGE, pkg.name, "package_status"), "Invalidated")
+
+
+class TestPublicationBoundaryOnInsertAndConfigurationLock(IntegrationTestCase):
+	"""RG-05 / AUD-XC-011 residue — the boundary also holds on insert, and the
+	publication lock on a configuration cannot be lifted with one save."""
+
+	def setUp(self):
+		super().setUp()
+		frappe.set_user("Administrator")
+
+	_new = TestPublicationRecordPermissions._new
+	_load = TestPublicationRecordPermissions._load
+
+	def test_a_publication_record_cannot_be_created_already_published(self):
+		for values in ({"status": "Published"}, {"status": "Ready to Publish"}, {"electronic_template_snapshot": "{}", "electronic_template_hash": "x" * 64}):
+			doc = frappe.get_doc({"doctype": PUBLICATION, "configuration": "RG05-CFG", "status": "Awaiting Publication Setup", **values})
+			doc.flags.ignore_links = True
+			doc.flags.ignore_mandatory = True
+			with self.assertRaises(frappe.ValidationError, msg=str(values)):
+				doc.insert(ignore_permissions=True)
+		self.assertFalse(frappe.db.exists(PUBLICATION, {"configuration": "RG05-CFG"}))
+
+	def test_the_publication_service_still_creates_its_record(self):
+		doc = frappe.get_doc({"doctype": PUBLICATION, "configuration": "RG05-CFG-OK", "status": "Awaiting Publication Setup"})
+		doc.flags.ignore_publication_boundary = True  # what create_publication_record sets
+		doc.flags.ignore_links = True
+		doc.flags.ignore_mandatory = True
+		doc.insert(ignore_permissions=True)
+		self.addCleanup(lambda: frappe.delete_doc(PUBLICATION, doc.name, force=True, ignore_permissions=True))
+		self.assertEqual(frappe.db.get_value(PUBLICATION, doc.name, "status"), "Awaiting Publication Setup")
+
+	def _locked_configuration(self):
+		pkg = self._new(PACKAGE, configuration="RG05-CFG", package_status="Confirmed")
+		cfg = self._new("Tender Configuration", configuration_ref="RG05-CFG-REF", tender_title="Locked tender", status="Sent to Publication Workflow", confirmed_document_package=pkg.name)
+		return pkg, self._load("Tender Configuration", cfg.name)
+
+	def test_clearing_the_confirmed_package_does_not_lift_the_lock(self):
+		pkg, cfg = self._locked_configuration()
+		cfg.confirmed_document_package = ""
+		with self.assertRaises(frappe.ValidationError):
+			cfg.save(ignore_permissions=True)
+		self.assertEqual(frappe.db.get_value("Tender Configuration", cfg.name, "confirmed_document_package"), pkg.name)
+
+	def test_the_status_of_a_locked_configuration_is_not_a_free_select(self):
+		_pkg, cfg = self._locked_configuration()
+		cfg.status = "Published"
+		with self.assertRaises(frappe.ValidationError):
+			cfg.save(ignore_permissions=True)
+		self.assertEqual(frappe.db.get_value("Tender Configuration", cfg.name, "status"), "Sent to Publication Workflow")
+
+	def test_the_services_still_move_a_locked_configuration(self):
+		pkg, cfg = self._locked_configuration()
+		cfg.flags.ignore_f1_publication_lock = True  # what the return-for-correction and publish services set
+		cfg.confirmed_document_package = ""
+		cfg.status = "Returned for Correction"
+		cfg.save(ignore_permissions=True)
+		self.assertEqual(frappe.db.get_value("Tender Configuration", cfg.name, "status"), "Returned for Correction")

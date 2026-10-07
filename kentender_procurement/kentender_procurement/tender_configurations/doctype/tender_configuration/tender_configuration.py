@@ -10,6 +10,9 @@ from frappe.utils import cstr
 from kentender_procurement.tender_configurations.constants import ACTIVE_CONFIGURATION_STATUSES
 
 
+LOCKED_STATE_FIELDS = ("confirmed_document_package", "status")
+
+
 class TenderConfiguration(Document):
 	def validate(self) -> None:
 		self._validate_unique_active_package()
@@ -26,7 +29,10 @@ class TenderConfiguration(Document):
 
 		if not configuration_is_locked_for_edit(self.name):
 			return
-		for field in CFG_LOCK_FIELDS:
+		# RG-05: the pointer to the confirmed package and the status are part of the lock; otherwise one save
+		# that clears the pointer lifts it, and the status is a free select. The services set
+		# `ignore_f1_publication_lock` when they return a configuration for correction or publish it.
+		for field in (*CFG_LOCK_FIELDS, *LOCKED_STATE_FIELDS):
 			db_val = frappe.db.get_value(self.doctype, self.name, field)
 			if cstr(self.get(field) or "") != cstr(db_val or ""):
 				frappe.throw(
