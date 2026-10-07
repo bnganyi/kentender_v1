@@ -9,14 +9,17 @@ from __future__ import annotations
 
 import frappe
 
+from kentender_core.utils.patch_guards import doctype_is_shipped
+
+# "Strategy Node" and "Strategic Plan" were listed here before the v1.3 rebuild
+# re-created them under the same names; they are current doctypes and must never
+# be dropped (AUD-XC-125). `doctype_is_shipped` is the standing guard for any entry.
 LEGACY_DOCTYPES = [
 	"Strategy Target",
 	"Strategy Objective",
 	"Sub Program",
 	"Strategy Program",
-	"Strategy Node",
 	"Strategy Navigation",
-	"Strategic Plan",
 ]
 
 LEGACY_PAGES = ["strategy-builder"]
@@ -58,6 +61,8 @@ def _ensure_placeholder_workspace() -> None:
 
 def execute() -> None:
 	for name in LEGACY_DOCTYPES:
+		if doctype_is_shipped(name):
+			continue
 		if frappe.db.exists("DocType", name):
 			frappe.delete_doc("DocType", name, force=1, ignore_permissions=True)
 
