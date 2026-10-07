@@ -34,9 +34,11 @@ from uuid import uuid4
 import frappe
 from frappe.utils import cstr, now_datetime
 
+from kentender_core.services.command_write_guard import command_write
 from kentender_core.utils.instants import to_utc_iso
 from kentender_procurement.departmental_needs.errors import fail
 from kentender_procurement.departmental_needs.services.quantity import normalise_wire_payload, wire_text
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
 
 EVENT_ACCEPTED = "DepartmentalNeedAccepted.v2"
 EVENT_SUPERSEDED = "DepartmentalNeedSuperseded.v1"
@@ -108,7 +110,7 @@ def _append(
 		"occurred_at": to_utc_iso(occurred_at),
 		**payload,
 	}
-	frappe.get_doc(
+	row = (
 		{
 			"doctype": "Departmental Need Event",
 			"event_id": event_id,
@@ -122,7 +124,9 @@ def _append(
 			"status": STATUS_PENDING,
 			"fixture_namespace": need.fixture_namespace,
 		}
-	).insert(ignore_permissions=True)
+	)
+	with command_write(NEEDS_WRITE_FAMILY):
+		frappe.get_doc(row).insert(ignore_permissions=True)
 	return event_id
 
 

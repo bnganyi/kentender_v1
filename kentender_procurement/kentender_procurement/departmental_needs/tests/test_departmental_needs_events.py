@@ -13,6 +13,7 @@ from uuid import uuid4
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.command_write_guard import CommandWriteError, command_write
 from kentender_procurement.departmental_needs.constants import STATE_WITHDRAWN
 from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
@@ -68,6 +69,7 @@ EXCLUDED_FIELDS = (
 	"notes",
 )
 from kentender_procurement.departmental_needs.tests import support
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
 
 
 class EventCase(IntegrationTestCase):
@@ -424,8 +426,15 @@ class TestOutboxDelivery(EventCase):
 		accepted = self.accepted()
 		doc = frappe.get_doc("Departmental Need Event", accepted["event_id"])
 		doc.payload = json.dumps({"tampered": True})
-		with self.assertRaises(DepartmentalNeedError) as caught:
+		# outside a Needs command the command-only guard refuses first (RG-08) ...
+		with self.assertRaises(CommandWriteError):
 			doc.save(ignore_permissions=True)
+		# ... and inside one the event's own immutability rule still does
+		with command_write(NEEDS_WRITE_FAMILY):
+			doc = frappe.get_doc("Departmental Need Event", accepted["event_id"])
+			doc.payload = json.dumps({"tampered": True})
+			with self.assertRaises(DepartmentalNeedError) as caught:
+				doc.save(ignore_permissions=True)
 		self.assertEqual(caught.exception.code, "NDS_STATE_CONFLICT")
 
 	def test_current_accepted_events_replays_the_context(self):

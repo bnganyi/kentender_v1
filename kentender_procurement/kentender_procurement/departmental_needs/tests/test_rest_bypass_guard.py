@@ -29,6 +29,8 @@ BUSINESS_WRITERS = (AUTHOR, REVIEWER, "Administrator")
 NEEDS_FAMILY = (
 	"Departmental Need", "Departmental Need Revision", "Departmental Need Review Task", "Need Withdrawal Request",
 	"Need Planning Usage Projection", "Need Planning Intake Projection", "Need Planning Disposition Projection",
+	# RG-08: the outbox and the decision record are command-only too
+	"Departmental Need Event", "Departmental Need Decision",
 )
 
 RIGHTS = ("write", "create", "delete", "submit", "cancel", "amend", "share")
@@ -152,6 +154,68 @@ class TestNeedRecordsAreCommandOnly(NeedsWorld):
 		frappe.set_user("Administrator")
 		self.assertEqual(saved["need"], self.draft_need)
 		self.assertEqual(frappe.db.get_value("Departmental Need Revision", self.draft_revision, "title"), "Command route title still saves")
+
+
+class TestNeedEventsAndDecisionsAreCommandOnly(NeedsWorld):
+	"""RG-08 / AUD-XC-013: the Needs outbox row starts a departmental plan the
+	moment it is inserted, and the decision row is the Needs audit record. Neither
+	may be written or deleted outside a Needs command, by anyone."""
+
+	def setUp(self):
+		super().setUp()
+		self.build_world()
+		self.event = frappe.get_all("Departmental Need Event", filters={"departmental_need": self.need}, pluck="name", order_by="sequence desc")[0]
+		self.decision = frappe.get_all("Departmental Need Decision", filters={"departmental_need": self.need}, pluck="name")[0]
+
+	def test_the_event_and_decision_rows_cannot_be_rewritten_or_deleted(self):
+		for user in BUSINESS_WRITERS:
+			for doctype, name, fieldname, value in (
+				("Departmental Need Event", self.event, "status", "Delivered"),
+				("Departmental Need Decision", self.decision, "reason", "rewritten"),
+			):
+				with self.subTest(user=user, doctype=doctype):
+					before = frappe.db.get_value(doctype, name, fieldname)
+					frappe.set_user(user)
+					with self.assertRaises(frappe.PermissionError):
+						frappe.client.set_value(doctype, name, fieldname, value)
+					with self.assertRaises(frappe.PermissionError):
+						frappe.client.delete(doctype, name)
+					with self.assertRaises(CommandWriteError) as caught:
+						frappe.delete_doc(doctype, name, ignore_permissions=True)
+					self.assertEqual(caught.exception.code, "COMMAND_ONLY_DELETE")
+					frappe.set_user("Administrator")
+					self.assertEqual(frappe.db.get_value(doctype, name, fieldname), before)
+					self.assertTrue(frappe.db.exists(doctype, name))
+
+	def test_a_posted_accepted_need_event_is_refused_and_starts_no_plan(self):
+		# The audit's reproduction: POST an accepted-Need event as a technical user.
+		template = frappe.get_doc("Departmental Need Event", self.event)
+		plans_before = frappe.db.count("Departmental Plan")
+		events_before = frappe.db.count("Departmental Need Event")
+		frappe.set_user("Administrator")
+		forged = frappe.get_doc(
+			{
+				"doctype": "Departmental Need Event", "event_id": "NDE-REST-BYPASS", "event_type": template.event_type,
+				"departmental_need": template.departmental_need, "sequence": 9999, "need_revision": template.need_revision,
+				"occurred_at": template.occurred_at, "payload": template.payload, "status": "Pending",
+			}
+		)
+		with self.assertRaises(CommandWriteError) as caught:
+			forged.insert()
+		self.assertEqual(caught.exception.code, "COMMAND_ONLY_WRITE")
+		self.assertEqual(frappe.db.count("Departmental Need Event"), events_before)
+		self.assertEqual(frappe.db.count("Departmental Plan"), plans_before)
+
+	def test_a_posted_decision_is_refused(self):
+		template = frappe.get_doc("Departmental Need Decision", self.decision)
+		frappe.set_user("Administrator")
+		forged = frappe.copy_doc(template)
+		forged.decision_id = "NDD-REST-BYPASS"
+		forged.idempotency_key = "rest-bypass-decision"
+		with self.assertRaises(CommandWriteError) as caught:
+			forged.insert()
+		self.assertEqual(caught.exception.code, "COMMAND_ONLY_WRITE")
+		self.assertFalse(frappe.db.exists("Departmental Need Decision", "NDD-REST-BYPASS"))
 
 
 class TestPlanningIntakeProjectionIsReadOnly(NeedsWorld):

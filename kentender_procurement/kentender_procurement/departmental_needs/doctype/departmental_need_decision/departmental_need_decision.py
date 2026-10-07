@@ -13,16 +13,24 @@ from __future__ import annotations
 import frappe
 from frappe.model.document import Document
 
+from kentender_core.services.command_write_guard import CommandWriteGuardMixin
 from kentender_procurement.departmental_needs.constants import (
 	REASON_MAX,
 	REASON_MIN,
 	REASON_REQUIRED_ACTIONS,
 )
 from kentender_procurement.departmental_needs.errors import fail
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
 
 
-class DepartmentalNeedDecision(Document):
+class DepartmentalNeedDecision(CommandWriteGuardMixin, Document):
+	"""Recorded only by the Departmental Needs commands (RG-08): the command-only
+	write guard refuses a user insert, save or delete, whoever asks."""
+
+	command_write_family = NEEDS_WRITE_FAMILY
+
 	def validate(self):
+		super().validate()
 		if not self.is_new():
 			fail("NDS_STATE_CONFLICT", "A Departmental Need Decision is immutable once recorded.")
 		self._validate_reason()
@@ -40,4 +48,5 @@ class DepartmentalNeedDecision(Document):
 			fail("NDS_FIELD_REQUIRED", f"{self.action} does not collect a reason.")
 
 	def on_trash(self):
+		super().on_trash()
 		fail("NDS_STATE_CONFLICT", "Departmental Need Decisions are retained permanently.")
