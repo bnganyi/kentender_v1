@@ -24,6 +24,8 @@
   "prepared_by",
   "prepared_capacity",
   "prepared_authority_snapshot",
+  "sent_for_approval_by",
+  "sent_for_approval_at",
   "submitted_by",
   "submitted_capacity",
   "submitted_authority_snapshot",
@@ -217,12 +219,25 @@
    "hidden": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "sent_for_approval_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Sent for approval by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sent_for_approval_at",
+   "fieldtype": "Datetime",
+   "label": "Sent for approval at",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-10-07 01:56:16.527683",
+ "modified": "2026-10-07 09:20:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement Requisitions",
  "name": "Requisition Version",

@@ -75,13 +75,21 @@ def basis_snapshot(projection: dict[str, Any]) -> str:
 	)
 
 
-def lock(root, version, package_version, *, target_status: str) -> dict[str, Any]:
-	"""§7.2 — recheck everything on the exact content, freeze it, lock it."""
+def recheck(root, version, package_version) -> dict[str, Any]:
+	"""§7.2 — the checks made before departmental routing **or submission**:
+	current Planning eligibility, the nine compatibility checks and every field
+	and row control with zero Blocking findings. Returns the projection."""
 	projection = eligibility_gateway.get_requisition_eligible_plan_item(root.plan_item_id)
 	compatibility.require_compatible(projection)
 	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=projection)
 	if report["blocking_count"]:
 		fail("REQ_BLOCKING_FINDINGS", detail={"findings": [f for f in report["findings"] if f["severity"] == "Blocking"]})
+	return projection
+
+
+def lock(root, version, package_version, *, target_status: str) -> dict[str, Any]:
+	"""§7.2 — recheck everything on the exact content, freeze it, lock it."""
+	projection = recheck(root, version, package_version)
 	content_digest = digest.sha256_hex(records.digest_payload(version, package_version))
 	version.content_digest = content_digest
 	package_version.content_digest = content_digest
@@ -225,6 +233,9 @@ def send_for_department_approval(*, requisition: str, expected_record_version, i
 	version, package_version = _load_current(root)
 	if root.current_state != "Draft" or version.version_status != "Draft":
 		fail("REQ_STALE_VERSION")
+	# §5.2 / §7.3 — who sent it is evidence, so the Head of User Department decision can refuse them later.
+	version.sent_for_approval_by = actor
+	version.sent_for_approval_at = now_datetime()
 	lock(root, version, package_version, target_status="Awaiting Department Approval")
 	task = new_task(root, version, business_role=ROLE_HEAD_OF_USER_DEPARTMENT, organisation_unit=root.lead_org_unit_id)
 	root.current_state = "Awaiting Department Approval"
@@ -255,14 +266,21 @@ def submit_requisition_to_procurement(*, requisition: str, expected_record_versi
 		if task_doc.status != "Open" or task_doc.requisition_version != version.name:
 			fail("REQ_STALE_VERSION")
 		# §7.3 — an Author cannot complete the HoD decision on a Version they
-		# sent, unless they hold the HoD role and prepared it in that capacity.
-		if cstr(version.prepared_by) == actor and cstr(version.prepared_capacity) != ROLE_HEAD_OF_USER_DEPARTMENT:
+		# prepared or sent, unless they hold the HoD role and prepared it in that capacity.
+		if records.certifier_conflict(version, actor):
 			fail("REQ_SOD_BLOCKED")
+		# §7.2 — "before departmental routing or submission": the content is locked, the facts around it are not.
+		recheck(root, version, package_version)
+		if digest.sha256_hex(records.digest_payload(version, package_version)) != version.content_digest:
+			fail("REQ_BLOCKING_FINDINGS", detail={"findings": [{"code": "DIGEST_FAILED", "message": "The canonical preview could not be reproduced."}]})
 		envelope.bump(version, version_status="Submitted to Procurement")
 		envelope.bump(package_version, version_status="Submitted to Procurement")
 	elif root.current_state == "Draft":
 		if version.version_status != "Draft":
 			fail("REQ_STALE_VERSION")
+		# §7.1/§7.3 — only a Head of User Department preparing directly certifies a Draft; the Draft an Author prepared goes through the approval task.
+		if records.certifier_conflict(version, actor):
+			fail("REQ_SOD_BLOCKED")
 		lock(root, version, package_version, target_status="Submitted to Procurement")
 	else:
 		fail("REQ_STALE_VERSION")

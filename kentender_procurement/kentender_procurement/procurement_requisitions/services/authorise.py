@@ -100,8 +100,8 @@ def authorise_requisition(*, requisition: str, task: str, expected_record_versio
 		fail("REQ_STALE_VERSION")
 	if cstr(version.certified_lead_org_unit_id) != cstr(root.lead_org_unit_id):
 		fail("REQ_LEAD_RECERTIFICATION_REQUIRED")
-	# §7.3 — the authoriser cannot also be the departmental submitting authority.
-	if cstr(version.submitted_by) == actor:
+	# §7.3 — the authoriser cannot also be the departmental submitting authority, nor prepare and authorise the same Version.
+	if records.authoriser_conflict(version, actor):
 		fail("REQ_SOD_BLOCKED")
 
 	projection, checks = recheck(root, version, package_version)

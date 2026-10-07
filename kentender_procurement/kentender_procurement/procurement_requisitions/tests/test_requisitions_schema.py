@@ -99,8 +99,8 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 		"based_on_version", "basis_snapshot_json", "certified_lead_org_unit_id", "content_digest",
 		"delivery_address_snapshot", "delivery_location", "drawdown_lines", "fixture_namespace", "latest_delivery_date",
 		"lead_routing_directive", "package_version", "prepared_authority_snapshot", "prepared_by", "prepared_capacity",
-		"record_version", "related_services_required", "requirement_title", "requisition", "submitted_at",
-		"submitted_authority_snapshot", "submitted_by", "submitted_capacity", "version_number", "version_status",
+		"record_version", "related_services_required", "requirement_title", "requisition", "sent_for_approval_at",
+		"sent_for_approval_by", "submitted_at", "submitted_authority_snapshot", "submitted_by", "submitted_capacity", "version_number", "version_status",
 	},
 }
 

@@ -35,6 +35,24 @@ def child_rows(doc, fieldname: str) -> list[dict[str, Any]]:
 	return [{k: v for k, v in row.as_dict().items() if k not in _BOOKKEEPING} for row in doc.get(fieldname) or []]
 
 
+def certifier_conflict(version, actor: str) -> bool:
+	"""§7.3 bullet 1 / REQ19-AC-045 — an actor who prepared or sent the Version
+	as a Departmental Author cannot also complete the Head of User Department
+	decision on it, unless they hold that role independently and prepared the
+	Requisition directly in that capacity. One rule for every submit path
+	(Draft or approval task) and for the offers that mirror it."""
+	prepared_by, sent_by = cstr(version.get("prepared_by")), cstr(version.get("sent_for_approval_by"))
+	prepared_directly = prepared_by == actor and cstr(version.get("prepared_capacity")) == ROLE_HEAD_OF_USER_DEPARTMENT
+	return not prepared_directly and actor in (prepared_by, sent_by)
+
+
+def authoriser_conflict(version, actor: str) -> bool:
+	"""§7.3 bullet 4 / REQ19-AC-045 — the Procurement authoriser cannot also be
+	the departmental submitting authority, and cannot authorise a Version they
+	prepared themselves (no self-authorisation)."""
+	return bool(actor) and actor in (cstr(version.get("submitted_by")), cstr(version.get("prepared_by")))
+
+
 def unit_name(unit: str) -> str:
 	if not unit:
 		return ""

@@ -38,7 +38,7 @@ from frappe.utils import cstr, get_datetime, now_datetime
 from kentender_core.services import home_entries as he
 from kentender_core.services import home_support, home_time
 from kentender_core.services.authorization import descendants_of, is_technical, permitted_ou_scopes
-from kentender_procurement.procurement_requisitions.services import eligibility_gateway, my_work_provider
+from kentender_procurement.procurement_requisitions.services import eligibility_gateway, my_work_provider, records
 from kentender_procurement.procurement_requisitions.services import requisition_authorization as authz
 from kentender_procurement.procurement_requisitions.services.requisition_roles import (
 	DEPARTMENTAL_ROLES,
@@ -51,7 +51,7 @@ from kentender_procurement.procurement_requisitions.services.requisition_roles i
 OWNER = "requisitions"
 PAGE = "procurement-requisitions"
 ROOT_FIELDS = ["name", "requisition_reference", "lead_org_unit_id", "current_state", "current_version", "plan_item_id"]
-VERSION_FIELDS = ["name", "requirement_title", "prepared_by", "prepared_capacity", "submitted_by"]
+VERSION_FIELDS = ["name", "requirement_title", "prepared_by", "prepared_capacity", "sent_for_approval_by", "submitted_by"]
 DEPARTMENT_APPROVAL, PROCUREMENT_AUTHORISATION = "requisitions.department_approval", "requisitions.procurement_authorisation"
 SEND = "SendForDepartmentApproval"
 
@@ -219,10 +219,10 @@ def _work(facts: _Facts) -> tuple[list[dict[str, Any]], set[str]]:
 		if not task or not root or not version:
 			continue
 		kind = cstr(row["task_type"])
-		if kind == PROCUREMENT_AUTHORISATION and cstr(version.submitted_by) == facts.user:
-			continue  # `authorise_requisition`: the authoriser cannot also be the submitting authority (REQ_SOD_BLOCKED)
-		if kind == DEPARTMENT_APPROVAL and cstr(version.prepared_by) == facts.user and cstr(version.prepared_capacity) != ROLE_HEAD_OF_USER_DEPARTMENT:
-			continue  # `submit_requisition_to_procurement`: an Author cannot complete the HoD decision on a Version they prepared (REQ_SOD_BLOCKED)
+		if kind == PROCUREMENT_AUTHORISATION and records.authoriser_conflict(version, facts.user):
+			continue  # `authorise_requisition`: the authoriser cannot also be the submitting authority or the preparer (REQ_SOD_BLOCKED)
+		if kind == DEPARTMENT_APPROVAL and records.certifier_conflict(version, facts.user):
+			continue  # `submit_requisition_to_procurement`: an Author cannot complete the HoD decision on a Version they prepared or sent (REQ_SOD_BLOCKED)
 		held.add(task.name)
 		blocked = kind == PROCUREMENT_AUTHORISATION and facts.hold(root)
 		entries.append(he.make(

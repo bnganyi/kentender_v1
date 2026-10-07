@@ -475,7 +475,7 @@ def get_requisition_editor(*, root, actor: str) -> dict[str, Any]:
 		"save": bool(scope["units"]) and not technical, "save_label": "Save my changes" if contributor else "Save draft",
 		"edit_shared": scope["shared"] and not technical,
 		"send_for_department_approval": scope["shared"] and is_lead_author and not direct_hod and not technical,
-		"submit_to_procurement": is_lead_hod and not technical and (direct_hod or not is_lead_author),
+		"submit_to_procurement": is_lead_hod and not technical and (direct_hod or not is_lead_author) and not records.certifier_conflict(version, actor),
 		"withdraw": is_lead_hod and not technical,
 		"request_planning_correction": (is_lead_hod or _has(actor, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)) and not technical,
 		"contributor": contributor,
@@ -645,7 +645,7 @@ def get_procurement_authorisation_task(*, task: str, user: str | None = None) ->
 	else:
 		result = {"tone": "is-live", "title": "Ready to authorise", "detail": f"Authorising will reserve {precision.display_money(value)} and allow Tender Preparation to begin."}
 	decider = mode == "decider" and task_doc.status == "Open"
-	can_authorise = decider and result["title"] == "Ready to authorise" and cstr(version.submitted_by) != actor
+	can_authorise = decider and result["title"] == "Ready to authorise" and not records.authoriser_conflict(version, actor)
 	submit = records.decision_of(version.name, "Submit to Procurement")
 	units = sorted(records.contributing_units(root))
 	after = funding.get("lines", [{}])[0].get("available_after", "") if funding.get("lines") else ""
