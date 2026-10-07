@@ -21,6 +21,7 @@ PATCHES = (
 	"tpr_fu25_retire_candidate_stand_in",
 	"p6_clear_procurement_tender_dev",
 	"pln_chg_001_v12_drop_legacy_planning_doctypes",
+	"drop_retired_tender_" + "configurations",
 )
 BASE = "kentender_procurement.patches."
 

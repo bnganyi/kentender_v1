@@ -7,7 +7,7 @@ Drops what the new Supplier Portal and Electronic Bid Submission module
 replaces (plan BDS-CHG-001 v0.8 Phase 1; `reconciliation/legacy_inventory.md`;
 spec BDS01-IMP-090, BDS07-IMP-010):
 
-- the three legacy bid DocTypes of `tender_configurations` and every row in
+- the three legacy bid DocTypes of the old tender-configuration module and every row in
   them. The Project Owner decided on 21 Sep 2026 that the old bid records
   are deleted outright, with no migration.
 - the three legacy bidder/bid Desk Pages.

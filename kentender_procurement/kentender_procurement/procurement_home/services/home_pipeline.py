@@ -31,7 +31,6 @@ from kentender_procurement.departmental_needs.services.events import (
 	current_accepted_events,
 )
 from kentender_procurement.departmental_needs.services.usage import planning_usage
-from kentender_procurement.procurement_home.services.pe_aliases import pe_aliases
 
 PIPELINE_STAGES = (
 	(
@@ -72,27 +71,6 @@ def _count_needs_awaiting_planning(pe: str) -> int:
 			if need and planning_usage(need) != USAGE_FULL:
 				awaiting += 1
 	return awaiting
-
-
-def _packages_with_tender_initiation(pe: str) -> set[str]:
-	"""Package names/codes that already have a tender or tender configuration."""
-	claimed: set[str] = set()
-	aliases = pe_aliases(pe)
-	if frappe.db.exists("DocType", "Tender Configuration"):
-		cfg_filters: dict[str, Any] = {}
-		if frappe.db.has_column("Tender Configuration", "procuring_entity_code"):
-			cfg_filters["procuring_entity_code"] = ["in", aliases]
-		for r in frappe.get_all(
-			"Tender Configuration",
-			filters=cfg_filters or None,
-			fields=["procurement_package", "procurement_package_ref"],
-			limit=2000,
-		):
-			for key in ("procurement_package", "procurement_package_ref"):
-				val = (r.get(key) or "").strip()
-				if val:
-					claimed.add(val)
-	return claimed
 
 
 def _count_plan_awaiting_tender(pe: str) -> int:

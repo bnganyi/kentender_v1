@@ -34,7 +34,7 @@ class TestSidebarAvailability(unittest.TestCase):
 		self.assertEqual(labels, ["Demands"])
 
 	def test_available_labels_unchanged(self):
-		items = [{"label": "Tenders", "type": "Link", "link_to": "publications"}]
+		items = [{"label": "Tenders", "type": "Link", "link_to": "tenders"}]
 		out = apply_availability_to_sidebar_items(items)
 		self.assertEqual(out[0].get("suffix"), None)
 		self.assertEqual(out[0]["label"], "Tenders")

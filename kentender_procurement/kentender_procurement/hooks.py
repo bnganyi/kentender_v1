@@ -81,7 +81,6 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
 	f"/assets/kentender_procurement/js/workspace_list_selection_utils.js?v={_desk_asset_v('public/js/workspace_list_selection_utils.js')}",
 	f"/assets/kentender_procurement/js/procurement_home_workspace.js?v={_desk_asset_v('public/js/procurement_home_workspace.js')}",
-	f"/assets/kentender_procurement/js/it_tender_configuration_create_modal.js?v={_desk_asset_v('public/js/it_tender_configuration_create_modal.js')}",
 ]
 
 # include js, css files in header of web template
@@ -242,26 +241,8 @@ page_js = {
 	"kt-procurement-home": "public/js/procurement_home_page.js",
 	"plc-procurement-journey": "public/js/procurement_journey_page.js",
 	"plc-module-journey-context": "public/js/plc_module_journey_context_page.js",
-	"it-std-wizard-retired": "public/js/it_std_wizard_retired_page.js",
 	"kt-cl-shell-poc": "public/js/kt_cl_shell_poc_page.js",
-	"it-tender-configuration-dashboard": "public/js/it_tender_configurations_dashboard_page.js",
-	"it-tender-configuration-overview": "public/js/it_tender_configuration_overview_page.js",
-	"it-tender-configuration-tender-profile": "public/js/it_tender_configuration_tender_profile_page.js",
-	"it-tender-configuration-tds": "public/js/it_tender_configuration_tds_page.js",
-	"it-tender-configuration-it-requirements": "public/js/it_tender_configuration_it_requirements_page.js",
-	"it-tender-configuration-implementation-schedule": "public/js/it_tender_configuration_implementation_schedule_page.js",
-	"it-tender-configuration-system-inventory": "public/js/it_tender_configuration_system_inventory_page.js",
-	"it-tender-configuration-price-schedule": "public/js/it_tender_configuration_price_schedule_page.js",
-	"it-tender-configuration-evaluation-setup": "public/js/it_tender_configuration_evaluation_setup_page.js",
-	"it-tender-configuration-forms-and-evidence": "public/js/it_tender_configuration_forms_and_evidence_page.js",
-	"it-tender-configuration-scc": "public/js/it_tender_configuration_scc_page.js",
-	"it-tender-configuration-validation-report": "public/js/it_tender_configuration_validation_report_page.js",
-	"it-tender-configuration-review-and-approval": "public/js/it_tender_configuration_review_and_approval_page.js",
-	"it-tender-configuration-render-preview": "public/js/it_tender_configuration_render_preview_page.js",
-	"it-tender-configuration-publication-readiness": "public/js/it_tender_configuration_render_preview_page.js",
-	"it-tender-package-review": "public/js/it_tender_package_review_page.js",
 	"coming-soon": "public/js/coming_soon_page.js",
-	"publications": "public/js/publications_page.js",
 	"procurement-planning": "public/js/procurement_planning_page.js",
 	"procurement-requisitions": "public/js/procurement_requisitions_page.js",
 	"tenders": "public/js/tenders_page.js",
@@ -276,7 +257,6 @@ page_js = {
 	"departmental-procurement-plan": "public/js/departmental_procurement_plan_page.js",
 	"annual-procurement-plan": "public/js/annual_procurement_plan_page.js",
 	"procurement-plan-item": "public/js/procurement_plan_item_page.js",
-	"publication-setup": "public/js/publication_setup_page.js",
 	# The STD-CHG-001 v1.3 "std-cfg-*" STD Configuration pages were retired
 	# with that module (STD-TPL-IMP-001 v1.0, OD4; archive/std-configuration-retired-2026-09/).
 }
@@ -476,9 +456,6 @@ has_permission.update({doctype: f"{_TND_AUTHZ}.has_permission" for doctype in _T
 # Hook on document methods and events
 
 doc_events = {
-	"File": {
-		"on_trash": "kentender_procurement.tender_configurations.bidder_workspace_manifest.repository.cas.prevent_cas_file_trash",
-	},
 	# Procurement Planning subscribes to the Departmental Needs published
 	# outbox (NDS §7.1): accepting a Need starts that department's Draft
 	# departmental plan, so the Head of Department never has to start it by

@@ -8,12 +8,12 @@ legacy_inventory.md` (plan BDS-CHG-001 v0.8 Phase 1, owner decision OD-F; spec
 BDS01-IMP-090, BDS07-IMP-010): no retired route, page, asset, service, test,
 seed, make target or DocType survives, and no remaining module imports one.
 The retirement patch itself is the only code allowed to name the retired
-DocTypes. The kept BWMF/STD-wizard machinery (FU-05) is out of scope here.
+DocTypes. The module that carried the bid slice has since been retired whole
+(see `kentender_procurement/tests/test_retired_tender_configurations_gone.py`).
 """
 
 from __future__ import annotations
 
-import ast
 import json
 import os
 import re
@@ -26,20 +26,6 @@ REPO_DIR = os.path.dirname(os.path.dirname(APP_DIR))  # apps/kentender_v1
 
 RETIRED_DOCTYPES = ("Electronic Bid Submission", "IT Bid Opening Record", "Electronic Bid Audit Event")
 RETIRED_PAGES = ("bid-submissions", "it-electronic-bidder-workspace", "published-tender-overview")
-
-TC = "tender_configurations"
-RETIRED_TC_SERVICES = (
-	"electronic_bid", "bid_submissions", "bid_evidence", "bidder_presentation", "bid_issues",
-	"bidder_submission_schema", "price_schedule_bidder", "final_submission", "available_tenders",
-	"published_tender_overview", "tender_documents_addenda", "confidential_business_questionnaire",
-	"form_of_tender", "statutory_declarations", "tender_security", "preliminary_requirements",
-	"qualification_and_capability", "technical_proposal_and_implementation_plan", "requirement_matrix",
-	"submission_checklist", "section_response_envelope", "section_status",
-)
-RETIRED_TC_SEEDS = ("bid_submissions_officer_fixtures", "demand_to_bidder_journey_sample")
-RETIRED_MODULES = tuple(f"kentender_procurement.{TC}.services.{m}" for m in RETIRED_TC_SERVICES) + tuple(
-	f"kentender_procurement.{TC}.seed.{m}" for m in RETIRED_TC_SEEDS
-)
 
 RETIRED_PATHS = (
 	"www/tenders",
@@ -65,9 +51,6 @@ RETIRED_PATHS = (
 		"price_schedule_web", "qualification_and_capability_web", "requirement_matrix_web",
 		"statutory_declarations_web", "submission_checklist_web", "technical_proposal_web", "tender_security_web",
 	)),
-	*(f"{TC}/services/{m}.py" for m in RETIRED_TC_SERVICES),
-	*(f"{TC}/seed/{m}.py" for m in RETIRED_TC_SEEDS),
-	*(f"{TC}/doctype/{d}" for d in ("electronic_bid_submission", "it_bid_opening_record", "electronic_bid_audit_event")),
 )
 RETIRED_REPO_PATHS = ("tests/ui/smoke/bid-submissions", "tests/ui/smoke/bidder-workspace")
 RETIRED_MAKE_TARGETS = (
@@ -83,18 +66,6 @@ RETIRED_MAKE_TARGETS = (
 	"bw-final-submission-stitch-contract-gate", "ui-bidder-final-submission-gate", "bw-a4-domain-gate",
 	"ui-bidder-a4-gate", "seed-demand-to-bidder-journey",
 )
-# Whitelisted bid/bidder endpoints that lived on the legacy module surface.
-RETIRED_ENDPOINTS = (
-	"download_published_tender_document_pdf", "get_tender_configuration_bidder_submission_schema",
-	"get_electronic_bidder_workspace", "create_electronic_bid_draft", "save_electronic_bid_section",
-	"validate_electronic_bid", "submit_and_seal_electronic_bid", "get_electronic_bid_receipt",
-	"get_published_tender_overview", "start_or_get_bid_workspace", "get_submission_checklist",
-	"get_form_of_tender", "get_statutory_declarations", "get_tender_security", "get_requirement_matrix",
-	"get_evidence_register", "get_issue_register", "get_price_schedule_overview", "submit_electronic_bid",
-	"get_submission_receipt", "list_bid_submission_tenders", "get_bid_submission_sealed_status",
-	"open_submitted_bids", "get_opening_register", "download_submitted_evidence",
-	"seed_bid_submissions_officer_fixtures", "seed_demand_to_bidder_journey_sample_for_tests",
-)
 PATCH_MODULE = "kentender_procurement/patches/bds_chg_001_v08_retire_bid_slice.py"
 
 SCAN_ROOTS = ("kentender_core", "kentender_strategy", "kentender_budget", "kentender_procurement", "kentender_suppliers")
@@ -109,18 +80,6 @@ def _py_files():
 			for name in filenames:
 				if name.endswith(".py"):
 					yield os.path.join(dirpath, name)
-
-
-def _imported_modules(path: str) -> set[str]:
-	tree = ast.parse(open(path, encoding="utf-8").read())
-	found: set[str] = set()
-	for node in ast.walk(tree):
-		if isinstance(node, ast.Import):
-			found.update(alias.name for alias in node.names)
-		elif isinstance(node, ast.ImportFrom) and node.module and not node.level:
-			found.add(node.module)
-			found.update(f"{node.module}.{alias.name}" for alias in node.names)
-	return found
 
 
 class TestLegacyBidSliceRetired(IntegrationTestCase):
@@ -139,14 +98,6 @@ class TestLegacyBidSliceRetired(IntegrationTestCase):
 		self.assertEqual(legacy_routes, [])
 		self.assertFalse([s for s in hooks.app_include_js if "bidder_workspace_renderer" in s])
 		self.assertFalse([p for p in RETIRED_PAGES if p in hooks.page_js])
-
-	def test_no_module_imports_a_retired_module(self):
-		offenders = []
-		for path in _py_files():
-			hits = _imported_modules(path) & set(RETIRED_MODULES)
-			if hits:
-				offenders.append((os.path.relpath(path, REPO_DIR), sorted(hits)))
-		self.assertEqual(offenders, [])
 
 	def test_only_the_retirement_patch_names_the_retired_doctypes(self):
 		pattern = re.compile("|".join(re.escape(d) for d in RETIRED_DOCTYPES))
@@ -186,14 +137,6 @@ class TestLegacyBidSliceRetired(IntegrationTestCase):
 			self.assertFalse(frappe.db.table_exists(doctype), doctype)
 		for page in RETIRED_PAGES:
 			self.assertFalse(frappe.db.exists("Page", page), page)
-
-	def test_legacy_module_surface_exposes_no_bid_endpoint(self):
-		from kentender_procurement import tender_configurations
-		from kentender_procurement.tender_configurations import api
-
-		for module in (tender_configurations, api):
-			left = [name for name in RETIRED_ENDPOINTS if hasattr(module, name)]
-			self.assertEqual(left, [], module.__name__)
 
 	def test_navigation_and_make_targets_no_longer_point_at_the_legacy_bid_screens(self):
 		sidebar = json.load(open(os.path.join(APP_DIR, "workspace_sidebar", "procurement.json"), encoding="utf-8"))
