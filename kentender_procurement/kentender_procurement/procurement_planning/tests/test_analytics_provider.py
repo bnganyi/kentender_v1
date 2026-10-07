@@ -32,13 +32,14 @@ from typing import Any
 from unittest.mock import patch
 
 import frappe
+
+from kentender_core.services.command_write_guard import maintenance_write, purge_doc
+from kentender_procurement.procurement_planning.write_family import PLANNING_WRITE_FAMILY
 from frappe.tests import IntegrationTestCase
 from frappe.utils import now_datetime
 
 from kentender_core.services import analytics_contract as ac
 from kentender_core.services import responsibility_administration as administration
-from kentender_core.services.command_write_guard import maintenance_write
-from kentender_procurement.procurement_planning.write_family import PLANNING_WRITE_FAMILY
 from kentender_procurement.procurement_planning.services import analytics_provider as provider
 from kentender_procurement.procurement_planning.services import dpp_read
 from kentender_procurement.procurement_planning.tests import fixtures as fx
@@ -113,7 +114,7 @@ class TestPlanningAnalytics(IntegrationTestCase):
 		for name in frappe.get_all("User Responsibility Assignment", filters={"fixture_namespace": NS}, pluck="name"):
 			if frappe.db.get_value("User Responsibility Assignment", name, "status") == "Enabled":
 				administration.revoke(name, reason="Revoked inside the Planning Analytics test.", actor="Administrator")
-			frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+			purge_doc("User Responsibility Assignment", name)
 		for name in frappe.get_all("Contact Email", filters={"email_id": EXTRA}, pluck="parent"):
 			frappe.delete_doc("Contact", name, force=1, ignore_permissions=True)
 		if frappe.db.exists("User", EXTRA):

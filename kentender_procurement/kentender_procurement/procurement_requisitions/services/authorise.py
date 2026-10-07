@@ -131,8 +131,6 @@ def authorise_requisition(*, requisition: str, task: str, expected_record_versio
 		for line in version.drawdown_lines:
 			line.reservation_id = reservation_by_line[line.drawdown_line_id]["reservation_id"]
 			line.planning_drawdown_reference = drawdown_by_allocation.get(line.plan_item_line_id, "")
-		version.flags.kt_lifecycle = True
-		package_version.flags.kt_lifecycle = True
 		envelope.bump(version, version_status="Authorised")
 		envelope.bump(package_version, version_status="Authorised")
 		decision = record_decision(task=task_doc, version=version, actor=actor, capacity=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, decision="Authorise requisition", assignment=assignment, idempotency_key=idempotency_key, resulting_state="Authorised")
@@ -146,7 +144,7 @@ def authorise_requisition(*, requisition: str, task: str, expected_record_versio
 
 		package = frappe.get_doc("IT Equipment Requirement Package", package_version.package)
 		package.authorised_version = package_version.name
-		package.save(ignore_permissions=True)
+		envelope.save(package)
 		root.current_state = "Authorised"
 		root.authorised_version = version.name
 		root.handoff = handoff_doc.name
@@ -193,8 +191,6 @@ def revoke_unconsumed_authorisation(*, requisition: str, reason: str, expected_r
 		for row in eligibility_gateway.list_requisition_drawdowns(root.requisition_reference):
 			if row["requisition_version"] == version.name and row["drawdown_state"] == "Active":
 				eligibility_gateway.reverse_requisition_drawdown(drawdown_reference=row["drawdown_reference"], expected_record_version=row["record_version"], idempotency_key=f"{idempotency_key}:planning:{row['drawdown_reference']}")
-		version.flags.kt_lifecycle = True
-		package_version.flags.kt_lifecycle = True
 		envelope.bump(version, version_status="Revoked")
 		envelope.bump(package_version, version_status="Revoked")
 		record_decision(task=None, version=version, actor=actor, capacity=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, decision="Revoke authorisation", assignment=assignment, idempotency_key=idempotency_key, reason=reason, resulting_state="Revoked")

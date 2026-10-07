@@ -23,9 +23,13 @@ from uuid import uuid4
 import frappe
 from frappe.utils import cstr, now_datetime
 
+from kentender_core.services.command_write_guard import command_write
 from kentender_procurement.tenders.services.errors import fail
 
 JOURNAL = "Tender Command Journal"
+# The Tenders command-write family (AUD-XC-013): every Tender doctype's
+# controller refuses a write that is not made inside `command_write(FAMILY)`.
+FAMILY = "Tenders"
 
 
 def token() -> str:
@@ -67,7 +71,7 @@ def record_command(
 	actor: str | None = None,
 	fixture_namespace: str = "",
 ) -> None:
-	frappe.get_doc(
+	doc = frappe.get_doc(
 		{
 			"doctype": JOURNAL,
 			"idempotency_key": cstr(idempotency_key).strip(),
@@ -80,7 +84,9 @@ def record_command(
 			"occurred_at": now_datetime(),
 			"fixture_namespace": fixture_namespace,
 		}
-	).insert(ignore_permissions=True)
+	)
+	with command_write(FAMILY):
+		doc.insert(ignore_permissions=True)
 
 
 def locked(doctype: str, name: str):
@@ -99,19 +105,19 @@ def check_record_version(doc, expected_record_version) -> None:
 def bump(doc, **values) -> None:
 	"""The one writer of immutable rows (plan D14): sets the given columns,
 	bumps `record_version` when the doctype carries one, and saves under the
-	lifecycle flag the controllers' `validate()` guards look for."""
+	command-write window the controllers' guards look for."""
 	for field, value in values.items():
 		doc.set(field, value)
 	if doc.meta.has_field("record_version"):
 		doc.record_version = int(doc.record_version or 0) + 1
-	doc.flags.kt_lifecycle = True
-	doc.save(ignore_permissions=True)
+	with command_write(FAMILY):
+		doc.save(ignore_permissions=True)
 
 
 def insert(doc):
-	"""Insert a new lifecycle-owned row (the controllers only guard updates)."""
-	doc.flags.kt_lifecycle = True
-	doc.insert(ignore_permissions=True)
+	"""Insert a new lifecycle-owned row (the controllers refuse any insert made outside the window)."""
+	with command_write(FAMILY):
+		doc.insert(ignore_permissions=True)
 	return doc
 
 

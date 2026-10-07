@@ -10,6 +10,7 @@ from __future__ import annotations
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.command_write_guard import CommandWriteError
 from kentender_procurement.tenders.services import envelope
 from kentender_procurement.tenders.services.errors import TendersError
 from kentender_procurement.tenders.tests import fixtures as fx
@@ -78,12 +79,12 @@ class TestImmutabilityAndVersions(TendersEnvelopeCase):
 	def test_an_immutable_row_refuses_a_plain_save_and_a_plain_delete(self):
 		root = self._tender()
 		inserted = envelope.insert(frappe.get_doc({"doctype": "Tender Version", "tender": root.name, "version_number": 1, "status": "Draft", "record_version": 0, "fixture_namespace": fx.NS}))
-		version = frappe.get_doc("Tender Version", inserted.name)  # a fresh object: no lifecycle flag
+		version = frappe.get_doc("Tender Version", inserted.name)  # a fresh object: outside the command-write window
 		version.status = "Approved"
-		with self.assertRaises(frappe.ValidationError):
+		with self.assertRaises(CommandWriteError):
 			version.save(ignore_permissions=True)
 		version.reload()
-		with self.assertRaises(frappe.ValidationError):
+		with self.assertRaises(CommandWriteError):
 			version.delete(ignore_permissions=True)
 		self.assertTrue(frappe.db.exists("Tender Version", version.name))
 

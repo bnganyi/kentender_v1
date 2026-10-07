@@ -22,6 +22,8 @@ from decimal import Decimal
 from uuid import uuid4
 
 import frappe
+
+from kentender_core.services.command_write_guard import fixture_insert, purge_doc
 from frappe.tests import IntegrationTestCase
 
 from kentender_core.services import analytics_contract as ac
@@ -48,7 +50,7 @@ def _dt(text: str) -> datetime:
 def _remove_extra() -> None:
 	frappe.set_user("Administrator")
 	for name in frappe.get_all("User Responsibility Assignment", filters={"fixture_namespace": ANL_NS}, pluck="name"):
-		frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+		purge_doc("User Responsibility Assignment", name)
 	for email in EXTRA_USERS:
 		for name in frappe.get_all("Contact Email", filters={"email_id": email}, pluck="parent"):
 			frappe.delete_doc("Contact", name, force=1, ignore_permissions=True)
@@ -95,8 +97,7 @@ class World:
 
 	def insert(self, values: dict):
 		doc = frappe.get_doc({**values, "fixture_namespace": ANL_NS if "fixture_namespace" in frappe.get_meta(values["doctype"]).get_valid_columns() else None})
-		doc.insert(ignore_permissions=True)
-		return doc
+		return fixture_insert(doc)
 
 	def version(self, key: str, number: int, status: str, lines: list[tuple[str, str]], *, submitted: str = "", based_on: str = "") -> str:
 		version = self.insert({

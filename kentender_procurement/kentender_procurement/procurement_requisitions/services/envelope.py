@@ -22,7 +22,12 @@ from uuid import uuid4
 import frappe
 from frappe.utils import cstr, now_datetime
 
+from kentender_core.services.command_write_guard import command_write
 from kentender_procurement.procurement_requisitions.services.errors import fail
+
+# The Requisitions command-write family (AUD-XC-013): every Requisition
+# doctype's controller refuses a write made outside `command_write(FAMILY)`.
+FAMILY = "Requisitions"
 
 
 def token() -> str:
@@ -69,7 +74,7 @@ def record_command(
 	actor: str | None = None,
 	fixture_namespace: str = "",
 ) -> None:
-	frappe.get_doc(
+	doc = frappe.get_doc(
 		{
 			"doctype": "Requisition Command Journal",
 			"idempotency_key": cstr(idempotency_key).strip(),
@@ -82,7 +87,8 @@ def record_command(
 			"occurred_at": now_datetime(),
 			"fixture_namespace": fixture_namespace,
 		}
-	).insert(ignore_permissions=True)
+	)
+	insert(doc)
 
 
 def locked(doctype: str, name: str):
@@ -102,11 +108,25 @@ def check_record_version(doc, expected_record_version) -> None:
 		fail("REQ_STALE_VERSION")
 
 
+def insert(doc):
+	"""Insert a Requisition-owned row inside the command-write window."""
+	with command_write(FAMILY):
+		doc.insert(ignore_permissions=True)
+	return doc
+
+
+def save(doc):
+	"""Save a Requisition-owned row inside the command-write window."""
+	with command_write(FAMILY):
+		doc.save(ignore_permissions=True)
+	return doc
+
+
 def bump(doc, **values) -> None:
 	for field, value in values.items():
 		doc.set(field, value)
 	doc.record_version = int(doc.record_version or 0) + 1
-	doc.save(ignore_permissions=True)
+	save(doc)
 
 
 def assert_task_token(task_doc, presented_token: str) -> None:

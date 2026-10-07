@@ -20,6 +20,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import frappe
+from kentender_core.services.command_write_guard import purge_doc
 from frappe.tests import IntegrationTestCase
 
 from kentender_core.services import home_entries as he
@@ -276,7 +277,7 @@ def _remove_world() -> None:
 	rows = _world_rows()
 	fx.wipe_planning_rows()
 	for name in frappe.get_all("User Responsibility Assignment", filters={"user": EXTRA}, pluck="name"):
-		frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+		purge_doc("User Responsibility Assignment", name)
 	for name in frappe.get_all("Contact Email", filters={"email_id": EXTRA}, pluck="parent"):
 		frappe.delete_doc("Contact", name, force=1, ignore_permissions=True)
 	if frappe.db.exists("User", EXTRA):

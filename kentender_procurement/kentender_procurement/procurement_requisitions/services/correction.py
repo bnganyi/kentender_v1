@@ -46,7 +46,7 @@ def _digest(event: dict[str, Any]) -> str:
 
 
 def _quarantine(event: dict[str, Any], reason: str, root_name: str = "") -> None:
-	frappe.get_doc(
+	envelope.insert(frappe.get_doc(
 		{
 			"doctype": "Requisition Correction Outcome", "event_id": f"Q-{frappe.generate_hash(length=12)}:{cstr(event.get('event_id'))[:80]}",
 			"schema_version": int(event.get("schema_version") or 0) if str(event.get("schema_version") or "").isdigit() else 0,
@@ -54,7 +54,7 @@ def _quarantine(event: dict[str, Any], reason: str, root_name: str = "") -> None
 			"requisition": root_name or None, "payload_digest": _digest(event), "received_at": now_datetime(),
 			"status": "Quarantined", "quarantine_reason": reason,
 		}
-	).insert(ignore_permissions=True)
+	))
 
 
 def _invalid(event: dict[str, Any], reason: str, root_name: str = "") -> dict[str, Any]:
@@ -126,7 +126,7 @@ def record_plan_item_correction_outcome(*, event: dict[str, Any]) -> dict[str, A
 	if last is not None and int(event["producer_sequence"]) <= int(last):
 		return _invalid(event, "Out-of-order outcome: a later outcome for this request is already recorded.", root.name)
 
-	doc = frappe.get_doc(
+	doc = envelope.insert(frappe.get_doc(
 		{
 			"doctype": "Requisition Correction Outcome", "event_id": event["event_id"], "schema_version": SCHEMA_VERSION, "producer": PRODUCER,
 			"producer_sequence": int(event["producer_sequence"]), "correction_request_id": event["correction_request_id"],
@@ -139,7 +139,7 @@ def record_plan_item_correction_outcome(*, event: dict[str, Any]) -> dict[str, A
 			"eligibility_revision": int(event.get("eligibility_revision") or 0), "payload_digest": payload_digest, "received_at": now_datetime(),
 			"status": "Recorded",
 		}
-	).insert(ignore_permissions=True)
+	))
 	events.publish(requisition=root.name, requisition_version=event["requesting_requisition_version_id"], event_type=events.EVENT_OUTCOME_RECEIVED, payload={"outcome": doc.name, "result": event["outcome"]})
 	_notify_requester(root, event)
 	return {"ok": True, "idempotent": False, "action": "recorded", "outcome": doc.name}

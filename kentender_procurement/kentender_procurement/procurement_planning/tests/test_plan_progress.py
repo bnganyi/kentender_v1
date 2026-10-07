@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import frappe
 
+from kentender_core.services.command_write_guard import fixture_insert
+
 from kentender_procurement.procurement_planning.services import (
 	plan_read,
 	plan_requisition,
@@ -53,11 +55,11 @@ class ProgressCase(RequisitionCase):
 		disposition calls back into — this module's tests synthesise the
 		REQ-shaped record rather than depending on that module's fixtures."""
 		if accepted and not frappe.db.exists("Procurement Requisition", {"requisition_reference": reference}):
-			root = frappe.get_doc({
+			root = fixture_insert(frappe.get_doc({
 				"doctype": "Procurement Requisition", "requisition_reference": reference,
 				"plan_id": accepted["annual_plan"], "plan_version_id": accepted["annual_plan_version"],
 				"plan_item_id": item_id, "current_state": "Upstream correction required", "record_version": 0,
-			}).insert(ignore_permissions=True)
+			}))
 			self.addCleanup(frappe.db.delete, "Procurement Requisition", {"name": root.name})
 		frappe.set_user(fx.HOD)
 		result = plan_requisition.receive_plan_item_correction_request(

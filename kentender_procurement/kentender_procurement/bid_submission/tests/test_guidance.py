@@ -13,6 +13,7 @@ from __future__ import annotations
 from unittest import mock
 
 import frappe
+from kentender_core.services.command_write_guard import purge_doc
 
 from kentender_core.services import next_step as ns
 
@@ -50,7 +51,7 @@ def _remove_operators() -> None:
 	they created. The register's people and their canonical roles stay."""
 	frappe.db.delete("Notification Log", {"for_user": ("in", (DANIEL, NADIA))})
 	for name in frappe.get_all("User Responsibility Assignment", filters={"user": ("in", (DANIEL, NADIA)), "fixture_namespace": NS}, pluck="name"):
-		frappe.delete_doc("User Responsibility Assignment", name, force=True, ignore_permissions=True)
+		purge_doc("User Responsibility Assignment", name)
 	for email in (DANIEL, NADIA):
 		if email in _CREATED and frappe.db.exists("User", email):
 			frappe.delete_doc("User", email, force=True, ignore_permissions=True)

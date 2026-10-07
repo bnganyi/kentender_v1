@@ -20,15 +20,16 @@ from datetime import datetime
 from typing import Any
 
 import frappe
+from kentender_core.services.command_write_guard import purge_doc
 from frappe.tests import IntegrationTestCase
 from frappe.utils import now_datetime
 
 from kentender_core.services import analytics_contract as ac
 from kentender_core.services import responsibility_administration as administration
-from kentender_procurement.departmental_needs.constants import REASON_REQUIRED_ACTIONS
-from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import AUTHOR, DEPARTMENTAL_AUTHOR, upsert_departmental_needs, _granted_units
 from kentender_core.services.command_write_guard import maintenance_write
 from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
+from kentender_procurement.departmental_needs.constants import REASON_REQUIRED_ACTIONS
+from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import AUTHOR, DEPARTMENTAL_AUTHOR, upsert_departmental_needs, _granted_units
 from kentender_procurement.departmental_needs.services import analytics_provider as provider
 
 NS = "KT_TEST_NDSANL"
@@ -139,7 +140,7 @@ class TestNeedsAnalytics(IntegrationTestCase):
 		for name in frappe.get_all("User Responsibility Assignment", filters={"fixture_namespace": NS}, pluck="name"):
 			if frappe.db.get_value("User Responsibility Assignment", name, "status") == "Enabled":
 				administration.revoke(name, reason="Revoked inside the Needs Analytics test.", actor="Administrator")
-			frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+			purge_doc("User Responsibility Assignment", name)
 		for doctype in ("Departmental Need Decision", "Departmental Need Revision", "Departmental Need"):
 			frappe.db.delete(doctype, {"fixture_namespace": NS})
 		for email in USERS:

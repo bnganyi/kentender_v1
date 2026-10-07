@@ -131,7 +131,7 @@ def prepare_it_equipment_requisition(*, plan_item_id: str, idempotency_key: str,
 
 	# All or nothing: the open-slot guard may refuse after the root row exists.
 	with envelope.atomic("prepare"):
-		root = frappe.get_doc(
+		root = envelope.insert(frappe.get_doc(
 			{
 				"doctype": "Procurement Requisition",
 				"requisition_reference": references.requisition_reference(fiscal_year=projection["fiscal_year"], plan_item_id_value=projection["plan_item_id"]),
@@ -147,10 +147,10 @@ def prepare_it_equipment_requisition(*, plan_item_id: str, idempotency_key: str,
 				"planning_correction_request_id": (prior or {}).get("correction_request") or "",
 				"planning_correction_outcome_event_id": (prior or {}).get("outcome_event") or "",
 			}
-		).insert(ignore_permissions=True)
+		))
 		records.occupy_slot(root, projection["plan_item_id"])
 
-		package = frappe.get_doc(
+		package = envelope.insert(frappe.get_doc(
 			{
 				"doctype": "IT Equipment Requirement Package", "requisition": root.name, "product_pattern": "IT Equipment",
 				"reservation_category": projection.get("reservation_category") or "None",
@@ -158,25 +158,25 @@ def prepare_it_equipment_requisition(*, plan_item_id: str, idempotency_key: str,
 				"reservation_rule_snapshot_ids": json.dumps(snapshot_ids), "lotting_indicator": projection.get("lotting_indicator"),
 				"record_version": 0,
 			}
-		).insert(ignore_permissions=True)
-		package_version = frappe.get_doc(
+		))
+		package_version = envelope.insert(frappe.get_doc(
 			{
 				"doctype": "IT Equipment Requirement Package Version", "package": package.name, "version_number": 1,
 				"version_status": "Draft", "catalogue_version": catalogue.CATALOGUE_VERSION,
 				"standard_package_review_state": "Not generated", "service_location_constraint": "None", "record_version": 0,
 			}
-		).insert(ignore_permissions=True)
+		))
 		package.current_version = package_version.name
-		package.save(ignore_permissions=True)
+		envelope.save(package)
 
-		version = frappe.get_doc(
+		version = envelope.insert(frappe.get_doc(
 			{
 				"doctype": "Requisition Version", "requisition": root.name, "version_number": 1, "version_status": "Draft",
 				"requirement_title": (projection.get("title") or "")[:160], "related_services_required": 0,
 				"package_version": package_version.name, "drawdown_lines": lines,
 				"prepared_by": actor, "prepared_capacity": capacity, "prepared_authority_snapshot": authority, "record_version": 0,
 			}
-		).insert(ignore_permissions=True)
+		))
 		root.current_version = version.name
 		envelope.bump(root)
 

@@ -72,7 +72,7 @@
    "fieldname": "plan_item_version_id",
    "fieldtype": "Data",
    "label": "Plan item version",
-   "description": "REQ-CHG-001 v1.11 \u00a75.1 \u2014 the exact approved item Version pinned at preparation; immutable.",
+   "description": "REQ-CHG-001 v1.11 §5.1 — the exact approved item Version pinned at preparation; immutable.",
    "read_only": 1
   },
   {
@@ -82,7 +82,7 @@
    "read_only": 1,
    "unique": 1,
    "hidden": 1,
-   "description": "REQ-CHG-001 v1.11 \u00a75.1 \u2014 the stable plan_item_id while this root is open (Draft, awaiting, submitted, or authorised with an unconsumed handoff); empty otherwise. The database unique index is the authoritative one-open-per-item guard."
+   "description": "REQ-CHG-001 v1.11 §5.1 — the stable plan_item_id while this root is open (Draft, awaiting, submitted, or authorised with an unconsumed handoff); empty otherwise. The database unique index is the authoritative one-open-per-item guard."
   },
   {
    "fieldname": "strategic_objective_id",
@@ -125,7 +125,7 @@
    "label": "Lead department",
    "options": "Organisation Unit",
    "read_only": 1,
-   "description": "REQ-CHG-001 v1.6 \u00a75.1 \u2014 the OU whose Head of User Department certifies when more than one department contributed. Changeable only by the Head of Procurement Function at authorisation review (\u00a713.11)."
+   "description": "REQ-CHG-001 v1.6 §5.1 — the OU whose Head of User Department certifies when more than one department contributed. Changeable only by the Head of Procurement Function at authorisation review (§13.11)."
   },
   {
    "fieldname": "current_version",
@@ -161,7 +161,7 @@
    "fieldtype": "Small Text",
    "label": "Planning Drawdown Reference",
    "read_only": 1,
-   "description": "Comma-separated Plan Drawdown Reference names \u2014 one per requesting Organisation Unit (Planning issues one per requesting OU, not one per Requisition)."
+   "description": "Comma-separated Plan Drawdown Reference names — one per requesting Organisation Unit (Planning issues one per requesting OU, not one per Requisition)."
   },
   {
    "fieldname": "handoff",
@@ -181,7 +181,7 @@
    "fieldtype": "Link",
    "options": "Procurement Requisition",
    "label": "Prior requisition",
-   "description": "\u00a75.1 \u2014 the stopped root this fresh Requisition follows, after a Planning outcome.",
+   "description": "§5.1 — the stopped root this fresh Requisition follows, after a Planning outcome.",
    "read_only": 1
   },
   {
@@ -223,7 +223,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-07 00:00:00.000000",
+ "modified": "2026-10-07 01:56:16.525232",
  "modified_by": "Administrator",
  "module": "Procurement Requisitions",
  "name": "Procurement Requisition",
@@ -235,8 +235,8 @@
  "track_changes": 1,
  "permissions": [
   {
-   "create": 1,
-   "delete": 1,
+   "create": 0,
+   "delete": 0,
    "email": 0,
    "export": 1,
    "print": 1,
@@ -244,7 +244,7 @@
    "report": 1,
    "role": "System Manager",
    "share": 0,
-   "write": 1
+   "write": 0
   },
   {
    "create": 0,

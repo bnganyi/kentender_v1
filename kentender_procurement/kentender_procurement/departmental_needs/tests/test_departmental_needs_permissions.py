@@ -20,6 +20,7 @@ from __future__ import annotations
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.command_write_guard import purge_doc
 from kentender_core.services.responsibility_administration import grant, revoke
 from kentender_procurement.departmental_needs.constants import (
 	ROLE_AUDITOR,
@@ -827,9 +828,7 @@ class ScopeDiagnosticTest(DepartmentalNeedsPermissionCase):
 			fixture_namespace="NDS_SCOPE_DIAGNOSTIC_TEST",
 			actor="Administrator",
 		)
-		self.addCleanup(
-			frappe.delete_doc, "User Responsibility Assignment", outcome["assignment"], force=True, ignore_permissions=True
-		)
+		self.addCleanup(purge_doc, "User Responsibility Assignment", outcome["assignment"])
 
 		self.assertEqual(permissions.scope_diagnostic(email), "unit_not_configured")
 		result = self.workspace_as(email)

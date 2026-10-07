@@ -20,6 +20,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 import frappe
+from kentender_core.services.command_write_guard import purge_doc
 
 from kentender_core.services import home_entries as he
 from kentender_core.services import home_support, home_time
@@ -84,7 +85,7 @@ class HomeCase(DepartmentalNeedsCommandCase):
 	def remove_extra(cls):
 		frappe.set_user("Administrator")
 		for name in frappe.get_all("User Responsibility Assignment", filters={"fixture_namespace": EXTRA_NS}, pluck="name"):
-			frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+			purge_doc("User Responsibility Assignment", name)
 		for name in frappe.get_all("Contact Email", filters={"email_id": EXTRA}, pluck="parent"):
 			frappe.delete_doc("Contact", name, force=1, ignore_permissions=True)
 		if frappe.db.exists("User", EXTRA):
@@ -115,7 +116,7 @@ class HomeCase(DepartmentalNeedsCommandCase):
 			for name in frappe.get_all("User Responsibility Assignment", filters={"fixture_namespace": namespace}, pluck="name"):
 				if frappe.db.get_value("User Responsibility Assignment", name, "status") == "Enabled":
 					administration.revoke(name, reason="Revoked inside the Home provider test.", actor="Administrator")
-				frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+				purge_doc("User Responsibility Assignment", name)
 		frappe.db.commit()
 
 	# ----- the owner's commands, then the §10B instants set on the records -----

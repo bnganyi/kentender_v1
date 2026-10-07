@@ -20,6 +20,7 @@ from uuid import uuid4
 
 import frappe
 
+from kentender_core.services.command_write_guard import maintenance_write, purge_doc
 from kentender_procurement.procurement_requisitions.tests import fixtures as req_fx
 
 NS = req_fx.NS
@@ -123,8 +124,8 @@ def wipe_tender_rows() -> None:
 	def _drop(doctype: str, rows: list[str]) -> None:
 		for name in rows:
 			doc = frappe.get_doc(doctype, name)
-			doc.flags.kt_fixture_wipe = True
-			doc.delete(ignore_permissions=True, force=True)
+			with maintenance_write("Tenders", reason="test-world wipe"):
+				doc.delete(ignore_permissions=True, force=True)
 
 	from kentender_procurement.tenders.seeds.clear import notify_removal
 
@@ -158,9 +159,8 @@ def restore_site() -> None:
 	wipe_tender_rows()
 	frappe.set_user("Administrator")
 	for email in TENDER_ACTORS:
-		for doctype in ("User Responsibility Assignment",):
-			for name in frappe.get_all(doctype, filters={"user": email}, pluck="name"):
-				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+		for name in frappe.get_all("User Responsibility Assignment", filters={"user": email}, pluck="name"):
+			purge_doc("User Responsibility Assignment", name)
 		if frappe.db.exists("User", email):
 			frappe.delete_doc("User", email, force=True, ignore_permissions=True)
 	for doctype, name in (("Delivery Location", LOCATION), ("Contact Office", CONTACT_OFFICE)):

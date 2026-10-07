@@ -19,6 +19,7 @@ from datetime import datetime
 from decimal import Decimal
 
 import frappe
+from kentender_core.services.command_write_guard import purge_doc
 
 from kentender_core.services import responsibility_administration as administration
 from kentender_procurement.award.services import corrections, decision, issues, people, reads, records, restrictions, simulation, state
@@ -41,7 +42,7 @@ REASON = "The reported calculation issue may affect the recommendation."
 def _remove_hod() -> None:
 	frappe.set_user("Administrator")
 	for name in frappe.get_all("User Responsibility Assignment", filters={"user": HOD}, pluck="name"):
-		frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+		purge_doc("User Responsibility Assignment", name)
 	for name in frappe.get_all("Contact Email", filters={"email_id": HOD}, pluck="parent"):
 		frappe.delete_doc("Contact", name, force=1, ignore_permissions=True)
 	if frappe.db.exists("User", HOD):

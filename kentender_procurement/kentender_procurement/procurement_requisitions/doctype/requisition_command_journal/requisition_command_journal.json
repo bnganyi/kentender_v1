@@ -25,7 +25,7 @@
    "read_only": 1,
    "reqd": 1,
    "unique": 1,
-   "description": "\u00a78.2-style command idempotency: a repeated key replays the recorded result; the same key with a different fingerprint is rejected."
+   "description": "§8.2-style command idempotency: a repeated key replays the recorded result; the same key with a different fingerprint is rejected."
   },
   {
    "fieldname": "command",
@@ -87,7 +87,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-07 00:00:00.000000",
+ "modified": "2026-10-07 01:56:16.525640",
  "modified_by": "Administrator",
  "module": "Procurement Requisitions",
  "name": "Requisition Command Journal",
@@ -99,7 +99,7 @@
  "track_changes": 1,
  "permissions": [
   {
-   "create": 1,
+   "create": 0,
    "delete": 0,
    "email": 0,
    "export": 1,
@@ -108,7 +108,7 @@
    "report": 1,
    "role": "System Manager",
    "share": 0,
-   "write": 1
+   "write": 0
   },
   {
    "create": 0,

@@ -33,6 +33,7 @@ from typing import Any
 from uuid import uuid4
 
 import frappe
+from kentender_core.services.command_write_guard import purge_doc
 from frappe.utils import cstr
 from frappe.utils.password import update_password
 
@@ -389,7 +390,7 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 	if "Auditor" not in {row.role for row in nobody.roles}:
 		nobody.add_roles("Auditor")
 	for assignment in frappe.get_all("User Responsibility Assignment", filters={"user": NOBODY}, pluck="name"):
-		frappe.delete_doc("User Responsibility Assignment", assignment, ignore_permissions=True, force=True)
+		purge_doc("User Responsibility Assignment", assignment)
 	_move_flags()
 	_clear_context_preferences()
 	if commit:

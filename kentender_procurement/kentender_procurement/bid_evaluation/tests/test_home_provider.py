@@ -22,6 +22,7 @@ from pathlib import Path
 from unittest import mock
 
 import frappe
+from kentender_core.services.command_write_guard import purge_doc
 from frappe.utils import get_datetime
 
 from kentender_core.services import home_entries as he
@@ -58,7 +59,7 @@ SCOPE = "Explain the submitted evidence. Do not change your offer or add a new s
 def _remove_extra() -> None:
 	frappe.set_user("Administrator")
 	for name in frappe.get_all("User Responsibility Assignment", filters={"user": EXTRA}, pluck="name"):
-		frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=1)
+		purge_doc("User Responsibility Assignment", name)
 	for name in frappe.get_all("Contact Email", filters={"email_id": EXTRA}, pluck="parent"):
 		frappe.delete_doc("Contact", name, force=1, ignore_permissions=1)
 	frappe.db.delete("Notification Log", {"for_user": EXTRA})

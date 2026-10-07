@@ -89,8 +89,6 @@ def lock(root, version, package_version, *, target_status: str) -> dict[str, Any
 	# §5.2 — generated from the selected location at submission.
 	location = frappe.db.get_value("Delivery Location", version.delivery_location, ["location_name", "address"], as_dict=True) or {}
 	version.delivery_address_snapshot = ", ".join(v for v in (location.get("location_name"), location.get("address")) if v)
-	version.flags.kt_lifecycle = True
-	package_version.flags.kt_lifecycle = True
 	envelope.bump(version, version_status=target_status)
 	envelope.bump(package_version, version_status=target_status)
 	return projection
@@ -114,7 +112,7 @@ def copy_draft_successor(root, reviewed_version, reviewed_package_version, *, le
 	copied_technical = proposed(reviewed_package_version.technical_requirements)
 	copied_acceptance = proposed(reviewed_package_version.acceptance_requirements)
 	proposal_digest = digest.sha256_hex({"technical": copied_technical, "acceptance": copied_acceptance, "based_on": reviewed_package_version.name})
-	new_package_version = frappe.get_doc(
+	new_package_version = envelope.insert(frappe.get_doc(
 		{
 			"doctype": "IT Equipment Requirement Package Version", "package": reviewed_package_version.package,
 			"version_number": int(reviewed_package_version.version_number) + 1, "based_on_version": reviewed_package_version.name,
@@ -130,9 +128,9 @@ def copy_draft_successor(root, reviewed_version, reviewed_package_version, *, le
 			"acceptance_requirements": copied_acceptance,
 			"supporting_materials": [r.as_dict() for r in reviewed_package_version.supporting_materials],
 		}
-	).insert(ignore_permissions=True)
+	))
 
-	new_version = frappe.get_doc(
+	new_version = envelope.insert(frappe.get_doc(
 		{
 			"doctype": "Requisition Version", "requisition": root.name, "version_number": int(reviewed_version.version_number) + 1,
 			"based_on_version": reviewed_version.name, "version_status": "Draft",
@@ -141,11 +139,11 @@ def copy_draft_successor(root, reviewed_version, reviewed_package_version, *, le
 			"package_version": new_package_version.name, "record_version": 0,
 			"drawdown_lines": [{k: v for k, v in r.as_dict().items() if k not in ("reservation_id", "planning_drawdown_reference")} for r in reviewed_version.drawdown_lines],
 		}
-	).insert(ignore_permissions=True)
+	))
 
 	package = frappe.get_doc("IT Equipment Requirement Package", new_package_version.package)
 	package.current_version = new_package_version.name
-	package.save(ignore_permissions=True)
+	envelope.save(package)
 	root.current_version = new_version.name
 	root.current_state = "Draft"
 	if lead_directive:
@@ -155,13 +153,13 @@ def copy_draft_successor(root, reviewed_version, reviewed_package_version, *, le
 
 
 def new_task(root, version, *, business_role: str, organisation_unit: str = "") -> Any:
-	return frappe.get_doc(
+	return envelope.insert(frappe.get_doc(
 		{
 			"doctype": "Requisition Task", "requisition": root.name, "requisition_version": version.name,
 			"business_role": business_role, "organisation_unit": organisation_unit or None, "status": "Open",
 			"task_token": envelope.token(), "record_version": 0,
 		}
-	).insert(ignore_permissions=True)
+	))
 
 
 def cancel_open_tasks(root) -> None:
@@ -171,14 +169,14 @@ def cancel_open_tasks(root) -> None:
 
 
 def record_decision(*, task, version, actor: str, capacity: str, decision: str, assignment, idempotency_key: str, reason: str = "", affected_section: str = "", new_lead: str = "", resulting_state: str = ""):
-	return frappe.get_doc(
+	return envelope.insert(frappe.get_doc(
 		{
 			"doctype": "Requisition Decision", "task": task.name if task else None, "requisition_version": version.name,
 			"actor": actor, "legal_capacity": capacity, "decision": decision, "reason": reason, "affected_section": affected_section or None,
 			"new_lead_org_unit_id": new_lead or None, "resulting_state": resulting_state,
 			"authority_snapshot": authz.authority_snapshot(assignment), "decided_at": now_datetime(), "command_idempotency_key": idempotency_key,
 		}
-	).insert(ignore_permissions=True)
+	))
 
 
 def _require_role_in(actor: str, role: str, unit: str, *, masked: bool = True):
@@ -260,8 +258,6 @@ def submit_requisition_to_procurement(*, requisition: str, expected_record_versi
 		# sent, unless they hold the HoD role and prepared it in that capacity.
 		if cstr(version.prepared_by) == actor and cstr(version.prepared_capacity) != ROLE_HEAD_OF_USER_DEPARTMENT:
 			fail("REQ_SOD_BLOCKED")
-		version.flags.kt_lifecycle = True
-		package_version.flags.kt_lifecycle = True
 		envelope.bump(version, version_status="Submitted to Procurement")
 		envelope.bump(package_version, version_status="Submitted to Procurement")
 	elif root.current_state == "Draft":
@@ -303,8 +299,6 @@ def _return(*, task: str, reason: str, affected_section: str, expected_record_ve
 		fail("REQ_STALE_VERSION")
 	reviewed_version = frappe.get_doc("Requisition Version", task_doc.requisition_version)
 	reviewed_package_version = frappe.get_doc("IT Equipment Requirement Package Version", reviewed_version.package_version)
-	reviewed_version.flags.kt_lifecycle = True
-	reviewed_package_version.flags.kt_lifecycle = True
 	envelope.bump(reviewed_version, version_status="Returned")
 	envelope.bump(reviewed_package_version, version_status="Returned")
 	decision_doc = record_decision(task=task_doc, version=reviewed_version, actor=actor, capacity=capacity, decision=decision, assignment=assignment, idempotency_key=idempotency_key, reason=reason, affected_section=affected_section, resulting_state="Draft")
@@ -346,8 +340,6 @@ def change_requisition_lead_department(*, task: str, new_lead_org_unit: str, rea
 		fail("REQ_CONTROL_INVALID", "Select a different contributing department.")
 	reviewed_version = frappe.get_doc("Requisition Version", task_doc.requisition_version)
 	reviewed_package_version = frappe.get_doc("IT Equipment Requirement Package Version", reviewed_version.package_version)
-	reviewed_version.flags.kt_lifecycle = True
-	reviewed_package_version.flags.kt_lifecycle = True
 	envelope.bump(reviewed_version, version_status="Returned")
 	envelope.bump(reviewed_package_version, version_status="Returned")
 	decision_doc = record_decision(task=task_doc, version=reviewed_version, actor=actor, capacity=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, decision="Change submitting department and return", assignment=assignment, idempotency_key=idempotency_key, reason=reason, new_lead=new_lead_org_unit, resulting_state="Draft")
@@ -375,8 +367,6 @@ def withdraw_requisition(*, requisition: str, reason: str, expected_record_versi
 	if root.current_state == "Draft":
 		version.content_digest = digest.sha256_hex(records.digest_payload(version, package_version))
 		package_version.content_digest = version.content_digest
-	version.flags.kt_lifecycle = True
-	package_version.flags.kt_lifecycle = True
 	envelope.bump(version, version_status="Withdrawn")
 	envelope.bump(package_version, version_status="Withdrawn")
 	cancel_open_tasks(root)
@@ -418,8 +408,6 @@ def request_upstream_plan_correction(*, requisition: str, reason: str, expected_
 		if version.version_status == "Draft":
 			version.content_digest = digest.sha256_hex(records.digest_payload(version, package_version))
 			package_version.content_digest = version.content_digest
-		version.flags.kt_lifecycle = True
-		package_version.flags.kt_lifecycle = True
 		envelope.bump(version, version_status="Upstream correction required")
 		envelope.bump(package_version, version_status="Upstream correction required")
 		cancel_open_tasks(root)

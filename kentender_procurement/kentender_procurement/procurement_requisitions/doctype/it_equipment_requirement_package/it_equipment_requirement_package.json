@@ -59,14 +59,14 @@
    "fieldname": "county_resident_reservation",
    "fieldtype": "Check",
    "label": "County-residents restriction",
-   "description": "\u00a75.4 \u2014 inherited independently from the Plan Item; never edited here.",
+   "description": "§5.4 — inherited independently from the Plan Item; never edited here.",
    "read_only": 1
   },
   {
    "fieldname": "reservation_rule_snapshot_ids",
    "fieldtype": "Small Text",
    "label": "Reservation rule snapshots",
-   "description": "\u00a75.4 \u2014 exact verified rule Versions bound by the owner contracts.",
+   "description": "§5.4 — exact verified rule Versions bound by the owner contracts.",
    "read_only": 1
   },
   {
@@ -95,7 +95,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-07 00:00:00.000000",
+ "modified": "2026-10-07 01:56:16.524173",
  "modified_by": "Administrator",
  "module": "Procurement Requisitions",
  "name": "IT Equipment Requirement Package",
@@ -107,8 +107,8 @@
  "track_changes": 1,
  "permissions": [
   {
-   "create": 1,
-   "delete": 1,
+   "create": 0,
+   "delete": 0,
    "email": 0,
    "export": 1,
    "print": 1,
@@ -116,7 +116,7 @@
    "report": 1,
    "role": "System Manager",
    "share": 0,
-   "write": 1
+   "write": 0
   },
   {
    "create": 0,

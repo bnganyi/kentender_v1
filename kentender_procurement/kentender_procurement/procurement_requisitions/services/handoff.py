@@ -93,13 +93,13 @@ def build_and_insert(*, root, version, package_version, projection, checks, rese
 	payload = build_payload(root=root, version=version, package_version=package_version, projection=projection, checks=checks, reservations=reservations, hopf_decision=hopf_decision)
 	handoff_digest = digest.sha256_hex(payload)
 	payload["handoff_digest"] = handoff_digest
-	return frappe.get_doc(
+	return envelope.insert(frappe.get_doc(
 		{
 			"doctype": "Authorised Requisition Handoff", "requisition": root.name, "requisition_version": version.name,
 			"payload_json": digest.canonical_json(payload), "handoff_digest": handoff_digest, "handoff_version": HANDOFF_VERSION,
 			"generated_at": now_datetime(),
 		}
-	).insert(ignore_permissions=True)
+	))
 
 
 def record_handoff_consumption(*, handoff: str, tender: str, tender_version: str, template_key: str, template_version: str, idempotency_key: str) -> dict[str, Any]:
@@ -128,7 +128,7 @@ def record_handoff_consumption(*, handoff: str, tender: str, tender_version: str
 	doc.template_key = cstr(template_key)
 	doc.template_version = cstr(template_version)
 	doc.consumed_at = now_datetime()
-	doc.save(ignore_permissions=True)
+	envelope.save(doc)
 	root.handoff_consumed_at = doc.consumed_at
 	records.release_slot(root)
 	envelope.bump(root)
