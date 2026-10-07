@@ -1,8 +1,11 @@
-"""Whitelisted AUTH-G04 Desk API facade."""
+"""Whitelisted AUTH-G04 Desk API facade: read-only inspection of the retired authority store (AUD-XC-026).
+
+The commands that created an assignment or revised a routing rule are gone; responsibilities are
+assigned only through `responsibility_administration`."""
 
 import frappe
 
-from kentender_core.services.authorization_administration import create_draft_assignment, create_revised_routing_rule, get_routing_rule_detail, get_user_operational_access
+from kentender_core.services.authorization_administration import get_routing_rule_detail, get_user_operational_access
 from kentender_core.services.authorization_diagnostics import diagnose_access
 from kentender_core.services.authorization_policy import ResourceContext
 
@@ -15,16 +18,6 @@ def user_access(target_user: str):
 @frappe.whitelist()
 def routing_rule(name: str):
 	return get_routing_rule_detail(name)
-
-
-@frappe.whitelist()
-def revise_routing_rule(name: str):
-	return create_revised_routing_rule(name)
-
-
-@frappe.whitelist()
-def add_assignment(values):
-	return create_draft_assignment(frappe.parse_json(values))
 
 
 @frappe.whitelist()

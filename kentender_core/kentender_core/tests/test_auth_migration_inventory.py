@@ -15,6 +15,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, now_datetime
 
+from kentender_core.services.command_write_guard import fixture_insert, purge_doc
 from kentender_core.scripts.auth_migration_inventory import (
 	AMBIGUOUS,
 	CONFLICTING_SCOPE,
@@ -51,9 +52,9 @@ class TestAuthMigrationInventory(IntegrationTestCase):
 
 	def tearDown(self):
 		for name in self._assignments:
-			frappe.delete_doc("Operational Scope Assignment", name, force=True, ignore_permissions=True)
+			purge_doc("Operational Scope Assignment", name)
 		for name in self._profiles:
-			frappe.delete_doc("Capability Profile", name, force=True, ignore_permissions=True)
+			purge_doc("Capability Profile", name)
 		for user in self._users:
 			if frappe.db.exists("User", user):
 				frappe.delete_doc("User", user, force=True, ignore_permissions=True)
@@ -65,7 +66,7 @@ class TestAuthMigrationInventory(IntegrationTestCase):
 		return email
 
 	def _profile(self, label: str, capabilities: list[str], *, status: str = "Active", effective_from=None) -> str:
-		doc = frappe.get_doc({
+		doc = fixture_insert(frappe.get_doc({
 			"doctype": "Capability Profile",
 			"profile_id": f"{label}-{self.suffix}",
 			"profile_name": label,
@@ -74,12 +75,12 @@ class TestAuthMigrationInventory(IntegrationTestCase):
 			"status": status,
 			"effective_from": effective_from or add_days(now_datetime(), -1),
 			"concurrency_token": uuid4().hex,
-		}).insert(ignore_permissions=True)
+		}))
 		self._profiles.append(doc.name)
 		return doc.name
 
 	def _assignment(self, user: str, profile_id: str, *, procuring_entity: str | None = None) -> str:
-		doc = frappe.get_doc({
+		doc = fixture_insert(frappe.get_doc({
 			"doctype": "Operational Scope Assignment",
 			"assignment_id": f"OSA-{uuid4().hex[:8]}",
 			"user_id": user,
@@ -90,7 +91,7 @@ class TestAuthMigrationInventory(IntegrationTestCase):
 			"assigned_by": "Administrator",
 			"assigned_at": now_datetime(),
 			"concurrency_token": uuid4().hex,
-		}).insert(ignore_permissions=True)
+		}))
 		self._assignments.append(doc.name)
 		return doc.name
 

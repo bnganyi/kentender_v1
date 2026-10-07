@@ -205,15 +205,15 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-16 21:37:31.954543",
+ "modified": "2026-10-07 01:56:16.554642",
  "modified_by": "Administrator",
  "module": "Kentender Core",
  "name": "Workflow Task",
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1,
-   "delete": 1,
+   "create": 0,
+   "delete": 0,
    "email": 1,
    "export": 1,
    "print": 1,
@@ -221,11 +221,11 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "write": 1
+   "write": 0
   },
   {
-   "create": 1,
-   "delete": 1,
+   "create": 0,
+   "delete": 0,
    "email": 1,
    "export": 1,
    "print": 1,
@@ -233,7 +233,7 @@
    "report": 1,
    "role": "Administrator",
    "share": 1,
-   "write": 1
+   "write": 0
   }
  ],
  "row_format": "Dynamic",

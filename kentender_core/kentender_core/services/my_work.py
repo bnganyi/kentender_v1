@@ -9,7 +9,6 @@ from frappe.utils import cint, cstr, get_datetime, now_datetime
 
 from kentender_core.services.authorization import is_technical
 from kentender_core.services.authorization_policy import ResourceContext, evaluate_capability
-from kentender_core.services.workflow_tasks import claim_task
 
 NO_ACTIVE_OPERATIONAL_ASSIGNMENT = "NO_ACTIVE_OPERATIONAL_ASSIGNMENT"
 
@@ -220,17 +219,6 @@ def get_my_work() -> dict[str, Any]:
 		"counts": {key: len(buckets[key]) for key in empty},
 		"buckets": dict(buckets),
 	}
-
-
-@frappe.whitelist()
-def claim_my_work_task(task_id: str, expected_token: str) -> dict[str, Any]:
-	claim_task(task_id, user=frappe.session.user, expected_token=expected_token)
-	result = get_my_work()
-	result["claimed_task"] = next(
-		(row for row in result["buckets"]["assigned"] if row["task_id"] == task_id),
-		None,
-	)
-	return result
 
 
 def _home_page_exists() -> bool:
