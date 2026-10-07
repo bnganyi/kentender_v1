@@ -113,3 +113,83 @@ class TestHasPermission(RequisitionAuthorizationCase):
 	def test_a_site_wide_role_has_permission_on_any_record(self):
 		prepared = self._prepared()
 		self.assertTrue(frappe.has_permission("Procurement Requisition", doc=prepared["requisition"], user=fx.PLANNER))
+
+
+FAMILY_RECORDS = (
+	"IT Equipment Requirement Package",
+	"IT Equipment Requirement Package Version",
+	"Requisition Event",
+	"Requisition Correction Outcome",
+	"Requisition Command Journal",
+)
+LINGERING = "reqt.lingering.auditor@example.test"
+
+
+class TestFamilyRecordsReadThroughTheirRequisition(RequisitionAuthorizationCase):
+	"""AUD-XC-025 — the package, event, correction-outcome and journal records
+	carry business-role read DocPerm, so each needs the registered predicate:
+	a role held without a live assignment reads none of them."""
+
+	def _authorised(self) -> str:
+		_, item_id = fx.active_item()
+		requisition = fx.submitted(item_id)
+		fx.authorise(requisition)
+		frappe.set_user("Administrator")
+		return requisition
+
+	def _lingering_auditor(self) -> str:
+		"""The Frappe Role `Auditor` with no assignment behind it (a lapsed holder until the daily reconcile)."""
+		from kentender_procurement.procurement_planning.tests import fixtures as pln_fx
+
+		pln_fx._user(LINGERING, "REQ Test Lingering Auditor")
+		frappe.get_doc("User", LINGERING).add_roles("Auditor")
+		self.addCleanup(self._remove_lingering)
+		return LINGERING
+
+	def _remove_lingering(self) -> None:
+		frappe.set_user("Administrator")
+		for contact in frappe.get_all("Contact Email", filters={"email_id": LINGERING}, pluck="parent"):
+			frappe.delete_doc("Contact", contact, force=1, ignore_permissions=True)
+		if frappe.db.exists("User", LINGERING):
+			frappe.delete_doc("User", LINGERING, force=1, ignore_permissions=True)
+
+	def _rows(self, requisition: str) -> dict[str, list[str]]:
+		root = frappe.get_doc("Procurement Requisition", requisition)
+		package = frappe.db.get_value("IT Equipment Requirement Package", {"requisition": requisition}, "name")
+		return {
+			"IT Equipment Requirement Package": [package],
+			"IT Equipment Requirement Package Version": frappe.get_all("IT Equipment Requirement Package Version", filters={"package": package}, pluck="name"),
+			"Requisition Event": frappe.get_all("Requisition Event", filters={"requisition": requisition}, pluck="name"),
+			"Requisition Command Journal": frappe.get_all("Requisition Command Journal", filters={"document_name": ("in", [root.name, root.current_version, root.handoff])}, pluck="name"),
+		}
+
+	def test_every_family_doctype_registers_both_hooks(self):
+		hooks = frappe.get_hooks("has_permission")
+		query = frappe.get_hooks("permission_query_conditions")
+		for doctype in FAMILY_RECORDS:
+			self.assertTrue(hooks.get(doctype), f"{doctype}: no has_permission")
+			self.assertTrue(query.get(doctype), f"{doctype}: no permission_query_conditions")
+
+	def test_a_site_wide_reader_with_an_assignment_reads_each_record(self):
+		rows = self._rows(self._authorised())
+		self.assertTrue(all(rows[doctype] for doctype in ("IT Equipment Requirement Package", "IT Equipment Requirement Package Version", "Requisition Event", "Requisition Command Journal")), rows)
+		for doctype, names in rows.items():
+			frappe.set_user(fx.AUDITOR)
+			self.assertTrue(set(names) <= set(frappe.get_list(doctype, pluck="name", limit_page_length=0)), doctype)
+			for name in names:
+				self.assertTrue(frappe.has_permission(doctype, doc=name, user=fx.AUDITOR), f"{doctype} {name}")
+
+	def test_a_role_without_a_live_assignment_reads_none_of_them(self):
+		rows = self._rows(self._authorised())
+		lingering = self._lingering_auditor()
+		for doctype, names in rows.items():
+			frappe.set_user(lingering)
+			self.assertFalse(set(names) & set(frappe.get_list(doctype, pluck="name", limit_page_length=0)), doctype)
+			for name in names:
+				self.assertFalse(frappe.has_permission(doctype, doc=name, user=lingering), f"{doctype} {name}")
+
+	def test_a_technical_reader_still_reads_every_record(self):
+		rows = self._rows(self._authorised())
+		for doctype, names in rows.items():
+			for name in names:
+				self.assertTrue(frappe.has_permission(doctype, doc=name, user="Administrator"), f"{doctype} {name}")

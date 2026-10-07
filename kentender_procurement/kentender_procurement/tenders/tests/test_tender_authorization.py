@@ -100,6 +100,17 @@ class TestFrameworkHooks(TendersAuthorizationCase):
 		frappe.set_user("Administrator")
 		self.assertEqual(len(frappe.get_list("Tender", filters=ours, pluck="name")), 2)
 
+	def test_the_command_journal_reads_site_wide_only(self):
+		"""AUD-XC-025: the journal names no Tender of its own, so only a site-wide or technical reader sees it."""
+		tender = self._tender(lead_unit=pln_fx.OU_ALPHA)
+		key = fx.key()
+		envelope.record_command(idempotency_key=key, command="Test", payload={"a": 1}, result={"ok": True}, document_type="Tender", document_name=tender, fixture_namespace=fx.NS)
+		row = frappe.db.get_value("Tender Command Journal", {"idempotency_key": key}, "name")
+		for user, expected in ((fx.AUDITOR, True), ("Administrator", True), (fx.DEPARTMENTAL, False), (fx.OUTSIDER, False)):
+			self.assertEqual(frappe.has_permission("Tender Command Journal", doc=row, user=user), expected, user)
+		frappe.set_user(fx.AUDITOR)
+		self.assertIn(row, frappe.get_list("Tender Command Journal", filters={"name": row}, pluck="name"))
+
 	def test_the_installed_std_release_registry_is_not_a_tenders_list(self):
 		# STD-TPL-IMP-001 v1.0: releases are read only through STD Templates
 		# (Procurement Officer / HOPF / technical readers); the retired

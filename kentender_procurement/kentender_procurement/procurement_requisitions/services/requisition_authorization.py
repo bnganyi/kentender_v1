@@ -307,6 +307,8 @@ def permission_query_conditions(user: str | None = None, doctype: str | None = N
 		return "1=0"
 	if doctype in (None, "Procurement Requisition"):
 		return root_condition
+	if doctype == JOURNAL:
+		return _journal_condition(principal)
 	link = _CHILD_LINK.get(doctype)
 	if not link:
 		return "1=0"
@@ -322,12 +324,37 @@ def permission_query_conditions(user: str | None = None, doctype: str | None = N
 	return f"`tab{doctype}`.`{field}` in (select name from `tab{parent_doctype}` where {parent_condition})"
 
 
+# AUD-XC-025 — the package, event and correction-outcome records read through
+# their owning requisition, exactly as the decision and handoff already do; the
+# command journal names its record by (document_type, document_name) and so
+# reads through whichever of these that record is (see `_journal_condition`).
+JOURNAL = "Requisition Command Journal"
 _CHILD_LINK: dict[str, tuple[str, str]] = {
 	"Requisition Version": ("requisition", "Procurement Requisition"),
 	"Requisition Task": ("requisition", "Procurement Requisition"),
 	"Authorised Requisition Handoff": ("requisition", "Procurement Requisition"),
 	"Requisition Decision": ("task", "Requisition Task"),
+	"IT Equipment Requirement Package": ("requisition", "Procurement Requisition"),
+	"IT Equipment Requirement Package Version": ("package", "IT Equipment Requirement Package"),
+	"Requisition Event": ("requisition", "Procurement Requisition"),
+	"Requisition Correction Outcome": ("requisition", "Procurement Requisition"),
 }
+
+
+def _journal_condition(principal: str) -> str:
+	"""A journal row is readable when the record it names is."""
+	parts = []
+	for record_doctype in ("Procurement Requisition", *_CHILD_LINK):
+		condition = permission_query_conditions(principal, record_doctype)
+		if condition == "1=0":
+			continue
+		if condition == "":
+			return ""
+		parts.append(
+			f"(`tab{JOURNAL}`.document_type = {frappe.db.escape(record_doctype)} and `tab{JOURNAL}`.document_name in "
+			f"(select name from `tab{record_doctype}` where {condition}))"
+		)
+	return "(" + " or ".join(parts) + ")" if parts else "1=0"
 
 
 def _root_requisition_of(doctype: str, name: str) -> str:
@@ -358,6 +385,10 @@ def has_permission(doc=None, ptype: str = "read", user: str | None = None):
 	name = getattr(doc, "name", None) or (doc.get("name") if isinstance(doc, dict) else "")
 	if not name:
 		return True
+	if doctype == JOURNAL:
+		doctype, name = (cstr(v) for v in frappe.db.get_value(JOURNAL, name, ["document_type", "document_name"]) or ("", ""))
+		if not name:
+			return False
 	root_name = name if doctype == "Procurement Requisition" else _root_requisition_of(doctype, name)
 	if not root_name:
 		return False

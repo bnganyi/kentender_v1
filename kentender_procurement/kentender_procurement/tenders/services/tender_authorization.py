@@ -235,6 +235,8 @@ _CHILD_LINK: dict[str, tuple[str, str]] = {
 	"Tender Submission Handoff": ("tender", ROOT),
 }
 FAMILY: tuple[str, ...] = (ROOT, *_CHILD_LINK.keys())
+# AUD-XC-013/025 — the journal reads site-wide only (no `tender` link to scope it by).
+JOURNAL = "Tender Command Journal"
 
 
 def _site_wide_condition(principal: str) -> str | None:
@@ -293,6 +295,9 @@ def has_permission(doc=None, ptype: str = "read", user: str | None = None):
 	name = getattr(doc, "name", None) or (doc.get("name") if isinstance(doc, dict) else "")
 	if not name:
 		return True
+	if doctype == JOURNAL:
+		# an idempotency record names no Tender of its own: only a site-wide reader (or a technical one, above) sees it
+		return _site_wide_condition(principal) == ""
 	root_name = _root_of(doctype, name)
 	if not root_name:
 		return False

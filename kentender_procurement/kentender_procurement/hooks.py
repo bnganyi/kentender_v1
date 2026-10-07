@@ -432,6 +432,12 @@ permission_query_conditions.update({
 	"Requisition Task": f"{_REQ_AUTHZ}.permission_query_conditions",
 	"Requisition Decision": f"{_REQ_AUTHZ}.permission_query_conditions",
 	"Authorised Requisition Handoff": f"{_REQ_AUTHZ}.permission_query_conditions",
+	# AUD-XC-025 — the remaining Requisition-family records with a business-role read
+	"IT Equipment Requirement Package": f"{_REQ_AUTHZ}.permission_query_conditions",
+	"IT Equipment Requirement Package Version": f"{_REQ_AUTHZ}.permission_query_conditions",
+	"Requisition Event": f"{_REQ_AUTHZ}.permission_query_conditions",
+	"Requisition Correction Outcome": f"{_REQ_AUTHZ}.permission_query_conditions",
+	"Requisition Command Journal": f"{_REQ_AUTHZ}.permission_query_conditions",
 })
 
 has_permission.update({
@@ -440,6 +446,11 @@ has_permission.update({
 	"Requisition Task": f"{_REQ_AUTHZ}.has_permission",
 	"Requisition Decision": f"{_REQ_AUTHZ}.has_permission",
 	"Authorised Requisition Handoff": f"{_REQ_AUTHZ}.has_permission",
+	"IT Equipment Requirement Package": f"{_REQ_AUTHZ}.has_permission",
+	"IT Equipment Requirement Package Version": f"{_REQ_AUTHZ}.has_permission",
+	"Requisition Event": f"{_REQ_AUTHZ}.has_permission",
+	"Requisition Correction Outcome": f"{_REQ_AUTHZ}.has_permission",
+	"Requisition Command Journal": f"{_REQ_AUTHZ}.has_permission",
 })
 
 # TPR-CHG-001 v0.8 §6 / plan D12 — the Tender family is Site-wide with one
@@ -450,7 +461,7 @@ _TND_AUTHZ = "kentender_procurement.tenders.services.tender_authorization"
 _TND_FAMILY = (
 	"Tender", "Tender Version", "Tender Task", "Tender Decision", "Tender Publication", "Tender Channel Confirmation",
 	"Tender Addendum", "Tender Clarification", "Tender Candidate Notice", "Tender Bid Definition",
-	"Tender Cancellation", "Tender Document", "Tender Event", "Tender Submission Handoff",
+	"Tender Cancellation", "Tender Document", "Tender Event", "Tender Submission Handoff", "Tender Command Journal",
 )
 permission_query_conditions.update({doctype: f"{_TND_AUTHZ}.permission_query_conditions" for doctype in _TND_FAMILY})
 has_permission.update({doctype: f"{_TND_AUTHZ}.has_permission" for doctype in _TND_FAMILY})
