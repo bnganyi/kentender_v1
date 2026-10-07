@@ -1,6 +1,6 @@
 {
  "actions": [],
- "allow_rename": 1,
+ "allow_rename": 0,
  "autoname": "field:assignment_id",
  "creation": "2026-08-16 21:37:31.511777",
  "doctype": "DocType",
