@@ -115,3 +115,50 @@ class TestDrawdownSnapshotRaces(RequisitionCase):
 		self.assertIn("not currently eligible", str(drawdown.error))
 		frappe.db.commit()
 		self.assertEqual(frappe.db.count("Plan Drawdown Reference", {"plan_item_id": item_id}), 1)
+
+	def test_a_funding_state_changed_after_the_drawdowns_snapshot_is_refused(self):
+		"""RG-23 — the Annual Plan Version's funding state is a different row from the locked Plan Item;
+		it is read as a locking read, not from the snapshot."""
+		item_id, allocation_id, record_version = self._world()
+		drawdown = self._drawdown(item_id, allocation_id, record_version)
+		self.assertTrue(drawdown.snapshot_open.wait(WAIT))
+		plan_version = frappe.db.get_value("Annual Plan Item", plan_requisition._requisition_item_name(item_id), "plan_version")
+
+		def stale():
+			frappe.db.set_value("Annual Plan Version", plan_version, "funding_state", "Stale", update_modified=False)
+
+		change = Conn("Administrator", stale)
+		self.assertTrue(change.finished.wait(WAIT))
+		self.assertIsNone(change.error, change.error)
+		self.addCleanup(lambda: (frappe.db.set_value("Annual Plan Version", plan_version, "funding_state", "Confirmed", update_modified=False), frappe.db.commit()))
+		drawdown.start_gate.set()
+		self.assertTrue(drawdown.finished.wait(WAIT))
+		self.assertIsNotNone(drawdown.error)
+		self.assertIn("not currently eligible", str(drawdown.error))
+		frappe.db.commit()
+		self.assertEqual(frappe.db.count("Plan Drawdown Reference", {"plan_item_id": item_id}), 1)
+
+	def test_an_allowance_drawn_after_the_drawdowns_snapshot_still_counts(self):
+		"""RG-23 — the drawn totals are summed from the latest committed Plan Drawdown References, so two
+		drawdowns that start together cannot both fit into the same remaining balance."""
+		item_id, allocation_id, record_version = self._world()
+		drawdown = self._drawdown(item_id, allocation_id, record_version)  # asks 0.3 / 300000 of the 0.8 / 800000 left
+		self.assertTrue(drawdown.snapshot_open.wait(WAIT))
+
+		def competing():
+			frappe.set_user(fx.HOPF)
+			return plan_requisition.authorise_requisition_drawdown(
+				plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}",
+				allocations=[{"plan_source_allocation_id": allocation_id, "quantity": "0.6", "amount": "600000"}],
+				expected_record_version=record_version, idempotency_key=key(),
+			)
+
+		other = Conn(fx.HOPF, competing)
+		self.assertTrue(other.finished.wait(WAIT))
+		self.assertIsNone(other.error, other.error)
+		drawdown.start_gate.set()
+		self.assertTrue(drawdown.finished.wait(WAIT))
+		self.assertIsInstance(drawdown.error, ProcurementPlanningError, repr(drawdown.error))
+		self.assertEqual(drawdown.error.code, "PLN_ALLOWANCE_EXCEEDED")
+		frappe.db.commit()
+		self.assertEqual(frappe.db.count("Plan Drawdown Reference", {"plan_item_id": item_id}), 2)  # the first and the competing one
