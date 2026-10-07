@@ -18,7 +18,7 @@ from typing import Any
 
 import frappe
 
-from kentender_procurement.procurement_requisitions.services import authorise, correction, draft_commands as cmd, handoff, lifecycle, read
+from kentender_procurement.procurement_requisitions.services import authorise, correction, draft_commands as cmd, lifecycle, read
 
 
 def _parse_json(value, default):
@@ -266,15 +266,3 @@ def prepare_requisition_after_plan_correction(requisition: str, idempotency_key:
 @frappe.whitelist()
 def create_requisition_correction_draft(requisition: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
 	return correction.create_requisition_correction_draft(requisition=requisition, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
-
-
-@frappe.whitelist()
-def record_handoff_consumption(handoff_name: str, tender: str, tender_version: str, template_key: str, template_version: str, idempotency_key: str) -> dict[str, Any]:
-	"""Owner command for Tender Preparation (§9.2). The Tender caller runs it in
-	its own Draft-creation transaction; this endpoint exists for that seam."""
-	from kentender_procurement.procurement_requisitions.services import requisition_authorization as authz
-	from kentender_procurement.procurement_requisitions.services.requisition_roles import TENDER_CALLER_ROLES
-
-	if not any(authz.has_site_role(role) for role in TENDER_CALLER_ROLES):
-		authz.not_found()
-	return handoff.record_handoff_consumption(handoff=handoff_name, tender=tender, tender_version=tender_version, template_key=template_key, template_version=template_version, idempotency_key=idempotency_key)

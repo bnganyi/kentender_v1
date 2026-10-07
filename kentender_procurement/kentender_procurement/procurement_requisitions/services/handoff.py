@@ -12,9 +12,11 @@ snapshots, one Budget reservation per drawdown line and the nine compatibility
 results. Stored v1.3 handoffs are history and are never rewritten or rehashed.
 
 `record_handoff_consumption` is the owner command Tender Preparation calls in
-the same transaction as its Draft Tender: it locks the handoff row — the lock
-revocation takes too — rechecks Authorised and unconsumed, and binds exactly
-one Tender. There is no release: once consumed, the authorisation cannot be
+the same transaction as its Draft Tender, in-process only (there is no web
+endpoint, AUD-REQ-001; the Tenders gateway first verifies the Tender exists
+and was created from this handoff). It takes the locks revocation takes, in
+the same order — Requisition root, then handoff (AUD-XC-109) — rechecks
+Authorised and unconsumed, and binds exactly one Tender. There is no release: once consumed, the authorisation cannot be
 revoked (§7.4).
 """
 
@@ -114,8 +116,13 @@ def record_handoff_consumption(*, handoff: str, tender: str, tender_version: str
 		return replay
 	if not handoff or not frappe.db.exists("Authorised Requisition Handoff", handoff):
 		raise frappe.DoesNotExistError("Handoff not found")
+	# Lock order (AUD-XC-109): Requisition root, then its handoff — the order
+	# `authorise_requisition` and `revoke_unconsumed_authorisation` take, so
+	# consumption and revocation queue on the root instead of deadlocking. The
+	# handoff's requisition never changes, so it is read before the locks.
+	requisition = cstr(frappe.db.get_value("Authorised Requisition Handoff", handoff, "requisition"))
+	root = envelope.locked("Procurement Requisition", requisition)
 	doc = envelope.locked("Authorised Requisition Handoff", handoff)
-	root = envelope.locked("Procurement Requisition", doc.requisition)
 	if doc.consumed_at:
 		if doc.tender == cstr(tender):
 			return {"ok": True, "idempotent": True, "action": "already_consumed", "handoff": doc.name, "tender": doc.tender, "consumed_at": cstr(doc.consumed_at)}

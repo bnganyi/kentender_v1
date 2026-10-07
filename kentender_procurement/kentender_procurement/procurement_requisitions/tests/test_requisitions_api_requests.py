@@ -96,10 +96,11 @@ class TestTheFullRequisitionJourneyOverTheRequestPath(RequestShapedCase):
 		self.assertEqual(authorised["action"], "authorised")
 		self.assertEqual(self.call("get_requisition_record", requisition=requisition)["kind"], "authorised")
 
-		frappe.set_user("Administrator")
+		# AUD-REQ-001: consumption has no web endpoint — only Tenders' own Start command consumes a handoff.
 		frappe.set_user(fx.HOPF)
-		consumed = self.call("record_handoff_consumption", handoff_name=authorised["handoff"], tender="TND-0001", tender_version="TND-0001-V1", template_key="IT-EQUIPMENT-OPEN-V1", template_version="1.1", idempotency_key=self.key())
-		self.assertEqual(consumed["action"], "consumed")
+		with self.assertRaises(Exception):
+			self.call("record_handoff_consumption", handoff_name=authorised["handoff"], tender="TND-0001", tender_version="TND-0001-V1", template_key="IT-EQUIPMENT-OPEN-V1", template_version="1.1", idempotency_key=self.key())
+		self.assertFalse(frappe.db.get_value("Authorised Requisition Handoff", authorised["handoff"], "consumed_at"))
 
 
 class TestNoWhitelistedEndpointTakesKwargs(IntegrationTestCase):
