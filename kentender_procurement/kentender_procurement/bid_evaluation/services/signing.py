@@ -44,6 +44,14 @@ def signing_version(doc):
 	return frappe.get_doc(REPORT, name) if name else None
 
 
+def unassessed_supplements(doc) -> list[str]:
+	"""Opening supplements whose effect on the findings no member has recorded yet (§5.5, §5.6).
+
+	Until the impact is recorded the report can be neither frozen nor delivered."""
+	return frappe.get_all("Evaluation Source Event", filters={"evaluation_case": doc.name, "kind": "Opening supplement", "impact": ("in", ("Pending", ""))},
+		pluck="name", order_by="received_at asc")
+
+
 def readiness(doc) -> Guards:
 	"""Every reason the report cannot be frozen yet (EVL_REPORT_INCOMPLETE and friends)."""
 	from kentender_procurement.bid_evaluation.services import diligence
@@ -69,6 +77,8 @@ def readiness(doc) -> Guards:
 		issues.append({"item": "The verification exercise is not complete", "holder": plan.lead_user, "holder_name": people.full_name(plan.lead_user)})
 	if built["recommendation"]["provisional"]:
 		issues.append({"item": "The comparison is provisional", "holder": chair, "holder_name": people.full_name(chair) if chair else ""})
+	for item in unassessed_supplements(doc):
+		issues.append({"item": "An opening update has not been assessed", "source_event": item, "holder": chair, "holder_name": people.full_name(chair) if chair else ""})
 	complete = roster.complete(doc.name)
 	if not complete["complete"]:
 		for p in complete["pending"]:
@@ -167,14 +177,21 @@ def _recipient(doc) -> str | None:
 
 
 def recheck(doc) -> Guards:
-	"""Before delivery: roster, cancellation, suspension and validity (§5.5)."""
+	"""Before delivery: roster, cancellation, suspension, source impact and validity (§5.5)."""
 	checks_ = guards.open_case(doc)
 	if not roster.complete(doc.name)["complete"]:
 		checks_.add("EVL_REPORT_INCOMPLETE", issues=[{"item": "The committee changed while the report was being signed."}])
+	for item in unassessed_supplements(doc):
+		checks_.add("EVL_REPORT_INCOMPLETE", issues=[{"item": "An opening update has not been assessed", "source_event": item}])
 	return checks_
 
 
 def _complete_and_deliver(doc, version, key: str, actor: str) -> dict[str, Any]:
+	"""Recheck, withdraw on expired validity, complete the Proceedings record (once) and deliver.
+
+	Both the last signature and a delivery retry come through here, so a retry
+	cannot hand over a report that a suspension, roster change or validity expiry
+	has since made undeliverable (EVL §5.5, AUD-EVL-004)."""
 	from kentender_procurement.proceedings.services import record_versions
 
 	if recheck(doc):
@@ -183,9 +200,21 @@ def _complete_and_deliver(doc, version, key: str, actor: str) -> dict[str, Any]:
 	if dated["validity_expired"] and version.outcome == "Recommendation":
 		lifecycle.withdraw_signing(doc, kind="Validity", reason="Tender validity expired while the report was being signed.", idempotency_key=key, actor=actor)
 		return {"status": "Returned for validity"}
-	with prc_owner.acting(doc.name):
-		record_versions.complete_record(**prc.ref(doc), record_version=version.record_version_reference, idempotency_key=prc.key(key, "complete"), actor=prc.SYSTEM)
+	if frappe.db.get_value("Proceeding Minutes Version", version.record_version_reference, "state") != "Finalized":
+		with prc_owner.acting(doc.name):
+			record_versions.complete_record(**prc.ref(doc), record_version=version.record_version_reference, idempotency_key=prc.key(key, "complete"), actor=prc.SYSTEM)
 	return deliver(doc, version, key)
+
+
+def resume_delivery(doc, key: str, actor: str) -> dict[str, Any] | None:
+	"""Complete and deliver a fully signed version that was paused on a recheck (for example
+	an opening update that has now been assessed with no effect on the findings)."""
+	from kentender_procurement.proceedings.services import record_versions
+
+	version = signing_version(doc)
+	if version is None or not version.record_version_reference or record_versions.missing_proofs(version.record_version_reference):
+		return None
+	return _complete_and_deliver(doc, version, key, actor)
 
 
 def deliver(doc, version, key: str) -> dict[str, Any]:
@@ -232,7 +261,8 @@ def retry_delivery(*, tender: str, idempotency_key: str, user: str) -> dict[str,
 
 		if record_versions.missing_proofs(version.record_version_reference):
 			fail("EVL_VERSION_CONFLICT", {"reason": "signatures_outstanding"})
-		out = deliver(doc, version, idempotency_key)
+		recheck(doc).raise_if_any()  # a suspension or cancellation refuses the retry with its reason (EVL_SUSPENDED / EVL_CANCELLED)
+		out = _complete_and_deliver(doc, version, idempotency_key, user)
 		return records.summary(frappe.get_doc(records.CASE, doc.name), **out) if out["status"] == "Delivered" else {**records.summary(doc), **out, "ok": False}
 
 	return records.command("RetryEvaluationOperation", tender=tender, idempotency_key=idempotency_key, actor=user, payload={"operation": "DeliverEvaluationReport"},

@@ -22,7 +22,7 @@ from __future__ import annotations
 import frappe
 
 from kentender_procurement.bid_evaluation.services import (
-	correction, findings, my_work_provider, report, signing, simulation, tender_events,
+	checks, correction, findings, my_work_provider, report, signing, simulation, tender_events,
 )
 from kentender_procurement.bid_evaluation.services.errors import EvaluationError
 from kentender_procurement.bid_evaluation.tests.support import AO, CHAIR, HOP, MEMBER, MEMBER_2, SECRETARY, EvaluationCase
@@ -132,6 +132,76 @@ class TestSendAndSign(ReportCase):
 		self.assertEqual(frappe.db.count("Evaluation Report Delivery", {"evaluation_case": self.case}), 1)
 
 
+	def _supplement(self, name="TEST1") -> str:
+		"""An opening supplement arrives (as consume_supplements would record it); returns its source event."""
+		supplement = frappe._dict(supplement_id=f"SUPP-{name}", author=AO, reason="The recorder corrected an attendance note.", recorded_at=frappe.flags.kt_evl_clock,
+			kind="Attendance note", correct_information="Peter Mugo joined at 10:02, not 10:20.")
+		return correction._receive_supplement(self.name, f"BOP-SUPP:{name}", supplement)["source_event"]
+
+	def test_a_pending_opening_update_blocks_freezing_until_assessed(self):
+		"""AUD-EVL-005: the member records whether an opening update affects any finding before the report is frozen."""
+		self.evl_ready()
+		event = self._supplement()
+		error = self.refused(self.evl_freeze)
+		self.assertEqual(error.code, "EVL_REPORT_INCOMPLETE")
+		self.assertIn("An opening update has not been assessed", [i["item"] for i in error.detail["issues"]])
+		correction.assess_supplement(tender=self.name, source_event=event, impact="No effect on findings", reason="Attendance only.", idempotency_key=key(), user=MEMBER)
+		self.assertTrue(self.evl_freeze()["ok"])
+
+	def test_a_material_opening_update_recalculates_and_withdraws_signing(self):
+		self.evl_ready()
+		self.evl_freeze()
+		run = checks.current_run(self.case)
+		event = self._supplement("TEST2")
+		self.assertEqual(self.evl_doc().state, "Signing")
+		correction.assess_supplement(tender=self.name, source_event=event, impact="Findings need review", reason="The attendance affects a finding.",
+			idempotency_key=key(), user=MEMBER)
+		self.assertEqual(self.evl_doc().state, "Reviewing")
+		self.assertNotEqual(checks.current_run(self.case), run)
+		self.assertEqual(frappe.db.get_value("Evaluation Check Run", checks.current_run(self.case), "reason"), "Opening supplement")
+
+	def test_an_update_arriving_while_signing_pauses_delivery_until_assessed(self):
+		self.evl_ready()
+		self.evl_freeze()
+		event = self._supplement("TEST3")
+		for user in MEMBERS:
+			out = self.evl_sign(user)
+		self.assertEqual(out["delivery"]["status"], "Paused")
+		self.assertEqual(self.evl_doc().state, "Signing")
+		done = correction.assess_supplement(tender=self.name, source_event=event, impact="No effect on findings", reason="Attendance only.", idempotency_key=key(), user=MEMBER)
+		self.assertEqual(done["delivery"]["status"], "Delivered")
+		self.assertEqual(self.evl_doc().state, "Report sent")
+
+	def _all_signed_delivery_failed(self):
+		self.evl_ready()
+		self.evl_freeze()
+		simulation.set_controls(delivery_outcome="Failed")
+		for user in MEMBERS:
+			self.evl_sign(user)
+		simulation.set_controls(delivery_outcome="")
+
+	def test_a_retry_does_not_deliver_through_a_suspension(self):
+		"""AUD-EVL-004: the retry rechecks suspension like the last signature does."""
+		self._all_signed_delivery_failed()
+		tender_events.record_simulated_event(tender=self.name, kind="Suspension", instruction_reference="MOH/REVIEW/TEST-RETRY", authority=AO)
+		error = self.refused(signing.retry_delivery, tender=self.name, idempotency_key=key(), user=SECRETARY)
+		self.assertEqual((error.code, error.detail["instruction"]), ("EVL_SUSPENDED", "MOH/REVIEW/TEST-RETRY"))
+		self.assertEqual(self.evl_doc().state, "Signing")
+		self.assertFalse(frappe.db.exists("Evaluation Report Delivery", {"evaluation_case": self.case, "status": "Delivered"}))
+		tender_events.record_simulated_event(tender=self.name, kind="Resumption", instruction_reference="MOH/REVIEW/TEST-RETRY-R", authority=AO)
+		self.assertEqual(signing.retry_delivery(tender=self.name, idempotency_key=key(), user=SECRETARY)["status"], "Delivered")
+
+	def test_a_retry_after_validity_expired_returns_a_positive_recommendation_to_review(self):
+		"""AUD-EVL-004: a recommendation whose validity lapsed before the retry is withdrawn, not delivered."""
+		self._all_signed_delivery_failed()
+		frappe.db.set_value("Evaluation Case", self.case, "validity_end", "2027-06-01 00:00:00", update_modified=False)
+		self.at("2027-06-20 10:00:00")
+		out = signing.retry_delivery(tender=self.name, idempotency_key=key(), user=SECRETARY)
+		self.assertEqual(out["status"], "Returned for validity")
+		self.assertEqual(self.evl_doc().state, "Reviewing")
+		self.assertFalse(frappe.db.exists("Evaluation Report Delivery", {"evaluation_case": self.case, "status": "Delivered"}))
+
+
 class TestAfterDelivery(ReportCase):
 	def setUp(self):
 		super().setUp()
@@ -151,6 +221,18 @@ class TestAfterDelivery(ReportCase):
 		self.assertEqual(self.evl_doc().state, "Reviewing")
 		self.assertIn(f"Correct evaluation report for {self.reference}: Correct the service-address page reference from page 3 to page 2.", titles(SECRETARY))
 		self.assertEqual(frappe.db.get_value("Evaluation Report Version", {"evaluation_case": self.case, "version_number": 1}, "state"), "Returned")
+
+	def test_a_return_applies_only_to_the_current_unreturned_delivery(self):
+		"""AUD-EVL-007: a repeated return cannot re-mark history or regress a successor being signed."""
+		correction.return_report(tender=self.name, comment="Correct the page reference.", idempotency_key=key(), user=HOP)
+		self.assertEqual(self.refused(correction.return_report, tender=self.name, comment="Again.", idempotency_key=key(), user=HOP).code, "EVL_VERSION_CONFLICT")
+		self.evl_freeze()  # v2, collecting signatures
+		self.assertEqual(self.evl_doc().state, "Signing")
+		error = self.refused(correction.return_report, tender=self.name, comment="Yet another comment.", idempotency_key=key(), user=HOP)
+		self.assertEqual((error.code, error.detail["reason"]), ("EVL_VERSION_CONFLICT", "not_current_delivery"))
+		self.assertEqual(self.evl_doc().state, "Signing")
+		self.assertEqual(frappe.db.get_value("Evaluation Report Delivery", {"evaluation_case": self.case}, "return_comment"), "Correct the page reference.")
+		self.assertEqual(frappe.db.count("Evaluation Report Version", {"evaluation_case": self.case, "state": "Signing"}), 1)
 
 	def test_an_unknown_decision_status_is_reported_to_support(self):
 		from kentender_core.services import support_issues
