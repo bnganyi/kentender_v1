@@ -29,3 +29,24 @@ def raise_series_to(prefix: str, minimum: int) -> None:
 		"ON DUPLICATE KEY UPDATE `current` = GREATEST(`current`, VALUES(`current`))",
 		(prefix, minimum),
 	)
+
+
+def next_free_reference(doctype: str, field: str, prefix: str, highest_seen: int, width: int) -> str:
+	"""The next `{prefix}{number}` that is free as of the latest committed rows.
+
+	For allocators that number from the highest reference in use (so a purged
+	range is reused) and serialise on a named lock. MariaDB runs at REPEATABLE
+	READ: a plain read after waiting for that lock returns the transaction's
+	older snapshot, so a reference another request had just committed is
+	invisible and a plain `max + 1` takes the same number (AUD-XC-130). The
+	caller passes the highest number its own snapshot shows; this then probes
+	each candidate with a locking read, which sees the committed row, and moves
+	on while the candidate is taken. A probe is a point lookup on an indexed
+	field, so it never locks a range of unrelated rows.
+	"""
+	number = int(highest_seen or 0) + 1
+	while True:
+		candidate = f"{prefix}{number:0{int(width)}d}"
+		if not frappe.db.sql(f"select 1 from `tab{doctype}` where `{field}`=%s for update", (candidate,)):
+			return candidate
+		number += 1
