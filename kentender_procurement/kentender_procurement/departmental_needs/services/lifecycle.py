@@ -466,6 +466,24 @@ def _validate_submission(need, version) -> None:
 	_require_required_by_in_year(selectable_financial_year(need.financial_year), version.required_by_date)
 
 
+def _recheck_for_acceptance(version) -> None:
+	"""NDS §8.2 / §4.9 / NDS11-AC-081 — acceptance rechecks the *current* unit
+	and the exact submitted content, not what was true at submission.
+
+	The unit must still be an active governed unit and the quantity must still
+	satisfy its rule (the catalogue may have changed since). The submitted
+	facts must still hash to the digest stored when they were locked, so a
+	revision altered outside the commands cannot reach Planning. Only
+	acceptance runs this: a return or decline records the reason a stale value
+	needs correcting and must never be blocked by it.
+	"""
+	if not version.unit or not frappe.db.get_value("UOM", version.unit, "enabled"):
+		fail("NDS_UNIT_INELIGIBLE", "The selected unit is no longer an active governed unit.")
+	require_valid_quantity(version.indicative_quantity, version.unit)
+	if cstr(version.content_hash) != _content_hash(version):
+		fail("NDS_STATE_CONFLICT", "The submitted requirement no longer matches what was reviewed. Refresh to see the available actions.")
+
+
 def _require_required_by_in_year(fy: dict[str, Any], required_by_date) -> None:
 	"""NDS-AC-005 — a supplied Required-by date lies inside the target year.
 
@@ -771,6 +789,8 @@ def review_need(
 	prior = doc.current_state
 	# NDS-BR-011 — return and decline require a reason; accept collects none.
 	reason_text = _require_reason(reason) if action in REASON_REQUIRED_ACTIONS else ""
+	if decision == "accept":
+		_recheck_for_acceptance(version)
 	_consume_task(task, doc.name, task_type, decision_token)
 	_set_version_status(version, revision_status)
 	superseded, successor, earlier = "", "", None

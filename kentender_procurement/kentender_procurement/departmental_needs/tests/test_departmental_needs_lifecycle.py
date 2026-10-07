@@ -848,6 +848,71 @@ class TestSubmissionValidation(ContentValidationCase):
 		self.assertEqual(submitted["current_state"], STATE_SUBMITTED)
 
 
+class TestAcceptanceRechecks(ContentValidationCase):
+	"""NDS v1.16 §8.2 / §4.9 / NDS11-AC-081 (AUD-NDS-007) — acceptance rechecks
+	the current unit and the content hash. A rejected acceptance is a no-op;
+	return and decline stay available so stale evidence never blocks the very
+	command that fixes it."""
+
+	def submitted(self, **overrides):
+		return self.submit(self.save_draft(**overrides))
+
+	def assert_untouched(self, submitted):
+		revision = frappe.db.get_value("Departmental Need", submitted["need"], "current_revision")
+		self.assertEqual(self.status_of(revision), "Submitted")
+		self.assertEqual(frappe.db.get_value("Departmental Need Review Task", submitted["task"], "status"), TASK_OPEN)
+		self.assertEqual(frappe.db.get_value("Departmental Need", submitted["need"], "current_state"), STATE_SUBMITTED)
+		self.assertFalse(frappe.db.exists("Departmental Need Event", {"departmental_need": submitted["need"]}))
+
+	def test_acceptance_is_refused_once_the_unit_is_no_longer_available(self):
+		submitted = self.submitted(unit="Programme")
+		frappe.db.set_value("UOM", "Programme", "enabled", 0, update_modified=False)
+		self.addCleanup(frappe.db.set_value, "UOM", "Programme", "enabled", 1, update_modified=False)
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.decide(submitted, "accept")
+		self.assertEqual(caught.exception.code, "NDS_UNIT_INELIGIBLE")
+		self.assert_untouched(submitted)
+
+	def test_acceptance_is_refused_when_the_unit_now_takes_whole_numbers_only(self):
+		submitted = self.submitted(unit="Programme", indicative_quantity=1.5)
+		before = frappe.db.get_value("UOM", "Programme", "must_be_whole_number")
+		frappe.db.set_value("UOM", "Programme", "must_be_whole_number", 1, update_modified=False)
+		self.addCleanup(frappe.db.set_value, "UOM", "Programme", "must_be_whole_number", before, update_modified=False)
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.decide(submitted, "accept")
+		self.assertEqual(caught.exception.code, "NDS_QUANTITY_PRECISION_INVALID")
+		self.assert_untouched(submitted)
+
+	def test_acceptance_is_refused_when_the_submitted_content_no_longer_matches_its_hash(self):
+		submitted = self.submitted()
+		revision = frappe.db.get_value("Departmental Need", submitted["need"], "current_revision")
+		frappe.db.set_value(
+			"Departmental Need Revision", revision, "description",
+			"Laptop computers for a different set of facilities than the ones submitted.",
+			update_modified=False,
+		)
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.decide(submitted, "accept")
+		self.assertEqual(caught.exception.code, "NDS_STATE_CONFLICT")
+		self.assert_untouched(submitted)
+
+	def test_return_and_decline_do_not_wait_on_the_unit_check(self):
+		frappe.db.set_value("UOM", "Programme", "enabled", 1, update_modified=False)
+		for decision in ("return", "decline"):
+			with self.subTest(decision=decision):
+				submitted = self.submitted(unit="Programme")
+				frappe.db.set_value("UOM", "Programme", "enabled", 0, update_modified=False)
+				self.addCleanup(frappe.db.set_value, "UOM", "Programme", "enabled", 1, update_modified=False)
+				result = self.decide(submitted, decision, reason="The unit is being withdrawn from the catalogue.")
+				frappe.db.set_value("UOM", "Programme", "enabled", 1, update_modified=False)
+				self.assertTrue(result["ok"])
+
+	def test_an_unchanged_need_is_still_accepted(self):
+		# The control: without it every refusal above could be a broken accept.
+		result = self.decide(self.submitted(), "accept")
+		self.assertEqual(result["current_state"], STATE_ACCEPTED)
+
+
 class TestCommandControls(DepartmentalNeedsCommandCase):
 	"""§5.4 NDS-BR-018 / NDS-AC-028."""
 
