@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 0,
  "creation": "2026-09-30 18:00:00.000000",
- "description": "§7.2: every write records actor, object, trusted time and an idempotency key; a replay returns the original result.",
+ "description": "\u00a77.2: every write records actor, object, trusted time and an idempotency key; a replay returns the original result.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -12,6 +12,7 @@
   "payload_hash",
   "result_json",
   "actor",
+  "standing",
   "evaluation_case",
   "recorded_at",
   "fixture_namespace"
@@ -53,6 +54,13 @@
    "options": "User"
   },
   {
+   "fieldname": "standing",
+   "fieldtype": "Small Text",
+   "label": "Standing",
+   "read_only": 1,
+   "description": "The responsibilities and committee capacities the actor held when the command ran. A replay is answered only while the actor still holds them all."
+  },
+  {
    "fieldname": "evaluation_case",
    "fieldtype": "Data",
    "label": "Evaluation case",
@@ -74,7 +82,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-30 18:00:00.000000",
+ "modified": "2026-10-07 09:30:00.000000",
  "modified_by": "Administrator",
  "module": "Bid Evaluation",
  "name": "Evaluation Command Journal",
