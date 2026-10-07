@@ -105,7 +105,8 @@ def record_external(*, award: str, basis: str, source: str, received_at: str = "
 
 	return records.command("RecordExternalAwardRestriction", case=award, idempotency_key=idempotency_key, actor=user,
 		payload={"basis": basis, "source": source, "received": received_at, "effective": effective_from, "scope": scope, "evidence": evidence, "reason": reason},
-		body=body)
+		body=body,
+		authorise=lambda: guards.require_hop(user))
 
 
 def receive(*, tender: str, event_key: str, basis: str = "Authoritative order", authority: str = "", instruction: str = "", effective_at=None, scope: str = "",
@@ -201,7 +202,8 @@ def disposition(*, award: str, issue: str, outcome: str = "", reason: str = "", 
 		return records.summary(state.reload(doc), issue=row.name, outcome=chosen)
 
 	return records.command("RecordAwardIssueDisposition", case=award, idempotency_key=idempotency_key, actor=user,
-		payload={"issue": issue, "outcome": outcome, "reason": reason, "evidence": evidence, "next_action": next_action}, body=body)
+		payload={"issue": issue, "outcome": outcome, "reason": reason, "evidence": evidence, "next_action": next_action}, body=body,
+		authorise=lambda: guards.require_hop(user))
 
 
 def proposals(doc) -> list:

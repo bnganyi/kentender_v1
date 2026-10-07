@@ -137,4 +137,5 @@ def record(*, award: str, outcome: str, reason: str = "", next_action: str = "",
 		return records.summary(state.reload(doc), **result)
 
 	return records.command("RecordAwardDecision", case=award, idempotency_key=idempotency_key, actor=user,
-		payload={"outcome": outcome, "reason": reason, "next_action": next_action, "expected": cstr(expected_version)}, body=body)
+		payload={"outcome": outcome, "reason": reason, "next_action": next_action, "expected": cstr(expected_version)}, body=body,
+		authorise=lambda: guards.require_ao(user))

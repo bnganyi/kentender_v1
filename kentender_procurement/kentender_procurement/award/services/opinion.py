@@ -59,7 +59,8 @@ def save(*, award: str, conclusion: str = "", reason: str = "", addressed_issues
 		return records.summary(state.reload(doc), opinion=working.name, version=working.version)
 
 	return records.command("SaveProfessionalOpinion", case=award, idempotency_key=idempotency_key, actor=user,
-		payload={"conclusion": conclusion, "reason": reason, "addressed": addressed_issues, "expected": cstr(expected_version)}, body=body)
+		payload={"conclusion": conclusion, "reason": reason, "addressed": addressed_issues, "expected": cstr(expected_version)}, body=body,
+		authorise=lambda: guards.require_hop(user))
 
 
 def _frozen(opinion, rep) -> str:
@@ -132,7 +133,8 @@ def sign(*, award: str, expected_version=None, idempotency_key: str, user: str) 
 		records.audit(doc.name, "SignProfessionalOpinion", user, opinion=opinion.name, digest=frozen, proof=opinion.proof_reference)
 		return records.summary(doc, opinion=opinion.name, signed=True, task=task)
 
-	return records.command("SignProfessionalOpinion", case=award, idempotency_key=idempotency_key, actor=user, payload={"expected": cstr(expected_version)}, body=body)
+	return records.command("SignProfessionalOpinion", case=award, idempotency_key=idempotency_key, actor=user, payload={"expected": cstr(expected_version)}, body=body,
+		authorise=lambda: guards.require_hop(user))
 
 
 def return_report(*, award: str, reason: str, expected_version=None, idempotency_key: str, user: str) -> dict[str, Any]:
@@ -177,7 +179,8 @@ def return_report(*, award: str, reason: str, expected_version=None, idempotency
 		return records.summary(state.reload(doc), returned=rep.name)
 
 	return records.command("ReturnEvaluationReport", case=award, idempotency_key=idempotency_key, actor=user, payload={"reason": reason, "expected": cstr(expected_version)},
-		body=body)
+		body=body,
+		authorise=lambda: guards.require_hop(user))
 
 
 def hop_label(user: str) -> str:

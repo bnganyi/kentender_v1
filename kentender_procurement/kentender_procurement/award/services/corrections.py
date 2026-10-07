@@ -216,7 +216,8 @@ def record(*, award: str, outcome: str, reason: str = "", next_action: str = "",
 		return records.summary(state.reload(frappe.get_doc(records.CASE, award)), outcome=outcome, **result)
 
 	return records.command("RecordAwardCorrectionDecision", case=award, idempotency_key=idempotency_key, actor=user,
-		payload={"outcome": outcome, "reason": reason, "next_action": next_action, "expected": cstr(expected_version)}, body=body)
+		payload={"outcome": outcome, "reason": reason, "next_action": next_action, "expected": cstr(expected_version)}, body=body,
+		authorise=lambda: guards.require_ao(user))
 
 
 def _award_guards(doc, opinion) -> None:

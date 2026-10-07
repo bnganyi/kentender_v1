@@ -49,6 +49,18 @@ def _authority(doc, n, user: str) -> dict[str, Any]:
 	return {"acting": acting, "signatory": signatory}
 
 
+def _case_of(notice: str) -> str:
+	return (frappe.db.get_value(NOTICE, notice, "award_case") if notice else "") or ""
+
+
+def _authorise(notice: str, user: str, *, signatory: bool = False) -> None:
+	"""The caller's standing for a supplier command, before the journal is read."""
+	n, doc = _load(notice)
+	auth = _authority(doc, n, user)
+	if signatory and not auth["signatory"]:
+		fail("AWD_AUTHORITY_REQUIRED", {"reason": "signatory_required"})
+
+
 def _current(doc, n) -> bool:
 	return doc.current_batch == n.batch and not doc.cancelled
 
@@ -163,8 +175,9 @@ def respond(*, notice: str, response: str, reason: str = "", notice_version=None
 			out.update(code="AWD_RESPONSE_LATE", message=LATE)
 		return out
 
-	return records.command("RespondToAward", case="", idempotency_key=idempotency_key, actor=user,
-		payload={"notice": notice, "response": response, "reason": reason, "version": cstr(notice_version)}, body=body)
+	return records.command("RespondToAward", case=_case_of(notice), idempotency_key=idempotency_key, actor=user,
+		payload={"notice": notice, "response": response, "reason": reason, "version": cstr(notice_version)}, body=body,
+		authorise=lambda: _authorise(notice, user, signatory=True))
 
 
 def request_explanation(*, notice: str, request: str, idempotency_key: str, user: str) -> dict[str, Any]:
@@ -181,7 +194,8 @@ def request_explanation(*, notice: str, request: str, idempotency_key: str, user
 		records.audit(doc.name, "RequestAwardExplanation", user, request=row.name)
 		return {"ok": True, "request": row.name}
 
-	return records.command("RequestAwardExplanation", case="", idempotency_key=idempotency_key, actor=user, payload={"notice": notice, "request": request}, body=body)
+	return records.command("RequestAwardExplanation", case=_case_of(notice), idempotency_key=idempotency_key, actor=user, payload={"notice": notice, "request": request}, body=body,
+		authorise=lambda: _authorise(notice, user))
 
 
 def my_notices(*, user: str) -> list[dict[str, Any]]:
