@@ -18,6 +18,7 @@
   "drawdown_line_id",
   "source_organisation_unit",
   "payload_digest",
+  "source_set_hash",
   "col_b",
   "original_amount",
   "remaining_amount",
@@ -125,6 +126,14 @@
    "read_only": 1,
    "hidden": 1,
    "description": "Digest of the exact checked payload; same key + changed payload is refused."
+  },
+  {
+   "fieldname": "source_set_hash",
+   "fieldtype": "Data",
+   "label": "Source set hash",
+   "read_only": 1,
+   "hidden": 1,
+   "description": "The source-set hash the reservation was reserved under (RG-27): a replay of the same key under another hash is refused, whether or not the check token is still cached."
   },
   {
    "fieldname": "col_b",

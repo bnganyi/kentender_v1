@@ -472,6 +472,23 @@ class TestCheckReserveCaller(_PrincipalBase):
 		self.assertTrue(approved["ok"], approved.get("blockers"))
 		frappe.set_user("Administrator")
 
+	def test_a_replay_with_a_changed_source_set_is_a_conflict_even_after_the_check_token_expired(self):
+		"""RG-27 — same key + changed payload is refused (BUD section 8.3) whether or not the 300 s check
+		token is still cached: the reservation carries the source-set hash it was reserved under."""
+		_, line = self._new_dhi_line()
+		self._as(self.hopf)
+		correlation, checked = self._check(line, req("REQ-CR-27"), reference="REQ-CR-27")
+		first = check_reserve.reserve_funding(checked["token"], "HASH-CR", correlation, caller=req("REQ-CR-27"))
+		frappe.cache().delete_value(f"budget_check_token:{checked['token']}")  # the token has expired
+		again = check_reserve.reserve_funding(checked["token"], "HASH-CR", correlation, caller=req("REQ-CR-27"))
+		self.assertTrue(again["reused"])
+		self.assertEqual(again["reservations"][0]["reservation_id"], first["reservations"][0]["reservation_id"])
+		frappe.local.message_log = []
+		with self.assertRaises(frappe.ValidationError):
+			check_reserve.reserve_funding("an-expired-token", "HASH-CHANGED", correlation, caller=req("REQ-CR-27"))
+		titles = [m.get("title") for m in (frappe.local.message_log or []) if isinstance(m, dict)]
+		self.assertIn("BUDGET_IDEMPOTENCY_CONFLICT", titles)
+
 	def test_reserve_replays_on_the_same_key(self):
 		_, line = self._new_dhi_line()
 		self._as(self.hopf)

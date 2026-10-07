@@ -348,7 +348,9 @@ def reserve_funding(
 		# Same key + same payload replays the original mapping, even after a
 		# later release; same key + changed payload is refused (§8.3).
 		stored = {r.payload_digest for r in existing if r.payload_digest}
-		if cached and stored and cached.get("payload_digest") not in stored:
+		# The check token lives 300 s; the source-set hash the reservation was made under does not (RG-27).
+		stored_hashes = {r.source_set_hash for r in existing if r.source_set_hash}
+		if (cached and stored and cached.get("payload_digest") not in stored) or (stored_hashes and source_set_hash not in stored_hashes):
 			frappe.throw(
 				_("This request differs from the original attempt. Check the original result before retrying; no new effect was created."),
 				frappe.ValidationError,
@@ -457,6 +459,7 @@ def reserve_funding(
 				"currency": budget.currency,
 				"correlation_id": correlation_id,
 				"payload_digest": cached.get("payload_digest") or "",
+				"source_set_hash": source_set_hash,
 				"calling_module": calling_module,
 				"caller_reference": caller_reference,
 			}
