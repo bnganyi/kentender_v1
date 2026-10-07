@@ -64,6 +64,44 @@ class TestReferenceDataSingleEntity(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		self.assertEqual(frappe.db.count("Procuring Entity"), before)
 
+	def _rest_request(self):
+		"""Make the call look like it arrived over HTTP (what `/api/resource` does), restored afterwards."""
+		previous = getattr(frappe.local, "request", None)
+		frappe.local.request = frappe._dict(method="POST", path="/api/resource/Procuring Entity", headers={})
+		self.addCleanup(setattr, frappe.local, "request", previous)
+
+	def _second_entity(self):
+		return frappe.get_doc(
+			{"doctype": "Procuring Entity", "entity_code": self.entity_code, "legal_name": "Second Entity", "entity_name": "Second Entity", "reporting_currency": "KES"}
+		)
+
+	def test_a_role_holder_cannot_create_a_second_procuring_entity_through_the_resource_api(self):
+		"""RG-07 / AUD-XC-017: the rule lived only in the reference-data API; `POST /api/resource/Procuring Entity`
+		went straight to the doctype, whose DocPerm let the role create."""
+		if not self._configured_site_pe() and not frappe.db.count("Procuring Entity"):
+			self.skipTest("site has no Procuring Entity; the bootstrap case is allowed")
+		before = frappe.db.count("Procuring Entity")
+		frappe.set_user(self.manager)
+		self._rest_request()
+		with self.assertRaises((frappe.PermissionError, frappe.ValidationError)):
+			self._second_entity().insert()
+		frappe.set_user("Administrator")
+		self.assertEqual(frappe.db.count("Procuring Entity"), before)
+		self.assertFalse(frappe.db.exists("Procuring Entity", self.entity_code))
+
+	def test_the_single_entity_rule_holds_in_the_controller_for_a_request_made_by_administrator(self):
+		if not self._configured_site_pe() and not frappe.db.count("Procuring Entity"):
+			self.skipTest("site has no Procuring Entity; the bootstrap case is allowed")
+		frappe.set_user("Administrator")
+		self._rest_request()
+		with self.assertRaisesRegex(frappe.ValidationError, "one Procuring Entity"):
+			self._second_entity().insert()
+		self.assertFalse(frappe.db.exists("Procuring Entity", self.entity_code))
+
+	def test_no_business_or_technical_role_holds_create_on_the_doctype(self):
+		roles = {p.role for p in frappe.get_meta("Procuring Entity").permissions if p.create}
+		self.assertFalse(roles - {"Administrator"}, f"roles with create: {roles}")
+
 	def test_a_role_holder_cannot_open_a_context_for_another_entity(self):
 		site_pe = self._configured_site_pe()
 		if not site_pe:
