@@ -6,8 +6,10 @@ import json
 import frappe
 from frappe import _
 
+from kentender_core.services.command_write_guard import command_write
 from kentender_suppliers.api import smw_workflow
 from kentender_suppliers.services import registry_access
+from kentender_suppliers.services.registry_access import WRITE_FAMILY
 
 
 _OWNERSHIP_QUEUES = frozenset({"my_work", "all", "approved", "blocked"})
@@ -265,6 +267,13 @@ def _assert_registry_access() -> None:
 	)
 
 
+def _assert_may_prepare_registration() -> None:
+	"""The builder's writes need a write capability, not the read grant that opens the workbench (RG-11)."""
+	registry_access.require_capability(
+		"prepare_registration", _("Not permitted to create or change supplier registrations.")
+	)
+
+
 def _action_defs(approval_status: str, operational_status: str, compliance_status: str, docs_missing: bool) -> list[dict]:
 	approval = (approval_status or "").strip()
 	ops = (operational_status or "").strip()
@@ -454,7 +463,7 @@ def create_supplier_builder_profile(
 	supplier_type: str = "Company",
 ) -> dict:
 	"""Create ERP Supplier + linked KTSM profile and return builder target."""
-	_assert_registry_access()
+	_assert_may_prepare_registration()
 	name = (supplier_name or "").strip()
 	if not name:
 		return {"ok": False, "error": "SUPPLIER_NAME_REQUIRED"}
@@ -478,7 +487,8 @@ def create_supplier_builder_profile(
 			"erpnext_supplier": erp.name,
 		}
 	)
-	prof.insert(ignore_permissions=True)
+	with command_write(WRITE_FAMILY):
+		prof.insert(ignore_permissions=True)
 	return {"ok": True, "profile_name": prof.name, "supplier_code": code}
 
 
@@ -544,9 +554,17 @@ def update_builder_identity(
 	supplier_name: str,
 	supplier_type: str = "Company",
 ) -> dict:
-	"""Update ERPNext Supplier identity from KTSM builder with policy guard."""
-	_assert_registry_access()
+	"""Update ERPNext Supplier identity from KTSM builder with policy guard.
+
+	Needs the registry's write capability (RG-11) and is open only while the registration is a Draft
+	or Returned: once a supplier has been submitted or decided, its identity is no longer a builder edit."""
+	_assert_may_prepare_registration()
 	prof = frappe.get_doc("KTSM Supplier Profile", profile_name)
+	if prof.approval_status not in ("Draft", "Returned"):
+		frappe.throw(
+			_("The identity of a supplier can only be changed while its registration is a Draft or Returned."),
+			exc=frappe.PermissionError,
+		)
 	s = frappe.get_doc("Supplier", prof.erpnext_supplier)
 	if (supplier_name or "").strip():
 		s.supplier_name = supplier_name.strip()

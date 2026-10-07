@@ -17,9 +17,9 @@ def _require(capability: str) -> None:
 @frappe.whitelist()
 def ktsm_submit_for_review(supplier_profile: str) -> dict:
 	"""Internal desk – registry may submit for supplier (when supported)."""
-	prof = frappe.get_doc("KTSM Supplier Profile", supplier_profile)
-	if not frappe.has_permission("KTSM Supplier Profile", "write", prof, throw=False):
-		frappe.throw(_("Not permitted to submit this profile for review."))
+	registry_access.require_capability(
+		"prepare_registration", _("Not permitted to submit this profile for review.")
+	)
 	governance.submit_for_review(supplier_profile)
 	return {"ok": True}
 

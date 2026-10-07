@@ -12,7 +12,9 @@ point asks the same question instead of carrying its own role set.
 Two rules from AUTH-ADR-001 §5.7/§8 are applied here:
 
 - a technical role (System Manager, Administrator) may *read* the registry but
-  decides nothing: it appears in no mutation capability;
+  decides nothing: it appears in no mutation capability, and the literal
+  Administrator user (which Frappe credits with every Role) is refused every
+  mutation capability by name;
 - a read capability never extends to portal / supplier accounts.
 """
 
@@ -21,6 +23,10 @@ from frappe import _
 from frappe.exceptions import PermissionError
 
 TECHNICAL_ROLES = frozenset({"System Manager", "Administrator"})
+
+# The command-write family of the four registry doctypes (RG-13): Profile, Category Assignment,
+# Document and API Access change only inside `command_write(WRITE_FAMILY)` in these services.
+WRITE_FAMILY = "Supplier Registry"
 
 APPROVER = "KenTender Approving Authority"
 COMPLIANCE = "KenTender Compliance Officer"
@@ -59,6 +65,10 @@ CAPABILITIES: dict[str, frozenset[str]] = {
 	"decide_category": frozenset({COMPLIANCE, APPROVER}),
 	# Blacklist (kept in supplier_policy.can_blacklist for compatibility).
 	"blacklist": frozenset({BLACKLIST_AUTHORITY}),
+	# Prepare a registration: create a profile, edit its identity while it is still a
+	# Draft or Returned, submit it for review. The roles that hold create/write on the
+	# profile through the registry DocPerms; not a read grant (RG-11).
+	"prepare_registration": frozenset({REGISTRY_OFFICER, "Procurement Officer", "Procurement Planner"}),
 }
 
 
@@ -67,6 +77,11 @@ def _roles(user: str | None = None) -> set[str]:
 
 
 def has_capability(capability: str, user: str | None = None) -> bool:
+	user = user or frappe.session.user
+	# Frappe answers every Role for the literal Administrator user, so a bare role test would hand
+	# it every mutation (RG-10). It reads the registry and decides nothing.
+	if user == "Administrator":
+		return capability == "read_registry"
 	roles = _roles(user)
 	if roles & CAPABILITIES[capability]:
 		return True

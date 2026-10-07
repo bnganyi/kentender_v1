@@ -13,9 +13,31 @@ from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, getdate, today
 from frappe.utils.file_manager import save_file
 
+from kentender_core.services.command_write_guard import fixture_insert, purge_doc
 from kentender_suppliers.api import smw_public, smw_workflow
 from kentender_suppliers.services import constants, eligibility, governance
 from kentender_suppliers.services.compliance import recompute_and_save_profile, recompute_compliance
+
+
+_CREATED_PROFILES: list[str] = []
+
+
+def _purge_created() -> None:
+	"""Remove every registry row this module made (the profiles are command-only, so the purge opens the
+	maintenance window of their family)."""
+	frappe.set_user("Administrator")
+	for prof in _CREATED_PROFILES:
+		erp = frappe.db.get_value("KTSM Supplier Profile", prof, "erpnext_supplier")
+		for dt in ("KTSM Supplier Document", "KTSM Category Assignment", "KTSM Supplier API Access"):
+			for name in frappe.get_all(dt, {"supplier_profile": prof}, pluck="name"):
+				purge_doc(dt, name)
+		for name in frappe.get_all("KTSM Status History", {"supplier_profile": prof}, pluck="name"):
+			frappe.delete_doc("KTSM Status History", name, force=True, ignore_permissions=True)
+		purge_doc("KTSM Supplier Profile", prof)
+		if erp and frappe.db.exists("Supplier", erp):
+			frappe.delete_doc("Supplier", erp, force=True, ignore_permissions=True)
+	_CREATED_PROFILES.clear()
+	frappe.db.commit()
 
 
 def _sg():
@@ -75,6 +97,7 @@ def _make_supplier_and_profile(code: str) -> tuple[str, str]:
 		}
 	)
 	p.insert(ignore_permissions=True)
+	_CREATED_PROFILES.append(p.name)
 	return erp.name, p.name
 
 
@@ -113,7 +136,7 @@ def _add_doc(
 		if frappe.db.get_value("KTSM Document Type", dt, "expires"):
 			dspec["expiry_date"] = add_days(today(), 400)
 		d = frappe.get_doc(dspec)
-		d.insert(ignore_permissions=True)
+		fixture_insert(d, reason="smoke fixture: a document uploaded from outside")
 		b = b"x"
 		s = save_file("smoke.txt", b, "KTSM Supplier Document", d.name, is_private=0, decode=False)
 		d.db_set("file", s.file_url, update_modified=False)
@@ -146,6 +169,10 @@ class TestKTSMFullSmoke(IntegrationTestCase):
 		cls._comp_user = _create_user("smoke.compliance@kentender.test", "Compliance")
 		cls._ext_a = _create_user("smoke.a@kentender.test", "A")
 		cls._ext_b = _create_user("smoke.b@kentender.test", "B")
+		cls.addClassCleanup(_purge_created)
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
 
 	# -- SCENARIO 1 --
 
@@ -161,12 +188,10 @@ class TestKTSMFullSmoke(IntegrationTestCase):
 		code = r.get("supplier_code")
 		prof = eligibility.get_profile_name_for_supplier_code(code)
 		self.assertTrue(prof)
-		acc = frappe.get_all("KTSM Supplier API Access", {"supplier_profile": prof}, pluck="name", limit=1)
-		self.assertTrue(acc, "API access grant (Pending) expected by smoke contract")
-		self.assertEqual(
-			frappe.db.get_value("KTSM Supplier API Access", acc[0], "access_status"),
-			"Pending",
-		)
+		_CREATED_PROFILES.append(prof)
+		# RG-12: no login and no API access exist until the contact address is verified.
+		self.assertFalse(frappe.db.exists("User", em))
+		self.assertFalse(frappe.db.exists("KTSM Supplier API Access", {"supplier_profile": prof}))
 		frappe.set_user("Administrator")
 
 	# 2-6: lifecycle (upload → submit as external → start review → approve as admin → category → eligible)
@@ -205,7 +230,7 @@ class TestKTSMFullSmoke(IntegrationTestCase):
 				"qualification_status": "Requested",
 			}
 		)
-		ca.insert(ignore_permissions=True)
+		fixture_insert(ca, reason="smoke fixture: a category request")
 		governance.start_category_review(ca.name)
 		governance.qualify_supplier_category(
 			ca.name, qualified_until=getdate(add_days(today(), 365))

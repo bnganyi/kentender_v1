@@ -5,17 +5,19 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime
 
+from kentender_core.services.command_write_guard import command_write
 from kentender_suppliers.services import compliance, eligibility, history, sod
+from kentender_suppliers.services.registry_access import WRITE_FAMILY
 
 
 def _save(
 	profile_name: str, updates: dict
 ) -> "frappe.model.document.Document":
 	prof = frappe.get_doc("KTSM Supplier Profile", profile_name)
-	prof.flags.bypass_governance = True
 	for k, v in updates.items():
 		prof.set(k, v)
-	prof.save(ignore_permissions=True)
+	with command_write(WRITE_FAMILY):
+		prof.save(ignore_permissions=True)
 	return prof
 
 
