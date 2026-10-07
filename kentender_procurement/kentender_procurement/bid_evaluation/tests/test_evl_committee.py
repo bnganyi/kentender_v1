@@ -79,6 +79,20 @@ class TestAppointment(CommitteeCase):
 		self.assertNotIn(f"Appoint evaluation committee for {self.reference}", titles(AO))
 		self.assertFalse(roster.complete(self.evaluation)["complete"])  # declarations still owed
 
+	def test_a_person_already_on_the_evaluation_committee_cannot_be_the_independent_opening_member(self):
+		"""AUD-EVL-013: BOP-A17 holds in both orders (the evaluation side is test_every_ineligible_person_is_reported_together)."""
+		from kentender_procurement.bid_opening.services import appointment as opening_appointment
+
+		self.evl_appoint()
+		opening_roster = self.roster()
+		members = [opening_roster[0], opening_roster[1], {"user": MEMBER, "committee_role": "Independent member"}]
+		refused = opening_appointment.validate(self.name, members)
+		self.assertEqual(refused["code"], "BOP_INDEPENDENT_MEMBER_REQUIRED", refused)
+		self.assertEqual(refused["errors"], {MEMBER: "Appointed to evaluate this Tender."})
+		self.assertTrue(next(c for c in opening_appointment.candidates(self.name) if c["user"] == MEMBER)["involved"])
+		# someone outside the evaluation committee is still acceptable
+		self.assertIsNone(opening_appointment.validate(self.name, opening_roster))
+
 	def test_only_the_accounting_officer_appoints(self):
 		with self.assertRaises(frappe.DoesNotExistError):
 			self.evl_appoint(user=HOP)
@@ -185,6 +199,17 @@ class TestDeclarationAndReplacement(CommitteeCase):
 		self.assertIn("Waiting for committee appointment", titles(CHAIR, "waiting"))
 		error = self.refused(self.evl_declare, MEMBER_2, choice="Declare a conflict")
 		self.assertIn("conflict_description", error.detail["fields"])
+
+	def test_a_conflicted_member_cannot_clear_their_own_conflict(self):
+		"""AUD-EVL-001: only the Accounting Officer's reasoned replacement ends a declared conflict."""
+		for user in (CHAIR, MEMBER_2):
+			self.evl_declare(user)
+		self.evl_declare(MEMBER, choice="Declare a conflict", description="I have a financial interest in the bidder.")
+		error = self.refused(self.evl_declare, MEMBER)  # re-declaring "No conflict to declare"
+		self.assertEqual((error.code, error.detail.get("reason")), ("EVL_MEMBER_INELIGIBLE", "declared_conflict"))
+		self.assertEqual(roster.status(self.evaluation, MEMBER)["reasons"], ["declared_conflict"])
+		self.assertEqual(frappe.db.count("Evaluation Declaration", {"evaluation_case": self.evaluation, "member_user": MEMBER}), 1)  # nothing superseded
+		self.assertIn(f"Resolve committee appointment for {self.reference}", titles(AO))
 
 	def test_a_reasoned_replacement_keeps_history(self):
 		for user in (CHAIR, MEMBER_2):

@@ -86,6 +86,52 @@ class TestDisclosure(EvaluationCase):
 		self.assertNotIn(BIDDER, dump(ao))
 
 
+class TestMemberSecretary(EvaluationCase):
+	"""AUD-EVL-010: a secretary who is also an appointed member reads as that member (EVL §3)."""
+
+	def received(self):
+		from kentender_procurement.bid_evaluation.services import declaration, intake, secretary
+
+		case = preparation.ensure_preparation(tender=self.name)["evaluation"]
+		version = lambda: frappe.db.get_value("Evaluation Case", case, "record_version")  # noqa: E731
+		appointment.appoint_committee(tender=self.name, members=[ROSTER[0], ROSTER[1], {"user": SECRETARY, "department": "Procurement", "capacity": "Member"}],
+			appointment_reference="MOH/EVAL/TEST/SEC", expected_version=version(), idempotency_key=key(), user=AO)
+		secretary.assign_secretary(tender=self.name, secretary=SECRETARY, appointment_reference="MOH/EVAL/SEC/TEST", expected_version=version(),
+			idempotency_key=key(), user=HOP)
+		for user in (CHAIR, MEMBER):
+			declaration.declare_interest(tender=self.name, choice="No conflict to declare", confidentiality_accepted=True, idempotency_key=key(), user=user)
+		self.completed_opening()
+		self.assertTrue(intake.receive_opening_package(tender=self.name)["received"])
+		return case, frappe.db.get_value("Evaluation Bid", {"evaluation_case": case}, "name")
+
+	def assert_no_bid_access(self, case, bid):
+		view = reads.resolve(tender_reference=self.reference, user=SECRETARY)
+		self.assertNotIn("comparison", view)
+		self.assertNotIn(BIDDER, dump(view))
+		self.assertFalse(view["viewer"]["bids"])
+		with self.assertRaises(frappe.DoesNotExistError):
+			reads.bid(tender_reference=self.reference, bid=bid, user=SECRETARY)
+		with self.assertRaises(frappe.DoesNotExistError):
+			reads.evidence(tender_reference=self.reference, bid=bid, digest="0" * 64, user=SECRETARY)
+
+	def test_a_conflicted_member_secretary_loses_bid_access(self):
+		from kentender_procurement.bid_evaluation.services import declaration
+
+		case, bid = self.received()
+		declaration.declare_interest(tender=self.name, choice="Declare a conflict", conflict_description="I know one of the bidders.",
+			confidentiality_accepted=True, idempotency_key=key(), user=SECRETARY)
+		self.assert_no_bid_access(case, bid)
+
+	def test_an_unavailable_member_secretary_loses_bid_access(self):
+		from kentender_procurement.bid_evaluation.services import declaration
+
+		case, bid = self.received()
+		declaration.declare_interest(tender=self.name, choice="No conflict to declare", confidentiality_accepted=True, idempotency_key=key(), user=SECRETARY)
+		self.assertTrue(reads.resolve(tender_reference=self.reference, user=SECRETARY)["viewer"]["bids"])  # eligible: reads
+		declaration.record_unavailability(tender=self.name, reason="I cannot continue on this evaluation.", idempotency_key=key(), user=SECRETARY)
+		self.assert_no_bid_access(case, bid)
+
+
 class TestNextSteps(EvaluationCase):
 	"""A small dead-end matrix over the states this world reaches."""
 

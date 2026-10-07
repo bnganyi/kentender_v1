@@ -59,7 +59,9 @@ def access(doc, user: str) -> dict[str, Any]:
 	recipient = any(d.recipient_user == user for d in rows)
 	read_other = v["technical"] or v["ao"] or v["hop"] or v["auditor"] or v["member"] or v["secretary"] or former
 	department = not read_other and oversight.department_scope(doc, user)
-	bids = (v["eligible"] or v["secretary"] or v["auditor"]) and not v["technical"]
+	# A secretary who is also an appointed member reads as a member only (EVL §3): a conflicted, unavailable or undeclared member-secretary loses bid access.
+	secretary_reads = v["secretary"] and not (v["member"] and not v["eligible"])
+	bids = (v["eligible"] or secretary_reads or v["auditor"]) and not v["technical"]
 	# OVS v0.6 §4: the AO and HOPF see status only before delivery, all details after
 	oversight_full = bool((v["ao"] or v["hop"]) and not v["technical"] and delivered)
 	# OVS-P05 and EVL-CHG-001 v0.5 §9.10: Administrator and System Manager read the delivered report, read-only, and nothing of the bids

@@ -48,6 +48,9 @@ def declare_interest(*, tender: str, choice: str, confidentiality_accepted: bool
 			checks.add("EVL_DECLARATION_REQUIRED", fields=fields)
 		checks.raise_if_any()
 		current = roster.declaration(doc.name, user)
+		if current and current.choice == CHOICES[1] and choice == CHOICES[0]:
+			# A declared conflict ends only through the Accounting Officer's reasoned replacement (EVL §3), never by the member's own re-declaration.
+			fail("EVL_MEMBER_INELIGIBLE", {"reason": "declared_conflict", "explanation": "A declared conflict can be resolved only by the Accounting Officer."})
 		if current and current.choice == choice and choice == "No conflict to declare":
 			return records.summary(doc, declaration=current.declaration_id, unchanged=True)
 		for name in frappe.get_all(roster.DECLARATION, filters={"evaluation_case": doc.name, "member_user": user, "status": "Current"}, pluck="name"):

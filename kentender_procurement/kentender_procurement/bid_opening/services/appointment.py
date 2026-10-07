@@ -61,6 +61,13 @@ def is_excluded_from_evaluation(tender: str, user: str) -> bool:
 	return bool(appointments) and bool(frappe.db.exists("Opening Committee Member", {"parent": ("in", appointments), "member_user": user, "excluded_from_evaluation": 1}))
 
 
+def _evaluation_members(tender: str) -> set[str]:
+	"""Bid Evaluation's published read of its current committee."""
+	from kentender_procurement.bid_evaluation.services import opening_seam as evaluation
+
+	return evaluation.committee_members(tender)
+
+
 def validate(tender: str, members: list[dict[str, Any]]) -> dict[str, Any] | None:
 	"""A correctable appointment is returned as data with its guard (§10.2 INCOMPLETE)."""
 	from kentender_core.services import next_step as ns
@@ -80,17 +87,20 @@ def validate(tender: str, members: list[dict[str, Any]]) -> dict[str, Any] | Non
 	incomplete = field_errors or sum(r in CHAIR_ROLES for r in roles) != 1 or sum(r in RECORDER_ROLES for r in roles) != 1
 	processing = opening_seam.processing_actors(tender)
 	independent = [cstr(r["user"]) for r in members if r.get("committee_role") == "Independent member"]
+	# BOP-A17 both ways: someone already appointed to evaluate this Tender cannot be its independent opening member (AUD-EVL-013)
+	evaluating = _evaluation_members(tender) if independent else set()
 	# Board a2: a draft with no independent member is told that first; "at
 	# least three" applies once the independent member is there.
 	if incomplete or (len(members) < 3 and independent):
 		guard = ns.guard(False, reason_code="BOP_COMMITTEE_INCOMPLETE", message=errors.message("BOP_COMMITTEE_INCOMPLETE"),
 			fixes=[ns.fix("Add member", responsibility=people.ACCOUNTING_OFFICER, kind=ns.FIX_FOCUS, fix_id="add_member", target="committee", primary=True)])
 		return {"ok": False, "code": "BOP_COMMITTEE_INCOMPLETE", "message": guard["message"], "errors": field_errors, "guard": guard}
-	if not independent or any(u in processing for u in independent):
+	if not independent or any(u in processing or u in evaluating for u in independent):
 		guard = ns.guard(False, reason_code="BOP_INDEPENDENT_MEMBER_REQUIRED", headline="The opening committee needs an independent third member",
 			message=errors.message("BOP_INDEPENDENT_MEMBER_REQUIRED"),
 			fixes=[ns.fix("Add an independent third member", responsibility=people.ACCOUNTING_OFFICER, kind=ns.FIX_FOCUS, fix_id="add_member", target="committee", primary=True)])
-		return {"ok": False, "code": "BOP_INDEPENDENT_MEMBER_REQUIRED", "message": guard["message"], "errors": {u: "Involved in processing this Tender." for u in independent if u in processing}, "guard": guard}
+		return {"ok": False, "code": "BOP_INDEPENDENT_MEMBER_REQUIRED", "message": guard["message"], "errors": {u: "Involved in processing this Tender." if u in processing else "Appointed to evaluate this Tender." for u in independent
+			if u in processing or u in evaluating}, "guard": guard}
 	return None
 
 
@@ -156,7 +166,7 @@ def candidates(tender: str) -> list[dict[str, Any]]:
 	internal people holding an active KenTender responsibility, with their
 	designation and whether they processed this Tender (so cannot be the
 	independent member). Holding a responsibility is not an appointment."""
-	processing = opening_seam.processing_actors(tender)
+	processing = opening_seam.processing_actors(tender) | _evaluation_members(tender)  # neither can be the independent member
 	users = frappe.get_all("User Responsibility Assignment", filters={"status": "Enabled"}, pluck="user", distinct=True)
 	out = []
 	for user in sorted(set(users)):

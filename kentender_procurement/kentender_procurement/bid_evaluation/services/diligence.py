@@ -147,6 +147,7 @@ def send_for_signing(*, tender: str, idempotency_key: str, user: str) -> dict[st
 		plan = current_plan(doc.name)
 		if not plan or plan.status != "Current" or plan.lead_user != user:
 			raise frappe.DoesNotExistError("Not found")
+		findings.require_member(doc, user)  # due diligence is by eligible members only (§5.4)
 		guards.open_case(doc).raise_if_any()
 		if plan.report_state != "Draft":
 			fail("EVL_VERSION_CONFLICT", {"reason": "already_frozen"})
@@ -194,6 +195,7 @@ def sign(*, tender: str, idempotency_key: str, user: str) -> dict[str, Any]:
 		plan = current_plan(doc.name)
 		if not plan or user not in participants(plan):
 			raise frappe.DoesNotExistError("Not found")
+		findings.require_member(doc, user)  # a conflicted, unavailable or replaced participant cannot sign (§5.4)
 		guards.open_case(doc).raise_if_any()
 		if plan.report_state != "Frozen":
 			fail("EVL_TARGET_CHANGED", {"reason": "not_frozen"})
