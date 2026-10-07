@@ -88,26 +88,51 @@ def _hash(payload: dict[str, Any]) -> str:
 	return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode("utf-8")).hexdigest()
 
 
+def _claim(key: str, command: str, digest: str, actor: str, organisation: str) -> bool:
+	"""Claim the key with a unique insert inside a savepoint; the unique index on the key is the authority."""
+	savepoint = f"bdj_{uuid4().hex[:12]}"
+	frappe.db.savepoint(savepoint)
+	try:
+		insert(frappe.get_doc({"doctype": JOURNAL, "idempotency_key": key, "command": command, "payload_hash": digest, "actor": actor, "organisation": organisation, "recorded_at": clock.now()}))
+	except (frappe.UniqueValidationError, frappe.DuplicateEntryError):
+		frappe.db.rollback(save_point=savepoint)
+		frappe.clear_last_message()
+		return False
+	frappe.db.release_savepoint(savepoint)
+	return True
+
+
 def idempotent(key: str, command: str, payload: dict[str, Any], fn: Callable[[], dict[str, Any]], *, actor: str, organisation: str = "") -> dict[str, Any]:
-	"""Run `fn` once per key. The same key with the same payload returns the
-	recorded result; with a different payload it is refused. A result that is
-	returned as data (`ok: False`) is not recorded, so a corrected retry runs."""
+	"""Run `fn` once per key (RG-17, AUD-XC-131). The key is claimed by a unique insert before the command
+	runs, bound to the actor, the command and the payload: the same actor repeating the same request gets the
+	recorded result (a duplicate that arrives while the first is still running waits for it and replays it);
+	another user, another command or another payload is refused. A result that is returned as data
+	(`ok: False`) is not recorded, so a corrected retry runs."""
 	key = cstr(key).strip()
 	if not key:
 		fail("BDS_FIELD_INVALID", "A request key is required.", {"fields": {"idempotency_key": "A request key is required."}})
 	digest = _hash({"command": command, **payload})
-	row = frappe.db.get_value(JOURNAL, {"idempotency_key": key}, ["command", "payload_hash", "result_json"], as_dict=True)
-	if row:
-		if row.command != command or row.payload_hash != digest:
+	actor = cstr(actor)
+	for _attempt in range(3):
+		if _claim(key, command, digest, actor, organisation):
+			break
+		# a locking read: it waits for an uncommitted claim and sees the committed row (a plain read would use the older snapshot)
+		row = frappe.db.get_value(JOURNAL, {"idempotency_key": key}, ["name", "command", "payload_hash", "result_json", "actor"], as_dict=True, for_update=True)
+		if not row:
+			continue  # the first request rolled back between the two statements: claim again
+		if cstr(row.actor) != actor or row.command != command or row.payload_hash != digest:
 			fail("BDS_IDEMPOTENCY_CONFLICT")
-		return json.loads(row.result_json or "{}")
+		if row.result_json:
+			return json.loads(row.result_json)
+		break  # a claim that recorded nothing (interrupted): the same actor may run the command
+	else:
+		fail("BDS_IDEMPOTENCY_CONFLICT")
 	with running(command, key):
 		result = fn()
 	if result.get("ok") is not False:
-		insert(frappe.get_doc({
-			"doctype": JOURNAL, "idempotency_key": key, "command": command, "payload_hash": digest, "result_json": json.dumps(result, default=str),
-			"actor": actor, "organisation": organisation, "recorded_at": clock.now(),
-		}))
+		frappe.db.set_value(JOURNAL, {"idempotency_key": key}, {"result_json": json.dumps(result, default=str), "recorded_at": clock.now()}, update_modified=False)
+	else:
+		frappe.db.sql(f"delete from `tab{JOURNAL}` where idempotency_key=%s and (result_json is null or result_json='')", key)
 	return result
 
 

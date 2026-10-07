@@ -74,3 +74,43 @@ class Conn:
 	def commit(self):
 		self.commit_gate.set()
 		assert self.finished.wait(WAIT), "connection did not finish"
+
+
+def commit_on_other_connection(fn: Callable) -> None:
+	"""Run `fn` and commit it on its own database connection, in its own thread, and wait for it.
+	For tests that must show a committed row this transaction's snapshot cannot see."""
+	site, sites_path = frappe.local.site, frappe.local.sites_path
+	failure: list[BaseException] = []
+
+	def run():
+		try:
+			frappe.init(site=site, sites_path=sites_path)
+			frappe.connect()
+			frappe.set_user("Administrator")
+			fn()
+			frappe.db.commit()
+		except BaseException as exc:  # noqa: BLE001 - handed to the test thread
+			failure.append(exc)
+		finally:
+			try:
+				frappe.db.close()
+			except Exception:  # noqa: BLE001
+				pass
+
+	thread = threading.Thread(target=run, daemon=True)
+	thread.start()
+	thread.join(WAIT)
+	if failure:
+		raise failure[0]
+
+
+def raw_row(doctype: str, **values) -> str:
+	"""Insert a minimal row (name, audit columns and `values`) by SQL, for numbering tests that read only a link or a flag."""
+	from uuid import uuid4
+
+	name = f"RAW-{uuid4().hex[:10]}"
+	columns = {"name": name, "owner": "Administrator", "modified_by": "Administrator", "creation": frappe.utils.now(), "modified": frappe.utils.now(), "docstatus": 0, "idx": 0, **values}
+	frappe.db.sql(
+		f"insert into `tab{doctype}` ({', '.join(f'`{c}`' for c in columns)}) values ({', '.join(['%s'] * len(columns))})", tuple(columns.values())
+	)
+	return name
