@@ -106,12 +106,16 @@ def check_plan_affordability(fiscal_year: str | None = None, planned_totals=None
 	return lines.check_plan_affordability(fiscal_year=fiscal_year or "", planned_totals=planned_totals)
 
 
-@frappe.whitelist()
 def validate_plan_affordability_for_decision(
 	fiscal_year: str | None = None, planned_totals=None, expected_revisions=None, correlation: str | None = None
 ):
 	"""PLN-CHG-001 v1.18 §5.3.3 — decision-time basis validation inside the
-	caller's transaction; locks, validates, writes nothing."""
+	caller's transaction; locks, validates, writes nothing.
+
+	Not a web endpoint (RG-22): it takes whole-Budget row locks, so any Budget reader
+	who could post to it could stall reserve, approve and close. Procurement Planning
+	calls it in-process through `budget_gateway.validate_plan_affordability_for_decision`
+	inside the Finance decision's own transaction."""
 	from kentender_budget.services import budget_line_contracts as lines
 
 	return lines.validate_plan_affordability_for_decision(

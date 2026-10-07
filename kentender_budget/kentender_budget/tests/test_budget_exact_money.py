@@ -123,7 +123,7 @@ class TestExactPositions(_MoneyBase):
 
 
 class TestExactInputs(_MoneyBase):
-	BAD = ("nan", "NaN", "inf", "-Infinity", "1e3", "1.005", "12.345678", "", " ", "abc", "1,000.00", float("nan"), float("inf"), True, None, "9" * 13)
+	BAD = ("nan", "NaN", "inf", "-Infinity", "1e3", "1.005", "12.345678", "", " ", "abc", "1,000.00", float("nan"), float("inf"), True, None, "9" * 13, "9" * 27, "9" * 30, int("9" * 30), Decimal("9" * 30))
 
 	def test_parse_money_accepts_exact_amounts_and_refuses_the_rest(self):
 		for good, expected in (("100.00", Decimal("100.00")), ("0.01", Decimal("0.01")), (5, Decimal("5.00")), (Decimal("12.5"), Decimal("12.50")), (1250000.5, Decimal("1250000.50")), ("999999999999.99", Decimal("999999999999.99"))):
@@ -140,6 +140,19 @@ class TestExactInputs(_MoneyBase):
 			money.parse_money("0")
 		with self.assertRaises(frappe.ValidationError):
 			money.parse_money("-1")
+
+	def test_a_huge_integer_is_the_typed_refusal_not_a_decimal_error(self):
+		"""RG-29 / AUD-XC-117 — quantize raises InvalidOperation past the Decimal context's precision;
+		that must not escape as an untyped exception from either entry point."""
+		for huge in ("9" * 27, "9" * 30, int("9" * 40), Decimal("9" * 30)):
+			with self.subTest(huge=huge):
+				amount, message = money.check_money(huge)
+				self.assertIsNone(amount)
+				self.assertTrue(message)
+				frappe.local.message_log = []
+				with self.assertRaises(frappe.ValidationError):
+					money.parse_money(huge)
+				self.assertEqual(_title(None), MONEY_CODE)
 
 	def test_a_line_save_refuses_a_malformed_amount_with_a_typed_code_and_writes_nothing(self):
 		budget, version, line = self._baseline(Decimal("100000000.00"))

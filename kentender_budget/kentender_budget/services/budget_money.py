@@ -108,9 +108,15 @@ def _parse(value, scale: int, allow_zero: bool, allow_negative: bool) -> Decimal
 	if not amount.is_finite():
 		_refuse(value)
 	q = quantum(scale)
-	if amount != amount.quantize(q):
+	try:
+		quantized = amount.quantize(q)
+	except InvalidOperation:
+		# RG-29: a result with more digits than the Decimal context holds (about 28) is far past the
+		# supported maximum; it is that typed refusal, never an uncaught decimal error.
+		_refuse(value, _("Amount {0} is larger than the supported maximum").format(repr(value)))
+	if amount != quantized:
 		_refuse(value)
-	amount = amount.quantize(q)
+	amount = quantized
 	if len(str(int(abs(amount)))) > min(MAX_INTEGRAL_DIGITS, STORAGE_INTEGRAL_DIGITS):
 		_refuse(value, _("Amount {0} is larger than the supported maximum").format(repr(value)))
 	if amount < 0 and not allow_negative:

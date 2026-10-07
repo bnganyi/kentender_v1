@@ -137,6 +137,14 @@ class TestNoWebSurface(_PrincipalBase):
 					with self.subTest(name=name):
 						self.assertNotIn(fn, frappe.whitelisted)
 
+	def test_the_decision_time_affordability_check_is_not_a_web_endpoint(self):
+		"""RG-22 — it takes whole-Budget row locks, so a reader who can reach it can stall reserve, approve and close.
+		Planning calls it in-process (`procurement_planning.services.budget_gateway`)."""
+		from kentender_budget.api import budget_api
+
+		self.assertNotIn(budget_api.validate_plan_affordability_for_decision, frappe.whitelisted)
+		self.assertIn(budget_api.check_plan_affordability, frappe.whitelisted)  # the non-locking display read stays published
+
 	def test_the_dia_adapter_release_endpoint_is_gone(self):
 		self.assertIsNone(importlib.util.find_spec("kentender_budget.api.dia_budget_control"))
 
