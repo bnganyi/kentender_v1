@@ -143,7 +143,7 @@ class TestCanonicalSelection(IntegrationTestCase):
 		name = row.get("assignment") or row.get("name")
 		def cleanup():
 			if frappe.db.exists("User Responsibility Assignment", name):
-				frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+				purge_doc("User Responsibility Assignment", name)
 			administration._sync_projection(user)
 			frappe.db.commit()
 

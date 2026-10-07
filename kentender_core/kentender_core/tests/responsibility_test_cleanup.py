@@ -29,6 +29,7 @@ from __future__ import annotations
 import frappe
 
 from kentender_core.services.audit_event_service import purge_audit_events
+from kentender_core.services.command_write_guard import purge_doc
 
 PE_PATTERN = "KT-TEST-%"
 USER_PATTERN = "kt.test.%"
@@ -55,9 +56,7 @@ def purge(*, commit: bool = True) -> dict[str, int]:
 		)
 	)
 	for name in assignments:
-		frappe.delete_doc(
-			"User Responsibility Assignment", name, force=1, ignore_permissions=True
-		)
+		purge_doc("User Responsibility Assignment", name)
 	removed["User Responsibility Assignment"] = len(assignments)
 
 	units: list[str] = []

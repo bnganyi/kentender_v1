@@ -37,11 +37,13 @@ never touched (KT-STD-001 §10).
 
 from __future__ import annotations
 
+from contextlib import nullcontext
 from typing import Any
 
 import frappe
 
 from kentender_core.seeds import calendar, site_setup
+from kentender_core.services.command_write_guard import maintenance_write
 
 #: Two-year seed world (owner, 4 Oct 2026: "Decisions for the owner:
 #: recommendations accepted"; plan D1–D7). The world is read as at
@@ -474,7 +476,10 @@ def _delete_docs(doctype: str, names: list[str], deleted: dict[str, int], **flag
 		doc = frappe.get_doc(doctype, name)
 		for key, value in flags.items():
 			doc.flags[key] = value
-		doc.delete(ignore_permissions=True, force=True)
+		# a command-only doctype (AUD-XC-013) is cleared under its own family's maintenance window
+		family = getattr(doc, "command_write_family", "")
+		with maintenance_write(family, reason="canonical seed clean-up") if family else nullcontext():
+			doc.delete(ignore_permissions=True, force=True)
 		deleted[doctype] = deleted.get(doctype, 0) + 1
 
 

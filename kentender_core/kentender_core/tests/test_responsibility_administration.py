@@ -16,6 +16,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from kentender_core.services import responsibility_administration as administration
+from kentender_core.services.command_write_guard import CommandWriteError, command_write
 from kentender_core.services.responsibility_errors import ResponsibilityError
 from kentender_core.tests import v16_fixtures as fx
 from kentender_core.tests.responsibility_test_cleanup import purge
@@ -580,8 +581,15 @@ class TestUpdateScheduled(AdministrationTestCase):
 		granted = _grant(user, "Departmental Author", self.child)["assignment"]
 		doc = frappe.get_doc("User Responsibility Assignment", granted)
 		doc.user = other
-		with self.assertRaises(frappe.ValidationError) as caught:
+		# outside the administration commands the record refuses every write (AUD-XC-013) ...
+		with self.assertRaises(CommandWriteError):
 			doc.save(ignore_permissions=True)
+		# ... and even a command window cannot rewrite an assignment that has started
+		doc = frappe.get_doc("User Responsibility Assignment", granted)
+		doc.user = other
+		with command_write("Responsibility"):
+			with self.assertRaises(frappe.ValidationError) as caught:
+				doc.save(ignore_permissions=True)
 		self.assertIn("already started", str(caught.exception))
 		self.assertEqual(
 			frappe.db.get_value("User Responsibility Assignment", granted, "user"), user

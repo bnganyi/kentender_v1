@@ -8,6 +8,8 @@ from __future__ import annotations
 from uuid import uuid4
 
 import frappe
+
+from kentender_core.services.command_write_guard import maintenance_write
 from frappe.tests import IntegrationTestCase
 
 from kentender_core.services import working_context as wc
@@ -41,7 +43,7 @@ class TestPeScopeWithoutUserPermission(IntegrationTestCase):
 		frappe.clear_cache(user=self.user)
 
 	def _responsibility(self):
-		frappe.get_doc(
+		doc = frappe.get_doc(
 			{
 				"doctype": "User Responsibility Assignment",
 				"user": self.user,
@@ -50,7 +52,9 @@ class TestPeScopeWithoutUserPermission(IntegrationTestCase):
 				"status": "Enabled",
 				"fixture_namespace": "KT_TEST_UPSCOPE",
 			}
-		).insert(ignore_permissions=True)
+		)
+		with maintenance_write("Responsibility", reason="test fixture: a bare assignment row"):
+			doc.insert(ignore_permissions=True)
 
 	def test_user_permission_alone_offers_no_entity(self):
 		self._user_permission()

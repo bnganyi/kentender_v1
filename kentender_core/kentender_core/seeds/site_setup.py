@@ -22,9 +22,12 @@ Conflicting authoritative data fails the seed rather than being repaired
 
 from __future__ import annotations
 
+from contextlib import nullcontext
+
 import frappe
 
 from kentender_core.services import organisation_structure as structure
+from kentender_core.services.command_write_guard import maintenance_write
 from kentender_core.services import responsibility_administration as administration
 from kentender_core.services import site_configuration as configuration
 
@@ -1637,7 +1640,10 @@ def reset_site_setup(*, commit: bool = False) -> dict[str, int]:
 				doc.flags.kt_fixture_purge = True
 				doc.delete(ignore_permissions=True, force=True)
 			else:
-				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True, delete_permanently=True)
+				# a command-only doctype (AUD-XC-013) is cleared under its own family's maintenance window
+				family = getattr(frappe.get_doc(doctype, name), "command_write_family", "")
+				with maintenance_write(family, reason="site setup clean-up") if family else nullcontext():
+					frappe.delete_doc(doctype, name, force=True, ignore_permissions=True, delete_permanently=True)
 		if names:
 			deleted[doctype] = deleted.get(doctype, 0) + len(names)
 

@@ -39,6 +39,7 @@ from kentender_core.services.authorization import (
 	STATUS_REVOKED,
 	descendants_of,
 	diagnose_user,
+	is_technical,
 )
 from kentender_core.services.authorization import derived_status as _derived
 from kentender_core.services.business_role_registry import (
@@ -46,10 +47,46 @@ from kentender_core.services.business_role_registry import (
 	may_administer,
 	require_registered,
 )
+from kentender_core.services.command_write_guard import command_write
 from kentender_core.services.responsibility_errors import fail
+
+# The command-write family of the assignment record (AUD-XC-013): only this
+# service writes a User Responsibility Assignment.
+FAMILY = "Responsibility"
 
 # §14.2 — the filter's Status vocabulary, in the order the screen shows it.
 DERIVED_STATUSES = (DERIVED_SCHEDULED, DERIVED_ACTIVE, DERIVED_EXPIRED, DERIVED_REVOKED)
+
+
+SELF_GRANT_MESSAGE = "You cannot assign a responsibility to yourself. Another administrator must do it."
+TECHNICAL_HOLDER_MESSAGE = (
+	"Administrator and System Manager accounts are technical accounts and hold no business responsibility. "
+	"Assign the responsibility to the person who will exercise it."
+)
+
+
+def holder_problem(user: str, principal: str, business_role: str = "") -> tuple[str, str] | None:
+	"""AUD-XC-136 / AUTH-ADR-001 §5.8, §8 — who may hold a responsibility.
+
+	Returns `(error_code, message)` when the grant must be refused. An
+	administrator cannot stack business authority on themselves (they would
+	then pass every state and segregation check as an ordinary user), and a
+	technical account — Administrator or a System Manager holder — carries
+	inspection authority only ("Setup authority is not business authority"),
+	except a registered technical-operation responsibility (`technical_holder`).
+	"""
+	if user and user == principal:
+		return "AUTH_SEGREGATION_BLOCKED", SELF_GRANT_MESSAGE
+	entry = REGISTRY.get(business_role) if business_role else None
+	if user and is_technical(user) and not (entry and entry.technical_holder):
+		return "AUTH_CONFIGURATION_INVALID", TECHNICAL_HOLDER_MESSAGE
+	return None
+
+
+def _require_grantable_holder(user: str, principal: str, business_role: str) -> None:
+	problem = holder_problem(user, principal, business_role)
+	if problem:
+		fail(*problem)
 
 
 def require_assignment_administrator(business_role: str, actor: str | None = None) -> str:
@@ -109,6 +146,7 @@ def grant(
 	require_whole_structure()
 	entry = require_registered(business_role)
 	_require_enabled_user(user)
+	_require_grantable_holder(user, principal, business_role)
 
 	if not entry.requires_organisation_unit:
 		organisation_unit = ""
@@ -158,7 +196,8 @@ def grant(
 			"fixture_namespace": fixture_namespace or None,
 		}
 	)
-	doc.insert(ignore_permissions=True)
+	with command_write(FAMILY):
+		doc.insert(ignore_permissions=True)
 	_sync_projection(user)
 	return {"assignment": doc.name, "created": True}
 
@@ -265,6 +304,7 @@ def update_scheduled(
 
 	entry = require_registered(business_role)
 	_require_enabled_user(user)
+	_require_grantable_holder(user, principal, business_role)
 	if not entry.requires_organisation_unit:
 		organisation_unit = ""
 	effective_from = effective_from or None
@@ -316,7 +356,8 @@ def update_scheduled(
 
 	previous_user = doc.user
 	doc.update(after)
-	doc.save(ignore_permissions=True)
+	with command_write(FAMILY):
+		doc.save(ignore_permissions=True)
 	log_audit_event(
 		event_type=UPDATE_EVENT_TYPE,
 		document_type=ASSIGNMENT_DOCTYPE,
@@ -755,6 +796,10 @@ def preview_assignment(
 	entry = None
 	if not user:
 		problems.append({"field": "user", "message": "Select a user."})
+	else:
+		holder = holder_problem(user, frappe.session.user, business_role)
+		if holder:
+			problems.append({"field": "user", "message": holder[1]})
 	if not business_role:
 		problems.append({"field": "business_role", "message": "Select a responsibility."})
 	else:

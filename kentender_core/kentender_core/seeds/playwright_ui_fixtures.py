@@ -46,6 +46,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
+from kentender_core.services.command_write_guard import purge_doc
 from frappe.utils import add_to_date, now_datetime
 
 from kentender_core.seeds import site_setup
@@ -227,7 +228,7 @@ def _purge_grantee_assignments() -> int:
 		):
 			purge_audit_events({"name": event}, reason="Playwright fixture clean-up")
 	for name in names:
-		frappe.delete_doc("User Responsibility Assignment", name, force=True, ignore_permissions=True)
+		purge_doc("User Responsibility Assignment", name)
 	return len(names)
 
 
