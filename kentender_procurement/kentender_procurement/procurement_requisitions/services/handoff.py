@@ -111,7 +111,8 @@ def record_handoff_consumption(*, handoff: str, tender: str, tender_version: str
 	`REQ_HANDOFF_CONFLICT`. Consumption frees the item's open slot (§5.1) but
 	releases no drawdown."""
 	payload = {"handoff": handoff, "tender": tender, "tender_version": tender_version, "template_key": template_key, "template_version": template_version}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	actor = frappe.session.user  # an in-process owner call made inside Tenders' own start command
+	replay = envelope.replay_or_none(idempotency_key, payload, command="RecordHandoffConsumption", actor=actor)
 	if replay:
 		return replay
 	if not handoff or not frappe.db.exists("Authorised Requisition Handoff", handoff):
@@ -125,7 +126,9 @@ def record_handoff_consumption(*, handoff: str, tender: str, tender_version: str
 	doc = envelope.locked("Authorised Requisition Handoff", handoff)
 	if doc.consumed_at:
 		if doc.tender == cstr(tender):
-			return {"ok": True, "idempotent": True, "action": "already_consumed", "handoff": doc.name, "tender": doc.tender, "consumed_at": cstr(doc.consumed_at)}
+			result = {"ok": True, "idempotent": True, "action": "already_consumed", "handoff": doc.name, "tender": doc.tender, "consumed_at": cstr(doc.consumed_at)}
+			envelope.record_command(idempotency_key=idempotency_key, command="RecordHandoffConsumption", payload=payload, result=result, document_type="Authorised Requisition Handoff", document_name=doc.name, actor=actor)
+			return result
 		fail("REQ_HANDOFF_CONFLICT", detail={"tender": cstr(doc.tender)})
 	if root.current_state != "Authorised" or root.handoff != doc.name:
 		fail("REQ_HANDOFF_CONFLICT", detail={"state": root.current_state})
@@ -140,5 +143,5 @@ def record_handoff_consumption(*, handoff: str, tender: str, tender_version: str
 	records.release_slot(root)
 	envelope.bump(root)
 	result = {"ok": True, "idempotent": False, "action": "consumed", "handoff": doc.name, "tender": doc.tender, "consumed_at": cstr(doc.consumed_at)}
-	envelope.record_command(idempotency_key=idempotency_key, command="RecordHandoffConsumption", payload=payload, result=result, document_type="Authorised Requisition Handoff", document_name=doc.name)
+	envelope.record_command(idempotency_key=idempotency_key, command="RecordHandoffConsumption", payload=payload, result=result, document_type="Authorised Requisition Handoff", document_name=doc.name, actor=actor)
 	return result

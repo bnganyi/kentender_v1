@@ -221,14 +221,14 @@ def send_for_department_approval(*, requisition: str, expected_record_version, i
 	exact Version and routes it to the lead Head of User Department."""
 	actor = authz.actor(user)
 	payload = {"requisition": requisition}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	root = records.require_root(requisition)
 	scope = records.require_edit_units(root, actor)
 	if not scope["shared"]:
 		fail("REQ_RESPONSIBILITY_REQUIRED", "Only the submitting department can send this requisition for department approval.")
 	_require_role_in(actor, ROLE_DEPARTMENTAL_AUTHOR, root.lead_org_unit_id, masked=False)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="SendForDepartmentApproval", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(root, expected_record_version)
 	version, package_version = _load_current(root)
 	if root.current_state != "Draft" or version.version_status != "Draft":
@@ -250,11 +250,11 @@ def submit_requisition_to_procurement(*, requisition: str, expected_record_versi
 	prepare. The certified lead and submitting authority are frozen here."""
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "task": task}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	root = records.require_root(requisition)
 	assignment = _lead_hod(root, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="SubmitRequisitionToProcurement", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(root, expected_record_version)
 	version, package_version = _load_current(root)
 
@@ -302,9 +302,6 @@ def submit_requisition_to_procurement(*, requisition: str, expected_record_versi
 def _return(*, task: str, reason: str, affected_section: str, expected_record_version, idempotency_key: str, user: str | None, from_state: str, capacity: str, decision: str, command: str) -> dict[str, Any]:
 	actor = authz.actor(user)
 	payload = {"task": task, "reason": reason, "affected_section": affected_section}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	reason = _reason(reason, label="correction")
 	affected_section = _section(affected_section)
 	if not task or not frappe.db.exists("Requisition Task", task):
@@ -312,6 +309,9 @@ def _return(*, task: str, reason: str, affected_section: str, expected_record_ve
 	task_doc = envelope.locked("Requisition Task", task)
 	root = records.require_root(task_doc.requisition)
 	assignment = authz.require_hopf(actor) if capacity == ROLE_HEAD_OF_PROCUREMENT_FUNCTION else _lead_hod(root, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command=command, actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(task_doc, expected_record_version)
 	if task_doc.status != "Open" or root.current_state != from_state:
 		fail("REQ_STALE_VERSION")
@@ -340,15 +340,15 @@ def change_requisition_lead_department(*, task: str, new_lead_org_unit: str, rea
 	and opens a copied Draft the new lead must certify afresh."""
 	actor = authz.actor(user)
 	payload = {"task": task, "new_lead_org_unit": new_lead_org_unit, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	reason = _reason(reason, high=500)
 	if not task or not frappe.db.exists("Requisition Task", task):
 		authz.not_found()
 	task_doc = envelope.locked("Requisition Task", task)
 	root = records.require_root(task_doc.requisition)
 	assignment = authz.require_hopf(actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="ChangeRequisitionLeadDepartment", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(task_doc, expected_record_version)
 	if task_doc.status != "Open" or root.current_state != "Submitted to Procurement":
 		fail("REQ_STALE_VERSION", "The submitting department can be changed only while the requisition is submitted to Procurement.")
@@ -372,12 +372,12 @@ def withdraw_requisition(*, requisition: str, reason: str, expected_record_versi
 	Version with no drawdown and no reservation."""
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	reason = _reason(reason)
 	root = records.require_root(requisition)
 	assignment = _lead_hod(root, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="WithdrawRequisition", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(root, expected_record_version)
 	if root.current_state not in ("Draft", "Awaiting Department Approval", "Submitted to Procurement"):
 		fail("REQ_STALE_VERSION")
@@ -412,12 +412,12 @@ def request_upstream_plan_correction(*, requisition: str, reason: str, expected_
 	nothing here changes."""
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	reason = _reason(reason, label="description of what is wrong")
 	root = records.require_root(requisition)
 	assignment, capacity = _lead_hod_or_hopf(root, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="RequestUpstreamPlanCorrection", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(root, expected_record_version)
 	if root.current_state not in ("Draft", "Awaiting Department Approval", "Submitted to Procurement"):
 		fail("REQ_STALE_VERSION", "A Planning correction can be requested only before authorisation.")

@@ -202,12 +202,12 @@ def create_requisition_correction_draft(*, requisition: str, expected_record_ver
 
 	actor = authz.actor(user)
 	payload = {"requisition": requisition}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	root = records.require_root(requisition)
 	scope = records.require_edit_units(root, actor)
 	records.require_shared(scope)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="CreateRequisitionCorrectionDraft", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(root, expected_record_version)
 	if root.current_state != "Revoked":
 		fail("REQ_STALE_VERSION")

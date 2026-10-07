@@ -81,11 +81,11 @@ def source_set_hash(version) -> str:
 def authorise_requisition(*, requisition: str, task: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "task": task}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	root = records.require_root(requisition)
 	assignment = authz.require_hopf(actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="AuthoriseRequisition", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(root, expected_record_version)
 	if root.current_state != "Submitted to Procurement":
 		fail("REQ_STALE_VERSION")
@@ -169,12 +169,12 @@ def revoke_unconsumed_authorisation(*, requisition: str, reason: str, expected_r
 
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	reason = _reason(reason)
 	root = records.require_root(requisition)
 	assignment = authz.require_hopf(actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="RevokeUnconsumedAuthorisation", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(root, expected_record_version)
 	if root.current_state != "Authorised":
 		fail("REQ_STALE_VERSION")

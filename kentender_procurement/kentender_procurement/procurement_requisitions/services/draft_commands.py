@@ -71,13 +71,13 @@ def prepare_it_equipment_requisition(*, plan_item_id: str, idempotency_key: str,
 	every §5A check passes and the open slot is taken."""
 	actor = authz.actor(user)
 	payload = {"plan_item_id": plan_item_id, "prior": prior or {}}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 
 	projection = eligibility_gateway.get_requisition_eligible_plan_item(plan_item_id)
 	units = set(projection.get("contributing_org_unit_ids") or [])
 	authz.require_draft_author_for_any(units, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="PrepareITEquipmentRequisition", actor=actor)
+	if replay:
+		return replay
 
 	existing = records.open_root_for(projection["plan_item_id"])
 	if existing:
@@ -192,13 +192,17 @@ def prepare_it_equipment_requisition(*, plan_item_id: str, idempotency_key: str,
 # --------------------------------------------------------------------------
 
 
-def _draft_for_write(requisition: str, actor: str):
+def _writer(requisition: str, actor: str):
+	"""The locked root and the actor's edit scope: who may write, decided before any key is read."""
 	root = records.require_root(requisition)
-	scope = records.require_edit_units(root, actor)
+	return root, records.require_edit_units(root, actor)
+
+
+def _draft_versions(root):
 	version = envelope.locked("Requisition Version", root.current_version)
 	package_version = envelope.locked("IT Equipment Requirement Package Version", version.package_version)
 	records.require_draft(version, package_version)
-	return root, version, package_version, scope
+	return version, package_version
 
 
 def _refresh_lead(root, version) -> None:
@@ -223,10 +227,11 @@ _SUMMARY_FIELDS = ("requirement_title", "delivery_location", "latest_delivery_da
 def save_requisition_summary(*, requisition: str, values: dict[str, Any], expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "values": values}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	root, scope = _writer(requisition, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command='SaveRequisitionSummary', actor=actor)
 	if replay:
 		return replay
-	root, version, package_version, scope = _draft_for_write(requisition, actor)
+	version, package_version = _draft_versions(root)
 	envelope.check_record_version(version, expected_record_version)
 
 	if any(field in values for field in _SUMMARY_FIELDS):
@@ -354,10 +359,11 @@ def add_same_specification_items(*, requisition: str, shared: dict[str, Any], ro
 	source-linked item per selected positive row; every row or none."""
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "shared": shared, "rows": rows}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	root, scope = _writer(requisition, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command='AddSameSpecificationItems', actor=actor)
 	if replay:
 		return replay
-	root, version, package_version, scope = _draft_for_write(requisition, actor)
+	version, package_version = _draft_versions(root)
 	envelope.check_record_version(package_version, expected_record_version)
 	values = _validate_shared_item(shared, version)
 
@@ -422,10 +428,11 @@ def update_shared_item_details(*, requisition: str, requisition_item_ids: list[s
 	quantity or intended use. A category change regenerates the proposal."""
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "requisition_item_ids": requisition_item_ids, "shared": shared}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	root, scope = _writer(requisition, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command='UpdateSharedItemDetails', actor=actor)
 	if replay:
 		return replay
-	root, version, package_version, scope = _draft_for_write(requisition, actor)
+	version, package_version = _draft_versions(root)
 	records.require_shared(scope)
 	envelope.check_record_version(package_version, expected_record_version)
 	values = _validate_shared_item(shared, version)
@@ -448,10 +455,11 @@ def update_requisition_item(*, requisition: str, requisition_item_id: str, value
 	"""Edit quantity and intended use of one source-linked item only."""
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "requisition_item_id": requisition_item_id, "values": values}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	root, scope = _writer(requisition, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command='UpdateRequisitionItem', actor=actor)
 	if replay:
 		return replay
-	root, version, package_version, scope = _draft_for_write(requisition, actor)
+	version, package_version = _draft_versions(root)
 	envelope.check_record_version(package_version, expected_record_version)
 	item = next((i for i in package_version.items if i.requisition_item_id == requisition_item_id), None)
 	if not item:
@@ -481,10 +489,11 @@ def _item_is_referenced(package_version, item_id: str) -> bool:
 def remove_requisition_item(*, requisition: str, requisition_item_id: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "requisition_item_id": requisition_item_id}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	root, scope = _writer(requisition, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command='RemoveRequisitionItem', actor=actor)
 	if replay:
 		return replay
-	root, version, package_version, scope = _draft_for_write(requisition, actor)
+	version, package_version = _draft_versions(root)
 	envelope.check_record_version(package_version, expected_record_version)
 	item = next((i for i in package_version.items if i.requisition_item_id == requisition_item_id), None)
 	if not item:
@@ -582,10 +591,11 @@ def save_requirement_proposal_draft(*, requisition: str, proposal_digest: str, t
 	the visible support values. Review required remains; nothing confirms."""
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "proposal_digest": proposal_digest, "technical": technical, "acceptance": acceptance, "support": support}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	root, scope = _writer(requisition, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command='SaveRequirementProposalDraft', actor=actor)
 	if replay:
 		return replay
-	root, version, package_version, scope = _draft_for_write(requisition, actor)
+	version, package_version = _draft_versions(root)
 	records.require_shared(scope)
 	envelope.check_record_version(package_version, expected_record_version)
 	_require_current_proposal(package_version, proposal_digest, profile_key or package_version.standard_profile_key, profile_version or package_version.standard_profile_version)
@@ -604,10 +614,11 @@ def apply_selected_requirement_package(*, requisition: str, profile_key: str, pr
 	marked Reviewed, or nothing changes."""
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "profile_key": profile_key, "profile_version": profile_version, "proposal_digest": proposal_digest, "technical": technical, "acceptance": acceptance, "support": support}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	root, scope = _writer(requisition, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command='ApplySelectedRequirementPackage', actor=actor)
 	if replay:
 		return replay
-	root, version, package_version, scope = _draft_for_write(requisition, actor)
+	version, package_version = _draft_versions(root)
 	records.require_shared(scope)
 	envelope.check_record_version(package_version, expected_record_version)
 	_require_current_proposal(package_version, proposal_digest, profile_key, profile_version)
@@ -637,10 +648,11 @@ def reset_standard_values(*, requisition: str, expected_record_version, idempote
 	"""Restore the visible code-owned proposal; it stays Review required."""
 	actor = authz.actor(user)
 	payload = {"requisition": requisition}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	root, scope = _writer(requisition, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command='ResetStandardValues', actor=actor)
 	if replay:
 		return replay
-	root, version, package_version, scope = _draft_for_write(requisition, actor)
+	version, package_version = _draft_versions(root)
 	records.require_shared(scope)
 	envelope.check_record_version(package_version, expected_record_version)
 	for field_name in catalogue.STANDARD_SUPPORT:
@@ -704,10 +716,11 @@ def _apply_support(package_version, values: dict[str, Any], *, complete: bool = 
 def save_warranty_and_support(*, requisition: str, values: dict[str, Any], expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "values": values}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	root, scope = _writer(requisition, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command='SaveWarrantyAndSupport', actor=actor)
 	if replay:
 		return replay
-	root, version, package_version, scope = _draft_for_write(requisition, actor)
+	version, package_version = _draft_versions(root)
 	records.require_shared(scope)
 	envelope.check_record_version(package_version, expected_record_version)
 	_apply_support(package_version, values)
@@ -723,10 +736,11 @@ def save_warranty_and_support(*, requisition: str, values: dict[str, Any], expec
 
 def _row_command(*, requisition, table_field, id_field, id_prefix, command, idempotency_key, expected_record_version, user, payload, mutate):
 	actor = authz.actor(user)
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	root, scope = _writer(requisition, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command=command, actor=actor)
 	if replay:
 		return replay
-	root, version, package_version, scope = _draft_for_write(requisition, actor)
+	version, package_version = _draft_versions(root)
 	records.require_shared(scope)
 	envelope.check_record_version(package_version, expected_record_version)
 	row_id = mutate(package_version, version)

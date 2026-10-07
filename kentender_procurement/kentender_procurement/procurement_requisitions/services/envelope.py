@@ -13,21 +13,21 @@ and error contract) — see AGENTS.md §4.2, "reuse existing services".
 
 from __future__ import annotations
 
-import hashlib
-import json
 from contextlib import contextmanager
 from typing import Any
 from uuid import uuid4
 
 import frappe
-from frappe.utils import cstr, now_datetime
+from frappe.utils import cstr
 
 from kentender_core.services.command_write_guard import command_write
 from kentender_procurement.procurement_requisitions.services.errors import fail
+from kentender_procurement.services import command_journal
 
 # The Requisitions command-write family (AUD-XC-013): every Requisition
 # doctype's controller refuses a write made outside `command_write(FAMILY)`.
 FAMILY = "Requisitions"
+JOURNAL = "Requisition Command Journal"
 
 
 def token() -> str:
@@ -35,32 +35,23 @@ def token() -> str:
 
 
 def fingerprint(payload: dict[str, Any]) -> str:
-	material = {
-		key: cstr(value)
-		for key, value in sorted(payload.items())
-		if key not in {"user", "idempotency_key"} and value is not None
-	}
-	return hashlib.sha256(json.dumps(material, sort_keys=True).encode()).hexdigest()
+	return command_journal.fingerprint(payload)
 
 
-def replay_or_none(idempotency_key: str, payload: dict[str, Any]) -> dict[str, Any] | None:
-	"""Return the recorded result for a repeated key; reject key reuse."""
-	key = cstr(idempotency_key).strip()
-	if not key:
-		fail("REQ_STALE_VERSION", "An idempotency key is required.")
-	row = frappe.db.get_value(
-		"Requisition Command Journal",
-		{"idempotency_key": key},
-		["request_fingerprint", "result"],
-		as_dict=True,
+def replay_or_none(idempotency_key: str, payload: dict[str, Any], *, command: str, actor: str) -> dict[str, Any] | None:
+	"""Claim the key for this actor, command and payload, or return the recorded
+	result of the same request (AUD-XC-131, AUD-XC-130).
+
+	Call it after the caller has been authorised and before the command reads or
+	changes anything else. A key reused by another user, for another command or
+	with another payload is `REQ_IDEMPOTENCY_CONFLICT` and the recorded result is
+	not returned; a duplicate that arrives while the first request is still
+	running waits for it and gets its result. `record_command` completes the claim."""
+	return command_journal.claim_or_replay(
+		journal=JOURNAL, family=FAMILY, idempotency_key=idempotency_key, command=command, actor=actor, payload=payload,
+		conflict=lambda: fail("REQ_IDEMPOTENCY_CONFLICT"),
+		key_required=lambda: fail("REQ_STALE_VERSION", "An idempotency key is required."),
 	)
-	if not row:
-		return None
-	if cstr(row.request_fingerprint) != fingerprint(payload):
-		fail("REQ_IDEMPOTENCY_CONFLICT")
-	result = json.loads(row.result) if row.result else {}
-	result["idempotent"] = True
-	return result
 
 
 def record_command(
@@ -74,21 +65,15 @@ def record_command(
 	actor: str | None = None,
 	fixture_namespace: str = "",
 ) -> None:
-	doc = frappe.get_doc(
-		{
-			"doctype": "Requisition Command Journal",
-			"idempotency_key": cstr(idempotency_key).strip(),
-			"command": command,
-			"document_type": document_type,
-			"document_name": document_name,
-			"request_fingerprint": fingerprint(payload),
-			"actor": actor or frappe.session.user,
-			"result": json.dumps(result, default=str),
-			"occurred_at": now_datetime(),
-			"fixture_namespace": fixture_namespace,
-		}
+	command_journal.complete(
+		journal=JOURNAL, family=FAMILY, idempotency_key=idempotency_key, command=command, actor=actor or frappe.session.user,
+		payload=payload, result=result, document_type=document_type, document_name=document_name, fixture_namespace=fixture_namespace,
 	)
-	insert(doc)
+
+
+def release_claim(idempotency_key: str) -> None:
+	"""A command that returns a refusal as data records nothing; free its key."""
+	command_journal.release(JOURNAL, idempotency_key)
 
 
 def locked(doctype: str, name: str):

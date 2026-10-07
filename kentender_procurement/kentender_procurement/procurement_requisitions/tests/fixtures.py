@@ -167,6 +167,8 @@ def wipe_requisition_rows() -> None:
 		names |= set(frappe.get_all(doctype, filters={field: ("in", values)}, pluck="name"))
 		frappe.db.delete(doctype, {field: ("in", values)})
 	frappe.db.delete("Requisition Command Journal", {"document_name": ("in", list(names - {""}) or [""])})
+	# a claim that never recorded a result (a command that failed inside a surviving transaction) belongs to no record
+	frappe.db.sql("delete from `tabRequisition Command Journal` where result is null or result=''")
 	delete_rows("Requisition Version", {"name": ("in", versions)})
 	delete_rows("IT Equipment Requirement Package Version", {"name": ("in", package_versions)})
 	delete_rows("IT Equipment Requirement Package", {"name": ("in", packages)})

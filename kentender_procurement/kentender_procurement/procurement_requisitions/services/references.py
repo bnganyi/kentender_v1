@@ -24,6 +24,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cstr, getdate
 
+from kentender_core.utils.series import next_free_reference
 from kentender_procurement.procurement_requisitions.services.errors import fail
 
 
@@ -59,8 +60,10 @@ def _next_requisition_sequence(prefix: str) -> str:
 		"Procurement Requisition", filters={"requisition_reference": ["like", f"{prefix}%"]},
 		pluck="requisition_reference", limit_page_length=0,
 	)
-	seq = max([int(ref[len(prefix):]) for ref in rows if cstr(ref)[len(prefix):].isdigit()] or [0]) + 1
-	return f"{prefix}{seq:03d}"
+	highest = max([int(ref[len(prefix):]) for ref in rows if cstr(ref)[len(prefix):].isdigit()] or [0])
+	# `rows` is this transaction's snapshot: a number another request committed
+	# while this one waited for the lock is not in it (AUD-XC-130).
+	return next_free_reference("Procurement Requisition", "requisition_reference", prefix, highest, 3)
 
 
 def requisition_reference(*, fiscal_year: str, plan_item_id_value: str) -> str:
