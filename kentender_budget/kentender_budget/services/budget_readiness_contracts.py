@@ -587,10 +587,27 @@ def _is_stale(version, payload: dict[str, Any]) -> bool:
 	return stamp_is_stale(version, payload)
 
 
+def _authorise_on_version(payload: dict[str, Any], capability: str) -> None:
+	"""RG-16 — the capability is checked before an idempotency key is looked up, so a
+	recorded result is never handed to a caller with no standing for the command."""
+	version = _resolve_budget_version(payload.get("budget_version") or "")
+	require_budget_version_capability(frappe.session.user, capability, version)
+
+
+def _authorise_close(payload: dict[str, Any]) -> None:
+	doc = _resolve_budget(payload.get("budget") or "")
+	version = _active_version(doc.name)
+	if version:  # no Active Version: the command itself reports the closed or missing state
+		require_budget_version_capability(frappe.session.user, CAP_APPROVE, version)
+
+
 def submit_budget_version(payload: dict | str | None = None) -> dict[str, Any]:
 	"""§9.2 `submit_budget_version` — Draft → Submitted for approval."""
 	payload = _as_dict(payload)
-	return run_idempotent(payload=payload, fn=lambda: _submit_budget_version(payload), budget_for=lambda r: (r.get("version") or {}).get("budget"))
+	return run_idempotent(
+		payload=payload, fn=lambda: _submit_budget_version(payload), budget_for=lambda r: (r.get("version") or {}).get("budget"),
+		command="SubmitBudgetVersion", authorise=lambda: _authorise_on_version(payload, CAP_SUBMIT),
+	)
 
 
 def _submit_budget_version(payload: dict[str, Any]) -> dict[str, Any]:
@@ -667,7 +684,10 @@ def _closed(version) -> dict[str, Any]:
 def return_budget_version(payload: dict | str | None = None) -> dict[str, Any]:
 	"""§9.2 `return_budget_version` — Submitted for approval → Draft, reason required."""
 	payload = _as_dict(payload)
-	return run_idempotent(payload=payload, fn=lambda: _return_budget_version(payload), budget_for=lambda r: (r.get("version") or {}).get("budget"))
+	return run_idempotent(
+		payload=payload, fn=lambda: _return_budget_version(payload), budget_for=lambda r: (r.get("version") or {}).get("budget"),
+		command="ReturnBudgetVersion", authorise=lambda: _authorise_on_version(payload, CAP_RETURN),
+	)
 
 
 def _return_budget_version(payload: dict[str, Any]) -> dict[str, Any]:
@@ -725,7 +745,10 @@ def approve_budget_version(payload: dict | str | None = None) -> dict[str, Any]:
 	activate and supersede the previous Active version (BUD-BR-021/022).
 	One atomic action — there is no separate later activation step."""
 	payload = _as_dict(payload)
-	return run_idempotent(payload=payload, fn=lambda: _approve_budget_version(payload), budget_for=lambda r: (r.get("version") or {}).get("budget"))
+	return run_idempotent(
+		payload=payload, fn=lambda: _approve_budget_version(payload), budget_for=lambda r: (r.get("version") or {}).get("budget"),
+		command="ApproveBudgetVersion", authorise=lambda: _authorise_on_version(payload, CAP_APPROVE),
+	)
 
 
 def _approve_budget_version(payload: dict[str, Any]) -> dict[str, Any]:
@@ -933,7 +956,10 @@ def close_budget(payload: dict | str | None = None) -> dict[str, Any]:
 	hold guards pass (§6, §12.8, BUD-BR-023). Revalidates every guard and
 	the live authority at commit under the Budget's version lock."""
 	payload = _as_dict(payload)
-	return run_idempotent(payload=payload, fn=lambda: _close_budget(payload), budget_for=lambda r: (r.get("version") or {}).get("budget") or r.get("budget_id"))
+	return run_idempotent(
+		payload=payload, fn=lambda: _close_budget(payload), budget_for=lambda r: (r.get("version") or {}).get("budget") or r.get("budget_id"),
+		command="CloseBudget", authorise=lambda: _authorise_close(payload),
+	)
 
 
 def _close_budget(payload: dict[str, Any]) -> dict[str, Any]:

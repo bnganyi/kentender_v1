@@ -166,6 +166,40 @@ class TestBudgetLockingRaces(_PrincipalBase):
 	def _approve_fn(self, version):
 		return lambda: readiness.approve_budget_version(stamped({"budget_version": version}))
 
+	# ----- RG-16 / AUD-XC-002 ---------------------------------------------
+
+	def test_two_connections_releasing_with_one_key_apply_the_release_once(self):
+		"""RG-16 — the second connection's claim of the key waits for the first, then replays
+		its result; the explicit-amount release is not applied twice."""
+		_budget, _version, dhi, _hwd = self._world()
+		reservation = self._reserve_now(dhi, 10_000_000, "REQ-RACE-J")
+		contract = self._key("CTR-J")
+		self._as(self.hopf)
+		commitment_svc.convert_reservation(
+			reservation, contract, 6_000_000, self._key("CONV"),
+			contract_event_id=f"{contract}:signed", contract_event_type="ContractSigned", caller=service_caller(PRINCIPAL_CONTRACT, reference=contract),
+		)
+		self._as("Administrator")
+		frappe.db.commit()
+		key = self._key("REL")
+
+		def release():
+			return commitment_svc.release_reservation(
+				reservation, 1_000_000, f"{contract}:unused", "ContractUnusedAmount", key, caller=service_caller(PRINCIPAL_CONTRACT, reference=contract)
+			)
+
+		conn_a = _Conn(self.hopf, release, hold=True)
+		self.assertTrue(conn_a.ran.wait(_WAIT))
+		self.assertIsNone(conn_a.error)
+		conn_b = _Conn(self.hopf, release)
+		self.assertFalse(conn_b.finished.wait(_BLOCKED_FOR), "B must wait for A's claim of the key")
+		conn_a.commit()
+		self.assertTrue(conn_b.finished.wait(_WAIT))
+		self.assertIsNone(conn_b.error)
+		self.assertTrue(conn_b.value.get("replayed"))
+		frappe.db.commit()
+		self.assertEqual(frappe.db.get_value("Funding Reservation", reservation, "remaining_amount"), 3_000_000)
+
 	# ----- AUD-XC-101 -----------------------------------------------------
 
 	def test_two_80m_reservations_on_a_100m_line_cannot_both_succeed(self):

@@ -124,6 +124,9 @@ class _BudgetLifecycleTestBase(FrappeTestCase):
 	@classmethod
 	def tearDownClass(cls):
 		frappe.set_user("Administrator")
+		budgets = [name for doctype, name in cls._cleanup if doctype == "Procurement Budget"]
+		if budgets:
+			frappe.db.delete("Budget Command Journal", {"budget": ["in", budgets]})  # the command idempotency journal (RG-16)
 		versions = [name for doctype, name in cls._cleanup if doctype == "Procurement Budget Version"]
 		if versions:
 			# Submission attempts are append-only records of every submit.

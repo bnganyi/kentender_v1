@@ -30,6 +30,7 @@ from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import FUNDING
 from kentender_budget.services.budget_service_principal import PRINCIPAL_BUDGET, PRINCIPAL_CONTRACT, PRINCIPAL_REQUISITIONS, service_caller
 from kentender_budget.utils.version_stamp import stamped
 from kentender_core.services.command_write_guard import purge_doc
+from kentender_core.services.responsibility_errors import ResponsibilityError
 
 class _V19Base(_FinanceTestBase):
 	@classmethod
@@ -307,6 +308,27 @@ class TestSaveSubmitRecovery(_V19Base):
 		self.assertEqual(frappe.db.count("Budget Audit Event", {"budget_version": version, "event_type": "Budget version submitted"}), 1)
 		conflict = readiness.submit_budget_version(stamped({"budget_version": version, "idempotency_key": key, "expected_modified": "changed"}))
 		self.assertEqual(conflict["code"], "BUDGET_IDEMPOTENCY_CONFLICT")
+
+	def test_a_recorded_result_is_not_handed_to_another_user_and_needs_standing_first(self):
+		"""RG-16 / AUD-XC-131 — the capability is checked before the key is looked up, and the
+		key is bound to the user who ran the command."""
+		fy, budget, version = self._draft()
+		self._as(self.officer)
+		key = f"submit-{frappe.generate_hash(length=8)}"
+		payload = stamped({"budget_version": version, "idempotency_key": key})
+		first = readiness.submit_budget_version(dict(payload))
+		self.assertTrue(first["ok"], first.get("blockers"))
+		outsider = self._make_user("keyspy", ("Auditor",))
+		self._as(outsider)
+		with self.assertRaises(ResponsibilityError):
+			readiness.submit_budget_version(dict(payload))
+		self._as(self.dual)  # holds the capability but did not run the first command
+		other = readiness.submit_budget_version(dict(payload))
+		self.assertEqual(other.get("code"), "BUDGET_IDEMPOTENCY_CONFLICT")
+		self.assertNotIn("version", other)
+		self.assertNotIn("replayed", other)
+		self._as(self.officer)
+		self.assertTrue(readiness.submit_budget_version(dict(payload)).get("replayed"))
 
 	def test_lines_save_reports_exact_amount_still_to_assign(self):
 		fy, budget, version = self._draft()

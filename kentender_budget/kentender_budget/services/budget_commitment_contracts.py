@@ -60,7 +60,8 @@ def _idempotent(*, action: str, caller, key: str, params: dict[str, Any], fn, bu
 	from kentender_budget.services.budget_idempotency import conflict, run_idempotent
 
 	payload = {"action": action, "principal": caller.principal, "reference": caller.reference, **params, "idempotency_key": key}
-	result = run_idempotent(payload=payload, fn=fn, budget_for=budget_for)
+	# the caller was authorised by `require_principal` and the scope checks before this point; the key is bound to the principal and the action
+	result = run_idempotent(payload=payload, fn=fn, budget_for=budget_for, command=action, actor=caller.principal)
 	if result.get("ok") is False and result.get("code") == "BUDGET_IDEMPOTENCY_CONFLICT":
 		frappe.throw(conflict(key)["errors"]["idempotency_key"], frappe.ValidationError, title="BUDGET_IDEMPOTENCY_CONFLICT")
 	return result

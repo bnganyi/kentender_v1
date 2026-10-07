@@ -1029,7 +1029,27 @@ def save_budget_version_draft(payload: dict | str | None = None) -> dict[str, An
 	if isinstance(payload, str):
 		payload = frappe.parse_json(payload)
 	payload = payload or {}
-	return run_idempotent(payload=payload, fn=lambda: _save_budget_version_draft(payload), budget_for=lambda r: (r.get("budget") or {}).get("id") if isinstance(r.get("budget"), dict) else (r.get("version") or {}).get("budget"))
+	return run_idempotent(
+		payload=payload, fn=lambda: _save_budget_version_draft(payload),
+		budget_for=lambda r: (r.get("budget") or {}).get("id") if isinstance(r.get("budget"), dict) else (r.get("version") or {}).get("budget"),
+		command="SaveBudgetVersionDraft", authorise=lambda: _authorise_draft_save(payload),
+	)
+
+
+def _authorise_draft_save(payload: dict[str, Any]) -> None:
+	"""RG-16 — the create or edit capability, checked before an idempotency key is looked up."""
+	budget_key = (payload.get("budget") or "").strip()
+	version_key = (payload.get("budget_version") or "").strip()
+	if not budget_key and not version_key:
+		require_budget_create_capability(frappe.session.user)
+		return
+	if version_key:
+		version = _resolve_budget_version(version_key)
+	else:
+		version = _draft_version(_resolve_budget(budget_key).name)
+		if not version:
+			return  # the command itself reports that there is no Draft to update
+	require_budget_version_capability(frappe.session.user, CAP_EDIT, version)
 
 
 def _save_budget_version_draft(payload: dict[str, Any]) -> dict[str, Any]:

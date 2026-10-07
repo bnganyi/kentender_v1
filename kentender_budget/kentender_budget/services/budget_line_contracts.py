@@ -88,7 +88,11 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 		payload = frappe.parse_json(payload)
 	payload = payload or {}
 
-	return run_idempotent(payload=payload, fn=lambda: _save_budget_lines_draft(payload), budget_for=lambda r: (r.get("version") or {}).get("budget"))
+	return run_idempotent(
+		payload=payload, fn=lambda: _save_budget_lines_draft(payload), budget_for=lambda r: (r.get("version") or {}).get("budget"),
+		command="SaveBudgetLinesDraft",
+		authorise=lambda: require_budget_version_capability(frappe.session.user, CAP_EDIT, _resolve_budget_version(payload.get("budget_version") or "")),
+	)
 
 
 def _save_budget_lines_draft(payload: dict[str, Any]) -> dict[str, Any]:
