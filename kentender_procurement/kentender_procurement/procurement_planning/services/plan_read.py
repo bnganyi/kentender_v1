@@ -933,7 +933,8 @@ def _item_values(version_name: str) -> dict[str, dict[str, Any]]:
 		out[cstr(item.plan_item) or item.plan_item_id] = {
 			"plan_item_id": item.plan_item_id,
 			"title": item.title,
-			"value": sum(flt(a.indicative_amount) for a in allocations),
+			# RG-24: an exact decimal sum, compared exactly below (no epsilon)
+			"value": sum((money.as_decimal(a.indicative_amount) for a in allocations), Decimal(0)),
 		}
 	return out
 
@@ -945,7 +946,7 @@ def _purchase_changes(before_version: str, after_version: str) -> list[dict[str,
 		prior = before.get(key)
 		if prior is None:
 			rows.append({"plan_item_id": item["plan_item_id"], "title": item["title"], "field": "Estimated cost", "current": "Not in the current plan", "proposed": _money(item["value"])})
-		elif abs(prior["value"] - item["value"]) > 1e-9:
+		elif prior["value"] != item["value"]:
 			rows.append({"plan_item_id": item["plan_item_id"], "title": item["title"], "field": "Estimated cost", "current": _money(prior["value"]), "proposed": _money(item["value"])})
 	for key, prior in before.items():
 		if key not in after:
