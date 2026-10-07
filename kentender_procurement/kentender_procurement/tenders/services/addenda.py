@@ -53,6 +53,7 @@ AFFECTED_AREAS = ("Invitation detail", "Technical requirement", "Goods/delivery 
 # satisfies it.
 LATE_AMENDMENT_DAYS = 7
 MATERIAL_TEXT = "This change cannot be made by addendum."
+CLARIFICATION_KEY = "clarification_deadline"
 
 
 def _published_version(root):
@@ -101,18 +102,35 @@ def effective_deadline(root):
 	return get_datetime(root.submission_deadline) if root.submission_deadline else None
 
 
-def deadline_rule(root, *, at=None, change_class: str = "") -> dict[str, Any]:
+def deadline_rule(root, *, at=None, change_class: str = "", reference_key: str = "") -> dict[str, Any]:
 	"""§5.6: extension is required when the addendum is issued inside the
-	governed late-amendment window or when the class is a deadline extension."""
+	governed late-amendment window, when the class is a deadline extension, or
+	when the affected row is the submission deadline itself (a changed
+	deadline row with no revised deadline would state one date and apply
+	another, AUD-TND-004)."""
 	now = at or clock.now()
 	current = effective_deadline(root)
-	required = change_class == "Submission deadline extension" or (current is not None and (current - now) < timedelta(days=LATE_AMENDMENT_DAYS))
+	required = change_class == "Submission deadline extension" or reference_key == "submission_deadline" or (current is not None and (current - now) < timedelta(days=LATE_AMENDMENT_DAYS))
 	earliest = (now + timedelta(days=LATE_AMENDMENT_DAYS)).replace(second=0, microsecond=0)
 	return {
 		"required": bool(required), "current_deadline": cstr(current), "current_deadline_label": serializer.fmt_datetime_short(current) if current else "",
 		"earliest_revised_deadline": cstr(earliest), "earliest_revised_deadline_label": serializer.fmt_datetime_short(earliest), "late_amendment_days": LATE_AMENDMENT_DAYS,
-		"explanation": "This addendum is being issued within the governed late-amendment period." if required and change_class != "Submission deadline extension" else ("A deadline extension always sets a lawful revised deadline." if required else "The current submission deadline is unchanged."),
+		"explanation": "This addendum is being issued within the governed late-amendment period." if required and change_class != "Submission deadline extension" and reference_key != "submission_deadline" else ("A deadline extension always sets a lawful revised deadline." if required else "The current submission deadline is unchanged."),
 	}
+
+
+def require_period_open(root, *, what: str) -> None:
+	"""§5.1 / §5.6 / AUD-TND-001: an addendum, its deadline and its successor
+	definition can take effect only inside the open submission period. Once
+	the Tender has left `Published — open`, or its deadline is reached (the
+	hourly close has only not run yet), the period is over: the frozen
+	submission handoff Bid Submission and Bid Opening consume must never
+	diverge from the Tender. A deadline can no longer be revised."""
+	if root.overall_status == "Cancelled":
+		fail("TND_CANCELLED")
+	deadline = effective_deadline(root)
+	if root.overall_status != "Published — open" or (deadline is not None and clock.now() >= deadline):
+		fail("TND_STALE_VERSION", f"The submission period has ended, so {what}.")
 
 
 def _draft_open(root) -> str:
@@ -207,9 +225,10 @@ def validate_values(root, values: dict[str, Any], *, current: dict[str, Any]) ->
 	clean["affected_reference_key"] = reference_key
 	clean["affected_reference"] = reference["label"] if reference else cstr(merged.get("affected_reference"))
 	clean["previous_value"] = reference["value"] if reference else ""
-	rule = deadline_rule(root, change_class=change_class)
+	rule = deadline_rule(root, change_class=change_class, reference_key=reference_key)
 	clean["deadline_extension_required"] = 1 if rule["required"] else 0
 	revised = merged.get("revised_submission_deadline")
+	revised_dt = None
 	if revised:
 		try:
 			revised_dt = get_datetime(revised)
@@ -220,9 +239,22 @@ def validate_values(root, values: dict[str, Any], *, current: dict[str, Any]) ->
 			elif revised_dt < get_datetime(rule["earliest_revised_deadline"]):
 				errors["revised_submission_deadline"] = f"The revised deadline must allow at least {LATE_AMENDMENT_DAYS} days from issue ({rule['earliest_revised_deadline_label']} or later)."
 		except Exception:
+			revised_dt = None
 			errors["revised_submission_deadline"] = "Enter a valid date and time."
 	else:
 		clean["revised_submission_deadline"] = None
+	# a deadline row's revised value is the date itself, kept as the label the notice shows (and parsed back when the addendum takes effect)
+	if reference_key == "submission_deadline":
+		clean["revised_value"] = serializer.fmt_datetime_short(revised_dt) if revised_dt else ""
+	elif reference_key == CLARIFICATION_KEY and clean.get("revised_value"):
+		clarification = serializer.parse_datetime_text(clean["revised_value"])
+		bound = revised_dt or effective_deadline(root)
+		if clarification is None:
+			errors["revised_value"] = "Enter the revised clarification deadline as a date and time."
+		elif bound is not None and clarification >= bound:
+			errors["revised_value"] = "The clarification deadline must be before the submission deadline."
+		else:
+			clean["revised_value"] = serializer.fmt_datetime_short(clarification)
 	for name in set(values) - {"change_class", "affected_area", "affected_reference_key", "revised_value", "reason", "materiality_statement", "revised_submission_deadline"}:
 		errors[name] = "Unknown field."
 	facts = {"material": bool(reference and reference["material"]), "deadline_rule": rule, "reference": reference}
@@ -272,8 +304,10 @@ def _require_complete_and_non_material(root, doc) -> dict[str, Any]:
 		fields["affected_area"] = "Choose the affected area."
 	if not reference:
 		fields["affected_reference_key"] = "Choose the affected published row."
-	if not cstr(doc.revised_value).strip():
+	if not cstr(doc.revised_value).strip() and cstr(doc.affected_reference_key) != "submission_deadline":  # that row's value is the revised deadline, checked below
 		fields["revised_value"] = "Enter the revised value."
+	if cstr(doc.affected_reference_key) == CLARIFICATION_KEY and cstr(doc.revised_value).strip() and serializer.parse_datetime_text(doc.revised_value) is None:
+		fields["revised_value"] = "Enter the revised clarification deadline as a date and time."
 	if not (20 <= len(cstr(doc.reason).strip()) <= 1000):
 		fields["reason"] = "Enter a reason of 20–1,000 characters."
 	if not cstr(doc.materiality_statement).strip():
@@ -284,7 +318,7 @@ def _require_complete_and_non_material(root, doc) -> dict[str, Any]:
 		fail("TND_ADDENDUM_MATERIAL", detail={"affected_reference": reference["label"], "current": reference["value"], "proposed": cstr(doc.revised_value)})
 	if cstr(reference["value"]) != cstr(doc.previous_value) or _baseline_digest(root) != cstr(doc.baseline_digest):
 		fail("TND_ADDENDUM_STALE", detail={"affected_reference": reference["label"], "current": reference["value"], "recorded": cstr(doc.previous_value)})
-	rule = deadline_rule(root, change_class=cstr(doc.change_class))
+	rule = deadline_rule(root, change_class=cstr(doc.change_class), reference_key=cstr(doc.affected_reference_key))
 	if rule["required"]:
 		if not doc.revised_submission_deadline:
 			fail("TND_ADDENDUM_DEADLINE_REQUIRED", detail=rule)
@@ -390,6 +424,7 @@ def issue_addendum(*, tender: str, addendum: str, expected_record_version, idemp
 		return replay
 	root, version = draft_commands.load(tender)
 	_require_open(root)
+	require_period_open(root, what="an addendum can no longer be issued")
 	envelope.check_record_version(root, expected_record_version)
 	doc = envelope.locked(DOCTYPE, addendum)
 	if doc.tender != root.name or doc.status != "Awaiting issue":
@@ -446,6 +481,7 @@ def confirm_addendum_publication_channel(*, tender: str, addendum: str, channel:
 		subject_type=channel_confirmation.SUBJECT_ADDENDUM, subject_id=addendum, channel=channel, available_at=available_at, evidence_reference=evidence_reference, public_url=public_url,
 		url_not_applicable_reason=url_not_applicable_reason, evidence_file=evidence_file, evidence_notes=evidence_notes, attestation_confirmed=attestation_confirmed, package_digest=addendum_digest,
 		expected_record_version=expected_record_version, idempotency_key=idempotency_key, user=user, on_all_confirmed=_all_channels_confirmed, command="ConfirmAddendumPublicationChannel",
+		precondition=lambda root: require_period_open(root, what="an addendum can no longer become effective"),
 	)
 
 
@@ -462,6 +498,10 @@ def _all_channels_confirmed(root, rows, *, actor: str, assignment, idempotency_k
 	updates: dict[str, Any] = {}
 	if doc.deadline_extension_required and doc.revised_submission_deadline:
 		updates["submission_deadline"] = doc.revised_submission_deadline
+	if cstr(doc.affected_reference_key) == CLARIFICATION_KEY:
+		clarification = serializer.parse_datetime_text(doc.revised_value)
+		if clarification is not None:
+			updates["clarification_deadline"] = clarification
 	if updates:
 		envelope.bump(root, **updates)
 	handoffs.close_open(root, task_types=(handoffs.CHANNEL_CONFIRMATION,), subject_id=doc.name)

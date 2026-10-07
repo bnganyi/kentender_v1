@@ -134,6 +134,7 @@ def confirm_channel(
 	user: str | None = None,
 	on_all_confirmed=None,
 	command: str = "ConfirmPublicationChannel",
+	precondition=None,
 ) -> dict[str, Any]:
 	"""The generic engine. `on_all_confirmed(root, rows)` runs inside the
 	same transaction when this confirmation completes the set (the final
@@ -159,6 +160,8 @@ def confirm_channel(
 	root = envelope.locked("Tender", row.tender)
 	if root.overall_status == "Cancelled" and subject_type != SUBJECT_CANCELLATION:
 		fail("TND_CANCELLED")
+	if precondition:
+		precondition(root)  # the subject's own state test, under the Tender lock (an addendum's open period, AUD-TND-001)
 	envelope.check_record_version(root, expected_record_version)
 	clean = _validate_inputs(row, available_at=available_at, evidence_reference=evidence_reference, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, evidence_file=evidence_file, evidence_notes=evidence_notes, attestation_confirmed=attestation_confirmed, package_digest=package_digest)
 	from kentender_procurement.tenders.services import guidance

@@ -216,6 +216,97 @@ class TestAddenda(OpenPeriodCase):
 		self.assertEqual(sorted(e["event_type"] for e in events.list_for_tender(self.name) if e["event_type"].startswith("Addendum")), ["AddendumDraftCreated", "AddendumDraftSaved", "AddendumDraftSaved", "AddendumIssueDecided", "AddendumIssued", "AddendumReturned", "AddendumSubmittedForIssue", "AddendumSubmittedForIssue"])
 
 
+class TestAddendumEffects(OpenPeriodCase):
+	"""AUD-TND-001 / AUD-TND-004: when an addendum may become effective, and what each non-material row changes once it does."""
+
+	def _issued(self, values: dict, *, at="2027-05-20 09:00:00") -> str:
+		"""An addendum issued (channel work created, nothing confirmed yet) at `at`."""
+		frappe.flags.kt_tenders_clock = at
+		name = self._addendum(values=values)
+		root = self._root()
+		addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		root.reload()
+		addenda.issue_addendum(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
+		return name
+
+	def _confirm_all(self, name: str, *, available_at="2027-05-20 09:00:00", skip_last=False):
+		channels = CHANNELS[:-1] if skip_last else CHANNELS
+		for channel in channels:
+			self._confirm("addendum", channel, addendum=name, available_at=available_at)
+
+	def test_an_addendum_cannot_become_effective_after_the_submission_period_closed(self):
+		name = self._issued({**self.FIXTURE_ADDENDUM, "change_class": "Submission deadline extension", "revised_submission_deadline": "2027-06-12 11:00:00"}, at="2027-05-31 09:00:00")
+		self._confirm_all(name, available_at="2027-05-31 09:00:00", skip_last=True)
+		before = bid_definition.current(self.name)["bid_definition_id"]
+		frappe.flags.kt_tenders_clock = "2027-06-05 11:00:00"
+		self.assertEqual(submission_close.close_due_submission_periods()["closed"], [self.name])
+		with self.assertRaises(TendersError) as ctx:  # the last required channel is confirmed after the period has closed
+			self._confirm("addendum", CHANNELS[-1], addendum=name, available_at="2027-05-31 09:00:00")
+		self.assertEqual(ctx.exception.code, "TND_STALE_VERSION")
+		root = self._root()
+		self.assertEqual((root.overall_status, str(root.submission_deadline)), ("Submission period ended", "2027-06-05 11:00:00"))
+		self.assertEqual(frappe.db.get_value("Tender Addendum", name, "status"), "Awaiting publication confirmation")
+		self.assertEqual(bid_definition.current(self.name)["bid_definition_id"], before)
+		# offer parity: the screen no longer offers the confirmation it would refuse
+		self.assertNotIn("confirm_addendum_channel", open_period_read.get_tender_addendum(tender=self.name, addendum=name, user=fx.HOPF)["allowed_actions"])
+
+	def test_an_addendum_cannot_be_issued_or_confirmed_once_the_deadline_is_reached_even_before_the_close_job_ran(self):
+		frappe.flags.kt_tenders_clock = "2027-05-31 09:00:00"
+		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "change_class": "Submission deadline extension", "revised_submission_deadline": "2027-06-12 11:00:00"})
+		root = self._root()
+		addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		root.reload()
+		frappe.flags.kt_tenders_clock = "2027-06-05 11:00:00"  # the deadline itself; the hourly close has not run
+		self.assertEqual(self._root().overall_status, "Published — open")
+		with self.assertRaises(TendersError) as ctx:
+			addenda.issue_addendum(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
+		self.assertEqual(ctx.exception.code, "TND_STALE_VERSION")
+		self.assertEqual(frappe.db.get_value("Tender Addendum", name, "status"), "Awaiting issue")
+		self.assertEqual(str(self._root().submission_deadline), "2027-06-05 11:00:00")
+
+	def test_a_clarification_deadline_row_moves_the_tenders_clarification_deadline_and_the_definition(self):
+		name = self._issued({**self.FIXTURE_ADDENDUM, "affected_area": "Invitation detail", "affected_reference_key": "clarification_deadline", "revised_value": "2027-05-29 17:00",
+			"reason": "Suppliers asked for two more days to submit clarification questions"})
+		doc = frappe.get_doc("Tender Addendum", name)
+		self.assertEqual((doc.previous_value, doc.revised_value), ("27 May 2027, 17:00 EAT", "29 May 2027, 17:00 EAT"))
+		self.assertEqual(str(self._root().clarification_deadline), "2027-05-27 17:00:00")  # not effective until confirmed
+		self._confirm_all(name)
+		self.assertEqual(frappe.db.get_value("Tender Addendum", name, "status"), "Issued")
+		self.assertEqual(str(self._root().clarification_deadline), "2027-05-29 17:00:00")
+		# the projection the effective definition and the supplier documents are built from carries it too
+		projected = bid_definition.apply_addenda({"tender": {"clarification_deadline": "old"}}, [{"affected_reference_key": "clarification_deadline", "revised_value": doc.revised_value}])
+		self.assertEqual(projected["tender"]["clarification_deadline"], bid_definition.iso_datetime("2027-05-29 17:00:00"))
+		# the late-question rule now follows the new deadline: a question at 28 May is on time
+		self.assertEqual(next(r for r in addenda.affected_references(self._root()) if r["key"] == "clarification_deadline")["value"], "29 May 2027, 17:00 EAT")
+
+	def test_a_clarification_deadline_must_be_a_date_before_the_submission_deadline(self):
+		name = self._addendum()
+		root = self._root()
+		base = {**self.FIXTURE_ADDENDUM, "affected_area": "Invitation detail", "affected_reference_key": "clarification_deadline"}
+		for bad in ("soon", "2027-06-06 10:00"):
+			refused = addenda.update_addendum_draft(tender=self.name, addendum=name, values={**base, "revised_value": bad}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+			self.assertIn("revised_value", refused.get("errors", {}), bad)
+
+	def test_a_submission_deadline_row_needs_the_revised_deadline_and_then_takes_effect(self):
+		frappe.flags.kt_tenders_clock = "2027-05-20 09:00:00"  # outside the late-amendment window: only the row itself asks for a deadline
+		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "affected_area": "Submission or opening detail", "affected_reference_key": "submission_deadline", "reason": "Suppliers need more time to price the equipment"})
+		root = self._root()
+		with self.assertRaises(TendersError) as ctx:  # a changed deadline row with no deadline is not an addendum
+			addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		self.assertEqual(ctx.exception.code, "TND_ADDENDUM_DEADLINE_REQUIRED")
+		saved = addenda.update_addendum_draft(tender=self.name, addendum=name, values={"revised_submission_deadline": "2027-06-12 11:00:00"}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		self.assertTrue(saved["ok"], saved)
+		doc = frappe.get_doc("Tender Addendum", name)
+		self.assertEqual((doc.deadline_extension_required, doc.revised_value), (1, "12 Jun 2027, 11:00 EAT"))
+		root.reload()
+		addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		root.reload()
+		addenda.issue_addendum(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
+		self._confirm_all(name)
+		self.assertEqual(str(self._root().submission_deadline), "2027-06-12 11:00:00")
+		self.assertEqual(bid_definition.current(self.name)["definition"]["submission_deadline"], bid_definition.iso_datetime("2027-06-12 11:00:00"))
+
+
 class TestClarifications(OpenPeriodCase):
 	CANDIDATE = {"bidder_arrangement_id": "ARR-TNDT-001", "candidate_name": "Afya Digital Supplies Limited", "notice_address": "tenders@afyadigital.example"}
 	SECOND = {"bidder_arrangement_id": "ARR-TNDT-002", "candidate_name": "Second Supplier Limited", "notice_address": "bids@second.example"}

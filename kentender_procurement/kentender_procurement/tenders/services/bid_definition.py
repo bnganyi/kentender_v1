@@ -55,7 +55,7 @@ _CODE = {
 }
 #: Addendum `affected_reference_key` → how the revised value enters the
 #: successor projection (the non-material rows of `addenda.affected_references`).
-_ADDENDUM_TARGETS = ("delivery_location", "tender_title", "inspection_location", "contract_contact_office", "pre_tender_meeting")
+_ADDENDUM_TARGETS = ("delivery_location", "tender_title", "inspection_location", "contract_contact_office", "pre_tender_meeting", "clarification_deadline")
 
 
 # --------------------------------------------------------------------------
@@ -296,6 +296,10 @@ def apply_addenda(base: dict[str, Any], addenda: list[Any]) -> dict[str, Any]:
 			out["officer_decisions"]["contract"]["contact_office"] = value
 		elif key == "pre_tender_meeting":
 			out["tender"]["pre_tender_meeting"]["details"] = value
+		elif key == "clarification_deadline":
+			revised = serializer.parse_datetime_text(value)
+			if revised is not None:
+				out["tender"]["clarification_deadline"] = iso_datetime(revised)
 		if row.get("deadline_extension_required") and row.get("revised_submission_deadline"):
 			out["tender"]["submission_deadline"] = iso_datetime(row.get("revised_submission_deadline"))
 	return out

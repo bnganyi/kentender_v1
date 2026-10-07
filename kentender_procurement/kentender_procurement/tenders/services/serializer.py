@@ -22,6 +22,7 @@ masters consume for its own MoH fixture (STD Templates
 from __future__ import annotations
 
 import json
+import re
 from datetime import timedelta
 from decimal import Decimal
 from typing import Any
@@ -86,6 +87,42 @@ def fmt_datetime_short(value) -> str:
 		return ""
 	dt = _eat(value)
 	return f"{formatdate(dt.date(), 'd MMM yyyy')}, {dt.strftime('%H:%M')} EAT"
+
+
+_MONTHS = {m: i for i, m in enumerate(("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), start=1)}
+_LABEL = re.compile(r"^(\d{1,2}) ([A-Za-z]{3,9}) (\d{4}), (\d{1,2}):(\d{2})(?: EAT)?$")
+
+
+def parse_datetime_text(text):
+	"""A stored datetime from what an officer typed or from the screen label
+	`fmt_datetime_short` writes ("27 May 2027, 17:00 EAT"): the exact inverse
+	of that label, so an addendum's revised deadline, kept as the label its
+	notice shows, can become the Tender's own deadline. None when it is
+	neither (AUD-TND-004)."""
+	from datetime import datetime
+
+	value = " ".join(cstr(text).split())
+	if not value:
+		return None
+	match = _LABEL.match(value)
+	if match:
+		day, month, year, hour, minute = match.groups()
+		number = _MONTHS.get(month[:3].title())
+		if not number:
+			return None
+		try:
+			wall = datetime(int(year), number, int(day), int(hour), int(minute))
+		except ValueError:
+			return None
+		if (get_system_timezone() or "").upper() == "UTC":
+			from zoneinfo import ZoneInfo
+
+			wall = wall.replace(tzinfo=ZoneInfo("Africa/Nairobi")).astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
+		return wall
+	try:
+		return get_datetime(value)
+	except Exception:
+		return None
 
 
 def fmt_money(value) -> str:
