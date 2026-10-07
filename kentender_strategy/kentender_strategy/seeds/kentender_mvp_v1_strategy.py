@@ -180,7 +180,6 @@ def _seed_moh_plan() -> dict[str, Any]:
 					"fiscal_year": FY_2027_2028,
 					"comparison": "At least",
 					"target_value": 80,
-					"fixture_namespace": FIXTURE_NS,
 				}
 			],
 		)
@@ -193,6 +192,11 @@ def _seed_moh_plan() -> dict[str, Any]:
 
 	frappe.db.set_value("Strategic Plan", plan_id, "fixture_namespace", FIXTURE_NS, update_modified=False)
 	frappe.db.set_value("Strategic Plan Version", version_id, "fixture_namespace", FIXTURE_NS, update_modified=False)
+	# The Strategy command accepts only a target's own content fields (AUD-STR-008),
+	# so the namespace is stamped here, like the plan's and the version's.
+	for indicator in frappe.get_all("Performance Indicator", filters={"plan_version_id": version_id}, pluck="name"):
+		for target in frappe.get_all("Performance Target", filters={"indicator_id": indicator}, pluck="name"):
+			frappe.db.set_value("Performance Target", target, "fixture_namespace", FIXTURE_NS, update_modified=False)
 
 	return {"ok": True, "plan": plan_id, "plan_version": version_id}
 
