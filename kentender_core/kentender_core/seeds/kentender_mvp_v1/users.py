@@ -14,6 +14,7 @@ from kentender_budget.services.budget_authorization import ensure_budget_governa
 from kentender_core.seeds import constants as CoreC
 from kentender_core.seeds._common import ensure_user_permission
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
+from kentender_core.services.command_write_guard import fixture_insert, purge_doc
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	ensure_planning_roles as ensure_v12_planning_roles,
 )
@@ -260,7 +261,7 @@ def _clear_fixture_assignments(user: str) -> None:
 		filters={"user": user, "fixture_namespace": C.FIXTURE_NS},
 		pluck="name",
 	):
-		frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
+		purge_doc("User Scope Assignment", name, reason="legacy MVP seed refreshes its scope rows")
 
 
 def _upsert_scope(
@@ -271,17 +272,20 @@ def _upsert_scope(
 	org_unit: str | None,
 	include_descendants: int,
 ) -> None:
-	frappe.get_doc(
-		{
-			"doctype": "User Scope Assignment",
-			"user": user,
-			"role": role,
-			"procuring_entity": pe,
-			"organisation_unit": org_unit or "",
-			"include_descendants": include_descendants,
-			"fixture_namespace": C.FIXTURE_NS,
-		}
-	).insert(ignore_permissions=True)
+	fixture_insert(
+		frappe.get_doc(
+			{
+				"doctype": "User Scope Assignment",
+				"user": user,
+				"role": role,
+				"procuring_entity": pe,
+				"organisation_unit": org_unit or "",
+				"include_descendants": include_descendants,
+				"fixture_namespace": C.FIXTURE_NS,
+			}
+		),
+		reason="legacy MVP seed writes its scope rows",
+	)
 
 
 def _save_user_identity_if_changed(user, *, first_name: str, last_name: str) -> None:
@@ -360,7 +364,7 @@ def _strip_retired_persona_artifacts(email: str) -> None:
 		filters={"user": email, "role": ("in", _RETIRED_PERSONA_ROLES)},
 		pluck="name",
 	):
-		frappe.delete_doc("User Scope Assignment", name, force=1, ignore_permissions=True)
+		purge_doc("User Scope Assignment", name, reason="legacy MVP seed refreshes its scope rows")
 
 
 def _upsert_multiscope_admin() -> str:

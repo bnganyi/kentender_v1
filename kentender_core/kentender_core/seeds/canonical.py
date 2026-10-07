@@ -43,7 +43,7 @@ from typing import Any
 import frappe
 
 from kentender_core.seeds import calendar, site_setup
-from kentender_core.services.command_write_guard import maintenance_write
+from kentender_core.services.command_write_guard import maintenance_write, purge_doc
 
 #: Two-year seed world (owner, 4 Oct 2026: "Decisions for the owner:
 #: recommendations accepted"; plan D1–D7). The world is read as at
@@ -519,7 +519,7 @@ def _delete_user(user: str, deleted: dict[str, int]) -> None:
 		if not frappe.db.exists("DocType", doctype) or not frappe.db.has_column(doctype, field):
 			continue
 		for name in frappe.get_all(doctype, filters={field: user}, pluck="name"):
-			frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
+			purge_doc(doctype, name, reason="canonical seed clean-up of a user's assignments")
 			deleted[doctype] = deleted.get(doctype, 0) + 1
 	frappe.delete_doc("User", user, force=1, ignore_permissions=True)
 	deleted["User"] = deleted.get("User", 0) + 1

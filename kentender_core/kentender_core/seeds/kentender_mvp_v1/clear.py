@@ -177,9 +177,7 @@ def _delete_test_users(users: list[str]) -> dict[str, int]:
 			for name in frappe.get_all(
 				"User Scope Assignment", filters={"user": user}, pluck="name"
 			):
-				frappe.delete_doc(
-					"User Scope Assignment", name, force=1, ignore_permissions=True
-				)
+				purge_doc("User Scope Assignment", name)
 				deleted["User Scope Assignment"] = deleted.get("User Scope Assignment", 0) + 1
 		if frappe.db.exists("User Permission"):
 			for name in frappe.get_all("User Permission", filters={"user": user}, pluck="name"):

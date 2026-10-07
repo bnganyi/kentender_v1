@@ -9,13 +9,15 @@ never to an error.
 
 from __future__ import annotations
 
+from unittest.mock import patch
 from uuid import uuid4
 
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_core.services.org_scope_access import permitted_procuring_entities
 from kentender_core.services import working_context as wc
+from kentender_core.services.command_write_guard import fixture_insert, purge_doc
+from kentender_core.services.org_scope_access import permitted_procuring_entities
 
 
 class WorkingContextCase(IntegrationTestCase):
@@ -26,6 +28,16 @@ class WorkingContextCase(IntegrationTestCase):
 		self.pe_b = self._pe("B")
 		self.user_one = self._user("one")
 		self.user_two = self._user("two")
+		# The resolver supports a user who works in several entities, but a site has one Procuring Entity
+		# and the User Scope Assignment that used to offer them is retired (RG-32, AUTH-ADR-001 §19), so
+		# these tests state the permitted set directly instead of reading it from the retired source.
+		self._permitted: dict[str, set[str]] = {}
+		patcher = patch(
+			"kentender_core.services.org_scope_access.permitted_procuring_entities",
+			side_effect=lambda user=None: None if (user or frappe.session.user) == "Administrator" else set(self._permitted.get(user or frappe.session.user, ())),
+		)
+		patcher.start()
+		self.addCleanup(patcher.stop)
 
 	def _user(self, label: str) -> str:
 		email = f"ctxchg.{label}.{self.suffix}@test.local"
@@ -50,12 +62,7 @@ class WorkingContextCase(IntegrationTestCase):
 		return code
 
 	def _permit(self, user: str, pe: str) -> None:
-		# A scope row, not a Frappe User Permission: AUD-XC-021 retired the
-		# User Permission fallback (see test_pe_scope_without_user_permission).
-		name = frappe.get_doc(
-			{"doctype": "User Scope Assignment", "user": user, "role": "Desk User", "procuring_entity": pe}
-		).insert(ignore_permissions=True).name
-		self.addCleanup(frappe.delete_doc, "User Scope Assignment", name, force=True, ignore_permissions=True)
+		self._permitted.setdefault(user, set()).add(pe)
 		frappe.clear_cache(user=user)
 		self.addCleanup(frappe.clear_cache, user=user)
 
@@ -81,16 +88,16 @@ class TestKeyDiscipline(WorkingContextCase):
 
 
 class TestEligibilityRule(WorkingContextCase):
-	def test_multiple_scope_rows_all_count(self):
-		"""permitted_procuring_entities must return EVERY scoped PE.
-
-		The previous fallback read one arbitrary row (frappe.db.get_value), so
-		a user permitted three entities was silently narrowed to one — the
-		exact class of defect rule 1 forbids.
-		"""
-		self._permit(self.user_one, self.pe_a)
-		self._permit(self.user_one, self.pe_b)
-		self.assertEqual(permitted_procuring_entities(self.user_one), {self.pe_a, self.pe_b})
+	def test_a_legacy_user_scope_assignment_offers_no_entity(self):
+		"""RG-32: one site is one Procuring Entity, and the retired User Scope Assignment no longer widens (or
+		narrows) the entities a user works in; only a responsibility in force does."""
+		row = fixture_insert(
+			frappe.get_doc({"doctype": "User Scope Assignment", "user": self.user_one, "role": "Desk User", "procuring_entity": self.pe_a}),
+			reason="test fixture: a legacy scope row",
+		)
+		self.addCleanup(purge_doc, "User Scope Assignment", row.name)
+		# `permitted_procuring_entities` here is the real function (imported before setUp patched the module attribute).
+		self.assertEqual(permitted_procuring_entities(self.user_one), set())
 
 
 class TestWorkingPe(WorkingContextCase):

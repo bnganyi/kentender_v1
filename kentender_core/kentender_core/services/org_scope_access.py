@@ -96,18 +96,16 @@ def _site_entity_if_responsible(user: str) -> set[str]:
 
 
 def permitted_procuring_entities(user: str | None = None) -> set[str] | None:
-	"""None = unrestricted (admin). Empty set = no PE assignments."""
+	"""None = unrestricted (admin). Empty set = no PE assignments.
+
+	AUTH-ADR-001 §11.5/§19 (AUD-XC-021, RG-32): no Frappe User Permission fallback and no User Scope
+	Assignment. One site is one Procuring Entity, so a user holding a responsibility in force works in
+	that entity; a user holding none works in none, whatever User Permission or legacy User Scope
+	Assignment rows exist."""
 	user = user or frappe.session.user
 	if _is_admin(user):
 		return None
-	rows = user_scope_rows(user)
-	if not rows:
-		# AUTH-ADR-001 §11.5/§19 (AUD-XC-021): no Frappe User Permission
-		# fallback. One site is one Procuring Entity, so a user holding a
-		# responsibility in force works in that entity; a user holding none
-		# works in none, whatever User Permission rows exist.
-		return _site_entity_if_responsible(user)
-	return {r.procuring_entity for r in rows if r.procuring_entity}
+	return _site_entity_if_responsible(user)
 
 
 def permitted_org_units(
