@@ -30,6 +30,7 @@ from kentender_procurement.bid_evaluation.services import (
 	clock, comparison, conclusion, discussion, findings, guards, notify, people, prc, prc_owner, records, roster,
 )
 from kentender_procurement.bid_evaluation.services.errors import Guards, fail, invalid
+from kentender_procurement.services import sequence
 
 PLAN = "Evaluation Verification Plan"
 OBSERVATION = "Evaluation Verification Observation"
@@ -71,7 +72,7 @@ def record_plan(*, tender: str, scope: str, basis: str, participants_: list[str]
 			payload={"participants": chosen, "lead": lead}, note=cstr(scope).strip(), idempotency_key=idempotency_key)
 		decided = conclusion.insert(doc, kind="Verification plan", session=out["session_id"], reason=cstr(basis).strip(), recorded_by=user,
 			participants=out["participants"], event=out["event_id"], next_action="Verification")
-		number = frappe.db.count(PLAN, {"evaluation_case": doc.name}) + 1
+		number = sequence.next_count(PLAN, {"evaluation_case": doc.name})
 		plan = records.insert(frappe.get_doc({
 			"doctype": PLAN, "plan_id": f"{doc.name}-VP-{number:02d}", "evaluation_case": doc.name, "version_number": number, "scope": cstr(scope).strip(),
 			"basis": cstr(basis).strip(), "participants_json": json.dumps(chosen), "lead_user": lead, "change_reason": cstr(change_reason).strip(),
@@ -112,7 +113,7 @@ def record_observation(*, tender: str, findings_: str, evidence: list | None = N
 		invalid({"findings": "Record your observations."} if not cstr(findings_).strip() else {})
 		for name in frappe.get_all(OBSERVATION, filters={"verification_plan": plan.name, "participant_user": user, "status": "Current"}, pluck="name"):
 			records.save(frappe.get_doc(OBSERVATION, name).update({"status": "Superseded"}))
-		number = frappe.db.count(OBSERVATION, {"verification_plan": plan.name}) + 1
+		number = sequence.next_count(OBSERVATION, {"verification_plan": plan.name})
 		row = records.insert(frappe.get_doc({
 			"doctype": OBSERVATION, "observation_id": f"{plan.name}-OBS-{number:02d}", "verification_plan": plan.name, "evaluation_case": doc.name,
 			"participant_user": user, "findings": cstr(findings_).strip(), "evidence_json": json.dumps(evidence or []), "recorded_at": clock.now(), "status": "Current",

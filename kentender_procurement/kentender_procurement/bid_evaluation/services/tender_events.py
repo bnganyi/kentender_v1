@@ -34,6 +34,7 @@ import frappe
 from frappe.utils import cstr, get_datetime
 
 from kentender_procurement.bid_evaluation.services import clock, prc, records, simulation
+from kentender_procurement.services import sequence
 
 EVENT = "Evaluation Source Event"
 KINDS = ("Suspension", "Resumption", "Cancellation", "Validity extension", "Award decision", "Dated rule")
@@ -44,7 +45,7 @@ def _record(doc, *, event_key: str, kind: str, source: str, source_reference: st
 	name = frappe.db.get_value(EVENT, {"event_key": event_key}, "name")
 	if name:
 		return frappe.get_doc(EVENT, name), False
-	number = frappe.db.count(EVENT, {"evaluation_case": doc.name}) + 1
+	number = sequence.next_count(EVENT, {"evaluation_case": doc.name})
 	row = records.insert(frappe.get_doc({
 		"doctype": EVENT, "source_event_id": f"{doc.name}-SE-{number:02d}", "evaluation_case": doc.name, "event_key": event_key, "source": source, "kind": kind,
 		"source_reference": source_reference, "authority": authority, "instruction_reference": instruction_reference, "reason": cstr(reason),

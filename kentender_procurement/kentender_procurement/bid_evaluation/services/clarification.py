@@ -38,6 +38,7 @@ from kentender_procurement.bid_evaluation.services import (
 	clock, conclusion, discussion, findings, guards, notify, prc, records, roster, simulation,
 )
 from kentender_procurement.bid_evaluation.services.errors import Guards, fail, invalid
+from kentender_procurement.services import sequence
 
 REQUEST = "Evaluation Clarification"
 REPLY = "Evaluation Clarification Reply"
@@ -93,7 +94,7 @@ def authorise(*, tender: str, bid: str, requirement_key: str, question: str, rep
 		decided = conclusion.insert(doc, kind="Clarification authorised", session=out["session_id"],
 			reason=cstr(replacement_reason).strip() if replaces else cstr(question).strip(), recorded_by=user,
 			participants=out["participants"], event=out["event_id"], bid=bid, requirement_key=requirement_key, next_action="Clarification", item=item or "")
-		number = frappe.db.count(REQUEST, {"evaluation_case": doc.name}) + 1
+		number = sequence.next_count(REQUEST, {"evaluation_case": doc.name})
 		request = records.insert(frappe.get_doc({
 			"doctype": REQUEST, "clarification_id": f"{doc.name}-CLR-{number:02d}", "evaluation_case": doc.name, "evaluation_bid": bid,
 			"requirement_key": requirement_key, "response_id": "", "question": cstr(question).strip(), "reply_scope": cstr(reply_scope).strip(),

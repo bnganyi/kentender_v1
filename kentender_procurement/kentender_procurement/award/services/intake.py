@@ -22,6 +22,7 @@ import frappe
 from frappe.utils import cint, cstr
 
 from kentender_procurement.award.services import checks, clock, issues, notify, records, sources, state
+from kentender_procurement.services import sequence
 
 
 def receive(*, delivery: str, source_kind: str = sources.EVALUATION) -> dict[str, Any]:
@@ -58,7 +59,7 @@ def receive(*, delivery: str, source_kind: str = sources.EVALUATION) -> dict[str
 
 
 def _new_report(doc, snap: dict[str, Any], delivery: str, cycle_number: int) -> Any:
-	number = frappe.db.count(state.REPORT, {"award_case": doc.name}) + 1
+	number = sequence.next_count(state.REPORT, {"award_case": doc.name})
 	return records.new(state.REPORT, report_id=f"{doc.name}-RPT-{number:02d}", award_case=doc.name, cycle=cycle_number, source_delivery=delivery,
 		source_version=snap.get("report"), version_number=cint(snap.get("version")) or number, content_digest=snap.get("content_digest"),
 		signature_digest=records.digest(snap.get("signatures") or {}), snapshot_json=records.dumps(snap), received_at=_received_at(snap), state="Current",

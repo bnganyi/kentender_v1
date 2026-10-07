@@ -24,6 +24,7 @@ import frappe
 from frappe.utils import cstr, get_datetime
 
 from kentender_procurement.bid_evaluation.services import aggregate, checks, comparison, people, records, roster, timers
+from kentender_procurement.services import sequence
 
 REPORT = "Evaluation Report Version"
 NOT_AN_AWARD = "This report does not constitute an award."
@@ -38,7 +39,7 @@ def draft(doc) -> Any:
 	name = frappe.db.get_value(REPORT, {"evaluation_case": doc.name, "state": "Draft"}, "name")
 	if name:
 		return frappe.get_doc(REPORT, name)
-	number = frappe.db.count(REPORT, {"evaluation_case": doc.name}) + 1
+	number = sequence.next_count(REPORT, {"evaluation_case": doc.name})
 	previous = frappe.db.get_value(REPORT, {"evaluation_case": doc.name}, ["narrative"], as_dict=True, order_by="version_number desc")
 	return records.insert(frappe.get_doc({"doctype": REPORT, "report_id": f"{doc.name}-RPT-{number:02d}", "evaluation_case": doc.name, "version_number": number,
 		"state": "Draft", "narrative": (previous or {}).get("narrative") or "", "record_version": 1}))

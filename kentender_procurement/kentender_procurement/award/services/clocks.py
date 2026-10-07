@@ -17,6 +17,7 @@ import frappe
 from frappe.utils import cint, get_datetime
 
 from kentender_procurement.award.services import clock, profile, records, state
+from kentender_procurement.services import sequence
 
 CLOCK = state.CLOCK
 
@@ -30,7 +31,7 @@ def record(doc, *, kind: str, notice: str = "", trigger_at, trigger_evidence: st
 	for row in existing:
 		revision = cint(row.revision) + 1
 		records.update(frappe.get_doc(CLOCK, row.name), state="Revised")
-	number = frappe.db.count(CLOCK, {"award_case": doc.name}) + 1
+	number = sequence.next_count(CLOCK, {"award_case": doc.name})
 	return records.new(CLOCK, clock_id=f"{doc.name}-CLK-{number:02d}", award_case=doc.name, notice=notice, kind=kind, rule=rule,
 		profile_version=p.get("profile_version"), trigger_evidence=trigger_evidence, trigger_at=trigger_at, timezone=p.get("timezone"), calendar=p.get("calendar"),
 		deadline=deadline, revision=revision, state="Current", fixture_namespace=doc.fixture_namespace)

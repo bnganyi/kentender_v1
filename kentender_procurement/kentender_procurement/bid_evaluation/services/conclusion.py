@@ -30,6 +30,7 @@ from frappe.utils import cstr
 
 from kentender_procurement.bid_evaluation.services import clock, discussion, findings, guards, prc, prc_owner, records, roster
 from kentender_procurement.bid_evaluation.services.errors import fail, invalid
+from kentender_procurement.services import sequence
 
 CONCLUSION = "Evaluation Conclusion"
 DISAGREEMENT = "Evaluation Disagreement"
@@ -68,7 +69,7 @@ def committed(doc, *, event_type: str, owner_event_id: str, members: list[str], 
 
 def insert(doc, *, kind: str, session: str, reason: str, recorded_by: str, participants: list[str], event: str, bid: str = "", requirement_key: str = "",
 		result: str = "", evidence: list | None = None, next_action: str = "", item: str = "") -> Any:
-	number = frappe.db.count(CONCLUSION, {"evaluation_case": doc.name}) + 1
+	number = sequence.next_count(CONCLUSION, {"evaluation_case": doc.name})
 	return records.insert(frappe.get_doc({
 		"doctype": CONCLUSION, "conclusion_id": f"{doc.name}-CON-{number:02d}", "evaluation_case": doc.name, "session": session, "kind": kind,
 		"evaluation_bid": bid, "requirement_key": requirement_key, "result": result, "reason": cstr(reason).strip(), "evidence_json": json.dumps(evidence or []),
@@ -154,7 +155,7 @@ def record_disagreement(*, tender: str, statement: str, conclusion: str = "", re
 		with prc_owner.acting(doc.name):
 			out = sessions.record_member_statement(**prc.ref(doc), event_type="Disagreement", owner_event_id=prc.bounded(f"disagreement:{doc.name}:{idempotency_key}"),
 				statement=cstr(statement).strip(), linked_event=linked or "", idempotency_key=prc.key(idempotency_key, "statement"), actor=user)
-		number = frappe.db.count(DISAGREEMENT, {"evaluation_case": doc.name}) + 1
+		number = sequence.next_count(DISAGREEMENT, {"evaluation_case": doc.name})
 		row = records.insert(frappe.get_doc({
 			"doctype": DISAGREEMENT, "disagreement_id": f"{doc.name}-DIS-{number:02d}", "evaluation_case": doc.name, "conclusion": conclusion,
 			"report_version": report_version, "member_user": user, "statement": cstr(statement).strip(), "recorded_at": clock.now(), "proceeding_event": out["event_id"],

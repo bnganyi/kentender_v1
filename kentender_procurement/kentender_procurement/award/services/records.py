@@ -23,6 +23,7 @@ from frappe.utils import cint, cstr
 
 from kentender_procurement.award.services import clock
 from kentender_procurement.award.services.errors import fail
+from kentender_procurement.services import sequence
 
 CASE = "Award Case"
 JOURNAL = "Award Command Journal"
@@ -84,8 +85,7 @@ def dumps(value) -> str:
 
 
 def next_number(doctype: str, filters: dict, field: str = "version") -> int:
-	rows = frappe.get_all(doctype, filters=filters, pluck=field)
-	return (max(cint(r) for r in rows) if rows else 0) + 1
+	return sequence.next_after(doctype, filters, field)
 
 
 @contextmanager

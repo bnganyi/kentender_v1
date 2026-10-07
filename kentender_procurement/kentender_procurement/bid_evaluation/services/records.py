@@ -60,7 +60,8 @@ def digest(value: Any) -> str:
 
 def next_id(doctype: str, field: str, prefix: str, width: int = 2) -> str:
 	"""`prefix-NN`, the next free number for this prefix."""
-	taken = frappe.get_all(doctype, filters={field: ("like", f"{prefix}-%")}, pluck=field)
+	# a locking read: the case lock was taken first and a plain read would answer from the older snapshot (RG-19)
+	taken = frappe.db.get_values(doctype, {field: ("like", f"{prefix}-%")}, field, pluck=field, for_update=True) or []
 	numbers = [cint(n.rsplit("-", 1)[-1]) for n in taken if n.rsplit("-", 1)[-1].isdigit()]
 	return f"{prefix}-{(max(numbers) if numbers else 0) + 1:0{width}d}"
 

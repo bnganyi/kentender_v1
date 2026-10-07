@@ -20,6 +20,7 @@ from frappe.utils import cint, cstr
 
 from kentender_procurement.proceedings.services import clock, owners, records
 from kentender_procurement.proceedings.services.errors import fail
+from kentender_procurement.services import sequence
 
 VERSION = "Proceeding Minutes Version"
 TARGET_TYPES = ("Tender page", "Price location", "Change location", "Minutes page", "Final minutes page")
@@ -54,7 +55,7 @@ def _validate(doc, *, content: str, event_ids: list[str], targets: list[dict[str
 
 def _freeze(doc, *, actor: str, content: str, page_count: int, register_reference: str, register_digest: str, event_ids: list[str], targets: list[dict[str, Any]],
 		supersedes: str = "", reason: str = "") -> dict[str, Any]:
-	number = frappe.db.count(VERSION, {"proceeding": doc.name}) + 1
+	number = sequence.next_count(VERSION, {"proceeding": doc.name})
 	version = frappe.get_doc({
 		"doctype": VERSION, "minutes_version_id": f"{doc.name}-M{number:02d}", "proceeding": doc.name, "version_number": number, "content": content,
 		"content_digest": records.text_digest(content), "page_count": cint(page_count), "register_reference": register_reference, "register_digest": register_digest,

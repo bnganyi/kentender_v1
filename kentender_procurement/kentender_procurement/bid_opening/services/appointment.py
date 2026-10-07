@@ -20,6 +20,7 @@ from frappe.utils import cint, cstr
 
 from kentender_procurement.bid_opening.services import clock, errors, people, records
 from kentender_procurement.tenders.services import opening_seam
+from kentender_procurement.services import sequence
 
 APPOINTMENT = "Opening Committee Appointment"
 ROLES = ("Chair and recorder", "Chair", "Recorder", "Member", "Independent member")
@@ -120,7 +121,7 @@ def appoint_opening_committee(*, tender: str, members: list[dict[str, Any]], exp
 			return invalid
 		previous = current(doc.name)
 		at = clock.now()
-		number = frappe.db.count(APPOINTMENT, {"opening_case": doc.name}) + 1
+		number = sequence.next_count(APPOINTMENT, {"opening_case": doc.name})
 		appointment = frappe.get_doc({
 			"doctype": APPOINTMENT, "appointment_id": f"{doc.opening_id}-APT-{number:02d}", "opening_case": doc.name, "version_number": number, "appointed_by": user,
 			"appointed_at": at, "status": "Active", "supersedes_appointment": previous.name if previous else "", "reason": cstr(reason).strip(),

@@ -19,6 +19,7 @@ import frappe
 from frappe.utils import cint, cstr
 
 from kentender_procurement.bid_opening.services import appointment, clock, errors, notify, people, prc, records
+from kentender_procurement.services import sequence
 
 INCIDENT = "Opening Access Incident"
 SUBJECTS = {
@@ -54,7 +55,7 @@ def ensure(doc, incident_type: str, *, envelope_id: str = "") -> Any:
 	name = frappe.db.get_value(INCIDENT, {"opening_case": doc.name, "incident_type": incident_type, "envelope_id": envelope_id, "status": "Open"}, "name")
 	if name:
 		return frappe.get_doc(INCIDENT, name)
-	number = frappe.db.count(INCIDENT, {"opening_case": doc.name}) + 1
+	number = sequence.next_count(INCIDENT, {"opening_case": doc.name})
 	holders = notify.holders()
 	row = records.insert(frappe.get_doc({
 		"doctype": INCIDENT, "incident_id": f"INC-OPEN-{doc.opening_id.removeprefix('BOC-')}-{number:02d}", "opening_case": doc.name, "incident_type": incident_type,
@@ -125,7 +126,7 @@ def record_unresolved(*, tender: str, incident: str, resolution_note: str, idemp
 			pause.holder = holders[0] if holders else None
 			records.save(pause)
 		if doc.state == "Interrupted" and holders:
-			number = frappe.db.count(not_held.DECISION, {"opening_case": doc.name}) + 1
+			number = sequence.next_count(not_held.DECISION, {"opening_case": doc.name})
 			last = ceremony.last_committed(doc.name)
 			records.insert(frappe.get_doc({
 				"doctype": not_held.DECISION, "decision_item_id": f"{doc.opening_id}-DEC-{number:02d}", "opening_case": doc.name, "kind": "Paused opening",

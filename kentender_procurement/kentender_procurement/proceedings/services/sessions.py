@@ -25,6 +25,7 @@ from frappe.utils import cint, cstr
 
 from kentender_procurement.proceedings.services import clock, owners, profiles, records
 from kentender_procurement.proceedings.services.errors import fail
+from kentender_procurement.services import sequence
 
 SESSION = "Proceeding Session"
 ATTENDANCE = "Proceeding Attendance"
@@ -69,7 +70,7 @@ def present(proceeding: str, session: str | None = None) -> list[str]:
 def _movement(doc, session: str, *, user: str, capacity: str, movement: str, actor: str, source: str = "Member") -> str:
 	event_id = records.event(doc, f"Attendance{movement}", source=source, actor=actor, session=session, payload={"user": user, "capacity": capacity},
 		note=f"{_name(doc, user)} ({capacity})")
-	number = frappe.db.count(ATTENDANCE, {"proceeding": doc.name}) + 1
+	number = sequence.next_count(ATTENDANCE, {"proceeding": doc.name})
 	records.insert(frappe.get_doc({
 		"doctype": ATTENDANCE, "attendance_id": f"{doc.name}-A{number:04d}", "proceeding": doc.name, "session": session, "person_name": _name(doc, user),
 		"user": owners.user_or_none(user), "capacity": capacity, "movement": movement, "pre_session": 0, "occurred_at": clock.now(),
@@ -113,7 +114,7 @@ def start_session(*, owner_type: str, owner_id: str, expected_version: int, subj
 			fail("PRC_VERSION_CONFLICT", {"reason": "active_session"})
 		if actor not in _members(doc):
 			fail("PRC_MEMBER_REQUIRED")
-		number = frappe.db.count(SESSION, {"proceeding": doc.name}) + 1
+		number = sequence.next_count(SESSION, {"proceeding": doc.name})
 		session_id = f"{doc.name}-S{number:02d}"
 		records.insert(frappe.get_doc({
 			"doctype": SESSION, "session_id": session_id, "proceeding": doc.name, "session_number": number, "state": "Active", "subject": cstr(subject).strip(),

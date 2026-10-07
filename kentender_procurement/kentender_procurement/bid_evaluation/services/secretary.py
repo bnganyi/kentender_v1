@@ -19,6 +19,7 @@ from frappe.utils import cstr
 
 from kentender_procurement.bid_evaluation.services import clock, guards, notify, people, prc, records
 from kentender_procurement.bid_evaluation.services.errors import Guards
+from kentender_procurement.services import sequence
 
 SECRETARY = "Evaluation Secretary Appointment"
 
@@ -41,7 +42,7 @@ def assign_secretary(*, tender: str, secretary: str, appointment_reference: str,
 			checks.add("EVL_MEMBER_INELIGIBLE", person=secretary, person_name=people.full_name(secretary), reason="not_procurement_officer",
 				explanation=f"{people.full_name(secretary)} is not a procurement officer.")
 		checks.raise_if_any()
-		number = frappe.db.count(SECRETARY, {"evaluation_case": doc.name}) + 1
+		number = sequence.next_count(SECRETARY, {"evaluation_case": doc.name})
 		for name in frappe.get_all(SECRETARY, filters={"evaluation_case": doc.name, "status": "Current"}, pluck="name"):
 			prior = frappe.get_doc(SECRETARY, name)
 			prior.status = "Superseded"

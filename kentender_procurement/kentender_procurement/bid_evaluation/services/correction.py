@@ -32,6 +32,7 @@ from kentender_procurement.bid_evaluation.services import (
 	checks, clock, findings, guards, lifecycle, notify, people, prc, prc_owner, records, roster, simulation,
 )
 from kentender_procurement.bid_evaluation.services.errors import Guards, fail, invalid
+from kentender_procurement.services import sequence
 
 DELIVERY = "Evaluation Report Delivery"
 NOTICE = "Evaluation Correction Notice"
@@ -172,7 +173,7 @@ def record_correction_notice(*, tender: str, reason: str, correction: str, idemp
 		status = decision_status(doc)
 		if status["status"] != "Unknown":
 			_status_known(doc)
-		number = frappe.db.count(NOTICE, {"evaluation_case": doc.name}) + 1
+		number = sequence.next_count(NOTICE, {"evaluation_case": doc.name})
 		notice = records.insert(frappe.get_doc({
 			"doctype": NOTICE, "notice_id": f"{doc.name}-CN-{number:02d}", "evaluation_case": doc.name, "report_version": delivery.report_version,
 			"reason": cstr(reason).strip(), "correction": cstr(correction).strip(), "recorded_by": user, "recorded_at": clock.now(),
@@ -226,7 +227,7 @@ def _receive_supplement(tender: str, key: str, supplement) -> dict[str, Any]:
 	def body() -> dict[str, Any]:
 		doc = records.lock(tender)
 		after = doc.state == "Report sent"
-		number = frappe.db.count(EVENT, {"evaluation_case": doc.name}) + 1
+		number = sequence.next_count(EVENT, {"evaluation_case": doc.name})
 		row = records.insert(frappe.get_doc({
 			"doctype": EVENT, "source_event_id": f"{doc.name}-SE-{number:02d}", "evaluation_case": doc.name, "event_key": key, "source": "Bid Opening",
 			"kind": "Opening supplement", "source_reference": supplement.supplement_id, "authority": cstr(supplement.author), "reason": cstr(supplement.reason),

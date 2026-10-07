@@ -20,6 +20,7 @@ import frappe
 from frappe.utils import cstr, get_datetime
 
 from kentender_procurement.award.services import clock, issues, people, profile, simulation, sources, state
+from kentender_procurement.services import sequence
 
 TIE = "No single recommendation — equal evaluated totals"
 SOURCE_INCOMPLETE = "Incomplete source"
@@ -142,7 +143,7 @@ def sync(doc) -> dict[str, Any]:
 	if rep and fund["known"]:
 		if fund["restricted"]:
 			if not issues.open_issues(doc, subtype=FUNDING):
-				number = frappe.db.count(issues.ISSUE, {"award_case": doc.name, "subtype": FUNDING}) + 1
+				number = sequence.next_count(issues.ISSUE, {"award_case": doc.name, "subtype": FUNDING})
 				issues.open_issue(doc, source_event=f"funding:{rep.name}:{number}", issue_type="Funding", subtype=FUNDING, title="Funding needs resolution before award.",
 					reason="The funding Budget now holds for this tender is less than the evaluated amount.", detail={"owner": "Budget", "funding": fund["detail"]})
 		else:

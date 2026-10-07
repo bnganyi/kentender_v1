@@ -23,6 +23,7 @@ from frappe.utils import cint, cstr
 
 from kentender_procurement.award.services import clock, clocks, eligibility, issues, notify, people, records, sources, state
 from kentender_procurement.award.services.errors import fail, invalid
+from kentender_procurement.services import sequence
 
 NOTICE = state.NOTICE
 NOT_A_CONTRACT = "Accepting this award does not create a contract."
@@ -146,7 +147,7 @@ def respond(*, notice: str, response: str, reason: str = "", notice_version=None
 		late = bool(deadline and now > deadline)
 		label = records.loads(n.content_json).get("notice")
 		wording = (f"I accept {label} on behalf of {n.organisation_name}." if response == "Accept" else f"I decline {label} on behalf of {n.organisation_name}.")
-		number = frappe.db.count(state.RESPONSE, {"notice": n.name}) + 1
+		number = sequence.next_count(state.RESPONSE, {"notice": n.name})
 		row = records.new(state.RESPONSE, response_id=f"{n.name}-R{number:02d}", notice=n.name, award_case=doc.name, notice_version=n.version, response=response,
 			responder=user, organisation=n.organisation, authority_evidence=cstr(auth["signatory"].get("assignment_id")), wording=wording, reason=cstr(reason).strip(),
 			received_at=now, late=1 if late else 0, operative=0 if late else 1, fixture_namespace=doc.fixture_namespace)
@@ -186,7 +187,7 @@ def request_explanation(*, notice: str, request: str, idempotency_key: str, user
 		_authority(doc, n, user)
 		invalid({"request": "Enter your request." if not cstr(request).strip() else ""})
 		previous = frappe.db.get_value(state.CORRESPONDENCE, {"notice": n.name}, "name", order_by="requested_at desc")
-		number = frappe.db.count(state.CORRESPONDENCE, {"award_case": doc.name}) + 1
+		number = sequence.next_count(state.CORRESPONDENCE, {"award_case": doc.name})
 		row = records.new(state.CORRESPONDENCE, correspondence_id=f"{doc.name}-REQ-{number:02d}", award_case=doc.name, notice=n.name, organisation=n.organisation,
 			organisation_name=n.organisation_name, requested_by=user, request_text=cstr(request).strip(), requested_at=clock.now(), predecessor=previous or "",
 			reply_state="", attempts_json="[]", state="Open", fixture_namespace=doc.fixture_namespace)

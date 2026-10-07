@@ -22,6 +22,7 @@ from frappe.utils import cstr
 
 from kentender_procurement.bid_evaluation.services import aggregate, checks, clock, guards, notify, prc, records, roster
 from kentender_procurement.bid_evaluation.services.errors import fail, invalid
+from kentender_procurement.services import sequence
 
 FINDING = "Evaluation Finding"
 ITEM = "Evaluation Discussion Item"
@@ -59,7 +60,7 @@ def open_item(doc, bid: str, requirement_key: str, *, subject: str, user: str, f
 		item.last_finding = finding
 		records.save(item)
 		return item.name
-	number = frappe.db.count(ITEM, {"evaluation_case": doc.name}) + 1
+	number = sequence.next_count(ITEM, {"evaluation_case": doc.name})
 	item = records.insert(frappe.get_doc({
 		"doctype": ITEM, "item_id": f"{doc.name}-ITEM-{number:02d}", "evaluation_case": doc.name, "evaluation_bid": bid, "requirement_key": requirement_key,
 		"subject": subject, "status": "Open", "opened_at": clock.now(), "opened_by": user, "last_finding": finding,
@@ -81,7 +82,7 @@ def _write(doc, *, bid: str, requirement_key: str, kind: str, result: str, reaso
 		"status": "Current"}, "name")
 	if prior:
 		records.save(frappe.get_doc(FINDING, prior).update({"status": "Superseded"}))
-	number = frappe.db.count(FINDING, {"evaluation_case": doc.name}) + 1
+	number = sequence.next_count(FINDING, {"evaluation_case": doc.name})
 	return records.insert(frappe.get_doc({
 		"doctype": FINDING, "finding_id": f"{doc.name}-FND-{number:03d}", "evaluation_case": doc.name, "evaluation_bid": bid, "requirement_key": requirement_key,
 		"kind": kind, "result": result, "reason": cstr(reason).strip(), "evidence_reference": cstr(evidence_reference).strip(), "author": user,

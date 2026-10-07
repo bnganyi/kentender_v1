@@ -24,6 +24,7 @@ from frappe.utils import cstr, escape_html
 
 from kentender_procurement.bid_opening.services import ceremony, clock, errors, finish, labels, people, records, settings
 from kentender_procurement.bid_submission.services import opening_gateway
+from kentender_procurement.services import sequence
 
 REQUEST = "Opening Register Request"
 
@@ -49,7 +50,7 @@ def request_opening_register(*, tender: str, idempotency_key: str, user: str) ->
 		existing = frappe.db.get_value(REQUEST, {"opening_case": doc.name, "requester_user": user, "status": ("in", ("Pending", "Ready", "Delivered"))}, "request_id")
 		if existing:
 			return records.summary(doc, request=existing, status=frappe.db.get_value(REQUEST, {"request_id": existing}, "status"))
-		number = frappe.db.count(REQUEST, {"opening_case": doc.name}) + 1
+		number = sequence.next_count(REQUEST, {"opening_case": doc.name})
 		row = records.insert(frappe.get_doc({
 			"doctype": REQUEST, "request_id": f"{doc.opening_id}-RRQ-{number:02d}", "opening_case": doc.name, "requester_user": user, "receipt_reference": receipt,
 			"requested_at": clock.now(), "status": "Pending",
