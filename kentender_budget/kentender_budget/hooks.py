@@ -67,6 +67,7 @@ kt_technical_read_probes = [
 	"kentender_budget.services.technical_read.read_probes",
 ]
 
+after_install = "kentender_budget.install.after_install"
 after_migrate = "kentender_budget.install.after_migrate"
 before_tests = "kentender_budget.install.before_tests"
 
