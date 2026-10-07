@@ -12,15 +12,18 @@ are removed outright, not stubbed.
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 import frappe
 from frappe import _
 from frappe.utils import flt
 
+from kentender_budget.services.budget_write_family import budget_write
 from kentender_budget.services.budget_check_reserve_contracts import _resolve_reservation
 from kentender_budget.services.budget_line_contracts import format_kes_full
 from kentender_budget.services.budget_locking import locked_doc, lock_budgets_of_lines
+from kentender_budget.services.budget_money import parse_money, scale_for, stored, text
 from kentender_budget.services.budget_reference import allocate_commitment_reference
 from kentender_budget.services.budget_service_principal import (
 	ACTION_ADJUST,
@@ -117,7 +120,7 @@ def revalidate_reservations(
 	require_principal(caller, ACTION_REVALIDATE)
 	_require_event(downstream_event_id, downstream_event_type)
 	_require_key(idempotency_key)
-	from kentender_budget.services.budget_contracts import _line_position
+	from kentender_budget.services.budget_contracts import _line_position_exact
 	from kentender_budget.services.budget_audit_contracts import EVENT_REVALIDATED, safe_record_event
 
 	results = []
@@ -127,15 +130,20 @@ def revalidate_reservations(
 			results.append(_reservation_result(doc))
 			continue
 
-		pos = _line_position(doc.budget_line, _current_line_version(doc.budget_line))
+		# AUD-XC-116 — exact decimals: a line whose approved amount equals its
+		# reserved plus committed amount has an available balance of exactly
+		# zero and is not in breach.
+		pos = _line_position_exact(doc.budget_line, _current_line_version(doc.budget_line))
+		scale = scale_for(doc.currency)
 		# The reservation's own remaining_amount is already inside pos["reserved"];
 		# a floor breach shows up as negative available once approved_amount fell.
 		prior_status = doc.status
-		new_status = "Needs Attention" if pos["available"] < 0 else ("Active" if flt(doc.remaining_amount) >= flt(doc.original_amount) else "Partially Converted")
+		new_status = "Needs Attention" if pos["available"] < 0 else ("Active" if stored(doc.remaining_amount, scale=scale) >= stored(doc.original_amount, scale=scale) else "Partially Converted")
 
 		if new_status != prior_status:
 			doc.status = new_status
-			doc.save(ignore_permissions=True)
+			with budget_write():
+				doc.save(ignore_permissions=True)
 			safe_record_event(
 				budget=doc.budget,
 				budget_line=doc.budget_line,
@@ -162,7 +170,7 @@ def _current_line_version(budget_line: str, *, for_update: bool = False):
 
 def release_reservation(
 	reservation: str,
-	amount: float | None,
+	amount: Decimal | str | int | None,
 	downstream_event_id: str,
 	downstream_event_type: str,
 	idempotency_key: str,
@@ -182,8 +190,11 @@ def release_reservation(
 	_require_event(downstream_event_id, downstream_event_type)
 	key = _require_key(idempotency_key)
 	doc = _resolve_reservation(reservation)
+	# AUD-XC-117 — a malformed, non-finite or excess-scale amount fails typed,
+	# before the scope check and before any effect.
+	amount = None if amount is None else parse_money(amount, scale=scale_for(doc.currency), field="amount")
 	_require_release_scope(caller, doc, amount)
-	params = {"reservation": doc.name, "amount": None if amount is None else flt(amount), "event_id": downstream_event_id, "event_type": downstream_event_type}
+	params = {"reservation": doc.name, "amount": None if amount is None else text(amount, scale=scale_for(doc.currency)), "event_id": downstream_event_id, "event_type": downstream_event_type}
 	return _idempotent(
 		action=ACTION_RELEASE, caller=caller, key=key, params=params,
 		fn=lambda: _release(doc.name, amount, downstream_event_id, downstream_event_type, key, caller),
@@ -201,7 +212,7 @@ def _require_release_scope(caller, doc, amount) -> None:
 			refuse(_("Requisitions may release only the whole, unconverted reservation its own requisition created."))
 	elif caller.principal == PRINCIPAL_CONTRACT:
 		linked = frappe.db.exists("Procurement Commitment", {"reservation": doc.name, "contract": caller.reference})
-		if not linked or amount is None or flt(amount) <= 0:
+		if not linked or amount is None:
 			refuse(_("Contract Management may release only an explicit unused amount of a reservation it converted for its own contract."))
 
 
@@ -214,23 +225,25 @@ def _release(reservation: str, amount, downstream_event_id: str, downstream_even
 	if doc.status in ("Converted", "Released"):
 		return {"ok": True, "reused": True, "reservation": _reservation_result(doc)}
 
-	release_amount = flt(amount) if amount is not None else flt(doc.remaining_amount)
-	if release_amount > flt(doc.remaining_amount) + 0.0001:
+	scale = scale_for(doc.currency)
+	prior_remaining = stored(doc.remaining_amount, scale=scale)
+	release_amount = amount if amount is not None else prior_remaining
+	if release_amount > prior_remaining:
 		frappe.throw(
 			_("Release amount ({0}) exceeds the remaining reservation ({1})").format(
-				format_kes_full(release_amount, currency=doc.currency), format_kes_full(flt(doc.remaining_amount), currency=doc.currency)
+				format_kes_full(release_amount, currency=doc.currency), format_kes_full(prior_remaining, currency=doc.currency)
 			),
 			frappe.ValidationError,
 			title="BUDGET_RELEASE_EXCEEDS_REMAINDER",
 		)
-	release_amount = min(release_amount, flt(doc.remaining_amount))
 	if release_amount <= 0:
 		return {"ok": True, "reused": True, "reservation": _reservation_result(doc)}
 
-	prior_remaining = flt(doc.remaining_amount)
-	doc.remaining_amount = prior_remaining - release_amount
-	doc.status = "Released" if doc.remaining_amount <= 0.0001 else doc.status
-	doc.save(ignore_permissions=True)
+	new_remaining = prior_remaining - release_amount
+	doc.remaining_amount = new_remaining
+	doc.status = "Released" if new_remaining == 0 else doc.status
+	with budget_write():
+		doc.save(ignore_permissions=True)
 
 	from kentender_budget.services.budget_audit_contracts import EVENT_RELEASED, safe_record_event
 
@@ -253,7 +266,7 @@ def _release(reservation: str, amount, downstream_event_id: str, downstream_even
 def convert_reservation(
 	reservation: str,
 	contract: str,
-	amount: float,
+	amount: Decimal | str | int,
 	idempotency_key: str,
 	*,
 	contract_event_id: str = "",
@@ -274,7 +287,8 @@ def convert_reservation(
 	if caller.reference != contract:
 		refuse(_("Contract Management may convert a reservation only for its own contract."))
 	doc = _resolve_reservation(reservation)
-	params = {"reservation": doc.name, "contract": contract, "amount": flt(amount), "event_id": contract_event_id, "event_type": contract_event_type}
+	amount = parse_money(amount, scale=scale_for(doc.currency), field="amount")
+	params = {"reservation": doc.name, "contract": contract, "amount": text(amount, scale=scale_for(doc.currency)), "event_id": contract_event_id, "event_type": contract_event_type}
 	return _idempotent(
 		action=ACTION_CONVERT, caller=caller, key=key, params=params,
 		fn=lambda: _convert(doc.name, contract, amount, key, contract_event_id, contract_event_type),
@@ -282,12 +296,12 @@ def convert_reservation(
 	)
 
 
-def _convert(reservation: str, contract: str, amount, idempotency_key: str, contract_event_id: str, contract_event_type: str) -> dict[str, Any]:
-	amount = flt(amount)
+def _convert(reservation: str, contract: str, amount: Decimal, idempotency_key: str, contract_event_id: str, contract_event_type: str) -> dict[str, Any]:
 	# AUD-XC-101..103/BUD-004 — shared lock order, then every read below is a
 	# locking read of the latest committed state.
 	lock_budgets_of_lines([frappe.db.get_value("Funding Reservation", reservation, "budget_line")])
 	doc = locked_doc("Funding Reservation", reservation)
+	scale = scale_for(doc.currency)
 
 	# §4.6 — contract is unique within the reservation lineage, so (reservation,
 	# contract) is also a natural key: the same pair and amount returns the
@@ -297,7 +311,7 @@ def _convert(reservation: str, contract: str, amount, idempotency_key: str, cont
 	existing = frappe.db.get_value("Procurement Commitment", {"contract": contract, "reservation": doc.name}, "name", for_update=True)
 	if existing:
 		existing_doc = locked_doc("Procurement Commitment", existing)
-		if abs(flt(existing_doc.current_amount) - amount) > 0.0001:
+		if stored(existing_doc.current_amount, scale=scale) != amount:
 			frappe.throw(
 				_("This contract already holds a commitment on this reservation for a different amount. Adjust the commitment instead."),
 				frappe.ValidationError,
@@ -308,11 +322,8 @@ def _convert(reservation: str, contract: str, amount, idempotency_key: str, cont
 	if doc.status not in ("Active", "Partially Converted"):
 		frappe.throw(_("Only an Active or Partially Converted reservation can be converted"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
 
-	if amount <= 0:
-		frappe.throw(_("Commitment amount must be positive"))
-
-	remaining = flt(doc.remaining_amount)
-	if amount > remaining + 0.0001:
+	remaining = stored(doc.remaining_amount, scale=scale)
+	if amount > remaining:
 		frappe.throw(
 			_("Commitment amount ({0}) exceeds the remaining reservation ({1})").format(
 				format_kes_full(amount, currency=doc.currency), format_kes_full(remaining, currency=doc.currency)
@@ -333,11 +344,14 @@ def _convert(reservation: str, contract: str, amount, idempotency_key: str, cont
 			"currency": doc.currency,
 		}
 	)
-	com.insert(ignore_permissions=True)
+	with budget_write():
+		com.insert(ignore_permissions=True)
 
-	doc.remaining_amount = remaining - amount
-	doc.status = "Converted" if doc.remaining_amount <= 0.0001 else "Partially Converted"
-	doc.save(ignore_permissions=True)
+	new_remaining = remaining - amount
+	doc.remaining_amount = new_remaining
+	doc.status = "Converted" if new_remaining == 0 else "Partially Converted"
+	with budget_write():
+		doc.save(ignore_permissions=True)
 
 	from kentender_budget.services.budget_audit_contracts import EVENT_COMMITMENT, safe_record_event
 
@@ -361,7 +375,7 @@ def _convert(reservation: str, contract: str, amount, idempotency_key: str, cont
 
 def adjust_commitment(
 	commitment: str,
-	new_total: float,
+	new_total: Decimal | str | int,
 	variation_event_id: str,
 	variation_event_type: str,
 	idempotency_key: str,
@@ -381,7 +395,8 @@ def adjust_commitment(
 		refuse(_("Contract Management may adjust only its own contract's commitment."))
 	if new_total is None:
 		frappe.throw(_("Adjusted commitment amount is required"))
-	params = {"commitment": doc.name, "new_total": flt(new_total), "event_id": variation_event_id, "event_type": variation_event_type}
+	new_total = parse_money(new_total, scale=scale_for(doc.currency), field="new_total", allow_zero=True)
+	params = {"commitment": doc.name, "new_total": text(new_total, scale=scale_for(doc.currency)), "event_id": variation_event_id, "event_type": variation_event_type}
 
 	def budget_for(result):
 		reservation = frappe.db.get_value("Procurement Commitment", (result.get("commitment") or {}).get("commitment_id"), "reservation")
@@ -394,10 +409,8 @@ def adjust_commitment(
 	)
 
 
-def _adjust(commitment: str, new_total: float, variation_event_id: str, variation_event_type: str, idempotency_key: str) -> dict[str, Any]:
-	new_amt = flt(new_total)
-	if new_amt < 0:
-		frappe.throw(_("Adjusted commitment amount cannot be negative"))
+def _adjust(commitment: str, new_total: Decimal, variation_event_id: str, variation_event_type: str, idempotency_key: str) -> dict[str, Any]:
+	new_amt = new_total
 
 	# AUD-XC-102 — an increase must be serialised against the Budget Line and
 	# every reservation on it, not only this commitment row: take the shared
@@ -411,13 +424,13 @@ def _adjust(commitment: str, new_total: float, variation_event_id: str, variatio
 		frappe.throw(_("Only an Active commitment can be adjusted"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
 
 	reservation = locked_doc("Funding Reservation", doc.reservation)
-	prior_amount = flt(doc.current_amount)
+	prior_amount = stored(doc.current_amount, scale=scale_for(doc.currency))
 	delta = new_amt - prior_amount
 	if delta > 0:
-		from kentender_budget.services.budget_contracts import _line_position
+		from kentender_budget.services.budget_contracts import _line_position_exact
 
-		pos = _line_position(reservation.budget_line, _current_line_version(reservation.budget_line, for_update=True), for_update=True)
-		if delta > pos["available"] + 0.0001:
+		pos = _line_position_exact(reservation.budget_line, _current_line_version(reservation.budget_line, for_update=True), for_update=True)
+		if delta > pos["available"]:
 			frappe.throw(
 				_("Increase of {0} exceeds the Budget Line's available balance ({1})").format(
 					format_kes_full(delta, currency=doc.currency), format_kes_full(pos["available"], currency=doc.currency)
@@ -429,7 +442,8 @@ def _adjust(commitment: str, new_total: float, variation_event_id: str, variatio
 	doc.current_amount = new_amt
 	if new_amt <= 0:
 		doc.status = "Cancelled"
-	doc.save(ignore_permissions=True)
+	with budget_write():
+		doc.save(ignore_permissions=True)
 
 	from kentender_budget.services.budget_audit_contracts import EVENT_COMMITMENT_ADJUSTED, safe_record_event
 

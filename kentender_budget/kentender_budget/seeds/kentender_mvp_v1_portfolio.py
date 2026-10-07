@@ -33,6 +33,7 @@ import frappe
 from frappe.utils import add_days, cstr, now_datetime, nowdate
 
 from kentender_budget.services.budget_authorization import ensure_budget_governance_roles
+from kentender_budget.utils.version_stamp import stamped
 from kentender_core.seeds import calendar, clock
 from kentender_core.seeds._common import ensure_currency_kes
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
@@ -273,7 +274,7 @@ def _upsert_active_baseline(
 	try:
 		_as_user(officer)
 		with clock.at(baseline_clock["create"]):
-			result = contracts.save_budget_version_draft(
+			result = contracts.save_budget_version_draft(stamped(
 				{
 					"fiscal_year": fy,
 					"approval_reference": approval_reference,
@@ -281,14 +282,14 @@ def _upsert_active_baseline(
 					"authorised_total": authorised_total,
 					"approval_document": approval_document,
 				}
-			)
+			))
 		if not result.get("ok"):
 			frappe.throw(f"Budget seed: could not create the canonical budget draft: {result.get('errors')}")
 		budget_name = result["budget"]["id"]
 		version_name = result["version"]["id"]
 
 		with clock.at(baseline_clock["draft"]):
-			lines_result = lines_svc.save_budget_lines_draft(
+			lines_result = lines_svc.save_budget_lines_draft(stamped(
 				{
 					"budget_version": version_name,
 					"lines": [
@@ -301,7 +302,7 @@ def _upsert_active_baseline(
 						for ln in lines
 					],
 				}
-			)
+			))
 		if not lines_result.get("ok"):
 			frappe.throw(f"Budget seed: could not save the canonical budget lines: {lines_result.get('errors')}")
 
@@ -316,13 +317,13 @@ def _upsert_active_baseline(
 				frappe.db.set_value(doctype, name, "fixture_namespace", FIXTURE_NS, update_modified=False)
 
 		with clock.at(baseline_clock["submit"]):
-			submit_result = readiness.submit_budget_version({"budget_version": version_name})
+			submit_result = readiness.submit_budget_version(stamped({"budget_version": version_name}))
 		if not submit_result.get("ok"):
 			frappe.throw(f"Budget seed: could not submit the canonical budget: {submit_result.get('blockers')}")
 
 		_as_user(approver)
 		with clock.at(baseline_clock["approve"]):
-			approve_result = readiness.approve_budget_version({"budget_version": version_name})
+			approve_result = readiness.approve_budget_version(stamped({"budget_version": version_name}))
 		if not approve_result.get("ok"):
 			frappe.throw(f"Budget seed: could not approve the canonical budget: {approve_result.get('blockers')}")
 
@@ -587,7 +588,7 @@ def upsert_isolated_successor_version() -> dict[str, Any]:
 				fields=["budget_line", "title", "owner_org_unit", "funding_source"],
 			)
 		}
-		lines_result = lines_svc.save_budget_lines_draft(
+		lines_result = lines_svc.save_budget_lines_draft(stamped(
 			{
 				"budget_version": version_name,
 				"lines": [
@@ -607,12 +608,12 @@ def upsert_isolated_successor_version() -> dict[str, Any]:
 					},
 				],
 			}
-		)
+		))
 		if not lines_result.get("ok"):
 			frappe.throw(f"Budget seed: could not save successor lines: {lines_result.get('errors')}")
 		_set_event_timestamps(version_name, "Draft lines saved", _offset_datetime(14, "15:55:00"))
 
-		submit_result = readiness.submit_budget_version({"budget_version": version_name})
+		submit_result = readiness.submit_budget_version(stamped({"budget_version": version_name}))
 		if not submit_result.get("ok"):
 			frappe.throw(f"Budget seed: could not submit successor version: {submit_result.get('blockers')}")
 		_set_event_timestamps(version_name, "Budget version submitted", _offset_datetime(14, "16:20:00"))
@@ -673,7 +674,7 @@ def _isolated_line(
 	prior_user = frappe.session.user
 	try:
 		_as_user(C.USER_BUD_OFFICER)
-		result = contracts.save_budget_version_draft(
+		result = contracts.save_budget_version_draft(stamped(
 			{
 				"fiscal_year": isolated_fy,
 				"approval_reference": f"{budget_ref} (Isolated test profile)",
@@ -681,7 +682,7 @@ def _isolated_line(
 				"authorised_total": approved_amount,
 				"approval_document": "/files/isolated-test-profile-approval-demo.pdf",
 			}
-		)
+		))
 		if not result.get("ok"):
 			frappe.throw(f"Budget seed: could not create isolated profile {budget_ref}: {result.get('errors')}")
 		budget_name = result["budget"]["id"]
@@ -691,22 +692,22 @@ def _isolated_line(
 		frappe.db.set_value("Procurement Budget", budget_name, "generated_reference", budget_ref, update_modified=False)
 		frappe.db.set_value("Procurement Budget Version", version_name, "generated_reference", f"{budget_ref}-V1", update_modified=False)
 
-		lines_result = lines_svc.save_budget_lines_draft(
+		lines_result = lines_svc.save_budget_lines_draft(stamped(
 			{
 				"budget_version": version_name,
 				"lines": [
 					{"title": title, "owner_org_unit": owner_org_unit, "funding_source": FUNDING_SOURCE, "approved_amount": approved_amount}
 				],
 			}
-		)
+		))
 		if not lines_result.get("ok"):
 			frappe.throw(f"Budget seed: could not save isolated profile {budget_ref} line: {lines_result.get('errors')}")
-		submit_result = readiness.submit_budget_version({"budget_version": version_name})
+		submit_result = readiness.submit_budget_version(stamped({"budget_version": version_name}))
 		if not submit_result.get("ok"):
 			frappe.throw(f"Budget seed: could not submit isolated profile {budget_ref}: {submit_result.get('blockers')}")
 
 		_as_user(C.USER_BUD_APPROVER)
-		approve_result = readiness.approve_budget_version({"budget_version": version_name})
+		approve_result = readiness.approve_budget_version(stamped({"budget_version": version_name}))
 		if not approve_result.get("ok"):
 			frappe.throw(f"Budget seed: could not approve isolated profile {budget_ref}: {approve_result.get('blockers')}")
 

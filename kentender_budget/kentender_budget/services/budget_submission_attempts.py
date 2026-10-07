@@ -16,6 +16,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, flt, now_datetime
 
+from kentender_budget.services.budget_write_family import budget_write
 from kentender_budget.services.budget_locking import locked_doc
 
 
@@ -65,7 +66,8 @@ def open_attempt(version) -> Any:
 			"outcome": "Submitted",
 		}
 	)
-	doc.insert(ignore_permissions=True)
+	with budget_write():
+		doc.insert(ignore_permissions=True)
 	return doc
 
 
@@ -88,7 +90,8 @@ def record_decision(version, outcome: str, reason: str = "") -> None:
 	attempt.decided_by = frappe.session.user
 	attempt.decided_at = now_datetime()
 	attempt.return_reason = reason or ""
-	attempt.save(ignore_permissions=True)
+	with budget_write():
+		attempt.save(ignore_permissions=True)
 
 
 def attempts_for_history(version_name: str) -> list[dict[str, Any]]:

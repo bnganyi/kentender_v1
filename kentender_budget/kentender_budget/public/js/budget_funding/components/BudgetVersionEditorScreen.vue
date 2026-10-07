@@ -293,6 +293,10 @@ function openFileUploader() {
 }
 
 async function saveDetails(key) {
+	// AUD-BUD-007 — the "clean" signature is the one of the values SENT, taken
+	// before the request: whatever the Officer types while the request is in
+	// flight stays dirty and is never overwritten by the server's echo.
+	const sentSignature = signature();
 	const payload = {
 		budget_version: versionKey.value,
 		approval_reference: form.approval_reference,
@@ -306,7 +310,7 @@ async function saveDetails(key) {
 	const result = await saveBudgetVersionDraft(payload);
 	if (!result.ok) return applyTyped(result);
 	draft.value = { ...draft.value, version: result.version };
-	formSignature = signature();
+	formSignature = sentSignature;
 	return true;
 }
 
@@ -324,6 +328,9 @@ function linePayload() {
 }
 
 async function saveLines(key) {
+	// AUD-BUD-007 — every row control is disabled while a command is in flight
+	// (`busy`), so the rows being replaced below are exactly the rows that were
+	// sent: nothing typed during the request can be lost to this replacement.
 	const result = await saveBudgetLinesDraft({ budget_version: versionKey.value, lines: linePayload(), expected_modified: draft.value.version.modified, idempotency_key: key || mintKey("lines") });
 	if (!result.ok) {
 		if (result.errors && !result.code) {
@@ -553,7 +560,7 @@ function restoreLine(o) {
 								<div class="field"><label>{{ __("Based on") }}</label><input class="input" type="text" :value="__('Active Version {0}', [draft.based_on.version_number])" disabled /></div>
 								<div class="field">
 									<label for="bud-editor-type">{{ __("Type of change") }}</label>
-									<select id="bud-editor-type" v-model="form.revision_type" class="input" :disabled="!canEdit" data-testid="bud-editor-revision-type">
+									<select id="bud-editor-type" v-model="form.revision_type" class="input" :disabled="!canEdit || busy" data-testid="bud-editor-revision-type">
 										<option>Supplementary allocation</option>
 										<option>Reduction</option>
 										<option>Transfer</option>
@@ -571,15 +578,15 @@ function restoreLine(o) {
 						<div class="kt-grid-2" style="gap: 16px">
 							<div class="field">
 								<label for="bud-editor-approval-ref">{{ __("Approval reference") }}</label>
-								<input id="bud-editor-approval-ref" v-model="form.approval_reference" class="input" type="text" :disabled="!canEdit" data-testid="bud-editor-approval-ref" />
+								<input id="bud-editor-approval-ref" v-model="form.approval_reference" class="input" type="text" :disabled="!canEdit || busy" data-testid="bud-editor-approval-ref" />
 							</div>
 							<div class="field">
 								<label for="bud-editor-approval-date">{{ __("Approval date") }}</label>
-								<input id="bud-editor-approval-date" v-model="form.approval_date" class="input" type="date" :disabled="!canEdit" data-testid="bud-editor-approval-date" />
+								<input id="bud-editor-approval-date" v-model="form.approval_date" class="input" type="date" :disabled="!canEdit || busy" data-testid="bud-editor-approval-date" />
 							</div>
 							<div class="field">
 								<label for="bud-editor-approved-allocation">{{ __("Approved allocation") }}</label>
-								<div class="kt-input-prefix"><span class="prefix">{{ currency }}</span><input id="bud-editor-approved-allocation" v-model="form.authorised_total" type="number" min="0" :disabled="!canEdit || allocationLocked" data-testid="bud-editor-approved-allocation" /></div>
+								<div class="kt-input-prefix"><span class="prefix">{{ currency }}</span><input id="bud-editor-approved-allocation" v-model="form.authorised_total" type="number" min="0" :disabled="!canEdit || allocationLocked || busy" data-testid="bud-editor-approved-allocation" /></div>
 								<p v-if="allocationLocked" class="kt-field-hint" data-testid="bud-editor-allocation-locked-hint">{{ __("A transfer moves money between budget lines; the approved allocation itself does not change.") }}</p>
 							</div>
 							<div class="field">
@@ -587,7 +594,7 @@ function restoreLine(o) {
 								<div class="kt-file-row" style="justify-content: space-between">
 									<a v-if="form.approval_document" :href="form.approval_document" target="_blank" rel="noopener" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis" data-testid="bud-editor-document-name">{{ form.approval_document_name }}</a>
 									<span v-else data-testid="bud-editor-document-name">{{ __("No file attached") }}</span>
-									<button v-if="canEdit" id="bud-editor-upload-btn" type="button" class="btn btn-ghost" style="flex: none; font-size: 13px" data-testid="bud-editor-upload-btn" @click="openFileUploader">{{ form.approval_document ? __("Replace") : __("Attach") }}</button>
+									<button v-if="canEdit" id="bud-editor-upload-btn" type="button" class="btn btn-ghost" :disabled="busy" style="flex: none; font-size: 13px" data-testid="bud-editor-upload-btn" @click="openFileUploader">{{ form.approval_document ? __("Replace") : __("Attach") }}</button>
 								</div>
 								<p class="kt-field-hint">{{ __("Exactly one document. Replacing it in this draft keeps every earlier submitted attempt's evidence.") }}</p>
 							</div>
@@ -638,32 +645,32 @@ function restoreLine(o) {
 								<tbody>
 									<tr v-for="(row, i) in linesEditor.rows" :key="row.budget_line || 'new-' + i">
 										<td style="min-width: 240px">
-											<input v-if="canEdit && !row.identity_locked" v-model="row.title" class="input" style="min-width: 240px" :aria-label="__('Budget line')" @input="markLinesDirty" />
+											<input v-if="canEdit && !row.identity_locked" v-model="row.title" class="input" style="min-width: 240px" :disabled="busy" :aria-label="__('Budget line')" @input="markLinesDirty" />
 											<div v-else>{{ row.title }}</div>
 											<div class="kt-muted" style="font-size: 11px; margin-top: 2px">{{ row.budget_line_code || __("Reference assigned on save") }}</div>
-											<a v-if="canEdit && row.can_omit" href="#" style="font-size: 11px" data-testid="bud-editor-omit-link" @click.prevent="omitLine(row)">{{ __("Omit from this update") }}</a>
+											<a v-if="canEdit && row.can_omit" href="#" style="font-size: 11px" data-testid="bud-editor-omit-link" @click.prevent="!busy && omitLine(row)">{{ __("Omit from this update") }}</a>
 										</td>
 										<td>
-											<select v-if="canEdit && !row.identity_locked" v-model="row.owner_org_unit" class="input" :aria-label="__('Available to')" @change="markLinesDirty">
+											<select v-if="canEdit && !row.identity_locked" v-model="row.owner_org_unit" class="input" :disabled="busy" :aria-label="__('Available to')" @change="markLinesDirty">
 												<option value="">{{ __("All departments") }}</option>
 												<option v-for="o in orgUnits" :key="o.id" :value="o.id">{{ o.label }}</option>
 											</select>
 											<span v-else>{{ row.owner_org_unit_label || __("All departments") }}</span>
 										</td>
 										<td>
-											<select v-if="canEdit && !row.identity_locked" v-model="row.funding_source" class="input" :aria-label="__('Funding source')" @change="markLinesDirty">
+											<select v-if="canEdit && !row.identity_locked" v-model="row.funding_source" class="input" :disabled="busy" :aria-label="__('Funding source')" @change="markLinesDirty">
 												<option v-for="f in fundingSources" :key="f.id" :value="f.id">{{ f.label }}</option>
 											</select>
 											<span v-else>{{ row.funding_source }}</span>
 										</td>
 										<td v-if="isSuccessor" class="is-num">{{ formatKes(row.current_amount, currency) }}</td>
 										<td class="is-num">
-											<div v-if="canEdit" class="kt-input-prefix" style="min-width: 170px"><span class="prefix">{{ currency }}</span><input v-model="row.approved_amount" type="number" min="0" style="text-align: right" :aria-label="__('Amount')" @input="markLinesDirty" /></div>
+											<div v-if="canEdit" class="kt-input-prefix" style="min-width: 170px"><span class="prefix">{{ currency }}</span><input v-model="row.approved_amount" type="number" min="0" style="text-align: right" :disabled="busy" :aria-label="__('Amount')" @input="markLinesDirty" /></div>
 											<span v-else>{{ formatKes(row.approved_amount, currency) }}</span>
 										</td>
 										<td v-if="isSuccessor" class="is-num">{{ formatSignedKes((Number(row.approved_amount) || 0) - (Number(row.current_amount) || 0), currency) }}</td>
 										<td style="white-space: nowrap">
-											<button v-if="canEdit && row.can_remove && !row.identity_locked" type="button" class="btn btn-ghost kt-danger" style="font-size: 13px; padding: 5px 10px" @click="removeLine(row)">{{ __("Remove") }}</button>
+											<button v-if="canEdit && row.can_remove && !row.identity_locked" type="button" class="btn btn-ghost kt-danger" style="font-size: 13px; padding: 5px 10px" :disabled="busy" @click="removeLine(row)">{{ __("Remove") }}</button>
 										</td>
 									</tr>
 								</tbody>
@@ -673,12 +680,12 @@ function restoreLine(o) {
 							<h3 class="kt-card-title">{{ __("Omitted from this update") }}</h3>
 							<div v-for="o in omitted" :key="o.budget_line" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px; padding: 6px 0">
 								<span>{{ o.title }} · {{ formatKes(o.current_amount, currency) }}</span>
-								<a v-if="canEdit" href="#" @click.prevent="restoreLine(o)">{{ __("Keep in this update") }}</a>
+								<a v-if="canEdit" href="#" @click.prevent="!busy && restoreLine(o)">{{ __("Keep in this update") }}</a>
 							</div>
 							<p class="kt-muted" style="font-size: 12px; margin: 8px 0 0">{{ __("The line and its history remain; it is left out of the proposed version only.") }}</p>
 						</div>
 						<div v-if="canEdit" style="padding: 16px 24px; border-top: 1px solid var(--kt-color-divider)">
-							<button type="button" class="btn btn-secondary" data-testid="bud-editor-add-line-btn" @click="addLine">{{ __("Add Budget Line") }}</button>
+							<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="bud-editor-add-line-btn" @click="addLine">{{ __("Add Budget Line") }}</button>
 						</div>
 					</template>
 				</template>

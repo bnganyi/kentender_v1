@@ -35,7 +35,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from decimal import Decimal
 from typing import Any
 
@@ -43,19 +42,21 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from kentender_budget.services.budget_write_family import budget_write
 from kentender_budget.services.budget_line_contracts import format_kes_full
 from kentender_budget.services.budget_locking import lock_budgets_of_lines
+from kentender_budget.services.budget_money import parse_money, stored
 from kentender_budget.services.budget_reference import allocate_reservation_reference
 
 _CHECK_TOKEN_TTL_SECONDS = 300
 
 # BUD-CHG-001 v1.10 §4.8 Money at this boundary: currency units, KES scale 2,
-# at most 18 integral digits. Accepted: a plain decimal string, an int or a
-# Decimal. Refused without rounding: a float, exponent notation, NaN/Infinity,
-# excess scale, overflow. Budget's own storage is still Currency (its FU-30),
-# so stored positions are read back through `_stored_money`.
+# at most 18 integral digits (12 until storage is widened, AUD-XC-129).
+# Accepted: a plain decimal string, an int or a Decimal. Refused without
+# rounding: a float, exponent notation, NaN/Infinity, excess scale, overflow.
+# The rules live in `budget_money` (one parser for every Budget boundary);
+# stored positions are read back through `_stored_money`.
 _MONEY_SCALE = 2
-_MONEY_TEXT = re.compile(r"^\d{1,18}(\.\d{1,2})?$")
 _QUANTUM = Decimal(1).scaleb(-_MONEY_SCALE)
 
 
@@ -68,27 +69,16 @@ def _money_error(value) -> None:
 
 
 def _exact_money(value) -> Decimal:
-	if isinstance(value, bool) or isinstance(value, float) or value is None:
+	# This module's callers (Requisitions) send decimal strings: a binary float
+	# is refused outright here, unlike the editor's JSON numbers.
+	if isinstance(value, float):
 		_money_error(value)
-	if isinstance(value, int):
-		amount = Decimal(value)
-	elif isinstance(value, Decimal):
-		amount = value
-	else:
-		text = str(value).strip()
-		if not _MONEY_TEXT.match(text):
-			_money_error(value)
-		amount = Decimal(text)
-	if not amount.is_finite() or amount != amount.quantize(_QUANTUM) or len(str(int(abs(amount)))) > 18:
-		_money_error(value)
-	if amount <= 0:
-		frappe.throw(_("Requested amount must be greater than zero"), frappe.ValidationError, title="BUDGET_MONEY_PRECISION_INVALID")
-	return amount.quantize(_QUANTUM)
+	return parse_money(value, scale=_MONEY_SCALE, field="amount")
 
 
 def _stored_money(value) -> Decimal:
 	"""A Currency value read back from Budget's own storage."""
-	return Decimal(repr(flt(value))).quantize(_QUANTUM)
+	return stored(value, scale=_MONEY_SCALE)
 
 
 def _text(amount: Decimal) -> str:
@@ -129,7 +119,7 @@ def _line_active_version_and_position(budget_line_doc, *, for_update: bool = Fal
 	`for_update=True` (after the Budget lock, AUD-XC-101/103) all of it is read
 	as locking reads, so a Version approved or closed since this transaction's
 	snapshot is seen."""
-	from kentender_budget.services.budget_contracts import _active_version, _line_position, _line_version_for
+	from kentender_budget.services.budget_contracts import _active_version, _line_position_exact, _line_version_for
 
 	version = _active_version(budget_line_doc.budget, for_update=for_update)
 	if not version:
@@ -144,7 +134,7 @@ def _line_active_version_and_position(budget_line_doc, *, for_update: bool = Fal
 	line_version = _line_version_for(version.name, budget_line_doc.name, for_update=for_update)
 	if not line_version:
 		frappe.throw(_("Budget Line is not eligible under the Active Version"), frappe.ValidationError, title="BUDGET_LINE_NOT_ELIGIBLE")
-	return version, line_version, _line_position(budget_line_doc.name, line_version, for_update=for_update)
+	return version, line_version, _line_position_exact(budget_line_doc.name, line_version, for_update=for_update)
 
 
 def _normalise_rows(allocations: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -210,7 +200,7 @@ def _line_totals(rows: list[dict[str, Any]], line_docs: dict[str, Any], *, for_u
 			entry = totals[line_doc.name] = {
 				"version": version,
 				"line_version": line_version,
-				"available": _stored_money(position["available"]),
+				"available": position["available"],
 				"required": Decimal(0),
 			}
 		# BUD-BR-008 — the allocation's funding source shall equal the Budget
@@ -471,7 +461,8 @@ def reserve_funding(
 				"caller_reference": caller_reference,
 			}
 		)
-		doc.insert(ignore_permissions=True)
+		with budget_write():
+			doc.insert(ignore_permissions=True)
 		created.append(doc)
 
 		from kentender_budget.services.budget_audit_contracts import EVENT_RESERVED, safe_record_event
@@ -485,7 +476,7 @@ def reserve_funding(
 			correlation_id=correlation_id,
 			calling_module=calling_module,
 			downstream_reference=(caller_reference or cached["plan_item"]) + f" · {doc.name}",
-			amount=flt(row["amount"]),
+			amount=Decimal(row["amount"]),
 			currency=budget.currency,
 		)
 

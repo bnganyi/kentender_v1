@@ -14,14 +14,20 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from kentender_core.services.command_write_guard import CommandWriteGuardMixin
+from kentender_budget.services.budget_write_family import BUDGET_WRITE_FAMILY
+
 _CONTENT_FIELDS = (
 	"budget_version", "budget", "attempt_number", "submitted_by", "submitted_at", "approval_reference",
 	"approval_date", "authorised_total", "currency", "revision_type", "approval_document", "lines_snapshot",
 )
 
 
-class BudgetSubmissionAttempt(Document):
+class BudgetSubmissionAttempt(CommandWriteGuardMixin, Document):
+	command_write_family = BUDGET_WRITE_FAMILY
+
 	def validate(self):
+		super().validate()
 		before = self.get_doc_before_save()
 		if not before:
 			if self.outcome != "Submitted":
@@ -38,6 +44,6 @@ class BudgetSubmissionAttempt(Document):
 			frappe.throw(_("The decision on a submission attempt is set once."), frappe.ValidationError, title="BUDGET_ATTEMPT_IMMUTABLE")
 
 	def on_trash(self):
-		if frappe.flags.in_migrate or frappe.flags.in_install or frappe.flags.get("allow_budget_audit_purge"):
+		if frappe.flags.in_migrate or frappe.flags.in_install:
 			return
-		frappe.throw(_("Budget Submission Attempt records cannot be deleted"), frappe.ValidationError)
+		super().on_trash()

@@ -18,6 +18,7 @@ from kentender_budget.services import budget_line_contracts as lines_svc
 from kentender_budget.services import budget_readiness_contracts as readiness
 from kentender_budget.services.budget_my_work_provider import my_work_rows
 from kentender_budget.tests.test_bud_chg_001_phase3_lifecycle import FUNDING_SOURCE, _BudgetLifecycleTestBase
+from kentender_budget.utils.version_stamp import stamped
 
 
 class _SubmittedDraftMixin:
@@ -26,7 +27,7 @@ class _SubmittedDraftMixin:
 		left undecided. Returns (budget, version) docnames. Assumes the
 		calling test already set the acting Officer via `_as`."""
 		actor = frappe.session.user
-		result = contracts.save_budget_version_draft(
+		result = contracts.save_budget_version_draft(stamped(
 			{
 				"fiscal_year": self._fresh_fy(),
 				"approval_reference": f"MYWORK-{self.suffix}",
@@ -34,22 +35,22 @@ class _SubmittedDraftMixin:
 				"authorised_total": 1_000_000,
 				"approval_document": "/files/test-approval.pdf",
 			}
-		)
+		))
 		self.assertTrue(result["ok"], result.get("errors"))
 		budget, version = result["budget"]["id"], result["version"]["id"]
 		self._track("Procurement Budget Version", version)
 		self._track("Procurement Budget", budget)
-		lines = lines_svc.save_budget_lines_draft(
+		lines = lines_svc.save_budget_lines_draft(stamped(
 			{
 				"budget_version": version,
 				"lines": [{"title": "My Work test line", "owner_org_unit": self.ou_dhp, "funding_source": FUNDING_SOURCE, "approved_amount": 1_000_000}],
 			}
-		)
+		))
 		self.assertTrue(lines["ok"], lines.get("errors"))
 		for line in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="budget_line"):
 			self._track("Procurement Budget Line", line)
 		self._as(actor)
-		submitted = readiness.submit_budget_version({"budget_version": version})
+		submitted = readiness.submit_budget_version(stamped({"budget_version": version}))
 		self.assertTrue(submitted["ok"], submitted.get("blockers"))
 		return budget, version
 
@@ -79,7 +80,7 @@ class TestBudgetMyWorkProvider(_SubmittedDraftMixin, _BudgetLifecycleTestBase):
 
 		# Once decided, the row disappears.
 		self._as(self.approver)
-		self.assertTrue(readiness.approve_budget_version({"budget_version": version})["ok"])
+		self.assertTrue(readiness.approve_budget_version(stamped({"budget_version": version}))["ok"])
 		self.assertEqual([r for r in my_work_rows(user=self.approver)["assigned"] if r["task_id"] == version], [])
 
 	def test_dual_role_submitter_does_not_see_own_submission(self):
@@ -105,7 +106,7 @@ class TestBudgetMyWorkProvider(_SubmittedDraftMixin, _BudgetLifecycleTestBase):
 
 		# Submitted successor: the Approver opens the task, the Officer views it.
 		self._as(self.officer)
-		self.assertTrue(readiness.submit_budget_version({"budget_version": successor})["ok"])
+		self.assertTrue(readiness.submit_budget_version(stamped({"budget_version": successor}))["ok"])
 		self.assertEqual(contracts.get_budget_workspace(fy)["pending_version"]["action"], "view_submission")
 		self._as(self.approver)
 		pending = contracts.get_budget_workspace(fy)["pending_version"]
@@ -118,13 +119,13 @@ class TestBudgetMyWorkProvider(_SubmittedDraftMixin, _BudgetLifecycleTestBase):
 		budget, version = self._create_submitted_draft()
 		self._as(self.approver)
 		reason = "Line titles must name the department before activation."
-		self.assertTrue(readiness.return_budget_version({"budget_version": version, "return_reason": reason})["ok"])
+		self.assertTrue(readiness.return_budget_version(stamped({"budget_version": version, "return_reason": reason}))["ok"])
 		self._as(self.officer)
 		returned = contracts.get_budget_version_draft(version)["returned"]
 		self.assertEqual(returned["reason"], reason)
 		self.assertTrue(returned["by"])
 		self.assertTrue(returned["at"].endswith("EAT"))
-		self.assertTrue(readiness.submit_budget_version({"budget_version": version})["ok"])
+		self.assertTrue(readiness.submit_budget_version(stamped({"budget_version": version}))["ok"])
 		self.assertIsNone(contracts.get_budget_version_draft(version)["returned"])
 
 

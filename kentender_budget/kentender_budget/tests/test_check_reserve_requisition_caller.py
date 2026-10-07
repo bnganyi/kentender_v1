@@ -20,6 +20,7 @@ from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import (
 	_FinanceTestBase,
 	owner_ou,
 )
+from kentender_core.services.command_write_guard import fixture_insert
 
 
 def _req(reference: str):
@@ -146,7 +147,7 @@ class TestReservationUniquenessRelaxed(_RequisitionCallerTestBase):
 		version = frappe.db.get_value("Procurement Budget Version", {"budget": budget, "status": "Active"}, "name")
 		allocation = "TEST-PSA-BYPASS-1"
 		for i in range(2):
-			frappe.get_doc(
+			fixture_insert(frappe.get_doc(
 				{
 					"doctype": "Funding Reservation",
 					"generated_reference": f"RSV-TEST-BYPASS-{i}",
@@ -161,4 +162,4 @@ class TestReservationUniquenessRelaxed(_RequisitionCallerTestBase):
 					"currency": "KES",
 					"correlation_id": f"TEST-BYPASS-{i}",
 				}
-			).insert(ignore_permissions=True)
+			))

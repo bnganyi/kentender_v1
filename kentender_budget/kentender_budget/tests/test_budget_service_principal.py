@@ -35,6 +35,8 @@ from kentender_budget.services.budget_service_principal import (
 	service_caller,
 )
 from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import FUNDING_SOURCE, _FinanceTestBase, owner_ou
+from kentender_budget.utils.version_stamp import stamped
+from kentender_core.services.command_write_guard import purge_doc
 
 FORBIDDEN = "BUDGET_DOWNSTREAM_FORBIDDEN"
 
@@ -64,10 +66,10 @@ class _PrincipalBase(_FinanceTestBase):
 				reservations = frappe.get_all("Funding Reservation", filters={"budget": ["in", budgets]}, pluck="name")
 				for name in frappe.get_all("Procurement Commitment", filters={"reservation": ["in", reservations or [""]]}, pluck="name"):
 					frappe.db.delete("Budget Audit Event", {"commitment": name})
-					frappe.delete_doc("Procurement Commitment", name, force=True, ignore_permissions=True)
+					purge_doc("Procurement Commitment", name)
 				for name in reservations:
 					frappe.db.delete("Budget Audit Event", {"reservation": name})
-					frappe.delete_doc("Funding Reservation", name, force=True, ignore_permissions=True)
+					purge_doc("Funding Reservation", name)
 				frappe.db.delete("Budget Audit Event", {"budget": ["in", budgets]})
 			finally:
 				frappe.flags.allow_budget_audit_purge = False
@@ -445,7 +447,7 @@ class TestCheckReserveCaller(_PrincipalBase):
 		active = frappe.db.get_value("Procurement Budget Version", {"budget": budget, "status": "Active"}, "name")
 		dhi = frappe.db.get_value("Procurement Budget Line Version", {"budget_version": active, "title": "DHI test line"}, "budget_line")
 		hwd = frappe.db.get_value("Procurement Budget Line Version", {"budget_version": active, "title": "HWD test line"}, "budget_line")
-		saved = lines_svc.save_budget_lines_draft(
+		saved = lines_svc.save_budget_lines_draft(stamped(
 			{
 				"budget_version": new_version,
 				"lines": [
@@ -453,12 +455,12 @@ class TestCheckReserveCaller(_PrincipalBase):
 					{"budget_line": hwd, "approved_amount": 2},
 				],
 			}
-		)
+		))
 		self.assertTrue(saved["ok"], saved.get("errors"))
-		submitted = readiness.submit_budget_version({"budget_version": new_version})
+		submitted = readiness.submit_budget_version(stamped({"budget_version": new_version}))
 		self.assertTrue(submitted["ok"], submitted.get("blockers"))
 		self._as(self.approver)
-		approved = readiness.approve_budget_version({"budget_version": new_version})
+		approved = readiness.approve_budget_version(stamped({"budget_version": new_version}))
 		self.assertTrue(approved["ok"], approved.get("blockers"))
 		frappe.set_user("Administrator")
 

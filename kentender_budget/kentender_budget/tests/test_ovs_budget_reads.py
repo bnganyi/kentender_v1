@@ -20,6 +20,7 @@ from frappe.tests.utils import FrappeTestCase
 from kentender_budget.services import budget_contracts as contracts
 from kentender_budget.services.budget_authorization import ensure_budget_governance_roles
 from kentender_core.services import responsibility_administration as administration
+from kentender_core.services.command_write_guard import fixture_insert
 
 
 class TestApprovedBudgetReads(FrappeTestCase):
@@ -45,10 +46,10 @@ class TestApprovedBudgetReads(FrappeTestCase):
 	def _budget(cls, year: int, status: str):
 		fy = frappe.get_doc({"doctype": "Fiscal Year", "year": f"{year}-{year + 1}", "year_start_date": f"{year}-07-01", "year_end_date": f"{year + 1}-06-30"}).insert(ignore_permissions=True)
 		cls._cleanup.append(("Fiscal Year", fy.name))
-		budget = frappe.get_doc({"doctype": "Procurement Budget", "generated_reference": f"OVS-BUD-{year}-{cls.suffix}", "fiscal_year": fy.name, "currency": "KES"}).insert(ignore_permissions=True)
+		budget = fixture_insert(frappe.get_doc({"doctype": "Procurement Budget", "generated_reference": f"OVS-BUD-{year}-{cls.suffix}", "fiscal_year": fy.name, "currency": "KES"}))
 		cls._cleanup.append(("Procurement Budget", budget.name))
-		version = frappe.get_doc({"doctype": "Procurement Budget Version", "generated_reference": f"OVS-BUD-{year}-{cls.suffix}-V1", "budget": budget.name, "version_number": 1,
-			"status": status, "approval_reference": f"OVS-{year}", "approval_date": "2020-01-01", "authorised_total": 1, "approval_document": "/files/ovs.pdf", "currency": "KES"}).insert(ignore_permissions=True)
+		version = fixture_insert(frappe.get_doc({"doctype": "Procurement Budget Version", "generated_reference": f"OVS-BUD-{year}-{cls.suffix}-V1", "budget": budget.name, "version_number": 1,
+			"status": status, "approval_reference": f"OVS-{year}", "approval_date": "2020-01-01", "authorised_total": 1, "approval_document": "/files/ovs.pdf", "currency": "KES"}))
 		cls._cleanup.append(("Procurement Budget Version", version.name))
 		return fy.name, budget.name, version.name
 
@@ -69,7 +70,7 @@ class TestApprovedBudgetReads(FrappeTestCase):
 			if doctype == "User Responsibility Assignment":
 				purge_doc(doctype, name)  # command-only doctype: clean-up opens its own window
 			elif frappe.db.exists(doctype, name):
-				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+				purge_doc(doctype, name)
 		frappe.db.commit()
 		super().tearDownClass()
 

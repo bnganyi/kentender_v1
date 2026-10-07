@@ -48,6 +48,7 @@ TABLES = (
 
 
 from kentender_budget.services.budget_service_principal import PRINCIPAL_REQUISITIONS, service_caller
+from kentender_core.services.command_write_guard import fixture_insert, purge_doc
 
 ANL_REQ = service_caller(PRINCIPAL_REQUISITIONS, reference="REQ-ANL-1")
 
@@ -109,7 +110,7 @@ class TestFundingProvider(_BudgetLifecycleTestBase):
 
 	@classmethod
 	def _insert(cls, doctype: str, **values) -> str:
-		name = frappe.get_doc({"doctype": doctype, **values}).insert(ignore_permissions=True).name
+		name = fixture_insert(frappe.get_doc({"doctype": doctype, **values})).name
 		cls._track(doctype, name)
 		return name
 
@@ -380,18 +381,18 @@ class TestFundingMatchesBudgetsOwnPosition(_FinanceTestBase):
 		for budget in getattr(cls, "_budgets", []):
 			reservations = frappe.get_all("Funding Reservation", filters={"budget": budget}, pluck="name")
 			for name in frappe.get_all("Procurement Commitment", filters={"reservation": ("in", reservations or ["-"])}, pluck="name"):
-				frappe.delete_doc("Procurement Commitment", name, force=True, ignore_permissions=True)
+				purge_doc("Procurement Commitment", name)
 			for name in reservations:
-				frappe.delete_doc("Funding Reservation", name, force=True, ignore_permissions=True)
+				purge_doc("Funding Reservation", name)
 			frappe.flags.allow_budget_audit_purge = True
 			try:
 				for name in frappe.get_all("Budget Audit Event", filters={"budget": budget}, pluck="name"):
-					frappe.delete_doc("Budget Audit Event", name, force=True, ignore_permissions=True)
+					purge_doc("Budget Audit Event", name)
 			finally:
 				frappe.flags.allow_budget_audit_purge = False
 			versions = frappe.get_all("Procurement Budget Version", filters={"budget": budget}, pluck="name")
 			for name in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": ("in", versions or ["-"])}, pluck="name"):
-				frappe.delete_doc("Procurement Budget Line Version", name, force=True, ignore_permissions=True)
+				purge_doc("Procurement Budget Line Version", name)
 		suffix = cls.suffix
 		super().tearDownClass()
 		frappe.db.commit()

@@ -15,6 +15,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt, get_datetime, now_datetime
 
+from kentender_budget.services.budget_write_family import budget_write
 from kentender_budget.services.budget_authorization import require_budget_read_scope, require_budget_version_read_scope
 from kentender_budget.services.budget_contracts import _display_datetime, _user_label
 
@@ -152,7 +153,7 @@ def record_event(
 		"reservation": reservation or None,
 		"commitment": commitment or None,
 		"amount": flt(amount) if amount is not None else None,
-		"currency": currency or "KES",
+		"currency": currency or frappe.db.get_value("Procurement Budget", budget, "currency"),
 		"actor": (actor or frappe.session.user or "System").strip(),
 		"actor_kind": actor_kind if actor_kind in ("user", "system", "integration") else "user",
 		"calling_module": calling_module or "",
@@ -169,7 +170,8 @@ def record_event(
 		values[f"after_{key}"] = flt((after or {}).get(key)) if after else None
 
 	doc = frappe.get_doc(values)
-	doc.insert(ignore_permissions=True)
+	with budget_write():
+		doc.insert(ignore_permissions=True)
 	return doc.name
 
 

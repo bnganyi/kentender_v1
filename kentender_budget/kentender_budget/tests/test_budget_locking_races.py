@@ -36,6 +36,7 @@ from kentender_budget.services import budget_readiness_contracts as readiness
 from kentender_budget.services.budget_service_principal import PRINCIPAL_CONTRACT, PRINCIPAL_REQUISITIONS, service_caller
 from kentender_budget.tests.test_bud_chg_001_phase3_lifecycle import FUNDING_SOURCE, owner_ou
 from kentender_budget.tests.test_budget_service_principal import _PrincipalBase
+from kentender_budget.utils.version_stamp import stamped
 
 _WAIT = 30
 _BLOCKED_FOR = 1.5
@@ -152,18 +153,18 @@ class TestBudgetLockingRaces(_PrincipalBase):
 		self.assertTrue(succ["ok"], succ)
 		new = succ["version"]["id"]
 		self._track("Procurement Budget Version", new)
-		saved = lines_svc.save_budget_lines_draft(
+		saved = lines_svc.save_budget_lines_draft(stamped(
 			{"budget_version": new, "lines": [{"budget_line": dhi_line, "approved_amount": dhi}, {"budget_line": hwd_line, "approved_amount": hwd}]}
-		)
+		))
 		self.assertTrue(saved["ok"], saved)
-		submitted = readiness.submit_budget_version({"budget_version": new})
+		submitted = readiness.submit_budget_version(stamped({"budget_version": new}))
 		self.assertTrue(submitted["ok"], submitted)
 		self._as("Administrator")
 		frappe.db.commit()
 		return new
 
 	def _approve_fn(self, version):
-		return lambda: readiness.approve_budget_version({"budget_version": version})
+		return lambda: readiness.approve_budget_version(stamped({"budget_version": version}))
 
 	# ----- AUD-XC-101 -----------------------------------------------------
 
@@ -311,7 +312,7 @@ class TestBudgetLockingRaces(_PrincipalBase):
 		conn_a = _Conn(self.hopf, self._reserve_fn(race), hold=True)
 		self.assertTrue(conn_a.ran.wait(_WAIT))
 		self.assertIsNone(conn_a.error)
-		conn_b = _Conn(self.approver, lambda: readiness.close_budget({"budget": budget}))
+		conn_b = _Conn(self.approver, lambda: readiness.close_budget(stamped({"budget": budget})))
 		self.assertFalse(conn_b.finished.wait(_BLOCKED_FOR), "closure must wait for the reservation's lock")
 		conn_a.commit()
 		self.assertTrue(conn_b.finished.wait(_WAIT))
@@ -328,7 +329,7 @@ class TestBudgetLockingRaces(_PrincipalBase):
 		_fy_ended(budget)
 		frappe.db.commit()
 		race = self._checked(dhi, 1_000_000, "REQ-RACE-CL2")
-		conn_a = _Conn(self.approver, lambda: readiness.close_budget({"budget": budget}), hold=True)
+		conn_a = _Conn(self.approver, lambda: readiness.close_budget(stamped({"budget": budget})), hold=True)
 		self.assertTrue(conn_a.ran.wait(_WAIT))
 		self.assertTrue(conn_a.value["ok"], conn_a.value)
 		conn_b = _Conn(self.hopf, self._reserve_fn(race))

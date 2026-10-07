@@ -23,6 +23,7 @@ from frappe.tests.utils import FrappeTestCase
 
 from kentender_core.services import responsibility_administration as administration
 from kentender_budget.services.budget_authorization import ensure_budget_governance_roles
+from kentender_core.services.command_write_guard import fixture_insert
 
 
 class TestScopeMapProofOfEffect(FrappeTestCase):
@@ -46,18 +47,18 @@ class TestScopeMapProofOfEffect(FrappeTestCase):
 		cls.fy = fy_doc.name
 		cls._cleanup.append(("Fiscal Year", cls.fy))
 
-		budget = frappe.get_doc(
+		budget = fixture_insert(frappe.get_doc(
 			{
 				"doctype": "Procurement Budget",
 				"generated_reference": f"SCOPEMAP-BUD-{cls.suffix}",
 				"fiscal_year": cls.fy,
 				"currency": "KES",
 			}
-		).insert(ignore_permissions=True)
+		))
 		cls.budget = budget.name
 		cls._cleanup.append(("Procurement Budget", cls.budget))
 
-		version = frappe.get_doc(
+		version = fixture_insert(frappe.get_doc(
 			{
 				"doctype": "Procurement Budget Version",
 				"generated_reference": f"SCOPEMAP-BUD-{cls.suffix}-V1",
@@ -70,7 +71,7 @@ class TestScopeMapProofOfEffect(FrappeTestCase):
 				"approval_document": "/files/scopemap-test.pdf",
 				"currency": "KES",
 			}
-		).insert(ignore_permissions=True)
+		))
 		cls.version = version.name
 		cls._cleanup.append(("Procurement Budget Version", cls.version))
 
@@ -83,7 +84,7 @@ class TestScopeMapProofOfEffect(FrappeTestCase):
 			if doctype == "User Responsibility Assignment":
 				purge_doc(doctype, name)  # command-only doctype: clean-up opens its own window
 			elif frappe.db.exists(doctype, name):
-				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+				purge_doc(doctype, name)
 		super().tearDownClass()
 
 	def _user_with_stale_role(self, label: str) -> str:

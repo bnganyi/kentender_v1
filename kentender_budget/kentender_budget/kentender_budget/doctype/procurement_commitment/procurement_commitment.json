@@ -47,8 +47,8 @@
    "read_only": 1,
    "in_list_view": 1,
    "search_index": 1,
-   "unique": 1,
-   "description": "Identifies the owning downstream contract; unique within the reservation lineage."
+   "unique": 0,
+   "description": "Identifies the owning downstream contract. Unique only together with its reservation (database key uq_commitment_contract_reservation); one contract may be funded from several reservations."
   },
   {
    "fieldname": "status",
@@ -85,7 +85,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-08-28 00:00:00.000000",
+ "modified": "2026-10-07 02:34:35.066796",
  "modified_by": "Administrator",
  "module": "Kentender Budget",
  "name": "Procurement Commitment",
@@ -93,7 +93,7 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1,
+   "create": 0,
    "delete": 0,
    "email": 0,
    "export": 1,
@@ -102,7 +102,7 @@
    "report": 1,
    "role": "System Manager",
    "share": 0,
-   "write": 1
+   "write": 0
   },
   {
    "create": 0,
