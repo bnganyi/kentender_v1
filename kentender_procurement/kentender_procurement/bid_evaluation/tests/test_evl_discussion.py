@@ -22,7 +22,7 @@ import frappe
 
 from kentender_core.services import support_issues
 from kentender_procurement.bid_evaluation.services import (
-	checks, comparison, conclusion, discussion, findings, issues, my_work_provider,
+	checks, comparison, conclusion, discussion, findings, issues, my_work_provider, report, signing,
 )
 from kentender_procurement.bid_evaluation.services.errors import EvaluationError, InputError
 from kentender_procurement.bid_evaluation.tests.support import CHAIR, MEMBER, MEMBER_2, OUTSIDER, SECRETARY, EvaluationCase
@@ -185,3 +185,65 @@ class TestFailedRequirement(DiscussionCase):
 			self.evl_join(user)
 		self.assertIn("cannot be waived", self.refused(self.evl_conclude, label="Memory").fields["result"])
 		self.assertEqual(comparison.compare(self.case, with_funding=False)["outcome"], "No responsive bids")
+
+
+PRICE = "Tender price"
+DISCREPANCY = "The submitted total 46000000.00 differs from the calculated 46400000.00."
+
+
+class TestPriceDiscrepancy(DiscussionCase):
+	"""EVL §4.4: an arithmetic discrepancy stays visible; a committee explanation cannot
+	substitute for a missing legal or published basis (AUD-EVL-003), so it can only be
+	qualified in the report (AUD-EVL-002)."""
+
+	def setUp(self):
+		super().setUp()
+		frappe.db.set_value("Evaluation Check Result", {"check_run": checks.current_run(self.case), "check_kind": "calculation"},
+			{"result": "Needs review", "reason": DISCREPANCY})  # the Tender's published calculation disagrees with the submitted total
+		self.resolve_all(self.case, skip=(PRICE,))
+
+	def test_a_member_finding_cannot_resolve_the_discrepancy(self):
+		self.assertEqual(self.requirement(self.case, PRICE)["result"], "Needs review")
+		self.assertIn("arithmetic discrepancy", self.refused(self.evl_find, PRICE, "Meets", "The totals are close enough.").fields["result"])
+		self.assertFalse(frappe.db.exists("Evaluation Finding", {"evaluation_case": self.case, "requirement_key": self.requirement(self.case, PRICE)["requirement_key"]}))
+		price = self.requirement(self.case, PRICE)
+		self.assertEqual((price["result"], price["basis"]), ("Needs review", "Automatic check"))
+		row = comparison.compare(self.case, with_funding=False)["rows"][0]
+		self.assertEqual((row["evaluated_total"], row["position"]), ("Needs review", "Not ranked"))  # never ranked on the submitted total
+
+	def test_even_a_committee_conclusion_cannot_resolve_it_but_can_qualify_it(self):
+		self.evl_start()
+		for user in (MEMBER, MEMBER_2):
+			self.evl_join(user)
+		self.assertIn("arithmetic discrepancy", self.refused(self.evl_conclude, label=PRICE).fields["result"])
+		self.assertEqual(self.requirement(self.case, PRICE)["result"], "Needs review")
+		out = self.evl_conclude(label=PRICE, result="Needs review", qualified=True, reason="The Tender publishes no disposition for a total that differs from the calculation.")
+		self.assertEqual(out["kind"], "Qualified report")
+		table = comparison.compare(self.case, with_funding=False)
+		self.assertEqual((table["outcome"], table["recommended"]), ("Qualified report", None))
+		self.assertFalse(table["provisional"])
+
+
+class TestQualifiedReport(DiscussionCase):
+	"""EVL §5.5 (AUD-EVL-002): a requirement recorded for a qualified report freezes as one."""
+
+	def test_a_qualified_unresolved_requirement_can_be_frozen_for_signing(self):
+		self.resolve_all(self.case, skip=("Service location",))
+		draft = report.draft(frappe.get_doc("Evaluation Case", self.case))
+		error = self.refused(signing.send_for_signing, tender=self.name, expected_version=draft.record_version, idempotency_key=key(), user=SECRETARY)
+		self.assertEqual(error.code, "EVL_REPORT_INCOMPLETE")  # still unresolved with no committee disposition
+		self.evl_start()
+		for user in (MEMBER, MEMBER_2):
+			self.evl_join(user)
+		self.evl_conclude(result="Needs review", qualified=True, reason="The committee cannot establish the service address from the submitted evidence.")
+		doc = frappe.get_doc("Evaluation Case", self.case)
+		built = report.build(doc)
+		self.assertEqual(built["recommendation"]["outcome"], "Qualified report")
+		self.assertIsNone(built["recommendation"]["recommended"])
+		self.assertFalse(built["recommendation"]["provisional"])
+		# a discussion left active blocks freezing (§5.5), so it ends first
+		discussion.end_discussion(tender=self.name, idempotency_key=key(), user=CHAIR)
+		out = signing.send_for_signing(tender=self.name, expected_version=report.draft(doc).record_version, idempotency_key=key(), user=SECRETARY)
+		self.assertTrue(out["ok"], out)
+		self.assertEqual(frappe.get_doc("Evaluation Case", self.case).state, "Signing")
+		self.assertEqual(frappe.db.get_value("Evaluation Report Version", out["report"], "outcome"), "Qualified report")

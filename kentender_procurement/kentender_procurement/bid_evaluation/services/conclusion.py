@@ -98,6 +98,8 @@ def record_conclusion(*, tender: str, bid: str, requirement_key: str, result: st
 			fields["reason"] = "Give the committee's reason."
 		if result == "Needs review" and not qualified:
 			fields["result"] = "Record a resolved result, or record this outcome for a qualified report."
+		if requirement["unsupported_basis"] and result != "Needs review":
+			fields["result"] = findings.UNSUPPORTED_MESSAGE
 		if requirement["automatic"] == "Does not meet" and result == "Meets":
 			fields["result"] = "A failed mandatory requirement cannot be waived. Report a suspected rule defect as an issue."
 		invalid(fields)

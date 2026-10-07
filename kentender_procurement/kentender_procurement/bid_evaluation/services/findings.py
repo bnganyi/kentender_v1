@@ -26,6 +26,8 @@ from kentender_procurement.bid_evaluation.services.errors import fail, invalid
 FINDING = "Evaluation Finding"
 ITEM = "Evaluation Discussion Item"
 RESULTS = ("Meets", "Does not meet", "Needs review")
+UNSUPPORTED_MESSAGE = ("An arithmetic discrepancy or a missing rule cannot be resolved by a finding. Report it as an issue for repair, "
+	"or record it for a qualified report.")
 
 
 def require_member(doc, user: str) -> None:
@@ -101,6 +103,8 @@ def record_evidence_finding(*, tender: str, bid: str, requirement_key: str, resu
 		invalid({**({"result": "Choose Meets, Does not meet or Needs review."} if result not in RESULTS else {}),
 			**({"reason": "Give the reason."} if not cstr(reason).strip() else {})})
 		requirement = _requirement(doc, bid, requirement_key)
+		if requirement["unsupported_basis"] and result != "Needs review":
+			invalid({"result": UNSUPPORTED_MESSAGE})
 		contrary = requirement["automatic"] == "Does not meet" and result == "Meets"
 		kind = "Contrary finding" if contrary else "Evidence finding"
 		finding = _write(doc, bid=bid, requirement_key=requirement_key, kind=kind, result=result, reason=reason, evidence_reference=evidence_reference, user=user)
