@@ -94,6 +94,9 @@ class TestTendersSurface(AvailableTendersCase):
 	def test_a_guest_receives_the_portal_page_with_the_first_payload(self):
 		frappe.set_user("Guest")
 		self.addCleanup(frappe.set_user, "Administrator")
+		# set_request leaves the request on frappe.local; the command-write guard refuses maintenance
+		# writes (the next test's fixture wipe) while a request is present, so put it back.
+		self.addCleanup(setattr, frappe.local, "request", getattr(frappe.local, "request", None))
 		set_request(method="GET", path="/tenders")
 		response = get_response()
 		html = response.get_data(as_text=True)
@@ -101,5 +104,5 @@ class TestTendersSurface(AvailableTendersCase):
 		self.assertIn('data-kt-portal-surface="tenders"', html)
 		self.assertIn("bid_portal", html)
 		self.assertIn(self.reference, html)
-		self.assertIn('data-kt-portal-nav="tenders" aria-current="page"', html)
+		self.assertRegex(html, r'data-kt-portal-nav="tenders"\s+aria-current="page"')
 		self.assertIsNone(LEAK.search(html.split('id="kt-portal-initial">', 1)[1].split("</script>", 1)[0]))
