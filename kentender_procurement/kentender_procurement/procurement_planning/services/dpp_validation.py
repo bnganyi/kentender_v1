@@ -27,6 +27,7 @@ from kentender_procurement.procurement_planning.services import dpp_classificati
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.dpp_lifecycle import _next_version_number, copy_entries
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_PROCUREMENT_PLANNER
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 
 def _open_task(task_name: str):
@@ -38,6 +39,7 @@ def _open_task(task_name: str):
 	return task
 
 
+@planning_command
 def _decide(
 	task, *, decision: str, actor: str, assignment, classifications=None, derived_categories=None, issues=None,
 	idempotency_key: str = "",
@@ -71,6 +73,7 @@ def _decide(
 	return doc
 
 
+@planning_command
 def return_departmental_plan(
 	*, task: str, issues: list[dict[str, str]] | str, task_token: str, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
@@ -146,6 +149,7 @@ def return_departmental_plan(
 	return result
 
 
+@planning_command
 def accept_departmental_plan(
 	*, task: str, classifications: dict[str, str] | str, task_token: str, idempotency_key: str, user: str | None = None,
 	**unexpected: Any,
@@ -261,6 +265,7 @@ def _publish_dispositions(snapshots: list[dict[str, Any]], *, submission: str, d
 		)
 
 
+@planning_command
 def ensure_annual_plan(*, fiscal_year: str, fixture_namespace: str = "") -> dict[str, str]:
 	"""Create or reuse the one Annual Plan root + Draft Version 1 (invariant 28).
 

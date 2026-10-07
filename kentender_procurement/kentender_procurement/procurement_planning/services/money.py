@@ -101,3 +101,20 @@ def sum_money(values, *, precision: int = DEFAULT_MONEY_PRECISION) -> Decimal:
 		if amount is not None:
 			total += amount
 	return total.quantize(Decimal(1).scaleb(-precision))
+
+
+def as_decimal(value) -> Decimal:
+	"""A stored or computed amount as an exact `Decimal`; blank is zero."""
+	amount = _to_decimal(value)
+	return amount if amount is not None else Decimal(0)
+
+
+def exceeds(amount, limit) -> bool:
+	"""Exact `amount > limit` — a decision, so no epsilon (BUD §4.8, PLN §4.1)."""
+	return as_decimal(amount) > as_decimal(limit)
+
+
+def same_amount(left, right, *, precision: int = DEFAULT_MONEY_PRECISION) -> bool:
+	"""Equality at the currency's precision (never a tolerance)."""
+	quantum = Decimal(1).scaleb(-precision)
+	return as_decimal(left).quantize(quantum) == as_decimal(right).quantize(quantum)

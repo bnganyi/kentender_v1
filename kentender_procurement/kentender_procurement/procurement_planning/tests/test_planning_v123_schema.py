@@ -362,4 +362,8 @@ class TestPlanningV123Schema(IntegrationTestCase):
 					continue
 				lines = open(os.path.join(root, f), encoding="utf-8").read().splitlines()
 				self.assertLessEqual(len(lines), 80, f"{f} exceeds the thin-controller ceiling")
-				self.assertEqual([l for l in lines if l.strip().startswith(("import ", "from ")) and ".services" in l], [], f"{f} imports a services module")
+				# the one shared primitive a controller may take from a services package is the
+				# command-only write guard (AUD-XC-007): it is the guard, not business logic.
+				imports = [l for l in lines if l.strip().startswith(("import ", "from ")) and ".services" in l]
+				imports = [l for l in imports if "kentender_core.services.command_write_guard" not in l]
+				self.assertEqual(imports, [], f"{f} imports a services module")

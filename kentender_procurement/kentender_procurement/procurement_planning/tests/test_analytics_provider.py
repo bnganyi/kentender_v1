@@ -37,6 +37,8 @@ from frappe.utils import now_datetime
 
 from kentender_core.services import analytics_contract as ac
 from kentender_core.services import responsibility_administration as administration
+from kentender_core.services.command_write_guard import maintenance_write
+from kentender_procurement.procurement_planning.write_family import PLANNING_WRITE_FAMILY
 from kentender_procurement.procurement_planning.services import analytics_provider as provider
 from kentender_procurement.procurement_planning.services import dpp_read
 from kentender_procurement.procurement_planning.tests import fixtures as fx
@@ -76,7 +78,8 @@ def _ins(doctype: str, **values: Any) -> str:
 	(budget line, requirement type, the DPP entry behind an allocation) are not built."""
 	doc = frappe.get_doc({"doctype": doctype, "fixture_namespace": fx.NS, **values})
 	doc.flags.ignore_links = True
-	doc.insert(ignore_permissions=True, ignore_mandatory=True)
+	with maintenance_write(PLANNING_WRITE_FAMILY, reason="Planning analytics test: a world of rows in states the commands reach slowly"):
+		doc.insert(ignore_permissions=True, ignore_mandatory=True)
 	return doc.name
 
 

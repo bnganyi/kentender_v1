@@ -23,9 +23,10 @@ import frappe
 from frappe.utils import cstr, flt, now_datetime
 
 from kentender_procurement.procurement_planning.errors import fail
-from kentender_procurement.procurement_planning.services import budget_gateway, envelope, plan_finance
+from kentender_procurement.procurement_planning.services import budget_gateway, envelope, money, plan_finance
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_PROCUREMENT_PLANNER
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 DOCTYPE = "Plan Budget Revision Request"
 OPEN = "Open"
@@ -53,6 +54,7 @@ def open_request(plan_version: str, budget_line: str) -> str:
 	return cstr(frappe.db.get_value(DOCTYPE, {"plan_version": plan_version, "budget_line": budget_line, "status": OPEN}, "name"))
 
 
+@planning_command
 def request_budget_revision(*, plan_version: str, budget_line: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `RequestBudgetRevision` — the line, approved, planned and over
 	amounts are server-derived, never supplied by the client."""
@@ -69,7 +71,7 @@ def request_budget_revision(*, plan_version: str, budget_line: str, expected_rec
 		fail("PLN_BASELINE_LOCKED")
 
 	line = _line_statement(plan, version, budget_line)
-	if not line or flt(line.get("planned")) <= flt(line.get("approved")) + 1e-9:
+	if not line or not money.exceeds(line.get("planned"), line.get("approved")):
 		fail("PLN_BUDGET_REVISION_NOT_REQUIRED")
 	if open_request(version.name, budget_line):
 		fail("PLN_BUDGET_REVISION_ALREADY_REQUESTED")
@@ -81,12 +83,13 @@ def request_budget_revision(*, plan_version: str, budget_line: str, expected_rec
 	)
 	if (
 		last and last.status == "Declined"
-		and abs(flt(last.approved_amount) - flt(line.get("approved"))) <= 0.005
-		and abs(flt(last.planned_amount) - flt(line.get("planned"))) <= 0.005
+		and money.same_amount(last.approved_amount, line.get("approved"))
+		and money.same_amount(last.planned_amount, line.get("planned"))
 	):
 		fail("PLN_BUDGET_REVISION_ALREADY_DECLINED")
 
 	approved, planned = flt(line["approved"]), flt(line["planned"])
+	over = float(money.as_decimal(line["planned"]) - money.as_decimal(line["approved"]))  # exact, then stored
 	request = frappe.get_doc({
 		"doctype": DOCTYPE,
 		"request_reference": _new_reference(),
@@ -96,7 +99,7 @@ def request_budget_revision(*, plan_version: str, budget_line: str, expected_rec
 		"budget_line_title": cstr(line.get("title")),
 		"approved_amount": approved,
 		"planned_amount": planned,
-		"over_amount": planned - approved,
+		"over_amount": over,
 		"status": OPEN,
 		"requested_by": actor,
 		"authority_snapshot": authz.authority_snapshot(assignment),
@@ -113,7 +116,7 @@ def request_budget_revision(*, plan_version: str, budget_line: str, expected_rec
 		"fiscal_year": plan.fiscal_year,
 		"budget_line": budget_line,
 		"planned_amount": planned,
-		"over_amount": planned - approved,
+		"over_amount": over,
 		"plan_version_reference": version.name,
 		"plan_label": f"{plan.plan_reference}, Version {version.version_number}",
 		"requested_by": actor,
@@ -158,7 +161,7 @@ def withdraw_budget_revision_request(*, request: str, idempotency_key: str, user
 	# A cancelled plan update needs nothing from Budget, whatever its lines say.
 	if version.version_status != "Cancelled":
 		line = _line_statement(plan, version, doc.budget_line)
-		if line and flt(line.get("planned")) > flt(line.get("approved")) + 1e-9:
+		if line and money.exceeds(line.get("planned"), line.get("approved")):
 			fail("PLN_BUDGET_REVISION_ALREADY_REQUESTED", "The line is still over its approved amount; the request stays open.")
 	withdrawn = budget_gateway.withdraw_budget_revision_request({
 		"planning_request_id": doc.name, "idempotency_key": idempotency_key, "requested_by": actor,

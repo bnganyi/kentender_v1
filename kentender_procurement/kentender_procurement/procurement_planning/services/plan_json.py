@@ -20,17 +20,18 @@ from __future__ import annotations
 
 import hashlib
 import json
+from decimal import Decimal
 from typing import Any
 
 import frappe
 from frappe.utils import cstr, flt
 
-from kentender_procurement.procurement_planning.services import financial_basis, money, profiles, readiness, references, schedule
+from kentender_procurement.procurement_planning.services import budget_gateway, financial_basis, money, profiles, readiness, references, schedule
 
 SCHEMA_VERSION = "KenTenderAnnualPlan.v1"
 
 
-def _item_content(item, allocations: list) -> dict[str, Any]:
+def _item_content(item, allocations: list, currency: str) -> dict[str, Any]:
 	value = money.sum_money(a.indicative_amount for a in allocations)
 	schedule_profile = profiles.schedule_profile_by_name(cstr(item.schedule_profile_version))
 	applicable = set(profiles.applicable_milestones(schedule_profile)) if schedule_profile.get("found") else set(schedule.MILESTONES)
@@ -64,13 +65,13 @@ def _item_content(item, allocations: list) -> dict[str, Any]:
 		"estimatedDeliveryPeriodDays": readiness.item_delivery_days(item),
 		"estimatedCompletionDate": cstr(item.estimated_completion_date) or None,
 		"plannedValue": money.money_text(value),
-		"currency": "KES",
+		"currency": currency,
 		"baselineMilestones": baseline_rows,
 		"itemState": item.item_state,
 	}
 
 
-def _source_content(allocation, entry_labels: dict[str, str]) -> dict[str, Any]:
+def _source_content(allocation, entry_labels: dict[str, str], currency: str) -> dict[str, Any]:
 	return {
 		"planSourceAllocationId": allocation.allocation_id,
 		"sourceOrigin": allocation.source_origin,
@@ -81,7 +82,7 @@ def _source_content(allocation, entry_labels: dict[str, str]) -> dict[str, Any]:
 		"requiredByDate": cstr(allocation.required_by_date),
 		"budgetLine": cstr(allocation.budget_line),
 		"amount": money.money_text(allocation.indicative_amount),
-		"currency": "KES",
+		"currency": currency,
 		"allocationState": allocation.allocation_state,
 	}
 
@@ -126,16 +127,17 @@ def build_snapshot(version, plan) -> dict[str, Any]:
 	)
 	item_rows, source_rows = [], []
 	entry_labels = {row.name: cstr(row.unit_name) for row in frappe.get_all("Organisation Unit", fields=["name", "unit_name"])}
-	total = 0
+	total = Decimal(0)
+	currency = budget_gateway.budget_currency(plan.fiscal_year)
 	for item in items:
 		allocations = frappe.get_all(
 			"Plan Source Allocation", filters={"plan_item": item.name, "allocation_state": ("in", ("Draft", "Active"))},
 			fields=["allocation_id", "source_origin", "source_key", "organisation_unit", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount", "allocation_state"],
 		)
-		item_rows.append(_item_content(item, allocations))
+		item_rows.append(_item_content(item, allocations, currency))
 		for allocation in allocations:
-			source_rows.append({"planItemId": item.plan_item_id, **_source_content(allocation, entry_labels)})
-		total += flt(sum(flt(a.indicative_amount) for a in allocations))
+			source_rows.append({"planItemId": item.plan_item_id, **_source_content(allocation, entry_labels, currency)})
+		total += money.sum_money(a.indicative_amount for a in allocations)
 	return {
 		"schemaVersion": SCHEMA_VERSION,
 		"planId": plan.name,
@@ -150,7 +152,7 @@ def build_snapshot(version, plan) -> dict[str, Any]:
 		"entity": {"name": cstr(site.pe_name), "code": cstr(site.pe_code), "ppraRegistration": cstr(site.ppra_registration)},
 		"items": item_rows,
 		"sources": source_rows,
-		"totals": {"currency": "KES", "planTotal": money.money_text(total)},
+		"totals": {"currency": currency, "planTotal": money.money_text(total)},
 		"evidence": _evidence_index(version, plan),
 	}
 

@@ -33,6 +33,7 @@ from kentender_procurement.procurement_planning.services import (
 	references,
 )
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 ATTESTATION = (
 	"I certify that this Departmental Procurement Plan contains the current "
@@ -118,6 +119,7 @@ def _result(root, version=None, *, action: str = "", task: str = "", idempotent:
 	}
 
 
+@planning_command
 def _new_version(root, *, number: int, based_on: str = "", returned_from: str = ""):
 	return frappe.get_doc(
 		{
@@ -139,6 +141,7 @@ def _next_version_number(root_name: str) -> int:
 	return max([int(n or 0) for n in rows] or [0]) + 1
 
 
+@planning_command
 def copy_entries(source_version: str, target_version, fixture_namespace: str = "") -> int:
 	"""Copy every entry with its stable entry_id, funding and outcome onto a new Version."""
 	count = 0
@@ -183,6 +186,7 @@ def entry_is_complete(entry) -> bool:
 # --- §8.2 commands ----------------------------------------------------------
 
 
+@planning_command
 def open_departmental_plan(
 	*,
 	organisation_unit: str,
@@ -241,6 +245,7 @@ def open_departmental_plan(
 	return result
 
 
+@planning_command
 def ensure_departmental_plan(
 	*,
 	organisation_unit: str,
@@ -319,6 +324,7 @@ def ensure_departmental_plan(
 	return result
 
 
+@planning_command
 def save_need_funding(
 	*,
 	dpp_version: str,
@@ -372,6 +378,7 @@ DISPOSITION_DO_NOT_PROCEED = "Do not proceed"
 DISPOSITION_RESTORE = "Restore"
 
 
+@planning_command
 def set_need_planning_disposition(
 	*,
 	dpp_version: str,
@@ -446,6 +453,7 @@ def _validate_funding(root, budget_line: str, indicative_amount) -> None:
 		fail("PLN_BUDGET_LINE_INELIGIBLE", detail={"field": "budget_line"})
 
 
+@planning_command
 def save_direct_requirement(
 	*,
 	dpp_version: str,
@@ -525,6 +533,7 @@ def _validate_direct_values(root, values: dict[str, Any]) -> None:
 	_validate_funding(root, cstr(values.get("budget_line")), values.get("indicative_amount"))
 
 
+@planning_command
 def remove_direct_requirement(
 	*, dpp_version: str, entry_id: str, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
@@ -556,6 +565,7 @@ def remove_direct_requirement(
 	return result
 
 
+@planning_command
 def submit_departmental_plan(
 	*, dpp_version: str, certification_confirmed: bool, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
@@ -672,6 +682,7 @@ def submit_departmental_plan(
 	return result
 
 
+@planning_command
 def withdraw_departmental_submission(
 	*, dpp_version: str, reason: str, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
@@ -710,6 +721,7 @@ def withdraw_departmental_submission(
 	return result
 
 
+@planning_command
 def create_departmental_plan_update(
 	*, departmental_plan: str, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:

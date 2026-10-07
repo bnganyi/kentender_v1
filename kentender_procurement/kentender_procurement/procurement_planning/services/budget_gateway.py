@@ -86,13 +86,40 @@ def line_labels(fiscal_year: str) -> dict[str, dict[str, Any]]:
 	return out
 
 
-def check_plan_affordability(*, fiscal_year: str, planned_totals: dict[str, float]) -> dict[str, Any]:
+def budget_currency(fiscal_year: str) -> str:
+	"""The Budget's own currency for the Fiscal Year (BUD §4.8 CurrencyBasis),
+	through its published `resolve_budget_context`. Never defaulted: a missing
+	or blank currency blocks the caller (PLN §4.1)."""
+	from kentender_budget.api.budget_api import resolve_budget_context
+
+	from kentender_procurement.procurement_planning.errors import fail
+
+	try:
+		with _system_principal():
+			context = resolve_budget_context(fiscal_year=fiscal_year)
+	except frappe.DoesNotExistError:
+		context = None
+	currency = cstr(((context or {}).get("budget") or {}).get("currency")).strip()
+	if not currency:
+		fail("PLN_REFERENCE_UNAVAILABLE", "The Budget currency for this Fiscal Year is not available.", {"fiscal_year": fiscal_year})
+	return currency
+
+
+def _totals_as_text(planned_totals: dict[str, Any]) -> dict[str, str]:
+	"""PLN §4.1 — amounts cross the Budget contract as exact decimal strings,
+	never as binary floats (Budget reads them with its own exact parser)."""
+	from kentender_procurement.procurement_planning.services import money
+
+	return {str(line): money.money_text(amount) for line, amount in (planned_totals or {}).items()}
+
+
+def check_plan_affordability(*, fiscal_year: str, planned_totals: dict[str, Any]) -> dict[str, Any]:
 	"""BUD v1.5 §8.2 — non-mutating; blocking within-approved, advisory
 	within-available. No token, no lock, no ledger event."""
 	from kentender_budget.api.budget_api import check_plan_affordability as contract
 
 	with _system_principal():
-		return contract(fiscal_year=fiscal_year, planned_totals=planned_totals)
+		return contract(fiscal_year=fiscal_year, planned_totals=_totals_as_text(planned_totals))
 
 
 #: BUD v1.11 §6 — Planning's registered principal for the revision-request
@@ -137,7 +164,7 @@ class BudgetBasisStale(Exception):
 		super().__init__(message)
 
 
-def validate_plan_affordability_for_decision(*, fiscal_year: str, planned_totals: dict[str, float], expected_revisions: dict[str, str] | None = None, correlation: str = "") -> dict[str, Any]:
+def validate_plan_affordability_for_decision(*, fiscal_year: str, planned_totals: dict[str, Any], expected_revisions: dict[str, str] | None = None, correlation: str = "") -> dict[str, Any]:
 	"""BUD v1.8 (owed) §5.3.3 — the decision-time counterpart of the display
 	read: inside the caller's transaction Budget serialises its Active
 	Version and line versions, validates the reviewed revisions and returns
@@ -151,7 +178,7 @@ def validate_plan_affordability_for_decision(*, fiscal_year: str, planned_totals
 	before = len(_frappe.local.message_log or [])
 	with _system_principal():
 		try:
-			return contract(fiscal_year=fiscal_year, planned_totals=planned_totals, expected_revisions=expected_revisions or {}, correlation=correlation)
+			return contract(fiscal_year=fiscal_year, planned_totals=_totals_as_text(planned_totals), expected_revisions=expected_revisions or {}, correlation=correlation)
 		except _frappe.ValidationError as exc:
 			titles = [m.get("title") for m in (_frappe.local.message_log or [])[before:] if isinstance(m, dict)]
 			code = next((t for t in reversed(titles) if t in ("BUD_BASIS_STALE", "BUD_BASIS_UNAVAILABLE")), "")

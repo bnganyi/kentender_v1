@@ -45,6 +45,7 @@ from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_PLAN_STATUTORY_APPROVER,
 	ROLE_PROCUREMENT_PLANNER,
 )
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 STAGE_AO = "Accounting Officer adoption"
 STAGE_STATUTORY = "Statutory approval"
@@ -259,6 +260,7 @@ def record_late_activation_explanation(*, plan_version: str, reason: str, supers
 	return result
 
 
+@planning_command
 def begin_held_plan_correction(*, plan_version: str, reason: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `BeginHeldPlanCorrection` — one linked Draft correction of a
 	**Published — activation held** Version: the correction origin is the
@@ -461,6 +463,7 @@ def _record_late_explanation(version, plan, *, reason: str, actor: str, assignme
 	).insert(ignore_permissions=True)
 
 
+@planning_command
 def adopt_and_submit_plan(*, task: str, task_token: str, idempotency_key: str, late_activation_explanation: str = "", user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `AdoptAndSubmitPlan` — adopt the exact reviewed Version, recheck
 	the positive predicates and create one configured statutory task. An
@@ -514,6 +517,7 @@ def adopt_and_submit_plan(*, task: str, task_token: str, idempotency_key: str, l
 	return result
 
 
+@planning_command
 def approve_annual_plan(*, task: str, task_token: str, collective_resolution_reference: str = "", idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `ApproveAnnualPlan` — the configured statutory capacity's positive
 	decision; Board and Council record the collective resolution reference
@@ -583,6 +587,7 @@ ALLOCATION_COPY_FIELDS = (
 )
 
 
+@planning_command
 def _copy_version_content(source_version: str, target_version, fixture_namespace: str) -> None:
 	"""§4.8/§5.2 — a correction or successor contains exactly the source
 	Version's items and allocations. Forecast and actual dates are never
@@ -621,6 +626,7 @@ def _copy_version_content(source_version: str, target_version, fixture_namespace
 			).insert(ignore_permissions=True)
 
 
+@planning_command
 def return_plan_version(*, task: str, reason: str, task_token: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	reason = cstr(reason).strip()

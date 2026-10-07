@@ -43,7 +43,7 @@ import frappe
 from frappe.utils import cstr, flt, now_datetime
 
 from kentender_procurement.procurement_planning.errors import fail
-from kentender_procurement.procurement_planning.services import envelope, outcome_event, plan_read, scope_lock
+from kentender_procurement.procurement_planning.services import budget_gateway, envelope, outcome_event, plan_read, scope_lock
 from kentender_procurement.procurement_planning.services import money as money_boundary
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
@@ -53,6 +53,7 @@ from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_PROCUREMENT_PLANNER,
 	REQUISITION_CALLER_SITE_WIDE_ROLES,
 )
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 
 def _authorise_requisition_reader(actor: str, *, contributing_org_units: set[str]) -> None:
@@ -322,7 +323,7 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		"lot_count": int(item.lot_count or 0),
 		"plan_horizon": cstr(item.plan_horizon),
 		"contributing_org_unit_ids": sorted(contributing_org_units),
-		"currency": "KES",
+		"currency": budget_gateway.budget_currency(plan.fiscal_year),
 		"award_packages": 1,
 		"planned_dates": {f"{m}_date": cstr(item.get(f"baseline_{m}_date")) for m in schedule.MILESTONES},
 		# §5.14 — three separate dates: the source-derived Plan completion
@@ -446,6 +447,7 @@ def _strict(value, *, parse, field: str, code: str):
 	return parse(value, field=field)
 
 
+@planning_command
 def authorise_requisition_drawdown(
 	*,
 	plan_item_id: str,
@@ -648,6 +650,7 @@ def _authorise_correction_requester(actor: str, *, contributing_org_units: set[s
 	return ""
 
 
+@planning_command
 def receive_plan_item_correction_request(
 	*,
 	plan_item_id: str,
@@ -757,6 +760,7 @@ def start_plan_item_correction(
 	return result
 
 
+@planning_command
 def resolve_plan_item_correction_request(
 	*,
 	correction_request: str,

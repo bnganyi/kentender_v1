@@ -19,6 +19,7 @@ from typing import Any
 
 import frappe
 from frappe.utils import cstr, flt
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 CONSUMER = "procurement_planning"
 
@@ -132,6 +133,7 @@ def _cohort_filter(version_doc, sources: list[dict[str, Any]]) -> list[dict[str,
 	return [payload for payload in sources if cstr(payload["need_id"]) in cohort]
 
 
+@planning_command
 def refresh_draft_entries(version_doc) -> dict[str, Any]:
 	"""Project every current accepted Need into a mutable Draft Version once.
 

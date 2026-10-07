@@ -28,8 +28,24 @@ from kentender_procurement.procurement_planning.services import budget_gateway, 
 DOCTYPE = "Plan Financial Basis"
 
 
+def currency_basis(statement: dict[str, Any], basis=None) -> tuple[str, int]:
+	"""(currency, precision) of a Budget statement — BUD §4.8 CurrencyBasis.
+
+	The decision-time statement carries both. The display read carries the
+	currency only, so its precision is the one captured with the Financial
+	Basis it is compared against. Never defaulted: a missing or unsupported
+	value blocks the caller (PLN §4.1)."""
+	currency = cstr(statement.get("currency")).strip()
+	precision = statement.get("currency_precision")
+	if precision in (None, "") and basis is not None:
+		precision = basis.precision
+	if not currency or precision in (None, "") or int(precision) not in money.SUPPORTED_PRECISIONS:
+		fail("PLN_MONEY_PRECISION_INVALID", "The Budget currency basis for this plan is not available.", {"currency": currency, "precision": precision})
+	return currency, int(precision)
+
+
 def _rows_from_decision_statement(statement: dict[str, Any]) -> list[dict[str, Any]]:
-	precision = int(statement.get("currency_precision") or 2)
+	_currency, precision = currency_basis(statement)
 	rows = []
 	for line in statement.get("lines", []):
 		rows.append(
@@ -75,7 +91,7 @@ def capture(plan, version, *, correlation: str = "") -> tuple[Any, dict[str, Any
 		fail("PLN_REFERENCE_UNAVAILABLE", f"The annual budget basis is not available: {exc}", {"budget_code": exc.code})
 	rows = _rows_from_decision_statement(statement)
 	basis_digest = digest(cstr(statement.get("budget_version")), rows)
-	precision = int(statement.get("currency_precision") or 2)
+	currency, precision = currency_basis(statement)
 	planned_total = money.sum_money((r["planned"] for r in rows if r["planned"]), precision=precision)
 	approved_total = money.sum_money((r["approved"] for r in rows if flt(r["planned"]) > 0), precision=precision)
 	existing = frappe.db.get_value(DOCTYPE, {"plan_version": version.name, "basis_digest": basis_digest}, "name")
@@ -86,7 +102,7 @@ def capture(plan, version, *, correlation: str = "") -> tuple[Any, dict[str, Any
 			"doctype": DOCTYPE,
 			"plan_version": version.name,
 			"fiscal_year": plan.fiscal_year,
-			"currency": cstr(statement.get("currency") or "KES"),
+			"currency": currency,
 			"precision": precision,
 			"lines": json.dumps(rows),
 			"planned_total": float(planned_total),
@@ -121,23 +137,24 @@ def _budget_version_of(basis) -> str:
 	return cstr(frappe.db.get_value("Procurement Budget Line Version", name, "budget_version")) if name else ""
 
 
-def current_digest(plan, version) -> str:
+def current_digest(plan, version, basis) -> str:
 	"""The digest the Version's current totals would capture, from the
-	non-locking display read (no basis row is written)."""
+	non-locking display read (no basis row is written), compared against
+	`basis`, whose captured currency precision it uses."""
 	totals = readiness.line_totals(version.name)
 	statement = budget_gateway.check_plan_affordability(fiscal_year=plan.fiscal_year, planned_totals=totals)
-	precision = 2
+	currency, precision = currency_basis(statement, basis)
 	rows = []
 	for line in statement.get("lines", []):
 		rows.append(
 			{
 				"budget_line": cstr(line.get("budget_line")), "approved": money.money_text(line.get("approved"), precision=precision),
 				"planned": money.money_text(line.get("planned"), precision=precision), "funding_source": cstr(line.get("funding_source")),
-				"currency": cstr(line.get("currency") or "KES"), "eligible": True,
+				"currency": cstr(line.get("currency") or currency), "eligible": True,
 			}
 		)
 	for key in statement.get("unknown_lines", []):
-		rows.append({"budget_line": cstr(key), "approved": money.money_text(0), "planned": money.money_text(totals.get(key, 0)), "funding_source": "", "currency": "KES", "eligible": False})
+		rows.append({"budget_line": cstr(key), "approved": money.money_text(0, precision=precision), "planned": money.money_text(totals.get(key, 0), precision=precision), "funding_source": "", "currency": currency, "eligible": False})
 	return digest(cstr(statement.get("active_version")), rows)
 
 
@@ -158,8 +175,8 @@ def summary(basis) -> dict[str, Any]:
 		"budget_basis_digest": cstr(basis.budget_basis_digest),
 		"budget_version": _budget_version_of(basis),
 		"currency": basis.currency,
-		"planned_total": money.money_text(basis.planned_total, precision=int(basis.precision or 2)),
-		"approved_total": money.money_text(basis.approved_total, precision=int(basis.precision or 2)),
+		"planned_total": money.money_text(basis.planned_total, precision=int(basis.precision)),
+		"approved_total": money.money_text(basis.approved_total, precision=int(basis.precision)),
 		"captured_at": cstr(basis.captured_at),
 		"lines": lines_of(basis),
 	}

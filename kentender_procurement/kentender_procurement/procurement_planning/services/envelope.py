@@ -22,6 +22,7 @@ import frappe
 from frappe.utils import cstr, now_datetime
 
 from kentender_procurement.procurement_planning.errors import fail
+from kentender_procurement.procurement_planning.write_family import planning_write
 
 
 def token() -> str:
@@ -110,7 +111,8 @@ def bump(doc, **values) -> None:
 	for field, value in values.items():
 		doc.set(field, value)
 	doc.record_version = int(doc.record_version or 0) + 1
-	doc.save(ignore_permissions=True)
+	with planning_write():  # the one save every lifecycle step goes through
+		doc.save(ignore_permissions=True)
 
 
 def assert_task_token(task_doc, presented_token: str) -> None:

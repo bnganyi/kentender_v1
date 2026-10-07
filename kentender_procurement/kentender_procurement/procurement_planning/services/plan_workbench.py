@@ -41,6 +41,7 @@ from kentender_procurement.procurement_planning.services import (
 )
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_PROCUREMENT_PLANNER
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 PLAN_ITEM_FIELDS = (
 	"title", "description", "strategic_objective", "aggregation_reason",
@@ -134,6 +135,7 @@ def _compatible(entries: list) -> bool:
 	return not combination_conflicts(entries)
 
 
+@planning_command
 def _create_item(*, version, plan, entries: list, combined: bool, fixture_namespace: str = "", combination_reason: str = "", title_override: str = ""):
 	"""A formed item carries the §4.6 defaults: category from the accepted
 	classification, Open Tender proposed (section 91(1)), Single year / Not
@@ -233,6 +235,7 @@ def _mark_funding_changed(version) -> None:
 		frappe.db.set_value("Annual Plan Version", version.name, "funding_state", "Not requested", update_modified=False)
 
 
+@planning_command
 def form_plan_items(
 	*, plan_version: str, dpp_entries: list[str] | str, mode: str = "each", combination_reason: str = "",
 	combined_title: str = "", expected_record_version, idempotency_key: str, user: str | None = None,
@@ -313,6 +316,7 @@ def form_plan_items(
 	return result
 
 
+@planning_command
 def dissolve_plan_item(*, plan_item: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	payload = {"plan_item": plan_item}
@@ -357,6 +361,7 @@ def _validate_reservation(reference: dict[str, Any], category: str) -> str:
 	return category
 
 
+@planning_command
 def save_plan_item(*, plan_item: str, values: dict[str, Any] | str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	if isinstance(values, str):
@@ -402,7 +407,7 @@ def save_plan_item(*, plan_item: str, values: dict[str, Any] | str, expected_rec
 	if changed and scope_lock.is_locked(item.plan_item_id):
 		fail("PLN_ITEM_SCOPE_LOCKED", detail={"plan_item_id": item.plan_item_id, "fields": changed})
 	reference = readiness.reference_for(plan.fiscal_year)
-	planned_value = sum(flt(a.indicative_amount) for a in allocations)
+	planned_value = readiness.allocation_total(allocations)
 	category = cstr(item.procurement_category) or "Services"
 
 	title = cstr(values.get("title", item.title)).strip()
@@ -531,6 +536,7 @@ def save_plan_item(*, plan_item: str, values: dict[str, Any] | str, expected_rec
 	return result
 
 
+@planning_command
 def save_plan_version_details(*, plan_version: str, values: dict[str, Any] | str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""PLN-CHG-001 v1.18 §4.5 / §7.2 `SavePlanVersionDetails` — the whole-Plan
 	`project_name` (optional, ≤ 160) and the successor's `change_reason`
@@ -572,6 +578,7 @@ def save_plan_version_details(*, plan_version: str, values: dict[str, Any] | str
 	return result
 
 
+@planning_command
 def confirm_splitting_advisory(*, plan_version: str, confirmation: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""Invariant 26 / PLN-AC-074 — record the Planner's confirmation that the
 	flagged items are legitimately separate (a preference-scheme unbundling

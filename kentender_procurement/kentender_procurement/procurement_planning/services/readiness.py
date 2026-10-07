@@ -21,6 +21,7 @@ plan's Fiscal Year — never today's.
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 import frappe
@@ -28,7 +29,7 @@ from frappe.utils import cstr, flt
 
 from kentender_core.services.regulatory_reference import get_regulatory_reference
 from kentender_procurement.procurement_planning.errors import fail
-from kentender_procurement.procurement_planning.services import schedule
+from kentender_procurement.procurement_planning.services import money as money_boundary, schedule
 
 NONE_RESERVATION = "None"
 # PLN v1.25 / RES-IMP-001 §1.1 — the planned base designations. County
@@ -161,25 +162,30 @@ def _allocations(item_name: str) -> list:
 	)
 
 
-def item_value(item_name: str) -> float:
-	return sum(flt(a.indicative_amount) for a in _allocations(item_name))
+def allocation_total(allocations) -> Decimal:
+	"""Exact sum of allocation amounts (PLN §4.1 — never a float sum)."""
+	return money_boundary.sum_money(a.indicative_amount for a in allocations)
 
 
-def line_totals(version_name: str) -> dict[str, float]:
-	"""Per-Procurement-Budget-Line planned totals for the whole Version — the
-	input to `check_plan_affordability` (§7.3)."""
+def item_value(item_name: str) -> Decimal:
+	return allocation_total(_allocations(item_name))
+
+
+def line_totals(version_name: str) -> dict[str, Decimal]:
+	"""Per-Procurement-Budget-Line planned totals for the whole Version, as
+	exact decimals — the input to `check_plan_affordability` (§7.3)."""
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": version_name, "item_state": ("!=", "Dissolved")}, pluck="name")
-	totals: dict[str, float] = {}
+	by_line: dict[str, list] = {}
 	for a in frappe.get_all(
 		"Plan Source Allocation",
 		filters={"plan_item": ("in", items or ("",)), "allocation_state": ("in", ("Draft", "Active"))},
 		fields=["budget_line", "indicative_amount"],
 	):
-		totals[a.budget_line] = totals.get(a.budget_line, 0.0) + flt(a.indicative_amount)
-	return totals
+		by_line.setdefault(a.budget_line, []).append(a)
+	return {line: allocation_total(rows) for line, rows in by_line.items()}
 
 
-def line_totals_hash(totals: dict[str, float]) -> str:
+def line_totals_hash(totals: dict[str, Decimal]) -> str:
 	import hashlib
 	import json
 
@@ -338,9 +344,9 @@ def splitting_advisory(version_name: str, reference: dict[str, Any]) -> list[dic
 		lines = {a.budget_line for a in allocations}
 		if len(lines) != 1:
 			continue
-		value = sum(flt(a.indicative_amount) for a in allocations)
+		value = allocation_total(allocations)
 		threshold = open_tender_threshold(reference, cstr(item.procurement_category) or "Services")
-		if not threshold or value > threshold:
+		if not threshold or money_boundary.exceeds(value, threshold):
 			continue
 		groups.setdefault((next(iter(lines)), cstr(item.requirement_type)), []).append(
 			{"plan_item_id": item.plan_item_id, "title": item.title, "value": value, "threshold": threshold}
@@ -349,15 +355,15 @@ def splitting_advisory(version_name: str, reference: dict[str, Any]) -> list[dic
 	for (line, requirement_type), members in groups.items():
 		if len(members) < 2:
 			continue
-		combined = sum(m["value"] for m in members)
+		combined = sum((m["value"] for m in members), Decimal(0))
 		threshold = members[0]["threshold"]
-		if combined > threshold:
+		if money_boundary.exceeds(combined, threshold):
 			advisories.append(
 				{
 					"budget_line": line,
 					"requirement_type": requirement_type,
 					"items": [m["plan_item_id"] for m in members],
-					"combined_value": combined,
+					"combined_value": float(combined),
 					"threshold": threshold,
 					"text": (
 						f"{len(members)} Plan Items on {line} ({requirement_type}) each fall below {money(threshold)} "
@@ -388,7 +394,7 @@ def item_blockers(item, allocations: list, fiscal_year: str, *, objective_eligib
 		blockers.append({"code": "PLN_PLAN_CONTENTS_INCOMPLETE", "field": "estimate_basis"})
 	if not cstr(item.get("estimate_basis_reference")).strip():
 		blockers.append({"code": "PLN_PLAN_CONTENTS_INCOMPLETE", "field": "estimate_basis_reference"})
-	value = sum(flt(a.indicative_amount) for a in allocations)
+	value = allocation_total(allocations)
 	category = cstr(item.get("procurement_category")) or "Services"
 	resolved = method_profile_for(item, fiscal_year)
 	method_profile, schedule_profile = resolved["method"], resolved["schedule"]
@@ -491,15 +497,15 @@ def low_value_cumulative_breaches(version_name: str, reference: dict[str, Any]) 
 		filters={"plan_version": version_name, "item_state": ("!=", "Dissolved"), "procurement_method": "Low Value Procurement"},
 		fields=["name", "plan_item_id", "title", "procurement_category"],
 	)
-	totals: dict[tuple[str, str], float] = {}
+	totals: dict[tuple[str, str], Decimal] = {}
 	members: dict[tuple[str, str], list[str]] = {}
 	for item in items:
 		key = (cstr(item.procurement_category) or "Services", " ".join(cstr(item.title).lower().split()))
-		totals[key] = totals.get(key, 0.0) + item_value(item.name)
+		totals[key] = totals.get(key, Decimal(0)) + item_value(item.name)
 		members.setdefault(key, []).append(item.plan_item_id)
 	breaches = []
 	for key, total in totals.items():
 		cap = low_value_cap(reference, key[0])
-		if cap and total > cap:
+		if cap and money_boundary.exceeds(total, cap):
 			breaches.extend(members[key])
 	return breaches

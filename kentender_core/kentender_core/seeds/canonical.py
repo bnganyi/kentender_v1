@@ -562,7 +562,11 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 		for doctype in ("Departmental Plan", "Annual Plan"):
 			for name in plan.get(doctype, []):
 				if frappe.db.exists(doctype, name):
-					frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
+					from kentender_core.services.command_write_guard import maintenance_write
+
+					# Planning's records are command-only (AUD-XC-007): cleared under their family's window
+					with maintenance_write(frappe.get_doc(doctype, name).command_write_family, reason="canonical seed clean-up: Planning rows the module clear did not recognise"):
+						frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
 					deleted[doctype] = deleted.get(doctype, 0) + 1
 	for need in plan.get("Departmental Need", []):
 		if frappe.db.exists("Departmental Need", need):

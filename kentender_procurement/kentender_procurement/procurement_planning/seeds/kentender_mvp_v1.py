@@ -48,9 +48,11 @@ from frappe.utils import cstr, now_datetime
 from frappe.utils.password import update_password
 
 from kentender_core.seeds import calendar, clock
+from kentender_core.services.command_write_guard import maintenance_write
 from kentender_core.seeds.constants import TEST_PASSWORD
 from kentender_core.services import responsibility_administration as administration
 from kentender_core.services import site_configuration
+from kentender_procurement.procurement_planning.write_family import PLANNING_WRITE_FAMILY
 
 PLAYWRIGHT_NS = "KENTENDER_PLAYWRIGHT"
 NS = "KENTENDER_MVP_1_R1_PLN"
@@ -1535,8 +1537,9 @@ def clear_planning_fixture_rows(
 				continue
 			filters["fixture_namespace"] = ("in", selected)
 		rows = frappe.get_all(doctype, filters=filters, pluck="name")
-		for name in rows:
-			frappe.delete_doc(doctype, name, force=True, ignore_permissions=True, delete_permanently=True)
+		with maintenance_write(PLANNING_WRITE_FAMILY, reason="Planning seed clear: fixture rows are removed whole"):
+			for name in rows:
+				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True, delete_permanently=True)
 		deleted[doctype] = len(rows)
 	return deleted
 

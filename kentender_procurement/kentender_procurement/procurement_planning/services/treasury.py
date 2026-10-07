@@ -28,6 +28,7 @@ from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.services import envelope, plan_governance, publication_pipeline, references
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_ACCOUNTING_OFFICER, ROLE_PLAN_STATUTORY_APPROVER
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 
 def _approved_version(plan_version: str):
@@ -76,6 +77,7 @@ def record_treasury_submission(
 	return result
 
 
+@planning_command
 def correct_treasury_submission_evidence(*, prior_evidence: str, reason: str, idempotency_key: str, user: str | None = None, **new_fields) -> dict[str, Any]:
 	"""§7.2 `CorrectTreasurySubmissionEvidence` — append a superseding record
 	with a reason; the prior record is preserved, never overwritten. Any
@@ -135,6 +137,7 @@ def _confirmed_unpublished(version) -> bool:
 	return True
 
 
+@planning_command
 def request_plan_withdrawal(*, plan_version: str, reason: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `RequestPlanWithdrawal` — the Accounting Officer's request to the
 	configured statutory authority; requires confirmed-unpublished content
@@ -173,6 +176,7 @@ def request_plan_withdrawal(*, plan_version: str, reason: str, idempotency_key: 
 	return result
 
 
+@planning_command
 def withdraw_approved_plan_for_correction(*, task: str, task_token: str, collective_resolution_reference: str = "", idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `WithdrawApprovedPlanForCorrection` — the configured statutory
 	authority confirms the content is still unpublished with no outstanding

@@ -16,6 +16,8 @@ import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import formatdate, nowdate
 
+from kentender_core.services.command_write_guard import maintenance_write
+from kentender_procurement.procurement_planning.write_family import PLANNING_WRITE_FAMILY
 from kentender_procurement.procurement_planning.services import (
 	budget_gateway,
 	dpp_lifecycle,
@@ -493,7 +495,8 @@ class TestAnnualPlanCard(WorkspaceCase):
 		successor.version_number = 2
 		successor.version_status = "Draft"
 		successor.based_on_version = accepted["annual_plan_version"]
-		successor.insert(ignore_permissions=True)
+		with maintenance_write(PLANNING_WRITE_FAMILY, reason="Planning workspace test: an Active plan with a Draft successor, built without the update command"):
+			successor.insert(ignore_permissions=True)
 		frappe.db.set_value("Annual Plan", accepted["annual_plan"], "open_successor_version", successor.name)
 
 		result = self.load(fx.PLANNER)

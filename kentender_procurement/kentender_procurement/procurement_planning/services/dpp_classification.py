@@ -37,6 +37,7 @@ from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.services import envelope, needs_intake, references, scope_lock
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_PROCUREMENT_PLANNER
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 def _full_name(user: str) -> str:
 	return cstr(frappe.db.get_value("User", user, "full_name") or user)
@@ -424,6 +425,7 @@ def _classification_rows(dpp_submission: str, *, only_entry: str = "") -> list[d
 # --------------------------------------------------------------------------
 
 
+@planning_command
 def correct_accepted_requirement_classification(
 	*,
 	dpp_submission: str,

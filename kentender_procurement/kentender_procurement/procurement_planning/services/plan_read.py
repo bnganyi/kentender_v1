@@ -24,13 +24,14 @@ computed from the same resolver the commands use (read-offer parity).
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from typing import Any
 
 import frappe
 from frappe.utils import cstr, flt, fmt_money, formatdate, get_datetime
 
 from kentender_procurement.procurement_planning.errors import MESSAGES
-from kentender_procurement.procurement_planning.services import missing_setting, needs_intake, readiness, references, schedule, scope_lock
+from kentender_procurement.procurement_planning.services import missing_setting, money, needs_intake, readiness, references, schedule, scope_lock
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
@@ -1120,13 +1121,13 @@ def _budget_fit(affordability: dict[str, Any] | None, version) -> dict[str, Any]
 	if not affordability or version.version_status != "Draft":
 		return None
 	rows = []
-	total_over = 0.0
+	total_over = Decimal(0)
 	over_lines = 0
 	for line in affordability.get("lines") or []:
-		approved, planned = flt(line.get("approved")), flt(line.get("planned"))
+		approved, planned = money.as_decimal(line.get("approved")), money.as_decimal(line.get("planned"))
 		if not planned and not approved:
 			continue
-		over = planned > approved + 1e-9
+		over = planned > approved
 		difference = abs(approved - planned)
 		if over:
 			total_over += planned - approved
@@ -1290,9 +1291,9 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 		fields=["name", "dpp_entry", "source_origin", "need", "need_revision", "organisation_unit", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount"],
 		order_by="creation asc",
 	)
-	sources, value, correction_required = [], 0.0, False
+	sources, value, correction_required = [], Decimal(0), False
 	for allocation in allocations:
-		value += flt(allocation.indicative_amount)
+		value += money.as_decimal(allocation.indicative_amount)
 		if source_correction_required(allocation.dpp_entry):
 			correction_required = True
 		entry_title = cstr(frappe.db.get_value("Departmental Plan Entry", allocation.dpp_entry, "title"))
@@ -1768,7 +1769,7 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 		"failing_lines": statement.get("failing_lines", []),
 		# v1.18 §4.7 — the immutable basis this review decides on
 		"financial_basis": basis_summary,
-		"basis_current": (financial_basis.current_digest(plan, version) == cstr(basis.basis_digest)) if (basis and not decided) else None,
+		"basis_current": (financial_basis.current_digest(plan, version, basis) == cstr(basis.basis_digest)) if (basis and not decided) else None,
 		"is_reassessment": reassessment,
 		"version_status": version.version_status,
 		"version_number": version.version_number,

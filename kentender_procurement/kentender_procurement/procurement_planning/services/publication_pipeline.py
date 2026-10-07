@@ -29,6 +29,7 @@ from frappe.utils import cstr, now_datetime
 from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.services import envelope, plan_finance, plan_json, plan_publication
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 DESTINATION_ADAPTER = "KenTender Annual Plan Publication Sandbox"
 
@@ -115,6 +116,7 @@ def _transmit(destination: str) -> tuple[str, str]:
 	return "Acknowledged", frappe.generate_hash(length=16)
 
 
+@planning_command
 def publish_annual_plan(*, plan_version: str, idempotency_key: str | None = None, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `PublishAnnualPlan` — the system worker. Gated on valid current
 	Treasury evidence and no active hold; sends the exact frozen manifest
@@ -238,6 +240,7 @@ def _activation_blockers(version, plan) -> list[str]:
 	return reasons
 
 
+@planning_command
 def activate_plan_version(*, plan_version: str, idempotency_key: str | None = None, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `ActivatePlanVersion` — system; preserves the publication fact
 	even when activation checks fail (`Published — activation held`, one
@@ -264,6 +267,7 @@ def activate_plan_version(*, plan_version: str, idempotency_key: str | None = No
 	return result
 
 
+@planning_command
 def reconcile_publication(*, publication: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `ReconcilePublication` — technical; reads the authoritative
 	destination result. Never sets success manually; an unknown result
@@ -322,6 +326,7 @@ def retry_publication(*, publication: str, idempotency_key: str, user: str | Non
 	return result_dict
 
 
+@planning_command
 def hold_plan_publication(*, plan_version: str, reason: str, hold_kind: str = "Detected invalidity", idempotency_key: str = "", user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `HoldPlanPublication` — a recorded control over transmission,
 	never an unrecorded withdrawal of statutory approval."""
