@@ -12,10 +12,14 @@ from __future__ import annotations
 
 import frappe
 
+from kentender_core.utils.patch_guards import require_empty_or_authorised
+
 STAND_IN = "Tender Candidate Registration"
 
 
 def execute() -> None:
+	# AUD-XC-127: authorised for a site with no production data only.
+	require_empty_or_authorised("tpr_fu25_retire_candidate_stand_in", (STAND_IN,))
 	if frappe.db.table_exists(STAND_IN):
 		frappe.db.delete(STAND_IN)
 	if frappe.db.exists("DocType", STAND_IN):

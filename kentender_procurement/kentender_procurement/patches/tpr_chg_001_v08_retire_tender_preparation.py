@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import frappe
 
+from kentender_core.utils.patch_guards import require_empty_or_authorised
+
 # Children before parents; the root last.
 RETIRED_DOCTYPES: tuple[str, ...] = (
 	"Tender Readiness Finding",
@@ -51,6 +53,8 @@ def _ensure_module_def() -> None:
 
 
 def execute() -> None:
+	# AUD-XC-127: authorised for a site with no production data only.
+	require_empty_or_authorised("tpr_chg_001_v08_retire_tender_preparation", RETIRED_DOCTYPES)
 	_ensure_module_def()
 	if frappe.db.exists("DocType", RELOCATED_DOCTYPE):
 		frappe.db.set_value("DocType", RELOCATED_DOCTYPE, "module", NEW_MODULE, update_modified=False)

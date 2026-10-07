@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import frappe
 
+from kentender_core.utils.patch_guards import require_empty_or_authorised
+
 LEGACY_DOCTYPES = (
 	# dependents first, roots last
 	"Plan Need Allocation",
@@ -28,6 +30,8 @@ LEGACY_DOCTYPES = (
 
 
 def execute() -> None:
+	# AUD-XC-127: authorised for a site with no production data only.
+	require_empty_or_authorised("pln_chg_001_v12_drop_legacy_planning_doctypes", LEGACY_DOCTYPES)
 	for doctype in LEGACY_DOCTYPES:
 		if frappe.db.exists("DocType", doctype):
 			frappe.delete_doc(

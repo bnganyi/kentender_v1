@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import frappe
 
+from kentender_core.utils.patch_guards import require_empty_or_authorised
+
 # Child before parent; the multi-pass loop absorbs residual ordering.
 RETIRED_DOCTYPES: tuple[str, ...] = (
 	"Electronic Bid Audit Event",
@@ -82,6 +84,8 @@ def _delete_pages() -> None:
 
 
 def execute() -> None:
+	# AUD-XC-127: authorised for a site with no production data only.
+	require_empty_or_authorised("bds_chg_001_v08_retire_bid_slice", RETIRED_DOCTYPES)
 	_delete_rows()
 	_delete_permission_rows()
 	_delete_doctypes_multi_pass()
