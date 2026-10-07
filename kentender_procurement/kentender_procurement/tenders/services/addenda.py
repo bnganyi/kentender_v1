@@ -157,7 +157,7 @@ def create_addendum_draft(*, tender: str, expected_record_version, idempotency_k
 	actor = authz.actor(user)
 	assignment, role = authz.require_any_site_role((ROLE_PROCUREMENT_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION), actor)
 	payload = {"tender": tender}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="CreateAddendumDraft", actor=actor)
 	if replay:
 		return replay
 	root, _version = draft_commands.load(tender)
@@ -265,7 +265,7 @@ def update_addendum_draft(*, tender: str, addendum: str, values: dict[str, Any],
 	actor = authz.actor(user)
 	assignment, _role = authz.require_any_site_role((ROLE_PROCUREMENT_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION), actor)
 	payload = {"tender": tender, "addendum": addendum, "values": json.dumps(values, sort_keys=True, default=str) if isinstance(values, dict) else cstr(values)}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="UpdateAddendumDraft", actor=actor)
 	if replay:
 		return replay
 	root, _version = draft_commands.load(tender)
@@ -279,6 +279,7 @@ def update_addendum_draft(*, tender: str, addendum: str, values: dict[str, Any],
 	current = {"change_class": doc.change_class, "affected_area": doc.affected_area, "affected_reference_key": doc.affected_reference_key, "revised_value": doc.revised_value, "reason": doc.reason, "materiality_statement": doc.materiality_statement, "revised_submission_deadline": doc.revised_submission_deadline}
 	clean, errors, facts = validate_values(root, values, current=current)
 	if errors:
+		envelope.release_claim(idempotency_key)  # a refusal returned as data is not journalled: the corrected attempt may reuse the key
 		return {"ok": False, "errors": errors, "record_version": root.record_version, "material": facts.get("material", False)}
 	with envelope.atomic("update-addendum"):
 		envelope.bump(doc, **clean, baseline_digest=_baseline_digest(root))
@@ -332,7 +333,7 @@ def submit_addendum_for_issue(*, tender: str, addendum: str, expected_record_ver
 	actor = authz.actor(user)
 	assignment, role = authz.require_any_site_role((ROLE_PROCUREMENT_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION), actor)
 	payload = {"tender": tender, "addendum": addendum}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="SubmitAddendumForIssue", actor=actor)
 	if replay:
 		return replay
 	root, version = draft_commands.load(tender)
@@ -358,7 +359,7 @@ def return_addendum_for_correction(*, tender: str, addendum: str, reason: str, e
 	actor = authz.actor(user)
 	assignment = authz.require_hopf(actor)
 	payload = {"tender": tender, "addendum": addendum, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="ReturnAddendumForCorrection", actor=actor)
 	if replay:
 		return replay
 	reason = " ".join(cstr(reason).split())
@@ -419,7 +420,7 @@ def issue_addendum(*, tender: str, addendum: str, expected_record_version, idemp
 	actor = authz.actor(user)
 	assignment = authz.require_hopf(actor)
 	payload = {"tender": tender, "addendum": addendum}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="IssueAddendum", actor=actor)
 	if replay:
 		return replay
 	root, version = draft_commands.load(tender)
@@ -532,7 +533,7 @@ def discard_addendum_draft(*, tender: str, addendum: str, expected_record_versio
 	actor = authz.actor(user)
 	assignment, role = authz.require_any_site_role((ROLE_PROCUREMENT_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION), actor)
 	payload = {"tender": tender, "addendum": addendum}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="DiscardAddendumDraft", actor=actor)
 	if replay:
 		return replay
 	root, version = draft_commands.load(tender)
@@ -563,7 +564,7 @@ def request_tender_cancellation_review(*, tender: str, addendum: str, reason: st
 	actor = authz.actor(user)
 	assignment, role = authz.require_any_site_role((ROLE_PROCUREMENT_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION), actor)
 	payload = {"tender": tender, "addendum": addendum, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="RequestTenderCancellationReview", actor=actor)
 	if replay:
 		return replay
 	text = " ".join(cstr(reason).split())
@@ -605,7 +606,7 @@ def close_tender_cancellation_review(*, tender: str, addendum: str, reason: str,
 	actor = authz.actor(user)
 	assignment = authz.require_ao(actor)
 	payload = {"tender": tender, "addendum": addendum, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="CloseTenderCancellationReview", actor=actor)
 	if replay:
 		return replay
 	text = " ".join(cstr(reason).split())

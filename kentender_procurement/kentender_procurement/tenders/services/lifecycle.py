@@ -114,7 +114,7 @@ def submit_tender_for_approval(*, tender: str, expected_record_version, idempote
 	actor = authz.actor(user)
 	assignment = authz.require_officer(actor)
 	payload = {"tender": tender}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="SubmitTenderForApproval", actor=actor)
 	if replay:
 		return replay
 	root, version = draft_commands.load(tender)
@@ -162,7 +162,7 @@ def return_tender_for_correction(*, tender: str, reason: str, affected_task: str
 	actor = authz.actor(user)
 	assignment = authz.require_hopf(actor)
 	payload = {"tender": tender, "reason": reason, "affected_task": affected_task}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="ReturnTenderForCorrection", actor=actor)
 	if replay:
 		return replay
 	reason = " ".join(cstr(reason).split())
@@ -220,7 +220,7 @@ def approve_tender_package(*, tender: str, expected_record_version, idempotency_
 	actor = authz.actor(user)
 	assignment = authz.require_hopf(actor)
 	payload = {"tender": tender}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="ApproveTenderPackage", actor=actor)
 	if replay:
 		return replay
 	root, version = draft_commands.load(tender)
@@ -284,7 +284,7 @@ def reopen_approved_tender(*, tender: str, reason: str, expected_record_version,
 	actor = authz.actor(user)
 	assignment = authz.require_hopf(actor)
 	payload = {"tender": tender, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="ReopenApprovedTender", actor=actor)
 	if replay:
 		return replay
 	reason = " ".join(cstr(reason).split())

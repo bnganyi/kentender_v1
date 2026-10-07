@@ -116,6 +116,8 @@ def wipe_tender_rows() -> None:
 	(TPR-CHG-001 v0.12 plan §5): until 26 Sep 2026 this deleted every Tender
 	on the site, canonical data included."""
 	frappe.set_user("Administrator")
+	# a claim that never recorded a result (a command that failed inside a surviving transaction) belongs to no record
+	frappe.db.sql("delete from `tabTender Command Journal` where result is null or result=''")
 	tenders = test_tenders()
 	if not tenders:
 		return

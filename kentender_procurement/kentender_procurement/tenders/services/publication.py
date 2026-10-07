@@ -50,7 +50,7 @@ def authorise_tender_publication(*, tender: str, expected_record_version, idempo
 	actor = authz.actor(user)
 	assignment = authz.require_ao(actor)
 	payload = {"tender": tender}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="AuthoriseTenderPublication", actor=actor)
 	if replay:
 		return replay
 	root, version = draft_commands.load(tender)
@@ -194,7 +194,7 @@ def withdraw_publication_authorisation(*, tender: str, reason: str, evidence: st
 	actor = authz.actor(user)
 	assignment = authz.require_ao(actor)
 	payload = {"tender": tender, "reason": reason, "evidence": evidence}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="WithdrawPublicationAuthorisation", actor=actor)
 	if replay:
 		return replay
 	reason = " ".join(cstr(reason).split())
@@ -238,7 +238,7 @@ def return_approved_tender(*, tender: str, reason: str, expected_record_version,
 	actor = authz.actor(user)
 	assignment = authz.require_ao(actor)
 	payload = {"tender": tender, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="ReturnApprovedTender", actor=actor)
 	if replay:
 		return replay
 	reason = " ".join(cstr(reason).split())

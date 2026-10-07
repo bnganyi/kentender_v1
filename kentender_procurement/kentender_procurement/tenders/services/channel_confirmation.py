@@ -150,7 +150,7 @@ def confirm_channel(
 		"subject_type": subject_type, "subject_id": subject_id, "channel": channel, "available_at": cstr(available_at), "evidence_reference": cstr(evidence_reference), "public_url": cstr(public_url),
 		"evidence_file": cstr(evidence_file), "evidence_notes": cstr(evidence_notes), "package_digest": cstr(package_digest),
 	}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command=command, actor=actor)
 	if replay:
 		return replay
 	name = frappe.db.get_value(DOCTYPE, {"subject_type": subject_type, "subject_id": subject_id, "channel": channel}, "name")

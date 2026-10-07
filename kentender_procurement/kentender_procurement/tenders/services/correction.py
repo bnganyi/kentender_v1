@@ -39,7 +39,7 @@ def request_requisition_correction(*, tender: str, reason: str, expected_record_
 	actor = authz.actor(user)
 	assignment, role = authz.require_any_site_role((ROLE_PROCUREMENT_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION), actor)
 	payload = {"tender": tender, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="RequestRequisitionCorrection", actor=actor)
 	if replay:
 		return replay
 	reason = " ".join(cstr(reason).split())
@@ -108,7 +108,7 @@ def start_corrected_tender_version(*, tender: str, handoff: str, expected_record
 	actor = authz.actor(user)
 	assignment = authz.require_officer(actor)
 	payload = {"tender": tender, "handoff": handoff}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="StartCorrectedTenderVersion", actor=actor)
 	if replay:
 		return replay
 	root, stopped = draft_commands.load(tender)

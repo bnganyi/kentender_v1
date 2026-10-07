@@ -65,7 +65,7 @@ def recommend_tender_cancellation(*, tender: str, ground: str, reason: str, expe
 	actor = authz.actor(user)
 	assignment = authz.require_hopf(actor)
 	payload = {"tender": tender, "ground": ground, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="RecommendTenderCancellation", actor=actor)
 	if replay:
 		return replay
 	if ground not in GROUND_LABELS:
@@ -113,7 +113,7 @@ def cancel_tender(*, tender: str, ground: str, reason: str, expected_record_vers
 	actor = authz.actor(user)
 	assignment = authz.require_ao(actor)
 	payload = {"tender": tender, "ground": ground, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="CancelTender", actor=actor)
 	if replay:
 		return replay
 	if ground not in GROUND_LABELS:
@@ -233,7 +233,7 @@ def record_cancellation_compliance_evidence(*, tender: str, obligation_id: str, 
 	actor = authz.actor(user)
 	assignment, role = authz.require_any_site_role((ROLE_PROCUREMENT_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION), actor)
 	payload = {"tender": tender, "obligation_id": obligation_id, "evidence_reference": evidence_reference, "evidence_file": evidence_file}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="RecordCancellationComplianceEvidence", actor=actor)
 	if replay:
 		return replay
 	root, _version = draft_commands.load(tender)

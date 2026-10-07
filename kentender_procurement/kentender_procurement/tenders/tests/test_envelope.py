@@ -10,7 +10,7 @@ from __future__ import annotations
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_core.services.command_write_guard import CommandWriteError
+from kentender_core.services.command_write_guard import CommandWriteError, command_write
 from kentender_procurement.tenders.services import envelope
 from kentender_procurement.tenders.services.errors import TendersError
 from kentender_procurement.tenders.tests import fixtures as fx
@@ -25,22 +25,70 @@ class TendersEnvelopeCase(IntegrationTestCase):
 
 
 class TestReplayAndFingerprint(TendersEnvelopeCase):
-	def test_a_fresh_key_has_no_replay(self):
-		self.assertIsNone(envelope.replay_or_none(fx.key(), {"a": 1}))
+	ACTOR = "Administrator"
+
+	def _key(self) -> str:
+		key = fx.key()
+		self.addCleanup(frappe.db.delete, "Tender Command Journal", {"idempotency_key": key})
+		return key
+
+	def _replay(self, key, payload, *, command="Test", actor=ACTOR):
+		return envelope.replay_or_none(key, payload, command=command, actor=actor)
+
+	def test_a_fresh_key_has_no_replay_and_is_claimed(self):
+		key = self._key()
+		self.assertIsNone(self._replay(key, {"a": 1}))
+		self.assertEqual(frappe.db.count("Tender Command Journal", {"idempotency_key": key}), 1)
 
 	def test_the_same_key_with_the_same_payload_replays(self):
-		key = fx.key()
-		envelope.record_command(idempotency_key=key, command="Test", payload={"a": 1}, result={"ok": True, "value": 1})
-		replay = envelope.replay_or_none(key, {"a": 1})
+		key = self._key()
+		self.assertIsNone(self._replay(key, {"a": 1}))
+		envelope.record_command(idempotency_key=key, command="Test", payload={"a": 1}, result={"ok": True, "value": 1}, actor=self.ACTOR)
+		replay = self._replay(key, {"a": 1})
 		self.assertTrue(replay["idempotent"])
 		self.assertEqual(replay["value"], 1)
+		self.assertEqual(frappe.db.count("Tender Command Journal", {"idempotency_key": key}), 1)
 
 	def test_the_same_key_with_a_different_payload_is_a_conflict(self):
-		key = fx.key()
-		envelope.record_command(idempotency_key=key, command="Test", payload={"a": 1}, result={"ok": True})
+		key = self._key()
+		envelope.record_command(idempotency_key=key, command="Test", payload={"a": 1}, result={"ok": True}, actor=self.ACTOR)
 		with self.assertRaises(TendersError) as ctx:
-			envelope.replay_or_none(key, {"a": 2})
+			self._replay(key, {"a": 2})
 		self.assertEqual(ctx.exception.code, "TND_IDEMPOTENCY_CONFLICT")
+
+	def test_the_same_key_for_another_command_is_a_conflict(self):
+		key = self._key()
+		envelope.record_command(idempotency_key=key, command="Test", payload={"a": 1}, result={"ok": True}, actor=self.ACTOR)
+		with self.assertRaises(TendersError) as ctx:
+			self._replay(key, {"a": 1}, command="Another")
+		self.assertEqual(ctx.exception.code, "TND_IDEMPOTENCY_CONFLICT")
+
+	def test_another_actor_gets_a_conflict_and_never_the_recorded_result(self):
+		key = self._key()
+		envelope.record_command(idempotency_key=key, command="Test", payload={"a": 1}, result={"ok": True, "secret": "reservation-17"}, actor=self.ACTOR)
+		with self.assertRaises(TendersError) as ctx:
+			self._replay(key, {"a": 1}, actor="Guest")
+		self.assertEqual(ctx.exception.code, "TND_IDEMPOTENCY_CONFLICT")
+		self.assertNotIn("reservation-17", str(ctx.exception))
+
+	def test_a_key_that_recorded_nothing_may_be_reused_by_the_same_actor_only(self):
+		key = self._key()
+		self.assertIsNone(self._replay(key, {"a": 1}))
+		self.assertIsNone(self._replay(key, {"a": 2}, command="Corrected"))  # a refusal returned as data left no result
+		with self.assertRaises(TendersError):
+			self._replay(key, {"a": 2}, command="Corrected", actor="Guest")
+
+	def test_a_journal_row_from_before_the_change_replays_for_its_own_actor_and_command(self):
+		key = self._key()
+		legacy = frappe.get_doc({
+			"doctype": "Tender Command Journal", "idempotency_key": key, "command": "Test", "request_fingerprint": envelope.fingerprint({"a": 1}),
+			"actor": self.ACTOR, "result": '{"ok": true, "value": 7}', "occurred_at": frappe.utils.now_datetime(),
+		})
+		with command_write(envelope.FAMILY):
+			legacy.insert(ignore_permissions=True)
+		self.assertEqual(self._replay(key, {"a": 1})["value"], 7)
+		with self.assertRaises(TendersError):
+			self._replay(key, {"a": 1}, actor="Guest")
 
 	def test_fingerprint_ignores_user_and_idempotency_key(self):
 		self.assertEqual(
@@ -50,7 +98,7 @@ class TestReplayAndFingerprint(TendersEnvelopeCase):
 
 	def test_an_empty_idempotency_key_is_refused(self):
 		with self.assertRaises(TendersError) as ctx:
-			envelope.replay_or_none("", {"a": 1})
+			envelope.replay_or_none("", {"a": 1}, command="Test", actor="Administrator")
 		self.assertEqual(ctx.exception.code, "TND_STALE_VERSION")
 
 

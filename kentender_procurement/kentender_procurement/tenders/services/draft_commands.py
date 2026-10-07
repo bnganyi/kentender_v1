@@ -100,7 +100,7 @@ def start_tender(*, handoff: str, idempotency_key: str, user: str | None = None,
 	actor = authz.actor(user)
 	assignment = authz.require_officer(actor, masked=False)
 	payload = {"handoff": handoff}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="StartTender", actor=actor)
 	if replay:
 		return replay
 	handoff_doc = handoff_gateway.load(handoff)
@@ -181,7 +181,7 @@ def save_tender_draft(*, tender: str, values: dict[str, Any], expected_record_ve
 	actor = authz.actor(user)
 	assignment = authz.require_officer(actor)
 	payload = {"tender": tender, "values": json.dumps(values, sort_keys=True, default=str) if isinstance(values, dict) else cstr(values)}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="SaveTenderDraft", actor=actor)
 	if replay:
 		return replay
 	root, version = load(tender)
@@ -190,6 +190,7 @@ def save_tender_draft(*, tender: str, values: dict[str, Any], expected_record_ve
 	current = serializer.officer_state(version)
 	clean, errors = controls.validate(values, current)
 	if errors:
+		envelope.release_claim(idempotency_key)  # a refusal returned as data is not journalled: the corrected attempt may reuse the key
 		return {"ok": False, "errors": errors, "record_version": root.record_version}
 	changed = {field: {"previous": current.get(field), "new": value} for field, value in clean.items() if current.get(field) != value}
 	merged = dict(current)
@@ -238,7 +239,7 @@ def task_statuses(version) -> dict[str, str]:
 def _evidence_command(*, command: str, tender: str, expected_record_version, idempotency_key: str, user: str | None, payload: dict[str, Any], mutate) -> dict[str, Any]:
 	actor = authz.actor(user)
 	assignment = authz.require_officer(actor)
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command=command, actor=actor)
 	if replay:
 		return replay
 	root, version = load(tender)
@@ -247,6 +248,7 @@ def _evidence_command(*, command: str, tender: str, expected_record_version, ide
 	snapshot = snap.load(version)
 	outcome = mutate(version, snapshot)
 	if outcome.get("errors"):
+		envelope.release_claim(idempotency_key)  # a refusal returned as data is not journalled: the corrected attempt may reuse the key
 		return {"ok": False, "errors": outcome["errors"], "record_version": root.record_version}
 	with envelope.atomic(command):
 		_regenerate(root, version)

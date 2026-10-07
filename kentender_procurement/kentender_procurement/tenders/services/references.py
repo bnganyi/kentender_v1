@@ -16,6 +16,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cstr, getdate
 
+from kentender_core.utils.series import next_free_reference
 from kentender_procurement.tenders.services.errors import fail
 
 
@@ -49,14 +50,17 @@ def tender_reference(*, fiscal_year: str, plan_item_id_value: str) -> str:
 	base = f"TND-{pe_code()}-{fy_start(fiscal_year)}-{plan_item_number(plan_item_id_value)}"
 	_lock(f"tnd:ref:{base}")
 	existing = frappe.get_all("Tender", filters={"tender_reference": ["like", f"{base}%"]}, pluck="tender_reference", limit_page_length=0)
-	if not existing:
+	# `existing` is this transaction's snapshot: a Tender another request committed while this
+	# one waited for the lock is not in it, so every candidate is confirmed with a locking read
+	# (AUD-XC-130).
+	if not existing and not frappe.db.sql("select 1 from `tabTender` where tender_reference=%s for update", (base,)):
 		return base
 	seq = 1
 	for ref in existing:
 		tail = cstr(ref)[len(base):]
 		if tail.startswith("-") and tail[1:].isdigit():
 			seq = max(seq, int(tail[1:]))
-	return f"{base}-{seq + 1:03d}"
+	return next_free_reference("Tender", "tender_reference", f"{base}-", seq, 3)
 
 
 def addendum_reference(*, tender_reference_value: str, addendum_number: int) -> str:
