@@ -41,7 +41,7 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	_granted_units,
 	upsert_departmental_needs,
 )
-from kentender_procurement.departmental_needs.services import permissions, workspace
+from kentender_procurement.departmental_needs.services import need_authorization, permissions, workspace
 from kentender_procurement.departmental_needs.services.context import resolve_creation_context
 
 # §1.1 removed these outright; §6 names exactly four business roles (plus
@@ -316,6 +316,76 @@ class TestCartesianProductIsolation(DepartmentalNeedsPermissionCase):
 		with self.assertRaises(DepartmentalNeedError) as caught:
 			permissions.require_review_command(self.accepted_need(), user)
 		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
+
+
+class TestDecisionRowsFollowTheNeedScope(DepartmentalNeedsPermissionCase):
+	"""RG-09 / AUD-XC-015 — a decision row (reason, actor, assignment, source
+	address, session) is read inside the same scope as the Need it belongs to,
+	through the list and through the direct route, never a whole-table read."""
+
+	def listed(self, user: str) -> dict[str, str]:
+		rows = frappe.get_list(
+			"Departmental Need Decision", user=user, fields=["name", "departmental_need"], limit_page_length=0
+		)
+		return {row.name: row.departmental_need for row in rows}
+
+	def decision_of(self, need: str) -> str:
+		return frappe.get_all("Departmental Need Decision", filters={"departmental_need": need}, pluck="name")[0]
+
+	SCOPE_TEST_USER = "nds.test.scope-hod@example.test"
+
+	def _head_of_one_department(self) -> str:
+		"""A disposable Head of User Department for the Digital Health unit only."""
+		if not frappe.db.exists("User", self.SCOPE_TEST_USER):
+			doc = frappe.get_doc(
+				{
+					"doctype": "User", "email": self.SCOPE_TEST_USER, "first_name": "Scope", "last_name": "HoD Test User",
+					"send_welcome_email": 0, "user_type": "System User", "enabled": 1,
+				}
+			)
+			doc.insert(ignore_permissions=True)
+			doc.add_roles("Desk User")
+		assignment = grant(
+			user=self.SCOPE_TEST_USER, business_role=ROLE_HEAD_OF_USER_DEPARTMENT, organisation_unit=self.ou,
+			fixture_namespace=NS_TEST_GRANT, actor="Administrator",
+		)
+		if assignment.get("created"):
+			self.addCleanup(revoke, assignment["assignment"], reason="Test-only revocation of a disposable head.", actor="Administrator")
+		return self.SCOPE_TEST_USER
+
+	def test_a_head_reads_only_the_decisions_of_the_department_they_head(self):
+		head = self._head_of_one_department()
+		own = self.decision_of(self.accepted_need().name)  # Digital Health
+		elsewhere = self.decision_of(self.hrmd_need().name)  # HR Management and Development
+		held = self.listed(head)
+		self.assertIn(own, held)
+		self.assertNotIn(self.hrmd_need().name, set(held.values()))
+		self.assertNotIn(elsewhere, held)
+		frappe.set_user(head)
+		self.assertTrue(frappe.has_permission("Departmental Need Decision", "read", doc=own))
+		self.assertFalse(frappe.has_permission("Departmental Need Decision", "read", doc=elsewhere))
+		with self.assertRaises(frappe.PermissionError):
+			frappe.get_doc("Departmental Need Decision", elsewhere).check_permission("read")
+
+	def test_the_planner_reads_no_decision(self):
+		self.assertEqual(self.listed(PLANNER), {})
+		frappe.set_user(PLANNER)
+		self.assertFalse(frappe.has_permission("Departmental Need Decision", "read", doc=self.decision_of(self.accepted_need().name)))
+
+	def test_the_list_and_the_direct_route_agree(self):
+		everything = frappe.get_all("Departmental Need Decision", pluck="name", limit_page_length=60, order_by="creation desc")
+		for user in (AUTHOR, REVIEWER, PLANNER, AUDITOR):
+			listed = self.listed(user)
+			frappe.set_user(user)
+			try:
+				for name in everything:
+					with self.subTest(user=user, decision=name):
+						self.assertEqual(bool(frappe.has_permission("Departmental Need Decision", "read", doc=name)), name in listed)
+			finally:
+				frappe.set_user("Administrator")
+
+	def test_a_technical_reader_still_reads_every_decision(self):
+		self.assertEqual(need_authorization.permission_query_conditions("Administrator", "Departmental Need Decision"), "")
 
 
 class TestParentOrganisationUnitCoversDescendantsNotSiblings(DepartmentalNeedsPermissionCase):

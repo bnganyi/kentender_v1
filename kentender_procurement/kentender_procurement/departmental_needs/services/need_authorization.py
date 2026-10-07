@@ -2,7 +2,7 @@
 AUD-XC-015).
 
 `has_permission` and `permission_query_conditions` for every Need doctype that
-can be reached through a standard Frappe route. They narrow the generic
+can be reached through a standard Frappe route (the Decision rows included: RG-09). They narrow the generic
 Organisation-Unit predicate to the Needs read matrix of NDS §6, so a direct
 `/api/resource` read, a list, a count and a report all see exactly what the
 service layer's `permissions.can_view` shows:
@@ -20,7 +20,7 @@ service layer's `permissions.can_view` shows:
 
 One predicate, written once as SQL and once as a record test over the same
 inputs (`_tags`); a test pins that they agree. Child records (Revision, Review
-Task, Withdrawal Request, the three Planning projections) resolve to their
+Task, Withdrawal Request, Decision, the three Planning projections) resolve to their
 parent Need.
 """
 
@@ -49,6 +49,7 @@ PARENT_FIELD = {
 	"Departmental Need Revision": "departmental_need",
 	"Departmental Need Review Task": "departmental_need",
 	"Need Withdrawal Request": "departmental_need",
+	"Departmental Need Decision": "departmental_need",
 	"Need Planning Usage Projection": "departmental_need",
 	"Need Planning Intake Projection": "departmental_need",
 	"Need Planning Disposition Projection": "departmental_need",
@@ -63,6 +64,11 @@ _ALLOWED_TAGS = {
 	"Departmental Need Revision": {"full", "planner"},
 	"Departmental Need Review Task": {"full"},
 	"Need Withdrawal Request": {"full"},
+	# RG-09 / AUD-XC-015: a decision row carries the reason, actor, assignment,
+	# source address and session of a department's decision, so it is read like
+	# the department's other decision records (NDS-AC-043: the Planner receives
+	# no Need decision).
+	"Departmental Need Decision": {"full"},
 	"Need Planning Usage Projection": {"full", "planner", "office"},
 	"Need Planning Intake Projection": {"full", "planner", "office"},
 	"Need Planning Disposition Projection": {"full", "planner", "office"},

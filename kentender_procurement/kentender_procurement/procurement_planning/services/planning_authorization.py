@@ -47,6 +47,7 @@ from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_AUDITOR,
 	ROLE_DEPARTMENTAL_AUTHOR,
 	ROLE_FINANCE_CONFIRMATION_OFFICER,
+	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
 	ROLE_HEAD_OF_USER_DEPARTMENT,
 	ROLE_PLAN_STATUTORY_APPROVER,
 	ROLE_PROCUREMENT_PLANNER,
@@ -457,6 +458,45 @@ def _root_unit_of(doctype: str, name: str) -> str:
 	return ""
 
 
+# RG-31 — a Plan Item Correction Request is Site-wide to the Planning readers who
+# work the request and departmental to the Heads whose department contributes to
+# the plan item it concerns.
+CORRECTION_REQUEST = "Plan Item Correction Request"
+_CORRECTION_SITE_READERS = (ROLE_PROCUREMENT_PLANNER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION, ROLE_AUDITOR)
+
+
+def _correction_request_units(principal: str) -> set[str] | None:
+	"""`None` = every request (a Site-wide Planning reader); else the units whose
+	requests the Head of User Department may read, subtrees included."""
+	for role in _CORRECTION_SITE_READERS:
+		if can_read_site(role, principal):
+			return None
+	return permitted_ou_scopes(principal, ROLE_HEAD_OF_USER_DEPARTMENT) or set()
+
+
+def _correction_request_condition(principal: str) -> str:
+	units = _correction_request_units(principal)
+	if units is None:
+		return ""
+	if not units:
+		return "1=0"
+	listed = ", ".join(frappe.db.escape(unit) for unit in sorted(units))
+	return (
+		f"`tab{CORRECTION_REQUEST}`.`plan_item` in (select `plan_item` from `tabPlan Source Allocation` "
+		f"where `organisation_unit` in ({listed}))"
+	)
+
+
+def _may_read_correction_request(doc, principal: str) -> bool:
+	units = _correction_request_units(principal)
+	if units is None:
+		return True
+	item = doc.get("plan_item") if hasattr(doc, "get") else None
+	if not units or not item:
+		return False
+	return bool(frappe.db.exists("Plan Source Allocation", {"plan_item": item, "organisation_unit": ("in", sorted(units))}))
+
+
 def permission_query_conditions(user: str | None = None, doctype: str | None = None) -> str:
 	"""List/count predicate for a DPP-family DocType: delegate to the root's
 	own registered condition through the parent chain."""
@@ -465,6 +505,8 @@ def permission_query_conditions(user: str | None = None, doctype: str | None = N
 	principal = cstr(user or frappe.session.user)
 	if is_technical(principal):
 		return ""
+	if doctype == CORRECTION_REQUEST:
+		return _correction_request_condition(principal)
 	root_condition = scope_condition("Departmental Plan", principal)
 	if root_condition == "":
 		return ""
@@ -492,6 +534,11 @@ def has_permission(doc=None, ptype: str = "read", user: str | None = None):
 	if doc is None:
 		return True
 	doctype = getattr(doc, "doctype", None) or (doc.get("doctype") if isinstance(doc, dict) else "")
+	if doctype == CORRECTION_REQUEST:
+		# a technical reader reads (and may write only through DocPerm and the guard)
+		if is_technical(principal) or ptype in ("read", "select", "report", "export", "print", "email", "share") and _may_read_correction_request(doc, principal):
+			return True
+		return False
 	name = getattr(doc, "name", None) or (doc.get("name") if isinstance(doc, dict) else "")
 	unit = _root_unit_of(doctype, name) if name else ""
 	proxy = frappe._dict({"doctype": "Departmental Plan", "name": name, "organisation_unit": unit})

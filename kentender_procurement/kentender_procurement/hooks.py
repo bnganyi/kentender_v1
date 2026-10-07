@@ -387,6 +387,7 @@ _NDS_FAMILY = (
 	"Departmental Need Revision",
 	"Departmental Need Review Task",
 	"Need Withdrawal Request",
+	"Departmental Need Decision",
 	"Need Planning Usage Projection",
 	"Need Planning Intake Projection",
 	"Need Planning Disposition Projection",
@@ -405,6 +406,9 @@ permission_query_conditions = {
 	"Departmental Plan Entry": f"{_PLN_AUTHZ}.permission_query_conditions",
 	"Departmental Plan Submission": f"{_PLN_AUTHZ}.permission_query_conditions",
 	"Departmental Plan Validation Decision": f"{_PLN_AUTHZ}.permission_query_conditions",
+	# RG-31: a Head of User Department reads the correction requests of the plan
+	# items their department contributes to, not every request.
+	"Plan Item Correction Request": f"{_PLN_AUTHZ}.permission_query_conditions",
 }
 
 has_permission = {
@@ -415,6 +419,7 @@ has_permission = {
 	"Departmental Plan Entry": f"{_PLN_AUTHZ}.has_permission",
 	"Departmental Plan Submission": f"{_PLN_AUTHZ}.has_permission",
 	"Departmental Plan Validation Decision": f"{_PLN_AUTHZ}.has_permission",
+	"Plan Item Correction Request": f"{_PLN_AUTHZ}.has_permission",
 	# REQ-CHG-001 v1.6 §8 — Procurement Requisition is NOT registered here:
 	# it has no single organisation_unit column (a combined Plan Item may
 	# carry more than one contributing department, §2.1), so the generic
