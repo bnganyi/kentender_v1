@@ -12,6 +12,7 @@ still works."""
 from __future__ import annotations
 
 import frappe
+import frappe.tests
 from frappe.utils import now_datetime
 
 from kentender_core.services.command_write_guard import CommandWriteError, maintenance_write
@@ -24,6 +25,34 @@ from kentender_procurement.departmental_needs.tests.test_departmental_needs_life
 from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
 
 BUSINESS_WRITERS = (AUTHOR, REVIEWER, "Administrator")
+
+NEEDS_FAMILY = (
+	"Departmental Need", "Departmental Need Revision", "Departmental Need Review Task", "Need Withdrawal Request",
+	"Need Planning Usage Projection", "Need Planning Intake Projection", "Need Planning Disposition Projection",
+)
+
+RIGHTS = ("write", "create", "delete", "submit", "cancel", "amend", "share")
+
+
+def rights_held(doctypes):
+	"""Every (doctype, role, right) the DocPerm and Custom DocPerm tables grant
+	among the write-side rights. Read from the tables, not from meta, so a
+	Custom DocPerm added after the last migrate is seen too."""
+	held = []
+	for table in ("DocPerm", "Custom DocPerm"):
+		for row in frappe.get_all(table, filters={"parent": ("in", list(doctypes))}, fields=["parent", "role", *RIGHTS]):
+			held.extend((row.parent, row.role, right) for right in RIGHTS if row.get(right))
+	return held
+
+
+
+class TestNeedsDocPermsGrantNoWrite(frappe.tests.IntegrationTestCase):
+	"""The DocPerm is the first lock (AUD-XC-008, AUD-XC-014): after a migrate
+	no role, System Manager included, holds a write-side right on a
+	command-only Needs record."""
+
+	def test_no_role_holds_a_write_side_right_on_a_needs_record(self):
+		self.assertEqual(rights_held(NEEDS_FAMILY), [])
 
 
 class NeedsWorld(DepartmentalNeedsCommandCase):

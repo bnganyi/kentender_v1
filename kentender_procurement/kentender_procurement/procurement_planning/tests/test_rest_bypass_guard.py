@@ -13,6 +13,7 @@ proved to still write the same records."""
 from __future__ import annotations
 
 import frappe
+import frappe.tests
 
 from kentender_core.services.command_write_guard import CommandWriteError
 from kentender_procurement.procurement_planning.services import plan_read, plan_workbench
@@ -20,6 +21,34 @@ from kentender_procurement.procurement_planning.tests import fixtures as fx
 from kentender_procurement.procurement_planning.tests.test_plan_finance import PlanFinanceCase, key
 
 WRITERS = (fx.PLANNER, fx.AUTHOR, fx.HOD, "Administrator")
+
+PLANNING_FAMILY = (
+	"Annual Plan", "Annual Plan Version", "Annual Plan Item", "Plan Source Allocation",
+	"Departmental Plan", "Departmental Plan Version", "Departmental Plan Entry",
+)
+
+RIGHTS = ("write", "create", "delete", "submit", "cancel", "amend", "share")
+
+
+def rights_held(doctypes):
+	"""Every (doctype, role, right) the DocPerm and Custom DocPerm tables grant
+	among the write-side rights. Read from the tables, not from meta, so a
+	Custom DocPerm added after the last migrate is seen too."""
+	held = []
+	for table in ("DocPerm", "Custom DocPerm"):
+		for row in frappe.get_all(table, filters={"parent": ("in", list(doctypes))}, fields=["parent", "role", *RIGHTS]):
+			held.extend((row.parent, row.role, right) for right in RIGHTS if row.get(right))
+	return held
+
+
+
+class TestPlanningDocPermsGrantNoWrite(frappe.tests.IntegrationTestCase):
+	"""The DocPerm is the first lock (AUD-XC-007): after a migrate no role,
+	System Manager included, holds a write-side right on a command-only
+	Planning record."""
+
+	def test_no_role_holds_a_write_side_right_on_a_planning_record(self):
+		self.assertEqual(rights_held(PLANNING_FAMILY), [])
 
 
 class TestPlanningRecordsAreCommandOnly(PlanFinanceCase):
