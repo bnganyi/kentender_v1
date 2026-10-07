@@ -187,7 +187,7 @@ class TestProcurementStageAndOwnerEvidence(ProgressCase):
 	def test_a_proceeding_no_owner_has_reported_on_carries_no_dated_table_at_all(self):
 		accepted, item_id = self.active_item()
 		item_name = plan_read.resolve_item_doc_name(item_id)
-		frappe.get_doc({
+		fixture_insert(frappe.get_doc({
 			"doctype": "Proceeding Coverage", "proceeding_type": "Requisition", "proceeding_id": "REQ-NO-DATES",
 			"requisition_reference": "REQ-NO-DATES", "plan_item_id": item_id,
 			"plan_item": item_id, "plan_version": frappe.db.get_value("Annual Plan Item", item_name, "plan_version"),
@@ -196,7 +196,7 @@ class TestProcurementStageAndOwnerEvidence(ProgressCase):
 			),
 			"covered_quantity": 1, "covered_value": 1000000, "authorisation_state": "Authorised",
 			"fixture_namespace": fx.NS,
-		}).insert(ignore_permissions=True)
+		}))
 		row = next(r for r in self.progress(accepted["annual_plan"])["items"] if r["plan_item_id"] == item_id)
 		self.assertEqual(row["proceedings"][0]["milestones"], [])
 		self.assertEqual(row["proceedings"][0]["durations"], [])

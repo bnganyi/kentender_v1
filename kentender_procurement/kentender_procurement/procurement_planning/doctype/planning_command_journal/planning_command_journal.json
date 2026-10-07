@@ -25,7 +25,7 @@
    "read_only": 1,
    "reqd": 1,
    "unique": 1,
-   "description": "\u00a78.2 command idempotency: a repeated key replays the recorded result to the same actor and command; the same key with a different actor, command or payload is rejected (PLN_IDEMPOTENCY_CONFLICT)."
+   "description": "§8.2 command idempotency: a repeated key replays the recorded result to the same actor and command; the same key with a different actor, command or payload is rejected (PLN_IDEMPOTENCY_CONFLICT)."
   },
   {
    "fieldname": "command",
@@ -102,15 +102,11 @@
  "permissions": [
   {
    "role": "System Manager",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Administrator",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Auditor",

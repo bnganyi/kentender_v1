@@ -29,7 +29,7 @@ from frappe.utils import cstr, now_datetime
 from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.services import envelope, plan_finance, plan_json, plan_publication
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
-from kentender_procurement.procurement_planning.write_family import planning_command
+from kentender_procurement.procurement_planning.write_family import planning_command, planning_write
 
 DESTINATION_ADAPTER = "KenTender Annual Plan Publication Sandbox"
 
@@ -189,15 +189,19 @@ def receive_publication_acknowledgement(
 		return {"ok": True, "idempotent": True, "action": "acknowledged", "acknowledgement": ack.name, "publication": ack.publication, "matched": bool(ack.matched)}
 	pub = envelope.locked("Plan Publication", publication)
 	matched = cstr(package_hash) == cstr(pub.package_hash)
-	ack = frappe.get_doc(
-		{
-			"doctype": "Publication Acknowledgement", "event_id": event_id, "publication": pub.name, "snapshot": pub.snapshot,
-			"destination": pub.destination, "package_hash": cstr(package_hash), "public_location": public_location,
-			"external_reference": external_reference, "acknowledged_at": acknowledged_at or now_datetime(), "received_at": now_datetime(),
-			"matched": 1 if matched else 0, "mismatch_reason": "" if matched else "The acknowledged package hash does not match this publication.",
-			"fixture_namespace": cstr(pub.fixture_namespace),
-		}
-	).insert(ignore_permissions=True)
+	# the acknowledgement is evidence even when it does not match: it is recorded
+	# first and the mismatch refused after, so the Planning write window covers
+	# only this insert and not the refusal
+	with planning_write():
+		ack = frappe.get_doc(
+			{
+				"doctype": "Publication Acknowledgement", "event_id": event_id, "publication": pub.name, "snapshot": pub.snapshot,
+				"destination": pub.destination, "package_hash": cstr(package_hash), "public_location": public_location,
+				"external_reference": external_reference, "acknowledged_at": acknowledged_at or now_datetime(), "received_at": now_datetime(),
+				"matched": 1 if matched else 0, "mismatch_reason": "" if matched else "The acknowledged package hash does not match this publication.",
+				"fixture_namespace": cstr(pub.fixture_namespace),
+			}
+		).insert(ignore_permissions=True)
 	if not matched:
 		fail("PLN_PUBLICATION_ACK_MISMATCH", detail={"publication": pub.name, "acknowledgement": ack.name})
 

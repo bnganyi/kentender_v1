@@ -12,9 +12,13 @@ effective-classification projection used for new Planning work.
 from frappe.model.document import Document
 
 from kentender_procurement.procurement_planning.errors import fail
+from kentender_core.services.command_write_guard import CommandWriteGuardMixin
+from kentender_procurement.procurement_planning.write_family import PLANNING_WRITE_FAMILY
 
 
-class DPPClassificationCorrection(Document):
+class DPPClassificationCorrection(CommandWriteGuardMixin, Document):
+	command_write_family = PLANNING_WRITE_FAMILY
+
 	def on_update(self) -> None:
 		if not self.is_new() and self.get_doc_before_save():
 			fail(
@@ -23,6 +27,7 @@ class DPPClassificationCorrection(Document):
 			)
 
 	def on_trash(self) -> None:
+		super().on_trash()
 		fail(
 			"PLN_BASELINE_LOCKED",
 			"A recorded classification correction cannot be deleted.",

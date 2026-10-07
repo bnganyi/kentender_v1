@@ -78,7 +78,7 @@
    "fieldtype": "JSON",
    "label": "Canonical Payload (OCDS planning stage)",
    "read_only": 1,
-   "description": "The exact approved payload transmitted, OCDS-shaped (\u00a74.13)."
+   "description": "The exact approved payload transmitted, OCDS-shaped (§4.13)."
   },
   {
    "fieldname": "legal_character",
@@ -126,15 +126,11 @@
  "permissions": [
   {
    "role": "System Manager",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Administrator",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Procurement Planner",

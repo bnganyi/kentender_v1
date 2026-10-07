@@ -27,6 +27,7 @@ import re
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.command_write_guard import fixture_insert
 from kentender_procurement.procurement_planning import errors
 
 MODULE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -330,11 +331,10 @@ class TestPlanningV123Schema(IntegrationTestCase):
 			"plan_item_id": plan_item[0], "milestone": "invitation", "actual_date": "2101-01-01", "recorded_at": frappe.utils.now_datetime(),
 			"fixture_namespace": "KENTENDER_TEST",
 		}
-		first = frappe.get_doc(base)
-		first.insert(ignore_permissions=True)
+		fixture_insert(frappe.get_doc(base))
 		self.addCleanup(frappe.db.delete, "Milestone Actual Event", {"producer": "schema-test"})
 		with self.assertRaises(Exception) as caught:
-			frappe.get_doc(base).insert(ignore_permissions=True)
+			fixture_insert(frappe.get_doc(base))
 		self.assertIn("Duplicate", str(caught.exception))
 
 	def test_no_doctype_slug_collides_with_a_desk_page(self):

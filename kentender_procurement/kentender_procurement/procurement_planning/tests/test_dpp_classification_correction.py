@@ -27,6 +27,7 @@ from uuid import uuid4
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.command_write_guard import CommandWriteError
 from kentender_procurement.procurement_planning.errors import ProcurementPlanningError
 from kentender_procurement.procurement_planning.services import (
 	budget_gateway,
@@ -37,6 +38,7 @@ from kentender_procurement.procurement_planning.services import (
 	plan_workbench,
 )
 from kentender_procurement.procurement_planning.tests import fixtures as fx
+from kentender_procurement.procurement_planning.write_family import planning_write
 
 
 def key() -> str:
@@ -203,10 +205,19 @@ class TestCorrectionGuards(ClassificationCase):
 		frappe.set_user("Administrator")
 		correction = frappe.get_doc("DPP Classification Correction", {"dpp_entry_id": entry_id})
 		correction.reason = "A different reason entirely, long enough to pass validation."
-		with self.assertRaises(ProcurementPlanningError):
+		# outside a Planning command the command-only guard refuses first (RG-02) ...
+		with self.assertRaises(CommandWriteError):
 			correction.save(ignore_permissions=True)
-		with self.assertRaises(ProcurementPlanningError):
+		with self.assertRaises(CommandWriteError):
 			frappe.delete_doc("DPP Classification Correction", correction.name, ignore_permissions=True)
+		# ... and inside one the record's own baseline lock still does
+		with planning_write():
+			correction = frappe.get_doc("DPP Classification Correction", correction.name)
+			correction.reason = "A different reason entirely, long enough to pass validation."
+			with self.assertRaises(ProcurementPlanningError):
+				correction.save(ignore_permissions=True)
+			with self.assertRaises(ProcurementPlanningError):
+				frappe.delete_doc("DPP Classification Correction", correction.name, ignore_permissions=True)
 
 	def test_an_unchanged_type_is_rejected(self):
 		submission, entry_id = self.accepted()

@@ -26,7 +26,7 @@ from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.services import budget_gateway, envelope, money, plan_finance
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_PROCUREMENT_PLANNER
-from kentender_procurement.procurement_planning.write_family import planning_command
+from kentender_procurement.procurement_planning.write_family import planning_command, planning_write
 
 DOCTYPE = "Plan Budget Revision Request"
 OPEN = "Open"
@@ -207,4 +207,7 @@ def receive_budget_revision_outcome(event: dict[str, Any]) -> None:
 	doc.resulting_line_version = cstr(event.get("resulting_line_version"))
 	if event.get("resulting_approved_amount") is not None:
 		doc.resulting_approved_amount = flt(event.get("resulting_approved_amount"))
-	doc.save(ignore_permissions=True)
+	# Budget's outcome consumer is not a user command: it writes the request's
+	# status through the Planning write window, the only way a request changes
+	with planning_write():
+		doc.save(ignore_permissions=True)

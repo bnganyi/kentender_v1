@@ -11,6 +11,8 @@ from uuid import uuid4
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.command_write_guard import fixture_insert
+
 from kentender_procurement.procurement_planning.services import (
 	budget_gateway,
 	dpp_lifecycle,
@@ -266,22 +268,24 @@ class TestGetDepartmentalPlan(DppReadCase):
 		frappe.set_user(fx.PLANNER)
 		import json as _json
 
-		frappe.get_doc(
-			{
-				"doctype": "Departmental Plan Validation Decision",
-				"decision_reference": "DEC-HIST-TEST-01",
-				"task": task.name,
-				"submission": task.submission,
-				"decision": "Return to department",
-				"issues": _json.dumps([
-					{"entry_id": added["entry_id"], "problem": "Amount unsupported", "correction": "Align the amount with the budget line."}
-				]),
-				"actor": fx.PLANNER,
-				"authority_snapshot": "{}",
-				"decided_at": frappe.utils.now_datetime(),
-				"command_idempotency_key": key(),
-			}
-		).insert(ignore_permissions=True)
+		fixture_insert(
+			frappe.get_doc(
+				{
+					"doctype": "Departmental Plan Validation Decision",
+					"decision_reference": "DEC-HIST-TEST-01",
+					"task": task.name,
+					"submission": task.submission,
+					"decision": "Return to department",
+					"issues": _json.dumps([
+						{"entry_id": added["entry_id"], "problem": "Amount unsupported", "correction": "Align the amount with the budget line."}
+					]),
+					"actor": fx.PLANNER,
+					"authority_snapshot": "{}",
+					"decided_at": frappe.utils.now_datetime(),
+					"command_idempotency_key": key(),
+				}
+			)
+		)
 		frappe.db.set_value("Departmental Plan Validation Task", task.name, "status", "Completed", update_modified=False)
 		frappe.db.set_value(
 			"Departmental Plan Version", opened["current_version"], "returned_from_submission", task.submission, update_modified=False,

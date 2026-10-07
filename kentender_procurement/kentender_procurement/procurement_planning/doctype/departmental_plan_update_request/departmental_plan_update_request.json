@@ -16,7 +16,6 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1,
    "delete": 0,
    "email": 0,
    "export": 1,

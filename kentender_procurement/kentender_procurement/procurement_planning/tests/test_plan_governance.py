@@ -16,6 +16,7 @@ from uuid import uuid4
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.command_write_guard import fixture_insert
 from kentender_procurement.procurement_planning.errors import ProcurementPlanningError
 from kentender_procurement.procurement_planning.services import (
 	publication_pipeline,
@@ -710,14 +711,16 @@ class TestReviewReadModel(GovernanceCase):
 			organisation_unit=fx.OU_ALPHA, fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
 		)
 		entry = frappe.get_doc("Departmental Plan Entry", {"dpp_version": opened["current_version"], "need": fx.NEED})
-		frappe.get_doc(
-			{
-				"doctype": "Departmental Need Decision", "decision_id": f"NDD-{key()[:10]}", "departmental_need": fx.NEED,
-				"need_revision": fx.NEED_V1, "action": "Accept for planning", "actor": fx.HOD,
-				"occurred_at": "2101-11-25 10:00:00", "prior_state": "Submitted", "result_state": "Accepted for planning",
-				"idempotency_key": key(), "fixture_namespace": fx.NS,
-			}
-		).insert(ignore_permissions=True)
+		fixture_insert(
+			frappe.get_doc(
+				{
+					"doctype": "Departmental Need Decision", "decision_id": f"NDD-{key()[:10]}", "departmental_need": fx.NEED,
+					"need_revision": fx.NEED_V1, "action": "Accept for planning", "actor": fx.HOD,
+					"occurred_at": "2101-11-25 10:00:00", "prior_state": "Submitted", "result_state": "Accepted for planning",
+					"idempotency_key": key(), "fixture_namespace": fx.NS,
+				}
+			)
+		)
 		funded = dpp_lifecycle.save_need_funding(
 			dpp_version=opened["current_version"], entry_id=entry.entry_id, budget_line=fx.BUDGET_LINE,
 			indicative_amount=indicative_amount, expected_record_version=opened["record_version"], idempotency_key=key(),

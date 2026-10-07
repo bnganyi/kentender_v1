@@ -172,7 +172,6 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1,
    "delete": 0,
    "email": 0,
    "export": 1,
@@ -180,8 +179,7 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
-   "share": 0,
-   "write": 1
+   "share": 0
   },
   {
    "create": 0,

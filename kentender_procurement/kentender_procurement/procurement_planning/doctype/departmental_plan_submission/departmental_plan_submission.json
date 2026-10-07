@@ -43,7 +43,7 @@
    "label": "Submission Number",
    "read_only": 1,
    "reqd": 1,
-   "description": "Equals the version_number of the Departmental Plan Version this snapshot certifies (PLN-CHG-001 v1.16 \u00a74.5)."
+   "description": "Equals the version_number of the Departmental Plan Version this snapshot certifies (PLN-CHG-001 v1.16 §4.5)."
   },
   {
    "fieldname": "entry_snapshots",
@@ -110,15 +110,11 @@
  "permissions": [
   {
    "role": "System Manager",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Administrator",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Departmental Author",

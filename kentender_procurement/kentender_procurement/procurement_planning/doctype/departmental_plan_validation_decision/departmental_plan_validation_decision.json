@@ -60,21 +60,21 @@
    "fieldtype": "JSON",
    "label": "Classifications",
    "read_only": 1,
-   "description": "On acceptance: one governed requirement type per submitted entry (entry_id \u2192 Requirement Type)."
+   "description": "On acceptance: one governed requirement type per submitted entry (entry_id → Requirement Type)."
   },
   {
    "fieldname": "derived_categories",
    "fieldtype": "Long Text",
    "label": "Derived Procurement Categories",
    "read_only": 1,
-   "description": "PLN-CHG-001 v1.23 \u00a74.4 \u2014 the category the server derived from each selected requirement type, frozen with the decision. Never client-supplied."
+   "description": "PLN-CHG-001 v1.23 §4.4 — the category the server derived from each selected requirement type, frozen with the decision. Never client-supplied."
   },
   {
    "fieldname": "issues",
    "fieldtype": "JSON",
    "label": "Issues",
    "read_only": 1,
-   "description": "On return: structured issues \u2014 affected entry, concise problem, exact correction required."
+   "description": "On return: structured issues — affected entry, concise problem, exact correction required."
   },
   {
    "fieldname": "actor",
@@ -125,15 +125,11 @@
  "permissions": [
   {
    "role": "System Manager",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Administrator",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Departmental Author",
