@@ -29,7 +29,27 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 # Parameter names that would let a request choose who acts.
-ACTING_PARAMETER_NAMES = frozenset({"user", "actor", "acting_user", "acting", "as_user", "on_behalf_of", "principal"})
+ACTING_PARAMETER_NAMES = frozenset(
+	{
+		"user",
+		"actor",
+		"acting_user",
+		"acting",
+		"as_user",
+		"on_behalf_of",
+		"principal",
+		"made_by",
+		"requested_by",
+		"performed_by",
+		"submitted_by",
+		"approved_by",
+		"decided_by",
+		"signed_by",
+		"recorded_by",
+		"issued_by",
+		"created_by",
+	}
+)
 
 # (module, function, parameter) where the name identifies the *subject* of the
 # operation, not the person performing it. The acting person is still the session
@@ -41,6 +61,20 @@ SUBJECT_NOT_ACTOR = {
 	("kentender_core.api.responsibility_api", "grant_responsibility", "user"),
 	("kentender_core.api.responsibility_api", "update_scheduled_responsibility", "user"),
 	("kentender_core.api.responsibility_api", "preview_responsibility_assignment", "user"),
+	# Bid Opening: `made_by` is the speaker the Secretary records a ceremony comment for (an observer or
+	# a bidder's representative), a label on the record. The actor is the session user, checked by `_call`.
+	("kentender_procurement.bid_opening.api", "record_comment_for_evaluation", "made_by"),
+}
+
+# `**kwargs` endpoints: the request can carry any field, `user` included, past the signature. Each is
+# reviewed here with the reason its body cannot forward a principal.
+KWARGS_REVIEWED = {
+	# The four Needs commands pass their kwargs through `_command_args`, which calls `_refuse_principal`
+	# (departmental_needs/api.py) and covered by test_departmental_needs_principal.
+	("kentender_procurement.departmental_needs.api", "save_need_draft", "**kwargs"),
+	("kentender_procurement.departmental_needs.api", "return_need_revision", "**kwargs"),
+	("kentender_procurement.departmental_needs.api", "accept_need_revision", "**kwargs"),
+	("kentender_procurement.departmental_needs.api", "decline_need_revision", "**kwargs"),
 }
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[3]
@@ -73,12 +107,14 @@ def _is_whitelist(node: ast.expr) -> bool:
 
 def _acting_parameters(names) -> list[str]:
 	return sorted(
-		name for name in names if name in ACTING_PARAMETER_NAMES or name.endswith("_actor") or name.endswith("_acting_user")
+		name
+		for name in names
+		if name in ACTING_PARAMETER_NAMES or name.endswith(("_actor", "_acting_user", "_made_by", "_requested_by"))
 	)
 
 
 def _is_tolerated(module: str, function: str, parameter: str) -> bool:
-	return (module, function, parameter) in SUBJECT_NOT_ACTOR
+	return (module, function, parameter) in SUBJECT_NOT_ACTOR or (module, function, parameter) in KWARGS_REVIEWED
 
 
 def static_offenders(source: str, module: str) -> list[tuple[str, str, str]]:
@@ -91,6 +127,8 @@ def static_offenders(source: str, module: str) -> list[tuple[str, str, str]]:
 		arguments = node.args
 		names = [a.arg for a in arguments.posonlyargs + arguments.args + arguments.kwonlyargs]
 		found += [(module, node.name, parameter) for parameter in _acting_parameters(names)]
+		if arguments.kwarg is not None:
+			found.append((module, node.name, f"**{arguments.kwarg.arg}"))
 	return found
 
 
@@ -100,6 +138,16 @@ class TestNoWhitelistedFunctionNamesTheActingPrincipal(IntegrationTestCase):
 		source = "import frappe\n\n@frappe.whitelist()\ndef release(reservation, actor=None):\n\tpass\n"
 		self.assertEqual(static_offenders(source, "m"), [("m", "release", "actor")])
 		self.assertEqual(static_offenders("def release(actor=None):\n\tpass\n", "m"), [])
+
+	def test_the_static_scan_sees_a_kwargs_endpoint_and_the_by_named_parameters(self):
+		"""RG-41: a `**kwargs` endpoint can forward `user` into a service whatever its signature says, and the
+		name list must not stop at `user`/`actor`."""
+		kwargs_source = "import frappe\n\n@frappe.whitelist()\ndef save(**kwargs):\n\tpass\n"
+		self.assertEqual(static_offenders(kwargs_source, "m"), [("m", "save", "**kwargs")])
+		for name in ("made_by", "requested_by", "performed_by", "approved_by", "submitted_by"):
+			source = f"import frappe\n\n@frappe.whitelist()\ndef act({name}=None):\n\tpass\n"
+			self.assertEqual(static_offenders(source, "m"), [("m", "act", name)], name)
+		self.assertEqual(static_offenders("def save(**kwargs):\n\tpass\n", "m"), [])
 
 	def test_no_decorated_whitelisted_function_takes_an_acting_user_parameter(self):
 		offenders = []
@@ -153,4 +201,4 @@ class TestNoWhitelistedFunctionNamesTheActingPrincipal(IntegrationTestCase):
 			source = path.read_text()
 			if "whitelist" in source:
 				live |= set(static_offenders(source, _module_name(app, path)))
-		self.assertEqual(sorted(SUBJECT_NOT_ACTOR - live), [])
+		self.assertEqual(sorted((SUBJECT_NOT_ACTOR | KWARGS_REVIEWED) - live), [])
