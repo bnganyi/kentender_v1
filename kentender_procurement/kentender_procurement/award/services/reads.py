@@ -129,7 +129,7 @@ def _history(doc) -> list[dict[str, Any]]:
 def _actions(doc, v: dict[str, Any]) -> dict[str, Any]:
 	hop, ao = v["hop"] and not v["technical"], v["ao"] and not v["technical"]
 	hop_prepares = hop and not guards.hop_is_decider(v["user"], doc)  # segregation of duties: the decider does not prepare the opinion
-	ao_decides = ao and not guards.ao_is_opinion_author(v["user"], doc)
+	ao_decides = ao and not guards.ao_is_barred(v["user"], doc)
 	c = state.cycle(doc)
 	open_ = not doc.cancelled and doc.stage != "Closed"
 	opinion_stage = open_ and doc.stage == "Opinion" and not cint(c.awaiting_report)

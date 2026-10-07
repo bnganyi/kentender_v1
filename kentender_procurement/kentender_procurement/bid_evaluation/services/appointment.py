@@ -21,7 +21,7 @@ from typing import Any
 import frappe
 from frappe.utils import cint, cstr
 
-from kentender_procurement.bid_evaluation.services import clock, guards, notify, people, prc, records, roster
+from kentender_procurement.bid_evaluation.services import clock, guards, notify, people, prc, records, roster, separation
 from kentender_procurement.bid_evaluation.services.errors import Guards, fail
 
 APPOINTMENT = roster.APPOINTMENT
@@ -32,6 +32,8 @@ REASONS = {
 	"declared_conflict": "{name} has an unresolved declared conflict for this tender.",
 	"duplicate": "{name} is listed more than once.",
 	"already_member": "{name} is already on this committee.",
+	"accounting_officer": "{name} is the Accounting Officer, who decides the award and cannot sit on its evaluation.",
+	"head_of_procurement": "{name} is the Head of Procurement, who issues the professional opinion and cannot evaluate this tender; the Head may be its secretary.",
 }
 
 
@@ -48,6 +50,9 @@ def _ineligibility(doc, user: str) -> str | None:
 		return "not_internal"
 	if opening.is_excluded_from_evaluation(doc.tender, user):
 		return "opening_independent"
+	separated = separation.panel_refusal(user, as_member=True)
+	if separated:
+		return separated
 	if frappe.db.exists(roster.DECLARATION, {"evaluation_case": doc.name, "member_user": user, "status": "Current", "choice": "Declare a conflict"}):
 		return "declared_conflict"
 	return None

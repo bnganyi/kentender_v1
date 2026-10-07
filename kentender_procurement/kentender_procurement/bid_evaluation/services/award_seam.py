@@ -22,7 +22,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.bid_evaluation.services import records
+from kentender_procurement.bid_evaluation.services import records, roster
 
 DELIVERY = "Evaluation Report Delivery"
 VERSION = "Evaluation Report Version"
@@ -104,10 +104,17 @@ def delivered_report(delivery: str) -> dict[str, Any] | None:
 		if lines:
 			recommended["quantity"] = f"{cstr(lines[0].get('quantity'))} {cstr(lines[0].get('unit'))}".strip()
 	members = ((content.get("tender_and_committee") or {}).get("members")) or []
+	# everyone who sat on the panel under any appointment of this evaluation (a replaced member evaluated too), and every secretary
+	appointments = frappe.get_all(roster.APPOINTMENT, filters={"evaluation_case": case.name}, pluck="name")
+	seated = frappe.get_all("Evaluation Committee Member", filters={"parent": ("in", appointments or [""])}, fields=["member_user", "capacity"])
+	secretaries = frappe.get_all("Evaluation Secretary Appointment", filters={"evaluation_case": case.name}, pluck="secretary_user")
+	panel = {"members": [{"user": m.member_user, "capacity": m.capacity} for m in seated], "chair": cstr(roster.chair(case.name)),
+		"secretary": cstr(roster.secretary(case.name)), "secretaries": sorted({u for u in secretaries if u})}
 	return {
 		"source_kind": "Evaluation", "delivery": row.name, "source_case": case.name, "report": version.name, "version": version.version_number,
 		"content_digest": version.content_digest, "digest_verified": verified, "delivered_at": row.delivered_at, "recipient": row.recipient_user,
 		"fixture_namespace": cstr(case.fixture_namespace), "tender": case.tender, "tender_reference": case.tender_reference,
+		"panel": panel,
 		"signatures": {"required": len(sigs), "signed": len([s for s in sigs if s.get("signed_at")]),
 			"members": [{"user": s["member"], "name": s["name"], "signed_at": s["signed_at"]} for s in sigs]},
 		"sections": content.get("sections") or [], "annexes": [{"name": s, "available": True} for s in (content.get("sections") or [])],

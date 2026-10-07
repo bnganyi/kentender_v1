@@ -12,6 +12,7 @@ import frappe
 from frappe.utils import cint
 
 from kentender_procurement.award.services import checks, issues, people, state
+from kentender_procurement.award.services.records import loads
 from kentender_procurement.award.services.errors import Guards, fail
 
 INTERNAL_READERS = (people.HEAD_OF_PROCUREMENT, people.ACCOUNTING_OFFICER, people.AUDITOR)
@@ -58,14 +59,45 @@ def hop_is_decider(user: str, doc) -> bool:
 	return bool(frappe.db.exists(state.DECISION, {"award_case": doc.name, "decided_by": user}))
 
 
+def _evaluation(doc) -> dict:
+	"""The panel and the report signers recorded with the delivered report this cycle decides on (owner
+	decision 7 Oct 2026; a report delivered before the panel was recorded carries only its signers)."""
+	report = state.current_report(doc)
+	snapshot = loads(report.snapshot_json, {}) if report else {}
+	panel = snapshot.get("panel") or {}
+	members = {m.get("user") for m in panel.get("members") or [] if m.get("user")} | ({panel.get("chair")} if panel.get("chair") else set())
+	signers = {m.get("user") for m in (snapshot.get("signatures") or {}).get("members") or [] if m.get("user")}
+	secretaries = {u for u in panel.get("secretaries") or [] if u} | ({panel["secretary"]} if panel.get("secretary") else set())
+	return {"members": members, "secretaries": secretaries, "signers": signers}
+
+
+def ao_was_on_the_evaluation(user: str, doc) -> bool:
+	"""The deciding Accounting Officer is not on this tender's evaluation panel in any capacity and did not sign its report."""
+	e = _evaluation(doc)
+	return user in e["members"] or user in e["secretaries"] or user in e["signers"]
+
+
+def hop_evaluated_the_tender(user: str, doc) -> bool:
+	"""The Head who issues the opinion was not a member or chair of this tender's evaluation (the Head may have been its secretary)."""
+	return user in _evaluation(doc)["members"]
+
+
+def ao_is_barred(user: str, doc) -> bool:
+	return ao_is_opinion_author(user, doc) or ao_was_on_the_evaluation(user, doc)
+
+
 def require_ao_not_opinion_author(user: str, doc) -> None:
 	if ao_is_opinion_author(user, doc):
 		_segregated(people.ACCOUNTING_OFFICER, "The person who prepared or signed the professional opinion cannot record the award decision.")
+	if ao_was_on_the_evaluation(user, doc):
+		_segregated(people.ACCOUNTING_OFFICER, "The Accounting Officer cannot decide an award on a tender whose evaluation they sat on or whose report they signed.")
 
 
 def require_hop_not_decider(user: str, doc) -> None:
 	if hop_is_decider(user, doc):
 		_segregated(people.HEAD_OF_PROCUREMENT, "The person who recorded the award decision cannot prepare or sign the professional opinion.")
+	if hop_evaluated_the_tender(user, doc):
+		_segregated(people.HEAD_OF_PROCUREMENT, "The Head of Procurement cannot issue the professional opinion on a tender they evaluated as a member or chair.")
 
 
 def open_case(doc, g: Guards | None = None) -> Guards:

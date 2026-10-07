@@ -17,7 +17,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.bid_evaluation.services import clock, guards, notify, people, prc, records
+from kentender_procurement.bid_evaluation.services import clock, guards, notify, people, prc, records, separation
 from kentender_procurement.bid_evaluation.services.errors import Guards
 from kentender_procurement.services import sequence
 
@@ -41,6 +41,10 @@ def assign_secretary(*, tender: str, secretary: str, appointment_reference: str,
 		if not own and not people.holds(secretary, people.PROCUREMENT_OFFICER):
 			checks.add("EVL_MEMBER_INELIGIBLE", person=secretary, person_name=people.full_name(secretary), reason="not_procurement_officer",
 				explanation=f"{people.full_name(secretary)} is not a procurement officer.")
+		reason = separation.panel_refusal(secretary, as_member=False, as_secretary=True)
+		if reason:
+			checks.add("EVL_MEMBER_INELIGIBLE", person=secretary, person_name=people.full_name(secretary), reason=reason,
+				explanation=f"{people.full_name(secretary)} is the Accounting Officer, who decides the award and cannot sit on its evaluation.")
 		checks.raise_if_any()
 		number = sequence.next_count(SECRETARY, {"evaluation_case": doc.name})
 		for name in frappe.get_all(SECRETARY, filters={"evaluation_case": doc.name, "status": "Current"}, pluck="name"):

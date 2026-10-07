@@ -152,6 +152,9 @@ def command(name: str, *, tender: str, idempotency_key: str, actor: str, payload
 	case = case_for(tender) if tender else None
 	if case:
 		lock(tender)
+		from kentender_procurement.bid_evaluation.services import separation
+
+		separation.require_standing(case, actor, name)  # same-tender separation, at every command (RG-15)
 	try:
 		with atomic(), prc_owner.acting(case):
 			if not _claim(key, name, payload_hash, actor, case):
