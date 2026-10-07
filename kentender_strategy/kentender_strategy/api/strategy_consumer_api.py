@@ -86,8 +86,11 @@ def list_active_targets(plan_code: str | None = None):
 	return consumer.active_target_options(plan_code=plan_code or None)
 
 
-@frappe.whitelist()
 def create_strategy_snapshot(plan_version_id: str, objective_id: str, correlation_key: str):
+	"""Not an endpoint (RG-34): it writes an audit event and a journal row, and the only gate was the read
+	gate every internal user passes. Planning freezes lineage by calling the service in-process
+	(`procurement_planning.services.strategy_gateway`); the function stays here for that contract and
+	refuses portal and other external accounts."""
 	require_downstream_read()
 	return run_idempotent(
 		correlation_key,

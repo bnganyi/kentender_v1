@@ -30,6 +30,8 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime
 
+from kentender_core.services.command_write_guard import command_write
+
 JOURNAL = "Strategy Command Journal"
 CONFLICT = "STRATEGY_IDEMPOTENCY_CONFLICT"
 KEY_REQUIRED = "STRATEGY_IDEMPOTENCY_REQUIRED"
@@ -68,19 +70,20 @@ def _claim(key: str, document_type: str, document_name: str, action: str, actor:
 	savepoint = f"strj_{uuid4().hex[:12]}"
 	frappe.db.savepoint(savepoint)
 	try:
-		frappe.get_doc(
-			{
-				"doctype": JOURNAL,
-				"idempotency_key": key,
-				"document_type": document_type,
-				"document_name": document_name,
-				"action": action,
-				"actor": actor,
-				"payload_hash": digest,
-				"created_at": now_datetime(),
-				"result": "",
-			}
-		).insert(ignore_permissions=True)
+		with command_write("Strategy"):
+			frappe.get_doc(
+				{
+					"doctype": JOURNAL,
+					"idempotency_key": key,
+					"document_type": document_type,
+					"document_name": document_name,
+					"action": action,
+					"actor": actor,
+					"payload_hash": digest,
+					"created_at": now_datetime(),
+					"result": "",
+				}
+			).insert(ignore_permissions=True)
 	except (frappe.UniqueValidationError, frappe.DuplicateEntryError):
 		frappe.db.rollback(save_point=savepoint)
 		frappe.clear_last_message()
