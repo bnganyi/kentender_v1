@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from decimal import Decimal
 from typing import Any
 
 import frappe
@@ -29,6 +30,7 @@ from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.services import (
 	budget_gateway,
 	envelope,
+	money,
 	needs_intake,
 	references,
 )
@@ -372,9 +374,9 @@ def save_need_funding(
 		fail("PLN_DPP_STALE")
 	if cstr(entry.not_proceeding_reason).strip():
 		fail("PLN_ENTRY_INCOMPLETE", "This requirement is recorded as not proceeding. Restore it to planned requirements before funding it.", {"entry_id": entry.entry_id})
-	_validate_funding(root, budget_line, indicative_amount)
+	amount = _validate_funding(root, budget_line, indicative_amount)
 	entry.budget_line = budget_line
-	entry.indicative_amount = flt(indicative_amount)
+	entry.indicative_amount = amount
 	entry.save(ignore_permissions=True)
 	envelope.bump(root)
 	result = _result(root, version, action="need_funding_saved")
@@ -457,12 +459,36 @@ def set_need_planning_disposition(
 	return result
 
 
-def _validate_funding(root, budget_line: str, indicative_amount) -> None:
-	if flt(indicative_amount) <= 0:
+def _exact_amount(root, value) -> Decimal:
+	"""RG-03 / AUD-XC-117 — an indicative amount is an exact positive decimal at
+	the Budget currency's precision (PLN §4.1): blank or zero is an incomplete
+	entry; NaN, Infinity, a negative, excess decimals or an amount the column
+	cannot hold is `PLN_MONEY_PRECISION_INVALID`, before any effect. Never
+	rounded."""
+	if value is None or cstr(value).strip() == "":
 		fail("PLN_ENTRY_INCOMPLETE", detail={"field": "indicative_amount"})
+	amount = money.parse_money(
+		value, precision=budget_gateway.money_precision(root.fiscal_year), field="indicative_amount", allow_zero=True
+	)
+	if amount == 0:
+		fail("PLN_ENTRY_INCOMPLETE", detail={"field": "indicative_amount"})
+	return amount
+
+
+def _exact_quantity(value, unit: str) -> Decimal:
+	"""The quantity at the governed precision of its unit: whole numbers only for
+	a unit ERPNext marks `must_be_whole_number`, otherwise the Needs quantity
+	precision. Never rounded."""
+	precision = 0 if frappe.db.get_value("UOM", cstr(unit), "must_be_whole_number") else money.DEFAULT_QUANTITY_PRECISION
+	return money.parse_quantity(value, precision=precision, field="quantity")
+
+
+def _validate_funding(root, budget_line: str, indicative_amount) -> Decimal:
+	amount = _exact_amount(root, indicative_amount)
 	eligible = budget_gateway.eligible_line_ids(fiscal_year=root.fiscal_year, source_org_unit=root.organisation_unit)
 	if cstr(budget_line) not in eligible:
 		fail("PLN_BUDGET_LINE_INELIGIBLE", detail={"field": "budget_line"})
+	return amount
 
 
 @planning_command
@@ -490,7 +516,7 @@ def save_direct_requirement(
 	_require_author(actor, root)
 	envelope.check_record_version(root, expected_record_version)
 	_require_mutable_current(root, version)
-	_validate_direct_values(root, values)
+	values = _validate_direct_values(root, values)
 
 	if not entry_id and cstr(version.returned_from_submission):
 		# §5.1.2 — a correction keeps the returned Submission's fixed cohort
@@ -529,20 +555,22 @@ def save_direct_requirement(
 	return result
 
 
-def _validate_direct_values(root, values: dict[str, Any]) -> None:
+def _validate_direct_values(root, values: dict[str, Any]) -> dict[str, Any]:
+	"""Validate a direct requirement and return the values to store: the quantity
+	and the indicative amount as the exact decimals they were validated as."""
 	missing = [field for field in DIRECT_FIELDS if not cstr(values.get(field)).strip()]
 	if missing:
 		fail("PLN_ENTRY_INCOMPLETE", f"Complete the highlighted requirement fields before submitting: {', '.join(missing)}.", {"fields": missing})
-	if flt(values.get("quantity")) <= 0:
-		fail("PLN_ENTRY_INCOMPLETE", "Quantity must be greater than zero.", {"field": "quantity"})
 	# CFG v0.9 §4.5 — units come only from enabled ERPNext UOM records.
 	if not frappe.db.get_value("UOM", cstr(values.get("unit")), "enabled"):
 		fail("PLN_ENTRY_INCOMPLETE", "Select an enabled unit of measure.", {"field": "unit"})
+	quantity = _exact_quantity(values.get("quantity"), cstr(values.get("unit")))
 	start, end = _fy_bounds(root.fiscal_year)
 	required_by = getdate(values.get("required_by_date"))
 	if not start or not (start <= required_by <= end):
 		fail("PLN_ENTRY_INCOMPLETE", "Required by must fall inside the selected Financial Year.", {"field": "required_by_date"})
-	_validate_funding(root, cstr(values.get("budget_line")), values.get("indicative_amount"))
+	amount = _validate_funding(root, cstr(values.get("budget_line")), values.get("indicative_amount"))
+	return {**values, "quantity": quantity, "indicative_amount": amount}
 
 
 @planning_command

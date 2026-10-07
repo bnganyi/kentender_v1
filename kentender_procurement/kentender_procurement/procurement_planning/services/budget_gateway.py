@@ -105,6 +105,22 @@ def budget_currency(fiscal_year: str) -> str:
 	return currency
 
 
+def money_precision(fiscal_year: str) -> int:
+	"""Decimal places of the Budget's currency for the Fiscal Year (BUD §4.8
+	CurrencyBasis), read from the native Currency record the Budget itself reads.
+	Never defaulted to two: an unknown or unsupported precision blocks the write
+	(PLN §4.1, `PLN_MONEY_PRECISION_INVALID`)."""
+	from kentender_procurement.procurement_planning.errors import fail
+	from kentender_procurement.procurement_planning.services import money
+
+	currency = budget_currency(fiscal_year)
+	units = str(int(frappe.db.get_value("Currency", currency, "fraction_units") or 0))
+	digits = len(units) - 1 if units.startswith("1") and set(units[1:]) <= {"0"} else None
+	if digits is None or digits not in money.SUPPORTED_PRECISIONS:
+		fail("PLN_MONEY_PRECISION_INVALID", "The currency precision for this amount is not configured.", {"currency": currency})
+	return digits
+
+
 def _totals_as_text(planned_totals: dict[str, Any]) -> dict[str, str]:
 	"""PLN §4.1 — amounts cross the Budget contract as exact decimal strings,
 	never as binary floats (Budget reads them with its own exact parser)."""

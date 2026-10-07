@@ -104,7 +104,7 @@
    "fieldtype": "Float",
    "label": "Quantity",
    "reqd": 1,
-   "precision": "2",
+   "precision": "3",
    "description": "Full source quantity, greater than zero. Read-only for Need-origin."
   },
   {

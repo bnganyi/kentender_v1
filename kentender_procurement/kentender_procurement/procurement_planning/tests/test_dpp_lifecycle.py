@@ -346,7 +346,10 @@ class TestSubmission(PlanningCommandCase):
 
 	def test_first_submission_outside_window_is_refused(self):
 		opened = self.open_alpha(fy=fx.FY_CLOSED)
-		added = self.add_direct(opened, required_by_date="2104-05-31")
+		# the closed year has no Budget of its own in this world (its eligible lines are
+		# patched), so the Budget currency precision an amount is read at is supplied
+		with patch.object(budget_gateway, "money_precision", return_value=2):
+			added = self.add_direct(opened, required_by_date="2104-05-31")
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			self.submit({**opened, "record_version": added["record_version"]})
 		self.assertEqual(caught.exception.code, "PLN_WINDOW_CLOSED")

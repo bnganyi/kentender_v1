@@ -138,7 +138,7 @@
    "label": "Quantity",
    "read_only": 1,
    "reqd": 1,
-   "precision": "2",
+   "precision": "3",
    "description": "Full accepted source quantity."
   },
   {
