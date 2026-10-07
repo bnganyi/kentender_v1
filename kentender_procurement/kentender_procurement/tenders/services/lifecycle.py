@@ -205,9 +205,14 @@ def return_tender_for_correction(*, tender: str, reason: str, affected_task: str
 def require_segregation(version, actor: str, *, blocked_columns: tuple[str, ...]) -> None:
 	"""§6: the person who prepared or submitted a Version cannot approve it;
 	the person who prepared, submitted or approved cannot authorise its
-	publication. Decided from the immutable Version columns."""
+	publication. Decided from the immutable Version columns, and "prepared"
+	is every officer who edited the Draft or an earlier Version it was copied
+	from, read from the event log, not only the person who started the
+	Tender (AUD-TND-008, §6 "Checks use the immutable Version audit")."""
 	for column in blocked_columns:
 		if cstr(version.get(column)) == actor:
+			fail("TND_SOD_BLOCKED", detail={"conflicting_action": column, "version": version.name})
+		if column == "prepared_by" and actor in draft_commands.draft_editors(version.tender):
 			fail("TND_SOD_BLOCKED", detail={"conflicting_action": column, "version": version.name})
 
 

@@ -118,6 +118,18 @@ class TendersError(frappe.ValidationError):
 				pass
 
 
+def forget_refusal() -> None:
+	"""A refusal that is answered rather than returned (an idempotent winner,
+	AUD-TND-013) must not leave its error fields on the successful response."""
+	response = getattr(getattr(frappe, "local", None), "response", None)
+	if response is not None:
+		for key in ("kt_error_code", "kt_error_message", "kt_error_detail"):
+			try:
+				response.pop(key, None)
+			except Exception:
+				pass
+
+
 def fail(code: str, message: str = "", detail: dict | None = None, *, audit_preserved: bool = False) -> None:
 	if code not in ERROR_CODES:
 		raise ValueError(
