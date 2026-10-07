@@ -76,7 +76,7 @@ a development/test site, so no endpoint and no production process can use it.
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from typing import Any
 
 import frappe
@@ -156,6 +156,32 @@ def maintenance_write(family: str, *, reason: str):
 		raise CommandWriteError("COMMAND_MAINTENANCE_REFUSED", doctype=family)
 	with command_write(family):
 		yield
+
+
+def purge_doc(doctype: str, name: str, *, reason: str = "test and seed clean-up") -> bool:
+	"""Delete one document for test/seed clean-up, opening the maintenance
+	window of its own command-write family when its controller has one (so the
+	caller need not know which family guards the doctype). Same restrictions as
+	`maintenance_write`: never inside an HTTP request, never off a development
+	or test site. Returns False when the document is already gone."""
+	if not frappe.db.exists(doctype, name):
+		return False
+	doc = frappe.get_doc(doctype, name)
+	family = getattr(doc, "command_write_family", "")
+	with maintenance_write(family, reason=reason) if family else nullcontext():
+		frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+	return True
+
+
+def fixture_insert(doc, *, reason: str = "test fixture row", **insert_kwargs):
+	"""Insert one fixture row of a command-only doctype for a test, under the
+	maintenance window of the doctype's own family. Same restrictions as
+	`maintenance_write`. Returns the inserted document."""
+	family = getattr(doc, "command_write_family", "")
+	insert_kwargs.setdefault("ignore_permissions", True)
+	with maintenance_write(family, reason=reason) if family else nullcontext():
+		doc.insert(**insert_kwargs)
+	return doc
 
 
 # -- field comparison ---------------------------------------------------------
