@@ -155,6 +155,17 @@ def _supersede_and_activate(doc) -> None:
 	doc.save(ignore_permissions=True)
 
 
+def authorise_action(plan_version_id: str, action: str) -> None:
+	"""The caller's standing for `action` on this version, independent of the
+	version's current state — the check the command journal makes before it
+	answers a replay (AUD-XC-131). Raises the §10 responsibility error."""
+	capability = next((cap for (_status, act), (_next, cap) in TRANSITIONS.items() if act == action), None)
+	if capability is None:
+		frappe.throw(_("Unknown action {0}").format(action), frappe.ValidationError, title="STRATEGY_INVALID_STATE")
+	doc = frappe.get_doc("Strategic Plan Version", resolve_version_name(plan_version_id) or plan_version_id)
+	require_plan_version_capability(frappe.session.user, capability, doc)
+
+
 def transition_plan_version(
 	plan_version_id: str,
 	action: str,

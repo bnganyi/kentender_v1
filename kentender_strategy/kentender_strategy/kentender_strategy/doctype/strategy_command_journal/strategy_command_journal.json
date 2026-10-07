@@ -10,6 +10,8 @@
   "document_type",
   "document_name",
   "action",
+  "actor",
+  "payload_hash",
   "col_meta",
   "created_at",
   "result"
@@ -44,6 +46,19 @@
    "reqd": 1
   },
   {
+   "fieldname": "actor",
+   "fieldtype": "Data",
+   "label": "Actor",
+   "description": "The session user who ran the first execution. A key is bound to this user."
+  },
+  {
+   "fieldname": "payload_hash",
+   "fieldtype": "Data",
+   "label": "Payload Hash",
+   "length": 64,
+   "description": "SHA-256 of the command's canonical inputs. The same key with other inputs is a conflict."
+  },
+  {
    "fieldname": "col_meta",
    "fieldtype": "Column Break",
    "label": "Col Meta"
@@ -66,7 +81,7 @@
  "istable": 0,
  "editable_grid": 0,
  "links": [],
- "modified": "2026-08-24 00:00:00.000000",
+ "modified": "2026-10-07 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Strategy",
  "name": "Strategy Command Journal",

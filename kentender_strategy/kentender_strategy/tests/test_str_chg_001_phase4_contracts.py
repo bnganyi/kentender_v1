@@ -42,6 +42,10 @@ _PROFILE_ROLE = {
 }
 
 
+def _token(version: str) -> str:
+	return str(frappe.db.get_value("Strategic Plan Version", version, "modified"))
+
+
 class Phase4TestBase(FrappeTestCase):
 	def setUp(self):
 		pin_review_date(self, "2044-01-01")
@@ -468,12 +472,15 @@ class TestLifecycleCommandDispatch(Phase4TestBase):
 		self._fill_hierarchy(version)
 
 		frappe.set_user(author)
-		out = api.submit_strategy_version(version)
+		out = api.submit_strategy_version(version, expected_version=_token(version), idempotency_key=f"disp-s-{self.suffix}")
 		self.assertEqual(out["status"], "Submitted for approval")
 
 		frappe.set_user(approver)
-		out = api.approve_strategy_version(version)
+		out = api.approve_strategy_version(version, expected_version=_token(version), idempotency_key=f"disp-a-{self.suffix}")
 		self.assertEqual(out["status"], "Active")
+		frappe.set_user("Administrator")
+		for key in (f"disp-s-{self.suffix}", f"disp-a-{self.suffix}"):
+			self._cleanup.append(("Strategy Command Journal", frappe.db.get_value("Strategy Command Journal", {"idempotency_key": key}, "name")))
 
 
 class TestActiveContentImmutability(Phase4TestBase):

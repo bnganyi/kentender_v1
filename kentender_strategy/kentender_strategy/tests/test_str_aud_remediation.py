@@ -29,6 +29,24 @@ LIFECYCLE_DOCTYPES = (
 
 
 class AudRemediationBase(Phase4TestBase):
+	def _api_command(self, command, version):
+		"""A Strategy command through its whitelisted endpoint, which requires the
+		expected version and an idempotency key (STR §8, KT-STD-001 §11)."""
+		key = f"aud-{command.__name__}-{version}-{self.suffix}"
+		token = str(frappe.db.get_value("Strategic Plan Version", version, "modified"))
+		try:
+			return command(version, expected_version=token, idempotency_key=key)
+		finally:
+			name = frappe.db.get_value("Strategy Command Journal", {"idempotency_key": key}, "name")
+			if name:
+				self._cleanup.append(("Strategy Command Journal", name))
+
+	def _api_submit(self, version):
+		return self._api_command(api.submit_strategy_version, version)
+
+	def _api_approve(self, version):
+		return self._api_command(api.approve_strategy_version, version)
+
 	def _author(self, label="author"):
 		user = self._user(label)
 		self._assign(user, "CAP-STRATEGY-AUTHOR")
@@ -141,9 +159,9 @@ class TestCommandOnlyWrites(AudRemediationBase):
 		_, version = self._plan_and_version()
 		self._fill_hierarchy(version)
 		frappe.set_user(author)
-		self.assertEqual(api.submit_strategy_version(version)["status"], "Submitted for approval")
+		self.assertEqual(self._api_submit(version)["status"], "Submitted for approval")
 		frappe.set_user(approver)
-		self.assertEqual(api.approve_strategy_version(version)["status"], "Active")
+		self.assertEqual(self._api_approve(version)["status"], "Active")
 
 
 class TestChangeSetConfinement(AudRemediationBase):
@@ -321,9 +339,9 @@ class TestOpenEndedApplicability(AudRemediationBase):
 		save_strategy_plan_draft(
 			{"plan_id": plan, "plan_version_id": v2, "effective_from": "2043-01-01", "effective_to": None}
 		)
-		api.submit_strategy_version(v2)
+		self._api_submit(v2)
 		frappe.set_user(approver)
-		self.assertEqual(api.approve_strategy_version(v2)["status"], "Active")
+		self.assertEqual(self._api_approve(v2)["status"], "Active")
 		frappe.set_user("Administrator")
 		ctx = consumer.resolve_strategy_context(as_of_date="2043-06-01")
 		self.assertEqual(ctx["primary_plan"]["version_id"], v2)
@@ -380,10 +398,10 @@ class TestExpiredApplicability(AudRemediationBase):
 		_, version = self._plan_and_version(effective_from="2040-07-01", effective_to="2041-06-30")
 		self._fill_hierarchy(version)
 		frappe.set_user(author)
-		api.submit_strategy_version(version)
+		self._api_submit(version)
 		frappe.set_user(approver)
 		with self.assertRaises(frappe.ValidationError) as caught:
-			api.approve_strategy_version(version)
+			self._api_approve(version)
 		self.assertIn("ended", str(caught.exception))
 		frappe.set_user("Administrator")
 		self.assertEqual(frappe.db.get_value("Strategic Plan Version", version, "status"), "Submitted for approval")

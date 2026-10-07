@@ -15,10 +15,10 @@ import json
 import frappe
 
 from kentender_strategy.services import strategy_consumer as consumer
-from kentender_strategy.services.strategy_authorization import require_downstream_read
+from kentender_strategy.services.strategy_authorization import require_downstream_read, require_plan_create_capability
 from kentender_strategy.services import strategy_transitions as transitions
 from kentender_strategy.services import strategy_writes as writes
-from kentender_strategy.services.strategy_idempotency import run_idempotent
+from kentender_strategy.services.strategy_idempotency import require_command_inputs, run_idempotent
 
 
 def _obj(value):
@@ -97,37 +97,58 @@ def create_strategy_snapshot(plan_version_id: str, objective_id: str, correlatio
 		lambda: consumer.create_strategy_snapshot(
 			plan_version_id=plan_version_id, objective_id=objective_id, correlation_key=correlation_key
 		),
+		payload={"plan_version_id": plan_version_id, "objective_id": objective_id},
+		authorise=require_downstream_read,
 	)
 
 
 # --- §8/§8.2 command contracts ---------------------------------------------------
 #
-# v1.8 (plan D6): every write command is retriable. The client captures one
-# `idempotency_key` per attempt and reuses it on retry and after a lost
-# response; the journal returns the original committed result on replay, so
-# no attempt ever creates a second plan, version, submission or decision.
+# Every write command is retriable and carries its attempt's `idempotency_key`
+# (KT-STD-001 §11: "every retriable command carries an idempotency key"); one
+# on an existing version also carries `expected_version` (STR §8: "every write
+# command requires the expected record version"). The client captures one key
+# per attempt and reuses it on retry and after a lost response. The journal
+# (`strategy_idempotency`) binds the key to the actor, the command and its
+# payload, answers only after authorisation, and returns the original
+# committed result on replay, so no attempt ever creates a second plan,
+# version, submission or decision. The key's payload is the command's own
+# inputs, so the same key with other inputs is `STRATEGY_IDEMPOTENCY_CONFLICT`.
+
+
+def _authorise_author() -> None:
+	"""Strategy Author, Site-wide (STR §7). State-independent, so a replay
+	after the command has taken effect is still answered only to an author."""
+	require_plan_create_capability(frappe.session.user)
 
 
 @frappe.whitelist()
 def save_strategy_plan_draft(payload=None, expected_version: str | None = None, idempotency_key: str | None = None):
 	data = _obj(payload) or {}
+	updating = bool(data.get("plan_id"))
+	key, token = require_command_inputs(idempotency_key, expected_version, version_required=updating)
 	return run_idempotent(
-		idempotency_key or None,
+		key,
 		"Strategic Plan",
 		str(data.get("plan_id") or "new"),
 		"save_strategy_plan_draft",
-		lambda: writes.save_strategy_plan_draft(data, expected_version=expected_version or None),
+		lambda: writes.save_strategy_plan_draft(data, expected_version=token),
+		payload={"payload": data, "expected_version": token},
+		authorise=_authorise_author,
 	)
 
 
 @frappe.whitelist()
 def create_strategy_successor_version(plan_id: str, idempotency_key: str | None = None):
+	key, _token = require_command_inputs(idempotency_key)
 	return run_idempotent(
-		idempotency_key or None,
+		key,
 		"Strategic Plan",
 		plan_id,
 		"create_strategy_successor_version",
 		lambda: writes.create_strategy_successor_version(plan_id),
+		payload={"plan_id": plan_id},
+		authorise=_authorise_author,
 	)
 
 
@@ -141,19 +162,21 @@ def save_strategy_structure_draft(
 	expected_version: str | None = None,
 	idempotency_key: str | None = None,
 ):
+	key, token = require_command_inputs(idempotency_key, expected_version, version_required=True)
+	change_set = {
+		"nodes": _obj(nodes) or [],
+		"indicators": _obj(indicators) or [],
+		"targets": _obj(targets) or [],
+		"deletes": _obj(deletes) or [],
+	}
 	return run_idempotent(
-		idempotency_key or None,
+		key,
 		"Strategic Plan Version",
 		plan_version_id,
 		"save_strategy_structure_draft",
-		lambda: writes.save_strategy_structure_draft(
-			plan_version_id,
-			nodes=_obj(nodes) or [],
-			indicators=_obj(indicators) or [],
-			targets=_obj(targets) or [],
-			deletes=_obj(deletes) or [],
-			expected_version=expected_version or None,
-		),
+		lambda: writes.save_strategy_structure_draft(plan_version_id, **change_set, expected_version=token),
+		payload={"plan_version_id": plan_version_id, **change_set, "expected_version": token},
+		authorise=_authorise_author,
 	)
 
 
@@ -166,12 +189,34 @@ def discard_strategy_plan_draft(
 	"""discard_strategy_plan_draft — Strategy Author only, Draft and never
 	submitted only. Permanently removes the version (and, for a plan's only
 	version, the plan itself)."""
+	key, token = require_command_inputs(idempotency_key, expected_version, version_required=True)
 	return run_idempotent(
-		idempotency_key or None,
+		key,
 		"Strategic Plan Version",
 		plan_version_id,
 		"discard_strategy_plan_draft",
-		lambda: writes.discard_strategy_plan_draft(plan_version_id, expected_version=expected_version or None),
+		lambda: writes.discard_strategy_plan_draft(plan_version_id, expected_version=token),
+		payload={"plan_version_id": plan_version_id, "expected_version": token},
+		authorise=_authorise_author,
+	)
+
+
+def _transition(action: str, command: str, plan_version_id: str, expected_version, correlation_id, idempotency_key, *, reason: str | None = None) -> dict:
+	key, token = require_command_inputs(idempotency_key, expected_version, version_required=True)
+	return run_idempotent(
+		key,
+		"Strategic Plan Version",
+		plan_version_id,
+		command,
+		lambda: transitions.transition_plan_version(
+			plan_version_id,
+			action,
+			reason=reason,
+			expected_version=token,
+			correlation_id=correlation_id or key,
+		),
+		payload={"plan_version_id": plan_version_id, "reason": reason, "expected_version": token, "correlation_id": correlation_id or None},
+		authorise=lambda: transitions.authorise_action(plan_version_id, action),
 	)
 
 
@@ -182,18 +227,7 @@ def submit_strategy_version(
 	correlation_id: str | None = None,
 	idempotency_key: str | None = None,
 ):
-	return run_idempotent(
-		idempotency_key or None,
-		"Strategic Plan Version",
-		plan_version_id,
-		"submit_strategy_version",
-		lambda: transitions.transition_plan_version(
-			plan_version_id,
-			"Submit for approval",
-			expected_version=expected_version or None,
-			correlation_id=correlation_id or idempotency_key or None,
-		),
-	)
+	return _transition("Submit for approval", "submit_strategy_version", plan_version_id, expected_version, correlation_id, idempotency_key)
 
 
 @frappe.whitelist()
@@ -206,19 +240,7 @@ def return_strategy_version(
 ):
 	"""§8 return_strategy_version — Strategy Approver only, Submitted for
 	approval only. Requires a 10-500 character correction reason."""
-	return run_idempotent(
-		idempotency_key or None,
-		"Strategic Plan Version",
-		plan_version_id,
-		"return_strategy_version",
-		lambda: transitions.transition_plan_version(
-			plan_version_id,
-			"Return",
-			reason=reason,
-			expected_version=expected_version or None,
-			correlation_id=correlation_id or idempotency_key or None,
-		),
-	)
+	return _transition("Return", "return_strategy_version", plan_version_id, expected_version, correlation_id, idempotency_key, reason=reason)
 
 
 @frappe.whitelist()
@@ -232,15 +254,4 @@ def approve_strategy_version(
 	approval only. Revalidates readiness, immediate applicability and
 	overlap and activates the version, atomically superseding the plan's
 	previous Active version in the same transaction."""
-	return run_idempotent(
-		idempotency_key or None,
-		"Strategic Plan Version",
-		plan_version_id,
-		"approve_strategy_version",
-		lambda: transitions.transition_plan_version(
-			plan_version_id,
-			"Approve",
-			expected_version=expected_version or None,
-			correlation_id=correlation_id or idempotency_key or None,
-		),
-	)
+	return _transition("Approve", "approve_strategy_version", plan_version_id, expected_version, correlation_id, idempotency_key)
