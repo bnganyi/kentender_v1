@@ -97,7 +97,7 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	# --- v1.12 rows carried until the Phase 2 exit patch retires them (PLN18-213)
 	"Annual Plan Publication": {"publication_reference", "plan_version", "destination", "attempt_number", "result", "payload_hash", "payload", "legal_character", "external_reference", "attempted_at", "acknowledged_at", "fixture_namespace"},
 	# --- infrastructure
-	"Planning Command Journal": {"idempotency_key", "command", "document_type", "document_name", "request_fingerprint", "actor", "result", "occurred_at", "fixture_namespace"},
+	"Planning Command Journal": {"idempotency_key", "command", "document_type", "document_name", "request_fingerprint", "actor", "standing", "result", "occurred_at", "fixture_namespace"},
 }
 
 # v1.18 §4.6/§4.7 columns whose replacement lands in a later Phase 2 sub-phase;

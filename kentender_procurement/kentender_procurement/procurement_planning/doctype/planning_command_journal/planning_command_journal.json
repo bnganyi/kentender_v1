@@ -12,6 +12,7 @@
   "document_name",
   "request_fingerprint",
   "actor",
+  "standing",
   "result",
   "occurred_at",
   "fixture_namespace"
@@ -24,7 +25,7 @@
    "read_only": 1,
    "reqd": 1,
    "unique": 1,
-   "description": "\u00a78.2 command idempotency: a repeated key replays the recorded result; the same key with a different fingerprint is rejected."
+   "description": "\u00a78.2 command idempotency: a repeated key replays the recorded result to the same actor and command; the same key with a different actor, command or payload is rejected (PLN_IDEMPOTENCY_CONFLICT)."
   },
   {
    "fieldname": "command",
@@ -60,6 +61,13 @@
    "options": "User",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "standing",
+   "fieldtype": "Small Text",
+   "label": "Standing",
+   "read_only": 1,
+   "description": "The active responsibilities the actor held when the command ran. A replay is answered only while the actor still holds them all (AUD-XC-131). Empty on rows written before the key was bound to its actor and command."
   },
   {
    "fieldname": "result",

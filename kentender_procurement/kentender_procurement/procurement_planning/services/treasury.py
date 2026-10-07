@@ -38,6 +38,7 @@ def _approved_version(plan_version: str):
 	return version
 
 
+@planning_command
 def record_treasury_submission(
 	*, plan_version: str, submitted_at, channel: str, destination: str, dispatch_reference: str,
 	exact_document_confirmed, supporting_attachment: str = "", idempotency_key: str, user: str | None = None,

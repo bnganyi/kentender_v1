@@ -597,6 +597,7 @@ def list_requisition_drawdowns(*, requisition_reference: str, user: str | None =
 	]
 
 
+@planning_command
 def reverse_requisition_drawdown(
 	*, drawdown_reference: str, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
@@ -727,6 +728,7 @@ def _authorise_disposition(actor: str, correction_request: str, expected_record_
 	return doc, assignment
 
 
+@planning_command
 def start_plan_item_correction(
 	*, correction_request: str, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
@@ -842,6 +844,7 @@ def resolve_plan_item_correction_request(
 	return result
 
 
+@planning_command
 def close_plan_item_correction_without_change(
 	*, correction_request: str, reason: str, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:

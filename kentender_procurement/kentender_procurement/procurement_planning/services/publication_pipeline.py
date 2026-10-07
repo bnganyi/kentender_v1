@@ -303,6 +303,7 @@ def reconcile_publication(*, publication: str, idempotency_key: str, user: str |
 	return result
 
 
+@planning_command
 def retry_publication(*, publication: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `RetryPublication` — technical; the SAME frozen manifest and
 	identity, from a confirmed Failed publication only (Indeterminate must

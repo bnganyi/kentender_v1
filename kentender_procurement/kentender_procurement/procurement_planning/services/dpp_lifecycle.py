@@ -54,11 +54,23 @@ DIRECT_FIELDS = (
 # --- shared helpers ---------------------------------------------------------
 
 
-def _root_by_scope(organisation_unit: str, fiscal_year: str):
+def _root_by_scope(organisation_unit: str, fiscal_year: str, *, creating: bool = False):
+	"""The department's plan root for the year, or `None`.
+
+	`creating=True` is for a command that will create the root when there is
+	none: it first takes an advisory lock for the department and year, then
+	reads the latest committed row. Two requests starting the same plan then
+	run one after the other and the second finds the first's root instead of
+	making another (MariaDB REPEATABLE READ would hide the committed row from a
+	plain read taken before the wait: AUD-XC-130)."""
+	if creating:
+		lock = f"pln:dpp:{organisation_unit}:{fiscal_year}"[:64]
+		if not frappe.db.sql("select get_lock(%s, 10)", lock)[0][0]:
+			fail("PLN_STALE_WRITE", "Departmental plan creation is busy. Try again.")
 	name = frappe.db.get_value(
-		"Departmental Plan", {"fiscal_year": fiscal_year, "organisation_unit": organisation_unit}, "name"
+		"Departmental Plan", {"fiscal_year": fiscal_year, "organisation_unit": organisation_unit}, "name", for_update=creating
 	)
-	return frappe.get_doc("Departmental Plan", name) if name else None
+	return frappe.get_doc("Departmental Plan", name, for_update=creating) if name else None
 
 
 def _version(version_name: str):
@@ -205,7 +217,7 @@ def open_departmental_plan(
 	if not frappe.db.exists("Organisation Unit", organisation_unit):
 		fail("PLN_NO_CONTEXT")
 	authz.require_dpp_author(organisation_unit, actor, masked=False)
-	root = _root_by_scope(organisation_unit, fiscal_year)
+	root = _root_by_scope(organisation_unit, fiscal_year, creating=True)
 
 	if root is None:
 		root = frappe.get_doc(
@@ -290,7 +302,7 @@ def ensure_departmental_plan(
 	if not frappe.db.exists("Organisation Unit", organisation_unit):
 		return {"ok": False, "action": "no_context", "reason": "PLN_NO_CONTEXT"}
 
-	root = _root_by_scope(organisation_unit, fiscal_year)
+	root = _root_by_scope(organisation_unit, fiscal_year, creating=True)
 	if root is None:
 		root = frappe.get_doc(
 			{

@@ -17,7 +17,9 @@ dimension — §1.1):
 	PUB-{PE}-{FYstart}-{plan NNN}-V{n}-A{n} publication attempt
 
 Sequence scans take a MariaDB advisory lock (NDS pattern) so two concurrent
-creates cannot mint the same number.
+creates cannot mint the same number, then probe the next candidate with a
+locking read so a number committed by the request that held the lock is seen
+(MariaDB REPEATABLE READ would otherwise hide it).
 """
 
 from __future__ import annotations
@@ -25,6 +27,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cstr, getdate
 
+from kentender_core.utils.series import next_free_reference
 from kentender_procurement.procurement_planning.errors import fail
 
 
@@ -66,8 +69,10 @@ def _next(doctype: str, field: str, prefix: str, *, width: int = 3) -> str:
 	if not frappe.db.sql("select get_lock(%s, 10)", lock)[0][0]:
 		fail("PLN_STALE_WRITE", "Reference generation is busy. Try again.")
 	rows = frappe.get_all(doctype, filters={field: ["like", f"{prefix}%"]}, pluck=field, limit_page_length=0)
-	seq = max([int(ref[len(prefix):]) for ref in rows if cstr(ref)[len(prefix):].isdigit()] or [0]) + 1
-	return f"{prefix}{seq:0{width}d}"
+	highest = max([int(ref[len(prefix):]) for ref in rows if cstr(ref)[len(prefix):].isdigit()] or [0])
+	# `rows` is this transaction's snapshot: a number another request committed
+	# while this one waited for the lock is not in it (AUD-XC-130).
+	return next_free_reference(doctype, field, prefix, highest, width)
 
 
 def dpp_reference(organisation_unit: str, fiscal_year: str) -> str:
@@ -119,7 +124,8 @@ def finance_task_reference(plan_reference_value: str) -> str:
 	`FNT-MOH-2027-001` (§14.6); later requests on the same Plan append a
 	sequence (`FNT-MOH-2027-001-2`)."""
 	base = "FNT-" + cstr(plan_reference_value).removeprefix("PLN-")
-	if not frappe.db.exists("Plan Finance Task", base):
+	# a locking read: a task another request just committed is not in this snapshot
+	if not frappe.db.sql("select 1 from `tabPlan Finance Task` where name=%s for update", (base,)):
 		return base
 	return _next("Plan Finance Task", "task_reference", base + "-", width=1)
 

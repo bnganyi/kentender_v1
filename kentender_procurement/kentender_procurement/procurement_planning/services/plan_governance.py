@@ -233,6 +233,7 @@ def _require_correction_cohort(version) -> None:
 		fail("PLN_CORRECTION_COHORT_VIOLATION", detail={"source_keys": strangers})
 
 
+@planning_command
 def record_late_activation_explanation(*, plan_version: str, reason: str, supersedes: str = "", idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `RecordLateActivationExplanation` — the Accounting Officer's
 	append-only accountability for an initial Plan adopted after the
@@ -367,6 +368,7 @@ def _freeze_and_task(version, plan, actor: str, assignment, *, idempotency_key: 
 	).insert(ignore_permissions=True)
 
 
+@planning_command
 def submit_consolidated_plan(*, plan_version: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `SubmitConsolidatedPlan` — **Sign and submit Annual Plan** by the
 	Head of Procurement Function (§6.2, D6): preparation accountability for
@@ -684,6 +686,7 @@ def return_plan_version(*, task: str, reason: str, task_token: str, idempotency_
 	return result
 
 
+@planning_command
 def submit_corrected_plan(*, plan_version: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `SubmitCorrectedPlan` — the same final-submission service and
 	guards as `SubmitConsolidatedPlan` (Finance basis evaluation, new
