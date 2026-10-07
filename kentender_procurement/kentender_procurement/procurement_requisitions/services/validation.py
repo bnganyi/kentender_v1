@@ -31,6 +31,7 @@ from typing import Any
 
 from kentender_procurement.procurement_requisitions.services import precision, restrictive_terms
 from kentender_procurement.procurement_requisitions.services.catalogue import CATALOGUE_BY_KEY, TEXT
+from kentender_procurement.procurement_requisitions.services.catalogue import inapplicable_categories as catalogue_inapplicable
 
 BLOCKING = "Blocking"
 WARNING = "Warning"
@@ -84,6 +85,10 @@ class Finding:
 			"code": self.code, "severity": self.severity, "group": self.group, "task": TASK_OF_GROUP[self.group],
 			"section": self.section, "message": self.message, "row": self.row,
 		}
+
+
+def cstr_(value) -> str:
+	return "" if value is None else str(value).strip()
 
 
 def _row(kind: str, row_id: str) -> dict[str, str]:
@@ -222,6 +227,46 @@ def _equipment_items(version: dict[str, Any], package: dict[str, Any]) -> list[F
 # --- technical_support -----------------------------------------------------
 
 
+def _row_categories(row: dict[str, Any], package: dict[str, Any]) -> list[str]:
+	"""The equipment categories a technical row applies to: the one item it
+	names, or every item for an `All items` row."""
+	items = package.get("items") or []
+	if row.get("applies_to_scope") == "Item":
+		return [i.get("equipment_category") for i in items if i.get("requisition_item_id") == row.get("applies_to_id")]
+	return [i.get("equipment_category") for i in items]
+
+
+def _restrictive(text: str, *, reason: str = "") -> bool:
+	return restrictive_terms.is_restrictive(text, reason=reason)
+
+
+def _restrictive_free_text(version: dict[str, Any], package: dict[str, Any]) -> list[Finding]:
+	"""§6.3/§6.5, REQ19-AC-018 — a brand, model, proprietary certification or
+	named technology is Blocking in every free-text field that reaches the
+	Tender, not only in technical TEXT rows. Rows with no recorded-reason
+	column cannot meet the "or equivalent plus a functional reason" test, so
+	only brand-free wording clears them."""
+	message = "A brand or restrictive term lacks permitted equivalent treatment."
+	findings: list[Finding] = []
+
+	def check(group: str, section: str, kind: str, row_id: str, *texts: str) -> None:
+		if any(_restrictive(text) for text in texts if text):
+			findings.append(Finding("RESTRICTIVE_TERM", BLOCKING, group, section, message, _row(kind, row_id)))
+
+	check("request_drawdown", "request_information", "field", "requirement_title", version.get("requirement_title") or "")
+	for item in package.get("items") or []:
+		check("equipment_items", "equipment", "item", item.get("requisition_item_id", ""), item.get("item_name") or "", item.get("intended_use") or "")
+	check("technical_support", "warranty_support", "field", "support_description", package.get("support_description") or "")
+	for row in package.get("acceptance_requirements") or []:
+		if row.get("row_state") != "Proposed":
+			check("services_acceptance", "acceptance", "acceptance", row.get("acceptance_requirement_id", ""), row.get("pass_condition") or "", row.get("other_evidence_name") or "")
+	for row in package.get("related_services") or []:
+		check("services_acceptance", "services", "service", row.get("service_requirement_id", ""), row.get("required_result") or "", row.get("quantity_or_coverage") or "", row.get("other_evidence_name") or "")
+	for row in package.get("supporting_materials") or []:
+		check("services_acceptance", "supporting_materials", "material", row.get("supporting_material_id", ""), row.get("title") or "", row.get("purpose") or "", row.get("other_document_type") or "")
+	return findings
+
+
 def _technical_support(package: dict[str, Any]) -> list[Finding]:
 	group = "technical_support"
 	findings: list[Finding] = []
@@ -241,13 +286,19 @@ def _technical_support(package: dict[str, Any]) -> list[Finding]:
 		seen.add(target)
 		if not row.get("required_value_json"):
 			findings.append(Finding("MISSING_REQUIRED_FIELD", BLOCKING, group, "technical", f"Enter the value for {ch.label}.", _row("technical_requirement", row_id)))
+		missing = catalogue_inapplicable(ch, _row_categories(row, package))
+		if missing:
+			findings.append(Finding("CONTROL_INVALID", BLOCKING, group, "technical", f"{ch.label} does not apply to {', '.join(missing)} equipment.", _row("technical_requirement", row_id)))
 		text_value = ""
+		other_text = cstr_(row.get("other_value"))
 		try:
 			parsed = json.loads(row.get("required_value_json") or "{}")
 			text_value = str(parsed.get("value") or parsed.get("other") or "")
+			other_text = " ".join(t for t in (other_text, str(parsed.get("other") or "")) if t)
 		except (TypeError, ValueError):
 			text_value = str(row.get("required_value_json"))
-		if ch.control == TEXT and restrictive_terms.is_restrictive(text_value, reason=row.get("reason", "")):
+		scanned = text_value if ch.control == TEXT else ""
+		if _restrictive(" ".join(t for t in (scanned, other_text) if t), reason=row.get("reason", "")):
 			findings.append(Finding("RESTRICTIVE_TERM", BLOCKING, group, "technical", "A brand or restrictive term lacks permitted equivalent treatment.", _row("technical_requirement", row_id)))
 		if ch.key == "other_essential_characteristic" and not (20 <= len((row.get("reason") or "").strip()) <= 300):
 			findings.append(Finding("MISSING_REQUIRED_FIELD", BLOCKING, group, "technical", "Give a reason of 20–300 characters for this essential characteristic.", _row("technical_requirement", row_id)))
@@ -322,6 +373,7 @@ def validate(*, version: dict[str, Any], package: dict[str, Any], eligibility: d
 		+ _equipment_items(version, package)
 		+ _technical_support(package)
 		+ _services_acceptance(version, package)
+		+ _restrictive_free_text(version, package)
 	)
 	for extra in review_findings or []:
 		findings.append(Finding(extra["code"], BLOCKING, "review_submit", "review", extra.get("message", "The canonical preview could not be produced.")))

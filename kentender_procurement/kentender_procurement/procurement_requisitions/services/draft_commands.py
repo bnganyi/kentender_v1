@@ -520,6 +520,23 @@ def _visible_technical(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	return out
 
 
+def _require_applicable(ch, scope: str, target: str, package_version) -> None:
+	"""§6.3 / REQ19-AC-009 — a characteristic is accepted only for equipment
+	categories it applies to: the one item a row names, or every item for an
+	`All items` row. (With no item yet there is no category to contradict;
+	validation judges the row once items exist.)"""
+	categories = [i.equipment_category for i in package_version.items if scope != "Item" or i.requisition_item_id == target]
+	missing = catalogue.inapplicable_categories(ch, categories)
+	if missing:
+		message = f"{ch.label} does not apply to {', '.join(missing)} equipment."
+		fail("REQ_CONTROL_INVALID", message, {"fields": {ch.key: message}})
+
+
+def _require_applicable_rows(rows: list[dict[str, Any]], package_version) -> None:
+	for row in rows:
+		_require_applicable(catalogue.CATALOGUE_BY_KEY[row["characteristic_key"]], cstr(row.get("applies_to_scope") or "All items"), cstr(row.get("applies_to_id")), package_version)
+
+
 def _visible_acceptance(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	out = []
 	for row in rows or []:
@@ -572,7 +589,9 @@ def save_requirement_proposal_draft(*, requisition: str, proposal_digest: str, t
 	records.require_shared(scope)
 	envelope.check_record_version(package_version, expected_record_version)
 	_require_current_proposal(package_version, proposal_digest, profile_key or package_version.standard_profile_key, profile_version or package_version.standard_profile_version)
-	_write_package_rows(package_version, _visible_technical(technical), _visible_acceptance(acceptance), "Proposed")
+	visible_technical = _visible_technical(technical)
+	_require_applicable_rows(visible_technical, package_version)
+	_write_package_rows(package_version, visible_technical, _visible_acceptance(acceptance), "Proposed")
 	_apply_support(package_version, support)
 	envelope.bump(package_version)
 	result = {"ok": True, "idempotent": False, "action": "saved", "record_version": package_version.record_version, "review_state": package_version.standard_package_review_state}
@@ -593,6 +612,7 @@ def apply_selected_requirement_package(*, requisition: str, profile_key: str, pr
 	envelope.check_record_version(package_version, expected_record_version)
 	_require_current_proposal(package_version, proposal_digest, profile_key, profile_version)
 	selected_technical = _visible_technical(technical)
+	_require_applicable_rows(selected_technical, package_version)
 	selected_acceptance = _visible_acceptance(acceptance)
 	if not selected_acceptance:
 		fail("REQ_CONTROL_INVALID", "Keep at least one objective acceptance check.", {"fields": {"acceptance": "Keep at least one objective acceptance check."}})
@@ -735,6 +755,7 @@ def add_technical_requirement(*, requisition: str, values: dict[str, Any], expec
 	def mutate(package_version, version):
 		scope, target = _target(values, package_version)
 		row = _visible_technical([{**values, "selected": True}])[0]
+		_require_applicable(catalogue.CATALOGUE_BY_KEY[row["characteristic_key"]], scope, target, package_version)
 		ids = [r.technical_requirement_id for r in package_version.technical_requirements]
 		row_id = _next_id("TECH-", ids)
 		package_version.append("technical_requirements", _technical_values(row_id, {**row, "applies_to_scope": scope, "applies_to_id": target}, "Confirmed", len(ids) + 1))
@@ -750,6 +771,7 @@ def update_technical_requirement(*, requisition: str, technical_requirement_id: 
 			authz.not_found()
 		scope, target = _target({"applies_to_scope": values.get("applies_to_scope", existing.applies_to_scope), "applies_to_id": values.get("applies_to_id", existing.applies_to_id)}, package_version)
 		row = _visible_technical([{**values, "characteristic_key": existing.characteristic_key, "selected": True}])[0]
+		_require_applicable(catalogue.CATALOGUE_BY_KEY[row["characteristic_key"]], scope, target, package_version)
 		fresh = _technical_values(existing.technical_requirement_id, {**row, "applies_to_scope": scope, "applies_to_id": target}, existing.row_state, existing.row_order)
 		for field_name, value in fresh.items():
 			existing.set(field_name, value)

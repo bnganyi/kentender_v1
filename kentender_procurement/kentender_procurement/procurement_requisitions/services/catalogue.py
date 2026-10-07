@@ -152,6 +152,15 @@ def characteristics_for(equipment_category: str) -> list[Characteristic]:
 	return [c for c in CHARACTERISTICS if c.applies(equipment_category)]
 
 
+def inapplicable_categories(characteristic: Characteristic, categories) -> list[str]:
+	"""The categories (in first-seen order, once each) a characteristic does
+	not apply to — the one applicability rule §6.3 states ("only
+	characteristics applicable to the selected category") for every caller:
+	the Draft commands that refuse a row and the validation that blocks one
+	a category change left behind."""
+	return [c for c in dict.fromkeys(categories or ()) if c and not characteristic.applies(c)]
+
+
 #: §6.4 — the catalogue-driven starting proposal for a supported category
 #: other than Laptop (`proposal_for`). Only rows with a code-owned starting
 #: value are proposed; a `None` entry is offered in the catalogue but never

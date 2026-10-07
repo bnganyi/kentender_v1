@@ -171,3 +171,117 @@ class TestRequirementsRules(unittest.TestCase):
 		finding = next(f for f in report["findings"] if f["section"] == "warranty_support")
 		self.assertEqual(finding["message"], "Enter the minimum warranty in months.")
 		self.assertEqual(finding["row"], {"kind": "field", "id": "minimum_warranty_months"})
+
+
+def _codes(report, code):
+	return [f for f in report["findings"] if f["code"] == code]
+
+
+class TestCategoryApplicability(unittest.TestCase):
+	"""AUD-REQ-005 (REQ §6.3, REQ19-AC-009): only characteristics applicable to the
+	selected category are accepted; a category change revalidates the rows."""
+
+	def _with_row(self, key, value, *, scope="All items", target="", items=None):
+		rows = package()["technical_requirements"]
+		rows.append({"technical_requirement_id": "TECH-090", "row_state": "Confirmed", "characteristic_key": key, "applies_to_scope": scope, "applies_to_id": target, "required_value_json": json.dumps({"value": value}), "reason": ""})
+		extra = {} if items is None else {"items": items}
+		return validation.validate(version=version(), package=package(technical_requirements=rows, **extra), eligibility=eligibility())
+
+	def test_a_printer_only_characteristic_on_all_laptop_items_blocks(self):
+		report = self._with_row("print_speed", 30)
+		found = _codes(report, "CONTROL_INVALID")
+		self.assertEqual([f["row"] for f in found], [{"kind": "technical_requirement", "id": "TECH-090"}])
+		self.assertIn("Print speed", found[0]["message"])
+		self.assertEqual(found[0]["severity"], "Blocking")
+
+	def test_an_all_items_row_must_suit_every_item_category(self):
+		items = package()["items"]
+		items[1] = {**items[1], "equipment_category": "Monitor"}
+		report = self._with_row("memory", 8, items=items)  # Laptop and Monitor: memory is not a Monitor characteristic
+		self.assertTrue(_codes(report, "CONTROL_INVALID"))
+
+	def test_an_item_scoped_row_is_judged_by_that_items_category_only(self):
+		items = package()["items"]
+		items[1] = {**items[1], "equipment_category": "Monitor"}
+		def mine(report):
+			return [f for f in _codes(report, "CONTROL_INVALID") if f["row"]["id"] == "TECH-090"]
+
+		self.assertFalse(mine(self._with_row("display_resolution", "QHD", scope="Item", target="RQI-002", items=items)))
+		self.assertTrue(mine(self._with_row("display_resolution", "QHD", scope="Item", target="RQI-001", items=items)))
+
+	def test_a_category_change_makes_the_old_rows_blocking(self):
+		items = [{**i, "equipment_category": "Monitor"} for i in package()["items"]]
+		report = validation.validate(version=version(), package=package(items=items), eligibility=eligibility())
+		labels = " ".join(f["message"] for f in _codes(report, "CONTROL_INVALID"))
+		self.assertIn("Memory", labels)  # the laptop package's rows no longer fit Monitors
+
+	def test_the_complete_laptop_package_is_unaffected(self):
+		report = validation.validate(version=version(), package=package(), eligibility=eligibility())
+		self.assertFalse(_codes(report, "CONTROL_INVALID"))
+
+	def test_catalogue_applies_is_the_one_rule(self):
+		self.assertFalse(catalogue.CATALOGUE_BY_KEY["print_speed"].applies("Monitor"))
+		self.assertEqual(catalogue.inapplicable_categories(catalogue.CATALOGUE_BY_KEY["print_speed"], ["Printer", "Monitor", "Monitor"]), ["Monitor"])
+
+
+class TestRestrictiveWordingEverywhereItReachesTheTender(unittest.TestCase):
+	"""AUD-REQ-006 (REQ §6.3/§6.5, REQ19-AC-018): brand or restrictive wording
+	is a Blocking finding in every free-text field that reaches the Tender,
+	not only in technical TEXT rows."""
+
+	def _blocked(self, report, kind, row_id):
+		return [f for f in _codes(report, "RESTRICTIVE_TERM") if f["row"] == {"kind": kind, "id": row_id}]
+
+	def test_an_item_name_or_intended_use(self):
+		items = package()["items"]
+		items[0] = {**items[0], "item_name": "Dell Latitude 5440 laptops"}
+		items[1] = {**items[1], "intended_use": "Field deployment on Lenovo ThinkPad units for staff"}
+		report = validation.validate(version=version(), package=package(items=items), eligibility=eligibility())
+		self.assertTrue(self._blocked(report, "item", "RQI-001"))
+		self.assertTrue(self._blocked(report, "item", "RQI-002"))
+
+	def test_an_acceptance_pass_condition(self):
+		rows = package()["acceptance_requirements"]
+		rows[0] = {**rows[0], "pass_condition": "Delivered units must be Dell Latitude 5440 devices"}
+		report = validation.validate(version=version(), package=package(acceptance_requirements=rows), eligibility=eligibility())
+		self.assertTrue(self._blocked(report, "acceptance", rows[0]["acceptance_requirement_id"]))
+
+	def test_a_related_service_result_and_coverage(self):
+		service = {"service_requirement_id": "SVC-001", "service_type": "Installation", "required_result": "Install and enrol all laptops in Microsoft Intune", "quantity_or_coverage": "All units", "completion_date": "2027-09-30", "acceptance_evidence": "Test result"}
+		report = validation.validate(version=version(related_services_required=True), package=package(related_services=[service]), eligibility=eligibility())
+		self.assertFalse(self._blocked(report, "service", "SVC-001"))
+		service = {**service, "required_result": "Install the Dell Command Update tool on all laptops"}
+		report = validation.validate(version=version(related_services_required=True), package=package(related_services=[service]), eligibility=eligibility())
+		self.assertTrue(self._blocked(report, "service", "SVC-001"))
+
+	def test_a_supporting_material_title_and_purpose(self):
+		material = {"supporting_material_id": "MAT-001", "title": "Dell Latitude 5440 datasheet", "purpose": "Shows the layout", "treatment": "Reference only", "linked_requirement_ids_json": "[]"}
+		report = validation.validate(version=version(), package=package(supporting_materials=[material]), eligibility=eligibility())
+		self.assertTrue(self._blocked(report, "material", "MAT-001"))
+
+	def test_the_other_value_of_a_non_text_control(self):
+		rows = package()["technical_requirements"]
+		rows.append({"technical_requirement_id": "TECH-091", "row_state": "Confirmed", "characteristic_key": "storage_type", "applies_to_scope": "All items", "applies_to_id": "", "required_value_json": json.dumps({"value": "Other", "other": "Samsung PM9A1"}), "other_value": "Samsung PM9A1", "reason": ""})
+		report = validation.validate(version=version(), package=package(technical_requirements=rows), eligibility=eligibility())
+		self.assertTrue(self._blocked(report, "technical_requirement", "TECH-091"))
+
+	def test_the_requirement_title(self):
+		report = validation.validate(version=version(requirement_title="Dell laptops for digital health rollout"), package=package(), eligibility=eligibility())
+		self.assertTrue(self._blocked(report, "field", "requirement_title"))
+
+	def test_equivalent_wording_with_a_recorded_reason_is_allowed_where_the_row_has_a_reason(self):
+		rows = package()["technical_requirements"]
+		idx = next(i for i, r in enumerate(rows) if r["characteristic_key"] == "processor_requirement")
+		rows[idx] = {**rows[idx], "required_value_json": json.dumps({"value": "Intel Core i7 or equivalent"}), "reason": "Needed to run the national health information client at clinic sites."}
+		report = validation.validate(version=version(), package=package(technical_requirements=rows), eligibility=eligibility())
+		self.assertFalse(_codes(report, "RESTRICTIVE_TERM"))
+
+	def test_a_row_with_no_reason_field_cannot_be_excused_by_equivalent_wording_alone(self):
+		rows = package()["acceptance_requirements"]
+		rows[0] = {**rows[0], "pass_condition": "Delivered units are Dell Latitude 5440 or equivalent"}
+		report = validation.validate(version=version(), package=package(acceptance_requirements=rows), eligibility=eligibility())
+		self.assertTrue(self._blocked(report, "acceptance", rows[0]["acceptance_requirement_id"]))
+
+	def test_the_clean_package_has_no_finding(self):
+		report = validation.validate(version=version(), package=package(), eligibility=eligibility())
+		self.assertFalse(_codes(report, "RESTRICTIVE_TERM"))
