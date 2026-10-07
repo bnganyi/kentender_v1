@@ -304,7 +304,7 @@ class TestEndpointsSurviveTheFrameworksTransportFields(RequestShapedCase):
 			"record_treasury_submission", plan_version=plan["version_reference"], submitted_at="2101-11-01 09:00:00", channel="Email",
 			destination="treasury@example.test", dispatch_reference="MOH/APP/2101/001", exact_document_confirmed="true", idempotency_key=key(),
 		)
-		frappe.set_user("Administrator")
+		frappe.set_user(fx.HOPF)  # RG-01: the Head of Procurement Function presses Publish
 		published = self.call("publish_annual_plan", plan_version=plan["version_reference"], idempotency_key=key())
 		self.assertEqual(published["result"], "Acknowledged")
 		# PLN-CHG-001 v1.23 §7.5 (PLN23-AC-001) — the forecast cascade has no

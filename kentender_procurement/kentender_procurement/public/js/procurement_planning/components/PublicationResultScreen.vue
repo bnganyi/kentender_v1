@@ -167,6 +167,18 @@
 					>
 						Correct submission details
 					</button>
+					<!-- The Head of Procurement Function's, once Treasury
+					     submission is recorded and nothing holds the plan (RG-01). -->
+					<button
+						v-if="task.can_publish"
+						type="button"
+						class="btn btn-primary"
+						data-testid="pub-publish"
+						:disabled="pending"
+						@click="$emit('publish')"
+					>
+						Publish annual plan
+					</button>
 					<!-- The technical operator's, and only after a confirmed
 					     failure. An unknown result gets reconciliation instead. -->
 					<button
@@ -292,7 +304,7 @@ const props = defineProps({
 });
 
 defineEmits([
-	"record-treasury", "correct-treasury", "retry", "reconcile",
+	"record-treasury", "correct-treasury", "publish", "retry", "reconcile",
 	"request-withdrawal", "decide-withdrawal", "explain-late", "navigate", "back",
 	"download-plan", "download-plan-data", "view-evidence",
 ]);

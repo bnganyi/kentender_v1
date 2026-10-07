@@ -420,16 +420,13 @@ def submit_corrected_plan(plan_version: str, expected_record_version, idempotenc
 
 @frappe.whitelist()
 def publish_annual_plan(plan_version: str, idempotency_key: str) -> dict[str, Any]:
-	"""§7.2 `PublishAnnualPlan` — the system worker; runs inline here (no RQ
-	worker on this bench) and would otherwise be `frappe.enqueue`d post-commit
-	by `ApproveAnnualPlan`. Technical/System Manager only."""
-	from kentender_core.services.authorization import is_technical
-	from kentender_procurement.procurement_planning.services import planning_authorization as authz
+	"""`PublishApprovedPlan` (RG-01, owner decision 7 Oct 2026) — the Head of
+	Procurement Function presses Publish on an approved Annual Plan. The actor is
+	the session user; no technical role may call it (a technical caller is the
+	retry/reconcile route, never a business Publish)."""
 	from kentender_procurement.procurement_planning.services import publication_pipeline
 
-	if not is_technical(authz.actor(None)):
-		authz.not_found()
-	return publication_pipeline.publish_annual_plan(plan_version=plan_version, idempotency_key=idempotency_key)
+	return publication_pipeline.publish_approved_plan(plan_version=plan_version, idempotency_key=idempotency_key)
 
 
 @frappe.whitelist()

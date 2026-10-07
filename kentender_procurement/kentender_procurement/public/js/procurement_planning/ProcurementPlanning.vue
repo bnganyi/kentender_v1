@@ -207,6 +207,7 @@
 						:task="publication"
 						:pending="pending"
 						:error-summary="errorSummary"
+						@publish="onPublishPlan"
 						@retry="onRetryPublication"
 						@reconcile="onReconcilePublication"
 						@record-treasury="treasuryDialog = true"
@@ -1466,6 +1467,15 @@ async function onCloseWithoutChange(reason) {
 		return r;
 	});
 	if (result) noChangeRequest.value = null;
+}
+
+async function onPublishPlan() {
+	const result = await run("publish-plan", async (key) => {
+		const r = await api.publishAnnualPlan({ plan_version: publication.value.version?.reference, idempotency_key: key });
+		await load({ quiet: true });
+		return r;
+	});
+	return result;
 }
 
 async function onRetryPublication() {

@@ -484,9 +484,12 @@ def _publication_state(version, *, actor, roles) -> dict[str, Any]:
 		others = _waiting(f"Waiting for {ao['display']} to record the Treasury submission", stage=STAGE_PUBLICATION, holder=ao, since=version.modified)
 		mine = ns.answer(ns.KIND_YOUR_TURN, headline="Record the Treasury submission", stage=STAGE_PUBLICATION, primary_action="record_treasury") if roles[ROLE_ACCOUNTING_OFFICER] else None
 		return {**base, "stage_holder": ", ".join(ao["people"]) or ao["role"], "others": others, "mine": mine}
-	system = ns.holder("System")
-	others = _waiting("Waiting for website publication", stage=STAGE_PUBLICATION, holder=system, since=treasury.recorded_at)
-	return {**base, "stage_holder": "System", "others": others}
+	# RG-01 (owner decision 7 Oct 2026): Treasury evidence is in and nothing is held, so the
+	# Head of Procurement Function presses Publish
+	hopf = guards.holder(ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
+	others = _waiting(f"Waiting for {hopf['display']} to publish the plan", stage=STAGE_PUBLICATION, holder=hopf, since=treasury.recorded_at)
+	mine = ns.answer(ns.KIND_YOUR_TURN, headline="Publish the annual plan", stage=STAGE_PUBLICATION, primary_action="publish") if roles[ROLE_HEAD_OF_PROCUREMENT_FUNCTION] else None
+	return {**base, "stage_holder": ", ".join(hopf["people"]) or hopf["role"], "others": others, "mine": mine}
 
 
 def _requisitions_link(version) -> dict[str, Any] | None:

@@ -30,6 +30,7 @@ function task(overrides = {}) {
 		attempts: [],
 		can_record_treasury: true,
 		can_retry: false,
+		can_publish: false,
 		can_reconcile: false,
 		next_step: TREASURY_TURN,
 		journey: planJourney("publication", { holder: "Amina Hassan", reduced: true }),
@@ -291,5 +292,26 @@ describe("PublicationResultScreen — published states", () => {
 		});
 		expect(w.find('[data-testid="pub-hold"]').text()).toContain("Publication is on hold");
 		expect(w.find('[data-testid="pub-status-row"]').text()).toContain("Approved");
+	});
+});
+
+
+describe("PublicationResultScreen — the Head of Procurement Function publishes (RG-01)", () => {
+	const evidence = { recorded: true, submitted_display: "x", channel: "y", dispatch_reference: "z", recorded_by_name: "Amina Hassan" };
+
+	it("offers Publish only where the server says the Head may, and emits it", async () => {
+		const head = make({ task: task({ can_record_treasury: false, can_publish: true, treasury_evidence: evidence }) });
+		const button = head.find('[data-testid="pub-publish"]');
+		expect(button.text()).toBe("Publish annual plan");
+		await button.trigger("click");
+		expect(head.emitted("publish")).toHaveLength(1);
+
+		const reader = make({ task: task({ can_record_treasury: false, can_publish: false, treasury_evidence: evidence }) });
+		expect(reader.find('[data-testid="pub-publish"]').exists()).toBe(false);
+	});
+
+	it("is disabled while a command is pending", () => {
+		const head = make({ task: task({ can_record_treasury: false, can_publish: true, treasury_evidence: evidence }), pending: true });
+		expect(head.find('[data-testid="pub-publish"]').attributes("disabled")).toBeDefined();
 	});
 });

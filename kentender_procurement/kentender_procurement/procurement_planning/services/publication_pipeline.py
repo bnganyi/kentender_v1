@@ -29,6 +29,7 @@ from frappe.utils import cstr, now_datetime
 from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.services import envelope, plan_finance, plan_json, plan_publication
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
+from kentender_procurement.procurement_planning.services.planning_roles import ROLE_HEAD_OF_PROCUREMENT_FUNCTION
 from kentender_procurement.procurement_planning.write_family import planning_command, planning_write
 
 DESTINATION_ADAPTER = "KenTender Annual Plan Publication Sandbox"
@@ -118,22 +119,55 @@ def _transmit(destination: str) -> tuple[str, str]:
 
 @planning_command
 def publish_annual_plan(*, plan_version: str, idempotency_key: str | None = None, user: str | None = None) -> dict[str, Any]:
-	"""§7.2 `PublishAnnualPlan` — the system worker. Gated on valid current
-	Treasury evidence and no active hold; sends the exact frozen manifest
-	under the publication's own stable identity (never a new package)."""
+	"""§7.2 `PublishAnnualPlan` — the system worker (seeds, tests and the
+	technical retry). Gated on valid current Treasury evidence and no active
+	hold; sends the exact frozen manifest under the publication's own stable
+	identity (never a new package). The business entry is `publish_approved_plan`."""
 	actor = authz.require_technical(user)
+	return _publish(
+		plan_version=plan_version, idempotency_key=idempotency_key, actor=actor, command="PublishAnnualPlan",
+		states=("Approved — publication pending", "Publication failed"), refuse_unknown_result=False,
+	)
+
+
+@planning_command
+def publish_approved_plan(*, plan_version: str, idempotency_key: str) -> dict[str, Any]:
+	"""RG-01 / AUD-XC-106 (owner decisions D4 and 7 Oct 2026) — the Head of
+	Procurement Function presses Publish on an approved Annual Plan.
+
+	The actor is the session user, never a parameter. Only a registered Head of
+	Procurement Function responsibility may start it (a technical role holds no
+	business action); it is offered in the one state "Approved — publication
+	pending" — a failed or unknown result is the technical retry/reconcile, never
+	a second manual press. Everything after the authorisation is the pipeline
+	`publish_annual_plan` uses: Treasury evidence and no hold, the frozen
+	manifest, the attempt record, acknowledgement and activation."""
+	actor = authz.actor(None)
+	authz.require_site_role(ROLE_HEAD_OF_PROCUREMENT_FUNCTION, actor)
+	if not cstr(idempotency_key).strip():
+		fail("PLN_ENTRY_INCOMPLETE", detail={"field": "idempotency_key"})
+	return _publish(
+		plan_version=plan_version, idempotency_key=idempotency_key, actor=actor, command="PublishApprovedPlan",
+		states=("Approved — publication pending",), refuse_unknown_result=True,
+	)
+
+
+def _publish(*, plan_version: str, idempotency_key: str | None, actor: str, command: str, states: tuple[str, ...], refuse_unknown_result: bool) -> dict[str, Any]:
 	payload_key = {"plan_version": plan_version}
 	if idempotency_key:
 		replay = envelope.replay_or_none(idempotency_key, payload_key)
 		if replay:
 			return replay
 	version = envelope.locked("Annual Plan Version", plan_version)
-	if version.version_status not in ("Approved — publication pending", "Publication failed"):
+	if version.version_status not in states:
 		fail("PLN_REVIEW_STALE")
 	publication_name = frappe.db.get_value("Plan Publication", {"plan_version": version.name}, "name")
 	if not publication_name:
 		fail("PLN_REVIEW_STALE", "Approval has not committed a publication yet.")
 	publication = frappe.get_doc("Plan Publication", publication_name)
+	if refuse_unknown_result and publication.publication_state == "Indeterminate":
+		# an earlier press could not confirm the result: the plan may be published already
+		fail("PLN_PUBLICATION_UNKNOWN")
 	if _active_hold(version.name):
 		fail("PLN_PUBLICATION_HELD")
 	current_evidence = frappe.db.get_value("Treasury Submission Evidence", {"plan_version": version.name, "evidence_state": "Current"}, "name")
@@ -166,7 +200,7 @@ def publish_annual_plan(*, plan_version: str, idempotency_key: str | None = None
 	result_dict = {"ok": True, "idempotent": False, "action": "publish_attempted", "publication": publication.name, "attempt": attempt.name, "result": result, "version_status": version.version_status}
 	if idempotency_key:
 		envelope.record_command(
-			idempotency_key=idempotency_key, command="PublishAnnualPlan", payload=payload_key, result=result_dict,
+			idempotency_key=idempotency_key, command=command, payload=payload_key, result=result_dict,
 			document_type="Publication Attempt", document_name=attempt.name, actor=actor, fixture_namespace=cstr(version.fixture_namespace),
 		)
 	return result_dict

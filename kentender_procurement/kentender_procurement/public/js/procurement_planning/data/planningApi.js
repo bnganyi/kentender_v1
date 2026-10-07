@@ -198,6 +198,11 @@ export function getPublicationTask(publication) {
 	return frappeCall(`${BASE}.get_publication_task`, { publication });
 }
 
+// RG-01 — the Head of Procurement Function publishes an approved plan; the actor is the session user.
+export function publishAnnualPlan(args) {
+	return frappeCall(`${BASE}.publish_annual_plan`, args);
+}
+
 export function retryPublication(args) {
 	return frappeCall(`${BASE}.retry_publication`, args);
 }

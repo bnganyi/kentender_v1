@@ -2461,7 +2461,15 @@ def get_publication_task(*, publication: str, user: str | None = None) -> dict[s
 			authz.has_site_role(ROLE_ACCOUNTING_OFFICER, actor)
 			and version.version_status in ("Approved — publication pending", "Publication failed")
 		),
-		"quiet_notice": "Publication is a system worker action after statutory approval. Retry and reconciliation are technical actions, never a business decision.",
+		"quiet_notice": "The Head of Procurement Function publishes the approved plan once Treasury submission is recorded. Retry and reconciliation are technical actions, never a business decision.",
+		# RG-01 — the Head's own action, offered only where the command would accept it
+		"can_publish": (
+			authz.has_site_role(ROLE_HEAD_OF_PROCUREMENT_FUNCTION, actor)
+			and version.version_status == "Approved — publication pending"
+			and doc.publication_state == "Pending"
+			and bool(treasury)
+			and not hold
+		),
 		# §10.14 U21-LATE-ACTIVATION / §6.3 — the Accounting Officer's own
 		# listed action when the plan only became active after the financial
 		# year had begun. Append-only: every explanation is kept and a later
