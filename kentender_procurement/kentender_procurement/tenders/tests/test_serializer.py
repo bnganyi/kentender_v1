@@ -52,6 +52,18 @@ class TestSchedules(SerializerCase):
 		self.assertEqual([s["plan_source_allocation_id"] for s in line["source_items"]], ["PSA-MOH-2027-033-001", "PSA-MOH-2027-033-002"])
 		self.assertEqual(len(line["technical_requirement_ids"]), 11)
 
+	def test_the_goods_schedule_reconciles_exactly_to_the_inherited_items(self):
+		"""RG-24 / AUD-XC-117 — the comparison is exact decimal arithmetic: float noise cannot fail a schedule that
+		reconciles, and a difference far below the old 1e-6 epsilon cannot hide one that does not."""
+		from kentender_procurement.tenders.services import review
+
+		snapshot = {**self.snapshot, "items": [{**self.snapshot["items"][0], "quantity": "1000000.00000001"}, {**self.snapshot["items"][1], "quantity": "0.1"}, {**self.snapshot["items"][1], "requisition_item_id": "SRC-X-3", "quantity": "0.2"}]}
+		lines = serializer.goods_lines(snapshot)
+		self.assertTrue(review.goods_schedule_reconciles(snapshot, lines))
+		drifted = [{**line, "source_items": [{**s, "quantity": "1000000.00000002"} if s["requisition_item_id"] == snapshot["items"][0]["requisition_item_id"] else s for s in line["source_items"]]} for line in lines]
+		self.assertFalse(review.goods_schedule_reconciles(snapshot, drifted))
+		self.assertFalse(review.goods_schedule_reconciles(snapshot, []))
+
 	def test_the_price_schedule_never_carries_the_authorised_value(self):
 		schedule = serializer.price_schedule(self.snapshot)
 		self.assertEqual(len(schedule["rows"]), 1)

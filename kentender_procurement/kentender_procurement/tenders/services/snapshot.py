@@ -10,7 +10,10 @@ authorised value and funding evidence are internal-only context."""
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from typing import Any
+
+from frappe.utils import cstr
 
 from kentender_procurement.tenders.services import digest
 
@@ -103,6 +106,11 @@ def internal_context(snapshot: dict[str, Any]) -> dict[str, Any]:
 	out["authorised_value"] = total_value(snapshot)
 	out["reservation_ids"] = sorted({line.get("reservation_id") for line in snapshot.get("drawdown_lines") or [] if line.get("reservation_id")})
 	return out
+
+
+def total_quantity_exact(snapshot: dict[str, Any]) -> Decimal:
+	"""The inherited items' quantities added in exact decimal arithmetic (RG-24); `total_quantity` is for display."""
+	return sum((Decimal(cstr(row.get("quantity") or 0)) for row in snapshot.get("items") or []), Decimal(0))
 
 
 def total_quantity(snapshot: dict[str, Any]) -> float:

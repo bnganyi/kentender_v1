@@ -14,6 +14,7 @@ package digest (TPR08-AC-026..028)."""
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 import frappe
@@ -39,6 +40,16 @@ FINDING_CODES: frozenset[str] = frozenset(
 MANUFACTURER_NOTE = "Confirm that manufacturer authorisation is proportionate for this purchase."
 MAPPING_MESSAGE = "A published requirement is not fully connected to its supplier response and downstream treatment."
 TASK_ROUTE_LABELS = {controls.TASK_DETAILS: "Review Tender details", controls.TASK_REQUIREMENTS: "Review supplier requirements", "contract": "Review contract terms", controls.TASK_REVIEW: "Review and generated documents"}
+
+
+def goods_schedule_reconciles(snapshot: dict[str, Any], lines: list[dict[str, Any]]) -> bool:
+	"""RG-24 — the goods schedule carries every inherited item once, exactly: the quantities of the schedule's
+	source items add up, in exact decimal arithmetic, to the quantities of the inherited items. (The rendered
+	line quantity is a formatted, rounded text, so the lineage rows are what is compared.)"""
+	if not lines:
+		return False
+	scheduled = sum((Decimal(cstr(src.get("quantity") or 0)) for line in lines for src in line.get("source_items") or []), Decimal(0))
+	return scheduled == snap.total_quantity_exact(snapshot)
 
 
 def _finding(code: str, message: str, *, severity: str = MUST_FIX, task: str = "", field: str = "", link_label: str = "") -> dict[str, Any]:
@@ -161,8 +172,7 @@ def run(tender, version, *, approval: dict[str, str] | None = None, with_renders
 
 	# 7. schedules reconcile to the inherited rows (grouping lineage)
 	lines = serializer.goods_lines(snapshot)
-	grouped_total = sum(float(line["quantity"]) for line in lines) if lines else 0.0
-	if abs(grouped_total - snap.total_quantity(snapshot)) > 1e-6 or not lines:
+	if not goods_schedule_reconciles(snapshot, lines):
 		findings.append(_finding("SCHEDULE_MISMATCH", "The goods schedule does not reconcile to the inherited items.", task=controls.TASK_REVIEW))
 	if len(serializer.price_schedule(snapshot)["rows"]) != len(lines) + len(snapshot.get("related_services") or []):
 		findings.append(_finding("SCHEDULE_MISMATCH", "The price schedule does not reconcile to the goods and services schedules.", task=controls.TASK_REVIEW))
