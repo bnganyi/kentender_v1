@@ -124,10 +124,21 @@ def publish_annual_plan(*, plan_version: str, idempotency_key: str | None = None
 	hold; sends the exact frozen manifest under the publication's own stable
 	identity (never a new package). The business entry is `publish_approved_plan`."""
 	actor = authz.require_technical(user)
-	return _publish(
-		plan_version=plan_version, idempotency_key=idempotency_key, actor=actor, command="PublishAnnualPlan",
-		states=("Approved — publication pending", "Publication failed"), refuse_unknown_result=False,
+	payload_key = {"plan_version": plan_version}
+	if idempotency_key:
+		replay = envelope.replay_or_none(idempotency_key, payload_key)
+		if replay:
+			return replay
+	result = _publish(
+		plan_version=plan_version, states=("Approved — publication pending", "Publication failed"), refuse_unknown_result=False,
 	)
+	if idempotency_key:
+		envelope.record_command(
+			idempotency_key=idempotency_key, command="PublishAnnualPlan", payload=payload_key, result=result,
+			document_type="Publication Attempt", document_name=result["attempt"], actor=actor,
+			fixture_namespace=cstr(frappe.db.get_value("Annual Plan Version", plan_version, "fixture_namespace")),
+		)
+	return result
 
 
 @planning_command
@@ -146,18 +157,23 @@ def publish_approved_plan(*, plan_version: str, idempotency_key: str) -> dict[st
 	authz.require_site_role(ROLE_HEAD_OF_PROCUREMENT_FUNCTION, actor)
 	if not cstr(idempotency_key).strip():
 		fail("PLN_ENTRY_INCOMPLETE", detail={"field": "idempotency_key"})
-	return _publish(
-		plan_version=plan_version, idempotency_key=idempotency_key, actor=actor, command="PublishApprovedPlan",
-		states=("Approved — publication pending",), refuse_unknown_result=True,
-	)
-
-
-def _publish(*, plan_version: str, idempotency_key: str | None, actor: str, command: str, states: tuple[str, ...], refuse_unknown_result: bool) -> dict[str, Any]:
 	payload_key = {"plan_version": plan_version}
-	if idempotency_key:
-		replay = envelope.replay_or_none(idempotency_key, payload_key)
-		if replay:
-			return replay
+	replay = envelope.replay_or_none(idempotency_key, payload_key)
+	if replay:
+		return replay
+	result = _publish(plan_version=plan_version, states=("Approved — publication pending",), refuse_unknown_result=True)
+	envelope.record_command(
+		idempotency_key=idempotency_key, command="PublishApprovedPlan", payload=payload_key, result=result,
+		document_type="Publication Attempt", document_name=result["attempt"], actor=actor,
+		fixture_namespace=cstr(frappe.db.get_value("Annual Plan Version", plan_version, "fixture_namespace")),
+	)
+	return result
+
+
+def _publish(*, plan_version: str, states: tuple[str, ...], refuse_unknown_result: bool) -> dict[str, Any]:
+	"""The publication pipeline both publishing commands share: lock the Version, gate on its
+	state, Treasury evidence and holds, send the frozen manifest, record the attempt, and
+	acknowledge and activate. The calling command owns the idempotency key."""
 	version = envelope.locked("Annual Plan Version", plan_version)
 	if version.version_status not in states:
 		fail("PLN_REVIEW_STALE")
@@ -197,13 +213,7 @@ def _publish(*, plan_version: str, idempotency_key: str | None, actor: str, comm
 			external_reference=external_reference, acknowledged_at=now_datetime(), user="Administrator",
 		)
 	version.reload()
-	result_dict = {"ok": True, "idempotent": False, "action": "publish_attempted", "publication": publication.name, "attempt": attempt.name, "result": result, "version_status": version.version_status}
-	if idempotency_key:
-		envelope.record_command(
-			idempotency_key=idempotency_key, command=command, payload=payload_key, result=result_dict,
-			document_type="Publication Attempt", document_name=attempt.name, actor=actor, fixture_namespace=cstr(version.fixture_namespace),
-		)
-	return result_dict
+	return {"ok": True, "idempotent": False, "action": "publish_attempted", "publication": publication.name, "attempt": attempt.name, "result": result, "version_status": version.version_status}
 
 
 def receive_publication_acknowledgement(
