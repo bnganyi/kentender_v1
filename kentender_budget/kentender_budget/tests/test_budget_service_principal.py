@@ -15,7 +15,6 @@ session role. Matrix (owner decision 6 Oct 2026):
 from __future__ import annotations
 
 import importlib.util
-import re
 from pathlib import Path
 
 import frappe
@@ -188,23 +187,71 @@ class TestPrincipalMatrix(_PrincipalBase):
 			service_caller("somebody_else")
 
 	def test_only_the_owning_gateways_and_seeds_mint_principals(self):
+		"""RG-26 / AUD-BUD-012 — an import and syntax-tree scan, not a regex over literal names: an aliased import,
+		a module attribute call, a variable principal or a constant of another principal is found."""
 		root = Path(frappe.get_app_path("kentender_budget")).parent.parent
-		pattern = re.compile(r"\bservice_caller\(\s*(?:principals\.)?(PRINCIPAL_[A-Z]+)")
-		allowed_gateway = {PRINCIPAL_REQUISITIONS: "procurement_requisitions/services/funding_gateway.py"}
+		gateway = {PRINCIPAL_REQUISITIONS: "procurement_requisitions/services/funding_gateway.py"}
+		seed_principals = {"PRINCIPAL_CONTRACT", "PRINCIPAL_BUDGET", "PRINCIPAL_REQUISITIONS"}  # seeds exercise the registered principals
 		offenders = []
-		for path in root.glob("kentender_*/**/*.py"):
+		for path in sorted(root.glob("kentender_*/**/*.py")):
 			rel = str(path.relative_to(root))
 			if "/tests/" in rel or "/node_modules/" in rel or rel.endswith("budget_service_principal.py"):
 				continue
 			text = path.read_text(encoding="utf-8", errors="ignore")
-			for name in pattern.findall(text):
-				principal = getattr(principals, name)
-				if "/seeds/" in rel or "/seed/" in rel:
+			if "service_caller" not in text and "ServiceCaller" not in text:
+				continue
+			is_seed = "/seeds/" in rel or "/seed/" in rel
+			for line, principal in mints_in(text):
+				if is_seed and principal in seed_principals:
 					continue
-				if principal in allowed_gateway and rel.endswith(allowed_gateway[principal]):
+				if principal and not is_seed and getattr(principals, principal, None) == PRINCIPAL_REQUISITIONS and rel.endswith(gateway[PRINCIPAL_REQUISITIONS]):
 					continue
-				offenders.append((rel, name))
+				offenders.append((rel, line, principal or "(not a PRINCIPAL_* constant)"))
 		self.assertEqual(offenders, [])
+
+	def test_the_mint_scan_finds_the_ways_the_old_regex_missed(self):
+		hidden = {
+			"aliased import": "from kentender_budget.services.budget_service_principal import service_caller as sc\nsc(PRINCIPAL_CONTRACT)\n",
+			"module attribute": "from kentender_budget.services import budget_service_principal as bp\nbp.service_caller(bp.PRINCIPAL_CONTRACT, reference='x')\n",
+			"variable principal": "from kentender_budget.services.budget_service_principal import service_caller\nservice_caller(which)\n",
+			"literal string": "from kentender_budget.services.budget_service_principal import service_caller\nservice_caller('contract_management', reference='x')\n",
+			"keyword": "from kentender_budget.services.budget_service_principal import service_caller\nservice_caller(principal=PRINCIPAL_AWARD)\n",
+		}
+		for label, source in hidden.items():
+			with self.subTest(label):
+				self.assertTrue(mints_in(source), f"{label} was not found")
+		self.assertEqual(mints_in("from kentender_budget.services.budget_service_principal import service_caller\nservice_caller(PRINCIPAL_REQUISITIONS, reference='x')\n"), [(2, "PRINCIPAL_REQUISITIONS")])
+		self.assertEqual(mints_in("def service_caller_report():\n    return 1\n"), [])
+
+
+def mints_in(source: str) -> list[tuple[int, str | None]]:
+	"""Every call that mints a Budget service principal in `source`: `(line, constant name or None)`.
+	Follows `import ... as`, `from ... import service_caller as alias` and `module.service_caller(...)`."""
+	import ast
+
+	tree = ast.parse(source)
+	names, modules = {"service_caller"}, set()
+	for node in ast.walk(tree):
+		if isinstance(node, ast.ImportFrom) and (node.module or "").endswith("budget_service_principal"):
+			names |= {a.asname or a.name for a in node.names if a.name == "service_caller"}
+		elif isinstance(node, ast.ImportFrom):
+			modules |= {a.asname or a.name for a in node.names if a.name == "budget_service_principal"}
+		elif isinstance(node, ast.Import):
+			modules |= {a.asname or a.name.split(".")[-1] for a in node.names if a.name.endswith("budget_service_principal")}
+	found = []
+	for node in ast.walk(tree):
+		if not isinstance(node, ast.Call):
+			continue
+		func = node.func
+		minting = (isinstance(func, ast.Name) and func.id in names) or (isinstance(func, ast.Attribute) and func.attr == "service_caller" and isinstance(func.value, ast.Name) and func.value.id in modules)
+		if not minting:
+			continue
+		argument = node.args[0] if node.args else next((k.value for k in node.keywords if k.arg == "principal"), None)
+		constant = argument.id if isinstance(argument, ast.Name) and argument.id.startswith("PRINCIPAL_") else (
+			argument.attr if isinstance(argument, ast.Attribute) and argument.attr.startswith("PRINCIPAL_") else None
+		)
+		found.append((node.lineno, constant))
+	return found
 
 
 class TestRequisitionsRelease(_PrincipalBase):
