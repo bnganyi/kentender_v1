@@ -14,10 +14,12 @@ Frappe "Not found" modal ever appears on a Vue surface (AGENTS §6.10)."""
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
 from typing import Any
 
 import frappe
 
+from kentender_procurement.tenders.services.errors import TendersError
 from kentender_procurement.tenders.services import addenda, cancellation, candidate_notices, clarifications, correction, documents, draft_commands as cmd, history, lifecycle, open_period_read, publication, read, submission_close
 
 
@@ -27,6 +29,21 @@ def _parse_json(value, default):
 	if isinstance(value, str):
 		return json.loads(value) if value.strip() else default
 	return value
+
+
+@contextmanager
+def preserving_refusal_audit():
+	"""A command that refuses after writing its own audit fact (a conflicting
+	channel confirmation, §5.8(10)) ends the request in a rollback that would
+	take the fact with it. The refusal marks itself `audit_preserved`; the
+	endpoint commits at that point. Nothing else the refused command did is
+	in the transaction: the marked refusal is raised before any state write."""
+	try:
+		yield
+	except TendersError as exc:
+		if exc.audit_preserved:
+			frappe.db.commit()
+		raise
 
 
 def _masked_read(fn, arguments: dict[str, Any]) -> dict[str, Any]:
@@ -168,10 +185,11 @@ def authorise_tender_publication(tender: str, expected_record_version, idempoten
 
 @frappe.whitelist()
 def confirm_publication_channel(tender: str, channel: str, available_at: str, evidence_reference: str, evidence_file: str, package_digest: str, expected_record_version, idempotency_key: str, public_url: str = "", url_not_applicable_reason: str = "", evidence_notes: str = "", attestation_confirmed=False) -> dict[str, Any]:
-	return publication.confirm_publication_channel(
-		tender=tender, channel=channel, available_at=available_at, evidence_reference=evidence_reference, evidence_file=evidence_file, package_digest=package_digest, expected_record_version=expected_record_version,
-		idempotency_key=idempotency_key, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, evidence_notes=evidence_notes, attestation_confirmed=str(attestation_confirmed).lower() in ("1", "true"),
-	)
+	with preserving_refusal_audit():
+		return publication.confirm_publication_channel(
+			tender=tender, channel=channel, available_at=available_at, evidence_reference=evidence_reference, evidence_file=evidence_file, package_digest=package_digest, expected_record_version=expected_record_version,
+			idempotency_key=idempotency_key, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, evidence_notes=evidence_notes, attestation_confirmed=str(attestation_confirmed).lower() in ("1", "true"),
+		)
 
 
 @frappe.whitelist()
@@ -236,10 +254,11 @@ def issue_addendum(tender: str, addendum: str, expected_record_version, idempote
 
 @frappe.whitelist()
 def confirm_addendum_publication_channel(tender: str, addendum: str, channel: str, available_at: str, evidence_reference: str, evidence_file: str, addendum_digest: str, expected_record_version, idempotency_key: str, public_url: str = "", url_not_applicable_reason: str = "", evidence_notes: str = "", attestation_confirmed=False) -> dict[str, Any]:
-	return addenda.confirm_addendum_publication_channel(
-		tender=tender, addendum=addendum, channel=channel, available_at=available_at, evidence_reference=evidence_reference, evidence_file=evidence_file, addendum_digest=addendum_digest, expected_record_version=expected_record_version,
-		idempotency_key=idempotency_key, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, evidence_notes=evidence_notes, attestation_confirmed=str(attestation_confirmed).lower() in ("1", "true"),
-	)
+	with preserving_refusal_audit():
+		return addenda.confirm_addendum_publication_channel(
+			tender=tender, addendum=addendum, channel=channel, available_at=available_at, evidence_reference=evidence_reference, evidence_file=evidence_file, addendum_digest=addendum_digest, expected_record_version=expected_record_version,
+			idempotency_key=idempotency_key, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, evidence_notes=evidence_notes, attestation_confirmed=str(attestation_confirmed).lower() in ("1", "true"),
+		)
 
 
 @frappe.whitelist()
@@ -288,7 +307,8 @@ def cancel_tender(tender: str, ground: str, reason: str, expected_record_version
 
 @frappe.whitelist()
 def record_cancellation_compliance_evidence(tender: str, obligation_id: str, evidence_reference: str, expected_record_version, idempotency_key: str, evidence_file: str = "", available_at: str = "", public_url: str = "", url_not_applicable_reason: str = "", attestation_confirmed=False) -> dict[str, Any]:
-	return cancellation.record_cancellation_compliance_evidence(
-		tender=tender, obligation_id=obligation_id, evidence_reference=evidence_reference, evidence_file=evidence_file, expected_record_version=expected_record_version, idempotency_key=idempotency_key,
-		available_at=available_at or None, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, attestation_confirmed=str(attestation_confirmed).lower() in ("1", "true"),
-	)
+	with preserving_refusal_audit():
+		return cancellation.record_cancellation_compliance_evidence(
+			tender=tender, obligation_id=obligation_id, evidence_reference=evidence_reference, evidence_file=evidence_file, expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+			available_at=available_at or None, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, attestation_confirmed=str(attestation_confirmed).lower() in ("1", "true"),
+		)

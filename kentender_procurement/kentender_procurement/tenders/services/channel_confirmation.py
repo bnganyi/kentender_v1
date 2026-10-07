@@ -187,7 +187,8 @@ def confirm_channel(
 			fixture_namespace=root.fixture_namespace,
 		)
 		conflict = guidance.confirmation_conflict(row.channel_label, stage=stage)
-		fail("TND_PUBLICATION_ALREADY_CONFIRMED", detail={"channel": channel, "confirmation": row.name, "next_step": conflict, "guidance": guidance.refusal_guidance(conflict, actor=actor)})
+		# the event above is the audit fact §5.8(10) requires; the endpoint commits it past the refusal's rollback
+		fail("TND_PUBLICATION_ALREADY_CONFIRMED", detail={"channel": channel, "confirmation": row.name, "next_step": conflict, "guidance": guidance.refusal_guidance(conflict, actor=actor)}, audit_preserved=True)
 	reference = cstr(frappe.db.get_value("Tender Addendum", subject_id, "addendum_reference")) if subject_type == SUBJECT_ADDENDUM else ""
 	attestation = attestation_text(subject_type=subject_type, channel_label=row.channel_label, subject_reference=reference)
 	with envelope.atomic("confirm-channel"):

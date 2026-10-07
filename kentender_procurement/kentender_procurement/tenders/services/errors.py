@@ -97,9 +97,13 @@ MESSAGES: dict[str, str] = {
 
 
 class TendersError(frappe.ValidationError):
-	def __init__(self, code: str, message: str, detail: dict | None = None):
+	def __init__(self, code: str, message: str, detail: dict | None = None, audit_preserved: bool = False):
 		self.code = code
 		self.detail = detail or {}
+		#: the refused command wrote an audit fact the whole-request rollback
+		#: must not take with it; the whitelisted endpoint commits it
+		#: (`api.preserving_refusal_audit`, AUD-TND-005)
+		self.audit_preserved = audit_preserved
 		super().__init__(message)
 		# The Vue surfaces pick the inline state (stale write, invalid evidence,
 		# already confirmed, ...) from the code, not from message text; the
@@ -114,10 +118,10 @@ class TendersError(frappe.ValidationError):
 				pass
 
 
-def fail(code: str, message: str = "", detail: dict | None = None) -> None:
+def fail(code: str, message: str = "", detail: dict | None = None, *, audit_preserved: bool = False) -> None:
 	if code not in ERROR_CODES:
 		raise ValueError(
 			f"{code!r} is not part of the TPR-CHG-001 v0.12 §8 error contract. "
 			f"Map the condition onto one of: {', '.join(sorted(ERROR_CODES))}."
 		)
-	raise TendersError(code, message or MESSAGES[code], detail)
+	raise TendersError(code, message or MESSAGES[code], detail, audit_preserved)

@@ -372,6 +372,29 @@ class TestConfirmChannels(PublicationCase):
 		self.assertTrue(events.exists(tender=name, event_type="ConfirmationConflictRejected"))
 		self.assertEqual(frappe.db.get_value("Tender", name, "overall_status"), "Publication authorised")
 
+	def test_a_conflicting_confirmation_audit_record_survives_the_refusal_the_request_rolls_back(self):
+		"""AUD-TND-005 (§5.8(10), §12.1): the refusal ends the request in a rollback; the audit fact must already be committed."""
+		from kentender_procurement.tenders import api
+
+		self.enterContext(no_file_scanners([]))
+		name, _ = self._authorised()
+		first = self._confirm(name, "STATE_PORTAL")
+		row = frappe.get_doc("Tender Channel Confirmation", first["confirmation"])
+		root = frappe.get_doc("Tender", name)
+		frappe.db.commit()  # the world under test is durable; only the refusal's own writes are in question
+		frappe.set_user(fx.HOPF)
+		with self.assertRaises(TendersError) as ctx:
+			api.confirm_publication_channel(
+				tender=name, channel="STATE_PORTAL", available_at="2027-05-15 09:30:00", evidence_reference="REF-STATE_PORTAL", evidence_file=row.evidence_file, package_digest=frappe.db.get_value("Tender Publication", root.publication, "package_digest"),
+				expected_record_version=root.record_version, idempotency_key=fx.key(), public_url="https://portal.example.test/STATE_PORTAL", attestation_confirmed=True,
+			)
+		self.assertEqual(ctx.exception.code, "TND_PUBLICATION_ALREADY_CONFIRMED")
+		frappe.db.rollback()  # what Frappe does with an uncaught exception in a request
+		event = frappe.db.get_value("Tender Event", {"tender": name, "event_type": "ConfirmationConflictRejected"}, ["subject_id", "payload"], as_dict=True)
+		self.assertIsNotNone(event, "the conflict audit event was rolled back with the refusal")
+		self.assertEqual(event.subject_id, row.name)
+		self.assertEqual(frappe.db.get_value("Tender Channel Confirmation", row.name, "status"), "Confirmed")
+
 	def test_the_final_channel_publishes_once_at_the_latest_availability_and_writes_planning_once(self):
 		name, _ = self._authorised()
 		root = frappe.get_doc("Tender", name)
