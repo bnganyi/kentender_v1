@@ -76,9 +76,13 @@ def _claim_or_replay(key: str, command: str, actor: str, digest: str) -> dict[st
 	for _attempt in range(3):
 		if _insert_claim(key, command, actor, digest):
 			return None
-		row = frappe.db.get_value(JOURNAL, {"idempotency_key": key}, ["name", "command", "actor", "request_fingerprint", "result"], as_dict=True, for_update=True)
+		row = frappe.db.get_value(JOURNAL, {"idempotency_key": key}, ["name", "command", "actor", "request_fingerprint", "result", "budget"], as_dict=True, for_update=True)
 		if not row:
 			continue  # the first request rolled back between the two statements: claim again
+		if row.budget and not frappe.db.exists("Procurement Budget", row.budget):
+			# the Budget it belongs to was removed (a seed or test clean-up): the recorded result describes nothing, so the key is free
+			frappe.db.sql(f"delete from `tab{JOURNAL}` where name=%s", row.name)
+			continue
 		if cstr(row.actor) != actor:
 			return conflict(key)
 		if not row.result:

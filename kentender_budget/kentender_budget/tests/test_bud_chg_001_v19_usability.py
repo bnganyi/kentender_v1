@@ -330,6 +330,18 @@ class TestSaveSubmitRecovery(_V19Base):
 		self._as(self.officer)
 		self.assertTrue(readiness.submit_budget_version(dict(payload)).get("replayed"))
 
+	def test_a_key_recorded_for_a_budget_that_no_longer_exists_is_free_again(self):
+		"""RG-16 — a seed or clean-up that removes a Budget must not leave its keys replaying results about nothing."""
+		fy, budget, version = self._draft()
+		self._as(self.officer)
+		key = f"submit-{frappe.generate_hash(length=8)}"
+		first = readiness.submit_budget_version(stamped({"budget_version": version, "idempotency_key": key}))
+		self.assertTrue(first["ok"], first.get("blockers"))
+		frappe.db.set_value("Budget Command Journal", {"idempotency_key": key}, "budget", "BUDGET-THAT-WAS-REMOVED", update_modified=False)
+		self.assertEqual(frappe.db.get_value("Budget Command Journal", {"idempotency_key": key}, "budget"), "BUDGET-THAT-WAS-REMOVED")
+		again = readiness.submit_budget_version(stamped({"budget_version": version, "idempotency_key": key}))
+		self.assertFalse(again.get("replayed"))
+
 	def test_lines_save_reports_exact_amount_still_to_assign(self):
 		fy, budget, version = self._draft()
 		self._as(self.officer)
