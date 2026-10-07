@@ -80,8 +80,10 @@ def cancellation_guard(*, tender: str) -> str:
 	name = _case_for_tender(tender)
 	if not name:
 		return ""
-	frappe.db.sql("select name from `tabAward Case` where name=%s for update", name)
-	value = cstr(frappe.db.get_value(records.CASE, name, "notification_status"))
+	# A locking read: MariaDB runs at REPEATABLE READ and the caller (Tenders) already
+	# holds a snapshot, so a plain read after the lock would answer "Not issued" for
+	# notices another command issued and committed while this waited (AUD-XC-108).
+	value = cstr(frappe.db.get_value(records.CASE, name, "notification_status", for_update=True))
 	if value == "Not issued":
 		return ""
 	if value == "Unknown":
