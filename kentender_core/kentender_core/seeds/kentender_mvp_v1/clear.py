@@ -15,6 +15,7 @@ from typing import Any
 import frappe
 
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
+from kentender_core.services.command_write_guard import purge_doc
 
 EDGE_NS = "KENTENDER_MVP_V1_EDGE"
 LEGACY_EDGE_NS = "MOH_MVP_V1_EDGE"
@@ -81,7 +82,7 @@ def _delete_budget_graph(budget_name: str, deleted: dict[str, int]) -> None:
 			for name in frappe.get_all(
 				"Procurement Commitment", filters={"reservation": ["in", reservation_names]}, pluck="name"
 			):
-				frappe.delete_doc("Procurement Commitment", name, force=1, ignore_permissions=True)
+				purge_doc("Procurement Commitment", name)
 				deleted["Procurement Commitment"] = deleted.get("Procurement Commitment", 0) + 1
 
 	if frappe.db.exists("DocType", "Procurement Budget Line Version") and frappe.db.exists("DocType", "Procurement Budget Version"):
@@ -90,7 +91,7 @@ def _delete_budget_graph(budget_name: str, deleted: dict[str, int]) -> None:
 			for name in frappe.get_all(
 				"Procurement Budget Line Version", filters={"budget_version": ["in", version_names]}, pluck="name"
 			):
-				frappe.delete_doc("Procurement Budget Line Version", name, force=1, ignore_permissions=True)
+				purge_doc("Procurement Budget Line Version", name)
 				deleted["Procurement Budget Line Version"] = deleted.get("Procurement Budget Line Version", 0) + 1
 
 	# BUD v1.11 — Planning's budget revision requests on this Budget and
@@ -99,10 +100,10 @@ def _delete_budget_graph(budget_name: str, deleted: dict[str, int]) -> None:
 		request_names = frappe.get_all("Budget Revision Request", filters={"budget": budget_name}, pluck="name")
 		if request_names and frappe.db.exists("DocType", "Budget Revision Request Event"):
 			for name in frappe.get_all("Budget Revision Request Event", filters={"budget_revision_request": ["in", request_names]}, pluck="name"):
-				frappe.delete_doc("Budget Revision Request Event", name, force=1, ignore_permissions=True)
+				purge_doc("Budget Revision Request Event", name)
 				deleted["Budget Revision Request Event"] = deleted.get("Budget Revision Request Event", 0) + 1
 		for name in request_names:
-			frappe.delete_doc("Budget Revision Request", name, force=1, ignore_permissions=True)
+			purge_doc("Budget Revision Request", name)
 			deleted["Budget Revision Request"] = deleted.get("Budget Revision Request", 0) + 1
 
 	for doctype in _BUDGET_CHILD_DOCTYPES:
@@ -114,13 +115,13 @@ def _delete_budget_graph(budget_name: str, deleted: dict[str, int]) -> None:
 			for name in frappe.get_all(doctype, filters={"budget": budget_name}, pluck="name"):
 				if not frappe.db.exists(doctype, name):
 					continue
-				frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
+				purge_doc(doctype, name)
 				deleted[doctype] = deleted.get(doctype, 0) + 1
 		finally:
 			if doctype == "Budget Audit Event":
 				frappe.flags.allow_budget_audit_purge = False
 	if frappe.db.exists("Procurement Budget", budget_name):
-		frappe.delete_doc("Procurement Budget", budget_name, force=1, ignore_permissions=True)
+		purge_doc("Procurement Budget", budget_name)
 		deleted["Procurement Budget"] = deleted.get("Procurement Budget", 0) + 1
 
 
@@ -271,7 +272,7 @@ def clear_kentender_mvp_v1_budget(
 		):
 			if not frappe.db.exists("Procurement Budget Line", name):
 				continue
-			frappe.delete_doc("Procurement Budget Line", name, force=1, ignore_permissions=True)
+			purge_doc("Procurement Budget Line", name)
 			deleted["Procurement Budget Line"] = deleted.get("Procurement Budget Line", 0) + 1
 
 	canonical_ledger_codes = (
@@ -290,7 +291,7 @@ def clear_kentender_mvp_v1_budget(
 			for name in frappe.get_all(doctype, filters={field: code}, pluck="name"):
 				if not frappe.db.exists(doctype, name):
 					continue
-				frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
+				purge_doc(doctype, name)
 				deleted[doctype] = deleted.get(doctype, 0) + 1
 	return {"ok": True, "deleted": deleted}
 
@@ -313,7 +314,7 @@ def clear_kentender_mvp_v1_scope_assignments(
 			filters={"fixture_namespace": ["in", namespaces]},
 			pluck="name",
 		):
-			frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
+			purge_doc(doctype, name)
 			count += 1
 		deleted[doctype] = count
 	return deleted

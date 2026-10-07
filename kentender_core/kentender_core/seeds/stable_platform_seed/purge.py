@@ -26,6 +26,7 @@ from kentender_core.seeds.stable_platform_seed.constants import (
 WORKS_PKG_CODE_LEGACY = "PKG-MOH-2026-001"
 PLAN_CODE = "PLAN-MOH-2026"
 from kentender_strategy.seeds.works_master_strategy_purge import purge_non_works_strategy_hierarchy
+from kentender_core.services.command_write_guard import purge_doc
 
 _KEEP_DEMAND_CODES: Final[frozenset[str]] = frozenset({WORKS_DEMAND_CODE, IT_DEMAND_CODE})
 _KEEP_BUDGET_NAMES: Final[frozenset[str]] = frozenset({BUDGET_NAME})
@@ -47,7 +48,8 @@ def _hard_delete(doctype: str, name: str) -> None:
 	was = bool(getattr(frappe.flags, "in_test", False))
 	frappe.flags.in_test = True
 	try:
-		frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+		# command-only doctypes (Budget, Planning, ...) open their own maintenance window
+		purge_doc(doctype, name)
 	finally:
 		frappe.flags.in_test = was
 

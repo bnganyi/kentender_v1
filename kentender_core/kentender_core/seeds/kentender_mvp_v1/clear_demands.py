@@ -11,6 +11,7 @@ import frappe
 from frappe.utils import flt
 
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
+from kentender_core.services.command_write_guard import purge_doc
 
 _DEMAND_CODES = (
 	C.DEMAND_CODE,
@@ -142,7 +143,7 @@ def clear_kentender_mvp_v1_demands(
 								)
 					finally:
 						frappe.flags.allow_budget_audit_purge = False
-				frappe.delete_doc("Funding Reservation", name, force=1, ignore_permissions=True)
+				purge_doc("Funding Reservation", name)
 				deleted["Funding Reservation"] = deleted.get("Funding Reservation", 0) + 1
 				if reservation and reservation.budget_line:
 					current = flt(

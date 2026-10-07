@@ -20,6 +20,7 @@ from kentender_core.seeds.kentender_mvp_v1.orchestrator import (
 	validate_kentender_mvp_v1,
 )
 from kentender_core.services.org_scope_access import can_access_owned_record
+from kentender_core.services.command_write_guard import fixture_insert
 
 
 class TestKentenderMvpV1SeedContract(IntegrationTestCase):
@@ -367,14 +368,14 @@ class TestKentenderMvpV1SeedContract(IntegrationTestCase):
 					"year_end_date": "2100-06-30",
 				}
 			).insert(ignore_permissions=True)
-		budget = frappe.get_doc(
+		budget = fixture_insert(frappe.get_doc(
 			{
 				"doctype": "Procurement Budget",
 				"generated_reference": "MOH-BUD-PW-LEFTOVER-001",
 				"fiscal_year": leftover_fy,
 				"currency": "KES",
 			}
-		).insert(ignore_permissions=True)
+		))
 		canonical_budget = frappe.db.get_value(
 			"Procurement Budget", {"generated_reference": C.BUD_ACTIVE}, "name"
 		)
@@ -405,7 +406,7 @@ class TestKentenderMvpV1SeedContract(IntegrationTestCase):
 				],
 			}
 		).insert(ignore_permissions=True)
-		budget_audit = frappe.get_doc(
+		budget_audit = fixture_insert(frappe.get_doc(
 			{
 				"doctype": "Budget Audit Event",
 				"budget": canonical_budget,
@@ -418,7 +419,7 @@ class TestKentenderMvpV1SeedContract(IntegrationTestCase):
 				"record_doctype": "Budget Revision",
 				"change_summary": "Playwright revision created",
 			}
-		).insert(ignore_permissions=True)
+		))
 
 		purge_dem_test_users(users=[named_dem_email], commit=False)
 		self.assertFalse(frappe.db.exists("User", named_dem_email))
