@@ -92,7 +92,12 @@ def record_command(
 
 
 def locked(doctype: str, name: str):
-	"""Row-lock and load one document; masked not-found for missing rows."""
+	"""Row-lock and load one document as last committed; masked not-found for
+	missing rows. MariaDB runs at REPEATABLE READ, so a plain read after the
+	lock would return this transaction's older snapshot and a recheck made on it
+	(a hold, an item state, a record version) would pass on facts a competing
+	command had already changed and committed (AUD-XC-107); the locking read
+	(`for_update`) sees what that command committed."""
 	rows = frappe.db.sql(
 		f"select name from `tab{doctype}` where name=%s for update",
 		cstr(name).strip(),
@@ -100,7 +105,7 @@ def locked(doctype: str, name: str):
 	)
 	if not rows:
 		raise frappe.DoesNotExistError(f"{doctype} not found")
-	return frappe.get_doc(doctype, rows[0].name)
+	return frappe.get_doc(doctype, rows[0].name, for_update=True)
 
 
 def check_record_version(doc, expected_record_version) -> None:
