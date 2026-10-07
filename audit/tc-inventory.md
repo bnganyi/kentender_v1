@@ -90,8 +90,8 @@ KEEP although they look related:
 
 No business data to preserve on either site. The drop patch follows the TM2 precedent: **refuse** (throw `RETIRED_TABLE_NOT_EMPTY`) if any retired table holds rows
 or the CAS folder holds files; otherwise raw existence-guarded deletes (no `frappe.delete_doc`, which in developer mode would delete files and fire events). It also
-removes the deletion-log rows (`Deleted Document`, `Comment` type Deleted) for the retired doctypes, the 19 Pages, unused BWMF roles, the empty CAS folder and the
-`Tender Configurations` Module Def.
+removes the 19 Pages, unused BWMF roles, the empty CAS folder and the `Tender Configurations` Module Def. It deliberately does NOT purge the deletion-log rows
+(`Deleted Document` is 1 GB / 756k rows on the test site and has no index on `deleted_doctype`; one pass took minutes). Those 3396 inert rows are test residue only.
 
 ## 5. Delete list / keep list summary
 

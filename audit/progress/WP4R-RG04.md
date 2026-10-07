@@ -1,17 +1,47 @@
 # Progress — WP4R-RG04 retire the legacy Tender Configurations module
 
-Owner decision 7 Oct 2026: retire completely, same method as Tender Management v2. Inventory: audit/tc-inventory.md.
+Owner decision 7 Oct 2026: retire completely, same method as Tender Management v2. Inventory: audit/tc-inventory.md (written before any deletion).
 
 | Finding | Status | Red test (file::name) | Commit | Verified on | Notes |
 |---|---|---|---|---|---|
-| RG-04 / REG-SOD-01 | Todo | | | | |
-| RG-05 / REG-STATE-05 | Todo | | | | |
-| AUD-XC-143 | Todo | | | | |
-| AUD-XC-011 (reopened part) | Todo | | | | |
-| INT-B 4 (16 modules never loaded) | Todo | | | | |
+| RG-04 / REG-SOD-01 (publish with no maker-checker) | Green (closed by deletion) | kentender_procurement/tests/test_retired_tender_configurations_gone.py::TestRetiredTenderConfigurationsGone::test_publication_endpoints_are_not_routable, ::test_python_package_is_gone | 541be82a | test site: module tests + migrate + HTTP probe | package, 19 pages, endpoints, hooks gone; GET of the old endpoints answers "No module named ...tender_configurations" |
+| RG-05 / REG-STATE-05 (record created already Published) | Green (closed by deletion) | same module | 541be82a | test site | doctypes gone from code and from the test site |
+| AUD-XC-143 (26 `frappe.db.commit()`, GET that writes) | Green (closed by deletion) | same module | 541be82a | test site | the 26 commits and `get_tender_configuration_review` no longer exist |
+| AUD-XC-011 (reopened part) | Green (closed by deletion) | same module | 541be82a | test site | `Confirmed Tender Document Package` and `IT Tender Publication Record` deleted |
+| INT-B 4 (16 test modules never loaded) | Green | n/a | 541be82a | | all 46 test modules removed with the package |
+| Follow-on cleanup (demo seed, specs, gates, registry) | Green | `kentender_core/tests/test_kt_cl_surface_registry_contract.py` | 9756d5f4 | test site | see Commands run |
+
+Red/green note: the new guard module was written first and run once before deletion; that run was stopped (it would have executed the drop patch against doctypes whose files still existed), so the red state is evidenced by the package existing at that time, not by a captured failing run. Green run is below.
+
+What was deleted: `kentender_procurement/tender_configurations/` (322 tracked files: 40 doctypes = 3 named + 37 BWMF, 30 services, 13 seeds, BWMF framework, STD template JSON, 46 test modules), 19 Desk pages, 20 public JS files, 21 `page_js` hooks + the create-modal include + the `File` `on_trash` BWMF guard, the `Tender Configurations` line in modules.txt, 4 patches that re-created the module, the core "demo platform" seed pack (7 files + entry script + shell script + 2 tests + 3 make targets), the wizard/publication Playwright specs (21) + 2 helpers + 20 make targets, the 19 wizard surfaces in `kt_cl_surface_registry.js` (registry kept, empty), the home-pipeline branch, the sidebar/route tables, the editor rule.
+What was kept and why: nothing live depended on the module (see inventory section 3). Kept on purpose: the Civic Ledger shell/components library and the `kt-cl-shell-poc` page (own tests, shared mechanism), roles Tender Manager / Planning Authority / Procurement Officer (shared), the empty `tabSTD *` tables (see F2), `stable_platform_seed`.
+Drop patch: `kentender_procurement/patches/drop_retired_tender_configurations.py` (pre_model_sync, after the TM2 drop). Copies the TM2 shape; refuses via the shared `require_empty_or_authorised` guard if any retired table holds rows (an unconditional refusal for the CAS File folder with files); only existence-guarded raw deletes; does not scan the 1 GB log tables.
 
 ## Follow-ups
+- F1 (Civic Ledger library): `kentender_core` `kt_cl_components.js` (1929 lines), `kt_cl_code_spec.js`, `kt_cl_code_layout.css` (6752 lines), `kt_cl_sidebar.js`, `kt_cl_shell*.js`, `kt-cl-shell-poc` and `kt_cl_components_gallery_page.js` were built for the wizard; with its pages gone they serve only the shell PoC and still carry wizard-specific markup (UI-01 strip, "Create Tender Configuration" modal, ui01 CSS pins). Options: (a) retire the whole Civic Ledger shell + PoC (needs owner decision: AGENTS.md calls it legacy), (b) leave. Recommended: (a) in its own work package. Did nothing (out of scope: not the module, has its own tests).
+- F2 (empty `tabSTD *` tables): STD-TPL-IMP-001 FU-08 kept ~20 empty `STD *` tables only because "live Tender Configurations code still queries" them. Nothing does now. Option: drop them with an empty-guarded patch. Recommended: yes, small separate patch. Not done.
+- F3 (orphan STD POC leftovers): `templates/std_works_poc/`, `templates/std_admin_console/` (no code reference), UI specs `tests/ui/smoke/procurement/officer-tender-poc-*.spec.ts`, `works-hardening-desk-wh012.spec.ts`, `tests/ui/helpers/stdAdminConsoleDesk.ts` ("Officer Tender Configuration" POC), and the `test:ui:smoke:rel-1610` script in package.json (points at a nonexistent `frontend/src/modules/std-engine/...`). Not owned by the module; recommended: delete in a stale-test sweep. Not done.
+- F4 (pre-existing failures seen, unrelated to this change; HEAD lacks the asserted strings): `test_kt_cl_shell_layout_guard::test_planning_surfaces_are_registered` (asserts `routePrefixes: ["planning-workspace"]`, contradicting AGENTS.md section 6.5), `::test_procurement_page_controllers_are_page_scoped` (procurement-plan-item-editor page_js), one toolbar-class assertion on `kt_cl_code_spec.js`; `setup/tests/test_procurement_sidebar_g0_012_contract` 2 failures (Procurement meetings item, known G0-012 drift); `test_ui01_layout_css_contract` and `test_workflow_guard` fail in set-up (fiscal-year overlap 2040-2041 / Procuring Entity needs reporting_currency on the shared test site). Recommended: the layout-guard planning tests should be deleted or inverted by whoever owns the shell.
+- F5: `docs/data/DEMO_PLATFORM_SEED.md` and the other docs below describe a seed and screens that no longer exist.
+
 ## Needs browser check
+- None required (no live page was changed). Optional: after `migrate` on dev, open /desk and the Procurement rail once to confirm no console error about a missing `it-tender-*` page script. The test-site server answered /desk, /desk/kt-procurement-home, /desk/tenders and /desk/std-templates with 200, the Desk HTML carries no reference to the retired pages, `/api/resource/Page/<retired>` returns 404 for three of them.
+
 ## Dev site actions needed
+1. `bench --site kentender.midas.com migrate` — runs `drop_retired_tender_configurations` (pre_model_sync). Dev holds 40 empty retired tables (read-only check, 0 rows everywhere, no BWMF roles, no CAS folder), so the patch will not refuse. If it ever refuses (`DESTRUCTIVE_PATCH_BLOCKED` / `RETIRED_TABLE_NOT_EMPTY`) stop and look at the rows; do not set the site flag blindly.
+2. Then `bench --site kentender.midas.com clear-cache` and a hard refresh of Desk (page_js and app_include_js entries were removed; a stale bundle may 404 one old script).
+3. Remove the now-dead make targets from any shell history/CI: `ui-civic-ledger-*`, `pub-domain-gate`, `ui-publications-gate`, `bw-manifest-phase*`, `e1-nssf-*`, `seed-demo-platform*`.
+Production droplet (when deployed): same migrate; `--site` always; restart workers then clear-cache.
+
 ## Document follow-ups
+docs/mvp-1-r1 documents that still describe the module (not edited): 07_std_configuration/STD-TPL-IMP-001_v1_0_FOLLOW_UPS.md (FU-08 reason no longer true), STD-TPL-IMP-001_v1_0_Implementation_Plan.md (JCS note names `bidder_workspace_manifest/compiler/jcs.py`, now deleted: adapt from git history if needed); 12_bid_submission/BDS-CHG-001_v0_8_FOLLOW_UPS.md (FU-05 "kept untouched" is superseded by this retirement; FU-09), BDS-CHG-001_v0_8_Implementation_Plan.md / IMPLEMENTATION_TRACKER.md / BDS-CHG-001_FOLLOW_UPS.md / _IMPLEMENTATION_TRACKER.md / _Implementation_Plan.md, reconciliation/legacy_inventory.md (lines 48-50 keep-list); 11_tenders/retired/TPR-CHG-001_v0_6/v0_8 plan + tracker. Also CFG-CHG-002 v0_11-v0_18 mention it in passing (search hits only in older versions). Outside mvp-1-r1: docs/std-prod-impl/IT-STD-Wizard*, docs/bidder-workspace, docs/tender-publications, docs/data/DEMO_PLATFORM_SEED.md, docs/test-contracts/civic-ledger-queue-rollout-matrix.md (candidates for archive/; `kt_cl_code_spec.js` and `test_kt_cl_shell_layout_guard.py` still read `IT-STD-Wizard-v3/B-Components/code.html`, so that one file must stay until F1 is decided). audit/FINDINGS.md / REMEDIATION_TRACKER rows RG-04, RG-05, XC-143, XC-011 to be marked closed by deletion by the lead.
+
 ## Commands run
+All on kentender-test.local under `flock /tmp/kt-test-site.lock`.
+- `bench --site kentender-test.local migrate` (first attempt aborted by me: the first draft of the patch purged log tables per doctype and was minutes slow on a 1 GB `Deleted Document`; patch rewritten, then) migrate completed (2m05s, no error); afterwards 0 retired doctypes/pages/roles/Module Def/CAS folder on the test site and a Patch Log row for the drop patch.
+- `run-tests --module kentender_procurement.tests.test_retired_tender_configurations_gone`: 12/12 OK (final run). (An earlier run: 11/12, the failure was my own assertion that patches.txt must not name the package; fixed.)
+- `...tests.test_destructive_patch_guards` 5/5 OK (the drop patch added to its list); `...tests.test_retired_surface_gone` 6/6 OK; `...bid_submission.tests.test_legacy_retirement` 6/6 OK; `...setup.tests.test_workspace_sidebar_fastpath` 8/8 OK; `...setup.tests.test_sidebar_availability` 3/3 OK; `...procurement_home.tests.test_home_service_contract` 13/13 OK.
+- `...setup.tests.test_procurement_sidebar_g0_012_contract`: 6 pass, 2 fail (pre-existing, F4).
+- kentender_core: `test_kt_cl_surface_registry_contract` 4/4 OK; `test_command_write_coverage` 3/3 OK; `test_command_write_guard` 13/13 OK; `test_whitelisted_principal_parameters` 5/5 OK; `test_kt_cl_shell_layout_guard` 22/25 (3 pre-existing failures, F4); `test_ui01_layout_css_contract` and `test_workflow_guard` not runnable on the shared test site (set-up errors, F4, unrelated).
+- HTTP probe http://127.0.0.1:8001 as the UI admin: login 200; /desk 200 (698 KB, no retired page names); /desk/kt-procurement-home, /desk/tenders, /desk/std-templates 200; GET of `kentender_procurement.tender_configurations.publish_tender` (and `.api.`, and `get_tender_configuration_review`) -> ValidationError "No module named 'kentender_procurement.tender_configurations'"; Page resources `it-tender-configuration-dashboard`, `publications`, `publication-setup` 404.
+- Not run: Playwright (not allowed), the full kentender_procurement suite, any command on the dev site.
