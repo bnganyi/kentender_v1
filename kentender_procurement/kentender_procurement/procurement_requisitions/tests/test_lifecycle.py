@@ -113,8 +113,9 @@ class TestLeadChange(RequisitionCase):
 		frappe.set_user(fx.HOD)
 		with self.assertRaises(frappe.DoesNotExistError):
 			lifecycle.submit_requisition_to_procurement(requisition=requisition, expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
-		frappe.set_user(fx.HOD_BETA)
-		lifecycle.submit_requisition_to_procurement(requisition=requisition, expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		# the Draft an Author prepared goes through the department approval task (REQ v1.14 §7.1, RG-14), now the new lead's
+		fx.send(requisition)
+		fx.submit_as_hod(requisition, fx.HOD_BETA)
 		self.assertEqual(records.load(requisition)[1].certified_lead_org_unit_id, fx.ou_beta())
 
 	def test_the_new_lead_must_be_a_different_contributor(self):

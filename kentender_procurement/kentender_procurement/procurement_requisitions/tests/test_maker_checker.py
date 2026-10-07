@@ -51,12 +51,43 @@ class TestHeadOfDepartmentCannotCertifyWhatTheyPreparedOrSent(MakerCheckerCase):
 		self.assertEqual(frappe.db.get_value("Procurement Requisition", requisition, "current_state"), "Draft")
 		self.assertEqual(frappe.db.count("Requisition Task", {"requisition": requisition, "business_role": "Head of Procurement Function"}), 0)
 
-	def test_a_different_head_still_certifies_an_authors_draft_and_a_head_still_submits_their_own(self):
+	def test_a_different_head_cannot_certify_an_authors_draft_directly_it_goes_through_the_approval_task(self):
+		"""RG-14 — REQ v1.14 §7.1: only "a Head of User Department preparing directly" submits a Draft; the Draft
+		an Author prepared goes through the department approval task, whoever the lead Head is."""
 		_, item_id = fx.active_item()
 		requisition = fx.complete_draft(item_id)
 		frappe.set_user(fx.HOD)
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			lifecycle.submit_requisition_to_procurement(requisition=requisition, expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		self.assertCode(ctx, "REQ_SOD_BLOCKED")
+		self.assertEqual(frappe.db.get_value("Procurement Requisition", requisition, "current_state"), "Draft")
+		fx.send(requisition)
+		self.assertEqual(fx.submit_as_hod(requisition)["action"], "submitted")  # the approval task is the way
+
+	def test_a_head_preparing_directly_still_submits_their_own_draft(self):
+		_, item_id = fx.active_item()
+		requisition = fx.complete_draft(item_id, fx.HOD)
+		frappe.set_user(fx.HOD)
 		lifecycle.submit_requisition_to_procurement(requisition=requisition, expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
 		self.assertEqual(frappe.db.get_value("Procurement Requisition", requisition, "current_state"), "Submitted to Procurement")
+
+	def test_a_head_who_edited_an_authors_draft_cannot_then_approve_it(self):
+		"""RG-14 — "prepared" is every editor, read from the immutable command audit, not only the creator."""
+		_, item_id = fx.active_item()
+		requisition = fx.complete_draft(item_id)  # Grace prepares
+		frappe.set_user(fx.HOD)  # Peter, the lead Head, edits the shared request information as a Head
+		view = fx.editor(requisition, fx.HOD)
+		cmd.save_requisition_summary(requisition=requisition, values={"requirement_title": "Edited by the Head"}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
+		fx.send(requisition)
+		task = fx.open_task(requisition, "Head of User Department")
+		frappe.set_user(fx.HOD)
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			lifecycle.submit_requisition_to_procurement(requisition=requisition, task=task, expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		self.assertCode(ctx, "REQ_SOD_BLOCKED")
+		self.assertEqual(frappe.db.get_value("Procurement Requisition", requisition, "current_state"), "Awaiting Department Approval")
+		# the Head who never touched it still approves
+		self.grant(fx.HOD_BETA, "Head of User Department", fx.ou_alpha())
+		self.assertEqual(fx.submit_as_hod(requisition, fx.HOD_BETA)["action"], "submitted")
 
 	def test_sending_records_who_sent_it_and_that_person_cannot_then_approve_it(self):
 		_, item_id = fx.active_item()
@@ -79,11 +110,12 @@ class TestHeadOfDepartmentCannotCertifyWhatTheyPreparedOrSent(MakerCheckerCase):
 		from kentender_procurement.procurement_requisitions.services import read
 
 		root = frappe.get_doc("Procurement Requisition", requisition)
-		# Charles is a lead Head who is not a lead Author: offered Submit on an Author's Draft ...
-		self.assertTrue(read.get_requisition_editor(root=root, actor=fx.HOPF)["actions"]["submit_to_procurement"])
-		# ... but not on the Draft he prepared himself as an Author in another capacity.
-		frappe.db.set_value("Requisition Version", records.load(requisition)[1].name, "prepared_by", fx.HOPF, update_modified=False)
+		# A lead Head who did not prepare the Draft is not offered Submit on an Author's Draft (RG-14): it goes through the approval task ...
 		self.assertFalse(read.get_requisition_editor(root=root, actor=fx.HOPF)["actions"]["submit_to_procurement"])
+		self.assertFalse(read.get_requisition_editor(root=root, actor=fx.HOD)["actions"]["submit_to_procurement"])
+		# ... while the Head who prepared it directly is.
+		frappe.db.set_value("Requisition Version", records.load(requisition)[1].name, {"prepared_by": fx.HOD, "prepared_capacity": "Head of User Department"}, update_modified=False)
+		self.assertTrue(read.get_requisition_editor(root=root, actor=fx.HOD)["actions"]["submit_to_procurement"])
 
 
 class TestPreparerCannotAuthorise(MakerCheckerCase):
@@ -100,6 +132,20 @@ class TestPreparerCannotAuthorise(MakerCheckerCase):
 		self.assertCode(ctx, "REQ_SOD_BLOCKED")
 		self.assertEqual(frappe.db.get_value("Procurement Requisition", requisition, "current_state"), "Submitted to Procurement")
 		self.assertEqual(fx.authorise(requisition)["action"], "authorised")  # the independent HOPF still can
+
+	def test_an_officer_who_edited_the_draft_cannot_authorise_it(self):
+		"""RG-14 — the authoriser's "prepared" set is every editor, not only the creator."""
+		_, item_id = fx.active_item()
+		requisition = fx.complete_draft(item_id)  # Grace prepares
+		frappe.set_user(fx.HOPF)  # Charles also holds the Head of User Department role and edits the Draft
+		view = fx.editor(requisition, fx.HOPF)
+		cmd.save_requisition_summary(requisition=requisition, values={"requirement_title": "Edited by Charles"}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
+		fx.send(requisition)
+		fx.submit_as_hod(requisition)
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			fx.authorise(requisition)
+		self.assertCode(ctx, "REQ_SOD_BLOCKED")
+		self.assertEqual(frappe.db.get_value("Procurement Requisition", requisition, "current_state"), "Submitted to Procurement")
 
 	def test_the_task_view_does_not_offer_authorise_to_the_preparer(self):
 		from kentender_procurement.procurement_requisitions.services import read

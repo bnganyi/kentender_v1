@@ -51,7 +51,7 @@ from kentender_procurement.procurement_requisitions.services.requisition_roles i
 OWNER = "requisitions"
 PAGE = "procurement-requisitions"
 ROOT_FIELDS = ["name", "requisition_reference", "lead_org_unit_id", "current_state", "current_version", "plan_item_id"]
-VERSION_FIELDS = ["name", "requirement_title", "prepared_by", "prepared_capacity", "sent_for_approval_by", "submitted_by"]
+VERSION_FIELDS = ["name", "requisition", "requirement_title", "prepared_by", "prepared_capacity", "sent_for_approval_by", "submitted_by"]
 DEPARTMENT_APPROVAL, PROCUREMENT_AUTHORISATION = "requisitions.department_approval", "requisitions.procurement_authorisation"
 SEND = "SendForDepartmentApproval"
 

@@ -87,8 +87,9 @@ class TestTheFullRequisitionJourneyOverTheRequestPath(RequestShapedCase):
 		)
 		self.assertEqual(applied["review_state"], "Reviewed")
 
+		sent = self.call("send_for_department_approval", requisition=requisition, expected_record_version=str(fx.root_version(requisition)), idempotency_key=self.key())
 		frappe.set_user(fx.HOD)
-		submitted = self.call("submit_requisition_to_procurement", requisition=requisition, expected_record_version=str(fx.root_version(requisition)), idempotency_key=self.key())
+		submitted = self.call("submit_requisition_to_procurement", requisition=requisition, task=sent["task"], expected_record_version=str(fx.root_version(requisition)), idempotency_key=self.key())
 		frappe.set_user(fx.HOPF)
 		task_view = self.call("get_procurement_authorisation_task", task=submitted["task"])
 		self.assertEqual(task_view["result"]["title"], "Ready to authorise")

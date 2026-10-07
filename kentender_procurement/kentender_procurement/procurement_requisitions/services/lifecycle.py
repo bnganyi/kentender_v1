@@ -279,7 +279,7 @@ def submit_requisition_to_procurement(*, requisition: str, expected_record_versi
 		if version.version_status != "Draft":
 			fail("REQ_STALE_VERSION")
 		# §7.1/§7.3 — only a Head of User Department preparing directly certifies a Draft; the Draft an Author prepared goes through the approval task.
-		if records.certifier_conflict(version, actor):
+		if records.certifier_conflict(version, actor, direct=True):
 			fail("REQ_SOD_BLOCKED")
 		lock(root, version, package_version, target_status="Submitted to Procurement")
 	else:

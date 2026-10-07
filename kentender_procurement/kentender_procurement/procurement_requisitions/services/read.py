@@ -470,12 +470,12 @@ def get_requisition_editor(*, root, actor: str) -> dict[str, Any]:
 	badge = ("Draft correction", "is-draft") if version.based_on_version else ("Draft", "is-draft")
 	blocking = [f for f in report["findings"] if f["severity"] == "Blocking"]
 	footer_hint = {t["key"]: next((f["message"] for f in blocking if f["task"] == t["key"]), "") for t in report["tasks"]}
-	direct_hod = is_lead_hod and cstr(version.prepared_capacity) == ROLE_HEAD_OF_USER_DEPARTMENT
+	direct_hod = is_lead_hod and records.prepared_directly(version, actor)
 	actions = {
 		"save": bool(scope["units"]) and not technical, "save_label": "Save my changes" if contributor else "Save draft",
 		"edit_shared": scope["shared"] and not technical,
 		"send_for_department_approval": scope["shared"] and is_lead_author and not direct_hod and not technical,
-		"submit_to_procurement": is_lead_hod and not technical and (direct_hod or not is_lead_author) and not records.certifier_conflict(version, actor),
+		"submit_to_procurement": is_lead_hod and not technical and direct_hod and not records.certifier_conflict(version, actor, direct=True),
 		"withdraw": is_lead_hod and not technical,
 		"request_planning_correction": (is_lead_hod or _has(actor, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)) and not technical,
 		"contributor": contributor,
