@@ -9,6 +9,8 @@ and hold no business action."""
 
 from __future__ import annotations
 
+import json
+
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -32,8 +34,9 @@ class TendersAuthorizationCase(IntegrationTestCase):
 		fx.wipe_tender_rows()
 		self.addCleanup(frappe.set_user, "Administrator")
 
-	def _tender(self, *, lead_unit: str) -> str:
-		doc = frappe.get_doc({"doctype": "Tender", "tender_reference": f"TND-TEST-AUTH-{lead_unit[-4:]}", "overall_status": "Draft", "lead_org_unit": lead_unit, "contributing_org_unit_ids": f'["{lead_unit}"]', "record_version": 0, "fixture_namespace": fx.NS})
+	def _tender(self, *, lead_unit: str, contributors: tuple[str, ...] = ()) -> str:
+		units = json.dumps([lead_unit, *contributors])
+		doc = frappe.get_doc({"doctype": "Tender", "tender_reference": f"TND-TEST-AUTH-{lead_unit[-4:]}-{len(contributors)}", "overall_status": "Draft", "lead_org_unit": lead_unit, "contributing_org_unit_ids": units, "record_version": 0, "fixture_namespace": fx.NS})
 		envelope.insert(doc)
 		envelope.insert(frappe.get_doc({"doctype": "Tender Version", "tender": doc.name, "version_number": 1, "status": "Draft", "record_version": 0, "fixture_namespace": fx.NS}))
 		return doc.name
@@ -99,6 +102,21 @@ class TestFrameworkHooks(TendersAuthorizationCase):
 		self.assertFalse(frappe.has_permission("Tender", doc=mine))
 		frappe.set_user("Administrator")
 		self.assertEqual(len(frappe.get_list("Tender", filters=ours, pluck="name")), 2)
+
+	def test_a_contributing_unit_lists_the_tender_it_may_open(self):
+		"""AUD-XC-023 (OVS §4.1): the list and the record check are one predicate, lead plus contributing unit."""
+		alpha, beta = pln_fx.OU_ALPHA, pln_fx.OU_BETA
+		shared = self._tender(lead_unit=beta, contributors=(alpha,))
+		beta_only = self._tender(lead_unit=beta)
+		ours = {"name": ("in", (shared, beta_only))}
+		our_versions = {"tender": ("in", (shared, beta_only))}
+		frappe.set_user(fx.DEPARTMENTAL)  # reads for OU_ALPHA only
+		self.assertTrue(frappe.has_permission("Tender", doc=shared))
+		self.assertFalse(frappe.has_permission("Tender", doc=beta_only))
+		self.assertEqual(frappe.get_list("Tender", filters=ours, pluck="name"), [shared])
+		self.assertEqual(frappe.get_list("Tender Version", filters=our_versions, pluck="tender"), [shared])
+		frappe.set_user(fx.OUTSIDER)  # OU_BETA: the lead of both
+		self.assertEqual(set(frappe.get_list("Tender", filters=ours, pluck="name")), {shared, beta_only})
 
 	def test_the_command_journal_reads_site_wide_only(self):
 		"""AUD-XC-025: the journal names no Tender of its own, so only a site-wide or technical reader sees it."""

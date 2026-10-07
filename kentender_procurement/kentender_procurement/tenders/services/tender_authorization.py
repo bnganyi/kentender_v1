@@ -255,8 +255,19 @@ def _tender_scope_condition(principal: str) -> str:
 	units = departmental_units(principal)
 	if not units:
 		return "1=0"
+	return unit_scope_condition(units)
+
+
+def unit_scope_condition(units: set[str]) -> str:
+	"""The list form of the one departmental predicate (OVS-CHG-001 §4.1,
+	AUTH-ADR-001 §5.3, AUD-XC-023): a Tender is in scope for a reader whose
+	units include its lead unit or any contributing unit, exactly what
+	`has_permission` and `reader_mode` test through `contributing_units_of`.
+	Rows and counts must never disagree about a record the reader may open."""
 	quoted = ", ".join(frappe.db.escape(u) for u in sorted(units))
-	return f"`tab{ROOT}`.`lead_org_unit` in ({quoted})"
+	units_json = f"if(json_valid(`tab{ROOT}`.`contributing_org_unit_ids`), `tab{ROOT}`.`contributing_org_unit_ids`, '[]')"
+	contributing = " or ".join(f"json_contains({units_json}, json_quote({frappe.db.escape(u)}))" for u in sorted(units))
+	return f"(`tab{ROOT}`.`lead_org_unit` in ({quoted}) or {contributing})"
 
 
 def permission_query_conditions(user: str | None = None, doctype: str | None = None) -> str:
