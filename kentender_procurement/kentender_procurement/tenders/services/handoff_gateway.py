@@ -79,14 +79,36 @@ def consumer_tender(handoff_doc) -> str:
 	return ""
 
 
+def _require_tender_made_from(*, handoff: str, tender: str, tender_version: str) -> None:
+	"""AUD-REQ-001 (REQ §9.2): Requisitions may bind a handoff only to a Tender
+	that exists, was created from this very handoff and is the one Tender
+	holding it. Tenders owns those facts, so Tenders checks them here, in the
+	Start command's own transaction, before the owner command binds anything."""
+	root = frappe.db.get_value("Tender", cstr(tender), ["name", "requisition_handoff"], as_dict=True) if cstr(tender).strip() else None
+	if not root or cstr(root.requisition_handoff) != cstr(handoff):
+		fail("TND_HANDOFF_INVALID", "The Tender was not created from this handoff.", detail={"handoff": handoff})
+	version = frappe.db.get_value("Tender Version", cstr(tender_version), ["tender", "requisition_handoff"], as_dict=True) if cstr(tender_version).strip() else None
+	if not version or cstr(version.tender) != root.name or cstr(version.requisition_handoff) != cstr(handoff):
+		fail("TND_HANDOFF_INVALID", "The Tender Version was not created from this handoff.", detail={"handoff": handoff})
+	other = frappe.get_all("Tender", filters={"requisition_handoff": handoff, "name": ("!=", root.name)}, pluck="name", limit=1)
+	if other:
+		fail("TND_HANDOFF_CONFLICT", detail={"handoff": handoff, "tender": other[0]})
+
+
 def consume(*, handoff: str, tender: str, tender_version: str, template_key: str, template_version: str, idempotency_key: str) -> dict[str, Any]:
+	"""Called only from inside a Tenders command (Start, Start corrected
+	version), in the same transaction as the Tender it binds. There is no web
+	endpoint for consumption: a caller outside a Tender transaction cannot
+	consume a handoff (AUD-REQ-001)."""
+	_require_tender_made_from(handoff=handoff, tender=tender, tender_version=tender_version)
 	try:
 		return req_handoff.record_handoff_consumption(
 			handoff=handoff, tender=tender, tender_version=tender_version, template_key=template_key, template_version=template_version, idempotency_key=idempotency_key,
 		)
 	except ProcurementRequisitionsError as exc:
-		if exc.code == "REQ_HANDOFF_CONSUMED":
-			fail("TND_HANDOFF_CONFLICT", detail={"handoff": handoff, "tender": cstr(frappe.db.get_value(HANDOFF_DOCTYPE, handoff, "tender"))})
+		held_by = cstr(frappe.db.get_value(HANDOFF_DOCTYPE, handoff, "tender")) if frappe.db.exists(HANDOFF_DOCTYPE, handoff) else ""
+		if exc.code == "REQ_HANDOFF_CONSUMED" or (exc.code == "REQ_HANDOFF_CONFLICT" and held_by and held_by != cstr(tender)):
+			fail("TND_HANDOFF_CONFLICT", detail={"handoff": handoff, "tender": held_by})
 		fail("TND_HANDOFF_INVALID", detail={"requisition_error": exc.code})
 	except frappe.DoesNotExistError:
 		fail("TND_HANDOFF_INVALID")
