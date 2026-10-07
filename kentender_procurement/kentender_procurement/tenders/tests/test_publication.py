@@ -268,6 +268,24 @@ class TestAuthorise(PublicationCase):
 		self.assertFalse([r for r in my_work_provider.my_work_rows(user=fx.AO)["waiting"] if "to reopen Tender" in r["title"]])
 		self.assertTrue([r for r in my_work_provider.my_work_rows(user=fx.OFFICER)["assigned"] if r["title"] == f"Correct reopened Tender {ref}"])
 
+	def test_the_accounting_officer_cannot_authorise_while_their_return_is_open(self):
+		"""AUD-TND-003 (§5.1, TPR16-AC-015): an open return leaves the AO neither Authorise nor Return, on the server and not only in the read."""
+		name, approved = self._approved()
+		root = frappe.get_doc("Tender", name)
+		reason = "The delivery location in the package does not match the stores plan; please correct before I authorise."
+		publication.return_approved_tender(tender=name, reason=reason, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO)
+		root.reload()
+		with self.assertRaises(TendersError) as ctx:
+			publication.authorise_tender_publication(tender=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO)
+		self.assertEqual(ctx.exception.code, "TND_STALE_VERSION")
+		with self.assertRaises(TendersError) as ctx:  # even carrying the (now cancelled) task it was offered before the return
+			publication.authorise_tender_publication(tender=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO, task=approved["task"])
+		self.assertEqual(ctx.exception.code, "TND_STALE_VERSION")
+		root.reload()
+		self.assertEqual((root.overall_status, root.publication), ("Approved", None))
+		# the HOPF's return item is still theirs to clear by Reopen
+		self.assertTrue([r for r in my_work_provider.my_work_rows(user=fx.HOPF)["assigned"] if "returned by the Accounting Officer" in r["title"]])
+
 	def test_digests_and_rule_identifiers_stay_under_technical_details(self):
 		"""v0.16 §10.8 item 2 and §10.9 item 4 (owner, 2 Oct 2026): no digest or rule identifier in a business-facing line."""
 		name, approved = self._approved()
