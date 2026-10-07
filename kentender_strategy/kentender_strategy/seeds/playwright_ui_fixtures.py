@@ -33,6 +33,7 @@ import frappe
 
 from kentender_core.seeds import site_setup
 from kentender_core.seeds.constants import TEST_PASSWORD
+from kentender_core.services.command_write_guard import maintenance_write
 from kentender_strategy.seeds.kentender_mvp_v1_strategy import (
 	APPROVER,
 	AUTHOR,
@@ -82,6 +83,11 @@ def _guard() -> None:
 
 
 def _delete_version_tree(version_name: str) -> None:
+	with maintenance_write("Strategy", reason="Playwright fixture clean-up"):
+		_delete_version_tree_unguarded(version_name)
+
+
+def _delete_version_tree_unguarded(version_name: str) -> None:
 	for indicator in frappe.get_all("Performance Indicator", filters={"plan_version_id": version_name}, pluck="name"):
 		for target in frappe.get_all("Performance Target", filters={"indicator_id": indicator}, pluck="name"):
 			frappe.delete_doc("Performance Target", target, force=1, ignore_permissions=True)
@@ -94,7 +100,8 @@ def _delete_version_tree(version_name: str) -> None:
 def _delete_plan(plan_name: str) -> None:
 	for version in frappe.get_all("Strategic Plan Version", filters={"plan_id": plan_name}, pluck="name"):
 		_delete_version_tree(version)
-	frappe.delete_doc("Strategic Plan", plan_name, force=1, ignore_permissions=True)
+	with maintenance_write("Strategy", reason="Playwright fixture clean-up"):
+		frappe.delete_doc("Strategic Plan", plan_name, force=1, ignore_permissions=True)
 
 
 def ensure_actors() -> dict[str, Any]:

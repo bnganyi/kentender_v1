@@ -30,15 +30,17 @@ from kentender_strategy.services.strategy_domain_guards import PLAN_ROLE_PRIMARY
 
 
 def _covers_date(start, end, as_of) -> bool:
-	if not start or not end:
+	"""A blank end is open-ended (STR §4.2), a blank start covers nothing."""
+	if not start:
 		return False
-	return getdate(start) <= as_of <= getdate(end)
+	return getdate(start) <= as_of and (not end or as_of <= getdate(end))
 
 
 def _overlaps_range(start, end, range_start, range_end) -> bool:
-	if not start or not end:
+	"""A blank end is open-ended (STR §4.2), a blank start overlaps nothing."""
+	if not start:
 		return False
-	return getdate(start) <= range_end and range_start <= getdate(end)
+	return getdate(start) <= range_end and (not end or range_start <= getdate(end))
 
 
 def _hierarchy_summary(plan_version_id: str) -> dict[str, int]:

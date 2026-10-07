@@ -40,7 +40,7 @@ from kentender_strategy.services import strategy_readiness as readiness
 from kentender_strategy.services.home_provider import entries
 from kentender_strategy.services.strategy_authorization import ROLE_STRATEGY_APPROVER, ROLE_STRATEGY_AUTHOR, ensure_strategy_governance_roles
 from kentender_strategy.services.strategy_transitions import transition_plan_version
-from kentender_strategy.tests.fixtures import ensure_fiscal_year
+from kentender_strategy.tests.fixtures import ensure_fiscal_year, open_strategy_write_window, purge_record
 from kentender_strategy.tests.test_str_technical_read import TechnicalReadTestBase
 
 # A window nothing else occupies (the suite's usual 2040 and the OVS suite's 2060 are taken).
@@ -63,8 +63,7 @@ class TestStrategyHomeProvider(TechnicalReadTestBase):
 		names = [name for doctype, name in cleanup if doctype in ("Strategic Plan Version", "Strategic Plan")]
 		purge_audit_events({"document_name": ("in", names or ["-"])}, reason="strategy home provider test clean-up")
 		for doctype, name in reversed(cleanup):
-			if frappe.db.exists(doctype, name):
-				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+			purge_record(doctype, name)
 		if WORLD.get("made_fiscal_year") and frappe.db.exists("Fiscal Year", FY):
 			frappe.delete_doc("Fiscal Year", FY, force=True, ignore_permissions=True)
 		frappe.db.commit()
@@ -80,6 +79,7 @@ class TestStrategyHomeProvider(TechnicalReadTestBase):
 			raise AssertionError(f"Strategy Home test rows left behind: {left}")
 
 	def setUp(self):
+		open_strategy_write_window(self)
 		frappe.set_user("Administrator")
 		self.addCleanup(frappe.set_user, "Administrator")
 		ensure_strategy_governance_roles()
@@ -91,7 +91,7 @@ class TestStrategyHomeProvider(TechnicalReadTestBase):
 		self.suffix, self._cleanup = WORLD["suffix"], WORLD["cleanup"]
 		if "built" not in WORLD:
 			WORLD["built"] = False  # a build that fails is not retried by every test
-			with patch("kentender_strategy.tests.test_str_technical_read.FY", FY), patch(READ_DATE, return_value=getdate("2099-12-31")):
+			with patch("kentender_strategy.tests.test_str_technical_read.FY", FY), patch(READ_DATE, return_value=getdate("2074-01-01")):
 				self._build()
 			WORLD["built"] = True
 		elif not WORLD["built"]:
@@ -225,7 +225,7 @@ class TestStrategyHomeProvider(TechnicalReadTestBase):
 		self.assertTrue(view["blocked"] and view["reason"] == row["reason"])
 
 	def test_a_version_that_can_become_current_now_is_not_blocked(self):
-		with patch(READ_DATE, return_value=getdate("2099-12-31")):
+		with patch(READ_DATE, return_value=getdate("2074-01-01")):
 			row = self.one(WORLD["approver"], he.MY_WORK, "v2", ":review")
 		self.assertEqual((row["blocked"], row["reason"]), (False, ""))
 

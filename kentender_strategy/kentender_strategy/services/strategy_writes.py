@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import frappe
 from frappe import _
+from frappe.utils import cstr
 
+from kentender_core.services.command_write_guard import command_write
 from kentender_strategy.services.strategy_audit import list_events, record_event
 from kentender_strategy.services.strategy_authorization import (
 	CAP_AUTHOR,
@@ -34,6 +36,24 @@ PLAN_IDENTITY_FIELDS = (
 	"period_end",
 )
 VERSION_FIELDS = ("effective_from", "effective_to")
+
+# The one Strategy command-write family (AUD-XC-005): every insert, save and
+# delete of a Strategy lifecycle record happens inside `command_write(FAMILY)`,
+# opened here only after the command has checked the caller's authority.
+FAMILY = "Strategy"
+
+# AUD-STR-001/008 — a structure change set may set only these fields. Identity
+# (`plan_version_id`), the generated references and the fixture namespace are
+# never taken from the caller.
+STRUCTURE_FIELDS: dict[str, tuple[str, ...]] = {
+	"Strategy Node": ("node_type", "parent_node_id", "title", "display_order"),
+	"Performance Indicator": ("measures_node_id", "indicator_name", "definition", "unit"),
+	"Performance Target": ("indicator_id", "fiscal_year", "target_by_date", "comparison", "target_value"),
+}
+
+
+def _refuse(message: str, code: str = "STRATEGY_INVALID_STATE"):
+	frappe.throw(message, frappe.ValidationError, title=code)
 
 
 def _plan_payload(plan) -> dict:
@@ -66,17 +86,30 @@ def save_strategy_plan_draft(payload: dict, *, expected_version: str | None = No
 				title="STRATEGY_INVALID_STATE",
 			)
 		version = frappe.get_doc("Strategic Plan Version", version_id)
+		# AUD-STR-003 — only a Draft of this very plan is edited here; an
+		# Active, Submitted or Superseded version is corrected by a successor.
+		if version.plan_id != plan.name:
+			_refuse(_("That version does not belong to this plan."))
+		if version.status != "Draft":
+			_refuse(_("Only a Draft version can be edited. Create a successor version to change an approved plan."))
 		_check_expected_version(version, expected_version)
 		exercised = require_plan_version_capability(frappe.session.user, CAP_AUTHOR, version)
 
-		for field in PLAN_IDENTITY_FIELDS:
-			if field in payload:
-				plan.set(field, payload[field])
-		plan.save(ignore_permissions=True)
-		for field in VERSION_FIELDS:
-			if field in payload:
-				version.set(field, payload[field])
-		version.save(ignore_permissions=True)
+		# STR §12.2 — identity is editable only in the plan's first Draft, before
+		# any other version exists; a successor Draft keeps the plan's identity.
+		changed = [f for f in PLAN_IDENTITY_FIELDS if f in payload and cstr(payload[f]) != cstr(plan.get(f))]
+		if changed and frappe.db.count("Strategic Plan Version", {"plan_id": plan.name}) > 1:
+			_refuse(_("The plan's title, role and period can be changed only in its first Draft."))
+
+		with command_write(FAMILY):
+			for field in PLAN_IDENTITY_FIELDS:
+				if field in payload:
+					plan.set(field, payload[field])
+			plan.save(ignore_permissions=True)
+			for field in VERSION_FIELDS:
+				if field in payload:
+					version.set(field, payload[field])
+			version.save(ignore_permissions=True)
 
 		record_event(
 			entity_type="Strategic Plan Version",
@@ -92,19 +125,20 @@ def save_strategy_plan_draft(payload: dict, *, expected_version: str | None = No
 	# validated or stamped (the physical column falls to RM per D2).
 	exercised = require_plan_create_capability(frappe.session.user)
 
-	plan = frappe.get_doc(
-		{"doctype": "Strategic Plan", **{f: payload.get(f) for f in PLAN_IDENTITY_FIELDS}}
-	)
-	plan.insert(ignore_permissions=True)
-	version = frappe.get_doc(
-		{
-			"doctype": "Strategic Plan Version",
-			"plan_id": plan.name,
-			"version_number": 1,
-			**{f: payload.get(f) for f in VERSION_FIELDS},
-		}
-	)
-	version.insert(ignore_permissions=True)
+	with command_write(FAMILY):
+		plan = frappe.get_doc(
+			{"doctype": "Strategic Plan", **{f: payload.get(f) for f in PLAN_IDENTITY_FIELDS}}
+		)
+		plan.insert(ignore_permissions=True)
+		version = frappe.get_doc(
+			{
+				"doctype": "Strategic Plan Version",
+				"plan_id": plan.name,
+				"version_number": 1,
+				**{f: payload.get(f) for f in VERSION_FIELDS},
+			}
+		)
+		version.insert(ignore_permissions=True)
 
 	record_event(
 		entity_type="Strategic Plan Version",
@@ -148,88 +182,89 @@ def create_strategy_successor_version(plan_id: str) -> dict:
 			title="STRATEGY_INVALID_STATE",
 		)
 
-	new_version = frappe.get_doc(
-		{
-			"doctype": "Strategic Plan Version",
-			"plan_id": plan_id,
-			"version_number": int(baseline.version_number) + 1,
-			"based_on_plan_version_id": baseline.name,
-			"effective_from": baseline.effective_from,
-			"effective_to": baseline.effective_to,
-		}
-	)
-	new_version.insert(ignore_permissions=True)
+	with command_write(FAMILY):
+		new_version = frappe.get_doc(
+			{
+				"doctype": "Strategic Plan Version",
+				"plan_id": plan_id,
+				"version_number": int(baseline.version_number) + 1,
+				"based_on_plan_version_id": baseline.name,
+				"effective_from": baseline.effective_from,
+				"effective_to": baseline.effective_to,
+			}
+		)
+		new_version.insert(ignore_permissions=True)
 
-	id_map: dict[str, str] = {}
-	remaining = frappe.get_all(
-		"Strategy Node",
-		filters={"plan_version_id": baseline.name},
-		fields=["name", "node_type", "parent_node_id", "title", "display_order"],
-	)
-	# Clone parents before children regardless of original creation order.
-	while remaining:
-		still = []
-		progressed = False
-		for node in remaining:
-			if node.parent_node_id and node.parent_node_id not in id_map:
-				still.append(node)
-				continue
+		id_map: dict[str, str] = {}
+		remaining = frappe.get_all(
+			"Strategy Node",
+			filters={"plan_version_id": baseline.name},
+			fields=["name", "node_type", "parent_node_id", "title", "display_order"],
+		)
+		# Clone parents before children regardless of original creation order.
+		while remaining:
+			still = []
+			progressed = False
+			for node in remaining:
+				if node.parent_node_id and node.parent_node_id not in id_map:
+					still.append(node)
+					continue
+				clone = frappe.get_doc(
+					{
+						"doctype": "Strategy Node",
+						"plan_version_id": new_version.name,
+						"node_type": node.node_type,
+						"parent_node_id": id_map.get(node.parent_node_id) if node.parent_node_id else None,
+						"title": node.title,
+						"display_order": node.display_order,
+					}
+				)
+				clone.insert(ignore_permissions=True)
+				id_map[node.name] = clone.name
+				progressed = True
+			if not progressed and still:
+				frappe.throw(_("Could not resolve hierarchy parent chain while cloning"))
+			remaining = still
+
+		indicator_ids = []
+		for ind in frappe.get_all(
+			"Performance Indicator",
+			filters={"plan_version_id": baseline.name},
+			fields=["name", "measures_node_id", "indicator_name", "definition", "unit"],
+		):
 			clone = frappe.get_doc(
 				{
-					"doctype": "Strategy Node",
+					"doctype": "Performance Indicator",
 					"plan_version_id": new_version.name,
-					"node_type": node.node_type,
-					"parent_node_id": id_map.get(node.parent_node_id) if node.parent_node_id else None,
-					"title": node.title,
-					"display_order": node.display_order,
+					"measures_node_id": id_map.get(ind.measures_node_id, ind.measures_node_id),
+					"indicator_name": ind.indicator_name,
+					"definition": ind.definition,
+					"unit": ind.unit,
 				}
 			)
 			clone.insert(ignore_permissions=True)
-			id_map[node.name] = clone.name
-			progressed = True
-		if not progressed and still:
-			frappe.throw(_("Could not resolve hierarchy parent chain while cloning"))
-		remaining = still
+			id_map[ind.name] = clone.name
+			indicator_ids.append(ind.name)
 
-	indicator_ids = []
-	for ind in frappe.get_all(
-		"Performance Indicator",
-		filters={"plan_version_id": baseline.name},
-		fields=["name", "measures_node_id", "indicator_name", "definition", "unit"],
-	):
-		clone = frappe.get_doc(
-			{
-				"doctype": "Performance Indicator",
-				"plan_version_id": new_version.name,
-				"measures_node_id": id_map.get(ind.measures_node_id, ind.measures_node_id),
-				"indicator_name": ind.indicator_name,
-				"definition": ind.definition,
-				"unit": ind.unit,
-			}
-		)
-		clone.insert(ignore_permissions=True)
-		id_map[ind.name] = clone.name
-		indicator_ids.append(ind.name)
-
-	for tgt in (
-		frappe.get_all(
-			"Performance Target",
-			filters={"indicator_id": ["in", indicator_ids]},
-			fields=["indicator_id", "fiscal_year", "target_by_date", "comparison", "target_value"],
-		)
-		if indicator_ids
-		else []
-	):
-		frappe.get_doc(
-			{
-				"doctype": "Performance Target",
-				"indicator_id": id_map.get(tgt.indicator_id, tgt.indicator_id),
-				"fiscal_year": tgt.fiscal_year,
-				"target_by_date": tgt.target_by_date,
-				"comparison": tgt.comparison,
-				"target_value": tgt.target_value,
-			}
-		).insert(ignore_permissions=True)
+		for tgt in (
+			frappe.get_all(
+				"Performance Target",
+				filters={"indicator_id": ["in", indicator_ids]},
+				fields=["indicator_id", "fiscal_year", "target_by_date", "comparison", "target_value"],
+			)
+			if indicator_ids
+			else []
+		):
+			frappe.get_doc(
+				{
+					"doctype": "Performance Target",
+					"indicator_id": id_map.get(tgt.indicator_id, tgt.indicator_id),
+					"fiscal_year": tgt.fiscal_year,
+					"target_by_date": tgt.target_by_date,
+					"comparison": tgt.comparison,
+					"target_value": tgt.target_value,
+				}
+			).insert(ignore_permissions=True)
 
 	record_event(
 		entity_type="Strategic Plan Version",
@@ -284,29 +319,30 @@ def discard_strategy_plan_draft(plan_version_id: str, *, expected_version: str |
 		assignment=assignment_id(exercised),
 	)
 
-	indicator_names = frappe.get_all("Performance Indicator", filters={"plan_version_id": version_name}, pluck="name")
-	if indicator_names:
-		for target_name in frappe.get_all(
-			"Performance Target", filters={"indicator_id": ["in", indicator_names]}, pluck="name"
-		):
-			frappe.delete_doc("Performance Target", target_name, ignore_permissions=True)
-		for indicator_name in indicator_names:
-			frappe.delete_doc("Performance Indicator", indicator_name, ignore_permissions=True)
+	with command_write(FAMILY):
+		indicator_names = frappe.get_all("Performance Indicator", filters={"plan_version_id": version_name}, pluck="name")
+		if indicator_names:
+			for target_name in frappe.get_all(
+				"Performance Target", filters={"indicator_id": ["in", indicator_names]}, pluck="name"
+			):
+				frappe.delete_doc("Performance Target", target_name, ignore_permissions=True)
+			for indicator_name in indicator_names:
+				frappe.delete_doc("Performance Indicator", indicator_name, ignore_permissions=True)
 
-	# Leaves before parents — Strategy Node is a self-referencing tree.
-	remaining = frappe.get_all("Strategy Node", filters={"plan_version_id": version_name}, pluck="name")
-	while remaining:
-		leftover = [n for n in remaining if frappe.db.exists("Strategy Node", {"parent_node_id": n})]
-		if leftover == remaining:
-			frappe.throw(_("Could not resolve hierarchy parent chain while discarding"))
-		for node_name in remaining:
-			if node_name not in leftover:
-				frappe.delete_doc("Strategy Node", node_name, ignore_permissions=True)
-		remaining = leftover
+		# Leaves before parents — Strategy Node is a self-referencing tree.
+		remaining = frappe.get_all("Strategy Node", filters={"plan_version_id": version_name}, pluck="name")
+		while remaining:
+			leftover = [n for n in remaining if frappe.db.exists("Strategy Node", {"parent_node_id": n})]
+			if leftover == remaining:
+				frappe.throw(_("Could not resolve hierarchy parent chain while discarding"))
+			for node_name in remaining:
+				if node_name not in leftover:
+					frappe.delete_doc("Strategy Node", node_name, ignore_permissions=True)
+			remaining = leftover
 
-	frappe.delete_doc("Strategic Plan Version", version_name, ignore_permissions=True)
-	if plan_discarded:
-		frappe.delete_doc("Strategic Plan", plan_id, ignore_permissions=True)
+		frappe.delete_doc("Strategic Plan Version", version_name, ignore_permissions=True)
+		if plan_discarded:
+			frappe.delete_doc("Strategic Plan", plan_id, ignore_permissions=True)
 
 	return {"plan_id": None if plan_discarded else plan_id, "plan_discarded": plan_discarded, "discarded_version": version_name}
 
@@ -334,6 +370,40 @@ def _assert_deletable(doctype: str, name: str) -> None:
 			)
 
 
+def _version_of(doctype: str, name: str) -> str | None:
+	"""The plan version a structure record belongs to (a target through its indicator)."""
+	if doctype in ("Strategy Node", "Performance Indicator"):
+		return frappe.db.get_value(doctype, name, "plan_version_id")
+	indicator = frappe.db.get_value("Performance Target", name, "indicator_id")
+	return frappe.db.get_value("Performance Indicator", indicator, "plan_version_id") if indicator else None
+
+
+def _assert_in_version(doctype: str, name: str, version_name: str) -> None:
+	"""AUD-STR-001/002 — a change set reaches only this Draft version's own rows."""
+	if _version_of(doctype, name) != version_name:
+		_refuse(_("{0} {1} does not belong to this plan version.").format(_(doctype), name))
+
+
+def _structure_item(doctype: str, item: dict, version_name: str) -> tuple[dict, str | None, str | None]:
+	"""Validate one change-set row: (data to set, client_id, existing name).
+	Only the doctype's own content fields are accepted (AUD-STR-008: a generated
+	reference is never supplied by the caller); a named row must already belong
+	to this version."""
+	if not isinstance(item, dict):
+		_refuse(_("Each change must be an object."))
+	data = dict(item)
+	client_id = data.pop("client_id", None)
+	name = data.pop("name", None)
+	refused = [k for k in data if k not in STRUCTURE_FIELDS[doctype]]
+	if refused:
+		_refuse(_("These fields cannot be set directly: {0}.").format(", ".join(sorted(refused))))
+	if name and frappe.db.exists(doctype, name):
+		_assert_in_version(doctype, name, version_name)
+	else:
+		name = None
+	return data, client_id, name
+
+
 def save_strategy_structure_draft(
 	plan_version_id: str,
 	*,
@@ -347,16 +417,36 @@ def save_strategy_structure_draft(
 	reorder or remove Draft nodes/indicators/targets as one validated
 	change set. `client_id` on a node/indicator item lets a later item in
 	the same batch reference it (as e.g. parent_node_id="$1") before it has
-	a real generated id."""
+	a real generated id.
+
+	The change set is confined to this Draft version's own Strategy Node,
+	Performance Indicator and Performance Target rows (AUD-STR-001/002): every
+	named row is checked against the version before anything is written."""
 	plan_version_id = resolve_version_name(plan_version_id) or plan_version_id
 	version = frappe.get_doc("Strategic Plan Version", plan_version_id)
 	_check_expected_version(version, expected_version)
 	exercised = require_plan_version_capability(frappe.session.user, CAP_AUTHOR, version)
+	if version.status != "Draft":
+		_refuse(_("Plan structure can only be edited while the version is a Draft."))
 
 	id_map: dict[str, str] = {}
 	result: dict[str, list[str]] = {"nodes": [], "indicators": [], "targets": [], "deleted": []}
 
-	if deletes and any(
+	# Validate the whole change set before the first write.
+	delete_rows: list[tuple[str, str]] = []
+	for item in deletes or []:
+		doctype, name = (item.get("doctype"), item.get("name")) if isinstance(item, dict) else (None, None)
+		if doctype not in STRUCTURE_FIELDS:
+			_refuse(_("Only plan nodes, indicators and targets can be removed here."))
+		if not name or not frappe.db.exists(doctype, name):
+			continue
+		_assert_in_version(doctype, name, version.name)
+		delete_rows.append((doctype, name))
+	node_rows = [_structure_item("Strategy Node", i, version.name) for i in nodes or []]
+	indicator_rows = [_structure_item("Performance Indicator", i, version.name) for i in indicators or []]
+	target_rows = [_structure_item("Performance Target", i, version.name) for i in targets or []]
+
+	if delete_rows and any(
 		row.get("action") == "Submit for approval" for row in list_events("Strategic Plan Version", version.name)
 	):
 		# §5.1/§11.4 — nothing may be deleted after first submission; a
@@ -367,81 +457,67 @@ def save_strategy_structure_draft(
 			title="STRATEGY_INVALID_STATE",
 		)
 
-	for item in deletes or []:
-		doctype, name = item.get("doctype"), item.get("name")
-		if not doctype or not name or not frappe.db.exists(doctype, name):
-			continue
-		_assert_deletable(doctype, name)
-		frappe.delete_doc(doctype, name, ignore_permissions=True)
-		result["deleted"].append(name)
+	with command_write(FAMILY):
+		for doctype, name in delete_rows:
+			_assert_deletable(doctype, name)
+			frappe.delete_doc(doctype, name, ignore_permissions=True)
+			result["deleted"].append(name)
 
-	# §11.4/§12.3 (plan D7) — a sibling reorder arrives as several existing
-	# nodes with new display_order values. Applied one by one they would
-	# collide with the sibling still holding the target value, so every
-	# existing node whose order changes is first parked on a temporary
-	# negative order (no real sibling ever holds one), then saved normally.
-	parked = 0
-	for item in nodes or []:
-		name = item.get("name")
-		if not name or "display_order" not in item or not frappe.db.exists("Strategy Node", name):
-			continue
-		current = frappe.db.get_value("Strategy Node", name, "display_order")
-		if str(current) != str(item["display_order"]):
-			parked += 1
-			frappe.db.set_value("Strategy Node", name, "display_order", -1000 - parked, update_modified=False)
+		# §11.4/§12.3 (plan D7) — a sibling reorder arrives as several existing
+		# nodes with new display_order values. Applied one by one they would
+		# collide with the sibling still holding the target value, so every
+		# existing node whose order changes is first parked on a temporary
+		# negative order (no real sibling ever holds one), then saved normally.
+		parked = 0
+		for data, _client_id, name in node_rows:
+			if not name or "display_order" not in data:
+				continue
+			current = frappe.db.get_value("Strategy Node", name, "display_order")
+			if str(current) != str(data["display_order"]):
+				parked += 1
+				frappe.db.set_value("Strategy Node", name, "display_order", -1000 - parked, update_modified=False)
 
-	for item in nodes or []:
-		data = dict(item)
-		client_id = data.pop("client_id", None)
-		name = data.pop("name", None)
-		data["plan_version_id"] = plan_version_id
-		if "parent_node_id" in data:
-			data["parent_node_id"] = _resolve_client_id(id_map, data["parent_node_id"])
-		if name and frappe.db.exists("Strategy Node", name):
-			doc = frappe.get_doc("Strategy Node", name)
-			doc.update(data)
-			doc.save(ignore_permissions=True)
-		else:
-			data["doctype"] = "Strategy Node"
-			doc = frappe.get_doc(data)
-			doc.insert(ignore_permissions=True)
-		if client_id:
-			id_map[client_id] = doc.name
-		result["nodes"].append(doc.name)
+		for data, client_id, name in node_rows:
+			if "parent_node_id" in data:
+				data["parent_node_id"] = _resolve_client_id(id_map, data["parent_node_id"])
+			if name:
+				doc = frappe.get_doc("Strategy Node", name)
+				doc.update(data)
+				doc.save(ignore_permissions=True)
+			else:
+				doc = frappe.get_doc({"doctype": "Strategy Node", "plan_version_id": version.name, **data})
+				doc.insert(ignore_permissions=True)
+			if client_id:
+				id_map[client_id] = doc.name
+			result["nodes"].append(doc.name)
 
-	for item in indicators or []:
-		data = dict(item)
-		client_id = data.pop("client_id", None)
-		name = data.pop("name", None)
-		data["plan_version_id"] = plan_version_id
-		if "measures_node_id" in data:
-			data["measures_node_id"] = _resolve_client_id(id_map, data["measures_node_id"])
-		if name and frappe.db.exists("Performance Indicator", name):
-			doc = frappe.get_doc("Performance Indicator", name)
-			doc.update(data)
-			doc.save(ignore_permissions=True)
-		else:
-			data["doctype"] = "Performance Indicator"
-			doc = frappe.get_doc(data)
-			doc.insert(ignore_permissions=True)
-		if client_id:
-			id_map[client_id] = doc.name
-		result["indicators"].append(doc.name)
+		for data, client_id, name in indicator_rows:
+			if "measures_node_id" in data:
+				data["measures_node_id"] = _resolve_client_id(id_map, data["measures_node_id"])
+			if name:
+				doc = frappe.get_doc("Performance Indicator", name)
+				doc.update(data)
+				doc.save(ignore_permissions=True)
+			else:
+				doc = frappe.get_doc({"doctype": "Performance Indicator", "plan_version_id": version.name, **data})
+				doc.insert(ignore_permissions=True)
+			if client_id:
+				id_map[client_id] = doc.name
+			result["indicators"].append(doc.name)
 
-	for item in targets or []:
-		data = dict(item)
-		name = data.pop("name", None)
-		if "indicator_id" in data:
-			data["indicator_id"] = _resolve_client_id(id_map, data["indicator_id"])
-		if name and frappe.db.exists("Performance Target", name):
-			doc = frappe.get_doc("Performance Target", name)
-			doc.update(data)
-			doc.save(ignore_permissions=True)
-		else:
-			data["doctype"] = "Performance Target"
-			doc = frappe.get_doc(data)
-			doc.insert(ignore_permissions=True)
-		result["targets"].append(doc.name)
+		for data, _client_id, name in target_rows:
+			if "indicator_id" in data:
+				data["indicator_id"] = _resolve_client_id(id_map, data["indicator_id"])
+				if data["indicator_id"] and _version_of("Performance Indicator", data["indicator_id"]) != version.name:
+					_refuse(_("A target can be set only on an indicator of this plan version."))
+			if name:
+				doc = frappe.get_doc("Performance Target", name)
+				doc.update(data)
+				doc.save(ignore_permissions=True)
+			else:
+				doc = frappe.get_doc({"doctype": "Performance Target", **data})
+				doc.insert(ignore_permissions=True)
+			result["targets"].append(doc.name)
 
 	record_event(
 		entity_type="Strategic Plan Version",

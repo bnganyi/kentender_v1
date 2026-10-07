@@ -20,6 +20,7 @@ from __future__ import annotations
 import frappe
 from frappe import _
 
+from kentender_core.services.command_write_guard import command_write
 from kentender_strategy.services.strategy_audit import record_event
 from kentender_strategy.services.strategy_authorization import (
 	CAP_APPROVE,
@@ -118,6 +119,13 @@ def _activate(doc) -> None:
 	the predecessor's last applicable day is D-1."""
 	_assert_no_primary_overlap(doc)
 
+	# AUD-XC-005 — the only place a version becomes Active (or Superseded);
+	# the caller has already authorised the Approve command.
+	with command_write("Strategy"):
+		_supersede_and_activate(doc)
+
+
+def _supersede_and_activate(doc) -> None:
 	current_active = frappe.get_all(
 		"Strategic Plan Version",
 		filters={"plan_id": doc.plan_id, "status": "Active", "name": ["!=", doc.name]},
@@ -195,7 +203,8 @@ def transition_plan_version(
 		doc.status = next_status
 		if action == "Submit for approval":
 			doc.return_reason = ""
-		doc.save(ignore_permissions=True)
+		with command_write("Strategy"):
+			doc.save(ignore_permissions=True)
 
 	record_event(
 		entity_type="Strategic Plan Version",

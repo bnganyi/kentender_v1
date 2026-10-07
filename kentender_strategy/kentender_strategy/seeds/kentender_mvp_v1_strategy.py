@@ -43,6 +43,7 @@ from frappe import _
 from frappe.utils import get_datetime
 
 from kentender_core.seeds import clock
+from kentender_core.services.command_write_guard import maintenance_write
 from kentender_strategy.services.strategy_transitions import transition_plan_version
 from kentender_strategy.services.strategy_writes import (
 	create_strategy_successor_version,
@@ -238,7 +239,8 @@ def _delete_plans(plans: list[str], versions: list[str]) -> dict[str, int]:
 	):
 		for name in names:
 			if frappe.db.exists(doctype, name):
-				frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
+				with maintenance_write("Strategy", reason="canonical seed reset"):
+					frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
 		if names:
 			deleted[doctype] = len(names)
 	return deleted
@@ -412,11 +414,12 @@ def seed_str_des_v2_returned_fixture(*, effective_from: str | None = None) -> di
 def teardown_str_des_v2_fixture(plan_version_id: str) -> None:
 	"""Removes an isolated V2 fixture — §14.4's own requirement: profiles
 	reset independently and never touch the default Version 1."""
-	for indicator in frappe.get_all("Performance Indicator", filters={"plan_version_id": plan_version_id}, pluck="name"):
-		for target in frappe.get_all("Performance Target", filters={"indicator_id": indicator}, pluck="name"):
-			frappe.delete_doc("Performance Target", target, force=1, ignore_permissions=True)
-		frappe.delete_doc("Performance Indicator", indicator, force=1, ignore_permissions=True)
-	for node in frappe.get_all("Strategy Node", filters={"plan_version_id": plan_version_id}, pluck="name"):
-		frappe.delete_doc("Strategy Node", node, force=1, ignore_permissions=True)
-	if frappe.db.exists("Strategic Plan Version", plan_version_id):
-		frappe.delete_doc("Strategic Plan Version", plan_version_id, force=1, ignore_permissions=True)
+	with maintenance_write("Strategy", reason="teardown of an isolated V2 fixture"):
+		for indicator in frappe.get_all("Performance Indicator", filters={"plan_version_id": plan_version_id}, pluck="name"):
+			for target in frappe.get_all("Performance Target", filters={"indicator_id": indicator}, pluck="name"):
+				frappe.delete_doc("Performance Target", target, force=1, ignore_permissions=True)
+			frappe.delete_doc("Performance Indicator", indicator, force=1, ignore_permissions=True)
+		for node in frappe.get_all("Strategy Node", filters={"plan_version_id": plan_version_id}, pluck="name"):
+			frappe.delete_doc("Strategy Node", node, force=1, ignore_permissions=True)
+		if frappe.db.exists("Strategic Plan Version", plan_version_id):
+			frappe.delete_doc("Strategic Plan Version", plan_version_id, force=1, ignore_permissions=True)

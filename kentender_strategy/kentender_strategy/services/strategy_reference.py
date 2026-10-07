@@ -189,6 +189,9 @@ def validate_reference_field(doc) -> None:
 	code = (doc.get(field) or "").strip()
 	if not code:
 		frappe.throw(_("{0} is required").format(frappe.unscrub(field)))
+	# AUD-STR-008 — a generated reference identifies one record only.
+	if frappe.db.exists(doc.doctype, {field: code, "name": ["!=", doc.name or ""]}):
+		frappe.throw(_("{0} {1} is already in use").format(frappe.unscrub(field), code), frappe.ValidationError)
 
 
 

@@ -21,7 +21,7 @@ from kentender_core.services import responsibility_administration as administrat
 from kentender_strategy.services import strategy_ui_contracts as ui
 from kentender_strategy.services.strategy_authorization import ROLE_STRATEGY_APPROVER, ROLE_STRATEGY_AUTHOR, ensure_strategy_governance_roles
 from kentender_strategy.services.strategy_transitions import transition_plan_version
-from kentender_strategy.tests.fixtures import ensure_fiscal_year, pin_review_date
+from kentender_strategy.tests.fixtures import ensure_fiscal_year, open_strategy_write_window, pin_review_date
 from kentender_strategy.tests.test_str_technical_read import TechnicalReadTestBase
 
 # The suite's usual 2040 window collides with Frappe's own `_Test Fiscal Year 2040` on a site that loaded test records;
@@ -31,6 +31,7 @@ FY, START, END = "2060-2061", "2060-07-01", "2065-06-30"
 
 class TestApprovedStrategyReads(TechnicalReadTestBase):
 	def setUp(self):
+		open_strategy_write_window(self)
 		ensure_strategy_governance_roles()
 		ensure_fiscal_year(2060)
 		self.suffix = uuid4().hex[:8]
@@ -38,7 +39,7 @@ class TestApprovedStrategyReads(TechnicalReadTestBase):
 		patcher = patch("kentender_strategy.tests.test_str_technical_read.FY", FY)
 		patcher.start()
 		self.addCleanup(patcher.stop)
-		pin_review_date(self)
+		pin_review_date(self, "2062-01-01")
 		self.author = self._user("author")
 		self.approver = self._user("approver")
 		self._grant(self.author, ROLE_STRATEGY_AUTHOR)
