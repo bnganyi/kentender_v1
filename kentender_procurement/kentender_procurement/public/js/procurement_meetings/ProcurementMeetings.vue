@@ -101,7 +101,7 @@
 									<td class="is-num" style="white-space:nowrap">{{ duration(r) }}</td>
 									<td class="is-num" style="white-space:nowrap">{{ r.present === null ? "—" : r.present }}</td>
 									<td><span class="kt-status" :class="tone(r)">{{ r.state }}</span></td>
-									<td style="white-space:nowrap"><a href="#" :aria-label="`View record: ${r.type} for ${r.tender}`" @click.prevent="open(r)">View record</a></td>
+									<td style="white-space:nowrap"><a v-if="r.record_readable !== false" href="#" :aria-label="`View record: ${r.type} for ${r.tender}`" @click.prevent="open(r)">View record</a><span v-else class="kt-muted" data-testid="pmt-no-record">—</span></td>
 								</tr>
 							</tbody>
 						</table>

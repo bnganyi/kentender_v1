@@ -150,15 +150,34 @@ BADGES = {
 }
 
 
+def _plan_source_for(root, actor: str):
+	"""The Plan-source reach of a reviewer for this departmental plan's accepted
+	submission, or the masked refusal (an unsent Draft, an accepted submission
+	no plan under review consumed, or a caller with no review responsibility)."""
+	accepted = root.current_accepted_version
+	submission = frappe.db.get_value("Departmental Plan Version", accepted, "submission") if accepted else None
+	access = authz.plan_source_access(submission or "", actor)
+	if not access:
+		authz.not_found()
+	return access
+
+
 def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	root = _root(dpp_reference)
-	access = authz.require_dpp_read(root.organisation_unit, actor)
+	access = authz.dpp_read_profile(root.organisation_unit, actor)
+	# KT-ACCESS-REV-001 v0.2 §2 (proposed PLN-R2, built ahead of approval): a
+	# Plan reviewer outside the department reads the accepted submission their
+	# plan consumed — those entries only, no editor link, nothing mutable.
+	plan_source = None
+	if not access:
+		plan_source = _plan_source_for(root, actor)
+		access = "oversight"
 	labels = _labels(root)
 	line_labels = budget_gateway.line_labels(root.fiscal_year)
-	version_name = root.current_version or root.current_accepted_version
+	version_name = (root.current_accepted_version if plan_source else None) or root.current_version or root.current_accepted_version
 	version = frappe.get_doc("Departmental Plan Version", version_name) if version_name else None
-	if version:
+	if version and plan_source is None:
 		# §5.1 — the coverage boundary is established at command time, not by
 		# a browser timestamp: `open_departmental_plan`'s own "reused" branch
 		# already re-syncs a mutable Draft against the Need register on every
@@ -189,6 +208,8 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 			limit_page_length=0,
 		)
 		for row in rows:
+			if plan_source is not None and row.entry_id not in plan_source.entries:
+				continue
 			not_proceeding = bool(cstr(row.not_proceeding_reason).strip())
 			funded = bool(row.budget_line) and flt(row.indicative_amount) > 0
 			complete = not_proceeding or funded
@@ -245,7 +266,7 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 					"action": _entry_action(
 						not_proceeding=not_proceeding, need_origin=need_origin, funded=funded, has_issue=has_issue,
 						mutable=version.version_status == "Draft" and access in ("author", "hod"),
-						can_open=access in ("author", "hod", "oversight"),
+						can_open=access in ("author", "hod", "oversight") and plan_source is None,
 					),
 					# §10.4 U03-FUNDING — the funding panel opens beneath the
 					# row it belongs to; nothing else navigates away from U02.

@@ -261,6 +261,21 @@ class TestNeedsAnalytics(IntegrationTestCase):
 			self.assertEqual(self.refs(user), everything, user)  # includes the Returned Need the module's own office read still masks
 			self.assertTrue(self.refs(user).isdisjoint(self.refs_of("draft_dh", "withdrawn_dh")), user)
 
+	def test_a_returned_need_the_offices_cannot_open_is_counted_but_not_named_or_linked(self):
+		"""KT-ACCESS-REV-001 AR-08: the aggregate counts it (OD-2); the title and the link follow the Need's own read."""
+		def returned(user):
+			return next(r for r in provider.facts(user=user, kind=ac.NEEDS, at=self.at)["records"] if r["reference"] == self.ref("returned_hrmd"))
+
+		for user in (HOPF, AO):
+			record = returned(user)
+			self.assertEqual((record["route"], record["title"], record["state_key"]), ([], record["reference"], "returned"), user)
+		# a reader who can open it still gets the title and the route
+		administrator = returned("Administrator")
+		self.assertEqual((administrator["title"], administrator["route"]), ("Training room", ["departmental-needs", self.ref("returned_hrmd")]))
+		# and the offices keep the link for a Need in an oversight state
+		accepted = next(r for r in provider.facts(user=AO, kind=ac.NEEDS, at=self.at)["records"] if r["reference"] == self.ref("accepted_dh"))
+		self.assertEqual(accepted["route"], ["departmental-needs", self.ref("accepted_dh")])
+
 	def test_an_unrelated_role_gets_nothing(self):
 		self.assertEqual(provider.applies(user=OFFICER, at=self.at), set())
 		self.assertEqual(provider.facts(user=OFFICER, kind=ac.NEEDS, at=self.at)["records"], [])

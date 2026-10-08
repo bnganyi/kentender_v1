@@ -289,6 +289,51 @@ class TestProjection(AdministrationTestCase):
 		self.assertNotIn("Strategy Approver", frappe.get_roles(actor))
 		self.assertGreaterEqual(result["users_reconciled"], 1)
 
+	def test_a_scheduled_assignment_projects_no_role_until_its_start(self):
+		"""KT-ACCESS-REV-001 AR-03 — a scheduled assignment grants no early
+		authority, including the Frappe Role that DocPerm-only records read by."""
+		actor = fx.user("adm.proj.scheduled")
+		granted = _grant(
+			actor,
+			"Strategy Approver",
+			effective_from="2097-01-01 00:00:00",
+			effective_to="2098-01-01 00:00:00",
+		)["assignment"]
+		frappe.local.role_permissions = {}
+		self.assertNotIn("Strategy Approver", frappe.get_roles(actor))
+		# The start arrives: the reconciliation projects it (it runs hourly).
+		frappe.db.set_value(
+			"User Responsibility Assignment", granted, "effective_from", "2020-01-01 00:00:00", update_modified=False
+		)
+		administration.reconcile_role_projections()
+		frappe.local.role_permissions = {}
+		self.assertIn("Strategy Approver", frappe.get_roles(actor))
+
+	def test_a_scheduled_second_assignment_does_not_keep_the_role_after_the_first_is_revoked(self):
+		actor = fx.user("adm.proj.sched.two")
+		first = _grant(actor, "Strategy Approver")["assignment"]
+		_grant(actor, "Strategy Approver", effective_from="2097-01-01 00:00:00", effective_to="2098-01-01 00:00:00")
+		frappe.local.role_permissions = {}
+		self.assertIn("Strategy Approver", frappe.get_roles(actor))
+		administration.revoke(first, reason="Scheduled projection test: the live one ends.")
+		frappe.local.role_permissions = {}
+		self.assertNotIn("Strategy Approver", frappe.get_roles(actor))
+
+	def test_active_holders_lists_only_assignments_in_force(self):
+		from kentender_core.services.authorization import active_holders
+
+		live = fx.user("adm.holders.live")
+		later = fx.user("adm.holders.later")
+		gone = fx.user("adm.holders.gone")
+		_grant(live, "Strategy Approver")
+		_grant(later, "Strategy Approver", effective_from="2097-01-01 00:00:00", effective_to="2098-01-01 00:00:00")
+		expired = _grant(gone, "Strategy Approver", effective_from="2020-01-01 00:00:00", effective_to="2097-01-01 00:00:00")["assignment"]
+		frappe.db.set_value("User Responsibility Assignment", expired, "effective_to", "2020-06-30 23:59:59", update_modified=False)
+		holders = active_holders("Strategy Approver")
+		self.assertIn(live, holders)
+		self.assertNotIn(later, holders)
+		self.assertNotIn(gone, holders)
+
 
 class TestRegisterPreviewAndDetail(AdministrationTestCase):
 	def test_the_register_row_carries_scope_coverage_and_derived_status(self):
@@ -477,7 +522,9 @@ class TestUpdateScheduled(AdministrationTestCase):
 		self.assertEqual(str(row.effective_to), "2097-06-30 23:59:59")
 		# The Role projection follows the holder (§5.7).
 		self.assertNotIn("Departmental Author", frappe.get_roles(user))
-		self.assertIn("Head of User Department", frappe.get_roles(other))
+		# A scheduled assignment projects no Role before its start (AR-03); the
+		# hourly reconciliation adds it when the start arrives.
+		self.assertNotIn("Head of User Department", frappe.get_roles(other))
 		# The detail's stamp moved, so a stale second edit is refused.
 		detail = administration.get_assignment_detail(granted)
 		self.assertEqual(detail["user"], other)

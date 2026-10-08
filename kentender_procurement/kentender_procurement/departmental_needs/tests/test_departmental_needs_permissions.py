@@ -49,7 +49,10 @@ from kentender_procurement.departmental_needs.services.context import resolve_cr
 RETIRED_ROLES = ("Departmental Need Requester", "Departmental Review Delegate", "Needs Configuration Manager")
 
 # §17 / NDS-AC-023 — no Departmental Needs surface, task or special action.
-EXCLUDED_ROLES = ("Budget Officer", "Accounting Officer")
+EXCLUDED_ROLES = ("Budget Officer", "Accounting Officer")  # no Page role; the doctype grant is below
+
+# OVS-CHG-001 v0.6 §4.1 — read-only on the Need root (AR-05)
+OFFICE_READERS = ("Accounting Officer", "Head of Procurement Function")
 
 NDS_DOCTYPES = (
 	"Departmental Need",
@@ -691,15 +694,26 @@ class TestRoleSurface(DepartmentalNeedsPermissionCase):
 		}
 		for doctype in NDS_DOCTYPES:
 			roles = {row.role for row in frappe.get_meta(doctype).permissions}
+			# OVS v0.6 §4.1 (AR-05): the two offices read the Need root, and only it.
+			permitted = allowed | set(OFFICE_READERS) if doctype == "Departmental Need" else allowed
 			self.assertTrue(
-				roles.issubset(allowed), f"{doctype} grants unexpected roles: {roles - allowed}"
+				roles.issubset(permitted), f"{doctype} grants unexpected roles: {roles - permitted}"
 			)
 
-	def test_budget_and_accounting_officers_receive_nothing(self):
+	def test_budget_officers_receive_nothing_and_the_offices_read_the_need_root_only(self):
 		for doctype in NDS_DOCTYPES:
-			roles = {row.role for row in frappe.get_meta(doctype).permissions}
-			for excluded in EXCLUDED_ROLES:
-				self.assertNotIn(excluded, roles, f"{excluded} appears on {doctype}")
+			meta = frappe.get_meta(doctype)
+			roles = {row.role for row in meta.permissions}
+			self.assertNotIn("Budget Officer", roles, f"Budget Officer appears on {doctype}")
+			for office in OFFICE_READERS:
+				if doctype != "Departmental Need":
+					self.assertNotIn(office, roles, f"{office} appears on {doctype}")
+					continue
+				rows = [row for row in meta.permissions if row.role == office]
+				self.assertEqual(len(rows), 1, f"{office} on {doctype}")
+				self.assertTrue(rows[0].read)
+				for write_type in ("write", "create", "delete", "submit", "cancel", "amend"):
+					self.assertFalse(rows[0].get(write_type), f"{office} may {write_type} on {doctype}")
 		pages = frappe.get_all("Page", filters={"name": ("like", "departmental-needs%")}, pluck="name")
 		self.assertTrue(pages, "expected at least one Departmental Needs page to check")
 		granted = frappe.get_all(

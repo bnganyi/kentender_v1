@@ -62,11 +62,17 @@ class TestPermissionQueryConditions(RequisitionAuthorizationCase):
 		names = frappe.get_list("Procurement Requisition", pluck="name")
 		self.assertNotIn(prepared["requisition"], names)
 
-	def test_a_site_wide_reader_sees_it_unconditionally(self):
+	def test_a_site_wide_reader_sees_a_submitted_requisition_unconditionally(self):
+		# AR-02: submitted work, not an unsent Draft (REQ v1.14 §8)
+		_, item_id = fx.active_item()
+		name = fx.submitted(item_id)
+		frappe.set_user(fx.AUDITOR)
+		self.assertIn(name, frappe.get_list("Procurement Requisition", pluck="name"))
+
+	def test_a_site_wide_reader_does_not_see_an_unsent_draft(self):
 		prepared = self._prepared()
 		frappe.set_user(fx.AUDITOR)
-		names = frappe.get_list("Procurement Requisition", pluck="name")
-		self.assertIn(prepared["requisition"], names)
+		self.assertNotIn(prepared["requisition"], frappe.get_list("Procurement Requisition", pluck="name"))
 
 	def test_an_actor_with_no_requisitions_role_sees_nothing(self):
 		"""`fx.FINANCE_OFFICER` holds no DocPerm-granting Frappe Role at all
@@ -110,9 +116,14 @@ class TestHasPermission(RequisitionAuthorizationCase):
 		prepared = self._prepared()
 		self.assertTrue(frappe.has_permission("Procurement Requisition", doc=prepared["requisition"], user="Administrator"))
 
-	def test_a_site_wide_role_has_permission_on_any_record(self):
+	def test_a_site_wide_role_has_permission_on_any_submitted_record(self):
+		_, item_id = fx.active_item()
+		name = fx.submitted(item_id)
+		self.assertTrue(frappe.has_permission("Procurement Requisition", doc=name, user=fx.PLANNER))
+
+	def test_a_site_wide_role_has_no_permission_on_an_unsent_draft(self):
 		prepared = self._prepared()
-		self.assertTrue(frappe.has_permission("Procurement Requisition", doc=prepared["requisition"], user=fx.PLANNER))
+		self.assertFalse(frappe.has_permission("Procurement Requisition", doc=prepared["requisition"], user=fx.PLANNER))
 
 
 FAMILY_RECORDS = (

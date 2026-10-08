@@ -321,7 +321,8 @@ def get_start_preview(*, plan_item_id: str, user: str | None = None) -> dict[str
 	rule = projection.get("reservation_rule") or {}
 	existing = records.open_root_for(projection.get("plan_item_id") or plan_item_id)
 	existing_row = None
-	if existing and _can(authz.require_requisition_reader, actor, contributing_org_units=records.contributing_units(frappe.get_doc("Procurement Requisition", existing))):
+	_existing_root = frappe.get_doc("Procurement Requisition", existing) if existing else None
+	if existing and _can(authz.require_requisition_reader, actor, contributing_org_units=records.contributing_units(_existing_root), state=_existing_root.current_state):
 		ex = frappe.get_doc("Procurement Requisition", existing)
 		existing_row = {"requisition": ex.name, "reference": ex.requisition_reference, "route": f"/app/procurement-requisitions/{ex.name}", "summary": f"{ex.requisition_reference} · {STATE_BADGES.get(ex.current_state, (ex.current_state,''))[0]}"}
 	state = "ready"

@@ -147,7 +147,12 @@ def list_meetings(*, user: str, type: str = "", department: str = "", state: str
 		try:
 			if adapter is None or not adapter.can_read_row(c["owner_id"], user):
 				continue
-			visible.append(_row(c))
+			row = _row(c)
+			# A row is meeting facts only; the owner's record applies its own rule again, so the
+			# link is offered only where it opens (KT-ACCESS-REV-001 AR-07).
+			opens = getattr(adapter, "can_open_record", None)
+			row["record_readable"] = True if opens is None else bool(opens(c["owner_id"], user))
+			visible.append(row)
 		except frappe.DoesNotExistError:
 			continue  # an owner record that is gone or protected is not a row
 		except Exception:

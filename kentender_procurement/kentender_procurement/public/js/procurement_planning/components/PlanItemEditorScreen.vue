@@ -77,7 +77,7 @@
 					<!-- Derived from the included requirements; not editable here, and
 					     Plan horizon is a fixed literal so it is not shown at all. -->
 					<span class="kt-muted" data-testid="ppi-summary-line">{{ item.summary_line }}</span>
-					<a href="#" class="btn btn-ghost" data-testid="ppi-view-classification" @click.prevent="$emit('view-classification')">View classification details</a>
+					<a v-if="classificationReadable" href="#" class="btn btn-ghost" data-testid="ppi-view-classification" @click.prevent="$emit('view-classification')">View classification details</a>
 				</div>
 			</div>
 
@@ -551,6 +551,9 @@ const preference = computed(() => props.item.preference || {});
 const baseline = computed(() => props.item.baseline || {});
 const methodProfile = computed(() => classification.value.method_profile || {});
 const sources = computed(() => props.item.sources || []);
+// The server says whether the classification page opens for this viewer; the
+// link is never offered on a guess (KT-ACCESS-REV-001 v0.2 §2).
+const classificationReadable = computed(() => sources.value.some((row) => row.classification_readable));
 // U09's own row: the need reference and revision, then the budget line —
 // found live 23 Sep 2026 missing entirely, though the read model already
 // carries both (`need_reference_line`, `budget_line`).

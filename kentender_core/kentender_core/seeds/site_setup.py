@@ -185,8 +185,12 @@ ACTORS = (
 	("esther.njeri", "Esther Njeri"),
 )
 
-# KT-STD-001 §3A.6 — register actors who read as technical readers
-# (System Manager): never a business turn, fix or action.
+# KT-STD-001 §3A.6 / §8.3 (Project Owner, 4 Oct 2026: "Technical Operator has
+# site-wide read-only access") — register actors who read as technical readers:
+# never a business turn, fix or action. The Technical Operator is a reader through
+# his in-force assignment, so he no longer carries System Manager, which would add
+# setup and responsibility-administration power to a read (KT-ACCESS-REV-001
+# AR-09/AR-10). Seeding withdraws the Role from a site seeded before this.
 TECHNICAL_ACTORS: tuple[str, ...] = ("daniel.otieno",)
 
 # KT-STD-001 v1.11 §8.3 (Project Owner, 29 Sep 2026: "Add Jane Wanjiku") —
@@ -1579,8 +1583,8 @@ def _seed_users() -> list[str]:
 			from kentender_core.seeds.constants import TEST_PASSWORD
 
 			update_password(email, TEST_PASSWORD)
-		if local in TECHNICAL_ACTORS and "System Manager" not in frappe.get_roles(email):
-			frappe.get_doc("User", email).add_roles("System Manager")
+		if local in TECHNICAL_ACTORS and "System Manager" in frappe.get_roles(email):
+			frappe.get_doc("User", email).remove_roles("System Manager")
 		out.append(email)
 	for email, full_name in PUBLIC_ACTORS:
 		if not frappe.db.exists("User", email):

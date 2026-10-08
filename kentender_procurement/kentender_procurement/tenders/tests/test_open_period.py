@@ -493,7 +493,12 @@ class TestCancellationAndClose(OpenPeriodCase):
 		self.assertEqual(hopf["status"], "Recorded")
 		self.assertEqual(frappe.db.get_value("Tender Channel Confirmation", {"subject_type": "Cancellation notice", "subject_id": doc.name, "channel": "NOTICE_BOARD"}, "status"), "Confirmed")
 		frappe.flags.kt_tenders_clock = "2027-06-20 09:00:00"
+		stored_before = frappe.db.get_value("Tender Cancellation", doc.name, ["record_version", "modified"], as_dict=True)
+		stored_statuses = {o.obligation_id: o.status for o in frappe.get_doc("Tender Cancellation", doc.name).obligations}
 		screen = open_period_read.get_tender_cancellation(tender=self.name, user=fx.AUDITOR)
+		# KT-ACCESS-REV-001 AR-06: a read derives the overdue statuses for the screen and writes nothing
+		self.assertEqual(frappe.db.get_value("Tender Cancellation", doc.name, ["record_version", "modified"], as_dict=True), stored_before)
+		self.assertEqual({o.obligation_id: o.status for o in frappe.get_doc("Tender Cancellation", doc.name).obligations}, stored_statuses)
 		statuses = {o["obligation_id"]: o["status"] for o in screen["cancellation"]["obligations"]}
 		self.assertEqual((statuses["PPRA_REPORT"], statuses["NOTICE-NOTICE_BOARD"], statuses["CANDIDATE_NOTICE"], statuses["NOTICE-STATE_PORTAL"]), ("Recorded", "Recorded", "Recorded", "Overdue"))
 		self.assertEqual(screen["cancellation"]["ppra_report_status"], "Recorded")

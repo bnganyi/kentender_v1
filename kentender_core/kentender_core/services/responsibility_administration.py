@@ -578,6 +578,8 @@ def _sync_projection(user: str) -> None:
 	):
 		if row.get("effective_to") and get_datetime(row["effective_to"]) < now:
 			continue  # expired by time — projects nothing (AUTH-AC-016)
+		if row.get("effective_from") and get_datetime(row["effective_from"]) > now:
+			continue  # scheduled — grants no early authority, not even the Role (KT-ACCESS-REV-001 AR-03)
 		required.update(require_registered(row["business_role"]).frappe_roles)
 
 	projected: set[str] = set()
@@ -603,7 +605,8 @@ def _sync_projection(user: str) -> None:
 
 
 def reconcile_role_projections() -> dict[str, Any]:
-	"""§5.7 — the scheduled reconciliation for time-expired assignments.
+	"""§5.7 — the scheduled reconciliation for time-based changes: expiry removes
+	the projected Role, and a scheduled assignment's start adds it (hourly).
 
 	Assignments expire by time rather than by an explicit action, so an
 	expired assignment would otherwise leave its projected Frappe Role behind

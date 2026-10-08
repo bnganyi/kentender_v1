@@ -26,6 +26,7 @@ on submissions, decisions and the Planning Command Journal. No extra field.
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass, field
 from typing import Any
 
 import frappe
@@ -163,6 +164,95 @@ def dpp_read_profile(organisation_unit: str, user: str | None = None) -> str:
 	if authorise_record(user=principal, business_role=ROLE_AUDITOR, organisation_unit="", purpose=PURPOSE_READ).allowed:
 		return "oversight"
 	return ""
+
+
+@dataclass(frozen=True)
+class PlanSourceAccess:
+	"""What a Plan reviewer may read of one accepted departmental submission:
+	only the entries a plan under their review consumed, and only those plans."""
+
+	entries: frozenset[str] = field(default_factory=frozenset)
+	plan_versions: frozenset[str] = field(default_factory=frozenset)
+
+	def __bool__(self) -> bool:
+		return bool(self.entries)
+
+
+_NO_PLAN_SOURCE_ACCESS = PlanSourceAccess()
+
+
+def plan_source_access(dpp_submission: str, user: str | None = None) -> PlanSourceAccess:
+	"""KT-ACCESS-REV-001 v0.2 §2 (proposed PLN-R2 — built ahead of approval):
+	the read-only reach of the Accounting Officer, Head of Procurement
+	Function, statutory approver and Finance Confirmation Officer into the
+	sources of a plan they review.
+
+	The right is the review that exists, never a caller-supplied parent: the
+	reviewer holds the Site-wide responsibility *and* the plan version that
+	consumed the entry has the review task that responsibility works from
+	(adoption task for the Accounting Officer, statutory task for the
+	statutory approver, finance task for Finance and the Head of Procurement
+	Function). A Draft plan with no review task, an unsent departmental draft
+	and an accepted submission no plan consumed grant nothing. Each role is
+	evaluated on its own; nothing is combined across roles. Reading is the
+	whole grant: the commands keep their own guards.
+	"""
+	principal = actor(user)
+	if is_technical(principal) or not dpp_submission:
+		return _NO_PLAN_SOURCE_ACCESS
+	held = {
+		role
+		for role in (
+			ROLE_ACCOUNTING_OFFICER,
+			ROLE_PLAN_STATUTORY_APPROVER,
+			ROLE_FINANCE_CONFIRMATION_OFFICER,
+			ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
+		)
+		if can_read_site(role, principal)
+	}
+	if not held:
+		return _NO_PLAN_SOURCE_ACCESS
+	dpp_version = frappe.db.get_value("Departmental Plan Submission", dpp_submission, "dpp_version")
+	if not dpp_version:
+		return _NO_PLAN_SOURCE_ACCESS
+	entry_ids = {
+		row.name: row.entry_id
+		for row in frappe.get_all(
+			"Departmental Plan Entry", filters={"dpp_version": dpp_version}, fields=["name", "entry_id"], limit_page_length=0
+		)
+	}
+	if not entry_ids:
+		return _NO_PLAN_SOURCE_ACCESS
+	allocations = frappe.get_all(
+		"Plan Source Allocation",
+		filters={"dpp_entry": ("in", list(entry_ids)), "allocation_state": ("in", ("Draft", "Active"))},
+		fields=["dpp_entry", "plan_version"],
+		limit_page_length=0,
+	)
+	reviewable: dict[str, bool] = {}
+	entries: set[str] = set()
+	versions: set[str] = set()
+	for allocation in allocations:
+		version = allocation.plan_version
+		if version not in reviewable:
+			reviewable[version] = _plan_version_under_review(version, held)
+		if reviewable[version]:
+			entries.add(entry_ids[allocation.dpp_entry])
+			versions.add(version)
+	return PlanSourceAccess(frozenset(entries), frozenset(versions))
+
+
+def _plan_version_under_review(plan_version: str, held: set[str]) -> bool:
+	def _task(doctype: str, **filters) -> bool:
+		return bool(frappe.db.exists(doctype, {"plan_version": plan_version, "status": ("!=", "Cancelled"), **filters}))
+
+	if ROLE_ACCOUNTING_OFFICER in held and _task("Plan Governance Task", stage="Accounting Officer adoption"):
+		return True
+	if ROLE_PLAN_STATUTORY_APPROVER in held and _task("Plan Governance Task", stage="Statutory approval"):
+		return True
+	if held & {ROLE_FINANCE_CONFIRMATION_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION} and _task("Plan Finance Task"):
+		return True
+	return False
 
 
 def require_dpp_read(organisation_unit: str, user: str | None = None) -> str:

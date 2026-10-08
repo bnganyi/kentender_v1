@@ -175,7 +175,9 @@ def sync(workspace: str, *, at=None, reason: str = "") -> dict[str, int]:
 
 
 def _holders(role: str) -> list[str]:
-	return frappe.get_all("User Responsibility Assignment", filters={"business_role": role, "status": "Enabled"}, pluck="user", distinct=True)
+	from kentender_core.services.authorization import active_holders
+
+	return active_holders(role)
 
 
 def wanted_incidents() -> dict[str, dict[str, Any]]:

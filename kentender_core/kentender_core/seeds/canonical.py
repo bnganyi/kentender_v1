@@ -43,6 +43,7 @@ from typing import Any
 import frappe
 
 from kentender_core.seeds import calendar, site_setup
+from kentender_core.services import authorization
 from kentender_core.services.command_write_guard import maintenance_write, purge_doc
 
 #: Two-year seed world (owner, 4 Oct 2026: "Decisions for the owner:
@@ -997,7 +998,9 @@ def validate(*, current: str | None = None, next_year: str | None = None, throug
 	for email in seeded_users:
 		check(bool(frappe.db.exists("User", email)), f"user {email}")
 	for local in site_setup.TECHNICAL_ACTORS:
-		check("System Manager" in frappe.get_roles(f"{local}@moh.example.test"), f"{local} is a technical reader (System Manager)")
+		technical = f"{local}@moh.example.test"
+		check("System Manager" not in frappe.get_roles(technical), f"{local} holds no System Manager (a read carries no setup power)")
+		check(authorization.is_technical(technical), f"{local} is a technical reader (in-force Technical Operator assignment)")
 	for email, _name in site_setup.PUBLIC_ACTORS:
 		check(frappe.db.get_value("User", email, "user_type") == "Website User", f"{email} is a Website User (public observer)")
 	strays = [

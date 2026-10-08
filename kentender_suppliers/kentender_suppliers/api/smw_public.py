@@ -246,7 +246,8 @@ def ktsm_upload_document(
 	d.flags.ignore_validate = False
 	with command_write(WRITE_FAMILY):  # `external_uploaded` is the upload endpoint's to set (RG-13)
 		d.insert(ignore_permissions=True)
-	saved = save_file(fname, content, "KTSM Supplier Document", d.name, is_private=0)
+	# Registration documents are private (KT-ACCESS-REV-001 AR-15): read through the document's own permission, never by URL.
+	saved = save_file(fname, content, "KTSM Supplier Document", d.name, is_private=1)
 	d.db_set("file", saved.file_url, update_modified=False)
 	return {
 		"ok": True,

@@ -384,11 +384,33 @@ class TestRequisitionsAnalyticsProvider(IntegrationTestCase):
 			self.assertEqual(set(self.rows(user)), set(SITE_WIDE_NON_DRAFT), user)
 
 	def test_a_site_wide_reader_gets_the_same_figures_as_anyone_else(self):
+		"""The figures are the same for every aggregate reader. What is *named and linked* follows the
+		viewer's own read (KT-ACCESS-REV-001 AR-08), so a requisition the reader cannot open carries its
+		reference and no link instead of its title and route."""
 		reference = self.rows("Administrator")
 		for user in (HOPF_ONLY, AO, AUDITOR, TECH_OP):
 			rows = self.rows(user)
 			for key in SITE_WIDE_NON_DRAFT:
-				self.assertEqual(rows[key], reference[key], f"{user} {key}")
+				if rows[key]["route"] == []:
+					self.assertEqual(rows[key]["title"], rows[key]["reference"], f"{user} {key}")
+					masked = {**rows[key], "title": reference[key]["title"], "route": reference[key]["route"]}
+					self.assertEqual(masked, reference[key], f"{user} {key}")
+				else:
+					self.assertEqual(rows[key], reference[key], f"{user} {key}")
+
+	def test_a_requisition_the_accounting_officer_cannot_open_is_counted_but_not_named_or_linked(self):
+		"""AR-08: the Analytics aggregate is wider than the owner's read (OD-2); the link and title are not."""
+		frappe.set_user(AO)
+		opened = {self.by_id[name] for name in frappe.get_list("Procurement Requisition", pluck="name", limit_page_length=0) if name in self.by_id}
+		frappe.set_user("Administrator")
+		rows = self.rows(AO)
+		self.assertTrue(set(SITE_WIDE_NON_DRAFT) - opened, "the fixture needs a requisition the AO cannot open")
+		for key in SITE_WIDE_NON_DRAFT:
+			if key in opened:
+				self.assertTrue(rows[key]["route"], key)
+			else:
+				self.assertEqual(rows[key]["route"], [], key)
+				self.assertEqual(rows[key]["title"], rows[key]["reference"], key)
 
 	def test_a_draft_of_another_user_never_appears_to_a_site_wide_reader(self):
 		for user in (HOPF_ONLY, PLANNER, AUDITOR, AO, "Administrator", TECH_OP):

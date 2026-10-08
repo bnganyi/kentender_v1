@@ -83,7 +83,8 @@ def prepare_it_equipment_requisition(*, plan_item_id: str, idempotency_key: str,
 	if existing:
 		readable = True
 		try:
-			authz.require_requisition_reader(actor, contributing_org_units=records.contributing_units(frappe.get_doc("Procurement Requisition", existing)))
+			_existing = frappe.get_doc("Procurement Requisition", existing)
+			authz.require_requisition_reader(actor, contributing_org_units=records.contributing_units(_existing), state=_existing.current_state)
 		except frappe.DoesNotExistError:
 			readable = False
 		if not readable:
@@ -962,7 +963,7 @@ def validate_requisition(*, requisition: str, user: str | None = None) -> dict[s
 
 	actor = authz.actor(user)
 	root = records.require_root(requisition, lock=False)
-	authz.require_requisition_reader(actor, contributing_org_units=records.contributing_units(root))
+	authz.require_requisition_reader(actor, contributing_org_units=records.contributing_units(root), state=root.current_state)
 	root, version, package_version = records.load(requisition)
 	projection = eligibility_gateway.get_requisition_eligible_plan_item(root.plan_item_id)
 	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=projection)

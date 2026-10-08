@@ -59,3 +59,35 @@ class TestOversightOfNeeds(DepartmentalNeedsPermissionCase):
 
 	def test_a_person_with_no_responsibility_is_unchanged(self):
 		self.assertEqual(permissions.can_view(self.accepted_need(), NO_GRANT_USER), (False, "none"))
+
+
+class TestOfficesOpenTheNeedThroughTheFrameworkRoutes(DepartmentalNeedsPermissionCase):
+	"""KT-ACCESS-REV-001 AR-05 — the service layer already admitted the two offices; the Desk and REST
+	routes (list, record, count) refused them because the DocType carried no read row for them. The row
+	exists now; the reader hook still limits them to submitted and decided Needs, read-only."""
+
+	def test_the_list_and_the_record_open_for_both_offices_in_oversight_states_only(self):
+		submitted, accepted = self.hrmd_need(), self.accepted_need()
+		for user in (AO, HOPF):
+			with self.subTest(user=user):
+				frappe.set_user(user)
+				names = frappe.get_list("Departmental Need", pluck="name", limit_page_length=0)
+				self.assertIn(submitted.name, names)
+				self.assertIn(accepted.name, names)
+				states = {row.current_state for row in frappe.get_list("Departmental Need", fields=["current_state"], limit_page_length=0)}
+				self.assertTrue(states <= {STATE_SUBMITTED, STATE_ACCEPTED, STATE_NOT_TAKEN_FORWARD}, states)
+				self.assertTrue(frappe.has_permission("Departmental Need", "read", doc=accepted.name, user=user))
+
+	def test_the_grant_is_read_only_on_the_framework_routes(self):
+		accepted = self.accepted_need()
+		for user in (AO, HOPF):
+			for ptype in ("write", "create", "delete", "submit"):
+				self.assertFalse(frappe.has_permission("Departmental Need", ptype, doc=accepted.name, user=user), f"{user} {ptype}")
+
+	def test_the_departments_other_records_stay_closed_to_the_offices(self):
+		for user in (AO, HOPF):
+			with self.subTest(user=user):
+				frappe.set_user(user)
+				for doctype in ("Departmental Need Revision", "Departmental Need Decision", "Departmental Need Review Task", "Need Withdrawal Request"):
+					with self.assertRaises(frappe.PermissionError):
+						frappe.get_list(doctype, limit_page_length=1)

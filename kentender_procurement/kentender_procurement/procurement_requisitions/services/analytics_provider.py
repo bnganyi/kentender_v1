@@ -188,10 +188,15 @@ def facts(*, user: str, kind: str, at: datetime, **params: Any) -> dict[str, Any
 		task = waiting.get(cstr(root.current_version)) if state == "Submitted to Procurement" else None
 		if task and (submitted_at or task.creation):
 			out = ac.outstanding(AWAITING_AUTHORISATION.format(who=who), who, get_datetime(submitted_at or task.creation))
+		# The record is named and linked only where the owner's own read would open it for this viewer
+		# (KT-ACCESS-REV-001 AR-08): the Accounting Officer reads Authorised and Revoked ones, not the rest; the
+		# aggregate still counts every one.
+		readable = frappe.has_permission("Procurement Requisition", "read", doc=root.name, user=user)
 		records.append(ac.record(
-			ac.REQUISITIONS, id=root.name, title=cstr((current.requirement_title if current else "") or root.requisition_reference or root.name),
+			ac.REQUISITIONS, id=root.name,
+			title=cstr((current.requirement_title if current else "") or root.requisition_reference or root.name) if readable else cstr(root.requisition_reference or root.name),
 			reference=cstr(root.requisition_reference), fiscal_year=years.get(cstr(root.plan_id), ""), org_units=units,
-			route=[PAGE, root.name, "authorised"] if state in AUTHORISED_ROUTE_STATES else [PAGE, root.name], outstanding=out,
+			route=([PAGE, root.name, "authorised"] if state in AUTHORISED_ROUTE_STATES else [PAGE, root.name]) if readable else [], outstanding=out,
 			state=label, state_key=state, value_kind=value_kind,
 			value_lines=[ac.line(row.contributing_org_unit, row.requested_value) for row in lines_of.get(valued[root.name], [])] if value_kind else [],
 			submitted_at=submitted_at,

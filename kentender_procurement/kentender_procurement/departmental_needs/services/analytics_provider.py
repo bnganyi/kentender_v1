@@ -124,10 +124,15 @@ def facts(*, user: str, kind: str, at: datetime, **params: Any) -> dict[str, Any
 	records = []
 	for need in needs:
 		baseline = cstr(need.current_accepted_revision)
+		# Named and linked only where the Need's own read opens for this viewer (KT-ACCESS-REV-001 AR-08): the
+		# Accounting Officer and the Head of Procurement Function read submitted and decided Needs, not Returned
+		# ones; the aggregate still counts every one.
+		readable = is_technical_reader(user, at) or can_view(need, user)[0]
 		records.append(ac.record(
-			ac.NEEDS, id=need.name, title=titles.get(revision_of[need.name]) or cstr(need.need_reference), reference=cstr(need.need_reference),
+			ac.NEEDS, id=need.name, title=(titles.get(revision_of[need.name]) or cstr(need.need_reference)) if readable else cstr(need.need_reference),
+			reference=cstr(need.need_reference),
 			fiscal_year=cstr(need.financial_year), org_units=[cstr(need.organisation_unit)] if need.organisation_unit else [],
-			route=[PAGE, cstr(need.need_reference)], state=cstr(need.current_state), state_key=STATE_KEYS[cstr(need.current_state)],
+			route=[PAGE, cstr(need.need_reference)] if readable else [], state=cstr(need.current_state), state_key=STATE_KEYS[cstr(need.current_state)],
 			accepted_at=accepted.get(need.name), pending_successor=bool(baseline) and cstr(need.current_revision) != baseline,
 		))
 	return ac.facts_result(records)

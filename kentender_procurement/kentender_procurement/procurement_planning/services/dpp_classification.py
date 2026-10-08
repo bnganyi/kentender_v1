@@ -351,8 +351,17 @@ def get_accepted_dpp_classification(
 	if not frappe.db.exists("Departmental Plan Submission", dpp_submission):
 		authz.not_found()
 	# A technical reader passes the read gate but is never offered the command.
-	authz.require_site_read((ROLE_PROCUREMENT_PLANNER,), actor)
+	# KT-ACCESS-REV-001 v0.2 §2 (proposed PLN-R2, built ahead of approval): a
+	# Plan reviewer who is not the Planner reads only the entries the plan
+	# under their review consumed — read-only, with no correction offered.
+	access = None
+	if not authz.can_read_site(ROLE_PROCUREMENT_PLANNER, actor) and not authz.is_technical(actor):
+		access = authz.plan_source_access(dpp_submission, actor)
+		if not access:
+			authz.not_found()
 	rows = _classification_rows(dpp_submission, only_entry=cstr(dpp_entry_id).strip())
+	if access is not None:
+		rows = [_reader_row(row, access) for row in rows if row["dpp_entry_id"] in access.entries]
 	version = frappe.db.get_value("Departmental Plan Submission", dpp_submission, "dpp_version")
 	root_name = frappe.db.get_value("Departmental Plan Version", version, "departmental_plan")
 	root = frappe.db.get_value(
@@ -377,6 +386,27 @@ def get_accepted_dpp_classification(
 		"rows": rows,
 		"requirement_types": active_requirement_types(),
 		"can_correct": authz.has_site_role(ROLE_PROCUREMENT_PLANNER, actor),
+	}
+
+
+def _reader_row(row: dict[str, Any], access: Any) -> dict[str, Any]:
+	"""A Plan reviewer sees what the plans under their review consumed — never a
+	Planner's Draft successor or another plan's unfinished work — and is offered
+	no correction."""
+	affected = row.get("affected") or {}
+	reviewed = access.plan_versions
+	governed = [item for item in affected.get("governed_items", []) if item["plan_version"] in reviewed]
+	locked = [item for item in affected.get("locked_items", []) if item["plan_version"] in reviewed]
+	if locked:
+		recovery = RECOVERY_DOWNSTREAM_OWNER
+	elif governed:
+		recovery = RECOVERY_PLAN_SUCCESSOR
+	else:
+		recovery = RECOVERY_NONE
+	return {
+		**row,
+		"can_correct": False,
+		"affected": {"recovery": recovery, "draft_items": [], "governed_items": governed, "locked_items": locked},
 	}
 
 

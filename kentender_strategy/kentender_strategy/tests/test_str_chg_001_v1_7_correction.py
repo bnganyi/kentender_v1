@@ -287,6 +287,22 @@ class TestTargetPeriodRule(CorrectionTestBase):
 		self.assertEqual(names, [row["name"] for row in ui.list_available_fiscal_years(plan.plan_id)])
 
 
+class TestFiscalYearListIsForInternalUsers(CorrectionTestBase):
+	"""KT-ACCESS-REV-001 AR-14."""
+
+	def test_a_website_account_is_refused_and_an_internal_user_is_served(self):
+		email = "ar14.supplier@example.test"
+		if not frappe.db.exists("User", email):
+			frappe.get_doc({"doctype": "User", "email": email, "first_name": "Supplier", "user_type": "Website User", "send_welcome_email": 0}).insert(ignore_permissions=True)
+		frappe.set_user(email)
+		try:
+			with self.assertRaises(frappe.PermissionError):
+				ui.list_available_fiscal_years()
+		finally:
+			frappe.set_user("Administrator")
+		self.assertTrue(ui.list_available_fiscal_years())
+
+
 class TestPortfolioAndReferences(CorrectionTestBase):
 	def test_portfolio_filters_are_server_side_and_counts_match_rows(self):
 		author = self._user("author")
@@ -337,6 +353,27 @@ class TestPortfolioAndReferences(CorrectionTestBase):
 			frappe.set_user("Administrator")
 		self.assertFalse(out["forbidden"])
 		self.assertEqual(out["routes"]["overview"], ["strategy", "approval", version.plan_version_id])
+
+
+class TestApprovalLinkIsOfferedOnlyWhereItOpens(CorrectionTestBase):
+	"""KT-ACCESS-REV-001 AR-12 — "Open approval task" is not a dead end for an Author or an Auditor."""
+
+	def _approval_route(self, user, plan, version):
+		frappe.set_user(user)
+		try:
+			workspace = ui.get_plan_workspace(plan.plan_id, version.version_number)
+			return workspace["routes"]["approval"]
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_the_route_is_given_to_an_approver_and_withheld_from_an_author(self):
+		plan = self._plan()
+		version = self._version(plan, status="Submitted for approval")
+		author, approver = self._user("author.link"), self._user("approver.link")
+		self._grant(author, ROLE_STRATEGY_AUTHOR)
+		self._grant(approver, ROLE_STRATEGY_APPROVER)
+		self.assertIsNone(self._approval_route(author, plan, version))
+		self.assertEqual(self._approval_route(approver, plan, version), ["strategy", "approval", version.plan_version_id])
 
 
 class TestAuditCarriesExercisedAssignment(CorrectionTestBase):

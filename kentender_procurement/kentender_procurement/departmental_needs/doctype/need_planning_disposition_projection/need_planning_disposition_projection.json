@@ -30,7 +30,9 @@
   {"read": 1, "role": "Departmental Author"},
   {"read": 1, "role": "Head of User Department"},
   {"read": 1, "role": "Procurement Planner"},
-  {"read": 1, "role": "Auditor"}
+  {"read": 1, "role": "Auditor"},
+  {"read": 1, "role": "Accounting Officer"},
+  {"read": 1, "role": "Head of Procurement Function"}
  ],
  "track_changes": 1
 }

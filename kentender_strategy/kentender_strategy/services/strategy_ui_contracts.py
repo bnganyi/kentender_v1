@@ -36,6 +36,7 @@ from kentender_strategy.services.strategy_authorization import (
 	has_plan_create_capability,
 	has_plan_version_capability,
 	holds_approver_responsibility,
+	holds_internal_read,
 	APPROVED_STATUSES,
 	holds_strategy_read_responsibility,
 	read_scope,
@@ -816,7 +817,8 @@ def get_plan_workspace(plan_id: str, version_number: str | int | None = None) ->
 			"structure": version_route(plan.plan_id, selected.version_number, "structure"),
 			"history": version_route(plan.plan_id, selected.version_number, "history"),
 			"current": plan_route(plan.plan_id) if active else None,
-			"approval": approval_route(selected.plan_version_id) if selected.status == STATUS_SUBMITTED else None,
+			# The task opens only for an Approver or the technical reader; an Author or Auditor is not sent to a refusal (KT-ACCESS-REV-001 AR-12).
+			"approval": approval_route(selected.plan_version_id) if selected.status == STATUS_SUBMITTED and (is_technical(frappe.session.user) or holds_approver_responsibility(frappe.session.user)) else None,
 		},
 	}
 
@@ -1233,7 +1235,11 @@ def diff_strategy_versions(base_version_id: str | None, compare_version_id: str)
 def list_available_fiscal_years(plan_id: str | None = None) -> list[dict]:
 	"""§12.3 — Period offers only ERPNext Fiscal Years overlapping the plan
 	period. `ignore_permissions` is safe here: Fiscal Year rows carry only
-	date ranges, and Strategy has no write path onto the doctype."""
+	date ranges, and Strategy has no write path onto the doctype. The list is
+	for internal users; a supplier or other Website account is refused
+	(KT-ACCESS-REV-001 AR-14)."""
+	if not holds_internal_read(frappe.session.user):
+		raise frappe.PermissionError(frappe._("Not permitted"))
 	rows = frappe.get_all(
 		"Fiscal Year",
 		fields=["name", "year_start_date", "year_end_date"],

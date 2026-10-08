@@ -1080,8 +1080,11 @@ async function onReconcilePublication() {
 function onViewItemClassification() {
 	// §10.8 — the classification evidence for this purchase's own sources,
 	// read-only: nothing on the purchase editor makes it editable.
-	const source = (planItem.value.sources || [])[0];
-	if (!source || !source.dpp_submission) return;
+	// The first source this viewer can actually open: the server marks it, so
+	// a reader is never sent into a masked page (and a combined purchase is not
+	// pinned to its first source's department alone).
+	const source = (planItem.value.sources || []).find((row) => row.classification_readable && row.dpp_submission);
+	if (!source) return;
 	frappe.set_route(WORKSPACE_PAGE, "dpp-classification", source.dpp_submission);
 }
 

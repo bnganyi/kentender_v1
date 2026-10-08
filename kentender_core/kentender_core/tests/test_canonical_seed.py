@@ -318,8 +318,13 @@ class TestFixturePasswords(IntegrationTestCase):
 
 		_full()
 		daniel = "daniel.otieno@moh.example.test"
-		self.assertIn("System Manager", frappe.get_roles(daniel))
+		# A technical reader through the in-force Technical Operator assignment, and without System Manager:
+		# a read carries no setup or responsibility-administration power (KT-ACCESS-REV-001 AR-09/AR-10).
+		self.assertNotIn("System Manager", frappe.get_roles(daniel))
 		self.assertTrue(frappe.db.exists("User Responsibility Assignment", {"user": daniel, "business_role": "Technical Operator", "status": "Enabled"}))
+		from kentender_core.services.authorization import is_technical
+
+		self.assertTrue(is_technical(daniel))
 		jane = "jane.wanjiku@observer.example"
 		self.assertEqual(frappe.db.get_value("User", jane, "user_type"), "Website User")
 		self.assertFalse(frappe.db.exists("User Responsibility Assignment", {"user": jane}))

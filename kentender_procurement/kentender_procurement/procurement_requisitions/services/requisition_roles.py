@@ -30,6 +30,10 @@ ALL_REQUISITION_ROLES = DEPARTMENTAL_ROLES + SITE_WIDE_ROLES
 # OVS-CHG-001 v0.6 §4.1: the Accounting Officer reads authorised Requisitions and their decision and history,
 # read-only. Never a Draft or one still in review, and never a command.
 OVERSIGHT_READ_ROLES = (ROLE_ACCOUNTING_OFFICER,)
+# KT-ACCESS-REV-001 AR-02 — REQ-CHG-001 v1.14 §8: the Site-wide roles read what has been submitted (the Head of
+# Procurement Function), Planning's lineage (the Planner) and immutable Versions (the Auditor); the Procurement
+# Officer has no Draft right. An unsent Draft is the department's own work (and the technical reader's).
+SITE_WIDE_UNREADABLE_STATES = ("Draft",)
 OVERSIGHT_READ_STATES = ("Authorised", "Revoked")
 
 # The Tender Preparation responsibilities that consume this module's handoff

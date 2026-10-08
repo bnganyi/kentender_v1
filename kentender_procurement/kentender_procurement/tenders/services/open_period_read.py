@@ -224,10 +224,13 @@ def get_tender_cancellation(*, tender: str, user: str | None = None) -> dict[str
 	summary = publication_read.open_period_summary(root, actor=actor, roles=roles) or {}
 	existing = summary.get("cancellation")
 	if existing and root.cancellation:
+		# Derived for the screen, never persisted by a read (KT-ACCESS-REV-001 AR-06).
 		doc = frappe.get_doc("Tender Cancellation", root.cancellation)
-		cancellation.refresh_obligation_statuses(doc)
-		summary = publication_read.open_period_summary(root, actor=actor, roles=roles) or {}
-		existing = summary.get("cancellation")
+		by_id, headline, _changed = cancellation.derived_statuses(doc)
+		existing = {
+			**existing, **headline,
+			"obligations": [{**o, "status": by_id.get(o["obligation_id"], o["status"])} for o in existing.get("obligations") or []],
+		}
 	recommendation_name = cancellation.latest_recommendation(root)
 	recommendation = None
 	if recommendation_name:

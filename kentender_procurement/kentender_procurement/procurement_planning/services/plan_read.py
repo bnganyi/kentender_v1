@@ -1273,6 +1273,21 @@ def _drawn(allocations: list) -> tuple[float, float]:
 # --------------------------------------------------------------------------
 
 
+def _classification_readable(working_reader: bool, cache: dict[str, Any], dpp_version: str, dpp_entry: str, actor: str) -> bool:
+	"""Whether this viewer may open the accepted-classification page for one
+	source: true for the working readers, otherwise only when the exact entry is
+	among those a plan under the viewer's review consumed."""
+	if working_reader:
+		return True
+	submission = frappe.db.get_value("Departmental Plan Submission", {"dpp_version": dpp_version}, "name") if dpp_version else ""
+	if not submission:
+		return False
+	if submission not in cache:
+		cache[submission] = authz.plan_source_access(submission, actor)
+	entry_id = frappe.db.get_value("Departmental Plan Entry", dpp_entry, "entry_id")
+	return entry_id in cache[submission].entries
+
+
 def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import strategy_gateway
 
@@ -1293,6 +1308,13 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 		order_by="creation asc",
 	)
 	sources, value, correction_required = [], Decimal(0), False
+	# KT-ACCESS-REV-001 v0.2 §2 — an enabled link must lead to a page this viewer
+	# can read (never a deterministic denial): the Planner and technical readers
+	# always, a Plan reviewer only for what their plan consumed (proposed
+	# PLN-R2, built ahead of approval). The server answers; the browser never
+	# derives it from a role.
+	working_reader = authz.can_read_site(ROLE_PROCUREMENT_PLANNER, actor) or authz.is_technical(actor)
+	reviewer_access: dict[str, Any] = {}
 	for allocation in allocations:
 		value += money.as_decimal(allocation.indicative_amount)
 		if source_correction_required(allocation.dpp_entry):
@@ -1314,6 +1336,9 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 				"dpp_submission": cstr(
 					frappe.db.get_value("Departmental Plan Submission", {"dpp_version": dpp_version}, "name")
 				) if dpp_version else "",
+				"classification_readable": _classification_readable(
+					working_reader, reviewer_access, dpp_version, allocation.dpp_entry, actor
+				),
 				"need_reference_line": f"{allocation.need} · Revision {needs_intake.need_revision_number(allocation.need_revision)}" if allocation.need else "",
 				"quantity_display": _quantity_display(allocation.quantity, allocation.unit),
 				"quantity_number": f"{flt(allocation.quantity):g}",

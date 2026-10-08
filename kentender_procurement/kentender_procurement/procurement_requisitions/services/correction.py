@@ -178,7 +178,7 @@ def prepare_requisition_after_plan_correction(*, requisition: str, idempotency_k
 
 	actor = authz.actor(user)
 	root = records.require_root(requisition, lock=False)
-	authz.require_requisition_reader(actor, contributing_org_units=records.contributing_units(root))
+	authz.require_requisition_reader(actor, contributing_org_units=records.contributing_units(root), state=root.current_state)
 	if root.current_state != "Upstream correction required":
 		fail("REQ_STALE_VERSION")
 	outcome = terminal_outcome(root)

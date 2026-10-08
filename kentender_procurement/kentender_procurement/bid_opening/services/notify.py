@@ -25,7 +25,9 @@ INCIDENT = "Opening Access Incident"
 
 def holders() -> list[str]:
 	"""The current Technical Operator holders (plan D11)."""
-	return frappe.get_all("User Responsibility Assignment", filters={"business_role": "Technical Operator", "status": "Enabled"}, pluck="user", distinct=True)
+	from kentender_core.services.authorization import active_holders
+
+	return active_holders("Technical Operator")
 
 
 def deliver(*, incident_id: str, subject: str, message: str, users: list[str]) -> dict[str, Any]:

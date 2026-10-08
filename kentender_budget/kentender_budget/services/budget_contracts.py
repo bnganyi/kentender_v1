@@ -73,7 +73,12 @@ def list_available_fiscal_years() -> list[str]:
 	`kentender_strategy.services.strategy_ui_contracts.list_available_fiscal_years`.
 	`ignore_permissions` is safe here for the same reason: Fiscal Year rows
 	carry only date ranges, and Budget has no create/write path onto the
-	doctype regardless."""
+	doctype regardless. For internal users only: a supplier or other Website
+	account is refused (KT-ACCESS-REV-001 AR-14)."""
+	from kentender_core.services.home_viewer import is_internal
+
+	if not is_internal(frappe.session.user):
+		raise frappe.PermissionError(frappe._("Not permitted"))
 	rows = frappe.get_all(
 		"Fiscal Year", fields=["name"], order_by="year_start_date desc", limit_page_length=0, ignore_permissions=True
 	)

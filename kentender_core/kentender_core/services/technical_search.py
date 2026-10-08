@@ -78,12 +78,30 @@ def _row(resolver: Resolver, match: dict[str, Any]) -> dict[str, Any]:
 	}
 
 
+def may_open(doctype: str, name: str, user: str) -> bool:
+	"""Whether the technical read policy lets this reader open the record a search result names
+	(KT-ACCESS-REV-001 AR-13).
+
+	`frappe.get_all` ignores permissions whatever `ignore_permissions` says, so the search has to ask
+	itself. The policy is what a System Manager may open: the DocType carries the technical read row, and
+	no record-level hook (the sealed-bid denial, for one) refuses the record. A Technical Operator reads
+	through the same policy without holding the Role, so this is not `frappe.has_permission`."""
+	meta = frappe.get_meta(doctype)
+	if not any(row.role == "System Manager" and row.read for row in meta.permissions):
+		return False
+	hooks = frappe.get_hooks("has_permission").get(doctype) or []
+	if not hooks:
+		return True
+	record = frappe.get_doc(doctype, name)
+	return all(frappe.get_attr(path)(doc=record, ptype="read", user=user) is not False for path in hooks)
+
+
 def search(query: str = "", limit: int = 25, user: str | None = None) -> list[dict[str, Any]]:
 	"""Reference-or-title match across every published resolver.
 
 	Exact (case-insensitive) reference matches sort first, then by record
 	type, then by reference. Capped at `limit` (default and max 25)."""
-	require_technical(user)
+	user = require_technical(user)
 	q = (query or "").strip()
 	if not q:
 		return []
@@ -103,7 +121,7 @@ def search(query: str = "", limit: int = 25, user: str | None = None) -> list[di
 			ignore_permissions=False,
 			limit_page_length=limit,
 		)
-		rows.extend(_row(resolver, match) for match in matches)
+		rows.extend(_row(resolver, match) for match in matches if may_open(resolver["doctype"], match["name"], user))
 
 	q_fold = q.casefold()
 
@@ -119,7 +137,7 @@ def search(query: str = "", limit: int = 25, user: str | None = None) -> list[di
 def resolve(reference: str, user: str | None = None) -> dict[str, Any] | None:
 	"""Exact match on `reference_field` across every published resolver;
 	the first hit wins (resolver iteration order, not ranked)."""
-	require_technical(user)
+	user = require_technical(user)
 	ref = (reference or "").strip()
 	if not ref:
 		return None
@@ -131,6 +149,6 @@ def resolve(reference: str, user: str | None = None) -> dict[str, Any] | None:
 			ignore_permissions=False,
 			limit_page_length=1,
 		)
-		if matches:
+		if matches and may_open(resolver["doctype"], matches[0]["name"], user):
 			return _row(resolver, matches[0])
 	return None

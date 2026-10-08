@@ -21,6 +21,7 @@ const SOURCES = [
 		amount_display: "KES 20,000,000",
 		need_reference_line: "NDS-MOH-2027-0003 · Revision 2",
 		budget_line_display: "MOH-BL-HWD-2027",
+		classification_readable: true,
 	},
 	{
 		requirement: "Clinical deployment laptops for digital health rollout",
@@ -31,6 +32,7 @@ const SOURCES = [
 		amount_display: "KES 30,000,000",
 		need_reference_line: "NDS-MOH-2027-0004 · Revision 1",
 		budget_line_display: "MOH-BL-HWD-2027",
+		classification_readable: true,
 	},
 ];
 
@@ -540,5 +542,19 @@ describe("what a designation of None means", () => {
 		for (const forbidden of ["Required allocation", "Planned qualifying allocation", "shortfall", "Still required", "Eligible planned procurement"]) {
 			expect(text).not.toContain(forbidden);
 		}
+	});
+});
+
+
+describe("PlanItemEditorScreen — View classification details is offered only where it opens", () => {
+	it("shows the link when the server marks a source readable", () => {
+		const wrapper = make();
+		expect(wrapper.find('[data-testid="ppi-view-classification"]').exists()).toBe(true);
+	});
+
+	it("omits the link when no source is readable for this viewer", () => {
+		const unreadable = SOURCES.map((row) => ({ ...row, classification_readable: false }));
+		const wrapper = make({ item: item({ sources: unreadable }) });
+		expect(wrapper.find('[data-testid="ppi-view-classification"]').exists()).toBe(false);
 	});
 });

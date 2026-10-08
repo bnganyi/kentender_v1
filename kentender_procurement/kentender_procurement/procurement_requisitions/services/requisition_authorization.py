@@ -58,6 +58,7 @@ from kentender_procurement.procurement_requisitions.services.requisition_roles i
 	ROLE_PROCUREMENT_PLANNER,
 	OVERSIGHT_READ_ROLES,
 	OVERSIGHT_READ_STATES,
+	SITE_WIDE_UNREADABLE_STATES,
 	SITE_WIDE_ROLES,
 )
 
@@ -121,17 +122,22 @@ def is_oversight_reader(user: str) -> bool:
 	return any(can_read_site(role, user) for role in OVERSIGHT_READ_ROLES)
 
 
-def require_requisition_reader(actor_name: str, *, contributing_org_units: set[str], state: str = "") -> None:
+def _holds_site_wide_reader_role(principal: str) -> bool:
+	return any(can_read_site(role, principal) for role in SITE_WIDE_ROLES)
+
+
+def require_requisition_reader(actor_name: str, *, contributing_org_units: set[str], state: str) -> None:
 	"""§5A/§8 — the Site-wide roles read unconditionally; the two
 	Organisation-Unit-scoped roles only for a Requisition whose contributing
 	departments they hold (never one a department did not contribute to).
 	An Accounting Officer reads only when the caller names an authorised (or later
-	revoked) state: a read-only oversight grant, never for a Draft or a command."""
+	revoked) state: a read-only oversight grant, never for a Draft or a command.
+	The Site-wide roles read every state but the unsent Draft (KT-ACCESS-REV-001
+	AR-02): `state` is therefore required — the caller names the record's own state."""
 	if is_technical(actor_name):
 		return
-	for role in SITE_WIDE_ROLES:
-		if can_read_site(role, actor_name):
-			return
+	if state not in SITE_WIDE_UNREADABLE_STATES and _holds_site_wide_reader_role(actor_name):
+		return
 	if state in OVERSIGHT_READ_STATES and is_oversight_reader(actor_name):
 		return
 	for role in DEPARTMENTAL_ROLES:
@@ -259,38 +265,32 @@ def authority_snapshot(assignment: Assignment | None) -> str:
 # --------------------------------------------------------------------------
 
 
-def _site_wide_condition(principal: str) -> str | None:
-	"""Returns "" (unrestricted) if the actor holds any Site-wide reader
-	role or is technical; None otherwise (caller falls through to the
-	OU-scoped subquery)."""
+def _requisition_scope_condition(principal: str) -> str:
 	if is_technical(principal):
 		return ""
-	for role in SITE_WIDE_ROLES:
-		if authorise_record(user=principal, business_role=role, organisation_unit="", purpose=PURPOSE_READ).allowed:
-			return ""
-	return None
-
-
-def _requisition_scope_condition(principal: str) -> str:
-	unrestricted = _site_wide_condition(principal)
-	if unrestricted is not None:
-		return unrestricted
+	clauses: list[str] = []
+	# the Site-wide roles read every Requisition but an unsent Draft (KT-ACCESS-REV-001 AR-02)
+	if _holds_site_wide_reader_role(principal):
+		unreadable = ", ".join(frappe.db.escape(x) for x in SITE_WIDE_UNREADABLE_STATES)
+		clauses.append(f"`tabProcurement Requisition`.current_state not in ({unreadable})")
 	units: set[str] = set()
 	for role in DEPARTMENTAL_ROLES:
 		scope = permitted_ou_scopes(principal, role)
 		if scope:
 			units |= scope
+	if units:
+		quoted = ", ".join(frappe.db.escape(u) for u in sorted(units))
+		clauses.append(
+			"exists (select 1 from `tabRequisition Contributing Unit` rcu "
+			"where rcu.parent = `tabProcurement Requisition`.name and rcu.organisation_unit in (" + quoted + "))"
+		)
 	# an Accounting Officer also reads what was authorised (OVS-CHG-001 v0.6 §4.1), by state, whatever the unit
-	states = ", ".join(frappe.db.escape(x) for x in OVERSIGHT_READ_STATES) if is_oversight_reader(principal) else ""
-	oversight = f"`tabProcurement Requisition`.current_state in ({states})" if states else ""
-	if not units:
-		return oversight or "1=0"
-	quoted = ", ".join(frappe.db.escape(u) for u in sorted(units))
-	scoped = (
-		"exists (select 1 from `tabRequisition Contributing Unit` rcu "
-		"where rcu.parent = `tabProcurement Requisition`.name and rcu.organisation_unit in (" + quoted + "))"
-	)
-	return f"({scoped} or {oversight})" if oversight else scoped
+	if is_oversight_reader(principal):
+		states = ", ".join(frappe.db.escape(x) for x in OVERSIGHT_READ_STATES)
+		clauses.append(f"`tabProcurement Requisition`.current_state in ({states})")
+	if not clauses:
+		return "1=0"
+	return clauses[0] if len(clauses) == 1 else "(" + " or ".join(clauses) + ")"
 
 
 def permission_query_conditions(user: str | None = None, doctype: str | None = None) -> str:
@@ -396,13 +396,13 @@ def has_permission(doc=None, ptype: str = "read", user: str | None = None):
 		r.organisation_unit
 		for r in frappe.get_all("Requisition Contributing Unit", filters={"parent": root_name}, fields=["organisation_unit"])
 	}
-	for role in SITE_WIDE_ROLES:
-		if authorise_record(user=principal, business_role=role, organisation_unit="", purpose=PURPOSE_READ).allowed:
-			return True
+	state = frappe.db.get_value("Procurement Requisition", root_name, "current_state")
+	if state not in SITE_WIDE_UNREADABLE_STATES and _holds_site_wide_reader_role(principal):
+		return True
 	for role in DEPARTMENTAL_ROLES:
 		scope = permitted_ou_scopes(principal, role)
 		if scope and scope & units:
 			return True
-	if is_oversight_reader(principal) and frappe.db.get_value("Procurement Requisition", root_name, "current_state") in OVERSIGHT_READ_STATES:
+	if is_oversight_reader(principal) and state in OVERSIGHT_READ_STATES:
 		return True
 	return False

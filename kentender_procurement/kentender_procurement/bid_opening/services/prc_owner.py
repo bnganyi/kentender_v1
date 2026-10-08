@@ -53,6 +53,14 @@ class BidOpeningOwner:
 		tender = frappe.db.get_value(CASE, owner_id, "tender")
 		return bool(tender) and authz.is_department_head_of(frappe.get_doc("Tender", tender), user)
 
+	def can_open_record(self, owner_id: str, user: str) -> bool:
+		"""May this reader open the opening record behind the row? Narrower than
+		`can_read_row`: a Head of User Department reads the row and the stage summary,
+		not the opening record (KT-ACCESS-REV-001 AR-07)."""
+		from kentender_procurement.bid_opening.services import reads
+
+		return reads.can_read(owner_id, user)
+
 
 def adapters() -> dict[str, Any]:
 	return {OWNER_TYPE: BidOpeningOwner()}

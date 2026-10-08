@@ -100,7 +100,10 @@ def get_submission_service_status(*, user: str | None = None) -> dict[str, Any]:
 
 
 def _holders(role: str) -> list[str]:
-	return frappe.get_all("User Responsibility Assignment", filters={"business_role": role, "status": "Enabled"}, pluck="user")
+	"""Holders in force now — an expired or scheduled one is not a holder (AR-04)."""
+	from kentender_core.services.authorization import active_holders
+
+	return active_holders(role)
 
 
 def _bid_kwargs() -> dict | None:
