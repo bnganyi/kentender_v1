@@ -658,6 +658,14 @@ kt_analytics_providers = [
 	"kentender_procurement.tenders.services.analytics_provider",
 ]
 
+# AUTH-ADR-001 v1.12 §4.8 / CFG-CHG-002 v0.19 §4.10A — the staff home organisation
+# unit is maintained in core, which publishes `StaffHomeUnitChanged` through this
+# hook and never imports a consumer. Bid Evaluation completes a Not recorded
+# committee-member department once (EVL-CHG-001 v0.7 §3, `CompleteMemberDepartment`).
+kt_staff_home_unit_changed = [
+	"kentender_procurement.bid_evaluation.services.member_department.on_home_unit_changed",
+]
+
 # AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical
 # search page/service and the technical-read conformance gate collect every
 # module's reference resolvers and read probes through these two hooks; core

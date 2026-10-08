@@ -119,13 +119,13 @@
   );
 
   const rtab = (o) => E.recHead(Object.assign({ g: G5, arch: 'Record detail', state: 'Reviewing', spec: '§9.12', title: 'Committee record', tabs: ['Results', 'Committee record'], tab: 1, tr: T('dcn', 'Brian Wafula'), at: '16 Jun 2027, 13:55 EAT' }, o));
-  const recordBlocks = [E.roster(),
+  const recordBlocks = [E.roster(), p('Secretary appointed: Brian Wafula — delegated by Charles Mutiso, 11 Jun 2027, 09:05 EAT · MOH/EVAL/SEC/033/2027-R1'),
     tb(['Session', 'Time', 'Subject', 'Attendance'], [
       ['14 Jun 2027', '09:00–09:06', 'Clarify service address', 'Grace 09:00 (Start discussion) · Peter 09:02 · Ruth 09:03 · Brian from start'],
       ['16 Jun 2027', '09:00–09:06', 'Resolve reply and complete findings', 'Grace 09:00 (Start discussion) · Peter 09:02 · Ruth 09:03 · Brian from start']], { title: 'Sessions', sec: true }),
     kv([['Question', E.Q1], ['Sent', '14 Jun 2027, 09:10 EAT'], ['Reply deadline', '15 Jun 2027, 17:00 EAT'], ['Reply', 'Received from David Ouma, 15 Jun 2027, 10:00 EAT'], ['Committee outcome', '16 Jun 2027, 09:05 — The address is present in the original submitted document and is within Kenya.']], { title: 'Clarification', sec: true }),
     p('No disagreement recorded', { strong: true }),
-    ds('Appointment and declaration history', ['Committee appointed by Amina Hassan, 11 Jun 2027, 09:00 EAT · MOH/EVAL/033/2027', 'Secretary Brian Wafula appointed by Charles Mutiso, 11 Jun 2027, 09:05 EAT · MOH/EVAL/SEC/033/2027', 'Declarations: Grace 09:10, Peter 09:12, Ruth 09:14 on 11 Jun — no conflict, confidentiality accepted'])];
+    ds('Appointment and declaration history', ['Committee appointed by Amina Hassan, 11 Jun 2027, 09:00 EAT · MOH/EVAL/033/2027', 'Secretary by office · Charles Mutiso · By office — Head of Procurement Function · appointed on the Accounting Officer\'s appointment MOH/EVAL/033/2027 · MOH/EVAL/SEC/033/2027 · 11 Jun 2027, 09:00 EAT', 'Delegated · Brian Wafula · written appointment by Charles Mutiso, Head of Procurement Function · MOH/EVAL/SEC/033/2027-R1 · 11 Jun 2027, 09:05 EAT', 'Declarations: Grace 09:10, Peter 09:12, Ruth 09:14 on 11 Jun — no conflict, confidentiality accepted'])];
   E.add(
     rtab({ id: 'D05-RECORD', name: 'Committee record — secretary', actor: 'brian', nx: { k: 'turn', h: 'Prepare the report from the completed committee record.' }, blocks: recordBlocks, pri: 'View report', sec: ['Back to evaluation'] }),
     rtab({ id: 'D05-RECORD-MEMBER', name: 'Committee record — member', actor: 'grace', nx: { k: 'turn', h: 'Review the completed committee record.' }, blocks: recordBlocks, pri: 'View report' }),

@@ -12,7 +12,11 @@ a chair shortcut: it keeps the former membership and history, the incoming
 member declares and reviews the whole current record, and a report being
 signed is withdrawn for a new version signed by the current roster. Every
 ineligible person is reported together, beside that person, with the
-specific reason; nothing is appointed in part."""
+specific reason; nothing is appointed in part.
+
+v0.8: the same transaction records the authoritative Head of Procurement
+Function as secretary by office; an unclear or ineligible holder refuses the
+whole appointment (`secretary.office_holder`)."""
 
 from __future__ import annotations
 
@@ -21,7 +25,7 @@ from typing import Any
 import frappe
 from frappe.utils import cint, cstr
 
-from kentender_procurement.bid_evaluation.services import clock, guards, notify, people, prc, records, roster, separation
+from kentender_procurement.bid_evaluation.services import clock, guards, member_department, notify, people, prc, records, references, roster, secretary, separation
 from kentender_procurement.bid_evaluation.services.errors import Guards, fail
 
 APPOINTMENT = roster.APPOINTMENT
@@ -66,7 +70,7 @@ def _rows(doc, members: list[dict[str, Any]], checks: Guards) -> list[dict[str, 
 	rows, seen = [], set()
 	for m in members:
 		user = cstr(m.get("user")).strip()
-		fields = {f: "Required." for f in ("user", "department", "capacity") if not cstr(m.get(f)).strip()}
+		fields = {f: "Required." for f in ("user", "capacity") if not cstr(m.get(f)).strip()}
 		if cstr(m.get("capacity")) and m.get("capacity") not in CAPACITIES:
 			fields["capacity"] = "Choose Chair or Member."
 		if fields:
@@ -78,7 +82,8 @@ def _rows(doc, members: list[dict[str, Any]], checks: Guards) -> list[dict[str, 
 			checks.add("EVL_MEMBER_INELIGIBLE", person=user, person_name=people.full_name(user), reason=code, explanation=_reason(code, user))
 			continue
 		_ok, designation = people.internal(user)
-		rows.append({"member_user": user, "full_name": people.full_name(user), "department": cstr(m["department"]).strip(),
+		# the department is the person's home organisation unit, read now and snapshotted; a department sent by a caller is never used
+		rows.append({"member_user": user, "full_name": people.full_name(user), "department": member_department.department_of(user),
 			"designation": cstr(m.get("designation") or designation), "capacity": m["capacity"], "status": "Current"})
 	return rows
 
@@ -90,10 +95,9 @@ def _size(rows: list[dict[str, Any]], checks: Guards) -> None:
 		checks.add("EVL_MEMBER_INELIGIBLE", reason="one_chair", explanation="Appoint exactly one Chair.")
 
 
-def appoint_committee(*, tender: str, members: list[dict[str, Any]], appointment_reference: str, expected_version: int, idempotency_key: str,
-		user: str) -> dict[str, Any]:
+def appoint_committee(*, tender: str, members: list[dict[str, Any]], expected_version: int, idempotency_key: str, user: str) -> dict[str, Any]:
 	_require_ao(user)
-	payload = {"members": members, "appointment_reference": appointment_reference, "expected_version": expected_version}
+	payload = {"members": [{"user": m.get("user"), "capacity": m.get("capacity")} for m in members], "expected_version": expected_version}
 
 	def body() -> dict[str, Any]:
 		doc = records.lock(tender)
@@ -102,32 +106,33 @@ def appoint_committee(*, tender: str, members: list[dict[str, Any]], appointment
 		records.check_version(doc, expected_version)
 		if roster.current_appointment(doc.name):
 			fail("EVL_VERSION_CONFLICT", {"reason": "already_appointed"})
-		if not cstr(appointment_reference).strip():
-			checks.add("EVL_MEMBER_INELIGIBLE", fields={"appointment_reference": "Enter the appointment reference."})
 		rows = _rows(doc, members, checks)
 		if not checks:
 			_size(rows, checks)
+		# the Head of Procurement Function is the secretary by office (EVL-CHG-001 v0.8 §3): an unclear holder refuses the whole appointment
+		head = secretary.office_holder(checks)
 		checks.raise_if_any()
 		appointment = frappe.get_doc({
 			"doctype": APPOINTMENT, "appointment_id": f"{doc.name}-APT-01", "evaluation_case": doc.name, "version_number": 1,
-			"appointment_reference": cstr(appointment_reference).strip(), "change_kind": "Initial", "appointed_by": user, "appointed_at": clock.now(), "status": "Current",
+			"appointment_reference": references.committee(doc.tender_reference), "change_kind": "Initial", "appointed_by": user, "appointed_at": clock.now(), "status": "Current",
 		})
 		for row in rows:
 			appointment.append("members", row)
 		records.insert(appointment)
 		event = prc.roster(doc, roster.prc_roster(doc.name), "Committee appointed", owner_event_id=f"appointment:{appointment.name}", idempotency_key=idempotency_key)
-		records.bump(doc, current_appointment=appointment.name, last_committed_event=event)
+		head_row, event = secretary.record_by_office(doc, holder=head, appointment=appointment, appointing_officer=user, idempotency_key=idempotency_key)
+		records.bump(doc, current_appointment=appointment.name, secretary_appointment=head_row.name, last_committed_event=event)
 		notify.tell(doc, [r["member_user"] for r in rows], subject=f"Declare interests for {doc.tender_reference}",
 			message=f"You are appointed to evaluate {doc.tender_reference}. Declare any conflict before viewing bids.", key=f"declare-{appointment.name}")
-		return records.summary(doc, appointment=appointment.name, members=[r["member_user"] for r in rows])
+		return records.summary(doc, appointment=appointment.name, members=[r["member_user"] for r in rows], reference=appointment.appointment_reference)
 
 	return records.command("AppointEvaluationCommittee", tender=tender, idempotency_key=idempotency_key, actor=user, payload=payload, body=body)
 
 
-def replace_member(*, tender: str, outgoing: str, incoming: dict[str, Any], appointment_reference: str, reason: str, expected_version: int,
+def replace_member(*, tender: str, outgoing: str, incoming: dict[str, Any], reason: str, expected_version: int,
 		idempotency_key: str, user: str) -> dict[str, Any]:
 	_require_ao(user)
-	payload = {"outgoing": outgoing, "incoming": incoming, "appointment_reference": appointment_reference, "reason": reason, "expected_version": expected_version}
+	payload = {"outgoing": outgoing, "incoming": {"user": incoming.get("user"), "capacity": incoming.get("capacity")}, "reason": reason, "expected_version": expected_version}
 
 	def body() -> dict[str, Any]:
 		from kentender_procurement.bid_evaluation.services import lifecycle
@@ -140,7 +145,7 @@ def replace_member(*, tender: str, outgoing: str, incoming: dict[str, Any], appo
 		members = roster.current_members(doc.name)
 		if not current or outgoing not in [m["member_user"] for m in members]:
 			fail("EVL_VERSION_CONFLICT", {"reason": "not_a_current_member"})
-		fields = {f: "Required." for f, v in (("appointment_reference", appointment_reference), ("reason", reason)) if not cstr(v).strip()}
+		fields = {f: "Required." for f, v in (("reason", reason),) if not cstr(v).strip()}
 		if fields:
 			checks.add("EVL_MEMBER_INELIGIBLE", fields=fields)
 		incoming_user = cstr(incoming.get("user")).strip()
@@ -156,7 +161,8 @@ def replace_member(*, tender: str, outgoing: str, incoming: dict[str, Any], appo
 		number = cint(current.version_number) + 1
 		successor = frappe.get_doc({
 			"doctype": APPOINTMENT, "appointment_id": f"{doc.name}-APT-{number:02d}", "evaluation_case": doc.name, "version_number": number,
-			"appointment_reference": cstr(appointment_reference).strip(), "change_kind": "Replacement", "reason": cstr(reason).strip(), "appointed_by": user,
+			"appointment_reference": references.replacement(doc.tender_reference, frappe.db.count(APPOINTMENT, {"evaluation_case": doc.name, "change_kind": "Replacement"}) + 1),
+			"change_kind": "Replacement", "reason": cstr(reason).strip(), "appointed_by": user,
 			"appointed_at": clock.now(), "status": "Current", "supersedes_appointment": current.name,
 		})
 		for m in members:
@@ -181,6 +187,6 @@ def replace_member(*, tender: str, outgoing: str, incoming: dict[str, Any], appo
 		lifecycle.roster_changed(doc, reason=cstr(reason).strip(), idempotency_key=idempotency_key, actor=user)
 		notify.tell(doc, [incoming_user], subject=f"Declare interests for {doc.tender_reference}",
 			message=f"You are appointed to evaluate {doc.tender_reference}. Declare any conflict before viewing bids.", key=f"declare-{successor.name}")
-		return records.summary(doc, appointment=successor.name, replaced=outgoing, incoming=incoming_user)
+		return records.summary(doc, appointment=successor.name, replaced=outgoing, incoming=incoming_user, reference=successor.appointment_reference)
 
 	return records.command("ReplaceEvaluationMember", tender=tender, idempotency_key=idempotency_key, actor=user, payload=payload, body=body)

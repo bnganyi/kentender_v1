@@ -73,14 +73,14 @@ test.describe("keyboard (Charles)", () => {
 		await expect.poll(() => page.evaluate(() => (document.activeElement as HTMLElement | null)?.closest("#waiting") !== null)).toBe(true);
 		await rows(page, "my-work").nth(4).locator('[data-testid="kt-home-continue"]').focus();
 		await page.keyboard.press("Enter");
-		await expect(page).toHaveURL(/\/desk\/tenders\/TND-MOH-2026-010\/evaluation\/secretary$/, { timeout: 60_000 });
+		await expect(page).toHaveURL(/\/desk\/tenders\/TND-MOH-2026-005\/opening$/, { timeout: 60_000 });
 	});
 
 	test("Show more works from the keyboard and puts focus on the first appended row", async ({ page }) => {
 		await openHomeFromMenu(page, CHARLES);
 		await page.locator('#my-work [data-testid="kt-home-show-more"]').focus();
 		await page.keyboard.press("Enter");
-		await expect(rows(page, "my-work")).toHaveCount(10);
+		await expect(rows(page, "my-work")).toHaveCount(9);
 		const focused = await page.evaluate(() => (document.activeElement as HTMLElement | null)?.closest("[data-key]")?.getAttribute("data-key") || "");
 		expect(focused).toBe(await rows(page, "my-work").nth(5).getAttribute("data-key"));
 	});
@@ -122,8 +122,8 @@ test.describe("200% zoom (Charles)", () => {
 
 test.describe("every persona, from the sidebar", () => {
 	const PERSONAS = [
-		{ user: CHARLES, name: "Charles", line: "Head of Procurement Function", columns: ["My work 10 actions for you", "Waiting on others 3 items you're waiting on", "Records you oversee 6 records with outstanding matters"] },
-		{ user: AMINA, name: "Amina", line: "Accounting Officer", columns: ["My work 4 actions for you", "Waiting on others 2 items you're waiting on", "Records you oversee 6 records with outstanding matters"] },
+		{ user: CHARLES, name: "Charles", line: "Head of Procurement Function", columns: ["My work 9 actions for you", "Waiting on others 2 items you're waiting on", "Records you oversee 6 records with outstanding matters"] },
+		{ user: AMINA, name: "Amina", line: "Accounting Officer", columns: ["My work 4 actions for you", "Waiting on others 1 item you're waiting on", "Records you oversee 6 records with outstanding matters"] },
 		{ user: BRIAN, name: "Brian", line: "Procurement Officer", columns: ["My work 9 actions for you", "Waiting on others 1 item you're waiting on"] },
 		{ user: PETER, name: "Peter", line: "Head of User Department", columns: ["My work 1 action for you", "Waiting on others 1 item you're waiting on", "Records you oversee 6 records with outstanding matters"] },
 		{ user: NAOMI, name: "Naomi", line: "Auditor", columns: ["My work 0 actions for you", "Waiting on others 0 items you're waiting on", "Records you oversee 8 records with outstanding matters"] },

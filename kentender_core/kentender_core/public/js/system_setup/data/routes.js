@@ -19,6 +19,7 @@ export const TABS = ["procuring-entity", "fiscal-years", "organisation-structure
 export const SECTIONS = ["funding-sources", "procurement-rules", "schedule-profiles", "reminders", "supplier-portal", "calendars"];
 const ACTIONS = ["new-version", "edit", "check-sources", "history"];
 const ID_TABS = ["fiscal-years", "organisation-structure", "users-and-responsibilities"];
+export const STAFF_HOME_UNITS = "staff-home-units";
 
 function decode(segment) {
 	try {
@@ -37,6 +38,11 @@ export function parseSetupHash(hash) {
 		.map(decode);
 	if (!TABS.includes(parts[0])) return route;
 	route.tab = parts[0];
+	// The Staff home units tab of Users and responsibilities (AUTH-ADR-001 v1.12 §12) is a local section, not a responsibility id.
+	if (route.tab === "users-and-responsibilities" && parts[1] === STAFF_HOME_UNITS) {
+		route.section = STAFF_HOME_UNITS;
+		return route;
+	}
 	// A year, an organisation unit and a responsibility each open by id.
 	if (ID_TABS.includes(route.tab)) {
 		route.id = parts[1] || "";
@@ -62,6 +68,7 @@ export function parseSetupHash(hash) {
 export function buildSetupHash({ tab = "", section = "", id = "", versionId = "", action = "" } = {}) {
 	if (!tab) return "";
 	const parts = [tab];
+	if (tab === "users-and-responsibilities" && section === STAFF_HOME_UNITS) return `${tab}/${STAFF_HOME_UNITS}`;
 	if (ID_TABS.includes(tab)) {
 		if (id) parts.push(id);
 		return parts.map((p, i) => (i ? encodeURIComponent(p) : p)).join("/");

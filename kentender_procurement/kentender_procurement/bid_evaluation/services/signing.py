@@ -169,9 +169,12 @@ def sign(*, tender: str, report_version: str, idempotency_key: str, user: str) -
 
 
 def _recipient(doc) -> str | None:
-	assigned_by = frappe.db.get_value("Evaluation Secretary Appointment", {"evaluation_case": doc.name, "status": "Current"}, "assigned_by")
-	if assigned_by and people.holds(assigned_by, people.HEAD_OF_PROCUREMENT):
-		return assigned_by
+	# The Head of Procurement Function the secretary is tied to: the secretary themself when the Head holds the duties by office, otherwise the Head
+	# who delegated them in writing (EVL-CHG-001 v0.8 §3). The Accounting Officer who made the by-office record is never the recipient.
+	row = frappe.db.get_value("Evaluation Secretary Appointment", {"evaluation_case": doc.name, "status": "Current"}, ["basis", "secretary_user", "assigned_by"], as_dict=True)
+	head = (row.secretary_user if row.basis == "By office" else row.assigned_by) if row else None
+	if head and people.holds(head, people.HEAD_OF_PROCUREMENT):
+		return head
 	holders = people.holders(people.HEAD_OF_PROCUREMENT)
 	return holders[0] if holders else None
 

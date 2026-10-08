@@ -42,14 +42,13 @@ export function world(stage, viewer) {
 // stale record, an unconfirmed signature). "@x" in a route is a captured id.
 export const SCREENS = [
 	["D02-A", "prepared", "ao"],
-	["D02-S", "appointed", "hop"],
+	["D02-DELEGATE", "appointed", "hop", ["delegate"]],
 	["D02-D", "assigned", "chair", ["declaration"], { choice: "No conflict to declare" }],
 	["D02-CONFLICT", "assigned", "chair", ["declaration"], { choice: "Declare a conflict" }],
 	["D02-REPLACE", "conflict", "ao", ["replace"]],
 	["D02-INELIGIBLE", "conflict", "ao", ["replace"], {}, "", { errors: { incoming: "This person cannot serve on this evaluation committee.",
 		incoming_detail: "The person has an unresolved declared conflict for this tender." } }],
 	["D02-INTAKE-FIRST", "intake-first", "ao"],
-	["D02-INTAKE-FIRST-HOP", "intake-first", "hop"],
 	["D02-DECLARE-FIRST", "declare-first", "member"],
 	["D02-UNABLE", "declared", "member", ["unable"]],
 	["D02-NO-BIDS", "no-bids", "chair"],
@@ -133,7 +132,6 @@ export const SCREENS = [
 export const WORKSPACE = [
 	["D01", "concern", "chair"],
 	["D01-APPOINT", "prepared", "ao"],
-	["D01-APPOINT-HOP", "prepared", "hop"],
 ].map(([board, stage, viewer, form]) => ({ board, stage, viewer, form: form || {} }));
 
 export function boardFor({ stage, viewer, route, form, dialog, page }) {

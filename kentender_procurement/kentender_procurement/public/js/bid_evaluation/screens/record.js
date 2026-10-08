@@ -5,7 +5,7 @@
 // the server's state and this viewer's place in it; the primary action is
 // the server's guidance, never inferred here.
 import { at, ds, em, f, kv, n, tb } from "../board/model.js";
-import { cmd, comparisonTable, conditionNotices, dialog, guidance, head, money, nav, ownerEvent, recordTabs, rosterTable, signaturesTable, sourceDisclosure, versionsBlock } from "./common.js";
+import { cmd, comparisonTable, conditionNotices, delegateAction, dialog, guidance, head, money, nav, ownerEvent, recordTabs, rosterTable, signaturesTable, sourceDisclosure, versionsBlock } from "./common.js";
 
 // The primary action the server's guidance names, as the button that does it
 // here (a command) or opens the screen where it is done (a navigation).
@@ -16,7 +16,6 @@ export function primaryFor(data, ctx) {
 	const firstBid = ((data.comparison || {}).rows || [])[0];
 	switch (action) {
 		case "appoint_committee": return nav("Appoint committee", "appoint");
-		case "assign_secretary": return nav("Assign secretary", "secretary");
 		case "complete_declaration": return nav("Complete declaration", "declaration");
 		case "replace_member": return nav("Replace member", "replace");
 		case "start_discussion": return cmd("Start discussion", "start_discussion", { values: { subject: subjectFor(data) } });
@@ -95,7 +94,8 @@ export function results(ctx) {
 	const sec = [];
 	if (!pri || pri.label !== "View report") sec.push(nav("View report", "report"));
 	if (ctx.tab !== 1) sec.push(nav("Committee record", "record"));
-	return { ...head(data), ...recordTabs(0), guidance: guidance(data), blocks, pri, sec: pri ? sec : sec };
+	sec.push(...delegateAction(data));
+	return { ...head(data), ...recordTabs(0), guidance: guidance(data), blocks, pri, sec };
 }
 
 // S-OPENING-AWAITED, S-CHECKS, S-SOURCE-OPEN / D08-SOURCE: Preparing states.
@@ -114,7 +114,7 @@ export function preparing(ctx) {
 		return { ...head(data), guidance: guidance(data), notInvolved: "Automatic checks are running.", blocks: [sourceDisclosure(data)].filter(Boolean) };
 	}
 	const blocks = (data.committee || {}).members && data.committee.members.length ? [rosterTable(data)] : [f(["Tender", data.tender], ["Title", data.title])];
-	return { ...head(data), guidance: guidance(data), blocks, pri: primaryFor(data, ctx) };
+	return { ...head(data), guidance: guidance(data), blocks, pri: primaryFor(data, ctx), sec: delegateAction(data) };
 }
 
 // D02-NO-BIDS: an empty opening; nothing to evaluate.
@@ -122,9 +122,12 @@ export function noBids(ctx) {
 	const { data } = ctx;
 	const rec = ctx.record || {};
 	const rows = [];
-	(rec.appointments || []).forEach((a) => rows.push([`Committee ${a.kind === "Initial" ? "appointed" : a.kind.toLowerCase()} · ${a.reference}`, "", a.at]));
-	const sec = (data.committee || {}).secretary;
-	if (sec) rows.push([`Secretary assigned · ${sec.reference}`, "", ""]);
+	(rec.appointments || []).forEach((a) => {
+		if (a.kind === "Department recorded") rows.push([`Department recorded · ${a.department}`, a.person, a.at]);
+		else if (a.kind === "Secretary by office") rows.push([`Secretary by office · ${a.reference}`, a.person, a.at]);
+		else if (a.kind === "Delegated") rows.push([`Secretary delegated · ${a.reference}`, a.person, a.at]);
+		else rows.push([`Committee ${a.kind === "Initial" ? "appointed" : a.kind.toLowerCase()} · ${a.reference}`, a.by || "", a.at]);
+	});
 	(rec.declarations || []).forEach((d) => rows.push([`Declaration · ${d.choice === "Declare a conflict" ? "conflict declared" : "no conflict"}`, d.member, d.at]));
 	return {
 		...head(data), guidance: guidance(data),
@@ -196,7 +199,7 @@ export function setupOnly(ctx) {
 	const delivery = (data.work || {}).delivery;
 	if (delivery && delivery.status === "Delivered") blocks.push(f(["Report", `Report ${delivery.report_version ? "" : ""}delivered`.trim()], ["Delivered", delivery.delivered]));
 	blocks.push(...departmentBlocks(data));
-	return { ...head(data), guidance: guidance(data), blocks, pri: data.viewer.technical ? null : primaryFor(data, ctx), sec: [nav("Back to evaluations", "workspace")] };
+	return { ...head(data), guidance: guidance(data), blocks, pri: data.viewer.technical ? null : primaryFor(data, ctx), sec: [nav("Back to evaluations", "workspace"), ...delegateAction(data)] };
 }
 
 export function instructionDialog(data) {

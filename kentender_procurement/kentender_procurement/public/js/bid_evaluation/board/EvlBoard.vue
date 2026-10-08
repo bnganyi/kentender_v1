@@ -52,6 +52,7 @@
 						<tr v-for="(r, ri) in rowsOf(b)" :key="ri">
 							<td v-for="(c, ci) in r.cells" :key="ci" :class="c.td">
 								<template v-if="c.txt">{{ c.t }}</template>
+								<p v-if="c.note" class="kt-muted" style="margin:4px 0 0;font-size:13px" data-testid="evl-cell-note">{{ c.note }}</p>
 								<strong v-if="c.strong">{{ c.t }}</strong><span v-if="c.person" style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap"><span class="kt-sidebar-avatar">{{ c.ini }}</span>{{ c.t }}</span>
 								<span v-if="c.chip" class="kt-status" :class="c.cls">{{ c.t }}</span>
 								<button v-if="c.btn" type="button" class="btn btn-ghost" style="padding:4px 10px;font-size:13px" :disabled="pending" :data-testid="c.testid || undefined" @click="emit('action', { action: c.action, args: c.args })">{{ c.t }}</button>

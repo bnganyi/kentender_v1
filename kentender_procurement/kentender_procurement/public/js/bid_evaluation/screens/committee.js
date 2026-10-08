@@ -1,5 +1,5 @@
-// Committee and declaration (EVL-CHG-001 v0.4 §9.3; boards D02-A, D02-S,
-// D02-D, D02-CONFLICT, D02-REPLACE, D02-INELIGIBLE, D02-INTAKE-FIRST(-HOP),
+// Committee and declaration (EVL-CHG-001 v0.4 §9.3; boards D02-A, D02-DELEGATE,
+// D02-D, D02-CONFLICT, D02-REPLACE, D02-INELIGIBLE, D02-INTAKE-FIRST,
 // D02-DECLARE-FIRST, D02-UNABLE). Appointment and declaration are the only
 // setup a viewer does here; none of these screens shows a bid fact.
 import { at, cb, ds, f, fi, ra, tb } from "../board/model.js";
@@ -16,6 +16,20 @@ export function memberRows(form) {
 	return Array.from({ length: count }, (_x, i) => i);
 }
 
+// The department of a chosen person: their home organisation unit as read-only text,
+// blank until a person is chosen, or Not recorded with its notice when none is recorded
+// (EVL-CHG-001 v0.7 §3, D02-A and D02-NOT-RECORDED). Never an input.
+export const NOT_RECORDED_NOTICE = "Department not recorded. Ask your KenTender administrator to record it.";
+
+export function departmentCell(candidates, user) {
+	if (!user) return "";
+	const person = (candidates || []).find((c) => c.user === user) || {};
+	return person.department ? person.department : { text: "Not recorded", note: NOT_RECORDED_NOTICE };
+}
+
+// What the appointment also does (EVL-CHG-001 v0.8 §3): the Head of Procurement Function is recorded as the secretary.
+export const SECRETARY_NOTE = "The Head of Procurement Function is recorded as the evaluation secretary.";
+
 // D02-A / D02-INTAKE-FIRST: the Accounting Officer's appointment form.
 export function appoint(ctx) {
 	const { data, form, errors } = ctx;
@@ -23,7 +37,7 @@ export function appoint(ctx) {
 	const capacities = [{ value: "Chair", label: "Chair" }, { value: "Member", label: "Member" }];
 	const rows = memberRows(form).map((i) => [
 		{ select: `m${i}_user`, options: opts, testid: `evl-member-${i}-user`, error: (errors.members || {})[i] },
-		{ input: `m${i}_department`, testid: `evl-member-${i}-department` },
+		departmentCell(ctx.candidates, form[`m${i}_user`]),
 		{ select: `m${i}_capacity`, options: capacities, testid: `evl-member-${i}-capacity` },
 	]);
 	const history = (ctx.record && ctx.record.appointments) || [];
@@ -32,29 +46,62 @@ export function appoint(ctx) {
 		tb(["Person", "Department", "Capacity"], rows, { title: "Committee members", caption: "Each member declares conflicts before viewing bids.", testid: "evl-members" }),
 	];
 	if (memberRows(form).length < MAX_MEMBERS) blocks.push({ k: "links", links: [{ label: "Add a member", action: "add-member" }], testid: "evl-add-member" });
-	blocks.push(fi("Appointment reference", "", { req: true, name: "appointment_reference" }),
-		ds("Appointment history", history.length ? history.map((h) => `${h.kind} · ${h.reference} · ${h.at}`) : "No earlier appointment."));
+	blocks.push(ds("Appointment history", history.length ? historyLines(history) : "No earlier appointment."));
 	return {
 		title: "Appoint evaluation committee", desc: `${data.tender} · ${data.title}`, guidance: guidance(data), blocks,
-		pri: cmd("Appoint committee", "appoint_committee", { values: { compose: "members" }, fields: ["appointment_reference"], versioned: true, after: [] }),
+		pri: cmd("Appoint committee", "appoint_committee", { values: { compose: "members" }, fields: [], versioned: true, after: [] }),
 		sec: [nav("Back to tender", "tender")],
+		cons: `The appointment reference is created when you appoint the committee. ${SECRETARY_NOTE}`,
 	};
 }
 
-// D02-S / D02-INTAKE-FIRST-HOP: the Head of Procurement assigns the secretary.
-export function secretary(ctx) {
-	const { data } = ctx;
-	const appointed = (data.committee || {}).members || [];
-	const blocks = [];
-	if (appointed.length) blocks.push(tb(["Person", "Department", "Capacity"], appointed.map((m) => [m.name, m.department, m.capacity]), { title: "Appointed committee", sec: true }));
-	else blocks.push(f(["Tender", data.tender], ["Title", data.title]));
-	blocks.push(fi("Person", "", { select: true, req: true, name: "secretary", options: personOptions(ctx.candidates) }),
-		fi("Appointment reference", "", { req: true, name: "appointment_reference" }));
+// Appointment history (EVL-CHG-001 v0.7 §3): each appointment with its generated reference, the appointing officer, the time and the
+// roster it produced, each later completion of a Not recorded department and every secretary record (by office, then each written
+// delegation, EVL-CHG-001 v0.8 §3). Nothing here is typed by a user.
+export function historyLines(history) {
+	const lines = [];
+	history.forEach((h) => {
+		if (h.kind === "Department recorded") {
+			lines.push(`Department recorded: ${h.department} for ${h.person} · recorded by ${h.by} · ${h.at}`);
+			return;
+		}
+		if (h.kind === "Secretary by office") {
+			lines.push(`Secretary by office · ${h.person} · By office — Head of Procurement Function · appointed on the Accounting Officer's appointment ${h.appointment} · ${h.reference} · ${h.at}`);
+			return;
+		}
+		if (h.kind === "Delegated") {
+			lines.push(`Delegated · ${h.person} · written appointment by ${h.by}, Head of Procurement Function · ${h.reference} · ${h.at}`);
+			return;
+		}
+		lines.push(`${h.kind} · ${h.reference} · appointed by ${h.by} · ${h.at}${h.reason ? ` — ${h.reason}` : ""}`);
+		if ((h.members || []).length) lines.push(`Members: ${h.members.map((m) => `${m.name} (${m.capacity})`).join(", ")}`);
+	});
+	return lines;
+}
+
+// The current secretary as one read-only fact (EVL-CHG-001 v0.8 §3): who, and how they came to hold the duties.
+export function secretaryFact(sec) {
+	if (!sec) return "";
+	return sec.basis === "By office" ? `${sec.name}, Head of Procurement Function, by office` : `${sec.name}, by written appointment of the Head of Procurement Function`;
+}
+
+// D02-DELEGATE: the authorised Head of Procurement Function's written appointment of a procurement officer as secretary
+// (section 46(4)(c) of the Act). Reached from the Delegate secretary duties action; no task asks for it, so it states no next
+// step and carries no tracker. No department or reference is typed.
+export function delegate(ctx) {
+	const { data, form } = ctx;
+	const sec = (data.committee || {}).secretary || null;
+	const chosen = (ctx.candidates || []).find((c) => c.user === (form || {}).secretary);
+	const blocks = [
+		f(["Tender", data.tender], ["Title", data.title], ["Current secretary", secretaryFact(sec)]),
+		fi("Person", "", { select: true, req: true, name: "secretary", options: personOptions(ctx.candidates) }),
+	];
 	return {
-		title: "Assign evaluation secretary", desc: `${data.tender} · ${data.title}`,
-		guidance: guidance(data, { headline: "Assign the person who will organise the evaluation record." }), blocks,
-		pri: cmd("Assign secretary", "assign_secretary", { fields: ["secretary", "appointment_reference"], versioned: true, after: [] }),
-		sec: [nav("Back to tender", "tender")],
+		title: "Delegate secretary duties", desc: "Appoint a procurement officer to act as secretary of this evaluation.",
+		guidance: { answer: null, journey: null }, notInvolved: " ", blocks,
+		pri: cmd("Delegate secretary duties", "delegate_secretary", { fields: ["secretary"], versioned: true, after: [] }),
+		sec: [nav("Back to evaluation", [])],
+		cons: `${chosen ? chosen.name : "The person you choose"} will organise the evaluation record. This is your written appointment and a new reference is created. They will have no vote, finding or signature.`,
 	};
 }
 
@@ -102,16 +149,15 @@ export function replace(ctx) {
 	if (blocked.name) blocks.push(at(blocked.declaration === "Conflict declared" ? `${blocked.name} declared a conflict` : `${blocked.name} recorded inability to serve`, statement ? statement.description || "" : ""));
 	blocks.push(
 		fi("Incoming person", "", { select: true, req: true, name: "incoming", options: personOptions(ctx.candidates), err: errors.incoming || "", errd: errors.incoming_detail || "" }),
-		f(["Department", incoming.department || blocked.department || ""], ["Capacity", blocked.capacity || "Member"]),
-		fi("Appointment reference", "", { req: true, name: "appointment_reference" }),
+		f(["Department", form.incoming ? (incoming.department || "Not recorded") : ""], ["Capacity", blocked.capacity || "Member"]),
 		fi("Reason", "", { area: true, req: true, rows: 2, name: "reason" }),
 	);
 	return {
 		title: "Replace committee member", desc: `${data.tender} · ${data.title}`, guidance: guidance(data), blocks,
-		pri: cmd("Replace member", "replace_member", { values: { outgoing: blocked.user, compose: "incoming", capacity: blocked.capacity || "Member", department: incoming.department || blocked.department || "" },
-			fields: ["incoming", "appointment_reference", "reason"], versioned: true, after: [] }),
+		pri: cmd("Replace member", "replace_member", { values: { outgoing: blocked.user, compose: "incoming", capacity: blocked.capacity || "Member" },
+			fields: ["incoming", "reason"], versioned: true, after: [] }),
 		sec: [nav("Keep current appointment", [])],
-		cons: "The new member must declare interests and review the evaluation. Any report being signed will need a new version.",
+		cons: "The new member must declare interests and review the evaluation. Any report being signed will need a new version. The appointment reference is created when you replace the member.",
 	};
 }
 

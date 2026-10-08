@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login } from "../../helpers/auth";
 import { PASSWORD, action, collectConsoleErrors, evaluationWorld, expectNextStep, expectScreen, gotoEvaluation, restoreEvlWorld } from "./evlWorld";
 
-/** EVL-CHG-001 v0.4 §9.2, §9.3 — workspace and committee (boards D01-APPOINT, D02-A, D01-APPOINT-HOP, D02-S, D02-D, D02-CONFLICT,
+/** EVL-CHG-001 v0.8 §3, §9.2, §9.3 (v0.4 boards; the department is read-only text, no reference is typed and the Head is secretary by office) — workspace and committee (boards D01-APPOINT, D02-A, D02-DELEGATE, D02-D, D02-CONFLICT,
  *  D02-REPLACE, D02-INELIGIBLE, S-OPENING-AWAITED), slices 11.1–11.2. One fixture entity: the Playwright Tender's evaluation. */
 
 test.describe.configure({ mode: "serial", timeout: 600_000 });
@@ -11,7 +11,7 @@ test.describe.configure({ mode: "serial", timeout: 600_000 });
 test.describe("EVL committee and declaration", () => {
 	test.afterAll(() => restoreEvlWorld());
 
-	test("AO appoints from the workspace task, the Head assigns the secretary, a member declares", async ({ page }) => {
+	test("AO appoints from the workspace task and the Head is recorded as secretary, a member declares", async ({ page }) => {
 		const world = evaluationWorld("prepared");
 		const p = world.people;
 		const errors = collectConsoleErrors(page);
@@ -30,35 +30,57 @@ test.describe("EVL committee and declaration", () => {
 		await expect(page.locator('[data-testid="evl-root"] [data-testid="evl-title"]')).toHaveText("Appoint evaluation committee");
 		await expect(page.locator('[data-testid="evl-root"]')).not.toContainText("Afya");
 
-		// A missing reference stays beside its field; nothing is appointed in part.
-		await page.locator('[data-testid="evl-root"] [data-testid="evl-member-0-user"]').selectOption(p.chair);
-		await page.locator('[data-testid="evl-root"] [data-testid="evl-member-0-department"]').fill("Human Resource Management and Development");
-		await page.locator('[data-testid="evl-root"] [data-testid="evl-member-1-user"]').selectOption(p.member);
-		await page.locator('[data-testid="evl-root"] [data-testid="evl-member-1-department"]').fill("ICT");
-		await page.locator('[data-testid="evl-root"] [data-testid="evl-member-2-user"]').selectOption(p.member_2);
-		await page.locator('[data-testid="evl-root"] [data-testid="evl-member-2-department"]').fill("Finance");
-		await action(page, "Appoint committee").click();
-		await expectScreen(page, "appoint");
-		await expect(page.locator('[data-testid="evl-root"] [data-testid="evl-error"]')).toBeVisible();
-		await page.locator('[data-testid="evl-root"] [data-testid="evl-field-appointment_reference"]').fill("MOH/EVAL/PW/2027");
+		// The department is read-only text from the person's home organisation unit (EVL-CHG-001 v0.7 §3); no reference is typed.
+		const root = page.locator('[data-testid="evl-root"]');
+		await expect(root.locator('[data-testid="evl-field-appointment_reference"]')).toHaveCount(0);
+		await expect(root.locator('[data-testid="evl-member-0-department"]')).toHaveCount(0);
+		await expect(root).toContainText("The appointment reference is created when you appoint the committee. The Head of Procurement Function is recorded as the evaluation secretary.");
+		await root.locator('[data-testid="evl-member-0-user"]').selectOption(p.chair);
+		await root.locator('[data-testid="evl-member-1-user"]').selectOption(p.member);
+		await root.locator('[data-testid="evl-member-2-user"]').selectOption(p.member_2);
+		await expect(root.locator('[data-testid="evl-members"] tbody tr').nth(0)).toContainText("Human Resources Management and Development");
+		await expect(root.locator('[data-testid="evl-members"] tbody tr').nth(1)).toContainText("ICT");
+		await expect(root.locator('[data-testid="evl-members"] tbody tr').nth(2)).toContainText("Finance");
 		await action(page, "Appoint committee").click();
 		await expect(page.locator('[data-testid="evl-root"]')).not.toHaveAttribute("data-screen", "appoint", { timeout: 30_000 });
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test("the Head assigns the secretary (D02-S)", async ({ page }) => {
+	test("the Head is secretary by office and delegates the secretary duties (D02-DELEGATE)", async ({ page, browser }) => {
 		const world = evaluationWorld("appointed");
 		const p = world.people;
 		const errors = collectConsoleErrors(page);
+		const root = page.locator('[data-testid="evl-root"]');
+		// no secretary task, waiting item or next step exists for the Head: the record offers the action as a secondary
 		await login(page, p.hop, PASSWORD);
 		await gotoEvaluation(page, world.tender_reference);
-		await expectScreen(page, "secretary");
-		await expectNextStep(page, "your_turn", "Assign the person who will organise the evaluation record.");
-		await expect(page.locator('[data-testid="evl-root"] [data-testid="evl-block-0"] tbody tr')).toHaveCount(3);
-		await page.locator('[data-testid="evl-root"] [data-testid="evl-field-secretary"]').selectOption(p.secretary);
-		await page.locator('[data-testid="evl-root"] [data-testid="evl-field-appointment_reference"]').fill("MOH/EVAL/SEC/PW/2027");
-		await action(page, "Assign secretary").click();
-		await expect(page.locator('[data-testid="evl-root"]')).not.toHaveAttribute("data-screen", "secretary", { timeout: 30_000 });
+		await expectScreen(page, "preparing");
+		await expect(root).not.toContainText("Assign the person who will organise the evaluation record.");
+		await expect(root.locator('[data-testid="evl-roster"]')).toContainText("Secretary");
+		await action(page, "Delegate secretary duties").click();
+		await expectScreen(page, "delegate");
+		await expect(root.locator('[data-testid="evl-title"]')).toHaveText("Delegate secretary duties");
+		await expect(root).toContainText("Head of Procurement Function, by office");
+		await expect(root.locator('[data-testid="evl-field-appointment_reference"]')).toHaveCount(0);
+		await expect(root.locator('[data-testid="evl-field-department"]')).toHaveCount(0);
+		await root.locator('[data-testid="evl-field-secretary"]').selectOption(p.secretary);
+		await expect(root).toContainText("This is your written appointment and a new reference is created. They will have no vote, finding or signature.");
+		await action(page, "Delegate secretary duties").click();
+		await expect(root).not.toHaveAttribute("data-screen", "delegate", { timeout: 30_000 });
+		// the committee record names the current secretary and keeps both records
+		await gotoEvaluation(page, world.tender_reference, "record");
+		await expect(root).toContainText("delegated by");
+		await root.locator('[data-testid="evl-disclosure-appointment-and-declaration-history"]').click();
+		await expect(root.locator('[data-testid="evl-history"]')).toContainText("Secretary by office");
+		await expect(root.locator('[data-testid="evl-history"]')).toContainText("written appointment by");
+		// only the authorised Head is offered it: the Accounting Officer has no control and is refused the form
+		const ao = await browser.newPage();
+		await login(ao, p.ao, PASSWORD);
+		await gotoEvaluation(ao, world.tender_reference);
+		await expect(ao.locator('[data-testid="evl-root"]').getByRole("button", { name: "Delegate secretary duties" })).toHaveCount(0);
+		await gotoEvaluation(ao, world.tender_reference, "delegate");
+		await expect(ao.locator('[data-testid="evl-root"]')).not.toHaveAttribute("data-screen", "delegate");
+		await ao.close();
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
@@ -95,7 +117,7 @@ test.describe("EVL committee and declaration", () => {
 		await action(page, "Replace member").click();
 		await expectScreen(page, "replace");
 		await page.locator('[data-testid="evl-root"] [data-testid="evl-field-incoming"]').selectOption(p.member);
-		await page.locator('[data-testid="evl-root"] [data-testid="evl-field-appointment_reference"]').fill("MOH/EVAL/PW/2027-R1");
+		await expect(page.locator('[data-testid="evl-root"] [data-testid="evl-field-appointment_reference"]')).toHaveCount(0);
 		await page.locator('[data-testid="evl-root"] [data-testid="evl-field-reason"]').fill("Replace the member who declared a financial interest.");
 		await action(page, "Replace member").click();
 		await expectScreen(page, "replace");

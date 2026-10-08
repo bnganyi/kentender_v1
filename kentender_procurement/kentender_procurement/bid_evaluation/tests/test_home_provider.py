@@ -99,11 +99,11 @@ class TestEvaluationHomeProvider(EvaluationCase):
 		return int(frappe.db.get_value("Evaluation Case", self.case, "record_version"))
 
 	def h_appoint(self):
-		appointment.appoint_committee(tender=self.name, members=ROSTER, appointment_reference="MOH/EVAL/TEST/2101", expected_version=self.evl_version(),
+		appointment.appoint_committee(tender=self.name, members=ROSTER, expected_version=self.evl_version(),
 			idempotency_key=key(), user=AO)
 
-	def assign_secretary(self):
-		secretary.assign_secretary(tender=self.name, secretary=SECRETARY, appointment_reference="MOH/EVAL/SEC/TEST", expected_version=self.evl_version(),
+	def delegate_secretary(self):
+		secretary.delegate_secretary(tender=self.name, secretary=SECRETARY, expected_version=self.evl_version(),
 			idempotency_key=key(), user=HOP)
 
 	def declare(self, *users):
@@ -199,7 +199,7 @@ class TestEvaluationHomeProvider(EvaluationCase):
 
 	# ----- My work -----
 
-	def test_the_accounting_officers_appointment_row_uses_the_specs_wording_and_the_head_assigns_the_secretary(self):
+	def test_the_accounting_officers_appointment_row_uses_the_specs_wording_and_the_head_has_no_secretary_row(self):
 		self.prep()
 		doc = self.evl_doc()
 		row = self.one(AO, he.MY_WORK, "appoint")
@@ -208,8 +208,7 @@ class TestEvaluationHomeProvider(EvaluationCase):
 		self.assertEqual((row["owner"], row["region"], row["root"], row["blocked"], row["reason"], row["due"]), ("evaluation", he.MY_WORK, doc.name, False, "", None))
 		self.assertEqual((row["entered_at"], type(row["entered_at"]), row["entered_verb"]), (doc.prepared_at or doc.creation, datetime, "Received"))
 		self.assertEqual(row["destination"], {"route": ["tenders", doc.tender_reference, "evaluation", "appoint"], "route_options": {}})
-		secretary_row = self.one(HOP, he.MY_WORK, "secretary")
-		self.assertEqual((secretary_row["action"], secretary_row["destination"]["route"]), ("Assign evaluation secretary", ["tenders", doc.tender_reference, "evaluation", "secretary"]))
+		self.assertNotIn("secretary", self.ids(HOP, he.MY_WORK))  # the Head is secretary by office: no setup task (EVL-CHG-001 v0.8 §3)
 		self.assertNotIn("secretary", self.ids(AO, he.MY_WORK))
 
 	def test_an_unset_preparation_instant_falls_back_to_the_cases_creation(self):
@@ -218,7 +217,7 @@ class TestEvaluationHomeProvider(EvaluationCase):
 		doc = self.evl_doc()
 		self.assertIsNone(doc.prepared_at)
 		self.assertEqual(self.one(AO, he.MY_WORK, "appoint")["entered_at"], doc.creation)
-		self.assertEqual(self.one(HOP, he.WAITING, "appoint:waiting")["since"], doc.creation)
+		self.assertNotIn("appoint:waiting", self.ids(HOP, he.WAITING))  # the Head waits for nothing (EVL-CHG-001 v0.8 §3)
 
 	def test_once_appointed_each_member_declares_from_the_appointment_instant(self):
 		self.prep()
@@ -284,19 +283,17 @@ class TestEvaluationHomeProvider(EvaluationCase):
 
 	# ----- Waiting -----
 
-	def test_the_head_waits_for_the_committee_and_the_accounting_officer_for_the_secretary_with_the_roster_holders(self):
+	def test_nobody_waits_for_the_committee_or_a_secretary_appointment_and_the_declarations_are_waited_for(self):
 		self.prep()
 		doc = self.evl_doc()
-		waiting = self.one(HOP, he.WAITING, "appoint:waiting")
-		self.assertEqual((waiting["title"], waiting["reference"], waiting["since"]), (doc.tender_title, doc.tender_reference, doc.prepared_at or doc.creation))
-		self.holders(waiting["action"], "Waiting for ", " to appoint the evaluation committee", people.ACCOUNTING_OFFICER, "an Accounting Officer")
-		self.holders(waiting["holder"], "", "", people.ACCOUNTING_OFFICER, "Accounting Officer")
-		self.assertEqual((waiting["due"], waiting["destination"]["route"]), (None, ["tenders", doc.tender_reference, "evaluation"]))
-		secretary_wait = self.one(AO, he.WAITING, "secretary:waiting")
-		self.holders(secretary_wait["action"], "Waiting for ", " to assign the evaluation secretary", people.HEAD_OF_PROCUREMENT, "a Head of Procurement Function")
+		del doc
+		# EVL-CHG-001 v0.8 §3: the Head is secretary by office, so the Head waits for nothing and the Accounting Officer waits for no secretary
+		self.assertNotIn("appoint:waiting", self.ids(HOP, he.WAITING))
+		self.assertNotIn("secretary:waiting", self.ids(AO, he.WAITING))
 		self.h_appoint()
 		self.assertNotIn("appoint:waiting", self.ids(HOP, he.WAITING))
-		self.assign_secretary()
+		self.assertNotIn("secretary:waiting", self.ids(AO, he.WAITING))
+		self.delegate_secretary()
 		self.assertNotIn("secretary:waiting", self.ids(AO, he.WAITING))
 
 	def test_the_accounting_officer_waits_for_the_members_who_have_not_declared(self):
@@ -490,10 +487,13 @@ class TestEvaluationHomeProvider(EvaluationCase):
 			("Appointed evaluation committee", self.evl_doc().tender_title, appointed.appointed_at, self.reference))
 		self.assertTrue(appointed_row["sentence"].startswith("You appointed the evaluation committee on ") and appointed_row["sentence"].endswith("."), appointed_row["sentence"])
 		self.assertEqual(appointed_row["destination"], {"route": ["tenders", self.reference, "evaluation"], "route_options": {}})
-		assigned = frappe.db.get_value("Evaluation Secretary Appointment", {"evaluation_case": self.case}, ["name", "assigned_at"], as_dict=True)
+		# the by-office record is part of the Accounting Officer's appointment, not an action of the Head; only the Head's written delegation is
+		by_office = frappe.db.get_value("Evaluation Secretary Appointment", {"evaluation_case": self.case, "basis": "By office"}, "name")
+		self.assertEqual([r for r in self.region(AO, he.COMPLETED) or [] if r["action_id"] == by_office], [])
+		assigned = frappe.db.get_value("Evaluation Secretary Appointment", {"evaluation_case": self.case, "basis": "Written appointment"}, ["name", "assigned_at"], as_dict=True)
 		head = self.done(HOP, assigned.name)
-		self.assertEqual((head["action"], head["completed_at"]), ("Assigned evaluation secretary", assigned.assigned_at))
-		self.assertTrue(head["sentence"].startswith("You assigned the evaluation secretary on "))
+		self.assertEqual((head["action"], head["completed_at"]), ("Delegated secretary duties", assigned.assigned_at))
+		self.assertTrue(head["sentence"].startswith("You delegated the secretary duties on "))
 		for user in (CHAIR, MEMBER, SECRETARY, AUDITOR):  # nobody else did either
 			self.assertEqual(self.mine(self.region(user, he.COMPLETED)), [], user)
 		self.h_freeze()
@@ -505,7 +505,7 @@ class TestEvaluationHomeProvider(EvaluationCase):
 		self.assertEqual(self.evl_doc().state, "Report sent")
 		# the system's own delivery is not a person's action
 		actions = {row["action"] for user in (AO, HOP, SECRETARY, *MEMBERS) for row in self.mine(self.region(user, he.COMPLETED))}
-		self.assertEqual(actions, {"Appointed evaluation committee", "Assigned evaluation secretary", "Sent report for signing"})
+		self.assertEqual(actions, {"Appointed evaluation committee", "Delegated secretary duties", "Sent report for signing"})
 		correction.return_report(tender=self.name, comment="Correct the page reference.", idempotency_key=key(), user=HOP)
 		delivery = oversight.deliveries(self.case)[0]
 		returned = self.done(HOP, delivery.name)
@@ -559,7 +559,7 @@ class TestEvaluationHomeProvider(EvaluationCase):
 		# a seat is a responsibility here: the committee has the regions only once appointed
 		self.assertIsNone(self.region(CHAIR, he.MY_WORK))
 		self.h_appoint()
-		self.assign_secretary()
+		self.delegate_secretary()
 		for user in (*MEMBERS, SECRETARY):
 			self.assertIsInstance(self.region(user, he.MY_WORK), list, user)
 			self.assertIsInstance(self.region(user, he.WAITING), list, user)
@@ -660,6 +660,9 @@ class TestEvaluationHomeProvider(EvaluationCase):
 		self.assertEqual((row["module"], row["action"], row["title"], row["reference"]), ("Evaluation", "Appoint the evaluation committee", doc.tender_title, doc.tender_reference))
 		self.assertEqual(row["timing"], home_time.entered("Received", entered, at))
 		self.assertTrue(row["timing"].startswith("Received 2 days ago ("), row["timing"])
-		waiting = self.row(HOP, at, "waiting", "appoint:waiting")
-		self.assertEqual(waiting["timing"], home_time.waiting(entered, at))
+		self.h_appoint()
+		appointed = roster.current_appointment(self.case).appointed_at
+		at = get_datetime(appointed) + timedelta(days=2)
+		waiting = self.row(AO, at, "waiting", f"declare:waiting:{roster.current_appointment(self.case).name}")
+		self.assertEqual(waiting["timing"], home_time.waiting(appointed, at))
 		self.assertTrue(waiting["timing"].startswith("Waiting 2 days (since "), waiting["timing"])

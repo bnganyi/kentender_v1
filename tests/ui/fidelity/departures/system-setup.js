@@ -32,7 +32,22 @@ const DIALOG_TITLE_IS_A_HEADING = [
 	{ path: "h2", ...DIALOG_TITLE_REASON },
 ];
 
+// AUTH-ADR-001 v1.12 §13.4 adds a page-local tab row (Responsibilities, Staff home units) above the register and its
+// states. The C06 boards pre-date v1.12; the row is a registered departure until the design tool redraws AUTH-DES-03
+// and AUTH-DES-08 with it (and draws AUTH-DES-10 and AUTH-DES-11, which have no board yet).
+const LOCAL_TABS_ARE_V112 = [
+	{
+		path: "tabs",
+		because: "AUTH-ADR-001 v1.12 adds the page-local tab row that reaches the Staff home units tab; the pre-v1.12 board does not draw it.",
+		authority: "AUTH-ADR-001 v1.12 §13.4 and §13.12 (approved 8 October 2026)",
+	},
+];
+
 export const DEPARTURES = {
+	"C06#auth-des-03": LOCAL_TABS_ARE_V112,
+	"C06#auth-des-08~loading": LOCAL_TABS_ARE_V112,
+	"C06#auth-des-08~empty": LOCAL_TABS_ARE_V112,
+	"C06#auth-des-08~error": LOCAL_TABS_ARE_V112,
 	"C02#overview": [
 		{
 			path: "card",

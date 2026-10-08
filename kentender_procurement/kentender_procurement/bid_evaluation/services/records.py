@@ -107,7 +107,12 @@ def summary(doc, **extra) -> dict[str, Any]:
 	return {"ok": True, "evaluation": doc.name, "tender": doc.tender, "state": doc.state, "record_version": cint(doc.record_version), **extra}
 
 
-def standing(case: str | None, actor: str) -> list[str]:
+#: Commands that change who the secretary is: the actor's secretary seat is their subject, not part of the standing a replay needs (the Head who
+#: delegates is no longer the secretary when the request is retried).
+SECRETARY_COMMANDS = ("DelegateEvaluationSecretary",)
+
+
+def standing(case: str | None, actor: str, command: str = "") -> list[str]:
 	"""What the actor holds now: their active responsibilities and, in this
 	case, their committee capacities. A replay is answered only to an actor who
 	still holds everything they held when the command first ran (AUD-XC-131),
@@ -123,7 +128,7 @@ def standing(case: str | None, actor: str) -> list[str]:
 			held.append("member")
 		if roster.chair(case) == actor:
 			held.append("chair")
-		if roster.secretary(case) == actor:
+		if roster.secretary(case) == actor and command not in SECRETARY_COMMANDS:
 			held.append("secretary")
 	return sorted(held)
 
@@ -179,7 +184,7 @@ def _claim(key: str, name: str, payload_hash: str, actor: str, case: str | None)
 		insert(frappe.get_doc({
 			"doctype": JOURNAL, "idempotency_key": key, "command": name, "payload_hash": payload_hash, "result_json": "",
 			"actor": actor if actor and frappe.db.exists("User", actor) else None, "evaluation_case": cstr(case),
-			"standing": json.dumps(standing(case, actor)), "recorded_at": clock.now(),
+			"standing": json.dumps(standing(case, actor, name)), "recorded_at": clock.now(),
 		}))
 	except (frappe.UniqueValidationError, frappe.DuplicateEntryError):
 		frappe.db.rollback(save_point=savepoint)
@@ -196,6 +201,6 @@ def _recorded(key: str, name: str, payload_hash: str, case: str | None, actor: s
 	row = frappe.db.get_value(JOURNAL, {"idempotency_key": key}, ["command", "payload_hash", "result_json", "standing"], as_dict=True, for_update=True)
 	if not row or row.command != name or row.payload_hash != payload_hash or not row.result_json:
 		fail("EVL_VERSION_CONFLICT", {"reason": "idempotency_key_reused"})
-	if not set(json.loads(row.standing or "[]")) <= set(standing(case, actor)):
+	if not set(json.loads(row.standing or "[]")) <= set(standing(case, actor, name)):
 		raise frappe.DoesNotExistError("Not found")
 	return json.loads(row.result_json)

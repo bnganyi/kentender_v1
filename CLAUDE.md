@@ -131,7 +131,7 @@ make validate-links
 make migrate SITE=<site>
 make clear SITE=<site>
 make doctor
-make seed-canonical SITE=<site> [CURRENT=award] [NEXT=annual_plan] [REBUILD=True]    # clear non-canonical rows, reseed the two-year world read as at 18 Jun 2027 10:00 and validate: CURRENT moves FY 2026/27, carried out (annual_plan/requisitions/tenders/bid_submission/bid_opening/bid_evaluation/award), NEXT moves FY 2027/28, being prepared (none/budget/needs/departmental_plans/annual_plan); default the full world; a lower stage rebuilds by itself; REBUILD=True drops and rebuilds the canonical module rows — SEED-002 (proposed): docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_1.md; approved runbook until then: docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_24.md
+make seed-canonical SITE=<site> [CURRENT=award] [NEXT=annual_plan] [REBUILD=True]    # clear non-canonical rows, reseed the two-year world read as at 18 Jun 2027 10:00 and validate: CURRENT moves FY 2026/27, carried out (annual_plan/requisitions/tenders/bid_submission/bid_opening/bid_evaluation/award), NEXT moves FY 2027/28, being prepared (none/budget/needs/departmental_plans/annual_plan); default the full world; a lower stage rebuilds by itself; REBUILD=True drops and rebuilds the canonical module rows — SEED-002 (approved 8 October 2026; it retired SEED-001 and SEED-OPS-001): docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_3.md
 make seed-canonical-dry-run SITE=<site>             # what seed-canonical would remove, deletes nothing
 make seed-canonical-validate SITE=<site>
 make seed-kentender-mvp-v1 SITE=<site>              # legacy KENTENDER_MVP_V1 pack (multi-PE era); prefer seed-canonical

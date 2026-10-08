@@ -7,7 +7,7 @@ D02-S, D02-D, D02-CONFLICT, D02-REPLACE, D02-INELIGIBLE, D02-UNABLE).
 
 The Accounting Officer appoints 3–5 eligible members with one Chair; every
 ineligible person is reported together with the specific reason; the Head of
-Procurement assigns a secretary who is themself or a procurement officer;
+Procurement is recorded as secretary by office and may delegate the duties in writing;
 each member declares personally with the confidentiality acceptance; a
 conflict stops eligibility at once and creates the Accounting Officer's
 work; a reasoned replacement keeps history; inability to serve never
@@ -32,9 +32,9 @@ from kentender_procurement.bid_opening.tests.support import INDEPENDENT
 from kentender_procurement.bid_submission.tests.support import DAVID, key
 
 ROSTER = [
-	{"user": CHAIR, "department": "Human Resource Management and Development", "capacity": "Chair"},
-	{"user": MEMBER, "department": "ICT", "capacity": "Member"},
-	{"user": MEMBER_2, "department": "Finance", "capacity": "Member"},
+	{"user": CHAIR, "capacity": "Chair"},
+	{"user": MEMBER, "capacity": "Member"},
+	{"user": MEMBER_2, "capacity": "Member"},
 ]
 
 
@@ -50,8 +50,8 @@ class CommitteeCase(EvaluationCase):
 	def evl_version(self) -> int:
 		return int(frappe.db.get_value("Evaluation Case", self.evaluation, "record_version"))
 
-	def evl_appoint(self, members=None, user=AO, reference="MOH/EVAL/TEST/2101") -> dict[str, Any]:
-		return appointment.appoint_committee(tender=self.name, members=members or ROSTER, appointment_reference=reference, expected_version=self.evl_version(),
+	def evl_appoint(self, members=None, user=AO) -> dict[str, Any]:
+		return appointment.appoint_committee(tender=self.name, members=members or ROSTER, expected_version=self.evl_version(),
 			idempotency_key=key(), user=user)
 
 	def evl_declare(self, user, choice="No conflict to declare", accepted=True, description=""):
@@ -100,9 +100,9 @@ class TestAppointment(CommitteeCase):
 	def test_every_ineligible_person_is_reported_together(self):
 		self.prepared()  # the opening committee, with its independent member; David Ouma's supplier account
 		error = self.refused(self.evl_appoint, members=[
-			{"user": CHAIR, "department": "HRM", "capacity": "Chair"},
-			{"user": INDEPENDENT, "department": "Budget", "capacity": "Member"},
-			{"user": DAVID, "department": "ICT", "capacity": "Member"},
+			{"user": CHAIR, "capacity": "Chair"},
+			{"user": INDEPENDENT, "capacity": "Member"},
+			{"user": DAVID, "capacity": "Member"},
 		])
 		self.assertEqual(error.code, "EVL_MEMBER_INELIGIBLE", error.detail)
 		by_person = {r["detail"].get("person"): r["detail"].get("reason") for r in error.reasons}
@@ -156,22 +156,23 @@ class TestAppointment(CommitteeCase):
 
 
 class TestSecretary(CommitteeCase):
-	def assign(self, who, user=HOP):
-		return secretary.assign_secretary(tender=self.name, secretary=who, appointment_reference="MOH/EVAL/SEC/TEST", expected_version=self.evl_version(),
+	"""The by-office default, the delegation, the unauthorised attempts and the history are tested in full in test_evl_secretary_delegation."""
+
+	def delegate(self, who, user=HOP):
+		return secretary.delegate_secretary(tender=self.name, secretary=who, expected_version=self.evl_version(),
 			idempotency_key=key(), user=user)
 
-	def test_the_head_assigns_a_procurement_officer_or_themself(self):
-		self.assertTrue(self.assign(SECRETARY)["ok"])
-		self.assertEqual(roster.secretary(self.evaluation), SECRETARY)
-		self.assertNotIn(f"Assign evaluation secretary for {self.reference}", titles(HOP))
-		self.assertTrue(self.assign(HOP)["ok"])
+	def test_the_head_is_secretary_by_office_and_delegates_to_a_procurement_officer(self):
+		self.evl_appoint()
 		self.assertEqual(roster.secretary(self.evaluation), HOP)
+		self.assertTrue(self.delegate(SECRETARY)["ok"])
+		self.assertEqual(roster.secretary(self.evaluation), SECRETARY)
 		self.assertEqual(frappe.db.count("Evaluation Secretary Appointment", {"evaluation_case": self.evaluation}), 2)  # history kept
-		error = self.refused(self.assign, MEMBER)
+		error = self.refused(self.delegate, MEMBER)
 		self.assertEqual(error.reasons[0]["detail"]["reason"], "not_procurement_officer")
 		with self.assertRaises(frappe.DoesNotExistError):
-			self.assign(SECRETARY, user=AO)
-
+			self.delegate(SECRETARY, user=AO)
+	
 
 class TestDeclarationAndReplacement(CommitteeCase):
 	def setUp(self):
@@ -216,13 +217,13 @@ class TestDeclarationAndReplacement(CommitteeCase):
 			self.evl_declare(user)
 		self.evl_declare(MEMBER, choice="Declare a conflict", description="I have a financial interest in the bidder.")
 		# the conflicted person cannot be the incoming member (board D02-INELIGIBLE)
-		error = self.refused(appointment.replace_member, tender=self.name, outgoing=MEMBER, incoming={"user": MEMBER, "department": "ICT"},
-			appointment_reference="R0", reason="x", expected_version=self.evl_version(), idempotency_key=key(), user=AO)
+		error = self.refused(appointment.replace_member, tender=self.name, outgoing=MEMBER, incoming={"user": MEMBER},
+			reason="x", expected_version=self.evl_version(), idempotency_key=key(), user=AO)
 		self.assertEqual((error.reasons[0]["detail"]["reason"], error.reasons[0]["detail"]["explanation"]),
 			("declared_conflict", "Test Evaluation Member has an unresolved declared conflict for this tender."))
 		self.assertEqual(len(roster.member_users(self.evaluation)), 3)  # nothing appointed
-		out = appointment.replace_member(tender=self.name, outgoing=MEMBER, incoming={"user": REPLACEMENT, "department": "ICT"},
-			appointment_reference="MOH/EVAL/TEST/2101-R1", reason="Replace the member who declared a financial interest.", expected_version=self.evl_version(),
+		out = appointment.replace_member(tender=self.name, outgoing=MEMBER, incoming={"user": REPLACEMENT},
+			reason="Replace the member who declared a financial interest.", expected_version=self.evl_version(),
 			idempotency_key=key(), user=AO)
 		self.assertTrue(out["ok"], out)
 		self.assertEqual(roster.member_users(self.evaluation), [CHAIR, MEMBER_2, REPLACEMENT])

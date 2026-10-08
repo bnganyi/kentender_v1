@@ -16,6 +16,7 @@ import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
 import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 import ResponsibilityDetail from "../components/ResponsibilityDetail.vue";
 import RevokeDialog from "../components/RevokeDialog.vue";
+import StaffHomeUnitsSection from "../components/StaffHomeUnitsSection.vue";
 import { responsibilityApi } from "../data/responsibilityApi.js";
 
 const props = defineProps({
@@ -23,8 +24,10 @@ const props = defineProps({
 	initialUnit: { type: String, default: "" },
 	// The responsibility named by the link; empty shows the register.
 	assignmentId: { type: String, default: "" },
+	// "" is the responsibilities register; "staff-home-units" is the Staff home units tab (AUTH-ADR-001 v1.12 §12).
+	section: { type: String, default: "" },
 });
-const emit = defineEmits(["open"]);
+const emit = defineEmits(["open", "section"]);
 
 const loading = ref(true);
 const busy = ref(false);
@@ -226,8 +229,15 @@ async function submitRevocation(reason) {
 
 <template>
 	<section class="kt-setup-section is-flow" data-testid="kt-setup-ura">
+		<!-- The page-local tabs of AUTH-DES-03 and AUTH-DES-10 (AUTH-ADR-001 v1.12 §13.4, §13.12): peer views of one context. -->
+		<nav v-if="!assignmentId && !forbidden" class="kt-tabs kt-local-tabs" role="tablist" data-testid="kt-ura-local-tabs" style="margin-bottom:14px">
+			<button type="button" role="tab" class="kt-tab" :aria-selected="section !== 'staff-home-units'" data-testid="kt-ura-tab-responsibilities" @click="emit('section', '')">{{ __("Responsibilities") }}</button>
+			<button type="button" role="tab" class="kt-tab" :aria-selected="section === 'staff-home-units'" data-testid="kt-ura-tab-staff-home-units" @click="emit('section', 'staff-home-units')">{{ __("Staff home units") }}</button>
+		</nav>
+		<!-- AUTH-DES-10 / AUTH-DES-11 -->
+		<StaffHomeUnitsSection v-if="!assignmentId && section === 'staff-home-units'" />
 		<!-- AUTH-DES-06 -->
-		<template v-if="assignmentId">
+		<template v-else-if="assignmentId">
 			<div v-if="detailLoading && !detail" role="status" aria-live="polite" data-testid="kt-ura-loading">
 				<p class="text-muted" style="margin:0 0 10px">{{ __("Loading responsibility…") }}</p>
 				<div class="kt-skel" style="width:90%" />

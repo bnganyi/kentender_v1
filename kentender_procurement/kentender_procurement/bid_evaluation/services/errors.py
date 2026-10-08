@@ -34,13 +34,20 @@ MESSAGES: dict[str, str] = {
 	"EVL_CLARIFICATION_NOTICE_FAILED": "The clarification notice could not be delivered.",
 	"EVL_DECISION_STATUS_UNKNOWN": "The later decision could not be checked.",
 }
+#: Blocking codes added after v0.4 (EVL-CHG-001 v0.8 §8, Owner decision D7): the
+#: secretary by office and the Head's delegation. `MESSAGES` stays the v0.4
+#: contract file verbatim; these are kept apart so that file still matches.
+ADDED_MESSAGES: dict[str, str] = {
+	"EVL_SECRETARY_OFFICE_UNCLEAR": "The Head of Procurement Function could not be identified.",
+	"EVL_SECRETARY_INELIGIBLE": "This person cannot be the secretary of this evaluation.",
+}
 #: §8 nonblocking conditions: shown through the same guidance contract, never
 #: a refusal, a lifecycle state or an automatic rejection.
 CONDITIONS: dict[str, str] = {
 	"EVL_REPLY_OVERDUE": "The reply deadline has passed.",
 	"EVL_EVALUATION_OVERDUE": "The evaluation deadline has passed.",
 }
-ERROR_CODES: frozenset[str] = frozenset(MESSAGES)
+ERROR_CODES: frozenset[str] = frozenset(MESSAGES) | frozenset(ADDED_MESSAGES)
 
 #: PRC-CHG-001 v0.9 §8 → Evaluation copy (reconciliation/error_contract.md).
 PRC_MAP: dict[str, str] = {
@@ -67,6 +74,8 @@ class EvaluationError(frappe.ValidationError):
 def message(code: str) -> str:
 	if code in MESSAGES:
 		return MESSAGES[code]
+	if code in ADDED_MESSAGES:
+		return ADDED_MESSAGES[code]
 	if code in CONDITIONS:
 		return CONDITIONS[code]
 	raise ValueError(f"{code!r} is not part of the EVL-CHG-001 v0.4 §8 error contract.")
@@ -75,7 +84,7 @@ def message(code: str) -> str:
 def reason(code: str, **detail) -> dict[str, Any]:
 	if code not in ERROR_CODES:
 		raise ValueError(f"{code!r} is not a blocking EVL-CHG-001 v0.4 §8 code.")
-	return {"code": code, "message": MESSAGES[code], "detail": detail}
+	return {"code": code, "message": message(code), "detail": detail}
 
 
 def fail(code: str, detail: dict | None = None, **facts) -> None:

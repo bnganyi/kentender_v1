@@ -14,9 +14,9 @@ from unittest import mock
 
 import frappe
 
-from kentender_procurement.bid_evaluation.services import findings, records, roster, secretary
+from kentender_procurement.bid_evaluation.services import appointment, findings, records, roster
 from kentender_procurement.bid_evaluation.services.errors import EvaluationError
-from kentender_procurement.bid_evaluation.tests.support import CLOCKS, HOP, MEMBER, SECRETARY, WORLD_FLAGS, EvaluationCase
+from kentender_procurement.bid_evaluation.tests.support import AO, CLOCKS, MEMBER, MEMBER_2, REPLACEMENT, WORLD_FLAGS, EvaluationCase
 from kentender_procurement.bid_submission.tests.support import key
 from kentender_procurement.tests.two_connections import BLOCKED_FOR, WAIT, Conn
 
@@ -83,13 +83,13 @@ class TestEvaluationCommandEnvelope(EvaluationCase):
 		frappe.db.commit()
 		before = self._version()
 
-		def assign(idem):
-			return lambda: secretary.assign_secretary(tender=self.name, secretary=SECRETARY, appointment_reference="MOH/EVAL/SEC/RACE",
-				expected_version=before, idempotency_key=idem, user=HOP)
+		def replace(idem):
+			return lambda: appointment.replace_member(tender=self.name, outgoing=MEMBER_2, incoming={"user": REPLACEMENT}, reason="Replace the member.",
+				expected_version=before, idempotency_key=idem, user=AO)
 
-		conn_b = Conn(HOP, assign(key()), snapshot_first=True, setup=self._thread_flags)
+		conn_b = Conn(AO, replace(key()), snapshot_first=True, setup=self._thread_flags)
 		self.assertTrue(conn_b.snapshot_open.wait(WAIT))
-		conn_a = Conn(HOP, assign(key()), setup=self._thread_flags)
+		conn_a = Conn(AO, replace(key()), setup=self._thread_flags)
 		self.assertTrue(conn_a.finished.wait(WAIT))
 		self.assertIsNone(conn_a.error, repr(conn_a.error))
 		conn_b.start_gate.set()

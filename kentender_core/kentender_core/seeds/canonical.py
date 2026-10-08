@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""The canonical site world (SEED-002, proposed to replace SEED-001 and
+"""The canonical site world (SEED-002, approved 8 October 2026; it retired SEED-001 and
 SEED-OPS-001): two financial years read as at 18 Jun 2027, 10:00 EAT, cleared
 of everything else and reseeded through the owning modules' own seeds.
 
@@ -988,6 +988,12 @@ def validate(*, current: str | None = None, next_year: str | None = None, throug
 	for name, _parent in site_setup.UNITS:
 		check(names.count(name) == 1, f"exactly one Organisation Unit named {name!r} (found {names.count(name)})")
 	check(len(units) == 1 + len(site_setup.UNITS), f"{1 + len(site_setup.UNITS)} Organisation Units, found {len(units)}")
+	# KT-STD-001 v1.26 §8.3A — each fixture person's home unit, and Esther Muthoni deliberately without one.
+	by_name = {u.name: u.unit_name for u in units}
+	for local, unit_name in site_setup.HOME_UNITS:
+		value = frappe.db.get_value("User", f"{local}@moh.example.test", "kt_home_organisation_unit")
+		check(by_name.get(value) == unit_name, f"{local} home unit is {by_name.get(value)!r}, expected {unit_name!r}")
+	check(not frappe.db.get_value("User", "esther.muthoni@moh.example.test", "kt_home_organisation_unit"), "esther.muthoni has no home unit (the Not recorded fixture)")
 	for fy in _site_fiscal_years():
 		check(bool(frappe.db.exists("Fiscal Year", fy)), f"Fiscal Year {fy}")
 	extra_fys = [fy for fy in frappe.get_all("Fiscal Year", filters={"name": ["not like", "_Test%"]}, pluck="name") if fy not in _site_fiscal_years()]

@@ -67,7 +67,7 @@ class TestDisclosure(EvaluationCase):
 
 	def test_an_undeclared_member_sees_no_bids(self):
 		case = preparation.ensure_preparation(tender=self.name)["evaluation"]
-		appointment.appoint_committee(tender=self.name, members=ROSTER, appointment_reference="MOH/EVAL/TEST", expected_version=frappe.db.get_value(
+		appointment.appoint_committee(tender=self.name, members=ROSTER, expected_version=frappe.db.get_value(
 			"Evaluation Case", case, "record_version"), idempotency_key=key(), user=AO)
 		self.completed_opening()
 		from kentender_procurement.bid_evaluation.services import intake
@@ -94,9 +94,9 @@ class TestMemberSecretary(EvaluationCase):
 
 		case = preparation.ensure_preparation(tender=self.name)["evaluation"]
 		version = lambda: frappe.db.get_value("Evaluation Case", case, "record_version")  # noqa: E731
-		appointment.appoint_committee(tender=self.name, members=[ROSTER[0], ROSTER[1], {"user": SECRETARY, "department": "Procurement", "capacity": "Member"}],
-			appointment_reference="MOH/EVAL/TEST/SEC", expected_version=version(), idempotency_key=key(), user=AO)
-		secretary.assign_secretary(tender=self.name, secretary=SECRETARY, appointment_reference="MOH/EVAL/SEC/TEST", expected_version=version(),
+		appointment.appoint_committee(tender=self.name, members=[ROSTER[0], ROSTER[1], {"user": SECRETARY, "capacity": "Member"}],
+			expected_version=version(), idempotency_key=key(), user=AO)
+		secretary.delegate_secretary(tender=self.name, secretary=SECRETARY, expected_version=version(),
 			idempotency_key=key(), user=HOP)
 		for user in (CHAIR, MEMBER):
 			declaration.declare_interest(tender=self.name, choice="No conflict to declare", confidentiality_accepted=True, idempotency_key=key(), user=user)

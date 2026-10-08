@@ -28,6 +28,10 @@ class TestErrorContract(IntegrationTestCase):
 		self.assertEqual(len(blocking), 15)
 		self.assertEqual(errors.MESSAGES, blocking)
 		self.assertEqual(errors.CONDITIONS, nonblocking)
+		# EVL-CHG-001 v0.8 §8 adds exactly two blocking codes, kept apart from the v0.4 contract file
+		self.assertEqual(errors.ADDED_MESSAGES, {"EVL_SECRETARY_OFFICE_UNCLEAR": "The Head of Procurement Function could not be identified.",
+			"EVL_SECRETARY_INELIGIBLE": "This person cannot be the secretary of this evaluation."})
+		self.assertEqual(errors.ERROR_CODES, set(blocking) | set(errors.ADDED_MESSAGES))
 
 	def test_every_applicable_guard_is_returned_together(self):
 		guards = errors.Guards()

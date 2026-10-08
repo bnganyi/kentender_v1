@@ -5,8 +5,9 @@
 "Preparation trigger", §7.2; tracker EVL4-401, EVL4-402).
 
 On the first authoritative publication of an in-scope tender, Evaluation
-records one preparation case; the Accounting Officer's appointment task and
-the Head of Procurement's secretary task follow from its state. Publication
+records one preparation case; the Accounting Officer's appointment task
+follows from its state (v0.8: the Head of Procurement Function is recorded as
+secretary when the committee is appointed, so holds no preparation task). Publication
 supplies only the published tender reference and scope, never sealed-box
 facts. A replay or addendum creates nothing new. A known unsupported scope
 creates no case and no task. Missing or conflicting scope metadata creates a
@@ -89,8 +90,6 @@ def ensure_preparation(*, tender: str, source: str = "Publication") -> dict[str,
 		ref = doc.tender_reference
 		notify.tell(doc, people.holders(people.ACCOUNTING_OFFICER), subject=f"Appoint evaluation committee for {ref}",
 			message=f"Appoint the members who will evaluate {ref}.", key="appoint")
-		notify.tell(doc, people.holders(people.HEAD_OF_PROCUREMENT), subject=f"Assign evaluation secretary for {ref}",
-			message=f"Assign the person who will organise the evaluation record for {ref}.", key="secretary")
 		return records.summary(doc, prepared=True, existing=False)
 
 	return records.command("EnsureEvaluationPreparation", tender=tender, idempotency_key=key, actor="system", payload={"source": source}, body=body)

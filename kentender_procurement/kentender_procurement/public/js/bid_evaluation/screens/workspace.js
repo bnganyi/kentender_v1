@@ -1,5 +1,5 @@
 // The Bid evaluation workspace (EVL-CHG-001 v0.4 §9.2; boards D01, D01-EMPTY,
-// D01-FILTERED, D01-APPOINT, D01-APPOINT-HOP, S-FORBIDDEN): the viewer's own
+// D01-FILTERED, D01-APPOINT, S-FORBIDDEN): the viewer's own
 // evaluation tasks, then the register they may read (ListEvaluationWork), with
 // a local search and state filter. No tracker or next step on the workspace.
 import { em, fb, task, tb } from "../board/model.js";

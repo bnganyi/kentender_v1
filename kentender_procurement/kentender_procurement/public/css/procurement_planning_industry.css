@@ -1351,3 +1351,18 @@
 
 /* Owner decision 26 Sep 2026 — who asked the department to update its plan, and when. */
 .kt-pln .pln-dpp-update-request-asked { margin-top: var(--kt-space-1); font-size: 13px; color: var(--kt-color-neutral-700); }
+
+/* Approval and publication (Active plan). `.kt-meta-row` bottom-aligns its
+   cells, which only suits one-line values; these wrap to different line counts,
+   so the labels sat on different lines. Top-align them, keep the evidence link
+   at body size under its value, and give the progress link room below the row. */
+.kt-pln .pln-governance-row {
+	align-items: start;
+}
+.kt-pln .pln-governance-row .pln-check-action {
+	font-size: 14px;
+}
+.kt-pln .pln-governance-progress {
+	display: inline-block;
+	margin-top: var(--kt-space-4);
+}

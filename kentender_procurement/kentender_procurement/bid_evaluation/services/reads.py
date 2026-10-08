@@ -37,7 +37,7 @@ import frappe
 from frappe.utils import cstr
 
 from kentender_procurement.bid_evaluation.services import (
-	aggregate, checks, comparison, evidence_manifest, next_steps, oversight, people, records, report, roster, signing, sources, timers,
+	aggregate, checks, comparison, evidence_manifest, guards, member_department, next_steps, oversight, people, records, report, roster, signing, sources, timers,
 )
 
 WORK_STATES = ("Preparing", "Reviewing", "Signing", "Report sent", "No evaluation required", "Cancelled")
@@ -89,13 +89,16 @@ def committee(doc) -> dict[str, Any]:
 	members = []
 	for m in roster.current_members(doc.name):
 		s = roster.status(doc.name, m["member_user"])
-		members.append({"user": m["member_user"], "name": m["full_name"], "department": m["department"], "capacity": m["capacity"],
+		members.append({"user": m["member_user"], "name": m["full_name"], "department": member_department.display(m["department"]), "capacity": m["capacity"],
 			"declaration": "Conflict declared" if s["conflict"] else ("No conflict" if s["declared"] else "Declaration owed"), "unavailable": s["unavailable"]})
 	sec = frappe.db.get_value("Evaluation Secretary Appointment", {"evaluation_case": doc.name, "status": "Current"}, ["secretary_user", "full_name",
-		"appointment_reference"], as_dict=True)
+		"appointment_reference", "basis", "appointing_authority", "assigned_at", "assigned_by"], as_dict=True)
 	appointment = roster.current_appointment(doc.name)
 	return {"members": members, "appointment_reference": cstr(appointment.appointment_reference) if appointment else "",
-		"secretary": {"user": sec.secretary_user, "name": sec.full_name, "reference": sec.appointment_reference} if sec else None}
+		"secretary": {"user": sec.secretary_user, "name": sec.full_name, "reference": sec.appointment_reference, "basis": cstr(sec.basis),
+			"authority": cstr(sec.appointing_authority), "at": next_steps.when(sec.assigned_at),
+			"by": people.full_name(sec.assigned_by)} if sec else None,
+		"can_delegate": False}
 
 
 def conditions(doc) -> dict[str, Any]:
@@ -127,6 +130,9 @@ def resolve(*, tender_reference: str, user: str) -> dict[str, Any]:
 		out["department_summary"] = oversight.department_summary(doc)
 		return out
 	out["committee"] = committee(doc)
+	# Delegate secretary duties is offered to the authorised Head only, and only while appointments are open (EVL-CHG-001 v0.8 §3, §10)
+	out["committee"]["can_delegate"] = (bool(a["hop"]) and not a["technical"] and doc.state in ("Preparing", "Reviewing", "Signing")
+		and not guards.open_case(doc, "appointments") and bool(out["committee"]["secretary"]))
 	out["source"] = _source(doc)
 	if a["oversight_full"] and not a["bids"]:
 		# the decision and the report, from the frozen delivered version (never the live case)
@@ -244,7 +250,8 @@ def candidates(*, tender_reference: str, user: str, purpose: str) -> list[dict[s
 	if purpose == "secretary":
 		if not people.holds(user, people.HEAD_OF_PROCUREMENT):
 			raise frappe.DoesNotExistError("Not found")
-		users = sorted(set(people.holders(people.PROCUREMENT_OFFICER)) | {user})
+		# procurement officers other than the current secretary (the Head is secretary by office, not a pick)
+		users = sorted(set(people.holders(people.PROCUREMENT_OFFICER)) - {roster.secretary(doc.name) or "", user})
 	else:
 		if not people.holds(user, people.ACCOUNTING_OFFICER):
 			raise frappe.DoesNotExistError("Not found")
@@ -255,9 +262,8 @@ def candidates(*, tender_reference: str, user: str, purpose: str) -> list[dict[s
 		ok, designation = people.internal(u)
 		if not ok:
 			continue
-		unit = frappe.db.get_value("User Responsibility Assignment", {"user": u, "status": "Enabled", "organisation_unit": ("is", "set")}, "organisation_unit")
-		department = cstr(frappe.db.get_value("Organisation Unit", unit, "unit_name")) if unit and frappe.db.exists("DocType", "Organisation Unit") else ""
-		out.append({"user": u, "name": people.full_name(u), "designation": designation, "department": department})
+		# the department is the person's home organisation unit (AUTH-ADR-001 v1.12 §4.8), never a responsibility assignment's unit; blank when none is recorded
+		out.append({"user": u, "name": people.full_name(u), "designation": designation, "department": member_department.department_of(u)})
 	del doc
 	return sorted(out, key=lambda r: r["name"])
 

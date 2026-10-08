@@ -70,9 +70,9 @@ def wipe_evaluations() -> None:
 
 
 ROSTER = [
-	{"user": CHAIR, "department": "Human Resource Management and Development", "capacity": "Chair"},
-	{"user": MEMBER, "department": "ICT", "capacity": "Member"},
-	{"user": MEMBER_2, "department": "Finance", "capacity": "Member"},
+	{"user": CHAIR, "capacity": "Chair"},
+	{"user": MEMBER, "capacity": "Member"},
+	{"user": MEMBER_2, "capacity": "Member"},
 ]
 
 
@@ -197,6 +197,9 @@ class EvaluationCase(RecordCase):
 	def _fresh_evaluation(self) -> None:
 		self._flag("kt_evl_fixture_namespace", NS)
 		simulation.reset_controls()
+		# The test site keeps other modules' Head of Procurement Function accounts (no rollback), so "the one Head" of the secretary-by-office rule
+		# (EVL-CHG-001 v0.8 §3) is named through the test controls; the rule itself is tested with explicit holders in test_evl_secretary_delegation.
+		simulation.set_controls(head_of_procurement=HOP)
 		self.addCleanup(simulation.reset_controls)
 		self.set_lapse(0)  # participation lapse off unless a test turns it on
 		self.addCleanup(wipe_evaluations)
@@ -288,16 +291,16 @@ class EvaluationCase(RecordCase):
 
 
 	def reviewing(self) -> str:
-		"""The ordinary preparation: appointed, secretary assigned, every member
+		"""The ordinary preparation: appointed (the Head is secretary by office), delegated to the procurement officer, every member
 		declared, the opening completed and taken up. Returns the case name."""
 		from kentender_procurement.bid_evaluation.services import appointment, declaration, intake, preparation, secretary
 		from kentender_procurement.bid_submission.tests.support import key
 
 		case = preparation.ensure_preparation(tender=self.name)["evaluation"]
 		version = lambda: int(frappe.db.get_value("Evaluation Case", case, "record_version"))  # noqa: E731
-		appointment.appoint_committee(tender=self.name, members=ROSTER, appointment_reference="MOH/EVAL/TEST/2101", expected_version=version(),
+		appointment.appoint_committee(tender=self.name, members=ROSTER, expected_version=version(),
 			idempotency_key=key(), user=AO)
-		secretary.assign_secretary(tender=self.name, secretary=SECRETARY, appointment_reference="MOH/EVAL/SEC/TEST", expected_version=version(),
+		secretary.delegate_secretary(tender=self.name, secretary=SECRETARY, expected_version=version(),
 			idempotency_key=key(), user=HOP)
 		for user in (CHAIR, MEMBER, MEMBER_2):
 			declaration.declare_interest(tender=self.name, choice="No conflict to declare", confidentiality_accepted=True, idempotency_key=key(), user=user)

@@ -45,22 +45,20 @@ class TestSeparationAtAppointment(CommitteeCase):
 		as_member = self.refused(self.evl_appoint, [ROSTER[0], ROSTER[1], {**ROSTER[2], "user": HOP}])
 		self.assertEqual(self.reasons(as_member), {HOP: "head_of_procurement"})
 
-	def test_the_accounting_officer_cannot_be_the_secretary_and_the_head_can(self):
-		def assign(who):
-			return secretary.assign_secretary(tender=self.name, secretary=who, appointment_reference="MOH/EVAL/SEC/SEP", expected_version=self.evl_version(), idempotency_key=key(), user=HOP)
-
-		error = self.refused(assign, AO)
+	def test_the_accounting_officer_cannot_be_the_secretary_and_the_head_is_by_office(self):
+		self.evl_appoint()
+		self.assertEqual(roster.secretary(self.evaluation), HOP)  # the Head may be the secretary: by office
+		error = self.refused(secretary.delegate_secretary, tender=self.name, secretary=AO, expected_version=self.evl_version(), idempotency_key=key(), user=HOP)
+		self.assertEqual(error.code, "EVL_SECRETARY_INELIGIBLE")
 		self.assertIn("accounting_officer", {r["detail"].get("reason") for r in error.reasons})
-		self.assertFalse(roster.secretary(self.evaluation))
-		self.assertTrue(assign(HOP)["ok"])  # the Head may be the secretary
 		self.assertEqual(roster.secretary(self.evaluation), HOP)
 
 	def test_a_replacement_cannot_bring_in_either_officer(self):
 		self.evl_appoint()
 		for who, reason in ((AO, "accounting_officer"), (HOP, "head_of_procurement")):
 			error = self.refused(
-				appointment.replace_member, tender=self.name, outgoing=MEMBER_2, incoming={"user": who, "department": "Finance", "capacity": "Member"},
-				appointment_reference="MOH/EVAL/REPL/SEP", reason="The member is unavailable for the whole evaluation period.", expected_version=self.evl_version(),
+				appointment.replace_member, tender=self.name, outgoing=MEMBER_2, incoming={"user": who, "capacity": "Member"},
+				reason="The member is unavailable for the whole evaluation period.", expected_version=self.evl_version(),
 				idempotency_key=key(), user=AO,
 			)
 			self.assertEqual(self.reasons(error), {who: reason})
@@ -90,12 +88,12 @@ class TestSeparationAtEveryCommand(CommitteeCase):
 		self.assertEqual(self.refused(self.evl_declare, CHAIR).detail["reason"], "head_of_procurement")
 
 	def test_a_secretary_who_later_becomes_the_accounting_officer_is_refused_but_a_head_secretary_is_not(self):
-		self.assertTrue(secretary.assign_secretary(tender=self.name, secretary=SECRETARY, appointment_reference="MOH/EVAL/SEC/SEP2", expected_version=self.evl_version(), idempotency_key=key(), user=HOP)["ok"])
+		self.evl_appoint()
+		self.assertTrue(self.probe(HOP)["ok"])  # the Head is the secretary by office and holds no member seat
+		self.assertTrue(secretary.delegate_secretary(tender=self.name, secretary=SECRETARY, expected_version=self.evl_version(), idempotency_key=key(), user=HOP)["ok"])
 		self.assertTrue(self.probe(SECRETARY)["ok"])
 		self.grant(SECRETARY, OFFICER)
 		self.assertEqual(self.refused(self.probe, SECRETARY).detail["reason"], "accounting_officer")
-		self.assertTrue(secretary.assign_secretary(tender=self.name, secretary=HOP, appointment_reference="MOH/EVAL/SEC/SEP3", expected_version=self.evl_version(), idempotency_key=key(), user=HOP)["ok"])
-		self.assertTrue(self.probe(HOP)["ok"])  # the Head is the secretary and holds no member seat
 
 	def test_the_offices_themselves_still_act_in_office(self):
 		self.evl_appoint()

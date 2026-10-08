@@ -16,37 +16,43 @@
       blocks: [task(TT, TN, 'Evidence needs a committee decision', 'Open evaluation')].concat(reg(null, 'printers', [em('No evaluations match your search.', 'Clear search', 'search')])) }, ws),
     Object.assign({ id: 'D01-APPOINT', g: G1, name: 'Workspace — AO appointment task', actor: 'amina', at: '11 Jun 2027, 08:58 EAT', state: 'Preparing', spec: '§9.13',
       blocks: [task('Appoint evaluation committee for ' + TN, TT, 'Preparing', 'Appoint committee')].concat(reg([[TN, TT, 'Preparing', '@View']])),
-      note: 'Opens D02-A. No bidder information.' }, ws),
-    Object.assign({ id: 'D01-APPOINT-HOP', g: G1, name: 'Workspace — secretary task', actor: 'charles', at: '11 Jun 2027, 08:58 EAT', state: 'Preparing', spec: '§9.13',
-      blocks: [task('Assign evaluation secretary for ' + TN, TT, 'Preparing', 'Assign secretary')].concat(reg([[TN, TT, 'Preparing', '@View']])),
-      note: 'Charles’s separate view; opens D02-S.' }, ws)
+      note: 'Opens D02-A. No bidder information.' }, ws)
   );
 
   const memberTable = tb(['Person', 'Department', 'Capacity'], [
-    ['#Grace Wambui', '#Human Resource Management and Development', '#Chair'],
-    ['#Peter Mugo', '#ICT', '#Member'], ['#Ruth Achieng', '#Finance', '#Member']
+    ['#Grace Wambui', 'Human Resources Management and Development', '#Chair'],
+    ['#Peter Mugo', 'ICT', '#Member'], ['#Ruth Achieng', 'Finance', '#Member']
   ], { title: 'Committee members', caption: 'Each member declares conflicts before viewing bids.' });
   const tenderFacts = f(['Tender', TN], ['Title', TT]);
-  const appointBlocks = [tenderFacts, memberTable, fi('Appointment reference', 'MOH/EVAL/033/2027', { req: true }), ds('Appointment history', 'No earlier appointment.')];
+  const appointBlocks = [tenderFacts, memberTable, ds('Appointment history', 'No earlier appointment.')];
   const d2 = (o) => Object.assign({ g: G2, arch: 'Form or editor', crumb: ['Bid evaluation', TN], desc: TN + ' · ' + TT }, o);
-  const roRoster = tb(['Person', 'Department', 'Capacity'], [['Grace Wambui', 'Human Resource Management and Development', 'Chair'], ['Peter Mugo', 'ICT', 'Member'], ['Ruth Achieng', 'Finance', 'Member']], { title: 'Appointed committee', sec: true });
+  const roRoster = tb(['Person', 'Department', 'Capacity'], [['Grace Wambui', 'Human Resources Management and Development', 'Chair'], ['Peter Mugo', 'ICT', 'Member'], ['Ruth Achieng', 'Finance', 'Member']], { title: 'Appointed committee', sec: true });
   const replaceBlocks = (person, err) => [
-    tb(['Person', 'Department', 'Capacity', 'Declaration'], [['Grace Wambui', 'Human Resource Management and Development', 'Chair', 'No conflict'], ['Peter Mugo', 'ICT', 'Member', 'Conflict declared'], ['Ruth Achieng', 'Finance', 'Member', 'No conflict']], { title: 'Current committee', sec: true }),
+    tb(['Person', 'Department', 'Capacity', 'Declaration'], [['Grace Wambui', 'Human Resources Management and Development', 'Chair', 'No conflict'], ['Peter Mugo', 'ICT', 'Member', 'Conflict declared'], ['Ruth Achieng', 'Finance', 'Member', 'No conflict']], { title: 'Current committee', sec: true }),
     at('Peter Mugo declared a conflict', 'I have a financial interest in Afya Digital Supplies Limited.'),
     fi('Incoming person', person, Object.assign({ select: true, req: true }, err ? { err: 'This person cannot serve on this evaluation committee.', errd: 'Peter Mugo has an unresolved declared conflict for this tender.' } : {})),
     f(['Department', 'ICT'], ['Capacity', 'Member']),
-    fi('Appointment reference', 'MOH/EVAL/033/2027-R1', { req: true }),
     fi('Reason', 'Replace the member who declared a financial interest.', { area: true, req: true, rows: 2 })
   ];
 
   E.add(
     d2({ id: 'D02-A', name: 'Appoint committee', actor: 'amina', at: '11 Jun 2027, 08:59 EAT', state: 'Preparing', spec: '§9.3', title: 'Appoint evaluation committee',
       tr: T('cnn', 'Amina Hassan'), nx: { k: 'turn', h: 'Appoint the members who will evaluate this tender.' },
-      blocks: appointBlocks, pri: 'Appoint committee', sec: ['Back to tender'], note: 'No bid facts or secretary field.' }),
-    d2({ id: 'D02-S', name: 'Assign secretary', actor: 'charles', at: '11 Jun 2027, 09:04 EAT', state: 'Preparing', spec: '§9.3', title: 'Assign evaluation secretary',
-      tr: T('cnn', 'Charles Mutiso'), nx: { k: 'turn', h: 'Assign the person who will organise the evaluation record.' },
-      blocks: [roRoster, fi('Person', 'Brian Wafula', { select: true, req: true }), fi('Appointment reference', 'MOH/EVAL/SEC/033/2027', { req: true })],
-      pri: 'Assign secretary', sec: ['Back to tender'], note: 'No member editing.' }),
+      blocks: appointBlocks, pri: 'Appoint committee', sec: ['Back to tender'], cons: 'The appointment reference is created when you appoint the committee. The Head of Procurement Function is recorded as the evaluation secretary.', note: 'No bid facts or secretary field; the Head is recorded as secretary (EVL-CHG-001 v0.8).' }),
+    d2({ id: 'D02-NOT-RECORDED', name: 'Appoint committee — department not recorded', actor: 'amina', at: '11 Jun 2027, 08:59 EAT', state: 'Preparing', spec: '§9.3', title: 'Appoint evaluation committee',
+      tr: T('cnn', 'Amina Hassan'), nx: { k: 'turn', h: 'Appoint the members who will evaluate this tender.' },
+      blocks: [tenderFacts, tb(['Person', 'Department', 'Capacity'], [
+        ['#Grace Wambui', 'Human Resources Management and Development', '#Chair'],
+        ['#Peter Mugo', 'ICT', '#Member'], ['#Esther Muthoni', '!Not recorded|Department not recorded. Ask your KenTender administrator to record it.', '#Member']
+      ], { title: 'Committee members', caption: 'Each member declares conflicts before viewing bids.' }), ds('Appointment history', 'No earlier appointment.')],
+      pri: 'Appoint committee', sec: ['Back to tender'], cons: 'The appointment reference is created when you appoint the committee. The Head of Procurement Function is recorded as the evaluation secretary.',
+      note: 'Isolated branch of D02-A (EVL-CHG-001 v0.7). A person with no home unit is appointable; nothing else is blocked.' }),
+    d2({ id: 'D02-DELEGATE', name: 'Delegate secretary duties', actor: 'charles', at: '11 Jun 2027, 09:05 EAT', state: 'Preparing', spec: '§9.3', title: 'Delegate secretary duties',
+      desc: 'Appoint a procurement officer to act as secretary of this evaluation.', notInvolved: ' ',
+      blocks: [f(['Tender', TN], ['Title', TT], ['Current secretary', 'Charles Mutiso, Head of Procurement Function, by office']), fi('Person', 'Brian Wafula', { select: true, req: true })],
+      pri: 'Delegate secretary duties', sec: ['Back to evaluation'],
+      cons: 'Brian Wafula will organise the evaluation record. This is your written appointment and a new reference is created. They will have no vote, finding or signature.',
+      note: 'Reached from the Delegate secretary duties action on the evaluation record, for the authorised Head only; no task asks for it, so no next step and no tracker (EVL-CHG-001 v0.8). Replaces D02-S.' }),
     d2({ id: 'D02-D', name: 'Personal declaration', actor: 'peter', at: '11 Jun 2027, 09:11 EAT', spec: '§9.3', title: 'Your evaluation declaration',
       nx: { k: 'turn', h: 'Declare any conflict before viewing bids.' },
       blocks: [f(['Tender', TN], ['Title', TT], ['Your capacity', 'Member · ICT']), ra('Declaration', ['No conflict to declare', 'Declare a conflict'], 0), cb('I will keep bid information confidential and use it only for this evaluation.', true)],
@@ -58,17 +64,13 @@
     d2({ id: 'D02-REPLACE', name: 'Replace member', actor: 'amina', at: '14 Jun 2027, 10:00 EAT', state: 'Reviewing', spec: '§9.3', title: 'Replace committee member',
       tr: T('dcn', 'Amina Hassan'), nx: { k: 'turn', h: 'Resolve Peter Mugo\'s declared conflict.' },
       blocks: replaceBlocks('Samuel Otieno'), pri: 'Replace member', sec: ['Keep current appointment'],
-      cons: 'The new member must declare interests and review the evaluation. Any report being signed will need a new version.', note: 'Isolated branch. Samuel Otieno is a fixture-only eligible replacement, not an opening member.' }),
+      cons: 'The new member must declare interests and review the evaluation. Any report being signed will need a new version. The appointment reference is created when you replace the member.', note: 'Isolated branch. Samuel Otieno is a fixture-only eligible replacement, not an opening member.' }),
     d2({ id: 'D02-INELIGIBLE', name: 'Replace member — ineligible person', actor: 'amina', at: '14 Jun 2027, 10:00 EAT', state: 'Reviewing', spec: '§9.13', title: 'Replace committee member',
       tr: T('dcn', 'Amina Hassan'), nx: { k: 'turn', h: 'Resolve Peter Mugo\'s declared conflict.' },
       blocks: replaceBlocks('Peter Mugo', true), pri: 'Replace member', sec: ['Keep current appointment'], note: 'No appointment committed; form and reason kept.' }),
     d2({ id: 'D02-INTAKE-FIRST', name: 'Opening complete before appointment', actor: 'amina', at: '12 Jun 2027, 11:11 EAT', state: 'Reviewing', spec: '§9.13', title: 'Appoint evaluation committee',
       tr: T('cnn', 'Amina Hassan'), nx: { k: 'turn', h: 'Appoint the evaluation committee.', s: 'Opening is complete. The evaluation committee has not been appointed.' },
-      blocks: appointBlocks, pri: 'Appoint committee', sec: ['Back to tender'], note: 'Lifecycle is Reviewing (backend intake); the tracker shows the actor’s outstanding setup. No bid names, counts, amounts or findings.' }),
-    d2({ id: 'D02-INTAKE-FIRST-HOP', name: 'Opening complete — secretary task', actor: 'charles', at: '12 Jun 2027, 11:11 EAT', state: 'Reviewing', spec: '§9.13', title: 'Assign evaluation secretary',
-      tr: T('cnn', 'Charles Mutiso'), nx: { k: 'turn', h: 'Assign the person who will organise the evaluation record.' },
-      blocks: [tenderFacts, fi('Person', 'Brian Wafula', { select: true, req: true }), fi('Appointment reference', 'MOH/EVAL/SEC/033/2027', { req: true })],
-      pri: 'Assign secretary', sec: ['Back to tender'], note: 'Same case as D02-INTAKE-FIRST.' }),
+      blocks: appointBlocks, pri: 'Appoint committee', sec: ['Back to tender'], cons: 'The appointment reference is created when you appoint the committee. The Head of Procurement Function is recorded as the evaluation secretary.', note: 'Lifecycle is Reviewing (backend intake); the tracker shows the actor’s outstanding setup. No bid names, counts, amounts or findings.' }),
     d2({ id: 'D02-DECLARE-FIRST', name: 'Declaration outstanding after intake', actor: 'peter', at: '12 Jun 2027, 11:11 EAT', state: 'Reviewing', spec: '§9.13', title: TT, desc: TN, arch: 'Record detail',
       tr: T('cnn', 'Peter Mugo'), nx: { k: 'turn', h: 'Complete your declaration before viewing bids.' },
       blocks: [f(['Your capacity', 'Member · ICT'], ['Appointment', 'MOH/EVAL/033/2027'])], pri: 'Complete declaration', sec: ['Back to evaluations'], note: 'No bid content. Opens D02-D.' }),
@@ -80,7 +82,8 @@
       nx: { k: 'done', h: 'No bids were received. No evaluation is required.' },
       blocks: [tb(['Event', 'Person', 'Recorded'], [
         ['Committee appointed · MOH/EVAL/033/2027', 'Amina Hassan', '11 Jun 2027, 09:00 EAT'],
-        ['Secretary assigned · MOH/EVAL/SEC/033/2027', 'Charles Mutiso', '11 Jun 2027, 09:05 EAT'],
+        ['Secretary by office · MOH/EVAL/SEC/033/2027', 'Charles Mutiso', '11 Jun 2027, 09:00 EAT'],
+        ['Secretary delegated · MOH/EVAL/SEC/033/2027-R1', 'Brian Wafula', '11 Jun 2027, 09:05 EAT'],
         ['Declaration · no conflict', 'Grace Wambui', '11 Jun 2027, 09:10 EAT'],
         ['Declaration · no conflict', 'Peter Mugo', '11 Jun 2027, 09:12 EAT'],
         ['Declaration · no conflict', 'Ruth Achieng', '11 Jun 2027, 09:14 EAT']], { title: 'Appointment and declaration history', sec: true }),

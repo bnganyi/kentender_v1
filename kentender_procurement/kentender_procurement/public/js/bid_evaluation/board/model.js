@@ -137,6 +137,7 @@ function cellOf(raw, num, people) {
 	if (raw && typeof raw === "object") {
 		if (raw.select) return { sel: true, name: raw.select, options: raw.options || [], td, testid: raw.testid || "", err: raw.error || "" };
 		if (raw.input) return { field: true, name: raw.input, td, testid: raw.testid || "", err: raw.error || "" };
+		if (raw.text !== undefined) return { t: raw.text, txt: true, note: raw.note || "", td };
 		return { t: raw.label, btn: true, td, action: raw.action, args: raw.args || null, testid: raw.testid || "" };
 	}
 	const s = String(raw == null ? "" : raw);

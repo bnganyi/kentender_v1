@@ -106,3 +106,18 @@ describe("the current tabs' internal views ⇄ §9 links (until Phase 5 re-ports
 		expect(buildSetupHash(legacyToRoute("procurement-settings", "procurement-rules"))).toBe("procurement-settings/procurement-rules");
 	});
 });
+
+describe("the Staff home units tab (AUTH-ADR-001 v1.12 §12)", () => {
+	it("is a local section of Users and responsibilities, never mistaken for a responsibility id", () => {
+		expect(parseSetupHash("#users-and-responsibilities/staff-home-units")).toEqual({
+			tab: "users-and-responsibilities", section: "staff-home-units", id: "", versionId: "", action: "",
+		});
+		expect(parseSetupHash("#users-and-responsibilities/URA-2026-0001").id).toBe("URA-2026-0001");
+	});
+
+	it("builds its own link and survives a round trip", () => {
+		expect(buildSetupHash({ tab: "users-and-responsibilities", section: "staff-home-units" })).toBe("users-and-responsibilities/staff-home-units");
+		expect(buildSetupHash(parseSetupHash("#users-and-responsibilities/staff-home-units"))).toBe("users-and-responsibilities/staff-home-units");
+		expect(buildSetupHash({ tab: "users-and-responsibilities", id: "URA-2026-0001" })).toBe("users-and-responsibilities/URA-2026-0001");
+	});
+});

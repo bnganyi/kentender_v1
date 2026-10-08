@@ -14,7 +14,9 @@
   "capacity",
   "status",
   "replaced_by_user",
-  "change_reason"
+  "change_reason",
+  "department_recorded_by",
+  "department_recorded_at"
  ],
  "fields": [
   {
@@ -37,7 +39,7 @@
    "fieldtype": "Data",
    "label": "Department",
    "read_only": 1,
-   "reqd": 1
+   "description": "The unit's name from the staff home organisation unit when the appointment committed; blank when none was recorded. Completed once when a home unit is later recorded (EVL-CHG-001 v0.7 §3)."
   },
   {
    "fieldname": "designation",
@@ -74,12 +76,26 @@
    "fieldtype": "Small Text",
    "label": "Change reason",
    "read_only": 1
+  },
+  {
+   "fieldname": "department_recorded_by",
+   "fieldtype": "Link",
+   "label": "Department recorded by",
+   "options": "User",
+   "read_only": 1,
+   "description": "Set only when a blank department is completed after the appointment."
+  },
+  {
+   "fieldname": "department_recorded_at",
+   "fieldtype": "Datetime",
+   "label": "Department recorded at",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "istable": 1,
  "links": [],
- "modified": "2026-09-30 18:00:00.000000",
+ "modified": "2026-10-08 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Bid Evaluation",
  "name": "Evaluation Committee Member",

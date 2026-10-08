@@ -23,7 +23,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, get_datetime
 
-from kentender_procurement.bid_evaluation.services import aggregate, checks, comparison, people, records, roster, timers
+from kentender_procurement.bid_evaluation.services import aggregate, checks, comparison, member_department, people, records, roster, timers
 from kentender_procurement.services import sequence
 
 REPORT = "Evaluation Report Version"
@@ -52,16 +52,46 @@ def _when(value) -> str:
 def _committee(doc) -> dict[str, Any]:
 	appointment = roster.current_appointment(doc.name)
 	secretary = frappe.db.get_value("Evaluation Secretary Appointment", {"evaluation_case": doc.name, "status": "Current"},
-		["secretary_user", "full_name", "appointment_reference", "assigned_at"], as_dict=True)
+		["secretary_user", "full_name", "appointment_reference", "assigned_at", "basis", "appointing_authority", "assigned_by"], as_dict=True)
 	return {
-		"members": [{"name": m["full_name"], "department": m["department"], "capacity": m["capacity"], "user": m["member_user"]} for m in roster.current_members(doc.name)],
+		"members": [{"name": m["full_name"], "department": member_department.display(m["department"]), "capacity": m["capacity"], "user": m["member_user"]}
+			for m in roster.current_members(doc.name)],
 		"appointment_reference": cstr(appointment.appointment_reference) if appointment else "",
 		"appointed_at": _when(appointment.appointed_at) if appointment else "",
-		"secretary": {"name": secretary.full_name, "reference": secretary.appointment_reference, "user": secretary.secretary_user} if secretary else None,
-		"history": [{"version": a.version_number, "kind": a.change_kind, "reference": a.appointment_reference, "reason": cstr(a.reason), "at": _when(a.appointed_at)}
-			for a in frappe.get_all("Evaluation Appointment", filters={"evaluation_case": doc.name}, fields=["version_number", "change_kind", "appointment_reference",
-				"reason", "appointed_at"], order_by="version_number asc")],
+		"secretary": {"name": secretary.full_name, "reference": secretary.appointment_reference, "user": secretary.secretary_user, "basis": cstr(secretary.basis),
+			"authority": cstr(secretary.appointing_authority), "at": _when(secretary.assigned_at),
+			"by": cstr(frappe.db.get_value("User", secretary.assigned_by, "full_name")) or cstr(secretary.assigned_by)} if secretary else None,
+		"history": _appointment_history(doc.name),
 	}
+
+
+def _appointment_history(case: str) -> list[dict[str, Any]]:
+	"""The appointment record and its history: each appointment with its reference, the appointing officer, the time and the roster it produced, and each
+	later completion of a Not recorded department (EVL-CHG-001 v0.7 §3), and every secretary record (by office, then each written delegation, EVL-CHG-001 v0.8
+	§3), in time order. The reference and the officer are recorded by the server."""
+	out: list[dict[str, Any]] = []
+	for a in frappe.get_all("Evaluation Appointment", filters={"evaluation_case": case}, fields=["name", "version_number", "change_kind", "appointment_reference", "reason",
+			"appointed_at", "appointed_by"], order_by="version_number asc"):
+		members = frappe.get_all("Evaluation Committee Member", filters={"parent": a.name, "parenttype": "Evaluation Appointment"},
+			fields=["full_name", "capacity", "status", "member_user", "department", "department_recorded_by", "department_recorded_at"], order_by="idx asc")
+		out.append({"version": a.version_number, "kind": a.change_kind, "reference": a.appointment_reference, "reason": cstr(a.reason), "at": _when(a.appointed_at),
+			"by": cstr(frappe.db.get_value("User", a.appointed_by, "full_name")) or cstr(a.appointed_by), "_when": a.appointed_at,
+			"members": [{"name": m.full_name, "capacity": m.capacity} for m in members if m.status == "Current"]})
+		for m in members:
+			if m.department_recorded_at:
+				out.append({"version": a.version_number, "kind": "Department recorded", "person": m.full_name, "department": m.department,
+					"by": cstr(frappe.db.get_value("User", m.department_recorded_by, "full_name")) or cstr(m.department_recorded_by), "at": _when(m.department_recorded_at),
+					"_when": m.department_recorded_at})
+	for s in frappe.get_all("Evaluation Secretary Appointment", filters={"evaluation_case": case}, fields=["full_name", "basis", "appointment_reference", "appointing_authority",
+			"assigned_at", "assigned_by", "status", "source_appointment"], order_by="creation asc, name asc"):
+		out.append({"kind": "Secretary by office" if s.basis == "By office" else "Delegated", "person": s.full_name, "reference": s.appointment_reference,
+			"authority": cstr(s.appointing_authority), "by": cstr(frappe.db.get_value("User", s.assigned_by, "full_name")) or cstr(s.assigned_by), "at": _when(s.assigned_at),
+			"current": s.status == "Current", "_when": s.assigned_at,
+			"appointment": cstr(frappe.db.get_value("Evaluation Appointment", s.source_appointment, "appointment_reference")) if s.source_appointment else ""})
+	out.sort(key=lambda h: (get_datetime(h["_when"]) if h["_when"] else get_datetime("1970-01-01"), {"Department recorded": 1, "Secretary by office": 2, "Delegated": 3}.get(h["kind"], 0)))
+	for h in out:
+		h.pop("_when", None)
+	return out
 
 
 def _findings(doc) -> list[dict[str, Any]]:

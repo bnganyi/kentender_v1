@@ -25,7 +25,7 @@ from kentender_procurement.bid_evaluation.services.errors import fail
 REASON_ACCOUNTING_OFFICER = "accounting_officer"
 REASON_HEAD_OF_PROCUREMENT = "head_of_procurement"
 #: Commands the offices run in office, not as a panel member: the remedy for a roster that breaks the rule.
-OFFICE_COMMANDS = frozenset({"AppointEvaluationCommittee", "ReplaceEvaluationMember", "AssignEvaluationSecretary"})
+OFFICE_COMMANDS = frozenset({"AppointEvaluationCommittee", "ReplaceEvaluationMember", "DelegateEvaluationSecretary"})
 
 
 def panel_refusal(user: str, *, as_member: bool, as_secretary: bool = False) -> str | None:

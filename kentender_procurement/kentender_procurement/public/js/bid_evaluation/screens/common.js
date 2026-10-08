@@ -15,6 +15,10 @@ export const cmd = (label, method, o) => {
 };
 export const dialog = (label, name, o) => button(label, "dialog", { args: { name }, ...(o || {}) });
 
+// Delegate secretary duties (EVL-CHG-001 v0.8 §3, §10): offered to the authorised Head of Procurement Function alone, as the server says
+// (`committee.can_delegate`); absent for every other viewer. It opens D02-DELEGATE and changes nothing on navigation.
+export const delegateAction = (data) => (((data || {}).committee || {}).can_delegate ? [nav("Delegate secretary duties", "delegate")] : []);
+
 export function money(currency, value) {
 	if (value === null || value === undefined || value === "") return "";
 	const num = Number(value);

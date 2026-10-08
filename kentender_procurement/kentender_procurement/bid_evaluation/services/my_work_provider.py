@@ -37,24 +37,13 @@ def _row(doc, *, key: str, title: str, action_label: str, role: str, sub: str = 
 def _preparation(doc, user: str, ao: bool, hop: bool, out: dict[str, list]) -> None:
 	ref = doc.tender_reference
 	appointment = roster.current_appointment(doc.name)
-	secretary = roster.secretary(doc.name)
 	if doc.state not in ("Preparing", "Reviewing"):
 		return
+	# the Head is secretary by office when the committee is appointed: no secretary task or waiting item exists (EVL-CHG-001 v0.8 §3, EVL-A20)
 	if not appointment:
 		if ao:
 			out["assigned"].append(_row(doc, key="appoint", title=f"Appoint evaluation committee for {ref}", action_label="Appoint committee",
 				role=people.ACCOUNTING_OFFICER, sub="appoint", since=doc.prepared_at))
-		if hop:
-			out["waiting"].append(_row(doc, key="appoint:waiting", title="Waiting for committee appointment", action_label="View", role=people.HEAD_OF_PROCUREMENT,
-				status="Waiting", since=doc.prepared_at))
-	if not secretary:
-		if hop:
-			out["assigned"].append(_row(doc, key="secretary", title=f"Assign evaluation secretary for {ref}", action_label="Assign secretary",
-				role=people.HEAD_OF_PROCUREMENT, sub="secretary", since=doc.prepared_at))
-		if ao:
-			out["waiting"].append(_row(doc, key="secretary:waiting", title="Waiting for secretary appointment", action_label="View", role=people.ACCOUNTING_OFFICER,
-				status="Waiting", since=doc.prepared_at))
-	if not appointment:
 		return
 	members = roster.member_users(doc.name)
 	undeclared = [u for u in members if not roster.declaration(doc.name, u)]

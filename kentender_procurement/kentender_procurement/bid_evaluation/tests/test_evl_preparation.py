@@ -45,8 +45,11 @@ class TestPreparation(EvaluationCase):
 		self.assertEqual((again["prepared"], again["evaluation"]), (False, doc.name))
 		self.assertEqual(frappe.db.count("Evaluation Case", {"tender": self.name}), 1)
 		self.assertIn(f"Appoint evaluation committee for {self.reference}", titles(AO)["assigned"])
-		self.assertIn(f"Assign evaluation secretary for {self.reference}", titles(HOP)["assigned"])
-		self.assertIn("Waiting for committee appointment", titles(HOP)["waiting"])
+		# the Head is recorded as secretary when the committee is appointed: no secretary task, no waiting item (EVL-CHG-001 v0.8 §3, EVL-A20)
+		self.assertEqual([t for t in titles(HOP)["assigned"] if "secretary" in t.lower()], [])
+		self.assertNotIn("Waiting for committee appointment", titles(HOP)["waiting"])
+		self.assertNotIn("Waiting for secretary appointment", titles(AO)["waiting"])
+		self.assertEqual(frappe.db.count("Notification Log", {"for_user": HOP, "subject": f"Assign evaluation secretary for {self.reference}"}), 0)
 		# one courtesy notice per person, even after the replay
 		self.assertEqual(frappe.db.count("Notification Log", {"for_user": AO, "subject": f"Appoint evaluation committee for {self.reference}"}), 1)
 

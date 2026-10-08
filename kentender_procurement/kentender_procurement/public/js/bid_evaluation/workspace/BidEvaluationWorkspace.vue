@@ -1,5 +1,5 @@
 <!-- Bid evaluation workspace — EVL-CHG-001 v0.4 §9.2, §10 (boards D01, D01-EMPTY,
-     D01-FILTERED, D01-APPOINT, D01-APPOINT-HOP, S-FORBIDDEN):
+     D01-FILTERED, D01-APPOINT, S-FORBIDDEN):
        /app/bid-evaluation
      The viewer's own evaluation tasks, then the register of evaluations they
      may read, with a local search and state filter (ListEvaluationWork). No

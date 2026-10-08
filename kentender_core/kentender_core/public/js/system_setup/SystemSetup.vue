@@ -121,7 +121,7 @@ const tabProps = computed(() => {
 		case "organisation-structure":
 			return { canRepair: !!site.value?.capabilities?.repair_root, unitId: route.value.id };
 		case "users-and-responsibilities":
-			return { initialUnit: uraUnitFilter.value, assignmentId: route.value.id };
+			return { initialUnit: uraUnitFilter.value, assignmentId: route.value.id, section: route.value.section };
 		default:
 			return {};
 	}
@@ -164,6 +164,11 @@ async function refreshSite() {
 // and Back return to it; an empty id returns to the tab's list.
 function openRecord(id) {
 	go({ tab: activeTab.value, id: id || "" });
+}
+
+// The Users and responsibilities tab's local tabs (Responsibilities, Staff home units).
+function openSection(section) {
+	go({ tab: "users-and-responsibilities", section: section || "" });
 }
 
 function viewAffected(unitId) {
@@ -245,6 +250,7 @@ function sentences(text) {
 					@view-affected="viewAffected"
 					@navigate="navigateWithin"
 					@open="openRecord"
+					@section="openSection"
 				/>
 			</KeepAlive>
 			</div>

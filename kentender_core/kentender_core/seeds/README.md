@@ -27,12 +27,14 @@ and delivery services). Before the clear, any loaded demo profile
 (Requisitions, Departmental Needs, Bid Opening, Award) is undone; at the end a
 test site's clock is set to the as-at instant. The world, the commands and how
 a module adds to it are in SEED-002
-(`docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_1.md`,
-proposed to replace SEED-001 and SEED-OPS-001). Pass `"rebuild": True` to also drop the canonical
+(`docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_3.md`,
+approved 8 October 2026; it retired SEED-001 and SEED-OPS-001). Pass `"rebuild": True` to also drop the canonical
 module rows first (downstream first: Tenders — which takes the bid, opening,
 evaluation and award with it — Requisitions, Planning, Needs, Budget,
 Strategy) and rebuild from scratch. Leaves ERPNext-owned records and the pre-cutover
 legacy reference doctypes alone (KT-STD-001 §10).
+
+The site stage also records each fixture person's home organisation unit (`site_setup.HOME_UNITS`, KT-STD-001 §8.3A) through the System setup command `SetStaffHomeOrganisationUnit` (CFG-CHG-002 v0.19), never by writing the field; Esther Muthoni has none on purpose. Evaluation reads a committee member's department from it and generates the appointment reference, so no Evaluation seed passes either.
 
 `make seed-canonical SITE=<site>` wraps `run` for the full world (`CURRENT=award NEXT=annual_plan`; set either lower to stop a year earlier, add `REBUILD=True` for a rebuild; `THROUGH=` still maps for one release). Until SEED-002 is approved, the approved runbook is `docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_24.md` (each version has its own file from v1.16; v1.0–v1.15 were kept in `…_v1_0.md`); its stage ladder is superseded by the two controls.
 

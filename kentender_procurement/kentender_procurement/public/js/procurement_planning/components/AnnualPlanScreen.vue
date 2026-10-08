@@ -295,36 +295,34 @@
 			     is still being prepared. -->
 			<div v-if="activeView" class="kt-region is-secondary">
 				<h2>Approval and publication</h2>
-				<div class="kt-meta-row" data-testid="ppl-governance">
+				<div class="kt-meta-row pln-governance-row" data-testid="ppl-governance">
 					<div>
 						<span class="kt-label">Adopted by the Accounting Officer</span>
-						<span class="kt-meta-value">{{ activeView.governance_card.ao_adoption_line || "—" }}</span>
+						<span class="pln-check-value">{{ activeView.governance_card.ao_adoption_line || "—" }}</span>
 					</div>
 					<div>
 						<span class="kt-label">Approved</span>
-						<span class="kt-meta-value">{{ activeView.governance_card.statutory_approval_line || "—" }}</span>
+						<span class="pln-check-value">{{ activeView.governance_card.statutory_approval_line || "—" }}</span>
 					</div>
 					<div>
 						<span class="kt-label">Published</span>
-						<span class="kt-meta-value">
-							{{ activeView.governance_card.publication_line || "Not published" }}
-							<a
-								v-if="activeView.governance_card.publication_route"
-								href="#"
-								class="pln-check-action"
-								data-testid="ppl-view-publication"
-								@click.prevent="$emit('navigate', activeView.governance_card.publication_route)"
-							>View publication evidence</a>
-						</span>
+						<span class="pln-check-value">{{ activeView.governance_card.publication_line || "Not published" }}</span>
+						<a
+							v-if="activeView.governance_card.publication_route"
+							href="#"
+							class="pln-check-action"
+							data-testid="ppl-view-publication"
+							@click.prevent="$emit('navigate', activeView.governance_card.publication_route)"
+						>View publication evidence</a>
 					</div>
 					<div>
 						<span class="kt-label">In force since</span>
-						<span class="kt-meta-value">{{ activeView.summary.activated_display }}</span>
+						<span class="pln-check-value">{{ activeView.summary.activated_display }}</span>
 					</div>
 				</div>
 				<!-- §10.13 — what has actually been procured against it lives in
 				     its own surface; this page is about the plan itself. -->
-				<a href="#" data-testid="ppl-view-progress" @click.prevent="$emit('navigate', ['annual-procurement-plan', plan.plan_reference, 'progress'])">
+				<a href="#" class="pln-governance-progress" data-testid="ppl-view-progress" @click.prevent="$emit('navigate', ['annual-procurement-plan', plan.plan_reference, 'progress'])">
 					View procurement progress
 				</a>
 			</div>
