@@ -64,6 +64,10 @@
 .kt-req .req-target-title { font-weight: 600; font-size: 15px; }
 .kt-req .req-target-facts { font-size: 13px; color: var(--kt-color-neutral-600, var(--color-neutral-600)); }
 
+/* Record details — facts line up at the top; a list of references breaks between references, never inside one. */
+.kt-req .req-facts { align-items: flex-start; }
+.kt-req .req-fact-line { display: block; white-space: nowrap; }
+
 /* Items — one block per shared specification, so a mixed request edits each kind on its own (v1.17 §13.4C). */
 .kt-req .req-item-group { margin-top: var(--kt-space-4); }
 .kt-req .req-item-group + .req-item-group { margin-top: var(--kt-space-6); }

@@ -63,14 +63,10 @@ def objective_title(objective: str) -> str:
 
 
 def objective_reference(objective: str) -> str:
+	"""The Strategy Node's own reference (`strategy_node_id`, e.g. MOH-NODE-0004), never its database name."""
 	if not objective:
 		return ""
-	for field in ("node_code", "reference", "code"):
-		if frappe.db.has_column("Strategy Node", field):
-			value = frappe.db.get_value("Strategy Node", objective, field)
-			if value:
-				return cstr(value)
-	return cstr(objective)
+	return cstr(frappe.db.get_value("Strategy Node", objective, "strategy_node_id") or "")
 
 
 def money(value) -> str:
@@ -414,15 +410,22 @@ def review_sections(*, root, version: dict[str, Any], package: dict[str, Any], p
 	return out
 
 
-def record_details(*, root, version: dict[str, Any], projection: dict[str, Any], package_row=None, handoff=None) -> list[dict[str, str]]:
-	"""Level 3 — exact identities as labelled supporting evidence."""
-	sources = [l.get("source_line_id") for l in version.get("drawdown_lines") or []]
+def record_details(*, root, version: dict[str, Any], projection: dict[str, Any], package_row=None, handoff=None, with_digests: bool = False) -> list[dict[str, str]]:
+	"""Level 3 — exact identities as labelled supporting evidence. Every identity reads "<thing> reference" or
+	"<thing> version", sentence case. The two integrity digests are for the Technical and Auditor reads only
+	(`with_digests`): to anyone else a 64-character hash is noise (REQ-CHG-001 v1.18 §13.7A)."""
+	sources = [s for s in (l.get("source_line_id") for l in version.get("drawdown_lines") or []) if s]
+	# A source is a departmental need unless Planning took it from another origin (a direct entry).
+	origin = {src.get("plan_item_line_id"): src.get("source_origin") for src in projection.get("sources", [])}
+	lines = [l for l in version.get("drawdown_lines") or [] if l.get("source_line_id")]
+	needs_only = bool(lines) and all(origin.get(l.get("plan_item_line_id")) == "Accepted Departmental Need" for l in lines)
+	source_label = "Departmental need references" if needs_only else "Source references"
 	facts = [
-		{"label": "Requisition", "value": root.requisition_reference},
-		{"label": "Plan Item reference", "value": root.plan_item_id},
-		{"label": "Plan", "value": f"{projection.get('plan_reference') or root.plan_id} · {root.plan_version_id}"},
-		{"label": "Plan item version", "value": cstr(root.plan_item_version_id)},
-		{"label": "Source references", "value": "; ".join(s for s in sources if s)},
+		{"label": "Requisition reference", "value": root.requisition_reference},
+		{"label": "Plan item reference", "value": root.plan_item_id},
+		{"label": "Plan version", "value": cstr(root.plan_version_id)},
+		{"label": "Plan item version reference", "value": cstr(root.plan_item_version_id)},
+		{"label": source_label, "value": "; ".join(sources)},
 		{"label": "Strategic objective reference", "value": objective_reference(root.strategic_objective_id)},
 	]
 	drawdowns = [l.get("planning_drawdown_reference") for l in version.get("drawdown_lines") or [] if l.get("planning_drawdown_reference")]
@@ -431,9 +434,9 @@ def record_details(*, root, version: dict[str, Any], projection: dict[str, Any],
 	reservations = [l.get("reservation_code") or l.get("reservation_id") for l in version.get("drawdown_lines") or [] if l.get("reservation_id")]
 	if reservations:
 		facts.append({"label": "Reservation references", "value": "; ".join(reservations)})
-	if handoff:
-		facts.append({"label": "Handoff display reference", "value": root.requisition_reference})
-		facts.append({"label": "Handoff digest", "value": cstr(handoff.handoff_digest)})
-	if version.get("content_digest"):
-		facts.append({"label": "Content digest", "value": cstr(version.get("content_digest"))})
+	if with_digests:
+		if handoff:
+			facts.append({"label": "Handoff digest", "value": cstr(handoff.handoff_digest)})
+		if version.get("content_digest"):
+			facts.append({"label": "Content digest", "value": cstr(version.get("content_digest"))})
 	return facts

@@ -150,6 +150,11 @@ def _next_task(root) -> tuple[str, str]:
 	return task_label, blocker
 
 
+def _integrity_reader(actor: str) -> bool:
+	"""Who sees the integrity digests in Record details: the Technical read and the Auditor, nobody else."""
+	return bool(authz.is_technical(actor) or authz.can_read_site(ROLE_AUDITOR, actor))
+
+
 def get_requisition_workspace(*, filters: dict[str, Any] | None = None, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	if not authz.holds_any_requisition_responsibility(actor):
@@ -541,7 +546,7 @@ def get_requisition_editor(*, root, actor: str) -> dict[str, Any]:
 		},
 		"requirements": _requirements_view(pdict, package_version, vdict),
 		"review": review, "decision_chain": _decision_chain(root, version),
-		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection, with_digests=_integrity_reader(actor)),
 		"actions": actions, "catalogue": _catalogue_meta(),
 	}
 
@@ -605,7 +610,7 @@ def get_department_approval_task(*, task: str, user: str | None = None) -> dict[
 		"question": f"Does this requisition accurately state {both} need and minimum requirements?",
 		"certification": "I confirm that this requisition states the departments’ operational need and minimum requirements and may be submitted to Procurement.",
 		"decision_chain": _decision_chain(root, version), "sections": sections, "findings": report["findings"],
-		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection, with_digests=_integrity_reader(actor)),
 		"actions": {
 			"submit_to_procurement": decider and not report.get("blocking_count"), "return_for_correction": decider,
 			# REQ-DES-07-SUBMITTED: before authorisation the lead HoD keeps
@@ -705,7 +710,7 @@ def get_procurement_authorisation_task(*, task: str, user: str | None = None) ->
 			"budget_line": ", ".join(l["budget_line"] for l in funding.get("lines", [])), "available_after": after,
 			"text": f"The approved-plan amounts will be used, {'two' if len(vdict['drawdown_lines']) == 2 else len(vdict['drawdown_lines'])} funding reservation{'s' if len(vdict['drawdown_lines']) != 1 else ''} will be created and Tender Preparation may begin.",
 		},
-		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection, with_digests=_integrity_reader(actor)),
 		"actions": {
 			"authorise": can_authorise, "return_to_department": decider, "request_planning_correction": decider,
 			"change_submitting_department": decider and len(units) > 1, "refresh": decider, "view_planning_request": bool(hold.get("held")),
@@ -726,7 +731,7 @@ def get_locked_requisition(*, root, actor: str) -> dict[str, Any]:
 		"outcome": "OK", "kind": "locked", "mode": "technical" if authz.is_technical(actor) else "reader",
 		"header": _header(root, version, description=""), "sections": sections, "decision_chain": _decision_chain(root, version),
 		"withdrawn": {"by": p.user_name(withdrawn.actor), "at": p.eat(withdrawn.decided_at), "reason": withdrawn.reason} if withdrawn else None,
-		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection, with_digests=_integrity_reader(actor)),
 		"actions": {"withdraw": is_lead_hod and pre, "request_planning_correction": pre and (is_lead_hod or _has(actor, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)), "export": True},
 		"requisition": root.name, "root_record_version": root.record_version,
 	}
@@ -746,7 +751,7 @@ def get_version_review(*, root, version_name: str, actor: str) -> dict[str, Any]
 		"outcome": "OK", "kind": "version", "header": _header(root, version, badge=(version.version_status, "is-critical" if version.version_status == "Returned" else "is-draft")),
 		"decision": {"by": p.user_name(decision.actor), "at": p.eat(decision.decided_at), "reason": decision.reason, "affected_section": decision.affected_section, "decision": decision.decision} if decision else None,
 		"current_draft_route": f"/app/procurement-requisitions/{root.name}" if root.current_state == "Draft" else "",
-		"sections": sections, "record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"sections": sections, "record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection, with_digests=_integrity_reader(actor)),
 		"actions": {"export": True}, "requisition": root.name,
 	}
 
@@ -794,7 +799,7 @@ def get_authorised_requisition(*, root, actor: str) -> dict[str, Any]:
 		"consumed": {"tender": tender, "tender_reference": tender_ref, "route": f"/app/tenders/{tender}" if tender else ""} if consumed else None,
 		"revoked": revoked, "decision_chain": _decision_chain(root, version), "sections": sections, "reservations": reservations,
 		"handoff": {"handoff": handoff.name, "digest": handoff.handoff_digest, "version": handoff.handoff_version} if handoff else None,
-		"record_details": p.record_details(root=root, version=vwith, projection=projection, handoff=handoff),
+		"record_details": p.record_details(root=root, version=vwith, projection=projection, handoff=handoff, with_digests=_integrity_reader(actor)),
 		"actions": {
 			"continue_to_tender_preparation": root.current_state == "Authorised" and not consumed and is_officer and not authz.is_technical(actor),
 			"open_tender": consumed, "revoke": root.current_state == "Authorised" and not consumed and is_hopf and not authz.is_technical(actor),
@@ -891,7 +896,7 @@ def get_stopped_requisition(*, root, actor: str) -> dict[str, Any]:
 		"unavailable": unavailable, "other_unresolved": [{"reference": r["correction_request"], "status": r["status"]} for r in others],
 		"hold_notice": f"Authorisation remains on hold: {len(others)} Planning request{' is' if len(others) == 1 else 's are'} still unresolved." if others else "",
 		"correction_chain": chain, "sections": sections, "fresh_start": fresh,
-		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection, with_digests=_integrity_reader(actor)),
 		"actions": {
 			"view_planning_request": not is_planner, "open_planning_task": is_planner, "start_new_requisition": may_start,
 			"try_again": unavailable, "export": True,

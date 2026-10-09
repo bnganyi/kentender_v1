@@ -385,7 +385,7 @@ export function review(variant) {
 			dates: [{ label: "Estimated completion", value: "24 Sep 2027" }, { label: "Latest delivery date", value: "30 Sep 2027" }, { label: "Plan completion boundary", value: "31 Dec 2027" }],
 			sections: reviewSections(),
 		},
-		record_details: [{ label: "Requisition", value: REF }],
+		record_details: [{ label: "Requisition reference", value: REF }],
 		actions: direct
 			? { save: true, save_label: "Save draft", edit_shared: true, submit_to_procurement: true, withdraw: true, request_planning_correction: true }
 			: { save: true, save_label: "Save draft", edit_shared: true, send_for_department_approval: true },
@@ -424,7 +424,7 @@ const CHECKS = [
 	["reservation_category", "Planned designation", "Youth — supported; exact verified rule snapshot bound"], ["county_resident_reservation", "County-residents restriction", "Not applicable"],
 	["lotting_indicator", "Lotting indicator", "Single lot"], ["currency", "Currency", "KES"], ["award_package", "Award package", "One"],
 	["procurement_method", "Planned method", "Open Tender"], ["plan_horizon", "Plan horizon", "Single year"],
-].map(([test, label, result]) => ({ test, label, ok: true, result, failure: "", code: "" }));
+].map(([test, check, result]) => ({ test, check, ok: true, result, failure: "", code: "" })); // the server's row: `check` names it (compatibility.Check.as_dict)
 
 export function procurementTask(variant) {
 	const technical = variant === "TECHNICAL";
