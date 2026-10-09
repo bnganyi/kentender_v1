@@ -1,22 +1,23 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.18 §5.5.2 / §7.2 — the asynchronous publication pipeline
-(plan D8, PLN18-209).
+"""PLN-CHG-001 v1.31 §5.5.2 / §7.2 — what approval commits, and the guarded
+activation.
 
 `commit_approved_plan` runs inside `ApproveAnnualPlan`'s own transaction: it
-freezes the exact immutable content (`Approved Plan Snapshot`), a durable
-publication record (`Plan Publication`) and dispatch intent
-(`Publication Intent`) — nothing here reaches outside the database. External
-transmission is `publish_annual_plan`, a system worker that would run
-post-commit via `frappe.enqueue` in production; this bench runs no RQ worker,
-so callers (tests, seeds) invoke it inline after the approving transaction
-commits, exactly as `ApproveAnnualPlan` itself would enqueue it. Acknowledgement,
-activation, reconciliation and retry are separate authenticated system
-functions so a real external callback, a technical reconciliation job and a
-technical retry are each their own auditable action — never a manufactured
-success.
-"""
+freezes the exact immutable content (`Approved Plan Snapshot`) and the
+publication record (`Plan Publication`) whose manifest and hash identify the
+generated document the Planner downloads and confirms. Nothing here reaches
+outside the database and nothing is dispatched.
+
+MVP 1 publication is manual (Project Owner instruction, 9 October 2026): the
+Procurement Planner confirms Treasury submission and entity-website publication
+(`publication_confirmation.confirm_plan_publication`), which then calls
+`activate_plan_version` below. v1.30 and earlier had a post-commit worker with a
+sandbox adapter, an authenticated acknowledgement, a technical retry and a
+reconciliation, and the Head of Procurement Function's Publish; all of that is
+retired (PLN-CHG-001 v1.31 §5.5.2.0). Existing attempts, acknowledgements and
+intents stay as read-only history."""
 
 from __future__ import annotations
 
@@ -29,20 +30,21 @@ from frappe.utils import cstr, now_datetime
 from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.services import envelope, plan_finance, plan_json, plan_publication
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
-from kentender_procurement.procurement_planning.services.planning_roles import ROLE_HEAD_OF_PROCUREMENT_FUNCTION
-from kentender_procurement.procurement_planning.write_family import planning_command, planning_write
+from kentender_procurement.procurement_planning.write_family import planning_command
 
-DESTINATION_ADAPTER = "KenTender Annual Plan Publication Sandbox"
+DESTINATION_ADAPTER = "Manual publication — Planner confirmation"
 
 
 def _ensure_destination() -> str:
+	"""`Plan Publication.destination` is required. MVP 1 has no external
+	destination, so every publication points at the one manual record."""
 	existing = frappe.db.get_value("Annual Plan Publication Destination", {"adapter": DESTINATION_ADAPTER, "active": 1})
 	if existing:
 		return existing
 	return frappe.get_doc(
 		{
-			"doctype": "Annual Plan Publication Destination", "destination_id": "MOH-APP-SANDBOX-v1",
-			"title": "KenTender Annual Plan Publication Sandbox", "adapter": DESTINATION_ADAPTER, "active": 1, "sandbox_outcome": "Acknowledge",
+			"doctype": "Annual Plan Publication Destination", "destination_id": "MOH-APP-MANUAL-v1",
+			"title": "Entity website, recorded by the Planner", "adapter": DESTINATION_ADAPTER, "active": 1, "sandbox_outcome": "Acknowledge",
 		}
 	).insert(ignore_permissions=True).name
 
@@ -50,7 +52,7 @@ def _ensure_destination() -> str:
 def commit_approved_plan(*, version, plan, decision, actor: str) -> dict[str, str]:
 	"""§5.5.2 — get-or-create, keyed by the exact Version: a retried or
 	duplicated `ApproveAnnualPlan` after a partial failure lands on the same
-	snapshot/publication/intent identifiers, never a second approved package."""
+	snapshot and publication identifiers, never a second approved package."""
 	existing_snapshot = frappe.db.get_value("Approved Plan Snapshot", {"plan_version": version.name}, "name")
 	if existing_snapshot:
 		snapshot = frappe.get_doc("Approved Plan Snapshot", existing_snapshot)
@@ -84,185 +86,11 @@ def commit_approved_plan(*, version, plan, decision, actor: str) -> dict[str, st
 			}
 		).insert(ignore_permissions=True)
 
-	existing_intent = frappe.db.get_value("Publication Intent", {"publication": publication.name}, "name")
-	if existing_intent:
-		intent = frappe.get_doc("Publication Intent", existing_intent)
-	else:
-		intent = frappe.get_doc(
-			{
-				"doctype": "Publication Intent", "publication": publication.name, "dispatch_state": "Committed",
-				"created_at": now_datetime(), "record_version": 0, "fixture_namespace": cstr(version.fixture_namespace),
-			}
-		).insert(ignore_permissions=True)
-	return {"snapshot": snapshot.name, "publication": publication.name, "intent": intent.name}
+	return {"snapshot": snapshot.name, "publication": publication.name}
 
 
 def _active_hold(plan_version: str):
 	return frappe.db.get_value("Plan Publication Hold", {"plan_version": plan_version, "hold_state": "Active"}, "name")
-
-
-def _payload_and_hash(publication):
-	return json.loads(publication.manifest)[0] if publication.manifest else None, publication.package_hash
-
-
-def _transmit(destination: str) -> tuple[str, str]:
-	"""The sandbox adapter: `Annual Plan Publication Destination.sandbox_outcome`
-	drives the simulated result so tests can prove the Failed/Indeterminate
-	recovery paths without a real external destination to fail against."""
-	outcome = cstr(frappe.db.get_value("Annual Plan Publication Destination", destination, "sandbox_outcome") or "Acknowledge")
-	if outcome == "Fail":
-		return "Failed", ""
-	if outcome == "Indeterminate":
-		return "Indeterminate", ""
-	return "Acknowledged", frappe.generate_hash(length=16)
-
-
-@planning_command
-def publish_annual_plan(*, plan_version: str, idempotency_key: str | None = None, user: str | None = None) -> dict[str, Any]:
-	"""§7.2 `PublishAnnualPlan` — the system worker (seeds, tests and the
-	technical retry). Gated on valid current Treasury evidence and no active
-	hold; sends the exact frozen manifest under the publication's own stable
-	identity (never a new package). The business entry is `publish_approved_plan`."""
-	actor = authz.require_technical(user)
-	payload_key = {"plan_version": plan_version}
-	if idempotency_key:
-		replay = envelope.replay_or_none(idempotency_key, payload_key)
-		if replay:
-			return replay
-	result = _publish(
-		plan_version=plan_version, states=("Approved — publication pending", "Publication failed"), refuse_unknown_result=False,
-	)
-	if idempotency_key:
-		envelope.record_command(
-			idempotency_key=idempotency_key, command="PublishAnnualPlan", payload=payload_key, result=result,
-			document_type="Publication Attempt", document_name=result["attempt"], actor=actor,
-			fixture_namespace=cstr(frappe.db.get_value("Annual Plan Version", plan_version, "fixture_namespace")),
-		)
-	return result
-
-
-@planning_command
-def publish_approved_plan(*, plan_version: str, idempotency_key: str) -> dict[str, Any]:
-	"""RG-01 / AUD-XC-106 (owner decisions D4 and 7 Oct 2026) — the Head of
-	Procurement Function presses Publish on an approved Annual Plan.
-
-	The actor is the session user, never a parameter. Only a registered Head of
-	Procurement Function responsibility may start it (a technical role holds no
-	business action); it is offered in the one state "Approved — publication
-	pending" — a failed or unknown result is the technical retry/reconcile, never
-	a second manual press. Everything after the authorisation is the pipeline
-	`publish_annual_plan` uses: Treasury evidence and no hold, the frozen
-	manifest, the attempt record, acknowledgement and activation."""
-	actor = authz.actor(None)
-	authz.require_site_role(ROLE_HEAD_OF_PROCUREMENT_FUNCTION, actor)
-	if not cstr(idempotency_key).strip():
-		fail("PLN_ENTRY_INCOMPLETE", detail={"field": "idempotency_key"})
-	payload_key = {"plan_version": plan_version}
-	replay = envelope.replay_or_none(idempotency_key, payload_key)
-	if replay:
-		return replay
-	result = _publish(plan_version=plan_version, states=("Approved — publication pending",), refuse_unknown_result=True)
-	envelope.record_command(
-		idempotency_key=idempotency_key, command="PublishApprovedPlan", payload=payload_key, result=result,
-		document_type="Publication Attempt", document_name=result["attempt"], actor=actor,
-		fixture_namespace=cstr(frappe.db.get_value("Annual Plan Version", plan_version, "fixture_namespace")),
-	)
-	return result
-
-
-def _publish(*, plan_version: str, states: tuple[str, ...], refuse_unknown_result: bool) -> dict[str, Any]:
-	"""The publication pipeline both publishing commands share: lock the Version, gate on its
-	state, Treasury evidence and holds, send the frozen manifest, record the attempt, and
-	acknowledge and activate. The calling command owns the idempotency key."""
-	version = envelope.locked("Annual Plan Version", plan_version)
-	if version.version_status not in states:
-		fail("PLN_REVIEW_STALE")
-	publication_name = frappe.db.get_value("Plan Publication", {"plan_version": version.name}, "name")
-	if not publication_name:
-		fail("PLN_REVIEW_STALE", "Approval has not committed a publication yet.")
-	publication = frappe.get_doc("Plan Publication", publication_name)
-	if refuse_unknown_result and publication.publication_state == "Indeterminate":
-		# an earlier press could not confirm the result: the plan may be published already
-		fail("PLN_PUBLICATION_UNKNOWN")
-	if _active_hold(version.name):
-		fail("PLN_PUBLICATION_HELD")
-	current_evidence = frappe.db.get_value("Treasury Submission Evidence", {"plan_version": version.name, "evidence_state": "Current"}, "name")
-	if not current_evidence:
-		fail("PLN_TREASURY_EVIDENCE_REQUIRED")
-
-	attempt_number = frappe.db.count("Publication Attempt", {"publication": publication.name}) + 1
-	result, external_reference = _transmit(publication.destination)
-	attempt = frappe.get_doc(
-		{
-			"doctype": "Publication Attempt", "publication": publication.name, "attempt_number": attempt_number, "result": result,
-			"attempted_at": now_datetime(), "external_reference": external_reference or None,
-			"completed_at": now_datetime() if result != "Pending" else None, "fixture_namespace": cstr(version.fixture_namespace),
-		}
-	).insert(ignore_permissions=True)
-
-	if result == "Failed":
-		envelope.bump(version, version_status="Publication failed")
-		frappe.db.set_value("Plan Publication", publication.name, "publication_state", "Failed", update_modified=False)
-	elif result == "Indeterminate":
-		frappe.db.set_value("Plan Publication", publication.name, "publication_state", "Indeterminate", update_modified=False)
-		frappe.db.set_value("Publication Intent", {"publication": publication.name}, "dispatch_state", "Dispatched", update_modified=False)
-	else:
-		frappe.db.set_value("Publication Intent", {"publication": publication.name}, {"dispatch_state": "Dispatched", "dispatched_at": now_datetime()}, update_modified=False)
-		receive_publication_acknowledgement(
-			event_id=f"{publication.name}:{attempt.name}", publication=publication.name, package_hash=publication.package_hash,
-			external_reference=external_reference, acknowledged_at=now_datetime(), user="Administrator",
-		)
-	version.reload()
-	return {"ok": True, "idempotent": False, "action": "publish_attempted", "publication": publication.name, "attempt": attempt.name, "result": result, "version_status": version.version_status}
-
-
-def receive_publication_acknowledgement(
-	*, event_id: str, publication: str, package_hash: str, public_location: str = "", external_reference: str = "",
-	acknowledged_at=None, idempotency_key: str | None = None, user: str | None = None,
-) -> dict[str, Any]:
-	"""§7.2 `ReceivePublicationAcknowledgement` — authenticated exact-package
-	correlation; duplicate event id is idempotent; a mismatched hash never
-	activates. Runs the activation predicates and switches once, or holds."""
-	actor = authz.require_technical(user)
-	event_id = cstr(event_id).strip()
-	if not event_id:
-		fail("PLN_ENTRY_INCOMPLETE", "An acknowledgement needs its adapter event id.", {"field": "event_id"})
-	existing = frappe.db.get_value("Publication Acknowledgement", {"event_id": event_id}, "name")
-	if existing:
-		ack = frappe.get_doc("Publication Acknowledgement", existing)
-		return {"ok": True, "idempotent": True, "action": "acknowledged", "acknowledgement": ack.name, "publication": ack.publication, "matched": bool(ack.matched)}
-	pub = envelope.locked("Plan Publication", publication)
-	matched = cstr(package_hash) == cstr(pub.package_hash)
-	# the acknowledgement is evidence even when it does not match: it is recorded
-	# first and the mismatch refused after, so the Planning write window covers
-	# only this insert and not the refusal
-	with planning_write():
-		ack = frappe.get_doc(
-			{
-				"doctype": "Publication Acknowledgement", "event_id": event_id, "publication": pub.name, "snapshot": pub.snapshot,
-				"destination": pub.destination, "package_hash": cstr(package_hash), "public_location": public_location,
-				"external_reference": external_reference, "acknowledged_at": acknowledged_at or now_datetime(), "received_at": now_datetime(),
-				"matched": 1 if matched else 0, "mismatch_reason": "" if matched else "The acknowledged package hash does not match this publication.",
-				"fixture_namespace": cstr(pub.fixture_namespace),
-			}
-		).insert(ignore_permissions=True)
-	if not matched:
-		fail("PLN_PUBLICATION_ACK_MISMATCH", detail={"publication": pub.name, "acknowledgement": ack.name})
-
-	frappe.db.set_value("Plan Publication", pub.name, {"publication_state": "Acknowledged", "acknowledged_at": ack.acknowledged_at, "public_location": public_location, "external_reference": external_reference}, update_modified=False)
-	open_attempt = frappe.db.get_value("Publication Attempt", {"publication": pub.name, "result": ("in", ("Pending", "Acknowledged"))}, "name", order_by="attempt_number desc")
-	if open_attempt:
-		frappe.db.set_value("Publication Attempt", open_attempt, {"result": "Acknowledged", "completed_at": ack.acknowledged_at, "external_reference": external_reference}, update_modified=False)
-	frappe.db.set_value("Publication Intent", {"publication": pub.name}, "dispatch_state", "Completed", update_modified=False)
-
-	activation = activate_plan_version(plan_version=pub.plan_version, user="Administrator")
-	result_dict = {"ok": True, "idempotent": False, "action": "acknowledged", "acknowledgement": ack.name, "publication": pub.name, "matched": True, "activation": activation}
-	if idempotency_key:
-		envelope.record_command(
-			idempotency_key=idempotency_key, command="ReceivePublicationAcknowledgement", payload={"publication": publication, "event_id": event_id},
-			result=result_dict, document_type="Publication Acknowledgement", document_name=ack.name, actor=actor, fixture_namespace=cstr(pub.fixture_namespace),
-		)
-	return result_dict
 
 
 def _activation_blockers(version, plan) -> list[str]:
@@ -313,66 +141,6 @@ def activate_plan_version(*, plan_version: str, idempotency_key: str | None = No
 			document_type="Annual Plan Version", document_name=version.name, actor=actor, fixture_namespace=cstr(version.fixture_namespace),
 		)
 	return result
-
-
-@planning_command
-def reconcile_publication(*, publication: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
-	"""§7.2 `ReconcilePublication` — technical; reads the authoritative
-	destination result. Never sets success manually; an unknown result
-	stays Indeterminate."""
-	actor = authz.require_technical(user)
-	replay = envelope.replay_or_none(idempotency_key, {"publication": publication})
-	if replay:
-		return replay
-	if not publication or not frappe.db.exists("Plan Publication", publication):
-		authz.not_found()
-	pub = envelope.locked("Plan Publication", publication)
-	if pub.publication_state != "Indeterminate":
-		fail("PLN_REVIEW_STALE", "Only an indeterminate publication needs reconciliation.")
-	attempt_name = frappe.db.get_value("Publication Attempt", {"publication": pub.name, "result": "Indeterminate"}, "name", order_by="attempt_number desc")
-	looked_up = _transmit(pub.destination)[0]  # sandbox: the destination's own current outcome answers the reconciliation query
-	if looked_up == "Acknowledged":
-		outcome = receive_publication_acknowledgement(event_id=f"reconcile:{publication}", publication=pub.name, package_hash=pub.package_hash, user="Administrator")
-		result = {"ok": True, "idempotent": False, "action": "reconciled", "outcome": "Acknowledged", "detail": outcome}
-	elif looked_up == "Failed":
-		if attempt_name:
-			frappe.db.set_value("Publication Attempt", attempt_name, {"result": "Failed", "completed_at": now_datetime()}, update_modified=False)
-		envelope.bump(pub, publication_state="Failed")
-		version = frappe.get_doc("Annual Plan Version", pub.plan_version)
-		if version.version_status not in ("Active", "Published — activation held"):
-			frappe.db.set_value("Annual Plan Version", pub.plan_version, "version_status", "Publication failed", update_modified=False)
-		result = {"ok": True, "idempotent": False, "action": "reconciled", "outcome": "Failed"}
-	else:
-		result = {"ok": True, "idempotent": False, "action": "reconciled", "outcome": "Indeterminate"}
-	envelope.record_command(
-		idempotency_key=idempotency_key, command="ReconcilePublication", payload={"publication": publication}, result=result,
-		document_type="Plan Publication", document_name=pub.name, actor=actor, fixture_namespace=cstr(pub.fixture_namespace),
-	)
-	return result
-
-
-@planning_command
-def retry_publication(*, publication: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
-	"""§7.2 `RetryPublication` — technical; the SAME frozen manifest and
-	identity, from a confirmed Failed publication only (Indeterminate must
-	reconcile first)."""
-	actor = authz.require_technical(user)
-	replay = envelope.replay_or_none(idempotency_key, {"publication": publication})
-	if replay:
-		return replay
-	if not publication or not frappe.db.exists("Plan Publication", publication):
-		authz.not_found()
-	pub = frappe.get_doc("Plan Publication", publication)
-	version = frappe.get_doc("Annual Plan Version", pub.plan_version)
-	if version.version_status != "Publication failed":
-		fail("PLN_REVIEW_STALE")
-	result_dict = publish_annual_plan(plan_version=version.name, user="Administrator")
-	result_dict = {**result_dict, "action": "retried"}
-	envelope.record_command(
-		idempotency_key=idempotency_key, command="RetryPublication", payload={"publication": publication}, result=result_dict,
-		document_type="Publication Attempt", document_name=result_dict["attempt"], actor=actor, fixture_namespace=cstr(pub.fixture_namespace),
-	)
-	return result_dict
 
 
 @planning_command

@@ -814,8 +814,11 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 			actionable.append(_action("Plan funding returned by Finance", plan.title, "Open Annual Plan", ["annual-procurement-plan", plan.plan_reference], "critical"))
 		if plan and open_version and open_version.version_status in ("Awaiting Accounting Officer", "Awaiting statutory approval"):
 			waiting.append({"item": f"Annual Plan {open_version.version_status.lower()}", "scope": plan.title})
-		if plan and open_version and open_version.version_status == "Publication failed":
-			waiting.append({"item": "Publication was not acknowledged; a technical retry is pending", "scope": plan.title})
+		if plan and open_version and open_version.version_status in ("Approved — publication pending", "Publication failed"):
+			# v1.31 — the Planner's own task (v1.30 read: a technical retry was pending)
+			publication = frappe.db.get_value("Plan Publication", {"plan_version": open_version.name}, "name")
+			if publication and not frappe.db.exists("Plan Publication Confirmation", {"plan_version": open_version.name, "confirmation_state": "Current"}):
+				actionable.append(_action("Confirm plan publication", plan.title, "Confirm plan publication", [PAGE, "publication", publication], "attention"))
 
 	if plan and open_version and authz.has_site_role(ROLE_FINANCE_CONFIRMATION_OFFICER, actor):
 		for task in frappe.get_all("Plan Finance Task", filters={"plan_version": open_version.name, "status": "Open"}, fields=["name", "plan_value", "creation"]):

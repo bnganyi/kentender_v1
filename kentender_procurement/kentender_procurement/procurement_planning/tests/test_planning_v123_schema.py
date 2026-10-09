@@ -92,6 +92,8 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	"Publication Intent": {"publication", "dispatch_state", "created_at", "dispatched_at", "correlation_id", "hold", "record_version", "fixture_namespace"},
 	"Publication Attempt": {"publication", "attempt_number", "result", "attempted_at", "completed_at", "external_reference", "response_evidence", "failure_reason", "fixture_namespace"},
 	"Publication Acknowledgement": {"event_id", "publication", "snapshot", "destination", "package_hash", "public_location", "external_reference", "acknowledged_at", "received_at", "matched", "mismatch_reason", "fixture_namespace"},
+	# PLN-CHG-001 v1.31 §4.9 — the Planner's publication confirmation (Draft, Current or Superseded).
+	"Plan Publication Confirmation": {"plan_version", "snapshot", "publication", "document_hash", "package_hash", "confirmation_state", "treasury_submitted_on", "treasury_reference", "treasury_attachment", "website_published_on", "public_plan_url", "confirmation_acknowledged", "actor", "authority_snapshot", "recorded_at", "superseded_by", "correction_reason", "record_version", "fixture_namespace"},
 	"Treasury Submission Evidence": {"plan_version", "document_hash", "submitted_at", "channel", "destination", "dispatch_reference", "supporting_attachment", "exact_document_confirmed", "actor", "authority_snapshot", "recorded_at", "evidence_state", "superseded_by", "correction_reason", "fixture_namespace"},
 	"Plan Publication Hold": {"plan_version", "publication", "hold_kind", "reason", "raised_by", "raised_by_service", "raised_at", "reconciliation_outcome", "withdrawal_decision", "hold_state", "released_at", "record_version", "fixture_namespace"},
 	"Annual Plan Publication Destination": {"destination_id", "title", "adapter", "active", "sandbox_outcome", "fixture_namespace"},
@@ -189,6 +191,11 @@ DORMANT_CODES = {"PLN_FORECAST_REASON_REQUIRED", "PLN_CASCADE_INCLUDES_ACTUAL_MI
 # Owner decision 26 Sep 2026 (the departmental correction route, PLN
 # FU-V127-05): three codes built ahead of the next PLN version's §8. Remove
 # them from here when the spec table carries them.
+#: Messages a later approved or proposed Planning version re-worded without changing the code.
+CHANGED_SINCE_V127 = {
+	"PLN_TREASURY_EVIDENCE_REQUIRED": "Complete the publication details before confirming: the Treasury submission date, a submission reference or attachment, the website publication date and the public plan URL, and tick the confirmation.",
+}
+
 OWED_TO_SPEC = {
 	"PLN_BUDGET_REVISION_ALREADY_DECLINED",
 	"PLN_DEPARTMENTAL_UPDATE_NOT_REQUIRED",
@@ -308,7 +315,8 @@ class TestPlanningV123Schema(IntegrationTestCase):
 		# table by exactly those two dormant codes and by nothing else.
 		self.assertEqual(set(errors.ERROR_CODES) - set(table), DORMANT_CODES | OWED_TO_SPEC)
 		self.assertEqual(set(table) - set(errors.ERROR_CODES), set())
-		self.assertEqual(table, {k: v for k, v in errors.MESSAGES.items() if k not in DORMANT_CODES | OWED_TO_SPEC})
+		# PLN-CHG-001 v1.31 §8 re-worded one message in place (the code is unchanged); this test still reads the v1.27 table.
+		self.assertEqual({**table, **CHANGED_SINCE_V127}, {k: v for k, v in errors.MESSAGES.items() if k not in DORMANT_CODES | OWED_TO_SPEC})
 		for removed in ("PLN_RESERVATION_RELEASE_FAILED", "PLN_TENDERING_PERIOD_BELOW_MINIMUM", "PLN_EVALUATION_PERIOD_ABOVE_MAXIMUM", "PLN_STANDSTILL_BELOW_MINIMUM"):
 			self.assertNotIn(removed, errors.ERROR_CODES)
 			with self.assertRaises(ValueError):

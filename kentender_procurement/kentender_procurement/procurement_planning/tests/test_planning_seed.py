@@ -102,7 +102,7 @@ class TestSeedContract(IntegrationTestCase):
 			card = plan["active_view"]["governance_card"]
 			self.assertEqual(card["ao_adoption_line"], f"Amina Hassan · {adopted}", reference)
 			self.assertIn(approved, card["statutory_approval_line"], reference)
-			self.assertEqual(card["publication_line"], f"Acknowledged · {published}", reference)
+			self.assertEqual(card["publication_line"], f"Confirmed · {published}", reference)  # PLN-CHG-001 v1.31: the Planner's confirmation (v1.30 read: Acknowledged)
 
 	def test_a_rerun_is_idempotent(self):
 		before = frappe.db.count("Annual Plan Version", {"annual_plan": ("in", frappe.get_all("Annual Plan", filters={"fiscal_year": seed.FY}, pluck="name") or ("",))})

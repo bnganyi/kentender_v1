@@ -248,6 +248,21 @@ def download_review_pack(task: str) -> None:
 
 
 @frappe.whitelist()
+def download_approved_plan(publication: str) -> None:
+	"""U13 **Download approved plan** / **Download Plan data** — a plain
+	authenticated file download of the frozen package (not the JSON API layer),
+	so it must not be called through `run()`."""
+	import json as _json
+
+	from kentender_procurement.procurement_planning.services import plan_read
+
+	package = plan_read.build_approved_package(publication=publication)
+	frappe.local.response.filename = package["filename"]
+	frappe.local.response.filecontent = _json.dumps(package["payload"], indent=2, default=str)
+	frappe.local.response.type = "download"
+
+
+@frappe.whitelist()
 def get_publication_task(publication: str) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_read
 
@@ -419,44 +434,37 @@ def submit_corrected_plan(plan_version: str, expected_record_version, idempotenc
 
 
 @frappe.whitelist()
-def publish_annual_plan(plan_version: str, idempotency_key: str) -> dict[str, Any]:
-	"""`PublishApprovedPlan` (RG-01, owner decision 7 Oct 2026) — the Head of
-	Procurement Function presses Publish on an approved Annual Plan. The actor is
-	the session user; no technical role may call it (a technical caller is the
-	retry/reconcile route, never a business Publish)."""
-	from kentender_procurement.procurement_planning.services import publication_pipeline
+def save_publication_draft(plan_version: str, values, idempotency_key: str, expected_record_version=None) -> dict[str, Any]:
+	"""`SavePublicationDraft` (PLN-CHG-001 v1.31) — the Procurement Planner keeps
+	incomplete publication evidence as the one Draft. Never evidence."""
+	from kentender_procurement.procurement_planning.services import publication_confirmation
 
-	return publication_pipeline.publish_approved_plan(plan_version=plan_version, idempotency_key=idempotency_key)
-
-
-@frappe.whitelist()
-def receive_publication_acknowledgement(publication: str, event_id: str, package_hash: str, idempotency_key: str, public_location: str | None = None, external_reference: str | None = None) -> dict[str, Any]:
-	"""§7.2 `ReceivePublicationAcknowledgement` — the authenticated System
-	endpoint an external destination's callback would call. Technical only."""
-	from kentender_core.services.authorization import is_technical
-	from kentender_procurement.procurement_planning.services import planning_authorization as authz
-	from kentender_procurement.procurement_planning.services import publication_pipeline
-
-	if not is_technical(authz.actor(None)):
-		authz.not_found()
-	return publication_pipeline.receive_publication_acknowledgement(
-		event_id=event_id, publication=publication, package_hash=package_hash,
-		public_location=public_location or "", external_reference=external_reference or "", idempotency_key=idempotency_key,
+	return publication_confirmation.save_publication_draft(
+		plan_version=plan_version, values=values, expected_record_version=expected_record_version, idempotency_key=idempotency_key,
 	)
 
 
 @frappe.whitelist()
-def reconcile_publication(publication: str, idempotency_key: str) -> dict[str, Any]:
-	from kentender_procurement.procurement_planning.services import publication_pipeline
+def confirm_plan_publication(plan_version: str, values, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	"""`ConfirmPlanPublication` — the Procurement Planner records Treasury
+	submission and entity-website publication; the existing activation checks
+	then run once. Replaces the Accounting Officer's Treasury form, the Head of
+	Procurement Function's Publish and the technical retry (v1.30)."""
+	from kentender_procurement.procurement_planning.services import publication_confirmation
 
-	return publication_pipeline.reconcile_publication(publication=publication, idempotency_key=idempotency_key)
+	return publication_confirmation.confirm_plan_publication(
+		plan_version=plan_version, values=values, expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+	)
 
 
 @frappe.whitelist()
-def retry_publication(publication: str, idempotency_key: str) -> dict[str, Any]:
-	from kentender_procurement.procurement_planning.services import publication_pipeline
+def correct_publication_details(confirmation: str, values, reason: str, idempotency_key: str) -> dict[str, Any]:
+	"""`CorrectPublicationDetails` — append a superseding record with a reason."""
+	from kentender_procurement.procurement_planning.services import publication_confirmation
 
-	return publication_pipeline.retry_publication(publication=publication, idempotency_key=idempotency_key)
+	return publication_confirmation.correct_publication_details(
+		confirmation=confirmation, values=values, reason=reason, idempotency_key=idempotency_key,
+	)
 
 
 @frappe.whitelist()
@@ -464,28 +472,6 @@ def hold_plan_publication(plan_version: str, reason: str, idempotency_key: str, 
 	from kentender_procurement.procurement_planning.services import publication_pipeline
 
 	return publication_pipeline.hold_plan_publication(plan_version=plan_version, reason=reason, hold_kind=hold_kind or "Accounting Officer correction request", idempotency_key=idempotency_key)
-
-
-@frappe.whitelist()
-def record_treasury_submission(
-	plan_version: str, submitted_at: str, channel: str, destination: str, dispatch_reference: str, exact_document_confirmed, idempotency_key: str, supporting_attachment: str | None = None,
-) -> dict[str, Any]:
-	from kentender_procurement.procurement_planning.services import treasury
-
-	return treasury.record_treasury_submission(
-		plan_version=plan_version, submitted_at=submitted_at, channel=channel, destination=destination, dispatch_reference=dispatch_reference,
-		exact_document_confirmed=exact_document_confirmed, supporting_attachment=supporting_attachment or "", idempotency_key=idempotency_key,
-	)
-
-
-@frappe.whitelist()
-def correct_treasury_submission_evidence(prior_evidence: str, reason: str, submitted_at: str, channel: str, destination: str, dispatch_reference: str, idempotency_key: str, supporting_attachment: str | None = None) -> dict[str, Any]:
-	from kentender_procurement.procurement_planning.services import treasury
-
-	return treasury.correct_treasury_submission_evidence(
-		prior_evidence=prior_evidence, reason=reason, submitted_at=submitted_at, channel=channel, destination=destination,
-		dispatch_reference=dispatch_reference, supporting_attachment=supporting_attachment or "", idempotency_key=idempotency_key,
-	)
 
 
 @frappe.whitelist()

@@ -342,7 +342,7 @@ def wipe_planning_rows() -> None:
 		frappe.db.delete(decision_doctype, {"task": ("in", task_rows or ("",))})
 		frappe.db.delete(task_doctype, {"name": ("in", task_rows or ("",))})
 	frappe.db.delete("Annual Plan Publication", {"plan_version": ("in", plan_versions or ("",))})
-	for doctype in ("Plan Preparation Signature", "Plan Financial Basis", "Plan Finance Basis Reuse", "Treasury Submission Evidence", "Plan Publication Hold", "Late Activation Explanation"):
+	for doctype in ("Plan Preparation Signature", "Plan Financial Basis", "Plan Finance Basis Reuse", "Treasury Submission Evidence", "Plan Publication Confirmation", "Plan Publication Hold", "Late Activation Explanation"):
 		frappe.db.delete(doctype, {"plan_version": ("in", plan_versions or ("",))})
 	snapshots = frappe.get_all("Approved Plan Snapshot", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
 	publications = frappe.get_all("Plan Publication", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")

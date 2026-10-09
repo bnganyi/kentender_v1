@@ -418,10 +418,11 @@ def _assigned_for(doc, plan, step, roles, base) -> dict[str, Any] | None:
 		return None
 	if status == "Draft" and stage == "signature" and hopf and step["kind"] == "your_turn":
 		return row("sign", _("Sign and submit the annual plan"), "Head of Procurement Function")
-	if status in ("Approved — publication pending", "Publication failed") and ao:
-		if step["headline"] == "Record the Treasury submission":
-			return row("treasury", _("Record the Treasury submission"), ROLE_ACCOUNTING_OFFICER)
-		if step["headline"] == "Request withdrawal for correction":
+	if status in ("Approved — publication pending", "Publication failed"):
+		# v1.31 — the Planner confirms publication (v1.30 read: the Accounting Officer recorded the Treasury submission)
+		if planner and step["headline"] == "Confirm plan publication":
+			return row("publication", _("Confirm plan publication"), ROLE_PROCUREMENT_PLANNER)
+		if ao and step["headline"] == "Request withdrawal for correction":
 			return row("withdrawal_request", _("Request withdrawal for correction"), ROLE_ACCOUNTING_OFFICER)
 	if step["headline"] == "Withdraw the plan for correction" and roles[ROLE_PLAN_STATUTORY_APPROVER]:
 		return row("withdrawal_decision", _("Decide the withdrawal request"), ROLE_PLAN_STATUTORY_APPROVER)
@@ -446,8 +447,6 @@ def _waiting_title(doc, stage: str, roles) -> str:
 		return _("Waiting for adoption")
 	if stage == "statutory" and ao:
 		return _("Waiting for approval")
-	if stage == "publication" and ao:
-		return _("Waiting on publication recovery")
 	return ""
 
 

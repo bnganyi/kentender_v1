@@ -82,7 +82,7 @@
    "fieldname": "publication_state",
    "fieldtype": "Select",
    "label": "Publication State",
-   "options": "Pending\nAcknowledged\nFailed\nIndeterminate\nHeld",
+   "options": "Pending\nConfirmed\nAcknowledged\nFailed\nIndeterminate\nHeld",
    "default": "Pending",
    "read_only": 1
   },

@@ -450,6 +450,7 @@ def _wipe() -> None:
 	frappe.db.delete("Plan Preparation Signature", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Late Activation Explanation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Treasury Submission Evidence", {"plan_version": ("in", plan_versions or ("",))})
+	frappe.db.delete("Plan Publication Confirmation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Plan Publication Hold", {"plan_version": ("in", plan_versions or ("",))})
 	snapshots = frappe.get_all("Approved Plan Snapshot", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
 	publications = frappe.get_all("Plan Publication", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
@@ -1030,22 +1031,32 @@ def _approve(state: dict[str, Any]) -> dict[str, Any]:
 		return plan_governance.approve_annual_plan(task=task.name, task_token=task.task_token, idempotency_key=_key())
 
 
-def _record_treasury(plan_version: str) -> dict[str, Any]:
-	from kentender_procurement.procurement_planning.services import treasury
+def _confirm_publication(plan_version: str, *, blockers: list[str] | None = None) -> dict[str, Any]:
+	"""The Planner's confirmation (PLN-CHG-001 v1.31 §5.5.2.2). `blockers`
+	makes the existing activation checks fail for the held-activation fixture."""
+	from contextlib import nullcontext
+	from unittest.mock import patch
 
-	with _as(ACCOUNTING_OFFICER):
-		return treasury.record_treasury_submission(
-			plan_version=plan_version, submitted_at="2098-11-01 09:00:00", channel="Email", destination="treasury@example.test",
-			dispatch_reference="MOH/APP/2098/001", exact_document_confirmed=True, idempotency_key=_key(),
+	from kentender_procurement.procurement_planning.services import publication_confirmation, publication_pipeline
+
+	today = str(frappe.utils.getdate(frappe.utils.nowdate()))
+	hold = patch.object(publication_pipeline, "_activation_blockers", return_value=blockers) if blockers else nullcontext()
+	with _as(PLANNER), hold:
+		return publication_confirmation.confirm_plan_publication(
+			plan_version=plan_version,
+			values={
+				"treasury_submitted_on": today, "treasury_reference": "MOH/APP/2098/001", "website_published_on": today,
+				"public_plan_url": "https://www.moh.example.test/procurement/annual-procurement-plan", "confirmation_acknowledged": 1,
+			},
+			expected_record_version=int(frappe.db.get_value("Annual Plan Version", plan_version, "record_version") or 0), idempotency_key=_key(),
 		)
 
 
 def reset_approved_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
-	"""§10.13 U13-TREASURY-FORM: approved, with the publication and intent
-	committed, and nothing sent to Treasury yet. This is the only state in
-	which the Accounting Officer is offered the first-submission form — once
-	a submission exists, the same route offers the correction form instead
-	(U13-CORRECT-EVIDENCE), which is a different artboard."""
+	"""§10.12 U13 (v1.31): approved, with the publication record committed and
+	nothing confirmed yet. This is the state in which the Planner is offered
+	**Confirm plan publication**; once a confirmation exists the same route
+	offers **Correct publication details** instead (U13-CORRECT-DETAILS)."""
 	state = reset_statutory_fixture(need=need, commit=False)
 	approved = _approve(state)
 	if commit:
@@ -1054,20 +1065,14 @@ def reset_approved_fixture(*, need: str = "", commit: bool = True) -> dict[str, 
 
 
 def reset_active_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
-	"""PLN-DES-14's opening state: the approved, acknowledged, Active Plan
-	with its one item's forecasts seeded from baseline. The worker runs
-	inline (no RQ worker on this bench), as a technical actor — publication
-	is a system worker, never a business-user action."""
-	from kentender_procurement.procurement_planning.services import publication_pipeline
-
+	"""PLN-DES-14's opening state: the approved Plan the Planner has confirmed
+	as published, now Active (PLN-CHG-001 v1.31: no worker, no adapter)."""
 	state = reset_statutory_fixture(need=need, commit=False)
 	approved = _approve(state)
-	_record_treasury(state["plan_version"])
-	with _as("Administrator"):
-		published = publication_pipeline.publish_annual_plan(plan_version=state["plan_version"], idempotency_key=_key())
+	confirmed = _confirm_publication(state["plan_version"])
 	if commit:
 		frappe.db.commit()
-	return {**state, "publication_result": published["result"], "publication": approved["publication"]}
+	return {**state, "publication_result": confirmed["activation"], "publication": approved["publication"]}
 
 
 UPDATE_CHANGE_REASON = "The department's description of the package was corrected after activation."
@@ -1199,41 +1204,16 @@ def reset_finance_reassessment_fixture(*, need: str = "", commit: bool = True) -
 	return {**state, "task": task}
 
 
-def reset_publication_unknown_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
-	"""§13.3 Publication recovery — the transmission whose outcome never came
-	back. §10.12 keeps this distinct from failure: an unknown result is not a
-	failure, offers reconciliation rather than a blind retry, and must never
-	be presented as either success or defeat."""
-	from kentender_procurement.procurement_planning.services import publication_pipeline
-
+def reset_activation_held_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""U13-PUBLISHED-HELD (PLN-CHG-001 v1.31 §10.12): the Planner has confirmed
+	publication and the existing activation checks failed, so the Version reads
+	**Published — activation held** and the evidence is preserved. (Replaces the
+	v1.30 unknown-result and failed-transmission fixtures: MVP 1 has no
+	transmission to fail.) The failing check is the funding evidence."""
 	state = reset_statutory_fixture(need=need, commit=False)
 	approved = _approve(state)
-	_record_treasury(state["plan_version"])
-	destination = frappe.get_doc("Plan Publication", approved["publication"]).destination
-	frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Indeterminate")
-	with _as("Administrator"):
-		publication_pipeline.publish_annual_plan(plan_version=state["plan_version"], idempotency_key=_key())
-	frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Acknowledge")
+	confirmed = _confirm_publication(state["plan_version"], blockers=["funding_not_current"])
 	if commit:
 		frappe.db.commit()
-	return {**state, "publication": approved["publication"]}
+	return {**state, "publication_result": confirmed["activation"], "publication": approved["publication"]}
 
-
-def reset_publication_failed_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
-	"""PLN-DES-13/16: the approved Plan whose first transmission failed —
-	approval preserved, a technical retry pending. The sandbox adapter's
-	own outcome drives the simulated result (Phase 2f), replacing the old
-	mock of a function `_transmit` that no longer lives in this module."""
-	from kentender_procurement.procurement_planning.services import publication_pipeline
-
-	state = reset_statutory_fixture(need=need, commit=False)
-	approved = _approve(state)
-	_record_treasury(state["plan_version"])
-	destination = frappe.get_doc("Plan Publication", approved["publication"]).destination
-	frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Fail")
-	with _as("Administrator"):
-		published = publication_pipeline.publish_annual_plan(plan_version=state["plan_version"], idempotency_key=_key())
-	frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Acknowledge")
-	if commit:
-		frappe.db.commit()
-	return {**state, "publication_result": published["result"], "publication": approved["publication"]}

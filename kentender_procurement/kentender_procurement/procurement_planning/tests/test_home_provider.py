@@ -37,8 +37,7 @@ from kentender_procurement.procurement_planning.services import (
 	plan_read,
 	plan_requisition,
 	plan_workbench,
-	publication_pipeline,
-	treasury,
+	publication_confirmation,
 )
 from kentender_procurement.procurement_planning.services import my_work_provider as work
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
@@ -196,12 +195,16 @@ def _build_treasury() -> dict:
 def _build_active() -> dict:
 	world = _build_treasury()
 	frappe.set_user(fx.ACCOUNTING_OFFICER)
-	recorded = treasury.record_treasury_submission(
-		plan_version=world["version"], submitted_at="2101-11-01 09:00:00", channel="Email", destination="treasury@example.test",
-		dispatch_reference="MOH/APP/2101/001", exact_document_confirmed=True, idempotency_key=_key(),
+	frappe.set_user(fx.PLANNER)  # PLN-CHG-001 v1.31: the Planner confirms publication
+	today = str(frappe.utils.getdate(frappe.utils.nowdate()))
+	recorded = publication_confirmation.confirm_plan_publication(
+		plan_version=world["version"],
+		values={
+			"treasury_submitted_on": today, "treasury_reference": "MOH/APP/2101/001", "website_published_on": today,
+			"public_plan_url": "https://www.moh.example.test/procurement/annual-procurement-plan", "confirmation_acknowledged": 1,
+		},
+		expected_record_version=int(frappe.db.get_value("Annual Plan Version", world["version"], "record_version") or 0), idempotency_key=_key(),
 	)
-	frappe.set_user("Administrator")
-	publication_pipeline.publish_annual_plan(plan_version=world["version"], idempotency_key=_key())
 	frappe.set_user(fx.HOD)  # the Head of User Department of a contributing unit asks for a correction
 	received = plan_requisition.receive_plan_item_correction_request(
 		plan_item_id=world["item"], requisition_reference="REQ-PLNT-HOME-1", requisition_version="RQV-PLNT-HOME-1",
@@ -235,8 +238,8 @@ def _pin_world(world: dict) -> None:
 	for name in frappe.get_all("Plan Governance Decision", filters={"plan_version": world.get("version") or "", "stage": "Statutory approval"}, pluck="name"):
 		_pin("Plan Governance Decision", name, "decided_at", "2027-06-17 16:00")
 	if world.get("treasury"):
-		for name in frappe.get_all("Treasury Submission Evidence", filters={"plan_version": world["version"]}, pluck="name"):
-			_pin("Treasury Submission Evidence", name, "recorded_at", "2027-06-17 17:00")
+		for name in frappe.get_all("Plan Publication Confirmation", filters={"plan_version": world["version"]}, pluck="name"):
+			_pin("Plan Publication Confirmation", name, "recorded_at", "2027-06-17 17:00")
 	if world.get("correction_request"):
 		_pin("Plan Item Correction Request", world["correction_request"].name, "requested_at", "2027-06-17 14:00")
 		for name in frappe.get_all("Plan Item Correction Disposition", filters={"correction_request": world["correction_request"].name}, pluck="name"):
@@ -265,6 +268,7 @@ def _world_rows() -> dict[str, list[str]]:
 		"Plan Governance Task": frappe.get_all("Plan Governance Task", filters=by_version, pluck="name"),
 		"Plan Governance Decision": frappe.get_all("Plan Governance Decision", filters=by_version, pluck="name"),
 		"Plan Preparation Signature": frappe.get_all("Plan Preparation Signature", filters=by_version, pluck="name"),
+		"Plan Publication Confirmation": frappe.get_all("Plan Publication Confirmation", filters=by_version, pluck="name"),
 		"Treasury Submission Evidence": frappe.get_all("Treasury Submission Evidence", filters=by_version, pluck="name"),
 		"Plan Item Correction Request": requests,
 		"Plan Item Correction Disposition": frappe.get_all("Plan Item Correction Disposition", filters={"correction_request": ("in", requests or ("",))}, pluck="name"),
@@ -744,14 +748,17 @@ class TestPlanAwaitingApproval(CommonChecks, PlanningHomeCase):
 		self.holder(clause[len("It is awaiting approval by ") : -1], "Plan Statutory Approver", label)
 
 
-class TestPlanApprovedAwaitingTreasury(CommonChecks, PlanningHomeCase):
+class TestPlanApprovedAwaitingPublication(CommonChecks, PlanningHomeCase):
 	BUILD = staticmethod(_build_treasury)
 
-	def test_the_accounting_officer_is_asked_to_record_the_treasury_submission_since_the_approval(self):
-		row = self.one(fx.ACCOUNTING_OFFICER, he.MY_WORK)
-		self.assertEqual((row["title"], row["action"], row["reference"], row["blocked"]), (self.plan_title(), "Record the Treasury submission", self.plan_reference(), False))
-		self.assertEqual((row["entered_at"], row["action_id"]), (_dt("2027-06-17 16:00"), f"{self.world['version']}:treasury"))
-		self.assertEqual(self.row(fx.ACCOUNTING_OFFICER, "my_work", self.plan_reference())["timing"], "Received yesterday (17 June, 16:00)")
+	def test_the_planner_is_asked_to_confirm_plan_publication_since_the_approval(self):
+		row = self.one(fx.PLANNER, he.MY_WORK, action="Confirm plan publication")
+		self.assertEqual((row["title"], row["action"], row["reference"], row["blocked"]), (self.plan_title(), "Confirm plan publication", self.plan_reference(), False))
+		self.assertEqual((row["entered_at"], row["action_id"]), (_dt("2027-06-17 16:00"), f"{self.world['version']}:publication"))
+		self.assertEqual(self.row(fx.PLANNER, "my_work", self.plan_reference())["timing"], "Received yesterday (17 June, 16:00)")
+
+	def test_the_accounting_officer_is_no_longer_asked_to_record_a_treasury_submission(self):
+		self.assertEqual([r for r in self.mine(self.region(fx.ACCOUNTING_OFFICER, he.MY_WORK)) if r["action"] == "Record the Treasury submission"], [])
 
 	def test_the_approver_sees_the_approval(self):
 		done = self.one(fx.STATUTORY, he.COMPLETED)
@@ -775,14 +782,14 @@ class TestPlanInForce(CommonChecks, PlanningHomeCase):
 		self.assertEqual(self.row(fx.PLANNER, "my_work", "REQ-PLNT-HOME-1")["timing"], "Received yesterday (17 June, 14:00)")
 		self.assertEqual(self.mine(self.region(fx.AUDITOR, he.MY_WORK)), [])
 
-	def test_the_planner_sees_the_work_they_started_and_the_officer_the_treasury_record(self):
+	def test_the_planner_sees_the_work_they_started_and_the_publication_they_confirmed(self):
 		started = [row for row in self.mine(self.region(fx.PLANNER, he.COMPLETED)) if row["action"] == "Started correction request"]
 		self.assertEqual(len(started), 1)
 		self.assertEqual((started[0]["title"], started[0]["reference"], started[0]["completed_at"]), ("Test procurement package", "REQ-PLNT-HOME-1", _dt("2027-06-18 08:00")))
 		self.assertTrue(started[0]["sentence"].startswith("You started work on this plan item correction request on 18 June 2027, 08:00 ") and started[0]["sentence"].endswith("."), started[0]["sentence"])
-		recorded = self.one(fx.ACCOUNTING_OFFICER, he.COMPLETED, action="Recorded Treasury submission")
+		recorded = self.one(fx.PLANNER, he.COMPLETED, action="Confirmed plan publication")
 		self.assertEqual((recorded["title"], recorded["reference"], recorded["completed_at"]), (self.plan_title(), self.plan_reference(), _dt("2027-06-17 17:00")))
-		self.assertTrue(recorded["sentence"].startswith("You recorded the Treasury submission of this Annual Procurement Plan on 17 June 2027, 17:00 "), recorded["sentence"])
+		self.assertTrue(recorded["sentence"].startswith("You confirmed the Treasury submission and website publication of this Annual Procurement Plan on 17 June 2027, 17:00 "), recorded["sentence"])
 
 	def test_an_actor_who_can_no_longer_read_the_plan_sees_none_of_what_they_did(self):
 		# the Planner's start of the correction is theirs; a user with no Planning read gets nothing, and an old action is outside 30 days

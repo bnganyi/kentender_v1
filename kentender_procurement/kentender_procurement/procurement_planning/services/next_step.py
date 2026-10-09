@@ -197,20 +197,16 @@ def plan_guidance(
 		)
 
 	answer = state["mine"] or state["others"]
-	# O4 — the one named exception: the authorised technical operator holds
-	# publication recovery although they hold no Planning responsibility.
-	technical_turn = bool(technical and state.get("technical_turn") and state.get("mine"))
-	if not participant and not technical_turn and state.get("others", {}).get("kind") != ns.KIND_DONE:
+	if not participant and state.get("others", {}).get("kind") != ns.KIND_DONE:
 		# §10.1A.6 — an Auditor or other reader is Not involved; the tracker
 		# still shows the exact Version's markers.
 		answer = ns.not_involved(state.get("stage", ""))
-	answer = ns.for_viewer(
-		answer, technical=technical, reader=state["others"],
-		allow_technical_turn=bool(state.get("technical_turn")),
-	)
-	if technical and not state.get("technical_turn"):
+	answer = ns.for_viewer(answer, technical=technical, reader=state["others"])
+	if technical:
 		# §3B.6 — a technical reader sees where the record stands: the line any
-		# participant who does not hold it would see.
+		# participant who does not hold it would see. (Until v1.31 the one
+		# named exception, decision O4, was a technical operator's publication
+		# retry; MVP 1 has none.)
 		answer = ns.for_viewer(state["others"], technical=True, reader=state["others"])
 	return {"next_step": answer, "journey": journey, "guards": state.get("guards", {})}
 
@@ -447,19 +443,16 @@ def _governance_state(version, *, actor, roles, stage: str) -> dict[str, Any]:
 
 
 def _publication_state(version, *, actor, roles) -> dict[str, Any]:
+	"""PLN-CHG-001 v1.31 §5.7 — an approved plan waits for the Planner's
+	**Confirm plan publication** (v1.30 read: the Accounting Officer's Treasury
+	record, then the system, or a technical retry). A hold or a withdrawal
+	request moves the turn to the Accounting Officer or the statutory authority."""
 	from kentender_procurement.procurement_planning.services import treasury as treasury_service
 
 	ao = guards.holder(ROLE_ACCOUNTING_OFFICER)
 	statutory = _statutory_holder()
-	publication = frappe.db.get_value(
-		"Plan Publication", {"plan_version": version.name}, ["name", "publication_state"], as_dict=True, order_by="creation desc",
-	)
-	attempt = frappe.db.get_value(
-		"Publication Attempt", {"publication": publication.name}, ["attempted_at", "result"], as_dict=True, order_by="attempt_number desc",
-	) if publication else None
 	hold = frappe.db.get_value("Plan Publication Hold", {"plan_version": version.name, "hold_state": "Active"}, ["hold_kind", "raised_at"], as_dict=True)
 	withdrawal_task = frappe.db.get_value("Plan Governance Task", {"plan_version": version.name, "task_reference": f"SAT-WD-{version.name}", "status": "Open"}, "name")
-	treasury = frappe.db.get_value("Treasury Submission Evidence", {"plan_version": version.name, "evidence_state": "Current"}, ["recorded_at"], as_dict=True)
 	base = {"stage": STAGE_PUBLICATION, "mine": None}
 
 	if withdrawal_task:
@@ -470,26 +463,11 @@ def _publication_state(version, *, actor, roles) -> dict[str, Any]:
 		others = _waiting(f"Waiting for {ao['display']} to request withdrawal for correction", stage=STAGE_PUBLICATION, holder=ao, since=hold.raised_at)
 		mine = ns.answer(ns.KIND_YOUR_TURN, headline="Request withdrawal for correction", stage=STAGE_PUBLICATION, primary_action="request_withdrawal") if roles[ROLE_ACCOUNTING_OFFICER] else None
 		return {**base, "blocked": True, "stage_holder": ", ".join(ao["people"]) or ao["role"], "others": others, "mine": mine}
-	state = cstr(publication.publication_state) if publication else ""
-	if version.version_status == "Publication failed" or state in ("Failed", "Indeterminate"):
-		unknown = state == "Indeterminate"
-		operator = ns.holder(TECHNICAL_OPERATOR)
-		verb = "check the publication result" if unknown else "retry publication"
-		others = _waiting(f"Waiting for an authorised technical operator to {verb}", stage=STAGE_PUBLICATION, holder=operator, since=attempt.attempted_at if attempt else None)
-		# O4 — the one named exception to KT-STD-001 v1.8 §3B.6: the
-		# authorised technical operator's turn, on this screen only.
-		mine = ns.answer(ns.KIND_YOUR_TURN, headline="Check the publication result" if unknown else "Retry publication", stage=STAGE_PUBLICATION, primary_action="reconcile" if unknown else "retry") if is_technical(actor) else None
-		return {**base, "blocked": True, "stage_holder": TECHNICAL_OPERATOR, "others": others, "mine": mine, "technical_turn": True}
-	if not treasury:
-		others = _waiting(f"Waiting for {ao['display']} to record the Treasury submission", stage=STAGE_PUBLICATION, holder=ao, since=version.modified)
-		mine = ns.answer(ns.KIND_YOUR_TURN, headline="Record the Treasury submission", stage=STAGE_PUBLICATION, primary_action="record_treasury") if roles[ROLE_ACCOUNTING_OFFICER] else None
-		return {**base, "stage_holder": ", ".join(ao["people"]) or ao["role"], "others": others, "mine": mine}
-	# RG-01 (owner decision 7 Oct 2026): Treasury evidence is in and nothing is held, so the
-	# Head of Procurement Function presses Publish
-	hopf = guards.holder(ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
-	others = _waiting(f"Waiting for {hopf['display']} to publish the plan", stage=STAGE_PUBLICATION, holder=hopf, since=treasury.recorded_at)
-	mine = ns.answer(ns.KIND_YOUR_TURN, headline="Publish the annual plan", stage=STAGE_PUBLICATION, primary_action="publish") if roles[ROLE_HEAD_OF_PROCUREMENT_FUNCTION] else None
-	return {**base, "stage_holder": ", ".join(hopf["people"]) or hopf["role"], "others": others, "mine": mine}
+	planner = guards.holder(ROLE_PROCUREMENT_PLANNER)
+	approved_at = frappe.db.get_value("Approved Plan Snapshot", {"plan_version": version.name}, "approved_at") or version.modified
+	others = _waiting(f"Waiting for {planner['display']} to confirm publication", stage=STAGE_PUBLICATION, holder=planner, since=approved_at)
+	mine = ns.answer(ns.KIND_YOUR_TURN, headline="Confirm plan publication", stage=STAGE_PUBLICATION, primary_action="confirm_publication") if roles[ROLE_PROCUREMENT_PLANNER] else None
+	return {**base, "stage_holder": ", ".join(planner["people"]) or planner["role"], "others": others, "mine": mine}
 
 
 def _requisitions_link(version) -> dict[str, Any] | None:

@@ -289,7 +289,7 @@
 			<div class="kt-region">
 				<!-- U09-INVALID-SCHEDULE — the blocking problem and its recovery
 				     action sit beside the dates they are about. -->
-				<div v-if="saveBlocked" class="kt-notice is-critical" style="margin-bottom: var(--kt-space-4)">
+				<div v-if="scheduleBlocked" class="kt-notice is-critical" style="margin-bottom: var(--kt-space-4)">
 					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 						<circle cx="12" cy="12" r="10"></circle><path d="M12 8v5"></path><path d="M12 16h.01"></path>
 					</svg>
@@ -340,7 +340,7 @@
 				     repeating the same sentence here left the page stating one
 				     problem twice (U09-INVALID-SCHEDULE draws the notice alone). -->
 				<p
-					v-if="baseline.estimated_completion_display && !saveBlocked"
+					v-if="baseline.estimated_completion_display && !scheduleBlocked"
 					class="pln-boundary"
 					data-testid="ppi-boundary"
 				>
@@ -442,7 +442,7 @@
 						type="button"
 						class="btn btn-primary"
 						data-testid="ppi-save"
-						:disabled="pending || saveBlocked"
+						:disabled="pending"
 						@click="$emit('save', draft)"
 					>
 						Save draft
@@ -644,7 +644,7 @@ const deadlineDisplay = computed(() => {
 	return row ? row.date_display : "—";
 });
 
-const saveBlocked = computed(() => blockerCodes.value.has("PLN_DELIVERY_BOUNDARY_INSUFFICIENT"));
+const scheduleBlocked = computed(() => blockerCodes.value.has("PLN_DELIVERY_BOUNDARY_INSUFFICIENT"));
 
 const boundaryText = computed(() =>
 	baseline.value.delivery_boundary_ok

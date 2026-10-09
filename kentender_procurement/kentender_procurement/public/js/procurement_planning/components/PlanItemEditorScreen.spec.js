@@ -206,7 +206,7 @@ describe("PlanItemEditorScreen — dates", () => {
 		expect(w.find('[data-testid="ppi-boundary"]').text()).toBe("Expected to meet the departmental deadline");
 	});
 
-	it("U09-INVALID-SCHEDULE: blocks Save and offers Review dates", () => {
+	it("U09-INVALID-SCHEDULE: offers Review dates and still lets the Planner save the draft", () => {
 		const w = make({
 			item: item({
 				baseline: { ...item().baseline, estimated_completion_display: "2 Jan 2028", delivery_boundary_ok: false },
@@ -220,7 +220,10 @@ describe("PlanItemEditorScreen — dates", () => {
 			"Expected completion is after the department's required date.",
 		);
 		expect(w.find('[data-testid="ppi-boundary"]').exists()).toBe(false);
-		expect(w.find('[data-testid="ppi-save"]').attributes("disabled")).toBeDefined();
+		// A draft may keep an infeasible schedule (schedule.derive_baseline);
+		// only readiness blocks. The blocker is the server's word as of the
+		// last load, so disabling Save on it left no way to fix the dates.
+		expect(w.find('[data-testid="ppi-save"]').attributes("disabled")).toBeUndefined();
 		expect(w.find('[data-testid="ppi-review-dates"]').exists()).toBe(true);
 	});
 });

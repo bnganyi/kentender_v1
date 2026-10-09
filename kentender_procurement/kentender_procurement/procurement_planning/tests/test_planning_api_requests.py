@@ -299,14 +299,22 @@ class TestEndpointsSurviveTheFrameworksTransportFields(RequestShapedCase):
 		frappe.set_user(fx.STATUTORY)
 		approved = self.call("approve_annual_plan", task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=key())
 		self.assertTrue(approved["publication"])
-		frappe.set_user(fx.ACCOUNTING_OFFICER)
-		self.call(
-			"record_treasury_submission", plan_version=plan["version_reference"], submitted_at="2101-11-01 09:00:00", channel="Email",
-			destination="treasury@example.test", dispatch_reference="MOH/APP/2101/001", exact_document_confirmed="true", idempotency_key=key(),
+		today = str(frappe.utils.getdate(frappe.utils.nowdate()))
+		version_record = frappe.db.get_value("Annual Plan Version", plan["version_reference"], "record_version")
+		frappe.set_user(fx.PLANNER)  # PLN-CHG-001 v1.31: the Planner confirms publication
+		published = self.call(
+			"confirm_plan_publication", plan_version=plan["version_reference"], expected_record_version=str(version_record), idempotency_key=key(),
+			values={
+				"treasury_submitted_on": today, "treasury_reference": "MOH/APP/2101/001", "website_published_on": today,
+				"public_plan_url": "https://www.moh.example.test/procurement/annual-procurement-plan", "confirmation_acknowledged": "true",
+			},
 		)
-		frappe.set_user(fx.HOPF)  # RG-01: the Head of Procurement Function presses Publish
-		published = self.call("publish_annual_plan", plan_version=plan["version_reference"], idempotency_key=key())
-		self.assertEqual(published["result"], "Acknowledged")
+		self.assertEqual(published["activation"], "activated")
+		# the retired publication endpoints are not reachable
+		from kentender_procurement.procurement_planning import api as retired_check
+
+		for gone in ("publish_annual_plan", "retry_publication", "reconcile_publication", "receive_publication_acknowledgement", "record_treasury_submission", "correct_treasury_submission_evidence"):
+			self.assertFalse(hasattr(retired_check, gone), f"{gone} is exposed again")
 		# PLN-CHG-001 v1.23 §7.5 (PLN23-AC-001) — the forecast cascade has no
 		# whitelisted endpoint at all, so the request surface cannot reach it.
 		from kentender_procurement.procurement_planning import api as planning_api
@@ -314,7 +322,7 @@ class TestEndpointsSurviveTheFrameworksTransportFields(RequestShapedCase):
 		for withdrawn in ("preview_forecast_cascade", "confirm_forecast_cascade"):
 			self.assertFalse(hasattr(planning_api, withdrawn), f"{withdrawn} is exposed again")
 		publication = frappe.db.get_value("Plan Publication", {"plan_version": accepted["annual_plan_version"]}, "name")
-		self.assertEqual(self.call("get_publication_task", publication=publication)["publication_state"], "Acknowledged")
+		self.assertEqual(self.call("get_publication_task", publication=publication)["publication_state"], "Confirmed")
 
 
 class TestNoWhitelistedEndpointTakesKwargs(IntegrationTestCase):

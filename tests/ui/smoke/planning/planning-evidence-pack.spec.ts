@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
-import { login, loginAsAdministrator } from "../../helpers/auth";
+import { login } from "../../helpers/auth";
 import {
 	ACCOUNTING_OFFICER,
 	AUTHOR,
@@ -153,11 +153,16 @@ test.describe("v1.12 evidence pack", () => {
 		await gotoPlanning(page, `/publication/${active.publication}`);
 		await expectReady(page, "publication");
 		await shot(page, "PLN-DES-13-publication-result");
-		const failed = resetFixture<State>("reset_publication_failed_fixture");
-		await loginAsAdministrator(page);
-		await gotoPlanning(page, `/publication/${failed.publication}`);
+		const approved = resetFixture<State>("reset_approved_fixture");
+		await login(page, PLANNER, PASSWORD);
+		await gotoPlanning(page, `/publication/${approved.publication}`);
 		await expectReady(page, "publication");
-		await expect(page.locator('[data-testid="pub-retry"]')).toBeVisible();
-		await shot(page, "PLN-DES-13-publication-failed-retry");
+		await expect(page.locator('[data-testid="pub-confirm"]')).toBeVisible();
+		await shot(page, "PLN-DES-13-publication-confirm-form");
+		const held = resetFixture<State>("reset_activation_held_fixture");
+		await gotoPlanning(page, `/publication/${held.publication}`);
+		await expectReady(page, "publication");
+		await expect(page.locator('[data-testid="pub-correct"]')).toBeVisible();
+		await shot(page, "PLN-DES-13-publication-activation-held");
 	});
 });

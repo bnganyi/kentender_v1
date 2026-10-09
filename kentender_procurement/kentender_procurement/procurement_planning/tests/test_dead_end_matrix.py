@@ -38,7 +38,6 @@ from kentender_procurement.procurement_planning.services import (
 	plan_governance,
 	plan_read,
 	plan_workbench,
-	publication_pipeline,
 )
 from kentender_procurement.procurement_planning.tests import fixtures as fx
 from kentender_procurement.procurement_planning.tests.test_plan_publication import PublicationCase, key
@@ -65,7 +64,7 @@ READERS = (
 ROUTES = {"annual-procurement-plan", "procurement-plan-item", "departmental-procurement-plan", "procurement-planning", "system-setup", "budget-funding"}
 TURNS = (ns.KIND_YOUR_TURN, ns.KIND_BLOCKED)
 # O4 — the one named exception to §3B.6.
-TECHNICAL_TURN_STATES = {"Publication failed"}
+TECHNICAL_TURN_STATES: set[str] = set()  # none since PLN-CHG-001 v1.31: no technical retry in MVP 1
 MATRIX = os.path.join(
 	os.path.dirname(frappe.get_app_path("kentender_procurement")), "..", "docs", "mvp-1-r1", "04_planning", "evidence", "v1_27", "dead_end_matrix.md",
 )
@@ -212,21 +211,17 @@ class TestPlanningDeadEndMatrix(PublicationCase):
 		statutory_task = frappe.get_doc("Plan Governance Task", adopted["statutory_task"])
 		frappe.set_user(fx.STATUTORY)
 		approved = plan_governance.approve_annual_plan(task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=key())
-		failures += self.check("Approved — Treasury submission needed", self.plan(reference))
+		failures += self.check("Approved — publication confirmation needed", self.plan(reference))
 		publication = approved["publication"]
-		failures += self.check("Publication task — Treasury", lambda user: plan_read.get_publication_task(publication=publication, user=user))
+		failures += self.check("Publication task — confirmation needed", lambda user: plan_read.get_publication_task(publication=publication, user=user))
 
 		version = frappe.db.get_value("Plan Publication", publication, "plan_version")
-		self.record_treasury(version)
-		destination = frappe.get_doc("Plan Publication", publication).destination
-		frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Fail")
-		frappe.set_user("Administrator")
-		publication_pipeline.publish_annual_plan(plan_version=version, idempotency_key=key())
-		failures += self.check("Publication failed", lambda user: plan_read.get_publication_task(publication=publication, user=user))
+		# a Version left in the historical Publication failed status is still the Planner's turn
+		frappe.db.set_value("Annual Plan Version", version, "version_status", "Publication failed", update_modified=False)
+		failures += self.check("Publication failed (historical)", lambda user: plan_read.get_publication_task(publication=publication, user=user))
+		frappe.db.set_value("Annual Plan Version", version, "version_status", "Approved — publication pending", update_modified=False)
 
-		frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Acknowledge")
-		frappe.set_user("Administrator")
-		publication_pipeline.retry_publication(publication=publication, idempotency_key=key())
+		self.confirm_publication(version)
 		failures += self.check("In force", self.plan(reference))
 
 		self.assertEqual(failures, [], "\n".join(failures))

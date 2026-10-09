@@ -198,31 +198,26 @@ export function getPublicationTask(publication) {
 	return frappeCall(`${BASE}.get_publication_task`, { publication });
 }
 
-// RG-01 — the Head of Procurement Function publishes an approved plan; the actor is the session user.
-export function publishAnnualPlan(args) {
-	return frappeCall(`${BASE}.publish_annual_plan`, args);
+// PLN-CHG-001 v1.31 §5.5.2.2 — the Procurement Planner records the Treasury
+// submission and the entity-website publication of an approved plan. The
+// actor is the session user. A Draft keeps incomplete evidence; confirming
+// runs the existing activation checks; a correction supersedes with a reason.
+export function savePublicationDraft(args) {
+	return frappeCall(`${BASE}.save_publication_draft`, args);
 }
 
-export function retryPublication(args) {
-	return frappeCall(`${BASE}.retry_publication`, args);
+export function confirmPlanPublication(args) {
+	return frappeCall(`${BASE}.confirm_plan_publication`, args);
 }
 
-// §5.5.2.3 — reads the authoritative destination result for an attempt whose
-// outcome is unknown. It never sets success manually, and an unknown result
-// that stays unknown stays held.
-export function reconcilePublication(args) {
-	return frappeCall(`${BASE}.reconcile_publication`, args);
+export function correctPublicationDetails(args) {
+	return frappeCall(`${BASE}.correct_publication_details`, args);
 }
 
-// §5.5.2 / §10.12 — the Accounting Officer's record of what was sent outside
-// the system, and the correction of it. A correction supersedes the recorded
-// evidence with a reason; it never overwrites it.
-export function recordTreasurySubmission(args) {
-	return frappeCall(`${BASE}.record_treasury_submission`, args);
-}
-
-export function correctTreasurySubmissionEvidence(args) {
-	return frappeCall(`${BASE}.correct_treasury_submission_evidence`, args);
+// "Download approved plan" / "Download Plan data" — a plain authenticated file
+// download of the frozen package, so the caller binds it to a window.open.
+export function approvedPlanDownloadUrl(publication) {
+	return `/api/method/${BASE}.download_approved_plan?publication=${encodeURIComponent(publication)}`;
 }
 
 // §10.14 / §6.3 — why an initial plan only became active after its financial

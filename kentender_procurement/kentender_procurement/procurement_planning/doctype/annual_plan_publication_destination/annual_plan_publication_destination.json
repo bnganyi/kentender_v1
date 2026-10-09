@@ -32,9 +32,9 @@
    "fieldname": "adapter",
    "fieldtype": "Select",
    "label": "Adapter",
-   "options": "KenTender Annual Plan Publication Sandbox",
+   "options": "KenTender Annual Plan Publication Sandbox\nManual publication — Planner confirmation",
    "reqd": 1,
-   "description": "Governed adapter identifier; users cannot edit the payload, destination or acknowledgement."
+   "description": "Governed adapter identifier. The sandbox adapter is historical (PLN-CHG-001 v1.31); MVP 1 publication is the Planner's confirmation."
   },
   {
    "fieldname": "active",

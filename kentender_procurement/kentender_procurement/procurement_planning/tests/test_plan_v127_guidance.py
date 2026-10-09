@@ -16,7 +16,7 @@ from unittest.mock import patch
 import frappe
 
 from kentender_procurement.procurement_planning.errors import ProcurementPlanningError
-from kentender_procurement.procurement_planning.services import plan_finance, plan_read, plan_workbench, publication_pipeline, readiness
+from kentender_procurement.procurement_planning.services import plan_finance, plan_read, plan_workbench, readiness
 from kentender_procurement.procurement_planning.tests import fixtures as fx
 from kentender_procurement.procurement_planning.tests.test_plan_finance import PlanFinanceCase, key
 
@@ -898,9 +898,10 @@ from kentender_procurement.procurement_planning.tests.test_plan_publication impo
 
 
 class TestPublicationNextStep(PublicationCase):
-	"""PLN v1.27 §10.12 U13 — reduced tracker, per-actor answers, and O4: the
-	one named exception to KT-STD §3B.6 — the authorised technical operator
-	gets Your turn on a failed or unknown publication, and nothing in My Work."""
+	"""PLN v1.31 §10.12 U13 — reduced tracker and per-actor answers: the
+	Planner's turn to confirm publication, everyone else waits on them. (Until
+	v1.31 this class also pinned O4, the technical operator's turn to retry a
+	failed publication; MVP 1 has none.)"""
 
 	def publication(self) -> tuple[dict, str, str]:
 		accepted, item_id = self.confirmed_item()
@@ -908,30 +909,31 @@ class TestPublicationNextStep(PublicationCase):
 		version = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
 		return accepted, approved["publication"], version
 
-	def test_u13_treasury_is_the_aos_turn_the_planner_waits_on_them_reduced_tracker(self):
+	def test_u13_confirmation_is_the_planners_turn_the_ao_waits_on_them_reduced_tracker(self):
 		accepted, publication, version = self.publication()
-		ao = plan_read.get_publication_task(publication=publication, user=fx.ACCOUNTING_OFFICER)
-		self.assertEqual((ao["next_step"]["kind"], ao["next_step"]["headline"]), ("your_turn", "Record the Treasury submission"))
-		self.assertTrue(ao["journey"]["reduced"])
-		self.assertEqual(ao["journey"]["reduced_parts"]["prefix"], "Stage 6 of 7: ")
 		planner = plan_read.get_publication_task(publication=publication, user=fx.PLANNER)
-		self.assertEqual(planner["next_step"]["kind"], "waiting")
-		self.assertIn("(Accounting Officer) to record the Treasury submission", planner["next_step"]["headline"])
+		self.assertEqual((planner["next_step"]["kind"], planner["next_step"]["headline"]), ("your_turn", "Confirm plan publication"))
+		self.assertTrue(planner["journey"]["reduced"])
+		self.assertEqual(planner["journey"]["reduced_parts"]["prefix"], "Stage 6 of 7: ")
+		ao = plan_read.get_publication_task(publication=publication, user=fx.ACCOUNTING_OFFICER)
+		self.assertEqual(ao["next_step"]["kind"], "waiting")
+		self.assertIn("(Procurement Planner) to confirm publication", ao["next_step"]["headline"])
 
-	def test_o4_a_failed_publication_is_the_technical_operators_turn_and_no_one_elses(self):
+	def test_a_historical_failed_publication_is_still_only_the_planners_turn_and_no_technical_turn_exists(self):
 		from kentender_procurement.procurement_planning.services import my_work_provider
 
 		accepted, publication, version = self.publication()
-		self.record_treasury(version)
-		frappe.db.set_value("Annual Plan Publication Destination", frappe.get_doc("Plan Publication", publication).destination, "sandbox_outcome", "Fail")
-		frappe.set_user("Administrator")
-		self.assertEqual(publication_pipeline.publish_annual_plan(plan_version=version, idempotency_key=key())["result"], "Failed")
+		frappe.db.set_value("Annual Plan Version", version, "version_status", "Publication failed", update_modified=False)
+		planner = plan_read.get_publication_task(publication=publication, user=fx.PLANNER)
+		self.assertEqual((planner["next_step"]["kind"], planner["next_step"]["headline"]), ("your_turn", "Confirm plan publication"))
 		technical = plan_read.get_publication_task(publication=publication, user="Administrator")
-		self.assertEqual((technical["next_step"]["kind"], technical["next_step"]["headline"]), ("your_turn", "Retry publication"))
+		self.assertNotEqual(technical["next_step"]["kind"], "your_turn")
+		self.assertEqual(technical["next_step"]["fixes"], [])
 		ao = plan_read.get_publication_task(publication=publication, user=fx.ACCOUNTING_OFFICER)
 		self.assertEqual(ao["next_step"]["kind"], "waiting")
-		self.assertEqual(ao["next_step"]["headline"], "Waiting for an authorised technical operator to retry publication")
-		self.assertTrue(ao["next_step"]["since"])
-		# O4: no My Work item for the technical operator
+		# no My Work item for the technical operator
 		work = my_work_provider.my_work_rows(user="Administrator")
 		self.assertEqual([r for r in work["assigned"] if publication in frappe.as_json(r)], [])
+		# the Planner's own work row says what to do
+		planner_work = my_work_provider.my_work_rows(user=fx.PLANNER)
+		self.assertIn("Confirm plan publication", frappe.as_json(planner_work["assigned"]))

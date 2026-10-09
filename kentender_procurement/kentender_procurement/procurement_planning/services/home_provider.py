@@ -71,7 +71,7 @@ ACTION: dict[str, str] = {
 	"planning.governance_return": "Correct the returned plan",
 	"planning.add_requirements": "Add accepted requirements to the annual plan",
 	"planning.sign": "Sign and submit the annual plan",
-	"planning.treasury": "Record the Treasury submission",
+	"planning.publication": "Confirm plan publication",
 	"planning.withdrawal_request": "Request withdrawal for correction",
 	"planning.withdrawal_decision": "Decide the withdrawal request",
 	"planning.continue_correction": "Continue the correction",
@@ -104,7 +104,7 @@ DISPOSITIONS: dict[str, tuple[str, str]] = {
 }
 SIGNED = ("Signed and submitted annual plan", "signed and submitted this annual plan")
 SUBMITTED = ("Submitted departmental plan", "certified and submitted this departmental plan to Procurement")
-TREASURY = ("Recorded Treasury submission", "recorded the Treasury submission of this Annual Procurement Plan")
+PUBLICATION = ("Confirmed plan publication", "confirmed the Treasury submission and website publication of this Annual Procurement Plan")
 
 #: The wait an actor is in, as the "It is awaiting {phrase} by …" clause: the stage of a plan wait, or "review" for a departmental
 #: plan under Procurement's review. Any other wait (preparation, planning) is not a clause.
@@ -225,7 +225,7 @@ def _hand_off_instant(kind: str, doc):
 	if kind == "sign":
 		confirmed = plan_finance._confirmed_decision(version)
 		return confirmed.decided_at if confirmed else None
-	if kind == "treasury":
+	if kind == "publication":
 		return _latest("Plan Governance Decision", {"plan_version": version, "decision": "Approve Annual Procurement Plan"}, "decided_at")
 	if kind == "withdrawal_request":
 		return _latest("Plan Publication Hold", {"plan_version": version, "hold_state": "Active"}, "raised_at")
@@ -234,11 +234,7 @@ def _hand_off_instant(kind: str, doc):
 	if kind == "continue_correction":
 		return _latest("Plan Governance Decision", {"plan_version": version, "decision": "Withdraw for correction"}, "decided_at")
 	if kind == "corrected_plan":
-		publication = frappe.db.get_value("Plan Publication", {"plan_version": version}, "name", order_by="creation desc")
-		if not publication:
-			return None
-		attempt = frappe.db.get_value("Publication Attempt", {"publication": publication}, ["attempted_at", "completed_at"], as_dict=True, order_by="attempt_number desc")
-		return (attempt.completed_at or attempt.attempted_at) if attempt else None
+		return _latest("Plan Publication Confirmation", {"plan_version": version, "confirmation_state": "Current"}, "recorded_at")
 	return None  # add_requirements: nothing records when a requirement became unallocated
 
 
@@ -426,8 +422,8 @@ def _completed(user: str) -> list[dict[str, Any]]:
 			add_plan(row, row.plan_version, wording, row.decided_at, (stage_role, ROLE_PROCUREMENT_PLANNER, ROLE_AUDITOR))
 	for row in frappe.get_all("Plan Preparation Signature", filters={"actor": user, "signed_at": (">=", cutoff)}, fields=["name", "plan_version", "signed_at"], limit_page_length=0):
 		add_plan(row, row.plan_version, SIGNED, row.signed_at, plan_read.PLAN_READERS)
-	for row in frappe.get_all("Treasury Submission Evidence", filters={"actor": user, "recorded_at": (">=", cutoff), "evidence_state": ("!=", "Invalid")}, fields=["name", "plan_version", "recorded_at"], limit_page_length=0):
-		add_plan(row, row.plan_version, TREASURY, row.recorded_at, plan_read.PLAN_READERS)
+	for row in frappe.get_all("Plan Publication Confirmation", filters={"actor": user, "recorded_at": (">=", cutoff), "confirmation_state": ("in", ("Current", "Superseded"))}, fields=["name", "plan_version", "recorded_at"], limit_page_length=0):
+		add_plan(row, row.plan_version, PUBLICATION, row.recorded_at, plan_read.PLAN_READERS)
 
 	def add_dpp(row, root_name: str, unit: str, wording: tuple[str, str], when: Any) -> None:
 		root = frappe.db.get_value("Departmental Plan", root_name, ["name", "dpp_reference", "organisation_unit"], as_dict=True) if root_name else None

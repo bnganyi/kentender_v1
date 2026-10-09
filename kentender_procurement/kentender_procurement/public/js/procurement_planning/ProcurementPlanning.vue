@@ -207,14 +207,15 @@
 						:task="publication"
 						:pending="pending"
 						:error-summary="errorSummary"
-						@publish="onPublishPlan"
-						@retry="onRetryPublication"
-						@reconcile="onReconcilePublication"
-						@record-treasury="treasuryDialog = true"
-						@correct-treasury="treasuryDialog = true"
+						:error-fields="errorFields"
+						@save-draft="onSavePublicationDraft"
+						@confirm="onConfirmPublication"
+						@correct="onCorrectPublication"
 						@request-withdrawal="withdrawalDialog = 'request'"
 						@decide-withdrawal="withdrawalDialog = 'decision'"
 						@explain-late="lateExplanationDialog = true"
+						@download-plan="onDownloadApprovedPlan"
+						@download-plan-data="onDownloadApprovedPlan"
 						@navigate="onNavigate"
 						@back="publication.plan_reference ? frappe.set_route(PLAN_PAGE, publication.plan_reference) : frappe.set_route(WORKSPACE_PAGE)"
 					/>
@@ -226,14 +227,6 @@
 						:error="errorSummary"
 						@confirm="onRecordLateExplanation"
 						@cancel="lateExplanationDialog = false"
-					/>
-					<TreasurySubmissionDialog
-						v-if="treasuryDialog"
-						:task="publication"
-						:pending="pending"
-						:error="errorSummary"
-						@confirm="onRecordTreasury"
-						@cancel="treasuryDialog = false"
 					/>
 					<WithdrawalDialog
 						v-if="withdrawalDialog"
@@ -247,13 +240,15 @@
 				</template>
 
 				<template v-else-if="screen === 'plan'">
-					<!-- PLN-DES-16 — publication was not acknowledged; the Draft is untouched -->
+					<!-- PLN-DES-16 (v1.31) — a Version still in the historical Publication
+					     failed status: the approved plan is unchanged and the Planner
+					     can confirm its publication; nothing is retried. -->
 					<div v-if="annualPlan.latest_publication && annualPlan.latest_publication.result === 'Failed'" class="card blueprint pln-state-card" data-testid="pln-publication-failed">
 						<i class="corner tl"></i><i class="corner tr"></i>
 						<i class="corner bl"></i><i class="corner br"></i>
-						<h3>Publication was not acknowledged</h3>
-						<p>The approved Plan is unchanged. Retry the same publication when the destination is available.</p>
-						<button type="button" class="btn btn-secondary" data-testid="pln-open-publication" @click="onNavigate(annualPlan.latest_publication.route)">Retry publication</button>
+						<h3>An earlier publication attempt did not succeed</h3>
+						<p>The approved plan is unchanged. Confirm its publication once it has been submitted to the National Treasury and published on the entity’s website.</p>
+						<button type="button" class="btn btn-secondary" data-testid="pln-open-publication" @click="onNavigate(annualPlan.latest_publication.route)">Confirm plan publication</button>
 					</div>
 					<AnnualPlanScreen
 						:plan="annualPlan"
@@ -394,6 +389,7 @@ import { computed, ref, watch } from "vue";
 import { useRouteState } from "../pln_shared/composables/useRouteState.js";
 import { usePageRail } from "../pln_shared/composables/usePageRail.js";
 import * as api from "./data/planningApi.js";
+import { directTaskRoute } from "./data/openTask.js";
 import WorkspaceScreen from "./components/WorkspaceScreen.vue";
 import CommonStates from "./components/CommonStates.vue";
 import DppPlanScreen from "./components/DppPlanScreen.vue";
@@ -418,7 +414,6 @@ import CorrectionRequestsScreen from "./components/CorrectionRequestsScreen.vue"
 import RecordCorrectionDialog from "./components/RecordCorrectionDialog.vue";
 import PublicationResultScreen from "./components/PublicationResultScreen.vue";
 import LateExplanationDialog from "./components/LateExplanationDialog.vue";
-import TreasurySubmissionDialog from "./components/TreasurySubmissionDialog.vue";
 import WithdrawalDialog from "./components/WithdrawalDialog.vue";
 import PlanItemEditorScreen from "./components/PlanItemEditorScreen.vue";
 import FinanceTaskScreen from "./components/FinanceTaskScreen.vue";
@@ -443,6 +438,7 @@ const error = ref("");
 // 404) is a distinct, calm state from a real load failure; see the template.
 const notAvailable = ref(false);
 const errorSummary = ref("");
+const errorFields = ref({});
 const supportRef = ref("");
 const workspace = ref({});
 const dpp = ref({});
@@ -475,7 +471,6 @@ const dissolveDialog = ref(false);
 // §10.10 — a collective body's resolution reference, and the AO's late-start
 // explanation, are inputs to the decision itself rather than separate dialogs.
 const collectiveResolution = ref("");
-const treasuryDialog = ref(false);
 const lateExplanationDialog = ref(false);
 // §10.12 — "" (closed), "request" (the AO's) or "decision" (the statutory
 // authority's). The two are different dialogs for different people.
@@ -730,7 +725,6 @@ function applyLoaded(scr, loaded) {
 			break;
 		case "publication":
 			publication.value = loaded;
-			treasuryDialog.value = false;
 			lateExplanationDialog.value = false;
 			withdrawalDialog.value = "";
 			break;
@@ -758,6 +752,15 @@ async function load(opts) {
 	try {
 		const loaded = await fetchFor(scr);
 		if (!loadGuard.isCurrent(token)) return;
+		// The holder of a decision task goes straight to it. Replacing the
+		// plan's history entry means Back from the task does not land on the
+		// plan page only to be sent forward again.
+		const taskRoute = directTaskRoute(scr, loaded);
+		if (taskRoute) {
+			frappe.route_flags.replace_route = true;
+			frappe.set_route(...taskRoute);
+			return;
+		}
 		cache.set(key, loaded);
 		applyLoaded(scr, loaded);
 	} catch (e) {
@@ -813,10 +816,13 @@ async function run(action, fn) {
 	if (pending.value) return null;
 	pending.value = true;
 	errorSummary.value = "";
+	errorFields.value = {};
 	try {
 		return await fn(api.newIdempotencyKey(action));
 	} catch (e) {
 		errorSummary.value = e.message;
+		// which fields the server refused, so a form can mark them (PLN-CHG-001 v1.31)
+		errorFields.value = (e.detail && e.detail.fields && !Array.isArray(e.detail.fields) ? e.detail.fields : {}) || {};
 		return null;
 	} finally {
 		pending.value = false;
@@ -995,37 +1001,50 @@ async function onRemoveDirect() {
 	if (result) go(dppReference.value);
 }
 
-// §5.5.2 / §10.12 — the Accounting Officer records what was sent outside the
-// system. A correction supersedes the recorded evidence with a reason; it
-// never overwrites it, so the two are separate commands.
-async function onRecordTreasury(values) {
-	const correcting = Boolean(publication.value.treasury_prior);
-	const result = await run("record-treasury", async (key) => {
-		const r = correcting
-			? await api.correctTreasurySubmissionEvidence({
-				prior_evidence: publication.value.treasury_evidence_id,
-				reason: values.reason,
-				submitted_at: values.submitted_at,
-				channel: values.channel,
-				destination: values.destination,
-				dispatch_reference: values.dispatch_reference,
-				supporting_attachment: values.supporting_attachment || "",
-				idempotency_key: key,
-			})
-			: await api.recordTreasurySubmission({
-				plan_version: publication.value.version?.reference,
-				submitted_at: values.submitted_at,
-				channel: values.channel,
-				destination: values.destination,
-				dispatch_reference: values.dispatch_reference,
-				exact_document_confirmed: values.exact_document_confirmed ? 1 : 0,
-				supporting_attachment: values.supporting_attachment || "",
-				idempotency_key: key,
-			});
+// §5.5.2.2 (v1.31) — the Planner records what was done outside the system:
+// the plan was submitted to the National Treasury and published on the
+// entity's website. Confirming runs the existing activation checks on the
+// server; the page reloads to show the result, which is either the current plan
+// or "Published — activation held" with the evidence kept.
+async function onSavePublicationDraft(values) {
+	await run("save-publication-draft", async (key) => {
+		const r = await api.savePublicationDraft({
+			plan_version: publication.value.version?.reference,
+			values: JSON.stringify(values),
+			expected_record_version: publication.value.draft ? publication.value.draft.record_version : "",
+			idempotency_key: key,
+		});
 		await load({ quiet: true });
 		return r;
 	});
-	if (result) treasuryDialog.value = false;
+}
+
+async function onConfirmPublication(values) {
+	await run("confirm-plan-publication", async (key) => {
+		const r = await api.confirmPlanPublication({
+			plan_version: publication.value.version?.reference,
+			values: JSON.stringify(values),
+			expected_record_version: publication.value.version?.record_version,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
+}
+
+// A correction supersedes the recorded details with a reason; it never
+// overwrites them (PLN-CHG-001 v1.31 §5.5.2.2).
+async function onCorrectPublication({ confirmation, values, reason }) {
+	await run("correct-publication-details", async (key) => {
+		const r = await api.correctPublicationDetails({ confirmation, values: JSON.stringify(values), reason, idempotency_key: key });
+		await load({ quiet: true });
+		return r;
+	});
+}
+
+// "Download approved plan" and "Download Plan data": the frozen package.
+function onDownloadApprovedPlan() {
+	window.open(api.approvedPlanDownloadUrl(publication.value.publication || ""), "_blank");
 }
 
 // §10.14 — append, never rewrite: the newest recorded explanation is named as
@@ -1066,15 +1085,6 @@ async function onWithdrawal(reason) {
 		return r;
 	});
 	if (result) withdrawalDialog.value = "";
-}
-
-async function onReconcilePublication() {
-	// §5.5.2.3 — reconciliation reads the authoritative destination result.
-	// It never sets success, and an unknown outcome stays unknown.
-	const result = await run("reconcile-publication", (key) =>
-		api.reconcilePublication({ publication: publication.value.publication, idempotency_key: key })
-	);
-	if (result) await load({ quiet: true });
 }
 
 function onViewItemClassification() {
@@ -1397,7 +1407,12 @@ async function onSubmitConsolidatedPlan(lateActivationReason) {
 	);
 	if (result) {
 		lateActivationDialog.value = false;
-		frappe.set_route(WORKSPACE_PAGE, "review", result.task);
+		// The signer is the Head of Procurement Function, who cannot open the
+		// Accounting Officer's task: sending them there said "This record is
+		// not available to you" the moment the plan was signed (found live
+		// 9 Oct 2026). They stay on the plan, which now says it is waiting.
+		if (result.task_readable) frappe.set_route(WORKSPACE_PAGE, "review", result.task);
+		else await load({ quiet: true });
 	}
 }
 
@@ -1470,28 +1485,6 @@ async function onCloseWithoutChange(reason) {
 		return r;
 	});
 	if (result) noChangeRequest.value = null;
-}
-
-async function onPublishPlan() {
-	const result = await run("publish-plan", async (key) => {
-		const r = await api.publishAnnualPlan({ plan_version: publication.value.version?.reference, idempotency_key: key });
-		await load({ quiet: true });
-		return r;
-	});
-	return result;
-}
-
-async function onRetryPublication() {
-	const result = await run("retry-publication", (key) =>
-		api.retryPublication({ publication: publication.value.publication, idempotency_key: key })
-	);
-	if (!result) return;
-	// a retry is a new attempt record; the route follows it (§12.11)
-	if (result.publication && result.publication !== publication.value.publication) {
-		frappe.set_route(WORKSPACE_PAGE, "publication", result.publication);
-	} else {
-		await load({ quiet: true });
-	}
 }
 
 async function onBeginUpdate() {

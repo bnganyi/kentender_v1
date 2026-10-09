@@ -1,19 +1,17 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.18 §5.5.2.2 / §5.5.2.3 / §7.2 — Treasury submission
-evidence and the withdrawal-for-correction recovery route (plan D8,
-PLN18-209).
+"""PLN-CHG-001 v1.31 §5.5.2.3 / §7.2 — the withdrawal-for-correction recovery
+route.
 
-Transmission to Treasury is external in this MVP: the Accounting Officer
-records evidence of what was submitted, never a second approval. Evidence is
-append-only — a correction supersedes rather than overwrites. Withdrawal
-requires confirmed non-publication (no acknowledgement, no outstanding
-attempt) and travels through the same statutory-capacity governance task
-machinery §6/§7.2 already uses, so it inherits capacity resolution,
-segregation and the decision journal rather than inventing a parallel
-approval shape.
-"""
+The Treasury submission evidence that the Accounting Officer recorded here under
+v1.29 and v1.30 is retired: the Planner's publication confirmation
+(`publication_confirmation.py`) replaces it, and the old rows stay as read-only
+history. What remains is the Accounting Officer's request and the statutory
+authority's decision to withdraw an approved plan that has no Current
+confirmation. It travels through the same statutory-capacity governance task
+machinery §6/§7.2 already uses, so it inherits capacity resolution, segregation
+and the decision journal rather than inventing a parallel approval shape."""
 
 from __future__ import annotations
 
@@ -31,111 +29,11 @@ from kentender_procurement.procurement_planning.services.planning_roles import R
 from kentender_procurement.procurement_planning.write_family import planning_command
 
 
-def _approved_version(plan_version: str):
-	version = envelope.locked("Annual Plan Version", plan_version)
-	if not frappe.db.exists("Approved Plan Snapshot", {"plan_version": version.name}):
-		fail("PLN_REVIEW_STALE", "Only an approved Plan Version takes Treasury submission evidence.")
-	return version
-
-
-@planning_command
-def record_treasury_submission(
-	*, plan_version: str, submitted_at, channel: str, destination: str, dispatch_reference: str,
-	exact_document_confirmed, supporting_attachment: str = "", idempotency_key: str, user: str | None = None,
-) -> dict[str, Any]:
-	"""§7.2 `RecordTreasurySubmission` — appends the first (or a fresh)
-	Current evidence row for the exact approved Version; releases the
-	`Approved — awaiting Treasury submission evidence` prerequisite."""
-	actor = authz.actor(user)
-	payload = {"plan_version": plan_version, "submitted_at": cstr(submitted_at), "channel": channel, "destination": destination, "dispatch_reference": dispatch_reference}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
-	if not (exact_document_confirmed in (True, 1, "1", "true", "True")):
-		fail("PLN_ENTRY_INCOMPLETE", "Confirm this is the exact document submitted to Treasury.", {"field": "exact_document_confirmed"})
-	for field, value in (("channel", channel), ("destination", destination), ("dispatch_reference", dispatch_reference)):
-		if not cstr(value).strip():
-			fail("PLN_ENTRY_INCOMPLETE", detail={"field": field})
-	version = _approved_version(plan_version)
-	assignment = authz.require_site_role(ROLE_ACCOUNTING_OFFICER, actor)
-	if frappe.db.exists("Treasury Submission Evidence", {"plan_version": version.name, "evidence_state": "Current"}):
-		fail("PLN_ENTRY_INCOMPLETE", "Current Treasury submission evidence already exists; correct it instead of recording another.")
-	snapshot = frappe.db.get_value("Approved Plan Snapshot", {"plan_version": version.name}, "content_digest")
-	evidence = frappe.get_doc(
-		{
-			"doctype": "Treasury Submission Evidence", "plan_version": version.name, "document_hash": cstr(snapshot),
-			"submitted_at": submitted_at, "channel": channel, "destination": destination, "dispatch_reference": dispatch_reference,
-			"supporting_attachment": supporting_attachment or None, "exact_document_confirmed": 1, "actor": actor,
-			"authority_snapshot": authz.authority_snapshot(assignment), "recorded_at": now_datetime(), "evidence_state": "Current",
-			"fixture_namespace": cstr(version.fixture_namespace),
-		}
-	).insert(ignore_permissions=True)
-	result = {"ok": True, "idempotent": False, "action": "treasury_submission_recorded", "evidence": evidence.name}
-	envelope.record_command(
-		idempotency_key=idempotency_key, command="RecordTreasurySubmission", payload=payload, result=result,
-		document_type="Treasury Submission Evidence", document_name=evidence.name, actor=actor, fixture_namespace=cstr(version.fixture_namespace),
-	)
-	return result
-
-
-@planning_command
-def correct_treasury_submission_evidence(*, prior_evidence: str, reason: str, idempotency_key: str, user: str | None = None, **new_fields) -> dict[str, Any]:
-	"""§7.2 `CorrectTreasurySubmissionEvidence` — append a superseding record
-	with a reason; the prior record is preserved, never overwritten. Any
-	outstanding in-flight publication attempt is held pending reconciliation
-	against the corrected evidence."""
-	actor = authz.actor(user)
-	reason = " ".join(cstr(reason).split())
-	payload = {"prior_evidence": prior_evidence, "reason": reason, **{k: cstr(v) for k, v in new_fields.items()}}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
-	if not (10 <= len(reason) <= 500):
-		fail("PLN_ENTRY_INCOMPLETE", "State the reason for the correction (10–500 characters).", {"field": "reason"})
-	if not prior_evidence or not frappe.db.exists("Treasury Submission Evidence", prior_evidence):
-		authz.not_found()
-	prior = frappe.get_doc("Treasury Submission Evidence", prior_evidence)
-	if prior.evidence_state != "Current":
-		fail("PLN_REVIEW_STALE", "Only the current evidence record can be corrected.")
-	version = envelope.locked("Annual Plan Version", prior.plan_version)
-	assignment = authz.require_site_role(ROLE_ACCOUNTING_OFFICER, actor)
-	for field in ("submitted_at", "channel", "destination", "dispatch_reference"):
-		if field not in new_fields or not cstr(new_fields.get(field)).strip():
-			fail("PLN_ENTRY_INCOMPLETE", detail={"field": field})
-	corrected = frappe.get_doc(
-		{
-			"doctype": "Treasury Submission Evidence", "plan_version": version.name, "document_hash": prior.document_hash,
-			"submitted_at": new_fields["submitted_at"], "channel": new_fields["channel"], "destination": new_fields["destination"],
-			"dispatch_reference": new_fields["dispatch_reference"], "supporting_attachment": new_fields.get("supporting_attachment") or None,
-			"exact_document_confirmed": 1, "actor": actor, "authority_snapshot": authz.authority_snapshot(assignment), "recorded_at": now_datetime(),
-			"evidence_state": "Current", "correction_reason": reason, "fixture_namespace": cstr(version.fixture_namespace),
-		}
-	).insert(ignore_permissions=True)
-	frappe.db.set_value("Treasury Submission Evidence", prior.name, {"evidence_state": "Superseded", "superseded_by": corrected.name}, update_modified=False)
-	held = None
-	publication_name = frappe.db.get_value("Plan Publication", {"plan_version": version.name}, "name")
-	if publication_name and frappe.db.get_value("Publication Attempt", {"publication": publication_name, "result": ("in", ("Pending", "Indeterminate"))}, "name"):
-		held = publication_pipeline.hold_plan_publication(
-			plan_version=version.name, reason=f"Treasury submission evidence corrected: {reason}",
-			hold_kind="Accounting Officer correction request", idempotency_key=f"{idempotency_key}:hold", user=actor,
-		)["hold"]
-	result = {"ok": True, "idempotent": False, "action": "treasury_evidence_corrected", "evidence": corrected.name, "supersedes": prior.name, "hold": held}
-	envelope.record_command(
-		idempotency_key=idempotency_key, command="CorrectTreasurySubmissionEvidence", payload=payload, result=result,
-		document_type="Treasury Submission Evidence", document_name=corrected.name, actor=actor, fixture_namespace=cstr(version.fixture_namespace),
-	)
-	return result
-
-
 def _confirmed_unpublished(version) -> bool:
-	publication_name = frappe.db.get_value("Plan Publication", {"plan_version": version.name}, "name")
-	if not publication_name:
-		return True
-	if frappe.db.exists("Publication Acknowledgement", {"publication": publication_name, "matched": 1}):
-		return False
-	if frappe.db.exists("Publication Attempt", {"publication": publication_name, "result": ("in", ("Pending", "Indeterminate"))}):
-		return False
-	return True
+	"""§5.5.2.3 (v1.31) — no Current publication confirmation exists. A saved
+	Draft is not evidence and does not count. (v1.30 read: no matched
+	acknowledgement and no pending or indeterminate attempt.)"""
+	return not frappe.db.exists("Plan Publication Confirmation", {"plan_version": version.name, "confirmation_state": "Current"})
 
 
 @planning_command

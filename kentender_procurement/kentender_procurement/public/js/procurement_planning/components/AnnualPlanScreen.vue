@@ -33,6 +33,15 @@
 					<!-- KT-STD-001 v1.8 §2.9.1 — Your turn / Waiting / Done, one line
 					     in the header after the scope line (U07-FINANCE-COMPLETE). -->
 					<div ref="headEl" class="kt-guidance-mount" data-testid="ppl-next-step-line"></div>
+					<!-- The decider's own task (FU-14: the record route never
+					     strands whoever holds an open task), in the header beside
+					     the status and the "Your turn" line it answers — found
+					     live 9 Oct 2026 at the foot of the page, below history. -->
+					<div v-if="plan.open_task" class="pln-head-action">
+						<button type="button" class="btn btn-primary" data-testid="ppl-open-task" @click="$emit('open-task', plan.open_task.route)">
+							{{ plan.open_task.label }}
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -455,11 +464,6 @@
 				</div>
 			</div>
 
-			<div v-if="plan.open_task" class="pln-dpp-task">
-				<button type="button" class="btn btn-primary" data-testid="ppl-open-task" @click="$emit('open-task', plan.open_task.route)">
-					{{ plan.open_task.label }}
-				</button>
-			</div>
 		</div>
 	</div>
 </template>
@@ -510,6 +514,10 @@ const FOCUS = { purchases: purchasesEl, reservation: reservationEl, requirements
 function focusRegion(target) {
 	const el = (FOCUS[target] || checksEl).value || checksEl.value;
 	if (!el) return;
+	// The reservation block is already on screen when its fix is pressed, so
+	// moving to it shows nothing; the answer is the working under it (which
+	// purchases count, and why), which is closed until asked for.
+	if (target === "reservation") el.querySelector("details")?.setAttribute("open", "");
 	nextTick(() => {
 		el.scrollIntoView({ behavior: "smooth", block: "start" });
 		el.focus({ preventScroll: true });

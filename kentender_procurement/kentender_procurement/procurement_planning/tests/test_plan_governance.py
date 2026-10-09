@@ -19,6 +19,7 @@ from frappe.tests import IntegrationTestCase
 from kentender_core.services.command_write_guard import fixture_insert
 from kentender_procurement.procurement_planning.errors import ProcurementPlanningError
 from kentender_procurement.procurement_planning.services import (
+	publication_confirmation,
 	publication_pipeline,
 	treasury,
 	budget_gateway,
@@ -285,6 +286,28 @@ class TestSubmitConsolidatedPlan(GovernanceCase):
 		self.assertEqual(caught.exception.code, "PLN_STATUTORY_ROUTE_UNCONFIGURED")
 
 
+class TestSubmitResultSaysWhereTheSignerCanGo(GovernanceCase):
+	"""Found live 9 Oct 2026: the page sent the signing HOPF straight into the
+	Accounting Officer's review task, which the HOPF cannot read, so the page
+	said "This record is not available to you" the moment the plan was signed.
+	The result now says whether the signer can open the task it created."""
+
+	def test_the_head_of_procurement_function_is_told_the_new_task_is_not_theirs_to_open(self):
+		accepted, _item_id = self.confirmed_item()
+		result = self.submit(accepted["annual_plan"])
+		self.assertFalse(result["task_readable"])
+		with self.assertRaises(Exception):
+			plan_read.get_plan_governance_task(task=result["task"])
+
+	def test_a_signer_who_may_read_the_task_is_told_so(self):
+		accepted, _item_id = self.confirmed_item()
+		result = self.submit(accepted["annual_plan"])
+		task = frappe.get_doc("Plan Governance Task", result["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		self.assertTrue(plan_read.governance_task_readable(task, fx.ACCOUNTING_OFFICER))
+		self.assertTrue(plan_read.get_plan_governance_task(task=task.name)["task"])
+
+
 class TestPreparationSignature(GovernanceCase):
 	"""PLN-CHG-001 v1.18 §6.2 / D6 — Sign and submit Annual Plan (PLN18-208)."""
 
@@ -387,7 +410,8 @@ class TestAdoptApproveChain(GovernanceCase):
 		self.assertFalse(read["authority_card"]["is_board"])
 		approved = plan_governance.approve_annual_plan(task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=key())
 		self.assertEqual(approved["action"], "approved")
-		self.assertTrue(approved["snapshot"] and approved["publication"] and approved["intent"])
+		self.assertTrue(approved["snapshot"] and approved["publication"])
+		self.assertNotIn("intent", approved)  # PLN-CHG-001 v1.31: nothing is queued for dispatch
 		# §5.5.2 (plan D8): approval only commits — no external send yet, still Draft-locked
 		self.assertEqual(frappe.db.get_value("Annual Plan Version", version.name, "version_status"), "Approved — publication pending")
 		self.assertFalse(frappe.db.get_value("Annual Plan", accepted["annual_plan"], "active_version"))
@@ -395,28 +419,33 @@ class TestAdoptApproveChain(GovernanceCase):
 		self.assertEqual(snapshot.plan_version, version.name)
 		self.assertTrue(snapshot.content_digest)
 
-		# the worker runs inline on this bench (no RQ worker) as a technical
-		# actor — `PublishAnnualPlan` is a system worker, never a business
-		# user action; Treasury evidence gates transmission (§5.5.2.2)
-		frappe.set_user("Administrator")
-		with self.assertRaises(ProcurementPlanningError) as caught:
-			publication_pipeline.publish_annual_plan(plan_version=version.name, idempotency_key=key())
-		self.assertEqual(caught.exception.code, "PLN_TREASURY_EVIDENCE_REQUIRED")
+		# v1.31 §5.5.2.2 — the Planner confirms Treasury submission and website
+		# publication; the existing activation checks then run once (§5.5.2.4).
+		today = str(frappe.utils.getdate(frappe.utils.nowdate()))
+		values = {
+			"treasury_submitted_on": today, "treasury_reference": "MOH/APP/2101/001", "website_published_on": today,
+			"public_plan_url": "https://www.moh.example.test/procurement/annual-procurement-plan", "confirmation_acknowledged": 1,
+		}
 		frappe.set_user(fx.ACCOUNTING_OFFICER)
-		treasury.record_treasury_submission(
-			plan_version=version.name, submitted_at="2101-11-01 09:00:00", channel="Email", destination="treasury@example.test",
-			dispatch_reference="MOH/APP/2101/001", exact_document_confirmed=True, idempotency_key=key(),
+		with self.assertRaises(frappe.DoesNotExistError):
+			publication_confirmation.confirm_plan_publication(
+				plan_version=version.name, values=values, expected_record_version=int(version.record_version or 0), idempotency_key=key(),
+			)
+		frappe.set_user(fx.PLANNER)
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			publication_confirmation.confirm_plan_publication(
+				plan_version=version.name, values={**values, "treasury_reference": ""}, expected_record_version=int(frappe.db.get_value("Annual Plan Version", version.name, "record_version") or 0), idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_TREASURY_EVIDENCE_REQUIRED")
+		published = publication_confirmation.confirm_plan_publication(
+			plan_version=version.name, values=values, expected_record_version=int(frappe.db.get_value("Annual Plan Version", version.name, "record_version") or 0), idempotency_key=key(),
 		)
-		frappe.set_user("Administrator")
-		published = publication_pipeline.publish_annual_plan(plan_version=version.name, idempotency_key=key())
-		self.assertEqual(published["result"], "Acknowledged")
+		self.assertEqual(published["activation"], "activated")
 		self.assertEqual(frappe.db.get_value("Annual Plan Version", version.name, "version_status"), "Active")
 		self.assertEqual(frappe.db.get_value("Annual Plan", accepted["annual_plan"], "active_version"), version.name)
 		publication = frappe.get_doc("Plan Publication", {"plan_version": version.name})
-		self.assertEqual(publication.publication_state, "Acknowledged")
-		self.assertTrue(publication.external_reference)
-		ack = frappe.get_doc("Publication Acknowledgement", {"publication": publication.name})
-		self.assertTrue(ack.matched)
+		self.assertEqual(publication.publication_state, "Confirmed")
+		self.assertEqual(frappe.db.count("Publication Acknowledgement", {"publication": publication.name}), 0)
 		# PLN-CHG-001 v1.23 §5.6.7 / PLN23-AC-001 — activation initialises no
 		# forecast record: AC-124 is future-only and the approved baseline is
 		# the only schedule the MVP keeps. The item is Active and its baseline
@@ -690,6 +719,22 @@ class TestReturnPlanVersion(GovernanceCase):
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 		requested = plan_finance.request_plan_funding_confirmation(plan_version=correction.name, expected_record_version=plan["record_version"], idempotency_key=key())
 		self.assertEqual(requested["action"], "requested")
+
+
+class TestRecordRouteTaskAction(GovernanceCase):
+	"""The plan page offers its decider the task, named by what they will do
+	(found live 9 Oct 2026: "Open decision" said where it went, not why)."""
+
+	def test_the_accounting_officer_is_offered_to_review_and_adopt(self):
+		accepted, _item_id = self.confirmed_item()
+		self.submit(accepted["annual_plan"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		task = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])["open_task"]
+		self.assertEqual(task["label"], "Review and adopt the plan")
+		self.assertEqual(task["route"][1], "review")
+		# The task is the page for deciding, so the plan page hands them to it
+		# rather than showing a near-identical page first.
+		self.assertTrue(task["opens_directly"])
 
 
 class TestReviewReadModel(GovernanceCase):

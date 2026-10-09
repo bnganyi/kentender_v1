@@ -215,9 +215,9 @@ CLOCK = {
 	"plan_submitted": "2026-12-07 10:00:00",
 	"ao_adopted": "2026-12-08 10:00:00",
 	"statutory_approved": "2026-12-09 11:00:00",
-	"publication_attempted": "2026-12-10 14:55:00",
-	"publication_acknowledged": "2026-12-10 15:00:00",
-	"treasury_submitted": "2026-12-10 14:00:00",  # §10.12
+	# PLN-CHG-001 v1.31 / SEED-002 v0.4: the Planner's one confirmation of
+	# Treasury submission and website publication; it activates the plan.
+	"publication_confirmed": "2026-12-10 15:00:00",  # §10.12
 }
 #: The UTC values CLOCK held before 26 Sep 2026 — the one-off patch that
 #: moves already-seeded rows to site time matches these exactly.
@@ -376,6 +376,7 @@ def plan_spec(year: str) -> dict[str, Any]:
 				*_portfolio_items(),
 			),
 			"treasury_reference": "MOH/APP/2026/001",
+			"public_plan_url": "https://www.moh.example.test/procurement/annual-procurement-plan-2026-27",
 		}
 	return {
 		"dpps": (
@@ -408,6 +409,7 @@ def plan_spec(year: str) -> dict[str, Any]:
 			)},
 		),
 		"treasury_reference": "MOH/APP/2027/001",
+		"public_plan_url": "https://www.moh.example.test/procurement/annual-procurement-plan-2027-28",
 	}
 
 
@@ -428,6 +430,7 @@ _DOCTYPES = (
 	"Plan Publication Hold",
 	"Plan Publication",
 	"Treasury Submission Evidence",
+	"Plan Publication Confirmation",
 	"Late Activation Explanation",
 	"Approved Plan Snapshot",
 	"Plan Preparation Signature",
@@ -627,7 +630,7 @@ def _destination() -> None:
 		{
 			"doctype": "Annual Plan Publication Destination",
 			"destination_id": DESTINATION_ID,
-			"title": "KenTender Annual Plan Publication Sandbox",
+			"title": "Entity website, recorded by the Planner",
 			"adapter": DESTINATION_ADAPTER,
 			"active": 1,
 			"fixture_namespace": NS,
@@ -804,18 +807,18 @@ def _submit_plan(plan_reference: str, *, steps: dict[str, str] | None = None, ke
 	return frappe.get_doc("Plan Governance Task", submitted["task"])
 
 
-def _govern_and_publish(plan_reference: str, *, steps: dict[str, str] | None = None, treasury_reference: str = "MOH/APP/2027/001", key=None) -> dict[str, Any]:
+def _govern_and_publish(plan_reference: str, *, steps: dict[str, str] | None = None, treasury_reference: str = "MOH/APP/2027/001", public_plan_url: str = "https://www.moh.example.test/procurement/annual-procurement-plan-2027-28", key=None) -> dict[str, Any]:
 	"""§14.6 / §5.5.2 — Charles signs and submits, Amina adopts, Daniel
 	approves in the entity's configured route.
 
-	Approval commits the exact content and a durable publication intent; it
-	does **not** transmit. The rest is the real asynchronous sequence: Amina
-	records the external Treasury submission, the worker sends the frozen
-	package, and the acknowledgement activates the Version. There is no RQ
-	worker on this bench, so the worker step runs inline here — which is
-	exactly what it does under test.
+	Approval commits the exact content and its document identity; it dispatches
+	nothing. MVP 1 publication is manual (PLN-CHG-001 v1.31 §5.5.2.2, SEED-002
+	v0.4): Mercy, the Procurement Planner, records the Treasury submission and
+	the entity-website publication in one confirmation, and the existing
+	activation checks then run. No adapter, no attempt, no acknowledgement and no
+	Accounting Officer Treasury record.
 	"""
-	from kentender_procurement.procurement_planning.services import plan_governance, publication_pipeline, treasury
+	from kentender_procurement.procurement_planning.services import plan_governance, publication_confirmation
 
 	frozen = steps is not None
 	steps, key = steps or CLOCK, key or _key
@@ -838,37 +841,30 @@ def _govern_and_publish(plan_reference: str, *, steps: dict[str, str] | None = N
 		)
 
 	plan_version = approved["plan_version"]
-	# §5.5.2.2 — the AO records that the exact approved document was sent.
-	# This is external dispatch evidence, not another approval. SEED-001 v1.3
-	# §3.7 / SEED-AC-020: the reference alone is not evidence, so a labelled
-	# synthetic attachment goes with it (the file name is the artboard's
-	# placeholder; until 26 Sep 2026 the seed attached nothing).
+	# The reference alone is not evidence (SEED-001 v1.3 §3.7 / SEED-AC-020),
+	# so a labelled synthetic attachment goes with it (the file name is the
+	# artboard's placeholder; until 26 Sep 2026 the seed attached nothing).
 	from kentender_core.seeds.fixture_files import attached_pdf
 
 	evidence = attached_pdf(
 		TREASURY_EVIDENCE_FILE, label=f"Treasury dispatch evidence {treasury_reference}", doctype="Annual Plan Version", name=plan_version,
 	)
-	with _as(ACCOUNTING_OFFICER), at("treasury_submitted"):
-		treasury.record_treasury_submission(
+	with _as(PLANNER), at("publication_confirmed"):
+		today = str(frappe.utils.getdate(frappe.utils.nowdate()))
+		confirmed = publication_confirmation.confirm_plan_publication(
 			plan_version=plan_version,
-			submitted_at=steps["treasury_submitted"],
-			channel="Official correspondence",
-			destination="National Treasury",
-			dispatch_reference=treasury_reference,
-			exact_document_confirmed=True,
-			supporting_attachment=evidence,
-			idempotency_key=key("treasury-submission"),
+			values={
+				"treasury_submitted_on": today, "treasury_reference": treasury_reference, "treasury_attachment": evidence,
+				"website_published_on": today, "public_plan_url": public_plan_url, "confirmation_acknowledged": 1,
+			},
+			expected_record_version=int(frappe.db.get_value("Annual Plan Version", plan_version, "record_version") or 0),
+			idempotency_key=key("confirm-publication"),
 		)
-	frappe.set_user("Administrator")
-	with at("publication_acknowledged"):
-		published = publication_pipeline.publish_annual_plan(plan_version=plan_version, idempotency_key=key("publish-plan"))
-	return {**approved, "publication_result": published.get("result"), "publication": published.get("publication")}
+	return {**approved, "publication_result": confirmed["activation"], "publication": confirmed["publication"]}
 
 
 def _stamp_design_clock(plan_reference: str, *, steps: dict[str, str] | None = None) -> None:
-	"""§14.4–14.6 exact instants onto the evidence rows the commands wrote
-	(the publication attempt's own two instants, which one inline worker run
-	cannot both hold)."""
+	"""§14.4–14.6 exact instants onto the evidence rows the commands wrote."""
 	CLOCK = steps or globals()["CLOCK"]
 	plan_name = frappe.db.get_value("Annual Plan", {"plan_reference": plan_reference})
 	version = frappe.db.get_value("Annual Plan", plan_name, "active_version") or frappe.db.get_value("Annual Plan", plan_name, "open_successor_version")
@@ -883,34 +879,15 @@ def _stamp_design_clock(plan_reference: str, *, steps: dict[str, str] | None = N
 		pluck="name",
 	):
 		frappe.db.set_value("Plan Finance Decision", decision, "decided_at", CLOCK["finance_confirmed"], update_modified=False)
-	frappe.db.set_value("Annual Plan Version", version, "activated_at", CLOCK["publication_acknowledged"], update_modified=False)
+	frappe.db.set_value("Annual Plan Version", version, "activated_at", CLOCK["publication_confirmed"], update_modified=False)
 	for stage, when in (("Accounting Officer adoption", CLOCK["ao_adopted"]), ("Statutory approval", CLOCK["statutory_approved"])):
 		task = frappe.db.get_value("Plan Governance Task", {"plan_version": version, "stage": stage}, "decision")
 		if task:
 			frappe.db.set_value("Plan Governance Decision", task, "decided_at", when, update_modified=False)
-	# PLN-CHG-001 v1.18 §5.5.2 — the publication chain, not the retired v1.12
-	# `Annual Plan Publication` row.
-	publication = frappe.db.get_value("Plan Publication", {"plan_version": version}, "name")
-	if publication:
-		frappe.db.set_value(
-			"Plan Publication", publication, "acknowledged_at", CLOCK["publication_acknowledged"], update_modified=False,
-		)
-		for attempt in frappe.get_all("Publication Attempt", filters={"publication": publication}, pluck="name"):
-			frappe.db.set_value(
-				"Publication Attempt", attempt,
-				{"attempted_at": CLOCK["publication_attempted"], "completed_at": CLOCK["publication_acknowledged"]},
-				update_modified=False,
-			)
-		for ack in frappe.get_all("Publication Acknowledgement", filters={"publication": publication}, pluck="name"):
-			frappe.db.set_value(
-				"Publication Acknowledgement", ack,
-				{"acknowledged_at": CLOCK["publication_acknowledged"], "received_at": CLOCK["publication_acknowledged"]},
-				update_modified=False,
-			)
-		for evidence in frappe.get_all("Treasury Submission Evidence", filters={"plan_version": version}, pluck="name"):
-			frappe.db.set_value(
-				"Treasury Submission Evidence", evidence, "recorded_at", CLOCK["treasury_submitted"], update_modified=False,
-			)
+	# PLN-CHG-001 v1.31 §5.5.2 — the Planner's confirmation is the publication
+	# evidence; no attempt or acknowledgement exists to stamp.
+	for confirmation in frappe.get_all("Plan Publication Confirmation", filters={"plan_version": version}, pluck="name"):
+		frappe.db.set_value("Plan Publication Confirmation", confirmation, "recorded_at", CLOCK["publication_confirmed"], update_modified=False)
 
 
 def _verify_year(year: str) -> dict[str, Any]:
@@ -1144,7 +1121,7 @@ def upsert_year_plan(year: str, *, through: str = "annual_plan") -> dict[str, An
 		return out
 	out["plan_items"] = _form_year_items(year, plan.plan_reference, entries, prereqs, steps)
 	_confirm_year_funding(year, plan.plan_reference, steps)
-	approved = _govern_and_publish(plan.plan_reference, steps=steps, treasury_reference=spec["treasury_reference"], key=lambda step: _ykey(year, step))
+	approved = _govern_and_publish(plan.plan_reference, steps=steps, treasury_reference=spec["treasury_reference"], public_plan_url=spec["public_plan_url"], key=lambda step: _ykey(year, step))
 	_stamp_design_clock(plan.plan_reference, steps=steps)
 	out["publication_result"] = approved["publication_result"]
 	return out
@@ -1287,6 +1264,7 @@ def _wipe_fiscal_year(fiscal_year: str) -> dict[str, int]:
 	delete("Plan Publication Hold", frappe.get_all("Plan Publication Hold", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
 	delete("Plan Publication", publications)
 	delete("Treasury Submission Evidence", frappe.get_all("Treasury Submission Evidence", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
+	delete("Plan Publication Confirmation", frappe.get_all("Plan Publication Confirmation", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
 	delete("Late Activation Explanation", frappe.get_all("Late Activation Explanation", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
 	delete("Approved Plan Snapshot", frappe.get_all("Approved Plan Snapshot", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
 	delete("Plan Preparation Signature", frappe.get_all("Plan Preparation Signature", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
@@ -1318,6 +1296,7 @@ def _wipe_fiscal_year(fiscal_year: str) -> dict[str, int]:
 		"Plan Publication",
 		"Plan Publication Hold",
 		"Treasury Submission Evidence",
+		"Plan Publication Confirmation",
 		"Late Activation Explanation",
 		"Approved Plan Snapshot",
 		"Plan Preparation Signature",
@@ -1469,28 +1448,10 @@ def seed_successor_profile(*, commit: bool = False) -> dict[str, Any]:
 	return {"ok": True, "profile": "successor", "successor_version": begun["successor_version"]}
 
 
-def seed_publication_failure_profile(*, commit: bool = False) -> dict[str, Any]:
-	"""§12.11 — an approved Version whose only publication attempt Failed;
-	the System Manager retry path is live. The sandbox adapter cannot fail on
-	its own, so the seed patches `_transmit` for this one approval."""
-	from unittest.mock import patch
-
-	from kentender_procurement.procurement_planning.services import plan_publication
-
-	prereqs = _fresh_profile_world()
-	with _intake_open():
-		built = _build_accepted_dpp(prereqs)
-		_form_and_confirm(built["plan"], prereqs)
-		with patch.object(plan_publication, "_transmit", return_value=("Failed", "")):
-			approved = _govern_and_publish(built["accepted"]["annual_plan"])
-	if approved["publication_result"] != "Failed":
-		frappe.throw("Publication-failure profile did not produce a Failed attempt.")
-	plan_name = frappe.db.get_value("Annual Plan", {"plan_reference": built["accepted"]["annual_plan"]})
-	version = frappe.get_all("Annual Plan Version", filters={"annual_plan": plan_name}, pluck="name")
-	publication = frappe.db.get_value("Annual Plan Publication", {"plan_version": ("in", version), "result": "Failed"}, "name")
-	if commit:
-		frappe.db.commit()
-	return {"ok": True, "profile": "publication_failure", "publication": publication}
+# `seed_publication_failure_profile` (§12.11) is retired — PLN-CHG-001 v1.31
+# §5.5.2.0: MVP 1 has no transmission to fail, no technical retry and no sandbox
+# adapter, so there is no failed attempt to seed. The held-activation state is
+# the publication profile that remains (`reset_activation_held_fixture`).
 
 
 # seed_kebs_profiles (§14.9) is retired — PLN-CHG-001 v1.13 §14.9/SEED-001
@@ -1604,10 +1565,17 @@ def validate_planning_history(year: str = "year1", *, through: str = "annual_pla
 			str(row and row.estimated_completion_date),
 		)
 	activated = frappe.db.get_value("Annual Plan Version", version, "activated_at")
-	check("activated", str(activated)[:19] == steps["publication_acknowledged"], str(activated))
-	evidence = frappe.db.get_value("Treasury Submission Evidence", {"plan_version": version, "evidence_state": "Current"}, ["supporting_attachment", "dispatch_reference"], as_dict=True)
-	check("treasury.attachment", bool(evidence) and bool(frappe.db.exists("File", {"file_url": evidence.supporting_attachment})), str(evidence))
-	check("treasury.reference", bool(evidence) and evidence.dispatch_reference == spec["treasury_reference"], str(evidence and evidence.dispatch_reference))
+	check("activated", str(activated)[:19] == steps["publication_confirmed"], str(activated))
+	confirmation = frappe.db.get_value(
+		"Plan Publication Confirmation", {"plan_version": version, "confirmation_state": "Current"},
+		["treasury_attachment", "treasury_reference", "public_plan_url", "actor"], as_dict=True,
+	)
+	check("publication.confirmed", bool(confirmation), "no Current publication confirmation")
+	check("publication.attachment", bool(confirmation) and bool(frappe.db.exists("File", {"file_url": confirmation.treasury_attachment})), str(confirmation))
+	check("publication.reference", bool(confirmation) and confirmation.treasury_reference == spec["treasury_reference"], str(confirmation and confirmation.treasury_reference))
+	check("publication.url", bool(confirmation) and confirmation.public_plan_url == spec["public_plan_url"], str(confirmation and confirmation.public_plan_url))
+	check("publication.confirmed_by_mercy", bool(confirmation) and confirmation.actor == PLANNER, str(confirmation and confirmation.actor))
+	check("publication.no_adapter_attempt", frappe.db.count("Publication Attempt", {"publication": ("in", frappe.get_all("Plan Publication", filters={"plan_version": version}, pluck="name") or ("",))}) == 0)
 	# Each funded Need reports its accepted revision as Fully included (found
 	# 26 Sep 2026: a Departmental Needs profile reset had deleted Need 1's).
 	for dpp in spec["dpps"]:
@@ -1648,7 +1616,7 @@ def validate_planning_seed() -> list[dict[str, Any]]:
 	)
 	check("active.items", bool(view and view["summary"]["plan_items"] == len(spec["items"])), str(view and view["summary"]))
 	check("active.value", bool(view and f"{int(expected_value):,}" in view["summary"]["value_display"]), str(view and view["summary"]["value_display"]))
-	activated = frappe.utils.get_datetime(steps["publication_acknowledged"])
+	activated = frappe.utils.get_datetime(steps["publication_confirmed"])
 	check("active.activated_display", bool(view and view["summary"]["activated_display"] == f"{activated.day} {activated:%b %Y, %H:%M} EAT"), str(view and view["summary"]["activated_display"]))
 	by_title = {item["title"]: item for item in (view or {}).get("items") or []}
 	for item in spec["items"]:
@@ -1675,11 +1643,11 @@ def validate_planning_seed() -> list[dict[str, Any]]:
 		decision = frappe.db.get_value("Plan Governance Task", {"plan_version": version, "stage": stage}, "decision")
 		who = frappe.db.get_value("Plan Governance Decision", decision, "actor") if decision else ""
 		check(f"governance.{stage.split()[0].lower()}_by_named_actor", who == actor, str(who))
-	publication = frappe.db.get_value("Plan Publication", {"plan_version": version, "publication_state": "Acknowledged"}, "name")
-	check("publication.acknowledged", bool(publication))
+	publication = frappe.db.get_value("Plan Publication", {"plan_version": version, "publication_state": "Confirmed"}, "name")
+	check("publication.confirmed", bool(publication))
 	check(
-		"publication.treasury_evidence_current",
-		bool(frappe.db.get_value("Treasury Submission Evidence", {"plan_version": version, "evidence_state": "Current"}, "name")),
+		"publication.confirmation_current",
+		bool(frappe.db.get_value("Plan Publication Confirmation", {"plan_version": version, "confirmation_state": "Current"}, "name")),
 	)
 	for dpp in spec["dpps"]:
 		for row in dpp["needs"]:
