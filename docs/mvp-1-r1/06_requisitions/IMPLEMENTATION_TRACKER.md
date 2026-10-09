@@ -5,6 +5,52 @@
 **Supersedes-in-tracking:** the REQ-CHG-001 v1.6 tracker (closed 7 September 2026, 48/56 acceptance rows Done; recoverable from git at `f5c3f649`).
 **Status:** Phases 0–1 Done; Phase 2 substantively Done (seeds pending); Phase 3 next. Started 24 September 2026.
 
+## v1.18 requirements follow the items (proposed 9 October 2026, built, not yet approved)
+
+Built ahead of approval at the Project Owner's direction (REQ-CHG-001 v1.18 §5.7A, §6.4A, §6.5A, §13.6A, §5.12; change rows REQ118-CHG-001..005; statements REQ118-AC-001..010). v1.16 remains the approved text.
+
+| Item | State | Evidence |
+|---|---|---|
+| Exact item ids on each requirement row (`Items` scope, `applies_to_item_ids_json`), frozen at lock, digest unchanged for earlier Versions | Built | `test_requirement_scope` 12/12 |
+| Proposal generated per item and category (monitor defaults Full HD / 24 in), never `All items` for a mixed request; Laptop-only digest identical | Built | `test_catalogue`, `test_requirement_scope` |
+| Customise for one item; reconcile on add/remove/recategorise; **Needs review**; per-item completeness | Built | `test_requirement_scope`, `test_maker_checker`, `test_draft_commands` |
+| Handoff 1.5 (`applies_to_item_ids`); Tenders accepts 1.4 and 1.5 | Built | `test_authorise`, `test_gateway_contracts`, `test_snapshot_contract` |
+| Tender goods lines, STD projection (incl. Service-scoped acceptance), evaluation labels | Built | `test_requirement_item_scope` 8/8, `test_serializer`, `test_bid_definition`, `test_compiler`, frozen release vectors 1.2–1.4 unchanged |
+| End to end: 100 laptops + 50 monitors → Tender, two goods lines with their own technical rows | Built | `tenders.tests.test_mixed_requisition_to_tender` |
+| Requirements by target, Customise dialog, Applies-to on service/acceptance, board REQ-DES-05-MIXED | Built | vitest 149/149; fidelity registries |
+| Per-item warranty | Deferred (owner) | one shared package-level set kept |
+| `bench migrate` on dev | **Not run** | schema: new field on three child doctypes, new Select options |
+| Approval of v1.18; TPR / STD-TPL wording for handoff 1.5 | Not given | register untouched |
+
+## v1.17 presentation change (proposed 9 October 2026, built, not yet approved)
+
+Built ahead of approval at the Project Owner's request; v1.16 remains the approved text until v1.17 is approved (REQ-CHG-001 v1.17 §13.4A–C, change rows REQ117-CHG-001..003, statements REQ117-AC-001..005).
+
+| Item | State | Evidence |
+|---|---|---|
+| One attention panel per task, each finding once, row/section markers, no red strips, one footer status line | Built | Vitest `procurement-requisitions` 144/144; Playwright request-details 8/8, requirements-review, decisions, fidelity pass on the test site |
+| Numbered steps row (design-system journey), current step marked | Built | `EditorSteps.spec.js`; browser check at 1280 and 390 wide |
+| Items grouped by specification, Edit shared details per group (mixed requests editable) | Built | `test_items_entered_once.TestMixedRequestKeepsEachKindEditable`; Playwright "two kinds of item" |
+| Design board REQ-DES-03-MIXED, board steps/panel/footer | Built | `ui-req-fidelity-gate` 5/5 |
+| Mixed-category proposal ("All equipment") | On hold (owner) | Not built |
+| Approval of v1.17 | Not given | Register not changed |
+
+## v1.15 delta (approved 9 October 2026)
+
+**Authority:** `KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_15.md` (supersedes v1.14); support notes and the full change report: `REQ-CHG-001_v1_15_change_manifest.md` (non-normative). Scope: items typed once, requested quantity derived, one estimated total cost per source, unused sources omitted at submission, frozen evidence, Goods template boundary, review of Drafts carried over from v1.14. Automatic estimation is deferred.
+**Status (9 October 2026):** document, backend, UI, board, fixtures and canonical seed done and verified on the test site; **dev migration and reseed not done** (see change report §12 for results and what was not verified).
+
+| Item | Status | Evidence |
+|---|---|---|
+| REQ v1.15 written, checked, approved, register entry updated | Done | preservation PASS; consistency 0 errors; register R5 errors for REQ cleared |
+| Backend (commands, validation, lock/omission, read model, handoff departments, error codes) | Done | new tests 16/16 and 1/1; Requisitions suite 316/319 (3 seeded-world failures named in §12) |
+| Downstream Tenders and Evaluation | Done with 2 modules failing, not baseline-verified | §12 |
+| UI, design board v2, fidelity registries | Done | vitest 128/128; `ui-req-fidelity-gate` 5/5; request-details browser spec 6/6 |
+| Canonical seed on the test site | Done | `validate: ok, failures: []` |
+| Dev site: migrate (two Version columns + review patch), reseed | **Not done** | needs the owner's go-ahead |
+| Browser spec for a carried-over Draft | Planned | no fixture state exists yet |
+| Reconcile approved REQ/TPR handoff label (v1.3) with the build (v1.4); KT-STD v1.7 citation; companion workbook | Planned | change report §11 |
+
 ## Tracker rules
 
 1. Rows are permanent. Status is one of `Planned`, `In progress`, `Blocked` or `Done`. A reversed decision is struck through in place, not deleted.

@@ -20,19 +20,39 @@
   .board-root .kt-section{margin:0}
   .board-root .kt-panel{margin-top:var(--space-3)}
   .sub{font-size:13px;font-weight:700;color:var(--color-neutral-700);margin:0 0 10px}
+  /* v1.17 — numbered steps, one attention panel, item groups, one footer status (app: procurement_requisitions_industry.css) */
+  .req-steps-nav{margin:var(--space-4) 0 var(--space-6)} .req-steps{gap:var(--space-3)}
+  .req-step{display:grid;gap:8px;align-content:start;width:100%;text-align:left}
+  .req-steps .kt-journey-bar{height:6px;border-radius:3px}
+  .req-steps .kt-journey-stage.is-selected .kt-journey-title,.req-steps .kt-journey-stage.is-selected .kt-journey-num{color:var(--color-accent-700);font-weight:700}
+  .req-steps .kt-journey-stage.is-selected .kt-journey-bar{background:var(--color-accent)}
+  .req-steps .kt-journey-stage.is-selected.is-blocked .kt-journey-bar{background:var(--status-attention)}
+  .req-steps .kt-journey-check{width:15px;height:15px;flex:none;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;align-self:center}
+  .req-steps .kt-journey-state{padding-left:21px}
+  .req-attention-head{font-weight:600;color:var(--color-text);margin-bottom:4px}
+  .req-attention-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px}
+  .req-attention-link{background:none;border:0;padding:0;font:inherit;text-align:left;color:inherit;text-decoration:underline;text-underline-offset:2px}
+  .req-attention-tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-right:6px;color:var(--color-neutral-600)}
+  .req-flag{margin-top:4px}
+  tr.is-flagged>td:first-child{box-shadow:inset 3px 0 0 var(--status-attention)}
+  .req-footer-status{font-size:13px;color:var(--color-neutral-700)}
+  .req-item-group{margin-top:var(--space-4)} .req-item-group+.req-item-group{margin-top:var(--space-6)}
+  .req-item-group-head{display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);flex-wrap:wrap;border-bottom:1px solid var(--color-divider);padding-bottom:8px}
+  .req-item-group-title{font-weight:600;font-size:15px}
+  .req-item-group-facts{font-size:13px;color:var(--color-neutral-600);display:flex;gap:6px 14px;flex-wrap:wrap;margin-top:2px}
 </style>
 </helmet>
 <div class="board-root" style="min-width:2600px;padding:56px;display:flex;flex-direction:column;gap:var(--space-8);font-family:var(--font-body);color:var(--color-text)">
 
 <div style="max-width:820px;margin:0 0 48px">
-<div class="text-muted" style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px">REQ-CHG-001 v1.11 · §13</div>
+<div class="text-muted" style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px">REQ-CHG-001 v1.15 · §13</div>
 <h1 style="margin:0 0 10px">Procurement Requisitions — complete screen and static design contract</h1>
-<p class="text-muted" style="font-size:15px;line-height:1.6;margin:0 0 24px">All 12 REQ-DES artboards plus their stated state variants, drawn from §13 in spec order, reconciled to v1.11: Stage 2 archetypes and Level 1–3 hierarchy, <strong>Reserved for</strong> labelling, nine compatibility checks and the two reservation states. Full pages show the primary fixture; variant sets show only the facts that differ from their named parent. Every control is static — this is an artboard set, not a prototype.</p>
+<p class="text-muted" style="font-size:15px;line-height:1.6;margin:0 0 24px">All 12 REQ-DES artboards plus their stated state variants, drawn from §13 in spec order, reconciled to v1.15: Stage 2 archetypes and Level 1–3 hierarchy, <strong>Reserved for</strong> labelling, nine compatibility checks and the two reservation states, and the v1.15 request flow — quantity typed once on the item rows, one <strong>Estimated total cost</strong> entered for each approved requirement, and a read-only <strong>Request summary</strong> (REQ-DES-03, REQ-DES-04, REQ-DES-06, REQ-DES-12 only). Full pages show the primary fixture; variant sets show only the facts that differ from their named parent. Every control is static — this is an artboard set, not a prototype.</p>
 <div class="kt-panel-lg" style="font-size:13px;line-height:1.9;columns:2;column-gap:32px">
 <div><a href="#des01">REQ-DES-01 Requisitions workspace</a></div>
 <div><a href="#des02">REQ-DES-02 Start requisition dialog</a></div>
 <div><a href="#des03">REQ-DES-03 Draft: Request details</a></div>
-<div><a href="#des04">REQ-DES-04 Add laptop request</a></div>
+<div><a href="#des04">REQ-DES-04 Add item</a></div>
 <div><a href="#des05">REQ-DES-05 Draft: Requirements</a></div>
 <div><a href="#des06">REQ-DES-06 Draft: Review and submit</a></div>
 <div><a href="#des07">REQ-DES-07 Head of User Department review</a></div>
@@ -77,7 +97,7 @@
 <div class="sub">REQ-DES-01-DRAFT · Your work leads with the Draft; Ready row absent; register repeats the record quietly</div>
 <h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>Your work</h6>
 <div style="border-left:3px solid var(--color-accent);padding:var(--space-2) 0 var(--space-2) var(--space-4);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-4);align-items:center;margin:var(--space-3) 0 var(--space-8)">
-<div><div class="kt-label">REQ-MOH-2027-033-001 · Updated 1 Mar 2027, 09:45 EAT</div><div style="font-family:var(--font-heading);font-size:20px;font-weight:600;margin:4px 0 2px">Complete request details</div><div style="font-size:14px">Clinical training and deployment laptops for digital health rollout</div><div class="text-muted" style="font-size:13px;margin-top:6px">Add the laptop request matching the requested quantities.</div></div>
+<div><div class="kt-label">REQ-MOH-2027-033-001 · Updated 1 Mar 2027, 09:45 EAT</div><div style="font-family:var(--font-heading);font-size:20px;font-weight:600;margin:4px 0 2px">Complete request details</div><div style="font-size:14px">Clinical training and deployment laptops for digital health rollout</div><div class="text-muted" style="font-size:13px;margin-top:6px">Add at least one item and enter its estimated total cost.</div></div>
 <span class="btn btn-primary">Continue</span></div>
 <h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px;font-size:14px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/></svg>Your requisitions</h6>
 <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) auto;gap:var(--space-3);align-items:center;margin:var(--space-3) 0 var(--space-4)">
@@ -202,11 +222,8 @@
 <div style="display:flex;gap:8px;align-items:center;margin-top:6px"><span class="kt-label">REQ-MOH-2027-033-001</span></div>
 <p class="text-muted" style="font-size:13px;margin:10px 0 var(--space-4)">Complete the request using the approved purchase shown below.</p>
 
-<div style="display:flex;border:1px solid var(--color-divider);margin-bottom:var(--space-6)">
-<div style="flex:1;padding:12px 16px;background:var(--color-accent-100);border-right:1px solid var(--color-divider)"><div class="kt-label">Request details</div><span class="kt-status is-attention" style="margin-top:4px">Needs attention</span></div>
-<div style="flex:1;padding:12px 16px;border-right:1px solid var(--color-divider)"><div class="kt-label">Requirements</div><span class="kt-status is-pending" style="margin-top:4px">Not started</span></div>
-<div style="flex:1;padding:12px 16px"><div class="kt-label">Review and submit</div><span class="kt-status is-pending" style="margin-top:4px">Not started</span></div>
-</div>
+<nav class="req-steps-nav" aria-label="Requisition steps"><ol class="kt-journey req-steps" style="--kt-journey-n:3"><li class="kt-journey-stage is-blocked is-selected" aria-current="step"><span class="req-step"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">1</span>Request details</span><span class="kt-journey-state">You are here · Needs attention</span></span></li><li class="kt-journey-stage is-not-started"><span class="req-step"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Requirements</span><span class="kt-journey-state">Not started</span></span></li><li class="kt-journey-stage is-not-started"><span class="req-step"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Review and submit</span><span class="kt-journey-state">Not started</span></span></li></ol></nav>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body"><div class="req-attention"><div class="req-attention-head">1 thing needs attention</div><ul class="req-attention-list"><li><button type="button" class="req-attention-link">Add at least one item and enter its estimated total cost.</button></li></ul></div></div></div>
 
 <div style="margin-bottom:var(--space-4)">
 <div class="kt-label">Approved purchase</div>
@@ -224,25 +241,25 @@
 <div class="field"><label>Related services required</label><div class="seg"><span class="seg-opt">Yes</span><span class="seg-opt" style="background:var(--color-accent);color:#fff">No</span></div></div>
 </div>
 
-<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1110.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/></svg>Amounts requested from the approved plan</h6>
-<p class="text-muted" style="font-size:13px;margin:6px 0 0">The full available amount is selected. Enter a smaller amount only when this requisition covers part of the approved purchase.</p>
-<table class="table" style="margin-bottom:var(--space-8)"><thead><tr><th>Department and requirement</th><th class="is-num">Available quantity</th><th class="is-num">Requested quantity</th><th class="is-num">Available value</th><th class="is-num">Requested value</th></tr></thead>
-<tbody>
-<tr><td><div style="font-weight:600">Human Resources Management and Development</div><div class="kt-label">Business laptops</div></td><td class="is-num">100 Each</td><td class="is-num">100 Each</td><td class="is-num">KES 20,000,000.00</td><td class="is-num">KES 20,000,000.00</td></tr>
-<tr><td><div style="font-weight:600">Digital Health</div><div class="kt-label">Business laptops</div></td><td class="is-num">150 Each</td><td class="is-num">150 Each</td><td class="is-num">KES 30,000,000.00</td><td class="is-num">KES 30,000,000.00</td></tr>
-</tbody></table>
-
-<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Equipment</h6>
-<div style="border-top:1px solid var(--color-divider);padding:var(--space-4) 0 0">
-<div style="font-family:var(--font-heading);font-weight:600;font-size:15px">No equipment added.</div>
-<p class="text-muted" style="font-size:13px;margin:6px 0 12px">Add the equipment covered by the requested quantities above.</p>
-<span class="btn btn-primary">Add laptop request</span>
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Items</h6>
+<p class="text-muted" style="font-size:13px;margin:6px 0 0">Add each item and enter its quantity here. You enter a quantity only once.</p>
+<div style="border-top:1px solid var(--color-divider);padding:var(--space-4) 0 0;margin-bottom:var(--space-8)">
+<div style="font-family:var(--font-heading);font-weight:600;font-size:15px">No items added.</div>
+<p class="text-muted" style="font-size:13px;margin:6px 0 12px">Add the items this requisition covers.</p>
+<span class="btn btn-primary">Add item</span>
 </div>
+
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1110.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/></svg>Request summary</h6>
+<table class="table" style="margin-bottom:var(--space-8)"><thead><tr><th>Department and requirement</th><th class="is-num">Available quantity</th><th class="is-num">Requested quantity</th><th class="is-num">Available value</th><th class="is-num">Estimated total cost</th><th class="is-num">Still available after this request</th></tr></thead>
+<tbody>
+<tr><td><div style="font-weight:600">Human Resources Management and Development</div><div class="kt-label">Business laptops</div></td><td class="is-num">100 Each</td><td class="is-num">0 Each</td><td class="is-num">KES 20,000,000.00</td><td class="is-num"><input class="input" value="" placeholder="0.00" style="max-width:160px;margin-left:auto;text-align:right" disabled="disabled" /><div class="kt-label" style="margin-top:3px;text-align:right">Up to KES 20,000,000.00</div></td><td class="is-num">100 Each · KES 20,000,000.00</td></tr>
+<tr><td><div style="font-weight:600">Digital Health</div><div class="kt-label">Business laptops</div></td><td class="is-num">150 Each</td><td class="is-num">0 Each</td><td class="is-num">KES 30,000,000.00</td><td class="is-num"><input class="input" value="" placeholder="0.00" style="max-width:160px;margin-left:auto;text-align:right" disabled="disabled" /><div class="kt-label" style="margin-top:3px;text-align:right">Up to KES 30,000,000.00</div></td><td class="is-num">150 Each · KES 30,000,000.00</td></tr>
+</tbody></table>
 
 <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);margin-top:var(--space-6);padding-top:var(--space-4)">
 <span class="btn btn-ghost">Back to Requisitions</span>
 <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-<span class="kt-label">Add the laptop request matching the requested quantities.</span>
+<span class="req-footer-status">Fix what needs attention above to continue.</span>
 <div style="display:flex;gap:var(--space-2)"><span class="btn btn-secondary">Save draft</span><span class="btn btn-secondary" style="color:var(--color-neutral-400)">Continue to requirements</span></div>
 </div>
 </div>
@@ -260,13 +277,73 @@
 <div class="kt-meta-row" style="margin-top:12px"><div><span class="kt-label">Approved requirements</span><span class="kt-meta-value" style="font-size:14px">SRC-MOH-033-001; SRC-MOH-033-002</span></div></div>
 </div>
 <div class="kt-panel-lg" style="width:860px">
-<div class="sub">REQ-DES-03-COMPLETE · both source-linked equipment rows created from one shared specification</div>
-<div style="display:flex;justify-content:space-between;align-items:center"><h6 class="kt-card-title" style="margin:0;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Equipment</h6><span class="text-muted" style="font-size:13px;display:flex;align-items:center;gap:10px">One shared laptop specification · 2 approved requirements<span class="btn btn-secondary">Edit shared details</span></span></div>
-<table class="table" style="margin-top:12px;font-size:13px"><thead><tr><th>Item</th><th>Approved requirement</th><th class="is-num">Quantity</th><th>Intended use</th><th>Delivery</th><th style="white-space:nowrap">Action</th></tr></thead>
+<div class="sub">REQ-DES-03-COMPLETE · both source-linked items created from one shared specification; the estimated total cost entered for each approved requirement</div>
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Items</h6>
+<p class="text-muted" style="font-size:13px;margin:6px 0 0">Add each item and enter its quantity here. You enter a quantity only once.</p>
+<div class="req-item-group"><div class="req-item-group-head"><div><div class="req-item-group-title">Business laptops<span class="kt-label" style="margin-left:8px">Laptop</span></div><div class="req-item-group-facts"><span>Nairobi; 30 Sep 2027</span><span>2 approved requirements</span></div></div><span class="btn btn-secondary">Edit shared details</span></div>
+<table class="table" style="margin-top:4px;font-size:13px"><thead><tr><th>Approved requirement</th><th class="is-num">Quantity</th><th>Intended use</th><th style="white-space:nowrap">Action</th></tr></thead>
 <tbody>
-<tr><td>Business laptops</td><td>HR Management and Development — SRC-MOH-033-001</td><td class="is-num">100 Each</td><td>Clinical training for Human Resources Management and Development staff</td><td>Nairobi; 30 Sep 2027</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit quantity and use</span><span class="btn btn-ghost">Remove</span></div></td></tr>
-<tr><td>Business laptops</td><td>Digital Health — SRC-MOH-033-002</td><td class="is-num">150 Each</td><td>Field digital-health deployment for Digital Health staff</td><td>Nairobi; 30 Sep 2027</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit quantity and use</span><span class="btn btn-ghost">Remove</span></div></td></tr>
+<tr><td>HR Management and Development — SRC-MOH-033-001</td><td class="is-num">100 Each</td><td>Clinical training for Human Resources Management and Development staff</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit quantity and use</span><span class="btn btn-ghost">Remove</span></div></td></tr>
+<tr><td>Digital Health — SRC-MOH-033-002</td><td class="is-num">150 Each</td><td>Field digital-health deployment for Digital Health staff</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit quantity and use</span><span class="btn btn-ghost">Remove</span></div></td></tr>
+</tbody></table></div>
+<div style="margin-top:var(--space-8)"><h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1110.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/></svg>Request summary</h6></div>
+<table class="table"><thead><tr><th>Department and requirement</th><th class="is-num">Available quantity</th><th class="is-num">Requested quantity</th><th class="is-num">Available value</th><th class="is-num">Estimated total cost</th><th class="is-num">Still available after this request</th></tr></thead>
+<tbody>
+<tr><td><div style="font-weight:600">Human Resources Management and Development</div><div class="kt-label">Business laptops</div></td><td class="is-num">100 Each</td><td class="is-num">100 Each</td><td class="is-num">KES 20,000,000.00</td><td class="is-num"><input class="input" value="20000000.00" placeholder="0.00" style="max-width:160px;margin-left:auto;text-align:right" disabled="disabled" /><div class="kt-label" style="margin-top:3px;text-align:right">Up to KES 20,000,000.00</div></td><td class="is-num">0 Each · KES 0.00</td></tr>
+<tr><td><div style="font-weight:600">Digital Health</div><div class="kt-label">Business laptops</div></td><td class="is-num">150 Each</td><td class="is-num">150 Each</td><td class="is-num">KES 30,000,000.00</td><td class="is-num"><input class="input" value="30000000.00" placeholder="0.00" style="max-width:160px;margin-left:auto;text-align:right" disabled="disabled" /><div class="kt-label" style="margin-top:3px;text-align:right">Up to KES 30,000,000.00</div></td><td class="is-num">0 Each · KES 0.00</td></tr>
 </tbody></table>
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);margin-top:var(--space-6);padding-top:var(--space-4)">
+<span class="btn btn-ghost">Back to Requisitions</span>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+<div style="display:flex;gap:var(--space-2)"><span class="btn btn-secondary">Save draft</span><span class="btn btn-primary">Continue to requirements</span></div>
+</div>
+</div>
+</div>
+<div class="kt-panel-lg" style="width:900px">
+<div class="sub">REQ-DES-03-PARTIAL · one printer item of 20 Each; estimated total cost entered; 80 Each and KES 17,000,000.00 stay available</div>
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Items</h6>
+<p class="text-muted" style="font-size:13px;margin:6px 0 0">Add each item and enter its quantity here. You enter a quantity only once.</p>
+<div class="req-item-group"><div class="req-item-group-head"><div><div class="req-item-group-title">Office printers<span class="kt-label" style="margin-left:8px">Printer</span></div><div class="req-item-group-facts"><span>Nairobi; 30 Sep 2027</span><span>1 approved requirement</span></div></div><span class="btn btn-secondary">Edit shared details</span></div>
+<table class="table" style="margin-top:4px;font-size:13px"><thead><tr><th>Approved requirement</th><th class="is-num">Quantity</th><th>Intended use</th><th style="white-space:nowrap">Action</th></tr></thead>
+<tbody>
+<tr><td>HR Management and Development — SRC-MOH-033-001</td><td class="is-num">20 Each</td><td>Printing for Human Resources Management and Development staff</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit quantity and use</span><span class="btn btn-ghost">Remove</span></div></td></tr>
+</tbody></table></div>
+<div style="margin-top:12px"><span class="btn btn-secondary">Add item</span></div>
+<div style="margin-top:var(--space-8)"><h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1110.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/></svg>Request summary</h6></div>
+<table class="table"><thead><tr><th>Department and requirement</th><th class="is-num">Available quantity</th><th class="is-num">Requested quantity</th><th class="is-num">Available value</th><th class="is-num">Estimated total cost</th><th class="is-num">Still available after this request</th></tr></thead>
+<tbody>
+<tr><td><div style="font-weight:600">Human Resources Management and Development</div><div class="kt-label">Office printers</div></td><td class="is-num">100 Each</td><td class="is-num">20 Each</td><td class="is-num">KES 20,000,000.00</td><td class="is-num"><input class="input" value="3000000.00" placeholder="0.00" style="max-width:160px;margin-left:auto;text-align:right" disabled="disabled" /><div class="kt-label" style="margin-top:3px;text-align:right">Up to KES 20,000,000.00</div></td><td class="is-num">80 Each · KES 17,000,000.00</td></tr>
+</tbody></table>
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);margin-top:var(--space-6);padding-top:var(--space-4)">
+<span class="btn btn-ghost">Back to Requisitions</span>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+<div style="display:flex;gap:var(--space-2)"><span class="btn btn-secondary">Save draft</span><span class="btn btn-primary">Continue to requirements</span></div>
+</div>
+</div>
+</div>
+<div class="kt-panel-lg" style="width:860px">
+<div class="sub">REQ-DES-03-MIXED · laptops and monitors in one request: one block per specification, each edited on its own; the item the server flags is marked and its finding is listed once</div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body"><div class="req-attention"><div class="req-attention-head">1 thing needs attention</div><ul class="req-attention-list"><li><button type="button" class="req-attention-link">“Dell” in the item “Dell monitors” is a brand or restrictive term. Use supplier-neutral wording.</button></li></ul></div></div></div>
+<h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Items</h6>
+<p class="text-muted" style="font-size:13px;margin:6px 0 0">Add each item and enter its quantity here. You enter a quantity only once.</p>
+<div class="req-item-group"><div class="req-item-group-head"><div><div class="req-item-group-title">Business laptops<span class="kt-label" style="margin-left:8px">Laptop</span></div><div class="req-item-group-facts"><span>Nairobi; 30 Sep 2027</span><span>1 approved requirement</span></div></div><span class="btn btn-secondary">Edit shared details</span></div>
+<table class="table" style="margin-top:4px;font-size:13px"><thead><tr><th>Approved requirement</th><th class="is-num">Quantity</th><th>Intended use</th><th style="white-space:nowrap">Action</th></tr></thead>
+<tbody>
+<tr><td>HR Management and Development — SRC-MOH-033-001</td><td class="is-num">100 Each</td><td>Clinical training for Human Resources Management and Development staff</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit quantity and use</span><span class="btn btn-ghost">Remove</span></div></td></tr>
+</tbody></table></div>
+<div class="req-item-group"><div class="req-item-group-head"><div><div class="req-item-group-title">Dell monitors<span class="kt-label" style="margin-left:8px">Monitor</span></div><div class="req-item-group-facts"><span>Nairobi; 30 Sep 2027</span><span>1 approved requirement</span></div></div><span class="btn btn-secondary">Edit shared details</span></div>
+<table class="table" style="margin-top:4px;font-size:13px"><thead><tr><th>Approved requirement</th><th class="is-num">Quantity</th><th>Intended use</th><th style="white-space:nowrap">Action</th></tr></thead>
+<tbody>
+<tr class="is-flagged"><td>Digital Health — SRC-MOH-033-002<div><span class="kt-status is-attention req-flag">Needs attention</span></div></td><td class="is-num">150 Each</td><td>Field digital-health deployment for Digital Health staff</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit quantity and use</span><span class="btn btn-ghost">Remove</span></div></td></tr>
+</tbody></table></div>
+<div style="margin-top:12px"><span class="btn btn-secondary">Add item</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);margin-top:var(--space-6);padding-top:var(--space-4)">
+<span class="btn btn-ghost">Back to Requisitions</span>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+<span class="req-footer-status">Fix what needs attention above to continue.</span>
+<div style="display:flex;gap:var(--space-2)"><span class="btn btn-secondary">Save draft</span><span class="btn btn-secondary" style="color:var(--color-neutral-400)">Continue to requirements</span></div>
+</div>
+</div>
 </div>
 <div class="kt-panel-lg" style="width:660px">
 <div class="sub">REQ-DES-03-RETURNED · copied Draft opened directly at the affected section</div>
@@ -276,12 +353,12 @@
 </div>
 <div class="kt-panel-lg" style="width:860px">
 <div class="sub">REQ-DES-03-CONTRIBUTOR · Asha Odhiambo, Departmental Author assigned only to HR Management and Development; the combined Draft already holds both departments' rows</div>
-<table class="table"><thead><tr><th>Department and requirement</th><th class="is-num">Requested quantity</th><th class="is-num">Requested value</th><th>Access</th></tr></thead>
+<table class="table"><thead><tr><th>Department and requirement</th><th class="is-num">Requested quantity</th><th class="is-num">Estimated total cost</th><th>Access</th></tr></thead>
 <tbody>
 <tr style="background:var(--color-accent-100)"><td><div style="font-weight:600">Human Resources Management and Development</div><div class="kt-label">Business laptops</div></td><td class="is-num">100 Each</td><td class="is-num">KES 20,000,000.00</td><td>Editable</td></tr>
 <tr><td><div style="font-weight:600">Digital Health</div><div class="kt-label">Business laptops</div></td><td class="is-num">150 Each</td><td class="is-num">KES 30,000,000.00</td><td class="text-muted">Read-only</td></tr>
 </tbody></table>
-<p class="text-muted" style="font-size:13px;margin:12px 0 0">Approved purchase, shared Request information and every shared Requirements value are read-only. No routing or decision action is rendered.</p>
+<p class="text-muted" style="font-size:13px;margin:12px 0 0">Approved purchase, shared Request information, every shared Requirements value and the Digital Health items and estimated total cost are read-only. No routing or decision action is rendered.</p>
 <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);margin-top:var(--space-4);padding-top:var(--space-4)">
 <span class="btn btn-ghost">Back to Requisitions</span><span class="btn btn-primary">Save my changes</span>
 </div>
@@ -292,13 +369,53 @@
 </div>
 
 <div id="des04" style="margin-bottom:56px">
-<div class="cap">REQ-DES-04 · Add laptop request <i>— Grace, both approved-requirement rows selected, no item saved</i></div>
+<div class="cap">REQ-DES-04 · Add item <i>— Grace, both approved-requirement rows selected, no item saved, every quantity still to be typed</i></div>
 <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
 <div>
-<div class="sub">Base · shared laptop details entered once; one row per approved requirement</div>
+<div class="sub">Base · shared item details entered once; one row per approved requirement; quantities start empty</div>
 <div class="dialog" style="width:640px">
-<div class="dialog-title">Add laptop request</div>
-<p class="text-muted" style="font-size:13px;margin:0">Enter the shared laptop details once, then confirm the quantity and intended use for each department.</p>
+<div class="dialog-title">Add item</div>
+<p class="text-muted" style="font-size:13px;margin:0">Enter the shared item details once, then enter the quantity and intended use for each department.</p>
+<div class="kt-label" style="margin-top:var(--space-2)">Shared details</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">
+<div class="field"><label>Equipment category</label><select class="input" disabled="disabled"><option>Laptop</option></select></div>
+<div class="field"><label>Item name</label><input class="input" value="Business laptops" disabled="disabled" /></div>
+<div class="field"><label>Delivery location</label><input class="input" value="Ministry of Health Headquarters, Afya House, Nairobi" disabled="disabled" /></div>
+<div class="field"><label>Latest delivery date</label><div class="date-field"><span>30 Sep 2027</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+</div>
+<div class="kt-label" style="margin-top:var(--space-3)">Department quantities and use</div>
+<table class="table"><thead><tr><th>Use</th><th>Department and approved requirement</th><th class="is-num">Quantity</th><th>Unit</th><th>Intended use</th></tr></thead>
+<tbody>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td>
+<td>Human Resources Management and Development<div class="kt-label">SRC-MOH-033-001</div></td>
+<td class="is-num"><input class="input" value="" placeholder="100" style="max-width:70px" disabled="disabled" /></td><td>Each</td>
+<td><input class="input" value="Clinical training for Human Resources Management and Development staff" disabled="disabled" /></td></tr>
+<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td>
+<td>Digital Health<div class="kt-label">SRC-MOH-033-002</div></td>
+<td class="is-num"><input class="input" value="" placeholder="150" style="max-width:70px" disabled="disabled" /></td><td>Each</td>
+<td><input class="input" value="Field digital-health deployment for Digital Health staff" disabled="disabled" /></td></tr>
+</tbody></table>
+<p class="text-muted" style="font-size:13px;margin:0">The standard requirements for the chosen category will be ready for review in the next task.</p>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-secondary" style="color:var(--color-neutral-400)">Add 2 items</span></div>
+</div>
+</div>
+<div>
+<div class="sub">REQ-DES-04-ONE-SOURCE · only one approved requirement has room for an item quantity</div>
+<div class="dialog" style="width:640px">
+<div class="dialog-title">Add item</div>
+<table class="table"><thead><tr><th>Use</th><th>Department and approved requirement</th><th class="is-num">Quantity</th><th>Unit</th><th>Intended use</th></tr></thead>
+<tbody><tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td>
+<td>Digital Health<div class="kt-label">SRC-MOH-033-002</div></td>
+<td class="is-num"><input class="input" value="" placeholder="150" style="max-width:70px" disabled="disabled" /></td><td>Each</td>
+<td><input class="input" value="Field digital-health deployment for Digital Health staff" disabled="disabled" /></td></tr></tbody></table>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-secondary" style="color:var(--color-neutral-400)">Add item</span></div>
+</div>
+</div>
+<div>
+<div class="sub">REQ-DES-04-VALIDATION · Digital Health quantity is above what remains; the limit is named beside the row; all entered values retained; primary disabled</div>
+<div class="dialog" style="width:640px">
+<div class="dialog-title">Add item</div>
+<p class="text-muted" style="font-size:13px;margin:0">Enter the shared item details once, then enter the quantity and intended use for each department.</p>
 <div class="kt-label" style="margin-top:var(--space-2)">Shared details</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">
 <div class="field"><label>Equipment category</label><select class="input" disabled="disabled"><option>Laptop</option></select></div>
@@ -315,44 +432,12 @@
 <td><input class="input" value="Clinical training for Human Resources Management and Development staff" disabled="disabled" /></td></tr>
 <tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td>
 <td>Digital Health<div class="kt-label">SRC-MOH-033-002</div></td>
-<td class="is-num"><input class="input" value="150" style="max-width:70px" disabled="disabled" /></td><td>Each</td>
+<td class="is-num"><input class="input" value="160" style="max-width:70px;border-color:var(--status-critical)" disabled="disabled" /></td><td>Each</td>
 <td><input class="input" value="Field digital-health deployment for Digital Health staff" disabled="disabled" /></td></tr>
+<tr><td colspan="5"><div style="color:var(--status-critical);font-size:12px">Digital Health can request at most 150 Each for this requirement; you entered 160.</div></td></tr>
 </tbody></table>
-<p class="text-muted" style="font-size:13px;margin:0">The standard laptop requirements will be ready for review in the next task.</p>
-<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Add 2 equipment rows</span></div>
-</div>
-</div>
-<div>
-<div class="sub">REQ-DES-04-ONE-SOURCE · only one approved requirement has a positive requested amount</div>
-<div class="dialog" style="width:640px">
-<div class="dialog-title">Add laptop request</div>
-<table class="table"><thead><tr><th>Use</th><th>Department and approved requirement</th><th class="is-num">Quantity</th><th>Unit</th><th>Intended use</th></tr></thead>
-<tbody><tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td>
-<td>Digital Health<div class="kt-label">SRC-MOH-033-002</div></td>
-<td class="is-num"><input class="input" value="150" style="max-width:70px" disabled="disabled" /></td><td>Each</td>
-<td><input class="input" value="Field digital-health deployment for Digital Health staff" disabled="disabled" /></td></tr></tbody></table>
-<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Add equipment row</span></div>
-</div>
-</div>
-<div>
-<div class="sub">REQ-DES-04-VALIDATION · Digital Health quantity does not reconcile; all entered values retained; primary disabled</div>
-<div class="dialog" style="width:640px">
-<div class="dialog-title">Add laptop request</div>
-<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">Requested equipment quantity for Digital Health is 140 Each but the approved requirement requests 150 Each</div></div>
-<div class="kt-label" style="margin-top:var(--space-2)">Department quantities and use</div>
-<table class="table"><thead><tr><th>Use</th><th>Department and approved requirement</th><th class="is-num">Quantity</th><th>Unit</th><th>Intended use</th></tr></thead>
-<tbody>
-<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td>
-<td>Human Resources Management and Development<div class="kt-label">SRC-MOH-033-001</div></td>
-<td class="is-num"><input class="input" value="100" style="max-width:70px" disabled="disabled" /></td><td>Each</td>
-<td><input class="input" value="Clinical training for Human Resources Management and Development staff" disabled="disabled" /></td></tr>
-<tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td>
-<td>Digital Health<div class="kt-label">SRC-MOH-033-002</div></td>
-<td class="is-num"><input class="input" value="140" style="max-width:70px;border-color:var(--status-critical)" disabled="disabled" /><div style="color:var(--status-critical);font-size:12px;margin-top:3px;white-space:nowrap">Must be 150 Each</div></td><td>Each</td>
-<td><input class="input" value="Field digital-health deployment for Digital Health staff" disabled="disabled" /></td></tr>
-</tbody></table>
-<p class="text-muted" style="font-size:13px;margin:0">Shared details are unchanged and retained. No equipment row is created until both rows are valid.</p>
-<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-secondary" style="color:var(--color-neutral-400)">Add 2 equipment rows</span></div>
+<p class="text-muted" style="font-size:13px;margin:0">Shared details are unchanged and retained. Nothing is added until every selected row is valid.</p>
+<div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-secondary" style="color:var(--color-neutral-400)">Add 2 items</span></div>
 </div>
 </div>
 </div>
@@ -364,13 +449,9 @@
 <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Clinical training and deployment laptops for digital health rollout</h3><span class="kt-status is-draft">Draft</span></div>
 <div class="kt-label" style="margin-top:6px">REQ-MOH-2027-033-001</div>
 
-<div style="display:flex;border:1px solid var(--color-divider);margin:var(--space-4) 0 var(--space-6)">
-<div style="flex:1;padding:12px 16px;border-right:1px solid var(--color-divider)"><div class="kt-label">Request details</div><span class="kt-status is-live" style="margin-top:4px">Complete</span></div>
-<div style="flex:1;padding:12px 16px;background:var(--color-accent-100);border-right:1px solid var(--color-divider)"><div class="kt-label">Requirements</div><span class="kt-status is-attention" style="margin-top:4px">Needs attention</span></div>
-<div style="flex:1;padding:12px 16px"><div class="kt-label">Review and submit</div><span class="kt-status is-pending" style="margin-top:4px">Not started</span></div>
-</div>
+<nav class="req-steps-nav" aria-label="Requisition steps"><ol class="kt-journey req-steps" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="req-step"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><svg class="kt-journey-check" aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Request details</span><span class="kt-journey-state">Complete</span></span></li><li class="kt-journey-stage is-blocked is-selected" aria-current="step"><span class="req-step"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">2</span>Requirements</span><span class="kt-journey-state">You are here · Needs attention</span></span></li><li class="kt-journey-stage is-not-started"><span class="req-step"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Review and submit</span><span class="kt-journey-state">Not started</span></span></li></ol></nav>
 
-<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body"><a href="#des05">Review the standard laptop requirements before continuing.</a></div></div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body"><div class="req-attention"><div class="req-attention-head">1 thing needs attention</div><ul class="req-attention-list"><li><button type="button" class="req-attention-link">Review and use the selected standard requirements.</button></li></ul></div></div></div>
 
 <div style="border-left:3px solid var(--status-attention);padding:var(--space-2) 0 var(--space-2) var(--space-6);margin:var(--space-6) 0 var(--space-8)">
 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--space-4)">
@@ -379,7 +460,7 @@
 <span class="kt-status is-attention">Review required</span>
 </div>
 
-<h6 class="kt-card-title" style="font-size:14px;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Technical requirements<span class="text-muted" style="font-family:var(--font-body);font-size:13px;font-weight:400;text-transform:none;letter-spacing:0">· Target: All equipment</span></h6>
+<h6 class="kt-card-title" style="font-size:14px;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Technical requirements</h6>
 <div class="kt-label" style="margin-bottom:6px">Basic equipment</div>
 <table class="table" style="margin-bottom:var(--space-4)"><thead><tr><th>Use</th><th>Requirement</th><th>Minimum or required value</th><th>Unit</th><th>Action</th></tr></thead><tbody>
 <tr><td><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></td><td>Electrical compatibility<div class="text-muted" style="font-size:12px">Required</div></td><td>Yes — suitable for Kenyan mains supply</td><td>—</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit</span><span class="btn btn-ghost">Clear</span></div></td></tr>
@@ -443,7 +524,7 @@
 <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);margin-top:var(--space-6);padding-top:var(--space-4)">
 <span class="btn btn-ghost">Back to request details</span>
 <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-<span class="kt-label">Review and use the selected standard requirements.</span>
+<span class="req-footer-status">Fix what needs attention above to continue.</span>
 <div style="display:flex;gap:var(--space-2)"><span class="btn btn-secondary">Save draft</span><span class="btn btn-secondary" style="color:var(--color-neutral-400)">Continue to review</span></div>
 </div>
 </div>
@@ -469,6 +550,33 @@
 <p class="text-muted" style="font-size:13px;margin:0">The same eleven technical rows, six warranty/support values and five acceptance checks are shown as confirmed content. A later edit is saved normally. A category change or copied package generates a new Review required proposal without overwriting this confirmed history. Review required and Reviewed are never shown together.</p>
 <div style="display:flex;justify-content:flex-end;border-top:1px solid var(--color-divider);margin-top:var(--space-4);padding-top:var(--space-4)"><span class="btn btn-primary">Continue to review</span></div>
 </div>
+<div class="kt-panel-lg" style="width:860px">
+<div class="sub">REQ-DES-05-MIXED · laptops and monitors in one request: Shared requirements, then one group for each kind of item; each row says what it applies to; Customise for one item only on rows that cover several; a row whose items changed is marked Needs review</div>
+<h6 class="kt-card-title" style="font-size:14px;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Technical requirements</h6>
+<div class="req-target-head"><div class="req-target-title">Shared requirements</div><div class="req-target-facts">Every item</div></div>
+<div class="kt-label" style="margin-bottom:6px">Basic equipment</div>
+<table class="table" style="margin-bottom:var(--space-4)"><thead><tr><th>Requirement</th><th>Minimum or required value</th><th>Unit</th><th>Action</th></tr></thead><tbody>
+<tr><td>Electrical compatibility<div class="text-muted" style="font-size:12px">Required</div></td><td>Yes — suitable for Kenyan mains supply</td><td>—</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit</span><span class="btn btn-ghost">Customise for one item</span><span class="btn btn-ghost">Remove</span></div></td></tr>
+<tr><td>New and unused equipment<div class="text-muted" style="font-size:12px">Required</div></td><td>Yes</td><td>—</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit</span><span class="btn btn-ghost">Customise for one item</span><span class="btn btn-ghost">Remove</span></div></td></tr>
+</tbody></table>
+<div class="req-target-head"><div class="req-target-title">Business laptops</div><div class="req-target-facts">Laptop · 1 approved requirement</div></div>
+<div class="kt-label" style="margin-bottom:6px">Performance and storage</div>
+<table class="table" style="margin-bottom:var(--space-4)"><thead><tr><th>Requirement</th><th>Minimum or required value</th><th>Unit</th><th>Action</th></tr></thead><tbody>
+<tr><td>Memory<div class="text-muted" style="font-size:12px">Minimum</div></td><td>16</td><td>GB</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit</span><span class="btn btn-ghost">Remove</span></div></td></tr>
+<tr class="is-flagged"><td>Storage type<div class="text-muted" style="font-size:12px">One of</div><div><span class="kt-status is-attention req-flag">Needs review</span></div></td><td>NVMe SSD</td><td>—</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit</span><span class="btn btn-ghost">Remove</span></div></td></tr>
+</tbody></table>
+<div class="kt-label" style="margin-bottom:6px">Connectivity</div>
+<table class="table" style="margin-bottom:var(--space-4)"><thead><tr><th>Requirement</th><th>Minimum or required value</th><th>Unit</th><th>Action</th></tr></thead><tbody>
+<tr><td>Network connectivity<div class="text-muted" style="font-size:12px">Required · every selected capability is required</div></td><td>Wi-Fi 6 and Bluetooth 5 or later</td><td>—</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit</span><span class="btn btn-ghost">Remove</span></div></td></tr>
+</tbody></table>
+<div class="req-target-head"><div class="req-target-title">Dell monitors</div><div class="req-target-facts">Monitor · 1 approved requirement</div></div>
+<div class="kt-label" style="margin-bottom:6px">Performance and storage</div>
+<table class="table" style="margin-bottom:var(--space-4)"><thead><tr><th>Requirement</th><th>Minimum or required value</th><th>Unit</th><th>Action</th></tr></thead><tbody>
+<tr><td>Display resolution<div class="text-muted" style="font-size:12px">Minimum</div></td><td>Full HD</td><td>—</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit</span><span class="btn btn-ghost">Remove</span></div></td></tr>
+<tr><td>Panel size<div class="text-muted" style="font-size:12px">Minimum</div></td><td>24</td><td>inches</td><td><div style="display:flex;gap:4px"><span class="btn btn-ghost">Edit</span><span class="btn btn-ghost">Remove</span></div></td></tr>
+</tbody></table>
+<p class="text-muted" style="font-size:13px;margin:0">Warranty and support (one shared set), the acceptance checks and related services are shown as in REQ-DES-05-COMPLETE.</p>
+</div>
 <div class="kt-panel-lg" style="width:520px">
 <div class="sub">Validation variant · exact issue above the affected section, field error bound locally</div>
 <div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body"><a href="#des05">Enter the minimum warranty in months.</a></div></div>
@@ -481,14 +589,10 @@
 <div id="des06" style="margin-bottom:56px">
 <div class="cap">REQ-DES-06 · Draft: Review and submit <i>— Grace, complete Draft Version 1, no blocking issue, one delivery-date warning</i></div>
 <div class="kt-panel-lg" style="width:900px">
-<div style="display:flex;border:1px solid var(--color-divider);margin-bottom:var(--space-6)">
-<div style="flex:1;padding:12px 16px;border-right:1px solid var(--color-divider)"><div class="kt-label">Request details</div><span class="kt-status is-live" style="margin-top:4px">Complete</span></div>
-<div style="flex:1;padding:12px 16px;border-right:1px solid var(--color-divider)"><div class="kt-label">Requirements</div><span class="kt-status is-live" style="margin-top:4px">Complete</span></div>
-<div style="flex:1;padding:12px 16px;background:var(--color-accent-100)"><div class="kt-label">Review and submit</div></div>
-</div>
+<nav class="req-steps-nav" aria-label="Requisition steps"><ol class="kt-journey req-steps" style="--kt-journey-n:3"><li class="kt-journey-stage is-done"><span class="req-step"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><svg class="kt-journey-check" aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Request details</span><span class="kt-journey-state">Complete</span></span></li><li class="kt-journey-stage is-done"><span class="req-step"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><svg class="kt-journey-check" aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Requirements</span><span class="kt-journey-state">Complete</span></span></li><li class="kt-journey-stage is-not-started is-selected" aria-current="step"><span class="req-step"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">3</span>Review and submit</span><span class="kt-journey-state">You are here · Not started</span></span></li></ol></nav>
 
 <div class="kt-notice is-live"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-notice-body"><strong>Ready to send for department approval</strong></div></div>
-<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">The requested delivery date is 6 days after the plan's estimated completion date.</div></div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body"><div class="req-attention"><div class="req-attention-head">For your attention</div><ul class="req-attention-list"><li><span class="req-attention-tag">Note</span><span>The requested delivery date is 6 days after the plan's estimated completion date.</span></li></ul></div></div></div>
 <div style="border-left:2px solid var(--color-divider);padding:2px 0 2px var(--space-4);margin-bottom:var(--space-6)"><div class="kt-meta-row">
 <div><span class="kt-label">Estimated completion</span><span class="kt-meta-value" style="font-size:14px">24 Sep 2027</span></div>
 <div><span class="kt-label">Latest delivery date</span><span class="kt-meta-value" style="font-size:14px">30 Sep 2027</span></div>
@@ -510,11 +614,11 @@
 </div>
 
 <div style="border:1px solid var(--color-divider);padding:var(--space-4);margin-bottom:var(--space-3);display:flex;justify-content:space-between;align-items:center">
-<div><h6 class="kt-card-title" style="margin:0;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1110.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/></svg>Amounts requested</h6><p class="text-muted" style="font-size:13px;margin:6px 0 0">2 departments · 250 Each · KES 50,000,000.00</p></div>
+<div><h6 class="kt-card-title" style="margin:0;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1110.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/></svg>Request summary</h6><p class="text-muted" style="font-size:13px;margin:6px 0 0">2 departments · 250 Each · KES 50,000,000.00</p></div>
 <span class="kt-label" style="color:var(--color-accent-700)">Show details</span>
 </div>
 <div style="border:1px solid var(--color-divider);padding:var(--space-4);margin-bottom:var(--space-3);display:flex;justify-content:space-between;align-items:center">
-<div><h6 class="kt-card-title" style="margin:0;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Equipment</h6><p class="text-muted" style="font-size:13px;margin:6px 0 0">2 laptop rows · one shared specification</p></div>
+<div><h6 class="kt-card-title" style="margin:0;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Items</h6><p class="text-muted" style="font-size:13px;margin:6px 0 0">2 items · one shared specification</p></div>
 <span class="kt-label" style="color:var(--color-accent-700)">Show details</span>
 </div>
 <div style="border:1px solid var(--color-divider);padding:var(--space-4);margin-bottom:var(--space-3);display:flex;justify-content:space-between;align-items:center">
@@ -811,7 +915,7 @@
 </div>
 </div>
 
-<p class="text-muted" style="font-size:13px;margin:0 0 var(--space-4)">The complete review sections from <a href="#des06">REQ-DES-06</a> follow, with Funding reservations inserted after Amounts requested.</p>
+<p class="text-muted" style="font-size:13px;margin:0 0 var(--space-4)">The complete review sections from <a href="#des06">REQ-DES-06</a> follow, with Funding reservations inserted after Request summary.</p>
 <h6 class="kt-card-title" style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>Funding reservations</h6>
 <table class="table" style="margin-bottom:var(--space-6)"><thead><tr><th>Funding reservation (financial hold)</th><th>Department</th><th class="is-num">Value</th></tr></thead><tbody>
 <tr><td>RSV-MOH-2027-033-001</td><td>Human Resources Management and Development</td><td class="is-num">KES 20,000,000.00</td></tr>
@@ -1013,8 +1117,8 @@
 <div class="kt-panel-lg" style="width:620px"><div class="sub" style="display:flex;justify-content:space-between;gap:12px"><span>Stale Draft</span><span style="font-weight:400;white-space:nowrap">Parent · REQ-DES-03 Request details</span></div>
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0">Clinical training and deployment laptops for digital health rollout</h3><span class="kt-status is-draft">Draft</span></div><div class="kt-label" style="margin:6px 0 var(--space-6)">REQ-MOH-2027-033-001</div><div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">This requisition changed after you opened it. Review the latest version before saving.</div></div><div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-top:var(--space-4)"><span class="btn btn-primary">Review latest version</span></div><div style="opacity:1;margin-top:var(--space-6);border-top:1px solid var(--color-divider);padding-top:var(--space-4)"><div class="kt-label">Request information · existing page retained below</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);margin-top:8px"><div class="field"><label>Requirement title</label><input class="input" value="Clinical training and deployment laptops for digital health rollout" disabled="disabled" /></div><div class="field"><label>Latest delivery date</label><input class="input" value="30 Sep 2027" disabled="disabled" /></div></div></div></div>
 
-<div class="kt-panel-lg" style="width:620px"><div class="sub" style="display:flex;justify-content:space-between;gap:12px"><span>Save validation</span><span style="font-weight:400;white-space:nowrap">Parent · REQ-DES-03 Equipment</span></div>
-<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0">Clinical training and deployment laptops for digital health rollout</h3><span class="kt-status is-draft">Draft</span></div><div class="kt-label" style="margin:6px 0 var(--space-6)">REQ-MOH-2027-033-001</div><div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">Requested equipment quantity for Digital Health is 140 Each but the approved requirement requests 150 Each</div></div><h6 class="kt-card-title" style="margin-top:var(--space-4)">Equipment</h6><table class="table" style="font-size:13px"><thead><tr><th>Approved requirement</th><th class="is-num">Quantity</th><th>Action</th></tr></thead><tbody><tr><td>HR Management and Development — SRC-MOH-033-001</td><td class="is-num">100 Each</td><td><span class="btn btn-ghost">Edit quantity and use</span></td></tr><tr><td>Digital Health — SRC-MOH-033-002</td><td class="is-num"><span style="color:var(--status-critical);font-weight:600">140 Each</span><div style="color:var(--status-critical);font-size:12px">Must be 150 Each</div></td><td><span class="btn btn-ghost">Edit quantity and use</span></td></tr></tbody></table><p class="text-muted" style="font-size:12px;margin:8px 0 0">All still-authorised input retained.</p><div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-top:var(--space-4)"><span class="btn btn-primary">Save again after correction</span></div></div>
+<div class="kt-panel-lg" style="width:620px"><div class="sub" style="display:flex;justify-content:space-between;gap:12px"><span>Save validation</span><span style="font-weight:400;white-space:nowrap">Parent · REQ-DES-03 Items</span></div>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0">Clinical training and deployment laptops for digital health rollout</h3><span class="kt-status is-draft">Draft</span></div><div class="kt-label" style="margin:6px 0 var(--space-6)">REQ-MOH-2027-033-001</div><div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">Digital Health can request at most 150 Each for this requirement; you entered 160.</div></div><h6 class="kt-card-title" style="margin-top:var(--space-4)">Items</h6><table class="table" style="font-size:13px"><thead><tr><th>Approved requirement</th><th class="is-num">Quantity</th><th>Action</th></tr></thead><tbody><tr><td>HR Management and Development — SRC-MOH-033-001</td><td class="is-num">100 Each</td><td><span class="btn btn-ghost">Edit quantity and use</span></td></tr><tr><td>Digital Health — SRC-MOH-033-002</td><td class="is-num"><span style="color:var(--status-critical);font-weight:600">160 Each</span><div style="color:var(--status-critical);font-size:12px">At most 150 Each</div></td><td><span class="btn btn-ghost">Edit quantity and use</span></td></tr></tbody></table><p class="text-muted" style="font-size:12px;margin:8px 0 0">All still-authorised input retained.</p><div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-top:var(--space-4)"><span class="btn btn-primary">Save again after correction</span></div></div>
 
 <div class="kt-panel-lg" style="width:620px"><div class="sub" style="display:flex;justify-content:space-between;gap:12px"><span>Unsupported product</span><span style="font-weight:400;white-space:nowrap">Parent · REQ-DES-02 start / approved purchase</span></div>
 <div class="kt-label">Approved purchase</div><div style="font-size:15px;font-weight:600;margin:4px 0 4px">Clinical training and deployment laptops for digital health rollout</div><div style="font-size:14px;margin-bottom:var(--space-4)">Requirement product · <strong>Software integration</strong></div><div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body">This approved purchase requires software integration, which this release does not support.</div></div><div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-top:var(--space-4)"><span class="btn btn-secondary">Back to Requisitions</span></div></div>
@@ -1034,7 +1138,7 @@
 <div class="kt-panel-lg" style="width:620px"><div class="sub" style="display:flex;justify-content:space-between;gap:12px"><span>Existing procurement scope</span><span style="font-weight:400;white-space:nowrap">Parent · REQ-DES-02 start / approved purchase</span></div>
 <div class="kt-label">Approved purchase</div><div style="font-size:15px;font-weight:600;margin:4px 0 4px">Clinical training and deployment laptops for digital health rollout</div><div style="font-size:14px;margin-bottom:var(--space-4)">Digital Health; HR Management and Development</div><div class="kt-notice is-info"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><div class="kt-notice-body">This approved purchase already has an authorised requisition. Additional requirements must use a separate approved purchase.</div></div><div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-top:var(--space-4)"><span class="btn btn-secondary">View approved purchase</span></div><p class="text-muted" style="font-size:12px;margin:10px 0 0">No local add-source, bypass or unlock. The existing proceeding is preserved.</p></div>
 
-<div class="kt-panel-lg" style="width:620px"><div class="sub" style="display:flex;justify-content:space-between;gap:12px"><span>Remaining original amount</span><span style="font-weight:400;white-space:nowrap">Parent · REQ-DES-03 Amounts requested</span></div>
+<div class="kt-panel-lg" style="width:620px"><div class="sub" style="display:flex;justify-content:space-between;gap:12px"><span>Remaining original amount</span><span style="font-weight:400;white-space:nowrap">Parent · REQ-DES-03 Request summary</span></div>
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0">Clinical training and deployment laptops for digital health rollout</h3><span class="kt-status is-draft">Draft</span></div><div class="kt-label" style="margin:6px 0 var(--space-6)">REQ-MOH-2027-033-001</div><p style="font-size:14px;margin:0 0 var(--space-3)">This request uses only the remaining amount from the original approved purchase.</p><table class="table"><thead><tr><th>Approved purchase</th><th class="is-num">Quantity</th><th class="is-num">Value</th></tr></thead><tbody><tr><td>Original</td><td class="is-num">250 Each</td><td class="is-num">KES 50,000,000.00</td></tr><tr><td>Previously used</td><td class="is-num">100 Each</td><td class="is-num">KES 20,000,000.00</td></tr><tr><td style="font-weight:600">Still available</td><td class="is-num" style="font-weight:600">150 Each</td><td class="is-num" style="font-weight:600">KES 30,000,000.00</td></tr></tbody></table><p class="text-muted" style="font-size:12px;margin:10px 0 0">Isolated example. Normal Start/Authorise remains only when every other current guard passes.</p></div>
 
 <div class="kt-panel-lg" style="width:620px"><div class="sub" style="display:flex;justify-content:space-between;gap:12px"><span>New submitting department</span><span style="font-weight:400;white-space:nowrap">Parent · REQ-DES-08 returned result</span></div>
@@ -1060,8 +1164,8 @@
 <div style="border-top:1px solid var(--color-divider);padding-top:var(--space-3)"><div style="font-size:15px;font-weight:600">Clinical training and deployment laptops for digital health rollout</div><div class="kt-label" style="margin-top:2px">PPI-MOH-2027-033</div>
 <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px;margin-top:10px"><span class="kt-label">Departments</span><span>Digital Health; HR Management and Development</span><span class="kt-label">Still available</span><span>250 Each · KES 50,000,000.00</span><span class="kt-label">Needed by</span><span>31 Dec 2027</span></div>
 <div style="margin-top:12px"><span class="btn btn-primary btn-block">Start requisition</span></div></div></div>
-<div class="kt-panel-lg" style="width:390px;padding:var(--space-4)"><div class="sub">REQ-DES-03 · Amounts requested</div>
-<div style="border-top:1px solid var(--color-divider);padding:var(--space-3) 0"><div style="font-weight:600;font-size:14px">Human Resources Management and Development</div><div class="kt-label">Business laptops</div><div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px;margin-top:8px"><span class="kt-label">Available quantity</span><span>100 Each</span><span class="kt-label">Requested quantity</span><span>100 Each</span><span class="kt-label">Available value</span><span>KES 20,000,000.00</span><span class="kt-label">Requested value</span><span>KES 20,000,000.00</span></div></div><div style="border-top:1px solid var(--color-divider);padding:var(--space-3) 0"><div style="font-weight:600;font-size:14px">Digital Health</div><div class="kt-label">Business laptops</div><div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px;margin-top:8px"><span class="kt-label">Available quantity</span><span>150 Each</span><span class="kt-label">Requested quantity</span><span>150 Each</span><span class="kt-label">Available value</span><span>KES 30,000,000.00</span><span class="kt-label">Requested value</span><span>KES 30,000,000.00</span></div></div></div>
+<div class="kt-panel-lg" style="width:390px;padding:var(--space-4)"><div class="sub">REQ-DES-03 · Request summary</div>
+<div style="border-top:1px solid var(--color-divider);padding:var(--space-3) 0"><div style="font-weight:600;font-size:14px">Human Resources Management and Development</div><div class="kt-label">Business laptops</div><div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px;margin-top:8px"><span class="kt-label">Available quantity</span><span>100 Each</span><span class="kt-label">Requested quantity</span><span>100 Each</span><span class="kt-label">Available value</span><span>KES 20,000,000.00</span><span class="kt-label">Estimated total cost</span><span>KES 20,000,000.00</span><span class="kt-label">Still available after this request</span><span>0 Each · KES 0.00</span></div></div><div style="border-top:1px solid var(--color-divider);padding:var(--space-3) 0"><div style="font-weight:600;font-size:14px">Digital Health</div><div class="kt-label">Business laptops</div><div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px;margin-top:8px"><span class="kt-label">Available quantity</span><span>150 Each</span><span class="kt-label">Requested quantity</span><span>150 Each</span><span class="kt-label">Available value</span><span>KES 30,000,000.00</span><span class="kt-label">Estimated total cost</span><span>KES 30,000,000.00</span><span class="kt-label">Still available after this request</span><span>0 Each · KES 0.00</span></div></div></div>
 <div class="kt-panel-lg" style="width:390px;padding:var(--space-4)"><div class="sub">REQ-DES-05 · Acceptance check row</div>
 <div style="border-top:1px solid var(--color-divider);padding-top:var(--space-3)"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600;font-size:14px">Quantity</span><label class="kt-checkbox"><input type="checkbox" checked="checked" disabled="disabled" /><span class="box"></span></label></div>
 <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px;margin-top:8px"><span class="kt-label">Applies to</span><span>All items</span><span class="kt-label">Pass condition</span><span>Delivered quantities equal the authorised schedule</span><span class="kt-label">Evidence</span><span>Inspection record</span></div>
