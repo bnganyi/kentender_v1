@@ -3346,6 +3346,13 @@
 	cursor: not-allowed;
 }
 
+.kt-industry .dialog {
+	max-height: calc(100vh - 2 * var(--space-4));
+	max-height: calc(100dvh - 2 * var(--space-4));
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+
 /* Part 6: buttons and fields are rectangular and outlined, so they cannot be mistaken for a status pill */
 
 .kt-industry {

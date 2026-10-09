@@ -123,6 +123,10 @@ STRUCTURE = (
 	".kt-industry .seg-opt {\n\tmargin: 0;\n}",
 	".kt-industry .seg-opt:has(input:disabled) {\n\tcursor: default;\n\topacity: 0.7;\n}",
 	".kt-industry .seg-opt.is-disabled {\n\topacity: 0.55;\n\tcursor: not-allowed;\n}",
+	# A dialog never grows past the window: the backdrop centres it and pads it, so a tall one (the Start Tender dialog with both disclosures
+	# open) was clipped at the top and the bottom with no way to scroll to its title or its buttons on a short screen. It scrolls inside the
+	# window instead. `dvh` follows a phone's moving address bar; `vh` is the fallback. A dialog that sets its own height keeps it.
+	".kt-industry .dialog {\n\tmax-height: calc(100vh - 2 * var(--space-4));\n\tmax-height: calc(100dvh - 2 * var(--space-4));\n\toverflow-y: auto;\n\toverscroll-behavior: contain;\n}",
 )
 
 HEADER = (
