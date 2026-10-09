@@ -5,6 +5,17 @@
 **Supersedes-in-tracking:** the REQ-CHG-001 v1.6 tracker (closed 7 September 2026, 48/56 acceptance rows Done; recoverable from git at `f5c3f649`).
 **Status:** Phases 0–1 Done; Phase 2 substantively Done (seeds pending); Phase 3 next. Started 24 September 2026.
 
+## v1.19 Record details (proposed 9 October 2026, built, not yet approved)
+
+Display change directed by the Project Owner (REQ-CHG-001 v1.19 §13.7A; REQ119-CHG-001; REQ119-AC-001..005). v1.18 remains the approved text.
+
+| Item | State | Evidence |
+|---|---|---|
+| One label pattern; Handoff display reference removed; Departmental need references | Built | `test_read` (record details tests), board REQ-DES-10 artboard |
+| Strategic objective reference = Strategy Node reference (was its database name; also fixes the Strategic objective line in Purchase and source details) | Built | `test_read` |
+| Digests for the Technical and Auditor reads only | Built | `test_read` |
+| Approval of v1.19 | Not given | register untouched |
+
 ## v1.18 requirements follow the items (proposed 9 October 2026, built, not yet approved)
 
 Built ahead of approval at the Project Owner's direction (REQ-CHG-001 v1.18 §5.7A, §6.4A, §6.5A, §13.6A, §5.12; change rows REQ118-CHG-001..005; statements REQ118-AC-001..010). v1.16 remains the approved text.
