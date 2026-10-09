@@ -15,7 +15,8 @@
   --color-control-disabled: var(--disabled-control-bg, #f8f8f8);     /* @kind color */ /* read-only value (.like-disabled-input), with --color-control-disabled-text */
   --color-input-disabled: var(--input-disabled-bg, #ededed);         /* @kind color */ /* disabled or readonly <input>/<button> ($input-disabled-bg), with --color-text-muted */
   --color-control-disabled-text: var(--disabled-text-color, #7c7c7c); /* @kind color */
-  --color-control-border: var(--gray-600, #7c7c7c);          /* @kind color */ /* DS-REV-003: 1px outline of secondary buttons and fields, 4.2:1 on white */
+  --color-control-border: #8590a6;                           /* @kind color */ /* DS-REV-006: 1px outline of secondary buttons and fields, blue-grey, 3.21:1 on white (was --gray-600 #7c7c7c, 4.2:1, in DS-REV-003); KT-STD-001 v1.28 §2.4 */
+  --color-control-border-hover: #6b7690;                     /* @kind color */ /* DS-REV-006: hover outline of secondary buttons and fields, 4.55:1 on white */
   --color-control-border-disabled: var(--gray-400, #c7c7c7); /* @kind color */ /* DS-REV-003: 1px outline of disabled buttons and fields */
   --color-text: var(--text-color, #383838);       /* @kind color */
   --color-heading: var(--heading-color, #171717); /* @kind color */
@@ -62,7 +63,8 @@
 
   --radius-sm: var(--border-radius-tiny, 4px); /* @kind radius */ /* tags, checkboxes */
   --radius-md: 4px;                            /* @kind radius */ /* DS-REV-005: legacy, prefer --radius-lg; no longer reads Frappe's --border-radius */
-  --radius-control: 2px;                       /* @kind radius */ /* DS-REV-003: buttons, inputs, selects, textareas, date field, segmented control */
+  --radius-control: 2px;                       /* @kind radius */ /* DS-REV-003: buttons, segmented control, notice banners (DS-REV-006: fields moved to --radius-field) */
+  --radius-field: 4px;                         /* @kind radius */ /* DS-REV-006: inputs, selects, textareas, date field */
   --radius-lg: 4px;                            /* @kind radius */ /* DS-REV-005: sheet, cards, dialogs, panels, disclosures, record cards, figure frames */
   --radius-xl: var(--radius-lg);               /* @kind radius */ /* legacy alias of --radius-lg */
 
@@ -148,7 +150,7 @@ figcaption {
 .btn-primary:active { background: var(--color-accent-900); border-color: var(--color-accent-900); }
 /* DS-REV-003: outlined, no resting fill. Grey appears only on hover / press. */
 .btn-secondary { background: var(--color-surface); border-color: var(--color-control-border); color: var(--color-text); }
-.btn-secondary:hover { background: var(--color-neutral-100); }
+.btn-secondary:hover { background: var(--color-neutral-100); border-color: var(--color-control-border-hover); }
 .btn-secondary:active { background: var(--color-neutral-200); }
 .btn-ghost { color: var(--color-accent); padding-inline: var(--space-1); }
 .btn-ghost:hover { background: var(--color-accent-100); }
@@ -165,8 +167,9 @@ figcaption {
   width: 100%; min-height: 36px; padding: 6px 10px; font: inherit;
   font-size: 14px; color: var(--color-text); caret-color: var(--color-accent);
   background: var(--color-surface); /* DS-REV-003: white field, outlined (was --color-control fill, no border) */
-  border: 1px solid var(--color-control-border); border-radius: var(--radius-control);
+  border: 1px solid var(--color-control-border); border-radius: var(--radius-field); /* DS-REV-006: 4px */
 }
+.input:hover:not(:disabled):not(:focus-visible) { border-color: var(--color-control-border-hover); }
 .input:focus-visible { outline-offset: 0; }
 .input:disabled {
   color: var(--color-text-muted); /* KT-STD v1.22 §2.4: disabled/readonly input text = --text-muted */
@@ -182,10 +185,12 @@ textarea.input { min-height: 90px; resize: vertical; }
 .date-field {
   width: 100%; min-height: 36px; padding: 6px 10px; font: inherit; font-size: 14px;
   color: var(--color-text); background: var(--color-surface);
-  border: 1px solid var(--color-control-border); border-radius: var(--radius-control);
+  border: 1px solid var(--color-control-border); border-radius: var(--radius-field); /* DS-REV-006: 4px */
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
 }
 .date-field svg { flex: none; color: var(--color-neutral-600); }
+/* DS-REV-006 addendum (Project Owner, 9 Oct 2026, "APPROVED"): the wrapper takes the field hover edge. A disabled date field must carry aria-disabled="true". */
+.date-field:hover:not([aria-disabled="true"]):not(:focus-within) { border-color: var(--color-control-border-hover); }
 .radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; }
 .radio input, .seg-opt input {
   position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
@@ -294,7 +299,8 @@ textarea.input { min-height: 90px; resize: vertical; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
 
 /* — shape (DS-REV-002): soft radii, tone before lines — */
-.btn, .input, .date-field, .seg { border-radius: var(--radius-control); } /* DS-REV-003: controls are rectangular; status chips and cards stay soft */
+.btn, .seg { border-radius: var(--radius-control); } /* DS-REV-003: controls are rectangular; status chips and cards stay soft */
+.input, .date-field { border-radius: var(--radius-field); } /* DS-REV-006: fields are 4px, like the containers they sit in */
 .tag { border-radius: var(--radius-sm); }
 .card { border-radius: var(--radius-lg); background: var(--color-surface); border: 1px solid var(--color-divider); }
 .dialog { border-radius: var(--radius-lg); }

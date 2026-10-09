@@ -1340,7 +1340,9 @@
 
 .kt-industry.kt-analytics {
 	--radius-control: 2px;
-	--color-control-border: #909090;
+	--radius-field: 4px;
+	--color-control-border: #8590a6;
+	--color-control-border-hover: #6b7690;
 }
 
 .kt-industry.kt-analytics {
@@ -1363,7 +1365,7 @@
 }
 
 .kt-industry.kt-analytics .btn-secondary:hover:not(:disabled) {
-	border-color: var(--color-neutral-600);
+	border-color: var(--color-control-border-hover);
 }
 
 .kt-industry.kt-analytics .btn-secondary.kt-danger:hover:not(:disabled) {
@@ -1398,12 +1400,16 @@
 
 .kt-industry.kt-analytics .input,
 .kt-industry.kt-analytics .date-field {
-	border-radius: var(--radius-control);
+	border-radius: var(--radius-field);
 	border-color: var(--color-control-border);
 }
 
 .kt-industry.kt-analytics .input:hover:not(:disabled):not(:focus-visible) {
-	border-color: var(--color-neutral-600);
+	border-color: var(--color-control-border-hover);
+}
+
+.kt-industry.kt-analytics .date-field:hover:not([aria-disabled="true"]):not(:focus-within) {
+	border-color: var(--color-control-border-hover);
 }
 
 .kt-industry.kt-analytics .input:not(:disabled):not([readonly]),

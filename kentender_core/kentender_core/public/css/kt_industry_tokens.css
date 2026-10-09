@@ -3388,7 +3388,9 @@
 
 .kt-industry {
 	--radius-control: 2px;
-	--color-control-border: #909090;
+	--radius-field: 4px;
+	--color-control-border: #8590a6;
+	--color-control-border-hover: #6b7690;
 }
 
 .kt-industry {
@@ -3402,7 +3404,7 @@
 }
 
 .kt-industry .btn {
-	border-radius: var(--radius-control);
+	border-radius: var(--radius-field);
 }
 
 .kt-industry .btn-secondary {
@@ -3411,7 +3413,7 @@
 }
 
 .kt-industry .btn-secondary:hover:not(:disabled) {
-	border-color: var(--color-neutral-600);
+	border-color: var(--color-control-border-hover);
 }
 
 .kt-industry .btn-secondary.kt-danger:hover:not(:disabled) {
@@ -3451,7 +3453,11 @@
 }
 
 .kt-industry .input:hover:not(:disabled):not(:focus-visible) {
-	border-color: var(--color-neutral-600);
+	border-color: var(--color-control-border-hover);
+}
+
+.kt-industry .date-field:hover:not([aria-disabled="true"]):not(:focus-within) {
+	border-color: var(--color-control-border-hover);
 }
 
 .kt-industry .input:not(:disabled):not([readonly]),

@@ -54,15 +54,15 @@ const ROLES: Role[] = [
 ];
 /**
  * Differences from the board that the Project Owner approved after the board was drawn (DS-REV-003 control shape,
- * DS-REV-005 corner radius, white field fill, 6 Oct 2026; KT-STD-001 v1.23–v1.25). The page must show exactly the value
+ * DS-REV-005 corner radius, white field fill, 6 Oct 2026; KT-STD-001 v1.23–v1.25; DS-REV-006 blue-grey control edge #8590a6, 9 Oct 2026; KT-STD-001 v1.28). The page must show exactly the value
  * named here, so the gate still fails if the page drifts anywhere else. Retire an entry when the board is redrawn.
  */
 const APPROVED_DEPARTURES: Record<string, string> = {
 	"sheet|borderTopLeftRadius": "4px",
 	"Continue (primary)|borderTopLeftRadius": "2px",
 	"Continue (standard)|backgroundColor": "rgb(255, 255, 255)",
-	"Continue (standard)|borderTopColor": "rgb(144, 144, 144)",
-	"Continue (standard)|borderLeftColor": "rgb(144, 144, 144)",
+	"Continue (standard)|borderTopColor": "rgb(133, 144, 166)",
+	"Continue (standard)|borderLeftColor": "rgb(133, 144, 166)",
 	"Continue (standard)|borderTopLeftRadius": "2px",
 	"Show more (ghost)|borderTopLeftRadius": "2px",
 };

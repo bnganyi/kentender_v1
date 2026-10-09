@@ -77,18 +77,23 @@ def control_shape(scope: str, fields: bool = False) -> tuple:
 	Owner, 6 Oct 2026: a grey-filled, 8px-cornered secondary button read as the same kind of object as a grey status pill, and the soft
 	corners felt too playful. So a button is a 2px-cornered rectangle, a secondary is outlined on white (grey fill only on hover), and
 	a field shares that corner and carries a visible border. Pills, cards and sheets keep their own rounding. Contrast of the 1px rule
-	against white is 3.2:1 (#909090), just above the 3:1 non-text minimum; neutral-600 (4.2:1) read as black next to the label (owner, 6 Oct
-	2026), so it is now only the hover edge.
+	against white is 3.2:1, just above the 3:1 non-text minimum; neutral-600 (4.2:1) read as black next to the label (owner, 6 Oct
+	2026), so a darker edge is only the hover edge.
+
+	Owner, 9 Oct 2026, option C of the field-border options (KT-STD-001 v1.28, DS-REV-006): the rule was neutral #909090, which looked
+	sharp, and it cannot simply be lightened (3:1 is the floor on a white field on a white sheet). So the edge keeps its lightness and takes
+	a blue-grey hue, #8590a6 (3.21:1, the same as before), the hover edge is #6b7690 (4.55:1), and a field's corner is 4px like the
+	containers it sits in (`--radius-field`), while buttons and notice banners stay 2px (`--radius-control`).
 	"""
 	rules = [
-		f"{scope} {{\n\t--radius-control: 2px;\n\t--color-control-border: #909090;\n}}",
+		f"{scope} {{\n\t--radius-control: 2px;\n\t--radius-field: 4px;\n\t--color-control-border: #8590a6;\n\t--color-control-border-hover: #6b7690;\n}}",
 		# DS-REV-005 (Project Owner, 6 Oct 2026: "Multiple elements are too rounded"): containers are 4px, notice banners 2px like the controls, status
 		# chips stay 6px. The radius tokens no longer read Frappe's --border-radius, so a Frappe theme change does not alter KenTender corners.
 		f"{scope} {{\n\t--radius-md: 4px;\n\t--radius-lg: 4px;\n\t--radius-xl: var(--radius-lg);\n}}",
 		f"{scope} .kt-notice {{\n\tborder-radius: var(--radius-control);\n}}",
 		f"{scope} .btn {{\n\tborder-radius: var(--radius-control);\n}}",
 		f"{scope} .btn-secondary {{\n\tbackground: var(--color-surface);\n\tborder-color: var(--color-control-border);\n}}",
-		f"{scope} .btn-secondary:hover:not(:disabled) {{\n\tborder-color: var(--color-neutral-600);\n}}",
+		f"{scope} .btn-secondary:hover:not(:disabled) {{\n\tborder-color: var(--color-control-border-hover);\n}}",
 		f"{scope} .btn-secondary.kt-danger:hover:not(:disabled) {{\n\tborder-color: var(--status-critical);\n}}",
 		f"{scope} .btn-secondary:hover:not(:disabled) {{\n\tbackground: var(--color-neutral-100);\n}}",
 		f"{scope} .btn-secondary:active:not(:disabled) {{\n\tbackground: var(--color-neutral-200);\n}}",
@@ -103,8 +108,11 @@ def control_shape(scope: str, fields: bool = False) -> tuple:
 	]
 	if fields:
 		rules += [
-			f"{scope} .input,\n{scope} .date-field {{\n\tborder-radius: var(--radius-control);\n\tborder-color: var(--color-control-border);\n}}",
-			f"{scope} .input:hover:not(:disabled):not(:focus-visible) {{\n\tborder-color: var(--color-neutral-600);\n}}",
+			f"{scope} .input,\n{scope} .date-field {{\n\tborder-radius: var(--radius-field);\n\tborder-color: var(--color-control-border);\n}}",
+			f"{scope} .input:hover:not(:disabled):not(:focus-visible) {{\n\tborder-color: var(--color-control-border-hover);\n}}",
+			# DS-REV-006 addendum (Claude Design, owner "APPROVED", 9 Oct 2026): a `.date-field` wrapper takes the same hover edge. No app screen draws
+			# `.date-field` today (they use a native date `.input`, which already has it); the pack's old `.date-field:hover` would otherwise win.
+			f"{scope} .date-field:hover:not([aria-disabled=\"true\"]):not(:focus-within) {{\n\tborder-color: var(--color-control-border-hover);\n}}",
 			# White fill (owner, 6 Oct 2026: "Much better. Approved - implement"; DS-REV-003): an enabled, editable field is the sheet colour inside its
 			# outline, so the grey #f3f3f3 no longer reads as a dirty patch on the white sheet. Only the colour is set: the `background` shorthand would
 			# wipe a select's dropdown arrow. Disabled and read-only fields keep their own treatment, so they stay distinguishable from editable ones.
