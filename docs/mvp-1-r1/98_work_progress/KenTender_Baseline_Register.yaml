@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "register_id": "KT-DOC-CTRL-001",
   "title": "KenTender Requirements and Delivery Baseline Register",
-  "as_of": "2026-10-03",
+  "as_of": "2026-10-09",
   "purpose": "Canonical machine-readable record of the current requirements baseline, cross-module contracts, decisions, implementation handoffs, future work and unresolved control findings.",
   "governance": {
     "source_of_truth": "This file is the canonical source for the companion Documentation Control Register workbook.",
@@ -29,7 +29,9 @@
       "Issue evidence",
       "Directional",
       "Referenced—unresolved",
-      "Release artifact"
+      "Release artifact",
+      "Mixed approved/proposed",
+      "Needs reconciliation"
     ],
     "implementation": [
       "Not started",
@@ -37,7 +39,9 @@
       "In progress",
       "Implemented",
       "Not evidenced",
-      "Not applicable"
+      "Not applicable",
+      "Not implemented",
+      "v1.0 claims implemented; not reverified"
     ],
     "verification": [
       "Not started",
@@ -45,14 +49,17 @@
       "Pending",
       "Passed",
       "Failed",
-      "Not applicable"
+      "Not applicable",
+      "Not reverified"
     ],
     "release": [
       "Not applicable",
       "Not approved",
       "Candidate",
       "Blocked",
-      "Released"
+      "Released",
+      "Not established",
+      "Not released"
     ]
   },
   "documents": [
@@ -125,69 +132,83 @@
     {
       "document_id": "NDS-CHG-001",
       "title": "Clean Departmental Needs",
-      "version": "1.16",
+      "version": "1.17",
       "category": "Module requirements",
       "module": "Departmental Needs",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-03",
-      "supersedes": "v1.14",
+      "approval_date": "2026-10-09",
+      "supersedes": "v1.16 (approved 3 October 2026, retained as history)",
       "implementation_status": "Not evidenced",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
-      "library_file_id": "libfile_43204a8a82548191a05d0c20cabf0283",
-      "filename": "KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_16.md",
-      "scope": "Simple need capture, review and acceptance; consultation is optional and is not a gate.",
-      "dependencies": "PLN-CHG-001; KT-STD-001",
-      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "library_file_id": "",
+      "filename": "KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_17.md",
+      "scope": "Simple need capture, review and acceptance; consultation is optional and is not a gate. From v1.17 the Author enters one required estimated total cost, frozen with the revision and shown at review; Budget Line, funding source and currency stay out of Needs.",
+      "dependencies": "PLN-CHG-001 v1.30; KT-STD-001",
+      "action": "Approved 9 October 2026 (v1.17: estimated total cost on the Need). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
       "source_bundle": "files.zip; supplied control block",
-      "source_sha256": "23fe428b9200b60b760c0b838bd4a9db2dd91cf7fae356296418700c9d5722f4",
+      "source_sha256": "4bb1d25aa48be061177146eda7a9bdbf102bd1dd456c9bf78a46ffa3b2f3ca1f",
       "prior_approved_baseline": {
-        "version": "1.15",
-        "approval_date": "2026-09-28",
-        "filename": "KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_15.md",
+        "version": "1.16",
+        "approval_date": "2026-10-03",
+        "filename": "KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_16.md",
         "requirement_status": "Approved requirement"
       },
-      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_record": "Project Owner: “1, Approved” — 9 October 2026, answering the question: approve NDS-CHG-001 v1.17, PLN-CHG-001 v1.30 and PLN-CHG-001 v1.31, in that order (v1.16: Mark the documents as approved; 3 October 2026)",
       "approval_history": {
         "proposed_version": "1.16",
         "proposed_filename": "KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_16.md",
         "proposal_status": "Project Owner review",
-        "proposed_base_version": "1.15"
+        "proposed_base_version": "1.15",
+        "latest_approved": {
+          "version": "1.17",
+          "filename": "KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_17.md",
+          "approved_on": "2026-10-09",
+          "base_version": "1.16",
+          "note": "Approved by the Project Owner on 9 October 2026. The proposed_* values above are v1.16 drafting history and are not corrected here."
+        }
       }
     },
     {
       "document_id": "PLN-CHG-001",
       "title": "Clean Procurement Planning",
-      "version": "1.29",
+      "version": "1.31",
       "category": "Module requirements",
       "module": "Procurement Planning",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-03",
-      "supersedes": "v1.27",
+      "approval_date": "2026-10-09",
+      "supersedes": "v1.30 (approved 9 October 2026 with v1.31); v1.29 approved 3 October 2026; v1.27 and earlier as before",
       "implementation_status": "Not implemented",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
-      "library_file_id": "libfile_efd27d9b04ac8191bb06e17aef384d2e",
-      "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_29.md",
-      "scope": "Complete Planning authority including the current-complete-APP reservation denominator, next-step and journey contract, corrected funding-request blockers, Planning-side budget revision request, hand-off register and Purchase-ready-for-requisition item.",
-      "dependencies": "STR-CHG-001 v1.8; BUD-CHG-001 v1.11; NDS-CHG-001 v1.14; CFG-CHG-002 v0.13+; REQ-CHG-001 v1.12; KT-STD-001 v1.8",
-      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "library_file_id": "",
+      "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_31.md",
+      "scope": "Complete Planning authority including the current-complete-APP reservation denominator, next-step and journey contract, corrected funding-request blockers, Planning-side budget revision request, hand-off register and Purchase-ready-for-requisition item. From v1.30 a Need-origin departmental plan entry starts from the accepted Need's estimated total cost and Planning shows any change from it; from v1.31 the Procurement Planner records the Treasury submission and entity-website publication in one Confirm plan publication action, and the system then runs the existing activation checks.",
+      "dependencies": "STR-CHG-001 v1.8; BUD-CHG-001 v1.11; NDS-CHG-001 v1.17; CFG-CHG-002 v0.13+; REQ-CHG-001 v1.12; KT-STD-001 v1.8",
+      "action": "Approved 9 October 2026 (v1.30: estimate prefill from the Need; v1.31: Planner confirms publication). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
       "source_bundle": "files.zip; supplied control block",
-      "source_sha256": "e366d67a71365b236f852c631c35a14d5263833db1ca767c27994270e0606c8e",
+      "source_sha256": "69eaaaf629237921a20c781b1a697dc1b937184f2892e5f08cd18f2b210481c9",
       "prior_approved_baseline": {
-        "version": "1.28",
-        "approval_date": "2026-09-28",
-        "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_28.md",
+        "version": "1.29",
+        "approval_date": "2026-10-03",
+        "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_29.md",
         "requirement_status": "Approved requirement"
       },
-      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_record": "Project Owner: “1, Approved” — 9 October 2026, answering the question: approve NDS-CHG-001 v1.17, PLN-CHG-001 v1.30 and PLN-CHG-001 v1.31, in that order (v1.29: Mark the documents as approved; 3 October 2026)",
       "approval_history": {
         "proposed_version": "1.29",
         "proposed_filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_29.md",
         "proposal_status": "Project Owner review",
-        "proposed_base_version": "1.28"
+        "proposed_base_version": "1.28",
+        "latest_approved": {
+          "version": "1.31",
+          "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_31.md",
+          "approved_on": "2026-10-09",
+          "base_version": "1.30",
+          "note": "v1.30 and v1.31 approved by the Project Owner on 9 October 2026. The proposed_* values above are v1.29 drafting history and are not corrected here."
+        }
       }
     },
     {
@@ -1165,18 +1186,18 @@
       "status": "Closed in requirements",
       "implementation_status": "Not evidenced",
       "test_status": "Not evidenced",
-      "owner_doc": "BUD-CHG-001 v1.11 / PLN-CHG-001 v1.27",
+      "owner_doc": "BUD-CHG-001 v1.12 / PLN-CHG-001 v1.27",
       "failure_rule": "Budget facts must not be repurposed as the APP reservation denominator."
     },
     {
       "interface_id": "IF-003",
       "upstream": "Departmental Needs",
       "downstream": "Procurement Planning",
-      "contract": "Accepted requirement identity, quantity, unit, required-by date and planning disposition",
+      "contract": "Accepted requirement identity, quantity, unit, required-by date, estimated total cost and planning disposition",
       "status": "Closed in requirements",
       "implementation_status": "Not evidenced",
       "test_status": "Not evidenced",
-      "owner_doc": "NDS-CHG-001 v1.14 / PLN-CHG-001 v1.27",
+      "owner_doc": "NDS-CHG-001 v1.17 / PLN-CHG-001 v1.31",
       "failure_rule": "A need cannot be subsumed into a plan item whose fulfilment path is already unavailable."
     },
     {
@@ -1253,7 +1274,7 @@
       "status": "Closed in requirements",
       "implementation_status": "Not evidenced",
       "test_status": "Not evidenced",
-      "owner_doc": "PLN-CHG-001 v1.27 / BUD-CHG-001 v1.11",
+      "owner_doc": "PLN-CHG-001 v1.27 / BUD-CHG-001 v1.12",
       "failure_rule": "The request itself must not change an amount, create a reservation, constitute a budget revision or imply approval."
     },
     {
@@ -1264,7 +1285,7 @@
       "status": "Closed in requirements",
       "implementation_status": "Not evidenced",
       "test_status": "Not evidenced",
-      "owner_doc": "BUD-CHG-001 v1.11 / PLN-CHG-001 v1.27",
+      "owner_doc": "BUD-CHG-001 v1.12 / PLN-CHG-001 v1.27",
       "failure_rule": "Planning must re-evaluate affordability from the returned Budget-owned fact and must not infer success from request submission."
     },
     {
@@ -1319,7 +1340,7 @@
       "status": "Deferred production contract; test proxy approved",
       "implementation_status": "Not started",
       "test_status": "Not started",
-      "owner_doc": "TRUST-ADR-001 v0.1; BDS-CHG-001 v0.8 (v0.9 proposed); BOP-CHG-001 v0.10 proposed; PRC-CHG-001 v0.9 proposed",
+      "owner_doc": "TRUST-ADR-001 v0.1; BDS-CHG-001 v0.8 (v0.9 proposed); BOP-CHG-001 v0.11; PRC-CHG-001 v0.9 proposed",
       "failure_rule": "No production submission/opening/signature on absent or uncertain trust/custody result. A synthetic proxy cannot turn the default-false BDS gate on."
     },
     {
@@ -1330,7 +1351,7 @@
       "status": "Proposed interface",
       "implementation_status": "Not started",
       "test_status": "Not started",
-      "owner_doc": "AWD-CHG-001 v0.4 §17.2; matching owner amendments pending",
+      "owner_doc": "AWD-CHG-001 v0.5 §17.2; matching owner amendments pending",
       "failure_rule": "No duplicate receipt task, stale source or false negative authority; preserve versioned corrections."
     },
     {
@@ -1341,7 +1362,7 @@
       "status": "Proposed interface",
       "implementation_status": "Not started",
       "test_status": "Not started",
-      "owner_doc": "AWD-CHG-001 v0.4 §17.2; matching owner amendments pending",
+      "owner_doc": "AWD-CHG-001 v0.5 §17.2; matching owner amendments pending",
       "failure_rule": "Unknown rules, authority, funding or giving evidence cannot authorise positive advancement."
     },
     {
@@ -1352,7 +1373,7 @@
       "status": "Proposed interface",
       "implementation_status": "Not started",
       "test_status": "Not started",
-      "owner_doc": "AWD-CHG-001 v0.4 §17.2; matching owner amendments pending",
+      "owner_doc": "AWD-CHG-001 v0.5 §17.2; matching owner amendments pending",
       "failure_rule": "No completion without consumer receipt; Contracting rechecks current restrictions. No contract created by notice or acceptance."
     },
     {
@@ -1731,6 +1752,30 @@
       "owner_doc": "OVS-CHG-001 v0.6 §4.1",
       "implementation_effect": "Requires matching owner read predicates and coordinated approval.",
       "design_effect": "Scoped progress and outcomes without committee appointment or broad bid access."
+    },
+    {
+      "decision_id": "DEC-041",
+      "decision": "The Author enters one required estimated total cost on a Need before submission; when the department's planning estimate differs from it, Planning shows the change only.",
+      "status": "Approved 9 October 2026",
+      "owner_doc": "NDS-CHG-001 v1.17 §1.2 and PLN-CHG-001 v1.30 §4.3; Project Owner, 9 October 2026: “Required (Recommended)” and “Show the change only (Recommended)”; approved with “1, Approved”",
+      "implementation_effect": "Need field, DepartmentalNeedAccepted.v3 payload and cutover, Planning prefill and change display; Budget Line, funding source and currency stay out of Needs. Approval is not evidence of implementation.",
+      "design_effect": "Estimate shown to the Head of User Department at review; U03 funding prefilled and changed variants in Planning."
+    },
+    {
+      "decision_id": "DEC-042",
+      "decision": "For MVP 1 the Procurement Planner records the Treasury submission and entity-website publication of the approved plan in one Confirm plan publication action; the system then runs the existing activation checks. The Accounting Officer and the statutory authority keep their decisions; State Portal publication stays a separate Treasury responsibility and gates nothing.",
+      "status": "Approved 9 October 2026",
+      "owner_doc": "PLN-CHG-001 v1.31 §5.5.2 and change scope row; Project Owner, 9 October 2026: “For MVP 1, the Planner should record external submission and publication on behalf of the entity. The AO and CS retain their decision responsibilities; routine evidence capture should sit with the operational role.”; approved with “1, Approved”",
+      "implementation_effect": "Replaces the Accounting Officer's Record Treasury submission, the publication worker with adapter acknowledgement, technical retry and reconciliation, and the Head of Procurement Function's Publish action. Approval is not evidence of implementation.",
+      "design_effect": "U13 variants with a Draft and Correct publication details; the seven user-facing stages are unchanged."
+    },
+    {
+      "decision_id": "DEC-043",
+      "decision": "Requisition item quantities are entered once on the item; each source line's requested quantity is derived from them (PD-2), and there is no full-remaining-balance default (PD-1). Automatic cost estimation stays deferred and proportional repricing stays prohibited.",
+      "status": "Approved 9 October 2026",
+      "owner_doc": "REQ-CHG-001 v1.15 §22.1A and v1.18; Project Owner, 9 October 2026: “Approved with all recommendations” (v1.15), “v1.16 is approved”, “v1.18 approved”",
+      "implementation_effect": "Items-once command and validation, estimated total per source allocation, frozen evidence at submission. Approval is not evidence of implementation.",
+      "design_effect": "Request summary and Items section; no product named outside the chosen category."
     }
   ],
   "delivery_items": [

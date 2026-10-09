@@ -1,6 +1,6 @@
 # PLN-CHG-001 — Clean Procurement Planning
 
-**Status of this version — proposed.** Version 1.30 is **Proposed**. PLN-CHG-001 v1.29, approved on 3 October 2026, remains the approved document until the Project Owner approves this version. The controlling-approval paragraphs below record the approval of v1.29 and are retained as history. This version adds the receiving side of NDS-CHG-001 v1.17 (proposed): a Need-origin departmental plan entry starts from the accepted Need's estimated total cost, and Planning shows any change from it. Every other rule of v1.29 is retained.
+**Status of this version — approved by the Project Owner on 9 October 2026.** The Project Owner stated: “1, Approved” (control table). Version 1.30 supersedes PLN-CHG-001 v1.29, approved on 3 October 2026, which is retained unchanged as historical evidence; PLN-CHG-001 v1.31, also approved on 9 October 2026, supersedes this version. (Proposed wording read: “Version 1.30 is **Proposed**. PLN-CHG-001 v1.29, approved on 3 October 2026, remains the approved document until the Project Owner approves this version.”) The controlling-approval paragraphs below record the approval of v1.29 and are retained as history. This version adds the receiving side of NDS-CHG-001 v1.17 (proposed): a Need-origin departmental plan entry starts from the accepted Need's estimated total cost, and Planning shows any change from it. Every other rule of v1.29 is retained.
 
 **Controlling approval — 3 October 2026.** The Project Owner instructed: “Mark the documents as approved”. This approves this version in the coordinated OVS v0.6 package, including its incorporated amendments. OVS-P01–P05 are approved. The incorporated REQ v1.13, CFG v0.17 and TPR v0.16 changes are accepted within their approved successors; this does not create separate retrospective approvals of those intermediate versions. Earlier proposed/pending wording is drafting history superseded by this record. Static design work and conformance matrices remain open; CM and the separate template walkthrough remain deferred. Approval does not establish implementation, seed execution, testing, legal clearance or production readiness.
 
@@ -14,13 +14,13 @@ Shared usability rules are owned once by **OVS-CHG-001 v0.6**, especially §§3�
 | v1.29 version (retained) | 1.29 |
 | Date | 9 October 2026 |
 | v1.29 date (retained) | 3 October 2026 |
-| Status | Proposed — v1.29 was Approved; re-approval required |
+| Status | Approved — 9 October 2026 |
 | v1.29 status (retained) | Approved — 3 October 2026 |
-| Approved on | Not yet approved |
+| Approved on | 9 October 2026 |
 | v1.29 approved on (retained) | 3 October 2026 |
-| Approval record | None for v1.30 |
+| Approval record | Project Owner: “1, Approved” — 9 October 2026, answering the question put to the owner: approve NDS-CHG-001 v1.17, PLN-CHG-001 v1.30 and PLN-CHG-001 v1.31, in that order. |
 | v1.29 approval record (retained) | Project Owner: “Mark the documents as approved” — 3 October 2026 |
-| Supersession | On approval only: supersedes v1.29, approved 3 October 2026, which is retained as historical evidence. |
+| Supersession | v1.30 supersedes v1.29, approved 3 October 2026, which is retained as historical evidence. (v1.30 row read: On approval only: supersedes v1.29.) v1.31 supersedes v1.30. |
 | v1.29 supersession (retained) | Supersedes v1.27, approved 25 September 2026, which is retained as historical evidence. v1.27 superseded v1.26, approved 25 September 2026, which is retained as historical evidence. v1.26 superseded v1.25, approved 23 September 2026. v1.25 superseded v1.24 and all earlier Planning implementation specifications in full. |
 | Decision authority | Project Owner approval of the corrected 30% denominator, calculation fixtures and dependent contracts; attached `thirty_percent_reservation_rule.pdf`; official Act and Regulations provisions recorded in approved LAW-REG-001 v1.2 |
 | UX basis | Planning Usability Blueprint v0.2, approved 13 September 2026; supersedes conflicting v1.18/PLN-UX-001 presentation. Prior proof of concept is historical evidence of a limited walkthrough only |
@@ -3195,9 +3195,9 @@ The 123 rows below comprise 72 refinements, 20 usability changes, 6 v1.20 compos
 
 ## 18. Approval effect
 
-### 18.0A v1.30 approval effect (proposed)
+### 18.0A v1.30 approval effect
 
-**PLN-CHG-001 v1.30 is Proposed and is not approved.** This subsection states what approval will make binding. It takes effect only when the Project Owner approves the version and this subsection is changed to declarative wording. On approval, v1.30 supersedes v1.29 and makes binding: the §4.3 entry reference and the prefill and change rules; the §7.3 `.v3` consumer; the U03-FUNDING-PREFILLED and U03-FUNDING-CHANGED variants and the estimate-change lines on U05 and U06 (§§10.4, 10.5); the §11.9 row; the §13.3 profile; PLN30-AC-001–009; PLN30-CHG-001–004; and the §15.2 dependency.
+**PLN-CHG-001 v1.30 is approved by the Project Owner** (Project Owner instruction on 9 October 2026: **“1, Approved”**). It supersedes v1.29 and makes binding: the §4.3 entry reference and the prefill and change rules; the §7.3 `.v3` consumer; the U03-FUNDING-PREFILLED and U03-FUNDING-CHANGED variants and the estimate-change lines on U05 and U06 (§§10.4, 10.5); the §11.9 row; the §13.3 profile; PLN30-AC-001–009; PLN30-CHG-001–004; and the §15.2 dependency.
 
 Recorded for the Project Owner: the decisions of 9 October 2026 are quoted in NDS-CHG-001 v1.17 §1.2: the estimate is required before a Need is submitted, and Planning shows the change from the accepted estimate and nothing more. Every string in bold that v1.30 adds in §§10.4 and 10.5 is new wording for review. Open owner decisions are listed in the change report that accompanies this version. This approval effect is not artboard approval, implementation or release evidence.
 

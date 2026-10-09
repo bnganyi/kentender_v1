@@ -1,6 +1,6 @@
 # NDS-CHG-001 — Clean Departmental Needs
 
-**Status of this version — proposed.** Version 1.17 is **Proposed**. NDS-CHG-001 v1.16, approved on 3 October 2026, remains the approved document until the Project Owner approves this version. The controlling-approval paragraphs below record the approval of v1.16 and are retained as history. This version restores one fact to the Need: the Author's **estimated total cost** (§1.2). Every other rule of v1.16 is retained, and where a v1.16 sentence is changed, the v1.16 wording is kept beside the correction.
+**Status of this version — approved by the Project Owner on 9 October 2026.** The Project Owner stated: “1, Approved” (control table). Version 1.17 supersedes NDS-CHG-001 v1.16, approved on 3 October 2026, which is retained unchanged as historical evidence. (Proposed wording read: “Version 1.17 is **Proposed**. NDS-CHG-001 v1.16, approved on 3 October 2026, remains the approved document until the Project Owner approves this version.”) The controlling-approval paragraphs below record the approval of v1.16 and are retained as history. This version restores one fact to the Need: the Author's **estimated total cost** (§1.2). Every other rule of v1.16 is retained, and where a v1.16 sentence is changed, the v1.16 wording is kept beside the correction.
 
 **Controlling approval — 3 October 2026.** The Project Owner instructed: “Mark the documents as approved”. This approves this version in the coordinated OVS v0.6 package, including its incorporated amendments. OVS-P01–P05 are approved. The incorporated REQ v1.13, CFG v0.17 and TPR v0.16 changes are accepted within their approved successors; this does not create separate retrospective approvals of those intermediate versions. Earlier proposed/pending wording is drafting history superseded by this record. Static design work and conformance matrices remain open; CM and the separate template walkthrough remain deferred. Approval does not establish implementation, seed execution, testing, legal clearance or production readiness.
 
@@ -20,14 +20,14 @@ Shared usability rules are owned once by **OVS-CHG-001 v0.6**, especially §§3�
 | v1.16 date (retained) | 3 October 2026 |
 | v1.14 date (retained) | 15 September 2026 |
 | Editorial correction | 15 September 2026: separate the accepted-exclusion fixture from the canonical Proceeding acceptance event; see NDS12-CHG-011. No business rule or approval lifecycle change. |
-| Status | Proposed — v1.16 was Approved; re-approval required |
+| Status | Approved — 9 October 2026 |
 | v1.16 status (retained) | Approved — 3 October 2026 |
-| Approved on | Not yet approved |
+| Approved on | 9 October 2026 |
 | v1.16 approved on (retained) | 3 October 2026 |
-| Approval record | None for v1.17 |
+| Approval record | Project Owner: “1, Approved” — 9 October 2026, answering the question put to the owner: approve NDS-CHG-001 v1.17, PLN-CHG-001 v1.30 and PLN-CHG-001 v1.31, in that order. |
 | v1.16 approval record (retained) | Project Owner: “Mark the documents as approved” — 3 October 2026 |
 | Approval basis | Project Owner instruction on 21 September 2026: **This is substantially better. Mark as approved and move to Planning.** Functional/domain baseline remains approved NDS v1.13; presentation basis is approved KT-STD-001 v1.7. |
-| Supersedes | On approval only: v1.16 |
+| Supersedes | v1.16, approved on 3 October 2026, which is retained as historical evidence. (v1.17 row read: On approval only: v1.16) |
 | v1.16 supersedes (retained) | On approval only: source v1.15; approved baseline and pending chain listed in OVS impact schedule |
 | Module | Departmental Needs |
 | Standards | Governed by approved KT-STD-001 v1.7, including task-led composition, page archetypes, information priority, comprehension gates and §3A.6 technical read; AUTH v1.7 remains the inspected owner baseline subject to the named shared-owner follow-up. From v1.15, next-step, journey, hand-off and dead-end content follows approved KT-STD-001 v1.9 §2.9 and KT-STD-001 §3B (approved 26 September 2026). |
@@ -2084,9 +2084,9 @@ Future fulfilment derivation, tender amendment for scope expansion, accounting i
 
 ## 20. Approval effect
 
-### 20.0 v1.17 approval effect (proposed)
+### 20.0 v1.17 approval effect
 
-**NDS-CHG-001 v1.17 is Proposed and is not approved.** This subsection states what approval will make binding. It takes effect only when the Project Owner approves the version and this subsection is changed to declarative wording. On approval, v1.17 supersedes v1.16 and makes binding: the estimated total cost as one required, immutable Need fact (§§1.2, 4.3, 4.9, 5.4); `DepartmentalNeedAccepted.v3` and its cutover (§7.1A); the placement in §11.19; the two new error codes (§9); the fixtures in §14.3A; NDS17-AC-001–010; six change rows; and six dependencies. The full contract would then contain **142 acceptance criteria** (v1.16 read: 132; plus ten), **62 change-register rows** (v1.16 read: 56; plus six) and **23 named owner or verification dependencies** (v1.16 read: 17; plus six).
+**NDS-CHG-001 v1.17 is approved by the Project Owner** (Project Owner instruction on 9 October 2026: **“1, Approved”**). It supersedes v1.16 and makes binding: the estimated total cost as one required, immutable Need fact (§§1.2, 4.3, 4.9, 5.4); `DepartmentalNeedAccepted.v3` and its cutover (§7.1A); the placement in §11.19; the two new error codes (§9); the fixtures in §14.3A; NDS17-AC-001–010; six change rows; and six dependencies. The full contract would then contain **142 acceptance criteria** (v1.16 read: 132; plus ten), **62 change-register rows** (v1.16 read: 56; plus six) and **23 named owner or verification dependencies** (v1.16 read: 17; plus six).
 
 Decisions recorded for the Project Owner with this version:
 

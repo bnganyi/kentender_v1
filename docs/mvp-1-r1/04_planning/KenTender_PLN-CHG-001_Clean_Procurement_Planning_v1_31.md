@@ -1,6 +1,6 @@
 # PLN-CHG-001 — Clean Procurement Planning
 
-**Status of this version — proposed (v1.31).** Version 1.31 is **Proposed**. It builds on proposed v1.30 (which keeps the receiving side of NDS-CHG-001 v1.17) and, on approval, supersedes both proposed v1.30 and approved v1.29. It is a domain change on the Project Owner instruction of 9 October 2026 (quoted in the change scope row below): for MVP 1 the **Procurement Planner** records the Treasury submission and the entity-website publication of the approved plan in one **Confirm plan publication** action, after the statutory authority has approved it, and the system then runs the existing activation checks. This replaces three earlier arrangements: the Accounting Officer's Treasury evidence form (v1.29 and v1.30), the post-commit publication worker with adapter acknowledgement and technical retry (v1.29 and v1.30), and the Head of Procurement Function's **Publish** action that the implementation built on the Project Owner decision of 7 October 2026 (audit decisions D4 and D5, which no approved Planning version records; see §5.5.2.0). The Accounting Officer and the statutory authority keep every decision. Every other rule of v1.30 and v1.29 is retained.
+**Status of this version — approved by the Project Owner on 9 October 2026 (v1.31).** The Project Owner stated: “1, Approved” (control table). Version 1.31 builds on v1.30 (which keeps the receiving side of NDS-CHG-001 v1.17), also approved on 9 October 2026, and supersedes both v1.30 and v1.29. (Proposed wording read: “Version 1.31 is **Proposed**. It builds on proposed v1.30 (which keeps the receiving side of NDS-CHG-001 v1.17) and, on approval, supersedes both proposed v1.30 and approved v1.29.”) It is a domain change on the Project Owner instruction of 9 October 2026 (quoted in the change scope row below): for MVP 1 the **Procurement Planner** records the Treasury submission and the entity-website publication of the approved plan in one **Confirm plan publication** action, after the statutory authority has approved it, and the system then runs the existing activation checks. This replaces three earlier arrangements: the Accounting Officer's Treasury evidence form (v1.29 and v1.30), the post-commit publication worker with adapter acknowledgement and technical retry (v1.29 and v1.30), and the Head of Procurement Function's **Publish** action that the implementation built on the Project Owner decision of 7 October 2026 (audit decisions D4 and D5, which no approved Planning version records; see §5.5.2.0). The Accounting Officer and the statutory authority keep every decision. Every other rule of v1.30 and v1.29 is retained.
 
 **v1.30 status paragraph (retained; superseded by the v1.31 paragraph above).** Version 1.30 was **Proposed**. PLN-CHG-001 v1.29, approved on 3 October 2026, remains the approved document until the Project Owner approves this version. The controlling-approval paragraphs below record the approval of v1.29 and are retained as history. This version adds the receiving side of NDS-CHG-001 v1.17 (proposed): a Need-origin departmental plan entry starts from the accepted Need's estimated total cost, and Planning shows any change from it. Every other rule of v1.29 is retained.
 
@@ -18,12 +18,12 @@ Shared usability rules are owned once by **OVS-CHG-001 v0.6**, especially §§3�
 | Date | 9 October 2026 |
 | v1.30 date (retained) | 9 October 2026 |
 | v1.29 date (retained) | 3 October 2026 |
-| Status | Proposed — v1.29 was Approved; re-approval required (v1.31 builds on proposed v1.30) |
+| Status | Approved — 9 October 2026 |
 | v1.30 status (retained) | Proposed — v1.29 was Approved; re-approval required |
 | v1.29 status (retained) | Approved — 3 October 2026 |
-| Approved on | Not yet approved |
+| Approved on | 9 October 2026 |
 | v1.29 approved on (retained) | 3 October 2026 |
-| Approval record | None for v1.31 |
+| Approval record | Project Owner: “1, Approved” — 9 October 2026, answering the question put to the owner: approve NDS-CHG-001 v1.17, PLN-CHG-001 v1.30 and PLN-CHG-001 v1.31, in that order. |
 | v1.30 approval record (retained) | None for v1.30 |
 | v1.29 approval record (retained) | Project Owner: “Mark the documents as approved” — 3 October 2026 |
 | Supersession | On approval only: supersedes v1.30, which was Proposed and never approved, and v1.29, approved 3 October 2026; both are retained as historical evidence. If the Project Owner approves v1.31, the v1.30 content it carries is approved with it. |
@@ -3276,9 +3276,9 @@ The 123 rows below comprise 72 refinements, 20 usability changes, 6 v1.20 compos
 
 ## 18. Approval effect
 
-### 18.0B v1.31 approval effect (proposed)
+### 18.0B v1.31 approval effect
 
-**PLN-CHG-001 v1.31 is Proposed and is not approved.** This subsection states what approval will make binding. It takes effect only when the Project Owner approves the version and this subsection is changed to declarative wording. On approval, v1.31 supersedes proposed v1.30 and approved v1.29, and approves with it the v1.30 content it carries (§18.0A). It makes binding: the Planner's **Confirm plan publication**, its Draft and **Correct publication details** in place of the Accounting Officer's Treasury evidence, the publication worker, adapter acknowledgement, technical retry and reconciliation, and the Head of Procurement Function's Publish action (§§5.5.2.0–5.5.2.4, 7.2); the §4.9 record; the §5.2 and §5.7 states; the §6 permissions; the §7.7 and §8 changes; the U13 variants in §10.12 and the headline-as-link rule; PLN31-AC-001–019; PLN31-CHG-001–008; and the §15.3 deferrals.
+**PLN-CHG-001 v1.31 is approved by the Project Owner** (Project Owner instruction on 9 October 2026: **“1, Approved”**). It supersedes v1.30 and v1.29, and carries the v1.30 content (§18.0A), approved the same day. It makes binding: the Planner's **Confirm plan publication**, its Draft and **Correct publication details** in place of the Accounting Officer's Treasury evidence, the publication worker, adapter acknowledgement, technical retry and reconciliation, and the Head of Procurement Function's Publish action (§§5.5.2.0–5.5.2.4, 7.2); the §4.9 record; the §5.2 and §5.7 states; the §6 permissions; the §7.7 and §8 changes; the U13 variants in §10.12 and the headline-as-link rule; PLN31-AC-001–019; PLN31-CHG-001–008; and the §15.3 deferrals.
 
 Recorded for the Project Owner: the instruction of 9 October 2026 is quoted in the change scope row. Every string in bold that v1.31 adds in §10.12, and the date rules in §5.5.2.2 and PLN31-AC-004, are new content for review. Open decisions and the other documents that must change are in the change report that accompanies this version. This approval effect is not artboard approval, implementation or release evidence.
 
