@@ -209,3 +209,18 @@ class TestExport(RequisitionCase):
 		self.assertEqual(frappe.db.get_value("Procurement Requisition", requisition, "record_version"), before)
 		frappe.set_user(fx.CONTRIBUTOR)
 		self.assertEqual(read.export_requisition(requisition=requisition)["outcome"], "NOT_FOUND")
+
+
+class TestProcurementOfficerReads(RequisitionCase):
+	"""A Procurement Officer is a site-wide reader (REQ-CHG-001 §3A), so the workspace opens for them. The record types
+	must list the role, or Frappe's own list read refuses it before the scope filter runs (found live on dev as Brian
+	Wafula, who holds only this role: 'Procurement Requisitions could not be loaded')."""
+
+	def test_the_workspace_opens_and_lists_a_sent_requisition(self):
+		_, item_id = fx.active_item()
+		sent = fx.submitted(item_id)
+		frappe.set_user(fx.PROCUREMENT_OFFICER)
+		result = read.get_requisition_workspace(user=fx.PROCUREMENT_OFFICER, filters={"page_size": 100})
+		self.assertNotIn(result.get("outcome"), ("FORBIDDEN", "NOT_FOUND"), result.get("outcome"))
+		self.assertIn(sent, [row["requisition"] for row in result["register"]])
+		self.assertIn(sent, frappe.get_list("Procurement Requisition", pluck="name"))

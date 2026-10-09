@@ -53,6 +53,8 @@ STATUTORY = pln_fx.STATUTORY
 #: REQ-DES-03-CONTRIBUTOR actor) and that department's Head.
 CONTRIBUTOR = "reqt.contributor@example.test"
 HOD_BETA = "reqt.hodbeta@example.test"
+#: A Procurement Officer, a site-wide reader of Requisitions (the demo profile Brian Wafula holds only this role).
+PROCUREMENT_OFFICER = "reqt.officer@example.test"
 COMBINATION_REASON = (
 	"Both departments require the same laptop specification for one programme; combining secures better unit pricing "
 	"and one delivery schedule."
@@ -87,6 +89,8 @@ def ensure_world() -> None:
 	pln_fx._grant(CONTRIBUTOR, "Departmental Author", pln_fx.OU_BETA)
 	pln_fx._grant(HOD_BETA, "Departmental Author", pln_fx.OU_BETA)
 	pln_fx._grant(HOD_BETA, "Head of User Department", pln_fx.OU_BETA)
+	pln_fx._user(PROCUREMENT_OFFICER, "REQ Test Procurement Officer")
+	pln_fx._grant(PROCUREMENT_OFFICER, "Procurement Officer")
 	# The combined-item Author holds both departments (REQ-DES-03's Grace).
 	pln_fx._grant(pln_fx.AUTHOR, "Departmental Author", pln_fx.OU_BETA)
 	if not frappe.db.exists("Delivery Location", {"status": "Active"}):
