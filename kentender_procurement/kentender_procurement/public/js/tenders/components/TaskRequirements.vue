@@ -119,9 +119,9 @@ const YesNo = defineComponent({
 	emits: ["update:modelValue"],
 	setup(p, { emit }) {
 		return () =>
-			h("div", { class: "tnd-seg", role: "radiogroup" }, [
-				h("label", { class: "tnd-seg-opt" }, [h("input", { type: "radio", name: `tnd-${p.name}`, checked: p.modelValue === true, "data-testid": `${p.testid}-yes`, onChange: () => emit("update:modelValue", true) }), "Yes"]),
-				h("label", { class: "tnd-seg-opt" }, [h("input", { type: "radio", name: `tnd-${p.name}`, checked: p.modelValue === false, "data-testid": `${p.testid}-no`, onChange: () => emit("update:modelValue", false) }), "No"]),
+			h("div", { class: "seg", role: "radiogroup" }, [
+				h("label", { class: "seg-opt" }, [h("input", { type: "radio", name: `tnd-${p.name}`, checked: p.modelValue === true, "data-testid": `${p.testid}-yes`, onChange: () => emit("update:modelValue", true) }), "Yes"]),
+				h("label", { class: "seg-opt" }, [h("input", { type: "radio", name: `tnd-${p.name}`, checked: p.modelValue === false, "data-testid": `${p.testid}-no`, onChange: () => emit("update:modelValue", false) }), "No"]),
 			]);
 	},
 });

@@ -61,7 +61,7 @@
 	margin: 0 0 18px;
 	border-radius: 0;
 }
-.kt-industry.kt-portal .kt-filter-bar .kt-field {
+.kt-industry.kt-portal .kt-filter-bar .field {
 	display: grid;
 	gap: 8px;
 	min-width: 0;
@@ -72,7 +72,7 @@
 	color: #42545d;
 	letter-spacing: 0;
 }
-.kt-industry.kt-portal .kt-filter-bar .kt-input,
+.kt-industry.kt-portal .kt-filter-bar .input,
 .kt-industry.kt-portal .kt-filter-bar select,
 .kt-industry.kt-portal .kt-filter-bar input {
 	border: 1px solid #c9c3bb;
@@ -84,25 +84,25 @@
 	font-size: 1rem;
 	box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.02);
 }
-.kt-industry.kt-portal .kt-filter-bar .kt-input::placeholder,
+.kt-industry.kt-portal .kt-filter-bar .input::placeholder,
 .kt-industry.kt-portal .kt-filter-bar input::placeholder {
 	color: #63756f;
 }
 .kt-industry.kt-portal .kt-filter-bar select,
-.kt-industry.kt-portal .kt-filter-bar .kt-btn-ghost,
-.kt-industry.kt-portal .kt-filter-bar .kt-btn-secondary {
+.kt-industry.kt-portal .kt-filter-bar .btn-ghost,
+.kt-industry.kt-portal .kt-filter-bar .btn-secondary {
 	appearance: none;
 	-webkit-appearance: none;
 	-moz-appearance: none;
 }
-.kt-industry.kt-portal .kt-filter-bar .kt-field:last-of-type select {
+.kt-industry.kt-portal .kt-filter-bar .field:last-of-type select {
 	background: #1f3d39;
 	border-color: #1f3d39;
 	color: #f4f8f5;
 	font-weight: 600;
 }
-.kt-industry.kt-portal .kt-filter-bar .kt-btn-ghost,
-.kt-industry.kt-portal .kt-filter-bar .kt-btn-secondary {
+.kt-industry.kt-portal .kt-filter-bar .btn-ghost,
+.kt-industry.kt-portal .kt-filter-bar .btn-secondary {
 	align-self: end;
 	border: 1px solid #c9c3bb;
 	border-radius: 10px;
@@ -122,7 +122,7 @@
 	margin-top: 2px;
 	color: #5a6f6d;
 }
-.kt-industry.kt-portal .kt-table {
+.kt-industry.kt-portal .table {
 	width: 100%;
 	border-collapse: separate;
 	border-spacing: 0;
@@ -131,7 +131,7 @@
 	overflow: hidden;
 	background: rgba(255, 255, 255, 0.42);
 }
-.kt-industry.kt-portal .kt-table thead th {
+.kt-industry.kt-portal .table thead th {
 	padding: 16px 18px;
 	border-bottom: 1px solid #d8d2cc;
 	background: rgba(255, 255, 255, 0.14);
@@ -142,20 +142,20 @@
 	font-weight: 700;
 	text-align: left;
 }
-.kt-industry.kt-portal .kt-table tbody td {
+.kt-industry.kt-portal .table tbody td {
 	vertical-align: middle;
 	padding: 18px;
 	border-bottom: 1px solid #ece5df;
 	background: rgba(255, 255, 255, 0.26);
 }
-.kt-industry.kt-portal .kt-table tbody tr:last-child td {
+.kt-industry.kt-portal .table tbody tr:last-child td {
 	border-bottom: none;
 }
-.kt-industry.kt-portal .kt-table tbody tr:hover {
+.kt-industry.kt-portal .table tbody tr:hover {
 	background: rgba(32, 61, 57, 0.02);
 }
 
-.kt-industry.kt-portal .kt-table tbody a,
+.kt-industry.kt-portal .table tbody a,
 .kt-industry.kt-portal .bds-card-actions a {
 	display: inline-flex;
 	align-items: center;
@@ -174,7 +174,7 @@
 		box-shadow 0.15s ease;
 }
 
-.kt-industry.kt-portal .kt-table tbody a:hover,
+.kt-industry.kt-portal .table tbody a:hover,
 .kt-industry.kt-portal .bds-card-actions a:hover {
 	background: rgba(31, 61, 57, 0.04);
 	box-shadow: 0 0 0 3px rgba(31, 61, 57, 0.06);
@@ -185,7 +185,7 @@
 	color: #5b5e6a;
 	text-wrap: pretty;
 }
-.kt-industry.kt-portal .kt-table + .bds-count,
+.kt-industry.kt-portal .table + .bds-count,
 .kt-industry.kt-portal [data-testid="bds-tenders-cards"] + .bds-count {
 	margin-top: var(--kt-space-3);
 }
@@ -366,20 +366,20 @@
 	flex-wrap: wrap;
 	gap: 12px;
 }
-.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .kt-btn,
-.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .kt-btn-primary,
-.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .kt-btn-secondary {
+.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .btn,
+.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .btn-primary,
+.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .btn-secondary {
 	min-height: 44px;
 	padding: 0 18px;
 	border-radius: 10px;
 	font-weight: 600;
 }
-.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .kt-btn-primary {
+.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .btn-primary {
 	background: #415db9;
 	border-color: #ffffff;
 	color: #f8fbf9;
 }
-.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .kt-btn-secondary {
+.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .btn-secondary {
 	background: transparent;
 	border-color: #c9c3bb;
 	color: #1b2d2c;
@@ -426,13 +426,13 @@
 	line-height: 1.5;
 	color: #1d2d2d;
 }
-.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .kt-table {
+.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .table {
 	background: rgba(255, 255, 255, 0.3);
 	border: 1px solid #d8d2cc;
 	border-radius: 12px;
 	overflow: hidden;
 }
-.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .kt-table thead th {
+.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .table thead th {
 	padding: 14px 16px;
 	background: rgba(255, 255, 255, 0.1);
 	border-bottom: 1px solid #ddd6d0;
@@ -441,14 +441,14 @@
 	color: #5d6f6b;
 	text-transform: uppercase;
 }
-.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .kt-table tbody td {
+.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .table tbody td {
 	padding: 14px 16px;
 	border-bottom: 1px solid #ece5df;
 	vertical-align: middle;
 }
 .kt-industry.kt-portal
 	.kt-page[data-testid="bds-tender-overview"]
-	.kt-table
+	.table
 	tbody
 	tr:last-child
 	td {
@@ -461,7 +461,7 @@
 .kt-industry.kt-portal
 	.kt-page[data-testid="bds-tender-overview"]
 	a[data-testid^="bds-overview-link"],
-.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .kt-table a {
+.kt-industry.kt-portal .kt-page[data-testid="bds-tender-overview"] .table a {
 	color: #415db9;
 	text-decoration: underline;
 	text-underline-offset: 3px;
@@ -656,7 +656,7 @@
 		grid-template-columns: minmax(0, 1fr);
 	}
 	/* Inputs at 16 px so a phone does not zoom on focus (board 390 frame). */
-	.kt-industry.kt-portal .kt-filter-bar .kt-input {
+	.kt-industry.kt-portal .kt-filter-bar .input {
 		font-size: 16px;
 	}
 }
@@ -1104,7 +1104,7 @@
 
 /* A checkbox choice inside a field: the field's own `label` rule (block, 12px, margin) outranks the checkbox kit's, which
    left the box an inline span with no size. Restore the kit's layout for the labels that are checkboxes. */
-.kt-industry.kt-portal .kt-field > label.kt-checkbox {
+.kt-industry.kt-portal .field > label.kt-checkbox {
 	display: inline-flex;
 	align-items: flex-start;
 	gap: 8px;
@@ -1178,7 +1178,7 @@
 .kt-industry.kt-portal .bds-terms-intro {
 	margin: 0 0 var(--kt-space-3);
 }
-.kt-industry.kt-portal .bds-terms .kt-table th {
+.kt-industry.kt-portal .bds-terms .table th {
 	background: transparent;
 }
 

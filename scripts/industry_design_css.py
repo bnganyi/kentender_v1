@@ -116,6 +116,13 @@ STRUCTURE = (
 	".kt-industry .btn-ghost.kt-danger:hover:not(:disabled) {\n\tbackground: var(--status-critical-bg);\n}",
 	# A link in a table keeps the link colour on a hovered row (the old stylesheet turned it rust; the pack bars rust from links).
 	f".kt-industry .table tbody tr:hover a{gen.LINK_GUARD} {{\n\tcolor: var(--color-accent-900);\n}}",
+	# The segmented control (Yes/No, Permanent/Acting ...) is the pack's `.seg` / `.seg-opt`, once, for every screen. These are the only
+	# things a screen needed beyond the pack: a track that does not stretch in a column, no label margin, and a disabled option that
+	# stays readable. No module may define its own copy (test_one_segmented_control).
+	".kt-industry .seg {\n\twidth: fit-content;\n}",
+	".kt-industry .seg-opt {\n\tmargin: 0;\n}",
+	".kt-industry .seg-opt:has(input:disabled) {\n\tcursor: default;\n\topacity: 0.7;\n}",
+	".kt-industry .seg-opt.is-disabled {\n\topacity: 0.55;\n\tcursor: not-allowed;\n}",
 )
 
 HEADER = (
@@ -178,13 +185,6 @@ JOURNEY = (
 	"@media (forced-colors: active) {\n\t.kt-industry .kt-notice.is-warning.kt-next-step {\n\t\tborder: 1px solid CanvasText;\n\t\tborder-left-width: 3px;\n\t}\n}",
 )
 
-
-def _pack_nodes():
-	source = Path(sorted(glob.glob(str(ROOT / SOURCE)))[0])
-	return source, tinycss2.parse_stylesheet(source.read_text(encoding="utf-8"), skip_comments=True, skip_whitespace=True)
-
-
-def _classes(selector: str) -> set[str]:
 #: The access state ("You do not have access to ..."). The pack draws it as `.kt-empty` + `.kt-spot.is-neutral` on the white sheet below a
 #: 1px rule (readme, "Empty, success, error and access states"); the access state stands alone on the sheet, with no heading above it for the rule to separate, so it drops the rule. Modules had each rebuilt it by hand (a blueprint card, a notice, a bare
 #: heading, a panel) and no two matched. `.kt-access` is the one remaining piece the pack does not size: the heading over the lock spot,
@@ -221,6 +221,13 @@ ALIGN = (
 	".kt-industry .kt-page .kt-next-step.is-turn::before {\n\tbackground: var(--color-accent);\n}",
 )
 
+
+def _pack_nodes():
+	source = Path(sorted(glob.glob(str(ROOT / SOURCE)))[0])
+	return source, tinycss2.parse_stylesheet(source.read_text(encoding="utf-8"), skip_comments=True, skip_whitespace=True)
+
+
+def _classes(selector: str) -> set[str]:
 	return set(re.findall(r"\.([A-Za-z_][\w-]*)", selector))
 
 
@@ -338,6 +345,9 @@ def build() -> str:
 	parts += ["/* Part 6: buttons and fields are rectangular and outlined, so they cannot be mistaken for a status pill */", *gen.control_shape(".kt-industry", fields=True)]
 	parts += ["/* Part 7: the table pager (table-pagination standard) */", *PAGER]
 	parts += ["/* Part 8: journey position figure, compact track and blocked next step (DS-REV-004) */", *JOURNEY]
+	parts += ["/* Part 9: the access state (\"You do not have access to ...\") */", *ACCESS]
+	parts += ["/* Part 10: a recorded fact beside the pack's figure style (.kt-meta-value) */", *FACTS]
+	parts += ["/* Part 11: flat sections start content at the heading's edge */", *ALIGN]
 	return HEADER.format(source=source.relative_to(ROOT)) + "\n\n".join(parts) + "\n"
 
 
@@ -345,9 +355,6 @@ def _old_token_values() -> dict[str, str]:
 	return {n: " ".join(v.split()) for n, v in re.findall(r"(--kt-[\w-]+)\s*:\s*([^;]+);", OLD.read_text(encoding="utf-8"))}
 
 
-	parts += ["/* Part 9: the access state (\"You do not have access to ...\") */", *ACCESS]
-	parts += ["/* Part 10: a recorded fact beside the pack's figure style (.kt-meta-value) */", *FACTS]
-	parts += ["/* Part 11: flat sections start content at the heading's edge */", *ALIGN]
 if __name__ == "__main__":
 	if "--renames" in sys.argv:
 		for old, new in RENAMES.items():

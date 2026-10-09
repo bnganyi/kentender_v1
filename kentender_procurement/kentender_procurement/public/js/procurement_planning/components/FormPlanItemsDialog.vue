@@ -57,15 +57,13 @@
 					<div class="kt-notice-body">{{ incompatibleText }}</div>
 				</div>
 
-				<!-- U08's own segmented toggle (`.seg`/`.seg-opt`), not two bare
-				     radio labels — same component Tenders already ported under
-				     `.kt-tnd .tnd-seg[-opt]`; this is the Planning-scoped copy. -->
-				<div v-if="entries.length > 1" class="pln-seg" role="radiogroup" aria-label="How should these requirements be added?">
-					<label class="pln-seg-opt">
+				<!-- U08's segmented toggle: the shared `.seg` / `.seg-opt`, not two bare radio labels. -->
+				<div v-if="entries.length > 1" class="seg" style="margin: var(--kt-space-4) 0" role="radiogroup" aria-label="How should these requirements be added?">
+					<label class="seg-opt">
 						<input type="radio" value="each" v-model="mode" data-testid="pln-form-mode-each">
 						Keep separate
 					</label>
-					<label class="pln-seg-opt" :class="{ 'is-disabled': !combinable }">
+					<label class="seg-opt" :class="{ 'is-disabled': !combinable }">
 						<input
 							type="radio"
 							value="combined"

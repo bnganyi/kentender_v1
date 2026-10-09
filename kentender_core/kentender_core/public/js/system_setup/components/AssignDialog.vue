@@ -287,7 +287,7 @@ const blockedReason = computed(() => {
 
 				<div class="field">
 					<label id="kt-assign-appointment">{{ __("Appointment") }}</label>
-					<div class="kt-seg kt-seg-inline" role="radiogroup" aria-labelledby="kt-assign-appointment" style="align-self:flex-start">
+					<div class="seg" role="radiogroup" aria-labelledby="kt-assign-appointment" style="align-self:flex-start">
 						<label v-for="kind in ['Permanent', 'Acting']" :key="kind" class="seg-opt">
 							<input
 								v-model="form.appointment_type"

@@ -102,7 +102,7 @@
 			</div>
 
 			<div v-if="b.is_seg" class="field"><label>{{ b.label }}</label>
-				<div class="kt-seg kt-seg-inline" role="radiogroup" style="width:max-content">
+				<div class="seg" role="radiogroup">
 					<label v-for="o in b.options" :key="o.t" class="seg-opt"><input type="radio" :name="b.name || `s${bi}`" :checked="checked(b, o)" :data-testid="`evl-seg-${slug(o.t)}`" @change="set(b.name, o.value); b.action && emit('action', { action: b.action, args: { value: o.value } })">{{ o.t }}</label>
 				</div>
 			</div>
