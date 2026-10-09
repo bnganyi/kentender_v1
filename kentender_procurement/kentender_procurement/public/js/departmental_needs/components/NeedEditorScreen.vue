@@ -218,6 +218,31 @@
 					</div>
 				</div>
 			</div>
+			<!-- NDS-CHG-001 v1.17 §11.19 — after Quantity and Unit, before Required by.
+			     The currency is the Budget currency of the year, read-only text. -->
+			<div class="field" style="max-width: 260px">
+				<label class="kt-label" for="nds-estimated-cost">
+					Estimated cost<span v-if="estimateCurrency" class="text-muted" data-testid="nds-estimated-cost-currency"> ({{ estimateCurrency }})</span>
+				</label>
+				<input
+					id="nds-estimated-cost"
+					ref="estimateEl"
+					data-testid="nds-estimated-cost"
+					class="input"
+					type="number"
+					min="0"
+					step="any"
+					inputmode="decimal"
+					v-model="form.estimated_total_cost"
+					@input="inputErrors.estimated_total_cost = ''"
+				/>
+				<div class="text-muted" style="font-size: 12px; margin-top: 5px">
+					Enter the full estimated cost, including applicable delivery and other incidental costs.
+				</div>
+				<div v-if="inputErrors.estimated_total_cost" class="kt-field-error" data-testid="nds-estimated-cost-error">
+					{{ inputErrors.estimated_total_cost }}
+				</div>
+			</div>
 			<div class="field" style="max-width: 260px">
 				<label class="kt-label" for="nds-required-by">Required by</label>
 				<input
@@ -374,13 +399,18 @@ const errorEl = ref(null);
 const titleEl = ref(null);
 const requiredByEl = ref(null);
 const quantityEl = ref(null);
+const estimateEl = ref(null);
+// the Budget currency of the year, read-only beside Estimated cost (v1.17 §11.19)
+const estimateCurrency = computed(
+	() => props.context?.estimate_currency || props.revision?.estimated_total_cost_currency || ""
+);
 const historyOpen = ref(false);
 
 // A native date or number input holding unparseable text keeps the text
 // visible but reports value "" — submitting would silently drop what the
 // user typed (e.g. 31/09/2026) and the server would answer "…is required.",
 // pointing at a field that looks filled in. Surface the real problem instead.
-const inputErrors = reactive({ required_by_date: "", indicative_quantity: "" });
+const inputErrors = reactive({ required_by_date: "", indicative_quantity: "", estimated_total_cost: "" });
 
 // NDS-DES-15-MULTIPLE — Save/Submit stay disabled until the required choice
 // is made; no invented default and no separate Continue dialog.
@@ -417,11 +447,19 @@ function guardedEmit(event) {
 			: form.indicative_quantity !== "" && Number(form.indicative_quantity) <= 0
 				? "Enter a quantity greater than zero."
 				: "";
+	// NDS17-AC-001 — an amount must be greater than zero (an empty one is a
+	// Draft; the server names it as missing at submission).
+	inputErrors.estimated_total_cost =
+		form.estimated_total_cost !== "" && Number(form.estimated_total_cost) <= 0
+			? "Enter an amount greater than zero."
+			: "";
 	const invalid = inputErrors.required_by_date
 		? requiredByEl.value
 		: inputErrors.indicative_quantity
 			? quantityEl.value
-			: null;
+			: inputErrors.estimated_total_cost
+				? estimateEl.value
+				: null;
 	if (invalid) {
 		invalid.focus();
 		return;
@@ -435,6 +473,7 @@ const form = reactive({
 	expected_operational_result: "",
 	indicative_quantity: "",
 	unit: "",
+	estimated_total_cost: "",
 	required_by_date: "",
 });
 
@@ -446,6 +485,7 @@ const FORM_SOURCE_FIELDS = [
 	"expected_operational_result",
 	"indicative_quantity",
 	"unit",
+	"estimated_total_cost",
 	"required_by_date",
 ];
 let hydratedFrom = null;
@@ -464,6 +504,8 @@ watch(
 		form.indicative_quantity =
 			revision?.indicative_quantity == null ? "" : revision.indicative_quantity;
 		form.unit = revision?.unit || "";
+		form.estimated_total_cost =
+			revision?.estimated_total_cost == null ? "" : revision.estimated_total_cost;
 		form.required_by_date = revision?.required_by_date
 			? String(revision.required_by_date).slice(0, 10)
 			: "";

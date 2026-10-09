@@ -61,7 +61,7 @@
 			     Sep 2026). The board draws certification as a plain group. -->
 			<div v-if="showCertification && !task.maker_checker_blocked" class="kt-group" data-testid="pln-review-certification">
 				<div v-if="context.submitted_capacity" class="kt-meta-row" style="margin-bottom: var(--kt-space-3)">
-					<div><span class="kt-label">Capacity</span><span class="kt-meta-value">{{ context.submitted_capacity }}</span></div>
+					<div><span class="kt-label">Capacity</span><span class="kt-meta-value is-plain">{{ context.submitted_capacity }}</span></div>
 				</div>
 				{{ certification.text }}
 			</div>
@@ -131,6 +131,10 @@
 									<span>Required by {{ row.required_by_display }}</span>
 									<span style="font-variant-numeric: tabular-nums">{{ row.amount_display }}</span>
 								</div>
+								<!-- v1.30 §10.5 — read from the certification snapshot; adds no input or blocker -->
+								<div v-if="row.estimate_change_display" class="kt-muted" data-testid="pln-review-estimate-change">
+									Accepted requirement estimate: {{ row.need_estimate_display }}. Change: {{ row.estimate_change_display }}.
+								</div>
 								<div v-if="!row.not_proceeding" class="pln-review-budget">
 									<span class="kt-label">Budget line</span>
 									<span>{{ row.budget_line_display }}</span>
@@ -143,11 +147,11 @@
 							<div class="kt-meta-row">
 								<div>
 									<span class="kt-label">Status</span>
-									<span class="kt-meta-value"><span class="kt-status is-muted">Not included this year</span></span>
+									<span class="kt-meta-value is-plain"><span class="kt-status is-muted">Not included this year</span></span>
 								</div>
 								<div>
 									<span class="kt-label">Requirement type</span>
-									<span class="kt-meta-value">Not applicable</span>
+									<span class="kt-meta-value is-plain">Not applicable</span>
 								</div>
 							</div>
 							<p class="kt-muted" style="margin: var(--kt-space-2) 0 0">{{ row.not_proceeding_reason }}</p>
@@ -157,8 +161,8 @@
 						<div v-else-if="!isOpen" class="pln-review-classify is-muted" data-testid="pln-review-recorded">
 							<div class="pln-review-classify-title">Recorded classification</div>
 							<div class="kt-meta-row">
-								<div><span class="kt-label">Requirement type</span><span class="kt-meta-value" data-testid="pln-review-recorded-type">{{ row.recorded_requirement_type || "—" }}</span></div>
-								<div><span class="kt-label">Category</span><span class="kt-meta-value">{{ row.recorded_category || "—" }}</span></div>
+								<div><span class="kt-label">Requirement type</span><span class="kt-meta-value is-plain" data-testid="pln-review-recorded-type">{{ row.recorded_requirement_type || "—" }}</span></div>
+								<div><span class="kt-label">Category</span><span class="kt-meta-value is-plain">{{ row.recorded_category || "—" }}</span></div>
 							</div>
 						</div>
 

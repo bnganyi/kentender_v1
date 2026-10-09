@@ -110,7 +110,9 @@ describe("every golden payload mounts", () => {
 		it("ANL-DES-" + id + " renders its title and draws no error", async () => {
 			const payload = FX[id];
 			const wrapper = await open(id, boardUrl(payload));
-			expect(wrapper.get('[data-testid="kt-anl-title"]').text()).toBe("Procurement Analytics");
+			// A denied page is the shared access state: no page title above it.
+			if (id === "31H") expect(wrapper.get('[data-testid="kt-anl-denied"] h2').text()).toBe("You do not have access to Analytics");
+			else expect(wrapper.get('[data-testid="kt-anl-title"]').text()).toBe("Procurement Analytics");
 			expect(wrapper.find('[data-testid="kt-anl-loading"]').exists()).toBe(false);
 			if (payload.verdict === "ok" && !payload.empty) expect(wrapper.get('[data-testid="kt-anl-updated"]').text()).toBe(payload.updated);
 			if (payload.verdict === "ok") expect(wrapper.find('[data-testid="kt-anl-tabs"] input:checked').element.value).toBe(payload.tab);
@@ -529,9 +531,10 @@ describe("state panels", () => {
 		expect(wrapper.get("main").attributes("aria-busy")).toBe("true");
 	});
 
-	it("31H: no permitted area: the title and one line, no tabs, filters, totals or actions", async () => {
+	it("31H: no permitted area: the shared access state, no tabs, filters, totals or actions", async () => {
 		const wrapper = await open("31H", boardUrl(FX["31H"]));
-		expect(text(wrapper.get('[data-testid="kt-anl-denied"]'))).toBe("No Analytics records are available to your responsibilities.");
+		expect(wrapper.get('[data-testid="kt-anl-denied"] h2').text()).toBe("You do not have access to Analytics");
+		expect(wrapper.get('[data-testid="kt-anl-denied"] p').text()).toBe("No Analytics records are available to your responsibilities.");
 		expect(wrapper.find(".kt-tabs").exists()).toBe(false);
 		expect(wrapper.find('[data-testid="kt-anl-filters"]').exists()).toBe(false);
 		expect(wrapper.find("button").exists()).toBe(false);
@@ -553,7 +556,7 @@ describe("state panels", () => {
 		const payload = clone(FX["31H"]);
 		payload.verdict = "denied";
 		const wrapper = await open("31H", undefined, payload);
-		expect(wrapper.get('[data-testid="kt-anl-denied"]').text()).toBe("No Analytics records are available to your responsibilities.");
+		expect(wrapper.get('[data-testid="kt-anl-denied"] p').text()).toBe("No Analytics records are available to your responsibilities.");
 	});
 });
 

@@ -20,6 +20,7 @@ import { siteConfigApi } from "./data/siteConfigApi.js";
 import { SECTIONS, legacyToRoute, routeToLegacy } from "./data/routes.js";
 import { usePageRail } from "./composables/usePageRail.js";
 import { useRouteState } from "./composables/useRouteState.js";
+import AccessDenied from "../access_shared/AccessDenied.vue";
 
 const railEl = ref(null);
 usePageRail(
@@ -217,13 +218,7 @@ function sentences(text) {
 
 			<div class="kt-setup-panel">
 			<!-- Common-States #denied / #load-error / #loading — never an empty success. -->
-			<div v-if="forbidden" class="kt-notice is-critical" role="alert" data-testid="kt-setup-forbidden">
-				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
-				<div class="kt-notice-body">
-					<strong>{{ __(forbidden.heading) }}.</strong>
-					<template v-for="line in sentences(forbidden.text)" :key="line"><br>{{ line }}</template>
-				</div>
-			</div>
+			<AccessDenied v-if="forbidden" :heading="__(forbidden.heading)" :text="forbidden.text" testid="kt-setup-forbidden" />
 
 			<div v-else-if="loadError" data-testid="kt-setup-error">
 				<div class="kt-notice is-critical" role="alert">

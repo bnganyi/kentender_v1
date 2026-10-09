@@ -20,7 +20,7 @@ from typing import Any
 import frappe
 from decimal import Decimal, InvalidOperation
 
-from frappe.utils import cstr
+from frappe.utils import cstr, flt
 from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.write_family import planning_command
 
@@ -124,6 +124,24 @@ def _quantity(payload: dict[str, Any]) -> float:
 	return float(quantity)
 
 
+def _estimate(payload: dict[str, Any]) -> float:
+	"""`estimated_total_cost` arrives on `DepartmentalNeedAccepted.v3` as an
+	exact decimal string, or null for a revision without one (NDS-CHG-001 v1.17
+	§7.1A) — and is absent from a `.v2` replay. Absence is zero here: the entry's
+	Currency column has no null, and zero reads as "no estimate" everywhere. Text
+	that is not a decimal is a broken source, never a silent zero."""
+	raw = payload.get("estimated_total_cost")
+	if raw in (None, ""):
+		return 0.0
+	try:
+		amount = Decimal(cstr(raw).strip())
+	except InvalidOperation:
+		fail("PLN_REFERENCE_UNAVAILABLE", "The accepted Need's estimated cost is not an exact decimal.", {"need": cstr(payload.get("need_id"))})
+	if not amount.is_finite() or amount < 0:
+		fail("PLN_REFERENCE_UNAVAILABLE", "The accepted Need's estimated cost is not an exact decimal.", {"need": cstr(payload.get("need_id"))})
+	return float(amount)
+
+
 def _facts(payload: dict[str, Any]) -> dict[str, Any]:
 	return {
 		"title": cstr(payload.get("title")),
@@ -132,7 +150,23 @@ def _facts(payload: dict[str, Any]) -> dict[str, Any]:
 		"quantity": _quantity(payload),
 		"unit": cstr(payload.get("unit_id")),
 		"required_by_date": payload.get("required_by_date"),
+		# PLN-CHG-001 v1.30 §4.3 — read-only reference to the accepted Need's estimate
+		"need_estimated_total_cost": _estimate(payload),
 	}
+
+
+def prefill_amount(entry) -> bool:
+	"""PLN-CHG-001 v1.30 §4.3 rules 1 and 6 — a Need-origin entry with no
+	operative amount, that is not excluded, starts from the accepted Need's
+	estimate. Never replaces an entered amount; never sets a Budget Line.
+	Returns whether it set one."""
+	if cstr(entry.not_proceeding_reason).strip() or flt(entry.indicative_amount) > 0:
+		return False
+	estimate = flt(entry.need_estimated_total_cost)
+	if estimate <= 0:
+		return False
+	entry.indicative_amount = estimate
+	return True
 
 
 def submission_cohort(submission_name: str) -> set[str]:
@@ -158,9 +192,11 @@ def _cohort_filter(version_doc, sources: list[dict[str, Any]]) -> list[dict[str,
 def refresh_draft_entries(version_doc) -> dict[str, Any]:
 	"""Project every current accepted Need into a mutable Draft Version once.
 
-	- a new accepted Need gains a new Need-origin entry (funding empty);
+	- a new accepted Need gains a new Need-origin entry (Budget Line empty; the
+	  amount starts from the Need's estimate when it has one, v1.30 §4.3);
 	- a successor accepted revision refreshes the six facts and the pinned
-	  need_revision, keeping the Planning-owned funding specification;
+	  need_revision, keeping the Planning-owned funding specification (an
+	  entered amount is never replaced; an empty one starts from the estimate);
 	- a withdrawn Need's unsubmitted entry is removed.
 	Direct entries are never touched. Idempotent by construction.
 	Wire keys (`accepted_version_id`, `version_number`) are frozen per
@@ -196,6 +232,7 @@ def refresh_draft_entries(version_doc) -> dict[str, Any]:
 			entry = frappe.get_doc("Departmental Plan Entry", row.name)
 			entry.update(_facts(payload))
 			entry.need_revision = payload["accepted_version_id"]
+			prefill_amount(entry)
 			entry.save(ignore_permissions=True)
 			refreshed.append(row.entry_id)
 	for payload in by_need.values():
@@ -213,6 +250,7 @@ def refresh_draft_entries(version_doc) -> dict[str, Any]:
 				**_facts(payload),
 			}
 		)
+		prefill_amount(entry)
 		entry.insert(ignore_permissions=True)
 		added.append(entry.entry_id)
 	return {"ok": True, "added": added, "refreshed": refreshed, "removed": removed}

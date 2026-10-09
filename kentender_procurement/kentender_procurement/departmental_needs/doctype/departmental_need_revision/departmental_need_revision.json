@@ -16,6 +16,7 @@
   "expected_operational_result",
   "indicative_quantity",
   "unit",
+  "estimated_total_cost",
   "required_by_date",
   "content_hash",
   "fixture_namespace"
@@ -102,6 +103,12 @@
    "fieldtype": "Link",
    "label": "Unit",
    "options": "UOM"
+  },
+  {
+   "description": "The Author's estimate of the full cost of meeting this requirement, including delivery and other incidental costs (NDS-CHG-001 v1.17 §4.3). Optional while Draft, required for submission. No currency, Budget Line or funding source is stored with it; the currency is read from Budget & Funding.",
+   "fieldname": "estimated_total_cost",
+   "fieldtype": "Currency",
+   "label": "Estimated Total Cost"
   },
   {
    "description": "Date the department needs the requirement. Must fall inside the target Financial Year.",

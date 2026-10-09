@@ -242,11 +242,11 @@
 				<div class="kt-meta-row">
 					<div>
 						<span class="kt-label">Financial year started</span>
-						<span class="kt-meta-value">{{ lateActivation.financial_year_started_display }}</span>
+						<span class="kt-meta-value is-plain">{{ lateActivation.financial_year_started_display }}</span>
 					</div>
 					<div>
 						<span class="kt-label">Plan became active</span>
-						<span class="kt-meta-value">{{ lateActivation.activated_display }}</span>
+						<span class="kt-meta-value is-plain">{{ lateActivation.activated_display }}</span>
 					</div>
 				</div>
 				<LateExplanationHistory

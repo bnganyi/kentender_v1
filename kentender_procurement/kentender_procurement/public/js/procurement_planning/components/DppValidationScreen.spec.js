@@ -337,3 +337,13 @@ describe("DppValidationScreen — a decided review", () => {
 		expect(w.find('[data-testid="pln-review-row-error"]').exists()).toBe(false);
 	});
 });
+
+// PLN-CHG-001 v1.30 §10.5 — the Planner sees the figure frozen at certification; it adds no blocker
+describe("DppValidationScreen — the accepted requirement's estimate (v1.30)", () => {
+	it("shows the accepted estimate and change on a revised row, and Accept stays enabled", () => {
+		const changed = { ...LAPTOPS, need_estimate_display: "KES 30,000,000", estimate_change_display: "+KES 5,000,000" };
+		const w = make({ task: task({ entries: [INFRASTRUCTURE, changed] }), classifications: { [INFRASTRUCTURE.entry_id]: "T1", [LAPTOPS.entry_id]: "T2" } });
+		expect(w.get('[data-testid="pln-review-estimate-change"]').text()).toBe("Accepted requirement estimate: KES 30,000,000. Change: +KES 5,000,000.");
+		expect(w.findAll('[data-testid="pln-review-estimate-change"]')).toHaveLength(1);
+	});
+});

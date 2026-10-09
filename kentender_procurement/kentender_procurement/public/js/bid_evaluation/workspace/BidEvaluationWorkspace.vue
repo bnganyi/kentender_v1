@@ -8,7 +8,16 @@
 	<div class="kt-industry kt-evl-ws">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell" data-testid="evl-workspace" :data-loading="loading ? 'true' : 'false'">
-			<EvlBoard :board="board" :form="form" :pending="false" :error="error" @action="onAction" @update="onUpdate" />
+			<div v-if="forbidden && !loading" class="kt-page" data-testid="evl-forbidden">
+				<AccessDenied
+					heading="You do not have access to Bid evaluation"
+					:text="[
+						'This area needs one of these responsibilities: Accounting Officer, Head of Procurement, appointed evaluation member, evaluation secretary or authorised auditor.',
+						'Ask your KenTender administrator to assign the appropriate responsibility in System setup; committee membership also requires appointment.',
+					]"
+				/>
+			</div>
+			<EvlBoard v-else :board="board" :form="form" :pending="false" :error="error" @action="onAction" @update="onUpdate" />
 		</div>
 	</div>
 </template>
@@ -17,6 +26,7 @@
 import { computed, reactive, ref, watch } from "vue";
 import { frappeCall } from "../data/frappeCall.js";
 import EvlBoard from "../board/EvlBoard.vue";
+import AccessDenied from "../../access_shared/AccessDenied.vue";
 import { workspaceBoard } from "../screens/workspace.js";
 import { usePageRail } from "../../tnd_shared/composables/usePageRail.js";
 
@@ -51,7 +61,7 @@ watch(() => [form.query, form.state], () => {
 	timer = setTimeout(load, 250);
 });
 
-const board = computed(() => workspaceBoard({ work: forbidden.value ? { forbidden: true } : work.value, form, loading: loading.value }));
+const board = computed(() => workspaceBoard({ work: work.value, form, loading: loading.value }));
 
 function onUpdate({ name, value }) {
 	form[name] = value;

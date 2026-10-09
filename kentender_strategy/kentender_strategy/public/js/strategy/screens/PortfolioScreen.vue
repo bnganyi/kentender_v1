@@ -12,6 +12,7 @@ import { runAttempt } from "../../strategy_shared/data/attempts.js";
 import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
 import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 import { fetchPortfolio, savePlanDraft } from "../data/strategyApi.js";
+import AccessDenied from "../../strategy_shared/components/AccessDenied.vue";
 
 const { route, go, epoch } = useRouteState("strategy");
 const mode = computed(() => (route.value[1] === "new" ? "create" : "list"));
@@ -207,12 +208,8 @@ async function submitDraft() {
 				</div>
 			</div>
 
-			<div v-else-if="forbidden" class="kt-notice is-critical" data-testid="str-forbidden">
-				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-				<div class="kt-notice-body">
-					<strong>{{ __("You do not have access to Strategy Alignment.") }}</strong>
-					{{ __("This area needs Strategy Author, Strategy Approver or Auditor responsibility, or Administrator/System Manager technical access. Ask your KenTender administrator to check your access in System setup.") }}
-				</div>
+			<div v-else-if="forbidden" class="kt-page" data-testid="str-forbidden">
+				<AccessDenied :heading="__('You do not have access to Strategy Alignment.')" :text="__('This area needs Strategy Author, Strategy Approver or Auditor responsibility, or Administrator/System Manager technical access. Ask your KenTender administrator to check your access in System setup.')" />
 			</div>
 
 			<div v-else-if="error && !loadedOnce" data-testid="str-error">

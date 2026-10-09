@@ -1,16 +1,14 @@
 // The Bid evaluation workspace (EVL-CHG-001 v0.4 §9.2; boards D01, D01-EMPTY,
-// D01-FILTERED, D01-APPOINT, S-FORBIDDEN): the viewer's own
+// D01-FILTERED, D01-APPOINT): the viewer's own
 // evaluation tasks, then the register they may read (ListEvaluationWork), with
 // a local search and state filter. No tracker or next step on the workspace.
+// A viewer with no evaluation responsibility gets the shared access state (BidEvaluationWorkspace.vue), not a board.
 import { em, fb, task, tb } from "../board/model.js";
 
 export const STATES = ["All states", "Preparing", "Reviewing", "Signing", "Report sent", "No evaluation required", "Cancelled"];
 
-const FORBIDDEN = "This area needs one of these responsibilities: Accounting Officer, Head of Procurement, appointed evaluation member, evaluation secretary or authorised auditor. Ask your KenTender administrator to assign the appropriate responsibility in System setup; committee membership also requires appointment.";
-
 export function workspaceBoard({ work, form, loading = false }) {
 	const head = { title: "Bid evaluation", desc: "Review automatic checks, resolve questions and prepare the committee report." };
-	if (work && work.forbidden) return { ...head, blocks: [em("You do not have access to Bid evaluation.", null, "ban", FORBIDDEN)] };
 	if (loading || !work) return { ...head, blocks: [em("Loading evaluations…", null, "loader")] };
 	const register = work.register || [];
 	const titleOf = (ref) => (register.find((r) => r.tender === ref) || {}).title || ref;

@@ -16,10 +16,10 @@ projection.
 
 The three contracts (§7.1):
 
-- `DepartmentalNeedAccepted.v2` — the accepted source payload. It carries the
-  expected operational result (NDS-AC-038) and none of the excluded concepts
-  (NDS-AC-024).
-- `DepartmentalNeedSuperseded.v1` — Need, earlier accepted version and hash,
+- `DepartmentalNeedAccepted.v3` — the accepted source payload (v1.17 §7.1A). It
+  carries the expected operational result (NDS-AC-038), the Need's own
+  estimated total cost and none of the excluded concepts (NDS-AC-024).
+- `DepartmentalNeedSuperseded.v2` — Need, earlier accepted version and hash,
   successor accepted version and hash, plus the successor accepted payload.
 - `DepartmentalNeedWithdrawn.v1` — the withdrawn accepted version and the
   withdrawal decision.
@@ -37,11 +37,17 @@ from frappe.utils import cstr, now_datetime
 from kentender_core.services.command_write_guard import command_write
 from kentender_core.utils.instants import to_utc_iso
 from kentender_procurement.departmental_needs.errors import fail
+from kentender_procurement.departmental_needs.services import estimate
 from kentender_procurement.departmental_needs.services.quantity import normalise_wire_payload, wire_text
 from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
 
-EVENT_ACCEPTED = "DepartmentalNeedAccepted.v2"
-EVENT_SUPERSEDED = "DepartmentalNeedSuperseded.v1"
+EVENT_ACCEPTED = "DepartmentalNeedAccepted.v3"
+EVENT_SUPERSEDED = "DepartmentalNeedSuperseded.v2"
+# NDS-CHG-001 v1.17 §7.1A — `.v2` and `.v1` are withdrawn for new events. Rows
+# already in the outbox keep their type, and a replay reads them as a revision
+# with no estimate (null) rather than rewriting history.
+LEGACY_EVENT_ACCEPTED = "DepartmentalNeedAccepted.v2"
+LEGACY_EVENT_SUPERSEDED = "DepartmentalNeedSuperseded.v1"
 EVENT_WITHDRAWN = "DepartmentalNeedWithdrawn.v1"
 
 EVENT_TYPES = frozenset({EVENT_ACCEPTED, EVENT_SUPERSEDED, EVENT_WITHDRAWN})
@@ -63,10 +69,11 @@ def _next_sequence(need: str) -> int:
 
 
 def accepted_payload(need, version) -> dict[str, Any]:
-	"""The exact §7.1 `DepartmentalNeedAccepted.v2` field set — nothing more.
+	"""The exact §7.1A `DepartmentalNeedAccepted.v3` field set — nothing more.
 
-	Deliberately absent: Budget Line, indicative amount, funding source,
-	currency, Strategy, requirement type, procurement method, location,
+	One amount only: the Need's own estimated total cost, a decimal string or
+	null for a revision without one (v1.17 §7.1A). Deliberately absent: Budget
+	Line, indicative amount, funding source, currency, Strategy, requirement type, procurement method, location,
 	attachment, source reference, generic evidence and notes (NDS-AC-024).
 	"""
 	unit_label = cstr(frappe.db.get_value("UOM", version.unit, "uom_name") or version.unit or "")
@@ -87,6 +94,7 @@ def accepted_payload(need, version) -> dict[str, Any]:
 		"unit_id": cstr(version.unit),
 		"unit_display_value": unit_label,
 		"required_by_date": str(version.required_by_date or ""),
+		"estimated_total_cost": estimate.wire_text(version.estimated_total_cost),
 	}
 
 
@@ -283,7 +291,7 @@ def current_accepted_events(*, financial_year: str, organisation_unit: str = "")
 			"Departmental Need Event",
 			{
 				"departmental_need": row.name,
-				"event_type": EVENT_ACCEPTED,
+				"event_type": ("in", [EVENT_ACCEPTED, LEGACY_EVENT_ACCEPTED]),
 				"need_revision": row.current_accepted_revision,
 			},
 			"payload",

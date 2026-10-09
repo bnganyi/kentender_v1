@@ -12,7 +12,16 @@
 	<div class="kt-industry kt-pmt">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell" data-testid="pmt-shell" :data-loading="loading ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : 'false'">
-			<div class="kt-page">
+			<div v-if="forbidden && !loading" class="kt-page" data-testid="pmt-forbidden">
+				<AccessDenied
+					heading="You do not have access to Procurement meetings"
+					:text="[
+						'This area needs one of these responsibilities: Accounting Officer, Head of Procurement Function, Head of User Department or authorised auditor.',
+						'Ask your KenTender administrator to assign the appropriate responsibility in System setup.',
+					]"
+				/>
+			</div>
+			<div v-else class="kt-page">
 				<div class="kt-page-head">
 					<div>
 						<h1 class="kt-page-title" data-testid="pmt-title">Procurement meetings</h1>
@@ -21,11 +30,6 @@
 				</div>
 
 				<div v-if="loading" class="kt-region" data-testid="pmt-loading" role="status"><div class="kt-skel" style="width:40%"></div><div class="kt-skel" style="width:70%;margin-top:12px"></div></div>
-
-				<div v-else-if="forbidden" class="kt-empty" data-testid="pmt-forbidden" role="alert">
-					<p><strong>You do not have access to Procurement meetings.</strong></p>
-					<p>This area needs one of these responsibilities: Accounting Officer, Head of Procurement Function, Head of User Department or authorised auditor. Ask your KenTender administrator to assign the appropriate responsibility in System setup.</p>
-				</div>
 
 				<div v-else-if="failure" class="kt-notice is-critical" role="alert" data-testid="pmt-failure">
 					<div class="kt-notice-body" style="display:flex;justify-content:space-between;align-items:center;gap:16px;width:100%">
@@ -123,6 +127,7 @@
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { frappeCall } from "./data/frappeCall.js";
 import { usePageRail } from "../tnd_shared/composables/usePageRail.js";
+import AccessDenied from "../access_shared/AccessDenied.vue";
 import TablePagerHost from "../pager_shared/TablePagerHost.vue";
 import { savePageSize, savedPageSize } from "../pager_shared/pageSize.js";
 

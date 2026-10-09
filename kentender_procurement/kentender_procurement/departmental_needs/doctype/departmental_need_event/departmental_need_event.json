@@ -36,7 +36,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Event Type",
-   "options": "DepartmentalNeedAccepted.v2\nDepartmentalNeedSuperseded.v1\nDepartmentalNeedWithdrawn.v1",
+   "options": "DepartmentalNeedAccepted.v2\nDepartmentalNeedAccepted.v3\nDepartmentalNeedSuperseded.v1\nDepartmentalNeedSuperseded.v2\nDepartmentalNeedWithdrawn.v1",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1

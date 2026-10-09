@@ -14,19 +14,19 @@
 			<div class="kt-meta-row">
 				<div>
 					<span class="kt-label">Request</span>
-					<span class="kt-meta-value">{{ request.request }}</span>
+					<span class="kt-meta-value is-plain">{{ request.request }}</span>
 				</div>
 				<div>
 					<span class="kt-label">Correcting plan</span>
-					<span class="kt-meta-value">{{ correctingPlan.plan_reference }}</span>
+					<span class="kt-meta-value is-plain">{{ correctingPlan.plan_reference }}</span>
 				</div>
 				<div>
 					<span class="kt-label">Version</span>
-					<span class="kt-meta-value">{{ correctingPlan.version_number }}</span>
+					<span class="kt-meta-value is-plain">{{ correctingPlan.version_number }}</span>
 				</div>
 				<div>
 					<span class="kt-label">Activation date</span>
-					<span class="kt-meta-value">{{ correctingPlan.activated_display }}</span>
+					<span class="kt-meta-value is-plain">{{ correctingPlan.activated_display }}</span>
 				</div>
 			</div>
 			<!-- Said before the action, not after it: this resolves one request

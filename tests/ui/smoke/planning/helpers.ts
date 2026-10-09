@@ -54,13 +54,15 @@ const NEED_CONTENT = {
 	expected_operational_result: "Priority health facilities can use secure and interoperable digital health services.",
 	indicative_quantity: 1,
 	unit: "Each",
+	// NDS-CHG-001 v1.17 — a Need is submitted with its estimated total cost
+	estimated_total_cost: 80_000_000,
 	required_by_date: "2099-03-31",
 };
 
 /** §14.8's two Goods sources for the combined item. */
 const COMBINED_NEEDS = [
-	{ ...NEED_CONTENT, title: "Clinical training laptops for digital health rollout", indicative_quantity: 200, required_by_date: "2099-04-30" },
-	{ ...NEED_CONTENT, title: "Clinical deployment laptops for digital health rollout", indicative_quantity: 300, required_by_date: "2099-04-30" },
+	{ ...NEED_CONTENT, title: "Clinical training laptops for digital health rollout", indicative_quantity: 200, estimated_total_cost: 20_000_000, required_by_date: "2099-04-30" },
+	{ ...NEED_CONTENT, title: "Clinical deployment laptops for digital health rollout", indicative_quantity: 300, estimated_total_cost: 30_000_000, required_by_date: "2099-04-30" },
 ];
 
 /** Fixtures that project an accepted Need; the helper obtains it from NDS first. */

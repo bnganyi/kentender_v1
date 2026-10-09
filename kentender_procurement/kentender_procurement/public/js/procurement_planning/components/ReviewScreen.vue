@@ -96,15 +96,15 @@
 					</div>
 					<div data-testid="rev-checks">
 						<span class="kt-label">Funding</span>
-						<span class="kt-meta-value" style="font-size: 14px">{{ summary.funding }}</span>
+						<span class="kt-meta-value is-plain">{{ summary.funding }}</span>
 					</div>
 					<div>
 						<span class="kt-label">Reserved procurement</span>
-						<span class="kt-meta-value" style="font-size: 14px">{{ summary.reservation }}</span>
+						<span class="kt-meta-value is-plain">{{ summary.reservation }}</span>
 					</div>
 					<div>
 						<span class="kt-label">Schedule</span>
-						<span class="kt-meta-value" style="font-size: 14px">{{ summary.schedule }}</span>
+						<span class="kt-meta-value is-plain">{{ summary.schedule }}</span>
 					</div>
 				</div>
 
@@ -149,15 +149,15 @@
 									<div class="kt-meta-row">
 										<div>
 											<span class="kt-label">Department</span>
-											<span class="kt-meta-value">{{ row.department }}</span>
+											<span class="kt-meta-value is-plain">{{ row.department }}</span>
 										</div>
 										<div>
 											<span class="kt-label">Quantity</span>
-											<span class="kt-meta-value">{{ row.quantity_display || row.quantity_number }}</span>
+											<span class="kt-meta-value is-plain">{{ row.quantity_display || row.quantity_number }}</span>
 										</div>
 										<div>
 											<span class="kt-label">Required by</span>
-											<span class="kt-meta-value">{{ row.delivery_completion_display }}</span>
+											<span class="kt-meta-value is-plain">{{ row.delivery_completion_display }}</span>
 										</div>
 										<div>
 											<span class="kt-label">Estimated cost</span>
@@ -165,15 +165,15 @@
 										</div>
 										<div>
 											<span class="kt-label">Procurement approach</span>
-											<span class="kt-meta-value">{{ row.procurement_method }}</span>
+											<span class="kt-meta-value is-plain">{{ row.procurement_method }}</span>
 										</div>
 										<div>
 											<span class="kt-label">Expected completion</span>
-											<span class="kt-meta-value">{{ row.delivery_completion_display }}</span>
+											<span class="kt-meta-value is-plain">{{ row.delivery_completion_display }}</span>
 										</div>
 										<div>
 											<span class="kt-label">Departmental deadline</span>
-											<span class="kt-meta-value">{{ row.delivery_completion_display }}</span>
+											<span class="kt-meta-value is-plain">{{ row.delivery_completion_display }}</span>
 										</div>
 									</div>
 									<!-- §10.11 — the evidence link belongs to a source, not
@@ -225,20 +225,20 @@
 						<template v-if="fundingAt.actor_name">
 							<div>
 								<span class="kt-label">Funding</span>
-								<span class="kt-meta-value" style="font-size: 14px">Within each approved budget line</span>
+								<span class="kt-meta-value is-plain">Within each approved budget line</span>
 							</div>
-							<div><span class="kt-label">Checked by</span><span class="kt-meta-value" style="font-size: 14px">{{ fundingAt.actor_name }}</span></div>
-							<div><span class="kt-label">Checked at</span><span class="kt-meta-value" style="font-size: 14px">{{ fundingAt.decided_at_display }}</span></div>
+							<div><span class="kt-label">Checked by</span><span class="kt-meta-value is-plain">{{ fundingAt.actor_name }}</span></div>
+							<div><span class="kt-label">Checked at</span><span class="kt-meta-value is-plain">{{ fundingAt.decided_at_display }}</span></div>
 						</template>
 					</div>
 				</div>
 				<!-- Absent before the signature exists (U11-HOPF). -->
 				<div v-if="signature" class="kt-group" data-testid="rev-preparation">
 					<div class="kt-meta-row">
-						<div><span class="kt-label">Preparation</span><span class="kt-meta-value" style="font-size: 14px">Signed</span></div>
-						<div><span class="kt-label">Signed by</span><span class="kt-meta-value" style="font-size: 14px">{{ signature.actor_name }}</span></div>
-						<div><span class="kt-label">Capacity</span><span class="kt-meta-value" style="font-size: 14px">{{ signature.capacity }}</span></div>
-						<div><span class="kt-label">Signed at</span><span class="kt-meta-value" style="font-size: 14px">{{ signature.signed_at_display }}</span></div>
+						<div><span class="kt-label">Preparation</span><span class="kt-meta-value is-plain">Signed</span></div>
+						<div><span class="kt-label">Signed by</span><span class="kt-meta-value is-plain">{{ signature.actor_name }}</span></div>
+						<div><span class="kt-label">Capacity</span><span class="kt-meta-value is-plain">{{ signature.capacity }}</span></div>
+						<div><span class="kt-label">Signed at</span><span class="kt-meta-value is-plain">{{ signature.signed_at_display }}</span></div>
 					</div>
 				</div>
 				<p class="kt-muted" style="margin-top: var(--kt-space-4)">Funding confirmation does not set money aside.</p>
@@ -305,11 +305,11 @@
 				<div v-if="authority.is_board" class="kt-meta-row" data-testid="rev-collective">
 					<div>
 						<span class="kt-label">Decision belongs to</span>
-						<span class="kt-meta-value">{{ authority.capacity_detail }}</span>
+						<span class="kt-meta-value is-plain">{{ authority.capacity_detail }}</span>
 					</div>
 					<div>
 						<span class="kt-label">Recorded by</span>
-						<span class="kt-meta-value">{{ task.recorder_name || "—" }}</span>
+						<span class="kt-meta-value is-plain">{{ task.recorder_name || "—" }}</span>
 					</div>
 				</div>
 
@@ -317,7 +317,7 @@
 				<div v-if="task.late_activation_required" class="kt-meta-row" data-testid="rev-late">
 					<div>
 						<span class="kt-label">Financial year started</span>
-						<span class="kt-meta-value">{{ task.financial_year_started_display }}</span>
+						<span class="kt-meta-value is-plain">{{ task.financial_year_started_display }}</span>
 					</div>
 				</div>
 

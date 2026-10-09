@@ -165,7 +165,7 @@
 					</div>
 					<div v-else-if="draft.estimate_basis_reference" class="pln-fact">
 						<span class="kt-label">Supporting document reference</span>
-						<span class="kt-meta-value">{{ draft.estimate_basis_reference }}</span>
+						<span class="kt-meta-value is-plain">{{ draft.estimate_basis_reference }}</span>
 					</div>
 				</div>
 				<p v-if="fullBasis" class="kt-muted" data-testid="ppi-full-basis">{{ classification.estimate_basis }}</p>
@@ -328,11 +328,11 @@
 					</div>
 					<div class="pln-fact">
 						<span class="kt-label">Expected completion</span>
-						<span class="kt-meta-value" data-testid="ppi-completion">{{ baseline.estimated_completion_display || "—" }}</span>
+						<span class="kt-meta-value is-plain" data-testid="ppi-completion">{{ baseline.estimated_completion_display || "—" }}</span>
 					</div>
 					<div class="pln-fact">
 						<span class="kt-label">Departmental deadline</span>
-						<span class="kt-meta-value" data-testid="ppi-deadline">{{ deadlineDisplay }}</span>
+						<span class="kt-meta-value is-plain" data-testid="ppi-deadline">{{ deadlineDisplay }}</span>
 					</div>
 				</div>
 				<!-- Said once. When the deadline cannot be met the critical notice
@@ -379,7 +379,7 @@
 
 					<div class="pln-fact">
 						<span class="kt-label">Classification provenance</span>
-						<span class="kt-meta-value" data-testid="ppi-classification-provenance">
+						<span class="kt-meta-value is-plain" data-testid="ppi-classification-provenance">
 							{{ item.identity?.requirement_type }} / {{ item.identity?.procurement_category }}
 						</span>
 					</div>
@@ -391,11 +391,11 @@
 					<div v-if="methodProfile.profile || methodProfile.verification_status" class="kt-meta-row" data-testid="ppi-rule-evidence">
 						<div v-if="methodProfile.profile">
 							<span class="kt-label">Applicable rule</span>
-							<span class="kt-meta-value">{{ methodProfile.profile }}</span>
+							<span class="kt-meta-value is-plain">{{ methodProfile.profile }}</span>
 						</div>
 						<div v-if="methodProfile.verification_status">
 							<span class="kt-label">Source check</span>
-							<span class="kt-meta-value">{{ methodProfile.verification_status }}</span>
+							<span class="kt-meta-value is-plain">{{ methodProfile.verification_status }}</span>
 						</div>
 					</div>
 

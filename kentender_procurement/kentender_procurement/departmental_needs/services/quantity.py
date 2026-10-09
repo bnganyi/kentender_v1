@@ -83,6 +83,9 @@ def normalise_wire_payload(body: dict) -> dict:
 		return body
 	if "indicative_quantity" in body and not isinstance(body["indicative_quantity"], str):
 		body = {**body, "indicative_quantity": wire_text(body["indicative_quantity"])}
+	if "accepted_version_id" in body and "estimated_total_cost" not in body:
+		# a `.v2` accepted payload from before NDS-CHG-001 v1.17: no estimate
+		body = {**body, "estimated_total_cost": None}
 	nested = body.get("successor_accepted_payload")
 	if isinstance(nested, dict):
 		body = {**body, "successor_accepted_payload": normalise_wire_payload(nested)}

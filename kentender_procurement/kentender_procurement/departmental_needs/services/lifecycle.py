@@ -84,6 +84,7 @@ from kentender_procurement.departmental_needs.services.context import (
 	require_open_intake,
 	selectable_financial_year,
 )
+from kentender_procurement.departmental_needs.services import estimate
 from kentender_procurement.departmental_needs.services.quantity import require_valid_quantity
 from kentender_procurement.departmental_needs.services.notifications import notify_need_transition
 from kentender_procurement.departmental_needs.services.permissions import (
@@ -223,7 +224,16 @@ def _state_hash(need, version=None) -> str:
 
 
 def _content_payload(version) -> dict[str, str]:
-	return {field: cstr(version.get(field)) for field in REVISION_CONTENT_FIELDS}
+	"""The canonical content hashed at submission. The estimated total cost is
+	part of it only when the revision has one (NDS-CHG-001 v1.17 §4.9), so a
+	revision submitted before v1.17 keeps and verifies its original hash."""
+	payload = {
+		field: cstr(version.get(field)) for field in REVISION_CONTENT_FIELDS if field != "estimated_total_cost"
+	}
+	text = estimate.wire_text(version.get("estimated_total_cost"))
+	if text is not None:
+		payload["estimated_total_cost"] = text
+	return payload
 
 
 def _content_hash(version) -> str:
@@ -496,7 +506,7 @@ def _require_text(value: str, label: str) -> str:
 
 
 def _validate_submission(need, version) -> None:
-	"""§5/NDS-BR-007 — all six values, a governed unit and an in-year date.
+	"""§5/NDS-BR-007 — all seven values, a governed unit and an in-year date.
 
 	Runs before any state change, task creation or notification, so a failure is
 	a pure no-op with a stable §9 code.
@@ -511,6 +521,12 @@ def _validate_submission(need, version) -> None:
 		fail("NDS_UNIT_INELIGIBLE", "The selected unit is not an active governed unit.")
 	# The unit may have changed since the Draft was saved (§4.9): recheck.
 	require_valid_quantity(version.indicative_quantity, version.unit)
+	# NDS-BR-022 — an estimated total cost is required, exact and within the
+	# Budget currency's precision. Checked before any state change.
+	if estimate.wire_text(version.estimated_total_cost) is None:
+		# Frappe stores a blank Currency as 0.0, so absence and zero read the same here
+		fail("NDS_FIELD_REQUIRED", "Estimated cost is required.")
+	estimate.validated(version.estimated_total_cost, need.financial_year)
 	if not version.required_by_date:
 		fail("NDS_FIELD_REQUIRED", "Required-by date is required.")
 	_require_required_by_in_year(selectable_financial_year(need.financial_year), version.required_by_date)
@@ -567,10 +583,15 @@ def _content_values(
 	indicative_quantity: float | None = None,
 	unit: str = "",
 	required_by_date: str | None = None,
+	estimated_total_cost: Any = None,
+	fiscal_year: str = "",
 ) -> dict[str, Any]:
 	"""A partial Draft is valid once the title is (§12.3, NDS-AC-004). A supplied
-	quantity must be exact for its unit before it is stored (§4.9)."""
+	quantity must be exact for its unit before it is stored (§4.9), and a
+	supplied estimated total cost exact at the Budget currency's precision
+	(NDS-CHG-001 v1.17 §4.9)."""
 	require_valid_quantity(indicative_quantity, cstr(unit).strip() or None)
+	cost = estimate.validated(estimated_total_cost, fiscal_year) if fiscal_year else None
 	return {
 		"title": cstr(title).strip(),
 		"description": cstr(description).strip(),
@@ -578,6 +599,7 @@ def _content_values(
 		"indicative_quantity": flt(indicative_quantity) if indicative_quantity not in (None, "") else None,
 		"unit": cstr(unit).strip() or None,
 		"required_by_date": required_by_date or None,
+		"estimated_total_cost": float(cost) if cost is not None else None,
 	}
 
 
@@ -595,6 +617,7 @@ def create_need(
 	indicative_quantity: float | None = None,
 	unit: str = "",
 	required_by_date: str | None = None,
+	estimated_total_cost: Any = None,
 	idempotency_key: str,
 	user: str | None = None,
 ) -> dict[str, Any]:
@@ -641,6 +664,8 @@ def create_need(
 			indicative_quantity=indicative_quantity,
 			unit=unit,
 			required_by_date=required_by_date,
+			estimated_total_cost=estimated_total_cost,
+			fiscal_year=fy["id"],
 		),
 	)
 	need.current_revision = version.name
@@ -669,6 +694,7 @@ def update_need(
 	indicative_quantity: float | None = None,
 	unit: str = "",
 	required_by_date: str | None = None,
+	estimated_total_cost: Any = None,
 	expected_version: int,
 	idempotency_key: str,
 	user: str | None = None,
@@ -703,6 +729,8 @@ def update_need(
 			indicative_quantity=indicative_quantity,
 			unit=unit,
 			required_by_date=required_by_date,
+			estimated_total_cost=estimated_total_cost,
+			fiscal_year=doc.financial_year,
 		)
 	)
 	version.save(ignore_permissions=True)

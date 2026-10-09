@@ -134,11 +134,11 @@
 						<div class="kt-meta-row">
 							<div>
 								<span class="kt-label">Current requirement type</span>
-								<span class="kt-meta-value">{{ panel.classification.requirement_type }}</span>
+								<span class="kt-meta-value is-plain">{{ panel.classification.requirement_type }}</span>
 							</div>
 							<div>
 								<span class="kt-label">Current category</span>
-								<span class="kt-meta-value">{{ panel.classification.procurement_category }}</span>
+								<span class="kt-meta-value is-plain">{{ panel.classification.procurement_category }}</span>
 							</div>
 						</div>
 
@@ -162,7 +162,7 @@
 
 						<div class="pln-class-derived">
 							<span class="kt-label">New category</span>
-							<span class="kt-meta-value" data-testid="pln-class-new-category">{{ derivedCategory }}</span>
+							<span class="kt-meta-value is-plain" data-testid="pln-class-new-category">{{ derivedCategory }}</span>
 						</div>
 
 						<div class="field">

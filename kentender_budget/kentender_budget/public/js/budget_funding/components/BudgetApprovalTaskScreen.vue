@@ -6,6 +6,7 @@ import { useRouteState } from "../../budget_shared/composables/useRouteState.js"
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { formatKes, formatSignedKes, mintKey } from "../../budget_shared/data/formatKes.js";
 import { getBudgetApprovalTask, getBudgetApprovalTaskLines, getBudgetApprovalTaskChanges, getBudgetVersionHistory, returnBudgetVersion, approveBudgetVersion } from "../data/budgetApi.js";
+import AccessDenied from "../../budget_shared/components/AccessDenied.vue";
 
 // BUD-UI-04 — BUD-DES-08/09/10/11 (Review allocation changes) and BUD-DES-13
 // (Review registered allocation): the decision and its evidence together
@@ -216,10 +217,14 @@ function approve() {
 <template>
 	<div class="kt-industry" data-testid="bud-task" :data-loading="loading ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : 'false'">
 		<div ref="railEl" class="kt-rail-mount"></div>
-		<div class="kt-shell" :style="{ paddingBottom: showFooter ? '96px' : '32px' }">
+		<div v-if="!loading && forbidden" class="kt-shell">
+			<div class="kt-page" data-testid="bud-task-forbidden">
+				<AccessDenied :heading="__(forbidden.heading)" :text="__(forbidden.text || '')" />
+			</div>
+		</div>
+		<div v-else class="kt-shell" :style="{ paddingBottom: showFooter ? '96px' : '32px' }">
 			<div v-if="loading" class="card blueprint"><div class="kt-skel" style="width: 280px; height: 20px"></div></div>
 			<div v-else-if="notFound" class="card blueprint kt-empty" data-testid="bud-task-not-found"><h2>{{ __("This approval task could not be found.") }}</h2></div>
-			<div v-else-if="forbidden" class="card blueprint kt-empty" data-testid="bud-task-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p v-if="forbidden.text" class="kt-muted">{{ __(forbidden.text) }}</p></div>
 			<div v-else-if="serverError" class="card blueprint kt-empty" data-testid="bud-task-server-error"><h2>{{ __("This approval task could not be loaded.") }}</h2><button type="button" class="btn btn-primary" @click="load()">{{ __("Try again") }}</button></div>
 
 			<template v-else-if="task">

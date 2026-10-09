@@ -73,3 +73,41 @@ describe("ReviewTaskScreen — NDS-DES-14-REVIEW-CHANGED", () => {
 		expect(w.text().split("You submitted this revision, so it must be decided by another Head of User Department.").length - 1).toBe(1);
 	});
 });
+
+// NDS-CHG-001 v1.17 §11.19 / NDS17-AC-007 — the estimate is read before the decision area,
+// and a changed estimate leads the update comparison.
+describe("ReviewTaskScreen — Estimated cost", () => {
+	it("shows the estimate beneath the requirement, before the decision actions", () => {
+		const w = make({ revision: { revision_number: 1, title: "Certification", description: "A programme to certify staff.", expected_operational_result: "Staff are certified.", estimated_total_cost: "12000000", estimated_total_cost_label: "KES 12,000,000" } });
+		const html = w.html();
+		expect(w.get('[data-testid="nds-estimated-cost-line"]').text()).toBe("Estimated costKES 12,000,000");
+		expect(html.indexOf("nds-estimated-cost-line")).toBeLessThan(html.indexOf("nds-decision-accept"));
+	});
+
+	it("says No estimate recorded for a revision that predates the field", () => {
+		const w = make({ revision: { revision_number: 1, title: "Old", description: "An older requirement.", expected_operational_result: "Done.", estimated_total_cost: null, estimated_total_cost_label: "" } });
+		expect(w.get('[data-testid="nds-estimated-cost-line"]').text()).toContain("No estimate recorded");
+	});
+
+	it("lists a changed estimate first in the update comparison", () => {
+		const w = make({
+			taskType: "Successor acceptance",
+			acceptedRevision: { name: "R1", revision_number: 1, title: "Infra", required_by_date: "2027-08-31", estimated_total_cost: "80000000", estimated_total_cost_label: "KES 80,000,000" },
+			revision: { name: "R2", revision_number: 2, title: "Infra", required_by_date: "2027-09-15", estimated_total_cost: "85000000", estimated_total_cost_label: "KES 85,000,000" },
+		});
+		const rows = w.findAll("tbody tr").map((r) => r.text());
+		expect(rows[0]).toContain("Estimated cost");
+		expect(rows[0]).toContain("KES 80,000,000");
+		expect(rows[0]).toContain("KES 85,000,000");
+		expect(rows[1]).toContain("Required by");
+	});
+
+	it("shows no estimate row when it did not change", () => {
+		const w = make({
+			taskType: "Successor acceptance",
+			acceptedRevision: { name: "R1", revision_number: 1, title: "Infra", required_by_date: "2027-08-31", estimated_total_cost: "80000000", estimated_total_cost_label: "KES 80,000,000" },
+			revision: { name: "R2", revision_number: 2, title: "Infra", required_by_date: "2027-09-15", estimated_total_cost: "80000000", estimated_total_cost_label: "KES 80,000,000" },
+		});
+		expect(w.findAll("tbody tr").some((r) => r.text().includes("Estimated cost"))).toBe(false);
+	});
+});

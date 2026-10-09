@@ -94,6 +94,15 @@ _TIMES = (
 # Year 1).
 _INTAKE = {"open": "2026-11-24 08:00:00", "closes": "2026-11-25 23:59:00"}
 
+# Estimated total cost (NDS-CHG-001 v1.17 §14.3A). Each Need carries the amount
+# its departmental plan entry funds in the Planning seed, so the canonical world
+# shows no change from the accepted estimate. Where a document states the figure
+# it is that figure (infrastructure 80m, DHI laptops 30m, HRMD laptops 20m for
+# 100 Each). The rest are new seed values, listed as new content in the change
+# report: 40m for
+# the 200-Each first request, 12m for the certification programme (Awaiting
+# fixture in v1.17), and the audio-visual first request of 20 Each at 20m.
+#
 # Two-year seed world (owner, 4 Oct 2026, D8–D10). A year's Needs, in the
 # order the commands create them, so each reference is the year's next one.
 #
@@ -116,6 +125,7 @@ YEAR_NEEDS = {
 			"expected_operational_result": "Priority health facilities can use secure and interoperable digital health services.",
 			"indicative_quantity": 1,
 			"unit": "Programme",
+			"estimated_total_cost": 80000000,
 			"required_by_date": "2027-06-30",
 			"state": STATE_ACCEPTED,
 			"reviewer": ACTING_REVIEWER,
@@ -132,6 +142,8 @@ YEAR_NEEDS = {
 			"expected_operational_result": "Provide the equipment required for staff training on the deployed digital health services.",
 			"indicative_quantity": 200,
 			"unit": "Each",
+			"estimated_total_cost": 40000000,
+			"corrected_estimated_total_cost": 20000000,
 			"required_by_date": "2027-06-30",
 			"state": STATE_ACCEPTED,
 			"corrected_quantity": 100,
@@ -145,6 +157,7 @@ YEAR_NEEDS = {
 			"expected_operational_result": "Provide endpoint equipment required to use the deployed digital health services.",
 			"indicative_quantity": 150,
 			"unit": "Each",
+			"estimated_total_cost": 30000000,
 			"required_by_date": "2027-06-30",
 			"state": STATE_ACCEPTED,
 			"reviewer": ACTING_REVIEWER,
@@ -159,6 +172,7 @@ YEAR_NEEDS = {
 			"expected_operational_result": "Health facilities exchange patient records through one secure, interoperable platform.",
 			"indicative_quantity": 1,
 			"unit": "Programme",
+			"estimated_total_cost": 70000000,
 			"required_by_date": "2027-08-31",
 			"state": STATE_ACCEPTED,
 			"times": 0,
@@ -170,6 +184,7 @@ YEAR_NEEDS = {
 			"expected_operational_result": "Build internal capacity to operate and support national digital health platforms.",
 			"indicative_quantity": 1,
 			"unit": "Programme",
+			"estimated_total_cost": 12000000,
 			"required_by_date": "2027-12-31",
 			"state": STATE_SUBMITTED,
 			"times": 1,
@@ -181,6 +196,8 @@ YEAR_NEEDS = {
 			"expected_operational_result": "Training rooms can run digital health courses with working presentation and sound equipment.",
 			"indicative_quantity": 20,
 			"unit": "Each",
+			"estimated_total_cost": 20000000,
+			"corrected_estimated_total_cost": 12000000,
 			"required_by_date": "2027-12-31",
 			"state": STATE_ACCEPTED,
 			"corrected_quantity": 12,
@@ -194,6 +211,7 @@ YEAR_NEEDS = {
 			"expected_operational_result": "Clinicians at priority facilities use decision-support tools within the digital health services.",
 			"indicative_quantity": 150,
 			"unit": "Each",
+			"estimated_total_cost": 20000000,
 			"required_by_date": "2027-12-31",
 			"state": STATE_ACCEPTED,
 			"times": 3,
@@ -305,6 +323,7 @@ def _build_need(spec: dict, author_units: dict[str, str], fiscal_year: str = FY)
 			expected_operational_result=spec["expected_operational_result"],
 			indicative_quantity=spec["indicative_quantity"],
 			unit=spec["unit"],
+			estimated_total_cost=spec["estimated_total_cost"],
 			required_by_date=spec["required_by_date"],
 			idempotency_key=f"nds-seed:{reference}:create",
 		)
@@ -387,6 +406,7 @@ def _return_and_correct(spec: dict, submitted: dict, when: dict) -> dict:
 			expected_operational_result=spec["expected_operational_result"],
 			indicative_quantity=spec["corrected_quantity"],
 			unit=spec["unit"],
+			estimated_total_cost=spec.get("corrected_estimated_total_cost", spec["estimated_total_cost"]),
 			required_by_date=spec["required_by_date"],
 			expected_version=frappe.db.get_value("Departmental Need", need, "record_version"),
 			idempotency_key=f"nds-seed:{need}:correct",

@@ -808,7 +808,7 @@ class RealNeedsCase(PublicationCase):
 			organisation_unit=fx.OU_ALPHA, financial_year=fx.FY_OPEN, title=title,
 			description="A fixture Need for the usage-publishing round trip.",
 			expected_operational_result="Planning can source a real accepted Need end to end.",
-			indicative_quantity=5, unit=fx.UNIT, required_by_date="2102-01-01", idempotency_key=key(),
+			indicative_quantity=5, unit=fx.UNIT, estimated_total_cost=1000000, required_by_date="2102-01-01", idempotency_key=key(),
 		)
 		submitted = need_lifecycle.submit_need(need=created["need"], expected_version=created["record_version"], idempotency_key=key())
 		frappe.set_user(fx.HOD)

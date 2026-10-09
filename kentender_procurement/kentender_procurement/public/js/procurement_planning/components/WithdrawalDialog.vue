@@ -20,20 +20,20 @@
 			<div class="kt-meta-row" data-testid="pub-withdrawal-plan">
 				<div>
 					<span class="kt-label">Plan</span>
-					<span class="kt-meta-value">{{ task.plan_title }}</span>
+					<span class="kt-meta-value is-plain">{{ task.plan_title }}</span>
 				</div>
 				<div>
 					<span class="kt-label">Reference</span>
-					<span class="kt-meta-value">{{ task.plan_reference }}</span>
+					<span class="kt-meta-value is-plain">{{ task.plan_reference }}</span>
 				</div>
 				<div>
 					<span class="kt-label">Version</span>
-					<span class="kt-meta-value">{{ task.version?.number }}</span>
+					<span class="kt-meta-value is-plain">{{ task.version?.number }}</span>
 				</div>
 				<!-- The fact the whole route depends on. -->
 				<div>
 					<span class="kt-label">Publication status</span>
-					<span class="kt-meta-value" data-testid="pub-withdrawal-confirmation">{{ task.publication_confirmation }}</span>
+					<span class="kt-meta-value is-plain" data-testid="pub-withdrawal-confirmation">{{ task.publication_confirmation }}</span>
 				</div>
 			</div>
 
@@ -41,15 +41,15 @@
 			<div v-if="isDecision" class="kt-meta-row" data-testid="pub-withdrawal-request">
 				<div>
 					<span class="kt-label">Reason for withdrawal</span>
-					<span class="kt-meta-value">{{ request.reason }}</span>
+					<span class="kt-meta-value is-plain">{{ request.reason }}</span>
 				</div>
 				<div>
 					<span class="kt-label">Requested by</span>
-					<span class="kt-meta-value">{{ request.requested_by_name }}</span>
+					<span class="kt-meta-value is-plain">{{ request.requested_by_name }}</span>
 				</div>
 				<div>
 					<span class="kt-label">Requested at</span>
-					<span class="kt-meta-value">{{ request.requested_display }}</span>
+					<span class="kt-meta-value is-plain">{{ request.requested_display }}</span>
 				</div>
 			</div>
 			<div v-else class="field">

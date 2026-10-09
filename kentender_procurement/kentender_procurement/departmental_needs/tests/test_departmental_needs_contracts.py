@@ -250,6 +250,8 @@ class TestErrorContract(ContractCase):
 					"NDS_REQUIRED_BY_OUTSIDE_FY",
 					"NDS_UNIT_INELIGIBLE",
 					"NDS_QUANTITY_PRECISION_INVALID",
+					"NDS_ESTIMATE_PRECISION_INVALID",
+					"NDS_ESTIMATE_CURRENCY_UNAVAILABLE",
 					"NDS_MAKER_CHECKER",
 					"NDS_STATE_CONFLICT",
 					"NDS_OPEN_SUCCESSOR_EXISTS",
@@ -291,6 +293,7 @@ class TestIdempotencyConflict(ContractCase):
 			"expected_operational_result": "Facilities can use the deployed digital health services.",
 			"indicative_quantity": 10,
 			"unit": "Each",
+			"estimated_total_cost": 1000000,
 			"required_by_date": "2027-12-31",
 		}
 		values.update(overrides)
@@ -329,7 +332,7 @@ class TestAcceptedSourceContract(ContractCase):
 
 	def test_the_payload_carries_the_seven_one_field_set(self):
 		payload = self.read()
-		self.assertEqual(payload["contract"], "DepartmentalNeedAccepted.v2")
+		self.assertEqual(payload["contract"], "DepartmentalNeedAccepted.v3")
 		for field in (
 			"need",
 			"need_reference",
@@ -345,6 +348,7 @@ class TestAcceptedSourceContract(ContractCase):
 			"unit",
 			"unit_label",
 			"required_by_date",
+			"estimated_total_cost",
 		):
 			self.assertIn(field, payload)
 
@@ -525,6 +529,7 @@ class TestPlanningUsageProjection(ContractCase):
 			expected_operational_result="Proves recorded is false before any projection.",
 			indicative_quantity=1,
 			unit="Each",
+			estimated_total_cost=1000000,
 			required_by_date="2027-12-31",
 		)
 		submitted = lifecycle.submit_need(
@@ -676,6 +681,7 @@ class TestEndpointsSurviveTheFrameworksTransportFields(ContractCase):
 			"expected_operational_result": "Facilities can use the deployed digital health services.",
 			"indicative_quantity": 10,
 			"unit": "Each",
+			"estimated_total_cost": 1000000,
 			"required_by_date": "2027-12-31",
 		}
 		values.update(overrides)

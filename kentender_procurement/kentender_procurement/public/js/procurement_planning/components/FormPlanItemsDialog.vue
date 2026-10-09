@@ -113,7 +113,7 @@
 							</div>
 							<div>
 								<span class="kt-label">Purchase title</span>
-								<span class="kt-meta-value" data-testid="pln-form-preview-title">{{ combinedTitle }}</span>
+								<span class="kt-meta-value is-plain" data-testid="pln-form-preview-title">{{ combinedTitle }}</span>
 							</div>
 						</template>
 					</div>

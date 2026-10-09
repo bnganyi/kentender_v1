@@ -117,7 +117,7 @@ describe("Procurement meetings", () => {
 	it("gives a reader with no responsibility the forbidden panel and no data", async () => {
 		respond = async () => answer({ forbidden: true, rows: [], matched: 0, held_total: 0 });
 		const w = await page();
-		expect(w.find('[data-testid="pmt-forbidden"]').text()).toContain("You do not have access to Procurement meetings.");
+		expect(w.find('[data-testid="pmt-forbidden"]').text()).toContain("You do not have access to Procurement meetings");
 		expect(w.find('[data-testid="pmt-rows"]').exists()).toBe(false);
 		w.unmount();
 	});

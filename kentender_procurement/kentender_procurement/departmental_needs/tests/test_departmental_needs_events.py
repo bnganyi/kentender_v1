@@ -26,7 +26,7 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 )
 from kentender_procurement.departmental_needs.services import events, lifecycle, workspace
 
-# §7.1 — the exact `DepartmentalNeedAccepted.v2` field set, plus event
+# §7.1A — the exact `DepartmentalNeedAccepted.v3` field set, plus event
 # identity. AUTH-ADR-001 v1.6 §1.1 — the site is exactly one implicit
 # Procuring Entity, so the payload carries no `procuring_entity_id`.
 ACCEPTED_FIELDS = {
@@ -47,6 +47,8 @@ ACCEPTED_FIELDS = {
 	"unit_id",
 	"unit_display_value",
 	"required_by_date",
+	# NDS-CHG-001 v1.17 §7.1A — the one amount a Need publishes.
+	"estimated_total_cost",
 }
 
 # NDS-AC-024 — none of these may ever appear in a published payload.
@@ -94,6 +96,7 @@ class EventCase(IntegrationTestCase):
 			"expected_operational_result": "Facilities can use the deployed digital health services.",
 			"indicative_quantity": 10,
 			"unit": "Each",
+			"estimated_total_cost": 1000000,
 			"required_by_date": "2027-12-31",
 		}
 		values.update(overrides)
@@ -139,7 +142,7 @@ class EventCase(IntegrationTestCase):
 
 
 class TestAcceptedEvent(EventCase):
-	"""§7.1 `DepartmentalNeedAccepted.v2`."""
+	"""§7.1A `DepartmentalNeedAccepted.v3`."""
 
 	def test_acceptance_publishes_exactly_one_event(self):
 		result = self.accepted()

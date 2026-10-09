@@ -447,6 +447,9 @@ def set_need_planning_disposition(
 		entry.not_proceeding_reason = None
 		entry.budget_line = None
 		entry.indicative_amount = 0
+		# v1.30 §4.3 rule 6 — restoring starts again from the accepted Need's
+		# estimate, never from the amount cleared by the exclusion
+		needs_intake.prefill_amount(entry)
 		action = "need_restored"
 	entry.save(ignore_permissions=True)
 	envelope.bump(root)
@@ -669,6 +672,8 @@ def submit_departmental_plan(
 			"required_by_date": cstr(entry.required_by_date),
 			"budget_line": cstr(entry.budget_line),
 			"indicative_amount": flt(entry.indicative_amount),
+			# v1.30 §4.3 rule 5 — the accepted Need's estimate frozen with the entry
+			"need_estimated_total_cost": flt(entry.need_estimated_total_cost),
 			"not_proceeding_reason": cstr(entry.not_proceeding_reason),
 		}
 		for entry in entries

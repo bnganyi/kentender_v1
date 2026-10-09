@@ -9,7 +9,16 @@
 	<div class="kt-industry kt-awd">
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell" data-testid="awd-root" :data-screen="board ? board.screen || '' : 'loading'" :data-loading="loading ? 'true' : 'false'" :data-pending="pending ? 'true' : 'false'">
-			<AwdBoard v-if="board" :key="screenKey" :board="board" :form="form" :pending="pending" :error="error" :reasons="reasons" :fields="fields"
+			<div v-if="board && board.screen === 'workspace-forbidden'" class="kt-page" data-testid="awd-forbidden">
+				<AccessDenied
+					heading="You do not have access to Award"
+					:text="[
+						'This area needs one of these responsibilities: Head of Procurement Function, Accounting Officer or Auditor.',
+						'Ask your KenTender administrator to check your assignment in System setup.',
+					]"
+				/>
+			</div>
+			<AwdBoard v-else-if="board" :key="screenKey" :board="board" :form="form" :pending="pending" :error="error" :reasons="reasons" :fields="fields"
 				@action="onAction" @update="onUpdate" />
 		</div>
 	</div>
@@ -20,6 +29,7 @@ import { computed, reactive, ref, watch } from "vue";
 import * as api from "./data/api.js";
 import { useRouteState } from "./composables/useRouteState.js";
 import AwdBoard from "./board/AwdBoard.vue";
+import AccessDenied from "../access_shared/AccessDenied.vue";
 import { recordBoard } from "./screens/record.js";
 import { workspaceBoard } from "./screens/workspace.js";
 import { viewBoard } from "./screens/views.js";

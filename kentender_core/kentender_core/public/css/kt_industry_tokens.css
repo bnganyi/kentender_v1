@@ -3745,3 +3745,111 @@
 		border-left-width: 3px;
 	}
 }
+
+/* Part 9: the access state ("You do not have access to ...") */
+
+.kt-industry .kt-empty.kt-access {
+	padding: var(--space-8) var(--space-6);
+	gap: var(--space-3);
+	align-content: start;
+	border-top: 0;
+}
+
+.kt-industry .kt-empty.kt-access h2 {
+	margin: var(--space-2) 0 0;
+	max-width: 52ch;
+	font-family: var(--font-heading);
+	font-weight: var(--font-heading-weight);
+	font-size: 23px;
+	line-height: 1.25;
+	color: var(--color-heading);
+	text-wrap: balance;
+}
+
+.kt-industry .kt-empty.kt-access p {
+	max-width: 60ch;
+	font-size: 14.5px;
+	line-height: 1.55;
+	color: var(--color-neutral-700);
+}
+
+.kt-industry .kt-empty.kt-access .kt-access-actions {
+	margin-top: var(--space-2);
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--space-2);
+}
+
+/* Part 10: a recorded fact beside the pack's figure style (.kt-meta-value) */
+
+.kt-industry .kt-meta-value.is-plain {
+	font-family: inherit;
+	font-weight: 400;
+	font-size: 14px;
+}
+
+/* Part 11: flat sections start content at the heading's edge */
+
+.kt-industry .kt-page .kt-region .table th:first-child,
+.kt-industry .kt-page .kt-region .table td:first-child {
+	padding-left: 0;
+}
+
+.kt-industry .kt-page .kt-region .table th:last-child,
+.kt-industry .kt-page .kt-region .table td:last-child {
+	padding-right: 0;
+}
+
+.kt-industry .kt-page > .kt-disclosure .kt-disclosure-head,
+.kt-industry .kt-page > .kt-disclosure .kt-disclosure-body,
+.kt-industry .kt-page .kt-region .kt-disclosure .kt-disclosure-head,
+.kt-industry .kt-page .kt-region .kt-disclosure .kt-disclosure-body {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.kt-industry .kt-page .kt-group {
+	position: relative;
+	border-left: 0;
+	padding-left: 0;
+}
+
+.kt-industry .kt-page .kt-group::before {
+	content: "";
+	position: absolute;
+	top: 2px;
+	bottom: 2px;
+	left: calc(-1 * (var(--space-4) + 2px));
+	width: 2px;
+	background: var(--color-divider);
+}
+
+.kt-industry .kt-page > .kt-guidance-mount > .kt-guidance {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.kt-industry .kt-page .kt-next-step.is-turn,
+.kt-industry .kt-page .kt-next-step.is-waiting,
+.kt-industry .kt-page .kt-next-step.is-done {
+	position: relative;
+	border-left: 0;
+	padding-left: 0;
+}
+
+.kt-industry .kt-page .kt-next-step.is-turn::before,
+.kt-industry .kt-page .kt-next-step.is-waiting::before,
+.kt-industry .kt-page .kt-next-step.is-done::before {
+	content: "";
+	position: absolute;
+	top: 2px;
+	bottom: 2px;
+	left: calc(-1 * (14px + 3px));
+	width: 3px;
+	background: var(--color-neutral-400);
+}
+
+.kt-industry .kt-page .kt-next-step.is-turn::before {
+	background: var(--color-accent);
+}

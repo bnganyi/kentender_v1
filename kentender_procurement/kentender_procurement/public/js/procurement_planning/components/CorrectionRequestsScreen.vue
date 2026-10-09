@@ -72,30 +72,30 @@
 								<div class="kt-meta-row">
 									<div>
 										<span class="kt-label">Full requested change</span>
-										<span class="kt-meta-value">{{ row.change_required }}</span>
+										<span class="kt-meta-value is-plain">{{ row.change_required }}</span>
 									</div>
 									<div>
 										<span class="kt-label">Affected purchase</span>
-										<span class="kt-meta-value">{{ task.title }}</span>
+										<span class="kt-meta-value is-plain">{{ task.title }}</span>
 									</div>
 									<div>
 										<span class="kt-label">Requested by</span>
-										<span class="kt-meta-value">{{ row.detail.requested_by }}</span>
+										<span class="kt-meta-value is-plain">{{ row.detail.requested_by }}</span>
 									</div>
 									<div>
 										<span class="kt-label">Requested at</span>
-										<span class="kt-meta-value">{{ row.detail.requested_display }}</span>
+										<span class="kt-meta-value is-plain">{{ row.detail.requested_display }}</span>
 									</div>
 									<div>
 										<span class="kt-label">Originating record</span>
-										<span class="kt-meta-value">
+										<span class="kt-meta-value is-plain">
 											{{ row.detail.requisition_reference }}
 											<template v-if="row.detail.requisition_version"> · Version {{ row.detail.requisition_version }}</template>
 										</span>
 									</div>
 									<div>
 										<span class="kt-label">Request</span>
-										<span class="kt-meta-value">{{ row.detail.request }}</span>
+										<span class="kt-meta-value is-plain">{{ row.detail.request }}</span>
 									</div>
 								</div>
 
@@ -104,15 +104,15 @@
 								<div v-if="row.can_record_completed" class="kt-meta-row" data-testid="cor-correcting-plan">
 									<div>
 										<span class="kt-label">Correcting plan</span>
-										<span class="kt-meta-value">{{ correctingPlan.plan_reference }}</span>
+										<span class="kt-meta-value is-plain">{{ correctingPlan.plan_reference }}</span>
 									</div>
 									<div>
 										<span class="kt-label">Version</span>
-										<span class="kt-meta-value">{{ correctingPlan.version_number }}</span>
+										<span class="kt-meta-value is-plain">{{ correctingPlan.version_number }}</span>
 									</div>
 									<div>
 										<span class="kt-label">Activation date</span>
-										<span class="kt-meta-value">{{ correctingPlan.activated_display }}</span>
+										<span class="kt-meta-value is-plain">{{ correctingPlan.activated_display }}</span>
 									</div>
 								</div>
 
@@ -120,15 +120,15 @@
 								<div v-if="row.terminal" class="kt-meta-row" data-testid="cor-outcome">
 									<div>
 										<span class="kt-label">Outcome recorded</span>
-										<span class="kt-meta-value">{{ row.detail.resolved_display }}</span>
+										<span class="kt-meta-value is-plain">{{ row.detail.resolved_display }}</span>
 									</div>
 									<div>
 										<span class="kt-label">Recorded by</span>
-										<span class="kt-meta-value">{{ row.detail.resolved_by }}</span>
+										<span class="kt-meta-value is-plain">{{ row.detail.resolved_by }}</span>
 									</div>
 									<div>
 										<span class="kt-label">Note</span>
-										<span class="kt-meta-value">{{ row.detail.resolution_note }}</span>
+										<span class="kt-meta-value is-plain">{{ row.detail.resolution_note }}</span>
 									</div>
 								</div>
 
@@ -201,11 +201,11 @@
 					<div class="kt-meta-row">
 						<div>
 							<span class="kt-label">Department</span>
-							<span class="kt-meta-value">{{ source.department }}</span>
+							<span class="kt-meta-value is-plain">{{ source.department }}</span>
 						</div>
 						<div>
 							<span class="kt-label">Quantity</span>
-							<span class="kt-meta-value">{{ source.quantity_display }}</span>
+							<span class="kt-meta-value is-plain">{{ source.quantity_display }}</span>
 						</div>
 						<div>
 							<span class="kt-label">Amount</span>
@@ -213,22 +213,22 @@
 						</div>
 						<div>
 							<span class="kt-label">Accepted requirement</span>
-							<span class="kt-meta-value">{{ source.entry_id }}</span>
+							<span class="kt-meta-value is-plain">{{ source.entry_id }}</span>
 						</div>
 					</div>
 					<!-- Three results, none of which implies another. -->
 					<div class="kt-meta-row" data-testid="cor-additional-results">
 						<div>
 							<span class="kt-label">Annual plan</span>
-							<span class="kt-meta-value">{{ source.annual_plan_result }}</span>
+							<span class="kt-meta-value is-plain">{{ source.annual_plan_result }}</span>
 						</div>
 						<div>
 							<span class="kt-label">Procurement</span>
-							<span class="kt-meta-value">{{ source.procurement_result }}</span>
+							<span class="kt-meta-value is-plain">{{ source.procurement_result }}</span>
 						</div>
 						<div>
 							<span class="kt-label">Completion</span>
-							<span class="kt-meta-value">{{ source.completion_result }}</span>
+							<span class="kt-meta-value is-plain">{{ source.completion_result }}</span>
 						</div>
 					</div>
 				</div>

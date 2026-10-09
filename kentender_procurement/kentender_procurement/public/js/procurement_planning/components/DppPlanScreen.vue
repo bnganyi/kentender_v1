@@ -53,34 +53,34 @@
 			<div class="kt-meta-row is-tight pln-context-row" data-testid="pln-dpp-context">
 				<div>
 					<span class="kt-label">Department</span>
-					<span class="kt-meta-value">{{ context.department }}</span>
+					<span class="kt-meta-value is-plain">{{ context.department }}</span>
 				</div>
 				<div>
 					<span class="kt-label">Financial year</span>
-					<span class="kt-meta-value">{{ context.financial_year }}</span>
+					<span class="kt-meta-value is-plain">{{ context.financial_year }}</span>
 				</div>
 				<!-- U02-AUTHOR-DRAFT: the reduced tracker states the stage, so the
 				     Status cell goes (v1.27 §10.4); every other variant keeps it. -->
 				<div v-if="!plan.journey?.reduced">
 					<span class="kt-label">Status</span>
-					<span class="kt-meta-value">
+					<span class="kt-meta-value is-plain">
 						<span class="kt-status" :class="`is-${plan.header?.badge_kind || 'draft'}`">{{ plan.header?.badge }}</span>
 					</span>
 				</div>
 				<div v-if="plan.accepted_submission_number">
 					<span class="kt-label">Accepted submission</span>
-					<span class="kt-meta-value">{{ plan.accepted_submission_number }}</span>
+					<span class="kt-meta-value is-plain">{{ plan.accepted_submission_number }}</span>
 				</div>
 				<!-- U05-CORRECTION — which submission Procurement returned, named
 				     separately from the correction draft's own eventual submission
 				     number below it. -->
 				<div v-if="plan.is_correction && plan.returned_submission_number">
 					<span class="kt-label">Returned submission</span>
-					<span class="kt-meta-value">{{ plan.returned_submission_number }}</span>
+					<span class="kt-meta-value is-plain">{{ plan.returned_submission_number }}</span>
 				</div>
 				<div v-if="plan.is_correction && plan.candidate_submission_number">
 					<span class="kt-label">Correction submission</span>
-					<span class="kt-meta-value">{{ plan.candidate_submission_number }}</span>
+					<span class="kt-meta-value is-plain">{{ plan.candidate_submission_number }}</span>
 				</div>
 			</div>
 
@@ -157,7 +157,13 @@
 							<td class="is-num">{{ row.quantity_number }}</td>
 							<td>{{ row.unit_label }}</td>
 							<td>{{ row.required_by_display }}</td>
-							<td class="is-num">{{ row.amount_display }}</td>
+							<td class="is-num">
+								{{ row.amount_display }}
+								<!-- v1.30 §10.4 — the accepted requirement's estimate and the change, information only -->
+								<div v-if="row.estimate_change_display" class="kt-muted pln-row-ref" style="max-width: 24ch; margin-left: auto; white-space: normal; text-align: right" data-testid="pln-dpp-estimate-change">
+									Accepted requirement estimate: {{ row.need_estimate_display }}. Change: {{ row.estimate_change_display }}.
+								</div>
+							</td>
 							<td><span class="kt-status" :class="`is-${row.status_kind}`">{{ row.status }}</span></td>
 							<td>
 								<!-- U03-FUNDING — the row whose panel is already open beneath

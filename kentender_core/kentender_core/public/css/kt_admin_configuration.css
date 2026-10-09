@@ -142,33 +142,6 @@
 	background: color-mix(in srgb, var(--kt-color-text) 6%, transparent);
 }
 
-/* The segmented control has no shared class yet; it is the only composition
-   on these dialogs the token sheet does not already provide. */
-.kt-industry .kt-seg {
-	display: flex;
-	width: 100%;
-	border: 1px solid var(--kt-color-divider);
-}
-.kt-industry .seg-opt {
-	flex: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 6px;
-	padding: 8px 10px;
-	font-size: 14px;
-	cursor: pointer;
-	margin: 0;
-}
-.kt-industry .seg-opt:first-child {
-	border-right: 1px solid var(--kt-color-divider);
-}
-.kt-industry .seg-opt.is-selected {
-	background: var(--kt-color-accent-100);
-	color: var(--kt-color-accent-800);
-	font-weight: 600;
-}
-
 /* AUTH-DES-04 — controls drawn as the artboard draws them. */
 
 .kt-industry .kt-date-field {

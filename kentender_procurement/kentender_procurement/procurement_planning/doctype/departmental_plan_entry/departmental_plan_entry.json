@@ -20,6 +20,7 @@
   "required_by_date",
   "budget_line",
   "indicative_amount",
+  "need_estimated_total_cost",
   "not_proceeding_reason",
   "fixture_namespace"
  ],
@@ -134,6 +135,13 @@
    "fieldtype": "Currency",
    "label": "Indicative Amount",
    "description": "Planning-owned entry value. Required before submission and greater than zero. Currency is read from the Budget Line."
+  },
+  {
+   "fieldname": "need_estimated_total_cost",
+   "fieldtype": "Currency",
+   "label": "Need Estimated Total Cost",
+   "read_only": 1,
+   "description": "Need origin only. The accepted Need revision's estimated total cost (NDS-CHG-001 v1.17 §4.3): the entry's starting amount and the reference for the change shown to the Head of User Department and Procurement. Planning reads it and never writes it back, and never sums it into any total (PLN-CHG-001 v1.30 §4.3). Empty when the revision has none."
   },
   {
    "fieldname": "not_proceeding_reason",

@@ -185,6 +185,42 @@ def _pack_nodes():
 
 
 def _classes(selector: str) -> set[str]:
+#: The access state ("You do not have access to ..."). The pack draws it as `.kt-empty` + `.kt-spot.is-neutral` on the white sheet below a
+#: 1px rule (readme, "Empty, success, error and access states"); the access state stands alone on the sheet, with no heading above it for the rule to separate, so it drops the rule. Modules had each rebuilt it by hand (a blueprint card, a notice, a bare
+#: heading, a panel) and no two matched. `.kt-access` is the one remaining piece the pack does not size: the heading over the lock spot,
+#: the reason beneath it, and the hint, always on the same top margin and measure and never centred vertically on the page.
+ACCESS = (
+	".kt-industry .kt-empty.kt-access {\n\tpadding: var(--space-8) var(--space-6);\n\tgap: var(--space-3);\n\talign-content: start;\n\tborder-top: 0;\n}",
+	".kt-industry .kt-empty.kt-access h2 {\n\tmargin: var(--space-2) 0 0;\n\tmax-width: 52ch;\n\tfont-family: var(--font-heading);\n\tfont-weight: var(--font-heading-weight);\n\tfont-size: 23px;\n\tline-height: 1.25;\n\tcolor: var(--color-heading);\n\ttext-wrap: balance;\n}",
+	".kt-industry .kt-empty.kt-access p {\n\tmax-width: 60ch;\n\tfont-size: 14.5px;\n\tline-height: 1.55;\n\tcolor: var(--color-neutral-700);\n}",
+	".kt-industry .kt-empty.kt-access .kt-access-actions {\n\tmargin-top: var(--space-2);\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\tjustify-content: center;\n\tgap: var(--space-2);\n}",
+)
+
+#: Fact values. The pack's `.kt-meta-value` is the figure style (heading face, 18px: an amount, a count, a total, an identifier).
+#: A recorded fact (a name, a date, a reference, a status) that a board draws as plain text under its label is the same
+#: label with a plain value; `.is-plain` is that one shared form, so no module carries its own copy of the rule. Planning's
+#: boards draw their recorded facts this way (plain body-face text, 14px); a screen that left the figure style on a fact set
+#: a date as large and as heavy as its own section heading (found live 9 Oct 2026, the publication details).
+FACTS = (
+	".kt-industry .kt-meta-value.is-plain {\n\tfont-family: inherit;\n\tfont-weight: 400;\n\tfont-size: 14px;\n}",
+)
+
+
+ALIGN = (
+	# A flat section has no box, so its content starts where its heading starts. The pack's
+	# own rules inset a group, a table's first column and a disclosure by one gutter, which
+	# only reads as tidy inside a card (Budget). The rule of a group hangs in the gutter.
+	".kt-industry .kt-page .kt-region .table th:first-child,\n.kt-industry .kt-page .kt-region .table td:first-child {\n\tpadding-left: 0;\n}",
+	".kt-industry .kt-page .kt-region .table th:last-child,\n.kt-industry .kt-page .kt-region .table td:last-child {\n\tpadding-right: 0;\n}",
+	".kt-industry .kt-page > .kt-disclosure .kt-disclosure-head,\n.kt-industry .kt-page > .kt-disclosure .kt-disclosure-body,\n.kt-industry .kt-page .kt-region .kt-disclosure .kt-disclosure-head,\n.kt-industry .kt-page .kt-region .kt-disclosure .kt-disclosure-body {\n\tpadding-left: 0;\n\tpadding-right: 0;\n}",
+	".kt-industry .kt-page .kt-group {\n\tposition: relative;\n\tborder-left: 0;\n\tpadding-left: 0;\n}",
+	".kt-industry .kt-page .kt-group::before {\n\tcontent: \"\";\n\tposition: absolute;\n\ttop: 2px;\n\tbottom: 2px;\n\tleft: calc(-1 * (var(--space-4) + 2px));\n\twidth: 2px;\n\tbackground: var(--color-divider);\n}",
+	".kt-industry .kt-page > .kt-guidance-mount > .kt-guidance {\n\tpadding-left: 0;\n\tpadding-right: 0;\n}",
+	".kt-industry .kt-page .kt-next-step.is-turn,\n.kt-industry .kt-page .kt-next-step.is-waiting,\n.kt-industry .kt-page .kt-next-step.is-done {\n\tposition: relative;\n\tborder-left: 0;\n\tpadding-left: 0;\n}",
+	".kt-industry .kt-page .kt-next-step.is-turn::before,\n.kt-industry .kt-page .kt-next-step.is-waiting::before,\n.kt-industry .kt-page .kt-next-step.is-done::before {\n\tcontent: \"\";\n\tposition: absolute;\n\ttop: 2px;\n\tbottom: 2px;\n\tleft: calc(-1 * (14px + 3px));\n\twidth: 3px;\n\tbackground: var(--color-neutral-400);\n}",
+	".kt-industry .kt-page .kt-next-step.is-turn::before {\n\tbackground: var(--color-accent);\n}",
+)
+
 	return set(re.findall(r"\.([A-Za-z_][\w-]*)", selector))
 
 
@@ -309,6 +345,9 @@ def _old_token_values() -> dict[str, str]:
 	return {n: " ".join(v.split()) for n, v in re.findall(r"(--kt-[\w-]+)\s*:\s*([^;]+);", OLD.read_text(encoding="utf-8"))}
 
 
+	parts += ["/* Part 9: the access state (\"You do not have access to ...\") */", *ACCESS]
+	parts += ["/* Part 10: a recorded fact beside the pack's figure style (.kt-meta-value) */", *FACTS]
+	parts += ["/* Part 11: flat sections start content at the heading's edge */", *ALIGN]
 if __name__ == "__main__":
 	if "--renames" in sys.argv:
 		for old, new in RENAMES.items():

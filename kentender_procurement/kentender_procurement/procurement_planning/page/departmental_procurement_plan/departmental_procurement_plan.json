@@ -4,32 +4,13 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-09-05 04:53:08.732423",
+ "modified": "2026-10-09 15:00:00.000000",
  "modified_by": "Administrator",
  "owner": "Administrator",
  "module": "Procurement Planning",
  "name": "departmental-procurement-plan",
  "page_name": "departmental-procurement-plan",
- "roles": [
-  {
-   "role": "Administrator"
-  },
-  {
-   "role": "System Manager"
-  },
-  {
-   "role": "Departmental Author"
-  },
-  {
-   "role": "Head of User Department"
-  },
-  {
-   "role": "Procurement Planner"
-  },
-  {
-   "role": "Auditor"
-  }
- ],
+ "roles": [],
  "script": null,
  "standard": "Yes",
  "style": null,

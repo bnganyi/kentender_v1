@@ -21,15 +21,15 @@
 		<div class="kt-meta-row" data-testid="dpp-funding-summary">
 			<div>
 				<span class="kt-label">Requirement</span>
-				<span class="kt-meta-value">{{ entry.title }}</span>
+				<span class="kt-meta-value is-plain">{{ entry.title }}</span>
 			</div>
 			<div>
 				<span class="kt-label">Quantity</span>
-				<span class="kt-meta-value">{{ entry.quantity_display }}</span>
+				<span class="kt-meta-value is-plain">{{ entry.quantity_display }}</span>
 			</div>
 			<div>
 				<span class="kt-label">Required by</span>
-				<span class="kt-meta-value">{{ entry.required_by_display }}</span>
+				<span class="kt-meta-value is-plain">{{ entry.required_by_display }}</span>
 			</div>
 		</div>
 
@@ -42,27 +42,27 @@
 				<div class="kt-meta-row">
 					<div>
 						<span class="kt-label">Requirement title</span>
-						<span class="kt-meta-value">{{ entry.title }}</span>
+						<span class="kt-meta-value is-plain">{{ entry.title }}</span>
 					</div>
 					<div>
 						<span class="kt-label">Description</span>
-						<span class="kt-meta-value">{{ entry.description }}</span>
+						<span class="kt-meta-value is-plain">{{ entry.description }}</span>
 					</div>
 					<div>
 						<span class="kt-label">Expected result</span>
-						<span class="kt-meta-value">{{ entry.expected_operational_result }}</span>
+						<span class="kt-meta-value is-plain">{{ entry.expected_operational_result }}</span>
 					</div>
 					<div>
 						<span class="kt-label">Quantity</span>
-						<span class="kt-meta-value">{{ quantityNumber }}</span>
+						<span class="kt-meta-value is-plain">{{ quantityNumber }}</span>
 					</div>
 					<div>
 						<span class="kt-label">Unit</span>
-						<span class="kt-meta-value">{{ entry.unit_label }}</span>
+						<span class="kt-meta-value is-plain">{{ entry.unit_label }}</span>
 					</div>
 					<div>
 						<span class="kt-label">Required by</span>
-						<span class="kt-meta-value">{{ entry.required_by_display }}</span>
+						<span class="kt-meta-value is-plain">{{ entry.required_by_display }}</span>
 					</div>
 				</div>
 			</div>
@@ -103,6 +103,11 @@
 			<div class="kt-field-hint" data-testid="dpp-funding-amount-hint">
 				Enter the full estimated cost, including applicable delivery and other incidental costs.
 			</div>
+			<!-- PLN-CHG-001 v1.30 §10.4 U03-FUNDING-CHANGED — information only: the
+			     accepted requirement's estimate and how far this amount has moved
+			     from it. Absent when equal, with no estimate, or for a direct
+			     requirement. It adds no required input. -->
+			<div v-if="estimateLine" class="kt-field-hint" data-testid="dpp-funding-estimate-line">{{ estimateLine }}</div>
 		</div>
 
 		<p v-if="error" class="pln-error-summary" data-testid="dpp-funding-error">{{ error }}</p>
@@ -170,5 +175,15 @@ const selectedLineReference = computed(() => {
 
 // Both facts are needed for the requirement to count as funded; the control
 // says so by staying unavailable rather than failing on the server.
+const money = (value) => `KES ${Math.round(Math.abs(value)).toLocaleString("en-US")}`;
+// v1.30 §4.3 rule 4 — the accepted Need's estimate and the signed change, live as typed
+const estimateLine = computed(() => {
+	const estimate = Number(entry.value.need_estimated_total_cost || 0);
+	const amount = Number(props.amount || 0);
+	if (!(estimate > 0) || !(amount > 0) || Math.abs(estimate - amount) < 0.000001) return "";
+	const delta = amount - estimate;
+	return `Accepted requirement estimate: ${money(estimate)}. Change: ${delta > 0 ? "+" : "\u2212"}${money(delta)}.`;
+});
+
 const canSave = computed(() => Boolean(props.budgetLine) && Number(props.amount) > 0);
 </script>

@@ -28,6 +28,23 @@ def _money(amount: float) -> str:
 	return f"KES {fmt_money(flt(amount), precision=0, currency=None).strip()}"
 
 
+def estimate_change(need_estimate, planning_amount) -> dict[str, Any]:
+	"""PLN-CHG-001 v1.30 §4.3 rule 4 — the accepted Need's estimate and the signed
+	change to the planning amount, as display text. Empty when there is no
+	estimate, no planning amount or no difference. Information only: it adds no
+	required input, reason or blocker, and is never summed into a total."""
+	estimate, amount = flt(need_estimate), flt(planning_amount)
+	if estimate <= 0 or amount <= 0 or round(estimate, 6) == round(amount, 6):
+		return {"need_estimate_display": _money(estimate) if estimate > 0 else "", "estimate_change_display": "", "estimate_change": 0}
+	delta = amount - estimate
+	sign = "+" if delta > 0 else "\u2212"
+	return {
+		"need_estimate_display": _money(estimate),
+		"estimate_change_display": f"{sign}{_money(abs(delta))}",
+		"estimate_change": delta,
+	}
+
+
 def _date(value) -> str:
 	return formatdate(value, "d MMM yyyy") if value else ""
 
@@ -202,7 +219,7 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 			fields=[
 				"entry_id", "source_origin", "need", "need_revision", "title", "description",
 				"expected_operational_result", "quantity", "unit", "required_by_date",
-				"budget_line", "indicative_amount", "not_proceeding_reason",
+				"budget_line", "indicative_amount", "need_estimated_total_cost", "not_proceeding_reason",
 			],
 			order_by="creation asc",
 			limit_page_length=0,
@@ -255,9 +272,10 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 					"required_by_display": _date(row.required_by_date),
 					"budget_line_display": (line.get("reference") or cstr(row.budget_line)) if row.budget_line else ("—" if not_proceeding else "Not selected"),
 					"amount_display": (
-						_money(row.indicative_amount) if funded
+						_money(row.indicative_amount) if flt(row.indicative_amount) > 0 and not not_proceeding
 						else ("Not applicable" if not_proceeding else "Not entered")
 					),
+					**(estimate_change(row.need_estimated_total_cost, row.indicative_amount) if need_origin and not not_proceeding else {}),
 					"status": status,
 					"status_kind": kind,
 					"not_proceeding_reason": cstr(row.not_proceeding_reason),
@@ -497,6 +515,9 @@ def get_dpp_entry_editor(*, dpp_reference: str, entry_id: str | None = None, use
 			"required_by_display": _date(entry.required_by_date),
 			"budget_line": cstr(entry.budget_line),
 			"indicative_amount": flt(entry.indicative_amount) or None,
+			# the numeric reference lets the funding panel show the change live as the preparer types
+			"need_estimated_total_cost": (flt(entry.need_estimated_total_cost) or None) if entry.source_origin == needs_intake.NEED_ORIGIN else None,
+			**(estimate_change(entry.need_estimated_total_cost, entry.indicative_amount) if entry.source_origin == needs_intake.NEED_ORIGIN else {}),
 			"not_proceeding_reason": cstr(entry.not_proceeding_reason),
 			"need_reference_line": (
 				f"{entry.need} · Revision {needs_intake.need_revision_number(entry.need_revision)}" if entry.need else ""
@@ -623,6 +644,10 @@ def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, 
 			"amount_display": (
 				"Not applicable" if cstr(row.get("not_proceeding_reason")).strip()
 				else _money(row.get("indicative_amount"))
+			),
+			**(
+				estimate_change(row.get("need_estimated_total_cost"), row.get("indicative_amount"))
+				if row.get("need") and not cstr(row.get("not_proceeding_reason")).strip() else {}
 			),
 			"description": row.get("description"),
 			"expected_operational_result": row.get("expected_operational_result"),

@@ -267,3 +267,43 @@ describe("NeedEditorScreen — the Unit list could not be loaded", () => {
 		expect(make().find('[data-testid="nds-units-error"]').exists()).toBe(false);
 	});
 });
+
+// NDS-CHG-001 v1.17 §11.19 / NDS17-AC-001 — Estimated cost sits after Quantity and
+// Unit, labelled with the Budget currency read-only, and an amount of zero is named.
+describe("NeedEditorScreen — Estimated cost", () => {
+	it("shows the field with its helper and the year's currency beside the label", () => {
+		const w = make({ context: { organisation_unit_label: "Digital Health", financial_year_label: "FY 2027/28", estimate_currency: "KES" } });
+		expect(w.get('[data-testid="nds-estimated-cost"]').exists()).toBe(true);
+		expect(w.get('[data-testid="nds-estimated-cost-currency"]').text()).toBe("(KES)");
+		expect(w.text()).toContain("Enter the full estimated cost, including applicable delivery and other incidental costs.");
+	});
+
+	it("comes after the Quantity and Unit row and before Required by", () => {
+		const html = make().html();
+		const at = (id) => html.indexOf(`data-testid="${id}"`);
+		expect(at("nds-unit")).toBeLessThan(at("nds-estimated-cost"));
+		expect(at("nds-estimated-cost")).toBeLessThan(at("nds-required-by"));
+	});
+
+	it("names an amount of zero and sends nothing", async () => {
+		const w = make();
+		await w.get('[data-testid="nds-estimated-cost"]').setValue("0");
+		await w.get('[data-testid="nds-submit"]').trigger("click");
+		expect(w.get('[data-testid="nds-estimated-cost-error"]').text()).toBe("Enter an amount greater than zero.");
+		expect(w.emitted("submit")).toBeUndefined();
+	});
+
+	it("starts from the revision's estimate and sends it with the form", async () => {
+		const w = make({ mode: "draft", need: { need_reference: "NDS-MOH-2027-0004" }, revision: { revision_status: "Draft", revision_number: 1, estimated_total_cost: "30000000" } });
+		expect(w.get('[data-testid="nds-estimated-cost"]').element.value).toBe("30000000");
+		await w.get('[data-testid="nds-save-draft"]').trigger("click");
+		expect(w.emitted("save")[0][0].estimated_total_cost).toBe("30000000");
+	});
+
+	it("leaves the field empty for a revision without an estimate, and a Draft may save that way", async () => {
+		const w = make({ mode: "draft", need: { need_reference: "NDS-MOH-2027-0004" }, revision: { revision_status: "Draft", revision_number: 1 } });
+		expect(w.get('[data-testid="nds-estimated-cost"]').element.value).toBe("");
+		await w.get('[data-testid="nds-save-draft"]').trigger("click");
+		expect(w.find('[data-testid="nds-estimated-cost-error"]').exists()).toBe(false);
+	});
+});

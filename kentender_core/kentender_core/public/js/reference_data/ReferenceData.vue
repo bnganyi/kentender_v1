@@ -14,6 +14,7 @@ import ContextDetail from "./components/context/ContextDetail.vue";
 import ContextNew from "./components/context/ContextNew.vue";
 import { useReferenceData } from "./composables/useReferenceData.js";
 import { useRouteState } from "./composables/useRouteState.js";
+import AccessDenied from "../access_shared/AccessDenied.vue";
 
 const { pe, fy, context, peTypes, forbidden, refreshPe, refreshFy, refreshContext, refreshAll, loadPeTypes, checkAccess } =
 	useReferenceData();
@@ -83,10 +84,8 @@ const availableFyOptionsForContext = computed(() =>
 	<div class="kt-industry" style="min-height:100vh;display:flex;flex-direction:column">
 		<PageRail :trail="railTrail" />
 
-		<div v-if="forbidden" class="card blueprint kt-empty" data-testid="rd-forbidden" style="margin:36px 48px">
-			<i class="corner tl" /><i class="corner tr" /><i class="corner bl" /><i class="corner br" />
-			<h2>{{ __(forbidden.heading) }}</h2>
-			<p>{{ __(forbidden.text) }}</p>
+		<div v-if="forbidden" class="kt-page" data-testid="rd-forbidden">
+			<AccessDenied :heading="__(forbidden.heading)" :text="__(forbidden.text)" />
 		</div>
 
 		<template v-else-if="route.view === 'list'">

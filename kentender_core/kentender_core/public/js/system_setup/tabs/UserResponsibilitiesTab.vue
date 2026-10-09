@@ -18,6 +18,7 @@ import ResponsibilityDetail from "../components/ResponsibilityDetail.vue";
 import RevokeDialog from "../components/RevokeDialog.vue";
 import StaffHomeUnitsSection from "../components/StaffHomeUnitsSection.vue";
 import { responsibilityApi } from "../data/responsibilityApi.js";
+import AccessDenied from "../../access_shared/AccessDenied.vue";
 
 const props = defineProps({
 	// Preset unit filter when arriving from "View affected responsibilities".
@@ -243,10 +244,7 @@ async function submitRevocation(reason) {
 				<div class="kt-skel" style="width:90%" />
 				<div class="kt-skel" style="width:70%" />
 			</div>
-			<div v-else-if="forbidden" class="kt-ura-state" data-testid="kt-ura-forbidden">
-				<p style="font-weight:600;margin:0 0 4px">{{ __("You do not have access to System setup") }}</p>
-				<p class="card-body" style="margin:0">{{ __("This area needs Administrator or System Manager access. Ask your KenTender administrator to grant it.") }}</p>
-			</div>
+			<AccessDenied v-else-if="forbidden" :heading="__('You do not have access to System setup')" :text="__('This area needs Administrator or System Manager access. Ask your KenTender administrator to grant it.')" testid="kt-ura-forbidden" />
 			<div v-else-if="detailError" class="kt-ura-state" role="alert" data-testid="kt-ura-detail-error">
 				<p style="font-weight:600;margin:0 0 4px">{{ __("Responsibilities could not be loaded") }}</p>
 				<p class="card-body" style="margin:0 0 16px">{{ __("Try again. If the problem continues, contact support.") }}</p>
@@ -280,11 +278,7 @@ async function submitRevocation(reason) {
 					</table>
 				</div>
 			</div>
-			<div v-else-if="registerState === 'forbidden'" class="kt-ura-state" data-testid="kt-ura-forbidden">
-				<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--kt-color-neutral-400)" stroke-width="1.5" aria-hidden="true" style="margin:0 auto 12px"><rect x="5" y="11" width="14" height="10" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
-				<p style="font-weight:600;margin:0 0 4px">{{ __("You do not have access to System setup") }}</p>
-				<p class="card-body" style="margin:0 auto;max-width:52ch">{{ __("This area needs Administrator or System Manager access. Ask your KenTender administrator to grant it.") }}</p>
-			</div>
+			<AccessDenied v-else-if="registerState === 'forbidden'" :heading="__('You do not have access to System setup')" :text="__('This area needs Administrator or System Manager access. Ask your KenTender administrator to grant it.')" testid="kt-ura-forbidden" />
 			<div v-else-if="registerState === 'error'" class="kt-ura-state" role="alert" data-testid="kt-ura-error">
 				<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--kt-color-neutral-400)" stroke-width="1.5" aria-hidden="true" style="margin:0 auto 12px"><circle cx="12" cy="12" r="9" /><path d="M12 8v5" /><path d="M12 16h.01" /></svg>
 				<p style="font-weight:600;margin:0 0 4px">{{ __("Responsibilities could not be loaded") }}</p>

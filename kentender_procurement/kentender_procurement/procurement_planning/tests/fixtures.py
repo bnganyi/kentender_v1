@@ -445,8 +445,11 @@ def _strategy_world() -> None:
 	STRATEGY_OBJECTIVE_PATH = "PLNT Pillar › PLNT Programme"
 
 
-def accepted_source(need_id: str = NEED, *, version: str = NEED_V1, title: str = "Test requirement", quantity: float = 1.0) -> dict:
-	"""A DepartmentalNeedAccepted.v2-shaped payload for patching the intake."""
+def accepted_source(
+	need_id: str = NEED, *, version: str = NEED_V1, title: str = "Test requirement", quantity: float = 1.0,
+	estimate: str | None = None,
+) -> dict:
+	"""A DepartmentalNeedAccepted.v3-shaped payload for patching the intake."""
 	return {
 		"need_id": need_id,
 		"need_reference": need_id,
@@ -462,6 +465,7 @@ def accepted_source(need_id: str = NEED, *, version: str = NEED_V1, title: str =
 		"unit_id": UNIT,
 		"unit_display_value": "Each",
 		"required_by_date": "2102-05-31",
+		"estimated_total_cost": estimate,
 	}
 
 

@@ -128,7 +128,7 @@ test.describe("§14 persona pass on the seeded world", () => {
 		await login(page, SAMUEL, PASSWORD);
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
-		await expect(page.locator('[data-testid="pln-forbidden"] h3')).toHaveText("You do not have access to Procurement Planning");
+		await expect(page.locator('[data-testid="pln-forbidden"] h2')).toHaveText("You do not have access to Procurement Planning");
 		await expect(page.locator('[data-testid="pln-context-strip"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="pln-departmental-table"]')).toHaveCount(0);
 	});

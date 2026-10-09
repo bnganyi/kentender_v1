@@ -43,7 +43,21 @@ const LOCAL_TABS_ARE_V112 = [
 	},
 ];
 
+// The access state is the one every module shares (the design pack's `.kt-empty` + `.kt-spot`, sized by `.kt-access`), not each
+// board's own hand-drawn notice or bare panel: they were a dozen different "no access" screens.
+const ACCESS_AUTHORITY = "Project Owner instruction, 9 Oct 2026: one consistent access state across modules; design pack readme, empty and access states";
+const accessState = (testid, replaces = []) => [
+	{
+		testid,
+		replaces,
+		because: "The board draws its own denied panel; the build draws the shared access state (lock spot, heading, reason) as every module does.",
+		authority: ACCESS_AUTHORITY,
+	},
+];
+
 export const DEPARTURES = {
+	"Common#denied": accessState("kt-procset-forbidden", ["notice.is-critical"]),
+	"C06#auth-des-08~forbidden": accessState("kt-ura-forbidden"),
 	"C06#auth-des-03": LOCAL_TABS_ARE_V112,
 	"C06#auth-des-08~loading": LOCAL_TABS_ARE_V112,
 	"C06#auth-des-08~empty": LOCAL_TABS_ARE_V112,

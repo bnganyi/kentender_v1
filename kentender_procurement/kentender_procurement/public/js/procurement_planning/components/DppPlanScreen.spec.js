@@ -316,3 +316,20 @@ describe("DppPlanScreen — U05-CORRECTION and U02-CLOSED", () => {
 		expect(w.find('[data-testid="pln-dpp-submit"]').exists()).toBe(false);
 	});
 });
+
+// PLN-CHG-001 v1.30 §10.4 — certification and the register show the change from the accepted estimate
+describe("DppPlanScreen — the accepted requirement's estimate (v1.30)", () => {
+	it("shows the accepted estimate and the change beneath a revised amount, and nothing otherwise", () => {
+		const changed = { ...LAPTOPS, amount_display: "KES 35,000,000", need_estimate_display: "KES 30,000,000", estimate_change_display: "+KES 5,000,000" };
+		const w = make({ plan: plan({ entries: [INFRASTRUCTURE, changed] }) });
+		const lines = w.findAll('[data-testid="pln-dpp-estimate-change"]');
+		expect(lines).toHaveLength(1);
+		expect(lines[0].text()).toBe("Accepted requirement estimate: KES 30,000,000. Change: +KES 5,000,000.");
+	});
+
+	it("adds no column and no blocker", () => {
+		const changed = { ...LAPTOPS, need_estimate_display: "KES 30,000,000", estimate_change_display: "+KES 5,000,000" };
+		const w = make({ plan: plan({ entries: [changed] }) });
+		expect(w.findAll("thead th")).toHaveLength(make().findAll("thead th").length);
+	});
+});

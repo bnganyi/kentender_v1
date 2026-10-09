@@ -5,6 +5,7 @@ import ConfirmDialog from "../../budget_shared/components/ConfirmDialog.vue";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { formatKes, formatSignedKes, mintKey } from "../../budget_shared/data/formatKes.js";
+import AccessDenied from "../../budget_shared/components/AccessDenied.vue";
 import {
 	getBudgetVersionDraft,
 	saveBudgetVersionDraft,
@@ -481,7 +482,11 @@ function restoreLine(o) {
 
 		<div v-if="loading" class="kt-shell"><div class="card blueprint"><div class="kt-skel" style="width: 240px; height: 20px"></div></div></div>
 		<div v-else-if="notFound" class="kt-shell"><div class="card blueprint kt-empty" data-testid="bud-editor-not-found"><h2>{{ __("This budget version could not be found.") }}</h2></div></div>
-		<div v-else-if="forbidden" class="kt-shell"><div class="card blueprint kt-empty" data-testid="bud-editor-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p v-if="forbidden.text" class="kt-muted">{{ __(forbidden.text) }}</p></div></div>
+		<div v-else-if="forbidden" class="kt-shell">
+			<div class="kt-page" data-testid="bud-editor-forbidden">
+				<AccessDenied :heading="__(forbidden.heading)" :text="__(forbidden.text || '')" />
+			</div>
+		</div>
 		<div v-else-if="serverError" class="kt-shell"><div class="card blueprint kt-empty"><h2>{{ __("This budget version could not be loaded.") }}</h2><button type="button" class="btn btn-primary" @click="loadDraft()">{{ __("Try again") }}</button></div></div>
 
 		<template v-else-if="draft">

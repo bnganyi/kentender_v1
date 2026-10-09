@@ -267,6 +267,7 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 			"expected_operational_result": "Facilities can use the deployed digital health services.",
 			"indicative_quantity": 10,
 			"unit": "Each",
+			"estimated_total_cost": 1000000,
 			"required_by_date": "2027-12-31",
 		}
 		values.update(overrides)

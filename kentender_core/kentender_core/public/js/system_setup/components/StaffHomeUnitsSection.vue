@@ -13,6 +13,7 @@ import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
 import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 import SetHomeUnitDialog from "./SetHomeUnitDialog.vue";
 import { newIdempotencyKey, staffHomeUnitApi } from "../data/staffHomeUnitApi.js";
+import AccessDenied from "../../access_shared/AccessDenied.vue";
 
 const loading = ref(true);
 const loadError = ref("");
@@ -108,10 +109,7 @@ async function submit(unit) {
 <template>
 	<div class="kt-staff-home-units" data-testid="kt-staff-home-units">
 		<template v-if="forbidden">
-			<div class="kt-ura-state" data-testid="kt-home-forbidden">
-				<p style="font-weight:600;margin:0 0 4px">{{ __("You do not have access to System setup") }}</p>
-				<p class="card-body" style="margin:0 auto;max-width:52ch">{{ __("This area needs Administrator or System Manager access. Ask your KenTender administrator to grant it.") }}</p>
-			</div>
+			<AccessDenied :heading="__('You do not have access to System setup')" :text="__('This area needs Administrator or System Manager access. Ask your KenTender administrator to grant it.')" testid="kt-home-forbidden" />
 		</template>
 		<template v-else-if="loading && !rows.length">
 			<div role="status" aria-live="polite" data-testid="kt-home-loading">

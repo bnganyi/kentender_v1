@@ -42,18 +42,13 @@
 		     dropping a real read-eligible role from this help text would mislead
 		     a Planner into thinking they have no path in. -->
 		<div v-else-if="outcome === 'NO_AUTHORISED_CONTEXT'" class="kt-page">
-			<div
-				style="max-width: 620px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px"
-			>
-				<div style="font-family: var(--kt-font-heading); font-size: 20px; font-weight: 600">
-					You do not have access to Departmental Needs
-				</div>
-				<p style="margin: 0; font-size: 14.5px; color: var(--kt-color-neutral-700)">
-					This area needs one of these responsibilities: Departmental Author, Head of User
-					Department, Procurement Planner or Auditor, assigned to an organisation unit. Ask your
-					KenTender administrator to assign one in System setup.
-				</p>
-			</div>
+			<AccessDenied
+				heading="You do not have access to Departmental Needs"
+				:text="[
+					'This area needs one of these responsibilities: Departmental Author, Head of User Department, Procurement Planner or Auditor, assigned to an organisation unit.',
+					'Ask your KenTender administrator to assign one in System setup.',
+				]"
+			/>
 		</div>
 
 		<div v-else class="kt-page">
@@ -321,6 +316,7 @@
 <script setup>
 import { computed } from "vue";
 import NeedsTable from "./NeedsTable.vue";
+import AccessDenied from "../../access_shared/AccessDenied.vue";
 import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
 import StatusPill from "./StatusPill.vue";
 import { formatInstant } from "../data/format.js";

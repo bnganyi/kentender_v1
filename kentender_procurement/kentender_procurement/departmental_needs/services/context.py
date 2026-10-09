@@ -23,6 +23,7 @@ from frappe.utils import cstr, get_datetime, getdate, now_datetime
 
 from kentender_procurement.departmental_needs.constants import INTAKE_CLOSED, INTAKE_OPEN
 from kentender_procurement.departmental_needs.errors import fail
+from kentender_procurement.departmental_needs.services import estimate
 from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
 	creation_contexts,
@@ -184,6 +185,8 @@ def list_need_create_targets(user: str | None = None) -> dict[str, Any]:
 		"organisation_units": organisation_units,
 		"financial_year": state["financial_year"] if state["open"] else "",
 		"financial_year_label": state["label"] if state["open"] else "",
+		# NDS-CHG-001 v1.17 §11.19 — the read-only currency beside Estimated cost
+		"estimate_currency": estimate.currency_of(state["financial_year"]) if state["open"] else "",
 		# The editor limits Required by to these dates (UAT issue #25); the
 		# server enforces the same window on every save.
 		"financial_year_start": year["start_date"] if year else "",
