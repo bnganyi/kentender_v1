@@ -291,6 +291,14 @@
 .kt-industry .kt-checkbox input:checked + .box { background: var(--kt-color-accent); border-color: var(--kt-color-accent); }
 .kt-industry .kt-checkbox input:checked + .box::after { content: ""; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .kt-industry .kt-checkbox input:focus-visible + .box { outline: 1px solid var(--kt-color-accent-700); outline-offset: 2px; }
+/* The kit holds wherever it sits. A form field's own `label` rule (block, 12px, bottom margin) outranks `.kt-checkbox`
+   on element specificity, which turned the label into a block and the drawn box into an inline span with no size: a
+   2px sliver. Restating the label's layout at field specificity makes a checkbox or radio choice look the same inside any
+   `.field`, so no screen needs its own patch (the portal and Planning's certification block each carried one). */
+.kt-industry .field > label.kt-checkbox { display: inline-flex; align-items: flex-start; gap: 8px; margin-bottom: 0; font-size: 14px; color: var(--kt-color-text); }
+/* One checkbox kit draws a radio choice too: a round box and a dot, not a tick. */
+.kt-industry .kt-checkbox input[type="radio"] + .box { border-radius: 50%; }
+.kt-industry .kt-checkbox input[type="radio"]:checked + .box::after { left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border: 0; border-radius: 50%; background: #fff; transform: none; }
 
 /* Round radio button (an explicit, mutually-exclusive choice — e.g. County
    entity Yes/No — CFG-CHG-002 v0.11 C01, never a checkbox stand-in). */
@@ -947,6 +955,7 @@
 /* Inside a page sheet, a disclosure is a rule band, not a nested card;
    .kt-notice/.kt-status/.table keep their own fill or rule unchanged. */
 .kt-industry .kt-page .kt-disclosure { border-left: 0; border-right: 0; border-bottom: 0; }
+	.kt-industry .kt-checkbox input[type="radio"]:checked + .box::after { background: Canvas; }
 
 /* Empty / filtered-empty inside the sheet — scoped so the existing
    full-panel .kt-empty rule other modules (Planning, Tenders, system
