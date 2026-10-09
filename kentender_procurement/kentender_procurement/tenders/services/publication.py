@@ -311,7 +311,7 @@ def get_tender_publication(*, tender: str, user: str | None = None) -> dict[str,
 		# TPR-DES-07 key facts: Purchase … Submission deadline, Tendering period, Reservation
 		"key_facts": _authorisation_facts(root, version, snapshot, tendering_days),
 		"documents": read.documents_for(root, version),
-		"sections": read.review_sections(root, version, snapshot, review.summary(version), internal=True),
+		"sections": read.review_sections(root, version, snapshot, review.summary(version), internal=True, digests=read.reads_digests(mode, actor)),
 		"proposed_channels": [{"channel": c["channel"], "label": c["label"], "how": "HOPF confirmation with evidence", "result": "Not started"} for c in (rule or {}).get("channels", [])],
 		"rule": {"rule_snapshot_id": rule["rule_snapshot_id"], "minimum_preparation_days": rule["minimum_preparation_days"], "contributing_versions": rule["contributing_versions"]} if rule else None,
 		"rule_error": rule_error,

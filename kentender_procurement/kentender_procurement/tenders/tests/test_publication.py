@@ -291,6 +291,11 @@ class TestAuthorise(PublicationCase):
 		name, approved = self._approved()
 		trail = publication.get_tender_publication(tender=name, user=fx.AO)["approval_trail"]
 		self.assertNotIn("package_digest", trail)
+		# the sections below the trail carry the same Technical evidence block: no digest for the Accounting Officer
+		sections = publication.get_tender_publication(tender=name, user=fx.AO)["sections"]
+		labels = {f["label"] for s in sections if s["key"] == "technical" for b in s["blocks"] for f in b.get("facts", [])}
+		self.assertFalse([label for label in labels if label.endswith("digest")])
+		self.assertIn("Template", labels)
 		self.assertEqual(sorted(trail), ["approved_at_label", "approved_by_name", "prepared_by_name", "version_number"])
 		root = frappe.get_doc("Tender", name)
 		out = publication.authorise_tender_publication(tender=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO, task=approved["task"])

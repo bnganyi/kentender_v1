@@ -737,6 +737,14 @@ def decisions_for(root) -> list[dict[str, Any]]:
 # --------------------------------------------------------------------------
 
 
+def reads_digests(mode: str, actor: str) -> bool:
+	"""Who sees the 64-character digests in the Technical evidence section. Owner, 10 October 2026 (option 1): only a technical reader
+	or an Auditor. They are technical detail (TPR09-AC-071; the owner's 2 October decision that digests live only under technical
+	details), so the Procurement Officer, the Head of Procurement Function and the Accounting Officer read the identities and
+	mappings without them. The same rule holds for the Requisition record's details."""
+	return mode == "technical" or authz.can_read_site(ROLE_AUDITOR, actor)
+
+
 def _facts_block(facts: list[tuple[str, str] | tuple[str, str, bool]]) -> dict[str, Any]:
 	return {"kind": "facts", "facts": [{"label": f[0], "value": cstr(f[1]), "wide": bool(f[2]) if len(f) > 2 else False} for f in facts]}
 
@@ -759,7 +767,7 @@ def _template_label(version) -> str:
 		return cstr(version.template_release_id)
 
 
-def _section_bodies(root, version, snapshot: dict[str, Any], state: dict[str, Any], evidence_rows: list[dict[str, Any]], *, internal: bool) -> dict[str, list[dict[str, Any]]]:
+def _section_bodies(root, version, snapshot: dict[str, Any], state: dict[str, Any], evidence_rows: list[dict[str, Any]], *, internal: bool, digests: bool = False) -> dict[str, list[dict[str, Any]]]:
 	"""§10.6 items 5–7 — each review section's content as the boards draw it
 	(fact grids, titled tables, the evaluation list). Shared by DES-05/06/07/09."""
 	meeting = serializer._meeting_details(state)
@@ -793,7 +801,7 @@ def _section_bodies(root, version, snapshot: dict[str, Any], state: dict[str, An
 	# W1: the board regeneration dropped §10.6 item 7's mappings and digests;
 	# restored here (registered in the fidelity departures).
 	technical_facts.append(("Requirement mappings", f"{mappings['technical_requirements']} technical requirements → {mappings['responses']} supplier responses, {mappings['evaluation']} evaluation checks, {mappings['contract']} contract obligations", True))
-	if internal:
+	if digests:
 		for label, field in (("Package digest", "package_digest"), ("Response schema digest", "response_schema_digest"), ("Evaluation contract digest", "evaluation_contract_digest"), ("Contract projection digest", "contract_projection_digest"), ("Requisition snapshot digest", "requisition_snapshot_digest")):
 			if version.get(field):
 				technical_facts.append((label, cstr(version.get(field)), True))
@@ -824,7 +832,7 @@ def _section_bodies(root, version, snapshot: dict[str, Any], state: dict[str, An
 	}
 
 
-def review_sections(root, version, snapshot: dict[str, Any], summary: dict[str, Any], *, internal: bool) -> list[dict[str, Any]]:
+def review_sections(root, version, snapshot: dict[str, Any], summary: dict[str, Any], *, internal: bool, digests: bool = False) -> list[dict[str, Any]]:
 	"""§10.6 items 5–7 — six sections, each a plain summary plus its content
 	blocks; only a section holding a Must fix or a Review note starts open,
 	and it carries the count tag (§10.6 item 5)."""
@@ -845,14 +853,14 @@ def review_sections(root, version, snapshot: dict[str, Any], summary: dict[str, 
 		parts = ([f"{must} must fix"] if must else []) + ([f"{notes} review note{'s' if notes != 1 else ''}"] if notes else [])
 		return " · ".join(parts)
 
-	bodies = _section_bodies(root, version, snapshot, state, evidence_rows, internal=internal)
+	bodies = _section_bodies(root, version, snapshot, state, evidence_rows, internal=internal, digests=digests)
 	heads = [
 		("details", "Tender details", f"Issue {serializer.fmt_date_short(state.get('issue_date'))} · clarification {serializer.fmt_datetime_short(state.get('clarification_deadline'))} · submission {serializer.fmt_datetime_short(state.get('submission_deadline'))} · validity {serializer.fmt_number(state.get('tender_validity_days'))} days · security KES {serializer.fmt_money(state.get('tender_security_amount'))}"),
 		("requirements", "Requirements from the authorised requisition", f"{len(snapshot.get('items') or [])} items · {len(snapshot.get('technical_requirements') or [])} technical requirements · {len(snapshot.get('acceptance_requirements') or [])} acceptance checks"),
 		("pricing", "Supplier pricing schedule", f"{len(lines)} line{'s' if len(lines) != 1 else ''} · unit price and tax completed by supplier · totals calculated from supplier response"),
 		("supplier", "Supplier and evaluation requirements", _supplier_summary(state, evidence_rows)),
 		("contract", "Contract terms", f"Payment {serializer.fmt_number(state.get('payment_timing_days'))} days · performance security {serializer.fmt_number(state.get('performance_security_percent')) + '%' if state.get('performance_security_required') else 'not required'} · delay damages {serializer.fmt_number(state.get('delay_damages_per_week_percent'))}% per week, maximum {serializer.fmt_number(state.get('maximum_delay_damages_percent'))}%"),
-		("technical", "Technical evidence", f"Template {cstr(version.template_release_id)} · {len(lines)} rendered line{'s' if len(lines) != 1 else ''} from {len(snapshot.get('items') or [])} items"),
+		("technical", "Technical evidence", f"{_template_label(version)} · {len(lines)} rendered line{'s' if len(lines) != 1 else ''} from {len(snapshot.get('items') or [])} items"),
 	]
 	return [{"key": key, "title": title, "summary": text, "tag": tag(key), "open": bool(tag(key)), "blocks": bodies[key]} for key, title, text in heads]
 
@@ -922,7 +930,7 @@ def get_tender_review(*, tender: str, user: str | None = None) -> dict[str, Any]
 		"version": version_summary(version),
 		"review": summary,
 		"key_facts": key_facts(root, version, snapshot, internal=internal),
-		"sections": review_sections(root, version, snapshot, summary, internal=internal),
+		"sections": review_sections(root, version, snapshot, summary, internal=internal, digests=reads_digests(mode, actor)),
 		"documents": documents_for(root, version) if internal else [],
 		# the fresh review decides: a must-fix item withdraws Submit (§10.6 Needs attention)
 		"allowed_actions": [a for a in allowed_actions(root, version, actor, roles) if not (a == "submit_for_approval" and summary["must_fix_count"])] if mode != "department" else ["view_history"],
