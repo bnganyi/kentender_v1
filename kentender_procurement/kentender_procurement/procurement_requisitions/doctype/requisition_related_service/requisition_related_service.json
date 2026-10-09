@@ -10,6 +10,7 @@
   "service_type",
   "applies_to_scope",
   "applies_to_id",
+  "applies_to_item_ids_json",
   "required_result",
   "quantity_or_coverage",
   "completion_date",
@@ -35,13 +36,19 @@
    "fieldname": "applies_to_scope",
    "fieldtype": "Select",
    "label": "Applies To Scope",
-   "options": "Item\nAll items",
+   "options": "Item\nItems\nAll items",
    "reqd": 1
   },
   {
    "fieldname": "applies_to_id",
    "fieldtype": "Data",
    "label": "Applies To Id"
+  },
+  {
+   "fieldname": "applies_to_item_ids_json",
+   "fieldtype": "Small Text",
+   "label": "Applies To Item Ids (JSON)",
+   "description": "REQ v1.18 §5.7A: the exact requisition_item_id list this row covers. Empty on rows saved before v1.18."
   },
   {
    "fieldname": "required_result",

@@ -46,6 +46,7 @@ class RequisitionAuthorizationCase(IntegrationTestCase):
 	def _complete_draft(self, prepared: dict) -> None:
 		fx.fill_request_information(prepared["requisition"])
 		fx.add_laptops(prepared["requisition"])
+		fx.enter_estimates(prepared["requisition"])
 		fx.apply_standard_package(prepared["requisition"])
 
 

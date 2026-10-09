@@ -31,8 +31,16 @@ OPEN_STATES = ("Draft", "Awaiting Department Approval", "Submitted to Procuremen
 _BOOKKEEPING = frozenset({"name", "owner", "creation", "modified", "modified_by", "docstatus", "idx", "parent", "parentfield", "parenttype", "doctype"})
 
 
+#: REQ v1.18 §5.7A — fields added to a child row after Versions were already locked. A row that holds no value for
+#: one is dumped exactly as before, so a Version locked earlier keeps its content digest.
+_OMIT_WHEN_EMPTY = frozenset({"applies_to_item_ids_json"})
+
+
 def child_rows(doc, fieldname: str) -> list[dict[str, Any]]:
-	return [{k: v for k, v in row.as_dict().items() if k not in _BOOKKEEPING} for row in doc.get(fieldname) or []]
+	return [
+		{k: v for k, v in row.as_dict().items() if k not in _BOOKKEEPING and not (k in _OMIT_WHEN_EMPTY and not v)}
+		for row in doc.get(fieldname) or []
+	]
 
 
 #: The commands that put the actor's work into a Draft. The Requisition Command Journal is the immutable
@@ -41,7 +49,7 @@ EDIT_COMMANDS = (
 	"PrepareITEquipmentRequisition", "SaveRequisitionSummary", "AddSameSpecificationItems", "UpdateSharedItemDetails",
 	"UpdateRequisitionItem", "RemoveRequisitionItem", "SaveRequirementProposalDraft", "ApplySelectedRequirementPackage",
 	"ResetStandardValues", "SaveWarrantyAndSupport",
-	"AddTechnicalRequirement", "UpdateTechnicalRequirement", "RemoveTechnicalRequirement",
+	"AddTechnicalRequirement", "UpdateTechnicalRequirement", "RemoveTechnicalRequirement", "CustomiseRequirementForItem",
 	"AddRelatedService", "UpdateRelatedService", "RemoveRelatedService",
 	"AddAcceptanceRequirement", "UpdateAcceptanceRequirement", "RemoveAcceptanceRequirement",
 	"AddSupportingMaterial", "UpdateSupportingMaterial", "RemoveSupportingMaterial",
@@ -222,10 +230,19 @@ def default_lead(lines: list[dict[str, Any]]) -> str:
 	the sorted stable OU identity."""
 	from kentender_procurement.procurement_requisitions.services import precision
 
-	totals: dict[str, Any] = {}
-	for line in lines:
-		unit = line.get("contributing_org_unit") or ""
-		totals[unit] = totals.get(unit, 0) + precision.stored_money(line.get("requested_value"))
+	def aggregate(field: str) -> dict[str, Any]:
+		totals: dict[str, Any] = {}
+		for line in lines:
+			unit = line.get("contributing_org_unit") or ""
+			totals[unit] = totals.get(unit, 0) + precision.stored_money(line.get(field))
+		return totals
+
+	totals = aggregate("requested_value")
+	# v1.15 §7.3A: until a valid estimated total cost exists the established rule
+	# is applied to what remains on each line, which is what the v1.14 default
+	# produced; once estimates exist it follows them.
+	if not totals or max(totals.values()) <= 0:
+		totals = aggregate("remaining_value")
 	if not totals:
 		return ""
 	best = max(totals.values())

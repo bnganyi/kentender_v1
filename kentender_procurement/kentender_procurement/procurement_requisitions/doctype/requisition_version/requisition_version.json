@@ -31,6 +31,8 @@
   "submitted_authority_snapshot",
   "submitted_at",
   "basis_snapshot_json",
+  "unreviewed_line_ids_json",
+  "omitted_lines_json",
   "content_digest",
   "section_lines",
   "drawdown_lines",
@@ -186,6 +188,22 @@
    "label": "Basis snapshot",
    "description": "§5.14 — exact Planning/Budget identities, currency basis and eligibility observation time frozen at lock.",
    "read_only": 1
+  },
+  {
+   "fieldname": "unreviewed_line_ids_json",
+   "fieldtype": "Long Text",
+   "label": "Lines awaiting review",
+   "description": "REQ-CHG-001 v1.15 §20 — drawdown line ids of a Draft carried over from v1.14 whose quantity and estimated total cost the requester has not yet reviewed. Set at migration; a line leaves the list when its estimated total cost is saved. Blocks submission while non-empty. Not part of the content digest.",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "omitted_lines_json",
+   "fieldtype": "Long Text",
+   "label": "Source lines omitted at submission",
+   "description": "REQ-CHG-001 v1.15 §5.3 — the drawdown lines with no items and no estimated total cost that were left out of the submitted snapshot, kept as history and restored into a copied Draft. Not part of the content digest.",
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "content_digest",

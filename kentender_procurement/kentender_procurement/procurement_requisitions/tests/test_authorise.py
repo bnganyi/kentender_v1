@@ -27,7 +27,7 @@ def _effects(item_id: str, reference: str) -> tuple[int, int]:
 
 
 class TestAuthorise(RequisitionCase):
-	def test_one_transaction_creates_every_effect_one_reservation_per_line_and_a_v14_handoff(self):
+	def test_one_transaction_creates_every_effect_one_reservation_per_line_and_a_v15_handoff(self):
 		_, item_id = fx.active_combined_item()
 		requisition = fx.submitted(item_id)
 		result = fx.authorise(requisition)
@@ -39,7 +39,7 @@ class TestAuthorise(RequisitionCase):
 		self.assertEqual(_effects(item_id, root.requisition_reference), (2, 2))
 		self.assertTrue(frappe.db.get_value("Plan Item", item_id, "scope_locked_since"))
 		payload = json.loads(frappe.db.get_value("Authorised Requisition Handoff", root.handoff, "payload_json"))
-		self.assertEqual(payload["handoff_version"], "1.4")
+		self.assertEqual(payload["handoff_version"], "1.5")  # v1.18 §5.12 (1.4 before)
 		self.assertEqual(len(payload["drawdown_lines"]), 2)
 		self.assertTrue(all(isinstance(l["requested_value"], str) for l in payload["drawdown_lines"]))
 		self.assertEqual(len(payload["compatibility"]), 9)

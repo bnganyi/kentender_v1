@@ -201,6 +201,7 @@ def authorised_handoff(*, items: tuple[tuple[str, int, str], ...] = (("Business 
 	requisition = req_fx.prepare(item_id)["requisition"]
 	req_fx.fill_request_information(requisition)
 	req_fx.add_laptops(requisition, item_name=items[0][0])
+	req_fx.enter_estimates(requisition)
 	req_fx.apply_standard_package(requisition)
 	req_fx.send(requisition)
 	req_fx.submit_as_hod(requisition)

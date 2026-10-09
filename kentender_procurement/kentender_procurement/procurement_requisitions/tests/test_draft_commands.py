@@ -37,7 +37,7 @@ class RequisitionCase(IntegrationTestCase):
 
 
 class TestPrepare(RequisitionCase):
-	def test_creates_one_draft_with_exact_default_amounts_and_no_budget_or_planning_effect(self):
+	def test_creates_one_draft_with_nothing_requested_and_no_budget_or_planning_effect(self):
 		_, item_id = fx.active_combined_item()
 		prepared = fx.prepare(item_id)
 		self.assertEqual(prepared["action"], "created")
@@ -47,7 +47,7 @@ class TestPrepare(RequisitionCase):
 		self.assertTrue(root.plan_item_version_id)
 		self.assertEqual({row.organisation_unit for row in root.contributing_org_units}, {fx.ou_alpha(), fx.ou_beta()})
 		self.assertEqual(root.lead_org_unit_id, fx.ou_alpha())  # the larger drawn value leads
-		self.assertEqual(sorted((l.requested_quantity, l.requested_value) for l in version.drawdown_lines), [("100", "20000000.00"), ("150", "30000000.00")])
+		self.assertEqual(sorted((l.requested_quantity, l.requested_value) for l in version.drawdown_lines), [("0", "0.00"), ("0", "0.00")])  # v1.15: nothing is defaulted
 		self.assertEqual(version.prepared_by, fx.AUTHOR)
 		self.assertEqual(package_version.standard_package_review_state, "Not generated")
 		self.assertEqual(frappe.db.count("Funding Reservation", {"calling_module": "Procurement Requisitions"}), 0)
@@ -95,13 +95,13 @@ class TestRequestDetails(RequisitionCase):
 		alpha = next(r for r in view["amounts"] if r["contributing_org_unit"] == fx.ou_alpha())
 		self.assertTrue(beta["editable"])
 		self.assertFalse(alpha["editable"])
-		cmd.save_requisition_summary(requisition=requisition, values={"drawdown_lines": [{"drawdown_line_id": beta["drawdown_line_id"], "requested_quantity": "80", "requested_value": "16000000.00"}]}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
+		cmd.save_requisition_summary(requisition=requisition, values={"drawdown_lines": [{"drawdown_line_id": beta["drawdown_line_id"], "requested_value": "16000000.00"}]}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
 		view = fx.editor(requisition, fx.CONTRIBUTOR)
 		with self.assertRaises(ProcurementRequisitionsError) as ctx:
 			cmd.save_requisition_summary(requisition=requisition, values={"requirement_title": "A contributor retitling the shared request"}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
 		self.assertCode(ctx, "REQ_RESPONSIBILITY_REQUIRED")
 		with self.assertRaises(ProcurementRequisitionsError) as ctx:
-			cmd.save_requisition_summary(requisition=requisition, values={"drawdown_lines": [{"drawdown_line_id": alpha["drawdown_line_id"], "requested_quantity": "1", "requested_value": "1.00"}]}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
+			cmd.save_requisition_summary(requisition=requisition, values={"drawdown_lines": [{"drawdown_line_id": alpha["drawdown_line_id"], "requested_value": "1.00"}]}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
 		self.assertCode(ctx, "REQ_RESPONSIBILITY_REQUIRED")
 
 	def test_amounts_are_exact_and_bounded_by_what_remains(self):
@@ -109,18 +109,19 @@ class TestRequestDetails(RequisitionCase):
 		requisition = fx.prepare(item_id)["requisition"]
 		view = fx.editor(requisition)
 		line = view["amounts"][0]
-		for value, code in (("50000000.01", "REQ_BALANCE_CHANGED"), ("1.005", "REQ_MONEY_PRECISION_INVALID"), (100.0, "REQ_MONEY_PRECISION_INVALID")):
+		for value, code in (("50000000.01", "REQ_ESTIMATE_EXCEEDS_ALLOWANCE"), ("1.005", "REQ_MONEY_PRECISION_INVALID"), (100.0, "REQ_MONEY_PRECISION_INVALID")):
 			with self.subTest(value=value):
 				with self.assertRaises(ProcurementRequisitionsError) as ctx:
-					cmd.save_requisition_summary(requisition=requisition, values={"drawdown_lines": [{"drawdown_line_id": line["drawdown_line_id"], "requested_quantity": "1", "requested_value": value}]}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
+					cmd.save_requisition_summary(requisition=requisition, values={"drawdown_lines": [{"drawdown_line_id": line["drawdown_line_id"], "requested_value": value}]}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
 				self.assertCode(ctx, code)
 
-	def test_the_lead_follows_the_drawn_amounts(self):
+	def test_the_lead_follows_the_entered_estimates(self):
 		_, item_id = fx.active_combined_item()
 		requisition = fx.prepare(item_id)["requisition"]
 		view = fx.editor(requisition)
 		alpha = next(r for r in view["amounts"] if r["contributing_org_unit"] == fx.ou_alpha())
-		cmd.save_requisition_summary(requisition=requisition, values={"drawdown_lines": [{"drawdown_line_id": alpha["drawdown_line_id"], "requested_quantity": "10", "requested_value": "1000000.00"}]}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
+		beta = next(r for r in view["amounts"] if r["contributing_org_unit"] == fx.ou_beta())
+		cmd.save_requisition_summary(requisition=requisition, values={"drawdown_lines": [{"drawdown_line_id": alpha["drawdown_line_id"], "requested_value": "1000000.00"}, {"drawdown_line_id": beta["drawdown_line_id"], "requested_value": "5000000.00"}]}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
 		self.assertEqual(frappe.db.get_value("Procurement Requisition", requisition, "lead_org_unit_id"), fx.ou_beta())
 
 
@@ -142,18 +143,16 @@ class TestSameSpecificationItems(RequisitionCase):
 		_, item_id = fx.active_combined_item()
 		requisition = fx.prepare(item_id)["requisition"]
 		view = fx.editor(requisition)
-		rows = [{"drawdown_line_id": r["drawdown_line_id"], "quantity": r["quantity"], "intended_use": "Field deployment for staff"} for r in view["equipment"]["add_rows"]]
-		rows[1]["quantity"] = rows[1]["quantity"] - 10
+		rows = [{"drawdown_line_id": r["drawdown_line_id"], "quantity": r["room"], "intended_use": "Field deployment for staff"} for r in view["equipment"]["add_rows"]]
+		over = rows[1]["quantity"] + 10
+		rows[1]["quantity"] = over
 		with self.assertRaises(ProcurementRequisitionsError) as ctx:
 			cmd.add_same_specification_items(requisition=requisition, shared={"equipment_category": "Laptop", "item_name": "Business laptops"}, rows=rows, expected_record_version=view["package_record_version"], idempotency_key=fx.key())
-		self.assertCode(ctx, "REQ_BATCH_ITEM_INVALID")
+		self.assertCode(ctx, "REQ_QUANTITY_EXCEEDS_AVAILABLE")
 		self.assertIn(rows[1]["drawdown_line_id"], ctx.exception.detail["rows"])
-		# REQ-DES-04-VALIDATION: the field says what it must be; the notice
-		# states the whole mismatch in the board's words.
-		wanted = rows[1]["quantity"] + 10
-		self.assertEqual(ctx.exception.detail["rows"][rows[1]["drawdown_line_id"]], f"Must be {wanted:,} Each")
+		# REQ-DES-04-VALIDATION (v1.15): the row says the real limit and what was entered.
 		name = next(r["department"] for r in view["equipment"]["add_rows"] if r["drawdown_line_id"] == rows[1]["drawdown_line_id"])
-		self.assertEqual(str(ctx.exception), f"Requested equipment quantity for {name} is {wanted - 10:,} Each but the approved requirement requests {wanted:,} Each")
+		self.assertEqual(ctx.exception.detail["rows"][rows[1]["drawdown_line_id"]], f"{name} can request at most {over - 10:,} Each for this requirement; you entered {over:,}.")
 		self.assertEqual(len(records.load(requisition)[2].items), 0)
 
 	def test_shared_edit_changes_every_named_item_and_a_category_change_regenerates_the_proposal(self):
@@ -178,13 +177,14 @@ class TestStandardPackage(RequisitionCase):
 		requisition = fx.prepare(item_id)["requisition"]
 		fx.fill_request_information(requisition)
 		fx.add_laptops(requisition)
+		fx.enter_estimates(requisition)
 		return requisition
 
 	def test_apply_records_exactly_the_visible_selection_and_marks_reviewed(self):
 		requisition = self._ready()
 		view = fx.editor(requisition)
 		technical, acceptance, support = fx.visible_proposal(view)
-		technical[4]["selected"] = False  # clear Storage type
+		technical[5]["selected"] = False  # clear Display size (not one of the baseline requirements every laptop must be covered by, REQ v1.18 §6.5A)
 		acceptance[0]["pass_condition"] = "Delivered quantities equal the authorised delivery schedule"
 		req = view["requirements"]
 		cmd.apply_selected_requirement_package(requisition=requisition, profile_key=req["profile_key"], profile_version=req["profile_version"], proposal_digest=req["proposal_digest"], technical=technical, acceptance=acceptance, support=support, expected_record_version=view["package_record_version"], idempotency_key=fx.key())
@@ -192,7 +192,7 @@ class TestStandardPackage(RequisitionCase):
 		self.assertEqual(package_version.standard_package_review_state, "Reviewed")
 		self.assertEqual(len(package_version.technical_requirements), 10)
 		self.assertTrue(all(r.row_state == "Confirmed" for r in package_version.technical_requirements + package_version.acceptance_requirements))
-		self.assertNotIn("storage_type", {r.characteristic_key for r in package_version.technical_requirements})
+		self.assertNotIn("display_size", {r.characteristic_key for r in package_version.technical_requirements})
 		self.assertEqual(package_version.acceptance_requirements[0].pass_condition, "Delivered quantities equal the authorised delivery schedule")
 		tasks = {t["key"]: t["status"] for t in fx.editor(requisition)["tasks"]}
 		self.assertEqual(tasks, {"request_details": "Complete", "requirements": "Complete", "review_submit": "Not started"})
@@ -260,5 +260,5 @@ class TestEditorProjection(RequisitionCase):
 		self.assertEqual([(t["label"], t["status"]) for t in view["tasks"]], [("Request details", "Needs attention"), ("Requirements", "Not started"), ("Review and submit", "Not started")])
 		self.assertEqual(view["header"]["badge"]["label"], "Draft")
 		self.assertEqual(len(view["amounts"]), 2)
-		self.assertFalse(any(r["changed"] for r in view["amounts"]))
+		self.assertEqual([(r["requested_quantity_value"], r["requested_value_value"]) for r in view["amounts"]], [("0", ""), ("0", "")], "v1.15: nothing is requested until the requester enters it")
 		self.assertEqual(view["footer_hints"]["request_details"], "Select the delivery location.")

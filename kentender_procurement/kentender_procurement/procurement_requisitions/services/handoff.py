@@ -28,13 +28,21 @@ import frappe
 from frappe.utils import cstr, now_datetime
 
 from kentender_procurement.procurement_requisitions.services import digest, envelope, precision, records
+from kentender_procurement.procurement_requisitions.services import scope as req_scope
 from kentender_procurement.procurement_requisitions.services.errors import fail
 
-HANDOFF_VERSION = "1.4"
+#: v1.5 (REQ-CHG-001 v1.18 §5.12): every requirement row also carries `applies_to_item_ids`, the exact items it
+#: covers. Tender Preparation accepts 1.4 as well, so an authorisation made before v1.18 stays usable.
+HANDOFF_VERSION = "1.5"
 
 
 def _rows(doc, fieldname: str, fields: tuple[str, ...]) -> list[dict[str, Any]]:
 	return [{f: row.get(f) for f in fields} for row in doc.get(fieldname) or []]
+
+
+def _scoped_rows(doc, fieldname: str, fields: tuple[str, ...]) -> list[dict[str, Any]]:
+	"""Requirement rows with the exact items each covers (§5.7A); a row locked before v1.18 is read from its scope."""
+	return [{**{f: row.get(f) for f in fields}, "applies_to_item_ids": req_scope.item_ids(row, doc.items)} for row in doc.get(fieldname) or []]
 
 
 def build_payload(*, root, version, package_version, projection: dict[str, Any], checks: list[Any], reservations: list[dict[str, Any]], hopf_decision) -> dict[str, Any]:
@@ -60,7 +68,8 @@ def build_payload(*, root, version, package_version, projection: dict[str, Any],
 		"requisition_id": root.name, "requisition_reference": root.requisition_reference, "requisition_version": version.name, "content_digest": version.content_digest,
 		"fiscal_year": projection.get("fiscal_year"), "plan_id": root.plan_id, "plan_version_id": root.plan_version_id,
 		"plan_item_id": root.plan_item_id, "plan_item_version_id": root.plan_item_version_id,
-		"contributing_org_unit_ids": sorted(records.contributing_units(root)),
+		# v1.15 §5.2 — a submitted Version's contributing departments are those of its retained source lines.
+		"contributing_org_unit_ids": sorted({line.contributing_org_unit for line in version.drawdown_lines}),
 		"strategic_objective_id": root.strategic_objective_id, "strategic_objective_path": root.strategic_objective_path,
 		"procurement_category": root.procurement_category, "plan_horizon": root.plan_horizon,
 		"business_need": "; ".join(sorted({s.get("description", "") for s in projection.get("sources", []) if s.get("description")})),
@@ -76,9 +85,9 @@ def build_payload(*, root, version, package_version, projection: dict[str, Any],
 		"items": _rows(package_version, "items", ("requisition_item_id", "drawdown_line_id", "plan_item_line_id", "equipment_category", "item_name", "quantity", "unit", "intended_use", "delivery_location", "latest_delivery_date")),
 		"warranty_support": {f: package_version.get(f) for f in ("minimum_warranty_months", "onsite_support_required", "maximum_support_response_hours", "manufacturer_support_required", "service_location_constraint", "support_description")},
 		"standard_profile": {"key": package_version.standard_profile_key, "version": package_version.standard_profile_version},
-		"technical_requirements": _rows(package_version, "technical_requirements", ("technical_requirement_id", "applies_to_scope", "applies_to_id", "characteristic_key", "comparison", "required_value_json", "required_value_display", "unit", "other_value", "reason")),
-		"related_services": _rows(package_version, "related_services", ("service_requirement_id", "service_type", "applies_to_scope", "applies_to_id", "required_result", "quantity_or_coverage", "completion_date", "acceptance_evidence", "other_evidence_name")),
-		"acceptance_requirements": _rows(package_version, "acceptance_requirements", ("acceptance_requirement_id", "applies_to_scope", "applies_to_id", "check_type", "pass_condition", "evidence_type", "other_evidence_name")),
+		"technical_requirements": _scoped_rows(package_version, "technical_requirements", ("technical_requirement_id", "applies_to_scope", "applies_to_id", "characteristic_key", "comparison", "required_value_json", "required_value_display", "unit", "other_value", "reason")),
+		"related_services": _scoped_rows(package_version, "related_services", ("service_requirement_id", "service_type", "applies_to_scope", "applies_to_id", "required_result", "quantity_or_coverage", "completion_date", "acceptance_evidence", "other_evidence_name")),
+		"acceptance_requirements": _scoped_rows(package_version, "acceptance_requirements", ("acceptance_requirement_id", "applies_to_scope", "applies_to_id", "check_type", "pass_condition", "evidence_type", "other_evidence_name")),
 		"supporting_materials": _rows(package_version, "supporting_materials", ("supporting_material_id", "title", "document_type", "other_document_type", "purpose", "treatment", "file_digest", "linked_requirement_ids_json", "document_version")),
 		"product_pattern": "IT Equipment",
 		"compatibility": [c.as_dict() for c in checks],

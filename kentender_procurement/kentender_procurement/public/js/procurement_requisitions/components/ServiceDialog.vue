@@ -42,6 +42,7 @@
 			<label :for="`${id}-other`">Name of the evidence record</label>
 			<input :id="`${id}-other`" v-model="form.other_evidence_name" class="input" />
 		</div>
+		<AppliesToField :view="view" :scope="form.applies_to_scope" :item-id="form.applies_to_id" :item-ids="form.applies_to_item_ids" @update="Object.assign(form, $event)" />
 		<Notice v-if="otherError" tone="critical">{{ otherError }}</Notice>
 		<template #actions>
 			<button type="button" class="btn btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
@@ -55,6 +56,7 @@ import { computed, reactive } from "vue";
 import { useReq } from "../data/context.js";
 import DateField from "./shared/DateField.vue";
 import DialogFrame from "./shared/DialogFrame.vue";
+import AppliesToField from "./shared/AppliesToField.vue";
 import Notice from "./shared/Notice.vue";
 
 const props = defineProps({ view: { type: Object, required: true }, row: { type: Object, default: null } });
@@ -67,7 +69,7 @@ const r = props.row || {};
 const form = reactive({
 	service_type: r.service_type || "", required_result: r.required_result || "", quantity_or_coverage: r.quantity_or_coverage || "",
 	completion_date: r.completion_date || "", acceptance_evidence: r.acceptance_evidence || "", other_evidence_name: r.other_evidence_name || "",
-	applies_to_scope: r.applies_to_scope || "All items", applies_to_id: r.applies_to_id || "",
+	applies_to_scope: r.applies_to_scope || "All items", applies_to_id: r.applies_to_id || "", applies_to_item_ids: r.applies_to_item_ids || [],
 });
 const LABEL = props.row ? "update-service" : "add-service";
 const error = computed(() => (ctx.commandError.value && ctx.commandError.value.label === LABEL ? ctx.commandError.value : null));

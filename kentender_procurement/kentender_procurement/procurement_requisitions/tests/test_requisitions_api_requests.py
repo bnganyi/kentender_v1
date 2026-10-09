@@ -73,9 +73,14 @@ class TestTheFullRequisitionJourneyOverTheRequestPath(RequestShapedCase):
 			expected_record_version=str(view["header"]["version_record_version"]), idempotency_key=self.key(),
 		)
 		view = self.call("get_requisition_record", requisition=requisition)
-		rows = [{"drawdown_line_id": r["drawdown_line_id"], "quantity": str(r["quantity"]), "intended_use": "Clinical training for department staff"} for r in view["equipment"]["add_rows"]]
+		rows = [{"drawdown_line_id": r["drawdown_line_id"], "quantity": str(r["room"]), "intended_use": "Clinical training for department staff"} for r in view["equipment"]["add_rows"]]
 		added = self.call("add_same_specification_items", requisition=requisition, shared_values=json.dumps({"equipment_category": "Laptop", "item_name": "Business laptops"}), item_rows=json.dumps(rows), expected_record_version=str(view["package_record_version"]), idempotency_key=self.key())
 		self.assertEqual(added["review_state"], "Review required")
+
+		# v1.15: the requester enters one estimated total cost for each source that has items.
+		view = self.call("get_requisition_record", requisition=requisition)
+		estimates = [{"drawdown_line_id": a["drawdown_line_id"], "requested_value": a["remaining_value_value"]} for a in view["amounts"] if int(a["requested_quantity_value"]) > 0]
+		self.call("save_requisition_summary", requisition=requisition, summary_values=json.dumps({"drawdown_lines": estimates}), expected_record_version=str(view["header"]["version_record_version"]), idempotency_key=self.key())
 
 		view = self.call("get_requisition_record", requisition=requisition)
 		technical, acceptance, support = fx.visible_proposal(view)

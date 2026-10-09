@@ -32,8 +32,7 @@ from kentender_procurement.procurement_planning.services import (
 	plan_governance,
 	plan_read,
 	plan_workbench,
-	publication_pipeline,
-	treasury,
+	publication_confirmation,
 )
 from kentender_procurement.procurement_planning.tests import fixtures as pln_fx
 
@@ -201,7 +200,7 @@ def complete_and_confirm(item_id: str, **value_overrides) -> None:
 	frappe.set_user(PLANNER)
 
 
-def confirmed_item(*, indicative_amount: float = 50_000_000) -> tuple[dict, str]:
+def confirmed_item(*, indicative_amount: float = 50_000_000, quantity: int = 1) -> tuple[dict, str]:
 	# This is Planning's own `RequisitionCase.confirmed_item()`, copied
 	# verbatim per this module's docstring — including the one thing that
 	# copy silently dropped: Planning's own `setUp()` mocks
@@ -225,7 +224,7 @@ def confirmed_item(*, indicative_amount: float = 50_000_000) -> tuple[dict, str]
 			organisation_unit=_ou_alpha(), fiscal_year=pln_fx.FY_OPEN, idempotency_key=key(), fixture_namespace=NS,
 		)
 		added = dpp_lifecycle.save_direct_requirement(
-			dpp_version=opened["current_version"], values=pln_fx.direct_values(indicative_amount=indicative_amount),
+			dpp_version=opened["current_version"], values=pln_fx.direct_values(indicative_amount=indicative_amount, quantity=quantity),
 			expected_record_version=opened["record_version"], idempotency_key=key(),
 		)
 		frappe.set_user(HOD)
@@ -263,19 +262,18 @@ def activate(plan_reference: str) -> dict:
 	frappe.set_user(STATUTORY)
 	approved = plan_governance.approve_annual_plan(task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=key())
 	version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
-	frappe.set_user(ACCOUNTING_OFFICER)
-	treasury.record_treasury_submission(
-		plan_version=version_name, submitted_at="2101-11-01 09:00:00", channel="Email", destination="treasury@example.test",
-		dispatch_reference="MOH/APP/2101/001", exact_document_confirmed=True, idempotency_key=key(),
+	frappe.set_user(PLANNER)  # PLN-CHG-001 v1.31: the Planner confirms publication
+	today = str(frappe.utils.getdate(frappe.utils.nowdate()))
+	published = publication_confirmation.confirm_plan_publication(
+		plan_version=version_name,
+		values={"treasury_submitted_on": today, "treasury_reference": "MOH/APP/2101/001", "website_published_on": today, "public_plan_url": "https://www.moh.example.test/procurement/annual-procurement-plan", "confirmation_acknowledged": 1},
+		expected_record_version=int(frappe.db.get_value("Annual Plan Version", version_name, "record_version") or 0), idempotency_key=key(),
 	)
-	frappe.set_user("Administrator")
-	published = publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
-	frappe.set_user(PLANNER)
 	return published
 
 
-def active_item(*, indicative_amount: float = 50_000_000) -> tuple[dict, str]:
-	accepted, item_id = confirmed_item(indicative_amount=indicative_amount)
+def active_item(*, indicative_amount: float = 50_000_000, quantity: int = 1) -> tuple[dict, str]:
+	accepted, item_id = confirmed_item(indicative_amount=indicative_amount, quantity=quantity)
 	activate(accepted["annual_plan"])
 	return accepted, item_id
 
@@ -357,29 +355,57 @@ def fill_request_information(requisition: str, user: str = AUTHOR, *, latest: st
 	)
 
 
-def add_laptops(requisition: str, user: str = AUTHOR, *, item_name: str = "Business laptops") -> dict:
+def add_laptops(requisition: str, user: str = AUTHOR, *, item_name: str = "Business laptops", quantities: dict | None = None, category: str = "Laptop") -> dict:
+	"""One same-specification item set through the real command. v1.15: the
+	requester types each quantity, so a test says so with `quantities`
+	({drawdown_line_id: n}); with none given every source the actor can add to
+	gets all that is available (`room`), which is what the v1.14 default
+	produced and keeps the older tests' numbers."""
 	from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
 
 	view = editor(requisition, user)
 	rows = [
-		{"drawdown_line_id": r["drawdown_line_id"], "quantity": r["quantity"], "intended_use": f"Field deployment for {r['department']} staff"}
-		for r in view["equipment"]["add_rows"] if r["quantity"] > 0
+		{"drawdown_line_id": r["drawdown_line_id"], "quantity": (quantities or {}).get(r["drawdown_line_id"], r["room"]), "intended_use": f"Field deployment for {r['department']} staff"}
+		for r in view["equipment"]["add_rows"] if r["room"] > 0 and (quantities is None or r["drawdown_line_id"] in quantities)
 	]
 	return cmd.add_same_specification_items(
-		requisition=requisition, shared={"equipment_category": "Laptop", "item_name": item_name},
+		requisition=requisition, shared={"equipment_category": category, "item_name": item_name},
 		rows=rows, expected_record_version=view["package_record_version"], idempotency_key=key(),
 	)
 
 
+def enter_estimates(requisition: str, user: str = AUTHOR, *, values: dict | None = None) -> dict:
+	"""v1.15: the requester's estimated total cost for each source that has
+	items. With no `values` ({drawdown_line_id: "KES amount"}) each is the whole
+	value that remains, as the v1.14 default was."""
+	from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
+
+	view = editor(requisition, user)
+	lines = [
+		{"drawdown_line_id": r["drawdown_line_id"], "requested_value": (values or {}).get(r["drawdown_line_id"], r["remaining_value_value"])}
+		for r in view["amounts"] if r["editable"] and int(r["requested_quantity_value"]) > 0 and (values is None or r["drawdown_line_id"] in values)
+	]
+	return cmd.save_requisition_summary(
+		requisition=requisition, values={"drawdown_lines": lines}, expected_record_version=view["header"]["version_record_version"], idempotency_key=key(),
+	)
+
+
 def visible_proposal(view: dict) -> tuple[list[dict], list[dict], dict]:
-	"""Exactly what the Requirements workbench shows: every row selected."""
+	"""Exactly what the Requirements workbench sends: every Proposed row selected, each with what it applies to
+	(REQ v1.18 §5.7A). Rows already Confirmed stay as they are, as in the page."""
 	technical = [
-		{"technical_requirement_id": r["technical_requirement_id"], "characteristic_key": r["characteristic_key"], "value": _raw(r["value"]), "selected": True}
-		for g in view["requirements"]["technical_groups"] for r in g["rows"]
+		{
+			"technical_requirement_id": r["technical_requirement_id"], "characteristic_key": r["characteristic_key"], "value": _raw(r["value"]), "selected": True,
+			"applies_to_scope": r["applies_to_scope"], "applies_to_id": r["applies_to_id"] or "", "applies_to_item_ids": r.get("applies_to_item_ids") or [],
+		}
+		for g in view["requirements"]["technical_groups"] for r in g["rows"] if r["state"] == "Proposed"
 	]
 	acceptance = [
-		{"acceptance_requirement_id": a["acceptance_requirement_id"], "check_type": a["check_type"], "pass_condition": a["pass_condition"], "evidence_type": a["evidence_type"], "applies_to_scope": a["applies_to_scope"], "applies_to_id": a["applies_to_id"], "selected": True}
-		for a in view["requirements"]["acceptance"]
+		{
+			"acceptance_requirement_id": a["acceptance_requirement_id"], "check_type": a["check_type"], "pass_condition": a["pass_condition"], "evidence_type": a["evidence_type"],
+			"applies_to_scope": a["applies_to_scope"], "applies_to_id": a["applies_to_id"], "applies_to_item_ids": a.get("applies_to_item_ids") or [], "selected": True,
+		}
+		for a in view["requirements"]["acceptance"] if a["state"] == "Proposed"
 	]
 	return technical, acceptance, dict(view["requirements"]["support"])
 
@@ -410,6 +436,7 @@ def complete_draft(item_id: str, user: str = AUTHOR) -> str:
 	requisition = prepared["requisition"]
 	fill_request_information(requisition, user)
 	add_laptops(requisition, user)
+	enter_estimates(requisition, user)
 	apply_standard_package(requisition, user)
 	return requisition
 

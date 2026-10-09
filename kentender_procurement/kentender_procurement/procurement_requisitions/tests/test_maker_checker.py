@@ -208,7 +208,7 @@ class TestCategoryApplicabilityIsEnforcedByTheCommands(MakerCheckerCase):
 		requisition = fx.prepare(item_id)["requisition"]
 		fx.fill_request_information(requisition)
 		view = fx.editor(requisition)
-		rows = [{"drawdown_line_id": r["drawdown_line_id"], "quantity": r["quantity"], "intended_use": f"Clinical display for {r['department']} staff"} for r in view["equipment"]["add_rows"] if r["quantity"] > 0]
+		rows = [{"drawdown_line_id": r["drawdown_line_id"], "quantity": r["room"], "intended_use": f"Clinical display for {r['department']} staff"} for r in view["equipment"]["add_rows"] if r["room"] > 0]
 		cmd.add_same_specification_items(requisition=requisition, shared={"equipment_category": "Monitor", "item_name": "Clinic monitors"}, rows=rows, expected_record_version=view["package_record_version"], idempotency_key=fx.key())
 		return requisition
 
@@ -223,7 +223,9 @@ class TestCategoryApplicabilityIsEnforcedByTheCommands(MakerCheckerCase):
 		added = cmd.add_technical_requirement(requisition=requisition, values={"characteristic_key": "display_resolution", "value": "QHD", "applies_to_scope": "All items"}, expected_record_version=view["package_record_version"], idempotency_key=fx.key())
 		self.assertTrue(added["ok"])
 
-	def test_a_category_change_that_strands_a_confirmed_row_blocks_the_submission_until_it_is_removed(self):
+	def test_a_category_change_takes_the_item_out_of_a_row_that_no_longer_applies_and_blocks_until_reviewed(self):
+		"""REQ v1.18 §6.5A (v1.17 read: the row was left stranded and flagged CONTROL_INVALID): the row that covered
+		the monitors is taken off the items that are now printers, and the package must be reviewed again."""
 		requisition = self._monitors()
 		view = fx.editor(requisition)
 		cmd.add_technical_requirement(requisition=requisition, values={"characteristic_key": "display_resolution", "value": "QHD", "applies_to_scope": "All items"}, expected_record_version=view["package_record_version"], idempotency_key=fx.key())
@@ -231,7 +233,10 @@ class TestCategoryApplicabilityIsEnforcedByTheCommands(MakerCheckerCase):
 		ids = [r["requisition_item_id"] for r in view["equipment"]["rows"]]
 		cmd.update_shared_item_details(requisition=requisition, requisition_item_ids=ids, shared={"equipment_category": "Printer", "item_name": "Clinic printers"}, expected_record_version=view["package_record_version"], idempotency_key=fx.key())
 		package_version = records.load(requisition)[2]
+		self.assertNotIn("display_resolution", {r.characteristic_key for r in package_version.technical_requirements if r.row_state != "Proposed"}, "the row covered nothing that remains")
+		self.assertEqual(package_version.standard_package_review_state, "Review required")
 		report = cmd.validation.validate(version=records.version_dict(records.load(requisition)[1]), package=records.package_dict(package_version), eligibility={})
-		stranded = [f for f in report["findings"] if f["code"] == "CONTROL_INVALID" and "Display resolution" in f["message"]]
-		self.assertEqual(len(stranded), 1)
-		self.assertEqual(stranded[0]["severity"], "Blocking")
+		self.assertFalse([f for f in report["findings"] if f["code"] == "CONTROL_INVALID" and "Display resolution" in f["message"]])
+		review = [f for f in report["findings"] if f["code"] == "PACKAGE_REVIEW_REQUIRED"]
+		self.assertEqual(len(review), 1)
+		self.assertEqual(review[0]["severity"], "Blocking")

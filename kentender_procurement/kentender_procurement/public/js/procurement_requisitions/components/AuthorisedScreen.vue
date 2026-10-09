@@ -104,7 +104,7 @@ const ctx = useReq();
 const busy = computed(() => ctx.pending.value);
 const actions = computed(() => props.view.actions || {});
 
-// Funding reservations sit after Amounts requested (REQ-DES-10 note).
+// Funding reservations sit after Request summary (REQ-DES-10 note).
 const split = computed(() => {
 	const sections = props.view.sections || [];
 	const at = sections.findIndex((s) => s.key === "amounts");

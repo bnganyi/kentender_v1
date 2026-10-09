@@ -23,6 +23,8 @@ from kentender_procurement.procurement_requisitions.services.errors import Procu
 from kentender_procurement.tenders.services.errors import fail
 
 HANDOFF_DOCTYPE = "Authorised Requisition Handoff"
+#: REQ-CHG-001 v1.18 §5.12: 1.5 carries the exact items each requirement covers; 1.4 (no lists) stays usable.
+SUPPORTED_HANDOFF_VERSIONS = frozenset({"1.4", req_handoff.HANDOFF_VERSION})
 REQUISITION_DOCTYPE = "Procurement Requisition"
 
 
@@ -66,7 +68,7 @@ def require_startable(handoff_doc) -> None:
 		fail("TND_HANDOFF_INVALID")
 	if cstr(frappe.db.get_value(REQUISITION_DOCTYPE, handoff_doc.requisition, "handoff")) != handoff_doc.name:
 		fail("TND_HANDOFF_INVALID", "This handoff is no longer the Requisition's current authorised handoff.")
-	if cstr(handoff_doc.handoff_version) != req_handoff.HANDOFF_VERSION:
+	if cstr(handoff_doc.handoff_version) not in SUPPORTED_HANDOFF_VERSIONS:
 		fail("TND_HANDOFF_INVALID", "The handoff version is not supported by this Tender format.")
 
 

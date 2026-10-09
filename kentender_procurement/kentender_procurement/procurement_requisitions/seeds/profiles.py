@@ -115,12 +115,12 @@ def _svc():
 def _pln():
 	from kentender_procurement.procurement_planning.seeds import kentender_mvp_v1 as seed
 	from kentender_procurement.procurement_planning.services import (
-		outcome_event, plan_finance, plan_governance, plan_publication, plan_read, plan_requisition, plan_workbench, publication_pipeline, treasury,
+		outcome_event, plan_finance, plan_governance, plan_publication, plan_read, plan_requisition, plan_workbench, publication_confirmation,
 	)
 
 	return frappe._dict(
 		seed=seed, outcome_event=outcome_event, finance=plan_finance, governance=plan_governance, publication=plan_publication, read=plan_read,
-		requisition=plan_requisition, workbench=plan_workbench, pipeline=publication_pipeline, treasury=treasury,
+		requisition=plan_requisition, workbench=plan_workbench, confirmation=publication_confirmation,
 	)
 
 
@@ -320,13 +320,13 @@ def _activate_successor(profile: str, plan_item_id: str, *, edit: dict[str, Any]
 	with _as(pln.seed.STATUTORY):
 		approved = pln.governance.approve_annual_plan(task=statutory.name, task_token=statutory.task_token, idempotency_key=_key(profile, "approve"))
 	version = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
-	with _as(pln.seed.ACCOUNTING_OFFICER):
-		pln.treasury.record_treasury_submission(
-			plan_version=version, submitted_at=frappe.utils.now_datetime(), channel="Official correspondence", destination="National Treasury",
-			dispatch_reference=f"MOH/APP/2027/{profile}", exact_document_confirmed=True, idempotency_key=_key(profile, "treasury"),
+	today = str(frappe.utils.getdate(frappe.utils.nowdate()))
+	with _as(pln.seed.PLANNER):  # PLN-CHG-001 v1.31: the Planner confirms publication
+		pln.confirmation.confirm_plan_publication(
+			plan_version=version,
+			values={"treasury_submitted_on": today, "treasury_reference": f"MOH/APP/2027/{profile}", "website_published_on": today, "public_plan_url": "https://www.moh.example.test/procurement/annual-procurement-plan", "confirmation_acknowledged": 1},
+			expected_record_version=int(frappe.db.get_value("Annual Plan Version", version, "record_version") or 0), idempotency_key=_key(profile, "confirm-publication"),
 		)
-	with _as("Administrator"):
-		pln.pipeline.publish_annual_plan(plan_version=version, idempotency_key=_key(profile, "publish"))
 	return cstr(frappe.db.get_value("Annual Plan", {"plan_reference": plan_reference}, "active_version"))
 
 
@@ -597,23 +597,32 @@ def precision(item: str) -> Report:
 		view = svc.read.get_requisition_record(requisition=requisition)
 		line = next(l for l in view["amounts"] if l["department"] == base.HRMD_NAME)
 
-		def save(quantity, value):
+		def save(value):
 			current = svc.read.get_requisition_record(requisition=requisition)
 			return svc.cmd.save_requisition_summary(
-				requisition=requisition, values={"drawdown_lines": [{"drawdown_line_id": line["drawdown_line_id"], "requested_quantity": quantity, "requested_value": value}]},
-				expected_record_version=current["header"]["version_record_version"], idempotency_key=_key("PRECISION", f"{quantity}-{value}"),
+				requisition=requisition, values={"drawdown_lines": [{"drawdown_line_id": line["drawdown_line_id"], "requested_value": value}]},
+				expected_record_version=current["header"]["version_record_version"], idempotency_key=_key("PRECISION", f"{value}"),
 			)
-
-		r.refused("a third decimal place is refused", lambda: save("100", "20000000.005"), "REQ_MONEY_PRECISION_INVALID")
-		r.refused("a binary float is refused", lambda: save("100", 20000000.0), "REQ_MONEY_PRECISION_INVALID")
-		r.refused("an exponent is refused", lambda: save("100", "2e7"), "REQ_MONEY_PRECISION_INVALID")
-		r.refused("an overflowing amount is refused", lambda: save("100", "1" + "0" * 18 + ".00"), "REQ_MONEY_PRECISION_INVALID")
-		r.refused("a fractional quantity is refused", lambda: save("99.5", "19999999.99"), "REQ_QUANTITY_PRECISION_INVALID")
-		save("100", "19999999.99")
+		
+		def update_quantity(quantity):
+			current = svc.read.get_requisition_record(requisition=requisition)
+			item = next(i for i in current["equipment"]["rows"] if i["drawdown_line_id"] == line["drawdown_line_id"])
+			return svc.cmd.update_requisition_item(
+				requisition=requisition, requisition_item_id=item["requisition_item_id"], values={"quantity": quantity},
+				expected_record_version=current["package_record_version"], idempotency_key=_key("PRECISION", f"qty-{quantity}"),
+			)
+		
+		r.refused("a third decimal place is refused", lambda: save("20000000.005"), "REQ_MONEY_PRECISION_INVALID")
+		r.refused("a binary float is refused", lambda: save(20000000.0), "REQ_MONEY_PRECISION_INVALID")
+		r.refused("an exponent is refused", lambda: save("2e7"), "REQ_MONEY_PRECISION_INVALID")
+		r.refused("an overflowing amount is refused", lambda: save("1" + "0" * 18 + ".00"), "REQ_MONEY_PRECISION_INVALID")
+		r.refused("an estimate above what remains is refused", lambda: save("20000000.01"), "REQ_ESTIMATE_EXCEEDS_ALLOWANCE")
+		r.refused("a fractional item quantity is refused", lambda: update_quantity("99.5"), "REQ_QUANTITY_PRECISION_INVALID")
+		save("19999999.99")
 	stored = frappe.db.get_value("Requisition Drawdown Line", {"drawdown_line_id": line["drawdown_line_id"]}, "requested_value")
 	r.check("the exact amount is stored exactly, without rounding", stored == "19999999.99", stored)
 	r.record(requisition=requisition)
-	r.look(base.AUTHOR, _route(requisition), "REQ-DES-03 amounts: HRMD requests KES 19,999,999.99 with Use full available amount")
+	r.look(base.AUTHOR, _route(requisition), "REQ-DES-03 Request summary: HRMD's estimated total cost is KES 19,999,999.99")
 	return r
 
 

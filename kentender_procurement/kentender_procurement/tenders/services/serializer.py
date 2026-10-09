@@ -151,10 +151,28 @@ def _item_names(snapshot: dict[str, Any]) -> dict[str, str]:
 	return {row.get("requisition_item_id"): row.get("item_name") for row in snapshot.get("items") or []}
 
 
+def _row_item_ids(row: dict[str, Any], snapshot: dict[str, Any]) -> list[str]:
+	"""The exact items a requirement row covers (REQ v1.18 §5.7A); a row without the list is read from its scope."""
+	listed = row.get("applies_to_item_ids")
+	if listed is not None and (listed or row.get("applies_to_scope") != "All items"):
+		return list(listed)
+	if row.get("applies_to_scope") == "Item":
+		return [row.get("applies_to_id")]
+	if row.get("applies_to_scope") == "Service":
+		return []
+	return [i.get("requisition_item_id") for i in snapshot.get("items") or []]
+
+
 def _applies_to_label(row: dict[str, Any], snapshot: dict[str, Any]) -> str:
 	if row.get("applies_to_scope") == "All items" or not row.get("applies_to_id"):
 		return "All items"
-	return _item_names(snapshot).get(row.get("applies_to_id")) or cstr(row.get("applies_to_id"))
+	names = _item_names(snapshot)
+	if row.get("applies_to_scope") == "Items":
+		return ", ".join(dict.fromkeys(cstr(names.get(i) or i) for i in _row_item_ids(row, snapshot)))
+	if row.get("applies_to_scope") == "Service":
+		service = next((s for s in snapshot.get("related_services") or [] if s.get("service_requirement_id") == row.get("applies_to_id")), None)
+		return cstr(service.get("service_type")) if service else cstr(row.get("applies_to_id"))
+	return names.get(row.get("applies_to_id")) or cstr(row.get("applies_to_id"))
 
 
 def _tech_ids_for_item(item_id: str, snapshot: dict[str, Any]) -> tuple[str, ...]:
@@ -162,7 +180,7 @@ def _tech_ids_for_item(item_id: str, snapshot: dict[str, Any]) -> tuple[str, ...
 		sorted(
 			row.get("technical_requirement_id")
 			for row in snapshot.get("technical_requirements") or []
-			if row.get("applies_to_scope") == "All items" or not row.get("applies_to_id") or row.get("applies_to_id") == item_id
+			if item_id in _row_item_ids(row, snapshot)
 		)
 	)
 

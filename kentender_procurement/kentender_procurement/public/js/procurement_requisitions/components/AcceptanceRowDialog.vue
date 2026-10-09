@@ -24,6 +24,7 @@
 			<label :for="`${id}-other`">Name of the evidence record</label>
 			<input :id="`${id}-other`" v-model="form.other_evidence_name" class="input" />
 		</div>
+		<AppliesToField v-if="form.applies_to_scope !== 'Service'" :view="view" :scope="form.applies_to_scope" :item-id="form.applies_to_id" :item-ids="form.applies_to_item_ids" @update="Object.assign(form, $event)" />
 		<Notice v-if="otherError" tone="critical">{{ otherError }}</Notice>
 		<template #actions>
 			<button type="button" class="btn btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
@@ -36,6 +37,7 @@
 import { computed, reactive, ref } from "vue";
 import { useReq } from "../data/context.js";
 import DialogFrame from "./shared/DialogFrame.vue";
+import AppliesToField from "./shared/AppliesToField.vue";
 import Notice from "./shared/Notice.vue";
 
 const props = defineProps({ view: { type: Object, required: true }, row: { type: Object, default: null }, local: { type: Boolean, default: false } });
@@ -51,6 +53,7 @@ const form = reactive({
 	other_evidence_name: (props.row && props.row.other_evidence_name) || "",
 	applies_to_scope: (props.row && props.row.applies_to_scope) || "All items",
 	applies_to_id: (props.row && props.row.applies_to_id) || "",
+	applies_to_item_ids: (props.row && props.row.applies_to_item_ids) || [],
 });
 const LABEL = props.row ? "update-acceptance" : "add-acceptance";
 const error = computed(() => (ctx.commandError.value && ctx.commandError.value.label === LABEL ? ctx.commandError.value : null));

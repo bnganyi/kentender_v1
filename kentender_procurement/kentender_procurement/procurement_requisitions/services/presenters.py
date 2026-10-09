@@ -20,7 +20,8 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, get_datetime, getdate
 
-from kentender_procurement.procurement_requisitions.services import catalogue, precision, records
+from kentender_procurement.procurement_requisitions.services import catalogue, goods_template, precision, records
+from kentender_procurement.procurement_requisitions.services import scope as req_scope
 
 
 def date_label(value) -> str:
@@ -122,9 +123,57 @@ def technical_groups(package: dict[str, Any], *, include_proposed: bool = True) 
 				"label": label, "comparison": comparison, "value": value, "display": cstr(row.get("required_value_display")) or (catalogue.display_value(ch, value) if ch and value else ""),
 				"unit": cstr(row.get("unit")) or "—", "state": row.get("row_state") or "Confirmed",
 				"applies_to_scope": row.get("applies_to_scope"), "applies_to_id": row.get("applies_to_id"), "reason": row.get("reason"), "other_value": row.get("other_value"),
+				"applies_to": row_label(row, package), "applies_to_item_ids": req_scope.item_ids(row, package.get("items") or []), "needs_review": row.get("row_state") == "Needs review",
 			}
 		)
 	return [{"group": name, "rows": items} for name, items in groups.items() if items]
+
+
+def technical_targets(package: dict[str, Any], version: dict[str, Any] | None = None, *, include_proposed: bool = True) -> list[dict[str, Any]]:
+	"""REQ v1.18 §13.6A — the technical rows grouped by what they apply to: Shared requirements (every item), one
+	target for each kind of item (a set of items sharing a specification), and any row customised for fewer items.
+	Each target keeps the characteristic grouping of `technical_groups`."""
+	items = package.get("items") or []
+	all_ids = [i.get("requisition_item_id") for i in items]
+	kinds = specification_groups(package, version)
+	line_unit = {l.get("drawdown_line_id"): records.unit_name(l.get("contributing_org_unit")) for l in (version or {}).get("drawdown_lines") or []}
+	by_id = {i.get("requisition_item_id"): i for i in items}
+	flat = [(g["group"], r) for g in technical_groups(package, include_proposed=include_proposed) for r in g["rows"]]
+	targets: dict[tuple, dict[str, Any]] = {}
+
+	def describe(ids: tuple) -> tuple[str, str, str]:
+		if list(ids) == all_ids:
+			return "shared", "Shared requirements", "Every item"
+		for g in kinds:
+			if list(ids) == list(g["requisition_item_ids"]):
+				n = len(ids)
+				return "kind", g["item_name"], f"{g['equipment_category']} · {n} approved requirement{'s' if n != 1 else ''}"
+		if len(ids) == 1 and ids[0] in by_id:
+			item = by_id[ids[0]]
+			return "item", f"{item.get('item_name')} — customised", f"{item.get('equipment_category')} · {line_unit.get(item.get('drawdown_line_id')) or 'one item'}"
+		names = list(dict.fromkeys(cstr(by_id[i].get("item_name")) for i in ids if i in by_id))
+		return "set", ", ".join(names) or "Selected items", f"{len(ids)} items"
+
+	for group_name, row in flat:
+		key = tuple(row["applies_to_item_ids"])
+		target = targets.get(key)
+		if target is None:
+			kind, title, subtitle = describe(key)
+			target = targets[key] = {"key": f"T{len(targets) + 1}", "kind": kind, "title": title, "subtitle": subtitle, "item_ids": list(key), "groups": {}}
+		target["groups"].setdefault(group_name, []).append(row)
+	order = {"shared": 0, "kind": 1, "set": 2, "item": 3}
+	out = []
+	for target in sorted(targets.values(), key=lambda t: order[t["kind"]]):
+		out.append({**target, "groups": [{"group": name, "rows": rows} for name, rows in target["groups"].items()]})
+	return out
+
+
+def row_label(row: dict[str, Any], package: dict[str, Any]) -> str:
+	"""What a requirement row applies to, in words (REQ v1.18 §5.7A): `All items`, an item name, a service type or
+	the names of the items a set covers."""
+	if row.get("applies_to_scope") == "Items":
+		return req_scope.label(row, package.get("items") or [])
+	return applies_to_label(row.get("applies_to_scope"), row.get("applies_to_id"), package)
 
 
 def applies_to_label(scope: str, target: str, package: dict[str, Any]) -> str:
@@ -141,8 +190,9 @@ def acceptance_rows(package: dict[str, Any], *, include_proposed: bool = True) -
 	return [
 		{
 			"acceptance_requirement_id": r.get("acceptance_requirement_id"), "check_type": r.get("check_type"),
-			"applies_to": applies_to_label(r.get("applies_to_scope"), r.get("applies_to_id"), package),
+			"applies_to": row_label(r, package),
 			"applies_to_scope": r.get("applies_to_scope"), "applies_to_id": r.get("applies_to_id"),
+			"applies_to_item_ids": req_scope.item_ids(r, package.get("items") or []), "needs_review": r.get("row_state") == "Needs review",
 			"pass_condition": r.get("pass_condition"), "evidence": r.get("other_evidence_name") if r.get("evidence_type") == "Other stated record" else r.get("evidence_type"),
 			"evidence_type": r.get("evidence_type"), "other_evidence_name": r.get("other_evidence_name"), "state": r.get("row_state") or "Confirmed",
 		}
@@ -200,31 +250,70 @@ def shared_specification(package: dict[str, Any]) -> dict[str, Any] | None:
 	if len(keys) != 1:
 		return None
 	category = items[0].get("equipment_category") or ""
-	noun = category.lower() if category != "Other IT equipment" else "equipment"
 	return {
-		"label": f"One shared {noun} specification · {len(items)} approved requirement{'s' if len(items) != 1 else ''}",
-		"summary": f"{len(items)} {noun} row{'s' if len(items) != 1 else ''} · one shared specification",
+		"label": f"One shared specification · {len(items)} approved requirement{'s' if len(items) != 1 else ''}",
+		"summary": f"{len(items)} item{'s' if len(items) != 1 else ''} · one shared specification",
 		"requisition_item_ids": [i.get("requisition_item_id") for i in items], "equipment_category": category,
 		"item_name": items[0].get("item_name"), "delivery_location": items[0].get("delivery_location"), "latest_delivery_date": cstr(items[0].get("latest_delivery_date")),
 	}
 
 
-def amounts_rows(version: dict[str, Any], sources: dict[str, dict[str, Any]], *, editable_units: set[str] | None = None) -> list[dict[str, Any]]:
+def specification_groups(package: dict[str, Any], version: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+	"""Items that share one specification (category, name, delivery location and
+	date), in the order they were first entered. Each group is edited as a unit
+	by `UpdateSharedItemDetails`, so a request that mixes laptops and monitors
+	can still change either group's name, category, location or date. Quantity
+	and intended use stay on the item rows."""
+	version = version or {}
+	groups: dict[tuple, dict[str, Any]] = {}
+	for item in sorted(package.get("items") or [], key=lambda i: int(i.get("row_order") or 0)):
+		key = (item.get("equipment_category"), item.get("item_name"), item.get("delivery_location"), cstr(item.get("latest_delivery_date")))
+		group = groups.get(key)
+		if group is None:
+			location = item.get("delivery_location") or version.get("delivery_location")
+			latest = item.get("latest_delivery_date") or version.get("latest_delivery_date")
+			place = cstr(frappe.db.get_value("Delivery Location", location, "address") or location_label(location)) if location else ""
+			group = groups[key] = {
+				"group_id": f"G{len(groups) + 1}", "equipment_category": item.get("equipment_category") or "", "item_name": item.get("item_name") or "",
+				"delivery_location": item.get("delivery_location") or "", "latest_delivery_date": cstr(item.get("latest_delivery_date")),
+				"delivery": "; ".join(v for v in (_town(place), date_label(latest)) if v), "requisition_item_ids": [],
+			}
+		group["requisition_item_ids"].append(item.get("requisition_item_id"))
+	return list(groups.values())
+
+
+def amounts_rows(
+	version: dict[str, Any], sources: dict[str, dict[str, Any]], *, editable_units: set[str] | None = None,
+	package: dict[str, Any] | None = None, only_used: bool = False, unreviewed: set[str] | None = None,
+) -> list[dict[str, Any]]:
+	"""One row per source line. v1.15 §5.3: the requested quantity is the sum of
+	the line's items (so it is read from `package`), the estimated total cost is
+	the requester's own entry (blank until entered), and what stays available
+	after this request is shown beside them. `only_used` leaves out the sources
+	the submission will omit (no items and no estimate)."""
 	out = []
+	unreviewed = unreviewed or set()
 	for line in version.get("drawdown_lines") or []:
 		source = sources.get(line.get("plan_item_line_id")) or {}
+		line_id = line.get("drawdown_line_id")
+		derived = goods_template.itemised(package.get("items"), line_id) if package is not None else int(precision.stored_quantity(line.get("requested_quantity")))
+		estimate = precision.stored_money(line.get("requested_value"))
+		if only_used and derived <= 0 and estimate <= 0:
+			continue
+		remaining_quantity = precision.stored_quantity(line.get("remaining_quantity"))
+		remaining_value = precision.stored_money(line.get("remaining_value"))
 		out.append(
 			{
-				"drawdown_line_id": line.get("drawdown_line_id"), "plan_item_line_id": line.get("plan_item_line_id"),
+				"drawdown_line_id": line_id, "plan_item_line_id": line.get("plan_item_line_id"),
 				"contributing_org_unit": line.get("contributing_org_unit"), "department": records.unit_name(line.get("contributing_org_unit")),
 				"requirement": cstr(source.get("title")) or cstr(line.get("source_line_id")), "source_reference": line.get("source_line_id"),
 				"available_quantity": quantity(line.get("remaining_quantity")), "available_value": money(line.get("remaining_value")),
-				"requested_quantity": quantity(line.get("requested_quantity")), "requested_value": money(line.get("requested_value")),
-				"requested_quantity_value": precision.quantity_text(precision.stored_quantity(line.get("requested_quantity"))),
-				"requested_value_value": precision.money_text(precision.stored_money(line.get("requested_value"))),
-				"remaining_quantity_value": precision.quantity_text(precision.stored_quantity(line.get("remaining_quantity"))),
-				"remaining_value_value": precision.money_text(precision.stored_money(line.get("remaining_value"))),
-				"changed": (line.get("requested_quantity"), line.get("requested_value")) != (line.get("remaining_quantity"), line.get("remaining_value")),
+				"requested_quantity": precision.display_quantity(derived), "requested_value": precision.display_money(estimate) if estimate > 0 else "",
+				"requested_quantity_value": str(derived), "requested_value_value": precision.money_text(estimate) if estimate > 0 else "",
+				"remaining_quantity_value": precision.quantity_text(remaining_quantity), "remaining_value_value": precision.money_text(remaining_value),
+				"after_quantity": precision.display_quantity(remaining_quantity - derived), "after_value": precision.display_money(remaining_value - estimate),
+				"after_quantity_value": precision.quantity_text(remaining_quantity - derived), "after_value_value": precision.money_text(remaining_value - estimate),
+				"needs_review": line_id in unreviewed,
 				"editable": editable_units is None or line.get("contributing_org_unit") in editable_units,
 				"reservation_id": line.get("reservation_id"), "planning_drawdown_reference": line.get("planning_drawdown_reference"),
 			}
@@ -243,8 +332,10 @@ def review_sections(*, root, version: dict[str, Any], package: dict[str, Any], p
 	or requested correction starts open; the rest start closed with a plain
 	summary. Disclosure is presentation only (§14.4)."""
 	sources = {s["plan_item_line_id"]: s for s in projection.get("sources", [])}
-	units = ordered_units(version.get("drawdown_lines") or [], lead)
-	qty, value = totals(version)
+	used = {**version, "drawdown_lines": [l for l in version.get("drawdown_lines") or [] if goods_template.itemised(package.get("items"), l.get("drawdown_line_id")) > 0 or goods_template.has_estimate(l)]}
+	units = ordered_units(used["drawdown_lines"], lead)
+	qty = Decimal(sum(goods_template.itemised(package.get("items"), l.get("drawdown_line_id")) for l in used["drawdown_lines"]))
+	value = sum((precision.stored_money(l.get("requested_value")) for l in used["drawdown_lines"]), Decimal(0))
 	by_section: dict[str, list[dict[str, Any]]] = {}
 	for f in findings:
 		by_section.setdefault(f.get("section") or "", []).append(f)
@@ -293,11 +384,11 @@ def review_sections(*, root, version: dict[str, Any], package: dict[str, Any], p
 			},
 		),
 		section(
-			"amounts", "Amounts requested", "coins",
+			"amounts", "Request summary", "coins",
 			f"{len(units)} department{'s' if len(units) != 1 else ''} · {precision.display_quantity(qty)} · {precision.display_money(value)}",
-			{"rows": amounts_rows(version, sources), "total_quantity": precision.display_quantity(qty), "total_value": precision.display_money(value)},
+			{"rows": amounts_rows(version, sources, package=package, only_used=True), "total_quantity": precision.display_quantity(qty), "total_value": precision.display_money(value)},
 		),
-		section("equipment", "Equipment", "monitor", spec["summary"] if spec else f"{len(items)} equipment row{'s' if len(items) != 1 else ''}", {"rows": items}),
+		section("equipment", "Items", "monitor", spec["summary"] if spec else f"{len(items)} item{'s' if len(items) != 1 else ''}", {"rows": items}),
 		section(
 			"requirements", "Requirements and support", "sliders",
 			" · ".join(v for v in (f"{technical_count} technical requirement{'s' if technical_count != 1 else ''}", f"{months}-month warranty" if months else "", f"support {location.lower()}" if location and location != "None" else "") if v),
@@ -305,7 +396,7 @@ def review_sections(*, root, version: dict[str, Any], package: dict[str, Any], p
 		),
 		section(
 			"services", "Related services", "wrench", "None requested" if not services else f"{len(services)} service{'s' if len(services) != 1 else ''}",
-			{"rows": [{**s, "applies_to": applies_to_label(s.get("applies_to_scope"), s.get("applies_to_id"), package), "completion_date_label": date_label(s.get("completion_date"))} for s in services]},
+			{"rows": [{**s, "applies_to": row_label(s, package), "applies_to_item_ids": req_scope.item_ids(s, package.get("items") or []), "completion_date_label": date_label(s.get("completion_date"))} for s in services]},
 			compact=not services, empty_text="None requested",
 		),
 		section("acceptance", "Acceptance", "check-square", f"{len(acceptance)} delivery check{'s' if len(acceptance) != 1 else ''}", {"rows": acceptance}),

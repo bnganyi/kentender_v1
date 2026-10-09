@@ -2,7 +2,7 @@
  *
  * kt_industry_tokens.css carries the shared system (.kt-panel-lg, .btn,
  * .table, .field, .input, .kt-status, .kt-notice, .kt-meta-row,
- * .kt-timeline, .kt-disclosure, .dialog, .kt-bar, .kt-seg-inline …). The
+ * .kt-timeline, .kt-disclosure, .dialog, .kt-bar, .seg …). The
  * board draws a handful of compositions inline in its artboards (the progress
  * row, the work row, bordered review sections, the left-rule fact block, the
  * footer bar); they are named here once, scoped under .kt-req so no rule can
@@ -24,13 +24,56 @@
 .kt-req .req-card-title svg { flex: none; }
 .kt-req .req-section { margin-bottom: var(--kt-space-8); }
 
-/* Progress row — three tasks, the selected one tinted (§6.1). */
-.kt-req .req-progress { display: flex; border: 1px solid var(--kt-color-divider); margin: var(--kt-space-4) 0 var(--kt-space-6); }
-.kt-req .req-progress-task { flex: 1; padding: 12px 16px; text-align: left; background: transparent; border: 0; border-right: 1px solid var(--kt-color-divider); font: inherit; cursor: pointer; }
-.kt-req .req-progress-task:last-child { border-right: 0; }
-.kt-req .req-progress-task.is-selected { background: var(--kt-color-accent-100); }
-.kt-req .req-progress-task .kt-status { margin-top: 4px; }
-.kt-req .req-progress-task:focus-visible { outline: 2px solid var(--kt-color-accent); outline-offset: -2px; }
+/* Steps — the three tasks drawn as the design system's numbered journey (v1.17 §13.4B).
+   The journey classes supply the bar, number, label and state colours; these rules only
+   make each stage a button and mark the step being looked at. */
+.kt-req .req-steps-nav { margin: var(--kt-space-4) 0 var(--kt-space-6); }
+.kt-req .req-steps { gap: var(--kt-space-3); }
+.kt-req .req-step { display: grid; gap: 8px; align-content: start; width: 100%; padding: 0; text-align: left; background: transparent; border: 0; font: inherit; color: inherit; cursor: pointer; }
+.kt-req .req-step:hover .kt-journey-title { text-decoration: underline; }
+.kt-req .req-step:focus-visible { outline: 2px solid var(--kt-color-accent); outline-offset: 4px; }
+.kt-req .req-steps .kt-journey-bar { height: 6px; border-radius: 3px; }
+.kt-req .req-steps .kt-journey-stage.is-selected .kt-journey-title,
+.kt-req .req-steps .kt-journey-stage.is-selected .kt-journey-num { color: var(--kt-color-accent-700, var(--color-accent-700)); font-weight: 700; }
+.kt-req .req-steps .kt-journey-stage.is-selected .kt-journey-bar { background: var(--kt-color-accent, var(--color-accent)); }
+.kt-req .req-steps .kt-journey-stage.is-selected.is-blocked .kt-journey-bar { background: var(--kt-status-attention); }
+.kt-req .req-steps .kt-journey-check { width: 15px; height: 15px; flex: none; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; align-self: center; }
+.kt-req .req-steps .kt-journey-state { padding-left: 21px; }
+
+/* Attention — every finding said once, in one panel; rows carry only a quiet marker (v1.17 §13.4A). */
+.kt-req .req-attention-head { font-weight: 600; color: var(--kt-color-text); margin-bottom: 4px; }
+.kt-req .req-attention.is-stale { opacity: 0.8; }
+.kt-req .req-attention-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.kt-req .req-attention-link { display: inline; background: none; border: 0; padding: 0; font: inherit; text-align: left; color: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.kt-req .req-attention-link:hover { color: var(--kt-color-accent-700, var(--color-accent-700)); }
+.kt-req .req-attention-link:focus-visible { outline: 2px solid var(--kt-color-accent); outline-offset: 2px; }
+.kt-req .req-attention-tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 6px; color: var(--kt-color-neutral-600, var(--color-neutral-600)); }
+.kt-req .kt-notice + .kt-notice, .kt-req .req-steps-nav + .kt-notice { margin-top: 0; }
+.kt-req .kt-notice:has(.req-attention) { margin-bottom: var(--kt-space-6); }
+.kt-req tr.is-flagged > td:first-child, .kt-req .req-row-card.is-flagged { box-shadow: inset 3px 0 0 var(--kt-status-attention); }
+.kt-req .req-flag { margin-top: 4px; }
+.kt-req .req-flash { animation: req-flash 1.6s ease-out; }
+@keyframes req-flash { from { background: var(--kt-status-attention-bg); } to { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .kt-req .req-flash { animation: none; } }
+
+/* One status line in the footer: unsaved, saved, or what to do next. */
+.kt-req .req-footer-status { font-size: 13px; color: var(--kt-color-neutral-700, var(--color-neutral-700)); }
+.kt-req .req-footer-status.is-unsaved { color: var(--kt-status-attention); font-weight: 600; }
+
+.kt-req .req-target-head { margin: var(--kt-space-6) 0 var(--kt-space-2); border-bottom: 1px solid var(--kt-color-divider); padding-bottom: 6px; }
+.kt-req .req-target-title { font-weight: 600; font-size: 15px; }
+.kt-req .req-target-facts { font-size: 13px; color: var(--kt-color-neutral-600, var(--color-neutral-600)); }
+
+/* Items — one block per shared specification, so a mixed request edits each kind on its own (v1.17 §13.4C). */
+.kt-req .req-item-group { margin-top: var(--kt-space-4); }
+.kt-req .req-item-group + .req-item-group { margin-top: var(--kt-space-6); }
+.kt-req .req-item-group-head { display: flex; justify-content: space-between; align-items: center; gap: var(--kt-space-3); flex-wrap: wrap; border-bottom: 1px solid var(--kt-color-divider); padding-bottom: 8px; }
+.kt-req .req-item-group .table { table-layout: fixed; width: 100%; }
+.kt-req .req-item-group .table th:nth-child(1) { width: 32%; }
+.kt-req .req-item-group .table th:nth-child(2) { width: 12%; }
+.kt-req .req-item-group .table th:nth-child(4) { width: 31%; }
+.kt-req .req-item-group-title { font-weight: 600; font-size: 15px; }
+.kt-req .req-item-group-facts { font-size: 13px; color: var(--kt-color-neutral-600, var(--color-neutral-600)); display: flex; gap: 6px 14px; flex-wrap: wrap; margin-top: 2px; }
 
 /* Your work — one accent-ruled row per task (REQ-DES-01). */
 .kt-req .req-work-row { border-left: 3px solid var(--kt-color-accent); padding: var(--kt-space-2) 0 var(--kt-space-2) var(--kt-space-4); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--kt-space-4); align-items: center; margin: var(--kt-space-3) 0 var(--kt-space-8); }
@@ -59,6 +102,7 @@
 .kt-req .req-review-section { border: 1px solid var(--kt-color-divider); padding: var(--kt-space-4); margin-bottom: var(--kt-space-3); }
 .kt-req .req-review-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .kt-req .req-review-head h6 { margin: 0; }
+.kt-req .req-review-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .kt-req .req-review-summary { font-size: 13px; margin: 6px 0 0; }
 .kt-req .req-review-toggle { background: none; border: 0; padding: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--kt-color-accent-700); cursor: pointer; }
 .kt-req .req-review-body { margin-top: var(--kt-space-3); }
@@ -108,8 +152,12 @@
 @media (max-width: 640px) {
 	.kt-req .kt-panel-lg.req-page { padding: var(--kt-space-4); }
 	.kt-req .req-grid-2, .kt-req .req-grid-2-tight, .kt-req .req-filters, .kt-req .req-filters.is-technical { grid-template-columns: 1fr; }
-	.kt-req .req-progress { flex-direction: column; }
-	.kt-req .req-progress-task { border-right: 0; border-bottom: 1px solid var(--kt-color-divider); }
+	.kt-req .req-item-group { overflow-x: auto; }
+	.kt-req .req-item-group .table { table-layout: auto; min-width: 460px; }
+	.kt-req .req-item-group .req-row-actions { flex-wrap: wrap; }
+	.kt-req .req-steps { grid-template-columns: 1fr; gap: var(--kt-space-3); }
+	.kt-req .req-steps .kt-journey-title { font-size: 13px; }
+	.kt-req .req-steps .kt-journey-state { font-size: 11px; padding-left: 0; }
 	.kt-req .req-has-cards > .table { display: none; }
 	.kt-req .req-has-cards > .req-row-cards { display: block; }
 	.kt-req .req-row-card { border-top: 1px solid var(--kt-color-divider); padding: var(--kt-space-3) 0; }

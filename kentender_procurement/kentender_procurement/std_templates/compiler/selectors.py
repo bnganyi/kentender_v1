@@ -124,6 +124,8 @@ def _technical(p: dict[str, Any], _params: dict[str, Any], constants: dict[str, 
 		}
 		flags = {"evidence_required": proj.technical_evidence_required(row["technical_requirement_id"], p)}
 		lineage = {"technical_requirement_id": row["technical_requirement_id"], "applies_to_scope": row["applies_to_scope"], "applies_to_id": row["applies_to_id"]}
+		if row.get("applies_to_item_ids"):  # v1.5 handoff: the exact items, carried to the bidder's response
+			lineage["applies_to_item_ids"] = list(row["applies_to_item_ids"])
 		out.append(_instance(row["technical_requirement_id"], facts, lineage, flags))
 	return out
 
@@ -228,7 +230,10 @@ def _related_services(p: dict[str, Any], _params: dict[str, Any], constants: dic
 			"unit": "service",
 			"description": f"{row['service_type']} — {row['required_result']}",
 		}
-		out.append(_instance(row["service_requirement_id"], facts, {"service_requirement_id": row["service_requirement_id"]}))
+		lineage = {"service_requirement_id": row["service_requirement_id"]}
+		if row.get("applies_to_item_ids"):
+			lineage["applies_to_item_ids"] = list(row["applies_to_item_ids"])
+		out.append(_instance(row["service_requirement_id"], facts, lineage))
 	return out
 
 
@@ -237,7 +242,7 @@ def _acceptance(p: dict[str, Any], _params: dict[str, Any], constants: dict[str,
 		_instance(
 			row["acceptance_requirement_id"],
 			{"check_type": row["check_type"], "pass_condition": row["pass_condition"], "evidence_type": row["evidence_type"], "applies_to": proj.applies_to_label(row, p)},
-			{"acceptance_requirement_id": row["acceptance_requirement_id"]},
+			{"acceptance_requirement_id": row["acceptance_requirement_id"], **({"applies_to_item_ids": list(row["applies_to_item_ids"])} if row.get("applies_to_item_ids") else {})},
 		)
 		for row in p["acceptance_requirements"]
 	]

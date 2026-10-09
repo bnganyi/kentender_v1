@@ -140,7 +140,8 @@ BASELINE_RULES: dict[str, tuple[tuple[str, Any], ...]] = {
 	"Laptop": (("memory", None), ("storage_capacity", None), ("storage_type", "NVMe SSD")),
 	"Desktop computer": (("memory", None), ("storage_capacity", None), ("storage_type", "NVMe SSD")),
 	"Tablet": (("memory", None), ("storage_capacity", None), ("storage_type", "NVMe SSD")),
-	"Monitor": (("display_resolution", None),),
+	# REQ v1.18 §6.4A — new content for owner review: Full HD, 24-inch minimum panel.
+	"Monitor": (("display_resolution", "Full HD"), ("panel_size", 24)),
 	"Printer": (("print_technology", None),),
 	"Scanner": (("scan_resolution", None),),
 	"Network equipment": (("network_function", None),),
@@ -339,33 +340,78 @@ def _technical_row(key: str, raw: Any) -> dict[str, Any]:
 	}
 
 
-def proposal_for(categories: list[str] | tuple[str, ...]) -> dict[str, Any]:
-	"""§6.4 — the one complete editable proposal for the Draft's equipment.
-	Laptop gets `LAPTOP-REQUIREMENTS-V1` exactly; any other supported
-	category gets the catalogue-driven starting rows that carry a code-owned
-	starting value. `proposal_digest` identifies exactly what was shown, so
+def _items_of(items) -> list[tuple[str, str]]:
+	"""`(requisition_item_id, category)` pairs, supported categories only. A bare category list (one entry per
+	item) is still accepted: each gets a stand-in id, so a single-kind request behaves as it always did."""
+	out: list[tuple[str, str]] = []
+	for n, item in enumerate(items or [], start=1):
+		if isinstance(item, str):
+			item_id, category = f"ITEM-{n}", item
+		elif isinstance(item, (tuple, list)):
+			item_id, category = item[0], item[1]
+		else:
+			item_id, category = item.get("requisition_item_id") or f"ITEM-{n}", item.get("equipment_category")
+		if category in EQUIPMENT_CATEGORIES:
+			out.append((str(item_id), category))
+	return out
+
+
+def _starting_rows(category: str) -> list[tuple[str, Any]]:
+	"""A category's own starting rows (REQ v1.18 §6.4A): Laptop its complete preset, any other the shared
+	baseline plus the rows that carry a code-owned starting value."""
+	if category == "Laptop":
+		return list(LAPTOP_TECHNICAL)
+	return [(k, v) for k, v in list(BASELINE_RULES.get("__all__", ())) + list(BASELINE_RULES.get(category, ())) if v is not None]
+
+
+def required_characteristics(category: str) -> list[str]:
+	"""The characteristics every item of a category must be covered by (§6.5A): the baseline rules (shared and
+	the category's own) that its starting rows give a value for."""
+	baseline = {k for k, _ in BASELINE_RULES.get("__all__", ())} | {k for k, _ in BASELINE_RULES.get(category, ())}
+	return [k for k, _ in _starting_rows(category) if k in baseline]
+
+
+def proposal_for(items) -> dict[str, Any]:
+	"""§6.4 / §6.4A — the one complete editable proposal for the Draft's items.
+
+	Built from each item's own category, never from a category list alone: every starting row targets exactly
+	the items it applies to, rows of different categories that name the same characteristic with the same
+	value merge into one row, and a row is `All items` only when it applies to every item. Laptop-only keeps
+	`LAPTOP-REQUIREMENTS-V1` exactly. `proposal_digest` identifies exactly what was shown, so
 	`ApplySelectedRequirementPackage` can refuse a stale one."""
-	categories = [c for c in dict.fromkeys(categories or []) if c in EQUIPMENT_CATEGORIES]
+	from kentender_procurement.procurement_requisitions.services import scope as req_scope
+
+	pairs = _items_of(items)
+	categories = list(dict.fromkeys(c for _, c in pairs))
 	if not categories:
 		return {"profile_key": "", "profile_version": "", "technical": [], "support": {}, "acceptance": [], "proposal_digest": ""}
+	item_docs = [{"requisition_item_id": i, "equipment_category": c} for i, c in pairs]
+	merged: dict[tuple[str, str], tuple[Any, list[str]]] = {}
+	for category in categories:
+		ids = [i for i, c in pairs if c == category]
+		for key, value in _starting_rows(category):
+			signature = (key, json.dumps(validate_value(CATALOGUE_BY_KEY[key], value), sort_keys=True, default=str))
+			_, bucket = merged.setdefault(signature, (value, []))
+			bucket.extend(i for i in ids if i not in bucket)
+	technical = []
+	targets: dict[str, list[str]] = {}
+	for (key, _), (raw, ids) in merged.items():
+		row = _technical_row(key, raw)
+		stored = req_scope.normalise(ids, item_docs, CATALOGUE_BY_KEY[key])
+		row["applies_to_scope"], row["applies_to_id"] = stored["applies_to_scope"], stored["applies_to_id"]
+		if stored["applies_to_scope"] != "All items":
+			row["applies_to_item_ids"] = targets[key] = json.loads(stored["applies_to_item_ids_json"])
+		technical.append(row)
 	if categories == ["Laptop"]:
-		technical = [_technical_row(k, v) for k, v in LAPTOP_TECHNICAL]
-		profile_key, profile_version = STANDARD_PROFILE_KEY, STANDARD_PROFILE_VERSION
+		profile_key = STANDARD_PROFILE_KEY
 	else:
-		technical = []
-		seen: set[str] = set()
-		for category in categories:
-			rules = list(BASELINE_RULES.get("__all__", ())) + list(BASELINE_RULES.get(category, ()))
-			for key, value in rules:
-				if value is None or key in seen:
-					continue
-				seen.add(key)
-				technical.append(_technical_row(key, value))
-		profile_key, profile_version = CATALOGUE_PROFILE_KEY, STANDARD_PROFILE_VERSION
+		profile_key = CATALOGUE_PROFILE_KEY
 	payload = {
-		"profile_key": profile_key, "profile_version": profile_version, "categories": categories,
+		"profile_key": profile_key, "profile_version": STANDARD_PROFILE_VERSION, "categories": categories,
 		"technical": technical, "support": dict(STANDARD_SUPPORT),
 		"acceptance": [{**row, "applies_to_scope": "All items", "applies_to_id": ""} for row in STANDARD_ACCEPTANCE],
 	}
+	if targets:  # only a request whose rows do not all cover every item changes the digest's shape
+		payload["targets"] = targets
 	payload["proposal_digest"] = hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
 	return payload

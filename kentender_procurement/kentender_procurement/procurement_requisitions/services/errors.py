@@ -1,7 +1,8 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Stable Procurement Requisitions service errors (REQ-CHG-001 v1.11 §11).
+"""Stable Procurement Requisitions service errors (REQ-CHG-001 v1.11 §11; v1.15 adds
+`REQ_QUANTITY_EXCEEDS_AVAILABLE` and `REQ_ESTIMATE_EXCEEDS_ALLOWANCE`).
 
 §11 defines a closed set of codes. They are stable service results; `fail()`
 refuses any code outside the contract — an invented code is a defect in the
@@ -23,6 +24,8 @@ MESSAGES: dict[str, str] = {
 	"REQ_OPEN_EXISTS": "This Plan Item already has an open Requisition.",
 	"REQ_CONTROL_INVALID": "A value does not match its released type, range or options.",
 	"REQ_QUANTITY_MISMATCH": "Item and requested quantities do not reconcile.",
+	"REQ_QUANTITY_EXCEEDS_AVAILABLE": "This quantity is more than what remains available for this requirement.",
+	"REQ_ESTIMATE_EXCEEDS_ALLOWANCE": "This estimated total cost is more than the value that remains available for this requirement.",
 	"REQ_BATCH_ITEM_INVALID": "One or more approved-requirement rows cannot be created or updated as one set. Nothing was changed.",
 	"REQ_STANDARD_PROPOSAL_STALE": "The standard requirements changed after they were shown. Review them again before using them.",
 	"REQ_PRODUCT_UNSUPPORTED": "This purchase is not supported by the installed IT-equipment Tender format.",

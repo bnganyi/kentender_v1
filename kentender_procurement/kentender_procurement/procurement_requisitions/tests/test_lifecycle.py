@@ -35,6 +35,7 @@ class TestRouting(RequisitionCase):
 		requisition = fx.prepare(item_id)["requisition"]
 		fx.fill_request_information(requisition)
 		fx.add_laptops(requisition)
+		fx.enter_estimates(requisition)
 		with self.assertRaises(ProcurementRequisitionsError) as ctx:
 			fx.send(requisition)
 		self.assertCode(ctx, "REQ_BLOCKING_FINDINGS")

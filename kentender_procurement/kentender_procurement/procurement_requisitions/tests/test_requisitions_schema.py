@@ -44,7 +44,7 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 		"record_version", "requisition_reference", "strategic_objective_id", "strategic_objective_path",
 	},
 	"Requisition Acceptance Requirement": {
-		"acceptance_requirement_id", "applies_to_id", "applies_to_scope", "check_type", "evidence_type",
+		"acceptance_requirement_id", "applies_to_id", "applies_to_item_ids_json", "applies_to_scope", "check_type", "evidence_type",
 		"other_evidence_name", "pass_condition", "row_order", "row_state",
 	},
 	"Requisition Command Journal": {
@@ -80,7 +80,7 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 		"plan_item_line_id", "quantity", "requisition_item_id", "row_order", "unit",
 	},
 	"Requisition Related Service": {
-		"acceptance_evidence", "applies_to_id", "applies_to_scope", "completion_date", "other_evidence_name",
+		"acceptance_evidence", "applies_to_id", "applies_to_item_ids_json", "applies_to_scope", "completion_date", "other_evidence_name",
 		"quantity_or_coverage", "required_result", "row_order", "service_requirement_id", "service_type",
 	},
 	"Requisition Supporting Material": {
@@ -92,11 +92,11 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 		"requisition_version", "status", "task_token",
 	},
 	"Requisition Technical Requirement": {
-		"applies_to_id", "applies_to_scope", "characteristic_key", "comparison", "mandatory", "other_value", "reason",
+		"applies_to_id", "applies_to_item_ids_json", "applies_to_scope", "characteristic_key", "comparison", "mandatory", "other_value", "reason",
 		"required_value_display", "required_value_json", "row_order", "row_state", "technical_requirement_id", "unit",
 	},
 	"Requisition Version": {
-		"based_on_version", "basis_snapshot_json", "certified_lead_org_unit_id", "content_digest",
+		"based_on_version", "basis_snapshot_json", "unreviewed_line_ids_json", "omitted_lines_json", "certified_lead_org_unit_id", "content_digest",
 		"delivery_address_snapshot", "delivery_location", "drawdown_lines", "fixture_namespace", "latest_delivery_date",
 		"lead_routing_directive", "package_version", "prepared_authority_snapshot", "prepared_by", "prepared_capacity",
 		"record_version", "related_services_required", "requirement_title", "requisition", "sent_for_approval_at",

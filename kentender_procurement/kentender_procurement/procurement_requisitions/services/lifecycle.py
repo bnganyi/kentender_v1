@@ -27,10 +27,12 @@ from kentender_procurement.procurement_requisitions.services import (
 	eligibility_gateway,
 	envelope,
 	events,
+	goods_template,
 	records,
 	validation,
 )
 from kentender_procurement.procurement_requisitions.services import requisition_authorization as authz
+from kentender_procurement.procurement_requisitions.services import scope as req_scope
 from kentender_procurement.procurement_requisitions.services.errors import fail
 from kentender_procurement.procurement_requisitions.services.requisition_roles import (
 	ROLE_DEPARTMENTAL_AUTHOR,
@@ -81,7 +83,7 @@ def recheck(root, version, package_version) -> dict[str, Any]:
 	and row control with zero Blocking findings. Returns the projection."""
 	projection = eligibility_gateway.get_requisition_eligible_plan_item(root.plan_item_id)
 	compatibility.require_compatible(projection)
-	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=projection)
+	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=projection, unreviewed_line_ids=goods_template.unreviewed_ids(version))
 	if report["blocking_count"]:
 		fail("REQ_BLOCKING_FINDINGS", detail={"findings": [f for f in report["findings"] if f["severity"] == "Blocking"]})
 	return projection
@@ -90,6 +92,18 @@ def recheck(root, version, package_version) -> dict[str, Any]:
 def lock(root, version, package_version, *, target_status: str) -> dict[str, Any]:
 	"""§7.2 — recheck everything on the exact content, freeze it, lock it."""
 	projection = recheck(root, version, package_version)
+	# v1.15 §5.3/§7.3A — derive every quantity, leave the unused sources out of the snapshot (kept as history),
+	# and re-derive the lead from what remains unless a Procurement directive fixed it.
+	goods_template.omit_unused_lines(version, package_version)
+	# v1.18 §5.7A — record exactly which items every requirement row covered, before the digest is computed.
+	for table_field in ("technical_requirements", "related_services", "acceptance_requirements"):
+		for row in package_version.get(table_field):
+			req_scope.freeze(row, package_version.items)
+	if not version.lead_routing_directive:
+		lead = records.default_lead(records.child_rows(version, "drawdown_lines"))
+		if lead and lead != root.lead_org_unit_id:
+			root.lead_org_unit_id = lead
+			envelope.bump(root)
 	content_digest = digest.sha256_hex(records.digest_payload(version, package_version))
 	version.content_digest = content_digest
 	package_version.content_digest = content_digest
@@ -145,7 +159,8 @@ def copy_draft_successor(root, reviewed_version, reviewed_package_version, *, le
 			**{f: reviewed_version.get(f) for f in ("requirement_title", "delivery_location", "latest_delivery_date", "related_services_required", "prepared_by", "prepared_capacity", "prepared_authority_snapshot")},
 			"lead_routing_directive": lead_directive or None,
 			"package_version": new_package_version.name, "record_version": 0,
-			"drawdown_lines": [{k: v for k, v in r.as_dict().items() if k not in ("reservation_id", "planning_drawdown_reference")} for r in reviewed_version.drawdown_lines],
+			"drawdown_lines": [{k: v for k, v in r.as_dict().items() if k not in ("reservation_id", "planning_drawdown_reference")} for r in reviewed_version.drawdown_lines]
+			+ goods_template.restored_lines(reviewed_version),
 		}
 	))
 

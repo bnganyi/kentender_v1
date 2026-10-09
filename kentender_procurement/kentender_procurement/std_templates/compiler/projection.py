@@ -80,7 +80,7 @@ SCHEMA: dict[str, Any] = {
 		{
 			"technical_requirement_id": STR, "characteristic_key": STR, "label": STR, "comparison": STR, "control": STR,
 			"unit": STR, "options": LIST_STR, "port_options": LIST_STR, "required_value": JSON,
-			"required_value_display": STR, "applies_to_scope": STR, "applies_to_id": STR, "row_order": INT,
+			"required_value_display": STR, "applies_to_scope": STR, "applies_to_id": STR, "applies_to_item_ids": ("optional", LIST_STR), "row_order": INT,
 		}
 	],
 	"warranty_support": {
@@ -89,14 +89,14 @@ SCHEMA: dict[str, Any] = {
 	},
 	"related_services": [
 		{
-			"service_requirement_id": STR, "service_type": STR, "applies_to_scope": STR, "applies_to_id": STR,
+			"service_requirement_id": STR, "service_type": STR, "applies_to_scope": STR, "applies_to_id": STR, "applies_to_item_ids": ("optional", LIST_STR),
 			"required_result": STR, "quantity_or_coverage": STR, "completion_date": DATE, "acceptance_evidence": STR,
 		}
 	],
 	"acceptance_requirements": [
 		{
 			"acceptance_requirement_id": STR, "check_type": STR, "pass_condition": STR, "evidence_type": STR,
-			"applies_to_scope": STR, "applies_to_id": STR,
+			"applies_to_scope": STR, "applies_to_id": STR, "applies_to_item_ids": ("optional", LIST_STR),
 		}
 	],
 	"supporting_materials": [
@@ -137,13 +137,14 @@ def _check(value: Any, spec: Any, path: str) -> None:
 		if not isinstance(value, dict):
 			fail("STD_INPUT_UNSUPPORTED", f"{path} must be an object.", identity=path)
 		unknown = sorted(set(value) - set(spec))
-		missing = sorted(set(spec) - set(value))
+		missing = sorted(k for k in spec if k not in value and not (isinstance(spec[k], tuple) and spec[k][0] == "optional"))
 		if unknown:
 			fail("STD_INPUT_UNSUPPORTED", f"{path} has unknown key(s): {', '.join(unknown)}.", identity=f"{path}.{unknown[0]}")
 		if missing:
 			fail("STD_INPUT_UNSUPPORTED", f"{path} is missing key(s): {', '.join(missing)}.", identity=f"{path}.{missing[0]}")
 		for key, sub in spec.items():
-			_check(value[key], sub, f"{path}.{key}")
+			if key in value:
+				_check(value[key], sub, f"{path}.{key}")
 		return
 	if isinstance(spec, list):
 		if not isinstance(value, list):
@@ -180,9 +181,17 @@ def validate(projection: dict[str, Any]) -> dict[str, Any]:
 	_unique(projection["acceptance_requirements"], "acceptance_requirement_id", "acceptance_requirements")
 	_unique(projection["officer_decisions"]["evidence_requirements"], "evidence_requirement_id", "evidence_requirements")
 	item_ids = {i["requisition_item_id"] for i in projection["items"]}
+	service_ids = {r["service_requirement_id"] for r in projection["related_services"]}
 	for family in ("technical_requirements", "related_services", "acceptance_requirements"):
 		for row in projection[family]:
-			if row["applies_to_scope"] != ALL_ITEMS and row["applies_to_id"] not in item_ids:
+			listed = row.get("applies_to_item_ids") or []
+			if row["applies_to_scope"] == "Service" and family == "acceptance_requirements":
+				if row["applies_to_id"] not in service_ids:
+					fail("STD_INPUT_UNSUPPORTED", f"{family} row applies to an unknown service.", identity=row["applies_to_id"] or family)
+			elif row["applies_to_scope"] == "Items":
+				if not listed or not set(listed) <= item_ids:
+					fail("STD_INPUT_UNSUPPORTED", f"{family} row applies to an unknown item.", identity=",".join(listed) or family)
+			elif row["applies_to_scope"] != ALL_ITEMS and row["applies_to_id"] not in item_ids:
 				fail("STD_INPUT_UNSUPPORTED", f"{family} row applies to an unknown item.", identity=row["applies_to_id"] or family)
 	return projection
 
@@ -204,9 +213,27 @@ def item_names(projection: dict[str, Any]) -> dict[str, str]:
 	return {i["requisition_item_id"]: i["item_name"] for i in projection["items"]}
 
 
+def row_item_ids(row: dict[str, Any], projection: dict[str, Any]) -> list[str]:
+	"""The exact items a requirement row covers (REQ v1.18 §5.7A). A row from an earlier handoff has no list:
+	`All items` is every item and `Item` is the one it names."""
+	listed = [i for i in row.get("applies_to_item_ids") or []]
+	if listed and row["applies_to_scope"] != ALL_ITEMS:
+		return listed
+	if row["applies_to_scope"] == ALL_ITEMS:
+		return [i["requisition_item_id"] for i in projection["items"]]
+	if row["applies_to_scope"] == "Item":
+		return [row["applies_to_id"]]
+	return []
+
+
 def applies_to_label(row: dict[str, Any], projection: dict[str, Any]) -> str:
 	if row["applies_to_scope"] == ALL_ITEMS or not row["applies_to_id"]:
 		return ALL_ITEMS
+	if row["applies_to_scope"] == "Items":
+		names = item_names(projection)
+		return ", ".join(dict.fromkeys(names.get(i, i) for i in row_item_ids(row, projection)))
+	if row["applies_to_scope"] == "Service":
+		return next((s["service_type"] for s in projection["related_services"] if s["service_requirement_id"] == row["applies_to_id"]), row["applies_to_id"])
 	return item_names(projection).get(row["applies_to_id"], row["applies_to_id"])
 
 
@@ -214,7 +241,7 @@ def technical_ids_for_item(item_id: str, projection: dict[str, Any]) -> list[str
 	return sorted(
 		row["technical_requirement_id"]
 		for row in projection["technical_requirements"]
-		if row["applies_to_scope"] == ALL_ITEMS or row["applies_to_id"] == item_id
+		if item_id in row_item_ids(row, projection)
 	)
 
 

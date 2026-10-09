@@ -26,6 +26,7 @@ from kentender_procurement.procurement_requisitions.services import (
 	envelope,
 	events,
 	funding_gateway,
+	goods_template,
 	handoff as handoff_service,
 	precision,
 	records,
@@ -48,7 +49,7 @@ def recheck(root, version, package_version) -> tuple[dict[str, Any], list[Any]]:
 		fail("PLN_ITEM_AUTHORISATION_HELD", detail={"requests": (projection.get("hold") or {}).get("unresolved_requests")})
 	if not projection.get("eligible"):
 		fail("REQ_PLAN_INELIGIBLE")
-	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=projection)
+	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=projection, unreviewed_line_ids=goods_template.unreviewed_ids(version))
 	blocking = [f for f in report["findings"] if f["severity"] == "Blocking"]
 	if any(f["code"] == "BALANCE_CHANGED" for f in blocking):
 		fail("REQ_BALANCE_CHANGED", detail={"findings": blocking})

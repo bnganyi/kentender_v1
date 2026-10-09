@@ -393,7 +393,7 @@ def _wipe_planning_side() -> None:
 		frappe.db.delete(decision_doctype, {"task": ("in", task_rows or ("",))})
 		frappe.db.delete(task_doctype, {"name": ("in", task_rows or ("",))})
 	frappe.db.delete("Annual Plan Publication", {"plan_version": ("in", plan_versions or ("",))})
-	for doctype in ("Plan Preparation Signature", "Plan Financial Basis", "Plan Finance Basis Reuse", "Treasury Submission Evidence", "Plan Publication Hold", "Late Activation Explanation"):
+	for doctype in ("Plan Preparation Signature", "Plan Financial Basis", "Plan Finance Basis Reuse", "Treasury Submission Evidence", "Plan Publication Confirmation", "Plan Publication Hold", "Late Activation Explanation"):
 		if frappe.db.exists("DocType", doctype):
 			frappe.db.delete(doctype, {"plan_version": ("in", plan_versions or ("",))})
 	snapshots = frappe.get_all("Approved Plan Snapshot", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
@@ -471,7 +471,7 @@ def _direct_entry(*, unit: str, author: str, hod: str, amount: int, quantity: in
 
 
 def _activate(plan_reference: str) -> None:
-	from kentender_procurement.procurement_planning.services import plan_finance, plan_governance, plan_read, publication_pipeline, treasury
+	from kentender_procurement.procurement_planning.services import plan_finance, plan_governance, plan_read, publication_confirmation
 
 	with _as(PLN_PLANNER):
 		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
@@ -488,13 +488,13 @@ def _activate(plan_reference: str) -> None:
 	with _as(PLN_STATUTORY):
 		approved = plan_governance.approve_annual_plan(task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=_key())
 	version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
-	with _as(PLN_AO):
-		treasury.record_treasury_submission(
-			plan_version=version_name, submitted_at=f"{FY_START}-11-01 09:00:00", channel="Email", destination="treasury@example.test",
-			dispatch_reference=f"MOH/APP/{FY_START}/001", exact_document_confirmed=True, idempotency_key=_key(),
+	today = str(frappe.utils.getdate(frappe.utils.nowdate()))
+	with _as(PLN_PLANNER):  # PLN-CHG-001 v1.31: the Planner confirms publication
+		publication_confirmation.confirm_plan_publication(
+			plan_version=version_name,
+			values={"treasury_submitted_on": today, "treasury_reference": f"MOH/APP/{FY_START}/001", "website_published_on": today, "public_plan_url": "https://www.moh.example.test/procurement/annual-procurement-plan", "confirmation_acknowledged": 1},
+			expected_record_version=int(frappe.db.get_value("Annual Plan Version", version_name, "record_version") or 0), idempotency_key=_key(),
 		)
-	frappe.set_user("Administrator")
-	publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=_key())
 
 
 def _build_eligible_plan_item(*, overrides: dict[str, Any] | None = None, single: bool = False) -> tuple[str, str]:
@@ -569,11 +569,36 @@ def _add_laptops(requisition: str, user: str = AUTHOR) -> None:
 	view = _view(requisition, user)
 	uses = {OU: "Field digital-health deployment for Digital Health staff", OU_B: "Clinical training for Human Resources Management and Development staff"}
 	lines = {l["drawdown_line_id"]: l for l in view["amounts"]}
-	rows = [{"drawdown_line_id": r["drawdown_line_id"], "quantity": r["quantity"], "intended_use": uses.get(lines[r["drawdown_line_id"]]["contributing_org_unit"], "Field deployment for department staff")} for r in view["equipment"]["add_rows"] if r["quantity"] > 0]
+	rows = [{"drawdown_line_id": r["drawdown_line_id"], "quantity": r["room"], "intended_use": uses.get(lines[r["drawdown_line_id"]]["contributing_org_unit"], "Field deployment for department staff")} for r in view["equipment"]["add_rows"] if r["room"] > 0]
 	with _as(user):
 		_cmd().add_same_specification_items(
 			requisition=requisition, shared={"equipment_category": "Laptop", "item_name": "Business laptops", "delivery_location": DELIVERY_LOCATION},
 			rows=rows, expected_record_version=view["package_record_version"], idempotency_key=_key(),
+		)
+
+
+def _add_laptops_and_monitors(requisition: str, user: str = AUTHOR) -> None:
+	"""REQ v1.18 §6.4A — one request, two kinds of item: laptops for the first source, monitors for the second."""
+	view = _view(requisition, user)
+	rows = [r for r in view["equipment"]["add_rows"] if r["room"] > 0]
+	for row, (category, name, use, quantity) in zip(rows, (("Laptop", "Business laptops", "Field digital-health deployment for department staff", None), ("Monitor", "Office monitors", "Clinical display for department staff", 50))):
+		view = _view(requisition, user)
+		with _as(user):
+			_cmd().add_same_specification_items(
+				requisition=requisition, shared={"equipment_category": category, "item_name": name, "delivery_location": DELIVERY_LOCATION},
+				rows=[{"drawdown_line_id": row["drawdown_line_id"], "quantity": quantity or row["room"], "intended_use": use}],
+				expected_record_version=view["package_record_version"], idempotency_key=_key(),
+			)
+
+
+def _enter_estimates(requisition: str, user: str = AUTHOR) -> None:
+	"""v1.15: one estimated total cost per source that has items — here the whole value that remains."""
+	view = _view(requisition, user)
+	lines = [{"drawdown_line_id": a["drawdown_line_id"], "requested_value": a["remaining_value_value"]} for a in view["amounts"] if a["editable"] and int(a["requested_quantity_value"]) > 0]
+	with _as(user):
+		_cmd().save_requisition_summary(
+			requisition=requisition, values={"drawdown_lines": lines},
+			expected_record_version=view["header"]["version_record_version"], idempotency_key=_key(),
 		)
 
 
@@ -584,8 +609,15 @@ def _apply_package(requisition: str, user: str = AUTHOR) -> None:
 	def raw(value):
 		return value.get("ports") or value.get("values") or value.get("value")
 
-	technical = [{"technical_requirement_id": r["technical_requirement_id"], "characteristic_key": r["characteristic_key"], "value": raw(r["value"]), "selected": True} for g in req["technical_groups"] for r in g["rows"]]
-	acceptance = [{k: a[k] for k in ("acceptance_requirement_id", "check_type", "pass_condition", "evidence_type", "applies_to_scope", "applies_to_id")} | {"selected": True} for a in req["acceptance"]]
+	technical = [
+		{"technical_requirement_id": r["technical_requirement_id"], "characteristic_key": r["characteristic_key"], "value": raw(r["value"]), "selected": True,
+		 "applies_to_scope": r["applies_to_scope"], "applies_to_id": r["applies_to_id"] or "", "applies_to_item_ids": r.get("applies_to_item_ids") or []}
+		for g in req["technical_groups"] for r in g["rows"] if r["state"] == "Proposed"
+	]
+	acceptance = [
+		{k: a[k] for k in ("acceptance_requirement_id", "check_type", "pass_condition", "evidence_type", "applies_to_scope", "applies_to_id", "applies_to_item_ids")} | {"selected": True}
+		for a in req["acceptance"] if a["state"] == "Proposed"
+	]
 	with _as(user):
 		_cmd().apply_selected_requirement_package(
 			requisition=requisition, profile_key=req["profile_key"], profile_version=req["profile_version"], proposal_digest=req["proposal_digest"],
@@ -635,7 +667,14 @@ def _state(stage: str, **kwargs) -> dict[str, Any]:
 	_request_information(requisition)
 	if stage == "request_information":
 		return out
+	if stage == "mixed_review_required":
+		_add_laptops_and_monitors(requisition)
+		_enter_estimates(requisition)
+		return out
 	_add_laptops(requisition)
+	if stage == "items":
+		return out
+	_enter_estimates(requisition)
 	if stage == "review_required":
 		return out
 	_apply_package(requisition)
@@ -669,9 +708,19 @@ def reset_draft(*, commit: bool = True) -> dict[str, Any]:
 	return _done(_state("request_information"), commit)
 
 
+def reset_items_added(*, commit: bool = True) -> dict[str, Any]:
+	"""REQ-DES-03 (v1.15): request information filled and items entered, but no estimated total cost yet."""
+	return _done(_state("items"), commit)
+
+
 def reset_review_required(*, commit: bool = True) -> dict[str, Any]:
 	"""REQ-DES-03-COMPLETE / REQ-DES-05 base: equipment added, standard package Review required."""
 	return _done(_state("review_required"), commit)
+
+
+def reset_mixed_review_required(*, commit: bool = True) -> dict[str, Any]:
+	"""REQ-DES-05-MIXED (v1.18): laptops and monitors in one request, standard package Review required."""
+	return _done(_state("mixed_review_required"), commit)
 
 
 def reset_complete_draft(*, commit: bool = True) -> dict[str, Any]:
@@ -767,5 +816,6 @@ def reset_direct_hod_draft(*, commit: bool = True) -> dict[str, Any]:
 	requisition = _prepare(world["plan_item_id"], user=HOD)
 	_request_information(requisition, user=HOD)
 	_add_laptops(requisition, user=HOD)
+	_enter_estimates(requisition, user=HOD)
 	_apply_package(requisition, user=HOD)
 	return _done({**world, "requisition": requisition}, commit)

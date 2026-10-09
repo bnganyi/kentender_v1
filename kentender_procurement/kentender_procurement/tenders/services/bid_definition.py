@@ -117,6 +117,13 @@ def _canonical_value(control: str, value: Any) -> Any:
 	return value
 
 
+def _item_ids_of(row: dict[str, Any]) -> dict[str, Any]:
+	"""REQ v1.18 §5.7A — the exact items a requirement row covers, when the snapshot carries them (handoff 1.5).
+	A snapshot taken earlier has none and projects exactly as it always did."""
+	ids = [cstr(i) for i in row.get("applies_to_item_ids") or []]
+	return {"applies_to_item_ids": ids} if ids else {}
+
+
 def _technical(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
 	out = []
 	for order, row in enumerate(snapshot.get("technical_requirements") or [], start=1):
@@ -139,6 +146,7 @@ def _technical(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
 				"required_value_display": cstr(row.get("required_value_display")),
 				"applies_to_scope": cstr(row.get("applies_to_scope") or "All items"),
 				"applies_to_id": cstr(row.get("applies_to_id")),
+				**_item_ids_of(row),
 				"row_order": order,
 			}
 		)
@@ -234,7 +242,7 @@ def projection(tender, version, *, publication_id: str, effective_addendum_ids=(
 		"related_services": [
 			{
 				"service_requirement_id": cstr(r.get("service_requirement_id")), "service_type": cstr(r.get("service_type")), "applies_to_scope": cstr(r.get("applies_to_scope") or "All items"),
-				"applies_to_id": cstr(r.get("applies_to_id")), "required_result": cstr(r.get("required_result")), "quantity_or_coverage": cstr(r.get("quantity_or_coverage")),
+				"applies_to_id": cstr(r.get("applies_to_id")), **_item_ids_of(r), "required_result": cstr(r.get("required_result")), "quantity_or_coverage": cstr(r.get("quantity_or_coverage")),
 				"completion_date": iso_date(r.get("completion_date")), "acceptance_evidence": cstr(r.get("acceptance_evidence")),
 			}
 			for r in snapshot.get("related_services") or []
@@ -243,6 +251,7 @@ def projection(tender, version, *, publication_id: str, effective_addendum_ids=(
 			{
 				"acceptance_requirement_id": cstr(r.get("acceptance_requirement_id")), "check_type": cstr(r.get("check_type")), "pass_condition": cstr(r.get("pass_condition")),
 				"evidence_type": cstr(r.get("evidence_type")), "applies_to_scope": cstr(r.get("applies_to_scope") or "All items"), "applies_to_id": cstr(r.get("applies_to_id")),
+				**_item_ids_of(r),
 			}
 			for r in snapshot.get("acceptance_requirements") or []
 		],

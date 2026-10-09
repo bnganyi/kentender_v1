@@ -26,6 +26,7 @@ from kentender_procurement.procurement_requisitions.services import (
 	eligibility_gateway,
 	envelope,
 	funding_gateway,
+	goods_template,
 	handoff as handoff_service,
 	precision,
 	presenters as p,
@@ -33,6 +34,7 @@ from kentender_procurement.procurement_requisitions.services import (
 	validation,
 )
 from kentender_procurement.procurement_requisitions.services import requisition_authorization as authz
+from kentender_procurement.procurement_requisitions.services import scope as req_scope
 from kentender_procurement.procurement_requisitions.services.errors import ProcurementRequisitionsError, fail
 from kentender_procurement.procurement_requisitions.services.requisition_roles import (
 	FORBIDDEN_MESSAGE,
@@ -135,7 +137,7 @@ def _decision_chain(root, version) -> list[dict[str, Any]]:
 def _next_task(root) -> tuple[str, str]:
 	version = frappe.get_doc("Requisition Version", root.current_version)
 	package_version = frappe.get_doc("IT Equipment Requirement Package Version", version.package_version)
-	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=_projection(root))
+	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=_projection(root), unreviewed_line_ids=goods_template.unreviewed_ids(version))
 	pending = next((t for t in report["tasks"] if t["status"] != "Complete"), None)
 	returned = bool(version.based_on_version)
 	labels = {"request_details": "Complete request details", "requirements": "Complete requirements", "review_submit": "Review and submit"}
@@ -443,15 +445,31 @@ def _purchase(root, projection: dict[str, Any], version_dict: dict[str, Any]) ->
 	}
 
 
-def _requirements_view(package_dict: dict[str, Any], package_version) -> dict[str, Any]:
+def _requirements_view(package_dict: dict[str, Any], package_version, version_dict: dict[str, Any] | None = None) -> dict[str, Any]:
 	review_state = package_dict.get("standard_package_review_state") or "Not generated"
 	return {
 		"review_state": review_state, "profile_key": package_version.standard_profile_key, "profile_version": package_version.standard_profile_version,
 		"proposal_digest": package_version.proposal_digest, "is_laptop_profile": package_version.standard_profile_key == catalogue.STANDARD_PROFILE_KEY,
-		"technical_groups": p.technical_groups(package_dict), "acceptance": p.acceptance_rows(package_dict),
+		"technical_groups": p.technical_groups(package_dict), "technical_targets": p.technical_targets(package_dict, version_dict), "acceptance": p.acceptance_rows(package_dict),
 		"support": {f: package_dict.get(f) for f in ("minimum_warranty_months", "onsite_support_required", "maximum_support_response_hours", "manufacturer_support_required", "service_location_constraint", "support_description")},
-		"services": [{**s, "applies_to": p.applies_to_label(s.get("applies_to_scope"), s.get("applies_to_id"), package_dict), "completion_date_label": p.date_label(s.get("completion_date"))} for s in package_dict.get("related_services") or []],
+		"services": [{**s, "applies_to": p.row_label(s, package_dict), "applies_to_item_ids": req_scope.item_ids(s, package_dict.get("items") or []), "completion_date_label": p.date_label(s.get("completion_date"))} for s in package_dict.get("related_services") or []],
 		"materials": [{**m, "linked": records.json_list(m.get("linked_requirement_ids_json"))} for m in package_dict.get("supporting_materials") or []],
+	}
+
+
+def _request_summary(vdict: dict[str, Any], pdict: dict[str, Any], sources: dict[str, dict[str, Any]], unreviewed: set[str]) -> dict[str, Any]:
+	"""v1.15 §13.4 — the read-only Request summary: what is available, what the
+	items request, the estimated total cost and what stays available."""
+	rows = p.amounts_rows(vdict, sources, package=pdict, unreviewed=unreviewed)
+	available_q = sum(int(r["remaining_quantity_value"]) for r in rows)
+	available_v = sum((precision.stored_money(r["remaining_value_value"]) for r in rows), precision.stored_money("0"))
+	requested_q = sum(int(r["requested_quantity_value"]) for r in rows)
+	estimate = sum((precision.stored_money(r["requested_value_value"]) for r in rows), precision.stored_money("0"))
+	return {
+		"available_quantity": precision.display_quantity(available_q), "available_value": precision.display_money(available_v),
+		"requested_quantity": precision.display_quantity(requested_q), "estimated_total": precision.display_money(estimate) if estimate > 0 else "",
+		"after_quantity": precision.display_quantity(available_q - requested_q), "after_value": precision.display_money(available_v - estimate),
+		"review_required": bool(unreviewed),
 	}
 
 
@@ -460,7 +478,7 @@ def get_requisition_editor(*, root, actor: str) -> dict[str, Any]:
 	projection = _projection(root)
 	vdict = records.version_dict(version)
 	pdict = records.package_dict(package_version)
-	report = validation.validate(version=vdict, package=pdict, eligibility=projection)
+	report = validation.validate(version=vdict, package=pdict, eligibility=projection, unreviewed_line_ids=goods_template.unreviewed_ids(version))
 	scope = records.edit_scope(root, actor)
 	technical = authz.is_technical(actor) or not scope["units"]
 	contributor = bool(scope["units"]) and not scope["shared"]
@@ -503,15 +521,22 @@ def get_requisition_editor(*, root, actor: str) -> dict[str, Any]:
 			"latest_delivery_date": cstr(version.latest_delivery_date or ""), "latest_delivery_date_label": p.date_label(version.latest_delivery_date),
 			"related_services_required": bool(version.related_services_required), "locations": list_delivery_locations(),
 		},
-		"amounts": p.amounts_rows(vdict, sources, editable_units=scope["units"]),
+		"amounts": p.amounts_rows(vdict, sources, editable_units=scope["units"], package=pdict, unreviewed=goods_template.unreviewed_ids(version)),
+		"summary": _request_summary(vdict, pdict, sources, goods_template.unreviewed_ids(version)),
 		"equipment": {
-			"rows": [{**r, "editable": r["contributing_org_unit"] in scope["units"]} for r in p.item_rows(vdict, pdict)], "shared_specification": p.shared_specification(pdict),
+			"rows": [{**r, "editable": r["contributing_org_unit"] in scope["units"]} for r in p.item_rows(vdict, pdict)], "shared_specification": p.shared_specification(pdict), "groups": p.specification_groups(pdict, vdict),
+			# v1.15 §13.5 — one row per source the actor may add items to; `room` is what can still be entered
+			# (nothing is prefilled: the requester types each quantity once).
 			"add_rows": [
-				{"drawdown_line_id": l["drawdown_line_id"], "department": records.unit_name(l["contributing_org_unit"]), "source_reference": l["source_line_id"], "quantity": int(precision.stored_quantity(l["requested_quantity"])) - sum(int(i.get("quantity") or 0) for i in pdict["items"] if i.get("drawdown_line_id") == l["drawdown_line_id"]), "unit": "Each", "editable": l["contributing_org_unit"] in scope["units"]}
-				for l in vdict["drawdown_lines"] if precision.stored_quantity(l["requested_quantity"]) > 0
+				{
+					"drawdown_line_id": l["drawdown_line_id"], "department": records.unit_name(l["contributing_org_unit"]), "source_reference": l["source_line_id"],
+					"room": goods_template.room(l, pdict["items"]), "remaining_quantity": int(precision.stored_quantity(l["remaining_quantity"])),
+					"unit": "Each", "editable": l["contributing_org_unit"] in scope["units"],
+				}
+				for l in vdict["drawdown_lines"] if goods_template.room(l, pdict["items"]) > 0
 			],
 		},
-		"requirements": _requirements_view(pdict, package_version),
+		"requirements": _requirements_view(pdict, package_version, vdict),
 		"review": review, "decision_chain": _decision_chain(root, version),
 		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
 		"actions": actions, "catalogue": _catalogue_meta(),
@@ -529,10 +554,10 @@ def _locked_bundle(root, version_name: str):
 	projection = _projection(root)
 	vdict = records.version_dict(version)
 	pdict = records.package_dict(package_version)
-	report = validation.validate(version=vdict, package=pdict, eligibility=projection) if version.version_status in ("Awaiting Department Approval", "Submitted to Procurement") else {"findings": [], "blocking_count": 0}
+	report = validation.validate(version=vdict, package=pdict, eligibility=projection, unreviewed_line_ids=goods_template.unreviewed_ids(version)) if version.version_status in ("Awaiting Department Approval", "Submitted to Procurement") else {"findings": [], "blocking_count": 0}
 	# §13.8/13.9 — the submitted Version's own date warning stays part of it.
 	findings = [f for f in report["findings"] if f["severity"] == "Warning"] or [
-		f for f in validation.validate(version=vdict, package=pdict, eligibility=projection)["findings"] if f["code"] == "DATE_AFTER_ESTIMATE"
+		f for f in validation.validate(version=vdict, package=pdict, eligibility=projection, unreviewed_line_ids=goods_template.unreviewed_ids(version))["findings"] if f["code"] == "DATE_AFTER_ESTIMATE"
 	]
 	sections = p.review_sections(root=root, version=vdict, package=pdict, projection=projection, findings=findings, lead=root.lead_org_unit_id)
 	return version, package_version, projection, vdict, pdict, report, sections

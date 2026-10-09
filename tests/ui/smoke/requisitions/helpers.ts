@@ -4,7 +4,7 @@ import path from "node:path";
 import { expect, Page } from "@playwright/test";
 
 /**
- * Shared plumbing for the REQ-CHG-001 v1.11 browser specs.
+ * Shared plumbing for the REQ-CHG-001 browser specs (v1.11 base, v1.15 request flow).
  *
  * Fixtures come from `procurement_requisitions.seeds.playwright_ui_fixtures`:
  * a self-contained world on Fiscal Year **2099-2100**, distinct from both the

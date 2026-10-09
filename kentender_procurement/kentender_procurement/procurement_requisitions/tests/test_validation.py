@@ -85,7 +85,7 @@ class TestTasksOverGroups(unittest.TestCase):
 		report = validation.validate(version=version(), package=package(items=[], technical_requirements=[], acceptance_requirements=[], standard_package_review_state="Not generated"), eligibility=eligibility())
 		self.assertEqual(statuses(report), {"request_details": "Needs attention", "requirements": "Not started", "review_submit": "Not started"})
 		messages = [f["message"] for f in report["findings"] if f["group"] == "equipment_items"]
-		self.assertIn("Add the laptop request matching the requested quantities.", messages)
+		self.assertIn("Add at least one item and enter its estimated total cost.", messages)
 
 	def test_des05_review_required_blocks_requirements(self):
 		report = validation.validate(version=version(), package=package(standard_package_review_state="Review required"), eligibility=eligibility())
@@ -101,13 +101,37 @@ class TestTasksOverGroups(unittest.TestCase):
 
 
 class TestExactReconciliation(unittest.TestCase):
-	def test_the_board_save_validation_message(self):
-		items = package()["items"]
-		items[1] = {**items[1], "quantity": 140}
+	def test_a_source_with_items_but_no_estimate_names_the_correction(self):
+		lines = version()["drawdown_lines"]
+		lines[1] = {**lines[1], "requested_value": "0.00"}
+		report = validation.validate(version=version(drawdown_lines=lines), package=package(), eligibility=eligibility())
+		incomplete = [f for f in report["findings"] if f["code"] == "SOURCE_INCOMPLETE"]
+		self.assertEqual([f["message"] for f in incomplete], ["Enter the estimated total cost for Digital Health."])
+		self.assertEqual(incomplete[0]["section"], "amounts")
+
+	def test_an_estimate_without_items_and_an_unused_source(self):
+		items = [i for i in package()["items"] if i["drawdown_line_id"] != version()["drawdown_lines"][1]["drawdown_line_id"]]
 		report = validation.validate(version=version(), package=package(items=items), eligibility=eligibility())
-		mismatch = [f for f in report["findings"] if f["code"] == "QUANTITY_MISMATCH"]
-		self.assertEqual(mismatch[0]["message"], "Requested equipment quantity for Digital Health is 140 Each but the approved requirement requests 150 Each")
-		self.assertEqual(mismatch[0]["section"], "equipment")
+		self.assertEqual([f["message"] for f in report["findings"] if f["code"] == "SOURCE_INCOMPLETE"], ["Add the items for Digital Health, or clear its estimated total cost."])
+		lines = version()["drawdown_lines"]
+		lines[1] = {**lines[1], "requested_value": "0.00"}
+		report = validation.validate(version=version(drawdown_lines=lines), package=package(items=items), eligibility=eligibility())
+		self.assertFalse([f for f in report["findings"] if f["code"] == "SOURCE_INCOMPLETE"], "no items and no estimate: the source is unused, not incomplete")
+
+	def test_a_brand_in_an_item_is_named_with_the_item_it_is_in(self):
+		items = package()["items"]
+		items[0] = {**items[0], "item_name": "Dell XPS"}
+		report = validation.validate(version=version(), package=package(items=items), eligibility=eligibility())
+		found = [f for f in report["findings"] if f["code"] == "RESTRICTIVE_TERM"]
+		self.assertEqual(len(found), 1)
+		self.assertEqual(found[0]["message"], "“Dell” in the item “Dell XPS” is a brand or restrictive term. Use supplier-neutral wording.")
+		self.assertEqual(found[0]["row"]["kind"], "item")
+		self.assertEqual(found[0]["task"], "request_details")
+
+	def test_a_carried_over_line_must_be_reviewed(self):
+		line_id = version()["drawdown_lines"][0]["drawdown_line_id"]
+		report = validation.validate(version=version(), package=package(), eligibility=eligibility(), unreviewed_line_ids={line_id})
+		self.assertEqual([f["code"] for f in report["findings"] if f["code"] == "AMOUNTS_REVIEW_REQUIRED"], ["AMOUNTS_REVIEW_REQUIRED"])
 
 	def test_requested_above_remaining_is_balance_changed_by_one_cent(self):
 		lines = version()["drawdown_lines"]

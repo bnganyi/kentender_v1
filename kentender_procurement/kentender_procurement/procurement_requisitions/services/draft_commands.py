@@ -1,7 +1,8 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.11 §10.2 — Draft commands.
+"""REQ-CHG-001 v1.11 §10.2 — Draft commands (v1.15: items enter the quantity, the requested
+quantity is derived, and the requester enters one estimated total cost per source).
 
 Creation (`PrepareITEquipmentRequisition`), the Request-details and
 Requirements edits, the atomic same-specification item set, and the grouped
@@ -28,11 +29,13 @@ from kentender_procurement.procurement_requisitions.services import (
 	compatibility,
 	eligibility_gateway,
 	envelope,
+	goods_template,
 	precision,
 	records,
 	references,
 	validation,
 )
+from kentender_procurement.procurement_requisitions.services import scope as req_scope
 from kentender_procurement.procurement_requisitions.services import requisition_authorization as authz
 from kentender_procurement.procurement_requisitions.services.errors import fail
 from kentender_procurement.procurement_requisitions.services.requisition_roles import ROLE_DEPARTMENTAL_AUTHOR, ROLE_HEAD_OF_USER_DEPARTMENT
@@ -117,8 +120,8 @@ def prepare_it_equipment_requisition(*, plan_item_id: str, idempotency_key: str,
 				"approved_quantity": precision.quantity_text(precision.planning_quantity(source.get("approved_quantity") or "0")),
 				"approved_value": precision.money_text(precision.parse_money(source.get("allocated_amount") or "0", allow_zero=True)),
 				"remaining_quantity": precision.quantity_text(remaining_qty), "remaining_value": precision.money_text(remaining_value),
-				# §14.3 — each line defaults to its full remaining balance.
-				"requested_quantity": precision.quantity_text(remaining_qty), "requested_value": precision.money_text(remaining_value),
+				# v1.15 §5.3 (PD-1) — nothing is requested until the requester enters items and an estimated total cost.
+				"requested_quantity": "0", "requested_value": "0.00",
 				"unit": source.get("unit") or precision.UNIT,
 			}
 		)
@@ -211,7 +214,13 @@ def _refresh_lead(root, version) -> None:
 	Head of Procurement Function directive fixed the lead."""
 	if version.lead_routing_directive:
 		return
-	lead = records.default_lead(records.child_rows(version, "drawdown_lines"))
+	lines = records.child_rows(version, "drawdown_lines")
+	# v1.15 §7.3A (owner, 9 Oct 2026): keep the start-time lead; apply the established rule to the estimated total
+	# costs only once every source line has one. A department that has not entered anything yet must not take the
+	# lead (and its routing rights) from another; submission re-derives it from the retained lines and freezes it.
+	if not lines or any(not goods_template.has_estimate(l) for l in lines):
+		return
+	lead = records.default_lead(lines)
 	if lead and lead != root.lead_org_unit_id:
 		root.lead_org_unit_id = lead
 		envelope.bump(root)
@@ -259,20 +268,33 @@ def save_requisition_summary(*, requisition: str, values: dict[str, Any], expect
 		version.related_services_required = 1 if wanted else 0
 
 	posted = {cstr(r.get("drawdown_line_id")): r for r in values.get("drawdown_lines") or []}
+	reviewed: list[str] = []
 	for line in version.drawdown_lines:
 		row = posted.pop(line.drawdown_line_id, None)
 		if row is None:
 			continue
 		records.require_unit(scope, line.contributing_org_unit)
-		quantity = precision.parse_quantity(row.get("requested_quantity"), field="Requested quantity")
-		value = precision.parse_money(row.get("requested_value"), field="Requested value")
-		if quantity > precision.stored_quantity(line.remaining_quantity) or value > precision.stored_money(line.remaining_value):
-			fail("REQ_BALANCE_CHANGED", detail={"drawdown_line_id": line.drawdown_line_id})
-		line.requested_quantity = precision.quantity_text(quantity)
-		line.requested_value = precision.money_text(value)
+		if "requested_quantity" in row:
+			message = "The requested quantity comes from the items. Add or change an item instead."
+			fail("REQ_CONTROL_INVALID", message, {"fields": {"requested_quantity": message}})
+		raw = row.get("requested_value")
+		if raw is None or (isinstance(raw, str) and not raw.strip()):
+			line.requested_value = "0.00"  # cleared: stored as zero, shown as blank — no estimate for this source
+		else:
+			value = precision.parse_money(raw, field="Estimated total cost")
+			remaining = precision.stored_money(line.remaining_value)
+			if value > remaining:
+				fail(
+					"REQ_ESTIMATE_EXCEEDS_ALLOWANCE", goods_template.estimate_exceeds_message(records.unit_name(line.contributing_org_unit), value, remaining),
+					{"drawdown_line_id": line.drawdown_line_id, "entered": precision.money_text(value), "limit": precision.money_text(remaining)},
+				)
+			line.requested_value = precision.money_text(value)
+		reviewed.append(line.drawdown_line_id)
 	if posted:
 		authz.not_found()
 
+	goods_template.apply_derived_quantities(version, package_version)
+	goods_template.mark_reviewed(version, reviewed)
 	envelope.bump(version)
 	_refresh_lead(root, version)
 	result = {"ok": True, "idempotent": False, "action": "saved", "requisition_version": version.name, "record_version": version.record_version, "lead_org_unit_id": root.lead_org_unit_id}
@@ -306,41 +328,131 @@ def _validate_shared_item(shared: dict[str, Any], version) -> dict[str, Any]:
 	return {"equipment_category": category, "item_name": name, "delivery_location": location or None, "latest_delivery_date": latest or None}
 
 
-def _generate_proposal(package_version) -> None:
-	"""§6.4 — (re)generate the one complete editable proposal for the Draft's
-	equipment: Proposed rows plus the visible support values, Review required.
-	Confirmed rows are history the proposal never overwrites."""
-	categories = [row.equipment_category for row in package_version.items]
-	proposal = catalogue.proposal_for(categories)
+def _generate_proposal(package_version, *, force_review: bool = False) -> None:
+	"""§6.4 / §6.4A — (re)generate the one complete editable proposal for the Draft's
+	items: Proposed rows targeted at the items each applies to, plus the visible support
+	values, Review required. Confirmed rows are history the proposal never overwrites; a
+	characteristic a confirmed row already covers for an item is not proposed again for it."""
+	items = [(row.requisition_item_id, row.equipment_category) for row in package_version.items]
+	proposal = catalogue.proposal_for(items)
 	if not proposal["technical"] and not proposal["acceptance"]:
 		return
 	kept_technical = [r for r in package_version.technical_requirements if r.row_state != "Proposed"]
 	kept_acceptance = [r for r in package_version.acceptance_requirements if r.row_state != "Proposed"]
 	package_version.set("technical_requirements", kept_technical)
 	package_version.set("acceptance_requirements", kept_acceptance)
+	covered: dict[str, set[str]] = {}
+	for row in kept_technical:
+		covered.setdefault(row.characteristic_key, set()).update(req_scope.item_ids(row, package_version.items))
 	technical_ids = [r.technical_requirement_id for r in kept_technical]
+	added = 0
 	for row in proposal["technical"]:
+		wanted = [i for i in (row.get("applies_to_item_ids") or [i for i, _ in items]) if i not in covered.get(row["characteristic_key"], set())]
+		if not wanted:
+			continue
+		if len(wanted) != len(row.get("applies_to_item_ids") or [i for i, _ in items]):
+			row = {**row, **_scope_dict(wanted, package_version.items, catalogue.CATALOGUE_BY_KEY[row["characteristic_key"]])}
 		row_id = _next_id("TECH-", technical_ids)
 		technical_ids.append(row_id)
 		package_version.append("technical_requirements", _technical_values(row_id, row, "Proposed", len(technical_ids)))
+		added += 1
 	acceptance_ids = [r.acceptance_requirement_id for r in kept_acceptance]
+	covered_checks = {r.check_type for r in kept_acceptance if r.applies_to_scope == "All items"}
 	for row in proposal["acceptance"]:
+		if row["check_type"] in covered_checks:
+			continue
 		row_id = _next_id("ACC-", acceptance_ids)
 		acceptance_ids.append(row_id)
 		package_version.append("acceptance_requirements", {**_acceptance_values(row), "acceptance_requirement_id": row_id, "row_state": "Proposed", "row_order": len(acceptance_ids)})
+		added += 1
 	for field_name, value in proposal["support"].items():
 		if package_version.get(field_name) in (None, "", 0) or field_name == "service_location_constraint" and package_version.get(field_name) in (None, "", "None"):
 			package_version.set(field_name, value)
 	package_version.standard_profile_key = proposal["profile_key"]
 	package_version.standard_profile_version = proposal["profile_version"]
 	package_version.proposal_digest = proposal["proposal_digest"]
-	package_version.standard_package_review_state = "Review required"
+	# Nothing new to review (every item is already covered by confirmed rows): a Reviewed package stays Reviewed.
+	if added or force_review or package_version.standard_package_review_state != "Reviewed":
+		package_version.standard_package_review_state = "Review required"
+
+
+def _scope_dict(ids, items, characteristic=None) -> dict[str, Any]:
+	stored = req_scope.normalise(ids, items, characteristic)
+	return {**stored, "applies_to_item_ids": json.loads(stored["applies_to_item_ids_json"]) if stored["applies_to_item_ids_json"] else []}
+
+
+def reconcile_requirements(package_version) -> None:
+	"""§6.5A — after items are added, removed, recategorised or customised: keep every
+	Confirmed row, take removed or no-longer-applicable items out of the rows that covered
+	them (a row left covering nothing goes), let a new item of a kind a row already covers
+	join it, mark every row whose coverage changed **Needs review**, then refresh the
+	Proposed rows for the current items. Only Drafts are reconciled; locked Versions never."""
+	items = list(package_version.items)
+	ids_now = [i.requisition_item_id for i in items]
+	category_of = {i.requisition_item_id: i.equipment_category for i in items}
+	flagged = False
+	rows = [r for r in package_version.technical_requirements if r.row_state != "Proposed"]
+	# which items each characteristic's confirmed rows cover today (before any change)
+	covered: dict[str, set[str]] = {}
+	for row in rows:
+		covered.setdefault(row.characteristic_key, set()).update(req_scope.item_ids(row, items))
+	keep_tech = []
+	for row in package_version.technical_requirements:
+		if row.row_state == "Proposed":
+			keep_tech.append(row)
+			continue
+		ch = catalogue.CATALOGUE_BY_KEY.get(row.characteristic_key)
+		before = req_scope.stored_ids(row) or req_scope.item_ids(row, items)
+		legacy_all = row.applies_to_scope == "All items"
+		targets = [i for i in req_scope.item_ids(row, items) if not ch or ch.applies(category_of.get(i, ""))]
+		if row.applies_to_scope != "All items" or len(targets) != len(ids_now):
+			kinds = {category_of[i] for i in targets}
+			joiners = [i for i in ids_now if i not in targets and ch and ch.applies(category_of[i]) and category_of[i] in kinds and i not in covered.get(row.characteristic_key, set())]
+			targets = targets + joiners
+		changed = (not legacy_all and sorted(targets) != sorted(before)) or (legacy_all and len(targets) != len(ids_now))
+		if not targets:
+			flagged = True
+			continue
+		if changed:
+			row.update(req_scope.normalise(targets, items, ch))
+			row.row_state = "Needs review"
+			flagged = True
+			covered.setdefault(row.characteristic_key, set()).update(targets)
+		keep_tech.append(row)
+	package_version.set("technical_requirements", keep_tech)
+	keep_acc = []
+	for row in package_version.acceptance_requirements:
+		if row.row_state == "Proposed" or row.applies_to_scope in ("All items", "Service"):
+			keep_acc.append(row)
+			continue
+		before = req_scope.item_ids(row, package_version.items)
+		targets = [i for i in before if i in ids_now]
+		if not targets:
+			flagged = True
+			continue
+		if sorted(targets) != sorted(req_scope.stored_ids(row) or before):
+			row.update(req_scope.normalise(targets, items))
+			row.row_state = "Needs review"
+			flagged = True
+		keep_acc.append(row)
+	package_version.set("acceptance_requirements", keep_acc)
+	_generate_proposal(package_version)
+	if flagged:
+		package_version.standard_package_review_state = "Review required"
+
+
+def _ids_json(row: dict[str, Any]) -> str:
+	if row.get("applies_to_item_ids_json"):
+		return cstr(row["applies_to_item_ids_json"])
+	ids = row.get("applies_to_item_ids")
+	return json.dumps(list(ids)) if ids else ""
 
 
 def _technical_values(row_id: str, row: dict[str, Any], state: str, order: int) -> dict[str, Any]:
 	ch = catalogue.CATALOGUE_BY_KEY[row["characteristic_key"]]
 	return {
 		"technical_requirement_id": row_id, "applies_to_scope": row.get("applies_to_scope") or "All items", "applies_to_id": row.get("applies_to_id") or "",
+		"applies_to_item_ids_json": _ids_json(row),
 		"characteristic_key": ch.key, "comparison": ch.comparison, "unit": ch.unit,
 		"required_value_json": json.dumps(row["value"]), "required_value_display": catalogue.display_value(ch, row["value"]),
 		"other_value": row.get("other_value") or "", "mandatory": 1, "reason": row.get("reason") or "", "row_state": state, "row_order": order,
@@ -350,6 +462,7 @@ def _technical_values(row_id: str, row: dict[str, Any], state: str, order: int) 
 def _acceptance_values(row: dict[str, Any]) -> dict[str, Any]:
 	return {
 		"applies_to_scope": row.get("applies_to_scope") or "All items", "applies_to_id": row.get("applies_to_id") or "",
+		"applies_to_item_ids_json": _ids_json(row),
 		"check_type": row.get("check_type"), "pass_condition": " ".join(cstr(row.get("pass_condition")).split()),
 		"evidence_type": row.get("evidence_type"), "other_evidence_name": row.get("other_evidence_name") or "",
 	}
@@ -373,7 +486,7 @@ def add_same_specification_items(*, requisition: str, shared: dict[str, Any], ro
 	for item in package_version.items:
 		already[item.drawdown_line_id] = already.get(item.drawdown_line_id, 0) + int(item.quantity or 0)
 	errors: dict[str, str] = {}
-	mismatches: list[str] = []
+	over_limit: list[str] = []
 	prepared = []
 	for row in rows or []:
 		line_id = cstr(row.get("drawdown_line_id"))
@@ -389,12 +502,11 @@ def add_same_specification_items(*, requisition: str, shared: dict[str, Any], ro
 		except frappe.ValidationError:
 			errors[line_id] = "Enter a whole-number quantity above zero."
 			continue
-		wanted = int(precision.stored_quantity(line.requested_quantity)) - already.get(line_id, 0)
-		if quantity != wanted:
-			name = records.unit_name(line.contributing_org_unit)
-			errors[line_id] = f"Must be {wanted:,} Each" if wanted > 0 else f"{name} already has equipment for its full requested quantity."
-			if wanted > 0:
-				mismatches.append(f"Requested equipment quantity for {name} is {quantity:,} Each but the approved requirement requests {wanted:,} Each")
+		available = int(precision.stored_quantity(line.remaining_quantity)) - already.get(line_id, 0)
+		if quantity > available:
+			message = goods_template.quantity_exceeds_message(records.unit_name(line.contributing_org_unit), quantity, available)
+			errors[line_id] = message
+			over_limit.append(message)
 			continue
 		intended = " ".join(cstr(row.get("intended_use")).split())
 		if not (10 <= len(intended) <= 500):
@@ -402,7 +514,9 @@ def add_same_specification_items(*, requisition: str, shared: dict[str, Any], ro
 			continue
 		prepared.append((line, quantity, intended))
 	if errors or not prepared:
-		fail("REQ_BATCH_ITEM_INVALID", "; ".join(mismatches), detail={"rows": errors or {"": "Select at least one approved requirement."}})
+		if errors and len(over_limit) == len(errors):
+			fail("REQ_QUANTITY_EXCEEDS_AVAILABLE", " ".join(over_limit), detail={"rows": errors})
+		fail("REQ_BATCH_ITEM_INVALID", " ".join(over_limit), detail={"rows": errors or {"": "Select at least one approved requirement."}})
 
 	ids = [item.requisition_item_id for item in package_version.items]
 	created = []
@@ -417,9 +531,14 @@ def add_same_specification_items(*, requisition: str, shared: dict[str, Any], ro
 			},
 		)
 		created.append(item_id)
-	_generate_proposal(package_version)
+	reconcile_requirements(package_version)
 	envelope.bump(package_version)
-	result = {"ok": True, "idempotent": False, "action": "added", "items": created, "package_version": package_version.name, "record_version": package_version.record_version, "review_state": package_version.standard_package_review_state}
+	# v1.15 §5.3/§13.5 — the quantities now come from the items; and a location chosen here when the request has none is the request's location too.
+	goods_template.apply_derived_quantities(version, package_version)
+	if values.get("delivery_location") and not version.delivery_location and scope["shared"]:
+		version.delivery_location = values["delivery_location"]
+	envelope.bump(version)
+	result = {"ok": True, "idempotent": False, "action": "added", "items": created, "package_version": package_version.name, "record_version": package_version.record_version, "version_record_version": version.record_version, "review_state": package_version.standard_package_review_state}
 	return _journal(idempotency_key, "AddSameSpecificationItems", payload, result, package_version, actor)
 
 
@@ -446,7 +565,7 @@ def update_shared_item_details(*, requisition: str, requisition_item_ids: list[s
 		for field_name in _SHARED_ITEM_FIELDS:
 			item.set(field_name, values[field_name])
 	if category_changed:
-		_generate_proposal(package_version)
+		reconcile_requirements(package_version)
 	envelope.bump(package_version)
 	result = {"ok": True, "idempotent": False, "action": "updated", "items": sorted(wanted), "record_version": package_version.record_version, "review_state": package_version.standard_package_review_state}
 	return _journal(idempotency_key, "UpdateSharedItemDetails", payload, result, package_version, actor)
@@ -468,22 +587,31 @@ def update_requisition_item(*, requisition: str, requisition_item_id: str, value
 	line = next((l for l in version.drawdown_lines if l.drawdown_line_id == item.drawdown_line_id), None)
 	records.require_unit(scope, line.contributing_org_unit if line else "")
 	if "quantity" in values:
-		item.quantity = int(precision.parse_quantity(values["quantity"], field="Quantity"))
+		quantity = int(precision.parse_quantity(values["quantity"], field="Quantity"))
+		if line:
+			available = goods_template.room(line, package_version.items, exclude_item=item.requisition_item_id)
+			if quantity > available:
+				message = goods_template.quantity_exceeds_message(records.unit_name(line.contributing_org_unit), quantity, available)
+				fail("REQ_QUANTITY_EXCEEDS_AVAILABLE", message, {"rows": {line.drawdown_line_id: message}, "limit": available})
+		item.quantity = quantity
 	if "intended_use" in values:
 		intended = " ".join(cstr(values["intended_use"]).split())
 		if not (10 <= len(intended) <= 500):
 			fail("REQ_CONTROL_INVALID", "Describe the intended use in 10–500 characters.", {"fields": {"intended_use": "Describe the intended use in 10–500 characters."}})
 		item.intended_use = intended
 	envelope.bump(package_version)
-	result = {"ok": True, "idempotent": False, "action": "updated", "row_id": requisition_item_id, "record_version": package_version.record_version}
+	goods_template.apply_derived_quantities(version, package_version)
+	envelope.bump(version)
+	result = {"ok": True, "idempotent": False, "action": "updated", "row_id": requisition_item_id, "record_version": package_version.record_version, "version_record_version": version.record_version}
 	return _journal(idempotency_key, "UpdateRequisitionItem", payload, result, package_version, actor)
 
 
 def _item_is_referenced(package_version, item_id: str) -> bool:
-	for table_field in ("technical_requirements", "related_services", "acceptance_requirements"):
-		for row in package_version.get(table_field):
-			if row.get("applies_to_scope") == "Item" and row.get("applies_to_id") == item_id:
-				return True
+	"""A service or a supporting file names the item. Technical and acceptance rows do not hold it
+	back: removing the item takes it out of them (§6.5A)."""
+	for row in package_version.related_services:
+		if row.get("applies_to_scope") in ("Item", "Items") and item_id in req_scope.item_ids(row, package_version.items):
+			return True
 	return any(item_id in records.json_list(m.linked_requirement_ids_json) for m in package_version.supporting_materials)
 
 
@@ -504,8 +632,11 @@ def remove_requisition_item(*, requisition: str, requisition_item_id: str, expec
 	if _item_is_referenced(package_version, requisition_item_id):
 		fail("REQ_CONTROL_INVALID", "This equipment row is linked to requirements, services, acceptance checks or files. Remove those links first.")
 	package_version.set("items", [i for i in package_version.items if i.requisition_item_id != requisition_item_id])
+	reconcile_requirements(package_version)
 	envelope.bump(package_version)
-	result = {"ok": True, "idempotent": False, "action": "removed", "row_id": requisition_item_id, "record_version": package_version.record_version}
+	goods_template.apply_derived_quantities(version, package_version)
+	envelope.bump(version)
+	result = {"ok": True, "idempotent": False, "action": "removed", "row_id": requisition_item_id, "record_version": package_version.record_version, "version_record_version": version.record_version}
 	return _journal(idempotency_key, "RemoveRequisitionItem", payload, result, package_version, actor)
 
 
@@ -530,21 +661,28 @@ def _visible_technical(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	return out
 
 
-def _require_applicable(ch, scope: str, target: str, package_version) -> None:
+def _require_applicable(ch, target: dict[str, Any], package_version) -> None:
 	"""§6.3 / REQ19-AC-009 — a characteristic is accepted only for equipment
-	categories it applies to: the one item a row names, or every item for an
-	`All items` row. (With no item yet there is no category to contradict;
-	validation judges the row once items exist.)"""
-	categories = [i.equipment_category for i in package_version.items if scope != "Item" or i.requisition_item_id == target]
+	categories it applies to: the items a row covers (one, several or every item).
+	(With no item yet there is no category to contradict; validation judges the
+	row once items exist.)"""
+	categories = req_scope.categories_of(target, package_version.items)
 	missing = catalogue.inapplicable_categories(ch, categories)
 	if missing:
 		message = f"{ch.label} does not apply to {', '.join(missing)} equipment."
 		fail("REQ_CONTROL_INVALID", message, {"fields": {ch.key: message}})
 
 
-def _require_applicable_rows(rows: list[dict[str, Any]], package_version) -> None:
+def _require_applicable_rows(rows: list[dict[str, Any]], package_version) -> list[dict[str, Any]]:
+	"""Every row's target resolved to exact items and checked against its characteristic; the rows come back
+	carrying their canonical scope fields."""
+	out = []
 	for row in rows:
-		_require_applicable(catalogue.CATALOGUE_BY_KEY[row["characteristic_key"]], cstr(row.get("applies_to_scope") or "All items"), cstr(row.get("applies_to_id")), package_version)
+		ch = catalogue.CATALOGUE_BY_KEY[row["characteristic_key"]]
+		target = _target(row, package_version, characteristic=ch)
+		_require_applicable(ch, target, package_version)
+		out.append({**row, **target})
+	return out
 
 
 def _visible_acceptance(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -600,8 +738,7 @@ def save_requirement_proposal_draft(*, requisition: str, proposal_digest: str, t
 	records.require_shared(scope)
 	envelope.check_record_version(package_version, expected_record_version)
 	_require_current_proposal(package_version, proposal_digest, profile_key or package_version.standard_profile_key, profile_version or package_version.standard_profile_version)
-	visible_technical = _visible_technical(technical)
-	_require_applicable_rows(visible_technical, package_version)
+	visible_technical = _require_applicable_rows(_visible_technical(technical), package_version)
 	_write_package_rows(package_version, visible_technical, _visible_acceptance(acceptance), "Proposed")
 	_apply_support(package_version, support)
 	envelope.bump(package_version)
@@ -623,10 +760,9 @@ def apply_selected_requirement_package(*, requisition: str, profile_key: str, pr
 	records.require_shared(scope)
 	envelope.check_record_version(package_version, expected_record_version)
 	_require_current_proposal(package_version, proposal_digest, profile_key, profile_version)
-	selected_technical = _visible_technical(technical)
-	_require_applicable_rows(selected_technical, package_version)
-	selected_acceptance = _visible_acceptance(acceptance)
-	if not selected_acceptance:
+	selected_technical = _require_applicable_rows(_visible_technical(technical), package_version)
+	selected_acceptance = [{**r, **_target(r, package_version, allow_service=True)} for r in _visible_acceptance(acceptance)]
+	if not selected_acceptance and not [r for r in package_version.acceptance_requirements if r.row_state != "Proposed"]:
 		fail("REQ_CONTROL_INVALID", "Keep at least one objective acceptance check.", {"fields": {"acceptance": "Keep at least one objective acceptance check."}})
 	_apply_support(package_version, support, complete=True)
 	# Confirmed rows the user already had stay; the proposal's rows replace
@@ -658,7 +794,7 @@ def reset_standard_values(*, requisition: str, expected_record_version, idempote
 	envelope.check_record_version(package_version, expected_record_version)
 	for field_name in catalogue.STANDARD_SUPPORT:
 		package_version.set(field_name, None if field_name != "service_location_constraint" else "None")
-	_generate_proposal(package_version)
+	_generate_proposal(package_version, force_review=True)
 	envelope.bump(package_version)
 	result = {"ok": True, "idempotent": False, "action": "reset", "record_version": package_version.record_version, "review_state": package_version.standard_package_review_state}
 	return _journal(idempotency_key, "ResetStandardValues", payload, result, package_version, actor)
@@ -750,17 +886,26 @@ def _row_command(*, requisition, table_field, id_field, id_prefix, command, idem
 	return _journal(idempotency_key, command, payload, result, package_version, actor)
 
 
-def _target(values: dict[str, Any], package_version, *, allow_service: bool = False) -> tuple[str, str]:
+def _target(values: dict[str, Any], package_version, *, allow_service: bool = False, characteristic=None) -> dict[str, Any]:
+	"""What a row applies to, resolved to exact items (§5.7A): `All items` (follows the items), `Item`, `Items`
+	or, for an acceptance check, one `Service`. Returns the stored scope fields."""
 	scope = cstr(values.get("applies_to_scope") or "All items")
 	target = cstr(values.get("applies_to_id"))
+	items = list(package_version.items)
+	known = {i.requisition_item_id for i in items}
 	if scope == "All items":
-		return scope, ""
-	if scope == "Item" and any(i.requisition_item_id == target for i in package_version.items):
-		return scope, target
+		return {"applies_to_scope": scope, "applies_to_id": "", "applies_to_item_ids_json": ""}
+	if scope == "Item" and target in known:
+		return {"applies_to_scope": "Item", "applies_to_id": target, "applies_to_item_ids_json": json.dumps([target])}
+	if scope == "Items":
+		ids = values.get("applies_to_item_ids") or records.json_list(values.get("applies_to_item_ids_json"))
+		ids = [cstr(i) for i in ids]
+		if ids and all(i in known for i in ids):
+			return req_scope.normalise(ids, items, characteristic)
 	if allow_service and scope == "Service" and any(s.service_requirement_id == target for s in package_version.related_services):
-		return scope, target
+		return {"applies_to_scope": scope, "applies_to_id": target, "applies_to_item_ids_json": ""}
 	fail("REQ_CONTROL_INVALID", "Select what this row applies to.", {"fields": {"applies_to": "Select what this row applies to."}})
-	return "", ""
+	return {}
 
 
 def add_technical_requirement(*, requisition: str, values: dict[str, Any], expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
@@ -768,12 +913,13 @@ def add_technical_requirement(*, requisition: str, values: dict[str, Any], expec
 	Proposed row (§10.2)."""
 
 	def mutate(package_version, version):
-		scope, target = _target(values, package_version)
 		row = _visible_technical([{**values, "selected": True}])[0]
-		_require_applicable(catalogue.CATALOGUE_BY_KEY[row["characteristic_key"]], scope, target, package_version)
+		ch = catalogue.CATALOGUE_BY_KEY[row["characteristic_key"]]
+		target = _target(values, package_version, characteristic=ch)
+		_require_applicable(ch, target, package_version)
 		ids = [r.technical_requirement_id for r in package_version.technical_requirements]
 		row_id = _next_id("TECH-", ids)
-		package_version.append("technical_requirements", _technical_values(row_id, {**row, "applies_to_scope": scope, "applies_to_id": target}, "Confirmed", len(ids) + 1))
+		package_version.append("technical_requirements", _technical_values(row_id, {**row, **target}, "Confirmed", len(ids) + 1))
 		return row_id
 
 	return _row_command(requisition=requisition, table_field="technical_requirements", id_field="technical_requirement_id", id_prefix="TECH-", command="AddTechnicalRequirement", idempotency_key=idempotency_key, expected_record_version=expected_record_version, user=user, payload={"requisition": requisition, "values": values}, mutate=mutate)
@@ -784,15 +930,51 @@ def update_technical_requirement(*, requisition: str, technical_requirement_id: 
 		existing = next((r for r in package_version.technical_requirements if r.technical_requirement_id == technical_requirement_id), None)
 		if not existing:
 			authz.not_found()
-		scope, target = _target({"applies_to_scope": values.get("applies_to_scope", existing.applies_to_scope), "applies_to_id": values.get("applies_to_id", existing.applies_to_id)}, package_version)
 		row = _visible_technical([{**values, "characteristic_key": existing.characteristic_key, "selected": True}])[0]
-		_require_applicable(catalogue.CATALOGUE_BY_KEY[row["characteristic_key"]], scope, target, package_version)
-		fresh = _technical_values(existing.technical_requirement_id, {**row, "applies_to_scope": scope, "applies_to_id": target}, existing.row_state, existing.row_order)
+		ch = catalogue.CATALOGUE_BY_KEY[row["characteristic_key"]]
+		moved = "applies_to_scope" in values
+		target = _target(
+			{"applies_to_scope": values.get("applies_to_scope", existing.applies_to_scope), "applies_to_id": values.get("applies_to_id", existing.applies_to_id),
+			 "applies_to_item_ids": values.get("applies_to_item_ids") or req_scope.stored_ids(existing)} if moved or existing.applies_to_scope != "All items" else {"applies_to_scope": "All items"},
+			package_version, characteristic=ch,
+		)
+		_require_applicable(ch, target, package_version)
+		fresh = _technical_values(existing.technical_requirement_id, {**row, **target}, existing.row_state, existing.row_order)
+		if existing.row_state == "Needs review":
+			fresh["row_state"] = "Needs review"
 		for field_name, value in fresh.items():
 			existing.set(field_name, value)
 		return existing.technical_requirement_id
 
 	return _row_command(requisition=requisition, table_field="technical_requirements", id_field="technical_requirement_id", id_prefix="TECH-", command="UpdateTechnicalRequirement", idempotency_key=idempotency_key, expected_record_version=expected_record_version, user=user, payload={"requisition": requisition, "row": technical_requirement_id, "values": values}, mutate=mutate)
+
+
+def customise_requirement_for_item(*, requisition: str, requirement_id: str, requisition_item_id: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
+	"""§5.7A `CustomiseRequirementForItem` — copy a shared technical or acceptance row as an `Item` row for
+	one item and take that item out of the shared row. No other item changes."""
+	technical = cstr(requirement_id).startswith("TECH-")
+
+	def mutate(package_version, version):
+		table = "technical_requirements" if technical else "acceptance_requirements"
+		id_field = "technical_requirement_id" if technical else "acceptance_requirement_id"
+		row = next((r for r in package_version.get(table) if r.get(id_field) == requirement_id), None)
+		if not row:
+			authz.not_found()
+		items = list(package_version.items)
+		covered = req_scope.item_ids(row, items)
+		if requisition_item_id not in covered or len(covered) < 2:
+			fail("REQ_CONTROL_INVALID", "This requirement already applies to that item alone, or does not apply to it.")
+		ch = catalogue.CATALOGUE_BY_KEY.get(row.get("characteristic_key")) if technical else None
+		ids = [r.get(id_field) for r in package_version.get(table)]
+		new_id = _next_id("TECH-" if technical else "ACC-", ids)
+		copy = {k: v for k, v in row.as_dict().items() if k not in records._BOOKKEEPING and k not in ("applies_to_scope", "applies_to_id", "applies_to_item_ids_json")}
+		copy.update({id_field: new_id, "row_order": len(ids) + 1, **req_scope.normalise([requisition_item_id], items, ch)})
+		rest = [i for i in covered if i != requisition_item_id]
+		row.update(req_scope.normalise(rest, items, ch))
+		package_version.append(table, copy)
+		return new_id
+
+	return _row_command(requisition=requisition, table_field="technical_requirements" if technical else "acceptance_requirements", id_field="requirement_id", id_prefix="", command="CustomiseRequirementForItem", idempotency_key=idempotency_key, expected_record_version=expected_record_version, user=user, payload={"requisition": requisition, "row": requirement_id, "item": requisition_item_id}, mutate=mutate)
 
 
 def _remove(table_field: str, id_field: str, row_id: str):
@@ -812,7 +994,7 @@ def remove_technical_requirement(*, requisition: str, technical_requirement_id: 
 
 
 def _service_values(values: dict[str, Any], package_version, version) -> dict[str, Any]:
-	scope, target = _target(values, package_version)
+	target = _target(values, package_version)
 	errors = {}
 	if values.get("service_type") not in catalogue.SERVICE_TYPES:
 		errors["service_type"] = "Select a service type."
@@ -834,7 +1016,7 @@ def _service_values(values: dict[str, Any], package_version, version) -> dict[st
 		errors["other_evidence_name"] = "Name the other evidence record."
 	if errors:
 		fail("REQ_CONTROL_INVALID", next(iter(errors.values())), {"fields": errors})
-	return {"service_type": values["service_type"], "applies_to_scope": scope, "applies_to_id": target, "required_result": result, "quantity_or_coverage": coverage, "completion_date": completion, "acceptance_evidence": values["acceptance_evidence"], "other_evidence_name": other}
+	return {"service_type": values["service_type"], **target, "required_result": result, "quantity_or_coverage": coverage, "completion_date": completion, "acceptance_evidence": values["acceptance_evidence"], "other_evidence_name": other}
 
 
 def add_related_service(*, requisition: str, values: dict[str, Any], expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
@@ -867,11 +1049,11 @@ def remove_related_service(*, requisition: str, service_requirement_id: str, exp
 
 def add_acceptance_requirement(*, requisition: str, values: dict[str, Any], expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	def mutate(package_version, version):
-		scope, target = _target(values, package_version, allow_service=True)
+		target = _target(values, package_version, allow_service=True)
 		row = _visible_acceptance([{**values, "selected": True}])[0]
 		ids = [r.acceptance_requirement_id for r in package_version.acceptance_requirements]
 		row_id = _next_id("ACC-", ids)
-		package_version.append("acceptance_requirements", {**_acceptance_values({**row, "applies_to_scope": scope, "applies_to_id": target}), "acceptance_requirement_id": row_id, "row_state": "Confirmed", "row_order": len(ids) + 1})
+		package_version.append("acceptance_requirements", {**_acceptance_values({**row, **target}), "acceptance_requirement_id": row_id, "row_state": "Confirmed", "row_order": len(ids) + 1})
 		return row_id
 
 	return _row_command(requisition=requisition, table_field="acceptance_requirements", id_field="acceptance_requirement_id", id_prefix="ACC-", command="AddAcceptanceRequirement", idempotency_key=idempotency_key, expected_record_version=expected_record_version, user=user, payload={"requisition": requisition, "values": values}, mutate=mutate)
@@ -882,9 +1064,9 @@ def update_acceptance_requirement(*, requisition: str, acceptance_requirement_id
 		row = next((r for r in package_version.acceptance_requirements if r.acceptance_requirement_id == acceptance_requirement_id), None)
 		if not row:
 			authz.not_found()
-		scope, target = _target({"applies_to_scope": values.get("applies_to_scope", row.applies_to_scope), "applies_to_id": values.get("applies_to_id", row.applies_to_id)}, package_version, allow_service=True)
+		target = _target({"applies_to_scope": values.get("applies_to_scope", row.applies_to_scope), "applies_to_id": values.get("applies_to_id", row.applies_to_id), "applies_to_item_ids": values.get("applies_to_item_ids") or req_scope.stored_ids(row)}, package_version, allow_service=True)
 		fresh = _visible_acceptance([{"check_type": row.check_type, "evidence_type": row.evidence_type, "pass_condition": row.pass_condition, "other_evidence_name": row.other_evidence_name, **values, "selected": True}])[0]
-		for field_name, value in _acceptance_values({**fresh, "applies_to_scope": scope, "applies_to_id": target}).items():
+		for field_name, value in _acceptance_values({**fresh, **target}).items():
 			row.set(field_name, value)
 		return acceptance_requirement_id
 
@@ -966,5 +1148,5 @@ def validate_requisition(*, requisition: str, user: str | None = None) -> dict[s
 	authz.require_requisition_reader(actor, contributing_org_units=records.contributing_units(root), state=root.current_state)
 	root, version, package_version = records.load(requisition)
 	projection = eligibility_gateway.get_requisition_eligible_plan_item(root.plan_item_id)
-	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=projection)
+	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=projection, unreviewed_line_ids=goods_template.unreviewed_ids(version))
 	return {"ok": True, **report, "preview_digest": digest.sha256_hex(records.digest_payload(version, package_version)), "evaluated_at": cstr(now_datetime())}

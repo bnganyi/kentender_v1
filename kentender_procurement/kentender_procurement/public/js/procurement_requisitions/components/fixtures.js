@@ -78,7 +78,7 @@ export function workspace(variant) {
 				your_work: [
 					{
 						requisition: "PR-0001", reference: REF, title: TITLE, task: "Complete request details",
-						detail: "Add the laptop request matching the requested quantities.",
+						detail: "Add at least one item and enter its estimated total cost.",
 						meta: `${REF} · Updated 1 Mar 2027, 09:45 EAT`, action: "Continue", route: REGISTER_ROW.route, kind: "draft",
 					},
 				],
@@ -153,23 +153,46 @@ export function startPreview(state = "ready") {
 	}
 }
 
+// The Request summary rows (v1.15 §13.4). `AMOUNTS` is the empty draft: nothing
+// requested, no estimate, so everything stays available. `FILLED_AMOUNTS` is the
+// complete variant: the item quantities fill each line and the estimates equal the
+// full available values.
+const row = (id, department, requirement, ref, q, v, requestedQ, estimate) => {
+	const remainingQ = Number(q.replace(/,/g, ""));
+	const remainingV = Number(v.replace(/,/g, ""));
+	const money = (n) => `KES ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+	return {
+		drawdown_line_id: id, department, requirement, source_reference: ref,
+		available_quantity: `${q} Each`, available_value: money(remainingV),
+		requested_quantity: `${requestedQ} Each`, requested_quantity_value: String(requestedQ),
+		requested_value: estimate ? money(Number(estimate)) : "", requested_value_value: estimate ? Number(estimate).toFixed(2) : "",
+		remaining_quantity_value: String(remainingQ), remaining_value_value: remainingV.toFixed(2),
+		after_quantity: `${remainingQ - requestedQ} Each`, after_value: money(remainingV - Number(estimate || 0)),
+		after_quantity_value: String(remainingQ - requestedQ), after_value_value: (remainingV - Number(estimate || 0)).toFixed(2),
+		needs_review: false, editable: true,
+	};
+};
+const HR_NAME = "Human Resources Management and Development";
 const AMOUNTS = [
-	{
-		drawdown_line_id: "RDL-001", department: "Human Resources Management and Development", requirement: "Business laptops", source_reference: "SRC-MOH-033-001",
-		available_quantity: "100 Each", requested_quantity: "100 Each", available_value: "KES 20,000,000.00", requested_value: "KES 20,000,000.00",
-		requested_quantity_value: "100", requested_value_value: "20000000.00", remaining_quantity_value: "100", remaining_value_value: "20000000.00", editable: true,
-	},
-	{
-		drawdown_line_id: "RDL-002", department: "Digital Health", requirement: "Business laptops", source_reference: "SRC-MOH-033-002",
-		available_quantity: "150 Each", requested_quantity: "150 Each", available_value: "KES 30,000,000.00", requested_value: "KES 30,000,000.00",
-		requested_quantity_value: "150", requested_value_value: "30000000.00", remaining_quantity_value: "150", remaining_value_value: "30000000.00", editable: true,
-	},
+	row("RDL-001", HR_NAME, "Business laptops", "SRC-MOH-033-001", "100", "20000000", 0, ""),
+	row("RDL-002", "Digital Health", "Business laptops", "SRC-MOH-033-002", "150", "30000000", 0, ""),
 ];
-
+const FILLED_AMOUNTS = [
+	row("RDL-001", HR_NAME, "Business laptops", "SRC-MOH-033-001", "100", "20000000", 100, "20000000"),
+	row("RDL-002", "Digital Health", "Business laptops", "SRC-MOH-033-002", "150", "30000000", 150, "30000000"),
+];
+// REQ-DES-03-PARTIAL (§13.1): one printer item of 20 Each, KES 3,000,000.00.
+const PARTIAL_AMOUNTS = [row("RDL-001", HR_NAME, "Office printers", "SRC-MOH-033-001", "100", "20000000", 20, "3000000")];
 const ITEMS = [
 	{ requisition_item_id: "RQI-001", drawdown_line_id: "RDL-001", item_name: "Business laptops", equipment_category: "Laptop", department: "Human Resources Management and Development", approved_requirement: "HR Management and Development — SRC-MOH-033-001", quantity: "100 Each", quantity_value: 100, intended_use: "Clinical training for Human Resources Management and Development staff", delivery: "Nairobi; 30 Sep 2027", editable: true },
 	{ requisition_item_id: "RQI-002", drawdown_line_id: "RDL-002", item_name: "Business laptops", equipment_category: "Laptop", department: "Digital Health", approved_requirement: "Digital Health — SRC-MOH-033-002", quantity: "150 Each", quantity_value: 150, intended_use: "Field digital-health deployment for Digital Health staff", delivery: "Nairobi; 30 Sep 2027", editable: true },
 ];
+
+const PARTIAL_ITEMS = [
+	{ requisition_item_id: "RQI-001", drawdown_line_id: "RDL-001", item_name: "Office printers", equipment_category: "Printer", department: HR_NAME, approved_requirement: "HR Management and Development — SRC-MOH-033-001", quantity: "20 Each", quantity_value: 20, intended_use: "Printing for Human Resources Management and Development staff", delivery: "Nairobi; 30 Sep 2027", editable: true },
+];
+
+const MIXED_FINDING = { code: "RESTRICTIVE_TERM", severity: "Blocking", task: "request_details", row: { kind: "item", id: "RQI-002" }, message: "“Dell” in the item “Dell monitors” is a brand or restrictive term. Use supplier-neutral wording." };
 
 export function editor(variant) {
 	const base = {
@@ -181,7 +204,7 @@ export function editor(variant) {
 			{ key: "requirements", label: "Requirements", status: "Not started" },
 			{ key: "review_submit", label: "Review and submit", status: "Not started" },
 		],
-		footer_hints: { request_details: "Add the laptop request matching the requested quantities.", requirements: "", review_submit: "" },
+		footer_hints: { request_details: "Add at least one item and enter its estimated total cost.", requirements: "", review_submit: "" },
 		returned: null,
 		purchase: {
 			title: TITLE, departments: BOTH, available: "250 Each · KES 50,000,000.00 available", method: "Open Tender", reserved_for: "Youth", county_requirement: "",
@@ -196,25 +219,56 @@ export function editor(variant) {
 		remaining_original: { shown: false },
 		request_information: { requirement_title: TITLE, delivery_location: "LOC-1", latest_delivery_date: "2027-09-30", related_services_required: false, locations: [{ name: "LOC-1", location_name: "Afya House", address: "Ministry of Health Headquarters, Afya House, Nairobi" }] },
 		amounts: AMOUNTS,
-		equipment: { rows: [], shared_specification: null, add_rows: [{ drawdown_line_id: "RDL-001", department: "Human Resources Management and Development", source_reference: "SRC-MOH-033-001", quantity: 100, unit: "Each", editable: true }, { drawdown_line_id: "RDL-002", department: "Digital Health", source_reference: "SRC-MOH-033-002", quantity: 150, unit: "Each", editable: true }] },
+		findings: [{ code: "NO_ITEMS", severity: "Blocking", task: "request_details", section: "equipment", message: "Add at least one item and enter its estimated total cost." }],
+		equipment: { rows: [], shared_specification: null, groups: [], add_rows: [{ drawdown_line_id: "RDL-001", department: HR_NAME, source_reference: "SRC-MOH-033-001", room: 100, remaining_quantity: 100, unit: "Each", editable: true }, { drawdown_line_id: "RDL-002", department: "Digital Health", source_reference: "SRC-MOH-033-002", room: 150, remaining_quantity: 150, unit: "Each", editable: true }] },
 		actions: { save: true, save_label: "Save draft", edit_shared: true, contributor: false },
-		catalogue: { categories: ["Laptop", "Desktop computer"] },
+		catalogue: { categories: ["Laptop", "Desktop computer", "Monitor", "Tablet", "Printer", "Scanner", "Network equipment", "Power-protection equipment", "Other IT equipment"] },
 	};
 	const complete = {
 		...base,
 		tasks: [{ ...base.tasks[0], status: "Complete" }, { ...base.tasks[1], status: "Needs attention" }, base.tasks[2]],
 		footer_hints: { request_details: "" },
-		equipment: { rows: ITEMS, add_rows: [], shared_specification: { label: "One shared laptop specification · 2 approved requirements", equipment_category: "Laptop", item_name: "Business laptops", requisition_item_ids: ["RQI-001", "RQI-002"] } },
+		findings: [],
+		amounts: FILLED_AMOUNTS,
+		equipment: { rows: ITEMS, add_rows: [], shared_specification: { label: "One shared specification · 2 approved requirements", summary: "2 items · one shared specification", equipment_category: "Laptop", item_name: "Business laptops", requisition_item_ids: ["RQI-001", "RQI-002"] }, groups: [{ group_id: "G1", equipment_category: "Laptop", item_name: "Business laptops", delivery_location: "LOC-1", latest_delivery_date: "2027-09-30", delivery: "Nairobi; 30 Sep 2027", requisition_item_ids: ["RQI-001", "RQI-002"] }] },
+	};
+	// REQ-DES-03-PARTIAL: one printer item of 20 Each; 80 Each and KES 17,000,000.00 stay available.
+	const partial = {
+		...complete,
+		purchase: { ...base.purchase, title: "Office printers for human resources", departments: HR_NAME, available: "100 Each · KES 20,000,000.00 available", business_need: "Replace worn-out office printers." },
+		amounts: PARTIAL_AMOUNTS,
+		equipment: {
+			rows: PARTIAL_ITEMS, shared_specification: { label: "One shared specification · 1 approved requirement", summary: "1 item · one shared specification", equipment_category: "Printer", item_name: "Office printers", requisition_item_ids: ["RQI-001"] }, groups: [{ group_id: "G1", equipment_category: "Printer", item_name: "Office printers", delivery_location: "LOC-1", latest_delivery_date: "2027-09-30", delivery: "Nairobi; 30 Sep 2027", requisition_item_ids: ["RQI-001"] }],
+			add_rows: [{ drawdown_line_id: "RDL-001", department: HR_NAME, source_reference: "SRC-MOH-033-001", room: 80, remaining_quantity: 100, unit: "Each", editable: true }],
+		},
 	};
 	switch (variant) {
 		case "COMPLETE":
 			return complete;
+		case "PARTIAL":
+			return partial;
+		case "MIXED":
+			// Laptops and monitors in one request; the server flags the brand name in the monitors' item.
+			return {
+				...complete,
+				tasks: [{ ...base.tasks[0], status: "Needs attention" }, base.tasks[1], base.tasks[2]],
+				footer_hints: { request_details: MIXED_FINDING.message },
+				findings: [MIXED_FINDING],
+				equipment: {
+					...complete.equipment,
+					rows: [ITEMS[0], { ...ITEMS[1], item_name: "Dell monitors", equipment_category: "Monitor" }],
+					groups: [
+						{ group_id: "G1", equipment_category: "Laptop", item_name: "Business laptops", delivery_location: "LOC-1", latest_delivery_date: "2027-09-30", delivery: "Nairobi; 30 Sep 2027", requisition_item_ids: ["RQI-001"] },
+						{ group_id: "G2", equipment_category: "Monitor", item_name: "Dell monitors", delivery_location: "LOC-1", latest_delivery_date: "2027-09-30", delivery: "Nairobi; 30 Sep 2027", requisition_item_ids: ["RQI-002"] },
+					],
+				},
+			};
 		case "RETURNED":
 			return { ...base, header: { ...base.header, badge: { label: "Draft correction", tone: "is-draft" } }, returned: { reason: "Replace the processor wording with a measurable, supplier-neutral minimum.", returned_by: "Dr Peter Kimani", returned_at: "8 Mar 2027, 09:10 EAT", affected_section: "Technical requirements", task: "request_details", section: "" } };
 		case "CONTRIBUTOR":
 			return {
 				...complete, mode: "contributor",
-				amounts: [{ ...AMOUNTS[0], editable: true }, { ...AMOUNTS[1], editable: false }],
+				amounts: [{ ...FILLED_AMOUNTS[0], editable: true }, { ...FILLED_AMOUNTS[1], editable: false }],
 				actions: { save: true, save_label: "Save my changes", edit_shared: false, contributor: true },
 			};
 		default:
@@ -263,6 +317,38 @@ export function requirements(variant) {
 	};
 }
 
+// REQ v1.18 §13.6A — laptops and monitors in one request: the technical rows by what they apply to.
+export function requirementsMixed(state = "Confirmed") {
+	const view = requirements("COMPLETE");
+	const mixed = editor("MIXED");
+	const both = ["RQI-001", "RQI-002"];
+	const mark = (rows, ids, extra = {}) => rows.map((r) => ({ ...r, state, applies_to: ids.length === 2 ? "All items" : mixed.equipment.rows.find((i) => i.requisition_item_id === ids[0]).item_name, applies_to_item_ids: ids, needs_review: false, ...extra }));
+	const groups = TECH_GROUPS(state);
+	const shared = [{ group: groups[0].group, rows: mark(groups[0].rows, both, { applies_to_scope: "All items" }) }];
+	const laptops = [
+		{ group: groups[1].group, rows: mark(groups[1].rows, ["RQI-001"], { applies_to_scope: "Item", applies_to_id: "RQI-001" }) },
+		{ group: groups[2].group, rows: mark(groups[2].rows, ["RQI-001"], { applies_to_scope: "Item", applies_to_id: "RQI-001" }) },
+	];
+	const monitorRows = mark(
+		[
+			TECH("T20", "display_resolution", "Display resolution", "Minimum", "Full HD", "—", { value: "Full HD" }, state),
+			TECH("T21", "panel_size", "Panel size", "Minimum", "24", "inches", { value: "24" }, state),
+		],
+		["RQI-002"], { applies_to_scope: "Item", applies_to_id: "RQI-002" }
+	);
+	const monitors = [{ group: groups[1].group, rows: monitorRows }];
+	const targets = [
+		{ key: "T1", kind: "shared", title: "Shared requirements", subtitle: "Every item", item_ids: both, groups: shared },
+		{ key: "T2", kind: "kind", title: "Business laptops", subtitle: "Laptop · 1 approved requirement", item_ids: ["RQI-001"], groups: laptops },
+		{ key: "T3", kind: "kind", title: "Dell monitors", subtitle: "Monitor · 1 approved requirement", item_ids: ["RQI-002"], groups: monitors },
+	];
+	const flat = [...shared, ...laptops, ...monitors];
+	return {
+		...view, equipment: mixed.equipment,
+		requirements: { ...view.requirements, technical_groups: flat, technical_targets: targets },
+	};
+}
+
 export function reviewSections() {
 	return [
 		{
@@ -276,8 +362,8 @@ export function reviewSections() {
 				{ label: "Expected operational result", value: "Staff can use secure, supported equipment for training and field digital-health work." },
 			],
 		},
-		{ key: "amounts", title: "Amounts requested", icon: "coins", open: false, summary: "2 departments · 250 Each · KES 50,000,000.00", issues: [], rows: [], total_quantity: "250 Each", total_value: "KES 50,000,000.00" },
-		{ key: "equipment", title: "Equipment", icon: "monitor", open: false, summary: "2 laptop rows · one shared specification", issues: [], rows: [] },
+		{ key: "amounts", title: "Request summary", icon: "coins", open: false, summary: "2 departments · 250 Each · KES 50,000,000.00", issues: [], rows: [], total_quantity: "250 Each", total_value: "KES 50,000,000.00" },
+		{ key: "equipment", title: "Items", icon: "monitor", open: false, summary: "2 items · one shared specification", issues: [], rows: [] },
 		{ key: "requirements", title: "Requirements and support", icon: "sliders", open: false, summary: "11 technical requirements · 36-month warranty · support within Kenya", issues: [], groups: [], support: [] },
 		{ key: "services", title: "Related services", icon: "wrench", open: false, compact: true, summary: "None requested", empty_text: "None requested", issues: [], rows: [] },
 		{ key: "acceptance", title: "Acceptance", icon: "check-square", open: false, summary: "5 delivery checks", issues: [], rows: [] },

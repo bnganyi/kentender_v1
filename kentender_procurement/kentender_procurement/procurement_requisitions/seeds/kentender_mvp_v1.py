@@ -225,23 +225,29 @@ def _build_item_package(
 	key = key or requisition
 	view = _editor(requisition)
 	values: dict[str, Any] = {"requirement_title": title, "delivery_location": DELIVERY_LOCATION, "latest_delivery_date": shared["latest_delivery_date"], "related_services_required": False}
-	if amounts:
-		values["drawdown_lines"] = [
-			{"drawdown_line_id": r["drawdown_line_id"], "requested_quantity": amounts[r["department"]][0], "requested_value": amounts[r["department"]][1]}
-			for r in view["amounts"] if r["department"] in amounts
-		]
 	cmd.save_requisition_summary(
 		requisition=requisition, values=values,
 		expected_record_version=view["header"]["version_record_version"], idempotency_key=_key(f"{key}:summary"),
 	)
 	view = _editor(requisition)
+	# v1.15: the quantity is typed on the items — a partial draw types the smaller quantity, every other line types all that is available.
 	rows = [
-		{"drawdown_line_id": r["drawdown_line_id"], "quantity": str(r["quantity"]), "intended_use": uses[r["department"]]}
+		{"drawdown_line_id": r["drawdown_line_id"], "quantity": str(amounts[r["department"]][0] if amounts and r["department"] in amounts else r["room"]), "intended_use": uses[r["department"]]}
 		for r in view["equipment"]["add_rows"]
 	]
 	cmd.add_same_specification_items(
 		requisition=requisition, shared=dict(shared), rows=rows,
 		expected_record_version=view["package_record_version"], idempotency_key=_key(f"{key}:laptops" if shared is _SHARED_LAPTOP else f"{key}:items"),
+	)
+	# v1.15: one estimated total cost per source — a partial draw enters the smaller amount, every other line the whole value that remains.
+	view = _editor(requisition)
+	estimates = [
+		{"drawdown_line_id": a["drawdown_line_id"], "requested_value": amounts[a["department"]][1] if amounts and a["department"] in amounts else a["remaining_value_value"]}
+		for a in view["amounts"] if int(a["requested_quantity_value"]) > 0
+	]
+	cmd.save_requisition_summary(
+		requisition=requisition, values={"drawdown_lines": estimates},
+		expected_record_version=view["header"]["version_record_version"], idempotency_key=_key(f"{key}:estimates"),
 	)
 	view = _editor(requisition)
 	req = view["requirements"]
@@ -250,11 +256,11 @@ def _build_item_package(
 		return value.get("ports") or value.get("values") or value.get("value")
 
 	technical = [
-		{"technical_requirement_id": r["technical_requirement_id"], "characteristic_key": r["characteristic_key"], "value": raw(r["value"]), "selected": True, "applies_to_scope": r["applies_to_scope"] or "All items"}
+		{"technical_requirement_id": r["technical_requirement_id"], "characteristic_key": r["characteristic_key"], "value": raw(r["value"]), "selected": True, "applies_to_scope": r["applies_to_scope"] or "All items", "applies_to_id": r["applies_to_id"] or "", "applies_to_item_ids": r.get("applies_to_item_ids") or []}
 		for g in req["technical_groups"] for r in g["rows"] if r["state"] == "Proposed"
 	]
 	acceptance = [
-		{k: a[k] for k in ("acceptance_requirement_id", "check_type", "pass_condition", "evidence_type", "applies_to_scope", "applies_to_id")} | {"selected": True}
+		{k: a[k] for k in ("acceptance_requirement_id", "check_type", "pass_condition", "evidence_type", "applies_to_scope", "applies_to_id", "applies_to_item_ids")} | {"selected": True}
 		for a in req["acceptance"] if a["state"] == "Proposed"
 	]
 	cmd.apply_selected_requirement_package(

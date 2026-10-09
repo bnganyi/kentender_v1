@@ -63,10 +63,27 @@ def _handoff_v14_names(payload: dict[str, Any]) -> dict[str, Any]:
 	return out
 
 
+def with_item_ids(snapshot: dict[str, Any]) -> dict[str, Any]:
+	"""REQ-CHG-001 v1.18 §5.7A — every requirement row names the exact items it covers. A handoff 1.5 already
+	does; one made before (1.4) is read from the row's scope: `All items` is every item, `Item` the one named."""
+	all_ids = [i.get("requisition_item_id") for i in snapshot.get("items") or []]
+	for family in ("technical_requirements", "related_services", "acceptance_requirements"):
+		rows = []
+		for row in snapshot.get(family) or []:
+			if "applies_to_item_ids" not in row:
+				scope = row.get("applies_to_scope")
+				row = {**row, "applies_to_item_ids": all_ids if scope == "All items" or not scope else ([row.get("applies_to_id")] if scope == "Item" else [])}
+			rows.append(row)
+		if family in snapshot:
+			snapshot[family] = rows
+	return snapshot
+
+
 def build(handoff_doc) -> tuple[dict[str, Any], str]:
 	payload = json.loads(handoff_doc.payload_json)
 	snapshot = {k: v for k, v in payload.items() if k != "decisions"}
 	snapshot.update(_handoff_v14_names(payload))
+	with_item_ids(snapshot)
 	snapshot["handoff"] = handoff_doc.name
 	snapshot["handoff_digest"] = handoff_doc.handoff_digest
 	snapshot["decisions"] = payload.get("decisions") or snapshot.get("decisions") or []

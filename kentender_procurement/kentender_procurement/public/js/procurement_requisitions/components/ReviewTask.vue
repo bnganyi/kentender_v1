@@ -5,19 +5,14 @@
 <template>
 	<div data-testid="req-body-review_submit">
 		<Notice v-if="review.result" tone="live"><strong data-testid="req-review-result">{{ review.result }}</strong></Notice>
-		<template v-else>
-			<Notice v-for="(f, i) in blocking" :key="i" tone="critical">
-				<a href="#" data-testid="req-review-blocker" @click.stop.prevent="$emit('select', f.task)">{{ f.message }}</a>
-			</Notice>
-		</template>
-		<Notice v-for="(w, i) in review.warnings || []" :key="`w${i}`" tone="warning"><span data-testid="req-review-warning">{{ w.message }}</span></Notice>
+		<AttentionPanel :items="attention" @go="(task) => $emit('select', task)" />
 		<div class="req-rule" style="margin-bottom: var(--kt-space-6)">
 			<div class="kt-meta-row">
 				<div v-for="d in review.dates || []" :key="d.label"><span class="kt-label">{{ d.label }}</span><span class="kt-meta-value" style="font-size: 14px">{{ d.value }}</span></div>
 			</div>
 		</div>
 
-		<ReviewSections :sections="review.sections || []" :shown-above="['DATE_AFTER_ESTIMATE']" />
+		<ReviewSections :sections="review.sections || []" :list-issues="false" />
 
 		<Disclosure title="Record details" testid="req-record-details" style="margin-bottom: var(--kt-space-6)">
 			<div class="kt-meta-row" style="flex-wrap: wrap">
@@ -25,8 +20,6 @@
 			</div>
 		</Disclosure>
 
-		<Notice v-if="error" tone="critical"><span data-testid="req-review-error">{{ error }}</span></Notice>
-		<Notice v-if="saved" tone="live"><span data-testid="req-saved">Your draft is saved.</span></Notice>
 
 		<div class="req-footer">
 			<div class="req-actions">
@@ -34,7 +27,7 @@
 				<ActionsMenu v-if="menu.length" :actions="menu" :disabled="busy" @choose="(k) => (dialog = k)" />
 			</div>
 			<div v-if="actions.save" class="req-footer-right">
-				<span v-if="primaryLabel && !ready" class="kt-label" data-testid="req-footer-hint">{{ (view.footer_hints || {}).review_submit || (blocking[0] || {}).message || "" }}</span>
+				<span v-if="footerStatus" class="req-footer-status" :data-state="footerStatus.state" data-testid="req-footer-status" role="status">{{ footerStatus.text }}</span>
 				<div class="req-actions">
 					<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="req-save" @click="confirmSaved">Save draft</button>
 					<button
@@ -74,6 +67,7 @@ import { computed, ref } from "vue";
 import { useReq } from "../data/context.js";
 import { PLANNING_CORRECTION, WITHDRAW } from "../data/dialogs.js";
 import ActionsMenu from "./shared/ActionsMenu.vue";
+import AttentionPanel from "./shared/AttentionPanel.vue";
 import Disclosure from "./shared/Disclosure.vue";
 import Notice from "./shared/Notice.vue";
 import ReasonDialog from "./shared/ReasonDialog.vue";
@@ -87,6 +81,22 @@ const review = computed(() => props.view.review || {});
 const actions = computed(() => props.view.actions || {});
 const ready = computed(() => !!review.value.result);
 const blocking = computed(() => (props.view.findings || []).filter((f) => f.severity === "Blocking"));
+// Everything that needs attention, said once (v1.17 §13.4A): a refused send first, then each blocking
+// finding (choosing it goes to the task that fixes it), then the advisories that do not block.
+const attention = computed(() => {
+	const out = [];
+	if (error.value) out.push({ message: error.value });
+	if (!review.value.result) {
+		for (const f of blocking.value) if (!out.some((i) => i.message === f.message)) out.push({ message: f.message, go: f.task });
+	}
+	for (const w of review.value.warnings || []) if (!out.some((i) => i.message === w.message)) out.push({ message: w.message, advisory: true });
+	return out;
+});
+const footerStatus = computed(() => {
+	if (saved.value) return { state: "saved", text: "Your draft is saved." };
+	if (primaryLabel.value && !ready.value) return { state: "blocked", text: "Fix what needs attention above to submit." };
+	return null;
+});
 
 const primaryLabel = computed(() => {
 	if (actions.value.submit_to_procurement) return "Submit to Procurement";

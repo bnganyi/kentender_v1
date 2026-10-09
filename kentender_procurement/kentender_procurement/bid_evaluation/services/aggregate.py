@@ -56,11 +56,20 @@ RULE_LABELS = {
 }
 
 
+def _scoped(label: str, facts: dict[str, Any]) -> str:
+	"""REQ-CHG-001 v1.18 §5.7A — a requirement that covers only some items names them, so the same characteristic
+	required of two kinds of item (or of one customised item) is never read as one requirement."""
+	applies = cstr(facts.get("applies_to"))
+	return f"{label} — {applies}" if applies and applies != "All items" else label
+
+
 def requirement_label(rule_id: str, facts: dict[str, Any], group_key: str = "") -> str:
-	if rule_id in ("RR-TECHNICAL", "RR-WARRANTY-SUPPORT") and facts.get("label"):
+	if rule_id == "RR-TECHNICAL" and facts.get("label"):
+		return _scoped(cstr(facts["label"]), facts)
+	if rule_id == "RR-WARRANTY-SUPPORT" and facts.get("label"):
 		return cstr(facts["label"])
 	if rule_id == "RR-ACCEPTANCE" and facts.get("check_type"):
-		return f"Acceptance: {facts['check_type']}"
+		return _scoped(f"Acceptance: {facts['check_type']}", facts)
 	return RULE_LABELS.get(rule_id) or cstr(facts.get("label")) or group_key
 
 

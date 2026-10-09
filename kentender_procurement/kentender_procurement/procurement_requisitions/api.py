@@ -154,6 +154,11 @@ def add_technical_requirement(requisition: str, technical_requirement_values, ex
 
 
 @frappe.whitelist()
+def customise_requirement_for_item(requisition: str, requirement_id: str, requisition_item_id: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return cmd.customise_requirement_for_item(requisition=requisition, requirement_id=requirement_id, requisition_item_id=requisition_item_id, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
 def update_technical_requirement(requisition: str, technical_requirement_id: str, technical_requirement_values, expected_record_version, idempotency_key: str) -> dict[str, Any]:
 	return cmd.update_technical_requirement(requisition=requisition, technical_requirement_id=technical_requirement_id, values=_parse_json(technical_requirement_values, {}), expected_record_version=expected_record_version, idempotency_key=idempotency_key)
 
