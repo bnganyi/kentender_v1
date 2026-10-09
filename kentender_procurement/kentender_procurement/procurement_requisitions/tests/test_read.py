@@ -33,6 +33,23 @@ class TestWorkspace(RequisitionCase):
 		self.assertEqual((work["task"], work["action"]), ("Complete request details", "Continue"))
 		self.assertFalse(any(r["plan_item_id"] == item_id for r in draft["ready_to_start"]))
 
+	def test_an_open_requisition_says_its_state_once_and_a_draft_adds_its_next_task(self):
+		_, item_id = fx.active_item()
+		requisition = fx.prepare(item_id)["requisition"]
+		reference = frappe.db.get_value("Procurement Requisition", requisition, "requisition_reference")
+		frappe.set_user(fx.AUTHOR)
+		work = [w for w in read.get_requisition_workspace()["your_work"] if w["requisition"] == requisition]
+		self.assertTrue(work, "a Draft leads Your work for its author")
+		fx.fill_request_information(requisition)
+		fx.add_laptops(requisition)
+		fx.enter_estimates(requisition)
+		fx.apply_standard_package(requisition)
+		fx.send(requisition)
+		frappe.set_user(fx.AUTHOR)
+		row = next(r for r in read.get_requisition_workspace()["ready_to_start"] if r["plan_item_id"] == item_id)
+		self.assertEqual(row["existing"]["summary"], f"{reference} \u00b7 Awaiting department approval")
+		self.assertEqual(row["existing"]["summary"].count("Awaiting department approval"), 1)
+
 	def test_an_assigned_decision_leads_for_the_hod(self):
 		_, item_id = fx.active_item()
 		requisition = fx.complete_draft(item_id)

@@ -22,7 +22,7 @@
 				</div>
 			</section>
 
-			<section v-if="showReady" data-testid="req-ready">
+			<section v-if="showReady && (readyRows.length || !existingRows.length)" data-testid="req-ready">
 				<CardTitle title="Ready to start" icon="inbox" />
 				<template v-if="readyRows.length">
 					<div class="req-has-cards" style="margin-bottom: var(--kt-space-8)">
@@ -54,19 +54,22 @@
 						</div>
 					</div>
 				</template>
-				<!-- An open requisition replaces Start requisition; it is never shown beside it (REQ-DES-12). -->
-				<div v-for="row in existingRows" :key="row.plan_item_id" style="margin-bottom: var(--kt-space-8)" data-testid="req-ready-existing">
-					<div class="req-rule is-accent">
-						<div style="font-size: 14px; font-weight: 600">{{ row.title }}</div>
-						<p style="font-size: 14px; margin: 6px 0 0">{{ row.existing.summary }}</p>
-					</div>
-					<div class="req-actions" style="margin-top: var(--kt-space-4)">
-						<button type="button" class="btn btn-primary" @click="ctx.goPath(row.existing.route)">Open existing requisition</button>
-					</div>
-				</div>
 				<div v-if="!readyRows.length && !existingRows.length" class="req-empty" data-testid="req-ready-none">
 					<div class="req-empty-title">No approved purchases are ready for a requisition.</div>
 					<p class="kt-muted" style="font-size: 13px; margin: 6px 0 0">New requisitions appear here once Planning approves a purchase.</p>
+				</div>
+			</section>
+
+			<!-- A purchase that already has an open requisition is not ready to start: Start requisition is replaced by
+			     Open existing requisition, in a section of its own, with the action beside the text (REQ-DES-12). -->
+			<section v-if="showReady && existingRows.length" data-testid="req-in-progress">
+				<CardTitle title="Already in progress" icon="clipboard" />
+				<div v-for="row in existingRows" :key="row.plan_item_id" class="req-work-row" data-testid="req-ready-existing">
+					<div>
+						<div class="req-work-title">{{ row.title }}</div>
+						<div class="kt-muted req-work-detail">{{ row.existing.summary }}</div>
+					</div>
+					<button type="button" class="btn btn-primary" @click="ctx.goPath(row.existing.route)">Open existing requisition</button>
 				</div>
 			</section>
 		</template>

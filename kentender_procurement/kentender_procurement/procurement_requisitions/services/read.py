@@ -234,7 +234,10 @@ def get_requisition_workspace(*, filters: dict[str, Any] | None = None, user: st
 				ex = frappe.get_doc("Procurement Requisition", open_root)
 				ex_version = frappe.get_doc("Requisition Version", ex.current_version)
 				task_label, _ = _next_task(ex) if ex.current_state == "Draft" else (STATE_BADGES.get(ex.current_state, (ex.current_state, ""))[0], "")
-				existing = {"requisition": ex.name, "summary": f"{ex.requisition_reference} · {STATE_BADGES.get(ex.current_state, (ex.current_state,''))[0]} · {task_label.replace('Complete request details', 'Request details need attention')}", "route": f"/app/procurement-requisitions/{ex.name}"}
+				# A Draft says its next task after its state; any other state says itself once.
+				state_label = STATE_BADGES.get(ex.current_state, (ex.current_state, ""))[0]
+				summary = f"{ex.requisition_reference} · {state_label}" + (f" · {task_label.replace('Complete request details', 'Request details need attention')}" if ex.current_state == "Draft" else "")
+				existing = {"requisition": ex.name, "summary": summary, "route": f"/app/procurement-requisitions/{ex.name}"}
 				if any(w["requisition"] == ex.name for w in your_work):
 					continue
 			ready.append(
