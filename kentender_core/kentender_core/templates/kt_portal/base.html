@@ -165,6 +165,8 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 			frappe.sys_defaults = frappe.boot.sysdefaults;
 		</script>
 		{{ include_script('frappe-web.bundle.js') }}
+		{# Before the surface bundles: a screen that posts as it mounts (the emailed verification link) reads this token at once. #}
+		<!-- csrf_token -->
 		<script>
 			(function () {
 				var path = (window.location.pathname || "/").replace(/^\/+|\/+$/g, "");
@@ -227,6 +229,5 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 		include_script('kt_industry_guidance.bundle.js') }} {{
 		include_script('kt_industry_pager.bundle.js') }} {{
 		include_script(kt_portal.surface.bundle) }} {%- endif %}
-		<!-- csrf_token -->
 	</body>
 </html>
