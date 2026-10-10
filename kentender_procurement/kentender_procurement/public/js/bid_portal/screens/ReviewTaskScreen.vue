@@ -127,7 +127,10 @@ onMounted(() => {
 			<h2>{{ __("What you are offering") }}</h2>
 			<div class="bds-region-body">
 				<div class="bds-facts" data-testid="bds-review-offering">
-					<div v-for="fact in data.offering" :key="fact.label" class="bds-fact"><span class="kt-label">{{ __(fact.label) }}</span><span class="bds-fact-value">{{ fact.value || "—" }}</span></div>
+					<template v-for="(fact, i) in data.offering" :key="(fact.line || '') + fact.label">
+						<h3 v-if="fact.line && (i === 0 || data.offering[i - 1].line !== fact.line)" class="bds-line-heading" data-testid="bds-review-line-heading">{{ fact.line }}</h3>
+						<div class="bds-fact"><span class="kt-label">{{ __(fact.label) }}</span><span class="bds-fact-value">{{ fact.value || "—" }}</span></div>
+					</template>
 				</div>
 			</div>
 		</div>

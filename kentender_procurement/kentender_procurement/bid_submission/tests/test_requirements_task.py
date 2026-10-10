@@ -32,6 +32,7 @@ class TestCompleteRequirements(SubmissionCase):
 		# every section is complete; the acceptance terms say "Accepted" in their own words
 		self.assertTrue(all(s["status"] == ("Accepted" if s["key"] == "acceptance" else "Complete") for s in view["sections"]), view["sections"])
 		self.assertIsNone(view["attention"])
+		self.assertIsNone(view["to_complete"])
 		self.assertTrue(view["goods"]["fields"])
 		self.assertIn("Quantity · published", [f["label"] for f in view["goods"]["published"]])
 		for row in view["technical"] + view["warranty"]:

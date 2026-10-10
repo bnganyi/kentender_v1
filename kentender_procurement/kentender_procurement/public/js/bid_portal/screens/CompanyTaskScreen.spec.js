@@ -204,4 +204,20 @@ describe("A business profile row", () => {
 		expect(lead.get('[data-testid="bds-open-account"]').attributes("href")).toBe("/account");
 		expect(wrapper.get('[data-testid="bds-declaration-gmember"]').find('[data-testid="bds-open-account"]').exists()).toBe(false);
 	});
+
+	it("says beside Needs attention what is missing, and says nothing on a row that needs nothing", () => {
+		const read = companyTask();
+		const row = (extra) => ({ ...read.declarations[0], key: "gprofile", label: "Business profile — Afya", status: "Needs attention", tone: "attention", action_label: "View business profile", account_href: "/account", needs_text: "", ...extra });
+		read.declarations = [row({ needs_text: "5 business profile facts are still missing in the Account." }), row({ key: "gother", label: "Business profile — Kisiwa", status: "Complete", tone: "live" })];
+		const wrapper = mountWith(read, portalFor());
+		expect(wrapper.get('[data-testid="bds-declaration-gprofile"] [data-testid="bds-declaration-needs"]').text()).toBe("5 business profile facts are still missing in the Account.");
+		expect(wrapper.get('[data-testid="bds-declaration-gother"]').find('[data-testid="bds-declaration-needs"]').exists()).toBe(false);
+	});
+
+	it("points to the updated details on this page, not to the Account, once the Account's profile is filled", () => {
+		const read = companyTask();
+		read.declarations = [{ ...read.declarations[0], key: "gprofile", label: "Business profile — Afya", status: "Needs attention", tone: "attention", action_label: "View business profile", account_href: "#bds-account-update", account_label: "Go to updated details", needs_text: "The Account's business profile is filled in. Use the updated Account details above to bring it into this bid." }];
+		const link = mountWith(read, portalFor()).get('[data-testid="bds-declaration-gprofile"] [data-testid="bds-open-account"]');
+		expect([link.text(), link.attributes("href")]).toEqual(["Go to updated details", "#bds-account-update"]);
+	});
 });

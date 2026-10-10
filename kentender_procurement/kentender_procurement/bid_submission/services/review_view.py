@@ -57,16 +57,24 @@ def _value(ctx, field) -> str:
 
 
 def offering(ctx) -> list[dict[str, str]]:
+	"""What is offered. With several goods lines each line's rows carry `line` (its description) and come
+	together in published line order (BDS-CHG-001 v0.12 §4.4.9); with one line the rows stay flat."""
 	rows: list[dict[str, str]] = []
+	several = sum(1 for g in ctx.model.groups_of("requirements") if g.composition_id == "COMP-GOODS-OFFER") > 1
+	lines: list[str] = []
 	for group in ctx.model.groups_of("requirements"):
 		facts = group.published_facts or {}
 		if group.composition_id == "COMP-GOODS-OFFER":
+			line = {"line": cstr(facts.get("description"))} if several else {}
+			lines.append(line.get("line", ""))
+			mine: list[dict[str, str]] = []
 			by_key = {f.field_key: f for f in group.fields}
 			for key, label in GOODS_FACTS:
 				if key in by_key:
-					rows.append({"label": label, "value": _value(ctx, by_key[key])})
+					mine.append({"label": label, "value": _value(ctx, by_key[key]), **line})
 			if facts.get("quantity"):
-				rows.insert(1, {"label": "Quantity", "value": f"{cstr(facts['quantity'])} {cstr(facts.get('unit'))}".strip()})
+				mine.insert(1, {"label": "Quantity", "value": f"{cstr(facts['quantity'])} {cstr(facts.get('unit'))}".strip(), **line})
+			rows.extend(mine)
 		if group.composition_id == "COMP-WARRANTY-SUPPORT":
 			label = dict(WARRANTY_FACTS).get(cstr(facts.get("obligation_key")))
 			answer = next((f for f in group.fields if f.control_id not in ("CTL-EVIDENCE", "CTL-LONG-TEXT") and "compliance" not in f.label.lower()), None)
@@ -75,7 +83,9 @@ def offering(ctx) -> list[dict[str, str]]:
 				unit = cstr(facts.get("unit"))
 				rows.append({"label": label, "value": f"{value} {unit}".strip() if value else ""})
 	order = [label for _k, label in GOODS_FACTS[:1]] + ["Quantity"] + [label for _k, label in GOODS_FACTS[1:]] + [label for _k, label in WARRANTY_FACTS]
-	return sorted(rows, key=lambda r: order.index(r["label"]))
+	line_order = {name: n for n, name in enumerate(lines)}
+	# each goods line's rows together in published line order, the shared warranty and support rows after them
+	return sorted(rows, key=lambda r: (line_order.get(r.get("line", ""), len(lines)), order.index(r["label"])))
 
 
 def _evidence_fields(tasks):

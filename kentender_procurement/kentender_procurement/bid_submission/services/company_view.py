@@ -144,6 +144,7 @@ def _group_status(group, states) -> str:
 
 def declarations(ctx, tasks, view_groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	states = {s.field.key: s for s in tasks["company"].fields}
+	changed = snapshot.compare(ctx.workspace)["changed"]
 	rows = []
 	for group, shown in zip(ctx.model.groups_of("company"), view_groups):
 		if group.rule_id == security_matching.SECURITY_RULE:
@@ -154,8 +155,17 @@ def declarations(ctx, tasks, view_groups: list[dict[str, Any]]) -> list[dict[str
 		profile = group.composition_id == "COMP-ENTITY-PROFILE"
 		# the lead's own profile is completed in the Account the bidder is signed in to; a member's is not theirs to change
 		fix_here = profile and label == "Needs attention" and group.member == (ctx.snapshot.get("organisation") or {}).get("organisation_id")
+		missing = sum(1 for f in group.fields if f.key in states and states[f.key].visible and states[f.key].issue and states[f.key].issue.get("severity") == "Must fix") if profile and label == "Needs attention" else 0
+		# the Account's profile may be complete now while this bid still holds the copy it took earlier: the way on is
+		# the "Updated Account details" choice, not the Account
+		refresh = bool(missing) and any(key.startswith(f"profiles.{group.member}.") for key in changed)
+		needs = "The Account's business profile is filled in. Use the updated Account details above to bring it into this bid." if refresh else (
+			f"{missing} business profile {'fact is' if missing == 1 else 'facts are'} still missing in the Account." if missing else "")
 		rows.append({
-			"action_label": "View business profile" if profile else "View declaration", "account_href": "/account" if fix_here else "",
+			"action_label": "View business profile" if profile else "View declaration",
+			"account_href": "#bds-account-update" if refresh else ("/account" if fix_here else ""), "account_label": "Go to updated details" if refresh else "Open Account",
+			# say what is wrong beside "Needs attention", and what to do about it
+			"needs_text": needs,
 			"key": shown["key"], "label": f"{shown['heading']} — {shown['member']}" if shown.get("member") else shown["heading"], "status": label, "tone": "live" if label in ("Complete", "Confirmed") else ("attention" if label == "Needs attention" else "draft"),
 			"confirmed_text": confirmed if confirmed != "Confirmed" else "", "statement": shown.get("statement", ""), "facts": shown.get("facts") or [], "fields": shown["fields"],
 		})

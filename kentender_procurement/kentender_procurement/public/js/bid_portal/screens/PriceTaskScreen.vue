@@ -13,6 +13,7 @@ import TaskStepper from "../components/TaskStepper.vue";
 import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
 import { arrive, destinationOf } from "../composables/saveDestination.js";
+import { sendCommand } from "../composables/bidCommands.js";
 
 const READ = "kentender_procurement.bid_submission.api.get_bid_task";
 const SAVE = "kentender_procurement.bid_submission.api.save_bid_task";
@@ -87,7 +88,7 @@ function savePrices() {
 	return runner.run(async () => {
 		failure.value = ""; // only when a save really starts
 		errors.value = {};
-		const result = await portal.call(SAVE, { bid_reference: data.value.bid.reference, task: "price", values: JSON.stringify(answers), expected_record_version: data.value.bid.record_version, idempotency_key: `bds-price-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}` }, { type: "POST" });
+		const result = await sendCommand(portal, data.value.bid.reference, data.value.bid.record_version, (version) => portal.call(SAVE, { bid_reference: data.value.bid.reference, task: "price", values: JSON.stringify(answers), expected_record_version: version, idempotency_key: `bds-price-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}` }, { type: "POST" }));
 		if (result && result.ok) {
 			for (const [handle] of Object.entries(answers)) {
 				const field = inputs(data.value).find((f) => f.handle === handle);

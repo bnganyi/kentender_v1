@@ -16,6 +16,7 @@ import ResponseDrawer from "../components/ResponseDrawer.vue";
 import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
 import { arrive, destinationOf } from "../composables/saveDestination.js";
+import { sendCommand } from "../composables/bidCommands.js";
 
 const READ = "kentender_procurement.bid_submission.api.get_bid_task";
 const SAVE = "kentender_procurement.bid_submission.api.save_bid_task";
@@ -125,7 +126,7 @@ function saveAndContinue() {
 			Object.assign(security, answers); // keep what was entered, now against the new version
 		}
 		if (Object.keys(answers).length) {
-			const result = await portal.call(SAVE, { bid_reference: data.value.bid.reference, task: "company", values: JSON.stringify(answers), expected_record_version: data.value.bid.record_version, idempotency_key: key("security") }, { type: "POST" });
+			const result = await sendCommand(portal, data.value.bid.reference, data.value.bid.record_version, (version) => portal.call(SAVE, { bid_reference: data.value.bid.reference, task: "company", values: JSON.stringify(answers), expected_record_version: version, idempotency_key: key("security") }, { type: "POST" }));
 			if (!(result && result.ok)) {
 				errors.value = (result && result.errors) || {};
 				failure.value = result && !result.errors ? result.message || "" : "";
@@ -199,7 +200,7 @@ onMounted(() => {
 					<span v-if="org.current_text" class="bds-muted">{{ org.current_text }}</span>
 					<a :href="org.update_account_href">{{ __("Update Account") }}</a>
 				</div>
-				<div v-if="org.update && !keepBid" class="kt-group bds-account-update" data-testid="bds-account-update">
+				<div v-if="org.update && !keepBid" id="bds-account-update" class="kt-group bds-account-update" data-testid="bds-account-update">
 					<span class="bds-strong">{{ __("Updated Account details are available") }}</span>
 					<table v-if="!narrow" class="table">
 						<thead><tr><th>{{ org.update.fact }}</th><th>{{ __("Value") }}</th></tr></thead>
@@ -274,8 +275,8 @@ onMounted(() => {
 					<tbody>
 						<tr v-for="row in data.declarations" :key="row.key" :data-testid="'bds-declaration-' + row.key">
 							<td class="bds-strong">{{ row.label }}</td>
-							<td><span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span><div v-if="row.confirmed_text" class="kt-label bds-confirmed">{{ row.confirmed_text }}</div></td>
-							<td><button type="button" class="btn btn-ghost" @click="drawer = row">{{ __(row.action_label || "View declaration") }}</button><a v-if="row.account_href" :href="row.account_href" class="bds-account-link" data-testid="bds-open-account">{{ __("Open Account") }}</a></td>
+							<td><span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span><div v-if="row.confirmed_text" class="kt-label bds-confirmed">{{ row.confirmed_text }}</div><div v-if="row.needs_text" class="kt-label bds-needs" data-testid="bds-declaration-needs">{{ row.needs_text }}</div></td>
+							<td><button type="button" class="btn btn-ghost" @click="drawer = row">{{ __(row.action_label || "View declaration") }}</button><a v-if="row.account_href" :href="row.account_href" class="bds-account-link" data-testid="bds-open-account">{{ __(row.account_label || "Open Account") }}</a></td>
 						</tr>
 					</tbody>
 				</table>
@@ -283,7 +284,8 @@ onMounted(() => {
 					<div v-for="row in data.declarations" :key="row.key" class="bds-card" :data-testid="'bds-declaration-' + row.key">
 						<div class="bds-card-title">{{ row.label }}</div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span></span></div>
-						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="drawer = row">{{ __(row.action_label || "View declaration") }}</button><a v-if="row.account_href" :href="row.account_href" class="bds-account-link" data-testid="bds-open-account">{{ __("Open Account") }}</a></div>
+						<div v-if="row.needs_text" class="bds-card-fact"><span class="kt-label" data-testid="bds-declaration-needs">{{ row.needs_text }}</span></div>
+						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="drawer = row">{{ __(row.action_label || "View declaration") }}</button><a v-if="row.account_href" :href="row.account_href" class="bds-account-link" data-testid="bds-open-account">{{ __(row.account_label || "Open Account") }}</a></div>
 					</div>
 				</div>
 			</div>
@@ -295,14 +297,14 @@ onMounted(() => {
 				<p v-if="!data.tender_security.entered" class="bds-muted" data-testid="bds-security-empty">{{ __("Tender security has not been entered for this bid.") }}</p>
 				<div class="bds-grid-2">
 					<template v-for="field in data.tender_security.fields" :key="field.handle">
-						<FieldControl v-if="field.kind !== 'evidence' && visible(field)" v-model="security[field.handle]" :field="field" :error="errors[field.handle] || ''" :bid="bid" id-prefix="bds-security" @changed="load" />
+						<FieldControl v-if="field.kind !== 'evidence' && visible(field)" v-model="security[field.handle]" :field="field" :error="errors[field.handle] || ''" :bid="bid" id-prefix="bds-security" @changed="load" @stale="load" />
 					</template>
 				</div>
 				<div class="bds-facts">
 					<div v-for="fact in data.tender_security.published_facts" :key="fact.label" class="bds-fact"><span class="kt-label">{{ fact.label }}</span><span class="bds-fact-value">{{ fact.value }}</span></div>
 				</div>
 				<template v-for="field in data.tender_security.fields" :key="'proof-' + field.handle">
-					<FieldControl v-if="field.kind === 'evidence' && visible(field)" :model-value="field.value" :field="field" :error="errors[field.handle] || ''" :bid="bid" id-prefix="bds-security" @changed="load" />
+					<FieldControl v-if="field.kind === 'evidence' && visible(field)" :model-value="field.value" :field="field" :error="errors[field.handle] || ''" :bid="bid" id-prefix="bds-security" @changed="load" @stale="load" />
 				</template>
 				<div v-if="data.tender_security.physical" class="kt-notice" :class="data.tender_security.physical.tone === 'live' ? 'is-live' : 'is-warning'" role="status" data-testid="bds-security-physical">
 					<svg class="kt-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v5h1" /></svg>
@@ -343,7 +345,7 @@ onMounted(() => {
 			<div class="bds-footer-end"><button v-if="canEdit" type="button" class="btn btn-primary" :disabled="pending" data-testid="bds-company-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button></div>
 		</div>
 
-		<ResponseDrawer v-if="drawer" :group="drawer" task="company" :bid="bid" @close="drawer = null" @saved="afterDrawer" @changed="drawerChanged" />
+		<ResponseDrawer v-if="drawer" :group="drawer" task="company" :bid="bid" @close="drawer = null" @saved="afterDrawer" @changed="drawerChanged" @stale="drawerChanged" />
 	</div>
 	<CommonState v-else-if="failure" state="load-failure" @action="load" />
 	<div v-else class="kt-page" aria-hidden="true"><div class="bds-skeleton" data-testid="bds-company-loading"></div></div>

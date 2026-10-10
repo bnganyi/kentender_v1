@@ -951,6 +951,16 @@
 	gap: var(--kt-space-3);
 	align-items: center;
 }
+/* One Offered goods form per goods line (BDS-CHG-001 v0.12 §4.4.9): the line's description heads its form */
+.kt-industry.kt-portal .bds-line-heading {
+	margin: 0 0 12px;
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--color-heading);
+}
+.kt-industry.kt-portal .kt-region > .bds-region-body + .bds-region-body {
+	margin-top: 28px;
+}
 .kt-industry.kt-portal .bds-confirmed {
 	margin-top: 4px;
 }

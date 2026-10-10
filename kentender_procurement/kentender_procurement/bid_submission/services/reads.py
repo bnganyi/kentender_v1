@@ -443,7 +443,7 @@ def get_bid_review(*, bid_reference: str, organisation: str = "", user: str | No
 		for state in tasks[task.key].fields:
 			if not state.issue:
 				continue
-			item = {"task": task.key, "task_label": task.label, "handle": state.field.handle, "label": projection.label(ctx, state.field), "text": state.issue["text"]}
+			item = {"task": task.key, "task_label": task.label, "handle": state.field.handle, "label": projection.blocker_label(ctx, state.field), "text": state.issue["text"]}
 			(must_fix if state.issue["severity"] == readiness.MUST_FIX else notes).append(item)
 	attention = [{"task": key, "task_label": ctx.model.task(key).label} for key, state in tasks.items() if state.status == "Needs attention"]
 	from kentender_procurement.bid_submission.services import price, tender_security

@@ -102,6 +102,40 @@ class TestEntityValues(IntegrationTestCase):
 		self.assertIn("business profile", issues["ORG-B"]["text"])
 
 
+	def test_the_company_row_says_how_much_of_the_profile_is_missing(self):
+		from kentender_procurement.bid_submission.services import company_view
+
+		model = definition_model.DefinitionModel(definition(), members=["ORG-A", "ORG-B"], entities=["ORG-A", "ORG-B"])
+		ctx = context(model, {"ORG-A": COMPANY}, members=["ORG-A", "ORG-B"])
+		tasks = readiness.evaluate(ctx)
+		groups = ctx.model.groups_of("company")
+		shown = [{"key": g.key, "heading": "Business profile", "member": g.member, "fields": []} for g in groups]
+		from unittest.mock import patch
+
+		with patch.object(company_view.snapshot, "compare", lambda ws: {"changed": [], "current": {}, "latest": {}}):
+			rows = {r["label"]: r for r in company_view.declarations(ctx, tasks, shown)}
+		missing = rows["Business profile — ORG-B"]
+		self.assertEqual(missing["status"], "Needs attention")
+		self.assertRegex(missing["needs_text"], r"^\d+ business profile facts? (is|are) still missing in the Account\.$")
+		self.assertEqual(rows["Business profile — ORG-A"]["needs_text"], "")
+		self.assertEqual((missing["account_href"], missing["account_label"]), ("", "Open Account"))
+
+	def test_once_the_account_profile_is_filled_the_row_points_to_the_updated_details_not_the_account(self):
+		from unittest.mock import patch
+
+		from kentender_procurement.bid_submission.services import company_view
+
+		model = definition_model.DefinitionModel(definition(), members=["ORG-A", "ORG-B"], entities=["ORG-A", "ORG-B"])
+		ctx = context(model, {"ORG-A": COMPANY}, members=["ORG-A", "ORG-B"])
+		groups = ctx.model.groups_of("company")
+		shown = [{"key": g.key, "heading": "Business profile", "member": g.member, "fields": []} for g in groups]
+		with patch.object(company_view.snapshot, "compare", lambda ws: {"changed": ["profiles.ORG-B.business_structure"], "current": {}, "latest": {}}):
+			rows = {r["label"]: r for r in company_view.declarations(ctx, readiness.evaluate(ctx), shown)}
+		row = rows["Business profile — ORG-B"]
+		self.assertEqual((row["status"], row["account_href"], row["account_label"]), ("Needs attention", "#bds-account-update", "Go to updated details"))
+		self.assertIn("Use the updated Account details above", row["needs_text"])
+
+
 class TestSnapshotCopiesEveryEntitysProfile(IntegrationTestCase):
 	def setUp(self):
 		super().setUp()

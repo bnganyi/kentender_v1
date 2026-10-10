@@ -17,6 +17,7 @@ import QuestionDialog from "../components/QuestionDialog.vue";
 import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
 import { arrive, destinationOf } from "../composables/saveDestination.js";
+import { sendCommand } from "../composables/bidCommands.js";
 
 const READ = "kentender_procurement.bid_submission.api.get_bid_task";
 const SAVE = "kentender_procurement.bid_submission.api.save_bid_task";
@@ -70,7 +71,7 @@ async function load() {
 	}
 }
 function save(values) {
-	return portal.call(SAVE, { bid_reference: data.value.bid.reference, task: "documents", values: JSON.stringify(values), expected_record_version: data.value.bid.record_version, idempotency_key: `bds-documents-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}` }, { type: "POST" });
+	return sendCommand(portal, data.value.bid.reference, data.value.bid.record_version, (version) => portal.call(SAVE, { bid_reference: data.value.bid.reference, task: "documents", values: JSON.stringify(values), expected_record_version: version, idempotency_key: `bds-documents-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}` }, { type: "POST" }));
 }
 // A Draft still bound to an earlier definition moves first (its next save
 // does that and asks for review); the acknowledgement then has its field

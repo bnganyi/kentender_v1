@@ -18,6 +18,7 @@ import ResponseDrawer from "../components/ResponseDrawer.vue";
 import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
 import { arrive, destinationOf } from "../composables/saveDestination.js";
+import { sendCommand } from "../composables/bidCommands.js";
 
 const READ = "kentender_procurement.bid_submission.api.get_bid_task";
 const SAVE = "kentender_procurement.bid_submission.api.save_bid_task";
@@ -57,15 +58,20 @@ function actionLabel(row) {
 }
 const rows = computed(() => (data.value ? [...data.value.technical, ...data.value.warranty, ...(data.value.experience ? data.value.experience.rows : []), ...data.value.acceptance, ...data.value.evidence] : []));
 
+// every goods line, first then the others (BDS-CHG-001 v0.12 §4.4.9); a line's fields never share a handle with another's
+const goodsLines = computed(() => (data.value ? [data.value.goods, ...(data.value.goods_more || [])].filter(Boolean) : []));
+function lineFields(result) {
+	return [result.goods, ...(result.goods_more || [])].filter(Boolean).flatMap((line) => line.fields || []);
+}
 function goodsChanges() {
-	const fields = (data.value && data.value.goods && data.value.goods.fields) || [];
+	const fields = data.value ? lineFields(data.value) : [];
 	return Object.fromEntries(fields.filter((f) => f.editable && f.kind !== "evidence" && JSON.stringify(goods[f.handle]) !== JSON.stringify(f.value)).map((f) => [f.handle, goods[f.handle]]));
 }
 function adopt(result) {
 	const unsaved = data.value ? goodsChanges() : {};
 	data.value = result;
 	for (const key of Object.keys(goods)) delete goods[key];
-	for (const f of (result.goods && result.goods.fields) || []) goods[f.handle] = f.handle in unsaved ? unsaved[f.handle] : f.value;
+	for (const f of lineFields(result)) goods[f.handle] = f.handle in unsaved ? unsaved[f.handle] : f.value;
 }
 if (props.initial) adopt(props.initial);
 
@@ -114,12 +120,19 @@ function saveAndContinue() {
 	const destination = destinationOf(data.value.footer);
 	if (!Object.keys(answers).length) return arrive(destination, { go, load });
 	return runner.run(async () => {
-		const result = await portal.call(SAVE, { bid_reference: data.value.bid.reference, task: "requirements", values: JSON.stringify(answers), expected_record_version: data.value.bid.record_version, idempotency_key: `bds-requirements-${Date.now().toString(36)}` }, { type: "POST" });
+		const result = await sendCommand(portal, data.value.bid.reference, data.value.bid.record_version, (version) => portal.call(SAVE, { bid_reference: data.value.bid.reference, task: "requirements", values: JSON.stringify(answers), expected_record_version: version, idempotency_key: `bds-requirements-${Date.now().toString(36)}` }, { type: "POST" }));
 		if (result && result.ok) await arrive(destination, { go, load });
 		else if (result && result.errors) errors.value = result.errors;
 		else if (result) failure.value = result.message || "";
 	}, "Save and continue");
 }
+const ATTENTION_SHOWN = 5;
+const showAllAttention = ref(false);
+const shownAttention = computed(() => {
+	const items = (data.value && data.value.attention && data.value.attention.items) || [];
+	return showAllAttention.value ? items : items.slice(0, ATTENTION_SHOWN);
+});
+const hiddenAttention = computed(() => !showAllAttention.value && ((data.value && data.value.attention && data.value.attention.items.length) || 0) > ATTENTION_SHOWN);
 function onFix(fix) {
 	const href = fixRoute(fix, props.reference);
 	if (href && href !== route.value.path) go(href);
@@ -155,7 +168,15 @@ onMounted(() => {
 			<svg class="kt-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
 			<div class="kt-notice-body">
 				<strong>{{ data.attention.title }}</strong>
-				<div v-for="item in data.attention.items" :key="item.key"><button type="button" class="bds-link-button" @click="open(item.key)">{{ item.label }}</button></div>
+				<div v-for="item in shownAttention" :key="item.key"><button type="button" class="bds-link-button" @click="open(item.key)">{{ item.label }}</button></div>
+				<button v-if="hiddenAttention" type="button" class="bds-link-button" data-testid="bds-requirements-attention-more" @click="showAllAttention = true">{{ __("Show all") }} {{ data.attention.items.length }}</button>
+			</div>
+		</div>
+		<div v-if="data.to_complete" class="kt-notice is-info" role="status" data-testid="bds-requirements-to-complete">
+			<svg class="kt-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
+			<div class="kt-notice-body">
+				<strong>{{ data.to_complete.title }}</strong>
+				<div v-for="section in data.to_complete.sections" :key="section.key"><a :href="'#bds-region-' + section.key" class="bds-link-button">{{ section.text }}</a></div>
 			</div>
 		</div>
 
@@ -164,17 +185,18 @@ onMounted(() => {
 			<a href="#kt-portal-main" class="bds-section-top" data-testid="bds-section-top">↑ {{ __("Top") }}</a>
 		</nav>
 
-		<div v-if="data.goods" id="bds-region-goods" class="kt-region">
+		<div v-if="goodsLines.length" id="bds-region-goods" class="kt-region">
 			<h2>{{ __("Offered goods") }}</h2>
-			<div class="bds-region-body">
+			<div v-for="line in goodsLines" :key="line.key" class="bds-region-body" :data-testid="'bds-goods-line-' + line.key">
+				<h3 v-if="goodsLines.length > 1" class="bds-line-heading" data-testid="bds-goods-line-heading">{{ line.heading }}</h3>
 				<div class="bds-grid-2">
-					<template v-for="field in data.goods.fields" :key="field.handle">
-						<FieldControl v-if="field.kind !== 'evidence'" v-model="goods[field.handle]" :field="field" :error="errors[field.handle] || ''" :bid="bid" id-prefix="bds-goods" @changed="load" />
+					<template v-for="field in line.fields" :key="field.handle">
+						<FieldControl v-if="field.kind !== 'evidence'" v-model="goods[field.handle]" :field="field" :error="errors[field.handle] || ''" :bid="bid" id-prefix="bds-goods" @changed="load" @stale="load" />
 					</template>
-					<div v-for="fact in data.goods.published" :key="fact.label" class="bds-drawer-fact"><span class="kt-label">{{ fact.label }}</span><span>{{ fact.value }}</span></div>
+					<div v-for="fact in line.published" :key="fact.label" class="bds-drawer-fact"><span class="kt-label">{{ fact.label }}</span><span>{{ fact.value }}</span></div>
 				</div>
-				<template v-for="field in data.goods.fields" :key="'goods-proof-' + field.handle">
-					<FieldControl v-if="field.kind === 'evidence'" :model-value="field.value" :field="field" :bid="bid" id-prefix="bds-goods" @changed="load" />
+				<template v-for="field in line.fields" :key="'goods-proof-' + field.handle">
+					<FieldControl v-if="field.kind === 'evidence'" :model-value="field.value" :field="field" :bid="bid" id-prefix="bds-goods" @changed="load" @stale="load" />
 				</template>
 			</div>
 		</div>
@@ -188,7 +210,7 @@ onMounted(() => {
 					<thead><tr><th>{{ __("Requirement") }}</th><th v-if="table[0] === 'technical'">{{ __("Tender requirement") }}</th><th>{{ __("Your response") }}</th><th>{{ __("Evidence") }}</th><th>{{ __("Status") }}</th><th>{{ __("Action") }}</th></tr></thead>
 					<tbody>
 						<tr v-for="row in data[table[0]]" :key="row.key" :data-testid="'bds-row-' + row.key">
-							<td><span class="bds-strong">{{ row.label }}</span><div v-if="table[0] === 'warranty' && row.requirement" class="bds-muted">{{ row.requirement }}</div></td>
+							<td><span class="bds-strong">{{ row.label }}</span><div v-if="table[0] === 'warranty' && row.requirement" class="bds-muted">{{ row.requirement }}</div><div v-if="table[0] === 'technical' && goodsLines.length > 1 && row.applies_to" class="bds-muted" data-testid="bds-applies-to">{{ row.applies_to }}</div></td>
 							<td v-if="table[0] === 'technical'">{{ row.requirement }}</td>
 							<td>{{ row.response }}</td>
 							<td><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></td>
@@ -200,6 +222,7 @@ onMounted(() => {
 				<div v-else :data-testid="'bds-' + table[0] + '-cards'">
 					<div v-for="row in data[table[0]]" :key="row.key" class="bds-card" :data-testid="'bds-row-' + row.key">
 						<div class="bds-card-title">{{ row.label }}</div>
+						<div v-if="table[0] === 'technical' && goodsLines.length > 1 && row.applies_to" class="bds-card-fact"><span class="kt-label">{{ __("Applies to") }}</span><span data-testid="bds-applies-to">{{ row.applies_to }}</span></div>
 						<div v-if="row.requirement" class="bds-card-fact"><span class="kt-label">{{ __("Tender requirement") }}</span><span>{{ row.requirement }}</span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Your response") }}</span><span>{{ row.response }}</span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Evidence") }}</span><span><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></span></div>
@@ -305,7 +328,7 @@ onMounted(() => {
 			<div class="bds-footer-end"><button v-if="canEdit" type="button" class="btn btn-primary" :disabled="pending" data-testid="bds-requirements-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button></div>
 		</div>
 
-		<ResponseDrawer v-if="drawer" :key="drawer.key" :group="drawer" task="requirements" :bid="bid" @close="drawer = null" @saved="afterDrawer" @changed="drawerChanged" />
+		<ResponseDrawer v-if="drawer" :key="drawer.key" :group="drawer" task="requirements" :bid="bid" @close="drawer = null" @saved="afterDrawer" @changed="drawerChanged" @stale="drawerChanged" />
 	</div>
 	<CommonState v-else-if="failure" state="load-failure" @action="load" />
 	<div v-else class="kt-page" aria-hidden="true"><div class="bds-skeleton" data-testid="bds-requirements-loading"></div></div>
