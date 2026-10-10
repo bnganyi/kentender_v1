@@ -385,10 +385,16 @@
       "source_sha256": "cba604f8d7f973f0c625cf4c7ca6cdd0b43003e4c8a445f93521106df2149fba",
       "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
       "approval_history": {
-        "proposed_version": "0.11",
-        "proposed_filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_11.md",
+        "proposed_version": "0.12",
+        "proposed_filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_12.md",
         "proposal_status": "Project Owner review",
-        "proposed_base_version": "0.10"
+        "proposed_base_version": "0.11",
+        "proposed_revision": "v0.12 — MVP completeness correction for a Tender with several goods lines (sections 4.4.9, 10.10A, 10.10B, 14.16); proposed 10 October 2026; v0.11 remains the approved baseline until the Project Owner approves v0.12",
+        "previous_proposal": {
+          "version": "0.11",
+          "proposed_base_version": "0.10",
+          "outcome": "Approved 3 October 2026 (Project Owner: Mark the documents as approved)"
+        }
       }
     },
     {
