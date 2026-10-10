@@ -14,9 +14,12 @@ from __future__ import annotations
 import copy
 import json
 
+from unittest.mock import patch
+
 from frappe.tests import IntegrationTestCase
 
 from kentender_core.services import analytics_contract as ac
+from kentender_core.services import analytics_workspace as aw
 from kentender_core.tests import analytics_a1 as a1
 from kentender_core.tests.analytics_a1 import CHARLES, DANIEL, DH, FY, HR, PETER, A1, read
 
@@ -81,6 +84,16 @@ class TestOverviewCharles(IntegrationTestCase):
 			[("Requisitions", [("0–7 days", 1)]), ("Tender proceedings", [("0–7 days", 3), ("8–30 days", 1)])])
 		self.assertEqual(w["none_text"], "Needs, departmental planning and annual planning: no outstanding matters recorded.")
 		self.assertEqual(w["caption"], "Days since each matter reached its current holder.")
+
+	def test_waiting_when_no_area_has_a_matter_says_so_once(self):
+		with patch.object(aw, "_outstanding", lambda ctx, area: []):
+			w = read(CHARLES)["overview"]["waiting"]
+		self.assertEqual((w["rows"], w["none_text"]), ([], ""))
+		self.assertEqual(w["empty_text"], "No outstanding matters recorded in any area.")
+		self.assertEqual(w["caption"], "Days since each matter reached its current holder.")
+
+	def test_waiting_with_a_matter_has_no_empty_statement(self):
+		self.assertEqual(self.ov["waiting"]["empty_text"], "")
 
 	def test_plan_coverage(self):
 		c = self.ov["coverage"]
