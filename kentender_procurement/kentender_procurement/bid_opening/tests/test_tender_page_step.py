@@ -114,10 +114,7 @@ class TestTenderPageStep(TenderPageMixin, OpeningCase):
 		home_support.reset()
 		waits = [r["action"] for r in entries(user=CHAIR, region="waiting")]
 		step = self.page(CHAIR)["next_step"]
-		# Home names at most two holders and otherwise the role (HOME-CHG-001); the Tender page names everyone the owner names
-		holders = (step["holder"] or {}).get("people") or []
-		expected = step["headline"] if len(holders) <= 2 else "Waiting for an Accounting Officer to appoint the opening committee"
-		self.assertEqual(waits, [expected])
+		self.assertEqual(waits, [step["headline"]])  # one wording on Home, the Tender page and the opening page, however many hold the role
 
 
 class TestTenderPageLeakage(TenderPageMixin, OpeningCase, SubmissionCase):
@@ -141,3 +138,14 @@ class TestTenderPageLeakage(TenderPageMixin, OpeningCase, SubmissionCase):
 			self.assertNotIn("bids opened", text.lower(), user)
 			opening = [s for s in record.get("stage_summaries") or [] if s["key"] == "bid-opening"][0]
 			self.assertEqual([f["label"] for f in opening["facts"] if "bid" in f["label"].lower()], [], user)
+
+
+class TestWhoAWaitIsOn(OpeningCase):
+	"""One rule for naming who a wait is on, on every surface: up to two names, otherwise the responsibility."""
+
+	def test_up_to_two_names_otherwise_the_role(self):
+		self.assertEqual(next_steps.someone(["Amina Hassan"], "Accounting Officer"), "Amina Hassan")
+		self.assertEqual(next_steps.someone(["Amina Hassan", "Brian Wafula"], "Accounting Officer"), "Amina Hassan or Brian Wafula")
+		self.assertEqual(next_steps.someone(["A", "B", "C"], "Accounting Officer"), "an Accounting Officer")
+		self.assertEqual(next_steps.someone(["A", "B", "C"], "Committee member"), "a Committee member")
+		self.assertEqual(next_steps.someone([], "Accounting Officer"), "an Accounting Officer")

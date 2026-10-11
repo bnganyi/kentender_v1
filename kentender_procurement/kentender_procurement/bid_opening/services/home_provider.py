@@ -84,9 +84,7 @@ def _people(names: list[str], role: str) -> str:
 
 
 def _someone(names: list[str], role: str) -> str:
-	if names and len(names) <= 2:
-		return " or ".join(names)
-	return f"{'an' if cstr(role)[:1] in 'AEIOU' else 'a'} {role}"
+	return next_steps.someone(names, cstr(role))
 
 
 def _destination(reference: str) -> dict[str, Any]:
