@@ -348,6 +348,8 @@ def journey(
 	upstream: dict[str, Any] | None = None,
 	downstream: dict[str, Any] | None = None,
 	reduced_style: str = REDUCED_STAGE_OF,
+	caption: str = "",
+	step_first: bool = False,
 ) -> dict[str, Any]:
 	"""One row of a record's own formal stages with one marker each.
 
@@ -356,6 +358,10 @@ def journey(
 	``complete`` marks every stage Done (the end state). Only the current
 	stage names its holder. ``reduced`` asks for the one-line form
 	"Stage {n} of {N}: {label} — {holder}".
+
+	``caption`` is one line of the module's own words drawn above the row (Tenders: "Tender
+	preparation is complete", so a finished stage row does not read as the whole procurement
+	finished). ``step_first`` asks the shared region to draw the next step above the row.
 	"""
 	stages = [(cstr(code), cstr(label)) for code, label in stages]
 	codes = [code for code, _label in stages]
@@ -408,6 +414,8 @@ def journey(
 		"reduced_parts": reduced_parts,
 		"upstream": upstream,
 		"downstream": downstream,
+		"caption": cstr(caption),
+		"step_first": bool(step_first),
 	}
 
 

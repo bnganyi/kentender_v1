@@ -28,6 +28,7 @@
      and an absent journey draws nothing (§2.9.3 rule 8). -->
 <template>
 	<div v-if="journey && journey.stages && journey.stages.length" class="kt-journey-host" data-kt="journey">
+		<p v-if="journey.caption" class="kt-journey-caption" data-testid="kt-journey-caption">{{ journey.caption }}</p>
 		<div v-if="journey.reduced" class="kt-journey is-reduced">
 			<div class="kt-journey-bars" aria-hidden="true">
 				<span v-for="stage in journey.stages" :key="stage.code" :class="markerClass(stage)"></span>

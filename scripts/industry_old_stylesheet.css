@@ -849,6 +849,8 @@
 .kt-industry .kt-guidance { display: grid; gap: 18px; padding: 20px 24px 22px; border-bottom: 1px solid var(--kt-color-divider); }
 /* Tracker: N equal columns of bar / numbered label / state line (§3). */
 .kt-industry .kt-journey-host { container-type: inline-size; display: grid; gap: var(--kt-space-2); min-width: 0; }
+/* one line of a module's own words above the row (Tenders: "Tender preparation is complete") */
+.kt-industry .kt-journey-caption { margin: 0; font-size: 13px; line-height: 1.4; font-weight: 600; color: var(--kt-color-neutral-700); }
 .kt-industry .kt-journey { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--kt-journey-n, 5), minmax(0, 1fr)); gap: 6px; }
 .kt-industry .kt-journey-stage { display: grid; gap: 8px; align-content: start; min-width: 0; }
 .kt-industry .kt-journey-bar { display: block; height: 4px; background: var(--kt-color-neutral-300); }

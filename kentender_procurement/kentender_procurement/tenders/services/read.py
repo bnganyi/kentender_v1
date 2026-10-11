@@ -631,6 +631,7 @@ def key_facts(root, version, snapshot: dict[str, Any], *, internal: bool) -> lis
 		{"label": "Method", "value": "Open Tender"},
 		{"label": "Submission deadline", "value": serializer.fmt_datetime_short(state.get("submission_deadline"))},
 		{"label": "Tender security", "value": f"KES {serializer.fmt_money(state.get('tender_security_amount'))}" if state.get("tender_security_amount") is not None else ""},
+		{"label": "Security submission", "value": serializer.security_statement(state)},
 		{"label": "Reservation", "value": cstr(snapshot.get("reservation_category_value") or "None")},
 		{"label": "Latest delivery", "value": serializer.fmt_date_short(snapshot.get("latest_delivery_date"))},
 	]
@@ -673,6 +674,8 @@ def get_tender(*, tender: str, user: str | None = None) -> dict[str, Any]:
 	snapshot = snap.load(version)
 	state = serializer.officer_state(version)
 	from kentender_procurement.tenders.services import publication_read
+	# what the later stages publish for this reader, read once for both the stage list and the lead panel's next step
+	summaries = stage_summaries(root, actor)
 
 	projection = {
 		"outcome": "OK",
@@ -705,13 +708,13 @@ def get_tender(*, tender: str, user: str | None = None) -> dict[str, Any]:
 		"correction": correction.correction_state(root, user=actor) if root.overall_status == "Requisition correction requested" else None,
 		# §5.9 / §10.17: the server-derived next step and Tender journey; the
 		# editor's two tasks carry their own answers (DES-03 / DES-04)
-		"guidance": guide.guidance(root, actor=actor, roles=roles, mode=mode),
+		"guidance": guide.guidance(root, actor=actor, roles=roles, mode=mode, downstream=summaries),
 		"period_problem": period_problem(root, version) if mode != "department" else None,
 		"period_rule": period_rule(version) if mode != "department" else None,
 		"task_steps": guide.task_steps(root, actor=actor, roles=roles, mode=mode) if root.overall_status == "Draft" and roles["officer"] and mode != "department" else {},
 		"key_facts": key_facts(root, version, snapshot, internal=internal),
 		"record_links": record_links(root, actor),
-		"stage_summaries": stage_summaries(root, actor),
+		"stage_summaries": summaries,
 		"publication": publication_read.publication_summary(root, actor=actor, roles=roles) if internal else None,
 		"open_period": publication_read.open_period_summary(root, actor=actor, roles=roles) if internal else None,
 		"options": {
@@ -812,6 +815,7 @@ def _section_bodies(root, version, snapshot: dict[str, Any], state: dict[str, An
 			*((("Reason for a shorter tendering period", cstr(state.get("shortened_period_reason")), True),) if cstr(state.get("shortened_period_reason")).strip() and shortened_period(version) else ()),
 			("Tender validity", f"{serializer.fmt_number(state.get('tender_validity_days'))} days" if state.get("tender_validity_days") else ""),
 			("Tender security", f"KES {serializer.fmt_money(state.get('tender_security_amount'))}" if state.get("tender_security_amount") is not None else ""),
+			("Security submission", serializer.security_statement(state)),
 			("Pre-tender meeting", f"Yes — {meeting}" if meeting else "No"),
 		])],
 		"requirements": [

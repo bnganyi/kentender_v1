@@ -688,6 +688,11 @@ function onGoFinding(f) {
 // are the server's.
 const focusAfterLoad = ref("");
 function onFix(fix) {
+	// a later stage's step arrives as a route into its own record (Bid Opening's "Open opening record"): go there
+	if (fix && fix.kind === "route" && Array.isArray(fix.target)) {
+		openLink(fix.target);
+		return;
+	}
 	const id = (fix && fix.fix_id) || "";
 	const target = (fix && fix.target) || {};
 	if (id.startsWith("finding:") || (target && target.task)) {

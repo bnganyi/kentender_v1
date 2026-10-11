@@ -277,6 +277,20 @@ def answer_for(doc, user: str) -> dict[str, Any]:
 	return ns.for_viewer(result, technical=technical, reader=reader)
 
 
+def tender_page_step(doc, user: str) -> dict[str, Any] | None:
+	"""The opening's own answer for this reader, as the closed Tender page shows it: the same wording, holder and
+	kind as `answer_for`, and for a turn one primary button into the opening record (the page owns every command).
+	None when the reader has no step, so the Tender keeps its own status."""
+	result = answer_for(doc, user)
+	if result["kind"] == ns.KIND_NOT_INVOLVED or not result["headline"]:
+		return None
+	if result["kind"] in ns.TURN_KINDS:
+		responsibility = people.ACCOUNTING_OFFICER if people.holds(user, people.ACCOUNTING_OFFICER) else "Opening committee"
+		result = {**result, "primary_action": "", "fixes": [ns.fix("Open opening record", responsibility=responsibility, kind=ns.FIX_ROUTE, fix_id="open_opening_record",
+			target=["tenders", doc.tender_reference, "opening"], primary=True)]}
+	return result
+
+
 def journey_for(doc) -> dict[str, Any]:
 	prepared = bool(appointment.current(doc.name) and arrangements.current(doc.name))
 	if doc.state == "Not held":
