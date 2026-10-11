@@ -10,7 +10,7 @@
     {
       "affected_asset": "01_source; 06_runtime",
       "check_id": "C02",
-      "message": "Source 95726a886427…; release stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01 IT-EQUIPMENT-OPEN-V1 1.4.",
+      "message": "Source 95726a886427…; release stdr-19da524c-85d1-4fdb-8dee-81860bd68c67 IT-EQUIPMENT-OPEN-V1 1.5.",
       "result": "Passed",
       "title": "Source, schema and release identities"
     },
@@ -52,21 +52,21 @@
     {
       "affected_asset": "06_runtime/downstream_rules.json",
       "check_id": "C08",
-      "message": "26 response rules, 26 mapping rows, no orphan.",
+      "message": "27 response rules, 27 mapping rows, no orphan.",
       "result": "Passed",
       "title": "One mapping for every response rule and no orphan mapping"
     },
     {
       "affected_asset": "06_runtime/downstream_rules.json",
       "check_id": "C09",
-      "message": "Evaluation treatments: {'EVG-ELIGIBILITY': 14, 'EVG-FINANCIAL': 2, 'EVG-TECHNICAL-COMPLIANCE': 7, 'Not evaluated': 3}.",
+      "message": "Evaluation treatments: {'EVG-ELIGIBILITY': 15, 'EVG-FINANCIAL': 2, 'EVG-TECHNICAL-COMPLIANCE': 7, 'Not evaluated': 3}.",
       "result": "Passed",
       "title": "Valid evaluation group and explicit evaluated/not-evaluated treatment"
     },
     {
       "affected_asset": "06_runtime/downstream_rules.json",
       "check_id": "C10",
-      "message": "Contract treatments: {'CD-CONTRACT-PRICE-SCHEDULES': 2, 'CD-GOODS-DELIVERY-SCHEDULE': 1, 'CD-INSPECTION-ACCEPTANCE-SCHEDULE': 1, 'CD-RELATED-SERVICES-SCHEDULE': 1, 'CD-SCC-WARRANTY-SUPPORT': 1, 'CD-TECHNICAL-OBLIGATION-SCHEDULE': 1, 'Not carried forward': 19}.",
+      "message": "Contract treatments: {'CD-CONTRACT-PRICE-SCHEDULES': 2, 'CD-GOODS-DELIVERY-SCHEDULE': 1, 'CD-INSPECTION-ACCEPTANCE-SCHEDULE': 1, 'CD-RELATED-SERVICES-SCHEDULE': 1, 'CD-SCC-WARRANTY-SUPPORT': 1, 'CD-TECHNICAL-OBLIGATION-SCHEDULE': 1, 'Not carried forward': 20}.",
       "result": "Passed",
       "title": "Valid contract destination and explicit carried/not-carried treatment"
     },
@@ -101,7 +101,7 @@
     {
       "affected_asset": "04_fixture; 06_runtime",
       "check_id": "C15",
-      "message": "MoH Invitation, issued Tender and Published Bid Definition (digest a738d37a1413…) reproduce byte for byte.",
+      "message": "MoH Invitation, issued Tender and Published Bid Definition (digest 70eba60cf357…) reproduce byte for byte.",
       "result": "Passed",
       "title": "Exact reproduction of all MoH expected HTML and JSON outputs"
     },
@@ -122,7 +122,7 @@
     {
       "affected_asset": "pack",
       "check_id": "C18",
-      "message": "input bundle digest 83d23536685e0788c674a924cfcdfed00373b0a89cd0845d8751727c44d4a99a; constituents product_profile def2e72ac8dd…, response_rules 4b47e66f7046…, downstream_rules caed57cdf8df…, addendum_identity_rules c82d186626fe…; 142 files.",
+      "message": "input bundle digest 72774c15d84b025cec4b70868158a69ee1db1dd66635378b880fb4045f5a0031; constituents product_profile 60da7bb6f65b…, response_rules 79ba2c638a05…, downstream_rules 8c26b427aad5…, addendum_identity_rules 675b7215449f…; 142 files.",
       "result": "Passed",
       "title": "Constituent SHA-256 values and the candidate bundle digest"
     },
@@ -143,7 +143,7 @@
     {
       "affected_asset": "05_review/release_change_report.json",
       "check_id": "C21",
-      "message": "Compared with release 1.3: 19 changes; Breaking — not interchangeable with the preceding release.",
+      "message": "Compared with release 1.4: 14 changes; Breaking — not interchangeable with the preceding release.",
       "result": "Passed",
       "title": "Generation and internal consistency of the preceding-release change report"
     },
@@ -155,8 +155,8 @@
       "title": "Content quality: wording, tables, evaluation coverage and polarity"
     }
   ],
-  "input_bundle_digest": "83d23536685e0788c674a924cfcdfed00373b0a89cd0845d8751727c44d4a99a",
-  "release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01",
+  "input_bundle_digest": "72774c15d84b025cec4b70868158a69ee1db1dd66635378b880fb4045f5a0031",
+  "release_id": "stdr-19da524c-85d1-4fdb-8dee-81860bd68c67",
   "schema_version": 1,
   "summary": {
     "blocking": false,
@@ -164,7 +164,7 @@
     "passed": 22
   },
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.4",
+  "template_release": "1.5",
   "tool_versions": {
     "jinja2": "3.1.6",
     "pdftotext": "pdftotext version 22.02.0",

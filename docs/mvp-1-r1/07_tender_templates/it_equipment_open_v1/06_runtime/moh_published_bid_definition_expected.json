@@ -1,7 +1,7 @@
 {
-  "addendum_identity_rules_digest": "c82d186626feee4766e5e36b82ca24b0a5d4618113b2b8ee32a67c674ca81e21",
+  "addendum_identity_rules_digest": "675b7215449f447b0a27fbb203223d14c9fc00a95d901a57d70762a2e7fd9be4",
   "bid_definition_id": "PBD-745b48b7f211a7e4d5162fb4",
-  "bundle_digest": "83d23536685e0788c674a924cfcdfed00373b0a89cd0845d8751727c44d4a99a",
+  "bundle_digest": "72774c15d84b025cec4b70868158a69ee1db1dd66635378b880fb4045f5a0031",
   "contract_mappings": [
     {
       "award_reporting_treatment": "Not applicable",
@@ -478,9 +478,9 @@
       "text_version": "1"
     }
   ],
-  "definition_digest": "a738d37a1413aa3cabadffde8a8f425dccd223e76c86f06cd1f8610dce3ddc53",
+  "definition_digest": "70eba60cf3574fbef8fe9f5f56b573fa7af403cbdda5a9153c1add128ab902c3",
   "definition_version": 1,
-  "downstream_rules_digest": "caed57cdf8df8a47a670b8c9f1bcd71e5f9ecf03c3fc5a589dcff5665bfb59b3",
+  "downstream_rules_digest": "8c26b427aad5074b42d0e8703ef1db563d79e2ba848ba83936d50363dcd18685",
   "effective_addendum_ids": [],
   "evaluation_mappings": [
     {
@@ -880,7 +880,7 @@
     }
   ],
   "official_source_digest": "95726a88642730e85a212389b4257f26970ecf3f23de872578d11172063ae1ee",
-  "package_digest": "6af846719ab38fc7df633c2e8d71c91567b55b214ac2f56c1ec41b9df1d57c1b",
+  "package_digest": "b422c4dfc83c79ea19d00a7dd590f2bb041e4c70a65323622ef288e2928a49ae",
   "price_rows": [
     {
       "calculation": {
@@ -4397,7 +4397,7 @@
       }
     },
     {
-      "applicability": "AP-TENDER-SECURITY-REQUIRED",
+      "applicability": "AP-TENDER-SECURITY-UPLOAD",
       "composition_id": "COMP-TENDER-SECURITY",
       "contract_mapping_id": "DM-TENDER-SECURITY",
       "document_anchor": "complete_tender.html#form-tender-security",
@@ -4417,7 +4417,7 @@
         "rule_id": "RR-TENDER-SECURITY",
         "source_family": "tender_security"
       },
-      "material_digest": "df6e028e897650470011ec41d11e8496fdb259f66c18180f084070dc99804fa2",
+      "material_digest": "b16c6148509dc149b6824a8dbce415bc0ba527717a7b638dab4f760b3185067e",
       "required": {
         "rule_id": "RQ-ALWAYS"
       },
@@ -4442,7 +4442,7 @@
       }
     },
     {
-      "applicability": "AP-TENDER-SECURITY-REQUIRED",
+      "applicability": "AP-TENDER-SECURITY-UPLOAD",
       "composition_id": "COMP-TENDER-SECURITY",
       "contract_mapping_id": "DM-TENDER-SECURITY",
       "document_anchor": "complete_tender.html#form-tender-security",
@@ -4462,7 +4462,7 @@
         "rule_id": "RR-TENDER-SECURITY",
         "source_family": "tender_security"
       },
-      "material_digest": "0cc26cfee16d047599a3dcdf9fee5f196513ebaee7da851c2dbf1463cea47f0d",
+      "material_digest": "cd9733d52fbbdf9f88118c25ea474dc84ddf29085b10ab2330fb5ba753d727c7",
       "required": {
         "rule_id": "RQ-ALWAYS"
       },
@@ -4485,7 +4485,7 @@
       }
     },
     {
-      "applicability": "AP-TENDER-SECURITY-REQUIRED",
+      "applicability": "AP-TENDER-SECURITY-UPLOAD",
       "composition_id": "COMP-TENDER-SECURITY",
       "contract_mapping_id": "DM-TENDER-SECURITY",
       "document_anchor": "complete_tender.html#form-tender-security",
@@ -4505,7 +4505,7 @@
         "rule_id": "RR-TENDER-SECURITY",
         "source_family": "tender_security"
       },
-      "material_digest": "8435edc585a59e3c320268272ab8c8f5a9c06fec944784b850b7fc53fb1daeed",
+      "material_digest": "974eecc93cf9157b233813a99f7c5459a37f1ca9177903356941a12ca19e5f27",
       "required": {
         "rule_id": "RQ-ALWAYS"
       },
@@ -4528,7 +4528,7 @@
       }
     },
     {
-      "applicability": "AP-TENDER-SECURITY-REQUIRED",
+      "applicability": "AP-TENDER-SECURITY-UPLOAD",
       "composition_id": "COMP-TENDER-SECURITY",
       "contract_mapping_id": "DM-TENDER-SECURITY",
       "document_anchor": "complete_tender.html#form-tender-security",
@@ -4548,7 +4548,7 @@
         "rule_id": "RR-TENDER-SECURITY",
         "source_family": "tender_security"
       },
-      "material_digest": "d7b0effb69614f51b37054f873cc40bfbb0259ac2c3d1ec2898da95298d904f1",
+      "material_digest": "21f2041961694f5c1dfe3c9a20dfe691f9ea37c0fbeb6f65734ba86f37897df7",
       "required": {
         "rule_id": "RQ-ALWAYS"
       },
@@ -4573,7 +4573,7 @@
       }
     },
     {
-      "applicability": "AP-TENDER-SECURITY-REQUIRED",
+      "applicability": "AP-TENDER-SECURITY-UPLOAD",
       "composition_id": "COMP-TENDER-SECURITY",
       "contract_mapping_id": "DM-TENDER-SECURITY",
       "document_anchor": "complete_tender.html#form-tender-security",
@@ -4593,7 +4593,7 @@
         "rule_id": "RR-TENDER-SECURITY",
         "source_family": "tender_security"
       },
-      "material_digest": "e6ce2164ddda35f074af5267c22f3ba8f228316c0ab9f2703f3f2ce544aac0cf",
+      "material_digest": "620257968482da2d93f5f195d459a0d6e4482674c376fbfe54da8448ae6fe992",
       "required": {
         "field_key": "security_form",
         "rule_id": "RQ-WHEN-FIELD-EQUALS",
@@ -4619,7 +4619,7 @@
       }
     },
     {
-      "applicability": "AP-TENDER-SECURITY-REQUIRED",
+      "applicability": "AP-TENDER-SECURITY-UPLOAD",
       "composition_id": "COMP-TENDER-SECURITY",
       "contract_mapping_id": "DM-TENDER-SECURITY",
       "document_anchor": "complete_tender.html#form-tender-security",
@@ -4639,7 +4639,7 @@
         "rule_id": "RR-TENDER-SECURITY",
         "source_family": "tender_security"
       },
-      "material_digest": "be181d3cf256dc29f2f85f4e8dbf37653479344ae9de837aeeeb9e0e386c0bee",
+      "material_digest": "593c1514c716c333de6c6effcbc9c7591931ba9e80780ba83421d8dcb3f607ad",
       "required": {
         "field_key": "security_form",
         "rule_id": "RQ-WHEN-FIELD-EQUALS",
@@ -4665,7 +4665,7 @@
       }
     },
     {
-      "applicability": "AP-TENDER-SECURITY-REQUIRED",
+      "applicability": "AP-TENDER-SECURITY-UPLOAD",
       "composition_id": "COMP-TENDER-SECURITY",
       "contract_mapping_id": "DM-TENDER-SECURITY",
       "document_anchor": "complete_tender.html#form-tender-security",
@@ -4691,7 +4691,7 @@
         "rule_id": "RR-TENDER-SECURITY",
         "source_family": "tender_security"
       },
-      "material_digest": "982f0d38e1f554754173caa404a45038479c53f196b156d0744c0c9e0e98c75f",
+      "material_digest": "21e19282af415472b09391f40eeb2fab9917d4a6236c78717012605c7ca1e7e3",
       "required": {
         "rule_id": "RQ-ALWAYS"
       },
@@ -9273,7 +9273,7 @@
       }
     }
   ],
-  "response_rules_digest": "4b47e66f70463f30067a8b8cf263f1b80c59eb92784374d1f069ddefe42ff3b7",
+  "response_rules_digest": "79ba2c638a05a953538312dc4ef09ac5f171b49ca08f3bf76c66b8bb3202ac67",
   "sections": [
     {
       "groups": [],
@@ -9560,10 +9560,12 @@
             "bank_guarantee_expiry_date": "2027-11-02",
             "currency": "KES",
             "insurance_guarantee_expiry_date": "2027-10-31",
+            "original_delivery": "Required",
             "permitted_forms": [
               "Demand Bank Guarantee",
               "Insurance Guarantee"
             ],
+            "submission_method": "Bidder uploads an electronic instrument",
             "validity_date": "2027-10-03"
           },
           "response_ids": [
@@ -10523,7 +10525,7 @@
   "submission_deadline": "2027-06-05T11:00:00+03:00",
   "supported_renderer_version": "1.2.0",
   "template_family": "IT-EQUIPMENT-OPEN-V1",
-  "template_release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01",
+  "template_release_id": "stdr-19da524c-85d1-4fdb-8dee-81860bd68c67",
   "tender_id": "TND-MOH-2027-033",
   "tender_version_id": "TNDV-MOH-2027-033-V2"
 }

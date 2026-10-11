@@ -426,7 +426,7 @@
     },
     {
       "path": "02_master/complete_tender.html",
-      "sha256": "9916c83cdfb2306b99daf3fce6e4373a76d43eb25d62792933f47c838440d150"
+      "sha256": "68ec66abf1bf3d1c871390a7a1b7e58510989b02b7430fdf634838ec928cae68"
     },
     {
       "path": "02_master/invitation_to_tender.html",
@@ -438,11 +438,11 @@
     },
     {
       "path": "03_registers/coverage_register.csv",
-      "sha256": "f498350e06dbe0a89f9030d6da6cc56dc073f1fb5fd46eb9c8c3b2dd5902738a"
+      "sha256": "b4b6158e9d63ec9bf6fb6f7563fba36a25dcffbf17874603f66f0a540082c4a7"
     },
     {
       "path": "03_registers/forms_register.csv",
-      "sha256": "80a9267edae43667b177380cd08831168a14ae75466ed16f2b86827e10b1c824"
+      "sha256": "9d7672a58fadc5439ed381105e668d7170be4c1f068f52fbc3876afa7113dac1"
     },
     {
       "path": "03_registers/insertion_points.csv",
@@ -490,158 +490,163 @@
     },
     {
       "path": "05_review/open_issues.md",
-      "sha256": "e789e13d25315b3d10809bd9c1f7c61cc9b2a22fdec3cf0eecfbd414117390d0"
+      "sha256": "dcd9150ff6ea97ea0483408c41c917412c6a6dfa6fc55c9466a3d188c6c60963"
     },
     {
       "path": "05_review/preceding_release.json",
-      "sha256": "359d4da27b172441fc382bf62f2c2e9b3f21155eb481b81c553a41db18bc7ce0"
+      "sha256": "b7b92548f8ced888b82c50db76d89d89601c7a2bda6dae1799280ccca8244784"
     },
     {
       "path": "06_runtime/addendum_identity_rules.json",
-      "sha256": "959f122969166ab60e3f994572efe7e377f3c6fc01846c2252fd9c4178b26844"
+      "sha256": "c82d186626feee4766e5e36b82ca24b0a5d4618113b2b8ee32a67c674ca81e21"
     },
     {
       "path": "06_runtime/downstream_rules.json",
-      "sha256": "b387f630088f4b167e8657e967a5e178758dc83de610c4086e79683d9de4db6d"
+      "sha256": "caed57cdf8df8a47a670b8c9f1bcd71e5f9ecf03c3fc5a589dcff5665bfb59b3"
     },
     {
       "path": "06_runtime/product_profile.json",
-      "sha256": "a1877534422dd3016c758f99465bab0ec9896d44da91378ba60526529637b421"
+      "sha256": "def2e72ac8dd20444dd27e283ea514612d3bd849d0c10b811d67dece0f517b85"
     },
     {
       "path": "06_runtime/response_rules.json",
-      "sha256": "95682ae3c0757520e3dd5a5d8b321f1d5270e1cb8d1cbb1f1392f21907a8dd14"
+      "sha256": "4b47e66f70463f30067a8b8cf263f1b80c59eb92784374d1f069ddefe42ff3b7"
     },
     {
       "path": "06_runtime/validate_release.py",
-      "sha256": "902dccc67d8a38252e284965ee3397d48fbf8552632099b74d5b444d2a1edf1b"
+      "sha256": "e44f3694de1bfd1c3ef49226fb1824c09510a81203b33a5d8844d08d0d6321c2"
     }
   ],
   "contract_mappings": [
     {
-      "mapping_id": "DM-ACCEPTANCE",
+      "contract_destination": "CD-INSPECTION-ACCEPTANCE-SCHEDULE",
       "contract_treatment": "Carried forward",
-      "contract_destination": "CD-INSPECTION-ACCEPTANCE-SCHEDULE"
+      "mapping_id": "DM-ACCEPTANCE"
     },
     {
-      "mapping_id": "DM-DECL-CBQ",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-DECL-CBQ"
     },
     {
-      "mapping_id": "DM-DECL-CITD",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-DECL-CITD"
     },
     {
-      "mapping_id": "DM-DECL-CODE-OF-ETHICS",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-DECL-CODE-OF-ETHICS"
     },
     {
-      "mapping_id": "DM-DECL-FORM-OF-TENDER",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-DECL-FORM-OF-TENDER"
     },
     {
-      "mapping_id": "DM-DECL-SD1",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-DECL-SD1"
     },
     {
-      "mapping_id": "DM-DECL-SD2",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-DECL-SD2"
     },
     {
-      "mapping_id": "DM-DOC-ACK",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-DOC-ACK"
     },
     {
-      "mapping_id": "DM-EVIDENCE-ADDITIONAL",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-ENTITY-PROFILE"
     },
     {
-      "mapping_id": "DM-EVIDENCE-AFTER-SALES",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-EVIDENCE-ADDITIONAL"
     },
     {
-      "mapping_id": "DM-EVIDENCE-DATASHEET",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-EVIDENCE-AFTER-SALES"
     },
     {
-      "mapping_id": "DM-EVIDENCE-ELIGIBILITY-DOCUMENTS",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-EVIDENCE-DATASHEET"
     },
     {
-      "mapping_id": "DM-EVIDENCE-MANUFACTURER-AUTHORISATION",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-EVIDENCE-ELIGIBILITY-DOCUMENTS"
     },
     {
-      "mapping_id": "DM-EXPERIENCE",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-EVIDENCE-MANUFACTURER-AUTHORISATION"
     },
     {
-      "mapping_id": "DM-GOODS-OFFER",
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-EXPERIENCE"
+    },
+    {
+      "contract_destination": "CD-GOODS-DELIVERY-SCHEDULE",
       "contract_treatment": "Carried forward",
-      "contract_destination": "CD-GOODS-DELIVERY-SCHEDULE"
+      "mapping_id": "DM-GOODS-OFFER"
     },
     {
-      "mapping_id": "DM-JV-MEMBER",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-JV-MEMBER"
     },
     {
-      "mapping_id": "DM-PRICE-GOODS",
+      "contract_destination": "CD-CONTRACT-PRICE-SCHEDULES",
       "contract_treatment": "Carried forward",
-      "contract_destination": "CD-CONTRACT-PRICE-SCHEDULES"
+      "mapping_id": "DM-PRICE-GOODS"
     },
     {
-      "mapping_id": "DM-PRICE-SERVICE",
+      "contract_destination": "CD-CONTRACT-PRICE-SCHEDULES",
       "contract_treatment": "Carried forward",
-      "contract_destination": "CD-CONTRACT-PRICE-SCHEDULES"
+      "mapping_id": "DM-PRICE-SERVICE"
     },
     {
-      "mapping_id": "DM-RELATED-SERVICE",
+      "contract_destination": "CD-RELATED-SERVICES-SCHEDULE",
       "contract_treatment": "Carried forward",
-      "contract_destination": "CD-RELATED-SERVICES-SCHEDULE"
+      "mapping_id": "DM-RELATED-SERVICE"
     },
     {
-      "mapping_id": "DM-RESERVATION",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-RESERVATION"
     },
     {
-      "mapping_id": "DM-SUBMISSION",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-SUBMISSION"
     },
     {
-      "mapping_id": "DM-SUPPLIER-DETAILS",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-SUPPLIER-DETAILS"
     },
     {
-      "mapping_id": "DM-TECHNICAL",
+      "contract_destination": "CD-TECHNICAL-OBLIGATION-SCHEDULE",
       "contract_treatment": "Carried forward",
-      "contract_destination": "CD-TECHNICAL-OBLIGATION-SCHEDULE"
+      "mapping_id": "DM-TECHNICAL"
     },
     {
-      "mapping_id": "DM-TENDER-SECURITY",
+      "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "contract_destination": null
+      "mapping_id": "DM-TENDER-SECURITY"
     },
     {
-      "mapping_id": "DM-WARRANTY-SUPPORT",
+      "contract_destination": "CD-SCC-WARRANTY-SUPPORT",
       "contract_treatment": "Carried forward",
-      "contract_destination": "CD-SCC-WARRANTY-SUPPORT"
+      "mapping_id": "DM-WARRANTY-SUPPORT"
     }
   ],
   "coverage_treatments": {
@@ -942,44 +947,44 @@
     "COV-295": "Generated",
     "COV-296": "Generated"
   },
-  "decided_at": "2026-10-02",
+  "decided_at": "2026-10-03",
   "decided_by": "Not applicable (OD5)",
   "decision": "INSTALLED — site On/Off switch (owner decision OD5, 26 September 2026); no release approval step",
   "declarations": [
     {
+      "source_text_digest": "f7ab0d169dc2c8f77364172255d5fa620b51e8509fcb544bd7a2c02714785396",
       "text_id": "TXT-RR-DECL-CBQ",
-      "text_version": "1",
-      "source_text_digest": "f7ab0d169dc2c8f77364172255d5fa620b51e8509fcb544bd7a2c02714785396"
+      "text_version": "1"
     },
     {
+      "source_text_digest": "c248d2f2c804328e7244879f2b6d6d501dd0542fd7391436ce76ecf7771764a5",
       "text_id": "TXT-RR-DECL-CITD",
-      "text_version": "1",
-      "source_text_digest": "c248d2f2c804328e7244879f2b6d6d501dd0542fd7391436ce76ecf7771764a5"
+      "text_version": "1"
     },
     {
+      "source_text_digest": "9cfa44e1faaba957e9fad359b682b909b3dfdd8d1efd91f1b5409b0b61eb994a",
       "text_id": "TXT-RR-DECL-CODE-OF-ETHICS",
-      "text_version": "1",
-      "source_text_digest": "9cfa44e1faaba957e9fad359b682b909b3dfdd8d1efd91f1b5409b0b61eb994a"
+      "text_version": "1"
     },
     {
+      "source_text_digest": "21e5d9c688f57551f5677f77eb7c2cf5ce103fb92cd6d517d1759044977b9657",
       "text_id": "TXT-RR-DECL-FORM-OF-TENDER",
-      "text_version": "1",
-      "source_text_digest": "d302495f8639d1e240b6313235d197a8c92cf2c1d5065d3127fce6bb769196af"
+      "text_version": "1"
     },
     {
+      "source_text_digest": "98c1ebed162b673f430457c8654567cac6fab0d465dcb140c0ff978cfbd1c4c9",
       "text_id": "TXT-RR-DECL-SD1",
-      "text_version": "1",
-      "source_text_digest": "98c1ebed162b673f430457c8654567cac6fab0d465dcb140c0ff978cfbd1c4c9"
+      "text_version": "1"
     },
     {
+      "source_text_digest": "6bc26dff1d4f652fb7932d77ad4419470c1f0bfc25780cbd6511046ab60d3559",
       "text_id": "TXT-RR-DECL-SD2",
-      "text_version": "1",
-      "source_text_digest": "6bc26dff1d4f652fb7932d77ad4419470c1f0bfc25780cbd6511046ab60d3559"
+      "text_version": "1"
     },
     {
+      "source_text_digest": "871fe28a6895e4467911de21aabf135bd26b6c8958e19195fdf4e2f5c85bc597",
       "text_id": "TXT-RR-RESERVATION",
-      "text_version": "1",
-      "source_text_digest": "871fe28a6895e4467911de21aabf135bd26b6c8958e19195fdf4e2f5c85bc597"
+      "text_version": "1"
     }
   ],
   "document_anchors": [
@@ -1008,241 +1013,250 @@
   "evaluation_groups": [],
   "evaluation_mappings": [
     {
-      "mapping_id": "DM-ACCEPTANCE",
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE"
+      "mapping_id": "DM-ACCEPTANCE"
     },
     {
-      "mapping_id": "DM-DECL-CBQ",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-ELIGIBILITY"
+      "mapping_id": "DM-DECL-CBQ"
     },
     {
-      "mapping_id": "DM-DECL-CITD",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-ELIGIBILITY"
+      "mapping_id": "DM-DECL-CITD"
     },
     {
-      "mapping_id": "DM-DECL-CODE-OF-ETHICS",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-ELIGIBILITY"
+      "mapping_id": "DM-DECL-CODE-OF-ETHICS"
     },
     {
-      "mapping_id": "DM-DECL-FORM-OF-TENDER",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-ELIGIBILITY"
+      "mapping_id": "DM-DECL-FORM-OF-TENDER"
     },
     {
-      "mapping_id": "DM-DECL-SD1",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-ELIGIBILITY"
+      "mapping_id": "DM-DECL-SD1"
     },
     {
-      "mapping_id": "DM-DECL-SD2",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-ELIGIBILITY"
+      "mapping_id": "DM-DECL-SD2"
     },
     {
-      "mapping_id": "DM-DOC-ACK",
+      "evaluation_group_id": null,
       "evaluation_treatment": "Not evaluated",
-      "evaluation_group_id": null
+      "mapping_id": "DM-DOC-ACK"
     },
     {
-      "mapping_id": "DM-EVIDENCE-ADDITIONAL",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE"
+      "mapping_id": "DM-ENTITY-PROFILE"
     },
     {
-      "mapping_id": "DM-EVIDENCE-AFTER-SALES",
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-ELIGIBILITY"
+      "mapping_id": "DM-EVIDENCE-ADDITIONAL"
     },
     {
-      "mapping_id": "DM-EVIDENCE-DATASHEET",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE"
+      "mapping_id": "DM-EVIDENCE-AFTER-SALES"
     },
     {
-      "mapping_id": "DM-EVIDENCE-ELIGIBILITY-DOCUMENTS",
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-ELIGIBILITY"
+      "mapping_id": "DM-EVIDENCE-DATASHEET"
     },
     {
-      "mapping_id": "DM-EVIDENCE-MANUFACTURER-AUTHORISATION",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-ELIGIBILITY"
+      "mapping_id": "DM-EVIDENCE-ELIGIBILITY-DOCUMENTS"
     },
     {
-      "mapping_id": "DM-EXPERIENCE",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-ELIGIBILITY"
+      "mapping_id": "DM-EVIDENCE-MANUFACTURER-AUTHORISATION"
     },
     {
-      "mapping_id": "DM-GOODS-OFFER",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE"
+      "mapping_id": "DM-EXPERIENCE"
     },
     {
-      "mapping_id": "DM-JV-MEMBER",
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-GOODS-OFFER"
+    },
+    {
+      "evaluation_group_id": null,
       "evaluation_treatment": "Not evaluated",
-      "evaluation_group_id": null
+      "mapping_id": "DM-JV-MEMBER"
     },
     {
-      "mapping_id": "DM-PRICE-GOODS",
+      "evaluation_group_id": "EVG-FINANCIAL",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-FINANCIAL"
+      "mapping_id": "DM-PRICE-GOODS"
     },
     {
-      "mapping_id": "DM-PRICE-SERVICE",
+      "evaluation_group_id": "EVG-FINANCIAL",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-FINANCIAL"
+      "mapping_id": "DM-PRICE-SERVICE"
     },
     {
-      "mapping_id": "DM-RELATED-SERVICE",
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE"
+      "mapping_id": "DM-RELATED-SERVICE"
     },
     {
-      "mapping_id": "DM-RESERVATION",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-ELIGIBILITY"
+      "mapping_id": "DM-RESERVATION"
     },
     {
-      "mapping_id": "DM-SUBMISSION",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-ELIGIBILITY"
+      "mapping_id": "DM-SUBMISSION"
     },
     {
-      "mapping_id": "DM-SUPPLIER-DETAILS",
+      "evaluation_group_id": null,
       "evaluation_treatment": "Not evaluated",
-      "evaluation_group_id": null
+      "mapping_id": "DM-SUPPLIER-DETAILS"
     },
     {
-      "mapping_id": "DM-TECHNICAL",
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE"
+      "mapping_id": "DM-TECHNICAL"
     },
     {
-      "mapping_id": "DM-TENDER-SECURITY",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-ELIGIBILITY"
+      "mapping_id": "DM-TENDER-SECURITY"
     },
     {
-      "mapping_id": "DM-WARRANTY-SUPPORT",
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
       "evaluation_treatment": "Evaluated",
-      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE"
+      "mapping_id": "DM-WARRANTY-SUPPORT"
     }
   ],
   "evidence": [
-    "Release 1.3 pack at repository commit f0801f16 (06_runtime assets)",
-    "STD-TPL-001 v0.14 (proposed)"
+    "Release 1.4 pack at repository commit b0e8d6d2 (06_runtime assets)",
+    "STD-TPL-001 v0.15 (approved 3 October 2026)"
   ],
-  "release_id": "stdr-9b953bcf-fb1e-4e85-b9c1-6ac57218d0e2",
+  "release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01",
   "renderer": {
+    "document_engine": "wkhtmltopdf 0.12.6.1 (with patched qt)",
     "renderer_profile_id": "BDS-GOODS-IT-V1",
-    "supported_renderer_version": "1.1.0",
-    "document_engine": "wkhtmltopdf 0.12.6.1 (with patched qt)"
+    "supported_renderer_version": "1.2.0"
   },
   "response_rules": [
     {
-      "rule_id": "RR-ACCEPTANCE",
-      "digest": "236845aa958bd64ab8c0be584ac7ec96bef0db027dca83f784afec620dc3d8b6"
+      "digest": "236845aa958bd64ab8c0be584ac7ec96bef0db027dca83f784afec620dc3d8b6",
+      "rule_id": "RR-ACCEPTANCE"
     },
     {
-      "rule_id": "RR-DECL-CBQ",
-      "digest": "29efa4acb2b0a96c5704b96e8a619d09e6c80c77b19f55d0449a8b6b0f9d5280"
+      "digest": "edb941de4df13e0480226858caf04b98e5d4f6cc9c14cc7390def10034d889c2",
+      "rule_id": "RR-DECL-CBQ"
     },
     {
-      "rule_id": "RR-DECL-CITD",
-      "digest": "171bbb9c555f212ba292f0e755a7b65c5d49d50477bbf7632c33ad873f5292e9"
+      "digest": "171bbb9c555f212ba292f0e755a7b65c5d49d50477bbf7632c33ad873f5292e9",
+      "rule_id": "RR-DECL-CITD"
     },
     {
-      "rule_id": "RR-DECL-CODE-OF-ETHICS",
-      "digest": "c10030e45670085e62e7b255a297103cff80b96b33d2d9498ebeaf9d3b94ff89"
+      "digest": "c10030e45670085e62e7b255a297103cff80b96b33d2d9498ebeaf9d3b94ff89",
+      "rule_id": "RR-DECL-CODE-OF-ETHICS"
     },
     {
-      "rule_id": "RR-DECL-FORM-OF-TENDER",
-      "digest": "94ccaef36099ec2624ad81a90601c1d34ae9d166f645bb4edd287677758bad96"
+      "digest": "18efa5c559170cf5a993c307597ec67d5a273ec14b35d41206e470eb1a651f99",
+      "rule_id": "RR-DECL-FORM-OF-TENDER"
     },
     {
-      "rule_id": "RR-DECL-SD1",
-      "digest": "d9719be5e19a06aab23f15c3d464bccad3ec4aaccb8144c0099da9267483b35e"
+      "digest": "d9719be5e19a06aab23f15c3d464bccad3ec4aaccb8144c0099da9267483b35e",
+      "rule_id": "RR-DECL-SD1"
     },
     {
-      "rule_id": "RR-DECL-SD2",
-      "digest": "ba261623b72ea003bed113265aec257cef92d0ba3d03ddd91ae6ab652bf2fe9d"
+      "digest": "ba261623b72ea003bed113265aec257cef92d0ba3d03ddd91ae6ab652bf2fe9d",
+      "rule_id": "RR-DECL-SD2"
     },
     {
-      "rule_id": "RR-DOC-ACK",
-      "digest": "83ab5cfb3a687d6d3cc0acfe2d9aaf34f93affed2b9c0d3dd93a1932df584839"
+      "digest": "83ab5cfb3a687d6d3cc0acfe2d9aaf34f93affed2b9c0d3dd93a1932df584839",
+      "rule_id": "RR-DOC-ACK"
     },
     {
-      "rule_id": "RR-EVIDENCE-ADDITIONAL",
-      "digest": "301efece45f4bc816a9bf34cfdb5eee5e19433ba596915d826834064a13a5f29"
+      "digest": "e4101d0c92190403570b2441cd35c9e4f35bec433d9fb7d098485867104f6613",
+      "rule_id": "RR-ENTITY-PROFILE"
     },
     {
-      "rule_id": "RR-EVIDENCE-AFTER-SALES",
-      "digest": "5fb4e2cd47f6f28c37c7b40d4ecfc3d40fcd8e9562da7df5704ae291db733fcf"
+      "digest": "301efece45f4bc816a9bf34cfdb5eee5e19433ba596915d826834064a13a5f29",
+      "rule_id": "RR-EVIDENCE-ADDITIONAL"
     },
     {
-      "rule_id": "RR-EVIDENCE-DATASHEET",
-      "digest": "b6f4b23575c2fb4911904c6cc449a793bad77d90ff54bd8939188660f983651c"
+      "digest": "5fb4e2cd47f6f28c37c7b40d4ecfc3d40fcd8e9562da7df5704ae291db733fcf",
+      "rule_id": "RR-EVIDENCE-AFTER-SALES"
     },
     {
-      "rule_id": "RR-EVIDENCE-ELIGIBILITY-DOCUMENTS",
-      "digest": "3d45ffa656bdd6385e0454480522031c85093cbcf3f6d82b6f6d4107b5061ccc"
+      "digest": "b6f4b23575c2fb4911904c6cc449a793bad77d90ff54bd8939188660f983651c",
+      "rule_id": "RR-EVIDENCE-DATASHEET"
     },
     {
-      "rule_id": "RR-EVIDENCE-MANUFACTURER-AUTHORISATION",
-      "digest": "ab914d89a0ce108e618961d1cfcbaa734f0b19735936c6160412be6ff3982e42"
+      "digest": "3d45ffa656bdd6385e0454480522031c85093cbcf3f6d82b6f6d4107b5061ccc",
+      "rule_id": "RR-EVIDENCE-ELIGIBILITY-DOCUMENTS"
     },
     {
-      "rule_id": "RR-EXPERIENCE",
-      "digest": "9634e2d6f474454b6e38a4c4aed583d76683220510bcd17899d0c4ced69f4f30"
+      "digest": "ab914d89a0ce108e618961d1cfcbaa734f0b19735936c6160412be6ff3982e42",
+      "rule_id": "RR-EVIDENCE-MANUFACTURER-AUTHORISATION"
     },
     {
-      "rule_id": "RR-GOODS-OFFER",
-      "digest": "507515758ef3e7ff27bb685c9313ec8aaae84826aabe968e5021a08d99c48ace"
+      "digest": "9634e2d6f474454b6e38a4c4aed583d76683220510bcd17899d0c4ced69f4f30",
+      "rule_id": "RR-EXPERIENCE"
     },
     {
-      "rule_id": "RR-JV-MEMBER",
-      "digest": "355512e82addebd3247beb1a42755697303019a55788ffba41e41de0c0259711"
+      "digest": "507515758ef3e7ff27bb685c9313ec8aaae84826aabe968e5021a08d99c48ace",
+      "rule_id": "RR-GOODS-OFFER"
     },
     {
-      "rule_id": "RR-PRICE-GOODS",
-      "digest": "cffff98e0876fd80ceb89c8964380de9628857b993bc93af9852d5efe5ed0383"
+      "digest": "fed1de352df6d774ca39274042f7b2c89b6b52da666c2b91d690efa36a55d7ce",
+      "rule_id": "RR-JV-MEMBER"
     },
     {
-      "rule_id": "RR-PRICE-SERVICE",
-      "digest": "16211432d60499384cec73014b8283a442c1934118c1a223b36534d53a6fc203"
+      "digest": "cffff98e0876fd80ceb89c8964380de9628857b993bc93af9852d5efe5ed0383",
+      "rule_id": "RR-PRICE-GOODS"
     },
     {
-      "rule_id": "RR-RELATED-SERVICE",
-      "digest": "303297a8aca8fefcf648a17df71810e41dd662e2c91a301a4f2edb3ef5a99a22"
+      "digest": "16211432d60499384cec73014b8283a442c1934118c1a223b36534d53a6fc203",
+      "rule_id": "RR-PRICE-SERVICE"
     },
     {
-      "rule_id": "RR-RESERVATION",
-      "digest": "c81900d3030b1935a422d41ba6e19e8789f8b706de9876b29fb5ef66938cd594"
+      "digest": "303297a8aca8fefcf648a17df71810e41dd662e2c91a301a4f2edb3ef5a99a22",
+      "rule_id": "RR-RELATED-SERVICE"
     },
     {
-      "rule_id": "RR-SUBMISSION",
-      "digest": "c69fc632e1d926ddbfefc594f98f58280c057fd933166919fc5ee5ce271e38d8"
+      "digest": "c81900d3030b1935a422d41ba6e19e8789f8b706de9876b29fb5ef66938cd594",
+      "rule_id": "RR-RESERVATION"
     },
     {
-      "rule_id": "RR-SUPPLIER-DETAILS",
-      "digest": "199324d4e5b9526d553f5b4d7869e17c085b05b07c49a199c30b490f965a3e92"
+      "digest": "c69fc632e1d926ddbfefc594f98f58280c057fd933166919fc5ee5ce271e38d8",
+      "rule_id": "RR-SUBMISSION"
     },
     {
-      "rule_id": "RR-TECHNICAL",
-      "digest": "8aba2255a1b3e932f278bb53b32c36f47fa53ae2f00dd35388d443ae33b32af8"
+      "digest": "d56f55c4c42a9c766e984d03933abdb4f9c500f9fe5b2a53a22659f26cb1690b",
+      "rule_id": "RR-SUPPLIER-DETAILS"
     },
     {
-      "rule_id": "RR-TENDER-SECURITY",
-      "digest": "6c57632d85825d554fe8f4e268e0ef237beadb3b03d0f9293be7f0e486c99c51"
+      "digest": "8aba2255a1b3e932f278bb53b32c36f47fa53ae2f00dd35388d443ae33b32af8",
+      "rule_id": "RR-TECHNICAL"
     },
     {
-      "rule_id": "RR-WARRANTY-SUPPORT",
-      "digest": "32ed50d627b000c9e8867e83bcc9a13519cf1c724165ff222d7692ef9cac0ed7"
+      "digest": "6c57632d85825d554fe8f4e268e0ef237beadb3b03d0f9293be7f0e486c99c51",
+      "rule_id": "RR-TENDER-SECURITY"
+    },
+    {
+      "digest": "32ed50d627b000c9e8867e83bcc9a13519cf1c724165ff222d7692ef9cac0ed7",
+      "rule_id": "RR-WARRANTY-SUPPORT"
     }
   ],
   "schema_version": 1,
@@ -1293,5 +1307,5 @@
     "technical_evaluation": "Mandatory pass/fail checks feeding one Technical compliance gate"
   },
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.3"
+  "template_release": "1.4"
 }

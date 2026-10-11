@@ -120,13 +120,15 @@
           "copy_prior_answer": true
         }
       ],
-      "fresh_response_notice": "A changed security amount, currency or expiry needs a fresh security response.",
+      "fresh_response_notice": "A changed security amount, currency, expiry or submission method needs a fresh security response.",
       "material_facts": [
         "amount",
         "currency",
         "bank_guarantee_expiry_date",
         "insurance_guarantee_expiry_date",
-        "permitted_forms"
+        "permitted_forms",
+        "submission_method",
+        "original_delivery"
       ],
       "source_family": "tender_security"
     },
@@ -374,10 +376,10 @@
     "display_label",
     "client_identity"
   ],
-  "release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01",
+  "release_id": "stdr-19da524c-85d1-4fdb-8dee-81860bd68c67",
   "renderer_profile_id": "BDS-GOODS-IT-V1",
   "schema_version": 1,
   "supported_renderer_version": "1.2.0",
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.4"
+  "template_release": "1.5"
 }

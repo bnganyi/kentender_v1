@@ -1,6 +1,6 @@
 {
   "product_profile_id": "GOODS-IT-SIMPLE-V1",
-  "release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01",
+  "release_id": "stdr-19da524c-85d1-4fdb-8dee-81860bd68c67",
   "renderer_profile_id": "BDS-GOODS-IT-V1",
   "rules": [
     {
@@ -1906,7 +1906,7 @@
     },
     {
       "applicability": {
-        "rule_id": "AP-TENDER-SECURITY-REQUIRED"
+        "rule_id": "AP-TENDER-SECURITY-UPLOAD"
       },
       "composition_id": "COMP-TENDER-SECURITY",
       "contract_mapping_id": "DM-TENDER-SECURITY",
@@ -3023,10 +3023,156 @@
         "selector": "SEL-SUBMISSION"
       },
       "task_id": "TASK-REVIEW"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-TENDER-SECURITY-ISSUER-SUPPLIED"
+      },
+      "composition_id": "COMP-TENDER-SECURITY",
+      "contract_mapping_id": "DM-TENDER-SECURITY-ISSUER",
+      "document_anchor": "complete_tender.html#form-tender-security",
+      "evaluation_mapping_id": "DM-TENDER-SECURITY-ISSUER",
+      "field_definitions": [
+        {
+          "control_id": "CTL-SINGLE-CHOICE",
+          "evidence_rule": null,
+          "field_key": "security_form",
+          "help_text": "",
+          "label": "Form of Tender Security",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": {
+              "source_fact": "permitted_forms"
+            }
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "issuer",
+          "help_text": "",
+          "label": "Issuing bank or insurer",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 160,
+            "min_length": 3
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "guarantee_reference",
+          "help_text": "",
+          "label": "Guarantee number",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 80,
+            "min_length": 2
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-MONEY",
+          "evidence_rule": null,
+          "field_key": "instrument_amount",
+          "help_text": "",
+          "label": "Amount of the instrument",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-MONEY",
+          "validation_parameters": {
+            "currency": {
+              "source_fact": "currency"
+            },
+            "maximum": {
+              "source_fact": "amount"
+            },
+            "minimum": {
+              "source_fact": "amount"
+            },
+            "scale": 2
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-DATE",
+          "evidence_rule": null,
+          "field_key": "bank_guarantee_valid_until",
+          "help_text": "",
+          "label": "Guarantee valid until",
+          "required_rule": {
+            "field_key": "security_form",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Demand Bank Guarantee"
+          },
+          "validation_id": "VAL-DATE-RANGE",
+          "validation_parameters": {
+            "not_before": {
+              "source_fact": "bank_guarantee_expiry_date"
+            }
+          },
+          "visibility_rule": {
+            "field_key": "security_form",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Demand Bank Guarantee"
+          }
+        },
+        {
+          "control_id": "CTL-DATE",
+          "evidence_rule": null,
+          "field_key": "insurance_guarantee_valid_until",
+          "help_text": "",
+          "label": "Guarantee valid until",
+          "required_rule": {
+            "field_key": "security_form",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Insurance Guarantee"
+          },
+          "validation_id": "VAL-DATE-RANGE",
+          "validation_parameters": {
+            "not_before": {
+              "source_fact": "insurance_guarantee_expiry_date"
+            }
+          },
+          "visibility_rule": {
+            "field_key": "security_form",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Insurance Guarantee"
+          }
+        }
+      ],
+      "identity_suffix": "TSI",
+      "order": 90,
+      "rule_id": "RR-TENDER-SECURITY-ISSUER",
+      "source_family": "tender_security",
+      "source_selector": {
+        "selector": "SEL-TENDER-SECURITY"
+      },
+      "task_id": "TASK-COMPANY"
     }
   ],
   "schema_version": 1,
   "supported_renderer_version": "1.2.0",
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.4"
+  "template_release": "1.5"
 }

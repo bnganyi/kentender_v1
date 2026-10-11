@@ -401,7 +401,7 @@
 - **Leakage of bid facts** through counts, errors, task titles or exports before declaration, or to the Accounting Officer. Mitigation: named leakage tests in Phase 4 and the Phase 10 leakage gate.
 - **Code running ahead of the owner documents** (OD-A). Mitigation: an addendum row in each owner's tracker for every seam, and a Phase 15 follow-up for each document with the exact change needed.
 - **Site-wide test mutation.** Mitigation: fixture years ≥ 2100, purge registration, reseed to canonical after runs, and never run Python and Playwright together.
-- **A stand-in mistaken for production.** Mitigation: the stand-ins load only under the simulation flag, and the verification labels appear only at runtime under that flag.
+- **A stand-in mistaken for production.** Mitigation: the stand-ins load only under the simulation flag, and the verification labels appear only at runtime under that flag. (Withdrawn 10 October 2026, DEC-044: no verification label is shown under any setting; the stand-ins still load only under the flag.)
 
 ## Verification
 

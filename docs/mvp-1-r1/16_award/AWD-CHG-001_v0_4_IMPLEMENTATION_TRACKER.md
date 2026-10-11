@@ -243,7 +243,7 @@
 | AWD-AC-023 | 0, 12 | Done | `reconciliation/command_map.md`; all 47 boards compared (`npx vitest run --project award` 48/48, one registered departure) |
 | AWD-AC-024 | 10 | Done | `test_awd_leakage` 7/7 and `awd-personas.spec.ts` (see AWD4-1203) |
 | AWD-AC-025 | 10 | Done | `test_awd_idempotency` 4/4, `test_awd_decision` retry, `test_awd_intake` retry, uncertain signing (`test_awd_opinion`) |
-| AWD-AC-026 | 7, 13 | Partial | Without the simulation flag no profile is verified and every positive advance is refused (`profile.verified`); test labels render only on a test environment. Production enablement is owner-gated (AWD4-1303/1304) |
+| AWD-AC-026 | 7, 13 | Partial | Without the simulation flag no profile is verified and every positive advance is refused (`profile.verified`); test labels render only on a test environment (withdrawn 10 October 2026, DEC-044: no test label renders; the profile guard stays). Production enablement is owner-gated (AWD4-1303/1304) |
 | AWD-AC-027 | 13 | Blocked — owner | Register and owner contracts are owner work |
 | AWD-AC-028 | 7 | Done | `test_awd_reads` (DDDCN wait, DDDDB receiver down, DDDBN restriction, DDDDD delivered) |
 | AWD-AC-029 | 9 | Done | `test_awd_cycles` (correction to a closed cycle is review only; successor on the same case with a new number; returned successor opinion → Decide correction; prior decisions and events unchanged; authority status keeps history) |

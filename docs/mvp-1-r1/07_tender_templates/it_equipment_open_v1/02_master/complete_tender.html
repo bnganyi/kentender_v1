@@ -555,7 +555,7 @@
   </tr>
   <tr>
     <td>ITT 18.1</td>
-    <td>A Tender Security is required, in the amount of {{ tender.tender_security.amount }} {{ tender.tender_security.currency }}, in a form acceptable for upload through the electronic-procurement system (a digitally signed or duly certified instrument).</td>
+    <td>A Tender Security is required, in the amount of {{ tender.tender_security.amount }} {{ tender.tender_security.currency }}, in a form acceptable for upload through the electronic-procurement system (a digitally signed or duly certified instrument).{% if tender.tender_security.submission_method == "Issuer supplies the instrument directly" %} Notwithstanding the upload requirement above, the Tenderer shall request the issuing bank or insurer to supply the instrument directly to the Procuring Entity; the Tenderer does not upload the instrument but states its details in its response.{% elif tender.tender_security.submission_method == "Paper instrument requiring an original" %} Notwithstanding the upload requirement above, the Tender Security is a paper instrument: the Tenderer shall upload its prescribed electronic copy and deliver the original to the Procuring Entity before the Tender submission deadline.{% endif %}{% if tender.tender_security.submission_method == "Bidder uploads an electronic instrument" and tender.tender_security.original_delivery == "Required" %} The Tenderer shall also deliver the original of the Tender Security to the Procuring Entity before the Tender submission deadline.{% endif %}</td>
   </tr>
   <tr>
     <td>ITT 19.3</td>
