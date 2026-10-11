@@ -62,6 +62,7 @@ export const returnApprovedTender = (args) => frappeCall(`${BASE}.return_approve
 export const reopenApprovedTender = (args) => frappeCall(`${BASE}.reopen_approved_tender`, args);
 export const requestRequisitionCorrection = (args) => frappeCall(`${BASE}.request_requisition_correction`, args);
 export const startCorrectedTenderVersion = (args) => frappeCall(`${BASE}.start_corrected_tender_version`, args);
+export const updateDraftTemplateRelease = (args) => frappeCall(`${BASE}.update_draft_template_release`, args);
 
 // --- §7.3 publication -----------------------------------------------------
 

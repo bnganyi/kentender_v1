@@ -49,7 +49,7 @@ UNSUPPORTED_KINDS = ("calculation", "unavailable")
 RULE_LABELS = {
 	"RR-DECL-FORM-OF-TENDER": "Form of Tender", "RR-DECL-CITD": "Certificate of independent tender determination", "RR-DECL-SD1": "Not debarred (SD1)",
 	"RR-DECL-SD2": "No corrupt or fraudulent practice (SD2)", "RR-DECL-CODE-OF-ETHICS": "Code of ethics", "RR-DECL-CBQ": "Conflict of interest questionnaire",
-	"RR-RESERVATION": "Youth reservation", "RR-TENDER-SECURITY": "Tender security", "RR-GOODS-OFFER": "Quantity and delivery",
+	"RR-RESERVATION": "Youth reservation", "RR-TENDER-SECURITY": "Tender security", "RR-TENDER-SECURITY-ISSUER": "Tender security", "RR-GOODS-OFFER": "Quantity and delivery",
 	"RR-EXPERIENCE": "Comparable experience", "RR-ACCEPTANCE": "Acceptance requirement", "RR-SUBMISSION": "Tender signed by an authorised person",
 	"RR-EVIDENCE-MANUFACTURER-AUTHORISATION": "Manufacturer authorisation", "RR-EVIDENCE-DATASHEET": "Product datasheet",
 	"RR-EVIDENCE-AFTER-SALES": "Kenya service-centre details", "RR-EVIDENCE-ELIGIBILITY-DOCUMENTS": "Eligibility and registration documents",

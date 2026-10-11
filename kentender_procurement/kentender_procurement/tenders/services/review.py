@@ -204,6 +204,8 @@ def run(tender, version, *, approval: dict[str, str] | None = None, with_renders
 	# 11. security and contract values internally consistent
 	if state.get("delay_damages_per_week_percent") is not None and state.get("maximum_delay_damages_percent") is not None and float(state["maximum_delay_damages_percent"]) < float(state["delay_damages_per_week_percent"]):
 		findings.append(_finding("VALUES_INCONSISTENT", "Maximum delay damages cannot be less than the weekly rate.", task=controls.TASK_REQUIREMENTS, field="maximum_delay_damages_percent"))
+	if state.get("tender_security_method") == controls.SECURITY_PAPER and state.get("tender_security_original") == "Not required":
+		findings.append(_finding("VALUES_INCONSISTENT", "A paper tender security needs its original delivered; the original cannot be marked not required.", task=controls.TASK_DETAILS, field="tender_security_original"))
 	if state.get("tender_security_amount") is not None and float(state["tender_security_amount"]) <= 0:
 		findings.append(_finding("VALUES_INCONSISTENT", "Tender security must be a positive KES amount.", task=controls.TASK_DETAILS, field="tender_security_amount"))
 

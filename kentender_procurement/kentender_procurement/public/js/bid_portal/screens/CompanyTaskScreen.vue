@@ -7,11 +7,12 @@
 // continue saves this page's own changes — the security answers and the
 // bid's contact — then opens the next task; a refusal is named in place.
 import { computed, inject, onMounted, onUnmounted, reactive, ref, watch } from "vue";
-import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
+import BidGuidance from "../components/BidGuidance.vue";
 import CommonState from "../components/CommonState.vue";
 import NotifySignatory from "../components/NotifySignatory.vue";
 import TaskStepper from "../components/TaskStepper.vue";
 import FieldControl from "../components/FieldControl.vue";
+import TenderSecurityStatus from "../components/TenderSecurityStatus.vue";
 import ResponseDrawer from "../components/ResponseDrawer.vue";
 import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
@@ -23,6 +24,8 @@ const SAVE = "kentender_procurement.bid_submission.api.save_bid_task";
 const CONTACT = "kentender_procurement.bid_submission.api.update_tender_contact";
 const NOTICE = "kentender_procurement.bid_submission.api.update_tender_notice_contact";
 const SNAPSHOT = "kentender_procurement.bid_submission.api.refresh_bid_organisation_snapshot";
+const SUBMIT_SECURITY = "kentender_procurement.bid_submission.api.submit_tender_security";
+const CHECK_SECURITY = "kentender_procurement.bid_submission.api.check_tender_security_verification";
 const props = defineProps({
 	initial: { type: Object, default: null },
 	reference: { type: String, required: true },
@@ -144,6 +147,22 @@ function useUpdated() {
 		else if (result) failure.value = result.message || "";
 	}, "Use updated details");
 }
+// The explicit tender-security commands (Project Owner, 10 Oct 2026): submit the instrument and ask its issuer, or ask again.
+function securityCommand(method, label) {
+	failure.value = "";
+	errors.value = {};
+	return runner.run(async () => {
+		const result = await sendCommand(portal, data.value.bid.reference, data.value.bid.record_version, (version) => portal.call(method, { bid_reference: data.value.bid.reference, expected_record_version: version, idempotency_key: key("security") }, { type: "POST" }));
+		if (!(result && result.ok)) {
+			errors.value = (result && result.errors) || {};
+			failure.value = result && !result.errors ? result.message || "" : "";
+			return;
+		}
+		adopt(await read());
+	}, label);
+}
+const submitSecurity = () => securityCommand(SUBMIT_SECURITY, "Submit tender security");
+const checkSecurity = () => securityCommand(CHECK_SECURITY, "Check tender security");
 async function afterDrawer() {
 	drawer.value = null;
 	await load();
@@ -178,7 +197,7 @@ onMounted(() => {
 			</div>
 		</div>
 
-		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
+		<BidGuidance :journey="data.journey" :answer="data.next_step" :reference="reference" :bid-reference="data.bid && data.bid.reference || ''" :organisation="route.query.organisation || ''" :support-href="data.support_href || ''" :tracker="!data.step" @fix="onFix" @reload="load" />
 
 		<NotifySignatory v-if="data.handover && data.bid" :handover="data.handover" :bid="data.bid" :organisation="route.query.organisation || ''" @sent="load" />
 
@@ -294,6 +313,7 @@ onMounted(() => {
 		<div v-if="data.tender_security" class="kt-region">
 			<h2>{{ __("Tender security") }}</h2>
 			<div class="bds-region-body">
+				<p v-if="data.tender_security.requirement" class="bds-muted" data-testid="bds-security-requirement">{{ data.tender_security.requirement }}</p>
 				<p v-if="!data.tender_security.entered" class="bds-muted" data-testid="bds-security-empty">{{ __("Tender security has not been entered for this bid.") }}</p>
 				<div class="bds-grid-2">
 					<template v-for="field in data.tender_security.fields" :key="field.handle">
@@ -306,7 +326,8 @@ onMounted(() => {
 				<template v-for="field in data.tender_security.fields" :key="'proof-' + field.handle">
 					<FieldControl v-if="field.kind === 'evidence' && visible(field)" :model-value="field.value" :field="field" :error="errors[field.handle] || ''" :bid="bid" id-prefix="bds-security" @changed="load" @stale="load" />
 				</template>
-				<div v-if="data.tender_security.physical" class="kt-notice" :class="data.tender_security.physical.tone === 'live' ? 'is-live' : 'is-warning'" role="status" data-testid="bds-security-physical">
+				<TenderSecurityStatus :electronic="data.tender_security.electronic" :can-edit="canEdit" :pending="pending" @submit="submitSecurity" @check="checkSecurity" />
+				<div v-if="data.tender_security.physical" class="kt-notice" :class="{ 'is-live': data.tender_security.physical.tone === 'live', 'is-warning': data.tender_security.physical.tone === 'warning' }" role="status" data-testid="bds-security-physical">
 					<svg class="kt-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v5h1" /></svg>
 					<div class="kt-notice-body">
 						<strong>{{ data.tender_security.physical.title }}</strong>

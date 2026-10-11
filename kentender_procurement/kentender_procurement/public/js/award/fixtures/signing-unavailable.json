@@ -231,7 +231,6 @@
    "stage": "Opinion",
    "tender_reference": "TND-MOH-2027-033",
    "tender_title": "Supply and delivery of business laptops",
-   "test_environment": "Test environment — no live award notices are sent.",
    "validity_rule": "Submission deadline date plus the published validity days",
    "viewer": {
     "ao": true,
@@ -242,8 +241,7 @@
   },
   "workspace": {
    "ok": true,
-   "tasks": [],
-   "test_environment": "Test environment — no live award notices are sent."
+   "tasks": []
   }
  },
  "daniel": {
@@ -504,7 +502,6 @@
    "stage": "Opinion",
    "tender_reference": "TND-MOH-2027-033",
    "tender_title": "Supply and delivery of business laptops",
-   "test_environment": "Test environment — no live award notices are sent.",
    "validity_rule": "Submission deadline date plus the published validity days",
    "viewer": {
     "ao": false,
@@ -523,8 +520,7 @@
      "tender_reference": "TND-MOH-2027-033",
      "tender_title": "Supply and delivery of business laptops"
     }
-   ],
-   "test_environment": "Test environment — no live award notices are sent."
+   ]
   }
  },
  "info": {
@@ -763,7 +759,6 @@
    "stage": "Opinion",
    "tender_reference": "TND-MOH-2027-033",
    "tender_title": "Supply and delivery of business laptops",
-   "test_environment": "Test environment — no live award notices are sent.",
    "validity_rule": "Submission deadline date plus the published validity days",
    "viewer": {
     "ao": false,
@@ -774,8 +769,7 @@
   },
   "workspace": {
    "ok": true,
-   "tasks": [],
-   "test_environment": "Test environment — no live award notices are sent."
+   "tasks": []
   }
  }
 }

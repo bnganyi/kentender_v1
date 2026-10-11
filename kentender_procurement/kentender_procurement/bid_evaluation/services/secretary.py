@@ -34,7 +34,7 @@ BY_OFFICE = "By office"
 WRITTEN = "Written appointment"
 
 
-def office_holder(checks: Guards) -> str | None:
+def office_holder(checks: Guards, tender: str = "") -> str | None:
 	"""The authoritative Head of Procurement Function: the one person who holds
 	an Active Head responsibility now. None, several or the Accounting Officer
 	add a refusal and return None (EVL_SECRETARY_OFFICE_UNCLEAR,
@@ -49,6 +49,14 @@ def office_holder(checks: Guards) -> str | None:
 		checks.add("EVL_SECRETARY_INELIGIBLE", person=holder, person_name=people.full_name(holder), reason=reason,
 			explanation=f"{people.full_name(holder)} is the Accounting Officer, who decides the award and cannot sit on its evaluation.")
 		return None
+	if tender:
+		from kentender_procurement.bid_submission.services import security_duty
+
+		# Project Owner, 10 Oct 2026: a Head who has exercised the tender-security intake for this Tender cannot be its secretary
+		blocked = security_duty.committee_blocker(tender, holder, "the evaluation secretary", "Evaluation secretary")
+		if blocked:
+			checks.add("EVL_SECRETARY_INELIGIBLE", person=holder, person_name=people.full_name(holder), reason="security_intake", explanation=blocked)
+			return None
 	return holder
 
 
@@ -111,6 +119,13 @@ def delegate_secretary(*, tender: str, secretary: str, expected_version: int, id
 			refuse("accounting_officer", f"{name} is the Accounting Officer, who decides the award and cannot sit on its evaluation.")
 		elif not people.holds(named, people.PROCUREMENT_OFFICER):
 			refuse("not_procurement_officer", f"{name} is not a procurement officer.")
+		else:
+			from kentender_procurement.bid_submission.services import security_duty
+
+			# Project Owner, 10 Oct 2026: intake and evaluation duties exclude each other on the same Tender
+			blocked = security_duty.committee_blocker(doc.tender, named, "the evaluation secretary", "Evaluation secretary")
+			if blocked:
+				refuse("security_intake", blocked)
 		checks.raise_if_any()
 		authority = f"{people.full_name(user)}, Head of Procurement Function — written appointment, section 46(4)(c) of the Act"
 		row, event = _record(doc, secretary=named, basis=WRITTEN, by=user, authority=authority, source_appointment=cstr(doc.current_appointment),

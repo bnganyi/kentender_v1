@@ -177,6 +177,51 @@ def start_tender(*, handoff: str, idempotency_key: str, user: str | None = None,
 # --------------------------------------------------------------------------
 
 
+def update_draft_template_release(*, tender: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
+	"""`UpdateDraftTemplateRelease` (Procurement Officer): move an **unpublished Draft** to the template release now switched On
+	(Project Owner, 10 October 2026: a new release reaches new Tenders and unpublished drafts only through this explicit update).
+	A published Tender keeps its release for life unless formally amended; nothing here touches one, and a Draft is never moved
+	silently. The Draft's review and generated digests are recomputed under the new release and the move is recorded."""
+	actor = authz.actor(user)
+	assignment = authz.require_officer(actor)
+	payload = {"tender": tender}
+	replay = envelope.replay_or_none(idempotency_key, payload, command="UpdateDraftTemplateRelease", actor=actor)
+	if replay:
+		return replay
+	root, version = load(tender)
+	require_editable(root, version)
+	envelope.check_record_version(root, expected_record_version)
+	binding = template_binding.require_available()
+	previous = cstr(root.template_release_id)
+	if binding["template_release_id"] == previous:
+		envelope.release_claim(idempotency_key)
+		return {"ok": True, "idempotent": False, "action": "unchanged", "tender": root.name, "record_version": root.record_version, "template_release": cstr(root.template_release)}
+	compatibility.require_supported(snap.load(version), binding)
+	before = {"template_release_id": previous, "template_release": cstr(root.template_release)}
+	with envelope.atomic("update-release"):
+		for field, value in template_binding.bound_fields(binding).items():
+			if version.meta.has_field(field):
+				version.set(field, value)
+		result = _regenerate_after_binding(root, version, binding)
+		_touch(root, version)
+		events.emit(
+			tender=root.name, event_type="TenderTemplateReleaseUpdated", command="UpdateDraftTemplateRelease", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
+			previous_status="Draft", resulting_status="Draft", record_version=root.record_version, subject_type="Tender Version", subject_id=version.name,
+			payload={"from": before, "to": {"template_release_id": binding["template_release_id"], "template_release": binding["template_release"]}, "review_result_digest": result["review_result_digest"]}, fixture_namespace=root.fixture_namespace,
+		)
+	out = {"ok": True, "idempotent": False, "action": "updated", "tender": root.name, "record_version": root.record_version, "template_release": binding["template_release"], "review": {"result": result["result"], "must_fix_count": result["must_fix_count"]}}
+	envelope.record_command(idempotency_key=idempotency_key, command="UpdateDraftTemplateRelease", payload=payload, result=out, document_type="Tender", document_name=root.name, actor=actor, fixture_namespace=root.fixture_namespace)
+	return out
+
+
+def _regenerate_after_binding(root, version, binding) -> dict[str, Any]:
+	"""The root carries the same bound-release facts as its Version (`template_binding.VERSION_FIELDS`); both move together."""
+	for field, value in template_binding.bound_fields(binding).items():
+		if root.meta.has_field(field):
+			root.set(field, value)
+	return _regenerate(root, version)
+
+
 def save_tender_draft(*, tender: str, values: dict[str, Any], expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	assignment = authz.require_officer(actor)

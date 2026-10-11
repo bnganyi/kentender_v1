@@ -45,3 +45,6 @@
 	.kt-industry.kt-tsr .table td { border-bottom: 0 !important; padding: 6px 0 !important; }
 	.kt-industry.kt-tsr .tsr-toast { left: 16px; right: 16px; }
 }
+
+/* Tender-security intake duty page (Project Owner, 10 Oct 2026) shares this layout. */
+.kt-industry.kt-tsd .tsd-h2 { margin: 24px 0 8px; font-size: 18px; }

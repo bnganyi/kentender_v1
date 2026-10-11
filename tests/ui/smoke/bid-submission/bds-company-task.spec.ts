@@ -8,7 +8,7 @@ import { bdsFixture, restoreBdsWorld } from "./bdsWorld";
  * and tender security, as David of Afya (Test) on a new bid on the Tenders
  * test Tender: confirm a declaration in the response drawer, enter the tender
  * security with its proof, keep the contact bid-specific, and see the
- * physical original as not yet recorded. Another organisation sees nothing.
+ * physical original as not yet recorded, and submit the security for issuer verification. Another organisation sees nothing.
  */
 type World = { tender_reference: string; bid_reference: string; password: string; representative: string; other_user: string };
 
@@ -80,7 +80,20 @@ test.describe("BDS-DES-08 Company, declarations and tender security", () => {
 		await page.goto(`/tenders/${world.tender_reference}/bid/company`, { waitUntil: "domcontentloaded" });
 		await waitForPortal(page);
 		await expect(page.getByTestId("bds-security-empty")).toHaveCount(0);
-		await expect(page.getByTestId("bds-security-physical")).toContainText("Physical original not yet recorded");
+		// what the Tender itself states about submitting its security and delivering an original (10 Oct 2026)
+		await expect(page.getByTestId("bds-security-requirement")).toHaveText("Upload your tender security, the electronic instrument, here. An original must be delivered before the submission deadline.");
+		await expect(page.getByTestId("bds-security-physical")).toContainText("Original receipt not yet recorded");
+		await expect(page.getByTestId("bds-security-physical")).toContainText("Security will be checked against your bid after opening.");
+		// Project Owner, 10 Oct 2026: submission, issuer verification and compliance are separate facts; an upload alone is never verified
+		await expect(page.getByTestId("bds-security-submission")).toContainText("Not submitted");
+		await expect(page.getByTestId("bds-security-verification")).toContainText("Not requested");
+		await expect(page.getByTestId("bds-security-compliance")).toContainText("Meets");
+		await page.getByTestId("bds-security-submit").click();
+		await expect(page.getByTestId("bds-security-submission")).toContainText("Submitted", { timeout: 30_000 });
+		await expect(page.getByTestId("bds-security-verification")).toContainText("Issuer verification confirmed");
+		await expect(page.getByTestId("bds-security-verification-details")).toContainText("Test Issuer Service (simulation)");
+		await expect(page.getByTestId("bds-security-verification-details")).toContainText(/\d+ ms/);
+		await expect(page.getByTestId("bds-security-physical")).toContainText("Original receipt not yet recorded"); // the electronic result never stands in for the original
 		await page.setViewportSize({ width: 390, height: 844 });
 		await expect(page.getByTestId("bds-declarations-cards")).toBeVisible();
 		await expectNoHorizontalOverflow(page);

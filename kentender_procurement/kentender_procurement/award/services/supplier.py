@@ -109,14 +109,7 @@ def notice_view(*, notice: str, user: str) -> dict[str, Any]:
 		"can_respond": can_respond, "is_signatory": signatory, "signatory_name": signatory_name,
 		"accept_wording": f"I accept {body.get('notice')} on behalf of {n.organisation_name}.",
 		"next_step": {"kind": kind, "headline": headline, "sentence": sentence}, "requests": requests,
-		"test_environment": _test_label(doc),
 	}
-
-
-def _test_label(doc) -> str:
-	from kentender_procurement.award.services import simulation
-
-	return simulation.TEST_LABEL if simulation.enabled() else ""
 
 
 def explanation_view(c) -> dict[str, Any]:

@@ -1,6 +1,7 @@
-<!-- Record receipt — the blind physical tender-security intake (owner
-     decisions OD-G/OD-H). The recorder enters a Tender reference and the
-     instrument's own details. Looking up the reference shows only the
+<!-- Record receipt — the blind tender-security intake (owner decisions
+     OD-G/OD-H; the explicit Tender-scoped duty, 10 Oct 2026). The recorder
+     enters a Tender reference they are assigned and the instrument's own
+     details, for a physical original or an issuer's confirmation. Looking up the reference shows only the
      published Tender's own security facts (permitted forms, amount,
      currency, deadline); nothing about any bid. Invalid input keeps what was
      entered and names each field (AGENTS.md §6.10). One request key per
@@ -10,12 +11,22 @@
 		<div class="dialog tsr-dialog" role="dialog" aria-modal="true" aria-labelledby="tsr-d-title" tabindex="-1">
 			<div>
 				<div id="tsr-d-title" class="dialog-title">{{ correcting ? `Correct receipt ${correcting.intake_reference}` : "Record receipt" }}</div>
-				<div class="tsr-dialog-sub">{{ correcting ? "Record the corrected details. The first receipt stays in the record, marked Corrected." : "Record a physical tender-security original received by the procuring entity." }}</div>
+				<div class="tsr-dialog-sub">{{ correcting ? "Record the corrected details. The first receipt stays in the record, marked Corrected." : "Record a tender-security instrument received by the procuring entity: a physical original, or an electronic confirmation from the issuer." }}</div>
+			</div>
+
+			<div class="field" role="radiogroup" aria-labelledby="tsr-d-kind-label" data-testid="tsr-d-kind">
+				<span id="tsr-d-kind-label" class="kt-label">What was received</span>
+				<label v-for="kind in kinds" :key="kind" class="tsr-check">
+					<input v-model="form.intake_kind" type="radio" name="tsr-kind" :value="kind" :data-testid="kind === 'Issuer confirmation' ? 'tsr-d-kind-issuer' : 'tsr-d-kind-physical'" />
+					<span>{{ kind }}</span>
+				</label>
+				<p v-if="errors.intake_kind" class="kt-field-error">{{ errors.intake_kind }}</p>
 			</div>
 
 			<div class="field">
 				<label for="tsr-d-tender">Tender reference</label>
-				<input id="tsr-d-tender" ref="firstEl" v-model="form.tender_reference" class="input" maxlength="40" autocomplete="off" :aria-invalid="!!errors.tender_reference" data-testid="tsr-d-tender" @change="lookUp" />
+				<input id="tsr-d-tender" ref="firstEl" v-model="form.tender_reference" class="input" maxlength="40" autocomplete="off" list="tsr-d-tenders" :aria-invalid="!!errors.tender_reference" data-testid="tsr-d-tender" @change="lookUp" />
+				<datalist id="tsr-d-tenders"><option v-for="t in tenders" :key="t.tender_reference" :value="t.tender_reference">{{ t.title }}</option></datalist>
 				<p v-if="errors.tender_reference" class="kt-field-error">{{ errors.tender_reference }}</p>
 				<p v-else-if="lookup.text" class="tsr-help" data-testid="tsr-d-requirement">{{ lookup.text }}</p>
 				<p v-else-if="lookup.required" class="tsr-help" data-testid="tsr-d-requirement">Required: {{ lookup.required_amount }} as {{ lookup.permitted_forms.join(" or ") }}. Submission deadline {{ lookup.deadline }}.</p>
@@ -56,9 +67,16 @@
 			</div>
 
 			<div class="field">
-				<label for="tsr-d-received">Date and time received</label>
+				<label for="tsr-d-received">{{ isIssuer ? "Date and time the confirmation was received" : "Date and time received" }}</label>
 				<input id="tsr-d-received" v-model="form.received_at" class="input" type="datetime-local" step="60" :aria-invalid="!!errors.received_at" data-testid="tsr-d-received" />
 				<p v-if="errors.received_at" class="kt-field-error">{{ errors.received_at }}</p>
+			</div>
+
+			<div v-if="isIssuer" class="field">
+				<label for="tsr-d-issuer-confirmed">Date and time the issuer confirmed</label>
+				<input id="tsr-d-issuer-confirmed" v-model="form.issuer_confirmed_at" class="input" type="datetime-local" step="60" :aria-invalid="!!errors.issuer_confirmed_at" data-testid="tsr-d-issuer-confirmed" />
+				<p v-if="errors.issuer_confirmed_at" class="kt-field-error">{{ errors.issuer_confirmed_at }}</p>
+				<p v-else class="tsr-help">The time the issuer states it confirmed the instrument, kept apart from when you received and recorded it.</p>
 			</div>
 
 			<div class="field">
@@ -86,7 +104,7 @@
 			<div v-if="error" class="kt-notice is-critical" role="alert" data-testid="tsr-d-error"><div class="kt-notice-body">{{ error }}</div></div>
 			<div class="dialog-actions">
 				<button type="button" class="btn btn-secondary" :disabled="pending" data-testid="tsr-d-cancel" @click="$emit('cancel')">Cancel</button>
-				<button type="button" class="btn btn-primary" :disabled="pending" data-testid="tsr-d-submit" @click="submit">{{ pending ? "Recording…" : correcting ? "Record correction" : "Record receipt" }}</button>
+				<button type="button" class="btn btn-primary" :disabled="pending" data-testid="tsr-d-submit" @click="submit">{{ pending ? "Recording…" : correcting ? "Record correction" : isIssuer ? "Record confirmation" : "Record receipt" }}</button>
 			</div>
 		</div>
 	</div>
@@ -102,7 +120,9 @@ const props = defineProps({
 	error: { type: String, default: "" },
 	initialTender: { type: String, default: "" },
 	correcting: { type: Object, default: null },
-	confirmation: { type: String, default: "I confirm that the physical original identified above was received at the date and time recorded." },
+	tenders: { type: Array, default: () => [] },
+	kinds: { type: Array, default: () => ["Physical original", "Issuer confirmation"] },
+	confirmation: { type: String, default: "I confirm that the instrument identified above was received at the date and time recorded." },
 });
 const emit = defineEmits(["submit", "cancel"]);
 
@@ -111,7 +131,9 @@ const form = reactive({
 	tender_reference: from ? from.tender_reference : props.initialTender, instrument_type: from ? from.instrument_type : "", issuer: from ? from.issuer : "",
 	instrument_reference: from ? from.instrument_reference : "", amount: from ? from.amount_value : "", currency: from ? from.currency : "",
 	received_at: from ? from.received_at_value : "", notes: "", confirmed: false, correction_reason: "",
+	intake_kind: from ? from.intake_kind : "Physical original", issuer_confirmed_at: from ? from.issuer_confirmed_at_value : "",
 });
+const isIssuer = computed(() => form.intake_kind === "Issuer confirmation");
 const lookup = ref({});
 const firstEl = ref(null);
 const requestKey = `tsi-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -141,7 +163,8 @@ async function lookUp() {
 
 function submit() {
 	const { correction_reason, ...entered } = form;
-	const values = { ...entered, received_at: form.received_at ? form.received_at.replace("T", " ") + (form.received_at.length === 16 ? ":00" : "") : "" };
+	const stamp = (v) => (v ? v.replace("T", " ") + (v.length === 16 ? ":00" : "") : "");
+	const values = { ...entered, received_at: stamp(form.received_at), issuer_confirmed_at: isIssuer.value ? stamp(form.issuer_confirmed_at) : "" };
 	if (props.correcting) Object.assign(values, { corrects: props.correcting.intake_reference, correction_reason });
 	emit("submit", { values, key: requestKey });
 }

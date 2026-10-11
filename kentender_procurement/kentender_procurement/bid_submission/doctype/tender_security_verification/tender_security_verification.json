@@ -1,0 +1,140 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-10 21:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-10 21:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "permissions": [],
+ "name": "Tender Security Verification",
+ "autoname": "hash",
+ "field_order": [
+  "bid_workspace",
+  "tender",
+  "instrument_digest",
+  "submitted_by",
+  "submitted_at",
+  "status",
+  "last_outcome",
+  "source",
+  "requested_at",
+  "responded_at",
+  "response_ms",
+  "correlation_id",
+  "attempts",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "bid_workspace",
+   "fieldtype": "Link",
+   "label": "Bid",
+   "read_only": 1,
+   "options": "Bid Workspace",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "label": "Tender",
+   "read_only": 1,
+   "options": "Tender",
+   "reqd": 1
+  },
+  {
+   "fieldname": "instrument_digest",
+   "fieldtype": "Data",
+   "label": "Submitted instrument digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "submitted_by",
+   "fieldtype": "Link",
+   "label": "Submitted by",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Verification",
+   "read_only": 1,
+   "options": "Pending\nConfirmed\nMismatch",
+   "reqd": 1,
+   "default": "Pending"
+  },
+  {
+   "fieldname": "last_outcome",
+   "fieldtype": "Select",
+   "label": "Last issuer response",
+   "read_only": 1,
+   "options": "\nConfirmed\nPending\nMismatch\nUnavailable"
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Data",
+   "label": "Verification source",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_at",
+   "fieldtype": "Datetime",
+   "label": "Requested at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "responded_at",
+   "fieldtype": "Datetime",
+   "label": "Responded at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "response_ms",
+   "fieldtype": "Int",
+   "label": "Response time (ms)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "correlation_id",
+   "fieldtype": "Data",
+   "label": "Correlation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attempts",
+   "fieldtype": "Int",
+   "label": "Attempts",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "description": "The supplier's explicit electronic tender-security submission and the issuer's verification of it. Verification is separate from the upload, from the physical original and from compliance with the published requirement; an unavailable issuer leaves it Pending. Sealed: no screen or role reads it but the owning service."
+}

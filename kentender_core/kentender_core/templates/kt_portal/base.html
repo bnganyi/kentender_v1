@@ -40,12 +40,6 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 		data-kt-portal-verdict="{{ kt_portal.verdict }}"
 	>
 		<a class="kt-portal-skip" href="#kt-portal-main">{{ _("Skip to main content") }}</a>
-		{%- for notice in kt_portal.shell.notices %}
-		<div class="kt-portal-environment" role="note" data-testid="kt-portal-environment">
-			<strong>{{ notice.label }}</strong>{% if notice.text %}
-			<span>{{ notice.text }}</span>{% endif %}
-		</div>
-		{%- endfor %}
 		<header class="kt-portal-header">
 			<div class="kt-portal-bar">
 				<a class="kt-portal-brand" href="/tenders" aria-label="KenTender home">

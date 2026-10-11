@@ -175,6 +175,10 @@ def release_notice(record, user: str) -> dict[str, Any] | None:
 		state = row.lifecycle_status
 	elif row.integrity_status == "Failed" and not published:
 		state = "Failed"
+	elif not published and row.lifecycle_status == "Available" and _newer_release(record):
+		# a newer release of this format is switched On for new Tenders: for an unpublished Draft that is the same
+		# situation as a Superseded release, and the same notice offers the explicit update (Project Owner, 10 October 2026)
+		state = "Superseded"
 	else:
 		return None
 	tone, heading, text = (_NOTICE_PUBLISHED if published else _NOTICE_UNPUBLISHED)[state]
@@ -186,10 +190,33 @@ def release_notice(record, user: str) -> dict[str, Any] | None:
 	can_continue = state == "Superseded" and not published and row.integrity_status != "Failed" and _may_continue(user)
 	if state == "Superseded" and not published:
 		text = _SUPERSEDED_CONTINUE if can_continue else _SUPERSEDED_READER
+	newer = None if published or state != "Superseded" else _newer_release(record)
+	can_update = bool(newer) and record.get("overall_status") == "Draft" and _may_update(user)
+	if can_update:
+		text = text + f" Release {newer['template_release']} is now in use for new Tenders; you can update this Draft to it. It is a recorded step and nothing changes until you choose it."
 	return {
 		"state": state, "tone": tone, "heading": heading, "text": text.format(release=row.template_release),
-		"std_template_route": route, "full_page": not published, "can_continue": can_continue,
+		"std_template_route": route, "full_page": not published, "can_continue": can_continue, "can_update": can_update,
+		"update_to": newer["template_release"] if newer else "",
 	}
+
+
+def _newer_release(record) -> dict[str, Any] | None:
+	"""The release now switched On and available for this Tender's format, when it is not the one the Tender is bound to.
+	Read from the installed-release rows only (the notice runs on every read; the update itself verifies the release in full)."""
+	import frappe
+
+	row = frappe.db.get_value("Installed STD Release", {"template_key": TEMPLATE_KEY, "site_switch": "On", "lifecycle_status": "Available"}, ["name", "template_release"], as_dict=True)
+	if not row or cstr(row.name) == cstr(record.get("template_release_id")):
+		return None
+	return {"template_release_id": row.name, "template_release": row.template_release}
+
+
+def _may_update(user: str) -> bool:
+	from kentender_procurement.tenders.services import tender_authorization as authz
+	from kentender_procurement.tenders.services.tender_roles import ROLE_PROCUREMENT_OFFICER
+
+	return authz.has_site_role(ROLE_PROCUREMENT_OFFICER, user)
 
 
 _SUPERSEDED_CONTINUE = "This Tender remains on release {release}. Its integrity and renderer checks passed; KenTender will not change the format automatically."

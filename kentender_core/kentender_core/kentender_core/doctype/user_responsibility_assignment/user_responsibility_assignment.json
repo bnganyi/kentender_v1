@@ -8,6 +8,7 @@
   "user",
   "business_role",
   "organisation_unit",
+  "scope_reference",
   "column_break_ura_scope",
   "appointment_type",
   "authority_reference",
@@ -50,6 +51,14 @@
    "in_list_view": 1,
    "label": "Organisation Unit",
    "options": "Organisation Unit",
+   "search_index": 1
+  },
+  {
+   "fieldname": "scope_reference",
+   "fieldtype": "Data",
+   "in_list_view": 0,
+   "label": "Scope reference",
+   "description": "The Tender reference a Tender-scoped responsibility applies to.",
    "search_index": 1
   },
   {

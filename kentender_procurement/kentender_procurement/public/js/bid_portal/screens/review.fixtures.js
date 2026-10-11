@@ -49,7 +49,7 @@ export function reviewTask(variant = "") {
 		]),
 		task_rows: taskRows(states, issues),
 		offering: facts([["Offered model", "ApexBook Pro 14"], ["Quantity", "250 Each"], ["Delivery", "15 Sep 2027"], ["Warranty", "36 months"], ["Support response", "4 hours"]]),
-		declarations: facts([["Declarations", "5 confirmed · 2 complete"], ["Evidence items", variant === "EVIDENCE" ? "9 accepted · 1 rejected" : "10 accepted"], ["Tender security reference", "KCB/TG/2027/8841"], ["Physical receipt", "MOH-SEC-2027-033-017"]]),
+		declarations: facts([["Declarations", "5 confirmed · 2 complete"], ["Evidence items", variant === "EVIDENCE" ? "9 accepted · 1 rejected" : "10 accepted"], ["Tender security reference", "KCB/TG/2027/8841"], ["Physical original", "Original received · MOH-SEC-2027-033-017"], ["Issuer verification", "Issuer verification pending"]]),
 		price_summary: facts([["Subtotal excluding tax", "KES 40,000,000.00"], ["Tax", "KES 6,400,000.00"], ["Bid total", "KES 46,400,000.00", true]]),
 		footer: { back_href: BASE, submit: variant === "" ? SUBMIT : null },
 	};

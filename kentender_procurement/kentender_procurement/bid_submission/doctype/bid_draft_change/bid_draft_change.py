@@ -6,8 +6,10 @@ from __future__ import annotations
 import frappe
 from frappe.model.document import Document
 
+from kentender_procurement.bid_submission.services.sealed import SealedRecordMixin
 
-class BidDraftChange(Document):
+
+class BidDraftChange(SealedRecordMixin, Document):
 	def validate(self) -> None:
 		# BDS-CHG-001 v0.8 plan D12 — written only by the Bid Submission commands
 		# (`flags.kt_bid_command`), never by a Desk save or script.

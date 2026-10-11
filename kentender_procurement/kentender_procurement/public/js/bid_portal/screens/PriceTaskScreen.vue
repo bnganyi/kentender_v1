@@ -6,7 +6,7 @@
 // here and no total is entered. Save and continue saves the changed prices,
 // then opens the review; until every line is priced it says what is missing.
 import { computed, inject, onMounted, onUnmounted, reactive, ref, watch } from "vue";
-import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
+import BidGuidance from "../components/BidGuidance.vue";
 import CommonState from "../components/CommonState.vue";
 import NotifySignatory from "../components/NotifySignatory.vue";
 import TaskStepper from "../components/TaskStepper.vue";
@@ -134,7 +134,7 @@ onMounted(() => {
 			</div>
 		</div>
 
-		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
+		<BidGuidance :journey="data.journey" :answer="data.next_step" :reference="reference" :bid-reference="data.bid && data.bid.reference || ''" :organisation="route.query.organisation || ''" :support-href="data.support_href || ''" :tracker="!data.step" @fix="onFix" @reload="load" />
 
 		<NotifySignatory v-if="data.handover && data.bid" :handover="data.handover" :bid="data.bid" :organisation="route.query.organisation || ''" @sent="load" />
 		<p v-if="data.terms" class="bds-muted bds-price-terms">{{ data.terms }}</p>

@@ -20,9 +20,11 @@ from kentender_core.services.responsibility_errors import ResponsibilityError
 
 
 class TestBusinessRoleRegistry(IntegrationTestCase):
-	def test_exactly_two_scope_types_exist(self):
-		"""§4.4 — `Site-wide` or `Organisation Unit`. No other value exists."""
-		self.assertEqual(registry.SCOPE_TYPES, ("Site-wide", "Organisation Unit"))
+	def test_exactly_three_scope_types_exist(self):
+		"""§4.4 — `Site-wide` or `Organisation Unit`; and `Tender`, added on 10 October
+		2026 for the tender-security intake duty alone. No other value exists."""
+		self.assertEqual(registry.SCOPE_TYPES, ("Site-wide", "Organisation Unit", "Tender"))
+		self.assertEqual(registry.roles_with_scope_type(registry.SCOPE_TENDER), ("Tender Security Intake Officer",))
 		for name, entry in registry.REGISTRY.items():
 			self.assertIn(entry.scope_type, registry.SCOPE_TYPES, f"{name} has no valid scope type")
 
@@ -137,10 +139,20 @@ class TestBusinessRoleRegistry(IntegrationTestCase):
 		for role in registry.all_projected_frappe_roles():
 			self.assertTrue(frappe.db.exists("Role", role), f"Role {role} was not provisioned")
 
-	def test_system_manager_may_administer_every_registered_role(self):
-		for name in registry.REGISTRY:
-			self.assertTrue(registry.may_administer(name, {"System Manager"}))
+	def test_system_manager_may_administer_every_registered_role_except_the_tender_duty(self):
+		for name, entry in registry.REGISTRY.items():
+			self.assertEqual(registry.may_administer(name, {"System Manager"}), entry.system_setup_assignable, name)
 			self.assertFalse(registry.may_administer(name, {"Desk User"}))
+
+	def test_only_the_head_of_procurement_function_assigns_the_tender_security_intake_duty(self):
+		"""Project Owner, 10 October 2026: the HOPF assigns the duty, and neither its default
+		bundle nor System Manager status carries it."""
+		duty = registry.REGISTRY["Tender Security Intake Officer"]
+		self.assertTrue(registry.may_administer(duty.business_role, {"Head of Procurement Function"}))
+		self.assertFalse(registry.may_administer(duty.business_role, {"System Manager"}))
+		self.assertNotIn("tender_security_receipt", registry.REGISTRY["Head of Procurement Function"].sod_tags)
+		self.assertEqual(duty.sod_tags, ("tender_security_receipt",))
+		self.assertFalse(duty.technical_holder)
 
 	def test_the_head_of_procurement_function_signs_the_annual_plan_preparation(self):
 		"""PLN-CHG-001 v1.18 §6.2 / plan D6 — Sign and submit Annual Plan is

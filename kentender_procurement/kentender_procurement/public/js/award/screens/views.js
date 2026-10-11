@@ -17,7 +17,7 @@ const VIEWS = {
 		{ t: "Bid comparison", tbl: { h: ["Tenderer", "Submitted", "Evaluated", "Position"], n: [1, 2, 3], r: d.report.comparison.map((r) => [r.tenderer, r.submitted, r.amount, r.position]) } },
 		{ t: "Report versions", tbl: { h: ["Report", "State", "Received"], r: d.report.versions.map((v) => [v.label, v.state, v.received_at]) } }],
 	opinion: (d) => (d.opinion.all || []).map((o) => ({ t: o.label, f: [["State", o.state], ["Conclusion", o.conclusion || "—"], ["Author", o.author]],
-		p: o.signed ? [o.signed].concat(o.proof_label ? [o.proof_label] : []) : [], d: [["Reason", o.reason || "—"]] })),
+		p: o.signed ? [o.signed] : [], d: [["Reason", o.reason || "—"]] })),
 	decision: (d) => [{ t: "Decision", f: decisionFacts(d.decision), d: [["Reason", (d.decision || {}).reason || "—"]].concat((d.decision || {}).next_action ? [["Next action",
 		`${d.decision.next_action} — ${d.decision.next_owner}`]] : []) }],
 	"prior-decision": (d) => (d.history || []).filter((c) => c.cycle < d.cycle.number || d.stage === "Closed").flatMap((c) => (c.decisions || []).map((x) => ({ t: `Decision cycle ${c.cycle}`,

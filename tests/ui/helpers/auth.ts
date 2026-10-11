@@ -14,8 +14,8 @@ export async function login(page: Page, username: string, password: string) {
 	}
 	await email.fill(username);
 	await page.locator('#login_password').fill(password);
-	// Exact "Login" — avoid matching Frappe's "Invalid Login. Try again." button (/login/i would match).
-	await page.getByRole('button', { name: 'Login', exact: true }).click();
+	// "Login" or the newer "Sign In →" — anchored at the start, so Frappe's "Invalid Login. Try again." button never matches.
+	await page.getByRole('button', { name: /^(Login|Sign In)/ }).click();
 
 	const outcome = await Promise.race([
 		page.getByText(/Invalid Login/i).waitFor({ state: 'visible', timeout: 60_000 }).then(() => 'invalid' as const),

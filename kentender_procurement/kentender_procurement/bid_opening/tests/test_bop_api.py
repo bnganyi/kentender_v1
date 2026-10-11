@@ -33,7 +33,7 @@ class ApiCase(CeremonyCase):
 class TestShape(ApiCase):
 	def test_every_endpoint_names_its_arguments_and_forwards_nothing_else(self):
 		endpoints = [f for name, f in inspect.getmembers(api, inspect.isfunction) if not name.startswith("_") and f.__module__ == api.__name__]
-		self.assertEqual(len(endpoints), 33)  # a removed endpoint must be a deliberate change
+		self.assertEqual(len(endpoints), 35)  # 11 Oct 2026 added get_incident_details and get_incident_access_trail; a removed endpoint must be a deliberate change
 		# the public opening page's read is the only endpoint a guest reaches (BOP v0.10 §10.5)
 		self.assertEqual({f.__name__ for f in endpoints if f in frappe.guest_methods}, {"get_public_opening"})
 		for fn in endpoints:
@@ -88,6 +88,7 @@ class TestPages(ApiCase):
 		from kentender_procurement.bid_opening.services import technical_read
 
 		doctypes = {r["doctype"] for r in technical_read.reference_resolvers()}
-		self.assertEqual(doctypes, {"Bid Opening Case", "Opening Access Incident", "Proceeding"})
+		# 10 Oct 2026: an incident can name an envelope, so it is not searchable here (the incident records are sealed)
+		self.assertEqual(doctypes, {"Bid Opening Case", "Proceeding"})
 		for doctype in doctypes:
 			self.assertTrue(frappe.get_meta(doctype).permissions)

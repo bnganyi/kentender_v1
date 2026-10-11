@@ -17,6 +17,7 @@ from kentender_procurement.bid_submission.services import notice_contact as noti
 from kentender_procurement.bid_submission.services import reads
 from kentender_procurement.bid_submission.services import save as save_service
 from kentender_procurement.bid_submission.services import signatory_notice
+from kentender_procurement.bid_submission.services import security_duty as security_duty_service
 from kentender_procurement.bid_submission.services import security_intake as security_intake_service
 from kentender_procurement.bid_submission.services import receipts as receipts_service
 from kentender_procurement.bid_submission.services import replacement as replacement_service
@@ -141,6 +142,23 @@ def refresh_bid_organisation_snapshot(bid_reference: str, confirm=False, expecte
 	return snapshot_service.refresh_bid_organisation_snapshot(bid_reference=bid_reference, confirm=confirmed, expected_record_version=expected_record_version, organisation=organisation, idempotency_key=idempotency_key)
 
 
+@frappe.whitelist(methods=["POST"])
+def submit_tender_security(bid_reference: str, expected_record_version=None, organisation: str = "", idempotency_key: str = "") -> dict[str, Any]:
+	"""BDS `SubmitTenderSecurity` (proposed successor): the supplier explicitly submits the
+	instrument and asks its issuer to confirm it; an upload alone never verifies."""
+	from kentender_procurement.bid_submission.services import security_verification
+
+	return security_verification.submit_tender_security(bid_reference=bid_reference, expected_record_version=expected_record_version, organisation=organisation, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist(methods=["POST"])
+def check_tender_security_verification(bid_reference: str, expected_record_version=None, organisation: str = "", idempotency_key: str = "") -> dict[str, Any]:
+	"""Ask the issuer again about the instrument already submitted (an unavailable issuer leaves it pending)."""
+	from kentender_procurement.bid_submission.services import security_verification
+
+	return security_verification.check_tender_security_verification(bid_reference=bid_reference, expected_record_version=expected_record_version, organisation=organisation, idempotency_key=idempotency_key)
+
+
 def _upload(field: str) -> tuple[str, bytes]:
 	files = getattr(getattr(frappe, "request", None), "files", None)
 	upload = files.get(field) if files else None
@@ -220,19 +238,20 @@ def update_tender_contact(bid_reference: str, email: str = "", phone: str = "", 
 
 
 @frappe.whitelist(methods=["POST"])
-def record_physical_tender_security_receipt(tender_reference: str, instrument_type: str = "", issuer: str = "", instrument_reference: str = "", amount: str = "", currency: str = "", received_at: str = "", notes: str = "", confirmed=False, idempotency_key: str = "", corrects: str = "", correction_reason: str = "") -> dict[str, Any]:
+def record_physical_tender_security_receipt(tender_reference: str, instrument_type: str = "", issuer: str = "", instrument_reference: str = "", amount: str = "", currency: str = "", received_at: str = "", notes: str = "", confirmed=False, intake_kind: str = "Physical original", issuer_confirmed_at: str = "", idempotency_key: str = "", corrects: str = "", correction_reason: str = "") -> dict[str, Any]:
 	"""BDS §7.3 `RecordPhysicalTenderSecurityReceipt`, as a blind intake; with
 	`corrects`, a correction of an earlier receipt (owner decision 27 Sep 2026)."""
 	return security_intake_service.record_physical_tender_security_receipt(
 		tender_reference=tender_reference, instrument_type=instrument_type, issuer=issuer, instrument_reference=instrument_reference, amount=amount, currency=currency,
 		received_at=received_at, notes=notes, confirmed=confirmed, idempotency_key=idempotency_key, corrects=corrects, correction_reason=correction_reason,
+		intake_kind=intake_kind, issuer_confirmed_at=issuer_confirmed_at,
 	)
 
 
 FORBIDDEN_INTAKE = {"outcome": "FORBIDDEN", "heading": "You do not have access to tender-security receipts", "text": security_intake_service.DENIED}
 
 
-@frappe.whitelist(methods=["GET"])
+@frappe.whitelist(methods=["POST"])  # POST: viewing intake records is logged as exposure
 def list_my_tender_security_intakes(tender_reference: str = "") -> dict[str, Any]:
 	try:
 		return {"outcome": "OK", **security_intake_service.list_my_intakes(tender_reference=tender_reference)}
@@ -246,6 +265,62 @@ def get_tender_security_requirement(tender_reference: str) -> dict[str, Any]:
 		return {"outcome": "OK", **security_intake_service.tender_security_requirement(tender_reference=tender_reference)}
 	except frappe.PermissionError:
 		return dict(FORBIDDEN_INTAKE)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_my_tender_security_tenders() -> dict[str, Any]:
+	"""The Tenders the caller is assigned the intake duty for (public Tender facts only)."""
+	try:
+		return {"outcome": "OK", **security_intake_service.my_tenders()}
+	except frappe.PermissionError:
+		return dict(FORBIDDEN_INTAKE)
+
+
+# The Head of Procurement Function's assignment of the intake duty (Project
+# Owner, 10 October 2026). The Head sees officers and assignments only — never
+# an intake record, a supplier or a bid.
+FORBIDDEN_DUTY = {"outcome": "FORBIDDEN", "heading": "You do not assign tender-security intake", "text": security_duty_service.ASSIGN_DENIED}
+
+
+@frappe.whitelist(methods=["GET"])
+def get_tender_security_duty(tender_reference: str) -> dict[str, Any]:
+	try:
+		return {"outcome": "OK", "officers": security_duty_service.eligible_officers(tender_reference), "assignments": security_duty_service.list_duty(tender_reference)}
+	except frappe.PermissionError:
+		return dict(FORBIDDEN_DUTY)
+
+
+@frappe.whitelist(methods=["POST"])
+def assign_tender_security_intake_officer(tender_reference: str, officer: str, effective_from: str = "", effective_to: str = "") -> dict[str, Any]:
+	try:
+		return {"outcome": "OK", **security_duty_service.assign_intake_officer(tender_reference=tender_reference, officer=officer, effective_from=effective_from, effective_to=effective_to)}
+	except frappe.PermissionError:
+		return dict(FORBIDDEN_DUTY)
+
+
+@frappe.whitelist(methods=["POST"])
+def revoke_tender_security_intake_officer(assignment: str, reason: str) -> dict[str, Any]:
+	try:
+		return {"outcome": "OK", **security_duty_service.revoke_intake_officer(assignment=assignment, reason=reason)}
+	except frappe.PermissionError:
+		return dict(FORBIDDEN_DUTY)
+
+
+@frappe.whitelist(methods=["GET"])
+def list_tender_security_duty_conflicts(status: str = "Open") -> dict[str, Any]:
+	"""Flagged conflicts between the intake duty and a Tender's opening or evaluation (Head and Accounting Officer)."""
+	try:
+		return {"outcome": "OK", **security_duty_service.list_conflicts(status=status)}
+	except frappe.PermissionError:
+		return dict(FORBIDDEN_DUTY)
+
+
+@frappe.whitelist(methods=["POST"])
+def resolve_tender_security_duty_conflict(conflict: str, reason: str) -> dict[str, Any]:
+	try:
+		return {"outcome": "OK", **security_duty_service.resolve_conflict(conflict=conflict, reason=reason)}
+	except frappe.PermissionError:
+		return {"outcome": "FORBIDDEN", "heading": "You do not resolve duty conflicts", "text": "Only the Accounting Officer resolves a tender-security duty conflict."}
 
 
 # --------------------------------------------------------------------------
@@ -383,18 +458,9 @@ def download_bid_receipt(receipt_reference: str, organisation: str = "", inline:
 
 
 # --------------------------------------------------------------------------
-# The technical read (KT-STD-001 §3A.6): metadata only, no business action.
+# The technical read (KT-STD-001 §3A.6): service status only; no bid record is
+# readable by a technical account (Project Owner, 10 October 2026).
 # --------------------------------------------------------------------------
-
-
-@frappe.whitelist(methods=["GET"])
-def get_bid_technical_summary(bid_reference: str) -> dict[str, Any]:
-	from kentender_procurement.bid_submission.services import technical_read
-
-	try:
-		return technical_read.get_bid_technical_summary(bid_reference=bid_reference)
-	except frappe.DoesNotExistError:
-		return {"outcome": "NOT_FOUND", "heading": "Record not found", "text": "This record is unavailable or you do not have permission to view it."}
 
 
 @frappe.whitelist(methods=["POST"])

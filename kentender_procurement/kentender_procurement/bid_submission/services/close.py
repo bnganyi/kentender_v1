@@ -132,12 +132,6 @@ def handoff_payload(root, close, custody: dict[str, Any], unresolved: list[str])
 	)
 	envelopes = {e.name: e for e in frappe.get_all("Tender Box Envelope", filters={"tender": tender}, fields=["name", "custody_receipt", "accepted_at"], limit_page_length=0)}
 	arrangements = dict(frappe.get_all("Bid Workspace", filters={"tender": tender}, fields=["name", "bidder_arrangement"], as_list=True))
-	intakes = frappe.get_all(
-		"Tender Security Intake", filters={"tender": tender},
-		fields=["intake_reference", "instrument_type", "issuer", "instrument_reference", "amount", "currency", "received_at", "deadline_class", "recorded_by", "recorded_at"],
-		order_by="recorded_at asc", limit_page_length=0,
-	)
-	matches = frappe.get_all("Tender Security Intake Match", filters={"tender": tender}, fields=["*"], limit_page_length=0)
 	return {
 		"handoff_version": HANDOFF_VERSION,
 		"tender": {"tender": tender, "tender_reference": root.tender_reference, "tenders_submission_handoff": close.tenders_handoff},
@@ -165,16 +159,11 @@ def handoff_payload(root, close, custody: dict[str, Any], unresolved: list[str])
 			)
 		],
 		"unresolved_attempts": unresolved,
-		"physical_tender_security": {
-			"intakes": [{**dict(i), "amount": str(i.amount), "received_at": str(i.received_at), "recorded_at": str(i.recorded_at)} for i in intakes],
-			"matches": [_match(m) for m in matches],
-		},
+		# Project Owner, 10 Oct 2026: nothing about a security intake travels with the sealed
+		# hand-off; the intake facts and their match to a bid are released only after the opening
+		# access boundary is crossed (`security_matching`).
+		"physical_tender_security": {"intakes": [], "matches": []},
 	}
-
-
-def _match(row) -> dict[str, Any]:
-	fields = {k: cstr(v) for k, v in dict(row).items() if k in ("intake", "tender_security_intake", "bid_workspace", "status", "matched_at")}
-	return dict(sorted(fields.items()))
 
 
 OVERDUE_AFTER = timedelta(minutes=15)  # the hourly Tenders job and the next sweep have had their chance

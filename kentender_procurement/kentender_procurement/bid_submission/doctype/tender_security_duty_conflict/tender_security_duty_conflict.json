@@ -1,0 +1,126 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-10 20:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-10 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "permissions": [],
+ "name": "Tender Security Duty Conflict",
+ "autoname": "hash",
+ "field_order": [
+  "tender",
+  "tender_reference",
+  "user",
+  "conflicting_duty",
+  "basis",
+  "status",
+  "detected_at",
+  "detected_by",
+  "resolution_reason",
+  "resolved_by",
+  "resolved_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "label": "Tender",
+   "read_only": 1,
+   "options": "Tender",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_reference",
+   "fieldtype": "Data",
+   "label": "Tender reference",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "conflicting_duty",
+   "fieldtype": "Select",
+   "label": "Conflicting duty",
+   "read_only": 1,
+   "options": "Opening committee\nEvaluation committee\nEvaluation secretary",
+   "reqd": 1
+  },
+  {
+   "fieldname": "basis",
+   "fieldtype": "Select",
+   "label": "Basis",
+   "read_only": 1,
+   "options": "Holds the intake duty\nHas recorded intake\nHas viewed intake records",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Open\nResolved",
+   "reqd": 1,
+   "default": "Open"
+  },
+  {
+   "fieldname": "detected_at",
+   "fieldtype": "Datetime",
+   "label": "Detected at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "detected_by",
+   "fieldtype": "Data",
+   "label": "Detected by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolution_reason",
+   "fieldtype": "Small Text",
+   "label": "Resolution reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolved_by",
+   "fieldtype": "Link",
+   "label": "Resolved by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "resolved_at",
+   "fieldtype": "Datetime",
+   "label": "Resolved at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "description": "A person who holds or held the tender-security intake duty for a Tender and also sits on, or is the secretary of, that Tender's opening or evaluation. Flagged for explicit resolution; nothing is deleted or reassigned."
+}

@@ -36,6 +36,10 @@ DEFAULTS: dict = {
 	"bound_release_state": "",
 	# BOP-CHG-001 v0.10 plan D4/D17: the Test Tender Box reveal outcome for Bid Opening.
 	"reveal_outcome": "Deliver",
+	# Project Owner, 10 Oct 2026: what the Test Issuer Service answers (Automatic decides by the reference's ending).
+	"issuer_response": "Automatic",
+	# Browser worlds only: treat every Tender's opening as started (security matching).
+	"opening_boundary_crossed": 0,
 }
 
 

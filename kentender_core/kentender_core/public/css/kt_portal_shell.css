@@ -28,15 +28,6 @@
 	top: 8px;
 }
 
-.kt-industry.kt-portal .kt-portal-environment {
-	padding: 8px 16px;
-	background: var(--kt-status-attention-bg);
-	color: var(--kt-color-text);
-	font-size: 13px;
-	text-align: center;
-	border-bottom: 1px solid var(--kt-color-neutral-300);
-}
-
 .kt-industry.kt-portal .kt-portal-header {
 	background: var(--kt-color-surface);
 	border-bottom: 1px solid var(--kt-color-neutral-300);

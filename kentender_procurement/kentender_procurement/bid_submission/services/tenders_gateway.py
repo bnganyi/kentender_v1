@@ -138,3 +138,11 @@ def candidate_view(tender_name: str, candidate_registration_id: str) -> dict[str
 def stream_public_document(reference: str, key: str) -> dict[str, Any] | None:
 	"""A published document's bytes by its bidder-safe key (no digest or file URL)."""
 	return bidder_projection.stream_public_document(reference, key)
+
+
+def security_statement_correction(tender_name: str) -> dict[str, str]:
+	"""The auditable correction of a Tender published before it stated how its tender security is submitted ({} when there is none).
+	It states what the published Tender already makes explicit; it never replaces a statement the published definition carries."""
+	from kentender_procurement.tenders.services import security_statement
+
+	return security_statement.overlay(tender_name)

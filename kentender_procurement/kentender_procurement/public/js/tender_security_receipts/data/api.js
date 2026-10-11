@@ -5,6 +5,7 @@ import { frappeCall } from "./call.js";
 
 const M = "kentender_procurement.bid_submission.api.";
 
-export const listIntakes = ({ tender }) => frappeCall(M + "list_my_tender_security_intakes", { tender_reference: tender || "" }, "GET");
+export const listIntakes = ({ tender }) => frappeCall(M + "list_my_tender_security_intakes", { tender_reference: tender || "" }, "POST");
+export const getMyTenders = () => frappeCall(M + "get_my_tender_security_tenders", {}, "GET");
 export const getRequirement = (tender) => frappeCall(M + "get_tender_security_requirement", { tender_reference: tender }, "GET");
 export const recordIntake = (values, key) => frappeCall(M + "record_physical_tender_security_receipt", { ...values, idempotency_key: key });

@@ -64,6 +64,7 @@ KENTENDER_OWNED_ALLOWS = (
 BLOCK_UNREGISTERED_ROLE = "Role is not a registered KenTender responsibility"
 BLOCK_MISSING_ORG_UNIT = "Departmental responsibility with no Organisation Unit evidence"
 BLOCK_AMBIGUOUS_ORG_UNIT = "Several Organisation Units and no evidence of which applies"
+BLOCK_TENDER_SCOPED = "Tender-scoped responsibility: assigned for one Tender by its own office, never inferred from a held role"
 BLOCK_UNKNOWN_ORG_UNIT = "Organisation Unit evidence names a unit that no longer exists"
 BLOCK_DEPARTMENT_UNMAPPED = "Procurement Department maps to no exact Organisation Unit"
 
@@ -185,6 +186,10 @@ def _propose(user: str, business_role: str) -> dict[str, Any]:
 			"sources": ["Has Role"],
 		}
 
+	if entry.requires_scope_reference:
+		# A Tender-scoped duty is assigned per Tender by its own office; a held
+		# Frappe Role is no evidence of which Tender it was for.
+		return {"user": user, "business_role": business_role, "blocked": BLOCK_TENDER_SCOPED}
 	assert entry.scope_type == SCOPE_OU
 	# The departmental dimension must be exact. A user permitted on several
 	# units gives no evidence of which one this responsibility applies to, and

@@ -201,6 +201,28 @@ class TestControls(IntegrationTestCase):
 		self.assertEqual(errors, {})
 		self.assertEqual((clean["minimum_comparable_contracts"], clean["experience_period_years"]), (7, 12))
 
+	def test_the_security_method_and_original_delivery_are_required_with_no_default(self):
+		"""Project Owner, 10 October 2026: "security required" is not "physical original required"; each is the officer's explicit choice."""
+		snapshot, _ = sample.sample_snapshot()
+		defaults = controls.defaults(snapshot)
+		self.assertNotIn("tender_security_method", defaults)
+		self.assertNotIn("tender_security_original", defaults)
+		state = controls.normalise(sample.officer_values(inspection_location="x", contact_office="y"))
+		self.assertEqual((state["tender_security_method"], state["tender_security_original"]), ("Bidder uploads an electronic instrument", "Required"))
+		for field in ("tender_security_method", "tender_security_original"):
+			with self.subTest(field=field):
+				blank = {**state, field: None}
+				self.assertIn(field, [f for _t, f, _l in controls.missing(blank)])
+		clean, errors = controls.validate({"tender_security_method": "Courier", "tender_security_original": "Maybe"}, {})
+		self.assertEqual(set(errors), {"tender_security_method", "tender_security_original"})
+		clean, errors = controls.validate({"tender_security_method": "Issuer supplies the instrument directly", "tender_security_original": "Not required"}, {})
+		self.assertEqual((errors, clean), ({}, {"tender_security_method": "Issuer supplies the instrument directly", "tender_security_original": "Not required"}))
+
+	def test_a_package_made_before_the_statements_existed_keeps_its_digest_until_one_is_stated(self):
+		"""The two joined `DIGEST_OMIT_WHEN_EMPTY`: an earlier package still verifies; it cannot be published until they are stated."""
+		self.assertIn("tender_security_method", controls.DIGEST_OMIT_WHEN_EMPTY)
+		self.assertIn("tender_security_original", controls.DIGEST_OMIT_WHEN_EMPTY)
+
 	def test_missing_reports_only_applicable_required_fields(self):
 		state = controls.normalise({"pre_tender_meeting": False})
 		fields = {f for _t, f, _l in controls.missing(state)}

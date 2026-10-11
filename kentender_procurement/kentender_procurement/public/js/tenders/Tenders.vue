@@ -254,6 +254,7 @@ const state = computed(() => {
 	const release = kind.value === "record" && !loading.value ? (record.value.tender || {}).template_notice : null;
 	if (release && release.full_page && !(release.can_continue && continuedRelease.value === releaseKey(release))) {
 		const actions = [stdOrBack(release.std_template_route)];
+		if (release.can_update) actions.push({ key: "update-release", label: "Update to the current release", primary: !release.can_continue });
 		if (release.can_continue) actions.push({ key: "continue", label: "Continue", primary: true });
 		return { kind: `release-${String(release.state).toLowerCase()}`, text: release.text, actions };
 	}
@@ -390,6 +391,11 @@ function onStateAction(action) {
 	}
 	if (key === "std-template" && action.route) {
 		onNavigate(action.route);
+		return;
+	}
+	if (key === "update-release") {
+		// 10 Oct 2026: a Draft moves to the release now switched On only by this explicit, recorded update
+		onUpdateRelease();
 		return;
 	}
 	if (key === "continue") {
@@ -565,6 +571,15 @@ async function onStartCorrected(handoffName) {
 	if (!result) return;
 	cache.set(screenKey.value, null);
 	go(tenderRef.value, "details");
+}
+async function onUpdateRelease() {
+	const result = await run(async () => {
+		const r = await api.updateDraftTemplateRelease({ tender: tenderRef.value, expected_record_version: rv(), idempotency_key: api.newIdempotencyKey("update-release") });
+		cache.set(screenKey.value, null);
+		await load({ quiet: true });
+		return r;
+	});
+	if (result) continuedRelease.value = "";
 }
 function onViewRequisition(name) {
 	frappe.set_route("procurement-requisitions", name);

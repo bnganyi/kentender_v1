@@ -95,6 +95,22 @@ def get_record_pages(tender_reference: str, minutes_version: str) -> None:
 	_download(_call("ReadOpeningRecord", tender_reference, pages.record_pages, minutes_version=minutes_version))
 
 
+@frappe.whitelist(methods=["POST"])
+def get_incident_details(tender_reference: str, incident: str, purpose: str, idempotency_key: str) -> dict[str, Any]:
+	"""An explicit, audited read of one Opening incident's details (Project Owner, 10 October 2026). POST because it records who read what and why."""
+	from kentender_procurement.bid_opening.services import incident_access
+
+	return _call("GetIncidentDetails", tender_reference, incident_access.get_details, incident=incident, purpose=purpose, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_incident_access_trail(tender_reference: str) -> dict[str, Any]:
+	"""Who read or exported this opening's incident details, when, why and with what outcome: the Auditor and the Accounting Officer only."""
+	from kentender_procurement.bid_opening.services import incident_access
+
+	return _call("GetIncidentAccessTrail", tender_reference, incident_access.trail)
+
+
 @frappe.whitelist(methods=["GET"])
 def export_opening(tender_reference: str) -> dict[str, Any]:
 	from kentender_procurement.bid_opening.services import export

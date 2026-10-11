@@ -56,6 +56,7 @@ from kentender_core.services.business_role_registry import (
 	REGISTRY,
 	SCOPE_OU,
 	SCOPE_SITE,
+	SCOPE_TENDER,
 	TECHNICAL_ROLES,
 	require_registered,
 )
@@ -94,6 +95,8 @@ class Assignment:
 	authority_reference: str
 	effective_from: str
 	effective_to: str
+	# The Tender a Tender-scoped responsibility applies to; empty otherwise.
+	scope_reference: str = ""
 
 
 @dataclass(frozen=True)
@@ -157,6 +160,7 @@ _ROW_FIELDS = [
 	"user",
 	"business_role",
 	"organisation_unit",
+	"scope_reference",
 	"appointment_type",
 	"authority_reference",
 	"effective_from",
@@ -182,6 +186,7 @@ def _as_assignment(row: dict[str, Any]) -> Assignment:
 		authority_reference=row.get("authority_reference") or "",
 		effective_from=str(row.get("effective_from") or ""),
 		effective_to=str(row.get("effective_to") or ""),
+		scope_reference=row.get("scope_reference") or "",
 	)
 
 
@@ -314,6 +319,7 @@ def authorise_record(
 	organisation_unit: str = "",
 	at=None,
 	purpose: str = PURPOSE_COMMAND,
+	scope_reference: str = "",
 ) -> Decision:
 	"""§9.1 — one allow/deny result with the exact matching assignment ID.
 
@@ -344,6 +350,15 @@ def authorise_record(
 
 	if entry.scope_type == SCOPE_SITE:
 		return Decision(allowed=True, business_role=business_role, assignment=active[0])
+
+	if entry.scope_type == SCOPE_TENDER:
+		# One Tender only: an assignment for another Tender, or no Tender named,
+		# never authorises (the Tender duty is not a site-wide permission).
+		wanted = (scope_reference or "").strip()
+		for assignment in active:
+			if wanted and assignment.scope_reference == wanted:
+				return Decision(allowed=True, business_role=business_role, assignment=assignment)
+		return Decision(allowed=False, business_role=business_role, reason_code="AUTH_SCOPE_REQUIRED")
 
 	# SCOPE_OU — the record's own unit must fall inside one assigned subtree.
 	if not organisation_unit:
@@ -470,7 +485,7 @@ def scope_condition(doctype: str, user: str | None = None, business_role: str = 
 	if not rows:
 		return "1=0"
 
-	site_wide = [row for row in rows if not require_registered(row["business_role"]).requires_organisation_unit]
+	site_wide = [row for row in rows if require_registered(row["business_role"]).scope_type == SCOPE_SITE]
 	if site_wide:
 		return ""
 
@@ -521,7 +536,7 @@ def has_permission(doc=None, ptype: str = "read", user: str | None = None):
 	if not rows:
 		return False
 	for row in rows:
-		if not require_registered(row["business_role"]).requires_organisation_unit:
+		if require_registered(row["business_role"]).scope_type == SCOPE_SITE:
 			return True
 	units = descendants_of({row["organisation_unit"] for row in rows if row["organisation_unit"]})
 	if record_unit and record_unit in units:
@@ -619,7 +634,7 @@ def _overlapping(active: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	seen: dict[tuple[str, str], str] = {}
 	clashes: list[dict[str, Any]] = []
 	for row in active:
-		key = (row["business_role"], row["organisation_unit"] or "")
+		key = (row["business_role"], row["organisation_unit"] or row.get("scope_reference") or "")
 		if key in seen:
 			clashes.append({"first": seen[key], "second": row["name"], "scope": list(key)})
 		else:

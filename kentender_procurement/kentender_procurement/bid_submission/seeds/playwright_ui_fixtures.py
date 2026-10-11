@@ -24,10 +24,14 @@ from kentender_procurement.bid_submission.seeds import clear as bds_clear
 from kentender_procurement.tenders.seeds import playwright_ui_fixtures as tender_pw
 
 NAMESPACE = "PW_BID_SUBMISSION"
-RECORDER = tender_pw.HOPF
+# Project Owner, 10 Oct 2026: tender-security intake is an explicit, Tender-scoped duty the Head of
+# Procurement Function assigns to an existing officer who sits on no opening or evaluation. The world's
+# Procurement Officer is that officer here; the Head assigns the duty and sees no intake.
+RECORDER = tender_pw.OFFICER
+HEAD = tender_pw.HOPF
 OFFICER = tender_pw.OFFICER
 DAVID = bds_canonical.DAVID
-BROWSER_ACTORS = (RECORDER, OFFICER, tender_pw.AUDITOR, tender_pw.BOTH)
+BROWSER_ACTORS = (RECORDER, HEAD, OFFICER, tender_pw.AUDITOR, tender_pw.BOTH)
 INSTRUMENT = {"instrument_type": "Demand Bank Guarantee", "issuer": "KCB Bank Kenya", "instrument_reference": "KCB/TG/2099/4417"}
 ANSWERED_AT = "2027-05-19 10:00:00"
 
@@ -53,7 +57,7 @@ def _security_facts(tender: str) -> dict[str, Any]:
 	current = tenders_gateway.current_definition(tender) or {}
 	for section in current.get("definition", {}).get("sections") or []:
 		for group in section.get("groups") or []:
-			if group.get("rule_id") == security_matching.SECURITY_RULE:
+			if group.get("rule_id") in security_matching.SECURITY_RULES:
 				return group.get("published_facts") or {}
 	frappe.throw("The fixture Tender has no tender-security requirement.")
 
@@ -85,13 +89,16 @@ def _answer_security(bid: str, facts: dict[str, Any]) -> None:
 	})
 
 
-def reset_security_intake_fixture(*, commit: bool = True, answered: bool = True) -> dict[str, Any]:
+def reset_security_intake_fixture(*, commit: bool = True, answered: bool = True, assigned: bool = True) -> dict[str, Any]:
 	"""A published Tender whose one bid (Afya, David Ouma) has — when
 	`answered` — its tender-security instrument details saved, so a matching
-	physical original can be recorded blind by the Head of Procurement
-	Function."""
+	physical original can be recorded blind by the intake officer the Head of
+	Procurement Function assigns (when `assigned`)."""
 	state = tender_pw.reset_published_fixture(commit=False)
 	_wipe_journal()
+	from kentender_procurement.bid_submission.services import simulation
+
+	simulation.reset_controls()  # a world that ended with the opening boundary forced starts clean
 	facts = _security_facts(state["tender"])
 	bid = _bid(state["tender"])
 	if answered:
@@ -104,6 +111,10 @@ def reset_security_intake_fixture(*, commit: bool = True, answered: bool = True)
 			for flag, value in saved.items():
 				frappe.flags[flag] = value
 	frappe.set_user("Administrator")
+	if assigned:
+		from kentender_procurement.bid_submission.services import security_duty
+
+		security_duty.assign_intake_officer(tender_reference=state["tender_reference"], officer=RECORDER, user=HEAD)
 	if commit:
 		frappe.db.commit()
 	return {
@@ -111,6 +122,32 @@ def reset_security_intake_fixture(*, commit: bool = True, answered: bool = True)
 		"supplier_name": frappe.db.get_value("Bidder Arrangement", {"tender": state["tender"]}, "lead_legal_name") or "Afya Digital Supplies Limited",
 		"amount": str(facts["amount"]), "currency": str(facts["currency"]), "permitted_forms": list(facts.get("permitted_forms") or []), **INSTRUMENT,
 	}
+
+
+def cross_opening_boundary(*, crossed: bool = True) -> dict[str, Any]:
+	"""A browser world's seam: treat the Tender's opening as started (or not), so an
+	intake is matched to its bid only then (Project Owner, 10 Oct 2026)."""
+	from kentender_procurement.bid_submission.services import simulation
+
+	simulation.set_controls(opening_boundary_crossed=int(bool(crossed)))
+	frappe.db.commit()
+	return {"crossed": bool(crossed)}
+
+
+def assign_intake_duty(*, tender_reference: str, officer: str = "", user: str = "") -> dict[str, Any]:
+	"""The Head assigns the intake duty (a browser world's direct call, as the page makes it)."""
+	from kentender_procurement.bid_submission.services import security_duty
+
+	result = security_duty.assign_intake_officer(tender_reference=tender_reference, officer=officer or RECORDER, user=user or HEAD)
+	frappe.db.commit()
+	return result
+
+
+def stored_match_count(*, tender_reference: str) -> dict[str, int]:
+	"""How many intake-to-bid links are stored for the Tender (none before its opening starts)."""
+	from kentender_procurement.bid_submission.services import tenders_gateway
+
+	return {"count": frappe.db.count("Tender Security Intake Match", {"tender": tenders_gateway.tender_root(tender_reference).name})}  # a dict: `bench execute` prints nothing for a falsy 0
 
 
 def physical_receipt_status(*, tender_reference: str) -> dict[str, Any]:
@@ -297,8 +334,8 @@ def _submit(bid: str, signatory: str) -> str:
 
 
 def _record_original(bid: str) -> str:
-	"""Charles records the physical original of this bid's own instrument
-	(blind intake; the private match links it to the bid)."""
+	"""The intake officer records the physical original of this bid's own instrument
+	(blind intake; the private match links it to the bid only after the opening starts)."""
 	from kentender_procurement.bid_submission.services import bid_context, security_intake, tender_security
 
 	from frappe.utils import get_datetime
@@ -306,6 +343,10 @@ def _record_original(bid: str) -> str:
 	representative = SUPPLIERS["afya"]["representative"]
 	security = tender_security.response(bid_context.load(bid, actor=representative, organisation="", at=get_datetime(REVIEW_STEPS["intake"])))
 	reference = frappe.db.get_value("Bid Workspace", bid, "tender_reference")
+	from kentender_procurement.bid_submission.services import security_duty
+
+	if not security_duty.holds_duty(RECORDER, reference):
+		security_duty.assign_intake_officer(tender_reference=reference, officer=RECORDER, user=HEAD)
 	recorded = security_intake.record_physical_tender_security_receipt(
 		tender_reference=reference, instrument_type=security["security_type"], issuer=security["issuer"], instrument_reference=security["reference"],
 		amount=security["amount"], currency=security["currency"], received_at="2027-05-20 10:00:00", notes="", confirmed=True, idempotency_key=_key(), user=RECORDER,

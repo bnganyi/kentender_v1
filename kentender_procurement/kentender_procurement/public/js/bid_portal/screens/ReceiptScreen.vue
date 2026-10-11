@@ -8,7 +8,7 @@
 // Withdraw bid opens the withdrawal dialog; success opens its
 // acknowledgement.
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
-import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
+import BidGuidance from "../components/BidGuidance.vue";
 import CommonState from "../components/CommonState.vue";
 import WithdrawDialog from "../components/WithdrawDialog.vue";
 import { fixRoute } from "../composables/fixRoute.js";
@@ -98,7 +98,7 @@ onMounted(() => {
 			</div>
 		</div>
 
-		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
+		<BidGuidance :journey="data.journey" :answer="data.next_step" :reference="reference" :bid-reference="data.bid && data.bid.reference || ''" :organisation="route.query.organisation || ''" :support-href="data.support_href || ''" @fix="onFix" @reload="load" />
 
 		<div class="kt-region">
 			<h2>{{ __("Acknowledgement") }}</h2>
@@ -170,7 +170,7 @@ onMounted(() => {
 			</div>
 		</div>
 
-		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
+		<BidGuidance :journey="data.journey" :answer="data.next_step" :reference="reference" :bid-reference="data.bid && data.bid.reference || ''" :organisation="route.query.organisation || ''" :support-href="data.support_href || ''" @fix="onFix" @reload="load" />
 
 		<div class="kt-region">
 			<h2>{{ __("Receipt") }}</h2>

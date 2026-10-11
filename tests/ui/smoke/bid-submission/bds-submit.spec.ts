@@ -89,6 +89,17 @@ test.describe("BDS-DES-12 Submit bid", () => {
 		await page.getByRole("button", { name: "Check certificate" }).click();
 		await expect(page.getByTestId("bds-certificate-check")).toHaveText("A valid digital signature certificate is required before you can submit.");
 		await expect(page.getByTestId("bds-submit-decision")).toHaveCount(0);
+
+		// the same blocked next step is drawn on a task page, where the button works
+		// and the formal journey does not stand beside the task stepper
+		await page.goto(`/tenders/${world.tender_reference}/bid/requirements`, { waitUntil: "domcontentloaded" });
+		await waitForPortal(page);
+		await expect(page.getByTestId("bds-stepper-where")).toContainText("Step 3 of 5");
+		await expect(page.locator(".kt-journey")).toHaveCount(0);
+		await expect(page.locator(".kt-next-step-headline")).toContainText("Obtain a valid digital signature certificate");
+		await page.getByRole("button", { name: "Check certificate" }).click();
+		await expect(page.getByTestId("bds-certificate-check")).toHaveText("A valid digital signature certificate is required before you can submit.");
+
 		await page.setViewportSize({ width: 390, height: 844 });
 		await expectNoHorizontalOverflow(page);
 	});

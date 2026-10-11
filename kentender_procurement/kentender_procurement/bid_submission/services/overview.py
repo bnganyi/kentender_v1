@@ -53,6 +53,13 @@ def _date(value) -> str:
 	return labels.date_label(value) if value else ""
 
 
+def tender_security_how(published: dict[str, Any]) -> str:
+	"""What the Tender states about submitting its security and delivering an original ('' for a Tender that stated neither)."""
+	from kentender_procurement.bid_submission.services import tender_security
+
+	return tender_security.requirement_text(cstr(published.get("tender_security_method")), cstr(published.get("tender_security_original")))
+
+
 def _facts(published: dict[str, Any]) -> dict[str, Any]:
 	quantity = published.get("total_quantity") or {}
 	return {
@@ -60,6 +67,7 @@ def _facts(published: dict[str, Any]) -> dict[str, Any]:
 		"delivery_location": cstr(published.get("delivery_location")), "latest_delivery": _date(published.get("latest_delivery")),
 		"currency": cstr(published.get("currency")),
 		"tender_security": labels.money_label(published.get("tender_security_amount"), cstr(published.get("currency"))) if published.get("tender_security_amount") else "Not required",
+		"tender_security_how": tender_security_how(published),
 		"bid_validity": f"{int(published.get('validity_days') or 0)} days" if published.get("validity_days") else "",
 	}
 

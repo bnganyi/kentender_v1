@@ -43,6 +43,7 @@ from kentender_core.services.authorization import (
 )
 from kentender_core.services.authorization import derived_status as _derived
 from kentender_core.services.business_role_registry import (
+	ASSIGNMENT_ADMIN,
 	REGISTRY,
 	may_administer,
 	require_registered,
@@ -97,6 +98,20 @@ def require_assignment_administrator(business_role: str, actor: str | None = Non
 			"AUTH_RESPONSIBILITY_REQUIRED",
 			"You are not allowed to grant or revoke this responsibility.",
 		)
+	entry = require_registered(business_role)
+	if entry.allowed_assignment_admin != ASSIGNMENT_ADMIN:
+		# A duty assigned by its own office is assigned by someone who holds that
+		# office by assignment — not by Administrator, who holds every Frappe Role.
+		from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
+
+		if not any(
+			name in REGISTRY and authorise_record(user=principal, business_role=name, purpose=PURPOSE_COMMAND).allowed
+			for name in entry.allowed_assignment_admin
+		):
+			fail(
+				"AUTH_RESPONSIBILITY_REQUIRED",
+				"You are not allowed to grant or revoke this responsibility.",
+			)
 	return principal
 
 
@@ -110,7 +125,10 @@ def require_assignment_administrator_any(actor: str | None = None) -> str:
 	"""
 	principal = actor or frappe.session.user
 	roles = set(frappe.get_roles(principal))
-	if not any(may_administer(name, roles) for name in REGISTRY):
+	# A duty assigned by its own office (the Tender Security Intake Officer,
+	# assigned by the Head of Procurement Function) does not admit that office
+	# to the System setup administration surface.
+	if not any(may_administer(name, roles) for name, entry in REGISTRY.items() if entry.system_setup_assignable):
 		fail(
 			"AUTH_RESPONSIBILITY_REQUIRED",
 			"You are not allowed to administer KenTender responsibilities.",
@@ -129,6 +147,7 @@ def grant(
 	effective_to: str | None = None,
 	fixture_namespace: str = "",
 	actor: str | None = None,
+	scope_reference: str = "",
 ) -> dict[str, Any]:
 	"""Create one Enabled assignment, or return the identical existing one.
 
@@ -150,11 +169,21 @@ def grant(
 
 	if not entry.requires_organisation_unit:
 		organisation_unit = ""
+	scope_reference = (scope_reference or "").strip()
+	if entry.requires_scope_reference and not scope_reference:
+		fail("AUTH_SCOPE_REQUIRED", f"{business_role} is scoped to one Tender; name its reference.")
+	if scope_reference and not entry.requires_scope_reference:
+		fail("AUTH_CONFIGURATION_INVALID", f"{business_role} is not scoped to a Tender.")
+	_run_grant_guard(
+		business_role, user=user, principal=principal, scope_reference=scope_reference,
+		effective_from=effective_from, effective_to=effective_to,
+	)
 
 	existing = _matching_enabled(
 		user=user,
 		business_role=business_role,
 		organisation_unit=organisation_unit,
+		scope_reference=scope_reference,
 		effective_from=effective_from,
 		effective_to=effective_to,
 	)
@@ -186,6 +215,7 @@ def grant(
 			"user": user,
 			"business_role": business_role,
 			"organisation_unit": organisation_unit or None,
+			"scope_reference": scope_reference or None,
 			"appointment_type": appointment_type,
 			"authority_reference": authority_reference,
 			"effective_from": effective_from,
@@ -200,6 +230,19 @@ def grant(
 		doc.insert(ignore_permissions=True)
 	_sync_projection(user)
 	return {"assignment": doc.name, "created": True}
+
+
+def _run_grant_guard(business_role: str, **kwargs) -> None:
+	"""A responsibility's owning module may refuse a grant for a domain reason
+	(for example, a conflicting duty on the same Tender). Registered under
+	`kt_responsibility_grant_guards` as {business_role: dotted path}; the guard
+	returns `(error_code, message)` to refuse, or None."""
+	path = (frappe.get_hooks("kt_responsibility_grant_guards", {}) or {}).get(business_role)
+	if not path:
+		return
+	problem = frappe.get_attr(path[-1] if isinstance(path, (list, tuple)) else path)(**kwargs)
+	if problem:
+		fail(*problem)
 
 
 REASON_MIN = 10
@@ -417,6 +460,7 @@ def registry_options() -> list[dict[str, Any]]:
 			"owning_document": entry.owning_document,
 		}
 		for entry in sorted(REGISTRY.values(), key=lambda e: e.business_role)
+		if entry.system_setup_assignable
 	]
 
 
@@ -437,6 +481,7 @@ def _matching_enabled(
 	effective_from: str | None,
 	effective_to: str | None,
 	exclude: str = "",
+	scope_reference: str = "",
 ) -> dict[str, Any] | None:
 	"""The Enabled assignment for this exact tuple whose period overlaps, if any.
 
@@ -453,6 +498,7 @@ def _matching_enabled(
 		where user = %(user)s
 		  and business_role = %(business_role)s
 		  and coalesce(organisation_unit, '') = %(organisation_unit)s
+		  and coalesce(scope_reference, '') = %(scope_reference)s
 		  and status = %(status)s
 		for update
 		""",
@@ -460,6 +506,7 @@ def _matching_enabled(
 			"user": user,
 			"business_role": business_role,
 			"organisation_unit": organisation_unit or "",
+			"scope_reference": scope_reference or "",
 			"status": STATUS_ENABLED,
 		},
 		as_dict=True,
@@ -688,6 +735,7 @@ def list_user_responsibilities(
 			"user",
 			"business_role",
 			"organisation_unit",
+			"scope_reference",
 			"appointment_type",
 			"effective_from",
 			"effective_to",
@@ -729,7 +777,7 @@ def _register_row(row: dict[str, Any], row_status: str) -> dict[str, Any]:
 		"organisation_unit": unit,
 		"organisation_unit_label": _unit_label(unit),
 		# §13.4 — the Scope column shows the unit name, or `Site-wide`.
-		"scope_label": _unit_label(unit) or "Site-wide",
+		"scope_label": _unit_label(unit) or (f"Tender {row['scope_reference']}" if row.get("scope_reference") else "Site-wide"),
 		"coverage": _coverage_label(unit, len(descendants)),
 		"descendant_count": len(descendants),
 		"appointment_type": row.get("appointment_type") or APPOINTMENT_PERMANENT,

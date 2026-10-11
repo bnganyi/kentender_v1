@@ -34,6 +34,11 @@ test.describe("TPR-DES-03 Tender details", () => {
 		await page.locator('[data-testid="tnd-field-clarification_deadline"]').fill("2027-05-27T17:00");
 		await page.locator('[data-testid="tnd-field-submission_deadline"]').fill("2027-06-05T11:00");
 		await page.locator('[data-testid="tnd-field-tender_security_amount"]').fill("500000");
+		// neither choice has a default; "security required" never means "an original is required" by itself (10 Oct 2026)
+		await expect(page.locator('[data-testid="tnd-field-tender_security_method"]')).toHaveValue("");
+		await expect(page.locator('[data-testid="tnd-field-tender_security_original"]')).toHaveValue("");
+		await page.locator('[data-testid="tnd-field-tender_security_method"]').selectOption("Issuer supplies the instrument directly");
+		await page.locator('[data-testid="tnd-field-tender_security_original"]').selectOption("Not required");
 		await expect(page.locator('[data-testid="tnd-meeting-group"]')).toHaveCount(0);
 		await pick(page, "tnd-meeting-yes");
 		// the dependent group sits directly beneath its parent control (§10.4 item 5)
@@ -58,6 +63,8 @@ test.describe("TPR-DES-03 Tender details", () => {
 		await page.reload();
 		await expectReady(page, "details");
 		await expect(page.locator('[data-testid="tnd-field-tender_security_amount"]')).toHaveValue("500,000.00");
+		await expect(page.locator('[data-testid="tnd-field-tender_security_method"]')).toHaveValue("Issuer supplies the instrument directly");
+		await expect(page.locator('[data-testid="tnd-field-tender_security_original"]')).toHaveValue("Not required");
 		await expect(page.locator('[data-testid="tnd-field-meeting_venue"]')).toBeVisible();
 
 		await page.locator('[data-testid="tnd-open-drawer"]').click();

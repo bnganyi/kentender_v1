@@ -187,6 +187,9 @@ def published_tender(reference: str, *, at=None) -> dict[str, Any] | None:
 	locations = {i["delivery_location"] for i in items}
 	availability = _availability(row, at)
 	published_at = iso_datetime(row.published_at)
+	from kentender_procurement.tenders.services import security_statement
+
+	correction = security_statement.overlay(row.name)  # the auditable correction of a Tender published before it stated its security method
 	documents = []
 	for key, (_kind, label) in DOCUMENT_KEYS.items():
 		doc = _official_document(row, key)
@@ -210,6 +213,9 @@ def published_tender(reference: str, *, at=None) -> dict[str, Any] | None:
 		"latest_delivery": max((i["latest_delivery"] for i in items if i["latest_delivery"]), default=""),
 		"currency": cstr(effective["tender"]["currency"]),
 		"tender_security_amount": cstr(effective["tender"]["tender_security"]["amount"]),
+		# "" for a Tender published before the Tender stated them: never filled in on the Tender's behalf
+		"tender_security_method": cstr(effective["tender"]["tender_security"].get("submission_method") or correction.get("submission_method")),
+		"tender_security_original": cstr(effective["tender"]["tender_security"].get("original_delivery") or correction.get("original_delivery")),
 		"validity_days": int(effective["tender"]["validity_days"] or 0),
 		"published_at": published_at,
 		"clarification_deadline": iso_datetime(row.clarification_deadline) or cstr(base["tender"]["clarification_deadline"]),

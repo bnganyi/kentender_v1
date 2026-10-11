@@ -30,7 +30,6 @@
   "resolved_at",
   "submission_version",
   "predecessor_submission_version",
-  "simulation",
   "fixture_namespace"
  ],
  "fields": [
@@ -201,13 +200,6 @@
    "options": "Bid Submission Version"
   },
   {
-   "fieldname": "simulation",
-   "fieldtype": "Check",
-   "label": "Simulation",
-   "read_only": 1,
-   "default": "0"
-  },
-  {
    "fieldname": "fixture_namespace",
    "fieldtype": "Data",
    "label": "Fixture namespace",
@@ -222,20 +214,7 @@
  "module": "Bid Submission",
  "name": "Bid Submission Attempt",
  "owner": "Administrator",
- "permissions": [
-  {
-   "create": 0,
-   "delete": 0,
-   "email": 0,
-   "export": 0,
-   "print": 0,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 0,
-   "write": 0
-  }
- ],
+ "permissions": [],
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",

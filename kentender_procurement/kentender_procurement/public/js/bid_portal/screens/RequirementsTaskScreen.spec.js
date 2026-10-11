@@ -7,6 +7,7 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { nextTick, ref } from "vue";
 
 import { createCommandRunner, createScreenCache, createSequenceGuard } from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/runtime.js";
+import BidGuidance from "../components/BidGuidance.vue";
 import RequirementsTaskScreen from "./RequirementsTaskScreen.vue";
 import { requirementsTask } from "./requirements.fixtures.js";
 
@@ -53,6 +54,16 @@ describe("Requirements and supporting evidence", () => {
 		await flushPromises();
 		expect(stepped.get('[data-testid="bds-stepper-where"]').text()).toBe("Step 3 of 5");
 		expect(stepped.get('[data-testid="bds-requirements-save"]').text()).toBe("Save and continue to Company and declarations");
+	});
+
+	it("draws the formal journey only when the task stepper is not already saying where the bidder is", async () => {
+		const plain = mountWith(requirementsTask(), portalFor());
+		expect(plain.findComponent(BidGuidance).props("tracker")).toBe(true);
+		const task = requirementsTask();
+		task.step = { number: 3, of: 5, label: "Requirements and supporting evidence", previous: null, next: null, tasks: [] };
+		const stepped = mountWith(task, portalFor({ call: vi.fn(async () => task) }));
+		await flushPromises();
+		expect(stepped.findComponent(BidGuidance).props("tracker")).toBe(false);
 	});
 
 	it("keeps a way back to the top beside the region links, which stay in view while the page scrolls", async () => {

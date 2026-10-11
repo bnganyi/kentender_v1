@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import TaskDetails from "./TaskDetails.vue";
 
-const VALUES = { tender_title: "Supply and delivery of business laptops", issue_date: "2027-05-15", clarification_deadline: "2027-05-27 17:00:00", submission_deadline: "2027-06-05 11:00:00", tender_validity_days: 120, tender_security_amount: 500000, pre_tender_meeting: false };
+const VALUES = { tender_title: "Supply and delivery of business laptops", issue_date: "2027-05-15", clarification_deadline: "2027-05-27 17:00:00", submission_deadline: "2027-06-05 11:00:00", tender_validity_days: 120, tender_security_amount: 500000, tender_security_method: "Bidder uploads an electronic instrument", tender_security_original: "Required", pre_tender_meeting: false };
 
 describe("TaskDetails — TPR-DES-03", () => {
 	it("hydrates once per identity and builds the payload in the server's own forms", async () => {
@@ -22,6 +22,24 @@ describe("TaskDetails — TPR-DES-03", () => {
 		expect(payload.pre_tender_meeting).toBe(false);
 		expect(payload.meeting_mode).toBeUndefined();
 		expect(w.vm.isDirty()).toBe(true);
+	});
+
+	it("states how tender security may be submitted and whether an original is delivered, chosen explicitly (no default)", async () => {
+		const blank = mount(TaskDetails, { props: { values: { ...VALUES, tender_security_method: undefined, tender_security_original: undefined }, options: {}, identity: "TDR-1:9", errors: {} } });
+		expect(blank.find('[data-testid="tnd-field-tender_security_method"]').element.value).toBe("");
+		expect(blank.find('[data-testid="tnd-field-tender_security_original"]').element.value).toBe("");
+		expect(blank.vm.getPayload().tender_security_method).toBeUndefined(); // an unchosen value is never sent, so the server says it is missing
+		const w = mount(TaskDetails, { props: { values: VALUES, options: {}, identity: "TDR-1:8", errors: { tender_security_method: "Choose one of: Electronic." } } });
+		await w.find('[data-testid="tnd-field-tender_security_method"]').setValue("Paper instrument requiring an original");
+		// a paper instrument always needs its original: the choice follows the method
+		expect(w.find('[data-testid="tnd-field-tender_security_original"]').element.value).toBe("Required");
+		expect(w.vm.getPayload()).toMatchObject({ tender_security_method: "Paper instrument requiring an original", tender_security_original: "Required" });
+		await w.find('[data-testid="tnd-field-tender_security_method"]').setValue("Issuer supplies the instrument directly");
+		await w.find('[data-testid="tnd-field-tender_security_original"]').setValue("Not required");
+		expect(w.vm.getPayload()).toMatchObject({ tender_security_method: "Issuer supplies the instrument directly", tender_security_original: "Not required" });
+		expect(w.find('[data-testid="tnd-security-method-help"]').text()).toContain("bidders enter its details and upload nothing");
+		expect(w.find('[data-testid="tnd-error-tender_security_method"]').exists()).toBe(true);
+		expect(w.find('[data-testid="tnd-security-method-help"]').text()).toContain("does not by itself require a physical original");
 	});
 
 	it("shows the venue for a physical meeting and the joining information for an online one", async () => {

@@ -5,8 +5,9 @@
 
 One record answers one complete question: which business responsibility may
 this user exercise, for which organisational scope, and during what effective
-period. The site is exactly one Procuring Entity, so scope is either the whole
-site or one Organisation Unit subtree — no Procuring Entity dimension exists.
+period. The site is exactly one Procuring Entity, so scope is the whole site,
+one Organisation Unit subtree, or — for the tender-security intake duty alone —
+one Tender; no Procuring Entity dimension exists.
 
 This controller holds only the invariants that belong to the record itself.
 Overlap, exclusive office, the actor's own grant authority and the Frappe Role
@@ -37,6 +38,7 @@ IDENTITY_FIELDS = (
 	"user",
 	"business_role",
 	"organisation_unit",
+	"scope_reference",
 	"appointment_type",
 	"authority_reference",
 	"effective_from",
@@ -92,7 +94,17 @@ class UserResponsibilityAssignment(CommandWriteGuardMixin, Document):
 			)
 		if not entry.requires_organisation_unit and self.organisation_unit:
 			frappe.throw(
-				f"{self.business_role} is a site-wide responsibility and cannot name an Organisation Unit.",
+				f"{self.business_role} does not apply to a department and cannot name an Organisation Unit.",
+				title="Invalid responsibility scope",
+			)
+		if entry.requires_scope_reference and not (self.scope_reference or "").strip():
+			frappe.throw(
+				f"{self.business_role} is scoped to one Tender, so the Tender reference must be named.",
+				title="Incomplete responsibility scope",
+			)
+		if not entry.requires_scope_reference and self.scope_reference:
+			frappe.throw(
+				f"{self.business_role} is not scoped to a Tender and cannot name a Tender reference.",
 				title="Invalid responsibility scope",
 			)
 

@@ -132,7 +132,7 @@ def _submit_bid(*, bid_reference: str, signature_ref: str, confirmed, expected_r
 		"evidence_set_digest": built.evidence_set_digest, "signed_by": actor, "signatory_assignment": signatory["assignment_id"], "signature_ref": cstr(signature_ref),
 		"signature_evidence_json": json.dumps({**verified["evidence"], "signed_at": str(verified["signed_at"])}, sort_keys=True, default=str),
 		"summary_json": json.dumps({**built.summary, "tender_title": _title(ctx), "signatory_name": signatory["full_name"]}, sort_keys=True),
-		"received_at": at, "status": "Dispatching", "simulation": int(bool(verified["evidence"].get("simulation"))),
+		"received_at": at, "status": "Dispatching",
 	}))
 	records.emit(
 		"BidSubmissionAttemptRecorded", tender=ctx.workspace.tender, arrangement=ctx.arrangement.name, workspace=ctx.workspace.name, organisation=ctx.workspace.lead_organisation, actor=actor, at=at,
@@ -195,7 +195,7 @@ def _accept(attempt, answer: dict[str, Any], at) -> None:
 		"bidder_name": cstr(arrangement.joint_venture_name) or cstr(arrangement.lead_legal_name), "submission_version": version_id, "version_number": number,
 		"submitted_by": attempt.signed_by, "submitted_by_name": summary.get("signatory_name") or attempt.signed_by, "received_at": attempt.received_at, "accepted_at": accepted_at,
 		"deadline_at": frappe.db.get_value("Tender", workspace.tender, "submission_deadline"), "summary_json": json.dumps({k: summary.get(k, "") for k in ("bid_total", "bid_total_words", "offered_item", "quantity", "delivery_date")}, sort_keys=True),
-		"predecessor_receipt": predecessor.receipt if predecessor else None, "simulation": attempt.simulation,
+		"predecessor_receipt": predecessor.receipt if predecessor else None,
 	}))
 	records.insert(frappe.get_doc({
 		"doctype": VERSION, "bid_submission_version_id": version_id, "version_number": number, "bid_workspace": workspace.name, "tender": workspace.tender,
@@ -205,7 +205,7 @@ def _accept(attempt, answer: dict[str, Any], at) -> None:
 		"signed_by": attempt.signed_by, "signatory_assignment": attempt.signatory_assignment, "signed_at": get_datetime(evidence.get("signed_at")),
 		"signature_certificate_ref": cstr(evidence.get("certificate_ref")), "signature_verification_evidence": attempt.signature_evidence_json, "received_at": attempt.received_at,
 		"accepted_at": accepted_at, "status": "Submitted", "status_since": accepted_at, "tender_box_envelope": envelope.name, "receipt": receipt.name, "attempt": attempt.name,
-		"predecessor_submission_version": predecessor.name if predecessor else None, "simulation": attempt.simulation,
+		"predecessor_submission_version": predecessor.name if predecessor else None,
 	}))
 	if predecessor:
 		if predecessor.status == "Submitted":

@@ -4,7 +4,7 @@ import { expect, Page, test } from "@playwright/test";
 
 import { login, loginAsAdministrator } from "../../helpers/auth";
 import { collectPortalConsoleErrors, expectNoFrappeDialog, expectNoHorizontalOverflow, loginToPortal, waitForPortal } from "../../helpers/portal";
-import { HOPF, PASSWORD as DESK_PASSWORD } from "../tenders/helpers";
+import { OFFICER, PASSWORD as DESK_PASSWORD } from "../tenders/helpers";
 import { bdsFixture, restoreBdsWorld } from "./bdsWorld";
 
 /**
@@ -14,12 +14,13 @@ import { bdsFixture, restoreBdsWorld } from "./bdsWorld";
  * test clock), in one worker so it reads as one evidence trail:
  *
  * Mary's Account is Active with David assigned; David starts the bid, asks a
- * question, completes the tasks and acknowledges the addendum; Charles
- * records the physical original blind in Desk; David reviews without Submit;
+ * question, completes the tasks and acknowledges the addendum; the intake
+ * officer (assigned by the Head of Procurement Function; 10 Oct 2026) records
+ * the physical original blind in Desk; David reviews without Submit;
  * Mary reviews, signs and submits and reads her receipt; Peter is told the
  * bid does not exist; the period closes and the sealed box goes to Bid
- * Opening with no bid content; the Administrator's technical read finds the
- * bid's metadata only. A second world proves Mary's withdrawal.
+ * Opening with no bid content; the Administrator's technical search finds
+ * no bid record at all (10 Oct 2026). A second world proves Mary's withdrawal.
  *
  * Task entry itself is proven page by page by the slice specs
  * (company, requirements, price); here the fixture completes the tasks with
@@ -113,10 +114,11 @@ test.describe("BDS-CHG-001 v0.8 — persona release pass", () => {
 		await capture(page, "company");
 		await signOut(page);
 
-		// 10 Jun 10:00 — Charles records the physical original blind, in Desk.
+		// 10 Jun 10:00 — the assigned intake officer records the physical original blind, in Desk.
 		const security = bdsFixture<Record<string, string>>("world_security", { bid_reference: reference });
+		bdsFixture("assign_intake_duty", { tender_reference: world.tender_reference });
 		bdsFixture("set_instant", { instant: "2027-06-10 10:00:00" });
-		await login(page, HOPF, DESK_PASSWORD);
+		await login(page, OFFICER, DESK_PASSWORD);
 		await page.goto("/desk/tender-security-receipts", { waitUntil: "domcontentloaded" });
 		await expect(page.getByTestId("tsr-shell")).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
 		await page.getByTestId("tsr-record").click();
@@ -141,7 +143,8 @@ test.describe("BDS-CHG-001 v0.8 — persona release pass", () => {
 		bdsFixture("set_instant", { instant: "2027-06-10 14:15:00" });
 		await loginToPortal(page, world.representative, world.password, `${base}/bid/review`);
 		await expect(page.getByTestId("bds-review-result")).toHaveText("All required bid information is complete.");
-		await expect(page.getByTestId("bds-review-security")).toContainText("recorded as received on 10 Jun 2027, 09:55 EAT");
+		// the supplier reads its own actual status: the intake officer recorded the original, so it reads Original received before any opening starts
+		await expect(page.getByTestId("bds-review-security")).toContainText("Original received: receipt");
 		await expect(page.getByText("Submit bid", { exact: true })).toHaveCount(0);
 		await signOut(page);
 
@@ -178,10 +181,10 @@ test.describe("BDS-CHG-001 v0.8 — persona release pass", () => {
 		// 12 Jun 11:00 — the period ends; the sealed box goes to Bid Opening with no bid content.
 		const closed = bdsFixture<{ handoff: string; envelopes: number; payload_text: string }>("close_world", { tender_reference: world.tender_reference });
 		expect(closed.envelopes).toBe(1);
-		// no bid content (its answers and prices); the physical-intake inventory
-		// Charles recorded is carried by design (owner decision OD-H)
-		for (const content of ["ApexBook", "160000", "6400000", "Seeded answer"]) expect(closed.payload_text, `the hand-off carries "${content}"`).not.toContain(content);
-		expect(closed.payload_text).toContain('"intakes"');
+		// no bid content (its answers and prices) and, since 10 Oct 2026, no security intake: the intake facts
+		// and their match to a bid are released only after the opening boundary is crossed
+		for (const content of ["ApexBook", "160000", "6400000", "Seeded answer", security.reference]) expect(closed.payload_text, `the hand-off carries "${content}"`).not.toContain(content);
+		expect(closed.payload_text).toMatch(/"intakes": \[\]/);
 		await loginToPortal(page, world.signatory, world.password, `${base}/bid/receipt/${receipt}`);
 		await expect(page.getByTestId("bds-receipt-sentence")).toContainText("Submission changes closed on ");
 		await expect(page.getByTestId("bds-receipt-actions").locator(".btn")).toHaveText(["Print receipt"]);
@@ -190,13 +193,13 @@ test.describe("BDS-CHG-001 v0.8 — persona release pass", () => {
 		expect(errors.filter((e) => !/404 \(Not Found\)/.test(e)), errors.join(" | ")).toEqual([]);
 		await signOut(page);
 
-		// The Administrator's technical read finds the bid's metadata, never its content.
+		// The Administrator's technical search finds no bid record: existence, count, identity and receipt are not a technical account's to read.
 		await loginAsAdministrator(page);
 		await page.goto("/app/technical-search", { waitUntil: "domcontentloaded" });
 		await page.getByTestId("kt-ts-input").fill(reference);
 		await page.getByTestId("kt-ts-search").click();
-		const row = page.getByTestId("kt-ts-row").first();
-		await expect(row).toContainText(reference, { timeout: 20_000 });
+		await expect(page.getByTestId("kt-ts-row")).toHaveCount(0, { timeout: 20_000 });
+		await expect(page.locator("body")).not.toContainText(reference);
 		await expect(page.locator("body")).not.toContainText("ApexBook");
 	});
 

@@ -57,6 +57,10 @@ NAMESPACE = bds_canonical.NAMESPACE
 DAVID = bds_canonical.DAVID
 MARY = "mary.wanjiku@afyadigital.example"
 CHARLES = "charles.mutiso@moh.example.test"
+# Project Owner, 10 Oct 2026: tender-security intake is an explicit, Tender-scoped duty that Charles (Head of
+# Procurement Function) assigns to an existing officer who sits on no opening or evaluation. Mercy Kilonzo
+# (Procurement Planner) is that officer in the demonstration world; no new persona is created for it.
+MERCY = "mercy.kilonzo@moh.example.test"
 CLOCK = {
 	"fill": "2027-05-20 10:10:00",
 	"acknowledge": "2027-06-01 12:10:00",
@@ -255,7 +259,7 @@ def fixture_answers(
 	from kentender_procurement.bid_submission.services import security_matching
 
 	for group in ctx.model.groups_of("company"):
-		if group.rule_id != security_matching.SECURITY_RULE:
+		if group.rule_id not in security_matching.SECURITY_RULES:
 			continue
 		facts = group.published_facts or {}
 		values = {**security, "instrument_amount": security_amount or cstr(facts.get("amount")), "bank_guarantee_valid_until": cstr(facts.get("bank_guarantee_expiry_date"))}
@@ -306,14 +310,18 @@ def _record_original(tender_reference: str, bid: str, *, actor: str = DAVID, at:
 
 	from kentender_procurement.bid_submission.services import bid_context, security_intake, tender_security
 
+	from kentender_procurement.bid_submission.services import security_duty
+
 	with _at(at):
 		security = tender_security.response(bid_context.load(bid, actor=actor, organisation="", at=get_datetime(at)))
+		if not security_duty.holds_duty(MERCY, tender_reference):
+			security_duty.assign_intake_officer(tender_reference=tender_reference, officer=MERCY, user=CHARLES)  # the Head assigns; the Head sees no intake
 		recorded = security_intake.record_physical_tender_security_receipt(
 			tender_reference=tender_reference, instrument_type=security["security_type"], issuer=security["issuer"], instrument_reference=security["reference"],
-			amount=security["amount"], currency=security["currency"], received_at=at, notes="", confirmed=True, idempotency_key=_key("intake"), user=CHARLES,
+			amount=security["amount"], currency=security["currency"], received_at=at, notes="", confirmed=True, idempotency_key=_key("intake"), user=MERCY,
 		)
 	if not recorded.get("ok"):
-		frappe.throw(f"Charles could not record the canonical physical original: {recorded}")
+		frappe.throw(f"Mercy could not record the canonical physical original: {recorded}")
 	return recorded["intake_reference"]
 
 
@@ -572,16 +580,28 @@ def validate_bid_submission_seed() -> list[dict[str, Any]]:
 	check(ws.status == "Submitted", f"the bid is Submitted (got {ws.status!r})")
 	version = frappe.db.get_value("Bid Submission Version", ws.current_submission_version, ["version_number", "status", "receipt"], as_dict=True) if ws.current_submission_version else None
 	check(bool(version) and int(version.version_number) == 1 and version.status == "Submitted", "Submitted bid Version 1 is current")
-	receipt = frappe.db.get_value("Bid Receipt", {"receipt_reference": version.receipt}, ["received_at", "accepted_at", "submitted_by", "simulation"], as_dict=True) if version else None
+	receipt = frappe.db.get_value("Bid Receipt", {"receipt_reference": version.receipt}, ["received_at", "accepted_at", "submitted_by"], as_dict=True) if version else None
 	check(bool(receipt) and cstr(receipt.received_at) == "2027-06-10 14:31:58", "received by the tender-box service at 10 Jun 2027, 14:31:58 EAT")
 	check(bool(receipt) and cstr(receipt.accepted_at) == "2027-06-10 14:32:01", "accepted into the tender box at 10 Jun 2027, 14:32:01 EAT")
 	check(bool(receipt) and receipt.submitted_by == MARY, "Mary Wanjiku submitted it")
-	check(bool(receipt) and int(receipt.simulation or 0) == 1, "the receipt is labelled simulation")
 	acknowledgement = frappe.db.get_value("Bid Draft Change", {"bid_workspace": bid, "actor": DAVID, "changed_at": CLOCK["acknowledge"]}, "name")
 	check(bool(acknowledgement), "David changed the Draft at 1 Jun 2027, 12:10 EAT (the addendum acknowledgement)")
-	intake = frappe.db.get_value("Tender Security Intake", {"recorded_by": CHARLES, "received_at": CLOCK["intake"]}, ["name", "deadline_class"], as_dict=True)
-	check(bool(intake), "Charles recorded the physical original at 10 Jun 2027, 10:00 EAT")
-	check(bool(intake) and bool(frappe.db.exists("Tender Security Intake Match", {"intake": intake.name, "bid_workspace": bid})), "the intake privately matches the bid")
+	from kentender_procurement.bid_submission.services import security_duty
+
+	intake = frappe.db.get_value("Tender Security Intake", {"recorded_by": MERCY, "received_at": CLOCK["intake"]}, ["name", "deadline_class"], as_dict=True)
+	check(bool(intake), "Mercy Kilonzo, assigned the intake duty by Charles Mutiso, recorded the physical original at 10 Jun 2027, 10:00 EAT")
+	check(not frappe.db.exists("Tender Security Intake", {"tender": tender, "recorded_by": CHARLES}), "Charles, who assigns the duty, recorded no intake")
+	check(security_duty.holds_duty(MERCY, frappe.db.get_value("Tender", tender, "tender_reference")), "Mercy holds the intake duty for the canonical Tender, assigned by Charles")
+	check(not security_duty.participants(tender).get(MERCY), "Mercy sits on no opening or evaluation of the canonical Tender")
+	check(not frappe.db.count("Tender Security Duty Conflict", {"tender": tender}), "no intake duty conflict is flagged on the canonical Tender")
+	check(not frappe.db.exists("Tender Security Intake Match", {"tender": tender}), "no intake is matched to a bid before the opening starts")
+	from kentender_procurement.bid_submission.services import security_matching
+	from kentender_procurement.tenders.services import bid_definition
+
+	current = bid_definition.current(tender)
+	facts = next((g.get("published_facts") or {} for sec in (current or {}).get("definition", {}).get("sections", []) for g in sec["groups"] if g["rule_id"] == security_matching.SECURITY_RULE), {})
+	check((facts.get("submission_method"), facts.get("original_delivery")) == ("Bidder uploads an electronic instrument", "Required"), "the canonical Tender states how its security may be submitted (the bidder uploads an electronic instrument) and that an original is delivered (Required)")
+	check(bool(security_matching.receipt_for(bid)), "before the opening starts the supplier reads its own recorded original as Original received, with no stored link")
 	for b in BIDDERS:
 		name = b["facts"]["legal_name"]
 		other = bidder_bid(tender, b)
@@ -593,9 +613,8 @@ def validate_bid_submission_seed() -> list[dict[str, Any]]:
 		rec = frappe.db.get_value("Bid Receipt", {"bid_workspace": other}, ["received_at", "submitted_by"], as_dict=True)
 		check(bool(rec) and cstr(rec.received_at) == b["clock"]["submit"] and rec.submitted_by == b["signatory"],
 			f"{b['signatory_name']} submitted it at {b['clock']['submit']}")
-		match = frappe.db.get_value("Tender Security Intake", {"recorded_by": CHARLES, "received_at": b["clock"]["intake"]}, "name")
-		check(bool(match) and bool(frappe.db.exists("Tender Security Intake Match", {"intake": match, "bid_workspace": other})),
-			f"Charles's physical original for {name} privately matches its bid")
+		match = frappe.db.get_value("Tender Security Intake", {"recorded_by": MERCY, "received_at": b["clock"]["intake"]}, "name")
+		check(bool(match), f"Mercy recorded {name}'s physical original (not yet matched to any bid)")
 	close = frappe.db.get_value("Bid Submission Close", {"tender": tender}, ["name", "bid_opening_handoff", "envelopes_sealed"], as_dict=True)
 	check(bool(close), "Bid Submission closed at the deadline")
 	check(bool(close) and int(close.envelopes_sealed or 0) == 1 + len(BIDDERS), f"{1 + len(BIDDERS)} sealed envelopes were handed over")

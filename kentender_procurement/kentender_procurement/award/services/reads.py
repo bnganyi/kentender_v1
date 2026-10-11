@@ -35,7 +35,7 @@ def workspace(*, user: str) -> dict[str, Any]:
 		return {"ok": True, "tasks": [], "forbidden": True}
 	rows = [{"award": t["award"], "tender_title": t["tender_title"], "tender_reference": t["tender_reference"], "task": t["task"], "holder": t["holder"]}
 		for t in tasks.all_for_user(user)]
-	return {"ok": True, "tasks": rows, "test_environment": simulation.TEST_LABEL if simulation.enabled() else ""}
+	return {"ok": True, "tasks": rows}
 
 
 def _report(doc) -> dict[str, Any]:
@@ -66,7 +66,7 @@ def _opinion(o) -> dict[str, Any] | None:
 		return None
 	return {"id": o.name, "label": f"Professional opinion {o.version}", "version": o.version, "state": o.state, "conclusion": o.conclusion, "reason": o.reason,
 		"author": people.full_name(o.author), "signed": f"Signed by {people.full_name(o.author)}, {clock.when(o.signed_at)}" if o.signed_at else "",
-		"proof_label": o.proof_label if simulation.enabled() else "", "signing_outcome": o.signing_outcome, "cycle": o.cycle}
+		"signing_outcome": o.signing_outcome, "cycle": o.cycle}
 
 
 def _decision(d) -> dict[str, Any] | None:
@@ -217,7 +217,6 @@ def record(*, award: str, user: str) -> dict[str, Any]:
 		"cycle": {"number": c.number, "awaiting_report": bool(c.awaiting_report), "stage": c.stage, "outcome": c.outcome, "predecessor": c.predecessor,
 			"authorising": _decision(frappe.get_doc(state.DECISION, c.authorising_decision)) if c.authorising_decision else None},
 		"decision_status": doc.decision_status, "notification_status": doc.notification_status, "source_kind": doc.source_kind,
-		"test_environment": simulation.TEST_LABEL if simulation.enabled() else "",
 		"guidance": {"answer": next_steps.answer(doc, user), "journey": next_steps.journey(doc)},
 		"outstanding": next_steps.outstanding(doc), "report": _report(doc),
 		"opinion": {"working": _opinion(working), "signed": _opinion(signed), "all": [_opinion(o) for o in state.opinions(doc)]},

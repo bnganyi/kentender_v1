@@ -6,8 +6,10 @@ from __future__ import annotations
 import frappe
 from frappe.model.document import Document
 
+from kentender_procurement.bid_submission.services.sealed import SealedRecordMixin
 
-class OpeningRegisterRequest(Document):
+
+class OpeningRegisterRequest(SealedRecordMixin, Document):
 	def validate(self) -> None:
 		# BOP-CHG-001 v0.10 plan D2 — written only by the Bid Opening commands
 		# (`flags.kt_bop_command`), never by a Desk save or script.
