@@ -44,7 +44,7 @@ class TestCompleteCompanyTask(SubmissionCase):
 		notice = view["contact"]["notice"]
 		self.assertIn(notice["current"], [o["contact_id"] for o in notice["options"]])  # verified Account emails only
 		security = view["tender_security"]
-		self.assertEqual((security["entered"], security["physical"]["tone"], security["physical"]["title"]), (True, "warning", "Physical original not yet recorded"))
+		self.assertEqual((security["entered"], security["physical"]["tone"], security["physical"]["title"]), (True, "warning", "Original receipt not yet recorded"))
 		self.assertIn("You may submit electronically, but failure to deliver the original before closing may disqualify the bid.", security["physical"]["text"])
 		self.assertEqual(view["signatory"]["name"], "Mary Wanjiku")
 		self.assertEqual(view["signatory"]["certificate"]["status"], "Ready")

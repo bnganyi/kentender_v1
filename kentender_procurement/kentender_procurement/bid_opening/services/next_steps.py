@@ -28,6 +28,18 @@ def _ao_names() -> list[str]:
 	return [people.full_name(u) for u in people.accounting_officers()]
 
 
+def someone(names: list[str], role: str) -> str:
+	"""Who a wait is on, in one wording for every surface that states it (this module's pages, the Tender page,
+	Home): up to two names, otherwise the responsibility, never a long list of people."""
+	if names and len(names) <= 2:
+		return " or ".join(names)
+	return f"{'an' if role[:1] in 'AEIOU' else 'a'} {role}"
+
+
+def _ao_phrase(names: list[str]) -> str:
+	return someone(names, people.ACCOUNTING_OFFICER) if names else "the Accounting Officer"
+
+
 def _timed_close(doc) -> dict[str, Any]:
 	return ns.answer(ns.KIND_SCHEDULED, headline=f"Submissions close automatically at {labels.when(doc.effective_deadline)}.", holder=ns.holder(SYSTEM), stage="open")
 
@@ -114,7 +126,7 @@ def _ceremony(doc, user: str, member, ao: bool) -> list[dict[str, Any] | None]:
 	chair = appointment.chair(doc.name)
 	recorder = appointment.recorder(doc.name)
 	ao_names = _ao_names()
-	ao_display = ", ".join(ao_names) or "the Accounting Officer"
+	ao_display = _ao_phrase(ao_names)
 	if doc.state == "Opening":
 		from kentender_procurement.bid_opening.services import session
 
@@ -268,13 +280,27 @@ def answer_for(doc, user: str) -> dict[str, Any]:
 			candidates.append(_member_before_start(doc, member, now))
 		if not appointment.current(doc.name) and not ao and (people.holds(user, people.HEAD_OF_PROCUREMENT) or technical):
 			names = _ao_names()
-			candidates.append(ns.answer(ns.KIND_WAITING, headline=f"Waiting for {', '.join(names) or 'the Accounting Officer'} to appoint the opening committee",
+			candidates.append(ns.answer(ns.KIND_WAITING, headline=f"Waiting for {_ao_phrase(names)} to appoint the opening committee",
 				stage="prepare", holder=ns.holder(people.ACCOUNTING_OFFICER, names)))
 	elif doc.state in ("Opening", "Interrupted", "Readout complete", "Awaiting attestations", "Opening complete"):
 		candidates += _ceremony(doc, user, member, ao)
 	result = ns.choose(*candidates)
 	reader = ns.not_involved(result.get("stage", ""))
 	return ns.for_viewer(result, technical=technical, reader=reader)
+
+
+def tender_page_step(doc, user: str) -> dict[str, Any] | None:
+	"""The opening's own answer for this reader, as the closed Tender page shows it: the same wording, holder and
+	kind as `answer_for`, and for a turn one primary button into the opening record (the page owns every command).
+	None when the reader has no step, so the Tender keeps its own status."""
+	result = answer_for(doc, user)
+	if result["kind"] == ns.KIND_NOT_INVOLVED or not result["headline"]:
+		return None
+	if result["kind"] in ns.TURN_KINDS:
+		responsibility = people.ACCOUNTING_OFFICER if people.holds(user, people.ACCOUNTING_OFFICER) else "Opening committee"
+		result = {**result, "primary_action": "", "fixes": [ns.fix("Open opening record", responsibility=responsibility, kind=ns.FIX_ROUTE, fix_id="open_opening_record",
+			target=["tenders", doc.tender_reference, "opening"], primary=True)]}
+	return result
 
 
 def journey_for(doc) -> dict[str, Any]:

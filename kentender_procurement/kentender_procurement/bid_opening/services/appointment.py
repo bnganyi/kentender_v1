@@ -88,6 +88,15 @@ def validate(tender: str, members: list[dict[str, Any]]) -> dict[str, Any] | Non
 	incomplete = field_errors or sum(r in CHAIR_ROLES for r in roles) != 1 or sum(r in RECORDER_ROLES for r in roles) != 1
 	processing = opening_seam.processing_actors(tender)
 	independent = [cstr(r["user"]) for r in members if r.get("committee_role") == "Independent member"]
+	# Project Owner, 10 Oct 2026: tender-security intake and opening duties exclude each other on the same Tender
+	from kentender_procurement.bid_submission.services import security_duty
+
+	for row in members:
+		user = cstr(row.get("user"))
+		blocked = security_duty.committee_blocker(tender, user, "the opening committee", "Opening committee") if user else None
+		if blocked:
+			field_errors[user] = blocked
+			incomplete = True
 	# BOP-A17 both ways: someone already appointed to evaluate this Tender cannot be its independent opening member (AUD-EVL-013)
 	evaluating = _evaluation_members(tender) if independent else set()
 	# Board a2: a draft with no independent member is told that first; "at
@@ -167,12 +176,14 @@ def candidates(tender: str) -> list[dict[str, Any]]:
 	internal people holding an active KenTender responsibility, with their
 	designation and whether they processed this Tender (so cannot be the
 	independent member). Holding a responsibility is not an appointment."""
+	from kentender_procurement.bid_submission.services import security_duty
+
 	processing = opening_seam.processing_actors(tender) | _evaluation_members(tender)  # neither can be the independent member
 	users = frappe.get_all("User Responsibility Assignment", filters={"status": "Enabled"}, pluck="user", distinct=True)
 	out = []
 	for user in sorted(set(users)):
 		eligible, designation = people.eligibility(user)
-		if eligible:
+		if eligible and security_duty.committee_blocker(tender, user, "the opening committee", "Opening committee") is None:
 			out.append({"user": user, "full_name": people.full_name(user), "designation": designation, "involved": user in processing})
 	return sorted(out, key=lambda r: r["full_name"])
 

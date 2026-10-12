@@ -17,7 +17,7 @@ import frappe
 
 from kentender_core.services import next_step as ns
 from kentender_procurement.bid_opening.services import (
-	cancellation, ceremony, finish, incidents, interventions, my_work_provider, presence, reads, renders, simulation,
+	cancellation, ceremony, finish, incidents, interventions, my_work_provider, next_steps, presence, reads, renders, simulation,
 )
 from kentender_procurement.bid_opening.tests.support import AO, AUDITOR, CHAIR, INDEPENDENT, MEMBER, OUTSIDER, SUPPORT, OpeningCase
 from kentender_procurement.bid_submission.services import simulation as bds_simulation
@@ -217,7 +217,8 @@ class TestPauses(CeremonyCase):
 		wait = self.next_step(CHAIR)
 		from kentender_procurement.bid_opening.services import people
 
-		officers = ", ".join(people.full_name(u) for u in people.accounting_officers())
+		# who the wait is on follows the one rule: up to two names, otherwise the responsibility (next_steps.someone)
+		officers = next_steps.someone([people.full_name(u) for u in people.accounting_officers()], people.ACCOUNTING_OFFICER)
 		self.assertEqual((wait["kind"], wait["headline"]), (ns.KIND_WAITING, f"Waiting for Test Independent Member to rejoin or for {officers} to appoint a replacement"))
 		self.assertTrue(wait["sentence"].startswith("Opening is paused because Test Independent Member is not present."))
 		self.assertIn(f"Appoint replacement for {self.reference}", [r["title"] for r in my_work_provider.my_work_rows(AO)["assigned"]])

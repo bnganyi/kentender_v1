@@ -255,3 +255,15 @@ Owner decisions of 2 October 2026 (change request `07_std_configuration/KenTende
 | 122 | Discounts | **Deferred to release 1.5** | Structured discounts need legal confirmation of ITT 13.4 "methodology" and of "including" (ITT 13.3) against "excluding" (item (e)), and change Opening, Evaluation and Award. Release 1.4 keeps the two text fields. |
 | 123 | Release identity and change report | Evidence | `release_id` `stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01`; `05_review/preceding_release.json` is the release 1.3 snapshot; the change report compares with release 1.3. Release 1.3 is frozen as test vectors (`std_templates/tests/vectors/release_1_3/`). |
 
+## Release 1.5 — tender-security evidence follows the Tender's submission method (STD-TPL-001 v0.17) (2026-10-11)
+
+Owner decisions of 10 October 2026 (quoted in STD-TPL-001 v0.17 §18.9): proof upload becomes conditional on the Tender's submission method; the release reaches new Tenders and unpublished Drafts only by explicit update; a pending issuer response is never a submission blocker.
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 124 | Applicability rules `AP-TENDER-SECURITY-UPLOAD` and `AP-TENDER-SECURITY-ISSUER-SUPPLIED`; response rule `RR-TENDER-SECURITY-ISSUER` (no attachment) | **For review — needs STD-TPL-001 v0.17** | Named rules only; no renderer capability change (renderer 1.2.0). `AP-TENDER-SECURITY-REQUIRED` stays in the compiler for released versions. Closes item TPL16-CHG-003. |
+| 125 | Mapping `DM-TENDER-SECURITY-ISSUER` and its evaluation entries | **For review — new wording** | Result rule “Pass when the issuer confirms a permitted instrument for the published amount and currency, valid to the published expiry date; otherwise fail.” Evaluation rules copy the upload group's, without the attachment rule; entries that name releases gain 1.5. |
+| 126 | Tender Data Sheet ITT 18.1 sentences by method | **For review — new wording** | Issuer-supplied, paper and upload-with-original sentences are new text in the Tender-specific data sheet; the official ITT text is unchanged. |
+| 127 | A fourth method, **No security required** | **Owner decision needed** | Supported at response level (neither group is generated). Not offered by Tenders: the issued documents state a Tender Security is required (ITT 18.2) and the insertion-point register fixes the treatment to 'Tender Security'. Needs an approved document variant. |
+| 128 | Release identity and change report | Evidence | `release_id` `stdr-19da524c-85d1-4fdb-8dee-81860bd68c67`; `05_review/preceding_release.json` is the release 1.4 snapshot and the change report compares with release 1.4. Release 1.4 stays frozen as test vectors; release 1.5's vectors are frozen when its successor is built. |
+

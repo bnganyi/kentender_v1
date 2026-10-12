@@ -22,7 +22,6 @@
   "deadline_at",
   "summary_json",
   "predecessor_receipt",
-  "simulation",
   "fixture_namespace"
  ],
  "fields": [
@@ -135,13 +134,6 @@
    "label": "Predecessor receipt",
    "read_only": 1,
    "options": "Bid Receipt"
-  },
-  {
-   "fieldname": "simulation",
-   "fieldtype": "Check",
-   "label": "Simulation",
-   "read_only": 1,
-   "default": "0"
   },
   {
    "fieldname": "fixture_namespace",

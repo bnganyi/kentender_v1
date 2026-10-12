@@ -110,6 +110,17 @@ def label(ctx: BidContext, field: Field) -> str:
 	return text
 
 
+def blocker_label(ctx: BidContext, field: Field) -> str:
+	"""A field's label for a list of what blocks the bid: with several goods lines, the line it belongs to
+	(BDS-CHG-001 v0.12 §4.4.9), since each line has a field of the same name."""
+	text = label(ctx, field)
+	if field.group.composition_id != "COMP-GOODS-OFFER":
+		return text
+	lines = [g for g in ctx.model.groups_of("requirements") if g.composition_id == "COMP-GOODS-OFFER"]
+	description = cstr((field.group.published_facts or {}).get("description"))
+	return f"{description}: {text}" if len(lines) > 1 and description else text
+
+
 def _options(field: Field) -> list[str] | None:
 	params = field.validation_parameters
 	if field.kind == "yes_no":

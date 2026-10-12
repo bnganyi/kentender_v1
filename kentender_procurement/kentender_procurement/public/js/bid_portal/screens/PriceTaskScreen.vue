@@ -6,13 +6,14 @@
 // here and no total is entered. Save and continue saves the changed prices,
 // then opens the review; until every line is priced it says what is missing.
 import { computed, inject, onMounted, onUnmounted, reactive, ref, watch } from "vue";
-import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
+import BidGuidance from "../components/BidGuidance.vue";
 import CommonState from "../components/CommonState.vue";
 import NotifySignatory from "../components/NotifySignatory.vue";
 import TaskStepper from "../components/TaskStepper.vue";
 import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
 import { arrive, destinationOf } from "../composables/saveDestination.js";
+import { sendCommand } from "../composables/bidCommands.js";
 
 const READ = "kentender_procurement.bid_submission.api.get_bid_task";
 const SAVE = "kentender_procurement.bid_submission.api.save_bid_task";
@@ -87,7 +88,7 @@ function savePrices() {
 	return runner.run(async () => {
 		failure.value = ""; // only when a save really starts
 		errors.value = {};
-		const result = await portal.call(SAVE, { bid_reference: data.value.bid.reference, task: "price", values: JSON.stringify(answers), expected_record_version: data.value.bid.record_version, idempotency_key: `bds-price-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}` }, { type: "POST" });
+		const result = await sendCommand(portal, data.value.bid.reference, data.value.bid.record_version, (version) => portal.call(SAVE, { bid_reference: data.value.bid.reference, task: "price", values: JSON.stringify(answers), expected_record_version: version, idempotency_key: `bds-price-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}` }, { type: "POST" }));
 		if (result && result.ok) {
 			for (const [handle] of Object.entries(answers)) {
 				const field = inputs(data.value).find((f) => f.handle === handle);
@@ -133,7 +134,7 @@ onMounted(() => {
 			</div>
 		</div>
 
-		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
+		<BidGuidance :journey="data.journey" :answer="data.next_step" :reference="reference" :bid-reference="data.bid && data.bid.reference || ''" :organisation="route.query.organisation || ''" :support-href="data.support_href || ''" :tracker="!data.step" @fix="onFix" @reload="load" />
 
 		<NotifySignatory v-if="data.handover && data.bid" :handover="data.handover" :bid="data.bid" :organisation="route.query.organisation || ''" @sent="load" />
 		<p v-if="data.terms" class="bds-muted bds-price-terms">{{ data.terms }}</p>

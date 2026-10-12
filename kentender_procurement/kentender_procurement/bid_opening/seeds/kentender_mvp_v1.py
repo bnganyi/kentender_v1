@@ -331,4 +331,12 @@ def validate_bid_opening_seed() -> list[dict[str, Any]]:
 	# Pending until Bid Evaluation takes it up (EVL-CHG-001 v0.4: the bid_evaluation stage), Delivered after
 	check(bool(doc.evaluation_handoff) and frappe.db.get_value("Evaluation Handoff", doc.evaluation_handoff, "delivery_status") in ("Pending", "Delivered"),
 		"the opened bid was handed to Evaluation")
+	# Project Owner, 10 Oct 2026: a tender-security intake is matched to a bid only once the opening has started
+	from kentender_procurement.bid_submission.services import security_matching
+
+	check(security_matching.opening_crossed(tender), "the opening access boundary is crossed (the opening started)")
+	from kentender_procurement.bid_submission.seeds import kentender_mvp_v1 as bds_seed
+
+	afya = bds_seed.canonical_bid(tender)
+	check(bool(afya) and bool(security_matching.receipt_for(afya)), "after the opening started, Afya's physical original is matched to its bid")
 	return rows

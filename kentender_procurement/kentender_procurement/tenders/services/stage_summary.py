@@ -40,15 +40,17 @@ def link(key: str, label: str, route: list[str]) -> dict[str, Any]:
 
 def summary(*, key: str, label: str, status: str, disclosure: str, facts: list[dict[str, str]] | None = None, outcome: dict[str, str] | None = None, actor: str = "",
 		recorded_at: str = "", reason: str = "", outstanding: dict[str, str] | None = None, version: str = "", notice: str = "",
-		links: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+		links: list[dict[str, Any]] | None = None, next_step: dict[str, Any] | None = None) -> dict[str, Any]:
+	"""``next_step`` is the owner's own answer for this reader (kentender_core.services.next_step shape),
+	which the Tender page shows in its lead panel when the Tender has nothing of its own left to say."""
 	return {"key": key, "label": label, "state": "ok", "error_key": "", "status": status, "disclosure": disclosure, "facts": [f for f in facts or [] if f["value"]],
 		"outcome": outcome, "actor": actor, "recorded_at": recorded_at, "reason": reason, "outstanding": outstanding, "version": version, "notice": notice,
-		"links": links or []}
+		"links": links or [], "next_step": next_step}
 
 
 def unavailable(key: str, label: str) -> dict[str, Any]:
 	return {"key": key, "label": label, "state": "unavailable", "error_key": UNAVAILABLE_KEY, "message": UNAVAILABLE_MESSAGE, "status": "", "disclosure": STATUS_ONLY,
-		"facts": [], "outcome": None, "actor": "", "recorded_at": "", "reason": "", "outstanding": None, "version": "", "notice": "", "links": []}
+		"facts": [], "outcome": None, "actor": "", "recorded_at": "", "reason": "", "outstanding": None, "version": "", "notice": "", "links": [], "next_step": None}
 
 
 def guarded(key: str, label: str, build: Callable[[], dict[str, Any]]) -> list[dict[str, Any]]:

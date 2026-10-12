@@ -41,8 +41,9 @@ cd apps/kentender_v1 && make seed-canonical-validate SITE=kentender.midas.com TH
 The last canonical stage builds the canonical Tender with Afya's bid
 lifecycle interleaved at the §13.3 instants: Start bid (19 May 2027 09:20),
 the company and requirements tasks with the §10.1 facts (20 May), the
-addendum acknowledgement (1 Jun 12:10), Charles Mutiso's blind physical
-intake (10 Jun 10:00), the price (13:50), Mary Wanjiku's signed submission
+addendum acknowledgement (1 Jun 12:10), the blind physical intake (10 Jun
+10:00: Mercy Kilonzo records it under the duty Charles Mutiso assigned her —
+section 3A; v0.8 read: Charles Mutiso recorded it), the price (13:50), Mary Wanjiku's signed submission
 (received 14:31:58, accepted 14:32:01) and, after Tenders ends the period on
 12 Jun 11:00, Bid Submission's close and the sealed Bid Opening hand-off.
 
@@ -54,14 +55,17 @@ make seed-canonical-validate SITE=kentender.midas.com THROUGH=bid_submission
 
 - It runs only on a test site: it signs with the Test Trust Service and
   deposits in the Test Tender Box (section 3). Everything it creates is
-  labelled simulation.
+  made by the simulated services (no record carries a simulation flag or label; withdrawn 10 October 2026, DEC-044).
 - Over a world seeded only through `tenders` it refuses with a message asking
   for `REBUILD=True`: the Requisition's hand-off is consumed once, so the
   Tender cannot be rebuilt without rebuilding the stages below it.
 - `validate` checks the bid is Submitted Version 1, the receipt's received
-  and accepted instants, the submitter, the simulation label, the addendum
-  acknowledgement, the matched intake, the close, one sealed envelope, the
-  Bid Opening hand-off, and that a second run changes nothing.
+  and accepted instants, the submitter, the addendum
+  acknowledgement, the intake recorded by Mercy (not by Charles) under her
+  assigned duty with no conflict flagged, that no intake is matched to any bid
+  before the opening starts (the bid opening stage then checks the match), the
+  close, one sealed envelope, the Bid Opening hand-off, and that a second run
+  changes nothing.
 
 ## 3. The test environment (simulated services)
 
@@ -72,8 +76,8 @@ bench --site kentender.midas.com set-config -p kt_bds_simulation_environment 1
 bench --site kentender.midas.com set-config -p production_bid_submission_enabled 1   # test site only; see section 7
 ```
 
-With the first set, these register and every supplier page shows a "Test
-environment" strip:
+With the first set, these register (no page shows a "Test environment" strip or
+any other test notice; withdrawn 10 October 2026, DEC-044):
 
 | Service | What it does | Where its data lives |
 |---|---|---|
@@ -82,6 +86,7 @@ environment" strip:
 | Test Scanner | Clean for any file, Infected for the EICAR test signature | the evidence rows |
 | Test Mailbox | captures supplier messages (verification links) | `sites/<site>/private/kt_test_mailbox/messages.jsonl` |
 | Test clock | the pages' trusted time for browser worlds | `BDS Test Environment Controls.current_instant` |
+| Test Issuer Service | answers a tender-security verification Confirmed, Pending, Mismatch or Unavailable; named “Test Issuer Service (simulation)” in the verification record, its details, the audit and any export | the `Tender Security Verification` rows (sealed) |
 
 The Test Mailbox does not carry Frappe's own login emails (sign-up welcome, password reset). Those go to Mailpit on dev; see `00_common/DEV_MAIL_RUNBOOK.md`. On dev, `kt_test_mailbox_also_email` also queues each Test Mailbox message as an email into Mailpit, so a person can open the link; the same page explains it.
 
@@ -90,7 +95,11 @@ The Single `BDS Test Environment Controls` also forces the operating worlds
 `gate_closed` (production gate closed), `trust_service_down`,
 `time_service_down`, `custody_service_down`, `deposit_outcome`
 (Accept / Reject / Uncertain), `rejection_reference`,
-`uncertain_resolution`, `accept_after_seconds`. The browser worlds reset
+`uncertain_resolution`, `accept_after_seconds`, `issuer_response` (what the
+Test Issuer Service answers: Automatic, Confirmed, Pending, Mismatch,
+Unavailable) and `opening_boundary_crossed` (a browser world's seam that
+treats every Tender's opening as started, so an intake can be matched to a
+bid). The browser worlds reset
 them through `restore_site`; a stuck world can be reset directly:
 
 ```bash
@@ -100,6 +109,58 @@ bench --site kentender.midas.com execute kentender_procurement.bid_submission.se
 On this dev site the production switch is on, so a live Submit is possible
 in a browser; the "not enabled" state is shown by closing the gate through
 the controls (`gate_closed`), never by the site's own setting.
+
+## 3A. The tender-security intake duty (Project Owner, 10 October 2026)
+
+Intake of a tender-security original or an issuer confirmation is an explicit,
+Tender-scoped duty, never a side effect of an office.
+
+1. **Assign.** The Head of Procurement Function opens **Tender-security intake
+   duty** (`/desk/tender-security-duty`), enters the Tender reference, picks an
+   existing eligible officer and chooses **Assign duty**, with an optional
+   period. An officer on the Tender's opening or evaluation, the Head's office
+   holder and a technical account are refused, with the incompatible duty named.
+   The Head sees officers and assignments, never an intake, a supplier or a bid.
+2. **Record.** The assigned officer opens **Tender-security receipts**
+   (`/desk/tender-security-receipts`): **Record receipt** for a physical original
+   or an issuer confirmation (which also takes the issuer's confirmation time).
+   Nothing about any bid is shown, and nothing says whether one exists.
+3. **End.** The Head chooses **End duty** with a reason. The access ends at once.
+   An officer who recorded or viewed the Tender's intake stays ineligible for its
+   opening and evaluation; one who never used it becomes eligible again.
+4. **Matching.** An intake is matched to a bid only once the Tender's opening has
+   started; before then the supplier's bid reads **Not yet matched**.
+5. **Conflicts.** `bench --site <site> execute
+   kentender_procurement.bid_submission.services.security_duty.detect_conflicts`
+   flags every Tender where someone who exercised the duty also sits on its
+   opening or evaluation (it also runs once on migrate). The Accounting Officer
+   resolves each with a reason (`resolve_tender_security_duty_conflict`); nothing
+   is deleted, reassigned or re-attributed.
+6. **Technical accounts.** Administrator and System Manager see no bid record, no
+   count and no security intake, on the Desk, by URL, by API, in search or in an
+   export. The service status (availability and open incidents) is readable by the
+   Technical Operator and is audited.
+
+To see the electronic journey in a test world, answer the security form, add the
+proof and choose **Submit tender security**: with `issuer_response` Automatic the
+result follows the guarantee number's ending (`-PENDING`, `-MISMATCH`,
+`-UNAVAILABLE`, otherwise Confirmed).
+
+What a supplier reads about its own security (10 October 2026, proposed BDS-CHG-001
+v0.15): **Original received** (with the receipt reference and time) once the intake
+officer has recorded an original that fits the supplier's own instrument;
+**Original receipt not yet recorded** while none has; **Issuer verification
+pending** while the issuer has not confirmed; **No original required** or
+**Original delivery not stated** as the Tender says. It is worked out when the
+supplier reads its bid and stored nowhere, so it appears before the opening
+starts while no intake-to-bid link exists. If a supplier reports the wrong status,
+check first that the intake's reference, issuer and amount equal the bid's and that
+no second active bid carries the same instrument (then neither reads Received).
+
+A Tender states how its security may be submitted and whether an original is
+delivered (Tender details task). `Tenders › get_security_statement_review` lists
+published Tenders that never stated them; for those the supplier reads **Original
+delivery not stated** and no original is assumed.
 
 ## 4. Browser worlds
 
@@ -191,6 +252,16 @@ tracker, BDS-CHG-001 §5.10 and §15.3–15.6); none is claimed by this build:
 5. the operating-profile, security and legal evidence of §15.3–15.6;
 6. the production signing client (FU-V08-57: a site without the Test Trust
    Service says signing is unavailable and submits nothing).
+7. **PR-001 — incident recovery and emergency access to sealed contents** (Project
+   Owner, 10 October 2026; TRUST-ADR-001 v0.5 §2B, proposed). There is no
+   break-glass access to sealed bids and the MVP provides none; a failing sealed
+   read, package or key service fails closed and support works from restricted
+   diagnostics (health, incident keys, kinds, timings — never bid content, count or
+   identity). Before production the owner defines the incident-recovery procedure
+   (who authorises, scope, duration, audit evidence, recovery steps), kept separate
+   from reading sealed contents; any exceptional content access needs its own
+   reviewed design that preserves the authorised-opening controls. Its absence does
+   not justify an administrator bypass.
 
 The switch is read in one place only (`bid_submission/services/availability.py`);
 a repository test fails if anything else names it.

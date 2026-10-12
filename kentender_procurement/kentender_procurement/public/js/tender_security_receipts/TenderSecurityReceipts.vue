@@ -1,9 +1,10 @@
 <!-- Tender-security receipts — BDS-CHG-001 v0.8 owner decisions OD-G/OD-H
-     (blind physical-original intake; replaces BDS-DES-15, which is not built
-     as drawn: FU-V08-01, design redraw owed).
-       /desk/tender-security-receipts          the recorder's own intakes
-     The Head of Procurement Function records an original by Tender reference
-     and the instrument's own details. Nothing about any bid appears here: no
+     (blind intake; replaces BDS-DES-15, which is not built as drawn:
+     FU-V08-01, design redraw owed). Since 10 Oct 2026 only a person assigned
+     the intake duty for a Tender sees it here.
+       /desk/tender-security-receipts          the assigned Tenders' intakes
+     The officer records an original or an issuer confirmation by Tender
+     reference and the instrument's own details. Nothing about any bid appears here: no
      supplier, candidate, bid status or match. The Tender-reference filter
      lives in the URL fragment so refresh and Back keep it (AGENTS.md §6.4). -->
 <template>
@@ -19,7 +20,7 @@
 					<div>
 						<p class="tsr-eyebrow">TENDER SECURITY</p>
 						<h1 class="kt-page-title">Tender-security receipts</h1>
-						<p class="kt-page-desc">Record physical tender-security originals as they are received. Bids are never shown here.</p>
+						<p class="kt-page-desc">Record tender-security originals and issuer confirmations as they are received, for the Tenders you are assigned. Bids are never shown here, and nothing here says whether a bid exists.</p>
 					</div>
 					<button type="button" class="btn btn-primary" data-testid="tsr-record" @click="openDialog">Record receipt</button>
 				</div>
@@ -55,6 +56,7 @@
 							<tr>
 								<th>Intake reference</th>
 								<th>Tender</th>
+								<th>Kind</th>
 								<th>Instrument</th>
 								<th>Amount</th>
 								<th>Received</th>
@@ -71,6 +73,7 @@
 									<span v-else-if="row.corrects" class="tsr-muted" data-testid="tsr-corrects">Corrects {{ row.corrects }}</span>
 								</td>
 								<td data-label="Tender">{{ row.tender_reference }}</td>
+								<td data-label="Kind">{{ row.intake_kind }}<template v-if="row.issuer_confirmed_at"><br /><span class="tsr-muted" data-testid="tsr-issuer-confirmed">Issuer confirmed {{ row.issuer_confirmed_at }}</span></template></td>
 								<td data-label="Instrument">{{ row.instrument_type }} · {{ row.issuer }}<br /><span class="tsr-muted">{{ row.instrument_reference }}</span></td>
 								<td data-label="Amount">{{ row.amount }}</td>
 								<td data-label="Received">{{ row.received_at }}<br /><span class="tsr-muted">{{ row.deadline_class }}</span></td>
@@ -85,7 +88,7 @@
 				</template>
 			</div>
 
-			<IntakeDialog v-if="dialogOpen" :pending="pending" :errors="fieldErrors" :error="dialogError" :initial-tender="tenderFilter" :correcting="correcting" v-bind="data.confirmation ? { confirmation: data.confirmation } : {}" @submit="onRecord" @cancel="closeDialog" />
+			<IntakeDialog v-if="dialogOpen" :pending="pending" :errors="fieldErrors" :error="dialogError" :initial-tender="tenderFilter" :correcting="correcting" :tenders="data.tenders || []" :kinds="data.kinds || undefined" v-bind="data.confirmation ? { confirmation: data.confirmation } : {}" @submit="onRecord" @cancel="closeDialog" />
 			<div v-if="notice" class="kt-notice is-success tsr-toast" role="status" data-testid="tsr-recorded">
 				<svg class="kt-notice-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
 				<div class="kt-notice-body">{{ notice }}</div>

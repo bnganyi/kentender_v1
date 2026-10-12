@@ -277,6 +277,9 @@
 			<table class="table"><thead><tr><th>Reference</th><th>Problem</th><th>Handled by</th><th>Notice</th></tr></thead><tbody>
 				<tr v-for="i in data.incidents" :key="i.incident_id"><td>{{ i.incident_id }}</td><td>{{ i.type }}</td><td>{{ i.holder }}</td><td>{{ i.notification_state }}<template v-if="i.notified_label"> {{ i.notified_label }}</template></td></tr>
 			</tbody></table>
+			<template v-if="(data.viewer || {}).can_read_incident_details">
+				<IncidentDetails v-for="i in data.incidents" :key="'d-' + i.incident_id" :tender="data.opening.tender_reference" :incident="i.incident_id" :purposes="data.viewer.incident_purposes" />
+			</template>
 		</div>
 
 		<AttendanceDialog v-if="attendanceFor" :attendee="attendanceFor" :pending="pending" @confirm="recordAttendance" @cancel="attendanceFor = null" />
@@ -291,6 +294,7 @@ import BidFacts from "../components/BidFacts.vue";
 import CommitteeTable from "../components/CommitteeTable.vue";
 import Guidance from "../components/Guidance.vue";
 import History from "../components/History.vue";
+import IncidentDetails from "../components/IncidentDetails.vue";
 import PageHead from "../components/PageHead.vue";
 import RegisterTable from "../components/RegisterTable.vue";
 import ReplacementForm from "../components/ReplacementForm.vue";

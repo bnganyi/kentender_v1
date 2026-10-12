@@ -7,14 +7,21 @@ import { login } from "../../helpers/auth";
 import { expectNoFrappeDialog, expectNoHorizontalOverflow } from "../../helpers/portal";
 import { AUDITOR, HOPF, OFFICER, PASSWORD, collectConsoleErrors } from "../tenders/helpers";
 
+// Project Owner, 10 October 2026: the intake is an explicit Tender-scoped duty. The world's Procurement
+// Officer is the intake officer (an existing person on no opening or evaluation); the Head of
+// Procurement Function assigns the duty and sees no intake.
+const INTAKE_OFFICER = OFFICER;
+
 /**
- * BDS-CHG-001 v0.8 plan Phase 7 (BDS8-704) — the blind physical
- * tender-security intake, owner decisions OD-G/OD-H (replacing BDS-DES-15).
- * The Head of Procurement Function records an original by Tender reference
- * and the instrument's own details; the page never shows a bid, a supplier
- * or whether anything matched. The match is private: only the supplier's own
- * bid learns "recorded" (read here through the fixture, since the supplier
- * screen that shows it is a later slice).
+ * BDS-CHG-001 v0.8 plan Phase 7 (BDS8-704) — the blind tender-security
+ * intake, owner decisions OD-G/OD-H (replacing BDS-DES-15), reassigned on
+ * 10 October 2026 to an explicit Tender-scoped duty. The assigned officer
+ * records an original or an issuer confirmation by Tender reference and the
+ * instrument's own details; the page never shows a bid, a supplier or
+ * whether anything matched. The match is private and happens only after the
+ * Tender's opening has started: only the supplier's own bid then learns
+ * "recorded" (read here through the fixture, since the supplier screen that
+ * shows it is a later slice). The Head of Procurement Function has no access.
  *
  * World: `bid_submission.seeds.playwright_ui_fixtures` on the Tenders
  * Playwright world (FY 2099-2100) — a published Tender whose one bid (Afya,
@@ -72,17 +79,17 @@ async function expectNoBidFacts(page: Page, world: World): Promise<void> {
 
 test.describe.configure({ mode: "serial", timeout: 240_000 });
 
-test.describe("Tender-security receipts — the blind physical-original intake", () => {
+test.describe("Tender-security receipts — the blind intake of an assigned officer", () => {
 	test.afterAll(() => execute("restore_site"));
 
-	test("the Head of Procurement Function records a matching original; bad input is named; the supplier alone learns it", async ({ page }) => {
+	test("the assigned officer records an original; bad input is named; the supplier alone learns it, and only after the opening starts", async ({ page }) => {
 		const world = execute<World>("reset_security_intake_fixture");
 		const errors = collectConsoleErrors(page);
 		await page.setViewportSize({ width: 1440, height: 1024 });
-		await login(page, HOPF, PASSWORD);
+		await login(page, INTAKE_OFFICER, PASSWORD);
 		await openPage(page);
 		await expect(page.getByRole("heading", { level: 1, name: "Tender-security receipts" })).toBeVisible();
-		await expect(page.getByTestId("tsr-empty")).toHaveText("You have not recorded any tender-security originals yet.");
+		await expect(page.getByTestId("tsr-empty")).toHaveText("No tender-security receipts have been recorded for your Tenders yet.");
 		// the Procurement sidebar offers the page to this role (under Tender Management)
 		await expandTenderManagement(page);
 		await expect(page.locator('a[href="/desk/tender-security-receipts"]:visible')).toHaveCount(1);
@@ -106,13 +113,18 @@ test.describe("Tender-security receipts — the blind physical-original intake",
 		const intake = ((await toast.innerText()).match(/TSI-[0-9A-F]{10}/) || [""])[0];
 		const row = page.getByTestId("tsr-row");
 		await expect(row).toHaveCount(1);
-		await expect(row.locator("td")).toHaveText([intake, world.tender_reference, new RegExp(`${world.instrument_type} · ${world.issuer}`), `${world.currency} 500,000.00`, /1 Sep 2026, 09:00 EAT\s*Before deadline/, /EAT$/, "Correct"]);
+		await expect(row.locator("td")).toHaveText([intake, world.tender_reference, "Physical original", new RegExp(`${world.instrument_type} · ${world.issuer}`), `${world.currency} 500,000.00`, /1 Sep 2026, 09:00 EAT\s*Before deadline/, /EAT$/, "Correct"]);
 		await expectNoBidFacts(page, world);
 
-		// Only the matched supplier's own bid learns it, with the same reference.
-		expect(execute<Record<string, string>>("physical_receipt_status", { tender_reference: world.tender_reference })).toEqual({
-			physical_receipt_status: "Recorded before deadline", physical_receipt_reference: intake, physical_received_at: "1 Sep 2026, 09:00 EAT",
-		});
+		// The supplier reads its own actual status at once, computed on read: "Original received" with the receipt reference and time.
+		// Nothing is stored as a link between the intake and the bid before the opening starts.
+		const received = { physical_receipt_status: "Original received", physical_receipt_reference: intake, physical_received_at: "1 Sep 2026, 09:00 EAT" };
+		expect(execute<Record<string, string>>("physical_receipt_status", { tender_reference: world.tender_reference })).toEqual(received);
+		expect(execute<{ count?: number }>("stored_match_count", { tender_reference: world.tender_reference }).count ?? 0).toBe(0);
+		// Once the opening has started the same status stays, and only then is the match stored for the opening.
+		execute("cross_opening_boundary");
+		expect(execute<Record<string, string>>("physical_receipt_status", { tender_reference: world.tender_reference })).toEqual(received);
+		execute("cross_opening_boundary", { crossed: false });
 
 		// The Tender-reference filter lives in the address: reload keeps it.
 		await page.getByTestId("tsr-filter-tender").fill(world.tender_reference);
@@ -130,19 +142,20 @@ test.describe("Tender-security receipts — the blind physical-original intake",
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test("an original no bid matches gets the very same answer; correcting it then matches, privately", async ({ page }) => {
+	test("an original no bid matches gets the very same answer; correcting it then matches after the opening starts, privately", async ({ page }) => {
 		const world = execute<World>("reset_security_intake_fixture");
 		const errors = collectConsoleErrors(page);
 		await page.setViewportSize({ width: 1440, height: 1024 });
-		await login(page, HOPF, PASSWORD);
+		await login(page, INTAKE_OFFICER, PASSWORD);
 		await openPage(page);
 		await page.getByTestId("tsr-record").click();
 		await fillIntake(page, world, { reference: "EQB/TG/2099/0001" });
 		await page.getByTestId("tsr-d-submit").click();
 		await expect(page.getByTestId("tsr-recorded")).toHaveText(/^Receipt recorded\. Intake reference TSI-[0-9A-F]{10}\.$/);
-		await expect(page.getByTestId("tsr-row").locator("td").nth(4)).toContainText("Before deadline");
+		await expect(page.getByTestId("tsr-row").locator("td").nth(5)).toContainText("Before deadline");
 		await expectNoBidFacts(page, world);
-		expect(execute<Record<string, string>>("physical_receipt_status", { tender_reference: world.tender_reference }).physical_receipt_status).toBe("Not recorded");
+		// a receipt no bid's instrument fits is never shown as received: the supplier reads "Original receipt not yet recorded", never "not matched"
+		expect(execute<Record<string, string>>("physical_receipt_status", { tender_reference: world.tender_reference }).physical_receipt_status).toBe("Original receipt not yet recorded");
 
 		// the reference was typed wrongly: correct it; the first stays, marked Corrected
 		const first = ((await page.getByTestId("tsr-recorded").innerText()).match(/TSI-[0-9A-F]{10}/) || [""])[0];
@@ -161,16 +174,44 @@ test.describe("Tender-security receipts — the blind physical-original intake",
 		await expect(page.getByTestId("tsr-corrected-by")).toHaveCount(1);
 		await expect(page.getByTestId("tsr-correct")).toHaveCount(1);
 		await expectNoBidFacts(page, world);
-		expect(execute<Record<string, string>>("physical_receipt_status", { tender_reference: world.tender_reference }).physical_receipt_status).toBe("Recorded before deadline");
+		expect(execute<Record<string, string>>("physical_receipt_status", { tender_reference: world.tender_reference }).physical_receipt_status).toBe("Original received");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+
+	test("an issuer confirmation keeps its own time apart from the receipt, and the Tender need not have a bid", async ({ page }) => {
+		const world = execute<World>("reset_security_intake_fixture", { answered: false });
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await login(page, INTAKE_OFFICER, PASSWORD);
+		await openPage(page);
+		await page.getByTestId("tsr-record").click();
+		const dialog = page.getByTestId("tsr-dialog");
+		await dialog.getByTestId("tsr-d-kind-issuer").check();
+		await dialog.getByTestId("tsr-d-tender").fill(world.tender_reference);
+		await dialog.getByTestId("tsr-d-tender").blur();
+		await expect(dialog.getByTestId("tsr-d-requirement")).toContainText(`Required: ${world.currency} 500,000.00`);
+		await dialog.getByTestId("tsr-d-type").selectOption(world.instrument_type);
+		await dialog.getByTestId("tsr-d-issuer").fill(world.issuer);
+		await dialog.getByTestId("tsr-d-reference").fill("KCB/TG/2099/7001");
+		await dialog.getByTestId("tsr-d-amount").fill(world.amount);
+		await dialog.getByTestId("tsr-d-received").fill("2026-09-01T10:00");
+		await dialog.getByTestId("tsr-d-issuer-confirmed").fill("2026-09-01T11:00");
+		await dialog.getByTestId("tsr-d-confirm").check();
+		await dialog.getByTestId("tsr-d-submit").click();
+		await expect(dialog.locator(".kt-field-error")).toHaveText(["The issuer cannot have confirmed after you received the confirmation."]);
+		await dialog.getByTestId("tsr-d-issuer-confirmed").fill("2026-09-01T09:41");
+		await dialog.getByTestId("tsr-d-submit").click();
+		await expect(page.getByTestId("tsr-recorded")).toHaveText(/^Receipt recorded\. Intake reference TSI-[0-9A-F]{10}\.$/);
+		await expect(page.getByTestId("tsr-row").locator("td").nth(2)).toContainText("Issuer confirmation");
+		await expect(page.getByTestId("tsr-issuer-confirmed")).toContainText("Issuer confirmed 1 Sep 2026, 09:41 EAT");
+		await expectNoBidFacts(page, world);
 	});
 
 	test("the receipts stack as labelled cards at 390 px and the dialog fits", async ({ page }) => {
 		const errors = collectConsoleErrors(page);
 		await page.setViewportSize({ width: 390, height: 844 });
-		await login(page, HOPF, PASSWORD);
+		await login(page, INTAKE_OFFICER, PASSWORD);
 		await openPage(page);
-		await expect(page.getByTestId("tsr-row")).toHaveCount(2);
+		await expect(page.getByTestId("tsr-row")).toHaveCount(1); // the issuer-confirmation world's one receipt
 		await expect(page.getByTestId("tsr-table").locator("thead")).toHaveCSS("position", "absolute");
 		await expectNoHorizontalOverflow(page);
 		await page.getByTestId("tsr-record").click();
@@ -181,13 +222,13 @@ test.describe("Tender-security receipts — the blind physical-original intake",
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	for (const [who, user] of [["a Procurement Officer", OFFICER], ["an Auditor", AUDITOR]] as const) {
+	for (const [who, user] of [["the Head of Procurement Function (the office grants no intake)", HOPF], ["an Auditor", AUDITOR]] as const) {
 		test(`${who} is told the page is not theirs and can record nothing`, async ({ page }) => {
 			const errors = collectConsoleErrors(page);
 			await page.setViewportSize({ width: 1440, height: 1024 });
 			await login(page, user, PASSWORD);
 			await openPage(page);
-			await expect(page.getByTestId("tsr-forbidden")).toContainText("Only the Head of Procurement Function records physical tender-security originals.");
+			await expect(page.getByTestId("tsr-forbidden")).toContainText("You are not assigned to record tender-security receipts for this Tender.");
 			await expandTenderManagement(page);
 			await expect(page.locator('a[href="/desk/tender-security-receipts"]:visible')).toHaveCount(0);
 			await expect(page.getByTestId("tsr-record")).toHaveCount(0);

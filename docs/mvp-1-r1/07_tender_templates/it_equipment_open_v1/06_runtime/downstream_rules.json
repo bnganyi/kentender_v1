@@ -285,13 +285,24 @@
       "mapping_id": "DM-SUBMISSION",
       "reason": "The signature authenticates the submission; it is not a contract obligation.",
       "response_rule_id": "RR-SUBMISSION"
+    },
+    {
+      "award_reporting_treatment": "Not applicable",
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_result_rule": "Pass when the issuer confirms a permitted instrument for the published amount and currency, valid to the published expiry date; otherwise fail.",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-TENDER-SECURITY-ISSUER",
+      "reason": "Tender Security secures the tendering process only.",
+      "response_rule_id": "RR-TENDER-SECURITY-ISSUER"
     }
   ],
   "product_profile_id": "GOODS-IT-SIMPLE-V1",
-  "release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01",
+  "release_id": "stdr-19da524c-85d1-4fdb-8dee-81860bd68c67",
   "renderer_profile_id": "BDS-GOODS-IT-V1",
   "schema_version": 1,
   "supported_renderer_version": "1.2.0",
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.4"
+  "template_release": "1.5"
 }

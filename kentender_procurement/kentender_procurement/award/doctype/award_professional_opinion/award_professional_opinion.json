@@ -23,7 +23,6 @@
   "signing_attempt",
   "signing_outcome",
   "proof_reference",
-  "proof_label",
   "signed_at",
   "saved_at",
   "fixture_namespace"
@@ -129,12 +128,6 @@
   {
    "fieldname": "proof_reference",
    "label": "Proof reference",
-   "read_only": 1,
-   "fieldtype": "Data"
-  },
-  {
-   "fieldname": "proof_label",
-   "label": "Proof label",
    "read_only": 1,
    "fieldtype": "Data"
   },

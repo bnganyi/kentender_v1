@@ -63,7 +63,10 @@ class TestOperationalHandoffs(HandoffCase):
 		self.assertEqual(json.loads(rows["Waiting for production submission availability"].sender_users), [MARY])
 		gate = self.incident("production-gate")
 		self.assertEqual((gate.status, json.loads(gate.holder_users)), ("Open", [NADIA]))
-		self.assertTrue(frappe.db.exists("Notification Log", {"for_user": NADIA, "document_type": "Bid Submission Incident"}))
+		# the sealed incident record is named in the notice but never linked (it would be refused): the notice goes to the user's home
+		logs = frappe.get_all("Notification Log", filters={"for_user": NADIA, "email_header": ("like", "bds-incident:%")}, fields=["*"])
+		self.assertTrue(logs)
+		self.assertNotIn("bid-submission-incident", json.dumps(logs, default=str))
 		simulation.set_controls(gate_closed=0)
 		handoffs.sweep()
 		self.assertEqual((self.incident("production-gate").status, list(self.open_rows())), ("Resolved", ["Review and submit"]))

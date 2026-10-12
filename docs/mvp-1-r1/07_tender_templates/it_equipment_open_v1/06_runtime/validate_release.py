@@ -45,7 +45,7 @@ import build_definition_fixture as cli  # noqa: E402
 
 EXPECTED_IDENTITY = {
 	"template_key": "IT-EQUIPMENT-OPEN-V1",
-	"template_release": "1.4",
+	"template_release": "1.5",
 	"product_profile_id": "GOODS-IT-SIMPLE-V1",
 	"renderer_profile_id": "BDS-GOODS-IT-V1",
 }

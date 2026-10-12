@@ -223,8 +223,9 @@ def sync_incidents(*, at=None) -> dict[str, int]:
 		doc = records.save(frappe.get_doc(INCIDENT, existing).update(values)) if existing else records.insert(frappe.get_doc({"doctype": INCIDENT, "incident_key": key, **values}))
 		for user in spec["users"]:
 			emit_notification_log(
-				for_user=user, subject=spec["title"], message=f"{spec['title']}. Reference {spec['reference']}.", document_type=INCIDENT, document_name=doc.name,
-				event_type=spec["kind"], entity_scope="Bid Submission", route=f"/app/bid-submission-incident/{doc.name}", correlation_key=f"bds-incident:{doc.name}:{cstr(at)}",
+				for_user=user, subject=spec["title"], message=f"{spec['title']}. Reference {spec['reference']}.", document_type="User", document_name=user,
+				# Project Owner, 10 October 2026: the incident record is sealed, so the notice names it but never links to it (it would be refused)
+				event_type=spec["kind"], entity_scope="Bid Submission", route="/app/home", correlation_key=f"bds-incident:{doc.name}:{cstr(at)}",
 			)
 		done["opened"] += 1
 	return done

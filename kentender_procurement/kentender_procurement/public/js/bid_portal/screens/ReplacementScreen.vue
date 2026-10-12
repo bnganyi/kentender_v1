@@ -6,7 +6,7 @@
 // may, and opens the new Draft as the bid. Once a replacement Draft is open
 // the page says so and leads to it.
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
-import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
+import BidGuidance from "../components/BidGuidance.vue";
 import CommonState from "../components/CommonState.vue";
 import { conflictState } from "../composables/commonStates.js";
 import { fixRoute } from "../composables/fixRoute.js";
@@ -88,7 +88,7 @@ onMounted(() => {
 			</div>
 		</div>
 
-		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
+		<BidGuidance :journey="data.journey" :answer="data.next_step" :reference="reference" :bid-reference="data.bid && data.bid.reference || ''" :organisation="route.query.organisation || ''" :support-href="data.support_href || ''" @fix="onFix" @reload="load" />
 
 		<div class="kt-notice" role="note" data-testid="bds-replacement-notice">
 			<svg class="kt-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>

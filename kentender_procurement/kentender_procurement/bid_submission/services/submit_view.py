@@ -73,9 +73,9 @@ def _security_receipt(ctx) -> str:
 	security = tender_security.response(ctx)
 	if not security.get("required"):
 		return "Not required"
-	if security["physical_receipt_status"] == tender_security.NOT_RECORDED:
-		return "Not yet recorded"
-	return f"{security['physical_receipt_reference']} · {security['physical_received_at']}"
+	if security["physical_receipt_status"] == tender_security.ORIGINAL_RECEIVED:
+		return f"{tender_security.ORIGINAL_RECEIVED} · {security['physical_receipt_reference']} · {security['physical_received_at']}"
+	return security["physical_receipt_status"]
 
 
 def _signatory(ctx, *, at) -> list[dict[str, Any]]:

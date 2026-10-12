@@ -6,7 +6,8 @@ import { bdsFixture, restoreBdsWorld } from "./bdsWorld";
 /**
  * BDS-CHG-001 v0.8 §10.12 (plan Phase 11, slice 11.11) — Review bid on the
  * Tenders test Tender for Afya (Test): Mary, the Authorised Signatory, reads a
- * Ready bid whose physical original Charles recorded and is offered Submit
+ * Ready bid whose physical original the assigned intake officer recorded (not
+ * yet matched to the bid until the opening starts) and is offered Submit
  * bid; with the production gate closed (the GATE world, through the test
  * controls) Submit is absent and the next step names the release operator.
  * David reads the same review without Submit; a rejected datasheet and an
@@ -28,7 +29,16 @@ test.describe("BDS-DES-11 Review bid", () => {
 		await loginToPortal(page, world.signatory, world.password, review);
 		await expect(page.getByRole("heading", { level: 1, name: "Review bid" })).toBeVisible();
 		await expect(page.getByTestId("bds-review-result")).toHaveText("All required bid information is complete.");
-		await expect(page.getByTestId("bds-review-security")).toContainText("Physical tender-security original recorded as received on 20 May 2027");
+		// the intake officer recorded the original: the supplier reads its own actual status at once (10 Oct 2026), before any opening starts
+		await expect(page.getByTestId("bds-review-security")).toContainText("Original received: receipt");
+		await expect(page.getByTestId("bds-review-security")).toContainText("Security will be checked against your bid after opening.");
+		await expect(page.getByTestId("bds-review-security")).not.toContainText(/not (yet )?matched/i);
+		// crossing the opening boundary changes nothing the supplier reads
+		bdsFixture("cross_opening_boundary");
+		await page.reload({ waitUntil: "domcontentloaded" });
+		await waitForPortal(page);
+		await expect(page.getByTestId("bds-review-security")).toContainText("Original received: receipt");
+		bdsFixture("cross_opening_boundary", { crossed: false });
 		await expect(page.getByTestId("bds-review-action")).toHaveText("Submit bid");
 		await expect(page.getByTestId("bds-review-action")).toHaveAttribute("href", `/tenders/${world.tender_reference}/bid/submit`);
 		await expect(page.getByTestId("bds-review-submit")).toBeVisible();

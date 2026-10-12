@@ -9,6 +9,7 @@
 import { computed, inject, ref } from "vue";
 import CommonState from "./CommonState.vue";
 import RowGroupControl from "./RowGroupControl.vue";
+import { isStale, noteRefusal, sendCommand } from "../composables/bidCommands.js";
 
 const UPLOAD = "kentender_procurement.bid_submission.api.upload_bid_evidence";
 const REPLACE = "kentender_procurement.bid_submission.api.replace_bid_evidence";
@@ -23,12 +24,22 @@ const props = defineProps({
 	bid: { type: Object, default: null }, // { reference, record_version } for evidence commands
 	idPrefix: { type: String, default: "bds-field" },
 });
-const emit = defineEmits(["update:modelValue", "changed"]);
+const emit = defineEmits(["update:modelValue", "changed", "stale"]);
 const portal = inject("portal");
 const picker = ref(null);
 const fileError = ref("");
 const rejection = ref(null); // §10.17 Evidence rejected: the safe reason the file checks gave
-const runner = portal.createCommandRunner({ ref }, { onError: (e) => (fileError.value = e.message) });
+const runner = portal.createCommandRunner({ ref }, {
+	onError: (e) => {
+		fileError.value = e.message;
+		if (isStale(e) && props.bid) {
+			noteRefusal(portal, props.bid.reference, e);
+			emit("stale"); // the screen re-reads, so the next try is made against the bid as it now is
+		}
+	},
+});
+// one command at a time on this bid, each against the newest version known when it starts
+const command = (send) => sendCommand(portal, props.bid.reference, props.bid.record_version, send);
 const pending = computed(() => runner.pending.value);
 
 const id = computed(() => `${props.idPrefix}-${props.field.handle}`);
@@ -53,7 +64,7 @@ function useSaved(option) {
 	rejection.value = null;
 	return runner.run(async () => {
 		const handle = props.field.handle;
-		const result = await portal.call(LINK, { bid_reference: props.bid.reference, handle, account_evidence_id: option.id, expected_record_version: props.bid.record_version, idempotency_key: `bds-evidence-link-${Date.now().toString(36)}` }, { type: "POST" });
+		const result = await command((version) => portal.call(LINK, { bid_reference: props.bid.reference, handle, account_evidence_id: option.id, expected_record_version: version, idempotency_key: `bds-evidence-link-${Date.now().toString(36)}` }, { type: "POST" }));
 		if (result && result.ok) {
 			showSaved.value = false;
 			emit("changed", result);
@@ -101,10 +112,10 @@ function upload(event) {
 	rejection.value = null;
 	return runner.run(async () => {
 		const target = replacing.value;
-		const common = { bid_reference: props.bid.reference, expected_record_version: props.bid.record_version, idempotency_key: `bds-evidence-${Date.now().toString(36)}` };
-		const result = target
-			? await portal.upload(REPLACE, { ...common, evidence_id: target.id }, { file })
-			: await portal.upload(UPLOAD, { ...common, handle: props.field.handle }, { file });
+		const result = await command((version) => {
+			const common = { bid_reference: props.bid.reference, expected_record_version: version, idempotency_key: `bds-evidence-${Date.now().toString(36)}` };
+			return target ? portal.upload(REPLACE, { ...common, evidence_id: target.id }, { file }) : portal.upload(UPLOAD, { ...common, handle: props.field.handle }, { file });
+		});
 		if (result && result.ok) {
 			replacing.value = null;
 			emit("changed", result);
@@ -118,7 +129,7 @@ function upload(event) {
 function remove(file) {
 	fileError.value = "";
 	return runner.run(async () => {
-		const result = await portal.call(REMOVE, { bid_reference: props.bid.reference, evidence_id: file.id, expected_record_version: props.bid.record_version, idempotency_key: `bds-evidence-remove-${Date.now().toString(36)}` }, { type: "POST" });
+		const result = await command((version) => portal.call(REMOVE, { bid_reference: props.bid.reference, evidence_id: file.id, expected_record_version: version, idempotency_key: `bds-evidence-remove-${Date.now().toString(36)}` }, { type: "POST" }));
 		if (result && result.ok) emit("changed", result);
 		else if (result) fileError.value = result.message || "";
 	}, "Remove file");

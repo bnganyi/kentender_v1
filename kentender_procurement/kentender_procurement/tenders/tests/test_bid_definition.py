@@ -11,6 +11,8 @@ TPR09-AC-083..096, TPR11-AC-007, TPR12-AC-002/003."""
 
 from __future__ import annotations
 
+import json
+
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -70,6 +72,30 @@ class TestBidDefinition(IntegrationTestCase):
 			self.assertEqual(published - ids, set(), f"{kind} mapping missing")
 		# deterministic: the same recorded inputs give the same digest
 		self.assertEqual(self._compile(root)[1]["definition_digest"], definition["definition_digest"])
+
+	def test_the_published_security_facts_carry_the_tenders_own_statements(self):
+		"""Project Owner, 10 October 2026: the method and original delivery travel to the published release; none is invented."""
+		root = self._submitted()
+		_version, definition = self._compile(root)
+		facts = next(g["published_facts"] for s in definition["sections"] for g in s["groups"] if g["rule_id"] == "RR-TENDER-SECURITY")
+		self.assertEqual((facts["submission_method"], facts["original_delivery"]), ("Bidder uploads an electronic instrument", "Required"))
+
+	def test_a_package_that_states_neither_is_not_publishable_and_a_projection_without_them_publishes_no_such_fact(self):
+		from kentender_procurement.tenders.services import review
+
+		root = self._submitted()
+		version = frappe.get_doc("Tender Version", root.current_version)
+		payload = json.loads(version.officer_payload_json)
+		payload["tender_security_method"] = payload["tender_security_original"] = None
+		version.officer_payload_json = json.dumps(payload)
+		result = review.run(root, version, with_renders=False)
+		missing = {f["finding_code"] + ":" + f.get("field", "") for f in result["findings"]}
+		self.assertIn("CONTROL_MISSING:tender_security_method", missing)
+		self.assertIn("CONTROL_MISSING:tender_security_original", missing)
+		# a physical-only tender cannot say no original is required
+		payload["tender_security_method"], payload["tender_security_original"] = "Paper instrument requiring an original", "Not required"
+		version.officer_payload_json = json.dumps(payload)
+		self.assertIn("VALUES_INCONSISTENT:tender_security_original", {f["finding_code"] + ":" + f.get("field", "") for f in review.run(root, version, with_renders=False)["findings"]})
 
 	def test_component_digests_reconcile_from_submission_to_publication(self):
 		root = self._submitted()

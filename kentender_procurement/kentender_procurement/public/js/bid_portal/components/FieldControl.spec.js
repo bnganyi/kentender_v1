@@ -14,6 +14,24 @@ afterEach(() => {
 });
 
 describe("An evidence field", () => {
+	it("answers a stale refusal by asking the screen to re-read and by using the version the refusal names on the next try", async () => {
+		const stale = Object.assign(new Error("Another person changed this bid. Reload before continuing."), { code: "BDS_STALE_VERSION", detail: { record_version: 9 } });
+		const upload = vi.fn().mockRejectedValueOnce(stale).mockResolvedValue({ ok: true, record_version: 10 });
+		const portal = { upload, call: vi.fn(), createCommandRunner };
+		const wrapper = mount(FieldControl, { props: { field: FIELD, bid: { reference: "BID-1", record_version: 3 } }, attachTo: document.body, global: { provide: { portal }, config: { globalProperties: { __: globalThis.__ } } } });
+		const pick = async () => {
+			const input = wrapper.get('input[type="file"]');
+			Object.defineProperty(input.element, "files", { value: [new File(["x"], "datasheet.pdf", { type: "application/pdf" })], configurable: true });
+			await input.trigger("change");
+			await flushPromises();
+		};
+		await pick();
+		expect(wrapper.emitted("stale")).toHaveLength(1);
+		await pick();
+		expect(upload.mock.calls.map((c) => c[1].expected_record_version)).toEqual([3, 9]);
+		expect(wrapper.emitted("changed")).toHaveLength(1);
+	});
+
 	it("shows a refused file as the Evidence rejected state with Choose another file", async () => {
 		const upload = vi.fn(async () => ({ ok: false, code: "BDS_EVIDENCE_REJECTED", message: "This file could not be accepted.", errors: { "h-datasheet": "The file failed the malware check." } }));
 		const portal = { upload, call: vi.fn(), createCommandRunner };

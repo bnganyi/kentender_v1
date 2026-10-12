@@ -10,7 +10,7 @@ from pathlib import Path
 # Exit code 0 = allow
 # Exit code 2 = block (recommended for policy-style hooks)
 
-REPO = Path("/home/midasuser/frappe-bench/apps/kentender_v1").resolve()
+REPO = Path(__file__).resolve().parent.parent
 
 # Heuristics: if a new app root is being created manually without pyproject.toml
 # or if a doctype scaffold appears to be hand-created before framework generation,

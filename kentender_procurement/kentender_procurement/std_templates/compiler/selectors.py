@@ -74,6 +74,11 @@ def _tender_security(p: dict[str, Any], _params: dict[str, Any], constants: dict
 		"insurance_guarantee_expiry_date": formats.add_days(valid_until, constants["insurance_guarantee_extra_days"]),
 		"permitted_forms": ["Demand Bank Guarantee", "Insurance Guarantee"],
 	}
+	# Project Owner, 10 Oct 2026: how the security may be submitted and whether an original is delivered are the Tender's own statements.
+	# Carried only when the projection states them, so a definition compiled before they existed (and every frozen release vector) is unchanged.
+	for fact, key in (("submission_method", "submission_method"), ("original_delivery", "original_delivery")):
+		if t["tender_security"].get(key):
+			facts[fact] = t["tender_security"][key]
 	return [_instance("TENDER-SECURITY", facts, {"tender_version_id": t["tender_version_id"]})]
 
 
@@ -293,7 +298,7 @@ SELECTORS: dict[str, SelectorSpec] = {
 	"SEL-DOCUMENT-PACKAGE": SelectorSpec(("document",), (), ("tender_reference", "tender_title", "tender_version_id", "publication_id", "effective_addendum_ids"), (), _document_package),
 	"SEL-SUPPLIER": SelectorSpec(("supplier",), (), ("tender_reference",), (), _supplier),
 	"SEL-DECLARATION": SelectorSpec(("declaration",), ("form_id",), _DECLARATION_FACTS, (), _declaration),
-	"SEL-TENDER-SECURITY": SelectorSpec(("tender_security",), (), ("amount", "currency", "validity_date", "bank_guarantee_expiry_date", "insurance_guarantee_expiry_date", "permitted_forms"), (), _tender_security),
+	"SEL-TENDER-SECURITY": SelectorSpec(("tender_security",), (), ("amount", "currency", "validity_date", "bank_guarantee_expiry_date", "insurance_guarantee_expiry_date", "permitted_forms", "submission_method", "original_delivery"), (), _tender_security),
 	"SEL-RESERVATION": SelectorSpec(
 		("reservation",), (),
 		("category", "rule_snapshot_ids", "permitted_categories", "submission_deadline_date", "text_id", "text_version", "source_text_digest", "resolved_text_digest"),
@@ -346,9 +351,21 @@ def _sub(p: dict[str, Any]) -> dict[str, Any]:
 	return p["officer_decisions"]["submission"]
 
 
+# Project Owner, 10 October 2026: how the Tender's security reaches the bidder's response (release 1.5). The method is the Tender's own statement;
+# a projection that states none keeps the earlier behaviour (the bidder uploads the instrument).
+SECURITY_ISSUER_SUPPLIED = "Issuer supplies the instrument directly"
+
+
+def _security_issuer(p: dict[str, Any]) -> bool:
+	t = p["tender"]["tender_security"]
+	return bool(t["required"]) and t.get("submission_method") == SECURITY_ISSUER_SUPPLIED
+
+
 APPLICABILITY: dict[str, Callable[[dict[str, Any]], bool]] = {
 	"AP-ALWAYS": lambda p: True,
 	"AP-TENDER-SECURITY-REQUIRED": lambda p: p["tender"]["tender_security"]["required"],
+	"AP-TENDER-SECURITY-UPLOAD": lambda p: bool(p["tender"]["tender_security"]["required"]) and not _security_issuer(p),
+	"AP-TENDER-SECURITY-ISSUER-SUPPLIED": _security_issuer,
 	"AP-MANUFACTURER-AUTHORISATION-REQUIRED": lambda p: _sub(p)["manufacturer_authorisation_required"],
 	"AP-DATASHEET-REQUIRED": lambda p: _sub(p)["datasheet_required"],
 	"AP-COMPARABLE-EXPERIENCE-REQUIRED": lambda p: _sub(p)["comparable_experience"]["required"],

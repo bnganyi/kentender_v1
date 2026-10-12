@@ -1,5 +1,5 @@
 <!-- KT-STD-001 v1.8 §2.9 — one guidance region: the journey tracker above the
-     next-step block, below the page header and above the first working
+     next-step block (or below it when the journey's `step_first` says so), below the page header and above the first working
      region (§2.9.3 rule 7), with a bottom divider and no card, shadow or
      band (design-system handoff "Journey tracker and next-step block" §2).
      Used where a module's change unit places both components together
@@ -7,8 +7,14 @@
      with neither a tracker nor a next step draws nothing. -->
 <template>
 	<section v-if="hasJourney || hasStep" class="kt-guidance" data-testid="kt-guidance">
-		<JourneyTracker v-if="hasJourney" :journey="journey" :label="label" @link="$emit('link', $event)" />
-		<NextStep v-if="hasStep" :answer="answer" placement="region" :pending="pending" @fix="$emit('fix', $event)" />
+		<template v-if="stepFirst">
+			<NextStep v-if="hasStep" :answer="answer" placement="region" :pending="pending" @fix="$emit('fix', $event)" />
+			<JourneyTracker v-if="hasJourney" :journey="journey" :label="label" @link="$emit('link', $event)" />
+		</template>
+		<template v-else>
+			<JourneyTracker v-if="hasJourney" :journey="journey" :label="label" @link="$emit('link', $event)" />
+			<NextStep v-if="hasStep" :answer="answer" placement="region" :pending="pending" @fix="$emit('fix', $event)" />
+		</template>
 	</section>
 </template>
 
@@ -26,5 +32,7 @@ const props = defineProps({
 defineEmits(["fix", "link"]);
 
 const hasJourney = computed(() => !!(props.journey && props.journey.stages && props.journey.stages.length));
+// the journey may ask for the next step above it (a finished stage row under a later stage's step)
+const stepFirst = computed(() => !!(props.journey && props.journey.step_first));
 const hasStep = computed(() => !!(props.answer && props.answer.kind !== "not_involved" && props.answer.headline));
 </script>

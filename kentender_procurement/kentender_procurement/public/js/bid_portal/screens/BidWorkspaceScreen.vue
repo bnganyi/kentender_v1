@@ -6,7 +6,7 @@
 // change and action; nothing here derives them. Five ordinary tasks, current
 // notices, the deadline and one next action — no dashboard, no Submit here.
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
-import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
+import BidGuidance from "../components/BidGuidance.vue";
 import CommonState from "../components/CommonState.vue";
 import NotifySignatory from "../components/NotifySignatory.vue";
 import { fixRoute } from "../composables/fixRoute.js";
@@ -71,7 +71,7 @@ onMounted(() => {
 			</div>
 		</div>
 
-		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
+		<BidGuidance :journey="data.journey" :answer="data.next_step" :reference="reference" :bid-reference="bidReference" :organisation="route.query.organisation || ''" :support-href="data.support_href || ''" @fix="onFix" @reload="load" />
 
 		<NotifySignatory v-if="data.handover && data.bid" :handover="data.handover" :bid="data.bid" :organisation="route.query.organisation || ''" @sent="load" />
 		<!-- BDS-DES-06-WITHDRAWN-RELEASE: the two ways on while the Draft waits on the Tender's resolution -->

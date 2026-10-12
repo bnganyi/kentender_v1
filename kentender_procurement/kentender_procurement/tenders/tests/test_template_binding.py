@@ -38,8 +38,29 @@ class TemplateBindingCase(IntegrationTestCase):
 
 
 class TestReleaseNotice(TemplateBindingCase):
+	def make_current(self):
+		"""Make this test's release the one switched On (another release being On makes an unpublished Draft's release 'not current')."""
+		others = frappe.get_all("Installed STD Release", filters={"template_key": self.release.template_key, "site_switch": "On", "name": ("!=", self.release.name)}, pluck="name")
+		for name in others:
+			frappe.db.set_value("Installed STD Release", name, "site_switch", "Off", update_modified=False)
+			self.addCleanup(frappe.db.set_value, "Installed STD Release", name, "site_switch", "On", None, False)
+		frappe.db.set_value("Installed STD Release", self.release.name, "site_switch", "On", update_modified=False)
+
 	def test_a_usable_release_shows_no_notice(self):
+		self.make_current()
 		self.assertIsNone(template_binding.release_notice(self.record(), "Administrator"))
+
+	def test_an_unpublished_draft_on_a_release_another_has_replaced_is_offered_the_explicit_update_only(self):
+		frappe.db.set_value("Installed STD Release", self.release.name, "site_switch", "Off", update_modified=False)
+		current = frappe.db.get_value("Installed STD Release", {"template_key": self.release.template_key, "site_switch": "On", "lifecycle_status": "Available", "name": ("!=", self.release.name)}, ["name", "template_release"], as_dict=True)
+		if not current:
+			frappe.db.set_value("Installed STD Release", self.release.name, "site_switch", "On", update_modified=False)
+			self.skipTest("no other release is switched On on this site")
+		notice = template_binding.release_notice(self.record(overall_status="Draft"), "Administrator")
+		self.assertEqual((notice["state"], notice["full_page"], notice["update_to"]), ("Superseded", True, current.template_release))
+		self.assertFalse(template_binding.release_notice(self.record(overall_status="Draft"), "Guest")["can_update"])
+		# a published Tender keeps its release: no notice, no update
+		self.assertIsNone(template_binding.release_notice(self.record(published_at="2027-05-15 08:00:00"), "Administrator"))
 
 	def test_superseded_unpublished_names_the_release_and_offers_the_route_to_readers_only(self):
 		lifecycle.supersede(self.release.name, release_owner="test release owner")

@@ -78,7 +78,7 @@ def _values(title: str, published: str, deadline: str, security: int, **extra: A
 	day = published[:10]
 	return {
 		"tender_title": title, "issue_date": day, "clarification_deadline": f"{(datetime.fromisoformat(day) + timedelta(days=10)).date()} 17:00:00",
-		"submission_deadline": deadline, "tender_security_amount": float(security), **extra,
+		"submission_deadline": deadline, "tender_security_amount": float(security), "tender_security_method": "Bidder uploads an electronic instrument", "tender_security_original": "Required", **extra,
 	}
 
 

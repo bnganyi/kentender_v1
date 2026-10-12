@@ -25,7 +25,6 @@ from kentender_procurement.bid_submission.services import bid_context, clock, la
 
 RECEIPT = "Bid Receipt"
 NOT_A_RESULT = "This receipt confirms submission only. It is not an opening, evaluation or award result."
-SIMULATION_NOTE = "Test environment: this receipt comes from the simulated Test Tender Box, not a production tender box."
 
 
 def _load(receipt_reference: str, *, actor: str, organisation: str):
@@ -54,7 +53,7 @@ def facts(receipt) -> dict[str, Any]:
 		"replaces_receipt": predecessor,
 		"summary": {"bid_total": cstr(summary.get("bid_total")), "bid_total_words": cstr(summary.get("bid_total_words")), "offered_item": cstr(summary.get("offered_item")), "quantity": cstr(summary.get("quantity")), "delivery_date": cstr(summary.get("delivery_date"))},
 		"deadline": labels.datetime_label(frappe.db.get_value("Tender", receipt.tender, "submission_deadline")),
-		"notice": NOT_A_RESULT, "simulation_note": SIMULATION_NOTE if receipt.simulation else "",
+		"notice": NOT_A_RESULT,
 	}
 
 
@@ -91,7 +90,7 @@ def receipt_html(data: dict[str, Any]) -> str:
 		"dt{color:#4a5468}dd{margin:0;font-weight:600}p{max-width:640px}</style></head><body>"
 		"<h1>Bid submitted</h1><p>Your bid was accepted into the electronic tender box.</p>"
 		f"<dl>{rows(ROWS, data)}</dl><h2>Submission summary</h2><dl>{rows(SUMMARY_ROWS, data['summary'])}<dt>Current deadline</dt><dd>{escape_html(data['deadline'])}</dd></dl>"
-		f"<p>{escape_html(data['notice'])}</p>" + (f"<p>{escape_html(data['simulation_note'])}</p>" if data.get("simulation_note") else "") + "</body></html>"
+		f"<p>{escape_html(data['notice'])}</p>" + "</body></html>"
 	)
 
 

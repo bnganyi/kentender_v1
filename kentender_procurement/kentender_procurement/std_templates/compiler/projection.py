@@ -56,7 +56,9 @@ SCHEMA: dict[str, Any] = {
 		"procurement_method": STR, "currency": STR, "lotting_indicator": STR, "award_packages": INT,
 		"issue_date": DATE, "clarification_deadline": DATETIME, "submission_deadline": DATETIME,
 		"validity_days": INT,
-		"tender_security": {"required": BOOL, "amount": DEC, "currency": STR},
+		# `submission_method` / `original_delivery`: the Tender's own statements (Project Owner, 10 Oct 2026), absent on a projection
+		# built before they existed, so every frozen release vector and an earlier published definition are unchanged
+		"tender_security": {"required": BOOL, "amount": DEC, "currency": STR, "submission_method": ("optional", STR), "original_delivery": ("optional", STR)},
 		"pre_tender_meeting": {"enabled": BOOL, "details": STR},
 		"approval": ("optional", _APPROVAL),
 		"package_digest": STR,
@@ -383,6 +385,9 @@ def document_context(projection: dict[str, Any], constants: dict[str, Any]) -> d
 				"amount": formats.money(tender["tender_security"]["amount"], field="tender.tender_security.amount"),
 				"bank_guarantee_expiry_date": formats.long_date(formats.add_days(valid_until, constants["bank_guarantee_extra_days"])),
 				"insurance_guarantee_expiry_date": formats.long_date(formats.add_days(valid_until, constants["insurance_guarantee_extra_days"])),
+				# the Tender's own statements (release 1.5, Project Owner 10 Oct 2026); "" when the projection states none
+				"submission_method": tender["tender_security"].get("submission_method", ""),
+				"original_delivery": tender["tender_security"].get("original_delivery", ""),
 			},
 			"pre_tender_meeting": dict(tender["pre_tender_meeting"]),
 			"approval": (

@@ -20,7 +20,7 @@ import frappe
 
 from kentender_procurement.bid_submission.services import close, receipts, reads, replacement, save, security_intake, simulation, start_bid, withdrawal
 from kentender_procurement.bid_submission.test_services import tender_box
-from kentender_procurement.bid_submission.tests.support import DAVID, KISIWA, MARY, PETER, key
+from kentender_procurement.bid_submission.tests.support import DAVID, KISIWA, MARY, PETER, assign_intake_officer, key
 from kentender_procurement.bid_submission.tests.test_submission import SubmissionCase
 from kentender_procurement.tenders.services import bid_definition, submission_close
 from kentender_procurement.tenders.tests import fixtures as tender_fx
@@ -131,9 +131,10 @@ class TestClose(ChangeCase):
 		self.replace()  # never submitted
 		other = start_bid.start_bid(tender_reference=self.reference, organisation=KISIWA, arrangement=self.single(), notice_contact_id=f"{KISIWA}-C1", idempotency_key=key(), user=PETER)["bid_reference"]
 		facts = next(g["published_facts"] for s in bid_definition.current(self.name)["definition"]["sections"] for g in s["groups"] if g["rule_id"] == "RR-TENDER-SECURITY")
+		assign_intake_officer(self)
 		intake = security_intake.record_physical_tender_security_receipt(
 			tender_reference=self.reference, instrument_type=facts["permitted_forms"][0], issuer="KCB Bank Kenya", instrument_reference="KCB/TG/HANDOFF/1", amount=facts["amount"],
-			currency=facts["currency"], received_at="2027-05-31 08:00:00", confirmed=True, idempotency_key=key(), user=tender_fx.HOPF,
+			currency=facts["currency"], received_at="2027-05-31 08:00:00", confirmed=True, idempotency_key=key(), user=tender_fx.OFFICER,
 		)["intake_reference"]
 		self.at(str(self.deadline()))
 		submission_close.close_tender_submission_period(tender=self.name, idempotency_key=key(), user="Administrator")
@@ -151,7 +152,10 @@ class TestClose(ChangeCase):
 		bound = frappe.db.get_value("Bid Workspace", self.bid, ["bid_definition_id", "definition_version", "definition_digest"], as_dict=True)
 		self.assertEqual({k: body["envelopes"][0][k] for k in ("bid_definition_id", "definition_version", "definition_digest")}, {"bid_definition_id": bound.bid_definition_id, "definition_version": int(bound.definition_version), "definition_digest": bound.definition_digest})
 		self.assertRegex(body["envelopes"][0]["definition_digest"], r"^[0-9a-f]{64}$")
-		self.assertEqual([i["intake_reference"] for i in body["physical_tender_security"]["intakes"]], [intake])
+		# Project Owner, 10 Oct 2026: no security intake travels with the sealed hand-off; the intake stays recorded
+		self.assertEqual(body["physical_tender_security"], {"intakes": [], "matches": []})
+		self.assertNotIn(intake, row.payload_json)
+		self.assertTrue(frappe.db.exists("Tender Security Intake", {"intake_reference": intake}))
 		self.assertEqual(body["unresolved_attempts"], [])
 		text = row.payload_json
 		for content in ("content_base64", "ApexBook", "Afya Digital Supplies Limited", other):

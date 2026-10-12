@@ -34,7 +34,7 @@ from kentender_procurement.tenders.tests.test_open_period import CHANNELS, OpenP
 LIST_KEYS = {"reference", "title", "procuring_entity", "method", "reservation", "submission_deadline", "published_at", "availability"}
 TENDER_KEYS = {
 	"reference", "title", "procuring_entity", "method", "reservation", "items", "total_quantity", "delivery_location", "latest_delivery", "currency",
-	"tender_security_amount", "validity_days", "published_at", "clarification_deadline", "original_submission_deadline", "submission_deadline",
+	"tender_security_amount", "tender_security_method", "tender_security_original", "validity_days", "published_at", "clarification_deadline", "original_submission_deadline", "submission_deadline",
 	"availability", "clarifications_open", "documents", "addenda", "answers", "cancellation",
 }
 #: Internal record names, release/definition identities, private paths and digests never reach a supplier.
@@ -114,6 +114,7 @@ class TestPublicTender(BidSeamsCase):
 			(fx.LOCATION, "2027-06-05T11:00:00+03:00", "2027-06-05T11:00:00+03:00", "2027-05-27T17:00:00+03:00", [], True, "open"),
 		)
 		self.assertEqual((before["currency"], before["tender_security_amount"], before["validity_days"], before["total_quantity"]), ("KES", "500000", 120, {"quantity": "1", "unit": "Each"}))
+		self.assertEqual((before["tender_security_method"], before["tender_security_original"]), ("Bidder uploads an electronic instrument", "Required"))  # the Tender's own statements
 		self.assertEqual([(d["key"], d["label"], d["published_at"]) for d in before["documents"]], [("invitation", "Invitation to Tender", "2027-05-15T08:00:00+03:00"), ("complete-tender", "Complete Tender", "2027-05-15T08:00:00+03:00")])
 		name = self._issue(confirm=False)
 		awaiting = bidder_projection.published_tender(self.reference, at="2027-05-31 09:00:00")

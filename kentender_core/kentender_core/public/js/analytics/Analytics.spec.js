@@ -166,6 +166,18 @@ describe("ANL-DES-21 Charles, Overview", () => {
 		expect(region.find(".kt-anl-segrows").classes()).toContain("is-bands");
 	});
 
+	it("states 'No outstanding matters recorded in any area.' once, as its own line, when no area has a matter", async () => {
+		const payload = clone(FX["21"]);
+		Object.assign(payload.overview.waiting, { rows: [], none_text: "", empty_text: "No outstanding matters recorded in any area." });
+		const wrapper = await open("21", undefined, payload);
+		const region = wrapper.get('[data-testid="kt-anl-waiting"]');
+		expect(text(region)).toBe(
+			"Outstanding matters by waiting time No outstanding matters recorded in any area. Days since each matter reached its current holder.",
+		);
+		expect(region.find(".kt-anl-segrows").exists()).toBe(false);
+		expect(region.get(".kt-ap-region-msg").text()).toBe("No outstanding matters recorded in any area.");
+	});
+
 	it("shows Plan coverage: 81%, the planned value, both segments, the item sentence and the link", async () => {
 		const wrapper = await open("21");
 		const region = wrapper.get('[data-testid="kt-anl-coverage"]');

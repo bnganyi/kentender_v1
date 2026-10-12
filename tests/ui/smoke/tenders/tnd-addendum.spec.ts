@@ -47,6 +47,30 @@ test.describe("TPR-DES-10 Prepare and issue addendum", () => {
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
+	test("the Tender's tender-security statements are amended through the same addendum: a choice list, never free text", async ({ page }) => {
+		const state = resetFixture("reset_published_fixture");
+		await login(page, OFFICER, PASSWORD);
+		await gotoTenders(page, `/${state.tender_reference}`);
+		await expectReady(page, "published");
+		await page.locator('[data-testid="tnd-prepare-addendum"]').click();
+		await expectReady(page, "addendum");
+		await page.locator('[data-testid="tnd-ad-reference"]').selectOption("tender_security_method");
+		await expect(page.locator('[data-testid="tnd-ad-previous"]')).toHaveText("Bidder uploads an electronic instrument");
+		const revised = page.locator('[data-testid="tnd-ad-revised"]');
+		expect(await revised.evaluate((el) => el.tagName)).toBe("SELECT");
+		await expect(revised.locator("option")).toHaveText(["Choose the revised value", "Bidder uploads an electronic instrument", "Issuer supplies the instrument directly", "Paper instrument requiring an original"]);
+		await revised.selectOption("Issuer supplies the instrument directly");
+		await page.locator('[data-testid="tnd-ad-reason"]').fill("The issuer will supply the instrument directly to the Procuring Entity.");
+		await page.locator('[data-testid="tnd-ad-materiality"]').fill("No change to the amount, form, expiry or evaluation basis.");
+		await page.locator('[data-testid="tnd-ad-change-class"]').selectOption("Non-material correction");
+		await page.locator('[data-testid="tnd-ad-save"]').click();
+		await expectSettled(page);
+		await expect(page.locator('[data-testid="tnd-command-error"]')).toHaveCount(0);
+		await page.reload();
+		await expectReady(page, "addendum");
+		await expect(page.locator('[data-testid="tnd-ad-revised"]')).toHaveValue("Issuer supplies the instrument directly");
+	});
+
 	test("HoPF issues after the comparison; channel confirmation follows; the officer cannot issue", async ({ page }) => {
 		const state = resetFixture("reset_addendum_awaiting_issue_fixture");
 		await login(page, OFFICER, PASSWORD);

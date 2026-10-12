@@ -17,7 +17,7 @@ import frappe
 
 from kentender_procurement.bid_submission.services import evidence, reads, security_intake, tender_security
 from kentender_procurement.bid_submission.services.bid_context import load
-from kentender_procurement.bid_submission.tests.support import AFYA, DAVID, MARY, fill_everything, key
+from kentender_procurement.bid_submission.tests.support import AFYA, DAVID, MARY, assign_intake_officer, fill_everything, key, opening_crossed
 from kentender_procurement.bid_submission.tests.test_addendum_refresh import AddendumCase
 from kentender_procurement.bid_submission.tests.test_evidence import EICAR_PDF
 from kentender_procurement.bid_submission.tests.test_submission import SubmissionCase
@@ -56,12 +56,12 @@ class TestReadyReview(SubmissionCase):
 		self.assertTrue(all(offering.values()), offering)
 		self.assertTrue(offering["Warranty"].endswith(" months") and offering["Support response"].endswith(" hours"), offering)
 		declared = facts(view["declarations"])
-		self.assertEqual(list(declared), ["Declarations", "Evidence items", "Tender security reference", "Physical receipt"])
+		self.assertEqual(list(declared), ["Declarations", "Evidence items", "Tender security reference", "Physical original", "Issuer verification"])
 		self.assertIn("confirmed", declared["Declarations"])
 		self.assertTrue(declared["Evidence items"].endswith(" accepted"), declared["Evidence items"])
-		self.assertEqual(declared["Physical receipt"], "Not yet recorded")
+		self.assertEqual((declared["Physical original"], declared["Issuer verification"]), ("Original receipt not yet recorded", "Issuer verification not requested"))
 		# an outstanding original is the amber fact from the company task, not a Must fix
-		self.assertEqual((view["security_notice"]["tone"], view["security_notice"]["title"]), ("warning", "Physical original not yet recorded"))
+		self.assertEqual((view["security_notice"]["tone"], view["security_notice"]["title"]), ("warning", "Original receipt not yet recorded"))
 		self.assertEqual([r["label"] for r in view["price_summary"]], ["Subtotal excluding tax", "Tax", "Bid total"])
 		self.assertEqual(view["footer"], {"back_href": base, "submit": {"label": "Submit bid", "href": f"{base}/submit"}})
 		self.assertNotIn("review_bid", [f.get("fix_id") for f in view["next_step"]["fixes"]])
@@ -70,15 +70,18 @@ class TestReadyReview(SubmissionCase):
 	def test_a_recorded_original_is_a_green_fact(self):
 		ctx = load(self.bid, actor=MARY, organisation="", at=frappe.utils.now_datetime())
 		security = tender_security.response(ctx)
+		assign_intake_officer(self)
+		# the supplier reads its own recorded original at once; the stored match waits for the opening
 		recorded = security_intake.record_physical_tender_security_receipt(
 			tender_reference=self.reference, instrument_type=security["security_type"], issuer=security["issuer"], instrument_reference=security["reference"],
-			amount=security["amount"], currency=security["currency"], received_at="2027-05-19 09:00:00", notes="", confirmed=True, idempotency_key=key(), user=tender_fx.HOPF,
+			amount=security["amount"], currency=security["currency"], received_at="2027-05-19 09:00:00", notes="", confirmed=True, idempotency_key=key(), user=tender_fx.OFFICER,
 		)
 		self.assertTrue(recorded["ok"], recorded)
 		view = review(self.bid)
 		self.assertEqual(view["security_notice"]["tone"], "live")
-		self.assertTrue(view["security_notice"]["text"].startswith("Physical tender-security original recorded as received on 19 May 2027"), view["security_notice"])
-		self.assertEqual(facts(view["declarations"])["Physical receipt"], recorded["intake_reference"])
+		self.assertTrue(view["security_notice"]["text"].startswith(f"Original received: receipt {recorded['intake_reference']}, 19 May 2027"), view["security_notice"])
+		self.assertIn("Security will be checked against your bid after opening.", view["security_notice"]["text"])
+		self.assertEqual(facts(view["declarations"])["Physical original"], f"Original received · {recorded['intake_reference']}")
 
 	def test_the_representative_sees_the_same_review_without_submit(self):
 		view = review(self.bid, user=DAVID)

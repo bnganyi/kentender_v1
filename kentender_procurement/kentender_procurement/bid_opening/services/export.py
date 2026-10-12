@@ -55,4 +55,7 @@ def export_opening(*, tender: str, user: str) -> dict[str, Any]:
 		bundle["evaluation_handoff"].pop("payload_json")
 	with prc_owner.acting(case):
 		bundle["proceedings"] = prc_reads.export_proceeding(owner_type=prc_owner.OWNER_TYPE, owner_id=case, user=user)
+	from kentender_procurement.bid_opening.services import incident_access
+
+	incident_access.record_export(case=case, user=user, incident_ids=[row["incident_id"] for row in bundle["incidents"]])  # Project Owner, 10 October 2026: an export of incidents is audited
 	return json.loads(json.dumps(bundle, default=str))

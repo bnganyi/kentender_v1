@@ -25,7 +25,7 @@ from typing import Any
 
 from frappe.utils import cstr
 
-from kentender_procurement.bid_submission.services import addendum, company_view, controls, guidance, labels, price, projection, readiness, tender_security, tenders_gateway, workspace_view
+from kentender_procurement.bid_submission.services import addendum, company_view, controls, guidance, labels, price, projection, readiness, security_verification, tender_security, tenders_gateway, workspace_view
 
 TITLE = "Review bid"
 DESCRIPTION = "Check the complete bid before submitting it to the electronic tender box."
@@ -57,16 +57,24 @@ def _value(ctx, field) -> str:
 
 
 def offering(ctx) -> list[dict[str, str]]:
+	"""What is offered. With several goods lines each line's rows carry `line` (its description) and come
+	together in published line order (BDS-CHG-001 v0.12 §4.4.9); with one line the rows stay flat."""
 	rows: list[dict[str, str]] = []
+	several = sum(1 for g in ctx.model.groups_of("requirements") if g.composition_id == "COMP-GOODS-OFFER") > 1
+	lines: list[str] = []
 	for group in ctx.model.groups_of("requirements"):
 		facts = group.published_facts or {}
 		if group.composition_id == "COMP-GOODS-OFFER":
+			line = {"line": cstr(facts.get("description"))} if several else {}
+			lines.append(line.get("line", ""))
+			mine: list[dict[str, str]] = []
 			by_key = {f.field_key: f for f in group.fields}
 			for key, label in GOODS_FACTS:
 				if key in by_key:
-					rows.append({"label": label, "value": _value(ctx, by_key[key])})
+					mine.append({"label": label, "value": _value(ctx, by_key[key]), **line})
 			if facts.get("quantity"):
-				rows.insert(1, {"label": "Quantity", "value": f"{cstr(facts['quantity'])} {cstr(facts.get('unit'))}".strip()})
+				mine.insert(1, {"label": "Quantity", "value": f"{cstr(facts['quantity'])} {cstr(facts.get('unit'))}".strip(), **line})
+			rows.extend(mine)
 		if group.composition_id == "COMP-WARRANTY-SUPPORT":
 			label = dict(WARRANTY_FACTS).get(cstr(facts.get("obligation_key")))
 			answer = next((f for f in group.fields if f.control_id not in ("CTL-EVIDENCE", "CTL-LONG-TEXT") and "compliance" not in f.label.lower()), None)
@@ -75,7 +83,9 @@ def offering(ctx) -> list[dict[str, str]]:
 				unit = cstr(facts.get("unit"))
 				rows.append({"label": label, "value": f"{value} {unit}".strip() if value else ""})
 	order = [label for _k, label in GOODS_FACTS[:1]] + ["Quantity"] + [label for _k, label in GOODS_FACTS[1:]] + [label for _k, label in WARRANTY_FACTS]
-	return sorted(rows, key=lambda r: order.index(r["label"]))
+	line_order = {name: n for n, name in enumerate(lines)}
+	# each goods line's rows together in published line order, the shared warranty and support rows after them
+	return sorted(rows, key=lambda r: (line_order.get(r.get("line", ""), len(lines)), order.index(r["label"])))
 
 
 def _evidence_fields(tasks):
@@ -99,11 +109,14 @@ def declarations(ctx, tasks, published: dict[str, Any], security: dict[str, Any]
 		{"label": "Evidence items", "value": _counted([(accepted, "accepted"), (rejected, "rejected")])},
 	]
 	if security.get("required"):
-		recorded = security["physical_receipt_status"] != tender_security.NOT_RECORDED
+		received = security["physical_receipt_status"] == tender_security.ORIGINAL_RECEIVED
 		out += [
 			{"label": "Tender security reference", "value": security.get("reference") or "—"},
-			{"label": "Physical receipt", "value": security["physical_receipt_reference"] if recorded else "Not yet recorded"},
+			{"label": "Physical original", "value": f"{tender_security.ORIGINAL_RECEIVED} · {security['physical_receipt_reference']}" if received else security["physical_receipt_status"]},
 		]
+		issuer = security_verification.view(ctx)
+		if issuer:
+			out.append({"label": "Issuer verification", "value": issuer["verification"]["label"]})
 	return out
 
 
@@ -164,7 +177,7 @@ def view(ctx, tasks, guided: dict[str, Any], *, at) -> dict[str, Any]:
 	security = tender_security.response(ctx)
 	physical = company_view.physical(security, published)
 	if physical and physical["tone"] == "live":
-		physical = {"tone": "live", "title": "", "text": f"Physical tender-security original recorded as received on {security['physical_received_at']}."}
+		physical = {"tone": "live", "title": "", "text": f"{tender_security.ORIGINAL_RECEIVED}: receipt {security['physical_receipt_reference']}, {security['physical_received_at']}. {tender_security.CHECKED_AFTER_OPENING}"}
 	calc = price.summary(ctx)
 	issues = _issues(ctx, tasks, base)
 	rows = [

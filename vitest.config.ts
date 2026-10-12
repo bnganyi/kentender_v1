@@ -148,6 +148,17 @@ export default defineConfig({
 				},
 			},
 			{
+				// Project Owner, 10 October 2026 — the Head of Procurement Function's
+				// assignment of the tender-security intake duty.
+				plugins: [vue()],
+				test: {
+					name: "tender-security-duty",
+					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/tender_security_duty/vitest.setup.js"],
+					include: ["kentender_procurement/kentender_procurement/public/js/tender_security_duty/**/*.spec.js"],
+				},
+			},
+			{
 				// STD-TPL-IMP-001 v1.0 §11 — SFC component and structural-fidelity
 				// tests for STD Templates, alongside (never instead of) the browser layer.
 				plugins: [vue()],

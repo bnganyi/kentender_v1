@@ -2949,6 +2949,14 @@
 	min-width: 0;
 }
 
+.kt-industry .kt-journey-caption {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.4;
+	font-weight: 600;
+	color: var(--kt-color-neutral-700);
+}
+
 .kt-industry .kt-journey-compact {
 	display: grid;
 	gap: 8px;

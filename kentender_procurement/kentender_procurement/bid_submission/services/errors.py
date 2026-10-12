@@ -34,7 +34,7 @@ MESSAGES: dict[str, str] = {
 	"BDS_EVIDENCE_REQUIRED": "Add the required supporting evidence.",
 	"BDS_EVIDENCE_REJECTED": "This file could not be accepted.",
 	"BDS_SECURITY_PROOF_REQUIRED": "Add the required tender-security proof.",
-	"BDS_SECURITY_ORIGINAL_OUTSTANDING": "The physical tender-security original has not been recorded as received.",
+	"BDS_SECURITY_ORIGINAL_OUTSTANDING": "This Tender requires the original tender security to be delivered before the deadline. Its receipt is not yet recorded; this does not block electronic submission. Security will be checked against your bid after opening.",
 	"BDS_MUST_FIX": "Fix the listed items before submitting.",
 	"BDS_STALE_VERSION": "Another person changed this bid. Reload before continuing.",
 	"BDS_SIGNATORY_REQUIRED": "Only an active Authorised Signatory can submit this bid.",

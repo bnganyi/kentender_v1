@@ -1,0 +1,85 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-10 20:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-10 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "permissions": [],
+ "name": "Tender Security Exposure",
+ "autoname": "hash",
+ "field_order": [
+  "tender",
+  "tender_reference",
+  "user",
+  "kind",
+  "intake_reference",
+  "exposed_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "label": "Tender",
+   "read_only": 1,
+   "options": "Tender",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_reference",
+   "fieldtype": "Data",
+   "label": "Tender reference",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "read_only": 1,
+   "options": "Recorded an intake\nViewed intake records",
+   "reqd": 1
+  },
+  {
+   "fieldname": "intake_reference",
+   "fieldtype": "Data",
+   "label": "Intake reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "exposed_at",
+   "fieldtype": "Datetime",
+   "label": "At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "description": "Append-only: each time a person recorded or viewed supplier-identifying tender-security intake information for a Tender. Ending an assignment does not remove it; it keeps the person ineligible for that Tender's opening and evaluation duties."
+}

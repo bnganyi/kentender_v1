@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "register_id": "KT-DOC-CTRL-001",
   "title": "KenTender Requirements and Delivery Baseline Register",
-  "as_of": "2026-10-09",
+  "as_of": "2026-10-12",
   "purpose": "Canonical machine-readable record of the current requirements baseline, cross-module contracts, decisions, implementation handoffs, future work and unresolved control findings.",
   "governance": {
     "source_of_truth": "This file is the canonical source for the companion Documentation Control Register workbook.",
@@ -66,34 +66,35 @@
     {
       "document_id": "STR-CHG-001",
       "title": "Clean Strategy Alignment",
-      "version": "1.9",
+      "version": "1.10",
       "category": "Module requirements",
       "module": "Strategy Alignment",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-03",
-      "supersedes": "v1.7 and earlier",
+      "approval_date": "2026-10-12",
+      "supersedes": "v1.9 approved 3 October 2026; v1.7 and earlier",
       "implementation_status": "Not evidenced",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
-      "library_file_id": "libfile_f5502a30807c8191b8d3f2910b96a9dc",
-      "filename": "KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_9.md",
+      "library_file_id": "",
+      "filename": "KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_10.md",
       "scope": "Strategy objectives and accepted alignment evidence consumed by Planning.",
       "dependencies": "KT-STD-001; AUTH-ADR-001",
-      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
-      "source_sha256": "1ea70ef6ab97675c3b5dc75990e36276be9bb9ab8f3848173fe9665cefa72ce6",
+      "action": "Approved 12 October 2026 (v1.10). Records the every-internal-user read rule and the behaviour added by the 7 October 2026 audit remediation; lists 17 build-versus-document differences (section 18.4) that stay open for owner decisions. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "source_sha256": "3bdaf8ca7f6bc11445e780fd8d7fc7946278b6380a4b977bb9e5ef81a347ea88",
       "prior_approved_baseline": {
-        "version": "1.8",
-        "approval_date": "2026-09-13",
-        "filename": "KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_8.md",
+        "version": "1.9",
+        "approval_date": "2026-10-03",
+        "filename": "KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_9.md",
         "requirement_status": "Approved requirement"
       },
-      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_record": "Project Owner: Approve it and commit; 12 October 2026",
       "approval_history": {
-        "proposed_version": "1.9",
-        "proposed_filename": "KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_9.md",
-        "proposal_status": "Project Owner review",
-        "proposed_base_version": "1.8"
+        "prior_proposal": {
+          "proposed_version": "1.9",
+          "proposal_status": "Approved 3 October 2026",
+          "proposed_base_version": "1.8"
+        }
       }
     },
     {
@@ -325,98 +326,148 @@
     {
       "document_id": "TPR-CHG-001",
       "title": "Tenders",
-      "version": "0.17",
+      "version": "0.20",
       "category": "Module requirements",
       "module": "Tender Preparation and Publication",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-03",
-      "supersedes": "v0.13; prior approvals retained",
+      "approval_date": "2026-10-11",
+      "supersedes": "v0.17; v0.18 and v0.19 proposals carried in full; prior approvals retained",
       "implementation_status": "Planned",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
-      "library_file_id": "libfile_000ff3f0efe881918a374f6f15819fbb",
-      "filename": "KenTender_TPR-CHG-001_Tenders_v0_17.md",
+      "library_file_id": "",
+      "filename": "KenTender_TPR-CHG-001_Tenders_v0_20.md",
       "scope": "Approved Tender preparation, approval, publication, clarifications, addenda, cancellation, exact bound STD-release lifecycle including published Superseded/Withdrawn behavior, and KT-STD-001 v1.8 journey guidance.",
       "dependencies": "REQ-CHG-001 v1.12; CFG-CHG-002 v0.16; STD-TPL-001 v0.10; STD-TPL-IMP-001 v1.1; BDS-CHG-001 v0.8; BOP-CHG-001 v0.10 and PRC-CHG-001 v0.9 proposed for post-close cancellation; Award-status owner pending",
-      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v0.19 proposed 10 October 2026: the Tender-stated tender-security submission method and original delivery (section 5.2, section 23) and the explicit-review read for Tenders published without them; carries the v0.18 Review digests change. The approved baseline is unchanged until the Project Owner approves v0.19. v0.20 proposed 11 October 2026: three submission methods, the explicit update of an unpublished Draft to the new template release, amendment of the statements by the existing addendum and an auditable correction (section 24); carries v0.19 and v0.18. The approved baseline is unchanged until the Project Owner approves v0.20. Approved 2026-10-11 (v0.20): Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it. Approval is not evidence of implementation, verification or release.",
       "prior_approved_baseline": {
-        "version": "0.15",
-        "approval_date": "2026-10-01",
-        "filename": "KenTender_TPR-CHG-001_Tenders_v0_15.md",
+        "version": "0.17",
+        "approval_date": "2026-10-03",
+        "filename": "KenTender_TPR-CHG-001_Tenders_v0_17.md",
         "requirement_status": "Approved requirement"
       },
-      "source_sha256": "4a085fc2a369c9501cb3765b075e76e032defc1ff4c35fa5b91c3abea51674e5",
-      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "source_sha256": "f12b7f723fa38f260f9ddf03ced15d78d5b64a3f06e5769d675487f359915dce",
+      "approval_record": "Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it.",
       "approval_history": {
-        "proposed_version": "0.17",
-        "proposed_filename": "KenTender_TPR-CHG-001_Tenders_v0_17.md",
-        "proposal_status": "Project Owner review",
-        "proposed_base_version": "0.16",
-        "proposed_revision": "v0.16 — KenTender_TPR-CHG-001_Tenders_v0_16.md; not approved; not yet in the document library; a patch on approved v0.15",
-        "pending_predecessor_version": "0.16",
-        "pending_predecessor_filename": "KenTender_TPR-CHG-001_Tenders_v0_16.md"
+        "proposed_version": "0.20",
+        "proposed_filename": "KenTender_TPR-CHG-001_Tenders_v0_20.md",
+        "proposal_status": "Approved 11 October 2026",
+        "proposed_base_version": "0.17",
+        "proposed_revision": "three submission methods, the explicit update of an unpublished Draft to the new template release, amendment of the statements by the existing addendum and an auditable correction (section 24); carries v0.19 and v0.18.",
+        "proposed_scope": "three submission methods, the explicit update of an unpublished Draft to the new template release, amendment of the statements by the existing addendum and an auditable correction (section 24); carries v0.19 and v0.18.",
+        "previous_proposal": {
+          "version": "0.19",
+          "proposed_base_version": "0.17",
+          "outcome": "Superseded as the one proposal by v0.20 on 11 October 2026; its content is carried in full",
+          "previous_proposal": {
+            "version": "0.17",
+            "proposed_base_version": "0.16",
+            "outcome": "Carried in full by v0.19; not separately approved (Project Owner decided “Option 1” for its content on 10 October 2026)"
+          }
+        }
       }
     },
     {
       "document_id": "BDS-CHG-001",
       "title": "Supplier Portal and Electronic Bid Submission",
-      "version": "0.11",
+      "version": "0.16",
       "category": "Module requirements",
       "module": "Supplier/Bidder Workspace and Bid Submission",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-03",
-      "supersedes": "v0.8; prior approvals retained",
+      "approval_date": "2026-10-11",
+      "supersedes": "v0.11; v0.12 to v0.15 proposals carried in full; prior approvals retained",
       "implementation_status": "In progress",
       "verification_status": "Pending",
       "release_status": "Blocked",
       "normative": "Yes",
-      "library_file_id": "libfile_f8038abb4ed08191983a122d03a31c1f",
-      "filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_11.md",
+      "library_file_id": "",
+      "filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_16.md",
       "scope": "Public discovery, supplier Account, structured Goods/IT bid preparation, signature, receipt, replacement and sealed Bid Opening handoff, with actor-specific guidance and bound STD-release controls.",
       "dependencies": "TPR-CHG-001 v0.13; STD-TPL-001 v0.10; STD-TPL-IMP-001 v1.1; CFG-CHG-002 v0.16; AUTH-ADR-001 v1.10; KT-STD-001 v1.8; G1-REG-001 v1.1",
-      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v0.13 proposed 10 October 2026 (supersedes the v0.12 proposal): test notices withdrawn from sections 5.10 and 15.1. v0.14 proposed 10 October 2026: tender-security intake duty (explicit, Tender-scoped, assigned by the Head of Procurement Function), approved separation policy, limited security-intake exception and independence from bid submission, matching after the opening boundary, sealed records closed to technical accounts, and the explicit electronic security journey with issuer verification; carries the v0.12 multi-line goods correction and the v0.13 test-notice withdrawal. v0.11 remains the approved baseline until the Project Owner approves v0.14. v0.15 proposed 10 October 2026: supplier-facing security status wording (Original received, Original receipt not yet recorded, Issuer verification pending), the Tender-stated submission method and original delivery, and emergency access to sealed contents recorded as production-readiness item PR-001; carries v0.14 in full. The approved baseline is unchanged until the Project Owner approves v0.15. v0.16 proposed 11 October 2026: the three submission methods and the evidence each requires, a pending issuer response that blocks nothing, the auditable correction and the addendum for the Tender’s security statements, and incident notices that never link to a sealed record; carries v0.15 in full. The approved baseline is unchanged until the Project Owner approves v0.16. Approved 2026-10-11 (v0.16): Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it. Approval is not evidence of implementation, verification or release.",
       "prior_approved_baseline": {
-        "version": "0.10",
-        "approval_date": "2026-10-01",
-        "filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_10.md",
+        "version": "0.11",
+        "approval_date": "2026-10-03",
+        "filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_11.md",
         "requirement_status": "Approved requirement"
       },
-      "source_sha256": "cba604f8d7f973f0c625cf4c7ca6cdd0b43003e4c8a445f93521106df2149fba",
-      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "source_sha256": "bd7101ed9c0afa34b456fc73e436111087d29eea485ab3bc9ff56cf98e1a556f",
+      "approval_record": "Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it.",
       "approval_history": {
-        "proposed_version": "0.11",
-        "proposed_filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_11.md",
-        "proposal_status": "Project Owner review",
-        "proposed_base_version": "0.10"
+        "proposed_version": "0.16",
+        "proposed_filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_16.md",
+        "proposal_status": "Approved 11 October 2026",
+        "proposed_base_version": "0.11",
+        "proposed_revision": "the three submission methods and the evidence each requires, a pending issuer response that blocks nothing, the auditable correction and the addendum for the Tender’s security statements, and incident notices that never link to a sealed record; carries v0.15 in full.",
+        "proposed_scope": "the three submission methods and the evidence each requires, a pending issuer response that blocks nothing, the auditable correction and the addendum for the Tender’s security statements, and incident notices that never link to a sealed record; carries v0.15 in full.",
+        "previous_proposal": {
+          "version": "0.15",
+          "proposed_base_version": "0.11",
+          "outcome": "Superseded as the one proposal by v0.16 on 11 October 2026; its content is carried in full",
+          "previous_proposal": {
+            "version": "0.14",
+            "proposed_base_version": "0.11",
+            "outcome": "Superseded as the one proposal by v0.15 on 10 October 2026; its content is carried in full",
+            "previous_proposal": {
+              "version": "0.13",
+              "proposed_base_version": "0.11",
+              "outcome": "Superseded as the one proposal by v0.14 on 10 October 2026; its content is carried in full",
+              "previous_proposal": {
+                "version": "0.12",
+                "proposed_base_version": "0.11",
+                "outcome": "Superseded as the one proposal by v0.13 on 10 October 2026; its content is carried in full",
+                "previous_proposal": {
+                  "version": "0.11",
+                  "proposed_base_version": "0.10",
+                  "outcome": "Approved 3 October 2026 (Project Owner: Mark the documents as approved)"
+                }
+              }
+            }
+          }
+        }
       }
     },
     {
       "document_id": "STD-TPL-001",
       "title": "IT Equipment Tender Template Curation and Release Pack",
-      "version": "0.15",
+      "version": "0.17",
       "category": "Template standard",
       "module": "STD Templates",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-03",
-      "supersedes": "v0.14 proposed 2 October 2026 and never approved on its own (v0.15 carries it forward); v0.13 approved 27 September 2026; v0.12 approved 26 September 2026 (its approval also approved the v0.11 content it carried forward; v0.11 was not approved separately); v0.10 approved 26 September 2026; v0.9 and earlier",
+      "approval_date": "2026-10-11",
+      "supersedes": "v0.15; v0.16 proposal carried in full; v0.14 proposed 2 October 2026 and never approved on its own (v0.15 carried it forward); v0.13 approved 27 September 2026; v0.12 approved 26 September 2026",
       "implementation_status": "Planned",
       "verification_status": "Pending",
       "release_status": "Candidate",
       "normative": "Yes",
-      "library_file_id": "libfile_b28f18acf8c481919a9107d5d50954dc",
-      "filename": "KenTender_STD-TPL-001_IT_Equipment_Tender_Template_Curation_and_Release_Pack_v0_15.md",
+      "library_file_id": "",
+      "filename": "KenTender_STD-TPL-001_IT_Equipment_Tender_Template_Curation_and_Release_Pack_v0_17.md",
       "scope": "Controlled template content and construction, installed integrity, administrative inspection and Administrator On/Off switch for new Tender binding. v0.12 and v0.13 add, from template release 1.2, the first supplier task wording, supplied values, label parameters, the joint-venture member composition, the tender security amount and expiry response and per-obligation warranty/support responses. v0.14 and v0.15 add, from template releases 1.3 and 1.4, content-quality checks and the official wording, the table control, and each Tenderer's business profile held on its supplier Account and copied into each bid per entity.",
       "dependencies": "KT-STD-001 v1.8; REQ-CHG-001 v1.12; TPR-CHG-001 v0.11; BDS-CHG-001 v0.7 and v0.8; STD-TPL-IMP-001 v1.0; CFG-CHG-002 v0.16 (as cited in v0.13; see AUD-022)",
-      "action": "Approved v0.15 source confirmed. Apply scoped OVS amendment in impact schedule at next coordinated successor; numbering awaits separate walkthrough rebase. No new template successor allocated.",
+      "action": "Approved v0.15 source confirmed. Apply scoped OVS amendment in impact schedule at next coordinated successor; numbering awaits separate walkthrough rebase. No new template successor allocated. v0.16 proposed 10 October 2026: the published tender-security facts submission_method and original_delivery (section 18.8); a successor template release for the conditional response fields is owed. The approved baseline is unchanged until the Project Owner approves v0.16. v0.17 proposed 11 October 2026: release 1.5: conditional tender-security evidence by the Tender’s submission method (section 18.9); carries v0.16. The approved baseline is unchanged until the Project Owner approves v0.17. Approved 2026-10-11 (v0.17): Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it. Approval is not evidence of implementation, verification or release.",
       "proposed_revision": "",
       "prior_approved_baseline": {
-        "version": "0.13",
-        "approval_date": "2026-09-27",
-        "library_file_id": "",
-        "filename": "KenTender_STD-TPL-001_IT_Equipment_Tender_Template_Curation_and_Release_Pack_v0_13.md"
+        "version": "0.15",
+        "approval_date": "2026-10-03",
+        "filename": "KenTender_STD-TPL-001_IT_Equipment_Tender_Template_Curation_and_Release_Pack_v0_15.md",
+        "requirement_status": "Approved requirement"
       },
-      "source_sha256": "9d34e53e11bbb695ddfb0be83e5a3e38411cf81c4d434a56512174227d159366"
+      "source_sha256": "c70224e5aa9123e2a87d3654b37e86bd52a8a0365cbe90297626a017a4e8f746",
+      "approval_history": {
+        "proposed_version": "0.17",
+        "proposed_filename": "KenTender_STD-TPL-001_IT_Equipment_Tender_Template_Curation_and_Release_Pack_v0_17.md",
+        "proposal_status": "Approved 11 October 2026",
+        "proposed_base_version": "0.15",
+        "proposed_revision": "release 1.5: conditional tender-security evidence by the Tender’s submission method (section 18.9); carries v0.16.",
+        "proposed_scope": "release 1.5: conditional tender-security evidence by the Tender’s submission method (section 18.9); carries v0.16.",
+        "previous_proposal": {
+          "version": "0.16",
+          "proposed_base_version": "0.15",
+          "outcome": "Superseded as the one proposal by v0.17 on 11 October 2026; its content is carried in full"
+        }
+      },
+      "approval_record": "Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it."
     },
     {
       "document_id": "STD-TPL-IMP-001",
@@ -519,44 +570,51 @@
     {
       "document_id": "AUTH-ADR-001",
       "title": "Role-Bound Business Responsibility and Organisational Scope",
-      "version": "1.12",
+      "version": "1.15",
       "category": "Architecture decision record",
       "module": "Identity and Access",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-08",
-      "supersedes": "v1.11 on approval; v1.9; prior approvals retained",
+      "approval_date": "2026-10-11",
+      "supersedes": "v1.12; v1.13 and v1.14 proposals carried in full",
       "implementation_status": "Not evidenced",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "",
-      "filename": "KenTender_AUTH-ADR-001_Role-Bound_Business_Responsibility_and_Organisational_Scope_v1_12.md",
+      "filename": "KenTender_AUTH-ADR-001_Role-Bound_Business_Responsibility_and_Organisational_Scope_v1_15.md",
       "scope": "Approved v1.9 responsibility model plus bounded, non-authoritative STD-template inspection and concern access for Procurement Officer and HOPF. v1.12 adds the non-authoritative staff home organisation unit (display only, no authority), its System setup tab, and retires kt_primary_department.",
       "dependencies": "CFG-CHG-002 v0.19; STD-TPL-001 v0.10; all role-aware modules",
-      "action": "Approved 8 October 2026 (v1.12). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
-      "source_sha256": "4533f35da4e303575047225c1101a73754eff2a38da9bccb2d0d339638d6f9fa",
+      "action": "Approved 8 October 2026 (v1.12). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v1.13 proposed 10 October 2026: a Tender scope type and the Tender Security Intake Officer responsibility, the separation policy, the sealed-record exception to technical read. v1.12 remains the approved authorization authority until the Project Owner approves v1.13. v1.14 proposed 10 October 2026: the section 8 sealed-record exception extended to the Bid Opening incident and linked records; AUTH-AC-057; carries v1.13 in full. The approved baseline is unchanged until the Project Owner approves v1.14. v1.15 proposed 11 October 2026: the incident access trail is read only by the Auditor and the Accounting Officer (AUTH-AC-058); carries v1.14 in full. The approved baseline is unchanged until the Project Owner approves v1.15. Approved 2026-10-11 (v1.15): Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it. Approval is not evidence of implementation, verification or release.",
+      "source_sha256": "0edf699f0e4e24e2fc1da696a62d65dd71be840e4024b1965ae1c246774b67f1",
       "prior_approved_baseline": {
-        "version": "1.11",
-        "approval_date": "2026-10-03",
-        "filename": "KenTender_AUTH-ADR-001_Role-Bound_Business_Responsibility_and_Organisational_Scope_v1_11.md",
+        "version": "1.12",
+        "approval_date": "2026-10-08",
+        "filename": "KenTender_AUTH-ADR-001_Role-Bound_Business_Responsibility_and_Organisational_Scope_v1_12.md",
         "requirement_status": "Approved requirement"
       },
-      "approval_record": "Project Owner, 8 October 2026, verbatim: “Approved. Proceed”, answering the report of the proposed set AUTH-ADR-001 v1.12, CFG-CHG-002 v0.19, KT-STD-001 v1.26 and EVL-CHG-001 v0.7. (v1.11: Project Owner: Mark the documents as approved; 3 October 2026)",
+      "approval_record": "Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it.",
       "approval_history": {
-        "proposed_version": "1.12",
-        "proposed_filename": "KenTender_AUTH-ADR-001_Role-Bound_Business_Responsibility_and_Organisational_Scope_v1_12.md",
-        "proposal_status": "Approved 8 October 2026",
-        "proposed_base_version": "1.11",
-        "proposed_revision": null,
-        "proposed_scope": "Staff home organisation unit: one optional Organisation Unit per staff account, display only, no authority; its System setup tab (AUTH-DES-10, AUTH-DES-11); retirement of kt_primary_department. Proposed with CFG-CHG-002 v0.19, KT-STD-001 v1.26 and EVL-CHG-001 v0.7. v1.11 was the approved baseline until 8 October 2026.",
-        "earlier_proposals": [
-          {
-            "proposed_version": "1.11",
-            "proposed_filename": "KenTender_AUTH-ADR-001_Role-Bound_Business_Responsibility_and_Organisational_Scope_v1_11.md",
-            "proposed_base_version": "1.10",
-            "outcome": "Approved 3 October 2026"
+        "proposed_version": "1.15",
+        "proposed_filename": "KenTender_AUTH-ADR-001_Role-Bound_Business_Responsibility_and_Organisational_Scope_v1_15.md",
+        "proposal_status": "Approved 11 October 2026",
+        "proposed_base_version": "1.12",
+        "proposed_revision": "the incident access trail is read only by the Auditor and the Accounting Officer (AUTH-AC-058); carries v1.14 in full.",
+        "proposed_scope": "the incident access trail is read only by the Auditor and the Accounting Officer (AUTH-AC-058); carries v1.14 in full.",
+        "previous_proposal": {
+          "version": "1.14",
+          "proposed_base_version": "1.12",
+          "outcome": "Superseded as the one proposal by v1.15 on 11 October 2026; its content is carried in full",
+          "previous_proposal": {
+            "version": "1.13",
+            "proposed_base_version": "1.12",
+            "outcome": "Superseded as the one proposal by v1.14 on 10 October 2026; its content is carried in full",
+            "previous_proposal": {
+              "version": "1.12",
+              "proposed_base_version": "1.11",
+              "outcome": "Approved 8 October 2026 (Project Owner: Approved. Proceed)"
+            }
           }
-        ]
+        }
       }
     },
     {
@@ -648,23 +706,52 @@
     {
       "document_id": "SEED-002",
       "title": "Canonical Seed World",
-      "version": "0.3",
+      "version": "0.7",
       "category": "Fixture standard and operational runbook",
       "module": "Cross-module",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-08",
-      "supersedes": "From 8 October 2026: SEED-001 (v1.4 approved) and SEED-OPS-001 (v1.24 approved; v1.25 proposed)",
+      "approval_date": "2026-10-11",
+      "supersedes": "v0.3; v0.4 to v0.6 proposals carried in full",
       "implementation_status": "Implemented",
       "verification_status": "Pending",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "",
-      "filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_3.md",
-      "source_sha256": "b5d39a8ee09e32d6bec99f357aa1a6a76aa13b02032be4f80dd408a46dab4e14",
-      "approval_record": "Project Owner, 8 October 2026, verbatim: “SEED-002 v0.3 is approved.”, answering the report that EVL-CHG-001 v0.8, KT-STD-001 v1.27 and PRC-CHG-001 v0.12 were approved and SEED-002 v0.3 remained Proposed because its approval also retires SEED-001 and SEED-OPS-001",
+      "filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_7.md",
+      "source_sha256": "d5f4fd615acf1a7fdcb545192226f12e9209dd6c0367a89fc690a8e9613c6b63",
+      "approval_record": "Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it.",
       "scope": "The canonical world — FY 2026/27 carried out (Active plan, laptops Tender and an executed portfolio of eleven more items) and FY 2027/28 prepared, read as at 18 June 2027 10:00 EAT — how to seed it (make seed-canonical CURRENT=/NEXT=) and how a module adds to it; carry-over register of every SEED-001 and SEED-OPS-001 rule.",
       "dependencies": "Two-year seed world proposal decisions D1–D12 (4 October 2026); KT-STD-001 §8.1–§8.3; KT-STD-001 §8.4/§8.4A correction (Appendix C) owed by the Project Owner",
-      "action": "Approved 8 October 2026 (Project Owner, 8 October 2026, verbatim: “SEED-002 v0.3 is approved.”, answering the report that EVL-CHG-001 v0.8, KT-STD-001 v1.27 and PRC-CHG-001 v0.12 were approved and SEED-002 v0.3 remained Proposed because its approval also retires SEED-001 and SEED-OPS-001). v0.3 is the one proposal (v0.2 and v0.1 superseded). Complete outstanding verification; approval does not establish implementation or verification. v0.3 (8 October 2026) adds the evaluation secretary by office and by delegation (the proposed EVL-CHG-001 and KT-STD-001 successors); it supersedes v0.2 (staff home organisation units) and v0.1 as the one proposal. sha256 59c69575a333d7bfeb215b4b3e876c0665ef752267ac6ceebfbedf065cac49ef. Built and validated on kentender-test.local on 5 October 2026 (commit bedf8a5b and later); approval does not establish verification."
+      "action": "Approved 8 October 2026 (Project Owner, 8 October 2026, verbatim: “SEED-002 v0.3 is approved.”, answering the report that EVL-CHG-001 v0.8, KT-STD-001 v1.27 and PRC-CHG-001 v0.12 were approved and SEED-002 v0.3 remained Proposed because its approval also retires SEED-001 and SEED-OPS-001). v0.3 is the one proposal (v0.2 and v0.1 superseded). Complete outstanding verification; approval does not establish implementation or verification. v0.3 (8 October 2026) adds the evaluation secretary by office and by delegation (the proposed EVL-CHG-001 and KT-STD-001 successors); it supersedes v0.2 (staff home organisation units) and v0.1 as the one proposal. sha256 59c69575a333d7bfeb215b4b3e876c0665ef752267ac6ceebfbedf065cac49ef. Built and validated on kentender-test.local on 5 October 2026 (commit bedf8a5b and later); approval does not establish verification. v0.5 proposed 10 October 2026: the tender-security intake duty and its fixtures. v0.3 remains the approved baseline until the Project Owner approves the successor. v0.6 proposed 10 October 2026: every canonical Tender states its tender-security method and original delivery; the supplier-facing status validation; carries v0.5 in full. The approved baseline is unchanged until the Project Owner approves v0.6. v0.7 proposed 11 October 2026: canonical Tenders state the bidder-uploads method and are bound to template release 1.5; carries v0.6 in full. The approved baseline is unchanged until the Project Owner approves v0.7. Approved 2026-10-11 (v0.7): Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it. Approval is not evidence of implementation, verification or release.",
+      "approval_history": {
+        "proposed_version": "0.7",
+        "proposed_filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_7.md",
+        "proposal_status": "Approved 11 October 2026",
+        "proposed_base_version": "0.3",
+        "proposed_revision": "canonical Tenders state the bidder-uploads method and are bound to template release 1.5; carries v0.6 in full.",
+        "proposed_scope": "canonical Tenders state the bidder-uploads method and are bound to template release 1.5; carries v0.6 in full.",
+        "previous_proposal": {
+          "version": "0.6",
+          "proposed_base_version": "0.3",
+          "outcome": "Superseded as the one proposal by v0.7 on 11 October 2026; its content is carried in full",
+          "previous_proposal": {
+            "version": "0.5",
+            "proposed_base_version": "0.3",
+            "outcome": "Superseded as the one proposal by v0.6 on 10 October 2026; its content is carried in full",
+            "previous_proposal": {
+              "version": "0.4",
+              "proposed_base_version": "0.3",
+              "outcome": "Superseded as the one proposal by v0.5 on 10 October 2026; its content is carried in full"
+            }
+          }
+        }
+      },
+      "prior_approved_baseline": {
+        "version": "0.3",
+        "approval_date": "2026-10-08",
+        "filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_3.md",
+        "requirement_status": "Approved requirement"
+      }
     },
     {
       "document_id": "G1-REG-001",
@@ -873,66 +960,111 @@
     {
       "document_id": "TRUST-ADR-001",
       "title": "Shared Signing and Sealed Custody",
-      "version": "0.2",
+      "version": "0.6",
       "category": "Architecture decision",
       "module": "Shared Trust Infrastructure",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-03",
-      "supersedes": "",
+      "approval_date": "2026-10-11",
+      "supersedes": "v0.2; v0.3 to v0.5 proposals carried in full",
       "implementation_status": "Not started",
       "verification_status": "Not started",
       "release_status": "Blocked",
       "normative": "Yes",
-      "library_file_id": "libfile_d1eb23c985808191b4a6e33a29af86b5",
-      "filename": "KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_2.md",
+      "library_file_id": "",
+      "filename": "KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_6.md",
       "scope": "Locks two distinct signing/decision semantics and separate multi-person sealed-bid custody, defers actual production mechanisms to a shared support module, and permits synthetic test proxies only.",
       "dependencies": "BDS-CHG-001 v0.8 (v0.9 proposed); BOP-CHG-001 v0.10 proposed; PRC-CHG-001 v0.9 proposed; LAW-V-001",
-      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v0.3 proposed 10 October 2026: test notices withdrawn: the two required labels in the section 2 table and the 'clearly labelled' phrase, with a no-test-notices rule (Project Owner, 10 October 2026). v0.2 remains the approved baseline until the Project Owner approves v0.3. v0.4 proposed 10 October 2026: technical-access controls for sealed bids and tender-security intake (section 2A) and the interim issuer-verification proxy; carries the v0.3 test-notice withdrawal. v0.2 remains the approved baseline until the Project Owner approves v0.4. v0.5 proposed 10 October 2026: section 2B: incident records sealed, no unrestricted break-glass access to sealed bids in the MVP, and the incident-recovery procedure as production-readiness item PR-001; carries v0.4 in full. The approved baseline is unchanged until the Project Owner approves v0.5. v0.6 proposed 11 October 2026: PR-001 procedure drafted as TRUST-OPS-001 v0.1; incident-detail read auditing recorded as built; carries v0.5 in full. The approved baseline is unchanged until the Project Owner approves v0.6. Approved 2026-10-11 (v0.6): Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it. Approval is not evidence of implementation, verification or release.",
       "prior_approved_baseline": {
-        "version": "0.1",
-        "approval_date": "2026-09-27",
-        "filename": "KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_1.md",
+        "version": "0.2",
+        "approval_date": "2026-10-03",
+        "filename": "KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_2.md",
         "requirement_status": "Approved requirement"
       },
-      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_record": "Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it.",
       "approval_history": {
-        "proposed_version": "0.2",
-        "proposed_filename": "KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_2.md",
-        "proposal_status": "Project Owner review",
-        "proposed_base_version": "0.1"
-      }
+        "proposed_version": "0.6",
+        "proposed_filename": "KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_6.md",
+        "proposal_status": "Approved 11 October 2026",
+        "proposed_base_version": "0.2",
+        "proposed_revision": "PR-001 procedure drafted as TRUST-OPS-001 v0.1; incident-detail read auditing recorded as built; carries v0.5 in full.",
+        "proposed_scope": "PR-001 procedure drafted as TRUST-OPS-001 v0.1; incident-detail read auditing recorded as built; carries v0.5 in full.",
+        "previous_proposal": {
+          "version": "0.5",
+          "proposed_base_version": "0.2",
+          "outcome": "Superseded as the one proposal by v0.6 on 11 October 2026; its content is carried in full",
+          "previous_proposal": {
+            "version": "0.4",
+            "proposed_base_version": "0.2",
+            "outcome": "Superseded as the one proposal by v0.5 on 10 October 2026; its content is carried in full",
+            "previous_proposal": {
+              "version": "0.3",
+              "proposed_base_version": "0.2",
+              "outcome": "Superseded as the one proposal by v0.4 on 10 October 2026; its content is carried in full",
+              "previous_proposal": {
+                "version": "0.2",
+                "proposed_base_version": "0.1",
+                "outcome": "Approved 3 October 2026 (Project Owner: Mark the documents as approved)"
+              }
+            }
+          }
+        }
+      },
+      "source_sha256": "08e7d95915235ce423a8f366ae58ceef63317c9f0394d8f59760b50a4d0ad5fe"
     },
     {
       "document_id": "BOP-CHG-001",
       "title": "Electronic Bid Opening",
-      "version": "0.11",
+      "version": "0.15",
       "category": "Module requirements",
       "module": "Bid Opening",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-03",
-      "supersedes": "v0.9 approved 29 September 2026, retained as historical evidence",
+      "approval_date": "2026-10-11",
+      "supersedes": "v0.11; v0.12 to v0.14 proposals carried in full; v0.9 approved 29 September 2026, retained as historical evidence",
       "implementation_status": "In progress",
       "verification_status": "Pending",
       "release_status": "Not approved",
       "normative": "Yes",
-      "library_file_id": "libfile_a398ef6e43f08191981ed3372ee79e29",
-      "filename": "KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_11.md",
+      "library_file_id": "",
+      "filename": "KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_15.md",
       "scope": "Approved design and development contract. v0.10 adds the opening-access-unavailable scenario, four completed-record correction kinds, the AO Your turn state and a unified Tender route.",
       "dependencies": "KT-STD-001 v1.10 approved; TPR-CHG-001 v0.13 approved (v0.14 post-close seam proposed); BDS-CHG-001 v0.8 approved (v0.9 correction proposed); PRC-CHG-001 v0.9 approved; TRUST-ADR-001 v0.1 approved; LAW-V-001; future Evaluation intake",
-      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
-      "source_sha256": "a3c3f61bcc12b9992831b9fd1948356dedcc803bae53c29403b9079ef375ac99",
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v0.12 proposed 10 October 2026: test labels withdrawn from the shared-infrastructure deferral, section 13 and section 17 (Project Owner, 10 October 2026). v0.11 remains the approved baseline until the Project Owner approves v0.12. v0.13 proposed 10 October 2026: the confidentiality exception for security intake, the opening access boundary, the intake exclusion in the appointment and BOP-N19 to N21, BOP-A22 to A24; carries the v0.12 test-label withdrawal. v0.11 remains the approved baseline until the Project Owner approves v0.13. v0.14 proposed 10 October 2026: Opening incident records and linked identifiers sealed; incident reads limited to the committee, the Accounting Officer and the assigned Opening access support holder; BOP-N22; carries v0.13 in full. The approved baseline is unchanged until the Project Owner approves v0.14. v0.15 proposed 11 October 2026: audited, purpose-named reads of incident details, the audited export and the restricted access trail (BOP-N23 to BOP-N26); carries v0.14 in full. The approved baseline is unchanged until the Project Owner approves v0.15. Approved 2026-10-11 (v0.15): Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it. Approval is not evidence of implementation, verification or release.",
+      "source_sha256": "55f3fd48cd8d02102a1230d253d6b0977fae5a4ebf63ab11cc7497ef7cf80904",
       "prior_approved_baseline": {
-        "version": "0.10",
-        "approval_date": "2026-09-29",
-        "filename": "KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_10.md",
+        "version": "0.11",
+        "approval_date": "2026-10-03",
+        "filename": "KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_11.md",
         "requirement_status": "Approved requirement"
       },
-      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_record": "Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it.",
       "approval_history": {
-        "proposed_version": "0.11",
-        "proposed_filename": "KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_11.md",
-        "proposal_status": "Project Owner review",
-        "proposed_base_version": "0.10"
+        "proposed_version": "0.15",
+        "proposed_filename": "KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_15.md",
+        "proposal_status": "Approved 11 October 2026",
+        "proposed_base_version": "0.11",
+        "proposed_revision": "audited, purpose-named reads of incident details, the audited export and the restricted access trail (BOP-N23 to BOP-N26); carries v0.14 in full.",
+        "proposed_scope": "audited, purpose-named reads of incident details, the audited export and the restricted access trail (BOP-N23 to BOP-N26); carries v0.14 in full.",
+        "previous_proposal": {
+          "version": "0.14",
+          "proposed_base_version": "0.11",
+          "outcome": "Superseded as the one proposal by v0.15 on 11 October 2026; its content is carried in full",
+          "previous_proposal": {
+            "version": "0.13",
+            "proposed_base_version": "0.11",
+            "outcome": "Superseded as the one proposal by v0.14 on 10 October 2026; its content is carried in full",
+            "previous_proposal": {
+              "version": "0.12",
+              "proposed_base_version": "0.11",
+              "outcome": "Superseded as the one proposal by v0.13 on 10 October 2026; its content is carried in full",
+              "previous_proposal": {
+                "version": "0.11",
+                "proposed_base_version": "0.10",
+                "outcome": "Approved 3 October 2026 (Project Owner: Mark the documents as approved)"
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -952,7 +1084,7 @@
       "filename": "KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_12.md",
       "scope": "v0.12 (approved 8 October 2026): one clause of section 20 — the Head of Procurement Function holds no preparation task. Approved minimal shared service bound to BOP v0.10: attributed pre-session arrivals carried into actual session view, owner events, versioned opening record, personal target proof, one-action empty outcome and terminal partial/never-held records. No standalone UI.",
       "dependencies": "BOP-CHG-001 v0.10 approved; KT-STD-001 v1.10 approved; TPR-CHG-001 v0.13 approved (v0.14 proposed); TRUST-ADR-001 v0.1 approved; LAW-V-001",
-      "action": "Approved 8 October 2026 (v0.12). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "action": "Approved 8 October 2026 (v0.12). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v0.13 proposed 10 October 2026: test labels withdrawn from section 1 and section 13 (Project Owner, 10 October 2026). v0.12 remains the approved baseline until the Project Owner approves v0.13.",
       "prior_approved_baseline": {
         "version": "0.11",
         "approval_date": "2026-10-08",
@@ -962,20 +1094,17 @@
       "source_sha256": "aeec95d9db1c2a72cd0082be52500b12bbe21cb2ea9e29bf5a4787ceac8206d3",
       "approval_record": "Project Owner, 8 October 2026, verbatim: “All decisions approved. Proceed”, answering the report of the proposed set EVL-CHG-001 v0.8, KT-STD-001 v1.27, SEED-002 v0.3 and PRC-CHG-001 v0.12 with its Owner decisions D7–D11. (Project Owner: Mark the documents as approved; 3 October 2026)",
       "approval_history": {
-        "proposed_version": "0.12",
-        "proposed_filename": "KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_12.md",
-        "proposal_status": "Approved 8 October 2026",
-        "proposed_base_version": "0.11",
-        "proposed_revision": null,
-        "proposed_scope": "One clause of section 20: the Head of Procurement Function holds no preparation task (EVL-CHG-001 v0.8). v0.11 remains the approved baseline.",
-        "earlier_proposals": [
-          {
-            "proposed_version": "0.11",
-            "proposed_filename": "KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_11.md",
-            "proposed_base_version": "0.10",
-            "outcome": "Approved 3 October 2026"
-          }
-        ]
+        "proposed_version": "0.13",
+        "proposed_filename": "KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_13.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "0.12",
+        "proposed_revision": "test labels withdrawn from section 1 and section 13 (Project Owner, 10 October 2026).",
+        "proposed_scope": "test labels withdrawn from section 1 and section 13 (Project Owner, 10 October 2026).",
+        "previous_proposal": {
+          "version": "0.12",
+          "proposed_base_version": "0.11",
+          "outcome": "Approved 8 October 2026 (Project Owner: All decisions approved. Proceed)"
+        }
       }
     },
     {
@@ -995,7 +1124,7 @@
       "filename": "KenTender_EVL-CHG-001_Bid_Evaluation_v0_8.md",
       "scope": "v0.8 (approved 8 October 2026): the Head of Procurement Function is recorded as evaluation secretary by office when the Accounting Officer appoints the committee; Delegate secretary duties is the Head's written appointment of another procurement officer; the separate secretary-assignment task is retired. Automatic evaluation, focused committee review and signed report. Second-review corrections align commands, tasks, source issues, scope gates and dated fixtures. v0.7 reads the committee member department from the staff home organisation unit (snapshotted; a missing department does not block an appointment and is completed once) and has the system generate the appointment reference.",
       "dependencies": "KT-STD-001 v1.12; BOP v0.10; BDS v0.8; PRC v0.9; TRUST v0.1; TPR v0.13; STD-TPL v0.10. Coordinated owner amendments drafted: PRC v0.10, TPR v0.15, BDS v0.10, KT-STD v1.13; approval/integration outstanding. v0.7 adds AUTH-ADR-001 v1.12; CFG-CHG-002 v0.19; KT-STD-001 v1.26.",
-      "action": "Approved 8 October 2026 (v0.8). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "action": "Approved 8 October 2026 (v0.8). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v0.9 proposed 10 October 2026: the tender-security intake exclusion. v0.8 remains the approved baseline until the Project Owner approves v0.9.",
       "source_sha256": "3838db9e28438c83e789e2e84909ea71efb26f06b93d9fc61387826a7cf98dd5",
       "prior_approved_baseline": {
         "version": "0.7",
@@ -1005,32 +1134,17 @@
       },
       "approval_record": "Project Owner, 8 October 2026, verbatim: “All decisions approved. Proceed”, answering the report of the proposed set EVL-CHG-001 v0.8, KT-STD-001 v1.27, SEED-002 v0.3 and PRC-CHG-001 v0.12 with its Owner decisions D7–D11. (Project Owner, 8 October 2026, verbatim: “Approved. Proceed”, answering the report of the proposed set AUTH-ADR-001 v1.12, CFG-CHG-002 v0.19, KT-STD-001 v1.26 and EVL-CHG-001 v0.7, including the drafted values of Owner decisions D1–D6 in section 12.6. (v0.5: Project Owner: Mark the documents as approved; 3 October 2026))",
       "approval_history": {
-        "proposed_version": "0.8",
-        "proposed_filename": "KenTender_EVL-CHG-001_Bid_Evaluation_v0_8.md",
-        "proposal_status": "Approved 8 October 2026",
-        "proposed_base_version": "0.7",
-        "proposed_revision": null,
-        "proposed_scope": "The Head of Procurement Function is recorded as secretary by office on the Accounting Officer's appointment; Delegate secretary duties is the Head's written appointment under PPADA section 46(4)(c); the separate secretary-assignment task, its hand-off rows and boards are retired. Owner decisions D7-D11 open (document section 12.7). Proposed with KT-STD-001 v1.27, SEED-002 v0.3 and PRC-CHG-001 v0.12. v0.7 remains the approved baseline.",
-        "earlier_proposals": [
-          {
-            "proposed_version": "0.7",
-            "proposed_filename": "KenTender_EVL-CHG-001_Bid_Evaluation_v0_7.md",
-            "proposed_base_version": "0.5",
-            "outcome": "Approved 8 October 2026"
-          },
-          {
-            "proposed_version": "0.6",
-            "proposed_filename": "KenTender_EVL-CHG-001_Bid_Evaluation_v0_6.md",
-            "proposed_base_version": "0.5",
-            "outcome": "Superseded by v0.7 before approval; file retained as evidence"
-          },
-          {
-            "proposed_version": "0.5",
-            "proposed_filename": "KenTender_EVL-CHG-001_Bid_Evaluation_v0_5.md",
-            "proposed_base_version": "0.4",
-            "outcome": "Approved 3 October 2026"
-          }
-        ]
+        "proposed_version": "0.9",
+        "proposed_filename": "KenTender_EVL-CHG-001_Bid_Evaluation_v0_9.md",
+        "proposal_status": "Project Owner review",
+        "proposed_base_version": "0.8",
+        "proposed_revision": "the tender-security intake exclusion for members, replacements, the secretary by office and by delegation, and EVL-A21.",
+        "proposed_scope": "the tender-security intake exclusion for members, replacements, the secretary by office and by delegation, and EVL-A21.",
+        "previous_proposal": {
+          "version": "0.8",
+          "proposed_base_version": "0.7",
+          "outcome": "Approved 8 October 2026 (Project Owner: All decisions approved. Proceed)"
+        }
       }
     },
     {
@@ -1050,7 +1164,7 @@
       "filename": "KenTender_AWD-CHG-001_Award_v0_5.md",
       "scope": "Professional opinion, AO decision, bidder notices, acceptance, waiting conditions and delivery to Contracting.",
       "dependencies": "EVL v0.4; STD-TPL v0.10; KT-STD v1.12; TPR v0.13; BDS v0.8; PRC v0.9; TRUST v0.1; effective AUTH/Budget. Proposed owner interfaces: AWD-IF-01–07.",
-      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v0.6 proposed 10 October 2026: test-mode environment notice and visible adapter labelling withdrawn from sections 10 and 13; the Simulation only operating-profile setting stays as a guard (Project Owner, 10 October 2026). v0.5 remains the approved baseline until the Project Owner approves v0.6.",
       "source_sha256": "db64d9e3b0f8c3a5b18cd3d1aee16194651cfcd66efa9358416dc36cb6596c55",
       "prior_approved_baseline": {
         "version": "0.4",
@@ -1060,10 +1174,17 @@
       },
       "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
       "approval_history": {
-        "proposed_version": "0.5",
-        "proposed_filename": "KenTender_AWD-CHG-001_Award_v0_5.md",
+        "proposed_version": "0.6",
+        "proposed_filename": "KenTender_AWD-CHG-001_Award_v0_6.md",
         "proposal_status": "Project Owner review",
-        "proposed_base_version": "0.4"
+        "proposed_base_version": "0.5",
+        "proposed_revision": "test-mode environment notice and visible adapter labelling withdrawn from sections 10 and 13; the Simulation only operating-profile setting stays as a guard (Project Owner, 10 October 2026).",
+        "proposed_scope": "test-mode environment notice and visible adapter labelling withdrawn from sections 10 and 13; the Simulation only operating-profile setting stays as a guard (Project Owner, 10 October 2026).",
+        "previous_proposal": {
+          "version": "0.5",
+          "proposed_base_version": "0.4",
+          "outcome": "Approved 3 October 2026 (Project Owner: Mark the documents as approved)"
+        }
       }
     },
     {
@@ -1164,6 +1285,34 @@
         "proposal_status": "Project Owner review",
         "proposed_base_version": "1.0"
       }
+    },
+    {
+      "document_id": "TRUST-OPS-001",
+      "title": "Sealed-Bid Incident Recovery Procedure",
+      "version": "0.1",
+      "category": "Operational procedure",
+      "module": "Shared Trust Infrastructure",
+      "requirement_status": "Approved requirement",
+      "approval_date": "2026-10-11",
+      "supersedes": "",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "release_status": "Blocked",
+      "normative": "Yes",
+      "library_file_id": "",
+      "filename": "docs/mvp-1-r1/00_common/KenTender_TRUST-OPS-001_Sealed_Bid_Incident_Recovery_Procedure_v0_1.md",
+      "scope": "The PR-001 incident-recovery procedure: incident declaration, authorised support access, permitted diagnostics, recovery without exposing sealed contents, evidence preservation, escalation when opening cannot proceed, closure review and a pre-production test plan. Exceptional access to sealed contents is out of scope.",
+      "dependencies": "TRUST-ADR-001; BOP-CHG-001; BDS-CHG-001; AUTH-ADR-001",
+      "action": "Proposed 11 October 2026 (v0.1). Not operational until the Project Owner approves it and the section 11 tests pass; PR-001 closes only then. Severity classes, time targets, review period and retention are drafter proposals for the Owner’s decision. Approved 2026-10-11 (v0.1): Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it. Approval is not evidence of implementation, verification or release.",
+      "source_sha256": "df77d3cdaa1538329d7741f9303cf51fb12bcaebb28b36f71b50dff4ac20869c",
+      "approval_record": "Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it.",
+      "approval_history": {
+        "proposed_version": "0.1",
+        "proposed_filename": "docs/mvp-1-r1/00_common/KenTender_TRUST-OPS-001_Sealed_Bid_Incident_Recovery_Procedure_v0_1.md",
+        "proposal_status": "Approved 11 October 2026",
+        "proposed_base_version": "",
+        "proposed_revision": "The PR-001 incident-recovery procedure: incident declaration, authorised support access, permitted diagnostics, recovery without exposing sealed contents, evidence preservation, escalation when opening cannot proceed, closure review and a pre-production test plan. Exceptional access to sealed contents is out of scope."
+      }
     }
   ],
   "interfaces": [
@@ -1175,7 +1324,7 @@
       "status": "Closed in requirements",
       "implementation_status": "Not evidenced",
       "test_status": "Not evidenced",
-      "owner_doc": "STR-CHG-001 v1.8 / PLN-CHG-001 v1.27",
+      "owner_doc": "STR-CHG-001 v1.10 (v1.8 read: STR-CHG-001 v1.8) / PLN-CHG-001 v1.27",
       "failure_rule": "Planning must not invent or silently rewrite strategy evidence."
     },
     {
@@ -1430,6 +1579,50 @@
       "test_status": "Not started",
       "owner_doc": "OVS-CHG-001 v0.6 and limited owner successors",
       "failure_rule": "No new role/scope store; no Draft or bid access beyond explicit owner rule."
+    },
+    {
+      "interface_id": "IF-025",
+      "upstream": "BOP-CHG-001",
+      "downstream": "BDS-CHG-001",
+      "contract": "Opening access boundary: Bid Opening publishes that the Tender's opening has started through the kt_opening_boundary_probes hook; Bid Submission matches a security intake to a bid only after it.",
+      "status": "Approved requirement",
+      "implementation_status": "Implemented",
+      "test_status": "Pending",
+      "owner_doc": "BOP-CHG-001 (approved 11 October 2026, successor) and BDS-CHG-001 (approved 11 October 2026, successor)",
+      "failure_rule": "No probe answers yes before Start; matching and the supplier's matched status stay closed."
+    },
+    {
+      "interface_id": "IF-026",
+      "upstream": "BOP-CHG-001 and EVL-CHG-001",
+      "downstream": "BDS-CHG-001",
+      "contract": "Duty participants: Opening and Evaluation publish who sits on a Tender's opening and evaluation through the kt_tender_duty_participants hook; Bid Submission checks the intake duty against it, and the owning modules check the duty at appointment.",
+      "status": "Approved requirement",
+      "implementation_status": "Implemented",
+      "test_status": "Pending",
+      "owner_doc": "AUTH-ADR-001 (approved 11 October 2026, successor section 5.8) and BDS-CHG-001 (approved 11 October 2026, successor section 6)",
+      "failure_rule": "A person on a Tender's opening or evaluation cannot be assigned its intake duty; a duty holder or exposed person cannot be appointed; refusals name the duty and no supplier."
+    },
+    {
+      "interface_id": "IF-027",
+      "upstream": "Issuer verification service",
+      "downstream": "BDS-CHG-001",
+      "contract": "Issuer verification: an issuer's answer Confirmed, Pending, Mismatch or Unavailable to a tender-security instrument, found through the kt_bds_issuer_services hook; the source and response time travel with the result.",
+      "status": "Approved requirement",
+      "implementation_status": "In progress",
+      "test_status": "Pending",
+      "owner_doc": "BDS-CHG-001 (approved 11 October 2026, successor section 4.8) and TRUST-ADR-001 (approved 11 October 2026, successor section 2)",
+      "failure_rule": "An unavailable or absent service leaves verification Pending; only the Test Issuer Service answers, on a test environment only; nothing is Confirmed without an issuer's answer."
+    },
+    {
+      "interface_id": "IF-028",
+      "upstream": "Tenders",
+      "downstream": "Bid Submission",
+      "contract": "The Tender’s tender-security statements (submission method, original delivery) as published facts, or as the auditable Tender Security Statement correction where the published definition states neither",
+      "status": "Approved requirement",
+      "implementation_status": "Implemented",
+      "test_status": "Pending",
+      "owner_doc": "TPR-CHG-001; BDS-CHG-001; STD-TPL-001",
+      "failure_rule": "A Tender that states neither reads Original delivery not stated; no requirement is assumed or invented."
     }
   ],
   "decisions": [
@@ -1776,6 +1969,110 @@
       "owner_doc": "REQ-CHG-001 v1.15 §22.1A and v1.18; Project Owner, 9 October 2026: “Approved with all recommendations” (v1.15), “v1.16 is approved”, “v1.18 approved”",
       "implementation_effect": "Items-once command and validation, estimated total per source allocation, frozen evidence at submission. Approval is not evidence of implementation.",
       "design_effect": "Request summary and Items section; no product named outside the chosen category."
+    },
+    {
+      "decision_id": "DEC-044",
+      "decision": "No screen, Desk form, receipt, print view, PDF, export, message or portal shell shows a test-environment notice, a simulation or test-attestation label, or a record flag marking a record as simulated. Test stand-ins are recognised only through the site's simulation setting and their own test-control records. Production gates and the guards that stop a stand-in acting outside a test site stay.",
+      "status": "Approved 10 October 2026",
+      "owner_doc": "Proposed successors, all Project Owner review: TRUST-ADR-001 (section 2 and the new no-test-notices rule), PRC-CHG-001 (sections 1, 13), BOP-CHG-001 (deferral paragraph, sections 13, 17), AWD-CHG-001 (sections 10, 13) and BDS-CHG-001 (sections 5.10, 15.1); the proposed file names are in each document entry's approval_history. Project Owner, 10 October 2026, verbatim: “I am continuously discovering the highlighted throughout the app. I did not ask for them and if they exist in the documentation then that is wrong. The problem is the decision to put them in various places is opaque and they might eventually leak into production code. Remove these, including on forms, and summarize”; and: “\"Simulation\" checkbox: remove” and “Documentation: update all affected and the document control too”.",
+      "implementation_effect": "Removes the receipt Test-environment note, the Award test strip and Test attestation label, the Proof label field on the professional opinion, the Simulation flag on Bid Submission Attempt, Bid Submission Version, Bid Receipt and Tender Box Envelope, and the unused portal-shell environment-notice hook. Retained as guards or audit facts: the Award Settings Simulation only setting and the stored method of a test attestation. Approval is not evidence of implementation.",
+      "design_effect": "No test banner or label on any board or receipt; Award boards carry no environment strip."
+    },
+    {
+      "decision_id": "DEC-045",
+      "decision": "Tender-security intake is an explicit duty scoped to one Tender: the Head of Procurement Function assigns it to an existing eligible officer through the existing assignment mechanism, recording assigner, scope and effective period; the Head's office, an opening or evaluation appointment, and Administrator or System Manager status do not grant it; the Head manages the assignment without seeing intake records; the demonstration uses an existing officer with no opening or evaluation appointment.",
+      "status": "Approved 10 October 2026",
+      "owner_doc": "Approved 11 October 2026: successors of AUTH-ADR-001 (sections 4.4, 4.5, 9.2), BDS-CHG-001 (sections 5.9, 6, 7.3) and SEED-002 (section A2); Project Owner, 10 October 2026, verbatim: “Remove tender-security intake permission from the default HOPF permission bundle. Allow the HOPF to assign the intake duty explicitly to an existing eligible officer, using KenTender’s existing assignment mechanism and scoped to the relevant tender. The assignment grants only the access necessary to record security receipt and issuer confirmation. HOPF status, opening membership and evaluation membership must not independently grant that access.” “For the demonstration, assign an existing officer with no opening or evaluation appointment. Do not create a new staff persona solely for this duty.”",
+      "implementation_effect": "Registry gains a Tender scope type and the Tender Security Intake Officer; the Head's default bundle loses the duty tag; assignment, revocation and guard commands; HOPF duty page; intake page limited to assigned Tenders; canonical seed uses Mercy Kilonzo. Approval is not evidence of implementation.",
+      "design_effect": "A Tender-security intake duty page for the Head of Procurement Function (redraw owed) and an intake page showing only assigned Tenders."
+    },
+    {
+      "decision_id": "DEC-046",
+      "decision": "Tender-security intake and opening or evaluation duties exclude each other on the same Tender, in both directions, as an approved product policy and not a statutory prohibition: assigning is refused for an opening or evaluation participant, secretary or the Head's office holder; appointing is refused for a person who holds the duty or has recorded or viewed the Tender's intake; ending the duty does not erase exposure, and an unused assignment may be revoked before appointment; existing conflicts are flagged for explicit resolution by the Accounting Officer.",
+      "status": "Approved 10 October 2026",
+      "owner_doc": "Approved 11 October 2026: successors of AUTH-ADR-001 (section 5.8), BDS-CHG-001 (sections 6, 12.3) and BOP-CHG-001; EVL-CHG-001 (section 3) remains proposed; Project Owner, 10 October 2026, verbatim: “Enforce separation between security intake and opening/evaluation duties on the same tender. Record this as an approved product policy, without presenting it as a statutory prohibition.” “Ending intake access must not erase prior exposure. An officer who has already accessed supplier-identifying security information or recorded intake for that tender must remain ineligible for its opening/evaluation duties. An unused assignment may be revoked before appointment.”",
+      "implementation_effect": "Grant guard, committee and secretary appointment checks, an append-only exposure record, a conflict register, a resolve command and a migration flag of existing conflicts. Approval is not evidence of implementation.",
+      "design_effect": "Refusal wording names the incompatible duty and no supplier; candidate lists omit excluded people."
+    },
+    {
+      "decision_id": "DEC-047",
+      "decision": "Administrator and System Manager status grants no access to sealed-bid existence, counts, identities, contents, submission receipts or supplier-identifying security intake, before or after the opening, on any surface; the limited incident operator reads only the audited service status; the restrictions are application restrictions, not a claim about database or infrastructure access.",
+      "status": "Approved 10 October 2026",
+      "owner_doc": "Approved 11 October 2026: successors of AUTH-ADR-001 (section 8 exception), BDS-CHG-001 (section 12.3), BOP-CHG-001 and TRUST-ADR-001 (section 2A); Project Owner, 10 October 2026, verbatim: “Administrator and System Manager status must not grant pre-opening access to sealed-bid existence, counts, identities, contents, submission receipts or supplier-identifying security intake.” “Distinguish application restrictions from database or infrastructure privileges; do not claim that hidden screens prevent a database operator from inspecting records.”",
+      "implementation_effect": "No DocPerm on the sealed families, deny hooks, a refusal on the record itself, no technical-search resolvers, no per-bid technical read, no per-file URL for bid evidence, an audited service status. Approval is not evidence of implementation.",
+      "design_effect": "No design change."
+    },
+    {
+      "decision_id": "DEC-048",
+      "decision": "Security intake is independent of bid submission and is matched to a bid only after the opening access boundary has been crossed; the electronic security journey keeps submission, physical original, issuer verification and compliance as four facts; the demonstration issuer verification names its source “Test Issuer Service (simulation)” beside the result and response time, keeps it in the audit and export, adds no banner, and never verifies a real tender security.",
+      "status": "Approved 10 October 2026",
+      "owner_doc": "Approved 11 October 2026: successors of BDS-CHG-001 (sections 4.8, 5.9, 8, 10.9), BOP-CHG-001 (section 5) and TRUST-ADR-001 (section 2); Project Owner, 10 October 2026, verbatim: “Preserve DEC-044’s removal of general test banners and strips. Store the verification source as “Test Issuer Service (simulation)” and show it in the normal verification details alongside the result and response time.” and the brief: “Correct the tender-security intake and sealed-bid confidentiality gap across requirements, implementation and fixtures.”",
+      "implementation_effect": "Intake never reads a bid; matching deferred to the opening boundary; verification record and mock issuer service; supplier statuses and actions. Approval is not evidence of implementation.",
+      "design_effect": "Three status facts and two actions on the Company task; physical original reads Not yet matched until the boundary."
+    },
+    {
+      "decision_id": "DEC-049",
+      "decision": "A supplier is told its actual security status before the opening, never “Not yet matched”: Original received (with the receipt reference and time), Original receipt not yet recorded, Issuer verification pending, with the explanation “Security will be checked against your bid after opening.”; deferred matching must not make a complete bid appear incomplete. The status is computed when the supplier reads its own bid and stored nowhere; the stored intake-to-bid match still waits for the opening boundary.",
+      "status": "Approved 10 October 2026",
+      "owner_doc": "Approved 11 October 2026: successors of BDS-CHG-001 (sections 4.8, 8, 10.9, 14) and BOP-CHG-001 (section 5); Project Owner, 10 October 2026, quoted in part in the control table of each.",
+      "implementation_effect": "Read-time own-instrument lookup (exactly one active bid and one intake), new status strings, Review rows, no stored match before the boundary. Approval is not evidence of implementation.",
+      "design_effect": "Company task, Review and Submit status facts; board redraw owed."
+    },
+    {
+      "decision_id": "DEC-050",
+      "decision": "“Security required” does not by itself mean “physical original required”: the Tender states the permitted submission method (Electronic, Physical, Electronic or physical) and the original-delivery requirement (Required, Not required) in its own schema; they travel into the published release and drive the supplier form, advisory and intake lookup; a Tender published without them is listed for explicit review and has no original invented for it, and no published requirement is changed.",
+      "status": "Approved 10 October 2026",
+      "owner_doc": "Approved 11 October 2026: successors of TPR-CHG-001 (sections 5.2, 23), STD-TPL-001 (section 18.8) and BDS-CHG-001 (section 4.8); Project Owner, 10 October 2026.",
+      "implementation_effect": "Two required Tender controls with no default, review rules, projection and selector facts (frozen releases unchanged), BDS reads, an explicit-review read. A successor template release for conditional response fields is owed.",
+      "design_effect": "Tender details task gains two selects; supplier form shows what the Tender states."
+    },
+    {
+      "decision_id": "DEC-051",
+      "decision": "Opening incident records and the opening records that carry an envelope identifier or a bidder's name are sealed: no list, count, report, export, link search, form load or direct read for any technical account, and System Manager status alone grants no access; operational identifiers appear only inside the opening's own workflow; incident search is removed; notices link to the opening page.",
+      "status": "Approved 10 October 2026",
+      "owner_doc": "Approved 11 October 2026: successors of BOP-CHG-001 (section 6, BOP-N22), AUTH-ADR-001 (section 8, AUTH-AC-057) and TRUST-ADR-001 (section 2B); Project Owner, 10 October 2026.",
+      "implementation_effect": "Five Bid Opening doctypes sealed (permissions removed, controller refusal, deny hooks), technical search resolver removed, opening page hides incidents from a technical reader without the support assignment. An audit event for support reads of incident details is not built.",
+      "design_effect": "Technical status reads Held by Opening access support."
+    },
+    {
+      "decision_id": "DEC-052",
+      "decision": "No unrestricted break-glass access to sealed bids exists in the MVP; failures fail closed and support investigates through restricted diagnostics without bid content; operational recovery is kept separate from access to sealed contents; the absence of break-glass does not justify an administrator bypass.",
+      "status": "Approved 10 October 2026",
+      "owner_doc": "Approved 11 October 2026: successors of TRUST-ADR-001 (section 2B) and BDS-CHG-001 (section 12.3); Project Owner, 10 October 2026.",
+      "implementation_effect": "No code path added; existing failures already fail closed.",
+      "design_effect": "None."
+    },
+    {
+      "decision_id": "DEC-053",
+      "decision": "Amendment of a published Tender’s tender-security statements uses the existing addendum process: no separate kind of addendum and no republication. Missing system data for a requirement the published Tender already makes explicit is populated by an auditable correction that preserves the published requirement; a requirement that genuinely changes is a formal addendum before closing, communicated to bidders under the deadline-extension rules; closed Tenders keep their issued requirements.",
+      "status": "Approved 10 October 2026",
+      "owner_doc": "Approved 11 October 2026: successors of TPR-CHG-001 (section 24) and BDS-CHG-001 (section 4.8); Project Owner, 10 October 2026, quoted in part in each control table.",
+      "implementation_effect": "Two non-material addendum rows with option lists, CorrectSecurityStatement with an append-only Tender Security Statement, bid-definition projection and BDS reads that honour the correction. A screen for the correction is not built.",
+      "design_effect": "Addendum editor offers a choice list for the two rows."
+    },
+    {
+      "decision_id": "DEC-054",
+      "decision": "Template release 1.5 makes the bidder’s tender-security evidence follow the Tender’s submission method (upload: attachment required; issuer-supplied: no bidder upload; paper: prescribed electronic copy plus delivery instructions; none: no security inputs, supported but not offered); a new release reaches new Tenders and unpublished Drafts only through an explicit update and published Tenders keep their release; a pending issuer response is never a submission blocker.",
+      "status": "Approved 10 October 2026",
+      "owner_doc": "Approved 11 October 2026: successors of STD-TPL-001 (section 18.9), TPR-CHG-001 (section 24.2) and BDS-CHG-001 (section 4.8); Project Owner, 10 October 2026.",
+      "implementation_effect": "Release 1.5 built and installed on the test site; UpdateDraftTemplateRelease; BDS reads either security rule. The fourth method awaits an Owner-approved document variant.",
+      "design_effect": "Draft release notice offers Update to the current release."
+    },
+    {
+      "decision_id": "DEC-055",
+      "decision": "Reading an Opening incident’s details, and exporting it, are audited with actor, time, incident, action, purpose and outcome; the event holds no incident content, the trail is restricted to the Auditor and the Accounting Officer, and a page refresh records nothing.",
+      "status": "Approved 10 October 2026",
+      "owner_doc": "Approved 11 October 2026: successors of BOP-CHG-001 (section 6, BOP-N23 to BOP-N26), AUTH-ADR-001 (section 8, AUTH-AC-058) and TRUST-ADR-001 (section 2B); Project Owner, 10 October 2026.",
+      "implementation_effect": "GetIncidentDetails, the Export event, GetIncidentAccessTrail and a sealed Opening Incident Access Event record.",
+      "design_effect": "Incident details panel names a purpose before showing details."
+    },
+    {
+      "decision_id": "DEC-056",
+      "decision": "PR-001’s incident-recovery procedure is drafted as TRUST-OPS-001 and is tested before production; any exceptional access to sealed contents remains a separately reviewed design; the Documentation Control workbook is brought into line with this register.",
+      "status": "Approved 10 October 2026",
+      "owner_doc": "Approved 11 October 2026: TRUST-OPS-001 (first version) and successor of TRUST-ADR-001 (section 2B); Project Owner, 10 October 2026.",
+      "implementation_effect": "No code. The procedure is operational only after approval and the section 11 tests.",
+      "design_effect": "None."
     }
   ],
   "delivery_items": [
@@ -2470,6 +2767,71 @@
       "implementation_status": "Not started",
       "verification_status": "Not started",
       "evidence": "No repository verification claimed"
+    },
+    {
+      "item_id": "TNW-001",
+      "area": "Test notices withdrawn",
+      "change": "Test-environment notices, simulation and test-attestation labels and the record Simulation flags removed from screens, receipts, forms and the portal shell; the requirement documents corrected to match",
+      "functional": "Proposed successors of TRUST-ADR-001, PRC-CHG-001, BOP-CHG-001, AWD-CHG-001 and BDS-CHG-001 (see each entry's approval_history); decision DEC-044",
+      "design": "No notice or label on receipts, Award boards or the supplier portal",
+      "owner_doc": "TRUST-ADR-001",
+      "requirement_status": "Project Owner review",
+      "release_gate": "No",
+      "implementation_status": "Implemented",
+      "verification_status": "Pending",
+      "evidence": "Development site migrated 10 October 2026; focused Python and vitest checks and a source guard test ran on kentender-test.local (see the change report); no browser walk and no full suite recorded"
+    },
+    {
+      "item_id": "TSI-001",
+      "area": "Tender-security intake and sealed-bid confidentiality",
+      "change": "Intake duty assigned per Tender by the Head of Procurement Function; separation of intake from opening and evaluation; intake independent of bid submission with matching after the opening boundary; sealed bid and intake records closed to technical accounts; explicit electronic security journey with issuer verification; fixtures rebuilt with an existing intake officer",
+      "functional": "Proposed successors of AUTH-ADR-001, BDS-CHG-001, BOP-CHG-001, EVL-CHG-001, TRUST-ADR-001 and SEED-002 (see each entry's approval_history); decisions DEC-045 to DEC-048",
+      "design": "Tender-security intake duty page (redraw owed); Company task status facts",
+      "owner_doc": "BDS-CHG-001",
+      "requirement_status": "Mixed approved/proposed",
+      "release_gate": "Yes — tender-security handling",
+      "implementation_status": "In progress",
+      "verification_status": "Pending",
+      "evidence": "Server, vitest and browser checks on kentender-test.local as listed in the reconciliation report 98_work_progress/KenTender_Tender_Security_Intake_Reconciliation_2026-10-10.md; the dev site is migrated at the Project Owner's instruction; no full suite recorded Requirement documents approved 11 October 2026 except the EVL-CHG-001 proposal, which remains proposed."
+    },
+    {
+      "item_id": "TSI-002",
+      "area": "Security status wording, Tender-stated security method, incident-record exposure",
+      "change": "Supplier status wording and read-time own-instrument status; the Tender's submission method and original-delivery controls carried into the published release; Opening incident and linked records sealed",
+      "functional": "Approved 11 October 2026: successors of BDS-CHG-001, TPR-CHG-001, STD-TPL-001, BOP-CHG-001, TRUST-ADR-001, AUTH-ADR-001 and SEED-002; decisions DEC-049 to DEC-052",
+      "design": "Tender details task selects; Company/Review/Submit status facts (redraw owed)",
+      "owner_doc": "BDS-CHG-001",
+      "requirement_status": "Approved requirement",
+      "release_gate": "Yes — tender-security intake and sealed-bid confidentiality",
+      "implementation_status": "Implemented",
+      "verification_status": "Pending",
+      "evidence": "See the reconciliation report follow-up of 10 October 2026 for exactly what ran on kentender-test.local and what did not"
+    },
+    {
+      "item_id": "PR-001",
+      "area": "Production readiness: incident recovery and emergency access to sealed contents",
+      "change": "Define the incident-recovery procedure (authorisation, scope, duration, audit evidence, recovery steps) before production; any exceptional access to sealed contents needs a separately reviewed design that preserves the authorised-opening controls; operational recovery is separate from content access; no administrator bypass",
+      "functional": "TRUST-ADR-001 section 2B item 6 (approved 11 October 2026); TRUST-OPS-001 v0.1 (draft procedure, approved 11 October 2026); decisions DEC-052 and DEC-056",
+      "design": "None",
+      "owner_doc": "TRUST-ADR-001",
+      "requirement_status": "Approved requirement",
+      "release_gate": "Yes — blocks production",
+      "implementation_status": "In progress",
+      "verification_status": "Not started",
+      "evidence": "Draft procedure written 11 October 2026 (TRUST-OPS-001 v0.1). Not tested; not approved. Closes only when approved, tested (tabletop and technical drills) and the results accepted. Audit of incident-detail reads is built and tested (Opening Incident Access Event)."
+    },
+    {
+      "item_id": "TSI-003",
+      "area": "Tender security: methods, release 1.5, correction, addendum, draft update, incident-read auditing",
+      "change": "Three submission methods; template release 1.5 with conditional evidence; UpdateDraftTemplateRelease; two addendum rows; CorrectSecurityStatement; audited incident-detail reads, export and access trail",
+      "functional": "Approved 11 October 2026: successors of BDS-CHG-001, TPR-CHG-001, STD-TPL-001, BOP-CHG-001, TRUST-ADR-001, AUTH-ADR-001 and SEED-002, and TRUST-OPS-001; decisions DEC-053 to DEC-056",
+      "design": "Tender details select, Addendum choice list, Draft release notice, incident details panel (artboards owed); no screen yet for the correction",
+      "owner_doc": "TPR-CHG-001",
+      "requirement_status": "Approved requirement",
+      "release_gate": "Yes — tender-security intake and sealed-bid confidentiality",
+      "implementation_status": "Implemented",
+      "verification_status": "Pending",
+      "evidence": "See the follow-up reconciliation report of 11 October 2026 for exactly what ran and what did not"
     }
   ],
   "future_work": [
@@ -2580,6 +2942,15 @@
       "status": "Planned",
       "boundary": "Only synthetic, explicitly labelled test proxies now. BDS v0.8 production bid submission remains disabled and electronic Bid Opening cannot be used for real bids.",
       "trigger": "Approve provider/signing method, per-target legal equivalence, custody/key threshold, credentials, recovery, external channel and test/release evidence."
+    },
+    {
+      "future_id": "FW-013",
+      "capability": "Tender security: No security required method",
+      "planned_wave": "Owner decision",
+      "dependency": "An Owner-approved document variant (source-coverage decision under STD-TPL-001 section 13) for a Tender that states no security is required",
+      "status": "Planned",
+      "boundary": "Template release 1.5 supports it at response level; the Tender details control does not offer it because the issued documents state a Tender Security is required (ITT 18.2)",
+      "trigger": "Owner approves a document variant."
     }
   ],
   "audit_findings": [

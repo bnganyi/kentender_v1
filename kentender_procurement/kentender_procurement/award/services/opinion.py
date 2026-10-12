@@ -25,7 +25,6 @@ from kentender_procurement.award.services import checks, clock, guards, issues, 
 from kentender_procurement.award.services.errors import fail, invalid
 
 CONCLUSIONS = ("Recommend award", "No current recommendation")
-SIGNING_LABEL = "Test attestation — not an electronic signature"
 
 
 def _correction_cycle(doc) -> bool:
@@ -119,7 +118,7 @@ def sign(*, award: str, expected_version=None, idempotency_key: str, user: str) 
 				"message": "Signing is unavailable. Your draft has been saved.", "outcome": proof.get("outcome"), "attempt": attempt}
 		now = clock.now()
 		records.update(opinion, state="Signed", signing_outcome="Accepted/Verified", proof_reference=cstr(proof.get("proof_reference")),
-			proof_label=cstr(proof.get("label") or SIGNING_LABEL), signed_at=now, signed_by=user)
+			signed_at=now, signed_by=user)
 		checks.support_resolved(f"signing:{attempt}")
 		c = state.cycle(doc)
 		records.update(c, opinion=opinion.name)

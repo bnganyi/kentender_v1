@@ -45,7 +45,8 @@
 					</div>
 					<div class="tnd-fact tnd-form-row"><div class="kt-label">Current published value</div><div class="tnd-fact-value" data-testid="tnd-ad-previous">{{ previousValue || "—" }}</div></div>
 					<div class="field tnd-form-row"><label for="tnd-ad-revised">Revised value</label>
-						<textarea id="tnd-ad-revised" class="input" rows="2" v-model="form.revised_value" data-testid="tnd-ad-revised"></textarea>
+						<select v-if="selectedReference && selectedReference.options" id="tnd-ad-revised" class="input" v-model="form.revised_value" data-testid="tnd-ad-revised"><option value="">Choose the revised value</option><option v-for="o in selectedReference.options" :key="o" :value="o">{{ o }}</option></select>
+						<textarea v-else id="tnd-ad-revised" class="input" rows="2" v-model="form.revised_value" data-testid="tnd-ad-revised"></textarea>
 						<p v-if="errors.revised_value" class="tnd-field-error" data-testid="tnd-ad-error-revised">{{ errors.revised_value }}</p>
 					</div>
 					<div class="field tnd-form-row"><label for="tnd-ad-reason">Reason</label>

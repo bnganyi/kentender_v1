@@ -43,9 +43,13 @@ def deliver(*, incident_id: str, subject: str, message: str, users: list[str]) -
 def notification_log(*, incident_id: str, subject: str, message: str, users: list[str]) -> dict[str, Any]:
 	from kentender_core.services.notification_service import emit_notification_log
 
+	# The notice points at the opening page, never at the incident record (Project Owner, 10 October 2026: incident records are not Desk
+	# documents, so a link to one would be refused and would name the record).
+	case = frappe.db.get_value(INCIDENT, {"incident_id": incident_id}, "opening_case")
+	reference = frappe.db.get_value(records.CASE, case, "tender_reference") if case else ""
 	delivered = [user for user in users if emit_notification_log(
-		for_user=user, subject=subject, message=message, document_type=INCIDENT, document_name=incident_id, event_type="Opening access",
-		entity_scope="Bid Opening", route=f"/app/opening-access-incident/{incident_id}", correlation_key=f"bop-incident:{incident_id}",
+		for_user=user, subject=subject, message=message, document_type=records.CASE, document_name=case or "", event_type="Opening access",
+		entity_scope="Bid Opening", route=f"/app/tenders/{reference}/opening", correlation_key=f"bop-incident:{incident_id}",
 	)]
 	return {"delivered": bool(delivered), "delivered_to": delivered}
 

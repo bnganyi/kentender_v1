@@ -7,6 +7,7 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { nextTick, ref } from "vue";
 
 import { createCommandRunner, createScreenCache, createSequenceGuard } from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/runtime.js";
+import BidGuidance from "../components/BidGuidance.vue";
 import RequirementsTaskScreen from "./RequirementsTaskScreen.vue";
 import { requirementsTask } from "./requirements.fixtures.js";
 
@@ -53,6 +54,16 @@ describe("Requirements and supporting evidence", () => {
 		await flushPromises();
 		expect(stepped.get('[data-testid="bds-stepper-where"]').text()).toBe("Step 3 of 5");
 		expect(stepped.get('[data-testid="bds-requirements-save"]').text()).toBe("Save and continue to Company and declarations");
+	});
+
+	it("draws the formal journey only when the task stepper is not already saying where the bidder is", async () => {
+		const plain = mountWith(requirementsTask(), portalFor());
+		expect(plain.findComponent(BidGuidance).props("tracker")).toBe(true);
+		const task = requirementsTask();
+		task.step = { number: 3, of: 5, label: "Requirements and supporting evidence", previous: null, next: null, tasks: [] };
+		const stepped = mountWith(task, portalFor({ call: vi.fn(async () => task) }));
+		await flushPromises();
+		expect(stepped.findComponent(BidGuidance).props("tracker")).toBe(false);
 	});
 
 	it("keeps a way back to the top beside the region links, which stay in view while the page scrolls", async () => {
@@ -205,6 +216,129 @@ describe("Requirements and supporting evidence", () => {
 		await wrapper.get('[data-testid="bds-requirements-attention"] button').trigger("click");
 		await nextTick();
 		expect(document.querySelector('[data-testid="bds-response-drawer"] [role="dialog"]').getAttribute("aria-label")).toBe("Product datasheet");
+	});
+
+	// BDS-CHG-001 v0.12 §4.4.9 and §10.10A: one Offered goods form per goods line
+	function twoLines() {
+		const task = requirementsTask();
+		task.goods.heading = "Office laptops";
+		task.goods_more = [{
+			key: "gline2", heading: "Monitors for office laptops",
+			fields: task.goods.fields.map((f) => ({ ...f, handle: `${f.handle}-m`, value: f.kind === "evidence" ? null : "", evidence: f.evidence ? { ...f.evidence, files: [] } : f.evidence })),
+			published: [{ label: "Quantity · published", value: "20" }, { label: "Delivery location · published", value: "Afya House, Nairobi" }, { label: "Latest delivery · published", value: "6 Nov 2026" }],
+		}];
+		return task;
+	}
+
+	it("draws one Offered goods form per goods line, each under its line's description", () => {
+		const wrapper = mountWith(twoLines(), portalFor());
+		const headings = wrapper.findAll('#bds-region-goods [data-testid="bds-goods-line-heading"]').map((h) => h.text());
+		expect(headings).toEqual(["Office laptops", "Monitors for office laptops"]);
+		expect(wrapper.findAll("#bds-region-goods .bds-grid-2")).toHaveLength(2);
+		expect(wrapper.find("#bds-goods-g-model").exists()).toBe(true);
+		expect(wrapper.find("#bds-goods-g-model-m").exists()).toBe(true);
+	});
+
+	it("draws no line heading and one form when the Tender has one goods line", () => {
+		const wrapper = mountWith(requirementsTask(), portalFor());
+		expect(wrapper.find('[data-testid="bds-goods-line-heading"]').exists()).toBe(false);
+		expect(wrapper.findAll("#bds-region-goods .bds-grid-2")).toHaveLength(1);
+	});
+
+	it("saves only what the bidder changed in the second line and leaves the first line out", async () => {
+		const task = twoLines();
+		const portal = portalFor({ call: vi.fn(async (method) => (method.includes("save_bid_task") ? { ok: true, record_version: 31 } : task)) });
+		const wrapper = mountWith(task, portal);
+		await wrapper.get("#bds-goods-g-model-m").setValue("Dell P2422H");
+		await wrapper.get('[data-testid="bds-requirements-save"]').trigger("click");
+		await flushPromises();
+		const save = portal.call.mock.calls.find(([m]) => m.includes("save_bid_task"));
+		expect(JSON.parse(save[1].values)).toEqual({ "g-model-m": "Dell P2422H" });
+	});
+
+	it("keeps the typed entry of the second line through a re-read", async () => {
+		const task = twoLines();
+		const wrapper = mountWith(task, portalFor({ call: vi.fn(async () => twoLines()) }));
+		await wrapper.get("#bds-goods-g-model-m").setValue("Dell P2422H");
+		await wrapper.vm.$.setupState.load();
+		await flushPromises();
+		expect(wrapper.get("#bds-goods-g-model-m").element.value).toBe("Dell P2422H");
+	});
+
+	it("says which lines a requirement applies to when there are several, and nothing when there is one", () => {
+		const task = twoLines();
+		task.technical[0].applies_to = "All items";
+		task.technical[1].applies_to = "Monitors for office laptops";
+		const wrapper = mountWith(task, portalFor());
+		expect(wrapper.get(`[data-testid="bds-row-${task.technical[0].key}"] [data-testid="bds-applies-to"]`).text()).toBe("All items");
+		expect(wrapper.get(`[data-testid="bds-row-${task.technical[1].key}"] [data-testid="bds-applies-to"]`).text()).toBe("Monitors for office laptops");
+		const single = requirementsTask();
+		single.technical[0].applies_to = "All items";
+		expect(mountWith(single, portalFor()).find('[data-testid="bds-applies-to"]').exists()).toBe(false);
+	});
+
+	it("shows a task nobody has started as one neutral count, not a red list", async () => {
+		const task = requirementsTask();
+		task.attention = null;
+		task.to_complete = { title: "29 items to complete", sections: [] };
+		const wrapper = mountWith(task, portalFor());
+		expect(wrapper.find('[data-testid="bds-requirements-attention"]').exists()).toBe(false);
+		const notice = wrapper.get('[data-testid="bds-requirements-to-complete"]');
+		expect(notice.text()).toBe("29 items to complete");
+		expect(notice.classes()).toContain("is-info");
+	});
+
+	it("says how many are left in each section once the bidder has started, each linking to its section", async () => {
+		const task = requirementsTask();
+		task.attention = null;
+		task.to_complete = { title: "3 items to complete", sections: [{ key: "technical", text: "Technical requirements — 2 to complete" }, { key: "experience", text: "Experience — 1 to complete" }] };
+		const wrapper = mountWith(task, portalFor());
+		const links = wrapper.findAll('[data-testid="bds-requirements-to-complete"] a');
+		expect(links.map((a) => [a.text(), a.attributes("href")])).toEqual([["Technical requirements — 2 to complete", "#bds-region-technical"], ["Experience — 1 to complete", "#bds-region-experience"]]);
+	});
+
+	it("lists at most five faults and offers the rest on request", async () => {
+		const task = requirementsTask();
+		task.attention = { tone: "critical", title: "Fix 8 items", items: Array.from({ length: 8 }, (_, i) => ({ key: `ev${i}`, label: `Replace the rejected file ${i + 1}` })) };
+		const wrapper = mountWith(task, portalFor());
+		const body = () => wrapper.get('[data-testid="bds-requirements-attention"]');
+		expect(body().findAll("button").length).toBe(6); // five faults and "Show all 8"
+		await wrapper.get('[data-testid="bds-requirements-attention-more"]').trigger("click");
+		expect(body().findAll("button").length).toBe(8);
+	});
+
+	it("a Save right after an upload carries the version the upload produced, even while the re-read is still on its way", async () => {
+		const task = requirementsTask();
+		let release;
+		const slowRead = new Promise((resolve) => (release = resolve));
+		const calls = [];
+		const portal = portalFor({
+			call: vi.fn(async (method, args) => {
+				calls.push([method, args]);
+				if (method.endsWith("get_bid_task")) return calls.filter(([m]) => m.endsWith("get_bid_task")).length > 1 ? slowRead.then(() => ({ ...task, bid: { ...task.bid, record_version: 31 } })) : task;
+				return { ok: true, record_version: 32 };
+			}),
+		});
+		portal.upload = vi.fn(async () => ({ ok: true, record_version: 31 }));
+		const wrapper = mountWith(task, portal);
+		await wrapper.get('[data-testid="bds-row-t6"] button').trigger("click");
+		await nextTick();
+		const drawer = document.querySelector('[data-testid="bds-response-drawer"]');
+		const file = new File(["x"], "datasheet.pdf", { type: "application/pdf" });
+		const input = drawer.querySelector('input[type="file"]');
+		Object.defineProperty(input, "files", { value: [file], configurable: true });
+		input.dispatchEvent(new Event("change"));
+		await flushPromises(); // the upload is done; the re-read is not
+		const field = drawer.querySelector("input:not([type=file]), textarea");
+		field.value = "11 hours";
+		field.dispatchEvent(new Event("input"));
+		await nextTick();
+		drawer.querySelector('[data-testid="bds-drawer-save"]').click();
+		await flushPromises();
+		const save = calls.find(([m]) => m.endsWith("save_bid_task"));
+		expect(save && save[1].expected_record_version).toBe(31);
+		release();
+		await flushPromises();
 	});
 
 	it("saves the offered goods and opens the next task; typed entries survive a re-read", async () => {

@@ -13,7 +13,7 @@ from __future__ import annotations
 import frappe
 
 OPENING_DOCTYPES = ("Opening Arrangement", "Opening Presence", "Opening Custody Participation", "Opening Entry", "Opening Register", "Opening Exception",
-	"Opening Access Incident", "Opening Decision Item", "Opening Register Request", "Evaluation Handoff")
+	"Opening Access Incident", "Opening Incident Access Event", "Opening Decision Item", "Opening Register Request", "Evaluation Handoff")
 
 
 def on_tenders_removed(*, tenders: list[str]) -> dict[str, int]:

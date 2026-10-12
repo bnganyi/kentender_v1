@@ -203,7 +203,7 @@ def _authorised() -> dict[str, Any]:
 def officer_values(**overrides) -> dict[str, Any]:
 	values = {
 		"tender_title": "Supply and delivery of business laptops", "issue_date": "2027-05-15", "clarification_deadline": "2027-05-27 17:00:00",
-		"submission_deadline": "2027-06-05 11:00:00", "tender_validity_days": 120, "tender_security_amount": 500000.00, "pre_tender_meeting": False,
+		"submission_deadline": "2027-06-05 11:00:00", "tender_validity_days": 120, "tender_security_amount": 500000.00, "tender_security_method": "Bidder uploads an electronic instrument", "tender_security_original": "Required", "pre_tender_meeting": False,
 		"manufacturer_authorisation_required": True, "datasheets_required": True, "past_experience_required": True, "minimum_comparable_contracts": 2,
 		"experience_period_years": 5, "after_sales_evidence_required": True, "after_sales_evidence": "Kenya service-centre details and escalation contacts",
 		"inspection_location": LOCATION, "payment_timing_days": "30", "performance_security_required": True, "performance_security_percent": 10,

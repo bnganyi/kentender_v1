@@ -251,7 +251,7 @@ Standing owner rules carried in from earlier modules and not re-asked: dev-site 
 - **Double approvals creeping in.** Mitigation: the tracker's prohibited-controls rule and the command map (every control → one command).
 - **Leakage** of other bidders' facts to suppliers, or business facts to technical readers. Mitigation: per-actor DTOs and the Phase 10 leakage gate.
 - **Site-wide test mutation.** Mitigation: Award tests write only namespaced Award rows and clean up; the integration module uses years ≥ 2100; never run Python and Playwright together.
-- **A stand-in mistaken for production.** Mitigation: stand-ins load only under the simulation flag; `source_kind` and test labels are visible at runtime.
+- **A stand-in mistaken for production.** Mitigation: stand-ins load only under the simulation flag; `source_kind` and test labels are visible at runtime. (Test labels withdrawn 10 October 2026, DEC-044; `source_kind` stays as a stored classification.)
 
 ## Verification
 

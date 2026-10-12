@@ -17,7 +17,9 @@
   "accept_after_seconds",
   "current_instant",
   "bound_release_state",
-  "reveal_outcome"
+  "reveal_outcome",
+  "issuer_response",
+  "opening_boundary_crossed"
  ],
  "fields": [
   {
@@ -90,7 +92,7 @@
    "label": "Bound release state",
    "read_only": 1,
    "options": "\nSuperseded\nWithdrawn\nIntegrity failed",
-   "description": "Forces every bound template release to this state for Bid Submission (BDS-CHG-001 v0.8 §4.4.4 worlds); empty = the installed state."
+   "description": "Forces every bound template release to this state for Bid Submission (BDS-CHG-001 v0.8 \u00a74.4.4 worlds); empty = the installed state."
   },
   {
    "fieldname": "reveal_outcome",
@@ -99,6 +101,21 @@
    "options": "Deliver\nMismatch\nUnavailable\nIndeterminate",
    "default": "Deliver",
    "description": "BOP-CHG-001 v0.10 plan D4/D17: forces the Test Tender Box's opening reveal outcome on a test environment."
+  },
+  {
+   "fieldname": "issuer_response",
+   "fieldtype": "Select",
+   "label": "Test Issuer Service response",
+   "options": "Automatic\nConfirmed\nPending\nMismatch\nUnavailable",
+   "default": "Automatic",
+   "description": "Forces what the Test Issuer Service answers on a test environment. Automatic decides by the instrument reference's ending: -MISMATCH, -PENDING, -UNAVAILABLE, otherwise Confirmed."
+  },
+  {
+   "fieldname": "opening_boundary_crossed",
+   "fieldtype": "Check",
+   "label": "Treat every Tender's opening as started",
+   "default": "0",
+   "description": "Browser worlds only: lets a Tender that has no Bid Opening case behave as if its opening had started, so a tender-security intake can be matched to a bid. Ignored outside a test environment."
   }
  ],
  "grid_page_length": 50,

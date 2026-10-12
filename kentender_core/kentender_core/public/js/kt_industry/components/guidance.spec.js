@@ -146,6 +146,19 @@ describe("JourneyTracker", () => {
 		expect(w.emitted("link")[0][0]).toEqual(upstream);
 	});
 
+	it("draws a caption above the row when the server sends one, and none otherwise", () => {
+		const j = { ...journey({ current: 6 }), caption: "Tender preparation is complete" };
+		expect(mount(JourneyTracker, { props: { journey: j } }).get('[data-testid="kt-journey-caption"]').text()).toBe("Tender preparation is complete");
+		expect(mount(JourneyTracker, { props: { journey: journey({ current: 6 }) } }).find('[data-testid="kt-journey-caption"]').exists()).toBe(false);
+	});
+
+	it("puts the next step above the tracker only when the journey asks for it", () => {
+		const step = { kind: "your_turn", label: "Your turn", headline: "Appoint opening committee", sentence: "", stage: "prepare", holder: null, since: null, blockers: [], fixes: [], primary_action: "" };
+		const order = (j) => mount(GuidanceRegion, { props: { journey: j, answer: step } }).get("section").element.children[0].getAttribute("data-kt");
+		expect(order({ ...journey({ current: 6 }), step_first: true })).toBe("next-step");
+		expect(order(journey({ current: 6 }))).toBe("journey");
+	});
+
 	it("draws nothing when no journey is supplied", () => {
 		expect(mount(JourneyTracker, { props: { journey: null } }).html()).toBe("<!--v-if-->");
 	});

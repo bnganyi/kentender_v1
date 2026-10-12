@@ -8,7 +8,7 @@
 // test trust service on a test environment, and submits with one request key
 // per confirmation; success opens the receipt, anything else re-reads.
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
-import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
+import BidGuidance from "../components/BidGuidance.vue";
 import CommonState from "../components/CommonState.vue";
 import ConfirmSubmitDialog from "../components/ConfirmSubmitDialog.vue";
 import { conflictState } from "../composables/commonStates.js";
@@ -30,7 +30,6 @@ const confirmed = ref(false);
 const confirmError = ref("");
 const dialog = ref(false);
 const retrying = ref(false);
-const certificateText = ref("");
 const problem = ref(null); // a refused change's §10.17 state, in place of the confirmation
 const guard = portal.createSequenceGuard();
 const runner = portal.createCommandRunner({ ref }, { onError: (e) => (failure.value = e.message) });
@@ -100,19 +99,12 @@ function submit() {
 		}
 	}, "Submit bid");
 }
-async function onFix(fix) {
-	if (fix.fix_id === "check_certificate") {
-		const result = await portal.call(API + "check_certificate", { bid_reference: data.value.bid.reference, organisation: route.value.query.organisation || "" });
-		certificateText.value = (result && result.text) || "";
-		return load();
-	}
+// Check certificate and Contact support are done by the shared guidance block
+// (components/BidGuidance.vue); what is left here is this screen's own.
+function onFix(fix) {
 	if (fix.fix_id === "submit_bid") {
 		retrying.value = true;
 		confirmed.value = false;
-		return;
-	}
-	if (fix.fix_id === "contact_support") {
-		if (data.value.support_href) window.location.assign(data.value.support_href);
 		return;
 	}
 	const href = fixRoute(fix, props.reference);
@@ -136,8 +128,7 @@ onMounted(() => {
 			</div>
 		</div>
 
-		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
-		<p v-if="certificateText" class="bds-muted" role="status" data-testid="bds-certificate-check">{{ certificateText }}</p>
+		<BidGuidance :journey="data.journey" :answer="data.next_step" :reference="reference" :bid-reference="data.bid && data.bid.reference || ''" :organisation="route.query.organisation || ''" :support-href="data.support_href || ''" @fix="onFix" @reload="load" />
 
 		<div v-if="data.consequence" class="kt-notice" :class="'is-' + data.consequence.tone" data-testid="bds-submit-consequence">
 			<svg class="kt-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>

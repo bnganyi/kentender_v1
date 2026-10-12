@@ -43,4 +43,4 @@ class TestBidReview(BidCase):
 		version = frappe.db.get_value("Bid Workspace", self.bid, "record_version")
 		self.assertTrue(save.save_bid_task(bid_reference=self.bid, task="requirements", values={compliance["handle"]: "Do not comply", offered["handle"]: "No"}, expected_record_version=version, idempotency_key=key(), user=DAVID)["ok"])
 		review = reads.get_bid_review(bid_reference=self.bid, user=DAVID)
-		self.assertEqual((review["ready"], review["must_fix"], [n["text"] for n in review["review_notes"]]), (True, [], ["You state that the offer does not meet this requirement.", "The physical tender-security original has not been recorded as received."]))
+		self.assertEqual((review["ready"], review["must_fix"], [n["text"] for n in review["review_notes"]]), (True, [], ["You state that the offer does not meet this requirement.", "This Tender requires the original tender security to be delivered before the deadline. Its receipt is not yet recorded; this does not block electronic submission. Security will be checked against your bid after opening."]))

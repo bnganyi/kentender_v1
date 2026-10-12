@@ -65,12 +65,14 @@ test.describe("BOP release evidence — the canonical opening, person by person"
 	});
 
 	test("the administrator and Daniel Otieno (technical operator) see technical status only", async ({ page }) => {
-		for (const [user, password] of [[process.env.UI_ADMIN_USER || "Administrator", process.env.UI_ADMIN_PASSWORD || "admin"], [person("daniel.otieno"), PASSWORD]]) {
+		// 10 Oct 2026: incidents are the Opening access support holder's, never a System Manager's or Administrator's — the administrator is
+		// told the incidents are held by support (not a count of zero), and the assigned technical operator reads the count
+		for (const [user, password, incidents] of [[process.env.UI_ADMIN_USER || "Administrator", process.env.UI_ADMIN_PASSWORD || "admin", "Held by Opening access support"], [person("daniel.otieno"), PASSWORD, "None recorded"]]) {
 			await login(page, user, password);
 			await gotoOpening(page, REFERENCE);
 			await expectScreen(page, "completed");
 			await expect(page.locator('[data-testid="bop-technical"]')).toContainText("Bids, the register and the opening record are not shown to administrators.");
-			await expect(page.locator('[data-testid="bop-technical"]')).toContainText("None recorded");
+			await expect(page.locator('[data-testid="bop-technical"]')).toContainText(incidents);
 			await expect(page.locator('[data-testid="bop-register"], [data-testid="bop-signatures"], [data-testid="bop-guidance"]')).toHaveCount(0);
 		}
 	});

@@ -160,6 +160,12 @@ class TestJourney(IntegrationTestCase):
 		self.assertTrue(all(s["marker"] == "done" for s in j["stages"]))
 		self.assertEqual(j["reduced_text"], "Stage 7 of 7: In force")
 
+	def test_a_journey_can_carry_a_caption_and_ask_for_the_next_step_above_it(self):
+		plain = ns.journey(STAGES, complete=True)
+		self.assertEqual((plain["caption"], plain["step_first"]), ("", False))
+		framed = ns.journey(STAGES, complete=True, caption="Tender preparation is complete", step_first=True)
+		self.assertEqual((framed["caption"], framed["step_first"]), ("Tender preparation is complete", True))
+
 	def test_an_unknown_stage_is_refused(self):
 		with self.assertRaises(ValueError):
 			ns.journey(STAGES, current="nope")

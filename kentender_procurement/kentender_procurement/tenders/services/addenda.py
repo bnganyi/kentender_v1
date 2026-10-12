@@ -60,6 +60,25 @@ def _published_version(root):
 	return frappe.get_doc("Tender Version", root.approved_version or root.current_version)
 
 
+NOT_STATED = "Not stated"
+SECURITY_KEYS = ("tender_security_method", "tender_security_original")
+
+
+def _security_consistent(method: str, original: str) -> bool:
+	return not (method == controls.SECURITY_PAPER and original != "Required")
+
+
+def _security_now(root, version, state) -> dict[str, str]:
+	"""The statements in force before any issued addendum is applied: the Tender's own, else the auditable correction."""
+	from kentender_procurement.tenders.services import security_statement
+
+	fix = security_statement.overlay(root.name)
+	return {
+		"submission_method": cstr(state.get("tender_security_method") or fix.get("submission_method")),
+		"original_delivery": cstr(state.get("tender_security_original") or fix.get("original_delivery")),
+	}
+
+
 def affected_references(root) -> list[dict[str, Any]]:
 	"""§4.8 `affected_reference` catalogue: every published row/section a
 	non-material addendum may correct, with its current effective value
@@ -67,6 +86,7 @@ def affected_references(root) -> list[dict[str, Any]]:
 	version = _published_version(root)
 	snapshot = snap.load(version)
 	state = serializer.officer_state(version)
+	security = _security_now(root, version, state)
 	rows: list[dict[str, Any]] = [
 		{"key": "delivery_location", "label": "Goods and delivery — delivery location", "area": "Goods/delivery schedule", "value": cstr(snapshot.get("delivery_location")), "material": False},
 		{"key": "clarification_deadline", "label": "Invitation — clarification deadline", "area": "Invitation detail", "value": serializer.fmt_datetime_short(state.get("clarification_deadline")), "material": False},
@@ -75,6 +95,9 @@ def affected_references(root) -> list[dict[str, Any]]:
 		{"key": "contract_contact_office", "label": "Contract terms — contact office", "area": "Evaluation or contract term", "value": cstr(state.get("contract_contact_office")), "material": False},
 		{"key": "inspection_location", "label": "Contract terms — inspection and acceptance location", "area": "Evaluation or contract term", "value": cstr(state.get("inspection_location")), "material": False},
 		{"key": "tender_title", "label": "Invitation — Tender title", "area": "Invitation detail", "value": cstr(state.get("tender_title")), "material": False},
+		# Project Owner, 10 October 2026: the structured tender-security statements are amended through this mechanism; "Not stated" for a Tender that never stated them
+		{"key": "tender_security_method", "label": "Tender security — how it may be submitted", "area": "Submission or opening detail", "value": security.get("submission_method") or NOT_STATED, "material": False, "options": list(controls.SECURITY_METHODS)},
+		{"key": "tender_security_original", "label": "Tender security — delivery of the original", "area": "Submission or opening detail", "value": security.get("original_delivery") or NOT_STATED, "material": False, "options": list(controls.SECURITY_ORIGINALS)},
 	]
 	for line in serializer.goods_lines(snapshot):
 		rows.append({"key": f"goods:{line['line_number']}:quantity", "label": f"{line['description']} — Quantity", "area": "Goods/delivery schedule", "value": f"{line['quantity']} {line['unit']}", "material": True})
@@ -211,6 +234,8 @@ def validate_values(root, values: dict[str, Any], *, current: dict[str, Any]) ->
 	reference = catalogue.get(reference_key)
 	if reference_key and not reference:
 		errors["affected_reference_key"] = "Choose a published row, section or schedule line."
+	if reference and reference_key in SECURITY_KEYS and cstr(merged.get("revised_value")).strip() and cstr(merged.get("revised_value")).strip() not in reference["options"]:
+		errors["revised_value"] = "Choose one of: " + ", ".join(reference["options"]) + "."
 	for field, maximum in (("revised_value", 2000), ("reason", 1000), ("materiality_statement", 1000)):
 		text = " ".join(cstr(merged.get(field)).split())
 		if text and any(t in text for t in ("<", ">", "```")):
@@ -315,6 +340,11 @@ def _require_complete_and_non_material(root, doc) -> dict[str, Any]:
 		fields["materiality_statement"] = "Explain why the change is not material."
 	if fields:
 		fail("TND_CONTROL_INVALID", "Complete the addendum before continuing.", {"fields": fields})
+	if cstr(doc.affected_reference_key) in SECURITY_KEYS:
+		after = {r["key"]: r["value"] for r in affected_references(root)}
+		after[cstr(doc.affected_reference_key)] = cstr(doc.revised_value).strip()
+		if after["tender_security_method"] not in (NOT_STATED, "") and after["tender_security_original"] not in (NOT_STATED, "") and not _security_consistent(after["tender_security_method"], after["tender_security_original"]):
+			fail("TND_CONTROL_INVALID", "A paper tender security needs its original delivered.", {"fields": {"revised_value": "A paper tender security needs its original delivered."}})
 	if reference["material"]:
 		fail("TND_ADDENDUM_MATERIAL", detail={"affected_reference": reference["label"], "current": reference["value"], "proposed": cstr(doc.revised_value)})
 	if cstr(reference["value"]) != cstr(doc.previous_value) or _baseline_digest(root) != cstr(doc.baseline_digest):

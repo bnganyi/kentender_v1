@@ -3,7 +3,6 @@
      server's own answer, later ones reload in place after each command. -->
 <template>
 	<div class="kt-industry kt-awd" data-testid="awd-portal" :data-screen="board ? board.screen : ''" :data-pending="pending ? 'true' : 'false'">
-		<div v-if="data && data.test_environment" class="kt-notice is-info awd-test-environment" data-testid="awd-test-environment"><div class="kt-notice-body">{{ data.test_environment }}</div></div>
 		<AwdBoard v-if="board" :board="board" :form="form" :pending="pending" :error="error" :reasons="reasons" :fields="fields" @action="onAction" @update="onUpdate" />
 		<div v-if="viewing && data" class="awd-letter" data-testid="awd-letter" v-html="data.letter_html"></div>
 	</div>

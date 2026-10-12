@@ -18,7 +18,6 @@ from frappe.utils import cint, cstr
 CONTROLS = "Award Test Environment Controls"
 FIELDS = ("signing_outcome", "email_failure_organisations", "email_service_down", "status_service_down", "contracting_down", "event_delivery_down",
 	"rule_unverified", "revised_treatment_unverified")
-TEST_LABEL = "Test environment — no live award notices are sent."
 
 
 def enabled() -> bool:

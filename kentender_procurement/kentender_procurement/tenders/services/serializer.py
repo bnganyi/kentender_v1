@@ -125,6 +125,16 @@ def parse_datetime_text(text):
 		return None
 
 
+def security_statement(state: dict[str, Any]) -> str:
+	"""What the Tender says about submitting its security and delivering an original, for the officer's own screens
+	(Project Owner, 10 October 2026). "" until both are chosen."""
+	method, original = cstr(state.get("tender_security_method")), cstr(state.get("tender_security_original"))
+	how = {controls.SECURITY_UPLOAD: "Bidder uploads an electronic instrument", controls.SECURITY_ISSUER: "Issuer supplies the instrument directly", controls.SECURITY_PAPER: "Paper instrument"}.get(method)
+	if not how or original not in ("Required", "Not required"):
+		return ""
+	return f"{how}; " + ("an original must be delivered" if original == "Required" or method == controls.SECURITY_PAPER else "no original required")
+
+
 def fmt_money(value) -> str:
 	return f"{Decimal(str(value or 0)).quantize(Decimal('0.01')):,.2f}"
 
@@ -443,6 +453,8 @@ def render_context(tender, version, snapshot: dict[str, Any], *, approval: dict[
 				"type": "Tender Security", "currency": "KES", "amount": fmt_money(state.get("tender_security_amount")),
 				"bank_guarantee_expiry_date": fmt_date(dates["bank_guarantee_expiry_date"]),
 				"insurance_guarantee_expiry_date": fmt_date(dates["insurance_guarantee_expiry_date"]),
+				"submission_method": cstr(state.get("tender_security_method")),
+				"original_delivery": cstr(state.get("tender_security_original")),
 			},
 			"pre_tender_meeting": {"enabled": bool(state.get("pre_tender_meeting")), "details": _meeting_details(state)},
 			"approval": approval or pending_approval(),

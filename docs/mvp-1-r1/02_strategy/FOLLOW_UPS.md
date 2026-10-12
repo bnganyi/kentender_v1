@@ -134,6 +134,7 @@ v1.5 by owner direction (plan D4): technical read is implemented and tested
 as §3A.6, Strategy copy cites it. The document citation itself (v1.4 → v1.5,
 AUTH v1.7 → v1.8) is owed by the next STR-CHG-001 revision; recorded in the
 tracker as conflict C2.
+**Update (2026-10-12):** STR-CHG-001 v1.10 (Proposed) cites KT-STD-001 v1.29 §3A.6 and AUTH-ADR-001 v1.12 §8 for technical read (§18.1). Closes on approval of v1.10; the older v1.4 and v1.7 citations are kept in the document as history.
 
 ---
 

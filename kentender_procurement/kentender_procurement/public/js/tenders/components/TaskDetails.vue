@@ -34,6 +34,17 @@
 				<div class="tnd-fact"><div class="kt-label">Currency</div><div class="tnd-fact-value tnd-fact-value--muted">KES</div></div>
 				<div class="field" style="margin: 0"><label for="tnd-tender_security_amount">Amount</label><input id="tnd-tender_security_amount" class="input" inputmode="decimal" v-model="form.tender_security_amount" data-testid="tnd-field-tender_security_amount" @blur="normaliseMoney" /><p v-if="errors.tender_security_amount" class="tnd-field-error" data-testid="tnd-error-tender_security_amount">{{ errors.tender_security_amount }}</p></div>
 			</div>
+			<div class="tnd-grid-2 tnd-grid-start" data-testid="tnd-security-method-group">
+				<div class="field" style="margin: 0"><label for="tnd-tender_security_method">How tender security may be submitted</label>
+					<select id="tnd-tender_security_method" class="input" v-model="form.tender_security_method" data-testid="tnd-field-tender_security_method"><option value="">Choose a method</option><option v-for="o in securityMethods" :key="o.value" :value="o.value">{{ o.label }}</option></select>
+					<p v-if="errors.tender_security_method" class="tnd-field-error" data-testid="tnd-error-tender_security_method">{{ errors.tender_security_method }}</p>
+				</div>
+				<div class="field" style="margin: 0"><label for="tnd-tender_security_original">Delivery of the original instrument</label>
+					<select id="tnd-tender_security_original" class="input" v-model="form.tender_security_original" data-testid="tnd-field-tender_security_original"><option value="">Choose whether an original is required</option><option value="Required">An original must be delivered</option><option value="Not required">No original is required</option></select>
+					<p v-if="errors.tender_security_original" class="tnd-field-error" data-testid="tnd-error-tender_security_original">{{ errors.tender_security_original }}</p>
+				</div>
+			</div>
+			<p class="kt-label tnd-hint-label" data-testid="tnd-security-method-help">Requiring tender security does not by itself require a physical original. Suppliers see exactly what you choose here. {{ methodHelp }}</p>
 		</div>
 
 		<div class="tnd-section tnd-section--form tnd-section--last">
@@ -80,7 +91,18 @@ const props = defineProps({
 	periodRule: { type: Object, default: null },
 });
 
-const form = reactive({ tender_title: "", issue_date: "", clarification_deadline: "", submission_deadline: "", tender_validity_days: "", tender_security_amount: "", pre_tender_meeting: false, meeting_datetime: "", meeting_mode: "", meeting_venue: "", shortened_period_reason: "", online_joining_information: "" });
+const securityMethods = [
+	{ value: "Bidder uploads an electronic instrument", label: "Bidder uploads an electronic instrument" },
+	{ value: "Issuer supplies the instrument directly", label: "Issuer supplies the instrument directly" },
+	{ value: "Paper instrument requiring an original", label: "Paper instrument requiring an original" },
+];
+const METHOD_HELP = {
+	"Bidder uploads an electronic instrument": "Bidders upload the instrument with their bid.",
+	"Issuer supplies the instrument directly": "The issuer supplies the instrument to you directly; bidders enter its details and upload nothing.",
+	"Paper instrument requiring an original": "Bidders upload the prescribed electronic copy and deliver the original before the submission deadline.",
+};
+const form = reactive({ tender_title: "", issue_date: "", clarification_deadline: "", submission_deadline: "", tender_validity_days: "", tender_security_amount: "", tender_security_method: "", tender_security_original: "", pre_tender_meeting: false, meeting_datetime: "", meeting_mode: "", meeting_venue: "", shortened_period_reason: "", online_joining_information: "" });
+const methodHelp = computed(() => METHOD_HELP[form.tender_security_method] || "");
 let hydrated = "";
 let dirty = false;
 let hydrating = false;
@@ -94,6 +116,8 @@ function hydrate() {
 	form.submission_deadline = toInputDateTime(v.submission_deadline);
 	form.tender_validity_days = v.tender_validity_days ?? "";
 	form.tender_security_amount = v.tender_security_amount != null ? Number(v.tender_security_amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "";
+	form.tender_security_method = v.tender_security_method || "";
+	form.tender_security_original = v.tender_security_original || "";
 	form.pre_tender_meeting = !!v.pre_tender_meeting;
 	form.meeting_datetime = toInputDateTime(v.meeting_datetime);
 	form.meeting_mode = v.meeting_mode || "";
@@ -119,6 +143,13 @@ watch(
 watch(form, () => {
 	dirty = true;
 });
+// a paper instrument always needs its original delivered
+watch(
+	() => form.tender_security_method,
+	(method) => {
+		if (method === "Paper instrument requiring an original") form.tender_security_original = "Required";
+	}
+);
 
 
 function addDays(date, days) {
@@ -169,6 +200,8 @@ function getPayload() {
 		submission_deadline: fromInputDateTime(form.submission_deadline),
 		tender_validity_days: form.tender_validity_days === "" ? null : Number(form.tender_validity_days),
 		tender_security_amount: form.tender_security_amount === "" ? null : String(form.tender_security_amount).replace(/,/g, ""),
+		tender_security_method: form.tender_security_method,
+		tender_security_original: form.tender_security_original,
 		pre_tender_meeting: !!form.pre_tender_meeting,
 	};
 	if (form.pre_tender_meeting) {

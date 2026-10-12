@@ -18,7 +18,7 @@ from typing import Any
 
 import frappe
 
-from kentender_procurement.bid_opening.services import labels, people, reads, records
+from kentender_procurement.bid_opening.services import labels, next_steps, people, reads, records
 from kentender_procurement.tenders.services import stage_summary as ss
 from kentender_procurement.tenders.services import tender_authorization as authz
 
@@ -37,22 +37,23 @@ def for_tender(*, tender: str, user: str) -> list[dict[str, Any]]:
 	if not (readable or department):
 		return []
 	doc = frappe.get_doc(records.CASE, case)
-	return ss.guarded(KEY, LABEL, lambda: _build(doc, readable=readable, department=department, technical=people.technical(user)))
+	return ss.guarded(KEY, LABEL, lambda: _build(doc, readable=readable, department=department, technical=people.technical(user), user=user))
 
 
-def _build(doc, *, readable: bool, department: bool, technical: bool) -> dict[str, Any]:
+def _build(doc, *, readable: bool, department: bool, technical: bool, user: str) -> dict[str, Any]:
 	status = STATUS.get(doc.state, doc.state)
 	links = [ss.link("view-record", "View opening record", ["tenders", doc.tender_reference, "opening"])] if readable else []
+	step = next_steps.tender_page_step(doc, user) if readable else None
 	if doc.state == "Opening complete" and not technical:
 		bids = frappe.db.count("Opening Entry", {"opening_case": doc.name})
 		facts = [ss.fact("Opening completed", labels.when_seconds(doc.completed_at)), ss.fact("Bids opened", bids if doc.outcome != "No bids" else 0)]
 		if readable:
 			facts.append(ss.fact("Minutes", frappe.db.get_value("Proceeding", doc.proceeding, "state") if doc.proceeding else ""))
 		return ss.summary(key=KEY, label=LABEL, status=status, disclosure=ss.FULL if readable else ss.SUMMARY, facts=facts,
-			outcome={"label": "Outcome", "value": doc.outcome} if doc.outcome else None, recorded_at=labels.when_seconds(doc.completed_at), links=links)
+			outcome={"label": "Outcome", "value": doc.outcome} if doc.outcome else None, recorded_at=labels.when_seconds(doc.completed_at), links=links, next_step=step)
 	facts = []
 	if doc.state in ("Awaiting deadline", "Ready to open", "Not held"):
 		facts.append(ss.fact("Opening scheduled for", labels.when(doc.effective_deadline)))
 	elif doc.started_at:
 		facts.append(ss.fact("Opening started", labels.when_seconds(doc.started_at)))
-	return ss.summary(key=KEY, label=LABEL, status=status, disclosure=ss.STATUS_ONLY, facts=facts, links=links)
+	return ss.summary(key=KEY, label=LABEL, status=status, disclosure=ss.STATUS_ONLY, facts=facts, links=links, next_step=step)

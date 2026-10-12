@@ -14,7 +14,7 @@ from kentender_core.utils.raw_delete import delete_rows
 
 SUBMISSION = ("Bid Hand-off", "Bid Opening Handoff", "Bid Submission Close", "Bid Submission Change", "Bid Submission Version", "Bid Receipt", "Tender Box Envelope", "Bid Submission Attempt")
 SIMULATION = ("Test Trust Signature", "Test Trust Certificate", "Bid Submission Incident")
-DOCTYPES = SUBMISSION + ("Tender Security Intake Match", "Tender Security Intake", "Bid Submission Event", "Bid Draft Change", "Bid Section Response", "Bid Evidence", "Bid Workspace", "Bid Organisation Snapshot", "Bidder Arrangement", "Bid Command Journal")
+DOCTYPES = SUBMISSION + ("Tender Security Intake Match", "Tender Security Intake", "Tender Security Exposure", "Tender Security Duty Conflict", "Tender Security Verification", "Bid Submission Event", "Bid Draft Change", "Bid Section Response", "Bid Evidence", "Bid Workspace", "Bid Organisation Snapshot", "Bidder Arrangement", "Bid Command Journal")
 
 
 def _delete_evidence_files(evidence: list[str], deleted: dict[str, int]) -> None:
@@ -51,6 +51,7 @@ def wipe(*, tenders: list[str] | None = None, namespace: str = "") -> dict[str, 
 		_delete_evidence_files(frappe.get_all("Bid Evidence", pluck="name"), deleted)
 		for doctype in DOCTYPES + SIMULATION:
 			delete_rows(doctype, None, deleted=deleted)
+		delete_rows("User Responsibility Assignment", {"business_role": "Tender Security Intake Officer"}, deleted=deleted)
 		return deleted
 	if tenders:
 		within = {"tender": ("in", list(tenders))}
@@ -61,6 +62,12 @@ def wipe(*, tenders: list[str] | None = None, namespace: str = "") -> dict[str, 
 		workspaces = frappe.get_all("Bid Workspace", filters=within, pluck="name")
 		delete_rows("Tender Security Intake Match", within, deleted=deleted)
 		delete_rows("Tender Security Intake", within, deleted=deleted)
+		delete_rows("Tender Security Exposure", within, deleted=deleted)
+		delete_rows("Tender Security Verification", within, deleted=deleted)
+		delete_rows("Tender Security Duty Conflict", within, deleted=deleted)
+		references = frappe.get_all("Tender", filters={"name": ("in", list(tenders))}, pluck="tender_reference")
+		if references:  # the Tender-scoped intake duties go with their Tender
+			delete_rows("User Responsibility Assignment", {"business_role": "Tender Security Intake Officer", "scope_reference": ("in", references)}, deleted=deleted)
 		delete_rows("Bid Submission Event", within, deleted=deleted)
 		if workspaces:
 			of_bids = {"bid_workspace": ("in", workspaces)}

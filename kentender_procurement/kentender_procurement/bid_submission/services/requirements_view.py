@@ -14,7 +14,8 @@
   open in the response drawer;
 - the comparable contracts the Tender asks for, one row each;
 - the supporting evidence the Tender lists, with each file and its check;
-- what must be fixed, or reviewed after an addendum, before submitting.
+- what must be fixed, or reviewed after an addendum, before submitting; and, apart from that,
+  how much is still to complete (a count, never a list of faults).
 
 Nothing here saves anything."""
 
@@ -148,6 +149,7 @@ def _row(group: dict[str, Any], composition: str, published: dict[str, Any]) -> 
 		# the table shows how many files the row holds; the names are for a hover, never the layout
 		**_summary(files),
 		"status": status, "tone": _tone(status), "facts": group.get("facts") or [], "statement": group.get("statement", ""), "fields": fields,
+		"applies_to": applies_to(group.get("facts") or []),
 	}
 	if composition == "COMP-ACCEPTANCE":
 		row.update(_term(row))
@@ -166,33 +168,78 @@ def _term(row: dict[str, Any]) -> dict[str, Any]:
 	}
 
 
+def applies_to(facts: list[dict[str, Any]]) -> str:
+	"""The lines a requirement covers, as the published row names them: a line's description or All items."""
+	return next((cstr(f["value"]) for f in facts if f["label"] == "Applies to"), "")
+
+
+def goods_lines(goods_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+	"""One Offered goods form per goods line (BDS-CHG-001 v0.12 §4.4.9): the line's own fields beside its
+	published quantity, delivery location and latest delivery, under the line's published description."""
+	wanted = ("Quantity", "Delivery location", "Latest delivery")
+	return [{
+		"key": row["key"], "heading": next((cstr(f["value"]) for f in row["facts"] if f["label"] == "Description"), ""), "fields": row["fields"],
+		"published": [{"label": f"{f['label']} · published", "value": f["value"]} for f in row["facts"] if f["label"] in wanted],
+	} for row in goods_rows]
+
+
+def name_goods_rows(goods_rows: list[dict[str, Any]]) -> None:
+	"""With several goods lines each row takes its line's description, so a fault or a count says which line;
+	with one line the row keeps its published name."""
+	if len(goods_rows) < 2:
+		return
+	for row in goods_rows:
+		description = next((cstr(f["value"]) for f in row["facts"] if f["label"] == "Description"), "")
+		if description:
+			row["label"] = description
+
+
 # the page's own order: the regions as the bidder meets them
 FIX_ORDER = ("goods", "technical", "warranty", "experience", "acceptance", "evidence")
 
 
+def _row_blocker(r: dict[str, Any]) -> tuple[str, str] | None:
+	"""What a row in the way of submission is: ``("fix", why)`` when something already given is wrong
+	(a refused file, an answer that fails its rule), ``("todo", "")`` when it is only not done yet
+	(unanswered, or answered and still missing its proof), None when it does not block. Untouched rows
+	with nothing required, and fields the bidder is not asked, do not block."""
+	if r["status"] == "Complete":
+		return None
+	rejected = r["status"] == "Needs evidence" and (r.get("evidence_rejected") or "Rejected" in r.get("evidence", ""))  # a row may hold one good file and have another refused
+	problems = [f for f in r["fields"] if f.get("visible", True) and f.get("editable") and f.get("issue") and f["issue"].get("severity") == "Must fix"]
+	if rejected:
+		return "fix", f"Replace the rejected file for {r['label'].lower()}"
+	if r["status"] == "Needs attention":
+		if not problems:
+			return "fix", f"Complete {r['label'].lower()}"
+		first = problems[0]
+		return "fix", f"{r['label']}: {first['label']} — {first['issue']['text']}" + (f" (and {len(problems) - 1} more)" if len(problems) > 1 else "")
+	if problems or r["status"] == "Needs evidence":
+		return "todo", ""
+	return None
+
+
 def must_fix(by_region: dict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
-	"""Every row that blocks submission, in page order, saying what is missing: the
-	row, the first field that is wrong and why, and how many more. A row with a
-	refused file keeps its plain wording. Untouched rows with nothing required, and
-	fields the bidder is not asked, do not block."""
+	"""Rows with something wrong, in page order, saying what and why: the row, the first field that
+	is wrong and the reason, and how many more. A row with a refused file keeps its plain wording.
+	What is simply not done yet is counted by `to_complete`, not listed here."""
 	items = []
 	for region in FIX_ORDER:
 		for r in by_region.get(region, []):
-			if r["status"] == "Complete":
-				continue
-			rejected = r["status"] == "Needs evidence" and (r.get("evidence_rejected") or "Rejected" in r.get("evidence", ""))  # a row may hold one good file and have another refused
-			problems = [f for f in r["fields"] if f.get("visible", True) and f.get("editable") and f.get("issue") and f["issue"].get("severity") == "Must fix"]
-			if rejected:
-				label = f"Replace the rejected file for {r['label'].lower()}"
-			elif problems:
-				first = problems[0]
-				label = f"{r['label']}: {first['label']} — {first['issue']['text']}" + (f" (and {len(problems) - 1} more)" if len(problems) > 1 else "")
-			elif r["status"] in ("Needs attention", "Needs evidence"):
-				label = f"Complete {r['label'].lower()}"
-			else:
-				continue
-			items.append({"key": r["key"], "label": label})
+			blocker = _row_blocker(r)
+			if blocker and blocker[0] == "fix":
+				items.append({"key": r["key"], "label": blocker[1]})
 	return items
+
+
+def to_complete(by_region: dict[str, list[dict[str, Any]]], labels_of: dict[str, str], *, started: bool) -> dict[str, Any] | None:
+	"""How much is still to do, as a count; once the bidder has started, one line per region."""
+	counts = {region: sum(1 for r in by_region.get(region, []) if (_row_blocker(r) or ("", ""))[0] == "todo") for region in FIX_ORDER}
+	total = sum(counts.values())
+	if not total:
+		return None
+	sections = [{"key": region, "text": f"{labels_of[region]} — {n} to complete"} for region, n in counts.items() if n and started]
+	return {"title": f"{total} item{'s' if total != 1 else ''} to complete", "sections": sections}
 
 
 _must_fix = must_fix
@@ -210,7 +257,9 @@ def view(ctx, tasks, task_view: dict[str, Any], *, at) -> dict[str, Any]:
 		if region:
 			by_region[region].append(_row(shown, group.composition_id, group.published_facts or {}))
 
-	goods = by_region["goods"][0] if by_region["goods"] else None
+	name_goods_rows(by_region["goods"])
+	lines = goods_lines(by_region["goods"])
+	goods = lines[0] if lines else None
 	experience_facts = {}
 	if by_region["experience"]:
 		experience_facts = {f["label"]: f["value"] for f in by_region["experience"][0]["facts"]}
@@ -243,6 +292,8 @@ def view(ctx, tasks, task_view: dict[str, Any], *, at) -> dict[str, Any]:
 		sections.append({"key": key, "label": label, "status": state, "tone": tone})
 
 	must_fix = _must_fix(by_region)
+	status = tasks["requirements"].status
+	todo = to_complete(by_region, {key: label for key, label, _c in REGIONS}, started=status != "Not started")
 	attention = None
 	changed = "requirements" in json.loads(ctx.workspace.attention_json or "[]")
 	if must_fix:
@@ -251,16 +302,12 @@ def view(ctx, tasks, task_view: dict[str, Any], *, at) -> dict[str, Any]:
 		review = [{"key": r["key"], "label": f"Review {r['label'].lower()}"} for r in by_region["goods"] + by_region["technical"] + by_region["warranty"]][:1]
 		attention = {"tone": "warning", "title": "Review 1 changed response", "items": review} if review else None
 
-	status = tasks["requirements"].status
-	published_goods = []
-	if goods:
-		wanted = ("Quantity", "Delivery location", "Latest delivery")
-		published_goods = [{"label": f"{f['label']} · published", "value": f["value"]} for f in goods["facts"] if f["label"] in wanted]
 	return {
 		"page": {"title": TITLE, "description": DESCRIPTION, "back_href": f"/tenders/{ws.tender_reference}/bid"},
 		"badge": {"label": status, "tone": BADGE_TONES.get(status, "draft")},
-		"sections": sections, "attention": attention,
-		"goods": {"key": goods["key"], "fields": goods["fields"], "published": published_goods} if goods else None,
+		"sections": sections, "attention": attention, "to_complete": todo,
+		# the first goods line, then any others (BDS-CHG-001 v0.12 §4.4.9); a heading is drawn only when there are several
+		"goods": goods, "goods_more": lines[1:],
 		"technical": by_region["technical"], "warranty": by_region["warranty"],
 		"experience": {"text": f"Provide at least {count} comparable contracts completed within the last {years} years." if count and years else "", "rows": experience_rows} if experience_rows else None,
 		"acceptance": by_region["acceptance"], "evidence": evidence_rows,

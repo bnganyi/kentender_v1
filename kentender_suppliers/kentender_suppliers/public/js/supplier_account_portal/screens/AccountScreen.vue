@@ -176,7 +176,10 @@ onMounted(() => {
 						</div>
 					</div>
 				</template>
-				<p v-if="profile.missing.length" class="acc-muted" data-testid="acc-profile-missing">{{ __("Still needed: {0}.", [profile.missing.map((m) => m.text.toLowerCase()).join("; ")]) }}</p>
+				<div v-if="profile.missing.length" class="kt-notice is-warning" role="status" data-testid="acc-profile-missing">
+					<svg class="kt-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
+					<div class="kt-notice-body">{{ __("Still needed: {0}.", [profile.missing.map((m) => m.text.toLowerCase()).join("; ")]) }}</div>
+				</div>
 				<p class="acc-muted">{{ __("A bid copies these facts when you start it. Changing them here does not change a bid already prepared until you choose to refresh it.") }}</p>
 				<div v-if="allowed.has('edit_business_profile')">
 					<button type="button" class="btn btn-secondary" :class="{ 'acc-btn-touch': narrow }" data-testid="acc-edit-profile" @click="dialog = { kind: 'profile' }">{{ __("Edit business profile") }}</button>

@@ -121,8 +121,9 @@ def _refusal(reason_code: str, message: str, *, fixes: list[dict[str, Any]], fig
 	return ns.guard(False, reason_code=reason_code, message=message, headline=headline or message, figures=figures or {}, fixes=fixes)
 
 
-def _journey(stage: str, *, blocked: bool = False, holder_display: str = "", complete: bool = False) -> dict[str, Any]:
-	return ns.journey(STAGES, current="" if complete else stage, blocked=blocked, holder_display=holder_display, complete=complete, reduced_style=ns.REDUCED_POSITION)
+def _journey(stage: str, *, blocked: bool = False, holder_display: str = "", complete: bool = False, caption: str = "", step_first: bool = False) -> dict[str, Any]:
+	return ns.journey(STAGES, current="" if complete else stage, blocked=blocked, holder_display=holder_display, complete=complete, reduced_style=ns.REDUCED_POSITION,
+		caption=caption, step_first=step_first)
 
 
 # --------------------------------------------------------------------------
@@ -650,8 +651,24 @@ def _cancelled(root, *, actor: str, roles: dict[str, bool]) -> tuple[dict[str, A
 # --------------------------------------------------------------------------
 
 
-def guidance(root, *, actor: str, roles: dict[str, bool], mode: str, context: str = "record", task: str = "", subject: dict[str, Any] | None = None, review_summary: dict[str, Any] | None = None) -> dict[str, Any]:
-	"""`{"next_step", "journey"}` for this actor on this screen (§5.9)."""
+PREPARATION_COMPLETE = "Tender preparation is complete"
+
+
+def _downstream_step(downstream: list[dict[str, Any]] | None) -> dict[str, Any] | None:
+	"""The one next step a later stage's owner published for this reader (`kt_tender_stage_summaries`), shown as
+	published: Tenders neither rewords it nor decides it. None when no stage has a step for this reader."""
+	for summary in downstream or []:
+		step = summary.get("next_step")
+		if summary.get("state") == "ok" and step and step.get("kind") != ns.KIND_NOT_INVOLVED and step.get("headline"):
+			return step
+	return None
+
+
+def guidance(root, *, actor: str, roles: dict[str, bool], mode: str, context: str = "record", task: str = "", subject: dict[str, Any] | None = None, review_summary: dict[str, Any] | None = None,
+		downstream: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+	"""`{"next_step", "journey"}` for this actor on this screen (§5.9). `downstream` is what the later stages
+	published for this reader; once supplier submission has closed the Tender's own part is done and the
+	reader's next step, where a later stage has one, leads."""
 	if context not in CONTEXTS:
 		raise ValueError(context)
 	status = cstr(root.overall_status)
@@ -687,8 +704,10 @@ def guidance(root, *, actor: str, roles: dict[str, bool], mode: str, context: st
 	elif status == "Published — open":
 		answer, journey = _open(root, version, actor=actor, roles=business, context=context, subject=subject)
 	elif status == "Submission period ended":
-		answer = _done(OPEN_MANAGEMENT, f"The system closed supplier submission at {serializer.fmt_datetime_short(root.submission_deadline)}.")
-		journey = _journey(OPEN_MANAGEMENT, complete=True)
+		step = _downstream_step(downstream)
+		# the finished row says only that preparation is done, so the page never reads as the whole procurement finished
+		answer = step or _done(OPEN_MANAGEMENT, f"The system closed supplier submission at {serializer.fmt_datetime_short(root.submission_deadline)}.")
+		journey = _journey(OPEN_MANAGEMENT, complete=True, caption=PREPARATION_COMPLETE, step_first=bool(step))
 	elif status == "Cancelled":
 		answer, journey = _cancelled(root, actor=actor, roles=business)
 	else:
@@ -696,8 +715,9 @@ def guidance(root, *, actor: str, roles: dict[str, bool], mode: str, context: st
 	if mode == "technical":
 		reader = answer if answer["kind"] not in ns.TURN_KINDS else ns.not_involved(answer["stage"])
 		answer = ns.for_viewer(answer, technical=True, reader=reader)
-	# the journey marker and the next-step stage always agree (§10.17)
-	if answer.get("stage") and journey.get("current") and answer["stage"] != journey["current"]:
+	# the journey marker and the next-step stage always agree (§10.17); a later stage's own step carries that stage's
+	# ids, and the Tender's row is complete beneath it
+	if answer.get("stage") and journey.get("current") and answer["stage"] != journey["current"] and not journey.get("step_first"):
 		raise ValueError(f"next step stage {answer['stage']} disagrees with journey {journey['current']}")
 	return {"next_step": answer, "journey": journey}
 

@@ -143,7 +143,6 @@
        "cycle": 1,
        "id": "AWD-MOH-2027-033-OP-01",
        "label": "Professional opinion 1",
-       "proof_label": "Test attestation — not an electronic signature",
        "reason": "Tender validity expired before an award could be notified.",
        "signed": "Signed by Charles Mutiso, 11 Oct 2027, 09:00 EAT",
        "signing_outcome": "Accepted/Verified",
@@ -170,7 +169,6 @@
       "cycle": 1,
       "id": "AWD-MOH-2027-033-OP-01",
       "label": "Professional opinion 1",
-      "proof_label": "Test attestation — not an electronic signature",
       "reason": "Tender validity expired before an award could be notified.",
       "signed": "Signed by Charles Mutiso, 11 Oct 2027, 09:00 EAT",
       "signing_outcome": "Accepted/Verified",
@@ -184,7 +182,6 @@
      "cycle": 1,
      "id": "AWD-MOH-2027-033-OP-01",
      "label": "Professional opinion 1",
-     "proof_label": "Test attestation — not an electronic signature",
      "reason": "Tender validity expired before an award could be notified.",
      "signed": "Signed by Charles Mutiso, 11 Oct 2027, 09:00 EAT",
      "signing_outcome": "Accepted/Verified",
@@ -284,7 +281,6 @@
    "stage": "Closed",
    "tender_reference": "TND-MOH-2027-033",
    "tender_title": "Supply and delivery of business laptops",
-   "test_environment": "Test environment — no live award notices are sent.",
    "validity_rule": "Submission deadline date plus the published validity days",
    "viewer": {
     "ao": true,
@@ -295,8 +291,7 @@
   },
   "workspace": {
    "ok": true,
-   "tasks": [],
-   "test_environment": "Test environment — no live award notices are sent."
+   "tasks": []
   }
  },
  "daniel": {
@@ -460,7 +455,6 @@
        "cycle": 1,
        "id": "AWD-MOH-2027-033-OP-01",
        "label": "Professional opinion 1",
-       "proof_label": "Test attestation — not an electronic signature",
        "reason": "Tender validity expired before an award could be notified.",
        "signed": "Signed by Charles Mutiso, 11 Oct 2027, 09:00 EAT",
        "signing_outcome": "Accepted/Verified",
@@ -487,7 +481,6 @@
       "cycle": 1,
       "id": "AWD-MOH-2027-033-OP-01",
       "label": "Professional opinion 1",
-      "proof_label": "Test attestation — not an electronic signature",
       "reason": "Tender validity expired before an award could be notified.",
       "signed": "Signed by Charles Mutiso, 11 Oct 2027, 09:00 EAT",
       "signing_outcome": "Accepted/Verified",
@@ -501,7 +494,6 @@
      "cycle": 1,
      "id": "AWD-MOH-2027-033-OP-01",
      "label": "Professional opinion 1",
-     "proof_label": "Test attestation — not an electronic signature",
      "reason": "Tender validity expired before an award could be notified.",
      "signed": "Signed by Charles Mutiso, 11 Oct 2027, 09:00 EAT",
      "signing_outcome": "Accepted/Verified",
@@ -601,7 +593,6 @@
    "stage": "Closed",
    "tender_reference": "TND-MOH-2027-033",
    "tender_title": "Supply and delivery of business laptops",
-   "test_environment": "Test environment — no live award notices are sent.",
    "validity_rule": "Submission deadline date plus the published validity days",
    "viewer": {
     "ao": false,
@@ -627,8 +618,7 @@
      "tender_reference": "TND-MOH-2027-033",
      "tender_title": "Supply and delivery of business laptops"
     }
-   ],
-   "test_environment": "Test environment — no live award notices are sent."
+   ]
   }
  },
  "info": {
@@ -785,7 +775,6 @@
        "cycle": 1,
        "id": "AWD-MOH-2027-033-OP-01",
        "label": "Professional opinion 1",
-       "proof_label": "Test attestation — not an electronic signature",
        "reason": "Tender validity expired before an award could be notified.",
        "signed": "Signed by Charles Mutiso, 11 Oct 2027, 09:00 EAT",
        "signing_outcome": "Accepted/Verified",
@@ -812,7 +801,6 @@
       "cycle": 1,
       "id": "AWD-MOH-2027-033-OP-01",
       "label": "Professional opinion 1",
-      "proof_label": "Test attestation — not an electronic signature",
       "reason": "Tender validity expired before an award could be notified.",
       "signed": "Signed by Charles Mutiso, 11 Oct 2027, 09:00 EAT",
       "signing_outcome": "Accepted/Verified",
@@ -826,7 +814,6 @@
      "cycle": 1,
      "id": "AWD-MOH-2027-033-OP-01",
      "label": "Professional opinion 1",
-     "proof_label": "Test attestation — not an electronic signature",
      "reason": "Tender validity expired before an award could be notified.",
      "signed": "Signed by Charles Mutiso, 11 Oct 2027, 09:00 EAT",
      "signing_outcome": "Accepted/Verified",
@@ -926,7 +913,6 @@
    "stage": "Closed",
    "tender_reference": "TND-MOH-2027-033",
    "tender_title": "Supply and delivery of business laptops",
-   "test_environment": "Test environment — no live award notices are sent.",
    "validity_rule": "Submission deadline date plus the published validity days",
    "viewer": {
     "ao": false,
@@ -937,8 +923,7 @@
   },
   "workspace": {
    "ok": true,
-   "tasks": [],
-   "test_environment": "Test environment — no live award notices are sent."
+   "tasks": []
   }
  }
 }

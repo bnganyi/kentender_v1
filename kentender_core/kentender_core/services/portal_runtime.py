@@ -14,8 +14,6 @@ surface, asks the surface's resolver for the verdict and first payload
   **Account**, with the section that owns the path marked current;
 - the quiet footer from CFG `GetPublicPortalInformation` — only the links
   the active projection supplies, never a placeholder (BDS §10.7);
-- environment notices from the `kt_portal_environment_notices` hook (the
-  "Test environment" strip on a simulation site, OD-C).
 
 A surface entry is a dict: `prefix` (for example "/tenders"), `resolver`
 (dotted path of `resolve(*, path, query, user) -> dict`), `bundle` (the
@@ -37,7 +35,6 @@ from frappe.utils import cstr
 from kentender_core.services import public_portal
 
 SURFACES_HOOK = "kt_portal_surfaces"
-NOTICES_HOOK = "kt_portal_environment_notices"
 IDENTITY_HOOK = "kt_portal_identity_providers"
 VERDICTS = ("OK", "NOT_FOUND", "SIGN_IN")
 #: (key, label, href, owned prefixes) — BDS §10.1 header order.
@@ -103,15 +100,6 @@ def support_contact() -> dict[str, str]:
 	return support
 
 
-def environment_notices() -> list[dict[str, str]]:
-	out = []
-	for path in frappe.get_hooks(NOTICES_HOOK) or []:
-		notice = frappe.get_attr(path)()
-		if notice and notice.get("label"):
-			out.append({"label": cstr(notice["label"]), "text": cstr(notice.get("text"))})
-	return out
-
-
 def initials(name: str) -> str:
 	"""Up to two capital letters for the header's avatar: the first letters of
 	the first and last words of a name, one letter for an address."""
@@ -166,5 +154,5 @@ def resolve(path: str, *, query: dict[str, Any] | None = None, query_string: str
 		**result,
 		"path": path,
 		"surface": {"key": cstr((surface or {}).get("key") or (surface or {}).get("prefix", "")), "bundle": cstr((surface or {}).get("bundle")), "css": list((surface or {}).get("css") or [])},
-		"shell": {"nav": nav(path), "footer": footer(), "notices": environment_notices(), "signed_in": principal not in ("", "Guest"), "identity": identity(principal)},
+		"shell": {"nav": nav(path), "footer": footer(), "signed_in": principal not in ("", "Guest"), "identity": identity(principal)},
 	}

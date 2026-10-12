@@ -79,6 +79,14 @@ def get_tender_review(tender: str) -> dict[str, Any]:
 
 
 @frappe.whitelist()
+def get_security_statement_review() -> dict[str, Any]:
+	"""Published Tenders that never stated how their tender security may be submitted (Project Owner, 10 October 2026)."""
+	from kentender_procurement.tenders.services import security_statement_review
+
+	return _masked_read(security_statement_review.get_security_statement_review, {})
+
+
+@frappe.whitelist()
 def get_tender_history(tender: str) -> dict[str, Any]:
 	return _masked_read(history.get_tender_history, dict(tender=tender))
 
@@ -293,6 +301,20 @@ def respond_to_tender_clarification(tender: str, clarification: str, response: s
 @frappe.whitelist()
 def retry_failed_candidate_notice(tender: str, notice: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
 	return candidate_notices.retry_failed_candidate_notice(tender=tender, notice=notice, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def update_draft_template_release(tender: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	"""Move an unpublished Draft to the template release now switched On (Project Owner, 10 October 2026)."""
+	return cmd.update_draft_template_release(tender=tender, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def correct_security_statement(tender: str, submission_method: str, original_delivery: str, source_reference: str, basis: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	"""Record, as an auditable correction, what a published Tender already states about its tender security (Project Owner, 10 October 2026)."""
+	from kentender_procurement.tenders.services import security_statement
+
+	return security_statement.correct_security_statement(tender=tender, submission_method=submission_method, original_delivery=original_delivery, source_reference=source_reference, basis=basis, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
 
 
 @frappe.whitelist()

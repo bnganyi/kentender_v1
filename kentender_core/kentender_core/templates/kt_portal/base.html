@@ -40,12 +40,6 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 		data-kt-portal-verdict="{{ kt_portal.verdict }}"
 	>
 		<a class="kt-portal-skip" href="#kt-portal-main">{{ _("Skip to main content") }}</a>
-		{%- for notice in kt_portal.shell.notices %}
-		<div class="kt-portal-environment" role="note" data-testid="kt-portal-environment">
-			<strong>{{ notice.label }}</strong>{% if notice.text %}
-			<span>{{ notice.text }}</span>{% endif %}
-		</div>
-		{%- endfor %}
 		<header class="kt-portal-header">
 			<div class="kt-portal-bar">
 				<a class="kt-portal-brand" href="/tenders" aria-label="KenTender home">
@@ -165,6 +159,8 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 			frappe.sys_defaults = frappe.boot.sysdefaults;
 		</script>
 		{{ include_script('frappe-web.bundle.js') }}
+		{# Before the surface bundles: a screen that posts as it mounts (the emailed verification link) reads this token at once. #}
+		<!-- csrf_token -->
 		<script>
 			(function () {
 				var path = (window.location.pathname || "/").replace(/^\/+|\/+$/g, "");
@@ -227,6 +223,5 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 		include_script('kt_industry_guidance.bundle.js') }} {{
 		include_script('kt_industry_pager.bundle.js') }} {{
 		include_script(kt_portal.surface.bundle) }} {%- endif %}
-		<!-- csrf_token -->
 	</body>
 </html>

@@ -26,3 +26,8 @@ export function pagesUrl(ref, kind, id) {
 	const param = kind === "bid" ? "entry" : "minutes_version";
 	return `/api/method/${BASE}.${method}?tender_reference=${encodeURIComponent(ref)}&${param}=${encodeURIComponent(id)}`;
 }
+
+// Project Owner, 10 October 2026: an incident's full details are an explicit read that names its purpose and is audited;
+// the opening page's own refresh never calls this.
+export const getIncidentDetails = (ref, incident, purpose) => post("get_incident_details", { tender_reference: ref, incident, purpose, idempotency_key: newKey("incident-details") });
+export const getIncidentAccessTrail = (ref) => get("get_incident_access_trail", { tender_reference: ref });

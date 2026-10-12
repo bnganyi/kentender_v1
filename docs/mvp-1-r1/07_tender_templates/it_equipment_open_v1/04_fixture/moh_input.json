@@ -376,7 +376,7 @@
     "currency": "KES",
     "issue_date": "2027-05-15",
     "lotting_indicator": "Single lot",
-    "package_digest": "6af846719ab38fc7df633c2e8d71c91567b55b214ac2f56c1ec41b9df1d57c1b",
+    "package_digest": "b422c4dfc83c79ea19d00a7dd590f2bb041e4c70a65323622ef288e2928a49ae",
     "pre_tender_meeting": {
       "details": "",
       "enabled": false
@@ -388,7 +388,9 @@
     "tender_security": {
       "amount": "500000.00",
       "currency": "KES",
-      "required": true
+      "original_delivery": "Required",
+      "required": true,
+      "submission_method": "Bidder uploads an electronic instrument"
     },
     "tender_version_id": "TNDV-MOH-2027-033-V2",
     "title": "Supply and delivery of business laptops",

@@ -7,7 +7,7 @@
 // summary, the five tasks with their exact issue links, what is offered, the
 // declarations and evidence, and the price summary. Nothing is saved here.
 import { inject, onMounted, onUnmounted, ref, watch } from "vue";
-import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
+import BidGuidance from "../components/BidGuidance.vue";
 import CommonState from "../components/CommonState.vue";
 import NotifySignatory from "../components/NotifySignatory.vue";
 import TaskStepper from "../components/TaskStepper.vue";
@@ -67,7 +67,7 @@ onMounted(() => {
 			</div>
 		</div>
 
-		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
+		<BidGuidance :journey="data.journey" :answer="data.next_step" :reference="reference" :bid-reference="data.bid && data.bid.reference || ''" :organisation="route.query.organisation || ''" :support-href="data.support_href || ''" :tracker="!data.step" @fix="onFix" @reload="load" />
 
 		<NotifySignatory v-if="data.handover && data.bid" :handover="data.handover" :bid="data.bid" :organisation="route.query.organisation || ''" @sent="load" />
 
@@ -127,7 +127,10 @@ onMounted(() => {
 			<h2>{{ __("What you are offering") }}</h2>
 			<div class="bds-region-body">
 				<div class="bds-facts" data-testid="bds-review-offering">
-					<div v-for="fact in data.offering" :key="fact.label" class="bds-fact"><span class="kt-label">{{ __(fact.label) }}</span><span class="bds-fact-value">{{ fact.value || "—" }}</span></div>
+					<template v-for="(fact, i) in data.offering" :key="(fact.line || '') + fact.label">
+						<h3 v-if="fact.line && (i === 0 || data.offering[i - 1].line !== fact.line)" class="bds-line-heading" data-testid="bds-review-line-heading">{{ fact.line }}</h3>
+						<div class="bds-fact"><span class="kt-label">{{ __(fact.label) }}</span><span class="bds-fact-value">{{ fact.value || "—" }}</span></div>
+					</template>
 				</div>
 			</div>
 		</div>

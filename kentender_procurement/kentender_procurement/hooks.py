@@ -159,6 +159,20 @@ kt_award_source_providers = [
 	"kentender_procurement.award.test_services.sources.synthetic_provider",
 ]
 kt_evaluation_report_consumers = ["kentender_procurement.award.services.intake.on_report_delivered"]
+
+# Tender-security intake duty (Project Owner, 10 October 2026): the Head of
+# Procurement Function assigns it for one Tender; it excludes the same person's
+# opening and evaluation duties on that Tender, in both directions. Opening and
+# Evaluation publish who sits on their committees; the registry asks the guard
+# before it grants the duty. (BDS-CHG-001 §6; AUTH-ADR-001 §4.4.)
+kt_tender_duty_participants = [
+	"kentender_procurement.bid_opening.services.duty_participants.participants",
+	"kentender_procurement.bid_evaluation.services.duty_participants.participants",
+]
+kt_opening_boundary_probes = ["kentender_procurement.bid_opening.services.boundary.crossed"]
+kt_responsibility_grant_guards = {
+	"Tender Security Intake Officer": "kentender_procurement.bid_submission.services.security_duty.guard_grant",
+}
 kt_evaluation_report_consumers_failed = ["kentender_procurement.award.services.intake.on_report_delivery_failed"]
 kt_evaluation_correction_consumers = ["kentender_procurement.award.services.corrections.on_evaluation_correction"]
 kt_evaluation_removal_consumers = ["kentender_procurement.award.seeds.clear.on_evaluations_removed"]
@@ -191,6 +205,7 @@ kt_file_scanners = ["kentender_procurement.bid_submission.test_services.scanner.
 kt_bds_trust_services = ["kentender_procurement.bid_submission.test_services.trust.service"]
 kt_bds_time_services = ["kentender_procurement.bid_submission.test_services.trusted_time.service"]
 kt_bds_custody_services = ["kentender_procurement.bid_submission.test_services.tender_box.service"]
+kt_bds_issuer_services = ["kentender_procurement.bid_submission.test_services.issuer.service"]
 # BOP-CHG-001 v0.10 plan D6/D15 and TRUST-ADR-001 v0.1 §2: the shared signing
 # service seam used by Proceedings attestations. Only the test attestation
 # double is configured, and it answers on a test environment only.
@@ -251,6 +266,7 @@ page_js = {
 	"std-templates": "public/js/std_templates_page.js",
 	# BDS-CHG-001 v0.8 OD-G/OD-H — the blind physical tender-security intake.
 	"tender-security-receipts": "public/js/tender_security_receipts_page.js",
+	"tender-security-duty": "public/js/tender_security_duty_page.js",
 	# EVL-CHG-001 v0.4 plan D13 — the Bid evaluation workspace.
 	"bid-evaluation": "public/js/bid_evaluation_page.js",
 	"procurement-meetings": "public/js/procurement_meetings_page.js",
@@ -562,7 +578,8 @@ scheduler_events: dict[str, list[str]] = {
 
 # Request Events
 # ----------------
-# before_request = ["kentender_procurement.utils.before_request"]
+# Project Owner, 10 October 2026: a private file attached to a sealed record is not served by URL to anyone
+before_request = ["kentender_procurement.bid_submission.services.sealed.refuse_sealed_files"]
 # after_request = ["kentender_procurement.utils.after_request"]
 
 # Job Events
@@ -748,6 +765,12 @@ for _bds_content in (
 	"Bid Section Response", "Bid Evidence", "Bid Draft Change", "Bid Command Journal", "Bid Receipt", "Bid Submission Change",
 	"Bidder Arrangement", "Bid Organisation Snapshot", "Bid Workspace", "Bid Submission Attempt", "Bid Submission Version",
 	"Bid Submission Event", "Tender Box Envelope", "Bid Opening Handoff",
+	# Project Owner, 10 October 2026: nor is the tender-security intake, the hand-off tasks, the close or the incidents
+	# (they carry bid references, counts or supplier-identifying security facts)
+	"Bid Hand-off", "Bid Submission Close", "Bid Submission Incident",
+	"Tender Security Intake", "Tender Security Intake Match", "Tender Security Exposure", "Tender Security Duty Conflict", "Tender Security Verification",
+	# and the Opening incident records and the opening records that carry an envelope identifier or a bidder's name
+	"Opening Access Incident", "Opening Exception", "Opening Decision Item", "Opening Entry", "Opening Register Request", "Opening Incident Access Event",
 ):
 	has_permission[_bds_content] = "kentender_procurement.bid_submission.services.bid_authorization.deny_desk_access"
 	permission_query_conditions[_bds_content] = "kentender_procurement.bid_submission.services.bid_authorization.deny_desk_query"

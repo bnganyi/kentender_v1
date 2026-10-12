@@ -38,7 +38,17 @@ AFTER_SALES_OPTIONS = (
 DEFAULT_VALIDITY_DAYS = 120
 # Controls added after packages already existed. While one is empty it is left out of the package digest, so a Version submitted or
 # approved before the control existed still verifies; once it holds a value it is part of the digest like any other officer value.
-DIGEST_OMIT_WHEN_EMPTY = ("shortened_period_reason",)
+# The tender-security method and original-delivery requirement (Project Owner, 10 Oct 2026) join it: a package prepared before they existed
+# is not changed by them, yet it cannot be published until an officer states them (they are required, with no default).
+DIGEST_OMIT_WHEN_EMPTY = ("shortened_period_reason", "tender_security_method", "tender_security_original")
+# Project Owner, 10 October 2026 (second answer): the method names who supplies the instrument and what evidence the bidder gives. "No security
+# required" is a behaviour of template release 1.5 but is not offered here: this product's issued documents state a Tender Security is required
+# (ITT 18.2) and the Tender-Securing Declaration path is excluded, so offering it needs an owner-approved document variant.
+SECURITY_UPLOAD = "Bidder uploads an electronic instrument"
+SECURITY_ISSUER = "Issuer supplies the instrument directly"
+SECURITY_PAPER = "Paper instrument requiring an original"
+SECURITY_METHODS = (SECURITY_UPLOAD, SECURITY_ISSUER, SECURITY_PAPER)
+SECURITY_ORIGINALS = ("Required", "Not required")
 # v0.16 §5.2: the time of day the pre-filled submission deadline takes (new content, for owner review; the §10.1 fixtures close at 11:00)
 DEFAULT_CLOSING_TIME = "11:00"
 
@@ -54,6 +64,9 @@ CATALOGUE: dict[str, dict[str, Any]] = {
 	"shortened_period_reason": {"task": TASK_DETAILS, "group": "details", "type": TEXT, "max_length": 500, "min_length": 3, "required": False, "label": "Reason for a shorter tendering period"},
 	"tender_validity_days": {"task": TASK_DETAILS, "group": "details", "type": INT, "min": 1, "max": 365, "default": DEFAULT_VALIDITY_DAYS, "required": True, "label": "Tender validity"},
 	"tender_security_amount": {"task": TASK_DETAILS, "group": "details", "type": MONEY, "min_exclusive": 0, "required": True, "label": "Tender security amount"},
+	# Project Owner, 10 Oct 2026: "security required" no longer means "physical original required"; the Tender states each, with no default
+	"tender_security_method": {"task": TASK_DETAILS, "group": "details", "type": SELECT, "options": SECURITY_METHODS, "required": True, "label": "How tender security may be submitted"},
+	"tender_security_original": {"task": TASK_DETAILS, "group": "details", "type": SELECT, "options": SECURITY_ORIGINALS, "required": True, "label": "Delivery of the original instrument"},
 	"pre_tender_meeting": {"task": TASK_DETAILS, "group": "details", "type": BOOL, "default": False, "required": True, "label": "Pre-tender meeting"},
 	"meeting_datetime": {"task": TASK_DETAILS, "group": "details", "type": DATETIME, "when": ("pre_tender_meeting", True), "required": True, "label": "Meeting date/time"},
 	"meeting_mode": {"task": TASK_DETAILS, "group": "details", "type": SELECT, "options": ("Physical", "Online"), "when": ("pre_tender_meeting", True), "required": True, "label": "Meeting mode"},

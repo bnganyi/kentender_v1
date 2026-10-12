@@ -25,6 +25,20 @@ afterEach(() => {
 });
 
 describe("Review bid", () => {
+	it("groups what is offered by goods line when the Tender has several, and keeps it flat for one (BDS-CHG-001 v0.12 §4.4.9)", () => {
+		const task = reviewTask();
+		task.offering = [
+			{ label: "Offered model", value: "Dell XPS", line: "Office laptops" }, { label: "Quantity", value: "20 Each", line: "Office laptops" },
+			{ label: "Offered model", value: "Dell P2422H", line: "Monitors for office laptops" }, { label: "Quantity", value: "20 Each", line: "Monitors for office laptops" },
+			{ label: "Warranty", value: "36 months" },
+		];
+		const wrapper = mountWith(task);
+		const box = wrapper.get('[data-testid="bds-review-offering"]');
+		expect(box.findAll('[data-testid="bds-review-line-heading"]').map((h) => h.text())).toEqual(["Office laptops", "Monitors for office laptops"]);
+		expect(box.text()).toContain("Dell P2422H");
+		expect(mountWith(reviewTask()).find('[data-testid="bds-review-line-heading"]').exists()).toBe(false);
+	});
+
 	it("offers Submit bid to the signatory on a ready bid, with the computed result", () => {
 		const wrapper = mountWith(reviewTask());
 		expect(wrapper.get('[data-testid="bds-review-action"]').text()).toBe("Submit bid");

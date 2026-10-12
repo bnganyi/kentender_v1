@@ -144,9 +144,10 @@ def _group_status(group, states) -> str:
 
 def declarations(ctx, tasks, view_groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	states = {s.field.key: s for s in tasks["company"].fields}
+	changed = snapshot.compare(ctx.workspace)["changed"]
 	rows = []
 	for group, shown in zip(ctx.model.groups_of("company"), view_groups):
-		if group.rule_id == security_matching.SECURITY_RULE:
+		if group.rule_id in security_matching.SECURITY_RULES:
 			continue
 		status = _group_status(group, states)
 		confirmed = _confirmed(ctx, group, states) if group.composition_id == "COMP-LOCKED-DECLARATION" and status == "Complete" else ""
@@ -154,8 +155,17 @@ def declarations(ctx, tasks, view_groups: list[dict[str, Any]]) -> list[dict[str
 		profile = group.composition_id == "COMP-ENTITY-PROFILE"
 		# the lead's own profile is completed in the Account the bidder is signed in to; a member's is not theirs to change
 		fix_here = profile and label == "Needs attention" and group.member == (ctx.snapshot.get("organisation") or {}).get("organisation_id")
+		missing = sum(1 for f in group.fields if f.key in states and states[f.key].visible and states[f.key].issue and states[f.key].issue.get("severity") == "Must fix") if profile and label == "Needs attention" else 0
+		# the Account's profile may be complete now while this bid still holds the copy it took earlier: the way on is
+		# the "Updated Account details" choice, not the Account
+		refresh = bool(missing) and any(key.startswith(f"profiles.{group.member}.") for key in changed)
+		needs = "The Account's business profile is filled in. Use the updated Account details above to bring it into this bid." if refresh else (
+			f"{missing} business profile {'fact is' if missing == 1 else 'facts are'} still missing in the Account." if missing else "")
 		rows.append({
-			"action_label": "View business profile" if profile else "View declaration", "account_href": "/account" if fix_here else "",
+			"action_label": "View business profile" if profile else "View declaration",
+			"account_href": "#bds-account-update" if refresh else ("/account" if fix_here else ""), "account_label": "Go to updated details" if refresh else "Open Account",
+			# say what is wrong beside "Needs attention", and what to do about it
+			"needs_text": needs,
 			"key": shown["key"], "label": f"{shown['heading']} — {shown['member']}" if shown.get("member") else shown["heading"], "status": label, "tone": "live" if label in ("Complete", "Confirmed") else ("attention" if label == "Needs attention" else "draft"),
 			"confirmed_text": confirmed if confirmed != "Confirmed" else "", "statement": shown.get("statement", ""), "facts": shown.get("facts") or [], "fields": shown["fields"],
 		})
@@ -163,34 +173,43 @@ def declarations(ctx, tasks, view_groups: list[dict[str, Any]]) -> list[dict[str
 
 
 def security(ctx, tasks, view_groups: list[dict[str, Any]], *, published: dict[str, Any]) -> dict[str, Any] | None:
-	from kentender_procurement.bid_submission.services import tender_security
+	from kentender_procurement.bid_submission.services import security_verification, tender_security
 
-	pairs = [(g, v) for g, v in zip(ctx.model.groups_of("company"), view_groups) if g.rule_id == security_matching.SECURITY_RULE]
+	pairs = [(g, v) for g, v in zip(ctx.model.groups_of("company"), view_groups) if g.rule_id in security_matching.SECURITY_RULES]
 	if not pairs:
 		return None
 	group, shown = pairs[0]
 	facts = tender_security.response(ctx)
 	return {
 		"key": shown["key"], "fields": shown["fields"], "published_facts": [{"label": "Amount · published", "value": facts["required_amount"]}, {"label": "Currency · published", "value": facts["currency"]}],
-		"entered": bool(facts.get("security_type")), "physical": physical(facts, published),
+		"entered": bool(facts.get("security_type")), "physical": physical(facts, published), "requirement": facts["requirement_text"],
+		# Project Owner, 10 Oct 2026: submission, physical original, issuer verification and compliance are four separate facts
+		"electronic": security_verification.view(ctx),
 	}
 
 
 def physical(facts: dict[str, Any], published: dict[str, Any]) -> dict[str, Any] | None:
-	"""The physical original as this supplier's own bid knows it: recorded (with
-	the intake reference and time) or the amber delivery reminder; None until a
-	security form is entered."""
-	from kentender_procurement.bid_submission.services import tender_security
+	"""The physical original as this supplier's own bid knows it, in the Tender's own terms (Project Owner,
+	10 October 2026): "Original received" (with the receipt reference and time), "Original receipt not yet
+	recorded", or what the Tender says when it requires no original or does not say. Never the old "unmatched" wording: an
+	original's match to the bid is made after the opening and a bid that is complete never reads as incomplete.
+	None until a security form is entered."""
+	from kentender_procurement.bid_submission.services import tender_security as ts
 
 	if not facts.get("required") or not facts.get("security_type"):
 		return None  # nothing entered yet: the region says so
-	if facts["physical_receipt_status"] != tender_security.NOT_RECORDED:
-		return {"tone": "live", "title": "Physical original recorded as received", "text": "", "facts": [{"label": "Receipt", "value": facts["physical_receipt_reference"]}, {"label": "Received at", "value": facts["physical_received_at"]}]}
+	status = facts["physical_receipt_status"]
+	if status == ts.ORIGINAL_RECEIVED:
+		return {"tone": "live", "title": ts.ORIGINAL_RECEIVED, "text": ts.CHECKED_AFTER_OPENING, "facts": [{"label": "Receipt", "value": facts["physical_receipt_reference"]}, {"label": "Received at", "value": facts["physical_received_at"]}]}
+	if status == ts.ORIGINAL_NOT_REQUIRED:
+		return {"tone": "draft", "title": ts.ORIGINAL_NOT_REQUIRED, "text": "This Tender does not require you to deliver an original.", "facts": []}
+	if status == ts.ORIGINAL_NOT_STATED:
+		return {"tone": "draft", "title": ts.ORIGINAL_NOT_STATED, "text": "This Tender does not say whether an original must be delivered. Ask the procuring entity if you are unsure.", "facts": []}
 	deadline = labels.datetime_label(published.get("submission_deadline"))
 	entity = cstr(published.get("procuring_entity"))
 	return {
-		"tone": "warning", "title": "Physical original not yet recorded",
-		"text": f"Deliver the original {facts['security_type'].lower()} to the {entity} procurement office before {deadline}. You may submit electronically, but failure to deliver the original before closing may disqualify the bid.",
+		"tone": "warning", "title": ts.ORIGINAL_NOT_RECORDED,
+		"text": f"Deliver the original {facts['security_type'].lower()} to the {entity} procurement office before {deadline}. You may submit electronically, but failure to deliver the original before closing may disqualify the bid. {ts.CHECKED_AFTER_OPENING}",
 		"facts": [],
 	}
 

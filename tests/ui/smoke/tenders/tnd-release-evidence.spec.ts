@@ -54,6 +54,9 @@ test.describe("TPR-CHG-001 v0.12 — persona release pass", () => {
 		await page.locator('[data-testid="tnd-field-clarification_deadline"]').fill("2027-05-27T17:00");
 		await page.locator('[data-testid="tnd-field-submission_deadline"]').fill("2027-06-05T11:00");
 		await page.locator('[data-testid="tnd-field-tender_security_amount"]').fill("500000");
+		// 10 Oct 2026: the officer states how the security may be submitted and whether an original is delivered; neither has a default
+		await page.locator('[data-testid="tnd-field-tender_security_method"]').selectOption("Bidder uploads an electronic instrument");
+		await page.locator('[data-testid="tnd-field-tender_security_original"]').selectOption("Required");
 		await page.locator('[data-testid="tnd-continue"]').click();
 		await expectReady(page, "requirements");
 		await page.locator('[data-testid="tnd-field-inspection_location"]').selectOption({ index: 1 });

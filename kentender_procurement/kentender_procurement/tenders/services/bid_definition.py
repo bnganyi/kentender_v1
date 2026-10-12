@@ -55,7 +55,7 @@ _CODE = {
 }
 #: Addendum `affected_reference_key` → how the revised value enters the
 #: successor projection (the non-material rows of `addenda.affected_references`).
-_ADDENDUM_TARGETS = ("delivery_location", "tender_title", "inspection_location", "contract_contact_office", "pre_tender_meeting", "clarification_deadline")
+_ADDENDUM_TARGETS = ("delivery_location", "tender_title", "inspection_location", "contract_contact_office", "pre_tender_meeting", "clarification_deadline", "tender_security_method", "tender_security_original")
 
 
 # --------------------------------------------------------------------------
@@ -187,6 +187,18 @@ def _approval(tender, version) -> dict[str, Any] | None:
 	}
 
 
+def _security_statements(tender, state: dict[str, Any]) -> dict[str, str]:
+	"""The Tender's own statements for the projection: its state, else the auditable correction of a Tender published before it
+	stated them (never a default)."""
+	from kentender_procurement.tenders.services import security_statement
+
+	fix = security_statement.overlay(tender.name)
+	return {
+		"submission_method": cstr(state.get("tender_security_method") or fix.get("submission_method")).strip(),
+		"original_delivery": cstr(state.get("tender_security_original") or fix.get("original_delivery")).strip(),
+	}
+
+
 def projection(tender, version, *, publication_id: str, effective_addendum_ids=(), package_digest: str = "") -> dict[str, Any]:
 	"""The exact `TenderVersionProjection v1` for `version` (§4.5.4)."""
 	snapshot = snap.load(version)
@@ -209,7 +221,11 @@ def projection(tender, version, *, publication_id: str, effective_addendum_ids=(
 			"lotting_indicator": cstr(snapshot.get("lotting_indicator") or "Single lot"), "award_packages": _int(snapshot.get("award_packages") or 1),
 			"issue_date": iso_date(state.get("issue_date")), "clarification_deadline": iso_datetime(state.get("clarification_deadline")),
 			"submission_deadline": iso_datetime(state.get("submission_deadline")), "validity_days": _int(state.get("tender_validity_days")),
-			"tender_security": {"required": True, "amount": decimal_text(state.get("tender_security_amount")), "currency": "KES"},
+			"tender_security": {
+				"required": True, "amount": decimal_text(state.get("tender_security_amount")), "currency": "KES",
+				# stated by the officer (Project Owner, 10 Oct 2026); left out, never defaulted, when a package predates them
+				**{key: value for key, value in _security_statements(tender, state).items() if value},
+			},
 			"pre_tender_meeting": {"enabled": bool(state.get("pre_tender_meeting")), "details": serializer._meeting_details(state)},
 			"approval": _approval(tender, version),
 			"package_digest": cstr(package_digest or version.package_digest),
@@ -305,6 +321,10 @@ def apply_addenda(base: dict[str, Any], addenda: list[Any]) -> dict[str, Any]:
 			out["officer_decisions"]["contract"]["contact_office"] = value
 		elif key == "pre_tender_meeting":
 			out["tender"]["pre_tender_meeting"]["details"] = value
+		elif key == "tender_security_method":
+			out["tender"]["tender_security"]["submission_method"] = value
+		elif key == "tender_security_original":
+			out["tender"]["tender_security"]["original_delivery"] = value
 		elif key == "clarification_deadline":
 			revised = serializer.parse_datetime_text(value)
 			if revised is not None:

@@ -20,6 +20,7 @@ from typing import Any
 import frappe
 
 TRUST, TIME, CUSTODY = "kt_bds_trust_services", "kt_bds_time_services", "kt_bds_custody_services"
+ISSUER = "kt_bds_issuer_services"
 
 
 def _service(hook: str) -> Any | None:
@@ -40,6 +41,14 @@ def trusted_time() -> Any | None:
 
 def custody() -> Any | None:
 	return _service(CUSTODY)
+
+
+def issuer() -> Any | None:
+	"""The service that asks a tender-security issuer to confirm an instrument. None
+	where none is configured (every production site on this bench): a verification
+	then stays Pending, never Confirmed. Only the Test Issuer Service answers, and
+	only on a test environment."""
+	return _service(ISSUER)
 
 
 def _healthy(service) -> bool:

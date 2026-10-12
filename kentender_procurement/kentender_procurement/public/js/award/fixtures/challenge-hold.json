@@ -165,7 +165,6 @@
        "cycle": 1,
        "id": "AWD-MOH-2027-033-OP-01",
        "label": "Professional opinion 1",
-       "proof_label": "Test attestation — not an electronic signature",
        "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
        "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
        "signing_outcome": "Accepted/Verified",
@@ -225,7 +224,6 @@
       "cycle": 1,
       "id": "AWD-MOH-2027-033-OP-01",
       "label": "Professional opinion 1",
-      "proof_label": "Test attestation — not an electronic signature",
       "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
       "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
       "signing_outcome": "Accepted/Verified",
@@ -239,7 +237,6 @@
      "cycle": 1,
      "id": "AWD-MOH-2027-033-OP-01",
      "label": "Professional opinion 1",
-     "proof_label": "Test attestation — not an electronic signature",
      "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
      "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
      "signing_outcome": "Accepted/Verified",
@@ -330,7 +327,6 @@
    "stage": "Waiting to proceed",
    "tender_reference": "TND-MOH-2027-033",
    "tender_title": "Supply and delivery of business laptops",
-   "test_environment": "Test environment — no live award notices are sent.",
    "validity_rule": "Submission deadline date plus the published validity days",
    "viewer": {
     "ao": true,
@@ -341,8 +337,7 @@
   },
   "workspace": {
    "ok": true,
-   "tasks": [],
-   "test_environment": "Test environment — no live award notices are sent."
+   "tasks": []
   }
  },
  "daniel": {
@@ -404,8 +399,7 @@
    "statement": "Your tender was successful.",
    "successful_supplier": "",
    "tender_reference": "TND-MOH-2027-033",
-   "tender_title": "Supply and delivery of business laptops",
-   "test_environment": "Test environment — no live award notices are sent."
+   "tender_title": "Supply and delivery of business laptops"
   }
  },
  "hop": {
@@ -603,7 +597,6 @@
        "cycle": 1,
        "id": "AWD-MOH-2027-033-OP-01",
        "label": "Professional opinion 1",
-       "proof_label": "Test attestation — not an electronic signature",
        "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
        "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
        "signing_outcome": "Accepted/Verified",
@@ -663,7 +656,6 @@
       "cycle": 1,
       "id": "AWD-MOH-2027-033-OP-01",
       "label": "Professional opinion 1",
-      "proof_label": "Test attestation — not an electronic signature",
       "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
       "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
       "signing_outcome": "Accepted/Verified",
@@ -677,7 +669,6 @@
      "cycle": 1,
      "id": "AWD-MOH-2027-033-OP-01",
      "label": "Professional opinion 1",
-     "proof_label": "Test attestation — not an electronic signature",
      "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
      "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
      "signing_outcome": "Accepted/Verified",
@@ -768,7 +759,6 @@
    "stage": "Waiting to proceed",
    "tender_reference": "TND-MOH-2027-033",
    "tender_title": "Supply and delivery of business laptops",
-   "test_environment": "Test environment — no live award notices are sent.",
    "validity_rule": "Submission deadline date plus the published validity days",
    "viewer": {
     "ao": false,
@@ -787,8 +777,7 @@
      "tender_reference": "TND-MOH-2027-033",
      "tender_title": "Supply and delivery of business laptops"
     }
-   ],
-   "test_environment": "Test environment — no live award notices are sent."
+   ]
   }
  },
  "info": {
@@ -845,8 +834,7 @@
    "statement": "Your tender was successful.",
    "successful_supplier": "",
    "tender_reference": "TND-MOH-2027-033",
-   "tender_title": "Supply and delivery of business laptops",
-   "test_environment": "Test environment — no live award notices are sent."
+   "tender_title": "Supply and delivery of business laptops"
   }
  },
  "naomi": {
@@ -1015,7 +1003,6 @@
        "cycle": 1,
        "id": "AWD-MOH-2027-033-OP-01",
        "label": "Professional opinion 1",
-       "proof_label": "Test attestation — not an electronic signature",
        "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
        "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
        "signing_outcome": "Accepted/Verified",
@@ -1075,7 +1062,6 @@
       "cycle": 1,
       "id": "AWD-MOH-2027-033-OP-01",
       "label": "Professional opinion 1",
-      "proof_label": "Test attestation — not an electronic signature",
       "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
       "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
       "signing_outcome": "Accepted/Verified",
@@ -1089,7 +1075,6 @@
      "cycle": 1,
      "id": "AWD-MOH-2027-033-OP-01",
      "label": "Professional opinion 1",
-     "proof_label": "Test attestation — not an electronic signature",
      "reason": "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.",
      "signed": "Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT",
      "signing_outcome": "Accepted/Verified",
@@ -1180,7 +1165,6 @@
    "stage": "Waiting to proceed",
    "tender_reference": "TND-MOH-2027-033",
    "tender_title": "Supply and delivery of business laptops",
-   "test_environment": "Test environment — no live award notices are sent.",
    "validity_rule": "Submission deadline date plus the published validity days",
    "viewer": {
     "ao": false,
@@ -1191,8 +1175,7 @@
   },
   "workspace": {
    "ok": true,
-   "tasks": [],
-   "test_environment": "Test environment — no live award notices are sent."
+   "tasks": []
   }
  }
 }

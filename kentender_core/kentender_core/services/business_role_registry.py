@@ -6,10 +6,11 @@ taken from the owning module's approved document — this file records the
 role's *scope classification*, never invents a role, a business action or an
 approval stage.
 
-Exactly two scope types exist (§4.4): **Site-wide** and **Organisation
-Unit**. One site is one Procuring Entity, so the former `Global` and
-`Procuring Entity` classifications collapse into Site-wide; no other value is
-representable.
+Three scope types exist: **Site-wide** and **Organisation Unit** (§4.4), and
+**Tender**, added by the Project Owner's decision of 10 October 2026 for the
+tender-security intake duty alone. One site is one Procuring Entity, so the
+former `Global` and `Procuring Entity` classifications collapse into
+Site-wide; no other value is representable.
 
 The registry deliberately holds no capability strings and no command list:
 "The registry does not enumerate commands. Each module names the business
@@ -48,7 +49,11 @@ from kentender_core.services.responsibility_errors import fail
 # §4.4 scope types. The literal strings are part of the service contract.
 SCOPE_SITE = "Site-wide"
 SCOPE_OU = "Organisation Unit"
-SCOPE_TYPES: tuple[str, ...] = (SCOPE_SITE, SCOPE_OU)
+# A Tender-scoped assignment names the one published Tender (its reference) it
+# applies to, in `scope_reference`. Owner decision 10 Oct 2026 (tender-security
+# intake duty).
+SCOPE_TENDER = "Tender"
+SCOPE_TYPES: tuple[str, ...] = (SCOPE_SITE, SCOPE_OU, SCOPE_TENDER)
 
 # §4.4 `allowed_assignment_admin`. System Manager is the live administrative
 # role; Administrator holds it implicitly through Frappe.
@@ -79,6 +84,17 @@ class BusinessRole:
 		"""§4.5 — required for OU-scoped roles, prohibited for Site-wide."""
 		return self.scope_type == SCOPE_OU
 
+	@property
+	def requires_scope_reference(self) -> bool:
+		"""Required for Tender-scoped roles, prohibited for every other scope."""
+		return self.scope_type == SCOPE_TENDER
+
+	@property
+	def system_setup_assignable(self) -> bool:
+		"""False where the duty is assigned by its own office through its own
+		surface, so System setup does not offer it (it cannot name a Tender)."""
+		return self.allowed_assignment_admin == ASSIGNMENT_ADMIN and not self.requires_scope_reference
+
 
 def _entry(
 	business_role: str,
@@ -89,6 +105,7 @@ def _entry(
 	sod_tags: tuple[str, ...] = (),
 	frappe_roles: tuple[str, ...] | None = None,
 	technical_holder: bool = False,
+	allowed_assignment_admin: tuple[str, ...] = ASSIGNMENT_ADMIN,
 ) -> BusinessRole:
 	# §5.7 — the Frappe Role projection is the minimal framework access the
 	# responsibility needs for Desk/DocType reach. Every registered
@@ -102,6 +119,7 @@ def _entry(
 		sod_tags=sod_tags,
 		technical_holder=technical_holder,
 		owning_document=owning_document,
+		allowed_assignment_admin=allowed_assignment_admin,
 	)
 
 
@@ -194,9 +212,26 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 		# TPR-CHG-001 v0.8 §6 (2026-09-19): the same office confirms channel
 		# publication with evidence and attestation, and issues addenda —
 		# two more sod tags on the same entry, no new registry row.
-		# BDS-CHG-001 v0.8 owner decisions OD-G/OD-H (2026-09-26): the same
-		# office records physical tender-security originals, blind to bids.
-		sod_tags=("requisition_authorisation", "tender_approval", "plan_preparation_signature", "channel_confirmation", "addendum_issue", "tender_security_receipt"),
+		# BDS-CHG-001 v0.8 owner decisions OD-G/OD-H (2026-09-26) gave this
+		# office the `tender_security_receipt` tag. Project Owner, 10 October
+		# 2026: "Remove tender-security intake permission from the default HOPF
+		# permission bundle." The office now only assigns the duty (see the
+		# Tender Security Intake Officer entry below).
+		sod_tags=("requisition_authorisation", "tender_approval", "plan_preparation_signature", "channel_confirmation", "addendum_issue"),
+	),
+	# --- Tender-security intake (Project Owner, 10 October 2026) -----------
+	# The explicit, Tender-scoped duty of recording a physical original or an
+	# issuer confirmation, blind to bids. Only the Head of Procurement Function
+	# assigns it (and revokes it), to an existing eligible officer, with the
+	# effective period and the assigner recorded. Neither that office, nor an
+	# opening or evaluation appointment, nor Administrator/System Manager
+	# status grants it. The conflict rules are in `security_duty`.
+	_entry(
+		"Tender Security Intake Officer",
+		SCOPE_TENDER,
+		"BDS-CHG-001 §5.9, §6 (proposed successor); AUTH-ADR-001 §4.4 (proposed successor)",
+		sod_tags=("tender_security_receipt",),
+		allowed_assignment_admin=("Head of Procurement Function",),
 	),
 	# --- Tenders (TPR-CHG-001 v0.8 §6) ------------------------------------
 	# Site-wide; starts, prepares and submits Tender Versions, drafts addenda

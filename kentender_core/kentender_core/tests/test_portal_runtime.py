@@ -114,6 +114,9 @@ class TestPortalRuntime(IntegrationTestCase):
 		# every surface's prefix, so in-page navigation keeps the longest-prefix rule
 		self.assertIn('{"prefix": "/account/receipts", "key": "receipts"}', html)
 		self.assertTrue("frappe.csrf_token" in html or "<!-- csrf_token -->" in html)  # Frappe fills it when the session has one
+		# ...and it is in place before any bundle runs: a screen that posts as it mounts needs it on the first call
+		marker = re.search(r"frappe\.csrf_token|<!-- csrf_token -->", html)
+		self.assertLess(marker.start(), html.index("kt_portal_runtime"))
 		# no Frappe website stylesheet, theme, navbar or footer reaches the portal
 		stylesheets = re.findall(r'<link[^>]+rel="stylesheet"[^>]*>', html)
 		self.assertEqual([s for s in stylesheets if "kentender_core/css/" not in s], [])

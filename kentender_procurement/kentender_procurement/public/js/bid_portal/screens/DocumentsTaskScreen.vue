@@ -7,7 +7,7 @@
 // continue saves an acknowledgement through `SaveBidTask`, then opens the
 // next task; a refusal is named in place and the tick is kept.
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
-import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
+import BidGuidance from "../components/BidGuidance.vue";
 import CommonState from "../components/CommonState.vue";
 import NotifySignatory from "../components/NotifySignatory.vue";
 import TaskStepper from "../components/TaskStepper.vue";
@@ -17,6 +17,7 @@ import QuestionDialog from "../components/QuestionDialog.vue";
 import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
 import { arrive, destinationOf } from "../composables/saveDestination.js";
+import { sendCommand } from "../composables/bidCommands.js";
 
 const READ = "kentender_procurement.bid_submission.api.get_bid_task";
 const SAVE = "kentender_procurement.bid_submission.api.save_bid_task";
@@ -70,7 +71,7 @@ async function load() {
 	}
 }
 function save(values) {
-	return portal.call(SAVE, { bid_reference: data.value.bid.reference, task: "documents", values: JSON.stringify(values), expected_record_version: data.value.bid.record_version, idempotency_key: `bds-documents-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}` }, { type: "POST" });
+	return sendCommand(portal, data.value.bid.reference, data.value.bid.record_version, (version) => portal.call(SAVE, { bid_reference: data.value.bid.reference, task: "documents", values: JSON.stringify(values), expected_record_version: version, idempotency_key: `bds-documents-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}` }, { type: "POST" }));
 }
 // A Draft still bound to an earlier definition moves first (its next save
 // does that and asks for review); the acknowledgement then has its field
@@ -135,7 +136,7 @@ onMounted(() => {
 			</div>
 		</div>
 
-		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
+		<BidGuidance :journey="data.journey" :answer="data.next_step" :reference="reference" :bid-reference="data.bid && data.bid.reference || ''" :organisation="route.query.organisation || ''" :support-href="data.support_href || ''" :tracker="!data.step" @fix="onFix" @reload="load" />
 
 		<NotifySignatory v-if="data.handover && data.bid" :handover="data.handover" :bid="data.bid" :organisation="route.query.organisation || ''" @sent="load" />
 

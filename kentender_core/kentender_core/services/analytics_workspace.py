@@ -483,13 +483,16 @@ def _waiting(ctx: _Ctx, areas: list[dict[str, Any]]) -> dict[str, Any]:
 		segments = [{"key": key, "label": label, "count": sum(1 for m in matters if m["band"] == key), "tone": f"seq-{n + 1}"}
 			for n, (key, label, _lo, _hi) in enumerate(am.BANDS) if any(m["band"] == key for m in matters)]
 		rows.append({"key": area["key"], "label": area["label"], "icon": area["icon"], "segments": segments})
-	none_text = ""
-	if quiet:
+	none_text, empty_text = "", ""
+	if quiet and not rows and not unavailable:
+		# Every area is quiet: say so once, plainly, instead of listing the areas in a sentence.
+		empty_text = "No outstanding matters recorded in any area."
+	elif quiet:
 		sentence = am.join_and([q[0].upper() + q[1:] if i == 0 else q[0].lower() + q[1:] for i, q in enumerate(quiet)])
 		none_text = f"{sentence}: no outstanding matters recorded."
 	return {"status": "incomplete" if unavailable else "ok", "incomplete_text": INCOMPLETE if unavailable else "",
 		"legend": [{"key": k, "label": label, "tone": f"seq-{n + 1}"} for n, (k, label, _lo, _hi) in enumerate(am.BANDS)],
-		"rows": rows, "none_text": none_text, "caption": "Days since each matter reached its current holder."}
+		"rows": rows, "none_text": none_text, "empty_text": empty_text, "caption": "Days since each matter reached its current holder."}
 
 
 def _coverage_region(ctx: _Ctx) -> dict[str, Any] | None:

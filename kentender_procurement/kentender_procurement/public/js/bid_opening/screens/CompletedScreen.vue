@@ -13,7 +13,7 @@
 		<template v-if="mode === 'technical'">
 			<div class="kt-region" data-testid="bop-technical"><h2>Technical status</h2>
 				<p style="margin:0 0 16px;font-size:14px;max-width:75ch;text-wrap:pretty">{{ technical.message }}</p>
-				<div class="kt-meta-row"><div><span class="kt-label">{{ technical.completed_label ? "Opening completed" : "State" }}</span><span class="kt-meta-value">{{ technical.completed_label || technical.state }}</span></div><div><span class="kt-label">Technical incidents</span><span class="kt-meta-value">{{ technical.incidents ? technical.incidents : "None recorded" }}</span></div></div>
+				<div class="kt-meta-row"><div><span class="kt-label">{{ technical.completed_label ? "Opening completed" : "State" }}</span><span class="kt-meta-value">{{ technical.completed_label || technical.state }}</span></div><div><span class="kt-label">Technical incidents</span><span class="kt-meta-value">{{ technical.incidents === null || technical.incidents === undefined ? "Held by Opening access support" : technical.incidents ? technical.incidents : "None recorded" }}</span></div></div>
 			</div>
 		</template>
 

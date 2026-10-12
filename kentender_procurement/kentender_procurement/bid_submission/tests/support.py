@@ -210,6 +210,27 @@ def simulation_on(case) -> None:
 	case.addCleanup(frappe.conf.__setitem__, "kt_bds_simulation_environment", previous)
 
 
+def assign_intake_officer(case, officer: str | None = None) -> dict[str, Any]:
+	"""The Head of Procurement Function assigns the tender-security intake duty for the
+	case's Tender (Project Owner, 10 October 2026); the officer defaults to the
+	tests' Procurement Officer, who sits on no opening or evaluation."""
+	from kentender_procurement.bid_submission.services import security_duty
+
+	return security_duty.assign_intake_officer(tender_reference=case.reference, officer=officer or tender_fx.OFFICER, user=tender_fx.HOPF)
+
+
+def opening_crossed(case, value: bool = True) -> None:
+	"""Treat the Tender's opening as started (or not) for this test only: the
+	boundary after which an intake may be matched to a bid."""
+	from unittest import mock
+
+	from kentender_procurement.bid_submission.services import security_matching
+
+	patcher = mock.patch.object(security_matching, "opening_crossed", return_value=value)
+	patcher.start()
+	case.addCleanup(patcher.stop)
+
+
 def fill_everything(bid: str, *, user: str = DAVID) -> None:
 	filling.fill_everything(bid, user=user)
 

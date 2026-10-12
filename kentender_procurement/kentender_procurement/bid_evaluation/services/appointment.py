@@ -38,6 +38,7 @@ REASONS = {
 	"already_member": "{name} is already on this committee.",
 	"accounting_officer": "{name} is the Accounting Officer, who decides the award and cannot sit on its evaluation.",
 	"head_of_procurement": "{name} is the Head of Procurement, who issues the professional opinion and cannot evaluate this tender; the Head may be its secretary.",
+	"security_intake": "{name} holds or has held the tender-security intake duty for this tender and cannot be appointed to the evaluation committee.",
 }
 
 
@@ -59,6 +60,11 @@ def _ineligibility(doc, user: str) -> str | None:
 		return separated
 	if frappe.db.exists(roster.DECLARATION, {"evaluation_case": doc.name, "member_user": user, "status": "Current", "choice": "Declare a conflict"}):
 		return "declared_conflict"
+	from kentender_procurement.bid_submission.services import security_duty
+
+	# Project Owner, 10 Oct 2026: tender-security intake and evaluation duties exclude each other on the same Tender
+	if security_duty.committee_blocker(doc.tender, user, "the evaluation committee", "Evaluation committee"):
+		return "security_intake"
 	return None
 
 
@@ -110,7 +116,7 @@ def appoint_committee(*, tender: str, members: list[dict[str, Any]], expected_ve
 		if not checks:
 			_size(rows, checks)
 		# the Head of Procurement Function is the secretary by office (EVL-CHG-001 v0.8 §3): an unclear holder refuses the whole appointment
-		head = secretary.office_holder(checks)
+		head = secretary.office_holder(checks, doc.tender)
 		checks.raise_if_any()
 		appointment = frappe.get_doc({
 			"doctype": APPOINTMENT, "appointment_id": f"{doc.name}-APT-01", "evaluation_case": doc.name, "version_number": 1,

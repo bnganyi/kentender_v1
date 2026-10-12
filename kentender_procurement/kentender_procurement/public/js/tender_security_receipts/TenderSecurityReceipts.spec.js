@@ -26,7 +26,7 @@ const g = { global: { mocks: { __: (s) => s } } };
 const BID_WORDS = /\b(BID-|ARR-|bid status|Matched|Candidate|supplier|Draft)\b/i;
 const ROW = {
 	status: "Current", corrected_by: "", corrects: "", amount_value: "500000.00", currency: "KES", received_at_value: "2027-05-19T09:00",
-	intake_reference: "TSI-4F2A9C01B7", tender_reference: "TND-MOH-2027-002", instrument_type: "Demand Bank Guarantee", issuer: "KCB Bank Kenya",
+	intake_kind: "Physical original", issuer_confirmed_at: "", issuer_confirmed_at_value: "", intake_reference: "TSI-4F2A9C01B7", tender_reference: "TND-MOH-2027-002", instrument_type: "Demand Bank Guarantee", issuer: "KCB Bank Kenya",
 	instrument_reference: "KCB/TG/2027/8841", amount: "KES 500,000.00", received_at: "19 May 2027, 09:00 EAT", deadline_class: "Before deadline", recorded_at: "19 May 2027, 09:05 EAT", notes: "",
 };
 const REQUIREMENT = {
@@ -41,21 +41,21 @@ beforeEach(() => {
 
 describe("TenderSecurityReceipts", () => {
 	it("lists the recorder's own intakes with no bid fact", async () => {
-		api.listIntakes.mockResolvedValue({ outcome: "OK", rows: [ROW], empty_text: "You have not recorded any tender-security originals yet." });
+		api.listIntakes.mockResolvedValue({ outcome: "OK", rows: [ROW], empty_text: "No tender-security receipts have been recorded for your Tenders yet." });
 		const w = mount(TenderSecurityReceipts, g);
 		await flushPromises();
 		expect(w.find("h1").text()).toBe("Tender-security receipts");
 		expect(w.findAll('[data-testid="tsr-row"]')).toHaveLength(1);
-		expect(w.find("thead").text()).toBe("Intake referenceTenderInstrumentAmountReceivedRecordedActions");
+		expect(w.find("thead").text()).toBe("Intake referenceTenderKindInstrumentAmountReceivedRecordedActions");
 		expect(w.text()).toContain("Before deadline");
 		expect(w.text()).not.toMatch(BID_WORDS);
 	});
 
 	it("shows the empty state, then the filtered empty state with Clear filters", async () => {
-		api.listIntakes.mockResolvedValue({ outcome: "OK", rows: [], empty_text: "You have not recorded any tender-security originals yet." });
+		api.listIntakes.mockResolvedValue({ outcome: "OK", rows: [], empty_text: "No tender-security receipts have been recorded for your Tenders yet." });
 		const w = mount(TenderSecurityReceipts, g);
 		await flushPromises();
-		expect(w.find('[data-testid="tsr-empty"]').text()).toBe("You have not recorded any tender-security originals yet.");
+		expect(w.find('[data-testid="tsr-empty"]').text()).toBe("No tender-security receipts have been recorded for your Tenders yet.");
 		expect(w.find('[data-testid="tsr-clear-filters"]').exists()).toBe(false);
 		await w.find('[data-testid="tsr-filter-tender"]').setValue("TND-NONE");
 		await w.find('[data-testid="tsr-filter-tender"]').trigger("change");
@@ -70,10 +70,10 @@ describe("TenderSecurityReceipts", () => {
 	});
 
 	it("shows Forbidden as a state with no record action", async () => {
-		api.listIntakes.mockResolvedValue({ outcome: "FORBIDDEN", heading: "You do not have access to tender-security receipts", text: "Only the Head of Procurement Function records physical tender-security originals." });
+		api.listIntakes.mockResolvedValue({ outcome: "FORBIDDEN", heading: "You do not have access to tender-security receipts", text: "You are not assigned to record tender-security receipts for this Tender." });
 		const w = mount(TenderSecurityReceipts, g);
 		await flushPromises();
-		expect(w.find('[data-testid="tsr-forbidden"]').text()).toContain("Only the Head of Procurement Function records physical tender-security originals.");
+		expect(w.find('[data-testid="tsr-forbidden"]').text()).toContain("You are not assigned to record tender-security receipts for this Tender.");
 		expect(w.find('[data-testid="tsr-record"]').exists()).toBe(false);
 	});
 
@@ -152,7 +152,7 @@ describe("IntakeDialog", () => {
 		const [first, second] = w.emitted("submit").map((e) => e[0]);
 		expect(first.values).toEqual({
 			tender_reference: "TND-MOH-2027-002", instrument_type: "Demand Bank Guarantee", issuer: "KCB Bank Kenya", instrument_reference: "KCB/TG/2027/8841",
-			amount: "500000.00", currency: "KES", received_at: "2027-05-19 09:00:00", notes: "", confirmed: true,
+			amount: "500000.00", currency: "KES", received_at: "2027-05-19 09:00:00", notes: "", confirmed: true, intake_kind: "Physical original", issuer_confirmed_at: "",
 		});
 		expect(second.key).toBe(first.key);
 	});
