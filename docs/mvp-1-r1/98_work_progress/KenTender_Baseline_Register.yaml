@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "register_id": "KT-DOC-CTRL-001",
   "title": "KenTender Requirements and Delivery Baseline Register",
-  "as_of": "2026-10-11",
+  "as_of": "2026-10-12",
   "purpose": "Canonical machine-readable record of the current requirements baseline, cross-module contracts, decisions, implementation handoffs, future work and unresolved control findings.",
   "governance": {
     "source_of_truth": "This file is the canonical source for the companion Documentation Control Register workbook.",
@@ -66,34 +66,35 @@
     {
       "document_id": "STR-CHG-001",
       "title": "Clean Strategy Alignment",
-      "version": "1.9",
+      "version": "1.10",
       "category": "Module requirements",
       "module": "Strategy Alignment",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-03",
-      "supersedes": "v1.7 and earlier",
+      "approval_date": "2026-10-12",
+      "supersedes": "v1.9 approved 3 October 2026; v1.7 and earlier",
       "implementation_status": "Not evidenced",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
-      "library_file_id": "libfile_f5502a30807c8191b8d3f2910b96a9dc",
-      "filename": "KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_9.md",
+      "library_file_id": "",
+      "filename": "KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_10.md",
       "scope": "Strategy objectives and accepted alignment evidence consumed by Planning.",
       "dependencies": "KT-STD-001; AUTH-ADR-001",
-      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
-      "source_sha256": "1ea70ef6ab97675c3b5dc75990e36276be9bb9ab8f3848173fe9665cefa72ce6",
+      "action": "Approved 12 October 2026 (v1.10). Records the every-internal-user read rule and the behaviour added by the 7 October 2026 audit remediation; lists 17 build-versus-document differences (section 18.4) that stay open for owner decisions. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "source_sha256": "3bdaf8ca7f6bc11445e780fd8d7fc7946278b6380a4b977bb9e5ef81a347ea88",
       "prior_approved_baseline": {
-        "version": "1.8",
-        "approval_date": "2026-09-13",
-        "filename": "KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_8.md",
+        "version": "1.9",
+        "approval_date": "2026-10-03",
+        "filename": "KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_9.md",
         "requirement_status": "Approved requirement"
       },
-      "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
+      "approval_record": "Project Owner: Approve it and commit; 12 October 2026",
       "approval_history": {
-        "proposed_version": "1.9",
-        "proposed_filename": "KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_9.md",
-        "proposal_status": "Project Owner review",
-        "proposed_base_version": "1.8"
+        "prior_proposal": {
+          "proposed_version": "1.9",
+          "proposal_status": "Approved 3 October 2026",
+          "proposed_base_version": "1.8"
+        }
       }
     },
     {
@@ -1323,7 +1324,7 @@
       "status": "Closed in requirements",
       "implementation_status": "Not evidenced",
       "test_status": "Not evidenced",
-      "owner_doc": "STR-CHG-001 v1.8 / PLN-CHG-001 v1.27",
+      "owner_doc": "STR-CHG-001 v1.10 (v1.8 read: STR-CHG-001 v1.8) / PLN-CHG-001 v1.27",
       "failure_rule": "Planning must not invent or silently rewrite strategy evidence."
     },
     {

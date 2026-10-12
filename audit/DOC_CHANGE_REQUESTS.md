@@ -234,6 +234,8 @@ Wave 7 items on these documents (no code exists for them; included so the later 
 6. **§9 error vocabulary (AUD-STR-016, -017).** `STRATEGY_DOWNSTREAM_FORBIDDEN` (line 364) is now a PermissionError title; hierarchy and target validation should raise typed codes; the §9 vocabulary contradicts the closed vocabulary of AUTH-ADR-001 §10 (lines 424 to 439) that Strategy is bound to. Decide which wins.
 7. **Seed title (AUD-STR-019) and workspace label (AUD-STR-021).** Seed plan title lacks "(Demo)"; the workspace shortcut is still labelled "Strategy Portfolio".
 
+**Status (12 October 2026):** actioned as STR-CHG-001 v1_10 (Proposed, `docs/mvp-1-r1/02_strategy/KenTender_STR-CHG-001_Clean_Strategy_Alignment_v1_10.md`). Items 2, 3, 4 and 5 are written in as rules (STR-BR-021 to STR-BR-024, §8, §8.2, §9). Items 1, 6 and 7 were not decided: the document lists them as open differences D1, D2, D12, D15 and D16 (§18.4). Awaiting the Project Owner's approval of v1.10.
+
 ---
 
 ## DCR-11 — NDS-CHG-001 Clean Departmental Needs v1_16 → v1_17
