@@ -16,7 +16,8 @@
 # back for about 10 seconds, so expect up to INTERVAL + 10 seconds.
 set -euo pipefail
 
-BENCH_ROOT="${BENCH_ROOT:-/home/midasuser/frappe-bench}"
+# The bench is three levels above this script (<bench>/apps/kentender_v1/scripts).
+BENCH_ROOT="${BENCH_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 SITE="${SITE:-kentender.midas.com}"
 INTERVAL="${INTERVAL:-8}"
 PID_FILE="$BENCH_ROOT/logs/dev-mail-flush.pid"

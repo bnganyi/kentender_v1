@@ -14,7 +14,8 @@
 # Host header says, so the test site is simply http://127.0.0.1:8001.
 set -euo pipefail
 
-BENCH_ROOT="${BENCH_ROOT:-/home/midasuser/frappe-bench}"
+# The bench is three levels above this script (<bench>/apps/kentender_v1/scripts).
+BENCH_ROOT="${BENCH_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 DEV_SITE="${DEV_SITE:-kentender.midas.com}"
 TEST_SITE="${TEST_SITE:-kentender-test.local}"
 TEST_PORT="${TEST_PORT:-8001}"
