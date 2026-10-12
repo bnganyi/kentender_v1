@@ -133,9 +133,9 @@
 	max-width: 220px;
 }
 .kt-industry.kt-portal .kt-portal-header .kt-portal-nav a[aria-current="page"] {
-	color: var(--kt-color-text);
+	color: var(--kt-color-accent);
 	font-weight: 600;
-	border-bottom-color: var(--kt-color-accent);
+	/* border-bottom-color: var(--kt-color-accent); */
 }
 
 .kt-industry.kt-portal .kt-portal-breadcrumbs {

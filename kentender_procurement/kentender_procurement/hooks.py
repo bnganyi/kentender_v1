@@ -3,7 +3,8 @@ from pathlib import Path
 
 def _asset_version(rel_path: str) -> int:
 	try:
-		return int((Path(__file__).resolve().parent / rel_path).stat().st_mtime)
+		asset = Path(__file__).resolve().parent / rel_path
+		return int(max(asset.stat().st_mtime, Path(__file__).stat().st_mtime))
 	except OSError:
 		return 1
 

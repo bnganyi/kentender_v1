@@ -263,12 +263,14 @@ th {
   -webkit-box-sizing: border-box;
      -moz-box-sizing: border-box;
           box-sizing: border-box;
+          border-radius: 12px;
 }
 *:before,
 *:after {
   -webkit-box-sizing: border-box;
      -moz-box-sizing: border-box;
           box-sizing: border-box;
+          border-radius: 12px;
 }
 html {
   font-size: 10px;

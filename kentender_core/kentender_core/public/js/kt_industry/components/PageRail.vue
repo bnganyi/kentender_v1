@@ -14,7 +14,10 @@ const props = defineProps({
 // and never chosen; the global working-entity preference and its picker are retired.
 
 function initials(name) {
-	const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+	const parts = String(name || "")
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean);
 	if (!parts.length) return "U";
 	if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
 	return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
@@ -49,7 +52,8 @@ function sessionAvatarUrl() {
 			const info = frappe.user_info(user);
 			if (info && info.image) return info.image;
 		}
-		if (frappe.boot && frappe.boot.user && frappe.boot.user.image) return frappe.boot.user.image;
+		if (frappe.boot && frappe.boot.user && frappe.boot.user.image)
+			return frappe.boot.user.image;
 	} catch (e) {
 		/* ignore */
 	}
@@ -76,23 +80,72 @@ function goRoute(route) {
 function openProfile() {
 	frappe.set_route("Form", "User", frappe.session.user);
 }
+
+function logout() {
+	frappe.app.logout();
+}
 </script>
 
 <template>
 	<header class="kt-rail">
 		<nav class="kt-rail-crumbs" aria-label="Breadcrumb">
 			<template v-for="(item, i) in trail" :key="i">
-				<a v-if="item.route" href="#" class="kt-rail-crumb-link" @click.prevent="goRoute(item.route)">{{ item.label }}</a>
-				<span v-else class="kt-rail-crumb-current" aria-current="page">{{ item.label }}</span>
+				<a
+					v-if="item.route"
+					href="#"
+					class="kt-rail-crumb-link"
+					@click.prevent="goRoute(item.route)"
+					>{{ item.label }}</a
+				>
+				<span v-else class="kt-rail-crumb-current" aria-current="page">{{
+					item.label
+				}}</span>
 				<span v-if="i < trail.length - 1" class="kt-rail-sep">/</span>
 			</template>
 		</nav>
 		<div class="kt-rail-actions">
-			<button type="button" class="kt-rail-btn" :aria-label="__('Notifications')" @click="frappe.set_route('List', 'Notification Log')">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg>
+			<button
+				type="button"
+				class="kt-rail-btn"
+				:aria-label="__('Notifications')"
+				@click="frappe.set_route('List', 'Notification Log')"
+			>
+				<svg
+					width="20"
+					height="20"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path d="M10.268 21a2 2 0 0 0 3.464 0"></path>
+					<path
+						d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"
+					></path>
+				</svg>
 			</button>
-			<button type="button" class="kt-rail-btn" :aria-label="__('Help')" @click="frappe.set_route('List', 'Help Article')">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>
+			<button
+				type="button"
+				class="kt-rail-btn"
+				:aria-label="__('Help')"
+				@click="frappe.set_route('List', 'Help Article')"
+			>
+				<svg
+					width="20"
+					height="20"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<circle cx="12" cy="12" r="10"></circle>
+					<path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+					<path d="M12 17h.01"></path>
+				</svg>
 			</button>
 		</div>
 		<div class="kt-rail-div"></div>
@@ -105,7 +158,43 @@ function openProfile() {
 				<img v-if="avatarUrl" class="kt-rail-avatar-photo" :src="avatarUrl" alt="" />
 				<span v-else class="kt-rail-avatar">{{ userInitials }}</span>
 			</span>
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="kt-rail-chevron"><path d="m6 9 6 6 6-6"></path></svg>
+			<svg
+				width="16"
+				height="16"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.5"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				class="kt-rail-chevron"
+			>
+				<path d="m6 9 6 6 6-6"></path>
+			</svg>
+		</button>
+		<button
+			type="button"
+			class="kt-rail-logout"
+			:aria-label="__('Logout')"
+			:title="__('Logout')"
+			@click="logout"
+		>
+			<span>{{ __("Logout") }}</span>
+			<svg
+				width="18"
+				height="18"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.7"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<path d="M10 17l5-5-5-5"></path>
+				<path d="M15 12H3"></path>
+				<path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"></path>
+			</svg>
 		</button>
 	</header>
 </template>
@@ -230,6 +319,30 @@ function openProfile() {
 }
 .kt-rail-user:hover {
 	background: var(--kt-color-accent-100);
+}
+.kt-rail-logout {
+	width: auto;
+	height: 36px;
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	border: 0;
+	border-radius: var(--kt-radius-md);
+	background: none;
+	color: color-mix(in srgb, var(--kt-color-text) 70%, transparent);
+	cursor: pointer;
+	padding: 0 8px;
+	font: inherit;
+	font-size: 13px;
+	white-space: nowrap;
+}
+.kt-rail-logout:hover,
+.kt-rail-logout:focus-visible {
+	background: var(--kt-color-accent-100);
+	color: var(--kt-color-accent-800);
+	outline: none;
 }
 .kt-rail-user-text {
 	display: flex;
