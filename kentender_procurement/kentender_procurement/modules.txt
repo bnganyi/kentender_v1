@@ -1,6 +1,5 @@
 Kentender Procurement
 Procurement Planning
-Tender Configurations
 Departmental Needs
 Procurement Requisitions
 Tenders

@@ -1368,7 +1368,7 @@
 
 /* A checkbox choice inside a field: the field's own `label` rule (block, 12px, margin) outranks the checkbox kit's, which
    left the box an inline span with no size. Restore the kit's layout for the labels that are checkboxes. */
-.kt-industry.kt-portal .kt-field > label.kt-checkbox {
+.kt-industry.kt-portal .field > label.kt-checkbox {
 	display: inline-flex;
 	align-items: flex-start;
 	gap: 8px;
@@ -1442,7 +1442,7 @@
 .kt-industry.kt-portal .bds-terms-intro {
 	margin: 0 0 var(--kt-space-3);
 }
-.kt-industry.kt-portal .bds-terms .kt-table th {
+.kt-industry.kt-portal .bds-terms .table th {
 	background: transparent;
 }
 

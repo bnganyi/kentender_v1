@@ -41,6 +41,7 @@ def _new_decision(doc, *, outcome: str, reason: str, user: str, opinion, kind: s
 
 def positive_guards(doc, opinion) -> Guards:
 	g = guards.positive(doc)
+	guards.funding(doc, g)
 	rec = checks.recommendation(doc)
 	if not rec["supported"]:
 		g.add("AWD_NO_SUPPORTED_AWARD", reason=rec["reason"])
@@ -108,6 +109,7 @@ def record(*, award: str, outcome: str, reason: str = "", next_action: str = "",
 	def body() -> dict[str, Any]:
 		doc = records.lock(award)
 		guards.require_ao(user)
+		guards.require_ao_not_opinion_author(user, doc)
 		guards.open_case(doc).raise_if_any()
 		records.check_version(doc, expected_version)
 		guards.stage(doc, "Decision")
@@ -135,4 +137,5 @@ def record(*, award: str, outcome: str, reason: str = "", next_action: str = "",
 		return records.summary(state.reload(doc), **result)
 
 	return records.command("RecordAwardDecision", case=award, idempotency_key=idempotency_key, actor=user,
-		payload={"outcome": outcome, "reason": reason, "next_action": next_action, "expected": cstr(expected_version)}, body=body)
+		payload={"outcome": outcome, "reason": reason, "next_action": next_action, "expected": cstr(expected_version)}, body=body,
+		authorise=lambda: guards.require_ao(user))

@@ -26,6 +26,7 @@ from kentender_procurement.procurement_requisitions.services import (
 	envelope,
 	events,
 	funding_gateway,
+	goods_template,
 	handoff as handoff_service,
 	precision,
 	records,
@@ -48,7 +49,7 @@ def recheck(root, version, package_version) -> tuple[dict[str, Any], list[Any]]:
 		fail("PLN_ITEM_AUTHORISATION_HELD", detail={"requests": (projection.get("hold") or {}).get("unresolved_requests")})
 	if not projection.get("eligible"):
 		fail("REQ_PLAN_INELIGIBLE")
-	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=projection)
+	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=projection, unreviewed_line_ids=goods_template.unreviewed_ids(version))
 	blocking = [f for f in report["findings"] if f["severity"] == "Blocking"]
 	if any(f["code"] == "BALANCE_CHANGED" for f in blocking):
 		fail("REQ_BALANCE_CHANGED", detail={"findings": blocking})
@@ -81,11 +82,11 @@ def source_set_hash(version) -> str:
 def authorise_requisition(*, requisition: str, task: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "task": task}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	root = records.require_root(requisition)
 	assignment = authz.require_hopf(actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="AuthoriseRequisition", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(root, expected_record_version)
 	if root.current_state != "Submitted to Procurement":
 		fail("REQ_STALE_VERSION")
@@ -100,8 +101,8 @@ def authorise_requisition(*, requisition: str, task: str, expected_record_versio
 		fail("REQ_STALE_VERSION")
 	if cstr(version.certified_lead_org_unit_id) != cstr(root.lead_org_unit_id):
 		fail("REQ_LEAD_RECERTIFICATION_REQUIRED")
-	# §7.3 — the authoriser cannot also be the departmental submitting authority.
-	if cstr(version.submitted_by) == actor:
+	# §7.3 — the authoriser cannot also be the departmental submitting authority, nor prepare and authorise the same Version.
+	if records.authoriser_conflict(version, actor):
 		fail("REQ_SOD_BLOCKED")
 
 	projection, checks = recheck(root, version, package_version)
@@ -115,7 +116,7 @@ def authorise_requisition(*, requisition: str, task: str, expected_record_versio
 		)
 		if not checked.get("all_sufficient"):
 			fail("REQ_FUNDING_UNAVAILABLE", detail={"lines": [l for l in checked.get("lines", []) if not l.get("sufficient")]})
-		reserved = funding_gateway.reserve_funding(token=checked["token"], source_set_hash=source_set_hash(version), idempotency_key=correlation)
+		reserved = funding_gateway.reserve_funding(token=checked["token"], source_set_hash=source_set_hash(version), idempotency_key=correlation, caller_reference=root.requisition_reference)
 		reservation_by_line = {r["drawdown_line_id"]: r for r in reserved["reservations"]}
 		if set(reservation_by_line) != {line.drawdown_line_id for line in version.drawdown_lines}:
 			fail("REQ_OWNER_VALIDATION_UNAVAILABLE", detail={"reason": "Budget did not return one reservation per drawdown line."})
@@ -131,8 +132,6 @@ def authorise_requisition(*, requisition: str, task: str, expected_record_versio
 		for line in version.drawdown_lines:
 			line.reservation_id = reservation_by_line[line.drawdown_line_id]["reservation_id"]
 			line.planning_drawdown_reference = drawdown_by_allocation.get(line.plan_item_line_id, "")
-		version.flags.kt_lifecycle = True
-		package_version.flags.kt_lifecycle = True
 		envelope.bump(version, version_status="Authorised")
 		envelope.bump(package_version, version_status="Authorised")
 		decision = record_decision(task=task_doc, version=version, actor=actor, capacity=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, decision="Authorise requisition", assignment=assignment, idempotency_key=idempotency_key, resulting_state="Authorised")
@@ -146,7 +145,7 @@ def authorise_requisition(*, requisition: str, task: str, expected_record_versio
 
 		package = frappe.get_doc("IT Equipment Requirement Package", package_version.package)
 		package.authorised_version = package_version.name
-		package.save(ignore_permissions=True)
+		envelope.save(package)
 		root.current_state = "Authorised"
 		root.authorised_version = version.name
 		root.handoff = handoff_doc.name
@@ -171,12 +170,12 @@ def revoke_unconsumed_authorisation(*, requisition: str, reason: str, expected_r
 
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	reason = _reason(reason)
 	root = records.require_root(requisition)
 	assignment = authz.require_hopf(actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="RevokeUnconsumedAuthorisation", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(root, expected_record_version)
 	if root.current_state != "Authorised":
 		fail("REQ_STALE_VERSION")
@@ -189,12 +188,10 @@ def revoke_unconsumed_authorisation(*, requisition: str, reason: str, expected_r
 	with envelope.atomic("revoke"):
 		for line in version.drawdown_lines:
 			if line.reservation_id:
-				funding_gateway.release_reservation(reservation=line.reservation_id, downstream_event_id=f"{root.requisition_reference}:revoked", idempotency_key=f"{idempotency_key}:budget:{line.reservation_id}")
+				funding_gateway.release_reservation(reservation=line.reservation_id, requisition_reference=root.requisition_reference, downstream_event_id=f"{root.requisition_reference}:revoked", idempotency_key=f"{idempotency_key}:budget:{line.reservation_id}")
 		for row in eligibility_gateway.list_requisition_drawdowns(root.requisition_reference):
 			if row["requisition_version"] == version.name and row["drawdown_state"] == "Active":
 				eligibility_gateway.reverse_requisition_drawdown(drawdown_reference=row["drawdown_reference"], expected_record_version=row["record_version"], idempotency_key=f"{idempotency_key}:planning:{row['drawdown_reference']}")
-		version.flags.kt_lifecycle = True
-		package_version.flags.kt_lifecycle = True
 		envelope.bump(version, version_status="Revoked")
 		envelope.bump(package_version, version_status="Revoked")
 		record_decision(task=None, version=version, actor=actor, capacity=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, decision="Revoke authorisation", assignment=assignment, idempotency_key=idempotency_key, reason=reason, resulting_state="Revoked")

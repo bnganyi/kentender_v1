@@ -32,6 +32,7 @@
  * component tests (a mounted component's `outerHTML`) and the browser gates
  * (the live page's and the artboard's `outerHTML`).
  */
+import { DESIGN_SYSTEM_OMISSIONS } from "./departures/design-system.js";
 
 /**
  * The design system's structural vocabulary.
@@ -291,6 +292,11 @@ function affinity(boardNode, builtNode) {
 	return score;
 }
 
+// Revisions of the design system that the module artboards pre-date (departures/design-system.js).
+function omittedBySystem(path) {
+	return DESIGN_SYSTEM_OMISSIONS.some((entry) => path === entry.endsWith || path.endsWith(` > ${entry.endsWith}`));
+}
+
 export function compareSkeletons(board, built, { departures = [] } = {}) {
 	const missing = [];
 	const extra = [];
@@ -322,6 +328,7 @@ export function compareSkeletons(board, built, { departures = [] } = {}) {
 				// something else — recorded, with the replacement named, so
 				// "we chose differently" cannot be confused with "we dropped it".
 				if (replaced.has(path)) continue;
+				if (omittedBySystem(path)) continue;
 				const elsewhere = builtNodes.some((node) => wanted.names.every((name) => node.names.includes(name)));
 				missing.push({
 					path,

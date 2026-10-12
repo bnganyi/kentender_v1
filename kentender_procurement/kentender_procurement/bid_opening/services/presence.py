@@ -22,6 +22,7 @@ import frappe
 from frappe.utils import cint, get_datetime
 
 from kentender_procurement.bid_opening.services import appointment, arrangements, clock, custody_participation, labels, prc, records, settings
+from kentender_procurement.services import sequence
 
 PRESENCE = "Opening Presence"
 OPEN_STATES = ("Awaiting deadline", "Ready to open", "Opening", "Interrupted", "Readout complete")
@@ -61,7 +62,7 @@ def join_opening(*, tender: str, idempotency_key: str, user: str) -> dict[str, A
 		existing = active(doc.name, user)
 		if existing:
 			return records.summary(doc, presence=existing.name, joined=False)
-		number = frappe.db.count(PRESENCE, {"opening_case": doc.name}) + 1
+		number = sequence.next_count(PRESENCE, {"opening_case": doc.name})
 		row = records.insert(frappe.get_doc({
 			"doctype": PRESENCE, "presence_id": f"{doc.opening_id}-PRS-{number:03d}", "opening_case": doc.name, "member_user": user, "roster_segment": 1,
 			"joined_at": now, "last_seen_at": now, "state": "Present",

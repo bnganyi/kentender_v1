@@ -32,6 +32,9 @@ from typing import Any
 from unittest.mock import patch
 
 import frappe
+
+from kentender_core.services.command_write_guard import maintenance_write, purge_doc
+from kentender_procurement.procurement_planning.write_family import PLANNING_WRITE_FAMILY
 from frappe.tests import IntegrationTestCase
 from frappe.utils import now_datetime
 
@@ -76,7 +79,8 @@ def _ins(doctype: str, **values: Any) -> str:
 	(budget line, requirement type, the DPP entry behind an allocation) are not built."""
 	doc = frappe.get_doc({"doctype": doctype, "fixture_namespace": fx.NS, **values})
 	doc.flags.ignore_links = True
-	doc.insert(ignore_permissions=True, ignore_mandatory=True)
+	with maintenance_write(PLANNING_WRITE_FAMILY, reason="Planning analytics test: a world of rows in states the commands reach slowly"):
+		doc.insert(ignore_permissions=True, ignore_mandatory=True)
 	return doc.name
 
 
@@ -110,7 +114,7 @@ class TestPlanningAnalytics(IntegrationTestCase):
 		for name in frappe.get_all("User Responsibility Assignment", filters={"fixture_namespace": NS}, pluck="name"):
 			if frappe.db.get_value("User Responsibility Assignment", name, "status") == "Enabled":
 				administration.revoke(name, reason="Revoked inside the Planning Analytics test.", actor="Administrator")
-			frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+			purge_doc("User Responsibility Assignment", name)
 		for name in frappe.get_all("Contact Email", filters={"email_id": EXTRA}, pluck="parent"):
 			frappe.delete_doc("Contact", name, force=1, ignore_permissions=True)
 		if frappe.db.exists("User", EXTRA):

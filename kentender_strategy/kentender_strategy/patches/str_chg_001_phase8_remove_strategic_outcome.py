@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import frappe
 
+from kentender_core.services.command_write_guard import command_write
+
 
 def execute() -> None:
 	outcomes = frappe.get_all(
@@ -52,6 +54,7 @@ def execute() -> None:
 				"Performance Indicator", indicator.name, "measures_node_id", parent.name
 			)
 
-		frappe.delete_doc("Strategy Node", outcome.name, force=1, ignore_permissions=True)
+		with command_write("Strategy"):  # one-off migration owned by Strategy (AUD-XC-005)
+			frappe.delete_doc("Strategy Node", outcome.name, force=1, ignore_permissions=True)
 
 	frappe.db.commit()

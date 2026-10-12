@@ -39,6 +39,12 @@ export async function frappeCall(method, args) {
 		// distinguish "forbidden"/"masked as not found" from any other
 		// failure without re-parsing the raw jqXHR itself.
 		err.httpStatus = xhr && xhr.status;
+		// The refusal's closed code and its detail (which field, which row) ride on
+		// the server message log (`errors.fail`, PLN-CHG-001 v1.31); a screen marks
+		// the field it names rather than showing only a generic sentence.
+		const structured = extractStructured(xhr);
+		err.code = structured.code || "";
+		err.detail = structured.detail || {};
 		throw err;
 	} finally {
 		frappe.msgprint = originalMsgprint;
@@ -69,4 +75,18 @@ function extractErrorMessage(xhr) {
 	}
 	if (xhr && xhr.statusText && xhr.statusText !== "error") return xhr.statusText;
 	return __("Something went wrong. Please try again.");
+}
+
+function extractStructured(xhr) {
+	const data = xhr && xhr.responseJSON;
+	if (!data || !data._server_messages) return {};
+	try {
+		for (const raw of JSON.parse(data._server_messages).reverse()) {
+			const m = typeof raw === "string" ? JSON.parse(raw) : raw;
+			if (m && m.kt_pln) return m.kt_pln;
+		}
+	} catch (e) {
+		return {};
+	}
+	return {};
 }

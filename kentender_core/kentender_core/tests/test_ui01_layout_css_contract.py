@@ -49,8 +49,3 @@ class TestUi01LayoutCssContract(FrappeTestCase):
 		self.assertIn("Standard Tender Document", comp)
 		self.assertIn("Configuration Status", comp)
 		self.assertIn("Procurement Method", comp)
-
-	def test_trail_leaf_is_configuration_home(self):
-		reg = _read("public/js/kt_cl_surface_registry.js")
-		self.assertIn("trailUi01Home", reg)
-		self.assertIn("Tender Configuration Home", reg)

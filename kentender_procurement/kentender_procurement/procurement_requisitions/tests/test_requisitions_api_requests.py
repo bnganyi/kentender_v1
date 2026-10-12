@@ -73,9 +73,14 @@ class TestTheFullRequisitionJourneyOverTheRequestPath(RequestShapedCase):
 			expected_record_version=str(view["header"]["version_record_version"]), idempotency_key=self.key(),
 		)
 		view = self.call("get_requisition_record", requisition=requisition)
-		rows = [{"drawdown_line_id": r["drawdown_line_id"], "quantity": str(r["quantity"]), "intended_use": "Clinical training for department staff"} for r in view["equipment"]["add_rows"]]
+		rows = [{"drawdown_line_id": r["drawdown_line_id"], "quantity": str(r["room"]), "intended_use": "Clinical training for department staff"} for r in view["equipment"]["add_rows"]]
 		added = self.call("add_same_specification_items", requisition=requisition, shared_values=json.dumps({"equipment_category": "Laptop", "item_name": "Business laptops"}), item_rows=json.dumps(rows), expected_record_version=str(view["package_record_version"]), idempotency_key=self.key())
 		self.assertEqual(added["review_state"], "Review required")
+
+		# v1.15: the requester enters one estimated total cost for each source that has items.
+		view = self.call("get_requisition_record", requisition=requisition)
+		estimates = [{"drawdown_line_id": a["drawdown_line_id"], "requested_value": a["remaining_value_value"]} for a in view["amounts"] if int(a["requested_quantity_value"]) > 0]
+		self.call("save_requisition_summary", requisition=requisition, summary_values=json.dumps({"drawdown_lines": estimates}), expected_record_version=str(view["header"]["version_record_version"]), idempotency_key=self.key())
 
 		view = self.call("get_requisition_record", requisition=requisition)
 		technical, acceptance, support = fx.visible_proposal(view)
@@ -87,8 +92,9 @@ class TestTheFullRequisitionJourneyOverTheRequestPath(RequestShapedCase):
 		)
 		self.assertEqual(applied["review_state"], "Reviewed")
 
+		sent = self.call("send_for_department_approval", requisition=requisition, expected_record_version=str(fx.root_version(requisition)), idempotency_key=self.key())
 		frappe.set_user(fx.HOD)
-		submitted = self.call("submit_requisition_to_procurement", requisition=requisition, expected_record_version=str(fx.root_version(requisition)), idempotency_key=self.key())
+		submitted = self.call("submit_requisition_to_procurement", requisition=requisition, task=sent["task"], expected_record_version=str(fx.root_version(requisition)), idempotency_key=self.key())
 		frappe.set_user(fx.HOPF)
 		task_view = self.call("get_procurement_authorisation_task", task=submitted["task"])
 		self.assertEqual(task_view["result"]["title"], "Ready to authorise")
@@ -96,10 +102,11 @@ class TestTheFullRequisitionJourneyOverTheRequestPath(RequestShapedCase):
 		self.assertEqual(authorised["action"], "authorised")
 		self.assertEqual(self.call("get_requisition_record", requisition=requisition)["kind"], "authorised")
 
-		frappe.set_user("Administrator")
+		# AUD-REQ-001: consumption has no web endpoint — only Tenders' own Start command consumes a handoff.
 		frappe.set_user(fx.HOPF)
-		consumed = self.call("record_handoff_consumption", handoff_name=authorised["handoff"], tender="TND-0001", tender_version="TND-0001-V1", template_key="IT-EQUIPMENT-OPEN-V1", template_version="1.1", idempotency_key=self.key())
-		self.assertEqual(consumed["action"], "consumed")
+		with self.assertRaises(Exception):
+			self.call("record_handoff_consumption", handoff_name=authorised["handoff"], tender="TND-0001", tender_version="TND-0001-V1", template_key="IT-EQUIPMENT-OPEN-V1", template_version="1.1", idempotency_key=self.key())
+		self.assertFalse(frappe.db.get_value("Authorised Requisition Handoff", authorised["handoff"], "consumed_at"))
 
 
 class TestNoWhitelistedEndpointTakesKwargs(IntegrationTestCase):

@@ -33,6 +33,15 @@
 					<!-- KT-STD-001 v1.8 §2.9.1 — Your turn / Waiting / Done, one line
 					     in the header after the scope line (U07-FINANCE-COMPLETE). -->
 					<div ref="headEl" class="kt-guidance-mount" data-testid="ppl-next-step-line"></div>
+					<!-- The decider's own task (FU-14: the record route never
+					     strands whoever holds an open task), in the header beside
+					     the status and the "Your turn" line it answers — found
+					     live 9 Oct 2026 at the foot of the page, below history. -->
+					<div v-if="plan.open_task" class="pln-head-action">
+						<button type="button" class="btn btn-primary" data-testid="ppl-open-task" @click="$emit('open-task', plan.open_task.route)">
+							{{ plan.open_task.label }}
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -295,36 +304,34 @@
 			     is still being prepared. -->
 			<div v-if="activeView" class="kt-region is-secondary">
 				<h2>Approval and publication</h2>
-				<div class="kt-meta-row" data-testid="ppl-governance">
+				<div class="kt-meta-row pln-governance-row" data-testid="ppl-governance">
 					<div>
 						<span class="kt-label">Adopted by the Accounting Officer</span>
-						<span class="kt-meta-value">{{ activeView.governance_card.ao_adoption_line || "—" }}</span>
+						<span class="pln-check-value">{{ activeView.governance_card.ao_adoption_line || "—" }}</span>
 					</div>
 					<div>
 						<span class="kt-label">Approved</span>
-						<span class="kt-meta-value">{{ activeView.governance_card.statutory_approval_line || "—" }}</span>
+						<span class="pln-check-value">{{ activeView.governance_card.statutory_approval_line || "—" }}</span>
 					</div>
 					<div>
 						<span class="kt-label">Published</span>
-						<span class="kt-meta-value">
-							{{ activeView.governance_card.publication_line || "Not published" }}
-							<a
-								v-if="activeView.governance_card.publication_route"
-								href="#"
-								class="pln-check-action"
-								data-testid="ppl-view-publication"
-								@click.prevent="$emit('navigate', activeView.governance_card.publication_route)"
-							>View publication evidence</a>
-						</span>
+						<span class="pln-check-value">{{ activeView.governance_card.publication_line || "Not published" }}</span>
+						<a
+							v-if="activeView.governance_card.publication_route"
+							href="#"
+							class="pln-check-action"
+							data-testid="ppl-view-publication"
+							@click.prevent="$emit('navigate', activeView.governance_card.publication_route)"
+						>View publication evidence</a>
 					</div>
 					<div>
 						<span class="kt-label">In force since</span>
-						<span class="kt-meta-value">{{ activeView.summary.activated_display }}</span>
+						<span class="pln-check-value">{{ activeView.summary.activated_display }}</span>
 					</div>
 				</div>
 				<!-- §10.13 — what has actually been procured against it lives in
 				     its own surface; this page is about the plan itself. -->
-				<a href="#" data-testid="ppl-view-progress" @click.prevent="$emit('navigate', ['annual-procurement-plan', plan.plan_reference, 'progress'])">
+				<a href="#" class="pln-governance-progress" data-testid="ppl-view-progress" @click.prevent="$emit('navigate', ['annual-procurement-plan', plan.plan_reference, 'progress'])">
 					View procurement progress
 				</a>
 			</div>
@@ -457,11 +464,6 @@
 				</div>
 			</div>
 
-			<div v-if="plan.open_task" class="pln-dpp-task">
-				<button type="button" class="btn btn-primary" data-testid="ppl-open-task" @click="$emit('open-task', plan.open_task.route)">
-					{{ plan.open_task.label }}
-				</button>
-			</div>
 		</div>
 	</div>
 </template>
@@ -512,6 +514,10 @@ const FOCUS = { purchases: purchasesEl, reservation: reservationEl, requirements
 function focusRegion(target) {
 	const el = (FOCUS[target] || checksEl).value || checksEl.value;
 	if (!el) return;
+	// The reservation block is already on screen when its fix is pressed, so
+	// moving to it shows nothing; the answer is the working under it (which
+	// purchases count, and why), which is closed until asked for.
+	if (target === "reservation") el.querySelector("details")?.setAttribute("open", "");
 	nextTick(() => {
 		el.scrollIntoView({ behavior: "smooth", block: "start" });
 		el.focus({ preventScroll: true });

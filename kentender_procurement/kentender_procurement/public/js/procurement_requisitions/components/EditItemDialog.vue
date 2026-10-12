@@ -1,13 +1,14 @@
-<!-- "Edit quantity and use" for one source-linked equipment row (§13.4
-     Complete variant). Category, name and delivery belong to the shared
-     details and are not repeated here. -->
+<!-- "Edit quantity and use" for one source-linked item (§13.4 Complete
+     variant). Category, name and delivery belong to the shared details and are
+     not repeated here. The quantity typed here is the only place it changes; a
+     quantity above what remains is refused with the real limit named (v1.15). -->
 <template>
 	<DialogFrame title="Edit quantity and use" :width="480" :busy="busy" testid="req-item-dialog" @close="$emit('close')">
 		<p class="req-dialog-body">{{ item.item_name }} · {{ item.approved_requirement }}</p>
 		<div class="field">
 			<label for="req-item-quantity">Quantity (Each)</label>
-			<input id="req-item-quantity" v-model="quantity" class="input" :class="{ 'is-invalid': fieldError('quantity') }" inputmode="numeric" data-testid="req-item-quantity" />
-			<span v-if="fieldError('quantity')" class="req-field-error">{{ fieldError("quantity") }}</span>
+			<input id="req-item-quantity" v-model="quantity" class="input" :class="{ 'is-invalid': quantityError }" inputmode="numeric" data-testid="req-item-quantity" />
+			<span v-if="quantityError" class="req-field-error" data-testid="req-item-quantity-error">{{ quantityError }}</span>
 		</div>
 		<div class="field">
 			<label for="req-item-use">Intended use</label>
@@ -17,7 +18,7 @@
 		<Notice v-if="otherError" tone="critical">{{ otherError }}</Notice>
 		<template #actions>
 			<button type="button" class="btn btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
-			<button type="button" class="btn btn-primary" :disabled="busy" data-testid="req-item-dialog-confirm" @click="submit">Save equipment row</button>
+			<button type="button" class="btn btn-primary" :disabled="busy" data-testid="req-item-dialog-confirm" @click="submit">Save item</button>
 		</template>
 	</DialogFrame>
 </template>
@@ -39,7 +40,13 @@ const error = computed(() => (ctx.commandError.value && ctx.commandError.value.l
 function fieldError(field) {
 	return (error.value && error.value.detail && error.value.detail.fields && error.value.detail.fields[field]) || "";
 }
-const otherError = computed(() => (error.value && !(error.value.detail && error.value.detail.fields) ? error.value.message : ""));
+// The limit sentence the server returns for this item's requirement
+// (REQ_QUANTITY_EXCEEDS_AVAILABLE) sits beside the quantity it refers to.
+const quantityError = computed(() => {
+	const detail = (error.value && error.value.detail) || {};
+	return fieldError("quantity") || (detail.rows && detail.rows[props.item.drawdown_line_id]) || "";
+});
+const otherError = computed(() => (error.value && !(error.value.detail && (error.value.detail.fields || error.value.detail.rows)) ? error.value.message : ""));
 
 async function submit() {
 	const done = await ctx.run("update-item", (key) =>

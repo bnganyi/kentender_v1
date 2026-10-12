@@ -27,19 +27,19 @@
 			<div class="kt-meta-row is-tight">
 				<div>
 					<span class="kt-label">Setting</span>
-					<span class="kt-meta-value" data-testid="pln-missing-setting-name">{{ panel.setting }}</span>
+					<span class="kt-meta-value is-plain" data-testid="pln-missing-setting-name">{{ panel.setting }}</span>
 				</div>
 				<div v-if="panel.affected_purchase">
 					<span class="kt-label">{{ (panel.affected_count || 1) > 1 ? "Affected purchases" : "Affected purchase" }}</span>
-					<span class="kt-meta-value" data-testid="pln-missing-setting-purchase">{{ panel.affected_purchase }}</span>
+					<span class="kt-meta-value is-plain" data-testid="pln-missing-setting-purchase">{{ panel.affected_purchase }}</span>
 				</div>
 				<div>
 					<span class="kt-label">Affected action</span>
-					<span class="kt-meta-value" data-testid="pln-missing-setting-action">{{ panel.affected_action }}</span>
+					<span class="kt-meta-value is-plain" data-testid="pln-missing-setting-action">{{ panel.affected_action }}</span>
 				</div>
 				<div>
 					<span class="kt-label">Responsible role</span>
-					<span class="kt-meta-value" data-testid="pln-missing-setting-role">{{ panel.responsible_role }}</span>
+					<span class="kt-meta-value is-plain" data-testid="pln-missing-setting-role">{{ panel.responsible_role }}</span>
 				</div>
 			</div>
 			<!-- What is still permitted, where the closed setting does not stop

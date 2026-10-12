@@ -29,9 +29,10 @@ import frappe
 from frappe.utils import cstr
 
 from kentender_procurement.bid_evaluation.services import (
-	clock, findings, guards, lifecycle, notify, people, prc, prc_owner, records, roster, simulation,
+	checks, clock, findings, guards, lifecycle, notify, people, prc, prc_owner, records, roster, simulation,
 )
 from kentender_procurement.bid_evaluation.services.errors import Guards, fail, invalid
+from kentender_procurement.services import sequence
 
 DELIVERY = "Evaluation Report Delivery"
 NOTICE = "Evaluation Correction Notice"
@@ -55,6 +56,14 @@ def decision_status(doc) -> dict[str, Any]:
 def _delivered(doc):
 	name = frappe.db.get_value(DELIVERY, {"evaluation_case": doc.name, "status": "Delivered"}, "name", order_by="delivered_at desc")
 	return frappe.get_doc(DELIVERY, name) if name else None
+
+
+def _require_current(doc, delivery) -> None:
+	"""A return applies only to the current delivered report that has not already been
+	returned (EVL §5.6): a repeated return, or one made while its successor is being
+	signed, would re-mark history and regress the case (AUD-EVL-007)."""
+	if doc.state != "Report sent" or delivery.review_state == "Returned":
+		fail("EVL_VERSION_CONFLICT", {"reason": "not_current_delivery", "state": doc.state, "report": delivery.report_version})
 
 
 def _status_known(doc) -> None:
@@ -96,6 +105,7 @@ def return_report(*, tender: str, comment: str, idempotency_key: str, user: str)
 		if not delivery or delivery.recipient_user != user:
 			raise frappe.DoesNotExistError("Not found")
 		guards.closed(doc, Guards()).raise_if_any()
+		_require_current(doc, delivery)
 		invalid({"comment": "Say what needs correction."} if not cstr(comment).strip() else {})
 		status = decision_status(doc)
 		if status["status"] == "Unknown":
@@ -135,6 +145,7 @@ def return_for_authorised_correction(*, tender: str, comment: str, instruction: 
 		delivery = _delivered(doc)
 		if not delivery:
 			fail("EVL_VERSION_CONFLICT", {"reason": "not_delivered"})
+		_require_current(doc, delivery)
 		status = decision_status(doc)
 		if status["status"] == "Unknown":
 			fail("EVL_DECISION_STATUS_UNKNOWN", {"checked_at": str(status["checked_at"]), "report": delivery.report_version})
@@ -162,7 +173,7 @@ def record_correction_notice(*, tender: str, reason: str, correction: str, idemp
 		status = decision_status(doc)
 		if status["status"] != "Unknown":
 			_status_known(doc)
-		number = frappe.db.count(NOTICE, {"evaluation_case": doc.name}) + 1
+		number = sequence.next_count(NOTICE, {"evaluation_case": doc.name})
 		notice = records.insert(frappe.get_doc({
 			"doctype": NOTICE, "notice_id": f"{doc.name}-CN-{number:02d}", "evaluation_case": doc.name, "report_version": delivery.report_version,
 			"reason": cstr(reason).strip(), "correction": cstr(correction).strip(), "recorded_by": user, "recorded_at": clock.now(),
@@ -216,7 +227,7 @@ def _receive_supplement(tender: str, key: str, supplement) -> dict[str, Any]:
 	def body() -> dict[str, Any]:
 		doc = records.lock(tender)
 		after = doc.state == "Report sent"
-		number = frappe.db.count(EVENT, {"evaluation_case": doc.name}) + 1
+		number = sequence.next_count(EVENT, {"evaluation_case": doc.name})
 		row = records.insert(frappe.get_doc({
 			"doctype": EVENT, "source_event_id": f"{doc.name}-SE-{number:02d}", "evaluation_case": doc.name, "event_key": key, "source": "Bid Opening",
 			"kind": "Opening supplement", "source_reference": supplement.supplement_id, "authority": cstr(supplement.author), "reason": cstr(supplement.reason),
@@ -258,9 +269,16 @@ def assess_supplement(*, tender: str, source_event: str, impact: str, reason: st
 		records.save(row.update({"impact": impact, "impact_reason": cstr(reason).strip(), "impact_by": user, "impact_at": clock.now()}))
 		event = prc.owner_event(doc, "OpeningSupplementAssessed", f"impact:{row.name}", {"impact": impact}, idempotency_key=idempotency_key, note=cstr(reason).strip())
 		if impact == "Findings need review" and doc.state != "Report sent":
+			# A material change ends signature collection and is recalculated (§5.6): the checks run again for every bid.
 			lifecycle.withdraw_signing(doc, kind="Source change", reason=cstr(reason).strip(), idempotency_key=idempotency_key, actor=user)
+			checks.run(doc, reason="Opening supplement", idempotency_key=idempotency_key, affected={"source_event": row.name})
 		records.bump(frappe.get_doc(records.CASE, doc.name), last_committed_event=event)
-		return records.summary(frappe.get_doc(records.CASE, doc.name), source_event=row.name, impact=impact)
+		delivered = None
+		if impact == "No effect on findings" and doc.state == "Signing":
+			from kentender_procurement.bid_evaluation.services import signing
+
+			delivered = signing.resume_delivery(frappe.get_doc(records.CASE, doc.name), idempotency_key, user)
+		return records.summary(frappe.get_doc(records.CASE, doc.name), source_event=row.name, impact=impact, **({"delivery": delivered} if delivered else {}))
 
 	return records.command("AssessOpeningSupplement", tender=tender, idempotency_key=idempotency_key, actor=user, payload={"source_event": source_event, "impact": impact,
 		"reason": reason}, body=body)

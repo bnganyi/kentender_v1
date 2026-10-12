@@ -43,7 +43,7 @@ import frappe
 from frappe.utils import cstr, flt, now_datetime
 
 from kentender_procurement.procurement_planning.errors import fail
-from kentender_procurement.procurement_planning.services import envelope, outcome_event, plan_read, scope_lock
+from kentender_procurement.procurement_planning.services import budget_gateway, envelope, outcome_event, plan_read, scope_lock
 from kentender_procurement.procurement_planning.services import money as money_boundary
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
@@ -53,6 +53,7 @@ from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_PROCUREMENT_PLANNER,
 	REQUISITION_CALLER_SITE_WIDE_ROLES,
 )
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 
 def _authorise_requisition_reader(actor: str, *, contributing_org_units: set[str]) -> None:
@@ -106,15 +107,26 @@ def _requisition_item_name(plan_item_id: str) -> str:
 	return plan_read.resolve_item_doc_name(plan_item_id)
 
 
-def _drawn_totals(allocation_names: set[str]) -> dict[str, tuple[Decimal, Decimal]]:
+def _drawn_totals(allocation_names: set[str], *, for_update: bool = False) -> dict[str, tuple[Decimal, Decimal]]:
 	"""Exact drawn quantity/amount per allocation (REQ-CHG-001 v1.11 §5.14):
 	stored Currency/Float values are read back through the money boundary
-	and summed as `Decimal`, never with a float epsilon."""
-	rows = frappe.get_all(
-		"Plan Drawdown Reference",
-		filters={"allocation": ("in", list(allocation_names) or ("",)), "drawdown_state": "Active"},
-		fields=["allocation", "quantity", "amount"],
-	)
+	and summed as `Decimal`, never with a float epsilon.
+
+	`for_update` is the locking read a drawdown decides on (RG-23, AUD-XC-107): MariaDB
+	runs at REPEATABLE READ, so a plain read after the Plan Item lock would sum the
+	snapshot from before the lock and miss a drawdown another command had just committed."""
+	names = list(allocation_names) or [""]
+	if for_update:
+		rows = frappe.db.sql(
+			"select allocation, quantity, amount from `tabPlan Drawdown Reference` where allocation in %s and drawdown_state = 'Active' for update",
+			(tuple(names),), as_dict=True,
+		)
+	else:
+		rows = frappe.get_all(
+			"Plan Drawdown Reference",
+			filters={"allocation": ("in", names), "drawdown_state": "Active"},
+			fields=["allocation", "quantity", "amount"],
+		)
 	totals: dict[str, tuple[Decimal, Decimal]] = {}
 	for row in rows:
 		qty, amount = totals.get(row.allocation, (Decimal(0), Decimal(0)))
@@ -322,7 +334,7 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		"lot_count": int(item.lot_count or 0),
 		"plan_horizon": cstr(item.plan_horizon),
 		"contributing_org_unit_ids": sorted(contributing_org_units),
-		"currency": "KES",
+		"currency": budget_gateway.budget_currency(plan.fiscal_year),
 		"award_packages": 1,
 		"planned_dates": {f"{m}_date": cstr(item.get(f"baseline_{m}_date")) for m in schedule.MILESTONES},
 		# §5.14 — three separate dates: the source-derived Plan completion
@@ -446,6 +458,7 @@ def _strict(value, *, parse, field: str, code: str):
 	return parse(value, field=field)
 
 
+@planning_command
 def authorise_requisition_drawdown(
 	*,
 	plan_item_id: str,
@@ -483,7 +496,8 @@ def authorise_requisition_drawdown(
 	item_name = _requisition_item_name(plan_item_id)
 	item = envelope.locked("Annual Plan Item", item_name)
 	envelope.check_record_version(item, expected_record_version)
-	if item.item_state != "Active" or frappe.db.get_value("Annual Plan Version", item.plan_version, "funding_state") != "Confirmed":
+	# the Plan Version is a different row from the locked item: read its funding state as last committed (RG-23)
+	if item.item_state != "Active" or frappe.db.get_value("Annual Plan Version", item.plan_version, "funding_state", for_update=True) != "Confirmed":
 		frappe.throw("This Plan Item is not currently eligible for a Requisition drawdown.")
 
 	# §5.4.5/PLN-RI-029 — recheck the hold under the same stable-item guard
@@ -511,7 +525,7 @@ def authorise_requisition_drawdown(
 			frappe.throw(f"Source allocation {allocation.allocation_id} is not currently drawable.")
 		requested_qty = _strict(spec.get("quantity"), parse=money_boundary.parse_quantity, field="quantity", code="PLN_MONEY_PRECISION_INVALID")
 		requested_amount = _strict(spec.get("amount"), parse=money_boundary.parse_money, field="amount", code="PLN_MONEY_PRECISION_INVALID")
-		drawn_qty, drawn_amount = _drawn_totals({allocation.name}).get(allocation.name, (Decimal(0), Decimal(0)))
+		drawn_qty, drawn_amount = _drawn_totals({allocation.name}, for_update=True).get(allocation.name, (Decimal(0), Decimal(0)))
 		approved_qty, approved_amount = _dec(allocation.quantity), _dec(allocation.indicative_amount)
 		if drawn_qty + requested_qty > approved_qty or drawn_amount + requested_amount > approved_amount:
 			fail(
@@ -595,6 +609,7 @@ def list_requisition_drawdowns(*, requisition_reference: str, user: str | None =
 	]
 
 
+@planning_command
 def reverse_requisition_drawdown(
 	*, drawdown_reference: str, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
@@ -648,6 +663,7 @@ def _authorise_correction_requester(actor: str, *, contributing_org_units: set[s
 	return ""
 
 
+@planning_command
 def receive_plan_item_correction_request(
 	*,
 	plan_item_id: str,
@@ -724,6 +740,7 @@ def _authorise_disposition(actor: str, correction_request: str, expected_record_
 	return doc, assignment
 
 
+@planning_command
 def start_plan_item_correction(
 	*, correction_request: str, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
@@ -757,6 +774,7 @@ def start_plan_item_correction(
 	return result
 
 
+@planning_command
 def resolve_plan_item_correction_request(
 	*,
 	correction_request: str,
@@ -838,6 +856,7 @@ def resolve_plan_item_correction_request(
 	return result
 
 
+@planning_command
 def close_plan_item_correction_without_change(
 	*, correction_request: str, reason: str, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:

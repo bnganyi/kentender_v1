@@ -43,7 +43,8 @@ def save(*, award: str, request: str, reply: str, idempotency_key: str, user: st
 		records.bump(doc)
 		return records.summary(state.reload(doc), request=c.name)
 
-	return records.command("SaveAwardExplanation", case=award, idempotency_key=idempotency_key, actor=user, payload={"request": request, "reply": reply}, body=body)
+	return records.command("SaveAwardExplanation", case=award, idempotency_key=idempotency_key, actor=user, payload={"request": request, "reply": reply}, body=body,
+		authorise=lambda: guards.require_hop(user))
 
 
 def _dispatch(doc, c) -> bool:
@@ -82,7 +83,8 @@ def send(*, award: str, request: str, reply: str = "", idempotency_key: str, use
 		records.audit(doc.name, "SendAwardExplanation", user, request=c.name)
 		return records.summary(state.reload(doc), request=c.name, closed=True, message=CLOSED)
 
-	return records.command("SendAwardExplanation", case=award, idempotency_key=idempotency_key, actor=user, payload={"request": request, "reply": reply}, body=body)
+	return records.command("SendAwardExplanation", case=award, idempotency_key=idempotency_key, actor=user, payload={"request": request, "reply": reply}, body=body,
+		authorise=lambda: guards.require_hop(user))
 
 
 def retry_pending() -> int:

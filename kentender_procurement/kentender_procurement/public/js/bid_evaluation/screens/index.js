@@ -3,7 +3,7 @@
 // place shows. Sub-routes under /app/tenders/{ref}/evaluation:
 //   ""                     the record: results, or the live discussion
 //   record                 the committee record (tab)
-//   appoint | secretary | replace | declaration | unable   committee setup
+//   appoint | delegate | replace | declaration | unable   committee setup
 //   bid/{bid}              one opened bid's requirements
 //   discussion             the live committee discussion
 //   clarification/{id}     one clarification request
@@ -27,11 +27,11 @@ export function needs(sub, id, data) {
 	if (sub === "bid" && id) out.bid = id;
 	if (["report", "correction"].includes(sub) || (data && data.state === "Report sent" && sub === "update")) out.report = sub === "report" && id && id !== "preview" ? id : "";
 	if (["record", "replace"].includes(sub) || (data && data.state === "No evaluation required")) out.record = true;
-	// the main route shows the appointment or secretary form when that is the
-	// viewer's next step (pick()), so it needs the same pick list
+	// the main route shows the appointment form when that is the viewer's next
+	// step (pick()), so it needs the same pick list
 	const primary = ((data && data.guidance) || {}).primary_action || "";
 	if (sub === "appoint" || sub === "replace" || (sub === "" && primary === "appoint_committee")) out.candidates = "committee";
-	if (sub === "secretary" || (sub === "" && primary === "assign_secretary")) out.candidates = "secretary";
+	if (sub === "delegate") out.candidates = "secretary";
 	if (data && (data.work || {}).session && ["", "discussion"].includes(sub)) {
 		const item = (data.attention || [])[0] || ((data.work || {}).clarifications || []).find((c) => c.status === "Sent" && (c.reply || c.overdue));
 		if (item) out.bid = item.evaluation_bid;
@@ -57,7 +57,7 @@ function pick(ctx) {
 	if (v.technical && !(record.isOversight(data) && ["", "report", "record"].includes(sub))) return ["setup-only", record.setupOnly(ctx)];
 	switch (sub) {
 		case "appoint": return ["appoint", committee.appoint(ctx)];
-		case "secretary": return ["secretary", committee.secretary(ctx)];
+		case "delegate": return (data.committee || {}).can_delegate ? ["delegate", committee.delegate(ctx)] : ["not-found", nf];
 		case "declaration": return ["declaration", committee.declaration(ctx)];
 		case "replace": return ["replace", committee.replace(ctx)];
 		case "unable": return ["unable", committee.unable(ctx)];
@@ -75,7 +75,6 @@ function pick(ctx) {
 	if (data.state === "Cancelled") return ["cancelled", record.cancelled(ctx)];
 	if ((data.conditions || {}).suspended) return ["paused", record.paused(ctx)];
 	if (primary === "appoint_committee") return ["appoint", committee.appoint(ctx)];
-	if (primary === "assign_secretary") return ["secretary", committee.secretary(ctx)];
 	if (v.undeclared) return ["declare-first", committee.declareFirst(ctx)];
 	if (data.state === "Preparing") return ["preparing", record.preparing(ctx)];
 	if (record.isOversight(data)) return ["results", record.results({ ...ctx, data: record.oversightRecord(data) })];

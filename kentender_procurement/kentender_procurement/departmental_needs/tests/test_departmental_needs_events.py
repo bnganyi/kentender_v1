@@ -13,6 +13,7 @@ from uuid import uuid4
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.command_write_guard import CommandWriteError, command_write
 from kentender_procurement.departmental_needs.constants import STATE_WITHDRAWN
 from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
@@ -23,9 +24,9 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	_granted_units,
 	upsert_departmental_needs,
 )
-from kentender_procurement.departmental_needs.services import events, lifecycle
+from kentender_procurement.departmental_needs.services import events, lifecycle, workspace
 
-# §7.1 — the exact `DepartmentalNeedAccepted.v2` field set, plus event
+# §7.1A — the exact `DepartmentalNeedAccepted.v3` field set, plus event
 # identity. AUTH-ADR-001 v1.6 §1.1 — the site is exactly one implicit
 # Procuring Entity, so the payload carries no `procuring_entity_id`.
 ACCEPTED_FIELDS = {
@@ -46,6 +47,8 @@ ACCEPTED_FIELDS = {
 	"unit_id",
 	"unit_display_value",
 	"required_by_date",
+	# NDS-CHG-001 v1.17 §7.1A — the one amount a Need publishes.
+	"estimated_total_cost",
 }
 
 # NDS-AC-024 — none of these may ever appear in a published payload.
@@ -68,6 +71,7 @@ EXCLUDED_FIELDS = (
 	"notes",
 )
 from kentender_procurement.departmental_needs.tests import support
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
 
 
 class EventCase(IntegrationTestCase):
@@ -92,6 +96,7 @@ class EventCase(IntegrationTestCase):
 			"expected_operational_result": "Facilities can use the deployed digital health services.",
 			"indicative_quantity": 10,
 			"unit": "Each",
+			"estimated_total_cost": 1000000,
 			"required_by_date": "2027-12-31",
 		}
 		values.update(overrides)
@@ -137,7 +142,7 @@ class EventCase(IntegrationTestCase):
 
 
 class TestAcceptedEvent(EventCase):
-	"""§7.1 `DepartmentalNeedAccepted.v2`."""
+	"""§7.1A `DepartmentalNeedAccepted.v3`."""
 
 	def test_acceptance_publishes_exactly_one_event(self):
 		result = self.accepted()
@@ -188,6 +193,44 @@ class TestAcceptedEvent(EventCase):
 			reason="The department will meet this requirement from existing stock this year.",
 		)
 		self.assertEqual(self.events_for(created["need"]), [])
+
+
+class TestQuantityIsAnExactDecimalString(EventCase):
+	"""NDS v1.16 §4.9 (AUD-XC-118 follow-up) — `indicative_quantity` crosses the
+	published contract as an exact decimal string, never a float, on the event
+	and on the §8.1 read, and a replay of an older numeric event reads the same."""
+
+	def test_the_accepted_event_carries_the_quantity_as_a_string(self):
+		payload = self.payload_of(self.accepted()["event_id"])
+		self.assertEqual(payload["indicative_quantity"], "10")
+
+	def test_a_fractional_quantity_is_exact_on_the_event_and_on_the_read(self):
+		result = self.accepted(unit="Programme", indicative_quantity=1.125)
+		self.assertEqual(self.payload_of(result["event_id"])["indicative_quantity"], "1.125")
+		frappe.set_user("Administrator")
+		read = workspace.get_current_accepted_need(need=result["need"], user="Administrator")
+		self.assertEqual(read["indicative_quantity"], "1.125")
+
+	def test_the_consumer_replays_see_a_string_even_for_an_older_numeric_event(self):
+		result = self.accepted(unit="Programme", indicative_quantity=2.5)
+		row = frappe.db.get_value("Departmental Need Event", result["event_id"], "name")
+		body = self.payload_of(result["event_id"])
+		body["indicative_quantity"] = 2.5  # as written before the cutover
+		frappe.db.set_value("Departmental Need Event", row, "payload", json.dumps(body), update_modified=False)
+		replayed = events.current_accepted_events(financial_year=FY, organisation_unit=self.ou)
+		mine = [p for p in replayed if p["need_id"] == result["need"]]
+		self.assertEqual([p["indicative_quantity"] for p in mine], ["2.5"])
+		drained = events.consume_events(consumer="qty-test", need=result["need"])["events"]
+		self.assertEqual([e["payload"]["indicative_quantity"] for e in drained], ["2.5"])
+
+	def test_planning_stores_the_quantity_it_reads_from_the_string(self):
+		from kentender_procurement.procurement_planning.services import needs_intake
+
+		self.assertEqual(needs_intake._facts({"indicative_quantity": "1.125"})["quantity"], 1.125)
+		self.assertEqual(needs_intake._facts({"indicative_quantity": 7})["quantity"], 7.0)
+		with self.assertRaises(Exception) as caught:
+			needs_intake._facts({"indicative_quantity": "ten"})
+		self.assertEqual(getattr(caught.exception, "code", ""), "PLN_REFERENCE_UNAVAILABLE")
 
 
 class TestSupersededEvent(EventCase):
@@ -386,8 +429,15 @@ class TestOutboxDelivery(EventCase):
 		accepted = self.accepted()
 		doc = frappe.get_doc("Departmental Need Event", accepted["event_id"])
 		doc.payload = json.dumps({"tampered": True})
-		with self.assertRaises(DepartmentalNeedError) as caught:
+		# outside a Needs command the command-only guard refuses first (RG-08) ...
+		with self.assertRaises(CommandWriteError):
 			doc.save(ignore_permissions=True)
+		# ... and inside one the event's own immutability rule still does
+		with command_write(NEEDS_WRITE_FAMILY):
+			doc = frappe.get_doc("Departmental Need Event", accepted["event_id"])
+			doc.payload = json.dumps({"tampered": True})
+			with self.assertRaises(DepartmentalNeedError) as caught:
+				doc.save(ignore_permissions=True)
 		self.assertEqual(caught.exception.code, "NDS_STATE_CONFLICT")
 
 	def test_current_accepted_events_replays_the_context(self):

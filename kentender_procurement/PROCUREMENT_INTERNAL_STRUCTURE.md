@@ -6,7 +6,6 @@ Aligned with [mono-repo-v2.md](../docs/architecture/mono-repo-v2.md). Each folde
 |-----------|--------|
 | `demand_intake` | Demand Intake and Approval (DIA); handoff to planning |
 | `procurement_planning` | Procurement planning after approved demand |
-| `tender_management` | Tender Management: STD / tender configuration and (later) officer-facing tender lifecycle; v1 desk retired |
 | *(tendering v1 retired)* | Heavy solicitation UI removed; v2 may extend this slice or integrate via hooks — see `release_procurement_package_to_tender` |
 | `bid_submission_opening` | Bid submission and opening |
 | `evaluation_award` | Evaluation and award |

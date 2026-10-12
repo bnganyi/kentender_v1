@@ -52,6 +52,7 @@
 						<tr v-for="(r, ri) in rowsOf(b)" :key="ri">
 							<td v-for="(c, ci) in r.cells" :key="ci" :class="c.td">
 								<template v-if="c.txt">{{ c.t }}</template>
+								<p v-if="c.note" class="kt-muted" style="margin:4px 0 0;font-size:13px" data-testid="evl-cell-note">{{ c.note }}</p>
 								<strong v-if="c.strong">{{ c.t }}</strong><span v-if="c.person" style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap"><span class="kt-sidebar-avatar">{{ c.ini }}</span>{{ c.t }}</span>
 								<span v-if="c.chip" class="kt-status" :class="c.cls">{{ c.t }}</span>
 								<button v-if="c.btn" type="button" class="btn btn-ghost" style="padding:4px 10px;font-size:13px" :disabled="pending" :data-testid="c.testid || undefined" @click="emit('action', { action: c.action, args: c.args })">{{ c.t }}</button>
@@ -101,7 +102,7 @@
 			</div>
 
 			<div v-if="b.is_seg" class="field"><label>{{ b.label }}</label>
-				<div class="kt-seg kt-seg-inline" role="radiogroup" style="width:max-content">
+				<div class="seg" role="radiogroup">
 					<label v-for="o in b.options" :key="o.t" class="seg-opt"><input type="radio" :name="b.name || `s${bi}`" :checked="checked(b, o)" :data-testid="`evl-seg-${slug(o.t)}`" @change="set(b.name, o.value); b.action && emit('action', { action: b.action, args: { value: o.value } })">{{ o.t }}</label>
 				</div>
 			</div>

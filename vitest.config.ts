@@ -214,6 +214,18 @@ export default defineConfig({
 				},
 			},
 			{
+				// The shared access state ("You do not have access to ..."), kept as a copy in each app.
+				plugins: [vue()],
+				test: {
+					name: "access-shared",
+					environment: "jsdom",
+					setupFiles: [
+						"kentender_core/kentender_core/public/js/technical_search/vitest.setup.js",
+					],
+					include: ["kentender_core/kentender_core/public/js/access_shared/**/*.spec.js"],
+				},
+			},
+			{
 				// HOME-CHG-001 v0.6 — the Home page: component tests for the board's states and interactions.
 				plugins: [vue()],
 				test: {

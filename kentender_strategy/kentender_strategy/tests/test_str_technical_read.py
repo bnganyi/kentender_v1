@@ -30,13 +30,14 @@ from kentender_strategy.services.strategy_authorization import (
 	ensure_strategy_governance_roles,
 )
 from kentender_strategy.services.strategy_transitions import transition_plan_version
-from kentender_strategy.tests.fixtures import ensure_fiscal_year
+from kentender_strategy.tests.fixtures import ensure_fiscal_year, open_strategy_write_window, purge_record
 
 FY = "2040-2041"
 
 
 class TechnicalReadTestBase(FrappeTestCase):
 	def setUp(self):
+		open_strategy_write_window(self)
 		ensure_strategy_governance_roles()
 		ensure_fiscal_year(2040)
 		self.suffix = uuid4().hex[:8]
@@ -45,7 +46,7 @@ class TechnicalReadTestBase(FrappeTestCase):
 	def tearDown(self):
 		frappe.set_user("Administrator")
 		for doctype, name in reversed(self._cleanup):
-			frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+			purge_record(doctype, name)
 
 	def _track(self, doc):
 		self._cleanup.append((doc.doctype, doc.name))

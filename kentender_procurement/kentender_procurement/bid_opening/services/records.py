@@ -80,8 +80,10 @@ def lock(tender: str):
 	name = case_for(tender)
 	if not name:
 		raise frappe.DoesNotExistError("Not found")
-	frappe.db.sql("select name from `tabBid Opening Case` where name=%s for update", name)
-	return frappe.get_doc(CASE, name)
+	# The case row, locked, as last committed: a plain read after the lock would return this transaction's
+	# older snapshot, and a waiter would pass `check_version` on a revision another command had already
+	# replaced, then fail in `save` with a raw timestamp error (RG-18, AUD-XC-130).
+	return frappe.get_doc(CASE, name, for_update=True)
 
 
 def check_version(doc, expected) -> None:
@@ -98,10 +100,16 @@ def summary(doc, **extra) -> dict[str, Any]:
 
 
 def command(name: str, *, tender: str, idempotency_key: str, actor: str, payload: dict[str, Any], body: Callable[[], dict[str, Any]]) -> dict[str, Any]:
-	"""Run `body` once per key. A reused key with another payload is a
-	conflict. A Proceedings error is re-raised in Bid Opening's words
+	"""Run `body` once per key. A reused key with another command, actor or
+	payload is a conflict. A Proceedings error is re-raised in Bid Opening's words
 	(BOP-CHG-001 v0.10 §7.1 "Product vocabulary"). A result returned as data
-	(`ok: False`) is not journalled, so a corrected retry runs."""
+	(`ok: False`) is not journalled, so a corrected retry runs.
+
+	The key is claimed with a unique insert in the command's own transaction
+	before `body` runs (RG-18, AUD-XC-131): a duplicate waits on that insert until
+	the first request commits, then reads the winner's row with a locking read (a
+	plain read would return its older snapshot) and returns the original result.
+	A key is never read before it is claimed. Callers authorise before they get here."""
 	from kentender_procurement.proceedings.services.errors import ProceedingsError
 
 	from kentender_procurement.bid_opening.services import errors, prc_owner
@@ -110,21 +118,43 @@ def command(name: str, *, tender: str, idempotency_key: str, actor: str, payload
 	if not key:
 		fail("BOP_VERSION_CONFLICT", {"reason": "idempotency_key_required"})
 	payload_hash = digest({"command": name, "tender": tender, "actor": actor, **payload})
-	row = frappe.db.get_value(JOURNAL, {"idempotency_key": key}, ["command", "payload_hash", "result_json"], as_dict=True)
-	if row:
-		if row.command != name or row.payload_hash != payload_hash:
-			fail("BOP_VERSION_CONFLICT", {"reason": "idempotency_key_reused"})
-		return json.loads(row.result_json or "{}")
 	case = case_for(tender)
 	try:
-		with atomic(), prc_owner.acting(case):
-			result = body()
-			if result.get("ok") is not False:
-				insert(frappe.get_doc({
-					"doctype": JOURNAL, "idempotency_key": key, "command": name, "payload_hash": payload_hash, "result_json": json.dumps(result, default=str),
-					"actor": actor if actor and frappe.db.exists("User", actor) else None, "opening_case": cstr(result.get("opening") or case), "recorded_at": clock.now(),
-				}))
+		with atomic():
+			if not _claim(key, name, payload_hash, actor, case):
+				return _recorded(key, name, payload_hash)
+			with prc_owner.acting(case):
+				result = body()
+			if result.get("ok") is False:
+				frappe.db.delete(JOURNAL, {"idempotency_key": key})
+			else:
+				frappe.db.set_value(JOURNAL, {"idempotency_key": key}, {"result_json": json.dumps(result, default=str), "opening_case": cstr(result.get("opening") or case)}, update_modified=False)
 	except ProceedingsError as exc:
 		code, message = errors.from_prc(exc.code)
 		raise BidOpeningError(code, message, {"proceedings": exc.code, **exc.detail}) from exc
 	return result
+
+
+def _claim(key: str, name: str, payload_hash: str, actor: str, case: str | None) -> bool:
+	"""Insert the key's journal row; False when a committed row holds it."""
+	savepoint = f"bopj_{uuid4().hex[:12]}"
+	frappe.db.savepoint(savepoint)
+	try:
+		insert(frappe.get_doc({
+			"doctype": JOURNAL, "idempotency_key": key, "command": name, "payload_hash": payload_hash, "result_json": "",
+			"actor": actor if actor and frappe.db.exists("User", actor) else None, "opening_case": cstr(case), "recorded_at": clock.now(),
+		}))
+	except (frappe.UniqueValidationError, frappe.DuplicateEntryError):
+		frappe.db.rollback(save_point=savepoint)
+		frappe.clear_last_message()
+		return False
+	frappe.db.release_savepoint(savepoint)
+	return True
+
+
+def _recorded(key: str, name: str, payload_hash: str) -> dict[str, Any]:
+	"""The original result of a key that is already claimed; the same key for another command or payload is a conflict."""
+	row = frappe.db.get_value(JOURNAL, {"idempotency_key": key}, ["command", "payload_hash", "result_json"], as_dict=True, for_update=True)
+	if not row or row.command != name or row.payload_hash != payload_hash or not row.result_json:
+		fail("BOP_VERSION_CONFLICT", {"reason": "idempotency_key_reused"})
+	return json.loads(row.result_json)

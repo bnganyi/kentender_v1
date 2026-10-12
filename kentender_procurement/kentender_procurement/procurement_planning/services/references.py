@@ -16,8 +16,11 @@ dimension — §1.1):
 	AOT-/SAT-/AOD-/APP-…-V{n}          governance tasks / decisions
 	PUB-{PE}-{FYstart}-{plan NNN}-V{n}-A{n} publication attempt
 
-Sequence scans take a MariaDB advisory lock (NDS pattern) so two concurrent
-creates cannot mint the same number.
+Sequence scans take the table's allocation lock (`kentender_core.utils.series`,
+held to commit) so two concurrent creates cannot mint the same number or deadlock
+on each other's gap locks (RG-21), then probe the next candidate with a
+locking read so a number committed by the request that held the lock is seen
+(MariaDB REPEATABLE READ would otherwise hide it).
 """
 
 from __future__ import annotations
@@ -25,6 +28,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cstr, getdate
 
+from kentender_core.utils.series import allocation_lock, next_free_reference
 from kentender_procurement.procurement_planning.errors import fail
 
 
@@ -61,13 +65,17 @@ def fy_label(fiscal_year: str) -> str:
 	return f"FY {fy_period_label(fiscal_year)}"
 
 
+def busy_error(_table: str):
+	fail("PLN_STALE_WRITE", "Reference generation is busy. Try again.")
+
+
 def _next(doctype: str, field: str, prefix: str, *, width: int = 3) -> str:
-	lock = f"pln:ref:{prefix}"[:64]
-	if not frappe.db.sql("select get_lock(%s, 10)", lock)[0][0]:
-		fail("PLN_STALE_WRITE", "Reference generation is busy. Try again.")
+	allocation_lock(doctype, busy=busy_error)
 	rows = frappe.get_all(doctype, filters={field: ["like", f"{prefix}%"]}, pluck=field, limit_page_length=0)
-	seq = max([int(ref[len(prefix):]) for ref in rows if cstr(ref)[len(prefix):].isdigit()] or [0]) + 1
-	return f"{prefix}{seq:0{width}d}"
+	highest = max([int(ref[len(prefix):]) for ref in rows if cstr(ref)[len(prefix):].isdigit()] or [0])
+	# `rows` is this transaction's snapshot: a number another request committed
+	# while this one waited for the lock is not in it (AUD-XC-130).
+	return next_free_reference(doctype, field, prefix, highest, width, busy=busy_error)
 
 
 def dpp_reference(organisation_unit: str, fiscal_year: str) -> str:
@@ -119,7 +127,9 @@ def finance_task_reference(plan_reference_value: str) -> str:
 	`FNT-MOH-2027-001` (§14.6); later requests on the same Plan append a
 	sequence (`FNT-MOH-2027-001-2`)."""
 	base = "FNT-" + cstr(plan_reference_value).removeprefix("PLN-")
-	if not frappe.db.exists("Plan Finance Task", base):
+	# a locking read, under the table's allocation lock: a task another request just committed is not in this snapshot
+	allocation_lock("Plan Finance Task", busy=busy_error)
+	if not frappe.db.sql("select 1 from `tabPlan Finance Task` where name=%s for update", (base,)):
 		return base
 	return _next("Plan Finance Task", "task_reference", base + "-", width=1)
 

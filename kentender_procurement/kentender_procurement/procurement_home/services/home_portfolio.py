@@ -1,7 +1,8 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Procurement Home — portfolio snapshot (budget + tender counts)."""
+"""Procurement Home — portfolio snapshot (budget figures; the tender counts read the
+retired tender workbench and were removed with it)."""
 
 from __future__ import annotations
 
@@ -38,22 +39,6 @@ def _can_see_finance(user: str) -> bool:
 			"Planning Authority",
 			"System Manager",
 			"Accounts Manager",
-		}
-	)
-
-
-def _can_see_tenders(user: str) -> bool:
-	if user in ("Administrator",):
-		return True
-	roles = set(frappe.get_roles(user))
-	return bool(
-		roles
-		& {
-			"Tender Manager",
-			"Procurement Officer",
-			"Planning Authority",
-			"System Manager",
-			"Auditor",
 		}
 	)
 
@@ -120,34 +105,6 @@ def _unfunded_approved_demand(pe: str) -> float:
 	return 0.0
 
 
-def _tender_counts(pe: str) -> tuple[int, int]:
-	if not frappe.db.exists("DocType", "TM2 Tender"):
-		return 0, 0
-	# Keep portfolio open-count aligned with pipeline published_and_open.
-	from kentender_procurement.procurement_home.services.home_pipeline import (
-		_published_open_and_closed_past_deadline,
-		_tm_filters,
-	)
-
-	filters = _tm_filters(pe)
-	active_statuses = [
-		"Draft",
-		"STD Instance Incomplete",
-		"Ready for Publication Review",
-		"Returned for Correction",
-		"Approved for Publication",
-		"Published",
-		"Closed",
-		"Closed - No Valid Submissions",
-		"Opening Ready",
-	]
-	active = int(
-		frappe.db.count("TM2 Tender", {**filters, "status": ["in", active_statuses]})
-	)
-	open_count, _closed = _published_open_and_closed_past_deadline(pe)
-	return active, open_count
-
-
 def get_home_portfolio(
 	procuring_entity: str,
 	fiscal_year: int | None = None,
@@ -155,8 +112,7 @@ def get_home_portfolio(
 ) -> dict[str, Any]:
 	user = (user or frappe.session.user or "").strip()
 	show_finance = _can_see_finance(user)
-	show_tenders = _can_see_tenders(user)
-	if not show_finance and not show_tenders:
+	if not show_finance:
 		return {"ok": True, "visible": False, "figures": []}
 
 	figures: list[dict[str, Any]] = []
@@ -227,29 +183,6 @@ def get_home_portfolio(
 				"message": "Portfolio figures are temporarily unavailable.",
 				"figures": [],
 			}
-
-	if show_tenders:
-		active, open_count = _tender_counts(procuring_entity)
-		figures.extend(
-			[
-				{
-					"key": "active_tenders",
-					"label": "Active tenders",
-					"value": active,
-					"display": str(active),
-					"tone": "default",
-					"url": "/desk/tender-management-v2",
-				},
-				{
-					"key": "open_tenders",
-					"label": "Open tenders",
-					"value": open_count,
-					"display": str(open_count),
-					"tone": "default",
-					"url": "/desk/publications",
-				},
-			]
-		)
 
 	# Never include sealed-bid fields
 	return {"ok": True, "visible": True, "figures": figures, "currency": currency}

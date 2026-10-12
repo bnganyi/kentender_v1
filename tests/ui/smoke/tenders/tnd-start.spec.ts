@@ -40,6 +40,25 @@ test.describe("TPR-DES-02 Start Tender dialog", () => {
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
+	test("a short window: the expanded dialog stays inside the viewport and its Start button can be reached", async ({ page }) => {
+		const state = resetFixture("reset_start_fixture");
+		await login(page, OFFICER, PASSWORD);
+		await gotoTenders(page, `/new/${state.handoff}`);
+		await expectReady(page, "start");
+		await page.setViewportSize({ width: 1024, height: 560 }); // after the helper, which sets its own size
+		const dialog = page.locator('[data-testid="tnd-start-dialog"] .dialog');
+		await dialog.locator(".kt-disclosure-head").first().click();
+		await dialog.locator(".kt-disclosure-head").nth(1).click();
+		const box = await dialog.boundingBox();
+		expect(box, "the dialog is drawn").not.toBeNull();
+		expect(box!.y, "its top is not clipped above the window").toBeGreaterThanOrEqual(0);
+		expect(box!.y + box!.height, "its bottom is not clipped below the window").toBeLessThanOrEqual(560);
+		const start = page.locator('[data-testid="tnd-start-confirm"]');
+		await start.scrollIntoViewIfNeeded();
+		const button = await start.boundingBox();
+		expect(button!.y + button!.height, "Start Tender is on screen once scrolled to").toBeLessThanOrEqual(560);
+	});
+
 	test("unsupported requisition: the critical notice, Start disabled, nothing created", async ({ page }) => {
 		const state = resetFixture("reset_unsupported_start_fixture");
 		await login(page, OFFICER, PASSWORD);

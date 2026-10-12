@@ -3,16 +3,25 @@
 // sessions and attendance, correspondence, disagreement, and the
 // appointment and declaration history. Read-only; a current member may
 // record that they cannot continue.
+import { historyLines } from "./committee.js";
 import { ds, kv, p, tb } from "../board/model.js";
-import { guidance, head, nav, recordTabs, rosterTable } from "./common.js";
+import { delegateAction, guidance, head, nav, recordTabs, rosterTable } from "./common.js";
 
 const time = (when) => ((/(\d{2}:\d{2})/.exec(when || "") || [])[1] || "");
 const day = (when) => String(when || "").split(",")[0];
+
+// The current secretary, beneath the roster (EVL-CHG-001 v0.8 §3, D05-RECORD).
+export function secretaryLine(sec) {
+	const how = sec.basis === "By office" ? "by office as Head of Procurement Function" : `delegated by ${sec.by}`;
+	return `Secretary appointed: ${sec.name} — ${how}, ${sec.at} · ${sec.reference}`;
+}
 
 export function committeeRecord(ctx) {
 	const { data, record: rec } = ctx;
 	if (!rec) return { ...head(data), ...recordTabs(1), blocks: [] };
 	const blocks = [rosterTable(data)];
+	const sec = (data.committee || {}).secretary;
+	if (sec) blocks.push(p(secretaryLine(sec)));
 	const sessions = rec.sessions || [];
 	if (sessions.length) {
 		blocks.push(tb(["Session", "Time", "Subject", "Attendance"], sessions.map((s) => [day(s.start), `${time(s.start)}–${time(s.end)}`, s.subject,
@@ -28,12 +37,10 @@ export function committeeRecord(ctx) {
 	const said = rec.disagreements || [];
 	if (said.length) blocks.push(tb(["Member", "Statement", "Recorded"], said.map((d) => [d.member, d.statement, d.at]), { title: "Disagreement", sec: true }));
 	else blocks.push(p("No disagreement recorded", { strong: true }));
-	const history = (rec.appointments || []).map((a) => `Committee ${a.kind === "Initial" ? "appointed" : a.kind.toLowerCase()} ${a.at} · ${a.reference}${a.reason ? ` — ${a.reason}` : ""}`);
-	const sec = (data.committee || {}).secretary;
-	if (sec) history.push(`Secretary ${sec.name} · ${sec.reference}`);
+	const history = historyLines(rec.appointments || []);
 	const decl = (rec.declarations || []).map((d) => `${d.member} ${d.at} — ${d.choice === "Declare a conflict" ? "conflict declared" : "no conflict"}${d.status !== "Current" ? ` (${d.status.toLowerCase()})` : ""}`);
 	if (decl.length) history.push(`Declarations: ${decl.join("; ")}`);
-	blocks.push(ds("Appointment and declaration history", history));
+	blocks.push(ds("Appointment and declaration history", history, { testid: "evl-history" }));
 	const v = data.viewer;
 	const reader = v.auditor && !v.member && !v.secretary;
 	const board = { ...head(data, { title: "Committee record" }), ...recordTabs(1), blocks };
@@ -42,6 +49,7 @@ export function committeeRecord(ctx) {
 	board.pri = ["Reviewing", "Signing", "Report sent"].includes(data.state) ? nav("View report", "report") : null;
 	board.sec = [];
 	if (v.secretary) board.sec.push(nav("Back to evaluation", []));
+	board.sec.push(...delegateAction(data));
 	if (v.member && !v.chair && ["Preparing", "Reviewing"].includes(data.state)) board.sec.push(nav("Record inability to serve", "unable"));
 	return board;
 }

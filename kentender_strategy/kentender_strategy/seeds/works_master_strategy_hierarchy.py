@@ -31,6 +31,7 @@ from typing import Any, Final
 
 import frappe
 
+from kentender_core.services.command_write_guard import command_write
 from kentender_strategy.services.strategy_transitions import transition_plan_version
 
 PE_MOH = "PE-MOH"
@@ -121,87 +122,89 @@ def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[
 
 	actors = _seed_actors()
 
-	plan = frappe.get_doc(
-		{
-			"doctype": "Strategic Plan",
-			"title": FIXTURE_TITLE,
-			"plan_role": "Primary",
-			"period_start": "2031-07-01",
-			"period_end": "2035-06-30",
-			"fixture_namespace": FIXTURE_NS,
-		}
-	)
-	plan.insert(ignore_permissions=True)
-	version = frappe.get_doc(
-		{
-			"doctype": "Strategic Plan Version",
-			"plan_id": plan.name,
-			"version_number": 1,
-			"effective_from": "2031-07-01",
-			"effective_to": "2035-06-30",
-			"fixture_namespace": FIXTURE_NS,
-		}
-	)
-	version.insert(ignore_permissions=True)
+	# In-process seed owned by Strategy: opens the Strategy write window (AUD-XC-005).
+	with command_write("Strategy"):
+		plan = frappe.get_doc(
+			{
+				"doctype": "Strategic Plan",
+				"title": FIXTURE_TITLE,
+				"plan_role": "Primary",
+				"period_start": "2031-07-01",
+				"period_end": "2035-06-30",
+				"fixture_namespace": FIXTURE_NS,
+			}
+		)
+		plan.insert(ignore_permissions=True)
+		version = frappe.get_doc(
+			{
+				"doctype": "Strategic Plan Version",
+				"plan_id": plan.name,
+				"version_number": 1,
+				"effective_from": "2031-07-01",
+				"effective_to": "2035-06-30",
+				"fixture_namespace": FIXTURE_NS,
+			}
+		)
+		version.insert(ignore_permissions=True)
 
-	pillar = frappe.get_doc(
-		{
-			"doctype": "Strategy Node",
-			"plan_version_id": version.name,
-			"node_type": "Pillar",
-			"title": "Digital health infrastructure",
-			"display_order": 1,
-			"fixture_namespace": FIXTURE_NS,
-		}
-	)
-	pillar.insert(ignore_permissions=True)
-	programme = frappe.get_doc(
-		{
-			"doctype": "Strategy Node",
-			"plan_version_id": version.name,
-			"node_type": "Programme",
-			"title": "Digital Health Services",
-			"display_order": 2,
-			"parent_node_id": pillar.name,
-			"fixture_namespace": FIXTURE_NS,
-		}
-	)
-	programme.insert(ignore_permissions=True)
-	objective = frappe.get_doc(
-		{
-			"doctype": "Strategy Node",
-			"plan_version_id": version.name,
-			"node_type": "Strategic Objective",
-			"title": "Reliable and accessible digital clinical services",
-			"display_order": 3,
-			"parent_node_id": programme.name,
-			"fixture_namespace": FIXTURE_NS,
-		}
-	)
-	objective.insert(ignore_permissions=True)
-	indicator = frappe.get_doc(
-		{
-			"doctype": "Performance Indicator",
-			"plan_version_id": version.name,
-			"measures_node_id": objective.name,
-			"indicator_name": "Availability of core clinical information systems",
-			"definition": "Percentage of scheduled uptime achieved by core clinical information systems.",
-			"unit": "Percentage",
-			"fixture_namespace": FIXTURE_NS,
-		}
-	)
-	indicator.insert(ignore_permissions=True)
-	target = frappe.get_doc(
-		{
-			"doctype": "Performance Target",
-			"indicator_id": indicator.name,
-			"target_by_date": "2033-06-30",
-			"comparison": "At least",
-			"target_value": 99.9,
-			"fixture_namespace": FIXTURE_NS,
-		}
-	)
-	target.insert(ignore_permissions=True)
+		pillar = frappe.get_doc(
+			{
+				"doctype": "Strategy Node",
+				"plan_version_id": version.name,
+				"node_type": "Pillar",
+				"title": "Digital health infrastructure",
+				"display_order": 1,
+				"fixture_namespace": FIXTURE_NS,
+			}
+		)
+		pillar.insert(ignore_permissions=True)
+		programme = frappe.get_doc(
+			{
+				"doctype": "Strategy Node",
+				"plan_version_id": version.name,
+				"node_type": "Programme",
+				"title": "Digital Health Services",
+				"display_order": 2,
+				"parent_node_id": pillar.name,
+				"fixture_namespace": FIXTURE_NS,
+			}
+		)
+		programme.insert(ignore_permissions=True)
+		objective = frappe.get_doc(
+			{
+				"doctype": "Strategy Node",
+				"plan_version_id": version.name,
+				"node_type": "Strategic Objective",
+				"title": "Reliable and accessible digital clinical services",
+				"display_order": 3,
+				"parent_node_id": programme.name,
+				"fixture_namespace": FIXTURE_NS,
+			}
+		)
+		objective.insert(ignore_permissions=True)
+		indicator = frappe.get_doc(
+			{
+				"doctype": "Performance Indicator",
+				"plan_version_id": version.name,
+				"measures_node_id": objective.name,
+				"indicator_name": "Availability of core clinical information systems",
+				"definition": "Percentage of scheduled uptime achieved by core clinical information systems.",
+				"unit": "Percentage",
+				"fixture_namespace": FIXTURE_NS,
+			}
+		)
+		indicator.insert(ignore_permissions=True)
+		target = frappe.get_doc(
+			{
+				"doctype": "Performance Target",
+				"indicator_id": indicator.name,
+				"target_by_date": "2033-06-30",
+				"comparison": "At least",
+				"target_value": 99.9,
+				"fixture_namespace": FIXTURE_NS,
+			}
+		)
+		target.insert(ignore_permissions=True)
 
 	# STR-CHG-001 v1.8 §5.1 — approval is permitted only when the version
 	# can become effective immediately, judged against the site date. This

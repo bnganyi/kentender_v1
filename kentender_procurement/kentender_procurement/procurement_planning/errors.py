@@ -143,8 +143,8 @@ MESSAGES: dict[str, str] = {
 	"PLN_CORRECTION_NOT_ACTIVE": "Record completion only after the corrected plan becomes the current plan.",
 	"PLN_REMOVAL_BLOCKED": "This item is already used in procurement and cannot be removed through Planning.",
 	"PLN_ALLOWANCE_EXCEEDED": "The requested quantity or amount exceeds what remains under the original plan item.",
-	"PLN_TREASURY_EVIDENCE_REQUIRED": "Record evidence that this approved plan was sent to Treasury before website publication.",
-	"PLN_PUBLICATION_FAILED": "The plan was not published. The approved document is unchanged.",
+	"PLN_TREASURY_EVIDENCE_REQUIRED": "Complete the publication details before confirming: the Treasury submission date, a submission reference or attachment, the website publication date and the public plan URL, and tick the confirmation.",
+	"PLN_PUBLICATION_FAILED": "The plan was not published. The approved document is unchanged.",  # historical in MVP 1 (PLN v1.31): not raised
 	"PLN_PUBLICATION_UNKNOWN": "We could not confirm whether publication succeeded. Check the existing attempt before trying again.",
 	"PLN_PUBLICATION_HELD": "Publication is on hold. Review the issue shown.",
 	"PLN_PUBLICATION_ACK_MISMATCH": "The publication confirmation does not match this approved plan.",
@@ -174,4 +174,20 @@ def fail(code: str, message: str = "", detail: dict | None = None) -> None:
 			f"{code!r} is not part of the PLN-CHG-001 v1.18 §8 error contract. "
 			f"Map the condition onto one of: {', '.join(sorted(ERROR_CODES))}."
 		)
-	raise ProcurementPlanningError(code, message or MESSAGES[code], detail)
+	text = message or MESSAGES[code]
+	# The browser needs the code and the detail (which field, which row), not
+	# only the sentence. They travel on the message log, which Frappe returns as
+	# `_server_messages` on the failed request; the call wrapper reads them. Until
+	# 9 Oct 2026 the detail never left the server, so a refusal that named one
+	# field reached the page as a generic sentence (Requisitions has done this
+	# since its first version: `kt_req`).
+	log = getattr(frappe.local, "message_log", None)
+	if log is not None:
+		log.append({"message": text, "title": code, "indicator": "red", "kt_pln": {"code": code, "detail": _jsonable(detail or {})}})
+	raise ProcurementPlanningError(code, text, detail)
+
+
+def _jsonable(value):
+	import json
+
+	return json.loads(json.dumps(value, default=str))

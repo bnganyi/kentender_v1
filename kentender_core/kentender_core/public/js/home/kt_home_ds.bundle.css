@@ -576,6 +576,19 @@
 
 .kt-industry.kt-home {
 	--radius-control: 2px;
+	--radius-field: 4px;
+	--color-control-border: #8590a6;
+	--color-control-border-hover: #6b7690;
+}
+
+.kt-industry.kt-home {
+	--radius-md: 4px;
+	--radius-lg: 4px;
+	--radius-xl: var(--radius-lg);
+}
+
+.kt-industry.kt-home .kt-notice {
+	border-radius: var(--radius-control);
 }
 
 .kt-industry.kt-home .btn {
@@ -584,7 +597,15 @@
 
 .kt-industry.kt-home .btn-secondary {
 	background: var(--color-surface);
-	border-color: var(--color-neutral-600);
+	border-color: var(--color-control-border);
+}
+
+.kt-industry.kt-home .btn-secondary:hover:not(:disabled) {
+	border-color: var(--color-control-border-hover);
+}
+
+.kt-industry.kt-home .btn-secondary.kt-danger:hover:not(:disabled) {
+	border-color: var(--status-critical);
 }
 
 .kt-industry.kt-home .btn-secondary:hover:not(:disabled) {
@@ -598,4 +619,17 @@
 .kt-industry.kt-home .btn-secondary:disabled {
 	background: transparent;
 	border-color: var(--color-neutral-300);
+}
+
+.kt-industry.kt-home .btn:focus {
+	box-shadow: none;
+}
+
+.kt-industry.kt-home .btn:focus-visible,
+.kt-industry.kt-home .btn:active {
+	box-shadow: none !important;
+}
+
+.kt-industry.kt-home .btn-secondary:focus:not(:hover):not(:active):not(:disabled) {
+	background: var(--color-surface);
 }

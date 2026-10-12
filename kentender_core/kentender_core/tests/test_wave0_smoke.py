@@ -10,7 +10,7 @@ import json
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_core.services.audit_event_service import log_audit_event
+from kentender_core.services.audit_event_service import log_audit_event, purge_audit_events
 from kentender_core.services.business_id_service import generate_business_id
 from kentender_core.services.workflow_guard_service import run_workflow_guard
 
@@ -78,7 +78,7 @@ class TestWave0Smoke(IntegrationTestCase):
 		self.assertEqual(row.event_type, "ken.smoke.wave0")
 		meta = row.metadata if isinstance(row.metadata, dict) else json.loads(row.metadata)
 		self.assertEqual(meta.get("wave"), 0)
-		frappe.delete_doc("Audit Event", name, force=True, ignore_permissions=True)
+		purge_audit_events({"name": name}, reason="wave 0 smoke test clean-up")
 		frappe.db.commit()
 
 	def test_smoke_procuring_entity_exception_workflow_guard(self):

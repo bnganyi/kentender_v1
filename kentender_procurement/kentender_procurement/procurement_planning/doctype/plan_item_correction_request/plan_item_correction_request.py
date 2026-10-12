@@ -14,9 +14,15 @@ from __future__ import annotations
 import frappe
 from frappe.model.document import Document
 
+from kentender_core.services.command_write_guard import CommandWriteGuardMixin
+from kentender_procurement.procurement_planning.write_family import PLANNING_WRITE_FAMILY
 
-class PlanItemCorrectionRequest(Document):
+
+class PlanItemCorrectionRequest(CommandWriteGuardMixin, Document):
+	command_write_family = PLANNING_WRITE_FAMILY
+
 	def validate(self) -> None:
+		super().validate()
 		if self.is_new():
 			return
 		before = self.get_doc_before_save()

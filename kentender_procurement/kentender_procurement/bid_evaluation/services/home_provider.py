@@ -25,7 +25,7 @@ user) and only reads: no case is prepared, advanced or refreshed.
   load is a failed read, not an empty one.
 - **coming_up** — the evaluation deadline the owner records, for those who oversee or
   hold the evaluation, while the case is still open.
-- **completed** — the actor's own appointment, secretary assignment, report sent for
+- **completed** — the actor's own appointment, secretary delegation, report sent for
   signing and report return of the last 30 days. The system's own delivery is not an
   action of a person.
 
@@ -61,7 +61,6 @@ UNAVAILABLE = "unavailable"
 #: evaluation committee" is the spec's own wording (the owner's headline; its action label is "Appoint committee").
 ACTIONS: dict[str, str] = {
 	"appoint": "Appoint the evaluation committee",
-	"secretary": "Assign evaluation secretary",
 	"declare": "Declare interests",
 	"resolve-appointment": "Resolve committee appointment",
 	"review": "Review bids",
@@ -82,7 +81,6 @@ ACTIONS: dict[str, str] = {
 #: The owner's waiting rows: row key (before the first ":waiting") → the verb phrase after "Waiting for {holder} to …".
 WAITING: dict[str, str] = {
 	"appoint": "appoint the evaluation committee",
-	"secretary": "assign the evaluation secretary",
 	"declare": "declare their interests",
 	"resolve-appointment": "resolve the committee appointment",
 	"concern": "respond to the concern",
@@ -102,7 +100,7 @@ PLURAL = {"Appointed member": "the committee members"}
 #: Recently completed actions: kind → (the action label, what "You …" says).
 COMPLETED: dict[str, tuple[str, str]] = {
 	"appointed": ("Appointed evaluation committee", "appointed the evaluation committee"),
-	"secretary": ("Assigned evaluation secretary", "assigned the evaluation secretary"),
+	"secretary": ("Delegated secretary duties", "delegated the secretary duties"),
 	"report": ("Sent report for signing", "sent the evaluation report for signing"),
 	"returned": ("Returned evaluation report", "returned the evaluation report for correction"),
 }
@@ -256,8 +254,6 @@ def _holder(facts: _Facts, doc, row: dict[str, Any], kind: str) -> tuple[list[st
 	than two or none, a due instant), from the roster and the people the owner's rows are about."""
 	if kind in ("appoint", "resolve-appointment"):
 		return facts.names(people.holders(people.ACCOUNTING_OFFICER)), "an Accounting Officer", people.ACCOUNTING_OFFICER, None
-	if kind == "secretary":
-		return facts.names(people.holders(people.HEAD_OF_PROCUREMENT)), "a Head of Procurement Function", people.HEAD_OF_PROCUREMENT, None
 	if kind == "declare":
 		owed = [u for u in roster.member_users(doc.name) if not roster.declaration(doc.name, u)]
 		return facts.names(owed), "the committee members", "Committee members", None
@@ -295,7 +291,7 @@ def _waiting(facts: _Facts, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 		if not doc or kind not in WAITING:
 			continue
 		since = _since(row)
-		if kind in ("appoint", "secretary"):
+		if kind == "appoint":
 			since = since or doc.prepared_at or doc.creation  # an unset preparation instant: the case's own creation
 		if not since:
 			frappe.logger("kentender.home").info("evaluation waiting row has no since | row=%s", task_id)
@@ -419,12 +415,13 @@ def _completed(user: str) -> list[dict[str, Any]]:
 			sentence=home_time.completed_sentence(wording[1], when, follow=_awaiting(facts, doc, kind)),
 		))
 
-	def rows(doctype: str, who: str, when: str):
-		return frappe.get_all(doctype, filters={who: user, when: (">=", cutoff)}, fields=["name", "evaluation_case", when], order_by=f"{when} desc", limit_page_length=0)
+	def rows(doctype: str, who: str, when: str, **extra):
+		return frappe.get_all(doctype, filters={who: user, when: (">=", cutoff), **extra}, fields=["name", "evaluation_case", when], order_by=f"{when} desc", limit_page_length=0)
 
 	for row in rows(roster.APPOINTMENT, "appointed_by", "appointed_at"):
 		add(row.evaluation_case, row.name, "appointed", row.appointed_at)
-	for row in rows(roster.SECRETARY, "assigned_by", "assigned_at"):
+	# only the Head's written delegation is an action of a person; the by-office record is part of the Accounting Officer's appointment (EVL-CHG-001 v0.8 §3)
+	for row in rows(roster.SECRETARY, "assigned_by", "assigned_at", basis="Written appointment"):
 		add(row.evaluation_case, row.name, "secretary", row.assigned_at)
 	for row in rows(signing.REPORT, "frozen_by", "frozen_at"):
 		add(row.evaluation_case, row.name, "report", row.frozen_at)

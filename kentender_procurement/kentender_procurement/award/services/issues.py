@@ -15,6 +15,7 @@ import frappe
 from frappe.utils import cstr
 
 from kentender_procurement.award.services import clock, people, records, state
+from kentender_procurement.services import sequence
 
 ISSUE = state.ISSUE
 
@@ -26,7 +27,7 @@ def open_issue(doc, *, source_event: str, issue_type: str, title: str, holds: bo
 	if name:
 		return frappe.get_doc(ISSUE, name)
 	now = clock.now()
-	number = frappe.db.count(ISSUE, {"award_case": doc.name}) + 1
+	number = sequence.next_count(ISSUE, {"award_case": doc.name})
 	if not owner_user and owner_role == people.HEAD_OF_PROCUREMENT:
 		owner_user = hop_for(doc)
 	return records.new(ISSUE, issue_id=f"{doc.name}-ISS-{number:02d}", award_case=doc.name, cycle=doc.current_cycle, source_event=source_event,

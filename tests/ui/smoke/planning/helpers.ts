@@ -54,21 +54,23 @@ const NEED_CONTENT = {
 	expected_operational_result: "Priority health facilities can use secure and interoperable digital health services.",
 	indicative_quantity: 1,
 	unit: "Each",
+	// NDS-CHG-001 v1.17 — a Need is submitted with its estimated total cost
+	estimated_total_cost: 80_000_000,
 	required_by_date: "2099-03-31",
 };
 
 /** §14.8's two Goods sources for the combined item. */
 const COMBINED_NEEDS = [
-	{ ...NEED_CONTENT, title: "Clinical training laptops for digital health rollout", indicative_quantity: 200, required_by_date: "2099-04-30" },
-	{ ...NEED_CONTENT, title: "Clinical deployment laptops for digital health rollout", indicative_quantity: 300, required_by_date: "2099-04-30" },
+	{ ...NEED_CONTENT, title: "Clinical training laptops for digital health rollout", indicative_quantity: 200, estimated_total_cost: 20_000_000, required_by_date: "2099-04-30" },
+	{ ...NEED_CONTENT, title: "Clinical deployment laptops for digital health rollout", indicative_quantity: 300, estimated_total_cost: 30_000_000, required_by_date: "2099-04-30" },
 ];
 
 /** Fixtures that project an accepted Need; the helper obtains it from NDS first. */
 const NEED_BACKED = new Set([
 	"reset_dpp_fixture", "reset_review_fixture", "reset_accepted_fixture", "reset_workbench_fixture",
 	"reset_plan_item_fixture", "reset_finance_fixture", "reset_governance_fixture", "reset_statutory_fixture",
-	"reset_approved_fixture", "reset_active_fixture", "reset_publication_failed_fixture", "reset_update_candidate_fixture",
-	"reset_collective_fixture", "reset_publication_unknown_fixture", "reset_late_activation_fixture", "reset_finance_excess_fixture",
+	"reset_approved_fixture", "reset_active_fixture", "reset_activation_held_fixture", "reset_update_candidate_fixture",
+	"reset_collective_fixture", "reset_late_activation_fixture", "reset_finance_excess_fixture",
 	"reset_ready_for_funding_fixture", "reset_item_config_missing_fixture", "reset_item_lots_fixture",
 	"reset_item_direct_procurement_fixture", "reset_item_feasibility_fail_fixture",
 	"reset_finance_reassessment_fixture", "reset_update_over_budget_fixture", "reset_waiting_budget_revision_fixture",

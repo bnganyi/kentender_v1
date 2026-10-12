@@ -32,6 +32,7 @@ from frappe.utils import cint, cstr, escape_html
 from kentender_procurement.bid_opening.services import (
 	appointment, ceremony, clock, errors, finish, labels, people, prc, records, renders, session,
 )
+from kentender_procurement.services import sequence
 
 SIGN, INITIAL = "Sign", "Initial"
 
@@ -161,7 +162,7 @@ def _freeze_payload(doc, *, correction: dict[str, str] | None = None) -> dict[st
 	html = content(doc, correction=correction)
 	pdf, pages = render(html)
 	digest = hashlib.sha256(html.encode("utf-8")).hexdigest()
-	number = frappe.db.count("Proceeding Minutes Version", {"proceeding": doc.proceeding}) + 1
+	number = sequence.next_count("Proceeding Minutes Version", {"proceeding": doc.proceeding})
 	prefix = f"{doc.proceeding}-M{number:02d}"
 	register = frappe.get_doc(finish.REGISTER, doc.register)
 	return {"html": html, "pdf": pdf, "pages": pages, "prefix": prefix, "register": register,

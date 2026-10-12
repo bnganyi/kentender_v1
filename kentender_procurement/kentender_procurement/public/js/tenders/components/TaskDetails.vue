@@ -39,9 +39,9 @@
 		<div class="tnd-section tnd-section--form tnd-section--last">
 			<h3 class="kt-card-title tnd-section-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Pre-tender meeting</h3>
 			<div class="field" style="margin: 0"><label id="tnd-meeting-label">Hold a pre-tender meeting?</label>
-				<div class="tnd-seg" role="radiogroup" aria-labelledby="tnd-meeting-label">
-					<label class="tnd-seg-opt"><input type="radio" name="tnd-meeting" :checked="!form.pre_tender_meeting" data-testid="tnd-meeting-no" @change="form.pre_tender_meeting = false" />No</label>
-					<label class="tnd-seg-opt"><input type="radio" name="tnd-meeting" :checked="form.pre_tender_meeting" data-testid="tnd-meeting-yes" @change="form.pre_tender_meeting = true" />Yes</label>
+				<div class="seg" role="radiogroup" aria-labelledby="tnd-meeting-label">
+					<label class="seg-opt"><input type="radio" name="tnd-meeting" :checked="!form.pre_tender_meeting" data-testid="tnd-meeting-no" @change="form.pre_tender_meeting = false" />No</label>
+					<label class="seg-opt"><input type="radio" name="tnd-meeting" :checked="form.pre_tender_meeting" data-testid="tnd-meeting-yes" @change="form.pre_tender_meeting = true" />Yes</label>
 				</div>
 				<p v-if="errors.pre_tender_meeting" class="tnd-field-error">{{ errors.pre_tender_meeting }}</p>
 			</div>
@@ -50,9 +50,9 @@
 				<div class="tnd-grid-2 tnd-grid-start">
 					<div class="field" style="margin: 0"><label for="tnd-meeting_datetime">Meeting date/time</label><input id="tnd-meeting_datetime" type="datetime-local" class="input" v-model="form.meeting_datetime" data-testid="tnd-field-meeting_datetime" /><p v-if="errors.meeting_datetime" class="tnd-field-error">{{ errors.meeting_datetime }}</p></div>
 					<div class="field" style="margin: 0"><label>Meeting mode</label>
-						<div class="tnd-seg" role="radiogroup" aria-label="Meeting mode">
-							<label class="tnd-seg-opt"><input type="radio" name="tnd-mode" :checked="form.meeting_mode === 'Physical'" data-testid="tnd-mode-physical" @change="form.meeting_mode = 'Physical'" />Physical</label>
-							<label class="tnd-seg-opt"><input type="radio" name="tnd-mode" :checked="form.meeting_mode === 'Online'" data-testid="tnd-mode-online" @change="form.meeting_mode = 'Online'" />Online</label>
+						<div class="seg" role="radiogroup" aria-label="Meeting mode">
+							<label class="seg-opt"><input type="radio" name="tnd-mode" :checked="form.meeting_mode === 'Physical'" data-testid="tnd-mode-physical" @change="form.meeting_mode = 'Physical'" />Physical</label>
+							<label class="seg-opt"><input type="radio" name="tnd-mode" :checked="form.meeting_mode === 'Online'" data-testid="tnd-mode-online" @change="form.meeting_mode = 'Online'" />Online</label>
 						</div>
 						<p v-if="errors.meeting_mode" class="tnd-field-error">{{ errors.meeting_mode }}</p>
 					</div>

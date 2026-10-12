@@ -13,7 +13,8 @@ from uuid import uuid4
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from kentender_strategy.tests.fixtures import ensure_fiscal_year, pin_review_date
+from kentender_core.services.command_write_guard import maintenance_write
+from kentender_strategy.tests.fixtures import ensure_fiscal_year, pin_review_date, purge_record
 
 from kentender_strategy.api import strategy_consumer_api as api
 from kentender_strategy.services import strategy_consumer as consumer
@@ -41,9 +42,13 @@ _PROFILE_ROLE = {
 }
 
 
+def _token(version: str) -> str:
+	return str(frappe.db.get_value("Strategic Plan Version", version, "modified"))
+
+
 class Phase4TestBase(FrappeTestCase):
 	def setUp(self):
-		pin_review_date(self)
+		pin_review_date(self, "2044-01-01")
 		ensure_fiscal_year(2040)
 		ensure_strategy_governance_roles()
 		self.suffix = uuid4().hex[:8]
@@ -52,7 +57,7 @@ class Phase4TestBase(FrappeTestCase):
 	def tearDown(self):
 		frappe.set_user("Administrator")
 		for doctype, name in reversed(self._cleanup):
-			frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+			purge_record(doctype, name)
 
 	def _track(self, doc):
 		self._cleanup.append((doc.doctype, doc.name))
@@ -89,6 +94,10 @@ class Phase4TestBase(FrappeTestCase):
 		self._cleanup.append(("User Responsibility Assignment", outcome["assignment"]))
 
 	def _plan_and_version(self, **version_kwargs) -> tuple[str, str]:
+		with maintenance_write("Strategy", reason="test fixture"):
+			return self._plan_and_version_unguarded(**version_kwargs)
+
+	def _plan_and_version_unguarded(self, **version_kwargs) -> tuple[str, str]:
 		plan = self._track(
 			frappe.get_doc(
 				{
@@ -112,6 +121,10 @@ class Phase4TestBase(FrappeTestCase):
 		return plan.name, version.name
 
 	def _fill_hierarchy(self, plan_version: str) -> dict:
+		with maintenance_write("Strategy", reason="test fixture"):
+			return self._fill_hierarchy_unguarded(plan_version)
+
+	def _fill_hierarchy_unguarded(self, plan_version: str) -> dict:
 		pillar = self._track(
 			frappe.get_doc(
 				{"doctype": "Strategy Node", "plan_version_id": plan_version, "node_type": "Pillar", "title": "Pillar", "display_order": 1}
@@ -459,12 +472,15 @@ class TestLifecycleCommandDispatch(Phase4TestBase):
 		self._fill_hierarchy(version)
 
 		frappe.set_user(author)
-		out = api.submit_strategy_version(version)
+		out = api.submit_strategy_version(version, expected_version=_token(version), idempotency_key=f"disp-s-{self.suffix}")
 		self.assertEqual(out["status"], "Submitted for approval")
 
 		frappe.set_user(approver)
-		out = api.approve_strategy_version(version)
+		out = api.approve_strategy_version(version, expected_version=_token(version), idempotency_key=f"disp-a-{self.suffix}")
 		self.assertEqual(out["status"], "Active")
+		frappe.set_user("Administrator")
+		for key in (f"disp-s-{self.suffix}", f"disp-a-{self.suffix}"):
+			self._cleanup.append(("Strategy Command Journal", frappe.db.get_value("Strategy Command Journal", {"idempotency_key": key}, "name")))
 
 
 class TestActiveContentImmutability(Phase4TestBase):

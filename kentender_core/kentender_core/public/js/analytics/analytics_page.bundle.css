@@ -16,7 +16,7 @@
 .kt-industry.kt-analytics .kt-ap-sheet {
 	container: kt-ap / inline-size;
 	margin: 0 auto; max-width: 1200px; box-sizing: border-box; padding: 32px;
-	background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: 12px;
+	background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: var(--radius-lg);
 	display: flex; flex-direction: column; gap: 24px;
 }
 .kt-industry.kt-analytics .kt-ap-body { display: flex; flex-direction: column; gap: 24px; min-width: 0; }

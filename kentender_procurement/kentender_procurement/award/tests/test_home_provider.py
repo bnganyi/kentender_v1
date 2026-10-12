@@ -19,7 +19,9 @@ import json
 from datetime import datetime, timedelta
 
 import frappe
+from kentender_core.services.command_write_guard import purge_doc
 
+from kentender_core.services.command_write_guard import maintenance_write
 from kentender_core.services import home_entries as he
 from kentender_core.services import home_support, home_time
 from kentender_core.services import home_workspace as hw
@@ -46,7 +48,7 @@ def _remove_extras() -> None:
 	"""The users, assignments, Tender and Version this module adds; nothing else is touched."""
 	frappe.set_user("Administrator")
 	for name in frappe.get_all("User Responsibility Assignment", filters={"user": ("in", USERS)}, pluck="name"):
-		frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+		purge_doc("User Responsibility Assignment", name)
 	for name in frappe.get_all("Contact Email", filters={"email_id": ("in", USERS)}, pluck="parent"):
 		frappe.delete_doc("Contact", name, force=1, ignore_permissions=True)
 	for email in USERS:
@@ -56,8 +58,8 @@ def _remove_extras() -> None:
 	for doctype, field in (("Tender Version", "tender"), ("Tender", "name")):
 		for name in frappe.get_all(doctype, filters={field: ("in", tenders)}, pluck="name") if tenders else []:
 			doc = frappe.get_doc(doctype, name)
-			doc.flags.kt_fixture_wipe = True
-			doc.delete(ignore_permissions=True, force=True)
+			with maintenance_write("Tenders", reason="test clean-up"):
+				doc.delete(ignore_permissions=True, force=True)
 	frappe.db.commit()
 
 

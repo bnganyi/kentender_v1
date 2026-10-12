@@ -12,9 +12,11 @@ snapshots, one Budget reservation per drawdown line and the nine compatibility
 results. Stored v1.3 handoffs are history and are never rewritten or rehashed.
 
 `record_handoff_consumption` is the owner command Tender Preparation calls in
-the same transaction as its Draft Tender: it locks the handoff row — the lock
-revocation takes too — rechecks Authorised and unconsumed, and binds exactly
-one Tender. There is no release: once consumed, the authorisation cannot be
+the same transaction as its Draft Tender, in-process only (there is no web
+endpoint, AUD-REQ-001; the Tenders gateway first verifies the Tender exists
+and was created from this handoff). It takes the locks revocation takes, in
+the same order — Requisition root, then handoff (AUD-XC-109) — rechecks
+Authorised and unconsumed, and binds exactly one Tender. There is no release: once consumed, the authorisation cannot be
 revoked (§7.4).
 """
 
@@ -26,13 +28,21 @@ import frappe
 from frappe.utils import cstr, now_datetime
 
 from kentender_procurement.procurement_requisitions.services import digest, envelope, precision, records
+from kentender_procurement.procurement_requisitions.services import scope as req_scope
 from kentender_procurement.procurement_requisitions.services.errors import fail
 
-HANDOFF_VERSION = "1.4"
+#: v1.5 (REQ-CHG-001 v1.18 §5.12): every requirement row also carries `applies_to_item_ids`, the exact items it
+#: covers. Tender Preparation accepts 1.4 as well, so an authorisation made before v1.18 stays usable.
+HANDOFF_VERSION = "1.5"
 
 
 def _rows(doc, fieldname: str, fields: tuple[str, ...]) -> list[dict[str, Any]]:
 	return [{f: row.get(f) for f in fields} for row in doc.get(fieldname) or []]
+
+
+def _scoped_rows(doc, fieldname: str, fields: tuple[str, ...]) -> list[dict[str, Any]]:
+	"""Requirement rows with the exact items each covers (§5.7A); a row locked before v1.18 is read from its scope."""
+	return [{**{f: row.get(f) for f in fields}, "applies_to_item_ids": req_scope.item_ids(row, doc.items)} for row in doc.get(fieldname) or []]
 
 
 def build_payload(*, root, version, package_version, projection: dict[str, Any], checks: list[Any], reservations: list[dict[str, Any]], hopf_decision) -> dict[str, Any]:
@@ -58,7 +68,8 @@ def build_payload(*, root, version, package_version, projection: dict[str, Any],
 		"requisition_id": root.name, "requisition_reference": root.requisition_reference, "requisition_version": version.name, "content_digest": version.content_digest,
 		"fiscal_year": projection.get("fiscal_year"), "plan_id": root.plan_id, "plan_version_id": root.plan_version_id,
 		"plan_item_id": root.plan_item_id, "plan_item_version_id": root.plan_item_version_id,
-		"contributing_org_unit_ids": sorted(records.contributing_units(root)),
+		# v1.15 §5.2 — a submitted Version's contributing departments are those of its retained source lines.
+		"contributing_org_unit_ids": sorted({line.contributing_org_unit for line in version.drawdown_lines}),
 		"strategic_objective_id": root.strategic_objective_id, "strategic_objective_path": root.strategic_objective_path,
 		"procurement_category": root.procurement_category, "plan_horizon": root.plan_horizon,
 		"business_need": "; ".join(sorted({s.get("description", "") for s in projection.get("sources", []) if s.get("description")})),
@@ -74,9 +85,9 @@ def build_payload(*, root, version, package_version, projection: dict[str, Any],
 		"items": _rows(package_version, "items", ("requisition_item_id", "drawdown_line_id", "plan_item_line_id", "equipment_category", "item_name", "quantity", "unit", "intended_use", "delivery_location", "latest_delivery_date")),
 		"warranty_support": {f: package_version.get(f) for f in ("minimum_warranty_months", "onsite_support_required", "maximum_support_response_hours", "manufacturer_support_required", "service_location_constraint", "support_description")},
 		"standard_profile": {"key": package_version.standard_profile_key, "version": package_version.standard_profile_version},
-		"technical_requirements": _rows(package_version, "technical_requirements", ("technical_requirement_id", "applies_to_scope", "applies_to_id", "characteristic_key", "comparison", "required_value_json", "required_value_display", "unit", "other_value", "reason")),
-		"related_services": _rows(package_version, "related_services", ("service_requirement_id", "service_type", "applies_to_scope", "applies_to_id", "required_result", "quantity_or_coverage", "completion_date", "acceptance_evidence", "other_evidence_name")),
-		"acceptance_requirements": _rows(package_version, "acceptance_requirements", ("acceptance_requirement_id", "applies_to_scope", "applies_to_id", "check_type", "pass_condition", "evidence_type", "other_evidence_name")),
+		"technical_requirements": _scoped_rows(package_version, "technical_requirements", ("technical_requirement_id", "applies_to_scope", "applies_to_id", "characteristic_key", "comparison", "required_value_json", "required_value_display", "unit", "other_value", "reason")),
+		"related_services": _scoped_rows(package_version, "related_services", ("service_requirement_id", "service_type", "applies_to_scope", "applies_to_id", "required_result", "quantity_or_coverage", "completion_date", "acceptance_evidence", "other_evidence_name")),
+		"acceptance_requirements": _scoped_rows(package_version, "acceptance_requirements", ("acceptance_requirement_id", "applies_to_scope", "applies_to_id", "check_type", "pass_condition", "evidence_type", "other_evidence_name")),
 		"supporting_materials": _rows(package_version, "supporting_materials", ("supporting_material_id", "title", "document_type", "other_document_type", "purpose", "treatment", "file_digest", "linked_requirement_ids_json", "document_version")),
 		"product_pattern": "IT Equipment",
 		"compatibility": [c.as_dict() for c in checks],
@@ -93,13 +104,13 @@ def build_and_insert(*, root, version, package_version, projection, checks, rese
 	payload = build_payload(root=root, version=version, package_version=package_version, projection=projection, checks=checks, reservations=reservations, hopf_decision=hopf_decision)
 	handoff_digest = digest.sha256_hex(payload)
 	payload["handoff_digest"] = handoff_digest
-	return frappe.get_doc(
+	return envelope.insert(frappe.get_doc(
 		{
 			"doctype": "Authorised Requisition Handoff", "requisition": root.name, "requisition_version": version.name,
 			"payload_json": digest.canonical_json(payload), "handoff_digest": handoff_digest, "handoff_version": HANDOFF_VERSION,
 			"generated_at": now_datetime(),
 		}
-	).insert(ignore_permissions=True)
+	))
 
 
 def record_handoff_consumption(*, handoff: str, tender: str, tender_version: str, template_key: str, template_version: str, idempotency_key: str) -> dict[str, Any]:
@@ -109,16 +120,24 @@ def record_handoff_consumption(*, handoff: str, tender: str, tender_version: str
 	`REQ_HANDOFF_CONFLICT`. Consumption frees the item's open slot (§5.1) but
 	releases no drawdown."""
 	payload = {"handoff": handoff, "tender": tender, "tender_version": tender_version, "template_key": template_key, "template_version": template_version}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	actor = frappe.session.user  # an in-process owner call made inside Tenders' own start command
+	replay = envelope.replay_or_none(idempotency_key, payload, command="RecordHandoffConsumption", actor=actor)
 	if replay:
 		return replay
 	if not handoff or not frappe.db.exists("Authorised Requisition Handoff", handoff):
 		raise frappe.DoesNotExistError("Handoff not found")
+	# Lock order (AUD-XC-109): Requisition root, then its handoff — the order
+	# `authorise_requisition` and `revoke_unconsumed_authorisation` take, so
+	# consumption and revocation queue on the root instead of deadlocking. The
+	# handoff's requisition never changes, so it is read before the locks.
+	requisition = cstr(frappe.db.get_value("Authorised Requisition Handoff", handoff, "requisition"))
+	root = envelope.locked("Procurement Requisition", requisition)
 	doc = envelope.locked("Authorised Requisition Handoff", handoff)
-	root = envelope.locked("Procurement Requisition", doc.requisition)
 	if doc.consumed_at:
 		if doc.tender == cstr(tender):
-			return {"ok": True, "idempotent": True, "action": "already_consumed", "handoff": doc.name, "tender": doc.tender, "consumed_at": cstr(doc.consumed_at)}
+			result = {"ok": True, "idempotent": True, "action": "already_consumed", "handoff": doc.name, "tender": doc.tender, "consumed_at": cstr(doc.consumed_at)}
+			envelope.record_command(idempotency_key=idempotency_key, command="RecordHandoffConsumption", payload=payload, result=result, document_type="Authorised Requisition Handoff", document_name=doc.name, actor=actor)
+			return result
 		fail("REQ_HANDOFF_CONFLICT", detail={"tender": cstr(doc.tender)})
 	if root.current_state != "Authorised" or root.handoff != doc.name:
 		fail("REQ_HANDOFF_CONFLICT", detail={"state": root.current_state})
@@ -128,10 +147,10 @@ def record_handoff_consumption(*, handoff: str, tender: str, tender_version: str
 	doc.template_key = cstr(template_key)
 	doc.template_version = cstr(template_version)
 	doc.consumed_at = now_datetime()
-	doc.save(ignore_permissions=True)
+	envelope.save(doc)
 	root.handoff_consumed_at = doc.consumed_at
 	records.release_slot(root)
 	envelope.bump(root)
 	result = {"ok": True, "idempotent": False, "action": "consumed", "handoff": doc.name, "tender": doc.tender, "consumed_at": cstr(doc.consumed_at)}
-	envelope.record_command(idempotency_key=idempotency_key, command="RecordHandoffConsumption", payload=payload, result=result, document_type="Authorised Requisition Handoff", document_name=doc.name)
+	envelope.record_command(idempotency_key=idempotency_key, command="RecordHandoffConsumption", payload=payload, result=result, document_type="Authorised Requisition Handoff", document_name=doc.name, actor=actor)
 	return result

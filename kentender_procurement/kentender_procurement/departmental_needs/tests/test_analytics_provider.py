@@ -20,11 +20,14 @@ from datetime import datetime
 from typing import Any
 
 import frappe
+from kentender_core.services.command_write_guard import purge_doc
 from frappe.tests import IntegrationTestCase
 from frappe.utils import now_datetime
 
 from kentender_core.services import analytics_contract as ac
 from kentender_core.services import responsibility_administration as administration
+from kentender_core.services.command_write_guard import maintenance_write
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
 from kentender_procurement.departmental_needs.constants import REASON_REQUIRED_ACTIONS
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import AUTHOR, DEPARTMENTAL_AUTHOR, upsert_departmental_needs, _granted_units
 from kentender_procurement.departmental_needs.services import analytics_provider as provider
@@ -72,7 +75,8 @@ class TestNeedsAnalytics(IntegrationTestCase):
 		cls.before = _counts()
 		cls.addClassCleanup(cls.remove_world)
 		cls.build_users()
-		cls.needs = cls.build_needs()
+		with maintenance_write(NEEDS_WRITE_FAMILY, reason="Needs analytics test: a world of Needs in states the commands reach slowly"):
+			cls.needs = cls.build_needs()
 		frappe.db.commit()
 		cls.at = now_datetime()
 
@@ -136,7 +140,7 @@ class TestNeedsAnalytics(IntegrationTestCase):
 		for name in frappe.get_all("User Responsibility Assignment", filters={"fixture_namespace": NS}, pluck="name"):
 			if frappe.db.get_value("User Responsibility Assignment", name, "status") == "Enabled":
 				administration.revoke(name, reason="Revoked inside the Needs Analytics test.", actor="Administrator")
-			frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+			purge_doc("User Responsibility Assignment", name)
 		for doctype in ("Departmental Need Decision", "Departmental Need Revision", "Departmental Need"):
 			frappe.db.delete(doctype, {"fixture_namespace": NS})
 		for email in USERS:
@@ -256,6 +260,21 @@ class TestNeedsAnalytics(IntegrationTestCase):
 			self.assertEqual(provider.applies(user=user, at=self.at), {ac.NEEDS}, user)
 			self.assertEqual(self.refs(user), everything, user)  # includes the Returned Need the module's own office read still masks
 			self.assertTrue(self.refs(user).isdisjoint(self.refs_of("draft_dh", "withdrawn_dh")), user)
+
+	def test_a_returned_need_the_offices_cannot_open_is_counted_but_not_named_or_linked(self):
+		"""KT-ACCESS-REV-001 AR-08: the aggregate counts it (OD-2); the title and the link follow the Need's own read."""
+		def returned(user):
+			return next(r for r in provider.facts(user=user, kind=ac.NEEDS, at=self.at)["records"] if r["reference"] == self.ref("returned_hrmd"))
+
+		for user in (HOPF, AO):
+			record = returned(user)
+			self.assertEqual((record["route"], record["title"], record["state_key"]), ([], record["reference"], "returned"), user)
+		# a reader who can open it still gets the title and the route
+		administrator = returned("Administrator")
+		self.assertEqual((administrator["title"], administrator["route"]), ("Training room", ["departmental-needs", self.ref("returned_hrmd")]))
+		# and the offices keep the link for a Need in an oversight state
+		accepted = next(r for r in provider.facts(user=AO, kind=ac.NEEDS, at=self.at)["records"] if r["reference"] == self.ref("accepted_dh"))
+		self.assertEqual(accepted["route"], ["departmental-needs", self.ref("accepted_dh")])
 
 	def test_an_unrelated_role_gets_nothing(self):
 		self.assertEqual(provider.applies(user=OFFICER, at=self.at), set())

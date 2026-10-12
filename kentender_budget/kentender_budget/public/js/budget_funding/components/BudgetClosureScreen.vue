@@ -5,6 +5,7 @@ import { useRouteState } from "../../budget_shared/composables/useRouteState.js"
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { formatKes, mintKey } from "../../budget_shared/data/formatKes.js";
 import { getBudgetClosureStatus, closeBudget } from "../data/budgetApi.js";
+import AccessDenied from "../../budget_shared/components/AccessDenied.vue";
 
 // BUD-DES-17 — Close budget on the existing BUD-UI-03 (BUD-CHG-001 v1.9
 // §9.4, §11.18, §12.8): before year end, blocked, unavailable, ready,
@@ -100,9 +101,13 @@ function confirmClose() {
 <template>
 	<div class="kt-industry" data-testid="bud-close" :data-loading="loading ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : 'false'">
 		<div ref="railEl" class="kt-rail-mount"></div>
-		<div class="kt-shell" style="max-width: 900px">
+		<div v-if="!loading && forbidden" class="kt-shell">
+			<div class="kt-page" data-testid="bud-close-forbidden">
+				<AccessDenied :heading="__(forbidden.heading)" :text="__(forbidden.text || '')" />
+			</div>
+		</div>
+		<div v-else class="kt-shell" style="max-width: 900px">
 			<div v-if="loading" class="card blueprint"><div class="kt-skel" style="width: 280px; height: 20px"></div></div>
-			<div v-else-if="forbidden" class="card blueprint kt-empty" data-testid="bud-close-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p class="kt-muted">{{ __(forbidden.text) }}</p></div>
 			<div v-else-if="notFound" class="card blueprint kt-empty"><h2>{{ __("This budget could not be found.") }}</h2></div>
 			<div v-else-if="serverError" class="card blueprint kt-empty"><h2>{{ __("The funding position could not be checked. Try again before closing this budget.") }}</h2><button type="button" class="btn btn-primary" @click="load()">{{ __("Try again") }}</button></div>
 

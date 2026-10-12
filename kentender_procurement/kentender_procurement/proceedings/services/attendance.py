@@ -18,6 +18,7 @@ from frappe.utils import cint, cstr, get_datetime
 
 from kentender_procurement.proceedings.services import clock, owners, records
 from kentender_procurement.proceedings.services.errors import fail
+from kentender_procurement.services import sequence
 
 ATTENDANCE = "Proceeding Attendance"
 CAPACITIES = ("Committee member", "Recorder", "Tenderer representative", "Public observer")
@@ -75,7 +76,7 @@ def record_attendance(*, owner_type: str, owner_id: str, expected_version: int, 
 		event_id = records.event(doc, f"Attendance{movement}", source="Recorder", actor=actor, pre_session=pre_session, reported_at=reported_at,
 			reported_by=actor if reported_at else "", payload={"person_name": person_name, "capacity": capacity, "represented_tenderer": represented_tenderer},
 			note=f"{person_name} ({capacity})")
-		number = frappe.db.count(ATTENDANCE, {"proceeding": doc.name}) + 1
+		number = sequence.next_count(ATTENDANCE, {"proceeding": doc.name})
 		records.insert(frappe.get_doc({
 			"doctype": ATTENDANCE, "attendance_id": f"{doc.name}-A{number:04d}", "proceeding": doc.name, "person_name": cstr(person_name).strip(),
 			"user": owners.user_or_none(user), "capacity": capacity, "represented_tenderer": represented_tenderer, "movement": movement,

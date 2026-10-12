@@ -8,7 +8,7 @@
 minted on `plan_item_id`; Tenders never re-derives it. A later Tender on the
 same Plan Item (after a cancellation) takes a `-002` suffix; the first has
 none. `addendum_reference` = `{tender_reference}-{NNN}` prefixed `ADD-`
-(fixture `ADD-MOH-2027-033-001`). Both are minted under a named lock.
+(fixture `ADD-MOH-2027-033-001`). Both are minted under the Tender allocation lock (`kentender_core.utils.series`).
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cstr, getdate
 
+from kentender_core.utils.series import allocation_lock, next_free_reference
 from kentender_procurement.tenders.services.errors import fail
 
 
@@ -40,23 +41,25 @@ def plan_item_number(plan_item_id_value: str) -> str:
 	return value.rsplit("-", 1)[1]
 
 
-def _lock(name: str) -> None:
-	if not frappe.db.sql("select get_lock(%s, 10)", name[:64])[0][0]:
-		fail("TND_STALE_VERSION", "Reference generation is busy. Try again.")
+def _busy(_table: str):
+	fail("TND_STALE_VERSION", "Reference generation is busy. Try again.")
 
 
 def tender_reference(*, fiscal_year: str, plan_item_id_value: str) -> str:
 	base = f"TND-{pe_code()}-{fy_start(fiscal_year)}-{plan_item_number(plan_item_id_value)}"
-	_lock(f"tnd:ref:{base}")
+	allocation_lock("Tender", busy=_busy)
 	existing = frappe.get_all("Tender", filters={"tender_reference": ["like", f"{base}%"]}, pluck="tender_reference", limit_page_length=0)
-	if not existing:
+	# `existing` is this transaction's snapshot: a Tender another request committed while this
+	# one waited for the lock is not in it, so every candidate is confirmed with a locking read
+	# (AUD-XC-130).
+	if not existing and not frappe.db.sql("select 1 from `tabTender` where tender_reference=%s for update", (base,)):
 		return base
 	seq = 1
 	for ref in existing:
 		tail = cstr(ref)[len(base):]
 		if tail.startswith("-") and tail[1:].isdigit():
 			seq = max(seq, int(tail[1:]))
-	return f"{base}-{seq + 1:03d}"
+	return next_free_reference("Tender", "tender_reference", f"{base}-", seq, 3, busy=_busy)
 
 
 def addendum_reference(*, tender_reference_value: str, addendum_number: int) -> str:

@@ -1,7 +1,9 @@
 <!-- The result-first review composition (REQ-DES-06/07/08, §13.7): each
      section of the complete Version, in order. A section with an exception
      starts open; the rest start closed with a plain summary and Show details.
-     Disclosure is presentation only — every section is in the payload. -->
+     Disclosure is presentation only — every section is in the payload. The
+     section names, summaries and the estimated total cost come from the
+     server (v1.15: Request summary and Items). -->
 <template>
 	<div data-testid="req-review-sections">
 		<template v-for="section in sections" :key="section.key">
@@ -10,19 +12,25 @@
 			</div>
 			<div v-else class="req-review-section" :data-testid="`req-review-${section.key}`" :data-open="isOpen(section) ? 'true' : 'false'">
 				<div v-if="isOpen(section)" class="req-review-head">
-					<CardTitle :title="section.title" :icon="section.icon" style="margin: 0" />
+					<div class="req-review-title">
+						<CardTitle :title="section.title" :icon="section.icon" style="margin: 0" />
+						<span v-if="!listIssues && flagged(section)" class="kt-status is-attention" data-testid="req-section-flag">Needs attention</span>
+					</div>
 					<button type="button" class="req-review-toggle" :aria-expanded="'true'" @click="toggle(section)">Hide details</button>
 				</div>
 				<div v-else class="req-review-head">
 					<div>
-						<CardTitle :title="section.title" :icon="section.icon" style="margin: 0" />
+						<div class="req-review-title">
+							<CardTitle :title="section.title" :icon="section.icon" style="margin: 0" />
+							<span v-if="!listIssues && flagged(section)" class="kt-status is-attention" data-testid="req-section-flag">Needs attention</span>
+						</div>
 						<p class="kt-muted req-review-summary">{{ section.summary }}</p>
 					</div>
 					<button type="button" class="req-review-toggle" :aria-expanded="'false'" :data-testid="`req-review-show-${section.key}`" @click="toggle(section)">Show details</button>
 				</div>
 				<template v-if="isOpen(section)">
 					<p style="font-size: 14px; margin: 6px 0 12px">{{ section.summary }}</p>
-					<Notice v-for="(issue, i) in bodyIssues(section)" :key="i" :tone="issue.severity === 'Blocking' ? 'critical' : 'warning'">{{ issue.message }}</Notice>
+					<Notice v-for="(issue, i) in bodyIssues(section)" :key="i" tone="warning">{{ issue.message }}</Notice>
 
 					<template v-if="section.key === 'purpose'">
 						<div class="kt-meta-row">
@@ -34,7 +42,7 @@
 					</template>
 
 					<table v-else-if="section.key === 'amounts'" class="table">
-						<thead><tr><th>Department and requirement</th><th class="is-num">Requested quantity</th><th class="is-num">Requested value</th></tr></thead>
+						<thead><tr><th>Department and requirement</th><th class="is-num">Requested quantity</th><th class="is-num">Estimated total cost</th></tr></thead>
 						<tbody>
 							<tr v-for="row in section.rows" :key="row.drawdown_line_id"><td><div style="font-weight: 600">{{ row.department }}</div><div class="kt-label">{{ row.requirement }}</div></td><td class="is-num">{{ row.requested_quantity }}</td><td class="is-num">{{ row.requested_value }}</td></tr>
 							<tr><td style="font-weight: 600">Total</td><td class="is-num" style="font-weight: 600">{{ section.total_quantity }}</td><td class="is-num" style="font-weight: 600">{{ section.total_value }}</td></tr>
@@ -44,7 +52,7 @@
 					<table v-else-if="section.key === 'equipment'" class="table" style="font-size: 13px">
 						<thead><tr><th>Item</th><th>Approved requirement</th><th class="is-num">Quantity</th><th>Intended use</th><th>Delivery</th></tr></thead>
 						<tbody>
-							<tr v-for="item in section.rows" :key="item.requisition_item_id"><td>{{ item.item_name }}</td><td>{{ item.approved_requirement }}</td><td class="is-num">{{ item.quantity }}</td><td>{{ item.intended_use }}</td><td>{{ item.delivery }}</td></tr>
+							<tr v-for="item in section.rows" :key="item.requisition_item_id"><td>{{ item.item_name }}<div class="kt-label">{{ item.equipment_category }}</div></td><td>{{ item.approved_requirement }}</td><td class="is-num">{{ item.quantity }}</td><td>{{ item.intended_use }}</td><td>{{ item.delivery }}</td></tr>
 						</tbody>
 					</table>
 
@@ -52,9 +60,9 @@
 						<template v-for="group in section.groups" :key="group.group">
 							<div class="kt-label req-group-label">{{ group.group }}</div>
 							<table class="table" style="margin-bottom: var(--kt-space-4)">
-								<thead><tr><th>Requirement</th><th>Minimum or required value</th><th>Unit</th></tr></thead>
+								<thead><tr><th>Requirement</th><th>Minimum or required value</th><th>Unit</th><th v-if="scoped(section)">Applies to</th></tr></thead>
 								<tbody>
-									<tr v-for="row in group.rows" :key="row.technical_requirement_id"><td>{{ row.label }}<div class="kt-muted req-comparison">{{ row.comparison }}</div></td><td>{{ row.display }}</td><td>{{ row.unit }}</td></tr>
+									<tr v-for="row in group.rows" :key="row.technical_requirement_id"><td>{{ row.label }}<div class="kt-muted req-comparison">{{ row.comparison }}</div></td><td>{{ row.display }}</td><td>{{ row.unit }}</td><td v-if="scoped(section)">{{ row.applies_to }}</td></tr>
 								</tbody>
 							</table>
 						</template>
@@ -96,8 +104,8 @@ import Notice from "./Notice.vue";
 
 const props = defineProps({
 	sections: { type: Array, required: true },
-	// Findings shown above the sections already (the date warning) are not repeated inside.
-	shownAbove: { type: Array, default: () => [] },
+	// The editor lists every finding once, in its attention panel, and marks the section here instead.
+	listIssues: { type: Boolean, default: true },
 });
 const state = reactive({});
 const isOpen = (section) => (section.key in state ? state[section.key] : !!section.open);
@@ -105,8 +113,11 @@ function toggle(section) {
 	state[section.key] = !isOpen(section);
 }
 function bodyIssues(section) {
-	return (section.issues || []).filter((i) => !props.shownAbove.includes(i.code));
+	return props.listIssues ? section.issues || [] : [];
 }
+const flagged = (section) => (section.issues || []).length > 0;
+// REQ v1.18 §13.6A — name what a technical row applies to only when some row covers fewer than every item.
+const scoped = (section) => (section.groups || []).some((g) => g.rows.some((r) => r.applies_to && r.applies_to !== "All items"));
 function supportRows(rows) {
 	const out = [];
 	for (let i = 0; i < (rows || []).length; i += 3) out.push(rows.slice(i, i + 3));

@@ -8,6 +8,8 @@ import re
 import frappe
 from frappe import _
 
+from kentender_core.utils.series import raise_series_to
+
 # Type token → (DocType, fieldname)
 REF_TYPE_META: dict[str, tuple[str, str]] = {
 	"SP": ("Strategic Plan", "plan_id"),
@@ -85,19 +87,9 @@ def allocate_reference(type_token: str) -> str:
 	slug = site_slug()
 	prefix = f"{slug}-{type_token}-"
 	series_key = prefix  # Series.name is the prefix including trailing '-'
-	# Seed series past current max once (idempotent when series already ahead).
-	current_max = _max_seq(doctype, field, prefix)
-	existing_series = _series_current(series_key)
-	if existing_series is None and current_max:
-		frappe.db.sql(
-			"INSERT INTO `tabSeries` (`name`, `current`) VALUES (%s, %s)",
-			(series_key, current_max),
-		)
-	elif existing_series is not None and existing_series < current_max:
-		frappe.db.sql(
-			"UPDATE `tabSeries` SET `current`=%s WHERE `name`=%s",
-			(current_max, series_key),
-		)
+	# Seed series past current max once (idempotent when series already ahead);
+	# one atomic upsert, so concurrent first allocations cannot both insert it.
+	raise_series_to(series_key, _max_seq(doctype, field, prefix))
 	for _ in range(200):
 		candidate = make_autoname(f"{prefix}.####")
 		if not frappe.db.exists(doctype, {field: candidate}):
@@ -189,6 +181,9 @@ def validate_reference_field(doc) -> None:
 	code = (doc.get(field) or "").strip()
 	if not code:
 		frappe.throw(_("{0} is required").format(frappe.unscrub(field)))
+	# AUD-STR-008 — a generated reference identifies one record only.
+	if frappe.db.exists(doc.doctype, {field: code, "name": ["!=", doc.name or ""]}):
+		frappe.throw(_("{0} {1} is already in use").format(frappe.unscrub(field), code), frappe.ValidationError)
 
 
 

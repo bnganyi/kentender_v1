@@ -7,7 +7,8 @@
        - Your turn / Waiting on someone / Done: a line with no container of
          its own — a 3px left rule (accent for Your turn, neutral otherwise),
          the kind label, the headline and at most one sentence;
-       - Your turn, blocked: the only kind with a container, a warning notice
+       - Your turn, blocked: the only kind with a container, a warning tint
+         with a 3px warning rule on the left and no icon (DS-REV-004),
          listing every blocker with one control per fix.
 
      Placements (each module's approved change unit fixes where its line
@@ -29,11 +30,7 @@
 		</div>
 	</div>
 	<div v-else-if="showBlock" class="kt-notice is-warning kt-next-step kt-next-step-block" data-kt="next-step" :data-kind="answer.kind" role="status">
-		<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-			<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path>
-			<path d="M12 9v4"></path>
-			<path d="M12 17h.01"></path>
-		</svg>
+		<!-- DS-REV-004: no icon; the warning rule and tint mark the blocked kind -->
 		<div class="kt-notice-body kt-next-step-block-body">
 			<div class="kt-next-step-label">{{ answer.label }}</div>{{ " " }}<div class="kt-next-step-headline kt-next-step-block-headline" data-testid="kt-next-step-headline">{{ answer.headline }}</div><template v-if="answer.sentence">{{ " " }}<p class="kt-next-step-sentence">{{ answer.sentence }}</p></template>
 

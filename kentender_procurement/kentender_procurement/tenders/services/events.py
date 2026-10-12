@@ -23,7 +23,7 @@ import frappe
 from frappe.utils import cstr
 
 from kentender_core.utils.instants import to_utc_iso
-from kentender_procurement.tenders.services import clock, digest, serializer
+from kentender_procurement.tenders.services import clock, digest, envelope, serializer
 
 PRODUCER = "tenders"
 
@@ -79,8 +79,7 @@ def emit(
 			"status": status, "consumer": consumer, "delivered_at": occurred if status == "Delivered" else None, "fixture_namespace": fixture_namespace,
 		}
 	)
-	doc.flags.kt_lifecycle = True
-	doc.insert(ignore_permissions=True)
+	envelope.insert(doc)
 	return doc
 
 

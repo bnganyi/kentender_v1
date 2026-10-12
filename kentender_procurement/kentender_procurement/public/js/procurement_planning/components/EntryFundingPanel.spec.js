@@ -121,3 +121,34 @@ describe("EntryFundingPanel — a reader who cannot edit", () => {
 		expect(w.find('[data-testid="dpp-funding-amount"]').attributes("disabled")).toBeDefined();
 	});
 });
+
+// PLN-CHG-001 v1.30 §10.4 — U03-FUNDING-PREFILLED / U03-FUNDING-CHANGED
+describe("EntryFundingPanel — the accepted requirement's estimate (v1.30)", () => {
+	const withEstimate = (estimate) => editor({ entry: { ...editor().entry, need_estimated_total_cost: estimate, indicative_amount: estimate } });
+
+	it("starts from the estimate with Budget line blank and no change line while the amounts are equal", () => {
+		const w = make({ editor: withEstimate(80000000), amount: 80000000 });
+		expect(w.get('[data-testid="dpp-funding-amount"]').element.value).toBe("80000000");
+		expect(w.get('[data-testid="dpp-funding-line"]').element.value).toBe("");
+		expect(w.find('[data-testid="dpp-funding-estimate-line"]').exists()).toBe(false);
+		expect(w.get('[data-testid="dpp-funding-amount-hint"]').text()).toContain("Enter the full estimated cost");
+	});
+
+	it("shows the accepted estimate and the signed change once the amount differs", async () => {
+		const w = make({ editor: withEstimate(80000000), amount: 85000000 });
+		expect(w.get('[data-testid="dpp-funding-estimate-line"]').text()).toBe("Accepted requirement estimate: KES 80,000,000. Change: +KES 5,000,000.");
+		await w.setProps({ amount: 75000000 });
+		expect(w.get('[data-testid="dpp-funding-estimate-line"]').text()).toBe("Accepted requirement estimate: KES 80,000,000. Change: −KES 5,000,000.");
+	});
+
+	it("shows nothing for a requirement with no estimate, and never blocks saving", () => {
+		const w = make({ amount: 12000000, budgetLine: "BL-1" });
+		expect(w.find('[data-testid="dpp-funding-estimate-line"]').exists()).toBe(false);
+		expect(w.get('[data-testid="dpp-funding-save"]').attributes("disabled")).toBeUndefined();
+	});
+
+	it("a changed amount still saves with no reason required", () => {
+		const w = make({ editor: withEstimate(30000000), amount: 35000000, budgetLine: "BL-2" });
+		expect(w.get('[data-testid="dpp-funding-save"]').attributes("disabled")).toBeUndefined();
+	});
+});

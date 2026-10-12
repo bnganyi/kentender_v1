@@ -26,6 +26,7 @@ from kentender_procurement.procurement_requisitions.services import (
 	eligibility_gateway,
 	envelope,
 	funding_gateway,
+	goods_template,
 	handoff as handoff_service,
 	precision,
 	presenters as p,
@@ -33,6 +34,7 @@ from kentender_procurement.procurement_requisitions.services import (
 	validation,
 )
 from kentender_procurement.procurement_requisitions.services import requisition_authorization as authz
+from kentender_procurement.procurement_requisitions.services import scope as req_scope
 from kentender_procurement.procurement_requisitions.services.errors import ProcurementRequisitionsError, fail
 from kentender_procurement.procurement_requisitions.services.requisition_roles import (
 	FORBIDDEN_MESSAGE,
@@ -135,7 +137,7 @@ def _decision_chain(root, version) -> list[dict[str, Any]]:
 def _next_task(root) -> tuple[str, str]:
 	version = frappe.get_doc("Requisition Version", root.current_version)
 	package_version = frappe.get_doc("IT Equipment Requirement Package Version", version.package_version)
-	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=_projection(root))
+	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=_projection(root), unreviewed_line_ids=goods_template.unreviewed_ids(version))
 	pending = next((t for t in report["tasks"] if t["status"] != "Complete"), None)
 	returned = bool(version.based_on_version)
 	labels = {"request_details": "Complete request details", "requirements": "Complete requirements", "review_submit": "Review and submit"}
@@ -146,6 +148,11 @@ def _next_task(root) -> tuple[str, str]:
 		if last:
 			return "Correct returned requisition", cstr(last.reason)
 	return task_label, blocker
+
+
+def _integrity_reader(actor: str) -> bool:
+	"""Who sees the integrity digests in Record details: the Technical read and the Auditor, nobody else."""
+	return bool(authz.is_technical(actor) or authz.can_read_site(ROLE_AUDITOR, actor))
 
 
 def get_requisition_workspace(*, filters: dict[str, Any] | None = None, user: str | None = None) -> dict[str, Any]:
@@ -232,7 +239,10 @@ def get_requisition_workspace(*, filters: dict[str, Any] | None = None, user: st
 				ex = frappe.get_doc("Procurement Requisition", open_root)
 				ex_version = frappe.get_doc("Requisition Version", ex.current_version)
 				task_label, _ = _next_task(ex) if ex.current_state == "Draft" else (STATE_BADGES.get(ex.current_state, (ex.current_state, ""))[0], "")
-				existing = {"requisition": ex.name, "summary": f"{ex.requisition_reference} · {STATE_BADGES.get(ex.current_state, (ex.current_state,''))[0]} · {task_label.replace('Complete request details', 'Request details need attention')}", "route": f"/app/procurement-requisitions/{ex.name}"}
+				# A Draft says its next task after its state; any other state says itself once.
+				state_label = STATE_BADGES.get(ex.current_state, (ex.current_state, ""))[0]
+				summary = f"{ex.requisition_reference} · {state_label}" + (f" · {task_label.replace('Complete request details', 'Request details need attention')}" if ex.current_state == "Draft" else "")
+				existing = {"requisition": ex.name, "summary": summary, "route": f"/app/procurement-requisitions/{ex.name}"}
 				if any(w["requisition"] == ex.name for w in your_work):
 					continue
 			ready.append(
@@ -321,7 +331,8 @@ def get_start_preview(*, plan_item_id: str, user: str | None = None) -> dict[str
 	rule = projection.get("reservation_rule") or {}
 	existing = records.open_root_for(projection.get("plan_item_id") or plan_item_id)
 	existing_row = None
-	if existing and _can(authz.require_requisition_reader, actor, contributing_org_units=records.contributing_units(frappe.get_doc("Procurement Requisition", existing))):
+	_existing_root = frappe.get_doc("Procurement Requisition", existing) if existing else None
+	if existing and _can(authz.require_requisition_reader, actor, contributing_org_units=records.contributing_units(_existing_root), state=_existing_root.current_state):
 		ex = frappe.get_doc("Procurement Requisition", existing)
 		existing_row = {"requisition": ex.name, "reference": ex.requisition_reference, "route": f"/app/procurement-requisitions/{ex.name}", "summary": f"{ex.requisition_reference} · {STATE_BADGES.get(ex.current_state, (ex.current_state,''))[0]}"}
 	state = "ready"
@@ -442,15 +453,31 @@ def _purchase(root, projection: dict[str, Any], version_dict: dict[str, Any]) ->
 	}
 
 
-def _requirements_view(package_dict: dict[str, Any], package_version) -> dict[str, Any]:
+def _requirements_view(package_dict: dict[str, Any], package_version, version_dict: dict[str, Any] | None = None) -> dict[str, Any]:
 	review_state = package_dict.get("standard_package_review_state") or "Not generated"
 	return {
 		"review_state": review_state, "profile_key": package_version.standard_profile_key, "profile_version": package_version.standard_profile_version,
 		"proposal_digest": package_version.proposal_digest, "is_laptop_profile": package_version.standard_profile_key == catalogue.STANDARD_PROFILE_KEY,
-		"technical_groups": p.technical_groups(package_dict), "acceptance": p.acceptance_rows(package_dict),
+		"technical_groups": p.technical_groups(package_dict), "technical_targets": p.technical_targets(package_dict, version_dict), "acceptance": p.acceptance_rows(package_dict),
 		"support": {f: package_dict.get(f) for f in ("minimum_warranty_months", "onsite_support_required", "maximum_support_response_hours", "manufacturer_support_required", "service_location_constraint", "support_description")},
-		"services": [{**s, "applies_to": p.applies_to_label(s.get("applies_to_scope"), s.get("applies_to_id"), package_dict), "completion_date_label": p.date_label(s.get("completion_date"))} for s in package_dict.get("related_services") or []],
+		"services": [{**s, "applies_to": p.row_label(s, package_dict), "applies_to_item_ids": req_scope.item_ids(s, package_dict.get("items") or []), "completion_date_label": p.date_label(s.get("completion_date"))} for s in package_dict.get("related_services") or []],
 		"materials": [{**m, "linked": records.json_list(m.get("linked_requirement_ids_json"))} for m in package_dict.get("supporting_materials") or []],
+	}
+
+
+def _request_summary(vdict: dict[str, Any], pdict: dict[str, Any], sources: dict[str, dict[str, Any]], unreviewed: set[str]) -> dict[str, Any]:
+	"""v1.15 §13.4 — the read-only Request summary: what is available, what the
+	items request, the estimated total cost and what stays available."""
+	rows = p.amounts_rows(vdict, sources, package=pdict, unreviewed=unreviewed)
+	available_q = sum(int(r["remaining_quantity_value"]) for r in rows)
+	available_v = sum((precision.stored_money(r["remaining_value_value"]) for r in rows), precision.stored_money("0"))
+	requested_q = sum(int(r["requested_quantity_value"]) for r in rows)
+	estimate = sum((precision.stored_money(r["requested_value_value"]) for r in rows), precision.stored_money("0"))
+	return {
+		"available_quantity": precision.display_quantity(available_q), "available_value": precision.display_money(available_v),
+		"requested_quantity": precision.display_quantity(requested_q), "estimated_total": precision.display_money(estimate) if estimate > 0 else "",
+		"after_quantity": precision.display_quantity(available_q - requested_q), "after_value": precision.display_money(available_v - estimate),
+		"review_required": bool(unreviewed),
 	}
 
 
@@ -459,7 +486,7 @@ def get_requisition_editor(*, root, actor: str) -> dict[str, Any]:
 	projection = _projection(root)
 	vdict = records.version_dict(version)
 	pdict = records.package_dict(package_version)
-	report = validation.validate(version=vdict, package=pdict, eligibility=projection)
+	report = validation.validate(version=vdict, package=pdict, eligibility=projection, unreviewed_line_ids=goods_template.unreviewed_ids(version))
 	scope = records.edit_scope(root, actor)
 	technical = authz.is_technical(actor) or not scope["units"]
 	contributor = bool(scope["units"]) and not scope["shared"]
@@ -470,12 +497,12 @@ def get_requisition_editor(*, root, actor: str) -> dict[str, Any]:
 	badge = ("Draft correction", "is-draft") if version.based_on_version else ("Draft", "is-draft")
 	blocking = [f for f in report["findings"] if f["severity"] == "Blocking"]
 	footer_hint = {t["key"]: next((f["message"] for f in blocking if f["task"] == t["key"]), "") for t in report["tasks"]}
-	direct_hod = is_lead_hod and cstr(version.prepared_capacity) == ROLE_HEAD_OF_USER_DEPARTMENT
+	direct_hod = is_lead_hod and records.prepared_directly(version, actor)
 	actions = {
 		"save": bool(scope["units"]) and not technical, "save_label": "Save my changes" if contributor else "Save draft",
 		"edit_shared": scope["shared"] and not technical,
 		"send_for_department_approval": scope["shared"] and is_lead_author and not direct_hod and not technical,
-		"submit_to_procurement": is_lead_hod and not technical and (direct_hod or not is_lead_author),
+		"submit_to_procurement": is_lead_hod and not technical and direct_hod and not records.certifier_conflict(version, actor, direct=True),
 		"withdraw": is_lead_hod and not technical,
 		"request_planning_correction": (is_lead_hod or _has(actor, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)) and not technical,
 		"contributor": contributor,
@@ -502,17 +529,24 @@ def get_requisition_editor(*, root, actor: str) -> dict[str, Any]:
 			"latest_delivery_date": cstr(version.latest_delivery_date or ""), "latest_delivery_date_label": p.date_label(version.latest_delivery_date),
 			"related_services_required": bool(version.related_services_required), "locations": list_delivery_locations(),
 		},
-		"amounts": p.amounts_rows(vdict, sources, editable_units=scope["units"]),
+		"amounts": p.amounts_rows(vdict, sources, editable_units=scope["units"], package=pdict, unreviewed=goods_template.unreviewed_ids(version)),
+		"summary": _request_summary(vdict, pdict, sources, goods_template.unreviewed_ids(version)),
 		"equipment": {
-			"rows": [{**r, "editable": r["contributing_org_unit"] in scope["units"]} for r in p.item_rows(vdict, pdict)], "shared_specification": p.shared_specification(pdict),
+			"rows": [{**r, "editable": r["contributing_org_unit"] in scope["units"]} for r in p.item_rows(vdict, pdict)], "shared_specification": p.shared_specification(pdict), "groups": p.specification_groups(pdict, vdict),
+			# v1.15 §13.5 — one row per source the actor may add items to; `room` is what can still be entered
+			# (nothing is prefilled: the requester types each quantity once).
 			"add_rows": [
-				{"drawdown_line_id": l["drawdown_line_id"], "department": records.unit_name(l["contributing_org_unit"]), "source_reference": l["source_line_id"], "quantity": int(precision.stored_quantity(l["requested_quantity"])) - sum(int(i.get("quantity") or 0) for i in pdict["items"] if i.get("drawdown_line_id") == l["drawdown_line_id"]), "unit": "Each", "editable": l["contributing_org_unit"] in scope["units"]}
-				for l in vdict["drawdown_lines"] if precision.stored_quantity(l["requested_quantity"]) > 0
+				{
+					"drawdown_line_id": l["drawdown_line_id"], "department": records.unit_name(l["contributing_org_unit"]), "source_reference": l["source_line_id"],
+					"room": goods_template.room(l, pdict["items"]), "remaining_quantity": int(precision.stored_quantity(l["remaining_quantity"])),
+					"unit": "Each", "editable": l["contributing_org_unit"] in scope["units"],
+				}
+				for l in vdict["drawdown_lines"] if goods_template.room(l, pdict["items"]) > 0
 			],
 		},
-		"requirements": _requirements_view(pdict, package_version),
+		"requirements": _requirements_view(pdict, package_version, vdict),
 		"review": review, "decision_chain": _decision_chain(root, version),
-		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection, with_digests=_integrity_reader(actor)),
 		"actions": actions, "catalogue": _catalogue_meta(),
 	}
 
@@ -528,10 +562,10 @@ def _locked_bundle(root, version_name: str):
 	projection = _projection(root)
 	vdict = records.version_dict(version)
 	pdict = records.package_dict(package_version)
-	report = validation.validate(version=vdict, package=pdict, eligibility=projection) if version.version_status in ("Awaiting Department Approval", "Submitted to Procurement") else {"findings": [], "blocking_count": 0}
+	report = validation.validate(version=vdict, package=pdict, eligibility=projection, unreviewed_line_ids=goods_template.unreviewed_ids(version)) if version.version_status in ("Awaiting Department Approval", "Submitted to Procurement") else {"findings": [], "blocking_count": 0}
 	# §13.8/13.9 — the submitted Version's own date warning stays part of it.
 	findings = [f for f in report["findings"] if f["severity"] == "Warning"] or [
-		f for f in validation.validate(version=vdict, package=pdict, eligibility=projection)["findings"] if f["code"] == "DATE_AFTER_ESTIMATE"
+		f for f in validation.validate(version=vdict, package=pdict, eligibility=projection, unreviewed_line_ids=goods_template.unreviewed_ids(version))["findings"] if f["code"] == "DATE_AFTER_ESTIMATE"
 	]
 	sections = p.review_sections(root=root, version=vdict, package=pdict, projection=projection, findings=findings, lead=root.lead_org_unit_id)
 	return version, package_version, projection, vdict, pdict, report, sections
@@ -576,7 +610,7 @@ def get_department_approval_task(*, task: str, user: str | None = None) -> dict[
 		"question": f"Does this requisition accurately state {both} need and minimum requirements?",
 		"certification": "I confirm that this requisition states the departments’ operational need and minimum requirements and may be submitted to Procurement.",
 		"decision_chain": _decision_chain(root, version), "sections": sections, "findings": report["findings"],
-		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection, with_digests=_integrity_reader(actor)),
 		"actions": {
 			"submit_to_procurement": decider and not report.get("blocking_count"), "return_for_correction": decider,
 			# REQ-DES-07-SUBMITTED: before authorisation the lead HoD keeps
@@ -645,7 +679,7 @@ def get_procurement_authorisation_task(*, task: str, user: str | None = None) ->
 	else:
 		result = {"tone": "is-live", "title": "Ready to authorise", "detail": f"Authorising will reserve {precision.display_money(value)} and allow Tender Preparation to begin."}
 	decider = mode == "decider" and task_doc.status == "Open"
-	can_authorise = decider and result["title"] == "Ready to authorise" and cstr(version.submitted_by) != actor
+	can_authorise = decider and result["title"] == "Ready to authorise" and not records.authoriser_conflict(version, actor)
 	submit = records.decision_of(version.name, "Submit to Procurement")
 	units = sorted(records.contributing_units(root))
 	after = funding.get("lines", [{}])[0].get("available_after", "") if funding.get("lines") else ""
@@ -676,7 +710,7 @@ def get_procurement_authorisation_task(*, task: str, user: str | None = None) ->
 			"budget_line": ", ".join(l["budget_line"] for l in funding.get("lines", [])), "available_after": after,
 			"text": f"The approved-plan amounts will be used, {'two' if len(vdict['drawdown_lines']) == 2 else len(vdict['drawdown_lines'])} funding reservation{'s' if len(vdict['drawdown_lines']) != 1 else ''} will be created and Tender Preparation may begin.",
 		},
-		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection, with_digests=_integrity_reader(actor)),
 		"actions": {
 			"authorise": can_authorise, "return_to_department": decider, "request_planning_correction": decider,
 			"change_submitting_department": decider and len(units) > 1, "refresh": decider, "view_planning_request": bool(hold.get("held")),
@@ -697,7 +731,7 @@ def get_locked_requisition(*, root, actor: str) -> dict[str, Any]:
 		"outcome": "OK", "kind": "locked", "mode": "technical" if authz.is_technical(actor) else "reader",
 		"header": _header(root, version, description=""), "sections": sections, "decision_chain": _decision_chain(root, version),
 		"withdrawn": {"by": p.user_name(withdrawn.actor), "at": p.eat(withdrawn.decided_at), "reason": withdrawn.reason} if withdrawn else None,
-		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection, with_digests=_integrity_reader(actor)),
 		"actions": {"withdraw": is_lead_hod and pre, "request_planning_correction": pre and (is_lead_hod or _has(actor, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)), "export": True},
 		"requisition": root.name, "root_record_version": root.record_version,
 	}
@@ -717,7 +751,7 @@ def get_version_review(*, root, version_name: str, actor: str) -> dict[str, Any]
 		"outcome": "OK", "kind": "version", "header": _header(root, version, badge=(version.version_status, "is-critical" if version.version_status == "Returned" else "is-draft")),
 		"decision": {"by": p.user_name(decision.actor), "at": p.eat(decision.decided_at), "reason": decision.reason, "affected_section": decision.affected_section, "decision": decision.decision} if decision else None,
 		"current_draft_route": f"/app/procurement-requisitions/{root.name}" if root.current_state == "Draft" else "",
-		"sections": sections, "record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"sections": sections, "record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection, with_digests=_integrity_reader(actor)),
 		"actions": {"export": True}, "requisition": root.name,
 	}
 
@@ -765,7 +799,7 @@ def get_authorised_requisition(*, root, actor: str) -> dict[str, Any]:
 		"consumed": {"tender": tender, "tender_reference": tender_ref, "route": f"/app/tenders/{tender}" if tender else ""} if consumed else None,
 		"revoked": revoked, "decision_chain": _decision_chain(root, version), "sections": sections, "reservations": reservations,
 		"handoff": {"handoff": handoff.name, "digest": handoff.handoff_digest, "version": handoff.handoff_version} if handoff else None,
-		"record_details": p.record_details(root=root, version=vwith, projection=projection, handoff=handoff),
+		"record_details": p.record_details(root=root, version=vwith, projection=projection, handoff=handoff, with_digests=_integrity_reader(actor)),
 		"actions": {
 			"continue_to_tender_preparation": root.current_state == "Authorised" and not consumed and is_officer and not authz.is_technical(actor),
 			"open_tender": consumed, "revoke": root.current_state == "Authorised" and not consumed and is_hopf and not authz.is_technical(actor),
@@ -862,7 +896,7 @@ def get_stopped_requisition(*, root, actor: str) -> dict[str, Any]:
 		"unavailable": unavailable, "other_unresolved": [{"reference": r["correction_request"], "status": r["status"]} for r in others],
 		"hold_notice": f"Authorisation remains on hold: {len(others)} Planning request{' is' if len(others) == 1 else 's are'} still unresolved." if others else "",
 		"correction_chain": chain, "sections": sections, "fresh_start": fresh,
-		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection, with_digests=_integrity_reader(actor)),
 		"actions": {
 			"view_planning_request": not is_planner, "open_planning_task": is_planner, "start_new_requisition": may_start,
 			"try_again": unavailable, "export": True,

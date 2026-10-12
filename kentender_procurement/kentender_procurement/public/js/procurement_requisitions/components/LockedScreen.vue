@@ -25,8 +25,8 @@
 		<DecisionChain :rows="view.decision_chain || []" style="margin-bottom: var(--kt-space-6)" />
 		<ReviewSections :sections="view.sections || []" />
 		<Disclosure title="Record details" testid="req-record-details">
-			<div class="kt-meta-row" style="flex-wrap: wrap">
-				<div v-for="fact in view.record_details || []" :key="fact.label"><span class="kt-label">{{ fact.label }}</span><span class="kt-meta-value" style="font-size: 14px">{{ fact.value }}</span></div>
+			<div class="kt-meta-row req-facts" style="flex-wrap: wrap">
+				<div v-for="fact in view.record_details || []" :key="fact.label"><span class="kt-label">{{ fact.label }}</span><span class="kt-meta-value" style="font-size: 14px"><span v-for="(part, i) in String(fact.value).split('; ')" :key="i" class="req-fact-line">{{ part }}</span></span></div>
 			</div>
 		</Disclosure>
 

@@ -5,9 +5,32 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from kentender_core.services.command_write_guard import CommandWriteGuardMixin
 
-class KTSMSupplierDocument(Document):
+
+class KTSMSupplierDocument(CommandWriteGuardMixin, Document):
+	"""Verification (status, verifier, reason) and the external-upload mark change only through
+	`services/governance.py` or the upload endpoint, inside `command_write("Supplier Registry")`
+	(RG-13); the descriptive fields stay editable."""
+
+	command_write_family = "Supplier Registry"
+	command_user_insert = True
+	command_user_editable_fields = (
+		"supplier_profile",
+		"document_type",
+		"document_name",
+		"file",
+		"document_number",
+		"issue_date",
+		"expiry_date",
+		"is_current",
+	)
+
+	def user_editable_when(self, before) -> bool:  # noqa: ARG002
+		return True
+
 	def validate(self):
+		super().validate()
 		# B3: inactive type
 		if self.document_type:
 			if not frappe.db.get_value("KTSM Document Type", self.document_type, "is_active"):

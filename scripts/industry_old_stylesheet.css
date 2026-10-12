@@ -291,6 +291,14 @@
 .kt-industry .kt-checkbox input:checked + .box { background: var(--kt-color-accent); border-color: var(--kt-color-accent); }
 .kt-industry .kt-checkbox input:checked + .box::after { content: ""; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .kt-industry .kt-checkbox input:focus-visible + .box { outline: 1px solid var(--kt-color-accent-700); outline-offset: 2px; }
+/* The kit holds wherever it sits. A form field's own `label` rule (block, 12px, bottom margin) outranks `.kt-checkbox`
+   on element specificity, which turned the label into a block and the drawn box into an inline span with no size: a
+   2px sliver. Restating the label's layout at field specificity makes a checkbox or radio choice look the same inside any
+   `.field`, so no screen needs its own patch (the portal and Planning's certification block each carried one). */
+.kt-industry .field > label.kt-checkbox { display: inline-flex; align-items: flex-start; gap: 8px; margin-bottom: 0; font-size: 14px; color: var(--kt-color-text); }
+/* One checkbox kit draws a radio choice too: a round box and a dot, not a tick. */
+.kt-industry .kt-checkbox input[type="radio"] + .box { border-radius: 50%; }
+.kt-industry .kt-checkbox input[type="radio"]:checked + .box::after { left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border: 0; border-radius: 50%; background: #fff; transform: none; }
 
 /* Round radio button (an explicit, mutually-exclusive choice — e.g. County
    entity Yes/No — CFG-CHG-002 v0.11 C01, never a checkbox stand-in). */
@@ -729,21 +737,6 @@
 /* Page sections for content with no ruled structure of its own. */
 .kt-industry .kt-section { margin-bottom: var(--kt-space-8); }
 .kt-industry .kt-panel { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); padding: var(--kt-space-4); margin-top: var(--kt-space-3); }
-/* Inline segmented control (REQ-CHG-001 v1.11 board: Yes/No answers). The
-   board draws it inline with a solid accent selection; `.kt-seg-inline` keeps
-   that look distinct from System setup's full-width `.kt-seg`. Options are
-   real radio inputs (keyboard and screen readers) visually hidden. */
-.kt-industry .kt-seg.kt-seg-inline { display: inline-flex; width: auto; overflow: hidden; background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); }
-.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt { flex: none; position: relative; padding: 7px 12px; font-size: 13px; font-weight: 400; background: transparent; color: var(--kt-color-text); border: 0; }
-.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt + .kt-seg-opt { border-left: 1px solid var(--kt-color-divider); }
-.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
-.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:has(input:checked) { background: var(--kt-color-accent); color: #fff; }
-.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:not(:has(input:checked)):hover { background: var(--kt-color-neutral-100); }
-.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:has(input:focus-visible) { outline: 2px solid var(--kt-color-accent); outline-offset: -2px; }
-.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:has(input:disabled) { cursor: default; }
-@media (forced-colors: active) {
-	.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:has(input:checked) { background: Highlight; color: HighlightText; }
-}
 .kt-industry .kt-meta-row { display: flex; gap: var(--kt-space-6); flex-wrap: wrap; align-items: flex-end; }
 .kt-industry .kt-meta-row > div { display: flex; flex-direction: column; gap: 4px; }
 /* The inline opt-out the Industry design system added with its grid fact row
@@ -962,6 +955,7 @@
 	.kt-industry .kt-checkbox .box { border-color: CanvasText; }
 	.kt-industry .kt-checkbox input:checked + .box { background: CanvasText; border-color: CanvasText; }
 	.kt-industry .kt-checkbox input:checked + .box::after { border-color: Canvas; }
+	.kt-industry .kt-checkbox input[type="radio"]:checked + .box::after { background: Canvas; }
 	.kt-industry .kt-radio .dot { border-color: CanvasText; }
 	.kt-industry .kt-radio input:checked + .dot { background: CanvasText; border-color: CanvasText; }
 	.kt-industry .kt-kpi-card { border-color: CanvasText; }

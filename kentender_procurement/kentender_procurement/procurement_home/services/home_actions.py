@@ -63,50 +63,6 @@ def _package_actions(*_args, **_kwargs) -> list[dict[str, Any]]:
 	"""PP2 Package actions retired."""
 	return []
 
-def _tender_actions(user: str, procuring_entity: str) -> list[dict[str, Any]]:
-	roles = _roles(user)
-	tm_roles = {"Tender Manager", "Procurement Officer", "System Manager"}
-	if user != "Administrator" and not (roles & tm_roles):
-		return []
-	if not frappe.db.exists("DocType", "TM2 Tender"):
-		return []
-	filters: dict[str, Any] = {
-		"status": ["in", ["Returned for Correction", "Ready for Publication Review", "STD Instance Incomplete"]],
-	}
-	if frappe.db.has_column("TM2 Tender", "procuring_entity_code"):
-		filters["procuring_entity_code"] = ["in", pe_aliases(procuring_entity)]
-	rows = frappe.get_all(
-		"TM2 Tender",
-		filters=filters,
-		fields=["name", "tender_code", "tender_title", "status", "modified"],
-		limit=20,
-	)
-	items: list[dict[str, Any]] = []
-	for r in rows:
-		status = r.get("status") or ""
-		if status == "Returned for Correction":
-			action_req, urgency, btn = "Returned for correction", "Returned", "Continue"
-		elif status == "STD Instance Incomplete":
-			action_req, urgency, btn = "Configuration blockers require correction", "Blocked", "Resolve"
-		else:
-			action_req, urgency, btn = "Publication approval required", "Overdue", "Review"
-		items.append(
-			{
-				"title": r.get("tender_title") or r.get("tender_code") or r.name,
-				"reference": r.get("tender_code") or r.name,
-				"stage": "Tender Configuration" if "Incomplete" in status else "Publication",
-				"action_required": action_req,
-				"urgency": urgency,
-				"due_date": None,
-				"action_label": btn,
-				"target_url": "/desk/publications" if "Publication" in action_req else "/desk/tender-management-v2",
-				"_due_date": None,
-				"_modified": r.get("modified"),
-			}
-		)
-	return items
-
-
 def get_home_actions(
 	procuring_entity: str,
 	fiscal_year: int | None = None,
@@ -119,7 +75,6 @@ def get_home_actions(
 	raw = (
 		_demand_actions(user, procuring_entity, today)
 		+ _package_actions(user, procuring_entity)
-		+ _tender_actions(user, procuring_entity)
 	)
 	# Deduplicate by reference+stage
 	seen: set[str] = set()

@@ -22,6 +22,7 @@ from frappe.utils import cstr, flt, fmt_money
 
 from kentender_core.services import next_step as ns
 from kentender_procurement.procurement_planning.errors import MESSAGES
+from kentender_procurement.procurement_planning.services import money as money_boundary
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_DEPARTMENTAL_AUTHOR,
@@ -126,9 +127,11 @@ def _budget_guards(
 			continue
 		waiting_on_budget = budget_line in open_requests
 		decline = declined.get(budget_line) if not waiting_on_budget else None
+		# RG-24: exact decimals, no tolerance (PLN §4.1): any change of the line's
+		# approved or planned amount since the decline is a new basis
 		new_basis = not decline or (
-			abs(flt(decline.get("planned")) - flt(line.get("planned"))) > 0.005
-			or abs(flt(decline.get("approved")) - flt(line.get("approved"))) > 0.005
+			money_boundary.as_decimal(decline.get("planned")) != money_boundary.as_decimal(line.get("planned"))
+			or money_boundary.as_decimal(decline.get("approved")) != money_boundary.as_decimal(line.get("approved"))
 		)
 		budget_fixes = []
 		if waiting_on_budget:

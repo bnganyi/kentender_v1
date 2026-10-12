@@ -194,7 +194,7 @@
   {
    "collapsible": 1,
    "css_class": "plc-handoff-technical-refs",
-   "description": "Rectification pack §7.5 / ADR-PLC-002 — STD/TM2/snapshot codes for auditors; collapsed by default in Desk.",
+   "description": "Rectification pack §7.5 / ADR-PLC-002 — STD/snapshot codes for auditors; collapsed by default in Desk.",
    "fieldname": "section_technical_refs",
    "fieldtype": "Section Break",
    "label": "Technical references (advanced)"

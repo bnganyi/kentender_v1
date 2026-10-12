@@ -8,5 +8,6 @@ import frappe
 
 
 def can_blacklist() -> bool:
-	roles = frappe.get_roles()
-	return "System Manager" in roles or "KenTender Supplier Blacklist Authority" in roles
+	from kentender_suppliers.services import registry_access
+
+	return registry_access.has_capability("blacklist")

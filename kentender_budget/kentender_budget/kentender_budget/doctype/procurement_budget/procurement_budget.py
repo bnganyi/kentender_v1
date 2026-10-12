@@ -12,9 +12,15 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from kentender_core.services.command_write_guard import CommandWriteGuardMixin
+from kentender_budget.services.budget_write_family import BUDGET_WRITE_FAMILY
 
-class ProcurementBudget(Document):
+
+class ProcurementBudget(CommandWriteGuardMixin, Document):
+	command_write_family = BUDGET_WRITE_FAMILY
+
 	def validate(self):
+		super().validate()
 		self._assert_one_budget_per_fy()
 		self._assert_currency_immutable()
 		self.title = self._derived_title()

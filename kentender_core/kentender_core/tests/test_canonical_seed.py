@@ -16,6 +16,8 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from kentender_core.seeds import calendar, canonical
+from kentender_core.services.command_write_guard import fixture_insert
+from kentender_core.services.command_write_guard import maintenance_write, purge_doc
 
 
 def _full(**kwargs):
@@ -96,9 +98,9 @@ class TestCanonicalSelection(IntegrationTestCase):
 			{"doctype": "Fiscal Year", "year": fy, "year_start_date": f"{year}-07-01", "year_end_date": f"{year + 1}-06-30"}
 		).insert(ignore_permissions=True)
 		self._cleanup.append(("Fiscal Year", fy))
-		budget = frappe.get_doc(
+		budget = fixture_insert(frappe.get_doc(
 			{"doctype": "Procurement Budget", "generated_reference": f"STRAY-{uuid4().hex[:6]}", "fiscal_year": fy, "currency": "KES"}
-		).insert(ignore_permissions=True)
+		))
 		self._cleanup.append(("Procurement Budget", budget.name))
 
 		self.assertTrue(canonical._fiscal_year_referenced(fy))
@@ -141,7 +143,7 @@ class TestCanonicalSelection(IntegrationTestCase):
 		name = row.get("assignment") or row.get("name")
 		def cleanup():
 			if frappe.db.exists("User Responsibility Assignment", name):
-				frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+				purge_doc("User Responsibility Assignment", name)
 			administration._sync_projection(user)
 			frappe.db.commit()
 
@@ -158,7 +160,8 @@ class TestCanonicalSelection(IntegrationTestCase):
 		# would fail on this doctype's own required fields, so bypass them —
 		# `collect_non_canonical()` reads the raw db row, not the full doc.
 		need.flags.ignore_mandatory = True
-		need.insert(ignore_permissions=True)
+		with maintenance_write("Departmental Needs", reason="canonical seed test: a stray Need outside the namespace"):
+			need.insert(ignore_permissions=True)
 		try:
 			self.assertIn(need.name, canonical.collect_non_canonical().get("Departmental Need", []))
 		finally:
@@ -315,8 +318,13 @@ class TestFixturePasswords(IntegrationTestCase):
 
 		_full()
 		daniel = "daniel.otieno@moh.example.test"
-		self.assertIn("System Manager", frappe.get_roles(daniel))
+		# A technical reader through the in-force Technical Operator assignment, and without System Manager:
+		# a read carries no setup or responsibility-administration power (KT-ACCESS-REV-001 AR-09/AR-10).
+		self.assertNotIn("System Manager", frappe.get_roles(daniel))
 		self.assertTrue(frappe.db.exists("User Responsibility Assignment", {"user": daniel, "business_role": "Technical Operator", "status": "Enabled"}))
+		from kentender_core.services.authorization import is_technical
+
+		self.assertTrue(is_technical(daniel))
 		jane = "jane.wanjiku@observer.example"
 		self.assertEqual(frappe.db.get_value("User", jane, "user_type"), "Website User")
 		self.assertFalse(frappe.db.exists("User Responsibility Assignment", {"user": jane}))
@@ -379,14 +387,14 @@ class TestCanonicalSeedRun(IntegrationTestCase):
 		created_year = not frappe.db.exists("Fiscal Year", year)
 		if created_year:
 			configuration.add_fiscal_year(start_year=2099)
-		stray = frappe.get_doc(
+		stray = fixture_insert(frappe.get_doc(
 			{"doctype": "Procurement Budget", "generated_reference": f"STRAY-{uuid4().hex[:6]}", "fiscal_year": year, "currency": "KES"}
-		).insert(ignore_permissions=True)
+		))
 		try:
 			with self.assertRaisesRegex(frappe.ValidationError, "the canonical budgets"):
 				canonical.validate()
 		finally:
-			frappe.delete_doc("Procurement Budget", stray.name, force=1, ignore_permissions=True)
+			purge_doc("Procurement Budget", stray.name)
 			if created_year:
 				frappe.delete_doc("Fiscal Year", year, force=1, ignore_permissions=True)
 
@@ -507,10 +515,10 @@ class TestCanonicalReservationNamespace(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		for name in self._reservations:
 			if frappe.db.exists("Funding Reservation", name):
-				frappe.delete_doc("Funding Reservation", name, force=1, ignore_permissions=True)
+				purge_doc("Funding Reservation", name)
 
 	def _reserve(self, *, fixture_namespace: str, plan_source_allocation: str) -> str:
-		doc = frappe.get_doc(
+		doc = fixture_insert(frappe.get_doc(
 			{
 				"doctype": "Funding Reservation",
 				"generated_reference": f"RSV-TEST-{uuid4().hex[:8]}",
@@ -526,7 +534,7 @@ class TestCanonicalReservationNamespace(IntegrationTestCase):
 				"correlation_id": plan_source_allocation,
 				"fixture_namespace": fixture_namespace,
 			}
-		).insert(ignore_permissions=True)
+		))
 		self._reservations.append(doc.name)
 		return doc.name
 

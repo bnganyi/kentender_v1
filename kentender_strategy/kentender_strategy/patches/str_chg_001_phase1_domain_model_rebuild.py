@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import frappe
 
+from kentender_core.utils.patch_guards import doctype_is_shipped
+
 REMOVED_DOCTYPES = [
 	"Performance Measurement",
 	"Strategy Value Commitment",
@@ -28,12 +30,17 @@ REMOVED_DOCTYPES = [
 
 def execute() -> None:
 	for name in REMOVED_DOCTYPES:
+		if doctype_is_shipped(name):
+			continue
 		if frappe.db.exists("DocType", name):
 			frappe.delete_doc("DocType", name, force=1, ignore_permissions=True)
 
 	# Strategic Plan's schema changed incompatibly (identity/version split);
-	# pre-rebuild rows cannot be reconciled into the new shape.
-	if frappe.db.table_exists("Strategic Plan"):
-		frappe.db.sql("DELETE FROM `tabStrategic Plan`")
+	# pre-rebuild rows cannot be reconciled into the new shape. Only those rows
+	# go: a row that carries the rebuilt identity (`plan_id`, required since the
+	# rebuild) is current data and is never touched, so a site that has not
+	# logged this patch but holds real plans keeps them (AUD-XC-125).
+	if frappe.db.table_exists("Strategic Plan") and frappe.db.has_column("Strategic Plan", "plan_id"):
+		frappe.db.sql("DELETE FROM `tabStrategic Plan` WHERE `plan_id` IS NULL OR `plan_id` = ''")
 
 	frappe.db.commit()

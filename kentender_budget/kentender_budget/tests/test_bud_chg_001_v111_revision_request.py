@@ -30,7 +30,9 @@ from kentender_budget.services import budget_contracts as contracts
 from kentender_budget.services import budget_revision_request_contracts as brr
 from kentender_budget.services.budget_my_work_provider import my_work_rows
 from kentender_budget.tests.test_bud_chg_001_v19_usability import _V19Base
+from kentender_budget.utils.version_stamp import stamped
 from kentender_core.services.responsibility_errors import ResponsibilityError
+from kentender_core.services.command_write_guard import purge_doc
 
 HWD = "Digital health workforce development"
 DHI = "Digital health infrastructure programme"
@@ -83,9 +85,9 @@ class _RevisionRequestBase(_V19Base):
 		for budget in cls._budgets:
 			requests = frappe.get_all("Budget Revision Request", filters={"budget": budget}, pluck="name")
 			for name in frappe.get_all("Budget Revision Request Event", filters={"budget_revision_request": ("in", requests or ["-"])}, pluck="name"):
-				frappe.delete_doc("Budget Revision Request Event", name, force=True, ignore_permissions=True)
+				purge_doc("Budget Revision Request Event", name)
 			for name in requests:
-				frappe.delete_doc("Budget Revision Request", name, force=True, ignore_permissions=True)
+				purge_doc("Budget Revision Request", name)
 		super().tearDownClass()
 
 	def receive(self, fy: str, line: str, planned: float, *, planning_id: str | None = None, key: str | None = None, **extra) -> dict:
@@ -196,17 +198,17 @@ class TestAnswering(_RevisionRequestBase):
 		with recording_consumer() as delivered:
 			successor = self._successor(budget, dhi=100_000_000, hwd=62_000_000, submit=False, revision_type="Supplementary allocation")
 			self._as(self.officer)
-			details = contracts.save_budget_version_draft({
+			details = contracts.save_budget_version_draft(stamped({
 				"budget_version": successor, "approval_reference": f"SUPP-{self.suffix}", "approval_date": add_days(nowdate(), -1),
 				"authorised_total": 162_000_000, "approval_document": "/files/test-approval.pdf",
-			})
+			}))
 			self.assertTrue(details["ok"], details.get("errors"))
 			from kentender_budget.services import budget_readiness_contracts as readiness
 
-			submitted = readiness.submit_budget_version({"budget_version": successor})
+			submitted = readiness.submit_budget_version(stamped({"budget_version": successor}))
 			self.assertTrue(submitted["ok"], submitted.get("blockers"))
 			self._as(self.approver)
-			approved = readiness.approve_budget_version({"budget_version": successor})
+			approved = readiness.approve_budget_version(stamped({"budget_version": successor}))
 			self.assertTrue(approved["ok"], approved.get("blockers"))
 
 		revised = self.request(on_hwd)
@@ -270,7 +272,7 @@ class TestAnswering(_RevisionRequestBase):
 
 		with recording_consumer() as delivered:
 			self._as(self.approver)
-			closed = readiness.close_budget({"budget": budget})
+			closed = readiness.close_budget(stamped({"budget": budget}))
 			self.assertTrue(closed["ok"], closed)
 		request = self.request(result)
 		self.assertEqual((request.status, request.decline_reason), (brr.STATUS_DECLINED, brr.CLOSED_BUDGET_REASON))

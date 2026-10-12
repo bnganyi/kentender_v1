@@ -22,7 +22,7 @@ from frappe.utils import cint
 
 CONFIG_KEY = "kt_bds_simulation_environment"
 CONTROLS = "EVL Test Environment Controls"
-DEFAULTS: dict = {"intake_outcome": "", "notice_outcome": "", "delivery_outcome": "", "downstream_status": ""}
+DEFAULTS: dict = {"intake_outcome": "", "notice_outcome": "", "delivery_outcome": "", "downstream_status": "", "head_of_procurement": ""}
 
 
 def enabled() -> bool:

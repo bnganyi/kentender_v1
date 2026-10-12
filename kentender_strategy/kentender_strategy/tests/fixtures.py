@@ -42,3 +42,31 @@ def pin_review_date(testcase, date: str = "2099-12-31") -> None:
 	)
 	patcher.start()
 	testcase.addCleanup(patcher.stop)
+
+
+def purge_record(doctype: str, name: str) -> None:
+	"""Test clean-up delete. Strategy records and the records other apps guard
+	with the command-only write guard (a User Responsibility Assignment, an Audit
+	Event) are deleted through the guard's maintenance path, never a standing
+	exemption; anything else is deleted as before."""
+	from contextlib import nullcontext
+
+	from kentender_core.services.command_write_guard import maintenance_write
+
+	if not frappe.db.exists(doctype, name):
+		return
+	family = getattr(frappe.get_doc(doctype, name), "command_write_family", "")
+	with maintenance_write(family, reason="Strategy test clean-up") if family else nullcontext():
+		frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+
+
+def open_strategy_write_window(testcase) -> None:
+	"""Legacy suites build their fixtures with direct inserts. They run inside the
+	guard's maintenance window for the whole test (closed after tearDown), which
+	is a test-site-only path, never a standing exemption. Suites that prove the
+	guard itself (test_str_aud_remediation) do not use it."""
+	from kentender_core.services.command_write_guard import maintenance_write
+
+	window = maintenance_write("Strategy", reason="Strategy test fixtures")
+	window.__enter__()
+	testcase.addCleanup(window.__exit__, None, None, None)

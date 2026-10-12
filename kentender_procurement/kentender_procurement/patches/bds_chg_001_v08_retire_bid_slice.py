@@ -7,13 +7,12 @@ Drops what the new Supplier Portal and Electronic Bid Submission module
 replaces (plan BDS-CHG-001 v0.8 Phase 1; `reconciliation/legacy_inventory.md`;
 spec BDS01-IMP-090, BDS07-IMP-010):
 
-- the three legacy bid DocTypes of `tender_configurations` and every row in
+- the three legacy bid DocTypes of the old tender-configuration module and every row in
   them. The Project Owner decided on 21 Sep 2026 that the old bid records
   are deleted outright, with no migration.
 - the three legacy bidder/bid Desk Pages.
 
-The TM2 bid DocTypes are not touched: TM2's officer workbench still reads them,
-so they go with the owner's OD-F TM2 clean-up. Every deletion is
+Every deletion is
 exists-guarded, so the patch is idempotent and safe on a site that never had
 these rows. Follows `std_tpl_imp_001_retire_std_configuration`.
 """
@@ -21,6 +20,8 @@ these rows. Follows `std_tpl_imp_001_retire_std_configuration`.
 from __future__ import annotations
 
 import frappe
+
+from kentender_core.utils.patch_guards import require_empty_or_authorised
 
 # Child before parent; the multi-pass loop absorbs residual ordering.
 RETIRED_DOCTYPES: tuple[str, ...] = (
@@ -83,6 +84,8 @@ def _delete_pages() -> None:
 
 
 def execute() -> None:
+	# AUD-XC-127: authorised for a site with no production data only.
+	require_empty_or_authorised("bds_chg_001_v08_retire_bid_slice", RETIRED_DOCTYPES)
 	_delete_rows()
 	_delete_permission_rows()
 	_delete_doctypes_multi_pass()

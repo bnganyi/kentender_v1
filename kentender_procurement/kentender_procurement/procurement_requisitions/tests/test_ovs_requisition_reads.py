@@ -66,3 +66,67 @@ class TestAccountingOfficerReadsAuthorised(RequisitionCase):
 		with self.assertRaises(frappe.PermissionError):
 			frappe.get_list("Procurement Requisition", pluck="name")
 		self.assertEqual(read.get_requisition_record(requisition=requisition, user=fx.FINANCE_OFFICER).get("outcome"), "FORBIDDEN")
+
+
+class TestSiteWideRolesDoNotReadUnsentDrafts(RequisitionCase):
+	"""KT-ACCESS-REV-001 AR-02 — REQ-CHG-001 v1.14 §8: the Head of Procurement
+	Function views the *submitted* Requisition, the Planner reads Planning's
+	lineage, the Auditor reads immutable Versions; the Procurement Officer has
+	no Draft right. An unsent Draft belongs to the department that is writing
+	it (and to the technical reader), so a Site-wide role does not open it by
+	the list, the record, the framework check or the register."""
+
+	# Users who hold the Site-wide role and nothing else: the shared fixture HOPF also holds a
+	# department scope, which legitimately opens that department's own Draft.
+	ROLES = {
+		"reqt.sitewide.hopf@example.test": "Head of Procurement Function",
+		"reqt.sitewide.planner@example.test": "Procurement Planner",
+		"reqt.sitewide.auditor@example.test": "Auditor",
+	}
+
+	@property
+	def READERS(self):
+		for email, role in self.ROLES.items():
+			frappe.set_user("Administrator")
+			fx.pln_fx._user(email, "Site-wide reader " + role)
+			if not frappe.db.exists("User Responsibility Assignment", {"user": email, "business_role": role, "status": "Enabled"}):
+				fx.pln_fx._grant(email, role)
+		return tuple(self.ROLES)
+
+	def assert_draft_hidden(self, name: str, user: str):
+		frappe.set_user(user)
+		self.assertNotIn(name, frappe.get_list("Procurement Requisition", pluck="name"), user)
+		self.assertFalse(frappe.has_permission("Procurement Requisition", "read", name, user=user), user)
+		self.assertEqual(read.get_requisition_record(requisition=name, user=user).get("outcome"), "NOT_FOUND", user)
+		self.assertNotIn(name, [r["requisition"] for r in read.get_requisition_workspace(user=user)["register"]], user)
+
+	def test_a_draft_is_hidden_from_every_site_wide_reader(self):
+		_, item_id = fx.active_item()
+		name = fx.prepare(item_id)["requisition"]
+		for user in self.READERS:
+			with self.subTest(user=user):
+				self.assert_draft_hidden(name, user)
+
+	def test_the_requisition_children_follow_their_draft_root(self):
+		_, item_id = fx.active_item()
+		name = fx.prepare(item_id)["requisition"]
+		for user in self.READERS:
+			with self.subTest(user=user):
+				frappe.set_user(user)
+				self.assertEqual(frappe.get_list("Requisition Version", filters={"requisition": name}, pluck="name"), [], user)
+
+	def test_the_department_still_opens_its_own_draft(self):
+		_, item_id = fx.active_item()
+		name = fx.prepare(item_id)["requisition"]
+		frappe.set_user(fx.AUTHOR)
+		self.assertIn(name, frappe.get_list("Procurement Requisition", pluck="name"))
+		self.assertNotEqual(read.get_requisition_record(requisition=name, user=fx.AUTHOR).get("outcome"), "NOT_FOUND")
+
+	def test_a_submitted_requisition_stays_readable_to_the_site_wide_readers(self):
+		_, item_id = fx.active_item()
+		name = fx.submitted(item_id)
+		for user in self.READERS:
+			with self.subTest(user=user):
+				frappe.set_user(user)
+				self.assertIn(name, frappe.get_list("Procurement Requisition", pluck="name"), user)
+				self.assertNotIn(read.get_requisition_record(requisition=name, user=user).get("outcome"), ("NOT_FOUND", "FORBIDDEN"), user)

@@ -20,6 +20,7 @@ recomputed at read and at submission from the confirmed statement.
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from typing import Any
 
 import frappe
@@ -32,6 +33,7 @@ from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_FINANCE_CONFIRMATION_OFFICER,
 	ROLE_PROCUREMENT_PLANNER,
 )
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 
 def _open_task(task_name: str):
@@ -47,7 +49,7 @@ def affordability_statement(plan, version) -> dict[str, Any]:
 	totals = readiness.line_totals(version.name)
 	statement = budget_gateway.check_plan_affordability(fiscal_year=plan.fiscal_year, planned_totals=totals)
 	statement["line_totals_hash"] = readiness.line_totals_hash(totals)
-	statement["plan_value"] = sum(totals.values())
+	statement["plan_value"] = float(sum(totals.values(), Decimal(0)))
 	return statement
 
 
@@ -101,7 +103,7 @@ def funding_is_current(version, statement: dict[str, Any] | None = None) -> bool
 	if not basis:
 		return False
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
-	return financial_basis.current_digest(plan, version) == cstr(basis.basis_digest)
+	return financial_basis.current_digest(plan, version, basis) == cstr(basis.basis_digest)
 
 
 def _confirmed_decision(version_name: str):
@@ -133,6 +135,7 @@ def _reusable_decision(version, basis):
 	return None
 
 
+@planning_command
 def request_plan_funding_confirmation(*, plan_version: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `RequestPlanFundingConfirmation` — one current plan-level review
 	against an immutable financial basis. Draft: pre-Finance readiness, then
@@ -251,6 +254,7 @@ def _notify_finance_officers(task, plan) -> None:
 		)
 
 
+@planning_command
 def _decide(task, *, decision: str, actor: str, assignment, statement: dict[str, Any], return_reason: str = "", idempotency_key: str = ""):
 	version_number = frappe.db.get_value("Annual Plan Version", task.plan_version, "version_number")
 	return frappe.get_doc(
@@ -270,6 +274,7 @@ def _decide(task, *, decision: str, actor: str, assignment, statement: dict[str,
 	).insert(ignore_permissions=True)
 
 
+@planning_command
 def confirm_plan_funding(*, task: str, task_token: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	payload = {"task": task}
@@ -318,6 +323,7 @@ def confirm_plan_funding(*, task: str, task_token: str, idempotency_key: str, us
 	return result
 
 
+@planning_command
 def return_from_finance(*, task: str, reason: str, task_token: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	reason = cstr(reason).strip()

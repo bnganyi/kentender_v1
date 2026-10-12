@@ -99,7 +99,7 @@
   E.sections = () => E.lk(['Tender and committee', 'Bid findings', 'Financial comparison', 'Clarifications and committee record', 'Recommendation and reasons'], { title: 'Report sections', sec: true });
   E.sigs = (g, p, r, o) => E.tb(['Member', 'Capacity', 'Signature'], [['Grace Wambui', 'Chair', g], ['Peter Mugo', 'Member', p], ['Ruth Achieng', 'Member', r]], Object.assign({ title: 'Signatures', sec: true }, o || {}));
   E.roster = (o) => E.tb(['Person', 'Department', 'Capacity'], [
-    ['Grace Wambui', 'Human Resource Management and Development', 'Chair'],
+    ['Grace Wambui', 'Human Resources Management and Development', 'Chair'],
     ['Peter Mugo', 'ICT', 'Member'], ['Ruth Achieng', 'Finance', 'Member'],
     ['Brian Wafula', 'Procurement', 'Secretary — not a voting or signing member']
   ], Object.assign({ title: 'Committee', sec: true }, o || {}));
@@ -131,6 +131,7 @@
     if (s[0] === '@') return { t: s.slice(1), btn: true, td };
     if (s[0] === '#') return { t: s.slice(1), inp: true, td };
     if (s[0] === '*') return { t: s.slice(1), strong: true, td };
+    if (s[0] === '!') { const [t, note] = s.slice(1).split('|'); return { t, txt: true, note: note || '', td }; }  // v0.7: read-only text with a note beneath it
     const c = chipOf(s);
     if (c) return { t: s, chip: true, cls: c, td };
     if (E.PEOPLE[s]) return { t: s, person: true, ini: E.PEOPLE[s], td };

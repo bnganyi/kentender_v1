@@ -81,14 +81,14 @@
 			<table v-if="checksOpen" class="table req-review-body">
 				<thead><tr><th>Check</th><th>Result</th></tr></thead>
 				<tbody>
-					<tr v-for="c in view.checks.rows" :key="c.test" :class="{ 'is-failed': !c.ok }"><td>{{ c.label }}</td><td>{{ c.ok ? c.result : c.failure }}</td></tr>
+					<tr v-for="c in view.checks.rows" :key="c.test" :class="{ 'is-failed': !c.ok }"><td>{{ c.check }}</td><td>{{ c.ok ? c.result : c.failure }}</td></tr>
 				</tbody>
 			</table>
 		</div>
 
 		<Disclosure title="Record details" testid="req-record-details" style="margin-bottom: var(--kt-space-6)">
-			<div class="kt-meta-row" style="flex-wrap: wrap">
-				<div v-for="fact in view.record_details || []" :key="fact.label"><span class="kt-label">{{ fact.label }}</span><span class="kt-meta-value" style="font-size: 14px">{{ fact.value }}</span></div>
+			<div class="kt-meta-row req-facts" style="flex-wrap: wrap">
+				<div v-for="fact in view.record_details || []" :key="fact.label"><span class="kt-label">{{ fact.label }}</span><span class="kt-meta-value" style="font-size: 14px"><span v-for="(part, i) in String(fact.value).split('; ')" :key="i" class="req-fact-line">{{ part }}</span></span></div>
 			</div>
 		</Disclosure>
 

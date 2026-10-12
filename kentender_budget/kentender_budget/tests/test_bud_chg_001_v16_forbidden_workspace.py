@@ -15,6 +15,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from kentender_budget.services.budget_contracts import get_budget_workspace
+from kentender_core.services.command_write_guard import purge_doc
 
 
 class TestForbiddenWorkspace(FrappeTestCase):
@@ -30,7 +31,7 @@ class TestForbiddenWorkspace(FrappeTestCase):
 		frappe.set_user("Administrator")
 		for doctype, name in reversed(cls._cleanup):
 			if frappe.db.exists(doctype, name):
-				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+				purge_doc(doctype, name)
 		super().tearDownClass()
 
 	def _user_with_no_budget_responsibility(self) -> str:

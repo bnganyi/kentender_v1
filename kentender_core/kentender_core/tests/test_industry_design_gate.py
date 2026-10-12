@@ -40,6 +40,15 @@ from frappe.tests.utils import FrappeTestCase
 # when that module's own full Industry rebuild lands.
 LEGACY_BUNDLE_ALLOWLIST: frozenset[str] = frozenset()
 
+#: Page bundles that mount INSIDE another page's `.kt-industry` root, not as a page of their own: a second wrapper would repeat the
+#: root's full-viewport min-height. Each maps to the host component (relative to the bundle's parent folder) that must carry the class.
+NESTED_MOUNTS: dict[str, str] = {
+	# Bid Evaluation is mounted by the Tenders page into its host for every route under /app/tenders/{ref}/evaluation.
+	"bid_evaluation.bundle.js": "../tenders/Tenders.vue",
+	# Bid Opening likewise, for every route under /app/tenders/{ref}/opening.
+	"bid_opening.bundle.js": "../tenders/Tenders.vue",
+}
+
 KENTENDER_APPS: tuple[str, ...] = (
 	"kentender_core",
 	"kentender_strategy",
@@ -103,6 +112,17 @@ class TestIndustryDesignGate(FrappeTestCase):
 				allowlisted.append(bundle_path.name)
 				continue
 
+			if bundle_path.name in NESTED_MOUNTS:
+				host = (bundle_path.parent / NESTED_MOUNTS[bundle_path.name]).resolve()
+				self.assertTrue(host.is_file(), host)
+				self.assertRegex(
+					host.read_text(encoding="utf-8"),
+					r'class="(?:[^"]*\s)?kt-industry(?:\s[^"]*)?"',
+					f"{host}: the host page that {bundle_path.name} mounts into must wrap class=\"kt-industry\"",
+				)
+				checked += 1
+				continue
+
 			if PORTAL_REGISTER_RE.search(src):
 				# A public portal surface (BDS-CHG-001 v0.8 plan OD-B) mounts
 				# inside the portal page, whose <body> carries .kt-industry; a
@@ -112,7 +132,7 @@ class TestIndustryDesignGate(FrappeTestCase):
 				portal_template = Path(frappe.get_app_path("kentender_core")) / "templates" / "kt_portal" / "base.html"
 				self.assertRegex(
 					portal_template.read_text(encoding="utf-8"),
-					r'<body class="(?:[^"]*\s)?kt-industry(?:\s[^"]*)?"',
+					r'<body\s+class="(?:[^"]*\s)?kt-industry(?:\s[^"]*)?"',
 					f"{portal_template}: the portal page body must carry class=\"kt-industry\" for {bundle_path.name}",
 				)
 				checked += 1

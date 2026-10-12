@@ -42,14 +42,20 @@ def correct_contact(*, award: str, notice: str, idempotency_key: str, user: str)
 		records.bump(state.reload(doc))
 		return records.summary(state.reload(doc), notice=n.name, outcome=outcome)
 
-	return records.command("RetryNoticeDelivery", case=award, idempotency_key=idempotency_key, actor=user, payload={"notice": notice, "via": "Correct contact"}, body=body)
+	return records.command("RetryNoticeDelivery", case=award, idempotency_key=idempotency_key, actor=user, payload={"notice": notice, "via": "Correct contact"}, body=body,
+		authorise=lambda: guards.require_hop(user))
+
+
+def _require_operator(user: str) -> None:
+	if not people.is_technical_operator(user):
+		raise frappe.DoesNotExistError("Not found")
 
 
 def retry_operation(*, award: str, idempotency_key: str, user: str) -> dict[str, Any]:
 	"""The technical operator's **Retry operation** for this award's failed technical work."""
 
 	def body() -> dict[str, Any]:
-		if user not in people.technical_operators():
+		if not people.is_technical_operator(user):
 			raise frappe.DoesNotExistError("Not found")
 		doc = records.lock(award)
 		done = {"notices": 0, "events": 0, "package": ""}
@@ -67,4 +73,5 @@ def retry_operation(*, award: str, idempotency_key: str, user: str) -> dict[str,
 		records.audit(doc.name, "RetryOperation", user, **{k: cstr(v) for k, v in done.items()})
 		return {"ok": True, "award": doc.name, **done}
 
-	return records.command("RetryOperation", case=award, idempotency_key=idempotency_key, actor=user, payload={}, body=body)
+	return records.command("RetryOperation", case=award, idempotency_key=idempotency_key, actor=user, payload={}, body=body,
+		authorise=lambda: _require_operator(user))

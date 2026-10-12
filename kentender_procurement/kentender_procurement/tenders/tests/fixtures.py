@@ -20,6 +20,7 @@ from uuid import uuid4
 
 import frappe
 
+from kentender_core.services.command_write_guard import maintenance_write, purge_doc
 from kentender_procurement.procurement_requisitions.tests import fixtures as req_fx
 
 NS = req_fx.NS
@@ -115,6 +116,8 @@ def wipe_tender_rows() -> None:
 	(TPR-CHG-001 v0.12 plan §5): until 26 Sep 2026 this deleted every Tender
 	on the site, canonical data included."""
 	frappe.set_user("Administrator")
+	# a claim that never recorded a result (a command that failed inside a surviving transaction) belongs to no record
+	frappe.db.sql("delete from `tabTender Command Journal` where result is null or result=''")
 	tenders = test_tenders()
 	if not tenders:
 		return
@@ -123,8 +126,8 @@ def wipe_tender_rows() -> None:
 	def _drop(doctype: str, rows: list[str]) -> None:
 		for name in rows:
 			doc = frappe.get_doc(doctype, name)
-			doc.flags.kt_fixture_wipe = True
-			doc.delete(ignore_permissions=True, force=True)
+			with maintenance_write("Tenders", reason="test-world wipe"):
+				doc.delete(ignore_permissions=True, force=True)
 
 	from kentender_procurement.tenders.seeds.clear import notify_removal
 
@@ -158,9 +161,8 @@ def restore_site() -> None:
 	wipe_tender_rows()
 	frappe.set_user("Administrator")
 	for email in TENDER_ACTORS:
-		for doctype in ("User Responsibility Assignment",):
-			for name in frappe.get_all(doctype, filters={"user": email}, pluck="name"):
-				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+		for name in frappe.get_all("User Responsibility Assignment", filters={"user": email}, pluck="name"):
+			purge_doc("User Responsibility Assignment", name)
 		if frappe.db.exists("User", email):
 			frappe.delete_doc("User", email, force=True, ignore_permissions=True)
 	for doctype, name in (("Delivery Location", LOCATION), ("Contact Office", CONTACT_OFFICE)):
@@ -199,6 +201,7 @@ def authorised_handoff(*, items: tuple[tuple[str, int, str], ...] = (("Business 
 	requisition = req_fx.prepare(item_id)["requisition"]
 	req_fx.fill_request_information(requisition)
 	req_fx.add_laptops(requisition, item_name=items[0][0])
+	req_fx.enter_estimates(requisition)
 	req_fx.apply_standard_package(requisition)
 	req_fx.send(requisition)
 	req_fx.submit_as_hod(requisition)

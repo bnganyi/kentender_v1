@@ -14,8 +14,15 @@ from jinja2 import UndefinedError
 
 from kentender_procurement.std_templates.renderers import checks
 from kentender_procurement.tenders.services import documents, notices, render_service, snapshot as snap, template_binding
+from kentender_core.services.command_write_guard import CommandWriteError
 from kentender_procurement.tenders.services.errors import TendersError
 from kentender_procurement.tenders.tests import fixtures as fx, sample
+
+
+def authz_mode(tender, user: str) -> str:
+	from kentender_procurement.tenders.services import tender_authorization as authz
+
+	return authz.reader_mode(user, contributing_org_units=authz.contributing_units_of(tender))
 
 
 class DocumentsCase(IntegrationTestCase):
@@ -118,6 +125,25 @@ class TestNotices(DocumentsCase):
 
 
 class TestDocumentStore(DocumentsCase):
+	def test_a_department_reader_cannot_fetch_an_unpublished_document_or_the_digests_that_address_it(self):
+		"""AUD-XC-022: a contributing department sees neutral status, not the unpublished text."""
+		from kentender_procurement.tenders.services import read
+
+		tender, version = sample.insert_tender_with_version(values=self.values, fixture_namespace=fx.NS)
+		tender.db_set("contributing_org_unit_ids", frappe.as_json([fx.req_fx.ou_alpha()]))
+		tender.reload()
+		out = render_service.render(tender, version, snap.load(version))
+		documents.store(tender=tender.name, tender_version=version.name, kind=documents.KIND_INVITATION, html=out["invitation_html"], digest_value=out["invitation_digest"], file_base="TND-MOH-2027-033-invitation", fixture_namespace=fx.NS)
+		self.assertEqual(authz_mode(tender, fx.DEPARTMENTAL), "department")
+		for audience in ("Internal", "Public", "Audit"):
+			with self.assertRaises(frappe.DoesNotExistError, msg=audience):
+				documents.get_tender_document(digest_value=out["invitation_digest"], audience=audience, user=fx.DEPARTMENTAL)
+		projection = read.get_tender(tender=tender.name, user=fx.DEPARTMENTAL)
+		self.assertEqual(projection["mode"], "department")
+		for key in ("package_digest", "invitation_digest", "issued_tender_digest", "prepared_by", "approved_by"):
+			self.assertEqual(projection["version"][key], "", key)
+		self.assertEqual(projection["review"]["findings"], [])
+
 	def test_store_is_idempotent_on_digest_and_get_masks_by_audience(self):
 		tender, version = sample.insert_tender_with_version(values=self.values, fixture_namespace=fx.NS)
 		out = render_service.render(tender, version, snap.load(version), with_pdf=True)
@@ -130,7 +156,7 @@ class TestDocumentStore(DocumentsCase):
 		self.assertTrue(row.file and row.html_file)
 		# a plain save is refused: the row is immutable
 		row.kind = "Complete Tender"
-		with self.assertRaises(frappe.ValidationError):
+		with self.assertRaises(CommandWriteError):
 			row.save(ignore_permissions=True)
 
 		read = documents.get_tender_document(digest_value=out["invitation_digest"], user=fx.AUDITOR)

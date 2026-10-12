@@ -24,13 +24,15 @@ computed from the same resolver the commands use (read-offer parity).
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from typing import Any
 
 import frappe
 from frappe.utils import cstr, flt, fmt_money, formatdate, get_datetime
 
+from kentender_core.services import next_step as ns
 from kentender_procurement.procurement_planning.errors import MESSAGES
-from kentender_procurement.procurement_planning.services import missing_setting, needs_intake, readiness, references, schedule, scope_lock
+from kentender_procurement.procurement_planning.services import missing_setting, money, needs_intake, readiness, references, schedule, scope_lock
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
@@ -650,10 +652,9 @@ def _preview(text: str, *, limit: int = 90) -> str:
 	return f"{cut}…"
 
 
-#: §10.12 — the exact state wording for each of the four rows.
+#: §10.12 (v1.31) — the exact state wording for the website row of a Version that was published under the v1.30 arrangements. A
+#: Version confirmed by the Planner reads **Confirmed**; attempts are historical and none is created in MVP 1.
 _WEBSITE_STATE = {
-	"Pending": "Publication is in progress",
-	"Dispatched": "Publication is in progress",
 	"Acknowledged": "Published",
 	"Failed": "The plan was not published",
 	"Indeterminate": "We could not confirm whether publication succeeded.",
@@ -661,9 +662,16 @@ _WEBSITE_STATE = {
 }
 
 
-def _publication_status_rows(doc, version, *, treasury_current: bool) -> list[dict[str, str]]:
+def _publication_status_rows(doc, version, *, confirmed: bool, legacy_treasury: bool) -> list[dict[str, str]]:
 	state = cstr(doc.publication_state)
-	website = _WEBSITE_STATE.get(state, "Not started")
+	if confirmed:
+		treasury_state, treasury_kind = "Confirmed", "live"
+		website_state, website_kind = "Confirmed", "live"
+	else:
+		treasury_state, treasury_kind = ("Recorded", "live") if legacy_treasury else ("Not yet confirmed", "attention")
+		website_state = _WEBSITE_STATE.get(state, "Not yet confirmed")
+		# Historical results only: an unknown result is its own state, never a failure.
+		website_kind = {"Acknowledged": "live", "Failed": "critical", "Indeterminate": "attention", "Held": "attention"}.get(state, "attention")
 	if version.version_status == "Active":
 		procurement = "Current plan"
 		procurement_kind = "live"
@@ -682,19 +690,8 @@ def _publication_status_rows(doc, version, *, treasury_current: bool) -> list[di
 			"state": "Historical approval retained" if version.version_status == "Withdrawn for correction" else "Approved",
 			"kind": "live",
 		},
-		{
-			"label": "Treasury submission",
-			"state": "Recorded" if treasury_current else "Details not yet recorded",
-			"kind": "live" if treasury_current else "attention",
-		},
-		{
-			"label": "Website publication",
-			"state": website,
-			# An unknown result is its own state, never a failure.
-			"kind": {
-				"Acknowledged": "live", "Failed": "critical", "Indeterminate": "attention", "Held": "attention",
-			}.get(state, "pending"),
-		},
+		{"label": "Treasury submission", "state": treasury_state, "kind": treasury_kind},
+		{"label": "Website publication", "state": website_state, "kind": website_kind},
 		{"label": "Use for procurement", "state": procurement, "kind": procurement_kind},
 	]
 
@@ -870,6 +867,20 @@ def _signature_summary(version) -> dict[str, Any] | None:
 	return {"actor": row.actor, "actor_name": cstr(frappe.db.get_value("User", row.actor, "full_name") or row.actor), "capacity": row.capacity, "signed_at": cstr(row.signed_at), "signed_at_display": _eat(row.signed_at), "submitted_snapshot_id": row.submitted_snapshot_id, "snapshot_hash": row.snapshot_hash}
 
 
+def _turn_linked_to_task(answer: dict[str, Any], open_task: dict[str, Any] | None) -> dict[str, Any]:
+	"""PLN-CHG-001 v1.31 §10.12 — a **Your turn** headline that names an action
+	held on another page is itself the link to it. The shared next-step block
+	draws a route fix under the headline; the host maps it to the route. Only
+	Your turn answers carry it, so a Waiting or Done line stays plain text."""
+	if not open_task or not answer or answer.get("kind") != ns.KIND_YOUR_TURN or answer.get("fixes"):
+		return answer
+	link = ns.fix(
+		open_task["label"], responsibility=cstr(open_task.get("responsibility")), kind=ns.FIX_ROUTE, fix_id="open_task",
+		target=open_task["route"], primary=True,
+	)
+	return {**answer, "fixes": [link]}
+
+
 def _open_task_for(actor: str, version) -> dict[str, Any] | None:
 	"""FU-14 — the viewing actor's own open task on this Version, so the record
 	route is never a dead end for its decider. Same authority as the workspace."""
@@ -878,16 +889,23 @@ def _open_task_for(actor: str, version) -> dict[str, Any] | None:
 	):
 		task = frappe.db.get_value("Plan Finance Task", {"plan_version": version.name, "status": "Open"}, "name")
 		if task:
-			return {"label": "Open Finance task", "route": [PAGE, "finance", task]}
-	for stage, role, action in (
-		("Accounting Officer adoption", ROLE_ACCOUNTING_OFFICER, authz.ACTION_AO_DECIDE),
-		("Statutory approval", ROLE_PLAN_STATUTORY_APPROVER, authz.ACTION_STATUTORY_DECIDE),
+			return {"label": "Review and confirm funding", "route": [PAGE, "finance", task], "responsibility": ROLE_FINANCE_CONFIRMATION_OFFICER}
+	for stage, role, action, label in (
+		("Accounting Officer adoption", ROLE_ACCOUNTING_OFFICER, authz.ACTION_AO_DECIDE, "Review and adopt the plan"),
+		("Statutory approval", ROLE_PLAN_STATUTORY_APPROVER, authz.ACTION_STATUTORY_DECIDE, "Review and approve the plan"),
 	):
 		if not authz.has_site_role(role, actor) or authz.is_segregated(actor, action, plan_version=version.name):
 			continue
 		task = frappe.db.get_value("Plan Governance Task", {"plan_version": version.name, "stage": stage, "status": "Open"}, "name")
 		if task:
-			return {"label": "Open decision", "route": [PAGE, "review", task]}
+			# The task is the page for deciding; the plan page hands its holder
+			# to it instead of showing a near-identical read first.
+			return {"label": label, "route": [PAGE, "review", task], "opens_directly": True, "responsibility": role}
+	# v1.31 — the Planner's own task on an approved plan: confirm its publication.
+	if version.version_status in ("Approved — publication pending", "Publication failed") and authz.has_site_role(ROLE_PROCUREMENT_PLANNER, actor):
+		publication = frappe.db.get_value("Plan Publication", {"plan_version": version.name}, "name")
+		if publication and not frappe.db.exists("Plan Publication Confirmation", {"plan_version": version.name, "confirmation_state": "Current"}):
+			return {"label": "Confirm plan publication", "route": [PAGE, "publication", publication], "responsibility": ROLE_PROCUREMENT_PLANNER}
 	return None
 
 
@@ -932,7 +950,8 @@ def _item_values(version_name: str) -> dict[str, dict[str, Any]]:
 		out[cstr(item.plan_item) or item.plan_item_id] = {
 			"plan_item_id": item.plan_item_id,
 			"title": item.title,
-			"value": sum(flt(a.indicative_amount) for a in allocations),
+			# RG-24: an exact decimal sum, compared exactly below (no epsilon)
+			"value": sum((money.as_decimal(a.indicative_amount) for a in allocations), Decimal(0)),
 		}
 	return out
 
@@ -944,7 +963,7 @@ def _purchase_changes(before_version: str, after_version: str) -> list[dict[str,
 		prior = before.get(key)
 		if prior is None:
 			rows.append({"plan_item_id": item["plan_item_id"], "title": item["title"], "field": "Estimated cost", "current": "Not in the current plan", "proposed": _money(item["value"])})
-		elif abs(prior["value"] - item["value"]) > 1e-9:
+		elif prior["value"] != item["value"]:
 			rows.append({"plan_item_id": item["plan_item_id"], "title": item["title"], "field": "Estimated cost", "current": _money(prior["value"]), "proposed": _money(item["value"])})
 	for key, prior in before.items():
 		if key not in after:
@@ -1005,6 +1024,7 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 	# hand-written rule.
 	from kentender_procurement.procurement_planning.services import next_step as plan_next_step
 
+	open_task = _open_task_for(actor, version)
 	guidance = plan_next_step.plan_guidance(
 		version, plan, actor=actor, report=readiness_report, submission_report=submission_report,
 		unallocated=unallocated, accepted_entries=len(all_accepted),
@@ -1013,7 +1033,7 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 	sign_guard = guidance["guards"].get("sign_and_submit")
 	return {
 		"outcome": "OK",
-		"next_step": guidance["next_step"],
+		"next_step": _turn_linked_to_task(guidance["next_step"], open_task),
 		"journey": guidance["journey"],
 		# §10.1A.3 — budget fit (computed now) and Finance confirmation (a
 		# formal step) are two separate facts; neither is ever "not yet
@@ -1038,7 +1058,7 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		},
 		"mutable": mutable,
 		"can_act": can_act,
-		"open_task": _open_task_for(actor, version),
+		"open_task": open_task,
 		"is_correction": bool(version.correction_of_plan_version),
 		"is_successor": bool(version.based_on_version),
 		"has_open_successor": bool(plan.open_successor_version),
@@ -1120,13 +1140,13 @@ def _budget_fit(affordability: dict[str, Any] | None, version) -> dict[str, Any]
 	if not affordability or version.version_status != "Draft":
 		return None
 	rows = []
-	total_over = 0.0
+	total_over = Decimal(0)
 	over_lines = 0
 	for line in affordability.get("lines") or []:
-		approved, planned = flt(line.get("approved")), flt(line.get("planned"))
+		approved, planned = money.as_decimal(line.get("approved")), money.as_decimal(line.get("planned"))
 		if not planned and not approved:
 			continue
-		over = planned > approved + 1e-9
+		over = planned > approved
 		difference = abs(approved - planned)
 		if over:
 			total_over += planned - approved
@@ -1220,9 +1240,13 @@ def _active_view(version, plan) -> dict[str, Any]:
 			}
 		)
 	item_value = sum(flt(a.indicative_amount) for a in frappe.get_all("Plan Source Allocation", filters={"plan_version": version.name, "allocation_state": "Active"}, fields=["indicative_amount"]))
+	# v1.31 — a Version the Planner confirmed reads "Confirmed"; one published under
+	# the v1.30 worker keeps its "Acknowledged" line as history.
 	publication = frappe.db.get_value(
-		"Plan Publication", {"plan_version": version.name, "publication_state": "Acknowledged"}, ["name", "acknowledged_at", "external_reference"], as_dict=True,
+		"Plan Publication", {"plan_version": version.name, "publication_state": ("in", ("Confirmed", "Acknowledged"))},
+		["name", "publication_state", "acknowledged_at"], as_dict=True,
 	)
+	confirmed_at = frappe.db.get_value("Plan Publication Confirmation", {"plan_version": version.name, "confirmation_state": "Current"}, "recorded_at") if publication else None
 	return {
 		"summary": {
 			"plan_items": len(rows),
@@ -1234,7 +1258,11 @@ def _active_view(version, plan) -> dict[str, Any]:
 		"governance_card": {
 			"ao_adoption_line": _decision_line(version.name, "Accounting Officer adoption"),
 			"statutory_approval_line": _decision_line(version.name, "Statutory approval"),
-			"publication_line": f"Acknowledged · {_eat(publication.acknowledged_at)}" if publication else "",
+			"publication_line": (
+				f"Confirmed · {_eat(confirmed_at)}" if publication and publication.publication_state == "Confirmed" and confirmed_at
+				else f"Acknowledged · {_eat(publication.acknowledged_at)}" if publication and publication.acknowledged_at
+				else ""
+			),
 			"publication": publication.name if publication else "",
 			"publication_route": [PAGE, "publication", publication.name] if publication else None,
 		},
@@ -1271,6 +1299,21 @@ def _drawn(allocations: list) -> tuple[float, float]:
 # --------------------------------------------------------------------------
 
 
+def _classification_readable(working_reader: bool, cache: dict[str, Any], dpp_version: str, dpp_entry: str, actor: str) -> bool:
+	"""Whether this viewer may open the accepted-classification page for one
+	source: true for the working readers, otherwise only when the exact entry is
+	among those a plan under the viewer's review consumed."""
+	if working_reader:
+		return True
+	submission = frappe.db.get_value("Departmental Plan Submission", {"dpp_version": dpp_version}, "name") if dpp_version else ""
+	if not submission:
+		return False
+	if submission not in cache:
+		cache[submission] = authz.plan_source_access(submission, actor)
+	entry_id = frappe.db.get_value("Departmental Plan Entry", dpp_entry, "entry_id")
+	return entry_id in cache[submission].entries
+
+
 def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import strategy_gateway
 
@@ -1290,9 +1333,16 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 		fields=["name", "dpp_entry", "source_origin", "need", "need_revision", "organisation_unit", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount"],
 		order_by="creation asc",
 	)
-	sources, value, correction_required = [], 0.0, False
+	sources, value, correction_required = [], Decimal(0), False
+	# KT-ACCESS-REV-001 v0.2 §2 — an enabled link must lead to a page this viewer
+	# can read (never a deterministic denial): the Planner and technical readers
+	# always, a Plan reviewer only for what their plan consumed (proposed
+	# PLN-R2, built ahead of approval). The server answers; the browser never
+	# derives it from a role.
+	working_reader = authz.can_read_site(ROLE_PROCUREMENT_PLANNER, actor) or authz.is_technical(actor)
+	reviewer_access: dict[str, Any] = {}
 	for allocation in allocations:
-		value += flt(allocation.indicative_amount)
+		value += money.as_decimal(allocation.indicative_amount)
 		if source_correction_required(allocation.dpp_entry):
 			correction_required = True
 		entry_title = cstr(frappe.db.get_value("Departmental Plan Entry", allocation.dpp_entry, "title"))
@@ -1312,6 +1362,9 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 				"dpp_submission": cstr(
 					frappe.db.get_value("Departmental Plan Submission", {"dpp_version": dpp_version}, "name")
 				) if dpp_version else "",
+				"classification_readable": _classification_readable(
+					working_reader, reviewer_access, dpp_version, allocation.dpp_entry, actor
+				),
 				"need_reference_line": f"{allocation.need} · Revision {needs_intake.need_revision_number(allocation.need_revision)}" if allocation.need else "",
 				"quantity_display": _quantity_display(allocation.quantity, allocation.unit),
 				"quantity_number": f"{flt(allocation.quantity):g}",
@@ -1768,7 +1821,7 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 		"failing_lines": statement.get("failing_lines", []),
 		# v1.18 §4.7 — the immutable basis this review decides on
 		"financial_basis": basis_summary,
-		"basis_current": (financial_basis.current_digest(plan, version) == cstr(basis.basis_digest)) if (basis and not decided) else None,
+		"basis_current": (financial_basis.current_digest(plan, version, basis) == cstr(basis.basis_digest)) if (basis and not decided) else None,
 		"is_reassessment": reassessment,
 		"version_status": version.version_status,
 		"version_number": version.version_number,
@@ -2006,6 +2059,20 @@ def _governance_task_guidance(version, plan, actor: str) -> dict[str, Any]:
 	return _guidance_for(version, plan, actor, reduced=False)
 
 
+def _governance_task_readers(task_doc) -> tuple[str, ...]:
+	"""The roles that may open a governance task: the one whose decision it
+	asks for, the Planner and the Auditor."""
+	role = ROLE_ACCOUNTING_OFFICER if task_doc.stage == "Accounting Officer adoption" else ROLE_PLAN_STATUTORY_APPROVER
+	return (role, ROLE_PROCUREMENT_PLANNER, ROLE_AUDITOR)
+
+
+def governance_task_readable(task_doc, user: str | None = None) -> bool:
+	"""Whether `get_plan_governance_task` would open this task for the user —
+	so a command that creates a task can say whether to send its actor there."""
+	principal = authz.actor(user)
+	return authz.is_technical(principal) or any(authz.can_read_site(role, principal) for role in _governance_task_readers(task_doc))
+
+
 def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_finance, plan_governance
 
@@ -2014,7 +2081,7 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 		authz.not_found()
 	task_doc = frappe.get_doc("Plan Governance Task", task)
 	role = ROLE_ACCOUNTING_OFFICER if task_doc.stage == "Accounting Officer adoption" else ROLE_PLAN_STATUTORY_APPROVER
-	authz.require_site_read((role, ROLE_PROCUREMENT_PLANNER, ROLE_AUDITOR), actor)
+	authz.require_site_read(_governance_task_readers(task_doc), actor)
 	version = frappe.get_doc("Annual Plan Version", task_doc.plan_version)
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
 	snapshot = json.loads(version.submitted_snapshot) if version.submitted_snapshot else {}
@@ -2382,13 +2449,58 @@ def _late_activation(version, actor: str) -> dict[str, Any]:
 	}
 
 
+def build_approved_package(*, publication: str, user: str | None = None) -> dict[str, Any]:
+	"""U13 **Download approved plan** / **Download Plan data** (PLN-CHG-001 v1.31
+	§10.12) — the exact frozen file the Planner submits to Treasury and publishes:
+	the public payload of the approved snapshot under the publication's own
+	identity. It is rebuilt from the immutable snapshot and checked against the
+	hash frozen at approval, so it can never differ from what was approved.
+	(The manifest holds one file, the JSON; a rendered PDF is not produced.)"""
+	from kentender_procurement.procurement_planning.services import plan_json
+
+	actor = authz.actor(user)
+	if not publication or not frappe.db.exists("Plan Publication", publication):
+		authz.not_found()
+	authz.require_site_read(PLAN_READERS, actor)
+	doc = frappe.get_doc("Plan Publication", publication)
+	snapshot = frappe.get_doc("Approved Plan Snapshot", doc.snapshot)
+	payload = plan_json.build_public_payload(snapshot)
+	payload["publicationId"] = doc.publication_id
+	if plan_json.content_digest(payload) != doc.package_hash:
+		frappe.throw("The approved package no longer matches the hash frozen at approval.", exc=frappe.ValidationError)
+	return {"filename": "annual-procurement-plan.json", "payload": payload}
+
+
+def _confirmation_view(row) -> dict[str, Any] | None:
+	"""The Planner's publication confirmation (a Draft or the Current record) as the screen reads it."""
+	if not row:
+		return None
+	return {
+		"id": row.name,
+		"state": row.confirmation_state,
+		"record_version": int(row.record_version or 0),
+		"treasury_submitted_on": cstr(row.treasury_submitted_on or ""),
+		"treasury_submitted_display": _date(row.treasury_submitted_on) if row.treasury_submitted_on else "",
+		"treasury_reference": cstr(row.treasury_reference),
+		"treasury_attachment": cstr(row.treasury_attachment),
+		"website_published_on": cstr(row.website_published_on or ""),
+		"website_published_display": _date(row.website_published_on) if row.website_published_on else "",
+		"public_plan_url": cstr(row.public_plan_url),
+		"confirmation_acknowledged": bool(row.confirmation_acknowledged),
+		# when this record was last saved (a Draft's "saved at"; for a confirmation, `recorded_display` is the fact)
+		"saved_display": _eat(row.modified),
+		"recorded_by_name": _person_name(row.actor),
+		"recorded_display": _eat(row.recorded_at) if row.recorded_at else "",
+		"correction_reason": cstr(row.correction_reason),
+	}
+
+
 def get_publication_task(*, publication: str, user: str | None = None) -> dict[str, Any]:
-	"""§10.13 — the retry/reconcile screen for one `Plan Publication`: its
-	Treasury-evidence gate, the attempt history and the current publication
-	state. The full protected review pack (source evidence, web/PDF/JSON
-	exports) is Phase 3F/3G work; this is the minimal state a technical
-	retry or an AO's Treasury-evidence check needs today."""
-	from kentender_core.services.authorization import is_technical
+	"""§10.12 (PLN-CHG-001 v1.31) — U13 for one `Plan Publication`: the four
+	status rows, the Planner's confirmation (Draft and Current), the hold and
+	withdrawal state, and historical attempts read-only. MVP 1 has no retry,
+	reconciliation or Accounting Officer Treasury form."""
+	from kentender_procurement.procurement_planning.services import publication_confirmation as confirmation_service
 
 	actor = authz.actor(user)
 	if not publication or not frappe.db.exists("Plan Publication", publication):
@@ -2397,92 +2509,74 @@ def get_publication_task(*, publication: str, user: str | None = None) -> dict[s
 	authz.require_site_read(PLAN_READERS, actor)
 	version = frappe.get_doc("Annual Plan Version", doc.plan_version)
 	plan = frappe.get_doc("Annual Plan", version.annual_plan)
-	destination = frappe.db.get_value("Annual Plan Publication Destination", doc.destination, ["destination_id", "title"], as_dict=True) or {}
 	attempts = frappe.get_all(
 		"Publication Attempt", filters={"publication": doc.name}, fields=["name", "attempt_number", "result", "attempted_at", "completed_at", "external_reference", "failure_reason"],
 		order_by="attempt_number asc",
 	)
-	treasury = frappe.db.get_value(
+	current = frappe.get_doc("Plan Publication Confirmation", confirmation_service.current_confirmation(version.name)) if confirmation_service.current_confirmation(version.name) else None
+	draft_name = confirmation_service.draft_confirmation(version.name)
+	draft = frappe.get_doc("Plan Publication Confirmation", draft_name) if draft_name else None
+	legacy = frappe.db.get_value(
 		"Treasury Submission Evidence", {"plan_version": version.name, "evidence_state": "Current"},
-		["name", "submitted_at", "channel", "dispatch_reference", "recorded_at", "destination", "supporting_attachment", "actor"],
-		as_dict=True,
+		["submitted_at", "channel", "dispatch_reference", "recorded_at", "destination", "supporting_attachment", "actor"], as_dict=True,
 	)
 	hold = frappe.db.get_value("Plan Publication Hold", {"plan_version": version.name, "hold_state": "Active"}, ["name", "hold_kind", "reason", "raised_at"], as_dict=True)
+	approved_at = frappe.db.get_value("Approved Plan Snapshot", {"plan_version": version.name}, "approved_at")
+	is_planner = authz.has_site_role(ROLE_PROCUREMENT_PLANNER, actor)
+	open_state = version.version_status in confirmation_service.OPEN_STATES
 	badge, badge_kind = {
-		"Acknowledged": ("Acknowledged", "live"), "Failed": ("Publication failed", "critical"),
-		"Indeterminate": ("Result unknown — reconcile", "attention"), "Held": ("On hold", "attention"),
-	}.get(doc.publication_state, ("Pending", "attention"))
+		"Confirmed": ("Confirmed", "live"), "Acknowledged": ("Published", "live"), "Failed": ("Publication failed", "critical"),
+		"Indeterminate": ("Historical result unknown", "attention"), "Held": ("On hold", "attention"),
+	}.get(doc.publication_state, ("Awaiting confirmation", "attention"))
 	return {
 		"outcome": "OK",
 		**_guidance_for(version, plan, actor, reduced=True),
 		"publication": doc.name,
 		"publication_id": doc.publication_id,
-		"header": {"eyebrow": "ANNUAL PLAN PUBLICATION", "title": "Publication result", "reference_line": f"{plan.plan_reference} · Version {version.version_number}", "badge": badge, "badge_kind": badge_kind},
+		"header": {"eyebrow": "ANNUAL PLAN PUBLICATION", "title": "Publication", "reference_line": f"{plan.plan_reference} · Version {version.version_number}", "badge": badge, "badge_kind": badge_kind},
 		"plan_reference": plan.plan_reference,
 		"plan_title": plan.title,
-		"version": {"reference": version.version_reference, "status": version.version_status, "number": version.version_number},
-		"destination": {"id": destination.get("destination_id", ""), "title": destination.get("title", "")},
+		"version": {
+			"reference": version.version_reference, "status": version.version_status, "number": version.version_number,
+			"record_version": int(version.record_version or 0),
+			# the date the plan was approved: the earliest the Treasury submission can have been
+			"approved_on": cstr(frappe.utils.getdate(approved_at)) if approved_at else "",
+		},
+		# the site's own date, so the page never reads today's date as "in the future"
+		"today": cstr(frappe.utils.getdate(frappe.utils.nowdate())),
 		"publication_state": doc.publication_state,
 		"package_hash": doc.package_hash,
-		"external_reference": cstr(doc.external_reference),
-		"acknowledged_display": _eat(doc.acknowledged_at),
+		"statement": confirmation_service.CONFIRMATION_STATEMENT,
+		# Historical, read-only: attempts made under the v1.30 arrangements.
 		"attempts": [
 			{"attempt_number": a.attempt_number, "result": a.result, "attempted_display": _eat(a.attempted_at), "completed_display": _eat(a.completed_at), "external_reference": cstr(a.external_reference), "failure_reason": cstr(a.failure_reason)}
 			for a in attempts
 		],
-		# §10.12 U13-EVIDENCE-RECORDED — every recorded field, separately
-		# labelled, with the recording actor distinct from the dispatch time.
-		"treasury_evidence": (
+		"historical_treasury": (
 			{
-				"recorded": True,
-				"submitted_display": _eat(treasury.submitted_at),
-				"channel": treasury.channel,
-				# §10.12 U13-EVIDENCE-RECORDED — Destination is one of the five
-				# separately labelled fields; it was already fetched above and
-				# must not be dropped from the dict that reaches the screen.
-				"destination": cstr(treasury.destination),
-				"dispatch_reference": treasury.dispatch_reference,
-				"recorded_display": _eat(treasury.recorded_at),
-				"recorded_by_name": cstr(frappe.db.get_value("User", treasury.actor, "full_name") or ""),
-				"supporting_attachment": cstr(treasury.supporting_attachment),
+				"submitted_display": _eat(legacy.submitted_at), "channel": legacy.channel, "destination": cstr(legacy.destination),
+				"dispatch_reference": legacy.dispatch_reference, "recorded_display": _eat(legacy.recorded_at),
+				"recorded_by_name": _person_name(legacy.actor), "supporting_attachment": cstr(legacy.supporting_attachment),
 			}
-			if treasury else None
+			if legacy else None
 		),
+		# §5.5.2.2 — the Current record, and the Planner's one Draft (never evidence).
+		"confirmation": _confirmation_view(current),
+		"draft": _confirmation_view(draft),
 		"hold": {"active": bool(hold), "kind": hold.hold_kind if hold else "", "reason": cstr(hold.reason) if hold else "", "raised_display": _eat(hold.raised_at) if hold else ""},
 		# §10.12 — four distinct rows, in this order. Approval, external
-		# submission, publication and activation are four different facts and
-		# none of them proves another. "Unknown" is never rendered as failure.
-		"status_rows": _publication_status_rows(doc, version, treasury_current=bool(treasury)),
-		# §10.12 — the AO records external dispatch; a technical operator
-		# retries or reconciles. Technical read alone grants neither.
-		"can_record_treasury": (
-			authz.has_site_role(ROLE_ACCOUNTING_OFFICER, actor)
-			and version.version_status in ("Approved — publication pending", "Publication failed")
-		),
-		"quiet_notice": "Publication is a system worker action after statutory approval. Retry and reconciliation are technical actions, never a business decision.",
+		# submission, website publication and activation are four different
+		# facts and none of them proves another.
+		"status_rows": _publication_status_rows(doc, version, confirmed=bool(current), legacy_treasury=bool(legacy)),
+		"can_save_draft": bool(is_planner and open_state and not current),
+		"can_confirm": bool(is_planner and open_state and not current and not hold),
+		"can_correct": bool(is_planner and current and version.version_status in confirmation_service.CORRECTABLE_STATES),
 		# §10.14 U21-LATE-ACTIVATION / §6.3 — the Accounting Officer's own
 		# listed action when the plan only became active after the financial
 		# year had begun. Append-only: every explanation is kept and a later
 		# one supersedes rather than rewrites (§4.9), and none of this ever
 		# alters the activation instant it explains.
 		"late_activation": _late_activation(version, actor),
-		"can_retry": is_technical(actor) and doc.publication_state == "Failed",
-		"can_reconcile": is_technical(actor) and doc.publication_state == "Indeterminate",
-		# §10.12 U13-CORRECT-EVIDENCE — a correction supersedes the recorded
-		# evidence with a reason; it never overwrites it.
-		"treasury_evidence_id": treasury.name if treasury else "",
-		"treasury_prior": (
-			{
-				"submitted_at": cstr(treasury.submitted_at),
-				"submitted_display": _eat(treasury.submitted_at),
-				"channel": cstr(treasury.channel),
-				"destination": cstr(treasury.destination),
-				"dispatch_reference": cstr(treasury.dispatch_reference),
-				"supporting_attachment": cstr(treasury.supporting_attachment),
-				"recorded_by_name": cstr(frappe.db.get_value("User", treasury.actor, "full_name") or ""),
-			}
-			if treasury else None
-		),
 		**_withdrawal_state(version, actor),
 	}
 

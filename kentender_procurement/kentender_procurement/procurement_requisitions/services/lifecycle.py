@@ -27,10 +27,12 @@ from kentender_procurement.procurement_requisitions.services import (
 	eligibility_gateway,
 	envelope,
 	events,
+	goods_template,
 	records,
 	validation,
 )
 from kentender_procurement.procurement_requisitions.services import requisition_authorization as authz
+from kentender_procurement.procurement_requisitions.services import scope as req_scope
 from kentender_procurement.procurement_requisitions.services.errors import fail
 from kentender_procurement.procurement_requisitions.services.requisition_roles import (
 	ROLE_DEPARTMENTAL_AUTHOR,
@@ -75,13 +77,33 @@ def basis_snapshot(projection: dict[str, Any]) -> str:
 	)
 
 
-def lock(root, version, package_version, *, target_status: str) -> dict[str, Any]:
-	"""§7.2 — recheck everything on the exact content, freeze it, lock it."""
+def recheck(root, version, package_version) -> dict[str, Any]:
+	"""§7.2 — the checks made before departmental routing **or submission**:
+	current Planning eligibility, the nine compatibility checks and every field
+	and row control with zero Blocking findings. Returns the projection."""
 	projection = eligibility_gateway.get_requisition_eligible_plan_item(root.plan_item_id)
 	compatibility.require_compatible(projection)
-	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=projection)
+	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=projection, unreviewed_line_ids=goods_template.unreviewed_ids(version))
 	if report["blocking_count"]:
 		fail("REQ_BLOCKING_FINDINGS", detail={"findings": [f for f in report["findings"] if f["severity"] == "Blocking"]})
+	return projection
+
+
+def lock(root, version, package_version, *, target_status: str) -> dict[str, Any]:
+	"""§7.2 — recheck everything on the exact content, freeze it, lock it."""
+	projection = recheck(root, version, package_version)
+	# v1.15 §5.3/§7.3A — derive every quantity, leave the unused sources out of the snapshot (kept as history),
+	# and re-derive the lead from what remains unless a Procurement directive fixed it.
+	goods_template.omit_unused_lines(version, package_version)
+	# v1.18 §5.7A — record exactly which items every requirement row covered, before the digest is computed.
+	for table_field in ("technical_requirements", "related_services", "acceptance_requirements"):
+		for row in package_version.get(table_field):
+			req_scope.freeze(row, package_version.items)
+	if not version.lead_routing_directive:
+		lead = records.default_lead(records.child_rows(version, "drawdown_lines"))
+		if lead and lead != root.lead_org_unit_id:
+			root.lead_org_unit_id = lead
+			envelope.bump(root)
 	content_digest = digest.sha256_hex(records.digest_payload(version, package_version))
 	version.content_digest = content_digest
 	package_version.content_digest = content_digest
@@ -89,8 +111,6 @@ def lock(root, version, package_version, *, target_status: str) -> dict[str, Any
 	# §5.2 — generated from the selected location at submission.
 	location = frappe.db.get_value("Delivery Location", version.delivery_location, ["location_name", "address"], as_dict=True) or {}
 	version.delivery_address_snapshot = ", ".join(v for v in (location.get("location_name"), location.get("address")) if v)
-	version.flags.kt_lifecycle = True
-	package_version.flags.kt_lifecycle = True
 	envelope.bump(version, version_status=target_status)
 	envelope.bump(package_version, version_status=target_status)
 	return projection
@@ -114,7 +134,7 @@ def copy_draft_successor(root, reviewed_version, reviewed_package_version, *, le
 	copied_technical = proposed(reviewed_package_version.technical_requirements)
 	copied_acceptance = proposed(reviewed_package_version.acceptance_requirements)
 	proposal_digest = digest.sha256_hex({"technical": copied_technical, "acceptance": copied_acceptance, "based_on": reviewed_package_version.name})
-	new_package_version = frappe.get_doc(
+	new_package_version = envelope.insert(frappe.get_doc(
 		{
 			"doctype": "IT Equipment Requirement Package Version", "package": reviewed_package_version.package,
 			"version_number": int(reviewed_package_version.version_number) + 1, "based_on_version": reviewed_package_version.name,
@@ -130,22 +150,23 @@ def copy_draft_successor(root, reviewed_version, reviewed_package_version, *, le
 			"acceptance_requirements": copied_acceptance,
 			"supporting_materials": [r.as_dict() for r in reviewed_package_version.supporting_materials],
 		}
-	).insert(ignore_permissions=True)
+	))
 
-	new_version = frappe.get_doc(
+	new_version = envelope.insert(frappe.get_doc(
 		{
 			"doctype": "Requisition Version", "requisition": root.name, "version_number": int(reviewed_version.version_number) + 1,
 			"based_on_version": reviewed_version.name, "version_status": "Draft",
 			**{f: reviewed_version.get(f) for f in ("requirement_title", "delivery_location", "latest_delivery_date", "related_services_required", "prepared_by", "prepared_capacity", "prepared_authority_snapshot")},
 			"lead_routing_directive": lead_directive or None,
 			"package_version": new_package_version.name, "record_version": 0,
-			"drawdown_lines": [{k: v for k, v in r.as_dict().items() if k not in ("reservation_id", "planning_drawdown_reference")} for r in reviewed_version.drawdown_lines],
+			"drawdown_lines": [{k: v for k, v in r.as_dict().items() if k not in ("reservation_id", "planning_drawdown_reference")} for r in reviewed_version.drawdown_lines]
+			+ goods_template.restored_lines(reviewed_version),
 		}
-	).insert(ignore_permissions=True)
+	))
 
 	package = frappe.get_doc("IT Equipment Requirement Package", new_package_version.package)
 	package.current_version = new_package_version.name
-	package.save(ignore_permissions=True)
+	envelope.save(package)
 	root.current_version = new_version.name
 	root.current_state = "Draft"
 	if lead_directive:
@@ -155,13 +176,13 @@ def copy_draft_successor(root, reviewed_version, reviewed_package_version, *, le
 
 
 def new_task(root, version, *, business_role: str, organisation_unit: str = "") -> Any:
-	return frappe.get_doc(
+	return envelope.insert(frappe.get_doc(
 		{
 			"doctype": "Requisition Task", "requisition": root.name, "requisition_version": version.name,
 			"business_role": business_role, "organisation_unit": organisation_unit or None, "status": "Open",
 			"task_token": envelope.token(), "record_version": 0,
 		}
-	).insert(ignore_permissions=True)
+	))
 
 
 def cancel_open_tasks(root) -> None:
@@ -171,14 +192,14 @@ def cancel_open_tasks(root) -> None:
 
 
 def record_decision(*, task, version, actor: str, capacity: str, decision: str, assignment, idempotency_key: str, reason: str = "", affected_section: str = "", new_lead: str = "", resulting_state: str = ""):
-	return frappe.get_doc(
+	return envelope.insert(frappe.get_doc(
 		{
 			"doctype": "Requisition Decision", "task": task.name if task else None, "requisition_version": version.name,
 			"actor": actor, "legal_capacity": capacity, "decision": decision, "reason": reason, "affected_section": affected_section or None,
 			"new_lead_org_unit_id": new_lead or None, "resulting_state": resulting_state,
 			"authority_snapshot": authz.authority_snapshot(assignment), "decided_at": now_datetime(), "command_idempotency_key": idempotency_key,
 		}
-	).insert(ignore_permissions=True)
+	))
 
 
 def _require_role_in(actor: str, role: str, unit: str, *, masked: bool = True):
@@ -215,18 +236,21 @@ def send_for_department_approval(*, requisition: str, expected_record_version, i
 	exact Version and routes it to the lead Head of User Department."""
 	actor = authz.actor(user)
 	payload = {"requisition": requisition}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	root = records.require_root(requisition)
 	scope = records.require_edit_units(root, actor)
 	if not scope["shared"]:
 		fail("REQ_RESPONSIBILITY_REQUIRED", "Only the submitting department can send this requisition for department approval.")
 	_require_role_in(actor, ROLE_DEPARTMENTAL_AUTHOR, root.lead_org_unit_id, masked=False)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="SendForDepartmentApproval", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(root, expected_record_version)
 	version, package_version = _load_current(root)
 	if root.current_state != "Draft" or version.version_status != "Draft":
 		fail("REQ_STALE_VERSION")
+	# §5.2 / §7.3 — who sent it is evidence, so the Head of User Department decision can refuse them later.
+	version.sent_for_approval_by = actor
+	version.sent_for_approval_at = now_datetime()
 	lock(root, version, package_version, target_status="Awaiting Department Approval")
 	task = new_task(root, version, business_role=ROLE_HEAD_OF_USER_DEPARTMENT, organisation_unit=root.lead_org_unit_id)
 	root.current_state = "Awaiting Department Approval"
@@ -241,11 +265,11 @@ def submit_requisition_to_procurement(*, requisition: str, expected_record_versi
 	prepare. The certified lead and submitting authority are frozen here."""
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "task": task}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	root = records.require_root(requisition)
 	assignment = _lead_hod(root, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="SubmitRequisitionToProcurement", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(root, expected_record_version)
 	version, package_version = _load_current(root)
 
@@ -257,16 +281,21 @@ def submit_requisition_to_procurement(*, requisition: str, expected_record_versi
 		if task_doc.status != "Open" or task_doc.requisition_version != version.name:
 			fail("REQ_STALE_VERSION")
 		# §7.3 — an Author cannot complete the HoD decision on a Version they
-		# sent, unless they hold the HoD role and prepared it in that capacity.
-		if cstr(version.prepared_by) == actor and cstr(version.prepared_capacity) != ROLE_HEAD_OF_USER_DEPARTMENT:
+		# prepared or sent, unless they hold the HoD role and prepared it in that capacity.
+		if records.certifier_conflict(version, actor):
 			fail("REQ_SOD_BLOCKED")
-		version.flags.kt_lifecycle = True
-		package_version.flags.kt_lifecycle = True
+		# §7.2 — "before departmental routing or submission": the content is locked, the facts around it are not.
+		recheck(root, version, package_version)
+		if digest.sha256_hex(records.digest_payload(version, package_version)) != version.content_digest:
+			fail("REQ_BLOCKING_FINDINGS", detail={"findings": [{"code": "DIGEST_FAILED", "message": "The canonical preview could not be reproduced."}]})
 		envelope.bump(version, version_status="Submitted to Procurement")
 		envelope.bump(package_version, version_status="Submitted to Procurement")
 	elif root.current_state == "Draft":
 		if version.version_status != "Draft":
 			fail("REQ_STALE_VERSION")
+		# §7.1/§7.3 — only a Head of User Department preparing directly certifies a Draft; the Draft an Author prepared goes through the approval task.
+		if records.certifier_conflict(version, actor, direct=True):
+			fail("REQ_SOD_BLOCKED")
 		lock(root, version, package_version, target_status="Submitted to Procurement")
 	else:
 		fail("REQ_STALE_VERSION")
@@ -288,9 +317,6 @@ def submit_requisition_to_procurement(*, requisition: str, expected_record_versi
 def _return(*, task: str, reason: str, affected_section: str, expected_record_version, idempotency_key: str, user: str | None, from_state: str, capacity: str, decision: str, command: str) -> dict[str, Any]:
 	actor = authz.actor(user)
 	payload = {"task": task, "reason": reason, "affected_section": affected_section}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	reason = _reason(reason, label="correction")
 	affected_section = _section(affected_section)
 	if not task or not frappe.db.exists("Requisition Task", task):
@@ -298,13 +324,14 @@ def _return(*, task: str, reason: str, affected_section: str, expected_record_ve
 	task_doc = envelope.locked("Requisition Task", task)
 	root = records.require_root(task_doc.requisition)
 	assignment = authz.require_hopf(actor) if capacity == ROLE_HEAD_OF_PROCUREMENT_FUNCTION else _lead_hod(root, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command=command, actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(task_doc, expected_record_version)
 	if task_doc.status != "Open" or root.current_state != from_state:
 		fail("REQ_STALE_VERSION")
 	reviewed_version = frappe.get_doc("Requisition Version", task_doc.requisition_version)
 	reviewed_package_version = frappe.get_doc("IT Equipment Requirement Package Version", reviewed_version.package_version)
-	reviewed_version.flags.kt_lifecycle = True
-	reviewed_package_version.flags.kt_lifecycle = True
 	envelope.bump(reviewed_version, version_status="Returned")
 	envelope.bump(reviewed_package_version, version_status="Returned")
 	decision_doc = record_decision(task=task_doc, version=reviewed_version, actor=actor, capacity=capacity, decision=decision, assignment=assignment, idempotency_key=idempotency_key, reason=reason, affected_section=affected_section, resulting_state="Draft")
@@ -328,15 +355,15 @@ def change_requisition_lead_department(*, task: str, new_lead_org_unit: str, rea
 	and opens a copied Draft the new lead must certify afresh."""
 	actor = authz.actor(user)
 	payload = {"task": task, "new_lead_org_unit": new_lead_org_unit, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	reason = _reason(reason, high=500)
 	if not task or not frappe.db.exists("Requisition Task", task):
 		authz.not_found()
 	task_doc = envelope.locked("Requisition Task", task)
 	root = records.require_root(task_doc.requisition)
 	assignment = authz.require_hopf(actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="ChangeRequisitionLeadDepartment", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(task_doc, expected_record_version)
 	if task_doc.status != "Open" or root.current_state != "Submitted to Procurement":
 		fail("REQ_STALE_VERSION", "The submitting department can be changed only while the requisition is submitted to Procurement.")
@@ -346,8 +373,6 @@ def change_requisition_lead_department(*, task: str, new_lead_org_unit: str, rea
 		fail("REQ_CONTROL_INVALID", "Select a different contributing department.")
 	reviewed_version = frappe.get_doc("Requisition Version", task_doc.requisition_version)
 	reviewed_package_version = frappe.get_doc("IT Equipment Requirement Package Version", reviewed_version.package_version)
-	reviewed_version.flags.kt_lifecycle = True
-	reviewed_package_version.flags.kt_lifecycle = True
 	envelope.bump(reviewed_version, version_status="Returned")
 	envelope.bump(reviewed_package_version, version_status="Returned")
 	decision_doc = record_decision(task=task_doc, version=reviewed_version, actor=actor, capacity=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, decision="Change submitting department and return", assignment=assignment, idempotency_key=idempotency_key, reason=reason, new_lead=new_lead_org_unit, resulting_state="Draft")
@@ -362,12 +387,12 @@ def withdraw_requisition(*, requisition: str, reason: str, expected_record_versi
 	Version with no drawdown and no reservation."""
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	reason = _reason(reason)
 	root = records.require_root(requisition)
 	assignment = _lead_hod(root, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="WithdrawRequisition", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(root, expected_record_version)
 	if root.current_state not in ("Draft", "Awaiting Department Approval", "Submitted to Procurement"):
 		fail("REQ_STALE_VERSION")
@@ -375,8 +400,6 @@ def withdraw_requisition(*, requisition: str, reason: str, expected_record_versi
 	if root.current_state == "Draft":
 		version.content_digest = digest.sha256_hex(records.digest_payload(version, package_version))
 		package_version.content_digest = version.content_digest
-	version.flags.kt_lifecycle = True
-	package_version.flags.kt_lifecycle = True
 	envelope.bump(version, version_status="Withdrawn")
 	envelope.bump(package_version, version_status="Withdrawn")
 	cancel_open_tasks(root)
@@ -404,12 +427,12 @@ def request_upstream_plan_correction(*, requisition: str, reason: str, expected_
 	nothing here changes."""
 	actor = authz.actor(user)
 	payload = {"requisition": requisition, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
 	reason = _reason(reason, label="description of what is wrong")
 	root = records.require_root(requisition)
 	assignment, capacity = _lead_hod_or_hopf(root, actor)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="RequestUpstreamPlanCorrection", actor=actor)
+	if replay:
+		return replay
 	envelope.check_record_version(root, expected_record_version)
 	if root.current_state not in ("Draft", "Awaiting Department Approval", "Submitted to Procurement"):
 		fail("REQ_STALE_VERSION", "A Planning correction can be requested only before authorisation.")
@@ -418,8 +441,6 @@ def request_upstream_plan_correction(*, requisition: str, reason: str, expected_
 		if version.version_status == "Draft":
 			version.content_digest = digest.sha256_hex(records.digest_payload(version, package_version))
 			package_version.content_digest = version.content_digest
-		version.flags.kt_lifecycle = True
-		package_version.flags.kt_lifecycle = True
 		envelope.bump(version, version_status="Upstream correction required")
 		envelope.bump(package_version, version_status="Upstream correction required")
 		cancel_open_tasks(root)

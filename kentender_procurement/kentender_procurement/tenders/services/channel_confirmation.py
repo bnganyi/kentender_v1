@@ -134,6 +134,7 @@ def confirm_channel(
 	user: str | None = None,
 	on_all_confirmed=None,
 	command: str = "ConfirmPublicationChannel",
+	precondition=None,
 ) -> dict[str, Any]:
 	"""The generic engine. `on_all_confirmed(root, rows)` runs inside the
 	same transaction when this confirmation completes the set (the final
@@ -149,7 +150,7 @@ def confirm_channel(
 		"subject_type": subject_type, "subject_id": subject_id, "channel": channel, "available_at": cstr(available_at), "evidence_reference": cstr(evidence_reference), "public_url": cstr(public_url),
 		"evidence_file": cstr(evidence_file), "evidence_notes": cstr(evidence_notes), "package_digest": cstr(package_digest),
 	}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command=command, actor=actor)
 	if replay:
 		return replay
 	name = frappe.db.get_value(DOCTYPE, {"subject_type": subject_type, "subject_id": subject_id, "channel": channel}, "name")
@@ -159,6 +160,8 @@ def confirm_channel(
 	root = envelope.locked("Tender", row.tender)
 	if root.overall_status == "Cancelled" and subject_type != SUBJECT_CANCELLATION:
 		fail("TND_CANCELLED")
+	if precondition:
+		precondition(root)  # the subject's own state test, under the Tender lock (an addendum's open period, AUD-TND-001)
 	envelope.check_record_version(root, expected_record_version)
 	clean = _validate_inputs(row, available_at=available_at, evidence_reference=evidence_reference, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, evidence_file=evidence_file, evidence_notes=evidence_notes, attestation_confirmed=attestation_confirmed, package_digest=package_digest)
 	from kentender_procurement.tenders.services import guidance
@@ -187,7 +190,8 @@ def confirm_channel(
 			fixture_namespace=root.fixture_namespace,
 		)
 		conflict = guidance.confirmation_conflict(row.channel_label, stage=stage)
-		fail("TND_PUBLICATION_ALREADY_CONFIRMED", detail={"channel": channel, "confirmation": row.name, "next_step": conflict, "guidance": guidance.refusal_guidance(conflict, actor=actor)})
+		# the event above is the audit fact §5.8(10) requires; the endpoint commits it past the refusal's rollback
+		fail("TND_PUBLICATION_ALREADY_CONFIRMED", detail={"channel": channel, "confirmation": row.name, "next_step": conflict, "guidance": guidance.refusal_guidance(conflict, actor=actor)}, audit_preserved=True)
 	reference = cstr(frappe.db.get_value("Tender Addendum", subject_id, "addendum_reference")) if subject_type == SUBJECT_ADDENDUM else ""
 	attestation = attestation_text(subject_type=subject_type, channel_label=row.channel_label, subject_reference=reference)
 	with envelope.atomic("confirm-channel"):

@@ -21,6 +21,7 @@ RULE_INDICATOR = "CONTENT_INDICATOR"
 RULE_TARGET = "CONTENT_TARGET"
 RULE_EFFECTIVE_FROM_MISSING = "EFFECTIVE_FROM_MISSING"
 RULE_EFFECTIVE_FROM_FUTURE = "EFFECTIVE_DATE_FUTURE"
+RULE_EFFECTIVE_TO_EXPIRED = "EFFECTIVE_DATE_EXPIRED"
 
 NOT_READY_MESSAGE = "Complete the highlighted items before submitting or approving."
 
@@ -134,6 +135,17 @@ def get_version_approval_blockers(version) -> dict:
 			),
 		}
 		failures.append({"rule": RULE_EFFECTIVE_FROM_FUTURE, "message": future["headline"]})
+	if version.effective_to and frappe.utils.getdate(version.effective_to) < today():
+		# STR §12.4 — expired applicability leaves approval uncommitted: approving
+		# would retire the working plan for one that is already over.
+		failures.append(
+			{
+				"rule": RULE_EFFECTIVE_TO_EXPIRED,
+				"message": _(
+					"This version's applicability ended on {0}, so it cannot be approved. Return it so the dates can be corrected."
+				).format(_date_label(version.effective_to)),
+			}
+		)
 	return {"blocked": bool(failures), "future_effective": future, "failures": failures}
 
 

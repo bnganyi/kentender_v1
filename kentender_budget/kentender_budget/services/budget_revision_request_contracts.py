@@ -27,6 +27,9 @@ from frappe import _
 from frappe.utils import cstr, flt, now_datetime
 
 from kentender_budget.services.budget_idempotency import payload_digest
+from kentender_budget.services.budget_money import parse_money, scale_for
+from kentender_budget.services.budget_money import stored as money_stored
+from kentender_budget.services.budget_write_family import budget_write
 
 #: The one registered caller of receive/withdraw (§6 "Planning service
 #: principal"). Planning's gateway sets this flag around the call; nothing
@@ -118,41 +121,45 @@ def receive_budget_revision_request(payload: dict | str | None = None) -> dict[s
 	line_version = frappe.db.get_value(
 		"Procurement Budget Line Version",
 		{"budget_version": active.name, "budget_line": cstr(payload.get("budget_line"))},
-		["name", "approved_amount"], as_dict=True,
+		["name", "approved_amount", "currency"], as_dict=True,
 	)
 	if not line_version:
 		return _error("BUDGET_INVALID_STATE", "budget_line", _("This budget line is not in the current budget."))
 	expected = cstr(payload.get("expected_line_revision"))
 	if expected and expected != line_version.name:
 		return _error("BUDGET_DECISION_BASIS_STALE", "budget_line", _("The budget line has changed. Refresh and check the plan again."))
-	planned = flt(payload.get("planned_amount"))
-	approved = flt(line_version.approved_amount)
-	if planned <= approved + 1e-9:
+	# AUD-XC-117 — exact amounts at the Budget currency's scale; a malformed,
+	# non-finite or excess-scale planned amount fails typed, before any effect.
+	scale = scale_for(line_version.currency)
+	planned = parse_money(payload.get("planned_amount"), scale=scale, field="planned_amount", allow_zero=True)
+	approved = money_stored(line_version.approved_amount, scale=scale)
+	if planned <= approved:
 		# BUD-BR-027 — Budget's own approved amount at receipt decides.
 		return _error("BUDGET_REVISION_NOT_REQUIRED", "budget_line", _("This budget line already covers the planned amount. No budget revision is needed."))
 
-	request = frappe.get_doc({
-		"doctype": "Budget Revision Request",
-		"budget_revision_request_id": _new_reference(),
-		"planning_request_id": planning_request_id,
-		"status": STATUS_OPEN,
-		"budget": budget,
-		"budget_line": cstr(payload.get("budget_line")),
-		"budget_line_version_at_receipt": line_version.name,
-		"approved_amount_at_receipt": approved,
-		"planned_amount": planned,
-		"over_amount": flt(payload.get("over_amount")) or (planned - approved),
-		"plan_version_reference": cstr(payload.get("plan_version_reference")),
-		# Planning supplies the display label: Budget never reads Planning's
-		# records (Budget is upstream of Procurement).
-		"plan_label": cstr(payload.get("plan_label")),
-		"requested_by": requester,
-		"requested_by_assignment": assignments[0].name,
-		"requested_at": now_datetime(),
-		"idempotency_key": key,
-		"payload_digest": digest,
-		"fixture_namespace": cstr(payload.get("fixture_namespace")),
-	}).insert(ignore_permissions=True)
+	with budget_write():
+		request = frappe.get_doc({
+			"doctype": "Budget Revision Request",
+			"budget_revision_request_id": _new_reference(),
+			"planning_request_id": planning_request_id,
+			"status": STATUS_OPEN,
+			"budget": budget,
+			"budget_line": cstr(payload.get("budget_line")),
+			"budget_line_version_at_receipt": line_version.name,
+			"approved_amount_at_receipt": approved,
+			"planned_amount": planned,
+			"over_amount": parse_money(payload.get("over_amount"), scale=scale, field="over_amount") if payload.get("over_amount") else (planned - approved),
+			"plan_version_reference": cstr(payload.get("plan_version_reference")),
+			# Planning supplies the display label: Budget never reads Planning's
+			# records (Budget is upstream of Procurement).
+			"plan_label": cstr(payload.get("plan_label")),
+			"requested_by": requester,
+			"requested_by_assignment": assignments[0].name,
+			"requested_at": now_datetime(),
+			"idempotency_key": key,
+			"payload_digest": digest,
+			"fixture_namespace": cstr(payload.get("fixture_namespace")),
+		}).insert(ignore_permissions=True)
 	safe_record_event(
 		budget=budget, budget_version=active.name, event_type=EVENT_REVISION_REQUEST_RECEIVED,
 		actor=requester, correlation_id=key or request.name, calling_module="Procurement Planning",
@@ -234,7 +241,8 @@ def _close(request, status: str, *, by: str, reason: str = "", line_version: str
 	if reason:
 		request.decline_reason = reason
 	request.outcome_sequence = int(request.outcome_sequence or 0) + 1
-	request.save(ignore_permissions=True)
+	with budget_write():
+		request.save(ignore_permissions=True)
 	publish_outcome(request, line_version=line_version, approved=approved)
 
 
@@ -267,7 +275,7 @@ def revise_on_activation(version) -> list[str]:
 			"Procurement Budget Line Version", {"budget_version": version.name, "budget_line": row.budget_line},
 			["name", "approved_amount"], as_dict=True,
 		)
-		if line and abs(flt(line.approved_amount) - flt(row.approved_amount_at_receipt)) < 1e-9:
+		if line and money_stored(line.approved_amount) == money_stored(row.approved_amount_at_receipt):
 			continue
 		request = _locked(row.name)
 		_close(request, STATUS_REVISED, by=frappe.session.user, line_version=line.name if line else "", approved=flt(line.approved_amount) if line else 0.0)
@@ -329,17 +337,18 @@ def publish_outcome(request, *, line_version: str = "", approved: float | None =
 		"decided_at": _utc_iso(request.outcome_at),
 		"sequence": int(request.outcome_sequence or 0),
 	}
-	event = frappe.get_doc({
-		"doctype": "Budget Revision Request Event",
-		"event_id": f"{request.budget_revision_request_id}-{body['sequence']}",
-		"budget_revision_request": request.name,
-		"planning_request_id": request.planning_request_id,
-		"outcome": request.status,
-		"sequence": body["sequence"],
-		"payload": json.dumps(body, default=str),
-		"status": "Pending",
-		"fixture_namespace": cstr(request.fixture_namespace),
-	}).insert(ignore_permissions=True)
+	with budget_write():
+		event = frappe.get_doc({
+			"doctype": "Budget Revision Request Event",
+			"event_id": f"{request.budget_revision_request_id}-{body['sequence']}",
+			"budget_revision_request": request.name,
+			"planning_request_id": request.planning_request_id,
+			"outcome": request.status,
+			"sequence": body["sequence"],
+			"payload": json.dumps(body, default=str),
+			"status": "Pending",
+			"fixture_namespace": cstr(request.fixture_namespace),
+		}).insert(ignore_permissions=True)
 	_deliver(event)
 	return event.name
 

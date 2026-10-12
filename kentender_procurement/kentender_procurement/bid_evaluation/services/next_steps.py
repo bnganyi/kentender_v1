@@ -7,8 +7,8 @@
 Actionable work takes precedence over waiting; every genuine blocker is shown
 with its named fix; a system job is never "waiting on a person". The tracker
 describes the viewer's own human journey: Preparing is Prepare current;
-Reviewing is Review current, except for a viewer who must still appoint,
-assign the secretary or declare (Prepare current); Signing is Report
+Reviewing is Review current, except for a viewer who must still appoint
+or declare (Prepare current); Signing is Report
 current; Report sent completes all three. A suspension marks the current
 stage blocked; a cancellation keeps the stages done before it, marks the
 interrupted stage blocked and ends with "Evaluation ended". No evaluation
@@ -59,7 +59,7 @@ def viewer(doc, user: str) -> dict[str, Any]:
 def tracker(doc, v: dict[str, Any], holder_display: str = "") -> dict[str, Any] | None:
 	if doc.state == "No evaluation required":
 		return None
-	setup_owed = (v["ao"] and not roster.current_appointment(doc.name)) or (v["hop"] and not roster.secretary(doc.name)) or v["undeclared"]
+	setup_owed = (v["ao"] and not roster.current_appointment(doc.name)) or v["undeclared"]
 	if doc.state == "Report sent":
 		return ns.journey(STAGES, complete=True)
 	if doc.state == "Cancelled":
@@ -113,8 +113,6 @@ def answer(doc, user: str, *, extra: dict[str, Any] | None = None) -> dict[str, 
 			headline = "Appoint the evaluation committee." if doc.source_intake else "Appoint the members who will evaluate this tender."
 			candidates.append(ns.answer(ns.KIND_YOUR_TURN, headline=headline, primary_action="appoint_committee",
 				sentence="Opening is complete. The evaluation committee has not been appointed." if doc.source_intake else ""))
-		if v["hop"] and not secretary:
-			candidates.append(ns.answer(ns.KIND_YOUR_TURN, headline="Assign the person who will organise the evaluation record.", primary_action="assign_secretary"))
 		if v["undeclared"]:
 			candidates.append(ns.answer(ns.KIND_YOUR_TURN, headline="Complete your declaration before viewing bids.", primary_action="complete_declaration"))
 		blocked = [u for u in roster.member_users(doc.name) if roster.status(doc.name, u)["conflict"] or roster.status(doc.name, u)["unavailable"]]

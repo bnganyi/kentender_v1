@@ -12,6 +12,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, add_to_date, now_datetime
 
+from kentender_core.services.audit_event_service import purge_audit_events
 from kentender_core.services import reference_data_queries as queries
 from kentender_core.services.reference_data_permissions import REFERENCE_DATA_MANAGER_ROLE
 from kentender_core.services.reference_data_resolver import (
@@ -69,12 +70,12 @@ class TestReferenceDataContextLifecycle(IntegrationTestCase):
 		self.context_name = f"CTX-{self.entity_code.removeprefix('PE-')}-{self.start_year}-{self.start_year + 1}"
 
 	def tearDown(self):
+		purge_audit_events({"document_name": ["in", [self.context_name, self.fy_name, self.entity_code]]}, reason="context lifecycle test clean-up")
 		for doctype, filters in (
 			("PE Fiscal Year Context", [["name", "=", self.context_name]]),
 			("Financial Year", [["name", "=", self.fy_name]]),
 			("Procuring Entity Version", [["procuring_entity", "=", self.entity_code]]),
 			("Procuring Entity", [["name", "=", self.entity_code]]),
-			("Audit Event", [["document_name", "in", [self.context_name, self.fy_name, self.entity_code]]]),
 			("PE Type", [["name", "like", f"%{self.suffix}%"]]),
 		):
 			for name in frappe.get_all(doctype, filters=filters, pluck="name"):
@@ -290,10 +291,10 @@ class TestReferenceDataContextLifecycle(IntegrationTestCase):
 			self.assertIn(second_context_name, context_ids)
 			self.assertIsNone(result["auto_selected"])  # more than one — no single auto-selection
 		finally:
+			purge_audit_events({"document_name": ["like", f"%{second_fy_name}%"]}, reason="context lifecycle test clean-up")
 			for doctype, filters in (
 				("PE Fiscal Year Context", [["financial_year", "=", second_fy_name]]),
 				("Financial Year", [["name", "=", second_fy_name]]),
-				("Audit Event", [["document_name", "like", f"%{second_fy_name}%"]]),
 			):
 				for name in frappe.get_all(doctype, filters=filters, pluck="name"):
 					frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)

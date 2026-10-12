@@ -21,6 +21,7 @@ from frappe.model.document import Document
 from frappe.utils import get_datetime
 
 from kentender_core.services.business_role_registry import require_registered
+from kentender_core.services.command_write_guard import CommandWriteGuardMixin
 from kentender_core.services.authorization import (
 	APPOINTMENT_ACTING,
 	DERIVED_SCHEDULED,
@@ -43,8 +44,15 @@ IDENTITY_FIELDS = (
 )
 
 
-class UserResponsibilityAssignment(Document):
+class UserResponsibilityAssignment(CommandWriteGuardMixin, Document):
+	"""Written only by `responsibility_administration` (AUD-XC-013): a direct
+	save or delete, including by System Manager, is refused, so an assignment
+	is revoked by its command and never physically deleted (§15)."""
+
+	command_write_family = "Responsibility"
+
 	def validate(self):
+		super().validate()
 		entry = require_registered(self.business_role)
 		self._validate_scope(entry)
 		self._validate_period()

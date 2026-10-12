@@ -19,6 +19,7 @@ import frappe
 from frappe.utils import cint, cstr, get_datetime
 
 from kentender_procurement.bid_opening.services import clock, errors, labels, people, records, settings
+from kentender_procurement.services import sequence
 
 ARRANGEMENT = "Opening Arrangement"
 COMING_SOON = "Details on how to attend the opening are coming soon"
@@ -50,7 +51,7 @@ def publish_opening_arrangements(*, tender: str, attendance_method: str, access_
 		if opens is None:
 			errors.fail("BOP_OPENING_PROFILE_UNAVAILABLE", {"reason": "operating_profile_incomplete"})
 		previous = current(doc.name)
-		number = frappe.db.count(ARRANGEMENT, {"opening_case": doc.name}) + 1
+		number = sequence.next_count(ARRANGEMENT, {"opening_case": doc.name})
 		at = clock.now()
 		arrangement = records.insert(frappe.get_doc({
 			"doctype": ARRANGEMENT, "arrangement_id": f"{doc.opening_id}-ARR-{number:02d}", "opening_case": doc.name, "version_number": number,

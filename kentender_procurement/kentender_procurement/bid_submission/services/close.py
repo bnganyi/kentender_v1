@@ -202,7 +202,9 @@ def recover_overdue_close(*, tender_reference: str, user: str | None = None) -> 
 	from kentender_procurement.bid_submission.services import guidance
 
 	actor = cstr(user or frappe.session.user)
-	holders = frappe.get_all("User Responsibility Assignment", filters={"business_role": guidance.TECHNICAL, "status": "Enabled"}, pluck="user")
+	from kentender_core.services.authorization import active_holders
+
+	holders = active_holders(guidance.TECHNICAL)
 	if not is_technical(actor) and actor not in holders:
 		raise frappe.PermissionError("Only a technical operator recovers an overdue close.")
 	root = tenders_gateway.tender_root(cstr(tender_reference).strip())

@@ -363,3 +363,17 @@ describe("KT-STD-001 v1.8 §2.9 guidance components (data-kt landmarks)", () => 
 		expect(compare(BOARD, built).missing.length).toBeGreaterThan(0);
 	});
 });
+
+describe("design-system omissions (DS-REV-004)", () => {
+	it("does not require the icon the boards drew inside a blocked next step", () => {
+		const boardHtml = '<div class="kt-notice is-warning kt-next-step" data-kt="next-step"><svg class="kt-notice-icon"></svg><div class="kt-notice-body"></div></div>';
+		const builtHtml = '<div class="kt-notice is-warning kt-next-step" data-kt="next-step"><div class="kt-notice-body"></div></div>';
+		expect(compare(boardHtml, builtHtml).missing).toEqual([]);
+	});
+
+	it("still requires that icon in any other notice", () => {
+		const boardHtml = '<div class="kt-notice is-warning"><svg class="kt-notice-icon"></svg><div class="kt-notice-body"></div></div>';
+		const builtHtml = '<div class="kt-notice is-warning"><div class="kt-notice-body"></div></div>';
+		expect(compare(boardHtml, builtHtml).missing.map((m) => m.path)).toHaveLength(1);
+	});
+});

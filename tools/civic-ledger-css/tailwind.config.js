@@ -20,7 +20,6 @@ module.exports = {
 		"../../docs/std-prod-impl/IT-STD-Wizard-v3/C1-M2/*.html",
 		"../../kentender_core/kentender_core/public/js/kt_cl_*.js",
 		"../../kentender_procurement/kentender_procurement/public/js/kt_cl_*.js",
-		"../../kentender_procurement/kentender_procurement/public/js/it_tender_*.js",
 	],
 	darkMode: "class",
 	important: ".kt-cl-shell",

@@ -141,13 +141,12 @@ function collect(spec) {
 	delete values.compose;
 	Object.assign(args, values);
 	if (compose === "members") {
-		args.members = JSON.stringify(memberRows(form).map((i) => ({ user: form[`m${i}_user`] || "", department: form[`m${i}_department`] || "", capacity: form[`m${i}_capacity`] || "" }))
-			.filter((m) => m.user || m.department));
+		args.members = JSON.stringify(memberRows(form).map((i) => ({ user: form[`m${i}_user`] || "", capacity: form[`m${i}_capacity`] || "" }))
+			.filter((m) => m.user));
 	}
 	if (compose === "incoming") {
 		const pick = (extra.candidates || []).find((c) => c.user === form.incoming) || {};
-		args.incoming = JSON.stringify({ user: form.incoming || "", department: pick.department || values.department || "", capacity: values.capacity || "Member" });
-		delete args.department;
+		args.incoming = JSON.stringify({ user: form.incoming || "", capacity: values.capacity || "Member" });
 		delete args.capacity;
 	}
 	if (compose === "participants") {

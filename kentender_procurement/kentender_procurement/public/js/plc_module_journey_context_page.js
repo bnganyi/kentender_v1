@@ -1,7 +1,7 @@
 /**
  * R5-001 — Desk Page **plc-module-journey-context** (smoke / QA host for ``ModuleJourneyContextHeader``).
  *
- * Optional query: ``?object_type=TM2%20Tender&object_code=TND-MOH-2026-001``
+ * Optional query: ``?object_type=Budget%20Line&object_code=<code>``
  */
 (function () {
 	const PAGE_NAME = "plc-module-journey-context";

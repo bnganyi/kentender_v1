@@ -101,6 +101,31 @@ class TestWorkspaceAndStart(TenderReadCase):
 
 
 class TestRecordReview(TenderReadCase):
+	DIGESTS = {"Package digest", "Response schema digest", "Evaluation contract digest", "Contract projection digest", "Requisition snapshot digest"}
+
+	def test_the_review_shows_digests_only_to_technical_readers_and_auditors(self):
+		"""Owner, 10 Oct 2026 (option 1): the Technical evidence section keeps its identities for every reader, but the 64-character
+		digests are technical detail (TPR09-AC-071), so only a technical reader or an auditor sees them; and its heading line names the
+		template, never its internal release id."""
+		_, started = self._started()
+		self._complete(started)
+		root = frappe.get_doc("Tender", started["tender"])
+
+		def technical(user: str):
+			section = next(s for s in read.get_tender_review(tender=root.name, user=user)["sections"] if s["key"] == "technical")
+			return section, {f["label"] for b in section["blocks"] for f in b.get("facts", [])}
+
+		for user in (fx.OFFICER, fx.HOPF):
+			section, labels = technical(user)
+			self.assertFalse(labels & self.DIGESTS, f"{user} must not see a digest")
+			self.assertIn("Template", labels)
+			self.assertIn("Requirement mappings", labels)
+			self.assertNotRegex(section["summary"], r"stdr-|[0-9a-f]{8}-[0-9a-f]{4}", "no internal release id in the heading line")
+			self.assertIn("Version", section["summary"], "the heading line names the template and its version")
+		for user in (fx.AUDITOR, "Administrator"):
+			_, labels = technical(user)
+			self.assertTrue(self.DIGESTS <= labels, f"{user} sees the digests: missing {self.DIGESTS - labels}")
+
 	def test_record_read_per_role_and_state(self):
 		_, started = self._started()
 		root = frappe.get_doc("Tender", started["tender"])

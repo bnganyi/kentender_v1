@@ -6,7 +6,7 @@ import { DEPARTURES } from "../../fidelity/departures/procurement-requisitions.j
 import { AUTHOR, HOD, HOPF, PASSWORD, expectReady, gotoRequisitions, resetFixture, restoreSite } from "../requisitions/helpers";
 
 /**
- * Procurement Requisitions design-fidelity gate (REQ-CHG-001 v1.11, board v2,
+ * Procurement Requisitions design-fidelity gate (REQ-CHG-001 v1.15, board v2,
  * AGENTS.md §6.6): each base artboard frame against the live screen reached
  * as the frame's own actor on its own reset — the containers it is built from
  * (structure) and its ordered labels, titles and headers (text). Data values

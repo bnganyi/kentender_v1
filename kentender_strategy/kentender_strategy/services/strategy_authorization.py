@@ -25,6 +25,7 @@ v1.6 semantics callers should know:
 from __future__ import annotations
 
 import frappe
+from frappe import _
 
 from kentender_core.services.authorization import (
 	PURPOSE_COMMAND,
@@ -265,3 +266,22 @@ def read_scope(user: str) -> str:
 	if holds_strategy_read_responsibility(user):
 		return "full"
 	return "approved" if holds_internal_read(user) or holds_approved_read_responsibility(user) else ""
+
+
+def require_downstream_read(user: str | None = None) -> str:
+	"""The gate on the whitelisted downstream contracts (AUD-STR-005).
+
+	Every internal user reads the approved plans (owner, 5 Oct 2026); portal,
+	supplier and other external accounts are refused with the typed
+	`STRATEGY_DOWNSTREAM_FORBIDDEN` error (STR-CHG-001 §9). Returns the caller's
+	read scope so a contract can narrow what it returns. In-process callers
+	(Planning, Requisitions) call the services directly and never pass here."""
+	user = user or frappe.session.user
+	scope = read_scope(user)
+	if not scope:
+		frappe.throw(
+			_("This Strategy contract is not available to your account."),
+			frappe.PermissionError,
+			title="STRATEGY_DOWNSTREAM_FORBIDDEN",
+		)
+	return scope

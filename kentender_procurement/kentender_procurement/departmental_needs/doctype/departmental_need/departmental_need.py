@@ -15,12 +15,21 @@ from __future__ import annotations
 import frappe
 from frappe.model.document import Document
 
+from kentender_core.services.command_write_guard import CommandWriteGuardMixin
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
+
 from kentender_procurement.departmental_needs.constants import IMMUTABLE_NEED_SCOPE_FIELDS, NEED_STATES
 from kentender_procurement.departmental_needs.errors import fail
 
 
-class DepartmentalNeed(Document):
+class DepartmentalNeed(CommandWriteGuardMixin, Document):
+	"""Writable only by the Departmental Needs commands (AUD-XC-008/014): the
+	command-only write guard refuses every user save, insert and delete."""
+
+	command_write_family = NEEDS_WRITE_FAMILY
+
 	def validate(self):
+		super().validate()
 		if self.current_state not in NEED_STATES:
 			fail("NDS_STATE_CONFLICT", "Invalid Departmental Need state.")
 		self._guard_immutable_scope()

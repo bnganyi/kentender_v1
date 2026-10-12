@@ -10,6 +10,7 @@
   "row_state",
   "applies_to_scope",
   "applies_to_id",
+  "applies_to_item_ids_json",
   "check_type",
   "pass_condition",
   "evidence_type",
@@ -26,7 +27,7 @@
   {
    "fieldname": "row_state",
    "fieldtype": "Select",
-   "options": "Proposed\nConfirmed",
+   "options": "Proposed\nConfirmed\nNeeds review",
    "default": "Confirmed",
    "label": "Row state",
    "read_only": 0
@@ -35,13 +36,19 @@
    "fieldname": "applies_to_scope",
    "fieldtype": "Select",
    "label": "Applies To Scope",
-   "options": "Item\nService\nAll items",
+   "options": "Item\nItems\nService\nAll items",
    "reqd": 1
   },
   {
    "fieldname": "applies_to_id",
    "fieldtype": "Data",
    "label": "Applies To Id"
+  },
+  {
+   "fieldname": "applies_to_item_ids_json",
+   "fieldtype": "Small Text",
+   "label": "Applies To Item Ids (JSON)",
+   "description": "REQ v1.18 §5.7A: the exact requisition_item_id list this row covers. Empty on rows saved before v1.18."
   },
   {
    "fieldname": "check_type",

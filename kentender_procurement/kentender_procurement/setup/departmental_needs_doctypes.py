@@ -35,8 +35,8 @@ def _f(label: str, fieldname: str, fieldtype: str = "Data", **extra):
 #
 # Permissions are declared per doctype rather than as one blanket set, because
 # §6 grants materially different work to each role and NDS-AC-022 requires the
-# match to be exact. Budget Officer and Accounting Officer appear nowhere
-# (NDS-AC-023, §17). No role receives `delete` on a business record: §13 keeps
+# match to be exact. Budget Officer appears nowhere (NDS-AC-023, §17); the Accounting Officer and the
+# Head of Procurement Function read the Need root only (OVS v0.6 §4.1, below). No role receives `delete` on a business record: §13 keeps
 # Needs, versions and decisions permanently, and the controllers block deletion.
 ADMIN_PERMISSIONS: list[dict] = [
 	{"role": "System Manager", "read": 1, "write": 1, "create": 1},
@@ -60,6 +60,18 @@ NEED_PERMISSIONS: list[dict] = [
 	*OVERSIGHT_READ,
 ]
 
+# OVS-CHG-001 v0.6 §4.1 (KT-ACCESS-REV-001 AR-05): the Accounting Officer and the
+# Head of Procurement Function read submitted and decided Needs — the Need root
+# and Planning's projections of it, read-only. The reader hook
+# (`need_authorization`, tag "office") limits them to Submitted / Accepted / Not
+# taken forward and never to an unsent Draft; revisions, decisions, review tasks
+# and withdrawal requests stay with the department and the Planner.
+OFFICE_READ: list[dict] = [
+	{"role": "Accounting Officer", "read": 1},
+	{"role": "Head of Procurement Function", "read": 1},
+]
+NEED_ROOT_PERMISSIONS: list[dict] = [*NEED_PERMISSIONS, *OFFICE_READ]
+
 # §4.4 — the departmental decision queue. The Planner has no Need decision
 # (§6, NDS-AC-043), so the task is not readable by that role at all.
 REVIEW_TASK_PERMISSIONS: list[dict] = [
@@ -81,7 +93,7 @@ DECISION_PERMISSIONS: list[dict] = [
 
 # One explicit mapping so a new doctype cannot silently inherit the wrong set.
 PERMISSIONS_BY_DOCTYPE: dict[str, list[dict]] = {
-	"Departmental Need": NEED_PERMISSIONS,
+	"Departmental Need": NEED_ROOT_PERMISSIONS,
 	"Departmental Need Revision": NEED_PERMISSIONS,
 	"Need Withdrawal Request": NEED_PERMISSIONS,
 	"Departmental Need Review Task": REVIEW_TASK_PERMISSIONS,

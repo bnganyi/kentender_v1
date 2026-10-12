@@ -94,6 +94,27 @@ function make(props = {}) {
 	});
 }
 
+describe("AnnualPlanScreen — the decider's task action", () => {
+	// Found live 9 Oct 2026: "Open decision" sat below Changes and history,
+	// away from the "Your turn" line it answers. It belongs in the header,
+	// beside the status (v1.16 record-route task action).
+	it("puts the task action in the header, not at the foot of the page", () => {
+		const w = make({ plan: plan({ open_task: { label: "Review and adopt the plan", route: ["procurement-planning", "review", "AOT-1"] } }) });
+		const action = w.find('[data-testid="ppl-open-task"]');
+		expect(action.text()).toBe("Review and adopt the plan");
+		expect(action.element.closest(".kt-page-head")).not.toBeNull();
+		expect(w.find(".pln-dpp-task").exists()).toBe(false);
+	});
+
+	it("emits the task route when pressed, and is absent when there is no task", async () => {
+		const route = ["procurement-planning", "review", "AOT-1"];
+		const w = make({ plan: plan({ open_task: { label: "Review and adopt the plan", route } }) });
+		await w.find('[data-testid="ppl-open-task"]').trigger("click");
+		expect(w.emitted("open-task")[0]).toEqual([route]);
+		expect(make().find('[data-testid="ppl-open-task"]').exists()).toBe(false);
+	});
+});
+
 describe("AnnualPlanScreen — U07 BASE", () => {
 	it("leads with purchases, each naming its own next work", () => {
 		const w = make();
@@ -401,6 +422,21 @@ describe("AnnualPlanScreen — the Reservation allocation block", () => {
 		expect(order(w)).toEqual(["ppl-check-issue", "reservation-allocation", "ppl-plan-checks-group"]);
 		expect(w.find('[data-testid="reservation-status"]').text()).toBe("Required allocation not met");
 		expect(w.find('[data-testid="reservation-details"]').element.tagName).toBe("DETAILS");
+	});
+
+	// Found live 9 Oct 2026: the action scrolled to a block already on screen
+	// and focused it, so it looked dead. What the Planner needs is the
+	// working — which purchases count and why — which sits closed.
+	it("Review reserved procurement opens the allocation details and moves to them", async () => {
+		const scroll = vi.fn();
+		window.HTMLElement.prototype.scrollIntoView = scroll;
+		const w = make();
+		const details = w.find('[data-testid="reservation-details"]').element;
+		expect(details.open).toBe(false);
+		await w.find('[data-testid="ppl-check-action"]').trigger("click");
+		await new Promise((resolve) => setTimeout(resolve));
+		expect(details.open).toBe(true);
+		expect(scroll).toHaveBeenCalled();
 	});
 
 	it("follows the quiet checks once the allocation is met, and the met row is not repeated", () => {

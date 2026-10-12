@@ -52,6 +52,20 @@ const ROLES: Role[] = [
 	{ role: "rail timing", text: "Waiting 2 days (since 16 June, 15:30)", live: "#waiting .kt-home-rail-time" },
 	{ role: "Analytics link", text: "See all in Procurement Analytics", live: ".kt-home-analytics-link" },
 ];
+/**
+ * Differences from the board that the Project Owner approved after the board was drawn (DS-REV-003 control shape,
+ * DS-REV-005 corner radius, white field fill, 6 Oct 2026; KT-STD-001 v1.23–v1.25; DS-REV-006 blue-grey control edge #8590a6, 9 Oct 2026; KT-STD-001 v1.28). The page must show exactly the value
+ * named here, so the gate still fails if the page drifts anywhere else. Retire an entry when the board is redrawn.
+ */
+const APPROVED_DEPARTURES: Record<string, string> = {
+	"sheet|borderTopLeftRadius": "4px",
+	"Continue (primary)|borderTopLeftRadius": "2px",
+	"Continue (standard)|backgroundColor": "rgb(255, 255, 255)",
+	"Continue (standard)|borderTopColor": "rgb(133, 144, 166)",
+	"Continue (standard)|borderLeftColor": "rgb(133, 144, 166)",
+	"Continue (standard)|borderTopLeftRadius": "2px",
+	"Show more (ghost)|borderTopLeftRadius": "2px",
+};
 const PROPS = ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "color", "textDecorationLine", "textTransform", "fontStyle"];
 const BOX_PROPS = ["backgroundColor", "borderTopWidth", "borderTopColor", "borderLeftWidth", "borderLeftColor", "borderTopLeftRadius", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft"];
 
@@ -111,6 +125,7 @@ test("every role in the page is typed, coloured and shaped as the board draws it
 		if (!live) { differences.push(`${role}: the page has no element for ${liveSelector}`); continue; }
 		for (const prop of props) {
 			if (prop === "height" && !/Continue|badge|Show more|chip|summary column/.test(role)) continue; // text wraps with the width the Desk sidebar leaves it
+			if (live[prop] === APPROVED_DEPARTURES[`${role}|${prop}`]) continue;
 			if (wanted[prop] !== live[prop]) differences.push(`${role}: ${prop} is ${live[prop]} on the page, ${wanted[prop]} on the board`);
 		}
 	}

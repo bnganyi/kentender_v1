@@ -63,9 +63,6 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/procurement_home_page.css?v={_desk_asset_v('public/css/procurement_home_page.css')}",
 	f"/assets/kentender_procurement/css/procurement_journey_page.css?v={_desk_asset_v('public/css/procurement_journey_page.css')}",
 	f"/assets/kentender_procurement/css/module_journey_context_header.css?v={_desk_asset_v('public/css/module_journey_context_header.css')}",
-	f"/assets/kentender_procurement/css/tm2_tender_handoff_panel.css?v={_desk_asset_v('public/css/tm2_tender_handoff_panel.css')}",
-	f"/assets/kentender_procurement/css/business_readiness_summary.css?v={_desk_asset_v('public/css/business_readiness_summary.css')}",
-	f"/assets/kentender_procurement/css/tender_management_v2_workbench.css?v={_desk_asset_v('public/css/tender_management_v2_workbench.css')}",
 	# coming_soon_page.css: now lazy-loaded by coming_soon_page.js's own
 	# on_page_load.
 	f"/assets/kentender_procurement/css/departmental_needs_industry.css?v={_desk_asset_v('public/css/departmental_needs_industry.css')}",
@@ -83,12 +80,8 @@ app_include_js = [
 	# planning_builder_page.js, planning_item_editor_page.js,
 	# planning_review_page.js, planning_approved_page.js).
 	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
-	f"/assets/kentender_procurement/js/business_readiness_summary.js?v={_desk_asset_v('public/js/business_readiness_summary.js')}",
-	f"/assets/kentender_procurement/js/tm2_tender_handoff_panel.js?v={_desk_asset_v('public/js/tm2_tender_handoff_panel.js')}",
 	f"/assets/kentender_procurement/js/workspace_list_selection_utils.js?v={_desk_asset_v('public/js/workspace_list_selection_utils.js')}",
 	f"/assets/kentender_procurement/js/procurement_home_workspace.js?v={_desk_asset_v('public/js/procurement_home_workspace.js')}",
-	f"/assets/kentender_procurement/js/tm2_workbench_lifecycle.js?v={_desk_asset_v('public/js/tm2_workbench_lifecycle.js')}",
-	f"/assets/kentender_procurement/js/it_tender_configuration_create_modal.js?v={_desk_asset_v('public/js/it_tender_configuration_create_modal.js')}",
 ]
 
 # include js, css files in header of web template
@@ -249,27 +242,8 @@ page_js = {
 	"kt-procurement-home": "public/js/procurement_home_page.js",
 	"plc-procurement-journey": "public/js/procurement_journey_page.js",
 	"plc-module-journey-context": "public/js/plc_module_journey_context_page.js",
-	"tender-management-v2": "public/js/tender_management_v2_workbench_page.js",
-	"it-std-wizard-retired": "public/js/it_std_wizard_retired_page.js",
 	"kt-cl-shell-poc": "public/js/kt_cl_shell_poc_page.js",
-	"it-tender-configuration-dashboard": "public/js/it_tender_configurations_dashboard_page.js",
-	"it-tender-configuration-overview": "public/js/it_tender_configuration_overview_page.js",
-	"it-tender-configuration-tender-profile": "public/js/it_tender_configuration_tender_profile_page.js",
-	"it-tender-configuration-tds": "public/js/it_tender_configuration_tds_page.js",
-	"it-tender-configuration-it-requirements": "public/js/it_tender_configuration_it_requirements_page.js",
-	"it-tender-configuration-implementation-schedule": "public/js/it_tender_configuration_implementation_schedule_page.js",
-	"it-tender-configuration-system-inventory": "public/js/it_tender_configuration_system_inventory_page.js",
-	"it-tender-configuration-price-schedule": "public/js/it_tender_configuration_price_schedule_page.js",
-	"it-tender-configuration-evaluation-setup": "public/js/it_tender_configuration_evaluation_setup_page.js",
-	"it-tender-configuration-forms-and-evidence": "public/js/it_tender_configuration_forms_and_evidence_page.js",
-	"it-tender-configuration-scc": "public/js/it_tender_configuration_scc_page.js",
-	"it-tender-configuration-validation-report": "public/js/it_tender_configuration_validation_report_page.js",
-	"it-tender-configuration-review-and-approval": "public/js/it_tender_configuration_review_and_approval_page.js",
-	"it-tender-configuration-render-preview": "public/js/it_tender_configuration_render_preview_page.js",
-	"it-tender-configuration-publication-readiness": "public/js/it_tender_configuration_render_preview_page.js",
-	"it-tender-package-review": "public/js/it_tender_package_review_page.js",
 	"coming-soon": "public/js/coming_soon_page.js",
-	"publications": "public/js/publications_page.js",
 	"procurement-planning": "public/js/procurement_planning_page.js",
 	"procurement-requisitions": "public/js/procurement_requisitions_page.js",
 	"tenders": "public/js/tenders_page.js",
@@ -284,7 +258,6 @@ page_js = {
 	"departmental-procurement-plan": "public/js/departmental_procurement_plan_page.js",
 	"annual-procurement-plan": "public/js/annual_procurement_plan_page.js",
 	"procurement-plan-item": "public/js/procurement_plan_item_page.js",
-	"publication-setup": "public/js/publication_setup_page.js",
 	# The STD-CHG-001 v1.3 "std-cfg-*" STD Configuration pages were retired
 	# with that module (STD-TPL-IMP-001 v1.0, OD4; archive/std-configuration-retired-2026-09/).
 }
@@ -389,9 +362,23 @@ kentender_scope_map = {
 
 _PLN_AUTHZ = "kentender_procurement.procurement_planning.services.planning_authorization"
 
+_NDS_AUTHZ = "kentender_procurement.departmental_needs.services.need_authorization"
+_NDS_FAMILY = (
+	"Departmental Need",
+	"Departmental Need Revision",
+	"Departmental Need Review Task",
+	"Need Withdrawal Request",
+	"Departmental Need Decision",
+	"Need Planning Usage Projection",
+	"Need Planning Intake Projection",
+	"Need Planning Disposition Projection",
+)
+
 permission_query_conditions = {
-	"Departmental Need": "kentender_core.services.authorization.permission_query_conditions",
-	"Departmental Need Review Task": "kentender_core.services.authorization.permission_query_conditions",
+	# AUD-XC-015 — the Needs read matrix of NDS §6 (own / department / accepted
+	# only), one predicate for the root, its children and the Planning
+	# projections; the generic Organisation-Unit predicate was wider.
+	**{doctype: f"{_NDS_AUTHZ}.permission_query_conditions" for doctype in _NDS_FAMILY},
 	"Departmental Plan": "kentender_core.services.authorization.permission_query_conditions",
 	"Departmental Plan Validation Task": "kentender_core.services.authorization.permission_query_conditions",
 	# DPP children carry no OU column; Planning resolves through the parent
@@ -400,17 +387,20 @@ permission_query_conditions = {
 	"Departmental Plan Entry": f"{_PLN_AUTHZ}.permission_query_conditions",
 	"Departmental Plan Submission": f"{_PLN_AUTHZ}.permission_query_conditions",
 	"Departmental Plan Validation Decision": f"{_PLN_AUTHZ}.permission_query_conditions",
+	# RG-31: a Head of User Department reads the correction requests of the plan
+	# items their department contributes to, not every request.
+	"Plan Item Correction Request": f"{_PLN_AUTHZ}.permission_query_conditions",
 }
 
 has_permission = {
-	"Departmental Need": "kentender_core.services.authorization.has_permission",
-	"Departmental Need Review Task": "kentender_core.services.authorization.has_permission",
+	**{doctype: f"{_NDS_AUTHZ}.has_permission" for doctype in _NDS_FAMILY},
 	"Departmental Plan": "kentender_core.services.authorization.has_permission",
 	"Departmental Plan Validation Task": "kentender_core.services.authorization.has_permission",
 	"Departmental Plan Version": f"{_PLN_AUTHZ}.has_permission",
 	"Departmental Plan Entry": f"{_PLN_AUTHZ}.has_permission",
 	"Departmental Plan Submission": f"{_PLN_AUTHZ}.has_permission",
 	"Departmental Plan Validation Decision": f"{_PLN_AUTHZ}.has_permission",
+	"Plan Item Correction Request": f"{_PLN_AUTHZ}.has_permission",
 	# REQ-CHG-001 v1.6 §8 — Procurement Requisition is NOT registered here:
 	# it has no single organisation_unit column (a combined Plan Item may
 	# carry more than one contributing department, §2.1), so the generic
@@ -428,6 +418,12 @@ permission_query_conditions.update({
 	"Requisition Task": f"{_REQ_AUTHZ}.permission_query_conditions",
 	"Requisition Decision": f"{_REQ_AUTHZ}.permission_query_conditions",
 	"Authorised Requisition Handoff": f"{_REQ_AUTHZ}.permission_query_conditions",
+	# AUD-XC-025 — the remaining Requisition-family records with a business-role read
+	"IT Equipment Requirement Package": f"{_REQ_AUTHZ}.permission_query_conditions",
+	"IT Equipment Requirement Package Version": f"{_REQ_AUTHZ}.permission_query_conditions",
+	"Requisition Event": f"{_REQ_AUTHZ}.permission_query_conditions",
+	"Requisition Correction Outcome": f"{_REQ_AUTHZ}.permission_query_conditions",
+	"Requisition Command Journal": f"{_REQ_AUTHZ}.permission_query_conditions",
 })
 
 has_permission.update({
@@ -436,6 +432,11 @@ has_permission.update({
 	"Requisition Task": f"{_REQ_AUTHZ}.has_permission",
 	"Requisition Decision": f"{_REQ_AUTHZ}.has_permission",
 	"Authorised Requisition Handoff": f"{_REQ_AUTHZ}.has_permission",
+	"IT Equipment Requirement Package": f"{_REQ_AUTHZ}.has_permission",
+	"IT Equipment Requirement Package Version": f"{_REQ_AUTHZ}.has_permission",
+	"Requisition Event": f"{_REQ_AUTHZ}.has_permission",
+	"Requisition Correction Outcome": f"{_REQ_AUTHZ}.has_permission",
+	"Requisition Command Journal": f"{_REQ_AUTHZ}.has_permission",
 })
 
 # TPR-CHG-001 v0.8 §6 / plan D12 — the Tender family is Site-wide with one
@@ -446,7 +447,7 @@ _TND_AUTHZ = "kentender_procurement.tenders.services.tender_authorization"
 _TND_FAMILY = (
 	"Tender", "Tender Version", "Tender Task", "Tender Decision", "Tender Publication", "Tender Channel Confirmation",
 	"Tender Addendum", "Tender Clarification", "Tender Candidate Notice", "Tender Bid Definition",
-	"Tender Cancellation", "Tender Document", "Tender Event", "Tender Submission Handoff",
+	"Tender Cancellation", "Tender Document", "Tender Event", "Tender Submission Handoff", "Tender Command Journal",
 )
 permission_query_conditions.update({doctype: f"{_TND_AUTHZ}.permission_query_conditions" for doctype in _TND_FAMILY})
 has_permission.update({doctype: f"{_TND_AUTHZ}.has_permission" for doctype in _TND_FAMILY})
@@ -456,9 +457,6 @@ has_permission.update({doctype: f"{_TND_AUTHZ}.has_permission" for doctype in _T
 # Hook on document methods and events
 
 doc_events = {
-	"File": {
-		"on_trash": "kentender_procurement.tender_configurations.bidder_workspace_manifest.repository.cas.prevent_cas_file_trash",
-	},
 	# Procurement Planning subscribes to the Departmental Needs published
 	# outbox (NDS §7.1): accepting a Need starts that department's Draft
 	# departmental plan, so the Head of Department never has to start it by
@@ -661,6 +659,14 @@ kt_analytics_providers = [
 	"kentender_procurement.tenders.services.analytics_provider",
 ]
 
+# AUTH-ADR-001 v1.12 §4.8 / CFG-CHG-002 v0.19 §4.10A — the staff home organisation
+# unit is maintained in core, which publishes `StaffHomeUnitChanged` through this
+# hook and never imports a consumer. Bid Evaluation completes a Not recorded
+# committee-member department once (EVL-CHG-001 v0.7 §3, `CompleteMemberDepartment`).
+kt_staff_home_unit_changed = [
+	"kentender_procurement.bid_evaluation.services.member_department.on_home_unit_changed",
+]
+
 # AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical
 # search page/service and the technical-read conformance gate collect every
 # module's reference resolvers and read probes through these two hooks; core
@@ -734,6 +740,14 @@ kt_budget_revision_outcome_consumers = [
 ]
 
 # BDS-CHG-001 v0.8 §12 (BDS01-AC-080): a bid's content is never a Desk read.
-for _bds_content in ("Bid Section Response", "Bid Evidence", "Bid Draft Change", "Bid Command Journal", "Bid Receipt", "Bid Submission Change"):
+# KT-ACCESS-REV-001 AR-01 — and so is a bid's identity and payload before
+# governed opening (BDS v0.11 §6: Administrator / System Manager see health
+# metadata only): the same denial covers the records that name the bidder or
+# carry the bid summary, the package, the signature evidence or the hand-off.
+for _bds_content in (
+	"Bid Section Response", "Bid Evidence", "Bid Draft Change", "Bid Command Journal", "Bid Receipt", "Bid Submission Change",
+	"Bidder Arrangement", "Bid Organisation Snapshot", "Bid Workspace", "Bid Submission Attempt", "Bid Submission Version",
+	"Bid Submission Event", "Tender Box Envelope", "Bid Opening Handoff",
+):
 	has_permission[_bds_content] = "kentender_procurement.bid_submission.services.bid_authorization.deny_desk_access"
 	permission_query_conditions[_bds_content] = "kentender_procurement.bid_submission.services.bid_authorization.deny_desk_query"

@@ -65,6 +65,12 @@ class BusinessRole:
 	exclusive_office: bool = False
 	allowed_assignment_admin: tuple[str, ...] = ASSIGNMENT_ADMIN
 	sod_tags: tuple[str, ...] = field(default_factory=tuple)
+	# AUD-XC-136 — a technical account (Administrator, System Manager) may hold
+	# only a responsibility that is technical operation or support by its own
+	# approved document (the Technical Operator the canonical seed gives the
+	# technical operator, the Release Operator, Evaluation Technical Support);
+	# every other responsibility is refused to a technical account.
+	technical_holder: bool = False
 	# Which approved document is the source of this role's name and actions.
 	owning_document: str = ""
 
@@ -82,6 +88,7 @@ def _entry(
 	exclusive_office: bool = False,
 	sod_tags: tuple[str, ...] = (),
 	frappe_roles: tuple[str, ...] | None = None,
+	technical_holder: bool = False,
 ) -> BusinessRole:
 	# §5.7 — the Frappe Role projection is the minimal framework access the
 	# responsibility needs for Desk/DocType reach. Every registered
@@ -93,6 +100,7 @@ def _entry(
 		frappe_roles=frappe_roles if frappe_roles is not None else (business_role,),
 		exclusive_office=exclusive_office,
 		sod_tags=sod_tags,
+		technical_holder=technical_holder,
 		owning_document=owning_document,
 	)
 
@@ -223,8 +231,8 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 	# reconciles an uncertain submission attempt; the Release Operator holds
 	# the verified production-submission release. Not in the spec's §6 table
 	# or the KT-STD-001 persona register yet (FU-V08-41).
-	_entry("Technical Operator", SCOPE_SITE, "BDS-CHG-001 v0.8 owner decision 27 Sep 2026", sod_tags=("bid_submission_operations",)),
-	_entry("Release Operator", SCOPE_SITE, "BDS-CHG-001 v0.8 owner decision 27 Sep 2026", sod_tags=("submission_release",)),
+	_entry("Technical Operator", SCOPE_SITE, "BDS-CHG-001 v0.8 owner decision 27 Sep 2026", sod_tags=("bid_submission_operations",), technical_holder=True),
+	_entry("Release Operator", SCOPE_SITE, "BDS-CHG-001 v0.8 owner decision 27 Sep 2026", sod_tags=("submission_release",), technical_holder=True),
 	# --- Bid Evaluation (EVL-CHG-001 v0.4 §9.1 "Technical issue holder …
 	# Technical support … no evaluation business authority"; KT-STD-001 v1.13
 	# §8.3 "Technical support owner for assigned Evaluation incidents") ------
@@ -236,6 +244,7 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 		SCOPE_SITE,
 		"KT-STD-001 v1.13 §8.3; EVL-CHG-001 v0.4 §9.1",
 		sod_tags=("evaluation_support",),
+		technical_holder=True,
 	),
 )
 

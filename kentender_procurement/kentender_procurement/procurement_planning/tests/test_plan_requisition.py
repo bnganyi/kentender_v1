@@ -33,7 +33,7 @@ from kentender_procurement.procurement_planning.services import (
 	plan_read,
 	plan_requisition,
 	plan_workbench,
-	publication_pipeline,
+	publication_confirmation,
 	scope_lock,
 	treasury,
 )
@@ -151,14 +151,16 @@ class RequisitionCase(IntegrationTestCase):
 			task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=key(),
 		)
 		version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
-		frappe.set_user(fx.ACCOUNTING_OFFICER)
-		treasury.record_treasury_submission(
-			plan_version=version_name, submitted_at="2101-11-01 09:00:00", channel="Email", destination="treasury@example.test",
-			dispatch_reference="MOH/APP/2101/001", exact_document_confirmed=True, idempotency_key=key(),
+		today = str(frappe.utils.getdate(frappe.utils.nowdate()))
+		frappe.set_user(fx.PLANNER)  # PLN-CHG-001 v1.31: the Planner confirms publication
+		published = publication_confirmation.confirm_plan_publication(
+			plan_version=version_name,
+			values={
+				"treasury_submitted_on": today, "treasury_reference": "MOH/APP/2101/001", "website_published_on": today,
+				"public_plan_url": "https://www.moh.example.test/procurement/annual-procurement-plan", "confirmation_acknowledged": 1,
+			},
+			expected_record_version=int(frappe.db.get_value("Annual Plan Version", version_name, "record_version") or 0), idempotency_key=key(),
 		)
-		frappe.set_user("Administrator")
-		published = publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
-		frappe.set_user(fx.PLANNER)
 		return published
 
 	def active_item(self, *, indicative_amount: float = 1000000) -> tuple[dict, str]:

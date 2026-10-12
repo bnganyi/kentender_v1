@@ -172,14 +172,16 @@ export const WAITING_AO = {
 	blockers: [], fixes: [], primary_action: "",
 };
 
-// PLN v1.27 §10.12 — U13 answers (reduced tracker, stage 6 of 7).
-export const TREASURY_TURN = { ...TURN, headline: "Record the Treasury submission", stage: "publication", primary_action: "record_treasury" };
-export const RETRY_TURN = { ...TURN, headline: "Retry publication", stage: "publication", primary_action: "retry" };
-export const WAITING_OPERATOR = {
-	kind: "waiting", label: "Waiting", headline: "Waiting for an authorised technical operator to retry publication",
+// PLN v1.31 §10.12 — U13 answers (reduced tracker, stage 6 of 7). The Planner's
+// turn replaces the AO's Treasury record, the Head's Publish and the technical
+// retry of v1.30.
+export const CONFIRM_TURN = { ...TURN, headline: "Confirm plan publication", stage: "publication", primary_action: "confirm_publication" };
+export const PREPARE_CORRECTED_TURN = { ...TURN, headline: "Prepare a corrected plan", stage: "publication", primary_action: "" };
+export const WAITING_PLANNER = {
+	kind: "waiting", label: "Waiting", headline: "Waiting for Mercy Kilonzo (Procurement Planner) to confirm publication",
 	sentence: "", stage: "publication",
-	holder: { role: "Authorised technical operator", people: [], display: "Authorised technical operator" },
-	since: { at: "2026-12-10 08:55:00", display: "10 Dec 2026, 11:55 EAT" },
+	holder: { role: "Procurement Planner", people: ["Mercy Kilonzo"], display: "Mercy Kilonzo (Procurement Planner)" },
+	since: { at: "2026-12-09 08:00:00", display: "9 Dec 2026, 11:00 EAT" },
 	blockers: [], fixes: [], primary_action: "",
 };
 

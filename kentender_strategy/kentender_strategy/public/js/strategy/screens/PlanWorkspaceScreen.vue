@@ -21,6 +21,7 @@ import StructureSummary from "../components/StructureSummary.vue";
 import VersionTimeline from "../components/VersionTimeline.vue";
 import { typeLabel } from "../../strategy_shared/nodeIcons.js";
 import { getPlanWorkspace, savePlanDraft, getVersionHistory, getStrategyTree, createSuccessorVersion, discardPlanDraft } from "../data/strategyApi.js";
+import AccessDenied from "../../strategy_shared/components/AccessDenied.vue";
 
 const { route, epoch } = useRouteState("strategy");
 const planId = computed(() => (route.value[1] === "plan" ? route.value[2] || null : null));
@@ -396,12 +397,8 @@ function nodePath(node) {
 			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 			<div class="kt-notice-body"><strong>{{ __("This plan record is not available to you.") }}</strong></div>
 		</div>
-		<div v-else-if="forbidden" class="kt-notice is-critical" data-testid="str-forbidden">
-			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-			<div class="kt-notice-body">
-				<strong>{{ __("You do not have access to Strategy Alignment.") }}</strong>
-				{{ __("This area needs Strategy Author, Strategy Approver or Auditor responsibility, or Administrator/System Manager technical access. Ask your KenTender administrator to check your access in System setup.") }}
-			</div>
+		<div v-else-if="forbidden" class="kt-page" data-testid="str-forbidden">
+			<AccessDenied :heading="__('You do not have access to Strategy Alignment.')" :text="__('This area needs Strategy Author, Strategy Approver or Auditor responsibility, or Administrator/System Manager technical access. Ask your KenTender administrator to check your access in System setup.')" />
 		</div>
 		<div v-else-if="loadError && !workspace" data-testid="str-error">
 			<div class="kt-notice is-warning">

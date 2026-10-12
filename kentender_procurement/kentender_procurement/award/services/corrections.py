@@ -130,6 +130,7 @@ def record(*, award: str, outcome: str, reason: str = "", next_action: str = "",
 	def body() -> dict[str, Any]:
 		doc = records.lock(award)
 		guards.require_ao(user)
+		guards.require_ao_not_opinion_author(user, doc)
 		if doc.cancelled:
 			fail("AWD_ON_HOLD", {"reason": "cancelled"})
 		records.check_version(doc, expected_version)
@@ -215,7 +216,8 @@ def record(*, award: str, outcome: str, reason: str = "", next_action: str = "",
 		return records.summary(state.reload(frappe.get_doc(records.CASE, award)), outcome=outcome, **result)
 
 	return records.command("RecordAwardCorrectionDecision", case=award, idempotency_key=idempotency_key, actor=user,
-		payload={"outcome": outcome, "reason": reason, "next_action": next_action, "expected": cstr(expected_version)}, body=body)
+		payload={"outcome": outcome, "reason": reason, "next_action": next_action, "expected": cstr(expected_version)}, body=body,
+		authorise=lambda: guards.require_ao(user))
 
 
 def _award_guards(doc, opinion) -> None:
@@ -235,6 +237,7 @@ def _award_guards(doc, opinion) -> None:
 	v = checks.validity(doc)
 	if v["expired"]:
 		g.add("AWD_VALIDITY_EXPIRED", valid_until=clock.when(v["end"]))
+	guards.funding(doc, g)
 	g.raise_if_any()
 
 

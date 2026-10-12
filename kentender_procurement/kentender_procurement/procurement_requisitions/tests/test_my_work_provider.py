@@ -32,6 +32,7 @@ class RequisitionMyWorkCase(IntegrationTestCase):
 	def _complete_draft(self, prepared: dict) -> None:
 		fx.fill_request_information(prepared["requisition"])
 		fx.add_laptops(prepared["requisition"])
+		fx.enter_estimates(prepared["requisition"])
 		fx.apply_standard_package(prepared["requisition"])
 
 	def _prepared_draft(self) -> dict:
@@ -67,16 +68,14 @@ class TestDepartmentApprovalRows(RequisitionMyWorkCase):
 class TestProcurementAuthorisationRows(RequisitionMyWorkCase):
 	def test_a_submitted_requisition_appears_for_hopf(self):
 		prepared = self._prepared_draft()
-		frappe.set_user(fx.HOD)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		submitted = lifecycle.submit_requisition_to_procurement(requisition=prepared["requisition"], expected_record_version=root.record_version, idempotency_key=fx.key())
+		fx.send(prepared["requisition"])
+		submitted = fx.submit_as_hod(prepared["requisition"])
 		rows = my_work_provider.my_work_rows(user=fx.HOPF)
 		self.assertIn(submitted["task"], [r["task_id"] for r in rows["assigned"]])
 
 	def test_it_does_not_appear_for_a_non_hopf_actor(self):
 		prepared = self._prepared_draft()
-		frappe.set_user(fx.HOD)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		submitted = lifecycle.submit_requisition_to_procurement(requisition=prepared["requisition"], expected_record_version=root.record_version, idempotency_key=fx.key())
+		fx.send(prepared["requisition"])
+		submitted = fx.submit_as_hod(prepared["requisition"])
 		rows = my_work_provider.my_work_rows(user=fx.AUTHOR)
 		self.assertNotIn(submitted["task"], [r["task_id"] for r in rows["assigned"]])

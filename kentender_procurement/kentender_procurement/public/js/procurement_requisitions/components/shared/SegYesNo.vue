@@ -1,6 +1,6 @@
-<!-- The board's inline Yes/No control over real radio inputs. -->
+<!-- The board's inline Yes/No control (`.seg` / `.seg-opt`, as the design board draws it) over real radio inputs. -->
 <template>
-	<div class="kt-seg kt-seg-inline" role="radiogroup" :aria-labelledby="labelledby">
+	<div class="seg" role="radiogroup" :aria-labelledby="labelledby">
 		<label v-for="choice in CHOICES" :key="choice.label" class="seg-opt">
 			<input type="radio" :name="name" :checked="modelValue === choice.value" :disabled="disabled" @change="$emit('update:modelValue', choice.value)" />{{ choice.label }}
 		</label>

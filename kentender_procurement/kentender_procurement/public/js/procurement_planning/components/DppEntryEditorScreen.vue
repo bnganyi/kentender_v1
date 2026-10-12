@@ -37,11 +37,11 @@
 			<div class="kt-meta-row pln-context-row" data-testid="dpp-editor-context">
 				<div>
 					<span class="kt-label">Department</span>
-					<span class="kt-meta-value">{{ context.department }}</span>
+					<span class="kt-meta-value is-plain">{{ context.department }}</span>
 				</div>
 				<div>
 					<span class="kt-label">Financial year</span>
-					<span class="kt-meta-value">{{ context.financial_year }}</span>
+					<span class="kt-meta-value is-plain">{{ context.financial_year }}</span>
 				</div>
 			</div>
 

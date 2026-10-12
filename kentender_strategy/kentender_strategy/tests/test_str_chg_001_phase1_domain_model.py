@@ -13,6 +13,9 @@ from __future__ import annotations
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from kentender_strategy.tests.fixtures import open_strategy_write_window, purge_record
+
+from kentender_core.services.audit_event_service import purge_audit_events
 from kentender_strategy.services.strategy_audit import list_events, record_event
 from kentender_strategy.services.strategy_reference import REF_RE
 
@@ -34,11 +37,12 @@ def _plan(**kwargs) -> dict:
 
 class TestStrategicPlanDomainModel(FrappeTestCase):
 	def setUp(self):
+		open_strategy_write_window(self)
 		self._cleanup = []
 
 	def tearDown(self):
 		for doctype, name in reversed(self._cleanup):
-			frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+			purge_record(doctype, name)
 
 	def _track(self, doc):
 		self._cleanup.append((doc.doctype, doc.name))
@@ -333,7 +337,7 @@ class TestStrategyAuditMigratedToCoreEvent(FrappeTestCase):
 			new_state="Draft",
 			summary="Phase 1 audit routing check",
 		)
-		self.addCleanup(lambda: frappe.delete_doc("Audit Event", audit_id, force=True, ignore_permissions=True))
+		self.addCleanup(lambda: purge_audit_events({"name": audit_id}, reason="strategy audit routing test clean-up"))
 		row = frappe.db.get_value(
 			"Audit Event", audit_id, ["document_type", "document_name", "action"], as_dict=True
 		)

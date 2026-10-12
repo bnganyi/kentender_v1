@@ -4,7 +4,11 @@
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.command_write_guard import fixture_insert, purge_doc
 from kentender_suppliers.api import ktsm_landing
+from kentender_suppliers.services import registry_access
+
+OFFICER = "ktsm.workbench.officer@kentender.test"
 
 
 def _supplier_group():
@@ -45,7 +49,7 @@ def _ensure_profile(code: str, approval: str, operational: str, compliance: str)
 			"compliance_status": compliance,
 		}
 	)
-	prof.insert(ignore_permissions=True)
+	fixture_insert(prof, reason="workbench fixture: a profile born in a given governance state")
 	return prof.name
 
 
@@ -63,6 +67,25 @@ class TestKTSMWorkbenchApi(IntegrationTestCase):
 		cls.blocked_profile = _ensure_profile(
 			"SUP-KE-2099-1003", "Approved", "Suspended", "Incomplete"
 		)
+		cls.draft_profile = _ensure_profile("SUP-KE-2099-1004", "Draft", "Pending", "Incomplete")
+		if frappe.db.exists("User", OFFICER):
+			frappe.delete_doc("User", OFFICER, force=True, ignore_permissions=True)
+		officer = frappe.get_doc(
+			{"doctype": "User", "email": OFFICER, "first_name": "Officer", "send_welcome_email": 0, "user_type": "System User"}
+		)
+		officer.append("roles", {"role": registry_access.REGISTRY_OFFICER})
+		officer.insert(ignore_permissions=True, ignore_links=True)
+		cls.addClassCleanup(cls._remove_officer)
+
+	@classmethod
+	def _remove_officer(cls):
+		frappe.set_user("Administrator")
+		if frappe.db.exists("User", OFFICER):
+			frappe.delete_doc("User", OFFICER, force=True, ignore_permissions=True)
+		frappe.db.commit()
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
 
 	def test_get_suppliers_contract(self):
 		payload = ktsm_landing.get_suppliers({"q": "SUP-KE-2099"})
@@ -100,14 +123,25 @@ class TestKTSMWorkbenchApi(IntegrationTestCase):
 		self.assertTrue(KENTENDER_SUPPLIER_CODE_PATTERN.match("SUP-KE-2026-10000"))
 
 	def test_create_supplier_builder_profile_contract(self):
+		frappe.set_user(OFFICER)
 		payload = ktsm_landing.create_supplier_builder_profile(
 			supplier_name="Builder Flow Co", supplier_type="Company"
 		)
+		frappe.set_user("Administrator")
 		self.assertTrue(payload.get("ok"), payload)
 		self.assertTrue(payload.get("profile_name"))
 		self.assertTrue(payload.get("supplier_code"))
 		pname = payload.get("profile_name")
+		self.addCleanup(self._remove_builder_profile, pname)
 		self.assertTrue(frappe.db.exists("KTSM Supplier Profile", pname))
+
+	@staticmethod
+	def _remove_builder_profile(pname: str) -> None:
+		frappe.set_user("Administrator")
+		erp = frappe.db.get_value("KTSM Supplier Profile", pname, "erpnext_supplier")
+		purge_doc("KTSM Supplier Profile", pname)
+		if erp:
+			frappe.delete_doc("Supplier", erp, force=True, ignore_permissions=True)
 
 	def test_get_builder_payload_contract(self):
 		payload = ktsm_landing.get_builder_payload(self.submitted_profile)
@@ -119,14 +153,18 @@ class TestKTSMWorkbenchApi(IntegrationTestCase):
 		self.assertIn("readiness", payload)
 
 	def test_update_builder_identity_contract(self):
-		before = ktsm_landing.get_builder_payload(self.submitted_profile)
-		new_name = (before.get("identity") or {}).get("supplier_name", "") + " Updated"
+		frappe.set_user(OFFICER)
+		before = ktsm_landing.get_builder_payload(self.draft_profile)
+		new_name = (before.get("identity") or {}).get("supplier_name", "").removesuffix(" Updated") + " Updated"
 		resp = ktsm_landing.update_builder_identity(
-			self.submitted_profile, new_name, "Company"
+			self.draft_profile, new_name, "Company"
 		)
 		self.assertTrue(resp.get("ok"), resp)
-		after = ktsm_landing.get_builder_payload(self.submitted_profile)
+		after = ktsm_landing.get_builder_payload(self.draft_profile)
 		self.assertEqual((after.get("identity") or {}).get("supplier_name"), new_name)
+		# Once submitted the identity is no longer a builder edit (RG-11).
+		with self.assertRaises(frappe.PermissionError):
+			ktsm_landing.update_builder_identity(self.submitted_profile, "Changed After Submit", "Company")
 
 	def test_builder_api_requires_internal_role(self):
 		orig_user = frappe.session.user

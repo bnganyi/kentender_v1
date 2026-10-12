@@ -18,6 +18,7 @@ from frappe.utils import cint
 
 from kentender_procurement.proceedings.services import clock, records, signing
 from kentender_procurement.proceedings.services.errors import fail, unverified
+from kentender_procurement.services import sequence
 
 ATTESTATION = "Proceeding Attestation"
 ACTIONS = ("Sign", "Initial")
@@ -48,7 +49,7 @@ def attest_target(*, owner_type: str, owner_id: str, expected_version: int, minu
 			"satisfies_current": 1}, "attestation_id")
 		if existing:
 			return records.summary(doc, "", attestation_id=existing, verification_result=signing.VERIFIED)
-		number = frappe.db.count(ATTESTATION, {"proceeding": doc.name}) + 1
+		number = sequence.next_count(ATTESTATION, {"proceeding": doc.name})
 		attestation_id = f"{doc.name}-P{number:04d}"
 		proof = signing.attest(member=actor, target_id=target_id, target_digest=target_digest, minutes_version=current, action=action, correlation_id=attestation_id)
 		verified = proof["outcome"] == signing.VERIFIED

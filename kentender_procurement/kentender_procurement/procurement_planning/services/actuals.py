@@ -26,6 +26,7 @@ import frappe
 from frappe.utils import cstr, date_diff, getdate, now_datetime
 
 from kentender_procurement.procurement_planning.errors import fail
+from kentender_procurement.procurement_planning.write_family import planning_write
 
 NOT_AVAILABLE = "Not available"
 NOT_APPLICABLE = "Not applicable"
@@ -55,7 +56,7 @@ def record_actual_event(
 	existing = frappe.db.get_value("Milestone Actual Event", {"producer": producer, "event_id": event_id}, "name")
 	if existing:
 		return {"event": existing, "idempotent": True}
-	event = frappe.get_doc(
+	values = (
 		{
 			"doctype": "Milestone Actual Event", "producer": producer, "event_id": event_id,
 			"schema_version": "MilestoneActualEvent.v1", "proceeding_type": cstr(proceeding_type).strip(),
@@ -66,7 +67,9 @@ def record_actual_event(
 			"supersedes_event_id": cstr(supersedes_event_id).strip(), "source_evidence_reference": cstr(source_evidence_reference).strip(),
 			"fixture_namespace": cstr(item.fixture_namespace),
 		}
-	).insert(ignore_permissions=True)
+	)
+	with planning_write():
+		event = frappe.get_doc(values).insert(ignore_permissions=True)
 	return {"event": event.name, "idempotent": False}
 
 
@@ -103,9 +106,10 @@ def upsert_coverage(
 	if existing:
 		frappe.db.set_value("Proceeding Coverage", existing, values, update_modified=False)
 		return existing
-	doc = frappe.get_doc(
-		{"doctype": "Proceeding Coverage", **filters, **values, "fixture_namespace": cstr(item.fixture_namespace)}
-	).insert(ignore_permissions=True)
+	with planning_write():
+		doc = frappe.get_doc(
+			{"doctype": "Proceeding Coverage", **filters, **values, "fixture_namespace": cstr(item.fixture_namespace)}
+		).insert(ignore_permissions=True)
 	return doc.name
 
 

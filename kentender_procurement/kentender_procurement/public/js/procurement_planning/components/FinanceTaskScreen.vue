@@ -50,11 +50,11 @@
 			<div class="kt-meta-row is-tight" data-testid="fnt-statement">
 				<div>
 					<span class="kt-label">Budget</span>
-					<span class="kt-meta-value">{{ task.budget_reference || "—" }}</span>
+					<span class="kt-meta-value is-plain">{{ task.budget_reference || "—" }}</span>
 				</div>
 				<div>
 					<span class="kt-label">Amounts as at</span>
-					<span class="kt-meta-value" data-testid="fnt-as-at">{{ task.as_at_display }}</span>
+					<span class="kt-meta-value is-plain" data-testid="fnt-as-at">{{ task.as_at_display }}</span>
 				</div>
 			</div>
 			</div>
@@ -72,11 +72,11 @@
 					<div class="kt-meta-row">
 						<div v-if="task.budget_version_display">
 							<span class="kt-label">Budget version</span>
-							<span class="kt-meta-value">{{ task.budget_reference }} · {{ task.budget_version_display }}</span>
+							<span class="kt-meta-value is-plain">{{ task.budget_reference }} · {{ task.budget_version_display }}</span>
 						</div>
 						<div>
 							<span class="kt-label">Review requested at</span>
-							<span class="kt-meta-value">{{ task.requested_display }}</span>
+							<span class="kt-meta-value is-plain">{{ task.requested_display }}</span>
 						</div>
 					</div>
 				</div>
@@ -164,19 +164,19 @@
 									<div class="kt-meta-row">
 										<div>
 											<span class="kt-label">Funding source</span>
-											<span class="kt-meta-value">{{ row.funding_source }}</span>
+											<span class="kt-meta-value is-plain">{{ row.funding_source }}</span>
 										</div>
 										<div>
 											<span class="kt-label">Reserved</span>
-											<span class="kt-meta-value">{{ row.reserved_display }}</span>
+											<span class="kt-meta-value is-plain">{{ row.reserved_display }}</span>
 										</div>
 										<div>
 											<span class="kt-label">Committed</span>
-											<span class="kt-meta-value">{{ row.committed_display }}</span>
+											<span class="kt-meta-value is-plain">{{ row.committed_display }}</span>
 										</div>
 										<div>
 											<span class="kt-label">Currently available</span>
-											<span class="kt-meta-value">{{ row.available_display }}</span>
+											<span class="kt-meta-value is-plain">{{ row.available_display }}</span>
 										</div>
 									</div>
 								</td>

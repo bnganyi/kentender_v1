@@ -1,5 +1,5 @@
 // Structural departures for the Procurement Requisitions screens (REQ-CHG-001
-// v1.11, board `design/Requisitions - Design Board v2.dc.html`).
+// v1.15, board `design/Requisitions - Design Board v2.dc.html`).
 //
 // Keyed `Component#variant`. Every entry names what the build adds or omits
 // that the board does not draw, why, and the authority for it. Unregistered
@@ -36,12 +36,12 @@ export const DEPARTURES = {
 	// The contributor frame draws only its Access table, footer and saved
 	// notice; the section headings above them are the parent REQ-DES-03's.
 	"RequestDetailsTask#REQ-DES-03-CONTRIBUTOR": [
-		{ path: "card-title", because: "Amounts requested and Equipment headings belong to the parent REQ-DES-03 frame.", authority: INHERITED_HEADER.authority },
-		{ path: "card-title", because: "Amounts requested and Equipment headings belong to the parent REQ-DES-03 frame.", authority: INHERITED_HEADER.authority },
+		{ path: "card-title", because: "Items and Request summary headings belong to the parent REQ-DES-03 frame.", authority: INHERITED_HEADER.authority },
+		{ path: "card-title", because: "Items and Request summary headings belong to the parent REQ-DES-03 frame.", authority: INHERITED_HEADER.authority },
 	],
 	// The one-source frame redraws only the department table; the four shared
 	// details fields are unchanged from the parent REQ-DES-04 dialog.
-	"AddLaptopDialog#REQ-DES-04-ONE-SOURCE": Array.from({ length: 4 }, () => ({
+	"AddItemDialog#REQ-DES-04-ONE-SOURCE": Array.from({ length: 4 }, () => ({
 		path: "dialog > field",
 		because: "Shared details (category, item name, delivery location, latest date) are the parent REQ-DES-04 dialog's; the variant draws only what differs.",
 		authority: INHERITED_HEADER.authority,
@@ -80,6 +80,13 @@ export const DEPARTURES = {
 			authority: "Requisitions board v2 REQ-DES-11 Returned reviewed Version caption",
 		},
 	],
+	"RequirementsTask#REQ-DES-05-MIXED": [
+		...Array.from({ length: 6 }, () => ({
+			path: "field",
+			because: "The six warranty and support values: one shared set for the whole request, kept as in REQ-DES-05-COMPLETE.",
+			authority: "Requisitions board v2 REQ-DES-05-MIXED note",
+		})),
+	],
 	"RequirementsTask#REQ-DES-05-COMPLETE": [
 		...Array.from({ length: 3 }, () => ({
 			path: "card-title",
@@ -108,13 +115,16 @@ export const COVERED = [
 	"EditorScreen#REQ-DES-03",
 	"RequestDetailsTask#Purchase and source details",
 	"RequestDetailsTask#REQ-DES-03-COMPLETE",
+	"RequestDetailsTask#REQ-DES-03-PARTIAL",
+	"RequestDetailsTask#REQ-DES-03-MIXED",
 	"EditorScreen#REQ-DES-03-RETURNED",
 	"RequestDetailsTask#REQ-DES-03-CONTRIBUTOR",
-	"AddLaptopDialog#REQ-DES-04",
-	"AddLaptopDialog#REQ-DES-04-ONE-SOURCE",
-	"AddLaptopDialog#REQ-DES-04-VALIDATION",
+	"AddItemDialog#REQ-DES-04",
+	"AddItemDialog#REQ-DES-04-ONE-SOURCE",
+	"AddItemDialog#REQ-DES-04-VALIDATION",
 	"EditorScreen#REQ-DES-05",
 	"RequirementsTask#REQ-DES-05-COMPLETE",
+	"RequirementsTask#REQ-DES-05-MIXED",
 	"ReviewTask#REQ-DES-06",
 	"ReviewTask#REQ-DES-06-DIRECT-HOD",
 	"ReasonDialog#Withdraw requisition dialog",

@@ -186,7 +186,9 @@ def submit_guard(ctx, *, actor: str, at, tasks=None) -> dict[str, Any]:
 def _cfg_holders() -> list[str]:
 	"""The CFG System Manager: a Technical Operator who holds System Manager."""
 	names = []
-	for user in frappe.get_all("User Responsibility Assignment", filters={"business_role": TECHNICAL, "status": "Enabled"}, pluck="user"):
+	from kentender_core.services.authorization import active_holders
+
+	for user in active_holders(TECHNICAL):
 		if "System Manager" in frappe.get_roles(user) and _name(user) not in names:
 			names.append(_name(user))
 	return names

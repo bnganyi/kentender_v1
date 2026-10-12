@@ -31,8 +31,80 @@ OPEN_STATES = ("Draft", "Awaiting Department Approval", "Submitted to Procuremen
 _BOOKKEEPING = frozenset({"name", "owner", "creation", "modified", "modified_by", "docstatus", "idx", "parent", "parentfield", "parenttype", "doctype"})
 
 
+#: REQ v1.18 §5.7A — fields added to a child row after Versions were already locked. A row that holds no value for
+#: one is dumped exactly as before, so a Version locked earlier keeps its content digest.
+_OMIT_WHEN_EMPTY = frozenset({"applies_to_item_ids_json"})
+
+
 def child_rows(doc, fieldname: str) -> list[dict[str, Any]]:
-	return [{k: v for k, v in row.as_dict().items() if k not in _BOOKKEEPING} for row in doc.get(fieldname) or []]
+	return [
+		{k: v for k, v in row.as_dict().items() if k not in _BOOKKEEPING and not (k in _OMIT_WHEN_EMPTY and not v)}
+		for row in doc.get(fieldname) or []
+	]
+
+
+#: The commands that put the actor's work into a Draft. The Requisition Command Journal is the immutable
+#: record of who ran them (RG-14, REQ v1.14 §7.3: "prepared" is every officer who edited the Draft).
+EDIT_COMMANDS = (
+	"PrepareITEquipmentRequisition", "SaveRequisitionSummary", "AddSameSpecificationItems", "UpdateSharedItemDetails",
+	"UpdateRequisitionItem", "RemoveRequisitionItem", "SaveRequirementProposalDraft", "ApplySelectedRequirementPackage",
+	"ResetStandardValues", "SaveWarrantyAndSupport",
+	"AddTechnicalRequirement", "UpdateTechnicalRequirement", "RemoveTechnicalRequirement", "CustomiseRequirementForItem",
+	"AddRelatedService", "UpdateRelatedService", "RemoveRelatedService",
+	"AddAcceptanceRequirement", "UpdateAcceptanceRequirement", "RemoveAcceptanceRequirement",
+	"AddSupportingMaterial", "UpdateSupportingMaterial", "RemoveSupportingMaterial",
+)
+
+
+def draft_editors(requisition: str) -> set[str]:
+	"""Every officer who ran an editing command on any Version of this
+	Requisition, from the Command Journal (a copied Draft carries earlier
+	Versions' work forward, so their editors count too)."""
+	if not requisition:
+		return set()
+	rows = frappe.db.sql(
+		"""select distinct j.actor from `tabRequisition Command Journal` j
+		where j.command in %(commands)s and j.actor is not null and j.actor != ''
+		and ((j.document_type = 'Procurement Requisition' and j.document_name = %(requisition)s)
+			or (j.document_type = 'Requisition Version' and j.document_name in (
+				select v.name from `tabRequisition Version` v where v.requisition = %(requisition)s))
+			or (j.document_type = 'IT Equipment Requirement Package Version' and j.document_name in (
+				select pv.name from `tabIT Equipment Requirement Package Version` pv
+				inner join `tabIT Equipment Requirement Package` p on p.name = pv.package
+				where p.requisition = %(requisition)s)))""",
+		{"commands": EDIT_COMMANDS, "requisition": cstr(requisition)},
+	)
+	return {cstr(r[0]) for r in rows}
+
+
+def prepared_directly(version, actor: str) -> bool:
+	"""REQ v1.14 §7.1 — the actor prepared this Requisition in the Head of User Department capacity."""
+	return bool(actor) and cstr(version.get("prepared_by")) == actor and cstr(version.get("prepared_capacity")) == ROLE_HEAD_OF_USER_DEPARTMENT
+
+
+def certifier_conflict(version, actor: str, *, direct: bool = False) -> bool:
+	"""§7.3 bullet 1 / REQ19-AC-045 — an actor who prepared, edited or sent the
+	Version as a Departmental Author cannot also complete the Head of User
+	Department decision on it, unless they hold that role independently and
+	prepared the Requisition directly in that capacity. `direct` is the
+	Draft-state submit (§7.1: "Head of User Department preparing directly"): no
+	approval task exists, so only that preparing Head may certify, never another
+	Head. One rule for every submit path and for the offers that mirror it."""
+	if prepared_directly(version, actor) and cstr(version.get("sent_for_approval_by")) != actor:
+		return False
+	if direct:
+		return True
+	prepared_by, sent_by = cstr(version.get("prepared_by")), cstr(version.get("sent_for_approval_by"))
+	return actor in (prepared_by, sent_by) or actor in draft_editors(cstr(version.get("requisition")))
+
+
+def authoriser_conflict(version, actor: str) -> bool:
+	"""§7.3 bullet 4 / REQ19-AC-045 — the Procurement authoriser cannot also be
+	the departmental submitting authority, and cannot authorise a Version they
+	prepared or edited themselves (no self-authorisation)."""
+	if not actor:
+		return False
+	return actor in (cstr(version.get("submitted_by")), cstr(version.get("prepared_by"))) or actor in draft_editors(cstr(version.get("requisition")))
 
 
 def unit_name(unit: str) -> str:
@@ -158,10 +230,19 @@ def default_lead(lines: list[dict[str, Any]]) -> str:
 	the sorted stable OU identity."""
 	from kentender_procurement.procurement_requisitions.services import precision
 
-	totals: dict[str, Any] = {}
-	for line in lines:
-		unit = line.get("contributing_org_unit") or ""
-		totals[unit] = totals.get(unit, 0) + precision.stored_money(line.get("requested_value"))
+	def aggregate(field: str) -> dict[str, Any]:
+		totals: dict[str, Any] = {}
+		for line in lines:
+			unit = line.get("contributing_org_unit") or ""
+			totals[unit] = totals.get(unit, 0) + precision.stored_money(line.get(field))
+		return totals
+
+	totals = aggregate("requested_value")
+	# v1.15 §7.3A: until a valid estimated total cost exists the established rule
+	# is applied to what remains on each line, which is what the v1.14 default
+	# produced; once estimates exist it follows them.
+	if not totals or max(totals.values()) <= 0:
+		totals = aggregate("remaining_value")
 	if not totals:
 		return ""
 	best = max(totals.values())

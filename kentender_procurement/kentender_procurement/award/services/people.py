@@ -47,6 +47,17 @@ def first_holder(business_role: str) -> str:
 	return found[0] if found else ""
 
 
+def is_technical_operator(user: str) -> bool:
+	"""An active, in-force Technical Operator assignment, rechecked now (§6).
+	Unlike `holds`, a technical-role user may hold it: the Technical Operator
+	acts in no business capacity, but the assignment must still be effective."""
+	from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
+
+	if not user or user == "Guest":
+		return False
+	return authorise_record(user=user, business_role=TECHNICAL_OPERATOR, purpose=PURPOSE_COMMAND).allowed
+
+
 def technical_operators() -> list[str]:
 	users = frappe.get_all("User Responsibility Assignment", filters={"business_role": TECHNICAL_OPERATOR, "status": "Enabled"}, pluck="user", distinct=True)
-	return sorted(set(users))
+	return sorted(u for u in set(users) if is_technical_operator(u))

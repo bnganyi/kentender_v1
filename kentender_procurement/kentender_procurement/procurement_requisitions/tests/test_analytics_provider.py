@@ -22,6 +22,8 @@ from decimal import Decimal
 from uuid import uuid4
 
 import frappe
+
+from kentender_core.services.command_write_guard import fixture_insert, purge_doc
 from frappe.tests import IntegrationTestCase
 
 from kentender_core.services import analytics_contract as ac
@@ -48,7 +50,7 @@ def _dt(text: str) -> datetime:
 def _remove_extra() -> None:
 	frappe.set_user("Administrator")
 	for name in frappe.get_all("User Responsibility Assignment", filters={"fixture_namespace": ANL_NS}, pluck="name"):
-		frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+		purge_doc("User Responsibility Assignment", name)
 	for email in EXTRA_USERS:
 		for name in frappe.get_all("Contact Email", filters={"email_id": email}, pluck="parent"):
 			frappe.delete_doc("Contact", name, force=1, ignore_permissions=True)
@@ -95,8 +97,7 @@ class World:
 
 	def insert(self, values: dict):
 		doc = frappe.get_doc({**values, "fixture_namespace": ANL_NS if "fixture_namespace" in frappe.get_meta(values["doctype"]).get_valid_columns() else None})
-		doc.insert(ignore_permissions=True)
-		return doc
+		return fixture_insert(doc)
 
 	def version(self, key: str, number: int, status: str, lines: list[tuple[str, str]], *, submitted: str = "", based_on: str = "") -> str:
 		version = self.insert({
@@ -383,11 +384,33 @@ class TestRequisitionsAnalyticsProvider(IntegrationTestCase):
 			self.assertEqual(set(self.rows(user)), set(SITE_WIDE_NON_DRAFT), user)
 
 	def test_a_site_wide_reader_gets_the_same_figures_as_anyone_else(self):
+		"""The figures are the same for every aggregate reader. What is *named and linked* follows the
+		viewer's own read (KT-ACCESS-REV-001 AR-08), so a requisition the reader cannot open carries its
+		reference and no link instead of its title and route."""
 		reference = self.rows("Administrator")
 		for user in (HOPF_ONLY, AO, AUDITOR, TECH_OP):
 			rows = self.rows(user)
 			for key in SITE_WIDE_NON_DRAFT:
-				self.assertEqual(rows[key], reference[key], f"{user} {key}")
+				if rows[key]["route"] == []:
+					self.assertEqual(rows[key]["title"], rows[key]["reference"], f"{user} {key}")
+					masked = {**rows[key], "title": reference[key]["title"], "route": reference[key]["route"]}
+					self.assertEqual(masked, reference[key], f"{user} {key}")
+				else:
+					self.assertEqual(rows[key], reference[key], f"{user} {key}")
+
+	def test_a_requisition_the_accounting_officer_cannot_open_is_counted_but_not_named_or_linked(self):
+		"""AR-08: the Analytics aggregate is wider than the owner's read (OD-2); the link and title are not."""
+		frappe.set_user(AO)
+		opened = {self.by_id[name] for name in frappe.get_list("Procurement Requisition", pluck="name", limit_page_length=0) if name in self.by_id}
+		frappe.set_user("Administrator")
+		rows = self.rows(AO)
+		self.assertTrue(set(SITE_WIDE_NON_DRAFT) - opened, "the fixture needs a requisition the AO cannot open")
+		for key in SITE_WIDE_NON_DRAFT:
+			if key in opened:
+				self.assertTrue(rows[key]["route"], key)
+			else:
+				self.assertEqual(rows[key]["route"], [], key)
+				self.assertEqual(rows[key]["title"], rows[key]["reference"], key)
 
 	def test_a_draft_of_another_user_never_appears_to_a_site_wide_reader(self):
 		for user in (HOPF_ONLY, PLANNER, AUDITOR, AO, "Administrator", TECH_OP):

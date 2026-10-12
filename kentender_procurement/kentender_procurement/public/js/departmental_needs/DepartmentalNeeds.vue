@@ -419,6 +419,7 @@ const editorContext = computed(() => {
 			organisation_unit_label: chosen ? chosen.organisation_unit_label : "",
 			financial_year: targets.financial_year,
 			financial_year_label: targets.financial_year_label,
+			estimate_currency: targets.estimate_currency,
 			financial_year_start: targets.financial_year_start,
 			financial_year_end: targets.financial_year_end,
 		};
@@ -429,6 +430,7 @@ const editorContext = computed(() => {
 	return {
 		organisation_unit_label: labels.organisation_unit || need.organisation_unit,
 		financial_year_label: labels.financial_year || need.financial_year,
+		estimate_currency: detail.value.estimate_currency,
 		financial_year_start: (detail.value.financial_year_window || {}).start,
 		financial_year_end: (detail.value.financial_year_window || {}).end,
 	};

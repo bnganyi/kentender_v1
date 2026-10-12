@@ -116,6 +116,17 @@ STRUCTURE = (
 	".kt-industry .btn-ghost.kt-danger:hover:not(:disabled) {\n\tbackground: var(--status-critical-bg);\n}",
 	# A link in a table keeps the link colour on a hovered row (the old stylesheet turned it rust; the pack bars rust from links).
 	f".kt-industry .table tbody tr:hover a{gen.LINK_GUARD} {{\n\tcolor: var(--color-accent-900);\n}}",
+	# The segmented control (Yes/No, Permanent/Acting ...) is the pack's `.seg` / `.seg-opt`, once, for every screen. These are the only
+	# things a screen needed beyond the pack: a track that does not stretch in a column, no label margin, and a disabled option that
+	# stays readable. No module may define its own copy (test_one_segmented_control).
+	".kt-industry .seg {\n\twidth: fit-content;\n}",
+	".kt-industry .seg-opt {\n\tmargin: 0;\n}",
+	".kt-industry .seg-opt:has(input:disabled) {\n\tcursor: default;\n\topacity: 0.7;\n}",
+	".kt-industry .seg-opt.is-disabled {\n\topacity: 0.55;\n\tcursor: not-allowed;\n}",
+	# A dialog never grows past the window: the backdrop centres it and pads it, so a tall one (the Start Tender dialog with both disclosures
+	# open) was clipped at the top and the bottom with no way to scroll to its title or its buttons on a short screen. It scrolls inside the
+	# window instead. `dvh` follows a phone's moving address bar; `vh` is the fallback. A dialog that sets its own height keeps it.
+	".kt-industry .dialog {\n\tmax-height: calc(100vh - 2 * var(--space-4));\n\tmax-height: calc(100dvh - 2 * var(--space-4));\n\toverflow-y: auto;\n\toverscroll-behavior: contain;\n}",
 )
 
 HEADER = (
@@ -143,6 +154,76 @@ PAGER = (
 	"@media (max-width: 640px) {\n\t.kt-industry .kt-pager-count {\n\t\tflex-basis: 100%;\n\t}\n\t.kt-industry .kt-pager-nav {\n\t\tmargin-left: auto;\n\t}\n\t.kt-industry .kt-pager-page,\n\t.kt-industry .kt-pager-gap {\n\t\tdisplay: none;\n\t}\n\t.kt-industry .kt-pager-status {\n\t\tdisplay: inline;\n\t\tpadding-inline: var(--space-2);\n\t}\n}",
 )
 
+
+
+#: DS-REV-004 (Project Owner approved 6 Oct 2026, "2e it is. Approved"): the journey position figure, the compact track and the blocked next step.
+#: The pack does not carry these yet; the rules are the handoff's, scoped to `.kt-industry`, with the narrow-screen, forced-colours and print handling
+#: it asks for. They sit after the pack's `.kt-journey-*` rules, so the compact form (`.is-compact`) overrides the 4px slabs.
+JOURNEY = (
+	".kt-industry .kt-journey-lead {\n\tdisplay: grid;\n\tgap: 32px;\n\talign-items: start;\n}",
+	".kt-industry .kt-journey-lead.has-position {\n\tgrid-template-columns: 200px minmax(0, 1fr);\n}",
+	".kt-industry .kt-journey-position {\n\tdisplay: grid;\n\tgap: 4px;\n\tpadding-right: 24px;\n\tborder-right: 1px solid var(--color-divider);\n}",
+	".kt-industry .kt-journey-position-label {\n\tfont-size: 12px;\n\tfont-weight: 600;\n\tcolor: var(--color-neutral-700);\n}",
+	".kt-industry .kt-journey-position-value {\n\tdisplay: flex;\n\talign-items: baseline;\n\tgap: 6px;\n\tline-height: 1;\n\tfont-variant-numeric: tabular-nums;\n}",
+	".kt-industry .kt-journey-position-n {\n\tfont-size: 44px;\n\tfont-weight: 600;\n\tcolor: var(--color-figure);\n}",
+	".kt-industry .kt-journey-position-of {\n\tfont-size: 20px;\n\tfont-weight: 500;\n\tcolor: var(--color-neutral-600);\n}",
+	".kt-industry .kt-journey-position-state {\n\tmargin-top: 6px;\n\tfont-size: 12px;\n\tfont-weight: 600;\n\tcolor: var(--color-figure);\n}",
+	".kt-industry .kt-journey-position.is-blocked .kt-journey-position-n,\n.kt-industry .kt-journey-position.is-blocked .kt-journey-position-state {\n\tcolor: var(--status-attention);\n}",
+	"/* D1/K3, applied as recommended: with every stage done the figure reads \"N of N\" and the word Done in the live status colour. */\n.kt-industry .kt-journey-position.is-done .kt-journey-position-state {\n\tcolor: var(--status-live);\n}",
+	".kt-industry .kt-journey.is-compact {\n\tgap: 3px;\n\tpadding-top: 6px;\n}",
+	".kt-industry .kt-journey.is-compact .kt-journey-stage {\n\tgap: 10px;\n}",
+	".kt-industry .kt-journey.is-compact .kt-journey-bar {\n\theight: 6px;\n\tborder-radius: 3px;\n}",
+	".kt-industry .kt-journey.is-compact .kt-journey-title {\n\tgap: 5px;\n\tpadding-right: 12px;\n\tfont-size: 13px;\n}",
+	".kt-industry .kt-journey.is-compact .kt-journey-num {\n\tfont-family: inherit;\n\tfont-size: inherit;\n\tfont-variant-numeric: tabular-nums;\n}",
+	".kt-industry .kt-journey.is-compact .is-current .kt-journey-title,\n.kt-industry .kt-journey.is-compact .is-blocked .kt-journey-title {\n\tfont-weight: 600;\n}",
+	".kt-industry .kt-journey-check {\n\tflex: none;\n\twidth: 12px;\n\theight: 12px;\n\ttransform: translateY(1px);\n\tfill: none;\n\tstroke: var(--status-live);\n\tstroke-width: 2.5;\n\tstroke-linecap: round;\n\tstroke-linejoin: round;\n}",
+	"/* The per-stage state stays in the markup for assistive technology; the figure and the check carry it on screen (KT-STD-001 section 2.9.2, v1.23). */\n.kt-industry .kt-journey.is-compact .kt-journey-state {\n\tposition: absolute;\n\twidth: 1px;\n\theight: 1px;\n\toverflow: hidden;\n\tclip: rect(0 0 0 0);\n\twhite-space: nowrap;\n}",
+	".kt-industry .kt-journey.is-compact .kt-journey-stage {\n\tposition: relative;\n}",
+	"/* Between 600 and about 760px five labels would sit in about 350px: stack the figure above the track (proposed in the handoff; checked at 700px). */\n@container (max-width: 760px) {\n\t.kt-industry .kt-journey-lead.has-position {\n\t\tgrid-template-columns: 1fr;\n\t\tgap: 16px;\n\t}\n\t.kt-industry .kt-journey-position {\n\t\tborder-right: 0;\n\t\tpadding-right: 0;\n\t}\n}",
+	"/* Under 600px the one-line form takes over, as before; the figure goes with the row it leads. */\n@container (max-width: 600px) {\n\t.kt-industry .kt-journey-host > .kt-journey-lead {\n\t\tdisplay: none;\n\t}\n}",
+	"@media (forced-colors: active) {\n\t.kt-industry .kt-journey.is-compact .kt-journey-bar {\n\t\theight: 0;\n\t\tborder-top-width: 6px;\n\t}\n\t.kt-industry .kt-journey-check {\n\t\tstroke: CanvasText;\n\t}\n}",
+	"@media print {\n\t.kt-industry .kt-journey.is-compact .kt-journey-state {\n\t\tposition: static;\n\t\twidth: auto;\n\t\theight: auto;\n\t\toverflow: visible;\n\t\tclip: auto;\n\t\twhite-space: normal;\n\t}\n\t.kt-industry .kt-journey-check {\n\t\tstroke: #000;\n\t}\n\t.kt-industry .kt-journey-position-n,\n\t.kt-industry .kt-journey-position-state {\n\t\tcolor: #000 !important;\n\t}\n}",
+	"/* The blocked next step: a 3px warning rule over the warning tint, square on the rule side, no icon. The rule is a status mark, not an accent rule. */\n.kt-industry .kt-notice.is-warning.kt-next-step {\n\tdisplay: grid;\n\tgap: 3px;\n\tpadding: 12px 16px 14px 14px;\n\tborder-left: 3px solid var(--status-attention);\n\tborder-radius: 0 var(--radius-lg) var(--radius-lg) 0;\n\tbackground: var(--status-attention-bg);\n}",
+	".kt-industry .kt-notice.is-warning.kt-next-step .kt-notice-icon {\n\tdisplay: none;\n}",
+	".kt-industry .kt-notice.is-warning.kt-next-step .kt-next-step-label {\n\tcolor: var(--status-attention);\n}",
+	"@media (forced-colors: active) {\n\t.kt-industry .kt-notice.is-warning.kt-next-step {\n\t\tborder: 1px solid CanvasText;\n\t\tborder-left-width: 3px;\n\t}\n}",
+)
+
+#: The access state ("You do not have access to ..."). The pack draws it as `.kt-empty` + `.kt-spot.is-neutral` on the white sheet below a
+#: 1px rule (readme, "Empty, success, error and access states"); the access state stands alone on the sheet, with no heading above it for the rule to separate, so it drops the rule. Modules had each rebuilt it by hand (a blueprint card, a notice, a bare
+#: heading, a panel) and no two matched. `.kt-access` is the one remaining piece the pack does not size: the heading over the lock spot,
+#: the reason beneath it, and the hint, always on the same top margin and measure and never centred vertically on the page.
+ACCESS = (
+	".kt-industry .kt-empty.kt-access {\n\tpadding: var(--space-8) var(--space-6);\n\tgap: var(--space-3);\n\talign-content: start;\n\tborder-top: 0;\n}",
+	".kt-industry .kt-empty.kt-access h2 {\n\tmargin: var(--space-2) 0 0;\n\tmax-width: 52ch;\n\tfont-family: var(--font-heading);\n\tfont-weight: var(--font-heading-weight);\n\tfont-size: 23px;\n\tline-height: 1.25;\n\tcolor: var(--color-heading);\n\ttext-wrap: balance;\n}",
+	".kt-industry .kt-empty.kt-access p {\n\tmax-width: 60ch;\n\tfont-size: 14.5px;\n\tline-height: 1.55;\n\tcolor: var(--color-neutral-700);\n}",
+	".kt-industry .kt-empty.kt-access .kt-access-actions {\n\tmargin-top: var(--space-2);\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\tjustify-content: center;\n\tgap: var(--space-2);\n}",
+)
+
+#: Fact values. The pack's `.kt-meta-value` is the figure style (heading face, 18px: an amount, a count, a total, an identifier).
+#: A recorded fact (a name, a date, a reference, a status) that a board draws as plain text under its label is the same
+#: label with a plain value; `.is-plain` is that one shared form, so no module carries its own copy of the rule. Planning's
+#: boards draw their recorded facts this way (plain body-face text, 14px); a screen that left the figure style on a fact set
+#: a date as large and as heavy as its own section heading (found live 9 Oct 2026, the publication details).
+FACTS = (
+	".kt-industry .kt-meta-value.is-plain {\n\tfont-family: inherit;\n\tfont-weight: 400;\n\tfont-size: 14px;\n}",
+)
+
+
+ALIGN = (
+	# A flat section has no box, so its content starts where its heading starts. The pack's
+	# own rules inset a group, a table's first column and a disclosure by one gutter, which
+	# only reads as tidy inside a card (Budget). The rule of a group hangs in the gutter.
+	".kt-industry .kt-page .kt-region .table th:first-child,\n.kt-industry .kt-page .kt-region .table td:first-child {\n\tpadding-left: 0;\n}",
+	".kt-industry .kt-page .kt-region .table th:last-child,\n.kt-industry .kt-page .kt-region .table td:last-child {\n\tpadding-right: 0;\n}",
+	".kt-industry .kt-page > .kt-disclosure .kt-disclosure-head,\n.kt-industry .kt-page > .kt-disclosure .kt-disclosure-body,\n.kt-industry .kt-page .kt-region .kt-disclosure .kt-disclosure-head,\n.kt-industry .kt-page .kt-region .kt-disclosure .kt-disclosure-body {\n\tpadding-left: 0;\n\tpadding-right: 0;\n}",
+	".kt-industry .kt-page .kt-group {\n\tposition: relative;\n\tborder-left: 0;\n\tpadding-left: 0;\n}",
+	".kt-industry .kt-page .kt-group::before {\n\tcontent: \"\";\n\tposition: absolute;\n\ttop: 2px;\n\tbottom: 2px;\n\tleft: calc(-1 * (var(--space-4) + 2px));\n\twidth: 2px;\n\tbackground: var(--color-divider);\n}",
+	".kt-industry .kt-page > .kt-guidance-mount > .kt-guidance {\n\tpadding-left: 0;\n\tpadding-right: 0;\n}",
+	".kt-industry .kt-page .kt-next-step.is-turn,\n.kt-industry .kt-page .kt-next-step.is-waiting,\n.kt-industry .kt-page .kt-next-step.is-done {\n\tposition: relative;\n\tborder-left: 0;\n\tpadding-left: 0;\n}",
+	".kt-industry .kt-page .kt-next-step.is-turn::before,\n.kt-industry .kt-page .kt-next-step.is-waiting::before,\n.kt-industry .kt-page .kt-next-step.is-done::before {\n\tcontent: \"\";\n\tposition: absolute;\n\ttop: 2px;\n\tbottom: 2px;\n\tleft: calc(-1 * (14px + 3px));\n\twidth: 3px;\n\tbackground: var(--color-neutral-400);\n}",
+	".kt-industry .kt-page .kt-next-step.is-turn::before {\n\tbackground: var(--color-accent);\n}",
+)
 
 
 def _pack_nodes():
@@ -267,6 +348,10 @@ def build() -> str:
 	parts += ["/* Part 5: table structure inside the pack's rules */", *STRUCTURE]
 	parts += ["/* Part 6: buttons and fields are rectangular and outlined, so they cannot be mistaken for a status pill */", *gen.control_shape(".kt-industry", fields=True)]
 	parts += ["/* Part 7: the table pager (table-pagination standard) */", *PAGER]
+	parts += ["/* Part 8: journey position figure, compact track and blocked next step (DS-REV-004) */", *JOURNEY]
+	parts += ["/* Part 9: the access state (\"You do not have access to ...\") */", *ACCESS]
+	parts += ["/* Part 10: a recorded fact beside the pack's figure style (.kt-meta-value) */", *FACTS]
+	parts += ["/* Part 11: flat sections start content at the heading's edge */", *ALIGN]
 	return HEADER.format(source=source.relative_to(ROOT)) + "\n\n".join(parts) + "\n"
 
 

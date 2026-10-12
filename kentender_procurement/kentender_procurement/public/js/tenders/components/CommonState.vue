@@ -7,7 +7,11 @@
      viewer may take (e.g. View STD Template only for a user who may inspect
      templates, Open System setup only for a System Manager). -->
 <template>
-	<div class="tnd-page">
+	<!-- The access state is the shared one (KT-STD-001 §3A access state): the board's tone card is for the other variants. -->
+	<div v-if="kind === 'forbidden'" class="kt-page" data-testid="tnd-state-forbidden">
+		<AccessDenied :heading="heading || copy.heading" :text="text || copy.text" />
+	</div>
+	<div v-else class="tnd-page">
 		<div class="card blueprint tnd-state-card" :data-testid="`tnd-state-${kind}`" data-screen-label="TPR-DES-14 Common states">
 			<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
 			<div class="tnd-state-head">
@@ -30,6 +34,7 @@
 
 <script setup>
 import { computed } from "vue";
+import AccessDenied from "../../access_shared/AccessDenied.vue";
 
 const props = defineProps({
 	kind: { type: String, required: true },

@@ -113,6 +113,23 @@ class TestCounting(unittest.TestCase):
 			out = register.list_meetings(user="x@example.test")
 		self.assertEqual((out["matched"], out["held_total"], out["incomplete"]), (2, 1, False))  # denial is not a failure
 
+	def test_a_row_whose_record_the_reader_cannot_open_is_listed_without_a_link(self):
+		"""KT-ACCESS-REV-001 AR-07: a Head of User Department sees the opening as a row
+		(OVS v0.6 §11) but the opening record applies its own rule, which refuses them;
+		the register says so instead of offering a link that leads to Not found."""
+		class RowOnly(AllowAll):
+			def can_open_record(self, owner_id, user):
+				return False
+
+		adapters = {"Bid Opening Case": RowOnly(), "Evaluation Case": AllowAll()}
+		with mock.patch.object(register, "_candidates", return_value=self.CANDIDATES), mock.patch.object(register, "_row", side_effect=to_row), \
+				mock.patch.object(register.owners, "adapters", return_value=adapters), mock.patch.object(register, "_unit_name", side_effect=lambda c: DEPARTMENTS.get(c, c)), \
+				mock.patch.object(register, "_page_open", return_value=True):
+			out = register.list_meetings(user="x@example.test")
+		by_type = {r["type"]: r["record_readable"] for r in out["rows"]}
+		self.assertEqual(by_type, {"Bid opening": False, "Bid evaluation": True})
+		self.assertEqual(out["matched"], 4)  # still listed and counted
+
 	def test_a_row_that_cannot_be_loaded_marks_the_totals_incomplete(self):
 		broken = dict(A_EVAL_2, boom=True)
 		with mock.patch.object(register.frappe, "log_error"):

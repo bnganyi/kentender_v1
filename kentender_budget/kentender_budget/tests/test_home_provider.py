@@ -29,11 +29,14 @@ from kentender_budget.services import budget_readiness_contracts as readiness
 from kentender_budget.services import budget_revision_request_contracts as brr
 from kentender_budget.services.home_provider import entries
 from kentender_budget.tests.test_bud_chg_001_v111_revision_request import DHI, HWD, _RevisionRequestBase, recording_consumer
+from kentender_budget.utils.version_stamp import stamped
 from kentender_core.services import home_entries as he
 from kentender_core.services import home_support
 from kentender_core.services import home_workspace as hw
 from kentender_core.services import responsibility_administration as administration
 from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
+from kentender_core.services.command_write_guard import purge_doc
+from kentender_core.services.command_write_guard import fixture_insert
 
 H = datetime(2027, 6, 18, 10, 0)  # the Home read: two days after the 16 June hand-offs
 T_A = datetime(2027, 6, 16, 9, 0)
@@ -110,14 +113,14 @@ class TestBudgetHomeProvider(_RevisionRequestBase):
 
 		_fy, w["budget_c"], w["c"] = self._draft()
 		self._as(self.dual)
-		submitted = readiness.submit_budget_version({"budget_version": w["c"]})
+		submitted = readiness.submit_budget_version(stamped({"budget_version": w["c"]}))
 		self.assertTrue(submitted["ok"], submitted.get("blockers"))
 		frappe.db.set_value("Procurement Budget Version", w["c"], "submitted_at", T_C, update_modified=False)
 		self._stamp(w["c"], "Budget version submitted", T_C)
 
 		_fy, w["budget_d"], w["d"] = self._draft(submit=True)
 		self._as(self.approver)
-		returned = readiness.return_budget_version({"budget_version": w["d"], "return_reason": "Line titles must name the department before activation."})
+		returned = readiness.return_budget_version(stamped({"budget_version": w["d"], "return_reason": "Line titles must name the department before activation."}))
 		self.assertTrue(returned["ok"], returned)
 		self._stamp(w["d"], "Budget version submitted", T_D_SUBMITTED)
 		self._stamp(w["d"], "Budget version returned", T_D_RETURNED)
@@ -320,14 +323,14 @@ class TestBudgetHomeProvider(_RevisionRequestBase):
 	def test_a_closure_decline_is_not_the_actors_decision_and_system_events_are_ignored(self):
 		w = self.w
 		frappe.db.commit()
-		budget = frappe.get_doc({"doctype": "Budget Audit Event", "budget": w["budget_b"], "budget_version": w["b"], "event_type": "Budget revision request declined", "event_at": datetime(2027, 6, 17, 12, 0), "actor": self.officer, "actor_kind": "user", "correlation_id": "home-closure", "reason": brr.CLOSED_BUDGET_REASON}).insert(ignore_permissions=True)
-		system = frappe.get_doc({"doctype": "Budget Audit Event", "budget": w["budget_b"], "budget_version": w["b"], "event_type": "Budget version approved and activated", "event_at": datetime(2027, 6, 17, 12, 5), "actor": self.officer, "actor_kind": "system", "correlation_id": "home-system"}).insert(ignore_permissions=True)
+		budget = fixture_insert(frappe.get_doc({"doctype": "Budget Audit Event", "budget": w["budget_b"], "budget_version": w["b"], "event_type": "Budget revision request declined", "event_at": datetime(2027, 6, 17, 12, 0), "actor": self.officer, "actor_kind": "user", "correlation_id": "home-closure", "reason": brr.CLOSED_BUDGET_REASON}))
+		system = fixture_insert(frappe.get_doc({"doctype": "Budget Audit Event", "budget": w["budget_b"], "budget_version": w["b"], "event_type": "Budget version approved and activated", "event_at": datetime(2027, 6, 17, 12, 5), "actor": self.officer, "actor_kind": "system", "correlation_id": "home-system"}))
 
 		def remove():
 			frappe.flags.allow_budget_audit_purge = True
 			try:
 				for doc in (budget, system):
-					frappe.delete_doc("Budget Audit Event", doc.name, force=True, ignore_permissions=True)
+					purge_doc("Budget Audit Event", doc.name)
 			finally:
 				frappe.flags.allow_budget_audit_purge = False
 			frappe.db.commit()

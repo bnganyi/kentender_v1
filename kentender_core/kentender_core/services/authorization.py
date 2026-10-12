@@ -113,11 +113,23 @@ class Decision:
 		return self.assignment.name if self.assignment else ""
 
 
+#: The one technical-holder responsibility that is also a technical *reader*: KT-STD-001 v1.25 §8.3 (Project Owner,
+#: 4 October 2026) gives the Technical Operator site-wide, read-only access to every business surface. The Release
+#: Operator and Evaluation Technical Support are technical holders for their own operations and read nothing extra.
+TECHNICAL_OPERATOR = "Technical Operator"
+
+
 def is_technical(user: str) -> bool:
-	"""§8 — Administrator and System Manager inspect without an assignment."""
+	"""§8 — Administrator and System Manager inspect without an assignment; so does a Technical Operator whose
+	assignment is in force now (KT-ACCESS-REV-001 AR-09). The reader follows the *assignment*, not the System Manager
+	Role, so reading carries no setup or responsibility-administration power (AR-10). The projected Role only
+	narrows the lookup; the period is decided by the assignment, never by a Role that has lingered."""
 	if user == "Administrator":
 		return True
-	return bool(TECHNICAL_ROLES & set(frappe.get_roles(user)))
+	roles = set(frappe.get_roles(user))
+	if TECHNICAL_ROLES & roles:
+		return True
+	return TECHNICAL_OPERATOR in roles and bool(_effective_rows(user, None, business_role=TECHNICAL_OPERATOR))
 
 
 def _actor(user: str | None) -> str:
@@ -207,6 +219,22 @@ def resolve_assignments(
 	require_registered(business_role)
 	rows = _effective_rows(_actor(user), at, business_role=business_role)
 	return tuple(_as_assignment(row) for row in rows)
+
+
+def active_holders(business_role: str, at=None) -> list[str]:
+	"""Users holding `business_role` in force at `at` (Enabled, period contains
+	`at`) — never a bare `status == Enabled` lookup, which would admit a
+	scheduled or expired holder. Disabled Users are excluded."""
+	require_registered(business_role)
+	at = get_datetime(at or now_datetime())
+	rows = frappe.get_all(
+		ASSIGNMENT_DOCTYPE,
+		filters={"business_role": business_role, "status": STATUS_ENABLED},
+		fields=["user", "effective_from", "effective_to"],
+		limit_page_length=0,
+	)
+	users = {row["user"] for row in rows if _within_period(row, at)}
+	return sorted(user for user in users if frappe.db.get_value("User", user, "enabled"))
 
 
 def active_assignment_rows(user: str | None = None, at=None) -> list[dict[str, Any]]:

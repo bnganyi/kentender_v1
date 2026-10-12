@@ -20,6 +20,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, now_datetime
 
+from kentender_procurement.departmental_needs.services import estimate
 from kentender_procurement.departmental_needs.constants import (
 	REVISION_CONTENT_FIELDS,
 	REVISION_SUPERSEDED,
@@ -30,6 +31,7 @@ from kentender_procurement.departmental_needs.constants import (
 	USAGE_VALUES,
 )
 from kentender_procurement.departmental_needs.errors import fail
+from kentender_procurement.departmental_needs.write_family import needs_command
 from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
 	in_scope,
@@ -118,7 +120,14 @@ def older_revision_usage(need: str, current_accepted_revision: str) -> dict[str,
 				"active_plan_item": cstr(projection.get("active_plan_item") or ""),
 				# §11.8A "View earlier requirement" — the older revision's own
 				# six content facts, not the current revision's.
-				"content": {field: row.get(field) for field in REVISION_CONTENT_FIELDS},
+				"content": {
+					**{field: row.get(field) for field in REVISION_CONTENT_FIELDS},
+					# v1.17 §11.19 — its estimate as text with currency and label
+					**estimate.display_fields(
+						row.get("estimated_total_cost"),
+						cstr(frappe.db.get_value("Departmental Need", need, "financial_year")),
+					),
+				},
 			}
 	return None
 
@@ -155,6 +164,7 @@ def planning_status_for_need(need: str, user: str | None = None) -> dict[str, An
 	}
 
 
+@needs_command
 def project_planning_usage(
 	*,
 	departmental_need: str,
@@ -305,6 +315,7 @@ def planning_disposition_detail(need: str) -> dict[str, Any]:
 actor_of = actor
 
 
+@needs_command
 def project_planning_disposition(
 	*,
 	departmental_need: str,
@@ -433,6 +444,7 @@ def planning_intake_detail(need: str, current_accepted_revision: str, user: str 
 	}
 
 
+@needs_command
 def project_planning_intake(
 	*,
 	departmental_need: str,

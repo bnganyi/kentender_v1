@@ -31,6 +31,7 @@ from frappe.utils import cint, cstr
 from kentender_procurement.bid_opening.services import (
 	appointment, clock, custody, custody_participation, errors, guards, incidents, labels, prc, presence, records, renderer, renders,
 )
+from kentender_procurement.services import sequence
 
 ENTRY = "Opening Entry"
 EXCEPTION = "Opening Exception"
@@ -82,7 +83,7 @@ def absent_members(doc) -> list[dict[str, Any]]:
 
 def _exception(doc, exception_class: str, *, fact: str, user: str, entry: str = "", envelope_id: str = "", incident: str = "", outcome: str = "Open",
 		speaker: str = "", response: str = "", event_id: str = "") -> Any:
-	number = frappe.db.count(EXCEPTION, {"opening_case": doc.name}) + 1
+	number = sequence.next_count(EXCEPTION, {"opening_case": doc.name})
 	return records.insert(frappe.get_doc({
 		"doctype": EXCEPTION, "exception_id": f"{doc.opening_id}-EXC-{number:03d}", "opening_case": doc.name, "exception_class": exception_class, "entry": entry,
 		"envelope_id": envelope_id, "observed_fact": fact, "speaker_name": speaker, "response": response, "recorded_by": user if frappe.db.exists("User", user) else None,

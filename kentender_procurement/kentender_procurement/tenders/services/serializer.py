@@ -22,6 +22,7 @@ masters consume for its own MoH fixture (STD Templates
 from __future__ import annotations
 
 import json
+import re
 from datetime import timedelta
 from decimal import Decimal
 from typing import Any
@@ -88,6 +89,42 @@ def fmt_datetime_short(value) -> str:
 	return f"{formatdate(dt.date(), 'd MMM yyyy')}, {dt.strftime('%H:%M')} EAT"
 
 
+_MONTHS = {m: i for i, m in enumerate(("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), start=1)}
+_LABEL = re.compile(r"^(\d{1,2}) ([A-Za-z]{3,9}) (\d{4}), (\d{1,2}):(\d{2})(?: EAT)?$")
+
+
+def parse_datetime_text(text):
+	"""A stored datetime from what an officer typed or from the screen label
+	`fmt_datetime_short` writes ("27 May 2027, 17:00 EAT"): the exact inverse
+	of that label, so an addendum's revised deadline, kept as the label its
+	notice shows, can become the Tender's own deadline. None when it is
+	neither (AUD-TND-004)."""
+	from datetime import datetime
+
+	value = " ".join(cstr(text).split())
+	if not value:
+		return None
+	match = _LABEL.match(value)
+	if match:
+		day, month, year, hour, minute = match.groups()
+		number = _MONTHS.get(month[:3].title())
+		if not number:
+			return None
+		try:
+			wall = datetime(int(year), number, int(day), int(hour), int(minute))
+		except ValueError:
+			return None
+		if (get_system_timezone() or "").upper() == "UTC":
+			from zoneinfo import ZoneInfo
+
+			wall = wall.replace(tzinfo=ZoneInfo("Africa/Nairobi")).astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
+		return wall
+	try:
+		return get_datetime(value)
+	except Exception:
+		return None
+
+
 def fmt_money(value) -> str:
 	return f"{Decimal(str(value or 0)).quantize(Decimal('0.01')):,.2f}"
 
@@ -114,10 +151,28 @@ def _item_names(snapshot: dict[str, Any]) -> dict[str, str]:
 	return {row.get("requisition_item_id"): row.get("item_name") for row in snapshot.get("items") or []}
 
 
+def _row_item_ids(row: dict[str, Any], snapshot: dict[str, Any]) -> list[str]:
+	"""The exact items a requirement row covers (REQ v1.18 §5.7A); a row without the list is read from its scope."""
+	listed = row.get("applies_to_item_ids")
+	if listed is not None and (listed or row.get("applies_to_scope") != "All items"):
+		return list(listed)
+	if row.get("applies_to_scope") == "Item":
+		return [row.get("applies_to_id")]
+	if row.get("applies_to_scope") == "Service":
+		return []
+	return [i.get("requisition_item_id") for i in snapshot.get("items") or []]
+
+
 def _applies_to_label(row: dict[str, Any], snapshot: dict[str, Any]) -> str:
 	if row.get("applies_to_scope") == "All items" or not row.get("applies_to_id"):
 		return "All items"
-	return _item_names(snapshot).get(row.get("applies_to_id")) or cstr(row.get("applies_to_id"))
+	names = _item_names(snapshot)
+	if row.get("applies_to_scope") == "Items":
+		return ", ".join(dict.fromkeys(cstr(names.get(i) or i) for i in _row_item_ids(row, snapshot)))
+	if row.get("applies_to_scope") == "Service":
+		service = next((s for s in snapshot.get("related_services") or [] if s.get("service_requirement_id") == row.get("applies_to_id")), None)
+		return cstr(service.get("service_type")) if service else cstr(row.get("applies_to_id"))
+	return names.get(row.get("applies_to_id")) or cstr(row.get("applies_to_id"))
 
 
 def _tech_ids_for_item(item_id: str, snapshot: dict[str, Any]) -> tuple[str, ...]:
@@ -125,7 +180,7 @@ def _tech_ids_for_item(item_id: str, snapshot: dict[str, Any]) -> tuple[str, ...
 		sorted(
 			row.get("technical_requirement_id")
 			for row in snapshot.get("technical_requirements") or []
-			if row.get("applies_to_scope") == "All items" or not row.get("applies_to_id") or row.get("applies_to_id") == item_id
+			if item_id in _row_item_ids(row, snapshot)
 		)
 	)
 

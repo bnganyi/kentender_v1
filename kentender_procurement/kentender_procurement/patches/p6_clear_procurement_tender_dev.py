@@ -12,6 +12,8 @@ from __future__ import annotations
 import frappe
 from frappe.utils import get_table_name
 
+from kentender_core.utils.patch_guards import require_empty_or_authorised
+
 
 def _trigger_exists(trigger_name: str) -> bool:
 	return bool(
@@ -45,6 +47,8 @@ def _null_link(doctype: str, fieldname: str) -> None:
 
 
 def execute() -> None:
+	# AUD-XC-127: authorised for a site with no production data only.
+	require_empty_or_authorised("p6_clear_procurement_tender_dev", ("Procurement Tender",))
 	# Must run before ALTER drops ``procurement_tender`` (STDINST triggers / snapshot guard reference it).
 	_drop_trigger_if_exists("trg_stdinst_active_slot_bi")
 	_drop_trigger_if_exists("trg_stdinst_active_slot_bu")
@@ -58,7 +62,8 @@ def execute() -> None:
 	):
 		_null_link(dt, fn)
 
-	if frappe.db.table_exists("tabProcurement Tender"):
+	# table_exists takes a DocType name; the "tab" prefix made this branch dead.
+	if frappe.db.table_exists("Procurement Tender"):
 		frappe.db.sql("delete from `tabProcurement Tender`")
 
 	frappe.db.commit()

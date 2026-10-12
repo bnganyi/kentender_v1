@@ -60,6 +60,8 @@ from kentender_budget.seeds.kentender_mvp_v1_portfolio import (
 	upsert_kentender_mvp_v1_portfolio,
 )
 from kentender_budget.services.budget_authorization import ensure_budget_governance_roles
+from kentender_budget.utils.version_stamp import stamped
+from kentender_core.services.command_write_guard import purge_doc
 
 OFFICER = C.USER_BUD_OFFICER
 APPROVER = C.USER_BUD_APPROVER
@@ -168,29 +170,29 @@ def purge(*, commit: bool = True) -> dict[str, Any]:
 		reservations = frappe.get_all("Funding Reservation", filters={"budget": canonical}, pluck="name")
 		if reservations:
 			for name in frappe.get_all("Procurement Commitment", filters={"reservation": ["in", reservations]}, pluck="name"):
-				frappe.delete_doc("Procurement Commitment", name, force=1, ignore_permissions=True)
+				purge_doc("Procurement Commitment", name)
 				deleted["Procurement Commitment"] = deleted.get("Procurement Commitment", 0) + 1
 			for name in reservations:
-				frappe.delete_doc("Funding Reservation", name, force=1, ignore_permissions=True)
+				purge_doc("Funding Reservation", name)
 				deleted["Funding Reservation"] = deleted.get("Funding Reservation", 0) + 1
 		first = frappe.db.get_value("Procurement Budget Version", {"budget": canonical, "version_number": 1}, "name")
 		for version in frappe.get_all("Procurement Budget Version", filters={"budget": canonical, "version_number": [">", 1]}, pluck="name"):
 			for lv in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="name"):
-				frappe.delete_doc("Procurement Budget Line Version", lv, force=1, ignore_permissions=True)
+				purge_doc("Procurement Budget Line Version", lv)
 			frappe.flags.allow_budget_audit_purge = True
 			try:
 				for ev in frappe.get_all("Budget Audit Event", filters={"budget_version": version}, pluck="name"):
-					frappe.delete_doc("Budget Audit Event", ev, force=1, ignore_permissions=True)
+					purge_doc("Budget Audit Event", ev)
 			finally:
 				frappe.flags.allow_budget_audit_purge = False
-			frappe.delete_doc("Procurement Budget Version", version, force=1, ignore_permissions=True)
+			purge_doc("Procurement Budget Version", version)
 			deleted["Procurement Budget Version"] = deleted.get("Procurement Budget Version", 0) + 1
 		# Ledger rows of a browser run against the canonical budget that are
 		# not the baseline's own lifecycle trail (reservations, replays).
 		frappe.flags.allow_budget_audit_purge = True
 		try:
 			for ev in frappe.get_all("Budget Audit Event", filters={"budget": canonical, "event_type": ["in", ["Funding reserved", "Check funding performed", "Reservation revalidated", "Reservation released", "Reservation partially converted", "Contract commitment recorded", "Commitment adjusted", "Command recorded"]]}, pluck="name"):
-				frappe.delete_doc("Budget Audit Event", ev, force=1, ignore_permissions=True)
+				purge_doc("Budget Audit Event", ev)
 		finally:
 			frappe.flags.allow_budget_audit_purge = False
 		if first and frappe.db.get_value("Procurement Budget Version", first, "status") != "Active":
@@ -231,21 +233,37 @@ def reset_default(*, commit: bool = True) -> dict[str, Any]:
 	return {**_canonical_ids(), "removed": removed}
 
 
+def _contract_caller(contract: str):
+	"""The fixtures stand in for Contract Management, which has no module yet."""
+	from kentender_budget.services.budget_service_principal import PRINCIPAL_CONTRACT, service_caller
+
+	return service_caller(PRINCIPAL_CONTRACT, reference=contract)
+
+
+def _line_owner_unit(budget_line: str) -> str:
+	"""The source organisation unit these seed reservations name (BUD-BR-007):
+	the line's owner, or any Active unit for an Entity-wide line."""
+	unit = frappe.db.get_value("Procurement Budget Line Version", {"budget_line": budget_line}, "owner_org_unit")
+	return unit or frappe.db.get_value("Organisation Unit", {"status": "Active"}, "name", order_by="creation asc")
+
+
 def _reserve(line: str, amount: float, *, ref: str, source_allocation: str | None = None) -> str:
 	"""A real authorised-requisition hold through check/reserve, as Josphat
 	(Finance Confirmation Officer). Returns the reservation name."""
 	from kentender_budget.services import budget_check_reserve_contracts as check_reserve
+	from kentender_budget.services.budget_service_principal import PRINCIPAL_REQUISITIONS, service_caller
 
 	tag = frappe.generate_hash(length=6)
+	requisitions = service_caller(PRINCIPAL_REQUISITIONS, reference=ref)
 	prior = frappe.session.user
 	try:
 		_as(OFFICER)
 		token = check_reserve.check_funding(
 			plan_item=f"PPI-{tag}", plan_version=f"PLN-{tag}", finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}",
-			allocations=[{"budget_line": line, "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": source_allocation or f"PSA-{tag}"}],
-			correlation_id=frappe.generate_hash(length=12), calling_module="Procurement Requisitions", caller_reference=ref,
+			allocations=[{"budget_line": line, "source_organisation_unit": _line_owner_unit(line), "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": source_allocation or f"PSA-{tag}"}],
+			correlation_id=frappe.generate_hash(length=12), caller=requisitions,
 		)
-		result = check_reserve.reserve_funding(token=token["token"], finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}", idempotency_key=f"IDEM-{tag}")
+		result = check_reserve.reserve_funding(token=token["token"], finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}", idempotency_key=f"IDEM-{tag}", caller=requisitions)
 		if not result.get("ok"):
 			frappe.throw(f"Budget fixtures: could not reserve {amount} on {line}: {result}")
 		return result["reservations"][0]["reservation_id"]
@@ -265,7 +283,7 @@ def _isolated_budget(*, code: str, fy_start_year: int, dhi: float, hwd: float | 
 	prior = frappe.session.user
 	try:
 		_as(OFFICER)
-		result = contracts.save_budget_version_draft(
+		result = contracts.save_budget_version_draft(stamped(
 			{
 				"fiscal_year": fy,
 				"approval_reference": approval_reference or f"{code} (Demo)",
@@ -273,7 +291,7 @@ def _isolated_budget(*, code: str, fy_start_year: int, dhi: float, hwd: float | 
 				"authorised_total": dhi + (hwd or 0),
 				"approval_document": "/files/moh-approved-procurement-budget-2027-28-demo.pdf",
 			}
-		)
+		))
 		if not result.get("ok"):
 			frappe.throw(f"Budget fixtures: could not create {code}: {result}")
 		budget_name, version_name = result["budget"]["id"], result["version"]["id"]
@@ -282,16 +300,16 @@ def _isolated_budget(*, code: str, fy_start_year: int, dhi: float, hwd: float | 
 		lines = [{"title": DHI_TITLE, "owner_org_unit": _unit_for(GRACE, "Departmental Author", "Digital Health"), "funding_source": FUNDING_SOURCE, "approved_amount": dhi}]
 		if hwd:
 			lines.append({"title": HWD_TITLE, "owner_org_unit": "", "funding_source": FUNDING_SOURCE, "approved_amount": hwd})
-		saved = lines_svc.save_budget_lines_draft({"budget_version": version_name, "lines": lines})
+		saved = lines_svc.save_budget_lines_draft(stamped({"budget_version": version_name, "lines": lines}))
 		if not saved.get("ok"):
 			frappe.throw(f"Budget fixtures: could not save lines for {code}: {saved}")
 		if submit:
-			submitted = readiness.submit_budget_version({"budget_version": version_name})
+			submitted = readiness.submit_budget_version(stamped({"budget_version": version_name}))
 			if not submitted.get("ok"):
 				frappe.throw(f"Budget fixtures: could not submit {code}: {submitted}")
 		if submit and approve:
 			_as(APPROVER)
-			approved = readiness.approve_budget_version({"budget_version": version_name})
+			approved = readiness.approve_budget_version(stamped({"budget_version": version_name}))
 			if not approved.get("ok"):
 				frappe.throw(f"Budget fixtures: could not approve {code}: {approved}")
 		line_rows = frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version_name}, fields=["budget_line", "title"])
@@ -333,7 +351,7 @@ def reset_returned_draft(*, commit: bool = True) -> dict[str, Any]:
 	base = reset_default(commit=False)
 	iso = _isolated_budget(code="BUD19-PENDING", fy_start_year=2041, dhi=100_000_000, submit=True, approve=False)
 	_as(APPROVER)
-	returned = readiness.return_budget_version({"budget_version": iso["version"], "return_reason": RETURN_REASON})
+	returned = readiness.return_budget_version(stamped({"budget_version": iso["version"], "return_reason": RETURN_REASON}))
 	if not returned.get("ok"):
 		frappe.throw(f"Budget fixtures: could not return {iso['version_code']}: {returned}")
 	return _finish(base, {"pending": iso, "return_reason": RETURN_REASON}, commit=commit)
@@ -358,7 +376,7 @@ def _successor_draft(base: dict[str, Any], *, dhi: float, hwd: float, revision_t
 			{"budget_line": r["budget_line"], "title": r["title"], "owner_org_unit": r["owner_org_unit"], "funding_source": r["funding_source"], "approved_amount": dhi if r["title"] == DHI_TITLE else hwd}
 			for r in editor["rows"]
 		]
-		saved = lines_svc.save_budget_lines_draft({"budget_version": version, "lines": rows})
+		saved = lines_svc.save_budget_lines_draft(stamped({"budget_version": version, "lines": rows}))
 		if not saved.get("ok"):
 			frappe.throw(f"Budget fixtures: could not save successor lines: {saved}")
 		return {"v2": version, "v2_code": created["version"]["code"], "v2_number": created["version"]["version_number"]}
@@ -391,7 +409,7 @@ def reset_successor_returned(*, commit: bool = True) -> dict[str, Any]:
 
 	fixture = reset_successor_submitted(commit=False)
 	_as(APPROVER)
-	returned = readiness.return_budget_version({"budget_version": fixture["v2"], "return_reason": RETURN_REASON_SUCCESSOR})
+	returned = readiness.return_budget_version(stamped({"budget_version": fixture["v2"], "return_reason": RETURN_REASON_SUCCESSOR}))
 	if not returned.get("ok"):
 		frappe.throw(f"Budget fixtures: could not return V2: {returned}")
 	return _finish(fixture, {"return_reason": RETURN_REASON_SUCCESSOR}, commit=commit)
@@ -432,8 +450,9 @@ def reset_close_ready(*, commit: bool = True) -> dict[str, Any]:
 	iso = _isolated_budget(code="BUD19-CLOSE", fy_start_year=1990, dhi=100_000_000, hwd=60_000_000)
 	hold = _reserve(iso["dhi_line"], 80_000_000, ref="REQ-MOH-2027-031-001")
 	_as(OFFICER)
-	commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12))
-	commit_svc.release_reservation(reservation=hold, amount=20_000_000, downstream_event_id="REQ-REV-2027-031", downstream_event_type="Requisition revocation", idempotency_key=frappe.generate_hash(length=12))
+	contract = _contract_caller("KT-CON-2027-004")
+	commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12), contract_event_id="KT-CON-2027-004:signed", contract_event_type="ContractSigned", caller=contract)
+	commit_svc.release_reservation(reservation=hold, amount=20_000_000, downstream_event_id="KT-CON-2027-004:unused", downstream_event_type="ContractUnusedAmount", idempotency_key=frappe.generate_hash(length=12), caller=contract)
 	return _finish(base, {"closure": iso, "reservation": hold, "active_commitments_total": 60_000_000}, commit=commit)
 
 
@@ -446,7 +465,7 @@ def reset_partial_conversion(*, commit: bool = True) -> dict[str, Any]:
 	iso = _isolated_budget(code="BUD19-CONVERT", fy_start_year=2043, dhi=100_000_000, hwd=None)
 	hold = _reserve(iso["dhi_line"], 80_000_000, ref="REQ-MOH-2027-021-001")
 	_as(OFFICER)
-	commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12))
+	commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12), contract_event_id="KT-CON-2027-004:signed", contract_event_type="ContractSigned", caller=_contract_caller("KT-CON-2027-004"))
 	return _finish(base, {"conversion": iso, "reservation": hold}, commit=commit)
 
 
@@ -455,12 +474,13 @@ def reset_requires_review(*, commit: bool = True) -> dict[str, Any]:
 	review by an owner revalidation (a floor breach observed and then
 	corrected, leaving the typed reason on the ledger)."""
 	from kentender_budget.services import budget_commitment_contracts as commit_svc
+	from kentender_budget.services.budget_service_principal import PRINCIPAL_BUDGET, service_caller
 
 	fixture = reset_partial_conversion(commit=False)
 	line, version = fixture["conversion"]["dhi_line"], fixture["conversion"]["version"]
 	frappe.db.set_value("Procurement Budget Line Version", {"budget_version": version, "budget_line": line}, "approved_amount", 50_000_000, update_modified=False)
 	_as(OFFICER)
-	commit_svc.revalidate_reservations(reservations=[fixture["reservation"]], downstream_event_id="CON-VAR-2027-004-01", downstream_event_type="Contract variation", idempotency_key=frappe.generate_hash(length=12))
+	commit_svc.revalidate_reservations(reservations=[fixture["reservation"]], downstream_event_id="CON-VAR-2027-004-01", downstream_event_type="Contract variation", idempotency_key=frappe.generate_hash(length=12), caller=service_caller(PRINCIPAL_BUDGET))
 	frappe.db.set_value("Procurement Budget Line Version", {"budget_version": version, "budget_line": line}, "approved_amount", 100_000_000, update_modified=False)
 	return _finish(fixture, {"requires_review": True}, commit=commit)
 

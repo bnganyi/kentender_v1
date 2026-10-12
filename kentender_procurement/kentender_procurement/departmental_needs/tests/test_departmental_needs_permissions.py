@@ -20,6 +20,7 @@ from __future__ import annotations
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.command_write_guard import purge_doc
 from kentender_core.services.responsibility_administration import grant, revoke
 from kentender_procurement.departmental_needs.constants import (
 	ROLE_AUDITOR,
@@ -40,7 +41,7 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	_granted_units,
 	upsert_departmental_needs,
 )
-from kentender_procurement.departmental_needs.services import permissions, workspace
+from kentender_procurement.departmental_needs.services import need_authorization, permissions, workspace
 from kentender_procurement.departmental_needs.services.context import resolve_creation_context
 
 # §1.1 removed these outright; §6 names exactly four business roles (plus
@@ -48,7 +49,10 @@ from kentender_procurement.departmental_needs.services.context import resolve_cr
 RETIRED_ROLES = ("Departmental Need Requester", "Departmental Review Delegate", "Needs Configuration Manager")
 
 # §17 / NDS-AC-023 — no Departmental Needs surface, task or special action.
-EXCLUDED_ROLES = ("Budget Officer", "Accounting Officer")
+EXCLUDED_ROLES = ("Budget Officer", "Accounting Officer")  # no Page role; the doctype grant is below
+
+# OVS-CHG-001 v0.6 §4.1 — read-only on the Need root (AR-05)
+OFFICE_READERS = ("Accounting Officer", "Head of Procurement Function")
 
 NDS_DOCTYPES = (
 	"Departmental Need",
@@ -315,6 +319,76 @@ class TestCartesianProductIsolation(DepartmentalNeedsPermissionCase):
 		with self.assertRaises(DepartmentalNeedError) as caught:
 			permissions.require_review_command(self.accepted_need(), user)
 		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
+
+
+class TestDecisionRowsFollowTheNeedScope(DepartmentalNeedsPermissionCase):
+	"""RG-09 / AUD-XC-015 — a decision row (reason, actor, assignment, source
+	address, session) is read inside the same scope as the Need it belongs to,
+	through the list and through the direct route, never a whole-table read."""
+
+	def listed(self, user: str) -> dict[str, str]:
+		rows = frappe.get_list(
+			"Departmental Need Decision", user=user, fields=["name", "departmental_need"], limit_page_length=0
+		)
+		return {row.name: row.departmental_need for row in rows}
+
+	def decision_of(self, need: str) -> str:
+		return frappe.get_all("Departmental Need Decision", filters={"departmental_need": need}, pluck="name")[0]
+
+	SCOPE_TEST_USER = "nds.test.scope-hod@example.test"
+
+	def _head_of_one_department(self) -> str:
+		"""A disposable Head of User Department for the Digital Health unit only."""
+		if not frappe.db.exists("User", self.SCOPE_TEST_USER):
+			doc = frappe.get_doc(
+				{
+					"doctype": "User", "email": self.SCOPE_TEST_USER, "first_name": "Scope", "last_name": "HoD Test User",
+					"send_welcome_email": 0, "user_type": "System User", "enabled": 1,
+				}
+			)
+			doc.insert(ignore_permissions=True)
+			doc.add_roles("Desk User")
+		assignment = grant(
+			user=self.SCOPE_TEST_USER, business_role=ROLE_HEAD_OF_USER_DEPARTMENT, organisation_unit=self.ou,
+			fixture_namespace=NS_TEST_GRANT, actor="Administrator",
+		)
+		if assignment.get("created"):
+			self.addCleanup(revoke, assignment["assignment"], reason="Test-only revocation of a disposable head.", actor="Administrator")
+		return self.SCOPE_TEST_USER
+
+	def test_a_head_reads_only_the_decisions_of_the_department_they_head(self):
+		head = self._head_of_one_department()
+		own = self.decision_of(self.accepted_need().name)  # Digital Health
+		elsewhere = self.decision_of(self.hrmd_need().name)  # HR Management and Development
+		held = self.listed(head)
+		self.assertIn(own, held)
+		self.assertNotIn(self.hrmd_need().name, set(held.values()))
+		self.assertNotIn(elsewhere, held)
+		frappe.set_user(head)
+		self.assertTrue(frappe.has_permission("Departmental Need Decision", "read", doc=own))
+		self.assertFalse(frappe.has_permission("Departmental Need Decision", "read", doc=elsewhere))
+		with self.assertRaises(frappe.PermissionError):
+			frappe.get_doc("Departmental Need Decision", elsewhere).check_permission("read")
+
+	def test_the_planner_reads_no_decision(self):
+		self.assertEqual(self.listed(PLANNER), {})
+		frappe.set_user(PLANNER)
+		self.assertFalse(frappe.has_permission("Departmental Need Decision", "read", doc=self.decision_of(self.accepted_need().name)))
+
+	def test_the_list_and_the_direct_route_agree(self):
+		everything = frappe.get_all("Departmental Need Decision", pluck="name", limit_page_length=60, order_by="creation desc")
+		for user in (AUTHOR, REVIEWER, PLANNER, AUDITOR):
+			listed = self.listed(user)
+			frappe.set_user(user)
+			try:
+				for name in everything:
+					with self.subTest(user=user, decision=name):
+						self.assertEqual(bool(frappe.has_permission("Departmental Need Decision", "read", doc=name)), name in listed)
+			finally:
+				frappe.set_user("Administrator")
+
+	def test_a_technical_reader_still_reads_every_decision(self):
+		self.assertEqual(need_authorization.permission_query_conditions("Administrator", "Departmental Need Decision"), "")
 
 
 class TestParentOrganisationUnitCoversDescendantsNotSiblings(DepartmentalNeedsPermissionCase):
@@ -620,15 +694,26 @@ class TestRoleSurface(DepartmentalNeedsPermissionCase):
 		}
 		for doctype in NDS_DOCTYPES:
 			roles = {row.role for row in frappe.get_meta(doctype).permissions}
+			# OVS v0.6 §4.1 (AR-05): the two offices read the Need root, and only it.
+			permitted = allowed | set(OFFICE_READERS) if doctype == "Departmental Need" else allowed
 			self.assertTrue(
-				roles.issubset(allowed), f"{doctype} grants unexpected roles: {roles - allowed}"
+				roles.issubset(permitted), f"{doctype} grants unexpected roles: {roles - permitted}"
 			)
 
-	def test_budget_and_accounting_officers_receive_nothing(self):
+	def test_budget_officers_receive_nothing_and_the_offices_read_the_need_root_only(self):
 		for doctype in NDS_DOCTYPES:
-			roles = {row.role for row in frappe.get_meta(doctype).permissions}
-			for excluded in EXCLUDED_ROLES:
-				self.assertNotIn(excluded, roles, f"{excluded} appears on {doctype}")
+			meta = frappe.get_meta(doctype)
+			roles = {row.role for row in meta.permissions}
+			self.assertNotIn("Budget Officer", roles, f"Budget Officer appears on {doctype}")
+			for office in OFFICE_READERS:
+				if doctype != "Departmental Need":
+					self.assertNotIn(office, roles, f"{office} appears on {doctype}")
+					continue
+				rows = [row for row in meta.permissions if row.role == office]
+				self.assertEqual(len(rows), 1, f"{office} on {doctype}")
+				self.assertTrue(rows[0].read)
+				for write_type in ("write", "create", "delete", "submit", "cancel", "amend"):
+					self.assertFalse(rows[0].get(write_type), f"{office} may {write_type} on {doctype}")
 		pages = frappe.get_all("Page", filters={"name": ("like", "departmental-needs%")}, pluck="name")
 		self.assertTrue(pages, "expected at least one Departmental Needs page to check")
 		granted = frappe.get_all(
@@ -651,17 +736,21 @@ class TestRoleSurface(DepartmentalNeedsPermissionCase):
 		}
 		self.assertEqual(writable, set())
 
-	def test_only_the_author_and_head_of_department_write_needs(self):
-		# NDS-AC-041 — lifecycle actions belong to those two roles only.
-		writable = {
-			row.role
-			for row in frappe.get_meta("Departmental Need").permissions
-			if row.write or row.create
-		}
-		self.assertEqual(
-			writable,
-			{"Administrator", "System Manager", ROLE_DEPARTMENTAL_AUTHOR, ROLE_HEAD_OF_USER_DEPARTMENT},
-		)
+	def test_no_role_writes_a_need_record_directly(self):
+		# NDS-AC-041 / AUD-XC-008 — lifecycle actions belong to the Author and
+		# Head of User Department through the commands; DocPerm grants no role a
+		# direct write, create or delete on any command-only Need record.
+		for doctype in (
+			"Departmental Need",
+			"Departmental Need Revision",
+			"Departmental Need Review Task",
+			"Need Withdrawal Request",
+			"Need Planning Usage Projection",
+			"Need Planning Intake Projection",
+			"Need Planning Disposition Projection",
+		):
+			writable = {row.role for row in frappe.get_meta(doctype).permissions if row.write or row.create or row.delete}
+			self.assertEqual(writable, set(), f"{doctype} grants a direct write to {writable}")
 
 	def test_nothing_may_be_deleted_through_a_role(self):
 		for doctype in NDS_DOCTYPES:
@@ -823,9 +912,7 @@ class ScopeDiagnosticTest(DepartmentalNeedsPermissionCase):
 			fixture_namespace="NDS_SCOPE_DIAGNOSTIC_TEST",
 			actor="Administrator",
 		)
-		self.addCleanup(
-			frappe.delete_doc, "User Responsibility Assignment", outcome["assignment"], force=True, ignore_permissions=True
-		)
+		self.addCleanup(purge_doc, "User Responsibility Assignment", outcome["assignment"])
 
 		self.assertEqual(permissions.scope_diagnostic(email), "unit_not_configured")
 		result = self.workspace_as(email)

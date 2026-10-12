@@ -72,10 +72,71 @@ describe("JourneyTracker", () => {
 
 	it("marks done stages with a check and keeps a compact copy for narrow hosts", () => {
 		const w = mount(JourneyTracker, { props: { journey: journey({ current: 2, holder: "Josphat Mwangi" }) } });
-		expect(w.findAll("ol.kt-journey .kt-journey-state")[0].text()).toBe("✓ Done");
+		// DS-REV-004: a done stage shows a check in place of its number; the word stays as text for assistive technology
+		const first = w.findAll("ol.kt-journey > .kt-journey-stage")[0];
+		expect(first.find(".kt-journey-check").exists()).toBe(true);
+		expect(first.find(".kt-journey-num").exists()).toBe(false);
+		expect(first.get(".kt-journey-state").text()).toBe("Done");
 		// the one-line copy the container query shows under 600px
 		expect(w.get(".kt-journey-compact .kt-journey-reduced-text").text()).toBe("Stage 3 of 7: Signature — Josphat Mwangi");
 		expect(w.findAll(".kt-journey.is-reduced")).toHaveLength(0);
+	});
+
+	describe("position figure (DS-REV-004)", () => {
+		const figure = (w) => w.find('[data-testid="kt-journey-position"]');
+
+		it("leads with the current stage's number, the total and who holds it", () => {
+			const w = mount(JourneyTracker, { props: { journey: journey({ current: 2, holder: "Josphat Mwangi" }) } });
+			const f = figure(w);
+			expect(f.get(".kt-journey-position-n").text()).toBe("3");
+			expect(f.get(".kt-journey-position-of").text()).toBe("of 7");
+			expect(f.get(".kt-journey-position-state").text()).toBe("Current · Josphat Mwangi");
+			expect(f.classes()).not.toContain("is-blocked");
+			expect(f.attributes("aria-hidden")).toBe("true"); // the list already says it once, through aria-current and the state text
+			expect(w.get("ol.kt-journey").classes()).toContain("is-compact");
+		});
+
+		it("reads Blocked for a blocked stage and marks the figure", () => {
+			const w = mount(JourneyTracker, { props: { journey: journey({ current: 1, blocked: true, holder: "Mercy Kilonzo" }) } });
+			expect(figure(w).get(".kt-journey-position-n").text()).toBe("2");
+			expect(figure(w).get(".kt-journey-position-state").text()).toBe("Blocked · Mercy Kilonzo");
+			expect(figure(w).classes()).toContain("is-blocked");
+		});
+
+		it("names no holder when the stage has none", () => {
+			const w = mount(JourneyTracker, { props: { journey: journey({ current: 0 }) } });
+			expect(figure(w).get(".kt-journey-position-state").text()).toBe("Current");
+		});
+
+		it("reads N of N with Done when every stage is done", () => {
+			const j = journey({ current: 0 });
+			j.stages.forEach((stage) => Object.assign(stage, { marker: "done", marker_label: "Done", holder: "" }));
+			const w = mount(JourneyTracker, { props: { journey: j } });
+			expect(figure(w).get(".kt-journey-position-n").text()).toBe("7");
+			expect(figure(w).get(".kt-journey-position-of").text()).toBe("of 7");
+			expect(figure(w).get(".kt-journey-position-state").text()).toBe("Done");
+			expect(figure(w).classes()).toContain("is-done");
+			expect(w.findAll(".kt-journey-check")).toHaveLength(7);
+		});
+
+		it("is left out when nothing has started, and the track still draws", () => {
+			const j = journey({ current: 0 });
+			j.stages.forEach((stage) => Object.assign(stage, { marker: "not_started", marker_label: "Not started", holder: "" }));
+			const w = mount(JourneyTracker, { props: { journey: j } });
+			expect(figure(w).exists()).toBe(false);
+			expect(w.findAll("ol.kt-journey > .kt-journey-stage")).toHaveLength(7);
+		});
+
+		it("is not drawn on the reduced one-line form", () => {
+			const w = mount(JourneyTracker, { props: { journey: journey({ current: 2, holder: "Amina Hassan", reduced: true }) } });
+			expect(figure(w).exists()).toBe(false);
+		});
+
+		it("keeps every stage's state as text, with the holder only on the current one", () => {
+			const w = mount(JourneyTracker, { props: { journey: journey({ current: 2, holder: "Josphat Mwangi" }) } });
+			const states = w.findAll("ol.kt-journey .kt-journey-state").map((n) => n.text());
+			expect(states).toEqual(["Done", "Done", "Current · Josphat Mwangi", "Not started", "Not started", "Not started", "Not started"]);
+		});
 	});
 
 	it("emits the upstream link instead of navigating itself", async () => {
@@ -131,7 +192,8 @@ describe("NextStep", () => {
 	it("draws the blocked kind as the one container, in the body placement, with one control per fix", async () => {
 		const w = mount(NextStep, { props: { answer: OVER, placement: "body" } });
 		const block = w.get("div.kt-notice.is-warning.kt-next-step-block");
-		expect(block.find(".kt-notice-icon").exists()).toBe(true);
+		// DS-REV-004: the warning rule and tint mark the blocked kind; there is no icon
+		expect(block.find(".kt-notice-icon").exists()).toBe(false);
 		expect(block.get(".kt-next-step-block-headline").text()).toBe("Over budget by KES 2,000,000 on Digital health workforce development");
 		const buttons = block.findAll("button");
 		expect(buttons.map((b) => b.text())).toEqual(["Request budget revision from Josphat Mwangi", "Reduce a purchase"]);

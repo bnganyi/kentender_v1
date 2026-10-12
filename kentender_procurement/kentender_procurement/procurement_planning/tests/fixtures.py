@@ -24,6 +24,10 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cstr
 
+from kentender_core.services.command_write_guard import maintenance_write
+from kentender_procurement.departmental_needs.write_family import NEEDS_WRITE_FAMILY
+from kentender_core.services.command_write_guard import fixture_insert
+
 NS = "KENTENDER_TEST"
 
 FY_OPEN = "2101-2102"
@@ -338,7 +342,7 @@ def wipe_planning_rows() -> None:
 		frappe.db.delete(decision_doctype, {"task": ("in", task_rows or ("",))})
 		frappe.db.delete(task_doctype, {"name": ("in", task_rows or ("",))})
 	frappe.db.delete("Annual Plan Publication", {"plan_version": ("in", plan_versions or ("",))})
-	for doctype in ("Plan Preparation Signature", "Plan Financial Basis", "Plan Finance Basis Reuse", "Treasury Submission Evidence", "Plan Publication Hold", "Late Activation Explanation"):
+	for doctype in ("Plan Preparation Signature", "Plan Financial Basis", "Plan Finance Basis Reuse", "Treasury Submission Evidence", "Plan Publication Confirmation", "Plan Publication Hold", "Late Activation Explanation"):
 		frappe.db.delete(doctype, {"plan_version": ("in", plan_versions or ("",))})
 	snapshots = frappe.get_all("Approved Plan Snapshot", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
 	publications = frappe.get_all("Plan Publication", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
@@ -364,52 +368,54 @@ def _link_targets() -> None:
 	published contracts."""
 	global BUDGET_LINE, BUDGET_LINE_2
 	if not frappe.db.exists("Procurement Budget", {"generated_reference": "BUD-PLNT-0001"}):
-		frappe.get_doc({"doctype": "Procurement Budget", "generated_reference": "BUD-PLNT-0001", "fiscal_year": BUDGET_FISCAL_YEAR, "currency": "KES"}).insert(ignore_permissions=True)
+		fixture_insert(frappe.get_doc({"doctype": "Procurement Budget", "generated_reference": "BUD-PLNT-0001", "fiscal_year": BUDGET_FISCAL_YEAR, "currency": "KES"}))
 	budget = frappe.db.get_value("Procurement Budget", {"generated_reference": "BUD-PLNT-0001"}, "name")
 	for ref in (BUDGET_LINE_REF, BUDGET_LINE_REF_2):
 		if not frappe.db.exists("Procurement Budget Line", {"generated_reference": ref}):
-			frappe.get_doc({"doctype": "Procurement Budget Line", "generated_reference": ref, "budget": budget}).insert(ignore_permissions=True)
+			fixture_insert(frappe.get_doc({"doctype": "Procurement Budget Line", "generated_reference": ref, "budget": budget}))
 	BUDGET_LINE = frappe.db.get_value("Procurement Budget Line", {"generated_reference": BUDGET_LINE_REF}, "name")
 	BUDGET_LINE_2 = frappe.db.get_value("Procurement Budget Line", {"generated_reference": BUDGET_LINE_REF_2}, "name")
 	bv = frappe.db.get_value("Procurement Budget Version", {"budget": budget, "status": "Active"}, "name")
 	if not bv:
-		bv = frappe.get_doc(
+		bv = fixture_insert(frappe.get_doc(
 			{
 				"doctype": "Procurement Budget Version", "generated_reference": "BUDV-PLNT-0001", "budget": budget,
 				"version_number": 1, "status": "Active", "approval_reference": "PLNT-APPROVAL-1",
 				"approval_date": "2026-06-30", "authorised_total": 200000000, "currency": "KES",
 				"approval_document": "/files/plnt-approval.pdf",
 			}
-		).insert(ignore_permissions=True).name
+		)).name
 	fs = frappe.get_all("Funding Source", limit=1, pluck="name")
 	for line, ref, title in ((BUDGET_LINE, "BLV-PLNT-0001", "Digital health programme"), (BUDGET_LINE_2, "BLV-PLNT-0002", "Health workforce programme")):
 		if not frappe.db.exists("Procurement Budget Line Version", {"budget_version": bv, "budget_line": line}):
-			frappe.get_doc(
+			fixture_insert(frappe.get_doc(
 				{
 					"doctype": "Procurement Budget Line Version", "generated_reference": ref, "budget_version": bv,
 					"budget_line": line, "title": title, "funding_source": fs[0] if fs else None,
 					"approved_amount": 100000000, "currency": "KES",
 				}
-			).insert(ignore_permissions=True)
+			))
 	if not frappe.db.exists("Departmental Need", NEED):
-		frappe.get_doc(
-			{
-				"doctype": "Departmental Need", "need_reference": NEED, "organisation_unit": OU_ALPHA,
-				"financial_year": FY_OPEN, "current_state": "Accepted for planning", "record_version": 1, "fixture_namespace": NS,
-			}
-		).insert(ignore_permissions=True)
+		with maintenance_write(NEEDS_WRITE_FAMILY, reason="Planning test world: an accepted Need to plan from"):
+			frappe.get_doc(
+				{
+					"doctype": "Departmental Need", "need_reference": NEED, "organisation_unit": OU_ALPHA,
+					"financial_year": FY_OPEN, "current_state": "Accepted for planning", "record_version": 1, "fixture_namespace": NS,
+				}
+			).insert(ignore_permissions=True)
 	else:
 		frappe.db.set_value("Departmental Need", NEED, {"organisation_unit": OU_ALPHA, "financial_year": FY_OPEN}, update_modified=False)
 	if not frappe.db.exists("Departmental Need Revision", NEED_V1):
-		frappe.get_doc(
-			{
-				"doctype": "Departmental Need Revision", "need_revision_id": NEED_V1, "departmental_need": NEED,
-				"revision_number": 1, "revision_status": "Accepted", "title": "Test requirement",
-				"description": "Procure and implement the test requirement.",
-				"expected_operational_result": "The department can operate the tested capability.",
-				"indicative_quantity": 1, "unit": UNIT, "required_by_date": "2102-05-31", "fixture_namespace": NS,
-			}
-		).insert(ignore_permissions=True)
+		with maintenance_write(NEEDS_WRITE_FAMILY, reason="Planning test world: the accepted revision of that Need"):
+			frappe.get_doc(
+				{
+					"doctype": "Departmental Need Revision", "need_revision_id": NEED_V1, "departmental_need": NEED,
+					"revision_number": 1, "revision_status": "Accepted", "title": "Test requirement",
+					"description": "Procure and implement the test requirement.",
+					"expected_operational_result": "The department can operate the tested capability.",
+					"indicative_quantity": 1, "unit": UNIT, "required_by_date": "2102-05-31", "fixture_namespace": NS,
+				}
+			).insert(ignore_permissions=True)
 	frappe.db.set_value("Departmental Need", NEED, {"current_revision": NEED_V1, "current_accepted_revision": NEED_V1}, update_modified=False)
 
 
@@ -439,8 +445,11 @@ def _strategy_world() -> None:
 	STRATEGY_OBJECTIVE_PATH = "PLNT Pillar › PLNT Programme"
 
 
-def accepted_source(need_id: str = NEED, *, version: str = NEED_V1, title: str = "Test requirement", quantity: float = 1.0) -> dict:
-	"""A DepartmentalNeedAccepted.v2-shaped payload for patching the intake."""
+def accepted_source(
+	need_id: str = NEED, *, version: str = NEED_V1, title: str = "Test requirement", quantity: float = 1.0,
+	estimate: str | None = None,
+) -> dict:
+	"""A DepartmentalNeedAccepted.v3-shaped payload for patching the intake."""
 	return {
 		"need_id": need_id,
 		"need_reference": need_id,
@@ -456,6 +465,7 @@ def accepted_source(need_id: str = NEED, *, version: str = NEED_V1, title: str =
 		"unit_id": UNIT,
 		"unit_display_value": "Each",
 		"required_by_date": "2102-05-31",
+		"estimated_total_cost": estimate,
 	}
 
 

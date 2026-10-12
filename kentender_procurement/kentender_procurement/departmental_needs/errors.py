@@ -24,6 +24,15 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"NDS_FIELD_REQUIRED",
 		"NDS_REQUIRED_BY_OUTSIDE_FY",
 		"NDS_UNIT_INELIGIBLE",
+		# v1.16 §9 — quantity exceeds the unit's precision/whole-number/range
+		# rule or is not an exact decimal. Never rounded.
+		"NDS_QUANTITY_PRECISION_INVALID",
+		# v1.17 §9 — the estimated total cost is not a positive exact decimal
+		# within the Budget currency's decimal places or supported size.
+		"NDS_ESTIMATE_PRECISION_INVALID",
+		# v1.17 §9 — the Budget currency or precision cannot be read; the
+		# estimate is neither saved nor submitted.
+		"NDS_ESTIMATE_CURRENCY_UNAVAILABLE",
 		# Version maker attempted its own decision.
 		"NDS_MAKER_CHECKER",
 		# Command is invalid for the current Need/version state.

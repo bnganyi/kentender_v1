@@ -21,6 +21,8 @@ DEFAULT_MONEY_PRECISION = 2
 DEFAULT_QUANTITY_PRECISION = 3
 SUPPORTED_PRECISIONS = (0, 1, 2, 3, 4, 5, 6)
 MAX_INTEGRAL_DIGITS = 18
+# a Float is stored as decimal(21,9): twelve integral digits remain
+QUANTITY_INTEGRAL_DIGITS = 12
 
 
 def _to_decimal(value) -> Decimal | None:
@@ -53,6 +55,10 @@ def parse_money(value, *, precision: int | None = DEFAULT_MONEY_PRECISION, field
 		fail("PLN_MONEY_PRECISION_INVALID", detail={"field": field, "offered": "" if value is None else str(value)})
 	if not amount.is_finite():
 		fail("PLN_MONEY_PRECISION_INVALID", detail={"field": field, "offered": str(value)})
+	# magnitude first: quantizing a number wider than the Decimal context raises a
+	# raw `decimal.InvalidOperation`, which must be the typed refusal instead
+	if amount.adjusted() >= MAX_INTEGRAL_DIGITS:
+		fail("PLN_MONEY_PRECISION_INVALID", "The amount exceeds the supported magnitude.", {"field": field, "offered": str(value)})
 	quantum = Decimal(1).scaleb(-precision)
 	if amount != amount.quantize(quantum):
 		fail("PLN_MONEY_PRECISION_INVALID", detail={"field": field, "precision": precision, "offered": str(value)})
@@ -69,10 +75,14 @@ def parse_quantity(value, *, precision: int = DEFAULT_QUANTITY_PRECISION, field:
 	quantity = _to_decimal(value)
 	if quantity is None or not quantity.is_finite():
 		fail("PLN_ENTRY_INCOMPLETE", "Enter the quantity as a decimal number.", {"field": field, "offered": "" if value is None else str(value)})
+	if quantity.adjusted() >= QUANTITY_INTEGRAL_DIGITS:
+		fail("PLN_ENTRY_INCOMPLETE", f"The quantity can have at most {QUANTITY_INTEGRAL_DIGITS} digits before the decimal point.", {"field": field, "offered": str(value)})
 	quantum = Decimal(1).scaleb(-precision)
 	if quantity != quantity.quantize(quantum):
 		fail("PLN_ENTRY_INCOMPLETE", f"The quantity supports at most {precision} decimal places.", {"field": field, "precision": precision, "offered": str(value)})
 	quantity = quantity.quantize(quantum)
+	if len(str(abs(quantity.to_integral_value()))) > QUANTITY_INTEGRAL_DIGITS:
+		fail("PLN_ENTRY_INCOMPLETE", f"The quantity can have at most {QUANTITY_INTEGRAL_DIGITS} digits before the decimal point.", {"field": field, "offered": str(value)})
 	if quantity < 0 or (quantity == 0 and not allow_zero):
 		fail("PLN_ENTRY_INCOMPLETE", "Enter a positive quantity.", {"field": field, "offered": str(value)})
 	return quantity
@@ -101,3 +111,20 @@ def sum_money(values, *, precision: int = DEFAULT_MONEY_PRECISION) -> Decimal:
 		if amount is not None:
 			total += amount
 	return total.quantize(Decimal(1).scaleb(-precision))
+
+
+def as_decimal(value) -> Decimal:
+	"""A stored or computed amount as an exact `Decimal`; blank is zero."""
+	amount = _to_decimal(value)
+	return amount if amount is not None else Decimal(0)
+
+
+def exceeds(amount, limit) -> bool:
+	"""Exact `amount > limit` — a decision, so no epsilon (BUD §4.8, PLN §4.1)."""
+	return as_decimal(amount) > as_decimal(limit)
+
+
+def same_amount(left, right, *, precision: int = DEFAULT_MONEY_PRECISION) -> bool:
+	"""Equality at the currency's precision (never a tolerance)."""
+	quantum = Decimal(1).scaleb(-precision)
+	return as_decimal(left).quantize(quantum) == as_decimal(right).quantize(quantum)

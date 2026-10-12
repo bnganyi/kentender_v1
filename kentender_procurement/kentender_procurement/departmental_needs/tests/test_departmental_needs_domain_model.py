@@ -60,6 +60,12 @@ from kentender_procurement.departmental_needs.tests import support
 
 
 class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
+	def setUp(self):
+		super().setUp()
+		# These tests exercise the controllers' own invariants on records the
+		# commands cannot build in the odd shapes needed, so they write directly.
+		support.open_needs_maintenance(self, "Needs domain-model test: records written without the commands")
+
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()

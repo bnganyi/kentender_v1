@@ -27,6 +27,7 @@ import SummaryStrip from "./components/SummaryStrip.vue";
 import WaitingRegion from "./components/WaitingRegion.vue";
 import { regionId, useAnalytics } from "./composables/useAnalytics.js";
 import { buildUrl, useRouteState } from "./composables/useRouteState.js";
+import AccessDenied from "../access_shared/AccessDenied.vue";
 
 const { url, route, epoch, go, sync } = useRouteState();
 const analytics = useAnalytics({ getUrl: () => url.value });
@@ -155,8 +156,7 @@ const retryFailedFor = (id) => !!retryFailed[id];
 
 				<!-- ANL-DES-31H: no permitted area (and a user who may not open Analytics at all): the title and one line, nothing else. -->
 				<template v-else-if="view === 'denied'">
-					<h1 class="kt-ap-title" data-testid="kt-anl-title">{{ title }}</h1>
-					<StatePanel :text="data.message" spot="neutral" icon="lock" data-testid="kt-anl-denied" />
+					<AccessDenied :heading="__('You do not have access to Analytics')" :text="data.message" testid="kt-anl-denied" />
 				</template>
 
 				<template v-else>

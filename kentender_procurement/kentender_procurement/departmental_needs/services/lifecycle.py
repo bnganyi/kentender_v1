@@ -1,10 +1,12 @@
 """Departmental Needs command layer (NDS-CHG-001 v1.6 §5, §8.2).
 
-Every mutating command follows one shape: replay the idempotency key, resolve
-the actor, lock the root row, check the optimistic record version, authorize
-through the shared resolver (§6), guard the state, validate, mutate, then
-record one immutable decision (§4.5). Authorization is the AUTH-ADR-001 v1.6
-resolver and `User Responsibility Assignment` only — no Frappe User
+Every mutating command follows one shape: resolve the actor, lock the root
+row (as last committed), authorize through the shared resolver (§6), answer a
+replay of the idempotency key, check the optimistic record version, guard the
+state, validate, mutate, then record one immutable decision (§4.5). A recorded
+result is never answered before the caller is authorised, and only to the
+actor, command and payload it was recorded for (AUD-XC-131). Authorization is
+the AUTH-ADR-001 v1.6 resolver and `User Responsibility Assignment` only — no Frappe User
 Permission, capability or scope-assignment store (§16.4).
 
 The §5.1 initial lifecycle, the §5.2 accepted-successor lifecycle and the §5.3
@@ -21,6 +23,7 @@ from uuid import uuid4
 import frappe
 from frappe.utils import cstr, flt, formatdate, getdate, now_datetime
 
+from kentender_core.utils.series import allocation_lock, next_free_reference
 from kentender_procurement.departmental_needs.constants import (
 	ACTION_ACCEPT,
 	ACTION_ACCEPT_SUCCESSOR,
@@ -75,11 +78,14 @@ from kentender_procurement.departmental_needs.constants import (
 	WITHDRAWAL_DECLINED,
 )
 from kentender_procurement.departmental_needs.errors import fail
+from kentender_procurement.departmental_needs.write_family import needs_command
 from kentender_procurement.departmental_needs.services.context import (
 	FY_DOCTYPE,
 	require_open_intake,
 	selectable_financial_year,
 )
+from kentender_procurement.departmental_needs.services import estimate
+from kentender_procurement.departmental_needs.services.quantity import require_valid_quantity
 from kentender_procurement.departmental_needs.services.notifications import notify_need_transition
 from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
@@ -87,6 +93,7 @@ from kentender_procurement.departmental_needs.services.permissions import (
 	require_author_command,
 	require_create,
 	require_review_command,
+	require_view,
 )
 from kentender_procurement.departmental_needs.services.events import (
 	publish_accepted,
@@ -121,47 +128,86 @@ def _request_context() -> dict[str, str]:
 	}
 
 
-def _fingerprint(payload: dict[str, Any]) -> str:
-	"""A stable digest of the caller's command payload (§8, §9).
-
-	`user` and the key itself are excluded: the same request replayed by the
-	same caller must match, and the key is the lookup, not part of the payload.
-	"""
-	material = {
+def _material(payload: dict[str, Any]) -> dict[str, str]:
+	return {
 		key: cstr(value)
 		for key, value in sorted(payload.items())
 		if key not in {"user", "idempotency_key"} and value is not None
 	}
-	return hashlib.sha256(json.dumps(material, sort_keys=True).encode()).hexdigest()
 
 
-def _existing(idempotency_key: str, payload: dict[str, Any] | None = None) -> dict[str, Any] | None:
-	"""Replay a completed command, or reject the key if the payload differs.
+def _legacy_fingerprint(payload: dict[str, Any]) -> str:
+	"""The payload-only digest that decision rows carried before AUD-XC-131.
 
-	§9 distinguishes a genuine retry from key reuse: the same key with a
-	different payload is `NDS_IDEMPOTENCY_CONFLICT`, never a silent replay of
-	the earlier command's result.
-	"""
-	key = cstr(idempotency_key).strip()
-	if not key:
-		fail("NDS_IDEMPOTENCY_CONFLICT", "An idempotency key is required.")
-	row = frappe.db.get_value(
-		"Departmental Need Decision",
-		{"idempotency_key": key},
-		["departmental_need", "action", "request_fingerprint"],
-		as_dict=True,
-	)
-	if not row:
-		return None
-	if payload is not None:
-		seen = cstr(row.request_fingerprint)
-		if seen and seen != _fingerprint(payload):
-			fail(
-				"NDS_IDEMPOTENCY_CONFLICT",
-				"This idempotency key was already used with a different request.",
-			)
-	need = frappe.get_doc("Departmental Need", row.departmental_need)
-	return _result(need, idempotent=True, action=row.action)
+	Kept only to recognise those rows: one is replayed to the actor who wrote
+	it (never to another user), because its fingerprint cannot say which
+	command it was for."""
+	return hashlib.sha256(json.dumps(_material(payload), sort_keys=True).encode()).hexdigest()
+
+
+def _fingerprint(payload: dict[str, Any], *, command: str, principal: str) -> str:
+	"""A stable digest of the command, its actor and the caller's payload
+	(§8, §9). `user` and the key itself are excluded from the payload: the key
+	is the lookup, not part of the request."""
+	return hashlib.sha256(
+		json.dumps({"command": command, "actor": principal, "payload": _material(payload)}, sort_keys=True).encode()
+	).hexdigest()
+
+
+class _Command:
+	"""One command's idempotency identity (§9, AUD-XC-131).
+
+	A key is bound to the actor, the command and the payload that first used
+	it. The same key from anyone else, for another command or with another
+	payload is `NDS_IDEMPOTENCY_CONFLICT`, never a silent replay. Callers
+	authorise first and only then ask for the replay."""
+
+	def __init__(self, name: str, principal: str, idempotency_key: str, payload: dict[str, Any]):
+		self.name, self.principal, self.payload = name, principal, payload
+		self.key = cstr(idempotency_key).strip()
+		if not self.key:
+			fail("NDS_IDEMPOTENCY_CONFLICT", "An idempotency key is required.")
+		self.fingerprint = _fingerprint(payload, command=name, principal=principal)
+
+	def _matches(self, row) -> bool:
+		if cstr(row.actor) != self.principal:
+			return False
+		return cstr(row.request_fingerprint) in ("", self.fingerprint, _legacy_fingerprint(self.payload))
+
+	def replay(self, *, locking: bool = False, need=None) -> dict[str, Any] | None:
+		"""The recorded result of this key, `None` when the key is new.
+
+		`locking=True` reads the latest committed row (a plain read returns the
+		transaction's older snapshot, MariaDB REPEATABLE READ); it is used only
+		on a path that is about to refuse the command, so its lock on a missing
+		key never waits on anything this transaction writes."""
+		row = frappe.db.get_value(
+			"Departmental Need Decision",
+			{"idempotency_key": self.key},
+			["departmental_need", "action", "actor", "request_fingerprint"],
+			as_dict=True,
+			for_update=locking,
+		)
+		if not row:
+			return None
+		if not self._matches(row):
+			fail("NDS_IDEMPOTENCY_CONFLICT", "This idempotency key was already used with a different request.")
+		current = need if need is not None and need.name == row.departmental_need else frappe.get_doc("Departmental Need", row.departmental_need, for_update=locking)
+		return _result(current, idempotent=True, action=row.action)
+
+	def check_version(self, need, expected_version) -> dict[str, Any] | None:
+		"""Refuse a stale `expected_version`. A duplicate of a command that
+		committed while this request waited for the Need's lock is stale too (the
+		first run advanced the version), so before refusing, the key is read as
+		last committed and the original result is returned for a true duplicate."""
+		if cstr(expected_version) != "" and cstr(need.record_version) == cstr(expected_version):
+			return None
+		if replay := self.replay(locking=True, need=need):
+			return replay
+		fail(
+			"NDS_STALE_WRITE",
+			"This Departmental Need changed after it was opened. Reload and try again.",
+		)
 
 
 def _state_hash(need, version=None) -> str:
@@ -178,7 +224,16 @@ def _state_hash(need, version=None) -> str:
 
 
 def _content_payload(version) -> dict[str, str]:
-	return {field: cstr(version.get(field)) for field in REVISION_CONTENT_FIELDS}
+	"""The canonical content hashed at submission. The estimated total cost is
+	part of it only when the revision has one (NDS-CHG-001 v1.17 §4.9), so a
+	revision submitted before v1.17 keeps and verifies its original hash."""
+	payload = {
+		field: cstr(version.get(field)) for field in REVISION_CONTENT_FIELDS if field != "estimated_total_cost"
+	}
+	text = estimate.wire_text(version.get("estimated_total_cost"))
+	if text is not None:
+		payload["estimated_total_cost"] = text
+	return payload
 
 
 def _content_hash(version) -> str:
@@ -205,7 +260,7 @@ def _record_decision(
 	fingerprint: str = "",
 ):
 	ctx = _request_context()
-	return frappe.get_doc(
+	decision = frappe.get_doc(
 		{
 			"doctype": "Departmental Need Decision",
 			"decision_id": f"NDD-{uuid4().hex.upper()}",
@@ -234,29 +289,40 @@ def _record_decision(
 			"idempotency_key": cstr(idempotency_key).strip(),
 			"request_fingerprint": fingerprint,
 		}
-	).insert(ignore_permissions=True)
+	)
+	try:
+		return decision.insert(ignore_permissions=True)
+	except (frappe.UniqueValidationError, frappe.DuplicateEntryError):
+		# Another request claimed this key first (a different Need, so not a replay).
+		frappe.clear_last_message()
+		fail("NDS_IDEMPOTENCY_CONFLICT", "This idempotency key was already used with a different request.")
 
 
 # --- Root and version helpers ---------------------------------------------
 
 
-def _locked_need(name: str):
+def _lock(doctype: str, name: str):
+	"""The row, locked, as last committed. MariaDB runs at REPEATABLE READ, so
+	a plain read after `select ... for update` would return this transaction's
+	older snapshot: a waiter would pass the version check on a record another
+	command had already replaced and die at save with a framework timestamp
+	error instead of the typed refusal (AUD-XC-130). The locking read sees the
+	committed row. Returns `None` when there is no such row."""
 	rows = frappe.db.sql(
-		"select name from `tabDepartmental Need` where name=%s for update",
+		f"select name from `tab{doctype}` where name=%s for update",
 		cstr(name).strip(),
 		as_dict=True,
 	)
 	if not rows:
+		return None
+	return frappe.get_doc(doctype, rows[0].name, for_update=True)
+
+
+def _locked_need(name: str):
+	need = _lock("Departmental Need", name)
+	if need is None:
 		fail("NDS_SCOPE_DENIED", "Departmental Need not found.")
-	return frappe.get_doc("Departmental Need", rows[0].name)
-
-
-def _check_version(need, expected_version) -> None:
-	if cstr(expected_version) == "" or cstr(need.record_version) != cstr(expected_version):
-		fail(
-			"NDS_STALE_WRITE",
-			"This Departmental Need changed after it was opened. Reload and try again.",
-		)
+	return need
 
 
 def _bump(need, target_state: str | None = None) -> None:
@@ -328,7 +394,11 @@ def _require_open_successor(need):
 	return frappe.get_doc("Departmental Need Revision", successor)
 
 
-def _next_reference(financial_year: str) -> tuple[str, str]:
+def _creation_busy(_table: str):
+	fail("NDS_STATE_CONFLICT", "Departmental Need creation is busy. Try again.")
+
+
+def _next_reference(financial_year: str) -> str:
 	"""`NDS-{site PE code}-{FY start year}-{4 digits}` (§4.2).
 
 	The site Procuring Entity is a Frappe Single (AUTH-ADR-001 v1.6 §4.1) —
@@ -341,18 +411,16 @@ def _next_reference(financial_year: str) -> tuple[str, str]:
 	start_date = frappe.db.get_value(FY_DOCTYPE, financial_year, "year_start_date")
 	year = cstr(getdate(start_date).year) if start_date else ""
 	prefix = f"NDS-{entity_code}-{year}-"
-	lock_name = f"nds:create:{entity_code}:{year}"[:64]
-	if not frappe.db.sql("select get_lock(%s, 10)", lock_name)[0][0]:
-		fail("NDS_STATE_CONFLICT", "Departmental Need creation is busy. Try again.")
+	allocation_lock("Departmental Need", busy=_creation_busy)
 	refs = frappe.get_all(
 		"Departmental Need",
 		filters={"need_reference": ["like", f"{prefix}%"]},
 		pluck="need_reference",
 	)
-	seq = max(
-		[int(ref.rsplit("-", 1)[-1]) for ref in refs if ref.rsplit("-", 1)[-1].isdigit()] or [0]
-	) + 1
-	return f"{prefix}{seq:04d}", lock_name
+	highest = max([int(ref.rsplit("-", 1)[-1]) for ref in refs if ref.rsplit("-", 1)[-1].isdigit()] or [0])
+	# The list above is this transaction's snapshot: a Need another request
+	# committed while this one waited for the lock is not in it (AUD-XC-130).
+	return next_free_reference("Departmental Need", "need_reference", prefix, highest, 4, busy=_creation_busy)
 
 
 def _result(need, *, idempotent: bool = False, action: str = "", task: str = "") -> dict[str, Any]:
@@ -394,14 +462,9 @@ def _open_task(need, *, task_type: str, version: str = "", withdrawal_request: s
 
 def _claim_task(task_id: str, need: str, task_type: str, decision_token: str):
 	"""Lock one Open task and verify its decision token (NDS-AC-028)."""
-	row = frappe.db.sql(
-		"select name from `tabDepartmental Need Review Task` where name=%s for update",
-		cstr(task_id).strip(),
-		as_dict=True,
-	)
-	if not row:
+	task = _lock("Departmental Need Review Task", task_id)
+	if task is None:
 		fail("NDS_STATE_CONFLICT", "This review task does not exist.")
-	task = frappe.get_doc("Departmental Need Review Task", row[0].name)
 	if task.departmental_need != need or task.task_type != task_type or task.status != TASK_OPEN:
 		fail("NDS_STATE_CONFLICT", "This task does not belong to the current Departmental Need action.")
 	if cstr(task.decision_token) != cstr(decision_token):
@@ -443,7 +506,7 @@ def _require_text(value: str, label: str) -> str:
 
 
 def _validate_submission(need, version) -> None:
-	"""§5/NDS-BR-007 — all six values, a governed unit and an in-year date.
+	"""§5/NDS-BR-007 — all seven values, a governed unit and an in-year date.
 
 	Runs before any state change, task creation or notification, so a failure is
 	a pure no-op with a stable §9 code.
@@ -456,9 +519,35 @@ def _validate_submission(need, version) -> None:
 		fail("NDS_FIELD_REQUIRED", "Unit is required.")
 	if not frappe.db.get_value("UOM", version.unit, "enabled"):
 		fail("NDS_UNIT_INELIGIBLE", "The selected unit is not an active governed unit.")
+	# The unit may have changed since the Draft was saved (§4.9): recheck.
+	require_valid_quantity(version.indicative_quantity, version.unit)
+	# NDS-BR-022 — an estimated total cost is required, exact and within the
+	# Budget currency's precision. Checked before any state change.
+	if estimate.wire_text(version.estimated_total_cost) is None:
+		# Frappe stores a blank Currency as 0.0, so absence and zero read the same here
+		fail("NDS_FIELD_REQUIRED", "Estimated cost is required.")
+	estimate.validated(version.estimated_total_cost, need.financial_year)
 	if not version.required_by_date:
 		fail("NDS_FIELD_REQUIRED", "Required-by date is required.")
 	_require_required_by_in_year(selectable_financial_year(need.financial_year), version.required_by_date)
+
+
+def _recheck_for_acceptance(version) -> None:
+	"""NDS §8.2 / §4.9 / NDS11-AC-081 — acceptance rechecks the *current* unit
+	and the exact submitted content, not what was true at submission.
+
+	The unit must still be an active governed unit and the quantity must still
+	satisfy its rule (the catalogue may have changed since). The submitted
+	facts must still hash to the digest stored when they were locked, so a
+	revision altered outside the commands cannot reach Planning. Only
+	acceptance runs this: a return or decline records the reason a stale value
+	needs correcting and must never be blocked by it.
+	"""
+	if not version.unit or not frappe.db.get_value("UOM", version.unit, "enabled"):
+		fail("NDS_UNIT_INELIGIBLE", "The selected unit is no longer an active governed unit.")
+	require_valid_quantity(version.indicative_quantity, version.unit)
+	if cstr(version.content_hash) != _content_hash(version):
+		fail("NDS_STATE_CONFLICT", "The submitted requirement no longer matches what was reviewed. Refresh to see the available actions.")
 
 
 def _require_required_by_in_year(fy: dict[str, Any], required_by_date) -> None:
@@ -494,8 +583,15 @@ def _content_values(
 	indicative_quantity: float | None = None,
 	unit: str = "",
 	required_by_date: str | None = None,
+	estimated_total_cost: Any = None,
+	fiscal_year: str = "",
 ) -> dict[str, Any]:
-	"""A partial Draft is valid once the title is (§12.3, NDS-AC-004)."""
+	"""A partial Draft is valid once the title is (§12.3, NDS-AC-004). A supplied
+	quantity must be exact for its unit before it is stored (§4.9), and a
+	supplied estimated total cost exact at the Budget currency's precision
+	(NDS-CHG-001 v1.17 §4.9)."""
+	require_valid_quantity(indicative_quantity, cstr(unit).strip() or None)
+	cost = estimate.validated(estimated_total_cost, fiscal_year) if fiscal_year else None
 	return {
 		"title": cstr(title).strip(),
 		"description": cstr(description).strip(),
@@ -503,12 +599,14 @@ def _content_values(
 		"indicative_quantity": flt(indicative_quantity) if indicative_quantity not in (None, "") else None,
 		"unit": cstr(unit).strip() or None,
 		"required_by_date": required_by_date or None,
+		"estimated_total_cost": float(cost) if cost is not None else None,
 	}
 
 
 # --- §5.1 initial lifecycle ------------------------------------------------
 
 
+@needs_command
 def create_need(
 	*,
 	organisation_unit: str,
@@ -519,6 +617,7 @@ def create_need(
 	indicative_quantity: float | None = None,
 	unit: str = "",
 	required_by_date: str | None = None,
+	estimated_total_cost: Any = None,
 	idempotency_key: str,
 	user: str | None = None,
 ) -> dict[str, Any]:
@@ -530,56 +629,62 @@ def create_need(
 	# Captured before any local is bound, so the digest is exactly the
 	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
 	payload = dict(locals())
-	if replay := _existing(idempotency_key, payload):
-		return replay
 	principal = actor(user)
-	fy = selectable_financial_year(financial_year)
+	command = _Command("create_need", principal, idempotency_key, payload)
 	ou = cstr(organisation_unit).strip()
 	assignment = require_create(principal, ou)
+	if replay := command.replay():
+		return replay
+	fy = selectable_financial_year(financial_year)
 	# NDS-BR-002 / NDS-AC-003 — initial creation requires the flag Open.
 	require_open_intake(fy["id"])
 	_require_required_by_in_year(fy, required_by_date)
-	reference, lock_name = _next_reference(fy["id"])
-	try:
-		need = frappe.get_doc(
-			{
-				"doctype": "Departmental Need",
-				"need_reference": reference,
-				"organisation_unit": ou,
-				"financial_year": fy["id"],
-				"current_state": STATE_DRAFT,
-				"record_version": 1,
-			}
-		).insert(ignore_permissions=True)
-		version = _create_version(
-			need,
-			values=_content_values(
-				title=title,
-				description=description,
-				expected_operational_result=expected_operational_result,
-				indicative_quantity=indicative_quantity,
-				unit=unit,
-				required_by_date=required_by_date,
-			),
-		)
-		need.current_revision = version.name
-		need.save(ignore_permissions=True)
-		_record_decision(
-			need,
-			fingerprint=_fingerprint(payload),
-			action=ACTION_CREATE,
-			prior=STATE_DRAFT,
-			result=STATE_DRAFT,
-			principal=principal,
-			idempotency_key=idempotency_key,
-			assignment=assignment,
-			version=version.name,
-		)
-		return _result(need, action=ACTION_CREATE)
-	finally:
-		frappe.db.sql("select release_lock(%s)", lock_name)
+	reference = _next_reference(fy["id"])
+	# the Departmental Need allocation lock is held to commit, so the creation, the reference and the insert are one unit (RG-21)
+	# A duplicate of a create that committed while this request waited for
+	# the creation lock is answered with the original Need (AUD-XC-130).
+	if replay := command.replay(locking=True):
+		return replay
+	need = frappe.get_doc(
+		{
+			"doctype": "Departmental Need",
+			"need_reference": reference,
+			"organisation_unit": ou,
+			"financial_year": fy["id"],
+			"current_state": STATE_DRAFT,
+			"record_version": 1,
+		}
+	).insert(ignore_permissions=True)
+	version = _create_version(
+		need,
+		values=_content_values(
+			title=title,
+			description=description,
+			expected_operational_result=expected_operational_result,
+			indicative_quantity=indicative_quantity,
+			unit=unit,
+			required_by_date=required_by_date,
+			estimated_total_cost=estimated_total_cost,
+			fiscal_year=fy["id"],
+		),
+	)
+	need.current_revision = version.name
+	need.save(ignore_permissions=True)
+	_record_decision(
+		need,
+		fingerprint=command.fingerprint,
+		action=ACTION_CREATE,
+		prior=STATE_DRAFT,
+		result=STATE_DRAFT,
+		principal=principal,
+		idempotency_key=idempotency_key,
+		assignment=assignment,
+		version=version.name,
+	)
+	return _result(need, action=ACTION_CREATE)
 
 
+@needs_command
 def update_need(
 	*,
 	need: str,
@@ -589,6 +694,7 @@ def update_need(
 	indicative_quantity: float | None = None,
 	unit: str = "",
 	required_by_date: str | None = None,
+	estimated_total_cost: Any = None,
 	expected_version: int,
 	idempotency_key: str,
 	user: str | None = None,
@@ -597,13 +703,15 @@ def update_need(
 	# Captured before any local is bound, so the digest is exactly the
 	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
 	payload = dict(locals())
-	if replay := _existing(idempotency_key, payload):
-		return replay
 	principal = actor(user)
+	command = _Command("update_need", principal, idempotency_key, payload)
 	doc = _locked_need(need)
-	before_hash = _state_hash(doc)
-	_check_version(doc, expected_version)
 	assignment = require_author_command(doc, principal)
+	if replay := command.replay(need=doc):
+		return replay
+	before_hash = _state_hash(doc)
+	if replay := command.check_version(doc, expected_version):
+		return replay
 	if doc.current_state == STATE_ACCEPTED:
 		version, action = _require_open_successor(doc), ACTION_SAVE_SUCCESSOR
 	elif doc.current_state in {STATE_DRAFT, STATE_RETURNED}:
@@ -621,13 +729,15 @@ def update_need(
 			indicative_quantity=indicative_quantity,
 			unit=unit,
 			required_by_date=required_by_date,
+			estimated_total_cost=estimated_total_cost,
+			fiscal_year=doc.financial_year,
 		)
 	)
 	version.save(ignore_permissions=True)
 	_bump(doc)
 	_record_decision(
 		doc,
-		fingerprint=_fingerprint(payload),
+		fingerprint=command.fingerprint,
 		action=action,
 		prior=doc.current_state,
 		result=doc.current_state,
@@ -640,6 +750,7 @@ def update_need(
 	return _result(doc, action=action)
 
 
+@needs_command
 def submit_need(
 	*, need: str, expected_version: int, idempotency_key: str, user: str | None = None
 ) -> dict[str, Any]:
@@ -647,13 +758,15 @@ def submit_need(
 	# Captured before any local is bound, so the digest is exactly the
 	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
 	payload = dict(locals())
-	if replay := _existing(idempotency_key, payload):
-		return replay
 	principal = actor(user)
+	command = _Command("submit_need", principal, idempotency_key, payload)
 	doc = _locked_need(need)
-	before_hash = _state_hash(doc)
-	_check_version(doc, expected_version)
 	assignment = require_author_command(doc, principal)
+	if replay := command.replay(need=doc):
+		return replay
+	before_hash = _state_hash(doc)
+	if replay := command.check_version(doc, expected_version):
+		return replay
 	prior = doc.current_state
 	if prior == STATE_ACCEPTED:
 		# §5.2 — the accepted version stays effective, so the root state does not
@@ -684,7 +797,7 @@ def submit_need(
 	task = _open_task(doc, task_type=task_type, version=version.name)
 	_record_decision(
 		doc,
-		fingerprint=_fingerprint(payload),
+		fingerprint=command.fingerprint,
 		action=action,
 		prior=prior,
 		result=target,
@@ -700,6 +813,7 @@ def submit_need(
 	return _result(doc, action=action, task=task.name)
 
 
+@needs_command
 def review_need(
 	*,
 	need: str,
@@ -720,13 +834,15 @@ def review_need(
 	# Captured before any local is bound, so the digest is exactly the
 	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
 	payload = dict(locals())
-	if replay := _existing(idempotency_key, payload):
-		return replay
 	principal = actor(user)
+	command = _Command("review_need", principal, idempotency_key, payload)
 	doc = _locked_need(need)
-	before_hash = _state_hash(doc)
-	_check_version(doc, expected_version)
 	assignment = require_review_command(doc, principal)
+	if replay := command.replay(need=doc):
+		return replay
+	before_hash = _state_hash(doc)
+	if replay := command.check_version(doc, expected_version):
+		return replay
 	# NDS-BR-006 / NDS-AC-010 — the maker of a version may never decide it. This
 	# is unconditional and rechecked on the server, never inferred from the UI.
 	if is_owner(doc, principal):
@@ -760,6 +876,8 @@ def review_need(
 	prior = doc.current_state
 	# NDS-BR-011 — return and decline require a reason; accept collects none.
 	reason_text = _require_reason(reason) if action in REASON_REQUIRED_ACTIONS else ""
+	if decision == "accept":
+		_recheck_for_acceptance(version)
 	_consume_task(task, doc.name, task_type, decision_token)
 	_set_version_status(version, revision_status)
 	superseded, successor, earlier = "", "", None
@@ -788,7 +906,7 @@ def review_need(
 	_bump(doc, target)
 	_record_decision(
 		doc,
-		fingerprint=_fingerprint(payload),
+		fingerprint=command.fingerprint,
 		action=action,
 		prior=prior,
 		result=target,
@@ -821,6 +939,7 @@ def _content_payload_for_copy(version) -> dict[str, Any]:
 	return {field: version.get(field) for field in REVISION_CONTENT_FIELDS}
 
 
+@needs_command
 def withdraw_need(
 	*,
 	need: str,
@@ -833,13 +952,15 @@ def withdraw_need(
 	# Captured before any local is bound, so the digest is exactly the
 	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
 	payload = dict(locals())
-	if replay := _existing(idempotency_key, payload):
-		return replay
 	principal = actor(user)
+	command = _Command("withdraw_need", principal, idempotency_key, payload)
 	doc = _locked_need(need)
-	before_hash = _state_hash(doc)
-	_check_version(doc, expected_version)
 	assignment = require_author_command(doc, principal)
+	if replay := command.replay(need=doc):
+		return replay
+	before_hash = _state_hash(doc)
+	if replay := command.check_version(doc, expected_version):
+		return replay
 	if doc.current_state not in {STATE_DRAFT, STATE_RETURNED}:
 		fail(
 			"NDS_STATE_CONFLICT",
@@ -850,7 +971,7 @@ def withdraw_need(
 	_bump(doc, STATE_WITHDRAWN)
 	_record_decision(
 		doc,
-		fingerprint=_fingerprint(payload),
+		fingerprint=command.fingerprint,
 		action=ACTION_WITHDRAW,
 		prior=prior,
 		result=STATE_WITHDRAWN,
@@ -866,6 +987,7 @@ def withdraw_need(
 # --- §5.2 accepted successor lifecycle -------------------------------------
 
 
+@needs_command
 def create_accepted_need_successor(
 	*, need: str, expected_version: int, idempotency_key: str, user: str | None = None
 ) -> dict[str, Any]:
@@ -877,13 +999,15 @@ def create_accepted_need_successor(
 	# Captured before any local is bound, so the digest is exactly the
 	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
 	payload = dict(locals())
-	if replay := _existing(idempotency_key, payload):
-		return replay
 	principal = actor(user)
+	command = _Command("create_accepted_need_successor", principal, idempotency_key, payload)
 	doc = _locked_need(need)
-	before_hash = _state_hash(doc)
-	_check_version(doc, expected_version)
 	assignment = require_author_command(doc, principal)
+	if replay := command.replay(need=doc):
+		return replay
+	before_hash = _state_hash(doc)
+	if replay := command.check_version(doc, expected_version):
+		return replay
 	if doc.current_state != STATE_ACCEPTED or not doc.current_accepted_revision:
 		fail("NDS_STATE_CONFLICT", "Only an Accepted for planning Need may be updated.")
 	if _open_successor(doc):
@@ -899,7 +1023,7 @@ def create_accepted_need_successor(
 	_bump(doc)
 	_record_decision(
 		doc,
-		fingerprint=_fingerprint(payload),
+		fingerprint=command.fingerprint,
 		action=ACTION_CREATE_SUCCESSOR,
 		prior=STATE_ACCEPTED,
 		result=STATE_ACCEPTED,
@@ -914,6 +1038,7 @@ def create_accepted_need_successor(
 	return result
 
 
+@needs_command
 def cancel_accepted_need_successor(
 	*,
 	need: str,
@@ -929,13 +1054,15 @@ def cancel_accepted_need_successor(
 	# Captured before any local is bound, so the digest is exactly the
 	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
 	payload = dict(locals())
-	if replay := _existing(idempotency_key, payload):
-		return replay
 	principal = actor(user)
+	command = _Command("cancel_accepted_need_successor", principal, idempotency_key, payload)
 	doc = _locked_need(need)
-	before_hash = _state_hash(doc)
-	_check_version(doc, expected_version)
 	assignment = require_author_command(doc, principal)
+	if replay := command.replay(need=doc):
+		return replay
+	before_hash = _state_hash(doc)
+	if replay := command.check_version(doc, expected_version):
+		return replay
 	successor = _require_open_successor(doc)
 	if successor.revision_status != REVISION_DRAFT:
 		fail("NDS_STATE_CONFLICT", "Only a Draft update may be cancelled.")
@@ -944,7 +1071,7 @@ def cancel_accepted_need_successor(
 	_bump(doc)
 	_record_decision(
 		doc,
-		fingerprint=_fingerprint(payload),
+		fingerprint=command.fingerprint,
 		action=ACTION_CANCEL_SUCCESSOR,
 		prior=STATE_ACCEPTED,
 		result=STATE_ACCEPTED,
@@ -997,6 +1124,23 @@ def check_withdrawal_dependency(need: str, accepted_revision: str) -> dict[str, 
 	}
 
 
+def read_withdrawal_dependency(need: str, accepted_revision: str, user: str | None = None) -> dict[str, Any]:
+	"""§8.1 `check_accepted_need_withdrawal_dependency` for a reader.
+
+	The same view scope as `get_departmental_need` (NDS-BR-019): a person who
+	cannot read the Need learns nothing about it, not even that it exists (§9).
+	The commands that already hold the right to act call
+	`check_withdrawal_dependency` directly.
+	"""
+	principal = actor(user)
+	name = cstr(need).strip()
+	if not frappe.db.exists("Departmental Need", name):
+		fail("NDS_SCOPE_DENIED", "Departmental Need not found.")
+	require_view(frappe.get_doc("Departmental Need", name), principal)
+	return check_withdrawal_dependency(name, accepted_revision)
+
+
+@needs_command
 def request_withdrawal(
 	*,
 	need: str,
@@ -1009,13 +1153,15 @@ def request_withdrawal(
 	# Captured before any local is bound, so the digest is exactly the
 	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
 	payload = dict(locals())
-	if replay := _existing(idempotency_key, payload):
-		return replay
 	principal = actor(user)
+	command = _Command("request_withdrawal", principal, idempotency_key, payload)
 	doc = _locked_need(need)
-	before_hash = _state_hash(doc)
-	_check_version(doc, expected_version)
 	assignment = require_author_command(doc, principal)
+	if replay := command.replay(need=doc):
+		return replay
+	before_hash = _state_hash(doc)
+	if replay := command.check_version(doc, expected_version):
+		return replay
 	if doc.current_state != STATE_ACCEPTED:
 		fail(
 			"NDS_STATE_CONFLICT",
@@ -1047,7 +1193,7 @@ def request_withdrawal(
 	_bump(doc)
 	_record_decision(
 		doc,
-		fingerprint=_fingerprint(payload),
+		fingerprint=command.fingerprint,
 		action=ACTION_REQUEST_WITHDRAWAL,
 		prior=STATE_ACCEPTED,
 		result=STATE_ACCEPTED,
@@ -1066,6 +1212,7 @@ def request_withdrawal(
 	return result
 
 
+@needs_command
 def decide_withdrawal(
 	*,
 	need: str,
@@ -1087,13 +1234,15 @@ def decide_withdrawal(
 	# Captured before any local is bound, so the digest is exactly the
 	# caller's arguments (§9 NDS_IDEMPOTENCY_CONFLICT).
 	payload = dict(locals())
-	if replay := _existing(idempotency_key, payload):
-		return replay
 	principal = actor(user)
+	command = _Command("decide_withdrawal", principal, idempotency_key, payload)
 	doc = _locked_need(need)
-	before_hash = _state_hash(doc)
-	_check_version(doc, expected_version)
 	assignment = require_review_command(doc, principal)
+	if replay := command.replay(need=doc):
+		return replay
+	before_hash = _state_hash(doc)
+	if replay := command.check_version(doc, expected_version):
+		return replay
 	if doc.current_state != STATE_ACCEPTED:
 		fail(
 			"NDS_STATE_CONFLICT",
@@ -1160,7 +1309,7 @@ def decide_withdrawal(
 	_bump(doc, target)
 	_record_decision(
 		doc,
-		fingerprint=_fingerprint(payload),
+		fingerprint=command.fingerprint,
 		action=action,
 		prior=STATE_ACCEPTED,
 		result=target,
@@ -1201,8 +1350,9 @@ def _locked_withdrawal_request(task: str, need: str):
 	)
 	if not name:
 		fail("NDS_STATE_CONFLICT", "This task carries no withdrawal request.")
-	frappe.db.sql("select name from `tabNeed Withdrawal Request` where name=%s for update", name)
-	request = frappe.get_doc("Need Withdrawal Request", name)
+	request = _lock("Need Withdrawal Request", name)
+	if request is None:
+		fail("NDS_STATE_CONFLICT", "This task carries no withdrawal request.")
 	if request.departmental_need != need or request.status not in OPEN_WITHDRAWAL_STATUSES:
 		fail("NDS_STATE_CONFLICT", "This withdrawal request is not open for decision.")
 	return request

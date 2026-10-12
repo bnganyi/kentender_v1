@@ -32,7 +32,6 @@
   "procurement_package_ref",
   "std_template_version_ref",
   "tender_std_instance_ref",
-  "tm2_tender_ref",
   "publication_snapshot_ref",
   "opening_readiness_ref",
   "section_journey_steps",
@@ -207,12 +206,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "tm2_tender_ref",
-   "fieldtype": "Data",
-   "label": "TM2 Tender Ref",
-   "search_index": 1
-  },
-  {
    "fieldname": "publication_snapshot_ref",
    "fieldtype": "Data",
    "label": "Publication Snapshot Ref",
@@ -379,7 +372,7 @@
   }
  ],
  "row_format": "Dynamic",
- "search_fields": "journey_code,journey_title,procuring_entity_code,tm2_tender_ref",
+ "search_fields": "journey_code,journey_title,procuring_entity_code",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

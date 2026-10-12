@@ -24,6 +24,7 @@ from frappe.utils import cint, cstr
 
 from kentender_procurement.proceedings.services import clock, owners, profiles, records, sessions, signing
 from kentender_procurement.proceedings.services.errors import fail, unverified
+from kentender_procurement.services import sequence
 
 VERSION = "Proceeding Minutes Version"
 ATTESTATION = "Proceeding Attestation"
@@ -74,7 +75,7 @@ def freeze_record(*, owner_type: str, owner_id: str, expected_version: int, reco
 		_validate(doc, record_kind, content, targets)
 		if current(doc.name, record_kind):
 			fail("PRC_VERSION_CONFLICT", {"reason": "frozen_version_exists", "record_kind": record_kind})
-		number = frappe.db.count(VERSION, {"proceeding": doc.name, "record_kind": record_kind}) + 1
+		number = sequence.next_count(VERSION, {"proceeding": doc.name, "record_kind": record_kind})
 		version = frappe.get_doc({
 			"doctype": VERSION, "minutes_version_id": f"{doc.name}-{PREFIX[record_kind]}{number:02d}", "proceeding": doc.name, "version_number": number,
 			"record_kind": record_kind, "owner_reference": cstr(owner_reference), "content": content, "content_digest": records.text_digest(content),
@@ -148,7 +149,7 @@ def record_proof(*, owner_type: str, owner_id: str, expected_version: int, recor
 			"attestation_id")
 		if existing:
 			return records.summary(doc, "", attestation_id=existing, verification_result=signing.VERIFIED)
-		number = frappe.db.count(ATTESTATION, {"proceeding": doc.name}) + 1
+		number = sequence.next_count(ATTESTATION, {"proceeding": doc.name})
 		attestation_id = f"{doc.name}-P{number:04d}"
 		proof = signing.attest(member=actor, target_id=target_id, target_digest=target_digest, minutes_version=record_version, action=action,
 			correlation_id=attestation_id)
@@ -214,7 +215,7 @@ def append_correction(*, owner_type: str, owner_id: str, expected_version: int, 
 		fields = {f: "Required." for f, v in (("kind", kind), ("correct_information", correct_information), ("reason", reason)) if not cstr(v).strip()}
 		if fields:
 			fail("PRC_EVIDENCE_INCOMPLETE", {"fields": fields})
-		number = frappe.db.count(SUPPLEMENT, {"proceeding": doc.name}) + 1
+		number = sequence.next_count(SUPPLEMENT, {"proceeding": doc.name})
 		supplement_id = f"{doc.name}-C{number:02d}"
 		records.insert(frappe.get_doc({
 			"doctype": SUPPLEMENT, "supplement_id": supplement_id, "proceeding": doc.name, "original_version": record_version, "kind": cstr(kind).strip(),

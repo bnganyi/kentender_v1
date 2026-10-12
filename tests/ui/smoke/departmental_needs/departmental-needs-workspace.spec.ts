@@ -79,20 +79,22 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		await page.locator('[data-testid="nds-create-need"]').click();
 		await expectScreen(page, "editor");
 
-		// §2.2 / NDS-AC-001 — exactly the six requester-entered values, and none
-		// of the fields §1.1 removed.
+		// §2.2 / NDS-AC-001 — exactly the seven requester-entered values (v1.17: the
+		// six source facts and the estimated cost), and none of the fields §1.1 removed.
 		for (const field of [
 			"nds-title",
 			"nds-description",
 			"nds-result",
 			"nds-quantity",
 			"nds-unit",
+			"nds-estimated-cost",
 			"nds-required-by",
 		]) {
 			await expect(page.locator(`[data-testid="${field}"]`)).toBeVisible();
 		}
-		// NDS-AC-007 / NDS-AC-029 — no funding, cost, location or attachment.
-		for (const forbidden of ["indicative_cost", "currency", "budget_line", "attachment"]) {
+		// NDS-AC-007 / NDS-AC-029 — no funding, Budget Line, currency, location or
+		// attachment (v1.17: the estimated cost is the one amount a Need holds).
+		for (const forbidden of ["indicative_cost", "indicative_amount", "currency", "budget_line", "funding_source", "attachment"]) {
 			await expect(page.locator(`[name="${forbidden}"]`)).toHaveCount(0);
 		}
 		await expect(page.getByText(/attach/i)).toHaveCount(0);
@@ -128,7 +130,7 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		await page.locator('[data-testid="nds-create-need"]').click();
 		await expectScreen(page, "editor");
 		await expect(page).toHaveURL(/\/departmental-needs\/new$/);
-		for (const field of ["nds-title", "nds-description", "nds-result", "nds-quantity", "nds-required-by"]) {
+		for (const field of ["nds-title", "nds-description", "nds-result", "nds-quantity", "nds-estimated-cost", "nds-required-by"]) {
 			await expect(page.locator(`[data-testid="${field}"]`)).toHaveValue("");
 		}
 		await expect(page.getByText("Returned for correction")).toHaveCount(0);

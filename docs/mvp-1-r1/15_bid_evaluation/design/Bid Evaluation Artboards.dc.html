@@ -135,6 +135,7 @@ a:hover { color: var(--color-accent-2-800); }
                               <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="4">
                                 <td class="{{ c.td }}">
                                   <sc-if value="{{ c.txt }}">{{ c.t }}</sc-if>
+                                  <sc-if value="{{ c.note }}"><p style="margin:4px 0 0;font-size:13px;color:var(--color-text-muted, #525252)">{{ c.note }}</p></sc-if>
                                   <sc-if value="{{ c.strong }}"><strong>{{ c.t }}</strong></sc-if><sc-if value="{{ c.person }}"><span style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap"><span class="kt-sidebar-avatar">{{ c.ini }}</span>{{ c.t }}</span></sc-if>
                                   <sc-if value="{{ c.chip }}"><span class="kt-status {{ c.cls }}">{{ c.t }}</span></sc-if>
                                   <sc-if value="{{ c.btn }}"><button type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:13px">{{ c.t }}</button></sc-if>

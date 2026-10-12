@@ -22,6 +22,7 @@ from typing import Any
 import frappe
 
 from kentender_procurement.bid_opening.services import appointment, clock, custody, prc, records
+from kentender_procurement.services import sequence
 
 PARTICIPATION = "Opening Custody Participation"
 
@@ -31,7 +32,7 @@ def confirm(doc, user: str, key: str) -> dict[str, Any]:
 
 	row = appointment.member(doc.name, user)
 	roster = appointment.roster_digest(doc.name)
-	number = frappe.db.count(PARTICIPATION, {"opening_case": doc.name}) + 1
+	number = sequence.next_count(PARTICIPATION, {"opening_case": doc.name})
 	participation_id = f"{doc.opening_id}-CUS-{number:03d}"
 	answer = custody.confirm_participation(tender=doc.tender, member=user, independent=bool(row and row["is_independent"]), manifest_digest=doc.manifest_digest,
 		roster_digest=roster, correlation_id=participation_id)

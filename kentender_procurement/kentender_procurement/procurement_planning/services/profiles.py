@@ -25,6 +25,7 @@ from frappe.utils import add_days, cstr, date_diff, flt, getdate
 
 from kentender_core.services import procurement_settings as settings
 from kentender_procurement.procurement_planning.errors import fail
+from kentender_procurement.procurement_planning.services import money
 
 PERIOD_KEYS: tuple[str, ...] = (
 	"tendering_period_days",
@@ -229,7 +230,7 @@ def method_conditions(method: dict[str, Any], *, procurement_category: str, plan
 	submission only."""
 	if not method.get("found"):
 		return {"available": False, "admissible": False, "evidence_complete": False, "results": [], "failed": [], "missing_evidence": []}
-	value = Decimal(str(flt(planned_value)))
+	value = money.as_decimal(planned_value)
 	evidence = _evidence_by_condition(evidence_rows)
 	results, failed, missing = [], [], []
 	for condition in method.get("conditions", []):
@@ -238,7 +239,7 @@ def method_conditions(method: dict[str, Any], *, procurement_category: str, plan
 		cid = cstr(condition.get("condition_id"))
 		row = {"condition_id": cid, "kind": condition.get("kind"), "description": condition.get("description"), "mandatory": bool(condition.get("mandatory")), "statutory_reference": condition.get("statutory_reference", "")}
 		if condition.get("kind") == "Known fact":
-			minimum, maximum = Decimal(str(flt(condition.get("minimum_amount")))), Decimal(str(flt(condition.get("maximum_amount"))))
+			minimum, maximum = money.as_decimal(condition.get("minimum_amount")), money.as_decimal(condition.get("maximum_amount"))
 			ok = (minimum <= 0 or value >= minimum) and (maximum <= 0 or value <= maximum)
 			row.update(result="Met" if ok else "Not met", limit=str(maximum) if maximum > 0 else "", cumulative_basis=condition.get("cumulative_basis", "None"))
 			if not ok and row["mandatory"]:

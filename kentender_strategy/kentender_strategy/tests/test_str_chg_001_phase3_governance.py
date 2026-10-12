@@ -21,7 +21,7 @@ from uuid import uuid4
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from kentender_strategy.tests.fixtures import pin_review_date
+from kentender_strategy.tests.fixtures import pin_review_date, open_strategy_write_window, purge_record
 
 from kentender_core.services import responsibility_administration as administration
 from kentender_core.services.business_role_registry import REGISTRY, SCOPE_SITE
@@ -56,7 +56,8 @@ class TestGovernanceEnforcement(FrappeTestCase):
 	service must honour exactly the granted responsibility and nothing else."""
 
 	def setUp(self):
-		pin_review_date(self)
+		open_strategy_write_window(self)
+		pin_review_date(self, "2030-01-01")
 		ensure_strategy_governance_roles()
 		self.suffix = uuid4().hex[:8]
 		self._cleanup: list[tuple[str, str]] = []
@@ -64,7 +65,7 @@ class TestGovernanceEnforcement(FrappeTestCase):
 	def tearDown(self):
 		frappe.set_user("Administrator")
 		for doctype, name in reversed(self._cleanup):
-			frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+			purge_record(doctype, name)
 
 	def _track(self, doc):
 		self._cleanup.append((doc.doctype, doc.name))

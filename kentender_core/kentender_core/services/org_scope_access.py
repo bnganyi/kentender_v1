@@ -84,24 +84,28 @@ def user_scope_rows(user: str | None = None) -> list[dict[str, Any]]:
 	)
 
 
+def _site_entity_if_responsible(user: str) -> set[str]:
+	from kentender_core.services.authorization import active_assignment_rows
+
+	if not active_assignment_rows(user):
+		return set()
+	site_pe = frappe.db.get_single_value("Site Procuring Entity", "pe_code")
+	if site_pe and frappe.db.exists("Procuring Entity", site_pe):
+		return {site_pe}
+	return set()
+
+
 def permitted_procuring_entities(user: str | None = None) -> set[str] | None:
-	"""None = unrestricted (admin). Empty set = no PE assignments."""
+	"""None = unrestricted (admin). Empty set = no PE assignments.
+
+	AUTH-ADR-001 §11.5/§19 (AUD-XC-021, RG-32): no Frappe User Permission fallback and no User Scope
+	Assignment. One site is one Procuring Entity, so a user holding a responsibility in force works in
+	that entity; a user holding none works in none, whatever User Permission or legacy User Scope
+	Assignment rows exist."""
 	user = user or frappe.session.user
 	if _is_admin(user):
 		return None
-	rows = user_scope_rows(user)
-	if not rows:
-		# Fall back to User Permission PEs if no scope rows yet. ALL rows: the
-		# earlier single-row get_value silently narrowed a user permitted
-		# several entities to one arbitrary one (CTX-CHG-001 rule 1 — the
-		# permissions, not an accident of row order, determine access).
-		pes = frappe.get_all(
-			"User Permission",
-			filters={"user": user, "allow": "Procuring Entity"},
-			pluck="for_value",
-		)
-		return {pe for pe in pes if pe}
-	return {r.procuring_entity for r in rows if r.procuring_entity}
+	return _site_entity_if_responsible(user)
 
 
 def permitted_org_units(

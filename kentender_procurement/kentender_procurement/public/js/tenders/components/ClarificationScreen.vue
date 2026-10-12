@@ -27,9 +27,9 @@
 					<p v-if="errors.response" class="tnd-field-error" data-testid="tnd-clar-error-response">{{ errors.response }}</p>
 				</div>
 				<div class="field"><label id="tnd-clar-changes-label">Would this response change the published Tender?</label>
-					<div class="tnd-seg" role="radiogroup" aria-labelledby="tnd-clar-changes-label">
-						<label class="tnd-seg-opt"><input type="radio" name="tnd-clar-changes" :checked="!form.changes" :disabled="awaitingAddendum" data-testid="tnd-clar-changes-no" @change="form.changes = false" />No</label>
-						<label class="tnd-seg-opt"><input type="radio" name="tnd-clar-changes" :checked="form.changes" :disabled="awaitingAddendum" data-testid="tnd-clar-changes-yes" @change="form.changes = true" />Yes</label>
+					<div class="seg" role="radiogroup" aria-labelledby="tnd-clar-changes-label">
+						<label class="seg-opt"><input type="radio" name="tnd-clar-changes" :checked="!form.changes" :disabled="awaitingAddendum" data-testid="tnd-clar-changes-no" @change="form.changes = false" />No</label>
+						<label class="seg-opt"><input type="radio" name="tnd-clar-changes" :checked="form.changes" :disabled="awaitingAddendum" data-testid="tnd-clar-changes-yes" @change="form.changes = true" />Yes</label>
 					</div>
 				</div>
 				<div v-if="!form.changes" class="field" data-testid="tnd-clar-audience"><label id="tnd-clar-audience-label">Who should receive this answer?</label>

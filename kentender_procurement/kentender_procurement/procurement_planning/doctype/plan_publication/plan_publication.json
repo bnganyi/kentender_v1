@@ -82,7 +82,7 @@
    "fieldname": "publication_state",
    "fieldtype": "Select",
    "label": "Publication State",
-   "options": "Pending\nAcknowledged\nFailed\nIndeterminate\nHeld",
+   "options": "Pending\nConfirmed\nAcknowledged\nFailed\nIndeterminate\nHeld",
    "default": "Pending",
    "read_only": 1
   },
@@ -131,15 +131,11 @@
  "permissions": [
   {
    "role": "System Manager",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Administrator",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Procurement Planner",

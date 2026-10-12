@@ -33,6 +33,55 @@ class TestWorkspace(RequisitionCase):
 		self.assertEqual((work["task"], work["action"]), ("Complete request details", "Continue"))
 		self.assertFalse(any(r["plan_item_id"] == item_id for r in draft["ready_to_start"]))
 
+	def test_an_open_requisition_says_its_state_once_and_a_draft_adds_its_next_task(self):
+		_, item_id = fx.active_item()
+		requisition = fx.prepare(item_id)["requisition"]
+		reference = frappe.db.get_value("Procurement Requisition", requisition, "requisition_reference")
+		frappe.set_user(fx.AUTHOR)
+		work = [w for w in read.get_requisition_workspace()["your_work"] if w["requisition"] == requisition]
+		self.assertTrue(work, "a Draft leads Your work for its author")
+		fx.fill_request_information(requisition)
+		fx.add_laptops(requisition)
+		fx.enter_estimates(requisition)
+		fx.apply_standard_package(requisition)
+		fx.send(requisition)
+		frappe.set_user(fx.AUTHOR)
+		row = next(r for r in read.get_requisition_workspace()["ready_to_start"] if r["plan_item_id"] == item_id)
+		self.assertEqual(row["existing"]["summary"], f"{reference} \u00b7 Awaiting department approval")
+		self.assertEqual(row["existing"]["summary"].count("Awaiting department approval"), 1)
+
+	def test_record_details_use_one_label_pattern_show_real_references_and_keep_digests_for_technical_and_auditor(self):
+		"""REQ-CHG-001 v1.18 §13.7A — the Record details facts."""
+		_, item_id = fx.active_item()
+		requisition = fx.submitted(item_id)
+		root = frappe.get_doc("Procurement Requisition", requisition)
+		node = root.strategic_objective_id
+		reference = frappe.db.get_value("Strategy Node", node, "strategy_node_id") if node else ""
+
+		def facts(user: str) -> dict[str, str]:
+			frappe.set_user(user)
+			view = read.get_requisition_record(requisition=requisition)
+			frappe.set_user("Administrator")
+			return {f["label"]: f["value"] for f in view["record_details"]}
+
+		hopf = facts(fx.HOPF)
+		self.assertEqual(
+			list(hopf)[:6],
+			["Requisition reference", "Plan item reference", "Plan version", "Plan item version reference", "Source references", "Strategic objective reference"],
+		)  # the test world's sources are direct entries, so they stay "Source references"; a need origin reads "Departmental need references"
+		self.assertEqual(hopf["Requisition reference"], root.requisition_reference)
+		self.assertEqual(hopf["Plan version"], root.plan_version_id)
+		self.assertTrue(all(v for v in hopf.values()), "no fact is blank")
+		if node:
+			self.assertEqual(hopf["Strategic objective reference"], reference)
+			self.assertNotEqual(hopf["Strategic objective reference"], node, "never the database name")
+		self.assertNotIn("Content digest", hopf)
+		self.assertNotIn("Handoff digest", hopf)
+		self.assertNotIn("Handoff display reference", hopf)
+		# the Technical read keeps the evidence
+		technical = facts("Administrator")
+		self.assertRegex(technical["Content digest"], r"^[0-9a-f]{64}$")
+
 	def test_an_assigned_decision_leads_for_the_hod(self):
 		_, item_id = fx.active_item()
 		requisition = fx.complete_draft(item_id)
@@ -192,3 +241,33 @@ class TestExport(RequisitionCase):
 		self.assertEqual(frappe.db.get_value("Procurement Requisition", requisition, "record_version"), before)
 		frappe.set_user(fx.CONTRIBUTOR)
 		self.assertEqual(read.export_requisition(requisition=requisition)["outcome"], "NOT_FOUND")
+
+
+class TestRecordDetailsLabels(RequisitionCase):
+	def test_a_source_that_is_a_departmental_need_is_labelled_as_one(self):
+		from types import SimpleNamespace
+
+		from kentender_procurement.procurement_requisitions.services import presenters
+
+		root = SimpleNamespace(requisition_reference="REQ-X", plan_item_id="PPI-X", plan_version_id="PLN-X-V1", plan_item_version_id="APIR-X", strategic_objective_id="")
+		lines = [{"plan_item_line_id": "PSA-1", "source_line_id": "NDS-MOH-2027-0004"}]
+		need = presenters.record_details(root=root, version={"drawdown_lines": lines}, projection={"sources": [{"plan_item_line_id": "PSA-1", "source_origin": "Accepted Departmental Need"}]})
+		self.assertIn(("Departmental need references", "NDS-MOH-2027-0004"), [(f["label"], f["value"]) for f in need])
+		direct = presenters.record_details(root=root, version={"drawdown_lines": lines}, projection={"sources": [{"plan_item_line_id": "PSA-1", "source_origin": "Direct Requirement"}]})
+		self.assertIn("Source references", [f["label"] for f in direct])
+		self.assertEqual([f["label"] for f in need if "digest" in f["label"].lower()], [], "digests are opt-in")
+
+
+class TestProcurementOfficerReads(RequisitionCase):
+	"""A Procurement Officer is a site-wide reader (REQ-CHG-001 §3A), so the workspace opens for them. The record types
+	must list the role, or Frappe's own list read refuses it before the scope filter runs (found live on dev as Brian
+	Wafula, who holds only this role: 'Procurement Requisitions could not be loaded')."""
+
+	def test_the_workspace_opens_and_lists_a_sent_requisition(self):
+		_, item_id = fx.active_item()
+		sent = fx.submitted(item_id)
+		frappe.set_user(fx.PROCUREMENT_OFFICER)
+		result = read.get_requisition_workspace(user=fx.PROCUREMENT_OFFICER, filters={"page_size": 100})
+		self.assertNotIn(result.get("outcome"), ("FORBIDDEN", "NOT_FOUND"), result.get("outcome"))
+		self.assertIn(sent, [row["requisition"] for row in result["register"]])
+		self.assertIn(sent, frappe.get_list("Procurement Requisition", pluck="name"))

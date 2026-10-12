@@ -11,7 +11,6 @@
 	letter-spacing: 0.08em;
 	color: var(--kt-color-neutral-700);
 }
-.kt-industry.kt-tsr .tsr-state-heading { font-family: var(--kt-font-heading); font-size: 20px; margin: 12px 0 8px; }
 .kt-industry.kt-tsr .tsr-filter-actions { display: flex; align-items: end; }
 .kt-industry.kt-tsr .tsr-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .kt-industry.kt-tsr .tsr-muted { font-size: 13px; color: var(--kt-color-neutral-700); }

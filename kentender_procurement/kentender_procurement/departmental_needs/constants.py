@@ -51,13 +51,15 @@ MUTABLE_REVISION_STATUSES = frozenset({REVISION_DRAFT})
 # NDS_OPEN_SUCCESSOR_EXISTS) — until it is accepted, declined or withdrawn.
 OPEN_SUCCESSOR_STATUSES = frozenset({REVISION_DRAFT, REVISION_SUBMITTED, REVISION_RETURNED})
 
-# The six requester-entered values (§2.2, §4.3).
+# The seven requester-entered values (§2.2, §4.3): the six source facts and,
+# from NDS-CHG-001 v1.17, the estimated total cost.
 REVISION_CONTENT_FIELDS = (
 	"title",
 	"description",
 	"expected_operational_result",
 	"indicative_quantity",
 	"unit",
+	"estimated_total_cost",
 	"required_by_date",
 )
 

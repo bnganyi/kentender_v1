@@ -89,8 +89,9 @@ def lock(owner_type: str, owner_id: str):
 	name = find(owner_type, owner_id)
 	if not name:
 		fail("PRC_OWNER_UNAVAILABLE")
-	frappe.db.sql("select name from `tabProceeding` where name=%s for update", name)
-	return frappe.get_doc(PROCEEDING, name)
+	# The Proceeding row, locked, as last committed (RG-18, AUD-XC-130): a plain read after the lock would
+	# return this transaction's older snapshot and a stale revision would pass `check_version`.
+	return frappe.get_doc(PROCEEDING, name, for_update=True)
 
 
 def check_version(doc, expected) -> None:
@@ -117,25 +118,52 @@ def summary(doc, event_id: str = "", **extra) -> dict[str, Any]:
 
 def command(name: str, *, owner_type: str, owner_id: str, idempotency_key: str, actor: str, capacity: str, payload: dict[str, Any],
 		body: Callable[[], dict[str, Any]]) -> dict[str, Any]:
-	"""Authorise, then replay or run `body` once for this key."""
+	"""Authorise, then claim the key and run `body` once for it.
+
+	The caller is authorised first, so a recorded result is never answered to someone
+	who may not act. The key is then claimed with a unique insert before `body` runs
+	(RG-18, AUD-XC-131): a duplicate waits for the first request to commit, reads the
+	winner's row with a locking read (a plain read would return its older snapshot) and
+	returns the original result; a key is never read before it is claimed."""
 	owners.require(owner_type, owner_id, actor, capacity)
 	key = cstr(idempotency_key).strip()
 	if not key:
 		fail("PRC_EVIDENCE_INCOMPLETE", {"fields": {"idempotency_key": "A request key is required."}})
 	payload_hash = digest({"command": name, "owner_type": owner_type, "owner_id": owner_id, "actor": actor, **payload})
-	row = frappe.db.get_value(JOURNAL, {"idempotency_key": key}, ["command", "payload_hash", "result_json"], as_dict=True)
-	if row:
-		if row.command != name or row.payload_hash != payload_hash:
-			fail("PRC_VERSION_CONFLICT", {"reason": "idempotency_key_reused"})
-		return json.loads(row.result_json or "{}")
 	with atomic():
+		if not _claim(key, name, payload_hash, actor):
+			return _recorded(key, name, payload_hash)
 		result = body()
-		if result.get("ok") is not False:
-			insert(frappe.get_doc({
-				"doctype": JOURNAL, "idempotency_key": key, "command": name, "payload_hash": payload_hash, "result_json": json.dumps(result, default=str),
-				"actor": owners.user_or_none(actor), "proceeding": cstr(result.get("proceeding")), "recorded_at": clock.now(),
-			}))
+		if result.get("ok") is False:
+			frappe.db.delete(JOURNAL, {"idempotency_key": key})
+		else:
+			frappe.db.set_value(JOURNAL, {"idempotency_key": key}, {"result_json": json.dumps(result, default=str), "proceeding": cstr(result.get("proceeding"))}, update_modified=False)
 	return result
+
+
+def _claim(key: str, name: str, payload_hash: str, actor: str) -> bool:
+	"""Insert the key's journal row; False when a committed row holds it."""
+	savepoint = f"prcj_{uuid4().hex[:12]}"
+	frappe.db.savepoint(savepoint)
+	try:
+		insert(frappe.get_doc({
+			"doctype": JOURNAL, "idempotency_key": key, "command": name, "payload_hash": payload_hash, "result_json": "",
+			"actor": owners.user_or_none(actor), "recorded_at": clock.now(),
+		}))
+	except (frappe.UniqueValidationError, frappe.DuplicateEntryError):
+		frappe.db.rollback(save_point=savepoint)
+		frappe.clear_last_message()
+		return False
+	frappe.db.release_savepoint(savepoint)
+	return True
+
+
+def _recorded(key: str, name: str, payload_hash: str) -> dict[str, Any]:
+	"""The original result of a key that is already claimed; the same key for another command or payload is a conflict."""
+	row = frappe.db.get_value(JOURNAL, {"idempotency_key": key}, ["command", "payload_hash", "result_json"], as_dict=True, for_update=True)
+	if not row or row.command != name or row.payload_hash != payload_hash or not row.result_json:
+		fail("PRC_VERSION_CONFLICT", {"reason": "idempotency_key_reused"})
+	return json.loads(row.result_json)
 
 
 def next_sequence(proceeding: str) -> int:

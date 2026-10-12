@@ -28,6 +28,7 @@ from kentender_procurement.procurement_planning.services import envelope
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.plan_governance import _copy_version_content, _next_plan_version_number
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_PROCUREMENT_PLANNER
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 def _publish_usage_events(version, plan, *, event_suffix: str) -> None:
 	"""§7.1 `NeedPlanningUsageChanged.v1` — "Fully included" for every
@@ -61,6 +62,7 @@ def _publish_usage_events(version, plan, *, event_suffix: str) -> None:
 		)
 
 
+@planning_command
 def _activate_version(version, plan) -> None:
 	"""Invariants 16–18 and 12e — the controlled activation: supersede the
 	predecessor, mark this Version's items Active, seed forecasts from
@@ -83,6 +85,7 @@ def _activate_version(version, plan) -> None:
 	_publish_usage_events(version, plan, event_suffix=f"activate:{version.name}")
 
 
+@planning_command
 def begin_plan_update(*, plan_reference: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§8.2/§5.2 — create/reuse the sole Draft successor from the Active
 	Version, copying its exact items (invariant 22)."""
@@ -140,6 +143,7 @@ def _no_downstream_use(item) -> bool:
 	return not frappe.db.exists("Plan Drawdown Reference", {"plan_item_id": item.plan_item_id, "drawdown_state": "Active"})
 
 
+@planning_command
 def remove_plan_item_in_successor(*, plan_item: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	payload = {"plan_item": plan_item}
@@ -168,6 +172,7 @@ def remove_plan_item_in_successor(*, plan_item: str, expected_record_version, id
 	return result
 
 
+@planning_command
 def cancel_plan_update(*, plan_reference: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§8.2 / invariant 21 — cancel the successor; the Active Version and
 	every Budget balance are unchanged."""

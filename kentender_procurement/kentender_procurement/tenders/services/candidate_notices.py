@@ -171,7 +171,7 @@ def retry_failed_candidate_notice(*, tender: str, notice: str, expected_record_v
 	actor = authz.actor(user)
 	authz.require_any_site_role((ROLE_PROCUREMENT_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION), actor)
 	payload = {"tender": tender, "notice": notice}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="RetryFailedCandidateNotice", actor=actor)
 	if replay:
 		return replay
 	root, _version = draft_commands.load(tender)

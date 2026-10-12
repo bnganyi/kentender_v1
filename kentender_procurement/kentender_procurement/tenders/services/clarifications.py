@@ -123,7 +123,7 @@ def respond_to_tender_clarification(*, tender: str, clarification: str, response
 	assignment, role = authz.require_any_site_role((ROLE_PROCUREMENT_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION), actor)
 	affects = affects_published_tender in (True, 1, "1", "true", "True", "Yes")
 	payload = {"tender": tender, "clarification": clarification, "response": response, "affects_published_tender": affects, "response_audience": response_audience, "required_addendum": required_addendum}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="RespondToTenderClarification", actor=actor)
 	if replay:
 		return replay
 	root, version = draft_commands.load(tender)

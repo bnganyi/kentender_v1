@@ -11,28 +11,30 @@ Planning-era callers with no drawdown line), all or none, inside the caller's
 transaction — it never commits. Same key + same payload returns the original
 mapping; same key + changed payload is refused (BUD-BR-011).
 
-Caller authority — the assigned Finance Confirmation Officer or Head of
-Procurement Function Site-wide responsibility, task, source-set and amount
-scope — is authorised here directly via `authorise_record()`; Budget never
-trusts a caller's own route visibility as authority (§12.6). No Procuring
-Entity or Fiscal Year scope participates (BUD-BR-001).
+Caller authority (AUD-XC-012, AUD-BUD-012) — these two functions are
+in-process calls made only by the Procurement Requisitions service
+principal (`budget_service_principal`), never a web endpoint and never a
+session role: a Finance Confirmation Officer or Head of Procurement Function
+session without the principal is refused with `BUDGET_DOWNSTREAM_FORBIDDEN`.
+The caller identity recorded on the reservation (`calling_module`,
+`caller_reference`) comes from the authenticated principal, not from a value
+the caller declares. The check token is bound to the actor who checked, the
+requisition it was checked for and the Budget Version each line was on
+(BUD-013); a different actor, requisition or a Budget revision in between is
+`BUDGET_CHECK_STALE` / refused. No Procuring Entity or Fiscal Year scope
+participates (BUD-BR-001).
 
-Two callers exist as of REQ-CHG-001 v1.6 D1: Procurement Planning's own
-`check_plan_affordability` path never reaches these two functions at all
-(BUD-CHG-001 v1.6 §8.1 — Planning checks, never reserves); Procurement
-Requisitions is the first and only module that calls `check_funding` then
-`reserve_funding` for real, at `AuthoriseRequisition` (REQ-CHG-001 v1.6
-§9.1A). `calling_module` and `caller_reference` are recorded rather than
-hard-coded so the audit trail and the reservation-conflict rule both name
-the actual caller. `finance_task` is optional: Planning-era callers supply
-one, Requisitions does not (it has no Finance task at all).
+Procurement Planning's own `check_plan_affordability` path never reaches
+these two functions (BUD-CHG-001 v1.6 §8.1 — Planning checks, never
+reserves); Procurement Requisitions is the only module that calls
+`check_funding` then `reserve_funding`, at `AuthoriseRequisition`.
+`finance_task` is optional and unused by Requisitions.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
-import re
 from decimal import Decimal
 from typing import Any
 
@@ -40,18 +42,21 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from kentender_budget.services.budget_write_family import budget_write
 from kentender_budget.services.budget_line_contracts import format_kes_full
+from kentender_budget.services.budget_locking import lock_budgets_of_lines
+from kentender_budget.services.budget_money import parse_money, stored
 from kentender_budget.services.budget_reference import allocate_reservation_reference
 
 _CHECK_TOKEN_TTL_SECONDS = 300
 
 # BUD-CHG-001 v1.10 §4.8 Money at this boundary: currency units, KES scale 2,
-# at most 18 integral digits. Accepted: a plain decimal string, an int or a
-# Decimal. Refused without rounding: a float, exponent notation, NaN/Infinity,
-# excess scale, overflow. Budget's own storage is still Currency (its FU-30),
-# so stored positions are read back through `_stored_money`.
+# at most 18 integral digits (12 until storage is widened, AUD-XC-129).
+# Accepted: a plain decimal string, an int or a Decimal. Refused without
+# rounding: a float, exponent notation, NaN/Infinity, excess scale, overflow.
+# The rules live in `budget_money` (one parser for every Budget boundary);
+# stored positions are read back through `_stored_money`.
 _MONEY_SCALE = 2
-_MONEY_TEXT = re.compile(r"^\d{1,18}(\.\d{1,2})?$")
 _QUANTUM = Decimal(1).scaleb(-_MONEY_SCALE)
 
 
@@ -64,27 +69,16 @@ def _money_error(value) -> None:
 
 
 def _exact_money(value) -> Decimal:
-	if isinstance(value, bool) or isinstance(value, float) or value is None:
+	# This module's callers (Requisitions) send decimal strings: a binary float
+	# is refused outright here, unlike the editor's JSON numbers.
+	if isinstance(value, float):
 		_money_error(value)
-	if isinstance(value, int):
-		amount = Decimal(value)
-	elif isinstance(value, Decimal):
-		amount = value
-	else:
-		text = str(value).strip()
-		if not _MONEY_TEXT.match(text):
-			_money_error(value)
-		amount = Decimal(text)
-	if not amount.is_finite() or amount != amount.quantize(_QUANTUM) or len(str(int(abs(amount)))) > 18:
-		_money_error(value)
-	if amount <= 0:
-		frappe.throw(_("Requested amount must be greater than zero"), frappe.ValidationError, title="BUDGET_MONEY_PRECISION_INVALID")
-	return amount.quantize(_QUANTUM)
+	return parse_money(value, scale=_MONEY_SCALE, field="amount")
 
 
 def _stored_money(value) -> Decimal:
 	"""A Currency value read back from Budget's own storage."""
-	return Decimal(repr(flt(value))).quantize(_QUANTUM)
+	return stored(value, scale=_MONEY_SCALE)
 
 
 def _text(amount: Decimal) -> str:
@@ -96,34 +90,18 @@ def _payload_digest(context: dict[str, Any], rows: list[dict[str, Any]]) -> str:
 	return hashlib.sha256(body.encode()).hexdigest()
 
 
-# REQ-CHG-001 v1.6 D1 — either Site-wide responsibility may call
-# check_funding/reserve_funding: Finance Confirmation Officer (the original
-# Planning-era caller) or Head of Procurement Function (Procurement
-# Requisitions' authorising office). The error title stays
-# BUDGET_FINANCE_TASK_DENIED — it is a closed vocabulary (§13) naming the
-# funding boundary's own denial, not either caller's identity.
-ROLE_HEAD_OF_PROCUREMENT_FUNCTION = "Head of Procurement Function"
-_CHECK_RESERVE_CALLER_ROLES = (
-	"Finance Confirmation Officer",
-	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
-)
+def _authenticate(caller, action: str, caller_reference: str = "") -> tuple[str, str]:
+	"""BUD v1.12 §7 — Budget authenticates the calling service principal, not
+	the session role. Returns (calling module label, caller reference)."""
+	from kentender_budget.services.budget_service_principal import PRINCIPAL_LABEL, refuse, require_principal
 
-
-def _require_check_reserve_capability() -> None:
-	"""§7/§17.1 / REQ-CHG-001 v1.6 D1 — Finance Confirmation Officer or Head
-	of Procurement Function, via `authorise_record()`. No Procuring Entity,
-	Fiscal Year or capability string participates (BUD-BR-001)."""
-	from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
-
-	user = frappe.session.user
-	for role in _CHECK_RESERVE_CALLER_ROLES:
-		if authorise_record(user=user, business_role=role, organisation_unit="", purpose=PURPOSE_COMMAND).allowed:
-			return
-	frappe.throw(
-		_("Not permitted to confirm or reserve funding — requires Finance Confirmation Officer or Head of Procurement Function"),
-		frappe.PermissionError,
-		title="BUDGET_FINANCE_TASK_DENIED",
-	)
+	caller = require_principal(caller, action)
+	reference = caller.reference
+	if not reference:
+		refuse(_("The calling service must name the requisition it acts for."))
+	if caller_reference and caller_reference != reference:
+		refuse(_("The caller reference does not match the authenticated requisition."))
+	return PRINCIPAL_LABEL[caller.principal], reference
 
 
 def _resolve_line(budget_line: str) -> Any:
@@ -136,22 +114,27 @@ def _resolve_line(budget_line: str) -> Any:
 	return frappe.get_doc("Procurement Budget Line", name)
 
 
-def _line_active_version_and_position(budget_line_doc):
-	from kentender_budget.services.budget_contracts import _active_version, _line_position, _line_version_for
+def _line_active_version_and_position(budget_line_doc, *, for_update: bool = False):
+	"""The line's Active Version, its Line Version and its position. With
+	`for_update=True` (after the Budget lock, AUD-XC-101/103) all of it is read
+	as locking reads, so a Version approved or closed since this transaction's
+	snapshot is seen."""
+	from kentender_budget.services.budget_contracts import _active_version, _line_position_exact, _line_version_for
 
-	version = _active_version(budget_line_doc.budget)
+	version = _active_version(budget_line_doc.budget, for_update=for_update)
 	if not version:
 		# BUD-BR-023 — a Closed Budget admits no new reservations. A Closed
 		# Budget Version means the Budget itself is Closed (no other Active
 		# version exists for it); distinguish that from the generic "not
 		# eligible" case so callers get the specific documented error code.
-		if frappe.db.exists("Procurement Budget Version", {"budget": budget_line_doc.budget, "status": "Closed"}):
+		closed = frappe.db.get_value("Procurement Budget Version", {"budget": budget_line_doc.budget, "status": "Closed"}, "name", for_update=for_update)
+		if closed:
 			frappe.throw(_("The Budget is Closed and cannot accept a new reservation"), frappe.ValidationError, title="BUDGET_CLOSED")
 		frappe.throw(_("Budget Line has no Active Budget Version"), frappe.ValidationError, title="BUDGET_LINE_NOT_ELIGIBLE")
-	line_version = _line_version_for(version.name, budget_line_doc.name)
+	line_version = _line_version_for(version.name, budget_line_doc.name, for_update=for_update)
 	if not line_version:
 		frappe.throw(_("Budget Line is not eligible under the Active Version"), frappe.ValidationError, title="BUDGET_LINE_NOT_ELIGIBLE")
-	return version, line_version, _line_position(budget_line_doc.name, line_version)
+	return version, line_version, _line_position_exact(budget_line_doc.name, line_version, for_update=for_update)
 
 
 def _normalise_rows(allocations: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -173,9 +156,38 @@ def _normalise_rows(allocations: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	return rows
 
 
-def _line_totals(rows: list[dict[str, Any]], line_docs: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], Any]:
+def _require_eligible_source(row: dict[str, Any], line_version) -> None:
+	"""BUD-BR-007 (AUD-BUD-001) — a line is eligible for an allocation only when
+	its owner scope is Entity-wide (no owner unit) or exactly matches the
+	allocation's explicit source organisation unit. A missing or unknown source
+	unit fails even for an Entity-wide line; no descendant is inferred. This is
+	record eligibility, never a permission check."""
+	source = (row.get("source_organisation_unit") or "").strip()
+	if not source:
+		frappe.throw(
+			_("A source department is required to use {0}").format(line_version.title),
+			frappe.ValidationError,
+			title="BUDGET_SOURCE_OU_REQUIRED",
+		)
+	if not frappe.db.exists("Organisation Unit", source):
+		frappe.throw(
+			_("The source department for {0} is not a known organisation unit").format(line_version.title),
+			frappe.ValidationError,
+			title="BUDGET_LINE_NOT_ELIGIBLE",
+		)
+	owner = (line_version.owner_org_unit or "").strip()
+	if owner and owner != source:
+		frappe.throw(
+			_("{0} belongs to another department and cannot fund this allocation").format(line_version.title),
+			frappe.ValidationError,
+			title="BUDGET_LINE_NOT_ELIGIBLE",
+		)
+
+
+def _line_totals(rows: list[dict[str, Any]], line_docs: dict[str, Any], *, for_update: bool = False) -> tuple[dict[str, dict[str, Any]], Any]:
 	"""BUD-CHG-001 v1.10 §8.3 — total every row that shares a Budget Line,
-	then test the total against that line's availability."""
+	then test the total against that line's availability. `for_update=True`
+	is `reserve_funding`'s locked recheck (AUD-XC-101)."""
 	totals: dict[str, dict[str, Any]] = {}
 	budget = None
 	for row in rows:
@@ -184,11 +196,11 @@ def _line_totals(rows: list[dict[str, Any]], line_docs: dict[str, Any]) -> tuple
 			budget = frappe.get_doc("Procurement Budget", line_doc.budget)
 		entry = totals.get(line_doc.name)
 		if entry is None:
-			version, line_version, position = _line_active_version_and_position(line_doc)
+			version, line_version, position = _line_active_version_and_position(line_doc, for_update=for_update)
 			entry = totals[line_doc.name] = {
 				"version": version,
 				"line_version": line_version,
-				"available": _stored_money(position["available"]),
+				"available": position["available"],
 				"required": Decimal(0),
 			}
 		# BUD-BR-008 — the allocation's funding source shall equal the Budget
@@ -199,6 +211,7 @@ def _line_totals(rows: list[dict[str, Any]], line_docs: dict[str, Any]) -> tuple
 				frappe.ValidationError,
 				title="BUDGET_LINE_NOT_ELIGIBLE",
 			)
+		_require_eligible_source(row, entry["line_version"])
 		entry["required"] += Decimal(row["amount"])
 	return totals, budget
 
@@ -210,18 +223,20 @@ def check_funding(
 	allocations: list[dict[str, Any]],
 	correlation_id: str,
 	*,
+	caller=None,
 	finance_task: str | None = None,
-	calling_module: str = "Procurement Planning",
 	caller_reference: str = "",
 ) -> dict[str, Any]:
 	"""§9.1 `check_funding` — non-mutating, complete-array check. Rows sharing a
 	Budget Line are totalled before availability is tested (BUD-CHG-001 v1.10
 	§8.3); returns per-row and per-line results and one token bound to the
 	exact payload digest."""
+	from kentender_budget.services.budget_service_principal import ACTION_CHECK
+
+	calling_module, caller_reference = _authenticate(caller, ACTION_CHECK, caller_reference)
 	allocations = allocations or []
 	if not allocations:
 		frappe.throw(_("At least one allocation is required"), frappe.ValidationError)
-	_require_check_reserve_capability()
 
 	rows = _normalise_rows(allocations)
 	line_docs = {r["budget_line"]: _resolve_line(r["budget_line"]) for r in rows}
@@ -270,7 +285,17 @@ def check_funding(
 	token = frappe.generate_hash(length=24)
 	frappe.cache().set_value(
 		f"budget_check_token:{token}",
-		{**context, "correlation_id": correlation_id, "allocations": rows, "payload_digest": _payload_digest(context, rows)},
+		{
+			**context,
+			"correlation_id": correlation_id,
+			"allocations": rows,
+			"payload_digest": _payload_digest(context, rows),
+			# BUD-013 — bound to who checked and the Budget Version each line
+			# was on; kept out of the digest so a same-key replay by a
+			# different session of the same requisition still replays.
+			"actor": frappe.session.user,
+			"line_versions": {name: totals[name]["version"].name for name in totals},
+		},
 		expires_in_sec=_CHECK_TOKEN_TTL_SECONDS,
 	)
 
@@ -288,11 +313,14 @@ def check_funding(
 	return {"token": token, "all_sufficient": all_sufficient, "allocations": results, "lines": lines, "token_ttl_seconds": _CHECK_TOKEN_TTL_SECONDS}
 
 
-def _existing_reservations_for_correlation(correlation_id: str) -> list[Any] | None:
-	names = frappe.get_all("Funding Reservation", filters={"correlation_id": correlation_id}, pluck="name")
+def _existing_reservations_for_correlation(correlation_id: str, *, for_update: bool = False) -> list[Any] | None:
+	if for_update:
+		names = [r[0] for r in frappe.db.sql("select name from `tabFunding Reservation` where correlation_id = %s order by name for update", (correlation_id,))]
+	else:
+		names = frappe.get_all("Funding Reservation", filters={"correlation_id": correlation_id}, pluck="name")
 	if not names:
 		return None
-	return [frappe.get_doc("Funding Reservation", n) for n in names]
+	return [frappe.get_doc("Funding Reservation", n, for_update=for_update) for n in names]
 
 
 def reserve_funding(
@@ -300,23 +328,29 @@ def reserve_funding(
 	source_set_hash: str,
 	idempotency_key: str,
 	*,
+	caller=None,
 	finance_task: str | None = None,
-	actor: str | None = None,
 ) -> dict[str, Any]:
 	"""§9.1/§8.3 `reserve_funding` — validates the same token and exact payload
 	inside the caller's transaction, locks the affected lines in stable ID
 	order, rechecks the per-line totals and creates one reservation per
 	drawdown line or none. Never commits (BUD-CHG-001 v1.10 §8.3: the REQ
 	authorisation commits every owner's effects together or none of them)."""
-	_require_check_reserve_capability()
+	from kentender_budget.services.budget_service_principal import ACTION_RESERVE, refuse
+
+	authenticated_reference = _authenticate(caller, ACTION_RESERVE)[1]
 	correlation_id = idempotency_key
 	cached = frappe.cache().get_value(f"budget_check_token:{token}")
-	existing = _existing_reservations_for_correlation(correlation_id)
-	if existing:
+
+	def replay(existing):
+		if any((r.caller_reference or "") != authenticated_reference for r in existing):
+			refuse(_("This reservation belongs to another requisition."))
 		# Same key + same payload replays the original mapping, even after a
 		# later release; same key + changed payload is refused (§8.3).
 		stored = {r.payload_digest for r in existing if r.payload_digest}
-		if cached and stored and cached.get("payload_digest") not in stored:
+		# The check token lives 300 s; the source-set hash the reservation was made under does not (RG-27).
+		stored_hashes = {r.source_set_hash for r in existing if r.source_set_hash}
+		if (cached and stored and cached.get("payload_digest") not in stored) or (stored_hashes and source_set_hash not in stored_hashes):
 			frappe.throw(
 				_("This request differs from the original attempt. Check the original result before retrying; no new effect was created."),
 				frappe.ValidationError,
@@ -324,29 +358,41 @@ def reserve_funding(
 			)
 		return {"ok": True, "reused": True, "reservations": [_reservation_result(r) for r in existing]}
 
+	existing = _existing_reservations_for_correlation(correlation_id)
+	if existing:
+		return replay(existing)
+
 	# finance_task is optional (REQ-CHG-001 v1.6 D1): compare only when the
 	# check actually recorded one. A caller with no finance_task at check
 	# time (Requisitions) must reserve with no finance_task at reserve time
 	# either — supplying one where the check had none is itself a mismatch.
 	if not cached or cached.get("finance_task") != finance_task or cached.get("source_set_hash") != source_set_hash:
 		frappe.throw(_("The funding check has expired or no longer matches this task"), frappe.ValidationError, title="BUDGET_CHECK_STALE")
-	calling_module = cached.get("calling_module") or "Procurement Planning"
+	# BUD-013 — the token belongs to the actor and requisition that checked.
+	if (cached.get("caller_reference") or "") != authenticated_reference:
+		refuse(_("This funding check was made for another requisition."))
+	if cached.get("actor") != frappe.session.user:
+		frappe.throw(_("The funding check was made by another user and no longer matches"), frappe.ValidationError, title="BUDGET_CHECK_STALE")
+	calling_module = cached.get("calling_module") or ""
 	caller_reference = cached.get("caller_reference") or ""
 	rows = cached["allocations"]
 
 	line_docs = {r["budget_line"]: _resolve_line(r["budget_line"]) for r in rows}
-	# Lock all affected lines in stable ID order (§8.2 step 5) before reloading
-	# any position, to prevent concurrent oversubscription (BUD-BR-013).
-	frappe.db.sql(
-		"select name from `tabProcurement Budget Line` where name in %s order by name for update",
-		(tuple(sorted(line_docs)),),
-	)
+	# BUD-BR-013 / §8.2A step 2 (AUD-XC-101, -103) — take the Budget's Version
+	# rows then the affected Line rows in the fixed order shared with approve,
+	# close, adjust and the Finance decision (`budget_locking`). Everything
+	# below is a locking read: under REPEATABLE READ a plain read would still
+	# show the position this transaction saw before it waited for the lock.
+	lock_budgets_of_lines(sorted(line_docs))
+	existing = _existing_reservations_for_correlation(correlation_id, for_update=True)
+	if existing:
+		return replay(existing)
 
 	for row in rows:
 		if row.get("drawdown_line_id"):
 			# BUD-BR-011 — each authorised REQ drawdown line receives exactly
 			# one reservation; a new key cannot duplicate it.
-			if frappe.db.exists("Funding Reservation", {"drawdown_line_id": row["drawdown_line_id"]}):
+			if frappe.db.get_value("Funding Reservation", {"drawdown_line_id": row["drawdown_line_id"]}, "name", for_update=True):
 				frappe.throw(
 					_("This drawdown line already has funding reserved"),
 					frappe.ValidationError,
@@ -361,6 +407,7 @@ def reserve_funding(
 			{"plan_source_allocation": row["plan_source_allocation"], "status": ["in", ("Active", "Partially Converted")]},
 			["name", "correlation_id", "caller_reference"],
 			as_dict=True,
+			for_update=True,
 		)
 		if clashing and clashing.correlation_id != correlation_id and (clashing.caller_reference or "") == caller_reference:
 			frappe.throw(
@@ -369,7 +416,12 @@ def reserve_funding(
 				title="BUDGET_RESERVATION_CONFLICT",
 			)
 
-	totals, _budget = _line_totals(rows, line_docs)
+	totals, _budget = _line_totals(rows, line_docs, for_update=True)
+	# BUD-013 / §13 BUDGET_CHECK_STALE — the owner revisions the check saw
+	# must still be current.
+	checked_versions = cached.get("line_versions") or {}
+	if any(checked_versions.get(name) != totals[name]["version"].name for name in totals):
+		frappe.throw(_("The Budget changed after the funding check; check again"), frappe.ValidationError, title="BUDGET_CHECK_STALE")
 	for name in sorted(totals):
 		entry = totals[name]
 		if entry["available"] < entry["required"]:
@@ -384,7 +436,7 @@ def reserve_funding(
 				title="BUDGET_INSUFFICIENT_FUNDS",
 			)
 
-	actor_name = (actor or frappe.session.user or "System").strip()
+	actor_name = (frappe.session.user or "System").strip()
 	created = []
 	for row in rows:
 		line_doc = line_docs[row["budget_line"]]
@@ -407,11 +459,13 @@ def reserve_funding(
 				"currency": budget.currency,
 				"correlation_id": correlation_id,
 				"payload_digest": cached.get("payload_digest") or "",
+				"source_set_hash": source_set_hash,
 				"calling_module": calling_module,
 				"caller_reference": caller_reference,
 			}
 		)
-		doc.insert(ignore_permissions=True)
+		with budget_write():
+			doc.insert(ignore_permissions=True)
 		created.append(doc)
 
 		from kentender_budget.services.budget_audit_contracts import EVENT_RESERVED, safe_record_event
@@ -425,7 +479,7 @@ def reserve_funding(
 			correlation_id=correlation_id,
 			calling_module=calling_module,
 			downstream_reference=(caller_reference or cached["plan_item"]) + f" · {doc.name}",
-			amount=flt(row["amount"]),
+			amount=Decimal(row["amount"]),
 			currency=budget.currency,
 		)
 

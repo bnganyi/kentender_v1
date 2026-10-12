@@ -18,6 +18,7 @@ Fiscal Year alone. There is no PE parameter, PE scope check or PE-aware
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 import frappe
@@ -39,6 +40,9 @@ from kentender_budget.services.budget_authorization import (
 	require_budget_version_read_scope,
 )
 from kentender_budget.services.budget_idempotency import run_idempotent
+from kentender_budget.services.budget_money import as_float, check_money, currency_basis, parse_money, scale_for
+from kentender_budget.services.budget_money import stored as money_stored
+from kentender_budget.services.budget_write_family import budget_write
 from kentender_budget.services.budget_reference import (
 	allocate_budget_line_version_reference,
 	allocate_budget_reference,
@@ -69,7 +73,12 @@ def list_available_fiscal_years() -> list[str]:
 	`kentender_strategy.services.strategy_ui_contracts.list_available_fiscal_years`.
 	`ignore_permissions` is safe here for the same reason: Fiscal Year rows
 	carry only date ranges, and Budget has no create/write path onto the
-	doctype regardless."""
+	doctype regardless. For internal users only: a supplier or other Website
+	account is refused (KT-ACCESS-REV-001 AR-14)."""
+	from kentender_core.services.home_viewer import is_internal
+
+	if not is_internal(frappe.session.user):
+		raise frappe.PermissionError(frappe._("Not permitted"))
 	rows = frappe.get_all(
 		"Fiscal Year", fields=["name"], order_by="year_start_date desc", limit_page_length=0, ignore_permissions=True
 	)
@@ -161,8 +170,14 @@ def _resolve_budget_line(key: str) -> Any:
 	return frappe.get_doc("Procurement Budget Line", name)
 
 
-def _active_version(budget_name: str) -> Any | None:
-	names = frappe.get_all("Procurement Budget Version", filters={"budget": budget_name, "status": "Active"}, pluck="name")
+def _active_version(budget_name: str, *, for_update: bool = False) -> Any | None:
+	"""The Budget's Active Version. `for_update=True` is a locking read that
+	sees the latest committed row (see `budget_locking`); every path that
+	decides a funding outcome after taking the lock must pass it."""
+	if for_update:
+		names = [r[0] for r in frappe.db.sql("select name from `tabProcurement Budget Version` where budget = %s and status = 'Active' for update", (budget_name,))]
+	else:
+		names = frappe.get_all("Procurement Budget Version", filters={"budget": budget_name, "status": "Active"}, pluck="name")
 	if not names:
 		return None
 	if len(names) > 1:
@@ -170,57 +185,124 @@ def _active_version(budget_name: str) -> Any | None:
 		# database-level partial unique index is the real guard); kept as a
 		# defensive check against a data-integrity bug, not a scope error.
 		frappe.throw(_("Multiple Active Budget Versions found for this Budget"), frappe.ValidationError)
-	return frappe.get_doc("Procurement Budget Version", names[0])
+	return frappe.get_doc("Procurement Budget Version", names[0], for_update=for_update)
 
 
-def _draft_version(budget_name: str) -> Any | None:
+def _draft_version(budget_name: str, *, for_update: bool = False) -> Any | None:
 	"""At most one open (Draft or Submitted for approval) successor may exist (§6.2)."""
-	names = frappe.get_all(
-		"Procurement Budget Version",
-		filters={"budget": budget_name, "status": ["in", ("Draft", "Submitted for approval")]},
-		pluck="name",
-		order_by="version_number desc",
-	)
-	return frappe.get_doc("Procurement Budget Version", names[0]) if names else None
+	if for_update:
+		names = [
+			r[0]
+			for r in frappe.db.sql(
+				"select name from `tabProcurement Budget Version` where budget = %s and status in ('Draft', 'Submitted for approval') order by version_number desc for update",
+				(budget_name,),
+			)
+		]
+	else:
+		names = frappe.get_all(
+			"Procurement Budget Version",
+			filters={"budget": budget_name, "status": ["in", ("Draft", "Submitted for approval")]},
+			pluck="name",
+			order_by="version_number desc",
+		)
+	return frappe.get_doc("Procurement Budget Version", names[0], for_update=for_update) if names else None
 
 
-def _line_position(budget_line_name: str, budget_line_version) -> dict[str, float]:
-	"""§5 canonical calculation for one Budget Line at the current time.
+def _position_scale(budget_line_name: str, budget_line_version) -> int:
+	"""The decimal places of the line's currency (BUD §4.8 CurrencyBasis)."""
+	currency = getattr(budget_line_version, "currency", None) if budget_line_version else None
+	if not currency:
+		currency = frappe.db.sql(
+			"select b.currency from `tabProcurement Budget Line` l join `tabProcurement Budget` b on b.name = l.budget where l.name = %s",
+			(budget_line_name,),
+		)
+		currency = currency[0][0] if currency else None
+	return scale_for(currency)
+
+
+def _line_position_exact(budget_line_name: str, budget_line_version, *, for_update: bool = False) -> dict[str, Decimal]:
+	"""§5 canonical calculation for one Budget Line at the current time, in
+	exact `Decimal`s (AUD-XC-116). Every comparison that decides an outcome —
+	Needs Attention, the floor, availability — uses this, never the float view.
 
 	`budget_line_version` supplies `approved_amount`; Reserved/Committed are
 	summed from the stable Budget Line identity's reservations/commitments,
 	independent of which version is being displayed.
-	"""
-	approved = flt(budget_line_version.approved_amount) if budget_line_version else 0.0
 
-	reserved = flt(
+	`for_update=True` reads the sums with `FOR UPDATE`, i.e. the latest
+	committed reservations and commitments rather than the transaction's
+	snapshot. Money-moving paths and Version decisions must pass it after
+	they have taken the Budget lock (`budget_locking`, AUD-XC-101..104).
+	"""
+	scale = _position_scale(budget_line_name, budget_line_version)
+	approved = money_stored(budget_line_version.approved_amount, scale=scale) if budget_line_version else money_stored(0, scale=scale)
+	suffix = " for update" if for_update else ""
+
+	reserved = money_stored(
 		frappe.db.sql(
-			"select coalesce(sum(remaining_amount), 0) from `tabFunding Reservation` "
-			"where budget_line = %s and status in %s",
+			"select cast(coalesce(sum(remaining_amount), 0) as char) from `tabFunding Reservation` "
+			"where budget_line = %s and status in %s" + suffix,
 			(budget_line_name, _ACTIVE_RESERVATION_STATUSES),
-		)[0][0]
+		)[0][0],
+		scale=scale,
 	)
 
-	all_reservations = frappe.get_all("Funding Reservation", filters={"budget_line": budget_line_name}, pluck="name")
-	committed = 0.0
+	if for_update:
+		all_reservations = [r[0] for r in frappe.db.sql("select name from `tabFunding Reservation` where budget_line = %s for update", (budget_line_name,))]
+	else:
+		all_reservations = frappe.get_all("Funding Reservation", filters={"budget_line": budget_line_name}, pluck="name")
+	committed = money_stored(0, scale=scale)
 	if all_reservations:
-		committed = flt(
+		committed = money_stored(
 			frappe.db.sql(
-				"select coalesce(sum(current_amount), 0) from `tabProcurement Commitment` "
-				"where reservation in %s and status = 'Active'",
+				"select cast(coalesce(sum(current_amount), 0) as char) from `tabProcurement Commitment` "
+				"where reservation in %s and status = 'Active'" + suffix,
 				(all_reservations,),
-			)[0][0]
+			)[0][0],
+			scale=scale,
 		)
 
-	available = approved - reserved - committed
-	return {"approved": approved, "reserved": reserved, "committed": committed, "available": available}
+	return {"approved": approved, "reserved": reserved, "committed": committed, "available": approved - reserved - committed}
 
 
-def _line_version_for(budget_version_name: str, budget_line_name: str):
+def _line_position(budget_line_name: str, budget_line_version, *, for_update: bool = False) -> dict[str, float]:
+	"""The display view of `_line_position_exact` (floats for read models and
+	JSON). The floats come from the exact result, so a fully subscribed line
+	reads exactly 0.0, never -5.96e-08. Do not decide anything from this."""
+	exact = _line_position_exact(budget_line_name, budget_line_version, for_update=for_update)
+	return {key: as_float(value) for key, value in exact.items()}
+
+
+def catalogue_problem(owner_org_unit: str | None, funding_source: str | None) -> str:
+	"""BUD18-AC-056 / §13 `BUDGET_LINE_NOT_ELIGIBLE` (AUD-BUD-010) — why a NEW
+	line may not name this owner unit or funding source now: an unknown or
+	Inactive Organisation Unit, an unknown funding source or one that is not
+	Available. Empty when both are usable. Entity-wide (no owner unit) is
+	allowed. Historical lines keep their frozen identity and are not rechecked
+	here."""
+	if owner_org_unit:
+		status = frappe.db.get_value("Organisation Unit", owner_org_unit, "status")
+		if status is None:
+			return _("Organisation unit not found")
+		if status != "Active":
+			return _("This organisation unit is inactive and cannot be used on a new budget line")
+	if funding_source:
+		record_status = frappe.db.get_value("Funding Source", funding_source, "record_status")
+		if record_status is None:
+			return _("Funding source not found")
+		if record_status != "Available":
+			return _("This funding source is not available for a new budget line")
+	return ""
+
+
+def _line_version_for(budget_version_name: str, budget_line_name: str, *, for_update: bool = False):
 	name = frappe.db.get_value(
-		"Procurement Budget Line Version", {"budget_version": budget_version_name, "budget_line": budget_line_name}, "name"
+		"Procurement Budget Line Version",
+		{"budget_version": budget_version_name, "budget_line": budget_line_name},
+		"name",
+		for_update=for_update,
 	)
-	return frappe.get_doc("Procurement Budget Line Version", name) if name else None
+	return frappe.get_doc("Procurement Budget Line Version", name, for_update=for_update) if name else None
 
 
 def _plan_item_label(plan_item: str | None) -> str:
@@ -352,7 +434,7 @@ def _line_active_reservations(budget_line: str) -> list[dict[str, Any]]:
 				"status_label": _("Requires review — funds remain reserved") if requires_review else (_("Partially converted") if r.status == "Partially Converted" else _("Active")),
 				"requires_review": requires_review,
 				"review": _requires_review_facts(r.name) if requires_review else None,
-				"currency": r.currency or "KES",
+				"currency": r.currency,
 			}
 		)
 	return out
@@ -377,7 +459,7 @@ def get_budget_line_position(budget_line: str, *, as_at_version: str | None = No
 	position = _line_position(line.name, line_version)
 	reservations = _line_active_reservations(line.name)
 	converted_total = sum(r["converted"] for r in reservations)
-	currency = line_version.currency if line_version else "KES"
+	currency = line_version.currency if line_version else (budget.currency or "")
 	explanation = ""
 	if position["committed"] > 0 and converted_total > 0:
 		explanation = _("{0} of the reservation is now committed to a contract. The remaining reservation is {1}. No payment is recorded here.").format(
@@ -391,7 +473,7 @@ def get_budget_line_position(budget_line: str, *, as_at_version: str | None = No
 		"title": line_version.title if line_version else "",
 		"owner_org_unit": _org_unit_label(line_version.owner_org_unit) if line_version else "",
 		"funding_source": _funding_source_label(line_version.funding_source) if line_version else "",
-		"currency": line_version.currency if line_version else "KES",
+		"currency": line_version.currency if line_version else budget.currency,
 		"positions": position,
 		"budget": {
 			"id": budget.name,
@@ -429,18 +511,29 @@ def _line_owning_version(budget_line: str, as_at_version: str | None):
 	return frappe.get_doc("Procurement Budget Version", version_name)
 
 
-def _version_totals(budget_version_name: str) -> dict[str, float]:
-	"""Budget totals are the sums of the Version's line positions (§5)."""
-	line_versions = frappe.get_all(
-		"Procurement Budget Line Version",
-		filters={"budget_version": budget_version_name},
-		fields=["budget_line", "approved_amount", "title", "owner_org_unit", "funding_source", "currency"],
-		# Deterministic display order (BUD-DES-01/05 list lines by title) —
-		# the same `title asc` every other Budget Lines read model uses;
-		# without it MariaDB returned the rows in insertion-dependent order.
-		order_by="title asc",
-	)
-	approved = reserved = committed = available = 0.0
+def _version_totals(budget_version_name: str, *, for_update: bool = False) -> dict[str, float]:
+	"""Budget totals are the sums of the Version's line positions (§5).
+	`for_update=True` reads the Version's lines and every position as locking
+	reads (latest committed; see `budget_locking`)."""
+	if for_update:
+		line_versions = frappe.db.sql(
+			"select budget_line, approved_amount, title, owner_org_unit, funding_source, currency "
+			"from `tabProcurement Budget Line Version` where budget_version = %s order by title asc for update",
+			(budget_version_name,),
+			as_dict=True,
+		)
+		line_versions = [frappe._dict(r) for r in line_versions]
+	else:
+		line_versions = frappe.get_all(
+			"Procurement Budget Line Version",
+			filters={"budget_version": budget_version_name},
+			fields=["budget_line", "approved_amount", "title", "owner_org_unit", "funding_source", "currency"],
+			# Deterministic display order (BUD-DES-01/05 list lines by title) —
+			# the same `title asc` every other Budget Lines read model uses;
+			# without it MariaDB returned the rows in insertion-dependent order.
+			order_by="title asc",
+		)
+	approved = reserved = committed = available = Decimal(0)
 	lines: list[dict[str, Any]] = []
 	codes = (
 		{
@@ -453,25 +546,25 @@ def _version_totals(budget_version_name: str) -> dict[str, float]:
 		else {}
 	)
 	for lv in line_versions:
-		pos = _line_position(lv.budget_line, lv)
-		approved += pos["approved"]
-		reserved += pos["reserved"]
-		committed += pos["committed"]
-		available += pos["available"]
+		exact = _line_position_exact(lv.budget_line, lv, for_update=for_update)
+		approved += exact["approved"]
+		reserved += exact["reserved"]
+		committed += exact["committed"]
+		available += exact["available"]
 		lines.append(
 			{
 				**lv,
 				"code": codes.get(lv.budget_line, ""),
 				"owner_org_unit_label": _org_unit_label(lv.owner_org_unit),
 				"funding_source_label": _funding_source_label(lv.funding_source),
-				"positions": pos,
+				"positions": {key: as_float(value) for key, value in exact.items()},
 			}
 		)
 	return {
-		"approved": approved,
-		"reserved": reserved,
-		"committed": committed,
-		"available": available,
+		"approved": as_float(approved),
+		"reserved": as_float(reserved),
+		"committed": as_float(committed),
+		"available": as_float(available),
 		"lines": lines,
 	}
 
@@ -530,6 +623,24 @@ def _version_summary(version) -> dict[str, Any]:
 		"based_on": version.based_on_budget_version or None,
 		# The optimistic-lock stamp every command sends back as expected_modified.
 		"modified": str(version.modified) if version.modified else "",
+	}
+
+
+def stamp_is_stale(version, payload: dict[str, Any]) -> bool:
+	"""BUD §9.2 "Every write requires the expected record version" (AUD-XC-119).
+	A command that carries no `expected_modified`, or a different one from the
+	Version's current stamp, is refused: the stamp is mandatory, never optional."""
+	expected = str(payload.get("expected_modified") or "").strip()
+	return not expected or str(version.modified) != expected
+
+
+def stale_write_result(version) -> dict[str, Any]:
+	"""The typed `BUDGET_STALE_WRITE` outcome (§13), carrying the current stamp."""
+	return {
+		"ok": False,
+		"code": "BUDGET_STALE_WRITE",
+		"errors": {"expected_modified": _("This budget has changed since you opened it. Refresh to see the current details.")},
+		"version": _version_summary(version),
 	}
 
 
@@ -886,7 +997,7 @@ def get_budget_detail(budget: str) -> dict[str, Any]:
 	}
 
 
-def _validate_draft_payload(payload: dict) -> dict[str, str]:
+def _validate_draft_payload(payload: dict, scale: int = 2) -> dict[str, str]:
 	errors: dict[str, str] = {}
 	approval_reference = (payload.get("approval_reference") or "").strip()
 	approval_date = payload.get("approval_date")
@@ -902,12 +1013,16 @@ def _validate_draft_payload(payload: dict) -> dict[str, str]:
 				errors["approval_date"] = _("Approval date cannot be in the future")
 		except Exception:
 			errors["approval_date"] = _("Enter a valid approval date")
-	try:
-		total_val = flt(total)
-	except Exception:
-		total_val = 0
-	if not total or total_val <= 0:
+	# AUD-XC-117 — an exact amount at the currency's scale; NaN/Infinity,
+	# exponent notation, excess scale and overflow are refused, not rounded.
+	if total in (None, ""):
 		errors["authorised_total"] = _("Approved allocation must be greater than zero")
+	else:
+		amount, message = check_money(total, scale=scale, allow_zero=True, allow_negative=True)
+		if message:
+			errors["authorised_total"] = message
+		elif amount <= 0:
+			errors["authorised_total"] = _("Approved allocation must be greater than zero")
 	return errors
 
 
@@ -919,7 +1034,27 @@ def save_budget_version_draft(payload: dict | str | None = None) -> dict[str, An
 	if isinstance(payload, str):
 		payload = frappe.parse_json(payload)
 	payload = payload or {}
-	return run_idempotent(payload=payload, fn=lambda: _save_budget_version_draft(payload), budget_for=lambda r: (r.get("budget") or {}).get("id") if isinstance(r.get("budget"), dict) else (r.get("version") or {}).get("budget"))
+	return run_idempotent(
+		payload=payload, fn=lambda: _save_budget_version_draft(payload),
+		budget_for=lambda r: (r.get("budget") or {}).get("id") if isinstance(r.get("budget"), dict) else (r.get("version") or {}).get("budget"),
+		command="SaveBudgetVersionDraft", authorise=lambda: _authorise_draft_save(payload),
+	)
+
+
+def _authorise_draft_save(payload: dict[str, Any]) -> None:
+	"""RG-16 — the create or edit capability, checked before an idempotency key is looked up."""
+	budget_key = (payload.get("budget") or "").strip()
+	version_key = (payload.get("budget_version") or "").strip()
+	if not budget_key and not version_key:
+		require_budget_create_capability(frappe.session.user)
+		return
+	if version_key:
+		version = _resolve_budget_version(version_key)
+	else:
+		version = _draft_version(_resolve_budget(budget_key).name)
+		if not version:
+			return  # the command itself reports that there is no Draft to update
+	require_budget_version_capability(frappe.session.user, CAP_EDIT, version)
 
 
 def _save_budget_version_draft(payload: dict[str, Any]) -> dict[str, Any]:
@@ -947,7 +1082,12 @@ def _save_budget_version_draft(payload: dict[str, Any]) -> dict[str, Any]:
 				"pending_version": pending,
 				"route": _pending_route(existing, pending),
 			}
-		errors = _validate_draft_payload(payload)
+		# AUD-XC-133 — the currency and its decimal places come from the native
+		# Currency record (the site default when the form names none); an
+		# unsupported or missing currency blocks the write, nothing is assumed.
+		currency = (payload.get("currency") or frappe.db.get_default("currency") or "").strip()
+		basis = currency_basis(currency)
+		errors = _validate_draft_payload(payload, basis["fraction_digits"])
 		if errors:
 			return {"ok": False, "errors": errors}
 		# 2026-09-19 — the approval document is no longer required to save or
@@ -960,10 +1100,11 @@ def _save_budget_version_draft(payload: dict[str, Any]) -> dict[str, Any]:
 				"doctype": "Procurement Budget",
 				"generated_reference": allocate_budget_reference(fy),
 				"fiscal_year": fy,
-				"currency": (payload.get("currency") or "KES").strip(),
+				"currency": basis["currency"],
 			}
 		)
-		budget.insert(ignore_permissions=True)
+		with budget_write():
+			budget.insert(ignore_permissions=True)
 		version = _create_draft_version(budget, payload, based_on=None)
 		return {"ok": True, "saved_scope": "approval_details", "created": True, "budget": _budget_summary(budget), "version": _version_summary(version)}
 
@@ -979,27 +1120,34 @@ def _save_budget_version_draft(payload: dict[str, Any]) -> dict[str, Any]:
 	if version.status != "Draft":
 		return {"ok": False, "code": "BUDGET_INVALID_STATE", "errors": {"status": _("This budget has changed. Refresh to see the available actions.")}, "version": _version_summary(version)}
 
-	expected_version = payload.get("expected_modified")
-	if expected_version and str(version.modified) != str(expected_version):
-		return {
-			"ok": False,
-			"code": "BUDGET_STALE_WRITE",
-			"errors": {"expected_modified": _("This budget has changed since you opened it. Refresh to see the current details.")},
-			"version": _version_summary(version),
-		}
+	if stamp_is_stale(version, payload):
+		return stale_write_result(version)
 
-	errors = _validate_draft_payload(payload)
+	# AUD-XC-119 — decide on the latest committed row, under the Budget's
+	# Version lock, so two saves that read the same stamp cannot both pass.
+	from kentender_budget.services.budget_locking import lock_budget, locked_doc
+
+	lock_budget(version.budget, lines=False)
+	version = locked_doc("Procurement Budget Version", version.name)
+	if version.status != "Draft":
+		return {"ok": False, "code": "BUDGET_INVALID_STATE", "errors": {"status": _("This budget has changed. Refresh to see the available actions.")}, "version": _version_summary(version)}
+	if stamp_is_stale(version, payload):
+		return stale_write_result(version)
+
+	scale = scale_for(version.currency)
+	errors = _validate_draft_payload(payload, scale)
 	if errors:
 		return {"ok": False, "errors": errors}
 
 	version.approval_reference = (payload.get("approval_reference") or "").strip()
 	version.approval_date = getdate(payload.get("approval_date"))
-	version.authorised_total = flt(payload.get("authorised_total"))
+	version.authorised_total = parse_money(payload.get("authorised_total"), scale=scale, field="authorised_total")
 	if payload.get("approval_document"):
 		version.approval_document = payload["approval_document"]
 	if version.based_on_budget_version and payload.get("revision_type"):
 		version.revision_type = payload["revision_type"]
-	version.save(ignore_permissions=True)
+	with budget_write():
+		version.save(ignore_permissions=True)
 
 	from kentender_budget.services.budget_audit_contracts import EVENT_DRAFT_APPROVAL_SAVED, safe_record_event
 
@@ -1042,13 +1190,14 @@ def _create_draft_version(budget, payload: dict, *, based_on) -> Any:
 			"status": "Draft",
 			"approval_reference": (payload.get("approval_reference") or "").strip(),
 			"approval_date": getdate(payload.get("approval_date")) if payload.get("approval_date") else None,
-			"authorised_total": flt(payload.get("authorised_total")) if payload.get("authorised_total") else None,
+			"authorised_total": parse_money(payload.get("authorised_total"), scale=scale_for(budget.currency), field="authorised_total") if payload.get("authorised_total") else None,
 			"approval_document": payload.get("approval_document") or None,
 			"currency": budget.currency,
 			"submitted_by": None,
 		}
 	)
-	version.insert(ignore_permissions=True)
+	with budget_write():
+		version.insert(ignore_permissions=True)
 
 	from kentender_budget.services.budget_audit_contracts import EVENT_VERSION_CREATED, safe_record_event
 
@@ -1074,19 +1223,20 @@ def _copy_line_versions(source_version, target_version) -> None:
 	)
 	for row in rows:
 		line_code = frappe.db.get_value("Procurement Budget Line", row.budget_line, "generated_reference")
-		frappe.get_doc(
-			{
-				"doctype": "Procurement Budget Line Version",
-				"generated_reference": allocate_budget_line_version_reference(line_code, target_version.version_number),
-				"budget_version": target_version.name,
-				"budget_line": row.budget_line,
-				"title": row.title,
-				"owner_org_unit": row.owner_org_unit,
-				"funding_source": row.funding_source,
-				"approved_amount": row.approved_amount,
-				"currency": row.currency,
-			}
-		).insert(ignore_permissions=True)
+		with budget_write():
+			frappe.get_doc(
+				{
+					"doctype": "Procurement Budget Line Version",
+					"generated_reference": allocate_budget_line_version_reference(line_code, target_version.version_number),
+					"budget_version": target_version.name,
+					"budget_line": row.budget_line,
+					"title": row.title,
+					"owner_org_unit": row.owner_org_unit,
+					"funding_source": row.funding_source,
+					"approved_amount": row.approved_amount,
+					"currency": row.currency,
+				}
+			).insert(ignore_permissions=True)
 
 
 def create_budget_successor_version(budget: str, payload: dict | str | None = None) -> dict[str, Any]:
@@ -1103,7 +1253,17 @@ def create_budget_successor_version(budget: str, payload: dict | str | None = No
 		frappe.throw(_("No Active Budget Version to revise"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
 	require_budget_version_capability(frappe.session.user, CAP_EDIT, active)
 
-	existing_draft = _draft_version(doc.name)
+	# AUD-BUD-003 / §6 — "at most one open Draft or Submitted-for-approval
+	# successor per Budget": serialise creators on the Budget's Version rows and
+	# decide from locking reads, so two concurrent creators cannot both see "no
+	# open successor", and a Budget closed meanwhile is refused.
+	from kentender_budget.services.budget_locking import lock_budget
+
+	lock_budget(doc.name, lines=False)
+	active = _active_version(doc.name, for_update=True)
+	if not active:
+		frappe.throw(_("No Active Budget Version to revise"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+	existing_draft = _draft_version(doc.name, for_update=True)
 	request_id = (payload.get("budget_revision_request_id") or "").strip()
 	if existing_draft:
 		# BUD v1.11 §9.2 — answering a revision request reuses the one open

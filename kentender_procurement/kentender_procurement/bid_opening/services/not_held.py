@@ -21,6 +21,7 @@ from frappe.utils import cstr, get_datetime
 
 from kentender_procurement.bid_opening.services import clock, errors, people, prc, records
 from kentender_procurement.tenders.services import opening_seam
+from kentender_procurement.services import sequence
 
 DECISION = "Opening Decision Item"
 NOT_STARTED = ("Awaiting deadline", "Ready to open")
@@ -43,7 +44,7 @@ def record_opening_not_held(*, tender: str, reason: str, expected_version: int, 
 			return {"ok": False, "reason": "reason_required", "errors": {"reason": "Record what happened."}}
 		lifecycle.mark_not_held(**prc.ref(doc.name), reason=cstr(reason).strip(), custody_reference=cstr(doc.manifest_handoff),
 			idempotency_key=prc.key(idempotency_key, "not-held"), actor=user)
-		number = frappe.db.count(DECISION, {"opening_case": doc.name}) + 1
+		number = sequence.next_count(DECISION, {"opening_case": doc.name})
 		item = records.insert(frappe.get_doc({
 			"doctype": DECISION, "decision_item_id": f"{doc.opening_id}-DEC-{number:02d}", "opening_case": doc.name, "kind": "Not held", "holder_user": user,
 			"reason": cstr(reason).strip(), "status": "Open", "created_at": clock.now(),

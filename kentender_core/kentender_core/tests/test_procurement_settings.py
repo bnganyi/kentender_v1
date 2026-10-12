@@ -22,6 +22,7 @@ from kentender_core.services import procurement_settings as settings
 from kentender_core.services.configuration_errors import ConfigurationError
 from kentender_core.tests import v16_fixtures as fx
 from kentender_core.tests.responsibility_test_cleanup import purge
+from kentender_core.services.command_write_guard import fixture_insert, purge_doc
 
 NS = "KT_TEST_PROCSET"
 
@@ -534,18 +535,16 @@ class ProcurementSettingsTestCase(IntegrationTestCase):
 
 		referenced = settings.add_funding_source(label="KT Test Referenced")["name"]
 		self.addCleanup(lambda: frappe.delete_doc(settings.FUNDING_SOURCE, referenced, force=True, ignore_permissions=True))
-		line = frappe.get_doc(
-			{
-				"doctype": "Procurement Budget Line Version",
-				"funding_source": referenced,
-			}
-		)
 		# A throwaway row naming the source is enough to prove the guard reads
 		# real usage, not a flag on the source itself — no other Budget Line
-		# fields are required for `frappe.db.exists` to see the row.
-		line.flags.ignore_mandatory = True
-		line.insert(ignore_permissions=True)
-		self.addCleanup(lambda: frappe.delete_doc("Procurement Budget Line Version", line.name, force=True, ignore_permissions=True))
+		# fields are required for `frappe.db.exists` to see the row. Budget
+		# records are command-only (AUD-XC-006), so the fixture row is written
+		# under the maintenance window.
+		line = fixture_insert(
+			frappe.get_doc({"doctype": "Procurement Budget Line Version", "funding_source": referenced}),
+			ignore_mandatory=True,
+		)
+		self.addCleanup(lambda: purge_doc("Procurement Budget Line Version", line.name))
 
 		row = next(r for r in settings.list_funding_sources() if r["name"] == referenced)
 		self.assertTrue(row["referenced"])

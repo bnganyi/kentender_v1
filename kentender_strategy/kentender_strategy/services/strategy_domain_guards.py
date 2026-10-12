@@ -136,12 +136,15 @@ def validate_strategic_plan_version(doc) -> None:
 
 
 def _overlaps(start_a, end_a, start_b, end_b) -> bool:
-	if not start_a or not end_a or not start_b or not end_b:
+	"""Date ranges overlap. A blank end is open-ended (STR §4.2: `effective_to`
+	may be empty while the version is the current Active one), so it overlaps
+	everything from its start onward. A blank start overlaps nothing."""
+	if not start_a or not start_b:
 		return False
-	return (
-		frappe.utils.getdate(start_a) <= frappe.utils.getdate(end_b)
-		and frappe.utils.getdate(start_b) <= frappe.utils.getdate(end_a)
-	)
+	open_end = frappe.utils.getdate("9999-12-31")
+	end_a = frappe.utils.getdate(end_a) if end_a else open_end
+	end_b = frappe.utils.getdate(end_b) if end_b else open_end
+	return frappe.utils.getdate(start_a) <= end_b and frappe.utils.getdate(start_b) <= end_a
 
 
 def assert_no_primary_overlap(doc) -> None:

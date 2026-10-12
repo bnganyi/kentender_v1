@@ -12,10 +12,11 @@ from unittest.mock import patch
 
 import frappe
 
-from kentender_procurement.procurement_requisitions.services import authorise as authorise_service, handoff, lifecycle, records
+from kentender_procurement.procurement_requisitions.services import authorise as authorise_service, envelope, handoff, lifecycle, records
 from kentender_procurement.procurement_requisitions.services.errors import ProcurementRequisitionsError
 from kentender_procurement.procurement_requisitions.tests import fixtures as fx
 from kentender_procurement.procurement_requisitions.tests.test_draft_commands import RequisitionCase
+from kentender_procurement.tests.two_connections import BLOCKED_FOR, WAIT, Conn
 
 
 def _effects(item_id: str, reference: str) -> tuple[int, int]:
@@ -26,7 +27,7 @@ def _effects(item_id: str, reference: str) -> tuple[int, int]:
 
 
 class TestAuthorise(RequisitionCase):
-	def test_one_transaction_creates_every_effect_one_reservation_per_line_and_a_v14_handoff(self):
+	def test_one_transaction_creates_every_effect_one_reservation_per_line_and_a_v15_handoff(self):
 		_, item_id = fx.active_combined_item()
 		requisition = fx.submitted(item_id)
 		result = fx.authorise(requisition)
@@ -38,7 +39,7 @@ class TestAuthorise(RequisitionCase):
 		self.assertEqual(_effects(item_id, root.requisition_reference), (2, 2))
 		self.assertTrue(frappe.db.get_value("Plan Item", item_id, "scope_locked_since"))
 		payload = json.loads(frappe.db.get_value("Authorised Requisition Handoff", root.handoff, "payload_json"))
-		self.assertEqual(payload["handoff_version"], "1.4")
+		self.assertEqual(payload["handoff_version"], "1.5")  # v1.18 §5.12 (1.4 before)
 		self.assertEqual(len(payload["drawdown_lines"]), 2)
 		self.assertTrue(all(isinstance(l["requested_value"], str) for l in payload["drawdown_lines"]))
 		self.assertEqual(len(payload["compatibility"]), 9)
@@ -131,6 +132,36 @@ class TestRevokeAndConsume(RequisitionCase):
 		with self.assertRaises(ProcurementRequisitionsError) as ctx:
 			authorise_service.revoke_unconsumed_authorisation(requisition=requisition, reason="Too late: Tender Preparation already began.", expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
 		self.assertCode(ctx, "REQ_HANDOFF_CONSUMED")
+
+	def test_consumption_queues_on_the_requisition_root_without_holding_the_handoff(self):
+		"""AUD-XC-109: authorise, revoke and consume lock Requisition root first,
+		then handoff. Consumption used to take the handoff first and then wait on
+		the root a revocation held, which is an AB-BA deadlock. While consumption
+		waits for the root it must not hold the handoff row."""
+		item_id, requisition = self._authorised()
+		handoff_name = frappe.db.get_value("Procurement Requisition", requisition, "handoff")
+		frappe.db.commit()
+		holder = Conn("Administrator", lambda: envelope.locked("Procurement Requisition", requisition), hold=True)
+		self.assertTrue(holder.ran.wait(WAIT))
+		self.assertIsNone(holder.error, holder.error)
+		consumer = Conn(
+			"Administrator",
+			lambda: handoff.record_handoff_consumption(handoff=handoff_name, tender="TND-LOCK-1", tender_version="TNV-1", template_key="IT-EQUIPMENT-OPEN-V1", template_version="1.1", idempotency_key=fx.key()),
+		)
+		self.assertFalse(consumer.finished.wait(BLOCKED_FOR), "consumption must wait for the root lock")
+		try:
+			frappe.db.sql("select name from `tabAuthorised Requisition Handoff` where name=%s for update nowait", handoff_name)
+		except Exception as exc:  # noqa: BLE001 - any lock-wait failure is the defect
+			holder.commit()
+			consumer.finished.wait(WAIT)
+			frappe.db.rollback()
+			self.fail(f"consumption holds the handoff row while it waits for the Requisition root: {exc!r}")
+		frappe.db.rollback()
+		holder.commit()
+		self.assertTrue(consumer.finished.wait(WAIT))
+		self.assertIsNone(consumer.error, consumer.error)
+		frappe.db.commit()
+		self.assertTrue(frappe.db.get_value("Authorised Requisition Handoff", handoff_name, "consumed_at"))
 
 	def test_a_revoked_handoff_cannot_be_consumed(self):
 		item_id, requisition = self._authorised()

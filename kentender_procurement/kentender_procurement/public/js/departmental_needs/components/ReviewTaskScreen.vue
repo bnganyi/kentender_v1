@@ -150,6 +150,8 @@ const acceptLabel = computed(() => (isSuccessor.value ? "Accept proposed changes
 const declineLabel = computed(() => (isSuccessor.value ? "Decline proposed changes" : "Do not take forward"));
 
 const DIFF_FIELDS = [
+	// NDS-CHG-001 v1.17 §11.19 / NDS17-AC-007 — a changed estimate is listed first
+	{ key: "estimated_total_cost", label: "Estimated cost", display: "estimated_total_cost_label", empty: "No estimate recorded" },
 	{ key: "title", label: "Requirement title" },
 	{ key: "description", label: "Description" },
 	{ key: "expected_operational_result", label: "Expected result" },
@@ -166,6 +168,14 @@ const changedFields = computed(() => {
 		const after = props.revision[field.key];
 		if (String(before ?? "") === String(after ?? "")) continue;
 		const fmt = field.format || ((v) => v ?? "");
+		if (field.display) {
+			rows.push({
+				label: field.label,
+				before: props.acceptedRevision[field.display] || field.empty,
+				after: props.revision[field.display] || field.empty,
+			});
+			continue;
+		}
 		rows.push({ label: field.label, before: fmt(before), after: fmt(after) });
 	}
 	return rows;

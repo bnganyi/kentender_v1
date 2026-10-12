@@ -28,6 +28,23 @@ def _money(amount: float) -> str:
 	return f"KES {fmt_money(flt(amount), precision=0, currency=None).strip()}"
 
 
+def estimate_change(need_estimate, planning_amount) -> dict[str, Any]:
+	"""PLN-CHG-001 v1.30 §4.3 rule 4 — the accepted Need's estimate and the signed
+	change to the planning amount, as display text. Empty when there is no
+	estimate, no planning amount or no difference. Information only: it adds no
+	required input, reason or blocker, and is never summed into a total."""
+	estimate, amount = flt(need_estimate), flt(planning_amount)
+	if estimate <= 0 or amount <= 0 or round(estimate, 6) == round(amount, 6):
+		return {"need_estimate_display": _money(estimate) if estimate > 0 else "", "estimate_change_display": "", "estimate_change": 0}
+	delta = amount - estimate
+	sign = "+" if delta > 0 else "\u2212"
+	return {
+		"need_estimate_display": _money(estimate),
+		"estimate_change_display": f"{sign}{_money(abs(delta))}",
+		"estimate_change": delta,
+	}
+
+
 def _date(value) -> str:
 	return formatdate(value, "d MMM yyyy") if value else ""
 
@@ -150,15 +167,34 @@ BADGES = {
 }
 
 
+def _plan_source_for(root, actor: str):
+	"""The Plan-source reach of a reviewer for this departmental plan's accepted
+	submission, or the masked refusal (an unsent Draft, an accepted submission
+	no plan under review consumed, or a caller with no review responsibility)."""
+	accepted = root.current_accepted_version
+	submission = frappe.db.get_value("Departmental Plan Version", accepted, "submission") if accepted else None
+	access = authz.plan_source_access(submission or "", actor)
+	if not access:
+		authz.not_found()
+	return access
+
+
 def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	root = _root(dpp_reference)
-	access = authz.require_dpp_read(root.organisation_unit, actor)
+	access = authz.dpp_read_profile(root.organisation_unit, actor)
+	# KT-ACCESS-REV-001 v0.2 §2 (proposed PLN-R2, built ahead of approval): a
+	# Plan reviewer outside the department reads the accepted submission their
+	# plan consumed — those entries only, no editor link, nothing mutable.
+	plan_source = None
+	if not access:
+		plan_source = _plan_source_for(root, actor)
+		access = "oversight"
 	labels = _labels(root)
 	line_labels = budget_gateway.line_labels(root.fiscal_year)
-	version_name = root.current_version or root.current_accepted_version
+	version_name = (root.current_accepted_version if plan_source else None) or root.current_version or root.current_accepted_version
 	version = frappe.get_doc("Departmental Plan Version", version_name) if version_name else None
-	if version:
+	if version and plan_source is None:
 		# §5.1 — the coverage boundary is established at command time, not by
 		# a browser timestamp: `open_departmental_plan`'s own "reused" branch
 		# already re-syncs a mutable Draft against the Need register on every
@@ -183,12 +219,14 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 			fields=[
 				"entry_id", "source_origin", "need", "need_revision", "title", "description",
 				"expected_operational_result", "quantity", "unit", "required_by_date",
-				"budget_line", "indicative_amount", "not_proceeding_reason",
+				"budget_line", "indicative_amount", "need_estimated_total_cost", "not_proceeding_reason",
 			],
 			order_by="creation asc",
 			limit_page_length=0,
 		)
 		for row in rows:
+			if plan_source is not None and row.entry_id not in plan_source.entries:
+				continue
 			not_proceeding = bool(cstr(row.not_proceeding_reason).strip())
 			funded = bool(row.budget_line) and flt(row.indicative_amount) > 0
 			complete = not_proceeding or funded
@@ -234,9 +272,10 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 					"required_by_display": _date(row.required_by_date),
 					"budget_line_display": (line.get("reference") or cstr(row.budget_line)) if row.budget_line else ("—" if not_proceeding else "Not selected"),
 					"amount_display": (
-						_money(row.indicative_amount) if funded
+						_money(row.indicative_amount) if flt(row.indicative_amount) > 0 and not not_proceeding
 						else ("Not applicable" if not_proceeding else "Not entered")
 					),
+					**(estimate_change(row.need_estimated_total_cost, row.indicative_amount) if need_origin and not not_proceeding else {}),
 					"status": status,
 					"status_kind": kind,
 					"not_proceeding_reason": cstr(row.not_proceeding_reason),
@@ -245,7 +284,7 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 					"action": _entry_action(
 						not_proceeding=not_proceeding, need_origin=need_origin, funded=funded, has_issue=has_issue,
 						mutable=version.version_status == "Draft" and access in ("author", "hod"),
-						can_open=access in ("author", "hod", "oversight"),
+						can_open=access in ("author", "hod", "oversight") and plan_source is None,
 					),
 					# §10.4 U03-FUNDING — the funding panel opens beneath the
 					# row it belongs to; nothing else navigates away from U02.
@@ -476,6 +515,9 @@ def get_dpp_entry_editor(*, dpp_reference: str, entry_id: str | None = None, use
 			"required_by_display": _date(entry.required_by_date),
 			"budget_line": cstr(entry.budget_line),
 			"indicative_amount": flt(entry.indicative_amount) or None,
+			# the numeric reference lets the funding panel show the change live as the preparer types
+			"need_estimated_total_cost": (flt(entry.need_estimated_total_cost) or None) if entry.source_origin == needs_intake.NEED_ORIGIN else None,
+			**(estimate_change(entry.need_estimated_total_cost, entry.indicative_amount) if entry.source_origin == needs_intake.NEED_ORIGIN else {}),
 			"not_proceeding_reason": cstr(entry.not_proceeding_reason),
 			"need_reference_line": (
 				f"{entry.need} · Revision {needs_intake.need_revision_number(entry.need_revision)}" if entry.need else ""
@@ -602,6 +644,10 @@ def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, 
 			"amount_display": (
 				"Not applicable" if cstr(row.get("not_proceeding_reason")).strip()
 				else _money(row.get("indicative_amount"))
+			),
+			**(
+				estimate_change(row.get("need_estimated_total_cost"), row.get("indicative_amount"))
+				if row.get("need") and not cstr(row.get("not_proceeding_reason")).strip() else {}
 			),
 			"description": row.get("description"),
 			"expected_operational_result": row.get("expected_operational_result"),

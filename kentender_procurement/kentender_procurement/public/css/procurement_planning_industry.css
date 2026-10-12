@@ -935,7 +935,8 @@
 	margin: 0;
 	font-size: 12px;
 }
-.kt-pln .pln-dpp-task {
+.kt-pln .pln-dpp-task,
+.kt-pln .pln-head-action {
 	margin-top: var(--kt-space-4);
 }
 .kt-pln .pln-error-summary {
@@ -1016,56 +1017,6 @@
 .kt-pln .pln-form-dialog {
 	width: min(900px, calc(100vw - 48px));
 	max-width: none;
-}
-/* U08's own segmented toggle. `kt_industry_tokens.css` does not ship a
- * shared `.kt-seg`, so this follows the same locally-scoped precedent
- * Tenders already set (`.kt-tnd .tnd-seg[-opt]` in tenders_industry.css) —
- * a bordered track with the selected option filled solid, not two bare
- * radio labels floating side by side. */
-.kt-pln .pln-seg {
-	display: inline-flex;
-	overflow: hidden;
-	background: var(--kt-color-surface);
-	border: 1px solid var(--color-divider);
-	border-radius: var(--radius-md);
-	width: fit-content;
-	margin: var(--kt-space-4) 0;
-}
-.kt-pln .pln-seg-opt {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	white-space: nowrap;
-	padding: 7px 12px;
-	font-size: 13px;
-	cursor: pointer;
-	margin: 0;
-}
-.kt-pln .pln-seg-opt input {
-	position: absolute;
-	opacity: 0;
-	width: 0;
-	height: 0;
-	pointer-events: none;
-}
-.kt-pln .pln-seg-opt + .pln-seg-opt {
-	border-left: 1px solid var(--color-divider);
-}
-.kt-pln .pln-seg-opt:has(input:checked) {
-	background: var(--color-accent);
-	color: #fff;
-}
-.kt-pln .pln-seg-opt:not(:has(input:checked)):hover {
-	background: var(--color-neutral-100);
-}
-.kt-pln .pln-seg-opt:has(input:focus-visible) {
-	outline: 2px solid var(--color-accent);
-	outline-offset: -2px;
-}
-/* A disabled option stays readable: it is explained above, not hidden. */
-.kt-pln .pln-seg-opt.is-disabled {
-	opacity: 0.55;
-	cursor: not-allowed;
 }
 /* U08 — what the choice will produce: a plain shaded block, not a card. */
 .kt-pln .pln-form-preview {
@@ -1213,6 +1164,13 @@
 .kt-pln .pln-field-flagged > label {
 	color: var(--kt-status-critical);
 }
+/* The problem with one field, said under it (a form refusal names the field,
+   not only the page; PLN-CHG-001 v1.31 §10.12). */
+.kt-pln .pln-field-error {
+	margin-top: var(--kt-space-1);
+	color: var(--kt-status-critical);
+	font-size: 13px;
+}
 
 /* A derived line under a section's own content (the classification summary,
    the combined-purchase reason): the fact reads first, its link sits at the
@@ -1351,3 +1309,59 @@
 
 /* Owner decision 26 Sep 2026 — who asked the department to update its plan, and when. */
 .kt-pln .pln-dpp-update-request-asked { margin-top: var(--kt-space-1); font-size: 13px; color: var(--kt-color-neutral-700); }
+
+/* Approval and publication (Active plan). `.kt-meta-row` bottom-aligns its
+   cells, which only suits one-line values; these wrap to different line counts,
+   so the labels sat on different lines. Top-align them, keep the evidence link
+   at body size under its value, and give the progress link room below the row. */
+.kt-pln .pln-governance-row {
+	align-items: start;
+}
+.kt-pln .pln-governance-row .pln-check-action {
+	font-size: 14px;
+}
+.kt-pln .pln-governance-progress {
+	display: inline-block;
+	margin-top: var(--kt-space-4);
+}
+
+/* Recorded facts (PLN-CHG-001 v1.31 §10.12): a top-aligned grid, not the shared meta row, which bottom-aligns its cells
+   so a fact that wraps drags its neighbours' labels out of line (found live 9 Oct 2026 with a long public address).
+   The address takes a full row and wraps inside the card instead of running past it. */
+.kt-pln .pln-facts {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--kt-space-4) var(--kt-space-6);
+	align-items: start;
+}
+.kt-pln .pln-facts > div {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+.kt-pln .pln-facts .kt-meta-value {
+	overflow-wrap: anywhere;
+}
+.kt-pln .pln-fact-wide {
+	grid-column: 1 / -1;
+}
+/* An address is read, not scanned: body size and weight, the link colour doing the work. */
+.kt-pln .pln-facts .pln-fact-url {
+	font-family: inherit;
+	font-weight: 400;
+	font-size: 14px;
+}
+.kt-pln .pln-correct-prior {
+	margin-bottom: var(--kt-space-5);
+}
+/* A link set as a ghost button starts flush with the facts above it, not one padding in. */
+.kt-pln .pln-flush-link {
+	padding-left: 0;
+	margin-top: var(--kt-space-3);
+}
+@media (max-width: 720px) {
+	.kt-pln .pln-facts {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}

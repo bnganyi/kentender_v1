@@ -24,8 +24,13 @@ from kentender_budget.services import budget_contracts as contracts
 from kentender_budget.services import budget_line_contracts as lines_svc
 from kentender_budget.services import budget_readiness_contracts as readiness
 from kentender_budget.services.budget_audit_contracts import get_funding_activity
-from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import FUNDING_SOURCE, _FinanceTestBase, check_reserve
+from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import FUNDING_SOURCE, _FinanceTestBase, owner_ou, check_reserve
 
+
+from kentender_budget.services.budget_service_principal import PRINCIPAL_BUDGET, PRINCIPAL_CONTRACT, PRINCIPAL_REQUISITIONS, service_caller
+from kentender_budget.utils.version_stamp import stamped
+from kentender_core.services.command_write_guard import purge_doc
+from kentender_core.services.responsibility_errors import ResponsibilityError
 
 class _V19Base(_FinanceTestBase):
 	@classmethod
@@ -41,17 +46,17 @@ class _V19Base(_FinanceTestBase):
 		for budget in cls._budgets:
 			for doctype in ("Procurement Commitment",):
 				for name in frappe.get_all(doctype, filters={"reservation": ["in", frappe.get_all("Funding Reservation", filters={"budget": budget}, pluck="name") or ["-"]]}, pluck="name"):
-					frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+					purge_doc(doctype, name)
 			for name in frappe.get_all("Funding Reservation", filters={"budget": budget}, pluck="name"):
-				frappe.delete_doc("Funding Reservation", name, force=True, ignore_permissions=True)
+				purge_doc("Funding Reservation", name)
 			frappe.flags.allow_budget_audit_purge = True
 			try:
 				for name in frappe.get_all("Budget Audit Event", filters={"budget": budget}, pluck="name"):
-					frappe.delete_doc("Budget Audit Event", name, force=True, ignore_permissions=True)
+					purge_doc("Budget Audit Event", name)
 			finally:
 				frappe.flags.allow_budget_audit_purge = False
 			for name in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": ["in", frappe.get_all("Procurement Budget Version", filters={"budget": budget}, pluck="name") or ["-"]]}, pluck="name"):
-				frappe.delete_doc("Procurement Budget Line Version", name, force=True, ignore_permissions=True)
+				purge_doc("Procurement Budget Line Version", name)
 		super().tearDownClass()
 
 	@classmethod
@@ -67,32 +72,32 @@ class _V19Base(_FinanceTestBase):
 		"""Officer records an allocation with two lines. Returns (fy, budget, version)."""
 		fy = fiscal_year or self._fresh_fy()
 		self._as(self.officer)
-		result = contracts.save_budget_version_draft(
+		result = contracts.save_budget_version_draft(stamped(
 			{"fiscal_year": fy, "approval_reference": f"V19-{self.suffix}", "approval_date": add_days(nowdate(), -10), "authorised_total": dhi + hwd, "approval_document": "/files/test-approval.pdf"}
-		)
+		))
 		self.assertTrue(result["ok"], result.get("errors"))
 		budget, version = result["budget"]["id"], result["version"]["id"]
 		self._track("Procurement Budget Version", version)
 		self._track("Procurement Budget", budget)
 		self._budgets.append(budget)
-		lines = lines_svc.save_budget_lines_draft(
+		lines = lines_svc.save_budget_lines_draft(stamped(
 			{"budget_version": version, "lines": [
 				{"title": "Digital health infrastructure programme", "owner_org_unit": self.ou_dhp, "funding_source": FUNDING_SOURCE, "approved_amount": dhi},
 				{"title": "Digital health workforce development", "owner_org_unit": "", "funding_source": FUNDING_SOURCE, "approved_amount": hwd},
 			]}
-		)
+		))
 		self.assertTrue(lines["ok"], lines.get("errors"))
 		for lv in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="budget_line"):
 			self._track("Procurement Budget Line", lv)
 		if submit:
-			submitted = readiness.submit_budget_version({"budget_version": version})
+			submitted = readiness.submit_budget_version(stamped({"budget_version": version}))
 			self.assertTrue(submitted["ok"], submitted.get("blockers"))
 		return fy, budget, version
 
 	def _active(self, **kwargs) -> tuple[str, str, str]:
 		fy, budget, version = self._draft(submit=True, **kwargs)
 		self._as(self.approver)
-		approved = readiness.approve_budget_version({"budget_version": version})
+		approved = readiness.approve_budget_version(stamped({"budget_version": version}))
 		self.assertTrue(approved["ok"], approved.get("blockers"))
 		return fy, budget, version
 
@@ -104,10 +109,10 @@ class _V19Base(_FinanceTestBase):
 		tag = frappe.generate_hash(length=6)
 		token = check_reserve.check_funding(
 			plan_item=f"PPI-{tag}", plan_version=f"PLN-{tag}", finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}",
-			allocations=[{"budget_line": line, "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": f"PSA-{tag}"}],
-			correlation_id=frappe.generate_hash(length=12), calling_module="Procurement Requisitions", caller_reference=ref,
+			allocations=[{"budget_line": line, "source_organisation_unit": owner_ou(line), "amount": amount, "funding_source": FUNDING_SOURCE, "plan_source_allocation": f"PSA-{tag}"}],
+			correlation_id=frappe.generate_hash(length=12), caller=service_caller(PRINCIPAL_REQUISITIONS, reference=ref),
 		)
-		result = check_reserve.reserve_funding(token=token["token"], finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}", idempotency_key=f"IDEM-{tag}")
+		result = check_reserve.reserve_funding(token=token["token"], finance_task=f"FNT-{tag}", source_set_hash=f"HASH-{tag}", idempotency_key=f"IDEM-{tag}", caller=service_caller(PRINCIPAL_REQUISITIONS, reference=ref))
 		self.assertTrue(result["ok"])
 		return result["reservations"][0]["reservation_id"]
 
@@ -122,10 +127,10 @@ class _V19Base(_FinanceTestBase):
 		for r in editor["rows"]:
 			amount = dhi if r["title"].startswith("Digital health infrastructure") else hwd
 			rows.append({"budget_line": r["budget_line"], "title": r["title"], "owner_org_unit": r["owner_org_unit"], "funding_source": r["funding_source"], "approved_amount": amount})
-		saved = lines_svc.save_budget_lines_draft({"budget_version": version, "lines": rows})
+		saved = lines_svc.save_budget_lines_draft(stamped({"budget_version": version, "lines": rows}))
 		self.assertTrue(saved["ok"], saved.get("errors"))
 		if submit:
-			submitted = readiness.submit_budget_version({"budget_version": version})
+			submitted = readiness.submit_budget_version(stamped({"budget_version": version}))
 			self.assertTrue(submitted["ok"], submitted.get("blockers"))
 		return version
 
@@ -153,7 +158,7 @@ class TestWorkspaceStateMatrix(_V19Base):
 		self.assertEqual(ws["pending_version"]["action"], "continue_draft")
 		self.assertNotIn("positions", ws)
 		self.assertNotIn("record_allocation", ws["available_actions"])
-		readiness.submit_budget_version({"budget_version": version})
+		readiness.submit_budget_version(stamped({"budget_version": version}))
 		ws = contracts.get_budget_workspace(fy)
 		self.assertEqual(ws["state"], "initial_submitted")
 		self.assertEqual(ws["pending_version"]["action"], "view_submission")
@@ -168,7 +173,7 @@ class TestWorkspaceStateMatrix(_V19Base):
 	def test_returned_draft_carries_the_full_reason(self):
 		fy, budget, version = self._draft(submit=True)
 		self._as(self.approver)
-		returned = readiness.return_budget_version({"budget_version": version, "return_reason": "Attach the signed approval instrument, not the draft memo."})
+		returned = readiness.return_budget_version(stamped({"budget_version": version, "return_reason": "Attach the signed approval instrument, not the draft memo."}))
 		self.assertTrue(returned["ok"], returned)
 		self._as(self.officer)
 		ws = contracts.get_budget_workspace(fy)
@@ -190,7 +195,7 @@ class TestWorkspaceStateMatrix(_V19Base):
 		self.assertEqual(ws["pending_version"]["action"], "continue_update")
 		self.assertNotIn("update_allocation", ws["available_actions"])
 		self.assertEqual(ws["positions"]["approved"], 160_000_000)
-		readiness.submit_budget_version({"budget_version": successor})
+		readiness.submit_budget_version(stamped({"budget_version": successor}))
 		self._as(self.auditor)
 		ws = contracts.get_budget_workspace(fy)
 		self.assertEqual(ws["state"], "current_with_submitted")
@@ -240,14 +245,14 @@ class TestDecisionFirstApprovalRead(_V19Base):
 		self._reserve(dhi, 95_000_000, ref="REQ-V19-002")
 		v2 = self._successor(budget, dhi=90_000_000, hwd=70_000_000, submit=False)
 		self._as(self.officer)
-		submitted = readiness.submit_budget_version({"budget_version": v2})
+		submitted = readiness.submit_budget_version(stamped({"budget_version": v2}))
 		self.assertFalse(submitted["ok"])
 		breach = [b for b in submitted["blockers"] if b["rule"] == "BUDGET_REVISION_FLOOR_BREACH"][0]
 		self.assertEqual(breach["detail"]["shortfall"], 5_000_000)
 		self.assertIn("Shortfall: KES 5,000,000", breach["message"])
 		# Submit the version regardless (simulating a hold that arrived after submission)
 		frappe.db.set_value("Funding Reservation", {"budget_line": dhi}, "remaining_amount", 0)
-		submitted = readiness.submit_budget_version({"budget_version": v2})
+		submitted = readiness.submit_budget_version(stamped({"budget_version": v2}))
 		self.assertTrue(submitted["ok"], submitted.get("blockers"))
 		frappe.db.set_value("Funding Reservation", {"budget_line": dhi}, "remaining_amount", 95_000_000)
 		self._as(self.approver)
@@ -257,7 +262,7 @@ class TestDecisionFirstApprovalRead(_V19Base):
 		self.assertIsNone(row["available_after_update"])
 		self.assertFalse(task["capabilities"]["can_approve"])
 		self.assertTrue(task["capabilities"]["can_return"])
-		approved = readiness.approve_budget_version({"budget_version": v2})
+		approved = readiness.approve_budget_version(stamped({"budget_version": v2}))
 		self.assertFalse(approved["ok"])
 		self.assertEqual(frappe.db.get_value("Procurement Budget Version", v2, "status"), "Submitted for approval")
 
@@ -284,7 +289,7 @@ class TestSaveSubmitRecovery(_V19Base):
 	def test_stale_save_is_a_typed_result_not_an_exception(self):
 		fy, budget, version = self._draft()
 		self._as(self.officer)
-		result = contracts.save_budget_version_draft({"budget_version": version, "approval_reference": "X-1", "approval_date": add_days(nowdate(), -1), "authorised_total": 160_000_000, "expected_modified": "2000-01-01 00:00:00"})
+		result = contracts.save_budget_version_draft(stamped({"budget_version": version, "approval_reference": "X-1", "approval_date": add_days(nowdate(), -1), "authorised_total": 160_000_000, "expected_modified": "2000-01-01 00:00:00"}))
 		self.assertFalse(result["ok"])
 		self.assertEqual(result["code"], "BUDGET_STALE_WRITE")
 		self.assertIn("modified", result["version"])
@@ -293,14 +298,49 @@ class TestSaveSubmitRecovery(_V19Base):
 		fy, budget, version = self._draft()
 		self._as(self.officer)
 		key = f"submit-{frappe.generate_hash(length=8)}"
-		first = readiness.submit_budget_version({"budget_version": version, "idempotency_key": key})
+		payload = stamped({"budget_version": version, "idempotency_key": key})
+		first = readiness.submit_budget_version(dict(payload))
 		self.assertTrue(first["ok"], first.get("blockers"))
-		second = readiness.submit_budget_version({"budget_version": version, "idempotency_key": key})
+		# a replay re-sends the identical request, stamp included
+		second = readiness.submit_budget_version(dict(payload))
 		self.assertTrue(second["ok"])
 		self.assertTrue(second.get("replayed"))
 		self.assertEqual(frappe.db.count("Budget Audit Event", {"budget_version": version, "event_type": "Budget version submitted"}), 1)
-		conflict = readiness.submit_budget_version({"budget_version": version, "idempotency_key": key, "expected_modified": "changed"})
+		conflict = readiness.submit_budget_version(stamped({"budget_version": version, "idempotency_key": key, "expected_modified": "changed"}))
 		self.assertEqual(conflict["code"], "BUDGET_IDEMPOTENCY_CONFLICT")
+
+	def test_a_recorded_result_is_not_handed_to_another_user_and_needs_standing_first(self):
+		"""RG-16 / AUD-XC-131 — the capability is checked before the key is looked up, and the
+		key is bound to the user who ran the command."""
+		fy, budget, version = self._draft()
+		self._as(self.officer)
+		key = f"submit-{frappe.generate_hash(length=8)}"
+		payload = stamped({"budget_version": version, "idempotency_key": key})
+		first = readiness.submit_budget_version(dict(payload))
+		self.assertTrue(first["ok"], first.get("blockers"))
+		outsider = self._make_user("keyspy", ("Auditor",))
+		self._as(outsider)
+		with self.assertRaises(ResponsibilityError):
+			readiness.submit_budget_version(dict(payload))
+		self._as(self.dual)  # holds the capability but did not run the first command
+		other = readiness.submit_budget_version(dict(payload))
+		self.assertEqual(other.get("code"), "BUDGET_IDEMPOTENCY_CONFLICT")
+		self.assertNotIn("version", other)
+		self.assertNotIn("replayed", other)
+		self._as(self.officer)
+		self.assertTrue(readiness.submit_budget_version(dict(payload)).get("replayed"))
+
+	def test_a_key_recorded_for_a_budget_that_no_longer_exists_is_free_again(self):
+		"""RG-16 — a seed or clean-up that removes a Budget must not leave its keys replaying results about nothing."""
+		fy, budget, version = self._draft()
+		self._as(self.officer)
+		key = f"submit-{frappe.generate_hash(length=8)}"
+		first = readiness.submit_budget_version(stamped({"budget_version": version, "idempotency_key": key}))
+		self.assertTrue(first["ok"], first.get("blockers"))
+		frappe.db.set_value("Budget Command Journal", {"idempotency_key": key}, "budget", "BUDGET-THAT-WAS-REMOVED", update_modified=False)
+		self.assertEqual(frappe.db.get_value("Budget Command Journal", {"idempotency_key": key}, "budget"), "BUDGET-THAT-WAS-REMOVED")
+		again = readiness.submit_budget_version(stamped({"budget_version": version, "idempotency_key": key}))
+		self.assertFalse(again.get("replayed"))
 
 	def test_lines_save_reports_exact_amount_still_to_assign(self):
 		fy, budget, version = self._draft()
@@ -308,12 +348,12 @@ class TestSaveSubmitRecovery(_V19Base):
 		editor = lines_svc.get_budget_version_lines_editor(version)
 		rows = [dict(budget_line=r["budget_line"], title=r["title"], owner_org_unit=r["owner_org_unit"], funding_source=r["funding_source"], approved_amount=r["approved_amount"]) for r in editor["rows"]]
 		rows[1]["approved_amount"] = 50_000_000
-		saved = lines_svc.save_budget_lines_draft({"budget_version": version, "lines": rows})
+		saved = lines_svc.save_budget_lines_draft(stamped({"budget_version": version, "lines": rows}))
 		self.assertTrue(saved["ok"])
 		self.assertEqual(saved["saved_scope"], "budget_lines")
 		self.assertEqual(saved["totals"]["amount_still_to_assign"], 10_000_000)
 		self.assertFalse(saved["totals"]["match"])
-		submitted = readiness.submit_budget_version({"budget_version": version})
+		submitted = readiness.submit_budget_version(stamped({"budget_version": version}))
 		mismatch = [b for b in submitted["blockers"] if b["rule"] == "BUDGET_TOTAL_MISMATCH"][0]
 		self.assertEqual(mismatch["detail"]["amount_still_to_assign"], 10_000_000)
 		self.assertIn("Amount still to assign: KES 10,000,000", mismatch["message"])
@@ -344,9 +384,9 @@ class TestSuccessorEditing(_V19Base):
 		self.assertTrue(by[hwd]["can_omit"])
 		self.assertFalse(by[dhi]["can_omit"])
 		self.assertEqual(by[dhi]["protected_amount"], 80_000_000)
-		blocked = lines_svc.save_budget_lines_draft({"budget_version": v2, "lines": [{"budget_line": dhi, "omit": True}]})
+		blocked = lines_svc.save_budget_lines_draft(stamped({"budget_version": v2, "lines": [{"budget_line": dhi, "omit": True}]}))
 		self.assertFalse(blocked["ok"])
-		allowed = lines_svc.save_budget_lines_draft({"budget_version": v2, "lines": [{"budget_line": hwd, "omit": True}]})
+		allowed = lines_svc.save_budget_lines_draft(stamped({"budget_version": v2, "lines": [{"budget_line": hwd, "omit": True}]}))
 		self.assertTrue(allowed["ok"], allowed.get("errors"))
 		self.assertEqual([o["budget_line"] for o in allowed.get("rows", []) if False], [])
 		editor = lines_svc.get_budget_version_lines_editor(v2)
@@ -373,7 +413,7 @@ class TestYearEndClosure(_V19Base):
 		status = readiness.get_budget_closure_status(budget)
 		self.assertEqual(status["state"], "before_year_end")
 		self.assertFalse(status["can_close"])
-		closed = readiness.close_budget({"budget": budget})
+		closed = readiness.close_budget(stamped({"budget": budget}))
 		self.assertFalse(closed["ok"])
 		self.assertEqual(closed["code"], "BUDGET_INVALID_STATE")
 
@@ -381,28 +421,29 @@ class TestYearEndClosure(_V19Base):
 		fy, budget, v1 = self._active(fiscal_year=self._past_fy())
 		dhi = self._line(v1, "Digital health infrastructure programme")
 		reservation = self._reserve(dhi, 80_000_000, ref="REQ-V19-004")
-		converted = commit.convert_reservation(reservation=reservation, contract="KT-CON-V19-1", amount=60_000_000, idempotency_key=f"conv-{frappe.generate_hash(length=6)}")
+		converted = commit.convert_reservation(reservation=reservation, contract="KT-CON-V19-1", amount=60_000_000, idempotency_key=f"conv-{frappe.generate_hash(length=6)}", contract_event_id="KT-CON-V19-1:signed", contract_event_type="ContractSigned", caller=service_caller(PRINCIPAL_CONTRACT, reference="KT-CON-V19-1"))
 		self.assertTrue(converted["ok"])
 		self._as(self.approver)
 		status = readiness.get_budget_closure_status(budget)
 		self.assertEqual(status["state"], "blocked")
 		self.assertEqual(status["remaining_total"], 20_000_000)
 		self.assertEqual(status["rows"][0]["still_reserved"], 20_000_000)
-		blocked = readiness.close_budget({"budget": budget})
+		blocked = readiness.close_budget(stamped({"budget": budget}))
 		self.assertFalse(blocked["ok"])
 		self.assertIn("KES 20,000,000 remains reserved", blocked["errors"]["reservations"])
 		# Release the remainder through the owner event; the 60m commitment stays.
-		released = commit.release_reservation(reservation=reservation, amount=20_000_000, downstream_event_id="REV-V19-1", downstream_event_type="Requisition revocation", idempotency_key=f"rel-{frappe.generate_hash(length=6)}")
+		released = commit.release_reservation(reservation=reservation, amount=20_000_000, downstream_event_id="KT-CON-V19-1:unused", downstream_event_type="ContractUnusedAmount", idempotency_key=f"rel-{frappe.generate_hash(length=6)}", caller=service_caller(PRINCIPAL_CONTRACT, reference="KT-CON-V19-1"))
 		self.assertTrue(released["ok"])
 		status = readiness.get_budget_closure_status(budget)
 		self.assertEqual(status["state"], "ready")
 		self.assertEqual(status["active_commitments_total"], 60_000_000)
 		self.assertTrue(status["can_close"])
 		key = f"close-{frappe.generate_hash(length=6)}"
-		closed = readiness.close_budget({"budget": budget, "idempotency_key": key})
+		payload = stamped({"budget": budget, "idempotency_key": key})
+		closed = readiness.close_budget(dict(payload))
 		self.assertTrue(closed["ok"], closed)
 		self.assertEqual(closed["closure"]["state"], "closed")
-		replay = readiness.close_budget({"budget": budget, "idempotency_key": key})
+		replay = readiness.close_budget(dict(payload))
 		self.assertTrue(replay["ok"] and replay.get("replayed"))
 		self.assertEqual(frappe.db.count("Budget Audit Event", {"budget": budget, "event_type": "Budget closed"}), 1)
 		ws = contracts.get_budget_workspace(fy)
@@ -422,7 +463,7 @@ class TestLineDetailReads(_V19Base):
 		fy, budget, v1 = self._active()
 		dhi = self._line(v1, "Digital health infrastructure programme")
 		reservation = self._reserve(dhi, 80_000_000, ref="REQ-V19-005")
-		commit.convert_reservation(reservation=reservation, contract="KT-CON-V19-2", amount=60_000_000, idempotency_key=f"conv-{frappe.generate_hash(length=6)}")
+		commit.convert_reservation(reservation=reservation, contract="KT-CON-V19-2", amount=60_000_000, idempotency_key=f"conv-{frappe.generate_hash(length=6)}", contract_event_id="KT-CON-V19-2:signed", contract_event_type="ContractSigned", caller=service_caller(PRINCIPAL_CONTRACT, reference="KT-CON-V19-2"))
 		self._as(self.auditor)
 		line = contracts.get_budget_line_position(dhi)
 		self.assertEqual(line["positions"], {"approved": 100_000_000, "reserved": 20_000_000, "committed": 60_000_000, "available": 20_000_000})
@@ -446,7 +487,7 @@ class TestLineDetailReads(_V19Base):
 		# Force a floor breach outside the governed path (a test-only lever),
 		# then let the owner revalidation flag the hold.
 		frappe.db.set_value("Procurement Budget Line Version", {"budget_version": v1, "budget_line": dhi}, "approved_amount", 50_000_000)
-		commit.revalidate_reservations(reservations=[reservation], downstream_event_id="EVT-V19-1", downstream_event_type="Contract variation", idempotency_key=f"rev-{frappe.generate_hash(length=6)}")
+		commit.revalidate_reservations(reservations=[reservation], downstream_event_id="EVT-V19-1", downstream_event_type="Contract variation", idempotency_key=f"rev-{frappe.generate_hash(length=6)}", caller=service_caller(PRINCIPAL_BUDGET))
 		self._as(self.auditor)
 		row = contracts.get_budget_line_position(dhi)["reservations"][0]
 		self.assertEqual(row["status"], "Needs Attention")

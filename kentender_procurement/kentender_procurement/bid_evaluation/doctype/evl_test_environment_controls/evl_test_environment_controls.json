@@ -10,7 +10,8 @@
   "intake_outcome",
   "notice_outcome",
   "delivery_outcome",
-  "downstream_status"
+  "downstream_status",
+  "head_of_procurement"
  ],
  "fields": [
   {
@@ -40,12 +41,20 @@
    "label": "Downstream status",
    "read_only": 0,
    "options": "\nNo award decision recorded\nAward decision recorded\nUnknown"
+  },
+  {
+   "fieldname": "head_of_procurement",
+   "fieldtype": "Link",
+   "label": "Head of Procurement Function",
+   "read_only": 0,
+   "options": "User",
+   "description": "Names the one Head of Procurement Function on a test site that keeps other fixtures' Head accounts (EVL-CHG-001 v0.8 §3)."
   }
  ],
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-30 18:00:00.000000",
+ "modified": "2026-10-08 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Bid Evaluation",
  "name": "EVL Test Environment Controls",

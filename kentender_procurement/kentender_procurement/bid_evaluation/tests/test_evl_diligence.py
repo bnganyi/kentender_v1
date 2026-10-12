@@ -76,6 +76,31 @@ class TestReport(DiligenceCase):
 		self.plan()
 		self.end_session()
 
+	def test_a_participant_who_is_no_longer_eligible_cannot_freeze_or_sign(self):
+		"""AUD-EVL-006: due diligence is carried out by eligible members only (EVL §5.4)."""
+		from kentender_procurement.bid_evaluation.services import declaration
+
+		self.observe(MEMBER_2)
+		self.observe(CHAIR)
+		declaration.declare_interest(tender=self.name, choice="Declare a conflict", conflict_description="I know one of the customers.",
+			confidentiality_accepted=True, idempotency_key=key(), user=CHAIR)  # the lead steps aside
+		with self.assertRaises(frappe.DoesNotExistError):
+			diligence.send_for_signing(tender=self.name, idempotency_key=key(), user=CHAIR)
+		self.assertEqual(diligence.current_plan(self.case).report_state, "Draft")
+
+	def test_a_participant_who_became_conflicted_after_freezing_cannot_sign(self):
+		from kentender_procurement.bid_evaluation.services import declaration
+
+		self.observe(MEMBER_2)
+		self.observe(CHAIR)
+		diligence.send_for_signing(tender=self.name, idempotency_key=key(), user=CHAIR)
+		declaration.declare_interest(tender=self.name, choice="Declare a conflict", conflict_description="I know one of the customers.",
+			confidentiality_accepted=True, idempotency_key=key(), user=MEMBER_2)
+		with self.assertRaises(frappe.DoesNotExistError):
+			diligence.sign(tender=self.name, idempotency_key=key(), user=MEMBER_2)
+		diligence.sign(tender=self.name, idempotency_key=key(), user=CHAIR)
+		self.assertEqual(diligence.current_plan(self.case).report_state, "Frozen")  # never completes without the ineligible signer
+
 	def test_observe_freeze_sign_and_conclude(self):
 		from kentender_procurement.bid_evaluation.services import conclusion
 

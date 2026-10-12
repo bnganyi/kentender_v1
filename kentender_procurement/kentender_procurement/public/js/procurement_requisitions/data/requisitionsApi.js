@@ -1,6 +1,18 @@
 // REQ-CHG-001 v1.11 — the browser's only door to the server (§10). Every
 // command carries an idempotency key and expected record version; business
 // rules stay on the server.
+//
+// v1.15 payload shapes (the server refuses anything else):
+//   saveSummary          summary_values: header fields + drawdown_lines[{ drawdown_line_id, requested_value }]
+//                        — the estimated total cost as an exact string ("" clears it). A quantity is
+//                        never sent: it is derived from the items.
+//   addSameSpecificationItems  shared_values { equipment_category, item_name, delivery_location,
+//                        latest_delivery_date } + item_rows[{ drawdown_line_id, quantity, intended_use }]
+//   updateItem / removeItem    the result carries version_record_version; the page reloads.
+// A refusal reaches the caller as Error { message, code, detail } (req_shared/frappeCall.js):
+// REQ_QUANTITY_EXCEEDS_AVAILABLE → detail.rows { drawdown_line_id: sentence };
+// REQ_ESTIMATE_EXCEEDS_ALLOWANCE → detail.{ drawdown_line_id, entered, limit };
+// REQ_MONEY_PRECISION_INVALID → an amount with excess decimal places (never rounded).
 import { frappeCall } from "../../req_shared/frappeCall.js";
 
 const API = "kentender_procurement.procurement_requisitions.api";
@@ -29,6 +41,7 @@ export const saveWarrantyAndSupport = (a) => call("save_warranty_and_support", {
 export const addTechnical = (a) => call("add_technical_requirement", { ...a, technical_requirement_values: json(a.values) });
 export const updateTechnical = (a) => call("update_technical_requirement", { ...a, technical_requirement_values: json(a.values) });
 export const removeTechnical = (a) => call("remove_technical_requirement", a);
+export const customiseRequirement = (a) => call("customise_requirement_for_item", a);
 export const addService = (a) => call("add_related_service", { ...a, service_values: json(a.values) });
 export const updateService = (a) => call("update_related_service", { ...a, service_values: json(a.values) });
 export const removeService = (a) => call("remove_related_service", a);

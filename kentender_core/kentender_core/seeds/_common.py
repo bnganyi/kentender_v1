@@ -174,7 +174,6 @@ def upsert_seed_user(
 			email,
 			{
 				"kt_procuring_entity": entity_name,
-				"kt_primary_department": department_docname,
 			},
 		)
 	ensure_moh_entity_permission_aliases(email, entity_name)

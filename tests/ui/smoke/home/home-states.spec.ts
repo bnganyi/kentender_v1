@@ -31,7 +31,7 @@ test.describe("landing and history", () => {
 		await login(page, CHARLES, PASSWORD);
 		await page.goto("/desk/home", { waitUntil: "domcontentloaded" });
 		await waitForHome(page);
-		await expect(page.locator('[data-testid="kt-home-summary-my_work"]')).toContainText("10");
+		await expect(page.locator('[data-testid="kt-home-summary-my_work"]')).toContainText("9");
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await waitForHome(page);
 		await expect(page).toHaveURL(/\/desk\/home$/);
@@ -42,13 +42,13 @@ test.describe("landing and history", () => {
 	test("browser back returns to Home with its content at once, and forward returns to the record", async ({ page }) => {
 		await openHomeFromMenu(page, CHARLES);
 		await rows(page, "my-work").nth(4).locator('[data-testid="kt-home-continue"]').click();
-		await expect(page).toHaveURL(/\/evaluation\/secretary$/, { timeout: 60_000 });
+		await expect(page).toHaveURL(/\/tenders\/TND-MOH-2026-005\/opening$/, { timeout: 60_000 });
 		await page.goBack();
 		await expect(root(page)).toBeVisible({ timeout: 30_000 });
 		await expect(page.locator('[data-testid="kt-home-loading"]')).toHaveCount(0);
 		await expect(rows(page, "my-work")).toHaveCount(5);
 		await page.goForward();
-		await expect(page).toHaveURL(/\/evaluation\/secretary$/, { timeout: 30_000 });
+		await expect(page).toHaveURL(/\/tenders\/TND-MOH-2026-005\/opening$/, { timeout: 30_000 });
 	});
 
 	test("returning to Home re-reads quietly: the page keeps its content and no skeleton is shown", async ({ page }) => {

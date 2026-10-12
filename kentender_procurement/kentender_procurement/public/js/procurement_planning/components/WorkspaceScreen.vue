@@ -20,24 +20,15 @@
 		<!-- §9/§3A.1 — the verdict resolves before any header, filter, content
 		     or empty state is painted (PLN18-AC-112). -->
 		<div v-else-if="workspace.outcome === 'FORBIDDEN'" class="kt-page" data-testid="pln-forbidden">
-			<div class="kt-empty">
-				<h3 style="font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 23px; margin: 0">
-					{{ forbidden.heading }}
-				</h3>
-				<p v-for="(line, index) in forbidden.text || []" :key="index">{{ line }}</p>
-			</div>
+			<AccessDenied :heading="forbidden.heading" :text="forbidden.text" testid="kt-access-denied" />
 		</div>
+		<!-- §8's own PLN_NO_CONTEXT row is the one authoritative user-facing
+		     message (re-diffed 22 Sep 2026 — this previously split a different,
+		     invented pair of sentences across a heading and body). No artboard
+		     draws this state; the spec's error contract is the only source, so it
+		     is used exactly. -->
 		<div v-else-if="workspace.outcome === 'NO_CONTEXT'" class="kt-page" data-testid="pln-no-context">
-			<div class="kt-empty">
-				<!-- §8's own PLN_NO_CONTEXT row is the one authoritative
-				     user-facing message (re-diffed 22 Sep 2026 — this previously
-				     split a different, invented pair of sentences across a
-				     heading and body). No artboard draws this state; the spec's
-				     error contract is the only source, so it is used exactly. -->
-				<h3 style="font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 23px; margin: 0">
-					Procurement Planning is not available for your responsibilities or the current setup.
-				</h3>
-			</div>
+			<AccessDenied heading="Procurement Planning is not available for your responsibilities or the current setup." testid="kt-access-unavailable" />
 		</div>
 
 		<div v-else class="kt-page">
@@ -340,6 +331,7 @@
 <script setup>
 import { computed } from "vue";
 import CommonStates from "./CommonStates.vue";
+import AccessDenied from "../../access_shared/AccessDenied.vue";
 import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
 import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 

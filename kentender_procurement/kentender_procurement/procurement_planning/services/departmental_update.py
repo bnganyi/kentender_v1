@@ -29,9 +29,10 @@ import frappe
 from frappe.utils import cstr, flt, now_datetime
 
 from kentender_procurement.procurement_planning.errors import fail
-from kentender_procurement.procurement_planning.services import envelope
+from kentender_procurement.procurement_planning.services import envelope, money
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_PROCUREMENT_PLANNER
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 DOCTYPE = "Departmental Plan Update Request"
 OPEN = "Open"
@@ -86,6 +87,7 @@ def open_requests_for_plan(departmental_plan: str) -> list[Any]:
 	)
 
 
+@planning_command
 def request_departmental_plan_update(
 	*, plan_version: str, budget_line: str, organisation_unit: str, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
@@ -107,7 +109,7 @@ def request_departmental_plan_update(
 		fail("PLN_BASELINE_LOCKED")
 
 	line = budget_revision._line_statement(plan, version, budget_line)
-	if not line or flt(line.get("planned")) <= flt(line.get("approved")) + 1e-9:
+	if not line or not money.exceeds(line.get("planned"), line.get("approved")):
 		fail("PLN_DEPARTMENTAL_UPDATE_NOT_REQUIRED")
 	if organisation_unit not in (line_units(version.name).get(budget_line) or []):
 		fail("PLN_DEPARTMENTAL_UPDATE_NOT_REQUIRED")
@@ -121,6 +123,7 @@ def request_departmental_plan_update(
 		fail("PLN_DEPARTMENTAL_UPDATE_ALREADY_REQUESTED")
 
 	approved, planned = flt(line["approved"]), flt(line["planned"])
+	over = float(money.as_decimal(line["planned"]) - money.as_decimal(line["approved"]))  # exact, then stored
 	request = frappe.get_doc({
 		"doctype": DOCTYPE,
 		"request_reference": _new_reference(),
@@ -133,7 +136,7 @@ def request_departmental_plan_update(
 		"budget_line_title": cstr(line.get("title")),
 		"approved_amount": approved,
 		"planned_amount": planned,
-		"over_amount": planned - approved,
+		"over_amount": over,
 		"status": OPEN,
 		"requested_by": actor,
 		"authority_snapshot": authz.authority_snapshot(assignment),

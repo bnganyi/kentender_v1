@@ -41,6 +41,8 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"CFG_PORTAL_SUPPORT_EMAIL_REQUIRED",
 		"CFG_PORTAL_URL_INVALID",
 		"CFG_PUBLIC_PORTAL_INCOMPLETE",
+		# CFG-CHG-002 v0.19 §8 — the staff home organisation unit.
+		"CFG_HOME_UNIT_INVALID",
 	}
 )
 
@@ -78,6 +80,7 @@ DEFAULT_MESSAGES: dict[str, str] = {
 	"CFG_PORTAL_SUPPORT_EMAIL_REQUIRED": "Enter the email suppliers should use for support.",
 	"CFG_PORTAL_URL_INVALID": "Enter a complete HTTPS address for the public notice.",
 	"CFG_PUBLIC_PORTAL_INCOMPLETE": "Complete the supplier support and public-notice links before suppliers start or submit bids.",
+	"CFG_HOME_UNIT_INVALID": "Choose an active organisation unit for an enabled staff member.",
 }
 
 

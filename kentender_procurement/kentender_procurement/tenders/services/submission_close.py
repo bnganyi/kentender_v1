@@ -63,12 +63,14 @@ def close_tender_submission_period(*, tender: str, idempotency_key: str, user: s
 	if actor not in ("Administrator",) and not is_technical(actor):
 		fail("TND_RESPONSIBILITY_REQUIRED", "Submission periods close by the system, never by a business user.")
 	payload = {"tender": tender}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="CloseTenderSubmissionPeriod", actor=actor)
 	if replay:
 		return replay
 	root = envelope.locked("Tender", draft_commands.resolve_tender_name(tender))
 	if root.overall_status == "Submission period ended":
-		return {"ok": True, "idempotent": True, "action": "already_closed", "tender": root.name, "handoff": cstr(root.submission_handoff)}
+		result = {"ok": True, "idempotent": True, "action": "already_closed", "tender": root.name, "handoff": cstr(root.submission_handoff)}
+		envelope.record_command(idempotency_key=idempotency_key, command="CloseTenderSubmissionPeriod", payload=payload, result=result, document_type="Tender", document_name=root.name, actor=actor, fixture_namespace=root.fixture_namespace)
+		return result
 	if root.overall_status != "Published — open":
 		fail("TND_STALE_VERSION", "Only a Published — open Tender closes its submission period.")
 	deadline = get_datetime(root.submission_deadline)

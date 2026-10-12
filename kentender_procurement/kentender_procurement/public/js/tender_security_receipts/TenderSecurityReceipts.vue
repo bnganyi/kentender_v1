@@ -11,12 +11,7 @@
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell" data-testid="tsr-shell" :data-loading="loading ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : 'false'">
 			<div v-if="data.outcome === 'FORBIDDEN'" class="kt-page tsr-page" data-testid="tsr-forbidden">
-				<div class="kt-empty">
-					<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-					<h2 class="tsr-state-heading">{{ data.heading }}</h2>
-					<p style="margin: 0 auto 16px; max-width: 520px">{{ data.text }}</p>
-					<button type="button" class="btn btn-secondary" @click="goHome">Back to Procurement</button>
-				</div>
+				<AccessDenied :heading="data.heading" :text="data.text" />
 			</div>
 
 			<div v-else class="kt-page tsr-page" data-testid="tsr-list">
@@ -105,6 +100,7 @@ import { useRouteState } from "./composables/useRouteState.js";
 import { usePageRail } from "../tnd_shared/composables/usePageRail.js";
 import * as api from "./data/api.js";
 import IntakeDialog from "./IntakeDialog.vue";
+import AccessDenied from "../access_shared/AccessDenied.vue";
 import TablePagerHost from "../pager_shared/TablePagerHost.vue";
 import { usePagedRows } from "../pager_shared/usePagedRows.js";
 
@@ -133,9 +129,6 @@ const rows = computed(() => (data.value && data.value.rows) || []);
 // The table-pagination standard (AGENTS.md §6.11): the receipts register is paged; a new Tender filter is a new list.
 const { pagedRows, total, page, pageSize, setPage, setPageSize, reset } = usePagedRows(rows, "security-receipts");
 
-function goHome() {
-	frappe.set_route("Workspaces", "Procurement Home");
-}
 function applyFilter() {
 	const value = (draftTender.value || "").trim();
 	reset();

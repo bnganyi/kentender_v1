@@ -106,6 +106,8 @@ def _stop_reasons(doc) -> list[str]:
 		out.append("hold")
 	if not profile.verified():
 		out.append("rules")
+	if checks.funding_stop(doc):
+		out.append("funding")
 	return out
 
 

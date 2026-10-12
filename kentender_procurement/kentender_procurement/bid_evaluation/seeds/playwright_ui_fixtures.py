@@ -53,9 +53,9 @@ PEOPLE = {
 SUPPLIER = bds_pw.SUPPLIERS["afya"]["representative"]
 BROWSER_ACTORS = (AO, HOP, SECRETARY, AUDITOR, CHAIR, MEMBER, MEMBER_2, REPLACEMENT, SUPPORT, SUPPLIER, "Administrator")
 ROSTER = [
-	{"user": CHAIR, "department": "Human Resource Management and Development", "capacity": "Chair"},
-	{"user": MEMBER, "department": "ICT", "capacity": "Member"},
-	{"user": MEMBER_2, "department": "Finance", "capacity": "Member"},
+	{"user": CHAIR, "capacity": "Chair"},
+	{"user": MEMBER, "capacity": "Member"},
+	{"user": MEMBER_2, "capacity": "Member"},
 ]
 Q1 = "Please identify the page and section of your submitted Kenya service-centre details that gives the Nairobi service address."
 SCOPE = "Explain the submitted evidence. Do not change your offer or add a new service arrangement."
@@ -80,8 +80,8 @@ AT = {
 # Each stage is the stage it grows from and the boards it pictures.
 STAGES = {
 	"prepared": (None, "D01-APPOINT D02-A (Accounting Officer)"),
-	"appointed": ("prepared", "D01-APPOINT-HOP D02-S (Head of Procurement), D02-D (members)"),
-	"assigned": ("appointed", "D02-D, D02-CONFLICT (members)"),
+	"appointed": ("prepared", "D02-DELEGATE (Head of Procurement)"),
+	"assigned": ("appointed", "D02-D, D02-CONFLICT (members); the Head has delegated the secretary duties"),
 	"conflict": ("assigned", "D02-REPLACE, D02-INELIGIBLE (Accounting Officer)"),
 	"declared": ("assigned", "S-OPENING-AWAITED"),
 	"reviewing": ("declared", "D03 (before findings), D04 (members), S-CHECKS"),
@@ -97,7 +97,7 @@ STAGES = {
 	"signing": ("resolved", "D07-SIGN (members), D07-REVISE (secretary)"),
 	"chair-signed": ("signing", "D07-WAIT (chair)"),
 	"report-sent": ("chair-signed", "D07-SENT, D07-HOP, S-AUDITOR"),
-	"intake-first": (None, "D02-INTAKE-FIRST, D02-INTAKE-FIRST-HOP"),
+	"intake-first": (None, "D02-INTAKE-FIRST"),
 	"no-bids": (None, "D02-NO-BIDS"),
 	"paused": ("concern", "D08-PAUSED"),
 	"cancelled": ("concern", "D08-CANCELLED"),
@@ -266,9 +266,22 @@ class EvaluationWorld:
 		getattr(self, "stage_" + stage.replace("-", "_"))()
 
 	# -- preparation -----------------------------------------------------------
+	def set_home_units(self) -> None:
+		"""KT-STD-001 v1.26 §8.3A shape for the browser world: each committee person's department is their home unit
+		(AUTH-ADR-001 v1.12 §4.8), set through the System setup command like any other setup fact."""
+		from kentender_core.services import staff_home_unit
+
+		units = {r["unit_name"]: r["name"] for r in frappe.get_all("Organisation Unit", fields=["name", "unit_name"], limit_page_length=0)}
+		frappe.set_user("Administrator")
+		for user, unit_name in ((CHAIR, "Human Resources Management and Development"), (MEMBER, "ICT"), (MEMBER_2, "Finance"), (REPLACEMENT, "ICT")):
+			if unit_name in units and frappe.db.exists("User", user):
+				token = staff_home_unit.get_staff_home_organisation_unit(user)["token"]
+				staff_home_unit.set_staff_home_organisation_unit(user=user, organisation_unit=units[unit_name], expected_token=token)
+
 	def stage_prepared(self) -> None:
 		from kentender_procurement.bid_evaluation.services import preparation
 
+		self.set_home_units()
 		self.at(AT["prepare"])
 		_ok(preparation.ensure_preparation(tender=self.tender), "prepare")
 
@@ -276,15 +289,15 @@ class EvaluationWorld:
 		from kentender_procurement.bid_evaluation.services import appointment
 
 		self.at(AT["appoint"])
-		_ok(appointment.appoint_committee(tender=self.tender, members=ROSTER, appointment_reference="MOH/EVAL/PW/2027", expected_version=self.version(),
+		_ok(appointment.appoint_committee(tender=self.tender, members=ROSTER, expected_version=self.version(),
 			idempotency_key=_key(), user=AO), "appoint")
 
 	def stage_assigned(self) -> None:
 		from kentender_procurement.bid_evaluation.services import secretary
 
 		self.at(AT["secretary"])
-		_ok(secretary.assign_secretary(tender=self.tender, secretary=SECRETARY, appointment_reference="MOH/EVAL/SEC/PW/2027", expected_version=self.version(),
-			idempotency_key=_key(), user=HOP), "assign the secretary")
+		_ok(secretary.delegate_secretary(tender=self.tender, secretary=SECRETARY, expected_version=self.version(),
+			idempotency_key=_key(), user=HOP), "delegate the secretary duties")
 
 	def stage_conflict(self) -> None:
 		from kentender_procurement.bid_evaluation.services import declaration
@@ -467,7 +480,7 @@ class _Branches:
 		from kentender_procurement.bid_evaluation.services import appointment
 
 		self.at("2027-06-12 11:20:00")
-		_ok(appointment.appoint_committee(tender=self.tender, members=ROSTER, appointment_reference="MOH/EVAL/PW/2027", expected_version=self.version(),
+		_ok(appointment.appoint_committee(tender=self.tender, members=ROSTER, expected_version=self.version(),
 			idempotency_key=_key(), user=AO), "appoint after intake")
 
 	def stage_source_failed(self) -> None:
@@ -775,6 +788,7 @@ def _start(stage: str) -> "EvaluationWorld":
 	_ensure_people()
 	bop_simulation.reset_controls()
 	simulation.reset_controls()
+	simulation.set_controls(head_of_procurement=HOP)  # the test site keeps other fixtures' Head accounts; the browser world has one Head
 	bds_simulation.set_controls(custody_service_down=0, reveal_outcome="Deliver")
 	tender = frappe.db.get_value("Tender", {"tender_reference": world["tender_reference"]}, "name")
 	opening = bop_pw.OpeningWorld(tender, world["tender_reference"])

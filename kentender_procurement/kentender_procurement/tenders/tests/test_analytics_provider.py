@@ -24,9 +24,11 @@ from decimal import Decimal
 from unittest import mock
 
 import frappe
+from kentender_core.services.command_write_guard import purge_doc
 from frappe.tests import IntegrationTestCase
 from frappe.utils import get_datetime
 
+from kentender_core.services.command_write_guard import maintenance_write, purge_doc
 from kentender_core.services import analytics_contract as contract
 from kentender_core.services import responsibility_administration as administration
 from kentender_procurement.procurement_requisitions.tests import fixtures as req_fx
@@ -64,7 +66,8 @@ def _handoff(lines: list[tuple[str, str]], consumed_at: datetime | None) -> str:
 		"handoff_version": "1.4", "generated_at": consumed_at or _dt("2027-05-01 08:00"), "consumed_at": consumed_at, "fixture_namespace": NS,
 	})
 	doc.flags.ignore_links = True
-	doc.insert(ignore_permissions=True)
+	with maintenance_write("Requisitions", reason="synthetic handoff fixture"):
+		doc.insert(ignore_permissions=True)
 	HANDOFFS.append(doc.name)
 	return doc.name
 
@@ -168,10 +171,10 @@ def _remove_world() -> None:
 	fx.wipe_tender_rows()
 	for name in HANDOFFS:
 		if frappe.db.exists("Authorised Requisition Handoff", name):
-			frappe.delete_doc("Authorised Requisition Handoff", name, force=1, ignore_permissions=True)
+			purge_doc("Authorised Requisition Handoff", name)
 	for user in (TECH, EXTRA):
 		for name in frappe.get_all("User Responsibility Assignment", filters={"user": user}, pluck="name"):
-			frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+			purge_doc("User Responsibility Assignment", name)
 		for name in frappe.get_all("Contact Email", filters={"email_id": user}, pluck="parent"):
 			frappe.delete_doc("Contact", name, force=1, ignore_permissions=True)
 		if frappe.db.exists("User", user):
@@ -373,8 +376,8 @@ class TestTendersAnalyticsProvider(IntegrationTestCase):
 				self.assertTrue(self.rec("t045")["outstanding"]["text"].startswith("Waiting for"), self.rec("t045")["outstanding"])
 		finally:
 			doc = frappe.get_doc("Tender Task", task)
-			doc.flags.kt_fixture_wipe = True
-			doc.delete(ignore_permissions=True, force=True)
+			with maintenance_write("Tenders", reason="test clean-up"):
+				doc.delete(ignore_permissions=True, force=True)
 
 	# ----- failure and wiring -----
 

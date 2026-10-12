@@ -1,5 +1,5 @@
 // Structural fidelity for the Procurement Requisitions screens against
-// `design/Requisitions - Design Board v2.dc.html` (REQ-CHG-001 v1.11 §13).
+// `design/Requisitions - Design Board v2.dc.html` (REQ-CHG-001 v1.17 §13).
 // Each drawn variant is mounted with its board fixture and compared container
 // for container; registered departures are the only allowed differences.
 import { describe, expect, it } from "vitest";
@@ -9,7 +9,7 @@ import { boardSkeleton, requisitionsScope } from "../../../../../../tests/ui/fid
 import { compareSkeletons, formatMismatch, skeletonOf } from "../../../../../../tests/ui/fidelity/skeleton.js";
 import { COVERED, DEPARTURES } from "../../../../../../tests/ui/fidelity/departures/procurement-requisitions.js";
 
-import AddLaptopDialog from "./AddLaptopDialog.vue";
+import AddItemDialog from "./AddItemDialog.vue";
 import AuthoriseDialog from "./AuthoriseDialog.vue";
 import AuthorisedScreen from "./AuthorisedScreen.vue";
 import DepartmentTaskScreen from "./DepartmentTaskScreen.vue";
@@ -23,7 +23,7 @@ import StartDialog from "./StartDialog.vue";
 import StoppedScreen from "./StoppedScreen.vue";
 import VersionScreen from "./VersionScreen.vue";
 import WorkspaceScreen from "./WorkspaceScreen.vue";
-import { authorised, context, departmentTask, editor, procurementTask, requirements, review, startPreview, stopped, versionReview, workspace } from "./fixtures.js";
+import { authorised, context, departmentTask, editor, procurementTask, requirements, requirementsMixed, review, startPreview, stopped, versionReview, workspace } from "./fixtures.js";
 
 const BOARD = "docs/mvp-1-r1/06_requisitions/design/Requisitions - Design Board v2.dc.html";
 const FILTERS = { search: "", status: "", department: "", fiscal_year: "" };
@@ -40,17 +40,23 @@ const SCREENS = [
 	{ name: "StartDialog", variant: "REQ-DES-02-RESERVATION-UNSUPPORTED", component: StartDialog, props: { preview: startPreview("reservation_unsupported") } },
 	{ name: "EditorScreen", variant: "REQ-DES-03", component: EditorScreen, props: { view: editor() } },
 	{ name: "RequestDetailsTask", variant: "Purchase and source details", component: RequestDetailsTask, props: { view: editor(), focusSection: "source_details" }, pick: ".kt-disclosure-body" },
-	{ name: "RequestDetailsTask", variant: "REQ-DES-03-COMPLETE", component: RequestDetailsTask, props: { view: editor("COMPLETE") }, pick: '[data-section="equipment"]' },
+	{ name: "RequestDetailsTask", variant: "REQ-DES-03-COMPLETE", component: RequestDetailsTask, props: { view: editor("COMPLETE") }, pick: ['[data-section="equipment"]', '[data-section="amounts"]', ".req-footer"] },
+	{ name: "RequestDetailsTask", variant: "REQ-DES-03-PARTIAL", component: RequestDetailsTask, props: { view: editor("PARTIAL") }, pick: ['[data-section="equipment"]', '[data-section="amounts"]', ".req-footer"] },
+	{ name: "RequestDetailsTask", variant: "REQ-DES-03-MIXED", component: RequestDetailsTask, props: { view: editor("MIXED") }, pick: [".kt-notice.is-warning", '[data-section="equipment"]', ".req-footer"] },
 	{ name: "EditorScreen", variant: "REQ-DES-03-RETURNED", component: EditorScreen, props: { view: editor("RETURNED") }, pick: '[data-testid="req-returned"]' },
 	{ name: "RequestDetailsTask", variant: "REQ-DES-03-CONTRIBUTOR", component: RequestDetailsTask, props: { view: editor("CONTRIBUTOR") }, saved: true },
-	{ name: "AddLaptopDialog", variant: "REQ-DES-04", component: AddLaptopDialog, props: { view: editor() } },
-	{ name: "AddLaptopDialog", variant: "REQ-DES-04-ONE-SOURCE", component: AddLaptopDialog, props: { view: { ...editor(), equipment: { ...editor().equipment, add_rows: [editor().equipment.add_rows[1]] } } } },
+	{ name: "AddItemDialog", variant: "REQ-DES-04", component: AddItemDialog, props: { view: editor() } },
+	{ name: "AddItemDialog", variant: "REQ-DES-04-ONE-SOURCE", component: AddItemDialog, props: { view: { ...editor(), equipment: { ...editor().equipment, add_rows: [editor().equipment.add_rows[1]] } } } },
 	{
-		name: "AddLaptopDialog", variant: "REQ-DES-04-VALIDATION", component: AddLaptopDialog, props: { view: editor() },
-		error: { label: "add-items", code: "REQ_BATCH_ITEM_INVALID", message: "Requested equipment quantity for Digital Health is 140 Each but the approved requirement requests 150 Each", detail: { rows: { "RDL-002": "Must be 150 Each" } } },
+		name: "AddItemDialog", variant: "REQ-DES-04-VALIDATION", component: AddItemDialog, props: { view: editor() },
+		error: {
+			label: "add-items", code: "REQ_QUANTITY_EXCEEDS_AVAILABLE", message: "Digital Health can request at most 150 Each for this requirement; you entered 160.",
+			detail: { rows: { "RDL-002": "Digital Health can request at most 150 Each for this requirement; you entered 160." } },
+		},
 	},
 	{ name: "EditorScreen", variant: "REQ-DES-05", component: EditorScreen, props: { view: requirements() } },
 	{ name: "RequirementsTask", variant: "REQ-DES-05-COMPLETE", component: RequirementsTask, props: { view: requirements("COMPLETE") }, pick: ".req-workbench" },
+	{ name: "RequirementsTask", variant: "REQ-DES-05-MIXED", component: RequirementsTask, props: { view: requirementsMixed() }, pick: ".req-workbench" },
 	{ name: "ReviewTask", variant: "REQ-DES-06", component: ReviewTask, props: { view: review() } },
 	{ name: "ReviewTask", variant: "REQ-DES-06-DIRECT-HOD", component: ReviewTask, props: { view: review("DIRECT-HOD") }, pick: [".kt-notice.is-live", ".req-footer"] },
 	{

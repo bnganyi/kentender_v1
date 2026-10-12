@@ -19,6 +19,10 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 import frappe
+
+from kentender_core.services.command_write_guard import fixture_insert
+
+from kentender_core.services.command_write_guard import purge_doc
 from frappe.tests import IntegrationTestCase
 
 from kentender_core.services import home_entries as he
@@ -47,7 +51,7 @@ def _dt(text: str) -> datetime:
 def _remove_extra() -> None:
 	frappe.set_user("Administrator")
 	for name in frappe.get_all("User Responsibility Assignment", filters={"fixture_namespace": EXTRA_NS}, pluck="name"):
-		frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+		purge_doc("User Responsibility Assignment", name)
 	for name in frappe.get_all("Contact Email", filters={"email_id": EXTRA}, pluck="parent"):
 		frappe.delete_doc("Contact", name, force=1, ignore_permissions=True)
 	if frappe.db.exists("User", EXTRA):
@@ -109,7 +113,7 @@ class HomeCase(IntegrationTestCase):
 		for name in frappe.get_all("User Responsibility Assignment", filters={"fixture_namespace": EXTRA_NS}, pluck="name"):
 			if frappe.db.get_value("User Responsibility Assignment", name, "status") == "Enabled":
 				administration.revoke(name, reason="Revoked inside the Home provider test.", actor="Administrator")
-			frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+			purge_doc("User Responsibility Assignment", name)
 		frappe.db.commit()
 
 	def stamp_sent(self, requisition: str) -> None:
@@ -144,10 +148,10 @@ class HomeCase(IntegrationTestCase):
 		return frappe.db.get_value("Procurement Requisition", requisition, "current_version")
 
 	def add_decision(self, requisition: str, decision: str, *, actor: str, at: datetime) -> str:
-		return frappe.get_doc({
+		return fixture_insert(frappe.get_doc({
 			"doctype": "Requisition Decision", "requisition_version": self.version(requisition), "actor": actor, "decision": decision, "authority_snapshot": "{}",
 			"decided_at": at, "command_idempotency_key": fx.key(),
-		}).insert(ignore_permissions=True).name
+		})).name
 
 	# ----- reads -----
 

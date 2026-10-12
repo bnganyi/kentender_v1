@@ -14,18 +14,21 @@ error contract) — AGENTS.md §4.2, "reuse existing services".
 
 from __future__ import annotations
 
-import hashlib
-import json
 from contextlib import contextmanager
 from typing import Any
 from uuid import uuid4
 
 import frappe
-from frappe.utils import cstr, now_datetime
+from frappe.utils import cstr
 
+from kentender_core.services.command_write_guard import command_write
+from kentender_procurement.services import command_journal
 from kentender_procurement.tenders.services.errors import fail
 
 JOURNAL = "Tender Command Journal"
+# The Tenders command-write family (AUD-XC-013): every Tender doctype's
+# controller refuses a write that is not made inside `command_write(FAMILY)`.
+FAMILY = "Tenders"
 
 
 def token() -> str:
@@ -33,27 +36,23 @@ def token() -> str:
 
 
 def fingerprint(payload: dict[str, Any]) -> str:
-	material = {
-		key: cstr(value)
-		for key, value in sorted(payload.items())
-		if key not in {"user", "idempotency_key"} and value is not None
-	}
-	return hashlib.sha256(json.dumps(material, sort_keys=True).encode()).hexdigest()
+	return command_journal.fingerprint(payload)
 
 
-def replay_or_none(idempotency_key: str, payload: dict[str, Any]) -> dict[str, Any] | None:
-	"""Return the recorded result for a repeated key; reject key reuse."""
-	key = cstr(idempotency_key).strip()
-	if not key:
-		fail("TND_STALE_VERSION", "An idempotency key is required.")
-	row = frappe.db.get_value(JOURNAL, {"idempotency_key": key}, ["request_fingerprint", "result"], as_dict=True)
-	if not row:
-		return None
-	if cstr(row.request_fingerprint) != fingerprint(payload):
-		fail("TND_IDEMPOTENCY_CONFLICT")
-	result = json.loads(row.result) if row.result else {}
-	result["idempotent"] = True
-	return result
+def replay_or_none(idempotency_key: str, payload: dict[str, Any], *, command: str, actor: str) -> dict[str, Any] | None:
+	"""Claim the key for this actor, command and payload, or return the recorded
+	result of the same request (AUD-XC-131, AUD-XC-130; TPR09-AC-007).
+
+	Call it after the caller has been authorised and before the command reads or
+	changes anything else. A key reused by another user, for another command or
+	with another payload is `TND_IDEMPOTENCY_CONFLICT` and the recorded result is
+	not returned; a duplicate that arrives while the first request is still
+	running waits for it and gets its result. `record_command` completes the claim."""
+	return command_journal.claim_or_replay(
+		journal=JOURNAL, family=FAMILY, idempotency_key=idempotency_key, command=command, actor=actor, payload=payload,
+		conflict=lambda: fail("TND_IDEMPOTENCY_CONFLICT"),
+		key_required=lambda: fail("TND_STALE_VERSION", "An idempotency key is required."),
+	)
 
 
 def record_command(
@@ -67,28 +66,30 @@ def record_command(
 	actor: str | None = None,
 	fixture_namespace: str = "",
 ) -> None:
-	frappe.get_doc(
-		{
-			"doctype": JOURNAL,
-			"idempotency_key": cstr(idempotency_key).strip(),
-			"command": command,
-			"document_type": document_type,
-			"document_name": document_name,
-			"request_fingerprint": fingerprint(payload),
-			"actor": actor or frappe.session.user,
-			"result": json.dumps(result, default=str),
-			"occurred_at": now_datetime(),
-			"fixture_namespace": fixture_namespace,
-		}
-	).insert(ignore_permissions=True)
+	command_journal.complete(
+		journal=JOURNAL, family=FAMILY, idempotency_key=idempotency_key, command=command, actor=actor or frappe.session.user,
+		payload=payload, result=result, document_type=document_type, document_name=document_name, fixture_namespace=fixture_namespace,
+	)
+
+
+def release_claim(idempotency_key: str) -> None:
+	"""A command that returns a refusal as data records nothing; free its key."""
+	command_journal.release(JOURNAL, idempotency_key)
 
 
 def locked(doctype: str, name: str):
-	"""Row-lock and load one document; masked not-found for missing rows."""
+	"""Row-lock and load one document as last committed; masked not-found for
+	missing rows. MariaDB runs at REPEATABLE READ, so a plain read after the
+	lock returns this transaction's older snapshot and a waiter would pass
+	`check_record_version` (or any recheck made on the document) on facts a
+	competing command had already changed and committed, to be stopped only by
+	Frappe's save-time timestamp check instead of `TND_STALE_VERSION`
+	(AUD-XC-130, AUD-XC-107). The locking read (`for_update`) sees what that
+	command committed."""
 	rows = frappe.db.sql(f"select name from `tab{doctype}` where name=%s for update", cstr(name).strip(), as_dict=True)
 	if not rows:
 		raise frappe.DoesNotExistError(f"{doctype} not found")
-	return frappe.get_doc(doctype, rows[0].name)
+	return frappe.get_doc(doctype, rows[0].name, for_update=True)
 
 
 def check_record_version(doc, expected_record_version) -> None:
@@ -99,19 +100,19 @@ def check_record_version(doc, expected_record_version) -> None:
 def bump(doc, **values) -> None:
 	"""The one writer of immutable rows (plan D14): sets the given columns,
 	bumps `record_version` when the doctype carries one, and saves under the
-	lifecycle flag the controllers' `validate()` guards look for."""
+	command-write window the controllers' guards look for."""
 	for field, value in values.items():
 		doc.set(field, value)
 	if doc.meta.has_field("record_version"):
 		doc.record_version = int(doc.record_version or 0) + 1
-	doc.flags.kt_lifecycle = True
-	doc.save(ignore_permissions=True)
+	with command_write(FAMILY):
+		doc.save(ignore_permissions=True)
 
 
 def insert(doc):
-	"""Insert a new lifecycle-owned row (the controllers only guard updates)."""
-	doc.flags.kt_lifecycle = True
-	doc.insert(ignore_permissions=True)
+	"""Insert a new lifecycle-owned row (the controllers refuse any insert made outside the window)."""
+	with command_write(FAMILY):
+		doc.insert(ignore_permissions=True)
 	return doc
 
 

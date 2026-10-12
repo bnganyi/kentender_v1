@@ -764,18 +764,11 @@ test.describe("Procurement Planning — design fidelity (U11 governance, U12 evi
 test.describe("Procurement Planning — design fidelity (U13 publication)", () => {
 	test.afterAll(() => restoreSite());
 
-	test("U13-TREASURY-FORM — every field, and the confirmation that gates it", async ({ page, browser }) => {
-		const state = resetFixture<{ publication: string }>("reset_approved_fixture");
-		const art = await wanted(browser, U13, "U13-TREASURY-FORM");
-		const errors = collectConsoleErrors(page);
-		await login(page, ACCOUNTING_OFFICER, PASSWORD);
-		await gotoPlanning(page, `/publication/${state.publication}`);
-		await expectReady(page, "publication");
-		await page.locator('[data-testid="pub-record-treasury"]').click();
-		await expect(page.locator('[data-testid="pub-treasury-dialog"]')).toBeVisible();
-		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="pub-treasury-dialog"]'), "U13-TREASURY-FORM");
-		expect(errors, "console errors").toEqual([]);
-	});
+	// PLN-CHG-001 v1.31 §17.2 — Artboards-U12-U13 still draws the v1.30 Accounting Officer Treasury form
+	// (U13-TREASURY-FORM), the sending, failed and unknown states and U13-CORRECT-EVIDENCE. The Planner's
+	// confirmation form, U13-DRAFT-SAVED, U13-ACTIVE, U13-PUBLISHED-HELD, U13-WAITING and U13-CORRECT-DETAILS
+	// need new artboards before design sign-off, so they are not compared to a board here. Their behaviour is
+	// covered by planning-publication.spec.ts and PublicationResultScreen.spec.js.
 
 	test("U21-LATE-ACTIVATION — why the plan started late, said once and kept", async ({ page, browser }) => {
 		const state = resetFixture<{ publication: string }>("reset_late_activation_fixture");
@@ -791,44 +784,6 @@ test.describe("Procurement Planning — design fidelity (U13 publication)", () =
 		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="pln-late-explanation-dialog"]'), "U21-LATE-ACTIVATION");
 		// §10.14 — it says why, and offers no way to change when.
 		await expect(dialog.locator('input[type="date"]')).toHaveCount(0);
-		expect(errors, "console errors").toEqual([]);
-	});
-
-	test("U13-UNKNOWN — an unconfirmed result is neither success nor failure", async ({ page, browser }) => {
-		const state = resetFixture<{ publication: string }>("reset_publication_unknown_fixture");
-		const art = await wanted(browser, U13, "U13-UNKNOWN");
-		const errors = collectConsoleErrors(page);
-		// §10.12 — reconciling an unknown result is the technical operator's,
-		// and a technical read alone never creates retry authority, so the
-		// panel this artboard draws is theirs.
-		await loginAsAdministrator(page);
-		await gotoPlanning(page, `/publication/${state.publication}`);
-		await expectReady(page, "publication");
-		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U13-UNKNOWN");
-		// Reconciliation, never a blind retry, and never shown as failure.
-		await expect(page.locator('[data-testid="pub-retry"]')).toHaveCount(0);
-		await expect(page.locator(LIVE)).not.toContainText("The plan was not published");
-
-		// The Accounting Officer reads the same unknown result and is offered
-		// no recovery of any kind.
-		await login(page, ACCOUNTING_OFFICER, PASSWORD);
-		await gotoPlanning(page, `/publication/${state.publication}`);
-		await expectReady(page, "publication");
-		await expect(page.locator('[data-testid="pub-retry"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="pub-reconcile"]')).toHaveCount(0);
-		expect(errors, "console errors").toEqual([]);
-	});
-
-	test("U13-CORRECT-EVIDENCE — the same route once a submission already exists", async ({ page, browser }) => {
-		const state = resetFixture<{ publication: string }>("reset_publication_failed_fixture");
-		const art = await wanted(browser, U13, "U13-CORRECT-EVIDENCE");
-		const errors = collectConsoleErrors(page);
-		await login(page, ACCOUNTING_OFFICER, PASSWORD);
-		await gotoPlanning(page, `/publication/${state.publication}`);
-		await expectReady(page, "publication");
-		await page.locator('[data-testid="pub-correct-treasury"]').click();
-		await expect(page.locator('[data-testid="pub-treasury-dialog"]')).toBeVisible();
-		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="pub-treasury-dialog"]'), "U13-CORRECT-EVIDENCE");
 		expect(errors, "console errors").toEqual([]);
 	});
 });

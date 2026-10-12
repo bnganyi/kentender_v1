@@ -6,8 +6,11 @@ tracker AWD4-802)."""
 
 from __future__ import annotations
 
-from kentender_procurement.award.services import eligibility, issues, restrictions, state
+import frappe
+
+from kentender_procurement.award.services import eligibility, issues, restrictions, state, tender_events
 from kentender_procurement.award.services.errors import AwardError, InputError
+from kentender_procurement.award.test_services import sources as syn
 from kentender_procurement.award.tests.support import HOP, AwardCase
 
 
@@ -62,3 +65,29 @@ class TestRestrictions(AwardCase):
 		self.at("2027-09-01 09:00:00")
 		eligibility.refresh_case(self.case().name)
 		self.assertEqual(len(issues.open_issues(self.case(), issue_type="Review/order")), 1)
+
+	# -- an order Tenders sent is ended only by Tenders' release (AUD-AWD-003) ----------------
+	def _tenders_order(self):
+		syn.add_event(self.case().tender, {"event_key": "EVT-SUSP-1", "kind": "Suspension", "authority": "Review Board", "effective_at": "2027-06-20 10:00:00",
+			"source_reference": "PPARB/2027/77", "reason": "The Board suspended the procurement."})
+		tender_events.consume_case(self.case().name)
+		(row,) = issues.open_issues(self.case(), issue_type="Review/order")
+		self.assertEqual(row.source_event, "tender-event:EVT-SUSP-1")
+		return row
+
+	def test_a_tenders_order_cannot_be_ended_by_free_text(self):
+		row = self._tenders_order()
+		with self.assertRaises(AwardError) as ctx:
+			self.run_as(HOP, restrictions.disposition, award=self.case().name, issue=row.name, outcome="Restriction ended", reason="The Board released it.",
+				evidence="I was told by phone that it was released")
+		self.assertEqual((ctx.exception.code, ctx.exception.detail["reason"]), ("AWD_ON_HOLD", "no_release_evidence"))
+		self.assertEqual(len(issues.open_issues(self.case(), issue_type="Review/order")), 1)
+
+	def test_a_tenders_order_ends_on_the_release_tenders_reported(self):
+		row = self._tenders_order()
+		syn.add_event(self.case().tender, {"event_key": "EVT-RES-1", "kind": "Resumption", "source_reference": "PPARB/2027/77-RELEASE"})
+		tender_events.consume_case(self.case().name)
+		out = self.run_as(HOP, restrictions.disposition, award=self.case().name, issue=row.name, outcome="Restriction ended", reason="The Board released the suspension.")
+		self.assertTrue(out["ok"])
+		ended = frappe.get_doc(state.ISSUE, row.name)
+		self.assertEqual((ended.state, ended.disposition_evidence), ("Resolved", "Tenders release PPARB/2027/77-RELEASE"))

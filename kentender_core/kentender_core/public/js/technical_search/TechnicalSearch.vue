@@ -11,6 +11,7 @@
 // and the screen is simply Empty (no query typed yet).
 import { onMounted, ref } from "vue";
 import { technicalSearchApi } from "./data/technicalSearchApi.js";
+import AccessDenied from "../access_shared/AccessDenied.vue";
 
 const phase = ref("loading"); // loading | forbidden | error | ready
 const query = ref("");
@@ -72,7 +73,7 @@ onMounted(verify);
 <template>
 	<div class="kt-industry kt-setup-root" data-testid="kt-ts-root">
 		<div class="kt-setup-shell">
-			<header class="kt-setup-header">
+			<header v-if="phase !== 'forbidden'" class="kt-setup-header">
 				<span class="kt-eyebrow">{{ __("Technical access") }}</span>
 				<h1 class="kt-setup-title">{{ __("Technical record search") }}</h1>
 				<p class="kt-setup-lede">
@@ -88,10 +89,8 @@ onMounted(verify);
 				<div class="kt-skel" style="width:76%" />
 			</div>
 
-			<div v-else-if="phase === 'forbidden'" class="card blueprint kt-empty" data-testid="kt-ts-forbidden">
-				<i class="corner tl" /><i class="corner tr" /><i class="corner bl" /><i class="corner br" />
-				<h2>{{ __("You do not have access to Technical record search") }}</h2>
-				<p>{{ __("This area needs Administrator or System Manager access. Ask your KenTender administrator to grant it.") }}</p>
+			<div v-else-if="phase === 'forbidden'" class="kt-page">
+				<AccessDenied :heading="__('You do not have access to Technical record search')" :text="__('This area needs Administrator or System Manager access. Ask your KenTender administrator to grant it.')" testid="kt-ts-forbidden" />
 			</div>
 
 			<div v-else-if="phase === 'error'" class="card blueprint kt-empty" data-testid="kt-ts-error">

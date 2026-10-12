@@ -22,7 +22,7 @@ from kentender_core.seeds import site_setup
 from kentender_core.services import procurement_settings, regulatory_reference
 from kentender_procurement.procurement_planning.services import schedule
 from kentender_procurement.procurement_requisitions.services import handoff, read as req_read
-from kentender_procurement.tenders.services import snapshot as snap
+from kentender_procurement.tenders.services import handoff_gateway, snapshot as snap
 
 # Handoff v1.4. `reservation_category`, `strategic_objective_id`,
 # `warranty_support` and the two decision blocks reach Tenders' own names
@@ -44,7 +44,8 @@ class TestRequisitionSeam(IntegrationTestCase):
 			set(inspect.signature(handoff.record_handoff_consumption).parameters),
 			{"handoff", "tender", "tender_version", "template_key", "template_version", "idempotency_key"},
 		)
-		self.assertEqual(handoff.HANDOFF_VERSION, "1.4")
+		self.assertEqual(handoff.HANDOFF_VERSION, "1.5")  # v1.18 §5.12; Tenders still accepts 1.4
+		self.assertEqual(sorted(handoff_gateway.SUPPORTED_HANDOFF_VERSIONS), ["1.4", "1.5"])
 
 	def test_payload_keys_the_snapshot_consumes(self):
 		source = inspect.getsource(handoff.build_payload) + inspect.getsource(handoff.build_and_insert)

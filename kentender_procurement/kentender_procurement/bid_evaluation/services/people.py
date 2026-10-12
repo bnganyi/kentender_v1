@@ -52,6 +52,15 @@ def holders(business_role: str) -> list[str]:
 	return sorted(u for u in users if holds(u, business_role))
 
 
+def head_holders() -> list[str]:
+	"""Everyone who holds an Active Head of Procurement Function responsibility now (EVL-CHG-001 v0.8 §3: the secretary by office is the one person
+	among them). One seam: on a test environment the simulation controls may name the one Head, because a test site keeps other modules' leftover Head accounts."""
+	from kentender_procurement.bid_evaluation.services import simulation
+
+	named = simulation.controls()["head_of_procurement"]  # test environments only; production reads as blank
+	return [named] if named else holders(HEAD_OF_PROCUREMENT)
+
+
 def active_responsibilities(user: str) -> list[str]:
 	"""The business roles the user holds now, at any scope: enabled
 	assignments inside their effective period. A department-scoped role is

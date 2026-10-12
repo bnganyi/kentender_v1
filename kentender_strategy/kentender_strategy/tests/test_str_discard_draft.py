@@ -27,9 +27,8 @@ class TestDiscardFirstDraft(UsabilityTestBase):
 		fixture = self._fill_hierarchy(v1)
 		author, _approver = self._actors("discard1")
 
+		frappe.set_user(author)  # the capability is the caller's: a technical user holds no authoring authority
 		self.assertTrue(ui.get_plan_workspace(plan_id)["capabilities"]["discard_draft"])
-
-		frappe.set_user(author)
 		out = discard_strategy_plan_draft(v1)
 		frappe.set_user("Administrator")
 
@@ -92,10 +91,9 @@ class TestDiscardSuccessorDraft(UsabilityTestBase):
 		self._activate(v1, author, approver)
 		v2 = self._successor(plan_id, author)
 
+		frappe.set_user(author)
 		ws = ui.get_plan_workspace(plan_id, version_number=2)
 		self.assertTrue(ws["capabilities"]["discard_draft"])
-
-		frappe.set_user(author)
 		out = discard_strategy_plan_draft(v2)
 		frappe.set_user("Administrator")
 

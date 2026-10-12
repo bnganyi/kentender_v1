@@ -43,6 +43,19 @@ const WITH_DISCLOSURE = [
 
 export const DEPARTURES = Object.fromEntries(WITH_DISCLOSURE.map((id) => [`ANL-DES-${id}`, [...DISCLOSURE]]));
 
+// 31H: the access state is the one every module shares (a lock spot, a heading and the reason), not the board's title and one line.
+DEPARTURES["ANL-DES-31H"] = [
+	{
+		path: "empty > h2",
+		omits: ["h1"],
+		text: "You do not have access to Analytics",
+		omitsText: ["Procurement Analytics"],
+		reason:
+			"The board draws the title and one sentence. Every module's access state now reads the same: a lock spot, a heading that says what is denied, then the reason, with no page title above it. The page's own sentence is the board's, unchanged, under the heading.",
+		authority: "Project Owner instruction, 9 Oct 2026: one consistent access state across modules; design pack readme, empty and access states",
+	},
+];
+
 DEPARTURES["ANL-DES-31F"].push({
 	text: "Supply of printers We could not load the current position.",
 	omitsText: ["Supply of printers We could not load the current Award position."],

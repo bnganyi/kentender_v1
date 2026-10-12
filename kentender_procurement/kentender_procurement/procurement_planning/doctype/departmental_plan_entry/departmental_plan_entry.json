@@ -20,6 +20,7 @@
   "required_by_date",
   "budget_line",
   "indicative_amount",
+  "need_estimated_total_cost",
   "not_proceeding_reason",
   "fixture_namespace"
  ],
@@ -104,7 +105,7 @@
    "fieldtype": "Float",
    "label": "Quantity",
    "reqd": 1,
-   "precision": "2",
+   "precision": "3",
    "description": "Full source quantity, greater than zero. Read-only for Need-origin."
   },
   {
@@ -136,6 +137,13 @@
    "description": "Planning-owned entry value. Required before submission and greater than zero. Currency is read from the Budget Line."
   },
   {
+   "fieldname": "need_estimated_total_cost",
+   "fieldtype": "Currency",
+   "label": "Need Estimated Total Cost",
+   "read_only": 1,
+   "description": "Need origin only. The accepted Need revision's estimated total cost (NDS-CHG-001 v1.17 §4.3): the entry's starting amount and the reference for the change shown to the Head of User Department and Procurement. Planning reads it and never writes it back, and never sums it into any total (PLN-CHG-001 v1.30 §4.3). Empty when the revision has none."
+  },
+  {
    "fieldname": "not_proceeding_reason",
    "fieldtype": "Small Text",
    "label": "Not Proceeding Reason",
@@ -160,26 +168,19 @@
  "permissions": [
   {
    "role": "System Manager",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Administrator",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Departmental Author",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Head of User Department",
-   "read": 1,
-   "write": 1
+   "read": 1
   },
   {
    "role": "Procurement Planner",

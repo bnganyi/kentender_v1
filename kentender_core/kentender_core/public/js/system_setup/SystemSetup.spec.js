@@ -174,12 +174,14 @@ describe("SystemSetup root", () => {
 			forbidden: { heading: "You do not have access to System setup", text: "This area needs Administrator or System Manager access. Ask your KenTender administrator to grant it." },
 		});
 		const denied = await mountRoot();
+		// The shared access state: lock spot, heading, then the reason and the hint as separate paragraphs.
 		const notice = denied.find('[data-testid="kt-setup-forbidden"]');
-		expect(notice.classes()).toEqual(expect.arrayContaining(["kt-notice", "is-critical"]));
-		expect(notice.findAll(".kt-notice-body br")).toHaveLength(2);
-		expect(notice.text()).toBe(
-			"You do not have access to System setup.This area needs Administrator or System Manager access.Ask your KenTender administrator to grant it."
-		);
+		expect(notice.classes()).toEqual(expect.arrayContaining(["kt-empty", "kt-access"]));
+		expect(notice.find("h2").text()).toBe("You do not have access to System setup");
+		expect(notice.findAll("p").map((p) => p.text())).toEqual([
+			"This area needs Administrator or System Manager access.",
+			"Ask your KenTender administrator to grant it.",
+		]);
 		expect(denied.find(".kt-setup-head").exists()).toBe(false);
 		expect(denied.find('[data-testid="kt-setup-tabs"]').exists()).toBe(false);
 

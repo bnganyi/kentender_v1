@@ -54,14 +54,14 @@
    "read_only": 1,
    "reqd": 1,
    "search_index": 1,
-   "description": "Procurement Requisitions' own authoritative reference (\u00a77.4) \u2014 an opaque string here, since no Requisition DocType is owned by, or exists in, this repo (\u00a72.1 scope exclusions)."
+   "description": "Procurement Requisitions' own authoritative reference (§7.4) — an opaque string here, since no Requisition DocType is owned by, or exists in, this repo (§2.1 scope exclusions)."
   },
   {
    "fieldname": "requisition_version",
    "fieldtype": "Data",
    "label": "Requisition Version",
    "read_only": 1,
-   "description": "REQ-CHG-001 v1.11 \u00a79.1 \u2014 the exact immutable Requisition Version whose authorisation made this drawdown."
+   "description": "REQ-CHG-001 v1.11 §9.1 — the exact immutable Requisition Version whose authorisation made this drawdown."
   },
   {
    "fieldname": "correlation_id",
@@ -135,15 +135,11 @@
  "permissions": [
   {
    "role": "System Manager",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Administrator",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Procurement Planner",

@@ -24,11 +24,15 @@
   "prepared_by",
   "prepared_capacity",
   "prepared_authority_snapshot",
+  "sent_for_approval_by",
+  "sent_for_approval_at",
   "submitted_by",
   "submitted_capacity",
   "submitted_authority_snapshot",
   "submitted_at",
   "basis_snapshot_json",
+  "unreviewed_line_ids_json",
+  "omitted_lines_json",
   "content_digest",
   "section_lines",
   "drawdown_lines",
@@ -74,7 +78,7 @@
    "fieldtype": "Data",
    "label": "Requirement Title",
    "length": 160,
-   "description": "Enforced at submission time by the service layer (lifecycle.py), not at Draft insert (AGENTS.md \u00a76.10)."
+   "description": "Enforced at submission time by the service layer (lifecycle.py), not at Draft insert (AGENTS.md §6.10)."
   },
   {
    "fieldname": "col_a",
@@ -86,7 +90,7 @@
    "fieldtype": "Link",
    "label": "Delivery Location",
    "options": "Delivery Location",
-   "description": "Enforced at submission time by the service layer (lifecycle.py), not at Draft insert (AGENTS.md \u00a76.10)."
+   "description": "Enforced at submission time by the service layer (lifecycle.py), not at Draft insert (AGENTS.md §6.10)."
   },
   {
    "fieldname": "delivery_address_snapshot",
@@ -98,7 +102,7 @@
    "fieldname": "latest_delivery_date",
    "fieldtype": "Date",
    "label": "Latest Delivery Date",
-   "description": "Enforced at submission time by the service layer (lifecycle.py), not at Draft insert (AGENTS.md \u00a76.10)."
+   "description": "Enforced at submission time by the service layer (lifecycle.py), not at Draft insert (AGENTS.md §6.10)."
   },
   {
    "fieldname": "related_services_required",
@@ -123,7 +127,7 @@
    "fieldtype": "Link",
    "options": "Organisation Unit",
    "label": "Lead department directive",
-   "description": "\u00a77.3A \u2014 set only by a Head of Procurement Function change of submitting department; fixes the lead for this copied Draft.",
+   "description": "§7.3A — set only by a Head of Procurement Function change of submitting department; fixes the lead for this copied Draft.",
    "read_only": 1
   },
   {
@@ -131,7 +135,7 @@
    "fieldtype": "Link",
    "options": "Organisation Unit",
    "label": "Certified lead department",
-   "description": "\u00a75.2 \u2014 the lead frozen at departmental submission.",
+   "description": "§5.2 — the lead frozen at departmental submission.",
    "read_only": 1
   },
   {
@@ -182,8 +186,24 @@
    "fieldname": "basis_snapshot_json",
    "fieldtype": "Long Text",
    "label": "Basis snapshot",
-   "description": "\u00a75.14 \u2014 exact Planning/Budget identities, currency basis and eligibility observation time frozen at lock.",
+   "description": "§5.14 — exact Planning/Budget identities, currency basis and eligibility observation time frozen at lock.",
    "read_only": 1
+  },
+  {
+   "fieldname": "unreviewed_line_ids_json",
+   "fieldtype": "Long Text",
+   "label": "Lines awaiting review",
+   "description": "REQ-CHG-001 v1.15 §20 — drawdown line ids of a Draft carried over from v1.14 whose quantity and estimated total cost the requester has not yet reviewed. Set at migration; a line leaves the list when its estimated total cost is saved. Blocks submission while non-empty. Not part of the content digest.",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "omitted_lines_json",
+   "fieldtype": "Long Text",
+   "label": "Source lines omitted at submission",
+   "description": "REQ-CHG-001 v1.15 §5.3 — the drawdown lines with no items and no estimated total cost that were left out of the submitted snapshot, kept as history and restored into a copied Draft. Not part of the content digest.",
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "content_digest",
@@ -217,12 +237,25 @@
    "hidden": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "sent_for_approval_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Sent for approval by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sent_for_approval_at",
+   "fieldtype": "Datetime",
+   "label": "Sent for approval at",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-07 00:00:00.000000",
+ "modified": "2026-10-07 09:20:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement Requisitions",
  "name": "Requisition Version",
@@ -234,8 +267,8 @@
  "track_changes": 1,
  "permissions": [
   {
-   "create": 1,
-   "delete": 1,
+   "create": 0,
+   "delete": 0,
    "email": 0,
    "export": 1,
    "print": 1,
@@ -243,7 +276,7 @@
    "report": 1,
    "role": "System Manager",
    "share": 0,
-   "write": 1
+   "write": 0
   },
   {
    "create": 0,
@@ -302,6 +335,18 @@
    "read": 1,
    "report": 1,
    "role": "Auditor",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Officer",
    "share": 0,
    "write": 0
   },

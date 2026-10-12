@@ -41,10 +41,10 @@ class TestHomeServiceContract(IntegrationTestCase):
 		self.assertEqual(items[1]["urgency"], "Due soon")
 
 	def test_pipeline_stops_before_evaluation_award_and_contract(self):
-		# Five since NDS-CHG-001 v1.1: the two Demand-era stages were replaced by
-		# one Accepted-needs stage. The count is incidental; the invariant this
-		# test exists for is that the funnel stops at publication.
-		self.assertEqual(len(PIPELINE_STAGES), 5)
+		# Two now: the tender-side stages read the retired tender workbench. The
+		# count is incidental; the invariant this test exists for is that the
+		# funnel stops before evaluation, award and contract.
+		self.assertEqual(len(PIPELINE_STAGES), 2)
 		labels = " ".join(s[1].lower() for s in PIPELINE_STAGES)
 		self.assertNotIn("evaluation", labels)
 		self.assertNotIn("award", labels)
@@ -107,7 +107,7 @@ class TestHomeServiceContract(IntegrationTestCase):
 			self.assertNotIn("Approve", item.get("action_label") or "")
 			self.assertNotIn("Reject", item.get("action_label") or "")
 		stages = (payload.get("pipeline") or {}).get("stages") or []
-		self.assertEqual(len(stages), 5)
+		self.assertEqual(len(stages), 2)
 		# Bid confidentiality — no bid counts in JSON
 		blob = frappe.as_json(payload).lower()
 		self.assertNotIn("bid_count", blob)
@@ -133,7 +133,7 @@ class TestHomeServiceContract(IntegrationTestCase):
 
 		payload = get_procurement_home()
 		self.assertTrue(payload.get("ok"))
-		self.assertEqual(len((payload.get("pipeline") or {}).get("stages") or []), 5)
+		self.assertEqual(len((payload.get("pipeline") or {}).get("stages") or []), 2)
 
 	def test_deadline_items_include_stitch_action_icons(self):
 		frappe.set_user("Administrator")
@@ -229,32 +229,3 @@ class TestHomeServiceContract(IntegrationTestCase):
 		available = float(figures["available_balance"] or 0)
 		self.assertLessEqual(allocated, approved + 0.001)
 		self.assertAlmostEqual(available, max(0.0, approved - allocated), places=2)
-
-	def test_pipeline_excludes_packages_with_tender_or_cfg(self):
-		"""PRD: plan awaiting tender = approved packages without tender/CFG."""
-		from kentender_procurement.procurement_home.services.home_pipeline import (
-			_count_plan_awaiting_tender,
-			_packages_with_tender_initiation,
-		)
-
-		frappe.set_user("Administrator")
-		if not frappe.db.exists("DocType", "Procurement Package"):
-			self.skipTest("Procurement Package missing")
-		claimed = _packages_with_tender_initiation("PE-MOH")
-		count = _count_plan_awaiting_tender("PE-MOH")
-		rows = frappe.get_all(
-			"Procurement Package",
-			filters={
-				"status": ["in", ["Approved", "Ready for Release"]],
-				"procuring_entity_code": ["in", ["PE-MOH", "MOH"]],
-			},
-			fields=["name", "package_code"],
-		)
-		unclaimed = [
-			r
-			for r in rows
-			if (r.name not in claimed) and ((r.package_code or "") not in claimed)
-		]
-		self.assertEqual(count, len(unclaimed))
-		if frappe.db.exists("Procurement Package", "DEMO-MOH-2026-PKG-IP"):
-			self.assertIn("DEMO-MOH-2026-PKG-IP", claimed)

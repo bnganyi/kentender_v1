@@ -238,6 +238,7 @@ def apply_successor() -> dict[str, Any]:
 			expected_operational_result=source.expected_operational_result,
 			indicative_quantity=source.indicative_quantity,
 			unit=source.unit,
+			estimated_total_cost=source.estimated_total_cost or None,
 			required_by_date=SUCCESSOR_REQUIRED_BY,
 		)
 		submitted = lifecycle.submit_need(

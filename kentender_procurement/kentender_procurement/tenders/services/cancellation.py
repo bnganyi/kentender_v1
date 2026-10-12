@@ -65,7 +65,7 @@ def recommend_tender_cancellation(*, tender: str, ground: str, reason: str, expe
 	actor = authz.actor(user)
 	assignment = authz.require_hopf(actor)
 	payload = {"tender": tender, "ground": ground, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="RecommendTenderCancellation", actor=actor)
 	if replay:
 		return replay
 	if ground not in GROUND_LABELS:
@@ -113,7 +113,7 @@ def cancel_tender(*, tender: str, ground: str, reason: str, expected_record_vers
 	actor = authz.actor(user)
 	assignment = authz.require_ao(actor)
 	payload = {"tender": tender, "ground": ground, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="CancelTender", actor=actor)
 	if replay:
 		return replay
 	if ground not in GROUND_LABELS:
@@ -217,15 +217,30 @@ def _headline_statuses(doc) -> dict[str, str]:
 	return {"ppra_report_status": ppra, "notice_publication_status": notice, "candidate_notice_status": candidate_notices.delivery_summary(doc.name, notice_type="Tender cancelled")["label"]}
 
 
-def refresh_obligation_statuses(doc) -> None:
+def derived_statuses(doc) -> tuple[dict[str, str], dict[str, str], bool]:
+	"""The obligation statuses as they stand now, by obligation id; the headline
+	statuses derived from them; and whether either differs from what is stored.
+	Pure: nothing is changed, so a read can show the truth without writing it."""
+	by_id: dict[str, str] = {}
 	changed = False
 	for row in doc.obligations:
 		status = obligation_status(row, cancellation=doc.name)
-		if row.status != status:
-			row.status = status
-			changed = True
-	headline = _headline_statuses(doc)
-	if changed or any(cstr(doc.get(k)) != v for k, v in headline.items()):
+		by_id[row.obligation_id] = status
+		changed = changed or row.status != status
+	# headline from the derived statuses, not the stored ones
+	scratch = frappe._dict(name=doc.name, obligations=[frappe._dict(obligation_type=o.obligation_type, status=by_id[o.obligation_id]) for o in doc.obligations])
+	headline = _headline_statuses(scratch)
+	changed = changed or any(cstr(doc.get(k)) != v for k, v in headline.items())
+	return by_id, headline, changed
+
+
+def refresh_obligation_statuses(doc) -> None:
+	"""The explicit writer: persist the derived statuses. Never call it from a
+	read (KT-ACCESS-REV-001 AR-06) — a read uses `derived_statuses`."""
+	by_id, headline, changed = derived_statuses(doc)
+	if changed:
+		for row in doc.obligations:
+			row.status = by_id[row.obligation_id]
 		envelope.bump(doc, **headline)
 
 
@@ -233,7 +248,7 @@ def record_cancellation_compliance_evidence(*, tender: str, obligation_id: str, 
 	actor = authz.actor(user)
 	assignment, role = authz.require_any_site_role((ROLE_PROCUREMENT_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION), actor)
 	payload = {"tender": tender, "obligation_id": obligation_id, "evidence_reference": evidence_reference, "evidence_file": evidence_file}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="RecordCancellationComplianceEvidence", actor=actor)
 	if replay:
 		return replay
 	root, _version = draft_commands.load(tender)

@@ -23,8 +23,11 @@ from kentender_budget.services import budget_check_reserve_contracts as check_re
 from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import (
 	FUNDING_SOURCE,
 	_FinanceTestBase,
+	owner_ou,
 )
 
+
+from kentender_budget.services.budget_service_principal import PRINCIPAL_BUDGET, PRINCIPAL_CONTRACT, PRINCIPAL_REQUISITIONS, service_caller
 
 class _ArrayTestBase(_FinanceTestBase):
 	@classmethod
@@ -40,7 +43,7 @@ class _ArrayTestBase(_FinanceTestBase):
 				"funding_source": FUNDING_SOURCE,
 				"plan_source_allocation": f"TEST-PSA-{drawdown}",
 				"drawdown_line_id": drawdown,
-				"source_organisation_unit": f"TEST-OU-{drawdown}",
+				"source_organisation_unit": owner_ou(line),
 			}
 			for drawdown, amount in pairs
 		]
@@ -53,12 +56,15 @@ class _ArrayTestBase(_FinanceTestBase):
 			source_set_hash="TEST-HASH-ARRAY",
 			allocations=allocations,
 			correlation_id=correlation or frappe.generate_hash(length=12),
-			calling_module="Procurement Requisitions",
+			caller=service_caller(PRINCIPAL_REQUISITIONS, reference=caller_reference),
 			caller_reference=caller_reference,
 		)
 
-	def _reserve(self, token, key):
-		return check_reserve.reserve_funding(token=token["token"], source_set_hash="TEST-HASH-ARRAY", idempotency_key=key)
+	def _reserve(self, token, key, *, caller_reference="REQ-ARRAY"):
+		return check_reserve.reserve_funding(
+			token=token["token"], source_set_hash="TEST-HASH-ARRAY", idempotency_key=key,
+			caller=service_caller(PRINCIPAL_REQUISITIONS, reference=caller_reference),
+		)
 
 	@staticmethod
 	def _title(ctx) -> str:

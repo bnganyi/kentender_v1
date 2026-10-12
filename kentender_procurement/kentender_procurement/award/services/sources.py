@@ -129,6 +129,36 @@ class EvaluationSource:
 		except Exception as exc:
 			raise SourceUnavailable(str(exc)) from exc
 
+	def funding(self, tender: str) -> dict[str, Any]:
+		"""The current funding position at this moment (AWD-IF-07), read through
+		Budget's published `get_funding_lineage`. Never a guess: when the
+		reservations cannot be named or Budget cannot answer, `known` is False
+		and the caller treats it as unavailable, never as "not restricted"."""
+		from decimal import Decimal
+
+		from kentender_procurement.tenders.services import award_seam
+
+		try:
+			reservations = award_seam.funding_reservations(tender)
+			if not reservations:
+				return {"known": False, "reason": "The tender has no recorded budget reservation."}
+			from kentender_budget.services.budget_downstream_contracts import get_funding_lineage
+
+			total, codes = Decimal("0"), []
+			for reservation in reservations:
+				rows = get_funding_lineage(reservation=reservation).get("rows") or []
+				if not rows:
+					return {"known": False, "reason": "Budget could not confirm a reservation of this tender."}
+				for row in rows:
+					res = row["reservation"]
+					if res.get("status") in ("Active", "Partially Converted", "Converted"):
+						total += Decimal(cstr(res.get("remaining_amount") or 0))
+					codes.append(cstr(res.get("code")))
+		except Exception as exc:
+			frappe.log_error(title="Award funding read unavailable")
+			return {"known": False, "reason": cstr(exc)[:140] or "Budget did not answer."}
+		return {"known": True, "available": str(total.quantize(Decimal("0.01"))), "reservations": codes, "source": "Budget"}
+
 	# -- bidders and suppliers (AWD-IF-03) ---------------------------------------
 	def audience(self, tender: str) -> list[dict[str, Any]]:
 		from kentender_procurement.bid_submission.services import award_gateway

@@ -57,11 +57,6 @@ KEEP_DOMAINS_PARTIAL = (
 ROLES_TO_DISABLE = (
 	"Performance Officer",
 	"Performance Verifier",
-	"BWMF Auditor",
-	"BWMF Procurement Reviewer",
-	"BWMF Publication Service",
-	"BWMF Tender Approver",
-	"BWMF Tender Configurator",
 	"Approving Authority",
 	"Auditor / Oversight User",
 	"KenTender Approving Authority",

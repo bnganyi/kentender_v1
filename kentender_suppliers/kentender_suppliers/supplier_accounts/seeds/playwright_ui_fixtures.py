@@ -22,6 +22,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
+from kentender_core.services.command_write_guard import purge_doc
 
 from kentender_core.services import test_clock
 from kentender_suppliers.supplier_accounts.seeds import canonical
@@ -191,7 +192,7 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	frappe.set_user("Administrator")
 	_wipe_accounts()
 	for name in frappe.get_all("User Responsibility Assignment", filters={"fixture_namespace": NAMESPACE}, pluck="name"):
-		frappe.delete_doc("User Responsibility Assignment", name, force=True, ignore_permissions=True)
+		purge_doc("User Responsibility Assignment", name)
 	removed = canonical.remove_supplier_accounts(namespace=NAMESPACE, users=USERS)
 	test_clock.set_instant(None)
 	if commit:

@@ -6,8 +6,16 @@ v0.4 §5.4, §7; AWD-AC-010, AC-018; tracker AWD4-504)."""
 
 from __future__ import annotations
 
+import frappe
+
 from kentender_procurement.award.services import authority, simulation, state
-from kentender_procurement.award.tests.support import AwardCase
+from kentender_procurement.award.tests.support import NS, AwardCase
+from kentender_procurement.tests.two_connections import WAIT, Conn
+
+
+def _in_world():
+	frappe.flags.kt_awd_fixture_namespace = NS
+	frappe.flags.kt_awd_clock = "2027-06-17 09:00:00"
 
 
 class TestAuthority(AwardCase):
@@ -42,3 +50,25 @@ class TestAuthority(AwardCase):
 		simulation.set_controls(status_service_down=1)
 		self.deliver()
 		self.assertEqual(len(issues.open_issues(self.case(), subtype=checks.STATUS_UNAVAILABLE)), 1)
+
+	def test_a_cancellation_that_waited_on_the_case_lock_sees_the_notices_issued_meanwhile(self):
+		"""AUD-XC-108 (AWD-AC-010): Tenders' transaction already holds a snapshot
+		when the guard takes the case lock. The guard must read the status as last
+		committed (a locking read), not from that older snapshot."""
+		self.deliver()
+		self.at("2027-06-17 09:00:00")
+		doc = self.case()
+		tender = doc.tender
+		frappe.db.commit()
+		conn_b = Conn("Administrator", lambda: authority.cancellation_guard(tender=tender), snapshot_first=True, setup=_in_world)
+		self.assertTrue(conn_b.snapshot_open.wait(WAIT))
+
+		from kentender_procurement.award.services import records
+
+		conn_a = Conn("Administrator", lambda: records.bump(self.case(), notification_status="Issued"), setup=_in_world)
+		self.assertTrue(conn_a.finished.wait(WAIT))
+		self.assertIsNone(conn_a.error, conn_a.error)
+		conn_b.start_gate.set()
+		self.assertTrue(conn_b.finished.wait(WAIT))
+		self.assertIsNone(conn_b.error, conn_b.error)
+		self.assertIn("Award notices have been issued", conn_b.value)

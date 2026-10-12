@@ -21,6 +21,7 @@ import frappe
 from frappe.utils import cint, cstr
 
 from kentender_procurement.bid_evaluation.services import clock, records, rules, sources
+from kentender_procurement.services import sequence
 
 RUN = "Evaluation Check Run"
 RESULT = "Evaluation Check Result"
@@ -132,7 +133,7 @@ def run(doc, *, reason: str, idempotency_key: str, affected: dict[str, Any] | No
 	except rules.RulesUnavailable:
 		loaded = None
 	previous = current_run(doc.name)
-	number = frappe.db.count(RUN, {"evaluation_case": doc.name}) + 1
+	number = sequence.next_count(RUN, {"evaluation_case": doc.name})
 	run_doc = records.insert(frappe.get_doc({
 		"doctype": RUN, "run_id": f"{doc.name}-RUN-{number:02d}", "evaluation_case": doc.name, "run_number": number, "reason": reason,
 		"rules_version": cstr((loaded or {}).get("rules_version")), "rules_digest": cstr((loaded or {}).get("_digest")), "definition_id": doc.definition_id,

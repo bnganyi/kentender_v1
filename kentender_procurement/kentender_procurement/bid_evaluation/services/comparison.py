@@ -16,7 +16,13 @@ met** and **Not ranked**. With no published tie-break, equal leading totals
 give **No single recommendation — equal evaluated totals**. No responsive
 bid gives **No responsive bids**. A single responsive bid can be
 recommended. No preference margin, tax treatment, discount or exchange rate
-is introduced after closing, and funding never changes a result."""
+is introduced after closing, and funding never changes a result.
+
+A bid whose every unresolved requirement the committee has explicitly
+recorded for a qualified report (a "Qualified report" conclusion) is not
+pending: the comparison then reports **Qualified report**, a completed
+account of the issue with no recommendation (§4.4, §5.5), so the report can
+be frozen for signing (AUD-EVL-002)."""
 
 from __future__ import annotations
 
@@ -35,6 +41,7 @@ PROVISIONAL = "Provisional comparison"
 NO_RESPONSIVE = "No responsive bids"
 TIE = "No single recommendation — equal evaluated totals"
 TIE_REASON = "The published tender has no tie-break rule."
+QUALIFIED = "Qualified report"
 
 
 def _money(value: str) -> Decimal | None:
@@ -64,6 +71,9 @@ def compare(case: str, *, with_funding: bool = True) -> dict[str, Any]:
 			row["evaluated_total"] = cstr(bid.submitted_total)  # no published adjustment in this template
 		else:
 			row["evaluated_total"] = aggregate.REVIEW
+			# unresolved, but only on requirements the committee recorded for a qualified report
+			unresolved = [r for r in res["requirements"] if r["result"] == aggregate.REVIEW]
+			row["qualified_unresolved"] = [r["label"] for r in unresolved] if unresolved and all(r["qualified"] for r in unresolved) else []
 		rows.append(row)
 	ranked = sorted([r for r in rows if r["evaluated_total"] not in (NOT_ASSESSED, aggregate.REVIEW)], key=lambda r: _money(r["evaluated_total"]))
 	position, previous = 0, None
@@ -72,11 +82,16 @@ def compare(case: str, *, with_funding: bool = True) -> dict[str, Any]:
 		if amount != previous:
 			position, previous = n, amount
 		r["position"] = position
-	pending = [r for r in rows if r["evaluated_total"] == aggregate.REVIEW]
+	unresolved_rows = [r for r in rows if r["evaluated_total"] == aggregate.REVIEW]
+	pending = [r for r in unresolved_rows if not r.get("qualified_unresolved")]
+	qualified = [r for r in unresolved_rows if r.get("qualified_unresolved")]
 	provisional = bool(pending) and len(rows) > 1 and bool(ranked or pending)
 	outcome, recommended, reason, funds = None, None, "", None
 	if not pending:
-		if not ranked:
+		if qualified:
+			outcome = QUALIFIED
+			reason = "; ".join(f"{r['bidder']}: {', '.join(r['qualified_unresolved'])} unresolved, recorded for a qualified report" for r in qualified)
+		elif not ranked:
 			outcome, reason = NO_RESPONSIVE, "; ".join(f"{r['bidder']}: not responsive" for r in rows)
 		elif len([r for r in ranked if r["position"] == 1]) > 1:
 			outcome, reason = TIE, TIE_REASON

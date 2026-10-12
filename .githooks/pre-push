@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# The backstop: never push generated stylesheets that are out of step with their generators.
+root="$(git rev-parse --show-toplevel)"
+exec "$root/scripts/check-generated-css.sh"

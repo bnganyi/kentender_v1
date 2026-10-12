@@ -22,8 +22,8 @@ from kentender_procurement.bid_evaluation.services import appointment, checks, d
 from kentender_procurement.bid_evaluation.tests.support import AO, CHAIR, MEMBER, MEMBER_2, EvaluationCase
 from kentender_procurement.bid_submission.tests.support import key
 
-ROSTER = [{"user": CHAIR, "department": "HRM", "capacity": "Chair"}, {"user": MEMBER, "department": "ICT", "capacity": "Member"},
-	{"user": MEMBER_2, "department": "Finance", "capacity": "Member"}]
+ROSTER = [{"user": CHAIR, "capacity": "Chair"}, {"user": MEMBER, "capacity": "Member"},
+	{"user": MEMBER_2, "capacity": "Member"}]
 
 
 def titles(user: str) -> list[str]:
@@ -63,7 +63,7 @@ class TestIntake(EvaluationCase):
 		self.assertEqual((doc.state, doc.prepared_from), ("Reviewing", "Publication"))
 		self.assertTrue(checks.current_run(doc.name))
 		self.assertIn(f"Appoint evaluation committee for {self.reference}", titles(AO))
-		appointment.appoint_committee(tender=self.name, members=ROSTER, appointment_reference="MOH/EVAL/TEST", expected_version=doc.record_version,
+		appointment.appoint_committee(tender=self.name, members=ROSTER, expected_version=doc.record_version,
 			idempotency_key=key(), user=AO)
 		self.assertNotIn(f"Review bids for {self.reference}", titles(MEMBER))  # not before the member's own declaration
 		declaration.declare_interest(tender=self.name, choice="No conflict to declare", confidentiality_accepted=True, idempotency_key=key(), user=MEMBER)
@@ -102,7 +102,7 @@ class TestNoBidsAfterPreparation(EvaluationCase):
 
 	def test_a_final_no_bids_opening_closes_the_preparation(self):
 		preparation.ensure_preparation(tender=self.name)
-		appointment.appoint_committee(tender=self.name, members=ROSTER, appointment_reference="MOH/EVAL/TEST", expected_version=self.case().record_version,
+		appointment.appoint_committee(tender=self.name, members=ROSTER, expected_version=self.case().record_version,
 			idempotency_key=key(), user=AO)
 		self.completed_empty_opening()
 		sweep.sweep_tender(self.name)

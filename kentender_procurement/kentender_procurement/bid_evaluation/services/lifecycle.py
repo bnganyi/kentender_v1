@@ -36,7 +36,8 @@ def withdraw_signing(doc, *, kind: str, reason: str, idempotency_key: str, actor
 	from kentender_procurement.proceedings.services import record_versions
 
 	report = frappe.get_doc(REPORT, name)
-	if report.record_version_reference and actor:
+	# A record the Proceedings owner already finalized (every proof in, delivery then failed) stays as signed history; only a Frozen one is superseded.
+	if report.record_version_reference and actor and frappe.db.get_value("Proceeding Minutes Version", report.record_version_reference, "state") == "Frozen":
 		with prc_owner.acting(doc.name):
 			record_versions.supersede_record(**prc.ref(doc), record_version=report.record_version_reference, reason=cstr(reason),
 				idempotency_key=prc.key(idempotency_key, f"supersede-{name}"), actor=actor)

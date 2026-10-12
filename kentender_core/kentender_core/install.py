@@ -267,13 +267,18 @@ def _ensure_user_kt_scope_fields():
 	# kt_procuring_entity retired by CTX-CHG-001: the global working PE lives
 	# in frappe.defaults (kt_working_procuring_entity), migrated by
 	# migrate_kt_procuring_entity_to_working_pe.
+	# AUTH-ADR-001 v1.12 §4.8: the staff home organisation unit replaces the
+	# retired `kt_primary_department`. Display only; never an authority source;
+	# written only by CFG-CHG-002 v0.19 SetStaffHomeOrganisationUnit.
 	fields = [
 		{
-			"fieldname": "kt_primary_department",
-			"label": "Primary Department (KenTender)",
+			"fieldname": "kt_home_organisation_unit",
+			"label": "Home organisation unit",
 			"fieldtype": "Link",
-			"options": "Procuring Department",
+			"options": "Organisation Unit",
 			"insert_after": "username",
+			"read_only": 1,
+			"no_copy": 1,
 		},
 	]
 	for f in fields:

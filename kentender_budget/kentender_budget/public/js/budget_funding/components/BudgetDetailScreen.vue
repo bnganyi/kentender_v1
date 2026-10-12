@@ -7,6 +7,7 @@ import { useRouteState } from "../../budget_shared/composables/useRouteState.js"
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { formatKes, mintKey } from "../../budget_shared/data/formatKes.js";
 import { getBudgetDetail, getBudgetLinesActive, getFundingActivity, getBudgetVersionHistory, createBudgetSuccessorVersion } from "../data/budgetApi.js";
+import AccessDenied from "../../budget_shared/components/AccessDenied.vue";
 
 // BUD-UI-03 — BUD-DES-04/04A/05/07/07A (BUD-CHG-001 v1.9 §11.4–§11.7A,
 // §12.3); the Approver's Close budget entry routes to the closure screen
@@ -157,10 +158,14 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 <template>
 	<div class="kt-industry" data-testid="bud-detail" :data-loading="loading ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : 'false'">
 		<div ref="railEl" class="kt-rail-mount"></div>
-		<div class="kt-shell">
+		<div v-if="!loading && forbidden" class="kt-shell">
+			<div class="kt-page" data-testid="budget-detail-forbidden">
+				<AccessDenied :heading="__(forbidden.heading)" :text="__(forbidden.text || '')" />
+			</div>
+		</div>
+		<div v-else class="kt-shell">
 			<div v-if="loading" class="card blueprint"><div class="kt-skel" style="width: 280px; height: 20px"></div></div>
 			<div v-else-if="notFound" class="card blueprint kt-empty" data-testid="budget-detail-not-found"><h2>{{ __("This budget could not be found.") }}</h2></div>
-			<div v-else-if="forbidden" class="card blueprint kt-empty" data-testid="budget-detail-forbidden"><h2>{{ __(forbidden.heading) }}</h2><p v-if="forbidden.text" class="kt-muted">{{ __(forbidden.text) }}</p></div>
 			<div v-else-if="serverError" class="card blueprint kt-empty" data-testid="budget-detail-server-error"><h2>{{ __("This budget could not be loaded.") }}</h2><button type="button" class="btn btn-primary" @click="loadDetail()">{{ __("Try again") }}</button></div>
 
 			<template v-else-if="detail">

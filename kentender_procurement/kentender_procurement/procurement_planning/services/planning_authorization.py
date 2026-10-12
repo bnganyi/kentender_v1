@@ -26,6 +26,7 @@ on submissions, decisions and the Planning Command Journal. No extra field.
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass, field
 from typing import Any
 
 import frappe
@@ -47,6 +48,7 @@ from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_AUDITOR,
 	ROLE_DEPARTMENTAL_AUTHOR,
 	ROLE_FINANCE_CONFIRMATION_OFFICER,
+	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
 	ROLE_HEAD_OF_USER_DEPARTMENT,
 	ROLE_PLAN_STATUTORY_APPROVER,
 	ROLE_PROCUREMENT_PLANNER,
@@ -69,6 +71,7 @@ PLANNER_CHAIN_COMMANDS = (
 	"FormPlanItems",
 	"DissolvePlanItem",
 	"SavePlanItem",
+	"SavePlanVersionDetails",
 	"ConfirmSplittingAdvisory",
 	"RequestPlanFundingConfirmation",
 	"SubmitConsolidatedPlan",
@@ -161,6 +164,95 @@ def dpp_read_profile(organisation_unit: str, user: str | None = None) -> str:
 	if authorise_record(user=principal, business_role=ROLE_AUDITOR, organisation_unit="", purpose=PURPOSE_READ).allowed:
 		return "oversight"
 	return ""
+
+
+@dataclass(frozen=True)
+class PlanSourceAccess:
+	"""What a Plan reviewer may read of one accepted departmental submission:
+	only the entries a plan under their review consumed, and only those plans."""
+
+	entries: frozenset[str] = field(default_factory=frozenset)
+	plan_versions: frozenset[str] = field(default_factory=frozenset)
+
+	def __bool__(self) -> bool:
+		return bool(self.entries)
+
+
+_NO_PLAN_SOURCE_ACCESS = PlanSourceAccess()
+
+
+def plan_source_access(dpp_submission: str, user: str | None = None) -> PlanSourceAccess:
+	"""KT-ACCESS-REV-001 v0.2 §2 (proposed PLN-R2 — built ahead of approval):
+	the read-only reach of the Accounting Officer, Head of Procurement
+	Function, statutory approver and Finance Confirmation Officer into the
+	sources of a plan they review.
+
+	The right is the review that exists, never a caller-supplied parent: the
+	reviewer holds the Site-wide responsibility *and* the plan version that
+	consumed the entry has the review task that responsibility works from
+	(adoption task for the Accounting Officer, statutory task for the
+	statutory approver, finance task for Finance and the Head of Procurement
+	Function). A Draft plan with no review task, an unsent departmental draft
+	and an accepted submission no plan consumed grant nothing. Each role is
+	evaluated on its own; nothing is combined across roles. Reading is the
+	whole grant: the commands keep their own guards.
+	"""
+	principal = actor(user)
+	if is_technical(principal) or not dpp_submission:
+		return _NO_PLAN_SOURCE_ACCESS
+	held = {
+		role
+		for role in (
+			ROLE_ACCOUNTING_OFFICER,
+			ROLE_PLAN_STATUTORY_APPROVER,
+			ROLE_FINANCE_CONFIRMATION_OFFICER,
+			ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
+		)
+		if can_read_site(role, principal)
+	}
+	if not held:
+		return _NO_PLAN_SOURCE_ACCESS
+	dpp_version = frappe.db.get_value("Departmental Plan Submission", dpp_submission, "dpp_version")
+	if not dpp_version:
+		return _NO_PLAN_SOURCE_ACCESS
+	entry_ids = {
+		row.name: row.entry_id
+		for row in frappe.get_all(
+			"Departmental Plan Entry", filters={"dpp_version": dpp_version}, fields=["name", "entry_id"], limit_page_length=0
+		)
+	}
+	if not entry_ids:
+		return _NO_PLAN_SOURCE_ACCESS
+	allocations = frappe.get_all(
+		"Plan Source Allocation",
+		filters={"dpp_entry": ("in", list(entry_ids)), "allocation_state": ("in", ("Draft", "Active"))},
+		fields=["dpp_entry", "plan_version"],
+		limit_page_length=0,
+	)
+	reviewable: dict[str, bool] = {}
+	entries: set[str] = set()
+	versions: set[str] = set()
+	for allocation in allocations:
+		version = allocation.plan_version
+		if version not in reviewable:
+			reviewable[version] = _plan_version_under_review(version, held)
+		if reviewable[version]:
+			entries.add(entry_ids[allocation.dpp_entry])
+			versions.add(version)
+	return PlanSourceAccess(frozenset(entries), frozenset(versions))
+
+
+def _plan_version_under_review(plan_version: str, held: set[str]) -> bool:
+	def _task(doctype: str, **filters) -> bool:
+		return bool(frappe.db.exists(doctype, {"plan_version": plan_version, "status": ("!=", "Cancelled"), **filters}))
+
+	if ROLE_ACCOUNTING_OFFICER in held and _task("Plan Governance Task", stage="Accounting Officer adoption"):
+		return True
+	if ROLE_PLAN_STATUTORY_APPROVER in held and _task("Plan Governance Task", stage="Statutory approval"):
+		return True
+	if held & {ROLE_FINANCE_CONFIRMATION_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION} and _task("Plan Finance Task"):
+		return True
+	return False
 
 
 def require_dpp_read(organisation_unit: str, user: str | None = None) -> str:
@@ -377,7 +469,10 @@ def prior_actors(chain: list[str]) -> dict[str, set[str]]:
 		planner.add(cstr(row.actor))
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", chain)}, pluck="name")
 	tasks = frappe.get_all("Plan Finance Task", filters={"plan_version": ("in", chain)}, pluck="name")
-	journal_targets = set(chain) | set(items) | set(tasks)
+	# `RequestPlanFundingConfirmation` that reuses an earlier confirmation is
+	# journaled against the reuse record, not the task (AUD-PLN-010).
+	reuses = frappe.get_all("Plan Finance Basis Reuse", filters={"plan_version": ("in", chain)}, pluck="name")
+	journal_targets = set(chain) | set(items) | set(tasks) | set(reuses)
 	if journal_targets:
 		for row in frappe.get_all(
 			"Planning Command Journal",
@@ -453,6 +548,45 @@ def _root_unit_of(doctype: str, name: str) -> str:
 	return ""
 
 
+# RG-31 — a Plan Item Correction Request is Site-wide to the Planning readers who
+# work the request and departmental to the Heads whose department contributes to
+# the plan item it concerns.
+CORRECTION_REQUEST = "Plan Item Correction Request"
+_CORRECTION_SITE_READERS = (ROLE_PROCUREMENT_PLANNER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION, ROLE_AUDITOR)
+
+
+def _correction_request_units(principal: str) -> set[str] | None:
+	"""`None` = every request (a Site-wide Planning reader); else the units whose
+	requests the Head of User Department may read, subtrees included."""
+	for role in _CORRECTION_SITE_READERS:
+		if can_read_site(role, principal):
+			return None
+	return permitted_ou_scopes(principal, ROLE_HEAD_OF_USER_DEPARTMENT) or set()
+
+
+def _correction_request_condition(principal: str) -> str:
+	units = _correction_request_units(principal)
+	if units is None:
+		return ""
+	if not units:
+		return "1=0"
+	listed = ", ".join(frappe.db.escape(unit) for unit in sorted(units))
+	return (
+		f"`tab{CORRECTION_REQUEST}`.`plan_item` in (select `plan_item` from `tabPlan Source Allocation` "
+		f"where `organisation_unit` in ({listed}))"
+	)
+
+
+def _may_read_correction_request(doc, principal: str) -> bool:
+	units = _correction_request_units(principal)
+	if units is None:
+		return True
+	item = doc.get("plan_item") if hasattr(doc, "get") else None
+	if not units or not item:
+		return False
+	return bool(frappe.db.exists("Plan Source Allocation", {"plan_item": item, "organisation_unit": ("in", sorted(units))}))
+
+
 def permission_query_conditions(user: str | None = None, doctype: str | None = None) -> str:
 	"""List/count predicate for a DPP-family DocType: delegate to the root's
 	own registered condition through the parent chain."""
@@ -461,6 +595,8 @@ def permission_query_conditions(user: str | None = None, doctype: str | None = N
 	principal = cstr(user or frappe.session.user)
 	if is_technical(principal):
 		return ""
+	if doctype == CORRECTION_REQUEST:
+		return _correction_request_condition(principal)
 	root_condition = scope_condition("Departmental Plan", principal)
 	if root_condition == "":
 		return ""
@@ -488,6 +624,11 @@ def has_permission(doc=None, ptype: str = "read", user: str | None = None):
 	if doc is None:
 		return True
 	doctype = getattr(doc, "doctype", None) or (doc.get("doctype") if isinstance(doc, dict) else "")
+	if doctype == CORRECTION_REQUEST:
+		# a technical reader reads (and may write only through DocPerm and the guard)
+		if is_technical(principal) or ptype in ("read", "select", "report", "export", "print", "email", "share") and _may_read_correction_request(doc, principal):
+			return True
+		return False
 	name = getattr(doc, "name", None) or (doc.get("name") if isinstance(doc, dict) else "")
 	unit = _root_unit_of(doctype, name) if name else ""
 	proxy = frappe._dict({"doctype": "Departmental Plan", "name": name, "organisation_unit": unit})

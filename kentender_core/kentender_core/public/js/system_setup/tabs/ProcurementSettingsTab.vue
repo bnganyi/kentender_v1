@@ -26,6 +26,7 @@ import ReminderSettingCard from "../components/ReminderSettingCard.vue";
 import SupplierPortalSection from "../components/SupplierPortalSection.vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
 import { fmtDate, sourceCheckClass, sourceCheckLabel } from "../data/format.js";
+import AccessDenied from "../../access_shared/AccessDenied.vue";
 
 const props = defineProps({
 	// The parsed §9 route ({tab, section, id, versionId, action}).
@@ -297,10 +298,7 @@ async function confirmRemoveSource() {
 			<p class="card-body" style="margin:0">{{ __("Loading procurement settings…") }}</p>
 		</div>
 
-		<div v-else-if="loadError === 'FORBIDDEN'" class="kt-notice is-critical" role="alert" data-testid="kt-procset-forbidden">
-			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
-			<div class="kt-notice-body"><strong>{{ __("You do not have access to System setup.") }}</strong><br>{{ __("This area needs Administrator or System Manager access.") }}<br>{{ __("Ask your KenTender administrator to grant it.") }}</div>
-		</div>
+		<AccessDenied v-else-if="loadError === 'FORBIDDEN'" :heading="__('You do not have access to System setup')" :text="__('This area needs Administrator or System Manager access. Ask your KenTender administrator to grant it.')" testid="kt-procset-forbidden" />
 
 		<div v-else-if="loadError" data-testid="kt-procset-error">
 			<div class="kt-notice is-critical" role="alert">

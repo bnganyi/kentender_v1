@@ -45,6 +45,7 @@ from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_PLAN_STATUTORY_APPROVER,
 	ROLE_PROCUREMENT_PLANNER,
 )
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 STAGE_AO = "Accounting Officer adoption"
 STAGE_STATUTORY = "Statutory approval"
@@ -232,6 +233,7 @@ def _require_correction_cohort(version) -> None:
 		fail("PLN_CORRECTION_COHORT_VIOLATION", detail={"source_keys": strangers})
 
 
+@planning_command
 def record_late_activation_explanation(*, plan_version: str, reason: str, supersedes: str = "", idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `RecordLateActivationExplanation` — the Accounting Officer's
 	append-only accountability for an initial Plan adopted after the
@@ -259,6 +261,7 @@ def record_late_activation_explanation(*, plan_version: str, reason: str, supers
 	return result
 
 
+@planning_command
 def begin_held_plan_correction(*, plan_version: str, reason: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `BeginHeldPlanCorrection` — one linked Draft correction of a
 	**Published — activation held** Version: the correction origin is the
@@ -365,6 +368,7 @@ def _freeze_and_task(version, plan, actor: str, assignment, *, idempotency_key: 
 	).insert(ignore_permissions=True)
 
 
+@planning_command
 def submit_consolidated_plan(*, plan_version: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `SubmitConsolidatedPlan` — **Sign and submit Annual Plan** by the
 	Head of Procurement Function (§6.2, D6): preparation accountability for
@@ -383,7 +387,9 @@ def submit_consolidated_plan(*, plan_version: str, expected_record_version, idem
 	capacity_for_site()
 	_validate_ready_to_submit(version, plan)
 	task = _freeze_and_task(version, plan, actor, assignment, idempotency_key=idempotency_key)
-	result = {"ok": True, "idempotent": False, "action": "submitted", "task": task.name, "preparation_signature": version.preparation_signature, "submitted_snapshot_id": version.submitted_snapshot_id}
+	# The signer is the Head of Procurement Function, who cannot open the
+	# Accounting Officer's task; the page goes there only when this says it may.
+	result = {"ok": True, "idempotent": False, "action": "submitted", "task": task.name, "task_readable": plan_read.governance_task_readable(task, actor), "preparation_signature": version.preparation_signature, "submitted_snapshot_id": version.submitted_snapshot_id}
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="SubmitConsolidatedPlan", payload=payload, result=result,
 		document_type="Plan Governance Task", document_name=task.name, actor=actor,
@@ -461,6 +467,7 @@ def _record_late_explanation(version, plan, *, reason: str, actor: str, assignme
 	).insert(ignore_permissions=True)
 
 
+@planning_command
 def adopt_and_submit_plan(*, task: str, task_token: str, idempotency_key: str, late_activation_explanation: str = "", user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `AdoptAndSubmitPlan` — adopt the exact reviewed Version, recheck
 	the positive predicates and create one configured statutory task. An
@@ -514,6 +521,7 @@ def adopt_and_submit_plan(*, task: str, task_token: str, idempotency_key: str, l
 	return result
 
 
+@planning_command
 def approve_annual_plan(*, task: str, task_token: str, collective_resolution_reference: str = "", idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `ApproveAnnualPlan` — the configured statutory capacity's positive
 	decision; Board and Council record the collective resolution reference
@@ -545,18 +553,18 @@ def approve_annual_plan(*, task: str, task_token: str, collective_resolution_ref
 	envelope.bump(task_doc, status="Completed", decision=decision.name)
 	envelope.bump(version, version_status="Approved — publication pending")
 
-	# §5.5.2 (plan D8) — approval commits the exact immutable content and a
-	# durable publication intent; external transmission happens afterwards,
-	# never inside this transaction. Snapshot/publication/intent are
-	# get-or-created keyed by the exact Version, so a retried or duplicated
-	# ApproveAnnualPlan call after a partial failure lands on the same
-	# identifiers rather than a second approved package (deterministic retry).
+	# §5.5.2 (v1.31) — approval commits the exact immutable content and its
+	# generated document identity; nothing is dispatched (MVP 1 publication is
+	# the Planner's confirmation). Snapshot and publication are get-or-created
+	# keyed by the exact Version, so a retried or duplicated ApproveAnnualPlan
+	# call after a partial failure lands on the same identifiers rather than a
+	# second approved package (deterministic retry).
 	from kentender_procurement.procurement_planning.services import publication_pipeline
 
 	committed = publication_pipeline.commit_approved_plan(version=version, plan=plan, decision=decision, actor=actor)
 	result = {
 		"ok": True, "idempotent": False, "action": "approved", "plan_version": version.name,
-		"snapshot": committed["snapshot"], "publication": committed["publication"], "intent": committed["intent"],
+		"snapshot": committed["snapshot"], "publication": committed["publication"],
 	}
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="ApproveAnnualPlan", payload=payload, result=result,
@@ -583,6 +591,7 @@ ALLOCATION_COPY_FIELDS = (
 )
 
 
+@planning_command
 def _copy_version_content(source_version: str, target_version, fixture_namespace: str) -> None:
 	"""§4.8/§5.2 — a correction or successor contains exactly the source
 	Version's items and allocations. Forecast and actual dates are never
@@ -621,6 +630,7 @@ def _copy_version_content(source_version: str, target_version, fixture_namespace
 			).insert(ignore_permissions=True)
 
 
+@planning_command
 def return_plan_version(*, task: str, reason: str, task_token: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	reason = cstr(reason).strip()
@@ -678,6 +688,7 @@ def return_plan_version(*, task: str, reason: str, task_token: str, idempotency_
 	return result
 
 
+@planning_command
 def submit_corrected_plan(*, plan_version: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
 	"""§7.2 `SubmitCorrectedPlan` — the same final-submission service and
 	guards as `SubmitConsolidatedPlan` (Finance basis evaluation, new
@@ -698,7 +709,9 @@ def submit_corrected_plan(*, plan_version: str, expected_record_version, idempot
 	_validate_ready_to_submit(version, plan)
 	_require_correction_cohort(version)
 	task = _freeze_and_task(version, plan, actor, assignment, idempotency_key=idempotency_key)
-	result = {"ok": True, "idempotent": False, "action": "submitted", "task": task.name, "preparation_signature": version.preparation_signature, "submitted_snapshot_id": version.submitted_snapshot_id}
+	# The signer is the Head of Procurement Function, who cannot open the
+	# Accounting Officer's task; the page goes there only when this says it may.
+	result = {"ok": True, "idempotent": False, "action": "submitted", "task": task.name, "task_readable": plan_read.governance_task_readable(task, actor), "preparation_signature": version.preparation_signature, "submitted_snapshot_id": version.submitted_snapshot_id}
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="SubmitCorrectedPlan", payload=payload, result=result,
 		document_type="Plan Governance Task", document_name=task.name, actor=actor,

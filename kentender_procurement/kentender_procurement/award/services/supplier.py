@@ -23,6 +23,7 @@ from frappe.utils import cint, cstr
 
 from kentender_procurement.award.services import clock, clocks, eligibility, issues, notify, people, records, sources, state
 from kentender_procurement.award.services.errors import fail, invalid
+from kentender_procurement.services import sequence
 
 NOTICE = state.NOTICE
 NOT_A_CONTRACT = "Accepting this award does not create a contract."
@@ -47,6 +48,18 @@ def _authority(doc, n, user: str) -> dict[str, Any]:
 		raise frappe.DoesNotExistError("Not found")
 	signatory = provider.signatory(user, n.organisation, at=at)
 	return {"acting": acting, "signatory": signatory}
+
+
+def _case_of(notice: str) -> str:
+	return (frappe.db.get_value(NOTICE, notice, "award_case") if notice else "") or ""
+
+
+def _authorise(notice: str, user: str, *, signatory: bool = False) -> None:
+	"""The caller's standing for a supplier command, before the journal is read."""
+	n, doc = _load(notice)
+	auth = _authority(doc, n, user)
+	if signatory and not auth["signatory"]:
+		fail("AWD_AUTHORITY_REQUIRED", {"reason": "signatory_required"})
 
 
 def _current(doc, n) -> bool:
@@ -134,7 +147,7 @@ def respond(*, notice: str, response: str, reason: str = "", notice_version=None
 		late = bool(deadline and now > deadline)
 		label = records.loads(n.content_json).get("notice")
 		wording = (f"I accept {label} on behalf of {n.organisation_name}." if response == "Accept" else f"I decline {label} on behalf of {n.organisation_name}.")
-		number = frappe.db.count(state.RESPONSE, {"notice": n.name}) + 1
+		number = sequence.next_count(state.RESPONSE, {"notice": n.name})
 		row = records.new(state.RESPONSE, response_id=f"{n.name}-R{number:02d}", notice=n.name, award_case=doc.name, notice_version=n.version, response=response,
 			responder=user, organisation=n.organisation, authority_evidence=cstr(auth["signatory"].get("assignment_id")), wording=wording, reason=cstr(reason).strip(),
 			received_at=now, late=1 if late else 0, operative=0 if late else 1, fixture_namespace=doc.fixture_namespace)
@@ -163,8 +176,9 @@ def respond(*, notice: str, response: str, reason: str = "", notice_version=None
 			out.update(code="AWD_RESPONSE_LATE", message=LATE)
 		return out
 
-	return records.command("RespondToAward", case="", idempotency_key=idempotency_key, actor=user,
-		payload={"notice": notice, "response": response, "reason": reason, "version": cstr(notice_version)}, body=body)
+	return records.command("RespondToAward", case=_case_of(notice), idempotency_key=idempotency_key, actor=user,
+		payload={"notice": notice, "response": response, "reason": reason, "version": cstr(notice_version)}, body=body,
+		authorise=lambda: _authorise(notice, user, signatory=True))
 
 
 def request_explanation(*, notice: str, request: str, idempotency_key: str, user: str) -> dict[str, Any]:
@@ -173,7 +187,7 @@ def request_explanation(*, notice: str, request: str, idempotency_key: str, user
 		_authority(doc, n, user)
 		invalid({"request": "Enter your request." if not cstr(request).strip() else ""})
 		previous = frappe.db.get_value(state.CORRESPONDENCE, {"notice": n.name}, "name", order_by="requested_at desc")
-		number = frappe.db.count(state.CORRESPONDENCE, {"award_case": doc.name}) + 1
+		number = sequence.next_count(state.CORRESPONDENCE, {"award_case": doc.name})
 		row = records.new(state.CORRESPONDENCE, correspondence_id=f"{doc.name}-REQ-{number:02d}", award_case=doc.name, notice=n.name, organisation=n.organisation,
 			organisation_name=n.organisation_name, requested_by=user, request_text=cstr(request).strip(), requested_at=clock.now(), predecessor=previous or "",
 			reply_state="", attempts_json="[]", state="Open", fixture_namespace=doc.fixture_namespace)
@@ -181,7 +195,8 @@ def request_explanation(*, notice: str, request: str, idempotency_key: str, user
 		records.audit(doc.name, "RequestAwardExplanation", user, request=row.name)
 		return {"ok": True, "request": row.name}
 
-	return records.command("RequestAwardExplanation", case="", idempotency_key=idempotency_key, actor=user, payload={"notice": notice, "request": request}, body=body)
+	return records.command("RequestAwardExplanation", case=_case_of(notice), idempotency_key=idempotency_key, actor=user, payload={"notice": notice, "request": request}, body=body,
+		authorise=lambda: _authorise(notice, user))
 
 
 def my_notices(*, user: str) -> list[dict[str, Any]]:

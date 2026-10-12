@@ -22,7 +22,6 @@ PLANNED_SIDEBAR_LABELS: frozenset[str] = frozenset(
 	{
 		"Contract Management",
 		"Supplier Management",
-		"Tender Configurations",
 	}
 )
 

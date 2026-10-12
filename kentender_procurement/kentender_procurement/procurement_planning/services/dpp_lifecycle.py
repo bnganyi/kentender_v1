@@ -19,20 +19,24 @@ from __future__ import annotations
 
 import hashlib
 import json
+from decimal import Decimal
 from typing import Any
 
 import frappe
 from frappe.utils import cstr, flt, getdate, now_datetime
 
 from kentender_core.services import site_configuration
+from kentender_core.utils.series import allocation_lock
 from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.services import (
 	budget_gateway,
 	envelope,
+	money,
 	needs_intake,
 	references,
 )
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
+from kentender_procurement.procurement_planning.write_family import planning_command
 
 ATTESTATION = (
 	"I certify that this Departmental Procurement Plan contains the current "
@@ -53,11 +57,23 @@ DIRECT_FIELDS = (
 # --- shared helpers ---------------------------------------------------------
 
 
-def _root_by_scope(organisation_unit: str, fiscal_year: str):
+def _root_by_scope(organisation_unit: str, fiscal_year: str, *, creating: bool = False):
+	"""The department's plan root for the year, or `None`.
+
+	`creating=True` is for a command that will create the root when there is
+	none: it first takes the Departmental Plan allocation lock, then
+	reads the latest committed row. Two requests starting the same plan then
+	run one after the other and the second finds the first's root instead of
+	making another (MariaDB REPEATABLE READ would hide the committed row from a
+	plain read taken before the wait: AUD-XC-130)."""
+	if creating:
+		# the table's allocation lock, not one per unit: the read below locks an absent key and
+		# the new root's reference is allocated under the same lock (RG-21)
+		allocation_lock("Departmental Plan", busy=lambda _t: fail("PLN_STALE_WRITE", "Departmental plan creation is busy. Try again."))
 	name = frappe.db.get_value(
-		"Departmental Plan", {"fiscal_year": fiscal_year, "organisation_unit": organisation_unit}, "name"
+		"Departmental Plan", {"fiscal_year": fiscal_year, "organisation_unit": organisation_unit}, "name", for_update=creating
 	)
-	return frappe.get_doc("Departmental Plan", name) if name else None
+	return frappe.get_doc("Departmental Plan", name, for_update=creating) if name else None
 
 
 def _version(version_name: str):
@@ -118,6 +134,7 @@ def _result(root, version=None, *, action: str = "", task: str = "", idempotent:
 	}
 
 
+@planning_command
 def _new_version(root, *, number: int, based_on: str = "", returned_from: str = ""):
 	return frappe.get_doc(
 		{
@@ -139,6 +156,7 @@ def _next_version_number(root_name: str) -> int:
 	return max([int(n or 0) for n in rows] or [0]) + 1
 
 
+@planning_command
 def copy_entries(source_version: str, target_version, fixture_namespace: str = "") -> int:
 	"""Copy every entry with its stable entry_id, funding and outcome onto a new Version."""
 	count = 0
@@ -183,6 +201,7 @@ def entry_is_complete(entry) -> bool:
 # --- §8.2 commands ----------------------------------------------------------
 
 
+@planning_command
 def open_departmental_plan(
 	*,
 	organisation_unit: str,
@@ -201,7 +220,7 @@ def open_departmental_plan(
 	if not frappe.db.exists("Organisation Unit", organisation_unit):
 		fail("PLN_NO_CONTEXT")
 	authz.require_dpp_author(organisation_unit, actor, masked=False)
-	root = _root_by_scope(organisation_unit, fiscal_year)
+	root = _root_by_scope(organisation_unit, fiscal_year, creating=True)
 
 	if root is None:
 		root = frappe.get_doc(
@@ -241,6 +260,7 @@ def open_departmental_plan(
 	return result
 
 
+@planning_command
 def ensure_departmental_plan(
 	*,
 	organisation_unit: str,
@@ -285,7 +305,7 @@ def ensure_departmental_plan(
 	if not frappe.db.exists("Organisation Unit", organisation_unit):
 		return {"ok": False, "action": "no_context", "reason": "PLN_NO_CONTEXT"}
 
-	root = _root_by_scope(organisation_unit, fiscal_year)
+	root = _root_by_scope(organisation_unit, fiscal_year, creating=True)
 	if root is None:
 		root = frappe.get_doc(
 			{
@@ -319,6 +339,7 @@ def ensure_departmental_plan(
 	return result
 
 
+@planning_command
 def save_need_funding(
 	*,
 	dpp_version: str,
@@ -354,9 +375,9 @@ def save_need_funding(
 		fail("PLN_DPP_STALE")
 	if cstr(entry.not_proceeding_reason).strip():
 		fail("PLN_ENTRY_INCOMPLETE", "This requirement is recorded as not proceeding. Restore it to planned requirements before funding it.", {"entry_id": entry.entry_id})
-	_validate_funding(root, budget_line, indicative_amount)
+	amount = _validate_funding(root, budget_line, indicative_amount)
 	entry.budget_line = budget_line
-	entry.indicative_amount = flt(indicative_amount)
+	entry.indicative_amount = amount
 	entry.save(ignore_permissions=True)
 	envelope.bump(root)
 	result = _result(root, version, action="need_funding_saved")
@@ -372,6 +393,7 @@ DISPOSITION_DO_NOT_PROCEED = "Do not proceed"
 DISPOSITION_RESTORE = "Restore"
 
 
+@planning_command
 def set_need_planning_disposition(
 	*,
 	dpp_version: str,
@@ -425,6 +447,9 @@ def set_need_planning_disposition(
 		entry.not_proceeding_reason = None
 		entry.budget_line = None
 		entry.indicative_amount = 0
+		# v1.30 §4.3 rule 6 — restoring starts again from the accepted Need's
+		# estimate, never from the amount cleared by the exclusion
+		needs_intake.prefill_amount(entry)
 		action = "need_restored"
 	entry.save(ignore_permissions=True)
 	envelope.bump(root)
@@ -438,14 +463,39 @@ def set_need_planning_disposition(
 	return result
 
 
-def _validate_funding(root, budget_line: str, indicative_amount) -> None:
-	if flt(indicative_amount) <= 0:
+def _exact_amount(root, value) -> Decimal:
+	"""RG-03 / AUD-XC-117 — an indicative amount is an exact positive decimal at
+	the Budget currency's precision (PLN §4.1): blank or zero is an incomplete
+	entry; NaN, Infinity, a negative, excess decimals or an amount the column
+	cannot hold is `PLN_MONEY_PRECISION_INVALID`, before any effect. Never
+	rounded."""
+	if value is None or cstr(value).strip() == "":
 		fail("PLN_ENTRY_INCOMPLETE", detail={"field": "indicative_amount"})
+	amount = money.parse_money(
+		value, precision=budget_gateway.money_precision(root.fiscal_year), field="indicative_amount", allow_zero=True
+	)
+	if amount == 0:
+		fail("PLN_ENTRY_INCOMPLETE", detail={"field": "indicative_amount"})
+	return amount
+
+
+def _exact_quantity(value, unit: str) -> Decimal:
+	"""The quantity at the governed precision of its unit: whole numbers only for
+	a unit ERPNext marks `must_be_whole_number`, otherwise the Needs quantity
+	precision. Never rounded."""
+	precision = 0 if frappe.db.get_value("UOM", cstr(unit), "must_be_whole_number") else money.DEFAULT_QUANTITY_PRECISION
+	return money.parse_quantity(value, precision=precision, field="quantity")
+
+
+def _validate_funding(root, budget_line: str, indicative_amount) -> Decimal:
+	amount = _exact_amount(root, indicative_amount)
 	eligible = budget_gateway.eligible_line_ids(fiscal_year=root.fiscal_year, source_org_unit=root.organisation_unit)
 	if cstr(budget_line) not in eligible:
 		fail("PLN_BUDGET_LINE_INELIGIBLE", detail={"field": "budget_line"})
+	return amount
 
 
+@planning_command
 def save_direct_requirement(
 	*,
 	dpp_version: str,
@@ -470,7 +520,7 @@ def save_direct_requirement(
 	_require_author(actor, root)
 	envelope.check_record_version(root, expected_record_version)
 	_require_mutable_current(root, version)
-	_validate_direct_values(root, values)
+	values = _validate_direct_values(root, values)
 
 	if not entry_id and cstr(version.returned_from_submission):
 		# §5.1.2 — a correction keeps the returned Submission's fixed cohort
@@ -509,22 +559,25 @@ def save_direct_requirement(
 	return result
 
 
-def _validate_direct_values(root, values: dict[str, Any]) -> None:
+def _validate_direct_values(root, values: dict[str, Any]) -> dict[str, Any]:
+	"""Validate a direct requirement and return the values to store: the quantity
+	and the indicative amount as the exact decimals they were validated as."""
 	missing = [field for field in DIRECT_FIELDS if not cstr(values.get(field)).strip()]
 	if missing:
 		fail("PLN_ENTRY_INCOMPLETE", f"Complete the highlighted requirement fields before submitting: {', '.join(missing)}.", {"fields": missing})
-	if flt(values.get("quantity")) <= 0:
-		fail("PLN_ENTRY_INCOMPLETE", "Quantity must be greater than zero.", {"field": "quantity"})
 	# CFG v0.9 §4.5 — units come only from enabled ERPNext UOM records.
 	if not frappe.db.get_value("UOM", cstr(values.get("unit")), "enabled"):
 		fail("PLN_ENTRY_INCOMPLETE", "Select an enabled unit of measure.", {"field": "unit"})
+	quantity = _exact_quantity(values.get("quantity"), cstr(values.get("unit")))
 	start, end = _fy_bounds(root.fiscal_year)
 	required_by = getdate(values.get("required_by_date"))
 	if not start or not (start <= required_by <= end):
 		fail("PLN_ENTRY_INCOMPLETE", "Required by must fall inside the selected Financial Year.", {"field": "required_by_date"})
-	_validate_funding(root, cstr(values.get("budget_line")), values.get("indicative_amount"))
+	amount = _validate_funding(root, cstr(values.get("budget_line")), values.get("indicative_amount"))
+	return {**values, "quantity": quantity, "indicative_amount": amount}
 
 
+@planning_command
 def remove_direct_requirement(
 	*, dpp_version: str, entry_id: str, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
@@ -556,6 +609,7 @@ def remove_direct_requirement(
 	return result
 
 
+@planning_command
 def submit_departmental_plan(
 	*, dpp_version: str, certification_confirmed: bool, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
@@ -618,6 +672,8 @@ def submit_departmental_plan(
 			"required_by_date": cstr(entry.required_by_date),
 			"budget_line": cstr(entry.budget_line),
 			"indicative_amount": flt(entry.indicative_amount),
+			# v1.30 §4.3 rule 5 — the accepted Need's estimate frozen with the entry
+			"need_estimated_total_cost": flt(entry.need_estimated_total_cost),
 			"not_proceeding_reason": cstr(entry.not_proceeding_reason),
 		}
 		for entry in entries
@@ -672,6 +728,7 @@ def submit_departmental_plan(
 	return result
 
 
+@planning_command
 def withdraw_departmental_submission(
 	*, dpp_version: str, reason: str, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
@@ -710,6 +767,7 @@ def withdraw_departmental_submission(
 	return result
 
 
+@planning_command
 def create_departmental_plan_update(
 	*, departmental_plan: str, expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:

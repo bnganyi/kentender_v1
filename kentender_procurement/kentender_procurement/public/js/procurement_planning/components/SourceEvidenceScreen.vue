@@ -81,27 +81,27 @@
 					<div class="kt-meta-row is-tight" data-testid="src-requirement">
 						<div>
 							<span class="kt-label">Requirement title</span>
-							<span class="kt-meta-value">{{ evidence.title }}</span>
+							<span class="kt-meta-value is-plain">{{ evidence.title }}</span>
 						</div>
 						<div>
 							<span class="kt-label">Description</span>
-							<span class="kt-meta-value">{{ evidence.description }}</span>
+							<span class="kt-meta-value is-plain">{{ evidence.description }}</span>
 						</div>
 						<div>
 							<span class="kt-label">Expected result</span>
-							<span class="kt-meta-value">{{ evidence.expected_operational_result }}</span>
+							<span class="kt-meta-value is-plain">{{ evidence.expected_operational_result }}</span>
 						</div>
 						<div>
 							<span class="kt-label">Quantity</span>
-							<span class="kt-meta-value">{{ evidence.quantity_number }}</span>
+							<span class="kt-meta-value is-plain">{{ evidence.quantity_number }}</span>
 						</div>
 						<div>
 							<span class="kt-label">Unit</span>
-							<span class="kt-meta-value">{{ evidence.unit_label }}</span>
+							<span class="kt-meta-value is-plain">{{ evidence.unit_label }}</span>
 						</div>
 						<div>
 							<span class="kt-label">Required by</span>
-							<span class="kt-meta-value">{{ evidence.required_by_display }}</span>
+							<span class="kt-meta-value is-plain">{{ evidence.required_by_display }}</span>
 						</div>
 					</div>
 				</div>
@@ -113,15 +113,15 @@
 						<div class="kt-meta-row" data-testid="src-funding">
 							<div>
 								<span class="kt-label">Department</span>
-								<span class="kt-meta-value">{{ evidence.department }}</span>
+								<span class="kt-meta-value is-plain">{{ evidence.department }}</span>
 							</div>
 							<div v-if="evidence.budget_line_name">
 								<span class="kt-label">Budget line name</span>
-								<span class="kt-meta-value">{{ evidence.budget_line_name }}</span>
+								<span class="kt-meta-value is-plain">{{ evidence.budget_line_name }}</span>
 							</div>
 							<div>
 								<span class="kt-label">Budget line</span>
-								<span class="kt-meta-value">{{ evidence.budget_line_reference }}</span>
+								<span class="kt-meta-value is-plain">{{ evidence.budget_line_reference }}</span>
 							</div>
 							<div>
 								<span class="kt-label">Amount</span>
@@ -142,24 +142,24 @@
 							<div class="kt-meta-row">
 								<div>
 									<span class="kt-label">Certification status</span>
-									<span class="kt-meta-value">
+									<span class="kt-meta-value is-plain">
 										<span class="kt-status" :class="evidence.certified ? 'is-live' : 'is-attention'">{{ evidence.certification_status }}</span>
 									</span>
 								</div>
 								<template v-if="evidence.certified">
 									<div>
 										<span class="kt-label">Certified by</span>
-										<span class="kt-meta-value">{{ evidence.certified.actor_name }}</span>
+										<span class="kt-meta-value is-plain">{{ evidence.certified.actor_name }}</span>
 									</div>
 									<!-- The capacity is what makes the certification mean
 									     something; it is omitted rather than guessed. -->
 									<div v-if="evidence.certified.capacity">
 										<span class="kt-label">Capacity</span>
-										<span class="kt-meta-value">{{ evidence.certified.capacity }}</span>
+										<span class="kt-meta-value is-plain">{{ evidence.certified.capacity }}</span>
 									</div>
 									<div>
 										<span class="kt-label">Certified at</span>
-										<span class="kt-meta-value">{{ evidence.certified.display }}</span>
+										<span class="kt-meta-value is-plain">{{ evidence.certified.display }}</span>
 									</div>
 								</template>
 							</div>
@@ -172,16 +172,16 @@
 							<div class="kt-meta-row">
 								<div>
 									<span class="kt-label">Procurement disposition</span>
-									<span class="kt-meta-value">{{ evidence.procurement_disposition }}</span>
+									<span class="kt-meta-value is-plain">{{ evidence.procurement_disposition }}</span>
 								</div>
 								<template v-if="evidence.accepted_for_planning">
 									<div>
 										<span class="kt-label">Accepted by</span>
-										<span class="kt-meta-value">{{ evidence.accepted_for_planning.actor_name }}</span>
+										<span class="kt-meta-value is-plain">{{ evidence.accepted_for_planning.actor_name }}</span>
 									</div>
 									<div>
 										<span class="kt-label">Accepted at</span>
-										<span class="kt-meta-value">{{ evidence.accepted_for_planning.display }}</span>
+										<span class="kt-meta-value is-plain">{{ evidence.accepted_for_planning.display }}</span>
 									</div>
 								</template>
 							</div>
@@ -190,7 +190,7 @@
 					<div v-if="evidence.need_accepted" class="kt-meta-row" data-testid="src-need-accepted">
 						<div>
 							<span class="kt-label">Need accepted by</span>
-							<span class="kt-meta-value">{{ evidence.need_accepted.actor_name }} · {{ evidence.need_accepted.display }}</span>
+							<span class="kt-meta-value is-plain">{{ evidence.need_accepted.actor_name }} · {{ evidence.need_accepted.display }}</span>
 						</div>
 					</div>
 				</div>
@@ -206,23 +206,23 @@
 						<div class="kt-meta-row">
 							<div>
 								<span class="kt-label">Departmental plan</span>
-								<span class="kt-meta-value">{{ evidence.departmental_plan_reference }}</span>
+								<span class="kt-meta-value is-plain">{{ evidence.departmental_plan_reference }}</span>
 							</div>
 							<div>
 								<span class="kt-label">Submission</span>
-								<span class="kt-meta-value">{{ evidence.submission_number }}</span>
+								<span class="kt-meta-value is-plain">{{ evidence.submission_number }}</span>
 							</div>
 							<div>
 								<span class="kt-label">DPP entry</span>
-								<span class="kt-meta-value">{{ evidence.dpp_entry_id }}</span>
+								<span class="kt-meta-value is-plain">{{ evidence.dpp_entry_id }}</span>
 							</div>
 							<div>
 								<span class="kt-label">Plan item</span>
-								<span class="kt-meta-value">{{ evidence.plan_item_id }}</span>
+								<span class="kt-meta-value is-plain">{{ evidence.plan_item_id }}</span>
 							</div>
 							<div>
 								<span class="kt-label">Plan version</span>
-								<span class="kt-meta-value">{{ evidence.version_number }}</span>
+								<span class="kt-meta-value is-plain">{{ evidence.version_number }}</span>
 							</div>
 						</div>
 					</div>

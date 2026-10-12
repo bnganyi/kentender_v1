@@ -268,11 +268,34 @@ class TestAuthorise(PublicationCase):
 		self.assertFalse([r for r in my_work_provider.my_work_rows(user=fx.AO)["waiting"] if "to reopen Tender" in r["title"]])
 		self.assertTrue([r for r in my_work_provider.my_work_rows(user=fx.OFFICER)["assigned"] if r["title"] == f"Correct reopened Tender {ref}"])
 
+	def test_the_accounting_officer_cannot_authorise_while_their_return_is_open(self):
+		"""AUD-TND-003 (§5.1, TPR16-AC-015): an open return leaves the AO neither Authorise nor Return, on the server and not only in the read."""
+		name, approved = self._approved()
+		root = frappe.get_doc("Tender", name)
+		reason = "The delivery location in the package does not match the stores plan; please correct before I authorise."
+		publication.return_approved_tender(tender=name, reason=reason, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO)
+		root.reload()
+		with self.assertRaises(TendersError) as ctx:
+			publication.authorise_tender_publication(tender=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO)
+		self.assertEqual(ctx.exception.code, "TND_STALE_VERSION")
+		with self.assertRaises(TendersError) as ctx:  # even carrying the (now cancelled) task it was offered before the return
+			publication.authorise_tender_publication(tender=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO, task=approved["task"])
+		self.assertEqual(ctx.exception.code, "TND_STALE_VERSION")
+		root.reload()
+		self.assertEqual((root.overall_status, root.publication), ("Approved", None))
+		# the HOPF's return item is still theirs to clear by Reopen
+		self.assertTrue([r for r in my_work_provider.my_work_rows(user=fx.HOPF)["assigned"] if "returned by the Accounting Officer" in r["title"]])
+
 	def test_digests_and_rule_identifiers_stay_under_technical_details(self):
 		"""v0.16 §10.8 item 2 and §10.9 item 4 (owner, 2 Oct 2026): no digest or rule identifier in a business-facing line."""
 		name, approved = self._approved()
 		trail = publication.get_tender_publication(tender=name, user=fx.AO)["approval_trail"]
 		self.assertNotIn("package_digest", trail)
+		# the sections below the trail carry the same Technical evidence block: no digest for the Accounting Officer
+		sections = publication.get_tender_publication(tender=name, user=fx.AO)["sections"]
+		labels = {f["label"] for s in sections if s["key"] == "technical" for b in s["blocks"] for f in b.get("facts", [])}
+		self.assertFalse([label for label in labels if label.endswith("digest")])
+		self.assertIn("Template", labels)
 		self.assertEqual(sorted(trail), ["approved_at_label", "approved_by_name", "prepared_by_name", "version_number"])
 		root = frappe.get_doc("Tender", name)
 		out = publication.authorise_tender_publication(tender=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO, task=approved["task"])
@@ -353,6 +376,29 @@ class TestConfirmChannels(PublicationCase):
 		self.assertEqual(str(row.available_at), AVAILABLE)
 		self.assertTrue(events.exists(tender=name, event_type="ConfirmationConflictRejected"))
 		self.assertEqual(frappe.db.get_value("Tender", name, "overall_status"), "Publication authorised")
+
+	def test_a_conflicting_confirmation_audit_record_survives_the_refusal_the_request_rolls_back(self):
+		"""AUD-TND-005 (§5.8(10), §12.1): the refusal ends the request in a rollback; the audit fact must already be committed."""
+		from kentender_procurement.tenders import api
+
+		self.enterContext(no_file_scanners([]))
+		name, _ = self._authorised()
+		first = self._confirm(name, "STATE_PORTAL")
+		row = frappe.get_doc("Tender Channel Confirmation", first["confirmation"])
+		root = frappe.get_doc("Tender", name)
+		frappe.db.commit()  # the world under test is durable; only the refusal's own writes are in question
+		frappe.set_user(fx.HOPF)
+		with self.assertRaises(TendersError) as ctx:
+			api.confirm_publication_channel(
+				tender=name, channel="STATE_PORTAL", available_at="2027-05-15 09:30:00", evidence_reference="REF-STATE_PORTAL", evidence_file=row.evidence_file, package_digest=frappe.db.get_value("Tender Publication", root.publication, "package_digest"),
+				expected_record_version=root.record_version, idempotency_key=fx.key(), public_url="https://portal.example.test/STATE_PORTAL", attestation_confirmed=True,
+			)
+		self.assertEqual(ctx.exception.code, "TND_PUBLICATION_ALREADY_CONFIRMED")
+		frappe.db.rollback()  # what Frappe does with an uncaught exception in a request
+		event = frappe.db.get_value("Tender Event", {"tender": name, "event_type": "ConfirmationConflictRejected"}, ["subject_id", "payload"], as_dict=True)
+		self.assertIsNotNone(event, "the conflict audit event was rolled back with the refusal")
+		self.assertEqual(event.subject_id, row.name)
+		self.assertEqual(frappe.db.get_value("Tender Channel Confirmation", row.name, "status"), "Confirmed")
 
 	def test_the_final_channel_publishes_once_at_the_latest_availability_and_writes_planning_once(self):
 		name, _ = self._authorised()

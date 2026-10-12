@@ -267,6 +267,9 @@ scheduler_events = {
 		],
 	},
 	"hourly": [
+		# KT-ACCESS-REV-001 AR-03 — a scheduled assignment's Role is projected
+		# when its start arrives (and an expired one's removed), within the hour.
+		"kentender_core.services.responsibility_administration.reconcile_role_projections",
 		# CFG-CHG-002 v0.6 CFG-BR-008 — close needs submission when the
 		# configured instant passes, audited with System as actor. A
 		# convenience, never the security control (§11.3).

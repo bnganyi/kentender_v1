@@ -27,6 +27,15 @@ const STATE_SHEET = {
 	authority: "TPR-CHG-001 v0.12 §10.15 — each is a full inline state",
 };
 
+// The access state is the one every module shares (the design pack's `.kt-empty` + `.kt-spot` access state, sized by `.kt-access`),
+// not the board's tone card: the board's card was one of a dozen different hand-built "no access" screens.
+const ACCESS_STATE = {
+	testid: "tnd-state-forbidden",
+	replaces: ["card+blueprint"],
+	because: "The board draws the forbidden state as a tone card; the build draws the shared access state (lock spot, heading, reason) on the page sheet, as every module does.",
+	authority: "Project Owner instruction, 9 Oct 2026: one consistent access state across modules; design pack readme, empty and access states",
+};
+
 export const DEPARTURES = {
 	"EditorScreen#TPR-DES-03": [CORNERS],
 	"EditorScreen#TPR-DES-03-PHYSICAL": [CORNERS],
@@ -67,7 +76,8 @@ export const DEPARTURES = {
 	...Object.fromEntries(["READY", "DRAFT", "RETURNED", "HOPF", "AO", "PUBLISHING", "PUBLISHED", "READER", "EMPTY"].map((v) => [`WorkspaceScreen#TPR-DES-01-${v}`, [CORNERS]])),
 	"StartTenderDialog#TPR-DES-02-SUPPORTED": [],
 	"StartTenderDialog#TPR-DES-02-UNSUPPORTED": [],
-	...Object.fromEntries(["forbidden", "not-found", "requisition-unavailable", "release-superseded", "rule-unavailable", "stale", "failure"].map((kind) => [`CommonState#TPR-DES-14-${kind}`, [STATE_SHEET, { ...CORNERS, path: "card+blueprint > corner" }]])),
+	...Object.fromEntries(["not-found", "requisition-unavailable", "release-superseded", "rule-unavailable", "stale", "failure"].map((kind) => [`CommonState#TPR-DES-14-${kind}`, [STATE_SHEET, { ...CORNERS, path: "card+blueprint > corner" }]])),
+	"CommonState#TPR-DES-14-forbidden": [STATE_SHEET, ACCESS_STATE],
 };
 
 export const COVERED = Object.keys(DEPARTURES);

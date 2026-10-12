@@ -74,6 +74,19 @@ describe("Procurement meetings", () => {
 		expect(frappe.set_route).toHaveBeenCalledWith("tenders", "TND-MOH-2027-002", "evaluation");
 		w.unmount();
 	});
+	it("offers no View record link for a row whose record this reader cannot open", async () => {
+		// KT-ACCESS-REV-001 AR-07: the row is meeting facts; the opening record applies its own rule.
+		const full = answer();
+		full.rows[0] = { ...full.rows[0], record_readable: false };
+		respond = async () => full;
+		const w = await page();
+		const rows = w.findAll('[data-testid="pmt-rows"] tbody tr');
+		expect(rows).toHaveLength(4);
+		expect(rows[0].find("a").exists()).toBe(false);
+		expect(rows[0].find('[data-testid="pmt-no-record"]').exists()).toBe(true);
+		expect(rows[1].find("a").exists()).toBe(true); // the rest still open
+	});
+
 	it("sends the reader's own filter choices and offers Clear filters only while filtered", async () => {
 		const w = await page();
 		expect(w.find('[data-testid="pmt-clear"]').exists()).toBe(false);
@@ -104,7 +117,7 @@ describe("Procurement meetings", () => {
 	it("gives a reader with no responsibility the forbidden panel and no data", async () => {
 		respond = async () => answer({ forbidden: true, rows: [], matched: 0, held_total: 0 });
 		const w = await page();
-		expect(w.find('[data-testid="pmt-forbidden"]').text()).toContain("You do not have access to Procurement meetings.");
+		expect(w.find('[data-testid="pmt-forbidden"]').text()).toContain("You do not have access to Procurement meetings");
 		expect(w.find('[data-testid="pmt-rows"]').exists()).toBe(false);
 		w.unmount();
 	});

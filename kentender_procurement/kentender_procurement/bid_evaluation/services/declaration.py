@@ -21,6 +21,7 @@ from frappe.utils import cstr
 
 from kentender_procurement.bid_evaluation.services import clock, guards, notify, people, prc, records, roster
 from kentender_procurement.bid_evaluation.services.errors import Guards, fail
+from kentender_procurement.services import sequence
 
 CHOICES = ("No conflict to declare", "Declare a conflict")
 CONFIDENTIALITY = "I will keep bid information confidential and use it only for this evaluation."
@@ -48,13 +49,16 @@ def declare_interest(*, tender: str, choice: str, confidentiality_accepted: bool
 			checks.add("EVL_DECLARATION_REQUIRED", fields=fields)
 		checks.raise_if_any()
 		current = roster.declaration(doc.name, user)
+		if current and current.choice == CHOICES[1] and choice == CHOICES[0]:
+			# A declared conflict ends only through the Accounting Officer's reasoned replacement (EVL §3), never by the member's own re-declaration.
+			fail("EVL_MEMBER_INELIGIBLE", {"reason": "declared_conflict", "explanation": "A declared conflict can be resolved only by the Accounting Officer."})
 		if current and current.choice == choice and choice == "No conflict to declare":
 			return records.summary(doc, declaration=current.declaration_id, unchanged=True)
 		for name in frappe.get_all(roster.DECLARATION, filters={"evaluation_case": doc.name, "member_user": user, "status": "Current"}, pluck="name"):
 			prior = frappe.get_doc(roster.DECLARATION, name)
 			prior.status = "Superseded"
 			records.save(prior)
-		number = frappe.db.count(roster.DECLARATION, {"evaluation_case": doc.name}) + 1
+		number = sequence.next_count(roster.DECLARATION, {"evaluation_case": doc.name})
 		row = records.insert(frappe.get_doc({
 			"doctype": roster.DECLARATION, "declaration_id": f"{doc.name}-DEC-{number:03d}", "evaluation_case": doc.name, "member_user": user,
 			"appointment": doc.current_appointment, "choice": choice, "conflict_description": cstr(conflict_description).strip() if choice == CHOICES[1] else "",
@@ -88,7 +92,7 @@ def record_unavailability(*, tender: str, reason: str, idempotency_key: str, use
 			fail("EVL_MEMBER_INELIGIBLE", {"fields": {"reason": "Give the reason."}})
 		if roster.unavailable(doc.name, user):
 			fail("EVL_VERSION_CONFLICT", {"reason": "already_recorded"})
-		number = frappe.db.count(roster.UNAVAILABILITY, {"evaluation_case": doc.name}) + 1
+		number = sequence.next_count(roster.UNAVAILABILITY, {"evaluation_case": doc.name})
 		row = records.insert(frappe.get_doc({
 			"doctype": roster.UNAVAILABILITY, "unavailability_id": f"{doc.name}-UNA-{number:02d}", "evaluation_case": doc.name, "member_user": user,
 			"reason": cstr(reason).strip(), "recorded_at": clock.now(), "status": "Open",

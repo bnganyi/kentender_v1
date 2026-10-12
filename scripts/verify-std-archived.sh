@@ -20,8 +20,6 @@ FORBIDDEN=(
   'std_library_templates'
   'std_library_shell'
   'std_configurator_page'
-  'tender_management/std_instance'
-  'tender_management/works_completion'
 )
 
 ALLOW=(
@@ -30,7 +28,6 @@ ALLOW=(
   'std_template_loader'
   'works_master_std_seed'
   'planning_tender_handoff_xmv'
-  'tm2_std_adapter'
   'std_template_governance_seed'
   'STD_MODULE_RETIRED'
   'std_module_retired'

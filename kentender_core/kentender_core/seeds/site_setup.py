@@ -22,9 +22,12 @@ Conflicting authoritative data fails the seed rather than being repaired
 
 from __future__ import annotations
 
+from contextlib import nullcontext
+
 import frappe
 
 from kentender_core.services import organisation_structure as structure
+from kentender_core.services.command_write_guard import maintenance_write
 from kentender_core.services import responsibility_administration as administration
 from kentender_core.services import site_configuration as configuration
 
@@ -46,6 +49,19 @@ UNITS = (
 	("Directorate of Digital Health and Policy", None),
 	("Digital Health", "Directorate of Digital Health and Policy"),
 	("Human Resources Management and Development", None),
+	# KT-STD-001 v1.26 §8.2 — the two units EVL-CHG-001 already named as departments.
+	("ICT", None),
+	("Finance", None),
+)
+
+# KT-STD-001 v1.26 §8.3A — each fixture person's home organisation unit (AUTH-ADR-001 v1.12 §4.8), recorded through
+# CFG-CHG-002 v0.19 SetStaffHomeOrganisationUnit like any other setup fact. Everyone else, Esther Muthoni included, has
+# none: Not recorded is a valid state and the fixture for it.
+HOME_UNITS = (
+	("grace.wambui", "Human Resources Management and Development"),
+	("peter.mugo", "ICT"),
+	("ruth.achieng", "Finance"),
+	("samuel.otieno", "ICT"),
 )
 
 FISCAL_START_YEARS = (2026, 2027)
@@ -182,8 +198,12 @@ ACTORS = (
 	("esther.njeri", "Esther Njeri"),
 )
 
-# KT-STD-001 §3A.6 — register actors who read as technical readers
-# (System Manager): never a business turn, fix or action.
+# KT-STD-001 §3A.6 / §8.3 (Project Owner, 4 Oct 2026: "Technical Operator has
+# site-wide read-only access") — register actors who read as technical readers:
+# never a business turn, fix or action. The Technical Operator is a reader through
+# his in-force assignment, so he no longer carries System Manager, which would add
+# setup and responsibility-administration power to a read (KT-ACCESS-REV-001
+# AR-09/AR-10). Seeding withdraws the Role from a site seeded before this.
 TECHNICAL_ACTORS: tuple[str, ...] = ("daniel.otieno",)
 
 # KT-STD-001 v1.11 §8.3 (Project Owner, 29 Sep 2026: "Add Jane Wanjiku") —
@@ -528,6 +548,7 @@ def run(*, commit: bool = True) -> dict:
 		"users": _seed_users(),
 		"retired_assignments": _reconcile_superseded_fixture_assignments(),
 		"assignments": _seed_assignments(),
+		"home_units": _seed_home_units(),
 	}
 	if commit:
 		frappe.db.commit()
@@ -1576,8 +1597,8 @@ def _seed_users() -> list[str]:
 			from kentender_core.seeds.constants import TEST_PASSWORD
 
 			update_password(email, TEST_PASSWORD)
-		if local in TECHNICAL_ACTORS and "System Manager" not in frappe.get_roles(email):
-			frappe.get_doc("User", email).add_roles("System Manager")
+		if local in TECHNICAL_ACTORS and "System Manager" in frappe.get_roles(email):
+			frappe.get_doc("User", email).remove_roles("System Manager")
 		out.append(email)
 	for email, full_name in PUBLIC_ACTORS:
 		if not frappe.db.exists("User", email):
@@ -1637,7 +1658,10 @@ def reset_site_setup(*, commit: bool = False) -> dict[str, int]:
 				doc.flags.kt_fixture_purge = True
 				doc.delete(ignore_permissions=True, force=True)
 			else:
-				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True, delete_permanently=True)
+				# a command-only doctype (AUD-XC-013) is cleared under its own family's maintenance window
+				family = getattr(frappe.get_doc(doctype, name), "command_write_family", "")
+				with maintenance_write(family, reason="site setup clean-up") if family else nullcontext():
+					frappe.delete_doc(doctype, name, force=True, ignore_permissions=True, delete_permanently=True)
 		if names:
 			deleted[doctype] = deleted.get(doctype, 0) + len(names)
 
@@ -1698,6 +1722,8 @@ def reset_site_setup(*, commit: bool = False) -> dict[str, int]:
 	fy_names = [configuration._fy_name(year) for year in FISCAL_START_YEARS]
 	delete("Fiscal Year", [name for name in fy_names if frappe.db.exists("Fiscal Year", name)])
 
+	if frappe.db.has_column("User", "kt_home_organisation_unit"):
+		frappe.db.sql("update `tabUser` set `kt_home_organisation_unit` = NULL where `kt_home_organisation_unit` is not null")
 	unit_names = [name for name, _parent in UNITS]
 	root = structure._root()
 	if root:
@@ -1725,6 +1751,23 @@ def reset_site_setup(*, commit: bool = False) -> dict[str, int]:
 	if commit:
 		frappe.db.commit()
 	return deleted
+
+
+def _seed_home_units() -> list[str]:
+	"""CFG-CHG-002 v0.19 §13 — through the command, never by writing the field. No idempotency key: a replayed journal
+	row would answer after a reset without writing, and an unchanged value is already a no-op."""
+	from kentender_core.services import staff_home_unit
+
+	units = {row["unit_name"]: row["name"] for row in frappe.get_all("Organisation Unit", fields=["name", "unit_name"], limit_page_length=0)}
+	out = []
+	for local, unit_name in HOME_UNITS:
+		email = f"{local}@moh.example.test"
+		if not frappe.db.exists("User", email):
+			continue
+		token = staff_home_unit.get_staff_home_organisation_unit(email)["token"]
+		outcome = staff_home_unit.set_staff_home_organisation_unit(user=email, organisation_unit=units[unit_name], expected_token=token)
+		out.append(f"{email} → {unit_name}{'' if outcome['changed'] else ' (existing)'}")
+	return out
 
 
 def _seed_assignments() -> list[str]:

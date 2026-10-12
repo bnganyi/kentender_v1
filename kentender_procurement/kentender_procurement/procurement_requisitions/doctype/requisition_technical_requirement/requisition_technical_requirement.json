@@ -9,6 +9,7 @@
   "technical_requirement_id",
   "applies_to_scope",
   "applies_to_id",
+  "applies_to_item_ids_json",
   "characteristic_key",
   "comparison",
   "required_value_json",
@@ -31,13 +32,19 @@
    "fieldname": "applies_to_scope",
    "fieldtype": "Select",
    "label": "Applies To Scope",
-   "options": "Item\nAll items",
+   "options": "Item\nItems\nAll items",
    "reqd": 1
   },
   {
    "fieldname": "applies_to_id",
    "fieldtype": "Data",
    "label": "Applies To Id"
+  },
+  {
+   "fieldname": "applies_to_item_ids_json",
+   "fieldtype": "Small Text",
+   "label": "Applies To Item Ids (JSON)",
+   "description": "REQ v1.18 §5.7A: the exact requisition_item_id list this row covers. Empty on rows saved before v1.18."
   },
   {
    "fieldname": "characteristic_key",
@@ -90,7 +97,7 @@
    "fieldname": "row_state",
    "fieldtype": "Select",
    "label": "Row state",
-   "options": "Proposed\nConfirmed",
+   "options": "Proposed\nConfirmed\nNeeds review",
    "default": "Proposed"
   },
   {

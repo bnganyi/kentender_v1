@@ -25,7 +25,12 @@
 					<span>{{ orientationLine }}</span>
 				</div>
 			</div>
-			<div v-if="ownerActions.length" class="kt-page-actions">
+			<div v-if="reviewAction || ownerActions.length" class="kt-page-actions">
+				<!-- The reviewer's one decision action leads the header's actions (it was a loose
+				     row between the guidance and the first section). -->
+				<button v-if="reviewAction" class="btn btn-primary" data-testid="nds-detail-review" @click="$emit('review', reviewAction)">
+					{{ reviewAction.label }}
+				</button>
 				<button
 					v-for="action in ownerActions"
 					:key="action.code"
@@ -113,11 +118,6 @@
 			</div>
 			<button class="btn btn-primary" style="margin-top: var(--kt-space-3)" data-testid="nds-detail-edit" @click="$emit('edit')">
 				{{ editAction.label }}
-			</button>
-		</div>
-		<div v-if="reviewAction">
-			<button class="btn btn-primary" data-testid="nds-detail-review" @click="$emit('review', reviewAction)">
-				{{ reviewAction.label }}
 			</button>
 		</div>
 

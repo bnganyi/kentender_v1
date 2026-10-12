@@ -88,6 +88,12 @@ describe("WorkspaceScreen (REQ-DES-01)", () => {
 		const w = mount(WorkspaceScreen, { props: { workspace: ws, filters: FILTERS }, global });
 		expect(w.find('[data-testid="req-start"]').exists()).toBe(false);
 		expect(w.find('[data-testid="req-ready-existing"]').text()).toContain("Open existing requisition");
+		// its own heading, and the button sits in the same row as the text, not below it
+		expect(w.find('[data-testid="req-in-progress"]').text()).toContain("Already in progress");
+		const row = w.find('[data-testid="req-ready-existing"]');
+		expect(row.classes()).toContain("req-work-row");
+		expect(row.element.children[0].textContent).toContain("REQ-MOH-2027-033-001 · Draft");
+		expect(row.element.children[1].tagName).toBe("BUTTON");
 	});
 
 	it("filters are the caller's own selection: typed search survives a re-render and is sent once typing pauses", async () => {

@@ -57,8 +57,8 @@
 
 		<Disclosure title="Record details" testid="req-record-details">
 			<p class="kt-muted" style="font-size: 12px; margin: 0 0 12px">Each value below is supporting evidence; none is an editable command key.</p>
-			<div class="kt-meta-row" style="flex-wrap: wrap">
-				<div v-for="fact in view.record_details || []" :key="fact.label"><span class="kt-label">{{ fact.label }}</span><span class="kt-meta-value" style="font-size: 14px">{{ fact.value }}</span></div>
+			<div class="kt-meta-row req-facts" style="flex-wrap: wrap">
+				<div v-for="fact in view.record_details || []" :key="fact.label"><span class="kt-label">{{ fact.label }}</span><span class="kt-meta-value" style="font-size: 14px"><span v-for="(part, i) in String(fact.value).split('; ')" :key="i" class="req-fact-line">{{ part }}</span></span></div>
 			</div>
 		</Disclosure>
 
@@ -104,7 +104,7 @@ const ctx = useReq();
 const busy = computed(() => ctx.pending.value);
 const actions = computed(() => props.view.actions || {});
 
-// Funding reservations sit after Amounts requested (REQ-DES-10 note).
+// Funding reservations sit after Request summary (REQ-DES-10 note).
 const split = computed(() => {
 	const sections = props.view.sections || [];
 	const at = sections.findIndex((s) => s.key === "amounts");

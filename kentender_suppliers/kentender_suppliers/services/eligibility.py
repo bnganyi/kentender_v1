@@ -67,7 +67,14 @@ def check_supplier_eligibility(
 	category_code: str | None = None,
 	context: dict | None = None,
 ) -> dict:
-	"""D1 — eligibility with multi-reason (contract §5–9). `context` reserved."""
+	"""D1 — eligibility with multi-reason (contract §5–9). `context` reserved.
+
+	Registry readers only (AUD-XC-018); a supplier reads its own status through
+	`smw_public.ktsm_get_status`, which calls `compute_eligibility` after its
+	own-supplier check."""
+	from kentender_suppliers.services import registry_access
+
+	registry_access.require_capability("read_registry")
 	return _eligibility(supplier_code, category_code)
 
 
@@ -75,13 +82,21 @@ def check_supplier_eligibility(
 def check_multiple_suppliers(
 	supplier_codes: list, category_code: str | None = None
 ) -> list[dict]:
-	"""D2: batch; each item same shape as single call."""
+	"""D2: batch; each item same shape as single call (registry readers only)."""
+	from kentender_suppliers.services import registry_access
+
+	registry_access.require_capability("read_registry")
 	if isinstance(supplier_codes, str):
 		supplier_codes = json.loads(supplier_codes)
 	out: list[dict] = []
 	for sc in supplier_codes:
 		out.append(_eligibility(sc, category_code))
 	return out
+
+
+def compute_eligibility(supplier_code: str, category_code: str | None = None) -> dict:
+	"""Ungated in-process answer; the caller has already authorised the read."""
+	return _eligibility(supplier_code, category_code)
 
 
 def _eligibility(supplier_code: str, category_code: str | None) -> dict:

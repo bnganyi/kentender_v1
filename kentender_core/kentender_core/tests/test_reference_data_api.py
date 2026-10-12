@@ -12,8 +12,10 @@ from uuid import uuid4
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.services.audit_event_service import purge_audit_events
 from kentender_core.api import reference_data_api as api
 from kentender_core.services.reference_data_permissions import REFERENCE_DATA_MANAGER_ROLE
+from kentender_core.services.reference_data_transitions import create_pe_draft
 
 
 class TestReferenceDataApi(IntegrationTestCase):
@@ -31,10 +33,10 @@ class TestReferenceDataApi(IntegrationTestCase):
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
+		purge_audit_events({"document_name": self.entity_code}, reason="reference data API test clean-up")
 		for doctype, filters in (
 			("Procuring Entity Version", [["procuring_entity", "=", self.entity_code]]),
 			("Procuring Entity", [["name", "=", self.entity_code]]),
-			("Audit Event", [["document_name", "=", self.entity_code]]),
 			("Reference Data Command Journal", [["document_name", "=", self.entity_code]]),
 			("PE Type", [["name", "like", f"%{self.suffix}%"]]),
 		):
@@ -60,14 +62,18 @@ class TestReferenceDataApi(IntegrationTestCase):
 		return code
 
 	def _create(self):
+		# Setup only: AUD-XC-017 makes the API refuse a second Procuring Entity
+		# (see test_reference_data_single_entity), so the fixture entity is
+		# created through the service these endpoint tests sit on top of.
 		frappe.set_user(self.manager)
-		return api.create_or_revise_pe(
-			payload={
+		return create_pe_draft(
+			{
 				"entity_code": self.entity_code,
 				"legal_name": "Test API Entity",
 				"display_name": "Test API Entity",
 				"pe_type_code": self.pe_type,
-			}
+			},
+			user=self.manager,
 		)
 
 	def test_create_and_activate_full_journey_through_api(self):

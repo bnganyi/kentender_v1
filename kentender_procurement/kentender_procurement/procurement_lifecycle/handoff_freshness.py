@@ -40,7 +40,7 @@ Cards in terminal states (``Cancelled``, ``Superseded``, ``Audit Only``) are con
 ## Mutation constraint
 
 This service calls ``frappe.db.set_value`` **only** on ``Procurement Handoff Card``.
-It never saves to source-module DocTypes (Demand, Procurement Package, TM2 Tender, …).
+It never saves to source-module DocTypes (Demand, Procurement Package, …).
 
 ## Source-type fingerprint mapping
 
@@ -51,9 +51,6 @@ It never saves to source-module DocTypes (Demand, Procurement Package, TM2 Tende
 | Demand | Demand | demand_id | status, estimated_value |
 | Procurement Package | Procurement Package | package_code | procurement_method, status |
 | STD Instance | Tender STD Instance | (by name) | readiness_status, instance_status |
-| TM2 Tender | TM2 Tender | tender_code | status, procurement_category |
-| TM2 Tender Closing Record | TM2 Tender Closing Record | closing_code | closing_status |
-| Opening Readiness Record | TM2 Opening Readiness Record | opening_readiness_code | readiness_status |
 
 ## Response shape
 
@@ -136,21 +133,6 @@ _SOURCE_CONFIG: dict[str, dict[str, Any]] = {
         "code_field": None,
         "material_fields": ["readiness_status", "instance_status"],
     },
-    "TM2 Tender": {
-        "doctype": "TM2 Tender",
-        "code_field": "tender_code",
-        "material_fields": ["status", "procurement_category"],
-    },
-    "TM2 Tender Closing Record": {
-        "doctype": "TM2 Tender Closing Record",
-        "code_field": "closing_code",
-        "material_fields": ["closing_status"],
-    },
-    "Opening Readiness Record": {
-        "doctype": "TM2 Opening Readiness Record",
-        "code_field": "opening_readiness_code",
-        "material_fields": ["readiness_status"],
-    },
 }
 
 # Stale reason + required action per source_object_type
@@ -174,18 +156,6 @@ _STALE_MESSAGES: dict[str, tuple[str, str]] = {
     "STD Instance": (
         "Source STD Instance readiness status changed after handoff.",
         "Regenerate STD Readiness Certificate.",
-    ),
-    "TM2 Tender": (
-        "Source Tender status or procurement category changed after handoff.",
-        "Review Tender and regenerate relevant handoff.",
-    ),
-    "TM2 Tender Closing Record": (
-        "Source Tender Closing Record status changed after handoff.",
-        "Review closing record and regenerate Tender Closing Certificate.",
-    ),
-    "Opening Readiness Record": (
-        "Source Opening Readiness Record status changed after handoff.",
-        "Review opening readiness and regenerate Opening Readiness Handoff.",
     ),
 }
 

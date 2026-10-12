@@ -22,11 +22,10 @@ import CorrectionRequestsScreen from "./CorrectionRequestsScreen.vue";
 import DppValidationScreen from "./DppValidationScreen.vue";
 import FinanceTaskScreen from "./FinanceTaskScreen.vue";
 import ProgressScreen from "./ProgressScreen.vue";
-import PublicationResultScreen from "./PublicationResultScreen.vue";
 import ReviewScreen from "./ReviewScreen.vue";
 import { READY } from "./ReservationAllocation.fixtures.js";
 import {
-	AO_TURN, AUTHOR_DRAFT_TURN, CLASSIFICATION_PROMPT, FINANCE_TURN, TREASURY_TURN, WAITING_AO, WAITING_OPERATOR, planJourney, CLOSED_BLOCKED, CORRECTION_TURN, HOD_TURN, REVIEW_SEGREGATED, REVIEW_TURN, dppJourney,
+	AO_TURN, AUTHOR_DRAFT_TURN, CLASSIFICATION_PROMPT, FINANCE_TURN, WAITING_AO, planJourney, CLOSED_BLOCKED, CORRECTION_TURN, HOD_TURN, REVIEW_SEGREGATED, REVIEW_TURN, dppJourney,
 } from "./guidance.fixtures.js";
 import DppPlanScreen from "./DppPlanScreen.vue";
 import SourceEvidenceScreen from "./SourceEvidenceScreen.vue";
@@ -146,28 +145,9 @@ function dpp(over = {}) {
 }
 
 // PLN v1.27 §10.12 — U13 with its reduced tracker.
-const U13_ROWS = [
-	{ label: "Plan approval", state: "Approved", kind: "live", detail: "" },
-	{ label: "Treasury submission", state: "Not recorded", kind: "attention", detail: "" },
-	{ label: "Website publication", state: "Not published", kind: "pending", detail: "" },
-	{ label: "Use for procurement", state: "Not available", kind: "pending", detail: "This plan is not yet active" },
-];
-function u13(over = {}) {
-	return {
-		task: {
-			outcome: "OK", publication: "PUB-1", plan_reference: "PLN-MOH-2027-001",
-			version: { number: 1, status: "Approved — publication pending" },
-			publication_state: "Pending", status_rows: U13_ROWS, treasury_evidence: null, hold: { active: false }, attempts: [],
-			can_record_treasury: true, can_retry: false, can_reconcile: false,
-			next_step: TREASURY_TURN, journey: planJourney("publication", { holder: "Amina Hassan", reduced: true }),
-			...over,
-		},
-		pending: false, errorSummary: "",
-	};
-}
-
 const SCREENS = [
-	{ name: "PublicationResultScreen", component: PublicationResultScreen, board: `${D}Artboards-U12-U13.dc.html`, variant: "U13", props: u13() },
+	// U13 is not compared to a board in v1.31: Artboards-U12-U13 still draws the v1.30 Accounting Officer Treasury form, and the
+	// new variants need new artboards before design sign-off (PLN-CHG-001 v1.31 §17.2). The screen is covered by PublicationResultScreen.spec.js.
 	{ name: "DppPlanScreen", component: DppPlanScreen, board: `${D}Artboards-U02-U05.dc.html`, variant: "U02-AUTHOR-DRAFT", props: dpp() },
 	{
 		name: "DppPlanScreen", component: DppPlanScreen, board: `${D}Artboards-U02-U05.dc.html`, variant: "U02-CLOSED",

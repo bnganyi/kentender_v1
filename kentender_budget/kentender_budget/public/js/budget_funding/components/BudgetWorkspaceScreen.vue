@@ -6,6 +6,7 @@ import { useFiscalYearFilter } from "../../budget_shared/composables/useFiscalYe
 import { formatKes, mintKey } from "../../budget_shared/data/formatKes.js";
 import KtErrorBanner from "./KtErrorBanner.vue";
 import { getBudgetWorkspace, createBudgetSuccessorVersion, declineBudgetRevisionRequest } from "../data/budgetApi.js";
+import AccessDenied from "../../budget_shared/components/AccessDenied.vue";
 
 // BUD-UI-01 — BUD-DES-01 / 01A / 01B / 16 (BUD-CHG-001 v1.9 §11.1, §11.1A,
 // §11.1B, §11.16, §12.1). The server decides the state and the permitted
@@ -247,9 +248,8 @@ function openLine(line) {
 
 		<!-- BUD-DES-16 Forbidden: only the inline panel — no header, filter or protected content painted. -->
 		<div v-if="!loading && forbidden" class="kt-shell">
-			<div class="card blueprint kt-empty" data-testid="bud-forbidden">
-				<h2>{{ __(forbidden.heading) }}</h2>
-				<p class="kt-muted">{{ __(forbidden.text) }}</p>
+			<div class="kt-page" data-testid="bud-forbidden">
+				<AccessDenied :heading="__(forbidden.heading)" :text="__(forbidden.text || '')" />
 			</div>
 		</div>
 

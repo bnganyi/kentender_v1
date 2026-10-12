@@ -63,7 +63,7 @@
    "reqd": 1,
    "search_index": 1,
    "in_list_view": 1,
-   "description": "ERPNext Fiscal Year (CFG-CHG-002 v0.9 \u00a74.2). Planning data, never a permission dimension."
+   "description": "ERPNext Fiscal Year (CFG-CHG-002 v0.9 §4.2). Planning data, never a permission dimension."
   },
   {
    "fieldname": "status",
@@ -119,15 +119,11 @@
  "permissions": [
   {
    "role": "System Manager",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Administrator",
-   "read": 1,
-   "write": 1,
-   "create": 1
+   "read": 1
   },
   {
    "role": "Procurement Planner",

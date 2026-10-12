@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""The canonical site world (SEED-002, proposed to replace SEED-001 and
+"""The canonical site world (SEED-002, approved 8 October 2026; it retired SEED-001 and
 SEED-OPS-001): two financial years read as at 18 Jun 2027, 10:00 EAT, cleared
 of everything else and reseeded through the owning modules' own seeds.
 
@@ -37,11 +37,14 @@ never touched (KT-STD-001 §10).
 
 from __future__ import annotations
 
+from contextlib import nullcontext
 from typing import Any
 
 import frappe
 
 from kentender_core.seeds import calendar, site_setup
+from kentender_core.services import authorization
+from kentender_core.services.command_write_guard import maintenance_write, purge_doc
 
 #: Two-year seed world (owner, 4 Oct 2026: "Decisions for the owner:
 #: recommendations accepted"; plan D1–D7). The world is read as at
@@ -474,7 +477,10 @@ def _delete_docs(doctype: str, names: list[str], deleted: dict[str, int], **flag
 		doc = frappe.get_doc(doctype, name)
 		for key, value in flags.items():
 			doc.flags[key] = value
-		doc.delete(ignore_permissions=True, force=True)
+		# a command-only doctype (AUD-XC-013) is cleared under its own family's maintenance window
+		family = getattr(doc, "command_write_family", "")
+		with maintenance_write(family, reason="canonical seed clean-up") if family else nullcontext():
+			doc.delete(ignore_permissions=True, force=True)
 		deleted[doctype] = deleted.get(doctype, 0) + 1
 
 
@@ -514,7 +520,7 @@ def _delete_user(user: str, deleted: dict[str, int]) -> None:
 		if not frappe.db.exists("DocType", doctype) or not frappe.db.has_column(doctype, field):
 			continue
 		for name in frappe.get_all(doctype, filters={field: user}, pluck="name"):
-			frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
+			purge_doc(doctype, name, reason="canonical seed clean-up of a user's assignments")
 			deleted[doctype] = deleted.get(doctype, 0) + 1
 	frappe.delete_doc("User", user, force=1, ignore_permissions=True)
 	deleted["User"] = deleted.get("User", 0) + 1
@@ -562,7 +568,11 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 		for doctype in ("Departmental Plan", "Annual Plan"):
 			for name in plan.get(doctype, []):
 				if frappe.db.exists(doctype, name):
-					frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
+					from kentender_core.services.command_write_guard import maintenance_write
+
+					# Planning's records are command-only (AUD-XC-007): cleared under their family's window
+					with maintenance_write(frappe.get_doc(doctype, name).command_write_family, reason="canonical seed clean-up: Planning rows the module clear did not recognise"):
+						frappe.delete_doc(doctype, name, force=1, ignore_permissions=True)
 					deleted[doctype] = deleted.get(doctype, 0) + 1
 	for need in plan.get("Departmental Need", []):
 		if frappe.db.exists("Departmental Need", need):
@@ -978,6 +988,12 @@ def validate(*, current: str | None = None, next_year: str | None = None, throug
 	for name, _parent in site_setup.UNITS:
 		check(names.count(name) == 1, f"exactly one Organisation Unit named {name!r} (found {names.count(name)})")
 	check(len(units) == 1 + len(site_setup.UNITS), f"{1 + len(site_setup.UNITS)} Organisation Units, found {len(units)}")
+	# KT-STD-001 v1.26 §8.3A — each fixture person's home unit, and Esther Muthoni deliberately without one.
+	by_name = {u.name: u.unit_name for u in units}
+	for local, unit_name in site_setup.HOME_UNITS:
+		value = frappe.db.get_value("User", f"{local}@moh.example.test", "kt_home_organisation_unit")
+		check(by_name.get(value) == unit_name, f"{local} home unit is {by_name.get(value)!r}, expected {unit_name!r}")
+	check(not frappe.db.get_value("User", "esther.muthoni@moh.example.test", "kt_home_organisation_unit"), "esther.muthoni has no home unit (the Not recorded fixture)")
 	for fy in _site_fiscal_years():
 		check(bool(frappe.db.exists("Fiscal Year", fy)), f"Fiscal Year {fy}")
 	extra_fys = [fy for fy in frappe.get_all("Fiscal Year", filters={"name": ["not like", "_Test%"]}, pluck="name") if fy not in _site_fiscal_years()]
@@ -988,7 +1004,9 @@ def validate(*, current: str | None = None, next_year: str | None = None, throug
 	for email in seeded_users:
 		check(bool(frappe.db.exists("User", email)), f"user {email}")
 	for local in site_setup.TECHNICAL_ACTORS:
-		check("System Manager" in frappe.get_roles(f"{local}@moh.example.test"), f"{local} is a technical reader (System Manager)")
+		technical = f"{local}@moh.example.test"
+		check("System Manager" not in frappe.get_roles(technical), f"{local} holds no System Manager (a read carries no setup power)")
+		check(authorization.is_technical(technical), f"{local} is a technical reader (in-force Technical Operator assignment)")
 	for email, _name in site_setup.PUBLIC_ACTORS:
 		check(frappe.db.get_value("User", email, "user_type") == "Website User", f"{email} is a Website User (public observer)")
 	strays = [

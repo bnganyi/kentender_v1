@@ -76,6 +76,7 @@ CONTENT = {
 	),
 	"indicative_quantity": 12,
 	"unit": "Each",
+	"estimated_total_cost": 12000000,
 	"required_by_date": "2028-03-31",
 }
 

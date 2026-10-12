@@ -21,6 +21,7 @@ const SOURCES = [
 		amount_display: "KES 20,000,000",
 		need_reference_line: "NDS-MOH-2027-0003 · Revision 2",
 		budget_line_display: "MOH-BL-HWD-2027",
+		classification_readable: true,
 	},
 	{
 		requirement: "Clinical deployment laptops for digital health rollout",
@@ -31,6 +32,7 @@ const SOURCES = [
 		amount_display: "KES 30,000,000",
 		need_reference_line: "NDS-MOH-2027-0004 · Revision 1",
 		budget_line_display: "MOH-BL-HWD-2027",
+		classification_readable: true,
 	},
 ];
 
@@ -204,7 +206,7 @@ describe("PlanItemEditorScreen — dates", () => {
 		expect(w.find('[data-testid="ppi-boundary"]').text()).toBe("Expected to meet the departmental deadline");
 	});
 
-	it("U09-INVALID-SCHEDULE: blocks Save and offers Review dates", () => {
+	it("U09-INVALID-SCHEDULE: offers Review dates and still lets the Planner save the draft", () => {
 		const w = make({
 			item: item({
 				baseline: { ...item().baseline, estimated_completion_display: "2 Jan 2028", delivery_boundary_ok: false },
@@ -218,7 +220,10 @@ describe("PlanItemEditorScreen — dates", () => {
 			"Expected completion is after the department's required date.",
 		);
 		expect(w.find('[data-testid="ppi-boundary"]').exists()).toBe(false);
-		expect(w.find('[data-testid="ppi-save"]').attributes("disabled")).toBeDefined();
+		// A draft may keep an infeasible schedule (schedule.derive_baseline);
+		// only readiness blocks. The blocker is the server's word as of the
+		// last load, so disabling Save on it left no way to fix the dates.
+		expect(w.find('[data-testid="ppi-save"]').attributes("disabled")).toBeUndefined();
 		expect(w.find('[data-testid="ppi-review-dates"]').exists()).toBe(true);
 	});
 });
@@ -540,5 +545,19 @@ describe("what a designation of None means", () => {
 		for (const forbidden of ["Required allocation", "Planned qualifying allocation", "shortfall", "Still required", "Eligible planned procurement"]) {
 			expect(text).not.toContain(forbidden);
 		}
+	});
+});
+
+
+describe("PlanItemEditorScreen — View classification details is offered only where it opens", () => {
+	it("shows the link when the server marks a source readable", () => {
+		const wrapper = make();
+		expect(wrapper.find('[data-testid="ppi-view-classification"]').exists()).toBe(true);
+	});
+
+	it("omits the link when no source is readable for this viewer", () => {
+		const unreadable = SOURCES.map((row) => ({ ...row, classification_readable: false }));
+		const wrapper = make({ item: item({ sources: unreadable }) });
+		expect(wrapper.find('[data-testid="ppi-view-classification"]').exists()).toBe(false);
 	});
 });

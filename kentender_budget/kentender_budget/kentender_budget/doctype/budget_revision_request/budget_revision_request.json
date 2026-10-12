@@ -167,7 +167,7 @@
  "index_web_pages_for_search": 0,
  "istable": 0,
  "links": [],
- "modified": "2026-09-25 00:00:00.000000",
+ "modified": "2026-10-07 02:19:57.177503",
  "modified_by": "Administrator",
  "module": "Kentender Budget",
  "name": "Budget Revision Request",
@@ -175,7 +175,7 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1,
+   "create": 0,
    "delete": 0,
    "email": 0,
    "export": 1,

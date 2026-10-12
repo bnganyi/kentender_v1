@@ -115,6 +115,22 @@ class TestStartTender(TenderLifecycleCase):
 		self.assertEqual((after.modified, after.record_version, after.overall_status), (before.modified, before.record_version, before.overall_status))
 		self.assertEqual(patch.reconcile(), [])  # safe to run again
 
+	def test_a_losing_concurrent_start_returns_the_first_tenders_identity(self):
+		"""AUD-TND-013 (TPR09-AC-007): the loser of a true race passed the "already consumed" checks on its older snapshot, built its own Draft and
+		was refused at consumption. Simulated here by hiding the winner from those two checks, exactly what the loser's snapshot does."""
+		from unittest.mock import patch
+
+		from kentender_procurement.tenders.services import handoff_gateway
+
+		authorised, started = self._started()
+		handoff = handoff_gateway.load(authorised["handoff"])
+		stale = frappe.get_doc("Authorised Requisition Handoff", handoff.name)
+		stale.consumed_at, stale.tender = None, None
+		with patch.object(handoff_gateway, "load", return_value=stale), patch.object(handoff_gateway, "consumer_tender", return_value=""):
+			lost = cmd.start_tender(handoff=authorised["handoff"], idempotency_key=fx.key(), user=fx.OFFICER)
+		self.assertEqual((lost["action"], lost["tender"], lost["tender_version"]), ("existing", started["tender"], started["tender_version"]))
+		self.assertEqual(len(fx.test_tenders()), 1)  # the loser's own Draft was rolled back, not left beside the winner
+
 	def test_a_repeated_or_concurrent_start_returns_the_one_tender(self):
 		authorised, started = self._started()
 		again = cmd.start_tender(handoff=authorised["handoff"], idempotency_key=fx.key(), user=fx.OFFICER)
@@ -244,6 +260,28 @@ class TestSubmitReturnApprove(TenderLifecycleCase):
 		root.reload()
 		self.assertEqual((root.overall_status, root.current_version), ("Draft", draft.name))
 		self.assertEqual(frappe.db.get_value("Tender Task", submitted["task"], "status"), "Completed")
+
+	def test_an_officer_who_edited_the_draft_cannot_approve_it_as_head_of_procurement(self):
+		"""AUD-TND-008 (§6): "prepared" is every person who saved a value, read from the Version's own audit events, not only whoever started the Tender."""
+		authorised = fx.authorised_handoff()
+		started = cmd.start_tender(handoff=authorised["handoff"], idempotency_key=fx.key(), user=fx.OFFICER)
+		root = frappe.get_doc("Tender", started["tender"])
+		# BOTH (a Procurement Officer who is also the HoPF) writes the values; OFFICER started and submits
+		cmd.save_tender_draft(tender=root.name, values=sample.officer_values(inspection_location=fx.LOCATION, contact_office=fx.CONTACT_OFFICE), expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.BOTH)
+		root.reload()
+		submitted = lifecycle.submit_tender_for_approval(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		root.reload()
+		version = frappe.get_doc("Tender Version", started["tender_version"])
+		self.assertEqual((version.prepared_by, version.submitted_by), (fx.OFFICER, fx.OFFICER))
+		with self.assertRaises(TendersError) as ctx:
+			lifecycle.approve_tender_package(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.BOTH, task=submitted["task"])
+		self.assertEqual(ctx.exception.code, "TND_SOD_BLOCKED")
+		self.assertEqual(ctx.exception.detail["conflicting_action"], "prepared_by")
+		from kentender_procurement.tenders.services import read
+
+		self.assertNotIn("approve_tender_package", read.get_tender(tender=root.name, user=fx.BOTH)["allowed_actions"])
+		approved = lifecycle.approve_tender_package(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF, task=submitted["task"])
+		self.assertTrue(approved["ok"])
 
 	def test_the_preparer_or_submitter_cannot_approve_and_approval_creates_the_ao_task_only(self):
 		authorised = fx.authorised_handoff(items=(("Business laptops", 1, "Clinical training"),))

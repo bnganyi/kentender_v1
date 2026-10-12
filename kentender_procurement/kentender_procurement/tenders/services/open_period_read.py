@@ -15,7 +15,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.tenders.services import addenda, cancellation, channel_confirmation, draft_commands, guidance, publication_read, read, serializer
+from kentender_procurement.tenders.services import addenda, cancellation, channel_confirmation, clock, draft_commands, guidance, publication_read, read, serializer
 from kentender_procurement.tenders.services import tender_authorization as authz
 
 
@@ -47,7 +47,7 @@ def get_tender_addendum(*, tender: str, addendum: str = "", user: str | None = N
 	catalogue = {r["key"]: r for r in references}
 	reference = catalogue.get(cstr(doc.affected_reference_key)) if doc else None
 	material = bool(reference and reference["material"])
-	rule = addenda.deadline_rule(root, change_class=cstr(doc.change_class) if doc else "")
+	rule = addenda.deadline_rule(root, change_class=cstr(doc.change_class) if doc else "", reference_key=cstr(doc.affected_reference_key) if doc else "")
 	review_status = cstr(doc.cancellation_review_status) if doc else ""
 	drafter = roles["officer"] or roles["hopf"]
 	open_tender = root.overall_status == "Published — open"
@@ -59,6 +59,10 @@ def get_tender_addendum(*, tender: str, addendum: str = "", user: str | None = N
 		actions += ["return_addendum_for_correction", "issue_addendum"]
 	if doc and doc.status == "Awaiting publication confirmation" and roles["hopf"]:
 		actions.append("confirm_addendum_channel")
+	# AUD-TND-001: after the period ends an addendum can neither be issued nor become effective, so neither is offered
+	deadline = addenda.effective_deadline(root)
+	if not open_tender or (deadline is not None and clock.now() >= deadline):
+		actions = [a for a in actions if a not in ("issue_addendum", "confirm_addendum_channel")]
 	if material:
 		actions = [a for a in actions if a not in ("submit_addendum_for_issue", "issue_addendum")]
 		if doc and doc.status == "Draft" and drafter and open_tender and not review_status:
@@ -220,10 +224,13 @@ def get_tender_cancellation(*, tender: str, user: str | None = None) -> dict[str
 	summary = publication_read.open_period_summary(root, actor=actor, roles=roles) or {}
 	existing = summary.get("cancellation")
 	if existing and root.cancellation:
+		# Derived for the screen, never persisted by a read (KT-ACCESS-REV-001 AR-06).
 		doc = frappe.get_doc("Tender Cancellation", root.cancellation)
-		cancellation.refresh_obligation_statuses(doc)
-		summary = publication_read.open_period_summary(root, actor=actor, roles=roles) or {}
-		existing = summary.get("cancellation")
+		by_id, headline, _changed = cancellation.derived_statuses(doc)
+		existing = {
+			**existing, **headline,
+			"obligations": [{**o, "status": by_id.get(o["obligation_id"], o["status"])} for o in existing.get("obligations") or []],
+		}
 	recommendation_name = cancellation.latest_recommendation(root)
 	recommendation = None
 	if recommendation_name:

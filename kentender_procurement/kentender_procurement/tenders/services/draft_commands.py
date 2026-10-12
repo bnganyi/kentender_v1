@@ -24,10 +24,12 @@ from frappe.utils import cstr
 from kentender_procurement.tenders.services import clock, compatibility, controls, envelope, events, evidence, handoff_gateway, references, review, serializer, template_binding
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.services import tender_authorization as authz
-from kentender_procurement.tenders.services.errors import fail
+from kentender_procurement.tenders.services.errors import TendersError, fail, forget_refusal
 
 PRODUCT_KEY = "IT-EQUIPMENT-OPEN-V1"
 EDITABLE_STATUSES = ("Draft",)
+#: the events each officer edit of a Draft Version writes (their `actor` is who edited)
+EDIT_EVENT_TYPES = ("TenderDraftSaved", "TenderAddTenderEvidenceRequirement", "TenderUpdateTenderEvidenceRequirement", "TenderRemoveTenderEvidenceRequirement")
 
 
 # --------------------------------------------------------------------------
@@ -63,6 +65,16 @@ def require_editable(root, version) -> None:
 		fail("TND_STALE_VERSION", "This Tender Version is no longer editable.")
 
 
+def draft_editors(tender: str) -> set[str]:
+	"""Every officer who saved a value or an evidence requirement on any
+	Version of this Tender, from the append-only event log (AUD-TND-008): a
+	copied Draft carries earlier Versions' work forward, so their editors count."""
+	rows = frappe.db.sql(
+		"select distinct json_unquote(json_extract(payload, '$.actor')) from `tabTender Event` where tender=%s and event_type in %s", (cstr(tender), EDIT_EVENT_TYPES)
+	)
+	return {cstr(r[0]) for r in rows if r[0]}
+
+
 def version_dict(version) -> dict[str, Any]:
 	return {"name": version.name, "version_number": int(version.version_number), "status": version.status, "record_version": int(version.record_version or 0)}
 
@@ -88,57 +100,73 @@ def start_tender(*, handoff: str, idempotency_key: str, user: str | None = None,
 	actor = authz.actor(user)
 	assignment = authz.require_officer(actor, masked=False)
 	payload = {"handoff": handoff}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="StartTender", actor=actor)
 	if replay:
 		return replay
 	handoff_doc = handoff_gateway.load(handoff)
 	handoff_gateway.require_startable(handoff_doc)
-	existing = handoff_gateway.consumer_tender(handoff_doc)
-	if existing:
-		root = frappe.get_doc("Tender", existing)
+	def _existing_result(name: str) -> dict[str, Any]:
+		root = frappe.get_doc("Tender", name)
 		result = {"ok": True, "idempotent": False, "action": "existing", "tender": root.name, "tender_reference": root.tender_reference, "tender_version": root.current_version, "record_version": root.record_version}
 		envelope.record_command(idempotency_key=idempotency_key, command="StartTender", payload=payload, result=result, document_type="Tender", document_name=root.name, actor=actor, fixture_namespace=fixture_namespace)
 		return result
+
+	existing = handoff_gateway.consumer_tender(handoff_doc)
+	if existing:
+		return _existing_result(existing)
 	if handoff_doc.consumed_at:
 		fail("TND_HANDOFF_CONFLICT", detail={"handoff": handoff_doc.name, "tender": cstr(handoff_doc.tender)})
 	binding = template_binding.require_available()
 	snapshot, snapshot_digest = snap.build(handoff_doc)
 	compatibility.require_supported(snapshot, binding)
 
-	with envelope.atomic("start"):
-		reference = references.tender_reference(fiscal_year=cstr(snapshot.get("fiscal_year")), plan_item_id_value=cstr(snapshot.get("plan_item_id")))
-		units = snapshot.get("contributing_org_unit_ids") or []
-		lead = snap.lead_unit(snapshot)  # the certified lead of the consumed Requisition Version (OVS plan D15)
-		root = envelope.insert(
-			frappe.get_doc(
+	try:
+		with envelope.atomic("start"):
+			reference = references.tender_reference(fiscal_year=cstr(snapshot.get("fiscal_year")), plan_item_id_value=cstr(snapshot.get("plan_item_id")))
+			units = snapshot.get("contributing_org_unit_ids") or []
+			lead = snap.lead_unit(snapshot)  # the certified lead of the consumed Requisition Version (OVS plan D15)
+			root = envelope.insert(
+				frappe.get_doc(
+					{
+						"doctype": "Tender", "tender_reference": reference, "requirement_title": snapshot.get("requirement_title"), "requisition_handoff": handoff_doc.name,
+						"requisition": handoff_doc.requisition, "requisition_reference": snapshot.get("requisition_reference"), "requisition_version": handoff_doc.requisition_version,
+						"plan_item_id": snapshot.get("plan_item_id"), "plan_item_version_id": snapshot.get("plan_version_id"), "fiscal_year": snapshot.get("fiscal_year") if frappe.db.exists("Fiscal Year", cstr(snapshot.get("fiscal_year"))) else None,
+						"lead_org_unit": lead if lead and frappe.db.exists("Organisation Unit", lead) else None, "contributing_org_unit_ids": json.dumps(units),
+						"product_key": PRODUCT_KEY, **template_binding.bound_fields(binding), "overall_status": "Draft", "record_version": 0, "fixture_namespace": fixture_namespace,
+					}
+				)
+			)
+			version = frappe.get_doc(
 				{
-					"doctype": "Tender", "tender_reference": reference, "requirement_title": snapshot.get("requirement_title"), "requisition_handoff": handoff_doc.name,
-					"requisition": handoff_doc.requisition, "requisition_reference": snapshot.get("requisition_reference"), "requisition_version": handoff_doc.requisition_version,
-					"plan_item_id": snapshot.get("plan_item_id"), "plan_item_version_id": snapshot.get("plan_version_id"), "fiscal_year": snapshot.get("fiscal_year") if frappe.db.exists("Fiscal Year", cstr(snapshot.get("fiscal_year"))) else None,
-					"lead_org_unit": lead if lead and frappe.db.exists("Organisation Unit", lead) else None, "contributing_org_unit_ids": json.dumps(units),
-					"product_key": PRODUCT_KEY, **template_binding.bound_fields(binding), "overall_status": "Draft", "record_version": 0, "fixture_namespace": fixture_namespace,
+					"doctype": "Tender Version", "tender": root.name, "version_number": 1, "status": "Draft", "requisition_handoff": handoff_doc.name,
+					"requisition_version": handoff_doc.requisition_version, **template_binding.bound_fields(binding), "requisition_snapshot_digest": snapshot_digest, "requisition_snapshot_json": json.dumps(snapshot, sort_keys=True, default=str),
+					"officer_payload_json": json.dumps(controls.normalise(controls.defaults(snapshot)), sort_keys=True, default=str),
+					"prepared_by": actor, "prepared_at": clock.now(), "record_version": 0, "fixture_namespace": fixture_namespace,
 				}
 			)
-		)
-		version = frappe.get_doc(
-			{
-				"doctype": "Tender Version", "tender": root.name, "version_number": 1, "status": "Draft", "requisition_handoff": handoff_doc.name,
-				"requisition_version": handoff_doc.requisition_version, **template_binding.bound_fields(binding), "requisition_snapshot_digest": snapshot_digest, "requisition_snapshot_json": json.dumps(snapshot, sort_keys=True, default=str),
-				"officer_payload_json": json.dumps(controls.normalise(controls.defaults(snapshot)), sort_keys=True, default=str),
-				"prepared_by": actor, "prepared_at": clock.now(), "record_version": 0, "fixture_namespace": fixture_namespace,
-			}
-		)
-		envelope.insert(version)
-		_regenerate(root, version)
-		envelope.bump(version)
-		envelope.bump(root, current_version=version.name, submission_deadline=None)
-		handoff_gateway.consume(handoff=handoff_doc.name, tender=root.name, tender_version=version.name, template_key=binding["template_key"], template_version=binding["template_release"], idempotency_key=f"{idempotency_key}:consume")
-		events.emit(
-			tender=root.name, event_type="TenderStarted", command="StartTender", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
-			previous_status="", resulting_status="Draft", record_version=root.record_version, subject_type="Tender Version", subject_id=version.name,
-			payload={"requisition_handoff": handoff_doc.name, "handoff_digest": handoff_doc.handoff_digest, "requisition_snapshot_digest": snapshot_digest, "template_release_id": binding["template_release_id"], "bundle_digest": binding["bundle_digest"]},
-			fixture_namespace=fixture_namespace,
-		)
+			envelope.insert(version)
+			_regenerate(root, version)
+			envelope.bump(version)
+			envelope.bump(root, current_version=version.name, submission_deadline=None)
+			handoff_gateway.consume(handoff=handoff_doc.name, tender=root.name, tender_version=version.name, template_key=binding["template_key"], template_version=binding["template_release"], idempotency_key=f"{idempotency_key}:consume")
+			events.emit(
+				tender=root.name, event_type="TenderStarted", command="StartTender", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
+				previous_status="", resulting_status="Draft", record_version=root.record_version, subject_type="Tender Version", subject_id=version.name,
+				payload={"requisition_handoff": handoff_doc.name, "handoff_digest": handoff_doc.handoff_digest, "requisition_snapshot_digest": snapshot_digest, "template_release_id": binding["template_release_id"], "bundle_digest": binding["bundle_digest"]},
+				fixture_namespace=fixture_namespace,
+			)
+	except (TendersError, frappe.UniqueValidationError, frappe.DuplicateEntryError) as exc:
+		# TPR09-AC-007: the loser of a true race passed the checks above on its
+		# own older snapshot and was refused at consumption (or at the reference
+		# insert). Its Draft is already rolled back to the savepoint; a locking
+		# read sees the committed winner and its identity is the answer.
+		if isinstance(exc, TendersError) and exc.code != "TND_HANDOFF_CONFLICT":
+			raise
+		winner = frappe.db.get_value("Tender", {"requisition_handoff": handoff_doc.name}, "name", order_by="creation asc", for_update=True)
+		if not winner:
+			raise
+		forget_refusal()
+		return _existing_result(cstr(winner))
 	result = {"ok": True, "idempotent": False, "action": "started", "tender": root.name, "tender_reference": root.tender_reference, "tender_version": version.name, "record_version": root.record_version}
 	envelope.record_command(idempotency_key=idempotency_key, command="StartTender", payload=payload, result=result, document_type="Tender", document_name=root.name, actor=actor, fixture_namespace=fixture_namespace)
 	return result
@@ -153,7 +181,7 @@ def save_tender_draft(*, tender: str, values: dict[str, Any], expected_record_ve
 	actor = authz.actor(user)
 	assignment = authz.require_officer(actor)
 	payload = {"tender": tender, "values": json.dumps(values, sort_keys=True, default=str) if isinstance(values, dict) else cstr(values)}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="SaveTenderDraft", actor=actor)
 	if replay:
 		return replay
 	root, version = load(tender)
@@ -162,6 +190,7 @@ def save_tender_draft(*, tender: str, values: dict[str, Any], expected_record_ve
 	current = serializer.officer_state(version)
 	clean, errors = controls.validate(values, current)
 	if errors:
+		envelope.release_claim(idempotency_key)  # a refusal returned as data is not journalled: the corrected attempt may reuse the key
 		return {"ok": False, "errors": errors, "record_version": root.record_version}
 	changed = {field: {"previous": current.get(field), "new": value} for field, value in clean.items() if current.get(field) != value}
 	merged = dict(current)
@@ -210,7 +239,7 @@ def task_statuses(version) -> dict[str, str]:
 def _evidence_command(*, command: str, tender: str, expected_record_version, idempotency_key: str, user: str | None, payload: dict[str, Any], mutate) -> dict[str, Any]:
 	actor = authz.actor(user)
 	assignment = authz.require_officer(actor)
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command=command, actor=actor)
 	if replay:
 		return replay
 	root, version = load(tender)
@@ -219,6 +248,7 @@ def _evidence_command(*, command: str, tender: str, expected_record_version, ide
 	snapshot = snap.load(version)
 	outcome = mutate(version, snapshot)
 	if outcome.get("errors"):
+		envelope.release_claim(idempotency_key)  # a refusal returned as data is not journalled: the corrected attempt may reuse the key
 		return {"ok": False, "errors": outcome["errors"], "record_version": root.record_version}
 	with envelope.atomic(command):
 		_regenerate(root, version)

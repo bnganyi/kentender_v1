@@ -12,6 +12,7 @@ import uuid
 from unittest import mock
 
 import frappe
+from kentender_core.services.command_write_guard import purge_doc
 from frappe.tests import IntegrationTestCase
 
 NS = "BDS_ACC_TEST"
@@ -99,7 +100,7 @@ def purge() -> None:
 	frappe.set_user("Administrator")
 	wipe_accounts()
 	for name in frappe.get_all("User Responsibility Assignment", filters={"fixture_namespace": NS}, pluck="name"):
-		frappe.delete_doc("User Responsibility Assignment", name, force=True, ignore_permissions=True)
+		purge_doc("User Responsibility Assignment", name)
 	for email in frappe.get_all("User", filters={"email": ("like", f"%@{DOMAIN}")}, pluck="name"):
 		for contact in frappe.get_all("Contact", filters={"user": email}, pluck="name"):
 			frappe.delete_doc("Contact", contact, force=True, ignore_permissions=True)

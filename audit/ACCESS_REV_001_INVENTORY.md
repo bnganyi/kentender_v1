@@ -1,0 +1,77 @@
+# KT-ACCESS-REV-001 v0.2 — read-path inventory (Phase 2 audit)
+
+Date: 7 October 2026. Read-only audit when written. **Status (same day):** the Project Owner accepted the recommendations and the findings were implemented; what changed, what was proven and what is still owed is in `ACCESS_REV_001_FOLLOW_UPS.md`.
+Source of the checklist: `docs/mvp-1-r1/99_other/KenTender_KT-ACCESS-REV-001_Permissions_Reconciliation_v0_2.md` §3 and §3.1.
+
+## How to read this
+
+- **Checked by me** = I opened the code and confirmed the claim. **Agent reading** = reported by an audit agent that read the source; not run, not tested, not re-checked by me. Treat the second kind as a lead until reproduced.
+- **Basis** = whether an approved document already says what the code should do (so it can be fixed now), or whether it needs a proposed text or an owner decision first.
+- Paths are relative to `kentender_procurement/kentender_procurement/` ("P/") unless they start with `kentender_`.
+- Nothing here was run against the live site. Reproduce each item as a test before fixing it.
+
+## 0. Already done (Planning)
+
+| ID | What | Status |
+|---|---|---|
+| AR-00 | Plan reviewers (Accounting Officer, Head of Procurement Function, statutory approver, Finance Confirmation Officer) could not open the classification / source pages of a plan they review, and the Plan item link led there anyway | Fixed and verified on the test site (14 new tests, browser walk as Amina). Built to the proposed PLN-R2, ahead of approval. |
+| AR-00a | Not fixed, in Planning: the workspace listing omits the Head of Procurement Function; a decision is listed for Planner/Auditor but a departmental reader can open it directly but not see it in the list (`planning_authorization.py` ~590–620, agent reading) | Open, low |
+
+## 1. Findings, most serious first
+
+| ID | Area | Finding | Where | Affected | Verified | Basis |
+|---|---|---|---|---|---|---|
+| AR-01 | Bid Submission | System Manager can read bidder identity, contacts, bid total, quantity and delivery date before opening, through raw Desk/REST reads. The deny hook covers only six content DocTypes. | DocPerm `System Manager` read on Bidder Arrangement, Bid Organisation Snapshot, Bid Workspace, Tender Security Intake, Bid Opening Handoff, Bid Submission Version, Tender Box Envelope, Bid Submission Attempt (`P/bid_submission/doctype/*`); hook list `P/hooks.py:733-737`; the "never a price / supplier name" promise is only in the API wrapper `P/bid_submission/services/technical_read.py:10` | Administrator, System Manager | **Checked by me** (DocPerm on three; hook list). The Attempt `summary_json` price content and the Administrator file-bytes point are agent reading | Approved: BDS v0.11 §6 ("Configuration/health metadata only for sealed bids; no content access before governed opening") |
+| AR-02 | Requisitions | Unsent Drafts are readable by the Head of Procurement Function, Planner, Procurement Officer and Auditor (the Accounting Officer is correctly limited to Authorised/Revoked). Editor payload, workspace list, history and export all admit them. | `P/procurement_requisitions/services/requisition_roles.py:27,33`; `requisition_authorization.py:132` (no state test), hooks `:262-271`, `:399`; `services/read.py:151,166,364-377,914` | Those four roles | **Checked by me** (roles list and gate); read-path detail is agent reading | Approved: REQ v1.14 §8 gives the Procurement Officer "no Draft right" and the others a read of submitted/immutable versions |
+| AR-03 | Shared AUTH | A **scheduled** (not yet effective) assignment projects its Frappe Role immediately; an expired one keeps it until the daily job. Only `effective_to` is tested, never `effective_from`. For DocTypes read by DocPerm alone (Annual Plan family, Plan Item, Strategy, Funding Reservation, Procurement Commitment, Budget Command Journal …) the early/lapsed holder can read. | `kentender_core/.../responsibility_administration.py:559-581` (`_sync_projection`); `hooks.py:283` daily job | Any scheduled/just-expired holder | **Checked by me** (the function ignores `effective_from`); which DocTypes are DocPerm-only is agent reading | Approved: the resolver already treats scheduled as no authority; "a scheduled role grants no early authority" |
+| AR-04 | Technical operator | Some holder lookups use `status == Enabled` only, ignoring the period: Support Issue reads and Home repair rows; `get_submission_service_status`; the `recover_overdue_close` **command**. An expired/scheduled operator passes. | `kentender_core/.../support_issues.py:62-72`; `P/bid_submission/services/technical_read.py:87,102`; `close.py:205-206`; unchecked similar lists `bid_opening/services/notify.py:28`, `bid_submission/handoffs.py:178`, `guidance.py:52,189` | Expired/scheduled Technical Operator | Agent reading | Approved: AUTH resolver |
+| AR-05 | Needs | The Accounting Officer and Head of Procurement Function are refused on every Desk/REST route for Needs (DocPerm read excludes them); the service layer and Vue screens do admit them. A test still pins the old rule. | `P/setup/departmental_needs_doctypes.py` (`NEED_PERMISSIONS`, `OVERSIGHT_READ`); `departmental_needs/services/need_authorization.py:62,162`; `permissions.py:139`; `tests/test_departmental_needs_permissions.py:52,698` | AO, HOPF (raw routes only) | Agent reading | Approved: OVS v0.6 §4.1 NDS row (read of submitted/decided Needs). The pinned test must change with the fix. |
+| AR-06 | Read that writes | `get_tender_cancellation` (whitelisted read) calls `refresh_obligation_statuses`, which can bump `record_version` and save with `ignore_permissions`, which can invalidate an officer's pending edit. | `P/tenders/services/open_period_read.py:228`; `cancellation.py:218-229` | Any reader of a cancellation | **Checked by me** (the refresh bumps on change); the "whitelisted GET" point is agent reading | Approved: "reads create nothing" (KT-STD / OVS) |
+| AR-07 | Meetings register | HoD gets a "View record" link on Opening rows, but the Opening read admits only AO, HOPF, Procurement Officer, Auditor, members and technical. The link shows "not found". | `P/bid_opening/services/prc_owner.py:43-54`; `P/proceedings/services/register.py:144`; `reads.py:26-30,72-75`; `ProcurementMeetings.vue:104` | Head of User Department | **Checked by me** (reader roles list); the link emission is agent reading | OVS v0.6 §11 says the link "applies the owner's own permission", so this needs a design choice (safe summary or hide the link) |
+| AR-08 | Analytics links | Analytics emits titles and links for Returned Needs (owner read for AO/HOPF stops at Submitted/Accepted/Not taken forward) and for non-Authorised Requisitions (AO reads only Authorised/Revoked): dead-end links, and a title shown that the owner read refuses. Route checks look at Page roles only. | `analytics_workspace.py:262-270`; `home_workspace.py:153-161`; Needs `analytics_provider.py:47-52,130`; Requisitions `analytics_provider.py:21-30,194` | AO, HOPF | Agent reading | Approved: no dead-end links; counts are an owner aggregate decision (OD-2) |
+| AR-09 | Technical Operator | Three sources disagree. KT-STD §8.3 (owner, 4 Oct): Technical Operator reads every surface site-wide, read-only. OVS §11: a limited operator has no register access "solely through that assignment". Code: `is_technical` = Administrator/System Manager Frappe roles only; Home and Analytics also admit the Operator assignment; owner reads, technical search and STD Templates do not. Daniel Otieno works only because the seed also gives him System Manager. | `kentender_core/.../authorization.py:116-120`; `business_role_registry.py:234,256`; `home_viewer.py:31-40`; `seeds/site_setup.py:189-190` | Technical Operator without System Manager | Agent reading (the 4 Oct text I read earlier) | **Owner decision** — see §3 |
+| AR-10 | Setup power | Technical read is implemented as System Manager, which also allows setup writes and granting/revoking responsibilities; the seeded Technical Operator therefore can change setup. | `kentender_core/.../site_configuration.py:141-146` (`require_configuration_administrator`); `ASSIGNMENT_ADMIN = ("System Manager",)` | Technical Operator, System Manager | **Checked by me** (the gate); the seed point is agent reading | Needs decision: KT-STD §8.3 says no business action; CFG says Administrator/System Manager maintain setup |
+| AR-11 | Technical read after release | After delivery, a technical reader gets the full Evaluation report content (findings, bidders, prices) and Award decision text, while module docstrings and the AWD/EVL text say technical sees "no tender, supplier, price, opinion or decision". | `P/bid_evaluation/services/reads.py:68,121,368-374`; `P/award/services/stage_summary.py:44-75`; `award/services/reads.py:10,164` | Technical readers | Agent reading | OVS v0.6 §4.2 allows ordinary-record read after release; conflicts only with the older module text — document conflict |
+| AR-12 | Strategy | "Open approval task" is shown to Strategy Authors and Auditors, but the review overview refuses all but approvers. | `kentender_strategy/services/strategy_ui_contracts.py:819,920`; `PlanWorkspaceScreen.vue:469` | Strategy Author, Auditor | Agent reading | Approved: no dead-end links |
+| AR-13 | Technical search | `frappe.get_all(..., ignore_permissions=False)` is forced to `True` by Frappe, so technical search ignores DocPerm; DocTypes with no System Manager read (e.g. Bid Receipt) are findable by reference/title/status and the route then refuses. | `kentender_core/.../technical_search.py:103,131` | Technical readers | Agent reading | Approved: KT-STD §3A.6 |
+| AR-14 | Fiscal-year lists | `list_available_fiscal_years` (Strategy and Budget) is whitelisted with `ignore_permissions=True` and no gate; any signed-in user, including a supplier account, can call it. Data is year names and dates only. | `kentender_strategy/services/strategy_ui_contracts.py:1233-1243`; `kentender_budget/.../budget_contracts.py:70-78` | Any signed-in user | Agent reading | Low |
+| AR-15 | Supplier files | A whitelisted endpoint saves supplier registration documents as **public** files. Clear defect unless this legacy supplier module is retired. | `kentender_suppliers/api/smw_public.py:249` | Supplier document privacy | Agent reading; module liveness not checked | Needs: is this module live? |
+| AR-16 | Evaluation disclosure | Conflict-of-interest free text reaches the AO before delivery and is System Manager-readable on the raw DocType. | `P/bid_evaluation/services/reads.py:433` | AO, System Manager | Agent reading | Owner-controlled disclosure; confirm |
+
+## 2. Lower-severity and informational (all agent reading)
+
+- **Needs:** AO/HOPF cannot see Returned or Withdrawn Needs; Auditor reads unsent Drafts (by NDS v1.16 design); `get_need` returns decision history, including "Cancel successor" entries, to AO/HOPF/Planner; the review-task read for AO/HOPF carries a `decision_token` (stale-write guard only, commands re-check). Opening a Needs workspace writes the user's own working-context preference.
+- **Strategy:** approved-version reads are open to every enabled System User (owner decision 5 Oct), wider than the AO/HOPF/HoD text; `diff_strategy_versions` refuses AO/HOPF/HoD (no link is emitted to them).
+- **Budget:** HoD has no Budget read except aggregate Analytics (deliberate, owner decision 5 Oct); Funding Reservation read has HOPF but not AO; HOPF can list every reservation by REST with no scope hook.
+- **Requisitions:** the forbidden message omits the Accounting Officer; the authorised handoff emits an "Open Tender" route to every reader (probably fine; the Tender hook for AO was not verified).
+- **Bid Opening / Evaluation:** technical Evaluation list is empty while the detail opens; HoD register row shows no outcome while the detail does; `PRC read_proceeding` refuses technical although the `Proceeding` DocType has System Manager read.
+- **Config:** `get_site_configuration` is open to any signed-in user including supplier accounts (code comment says intended); Home gives Technical Operator holders Support Issue repair rows (by design, but see AR-04).
+- **Analytics viewer:** any one Site-wide assignment (e.g. Release Operator) makes a HoD's scope unrestricted in the department filter; providers re-limit, so data is probably bounded, not traced end to end.
+- **Positive:** list/count/detail predicates agree for Needs and Requisitions; Strategy approved-only scope is consistent; Budget AO/HOPF reads are approved-version only with the approval task, closure and affordability check kept off them; Evaluation pre-delivery oversight is status-only on every path read; Tenders reads all go through the resolver; no `has_role`/role-label string gates in the four earlier modules; no download endpoints in Strategy/Budget/Needs/Requisitions; every public CFG writer calls `require_configuration_administrator`; STD Template activation has no endpoint.
+
+## 3. Decisions needed from the Project Owner
+
+| # | Question | Recommendation |
+|---|---|---|
+| D1 | Technical Operator: should an Operator assignment alone be a technical reader (KT-STD §8.3, 4 Oct) or have no register access (OVS §11, 3 Oct)? | Follow the later instruction (KT-STD §8.3): read-only site-wide, sealed content and credentials excluded; amend OVS §11. Then make the data read paths admit the assignment, not only the System Manager role. |
+| D2 | Should the technical read be separated from System Manager so a read-only Operator cannot change setup or grant responsibilities (AR-10)? | Yes: a read-only technical role distinct from System Manager. Until then, treat the seeded Operator as a setup administrator. |
+| D3 | AR-07: for an HoD on a Held Opening row, show a safe summary or hide the link? | Show the existing safe summary the Evaluation rows already use. |
+| D4 | AR-11: keep full post-delivery technical read of Evaluation/Award content (OVS §4.2) and correct the older module text, or restrict it? | Keep OVS §4.2 and correct the module text. |
+| D5 | AR-15: is the legacy supplier-registration module still live? | If live, make the files private. |
+
+## 4. Suggested fix order (nothing started)
+
+1. **AR-03 and AR-04** — one shared fix: respect `effective_from` in the projection and the holder lookups (small, central, covers many DocTypes).
+2. **AR-01** — extend the existing deny hook to the sealed-bid DocTypes and remove or mask the payload fields; add a test per DocType for System Manager and Administrator.
+3. **AR-02** — state-gate Draft reads for the four site-wide Requisition roles (service, hooks, list, export), with tests for each role.
+4. **AR-05** — add AO/HOPF DocPerm rows for Needs and update the pinned test.
+5. **AR-06, AR-07, AR-08, AR-12** — dead-end links and the read that writes.
+6. After D1/D2/D4: AR-09, AR-10, AR-11.
+
+Each item: red test first, the focused module, then one wider run, on `kentender-test.local`; and re-check the Planning fix is not disturbed (it does not use `dpp_read_profile`'s callers' behaviour).
+
+## 5. What this audit did not do
+
+- No code was run and no live data was read. Findings marked "agent reading" are unverified leads.
+- Planning, Tenders stage facts, Strategy/Home/Suppliers providers were sampled, not read line by line; per-service gates behind most download/export endpoints were not traced.
+- The proposed owner successors (AUTH 1.12 … ANL 0.9) and CM are not in the repository, so nothing here implements or tests them.

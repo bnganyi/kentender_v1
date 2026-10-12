@@ -150,26 +150,26 @@ def heartbeat(tender_reference: str) -> dict[str, Any]:
 
 # -- preparation and committee ----------------------------------------------------------
 @frappe.whitelist(methods=["POST"])
-def appoint_committee(tender_reference: str, members, appointment_reference: str, expected_version, idempotency_key: str) -> dict[str, Any]:
+def appoint_committee(tender_reference: str, members, expected_version, idempotency_key: str) -> dict[str, Any]:
 	from kentender_procurement.bid_evaluation.services import appointment
 
 	return _call("AppointEvaluationCommittee", tender_reference, appointment.appoint_committee, members=_json(members, []),
-		appointment_reference=appointment_reference, expected_version=cint(expected_version), idempotency_key=idempotency_key)
+		expected_version=cint(expected_version), idempotency_key=idempotency_key)
 
 
 @frappe.whitelist(methods=["POST"])
-def replace_member(tender_reference: str, outgoing: str, incoming, appointment_reference: str, reason: str, expected_version, idempotency_key: str) -> dict[str, Any]:
+def replace_member(tender_reference: str, outgoing: str, incoming, reason: str, expected_version, idempotency_key: str) -> dict[str, Any]:
 	from kentender_procurement.bid_evaluation.services import appointment
 
 	return _call("ReplaceEvaluationMember", tender_reference, appointment.replace_member, outgoing=outgoing, incoming=_json(incoming, {}),
-		appointment_reference=appointment_reference, reason=reason, expected_version=cint(expected_version), idempotency_key=idempotency_key)
+		reason=reason, expected_version=cint(expected_version), idempotency_key=idempotency_key)
 
 
 @frappe.whitelist(methods=["POST"])
-def assign_secretary(tender_reference: str, secretary: str, appointment_reference: str, expected_version, idempotency_key: str) -> dict[str, Any]:
+def delegate_secretary(tender_reference: str, secretary: str, expected_version, idempotency_key: str) -> dict[str, Any]:
 	from kentender_procurement.bid_evaluation.services import secretary as service
 
-	return _call("AssignEvaluationSecretary", tender_reference, service.assign_secretary, secretary=secretary, appointment_reference=appointment_reference,
+	return _call("DelegateEvaluationSecretary", tender_reference, service.delegate_secretary, secretary=secretary,
 		expected_version=cint(expected_version), idempotency_key=idempotency_key)
 
 

@@ -6,6 +6,7 @@ import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { useFiscalYearFilter } from "../../budget_shared/composables/useFiscalYearFilter.js";
 import { mintKey } from "../../budget_shared/data/formatKes.js";
 import { getBudgetWorkspace, saveBudgetVersionDraft } from "../data/budgetApi.js";
+import AccessDenied from "../../budget_shared/components/AccessDenied.vue";
 
 // BUD-UI-02 pre-creation — BUD-DES-02 Record approved allocation (BUD-CHG-001
 // v1.9 §9.3, §11.2, §12.2). Save and add budget lines creates the Budget and
@@ -186,9 +187,8 @@ function cancel() {
 		</div>
 
 		<div v-else-if="forbidden" class="kt-shell">
-			<div class="card blueprint kt-empty" data-testid="bud-reg-forbidden">
-				<h2>{{ __(forbidden.heading) }}</h2>
-				<p class="kt-muted">{{ __(forbidden.text) }}</p>
+			<div class="kt-page" data-testid="bud-reg-forbidden">
+				<AccessDenied :heading="__(forbidden.heading)" :text="__(forbidden.text || '')" />
 			</div>
 		</div>
 

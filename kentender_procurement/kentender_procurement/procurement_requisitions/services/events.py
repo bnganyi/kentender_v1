@@ -16,6 +16,8 @@ from uuid import uuid4
 import frappe
 from frappe.utils import cstr, now_datetime
 
+from kentender_procurement.procurement_requisitions.services import envelope
+
 EVENT_AUTHORISED = "ProcurementRequisitionAuthorised.v1.4"
 EVENT_REVOKED = "ProcurementRequisitionRevoked.v1"
 EVENT_WITHDRAWN = "ProcurementRequisitionWithdrawn.v1"
@@ -32,14 +34,14 @@ def _next_sequence(requisition: str) -> int:
 def _append(*, requisition: str, event_type: str, requisition_version: str, payload: dict[str, Any]) -> str:
 	if event_type not in EVENT_TYPES:
 		raise ValueError(f"{event_type!r} is not a registered Requisition event type.")
-	doc = frappe.get_doc(
+	doc = envelope.insert(frappe.get_doc(
 		{
 			"doctype": "Requisition Event", "event_id": f"RQE-{uuid4().hex.upper()}",
 			"event_type": event_type, "requisition": requisition,
 			"sequence": _next_sequence(requisition), "requisition_version": requisition_version,
 			"occurred_at": now_datetime(), "payload": json.dumps(payload, default=str), "status": "Pending",
 		}
-	).insert(ignore_permissions=True)
+	))
 	return doc.name
 
 

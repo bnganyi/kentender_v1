@@ -114,7 +114,7 @@ def submit_tender_for_approval(*, tender: str, expected_record_version, idempote
 	actor = authz.actor(user)
 	assignment = authz.require_officer(actor)
 	payload = {"tender": tender}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="SubmitTenderForApproval", actor=actor)
 	if replay:
 		return replay
 	root, version = draft_commands.load(tender)
@@ -162,7 +162,7 @@ def return_tender_for_correction(*, tender: str, reason: str, affected_task: str
 	actor = authz.actor(user)
 	assignment = authz.require_hopf(actor)
 	payload = {"tender": tender, "reason": reason, "affected_task": affected_task}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="ReturnTenderForCorrection", actor=actor)
 	if replay:
 		return replay
 	reason = " ".join(cstr(reason).split())
@@ -205,9 +205,14 @@ def return_tender_for_correction(*, tender: str, reason: str, affected_task: str
 def require_segregation(version, actor: str, *, blocked_columns: tuple[str, ...]) -> None:
 	"""§6: the person who prepared or submitted a Version cannot approve it;
 	the person who prepared, submitted or approved cannot authorise its
-	publication. Decided from the immutable Version columns."""
+	publication. Decided from the immutable Version columns, and "prepared"
+	is every officer who edited the Draft or an earlier Version it was copied
+	from, read from the event log, not only the person who started the
+	Tender (AUD-TND-008, §6 "Checks use the immutable Version audit")."""
 	for column in blocked_columns:
 		if cstr(version.get(column)) == actor:
+			fail("TND_SOD_BLOCKED", detail={"conflicting_action": column, "version": version.name})
+		if column == "prepared_by" and actor in draft_commands.draft_editors(version.tender):
 			fail("TND_SOD_BLOCKED", detail={"conflicting_action": column, "version": version.name})
 
 
@@ -215,7 +220,7 @@ def approve_tender_package(*, tender: str, expected_record_version, idempotency_
 	actor = authz.actor(user)
 	assignment = authz.require_hopf(actor)
 	payload = {"tender": tender}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="ApproveTenderPackage", actor=actor)
 	if replay:
 		return replay
 	root, version = draft_commands.load(tender)
@@ -279,7 +284,7 @@ def reopen_approved_tender(*, tender: str, reason: str, expected_record_version,
 	actor = authz.actor(user)
 	assignment = authz.require_hopf(actor)
 	payload = {"tender": tender, "reason": reason}
-	replay = envelope.replay_or_none(idempotency_key, payload)
+	replay = envelope.replay_or_none(idempotency_key, payload, command="ReopenApprovedTender", actor=actor)
 	if replay:
 		return replay
 	reason = " ".join(cstr(reason).split())

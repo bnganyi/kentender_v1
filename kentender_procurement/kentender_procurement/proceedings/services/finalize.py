@@ -18,6 +18,7 @@ from frappe.utils import cint, cstr
 
 from kentender_procurement.proceedings.services import clock, owners, records, signing
 from kentender_procurement.proceedings.services.errors import fail
+from kentender_procurement.services import sequence
 
 SYSTEM_ACTOR = owners.SYSTEM_ACTOR
 SUPPLEMENT = "Proceeding Supplement"
@@ -68,7 +69,7 @@ def append_supplement(*, owner_type: str, owner_id: str, expected_version: int, 
 		fields = {f: "Required." for f, v in (("kind", kind), ("correct_information", correct_information), ("reason", reason)) if not cstr(v).strip()}
 		if fields:
 			fail("PRC_EVIDENCE_INCOMPLETE", {"fields": fields})
-		number = frappe.db.count(SUPPLEMENT, {"proceeding": doc.name}) + 1
+		number = sequence.next_count(SUPPLEMENT, {"proceeding": doc.name})
 		supplement_id = f"{doc.name}-S{number:02d}"
 		original = frappe.db.get_value("Proceeding Minutes Version", {"proceeding": doc.name, "version_number": cint(doc.current_minutes_version)}, "name")
 		records.insert(frappe.get_doc({

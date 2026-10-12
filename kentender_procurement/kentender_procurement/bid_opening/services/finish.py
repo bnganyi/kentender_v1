@@ -25,6 +25,7 @@ import frappe
 from frappe.utils import cint
 
 from kentender_procurement.bid_opening.services import ceremony, clock, errors, labels, prc, records
+from kentender_procurement.services import sequence
 
 REGISTER = "Opening Register"
 
@@ -38,7 +39,7 @@ def register_rows(case: str) -> list[dict[str, Any]]:
 
 def _freeze(doc) -> Any:
 	rows = register_rows(doc.name)
-	number = frappe.db.count(REGISTER, {"opening_case": doc.name}) + 1
+	number = sequence.next_count(REGISTER, {"opening_case": doc.name})
 	return records.insert(frappe.get_doc({
 		"doctype": REGISTER, "register_id": f"{doc.opening_id}-REG-{number:02d}", "opening_case": doc.name, "version_number": number,
 		"entry_ids_json": json.dumps([r["entry"] for r in rows]), "entry_count": len(rows), "is_empty": int(not rows), "register_digest": records.digest(rows),

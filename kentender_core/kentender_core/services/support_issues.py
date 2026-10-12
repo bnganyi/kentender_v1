@@ -60,8 +60,11 @@ def _write(doc, insert: bool = False):
 
 
 def holders(role: str = TECHNICAL_OPERATOR) -> list[str]:
-	users = frappe.get_all("User Responsibility Assignment", filters={"business_role": role, "status": "Enabled"}, pluck="user", distinct=True)
-	return sorted(u for u in users if frappe.db.get_value("User", u, "enabled"))
+	"""Who holds the responsibility *now* — the period is part of holding it
+	(KT-ACCESS-REV-001 AR-04): a scheduled or expired holder is not one."""
+	from kentender_core.services.authorization import active_holders
+
+	return active_holders(role)
 
 
 def _held_roles(user: str) -> list[str]:
@@ -69,7 +72,9 @@ def _held_roles(user: str) -> list[str]:
 
 	if is_technical(user):
 		return []
-	return frappe.get_all("User Responsibility Assignment", filters={"user": user, "status": "Enabled"}, pluck="business_role", distinct=True)
+	from kentender_core.services.authorization import active_assignment_rows
+
+	return sorted({row["business_role"] for row in active_assignment_rows(user)})
 
 
 def has_permission(doc, ptype: str = "read", user: str | None = None) -> bool:

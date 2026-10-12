@@ -6,41 +6,45 @@
      time. The server validates everything and says what still blocks. -->
 <template>
 	<div data-testid="req-body-requirements">
-		<Notice v-if="issue" tone="warning"><a href="#" data-testid="req-requirements-issue" @click.stop.prevent="focus(issueSection)">{{ issue }}</a></Notice>
+		<AttentionPanel :items="attention" @go="(section) => focus(section)" />
 
 		<div class="req-workbench" :class="{ 'is-reviewed': !reviewRequired }" data-section="technical" tabindex="-1">
 			<div v-if="reviewRequired" class="req-workbench-head">
 				<div>
-					<CardTitle title="Standard laptop requirements to review" icon="sliders" style="margin-bottom: 6px" />
+					<CardTitle :title="`Standard ${kindWords}requirements to review`" icon="sliders" style="margin-bottom: 6px" />
 					<p class="kt-muted" style="font-size: 13px; margin: 0; max-width: 66ch">These suggested requirements are not confirmed until you use the action below. Review every value, change what is necessary and clear any suggestion that does not apply.</p>
 				</div>
 				<span class="kt-status is-attention" data-testid="req-review-state">Review required</span>
 			</div>
 			<div v-else class="req-register-head" style="margin-bottom: var(--kt-space-3)">
-				<span class="req-subhead">Laptop requirements</span>
+				<span class="req-subhead">{{ kindHeading }}</span>
 				<span class="kt-status is-live" data-testid="req-review-state">Reviewed</span>
 			</div>
 
-			<CardTitle title="Technical requirements" icon="monitor" class="req-register-title">
-				<span class="kt-muted req-title-note">· Target: All equipment</span>
-			</CardTitle>
-			<template v-for="group in groups" :key="group.group">
+			<CardTitle title="Technical requirements" icon="monitor" class="req-register-title" />
+			<template v-for="target in targets" :key="target.key">
+				<div v-if="targets.length > 1" class="req-target-head" data-testid="req-target">
+					<div class="req-target-title">{{ target.title }}</div>
+					<div class="req-target-facts">{{ target.subtitle }}</div>
+				</div>
+			<template v-for="group in target.groups" :key="group.group">
 				<div class="kt-label req-group-label">{{ group.group }}</div>
 				<table class="table" style="margin-bottom: var(--kt-space-4)" :data-testid="`req-technical-${group.group}`">
 					<thead>
 						<tr><th v-if="reviewRequired">Use</th><th>Requirement</th><th>Minimum or required value</th><th>Unit</th><th>Action</th></tr>
 					</thead>
 					<tbody>
-						<tr v-for="row in group.rows" :key="row.technical_requirement_id" :class="{ 'is-cleared': isProposed(row) && !techCopy[row.technical_requirement_id].selected }" data-testid="req-technical-row">
+						<tr v-for="row in group.rows" :key="row.technical_requirement_id" :class="{ 'is-cleared': isProposed(row) && !techCopy[row.technical_requirement_id].selected, 'is-flagged': row.needs_review }" :data-requirement="row.technical_requirement_id" data-testid="req-technical-row">
 							<td v-if="reviewRequired">
 								<label v-if="isProposed(row)" class="kt-checkbox"><input v-model="techCopy[row.technical_requirement_id].selected" type="checkbox" :disabled="!canEdit" :aria-label="`Use ${row.label}`" /><span class="box"></span></label>
 							</td>
-							<td>{{ row.label }}<div class="kt-muted req-comparison">{{ row.comparison }}</div></td>
+							<td>{{ row.label }}<div class="kt-muted req-comparison">{{ row.comparison }}</div><div v-if="row.needs_review"><span class="kt-status is-attention req-flag" data-testid="req-row-flag">Needs review</span></div></td>
 							<td>{{ displayOf(row) }}</td>
 							<td>{{ row.unit }}</td>
 							<td>
 								<div v-if="canEdit" class="req-row-actions">
 									<button type="button" class="btn btn-ghost" data-testid="req-technical-edit" @click="dialog = { kind: 'technical', row }">Edit</button>
+									<button v-if="(row.applies_to_item_ids || []).length > 1" type="button" class="btn btn-ghost" data-testid="req-technical-customise" @click="dialog = { kind: 'customise', row, id: row.technical_requirement_id }">Customise for one item</button>
 									<button v-if="isProposed(row)" type="button" class="btn btn-ghost" data-testid="req-technical-clear" @click="techCopy[row.technical_requirement_id].selected = !techCopy[row.technical_requirement_id].selected">{{ techCopy[row.technical_requirement_id].selected ? "Clear" : "Use" }}</button>
 									<button v-else type="button" class="btn btn-ghost" data-testid="req-technical-remove" @click="removeRow('technical', row)">Remove</button>
 								</div>
@@ -48,6 +52,7 @@
 						</tr>
 					</tbody>
 				</table>
+			</template>
 			</template>
 
 			<section data-section="warranty_support" tabindex="-1">
@@ -103,6 +108,7 @@
 								<td>
 									<div v-if="canEdit" class="req-row-actions">
 										<button type="button" class="btn btn-ghost" data-testid="req-acceptance-edit" @click="dialog = { kind: 'acceptance', row }">Edit</button>
+										<button v-if="(row.applies_to_item_ids || []).length > 1" type="button" class="btn btn-ghost" data-testid="req-acceptance-customise" @click="dialog = { kind: 'customise', row, id: row.acceptance_requirement_id }">Customise for one item</button>
 										<button v-if="isProposed(row)" type="button" class="btn btn-ghost" data-testid="req-acceptance-clear" @click="accCopy[row.acceptance_requirement_id].selected = !accCopy[row.acceptance_requirement_id].selected">{{ accCopy[row.acceptance_requirement_id].selected ? "Clear" : "Use" }}</button>
 										<button v-else type="button" class="btn btn-ghost" data-testid="req-acceptance-remove" @click="removeRow('acceptance', row)">Remove</button>
 									</div>
@@ -126,7 +132,6 @@
 				</div>
 			</section>
 
-			<Notice v-if="packageError" tone="warning"><span data-testid="req-package-error">{{ packageError }}</span></Notice>
 			<div v-if="reviewRequired && canEdit" class="req-footer" style="justify-content: flex-end; margin-top: var(--kt-space-4)">
 				<div class="req-actions">
 					<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="req-reset-standard" @click="reset">Reset standard values</button>
@@ -178,7 +183,7 @@
 		<div class="req-footer">
 			<button type="button" class="btn btn-ghost" @click="$emit('back')">Back to request details</button>
 			<div v-if="canEdit" class="req-footer-right">
-				<span v-if="hint" class="kt-label" data-testid="req-footer-hint">{{ hint }}</span>
+				<span v-if="hint" class="req-footer-status" data-state="blocked" data-testid="req-footer-status" role="status">Fix what needs attention above to continue.</span>
 				<div class="req-actions">
 					<button type="button" class="btn btn-secondary" :disabled="busy" data-testid="req-save" @click="saveDraft">Save draft</button>
 					<button type="button" class="btn" :class="canContinue ? 'btn-primary' : 'btn-secondary'" :disabled="busy || !canContinue" data-testid="req-continue" @click="saveAndContinue">Continue to review</button>
@@ -186,6 +191,7 @@
 			</div>
 		</div>
 
+		<CustomiseDialog v-if="dialog && dialog.kind === 'customise'" :view="view" :row="dialog.row" :requirement-id="dialog.id" @done="resetFromServer" @close="dialog = null" />
 		<TechnicalRowDialog
 			v-if="dialog && dialog.kind === 'technical'"
 			:view="view"
@@ -212,9 +218,10 @@
 import { computed, nextTick, reactive, ref, watch } from "vue";
 import { useReq } from "../data/context.js";
 import CardTitle from "./shared/CardTitle.vue";
-import Notice from "./shared/Notice.vue";
+import AttentionPanel from "./shared/AttentionPanel.vue";
 import SegYesNo from "./shared/SegYesNo.vue";
 import AcceptanceRowDialog from "./AcceptanceRowDialog.vue";
+import CustomiseDialog from "./CustomiseDialog.vue";
 import MaterialDialog from "./MaterialDialog.vue";
 import ServiceDialog from "./ServiceDialog.vue";
 import TechnicalRowDialog from "./TechnicalRowDialog.vue";
@@ -228,7 +235,17 @@ const req = computed(() => props.view.requirements || {});
 const catalogue = computed(() => props.view.catalogue || {});
 const canEdit = computed(() => !!(props.view.actions || {}).edit_shared && !props.locked);
 const reviewRequired = computed(() => req.value.review_state === "Review required");
+// No product is named here unless it is the value of the chosen category
+// (v1.15 §12.1 wording rule): the one category the items share, or nothing.
+const sharedCategory = computed(() => {
+	const kinds = [...new Set((((props.view.equipment || {}).rows) || []).map((i) => i.equipment_category).filter(Boolean))];
+	return kinds.length === 1 && kinds[0] !== "Other IT equipment" ? kinds[0] : "";
+});
+const kindWords = computed(() => (sharedCategory.value ? `${sharedCategory.value.charAt(0).toLowerCase()}${sharedCategory.value.slice(1)} ` : ""));
+const kindHeading = computed(() => (sharedCategory.value ? `${sharedCategory.value} requirements` : "Standard requirements"));
 const groups = computed(() => req.value.technical_groups || []);
+// The technical rows by what they apply to (§13.6A); a view without targets shows its groups as one.
+const targets = computed(() => req.value.technical_targets || (groups.value.length ? [{ key: "T1", kind: "shared", title: "Shared requirements", subtitle: "", groups: groups.value }] : []));
 const acceptance = computed(() => req.value.acceptance || []);
 const services = computed(() => req.value.services || []);
 const materials = computed(() => req.value.materials || []);
@@ -263,7 +280,7 @@ function resetFromServer() {
 		for (const row of g.rows) techCopy[row.technical_requirement_id] = { selected: true, raw: rawOf(row.value), stored: row.value, edited: false };
 	}
 	for (const row of acceptance.value) {
-		accCopy[row.acceptance_requirement_id] = { selected: true, check_type: row.check_type, pass_condition: row.pass_condition, evidence_type: row.evidence_type, other_evidence_name: row.other_evidence_name || "", applies_to_scope: row.applies_to_scope, applies_to_id: row.applies_to_id || "" };
+		accCopy[row.acceptance_requirement_id] = { selected: true, check_type: row.check_type, pass_condition: row.pass_condition, evidence_type: row.evidence_type, other_evidence_name: row.other_evidence_name || "", applies_to_scope: row.applies_to_scope, applies_to_id: row.applies_to_id || "", applies_to_item_ids: row.applies_to_item_ids || [] };
 	}
 	Object.assign(support, supportFromServer());
 }
@@ -312,7 +329,7 @@ function proposalPayload() {
 	for (const g of groups.value) {
 		for (const row of g.rows.filter(isProposed)) {
 			const c = techCopy[row.technical_requirement_id];
-			technical.push({ technical_requirement_id: row.technical_requirement_id, characteristic_key: row.characteristic_key, value: c.raw, other_value: row.other_value || "", selected: c.selected, applies_to_scope: row.applies_to_scope, applies_to_id: row.applies_to_id || "" });
+			technical.push({ technical_requirement_id: row.technical_requirement_id, characteristic_key: row.characteristic_key, value: c.raw, other_value: row.other_value || "", selected: c.selected, applies_to_scope: row.applies_to_scope, applies_to_id: row.applies_to_id || "", applies_to_item_ids: row.applies_to_item_ids || [] });
 		}
 	}
 	const acceptanceRows = acceptance.value.filter(isProposed).map((row) => ({ acceptance_requirement_id: row.acceptance_requirement_id, ...accCopy[row.acceptance_requirement_id] }));
@@ -334,11 +351,18 @@ const packageError = computed(() => (error.value && !(error.value.detail && erro
 
 // The exact issue above the affected section (§13.6 validation variant).
 const blocking = computed(() => (props.view.findings || []).filter((f) => f.severity === "Blocking" && f.task === "requirements"));
-const issue = computed(() => {
-	if (reviewRequired.value) return "Review the standard laptop requirements before continuing.";
-	return blocking.value.length ? blocking.value[0].message : "";
+// Everything this task needs from the requester, said once in the attention panel (v1.17 §13.4A):
+// a refused command first, then the review it is waiting for, then each of the server's findings.
+const attention = computed(() => {
+	const out = [];
+	if (packageError.value) out.push({ message: packageError.value });
+	// The server names the pending review itself; this wording is only for a view that does not carry it.
+	if (reviewRequired.value && !blocking.value.length) out.push({ message: `Review the standard ${kindWords.value}requirements before continuing.`, go: "technical" });
+	for (const f of blocking.value) {
+		if (!out.some((i) => i.message === f.message)) out.push({ message: f.message, go: f.section || "technical" });
+	}
+	return out;
 });
-const issueSection = computed(() => (reviewRequired.value ? "technical" : (blocking.value[0] || {}).section || "technical"));
 const hint = computed(() => (props.view.footer_hints || {}).requirements || "");
 const canContinue = computed(() => !hint.value);
 

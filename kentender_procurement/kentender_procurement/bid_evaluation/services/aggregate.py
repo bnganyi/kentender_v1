@@ -15,6 +15,12 @@ assessment and the human record:
 - a required evidence assessment keeps an otherwise Meets comparison at
   **Needs review** until a member's evidence finding or a committee
   conclusion records it (a presence check never verifies authenticity);
+- an automatic **Needs review** caused by a price-arithmetic discrepancy or a
+  missing or unavailable rule has no human resolution (§4.4, "a committee
+  explanation cannot substitute for a missing legal or published basis"; §4.2,
+  "no automatic default may fill a missing rule"): it stays Needs review until
+  the discrepancy or rule is repaired through the owner route and the checks
+  are rerun, or the committee records it for a qualified report;
 - a member finding saved as Needs review, and an open concern, keep the
   requirement at Needs review until the committee concludes.
 
@@ -38,6 +44,8 @@ from kentender_procurement.bid_evaluation.services import rules
 MEETS, FAILS, REVIEW, NA = rules.MEETS, rules.FAILS, rules.REVIEW, rules.NOT_APPLICABLE
 ELIGIBILITY, TECHNICAL, FINANCIAL = "EVG-ELIGIBILITY", "EVG-TECHNICAL-COMPLIANCE", "EVG-FINANCIAL"
 EXPERIENCE = "RR-EXPERIENCE"
+#: Check kinds whose Needs review only the owner route can clear: an arithmetic discrepancy (calculation) or a missing rule (unavailable).
+UNSUPPORTED_KINDS = ("calculation", "unavailable")
 RULE_LABELS = {
 	"RR-DECL-FORM-OF-TENDER": "Form of Tender", "RR-DECL-CITD": "Certificate of independent tender determination", "RR-DECL-SD1": "Not debarred (SD1)",
 	"RR-DECL-SD2": "No corrupt or fraudulent practice (SD2)", "RR-DECL-CODE-OF-ETHICS": "Code of ethics", "RR-DECL-CBQ": "Conflict of interest questionnaire",
@@ -48,11 +56,20 @@ RULE_LABELS = {
 }
 
 
+def _scoped(label: str, facts: dict[str, Any]) -> str:
+	"""REQ-CHG-001 v1.18 §5.7A — a requirement that covers only some items names them, so the same characteristic
+	required of two kinds of item (or of one customised item) is never read as one requirement."""
+	applies = cstr(facts.get("applies_to"))
+	return f"{label} — {applies}" if applies and applies != "All items" else label
+
+
 def requirement_label(rule_id: str, facts: dict[str, Any], group_key: str = "") -> str:
-	if rule_id in ("RR-TECHNICAL", "RR-WARRANTY-SUPPORT") and facts.get("label"):
+	if rule_id == "RR-TECHNICAL" and facts.get("label"):
+		return _scoped(cstr(facts["label"]), facts)
+	if rule_id == "RR-WARRANTY-SUPPORT" and facts.get("label"):
 		return cstr(facts["label"])
 	if rule_id == "RR-ACCEPTANCE" and facts.get("check_type"):
-		return f"Acceptance: {facts['check_type']}"
+		return _scoped(f"Acceptance: {facts['check_type']}", facts)
 	return RULE_LABELS.get(rule_id) or cstr(facts.get("label")) or group_key
 
 
@@ -90,10 +107,13 @@ def requirement(results: list[dict[str, Any]], human: dict[str, Any]) -> dict[st
 	automatic = _combine([r["result"] for r in applicable]) if applicable else NA
 	pending_evidence = any(r["evidence_assessment_required"] and r["result"] == MEETS for r in applicable)
 	conclusion, finding = human.get("conclusion"), human.get("finding")
+	unsupported = automatic == REVIEW and any(r["check_kind"] in UNSUPPORTED_KINDS and r["result"] == REVIEW for r in applicable)
 	basis, reason = "Automatic check", "; ".join(dict.fromkeys(r["reason"] for r in applicable if r["result"] != MEETS)) or \
 		(applicable[0]["reason"] if len(applicable) == 1 else "")
 	if automatic == FAILS:
 		result = FAILS  # never waived by a finding or conclusion (§4.3)
+	elif unsupported:
+		result = REVIEW  # no member finding or committee conclusion can resolve it (§4.4)
 	elif conclusion is not None:
 		result, basis, reason = conclusion.result, "Committee conclusion", cstr(conclusion.reason)
 	elif finding is not None and finding.result in (MEETS, FAILS):
@@ -109,7 +129,7 @@ def requirement(results: list[dict[str, Any]], human: dict[str, Any]) -> dict[st
 	if human.get("open_item") and result != FAILS and basis != "Committee conclusion":
 		result = REVIEW
 	return {"result": result, "automatic": automatic, "basis": basis, "reason": reason, "evidence_pending": pending_evidence and finding is None and conclusion is None,
-		"qualified": bool(human.get("qualified")), "open_item": bool(human.get("open_item"))}
+		"qualified": bool(human.get("qualified")), "open_item": bool(human.get("open_item")), "unsupported_basis": unsupported}
 
 
 def bid_results(case: str, run: str, bid: str, human: dict | None = None) -> dict[str, Any]:
@@ -158,11 +178,12 @@ def _experience(entries: list[dict[str, Any]], human: dict[str, Any] | None = No
 	combined = {"requirement_key": EXPERIENCE, "label": RULE_LABELS[EXPERIENCE], "group_id": ELIGIBILITY, "mapping_id": "DM-EXPERIENCE",
 		"checks": [c for r in entries for c in r["checks"]], "entries": entries, "result": result, "automatic": _combine([r["automatic"] for r in entries]),
 		"basis": "Published count", "reason": f"{len(met)} of {required} comparable contracts meet the published conditions.",
-		"evidence_pending": any(r["evidence_pending"] for r in entries), "qualified": any(r["qualified"] for r in entries), "open_item": any(r["open_item"] for r in entries)}
+		"evidence_pending": any(r["evidence_pending"] for r in entries), "qualified": any(r["qualified"] for r in entries), "open_item": any(r["open_item"] for r in entries),
+		"unsupported_basis": any(r["unsupported_basis"] for r in entries)}
 	# The committee and members record findings on the combined requirement.
 	human = human or {}
-	automatic_failed = combined["automatic"] == FAILS
-	if automatic_failed:
+	if combined["automatic"] == FAILS or combined["unsupported_basis"]:
+		combined["qualified"] = combined["qualified"] or bool(human.get("qualified"))
 		return combined
 	if human.get("conclusion") is not None:
 		c = human["conclusion"]

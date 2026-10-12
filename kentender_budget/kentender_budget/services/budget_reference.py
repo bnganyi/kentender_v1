@@ -11,6 +11,7 @@ import frappe
 from frappe import _
 from frappe.model.naming import make_autoname
 
+from kentender_core.utils.series import raise_series_to
 from kentender_strategy.services.strategy_reference import site_slug
 
 BUD_REF_RE = re.compile(r"^[A-Z0-9]+-BUD-\d{4}$")
@@ -44,18 +45,10 @@ def _series_current(series_key: str) -> int | None:
 
 
 def _sync_series(prefix: str, current_max: int) -> None:
-	series_key = prefix
-	existing_series = _series_current(series_key)
-	if existing_series is None and current_max:
-		frappe.db.sql(
-			"INSERT INTO `tabSeries` (`name`, `current`) VALUES (%s, %s)",
-			(series_key, current_max),
-		)
-	elif existing_series is not None and existing_series < current_max:
-		frappe.db.sql(
-			"UPDATE `tabSeries` SET `current`=%s WHERE `name`=%s",
-			(current_max, series_key),
-		)
+	"""Raise the never-reuse counter past the highest number in use. One atomic
+	upsert (AUD-XC-130): the old read-then-insert let two concurrent first
+	allocations both insert the counter."""
+	raise_series_to(prefix, current_max)
 
 
 def reset_unused_series(fiscal_year: str) -> list[str]:

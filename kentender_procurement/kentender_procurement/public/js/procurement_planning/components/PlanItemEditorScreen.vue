@@ -77,7 +77,7 @@
 					<!-- Derived from the included requirements; not editable here, and
 					     Plan horizon is a fixed literal so it is not shown at all. -->
 					<span class="kt-muted" data-testid="ppi-summary-line">{{ item.summary_line }}</span>
-					<a href="#" class="btn btn-ghost" data-testid="ppi-view-classification" @click.prevent="$emit('view-classification')">View classification details</a>
+					<a v-if="classificationReadable" href="#" class="btn btn-ghost" data-testid="ppi-view-classification" @click.prevent="$emit('view-classification')">View classification details</a>
 				</div>
 			</div>
 
@@ -165,7 +165,7 @@
 					</div>
 					<div v-else-if="draft.estimate_basis_reference" class="pln-fact">
 						<span class="kt-label">Supporting document reference</span>
-						<span class="kt-meta-value">{{ draft.estimate_basis_reference }}</span>
+						<span class="kt-meta-value is-plain">{{ draft.estimate_basis_reference }}</span>
 					</div>
 				</div>
 				<p v-if="fullBasis" class="kt-muted" data-testid="ppi-full-basis">{{ classification.estimate_basis }}</p>
@@ -289,7 +289,7 @@
 			<div class="kt-region">
 				<!-- U09-INVALID-SCHEDULE — the blocking problem and its recovery
 				     action sit beside the dates they are about. -->
-				<div v-if="saveBlocked" class="kt-notice is-critical" style="margin-bottom: var(--kt-space-4)">
+				<div v-if="scheduleBlocked" class="kt-notice is-critical" style="margin-bottom: var(--kt-space-4)">
 					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 						<circle cx="12" cy="12" r="10"></circle><path d="M12 8v5"></path><path d="M12 16h.01"></path>
 					</svg>
@@ -328,11 +328,11 @@
 					</div>
 					<div class="pln-fact">
 						<span class="kt-label">Expected completion</span>
-						<span class="kt-meta-value" data-testid="ppi-completion">{{ baseline.estimated_completion_display || "—" }}</span>
+						<span class="kt-meta-value is-plain" data-testid="ppi-completion">{{ baseline.estimated_completion_display || "—" }}</span>
 					</div>
 					<div class="pln-fact">
 						<span class="kt-label">Departmental deadline</span>
-						<span class="kt-meta-value" data-testid="ppi-deadline">{{ deadlineDisplay }}</span>
+						<span class="kt-meta-value is-plain" data-testid="ppi-deadline">{{ deadlineDisplay }}</span>
 					</div>
 				</div>
 				<!-- Said once. When the deadline cannot be met the critical notice
@@ -340,7 +340,7 @@
 				     repeating the same sentence here left the page stating one
 				     problem twice (U09-INVALID-SCHEDULE draws the notice alone). -->
 				<p
-					v-if="baseline.estimated_completion_display && !saveBlocked"
+					v-if="baseline.estimated_completion_display && !scheduleBlocked"
 					class="pln-boundary"
 					data-testid="ppi-boundary"
 				>
@@ -379,7 +379,7 @@
 
 					<div class="pln-fact">
 						<span class="kt-label">Classification provenance</span>
-						<span class="kt-meta-value" data-testid="ppi-classification-provenance">
+						<span class="kt-meta-value is-plain" data-testid="ppi-classification-provenance">
 							{{ item.identity?.requirement_type }} / {{ item.identity?.procurement_category }}
 						</span>
 					</div>
@@ -391,11 +391,11 @@
 					<div v-if="methodProfile.profile || methodProfile.verification_status" class="kt-meta-row" data-testid="ppi-rule-evidence">
 						<div v-if="methodProfile.profile">
 							<span class="kt-label">Applicable rule</span>
-							<span class="kt-meta-value">{{ methodProfile.profile }}</span>
+							<span class="kt-meta-value is-plain">{{ methodProfile.profile }}</span>
 						</div>
 						<div v-if="methodProfile.verification_status">
 							<span class="kt-label">Source check</span>
-							<span class="kt-meta-value">{{ methodProfile.verification_status }}</span>
+							<span class="kt-meta-value is-plain">{{ methodProfile.verification_status }}</span>
 						</div>
 					</div>
 
@@ -442,7 +442,7 @@
 						type="button"
 						class="btn btn-primary"
 						data-testid="ppi-save"
-						:disabled="pending || saveBlocked"
+						:disabled="pending"
 						@click="$emit('save', draft)"
 					>
 						Save draft
@@ -551,6 +551,9 @@ const preference = computed(() => props.item.preference || {});
 const baseline = computed(() => props.item.baseline || {});
 const methodProfile = computed(() => classification.value.method_profile || {});
 const sources = computed(() => props.item.sources || []);
+// The server says whether the classification page opens for this viewer; the
+// link is never offered on a guess (KT-ACCESS-REV-001 v0.2 §2).
+const classificationReadable = computed(() => sources.value.some((row) => row.classification_readable));
 // U09's own row: the need reference and revision, then the budget line —
 // found live 23 Sep 2026 missing entirely, though the read model already
 // carries both (`need_reference_line`, `budget_line`).
@@ -641,7 +644,7 @@ const deadlineDisplay = computed(() => {
 	return row ? row.date_display : "—";
 });
 
-const saveBlocked = computed(() => blockerCodes.value.has("PLN_DELIVERY_BOUNDARY_INSUFFICIENT"));
+const scheduleBlocked = computed(() => blockerCodes.value.has("PLN_DELIVERY_BOUNDARY_INSUFFICIENT"));
 
 const boundaryText = computed(() =>
 	baseline.value.delivery_boundary_ok

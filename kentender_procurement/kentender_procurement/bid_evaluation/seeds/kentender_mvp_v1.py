@@ -6,8 +6,11 @@ Phase 13): the canonical Tender's evaluation, told the way §11.1 tells it.
 
   11 Jun 2027 08:58  the evaluation is prepared from the published Tender
               09:00  Amina Hassan appoints Grace Wambui (chair), Peter Mugo
-                     and Ruth Achieng; 09:05 Charles Mutiso assigns Brian
-                     Wafula as secretary; 09:10–09:14 each member declares
+                     and Ruth Achieng, and Charles Mutiso is recorded as
+                     secretary by office; 09:05 Charles delegates the
+                     secretary duties to Brian Wafula (his written
+                     appointment, EVL-CHG-001 v0.8 §3); 09:10–09:14 each
+                     member declares
   12 Jun 2027 11:10:33  the completed opening (four bids) is taken up and
                      checked: Pwani Tech Distributors Limited's 8 GB offer
                      fails the 16 GB memory requirement automatically
@@ -53,9 +56,9 @@ CHAIR = f"grace.wambui@{DOMAIN}"
 MEMBER = f"peter.mugo@{DOMAIN}"
 MEMBER_2 = f"ruth.achieng@{DOMAIN}"
 ROSTER = [
-	{"user": CHAIR, "department": "Human Resource Management and Development", "capacity": "Chair"},
-	{"user": MEMBER, "department": "ICT", "capacity": "Member"},
-	{"user": MEMBER_2, "department": "Finance", "capacity": "Member"},
+	{"user": CHAIR, "capacity": "Chair"},
+	{"user": MEMBER, "capacity": "Member"},
+	{"user": MEMBER_2, "capacity": "Member"},
 ]
 CLOCK = {
 	"prepare": "2027-06-11 08:58:00", "appoint": "2027-06-11 09:00:00", "secretary": "2027-06-11 09:05:00",
@@ -197,11 +200,11 @@ class _Story:
 		_at(CLOCK["prepare"])
 		_ok(preparation.ensure_preparation(tender=self.tender), "prepare")
 		_at(CLOCK["appoint"])
-		_ok(appointment.appoint_committee(tender=self.tender, members=ROSTER, appointment_reference="MOH/EVAL/002/2027", expected_version=self.version(),
+		_ok(appointment.appoint_committee(tender=self.tender, members=ROSTER, expected_version=self.version(),
 			idempotency_key=_key("appoint"), user=AO), "appoint the committee")
 		_at(CLOCK["secretary"])
-		_ok(secretary.assign_secretary(tender=self.tender, secretary=SECRETARY, appointment_reference="MOH/EVAL/SEC/002/2027", expected_version=self.version(),
-			idempotency_key=_key("secretary"), user=HOP), "assign the secretary")
+		_ok(secretary.delegate_secretary(tender=self.tender, secretary=SECRETARY, expected_version=self.version(),
+			idempotency_key=_key("secretary"), user=HOP), "delegate the secretary duties")
 		for user, at in zip((CHAIR, MEMBER, MEMBER_2), CLOCK["declare"]):
 			_at(at)
 			_ok(declaration.declare_interest(tender=self.tender, choice="No conflict to declare", confidentiality_accepted=True, idempotency_key=_key(f"declare-{user}"),
@@ -272,7 +275,7 @@ def evaluate_portfolio_tender(tender: str, clock_map: dict[str, str], *, stop: s
 
 	- "prepared": prepared from the published Tender; the committee
 	  appointment is the Accounting Officer's;
-	- "intake": appointed, the secretary assigned, each member declared, and
+	- "intake": appointed, the secretary duties delegated, each member declared, and
 	  the completed opening taken up — the automatic checks done, the
 	  committee's review outstanding;
 	- "report_sent": every bid's evidence reviewed as meeting, the
@@ -303,11 +306,11 @@ def evaluate_portfolio_tender(tender: str, clock_map: dict[str, str], *, stop: s
 		if stop == "prepared":
 			return {"ok": True, "idempotent": False, "evaluation": story.case(), "stopped": stop}
 		_at(clock_map["appoint"])
-		_ok(appointment.appoint_committee(tender=tender, members=ROSTER, appointment_reference=f"MOH/EVAL/{reference}/2027", expected_version=story.version(),
+		_ok(appointment.appoint_committee(tender=tender, members=ROSTER, expected_version=story.version(),
 			idempotency_key=_key("appoint"), user=AO), "appoint the committee")
 		_at(clock_map["secretary"])
-		_ok(secretary.assign_secretary(tender=tender, secretary=SECRETARY, appointment_reference=f"MOH/EVAL/SEC/{reference}/2027", expected_version=story.version(),
-			idempotency_key=_key("secretary"), user=HOP), "assign the secretary")
+		_ok(secretary.delegate_secretary(tender=tender, secretary=SECRETARY, expected_version=story.version(),
+			idempotency_key=_key("secretary"), user=HOP), "delegate the secretary duties")
 		for user, at in zip((CHAIR, MEMBER, MEMBER_2), clock_map["declare"]):
 			_at(at)
 			_ok(declaration.declare_interest(tender=tender, choice="No conflict to declare", confidentiality_accepted=True, idempotency_key=_key(f"declare-{user}"),

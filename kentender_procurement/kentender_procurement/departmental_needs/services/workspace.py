@@ -31,11 +31,15 @@ from kentender_procurement.departmental_needs.constants import (
 	TASK_SUCCESSOR_ACCEPTANCE,
 	TASK_WITHDRAWAL,
 	REVISION_CONTENT_FIELDS,
+	REVISION_DRAFT,
 )
 from kentender_procurement.departmental_needs.errors import fail
+from kentender_procurement.departmental_needs.services import estimate
+from kentender_procurement.departmental_needs.services.quantity import wire_text
 from kentender_procurement.departmental_needs.services.context import fy_label, selectable_financial_years
 from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
+	can_read_unsent_draft,
 	can_view,
 	creation_contexts,
 	is_owner,
@@ -80,7 +84,7 @@ def _version_facts(version: str) -> dict[str, Any]:
 	row = frappe.db.get_value(
 		"Departmental Need Revision",
 		version,
-		["name", "revision_number", "revision_status", "content_hash", *REVISION_CONTENT_FIELDS],
+		["name", "departmental_need", "revision_number", "revision_status", "content_hash", *REVISION_CONTENT_FIELDS],
 		as_dict=True,
 	)
 	if not row:
@@ -96,7 +100,28 @@ def _version_facts(version: str) -> dict[str, Any]:
 	facts["unit_label"] = cstr(
 		frappe.db.get_value("UOM", facts.get("unit"), "uom_name") or facts.get("unit") or ""
 	)
+	# NDS-CHG-001 v1.17 §4.3 — the estimated total cost, as an exact decimal
+	# string with its currency and label; a revision without one reads as
+	# absence (Frappe stores a blank Currency as 0.0), never as zero.
+	need_row = frappe.db.get_value("Departmental Need", facts.pop("departmental_need", None), "financial_year")
+	facts.update(estimate.display_fields(facts.get("estimated_total_cost"), cstr(need_row)))
 	return facts
+
+
+def _shown_revision(doc, principal: str) -> str:
+	"""The revision whose content `principal` may see as the Need's current one.
+
+	An author's unsent Draft successor is theirs (and the Head of Department's,
+	the Auditor's) alone; everyone else reads the accepted revision (AUD-NDS-003).
+	"""
+	current = cstr(doc.current_revision)
+	accepted = cstr(doc.current_accepted_revision)
+	if not current or current == accepted or not accepted:
+		return current
+	status = frappe.db.get_value("Departmental Need Revision", current, "revision_status")
+	if status == REVISION_DRAFT and not can_read_unsent_draft(doc, principal):
+		return accepted
+	return current
 
 
 def _quantity_label(version: dict[str, Any]) -> str:
@@ -318,7 +343,7 @@ def get_workspace(
 		allowed, profile = can_view(doc, principal)
 		if not allowed or doc.current_state == STATE_WITHDRAWN:
 			continue
-		version = _version_facts(doc.current_revision)
+		version = _version_facts(_shown_revision(doc, principal))
 		title = cstr(version.get("title"))
 		if term and term not in title.lower() and term not in cstr(doc.need_reference).lower():
 			continue
@@ -356,6 +381,7 @@ def get_workspace(
 			"financial_year_label": next(
 				(row["label"] for row in _fy_rows if row["id"] == fy), fy
 			),
+			"estimate_currency": estimate.currency_of(fy),
 		},
 		"needs": needs,
 		# §12.1 — "Derive create targets by combining active Departmental
@@ -472,11 +498,11 @@ def get_current_accepted_need(
 ) -> dict[str, Any]:
 	"""§8.1 — the typed accepted source contract for Procurement Planning.
 
-	Returns the §7.1 `DepartmentalNeedAccepted.v2` field set, or a typed
+	Returns the §7.1 / §7.1A `DepartmentalNeedAccepted.v3` field set, or a typed
 	stale/not-accepted error. This is the only supported way for Planning to
 	read a Need (firm D1 boundary); the payload deliberately carries no Budget
-	Line, amount, funding source, currency, Strategy, requirement type,
-	location or attachment (NDS-AC-024).
+	Line, funding source, currency, Strategy, requirement type, location or
+	attachment (NDS-AC-024); its one amount is the Need's own estimated total cost.
 	"""
 	principal = actor(user)
 	name = cstr(need).strip()
@@ -500,7 +526,7 @@ def get_current_accepted_need(
 	unit_label = cstr(frappe.db.get_value("UOM", version.unit, "uom_name") or version.unit or "")
 	return {
 		"ok": True,
-		"contract": "DepartmentalNeedAccepted.v2",
+		"contract": "DepartmentalNeedAccepted.v3",
 		"need": doc.name,
 		"need_reference": doc.need_reference,
 		"accepted_revision": version.name,
@@ -511,10 +537,11 @@ def get_current_accepted_need(
 		"title": version.title,
 		"description": version.description,
 		"expected_operational_result": version.expected_operational_result,
-		"indicative_quantity": flt(version.indicative_quantity),
+		"indicative_quantity": wire_text(version.indicative_quantity),
 		"unit": version.unit,
 		"unit_label": unit_label,
 		"required_by_date": str(version.required_by_date or ""),
+		"estimated_total_cost": estimate.wire_text(version.estimated_total_cost),
 	}
 
 
@@ -742,11 +769,12 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 		"ok": True,
 		"need": doc.as_dict(no_nulls=True),
 		"scope_labels": _scope_labels(doc),
+		"estimate_currency": estimate.currency_of(doc.financial_year),
 		# The editor limits Required by to the Need's own year (UAT issue #25).
 		"financial_year_window": _financial_year_window(doc),
 		"accepted": accepted,
 		"submitted": submitted,
-		"current_revision": _version_facts(doc.current_revision),
+		"current_revision": _version_facts(_shown_revision(doc, principal)),
 		"accepted_revision": _version_facts(doc.current_accepted_revision),
 		"latest_return": latest_return,
 		"terminal_decision": terminal_decision,

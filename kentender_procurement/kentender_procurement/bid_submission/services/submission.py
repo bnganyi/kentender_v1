@@ -67,8 +67,9 @@ def _lock(workspace: str) -> None:
 
 
 def _attempt_by_key(key_hash: str):
-	name = frappe.db.get_value(ATTEMPT, {"idempotency_key_hash": key_hash}, "name")
-	return frappe.get_doc(ATTEMPT, name) if name else None
+	# a locking read: the Workspace lock was taken first, and a plain read would show the snapshot from before the wait (RG-17)
+	name = frappe.db.get_value(ATTEMPT, {"idempotency_key_hash": key_hash}, "name", for_update=True)
+	return frappe.get_doc(ATTEMPT, name, for_update=True) if name else None
 
 
 def _current_receipt(workspace) -> str:

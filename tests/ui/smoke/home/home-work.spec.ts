@@ -21,8 +21,8 @@ test.describe("Charles, Head of Procurement Function (slice A)", () => {
 		await expect(page.locator('[data-testid="kt-home-responsibilities"]')).toHaveText("Head of Procurement Function, site-wide");
 		await expect(page.locator('[data-testid="kt-home-updated"]')).toContainText("Updated 18 June 2027, 10:00 EAT");
 		expect(await summary(page)).toEqual([
-			"My work 10 actions for you",
-			"Waiting on others 3 items you're waiting on",
+			"My work 9 actions for you",
+			"Waiting on others 2 items you're waiting on",
 			"Records you oversee 6 records with outstanding matters",
 		]);
 		expect(errors, errors.join("\n")).toEqual([]);
@@ -33,7 +33,7 @@ test.describe("Charles, Head of Procurement Function (slice A)", () => {
 		const list = rows(page, "my-work");
 		await expect(list).toHaveCount(5);
 		expect(await flat(list.nth(0))).toBe("Supply of medical-grade tablets Tenders TND-MOH-2026-005 Respond to clarification Received 16 days ago (2 June, 10:00) Continue");
-		expect(await flat(list.nth(4))).toBe("Supply of network switches Evaluation TND-MOH-2026-010 Assign evaluation secretary Received 5 days ago (13 June, 08:58) Continue");
+		expect(await flat(list.nth(4))).toBe("Supply of medical-grade tablets Bid opening TND-MOH-2026-005 Join opening Received 3 days ago (15 June, 10:00) Continue");
 		const buttons = region(page, "my-work").locator('[data-testid="kt-home-continue"]');
 		expect(await buttons.evaluateAll((els) => els.map((e) => e.classList.contains("btn-primary")))).toEqual([true, false, false, false, false]);
 		await expect(region(page, "my-work")).not.toContainText("Your turn");
@@ -41,18 +41,18 @@ test.describe("Charles, Head of Procurement Function (slice A)", () => {
 
 	test("Show more appends the next five in place, leaves the count, and moves focus to the first appended row", async ({ page }) => {
 		await openHomeFromMenu(page, CHARLES);
-		await expect(page.locator('#my-work [data-testid="kt-home-showing"]')).toHaveText("Showing 5 of 10");
+		await expect(page.locator('#my-work [data-testid="kt-home-showing"]')).toHaveText("Showing 5 of 9");
 		const more = page.locator('#my-work [data-testid="kt-home-show-more"]');
-		await expect(more).toContainText("Show 5 more");
+		await expect(more).toContainText("Show 4 more");
 		await more.click();
-		await expect(rows(page, "my-work")).toHaveCount(10);
-		await expect(page.locator('#my-work [data-testid="kt-home-showing"]')).toHaveText("Showing 10 of 10");
+		await expect(rows(page, "my-work")).toHaveCount(9);
+		await expect(page.locator('#my-work [data-testid="kt-home-showing"]')).toHaveText("Showing 9 of 9");
 		await expect(page.locator('#my-work [data-testid="kt-home-show-more"]')).toHaveCount(0);
-		expect((await summary(page))[0]).toBe("My work 10 actions for you");
+		expect((await summary(page))[0]).toBe("My work 9 actions for you");
 		const focused = await page.evaluate(() => (document.activeElement as HTMLElement | null)?.closest("[data-key]")?.getAttribute("data-key") || "");
 		const sixth = await rows(page, "my-work").nth(5).getAttribute("data-key");
 		expect(focused).toBe(sixth);
-		await expect(page.locator('[data-testid="kt-home-live"]')).toHaveText("Showing 10 of 10");
+		await expect(page.locator('[data-testid="kt-home-live"]')).toHaveText("Showing 9 of 9");
 	});
 
 	test("Coming up shows the chair's Start opening with a relative badge and the exact time", async ({ page }) => {
@@ -64,10 +64,9 @@ test.describe("Charles, Head of Procurement Function (slice A)", () => {
 	test("Waiting on others names who holds each item and since when", async ({ page }) => {
 		await openHomeFromMenu(page, CHARLES);
 		const list = rows(page, "waiting");
-		await expect(list).toHaveCount(3);
-		expect(await flat(list.nth(0))).toBe("Supply of network switches Waiting for Amina Hassan to appoint the evaluation committee Waiting 5 days (since 13 June, 08:58)");
-		expect(await flat(list.nth(1))).toBe("Supply of UPS units Waiting for Amina Hassan to decide publication Waiting 2 days (since 16 June, 15:30)");
-		expect(await flat(list.nth(2))).toBe("Supply of laboratory desktop computers Waiting for Amina Hassan to decide the award Waiting 1 day (since 17 June, 16:00)");
+		await expect(list).toHaveCount(2);
+		expect(await flat(list.nth(0))).toBe("Supply of UPS units Waiting for Amina Hassan to decide publication Waiting 2 days (since 16 June, 15:30)");
+		expect(await flat(list.nth(1))).toBe("Supply of laboratory desktop computers Waiting for Amina Hassan to decide the award Waiting 1 day (since 17 June, 16:00)");
 	});
 
 	test("Records you oversee counts outstanding matters, pages, and never shows a bid detail before delivery", async ({ page }) => {
@@ -95,7 +94,7 @@ test.describe("Charles, Head of Procurement Function (slice A)", () => {
 	test("Continue opens the owner's own route and writes nothing", async ({ page }) => {
 		await openHomeFromMenu(page, CHARLES);
 		await rows(page, "my-work").nth(4).locator('[data-testid="kt-home-continue"]').click();
-		await expect(page).toHaveURL(/\/desk\/tenders\/TND-MOH-2026-010\/evaluation\/secretary$/, { timeout: 60_000 });
+		await expect(page).toHaveURL(/\/desk\/tenders\/TND-MOH-2026-005\/opening$/, { timeout: 60_000 });
 		await expect(root(page)).toBeHidden(); // Home stays mounted behind the next page (AGENTS.md §6.1), so it is hidden, not removed
 	});
 });
@@ -117,7 +116,7 @@ test.describe("Amina, Accounting Officer (slice A)", () => {
 
 	test("an owner deadline that has passed reads Overdue since, and nothing is overdue from age alone", async ({ page }) => {
 		await openHomeFromMenu(page, AMINA);
-		expect(await flat(rows(page, "waiting").nth(1))).toBe("Supply of desktop computers Waiting for cancellation compliance evidence from Brian Wafula Waiting 3 days (since 15 June, 12:00) Overdue since 15 June");
+		expect(await flat(rows(page, "waiting").first())).toBe("Supply of desktop computers Waiting for cancellation compliance evidence from Brian Wafula Waiting 3 days (since 15 June, 12:00) Overdue since 15 June");
 		await expect(region(page, "my-work")).not.toContainText("Overdue"); // old work (5 days) is not overdue: no owner deadline
 	});
 
