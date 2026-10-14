@@ -30,11 +30,17 @@ def holders(role: str, unit: str = "") -> list[str]:
 	return people.holders(role, unit)
 
 
+def identity_of(case: str, subject: str, version: int, command: str, holder: str) -> str:
+	"""(case, subject, version, command, holder), shortened to a stable token when it would not fit the 140 characters the key is stored in."""
+	whole = f"{case}|{subject}|{version}|{command}|{holder}"
+	return whole if len(whole) <= 120 else f"{case}|{records.short(whole)}"
+
+
 def assign(case: str, command: str, title: str, subject: str, version: int, holder_users: Iterable[str], *, role: str = "", state: str = "Open", due=None, due_verified: bool = False) -> list[str]:
 	"""One task for each holder. Returns the identities created; an existing identity is left exactly as it is (so a replay changes nothing)."""
 	created = []
 	for holder in sorted({h for h in holder_users if h}):
-		identity = f"{case}|{subject}|{version}|{command}|{holder}"
+		identity = identity_of(case, subject, version, command, holder)
 		existing = frappe.db.get_value(TASK, {"identity": identity}, ["name", "state"], as_dict=True)
 		if existing:
 			if existing.state in ("Done", "Superseded"):  # the same obligation arising again (a recovery that fails twice) is the same item, reopened with its history kept
@@ -76,12 +82,12 @@ def finish(case: str, *, command: str | None = None, subject: str | None = None,
 
 def reassign(case: str, command: str, subject: str, version: int, old_holder: str, new_holder: str, *, actor: str = "") -> None:
 	"""Move a live task to another holder, keeping the earlier holder and the time it ended."""
-	name = frappe.db.get_value(TASK, {"identity": f"{case}|{subject}|{version}|{command}|{old_holder}"}, "name")
+	name = frappe.db.get_value(TASK, {"identity": identity_of(case, subject, version, command, old_holder)}, "name")
 	if not name:
 		return
 	doc = frappe.get_doc(TASK, name)
 	records.append_json(doc, "history_json", {"holder": old_holder, "from": str(doc.assigned_at), "until": str(clock.now()), "by": actor})
-	records.update(doc, holder=new_holder, assigned_at=clock.now(), identity=f"{case}|{subject}|{version}|{command}|{new_holder}")
+	records.update(doc, holder=new_holder, assigned_at=clock.now(), identity=identity_of(case, subject, version, command, new_holder))
 
 
 def live(case: str) -> list[dict[str, Any]]:

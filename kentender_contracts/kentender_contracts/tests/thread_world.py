@@ -8,6 +8,8 @@ provider and the clock the boards are read at (2 July 2027). Built once per test
 
 from __future__ import annotations
 
+from uuid import uuid4
+
 import frappe
 
 from kentender_contracts.services import records
@@ -115,7 +117,7 @@ class Environment:
 
 
 def package_particulars(people: dict[str, str]) -> dict:
-	return {"agreement_date": "2027-07-02", "entity_signatory": people["amina"], "item_mapping": {"L1": world.ITEM_FA}, "native_supplier": world.SUPPLIER}
+	return {"agreement_date": "2027-07-02", "entity_signatory": people["amina"], "item_mapping": {"L1": world.ITEM_FA}, "native_supplier": world.SUPPLIER, "asset_location": world.LOCATION}
 
 
 def receive(people: dict[str, str], *, contract_id: str = "CM-TEST-0001") -> dict:
@@ -127,3 +129,116 @@ def receive(people: dict[str, str], *, contract_id: str = "CM-TEST-0001") -> dic
 
 def purge_native_operation_rows(case_ids: list[str]) -> None:
 	records.wipe("CM_TEST")
+
+
+# -- the thread, a step at a time (each returns what the next step needs) --------------------------------------------------------------------
+class Thread:
+	"""Drives the ordinary thread through the services as the people of the boards. `case` and the latest `version` are kept so each step passes the version it last saw."""
+
+	def __init__(self, people: dict[str, str], tag: str = "T1", contract_id: str = ""):
+		self.p, self.tag, self.n = people, tag, 0
+		self.contract_id = contract_id or f"CM-TEST-{tag}"
+		self.case = ""
+
+	def key(self, step: str) -> str:
+		self.n += 1
+		return f"{self.tag}-{step}-{self.n}"
+
+	def version(self) -> int:
+		return int(frappe.db.get_value("Contract Case", self.case, "record_version"))
+
+	def active(self) -> str:
+		"""Receive, prepare, send, both signatures: an Active contract with its native order."""
+		from kentender_contracts.services import formation
+
+		out = receive(self.p, contract_id=self.contract_id)
+		self.case = out["contract"]
+		formation.save_particulars(self.case, expected_version=self.version(), idempotency_key=self.key("particulars"), actor=self.p["brian"], values=package_particulars(self.p))
+		formation.request_signatures(self.case, expected_version=self.version(), idempotency_key=self.key("send"), actor=self.p["charles"])
+		formation.sign_contract(self.case, party="Supplier", expected_version=self.version(), idempotency_key=self.key("sign-s"), actor=self.p["mary"])
+		formation.sign_contract(self.case, party="Entity", expected_version=self.version(), idempotency_key=self.key("sign-e"), actor=self.p["amina"])
+		return self.case
+
+	def appointed(self) -> dict:
+		"""HOP recommends Julia (chair), Peter (technical) and Brian; the Accounting Officer appoints; each declares no interest."""
+		from kentender_contracts.services import delivery
+
+		members = [{"user": self.p["julia"], "capacity": "Chair", "role_label": "User department"}, {"user": self.p["peter"], "capacity": "Member", "certifier": True, "role_label": "Technical"},
+			{"user": self.p["brian"], "capacity": "Member", "role_label": "Procurement"}]
+		rec = delivery.recommend_inspectors(self.case, expected_version=self.version(), idempotency_key=self.key("recommend"), actor=self.p["charles"], members=members)
+		delivery.appoint_inspectors(self.case, appointment=rec["appointment"], expected_version=self.version(), idempotency_key=self.key("appoint"), actor=self.p["amina"])
+		for who in ("julia", "peter", "brian"):
+			delivery.declare_interest(self.case, expected_version=self.version(), idempotency_key=self.key("declare"), actor=self.p[who])
+		return rec
+
+	def arrive(self, units: list[str], *, received_at: str = "2027-07-12 10:00:00") -> dict:
+		from kentender_contracts.services import delivery
+
+		return delivery.record_arrival(self.case, expected_version=self.version(), idempotency_key=self.key("arrive"), actor=self.p["grace"], received_at=received_at,
+			destination="Afya House store", items=[{"line_id": "L1", "quantity": len(units), "units": units}])
+
+	def inspect(self, arrival: str, units: list[str], bad: tuple[str, ...] = (), blank: tuple[str, ...] = ()) -> dict:
+		from kentender_contracts.services import delivery
+
+		return delivery.record_inspection(self.case, arrival=arrival, expected_version=self.version(), idempotency_key=self.key("inspect"), actor=self.p["peter"], observations=readings(units, bad, blank))
+
+
+def readings(units: list[str], bad: tuple[str, ...] = (), blank: tuple[str, ...] = ()) -> list[dict]:
+	out = []
+	for unit in units:
+		out.append({"unit": unit, "criterion_id": "C1", "value": "" if unit in blank else "13.3" if unit in bad else "15.6"})
+		out.append({"unit": unit, "criterion_id": "C2", "value": "16"})
+	return out
+
+
+_RUN = uuid4().hex[:6].upper()
+_NEXT = [0]
+
+
+def fresh_serials(count: int) -> list[str]:
+	"""Unit identities no earlier test (or earlier run that left assets behind) has used: a unit identifies one unit only, and the native world is built once per class."""
+	out = [f"CMT{_RUN}-{_NEXT[0] + n:04d}" for n in range(1, count + 1)]
+	_NEXT[0] += count
+	return out
+
+
+def _more(cls):
+	"""Steps past inspection, attached to `Thread` (kept apart so the first half reads on its own)."""
+
+	def accept(self, arrival: str) -> dict:
+		from kentender_contracts.services import delivery
+
+		delivery.sign_technical_certificate(self.case, arrival=arrival, expected_version=self.version(), idempotency_key=self.key("cert"), actor=self.p["peter"])
+		out = delivery.prepare_acceptance_report(self.case, arrivals=[arrival], expected_version=self.version(), idempotency_key=self.key("prepare"), actor=self.p["julia"])
+		for who in ("julia", "peter", "brian"):
+			last = delivery.sign_acceptance_report(self.case, acceptance=out["acceptance"], expected_version=self.version(), idempotency_key=self.key("sign-a"), actor=self.p[who])
+		return {**out, **last}
+
+	def claim(self, reference: str, quantity: int, *, rate=None) -> dict:
+		from kentender_contracts.services import payment
+
+		return payment.submit_invoice(self.case, expected_version=self.version(), idempotency_key=self.key("claim"), actor=self.p["david"], claim_reference=reference, invoice_date=frappe.utils.today(),
+			lines=[{"line_id": "L1", "quantity": quantity, "rate": rate}])
+
+	def certify_invoice(self, invoice: str) -> dict:
+		from kentender_contracts.services import payment
+
+		return payment.sign_certification(self.case, invoice=invoice, expected_version=self.version(), idempotency_key=self.key("certify"), actor=self.p["charles"])
+
+	def pay(self, invoice: str, reference: str) -> dict:
+		"""Josphat drafts and submits, Beatrice approves and confirms the settlement."""
+		from kentender_contracts.services import payment
+
+		draft = payment.save_finance_draft(self.case, invoice=invoice, expected_version=self.version(), idempotency_key=self.key("draft"), actor=self.p["josphat"], mode_of_payment=world.MODE,
+			paid_from=world.BANK_ACCOUNT, reference_no=reference)
+		payment.submit_finance_for_approval(self.case, payment=draft["payment"], expected_version=self.version(), idempotency_key=self.key("submit"), actor=self.p["josphat"])
+		payment.approve_finance_record(self.case, payment=draft["payment"], expected_version=self.version(), idempotency_key=self.key("approve"), actor=self.p["beatrice"])
+		settled = payment.record_finance_settlement(self.case, payment=draft["payment"], expected_version=self.version(), idempotency_key=self.key("settle"), actor=self.p["beatrice"],
+			effective_date="2027-07-20", evidence=f"Bank statement line for {reference}")
+		return {**draft, **settled}
+
+	cls.accept, cls.claim, cls.certify_invoice, cls.pay = accept, claim, certify_invoice, pay
+	return cls
+
+
+_more(Thread)

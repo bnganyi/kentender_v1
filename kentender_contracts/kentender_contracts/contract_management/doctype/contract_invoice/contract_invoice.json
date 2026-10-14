@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "contract_case",
+  "invoice_no",
   "claim_reference",
   "invoice_date",
   "received_at",
@@ -29,6 +30,12 @@
    "read_only": 1,
    "options": "Contract Case",
    "reqd": 1
+  },
+  {
+   "fieldname": "invoice_no",
+   "label": "Invoice no",
+   "fieldtype": "Int",
+   "read_only": 1
   },
   {
    "fieldname": "claim_reference",

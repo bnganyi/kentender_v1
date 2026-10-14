@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "contract_case",
+  "arrival_no",
   "delivery_reference",
   "received_at",
   "recorded_at",
@@ -28,6 +29,12 @@
    "read_only": 1,
    "options": "Contract Case",
    "reqd": 1
+  },
+  {
+   "fieldname": "arrival_no",
+   "label": "Arrival no",
+   "fieldtype": "Int",
+   "read_only": 1
   },
   {
    "fieldname": "delivery_reference",

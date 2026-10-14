@@ -20,23 +20,22 @@ import frappe
 from frappe.utils import cint, cstr, formatdate, getdate
 
 from kentender_contracts.native import adapter
-from kentender_contracts.services import authority, clock, events, intents, parties, people, preflight, records, simulation, source_package, work
+from kentender_contracts.services import authority, clock, events, intents, parties, people, preflight, records, simulation, source_package, signing_flow, work
 from kentender_contracts.services.errors import Guards, fail, invalid
 from kentender_core.services import contract_funding_contract as funding_seam
-from kentender_core.services import signing
 from kentender_core.utils.series import allocation_lock
 
 CASE = "Contract Case"
 AGREEMENT = "Contract Agreement Version"
 SIGNATURE = "Contract Signature"
 PACKAGE = "Contract Source Package"
-PARTICULARS = ("agreement_date", "entity_signatory", "supplier_signatory", "item_mapping", "native_supplier", "company", "destination")
+PARTICULARS = ("agreement_date", "entity_signatory", "supplier_signatory", "item_mapping", "native_supplier", "company", "destination", "asset_location")
 LABELS = {
 	"agreement_date": "Agreement date", "entity_signatory": "Entity signatory", "supplier_signatory": "Supplier signatory", "item_mapping": "Catalogue item for each line",
-	"native_supplier": "Supplier in Finance", "company": "Company", "destination": "Delivery destination",
+	"native_supplier": "Supplier in Finance", "company": "Company", "destination": "Delivery destination", "asset_location": "Asset location",
 }
 REQUIRED_PACKAGE_KEYS = ("award_case", "tender", "decision", "contract_terms", "restrictions")
-SIGNING_METHOD = "Signature proof"
+SIGNING_METHOD = signing_flow.METHOD
 
 
 # -- intake ---------------------------------------------------------------------------------------------------------------------------
@@ -115,6 +114,8 @@ def _assemble(doc, particulars: dict[str, Any]) -> dict[str, Any]:
 		missing.append("item_mapping")
 	if not _native_supplier(particulars, supplier_org["legal_name"]):
 		missing.append("native_supplier")
+	if all(mapping.get(l["line_id"]) for l in lines) and any(_creates_assets(mapping[l["line_id"]]) for l in lines) and not particulars.get("asset_location"):
+		missing.append("asset_location")
 	terms = {
 		"title": s["S1"].get("title") or doc.title, "currency": currency, "tax_included": bool(s["S3"].get("tax_included")), "total": total, "lines": lines,
 		"delivery": {"due": s["S4"]["delivery_schedule"]["due"], "destination": particulars.get("destination") or s["S4"]["delivery_schedule"].get("destination", "")},
@@ -128,6 +129,14 @@ def _assemble(doc, particulars: dict[str, Any]) -> dict[str, Any]:
 		"particulars": particulars,
 	}
 	return {"sources": sources, "terms": terms, "lines": lines, "html": html, "missing": sorted(set(missing)), "manifest": source_package.manifest(sources)}
+
+
+def _creates_assets(item_code: str | None) -> bool:
+	"""A fixed-asset item whose receipt creates an asset for each unit: each unit then needs a place."""
+	if not item_code or not frappe.db.exists("Item", item_code):
+		return False
+	flags = frappe.db.get_value("Item", item_code, ["is_fixed_asset", "auto_create_assets"], as_dict=True)
+	return bool(flags.is_fixed_asset and flags.auto_create_assets)
 
 
 def _native_supplier(particulars: dict[str, Any], legal_name: str) -> str:
@@ -150,6 +159,8 @@ def _check_particulars(values: dict[str, Any]) -> dict[str, Any]:
 			problems["entity_signatory"] = "Choose a person with an account."
 		elif not people.holds(clean["entity_signatory"], "Entity contract signing"):
 			problems["entity_signatory"] = "This person does not hold the Entity contract signing responsibility."
+	if "asset_location" in clean and not frappe.db.exists("Location", clean["asset_location"]):
+		problems["asset_location"] = "Choose an existing location."
 	if "item_mapping" in clean:
 		bad = [k for k, v in clean["item_mapping"].items() if not frappe.db.exists("Item", v)]
 		if bad:
@@ -277,7 +288,7 @@ def _record_attempt(case: str, party: str, expected_version: int, actor: str, ke
 		if supplier != "Signed":
 			fail("CM_CHANGED", reason="The supplier signs first.", waiting_for="supplier signature")
 	subject = f"signature {party.lower()} agreement {agreement.version_no}"
-	existing = frappe.db.get_value(intents.INTENT, {"operation_identity": intents.identity(case, subject, agreement.version_no, "Signing attempt", f"sign-{party.lower()}")}, "name")
+	existing = signing_flow.existing(case, subject, agreement.version_no, f"sign-{party.lower()}")
 	guards = preflight.rules(doc, "SignContractVersion")
 	preflight.holds(guards, case, "new_signing_attempt", except_keys=[f"operation:{existing}"] if existing else [])
 	terms = records.loads(agreement.terms_json)
@@ -287,7 +298,7 @@ def _record_attempt(case: str, party: str, expected_version: int, actor: str, ke
 	if terms.get("restrictions"):
 		guards.add("CM_HOLD", hold="award restriction", kind="Restriction", reason="An award restriction requires review.", holder="Head of procurement function", clears_with="The restriction is resolved by its owner", consequence="new_signing_attempt")
 	guards.raise_if_any()
-	intent = intents.record(case, subject, agreement.version_no, "Signing attempt", f"sign-{party.lower()}", recovery_owner="Technical operator")
+	intent = signing_flow.record(case, subject, agreement.version_no, f"sign-{party.lower()}")
 	return records.summary(doc, agreement=agreement.name, signature=slot.name, intent=intent.name, party=party)
 
 
@@ -303,34 +314,14 @@ def sign_contract(case: str, *, party: str, expected_version: int, idempotency_k
 	return _complete_signature(case, recorded, actor)
 
 
-def _signing_lookup(identity: str) -> str | None:
-	found = signing.reconcile(identity, consumer="contracts")
-	if found.get("known") is True and found.get("outcome") == signing.VERIFIED and found.get("proof_reference"):
-		return found["proof_reference"]
-	return None
-
-
 def _complete_signature(case: str, recorded: dict[str, Any], actor: str) -> dict[str, Any]:
 	agreement = frappe.get_doc(AGREEMENT, recorded["agreement"])
 	slot = frappe.get_doc(SIGNATURE, recorded["signature"])
 	party = recorded["party"]
-	reasons: dict[str, str] = {}
-
-	def executor(identity: str):
-		answer = signing.attest(member=actor, target_id=agreement.name, target_digest=agreement.rendered_digest, minutes_version=str(agreement.version_no),
-			action=f"Sign the contract agreement as the {party.lower()}", correlation_id=identity, consumer="contracts")
-		outcome = answer.get("outcome")
-		reasons["outcome"] = outcome
-		if outcome == signing.VERIFIED and answer.get("proof_reference"):
-			reasons["method"] = answer.get("method", "")
-			return answer["proof_reference"], SIGNING_METHOD
-		if outcome in (signing.UNAVAILABLE, signing.REJECTED):
-			raise intents.OwnerRefused(f"Signing {outcome.lower()}.")
-		raise RuntimeError("The signing outcome is not known.")
-
-	result = intents.execute(recorded["intent"], executor, _signing_lookup, native_doctype=SIGNING_METHOD)
-	if result["state"] in intents.SETTLED:
-		return _apply_signature(case, slot.name, result["reference"], actor, reasons.get("method", ""))
+	result = signing_flow.carry_out(recorded["intent"], member=actor, target_id=agreement.name, target_digest=agreement.rendered_digest, version=agreement.version_no,
+		action=f"Sign the contract agreement as the {party.lower()}")
+	if signing_flow.settled(result):
+		return _apply_signature(case, slot.name, result["reference"], actor, result["method"])
 	pending = result["state"] in ("Attempting", "Uncertain", "Recorded")
 	with records.atomic():
 		doc = records.lock(case)
@@ -338,9 +329,9 @@ def _complete_signature(case: str, recorded: dict[str, Any], actor: str) -> dict
 		records.update(slot, state="Pending" if pending else "Failed", correlation_id=frappe.db.get_value(intents.INTENT, recorded["intent"], "operation_identity"))
 		records.bump(doc)
 		work.incident(case, "RestoreContractOperation", "Restore signing", f"signature {party.lower()} agreement {agreement.version_no}", agreement.version_no)
-		events.record(case, "Signing not completed", actor, f"The {party.lower()} signature was not completed ({result['state'].lower()}).", intent=recorded["intent"], outcome=reasons.get("outcome", result["state"]))
+		events.record(case, "Signing not completed", actor, f"The {party.lower()} signature was not completed ({result['state'].lower()}).", intent=recorded["intent"], outcome=result["outcome"] or result["state"])
 	frappe.db.commit()
-	fail("CM_SIGNING", party=party, intent=recorded["intent"], pending=pending, state=result["state"])
+	signing_flow.unfinished(result, party=party)
 
 
 def _apply_signature(case: str, slot_name: str, proof: str, actor: str, method: str) -> dict[str, Any]:

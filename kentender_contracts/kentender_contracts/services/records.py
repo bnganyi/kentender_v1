@@ -76,6 +76,11 @@ def digest(value: Any) -> str:
 	return hashlib.sha256(json.dumps(value, sort_keys=True, default=str, ensure_ascii=False).encode("utf-8")).hexdigest()
 
 
+def short(value: str) -> str:
+	"""A short stable token for a long identity part (a person's address inside an operation key); the full value is kept on the record it belongs to."""
+	return hashlib.sha1(str(value).lower().encode("utf-8")).hexdigest()[:8]
+
+
 def loads(value, default=None):
 	if not value:
 		return default if default is not None else {}

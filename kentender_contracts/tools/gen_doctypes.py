@@ -35,7 +35,7 @@ RECORDS = {
 		F("scope"), F("reference"), F("members_json", "Long Text"), F("recommended_by"), F("appointed_by"), F("reason", "Small Text"),
 		F("effective_from", "Datetime"), F("effective_to", "Datetime"), F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Arrival": ("ARR", "One physical arrival: what was observed, when, by whom, where. Immutable; corrections are linked.", [
-		F("contract_case", "Link", "Contract Case", reqd=1), F("delivery_reference"), F("received_at", "Datetime"), F("recorded_at", "Datetime"), F("receiver"),
+		F("contract_case", "Link", "Contract Case", reqd=1), F("arrival_no", "Int"), F("delivery_reference"), F("received_at", "Datetime"), F("recorded_at", "Datetime"), F("receiver"),
 		F("destination"), F("items_json", "Long Text"), F("notes", "Small Text"), F("state", "Select", "Recorded\nCorrected"), F("evidence_json", "Long Text"),
 		F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Inspection": ("INS", "One inspector's observations of an arrival against the frozen criteria, with the calculated findings.", [
@@ -51,7 +51,7 @@ RECORDS = {
 		F("arrivals_json", "Long Text"), F("lines_json", "Long Text"), F("signers_json", "Long Text"), F("technical_certificate"), F("chair"),
 		F("decision_at", "Datetime"), F("posting_intent"), F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Invoice": ("INV", "A supplier's claim against the contract, with its automatic matching and its native invoice.", [
-		F("contract_case", "Link", "Contract Case", reqd=1), F("claim_reference"), F("invoice_date", "Date"), F("received_at", "Datetime"), F("claimed_amount", "Currency"),
+		F("contract_case", "Link", "Contract Case", reqd=1), F("invoice_no", "Int"), F("claim_reference"), F("invoice_date", "Date"), F("received_at", "Datetime"), F("claimed_amount", "Currency"),
 		F("state", "Select", "Submitted\nHeld\nCertified\nPartly paid\nPaid\nSuperseded"), F("lines_json", "Long Text"), F("matching_json", "Long Text"),
 		F("native_invoice"), F("successor_of"), F("submitted_by"), F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Certification": ("CTF", "The contractual support for one invoice: the frozen matching, the supported amount and the certifier's proof.", [
