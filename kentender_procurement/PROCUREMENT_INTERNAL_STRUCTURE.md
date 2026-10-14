@@ -9,8 +9,7 @@ Aligned with [mono-repo-v2.md](../docs/architecture/mono-repo-v2.md). Each folde
 | *(tendering v1 retired)* | Heavy solicitation UI removed; v2 may extend this slice or integrate via hooks — see `release_procurement_package_to_tender` |
 | `bid_submission_opening` | Bid submission and opening |
 | `evaluation_award` | Evaluation and award |
-| `contract_management` | Contract management |
-| `inspection_acceptance` | Inspection and acceptance |
+| *(contract management and inspection/acceptance)* | Moved out of this app: `kentender_contracts` owns contract management, inspection and acceptance (CM-CHG-001 v0.8; it must run without the tendering modules) |
 
 **Boundaries (v3):**
 

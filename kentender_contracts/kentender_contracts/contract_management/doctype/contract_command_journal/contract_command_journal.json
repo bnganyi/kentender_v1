@@ -1,0 +1,103 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-14 09:00:00.000000",
+ "description": "Plan D4: the command journal. A replay returns the original result and a conflicting reuse of a key is refused.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "idempotency_key",
+  "command",
+  "payload_hash",
+  "result_json",
+  "actor",
+  "contract_case",
+  "recorded_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "idempotency_key",
+   "label": "Idempotency key",
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "command",
+   "label": "Command",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "payload_hash",
+   "label": "Payload hash",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "result_json",
+   "label": "Result",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actor",
+   "label": "Actor",
+   "fieldtype": "Link",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recorded_at",
+   "label": "Recorded at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-14 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Command Journal",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:idempotency_key"
+}

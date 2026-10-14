@@ -1,0 +1,131 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-14 09:00:00.000000",
+ "description": "Plan D5: one durable intent per cross-owner or uncertain effect (\u00a75.17). Unique on its operation identity so a retry cannot post twice.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "subject",
+  "subject_version",
+  "operation_kind",
+  "operation_key",
+  "operation_identity",
+  "state",
+  "recovery_owner",
+  "result_reference",
+  "attempts_json",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "options": "Contract Case",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "subject",
+   "label": "Subject",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "subject_version",
+   "label": "Subject version",
+   "fieldtype": "Int",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "operation_kind",
+   "label": "Operation kind",
+   "fieldtype": "Select",
+   "options": "Purchase order\nFunding conversion\nFunding adjustment\nFunding closure\nAccepted receipt\nNative invoice\nNative payment\nSigning attempt\nReport dispatch\nNotice dispatch",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "operation_key",
+   "label": "Operation key",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "operation_identity",
+   "label": "Operation identity",
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "fieldtype": "Select",
+   "options": "Recorded\nAttempting\nSucceeded\nFailed\nUncertain\nReconciled",
+   "default": "Recorded",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "recovery_owner",
+   "label": "Recovery owner",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "result_reference",
+   "label": "Result reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attempts_json",
+   "label": "Attempts",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-14 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Operation Intent",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:CM-OP-{#####}"
+}

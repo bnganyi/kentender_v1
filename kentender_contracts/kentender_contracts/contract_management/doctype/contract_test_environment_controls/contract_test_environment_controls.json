@@ -1,0 +1,56 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-14 09:00:00.000000",
+ "description": "Plan D16 / spike S6\u2013S7: fault switches for the simulation. Read only by test stand-ins, which answer only under the site's simulation setting.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "signing_outcome",
+  "native_failure_after_success"
+ ],
+ "fields": [
+  {
+   "fieldname": "signing_outcome",
+   "label": "Forced signing outcome",
+   "fieldtype": "Select",
+   "options": "\nUnavailable\nIndeterminate\nRejected",
+   "description": "Spike S6: force the signing result."
+  },
+  {
+   "fieldname": "native_failure_after_success",
+   "label": "Fail after the native effect succeeds",
+   "fieldtype": "Check",
+   "description": "Spike S7: raise after the native document is created and before its link is written."
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 1,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-14 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Test Environment Controls",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

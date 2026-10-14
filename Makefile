@@ -5,8 +5,8 @@
 
 SITE ?= kentender.midas.com
 BENCH_ROOT ?= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../..)
-KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
-INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
+KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_contracts,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
+INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_contracts kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
 
 .PHONY: dev-mail-start dev-mail-stop dev-mail-status fidelity-affected test-site-rebuild test-site-serve test-site-stop test-site-status ui-awd-personas-gate home-preflight ui-home-fidelity-gate ui-home-gate ui-home-release-evidence-gate analytics-preflight analytics-services-gate ui-analytics-fidelity-gate ovs-preflight ovs-services-gateseed-ovs-register-branch seed-ovs-register-branch-restore awd-preflight awd-services-gate awd-seams-gate awd-leakage-gate awd-dead-end-gate ui-awd-fidelity-gate ui-awd-opinion-gate ui-awd-decision-gate ui-awd-notices-gate ui-awd-supplier-gate ui-awd-wait-gate ui-awd-debrief-gate ui-awd-correction-gate ui-awd-demo-walk-gate ui-awd-gate ui-awd-release-evidence-gate seed-awd-profiles seed-awd-profile seed-awd-profile-restore bop-preflight bop-profiles-gate seed-bop-profiles seed-bop-profile seed-bop-profile-restore ui-bop-prepare-gate ui-bop-before-start-gate ui-bop-ceremony-gate ui-bop-pauses-gate ui-bop-no-bids-gate ui-bop-record-gate ui-bop-completed-gate ui-bop-fidelity-gate ui-bop-public-gate ui-bop-release-evidence-gate ui-bop-gate prc-services-gate bop-services-gate bop-dead-end-gate bop-leakage-gate bds-preflight bds-retirement-gate bds-portal-gate bds-services-gate supplier-accounts-services-gate ui-bds-portal-skeleton-gate ui-bds-security-intake-gate ui-bds-overview-gate ui-bds-account-gate ui-bds-my-bids-gate ui-bds-workspace-gate ui-bds-documents-gate ui-bds-company-gate ui-bds-requirements-price-gate ui-bds-review-gate ui-bds-submit-gate ui-bds-receipt-changes-gate ui-bds-bound-release-gate ui-bds-acceptance-gaps-gate ui-bds-common-states-gate ui-bds-fidelity-gate ui-bds-release-evidence-gate bds-dead-end-gate ui-system-setup-responsibilities-gate seed-req-profiles seed-req-profile seed-req-profile-restore ui-structure-gate ui-visual-gate ui-fidelity-gate artboard-provenance-gate departmental-needs-domain-gate ui-departmental-needs-fidelity-gate tenders-preflight tenders-schema-gate tenders-services-gate tenders-dead-end-gate ui-tenders-workspace-gate ui-tenders-start-gate ui-tenders-details-gate ui-tenders-requirements-gate ui-tenders-review-gate ui-tenders-approval-gate ui-tenders-authorisation-gate ui-tenders-publication-gate ui-tenders-published-gate ui-tenders-addendum-gate ui-tenders-cancel-gate ui-tenders-history-gate ui-tenders-fidelity-gate ui-tenders-release-evidence-gate ui-system-setup-procurement-settings-gate ui-system-setup-fiscal-years-gate ui-system-setup-access-gate ui-system-setup-entity-gate ui-system-setup-funding-sources-gate ui-system-setup-rules-gate ui-system-setup-source-checks-gate ui-system-setup-schedules-gate help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke seed-canonical seed-canonical-dry-run seed-canonical-validate ui-smoke ui-workspace-pattern-gate ui-strategy-gate ui-strategy-fidelity-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-budget-gate ui-create-demand-strategy-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-departmental-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-annual-plan-gate ui-planning-item-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-req-workspace-gate ui-req-start-gate ui-req-editor-a-gate ui-req-editor-b-gate ui-req-department-gate ui-req-procurement-gate ui-req-authorised-gate ui-req-fidelity-gate ui-req-release-evidence-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate vue-desk-bundle-translation-binding-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
 
@@ -220,6 +220,7 @@ symlinks:
 	ln -sfn kentender_v1/kentender_assets kentender_assets && \
 	ln -sfn kentender_v1/kentender_integrations kentender_integrations && \
 	ln -sfn kentender_v1/kentender_suppliers kentender_suppliers && \
+	ln -sfn kentender_v1/kentender_contracts kentender_contracts && \
 	ln -sfn kentender_v1/kentender_transparency kentender_transparency && \
 	ln -sfn kentender_v1/apps/frontend frontend
 
@@ -234,6 +235,7 @@ validate-links:
 	@test -L $(BENCH_ROOT)/apps/kentender_assets
 	@test -L $(BENCH_ROOT)/apps/kentender_integrations
 	@test -L $(BENCH_ROOT)/apps/kentender_suppliers
+	@test -L $(BENCH_ROOT)/apps/kentender_contracts
 	@test -L $(BENCH_ROOT)/apps/kentender_transparency
 	@test -L $(BENCH_ROOT)/apps/frontend
 	@echo "All KenTender symlinks look present."
@@ -1422,3 +1424,28 @@ std-release-switch:
 std-templates-gate:
 	cd $(BENCH_ROOT) && for m in test_compiler test_release_vocabulary test_installer test_services test_binding test_bid_work_status; do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.std_templates.tests.$$m || exit 1; done
+
+# CM-CHG-001 v0.8 plan Phase 1 (tracker CM8-105). Contract Management's Python gates write real rows (no rollback on this bench), so they
+# run on the test site: `scripts/test-site.sh run make cm-services-gate`. They refuse the dev site and a live browser run.
+# Later gates (seams, native, leakage, dead ends, UI, seeds) are added with the phase that builds them (tracker rule 13).
+.PHONY: cm-preflight cm-services-gate cm-independence-gate
+CM_SERVICE_MODULES ?= test_cm_import_boundary test_cm_schema
+CM_ONLY_SITE ?= kentender-cm-only.local
+cm-preflight:
+	@if pgrep -f "[p]laywright test" >/dev/null; then echo "A Playwright run is active; run the Contract Management Python gates after it finishes."; exit 1; fi
+	@if [ "$(SITE)" = "kentender.midas.com" ] && [ -z "$(CM_ALLOW_DEV_SITE)" ]; then echo "Contract Management tests write real rows: run them on the test site (scripts/test-site.sh run make $(MAKECMDGOALS)), not on dev."; exit 1; fi
+
+cm-services-gate: cm-preflight
+	cd $(BENCH_ROOT) && for m in $(CM_SERVICE_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
+
+# CM-AC-25 / CM-AC-32: the app installs and runs on a site that holds only ERPNext, core, supplier accounts and itself.
+cm-independence-gate: cm-preflight
+	@test -d $(BENCH_ROOT)/sites/$(CM_ONLY_SITE) || (echo "Site $(CM_ONLY_SITE) does not exist yet (tracker CM8-107, FU-CM-38): it needs MariaDB root access to create its database."; exit 1)
+	@apps="$$(cd $(BENCH_ROOT) && bench --site $(CM_ONLY_SITE) list-apps 2>/dev/null | awk '{print $$1}' | sort | tr '\n' ' ')"; \
+	echo "Apps on $(CM_ONLY_SITE): $$apps"; \
+	for forbidden in kentender_strategy kentender_budget kentender_procurement kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency; do \
+		case " $$apps " in *" $$forbidden "*) echo "$$forbidden must not be installed on the independence site"; exit 1;; esac; done
+	cd $(BENCH_ROOT) && bench --site $(CM_ONLY_SITE) migrate
+	cd $(BENCH_ROOT) && for m in $(CM_SERVICE_MODULES); do \
+		bench --site $(CM_ONLY_SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done

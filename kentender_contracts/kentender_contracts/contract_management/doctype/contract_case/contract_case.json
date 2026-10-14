@@ -1,0 +1,100 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-14 09:00:00.000000",
+ "description": "\u00a74 Contract case: one per source contract identity; the lifecycle fact (\u00a75.1). Holds are conditions, never stages.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_id",
+  "source_kind",
+  "source_reference",
+  "supplier_organisation",
+  "lifecycle",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_id",
+   "label": "Contract ID",
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_kind",
+   "label": "Source kind",
+   "fieldtype": "Select",
+   "options": "KenTender award\nExternal record",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_reference",
+   "label": "Source reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supplier_organisation",
+   "label": "Supplier organisation",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lifecycle",
+   "label": "Lifecycle",
+   "fieldtype": "Select",
+   "options": "Preparing\nAwaiting signatures\nActive\nClosed\nDid not proceed\nTerminated",
+   "default": "Preparing",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "fieldtype": "Int",
+   "default": "1",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-14 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Case",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:contract_id"
+}

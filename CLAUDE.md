@@ -48,6 +48,7 @@ Primary dependency direction:
 Side applications consume published interfaces:
 
 - `kentender_suppliers`: supplier identity and qualification;
+- `kentender_contracts`: Contract Management (agreement, delivery and acceptance, invoices and payment follow-up, close-out); depends only on `kentender_core` and ERPNext and must run without the tendering apps, reaching Award, Budget and supplier accounts through published hooks and guarded adapters;
 - `kentender_governance`: approvals and delegation;
 - `kentender_compliance`: regulatory and audit-rule overlays;
 - `kentender_integrations`: external-system adapters, not business-rule ownership;

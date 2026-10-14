@@ -25,6 +25,7 @@ The repository root is `frappe-bench/apps/kentender_v1/`. It is a container repo
 - `kentender_budget`
 - `kentender_procurement`
 - `kentender_suppliers`
+- `kentender_contracts`
 - `kentender_governance`
 - `kentender_compliance`
 - `kentender_stores`
@@ -38,7 +39,7 @@ Primary dependency direction:
 
 `core -> strategy -> budget -> procurement -> stores -> assets`
 
-`suppliers`, `governance`, `compliance`, `integrations`, and `transparency` are side applications that consume published interfaces. `transparency` is read-only/publication-oriented; `integrations` adapts external systems and does not own business rules.
+`contracts` (Contract Management, CM-CHG-001) is a side application that depends only on `kentender_core` and ERPNext and runs without the tendering apps; Award, Budget and supplier accounts reach it through published hooks and guarded adapters, and it never imports their code or reads their tables. `suppliers`, `governance`, `compliance`, `integrations`, and `transparency` are side applications that consume published interfaces. `transparency` is read-only/publication-oriented; `integrations` adapts external systems and does not own business rules.
 
 Rules:
 
