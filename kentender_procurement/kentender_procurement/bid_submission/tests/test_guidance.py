@@ -120,7 +120,15 @@ class TestSubmissionWorlds(GuidanceCase):
 		self.expect(MARY, ns.KIND_WAITING, "Technical operator Daniel Otieno is restoring electronic submission.", "DBN")
 		simulation.set_controls(custody_service_down=0)
 		with mock.patch("kentender_core.services.public_portal.get_public_portal_information", return_value={"status": "Incomplete"}):
-			self.expect(MARY, ns.KIND_WAITING, "CFG System Manager Daniel Otieno is restoring supplier portal information.", "DBN")
+			# The canonical Technical Operator holds no System Manager role (a read carries no setup power, KT-ACCESS-REV-001), so no person qualifies and
+			# the role is named alone; a Technical Operator who also holds System Manager is named.
+			self.expect(MARY, ns.KIND_WAITING, "CFG System Manager is restoring supplier portal information.", "DBN")
+			daniel = frappe.get_doc("User", DANIEL)
+			daniel.add_roles("System Manager")
+			try:
+				self.expect(MARY, ns.KIND_WAITING, "CFG System Manager Daniel Otieno is restoring supplier portal information.", "DBN")
+			finally:
+				daniel.remove_roles("System Manager")
 
 	def test_rejected_and_uncertain_attempts(self):
 		simulation.set_controls(deposit_outcome="Reject")

@@ -20,6 +20,7 @@ Run:
 from __future__ import annotations
 
 import unittest
+from unittest import mock
 
 import frappe
 from frappe.utils import add_days, now_datetime
@@ -73,6 +74,11 @@ def _make_user(email: str) -> str:
 
 
 def _grant(user: str, role: str, **kwargs) -> str:
+	if REGISTRY[role].requires_scope_reference:
+		# A duty its own office assigns (the Head of Procurement Function), scoped to one Tender: Administrator may not grant it. Its grant guard (a
+		# published Tender, an eligible officer) is Bid Submission's own and has its own tests; this matrix only needs a person who holds the duty.
+		with mock.patch.object(administration, "_run_grant_guard"):
+			return administration.grant(user=_make_user(user), business_role=role, scope_reference="TND-AWARD-MATRIX", actor=HOP, **kwargs)["assignment"]
 	unit = ""
 	if REGISTRY[role].requires_organisation_unit:
 		unit = frappe.get_all("Organisation Unit", pluck="name", limit=1)[0]
