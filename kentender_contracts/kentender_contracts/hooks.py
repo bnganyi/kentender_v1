@@ -268,3 +268,6 @@ kt_trust_signing_services = ["kentender_contracts.simulation.signing.service"]
 
 # The one Desk Page (plan Phase 3, tracker CM8-315). Never append ?v= to page_js values: Frappe resolves them as disk paths.
 page_js = {"contracts": "public/js/contracts_page.js"}
+
+# The slot Procurement's shared rail reserves for this module (kentender_core.services.navigation_overrides).
+kt_navigation_overrides = ["kentender_contracts.navigation.overrides"]

@@ -13,18 +13,24 @@ test.describe('Contracts shell', () => {
 		page.on('pageerror', (error) => problems.push(error.message));
 		await loginAsAdministrator(page);
 
-		await page.goto(ROUTE);
+		// Walk from the menu, not by URL: Procurement's shared rail reserves a "Contract Management" slot, which this app takes over (FU-CM-58). It is live, not Planned.
+		await page.goto('/app/home');
+		const item = page.locator('.body-sidebar').getByText('Contract Management', { exact: true });
+		await expect(item).toBeVisible();
+		await expect(page.locator('.body-sidebar')).not.toContainText(/Contract Management\s*Planned/);
+		await item.click();
+		await expect(page).toHaveURL(/\/(app|desk)\/contracts/);
 		const root = page.getByTestId('cm-root');
 		await expect(root).toHaveAttribute('data-screen', 'workspace');
 		await expect(page.getByTestId('cm-empty')).toContainText('There are no contracts to show yet.');
 		await expect(page.locator('.kt-rail-mount')).toContainText('Contracts');
-		await expect(page.locator('.body-sidebar')).toContainText('Contracts');
+		await expect(page.locator('.body-sidebar')).toContainText('Tenders'); // the shared rail, not a rail of its own
 
 		await page.reload();
 		await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'workspace');
 		await expect(page.getByTestId('cm-empty')).toBeVisible();
 
-		// The rail is not rebuilt, and keeps this app's own sidebar, across one-, two- and three-segment routes below the page: the Page names the real module
+		// The rail is not rebuilt, and stays the shared rail, across one-, two- and three-segment routes below the page: the Page names the real module
 		// "Contract Management", and Frappe resolves a deeper route through the Page's module (the collision Departmental Needs hit on 30 Aug 2026).
 		await page.evaluate(() => {
 			(window as any).__railRemoved = 0;
@@ -35,7 +41,7 @@ test.describe('Contracts shell', () => {
 		for (const route of [['contracts', 'CM-DEMO-1'], ['contracts', 'CM-DEMO-1', 'tab'], ['contracts']]) {
 			await page.evaluate((r) => (window as any).frappe.set_route(...r), route);
 			await page.waitForTimeout(800);
-			await expect(page.locator('.body-sidebar')).toContainText('Kentender Contracts');
+			await expect(page.locator('.body-sidebar')).toContainText('Contract Management');
 		}
 		expect(await page.evaluate(() => (window as any).__railRemoved)).toBe(0);
 
