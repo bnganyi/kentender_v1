@@ -4,6 +4,7 @@ import path from "node:path";
 import { Browser, expect, Page, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
+import { addRecord } from "../../helpers/picker";
 import { loginToPortal, waitForPortal } from "../../helpers/portal";
 import { collectConsoleErrors, expectNextStep, expectScreen } from "./bopWorld";
 
@@ -89,21 +90,15 @@ test.describe("Bid Opening demo profiles, walked from the menu", () => {
 		await openFromMenu(page);
 		await expectScreen(page, "prepare");
 		await expectNextStep(page, "your_turn", "Appoint opening committee");
-		const add = async (user: string, role: string) => {
-			await page.locator('[data-testid="bop-add-member"]').click();
-			await page.locator('[data-testid="bop-add-member-person"]').selectOption(user);
-			await page.locator('[data-testid="bop-add-member-role"]').selectOption(role);
-			await page.locator('[data-testid="bop-add-member-confirm"]').click();
-		};
-		await add(CHARLES, "Chair and recorder");
-		await add(BRIAN, "Member");
-		await page.locator('[data-testid="bop-appoint"]').click();
+		await page.locator('[data-testid="bop-add-member"]').click();
+		await addRecord(page, "#bop-add-member-person", CHARLES);
+		await addRecord(page, "#bop-add-member-person", BRIAN);
+		await page.locator(`[data-testid="bop-staged-role-${BRIAN}"]`).selectOption("Member");
+		await page.locator('[data-testid="bop-add-member-confirm"]').click();
 		await expectNextStep(page, "your_turn_blocked", "The opening committee needs an independent third member");
 		await page.locator('[data-testid="bop-guidance"] [data-kt="next-step"] button', { hasText: "Add an independent third member" }).click();
-		await page.locator('[data-testid="bop-add-member-person"]').selectOption(BEATRICE);
-		await page.locator('[data-testid="bop-add-member-role"]').selectOption("Independent member");
+		await addRecord(page, "#bop-add-member-person", BEATRICE);
 		await page.locator('[data-testid="bop-add-member-confirm"]').click();
-		await page.locator('[data-testid="bop-appoint"]').click();
 		await expectScreen(page, "prepare");
 		await expectNextStep(page, "your_turn", "Publish how to attend");
 

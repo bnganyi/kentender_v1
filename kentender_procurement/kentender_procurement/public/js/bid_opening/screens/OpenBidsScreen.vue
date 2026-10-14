@@ -203,7 +203,7 @@
 				<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">The opening is paused until you rejoin. It continues from the last recorded step.</p>
 				<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary" :disabled="pending" data-testid="bop-join" @click="run('join_opening')">Rejoin opening</button></div>
 			</div>
-			<ReplacementForm v-if="primary === 'appoint_replacement'" :members="members" :candidates="data.candidates || []" :pending="pending" :error="error" @appoint="appointReplacement" />
+			<ReplacementForm v-if="primary === 'appoint_replacement'" :tender="data.opening.tender" :members="members" :pending="pending" :error="error" @appoint="appointReplacement" />
 			<div class="kt-region is-secondary"><h2>Where the opening stopped</h2>
 				<div class="kt-group"><div class="kt-meta-row"><div><span class="kt-label">Last recorded step</span><span class="kt-meta-value">{{ lastStep }}</span></div></div><p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">Nothing else is recorded, opened or ended until every member is present. When they rejoin, you continue from here.</p></div>
 			</div>

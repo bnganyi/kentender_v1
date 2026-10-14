@@ -94,14 +94,30 @@ def record_by_office(doc, *, holder: str, appointment, appointing_officer: str, 
 		idempotency_key=idempotency_key)
 
 
+def ineligibility(doc, named: str) -> tuple[str, str] | None:
+	"""Why `named` cannot be delegated the secretary's duties on this evaluation: (reason code, explanation), or None.
+	The record picker lists a person by this, so the list and DelegateEvaluationSecretary say the same thing."""
+	from kentender_procurement.bid_evaluation.services import roster
+	from kentender_procurement.bid_submission.services import security_duty
+
+	name = people.full_name(named)
+	if named == roster.secretary(doc.name):
+		return "already_secretary", f"{name} is already the secretary."
+	if separation.panel_refusal(named, as_member=False, as_secretary=True):
+		return "accounting_officer", f"{name} is the Accounting Officer, who decides the award and cannot sit on its evaluation."
+	if not people.holds(named, people.PROCUREMENT_OFFICER):
+		return "not_procurement_officer", f"{name} is not a procurement officer."
+	# Project Owner, 10 Oct 2026: intake and evaluation duties exclude each other on the same Tender
+	blocked = security_duty.committee_blocker(doc.tender, named, "the evaluation secretary", "Evaluation secretary")
+	return ("security_intake", blocked) if blocked else None
+
+
 def delegate_secretary(*, tender: str, secretary: str, expected_version: int, idempotency_key: str, user: str) -> dict[str, Any]:
 	if not people.holds(user, people.HEAD_OF_PROCUREMENT):
 		raise frappe.DoesNotExistError("Not found")
 	payload = {"secretary": secretary, "expected_version": expected_version}
 
 	def body() -> dict[str, Any]:
-		from kentender_procurement.bid_evaluation.services import roster
-
 		doc = records.lock(tender)
 		checks = guards.open_case(doc, "appointments")
 		checks.raise_if_any()
@@ -112,20 +128,9 @@ def delegate_secretary(*, tender: str, secretary: str, expected_version: int, id
 		def refuse(reason: str, explanation: str) -> None:
 			checks.add("EVL_SECRETARY_INELIGIBLE", person=named, person_name=people.full_name(named), reason=reason, explanation=explanation)
 
-		name = people.full_name(named)
-		if named == roster.secretary(doc.name):
-			refuse("already_secretary", f"{name} is already the secretary.")
-		elif separation.panel_refusal(named, as_member=False, as_secretary=True):
-			refuse("accounting_officer", f"{name} is the Accounting Officer, who decides the award and cannot sit on its evaluation.")
-		elif not people.holds(named, people.PROCUREMENT_OFFICER):
-			refuse("not_procurement_officer", f"{name} is not a procurement officer.")
-		else:
-			from kentender_procurement.bid_submission.services import security_duty
-
-			# Project Owner, 10 Oct 2026: intake and evaluation duties exclude each other on the same Tender
-			blocked = security_duty.committee_blocker(doc.tender, named, "the evaluation secretary", "Evaluation secretary")
-			if blocked:
-				refuse("security_intake", blocked)
+		problem = ineligibility(doc, named)
+		if problem:
+			refuse(*problem)
 		checks.raise_if_any()
 		authority = f"{people.full_name(user)}, Head of Procurement Function — written appointment, section 46(4)(c) of the Act"
 		row, event = _record(doc, secretary=named, basis=WRITTEN, by=user, authority=authority, source_appointment=cstr(doc.current_appointment),

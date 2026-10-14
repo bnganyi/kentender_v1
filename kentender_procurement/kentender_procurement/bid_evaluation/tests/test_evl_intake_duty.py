@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import frappe
 
-from kentender_procurement.bid_evaluation.services import roster, secretary
+from kentender_procurement.bid_evaluation.services import picker_sources, roster, secretary
 from kentender_procurement.bid_evaluation.tests.support import AO, CHAIR, HOP, MEMBER, MEMBER_2, REPLACEMENT, SECRETARY
 from kentender_procurement.bid_evaluation.tests.test_evl_committee import ROSTER, CommitteeCase
 from kentender_procurement.bid_submission.services import records, security_duty
@@ -46,7 +46,12 @@ class TestEvaluationAndIntakeDuty(CommitteeCase):
 		self.assertEqual(by_person, {REPLACEMENT: "security_intake"})
 		self.assertIn("holds or has held the tender-security intake duty for this tender", [r["detail"].get("explanation") for r in error.reasons][0])
 		self.assertFalse(roster.current_appointment(self.evaluation))  # nothing appointed in part
+		# the picker lists the same person unavailable, in the command's words, rather than leaving them out without a word
+		listed = {r["id"]: r for r in picker_sources.committee_members(query="", context={"tender_reference": self.reference, "mode": "appoint"}, actor=AO, limit=20)}
+		self.assertEqual(listed[REPLACEMENT]["disabled_reason"], [r["detail"].get("explanation") for r in error.reasons][0])
 		security_duty.revoke_intake_officer(assignment=given["assignment"], reason="Assigned in error before the committee was named.", user=tender_fx.HOPF)
+		again = {r["id"]: r for r in picker_sources.committee_members(query="", context={"tender_reference": self.reference, "mode": "appoint"}, actor=AO, limit=20)}
+		self.assertIsNone(again[REPLACEMENT]["disabled_reason"])
 		self.assertTrue(self.evl_appoint(members=NEW_ROSTER)["ok"])
 
 	def test_an_officer_who_viewed_the_intake_stays_ineligible_after_the_duty_ends(self):
@@ -76,3 +81,12 @@ class TestEvaluationAndIntakeDuty(CommitteeCase):
 		self.assign(REPLACEMENT)
 		error = self.refused(secretary.delegate_secretary, tender=self.name, secretary=REPLACEMENT, expected_version=self.evl_version(), idempotency_key=records.uuid4().hex if hasattr(records, "uuid4") else "k1", user=HOP)
 		self.assertEqual(error.code, "EVL_SECRETARY_INELIGIBLE", error.detail)
+
+	def test_the_secretary_picker_lists_a_procurement_officer_who_holds_the_duty_in_the_commands_words(self):
+		self.evl_appoint()
+		with records.atomic("exposure"):  # a procurement officer, not yet the secretary, who has recorded intake
+			security_duty.record_exposure(self.name, self.reference, SECRETARY, security_duty.RECORDED, "TSI-0000000000")
+		error = self.refused(secretary.delegate_secretary, tender=self.name, secretary=SECRETARY, expected_version=self.evl_version(), idempotency_key="duty-picker-1", user=HOP)
+		self.assertEqual(error.reasons[0]["detail"].get("reason"), "security_intake")
+		listed = {r["id"]: r for r in picker_sources.secretaries(query="", context={"tender_reference": self.reference}, actor=HOP, limit=20)}
+		self.assertEqual(listed[SECRETARY]["disabled_reason"], error.reasons[0]["detail"].get("explanation"))

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { pickRecord } from "../../helpers/picker";
 import {
 	OFFICER,
 	EmptyYearFixture,
@@ -55,6 +56,13 @@ test("record approved allocation, add lines and submit for review", async ({ pag
 	await page.getByTestId("bud-editor-add-line-btn").click();
 	const rows = page.locator('[data-testid="bud-editor-lines-table"] tbody tr');
 	await rows.nth(0).getByLabel("Budget line").fill("Digital health infrastructure programme");
+	// "Available to" is the shared picker inside the row, with an "All departments" row: choose a unit, then go back to all.
+	const owner = page.locator("#bud-line-owner-0");
+	await expect(owner).toHaveValue("All departments");
+	const unit = await pickRecord(page, "#bud-line-owner-0", "Directorate");
+	await expect(owner).toHaveValue(unit);
+	await rows.nth(0).locator('[data-testid="kt-picker-clear"]').click();
+	await expect(owner).toHaveValue("All departments");
 	await rows.nth(0).getByLabel("Amount").fill("100000000");
 	await expect(page.getByTestId("bud-editor-reconcile")).toContainText("Amount still to assign: KES 60,000,000");
 	await page.getByTestId("bud-editor-add-line-btn").click();

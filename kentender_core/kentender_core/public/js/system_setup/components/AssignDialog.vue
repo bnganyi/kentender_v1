@@ -7,8 +7,7 @@
 // Authority reference. There is no Procuring Entity control (§13.1).
 //
 // Responsibility is the board's select ("Role · Scope"); the Organisation
-// Unit is the board's read-only path field that opens a list of units (a
-// tree select), over the same server-supplied options.
+// Unit is the shared record picker over the active units, each by its full path.
 //
 // The dialog computes nothing it could get wrong: required fields, the exact
 // scope description, descendant counts, exclusive-office findings and the
@@ -16,6 +15,7 @@
 // stays disabled with a visible reason until that preview says ok.
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { responsibilityApi } from "../data/responsibilityApi.js";
+import RecordPickerHost from "../../record_picker_shared/RecordPickerHost.vue";
 
 const props = defineProps({
 	responsibilities: { type: Array, required: true },
@@ -56,14 +56,12 @@ const form = ref(
 				authority_reference: "",
 			}
 );
-const userQuery = ref("");
-const userMatches = ref([]);
 const userLabel = ref(props.editing ? props.editing.user_full_name || props.editing.user : "");
+const unitLabel = ref("");
+const userPicker = ref(null);
 const roleOpen = ref(false);
-const ouOpen = ref(false);
 const preview = ref(null);
 const previewing = ref(false);
-const firstField = ref(null);
 const titleId = computed(() => (props.editing ? "kt-assign-edit-title" : "kt-assign-title"));
 
 const registryEntry = computed(() =>
@@ -71,44 +69,20 @@ const registryEntry = computed(() =>
 );
 const needsUnit = computed(() => !!registryEntry.value?.requires_organisation_unit);
 const isActing = computed(() => form.value.appointment_type === "Acting");
-const selectedUnit = computed(() =>
-	props.organisationUnits.find((u) => u.id === form.value.organisation_unit) || null
-);
+// A saved assignment shows its unit by full path, from the options the page already holds; one chosen here, from the picker's own row.
+unitLabel.value = (props.organisationUnits.find((u) => u.id === form.value.organisation_unit) || {}).path_label || "";
 
 onMounted(async () => {
 	await nextTick();
-	firstField.value?.focus();
+	userPicker.value?.focus();
 	if (isEdit.value) refreshPreview();
-	userMatches.value = await responsibilityApi.searchUsers("");
 });
 
-let searchToken = 0;
-async function searchUsers() {
-	const token = ++searchToken;
-	const rows = await responsibilityApi.searchUsers(userQuery.value);
-	if (token === searchToken) userMatches.value = rows;
-}
-
-function pickUser(match) {
-	form.value.user = match.id;
-	userLabel.value = match.label;
-	userQuery.value = "";
-	userMatches.value = [];
+// The picker is bound to the dialog's own selection (`form.user`), never to a server echo; typing over a choice drops it.
+function onUserPicked(row) {
+	form.value.user = row ? row.id : "";
+	userLabel.value = row ? row.label : "";
 	refreshPreview();
-}
-
-// The field shows the chosen user as "Name · login", or what is being typed;
-// typing over a choice drops it (the input is bound to the user's own
-// selection, never to a server echo).
-const userText = computed(() => (form.value.user ? `${userLabel.value} · ${form.value.user}` : userQuery.value));
-function onUserInput(event) {
-	userQuery.value = event.target.value;
-	if (form.value.user) {
-		form.value.user = "";
-		userLabel.value = "";
-		refreshPreview();
-	}
-	searchUsers();
 }
 
 function onRoleChange(event) {
@@ -121,13 +95,16 @@ function pickRole(role) {
 	roleOpen.value = false;
 	// The registry decides whether a unit exists on this assignment; clear a
 	// stale value so it is never sent for a Site-wide role.
-	if (!role.requires_organisation_unit) form.value.organisation_unit = "";
+	if (!role.requires_organisation_unit) {
+		form.value.organisation_unit = "";
+		unitLabel.value = "";
+	}
 	refreshPreview();
 }
 
-function pickUnit(unit) {
-	form.value.organisation_unit = unit.id;
-	ouOpen.value = false;
+function onUnitPicked(row) {
+	form.value.organisation_unit = row ? row.id : "";
+	unitLabel.value = row ? row.label : "";
 	refreshPreview();
 }
 
@@ -166,10 +143,9 @@ function problemFor(field) {
 }
 
 function onEscape() {
-	// Esc closes the open unit list first; a second Esc closes the dialog.
-	if (roleOpen.value || ouOpen.value) {
+	// The pickers close their own lists on Esc and stop it there; a second Esc reaches the dialog.
+	if (roleOpen.value) {
 		roleOpen.value = false;
-		ouOpen.value = false;
 		return;
 	}
 	emit("cancel");
@@ -201,32 +177,21 @@ const blockedReason = computed(() => {
 					<div class="kt-notice-body"><em>{{ __("This assignment has not started yet, so any of its details can still be changed. Clear Effective from to bring it into force now.") }}</em></div>
 				</div>
 
-				<!-- User: a person search showing "Name · login" once chosen -->
+				<!-- User: the shared record picker over the staff accounts, searched on the server -->
 				<div class="field">
 					<label for="kt-assign-user">{{ __("User") }}</label>
-					<div class="kt-input-icon">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-						<input
-							id="kt-assign-user"
-							ref="firstField"
-							class="input"
-							type="text"
-							autocomplete="off"
-							:value="userText"
-							:placeholder="__('Search by name or login')"
-							:aria-invalid="problemFor('user') ? 'true' : 'false'"
-							:data-testid="form.user ? 'kt-ura-user-picked' : 'kt-ura-user'"
-							@input="onUserInput"
-						>
-					</div>
-					<ul v-if="!form.user && userMatches.length" class="kt-matches">
-						<li v-for="match in userMatches" :key="match.id">
-							<button type="button" @click="pickUser(match)">
-								<span>{{ match.label }}</span>
-								<span class="kt-muted">{{ match.id }}</span>
-							</button>
-						</li>
-					</ul>
+					<RecordPickerHost
+						ref="userPicker"
+						:model-value="form.user || null"
+						input-id="kt-assign-user"
+						source="core.responsible_user"
+						noun="user"
+						plural="users"
+						:placeholder="__('Search by name or login')"
+						:value-label="userLabel"
+						:invalid="!!problemFor('user')"
+						@change="onUserPicked"
+					/>
 					<p v-if="problemFor('user')" class="kt-field-error">{{ problemFor("user") }}</p>
 				</div>
 
@@ -249,39 +214,20 @@ const blockedReason = computed(() => {
 					<p v-if="problemFor('business_role')" class="kt-field-error">{{ problemFor("business_role") }}</p>
 				</div>
 
-				<!-- Organisation Unit: OU-scoped roles only; its full path, opening
-				     the list of active units -->
+				<!-- Organisation Unit: OU-scoped roles only; the shared picker over the active units, each by its full path -->
 				<div v-if="needsUnit" class="field" data-testid="kt-ura-ou">
 					<label for="kt-assign-ou">{{ __("Organisation Unit") }}</label>
-					<div class="kt-input-icon is-trailing">
-						<input
-							id="kt-assign-ou"
-							class="input"
-							type="text"
-							readonly
-							role="combobox"
-							aria-haspopup="listbox"
-							:aria-expanded="ouOpen ? 'true' : 'false'"
-							:value="selectedUnit ? selectedUnit.path_label || selectedUnit.label : ''"
-							:placeholder="__('Select an Organisation Unit')"
-							data-testid="kt-ura-ou-toggle"
-							@click="ouOpen = !ouOpen"
-							@keydown.enter.prevent="ouOpen = !ouOpen"
-							@keydown.space.prevent="ouOpen = !ouOpen"
-						>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 6h6" /><path d="M3 12h10" /><path d="M3 18h10" /><path d="M17 9v9" /><path d="m14 15 3 3 3-3" /></svg>
-					</div>
-					<ul v-if="ouOpen" class="kt-matches" role="listbox" :aria-label="__('Organisation units')">
-						<li v-for="unit in organisationUnits" :key="unit.id">
-							<button
-								type="button"
-								role="option"
-								:aria-selected="unit.id === form.organisation_unit ? 'true' : 'false'"
-								:data-testid="'kt-ura-ou-option-' + unit.id"
-								@click="pickUnit(unit)"
-							>{{ unit.path_label || unit.label }}</button>
-						</li>
-					</ul>
+					<RecordPickerHost
+						:model-value="form.organisation_unit || null"
+						input-id="kt-assign-ou"
+						source="core.organisation_unit"
+						noun="unit"
+						plural="units"
+						:placeholder="__('Search by name or path')"
+						:value-label="unitLabel"
+						:invalid="!!problemFor('organisation_unit')"
+						@change="onUnitPicked"
+					/>
 					<p v-if="problemFor('organisation_unit')" class="kt-field-error">{{ problemFor("organisation_unit") }}</p>
 				</div>
 

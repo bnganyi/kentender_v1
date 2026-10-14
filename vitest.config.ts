@@ -294,7 +294,10 @@ export default defineConfig({
 				test: {
 					name: "pager-shared",
 					environment: "node",
-					include: ["kentender_procurement/kentender_procurement/public/js/pager_shared/*.spec.js"],
+					include: [
+						"kentender_procurement/kentender_procurement/public/js/pager_shared/*.spec.js",
+						"kentender_procurement/kentender_procurement/public/js/record_picker_shared/*.spec.js",
+					],
 				},
 			},
 			{

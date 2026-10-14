@@ -13,6 +13,7 @@ import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import { onSetupRevalidate } from "../composables/useRouteState.js";
 import AssignDialog from "../components/AssignDialog.vue";
 import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import RecordPickerHost from "../../record_picker_shared/RecordPickerHost.vue";
 import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 import ResponsibilityDetail from "../components/ResponsibilityDetail.vue";
 import RevokeDialog from "../components/RevokeDialog.vue";
@@ -59,6 +60,15 @@ const STATUS_KIND = {
 	Expired: "is-pending",
 	Revoked: "is-critical",
 };
+
+// The unit filter is the shared picker with an "All organisation units" row: "" is All, bound to the register's own filter.
+const unitFilterLabel = computed(() => {
+	const unit = (options.value.organisation_units || []).find((u) => u.id === filters.organisation_unit);
+	return unit ? unit.path_label || unit.label : "";
+});
+function onUnitFilter(row) {
+	filters.organisation_unit = row ? row.id : "";
+}
 
 const hasFilters = computed(() => Object.values(filters).some((v) => v));
 // The board's state variants replace the register's header and filters;
@@ -323,10 +333,17 @@ async function submitRevocation(reason) {
 				</div>
 				<div class="field">
 					<label for="kt-ura-filter-ou">{{ __("Organisation unit") }}</label>
-					<select id="kt-ura-filter-ou" v-model="filters.organisation_unit" class="input" data-testid="kt-ura-filter-ou">
-						<option value="">{{ __("All organisation units") }}</option>
-						<option v-for="unit in options.organisation_units" :key="unit.id" :value="unit.id">{{ unit.label }}</option>
-					</select>
+					<RecordPickerHost
+						:model-value="filters.organisation_unit"
+						input-id="kt-ura-filter-ou"
+						source="core.organisation_unit"
+						noun="unit"
+						plural="units"
+						:placeholder="__('Search by name or path')"
+						:all-label="__('All organisation units')"
+						:value-label="unitFilterLabel"
+						@change="onUnitFilter"
+					/>
 				</div>
 				<div class="field">
 					<label for="kt-ura-filter-role">{{ __("Responsibility") }}</label>

@@ -47,7 +47,8 @@ def _require_ao(user: str) -> None:
 		raise frappe.DoesNotExistError("Not found")
 
 
-def _ineligibility(doc, user: str) -> str | None:
+def ineligibility(doc, user: str) -> str | None:
+	"""Why `user` cannot sit on this committee (a code in `REASONS`), or None. The record picker lists a person by this."""
 	from kentender_procurement.bid_opening.services import evaluation_seam as opening
 
 	ok, _designation = people.internal(user)
@@ -68,7 +69,8 @@ def _ineligibility(doc, user: str) -> str | None:
 	return None
 
 
-def _reason(code: str, user: str) -> str:
+def refusal_text(code: str, user: str) -> str:
+	"""The words the commands (and the record picker) use for a refusal code."""
 	return REASONS[code].format(name=people.full_name(user))
 
 
@@ -82,10 +84,10 @@ def _rows(doc, members: list[dict[str, Any]], checks: Guards) -> list[dict[str, 
 		if fields:
 			checks.add("EVL_MEMBER_INELIGIBLE", person=user, fields=fields)
 			continue
-		code = "duplicate" if user in seen else _ineligibility(doc, user)
+		code = "duplicate" if user in seen else ineligibility(doc, user)
 		seen.add(user)
 		if code:
-			checks.add("EVL_MEMBER_INELIGIBLE", person=user, person_name=people.full_name(user), reason=code, explanation=_reason(code, user))
+			checks.add("EVL_MEMBER_INELIGIBLE", person=user, person_name=people.full_name(user), reason=code, explanation=refusal_text(code, user))
 			continue
 		_ok, designation = people.internal(user)
 		# the department is the person's home organisation unit, read now and snapshotted; a department sent by a caller is never used
@@ -159,7 +161,7 @@ def replace_member(*, tender: str, outgoing: str, incoming: dict[str, Any], reas
 		if incoming_user in [m["member_user"] for m in members]:
 			code = "declared_conflict" if roster.status(doc.name, incoming_user)["conflict"] else "already_member"
 			checks.add("EVL_MEMBER_INELIGIBLE", person=incoming_user, person_name=people.full_name(incoming_user), reason=code,
-				explanation=_reason(code, incoming_user))
+				explanation=refusal_text(code, incoming_user))
 		else:
 			new_rows = _rows(doc, [{**incoming, "capacity": incoming.get("capacity") or next(m["capacity"] for m in members if m["member_user"] == outgoing)}], checks)
 		checks.raise_if_any()

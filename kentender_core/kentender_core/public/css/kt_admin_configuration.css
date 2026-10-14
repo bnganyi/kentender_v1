@@ -116,32 +116,6 @@
 	overflow-y: auto;
 }
 
-.kt-industry .kt-matches {
-	list-style: none;
-	margin: 4px 0 0;
-	padding: 0;
-	max-height: 160px;
-	overflow-y: auto;
-	border: 1px solid var(--kt-color-divider);
-	background: var(--kt-color-surface);
-}
-.kt-industry .kt-matches button {
-	display: flex;
-	width: 100%;
-	justify-content: space-between;
-	gap: 12px;
-	padding: 7px 10px;
-	background: none;
-	border: 0;
-	font: inherit;
-	font-size: 13px;
-	text-align: left;
-	cursor: pointer;
-}
-.kt-industry .kt-matches button:hover {
-	background: color-mix(in srgb, var(--kt-color-text) 6%, transparent);
-}
-
 /* AUTH-DES-04 — controls drawn as the artboard draws them. */
 
 .kt-industry .kt-date-field {

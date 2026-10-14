@@ -390,3 +390,34 @@
 .body-sidebar .section-item > .nested-container .standard-sidebar-item:not(.active-sidebar):hover .sidebar-item-label {
 	color: #000b1d; /* primary on hover */
 }
+
+/* Unread count on the sidebar's Notification item (kt_notification_badge.js). Frappe's own
+ * bell marker is not in the sidebar markup, so this is the only unread signal. */
+.body-sidebar .sidebar-notification .kt-notification-badge {
+	margin-left: auto;
+	min-width: 18px;
+	padding: 1px 6px;
+	border-radius: 9px;
+	background: var(--status-critical, #b0143a);
+	color: #fff;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 16px;
+	text-align: center;
+	flex-shrink: 0;
+}
+/* Icon-only rail: the label is hidden, so the count becomes a dot on the corner of the bell. */
+.body-sidebar-container:not(.expanded) .sidebar-notification {
+	position: relative;
+}
+.body-sidebar-container:not(.expanded) .sidebar-notification .kt-notification-badge {
+	position: absolute;
+	top: 2px;
+	right: 2px;
+	min-width: 8px;
+	width: 8px;
+	height: 8px;
+	padding: 0;
+	font-size: 0;
+	line-height: 0;
+}

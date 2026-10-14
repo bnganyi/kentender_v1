@@ -683,6 +683,14 @@ kt_staff_home_unit_changed = [
 	"kentender_procurement.bid_evaluation.services.member_department.on_home_unit_changed",
 ]
 
+# Shared record picker (approved plan, 13 Oct 2026) — the sources this app registers with
+# kentender_core.services.record_picker. A source owns who may be listed and why a row is
+# unavailable; core owns search, ranking, paging and the actor.
+kt_record_picker_sources = [
+	"kentender_procurement.bid_opening.services.picker_sources.sources",
+	"kentender_procurement.bid_evaluation.services.picker_sources.sources",
+]
+
 # AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical
 # search page/service and the technical-read conformance gate collect every
 # module's reference resolvers and read probes through these two hooks; core

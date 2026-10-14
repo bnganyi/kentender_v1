@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
+import { addRecord } from "../../helpers/picker";
 import { AO, AUDITOR, CHAIR, INDEPENDENT, MEMBER, PASSWORD, collectConsoleErrors, expectNextStep, expectScreen, gotoOpening, openingWorld, restoreBopWorld } from "./bopWorld";
 
 /** BOP-CHG-001 v0.10 §10.2 — BOP-DES-01 Prepare opening (boards a1–a5), slice 8.1. */
@@ -21,34 +22,44 @@ test.describe("BOP-DES-01 Prepare opening", () => {
 		await expect(page.locator('[data-testid="bop-committee-draft"] thead th')).toHaveText(["Member", "Designation", "Role on committee", "Eligibility"]);
 		await expect(page.locator('[data-testid="bop-history"] .tag')).toHaveText("No appointments yet");
 
-		const add = async (user: string, role: string) => {
-			await page.locator('[data-testid="bop-add-member"]').click();
-			await page.locator('[data-testid="bop-add-member-person"]').selectOption(user);
-			await page.locator('[data-testid="bop-add-member-role"]').selectOption(role);
-			await page.locator('[data-testid="bop-add-member-confirm"]').click();
-		};
-		// a2: two processing officers only — the server refuses and its guard is the next step.
-		await add(CHAIR, "Chair and recorder");
-		await add(MEMBER, "Member");
-		await expect(page.locator('[data-testid="bop-committee-draft"] tbody tr td:first-child')).toHaveText(["Charles Mutiso", "Playwright Tenders Officer"]);
-		await page.locator('[data-testid="bop-appoint"]').click();
+		// Add members: one dialog, the list open beside the field. Choosing a person adds them to "To appoint" and leaves the list where it was.
+		await page.locator('[data-testid="bop-add-member"]').click();
+		await expect(page.locator("#bop-add-member-title")).toHaveText("Add members");
+		await expect(page.locator('[data-testid="bop-staged-empty"]')).toHaveText("People you choose appear here.");
+		await addRecord(page, "#bop-add-member-person", CHAIR);
+		await addRecord(page, "#bop-add-member-person", MEMBER);
+		await expect(page.locator('[data-testid="bop-staged-title"]')).toHaveText("To appoint · 2");
+		await expect(page.locator('[data-testid="bop-add-member-confirm"]')).toHaveText("Appoint 2 members");
+		// the second person is suggested as the independent member, and the officer who prepared this Tender cannot be: it says so beside them
+		await expect(page.locator(`[data-testid="bop-staged-role-${MEMBER}"]`)).toHaveValue("Independent member");
+		await expect(page.locator(`[data-testid="bop-staged-error-${MEMBER}"]`)).toHaveText("Involved in processing this Tender.");
+		await expect(page.locator('[data-testid="bop-add-member-confirm"]')).toBeDisabled();
+		await page.locator(`[data-testid="bop-staged-role-${MEMBER}"]`).selectOption("Member");
+		await expect(page.locator(`[data-testid="bop-staged-error-${MEMBER}"]`)).toHaveCount(0);
+		// a2: two processing officers only — one action appoints them, the server refuses, and its guard is the next step.
+		await page.locator('[data-testid="bop-add-member-confirm"]').click();
+		await expect(page.locator('[data-testid="bop-add-member-dialog"]')).toHaveCount(0);
 		await expectScreen(page, "prepare");
 		await expectNextStep(page, "your_turn_blocked", "The opening committee needs an independent third member");
+		await expect(page.locator('[data-testid="bop-committee-draft"] tbody tr td:first-child')).toHaveText(["Charles Mutiso", "Playwright Tenders Officer"]);
 		await expect(page.locator('[data-testid="bop-add-member"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="bop-appoint"]')).toHaveCount(0);
+		// What the refused appointment left in the table is the reader's own work in this browser: a refresh must not lose it,
+		// and the screen says it is not appointed yet.
+		await page.reload({ waitUntil: "domcontentloaded" });
+		await expectScreen(page, "prepare");
+		await expect(page.locator('[data-testid="bop-committee-draft"] tbody tr td:first-child')).toHaveText(["Charles Mutiso", "Playwright Tenders Officer"]);
+		await expect(page.locator('[data-testid="bop-draft-note"]')).toContainText("kept in this browser");
 
-		// The fix opens the picker; an officer who processed the Tender cannot be the independent member.
-		await page.locator('[data-testid="bop-guidance"] [data-kt="next-step"] button', { hasText: "Add an independent third member" }).click();
-		await page.locator('[data-testid="bop-add-member-person"]').selectOption(INDEPENDENT);
-		await page.locator('[data-testid="bop-add-member-role"]').selectOption("Independent member");
-		await expect(page.locator('[data-testid="bop-add-member-involved"]')).toHaveCount(0);
+		// The fix opens Add members again, with the two already on the committee; an officer who processed the Tender cannot be the independent member.
+		await page.locator('[data-testid="bop-add-member"]').click();
+		await addRecord(page, "#bop-add-member-person", INDEPENDENT);
+		await expect(page.locator(`[data-testid="bop-staged-role-${INDEPENDENT}"]`)).toHaveValue("Independent member");
+		await expect(page.locator(`[data-testid="bop-staged-error-${INDEPENDENT}"]`)).toHaveCount(0); // not involved in processing this Tender
+		await expect(page.locator('[data-testid="bop-add-member-confirm"]')).toHaveText("Appoint 3 members");
 		await page.locator('[data-testid="bop-add-member-confirm"]').click();
-		await expectNextStep(page, "your_turn", "Appoint opening committee");
-		await expect(page.locator('[data-testid="bop-committee-draft"] tbody tr')).toHaveCount(3);
-		await expect(page.locator(".kt-decision p")).toContainText("cannot later be appointed to evaluate this Tender");
 
 		// a3: appointed; each member has their task; how to attend is not published.
-		await page.locator('[data-testid="bop-appoint"]').click();
 		await expectScreen(page, "prepare");
 		await expectNextStep(page, "your_turn", "Publish how to attend");
 		await expect(page.locator('[data-testid="bop-committee"] tbody tr td:last-child')).toHaveText(["Sent", "Sent", "Sent"]);

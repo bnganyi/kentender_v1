@@ -20,7 +20,6 @@ export const listWork = (query = "", state = "") => get("list_work", { query, st
 export const getOwnClarification = (ref, clarification, organisation = "") => get("get_own_clarification", { tender_reference: ref, clarification, organisation });
 export const heartbeat = (ref) => post("heartbeat", { tender_reference: ref });
 
-export const getCandidates = (ref, purpose) => get("get_candidates", { tender_reference: ref, purpose });
 
 // A command carries a fresh idempotency key, or the caller's own key when it
 // reconciles the same attempt (a signature whose proof was unconfirmed).

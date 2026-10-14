@@ -33,7 +33,7 @@ const id = computed(() => (segments.value[1] === "evaluation" ? segments.value.s
 const screenKey = computed(() => `${ref_.value}:${sub.value}:${id.value}`);
 
 const data = ref(null);
-const extra = reactive({ bid: null, report: null, record: null, candidates: null });
+const extra = reactive({ bid: null, report: null, record: null });
 const loading = ref(false);
 const failure = ref("");
 const pending = ref(false);
@@ -50,7 +50,7 @@ let seq = 0;
 const people = computed(() => peopleOf(data.value));
 const ctx = computed(() => ({
 	data: data.value, sub: sub.value, id: id.value, user: frappe.session.user, form, errors: memberErrors.value,
-	bid: extra.bid, report: extra.report, record: extra.record, candidates: extra.candidates, unconfirmed: unconfirmed.value,
+	bid: extra.bid, report: extra.report, record: extra.record, unconfirmed: unconfirmed.value,
 	dialogArgs: dialog.value ? dialog.value.args : null,
 }));
 
@@ -78,15 +78,14 @@ async function load({ quiet = false } = {}) {
 		if (token !== seq) return;
 		if (loaded && loaded.ok === false) throw Object.assign(new Error(loaded.message || ""), { httpStatus: 500 });
 		const want = needs(sub.value, id.value, loaded);
-		const [bid, report, rec, candidates] = await Promise.all([
+		const [bid, report, rec] = await Promise.all([
 			want.bid ? api.getBid(reference, want.bid).catch(() => null) : null,
 			want.report !== undefined ? api.getReport(reference, want.report).catch(() => null) : null,
 			want.record ? api.getCommitteeRecord(reference).catch(() => null) : null,
-			want.candidates ? api.getCandidates(reference, want.candidates).then((r) => r.candidates || r).catch(() => []) : null,
 		]);
 		if (token !== seq) return;
 		data.value = loaded;
-		Object.assign(extra, { bid: okOrNull(bid), report: okOrNull(report), record: okOrNull(rec), candidates });
+		Object.assign(extra, { bid: okOrNull(bid), report: okOrNull(report), record: okOrNull(rec) });
 		failure.value = "";
 		prefill();
 	} catch (e) {
@@ -145,7 +144,6 @@ function collect(spec) {
 			.filter((m) => m.user));
 	}
 	if (compose === "incoming") {
-		const pick = (extra.candidates || []).find((c) => c.user === form.incoming) || {};
 		args.incoming = JSON.stringify({ user: form.incoming || "", capacity: values.capacity || "Member" });
 		delete args.capacity;
 	}
@@ -301,7 +299,7 @@ watch(screenKey, (now, before) => {
 	const [refBefore] = (before || "").split(":");
 	if (refNow !== refBefore) {
 		data.value = null;
-		Object.assign(extra, { bid: null, report: null, record: null, candidates: null });
+		Object.assign(extra, { bid: null, report: null, record: null });
 	}
 	resetScreen();
 	load({ quiet: !!data.value });

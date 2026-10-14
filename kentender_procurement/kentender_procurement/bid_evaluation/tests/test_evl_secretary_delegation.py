@@ -19,7 +19,7 @@ from unittest import mock
 import frappe
 
 from kentender_core.services import responsibility_administration as administration
-from kentender_procurement.bid_evaluation.services import appointment, people, reads, report, roster, secretary
+from kentender_procurement.bid_evaluation.services import appointment, people, picker_sources, reads, report, roster, secretary
 from kentender_procurement.bid_evaluation.tests.support import NS, AO, AUDITOR, CHAIR, HOP, MEMBER, MEMBER_2, OUTSIDER, REPLACEMENT, SECRETARY, SUPPORT
 from kentender_procurement.bid_evaluation.tests.test_evl_committee import CommitteeCase, titles
 from kentender_procurement.bid_submission.tests.support import key
@@ -226,14 +226,27 @@ class TestTheCommitteeRecordShowsTheSecretary(SecretaryCase):
 		technical = reads.resolve(tender_reference=self.reference, user="Administrator")
 		self.assertNotIn("committee", technical)  # a technical reader sees no committee, so no control either
 
+	def pick(self, actor: str) -> dict[str, dict]:
+		rows = picker_sources.secretaries(query="", context={"tender_reference": self.reference}, actor=actor, limit=20)
+		return {r["id"]: r for r in rows}
+
 	def test_the_pick_list_offers_procurement_officers_who_are_not_the_current_secretary(self):
-		rows = reads.candidates(tender_reference=self.reference, user=HOP, purpose="secretary")
-		users = [r["user"] for r in rows]
-		self.assertIn(SECRETARY, users)
-		self.assertNotIn(HOP, users)
-		self.assertNotIn(AO, users)
+		rows = self.pick(HOP)
+		self.assertIn(SECRETARY, rows)
+		self.assertNotIn(HOP, rows)
+		self.assertNotIn(AO, rows)
 		with self.assertRaises(frappe.DoesNotExistError):
-			reads.candidates(tender_reference=self.reference, user=AO, purpose="secretary")
+			self.pick(AO)
+
+	def test_the_picker_and_the_delegation_command_agree_about_every_person(self):
+		"""Each officer listed is accepted by the command's check; the current secretary is listed unavailable in the command's words."""
+		self.delegate()  # SECRETARY is now the secretary by written appointment
+		doc = frappe.get_doc("Evaluation Case", self.evaluation)
+		rows = self.pick(HOP)
+		for user, row in rows.items():
+			problem = secretary.ineligibility(doc, user)
+			self.assertEqual(problem[1] if problem else None, row["disabled_reason"], user)
+		self.assertEqual(rows[SECRETARY]["disabled_reason"], f"{people.full_name(SECRETARY)} is already the secretary.")
 
 	def test_the_appointment_history_lists_every_secretary_record_in_order(self):
 		self.delegate()

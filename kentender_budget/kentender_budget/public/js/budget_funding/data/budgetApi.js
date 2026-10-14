@@ -45,10 +45,6 @@ export function submitBudgetVersion(budgetVersion, expectedModified, idempotency
 	});
 }
 
-export function listOrganisationUnits() {
-	return frappeCall(`${REF_DATA}.list_organisation_units`, {});
-}
-
 export function listFundingSources() {
 	return frappeCall(`${REF_DATA}.list_funding_sources`, {});
 }

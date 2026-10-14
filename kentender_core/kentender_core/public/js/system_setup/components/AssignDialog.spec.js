@@ -2,14 +2,13 @@
 // the selected registry role's scope and appointment (§14.3), and the primary
 // button stays disabled with a visible reason until the server preview is ok.
 // Ported from C06 #auth-des-04/05 and #auth-edit-scheduled: Responsibility is
-// the board's select ("Role · Scope"), the Organisation Unit its read-only
-// path field opening the list of units.
+// the board's select ("Role · Scope"); the User and the Organisation Unit are
+// the shared record picker (searched on the server, units by their full path).
 import { flushPromises, mount } from "@vue/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../data/responsibilityApi.js", () => ({
 	responsibilityApi: {
-		searchUsers: vi.fn(async () => [{ id: "grace.wanjiku@moh.example.test", label: "Grace Wanjiku" }]),
 		preview: vi.fn(async () => ({
 			ok: false,
 			problems: [{ field: "user", message: "Select a user." }],
@@ -24,7 +23,7 @@ vi.mock("../data/responsibilityApi.js", () => ({
 
 import AssignDialog from "./AssignDialog.vue";
 import { responsibilityApi } from "../data/responsibilityApi.js";
-import { globalMocks } from "./spec_helpers.js";
+import { choose, globalMocks, stubPicker } from "./spec_helpers.js";
 
 const RESPONSIBILITIES = [
 	{ business_role: "Departmental Author", scope_type: "Organisation Unit", requires_organisation_unit: true },
@@ -37,6 +36,7 @@ const UNITS = [
 function mountDialog() {
 	return mount(AssignDialog, {
 		props: { responsibilities: RESPONSIBILITIES, organisationUnits: UNITS },
+		attachTo: document.body,
 		global: globalMocks(),
 	});
 }
@@ -48,6 +48,7 @@ async function pickRole(wrapper, role) {
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	stubPicker([{ id: "grace.wanjiku@moh.example.test", label: "Grace Wanjiku", detail: "grace.wanjiku@moh.example.test" }]);
 });
 
 describe("AssignDialog", () => {
@@ -83,10 +84,11 @@ describe("AssignDialog", () => {
 		expect(labels).toContain("Departmental Author · Organisation Unit");
 		expect(labels).toContain("Procurement Planner · Site-wide");
 
-		await wrapper.find('[data-testid="kt-ura-ou-toggle"]').trigger("click");
-		expect(wrapper.find('[data-testid="kt-ura-ou-option-OU-MOH-00001"]').text()).toContain(
-			"Ministry of Health › Digital Health"
-		);
+		stubPicker([{ id: "OU-MOH-00001", label: "Ministry of Health › Digital Health", detail: "OU-MOH-00001" }]);
+		await wrapper.find("#kt-assign-ou").trigger("focus");
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		await flushPromises();
+		expect(wrapper.find('[data-testid="kt-ura-ou"] .kt-picker-list').text()).toContain("Ministry of Health › Digital Health");
 	});
 
 	it("shows Effective to and Authority reference only for Acting", async () => {
@@ -170,12 +172,13 @@ describe("AssignDialog", () => {
 					expected_version: "2026-09-21 10:00:00",
 				},
 			},
+			attachTo: document.body,
 			global: globalMocks(),
 		});
 		await flushPromises();
 		expect(wrapper.find(".dialog-title").text()).toBe("Edit scheduled assignment");
 		expect(wrapper.find('[data-testid="kt-ura-edit-notice"]').text()).toContain("has not started yet");
-		expect(wrapper.find('[data-testid="kt-ura-user-picked"]').element.value).toBe("Dr Peter Kimani · peter.kimani@moh.example.test");
+		expect(wrapper.find("#kt-assign-user").element.value).toBe("Dr Peter Kimani");
 		expect(wrapper.find('[data-testid="kt-ura-role"]').text()).toContain("Departmental Author");
 		expect(wrapper.find('[data-testid="kt-ura-from"]').element.value).toBe("2026-12-01");
 		expect(wrapper.find('[data-testid="kt-ura-assign-confirm"]').text()).toBe("Save changes");
@@ -194,17 +197,15 @@ describe("AssignDialog", () => {
 	it("drops a chosen user as soon as the field is typed over, and searches instead", async () => {
 		const wrapper = mountDialog();
 		await flushPromises();
-		await wrapper.find('[data-testid="kt-ura-user"]').setValue("gra");
-		await flushPromises();
-		await wrapper.find(".kt-matches button").trigger("click");
-		await flushPromises();
-		const picked = wrapper.find('[data-testid="kt-ura-user-picked"]');
-		expect(picked.element.value).toBe("Grace Wanjiku · grace.wanjiku@moh.example.test");
+		await choose(wrapper, "#kt-assign-user", "gra");
+		const picked = wrapper.find("#kt-assign-user");
+		expect(picked.element.value).toBe("Grace Wanjiku");
 		expect(responsibilityApi.preview.mock.calls.at(-1)[0].user).toBe("grace.wanjiku@moh.example.test");
 
-		await picked.setValue("Grace Wanjiku · grace.wanjiku@moh.example.tes");
+		picked.element.value = "Grace Wanjikux";
+		await picked.trigger("input");
 		await flushPromises();
-		expect(wrapper.find('[data-testid="kt-ura-user-picked"]').exists()).toBe(false);
 		expect(responsibilityApi.preview.mock.calls.at(-1)[0].user).toBe("");
+		expect(wrapper.find('[data-testid="kt-picker-clear"]').exists()).toBe(false);
 	});
 });

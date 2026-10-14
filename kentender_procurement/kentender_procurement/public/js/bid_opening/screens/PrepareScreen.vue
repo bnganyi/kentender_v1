@@ -13,11 +13,12 @@
 				<table class="table" data-testid="bop-committee-draft"><thead><tr><th>Member</th><th>Designation</th><th>Role on committee</th><th>Eligibility</th></tr></thead><tbody>
 					<tr v-for="row in draftRows" :key="row.user" :data-user="row.user">
 						<td>{{ row.full_name }}</td><td>{{ row.designation }}</td><td>{{ row.committee_role }}</td>
-						<td><span class="kt-status is-live">Eligible</span><template v-if="row.committee_role === 'Independent member'"> <span style="font-size:13px;color:var(--color-neutral-800)">Not involved in processing this Tender and will not evaluate it</span></template>
+						<td><span v-if="rowError(row.user)" class="kt-status is-critical" :data-testid="`bop-row-error-${row.user}`">{{ rowError(row.user) }}</span><span v-else class="kt-status is-live">Eligible</span><template v-if="row.committee_role === 'Independent member' && !rowError(row.user)"> <span style="font-size:13px;color:var(--color-neutral-800)">Not involved in processing this Tender and will not evaluate it</span></template>
 							<button v-if="!blocked" type="button" class="btn btn-ghost bop-row-action" :data-testid="`bop-remove-${row.user}`" @click="removeRow(row.user)">Remove</button></td>
 					</tr>
 				</tbody></table>
 				<div v-if="!blocked" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary" data-testid="bop-add-member" @click="adding = true">Add member</button></div>
+				<p v-if="draft.length" class="kt-muted" style="margin:12px 0 0;font-size:13px" data-testid="bop-draft-note">Not appointed yet. This list is kept in this browser until you appoint the committee.</p>
 			</div>
 			<div v-if="draft.length && !blocked" class="kt-decision">
 				<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">Each member gets their own task to join the opening at {{ opening.deadline_label }}.<template v-if="independentName"> As the independent member, {{ independentName }} cannot later be appointed to evaluate this Tender.</template></p>
@@ -56,7 +57,7 @@
 			<History title="Appointment and publication history" :summary="`${historyRows.length + 1} events by ${committee.appointed_by}`" :rows="historyRows" />
 		</template>
 
-		<AddMemberDialog v-if="adding" :candidates="data.candidates || []" :chosen="draft.map((d) => d.user)" :suggested-role="suggestedRole" @confirm="addRow" @cancel="adding = false" />
+		<AddMemberDialog v-if="adding" :tender="opening.tender" :draft="draft" :pending="pending" :error="dialogError" @appoint="appointFrom" @cancel="adding = false" />
 	</div>
 </template>
 
@@ -74,21 +75,41 @@ const emit = defineEmits(["appoint", "publish", "edited"]);
 const opening = computed(() => props.data.opening || {});
 const committee = computed(() => props.data.committee || { members: [] });
 const arrangements = computed(() => props.data.arrangements || {});
-const draft = ref([]);
+// The committee being named is recorded only when Appoint committee is chosen (one command), so until then it is the reader's own
+// work in this browser: kept in the tab's session storage, so a refresh or coming back never loses it (a convenience: a blocked or
+// damaged store means an empty list), and dropped once the committee is appointed.
+const ROLES = ["Chair and recorder", "Chair", "Recorder", "Member", "Independent member"];
+const draftKey = () => `kt.bop.draft.${window.frappe?.session?.user || ""}.${props.data.opening?.opening_id || ""}`;
+function readDraft() {
+	try {
+		const stored = JSON.parse(window.sessionStorage.getItem(draftKey()) || "[]");
+		return Array.isArray(stored) ? stored.filter((d) => d && typeof d.user === "string" && d.user && ROLES.includes(d.committee_role)).slice(0, 12) : [];
+	} catch (error) {
+		return [];
+	}
+}
+function writeDraft(rows) {
+	try {
+		if (rows.length) window.sessionStorage.setItem(draftKey(), JSON.stringify(rows));
+		else window.sessionStorage.removeItem(draftKey());
+	} catch (error) {
+		// a blocked store only means the draft does not survive a refresh
+	}
+}
+const draft = ref(props.data.committee?.appointed ? [] : readDraft());
+if (props.data.committee?.appointed) writeDraft([]);
+watch(draft, writeDraft, { deep: true });
+watch(() => !!(props.data.committee || {}).appointed, (appointed) => {
+	if (appointed) draft.value = [];
+});
 const adding = ref(false);
 const showForm = ref(false);
 const editingArrangements = ref(false);
 watch(() => arrangements.value.version, () => { editingArrangements.value = false; showForm.value = false; });
 
-const byUser = computed(() => Object.fromEntries((props.data.candidates || []).map((c) => [c.user, c])));
-const draftRows = computed(() => draft.value.map((d) => ({ ...(byUser.value[d.user] || { full_name: d.user, designation: "" }), ...d })));
+// A draft row carries the name and designation the Add member dialog was given by the server's search.
+const draftRows = computed(() => draft.value.map((d) => ({ full_name: d.user, designation: "", ...d })));
 const independentName = computed(() => (draftRows.value.find((r) => r.committee_role === "Independent member") || {}).full_name || "");
-const suggestedRole = computed(() => {
-	const roles = draft.value.map((d) => d.committee_role);
-	if (!roles.some((r) => ["Chair and recorder", "Chair"].includes(r))) return "Chair and recorder";
-	if (!roles.includes("Independent member")) return "Independent member";
-	return "Member";
-});
 const committeeSentence = computed(() => {
 	const parts = committee.value.members.map((m) => (m.is_independent ? `${m.full_name} (independent member)` : m.is_chair ? `${m.full_name} (${m.committee_role.toLowerCase()})` : m.full_name));
 	return parts.length > 1 ? `${parts.slice(0, -1).join(", ")}, ${parts[parts.length - 1]}.` : `${parts.join("")}.`;
@@ -105,11 +126,26 @@ const answer = computed(() => {
 		blockers: [{ reason_code: guard.reason_code, message: guard.message, headline: guard.headline, figures: {}, fixes: guard.fixes || [], facts: [] }], fixes: guard.fixes || [], primary_action: "" };
 });
 
-function addRow(row) {
-	draft.value = [...draft.value.filter((d) => d.user !== row.user), row];
-	adding.value = false;
+// The dialog hands over everyone it staged, with their roles. They join what the table already holds and the one command
+// appoints the whole committee (the same command as Appoint committee, with the same guard when it is refused). The dialog stays
+// open while that runs and closes when the committee is appointed or the guard is shown on the page; any other failure is shown in it.
+const submitted = ref(false);
+const dialogError = computed(() => props.error);
+function appointFrom(rows) {
+	const names = new Set(rows.map((r) => r.user));
+	draft.value = [...draft.value.filter((d) => !names.has(d.user)), ...rows];
+	submitted.value = true;
 	emit("edited");
+	emit("appoint", draft.value);
 }
+watch(() => props.pending, (now, before) => {
+	if (!before || now || !submitted.value) return;
+	submitted.value = false;
+	if (committee.value.appointed || (props.refusal && props.refusal.guard)) adding.value = false;
+});
+// A refused appointment names the people it refused: their row says why.
+const rowError = (user) => ((props.refusal && props.refusal.errors) || {})[user] || "";
+
 function removeRow(user) {
 	draft.value = draft.value.filter((d) => d.user !== user);
 	emit("edited");

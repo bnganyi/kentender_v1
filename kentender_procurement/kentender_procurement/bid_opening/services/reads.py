@@ -102,7 +102,6 @@ def get_opening(*, tender: str, user: str) -> dict[str, Any]:
 					order_by="version_number asc")],
 		},
 		"arrangements": published,
-		"candidates": appointment.candidates(doc.tender) if ao and doc.state in ("Awaiting deadline", "Ready to open", "Interrupted") else [],
 		"attendees": [] if technical else _attendees(case),
 		"start_guard": guard,
 		"incidents": [{"incident_id": r.incident_id, "type": r.incident_type, "holder": guards.SUPPORT, "notification_state": r.notification_state,

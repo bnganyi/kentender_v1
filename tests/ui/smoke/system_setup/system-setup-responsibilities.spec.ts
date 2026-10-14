@@ -1,6 +1,7 @@
 import { test, expect, Page } from "@playwright/test";
 import { login, loginAsAdministrator } from "../../helpers/auth";
 import { collectPageErrors } from "../../helpers/designFidelity";
+import { pickRecord } from "../../helpers/picker";
 import { resetResponsibilities, restoreSite, systemManager, type ResponsibilitiesWorld } from "./helpers";
 
 /**
@@ -49,12 +50,10 @@ test.describe.serial("System setup — Users and responsibilities, Organisation 
 		const dialog = page.locator('[data-testid="kt-ura-assign"]');
 		await expect(dialog.locator(".dialog-title")).toHaveText("Assign responsibility");
 		await expect(page.locator("#kt-assign-user")).toBeFocused();
-		await page.fill("#kt-assign-user", "Playwright Grantee");
-		await dialog.locator(".kt-matches button", { hasText: world.user }).click();
-		await expect(page.locator('[data-testid="kt-ura-user-picked"]')).toHaveValue(`${world.full_name} · ${world.user}`);
+		await pickRecord(page, "#kt-assign-user", world.user);
+		await expect(page.locator("#kt-assign-user")).toHaveValue(world.full_name);
 		await page.selectOption('[data-testid="kt-ura-role"]', "Departmental Author");
-		await page.click('[data-testid="kt-ura-ou-toggle"]');
-		await page.click(`[data-testid="kt-ura-ou-option-${world.unit}"]`);
+		await pickRecord(page, "#kt-assign-ou", world.unit);
 		await dialog.locator("label.seg-opt", { hasText: "Acting" }).click();
 		await expect(page.locator('[data-testid="kt-ura-appointment-acting"]')).toBeChecked();
 		// The primary stays off, saying why, until the server says the form is whole.

@@ -916,7 +916,7 @@ def capture(*, users: list[str] | None = None) -> dict[str, Any]:
 		earlier = [h for h in (report or {}).get("history") or [] if h.get("name") != (report or {}).get("report")]
 		out[user] = {"data": data, "bid": attempt(reads.bid, bid=bid, user=user) if bid else None, "report": report,
 			"report_previous": attempt(reads.report_view, user=user, version=earlier[-1]["name"]) if earlier else None,
-			"record": attempt(reads.committee_record, user=user), "candidates": attempt(reads.candidates, user=user, purpose="secretary" if user == HOP else "committee"),
+			"record": attempt(reads.committee_record, user=user),
 			"work": reads.list_work(user=user)}
 	# the supplier's own requests, as the portal reads them
 	supplier = []

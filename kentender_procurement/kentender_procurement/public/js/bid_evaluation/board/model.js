@@ -118,7 +118,7 @@ export function normBlock(b, { mobile = false, people = {} } = {}) {
 	}
 	if (b.k === "notice") { o.cls = "is-" + b.tone; o.iWarn = b.tone === "warning"; o.iCrit = b.tone === "critical"; o.iInfo = b.tone === "info" || b.tone === "live"; o.hasD = !!b.d; }
 	if (b.k === "field") {
-		o.isArea = !!b.area; o.isSelect = !!b.select; o.isFile = !!b.file; o.isInput = !b.area && !b.select && !b.file;
+		o.isArea = !!b.area; o.isSelect = !!b.select; o.isFile = !!b.file; o.isPicker = !!b.picker; o.isInput = !b.area && !b.select && !b.file && !b.picker;
 		o.rowsN = b.rows || 3; o.hasHelp = !!b.help; o.hasErr = !!b.err; o.hasErrd = !!b.errd;
 	}
 	if (b.k === "radios" || b.k === "seg") o.options = b.opts.map((t, i) => ({ t, value: (b.values || b.opts)[i], on: i === b.sel }));
@@ -136,6 +136,7 @@ function cellOf(raw, num, people) {
 	const td = num ? "is-num" : "";
 	if (raw && typeof raw === "object") {
 		if (raw.select) return { sel: true, name: raw.select, options: raw.options || [], td, testid: raw.testid || "", err: raw.error || "" };
+		if (raw.picker) return { pick: true, name: raw.picker, source: raw.source, context: raw.context || {}, value: raw.value || null, label: raw.chosenLabel || "", td, testid: raw.testid || "", err: raw.error || "" };
 		if (raw.input) return { field: true, name: raw.input, td, testid: raw.testid || "", err: raw.error || "" };
 		if (raw.text !== undefined) return { t: raw.text, txt: true, note: raw.note || "", td };
 		return { t: raw.label, btn: true, td, action: raw.action, args: raw.args || null, testid: raw.testid || "" };

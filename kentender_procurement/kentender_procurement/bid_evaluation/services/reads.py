@@ -242,32 +242,6 @@ def notes(doc) -> list[dict[str, Any]]:
 	return out
 
 
-def candidates(*, tender_reference: str, user: str, purpose: str) -> list[dict[str, Any]]:
-	"""The people this viewer may name in an appointment form: internal people
-	for the committee (AO), procurement officers for the secretary (HoP).
-	Eligibility is decided again by the command; this is only the pick list."""
-	doc = _case(tender_reference)
-	if purpose == "secretary":
-		if not people.holds(user, people.HEAD_OF_PROCUREMENT):
-			raise frappe.DoesNotExistError("Not found")
-		# procurement officers other than the current secretary (the Head is secretary by office, not a pick)
-		users = sorted(set(people.holders(people.PROCUREMENT_OFFICER)) - {roster.secretary(doc.name) or "", user})
-	else:
-		if not people.holds(user, people.ACCOUNTING_OFFICER):
-			raise frappe.DoesNotExistError("Not found")
-		# every staff account, not only responsibility holders (KT-STD-001 v1.13 §8.3)
-		users = sorted(frappe.get_all("User", filters={"enabled": 1, "user_type": "System User", "name": ("not in", ("Administrator", "Guest"))}, pluck="name"))
-	out = []
-	for u in users:
-		ok, designation = people.internal(u)
-		if not ok:
-			continue
-		# the department is the person's home organisation unit (AUTH-ADR-001 v1.12 §4.8), never a responsibility assignment's unit; blank when none is recorded
-		out.append({"user": u, "name": people.full_name(u), "designation": designation, "department": member_department.department_of(u)})
-	del doc
-	return sorted(out, key=lambda r: r["name"])
-
-
 def _proofs(record_version: str) -> list[dict[str, Any]]:
 	row = frappe.get_doc("Proceeding Minutes Version", record_version)
 	signed = {(p.target_id, p.member_user): p.recorded_at for p in frappe.get_all("Proceeding Attestation", filters={"minutes_version": record_version,

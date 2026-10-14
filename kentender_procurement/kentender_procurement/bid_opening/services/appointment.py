@@ -25,6 +25,15 @@ from kentender_procurement.services import sequence
 APPOINTMENT = "Opening Committee Appointment"
 ROLES = ("Chair and recorder", "Chair", "Recorder", "Member", "Independent member")
 CHAIR_ROLES, RECORDER_ROLES = ("Chair and recorder", "Chair"), ("Chair and recorder", "Recorder")
+INDEPENDENT = "Independent member"
+# States in which the Accounting Officer may name or replace the committee.
+APPOINTABLE = ("Awaiting deadline", "Ready to open", "Interrupted")
+# The refusals AppointOpeningCommittee gives for one person. The record picker lists a person
+# unavailable with the same words (picker_sources), so the list and the command cannot drift.
+DUPLICATE_TEXT = "This person is already on the committee."
+INELIGIBLE_TEXT = "This person cannot be appointed to the opening committee."
+INVOLVED_TEXT = "Involved in processing this Tender."
+EVALUATING_TEXT = "Appointed to evaluate this Tender."
 
 
 def current(case: str) -> Any | None:
@@ -78,16 +87,16 @@ def validate(tender: str, members: list[dict[str, Any]]) -> dict[str, Any] | Non
 	for row in members:
 		user, role = cstr(row.get("user")), cstr(row.get("committee_role"))
 		if user in seen:
-			field_errors[user] = "This person is already on the committee."
+			field_errors[user] = DUPLICATE_TEXT
 		seen.add(user)
 		if role not in ROLES:
 			field_errors[user] = "Choose the person's role on the committee."
 		elif not people.eligibility(user)[0]:
-			field_errors[user] = "This person cannot be appointed to the opening committee."
+			field_errors[user] = INELIGIBLE_TEXT
 	roles = [cstr(r.get("committee_role")) for r in members]
 	incomplete = field_errors or sum(r in CHAIR_ROLES for r in roles) != 1 or sum(r in RECORDER_ROLES for r in roles) != 1
 	processing = opening_seam.processing_actors(tender)
-	independent = [cstr(r["user"]) for r in members if r.get("committee_role") == "Independent member"]
+	independent = [cstr(r["user"]) for r in members if r.get("committee_role") == INDEPENDENT]
 	# Project Owner, 10 Oct 2026: tender-security intake and opening duties exclude each other on the same Tender
 	from kentender_procurement.bid_submission.services import security_duty
 
@@ -109,7 +118,7 @@ def validate(tender: str, members: list[dict[str, Any]]) -> dict[str, Any] | Non
 		guard = ns.guard(False, reason_code="BOP_INDEPENDENT_MEMBER_REQUIRED", headline="The opening committee needs an independent third member",
 			message=errors.message("BOP_INDEPENDENT_MEMBER_REQUIRED"),
 			fixes=[ns.fix("Add an independent third member", responsibility=people.ACCOUNTING_OFFICER, kind=ns.FIX_FOCUS, fix_id="add_member", target="committee", primary=True)])
-		return {"ok": False, "code": "BOP_INDEPENDENT_MEMBER_REQUIRED", "message": guard["message"], "errors": {u: "Involved in processing this Tender." if u in processing else "Appointed to evaluate this Tender." for u in independent
+		return {"ok": False, "code": "BOP_INDEPENDENT_MEMBER_REQUIRED", "message": guard["message"], "errors": {u: INVOLVED_TEXT if u in processing else EVALUATING_TEXT for u in independent
 			if u in processing or u in evaluating}, "guard": guard}
 	return None
 
@@ -121,7 +130,7 @@ def appoint_opening_committee(*, tender: str, members: list[dict[str, Any]], exp
 	def body() -> dict[str, Any]:
 		doc = records.lock(tender)
 		records.check_version(doc, expected_version)
-		if doc.state not in ("Awaiting deadline", "Ready to open", "Interrupted"):
+		if doc.state not in APPOINTABLE:
 			errors.fail("BOP_VERSION_CONFLICT", {"reason": "state", "state": doc.state})
 		if doc.state == "Interrupted" and not cstr(reason).strip():
 			return {"ok": False, "code": "BOP_COMMITTEE_INCOMPLETE", "errors": {"reason": "Give the reason for appointing a replacement."}}
@@ -171,21 +180,38 @@ def appoint_opening_committee(*, tender: str, members: list[dict[str, Any]], exp
 		payload={"members": members, "expected_version": expected_version, "reason": reason}, body=body)
 
 
-def candidates(tender: str) -> list[dict[str, Any]]:
-	"""Who the Accounting Officer can appoint (board a1 "Eligibility"): enabled
-	internal people holding an active KenTender responsibility, with their
-	designation and whether they processed this Tender (so cannot be the
-	independent member). Holding a responsibility is not an appointment."""
+def picker_rows(tender: str, actor: str, role: str, taken: set[str]) -> list[dict[str, Any]]:
+	"""The record picker's list for naming (or replacing) a committee member, for `role` on this Tender.
+
+	Everyone who holds an active responsibility, as picker rows: the person's designation and department beneath
+	the name, near the actor when they share a home unit, and unavailable, in the command's own words, when the
+	tender-security duty bars them, when already on the committee or, for the independent member, when involved
+	in processing or evaluating this Tender. The command's order of refusal is kept: the duty's conflict first.
+
+	With no `role`, as the Add members dialog asks (each person gets a role in the list), nothing is role-specific; every row
+	says in `extra.independent_blocker` whether that person could not be the independent member, and why."""
+	from kentender_core.services import record_picker
+	from kentender_procurement.bid_evaluation.services import member_department
 	from kentender_procurement.bid_submission.services import security_duty
 
-	processing = opening_seam.processing_actors(tender) | _evaluation_members(tender)  # neither can be the independent member
-	users = frappe.get_all("User Responsibility Assignment", filters={"status": "Enabled"}, pluck="user", distinct=True)
+	independent = role == INDEPENDENT
+	processing = opening_seam.processing_actors(tender)
+	evaluating = _evaluation_members(tender)
+	users = sorted(set(frappe.get_all("User Responsibility Assignment", filters={"status": "Enabled"}, pluck="user", distinct=True)))
+	near = record_picker.people_near(actor, users)
 	out = []
-	for user in sorted(set(users)):
+	for user in users:
 		eligible, designation = people.eligibility(user)
-		if eligible and security_duty.committee_blocker(tender, user, "the opening committee", "Opening committee") is None:
-			out.append({"user": user, "full_name": people.full_name(user), "designation": designation, "involved": user in processing})
-	return sorted(out, key=lambda r: r["full_name"])
+		if not eligible:
+			continue
+		not_independent = INVOLVED_TEXT if user in processing else EVALUATING_TEXT if user in evaluating else ""
+		reason = (security_duty.committee_blocker(tender, user, "the opening committee", "Opening committee")
+			or (DUPLICATE_TEXT if user in taken else (not_independent or None) if independent else None))
+		department = member_department.department_of(user)
+		# the Prepare screen's draft table shows the designation on its own, so it travels as a fact, not inside the text
+		out.append(record_picker.person_row(user, f"{designation} · {department}" if department else designation, near=user in near, disabled_reason=reason,
+			extra={"designation": designation, "department": department, "independent_blocker": not_independent}))
+	return out
 
 
 def arrangements_join_opens(doc):
