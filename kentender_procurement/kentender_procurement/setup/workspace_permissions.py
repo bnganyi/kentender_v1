@@ -261,6 +261,15 @@ def patch_bootinfo(bootinfo) -> None:
 		if payload:
 			sidebar_items[route_key.lower()] = payload
 
+	# Step 3b: the desk routes an installed app contributes (kt_navigation_overrides) show the same shared rail as every other KenTender page.
+	from kentender_core.services.navigation_overrides import _collected as contributed_navigation
+
+	for sidebar_name, spec in contributed_navigation().items():
+		payload = built.get(sidebar_name) or sidebar_items.get(sidebar_name.lower(), {})
+		for route_key in spec["routes"]:
+			if payload:
+				sidebar_items[route_key.lower()] = payload
+
 	# Step 4: drop Frappe's auto-generated module sidebar for "Departmental
 	# Needs". Frappe emits one boot sidebar per module (raw doctype list links:
 	# Departmental Need / Version / Decision …), and its sidebar JS resolves a
@@ -334,6 +343,10 @@ def _build_sidebar_dict(name: str, allowed_workspaces: set[str]) -> dict:
 	# Availability (Planned / Disabled) is separate from authorization filters above.
 	if name == "Procurement":
 		items = apply_availability_to_sidebar_items(items)
+	# An installed app may take over a Planned placeholder with its live page (kentender_core.services.navigation_overrides; CM-CHG-001 FU-CM-58).
+	from kentender_core.services.navigation_overrides import apply_to_items
+
+	items = apply_to_items(name, items)
 
 	return {
 		"label": doc.title or name,
