@@ -256,7 +256,7 @@ def _line_position_exact(budget_line_name: str, budget_line_version, *, for_upda
 		committed = money_stored(
 			frappe.db.sql(
 				"select cast(coalesce(sum(current_amount), 0) as char) from `tabProcurement Commitment` "
-				"where reservation in %s and status = 'Active'" + suffix,
+				"where reservation in %s and status in ('Active', 'Closed')" + suffix,
 				(all_reservations,),
 			)[0][0],
 			scale=scale,

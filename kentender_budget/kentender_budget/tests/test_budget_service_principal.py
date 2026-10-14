@@ -114,12 +114,13 @@ class _PrincipalBase(_FinanceTestBase):
 			"release_reservation": lambda: commit.release_reservation("X", None, "E", "T", "K", caller=caller),
 			"convert_reservation": lambda: commit.convert_reservation("X", "C", 1, "K", contract_event_id="E", contract_event_type="T", caller=caller),
 			"adjust_commitment": lambda: commit.adjust_commitment("X", 0, "E", "T", "K", caller=caller),
+			"close_commitment": lambda: commit.close_commitment("X", "R", {"event_id": "E", "event_type": "ContractClosed", "final_amount": 1}, ["REF"], "K", caller=caller),
 			"revalidate_reservations": lambda: commit.revalidate_reservations(["X"], "E", "T", "K", caller=caller),
 		}
 
 
 class TestNoWebSurface(_PrincipalBase):
-	NAMES = ("check_funding", "reserve_funding", "release_reservation", "convert_reservation", "adjust_commitment", "revalidate_reservations")
+	NAMES = ("check_funding", "reserve_funding", "release_reservation", "convert_reservation", "adjust_commitment", "close_commitment", "revalidate_reservations")
 
 	def test_no_budget_api_endpoint_remains_for_the_guarded_actions(self):
 		from kentender_budget.api import budget_api
@@ -165,9 +166,9 @@ class TestPrincipalMatrix(_PrincipalBase):
 
 	def test_each_principal_is_refused_the_actions_that_are_not_its_own(self):
 		self._as("Administrator")
-		not_requisitions = ("convert_reservation", "adjust_commitment", "revalidate_reservations")
+		not_requisitions = ("convert_reservation", "adjust_commitment", "close_commitment", "revalidate_reservations")
 		not_contract = ("check_funding", "reserve_funding", "revalidate_reservations")
-		not_budget = ("check_funding", "reserve_funding", "release_reservation", "convert_reservation", "adjust_commitment")
+		not_budget = ("check_funding", "reserve_funding", "release_reservation", "convert_reservation", "adjust_commitment", "close_commitment")
 		for principal, refused in ((PRINCIPAL_REQUISITIONS, not_requisitions), (PRINCIPAL_CONTRACT, not_contract), (PRINCIPAL_BUDGET, not_budget)):
 			calls = self._calls(service_caller(principal, reference="X"))
 			for action in refused:

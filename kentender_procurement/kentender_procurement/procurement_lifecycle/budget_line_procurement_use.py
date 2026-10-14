@@ -178,7 +178,7 @@ def build_procurement_use_payload(budget_line_name: str) -> dict[str, Any]:
 					amount_committed = frappe.utils.flt(
 						frappe.db.sql(
 							"select coalesce(sum(current_amount), 0) from `tabProcurement Commitment` "
-							"where reservation in %s and status = 'Active'",
+							"where reservation in %s and status in ('Active', 'Closed')",
 							(reservation_names,),
 						)[0][0]
 					)

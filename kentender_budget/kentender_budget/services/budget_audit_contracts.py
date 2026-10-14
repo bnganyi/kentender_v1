@@ -36,6 +36,8 @@ EVENT_RELEASED = "Reservation released"
 EVENT_PARTIAL = "Reservation partially converted"
 EVENT_COMMITMENT = "Contract commitment recorded"
 EVENT_COMMITMENT_ADJUSTED = "Commitment adjusted"
+# CM-CHG-001 v0.8 §5.14.1 — the zero-value record of a commitment's status closure.
+EVENT_COMMITMENT_CLOSED = "Commitment closed"
 EVENT_PERMISSION_DENIED = "Permission denied"
 EVENT_CONCURRENCY_CONFLICT = "Concurrency conflict"
 # BUD-CHG-001 v1.11 §12 — a Planning budget revision request and each outcome.
@@ -67,6 +69,7 @@ FUNDING_EVENT_TYPES = frozenset(
 		EVENT_PARTIAL,
 		EVENT_COMMITMENT,
 		EVENT_COMMITMENT_ADJUSTED,
+		EVENT_COMMITMENT_CLOSED,
 	}
 )
 
@@ -93,6 +96,7 @@ _DISPLAY_LABEL = {
 	EVENT_PARTIAL: _("Converted into a commitment"),
 	EVENT_COMMITMENT: _("Converted into a commitment"),
 	EVENT_COMMITMENT_ADJUSTED: _("Commitment adjusted"),
+	EVENT_COMMITMENT_CLOSED: _("Commitment closed"),
 }
 
 _POSITION_KEYS = ("approved", "reserved", "committed", "available")
@@ -106,6 +110,7 @@ _FUNDING_EVENT_ORDER = (
 	EVENT_RELEASED,
 	EVENT_COMMITMENT,
 	EVENT_COMMITMENT_ADJUSTED,
+	EVENT_COMMITMENT_CLOSED,
 )
 
 

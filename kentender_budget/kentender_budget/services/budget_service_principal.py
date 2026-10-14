@@ -6,7 +6,7 @@ which service principal it is (AUD-XC-002, AUD-BUD-012).
 
 The money-moving Budget functions (`check_funding`, `reserve_funding`,
 `release_reservation`, `convert_reservation`, `adjust_commitment`,
-`revalidate_reservations`) are in-process service calls made by a named
+`close_commitment`, `revalidate_reservations`) are in-process service calls made by a named
 downstream service, never web endpoints. Budget authenticates the *principal*
 the calling service passes, not the session's role: every function takes a
 `ServiceCaller` and checks it against the fixed allow-list of
@@ -49,11 +49,12 @@ ACTION_RESERVE = "reserve_funding"
 ACTION_RELEASE = "release_reservation"
 ACTION_CONVERT = "convert_reservation"
 ACTION_ADJUST = "adjust_commitment"
+ACTION_CLOSE = "close_commitment"
 ACTION_REVALIDATE = "revalidate_reservations"
 
 ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
 	PRINCIPAL_REQUISITIONS: frozenset({ACTION_CHECK, ACTION_RESERVE, ACTION_RELEASE}),
-	PRINCIPAL_CONTRACT: frozenset({ACTION_CONVERT, ACTION_RELEASE, ACTION_ADJUST}),
+	PRINCIPAL_CONTRACT: frozenset({ACTION_CONVERT, ACTION_RELEASE, ACTION_ADJUST, ACTION_CLOSE}),
 	PRINCIPAL_BUDGET: frozenset({ACTION_REVALIDATE}),
 	PRINCIPAL_PLANNING: frozenset(),
 	PRINCIPAL_TENDERS: frozenset(),

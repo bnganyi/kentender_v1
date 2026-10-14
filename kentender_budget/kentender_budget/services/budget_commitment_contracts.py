@@ -3,7 +3,7 @@
 
 """BUD-CHG-001 v1.3 §8.3/§9.1 — later reservation/commitment lifecycle events:
 `revalidate_reservations`, `release_reservation`, `convert_reservation`,
-`adjust_commitment`. They are in-process calls authenticated by a service
+`adjust_commitment`, `close_commitment` (CM-CHG-001 v0.8 §5.14.1). They are in-process calls authenticated by a service
 principal (`budget_service_principal`), never web endpoints (AUD-XC-002).
 No expenditure contract exists in MVP-1 — the previous
 `ingest_expenditure_snapshot` function and Expenditure Snapshot integration
@@ -27,6 +27,7 @@ from kentender_budget.services.budget_money import parse_money, scale_for, store
 from kentender_budget.services.budget_reference import allocate_commitment_reference
 from kentender_budget.services.budget_service_principal import (
 	ACTION_ADJUST,
+	ACTION_CLOSE,
 	ACTION_CONVERT,
 	ACTION_RELEASE,
 	ACTION_REVALIDATE,
@@ -36,6 +37,10 @@ from kentender_budget.services.budget_service_principal import (
 	refuse,
 	require_principal,
 )
+
+
+#: The owner outcomes that may close a commitment (CM-CHG-001 v0.8 §5.14.1: a Closed or termination-settlement outcome).
+CLOSE_OUTCOME_TYPES = ("ContractClosed", "TerminationSettlementCompleted")
 
 
 def _require_event(event_id: str, event_type: str) -> None:
@@ -94,7 +99,14 @@ def _commitment_result(doc) -> dict[str, Any]:
 		"contract": doc.contract,
 		"current_amount": flt(doc.current_amount),
 		"currency": doc.currency,
+		# the optimistic-lock token a caller reads before `close_commitment`: it changes whenever the commitment is saved
+		"revision": str(doc.modified),
 	}
+
+
+def commitment_revision(commitment: str) -> str:
+	"""The current revision token of a commitment (a plain read; the closing function decides under lock)."""
+	return str(_resolve_commitment(commitment).modified)
 
 
 def _reservation_result(doc) -> dict[str, Any]:
@@ -305,6 +317,12 @@ def convert_reservation(
 	)
 
 
+def _require_open_budget(budget: str) -> None:
+	"""BUD-BR-023 — a Budget with a Closed Version is Closed (locking read) and takes no new or increased obligation."""
+	if frappe.db.get_value("Procurement Budget Version", {"budget": budget, "status": "Closed"}, "name", for_update=True):
+		frappe.throw(_("The Budget is Closed and cannot take a new or increased obligation"), frappe.ValidationError, title="BUDGET_CLOSED")
+
+
 def _convert(reservation: str, contract: str, amount: Decimal, idempotency_key: str, contract_event_id: str, contract_event_type: str) -> dict[str, Any]:
 	# AUD-XC-101..103/BUD-004 — shared lock order, then every read below is a
 	# locking read of the latest committed state.
@@ -330,6 +348,7 @@ def _convert(reservation: str, contract: str, amount: Decimal, idempotency_key: 
 
 	if doc.status not in ("Active", "Partially Converted"):
 		frappe.throw(_("Only an Active or Partially Converted reservation can be converted"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+	_require_open_budget(doc.budget)  # CM-CHG-001 v0.8 §5.14.1 — a Closed Budget admits no new obligation
 
 	remaining = stored(doc.remaining_amount, scale=scale)
 	if amount > remaining:
@@ -392,7 +411,7 @@ def adjust_commitment(
 	caller=None,
 ) -> dict[str, Any]:
 	"""§9.1 `adjust_commitment` — apply a contract variation/cancellation to
-	an Active commitment's current amount after locked revalidation. An
+	an Active (or, downwards only, a Closed) commitment's current amount after locked revalidation. An
 	increase must be covered by the line's current available balance.
 	Contract Management only, for its own contract's commitment, on a
 	variation or cancellation event."""
@@ -429,13 +448,17 @@ def _adjust(commitment: str, new_total: Decimal, variation_event_id: str, variat
 	budget_line = frappe.db.get_value("Funding Reservation", reservation_name, "budget_line")
 	lock_budgets_of_lines([budget_line])
 	doc = locked_doc("Procurement Commitment", commitment)
-	if doc.status != "Active":
-		frappe.throw(_("Only an Active commitment can be adjusted"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+	if doc.status not in ("Active", "Closed"):
+		frappe.throw(_("Only an Active or Closed commitment can be adjusted"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
 
 	reservation = locked_doc("Funding Reservation", doc.reservation)
 	prior_amount = stored(doc.current_amount, scale=scale_for(doc.currency))
 	delta = new_amt - prior_amount
 	if delta > 0:
+		_require_open_budget(reservation.budget)
+		if doc.status == "Closed":
+			# §5.14.1 — a Closed commitment can later be reconciled downwards; an increase needs owner revalidation and a funding decision first
+			frappe.throw(_("A Closed commitment can only be decreased"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
 		from kentender_budget.services.budget_contracts import _line_position_exact
 
 		pos = _line_position_exact(reservation.budget_line, _current_line_version(reservation.budget_line, for_update=True), for_update=True)
@@ -449,7 +472,7 @@ def _adjust(commitment: str, new_total: Decimal, variation_event_id: str, variat
 			)
 
 	doc.current_amount = new_amt
-	if new_amt <= 0:
+	if new_amt <= 0 and doc.status == "Active":  # a Closed commitment keeps its closure; its amount may reach zero
 		doc.status = "Cancelled"
 	with budget_write():
 		doc.save(ignore_permissions=True)
@@ -471,3 +494,101 @@ def _adjust(commitment: str, new_total: Decimal, variation_event_id: str, variat
 	)
 	doc.reload()
 	return {"ok": True, "commitment": _commitment_result(doc)}
+
+
+def _budget_of_commitment(result):
+	reservation = frappe.db.get_value("Procurement Commitment", (result.get("commitment") or {}).get("commitment_id"), "reservation")
+	return frappe.db.get_value("Funding Reservation", reservation, "budget") if reservation else None
+
+
+def close_commitment(
+	commitment: str,
+	expected_revision: str,
+	contract_outcome_event: dict[str, Any],
+	reconciliation_evidence_refs: list[str],
+	idempotency_key: str,
+	*,
+	caller=None,
+) -> dict[str, Any]:
+	"""CM-CHG-001 v0.8 §5.14.1 `close_commitment` — close one reconciled commitment revision, once.
+
+	Contract Management only, for its own contract, on an exact owner outcome (`ContractClosed` or `TerminationSettlementCompleted`). The outcome event names
+	the **final supported obligation** (`final_amount`); the function never accepts a release amount. It locks the Budget's lines and the commitment, verifies
+	the revision the caller read and that the final amount equals the commitment's current amount (a mismatch is an error, never an implicit adjustment), changes
+	the **status only**, and records a zero-value closure event with the unchanged before and after positions. Closing releases no funds: the position counts Closed
+	commitments at their retained amount. Any lawful final decrease is requested beforehand through `adjust_commitment`. A repeat of the same outcome returns
+	the first result; a different payload, a stale revision or another outcome for an already Closed commitment fails."""
+	caller = require_principal(caller, ACTION_CLOSE)
+	key = _require_key(idempotency_key)
+	event = dict(contract_outcome_event or {})
+	_require_event(event.get("event_id", ""), event.get("event_type", ""))
+	if event["event_type"] not in CLOSE_OUTCOME_TYPES:
+		refuse(_("A commitment is closed only on a contract closure or a completed termination settlement."))
+	evidence = [str(ref).strip() for ref in (reconciliation_evidence_refs or []) if str(ref).strip()]
+	if not evidence:
+		refuse(_("Reconciliation evidence is required to close a commitment."))
+	doc = _resolve_commitment(commitment)
+	if not caller.reference or (doc.contract or "") != caller.reference:
+		refuse(_("Contract Management may close only its own contract's commitment."))
+	if event.get("final_amount") is None:
+		frappe.throw(_("The final supported obligation is required"))
+	final = parse_money(event["final_amount"], scale=scale_for(doc.currency), field="final_amount", allow_zero=True)
+	params = {"commitment": doc.name, "expected_revision": str(expected_revision), "event_id": event["event_id"], "event_type": event["event_type"],
+		"final_amount": text(final, scale=scale_for(doc.currency)), "evidence": evidence}
+	return _idempotent(
+		action=ACTION_CLOSE, caller=caller, key=key, params=params,
+		fn=lambda: _close(doc.name, str(expected_revision), event["event_id"], final, evidence, key),
+		budget_for=_budget_of_commitment,
+	)
+
+
+def _close(commitment: str, expected_revision: str, event_id: str, final: Decimal, evidence: list[str], idempotency_key: str) -> dict[str, Any]:
+	from kentender_budget.services.budget_audit_contracts import EVENT_COMMITMENT_CLOSED, record_event
+	from kentender_budget.services.budget_contracts import _line_position_exact
+
+	reservation_name = frappe.db.get_value("Procurement Commitment", commitment, "reservation")
+	budget_line = frappe.db.get_value("Funding Reservation", reservation_name, "budget_line")
+	lock_budgets_of_lines([budget_line])  # AUD-XC-101..103 — the shared lock order, then locking reads of the latest committed state
+	doc = locked_doc("Procurement Commitment", commitment)
+	reservation = locked_doc("Funding Reservation", doc.reservation)
+	scale = scale_for(doc.currency)
+
+	def position() -> dict[str, float]:
+		exact = _line_position_exact(reservation.budget_line, _current_line_version(reservation.budget_line, for_update=True), for_update=True)
+		return {key: float(value) for key, value in exact.items()}
+
+	if doc.status == "Closed":
+		first = frappe.db.get_value("Budget Audit Event", {"commitment": doc.name, "event_type": EVENT_COMMITMENT_CLOSED}, ["name", "downstream_reference"], as_dict=True, order_by="creation asc")
+		if first and first.downstream_reference == event_id and stored(doc.current_amount, scale=scale) == final:
+			now = position()
+			return {"ok": True, "reused": True, "commitment": _commitment_result(doc), "positions": {"before": now, "after": now},
+				"acknowledgement": {"event_id": event_id, "audit_event": first.name, "idempotency_key": idempotency_key, "contract": doc.contract}}
+		frappe.throw(_("This commitment is already Closed by a different outcome"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+	if doc.status != "Active":
+		frappe.throw(_("Only an Active commitment can be closed"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+	if str(doc.modified) != expected_revision:
+		frappe.throw(_("The commitment changed after it was read. Review the latest revision before closing it."), frappe.ValidationError, title="BUDGET_STALE_REVISION")
+	if stored(doc.current_amount, scale=scale) != final:
+		frappe.throw(
+			_("The owner outcome's final obligation ({0}) does not equal the commitment's current amount ({1})").format(
+				format_kes_full(final, currency=doc.currency), format_kes_full(stored(doc.current_amount, scale=scale), currency=doc.currency)
+			),
+			frappe.ValidationError,
+			title="BUDGET_COMMITMENT_AMOUNT_MISMATCH",
+		)
+
+	before = position()
+	doc.status = "Closed"
+	with budget_write():
+		doc.save(ignore_permissions=True)
+	after = position()
+	if after != before:  # the invariant of §5.14.1: closing the status changes no amount and frees no funding
+		frappe.throw(_("Closing a commitment must not change the Budget position"), frappe.ValidationError, title="BUDGET_POSITION_CHANGED")
+	audit = record_event(  # not the best-effort variant: a closure with no attribution must not stand
+		budget=reservation.budget, budget_line=reservation.budget_line, reservation=reservation.name, commitment=doc.name, event_type=EVENT_COMMITMENT_CLOSED,
+		actor=frappe.session.user, correlation_id=idempotency_key, calling_module=PRINCIPAL_LABEL[PRINCIPAL_CONTRACT], downstream_reference=event_id,
+		amount=0, currency=doc.currency, before=before, after=after, reason="; ".join(evidence)[:1000],
+	)
+	doc.reload()
+	return {"ok": True, "commitment": _commitment_result(doc), "positions": {"before": before, "after": after},
+		"acknowledgement": {"event_id": event_id, "audit_event": audit, "idempotency_key": idempotency_key, "contract": doc.contract}}

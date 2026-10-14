@@ -127,7 +127,7 @@ def facts(*, user: str, kind: str, at: datetime, fiscal_year: str = "", org_unit
 	committed_by_line = {
 		row.budget_line: _amount(row.total) for row in _texts(
 			"select r.budget_line as budget_line, cast(coalesce(sum(c.current_amount), 0) as char) as total from `tabProcurement Commitment` c "
-			"join `tabFunding Reservation` r on r.name = c.reservation where r.budget_line in %s and c.status = 'Active' group by r.budget_line", (lines_by_id,),
+			"join `tabFunding Reservation` r on r.name = c.reservation where r.budget_line in %s and c.status in ('Active', 'Closed') group by r.budget_line", (lines_by_id,),
 		)
 	}
 	lines: list[dict[str, Any]] = []
@@ -151,7 +151,7 @@ def _reservations(budget: str, units: set[str] | None, owner_of: dict[str, str])
 	rows = _texts(
 		"select r.name as name, r.budget_line as budget_line, r.source_organisation_unit as source, "
 		"cast(case when r.status in %s then r.remaining_amount else 0 end as char) as reserved, "
-		"cast(coalesce((select sum(c.current_amount) from `tabProcurement Commitment` c where c.reservation = r.name and c.status = 'Active'), 0) as char) as committed "
+		"cast(coalesce((select sum(c.current_amount) from `tabProcurement Commitment` c where c.reservation = r.name and c.status in ('Active', 'Closed')), 0) as char) as committed "
 		"from `tabFunding Reservation` r where r.budget = %s order by r.name asc", (HOLDING, budget),
 	)
 	missing = sorted({row.budget_line for row in rows if row.budget_line and row.budget_line not in owner_of})

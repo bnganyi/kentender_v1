@@ -171,3 +171,21 @@ Built in the Planning v1.27 workflow-guidance cycle (`../04_planning/PLN-CHG-001
 | BUD21-AC-007 | Partial | Row shown to the Budget Officer only, clears on the outcome (hand-off test; live check); Approver/Auditor/technical absence not tested. |
 | BUD21-AC-008 | Done | The row and dialog carry no Planner, Finance or Plan-editing control (built; browser `planning-guidance.spec.ts`). |
 | BUD21-XD-001 | Not tested | Joint commit/rollback not yet proven. |
+
+## Addendum, 15 October 2026 — `close_commitment` (CM-CHG-001 v0.8 §5.14.1, CM-CP-02; Contract Management tracker CM8-313, follow-up FU-CM-04)
+
+Built in this app at Contract Management's request. **The Budget requirement document (BUD-CHG-001 v1.12) is not amended;** the amendment is owed as a new version under the document-change protocol (FU-CM-59). Nothing here was run against the dev site.
+
+| Change | Where | Evidence |
+|---|---|---|
+| New in-process service `close_commitment(commitment, expected_revision, contract_outcome_event, reconciliation_evidence_refs, idempotency_key)`; Contract Management principal only, for its own contract; the outcome event names the final supported obligation, never a release amount; status closes, amount and Available stay unchanged; a zero-value "Commitment closed" event records the unchanged before and after positions (the non-best-effort audit write, so a closure with no attribution cannot stand) | `services/budget_commitment_contracts.py`, `services/budget_service_principal.py` (`ACTION_CLOSE`), `services/budget_audit_contracts.py`, `budget_audit_event.json` (one new Select option) | `tests/test_budget_close_commitment.py` 12/12: the seven §5.14.1 owner tests, the principal, the evidence and event inputs, a cancelled commitment, and one definition of a counted commitment |
+| **Positions count Closed commitments at their retained `current_amount`** (`status in ('Active', 'Closed')`), in the line position, the Procurement budget-line use read and both analytics queries; a test fails if any reader counts only Active | `services/budget_contracts.py`, `services/analytics_provider.py` (two queries), `kentender_procurement/.../budget_line_procurement_use.py` | `test_no_reader_counts_only_active_commitments` |
+| A Closed commitment may be decreased (reconciling a later correction) but never increased; an increase and a new conversion are refused in a Closed Budget (`BUDGET_CLOSED`) | `_adjust`, `_convert`, `_require_open_budget` | tests 7 and the Closed-decrease step |
+| Revision token: the commitment's `modified`, returned as `revision` on every commitment result; a stale revision is `BUDGET_STALE_REVISION`, an amount that differs from the owner event is `BUDGET_COMMITMENT_AMOUNT_MISMATCH` | `_commitment_result`, `commitment_revision`, `_close` | tests 5 and 6 |
+
+**Mutation-checked:** counting only Active (7 of the tests failed), skipping the revision check and the closed-Budget guard (2 tests failed), each restored green.
+
+**Dependency rerun after the change, on the test site, all passing:** `test_budget_service_principal` 32, `test_budget_exact_money` 14, `test_budget_command_only_writes` 9, `test_bud_chg_001_phase3_check_reserve` 8, `test_bud_chg_001_v19_usability` 20, `test_analytics_provider` 22, `test_budget_funding_read` 2, `test_budget_locking_races` 11. The principal matrix test was extended with the new action.
+
+**What the dev site will notice, when it next migrates:** the Budget Audit Event `event_type` list gains "Commitment closed" (metadata only). Until then nothing calls `close_commitment`, because Contract Management is not installed there.
+
