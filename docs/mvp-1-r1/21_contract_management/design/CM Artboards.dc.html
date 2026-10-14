@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<script src="cm-data-1.js"></script>
+<script src="cm-data-2.js"></script>
+<script src="cm-data-3.js"></script>
+<script src="cm-data-4.js"></script>
+<style>html,body{margin:0;height:100%}body{background:var(--color-bg);font-family:var(--font-body);color:var(--color-text)}a{color:var(--color-accent-700);text-decoration:none}a:hover{text-decoration:underline;color:var(--color-accent-800)}*{box-sizing:border-box}</style>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;background:var(--color-bg)">
+<nav style="width:300px;flex:none;display:flex;flex-direction:column;background:var(--color-surface);border-right:1px solid var(--color-divider)">
+<div style="padding:18px 18px 14px;border-bottom:1px solid var(--color-divider)">
+<div style="font-size:12px;font-weight:600;color:var(--color-neutral-700)">CM-CHG-001 v0.8 · §10, §19</div>
+<div style="font-size:17px;font-weight:600;color:var(--color-heading);margin-top:2px">Contract Management artboards</div>
+<div style="font-size:12px;color:var(--color-neutral-700);margin-top:6px">{{ totalLabel }}</div>
+</div>
+<div style="flex:1;overflow:auto;padding:8px 0 24px">
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="6">
+<div style="padding:14px 18px 6px;font-size:12px;font-weight:600;color:var(--color-neutral-700)">{{ g.t }}</div>
+<sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+<sc-if value="{{ it.sel }}">
+<button onClick="{{ it.go }}" style="display:flex;width:100%;align-items:baseline;gap:10px;padding:7px 18px 7px 15px;border:0;border-left:3px solid var(--color-accent);background:var(--color-accent-100);cursor:pointer;text-align:left;font:inherit">
+<span style="font-size:12px;font-weight:700;color:var(--color-accent-800);width:46px;flex:none;font-variant-numeric:tabular-nums">{{ it.d }}</span>
+<span style="flex:1;font-size:13px;font-weight:600;color:var(--color-accent-800)">{{ it.name }}</span>
+<span style="font-size:12px;color:var(--color-accent-800)">{{ it.count }}</span>
+</button>
+</sc-if>
+<sc-if value="{{ it.unsel }}">
+<button onClick="{{ it.go }}" style="display:flex;width:100%;align-items:baseline;gap:10px;padding:7px 18px;border:0;background:transparent;cursor:pointer;text-align:left;font:inherit" style-hover="background:var(--color-neutral-100)">
+<span style="font-size:12px;font-weight:600;color:var(--color-neutral-700);width:46px;flex:none;font-variant-numeric:tabular-nums">{{ it.d }}</span>
+<span style="flex:1;font-size:13px;color:var(--color-text)">{{ it.name }}</span>
+<span style="font-size:12px;color:var(--color-neutral-600)">{{ it.count }}</span>
+</button>
+</sc-if>
+</sc-for>
+</sc-for>
+</div>
+</nav>
+<main ref="{{ setMain }}" style="flex:1;min-width:0;overflow-x:auto;overflow-y:scroll">
+<div style="position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:16px;padding:14px 32px;background:var(--color-surface);border-bottom:1px solid var(--color-divider)">
+<div style="flex:1;min-width:0">
+<div style="font-size:12px;font-weight:600;color:var(--color-neutral-700)">{{ selGroup }}</div>
+<div style="font-size:18px;font-weight:600;color:var(--color-heading)">{{ selTitle }}</div>
+</div>
+<div class="seg" role="radiogroup">
+<label class="seg-opt"><input type="radio" name="zoom" checked="{{ zoomFit }}" onChange="{{ setFit }}">Fit</label>
+<label class="seg-opt"><input type="radio" name="zoom" checked="{{ zoom100 }}" onChange="{{ set100 }}">100%</label>
+</div>
+<button class="btn btn-secondary" onClick="{{ prev }}">Previous</button>
+<button class="btn btn-secondary" onClick="{{ next }}">Next</button>
+</div>
+<div style="padding:28px 32px 80px;display:flex;flex-direction:column;gap:44px">
+<sc-for list="{{ rows }}" as="s" hint-placeholder-count="2">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+<span style="font-size:12px;font-weight:700;padding:3px 8px;border-radius:2px;background:var(--color-neutral-900);color:#fff">{{ s.id }}</span>
+<span style="font-size:14px;font-weight:600;color:var(--color-heading)">{{ s.vl }}</span>
+<span style="font-size:13px;color:var(--color-neutral-700)">{{ s.cap }}</span>
+</div>
+<sc-if value="{{ s.hasNote }}"><div style="font-size:12px;color:var(--color-neutral-700);max-width:1100px">Review note: {{ s.note }}</div></sc-if>
+<div style="zoom:{{ zoomVal }};width:1280px;flex:none">
+<div style="width:1280px;position:relative;background:var(--color-bg);padding:28px 40px 40px;border:1px solid var(--color-neutral-300);min-height:{{ s.minH }}">
+
+<sc-if value="{{ s.isRecord }}">
+<div class="kt-page" style="margin:0;max-width:none">
+<div class="kt-page-head">
+<div>
+<h1 class="kt-page-title">{{ s.title }}</h1>
+<p class="kt-page-desc">{{ s.sub }}</p>
+<div style="display:flex;align-items:center;gap:10px;margin-top:10px;font-size:13px;color:var(--color-neutral-700)"><span>{{ s.ref }}</span><span class="kt-status {{ s.stCls }}">{{ s.stLabel }}</span></div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
+<button class="btn btn-ghost"><svg class="kt-icon is-sm" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>{{ s.back }}</button>
+<span style="font-size:11px;color:var(--color-neutral-700)">Illustrative test record</span>
+</div>
+</div>
+<sc-if value="{{ s.hasTabs }}">
+<div class="kt-tabs"><sc-for list="{{ s.tabs }}" as="t"><label class="kt-tab"><input type="radio" name="{{ t.name }}" defaultChecked="{{ t.sel }}">{{ t.l }}</label></sc-for></div>
+</sc-if>
+<sc-if value="{{ s.hasNext }}">
+<div style="padding:2px 0 4px">
+<sc-if value="{{ s.nTurn }}"><div class="kt-next-step is-turn"><div class="kt-next-step-label">Your turn</div><p class="kt-next-step-headline">{{ s.n.h }}</p><sc-if value="{{ s.n.hasS }}"><p class="kt-next-step-sentence">{{ s.n.s }}</p></sc-if></div></sc-if>
+<sc-if value="{{ s.nWait }}"><div class="kt-next-step is-waiting"><div class="kt-next-step-label">Waiting on someone</div><p class="kt-next-step-headline">{{ s.n.h }}</p><sc-if value="{{ s.n.hasS }}"><p class="kt-next-step-sentence">{{ s.n.s }}</p></sc-if></div></sc-if>
+<sc-if value="{{ s.nDone }}"><div class="kt-next-step is-done"><div class="kt-next-step-label">Done</div><p class="kt-next-step-headline">{{ s.n.h }}</p><sc-if value="{{ s.n.hasS }}"><p class="kt-next-step-sentence">{{ s.n.s }}</p></sc-if></div></sc-if>
+<sc-if value="{{ s.nBlk }}"><div class="kt-notice is-warning kt-next-step" role="status"><div class="kt-notice-body"><div class="kt-next-step-label">Your turn, blocked</div><p class="kt-next-step-headline">{{ s.n.h }}</p><sc-if value="{{ s.n.hasS2 }}"><p class="kt-next-step-sentence">{{ s.n.s2 }}</p></sc-if><sc-if value="{{ s.n.hasS }}"><p class="kt-next-step-sentence">{{ s.n.s }}</p></sc-if><sc-if value="{{ s.n.hasFix }}"><div class="kt-next-step-fixes"><sc-for list="{{ s.n.fixes }}" as="fx"><sc-if value="{{ fx.primary }}"><button class="btn btn-primary">{{ fx.l }}</button></sc-if><sc-if value="{{ fx.sec }}"><button class="btn btn-secondary">{{ fx.l }}</button></sc-if></sc-for></div></sc-if></div></div></sc-if>
+</div>
+</sc-if>
+
+<sc-for list="{{ s.regions }}" as="rg">
+<section class="kt-region">
+<sc-if value="{{ rg.hasT }}"><h2>{{ rg.t }}</h2></sc-if>
+<div style="display:flex;flex-direction:column;gap:16px">
+<sc-for list="{{ rg.b }}" as="b">
+<sc-if value="{{ b.isFacts }}"><div class="kt-meta-row" style="align-items:start"><sc-for list="{{ b.items }}" as="it"><div><span class="kt-label">{{ it.l }}</span><span style="font-size:17px;font-weight:600;color:var(--color-heading);font-variant-numeric:tabular-nums">{{ it.v }}</span></div></sc-for></div></sc-if>
+<sc-if value="{{ b.isRows }}"><div style="display:grid;grid-template-columns:260px minmax(0,1fr);border-top:1px solid var(--color-divider)"><sc-for list="{{ b.items }}" as="it"><div style="padding:9px 0;border-bottom:1px solid var(--color-divider);font-size:14px;color:var(--color-neutral-700)">{{ it.l }}</div><div style="padding:9px 0;border-bottom:1px solid var(--color-divider);font-size:14px;font-weight:500;color:var(--color-text)">{{ it.v }}</div></sc-for></div></sc-if>
+<sc-if value="{{ b.isTable }}"><table class="table"><thead><tr><sc-for list="{{ b.head }}" as="h"><th class="{{ h.cls }}">{{ h.v }}</th></sc-for></tr></thead><tbody><sc-for list="{{ b.body }}" as="r"><tr><sc-for list="{{ r.cells }}" as="c"><td class="{{ c.cls }}"><sc-if value="{{ c.isT }}">{{ c.v }}</sc-if><sc-if value="{{ c.isL }}"><a href="#">{{ c.v }}</a></sc-if><sc-if value="{{ c.isS }}"><span class="kt-status {{ c.sc }}">{{ c.v }}</span></sc-if><sc-if value="{{ c.isI }}"><input class="input" defaultValue="{{ c.v }}" style="text-align:inherit"></sc-if><sc-if value="{{ c.isSel }}"><div class="input" style="display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer"><span>{{ c.v }}</span><svg class="kt-icon is-sm" viewBox="0 0 24 24" style="color:var(--color-neutral-600)"><path d="m6 9 6 6 6-6"></path></svg></div></sc-if></td></sc-for></tr></sc-for></tbody></table></sc-if>
+<sc-if value="{{ b.isFields }}"><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px"><sc-for list="{{ b.items }}" as="f"><div class="field" style="grid-column:{{ f.span }}"><label>{{ f.l }}</label>
+<sc-if value="{{ f.isTx }}"><input class="input" defaultValue="{{ f.v }}" placeholder="{{ f.ph }}"></sc-if>
+<sc-if value="{{ f.isDt }}"><div class="date-field" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span>{{ f.v }}</span><svg class="kt-icon is-sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg></div></sc-if>
+<sc-if value="{{ f.isSel }}"><div class="input" style="display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer"><span>{{ f.v }}</span><svg class="kt-icon is-sm" viewBox="0 0 24 24" style="color:var(--color-neutral-600)"><path d="m6 9 6 6 6-6"></path></svg></div></sc-if>
+<sc-if value="{{ f.isTa }}"><textarea class="input" defaultValue="{{ f.v }}" rows="{{ f.rows }}"></textarea></sc-if>
+<sc-if value="{{ f.isFile }}"><div style="display:flex;align-items:center;gap:8px;min-height:36px;font-size:14px"><svg class="kt-icon is-sm" viewBox="0 0 24 24" style="color:var(--color-neutral-600)"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg><a href="#">{{ f.v }}</a></div></sc-if>
+<sc-if value="{{ f.isFileEmpty }}"><div style="display:flex;align-items:center;gap:10px;min-height:36px"><button class="btn btn-secondary">Choose file</button><span style="font-size:13px;color:var(--color-neutral-700)">No file selected</span></div></sc-if>
+<sc-if value="{{ f.isRo }}"><div style="min-height:36px;display:flex;align-items:center;font-size:14px;font-weight:500;color:var(--color-text)">{{ f.v }}</div></sc-if>
+<sc-if value="{{ f.isRad }}"><div style="display:grid;gap:10px;padding-top:4px"><sc-for list="{{ f.opts }}" as="o"><label class="radio"><input type="radio" name="{{ f.name }}" defaultChecked="{{ o.sel }}"><span class="dot"></span>{{ o.l }}</label></sc-for></div></sc-if>
+</div></sc-for></div></sc-if>
+<sc-if value="{{ b.isText }}"><p style="margin:0;font-size:14px;color:var(--color-text);max-width:80ch;text-wrap:pretty">{{ b.v }}</p></sc-if>
+<sc-if value="{{ b.isStrong }}"><p style="margin:0;font-size:15px;font-weight:600;color:var(--color-heading);max-width:80ch;text-wrap:pretty">{{ b.v }}</p></sc-if>
+<sc-if value="{{ b.isHelp }}"><p style="margin:0;font-size:13px;color:var(--color-neutral-700);max-width:80ch;text-wrap:pretty">{{ b.v }}</p></sc-if>
+<sc-if value="{{ b.isLinks }}"><div style="display:flex;flex-wrap:wrap;gap:8px 20px;font-size:14px"><sc-for list="{{ b.items }}" as="l"><a href="#">{{ l }}</a></sc-for></div></sc-if>
+<sc-if value="{{ b.isBtns }}"><div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ b.items }}" as="l"><button class="btn btn-secondary">{{ l }}</button></sc-for></div></sc-if>
+<sc-if value="{{ b.isPreview }}"><div class="kt-disclosure"><div class="kt-disclosure-head" style="padding-left:0;padding-right:0"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">{{ b.t }}</span></div><svg class="kt-icon is-sm kt-disclosure-chevron {{ b.chev }}" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg></div><sc-if value="{{ b.open }}"><div class="kt-disclosure-body" style="padding-left:0;padding-right:0"><div style="display:grid;grid-template-columns:260px minmax(0,1fr)"><sc-for list="{{ b.items }}" as="it"><div style="padding:7px 0;font-size:14px;color:var(--color-neutral-700)">{{ it.l }}</div><div style="padding:7px 0;font-size:14px;color:var(--color-text)">{{ it.v }}</div></sc-for></div></div></sc-if></div></sc-if>
+</sc-for>
+</div>
+</section>
+</sc-for>
+
+<div class="kt-disclosure">
+<div class="kt-disclosure-head" onClick="{{ s.toggleEv }}" style="padding-left:0;padding-right:0"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Evidence and history</span></div><svg class="kt-icon is-sm kt-disclosure-chevron {{ s.evCls }}" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg></div>
+<sc-if value="{{ s.evOpen }}"><div class="kt-disclosure-body" style="padding-left:0;padding-right:0"><sc-if value="{{ s.hasEv }}"><div style="display:flex;flex-direction:column;gap:8px;font-size:14px"><sc-for list="{{ s.ev }}" as="e"><a href="#">{{ e }}</a></sc-for></div></sc-if><sc-if value="{{ s.noEv }}"><p style="margin:0;font-size:14px;color:var(--color-neutral-700)">No evidence links are supplied for this view.</p></sc-if></div></sc-if>
+</div>
+<sc-if value="{{ s.hasFooter }}">
+<div style="display:flex;flex-wrap:wrap;gap:10px;padding-top:20px;border-top:1px solid var(--color-divider)">
+<sc-if value="{{ s.hasP }}"><button class="btn btn-primary">{{ s.p }}</button></sc-if>
+<sc-for list="{{ s.s2 }}" as="a"><sc-if value="{{ a.on }}"><button class="btn btn-secondary">{{ a.l }}</button></sc-if><sc-if value="{{ a.off }}"><button class="btn btn-secondary" disabled="{{ true }}">{{ a.l }}</button></sc-if></sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ s.isList }}">
+<div class="kt-page" style="margin:0;max-width:none">
+<div class="kt-page-head">
+<div><h1 class="kt-page-title">{{ s.title }}</h1><span style="display:block;margin-top:8px;font-size:11px;color:var(--color-neutral-700)">Illustrative test record</span></div>
+<sc-if value="{{ s.hasHeadP }}"><div class="kt-page-actions"><button class="btn btn-primary">{{ s.headP }}</button></div></sc-if>
+</div>
+<sc-if value="{{ s.hasViews }}"><div class="seg" role="radiogroup" style="width:fit-content"><sc-for list="{{ s.views }}" as="v"><label class="seg-opt"><input type="radio" name="{{ v.name }}" defaultChecked="{{ v.sel }}">{{ v.l }}</label></sc-for></div></sc-if>
+<div>
+<div class="kt-filter-bar"><sc-for list="{{ s.filters }}" as="f"><div class="field {{ f.wcls }}"><label>{{ f.l }}</label><sc-if value="{{ f.isTx }}"><input class="input" defaultValue="{{ f.v }}"></sc-if><sc-if value="{{ f.isSel }}"><div class="input" style="display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer"><span>{{ f.v }}</span><svg class="kt-icon is-sm" viewBox="0 0 24 24" style="color:var(--color-neutral-600)"><path d="m6 9 6 6 6-6"></path></svg></div></sc-if></div></sc-for></div>
+<sc-if value="{{ s.hasMore }}"><div class="kt-disclosure" style="margin-top:4px"><div class="kt-disclosure-head" onClick="{{ s.toggleF }}" style="padding-left:0;padding-right:0"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Filters</span></div><svg class="kt-icon is-sm kt-disclosure-chevron {{ s.fCls }}" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg></div><sc-if value="{{ s.fOpen }}"><div class="kt-disclosure-body" style="padding-left:0;padding-right:0"><div class="kt-filter-bar"><sc-for list="{{ s.more }}" as="f"><div class="field"><label>{{ f.l }}</label><div class="input" style="display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer"><span>{{ f.v }}</span><svg class="kt-icon is-sm" viewBox="0 0 24 24" style="color:var(--color-neutral-600)"><path d="m6 9 6 6 6-6"></path></svg></div></div></sc-for></div></div></sc-if></div></sc-if>
+<sc-if value="{{ s.hasRows }}"><table class="table"><thead><tr><sc-for list="{{ s.head }}" as="h"><th class="{{ h.cls }}">{{ h.v }}</th></sc-for></tr></thead><tbody><sc-for list="{{ s.body }}" as="r"><tr><sc-for list="{{ r.cells }}" as="c"><td class="{{ c.cls }}"><sc-if value="{{ c.isT }}">{{ c.v }}</sc-if><sc-if value="{{ c.isL }}"><a href="#">{{ c.v }}</a></sc-if><sc-if value="{{ c.isS }}"><span class="kt-status {{ c.sc }}">{{ c.v }}</span></sc-if></td></sc-for></tr></sc-for></tbody></table></sc-if>
+<sc-if value="{{ s.noRows }}"><div class="kt-empty"><div class="kt-spot is-neutral"><svg class="kt-icon" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"></path><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg></div><p>{{ s.empty }}</p><sc-if value="{{ s.hasEmptyAct }}"><button class="btn btn-secondary">{{ s.emptyAct }}</button></sc-if></div></sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ s.isState }}">
+<div class="kt-page" style="margin:0;max-width:none">
+<div class="kt-empty" style="border-top:0;padding:72px 24px">
+<sc-if value="{{ s.isErr }}"><div class="kt-spot is-error"><svg class="kt-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4M12 16h.01"></path></svg></div></sc-if>
+<sc-if value="{{ s.isLock }}"><div class="kt-spot is-neutral"><svg class="kt-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div></sc-if>
+<p style="font-size:17px;font-weight:600;color:var(--color-heading)">{{ s.msg }}</p>
+<div style="display:flex;gap:10px"><sc-if value="{{ s.hasP }}"><button class="btn btn-primary">{{ s.p }}</button></sc-if><sc-for list="{{ s.s2 }}" as="a"><button class="btn btn-secondary">{{ a.l }}</button></sc-for></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ s.hasDialog }}">
+<div class="dialog-backdrop" style="position:absolute;inset:0;z-index:5">
+<div class="dialog" role="dialog" style="width:520px;max-width:520px">
+<div class="dialog-title">{{ s.dlg.t }}</div>
+<div class="dialog-body" style="display:flex;flex-direction:column;gap:14px">
+<sc-for list="{{ s.dlg.b }}" as="b">
+<sc-if value="{{ b.isRows }}"><div style="display:grid;grid-template-columns:170px minmax(0,1fr);border-top:1px solid var(--color-divider)"><sc-for list="{{ b.items }}" as="it"><div style="padding:8px 0;border-bottom:1px solid var(--color-divider);font-size:13px;color:var(--color-neutral-700)">{{ it.l }}</div><div style="padding:8px 0;border-bottom:1px solid var(--color-divider);font-size:14px;color:var(--color-text)">{{ it.v }}</div></sc-for></div></sc-if>
+<sc-if value="{{ b.isTable }}"><div style="display:grid;grid-template-columns:{{ b.gcols }};font-size:13px"><sc-for list="{{ b.head }}" as="h"><div style="padding:6px 8px 6px 0;font-weight:600;color:var(--color-neutral-700);border-bottom:1px solid var(--color-divider)">{{ h.v }}</div></sc-for><sc-for list="{{ b.flat }}" as="c"><div style="padding:6px 8px 6px 0;border-bottom:1px solid var(--color-divider);display:flex;align-items:center;min-width:0"><sc-if value="{{ c.isT }}">{{ c.v }}</sc-if><sc-if value="{{ c.isS }}"><span class="kt-status {{ c.sc }}">{{ c.v }}</span></sc-if><sc-if value="{{ c.isI }}"><input class="input" defaultValue="{{ c.v }}"></sc-if><sc-if value="{{ c.isSel }}"><div class="input" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span>{{ c.v }}</span><svg class="kt-icon is-sm" viewBox="0 0 24 24" style="color:var(--color-neutral-600)"><path d="m6 9 6 6 6-6"></path></svg></div></sc-if></div></sc-for></div></sc-if>
+<sc-if value="{{ b.isFields }}"><div style="display:grid;gap:14px"><sc-for list="{{ b.items }}" as="f"><div class="field"><label>{{ f.l }}</label>
+<sc-if value="{{ f.isTx }}"><input class="input" defaultValue="{{ f.v }}"></sc-if>
+<sc-if value="{{ f.isDt }}"><div class="date-field" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span>{{ f.v }}</span><svg class="kt-icon is-sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg></div></sc-if>
+<sc-if value="{{ f.isSel }}"><div class="input" style="display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer"><span>{{ f.v }}</span><svg class="kt-icon is-sm" viewBox="0 0 24 24" style="color:var(--color-neutral-600)"><path d="m6 9 6 6 6-6"></path></svg></div></sc-if>
+<sc-if value="{{ f.isTa }}"><textarea class="input" defaultValue="{{ f.v }}" rows="{{ f.rows }}"></textarea></sc-if>
+<sc-if value="{{ f.isFile }}"><div style="display:flex;align-items:center;gap:8px;min-height:36px;font-size:14px"><svg class="kt-icon is-sm" viewBox="0 0 24 24" style="color:var(--color-neutral-600)"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg><a href="#">{{ f.v }}</a></div></sc-if>
+<sc-if value="{{ f.isFileEmpty }}"><div style="display:flex;align-items:center;gap:10px;min-height:36px"><button class="btn btn-secondary">Choose file</button><span style="font-size:13px;color:var(--color-neutral-700)">No file selected</span></div></sc-if>
+<sc-if value="{{ f.isRo }}"><div style="min-height:36px;display:flex;align-items:center;font-size:14px;font-weight:500;color:var(--color-text)">{{ f.v }}</div></sc-if>
+</div></sc-for></div></sc-if>
+<sc-if value="{{ b.isText }}"><p style="margin:0">{{ b.v }}</p></sc-if>
+<sc-if value="{{ b.isHelp }}"><p style="margin:0;font-size:13px;color:var(--color-neutral-700)">{{ b.v }}</p></sc-if>
+</sc-for>
+</div>
+<div class="dialog-actions"><sc-for list="{{ s.dlg.s2 }}" as="a"><button class="btn btn-secondary">{{ a.l }}</button></sc-for><sc-if value="{{ s.dlg.hasP }}"><button class="btn btn-primary">{{ s.dlg.p }}</button></sc-if></div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { ready: false, sel: null, ev: {}, zoom: 'fit', fit: 0.7 };
+  componentDidMount() {
+    this.poll = setInterval(() => { if (new Set((window.CMP || []).map(p => p.o)).size >= 4) { clearInterval(this.poll); this.build(); } }, 60);
+  }
+  componentWillUnmount() { clearInterval(this.poll); if (this.onRs) window.removeEventListener('resize', this.onRs); }
+  setMain = (el) => {
+    this.mainEl = el;
+    if (el && !this.onRs) {
+      this.onRs = () => { if (!this.mainEl) return; const w = this.mainEl.clientWidth; const fit = Math.round(Math.max(0.3, Math.min(1, (w - 66) / 1282)) * 50) / 50; if (Math.abs(fit - this.state.fit) > 0.019) this.setState({ fit }); };
+      window.addEventListener('resize', this.onRs);
+      setTimeout(this.onRs, 0);
+    }
+  };
+  H() {
+    const fld = (t) => (l, v, o) => ({ t, l, v: v == null ? '' : v, o });
+    const h = {
+      f: (...items) => ({ k: 'facts', items }),
+      r: (...items) => ({ k: 'rows', items }),
+      t: (cols, rows, num) => ({ k: 'table', cols, rows, num: num || [] }),
+      fl: (...items) => ({ k: 'fields', items }),
+      x: (v) => ({ k: 'text', v }), xs: (v) => ({ k: 'strong', v }), xh: (v) => ({ k: 'help', v }),
+      lk: (...items) => ({ k: 'links', items }), bt: (...items) => ({ k: 'btns', items }),
+      pv: (t, items, open) => ({ k: 'preview', t, items, open: open !== false }),
+      R: (t, ...b) => ({ t, b }),
+      tx: fld('tx'), dt: fld('dt'), ta: fld('ta'), file: fld('file'), ro: fld('ro'),
+      sel: (l, v, opts) => ({ t: 'sel', l, v, opts: opts || [v] }),
+      rad: (l, opts, si) => ({ t: 'rad', l, opts, si }),
+      wide: (f) => Object.assign({}, f, { wide: true }),
+      turn: (hl, holder) => ({ k: 'turn', h: hl, s: holder ? 'Responsible: ' + holder : '' }),
+      wait: (hl, s) => ({ k: 'wait', h: hl, s }),
+      done: (hl, s) => ({ k: 'done', h: hl, s }),
+      blk: (hl, holder, fixes, s2) => ({ k: 'blk', h: hl, s: holder ? 'Responsible for the fix: ' + holder : '', fixes: fixes || [], s2 }),
+      dlg: (t, b, p, s2) => ({ t, b, p, s2: s2 || ['Cancel'] }),
+      S: (o) => Object.assign({ ref: 'CM-MOH-2027-001', sub: 'Afya Digital Supplies Limited', back: 'Back to contracts', page: 'record', s2: [], ev: [], regions: [], vl: o.name }, o),
+      V: (base, o) => { const c = Object.assign({}, base); delete c.dialog; delete c.note; return Object.assign(c, o); },
+      D: (base, id, vl, dialog, o) => { const c = Object.assign({}, base); delete c.note; return Object.assign(c, { id, vl, dialog }, o || {}); }
+    };
+    return h;
+  }
+  build() {
+    const h = this.H();
+    let all = [];
+    const seen = {}; window.CMP.slice().sort((a, b) => a.o - b.o).forEach(p => { if (seen[p.o]) return; seen[p.o] = 1; all = all.concat(p.f(h)); });
+    const GM = [
+      ['Contracts list', ['D01', 'D01-S']],
+      ['Agreement · review and signing', ['D02', 'D03', 'D26']],
+      ['Agreement · appointment and authority', ['D23', 'D24']],
+      ['Deliveries · arrival, inspection, acceptance', ['D04', 'D05', 'D19', 'D06', 'D07', 'D31']],
+      ['Invoices · claim and Finance', ['D18', 'D08', 'D08-L', 'D33', 'D09', 'D17', 'D28', 'D29']],
+      ['Obligations · issue, change, security', ['D13', 'D25', 'D16', 'D27', 'D14', 'D34', 'D35', 'D36', 'D37']],
+      ['Obligations · remaining work and completion', ['D10', 'D40', 'D20', 'D39', 'D32', 'D22', 'D11', 'D38']],
+      ['Focused register and report', ['D12', 'D21', 'D15']],
+      ['Shared pages', ['D-ERR', 'D-DENIED']]];
+    const pos = {}; GM.forEach(([g, ds], gi) => ds.forEach((d, di) => { pos[d] = { g: (gi + 1) + ' · ' + g, k: gi * 100 + di }; }));
+    all.forEach((s, i) => { const p = pos[s.d]; s._k = (p ? p.k : 9999) * 1000 + i; if (p) s.g = p.g; });
+    all.sort((a, b) => a._k - b._k);
+    this.screens = all;
+    let saved = null; try { saved = localStorage.getItem('cm-review-sel'); } catch (e) {}
+    this.setState({ ready: true, sel: saved && all.some(s => s.d === saved) ? saved : all[0].d });
+  }
+  go(d) { try { localStorage.setItem('cm-review-sel', d); } catch (e) {} this.setState({ sel: d, blank: true }); clearTimeout(this.bt); this.bt = setTimeout(() => this.setState({ blank: false }), 40); if (this.mainEl) this.mainEl.scrollTop = 0; }
+  stCls(l) {
+    const m = { 'Preparing': 'is-draft', 'Draft': 'is-draft', 'Awaiting signatures': 'is-pending', 'Active': 'is-live', 'Closed': 'is-critical', 'Terminated': 'is-critical', 'Did not proceed': 'is-critical', 'Needs review': 'is-attention', 'Meets': 'is-live', 'Does not meet': 'is-critical', 'Signed': 'is-live', 'Awaiting signature': 'is-pending', 'Confirmed': 'is-live', 'Reversed': 'is-critical', 'Not verified': 'is-attention', 'Verified': 'is-live', 'Operative': 'is-live' };
+    return m[l] || 'is-pending';
+  }
+  cell(v, i, num) {
+    const s = String(v); const c = { cls: num.indexOf(i) >= 0 ? 'is-num' : '', isT: false, isL: false, isS: false, isI: false, isSel: false, v: s, opts: [] };
+    const p = s[0];
+    if (p === '@') { c.isL = true; c.v = s.slice(1); }
+    else if (p === '!') { c.isS = true; c.v = s.slice(1); c.sc = this.stCls(c.v); }
+    else if (p === '#' || p === '~') { c.isI = true; c.v = s.slice(1); }
+    else if (p === '^') { const [val, o] = s.slice(1).split('|'); c.isSel = true; c.v = val; c.opts = (o || val).split(','); }
+    else c.isT = true;
+    return c;
+  }
+  table(b) {
+    return { head: b.cols.map((v, i) => ({ v, cls: b.num.indexOf(i) >= 0 ? 'is-num' : '' })), body: b.rows.map(r => ({ cells: r.map((v, i) => this.cell(v, i, b.num)) })) };
+  }
+  field(f, key, i) {
+    const t = f.t;
+    return { l: f.l, v: f.v, ph: '', span: f.wide || t === 'ta' || t === 'rad' ? '1 / -1' : 'auto', rows: f.o && f.o.rows ? f.o.rows : 3, name: key + '-f' + i,
+      isTx: t === 'tx', isDt: t === 'dt', isSel: t === 'sel', isTa: t === 'ta', isFile: t === 'file' && !!f.v, isFileEmpty: t === 'file' && !f.v, isRo: t === 'ro', isRad: t === 'rad',
+      opts: t === 'rad' ? f.opts.map((l, j) => ({ l, sel: j === f.si })) : (f.opts || []) };
+  }
+  block(b, key, bi) {
+    const o = { isFacts: b.k === 'facts', isRows: b.k === 'rows', isTable: b.k === 'table', isFields: b.k === 'fields', isText: b.k === 'text', isStrong: b.k === 'strong', isHelp: b.k === 'help', isLinks: b.k === 'links', isBtns: b.k === 'btns', isPreview: b.k === 'preview', items: [], head: [], body: [] };
+    if (o.isFacts || o.isRows || o.isPreview) o.items = b.items.map(([l, v]) => ({ l, v }));
+    if (o.isLinks || o.isBtns) o.items = b.items;
+    if (o.isTable) { Object.assign(o, this.table(b)); o.flat = [].concat(...o.body.map(r => r.cells)); o.gcols = 'repeat(' + b.cols.length + ', minmax(0, 1fr))'; }
+    if (o.isFields) o.items = b.items.map((f, i) => this.field(f, key + '-' + bi, i));
+    if (o.isText || o.isStrong || o.isHelp) o.v = b.v;
+    if (o.isPreview) { o.t = b.t; o.open = b.open; o.chev = b.open ? 'is-open' : ''; }
+    return o;
+  }
+  view(s) {
+    const key = s.id;
+    const tabs = s.tab ? ['Agreement', 'Deliveries', 'Invoices', 'Obligations', 'History'].map(l => ({ l, sel: l === s.tab, name: 'tab-' + key })) : [];
+    const n = s.next || null;
+    const evOpen = !!this.state.ev[key];
+    const s2 = (s.s2 || []).map(l => ({ l: l.replace(/^-/, ''), on: l[0] !== '-', off: l[0] === '-' }));
+    const v = {
+      id: s.id, vl: s.vl || s.name, cap: [s.who, s.at, s.subj].filter(Boolean).join(' · '), note: s.note || '', hasNote: !!s.note,
+      isRecord: s.page === 'record', isList: s.page === 'list', isState: s.page === 'state',
+      title: s.title, sub: s.sub, ref: s.ref, stLabel: s.st || '', stCls: this.stCls(s.st), back: s.back,
+      tabs, hasTabs: tabs.length > 0,
+      hasNext: !!n, nTurn: !!n && n.k === 'turn', nWait: !!n && n.k === 'wait', nDone: !!n && n.k === 'done', nBlk: !!n && n.k === 'blk',
+      n: n ? { h: n.h, s: n.s || '', hasS: !!n.s, s2: n.s2 || '', hasS2: !!n.s2, hasFix: !!(n.fixes && n.fixes.length), fixes: (n.fixes || []).map((l, i) => ({ l, primary: i === 0, sec: i > 0 })) } : { h: '', s: '', fixes: [] },
+      regions: (s.regions || []).map((rg, ri) => ({ t: rg.t, hasT: !!rg.t, b: rg.b.map((b, bi) => this.block(b, key + '-' + ri, bi)) })),
+      p: s.p || '', hasP: !!s.p, s2, hasFooter: !!s.p || s2.length > 0,
+      ev: s.ev || [], hasEv: (s.ev || []).length > 0, noEv: !(s.ev || []).length, evOpen, evCls: evOpen ? 'is-open' : '',
+      toggleEv: () => this.setState(st => ({ ev: Object.assign({}, st.ev, { [key]: !st.ev[key] }) })),
+      hasDialog: !!s.dialog, minH: s.dialog ? '860px' : '0',
+      dlg: s.dialog ? { t: s.dialog.t, b: s.dialog.b.map((b, bi) => this.block(b, key + '-d', bi)), p: s.dialog.p || '', hasP: !!s.dialog.p, s2: (s.dialog.s2 || []).map(l => ({ l })) } : { t: '', b: [], s2: [] },
+      msg: s.msg || '', isErr: s.icon === 'err', isLock: s.icon === 'lock'
+    };
+    if (v.isList) {
+      v.headP = s.headP || ''; v.hasHeadP = !!s.headP;
+      v.views = (s.views || []).map((l, i) => ({ l, sel: i === (s.view || 0), name: 'view-' + key })); v.hasViews = v.views.length > 0;
+      const fs = (s.filters || []).map((f, i) => Object.assign(this.field(f, key, i), { wcls: i === 0 ? 'is-wide' : '' }));
+      v.filters = fs.slice(0, 2); v.more = fs.slice(2); v.hasMore = v.more.length > 0;
+      v.fOpen = !!this.state.ev['f-' + key]; v.fCls = v.fOpen ? 'is-open' : '';
+      v.toggleF = () => this.setState(st => ({ ev: Object.assign({}, st.ev, { ['f-' + key]: !st.ev['f-' + key] }) }));
+      const tb = this.table({ cols: s.cols, rows: s.rows || [], num: s.num || [] });
+      v.head = tb.head; v.body = tb.body; v.hasRows = (s.rows || []).length > 0; v.noRows = !v.hasRows;
+      v.empty = s.empty || ''; v.emptyAct = s.emptyAct || ''; v.hasEmptyAct = !!s.emptyAct;
+    }
+    return v;
+  }
+  renderVals() {
+    const st = this.state;
+    const base = { setMain: this.setMain, zoomVal: st.zoom === 'fit' ? st.fit : 1, zoomFit: st.zoom === 'fit', zoom100: st.zoom !== 'fit',
+      setFit: () => this.setState({ zoom: 'fit' }), set100: () => this.setState({ zoom: '100' }) };
+    if (!st.ready) return Object.assign(base, { groups: [], rows: [], totalLabel: 'Loading…', selGroup: '', selTitle: '', prev: () => {}, next: () => {} });
+    const all = this.screens;
+    const groups = []; const designs = [];
+    all.forEach(s => {
+      let g = groups.find(x => x.t === s.g); if (!g) { g = { t: s.g, items: [] }; groups.push(g); }
+      let it = g.items.find(x => x.d === s.d);
+      if (!it) { it = { d: s.d, name: s.dn || s.name, count: 0, sel: s.d === st.sel, unsel: s.d !== st.sel, go: () => this.go(s.d), g: s.g }; g.items.push(it); designs.push(it); }
+      it.count++;
+    });
+    const idx = designs.findIndex(x => x.d === st.sel);
+    const cur = designs[idx] || designs[0];
+    return Object.assign(base, {
+      groups, totalLabel: designs.length + ' designs · ' + all.length + ' artboards',
+      selGroup: cur.g, selTitle: cur.d + ' — ' + cur.name,
+      rows: st.blank ? [] : all.filter(s => s.d === cur.d).map(s => this.view(s)),
+      prev: () => this.go(designs[(idx - 1 + designs.length) % designs.length].d),
+      next: () => this.go(designs[(idx + 1) % designs.length].d)
+    });
+  }
+}
+</script>
+</body>
+</html>
