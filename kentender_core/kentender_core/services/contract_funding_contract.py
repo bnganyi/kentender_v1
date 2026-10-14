@@ -1,0 +1,67 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""The published seam between the owner of funding (Budget) and Contract Management (CM-CHG-001 v0.8 section 5.14, plan D5, D7).
+
+Contract Management never writes a funding row. When an agreement takes effect it asks the funding owner, through this seam, to convert the reservation lineage the Award
+package carried into a commitment; later phases ask it to adjust and to close. Each owner registers a provider on `kt_contract_funding_provider`, a callable returning a provider
+object (or None to decline, for example outside a simulation environment):
+
+    lookup(*, identity)                                  -> {"reference", "amount"} | None
+    convert(*, identity, contract, allocations, amount)  -> {"reference", "amount"}   (raises `Refused` when the owner definitively refuses)
+
+`identity` is Contract Management's operation identity. A provider must be **idempotent on it**: `lookup` answers what it already holds under an identity, and `convert` called again
+with the same identity returns that same result and creates nothing more. That is what lets Contract Management read the owner first, link what exists and never convert twice.
+With no provider, `convert` raises `Unavailable` and the caller treats the outcome as not done. Tests may set `frappe.flags.kt_contract_funding_providers` to a list of providers."""
+
+from __future__ import annotations
+
+from typing import Any
+
+import frappe
+
+HOOK = "kt_contract_funding_provider"
+FUNCTIONS: tuple[str, ...] = ("lookup", "convert")
+
+
+class Refused(Exception):
+	"""The funding owner definitively refused: nothing was created and a corrected retry may run."""
+
+
+class Unavailable(Exception):
+	"""No funding owner answered."""
+
+
+def providers() -> list[Any]:
+	override = frappe.flags.get("kt_contract_funding_providers")
+	if override is not None:
+		return list(override)
+	found = []
+	for path in frappe.get_hooks(HOOK) or []:
+		try:
+			provider = frappe.get_attr(path)()
+		except Exception:
+			frappe.log_error(title=f"Contract funding provider failed to load: {path}")
+			continue
+		if provider is not None:
+			found.append(provider)
+	return found
+
+
+def missing_functions(candidate: Any) -> list[str]:
+	return [name for name in FUNCTIONS if not callable(getattr(candidate, name, None))]
+
+
+def lookup(identity: str) -> dict[str, Any] | None:
+	for provider in providers():
+		answer = provider.lookup(identity=identity)
+		if answer is not None:
+			return answer
+	return None
+
+
+def convert(identity: str, *, contract: str, allocations: list[dict[str, Any]], amount: float) -> dict[str, Any]:
+	chosen = providers()
+	if not chosen:
+		raise Unavailable("No funding owner is installed on this site.")
+	return chosen[-1].convert(identity=identity, contract=contract, allocations=allocations, amount=amount)

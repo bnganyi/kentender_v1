@@ -1,0 +1,160 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-AGR-{#####}",
+ "creation": "2026-10-15 12:00:00.000000",
+ "description": "One generated version of the agreement: exact terms, rendered text and its digest, the frozen source package, and where it stands.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "version_no",
+  "state",
+  "source_package",
+  "amount",
+  "currency",
+  "operative_date",
+  "terms_json",
+  "items_json",
+  "missing_json",
+  "rendered_html",
+  "rendered_digest",
+  "frozen_at",
+  "effective_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "version_no",
+   "label": "Version no",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Draft\nFrozen\nAwaiting signatures\nEffective\nSuperseded\nEnded",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_package",
+   "label": "Source package",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Source Package"
+  },
+  {
+   "fieldname": "amount",
+   "label": "Amount",
+   "fieldtype": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "label": "Currency",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Currency"
+  },
+  {
+   "fieldname": "operative_date",
+   "label": "Operative date",
+   "fieldtype": "Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "terms_json",
+   "label": "Terms json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "items_json",
+   "label": "Items json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "missing_json",
+   "label": "Missing json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rendered_html",
+   "label": "Rendered html",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rendered_digest",
+   "label": "Rendered digest",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "frozen_at",
+   "label": "Frozen at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "effective_at",
+   "label": "Effective at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Agreement Version",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -1,0 +1,109 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""Stored obligations (CM-CHG-001 v0.8 sections 5.10, 6.3, 6.4; tracker CM8-312, CM-AC-59).
+
+A `Contract Task` is one obligation of one holder, identified by (case, subject, version, command, holder), so a retry or a replayed event never makes a second one. A command that
+hands work on **assigns** it to each required current holder and **finishes** its own; a sender who must wait gets a Waiting item naming the holder. What leads a person's day, and how a
+case answers "what is my next step", is `tasks.view` over these rows (`services/tasks.py`) mapped by `services/next_steps.py`. Closing a task keeps its outcome and its attribution; nothing is
+deleted, and a reassignment keeps the earlier holder. Whose task it is does not grant authority: every command checks authority itself."""
+
+from __future__ import annotations
+
+from typing import Any, Iterable
+
+import frappe
+from frappe.utils import get_datetime
+
+from kentender_contracts.services import clock, people, records, tasks as rules
+
+TASK = "Contract Task"
+STATE = {"Open": rules.ACTIONABLE, "Blocked": rules.BLOCKED, "Waiting": rules.WAITING, "Scheduled": rules.SCHEDULED}
+LIVE = ("Open", "Blocked", "Waiting", "Scheduled")
+HOP = "Head of Procurement Function"
+TECHNICAL = "Technical Operator"
+
+
+def holders(role: str, unit: str = "") -> list[str]:
+	if role == TECHNICAL:  # a technical account holds no business capacity, so the people helper never lists it; the recovery owner is whoever holds the registered technical duty
+		return sorted(set(frappe.get_all("User Responsibility Assignment", filters={"business_role": role, "status": "Enabled"}, pluck="user")))
+	return people.holders(role, unit)
+
+
+def assign(case: str, command: str, title: str, subject: str, version: int, holder_users: Iterable[str], *, role: str = "", state: str = "Open", due=None, due_verified: bool = False) -> list[str]:
+	"""One task for each holder. Returns the identities created; an existing identity is left exactly as it is (so a replay changes nothing)."""
+	created = []
+	for holder in sorted({h for h in holder_users if h}):
+		identity = f"{case}|{subject}|{version}|{command}|{holder}"
+		existing = frappe.db.get_value(TASK, {"identity": identity}, ["name", "state"], as_dict=True)
+		if existing:
+			if existing.state in ("Done", "Superseded"):  # the same obligation arising again (a recovery that fails twice) is the same item, reopened with its history kept
+				doc = frappe.get_doc(TASK, existing.name)
+				records.append_json(doc, "history_json", {"state": "Reopened", "at": str(clock.now())})
+				records.update(doc, state=state, assigned_at=clock.now(), completed_at=None)
+				created.append(identity)
+			continue
+		records.new(TASK, contract_case=case, identity=identity, command=command, title=title, subject=subject, subject_version=version, holder=holder, holder_role=role, state=state,
+			assigned_at=clock.now(), due=due, due_verified=1 if due and due_verified else 0, history_json="[]")
+		created.append(identity)
+	return created
+
+
+def waiting_command(command: str, qualifier: str) -> str:
+	"""The command key of a sender's "waiting" item: distinct from the obligation it waits for, so both keep their own identity and history."""
+	return f"{command}:waiting:{qualifier}"
+
+
+def finish(case: str, *, command: str | None = None, subject: str | None = None, version: int | None = None, state: str = "Done", actor: str = "") -> int:
+	"""Close the matching live tasks. `state` is Done (the obligation was met) or Superseded (it no longer applies)."""
+	filters: dict[str, Any] = {"contract_case": case, "state": ["in", list(LIVE)]}
+	if subject is not None:
+		filters["subject"] = subject
+	if version is not None:
+		filters["subject_version"] = version
+	if command is None:
+		names = frappe.get_all(TASK, filters=filters, pluck="name")
+	else:  # the obligation itself, and the sender's "waiting" items that were raised for it (`waiting`)
+		names = frappe.get_all(TASK, filters={**filters, "command": command}, pluck="name") + frappe.get_all(TASK, filters={**filters, "command": ["like", f"{command}:waiting:%"]}, pluck="name")
+	count = 0
+	for name in names:
+		doc = frappe.get_doc(TASK, name)
+		records.append_json(doc, "history_json", {"state": state, "at": str(clock.now()), "by": actor})
+		records.update(doc, state=state, completed_at=clock.now())
+		count += 1
+	return count
+
+
+def reassign(case: str, command: str, subject: str, version: int, old_holder: str, new_holder: str, *, actor: str = "") -> None:
+	"""Move a live task to another holder, keeping the earlier holder and the time it ended."""
+	name = frappe.db.get_value(TASK, {"identity": f"{case}|{subject}|{version}|{command}|{old_holder}"}, "name")
+	if not name:
+		return
+	doc = frappe.get_doc(TASK, name)
+	records.append_json(doc, "history_json", {"holder": old_holder, "from": str(doc.assigned_at), "until": str(clock.now()), "by": actor})
+	records.update(doc, holder=new_holder, assigned_at=clock.now(), identity=f"{case}|{subject}|{version}|{command}|{new_holder}")
+
+
+def live(case: str) -> list[dict[str, Any]]:
+	"""The case's live obligations in the shape `tasks.view` orders."""
+	rows = frappe.get_all(TASK, filters={"contract_case": case, "state": ["in", list(LIVE)]},
+		fields=["name", "command", "title", "subject", "subject_version", "holder", "holder_role", "state", "assigned_at", "due", "due_verified"], order_by="assigned_at asc, name asc")
+	return [{"task_id": r.name, "case": case, "subject": r.subject, "version": r.subject_version, "command": r.command, "title": r.title, "holder": r.holder, "holder_role": r.holder_role,
+		"state": STATE[r.state], "due": get_datetime(r.due) if r.due else None, "due_verified": bool(r.due_verified), "assigned_at": get_datetime(r.assigned_at)} for r in rows]
+
+
+def view(case: str, actor: str, *, neutral: bool = False) -> dict[str, Any]:
+	return rules.view(live(case), actor, clock.now(), neutral=neutral)
+
+
+def responsible(case: str) -> str:
+	"""Who the case is waiting on first: the holder of its leading obligation, whoever that is (the list's "Responsible person")."""
+	ordered = rules.order(rules.dedupe(live(case)), clock.now())
+	actionable = [t for t in ordered if t["state"] in (rules.ACTIONABLE, rules.BLOCKED)]
+	pick = (actionable or ordered or [None])[0]
+	return pick["holder"] if pick else ""
+
+
+def incident(case: str, command: str, title: str, subject: str, version: int) -> None:
+	"""Technical recovery work for an operation that did not complete: the original attempt is restored, never repeated with a fresh signature."""
+	assign(case, command, title, subject, version, holders(TECHNICAL), role=TECHNICAL)

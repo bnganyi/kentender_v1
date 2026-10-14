@@ -28,7 +28,12 @@ FAMILY = "Contract Management"
 CASE = "Contract Case"
 JOURNAL = "Contract Command Journal"
 #: Every record of the module a fixture wipe must reach; a phase that adds a record adds it here.
-DOCTYPES = ("Contract Case", "Contract Operation Intent", "Contract Transaction Link", "Contract Simulated Signature", "Contract Command Journal")
+DOCTYPES = (
+	"Contract Case", "Contract Operation Intent", "Contract Transaction Link", "Contract Simulated Signature", "Contract Command Journal",
+	"Contract Agreement Version", "Contract Source Package", "Contract Signature", "Contract Appointment", "Contract Arrival", "Contract Inspection",
+	"Contract Certificate", "Contract Acceptance", "Contract Invoice", "Contract Certification", "Contract Settlement", "Contract Closeout",
+	"Contract Task", "Contract Event", "Contract Simulated Funding",
+)
 
 
 def namespace() -> str:

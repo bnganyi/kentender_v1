@@ -47,9 +47,16 @@ def binding(capacity: str, *, read: bool = False) -> Callable[[Provider], Provid
 	return register
 
 
+def _default(capacity: str, *, read: bool = False):
+	"""The binding Contract Management itself owns (`bindings.py`), used when no other provider is registered for the capacity."""
+	from kentender_contracts.services import bindings
+
+	return (bindings.READ if read else bindings.ACT).get(capacity)
+
+
 def readable_binding(case: str, user: str, capacity: str, *, at=None) -> dict[str, Any] | None:
 	"""Evidence that this person has an appointment or mandate on this contract that lets them read it, or None. Does not check the responsibility."""
-	provider = READ_BINDINGS.get(capacity) or BINDINGS.get(capacity)
+	provider = READ_BINDINGS.get(capacity) or BINDINGS.get(capacity) or _default(capacity, read=True)
 	return provider(case, user, at) if provider else None
 
 
@@ -63,7 +70,7 @@ def require_capacity(case: str, user: str, capacity: str, *, at=None) -> dict[st
 	"""The responsibility **and** the exact effective appointment or mandate for this contract. Returns the binding's evidence."""
 	responsibility = CAPACITY_RESPONSIBILITY[capacity]
 	require(user, responsibility, at=at)
-	provider = BINDINGS.get(capacity)
+	provider = BINDINGS.get(capacity) or _default(capacity)
 	found = provider(case, user, at) if provider else None
 	if not found:
 		fail("CM_AUTHORITY", missing="appointment", capacity=capacity, responsibility=responsibility, reason="No effective appointment or mandate is recorded for this person on this contract. An assignment alone grants no contract access.",

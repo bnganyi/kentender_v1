@@ -1,0 +1,128 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-ACC-{#####}",
+ "creation": "2026-10-15 12:00:00.000000",
+ "description": "One acceptance report version: quantities accepted, rejected and deferred per arrival item, the signers and the effective decision.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "version_no",
+  "state",
+  "arrivals_json",
+  "lines_json",
+  "signers_json",
+  "technical_certificate",
+  "chair",
+  "decision_at",
+  "posting_intent",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "version_no",
+   "label": "Version no",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Draft\nAwaiting signatures\nEffective\nSuperseded"
+  },
+  {
+   "fieldname": "arrivals_json",
+   "label": "Arrivals json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lines_json",
+   "label": "Lines json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "signers_json",
+   "label": "Signers json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "technical_certificate",
+   "label": "Technical certificate",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "chair",
+   "label": "Chair",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision_at",
+   "label": "Decision at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "posting_intent",
+   "label": "Posting intent",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Acceptance",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

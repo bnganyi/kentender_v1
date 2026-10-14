@@ -12,6 +12,7 @@ from pathlib import Path
 import frappe
 
 from kentender_contracts.tests import synthetic
+from kentender_core.services import contract_source_contract as seam
 from kentender_contracts.tests.support import NAMESPACE, ContractCase
 
 GAP = Path(frappe.get_app_path("kentender_contracts")).resolve().parents[1] / "docs/mvp-1-r1/21_contract_management/reconciliation/package_gap.md"
@@ -31,22 +32,43 @@ class TestSyntheticSources(ContractCase):
 				self.assertEqual(set(package[name]), simple, name)
 		self.assertEqual((package["contract_terms"]["quantity"], package["decision"]["evaluated_amount"], package["decision"]["currency"]), (10, 1_000_000, "KES"))
 
+	def through(self, provider):
+		"""Ask through the published seam, as Contract Management does."""
+		frappe.flags.kt_contract_source_providers = [provider]
+		self.addCleanup(lambda: setattr(frappe.flags, "kt_contract_source_providers", None))
+
 	def test_the_handoff_has_one_reference_for_each_of_the_twelve_sources_with_a_digest_that_recomputes(self):
 		rows = synthetic.source_handoff()
 		self.assertEqual([r["source"] for r in rows], [f"S{n}" for n in range(1, 13)])
-		provider = synthetic.Provider()
+		self.through(synthetic.Provider())
 		for row in rows:
-			self.assertTrue(provider.verify(row["reference"]), row["source"])
-			self.assertEqual(provider.fetch(row["reference"])["digest"], row["sha256"])
+			self.assertTrue(seam.verify(row["reference"]), row["source"])
+			self.assertEqual(seam.fetch(row["reference"])["digest"], row["sha256"])
 			self.assertEqual(row["provider"], "synthetic")
-			self.assertEqual(row["size"], len(provider.fetch(row["reference"])["content"]))
+			self.assertEqual(row["size"], len(seam.fetch(row["reference"])["content"]))
 		self.assertEqual(len({r["reference"] for r in rows}), 12)
 
 	def test_a_source_whose_bytes_changed_fails_verification_and_an_unknown_reference_is_none(self):
-		provider = synthetic.Provider(tamper="S5")
-		self.assertFalse(provider.verify("S5-" + synthetic.CASE))
-		self.assertTrue(provider.verify("S4-" + synthetic.CASE))
-		self.assertIsNone(provider.fetch("S99-nothing"))
+		self.through(synthetic.Provider(tamper="S5"))
+		self.assertFalse(seam.verify("S5-" + synthetic.CASE))
+		self.assertTrue(seam.verify("S4-" + synthetic.CASE))
+		self.assertIsNone(seam.fetch("S99-nothing"))
+
+	def test_the_provider_is_registered_on_the_core_hook_and_answers_only_on_a_simulation_site(self):
+		from kentender_contracts.services import simulation
+
+		self.assertIn("kentender_contracts.simulation.sources.service", frappe.get_hooks(seam.HOOK))
+		flags = {f: frappe.conf.get(f) for f in simulation.FLAGS}
+		try:
+			frappe.conf.kt_cm_simulation_environment = 1
+			self.assertTrue(seam.verify("S3-" + synthetic.CASE))
+			for f in simulation.FLAGS:
+				frappe.conf[f] = 0
+			frappe.flags.kt_contract_source_providers = None
+			self.assertFalse(seam.verify("S3-" + synthetic.CASE), "outside a simulation environment no source is invented")
+		finally:
+			for f, v in flags.items():
+				frappe.conf[f] = v
 
 	def test_the_real_handoff_gaps_are_recorded_so_green_synthetic_never_means_accepted(self):
 		self.assertEqual(synthetic.missing_from_real_handoff(), ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10"])

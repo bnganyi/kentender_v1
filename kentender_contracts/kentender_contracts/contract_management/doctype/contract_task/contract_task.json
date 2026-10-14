@@ -1,0 +1,151 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-TSK-{#####}",
+ "creation": "2026-10-15 12:00:00.000000",
+ "description": "One obligation of one holder (command, subject, version, holder): the work and the handoff.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "identity",
+  "command",
+  "title",
+  "subject",
+  "subject_version",
+  "holder",
+  "holder_role",
+  "state",
+  "assigned_at",
+  "due",
+  "due_verified",
+  "completed_at",
+  "history_json",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "identity",
+   "label": "Identity",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "command",
+   "label": "Command",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "title",
+   "label": "Title",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "subject",
+   "label": "Subject",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "subject_version",
+   "label": "Subject version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "holder",
+   "label": "Holder",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "holder_role",
+   "label": "Holder role",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Open\nBlocked\nWaiting\nScheduled\nDone\nSuperseded"
+  },
+  {
+   "fieldname": "assigned_at",
+   "label": "Assigned at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "due",
+   "label": "Due",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "due_verified",
+   "label": "Due verified",
+   "fieldtype": "Check",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_at",
+   "label": "Completed at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "history_json",
+   "label": "History json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Task",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

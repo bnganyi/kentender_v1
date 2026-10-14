@@ -1429,7 +1429,7 @@ std-templates-gate:
 # run on the test site: `scripts/test-site.sh run make cm-services-gate`. They refuse the dev site and a live browser run.
 # Later gates (seams, native, leakage, dead ends, UI, seeds) are added with the phase that builds them (tracker rule 13).
 .PHONY: cm-preflight cm-services-gate cm-native-gate cm-ui-gate cm-independence-gate
-CM_SERVICE_MODULES ?= test_cm_import_boundary test_cm_schema test_cm_errors test_cm_records test_cm_intents test_cm_holds test_cm_recovery_matrix test_cm_signing_simulation test_cm_rules test_cm_authority test_cm_audience test_cm_tasks test_cm_workspace test_cm_support
+CM_SERVICE_MODULES ?= test_cm_import_boundary test_cm_schema test_cm_errors test_cm_records test_cm_intents test_cm_holds test_cm_recovery_matrix test_cm_signing_simulation test_cm_rules test_cm_authority test_cm_audience test_cm_tasks test_cm_workspace test_cm_support test_cm_formation
 # Core modules Contract Management depends on: the shared signing facade (plan D8).
 CM_CORE_MODULES ?= test_signing_facade
 CM_ONLY_SITE ?= kentender-cm-only.local

@@ -271,3 +271,7 @@ page_js = {"contracts": "public/js/contracts_page.js"}
 
 # The slot Procurement's shared rail reserves for this module (kentender_core.services.navigation_overrides).
 kt_navigation_overrides = ["kentender_contracts.navigation.overrides"]
+
+# The synthetic contract-source provider (development only; answers only on a simulation site): kentender_core.services.contract_source_contract.
+kt_contract_source_provider = ["kentender_contracts.simulation.sources.service"]
+kt_contract_funding_provider = ["kentender_contracts.simulation.funding.service"]
