@@ -18,10 +18,10 @@ assert len(lqs) == 6, len(lqs)
 
 # id: (module, input event, hold key, affected commands, phase, LQ links)
 A = {
-    "CM-R-01": ("formation.py", "Frozen agreement version; signature request; each commit", "FORMATION_AUTHORITY", "RequestContractSignatures, SignContractVersion", "5", ""),
+    "CM-R-01": ("formation.py", "Frozen agreement version; signature request; each commit", "FORMATION_AUTHORITY", "RequestContractSignatures, SignContractVersion", "5", "LQ-05"),
     "CM-R-02": ("signing_window.py", "Award's evidenced notification and signing-window result (consumed, never recomputed)", "SIGNING_WINDOW_UNESTABLISHED", "RequestContractSignatures, SignContractVersion", "5", ""),
     "CM-R-03": ("ag_clearance.py", "Contract value and entity type at send-for-signature", "AG_CLEARANCE_REQUIRED", "RequestContractSignatures", "5", ""),
-    "CM-R-04": ("package.py", "Package manifest entries and file digests", "PACKAGE_INCOMPLETE", "RequestContractSignatures", "4, 5", ""),
+    "CM-R-04": ("package.py", "Package manifest entries and file digests", "PACKAGE_INCOMPLETE", "RequestContractSignatures", "4, 5", "LQ-05"),
     "CM-R-05": ("appointment.py", "Appointment version, declarations, conflicts", "APPOINTMENT_MISSING", "RecordInspectionObservations, PrepareAcceptanceReport, SignAcceptanceReport", "6", ""),
     "CM-R-06": ("acceptance.py", "Acceptance report; decision-maker's written authority record", "ACCEPTANCE_AUTHORITY_NOT_EVIDENCED", "PostAcceptedReceipt, SignContractCertification", "6", ""),
     "CM-R-07": ("advance.py", "Issued tender and agreement advance clause; guarantee verification", "ADVANCE_UNSUPPORTED", "PrepareContractAdvance, SignAdvanceCertification", "7", ""),
@@ -69,7 +69,7 @@ for n, l in lqs:
 out += ["", "## Notes", "",
         "- **Classification (CM v0.8 §19.3):** LAW = read Act provision; TERM = exact issued or signed term; CONTROL = approved KenTender policy. A contract term cannot silently override a statutory constraint. An unsupported or conflicting input creates one named HOP issue for the affected action and never turns unrelated records into failed compliance (CM-AC-71).",
         "- **Original events are stored and results recomputed on an authoritative correction;** earlier results stay as history (CM v0.8 §19.3, §12).",
-        "- **Synthetic mechanism profile.** D34's 10 → 11 quantity change, D02's **Not required under these test terms** and D36's 0.1% per day are mechanism tests on a labelled synthetic profile, loaded only under `kt_bds_simulation_environment` and stored as a classification, not drawn as a banner on a user-facing surface (DEC-044; follow-up FU-CM-31). They are never production law (CM v0.8 §19.6).",
+        "- **Synthetic mechanism profile.** D34's 10 → 11 quantity change, D02's **Not required under these test terms** and D36's 0.1% per day are mechanism tests on a labelled synthetic profile, loaded only on a simulation site (`kt_bds_simulation_environment`, or `kt_cm_simulation_environment` on a Contract-Management-only site; `services/simulation.py`) and stored as a classification, not drawn as a banner on a user-facing surface (DEC-044; follow-up FU-CM-31). They are never production law (CM v0.8 §19.6).",
         "- **R-13 and LQ-06 apply to different things.** CM-R-13 requires recording publication and reporting with original triggers; LQ-06 asks only which directions fix the deadlines and channels. Until it is answered, work and evidence are recorded and no deadline is invented.",
         "- **Coverage check.** The script asserts 18 rules and 6 questions are present in the spec and mapped here; `test_cm_rules` (Phase 3) asserts the code register holds exactly these ids."]
 open("rule_register.md", "w").write("\n".join(out) + "\n")

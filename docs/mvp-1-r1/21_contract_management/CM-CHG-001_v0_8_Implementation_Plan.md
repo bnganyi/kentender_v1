@@ -383,3 +383,15 @@ Recorded after Phase 2; the phase text above is not rewritten. Evidence and the 
 
 **Carry-over into Phase 3** (additions to the Phase 3 list above): promote `guards.py` to `services/`; the custom-field fixtures (FU-CM-48); the serial refusal and unit-reference assignment; the reversal-order table in `reconciliation/recovery_matrix.md`; the `reconcile` addition to the signing facade; the savepoint-and-commit test pattern and the registered teardown used by the harness (D18).
 
+## Phase 3 findings (15 October 2026)
+
+Package A foundations are built; the gate is the foundations gate only (tracker CM-G03). What running the code taught, beyond the plan:
+
+1. **ERPNext creates a receipt's assets with `db_insert`, which fires no asset event.** The unit reference is therefore written from a Purchase Receipt `on_submit` event that runs after ERPNext's own, in the same transaction (D7 expected an asset event).
+2. **Serial numbers survive a cancelled receipt** (as spike S7b2 recorded); the units leave stock and the serial records remain.
+3. **A refused payment call records nothing and frees its key** in Budget's idempotency journal, so a replay check must use a key that completed.
+4. **The Finance responsibilities project their own identically-named roles.** The Payment Entry workflow is allowed to those roles (readiness names any mismatch) rather than coupling the registry to ERPNext's broad Accounts roles, which could strip a role someone else relies on.
+5. **Counting a Closed commitment** was a four-place change across three apps, found by a whole-repo search; one test now fails if any reader counts only Active.
+6. **The module-sidebar collision did not arise**: a Workspace Sidebar that declares its module is what Frappe resolves for that module's key, so no boot patch was needed (a negative control proved it).
+7. **Environment:** `sites/apps.txt` was rewritten on 14 October and lists `frontend`, which breaks Frappe's own build setup for every app (FU-CM-58). Two pre-existing test-site failures were found by a dependency rerun and are not Contract Management's (FU-CM-57).
+8. **Method:** seen failing before the code existed: the operation intents, the core signing facade, authority and segregation, the readiness check, task ordering and the Budget `close_commitment` tests. Written with or after their code, and compensated by deliberate-defect (mutation) checks instead: holds, the recovery matrix, the signing simulation, the rules and profiles, the audience resolver and the readiness role mapping. The workspace read tests were written first but not run until the code existed, and the native tests replay behaviour the Phase 2 spike had already observed. Each tracker row says which applies.

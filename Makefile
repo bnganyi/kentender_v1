@@ -1428,8 +1428,10 @@ std-templates-gate:
 # CM-CHG-001 v0.8 plan Phase 1 (tracker CM8-105). Contract Management's Python gates write real rows (no rollback on this bench), so they
 # run on the test site: `scripts/test-site.sh run make cm-services-gate`. They refuse the dev site and a live browser run.
 # Later gates (seams, native, leakage, dead ends, UI, seeds) are added with the phase that builds them (tracker rule 13).
-.PHONY: cm-preflight cm-services-gate cm-independence-gate
-CM_SERVICE_MODULES ?= test_cm_import_boundary test_cm_schema
+.PHONY: cm-preflight cm-services-gate cm-native-gate cm-ui-gate cm-independence-gate
+CM_SERVICE_MODULES ?= test_cm_import_boundary test_cm_schema test_cm_errors test_cm_records test_cm_intents test_cm_holds test_cm_recovery_matrix test_cm_signing_simulation test_cm_rules test_cm_authority test_cm_audience test_cm_tasks test_cm_workspace test_cm_support
+# Core modules Contract Management depends on: the shared signing facade (plan D8).
+CM_CORE_MODULES ?= test_signing_facade
 CM_ONLY_SITE ?= kentender-cm-only.local
 cm-preflight:
 	@if pgrep -f "[p]laywright test" >/dev/null; then echo "A Playwright run is active; run the Contract Management Python gates after it finishes."; exit 1; fi
@@ -1438,6 +1440,22 @@ cm-preflight:
 cm-services-gate: cm-preflight
 	cd $(BENCH_ROOT) && for m in $(CM_SERVICE_MODULES); do \
 		bench --site $(SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && for m in $(CM_CORE_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_core --module kentender_core.tests.$$m || exit 1; done
+
+# Real ERPNext documents (proof level L2): the native adapter, the payment bypass guards (every route, entitlement, maker/approver, a two-process
+# race, a hard-crash recovery) and the configuration readiness check. Test site only; MariaDB only; takes about a minute.
+CM_NATIVE_MODULES ?= test_cm_native test_cm_readiness
+cm-native-gate: cm-preflight
+	cd $(BENCH_ROOT) && for m in $(CM_NATIVE_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
+
+# The Contracts shell (plan Phase 3, tracker CM8-315): the structural fidelity of D-ERR and D-DENIED against their boards (no browser), then the shell in a real browser on
+# the test site (empty workspace under the rail, reload and back/forward, the shared denial, the load error and Retry). Build the bundle first:
+#   (cd $(BENCH_ROOT)/apps/frappe && node esbuild --apps kentender_contracts)   # or ./scripts/bench-with-node.sh build --app kentender_contracts
+cm-ui-gate: cm-preflight
+	npx vitest run --project contracts
+	scripts/test-site.sh run npx playwright test tests/ui/smoke/contracts/shell.spec.ts --workers=1 --retries=0
 
 # CM-AC-25 / CM-AC-32: the app installs and runs on a site that holds only ERPNext, core, supplier accounts and itself.
 cm-independence-gate: cm-preflight
@@ -1449,3 +1467,5 @@ cm-independence-gate: cm-preflight
 	cd $(BENCH_ROOT) && bench --site $(CM_ONLY_SITE) migrate
 	cd $(BENCH_ROOT) && for m in $(CM_SERVICE_MODULES); do \
 		bench --site $(CM_ONLY_SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && for m in $(CM_CORE_MODULES); do \
+		bench --site $(CM_ONLY_SITE) run-tests --app kentender_core --module kentender_core.tests.$$m || exit 1; done

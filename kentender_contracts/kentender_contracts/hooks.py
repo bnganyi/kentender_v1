@@ -250,9 +250,21 @@ required_apps = ["erpnext", "kentender_core"]
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
-# Phase 2 spike (CM plan, tracker CM8-206): inert unless a process sets `frappe.flags.cm_spike_mode`. Removed or replaced in Phase 3.
-_spike = "kentender_contracts.spike.guards.on_event"
+# Native payment guards and unit references (plan D7, tracker CM8-306/307). The guard sits on the documents' own events because every
+# route (desk, API, Journal Entry, reconciliation, import, background job) reaches them.
+_guard = "kentender_contracts.native.payment_guard.on_event"
 doc_events = {
-	doctype: {event: _spike for event in ("validate", "before_submit", "on_submit", "before_update_after_submit", "on_update_after_submit", "before_cancel", "on_cancel")}
-	for doctype in ("Payment Entry", "Journal Entry")
+	"Payment Entry": {event: _guard for event in ("validate", "before_submit", "before_update_after_submit")},
+	"Journal Entry": {event: _guard for event in ("before_submit", "before_update_after_submit")},
+	"Purchase Receipt": {"on_submit": "kentender_contracts.native.adapter.assign_unit_references"},
 }
+
+# The extra fields on ERPNext's own documents (plan D7, FU-CM-48): installed and kept present.
+after_install = "kentender_contracts.native.fields.ensure"
+after_migrate = ["kentender_contracts.native.fields.ensure"]
+
+# Signing (plan D8): the simulation provider answers only on a simulation site and only for the consumer "contracts".
+kt_trust_signing_services = ["kentender_contracts.simulation.signing.service"]
+
+# The one Desk Page (plan Phase 3, tracker CM8-315). Never append ?v= to page_js values: Frappe resolves them as disk paths.
+page_js = {"contracts": "public/js/contracts_page.js"}
