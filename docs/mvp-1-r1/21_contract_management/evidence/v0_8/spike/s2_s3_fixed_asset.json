@@ -1,0 +1,139 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S3.receive_8_of_10_fixed_asset",
+   "ok": true,
+   "result": "MAT-PRE-2026-00037"
+  },
+  {
+   "step": "S3.po_after_partial_receipt",
+   "status": "To Receive and Bill",
+   "per_received": 80.0,
+   "per_billed": 0.0
+  },
+  {
+   "step": "S3.pr_facts",
+   "docstatus": 1,
+   "status": "To Bill",
+   "total_qty": 8.0,
+   "grand_total": 800000.0,
+   "per_billed": 0.0
+  },
+  {
+   "step": "S3.pr_gl",
+   "gl": [
+    {
+     "account": "1720 - Electronic Equipment - K",
+     "debit": 800000.0,
+     "credit": 0.0,
+     "party": ""
+    },
+    {
+     "account": "2211 - Asset Received But Not Billed - K",
+     "debit": 0.0,
+     "credit": 800000.0,
+     "party": ""
+    }
+   ]
+  },
+  {
+   "step": "S3.stock_ledger_entries_for_fixed_asset_receipt",
+   "count": 2
+  },
+  {
+   "step": "S3.assets_from_receipt",
+   "count": 8,
+   "statuses": [
+    "Draft"
+   ],
+   "docstatuses": [
+    0
+   ],
+   "first": {
+    "name": "ACC-ASS-2026-00070",
+    "status": "Draft",
+    "docstatus": 0,
+    "net_purchase_amount": 100000.0,
+    "purchase_amount": 100000.0,
+    "location": "CM Spike Store Room",
+    "asset_category": "CM Spike Electronic Equipment",
+    "asset_name": "CM Spike Laptop (fixed asset)"
+   },
+   "asset_fields_with_serial": []
+  },
+  {
+   "step": "S3.assign_unit_references_to_assets",
+   "ok": true,
+   "result": [
+    "SPIKE-UNIT-001",
+    "SPIKE-UNIT-002",
+    "SPIKE-UNIT-003",
+    "SPIKE-UNIT-004",
+    "SPIKE-UNIT-005",
+    "SPIKE-UNIT-006",
+    "SPIKE-UNIT-007",
+    "SPIKE-UNIT-008"
+   ]
+  },
+  {
+   "step": "S2.replacement_2_units_consume_original_order_quantity",
+   "ok": true,
+   "result": "MAT-PRE-2026-00038"
+  },
+  {
+   "step": "S2.po_after_replacement",
+   "status": "To Bill",
+   "per_received": 100.0,
+   "per_billed": 0.0
+  },
+  {
+   "step": "S2.native_receipt_of_a_fully_received_order_is_empty",
+   "items": 0
+  },
+  {
+   "step": "S2.over_receipt_beyond_order_is_refused",
+   "ok": false,
+   "error": "OverAllowanceError: This document is over limit by <strong>Qty</strong> <strong>1.0</strong> for item <strong>CM-SPIKE-LAPTOP-FA</strong>. Are you making another <strong>Purchase Receipt</strong> against the same <strong>Purchase Order Item</strong>?<br><br>To allow over receipt / delivery, update \"Over Receipt/Delivery Allowance\" in Stock Settings or the Item.",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "erpnext.controllers.status_updater.OverAllowanceError: This document is over limit by <strong>Qty</strong> <strong>1.0</strong> for item <strong>CM-SPIKE-LAPTOP-FA</strong>. Are you making another <strong>Purchase Receipt</strong> against the same <strong>Purchase Order Item</strong>?<br><br>To allow over receipt / delivery, update \"Over Receipt/Delivery Allowance\" in Stock Settings or the Item."
+   ]
+  },
+  {
+   "step": "S3.submit_one_asset_after_receipt_no_second_valuation",
+   "ok": true,
+   "result": {
+    "asset": "ACC-ASS-2026-00070",
+    "status": "Submitted",
+    "docstatus": 1,
+    "gl": [],
+    "depreciation_rows": 1
+   }
+  },
+  {
+   "step": "S3.total_gl_for_receipt_vouchers",
+   "receipts": [
+    {
+     "account": "1720 - Electronic Equipment - K",
+     "debit": 800000.0,
+     "credit": 0.0,
+     "party": ""
+    },
+    {
+     "account": "2211 - Asset Received But Not Billed - K",
+     "debit": 0.0,
+     "credit": 800000.0,
+     "party": ""
+    }
+   ],
+   "assets_gl_entries": 0
+  }
+ ]
+}

@@ -1,0 +1,227 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S5c.route_direct_entry_outside_the_operation",
+   "ok": false,
+   "error": "PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation.",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation."
+   ],
+   "invoice": "ACC-PINV-2026-00017"
+  },
+  {
+   "step": "S5c.route_direct_entry.state_after",
+   "invoice": {
+    "status": "Unpaid",
+    "outstanding_amount": 100000.0
+   },
+   "submitted_payments_added": null,
+   "journal_entries_posted_for_invoice": 0
+  },
+  {
+   "step": "S5c.route_api_entry_outside_the_operation",
+   "ok": false,
+   "error": "PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation.",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation."
+   ],
+   "invoice": "ACC-PINV-2026-00018"
+  },
+  {
+   "step": "S5c.route_api_entry.state_after",
+   "invoice": {
+    "status": "Unpaid",
+    "outstanding_amount": 100000.0
+   },
+   "submitted_payments_added": null,
+   "journal_entries_posted_for_invoice": 0
+  },
+  {
+   "step": "S5c.route_journal_entry_outside_the_operation",
+   "ok": false,
+   "error": "PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation.",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation."
+   ],
+   "invoice": "ACC-PINV-2026-00019"
+  },
+  {
+   "step": "S5c.route_journal_entry.state_after",
+   "invoice": {
+    "status": "Unpaid",
+    "outstanding_amount": 100000.0
+   },
+   "submitted_payments_added": null,
+   "journal_entries_posted_for_invoice": 0
+  },
+  {
+   "step": "S5c.route_reconcile_advance_outside_the_operation",
+   "ok": false,
+   "error": "PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation.",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation."
+   ],
+   "invoice": "ACC-PINV-2026-00020"
+  },
+  {
+   "step": "S5c.route_reconcile_advance.state_after",
+   "invoice": {
+    "status": "Unpaid",
+    "outstanding_amount": 100000.0
+   },
+   "submitted_payments_added": null,
+   "journal_entries_posted_for_invoice": 0
+  },
+  {
+   "step": "S5c.approve_500k_inside_operation",
+   "ok": true,
+   "result": {
+    "workflow_state": "Approved",
+    "docstatus": 1
+   }
+  },
+  {
+   "step": "S5c.approve_300k_inside_operation",
+   "ok": true,
+   "result": {
+    "workflow_state": "Approved",
+    "docstatus": 1
+   }
+  },
+  {
+   "step": "S5c.invoice_after_500k_and_300k",
+   "status": "Paid",
+   "outstanding_amount": 0.0,
+   "cm_certified_amount": 800000.0
+  },
+  {
+   "step": "S5c.certified_600k_first_500k_inside_operation",
+   "ok": true,
+   "result": {
+    "workflow_state": "Approved",
+    "docstatus": 1
+   }
+  },
+  {
+   "step": "S5c.certified_600k_next_200k_exceeds_the_supported_amount_even_though_the_invoice_allows_it",
+   "ok": false,
+   "error": "ValidationError: CM_HOLD: ACC-PINV-2026-00022 is certified for 600,000.00, already settled 500,000.00; 200,000.00 exceeds the supported amount.",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.ValidationError: CM_HOLD: ACC-PINV-2026-00022 is certified for 600,000.00, already settled 500,000.00; 200,000.00 exceeds the supported amount."
+   ]
+  },
+  {
+   "step": "S5c.invoice_after_over_entitlement_attempt",
+   "status": "Partly Paid",
+   "outstanding_amount": 300000.0,
+   "cm_certified_amount": 600000.0,
+   "second_payment_state": {
+    "docstatus": 0,
+    "workflow_state": "Pending Approval"
+   }
+  },
+  {
+   "step": "S5c.bypass_direct_submit_by_dual_role_user",
+   "ok": false,
+   "error": "PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation.",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation."
+   ]
+  },
+  {
+   "step": "S5c.bypass_direct_submit_by_administrator",
+   "ok": false,
+   "error": "PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation.",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation."
+   ]
+  },
+  {
+   "step": "S5c.bypass_desk_savedocs_submit",
+   "ok": false,
+   "error": "PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation.",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation."
+   ]
+  },
+  {
+   "step": "S5c.bypass_workflow_approve_outside_the_operation_by_a_separate_approver",
+   "ok": false,
+   "error": "PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation.",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation."
+   ]
+  },
+  {
+   "step": "S5c.own_entry_approval_inside_the_operation_still_refused",
+   "ok": false,
+   "error": "ValidationError: Self approval is not allowed",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.ValidationError: Self approval is not allowed"
+   ]
+  },
+  {
+   "step": "S5c.bypass_target_state",
+   "docstatus": 0,
+   "workflow_state": "Pending Approval",
+   "invoice": {
+    "status": "Unpaid",
+    "outstanding_amount": 200000.0
+   }
+  },
+  {
+   "step": "S5c.pending_before_edit",
+   "workflow_state": "Pending Approval",
+   "paid_amount": 300000.0
+  },
+  {
+   "step": "S5c.edit_amount_while_pending_returns_the_entry_to_draft",
+   "ok": true,
+   "result": {
+    "workflow_state_after_save": "Draft",
+    "paid_amount": 400000,
+    "invalidated_fields": [
+     "paid_amount",
+     "received_amount",
+     "references"
+    ]
+   }
+  },
+  {
+   "step": "S5c.approve_after_edit_without_resubmission_is_refused",
+   "ok": false,
+   "error": "WorkflowTransitionError: Not a valid Workflow Action",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.model.workflow.WorkflowTransitionError: Not a valid Workflow Action"
+   ]
+  }
+ ]
+}

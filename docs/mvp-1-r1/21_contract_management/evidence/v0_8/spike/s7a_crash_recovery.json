@@ -1,0 +1,47 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S7a.process_crashed",
+   "exit_code": 137,
+   "output": [
+    "CRASH native order PUR-ORD-2026-00028 committed; dying before the link is written"
+   ]
+  },
+  {
+   "step": "S7a.state_after_crash",
+   "orders_with_identity": 1,
+   "intent_state": "Attempting",
+   "link": null
+  },
+  {
+   "step": "S7a.recovery_reads_the_owner_first_and_links_the_existing_order",
+   "ok": true,
+   "result": {
+    "order": "PUR-ORD-2026-00028",
+    "created_new_order": false,
+    "intent_state": "Reconciled"
+   }
+  },
+  {
+   "step": "S7a.second_recovery_is_a_no_op",
+   "ok": true,
+   "result": {
+    "order": "PUR-ORD-2026-00028",
+    "created_new_order": false,
+    "intent_state": "Reconciled"
+   }
+  },
+  {
+   "step": "S7a.final",
+   "orders_with_identity": 1,
+   "intent_state": "Reconciled",
+   "link": "PUR-ORD-2026-00028"
+  }
+ ]
+}

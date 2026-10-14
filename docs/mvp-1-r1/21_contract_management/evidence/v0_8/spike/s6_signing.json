@@ -1,0 +1,162 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S6.provider_found_through_the_hook",
+   "hook": [
+    "kentender_procurement.proceedings.test_services.attestation.service"
+   ],
+   "provider": "TestAttestationService"
+  },
+  {
+   "step": "S6.package_digest",
+   "digest": "b18b637eec8b4f61c4a8bfe79ca6d284d3424a0dbafccf7b79ccd405a4b145ec",
+   "entries": 8
+  },
+  {
+   "step": "S6.supplier_signs_first",
+   "ok": true,
+   "result": {
+    "replay": false,
+    "state": "Succeeded",
+    "proof": "TATT-6A62A52A98",
+    "provider_outcome": "Accepted/Verified"
+   }
+  },
+  {
+   "step": "S6.entity_signs_second_on_the_same_digest",
+   "ok": true,
+   "result": {
+    "replay": false,
+    "state": "Succeeded",
+    "proof": "TATT-EFE5B5002A",
+    "provider_outcome": "Accepted/Verified"
+   }
+  },
+  {
+   "step": "S6.replay_of_a_succeeded_signature_does_not_call_the_provider_again",
+   "ok": true,
+   "result": {
+    "replay": true,
+    "state": "Succeeded",
+    "proof": "TATT-6A62A52A98"
+   }
+  },
+  {
+   "step": "S6.provider_calls_so_far",
+   "calls": [
+    "CM-SPIKE-CASE-S6|agreement|1|Signing attempt|supplier",
+    "CM-SPIKE-CASE-S6|agreement|1|Signing attempt|entity",
+    "CM-SPIKE-CASE-S6|agreement|2|Signing attempt|forced-Unavailable",
+    "CM-SPIKE-CASE-S6|agreement|2|Signing attempt|forced-Indeterminate",
+    "CM-SPIKE-CASE-S6|agreement|2|Signing attempt|forced-Rejected",
+    "CM-SPIKE-CASE-S6|agreement|2|Signing attempt|forced-Indeterminate"
+   ],
+   "count": 2
+  },
+  {
+   "step": "S6.seam_same_correlation_id_twice",
+   "first": "TATT-5D383532E2",
+   "second": "TATT-BE5116C939",
+   "same_proof": false,
+   "result_keys": [
+    "label",
+    "method",
+    "outcome",
+    "proof_reference"
+   ],
+   "status_or_reconcile_function_on_provider": []
+  },
+  {
+   "step": "S6.outcome_unavailable",
+   "ok": true,
+   "result": {
+    "replay": false,
+    "state": "Uncertain",
+    "proof": "",
+    "provider_outcome": "Unavailable"
+   }
+  },
+  {
+   "step": "S6.outcome_indeterminate",
+   "ok": true,
+   "result": {
+    "replay": false,
+    "state": "Uncertain",
+    "proof": "",
+    "provider_outcome": "Indeterminate"
+   }
+  },
+  {
+   "step": "S6.outcome_rejected",
+   "ok": true,
+   "result": {
+    "replay": false,
+    "state": "Failed",
+    "proof": "",
+    "provider_outcome": "Rejected"
+   }
+  },
+  {
+   "step": "S6.uncertain_attempt_retried_under_the_same_identity",
+   "ok": true,
+   "result": {
+    "replay": false,
+    "state": "Succeeded",
+    "proof": "TATT-2F292CCF57",
+    "provider_outcome": "Accepted/Verified"
+   }
+  },
+  {
+   "step": "S6.intent_states",
+   "rows": [
+    {
+     "identity": "CM-SPIKE-CASE-S7|agreement 1|1|Purchase order|crash-1",
+     "state": "Reconciled",
+     "proof": "PUR-ORD-2026-00028"
+    },
+    {
+     "identity": "CM-SPIKE-CASE-S6|agreement|1|Signing attempt|supplier",
+     "state": "Succeeded",
+     "proof": "TATT-6A62A52A98"
+    },
+    {
+     "identity": "CM-SPIKE-CASE-S6|agreement|1|Signing attempt|entity",
+     "state": "Succeeded",
+     "proof": "TATT-EFE5B5002A"
+    },
+    {
+     "identity": "CM-SPIKE-CASE-S6|agreement|2|Signing attempt|forced-Unavailable",
+     "state": "Uncertain",
+     "proof": null
+    },
+    {
+     "identity": "CM-SPIKE-CASE-S6|agreement|2|Signing attempt|forced-Indeterminate",
+     "state": "Succeeded",
+     "proof": "TATT-2F292CCF57"
+    },
+    {
+     "identity": "CM-SPIKE-CASE-S6|agreement|2|Signing attempt|forced-Rejected",
+     "state": "Failed",
+     "proof": null
+    }
+   ]
+  },
+  {
+   "step": "S6.changed_version_changes_the_digest",
+   "old": "b18b637eec8b4f61c4a8bfe79ca6d284d3424a0dbafccf7b79ccd405a4b145ec",
+   "new": "6dd7164000fb08105aac0900323d432e6053873d69adec32ae86a3f1af1f9318",
+   "different": true
+  },
+  {
+   "step": "S6.version_1_proofs_remain_bound_to_version_1_only",
+   "proofs_for_version_1": 2,
+   "proofs_for_version_2": 1
+  }
+ ]
+}

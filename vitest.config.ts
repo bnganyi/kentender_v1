@@ -321,6 +321,9 @@ export default defineConfig({
 					// tooling check (Phase 0) and, from Phase 1, the Desk and supplier
 					// screens with their structural fidelity against the design's boards.
 					name: "contracts",
+					// Rendering all 157 boards through the design's template takes 1.7–3.7 s
+					// (measured 15 Oct 2026); under load it can pass the 5 s default.
+					testTimeout: 30_000,
 					environment: "jsdom",
 					include: ["tests/ui/fidelity/contracts/**/*.spec.js", "kentender_contracts/kentender_contracts/public/js/**/*.spec.js"],
 				},

@@ -250,3 +250,9 @@ required_apps = ["erpnext", "kentender_core"]
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
+# Phase 2 spike (CM plan, tracker CM8-206): inert unless a process sets `frappe.flags.cm_spike_mode`. Removed or replaced in Phase 3.
+_spike = "kentender_contracts.spike.guards.on_event"
+doc_events = {
+	doctype: {event: _spike for event in ("validate", "before_submit", "on_submit", "before_update_after_submit", "on_update_after_submit", "before_cancel", "on_cancel")}
+	for doctype in ("Payment Entry", "Journal Entry")
+}

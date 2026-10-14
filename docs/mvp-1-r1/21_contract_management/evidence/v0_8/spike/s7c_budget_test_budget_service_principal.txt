@@ -1,0 +1,58 @@
+Starting test run with parameters: site=kentender-test.local, app=kentender_budget, module=kentender_budget.tests.test_budget_service_principal, verbose=False, tests=(), force=False, profile=False, failfast=False, skip_before_tests=False, debug=False, selected_categories=[]
+View detailed logs (using --verbose): /home/midasuser/frappe-bench/logs/frappe.testing.log
+
+Running 32 unspecified-category tests for kentender_budget
+
+kentender_budget.tests.test_budget_service_principal.TestBudgetInternalRevalidation
+   [32m ✔ [0m test_revalidation_is_budget_internal
+
+kentender_budget.tests.test_budget_service_principal.TestCheckReserveCaller
+   [32m ✔ [0m test_a_budget_revision_between_check_and_reserve_makes_the_check_stale
+   [32m ✔ [0m test_a_finance_confirmation_officer_cannot_place_a_hold
+   [32m ✔ [0m test_a_replay_with_a_changed_source_set_is_a_conflict_even_after_the_check_token_expired
+   [32m ✔ [0m test_a_requisitions_caller_cannot_name_another_requisition
+   [32m ✔ [0m test_reserve_replays_on_the_same_key
+   [32m ✔ [0m test_the_calling_module_is_the_principal_not_a_declared_value
+   [32m ✔ [0m test_the_token_is_bound_to_the_actor_who_checked
+   [32m ✔ [0m test_the_token_is_bound_to_the_requisition_that_checked
+
+kentender_budget.tests.test_budget_service_principal.TestContractPrincipal
+   [32m ✔ [0m test_a_new_key_for_the_same_contract_with_another_amount_is_not_silently_accepted
+   [32m ✔ [0m test_adjustment_needs_a_variation_event
+   [32m ✔ [0m test_contract_adjusts_a_commitment_and_the_key_dedupes
+   [32m ✔ [0m test_contract_cannot_release_more_than_remains_or_for_another_contract
+   [32m ✔ [0m test_contract_converts_a_reservation_into_a_commitment
+   [32m ✔ [0m test_contract_releases_an_unused_amount_once_per_key
+   [32m ✔ [0m test_conversion_needs_a_contract_event_and_the_callers_own_contract
+   [32m ✔ [0m test_conversion_replays_on_the_same_key_and_conflicts_on_a_changed_payload
+
+kentender_budget.tests.test_budget_service_principal.TestNoWebSurface
+   [32m ✔ [0m test_no_budget_api_endpoint_remains_for_the_guarded_actions
+   [32m ✔ [0m test_service_functions_are_not_whitelisted
+   [32m ✔ [0m test_the_decision_time_affordability_check_is_not_a_web_endpoint
+   [32m ✔ [0m test_the_dia_adapter_release_endpoint_is_gone
+
+kentender_budget.tests.test_budget_service_principal.TestPrincipalMatrix
+   [32m ✔ [0m test_a_caller_cannot_be_forged
+   [32m ✔ [0m test_a_session_user_without_a_principal_is_refused_everywhere
+   [32m ✔ [0m test_each_principal_is_refused_the_actions_that_are_not_its_own
+   [32m ✔ [0m test_only_the_owning_gateways_and_seeds_mint_principals
+   [32m ✔ [0m test_planning_tenders_evaluation_and_award_hold_no_budget_money_action
+   [32m ✔ [0m test_the_mint_scan_finds_the_ways_the_old_regex_missed
+
+kentender_budget.tests.test_budget_service_principal.TestRequisitionsRelease
+   [32m ✔ [0m test_release_needs_the_downstream_event
+   [32m ✔ [0m test_requisitions_cannot_release_a_reservation_it_did_not_create
+   [32m ✔ [0m test_requisitions_cannot_release_another_requisitions_reservation
+   [32m ✔ [0m test_requisitions_releases_the_reservation_its_own_requisition_created
+   [32m ✔ [0m test_requisitions_releases_the_whole_hold_only_and_never_a_converted_one
+
+
+----------------------------------------------------------------------
+Ran 32 tests in 16.953s
+
+OK
+
+real	0m19.123s
+user	0m11.964s
+sys	0m2.244s

@@ -1,0 +1,21 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S3b.receipt_row_without_a_serial",
+   "ok": true,
+   "result": {
+    "submitted": true,
+    "serials_created_without_being_supplied": [
+     "CMSPK-00003"
+    ],
+    "row_serial_no_field": null
+   }
+  }
+ ]
+}

@@ -1,0 +1,65 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S5e.race_without_row_lock",
+   "contenders": [
+    {
+     "pe": "ACC-PAY-2026-00019",
+     "ok": true,
+     "result": {
+      "workflow_state": "Approved",
+      "docstatus": 1
+     },
+     "waited_s": 0.77
+    },
+    {
+     "pe": "ACC-PAY-2026-00020",
+     "ok": true,
+     "result": {
+      "workflow_state": "Approved",
+      "docstatus": 1
+     },
+     "waited_s": 0.85
+    }
+   ],
+   "payments_posted": 2,
+   "cash_posted_by_payment_entries": 1000000.0,
+   "settled_shown_on_the_invoice": 500000.0,
+   "certified": 800000.0,
+   "over_paid_in_cash": true,
+   "invoice_disagrees_with_cash": true
+  },
+  {
+   "step": "S5e.race_with_row_lock",
+   "contenders": [
+    {
+     "pe": "ACC-PAY-2026-00021",
+     "ok": true,
+     "result": {
+      "workflow_state": "Approved",
+      "docstatus": 1
+     },
+     "waited_s": 0.97
+    },
+    {
+     "pe": "ACC-PAY-2026-00022",
+     "ok": false,
+     "error": "ValidationError: CM_HOLD: ACC-PINV-2026-00027 is certified for 800,000.00, already settled 500,000.00; 500,000.00 exceeds the supported amount.",
+     "waited_s": 0.96
+    }
+   ],
+   "payments_posted": 1,
+   "cash_posted_by_payment_entries": 500000.0,
+   "settled_shown_on_the_invoice": 500000.0,
+   "certified": 800000.0,
+   "over_paid_in_cash": false,
+   "invoice_disagrees_with_cash": false
+  }
+ ]
+}

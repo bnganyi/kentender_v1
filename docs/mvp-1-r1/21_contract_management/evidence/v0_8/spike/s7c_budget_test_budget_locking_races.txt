@@ -1,0 +1,27 @@
+Starting test run with parameters: site=kentender-test.local, app=kentender_budget, module=kentender_budget.tests.test_budget_locking_races, verbose=False, tests=(), force=False, profile=False, failfast=False, skip_before_tests=False, debug=False, selected_categories=[]
+View detailed logs (using --verbose): /home/midasuser/frappe-bench/logs/frappe.testing.log
+
+Running 11 unspecified-category tests for kentender_budget
+
+kentender_budget.tests.test_budget_locking_races.TestBudgetLockingRaces
+   [32m ✔ [0m test_a_commitment_increase_waits_for_a_reservation_on_the_same_line [31m (2.32s)[0m
+   [32m ✔ [0m test_a_requisition_release_waiting_for_a_conversion_is_refused_on_the_converted_reservation
+   [32m ✔ [0m test_a_reservation_waiting_on_a_reservation_decides_on_the_committed_position
+   [32m ✔ [0m test_a_reservation_waits_for_a_closure_and_is_refused
+   [32m ✔ [0m test_a_reservation_waits_for_an_approval_and_uses_the_new_basis
+   [32m ✔ [0m test_approval_waits_for_a_racing_reservation_and_rechecks_the_floor
+   [32m ✔ [0m test_closure_waits_for_a_racing_reservation
+   [32m ✔ [0m test_decision_basis_waits_for_an_approval_and_fails_stale
+   [32m ✔ [0m test_two_80m_reservations_on_a_100m_line_cannot_both_succeed
+   [32m ✔ [0m test_two_commitment_increases_of_20m_cannot_both_succeed
+   [32m ✔ [0m test_two_connections_releasing_with_one_key_apply_the_release_once
+
+
+----------------------------------------------------------------------
+Ran 11 tests in 22.856s
+
+OK
+
+real	0m25.163s
+user	0m7.756s
+sys	0m1.274s

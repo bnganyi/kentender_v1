@@ -1,0 +1,210 @@
+{
+ "environment": {
+  "site": "kentender-test.local",
+  "erpnext": "16.10.1",
+  "frappe": "16.12.0",
+  "date": "2026-10-14",
+  "note": "read-only description taken BEFORE the spike built anything (tools: spike/inspect_world.py); ERPNext's own _Test Company residue omitted"
+ },
+ "world": {
+  "frappe": "16.12.0",
+  "company": [
+   {
+    "name": "KenTender",
+    "abbr": "K",
+    "default_currency": "KES",
+    "country": "Kenya",
+    "stock_received_but_not_billed": "2210 - Stock Received But Not Billed - K",
+    "default_payable_account": "2110 - Creditors - K",
+    "default_inventory_account": "1410 - Stock In Hand - K",
+    "stock_adjustment_account": "5119 - Stock Adjustment - K",
+    "cost_center": "Main - K",
+    "enable_perpetual_inventory": 1,
+    "asset_received_but_not_billed": "2211 - Asset Received But Not Billed - K",
+    "capital_work_in_progress_account": "1790 - CWIP Account - K",
+    "default_bank_account": null,
+    "default_cash_account": "1110 - Cash - K",
+    "round_off_account": "5212 - Round Off - K",
+    "accumulated_depreciation_account": "1780 - Accumulated Depreciation - K",
+    "depreciation_expense_account": "5203 - Depreciation - K",
+    "disposal_account": "5222 - Gain/Loss on Asset Disposal - K",
+    "default_expense_account": "5111 - Cost of Goods Sold - K",
+    "default_income_account": "4110 - Sales - K",
+    "write_off_account": "5218 - Write Off - K"
+   }
+  ],
+  "warehouses": [
+   {
+    "name": "Goods In Transit - K",
+    "company": "KenTender",
+    "is_group": 0,
+    "warehouse_type": "Transit",
+    "account": null
+   },
+   {
+    "name": "Finished Goods - K",
+    "company": "KenTender",
+    "is_group": 0,
+    "warehouse_type": null,
+    "account": null
+   },
+   {
+    "name": "Work In Progress - K",
+    "company": "KenTender",
+    "is_group": 0,
+    "warehouse_type": null,
+    "account": null
+   },
+   {
+    "name": "Stores - K",
+    "company": "KenTender",
+    "is_group": 0,
+    "warehouse_type": null,
+    "account": null
+   },
+   {
+    "name": "All Warehouses - K",
+    "company": "KenTender",
+    "is_group": 1,
+    "warehouse_type": null,
+    "account": null
+   }
+  ],
+  "counts": {
+   "Account": 964,
+   "Cost Center": 20,
+   "Item": 0,
+   "Item Group": 6,
+   "UOM": 247,
+   "Supplier": 0,
+   "Supplier Group": 8,
+   "Asset Category": 0,
+   "Asset": 0,
+   "Purchase Order": 0,
+   "Purchase Receipt": 0,
+   "Purchase Invoice": 0,
+   "Payment Entry": 0,
+   "Journal Entry": 0,
+   "Quality Inspection": 0,
+   "Quality Inspection Template": 0,
+   "Serial No": 0,
+   "Batch": 0,
+   "Stock Ledger Entry": 0,
+   "GL Entry": 0,
+   "Bank Account": 0,
+   "Mode of Payment": 5,
+   "Purchase Taxes and Charges Template": 17,
+   "Workflow": 0,
+   "Fiscal Year": 45,
+   "Price List": 2,
+   "Item Tax Template": 13
+  },
+  "fiscal_years": [
+   {
+    "name": "2103-2104",
+    "year_start_date": "2103-07-01",
+    "year_end_date": "2104-06-30",
+    "disabled": 0
+   },
+   {
+    "name": "2101-2102",
+    "year_start_date": "2101-07-01",
+    "year_end_date": "2102-06-30",
+    "disabled": 0
+   },
+   {
+    "name": "2099-2100",
+    "year_start_date": "2099-07-01",
+    "year_end_date": "2100-06-30",
+    "disabled": 0
+   },
+   {
+    "name": "2063-2064",
+    "year_start_date": "2063-07-01",
+    "year_end_date": "2064-06-30",
+    "disabled": 0
+   },
+   {
+    "name": "2027-2028",
+    "year_start_date": "2027-07-01",
+    "year_end_date": "2028-06-30",
+    "disabled": 0
+   },
+   {
+    "name": "2026-2027",
+    "year_start_date": "2026-07-01",
+    "year_end_date": "2027-06-30",
+    "disabled": 0
+   }
+  ],
+  "fiscal_year_companies": [
+   {
+    "parent": "2099-2100",
+    "company": "KenTender"
+   },
+   {
+    "parent": "2103-2104",
+    "company": "KenTender"
+   },
+   {
+    "parent": "2101-2102",
+    "company": "KenTender"
+   },
+   {
+    "parent": "2027-2028",
+    "company": "KenTender"
+   },
+   {
+    "parent": "2026-2027",
+    "company": "KenTender"
+   }
+  ],
+  "buying_settings": {
+   "po_required": "No",
+   "pr_required": "No",
+   "maintain_same_rate": 1,
+   "allow_multiple_items": 1,
+   "bill_for_rejected_quantity_in_purchase_invoice": 1
+  },
+  "stock_settings": {
+   "allow_negative_stock": 0,
+   "auto_insert_price_list_rate_if_missing": 1,
+   "action_if_quality_inspection_is_not_submitted": "Stop",
+   "action_if_quality_inspection_is_rejected": "Stop",
+   "allow_partial_reservation": 1,
+   "over_delivery_receipt_allowance": 0.0,
+   "default_warehouse": "Stores - K",
+   "enable_stock_reservation": 0,
+   "use_serial_batch_fields": 1
+  },
+  "accounts_settings": {
+   "unlink_payment_on_cancellation_of_invoice": 1,
+   "allow_stale": 1,
+   "check_supplier_invoice_uniqueness": 0,
+   "enable_common_party_accounting": 0,
+   "frozen_accounts_modifier": "(no such field)",
+   "acc_frozen_upto": "(no such field)",
+   "make_payment_via_journal_entry": 0,
+   "ignore_account_closing_balance": 0
+  },
+  "uoms": [
+   "Nos",
+   "Unit",
+   "Each"
+  ],
+  "user_roles_of_personas": {
+   "josphat.mwangi@moh.example.test": [
+    "Budget Officer",
+    "Finance Confirmation Officer"
+   ],
+   "beatrice.kamau@moh.example.test": [
+    "Budget Approver"
+   ],
+   "julia.njeri@moh.example.test": [],
+   "charles.mutiso@moh.example.test": [
+    "Head of Procurement Function"
+   ]
+  },
+  "workflows": []
+ }
+}
