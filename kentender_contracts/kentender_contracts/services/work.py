@@ -98,8 +98,12 @@ def live(case: str) -> list[dict[str, Any]]:
 		"state": STATE[r.state], "due": get_datetime(r.due) if r.due else None, "due_verified": bool(r.due_verified), "assigned_at": get_datetime(r.assigned_at)} for r in rows]
 
 
-def view(case: str, actor: str, *, neutral: bool = False) -> dict[str, Any]:
-	return rules.view(live(case), actor, clock.now(), neutral=neutral)
+def view(case: str, actor: str, *, neutral: bool = False, holders: set[str] | None = None) -> dict[str, Any]:
+	"""The leading item and Other work for one actor. `holders` limits the work the actor may see to the people named (a supplier sees their own side only, section 6.2)."""
+	items = live(case)
+	if holders is not None:
+		items = [t for t in items if t["holder"].lower() in holders]
+	return rules.view(items, actor, clock.now(), neutral=neutral)
 
 
 def responsible(case: str) -> str:

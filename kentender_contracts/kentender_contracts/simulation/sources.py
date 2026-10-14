@@ -58,8 +58,9 @@ FORM_4 = (
 )
 
 CRITERIA = [
-	{"id": "C1", "name": "Screen size", "comparator": ">=", "value": 14, "unit": "inch", "line_id": "L1", "coverage": "every unit"},
-	{"id": "C2", "name": "Memory", "comparator": ">=", "value": 16, "unit": "GB", "line_id": "L1", "coverage": "every unit"},
+	{"id": "C1", "name": "RAM", "comparator": ">=", "value": 16, "unit": "GB", "line_id": "L1", "coverage": "every unit"},
+	{"id": "C2", "name": "Storage", "comparator": ">=", "value": 512, "unit": "GB", "line_id": "L1", "coverage": "every unit"},
+	{"id": "C3", "name": "Starts successfully", "comparator": "=", "value": "Yes", "unit": "", "line_id": "L1", "coverage": "every unit"},
 ]
 
 
@@ -76,7 +77,7 @@ def _content(number: str, case: str) -> bytes:
 		return _json({"currency": "KES", "tax_included": True, "total": TOTAL,
 			"lines": [{"line_id": "L1", "item": "Laptop", "description": "Laptop computer", "uom": "Nos", "quantity": LAPTOPS, "rate": UNIT_PRICE, "amount": TOTAL}]})
 	if number == "S4":
-		return _json({"delivery_schedule": {"due": DELIVERY_DUE, "destination": "Ministry of Health, Afya House store"}, "technical": [{"line_id": "L1", "requirement": "Laptop with a screen of at least 14 inch and at least 16 GB memory"}],
+		return _json({"delivery_schedule": {"due": DELIVERY_DUE, "destination": "Ministry of Health, Afya House store"}, "technical": [{"line_id": "L1", "requirement": "Laptop with at least 16 GB RAM and 512 GB storage that starts successfully"}],
 			"related_services": []})
 	if number == "S5":
 		return _json({"warranty": {"months": 12, "from": "each unit's acceptance"}, "payment": {"basis": "certified invoice for accepted units", "terms": "as issued"},

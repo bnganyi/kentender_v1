@@ -1,0 +1,143 @@
+{
+ "actions": {
+  "Sign close-out": {
+   "args": {
+    "closeout": "CM-CLS-365000"
+   },
+   "command": "SignContractCloseout",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D11",
+ "dialogs": {},
+ "ev": [
+  "Completion certificate 1",
+  "Financial reconciliation 1"
+ ],
+ "id": "D11",
+ "name": "Close-out review",
+ "next": {
+  "h": "Review and sign the close-out.",
+  "k": "turn",
+  "s": "Responsible: Amina Hassan"
+ },
+ "p": "Sign close-out",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Accepted",
+       "10"
+      ],
+      [
+       "Invoiced",
+       "KES 1,000,000"
+      ],
+      [
+       "Cash confirmed",
+       "KES 1,000,000"
+      ],
+      [
+       "Balance",
+       "KES 0"
+      ]
+     ],
+     "k": "facts"
+    },
+    {
+     "items": [
+      [
+       "Warranty",
+       "Runs from each unit\u2019s acceptance"
+      ],
+      [
+       "Security",
+       "Not required under these test terms."
+      ],
+      [
+       "Required reporting",
+       "Complete"
+      ],
+      [
+       "Completion certificate",
+       "Signed"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Completion review"
+  },
+  {
+   "b": [
+    {
+     "k": "text",
+     "v": "I close this procurement contract following the evidenced completion recorded below. The surviving obligations and their accountable owners are listed in the attached schedule."
+    },
+    {
+     "items": [
+      [
+       "Surviving obligations",
+       "None"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Close-out decision"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Close contract",
+ "version": 47
+}

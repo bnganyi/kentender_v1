@@ -142,9 +142,10 @@ class TestArrivalAndInspection(DeliveryCase):
 		out = self.t.inspect(arrival, self.units, bad=(self.units[8], self.units[9]), blank=(self.units[7],))
 		self.assertEqual(out["findings"], {"Meets": 7, "Does not meet": 2, "Needs review": 1})
 		found = records.loads(frappe.db.get_value("Contract Inspection", out["inspection"], "findings_json"))
-		bad = found["units"][self.units[8]]["criteria"]["C1"]
-		self.assertEqual((bad["result"], bad["requirement"], bad["observed"]), ("Does not meet", "Screen size >= 14 inch", "13.3"))
-		self.assertEqual(found["units"][self.units[7]]["criteria"]["C1"]["result"], "Needs review", "a blank required reading is never a pass")
+		bad = found["units"][self.units[8]]["criteria"]["C3"]
+		self.assertEqual((bad["result"], bad["requirement"], bad["observed"]), ("Does not meet", "Starts successfully = Yes", "No"))
+		self.assertEqual(found["units"][self.units[0]]["criteria"]["C1"]["requirement"], "RAM >= 16 GB")
+		self.assertEqual(found["units"][self.units[7]]["criteria"]["C3"]["result"], "Needs review", "a blank required reading is never a pass")
 
 	def test_a_new_record_supersedes_the_earlier_one_and_keeps_it(self):
 		arrival = self.t.arrive(self.units)["arrival"]

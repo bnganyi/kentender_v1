@@ -1,0 +1,151 @@
+{
+ "actions": {
+  "Cancel": {
+   "do": "tab",
+   "tab": "Invoices"
+  },
+  "Submit correction": {
+   "args": {
+    "claim_reference": "AFYA-1-R",
+    "invoice_date": "2026-10-15",
+    "successor_of": "CM-INV-364842"
+   },
+   "command": "CorrectContractInvoice",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "supplier"
+ ],
+ "back": "Back to my contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D18",
+ "dialogs": {},
+ "ev": [
+  "Agreement 1"
+ ],
+ "id": "D18-C",
+ "lineId": "L1",
+ "name": "Supplier invoice",
+ "next": {
+  "h": "Correct your invoice: Claim the eight accepted units.",
+  "k": "turn",
+  "s": "Responsible: David Otieno"
+ },
+ "p": "Submit correction",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Invoice",
+       "AFYA-1 version 1"
+      ],
+      [
+       "Claimed",
+       "9 laptop computer \u00b7 KES 900,000"
+      ],
+      [
+       "Received",
+       "2 Jul 2027, 09:00 EAT"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Version 1 (retained)"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Item",
+      "Quantity",
+      "Rate",
+      "Tax",
+      "Total"
+     ],
+     "inputs": {
+      "0,1": "quantity.L1"
+     },
+     "k": "table",
+     "num": [
+      1,
+      2,
+      4
+     ],
+     "rows": [
+      [
+       "Laptop computer",
+       "#0",
+       "KES 100,000",
+       "Included",
+       "KES 0"
+      ]
+     ]
+    },
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Correction"
+  }
+ ],
+ "s2": [
+  "Cancel"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Correct invoice",
+ "version": 20
+}

@@ -65,36 +65,45 @@ def require_ready(case: str) -> dict[str, Any]:
 	return state
 
 
+def eligibility(user: str, role: str) -> str:
+	"""Why this person cannot be named for this responsibility, in the command's own words (the record picker shows the same text), or an empty string."""
+	if not user or not frappe.db.exists("User", user):
+		return "Every member must be a person with an account."
+	if not people.holds(user, role):
+		return f"{people.full_name(user)} does not hold the {role} responsibility."
+	return ""
+
+
 def _members(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	problems: dict[str, str] = {}
 	members = []
 	seen: set[str] = set()
 	for row in rows or []:
 		user = cstr(row.get("user")).strip()
-		if not user or not frappe.db.exists("User", user):
-			problems["members"] = "Every member must be a person with an account."
+		problem = eligibility(user, "Contract inspection")
+		certifier = bool(row.get("certifier"))
+		if not problem and certifier:
+			problem = eligibility(user, "Technical certification")
+		if problem:
+			problems.setdefault("members", problem)
 			continue
 		if user.lower() in seen:
-			problems["members"] = "A person can be named once."
+			problems.setdefault("members", "A person can be named once.")
 		seen.add(user.lower())
-		if not people.holds(user, "Contract inspection"):
-			problems["members"] = f"{people.full_name(user)} does not hold the Contract inspection responsibility."
-		certifier = bool(row.get("certifier"))
-		if certifier and not people.holds(user, "Technical certification"):
-			problems["members"] = f"{people.full_name(user)} does not hold the Technical certification responsibility."
 		members.append({"user": user, "name": people.full_name(user), "capacity": CHAIR if row.get("capacity") == CHAIR else "Member", "certifier": certifier, "role_label": cstr(row.get("role_label")),
 			"declared_at": None, "conflict": None})
 	if len(members) < 3:
-		problems["members"] = "Name a chair and at least two other members."
+		problems.setdefault("members", "Name a chair and at least two other members.")
 	if sum(1 for m in members if m["capacity"] == CHAIR) != 1:
-		problems["members"] = "Name exactly one chair."
+		problems.setdefault("members", "Name exactly one chair.")
 	if not any(m["certifier"] for m in members):
-		problems["members"] = "Name the member who gives the technical confirmation."
+		problems.setdefault("members", "Name the member who gives the technical confirmation.")
 	invalid(problems)
 	return members
 
 
-def recommend_inspectors(case: str, *, expected_version: int, idempotency_key: str, actor: str, members: list[dict[str, Any]], scope: str = "All deliveries under this contract", reason: str = "") -> dict[str, Any]:
+def recommend_inspectors(case: str, *, expected_version: int, idempotency_key: str, actor: str, members: list[dict[str, Any]], scope: str = "All deliveries under this contract", reason: str = "",
+		from_date: str = "", until_date: str = "") -> dict[str, Any]:
 	"""`RecommendContractInspectors`: HOP names the written appointment for the Accounting Officer."""
 	preflight.exists(case)
 
@@ -107,18 +116,18 @@ def recommend_inspectors(case: str, *, expected_version: int, idempotency_key: s
 		for earlier in frappe.get_all(APPOINTMENT, filters={"contract_case": case, "state": "Recommended"}, pluck="name"):
 			records.update(frappe.get_doc(APPOINTMENT, earlier), state="Superseded")
 		row = records.new(APPOINTMENT, contract_case=case, version_no=version, state="Recommended", scope=scope, reference=f"{case}/APP/{version}", members_json=records.dumps(named), recommended_by=actor,
-			reason=reason, record_version=1)
+			reason=reason, effective_from=get_datetime(from_date) if cstr(from_date).strip() else None, effective_to=get_datetime(until_date) if cstr(until_date).strip() else None, record_version=1)
 		work.finish(case, command="RecommendContractInspectors", actor=actor)
 		work.assign(case, "AppointContractInspectors", "Appoint the inspectors for this contract.", f"appointment {version}", version, work.holders("Accounting Officer"), role="Accounting Officer")
 		work.assign(case, work.waiting_command("AppointContractInspectors", "appointment"), "Waiting for the appointment.", f"appointment {version}", version, work.holders(work.HOP), role=work.HOP, state="Waiting")
 		events.record(case, "Inspectors recommended", actor, f"Appointment {version} recommended.", appointment=row.name)
 		return records.summary(doc, appointment=row.name, appointment_version=version)
 
-	return records.command("RecommendContractInspectors", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "members": members, "scope": scope},
+	return records.command("RecommendContractInspectors", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "members": members, "scope": scope, "from": from_date, "until": until_date},
 		body=body, authorise=lambda: preflight.acts_as_preparer(actor, _unit(case)))
 
 
-def appoint_inspectors(case: str, *, appointment: str, expected_version: int, idempotency_key: str, actor: str) -> dict[str, Any]:
+def appoint_inspectors(case: str, *, appointment: str, expected_version: int, idempotency_key: str, actor: str, from_date: str = "", until_date: str = "") -> dict[str, Any]:
 	"""`AppointContractInspectors`: the Accounting Officer's written appointment. A later appointment applies from then on; the earlier one stays as history."""
 	preflight.exists(case)
 
@@ -131,7 +140,9 @@ def appoint_inspectors(case: str, *, appointment: str, expected_version: int, id
 		now = clock.now()
 		for earlier in frappe.get_all(APPOINTMENT, filters={"contract_case": case, "state": "Appointed"}, pluck="name"):
 			records.update(frappe.get_doc(APPOINTMENT, earlier), state="Replaced", effective_to=now)
-		records.update(row, state="Appointed", appointed_by=actor, effective_from=now, record_version=cint(row.record_version) + 1)
+		start = get_datetime(from_date) if cstr(from_date).strip() else (row.effective_from or now)
+		end = get_datetime(until_date) if cstr(until_date).strip() else row.effective_to
+		records.update(row, state="Appointed", appointed_by=actor, effective_from=start, effective_to=end, record_version=cint(row.record_version) + 1)
 		records.bump(doc)
 		work.finish(case, command="AppointContractInspectors", subject=f"appointment {row.version_no}", actor=actor)
 		for member in records.loads(row.members_json, []):
@@ -140,7 +151,7 @@ def appoint_inspectors(case: str, *, appointment: str, expected_version: int, id
 		events.record(case, "Inspectors appointed", actor, f"Appointment {row.version_no} in force.", appointment=row.name)
 		return records.summary(doc, appointment=row.name)
 
-	return records.command("AppointContractInspectors", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "appointment": appointment},
+	return records.command("AppointContractInspectors", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "appointment": appointment, "from": from_date, "until": until_date},
 		body=body, authorise=lambda: authority.require(actor, "Accounting Officer"))
 
 
@@ -288,6 +299,16 @@ def findings(criteria: list[dict[str, Any]], units: list[str], observations: lis
 			obs = given.get((unit, c["id"]))
 			requirement = f"{c['name']} {c['comparator']} {c['value']} {c.get('unit', '')}".strip()
 			raw = obs.get("value") if obs else None
+			if not isinstance(c["value"], (int, float)):  # a typed text comparison ("Starts successfully" = "Yes")
+				given_text = cstr(raw).strip()
+				if not given_text:
+					result, reason = NEEDS_REVIEW, "No reading was recorded."
+				elif COMPARATORS[c["comparator"]](given_text.lower(), cstr(c["value"]).lower()):
+					result, reason = MEETS, ""
+				else:
+					result, reason = DOES_NOT_MEET, f"{c['name']} is {given_text}, the requirement is {c['value']}."
+				by_criterion[c["id"]] = {"requirement": requirement, "observed": cstr(raw), "result": result, "reason": reason, "evidence": (obs or {}).get("evidence", "")}
+				continue
 			reading = _reading(raw)
 			if reading is None:
 				result, reason = NEEDS_REVIEW, "No reading was recorded." if not cstr(raw).strip() else "The reading is not a number."

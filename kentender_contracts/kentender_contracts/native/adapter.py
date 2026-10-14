@@ -145,8 +145,9 @@ def inspect_accepted(receipt: str, item_code: str, *, status: str, sample: int, 
 
 
 # -- invoice and payment ---------------------------------------------------------------------------------------------------------
-def invoice_receipt(receipt: str, identity: str, *, bill_no: str, bill_date: str | None = None, qty: float | None = None) -> str:
-	"""A native Purchase Invoice from a receipt (accepted quantity only), once per operation identity."""
+def invoice_receipt(receipt: str, identity: str, *, bill_no: str, bill_date: str | None = None, qty: float | None = None, submit: bool = True) -> str:
+	"""A native Purchase Invoice from a receipt (accepted quantity only), once per operation identity. `submit=False` leaves it a Draft for the Finance maker to complete
+	(`prepare_invoice`) and the Finance approver to post (`post_invoice`); the supplier's claim is recorded as a draft and posts only after certification and approval."""
 	existing = find_by_identity("Purchase Invoice", identity)
 	if existing:
 		return existing
@@ -159,8 +160,45 @@ def invoice_receipt(receipt: str, identity: str, *, bill_no: str, bill_date: str
 	if qty is not None:
 		invoice.items[0].qty = qty
 	invoice.insert(ignore_permissions=True)
-	invoice.submit()
+	if submit:
+		invoice.submit()
 	return invoice.name
+
+
+def prepare_invoice(invoice: str, *, posting_date: str, payable_account: str, cost_centre: str, expense_account: str, tax_template: str = "") -> dict[str, Any]:
+	"""The accounting details of a Draft native invoice, saved by the Finance maker: posting date, payable account, accounting treatment (the expense or asset account of each line), tax
+	treatment and cost centre. The supplier's quantities and rates are untouched; a submitted invoice is refused."""
+	doc = frappe.get_doc("Purchase Invoice", invoice)
+	if doc.docstatus != 0:
+		fail("CM_RECONCILE", invoice=invoice, reason="The accounting invoice is already posted.")
+	doc.set_posting_time = 1
+	doc.posting_date = posting_date
+	doc.credit_to = payable_account
+	if tax_template:
+		doc.taxes_and_charges = tax_template
+		doc.set_taxes()
+	for row in doc.items:
+		row.cost_center, row.expense_account = cost_centre, expense_account
+	doc.cost_center = cost_centre
+	doc.save(ignore_permissions=True)
+	return {"invoice": invoice, "posting_date": str(doc.posting_date), "credit_to": doc.credit_to, "grand_total": doc.grand_total}
+
+
+def post_invoice(invoice: str, user: str) -> dict[str, Any]:
+	"""The approver's posting of a Draft invoice: the configured workflow's Approve if the site has one for Purchase Invoice, otherwise the native submission, taken as `user`."""
+	from frappe.model.workflow import apply_workflow, get_workflow_name
+
+	previous = frappe.session.user
+	frappe.set_user(user)
+	try:
+		doc = frappe.get_doc("Purchase Invoice", invoice)
+		if get_workflow_name("Purchase Invoice"):
+			doc = apply_workflow(doc, "Approve")
+		else:
+			doc.submit()
+	finally:
+		frappe.set_user(previous)
+	return {"invoice": invoice, "docstatus": doc.docstatus}
 
 
 def certify_invoice(invoice: str, amount: float) -> None:
@@ -183,6 +221,24 @@ def payment_draft(invoice: str, identity: str, *, amount: float | None = None, m
 		entry.references[0].allocated_amount = amount
 	entry.insert()
 	return entry.name
+
+
+def update_payment_draft(entry: str, *, amount: float | None = None, mode_of_payment: str | None = None, paid_from: str | None = None, reference_no: str | None = None) -> str:
+	"""The maker's changes to an unposted native payment. Saving an entry that is awaiting approval sends it back to Draft (the guard's rule for a changed amount)."""
+	doc = frappe.get_doc("Payment Entry", entry)
+	if doc.docstatus != 0:
+		fail("CM_RECONCILE", payment=entry, reason="The payment is already posted.")
+	if mode_of_payment:
+		doc.mode_of_payment = mode_of_payment
+	if paid_from:
+		doc.paid_from = paid_from
+	if reference_no:
+		doc.reference_no = reference_no
+	if amount is not None:
+		doc.paid_amount = doc.received_amount = amount
+		doc.references[0].allocated_amount = amount
+	doc.save()
+	return doc.name
 
 
 def approve_payment(entry: str, identity: str, user: str) -> dict[str, Any]:

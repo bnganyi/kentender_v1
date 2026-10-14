@@ -140,7 +140,7 @@ class TestFormation(ContractCase):
 		self.assertEqual(stranger.code, "CM_SEGREGATION", "a representative is not a signatory")
 		first = formation.sign_contract(case, party="Supplier", expected_version=sent["record_version"], idempotency_key=self.k(), actor=self.p["mary"])
 		self.assertEqual((first["state"], first["lifecycle"]), ("Signed", "Awaiting signatures"))
-		self.assertEqual(self.mine(case), {(self.p["amina"], "actionable"), (self.p["charles"], "waiting")})
+		self.assertEqual(self.mine(case), {(self.p["amina"], "actionable"), (self.p["charles"], "waiting"), (self.p["mary"], "waiting")})
 		second = formation.sign_contract(case, party="Entity", expected_version=first["record_version"], idempotency_key=self.k(), actor=self.p["amina"])
 		self.assertEqual((second["lifecycle"], second["effective"]), ("Active", True))
 		proofs = frappe.get_all("Contract Signature", filters={"contract_case": case}, pluck="proof_reference")

@@ -1,0 +1,186 @@
+{
+ "actions": {
+  "Sign contract": {
+   "args": {
+    "party": "Entity"
+   },
+   "command": "SignContractVersion",
+   "do": "command"
+  },
+  "View agreement": {
+   "do": "route",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement",
+    "1"
+   ]
+  },
+  "View agreement 1": {
+   "do": "route",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement",
+    "1"
+   ]
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D03",
+ "dialogs": {},
+ "ev": [
+  "Agreement 1"
+ ],
+ "id": "D03-A",
+ "name": "Supplier signature",
+ "next": {
+  "h": "Review the agreement before signing.",
+  "k": "turn",
+  "s": "Responsible: Amina Hassan"
+ },
+ "p": "Sign contract",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Contract value",
+       "KES 1,000,000"
+      ],
+      [
+       "Delivery",
+       "20 July 2027"
+      ],
+      [
+       "Warranty",
+       "12 months"
+      ],
+      [
+       "Security",
+       "Not required under these test terms"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Summary"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Supplier",
+       "Afya Digital Supplies Limited"
+      ],
+      [
+       "Items",
+       "10 Laptop computer at KES 100,000 each"
+      ],
+      [
+       "Contract value",
+       "KES 1,000,000, tax included"
+      ],
+      [
+       "Delivery due",
+       "20 July 2027"
+      ],
+      [
+       "Warranty",
+       "12 months from each unit\u2019s acceptance"
+      ],
+      [
+       "Performance security",
+       "Not required under these test terms"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "items": [
+      "View agreement 1"
+     ],
+     "k": "links"
+    }
+   ],
+   "t": "Agreement summary"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Signatory",
+      "Capacity",
+      "Status"
+     ],
+     "inputs": {},
+     "k": "table",
+     "num": [],
+     "rows": [
+      [
+       "Mary Wanjiku",
+       "Supplier authorised signatory",
+       "!Signed"
+      ],
+      [
+       "Amina Hassan",
+       "Entity signatory",
+       "!Awaiting signature"
+      ]
+     ]
+    }
+   ],
+   "t": "Signatures"
+  }
+ ],
+ "s2": [],
+ "st": "Awaiting signatures",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Sign contract",
+ "version": 4
+}

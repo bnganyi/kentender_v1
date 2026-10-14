@@ -1,0 +1,127 @@
+{
+ "actions": {
+  "Sign technical certificate": {
+   "args": {
+    "arrival": "CM-ARR-364804"
+   },
+   "command": "SignTechnicalCertificate",
+   "do": "command"
+  }
+ },
+ "arrival": "CM-ARR-364804",
+ "audiences": [
+  "appointee"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D19",
+ "dialogs": {},
+ "ev": [
+  "Inspection 1"
+ ],
+ "id": "D19",
+ "name": "Technical certificate",
+ "next": {
+  "h": "Sign the technical certificate.",
+  "k": "turn",
+  "s": "Responsible: Peter Mugo"
+ },
+ "p": "Sign technical certificate",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Contract",
+       "CM-TEST-BOARDS"
+      ],
+      [
+       "Inspected",
+       "10"
+      ],
+      [
+       "Conforms",
+       "8"
+      ],
+      [
+       "Fails",
+       "2"
+      ],
+      [
+       "Missing evidence",
+       "0"
+      ],
+      [
+       "Tests",
+       "RAM >= 16 GB, Storage >= 512 GB, Starts successfully = Yes"
+      ],
+      [
+       "Conforming units",
+       "CMTB1D795-0001\u2013CMTB1D795-0008"
+      ],
+      [
+       "Failed units",
+       "CMTB1D795-0009: Starts successfully; CMTB1D795-0010: Starts successfully"
+      ],
+      [
+       "Recipient",
+       "Amina Hassan, Accounting Officer"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "k": "text",
+     "v": "I confirm the quality and quantity of the goods or services identified in the attached coverage schedule against the cited contract requirements, subject to the recorded exceptions."
+    }
+   ],
+   "t": "Technical certificate 1"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Deliveries",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Confirm technical inspection",
+ "version": 11
+}

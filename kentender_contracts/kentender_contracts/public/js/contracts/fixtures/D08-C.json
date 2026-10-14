@@ -1,0 +1,138 @@
+{
+ "actions": {
+  "Sign certification": {
+   "args": {
+    "invoice": "CM-INV-364856"
+   },
+   "command": "SignContractCertification",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D08",
+ "dialogs": {},
+ "ev": [
+  "Supplier invoice AFYA-1-R1",
+  "Acceptance report 1",
+  "Receipt 1"
+ ],
+ "id": "D08-C",
+ "name": "Invoice review",
+ "next": {
+  "h": "Review the invoice and sign the certification.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Sign certification",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Item",
+      "Invoiced",
+      "Eligible",
+      "Rate",
+      "Claimed",
+      "Supported"
+     ],
+     "inputs": {},
+     "k": "table",
+     "num": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "rows": [
+      [
+       "Laptop computer",
+       "8",
+       "16",
+       "KES 100,000",
+       "KES 800,000",
+       "KES 800,000"
+      ]
+     ]
+    }
+   ],
+   "t": "Comparison"
+  },
+  {
+   "b": [
+    {
+     "k": "text",
+     "v": "I certify that invoice AFYA-1-R1, for KES 800,000, is supported by the cited effective contract and accepted goods or services, after the adjustments and recoveries shown in the certification schedule."
+    },
+    {
+     "items": [
+      [
+       "Accepted units",
+       "CMTB1D795-0001, CMTB1D795-0002, CMTB1D795-0003, CMTB1D795-0004, CMTB1D795-0005, CMTB1D795-0006, CMTB1D795-0007, CMTB1D795-0008"
+      ],
+      [
+       "Rejected units",
+       "CMTB1D795-0009, CMTB1D795-0010 \u2014 not certified"
+      ],
+      [
+       "Recipient",
+       "Finance"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Certification"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review invoice",
+ "version": 21
+}

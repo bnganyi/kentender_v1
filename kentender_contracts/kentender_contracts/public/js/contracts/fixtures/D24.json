@@ -1,0 +1,134 @@
+{
+ "actions": {
+  "Save declaration": {
+   "args": {},
+   "command": "DeclareContractInterest",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "appointee"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D24",
+ "dialogs": {},
+ "ev": [
+  "Appointment CM-TEST-BOARDS/APP/1"
+ ],
+ "id": "D24",
+ "name": "Declare interest",
+ "next": {
+  "h": "Declare any interest before you act on this contract.",
+  "k": "turn",
+  "s": "Responsible: Peter Mugo"
+ },
+ "p": "Save declaration",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Contract",
+       "CM-TEST-BOARDS"
+      ],
+      [
+       "Title",
+       "IT equipment delivery"
+      ],
+      [
+       "Supplier",
+       "Afya Digital Supplies Limited"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Contract"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Your declaration",
+       "name": "declaration",
+       "o": {},
+       "opts": [
+        "I have no conflict of interest",
+        "I have a conflict of interest"
+       ],
+       "si": -1,
+       "t": "rad"
+      },
+      {
+       "l": "Description",
+       "name": "conflict",
+       "o": {},
+       "t": "ta",
+       "v": "",
+       "when": {
+        "declaration": 1
+       }
+      }
+     ],
+     "k": "fields"
+    },
+    {
+     "k": "strong",
+     "v": "You will not be able to inspect or sign this contract while this conflict remains unresolved.",
+     "when": {
+      "declaration": 1
+     }
+    }
+   ],
+   "t": "Declaration"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Declare interest",
+ "version": 6
+}

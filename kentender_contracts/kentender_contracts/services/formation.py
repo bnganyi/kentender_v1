@@ -350,7 +350,7 @@ def _apply_signature(case: str, slot_name: str, proof: str, actor: str, method: 
 			entity = frappe.get_doc(SIGNATURE, frappe.db.get_value(SIGNATURE, {"contract_case": case, "agreement_version": agreement.version_no, "party": "Entity"}, "name"))
 			records.update(entity, state="Requested")
 			work.assign(case, "SignContractVersion", "Review the agreement before signing.", subject, agreement.version_no, [entity.signer], role="Entity contract signing")
-			work.assign(case, work.waiting_command("SignContractVersion", "entity"), "Waiting for the entity's signature.", subject, agreement.version_no, work.holders(work.HOP), role=work.HOP, state="Waiting")
+			work.assign(case, work.waiting_command("SignContractVersion", "entity"), "Waiting for the entity's signature.", subject, agreement.version_no, work.holders(work.HOP) + [slot.signer], role=work.HOP, state="Waiting")
 			records.bump(doc)
 			outcome = records.summary(doc, signature=slot.name, state="Signed", party="Supplier")
 		else:

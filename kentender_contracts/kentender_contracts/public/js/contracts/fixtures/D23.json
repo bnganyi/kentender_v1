@@ -1,0 +1,213 @@
+{
+ "actions": {
+  "Appoint inspectors": {
+   "dialog": "appoint",
+   "do": "dialog"
+  },
+  "Return for correction": {
+   "dialog": "return",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D23",
+ "dialogs": {
+  "appoint": {
+   "args": {
+    "appointment": "CM-APP-364770"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "From date",
+       "name": "from_date",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Until date",
+       "name": "until_date",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    },
+    {
+     "items": [
+      [
+       "Julia Njeri",
+       "Chair \u00b7 User department"
+      ],
+      [
+       "Peter Mugo",
+       "Member \u00b7 Technical"
+      ],
+      [
+       "Brian Wafula",
+       "Member \u00b7 Procurement"
+      ],
+      [
+       "Period",
+       "From appointment, until replaced"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "command": "AppointContractInspectors",
+   "p": "Appoint",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Appoint inspectors"
+  },
+  "return": {
+   "args": {
+    "appointment": "CM-APP-364770"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "ReturnContractAppointment",
+   "p": "Return",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Return for correction"
+  }
+ },
+ "ev": [
+  "Recommendation CM-TEST-BOARDS/APP/1"
+ ],
+ "id": "D23",
+ "name": "Appoint inspectors",
+ "next": {
+  "h": "Appoint the inspectors for this contract.",
+  "k": "turn",
+  "s": "Responsible: Amina Hassan"
+ },
+ "p": "Appoint inspectors",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Member",
+      "Role",
+      "Capacity"
+     ],
+     "inputs": {},
+     "k": "table",
+     "num": [],
+     "rows": [
+      [
+       "Julia Njeri",
+       "Chair",
+       "User department"
+      ],
+      [
+       "Peter Mugo",
+       "Member",
+       "Technical"
+      ],
+      [
+       "Brian Wafula",
+       "Member",
+       "Procurement"
+      ]
+     ]
+    }
+   ],
+   "t": "Proposed members"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Proposed period",
+       "From appointment, until replaced"
+      ],
+      [
+       "Recommended by",
+       "Charles Mutiso, 15 Oct 2026, 02:33 EAT"
+      ],
+      [
+       "Recommendation reference",
+       "CM-TEST-BOARDS/APP/1"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Proposal"
+  }
+ ],
+ "s2": [
+  "Return for correction"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Appoint inspectors",
+ "version": 5
+}

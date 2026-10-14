@@ -1,0 +1,196 @@
+{
+ "actions": {
+  "Approve payment": {
+   "args": {
+    "kind": "payment",
+    "payment": "ACC-PAY-2026-00028"
+   },
+   "command": "ApproveNativeFinanceRecord",
+   "do": "command"
+  },
+  "Return payment for correction": {
+   "dialog": "return",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "finance"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D17",
+ "dialogs": {
+  "return": {
+   "args": {
+    "kind": "payment",
+    "payment": "ACC-PAY-2026-00028"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "ReturnNativeFinanceForCorrection",
+   "p": "Return payment",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Return payment for correction"
+  }
+ },
+ "ev": [
+  "Certification 1",
+  "Accounting invoice",
+  "Payment Entry ACC-PAY-2026-00028"
+ ],
+ "id": "D17",
+ "name": "Finance payment approval",
+ "next": {
+  "h": "Approve the payment.",
+  "k": "turn",
+  "s": "Responsible: Beatrice Kamau"
+ },
+ "p": "Approve payment",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Supplier",
+       "Afya Digital Supplies Limited"
+      ],
+      [
+       "Invoice",
+       "AFYA-1-R1"
+      ],
+      [
+       "Certified / payable",
+       "KES 800,000"
+      ],
+      [
+       "Proposed cash",
+       "KES 800,000"
+      ],
+      [
+       "Prepared by",
+       "Josphat Mwangi"
+      ],
+      [
+       "Payment hold",
+       "None"
+      ],
+      [
+       "Beneficiary reference",
+       "Verified account on file"
+      ],
+      [
+       "Settlement",
+       "Not confirmed"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Payment"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Posting date",
+       "15 October 2026"
+      ],
+      [
+       "Payment method",
+       "Wire Transfer"
+      ],
+      [
+       "Bank account",
+       "CM Test Bank - K"
+      ],
+      [
+       "Payable account",
+       "2110 - Creditors - K"
+      ],
+      [
+       "Amount",
+       "KES 800,000"
+      ],
+      [
+       "Allocation",
+       "AFYA-1-R1 \u00b7 KES 800,000"
+      ],
+      [
+       "Reference",
+       "B-1"
+      ],
+      [
+       "Supported deductions / advance recovery / unapplied",
+       "KES 0 / KES 0 / KES 0"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Payment details"
+  }
+ ],
+ "s2": [
+  "Return payment for correction"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review payment",
+ "version": 27
+}

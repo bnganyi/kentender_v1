@@ -17,6 +17,8 @@
   "lines_json",
   "matching_json",
   "native_invoice",
+  "accounting_state",
+  "finance_maker",
   "successor_of",
   "submitted_by",
   "record_version",
@@ -83,6 +85,19 @@
   {
    "fieldname": "native_invoice",
    "label": "Native invoice",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "accounting_state",
+   "label": "Accounting state",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Not prepared\nDraft saved\nSubmitted for approval\nPosted"
+  },
+  {
+   "fieldname": "finance_maker",
+   "label": "Finance maker",
    "fieldtype": "Data",
    "read_only": 1
   },

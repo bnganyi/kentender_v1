@@ -53,7 +53,8 @@ RECORDS = {
 	"Contract Invoice": ("INV", "A supplier's claim against the contract, with its automatic matching and its native invoice.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("invoice_no", "Int"), F("claim_reference"), F("invoice_date", "Date"), F("received_at", "Datetime"), F("claimed_amount", "Currency"),
 		F("state", "Select", "Submitted\nHeld\nCertified\nPartly paid\nPaid\nSuperseded"), F("lines_json", "Long Text"), F("matching_json", "Long Text"),
-		F("native_invoice"), F("successor_of"), F("submitted_by"), F("record_version", "Int"), F("fixture_namespace")]),
+		F("native_invoice"), F("accounting_state", "Select", "Not prepared\nDraft saved\nSubmitted for approval\nPosted"), F("finance_maker"), F("successor_of"), F("submitted_by"),
+		F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Certification": ("CTF", "The contractual support for one invoice: the frozen matching, the supported amount and the certifier's proof.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("invoice", "Link", "Contract Invoice"), F("state", "Select", "Awaiting signature\nSigned\nSuperseded"),
 		F("matching_json", "Long Text"), F("certified_amount", "Currency"), F("certifier"), F("proof_reference"), F("certified_at", "Datetime"),

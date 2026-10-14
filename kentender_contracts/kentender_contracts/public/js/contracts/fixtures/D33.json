@@ -1,0 +1,231 @@
+{
+ "actions": {
+  "Save draft": {
+   "args": {
+    "invoice": "CM-INV-364856",
+    "kind": "invoice"
+   },
+   "command": "SaveNativeFinanceDraft",
+   "do": "command"
+  },
+  "Submit invoice for approval": {
+   "args": {
+    "invoice": "CM-INV-364856",
+    "kind": "invoice"
+   },
+   "command": "SaveNativeFinanceDraft",
+   "do": "command",
+   "then": {
+    "args": {
+     "invoice": "CM-INV-364856",
+     "kind": "invoice"
+    },
+    "command": "SubmitNativeFinanceForApproval"
+   }
+  }
+ },
+ "audiences": [
+  "finance"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D33",
+ "dialogs": {},
+ "ev": [
+  "Supplier invoice AFYA-1-R1",
+  "Certification 1",
+  "Receipt 1"
+ ],
+ "id": "D33",
+ "name": "Finance invoice preparation",
+ "next": {
+  "h": "Complete the accounting details for the invoice.",
+  "k": "turn",
+  "s": "Responsible: Josphat Mwangi"
+ },
+ "p": "Submit invoice for approval",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Source claim",
+       "AFYA-1-R1"
+      ],
+      [
+       "Certification",
+       "Signed"
+      ],
+      [
+       "Company",
+       "KenTender"
+      ],
+      [
+       "Supplier",
+       "Afya Digital Supplies Limited"
+      ],
+      [
+       "Currency",
+       "KES"
+      ],
+      [
+       "Invoice date",
+       "15 October 2026"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Source"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Item",
+      "Quantity",
+      "Rate",
+      "Total"
+     ],
+     "inputs": {},
+     "k": "table",
+     "num": [
+      1,
+      2,
+      3
+     ],
+     "rows": [
+      [
+       "Laptop computer",
+       "8",
+       "KES 100,000",
+       "KES 800,000"
+      ]
+     ]
+    }
+   ],
+   "t": "Accepted items"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Posting date",
+       "name": "posting_date",
+       "o": {},
+       "t": "dt",
+       "v": "2026-10-15"
+      },
+      {
+       "context": {
+        "kind": "account.payable"
+       },
+       "l": "Payable account",
+       "name": "payable_account",
+       "noun": "account",
+       "o": {},
+       "source": "contracts.native_record",
+       "t": "pick",
+       "v": "2110 - Creditors - K",
+       "valueLabel": "2110 - Creditors - K"
+      },
+      {
+       "context": {
+        "kind": "account.expense"
+       },
+       "l": "Accounting treatment",
+       "name": "expense_account",
+       "noun": "account",
+       "o": {},
+       "source": "contracts.native_record",
+       "t": "pick",
+       "v": "2211 - Asset Received But Not Billed - K",
+       "valueLabel": "2211 - Asset Received But Not Billed - K"
+      },
+      {
+       "context": {
+        "kind": "tax_template"
+       },
+       "l": "Tax treatment",
+       "name": "tax_template",
+       "noun": "tax template",
+       "o": {},
+       "source": "contracts.native_record",
+       "t": "pick",
+       "v": "",
+       "valueLabel": ""
+      },
+      {
+       "context": {
+        "kind": "cost_centre"
+       },
+       "l": "Cost centre",
+       "name": "cost_centre",
+       "noun": "cost centre",
+       "o": {},
+       "source": "contracts.native_record",
+       "t": "pick",
+       "v": "Main - K",
+       "valueLabel": "Main - K"
+      }
+     ],
+     "k": "fields"
+    },
+    {
+     "k": "help",
+     "v": "The supplier's quantities and prices are not editable here. The tax breakdown is generated from the configured template."
+    }
+   ],
+   "t": "Accounting details"
+  }
+ ],
+ "s2": [
+  "Save draft"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Prepare accounting invoice",
+ "version": 22
+}

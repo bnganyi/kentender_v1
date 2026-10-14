@@ -1,0 +1,77 @@
+{
+ "actions": {},
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D10",
+ "dialogs": {},
+ "ev": [
+  "Agreement 1"
+ ],
+ "id": "D10",
+ "name": "Contract obligations",
+ "next": {
+  "h": "Nothing is waiting for you on this contract.",
+  "k": "done",
+  "s": ""
+ },
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "k": "help",
+     "v": "There is no remaining work on this contract."
+    }
+   ],
+   "t": "Remaining obligations"
+  }
+ ],
+ "s2": [],
+ "st": "Closed",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Remaining obligations",
+ "version": 48
+}

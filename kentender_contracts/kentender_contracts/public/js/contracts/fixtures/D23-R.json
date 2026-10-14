@@ -1,0 +1,171 @@
+{
+ "actions": {
+  "Recommend inspectors": {
+   "args": {},
+   "command": "RecommendContractInspectors",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D23",
+ "dialogs": {},
+ "ev": [],
+ "id": "D23-R",
+ "name": "Appoint inspectors",
+ "next": {
+  "h": "Recommend the inspectors for this contract.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Recommend inspectors",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "context": {
+        "role": "Contract inspection"
+       },
+       "l": "Chair",
+       "name": "chair",
+       "noun": "chair",
+       "o": {},
+       "source": "contracts.person",
+       "t": "pick",
+       "v": "",
+       "valueLabel": ""
+      },
+      {
+       "l": "Chair capacity",
+       "name": "chair_label",
+       "o": {},
+       "opts": [
+        "User department",
+        "Technical",
+        "Procurement"
+       ],
+       "t": "sel",
+       "v": "User department"
+      },
+      {
+       "context": {
+        "role": "Technical certification"
+       },
+       "l": "Technical member (gives the technical confirmation)",
+       "name": "member_technical",
+       "noun": "technical member",
+       "o": {},
+       "source": "contracts.person",
+       "t": "pick",
+       "v": "",
+       "valueLabel": ""
+      },
+      {
+       "l": "Member capacity",
+       "name": "member_technical_label",
+       "o": {},
+       "opts": [
+        "User department",
+        "Technical",
+        "Procurement"
+       ],
+       "t": "sel",
+       "v": "Technical"
+      },
+      {
+       "context": {
+        "role": "Contract inspection"
+       },
+       "l": "Member",
+       "name": "member_other",
+       "noun": "member",
+       "o": {},
+       "source": "contracts.person",
+       "t": "pick",
+       "v": "",
+       "valueLabel": ""
+      },
+      {
+       "l": "Member capacity",
+       "name": "member_other_label",
+       "o": {},
+       "opts": [
+        "User department",
+        "Technical",
+        "Procurement"
+       ],
+       "t": "sel",
+       "v": "Procurement"
+      },
+      {
+       "l": "From date",
+       "name": "from_date",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Until date",
+       "name": "until_date",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Proposed members"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Recommend inspectors",
+ "version": 5
+}

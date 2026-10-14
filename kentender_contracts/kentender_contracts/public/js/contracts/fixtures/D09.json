@@ -1,0 +1,80 @@
+{
+ "actions": {
+  "Submit invoice": {
+   "do": "route",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices",
+    "submit-invoice"
+   ]
+  }
+ },
+ "audiences": [
+  "supplier"
+ ],
+ "back": "Back to my contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D09",
+ "dialogs": {},
+ "ev": [],
+ "id": "D09",
+ "name": "Payment follow-up",
+ "next": null,
+ "p": "Submit invoice",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "k": "help",
+     "v": "No invoice has been submitted yet."
+    }
+   ],
+   "t": "Invoices"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Invoice and payment",
+ "version": 18
+}

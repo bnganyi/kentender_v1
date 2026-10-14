@@ -1,0 +1,149 @@
+{
+ "actions": {
+  "Send for signature": {
+   "args": {},
+   "command": "RequestContractSignatures",
+   "do": "command"
+  },
+  "View agreement 1": {
+   "do": "route",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement",
+    "1"
+   ]
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D02",
+ "dialogs": {},
+ "ev": [
+  "Award package 1",
+  "Issued terms 1"
+ ],
+ "id": "D02",
+ "name": "Prepare agreement",
+ "next": {
+  "h": "Review the contract and send it for signature.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Send for signature",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Contract value",
+       "KES 1,000,000"
+      ],
+      [
+       "Delivery",
+       "20 July 2027"
+      ],
+      [
+       "Warranty",
+       "12 months"
+      ],
+      [
+       "Security",
+       "Not required under these test terms"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Summary"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Supplier",
+       "Afya Digital Supplies Limited"
+      ],
+      [
+       "Items",
+       "10 Laptop computer at KES 100,000 each"
+      ],
+      [
+       "Contract value",
+       "KES 1,000,000, tax included"
+      ],
+      [
+       "Delivery due",
+       "20 July 2027"
+      ],
+      [
+       "Warranty",
+       "12 months from each unit\u2019s acceptance"
+      ],
+      [
+       "Performance security",
+       "Not required under these test terms"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "items": [
+      "View agreement 1"
+     ],
+     "k": "links"
+    }
+   ],
+   "t": "Agreement summary"
+  }
+ ],
+ "s2": [],
+ "st": "Preparing",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Prepare contract",
+ "version": 2
+}

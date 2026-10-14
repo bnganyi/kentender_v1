@@ -275,3 +275,6 @@ kt_navigation_overrides = ["kentender_contracts.navigation.overrides"]
 # The synthetic contract-source provider (development only; answers only on a simulation site): kentender_core.services.contract_source_contract.
 kt_contract_source_provider = ["kentender_contracts.simulation.sources.service"]
 kt_contract_funding_provider = ["kentender_contracts.simulation.funding.service"]
+
+# The contract screens' choices of one person or one native record (AGENTS.md section 6.12): kentender_core.services.record_picker.
+kt_record_picker_sources = ["kentender_contracts.services.picker_sources.sources"]

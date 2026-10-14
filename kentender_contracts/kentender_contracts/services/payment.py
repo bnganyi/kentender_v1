@@ -106,7 +106,7 @@ def _claim_lines(lines: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	return clean
 
 
-def submit_invoice(case: str, *, expected_version: int, idempotency_key: str, actor: str, claim_reference: str, invoice_date: str, lines: list[dict[str, Any]], successor_of: str = "") -> dict[str, Any]:
+def submit_invoice(case: str, *, expected_version: int, idempotency_key: str, actor: str, claim_reference: str, invoice_date: str, lines: list[dict[str, Any]], successor_of: str = "", reason: str = "") -> dict[str, Any]:
 	"""`SubmitContractInvoice` / `CorrectContractInvoice` (with `successor_of`): record the claim and its automatic matching; a supported claim then gets its native invoice."""
 	preflight.exists(case)
 
@@ -143,11 +143,11 @@ def submit_invoice(case: str, *, expected_version: int, idempotency_key: str, ac
 			work.assign(case, "SignContractCertification", "Review the invoice and sign the certification.", subject, 1, work.holders(work.HOP), role=work.HOP)
 			work.assign(case, work.waiting_command("SignContractCertification", "procurement"), "Waiting for the certification.", subject, 1, [actor], role="Supplier Representative", state="Waiting")
 		events.record(case, "Invoice submitted" if not successor_of else "Invoice corrected", actor, f"Invoice {claim_reference} for {match['amount']:,.2f} {'held for review' if held else 'matched'}.", invoice=row.name,
-			outcome=match["outcome"], successor_of=successor_of)
+			outcome=match["outcome"], successor_of=successor_of, reason=reason)
 		return records.summary(doc, invoice=row.name, invoice_no=number, matching=match["outcome"], state=row.state)
 
 	recorded = records.command("CorrectContractInvoice" if successor_of else "SubmitContractInvoice", case=case, idempotency_key=idempotency_key, actor=actor,
-		payload={"expected": expected_version, "claim": claim_reference, "date": invoice_date, "lines": lines, "successor_of": successor_of}, body=body, authorise=lambda: _claim_authority(case, actor))
+		payload={"expected": expected_version, "claim": claim_reference, "date": invoice_date, "lines": lines, "successor_of": successor_of, "reason": reason}, body=body, authorise=lambda: _claim_authority(case, actor))
 	frappe.db.commit()
 	if recorded["state"] == "Submitted":
 		_carry_out_native_invoice(case, recorded["invoice"], actor)
@@ -161,14 +161,14 @@ def _carry_out_native_invoice(case: str, invoice: str, actor: str) -> dict[str, 
 
 	def executor(identity: str):
 		try:
-			return adapter.invoice_receipt(line["receipt"], identity, bill_no=row.claim_reference, bill_date=str(row.invoice_date), qty=line["quantity"]), "Purchase Invoice"
+			return adapter.invoice_receipt(line["receipt"], identity, bill_no=row.claim_reference, bill_date=str(row.invoice_date), qty=line["quantity"], submit=False), "Purchase Invoice"
 		except frappe.ValidationError as exc:
 			raise intents.OwnerRefused(str(exc)) from exc
 
 	result = intents.execute(intent, executor, lambda identity: adapter.find_by_identity("Purchase Invoice", identity), native_doctype="Purchase Invoice")
 	with records.atomic():
 		if result["state"] in intents.SETTLED:
-			records.update(frappe.get_doc(INVOICE, invoice), native_invoice=result["reference"])
+			records.update(frappe.get_doc(INVOICE, invoice), native_invoice=result["reference"], accounting_state="Not prepared")
 			work.finish(case, command="RestoreContractOperation", subject=f"invoice {row.invoice_no}", actor=actor)
 			events.record(case, "Native invoice linked", actor, f"Native invoice {result['reference']} created for invoice {row.claim_reference}.", invoice=invoice, native=result["reference"])
 		else:
@@ -261,7 +261,7 @@ def sign_certification(case: str, *, invoice: str, expected_version: int, idempo
 			subject = f"invoice {row.invoice_no}"
 			work.finish(case, command="SignContractCertification", subject=subject, actor=actor)
 			work.finish(case, command="RestoreContractOperation", subject=f"certification invoice {row.invoice_no}", actor=actor)
-			work.assign(case, "SaveNativeFinanceDraft", "Prepare the invoice and the payment.", subject, 1, work.holders("Finance preparation"), role="Finance preparation")
+			work.assign(case, "SaveNativeFinanceDraft", "Complete the accounting details for the invoice.", f"accounting invoice {row.invoice_no}", 1, work.holders("Finance preparation"), role="Finance preparation")
 			work.assign(case, work.waiting_command("SaveNativeFinanceDraft", "finance"), "Waiting for Finance.", subject, 1, work.holders(work.HOP), role=work.HOP, state="Waiting")
 			events.record(case, "Certification signed", actor, f"Invoice {row.claim_reference} certified for {recorded['amount']:,.2f}.", certification=cert.name, proof=result["reference"])
 		out = records.summary(doc, invoice=invoice, certification=cert.name, state="Certified")
@@ -269,7 +269,118 @@ def sign_certification(case: str, *, invoice: str, expected_version: int, idempo
 	return out
 
 
-# -- Finance --------------------------------------------------------------------------------------------------------------------------
+# -- Finance: the accounting invoice (D33) ------------------------------------------------------------------------------------------------
+def _accounting_row(case: str, invoice: str):
+	row = frappe.get_doc(INVOICE, invoice)
+	if row.contract_case != case:
+		raise frappe.DoesNotExistError("Not found")
+	if row.state not in ("Certified", "Partly paid") or not row.native_invoice:
+		fail("CM_INVOICE", invoice=invoice, state=row.state, reason="Only a certified invoice with a native invoice can be prepared for accounting.")
+	return row
+
+
+def save_accounting_invoice(case: str, *, invoice: str, expected_version: int, idempotency_key: str, actor: str, posting_date: str, payable_account: str, cost_centre: str,
+		expense_account: str, tax_template: str = "") -> dict[str, Any]:
+	"""`SaveNativeFinanceDraft` for the supplier invoice: the Finance maker completes the accounting details of the Draft native invoice. Quantities and rates are the supplier's and are not editable here."""
+	preflight.exists(case)
+
+	def body() -> dict[str, Any]:
+		invalid({k: ("" if cstr(v).strip() else f"Choose the {label}.") for k, v, label in (("posting_date", posting_date, "posting date"), ("payable_account", payable_account, "payable account"),
+			("cost_centre", cost_centre, "cost centre"), ("expense_account", expense_account, "accounting treatment"))})
+		doc = records.lock(case)
+		records.check_version(doc, expected_version)
+		row = _accounting_row(case, invoice)
+		if row.accounting_state in ("Submitted for approval", "Posted"):
+			fail("CM_CHANGED", invoice=invoice, accounting=row.accounting_state)
+		saved = adapter.prepare_invoice(row.native_invoice, posting_date=posting_date, payable_account=payable_account, cost_centre=cost_centre, expense_account=expense_account, tax_template=tax_template)
+		records.update(row, accounting_state="Draft saved", finance_maker=actor, record_version=cint(row.record_version) + 1)
+		records.bump(doc)
+		events.record(case, "Accounting invoice saved", actor, f"Accounting details of invoice {row.claim_reference} saved.", invoice=invoice, native=row.native_invoice)
+		return records.summary(doc, invoice=invoice, native_invoice=row.native_invoice, accounting="Draft saved", total=saved["grand_total"])
+
+	return records.command("SaveNativeFinanceDraft", case=case, idempotency_key=idempotency_key, actor=actor,
+		payload={"expected": expected_version, "invoice": invoice, "date": posting_date, "payable": payable_account, "cost": cost_centre, "expense": expense_account, "tax": tax_template},
+		body=body, authorise=lambda: authority.require(actor, "Finance preparation"))
+
+
+def submit_accounting_invoice(case: str, *, invoice: str, expected_version: int, idempotency_key: str, actor: str) -> dict[str, Any]:
+	"""`SubmitNativeFinanceForApproval` for the supplier invoice: the maker hands the saved draft to the Finance approver."""
+	preflight.exists(case)
+
+	def body() -> dict[str, Any]:
+		from frappe.model.workflow import apply_workflow, get_workflow_name
+
+		doc = records.lock(case)
+		records.check_version(doc, expected_version)
+		row = _accounting_row(case, invoice)
+		if row.accounting_state != "Draft saved":
+			fail("CM_CHANGED", invoice=invoice, accounting=row.accounting_state)
+		if row.finance_maker and row.finance_maker.lower() != actor.lower():
+			fail("CM_AUTHORITY", missing="responsibility", reason="The person who prepared the draft submits it.")
+		if get_workflow_name("Purchase Invoice"):
+			with _as_user(actor):
+				apply_workflow(frappe.get_doc("Purchase Invoice", row.native_invoice), "Submit for approval")
+		records.update(row, accounting_state="Submitted for approval", record_version=cint(row.record_version) + 1)
+		work.finish(case, command="SaveNativeFinanceDraft", subject=f"accounting invoice {row.invoice_no}", actor=actor)
+		work.assign(case, "ApproveNativeFinanceRecord", "Review the accounting invoice.", f"accounting invoice {row.invoice_no}", 1, work.holders("Finance approval"), role="Finance approval")
+		work.assign(case, work.waiting_command("ApproveNativeFinanceRecord", "accounting"), "Waiting for the Finance approver.", f"accounting invoice {row.invoice_no}", 1, [actor], role="Finance preparation", state="Waiting")
+		records.bump(doc)
+		events.record(case, "Accounting invoice submitted", actor, f"Accounting invoice for {row.claim_reference} submitted for approval.", invoice=invoice)
+		return records.summary(doc, invoice=invoice, accounting="Submitted for approval")
+
+	return records.command("SubmitNativeFinanceForApproval", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "invoice": invoice}, body=body,
+		authorise=lambda: authority.require(actor, "Finance preparation"))
+
+
+def approve_accounting_invoice(case: str, *, invoice: str, expected_version: int, idempotency_key: str, actor: str) -> dict[str, Any]:
+	"""`ApproveNativeFinanceRecord` for the supplier invoice: a different Finance person posts the accounting invoice natively. Liability recognition is a Finance fact, kept apart from payment."""
+	preflight.exists(case)
+
+	def body() -> dict[str, Any]:
+		doc = records.lock(case)
+		records.check_version(doc, expected_version)
+		row = _accounting_row(case, invoice)
+		if row.accounting_state == "Posted":
+			return records.summary(doc, invoice=invoice, already=True)
+		if row.accounting_state != "Submitted for approval":
+			fail("CM_CHANGED", invoice=invoice, accounting=row.accounting_state)
+		segregation.finance_maker_not_approver(actor, [row.finance_maker])
+		adapter.post_invoice(row.native_invoice, actor)
+		records.update(row, accounting_state="Posted", record_version=cint(row.record_version) + 1)
+		work.finish(case, command="ApproveNativeFinanceRecord", subject=f"accounting invoice {row.invoice_no}", actor=actor)
+		work.finish(case, command=work.waiting_command("SaveNativeFinanceDraft", "finance"), actor=actor)
+		work.assign(case, "SaveNativeFinanceDraft", "Prepare the payment record.", f"payment invoice {row.invoice_no}", 1, work.holders("Finance preparation"), role="Finance preparation")
+		records.bump(doc, invoice_state="Accounting invoice posted")
+		events.record(case, "Accounting invoice posted", actor, f"Accounting invoice {row.native_invoice} posted.", invoice=invoice, native=row.native_invoice)
+		return records.summary(doc, invoice=invoice, accounting="Posted")
+
+	return records.command("ApproveNativeFinanceRecord", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "invoice": invoice}, body=body,
+		authorise=lambda: authority.require(actor, "Finance approval"))
+
+
+def return_accounting_invoice(case: str, *, invoice: str, expected_version: int, idempotency_key: str, actor: str, reason: str) -> dict[str, Any]:
+	"""`ReturnNativeFinanceForCorrection` for the supplier invoice: the approver sends the draft back to its maker with the reason."""
+	preflight.exists(case)
+
+	def body() -> dict[str, Any]:
+		invalid({"reason": "" if cstr(reason).strip() else "Enter the reason."})
+		doc = records.lock(case)
+		records.check_version(doc, expected_version)
+		row = _accounting_row(case, invoice)
+		if row.accounting_state != "Submitted for approval":
+			fail("CM_CHANGED", invoice=invoice, accounting=row.accounting_state)
+		records.update(row, accounting_state="Draft saved", record_version=cint(row.record_version) + 1)
+		work.finish(case, command="ApproveNativeFinanceRecord", subject=f"accounting invoice {row.invoice_no}", actor=actor)
+		work.assign(case, "SaveNativeFinanceDraft", f"Correct the accounting invoice: {reason}", f"accounting invoice {row.invoice_no}", 2, [row.finance_maker], role="Finance preparation")
+		records.bump(doc)
+		events.record(case, "Accounting invoice returned", actor, f"Accounting invoice for {row.claim_reference} returned: {reason}", invoice=invoice)
+		return records.summary(doc, invoice=invoice, accounting="Draft saved")
+
+	return records.command("ReturnNativeFinanceForCorrection", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "invoice": invoice, "reason": reason},
+		body=body, authorise=lambda: authority.require(actor, "Finance approval"))
+
+
+# -- Finance: the payment (D09-F, D17) ----------------------------------------------------------------------------------------------------
 class _as_user:
 	def __init__(self, user: str):
 		self.user = user
@@ -292,6 +403,11 @@ def payments(case: str) -> list[dict[str, Any]]:
 	return out
 
 
+def draft_payment(case: str, invoice: str) -> str:
+	"""The invoice's unposted native payment, if its maker has one (saving again updates it; it never makes a second)."""
+	return next((p["name"] for p in payments(case) if p["invoice"] == invoice and p["docstatus"] == 0), "")
+
+
 def save_finance_draft(case: str, *, invoice: str, expected_version: int, idempotency_key: str, actor: str, mode_of_payment: str, paid_from: str, reference_no: str, amount: float | None = None) -> dict[str, Any]:
 	"""`SaveNativeFinanceDraft`: the Finance maker's draft native payment for a certified invoice, once per payment identity. Reads and the draft are the maker's; posting is the approver's."""
 	preflight.exists(case)
@@ -304,12 +420,21 @@ def save_finance_draft(case: str, *, invoice: str, expected_version: int, idempo
 		row = frappe.get_doc(INVOICE, invoice)
 		if row.contract_case != case or row.state not in ("Certified", "Partly paid"):
 			fail("CM_INVOICE", invoice=invoice, state=row.state, reason="Only a certified invoice can be paid.")
+		if row.accounting_state != "Posted":
+			fail("CM_INVOICE", invoice=invoice, accounting=row.accounting_state, reason="The accounting invoice is not posted yet.")
 		held = payment_guard.entitlement(row.native_invoice, lock=True)
 		wanted = flt(amount) if amount not in (None, "") else held["available"]
 		if wanted <= 0 or wanted > held["available"] + TOLERANCE:
 			fail("CM_HOLD", reason=f"The contract supports paying {held['available']:,.2f} on this invoice.", available=held["available"], requested=wanted, consequence="pay")
 		guards = preflight.holds(preflight.rules(doc, "SaveNativeFinanceDraft"), case, "pay", f"invoice {row.invoice_no}")
 		guards.raise_if_any()
+		unposted = draft_payment(case, invoice)
+		if unposted:
+			with _as_user(actor):
+				adapter.update_payment_draft(unposted, amount=wanted, mode_of_payment=mode_of_payment, paid_from=paid_from, reference_no=reference_no)
+			records.bump(doc)
+			events.record(case, "Payment draft saved", actor, f"Draft payment {unposted} updated.", payment=unposted, invoice=invoice)
+			return records.summary(doc, invoice=invoice, payment=unposted, amount=wanted, updated=True)
 		number = frappe.db.count(SETTLEMENT, {"contract_case": case, "invoice": invoice}) + len([p for p in payments(case) if p["invoice"] == invoice]) + 1
 		intent = intents.record(case, f"payment invoice {row.invoice_no}", number, "Native payment", "draft", recovery_owner="Finance; technical recovery")
 		return records.summary(doc, invoice=invoice, intent=intent.name, amount=wanted, payment_no=number)
@@ -318,6 +443,8 @@ def save_finance_draft(case: str, *, invoice: str, expected_version: int, idempo
 		payload={"expected": expected_version, "invoice": invoice, "mode": mode_of_payment, "from": paid_from, "ref": reference_no, "amount": amount}, body=body,
 		authorise=lambda: authority.require(actor, "Finance preparation"))
 	frappe.db.commit()
+	if recorded.get("updated"):
+		return recorded
 	row = frappe.get_doc(INVOICE, invoice)
 
 	def executor(identity: str):
@@ -331,7 +458,7 @@ def save_finance_draft(case: str, *, invoice: str, expected_version: int, idempo
 	with records.atomic():
 		doc = records.lock(case)
 		if result["state"] in intents.SETTLED:
-			work.finish(case, command="SaveNativeFinanceDraft", subject=f"invoice {row.invoice_no}", actor=actor)
+			work.finish(case, command="SaveNativeFinanceDraft", subject=f"payment invoice {row.invoice_no}", actor=actor)
 			work.assign(case, "SubmitNativeFinanceForApproval", "Submit the payment for approval.", f"payment {result['reference']}", 1, [actor], role="Finance preparation")
 			records.bump(doc)
 			events.record(case, "Payment drafted", actor, f"Draft payment {result['reference']} prepared for {recorded['amount']:,.2f}.", payment=result["reference"], invoice=invoice)
@@ -369,6 +496,7 @@ def submit_finance_for_approval(case: str, *, payment: str, expected_version: in
 			apply_workflow(frappe.get_doc("Payment Entry", payment), "Submit for approval")
 		work.finish(case, command="SubmitNativeFinanceForApproval", subject=f"payment {payment}", actor=actor)
 		work.assign(case, "ApproveNativeFinanceRecord", "Approve the payment.", f"payment {payment}", 1, work.holders("Finance approval"), role="Finance approval")
+		work.assign(case, work.waiting_command("ApproveNativeFinanceRecord", "payment"), "Waiting for the Finance approver.", f"payment {payment}", 1, [actor], role="Finance preparation", state="Waiting")
 		records.bump(doc)
 		events.record(case, "Payment submitted for approval", actor, f"Payment {payment} submitted for approval.", payment=payment)
 		return records.summary(doc, payment=payment)
@@ -467,7 +595,7 @@ def record_finance_settlement(case: str, *, payment: str, expected_version: int,
 		records.bump(doc, invoice_state="Paid" if whole else "Partly paid")
 		events.record(case, "Settlement confirmed", actor, f"Payment {payment} for {flt(pe.paid_amount):,.2f} confirmed as settled.", settlement=settlement.name, payment=payment)
 		if not whole:
-			work.assign(case, "SaveNativeFinanceDraft", "Prepare the next payment of this invoice.", f"invoice {invoice.invoice_no}", 1 + frappe.db.count(SETTLEMENT, {"invoice": invoice.name}), work.holders("Finance preparation"), role="Finance preparation")
+			work.assign(case, "SaveNativeFinanceDraft", "Prepare the next payment of this invoice.", f"payment invoice {invoice.invoice_no}", 1 + frappe.db.count(SETTLEMENT, {"invoice": invoice.name}), work.holders("Finance preparation"), role="Finance preparation")
 		from kentender_contracts.services import closeout
 
 		closeout.offer_completion(case)

@@ -83,7 +83,7 @@ class TestOrdinaryThread(ContractCase):
 		self.assertEqual(frappe.db.get_value("Contract Invoice", held["invoice"], "state"), "Superseded")
 		self.assertTrue(frappe.db.get_value("Contract Invoice", held["invoice"], "received_at"), "the original receipt time is kept")
 		native = frappe.db.get_value("Contract Invoice", invoice["invoice"], "native_invoice")
-		self.assertEqual(frappe.db.get_value("Purchase Invoice", native, ["docstatus", "grand_total"]), (1, 800000.0))
+		self.assertEqual(frappe.db.get_value("Purchase Invoice", native, ["docstatus", "grand_total"]), (0, 800000.0), "the supplier's claim is a draft native invoice; it posts only after certification and Finance approval")
 		cert = t.certify_invoice(invoice["invoice"])
 		self.assertEqual(cert["state"], "Certified")
 		self.assertEqual(payment_guard.entitlement(native)["certified"], 800000.0)
@@ -144,6 +144,19 @@ class TestOrdinaryThread(ContractCase):
 		self.assertEqual(refusal(payment.sign_certification, case, invoice=inv["invoice"], expected_version=t.version(), idempotency_key=t.key("c"), actor=self.p["brian"]).code, "CM_AUTHORITY")
 		t.certify_invoice(inv["invoice"])
 		native = frappe.db.get_value("Contract Invoice", inv["invoice"], "native_invoice")
+		# the accounting invoice: the maker prepares and submits; the maker cannot approve it; a different person posts it
+		self.assertEqual(refusal(payment.save_finance_draft, case, invoice=inv["invoice"], expected_version=t.version(), idempotency_key=t.key("d0"), actor=self.p["josphat"], mode_of_payment=world.MODE,
+			paid_from=world.BANK_ACCOUNT, reference_no="EARLY").code, "CM_INVOICE", "no payment before the accounting invoice is posted")
+		payment.save_accounting_invoice(case, invoice=inv["invoice"], expected_version=t.version(), idempotency_key=t.key("ai"), actor=self.p["josphat"], posting_date=frappe.utils.today(),
+			payable_account=frappe.db.get_value("Company", world.COMPANY, "default_payable_account"), cost_centre=frappe.db.get_value("Company", world.COMPANY, "cost_center"),
+			expense_account=frappe.db.get_value("Purchase Invoice Item", {"parent": native}, "expense_account"))
+		payment.submit_accounting_invoice(case, invoice=inv["invoice"], expected_version=t.version(), idempotency_key=t.key("as"), actor=self.p["josphat"])
+		self.assertEqual(refusal(payment.approve_accounting_invoice, case, invoice=inv["invoice"], expected_version=t.version(), idempotency_key=t.key("aa"), actor=self.p["josphat"]).code, "CM_AUTHORITY")
+		payment.return_accounting_invoice(case, invoice=inv["invoice"], expected_version=t.version(), idempotency_key=t.key("ar"), actor=self.p["beatrice"], reason="Use the ICT cost centre.")
+		self.assertEqual(frappe.db.get_value("Contract Invoice", inv["invoice"], "accounting_state"), "Draft saved")
+		payment.submit_accounting_invoice(case, invoice=inv["invoice"], expected_version=t.version(), idempotency_key=t.key("as2"), actor=self.p["josphat"])
+		payment.approve_accounting_invoice(case, invoice=inv["invoice"], expected_version=t.version(), idempotency_key=t.key("aa2"), actor=self.p["beatrice"])
+		self.assertEqual(frappe.db.get_value("Purchase Invoice", native, "docstatus"), 1)
 		# nothing is payable before a Finance maker drafts it, and more than the certified amount is refused
 		self.assertEqual(refusal(payment.save_finance_draft, case, invoice=inv["invoice"], expected_version=t.version(), idempotency_key=t.key("d"), actor=self.p["beatrice"], mode_of_payment=world.MODE, paid_from=world.BANK_ACCOUNT, reference_no="X").code, "CM_AUTHORITY")
 		over = refusal(payment.save_finance_draft, case, invoice=inv["invoice"], expected_version=t.version(), idempotency_key=t.key("d"), actor=self.p["josphat"], mode_of_payment=world.MODE, paid_from=world.BANK_ACCOUNT, reference_no="X", amount=400001)

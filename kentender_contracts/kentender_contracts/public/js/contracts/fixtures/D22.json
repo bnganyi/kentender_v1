@@ -1,0 +1,125 @@
+{
+ "actions": {
+  "Sign and issue certificate": {
+   "args": {},
+   "command": "IssueCompletionCertificate",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D22",
+ "dialogs": {},
+ "ev": [
+  "Financial reconciliation 1"
+ ],
+ "id": "D22",
+ "name": "Completion certificate",
+ "next": {
+  "h": "Issue the completion certificate.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Sign and issue certificate",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Delivered and accepted",
+       "10 laptop computer"
+      ],
+      [
+       "Acceptance",
+       "8 on 2 July 2027; 2 on 2 July 2027"
+      ],
+      [
+       "Contracted services",
+       "No contracted service line"
+      ],
+      [
+       "Unresolved defects",
+       "None"
+      ],
+      [
+       "Final acceptance",
+       "Not required by the issued terms"
+      ],
+      [
+       "Obligations",
+       "All fulfilled"
+      ],
+      [
+       "Recipient",
+       "Afya Digital Supplies Limited"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "k": "text",
+     "v": "I confirm delivery and acceptance of the goods and services identified in the contract completion schedule, under contract CM-TEST-BOARDS agreement 1, completed on 2 July 2027, with the surviving obligations expressly listed."
+    },
+    {
+     "items": [
+      [
+       "Surviving obligations",
+       "None"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Certificate summary"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Confirm contract completion",
+ "version": 46
+}

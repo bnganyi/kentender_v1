@@ -33,6 +33,7 @@ PEOPLE: dict[str, tuple[str, list[str]]] = {
 	"daniel": ("Daniel Otieno", ["Technical Operator"]),
 	"mary": ("Mary Wanjiku", []),
 	"david": ("David Otieno", []),
+	"stranger": ("Sam Stranger", []),
 }
 CLOCK = "2027-07-02 09:00:00"
 
@@ -184,10 +185,12 @@ class Thread:
 
 
 def readings(units: list[str], bad: tuple[str, ...] = (), blank: tuple[str, ...] = ()) -> list[dict]:
+	"""RAM and storage as supplied; "Starts successfully" is No for a unit in `bad` and not recorded for one in `blank`."""
 	out = []
 	for unit in units:
-		out.append({"unit": unit, "criterion_id": "C1", "value": "" if unit in blank else "13.3" if unit in bad else "15.6"})
-		out.append({"unit": unit, "criterion_id": "C2", "value": "16"})
+		out.append({"unit": unit, "criterion_id": "C1", "value": "16"})
+		out.append({"unit": unit, "criterion_id": "C2", "value": "512"})
+		out.append({"unit": unit, "criterion_id": "C3", "value": "" if unit in blank else "No" if unit in bad else "Yes"})
 	return out
 
 
@@ -225,10 +228,22 @@ def _more(cls):
 
 		return payment.sign_certification(self.case, invoice=invoice, expected_version=self.version(), idempotency_key=self.key("certify"), actor=self.p["charles"])
 
-	def pay(self, invoice: str, reference: str) -> dict:
-		"""Josphat drafts and submits, Beatrice approves and confirms the settlement."""
+	def post_accounting(self, invoice: str) -> dict:
+		"""Josphat completes the accounting details of the native invoice and submits; Beatrice posts it."""
 		from kentender_contracts.services import payment
 
+		native = frappe.db.get_value("Contract Invoice", invoice, "native_invoice")
+		payment.save_accounting_invoice(self.case, invoice=invoice, expected_version=self.version(), idempotency_key=self.key("acct"), actor=self.p["josphat"], posting_date=frappe.utils.today(),
+			payable_account=frappe.db.get_value("Company", world.COMPANY, "default_payable_account"), cost_centre=frappe.db.get_value("Company", world.COMPANY, "cost_center"),
+			expense_account=frappe.db.get_value("Purchase Invoice Item", {"parent": native}, "expense_account"))
+		payment.submit_accounting_invoice(self.case, invoice=invoice, expected_version=self.version(), idempotency_key=self.key("acct-s"), actor=self.p["josphat"])
+		return payment.approve_accounting_invoice(self.case, invoice=invoice, expected_version=self.version(), idempotency_key=self.key("acct-a"), actor=self.p["beatrice"])
+
+	def pay(self, invoice: str, reference: str) -> dict:
+		"""The accounting invoice is posted, then Josphat drafts and submits the payment, Beatrice approves and confirms the settlement."""
+		from kentender_contracts.services import payment
+
+		self.post_accounting(invoice)
 		draft = payment.save_finance_draft(self.case, invoice=invoice, expected_version=self.version(), idempotency_key=self.key("draft"), actor=self.p["josphat"], mode_of_payment=world.MODE,
 			paid_from=world.BANK_ACCOUNT, reference_no=reference)
 		payment.submit_finance_for_approval(self.case, payment=draft["payment"], expected_version=self.version(), idempotency_key=self.key("submit"), actor=self.p["josphat"])
@@ -237,7 +252,7 @@ def _more(cls):
 			effective_date="2027-07-20", evidence=f"Bank statement line for {reference}")
 		return {**draft, **settled}
 
-	cls.accept, cls.claim, cls.certify_invoice, cls.pay = accept, claim, certify_invoice, pay
+	cls.accept, cls.claim, cls.certify_invoice, cls.post_accounting, cls.pay = accept, claim, certify_invoice, post_accounting, pay
 	return cls
 
 

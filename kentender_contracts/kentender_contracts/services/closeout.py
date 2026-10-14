@@ -115,15 +115,30 @@ def issue_completion_certificate(case: str, *, expected_version: int, idempotenc
 			records.bump(doc, obligation_state="Completion certified")
 			work.finish(case, command="IssueCompletionCertificate", actor=actor)
 			work.finish(case, command="RestoreContractOperation", subject="completion certificate", actor=actor)
-			work.assign(case, "PrepareContractCloseout", "Prepare the close-out review.", "closeout", 1, work.holders(work.HOP), role=work.HOP)
+			_prepare_review(case, actor)
 			events.record(case, "Completion certified", actor, "The completion certificate was signed.", certificate=cert.name, proof=result["reference"])
 		out = records.summary(doc, certificate=cert.name, state="Signed")
 	frappe.db.commit()
 	return out
 
 
+def _prepare_review(case: str, actor: str):
+	"""The close-out review for the Accounting Officer, generated from the recorded facts (the earlier unsigned one is superseded and kept)."""
+	current = frappe.db.get_value(CLOSEOUT, {"contract_case": case, "state": ["in", ["Draft", "Awaiting signature"]]}, "name")
+	version = records.next_number(CLOSEOUT, {"contract_case": case}, "version_no")
+	if current:
+		old = frappe.get_doc(CLOSEOUT, current)
+		records.update(old, state="Superseded")
+		work.finish(case, subject="closeout", version=old.version_no, state="Superseded", actor=actor)
+	row = records.new(CLOSEOUT, contract_case=case, version_no=version, state="Awaiting signature", review_json=records.dumps(review(case)), record_version=1)
+	work.assign(case, "SignContractCloseout", "Review and sign the close-out.", "closeout", version, work.holders("Accounting Officer"), role="Accounting Officer")
+	work.assign(case, work.waiting_command("SignContractCloseout", "ao"), "Waiting for the close-out.", "closeout", version, work.holders(work.HOP), role=work.HOP, state="Waiting")
+	events.record(case, "Close-out prepared", actor, f"Close-out review {version} prepared.", closeout=row.name)
+	return row
+
+
 def prepare_closeout(case: str, *, expected_version: int, idempotency_key: str, actor: str) -> dict[str, Any]:
-	"""`PrepareContractCloseout`: the generated review for the Accounting Officer's signature, from the signed completion certificate and the recorded facts."""
+	"""`PrepareContractCloseout`: regenerate the review for the Accounting Officer from the recorded facts (it is also prepared when the completion certificate is signed)."""
 	preflight.exists(case)
 
 	def body() -> dict[str, Any]:
@@ -133,17 +148,10 @@ def prepare_closeout(case: str, *, expected_version: int, idempotency_key: str, 
 		if not frappe.db.exists(CERTIFICATE, {"contract_case": case, "kind": "Completion", "state": "Signed"}):
 			fail("CM_CLOSURE", remaining=[{"kind": "Completion certificate", "what": "The completion certificate is not signed.", "holder": "Head of procurement", "prevents": True}])
 		_closure_guards(case, "PrepareContractCloseout").raise_if_any()
-		current = frappe.db.get_value(CLOSEOUT, {"contract_case": case, "state": ["in", ["Draft", "Awaiting signature"]]}, "name")
-		version = records.next_number(CLOSEOUT, {"contract_case": case}, "version_no")
-		if current:
-			records.update(frappe.get_doc(CLOSEOUT, current), state="Superseded")
-		row = records.new(CLOSEOUT, contract_case=case, version_no=version, state="Awaiting signature", review_json=records.dumps(review(case)), record_version=1)
+		row = _prepare_review(case, actor)
 		work.finish(case, command="PrepareContractCloseout", actor=actor)
-		work.assign(case, "SignContractCloseout", "Review and sign the close-out.", "closeout", version, work.holders("Accounting Officer"), role="Accounting Officer")
-		work.assign(case, work.waiting_command("SignContractCloseout", "ao"), "Waiting for the close-out.", "closeout", version, work.holders(work.HOP), role=work.HOP, state="Waiting")
 		records.bump(doc)
-		events.record(case, "Close-out prepared", actor, f"Close-out review {version} prepared.", closeout=row.name)
-		return records.summary(doc, closeout=row.name, closeout_version=version)
+		return records.summary(doc, closeout=row.name, closeout_version=row.version_no)
 
 	return records.command("PrepareContractCloseout", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version}, body=body,
 		authorise=lambda: authority.require(actor, "Head of Procurement Function"))

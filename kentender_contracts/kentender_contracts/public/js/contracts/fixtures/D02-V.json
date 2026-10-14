@@ -1,0 +1,166 @@
+{
+ "actions": {
+  "Back to contract": {
+   "do": "route",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contract",
+ "case": "CM-TEST-BOARDS",
+ "d": "D02",
+ "dialogs": {},
+ "ev": [
+  "Award package 1",
+  "Issued terms 1"
+ ],
+ "id": "D02-V",
+ "name": "Agreement",
+ "next": null,
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Insertion",
+      "Bound value",
+      "Source"
+     ],
+     "inputs": {},
+     "k": "table",
+     "num": [],
+     "rows": [
+      [
+       "Agreement date",
+       "2 July 2027",
+       "Prepared particulars"
+      ],
+      [
+       "Procuring entity",
+       "Ministry of Health",
+       "Award entity particulars"
+      ],
+      [
+       "Supplier",
+       "Afya Digital Supplies Limited",
+       "Accepted supplier identity"
+      ],
+      [
+       "Goods",
+       "10 Laptop computer",
+       "Issued requirements, awarded lot"
+      ],
+      [
+       "Amount",
+       "KES 1,000,000, tax included",
+       "Accepted price schedule"
+      ],
+      [
+       "Entity signatory",
+       "Amina Hassan, Accounting Officer",
+       "Authority record"
+      ],
+      [
+       "Supplier representative",
+       "Mary Wanjiku, Authorised signatory",
+       "Supplier authority evidence"
+      ]
+     ]
+    }
+   ],
+   "t": "Form No. 4 particulars"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Category",
+      "Document",
+      "Source"
+     ],
+     "inputs": {},
+     "k": "table",
+     "num": [],
+     "rows": []
+    }
+   ],
+   "t": "Incorporated documents"
+  },
+  {
+   "b": [
+    {
+     "k": "help",
+     "v": "THIS AGREEMENT is made on 2 July 2027 between Ministry of Health of Afya House, Nairobi (the Procuring Entity) and Afya Digital Supplies Limited (the Supplier)."
+    },
+    {
+     "k": "help",
+     "v": "The Procuring Entity engages the Supplier to supply 10 Laptop computer for KES 1,000,000, tax included."
+    },
+    {
+     "k": "help",
+     "v": "[Synthetic stand-in: the covenant and precedence text of the issued Form No. 4 is copied verbatim here by the real template-release provider.]"
+    },
+    {
+     "k": "help",
+     "v": "Incorporated documents: Form No. 4, Contract Agreement, Form of tender, Price schedule, Schedule of requirements, Technical specifications, General Conditions of Contract, Special Conditions of Contract, Notification of award."
+    },
+    {
+     "k": "help",
+     "v": "Signed for the Procuring Entity by Amina Hassan, Accounting Officer and for the Supplier by Mary Wanjiku, Authorised signatory."
+    }
+   ],
+   "t": "Agreement text"
+  }
+ ],
+ "s2": [],
+ "st": "Preparing",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Agreement 1",
+ "version": 2
+}
