@@ -309,7 +309,7 @@ artboard-provenance-gate:
 # lives outside tests/ui/smoke/design-fidelity/ and was being missed.
 ui-structure-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project design-fidelity
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning --project departmental-needs-components --project system-setup --project desk-runtime --project procurement-requisitions --project std-templates --project tenders --project bid-opening --project bid-evaluation --project award --project bid-portal --project supplier-account-portal --project tender-security-receipts --project home --project analytics
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning --project departmental-needs-components --project system-setup --project desk-runtime --project procurement-requisitions --project std-templates --project tenders --project bid-opening --project bid-evaluation --project award --project contracts --project bid-portal --project supplier-account-portal --project tender-security-receipts --project home --project analytics
 
 # Visual references. Nothing ran the Departmental Needs baselines before this
 # target existed, so a spacing or rule change could only be found by a person

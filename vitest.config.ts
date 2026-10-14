@@ -310,6 +310,19 @@ export default defineConfig({
 					name: "design-fidelity",
 					environment: "node",
 					include: ["tests/ui/fidelity/**/*.spec.js"],
+					// Contract Management's board tooling check runs in its own project.
+					exclude: ["tests/ui/fidelity/contracts/**", "**/node_modules/**"],
+				},
+			},
+			{
+				plugins: [vue()],
+				test: {
+					// CM-CHG-001 v0.8 plan D15/D16 — the Contract Management board
+					// tooling check (Phase 0) and, from Phase 1, the Desk and supplier
+					// screens with their structural fidelity against the design's boards.
+					name: "contracts",
+					environment: "jsdom",
+					include: ["tests/ui/fidelity/contracts/**/*.spec.js", "kentender_contracts/kentender_contracts/public/js/**/*.spec.js"],
 				},
 			},
 		],
