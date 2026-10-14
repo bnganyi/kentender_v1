@@ -41,6 +41,7 @@ from kentender_strategy.services.strategy_authorization import (
 	holds_strategy_read_responsibility,
 	read_scope,
 )
+from kentender_strategy.services import strategy_readiness
 from kentender_strategy.services.strategy_readiness import (
 	get_version_approval_blockers,
 	get_version_readiness,
@@ -90,10 +91,24 @@ def plan_type_label(plan_role: str | None) -> str:
 	return _(PLAN_TYPE_LABELS.get(plan_role or "", plan_role or ""))
 
 
-def version_status_label(status: str | None, *, version_number: int | None = None, return_reason: str | None = None) -> str:
-	"""§4.7 — Current / Previous version / Awaiting approval / Changes
-	requested / Draft / Draft update. The stored status is untouched."""
+def version_status_label(
+	status: str | None,
+	*,
+	version_number: int | None = None,
+	return_reason: str | None = None,
+	effective_from=None,
+	effective_to=None,
+) -> str:
+	"""§4.7 — Current / Starts {date} / Previous version / Awaiting approval / Changes
+	requested / Draft / Draft update. The stored status is untouched. v1.11: an Active version's
+	label follows the site date when its dates are given — Starts {date} before it applies,
+	Previous version once its Use until has passed, otherwise Current."""
 	if status == STATUS_ACTIVE:
+		site_today = strategy_readiness.today()
+		if effective_from and frappe.utils.getdate(effective_from) > site_today:
+			return _("Starts {0}").format(_date_label(effective_from))
+		if effective_to and frappe.utils.getdate(effective_to) < site_today:
+			return _("Previous version")
 		return _("Current")
 	if status == STATUS_SUPERSEDED:
 		return _("Previous version")
@@ -245,7 +260,11 @@ def _version_dto(version) -> dict:
 		"version_number": version.version_number,
 		"status": version.status,
 		"status_label": version_status_label(
-			version.status, version_number=version.version_number, return_reason=version.return_reason
+			version.status,
+			version_number=version.version_number,
+			return_reason=version.return_reason,
+			effective_from=version.effective_from,
+			effective_to=version.effective_to,
 		),
 		"status_tone": status_tone(version.status),
 		"is_update": int(version.version_number or 1) > 1,
@@ -316,7 +335,7 @@ def _register_status_row(plan_name: str, *, approved_only: bool = False) -> dict
 	rows = frappe.get_all(
 		"Strategic Plan Version",
 		filters={"plan_id": plan_name},
-		fields=["name", "plan_version_id", "version_number", "status", "return_reason"],
+		fields=["name", "plan_version_id", "version_number", "status", "return_reason", "effective_from", "effective_to"],
 		order_by="version_number desc",
 	)
 	if approved_only:
@@ -327,6 +346,16 @@ def _register_status_row(plan_name: str, *, approved_only: bool = False) -> dict
 		for r in rows:
 			if r.status in (STATUS_DRAFT, STATUS_SUBMITTED):
 				return r
+	# v1.11: more than one version can be Active (one in force, one starting later); the row shows the one in force.
+	site_today = strategy_readiness.today()
+	for r in rows:
+		if (
+			r.status == STATUS_ACTIVE
+			and r.effective_from
+			and frappe.utils.getdate(r.effective_from) <= site_today
+			and (not r.effective_to or frappe.utils.getdate(r.effective_to) >= site_today)
+		):
+			return r
 	return rows[0]
 
 
@@ -385,7 +414,11 @@ def get_strategy_portfolio(
 				"status": row_status,
 				"status_label": (
 					version_status_label(
-						latest["status"], version_number=latest["version_number"], return_reason=latest.get("return_reason")
+						latest["status"],
+						version_number=latest["version_number"],
+						return_reason=latest.get("return_reason"),
+						effective_from=latest.get("effective_from"),
+						effective_to=latest.get("effective_to"),
 					)
 					if latest
 					else _("No version")
@@ -733,7 +766,20 @@ def get_plan_workspace(plan_id: str, version_number: str | int | None = None) ->
 			"routes": {"overview": plan_route(plan.plan_id)},
 		}
 
-	active = next((v for v in versions if v.status == STATUS_ACTIVE), None)
+	# v1.11: more than one version can be Active (one in force, one starting later). The plan leads with
+	# the one in force today; with none in force, the latest approved.
+	active_versions = [v for v in versions if v.status == STATUS_ACTIVE]
+	site_today = strategy_readiness.today()
+	active = next(
+		(
+			v
+			for v in active_versions
+			if v.effective_from
+			and frappe.utils.getdate(v.effective_from) <= site_today
+			and (not v.effective_to or frappe.utils.getdate(v.effective_to) >= site_today)
+		),
+		active_versions[0] if active_versions else None,
+	)
 	open_statuses = (STATUS_DRAFT, STATUS_SUBMITTED)
 	open_version = next((v for v in versions if v.status in open_statuses), None)
 
@@ -982,6 +1028,11 @@ def get_version_review_overview(plan_version_id: str) -> dict:
 			"return_label": _("Return for correction"),
 			"consequence": (
 				_(
+					"Approval makes this version apply from its start date. The current version stays in use until then. "
+					"Existing approved records keep their saved strategy details."
+				)
+				if is_update and blockers.get("starts_later")
+				else _(
 					"Approval replaces the current strategy version for new planning selections. "
 					"Existing approved records keep their saved strategy details."
 				)

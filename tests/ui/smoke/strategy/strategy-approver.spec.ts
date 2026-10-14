@@ -20,8 +20,9 @@ import {
  * profiles: STR18-FX-IMMEDIATE (decision overview leads with what changed,
  * every tab, Return once with the §11.9 reason, the corrected resubmission
  * approved in one click, Version 1 becomes Previous version) and
- * STR18-FX-FUTURE (approval refused while the start date is in the future,
- * Return still available). Plus the submitting author's own denial.
+ * STR18-FX-FUTURE (STR-CHG-001 v1.11: a later start date does not block approval;
+ * the current version keeps applying until the day before). Plus the submitting
+ * author's own denial.
  */
 
 test.describe.configure({ mode: "serial", timeout: 300_000 });
@@ -169,20 +170,31 @@ test.describe("STR-UI-04 — Strategy Approver", () => {
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test("cannot approve a version that starts in the future, but may return it", async ({ page }) => {
+	test("approves a version that starts in the future; the current version keeps applying", async ({ page }) => {
 		const future = resetFixture<SuccessorFixture>("reset_future_fixture");
 		const errors = collectConsoleErrors(page);
 		await login(page, APPROVER, PASSWORD);
 		await gotoStrategy(page, `/approval/${future.v2_reference}`);
 		await expectScreen(page, "approval");
 		const banner = page.locator('[data-testid="str-future-effective"]');
-		await expect(banner).toContainText("This version cannot be approved yet. It starts on 1 Jul 2027.");
-		await expect(banner).toContainText("It will not activate automatically.");
-		await expect(page.locator('[data-testid="str-approve"]')).toBeDisabled();
+		await expect(banner).toContainText("This version starts on 1 Jul 2027.");
+		await expect(banner).toContainText("keeps the current version in use until the day before");
+		await expect(page.locator('[data-testid="str-approve"]')).toBeEnabled();
 		await expect(page.locator('[data-testid="str-return"]')).toBeEnabled();
 		await page.locator('[data-testid="str-atab-changes"]').click();
 		await expect(banner).toBeVisible();
 		await expect(page.locator('[data-testid="str-approval-changes"] [data-testid="str-changes-row"]').filter({ hasText: "Version effective from" })).toContainText("1 Jul 2027");
+		await page.locator('[data-testid="str-approve"]').click();
+		await expect(page.locator('[data-testid="str-approval-status"]')).toHaveText("Starts 1 Jul 2027", { timeout: 30_000 });
+		await expectNoFrappeModal(page);
+		// Version 1 is still the one in force; Version 2 is approved and waits for its date.
+		await page.locator('[data-testid="str-open-plan"]').click();
+		await expectScreen(page, "plan");
+		const versions = page.locator('[data-testid="str-version-row"]');
+		await expect(versions).toHaveCount(2);
+		await expect(versions.nth(1)).toContainText("Current");
+		await gotoStrategy(page, `/plan/${future.plan_reference}/version/1`);
+		await expect(page.locator('[data-testid="str-plan-status"]')).toHaveText("Current");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 

@@ -214,15 +214,13 @@ class TestStrategyHomeProvider(TechnicalReadTestBase):
 		changes = self.one(w["approver"], he.MY_WORK, "v1b", ":review")
 		self.assertEqual((changes["title"], changes["action"], changes["entered_at"]), (self.title("p1"), "Review plan changes", T_P1V2))
 
-	def test_a_version_that_starts_in_the_future_cannot_be_approved_yet_and_says_so_in_the_owners_words(self):
+	def test_a_version_that_starts_in_the_future_is_not_blocked(self):
+		"""STR-CHG-001 v1.11: a later start date no longer holds an approval back."""
 		w = WORLD
 		row = self.one(w["approver"], he.MY_WORK, "v2", ":review")
-		self.assertTrue(row["blocked"])
-		self.assertTrue(row["reason"].startswith("This version cannot be approved yet. It starts on 1 Jul 2070."), row["reason"])
-		self.assertEqual(row["reason"], readiness.get_version_approval_blockers(w["v2"].name)["future_effective"]["headline"])
-		self.assertIn("1 Jul 2072", self.one(w["approver"], he.MY_WORK, "v1b", ":review")["reason"])
-		view = self.row(w["approver"], he.MY_WORK, "v2")
-		self.assertTrue(view["blocked"] and view["reason"] == row["reason"])
+		self.assertEqual((row["blocked"], row["reason"]), (False, ""))
+		self.assertEqual(readiness.get_version_approval_blockers(w["v2"].name)["starts_later"]["effective_from_label"], "1 Jul 2070")
+		self.assertEqual(self.one(w["approver"], he.MY_WORK, "v1b", ":review")["blocked"], False)
 
 	def test_a_version_that_can_become_current_now_is_not_blocked(self):
 		with patch(READ_DATE, return_value=getdate("2074-01-01")):

@@ -204,7 +204,7 @@ def reset_submitted_fixture(*, commit: bool = True) -> dict[str, Any]:
 
 def reset_future_fixture(*, commit: bool = True) -> dict[str, Any]:
 	"""STR18-FX-FUTURE — the same submission starting 1 Jul 2027: approval
-	is refused and Return stays available."""
+	succeeds (STR-CHG-001 v1.11) and Version 1 keeps applying until 30 Jun 2027."""
 	base = reset_default(commit=False)
 	fixture = seed_str_des_v2_fixture(profile=PROFILE_FUTURE)
 	return _with_v2(base, fixture, commit=commit)

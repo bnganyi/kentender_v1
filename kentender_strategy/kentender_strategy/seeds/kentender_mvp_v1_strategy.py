@@ -394,8 +394,8 @@ def seed_str_des_v2_draft(
 
 def seed_str_des_v2_fixture(*, profile: str = PROFILE_IMMEDIATE, effective_from: str | None = None) -> dict[str, Any]:
 	"""§14.4 — Version 2 Submitted for approval by Esther at 16:20 in the
-	named profile (FUTURE: 1 Jul 2027 start, the negative approval example;
-	IMMEDIATE: 25 Nov 2026 start, the positive one). The caller MUST tear it
+	named profile (FUTURE: 1 Jul 2027 start, approved with the current version still
+	in force until 30 Jun 2027 — STR-CHG-001 v1.11; IMMEDIATE: 25 Nov 2026 start). The caller MUST tear it
 	down with teardown_str_des_v2_fixture()."""
 	fixture = seed_str_des_v2_draft(profile=profile, effective_from=effective_from)
 	v2 = fixture["plan_version"]

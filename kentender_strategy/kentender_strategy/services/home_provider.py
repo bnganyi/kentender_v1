@@ -130,12 +130,12 @@ class _Facts:
 
 
 def _blocker(version) -> tuple[bool, str]:
-	"""Blocked only where the owner says the version cannot be approved yet; its own headline is the reason."""
+	"""Blocked only where approval would be refused (STR-CHG-001 v1.11: a later start date is not a block);
+	the failure messages are the reason."""
 	answer = get_version_approval_blockers(version.name)
 	if not answer["blocked"]:
 		return False, ""
-	future = answer.get("future_effective") or {}
-	return True, cstr(future.get("headline")) or " ".join(cstr(failure["message"]) for failure in answer["failures"])
+	return True, " ".join(cstr(failure["message"]) for failure in answer["failures"])
 
 
 # --------------------------------------------------------------------------
