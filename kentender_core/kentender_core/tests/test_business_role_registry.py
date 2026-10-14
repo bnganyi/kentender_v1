@@ -47,8 +47,29 @@ class TestBusinessRoleRegistry(IntegrationTestCase):
 		cutover slice names it (KT-STD-001 §7 default-to-omit)."""
 		self.assertEqual(
 			registry.roles_with_scope_type(registry.SCOPE_OU),
-			("Departmental Author", "Head of User Department"),
+			(
+				"Contract coordination",  # CM-CHG-001 v0.8 §6.2
+				"Contract preparation",  # CM-CHG-001 v0.8 §6.2
+				"Departmental Author",
+				"Head of User Department",
+				"Receiving",  # CM-CHG-001 v0.8 §6.2
+			),
 		)
+
+	def test_the_contract_management_responsibilities_use_existing_scope_types_only(self):
+		"""CM-CHG-001 v0.8 §6, §6.2, plan D11: three Organisation Unit, five Site-wide, no Contract scope type, each its own Frappe role."""
+		ou = ("Contract preparation", "Contract coordination", "Receiving")
+		site = ("Contract inspection", "Technical certification", "Entity contract signing", "Finance preparation", "Finance approval")
+		for name in ou:
+			self.assertEqual(registry.scope_type(name), registry.SCOPE_OU, name)
+		for name in site:
+			self.assertEqual(registry.scope_type(name), registry.SCOPE_SITE, name)
+		for name in ou + site:
+			self.assertEqual(registry.projected_frappe_roles(name), (name,), name)
+			self.assertEqual(registry.REGISTRY[name].owning_document, "CM-CHG-001 v0.8 §6")
+		self.assertEqual(registry.SCOPE_TYPES, ("Site-wide", "Organisation Unit", "Tender"))
+		self.assertEqual(registry.roles_with_sod_tag("payment_approval"), ("Finance approval",))
+		self.assertEqual(registry.roles_with_sod_tag("payment_preparation"), ("Finance preparation",))
 
 	def test_reference_data_manager_is_removed(self):
 		"""CFG-CHG-002 v0.6 §1.1 — no Reference Data Manager role exists."""
