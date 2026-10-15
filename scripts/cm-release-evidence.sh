@@ -29,6 +29,12 @@ GATES=(
 	"cm-independence-gate|L2 independence site|the service modules on a site that holds only ERPNext, core, supplier accounts and the app"
 )
 
+# The browser gates must not be cut off by the server restarting whenever a Python file in the shared checkout changes
+# (an earlier run lost four specs and a persona to "net::ERR_EMPTY_RESPONSE" for exactly that): serve without the watcher for the run, normally again after.
+scripts/test-site.sh stop >/dev/null 2>&1 || true
+TEST_SERVE_NORELOAD=1 scripts/test-site.sh serve >/dev/null 2>&1 || true
+trap 'scripts/test-site.sh stop >/dev/null 2>&1 || true; scripts/test-site.sh serve >/dev/null 2>&1 || true' EXIT
+
 now() { date '+%Y-%m-%d %H:%M:%S %z'; }
 commit="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 dirty="$(git status --porcelain 2>/dev/null | grep -c . || true)"

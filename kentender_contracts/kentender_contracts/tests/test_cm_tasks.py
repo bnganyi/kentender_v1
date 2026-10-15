@@ -59,6 +59,12 @@ class TestOrdering(IntegrationTestCase):
 		)
 		self.assertEqual(got, ["at-risk", "overdue", "upcoming-soon", "upcoming-far", "undated-early", "undated-late"])
 
+	def test_two_obligations_assigned_at_the_same_instant_are_led_by_the_one_recorded_first_not_by_their_names(self):
+		first, second = task("zzz-first", assigned="2027-07-20 09:00"), task("aaa-second", assigned="2027-07-20 09:00")
+		first["created"], second["created"] = datetime(2026, 10, 16, 1, 0, 0, 1), datetime(2026, 10, 16, 1, 0, 0, 2)
+		self.assertEqual(self.order(second, first), ["zzz-first", "aaa-second"])
+		self.assertEqual(self.order(first, second), ["zzz-first", "aaa-second"])
+
 	def test_undated_work_with_the_same_assignment_instant_has_a_stable_order_by_id(self):
 		self.assertEqual(self.order(task("B"), task("A")), ["A", "B"])
 

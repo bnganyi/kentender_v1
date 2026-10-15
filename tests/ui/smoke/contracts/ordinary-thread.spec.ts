@@ -167,6 +167,12 @@ test.describe('The ordinary contract thread', () => {
 			await expect(page.locator('[data-testid="cm-root"]')).toContainText('Delivery position');
 			await expect(page.locator('table.table').first()).toContainText('8');
 		});
+		await as(browser, 'charles', async (page) => {
+			// the two units that failed are an issue with the supplier and the head owns it: he sends the inspection findings before the invoice comes to him
+			await openContract(page, 'My work');
+			await expect(page.locator('[data-testid="cm-root"]')).toContainText('Send the inspection findings to the supplier.');
+			await press(page); // Send the message
+		});
 		await as(browser, 'grace', async (page) => {
 			await openContract(page);
 			await tab(page, 'Deliveries');

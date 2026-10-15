@@ -69,7 +69,8 @@ def rank(task: dict[str, Any], now: datetime) -> int:
 
 def sort_key(task: dict[str, Any], now: datetime) -> tuple:
 	r = rank(task, now)
-	return (GROUP[task["state"]], r, task["due"] if r < 3 else task["assigned_at"], task["task_id"])
+	# Two obligations assigned at the same instant (a simulated clock holds still; a batch is assigned in one moment) are led by the one recorded first, never by the order of their random names.
+	return (GROUP[task["state"]], r, task["due"] if r < 3 else task["assigned_at"], task.get("created") or task["assigned_at"], task["task_id"])
 
 
 def order(tasks: list[dict[str, Any]], now: datetime) -> list[dict[str, Any]]:
