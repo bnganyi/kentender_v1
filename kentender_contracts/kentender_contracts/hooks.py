@@ -258,9 +258,10 @@ scheduler_events = {
 # route (desk, API, Journal Entry, reconciliation, import, background job) reaches them.
 _guard = "kentender_contracts.native.payment_guard.on_event"
 doc_events = {
-	"Payment Entry": {event: _guard for event in ("validate", "before_submit", "before_update_after_submit")},
+	"Payment Entry": {**{event: _guard for event in ("validate", "before_submit", "before_update_after_submit")}, "on_cancel": "kentender_contracts.native.finance_events.on_payment_entry_cancel"},
 	"Journal Entry": {event: _guard for event in ("before_submit", "before_update_after_submit")},
 	"Purchase Receipt": {"on_submit": "kentender_contracts.native.adapter.assign_unit_references"},
+	"Purchase Invoice": {"on_submit": "kentender_contracts.native.finance_events.on_purchase_invoice_submit"},
 }
 
 # The extra fields on ERPNext's own documents (plan D7, FU-CM-48): installed and kept present.

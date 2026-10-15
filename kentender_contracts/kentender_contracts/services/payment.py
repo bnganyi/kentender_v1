@@ -20,7 +20,8 @@ import frappe
 from frappe.utils import cint, cstr, flt, getdate
 
 from kentender_contracts.native import adapter, payment_guard
-from kentender_contracts.services import authority, clock, delivery, events, formation, intents, opening, parties, people, position, preflight, records, segregation, service_principal, signing_flow, work
+from kentender_contracts.services import authority, clock, delivery, events, formation, holds, intents, opening, parties, people, position, preflight, records, segregation, service_principal, signing_flow, work
+from kentender_contracts.services import errors
 from kentender_contracts.services.errors import fail, invalid
 
 CASE = "Contract Case"
@@ -28,7 +29,7 @@ INVOICE = "Contract Invoice"
 CERTIFICATION = "Contract Certification"
 SETTLEMENT = "Contract Settlement"
 TOLERANCE = 0.005
-ACTIVE_INVOICE = ["not in", ["Superseded"]]
+ACTIVE_INVOICE = ["not in", ["Superseded", "Set aside"]]
 
 
 def _terms(case: str) -> dict[str, Any]:
@@ -59,8 +60,28 @@ def _receipt_qty(receipt: str) -> int:
 	return cint(sum(flt(q) for q in frappe.get_all("Purchase Receipt Item", filters={"parent": receipt}, pluck="qty")))
 
 
-def match_claim(case: str, lines: list[dict[str, Any]], *, exclude: str = "") -> dict[str, Any]:
-	"""Compare a claim with what the contract supports. Returns the frozen matching: a row per line and an overall outcome (`Supported` or `Needs review`)."""
+HOP_HOLDER, FINANCE_HOLDER = "Head of procurement function", "Finance"
+
+
+def _finding(kind: str, reason: str, holder: str, line_id: str = "") -> dict[str, str]:
+	"""One discrepancy: what differs, why, and who must act on it (the supplier corrects through the head of procurement; Finance reconciles what only the ledger can)."""
+	return {"kind": kind, "reason": reason, "holder": holder, "line_id": line_id}
+
+
+def apparent_duplicate(case: str, claim_reference: str, lines: list[dict[str, Any]], invoice_date: str, *, exclude: str = "") -> str:
+	"""The invoice this one appears to repeat: the same supplier invoice number, or the same lines on the same invoice date. A claim of the same quantity on another day is a separate legitimate claim."""
+	wanted = sorted((cstr(l["line_id"]), cint(l["quantity"])) for l in lines)
+	for row in frappe.get_all(INVOICE, filters={"contract_case": case, "state": ACTIVE_INVOICE, "name": ["!=", exclude or ""]}, fields=["name", "claim_reference", "invoice_date", "lines_json"]):
+		if cstr(row.claim_reference).strip().lower() == cstr(claim_reference).strip().lower():
+			return row.name
+		if cstr(row.invoice_date) == cstr(getdate(invoice_date)) and sorted((cstr(l["line_id"]), cint(l["quantity"])) for l in records.loads(row.lines_json, [])) == wanted:
+			return row.name
+	return ""
+
+
+def match_claim(case: str, lines: list[dict[str, Any]], *, exclude: str = "", duplicate_of: str = "") -> dict[str, Any]:
+	"""Compare a claim with what the contract supports. Returns the frozen matching: a row per line, a finding for each discrepancy (kind, reason and who acts on it) and an overall outcome
+	(`Supported` or `Needs review`). Price, tax treatment, accepted eligible quantity, previous claims, the receipt that carries the units and the remaining contractual amount are each compared."""
 	terms = _terms(case)
 	ordered = {l["line_id"]: l for l in terms["lines"]}
 	services = delivery.service_lines(terms)
@@ -72,34 +93,44 @@ def match_claim(case: str, lines: list[dict[str, Any]], *, exclude: str = "") ->
 	if carried:
 		receipts = [carried, *receipts]
 		on_receipt[carried] = on_receipt.get(carried, 0) + sum(opening.line(case, lid)["invoiced_quantity"] for lid in (opening.of(case).get("lines") or {}))
-	rows = []
+	rows, findings = [], []
 	value = flt(terms["total"])
 	previous_amount = opening.invoiced(case) + sum(flt(r) for r in frappe.get_all(INVOICE, filters={"contract_case": case, "state": ACTIVE_INVOICE, "name": ["!=", exclude]}, pluck="claimed_amount"))
+	if duplicate_of:
+		findings.append(_finding("Duplicate", f"This appears to repeat invoice {frappe.db.get_value(INVOICE, duplicate_of, 'claim_reference') or duplicate_of}.", FINANCE_HOLDER))
 	for line in lines:
 		contract = ordered.get(line["line_id"])
 		quantity, rate = cint(line["quantity"]), flt(line.get("rate") if line.get("rate") not in (None, "") else (contract or {}).get("rate"))
-		problems = []
+		problems: list[dict[str, str]] = []
 		if contract is None:
-			problems.append("This line is not in the contract.")
-			rows.append({"line_id": line["line_id"], "claimed_quantity": quantity, "eligible_quantity": 0, "claimed_rate": rate, "contract_rate": None, "amount": quantity * rate, "previously_claimed": 0, "receipt": "", "outcome": "Needs review", "reasons": problems})
+			problems.append(_finding("Line", "This line is not in the contract.", HOP_HOLDER, line["line_id"]))
+			rows.append({"line_id": line["line_id"], "claimed_quantity": quantity, "eligible_quantity": 0, "claimed_rate": rate, "contract_rate": None, "amount": quantity * rate, "previously_claimed": 0, "receipt": "",
+				"outcome": "Needs review", "reasons": [p["reason"] for p in problems], "findings": problems})
+			findings += problems
 			continue
 		eligible = max(0, now[line["line_id"]]["accepted"] - claimed.get(line["line_id"], 0))
 		if quantity <= 0:
-			problems.append("The quantity must be above zero.")
+			problems.append(_finding("Quantity", "The quantity must be above zero.", HOP_HOLDER, line["line_id"]))
 		if quantity > eligible:
-			problems.append(f"{quantity} claimed but only {eligible} accepted and unclaimed.")
+			problems.append(_finding("Quantity", f"{quantity} claimed but only {eligible} accepted and unclaimed.", HOP_HOLDER, line["line_id"]))
 		if abs(rate - flt(contract["rate"])) > TOLERANCE:
-			problems.append(f"The price {rate:,.2f} differs from the contract price {flt(contract['rate']):,.2f}.")
+			problems.append(_finding("Price", f"The price {rate:,.2f} differs from the contract price {flt(contract['rate']):,.2f}.", HOP_HOLDER, line["line_id"]))
+		claimed_tax = line.get("tax_included")
+		if claimed_tax not in (None, "") and bool(cint(claimed_tax)) != bool(terms.get("tax_included")):
+			problems.append(_finding("Tax", f"The invoice is {'inclusive' if cint(claimed_tax) else 'exclusive'} of tax; the contract price is {'inclusive' if terms.get('tax_included') else 'exclusive'}.", HOP_HOLDER, line["line_id"]))
 		receipt = next((r for r in receipts if _receipt_qty(r) - on_receipt.get(r, 0) >= quantity), "") if line["line_id"] not in services else ""  # a service is received into nothing: its entitlement is the acceptance itself
 		if quantity > 0 and quantity <= eligible and not receipt and line["line_id"] not in services:
-			problems.append("The claim spans more than one receipt.")
+			problems.append(_finding("Receipt", "The claim spans more than one receipt.", FINANCE_HOLDER, line["line_id"]))
 		rows.append({"line_id": line["line_id"], "claimed_quantity": quantity, "eligible_quantity": eligible, "claimed_rate": rate, "contract_rate": flt(contract["rate"]), "amount": quantity * rate,
-			"previously_claimed": claimed.get(line["line_id"], 0), "receipt": receipt, "outcome": "Needs review" if problems else "Supported", "reasons": problems})
+			"previously_claimed": claimed.get(line["line_id"], 0), "receipt": receipt, "outcome": "Needs review" if problems else "Supported", "reasons": [p["reason"] for p in problems], "findings": problems})
+		findings += problems
 	amount = sum(r["amount"] for r in rows)
 	remaining = value - previous_amount
 	over = amount > remaining + TOLERANCE
-	return {"rows": rows, "amount": amount, "previous_claims": previous_amount, "contract_value": value, "remaining_contractual": remaining,
-		"outcome": "Needs review" if over or any(r["outcome"] != "Supported" for r in rows) else "Supported", "exceeds_remaining": over}
+	if over:
+		findings.append(_finding("Remaining amount", f"{amount:,.2f} is more than the {max(remaining, 0):,.2f} still open under the contract.", HOP_HOLDER))
+	return {"rows": rows, "amount": amount, "previous_claims": previous_amount, "contract_value": value, "remaining_contractual": remaining, "duplicate_of": duplicate_of, "findings": findings,
+		"outcome": "Needs review" if over or duplicate_of or any(r["outcome"] != "Supported" for r in rows) else "Supported", "exceeds_remaining": over}
 
 
 def _claim_authority(case: str, actor: str) -> None:
@@ -108,8 +139,9 @@ def _claim_authority(case: str, actor: str) -> None:
 
 
 def _claim_lines(lines: list[dict[str, Any]]) -> list[dict[str, Any]]:
-	clean = [{"line_id": cstr(l.get("line_id")), "quantity": cint(l.get("quantity")), "rate": l.get("rate")} for l in lines or []]
+	clean = [{"line_id": cstr(l.get("line_id")), "quantity": cint(l.get("quantity")), "rate": l.get("rate"), **({"tax_included": l["tax_included"]} if l.get("tax_included") not in (None, "") else {})} for l in lines or []]
 	invalid({"lines": "" if clean and all(l["line_id"] for l in clean) else "Name the lines and quantities you are claiming."})
+	invalid({"lines": "" if len(clean) == 1 else "Claim one line on each invoice: the goods and a service are invoiced separately."})
 	return clean
 
 
@@ -123,53 +155,99 @@ def submit_invoice(case: str, *, expected_version: int, idempotency_key: str, ac
 		preflight.lifecycle(doc, "Active")
 		invalid({"claim_reference": "" if cstr(claim_reference).strip() else "Enter your invoice number.", "invoice_date": "" if cstr(invoice_date).strip() else "Enter the invoice date."})
 		clean = _claim_lines(lines)
-		earlier = None
+		earlier, reuse = None, False
 		if successor_of:
 			earlier = frappe.get_doc(INVOICE, successor_of)
 			if earlier.contract_case != case or earlier.state != "Held":
 				fail("CM_CHANGED", invoice=successor_of, state=earlier.state)
-		same = frappe.db.get_value(INVOICE, {"contract_case": case, "claim_reference": claim_reference.strip(), "state": ACTIVE_INVOICE, "name": ["!=", successor_of or ""]}, "name")
-		if same:
-			fail("CM_DUPLICATE", invoice=same, claim_reference=claim_reference, reason="An invoice with this number is already recorded for this contract.")
-		match = match_claim(case, clean, exclude=successor_of)
+		same = apparent_duplicate(case, claim_reference, clean, invoice_date, exclude=successor_of)  # held for Finance review, never refused or deleted (section 5.8)
+		match = match_claim(case, clean, exclude=successor_of, duplicate_of=same)
 		number = records.next_number(INVOICE, {"contract_case": case}, "invoice_no")
 		held = match["outcome"] != "Supported"
 		stored = [{**l, "receipt": r["receipt"], "amount": r["amount"]} for l, r in zip(clean, match["rows"])]
-		row = records.new(INVOICE, contract_case=case, invoice_no=number, claim_reference=claim_reference.strip(), invoice_date=getdate(invoice_date), received_at=clock.now(), claimed_amount=match["amount"],
+		received = clock.now()
+		row = records.new(INVOICE, contract_case=case, invoice_no=number, claim_reference=claim_reference.strip(), invoice_date=getdate(invoice_date), received_at=received,
+			first_received_at=(earlier.first_received_at or earlier.received_at) if earlier else received, claimed_amount=match["amount"],
 			state="Held" if held else "Submitted", lines_json=records.dumps(stored), matching_json=records.dumps(match), successor_of=successor_of or None, submitted_by=actor, record_version=1)
 		if earlier:
 			records.update(earlier, state="Superseded", record_version=cint(earlier.record_version) + 1)
 			work.finish(case, subject=f"invoice {earlier.invoice_no}", state="Superseded", actor=actor)
+			reuse = _retire_native(case, earlier, row, actor)
 		records.bump(doc, invoice_state="Invoice held for review" if held else "Invoice submitted")
 		subject = f"invoice {number}"
-		if held:
+		native = False
+		if held and same:
+			work.assign(case, "ResolveInvoiceDuplicate", "Review the invoice: it appears to repeat another.", subject, 1, work.holders("Finance preparation"), role="Finance preparation")
+			work.assign(case, work.waiting_command("ResolveInvoiceDuplicate", "supplier"), "Waiting for the invoice review.", subject, 1, [actor], role="Supplier Representative", state="Waiting")
+		elif held:
 			work.assign(case, "RequestInvoiceCorrection", "Review the invoice: it does not match what the contract supports.", subject, 1, work.holders(work.HOP), role=work.HOP)
 			work.assign(case, work.waiting_command("RequestInvoiceCorrection", "supplier"), "Waiting for the invoice review.", subject, 1, [actor], role="Supplier Representative", state="Waiting")
 		else:
-			intents.record(case, subject, 1, "Native invoice", "native", recovery_owner="Finance; technical recovery")
+			if not reuse:  # a liability Finance already posted for the claim this one corrects stands as the one liability: a second draft would double it
+				intents.record(case, subject, 1, "Native invoice", "native", recovery_owner="Finance; technical recovery")
+				native = True
 			work.assign(case, "SignContractCertification", "Review the invoice and sign the certification.", subject, 1, work.holders(work.HOP), role=work.HOP)
 			work.assign(case, work.waiting_command("SignContractCertification", "procurement"), "Waiting for the certification.", subject, 1, [actor], role="Supplier Representative", state="Waiting")
+		if held and not same and not reuse and _draftable(case, clean[0]):  # a disputed claim is still invoiced natively as a draft, so Finance holds the supplier's whole claim (section 5.8)
+			intents.record(case, subject, 1, "Native invoice", "native", recovery_owner="Finance; technical recovery")
+			native = True
 		events.record(case, "Invoice submitted" if not successor_of else "Invoice corrected", actor, f"Invoice {claim_reference} for {match['amount']:,.2f} {'held for review' if held else 'matched'}.", invoice=row.name,
 			outcome=match["outcome"], successor_of=successor_of, reason=reason)
-		return records.summary(doc, invoice=row.name, invoice_no=number, matching=match["outcome"], state=row.state)
+		return records.summary(doc, invoice=row.name, invoice_no=number, matching=match["outcome"], state=row.state, native=native)
 
 	recorded = records.command("CorrectContractInvoice" if successor_of else "SubmitContractInvoice", case=case, idempotency_key=idempotency_key, actor=actor,
 		payload={"expected": expected_version, "claim": claim_reference, "date": invoice_date, "lines": lines, "successor_of": successor_of, "reason": reason}, body=body, authorise=lambda: _claim_authority(case, actor))
 	frappe.db.commit()
-	if recorded["state"] == "Submitted":
+	if recorded.get("native"):
 		_carry_out_native_invoice(case, recorded["invoice"], actor)
-	return records.summary(frappe.get_doc(CASE, case), **{k: v for k, v in recorded.items() if k not in ("ok", "contract", "lifecycle", "record_version")})
+	return records.summary(frappe.get_doc(CASE, case), **{k: v for k, v in recorded.items() if k not in ("ok", "contract", "lifecycle", "record_version", "native")})
+
+
+def _draftable(case: str, line: dict[str, Any]) -> bool:
+	"""A held claim gets a native draft from the order unless its item is an asset (an asset is made when it is received) and only up to the ordered quantity."""
+	terms = _terms(case)
+	ordered = next((l for l in terms["lines"] if l["line_id"] == line["line_id"]), None)
+	code = (terms["particulars"].get("item_mapping") or {}).get(line["line_id"])
+	return bool(ordered and code and cint(line["quantity"]) > 0 and cint(line["quantity"]) <= cint(ordered["quantity"]) and not frappe.db.get_value("Item", code, "is_fixed_asset") and formation.native_order(case))
+
+
+def _retire_native(case: str, earlier, successor, actor: str) -> bool:
+	"""A corrected claim replaces the superseded one's native invoice. A draft is discarded and regenerated for the successor. One already posted (Finance recognised the liability) is kept: it stands as the
+	successor's invoice too, so there is one liability and not two, and Finance is asked to bring it to the supported amount with a native credit before the successor can be certified or paid (section 5.18).
+	Returns True when the posted invoice is carried to the successor."""
+	if not earlier.native_invoice:
+		return False
+	if adapter.discard_draft_invoice(earlier.native_invoice):
+		frappe.db.delete("Contract Transaction Link", {"native_doctype": "Purchase Invoice", "native_name": earlier.native_invoice})  # the name is free again (ERPNext reuses it): the link must not outlive the draft
+		events.record(case, "Native draft discarded", actor, f"The draft invoice {earlier.native_invoice} of the superseded claim {earlier.claim_reference} was discarded.", invoice=earlier.name, native=earlier.native_invoice)
+		return False
+	posted = adapter.posted(earlier.native_invoice)
+	if not posted:
+		return False
+	records.update(successor, native_invoice=earlier.native_invoice, accounting_state="Posted", finance_maker=earlier.finance_maker)
+	required = posted - flt(successor.claimed_amount)
+	if required > TOLERANCE:
+		work.assign(case, "ReconcileInvoiceLiability", f"Reconcile the original liability: a native credit of {required:,.2f} is needed.", f"invoice {successor.invoice_no}", 1, work.holders("Finance preparation"), role="Finance preparation")
+		events.record(case, "Liability needs a credit", actor, f"Invoice {earlier.claim_reference} was posted for {posted:,.2f}; the corrected claim supports {flt(successor.claimed_amount):,.2f}, so a native credit of {required:,.2f} is needed.",
+			invoice=earlier.name, native=earlier.native_invoice, required=required)
+	return True
 
 
 def _carry_out_native_invoice(case: str, invoice: str, actor: str) -> dict[str, Any]:
 	row = frappe.get_doc(INVOICE, invoice)
 	intent = frappe.db.get_value(intents.INTENT, {"operation_identity": intents.identity(case, f"invoice {row.invoice_no}", 1, "Native invoice", "native")}, "name")
+	if not intent:
+		return {}
 	line = records.loads(row.lines_json)[0]
+	code = _terms(case)["particulars"]["item_mapping"][line["line_id"]]
+	soft = row.state == "Held"  # a disputed claim's draft is a courtesy to Finance: if the owner refuses it, no one is asked to recover it
 
 	def executor(identity: str):
 		try:
 			with service_principal.acting():
-				return adapter.invoice_receipt(line["receipt"], identity, bill_no=row.claim_reference, bill_date=str(row.invoice_date), qty=line["quantity"], submit=False), "Purchase Invoice"
+				if line.get("receipt"):
+					return adapter.invoice_receipt(line["receipt"], identity, bill_no=row.claim_reference, bill_date=str(row.invoice_date), qty=line["quantity"], submit=False), "Purchase Invoice"
+				return adapter.invoice_order(formation.native_order(case), identity, bill_no=row.claim_reference, bill_date=str(row.invoice_date), item_code=code, qty=line["quantity"]), "Purchase Invoice"
 		except frappe.ValidationError as exc:
 			raise intents.OwnerRefused(str(exc)) from exc
 
@@ -179,8 +257,10 @@ def _carry_out_native_invoice(case: str, invoice: str, actor: str) -> dict[str, 
 			records.update(frappe.get_doc(INVOICE, invoice), native_invoice=result["reference"], accounting_state="Not prepared")
 			work.finish(case, command="RestoreContractOperation", subject=f"invoice {row.invoice_no}", actor=actor)
 			events.record(case, "Native invoice linked", actor, f"Native invoice {result['reference']} created for invoice {row.claim_reference}.", invoice=invoice, native=result["reference"])
-		else:
+		elif not soft:
 			work.incident(case, "RestoreContractOperation", "Restore the native invoice", f"invoice {row.invoice_no}", 1)
+		else:
+			events.record(case, "Native draft not made", actor, f"No draft invoice was made for the disputed claim {row.claim_reference}.", invoice=invoice)
 	frappe.db.commit()
 	return result
 
@@ -205,6 +285,97 @@ def request_invoice_correction(case: str, *, invoice: str, expected_version: int
 
 	return records.command("RequestInvoiceCorrection", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "invoice": invoice, "reason": reason},
 		body=body, authorise=lambda: authority.require(actor, "Head of Procurement Function"))
+
+
+def resolve_duplicate(case: str, *, invoice: str, disposition: str, reason: str, expected_version: int, idempotency_key: str, actor: str) -> dict[str, Any]:
+	"""`ResolveInvoiceDuplicate` (authored; FU-CM-92): Finance decides whether a claim held as an apparent duplicate is one. A duplicate is set aside with the reason and keeps no entitlement; one that is not
+	is matched again on its own merits and goes on to certification, or to the head of procurement for correction if it still does not match. The claim is never deleted."""
+	preflight.exists(case)
+	choices = ("Duplicate", "Not a duplicate")
+
+	def body() -> dict[str, Any]:
+		invalid({"disposition": "" if disposition in choices else "Choose whether this is a duplicate.", "reason": "" if cstr(reason).strip() else "Enter why."})
+		doc = records.lock(case)
+		records.check_version(doc, expected_version)
+		row = frappe.get_doc(INVOICE, invoice)
+		if row.contract_case != case or row.state != "Held" or not records.loads(row.matching_json).get("duplicate_of"):
+			fail("CM_CHANGED", invoice=invoice, state=row.state)
+		subject = f"invoice {row.invoice_no}"
+		work.finish(case, command="ResolveInvoiceDuplicate", subject=subject, actor=actor)
+		if disposition == "Duplicate":
+			records.update(row, state="Set aside", record_version=cint(row.record_version) + 1)
+			records.bump(doc)
+			events.record(case, "Invoice set aside", actor, f"Invoice {row.claim_reference} set aside as a duplicate: {reason}", invoice=invoice, reason=reason)
+			return records.summary(doc, invoice=invoice, state="Set aside")
+		lines = [{k: v for k, v in l.items() if k in ("line_id", "quantity", "rate", "tax_included")} for l in records.loads(row.lines_json)]
+		match = match_claim(case, lines, exclude=invoice)
+		held = match["outcome"] != "Supported"
+		records.update(row, state="Held" if held else "Submitted", matching_json=records.dumps(match), claimed_amount=match["amount"], record_version=cint(row.record_version) + 1)
+		records.bump(doc, invoice_state="Invoice held for review" if held else "Invoice submitted")
+		if held:
+			work.assign(case, "RequestInvoiceCorrection", "Review the invoice: it does not match what the contract supports.", subject, 1, work.holders(work.HOP), role=work.HOP)
+		else:
+			intents.record(case, subject, 1, "Native invoice", "native", recovery_owner="Finance; technical recovery")
+			work.assign(case, "SignContractCertification", "Review the invoice and sign the certification.", subject, 1, work.holders(work.HOP), role=work.HOP)
+		events.record(case, "Invoice duplicate cleared", actor, f"Invoice {row.claim_reference} is not a duplicate: {reason}", invoice=invoice, outcome=match["outcome"], reason=reason)
+		return records.summary(doc, invoice=invoice, state=row.state, matching=match["outcome"])
+
+	recorded = records.command("ResolveInvoiceDuplicate", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "invoice": invoice, "disposition": disposition, "reason": reason},
+		body=body, authorise=lambda: authority.require(actor, "Finance preparation"))
+	frappe.db.commit()
+	if recorded.get("state") == "Submitted":
+		_carry_out_native_invoice(case, invoice, actor)
+	return records.summary(frappe.get_doc(CASE, case), **{k: v for k, v in recorded.items() if k not in ("ok", "contract", "lifecycle", "record_version")})
+
+
+# -- a posted liability that a corrected claim no longer supports ------------------------------------------------------------------------------
+def _final_successor(invoice: str):
+	"""The claim at the end of a chain of corrections that still stands, or None."""
+	row = frappe.db.get_value(INVOICE, {"successor_of": invoice, "state": ["!=", "Set aside"]}, "name")
+	while row:
+		nxt = frappe.db.get_value(INVOICE, {"successor_of": row, "state": ["!=", "Set aside"]}, "name")
+		if not nxt:
+			return frappe.get_doc(INVOICE, row)
+		row = nxt
+	return None
+
+
+def liability_gap(case: str) -> list[dict[str, Any]]:
+	"""For each superseded claim whose native invoice Finance posted: the successor, the liability, what the successor supports, the credit still needed and whether it has arrived."""
+	out = []
+	for orig in frappe.get_all(INVOICE, filters={"contract_case": case, "state": "Superseded", "native_invoice": ["is", "set"]}, fields=["name", "invoice_no", "native_invoice", "claim_reference", "received_at"]):
+		posted = adapter.posted(orig.native_invoice)
+		final = _final_successor(orig.name) if posted else None
+		if not final:
+			continue
+		required = max(0.0, posted - flt(final.claimed_amount))
+		credited = adapter.credit_against(orig.native_invoice)
+		out.append({"original": orig.name, "original_no": orig.invoice_no, "native": orig.native_invoice, "successor": final.name, "successor_no": final.invoice_no, "liability": posted, "supported": flt(final.claimed_amount),
+			"required": required, "credited": credited, "reconciled": credited + TOLERANCE >= required})
+	return out
+
+
+@holds.provider("claim liability")
+def _liability_holds(case: str):
+	for gap in liability_gap(case):
+		if not gap["reconciled"]:
+			yield holds.Hold(key=f"liability:{gap['original']}", kind="Correction", reason=f"Finance must reconcile the original liability of {gap['liability']:,.2f}: a native credit of {gap['required']:,.2f} is needed.",
+				blocks=frozenset({"certify_invoice", "pay"}), owner="Finance", clearing="A native credit that brings the liability to the supported amount", scope=(f"invoice {gap['successor_no']}", f"invoice {gap['original_no']}"))
+
+
+def receive_finance_result(case: str, *, native_invoice: str, actor: str = "") -> dict[str, Any]:
+	"""`ReceiveFinanceResult` (service-only): ERPNext reports a native credit against an invoice of this contract. Contract Management never writes the ledger; it reads the credit, and when the liability
+	now equals what the corrected claim supports the hold lifts and Finance's task is done."""
+	for gap in liability_gap(case):
+		if gap["native"] != native_invoice:
+			continue
+		by = actor or "Administrator"
+		events.record(case, "Native credit received", by, f"A native credit of {gap['credited']:,.2f} now stands against invoice {gap['native']}; {gap['required']:,.2f} is needed.", native=native_invoice, credited=gap["credited"], required=gap["required"])
+		if gap["reconciled"]:
+			work.finish(case, command="ReconcileInvoiceLiability", subject=f"invoice {gap['successor_no']}", actor=by)
+			events.record(case, "Liability reconciled", by, f"The liability now equals what the corrected claim supports ({gap['supported']:,.2f}).", native=native_invoice)
+		return {"reconciled": gap["reconciled"], **gap}
+	return {"reconciled": None}
 
 
 # -- certification --------------------------------------------------------------------------------------------------------------------
@@ -269,7 +440,10 @@ def sign_certification(case: str, *, invoice: str, expected_version: int, idempo
 			subject = f"invoice {row.invoice_no}"
 			work.finish(case, command="SignContractCertification", subject=subject, actor=actor)
 			work.finish(case, command="RestoreContractOperation", subject=f"certification invoice {row.invoice_no}", actor=actor)
-			work.assign(case, "SaveNativeFinanceDraft", "Complete the accounting details for the invoice.", f"accounting invoice {row.invoice_no}", 1, work.holders("Finance preparation"), role="Finance preparation")
+			if row.accounting_state == "Posted":  # Finance already recognised the liability: payment is the next step, and the hold that stood in its way is lifted by this certification
+				work.assign(case, "SaveNativeFinanceDraft", "Prepare the payment record.", f"payment invoice {row.invoice_no}", 1, work.holders("Finance preparation"), role="Finance preparation")
+			else:
+				work.assign(case, "SaveNativeFinanceDraft", "Complete the accounting details for the invoice.", f"accounting invoice {row.invoice_no}", 1, work.holders("Finance preparation"), role="Finance preparation")
 			work.assign(case, work.waiting_command("SaveNativeFinanceDraft", "finance"), "Waiting for Finance.", subject, 1, work.holders(work.HOP), role=work.HOP, state="Waiting")
 			events.record(case, "Certification signed", actor, f"Invoice {row.claim_reference} certified for {recorded['amount']:,.2f}.", certification=cert.name, proof=result["reference"])
 		out = records.summary(doc, invoice=invoice, certification=cert.name, state="Certified")
@@ -282,9 +456,25 @@ def _accounting_row(case: str, invoice: str):
 	row = frappe.get_doc(INVOICE, invoice)
 	if row.contract_case != case:
 		raise frappe.DoesNotExistError("Not found")
-	if row.state not in ("Certified", "Partly paid") or not row.native_invoice:
-		fail("CM_INVOICE", invoice=invoice, state=row.state, reason="Only a certified invoice with a native invoice can be prepared for accounting.")
+	if row.state not in ("Submitted", "Held", "Certified", "Partly paid") or not row.native_invoice:  # Finance may recognise a lawful liability before certification; payment stays held until it (section 5.8)
+		fail("CM_INVOICE", invoice=invoice, state=row.state, reason="Only a claim with a native invoice can be prepared for accounting.")
 	return row
+
+
+def native(call, *args, **kwargs):
+	"""Run a native call and show ERPNext's own refusal in plain words on the same screen (section 7): the message, never a stack, with the owner who can fix a configuration."""
+	try:
+		return call(*args, **kwargs)
+	except errors.ContractError:
+		raise
+	except frappe.ValidationError as exc:
+		message = frappe.utils.strip_html(str(exc)).strip() or "ERPNext refused the update."
+		fail("CM_RECONCILE", native=message, reason=message, holder="Finance configuration owner")
+
+
+def accounting_setup(case: str, invoice: str) -> list[str]:
+	"""What stops the accounting invoice being posted because the site's accounting is not set up for it (the owner is the Finance configuration owner); empty when nothing does."""
+	return adapter.accounting_setup_problems(_accounting_row(case, invoice).native_invoice)
 
 
 def save_accounting_invoice(case: str, *, invoice: str, expected_version: int, idempotency_key: str, actor: str, posting_date: str, payable_account: str, cost_centre: str,
@@ -300,7 +490,7 @@ def save_accounting_invoice(case: str, *, invoice: str, expected_version: int, i
 		row = _accounting_row(case, invoice)
 		if row.accounting_state in ("Submitted for approval", "Posted"):
 			fail("CM_CHANGED", invoice=invoice, accounting=row.accounting_state)
-		saved = adapter.prepare_invoice(row.native_invoice, posting_date=posting_date, payable_account=payable_account, cost_centre=cost_centre, expense_account=expense_account, tax_template=tax_template)
+		saved = native(adapter.prepare_invoice, row.native_invoice, posting_date=posting_date, payable_account=payable_account, cost_centre=cost_centre, expense_account=expense_account, tax_template=tax_template)
 		records.update(row, accounting_state="Draft saved", finance_maker=actor, record_version=cint(row.record_version) + 1)
 		records.bump(doc)
 		events.record(case, "Accounting invoice saved", actor, f"Accounting details of invoice {row.claim_reference} saved.", invoice=invoice, native=row.native_invoice)
@@ -325,6 +515,9 @@ def submit_accounting_invoice(case: str, *, invoice: str, expected_version: int,
 			fail("CM_CHANGED", invoice=invoice, accounting=row.accounting_state)
 		if row.finance_maker and row.finance_maker.lower() != actor.lower():
 			fail("CM_AUTHORITY", missing="responsibility", reason="The person who prepared the draft submits it.")
+		problems = accounting_setup(case, invoice)
+		if problems:
+			fail("CM_RECONCILE", reason="The accounting setup needs review.", holder="Finance configuration owner", problems=problems)
 		if get_workflow_name("Purchase Invoice"):
 			with _as_user(actor):
 				apply_workflow(frappe.get_doc("Purchase Invoice", row.native_invoice), "Submit for approval")
@@ -353,11 +546,12 @@ def approve_accounting_invoice(case: str, *, invoice: str, expected_version: int
 		if row.accounting_state != "Submitted for approval":
 			fail("CM_CHANGED", invoice=invoice, accounting=row.accounting_state)
 		segregation.finance_maker_not_approver(actor, [row.finance_maker])
-		adapter.post_invoice(row.native_invoice, actor)
+		native(adapter.post_invoice, row.native_invoice, actor)
 		records.update(row, accounting_state="Posted", record_version=cint(row.record_version) + 1)
 		work.finish(case, command="ApproveNativeFinanceRecord", subject=f"accounting invoice {row.invoice_no}", actor=actor)
 		work.finish(case, command=work.waiting_command("SaveNativeFinanceDraft", "finance"), actor=actor)
-		work.assign(case, "SaveNativeFinanceDraft", "Prepare the payment record.", f"payment invoice {row.invoice_no}", 1, work.holders("Finance preparation"), role="Finance preparation")
+		if row.state in ("Certified", "Partly paid"):  # a liability recognised before certification waits for it; payment is prepared once it is signed
+			work.assign(case, "SaveNativeFinanceDraft", "Prepare the payment record.", f"payment invoice {row.invoice_no}", 1, work.holders("Finance preparation"), role="Finance preparation")
 		records.bump(doc, invoice_state="Accounting invoice posted")
 		events.record(case, "Accounting invoice posted", actor, f"Accounting invoice {row.native_invoice} posted.", invoice=invoice, native=row.native_invoice)
 		return records.summary(doc, invoice=invoice, accounting="Posted")
@@ -394,12 +588,13 @@ def _as_user(user: str):
 	return service_principal.acting_as(user)
 
 
-def payments(case: str) -> list[dict[str, Any]]:
+def payments(case: str, *, cancelled: bool = False) -> list[dict[str, Any]]:
+	"""The native payment entries of the contract's invoices. Cancelled ones are left out unless asked for (they still count when a new payment is numbered)."""
 	out = []
 	for invoice in frappe.get_all(INVOICE, filters={"contract_case": case, "state": ACTIVE_INVOICE, "native_invoice": ["is", "set"]}, fields=["name", "native_invoice", "invoice_no"]):
 		for pe in frappe.get_all("Payment Entry Reference", filters={"reference_doctype": "Purchase Invoice", "reference_name": invoice.native_invoice}, pluck="parent"):
 			doc = frappe.db.get_value("Payment Entry", pe, ["name", "docstatus", "workflow_state", "paid_amount", "owner", "reference_no", "posting_date"], as_dict=True)
-			if doc.docstatus < 2:
+			if doc.docstatus < 2 or cancelled:
 				out.append({**doc, "invoice": invoice.name, "invoice_no": invoice.invoice_no, "native_invoice": invoice.native_invoice})
 	return out
 
@@ -436,7 +631,7 @@ def save_finance_draft(case: str, *, invoice: str, expected_version: int, idempo
 			records.bump(doc)
 			events.record(case, "Payment draft saved", actor, f"Draft payment {unposted} updated.", payment=unposted, invoice=invoice)
 			return records.summary(doc, invoice=invoice, payment=unposted, amount=wanted, updated=True)
-		number = frappe.db.count(SETTLEMENT, {"contract_case": case, "invoice": invoice}) + len([p for p in payments(case) if p["invoice"] == invoice]) + 1
+		number = len([p for p in payments(case, cancelled=True) if p["invoice"] == invoice]) + 1  # a cancelled entry keeps its number: its operation identity is not reused
 		intent = intents.record(case, f"payment invoice {row.invoice_no}", number, "Native payment", "draft", recovery_owner="Finance; technical recovery")
 		return records.summary(doc, invoice=invoice, intent=intent.name, amount=wanted, payment_no=number)
 
@@ -562,7 +757,27 @@ def return_finance_for_correction(case: str, *, payment: str, expected_version: 
 
 # -- settlement -----------------------------------------------------------------------------------------------------------------------
 def settled_amount(invoice: str) -> float:
+	"""Confirmed cash: the settlements that stand (a reversed or corrected one does not)."""
 	return sum(flt(a) for a in frappe.get_all(SETTLEMENT, filters={"invoice": invoice, "state": "Confirmed"}, pluck="amount"))
+
+
+def invoice_position(case: str, invoice: str) -> dict[str, float]:
+	"""Where one invoice stands, kept in the facts section 5.12 keeps apart: what procurement certified; what Finance recorded as paid (posted native payments); the cash confirmed settled (only attributable
+	evidence counts); the noncash adjustments ERPNext applied to the invoice beyond those payments (an advance set against it, a write-off); and what is still to pay. A credit note standing alone against the
+	invoice is its own fact and reduces nothing here (FU-CM-53), and a zero native balance is not cash."""
+	row = frappe.get_doc(INVOICE, invoice)
+	certified = flt(frappe.db.get_value(CERTIFICATION, {"contract_case": case, "invoice": invoice, "state": "Signed"}, "certified_amount"))
+	recorded = sum(flt(p["paid_amount"]) for p in payments(case) if p["invoice"] == invoice and p["docstatus"] == 1)
+	native_reduced = 0.0
+	credit = 0.0
+	if row.native_invoice:
+		doc = frappe.db.get_value("Purchase Invoice", row.native_invoice, ["grand_total", "outstanding_amount"], as_dict=True)
+		native_reduced = flt(doc.grand_total) - flt(doc.outstanding_amount)
+		credit = adapter.credit_against(row.native_invoice)
+	cash = settled_amount(invoice)
+	noncash = max(0.0, native_reduced - recorded)
+	return {"certified": certified, "recorded": recorded, "cash_confirmed": cash, "unconfirmed": max(0.0, recorded - cash), "noncash": noncash, "credit": credit,
+		"outstanding": max(0.0, certified - recorded - noncash)}
 
 
 def record_finance_settlement(case: str, *, payment: str, expected_version: int, idempotency_key: str, actor: str, effective_date: str, evidence: str) -> dict[str, Any]:
@@ -585,18 +800,21 @@ def record_finance_settlement(case: str, *, payment: str, expected_version: int,
 		segregation.settlement_confirmer_independent(actor, makers=[pe.owner], certifiers=[certifier] if certifier else [])
 		guards = preflight.holds(preflight.rules(doc, "RecordFinanceSettlement"), case, "confirm_settlement", f"invoice {row['invoice_no']}")
 		guards.raise_if_any()
-		settlement = records.new(SETTLEMENT, contract_case=case, invoice=row["invoice"], native_payment=payment, amount=pe.paid_amount, state="Confirmed", evidence_json=records.dumps({"evidence": evidence}),
-			recorder=actor, effective_date=getdate(effective_date), recorded_at=clock.now(), record_version=1)
+		settlement = records.new(SETTLEMENT, contract_case=case, invoice=row["invoice"], native_payment=payment, amount=pe.paid_amount, state="Confirmed",
+			evidence_json=records.dumps({"evidence": evidence, "native_payment": payment, "amount": flt(pe.paid_amount), "recorded_by": actor}), recorder=actor, effective_date=getdate(effective_date), recorded_at=clock.now(), record_version=1)
 		invoice = frappe.get_doc(INVOICE, row["invoice"])
-		certified = flt(frappe.db.get_value(CERTIFICATION, {"contract_case": case, "invoice": invoice.name, "state": "Signed"}, "certified_amount"))
-		whole = settled_amount(invoice.name) + flt(pe.paid_amount) >= certified - TOLERANCE
+		position_now = invoice_position(case, invoice.name)
+		whole = position_now["cash_confirmed"] + position_now["noncash"] >= position_now["certified"] - TOLERANCE
 		records.update(invoice, state="Paid" if whole else "Partly paid", record_version=cint(invoice.record_version) + 1)
 		work.finish(case, command="RecordFinanceSettlement", subject=f"payment {payment}", actor=actor)
 		work.finish(case, command=work.waiting_command("SaveNativeFinanceDraft", "finance"), actor=actor)
 		records.bump(doc, invoice_state="Paid" if whole else "Partly paid")
 		events.record(case, "Settlement confirmed", actor, f"Payment {payment} for {flt(pe.paid_amount):,.2f} confirmed as settled.", settlement=settlement.name, payment=payment)
 		if not whole:
-			work.assign(case, "SaveNativeFinanceDraft", "Prepare the next payment of this invoice.", f"payment invoice {invoice.invoice_no}", 1 + frappe.db.count(SETTLEMENT, {"invoice": invoice.name}), work.holders("Finance preparation"), role="Finance preparation")
+			number = 1 + len(payments(case, cancelled=True))
+			work.assign(case, "SaveNativeFinanceDraft", f"Prepare payment for the remaining {position_now['outstanding']:,.2f}.", f"payment invoice {invoice.invoice_no}", number, work.holders("Finance preparation"), role="Finance preparation")
+			work.assign(case, work.waiting_command("SaveNativeFinanceDraft", "remaining"), f"Following up the remaining {position_now['outstanding']:,.2f}.", f"payment invoice {invoice.invoice_no}", number,
+				work.holders("Finance approval"), role="Finance approval", state="Waiting")
 		from kentender_contracts.services import closeout
 
 		closeout.offer_completion(case)
@@ -604,3 +822,50 @@ def record_finance_settlement(case: str, *, payment: str, expected_version: int,
 
 	return records.command("RecordFinanceSettlement", case=case, idempotency_key=idempotency_key, actor=actor,
 		payload={"expected": expected_version, "payment": payment, "date": effective_date, "evidence": evidence}, body=body, authorise=authorise)
+
+
+def correct_finance_settlement(case: str, *, settlement: str, effective_date: str, evidence: str, reason: str, expected_version: int, idempotency_key: str, actor: str) -> dict[str, Any]:
+	"""`CorrectFinanceSettlement`: change the evidenced settlement (its date and evidence; the cash amount is the native payment's and is not editable) without any ledger write. The earlier confirmation
+	stays as history, marked corrected, and the new one stands in its place. The same independence applies as to the first confirmation."""
+	preflight.exists(case)
+
+	def body() -> dict[str, Any]:
+		invalid({"evidence": "" if cstr(evidence).strip() else "Enter the bank or settlement evidence.", "effective_date": "" if cstr(effective_date).strip() else "Enter the settlement date.", "reason": "" if cstr(reason).strip() else "Enter why it is corrected."})
+		doc = records.lock(case)
+		records.check_version(doc, expected_version)
+		old = frappe.get_doc(SETTLEMENT, settlement)
+		if old.contract_case != case or old.state != "Confirmed":
+			fail("CM_CHANGED", settlement=settlement, state=old.state)
+		pe, row = _native_entry(case, old.native_payment)
+		certifier = frappe.db.get_value(CERTIFICATION, {"contract_case": case, "invoice": old.invoice, "state": "Signed"}, "certifier")
+		segregation.settlement_confirmer_independent(actor, makers=[pe.owner], certifiers=[certifier] if certifier else [])
+		records.update(old, state="Corrected", record_version=cint(old.record_version) + 1)
+		new = records.new(SETTLEMENT, contract_case=case, invoice=old.invoice, native_payment=old.native_payment, amount=old.amount, state="Confirmed", corrects=old.name, reason=cstr(reason).strip(),
+			evidence_json=records.dumps({"evidence": evidence, "native_payment": old.native_payment, "amount": flt(old.amount), "recorded_by": actor}), recorder=actor, effective_date=getdate(effective_date), recorded_at=clock.now(), record_version=1)
+		records.bump(doc)
+		events.record(case, "Settlement corrected", actor, f"The settlement of payment {old.native_payment} was corrected: {cstr(reason).strip()}", settlement=new.name, corrects=old.name)
+		return records.summary(doc, settlement=new.name, corrects=old.name)
+
+	return records.command("CorrectFinanceSettlement", case=case, idempotency_key=idempotency_key, actor=actor,
+		payload={"expected": expected_version, "settlement": settlement, "date": effective_date, "evidence": evidence, "reason": reason}, body=body, authorise=lambda: authority.require(actor, "Finance approval"))
+
+
+def receive_payment_cancelled(native_payment: str, *, actor: str = "") -> dict[str, Any]:
+	"""`ReceiveFinanceResult` for a cancelled native payment (service-only): Finance reversed the entry in ERPNext. The cash it settled is reversed in the projection, not erased: the original
+	confirmation stays, marked reversed, the invoice's outstanding supported amount reopens and Finance is asked to prepare the payment again (section 5.18). Nothing is written to the ledger."""
+	by = actor or "Administrator"
+	reopened = []
+	for stl in frappe.get_all(SETTLEMENT, filters={"native_payment": native_payment, "state": "Confirmed"}, fields=["name", "contract_case", "invoice", "amount"]):
+		case = stl.contract_case
+		doc = records.lock(case)
+		records.update(frappe.get_doc(SETTLEMENT, stl.name), state="Reversed", reversed_at=clock.now(), reason="The native payment was cancelled.")
+		invoice = frappe.get_doc(INVOICE, stl.invoice)
+		now = invoice_position(case, invoice.name)
+		records.update(invoice, state="Partly paid" if now["cash_confirmed"] > 0 else "Certified", record_version=cint(invoice.record_version) + 1)
+		records.bump(doc, invoice_state="Payment reversed")
+		number = 1 + len(payments(case, cancelled=True))
+		work.assign(case, "SaveNativeFinanceDraft", f"Prepare the payment again: {flt(stl.amount):,.2f} was reversed.", f"payment invoice {invoice.invoice_no}", number, work.holders("Finance preparation"), role="Finance preparation")
+		work.assign(case, work.waiting_command("SaveNativeFinanceDraft", "reversed"), f"Following up the reversed payment of {flt(stl.amount):,.2f}.", f"payment invoice {invoice.invoice_no}", number, work.holders("Finance approval"), role="Finance approval", state="Waiting")
+		events.record(case, "Settlement reversed", by, f"Payment {native_payment} of {flt(stl.amount):,.2f} was cancelled in ERPNext: the settlement is reversed and the amount is outstanding again.", settlement=stl.name, payment=native_payment)
+		reopened.append(stl.name)
+	return {"reversed": reopened}

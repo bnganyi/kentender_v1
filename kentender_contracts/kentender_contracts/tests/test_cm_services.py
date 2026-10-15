@@ -154,6 +154,16 @@ class TestRelatedServices(ContractCase):
 		again = payment.submit_invoice(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("c2"), actor=self.p["david"], claim_reference="SVC-INV-2", invoice_date=frappe.utils.today(), lines=[{"line_id": "L2", "quantity": 1}])
 		self.assertEqual(frappe.db.get_value("Contract Invoice", again["invoice"], "state"), "Held", "the same training is not paid twice")
 
+	def test_the_services_claim_is_invoiced_natively_from_the_order_because_there_is_no_receipt(self):
+		arrival = self.serviced()
+		self.certify(arrival)
+		self.sign_all(self.report(arrival))
+		out = payment.submit_invoice(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("c1"), actor=self.p["david"], claim_reference="SVC-INV-1", invoice_date=frappe.utils.today(), lines=[{"line_id": "L2", "quantity": 1}])
+		row = frappe.get_doc("Contract Invoice", out["invoice"])
+		self.assertTrue(row.native_invoice)
+		doc = frappe.get_doc("Purchase Invoice", row.native_invoice)
+		self.assertEqual((doc.docstatus, doc.grand_total, [(i.item_code, i.qty) for i in doc.items], bool(doc.items[0].purchase_receipt)), (0, 50000, [("CM-TEST-SERVICE", 1)], False))
+
 	def test_goods_and_a_service_accepted_together_receive_only_the_goods(self):
 		units = tw.fresh_serials(3)
 		goods = self.t.arrive(units)["arrival"]

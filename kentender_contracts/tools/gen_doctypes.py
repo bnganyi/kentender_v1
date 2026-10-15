@@ -52,7 +52,7 @@ RECORDS = {
 		F("decision_at", "Datetime"), F("posting_intent"), F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Invoice": ("INV", "A supplier's claim against the contract, with its automatic matching and its native invoice.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("invoice_no", "Int"), F("claim_reference"), F("invoice_date", "Date"), F("received_at", "Datetime"), F("claimed_amount", "Currency"),
-		F("state", "Select", "Submitted\nHeld\nCertified\nPartly paid\nPaid\nSuperseded"), F("lines_json", "Long Text"), F("matching_json", "Long Text"),
+		F("state", "Select", "Submitted\nHeld\nCertified\nPartly paid\nPaid\nSuperseded\nSet aside"), F("lines_json", "Long Text"), F("matching_json", "Long Text"), F("first_received_at", "Datetime"),
 		F("native_invoice"), F("accounting_state", "Select", "Not prepared\nDraft saved\nSubmitted for approval\nPosted"), F("finance_maker"), F("successor_of"), F("submitted_by"),
 		F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Certification": ("CTF", "The contractual support for one invoice: the frozen matching, the supported amount and the certifier's proof.", [
@@ -61,8 +61,8 @@ RECORDS = {
 		F("acceptance_versions_json", "Long Text"), F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Settlement": ("STL", "Settlement of a native payment, confirmed only by attributable evidence.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("invoice", "Link", "Contract Invoice"), F("native_payment"), F("amount", "Currency"),
-		F("state", "Select", "Recorded\nConfirmed\nReversed"), F("evidence_json", "Long Text"), F("recorder"), F("effective_date", "Date"), F("recorded_at", "Datetime"),
-		F("record_version", "Int"), F("fixture_namespace")]),
+		F("state", "Select", "Recorded\nConfirmed\nReversed\nCorrected"), F("evidence_json", "Long Text"), F("recorder"), F("effective_date", "Date"), F("recorded_at", "Datetime"),
+		F("corrects"), F("reason", "Small Text"), F("reversed_at", "Datetime"), F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Closeout": ("CLS", "A close-out version: the fulfilment review, surviving obligations and the authorised proof.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("version_no", "Int"), F("state", "Select", "Draft\nAwaiting signature\nClosed\nSuperseded"),
 		F("review_json", "Long Text"), F("signer"), F("proof_reference"), F("closed_at", "Datetime"), F("record_version", "Int"), F("fixture_namespace")]),

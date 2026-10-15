@@ -75,7 +75,7 @@ def tab_of(command: str) -> str:
 TAB_OF_COMMAND = {
 	"RequestContractSignatures": "Agreement", "SignContractVersion": "Agreement", "RecordContractSecurity": "Agreement", "VerifyContractSecurity": "Agreement", "ReviseContractIntake": "Agreement", "ReviewAwardRestriction": "Agreement", "RecordContractNotProceeding": "Agreement", "ConfirmOpeningPosition": "Invoices", "StartContractManagement": "Agreement", "RecommendContractInspectors": "Agreement", "AppointContractInspectors": "Agreement", "DeclareContractInterest": "Agreement",
 	"RecordInspectionObservations": "Deliveries", "ResolveDeliveryException": "Deliveries", "SignTechnicalCertificate": "Deliveries", "PrepareAcceptanceReport": "Deliveries", "SignAcceptanceReport": "Deliveries", "RequestAcceptanceCorrection": "Deliveries", "DecideContractAcceptance": "Deliveries",
-	"SignContractCertification": "Invoices", "RequestInvoiceCorrection": "Invoices", "CorrectContractInvoice": "Invoices", "SaveNativeFinanceDraft": "Invoices",
+	"SignContractCertification": "Invoices", "ResolveInvoiceDuplicate": "Invoices", "RequestInvoiceCorrection": "Invoices", "CorrectContractInvoice": "Invoices", "SaveNativeFinanceDraft": "Invoices", "CorrectFinanceSettlement": "Invoices", "ReconcileInvoiceLiability": "Invoices",
 	"SubmitNativeFinanceForApproval": "Invoices", "ApproveNativeFinanceRecord": "Invoices", "RecordFinanceSettlement": "Invoices",
 	"IssueCompletionCertificate": "Obligations", "PrepareContractCloseout": "Obligations", "SignContractCloseout": "Obligations", "RestoreContractOperation": "Obligations",
 }

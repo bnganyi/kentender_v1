@@ -118,6 +118,20 @@ def fresh_invoice(key: str, units: int = 1) -> str:
 	return pi
 
 
+def credit_note(pi: str, units: int, key: str) -> str:
+	"""Finance's native credit (debit) note against a posted invoice, for `units` at the invoice's rate: the document Finance makes in ERPNext Accounts when a liability must come down."""
+	from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import make_debit_note
+
+	note = make_debit_note(pi)
+	note.cm_operation_identity = identity("credit " + key, "Native invoice")
+	note.bill_no = f"CN-{key}"
+	note.items[0].qty = -units
+	note.insert(ignore_permissions=True)
+	note.submit()
+	frappe.db.commit()
+	return note.name
+
+
 def draft_payment(pi: str, key: str, *, amount: float | None = None, user: str | None = None, supplier_account: str | None = None) -> str:
 	def build_entry():
 		name = adapter.payment_draft(pi, identity("payment " + key, "Native payment"), amount=amount, mode_of_payment=MODE, paid_from=BANK_ACCOUNT, reference_no=f"BANK-{key}")

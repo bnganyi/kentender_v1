@@ -16,6 +16,7 @@
   "state",
   "lines_json",
   "matching_json",
+  "first_received_at",
   "native_invoice",
   "accounting_state",
   "finance_maker",
@@ -68,7 +69,7 @@
    "label": "State",
    "fieldtype": "Select",
    "read_only": 1,
-   "options": "Submitted\nHeld\nCertified\nPartly paid\nPaid\nSuperseded"
+   "options": "Submitted\nHeld\nCertified\nPartly paid\nPaid\nSuperseded\nSet aside"
   },
   {
    "fieldname": "lines_json",
@@ -80,6 +81,12 @@
    "fieldname": "matching_json",
    "label": "Matching json",
    "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "first_received_at",
+   "label": "First received at",
+   "fieldtype": "Datetime",
    "read_only": 1
   },
   {

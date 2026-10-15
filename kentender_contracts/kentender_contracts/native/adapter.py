@@ -166,6 +166,69 @@ def invoice_receipt(receipt: str, identity: str, *, bill_no: str, bill_date: str
 	return invoice.name
 
 
+def invoice_order(order: str, identity: str, *, bill_no: str, bill_date: str | None = None, item_code: str, qty: float, submit: bool = False) -> str:
+	"""A native Purchase Invoice drawn on the order, once per operation identity: a service (which is received into nothing) or a claim that is held for review and not yet covered by a receipt. A fixed-asset
+	item is refused, because ERPNext makes the assets when an invoice with no receipt posts and the receipt would make them again: such a claim is invoiced from its receipt."""
+	existing = find_by_identity("Purchase Invoice", identity)
+	if existing:
+		return existing
+	if frappe.db.get_value("Item", item_code, "is_fixed_asset"):
+		fail("CM_RECONCILE", item=item_code, reason="An asset is made when it is received, so it is invoiced from its receipt, not from the order.")
+	from erpnext.buying.doctype.purchase_order.purchase_order import make_purchase_invoice
+
+	invoice = make_purchase_invoice(order)
+	invoice.items = [row for row in invoice.items if row.item_code == item_code][:1]
+	if not invoice.items:
+		fail("CM_RECONCILE", item=item_code, reason="The order has nothing left to invoice for this item.")
+	invoice.items[0].qty = qty
+	invoice.cm_operation_identity = identity
+	invoice.bill_no = bill_no
+	invoice.bill_date = bill_date or today()
+	invoice.insert(ignore_permissions=True)
+	if submit:
+		invoice.submit()
+	return invoice.name
+
+
+def posted(invoice: str) -> float:
+	"""The amount a native invoice recognised as a liability: its total once posted, nothing while it is a draft or cancelled."""
+	row = frappe.db.get_value("Purchase Invoice", invoice, ["docstatus", "grand_total"], as_dict=True)
+	return flt(row.grand_total) if row and row.docstatus == 1 else 0.0
+
+
+def credit_against(invoice: str) -> float:
+	"""What native credit notes have reduced a posted invoice by. The original keeps its full amount (FU-CM-53); the credit is its own document."""
+	return sum(abs(flt(total)) for total in frappe.get_all("Purchase Invoice", filters={"return_against": invoice, "docstatus": 1}, pluck="grand_total"))
+
+
+def discard_draft_invoice(invoice: str) -> bool:
+	"""Remove a native invoice that was never posted (a superseded claim's draft). A posted one is never touched."""
+	if frappe.db.get_value("Purchase Invoice", invoice, "docstatus") != 0:
+		return False
+	frappe.delete_doc("Purchase Invoice", invoice, force=True, ignore_permissions=True)
+	return True
+
+
+def accounting_setup_problems(invoice: str) -> list[str]:
+	"""What the native invoice cannot be posted without, in plain words: the company's payable account and cost centre, and the accounting treatment of each item (an expense or stock account, or the
+	asset category's account). Read only; the owner of the answer is the Finance configuration owner."""
+	doc = frappe.get_doc("Purchase Invoice", invoice)
+	company = frappe.get_cached_value("Company", doc.company, ["default_payable_account", "cost_center", "stock_received_but_not_billed", "default_expense_account"], as_dict=True)
+	problems = []
+	if not (doc.credit_to or company.default_payable_account):
+		problems.append("There is no payable account.")
+	if not (doc.cost_center or company.cost_center):
+		problems.append("There is no cost centre.")
+	for row in doc.items:
+		item = frappe.db.get_value("Item", row.item_code, ["is_fixed_asset", "asset_category", "is_stock_item"], as_dict=True)
+		if item.is_fixed_asset:
+			if not frappe.db.exists("Asset Category Account", {"parent": item.asset_category, "company_name": doc.company}):
+				problems.append(f"{row.item_code}: the asset category has no account for this company.")
+		elif not (row.expense_account or company.default_expense_account or company.stock_received_but_not_billed):
+			problems.append(f"{row.item_code}: there is no account for it.")
+	return problems
+
+
 def prepare_invoice(invoice: str, *, posting_date: str, payable_account: str, cost_centre: str, expense_account: str, tax_template: str = "") -> dict[str, Any]:
 	"""The accounting details of a Draft native invoice, saved by the Finance maker: posting date, payable account, accounting treatment (the expense or asset account of each line), tax
 	treatment and cost centre. The supplier's quantities and rates are untouched; a submitted invoice is refused."""

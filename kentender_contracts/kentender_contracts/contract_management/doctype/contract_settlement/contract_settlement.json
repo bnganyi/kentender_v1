@@ -16,6 +16,9 @@
   "recorder",
   "effective_date",
   "recorded_at",
+  "corrects",
+  "reason",
+  "reversed_at",
   "record_version",
   "fixture_namespace"
  ],
@@ -52,7 +55,7 @@
    "label": "State",
    "fieldtype": "Select",
    "read_only": 1,
-   "options": "Recorded\nConfirmed\nReversed"
+   "options": "Recorded\nConfirmed\nReversed\nCorrected"
   },
   {
    "fieldname": "evidence_json",
@@ -75,6 +78,24 @@
   {
    "fieldname": "recorded_at",
    "label": "Recorded at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "corrects",
+   "label": "Corrects",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "label": "Reason",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reversed_at",
+   "label": "Reversed at",
    "fieldtype": "Datetime",
    "read_only": 1
   },

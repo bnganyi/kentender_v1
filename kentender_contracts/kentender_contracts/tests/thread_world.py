@@ -299,7 +299,8 @@ def _more(cls):
 		"""The accounting invoice is posted, then Josphat drafts and submits the payment, Beatrice approves and confirms the settlement."""
 		from kentender_contracts.services import payment
 
-		self.post_accounting(invoice)
+		if frappe.db.get_value("Contract Invoice", invoice, "accounting_state") != "Posted":  # Finance may already have posted the liability
+			self.post_accounting(invoice)
 		draft = payment.save_finance_draft(self.case, invoice=invoice, expected_version=self.version(), idempotency_key=self.key("draft"), actor=self.p["josphat"], mode_of_payment=world.MODE,
 			paid_from=world.BANK_ACCOUNT, reference_no=reference)
 		payment.submit_finance_for_approval(self.case, payment=draft["payment"], expected_version=self.version(), idempotency_key=self.key("submit"), actor=self.p["josphat"])
