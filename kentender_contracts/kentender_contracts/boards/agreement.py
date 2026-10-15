@@ -70,6 +70,8 @@ def parties_region(ctx: Context) -> dict:
 
 
 def signatures_region(ctx: Context) -> dict:
+	if not ctx.signatures and ctx.doc.source_kind == "External record":
+		return kit.R("Signatures", kit.xh("This contract was signed outside Contract Management and is recorded from an external source. Nobody is asked to sign it again."))
 	rows = [[ctx.name(s["signer"]), "Supplier authorised signatory" if s["party"] == "Supplier" else "Entity signatory", SIGNATURE_STATE.get(s["state"], "!Awaiting signature")] for s in ctx.signatures]
 	return kit.R("Signatures", kit.t(["Signatory", "Capacity", "Status"], rows))
 
@@ -87,6 +89,8 @@ def _particulars_fields(ctx: Context, missing: list[str]) -> dict:
 			fields.append(kit.pick(f"Catalogue item for {line.get('description') or line.get('item')}", current, "contracts.native_record", f"item_mapping.{line['line_id']}", {"kind": "item"}, current, "item"))
 	if "native_supplier" in missing:
 		fields.append(kit.pick("Supplier in Finance", have.get("native_supplier", ""), "contracts.native_record", "native_supplier", {"kind": "supplier"}, have.get("native_supplier", ""), "supplier"))
+	if "ag_clearance" in missing:
+		fields.append(kit.tx("Attorney-General clearance reference", have.get("ag_clearance", ""), "ag_clearance"))
 	if "asset_location" in missing:
 		fields.append(kit.pick("Asset location", have.get("asset_location", ""), "contracts.native_record", "asset_location", {"kind": "location"}, have.get("asset_location", ""), "location"))
 	return kit.R("Particulars to complete", kit.fl(*fields), kit.xh("These are the details the issued terms do not supply. Save them, then send the agreement for signature."))

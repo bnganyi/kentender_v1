@@ -1,0 +1,125 @@
+{
+ "actions": {
+  "Confirm opening position": {
+   "args": {},
+   "command": "ConfirmOpeningPosition",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "finance"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-2027-0001",
+ "d": "D21",
+ "dialogs": {},
+ "ev": [],
+ "id": "D21",
+ "name": "Opening position",
+ "next": {
+  "h": "Confirm the opening position.",
+  "k": "turn",
+  "s": "Responsible: Beatrice Kamau"
+ },
+ "p": "Confirm opening position",
+ "page": "record",
+ "ref": "CM-2027-0001",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Fact",
+      "Source",
+      "Native linked"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      1,
+      2
+     ],
+     "rows": [
+      [
+       "Accepted units",
+       "4",
+       "4"
+      ],
+      [
+       "In custody",
+       "2",
+       "Custody record 2"
+      ],
+      [
+       "Invoiced",
+       "KES 400,000",
+       "KES 400,000"
+      ],
+      [
+       "Cash paid",
+       "KES 0",
+       "Not linked"
+      ],
+      [
+       "Outstanding",
+       "KES 400,000",
+       "KES 400,000"
+      ],
+      [
+       "Advance",
+       "KES 0",
+       "Not linked"
+      ]
+     ]
+    }
+   ],
+   "t": "Opening comparison"
+  }
+ ],
+ "s2": [
+  "-Report difference"
+ ],
+ "st": "Preparing",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-2027-0001",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-2027-0001",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-2027-0001",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-2027-0001",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-2027-0001",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review prior activity",
+ "version": 2
+}

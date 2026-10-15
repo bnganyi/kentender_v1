@@ -1,0 +1,140 @@
+{
+ "actions": {
+  "Confirm signature evidence": {
+   "args": {},
+   "command": "ConfirmOutsideSignatureEvidence",
+   "do": "command"
+  },
+  "Signed agreement 1 \u2014 entity": {
+   "do": "download",
+   "url": "/api/method/kentender_contracts.api.contract.download_evidence?contract=CM-TEST-0001&file=61d24b9d48"
+  },
+  "Signed agreement 1 \u2014 supplier": {
+   "do": "download",
+   "url": "/api/method/kentender_contracts.api.contract.download_evidence?contract=CM-TEST-0001&file=2cf43a6051"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-0001",
+ "d": "D26",
+ "dialogs": {},
+ "ev": [
+  "Agreement 1"
+ ],
+ "id": "D26-E",
+ "name": "Record outside signature",
+ "next": {
+  "h": "Check the signed agreement.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Confirm signature evidence",
+ "page": "record",
+ "ref": "CM-TEST-0001",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Party",
+      "Signed by",
+      "Capacity",
+      "Signed on",
+      "Copy"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [],
+     "rows": [
+      [
+       "Supplier",
+       "Mary Wanjiku",
+       "Authorised signatory",
+       "2 Jul 2027",
+       "@Signed agreement 1 \u2014 supplier"
+      ],
+      [
+       "Procuring entity",
+       "Amina Hassan",
+       "Accounting Officer",
+       "2 Jul 2027",
+       "@Signed agreement 1 \u2014 entity"
+      ]
+     ]
+    }
+   ],
+   "t": "Signed copies"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Whole-document version",
+       "Agreement 1"
+      ],
+      [
+       "Authority source",
+       "The authority the agreement names for each party"
+      ],
+      [
+       "Reviewed method",
+       "Outside signing permitted in these test terms"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Signing basis"
+  }
+ ],
+ "s2": [
+  "-Report a problem"
+ ],
+ "st": "Awaiting signatures",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-0001",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-0001",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-0001",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-0001",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-0001",
+    "history"
+   ]
+  }
+ ],
+ "title": "Check signed agreement",
+ "version": 5
+}

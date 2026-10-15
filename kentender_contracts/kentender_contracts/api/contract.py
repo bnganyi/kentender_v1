@@ -42,7 +42,11 @@ def run_contract_command(command: str, contract: str, expected_version: int, ide
 	if handler is None:
 		return {"ok": False, "code": "CM_CHANGED", "message": "This action is not available.", "detail": {"command": command}, "reasons": []}
 	try:
-		if not frappe.db.exists("Contract Case", contract) or not audience.readable(user, contract):
+		if contract == "register":  # a contract that does not exist yet: only its registration is asked here
+			if command != "RegisterExistingContract":
+				return _denied()
+			contract = ""
+		elif not frappe.db.exists("Contract Case", contract) or not audience.readable(user, contract):
 			return _denied()
 		result = handler(contract, frappe.parse_json(args) if args else {}, frappe.parse_json(values) if values else {}, int(expected_version), idempotency_key, user)
 		return {**result, "ok": True}
@@ -52,3 +56,19 @@ def run_contract_command(command: str, contract: str, expected_version: int, ide
 	except InputError as exc:
 		frappe.db.rollback()
 		return {"ok": False, "code": exc.code, "message": str(exc), "detail": exc.detail, "fields": exc.fields, "reasons": []}
+
+
+@frappe.whitelist()
+def download_evidence(contract: str, file: str) -> None:
+	"""A signed copy or guarantee the contract relies on, to a reader the contract allows. Any other file, or a contract the reader may not open, is simply not found."""
+	from kentender_contracts.services import evidence
+	from kentender_core.services import file_integrity
+
+	user = frappe.session.user
+	found = audience.readable(user, contract) if frappe.db.exists("Contract Case", contract) else []
+	if not found or not ({"terms", "history"} & set(audience.field_sets(found))) or file not in evidence.attached(contract):
+		raise frappe.DoesNotExistError("Not found")
+	content = file_integrity.read_bytes(file)
+	frappe.local.response.filename = frappe.db.get_value("File", file, "file_name") or "evidence"
+	frappe.local.response.filecontent = content
+	frappe.local.response.type = "download"

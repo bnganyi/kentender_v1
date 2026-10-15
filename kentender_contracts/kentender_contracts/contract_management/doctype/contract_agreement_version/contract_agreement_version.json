@@ -17,6 +17,7 @@
   "terms_json",
   "items_json",
   "missing_json",
+  "intake_json",
   "rendered_html",
   "rendered_digest",
   "frozen_at",
@@ -89,6 +90,12 @@
   {
    "fieldname": "missing_json",
    "label": "Missing json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "intake_json",
+   "label": "Intake json",
    "fieldtype": "Long Text",
    "read_only": 1
   },

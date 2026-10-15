@@ -155,7 +155,14 @@ function act(label) {
 	if (spec.do === "dialog") dialogKey.value = spec.dialog;
 	else if (spec.do === "tab") emit("tab", spec.tab);
 	else if (spec.do === "route") emit("route", spec.route);
-	else if (spec.do === "command") {
+	else if (spec.do === "download") {
+		const link = document.createElement("a");
+		link.href = spec.url;
+		link.download = "";
+		document.body.appendChild(link);
+		link.click();
+		link.remove();
+	} else if (spec.do === "command") {
 		// the screen's own fields, and those of a dialog that only gathers input for it (the unit references typed in a dialog belong to the delivery the page records)
 		const local = Object.values(props.board.dialogs || {}).filter((d) => d.local).flatMap((d) => d.b);
 		emit("run", { spec, values: valuesFor([...regions.value.flatMap((r) => r.b), ...local]) });

@@ -3,7 +3,7 @@
   "Prepare report for signing": {
    "args": {
     "arrivals": [
-     "CM-ARR-380163"
+     "CM-ARR-419920"
     ]
    },
    "command": "PrepareAcceptanceReport",
@@ -73,14 +73,14 @@
      "num": [],
      "rows": [
       [
-       "CMT96C999-0009",
+       "CMT9A002F-0009",
        "Starts successfully is No, the requirement is Yes.",
        "",
        "",
        "!Does not meet"
       ],
       [
-       "CMT96C999-0010",
+       "CMT9A002F-0010",
        "Starts successfully is No, the requirement is Yes.",
        "",
        "",

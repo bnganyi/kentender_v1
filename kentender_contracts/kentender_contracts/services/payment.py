@@ -20,7 +20,7 @@ import frappe
 from frappe.utils import cint, cstr, flt, getdate
 
 from kentender_contracts.native import adapter, payment_guard
-from kentender_contracts.services import authority, clock, delivery, events, formation, intents, parties, people, position, preflight, records, segregation, service_principal, signing_flow, work
+from kentender_contracts.services import authority, clock, delivery, events, formation, intents, opening, parties, people, position, preflight, records, segregation, service_principal, signing_flow, work
 from kentender_contracts.services.errors import fail, invalid
 
 CASE = "Contract Case"
@@ -41,6 +41,8 @@ def _claimed(case: str, exclude: str = "") -> dict[str, int]:
 	for row in frappe.get_all(INVOICE, filters={"contract_case": case, "state": ACTIVE_INVOICE, "name": ["!=", exclude]}, fields=["lines_json"]):
 		for line in records.loads(row.lines_json, []):
 			out[line["line_id"]] = out.get(line["line_id"], 0) + cint(line["quantity"])
+	for lid in (opening.of(case).get("lines") or {}):  # what a registered existing contract had already claimed before management started
+		out[lid] = out.get(lid, 0) + opening.line(case, lid)["invoiced_quantity"]
 	return out
 
 
@@ -65,9 +67,13 @@ def match_claim(case: str, lines: list[dict[str, Any]], *, exclude: str = "") ->
 	claimed = _claimed(case, exclude)
 	on_receipt = _claimed_on_receipts(case, exclude)
 	receipts = delivery.posted_receipts(case)
+	carried = (opening.of(case).get("links") or {}).get("purchase_receipt")  # the existing contract's own receipt carries the units accepted before management started
+	if carried:
+		receipts = [carried, *receipts]
+		on_receipt[carried] = on_receipt.get(carried, 0) + sum(opening.line(case, lid)["invoiced_quantity"] for lid in (opening.of(case).get("lines") or {}))
 	rows = []
 	value = flt(terms["total"])
-	previous_amount = sum(flt(r) for r in frappe.get_all(INVOICE, filters={"contract_case": case, "state": ACTIVE_INVOICE, "name": ["!=", exclude]}, pluck="claimed_amount"))
+	previous_amount = opening.invoiced(case) + sum(flt(r) for r in frappe.get_all(INVOICE, filters={"contract_case": case, "state": ACTIVE_INVOICE, "name": ["!=", exclude]}, pluck="claimed_amount"))
 	for line in lines:
 		contract = ordered.get(line["line_id"])
 		quantity, rate = cint(line["quantity"]), flt(line.get("rate") if line.get("rate") not in (None, "") else (contract or {}).get("rate"))

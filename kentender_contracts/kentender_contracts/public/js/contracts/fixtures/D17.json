@@ -3,7 +3,7 @@
   "Approve payment": {
    "args": {
     "kind": "payment",
-    "payment": "ACC-PAY-2026-00038"
+    "payment": "ACC-PAY-2026-00048"
    },
    "command": "ApproveNativeFinanceRecord",
    "do": "command"
@@ -23,7 +23,7 @@
   "return": {
    "args": {
     "kind": "payment",
-    "payment": "ACC-PAY-2026-00038"
+    "payment": "ACC-PAY-2026-00048"
    },
    "b": [
     {
@@ -50,7 +50,7 @@
  "ev": [
   "Certification 1",
   "Accounting invoice",
-  "Payment Entry ACC-PAY-2026-00038"
+  "Payment Entry ACC-PAY-2026-00048"
  ],
  "id": "D17",
  "name": "Finance payment approval",

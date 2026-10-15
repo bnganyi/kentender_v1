@@ -73,7 +73,7 @@ def tab_of(command: str) -> str:
 
 
 TAB_OF_COMMAND = {
-	"RequestContractSignatures": "Agreement", "SignContractVersion": "Agreement", "RecordContractSecurity": "Agreement", "VerifyContractSecurity": "Agreement", "RecommendContractInspectors": "Agreement", "AppointContractInspectors": "Agreement", "DeclareContractInterest": "Agreement",
+	"RequestContractSignatures": "Agreement", "SignContractVersion": "Agreement", "RecordContractSecurity": "Agreement", "VerifyContractSecurity": "Agreement", "ReviseContractIntake": "Agreement", "ReviewAwardRestriction": "Agreement", "RecordContractNotProceeding": "Agreement", "ConfirmOpeningPosition": "Invoices", "StartContractManagement": "Agreement", "RecommendContractInspectors": "Agreement", "AppointContractInspectors": "Agreement", "DeclareContractInterest": "Agreement",
 	"RecordInspectionObservations": "Deliveries", "SignTechnicalCertificate": "Deliveries", "PrepareAcceptanceReport": "Deliveries", "SignAcceptanceReport": "Deliveries",
 	"SignContractCertification": "Invoices", "RequestInvoiceCorrection": "Invoices", "CorrectContractInvoice": "Invoices", "SaveNativeFinanceDraft": "Invoices",
 	"SubmitNativeFinanceForApproval": "Invoices", "ApproveNativeFinanceRecord": "Invoices", "RecordFinanceSettlement": "Invoices",

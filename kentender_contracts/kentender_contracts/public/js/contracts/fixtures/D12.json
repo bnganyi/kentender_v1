@@ -1,0 +1,636 @@
+{
+ "actions": {
+  "Cancel": {
+   "do": "route",
+   "route": []
+  },
+  "Save and review": {
+   "args": {},
+   "command": "RegisterExistingContract",
+   "do": "command"
+  }
+ },
+ "audiences": [],
+ "back": "Back to contracts",
+ "case": "",
+ "d": "D12",
+ "dialogs": {},
+ "ev": [],
+ "id": "D12",
+ "name": "Existing contract",
+ "next": {
+  "h": "Record the signed contract and its current position.",
+  "k": "turn",
+  "s": "Responsible: Brian Wafula"
+ },
+ "p": "Save and review",
+ "page": "record",
+ "ref": "",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Source",
+       "name": "source",
+       "o": {},
+       "opts": [
+        "External records",
+        "eGP"
+       ],
+       "t": "sel",
+       "v": "External records"
+      },
+      {
+       "l": "Source contract reference",
+       "name": "reference",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "eGP tender reference",
+       "name": "egp_tender_reference",
+       "o": {},
+       "t": "tx",
+       "v": "",
+       "when": {
+        "source": "eGP"
+       }
+      },
+      {
+       "l": "eGP contract reference",
+       "name": "egp_contract_reference",
+       "o": {},
+       "t": "tx",
+       "v": "",
+       "when": {
+        "source": "eGP"
+       }
+      },
+      {
+       "l": "Supplier's country",
+       "name": "supplier_country",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Supplier's registration number",
+       "name": "supplier_registration",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Signed agreement",
+       "name": "agreement_file",
+       "o": {},
+       "t": "file",
+       "v": ""
+      },
+      {
+       "l": "Amendments",
+       "name": "amendments",
+       "o": {},
+       "t": "ta",
+       "v": "None"
+      },
+      {
+       "l": "Signed on",
+       "name": "signed_on",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Effective on",
+       "name": "effective_on",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Cutover",
+       "name": "cutover",
+       "o": {
+        "time": true
+       },
+       "t": "dt",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Source"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "context": {
+        "role": "Contract inspection"
+       },
+       "l": "Contract owner",
+       "name": "owner",
+       "noun": "contract owner",
+       "o": {},
+       "source": "contracts.person",
+       "t": "pick",
+       "v": "",
+       "valueLabel": ""
+      },
+      {
+       "context": {},
+       "l": "Managing unit",
+       "name": "managing_unit",
+       "noun": "unit",
+       "o": {},
+       "source": "contracts.unit",
+       "t": "pick",
+       "v": "",
+       "valueLabel": ""
+      },
+      {
+       "l": "Supplier signatory",
+       "name": "",
+       "o": {},
+       "t": "ro",
+       "v": "Not yet known"
+      },
+      {
+       "context": {
+        "role": "Entity contract signing"
+       },
+       "l": "Entity signatory",
+       "name": "entity_signatory",
+       "noun": "signatory",
+       "o": {},
+       "source": "contracts.person",
+       "t": "pick",
+       "v": "",
+       "valueLabel": ""
+      },
+      {
+       "l": "Review regime",
+       "name": "",
+       "o": {},
+       "t": "ro",
+       "v": "Kenya public procurement \u2014 applicability review pending"
+      },
+      {
+       "l": "Source clause reference",
+       "name": "clauses",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Parties and ownership"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Original value",
+       "name": "original_value",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Current value",
+       "name": "current_value",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Currency",
+       "name": "currency",
+       "o": {},
+       "t": "ro",
+       "v": "KES"
+      }
+     ],
+     "k": "fields"
+    },
+    {
+     "cols": [
+      "Item description",
+      "Quantity",
+      "UOM",
+      "Rate",
+      "Tax treatment",
+      "Serial tracking",
+      "Accepted",
+      "In custody",
+      "Invoiced quantity"
+     ],
+     "inputs": {
+      "0,0": "row.1.description",
+      "0,1": "row.1.quantity",
+      "0,2": "row.1.uom",
+      "0,3": "row.1.rate",
+      "0,4": "row.1.tax",
+      "0,6": "row.1.accepted",
+      "0,7": "row.1.in_custody",
+      "0,8": "row.1.invoiced_quantity",
+      "1,0": "row.2.description",
+      "1,1": "row.2.quantity",
+      "1,2": "row.2.uom",
+      "1,3": "row.2.rate",
+      "1,4": "row.2.tax",
+      "1,6": "row.2.accepted",
+      "1,7": "row.2.in_custody",
+      "1,8": "row.2.invoiced_quantity",
+      "2,0": "row.3.description",
+      "2,1": "row.3.quantity",
+      "2,2": "row.3.uom",
+      "2,3": "row.3.rate",
+      "2,4": "row.3.tax",
+      "2,6": "row.3.accepted",
+      "2,7": "row.3.in_custody",
+      "2,8": "row.3.invoiced_quantity"
+     },
+     "k": "table",
+     "live": {},
+     "num": [],
+     "rows": [
+      [
+       "~",
+       "#",
+       "~",
+       "~",
+       "^Included|Included,Excluded",
+       "\u2014",
+       "#",
+       "#",
+       "#"
+      ],
+      [
+       "~",
+       "#",
+       "~",
+       "~",
+       "^Included|Included,Excluded",
+       "\u2014",
+       "#",
+       "#",
+       "#"
+      ],
+      [
+       "~",
+       "#",
+       "~",
+       "~",
+       "^Included|Included,Excluded",
+       "\u2014",
+       "#",
+       "#",
+       "#"
+      ]
+     ]
+    },
+    {
+     "items": [
+      {
+       "context": {
+        "kind": "supplier"
+       },
+       "l": "Supplier in Finance",
+       "name": "native_supplier",
+       "noun": "supplier",
+       "o": {},
+       "source": "contracts.native_record",
+       "t": "pick",
+       "v": "",
+       "valueLabel": ""
+      },
+      {
+       "context": {
+        "kind": "location"
+       },
+       "l": "Asset location",
+       "name": "asset_location",
+       "noun": "location",
+       "o": {},
+       "source": "contracts.native_record",
+       "t": "pick",
+       "v": "",
+       "valueLabel": ""
+      }
+     ],
+     "k": "fields"
+    },
+    {
+     "k": "help",
+     "v": "Fill one row for each item; leave the opening columns blank for a figure that is not established."
+    }
+   ],
+   "t": "Value and items"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Delivery",
+       "name": "delivery_due",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Payment days",
+       "name": "payment_days",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Warranty months",
+       "name": "warranty_months",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Advance provided",
+       "name": "advance_allowed",
+       "o": {},
+       "opts": [
+        "Select",
+        "Yes",
+        "No"
+       ],
+       "t": "sel",
+       "v": "Select"
+      },
+      {
+       "l": "Performance security required",
+       "name": "security_required",
+       "o": {},
+       "opts": [
+        "Select",
+        "Yes",
+        "No"
+       ],
+       "t": "sel",
+       "v": "Select"
+      },
+      {
+       "l": "Active restrictions",
+       "name": "restrictions",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Acceptance criteria",
+       "name": "acceptance",
+       "o": {},
+       "t": "ta",
+       "v": "",
+       "wide": true
+      }
+     ],
+     "k": "fields"
+    },
+    {
+     "items": [
+      [
+       "Payment",
+       "Not yet given"
+      ],
+      [
+       "Warranty",
+       "Not yet given"
+      ],
+      [
+       "Restrictions",
+       "None recorded"
+      ],
+      [
+       "Completion",
+       "After all contractual obligations"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "k": "help",
+     "v": "One acceptance criterion per line: Name | comparison (>=, <=, >, <, =) | value | unit."
+    }
+   ],
+   "t": "Operative terms"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Prior activity",
+       "name": "prior_activity",
+       "o": {},
+       "opts": [
+        "Select",
+        "None",
+        "Some"
+       ],
+       "t": "sel",
+       "v": "Select"
+      },
+      {
+       "l": "Currency",
+       "name": "opening_currency",
+       "o": {},
+       "t": "ro",
+       "v": "KES"
+      },
+      {
+       "l": "Invoiced (KES)",
+       "name": "opening_invoiced",
+       "o": {},
+       "t": "tx",
+       "v": "",
+       "when": {
+        "prior_activity": "Some"
+       }
+      },
+      {
+       "l": "Credits (KES)",
+       "name": "opening_credits",
+       "o": {},
+       "t": "tx",
+       "v": "",
+       "when": {
+        "prior_activity": "Some"
+       }
+      },
+      {
+       "l": "Confirmed cash paid (KES)",
+       "name": "opening_cash_paid",
+       "o": {},
+       "t": "tx",
+       "v": "",
+       "when": {
+        "prior_activity": "Some"
+       }
+      },
+      {
+       "l": "Outstanding (KES)",
+       "name": "opening_outstanding",
+       "o": {},
+       "t": "tx",
+       "v": "",
+       "when": {
+        "prior_activity": "Some"
+       }
+      },
+      {
+       "l": "Advance (KES)",
+       "name": "opening_advance",
+       "o": {},
+       "t": "tx",
+       "v": "",
+       "when": {
+        "prior_activity": "Some"
+       }
+      },
+      {
+       "l": "Unit references of the goods in custody",
+       "name": "units_in_custody",
+       "o": {},
+       "t": "ta",
+       "v": "",
+       "when": {
+        "prior_activity": "Some"
+       },
+       "wide": true
+      },
+      {
+       "context": {
+        "kind": "purchase_order"
+       },
+       "l": "Linked order",
+       "name": "link_purchase_order",
+       "noun": "purchase order",
+       "o": {},
+       "source": "contracts.native_record",
+       "t": "pick",
+       "v": "",
+       "valueLabel": "",
+       "when": {
+        "prior_activity": "Some"
+       }
+      },
+      {
+       "context": {
+        "kind": "purchase_receipt"
+       },
+       "l": "Linked receipt",
+       "name": "link_purchase_receipt",
+       "noun": "purchase receipt",
+       "o": {},
+       "source": "contracts.native_record",
+       "t": "pick",
+       "v": "",
+       "valueLabel": "",
+       "when": {
+        "prior_activity": "Some"
+       }
+      },
+      {
+       "context": {
+        "kind": "purchase_invoice"
+       },
+       "l": "Linked invoice",
+       "name": "link_purchase_invoice",
+       "noun": "purchase invoice",
+       "o": {},
+       "source": "contracts.native_record",
+       "t": "pick",
+       "v": "",
+       "valueLabel": "",
+       "when": {
+        "prior_activity": "Some"
+       }
+      },
+      {
+       "context": {
+        "kind": "payment_entry"
+       },
+       "l": "Linked payment",
+       "name": "link_payment_entry",
+       "noun": "payment entry",
+       "o": {},
+       "source": "contracts.native_record",
+       "t": "pick",
+       "v": "",
+       "valueLabel": "",
+       "when": {
+        "prior_activity": "Some"
+       }
+      }
+     ],
+     "k": "fields"
+    },
+    {
+     "items": [
+      [
+       "Linked receipt",
+       "Not linked"
+      ],
+      [
+       "Linked invoice",
+       "Not linked"
+      ],
+      [
+       "Linked payment and settlement",
+       "Not linked"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "k": "help",
+     "v": "Draft entered facts, not confirmed native balances until Finance review. Unknown values stay blank as Not established."
+    }
+   ],
+   "t": "Opening position"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Not yet given",
+       "Locators for the values above"
+      ]
+     ],
+     "k": "preview",
+     "open": false,
+     "t": "View source clauses"
+    }
+   ],
+   "t": ""
+  }
+ ],
+ "s2": [
+  "Cancel"
+ ],
+ "st": "Preparing",
+ "sub": "",
+ "tab": "Agreement",
+ "tabs": [],
+ "title": "Register existing contract",
+ "version": 0
+}

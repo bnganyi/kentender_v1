@@ -74,3 +74,20 @@ class TestPickerSources(IntegrationTestCase):
 		with self.assertRaises(errors.InputError) as caught:
 			delivery._members([{"user": self.people["julia"], "capacity": "Chair"}, {"user": self.people["grace"]}, {"user": self.people["brian"]}])
 		self.assertIn("does not hold the Contract inspection responsibility", caught.exception.fields["members"])
+
+	def test_units_are_listed_only_where_the_person_prepares_contracts(self):
+		everyone = {r["id"] for r in self.ask("charles", sources.UNIT, {})["rows"]}
+		self.assertEqual(everyone, set(frappe.get_all("Organisation Unit", pluck="name")), "the head of procurement prepares for every unit")
+		brian = {r["id"] for r in self.ask("brian", sources.UNIT, {})["rows"]}
+		self.assertEqual(brian, {tw.unit()}, "a Contract preparation assignment reaches its own unit")
+		for who in ("julia", "mary", "grace", "stranger"):
+			with self.assertRaises(frappe.DoesNotExistError):
+				self.ask(who, sources.UNIT, {})
+		self.assertEqual([r["id"] for r in self.ask("brian", sources.UNIT, {}, "no such unit anywhere")["rows"]], [])
+
+	def test_the_native_documents_an_opening_position_links_are_chosen_by_preparers_only(self):
+		for kind in ("purchase_order", "purchase_receipt", "purchase_invoice", "payment_entry"):
+			self.assertIn("rows", self.ask("brian", sources.RECORD, {"kind": kind}), kind)
+			for who in ("julia", "mary"):
+				with self.assertRaises(frappe.DoesNotExistError):
+					self.ask(who, sources.RECORD, {"kind": kind})

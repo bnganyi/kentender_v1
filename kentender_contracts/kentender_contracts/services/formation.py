@@ -20,7 +20,7 @@ import frappe
 from frappe.utils import cint, cstr, formatdate, getdate
 
 from kentender_contracts.native import adapter
-from kentender_contracts.services import authority, clock, events, intents, parties, people, preflight, records, service_principal, simulation, source_package, signing_flow, work
+from kentender_contracts.services import authority, clock, events, formation_rules, intents, parties, people, preflight, records, service_principal, simulation, source_package, signing_flow, work
 from kentender_contracts.services.errors import Guards, fail, invalid
 from kentender_core.services import contract_funding_contract as funding_seam
 from kentender_core.utils.series import allocation_lock
@@ -29,10 +29,10 @@ CASE = "Contract Case"
 AGREEMENT = "Contract Agreement Version"
 SIGNATURE = "Contract Signature"
 PACKAGE = "Contract Source Package"
-PARTICULARS = ("agreement_date", "entity_signatory", "supplier_signatory", "item_mapping", "native_supplier", "company", "destination", "asset_location")
+PARTICULARS = ("agreement_date", "entity_signatory", "supplier_signatory", "item_mapping", "native_supplier", "company", "destination", "asset_location", "ag_clearance")
 LABELS = {
 	"agreement_date": "Agreement date", "entity_signatory": "Entity signatory", "supplier_signatory": "Supplier signatory", "item_mapping": "Catalogue item for each line",
-	"native_supplier": "Supplier in Finance", "company": "Company", "destination": "Delivery destination", "asset_location": "Asset location",
+	"native_supplier": "Supplier in Finance", "company": "Company", "destination": "Delivery destination", "asset_location": "Asset location", "ag_clearance": "Attorney-General clearance reference",
 }
 REQUIRED_PACKAGE_KEYS = ("award_case", "tender", "decision", "contract_terms", "restrictions")
 SIGNING_METHOD = signing_flow.METHOD
@@ -60,6 +60,10 @@ def receive_award_package(package: dict[str, Any], *, handoff: list[dict[str, An
 		if missing or (package.get("decision") or {}).get("outcome") != "Award":
 			fail("CM_SOURCE", missing=missing, reason="The award package is incomplete or is not an award.")
 		decision = package["decision"]
+		stated = formation_rules.scope(package)
+		if not formation_rules.in_scope(stated):  # CM-R-17: a complex or specialised contract is outside this product, whatever the profile says
+			fail("CM_RULE", rule="CM-R-17", name="Complexity boundary", hold_key="OUT_OF_SCOPE_PRODUCT", classification=stated, holder="Head of procurement function",
+				reason="This is a complex or specialised contract, which this product does not manage.")
 		doc = records.new(CASE, contract_id=contract_id or _next_contract_id(), source_kind="KenTender award", source_reference=award_case, supplier_organisation=decision.get("organisation"),
 			supplier_name=decision.get("supplier"), managing_unit=managing_unit or None, currency=decision.get("currency"), contract_value=decision.get("evaluated_amount"),
 			tender_reference=package.get("tender_reference") or package.get("tender"), award_reference=decision.get("id"), legal_profile=package.get("legal_profile") or "", lifecycle="Preparing",
@@ -117,13 +121,15 @@ def _assemble(doc, particulars: dict[str, Any]) -> dict[str, Any]:
 	complete = all(mapping.get(l["line_id"]) for l in lines)
 	if not particulars.get("asset_location") and (not complete or any(_creates_assets(mapping[l["line_id"]]) for l in lines)):  # until every line is mapped we cannot say no unit needs a place
 		missing.append("asset_location")
+	if formation_rules.clearance_required({"total": total, "parties": {"entity": {"entity_type": entity.get("entity_type")}}}, preflight.profile(doc).parameter("ag_clearance_threshold").value) and not particulars.get("ag_clearance"):
+		missing.append("ag_clearance")
 	terms = {
 		"title": s["S1"].get("title") or doc.title, "currency": currency, "tax_included": bool(s["S3"].get("tax_included")), "total": total, "lines": lines,
 		"delivery": {"due": s["S4"]["delivery_schedule"]["due"], "destination": particulars.get("destination") or s["S4"]["delivery_schedule"].get("destination", "")},
-		"warranty": s["S5"]["warranty"], "security": s["S5"]["performance_security"], "advance": s["S5"].get("advance", {}), "payment": s["S5"].get("payment", {}),
+		"warranty": s["S5"]["warranty"], "security": s["S5"]["performance_security"], "signing": s["S5"].get("signing", {}), "advance": s["S5"].get("advance", {}), "payment": s["S5"].get("payment", {}),
 		"criteria": s["S6"]["criteria"], "signing_window": s["S8"], "funding": s["S9"], "restrictions": s["S12"].get("restrictions", []),
 		"parties": {
-			"entity": {"name": entity["legal_name"], "address": entity.get("address", ""), "user": entity_user, "signatory": _label_of(entity_user), "capacity": _entity_capacity(entity_user) if entity_user else ""},
+			"entity": {"name": entity["legal_name"], "address": entity.get("address", ""), "entity_type": entity.get("entity_type", ""), "user": entity_user, "signatory": _label_of(entity_user), "capacity": _entity_capacity(entity_user) if entity_user else ""},
 			"supplier": {"name": supplier_org["legal_name"], "organisation": supplier_org.get("organisation"), "user": supplier_pick["user"] if supplier_pick else "",
 				"signatory": supplier_pick["name"] if supplier_pick else "", "capacity": supplier_pick["capacity"] if supplier_pick else ""},
 		},
@@ -230,9 +236,8 @@ def request_signatures(case: str, *, expected_version: int, idempotency_key: str
 		branches = set() if simulation.enabled() else {preflight.PRODUCTION_BRANCH}
 		guards = preflight.rules(doc, "RequestContractSignatures", branches)
 		preflight.holds(guards, case, "new_signing_attempt")
-		window = built["terms"]["signing_window"]["signing_window"]
-		if window.get("ends_on") and getdate(window["ends_on"]) < getdate(clock.now()):
-			guards.add("CM_SOURCE", reason="The signing window for this award has ended.", ended_on=window["ends_on"])
+		for finding in formation_rules.sending(records.loads(doc.source_json).get("package", {}), built["terms"], built["sources"], clock.now(), preflight.profile(doc).parameter("ag_clearance_threshold").value):
+			guards.add("CM_HOLD", **finding)
 		if built["terms"]["restrictions"]:
 			guards.add("CM_HOLD", hold="award restriction", kind="Restriction", reason="An award restriction requires review.", holder="Head of procurement function", clears_with="The restriction is resolved by its owner", consequence="new_signing_attempt")
 		guards.raise_if_any()
@@ -285,6 +290,8 @@ def _record_attempt(case: str, party: str, expected_version: int, actor: str, ke
 	agreement, slot = _slot(case, party)
 	if slot is None or slot.state == "Signed":
 		return records.summary(doc, agreement=agreement.name, signature=slot.name if slot else "", already=True)
+	if slot.state == "Evidence recorded":
+		fail("CM_CHANGED", reason="This signature was recorded from a signed copy and is waiting to be confirmed.")
 	if slot.signer.lower() != actor.lower():
 		fail("CM_AUTHORITY", missing="mandate", reason="This signature is for another person.", capacity=party)
 	if party == "Entity":
@@ -296,9 +303,8 @@ def _record_attempt(case: str, party: str, expected_version: int, actor: str, ke
 	guards = preflight.rules(doc, "SignContractVersion")
 	preflight.holds(guards, case, "new_signing_attempt", except_keys=[f"operation:{existing}"] if existing else [])
 	terms = records.loads(agreement.terms_json)
-	window = terms["signing_window"]["signing_window"]
-	if window.get("ends_on") and getdate(window["ends_on"]) < getdate(clock.now()):
-		guards.add("CM_SOURCE", reason="The signing window for this award has ended.", ended_on=window["ends_on"])
+	for finding in formation_rules.at_commit(terms, clock.now()):
+		guards.add("CM_HOLD", **finding)
 	if terms.get("restrictions"):
 		guards.add("CM_HOLD", hold="award restriction", kind="Restriction", reason="An award restriction requires review.", holder="Head of procurement function", clears_with="The restriction is resolved by its owner", consequence="new_signing_attempt")
 	guards.raise_if_any()
@@ -338,7 +344,7 @@ def _complete_signature(case: str, recorded: dict[str, Any], actor: str) -> dict
 	signing_flow.unfinished(result, party=party)
 
 
-def _apply_signature(case: str, slot_name: str, proof: str, actor: str, method: str) -> dict[str, Any]:
+def _apply_signature(case: str, slot_name: str, proof: str, actor: str, method: str, *, next_task: bool = True) -> dict[str, Any]:
 	with records.atomic():
 		doc = records.lock(case)
 		slot = frappe.get_doc(SIGNATURE, slot_name)
@@ -352,9 +358,10 @@ def _apply_signature(case: str, slot_name: str, proof: str, actor: str, method: 
 		if slot.party == "Supplier":
 			work.finish(case, command="SignContractVersion", subject=subject, actor=actor)
 			entity = frappe.get_doc(SIGNATURE, frappe.db.get_value(SIGNATURE, {"contract_case": case, "agreement_version": agreement.version_no, "party": "Entity"}, "name"))
-			records.update(entity, state="Requested")
-			work.assign(case, "SignContractVersion", "Review the agreement before signing.", subject, agreement.version_no, [entity.signer], role="Entity contract signing")
-			work.assign(case, work.waiting_command("SignContractVersion", "entity"), "Waiting for the entity's signature.", subject, agreement.version_no, work.holders(work.HOP) + [slot.signer], role=work.HOP, state="Waiting")
+			records.update(entity, state="Requested" if entity.state == "Waiting" else entity.state)
+			if next_task:  # the entity signs electronically next; when its own evidence is already in hand there is nothing to ask of it
+				work.assign(case, "SignContractVersion", "Review the agreement before signing.", subject, agreement.version_no, [entity.signer], role="Entity contract signing")
+				work.assign(case, work.waiting_command("SignContractVersion", "entity"), "Waiting for the entity's signature.", subject, agreement.version_no, work.holders(work.HOP) + [slot.signer], role=work.HOP, state="Waiting")
 			records.bump(doc)
 			outcome = records.summary(doc, signature=slot.name, state="Signed", party="Supplier")
 		else:

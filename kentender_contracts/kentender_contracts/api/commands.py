@@ -11,7 +11,8 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from kentender_contracts.services import closeout, delivery, formation, payment, security
+from kentender_contracts import award_receiver
+from kentender_contracts.services import closeout, delivery, existing, formation, formation_end, outside_signature, payment, security
 from kentender_contracts.services.errors import invalid
 
 Handler = Callable[[str, dict[str, Any], dict[str, Any], int, str, str], dict[str, Any]]
@@ -29,7 +30,7 @@ def nested(values: dict[str, Any], prefix: str) -> dict[str, Any]:
 def _particulars(case, args, values, expected, key, actor):
 	mapping = {line: pick(item) for line, item in nested(values, "item_mapping").items() if pick(item)}
 	clean = {"agreement_date": values.get("agreement_date"), "entity_signatory": pick(values.get("entity_signatory")), "native_supplier": pick(values.get("native_supplier")),
-		"asset_location": pick(values.get("asset_location")), "item_mapping": mapping}
+		"asset_location": pick(values.get("asset_location")), "ag_clearance": str(values.get("ag_clearance") or "").strip(), "item_mapping": mapping}
 	return formation.save_particulars(case, expected_version=expected, idempotency_key=key, actor=actor, values=clean)
 
 
@@ -111,7 +112,32 @@ def _number(value: Any) -> float:
 		return 0.0
 
 
+ITEM_COLUMNS = ("description", "quantity", "uom", "rate", "tax", "accepted", "in_custody", "invoiced_quantity")
+
+
+def _intake_values(values: dict[str, Any]) -> dict[str, Any]:
+	"""The form's values for the intake: a picker sends an id, a select its option, the item table its cells (`row.N.column`), everything else as typed. A row with nothing in it is not an item."""
+	out = {k: (pick(v) if k in ("source", "tax") else v) for k, v in values.items() if not k.startswith("row.")}
+	rows: dict[int, dict[str, str]] = {}
+	for key, value in values.items():
+		if key.startswith("row."):
+			_r, number, column = key.split(".", 2)
+			rows.setdefault(int(number), {})[column] = pick(value) if column == "tax" else str(value or "").strip()
+	if rows:
+		out["items"] = "\n".join(" | ".join(row.get(c, "") for c in ITEM_COLUMNS) for _n, row in sorted(rows.items()) if any(row.get(c) for c in ITEM_COLUMNS if c != "tax"))
+	return out
+
+
 COMMANDS: dict[str, Handler] = {
+	"RecordRestrictionResolution": lambda c, a, v, e, k, u: award_receiver.release_restriction(c, issue=a["issue"], reason=v.get("reason", ""), reference=v.get("reference", ""), expected_version=e, idempotency_key=k, actor=u),
+	"RegisterExistingContract": lambda c, a, v, e, k, u: existing.register_existing_contract(idempotency_key=k, actor=u, values=_intake_values(v)),
+	"ReviseContractIntake": lambda c, a, v, e, k, u: existing.revise_intake(c, expected_version=e, idempotency_key=k, actor=u, values=_intake_values(v)),
+	"ConfirmOpeningPosition": lambda c, a, v, e, k, u: existing.confirm_opening_position(c, expected_version=e, idempotency_key=k, actor=u),
+	"StartContractManagement": lambda c, a, v, e, k, u: existing.start_management(c, expected_version=e, idempotency_key=k, actor=u),
+	"RecordContractNotProceeding": lambda c, a, v, e, k, u: formation_end.record_not_proceeding(c, kind=pick(v.get("kind")), reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u),
+	"RecordOutsideContractSignature": lambda c, a, v, e, k, u: outside_signature.record_outside_signature(c, party=v.get("party", a.get("party", "")), expected_version=e, idempotency_key=k, actor=u,
+		signed_by=v.get("signed_by", ""), capacity=v.get("capacity", ""), signed_on=v.get("signed_on", ""), copy=v.get("copy", ""), notes=v.get("notes", "")),
+	"ConfirmOutsideSignatureEvidence": lambda c, a, v, e, k, u: outside_signature.confirm_outside_signature(c, expected_version=e, idempotency_key=k, actor=u),
 	"RecordContractSecurity": _record_security,
 	"VerifyContractSecurity": lambda c, a, v, e, k, u: security.verify_security(c, security=a["security"], expected_version=e, idempotency_key=k, actor=u, confirmation_reference=v.get("confirmation_reference", ""),
 		received_on=v.get("received_on", ""), basis=v.get("basis", "")),

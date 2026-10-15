@@ -26,6 +26,7 @@
 				@open="openContract"
 				@page="onPage"
 				@size="onSize"
+				@head="goTo(['register'])"
 			/>
 			<CmBoard
 				v-else-if="screen === 'board'"
@@ -196,6 +197,10 @@ async function run({ spec, values }) {
 				await nextTick();
 				if (boardRef.value) Object.assign(boardRef.value.form, Object.fromEntries(Object.entries(typed).filter(([k]) => k in boardRef.value.form))); // the latest version, with what was typed kept
 			}
+			return;
+		}
+		if (answer.open) {  // a contract that did not exist before this command: go to it
+			props.go([answer.open, "agreement"]);
 			return;
 		}
 		const leaving = target.value.subject.length > 0; // a form opened from a tab (record delivery, submit invoice) is done once it is saved: back to the tab

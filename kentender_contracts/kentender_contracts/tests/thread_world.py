@@ -36,6 +36,8 @@ PEOPLE: dict[str, tuple[str, list[str]]] = {
 	"stranger": ("Sam Stranger", []),
 }
 CLOCK = "2027-07-02 09:00:00"
+#: the supplier's identity as an executed contract states it: country and registration number (the supplier-accounts stand-in resolves it)
+REGISTRATION = ("Kenya", "CPR/2018/00123")
 
 
 #: A browser world walks the seed world's own people: it maps a persona to their canonical address here (see `browser_world.py`); a test world uses throwaway `cm.thread.*` accounts.
@@ -57,19 +59,25 @@ class Suppliers:
 	"""Supplier Accounts as the audience and parties code asks it: one organisation, its authorised signatory and its representative."""
 
 	def __init__(self, organisation: str = ""):
-		self.organisation = organisation or sources.organisation_id()
+		self.org = organisation or sources.organisation_id()
 
 	def _row(self, user: str, responsibility: str) -> dict:
-		return {"assignment_id": f"A-{user}", "organisation_id": self.organisation, "user": user, "responsibility": responsibility, "active": True, "signatory_ready": responsibility == "Authorised Signatory"}
+		return {"assignment_id": f"A-{user}", "organisation_id": self.org, "user": user, "responsibility": responsibility, "active": True, "signatory_ready": responsibility == "Authorised Signatory"}
 
 	def active_assignments(self, *, user, at=None):
 		return [self._row(user, "Authorised Signatory" if user == email("mary") else "Supplier Representative")] if user in (email("mary"), email("david")) else []
 
+	def find_active_account(self, *, country, registration_number):
+		return {"organisation_id": self.org, "legal_name": sources.SUPPLIER} if (country, registration_number) == REGISTRATION else None
+
+	def organisation(self, *, organisation_id):
+		return {"legal_name": sources.SUPPLIER, "registered_address": "Westlands Business Park, Waiyaki Way, Nairobi", "country": REGISTRATION[0]} if organisation_id == self.org else None
+
 	def organisation_signatories(self, *, organisation_id, at=None):
-		return [self._row(email("mary"), "Authorised Signatory")] if organisation_id == self.organisation else []
+		return [self._row(email("mary"), "Authorised Signatory")] if organisation_id == self.org else []
 
 	def organisation_people(self, *, organisation_id, at=None):
-		return [self._row(email("mary"), "Authorised Signatory"), self._row(email("david"), "Supplier Representative")] if organisation_id == self.organisation else []
+		return [self._row(email("mary"), "Authorised Signatory"), self._row(email("david"), "Supplier Representative")] if organisation_id == self.org else []
 
 
 def unit() -> str:
@@ -96,6 +104,7 @@ def build(namespace: str = "CM_TEST") -> dict[str, str]:
 
 
 def teardown(namespace: str = "CM_TEST") -> None:
+	purge_evidence_files()
 	for persona in PEOPLE:
 		address = email(persona)
 		for name in frappe.get_all("User Responsibility Assignment", filters={"user": address, "fixture_namespace": namespace}, pluck="name"):
@@ -133,14 +142,30 @@ def package_particulars(people: dict[str, str]) -> dict:
 	return {"agreement_date": "2027-07-02", "entity_signatory": people["amina"], "item_mapping": {"L1": world.ITEM_FA}, "native_supplier": world.SUPPLIER, "asset_location": world.LOCATION}
 
 
-def receive(people: dict[str, str], *, contract_id: str = "CM-TEST-0001", security_required: bool = False) -> dict:
+def receive(people: dict[str, str], *, contract_id: str = "CM-TEST-0001", security_required: bool = False, outside_signing: bool = False) -> dict:
 	"""Receive the demonstration Award package. With `security_required` the issued terms require a performance security, and the synthetic provider answers for that variant."""
 	from kentender_contracts.services import formation
 
 	package = sources.award_package()
-	if security_required:
-		frappe.flags.kt_contract_source_providers = [sources.Provider(security_required=True)]
-	return formation.receive_award_package(package, handoff=sources.source_handoff(package["award_case"], security_required=security_required), managing_unit=unit(), idempotency_key=f"receive-{contract_id}", actor="Administrator", contract_id=contract_id)
+	if security_required or outside_signing:
+		frappe.flags.kt_contract_source_providers = [sources.Provider(security_required=security_required, outside_signing=outside_signing)]
+	return formation.receive_award_package(package, handoff=sources.source_handoff(package["award_case"], security_required=security_required, outside_signing=outside_signing), managing_unit=unit(), idempotency_key=f"receive-{contract_id}", actor="Administrator", contract_id=contract_id)
+
+
+def evidence_file(owner: str, label: str) -> str:
+	"""A private labelled PDF uploaded by `owner` (the person's own upload is the only file a command accepts as evidence). Removed with the world."""
+	from kentender_core.seeds.fixture_files import labelled_pdf
+
+	doc = frappe.get_doc({"doctype": "File", "file_name": f"cm-test-{label}.pdf", "is_private": 1, "content": labelled_pdf(label)}).insert(ignore_permissions=True)
+	frappe.db.set_value("File", doc.name, "owner", owner)
+	frappe.db.commit()
+	return doc.name
+
+
+def purge_evidence_files() -> None:
+	for name in frappe.get_all("File", filters={"file_name": ["like", "cm-test-%"]}, pluck="name"):
+		frappe.delete_doc("File", name, force=True, ignore_permissions=True)
+	frappe.db.commit()
 
 
 def purge_native_operation_rows(case_ids: list[str]) -> None:

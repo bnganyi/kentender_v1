@@ -21,7 +21,7 @@ RECORDS = {
 		F("contract_case", "Link", "Contract Case", reqd=1), F("version_no", "Int", reqd=1),
 		F("state", "Select", "Draft\nFrozen\nAwaiting signatures\nEffective\nSuperseded\nEnded", reqd=1), F("source_package", "Link", "Contract Source Package"),
 		F("amount", "Currency"), F("currency", "Link", "Currency"), F("operative_date", "Date"),
-		F("terms_json", "Long Text"), F("items_json", "Long Text"), F("missing_json", "Long Text"), F("rendered_html", "Long Text"), F("rendered_digest"),
+		F("terms_json", "Long Text"), F("items_json", "Long Text"), F("missing_json", "Long Text"), F("intake_json", "Long Text"), F("rendered_html", "Long Text"), F("rendered_digest"),
 		F("frozen_at", "Datetime"), F("effective_at", "Datetime"), F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Source Package": ("PKG", "The complete incorporated package frozen with its source versions and digests (CM v0.8 section 19.4).", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("agreement_version", "Int"), F("state", "Select", "Assembling\nFrozen\nSuperseded"),
@@ -29,7 +29,7 @@ RECORDS = {
 	"Contract Signature": ("SIG", "One signer slot of one agreement version, with its proof.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("agreement_version", "Int", reqd=1), F("party", "Select", "Supplier\nEntity", reqd=1), F("sequence", "Int"),
 		F("signer", "Data"), F("capacity"), F("state", "Select", "Waiting\nRequested\nEvidence recorded\nSigned\nPending\nFailed\nRefused\nSuperseded"),
-		F("correlation_id"), F("proof_reference"), F("method"), F("signed_at", "Datetime"), F("signed_on", "Date"), F("copy_reference"), F("copy_digest"), F("witness_json", "Long Text"), F("record_version", "Int"), F("fixture_namespace")]),
+		F("correlation_id"), F("proof_reference"), F("method"), F("signed_at", "Datetime"), F("signed_on", "Date"), F("copy_reference"), F("copy_digest"), F("evidence_json", "Long Text"), F("witness_json", "Long Text"), F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Appointment": ("APP", "A written appointment of inspectors and certifiers for a contract, with each member's personal declaration.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("version_no", "Int"), F("state", "Select", "Recommended\nAppointed\nReturned\nReplaced\nSuperseded"),
 		F("scope"), F("reference"), F("members_json", "Long Text"), F("recommended_by"), F("appointed_by"), F("reason", "Small Text"),
@@ -75,6 +75,10 @@ RECORDS = {
 		F("issuer"), F("beneficiary"), F("reference"), F("amount", "Currency"), F("issued_on", "Date"), F("expires_on", "Date"), F("attachment"),
 		F("confirmation_reference"), F("confirmation_received_on", "Date"), F("verification_basis", "Small Text"), F("verified_by"), F("verified_at", "Datetime"), F("rejection_reason", "Small Text"),
 		F("recorded_by"), F("recorded_at", "Datetime"), F("record_version", "Int"), F("fixture_namespace")]),
+	"Contract Award Inbox": ("AWI", "One thing Award handed to Contracting, kept exactly as received with its receipt: a package, a decision event or a later update. Immutable; applying it is a separate fact.", [
+		F("reference", "Data", "", unique=1, reqd=1), F("kind", "Select", "Package\nDecision event\nUpdate", reqd=1), F("award_case"), F("outcome"), F("payload_json", "Long Text"), F("receipt"), F("received_at", "Datetime"),
+		F("contract_case", "Link", "Contract Case"), F("state", "Select", "Received\nApplied\nReleased"), F("release_reason", "Small Text"), F("released_by"), F("released_at", "Datetime"),
+		F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Simulated Funding": ("SFD", "Development-only funding owner: the conversions a simulation site's synthetic funding provider holds, idempotent on the operation identity. Never present on a live site.", [
 		F("identity", "Data", "", unique=1, reqd=1), F("contract"), F("amount", "Currency"), F("reference"), F("outcome", "Select", "Converted\nRefused"), F("received_at", "Datetime"),
 		F("fixture_namespace")]),

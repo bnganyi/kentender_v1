@@ -78,7 +78,7 @@ def organisation_id() -> str:
 		return "ORG-DEMO-1"
 
 
-def _content(number: str, case: str, security_required: bool = False) -> bytes:
+def _content(number: str, case: str, security_required: bool = False, outside_signing: bool = False) -> bytes:
 	if number == "S1":
 		return _json({"tender": "TND-DEMO-001", "tender_reference": "MOH/ICT/2027/DEMO-01", "title": "IT equipment delivery", "release": "IT-EQUIPMENT-OPEN-V1", "release_id": "1.5", "addenda": []})
 	if number == "S2":
@@ -92,13 +92,14 @@ def _content(number: str, case: str, security_required: bool = False) -> bytes:
 	if number == "S5":
 		security = {"required": True, "percentage": 10, "statement": "10% of the contract sum, in the form of a bank guarantee"} if security_required else {"required": False, "statement": "Not required under these test terms"}
 		return _json({"warranty": {"months": 12, "from": "each unit's acceptance"}, "payment": {"basis": "certified invoice for accepted units", "terms": "as issued"},
-			"performance_security": security, "advance": {"allowed": False}, "delivery_due": DELIVERY_DUE})
+			"performance_security": security, "advance": {"allowed": False}, "delivery_due": DELIVERY_DUE,
+			"signing": {"outside_permitted": True, "basis": "Outside signing permitted in these test terms"} if outside_signing else {"outside_permitted": False}})
 	if number == "S6":
 		return _json({"criteria": CRITERIA})
 	if number == "S7":
 		return FORM_4.encode()
 	if number == "S8":
-		return _json({"notification": {"id": "NTC-DEMO-1", "given_at": "2027-06-30 10:00:00"}, "signing_window": {"result": "Within window", "ends_on": "2027-07-14", "counting_basis": "synthetic"}})
+		return _json({"notification": {"id": "NTC-DEMO-1", "given_at": "2027-06-17 10:00:00"}, "signing_window": {"result": "Within window", "earliest_signing_at": "2027-07-02 09:00:00", "ends_on": "2027-07-14", "counting_basis": "synthetic"}})
 	if number == "S9":
 		return _json({"allocations": [{"reservation": "RSV-DEMO-1", "source_allocation": "PSA-DEMO-1", "budget_line": "BL-DEMO-1", "amount": TOTAL}]})
 	if number == "S10":
@@ -122,7 +123,7 @@ def award_package() -> dict[str, Any]:
 		"opinion": {"id": "OPN-DEMO-1", "version": 1, "digest": _sha(b"opinion"), "proof": "synthetic"},
 		"decision": {"id": "DEC-DEMO-1", "version": 1, "outcome": "Award", "supplier": SUPPLIER, "organisation": organisation_id(), "bid": "BID-DEMO-1",
 			"submitted_amount": TOTAL, "evaluated_amount": TOTAL, "currency": "KES"},
-		"notice_batch": {"id": "NTB-DEMO-1", "version": 1, "notices": [{"id": "NTC-DEMO-1", "digest": _sha(b"notice"), "given_at": "2027-06-30 10:00:00", "evidence": "synthetic"}]},
+		"notice_batch": {"id": "NTB-DEMO-1", "version": 1, "notices": [{"id": "NTC-DEMO-1", "digest": _sha(b"notice"), "given_at": "2027-06-17 10:00:00", "evidence": "synthetic"}]},
 		"response": {"id": "RSP-DEMO-1", "response": "Accepted", "by": SUPPLIER_SIGNATORY, "received_at": "2027-07-01 09:00:00", "authority": "synthetic"},
 		"contract_terms": {"quantity": LAPTOPS, "warranty": "12 months", "delivery_and_warranty": "As issued in the tender and the supplier's response",
 			"reservation_treatment": "As recorded in the tender's reservation lineage", "performance_security": "As published in the tender (Contracting verifies before signature)",
@@ -135,11 +136,11 @@ def reference(number: str, case: str = CASE) -> str:
 	return f"{number}-{case}"
 
 
-def source_handoff(case: str = CASE, *, security_required: bool = False) -> list[dict[str, Any]]:
+def source_handoff(case: str = CASE, *, security_required: bool = False, outside_signing: bool = False) -> list[dict[str, Any]]:
 	"""One reference per required source S1 to S12 (plan D20). `security_required` is the variant whose issued terms require a performance security."""
 	rows = []
 	for number, (category, owner, real) in SOURCES.items():
-		data = _content(number, case, security_required)
+		data = _content(number, case, security_required, outside_signing)
 		rows.append({"source": number, "category": category, "owner": owner, "reference": reference(number, case), "version": 1, "sha256": _sha(data),
 			"media_type": "text/html" if number == "S7" else "application/json", "size": len(data), "locator": f"synthetic/{number}", "basis": "required by CM v0.8 section 19.4",
 			"provider": "synthetic", "real_handoff_today": real})
@@ -152,9 +153,10 @@ _REFERENCE = re.compile(r"^(S\d+)-(.+)$")
 class Provider:
 	"""The `describe` / `fetch` seam of D20, answering from the synthetic handoff. `tamper` makes one source's bytes differ, to prove verification."""
 
-	def __init__(self, *, tamper: str = "", security_required: bool = False):
+	def __init__(self, *, tamper: str = "", security_required: bool = False, outside_signing: bool = False):
 		self.tamper = tamper
 		self.security_required = security_required
+		self.outside_signing = outside_signing
 
 	def _parse(self, reference: str):
 		m = _REFERENCE.match(reference or "")
@@ -162,13 +164,13 @@ class Provider:
 
 	def describe(self, *, reference: str) -> dict[str, Any] | None:
 		number, case = self._parse(reference)
-		return next((r for r in source_handoff(case, security_required=self.security_required) if r["source"] == number), None) if number else None
+		return next((r for r in source_handoff(case, security_required=self.security_required, outside_signing=self.outside_signing) if r["source"] == number), None) if number else None
 
 	def fetch(self, *, reference: str) -> dict[str, Any] | None:
 		number, case = self._parse(reference)
 		if not number:
 			return None
-		data = _content(number, case, self.security_required) + (b" tampered" if number == self.tamper else b"")
+		data = _content(number, case, self.security_required, self.outside_signing) + (b" tampered" if number == self.tamper else b"")
 		return {"content": data, "digest": _sha(data)}
 
 

@@ -13,7 +13,7 @@ from typing import Any
 
 import frappe
 
-from kentender_contracts.boards import agreement, chrome, delivery, invoices, kit, obligations, security
+from kentender_contracts.boards import agreement, chrome, delivery, ending, existing, invoices, kit, obligations, outside, security
 from kentender_contracts.boards.context import Context
 from kentender_contracts.services import bindings, closeout, payment, records
 from kentender_contracts.services.errors import fail
@@ -31,9 +31,31 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 	if ":waiting:" in command:
 		return None
 	if command == "RequestContractSignatures":
-		return agreement.d02(ctx)
+		board = agreement.d02(ctx)
+		_offer_ending(ctx, board)
+		return board
 	if command == "SignContractVersion":
 		return agreement.d03(ctx, entity=is_entity)
+	if command == "ReviseContractIntake":
+		return existing.d12(ctx, ctx.user, ctx.case)
+	if command == "ConfirmOpeningPosition":
+		return existing.d21(ctx)
+	if command == "StartContractManagement":
+		return existing.d21h(ctx)
+	if command == "ReviewAwardRestriction":
+		board = _agreement_summary(ctx)
+		board["next"] = chrome.next_block(ctx)
+		ending.restriction(board, subject.split(" ", 1)[1])
+		return board
+	if command == "RecordContractNotProceeding":
+		board = _agreement_summary(ctx)
+		board["next"] = chrome.next_block(ctx)
+		ending.attach(board, primary=True)
+		return board
+	if command == "RecordOutsideContractSignature":
+		return outside.d26(ctx, "Entity" if " entity " in subject else "Supplier", differs=bool(outside.mismatched(ctx)))
+	if command == "ConfirmOutsideSignatureEvidence":
+		return outside.d26(ctx, outside.mismatched(ctx)[0], differs=True) if outside.mismatched(ctx) else outside.d26e(ctx)
 	if command == "RecordContractSecurity":
 		return security.d25r(ctx, lead["version"])
 	if command == "VerifyContractSecurity":
@@ -116,6 +138,8 @@ def summary(ctx: Context, tab: str) -> dict[str, Any]:
 
 
 def _agreement_summary(ctx: Context) -> dict[str, Any]:
+	if ctx.doc.source_kind == "External record" and ctx.doc.lifecycle == "Preparing" and ctx.can_prepare:
+		return existing.d12(ctx, ctx.user, ctx.case)  # an existing contract being registered is the preparers' until management starts
 	hidden = bool(ctx.agreement and ctx.agreement.state == "Draft" and not ctx.sees("terms"))  # a draft is the preparers' until it is sent
 	if hidden:
 		board = chrome.base(ctx, "D02-S", d="D02", name="Agreement", title="Agreement", tab="Agreement", next=chrome.next_block(ctx), regions=[kit.R("Agreement", kit.xh("The agreement has not been sent for signature yet."))])
@@ -128,14 +152,52 @@ def _agreement_summary(ctx: Context) -> dict[str, Any]:
 		board["p"], board["s2"], board["actions"] = "", [], {k: v for k, v in board["actions"].items() if k.startswith("View")}
 	else:
 		board = chrome.base(ctx, "D02-S", d="D02", name="Agreement", title="Agreement", tab="Agreement", next=chrome.next_block(ctx), regions=[kit.R("Agreement", kit.xh("The agreement has not been prepared yet."))])
+	_offer_outside(ctx, board)
+	_offer_ending(ctx, board)
 	appointed = ctx.appointment
 	if appointed["appointment"]:
 		board["regions"].append(kit.R("Inspectors", agreement._members_table(appointed["members"])))
 	return board
 
 
+def _offer_ending(ctx: Context, board: dict[str, Any]) -> None:
+	"""The preparer may record that the contract did not proceed while it is not yet in force."""
+	if ctx.can_prepare and ctx.doc.lifecycle in ("Preparing", "Awaiting signatures") and ending.LABEL not in board["actions"]:
+		ending.attach(board)
+
+
+def _offer_outside(ctx: Context, board: dict[str, Any]) -> None:
+	"""While the agreement is out for signature and its terms permit it, a preparer may record a party's signed copy instead of waiting for the electronic signature."""
+	if not (ctx.agreement and ctx.agreement.state == "Awaiting signatures" and ctx.can_prepare and service_outside_permitted(ctx)):
+		return
+	pending = frappe.get_all("Contract Signature", filters={"contract_case": ctx.case, "agreement_version": ctx.agreement.version_no, "state": ["in", ["Requested", "Waiting", "Failed", "Evidence recorded"]]}, fields=["party", "state"], order_by="sequence asc")
+	if not pending:
+		return
+	party = next((s["party"] for s in pending if s["state"] != "Evidence recorded"), pending[0]["party"]).lower()
+	label = "Record an outside signature"
+	for region in board.get("regions", []):
+		for block in region.get("b", []):
+			if block.get("k") == "links":
+				block["items"].append(label)
+				board["actions"][label] = kit.route(ctx.case, "agreement", "outside", party)
+				return
+
+
+def register_board(user: str) -> dict[str, Any]:
+	"""The registration form for a contract signed before KenTender: a person who prepares contracts, or the stable denial."""
+	from kentender_contracts.services import picker_sources
+
+	if not picker_sources.preparing_units(user):
+		fail("CM_AUTHORITY", denied=True, reason="You do not have access to this contract.")
+	board = existing.d12(None, user)
+	board["tab"], board["tabs"], board["audiences"] = "Agreement", [], []
+	return board
+
+
 def board_for(case: str, user: str, *, tab: str | None = None, subject: tuple[str, ...] = ()) -> dict[str, Any]:
 	"""The screen for this viewer: a record page with its tab, next step, regions and actions. Denial is `CM_AUTHORITY` with `denied`, drawn by the client as the shared denied page."""
+	if case == "register":
+		return register_board(user)
 	if not case or not frappe.db.exists("Contract Case", case):
 		fail("CM_AUTHORITY", denied=True, reason="You do not have access to this contract.")
 	ctx = Context(case, user)
@@ -154,8 +216,9 @@ def board_for(case: str, user: str, *, tab: str | None = None, subject: tuple[st
 			board = _by_waiting(ctx, item)
 			if board:
 				break
-	if board is None and not own and selected == "Agreement" and ctx.doc.lifecycle == "Preparing" and ctx.can_prepare:
+	if board is None and not own and selected == "Agreement" and ctx.doc.lifecycle == "Preparing" and ctx.can_prepare and ctx.doc.source_kind != "External record":
 		board = agreement.d02(ctx)  # an authorised preparer prepares the agreement whether or not the head of procurement's task is theirs (section 5.3)
+		_offer_ending(ctx, board)
 	if board is None:
 		board = summary(ctx, selected)
 	board["tab"] = selected
@@ -165,13 +228,23 @@ def board_for(case: str, user: str, *, tab: str | None = None, subject: tuple[st
 
 
 def _subject_board(ctx: Context, tab: str, subject: tuple[str, ...]) -> dict[str, Any] | None:
-	if subject[0] == "agreement" and len(subject) > 1 and "terms" in _sets(ctx):
+	if subject[0] == "agreement" and len(subject) > 2 and subject[1] == "outside" and ctx.can_prepare and ctx.doc.lifecycle == "Awaiting signatures" and service_outside_permitted(ctx):
+		return outside.d26(ctx, "Entity" if subject[2] == "entity" else "Supplier", differs=bool(outside.mismatched(ctx)))
+	if subject == ("agreement", "intake") and ctx.doc.source_kind == "External record" and ctx.can_prepare:
+		return existing.d12(ctx, ctx.user, ctx.case)
+	if subject[0] == "agreement" and len(subject) > 1 and subject[1].isdigit() and "terms" in _sets(ctx):
 		return agreement.d02v(ctx, int(subject[1]))
 	if subject == ("record-delivery",) and "receiver" in ctx.audiences:
 		return delivery.d04(ctx)
 	if subject == ("submit-invoice",) and "supplier" in ctx.audiences:
 		return invoices.d18(ctx)
 	return None
+
+
+def service_outside_permitted(ctx: Context) -> bool:
+	from kentender_contracts.services import outside_signature
+
+	return bool(ctx.agreement) and outside_signature.permitted(ctx.terms)[0]
 
 
 def _sets(ctx: Context) -> set[str]:

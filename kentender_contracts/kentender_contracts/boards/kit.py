@@ -128,6 +128,11 @@ def route(*segments: str) -> dict:
 	return {"do": "route", "route": list(segments)}
 
 
+def download(url: str) -> dict:
+	"""Open an audience-checked evidence file."""
+	return {"do": "download", "url": url}
+
+
 def tab(name: str) -> dict:
 	return {"do": "tab", "tab": name}
 

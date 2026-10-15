@@ -43,6 +43,13 @@ def _row_facts(case: str, user: str, grants: list[audience.Grant]) -> dict[str, 
 		"next": lead["title"] if lead else "—", "responsible": "" if supplier_only else (frappe.db.get_value("User", lead["holder"], "full_name") or lead["holder"]) if lead else ""}
 
 
+def _may_register(user: str) -> bool:
+	"""A person who prepares contracts (the head of procurement, or anyone with a Contract preparation assignment) may register a contract signed before KenTender."""
+	from kentender_contracts.services import picker_sources
+
+	return bool(picker_sources.preparing_units(user))
+
+
 def workspace(user: str, *, page: Any = 1, page_size: Any = 10, view: str = "", search: str = "", status: str = "", source: str = "") -> dict[str, Any]:
 	audiences = audience.workspace_audiences(user)
 	if not audiences:
@@ -82,7 +89,7 @@ def workspace(user: str, *, page: Any = 1, page_size: Any = 10, view: str = "", 
 		filters += [kit.sel("Status", status or STATUSES[0], STATUSES, "status"), kit.sel("Source", source or SOURCES[0], SOURCES, "source")]
 	empty = "No contracts are available." if not rows or not (search or status or source) else "No contracts match your search."
 	board = kit.board(id="D01-S" if supplier else "D01", d="D01-S" if supplier else "D01", page="list", title="My contracts" if supplier else "Contracts", views=[] if supplier else VIEWS, view=VIEWS.index(chosen),
-		filters=filters, cols=COLS_SUPPLIER if supplier else COLS, rows=body, rowRoutes=routes, empty=empty, emptyAct="Clear search" if (search or status or source) else "", paging=paging_info,
+		filters=filters, headP="" if supplier or not _may_register(user) else "Register existing contract", cols=COLS_SUPPLIER if supplier else COLS, rows=body, rowRoutes=routes, empty=empty, emptyAct="Clear search" if (search or status or source) else "", paging=paging_info,
 		at=clock.when(clock.now()))
 	return {"ok": True, "screen": "workspace", "audiences": audiences, "total": paging_info["total"], "page": paging_info["page"], "page_size": paging_info["page_size"],
 		"rows": [{"case": r["case"], "audiences": [g.audience for g in r["grants"]]} for r in page_rows], "board": board}

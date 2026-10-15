@@ -13,11 +13,12 @@
 // `kentender_contracts/.../public/js/contracts/contracts.fidelity.spec.js`.
 // `cm-boards.spec.js` checks that they only ever name real boards.
 
-// The head's one action, "Register existing contract", opens the existing-contract intake that Package B builds (plan Phase 5, CM-AC-25 to 28); a button with no command behind it is not drawn.
+// The head's one action, "Register existing contract", is built (plan Phase 5, D12): D01 and D01-F draw it for the head of procurement. D01-E is the empty list of a person who prepares no contracts
+// (the receiver in the test world), so it cannot offer registration; the artboard draws it for a registering person.
 const REGISTER = {
 	omits: ["page-head > page-actions"],
-	because: "Register existing contract (RegisterExistingContract) is not built until the formation package (plan Phase 5); the head draws no action that does nothing.",
-	authority: "CM-CHG-001 v0.8 plan Phase 5 (D01 variants, existing-contract route); tracker CM8-414",
+	because: "The captured empty list is a receiver's, who may not register a contract signed before KenTender; the artboard draws the action for a person who prepares contracts.",
+	authority: "CM-CHG-001 v0.8 section 5.13 (a registering person is an authorised preparer); plan Phase 5",
 };
 
 // The Verify dialog of D25 draws the issuer's confirmation as already received ("Confirmation TEST-CONF-01 · Received 2 Jul 2027"). No source delivers that confirmation to Contract Management, so the
@@ -28,7 +29,7 @@ const CONFIRMATION = {
 	authority: "CM-CHG-001 v0.8 section 5.10 (a verification needs the issuer's confirmation); plan Phase 5 security",
 };
 
-export const DEPARTURES = { D01: [REGISTER], "D01-E": [REGISTER], "D01-F": [REGISTER], "D25 · Verify": [CONFIRMATION] };
+export const DEPARTURES = { "D01-E": [REGISTER], "D25 · Verify": [CONFIRMATION] };
 // Phase 4 (CM8-414) needed none: the built screens use the boards' own containers. What the structural instrument cannot see, and the tracker lists as known simplifications: the list's
 // "Responsible person" and "Managing unit" filters are not drawn (each is a choice of one person or unit from a list that can grow, which AGENTS.md section 6.12 gives to the shared picker, and
 // the picker has no register-filter source yet: plan Phase 10), the invoice form has no file field (attaching the supplier's invoice file arrives with the Invoices package), and the
@@ -46,6 +47,8 @@ export const BOARD_PAGES = [
 	{ fixture: "D33", board: "D33" }, { fixture: "D33-A", board: "D33-A" }, { fixture: "D09-F", board: "D09-F" }, { fixture: "D17", board: "D17" }, { fixture: "D17-S", board: "D17-S" },
 	{ fixture: "D22", board: "D22" }, { fixture: "D11", board: "D11" },
 	{ fixture: "D25-R", board: "D25-R" }, { fixture: "D25", board: "D25" }, { fixture: "D25-J", board: "D25-J" },
+	{ fixture: "D26", board: "D26" }, { fixture: "D26-H", board: "D26-H" }, { fixture: "D26-E", board: "D26-E" },
+	{ fixture: "D12", board: "D12" }, { fixture: "D12-G", board: "D12-G" }, { fixture: "D21", board: "D21" }, { fixture: "D21-H", board: "D21-H" },
 ];
 export const BOARD_DIALOGS = [
 	{ fixture: "D23", action: "Appoint inspectors", board: "D23 · Appoint" }, { fixture: "D23", action: "Return for correction", board: "D23 · Return" },

@@ -32,7 +32,7 @@ DOCTYPES = (
 	"Contract Case", "Contract Operation Intent", "Contract Transaction Link", "Contract Simulated Signature", "Contract Command Journal",
 	"Contract Agreement Version", "Contract Source Package", "Contract Signature", "Contract Appointment", "Contract Arrival", "Contract Inspection",
 	"Contract Certificate", "Contract Acceptance", "Contract Invoice", "Contract Certification", "Contract Settlement", "Contract Closeout",
-	"Contract Task", "Contract Event", "Contract Simulated Funding", "Contract Security",
+	"Contract Task", "Contract Event", "Contract Simulated Funding", "Contract Security", "Contract Award Inbox",
 )
 
 

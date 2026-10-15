@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 0,
  "creation": "2026-10-14 09:00:00.000000",
- "description": "\u00a74 Contract case: one per source contract identity; the lifecycle fact (\u00a75.1). Holds are conditions, never stages.",
+ "description": "§4 Contract case: one per source contract identity; the lifecycle fact (§5.1). Holds are conditions, never stages.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -31,7 +31,10 @@
   "delivery_state",
   "invoice_state",
   "obligation_state",
-  "outcome_reason"
+  "outcome_reason",
+  "origin_key",
+  "source_system",
+  "intake_revision"
  ],
  "fields": [
   {
@@ -194,6 +197,29 @@
    "label": "Outcome reason",
    "fieldtype": "Small Text",
    "read_only": 1
+  },
+  {
+   "fieldname": "origin_key",
+   "fieldtype": "Data",
+   "label": "Origin Key",
+   "read_only": 1,
+   "no_copy": 1,
+   "unique": 1,
+   "description": "Stable unique key of an existing contract: site, origin system, external contract identity."
+  },
+  {
+   "fieldname": "source_system",
+   "fieldtype": "Data",
+   "label": "Source System",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "intake_revision",
+   "fieldtype": "Int",
+   "label": "Intake Revision",
+   "read_only": 1,
+   "no_copy": 1
   }
  ],
  "grid_page_length": 50,

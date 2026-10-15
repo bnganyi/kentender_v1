@@ -16,7 +16,7 @@ from typing import Any
 import frappe
 from frappe.utils import cint, cstr, flt, getdate
 
-from kentender_contracts.services import clock, events, holds, parties, preflight, records, work
+from kentender_contracts.services import clock, events, evidence, holds, parties, preflight, records, work
 from kentender_contracts.services.errors import fail, invalid
 
 SECURITY = "Contract Security"
@@ -94,13 +94,14 @@ def record_security(case: str, *, expected_version: int, idempotency_key: str, a
 		if flt(amount) <= 0:
 			problems["amount"] = "Enter the amount."
 		invalid(problems)
+		attached = evidence.checked(attachment, actor, field="attachment", required=False)
 		for earlier in frappe.get_all(SECURITY, filters={"contract_case": case, "state": "Recorded"}, pluck="name"):
 			old = frappe.get_doc(SECURITY, earlier)
 			records.update(old, state="Superseded")
 			work.finish(case, command="VerifyContractSecurity", subject=f"security {old.version_no}", state="Superseded", actor=actor)
 		version = records.next_number(SECURITY, {"contract_case": case}, "version_no")
 		row = records.new(SECURITY, contract_case=case, version_no=version, kind="Performance security", state="Recorded", issuer=issuer.strip(), beneficiary=beneficiary.strip(), reference=reference.strip(),
-			amount=flt(amount), issued_on=getdate(issued_on), expires_on=getdate(expires_on), attachment=attachment, recorded_by=actor, recorded_at=clock.now(), record_version=1)
+			amount=flt(amount), issued_on=getdate(issued_on), expires_on=getdate(expires_on), attachment=attached["file"] if attached else "", recorded_by=actor, recorded_at=clock.now(), record_version=1)
 		records.bump(doc)
 		work.finish(case, command="RecordContractSecurity", actor=actor)  # the request, and the supplier's waiting item for a replacement
 		work.assign(case, "VerifyContractSecurity", "Check the issuer's confirmation.", f"security {version}", version, work.holders(work.HOP), role=work.HOP)

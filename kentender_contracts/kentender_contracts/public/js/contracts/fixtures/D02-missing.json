@@ -1,5 +1,9 @@
 {
  "actions": {
+  "Record that the contract did not proceed": {
+   "dialog": "notproceeding",
+   "do": "dialog"
+  },
   "Save particulars": {
    "args": {},
    "command": "SaveContractParticulars",
@@ -20,7 +24,44 @@
  "back": "Back to contracts",
  "case": "CM-TEST-BOARDS",
  "d": "D02",
- "dialogs": {},
+ "dialogs": {
+  "notproceeding": {
+   "args": {},
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Why the contract did not proceed",
+       "name": "kind",
+       "o": {},
+       "opts": [
+        "The supplier declined to sign",
+        "The signing window ended",
+        "The award was withdrawn or changed",
+        "Another reason"
+       ],
+       "t": "sel",
+       "v": "The supplier declined to sign"
+      },
+      {
+       "l": "Details",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "RecordContractNotProceeding",
+   "p": "Record",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Record that the contract did not proceed"
+  }
+ },
  "ev": [
   "Award package 1",
   "Issued terms 1"
@@ -168,7 +209,8 @@
     },
     {
      "items": [
-      "View agreement 1"
+      "View agreement 1",
+      "Record that the contract did not proceed"
      ],
      "k": "links"
     }

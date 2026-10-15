@@ -143,6 +143,10 @@ required_apps = ["erpnext", "kentender_core"]
 # Scheduled Tasks
 # ---------------
 
+scheduler_events = {
+	"hourly": ["kentender_contracts.services.formation_end.sweep_signing_windows"],
+}
+
 # scheduler_events = {
 # 	"all": [
 # 		"kentender_contracts.tasks.all"
@@ -278,6 +282,9 @@ kt_contract_funding_provider = ["kentender_contracts.simulation.funding.service"
 
 # The contract screens' choices of one person or one native record (AGENTS.md section 6.12): kentender_core.services.record_picker.
 kt_record_picker_sources = ["kentender_contracts.services.picker_sources.sources"]
+
+# Contract Management is the Contracting receiver of Award's package, decision events and updates (AWD-IF-05; FU-CM-33: it declines where another receiver answers, unless named by `kt_award_contracting_receiver`).
+kt_award_contracting_receivers = ["kentender_contracts.award_receiver.receiver"]
 
 # The supplier's side (CM-CHG-001 v0.8 section 9): `/supplier/contracts` and `/supplier/contracts/<contract>/...` on the shared supplier portal (kentender_core's `kt_portal`). The resolver answers the verdict;
 # the bundle mounts the same screens the Desk page hosts, fed by the portal's route and transport.

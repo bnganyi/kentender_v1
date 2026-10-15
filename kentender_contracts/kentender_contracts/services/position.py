@@ -16,7 +16,7 @@ from typing import Any
 import frappe
 from frappe.utils import cint
 
-from kentender_contracts.services import records
+from kentender_contracts.services import opening, records
 
 ARRIVAL = "Contract Arrival"
 ACCEPTANCE = "Contract Acceptance"
@@ -80,6 +80,10 @@ def position(case: str) -> dict[str, Any]:
 		row = lines[unit["line_id"]]
 		key = {"Accepted": "accepted", "Rejected": "rejected", "Deferred": "deferred", "Returned": "returned", "Awaiting decision": "pending_decision"}[unit["status"]]
 		row[key] += 1
+	for lid, row in lines.items():  # a registered existing contract starts with units already accepted: they count as arrived and accepted, never as new activity
+		before = opening.line(case, lid)["accepted"]
+		row["arrived"] += before
+		row["accepted"] += before
 	for row in lines.values():
 		row["in_custody"] = row["arrived"] - row["accepted"] - row["returned"]
 		row["remaining"] = max(0, row["ordered"] - row["accepted"])

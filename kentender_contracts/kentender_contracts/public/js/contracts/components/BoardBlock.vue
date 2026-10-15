@@ -49,6 +49,11 @@
 						<option v-for="o in f.options" :key="o.value" :value="o.value">{{ o.label }}</option>
 					</select>
 					<textarea v-else-if="f.t === 'ta'" :id="`cm-f-${f.name}`" v-model="form[f.name]" class="input" :class="{ 'is-invalid': errors[f.name] }" :rows="f.rows" :disabled="disabled" :data-testid="`cm-input-${f.name}`"></textarea>
+					<template v-else-if="f.t === 'file'">
+						<input :id="`cm-f-${f.name}`" type="file" class="input" :class="{ 'is-invalid': errors[f.name] || uploadErrors[f.name] }" :disabled="disabled || uploading[f.name]" :data-testid="`cm-input-${f.name}`" @change="upload(f, $event)" />
+						<span v-if="chosen[f.name]" style="font-size: 13px; color: var(--color-neutral-700)">{{ uploading[f.name] ? __("Uploading…") : chosen[f.name] }}</span>
+						<span v-if="uploadErrors[f.name]" class="kt-field-error" role="alert">{{ uploadErrors[f.name] }}</span>
+					</template>
 					<div v-else-if="f.t === 'ro'" style="min-height: 36px; display: flex; align-items: center; font-size: 14px; font-weight: 500; color: var(--color-text)">{{ f.v }}</div>
 					<div v-else-if="f.t === 'rad'" style="display: grid; gap: 10px; padding-top: 4px" role="radiogroup" :data-testid="`cm-input-${f.name}`">
 						<label v-for="o in f.options" :key="o.index" class="radio"><input v-model="form[f.name]" type="radio" :name="f.radioName" :value="String(o.index)" :disabled="disabled" /><span class="dot"></span>{{ o.label }}</label>
@@ -115,5 +120,38 @@ function holds(when) {
 }
 
 const visible = computed(() => holds(props.block.when));
+
+// A file is uploaded first as the signed-in person's own private file; the command is then sent with its name and the server checks the file before it records anything (AGENTS.md: evidence files).
+const translate = (text) => (typeof window.__ === "function" ? window.__(text) : text);
+const chosen = ref({});
+const uploading = ref({});
+const uploadErrors = ref({});
+
+async function upload(field, event) {
+	const file = (event.target.files || [])[0];
+	uploadErrors.value = { ...uploadErrors.value, [field.name]: "" };
+	if (!file) {
+		props.form[field.name] = "";
+		chosen.value = { ...chosen.value, [field.name]: "" };
+		return;
+	}
+	chosen.value = { ...chosen.value, [field.name]: file.name };
+	uploading.value = { ...uploading.value, [field.name]: true };
+	try {
+		const data = new FormData();
+		data.append("file", file, file.name);
+		data.append("is_private", "1");
+		data.append("folder", "Home/Attachments");
+		const response = await fetch("/api/method/upload_file", { method: "POST", body: data, headers: { "X-Frappe-CSRF-Token": window.frappe.csrf_token } });
+		const body = await response.json().catch(() => ({}));
+		if (!response.ok || !body.message || !body.message.name) throw new Error(translate("The file could not be uploaded. Try again."));
+		props.form[field.name] = body.message.name;
+	} catch (error) {
+		props.form[field.name] = "";
+		uploadErrors.value = { ...uploadErrors.value, [field.name]: error.message };
+	} finally {
+		uploading.value = { ...uploading.value, [field.name]: false };
+	}
+}
 const shown = (field) => holds(field.when);
 </script>

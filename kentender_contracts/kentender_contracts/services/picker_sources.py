@@ -25,6 +25,7 @@ from kentender_core.services import record_picker
 
 PERSON = "contracts.person"
 RECORD = "contracts.native_record"
+UNIT = "contracts.unit"
 FETCH = 300
 #: the responsibilities a person can be picked for
 ROLES = ("Contract inspection", "Technical certification", "Entity contract signing")
@@ -34,6 +35,7 @@ FINANCE = ("Finance preparation",)
 KINDS = {
 	"item": PREPARERS, "supplier": PREPARERS, "location": PREPARERS,
 	"account.payable": FINANCE, "account.expense": FINANCE, "account.bank": FINANCE, "cost_centre": FINANCE, "tax_template": FINANCE,
+	"purchase_order": PREPARERS, "purchase_receipt": PREPARERS, "purchase_invoice": PREPARERS, "payment_entry": PREPARERS,
 }
 
 
@@ -41,6 +43,7 @@ def sources() -> list[dict[str, Any]]:
 	base = "kentender_contracts.services.picker_sources."
 	return [
 		{"key": PERSON, "noun": "person", "plural": "people", "match": "core", "provider": base + "people_holding"},
+		{"key": UNIT, "noun": "unit", "plural": "units", "match": "provider", "provider": base + "units_preparing", "resolver": base + "units_by_id"},
 		{"key": RECORD, "noun": "record", "plural": "records", "rest_title": "Records", "match": "provider", "provider": base + "native_records", "resolver": base + "native_records_by_id"},
 	]
 
@@ -86,6 +89,14 @@ def _query(kind: str) -> tuple[str, dict[str, Any], str, str]:
 		return "Supplier", {"disabled": 0}, "supplier_name", "name"
 	if kind == "location":
 		return "Location", {}, "location_name", "name"
+	if kind == "purchase_order":
+		return "Purchase Order", {"company": company, "docstatus": 1}, "supplier_name", "name"
+	if kind == "purchase_receipt":
+		return "Purchase Receipt", {"company": company, "docstatus": 1}, "supplier_name", "name"
+	if kind == "purchase_invoice":
+		return "Purchase Invoice", {"company": company, "docstatus": 1}, "supplier_name", "name"
+	if kind == "payment_entry":
+		return "Payment Entry", {"company": company, "docstatus": 1, "payment_type": "Pay"}, "party_name", "name"
 	if kind == "cost_centre":
 		return "Cost Center", {"company": company, "is_group": 0, "disabled": 0}, "cost_center_name", "name"
 	if kind == "tax_template":
@@ -132,3 +143,30 @@ def native_records_by_id(*, ids: list[str], context: dict, actor: str) -> list[d
 	doctype, filters, name_field, _detail = _query(kind)
 	fields = ["name"] if name_field == "name" else ["name", name_field]
 	return [_row(r, name_field) for r in frappe.get_all(doctype, filters={**filters, "name": ["in", ids]}, fields=fields)]
+
+
+# -- organisation units ------------------------------------------------------------------------------------------------------------------
+def preparing_units(actor: str) -> list[str]:
+	"""Where this person prepares contracts: every unit for the head of procurement, otherwise the units of their Contract preparation assignments."""
+	if people.holds(actor, "Head of Procurement Function"):
+		return frappe.get_all("Organisation Unit", pluck="name", order_by="name asc")
+	return sorted({u for u in frappe.get_all("User Responsibility Assignment", filters={"user": actor, "business_role": "Contract preparation", "status": "Enabled"}, pluck="organisation_unit") if u and people.holds(actor, "Contract preparation", u)})
+
+
+def _unit_row(name: str) -> dict[str, Any]:
+	label = frappe.db.get_value("Organisation Unit", name, "unit_name") if frappe.get_meta("Organisation Unit").has_field("unit_name") else name
+	return {"id": name, "label": cstr(label) or name, "detail": name, "keywords": f"{name} {cstr(label)}"}
+
+
+def units_preparing(*, query: str, context: dict, actor: str, limit: int) -> tuple[list[dict[str, Any]], int]:
+	"""The organisation units where the person may prepare contracts (the unit that will manage the contract)."""
+	allowed = preparing_units(actor)
+	if not allowed:
+		raise frappe.DoesNotExistError("Not found")
+	kept = [row for row in (_unit_row(u) for u in allowed) if record_picker.matches(row, query)]
+	return kept[:limit], len(kept)
+
+
+def units_by_id(*, ids: list[str], context: dict, actor: str) -> list[dict[str, Any]]:
+	allowed = set(preparing_units(actor))
+	return [_unit_row(i) for i in ids if i in allowed]
