@@ -118,7 +118,8 @@ def match_claim(case: str, lines: list[dict[str, Any]], *, exclude: str = "", du
 		claimed_tax = line.get("tax_included")
 		if claimed_tax not in (None, "") and bool(cint(claimed_tax)) != bool(terms.get("tax_included")):
 			problems.append(_finding("Tax", f"The invoice is {'inclusive' if cint(claimed_tax) else 'exclusive'} of tax; the contract price is {'inclusive' if terms.get('tax_included') else 'exclusive'}.", HOP_HOLDER, line["line_id"]))
-		receipt = next((r for r in receipts if _receipt_qty(r) - on_receipt.get(r, 0) >= quantity), "") if line["line_id"] not in services else ""  # a service is received into nothing: its entitlement is the acceptance itself
+		room = {r: _receipt_qty(r) - on_receipt.get(r, 0) for r in receipts}
+		receipt = min((r for r in receipts if room[r] >= quantity), key=lambda r: room[r], default="") if line["line_id"] not in services else ""  # the receipt with the least room that still carries the claim, so a small claim does not use up the room a later, larger one needs; a service is received into nothing: its entitlement is the acceptance itself
 		if quantity > 0 and quantity <= eligible and not receipt and line["line_id"] not in services:
 			problems.append(_finding("Receipt", "The claim spans more than one receipt.", FINANCE_HOLDER, line["line_id"]))
 		rows.append({"line_id": line["line_id"], "claimed_quantity": quantity, "eligible_quantity": eligible, "claimed_rate": rate, "contract_rate": flt(contract["rate"]), "amount": quantity * rate,

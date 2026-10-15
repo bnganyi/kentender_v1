@@ -67,6 +67,12 @@ describe("CM boards read from the design's own code", () => {
 		expect(failures).toEqual([]);
 	});
 
+	it("compares or records every board of the design, and no board is both", () => {
+		const recorded = new Set(Object.keys(NOT_COMPARED));
+		expect(ids.filter((id) => !COVERED.includes(id) && !recorded.has(id)), "a board neither compared nor recorded as not compared").toEqual([]);
+		expect([...recorded].filter((id) => COVERED.includes(id)), "a board both compared and recorded as not compared").toEqual([]);
+	});
+
 	it("keeps the departures registry honest: only real boards, a reason for every exclusion", () => {
 		const known = new Set(ids);
 		expect(Object.keys(DEPARTURES).filter((id) => !known.has(id)), "departure for an unknown board").toEqual([]);

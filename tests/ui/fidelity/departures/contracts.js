@@ -52,7 +52,9 @@ export const DEPARTURES = { "D01-E": [REGISTER], "D25 · Verify": [CONFIRMATION]
 
 // Boards compared by a fidelity spec in `kentender_contracts/.../public/js`:
 // listed here only when a spec importing this registry really compares them.
-export const LIST_PAGES = [{ fixture: "D01", board: "D01" }, { fixture: "D01-S", board: "D01-S" }, { fixture: "D01-E", board: "D01-E" }, { fixture: "D01-F", board: "D01-F" }];
+export const LIST_PAGES = [{ fixture: "D01", board: "D01" }, { fixture: "D01-S", board: "D01-S" }, { fixture: "D01-E", board: "D01-E" }, { fixture: "D01-F", board: "D01-F" },
+	// Phase 12 (plan CM8-1201): the list as the technical reader and the auditor read it (every contract, nothing to register) and the supplier with no contract yet.
+	{ fixture: "D01-T", board: "D01-T" }, { fixture: "D01-AUD", board: "D01-AUD" }, { fixture: "D01-S-E", board: "D01-S-E" }];
 export const BOARD_PAGES = [
 	{ fixture: "D02", board: "D02" }, { fixture: "D02-V", board: "D02-V" }, { fixture: "D03", board: "D03" }, { fixture: "D03-W", board: "D03-W" }, { fixture: "D03-A", board: "D03-A" },
 	{ fixture: "D23-R", board: "D23-R" }, { fixture: "D23", board: "D23" }, { fixture: "D23-P", board: "D23-P" }, { fixture: "D24", board: "D24" },
@@ -99,6 +101,17 @@ export const COVERED = ["D-ERR", "D-DENIED", ...LIST_PAGES.map((p) => p.board), 
 
 // Rare-branch boards recorded as not compared. Each needs a reason that names
 // the authority for leaving it out (tracker rule 14).
+// The register of boards that are not compared, each with its reason (tracker rule 14; plan Phase 12, CM8-1201). Every one of the design's 157 boards is either compared above or named here.
+const WORK_REGISTER = "The work register is not a page of its own: every reader opens the Obligations tab (D10), which since Phases 8 and 9 also carries the Issues, Contract changes, Reports, Duties and close-out regions the artboard predates; the reader variants differ only in which of those regions their audience may see, and that is tested directly in test_cm_leakage. The structural comparison waits for the designer to redraw D10 and D40 with those regions (FU-CM-125).";
+const NEXT_STEP_VARIANT = "A state variant of a compared board whose difference is the next-step block (a blocked or waiting step with its reason and holder, and no primary action); the block is drawn by the shared next-step answer and every stage of a whole contract is checked for it by test_cm_dead_end. A separate fixture of this exact state was not captured, so it is not compared (FU-CM-125).";
 export const NOT_COMPARED = {
 	"D11-T": "The terminated contract whose settlement continues is the state the Obligations tab already draws as D20-T and D20-P, with the same facts, wording and next step; a second page for it would repeat that screen, so it is compared there (CM-CHG-001 v0.8 section 5.21).",
+	"D09": "The Invoices summary is drawn for a contract owner who has a replacement follow-up as the next step, with a payment region that has no title of its own; the built screen titles the region and carries the reader's real next step. The payment screens that carry the money are compared as D09-F, D09-T and D09-AUD (FU-CM-125).",
+	"D10": WORK_REGISTER, "D40": WORK_REGISTER, "D40-AO": WORK_REGISTER, "D40-HOD": WORK_REGISTER, "D40-F": WORK_REGISTER, "D40-AUD": WORK_REGISTER, "D40-S": WORK_REGISTER, "D40-T": WORK_REGISTER,
+	"D40-D": "A Departmental Author who holds no Contract Management responsibility is refused: the shared denied page is the built screen and it is compared as D-DENIED.",
+	"D02-H": NEXT_STEP_VARIANT, "D02-S": NEXT_STEP_VARIANT, "D07-P": NEXT_STEP_VARIANT, "D33-W": NEXT_STEP_VARIANT, "D09-F · Submitted": NEXT_STEP_VARIANT, "D09-F · Stale": NEXT_STEP_VARIANT,
+	"D17 · Posted": NEXT_STEP_VARIANT, "D17 · Pending": NEXT_STEP_VARIANT, "D28-F": NEXT_STEP_VARIANT, "D27 · Blocked": NEXT_STEP_VARIANT,
+	"D07 · Correction": "The dialog that asks for a correction of an acceptance report is built as the request-correction dialog of the report screen; its own fixture was not captured, so it is not compared (FU-CM-125).",
+	"D33-A · Posted": "The accounting invoice once posted is the same screen as D33-A with its primary action gone and the posting result in its next step; it was not captured as its own fixture (FU-CM-125).",
+	"D28-F · Editor": "The payment editor for the remaining amount is the payment editor of D09-F with the remaining amount filled in; it was not captured as its own fixture (FU-CM-125).",
 };

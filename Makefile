@@ -1428,8 +1428,8 @@ std-templates-gate:
 # CM-CHG-001 v0.8 plan Phase 1 (tracker CM8-105). Contract Management's Python gates write real rows (no rollback on this bench), so they
 # run on the test site: `scripts/test-site.sh run make cm-services-gate`. They refuse the dev site and a live browser run.
 # Later gates (seams, native, leakage, dead ends, UI, seeds) are added with the phase that builds them (tracker rule 13).
-.PHONY: cm-preflight cm-services-gate cm-native-gate cm-ui-gate cm-independence-gate cm-seams-gate cm-leakage-gate cm-dead-end-gate seed-cm-profile seed-cm-clean seed-cm-profiles cm-demo-gate
-CM_SERVICE_MODULES ?= test_cm_import_boundary test_cm_schema test_cm_errors test_cm_records test_cm_intents test_cm_holds test_cm_recovery_matrix test_cm_signing_simulation test_cm_rules test_cm_authority test_cm_audience test_cm_tasks test_cm_workspace test_cm_support test_cm_formation test_cm_formation_rules test_cm_formation_end test_cm_outside_signature test_cm_security test_cm_existing test_cm_award_receiver test_cm_delivery test_cm_appointment test_cm_arrival_exceptions test_cm_inspection test_cm_acceptance test_cm_services test_cm_invoice test_cm_liability test_cm_settlement test_cm_advance test_cm_finance_boards test_cm_issues test_cm_change test_cm_adjustment test_cm_warranty test_cm_security_actions test_cm_termination test_cm_reporting test_cm_change_boards test_cm_obligation_boards test_cm_thread test_cm_boards test_cm_picker test_cm_service_principal test_cm_outputs test_cm_date_guard test_cm_completion test_cm_completion_boards test_cm_dead_end test_cm_idempotency test_cm_leakage test_cm_adversarial test_cm_home_provider test_cm_demo_profiles
+.PHONY: cm-preflight cm-services-gate cm-native-gate cm-ui-gate cm-independence-gate cm-seams-gate cm-leakage-gate cm-dead-end-gate seed-cm-profile seed-cm-clean seed-cm-profiles cm-demo-gate cm-persona-gate ui-cm-fidelity-gate cm-regression-gate ui-cm-release-evidence-gate
+CM_SERVICE_MODULES ?= test_cm_import_boundary test_cm_schema test_cm_errors test_cm_records test_cm_intents test_cm_holds test_cm_recovery_matrix test_cm_signing_simulation test_cm_rules test_cm_authority test_cm_audience test_cm_tasks test_cm_workspace test_cm_support test_cm_formation test_cm_formation_rules test_cm_formation_end test_cm_outside_signature test_cm_security test_cm_existing test_cm_award_receiver test_cm_delivery test_cm_appointment test_cm_arrival_exceptions test_cm_inspection test_cm_acceptance test_cm_services test_cm_invoice test_cm_liability test_cm_settlement test_cm_advance test_cm_finance_boards test_cm_issues test_cm_change test_cm_adjustment test_cm_warranty test_cm_security_actions test_cm_termination test_cm_reporting test_cm_change_boards test_cm_obligation_boards test_cm_thread test_cm_boards test_cm_picker test_cm_service_principal test_cm_outputs test_cm_date_guard test_cm_completion test_cm_completion_boards test_cm_dead_end test_cm_idempotency test_cm_leakage test_cm_adversarial test_cm_home_provider test_cm_demo_profiles test_cm_runbook test_cm_whole_chain
 # Core modules Contract Management depends on: the shared signing facade (plan D8).
 CM_CORE_MODULES ?= test_signing_facade
 CM_ONLY_SITE ?= kentender-cm-only.local
@@ -1481,6 +1481,35 @@ cm-demo-gate: cm-preflight
 		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_contracts.seeds.demo.run --kwargs "{\"profile\": \"$$p\", \"passwords\": True}" && \
 		cd $(CURDIR) && scripts/test-site.sh run npx playwright test tests/ui/smoke/contracts/cm-demo-walk.spec.ts --workers=1 --retries=0 || status=1; \
 		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_contracts.seeds.demo.clean; done; exit $$status
+
+# CM-CHG-001 v0.8 plan Phase 12 (tracker CM8-1201, CM8-1204): the structural fidelity of every board of the design (compared, or recorded as not compared with its reason: tests/ui/fidelity/departures/contracts.js) and the persona
+# pass as real users on the ACCEPTED profile. Test site only for the pass: `scripts/test-site.sh run make cm-persona-gate`.
+ui-cm-fidelity-gate:
+	npx vitest run --project contracts
+
+cm-persona-gate: cm-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_contracts.seeds.demo.run --kwargs "{\"profile\": \"ACCEPTED\", \"passwords\": True}"
+	@cd $(CURDIR) && scripts/test-site.sh run npx playwright test tests/ui/smoke/contracts/cm-persona-pass.spec.ts --workers=1 --retries=0; status=$$?; \
+		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_contracts.seeds.demo.clean; exit $$status
+
+# CM-CHG-001 v0.8 plan Phase 12 (tracker CM8-1206): the one cross-module regression run, at release time. What Contract Management reaches into or changed in another app's world: Award's source and delivery
+# seams, Budget's funding provider, the shared signing facade, the supplier-account provider and Home (which now carries the Contracts module). Test site only; nothing here is run after a small edit.
+CM_REGRESSION_AWARD ?= test_awd_delivery test_awd_seams test_awd_integration test_contract_sources
+CM_REGRESSION_BUDGET ?= test_budget_contract_funding_provider test_budget_service_principal test_budget_close_commitment
+cm-regression-gate: cm-preflight
+	cd $(BENCH_ROOT) && for m in $(CM_REGRESSION_AWARD); do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && for m in $(CM_REGRESSION_BUDGET); do \
+		bench --site $(SITE) run-tests --app kentender_budget --module kentender_budget.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_suppliers --module kentender_suppliers.supplier_accounts.tests.test_account_read_and_contract
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_core --module kentender_core.tests.test_signing_facade
+	npx vitest run --project home
+	scripts/test-site.sh run npx playwright test tests/ui/smoke/home --workers=1 --retries=0
+
+# Every Contract Management gate once, in the order that keeps one gate's leftovers out of the next, with each result and its proof level written to artifacts/cm-release-evidence.md (scripts/cm-release-evidence.sh).
+# `scripts/test-site.sh run make ui-cm-release-evidence-gate`; about two hours. It does not cover Phase 13, which is owner-gated.
+ui-cm-release-evidence-gate:
+	scripts/cm-release-evidence.sh
 
 # The real owners (proof level L2): Award's provider of the source material through Tenders, Bid Evaluation, site configuration, Supplier Accounts and Budget, the core seams they answer, Budget's funding
 # provider and the principal gateway guard. The canonical award's sources are listed one by one: a source nobody can supply blocks formation, and the report names it and its owner.

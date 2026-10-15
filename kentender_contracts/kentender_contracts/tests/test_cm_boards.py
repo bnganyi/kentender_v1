@@ -62,6 +62,10 @@ class TestBoards(ContractCase):
 
 	def test_the_screens_of_the_thread_for_the_people_who_walk_it(self):
 		t = tw.Thread(self.p, tag="BOARDS")
+		# a supplier with a binding and no contract yet has the empty list; the same supplier has the contract once Award has sent it
+		first = listing.workspace(self.p["mary"])["board"]
+		self.assertEqual((first["id"], first["rows"], first["empty"]), ("D01-S", [], "No contracts are available."))
+		self.seen["D01-S-E"] = first
 		out = tw.receive(self.p, contract_id=t.contract_id)
 		self.case = t.case = out["contract"]
 
@@ -77,6 +81,11 @@ class TestBoards(ContractCase):
 		nothing = listing.workspace(self.p["charles"], view="All contracts", search="no such contract")["board"]
 		self.assertEqual((nothing["rows"], nothing["empty"], nothing["emptyAct"]), ([], "No contracts match your search.", "Clear search"))
 		self.seen["D01-F"] = nothing
+		# the readers who never act: the technical operator and the auditor read every contract and have no work on any
+		for who, name in (("daniel", "D01-T"), ("naomi", "D01-AUD")):
+			reader = listing.workspace(self.p[who])["board"]
+			self.assertEqual((reader["id"], reader["rows"][0][0], reader["headP"]), ("D01", "@" + t.contract_id, ""), f"{who} reads the contract and may register nothing")
+			self.seen[name] = reader
 
 		# preparation: the particulars still to complete, then the agreement ready to send
 		blank = self.screen("charles", "D02", capture_as="D02-missing")

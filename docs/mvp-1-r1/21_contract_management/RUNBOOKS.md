@@ -1,0 +1,71 @@
+# Contract Management runbooks
+
+Companion to `CM-CHG-001_v0_8_IMPLEMENTATION_TRACKER.md` (plan Phase 12, tracker CM8-1205). Every command and function named here is checked against the code by `test_cm_runbook`, so a rename fails a test instead of leaving a stale instruction. The audience is whoever runs, tests or recovers Contract Management: a developer on the test site, the Technical Operator on a live site, and the head of procurement who is told something is pending.
+
+Contract Management never writes another app's records. It asks the owner (Budget for funding, ERPNext for orders, receipts, invoices and payments, the shared signing facade for proof) through its published interface, **reads the owner first** by the operation's identity, links what already exists and creates only what is missing. That one rule is what makes every recovery below safe to repeat.
+
+## 1. Environments and switches
+
+| Switch | Where | What it does |
+|---|---|---|
+| `kt_cm_simulation_environment` (site config) or the platform's `kt_bds_simulation_environment` | test and demonstration sites; never a live site | Lets the simulation stand-ins answer: the signing provider, the synthetic rule profile, the synthetic award source provider, the simulated funding owner. On a live site neither is set and the synthetic profile is refused (`CM_RULE`). Nothing is ever drawn on a screen as a test label. |
+| `kt_cm_clock` (a flag, set in code) | tests and profile builders | An injected instant that every recorded time and every deadline reads. The live pages of a test site read the site's test clock instead (`kentender_core.services.test_clock`). |
+| `kt_cm_dispatch_fault = "fail"` (a flag) | tests | Makes the message channel fail, so a notice stays Unsent and is retried. |
+| `kt_cm_funding_fault = "fail"` (a flag) | tests | Makes the simulated funding owner refuse, so the conversion, adjustment or closure stays pending. |
+| `kt_cm_deduction_account` (site config) | any site | The native account a delay deduction is posted against. Without it a delay adjustment's application is held (the "adjustment mapping" hold) and Finance is told. |
+
+Tests write real rows and have no rollback on this bench. **Run them on `kentender-test.local` only**, through `scripts/test-site.sh run …`, one module at a time, never while a Playwright run is active (`make cm-preflight` refuses). The dev site is never a test target.
+
+## 2. Resetting fixtures
+
+* The whole test site: `make test-site-rebuild` (copies the dev site over the test site).
+* The browser world the Playwright specs walk: `make cm-ui-world` builds it and `make cm-ui-world-clean` removes it; always clean before running Python gates.
+* A demonstration profile: `make seed-cm-profile SITE=kentender-test.local PROFILE=ACCEPTED` (profiles: RECEIVED, SIGNING, ACTIVE, ACCEPTED, PAID, CHANGE, WARRANTY, TERMINATION, CLOSED); the profile already in place is left exactly as it is, another replaces it, and `make seed-cm-clean` removes the contract, its native documents and the responsibilities granted for it and puts the clock back. `make seed-cm-profiles` builds and checks all nine once and cleans up.
+* Python-level: `kentender_contracts.services.records.wipe` deletes every Contract Management row of one fixture namespace and the bell alerts for its contracts.
+
+## 3. The gates, in the order they are run
+
+| Target | What it proves | Roughly |
+|---|---|---|
+| `make cm-services-gate` | every service and board module on the test site | 25 to 35 minutes |
+| `make cm-seams-gate` | the real owners: Award's source material, the core seams, Budget's funding provider | 3 minutes |
+| `make cm-native-gate` | real ERPNext documents: the adapter, the payment guards, a two-process claim race | 2 minutes |
+| `make cm-leakage-gate` | who may read what; the technical and audit readers can never act | 5 minutes |
+| `make cm-dead-end-gate` | no reader is left on a screen with no way forward; every command is safe to send twice | 8 minutes |
+| `make cm-ui-gate` | the structural fidelity of the boards, then every browser walk, then the world is cleaned | 12 to 35 minutes |
+| `make cm-demo-gate` | the demonstration profiles walked as real people from the sidebar, My work and the bell | 3 minutes |
+| `make cm-independence-gate` | the app on a site that holds only ERPNext, core, supplier accounts and itself | 6 minutes |
+| `make ui-cm-fidelity-gate` | every board of the design compared with its artboard, or recorded as not compared with its reason | 1 minute |
+| `make cm-persona-gate` | each named person on the accepted contract, in a real browser, with no native-form redirect | 3 minutes |
+| `make cm-regression-gate` | what Contract Management reaches into in other apps: Award's seams, Budget's funding provider, the signing facade, the supplier-account provider and Home | 10 to 20 minutes |
+| `make ui-cm-release-evidence-gate` | all of the above, once, in the order that keeps one gate's leftovers out of the next; writes `artifacts/cm-release-evidence.md` with each result and its proof level; it does not cover the owner-gated Phase 13 | about 2 hours |
+
+If a UI run fails oddly (a teardown that fails, later specs failing against state an earlier one left behind), check `make ui-queue-check` before reading any application code.
+
+## 4. Uncertain operations: what the screen says and who acts
+
+An operation that crosses to another owner is stored as a **Contract Operation Intent** with an identity (case, subject, version, kind, key) and a state: Recorded, Attempting, Failed or Uncertain are pending; Succeeded and Reconciled are settled. A definitive refusal by the owner is Failed; an unexpected error or a timeout is **Uncertain**, because the owner may or may not have acted. `kentender_contracts.services.intents.pending` lists a case's pending operations, and the Obligations tab shows them to the Technical Operator ("Restore contract operation").
+
+* The case never changes lifecycle because an operation is pending, and nothing asks for a repeat signature: a signature proves the exact version, and the retry carries on from the original operation.
+* What is held while an operation is pending is named on the screen with its reason and its holder; it is read fresh every time (`kentender_contracts.services.holds.open_holds`), so a cleared cause releases it without anyone editing a hold.
+* An attempt that was left Attempting belongs to its worker for two minutes; after that a retry reads the owner first and carries on.
+* **Recovery** is the Technical Operator's `RestoreContractOperation` task, which runs `kentender_contracts.services.formation.restore_operations`. It is the only technical action and it only reads and links.
+
+## 5. Retrying each kind of operation
+
+| Operation | Recovered by | How it is made safe |
+|---|---|---|
+| Native purchase order and funding conversion at signing, a variation's order update and funding adjustment, a termination's adjustment | `kentender_contracts.services.formation.carry_out_effects`, `kentender_contracts.services.change.carry_out_effects`, `kentender_contracts.services.termination.carry_out_effects` | the owner is read by identity first; a second attempt links the first's document |
+| Funding closure of a closed contract or a completed settlement | `kentender_contracts.services.funding_closure.carry_out` | the owner answers by identity (`recall`); the contract stays Closed and shows **Funding finalisation pending** until the owner acknowledges |
+| Native receipt of accepted goods | `kentender_contracts.services.delivery.restore_receipts` | a replacement's receipt waits for the native return that makes room for it |
+| Native invoice (liability) for a claim | on the claim's own state change; a corrected claim after Finance posted the original is held until the credit stands (`kentender_contracts.services.payment.reconcile_liability` names it) | one liability, never two |
+| A payment | **not retried by the system.** Finance prepares, a Finance approver approves, and the settlement is confirmed by a Finance approver, never the maker; a pending native payment holds further payment and a business user cannot repeat one by refreshing | the payment guards of the native adapter |
+| A report to its recipient | `kentender_contracts.services.reporting.retry_dispatches` | the same dispatch identity: the recipient is sent it once |
+| A message to the supplier | `kentender_contracts.services.issues.retry_dispatches` | the same message, delivered only with evidence |
+
+## 6. Things not to do
+
+* Do not edit a Contract Management record, or an ERPNext document the contract made, by hand to "fix" a state. The history is append-only; a correction is a later fact (a correction request, a reopening, a credit note).
+* Do not delete a native document the contract is linked to: the link stops the document's name from being reused until the contract's own record says what happened.
+* Do not reuse an idempotency key for anything but the exact same command: another payload, person or command with the same key is refused as a conflict, on purpose.
+* Do not turn on the simulation switches on a live site to "get past" a refused action. A refusal with `CM_RULE` means the production rule profile has not been verified (LQ-01), which is a decision for the legal and procurement owners, not a setting.
