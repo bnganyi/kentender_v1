@@ -240,6 +240,8 @@ def teardown() -> dict:
 		for movement in frappe.get_all("Asset Movement Item", filters={"asset": asset}, pluck="parent"):
 			drop("Asset Movement", [movement])
 	drop("Asset", frappe.get_all("Asset", filters={"item_code": ["in", items]}, pluck="name"))
+	frappe.db.delete("Stock Ledger Entry", {"item_code": ["in", items]})  # a return that is removed leaves its negative entry behind, and every later receipt of the test items then fails the stock check
+	frappe.db.delete("Bin", {"item_code": ["in", items]})
 	for serial in frappe.get_all("Serial No", filters={"item_code": ["in", items]}, pluck="name"):
 		frappe.delete_doc("Serial No", serial, force=True, ignore_permissions=True)
 	for doctype, name in [("Item", ITEM_FA), ("Item", ITEM_STK), ("Item", ITEM_SERVICE), ("Item", ITEM_PLAIN), ("Asset Category", CATEGORY), ("Supplier", SUPPLIER), ("Supplier", OTHER_SUPPLIER), ("Location", LOCATION)]:

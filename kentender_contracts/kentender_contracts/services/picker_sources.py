@@ -30,12 +30,15 @@ FETCH = 300
 #: the responsibilities a person can be picked for
 ROLES = ("Contract inspection", "Technical certification", "Entity contract signing")
 PREPARERS = ("Head of Procurement Function", "Contract preparation", "Accounting Officer")
+#: A person named to review a requested change holds one of these (the Accounting Officer, who decides, is deliberately not among them).
+REVIEWER = "Change reviewer"
+REVIEWER_ROLES = ("Contract inspection", "Technical certification", "Contract preparation", "Head of Procurement Function")
 FINANCE = ("Finance preparation",)
 #: kind -> (who may choose, how it is read)
 KINDS = {
 	"item": PREPARERS, "supplier": PREPARERS, "location": PREPARERS,
 	"account.payable": FINANCE, "account.expense": FINANCE, "account.bank": FINANCE, "cost_centre": FINANCE, "tax_template": FINANCE,
-	"purchase_order": PREPARERS, "purchase_receipt": PREPARERS, "purchase_invoice": PREPARERS, "payment_entry": PREPARERS,
+	"purchase_order": PREPARERS, "purchase_receipt": PREPARERS + FINANCE, "purchase_invoice": PREPARERS + FINANCE, "payment_entry": PREPARERS,  # Finance names the native return and credit when it reconciles a returned unit
 }
 
 
@@ -64,15 +67,21 @@ def _holds_somewhere(actor: str, role: str) -> bool:
 def people_holding(*, query: str, context: dict, actor: str, limit: int) -> list[dict[str, Any]]:
 	"""Everyone who holds the responsibility in the context now."""
 	role = cstr(context.get("role"))
-	if role not in ROLES:
+	if role not in ROLES and role != REVIEWER:
 		raise frappe.DoesNotExistError("Not found")
 	_gate(actor, PREPARERS)
-	users = frappe.get_all("User Responsibility Assignment", filters={"business_role": role, "status": "Enabled"}, pluck="user", distinct=True)
+	wanted = REVIEWER_ROLES if role == REVIEWER else (role,)
+	users = frappe.get_all("User Responsibility Assignment", filters={"business_role": ["in", list(wanted)], "status": "Enabled"}, pluck="user", distinct=True)
 	rows = []
 	for user in sorted(set(users)):
-		if people.holds(user, role):
+		if (eligible_reviewer(user) if role == REVIEWER else people.holds(user, role)):
 			rows.append({"id": user, "label": people.full_name(user), "detail": user, "keywords": user})
 	return rows
+
+
+def eligible_reviewer(user: str) -> bool:
+	"""May this person be named to review a requested change: an enabled person who holds one of the contract responsibilities (a unit-scoped one at any unit)."""
+	return any(people.holds(user, r) or _holds_somewhere(user, r) for r in REVIEWER_ROLES)
 
 
 # -- native records ---------------------------------------------------------------------------------------------------------------------

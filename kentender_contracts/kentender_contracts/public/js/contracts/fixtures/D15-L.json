@@ -1,0 +1,166 @@
+{
+ "actions": {
+  "Record source evidence": {
+   "dialog": "evidence",
+   "do": "dialog"
+  },
+  "View signing record": {
+   "do": "tab",
+   "tab": "History"
+  },
+  "View source event": {
+   "do": "tab",
+   "tab": "History"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_the_monthly_report_",
+ "d": "D15",
+ "dialogs": {
+  "evidence": {
+   "args": {
+    "obligation": "CM-OBL-794755"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Source reference",
+       "name": "reference",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Dated",
+       "name": "dated",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Copy",
+       "name": "copy",
+       "o": {},
+       "t": "file",
+       "v": ""
+      },
+      {
+       "l": "Notes",
+       "name": "notes",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "RecordLegalSourceEvidence",
+   "p": "Save evidence",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Record source evidence"
+  }
+ },
+ "ev": [
+  "Award decision event",
+  "Signing record"
+ ],
+ "id": "D15-L",
+ "name": "Contract reporting",
+ "next": {
+  "fixes": [
+   "Record source evidence",
+   "View source event",
+   "View signing record"
+  ],
+  "h": "The applicable publication deadline needs confirmation.",
+  "k": "blk",
+  "s": "Responsible for the fix: Charles Mutiso",
+  "s2": ""
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_the_monthly_report_",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Trigger",
+       "Award decision recorded 17 Jun 2027, 10:00 EAT"
+      ],
+      [
+       "Separate fact",
+       "Contract signed 2 Jul 2027, 09:00 EAT"
+      ],
+      [
+       "Destinations",
+       "Notice boards; website if available; report to PPRA"
+      ],
+      [
+       "Deadline",
+       "Not confirmed \u2014 set by current directions"
+      ],
+      [
+       "Responsible review",
+       "Procurement/reporting owner"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Obligation"
+  }
+ ],
+ "s2": [],
+ "st": "Needs review",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Publication obligation",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_the_monthly_report_",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_the_monthly_report_",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_the_monthly_report_",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_the_monthly_report_",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_the_monthly_report_",
+    "history"
+   ]
+  }
+ ],
+ "title": "Publication requirement needs review",
+ "version": 9
+}

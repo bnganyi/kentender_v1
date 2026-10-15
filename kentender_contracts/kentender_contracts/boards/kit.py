@@ -110,7 +110,7 @@ def dlg(title: str, blocks, primary: str = "", secondary=("Cancel",), **extra) -
 
 def board(**o) -> dict:
 	"""A board with the design's defaults (`S`)."""
-	base = {"ref": "", "sub": "", "back": "Back to contracts", "page": "record", "s2": [], "ev": [], "regions": [], "actions": {}, "dialogs": {}}
+	base = {"ref": "", "sub": "", "back": "Back to contracts", "page": "record", "p": "", "s2": [], "ev": [], "regions": [], "actions": {}, "dialogs": {}}
 	return {**base, **o}
 
 

@@ -20,7 +20,7 @@ import frappe
 from frappe.utils import cint, cstr, flt, getdate
 
 from kentender_contracts.native import adapter, payment_guard
-from kentender_contracts.services import advance, authority, clock, delivery, events, formation, holds, intents, opening, parties, people, position, preflight, records, segregation, service_principal, signing_flow, work
+from kentender_contracts.services import adjustment, advance, authority, clock, delivery, events, formation, holds, intents, opening, parties, people, position, preflight, records, segregation, service_principal, signing_flow, work
 from kentender_contracts.services import errors
 from kentender_contracts.services.errors import fail, invalid
 
@@ -152,7 +152,7 @@ def submit_invoice(case: str, *, expected_version: int, idempotency_key: str, ac
 	def body() -> dict[str, Any]:
 		doc = records.lock(case)
 		records.check_version(doc, expected_version)
-		preflight.lifecycle(doc, "Active")
+		preflight.lifecycle(doc, "Active", "Terminated")  # what was accepted before a termination can still be claimed
 		invalid({"claim_reference": "" if cstr(claim_reference).strip() else "Enter your invoice number.", "invoice_date": "" if cstr(invoice_date).strip() else "Enter the invoice date."})
 		clean = _claim_lines(lines)
 		earlier, reuse = None, False
@@ -492,6 +492,8 @@ def save_accounting_invoice(case: str, *, invoice: str, expected_version: int, i
 		if row.accounting_state in ("Submitted for approval", "Posted"):
 			fail("CM_CHANGED", invoice=invoice, accounting=row.accounting_state)
 		saved = native(adapter.prepare_invoice, row.native_invoice, posting_date=posting_date, payable_account=payable_account, cost_centre=cost_centre, expense_account=expense_account, tax_template=tax_template)
+		if adjustment.apply_to_native(case, invoice, row.native_invoice):  # an approved delay adjustment is a native deduction on this invoice, through Finance's verified mapping
+			saved["grand_total"] = frappe.db.get_value("Purchase Invoice", row.native_invoice, "grand_total")
 		plan = advance.recovery_plan(case, row)
 		if plan and plan["recovery"] > 0:  # the advance is recovered on this invoice at the issued rate, set against it natively and never more than the advance still holds
 			applied = native(adapter.apply_advance, row.native_invoice, plan["payment"], plan["recovery"])
@@ -791,8 +793,9 @@ def invoice_position(case: str, invoice: str) -> dict[str, float]:
 		native_reduced = flt(doc.grand_total) - flt(doc.outstanding_amount)
 		credit = adapter.credit_against(row.native_invoice)
 	cash = settled_amount(invoice)
-	noncash = max(0.0, native_reduced - recorded)
-	return {"certified": certified, "recorded": recorded, "cash_confirmed": cash, "unconfirmed": max(0.0, recorded - cash), "noncash": noncash, "credit": credit,
+	adjusted = adjustment.applied_to(invoice)  # an authorised contractual adjustment applied as a native deduction: noncash, never reported as cash
+	noncash = max(0.0, native_reduced - recorded) + adjusted
+	return {"certified": certified, "recorded": recorded, "cash_confirmed": cash, "unconfirmed": max(0.0, recorded - cash), "noncash": noncash, "adjustment": adjusted, "credit": credit,
 		"advance_recovery": adapter.advance_recovered(row.native_invoice) if row.native_invoice else 0.0, "outstanding": max(0.0, certified - recorded - noncash)}
 
 

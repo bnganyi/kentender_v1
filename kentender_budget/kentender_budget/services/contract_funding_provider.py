@@ -59,5 +59,59 @@ class Provider:
 		return {"reference": ", ".join(codes), "amount": float(sum((part for _r, part in parts), Decimal("0")))}
 
 
+	def recall(self, *, identity: str) -> dict[str, Any] | None:
+		"""What an adjustment or a closure already did under this identity (read from Budget's own idempotency journal), so a retry links it and does nothing twice."""
+		codes, total = [], Decimal("0")
+		for command, tag in (("adjust_commitment", "#adjust#"), ("close_commitment", "#close#")):
+			for row in frappe.get_all(JOURNAL, filters={"idempotency_key": ["like", f"{identity}{tag}%"], "command": command}, fields=["result"]):
+				commitment = (frappe.parse_json(row.result) if row.result else {}).get("commitment") or {}
+				if commitment.get("commitment_code"):
+					codes.append(commitment["commitment_code"])
+					total += Decimal(str(commitment.get("current_amount") or 0))
+		return {"reference": ", ".join(codes), "amount": float(total)} if codes else None
+
+	def _commitments(self, contract: str) -> list[Any]:
+		return frappe.get_all("Procurement Commitment", filters={"contract": contract, "status": ["in", ["Active", "Closed"]]}, fields=["name", "reservation", "current_amount", "status", "modified"], order_by="creation asc")
+
+	def adjust(self, *, identity: str, contract: str, allocations: list[dict[str, Any]], event_id: str, event_type: str) -> dict[str, Any]:
+		"""Apply a lawful variation or termination: each allocation names a reservation and the supported total of its commitment. Budget checks the cover for an increase and refuses an increase on a closed
+		Budget line or a Closed commitment; a refusal leaves everything it had done before it in place only if it had already committed, so the caller reads the owner's position afterwards."""
+		caller = service_caller(PRINCIPAL_CONTRACT, reference=contract)
+		held = {c.reservation: c for c in self._commitments(contract)}
+		codes, before, after = [], Decimal("0"), Decimal("0")
+		for allocation in allocations or []:
+			reservation = str(allocation.get("reservation") or "").strip()
+			current = held.get(reservation)
+			if current is None:
+				raise seam.Refused(f"The contract has no commitment on reservation {reservation}.")
+			try:
+				done = commitments.adjust_commitment(current.name, str(allocation["new_total"]), event_id, event_type, _key(identity + "#adjust", reservation), caller=caller)
+			except (frappe.ValidationError, frappe.PermissionError, frappe.DoesNotExistError) as exc:
+				raise seam.Refused(frappe.safe_decode(str(exc))) from exc
+			codes.append(done["commitment"]["commitment_code"])
+			before += Decimal(str(current.current_amount or 0))
+			after += Decimal(str(done["commitment"]["current_amount"]))
+		return {"reference": ", ".join(codes), "amount": float(after), "before": float(before), "after": float(after)}
+
+	def close(self, *, identity: str, contract: str, final_amount: float, event_id: str, event_type: str, evidence: list[str]) -> dict[str, Any]:
+		"""Close the contract's commitments on a reconciled outcome. The final amount must equal what the commitments hold now (a mismatch is an error, never an implicit adjustment)."""
+		replay = self.recall(identity=identity)  # the same closure asked again returns what it did; the revision it read the first time is no longer the current one
+		if replay is not None and replay["reference"]:
+			return replay
+		caller = service_caller(PRINCIPAL_CONTRACT, reference=contract)
+		rows = self._commitments(contract)
+		held = sum((Decimal(str(c.current_amount or 0)) for c in rows), Decimal("0"))
+		if held != Decimal(str(final_amount)):
+			raise seam.Refused(f"The final supported obligation {final_amount:,.2f} is not what the commitments hold ({float(held):,.2f}).")
+		codes = []
+		for c in rows:
+			try:
+				done = commitments.close_commitment(c.name, str(c.modified), {"event_id": event_id, "event_type": event_type, "final_amount": str(c.current_amount)}, evidence, _key(identity + "#close", c.reservation), caller=caller)
+			except (frappe.ValidationError, frappe.PermissionError, frappe.DoesNotExistError) as exc:
+				raise seam.Refused(frappe.safe_decode(str(exc))) from exc
+			codes.append(done["commitment"]["commitment_code"])
+		return {"reference": ", ".join(codes), "amount": float(held)}
+
+
 def service() -> Provider:
 	return Provider()

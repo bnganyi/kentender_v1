@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from kentender_contracts import award_receiver
-from kentender_contracts.services import advance, closeout, delivery, existing, formation, formation_end, outside_signature, payment, security
+from kentender_contracts.services import adjustment, advance, change, closeout, delivery, existing, formation, formation_end, issues, obligations, outside_signature, payment, reporting, security, security_actions, termination, warranty
 from kentender_contracts.services.errors import invalid
 
 Handler = Callable[[str, dict[str, Any], dict[str, Any], int, str, str], dict[str, Any]]
@@ -120,6 +120,46 @@ def _record_security(case, args, values, expected, key, actor):
 		amount=_number(values.get("amount")), issued_on=values.get("issued_on", ""), expires_on=values.get("expires_on", ""), attachment=values.get("attachment", ""))
 
 
+def _request_change(case, args, values, expected, key, actor):
+	kind = args.get("kind") or pick(values.get("kind"))
+	request = {"proposed_date": values.get("proposed_date")} if kind == "Extension" else {"quantities": {line: values.get(f"quantity.{line}") for line in nested(values, "quantity")}}
+	files = values.get("evidence")
+	evidence = [{"label": args.get("evidence_label") or "Supplier request", "file": files}] if files else []
+	return change.request_change(case, kind=kind, request=request, reason=values.get("reason", ""), evidence=evidence, expected_version=expected, idempotency_key=key, actor=actor, correcting=int(args.get("correcting") or 0))
+
+
+def _files(values: dict[str, Any], default: str, field: str = "evidence", label: str = "") -> list[dict[str, Any]]:
+	"""The file a form carries as one piece of labelled evidence (the service decides whether one is required)."""
+	url = str(values.get(field) or "").strip()
+	return [{"label": label or default, "file": url}] if url else []
+
+
+def _declaration(value: Any) -> str:
+	"""A radio group's value is the index of the chosen option: the first says there is no conflict, the second that there is one."""
+	chosen = str(value if value is not None else "").strip()
+	return {"0": change.NO_CONFLICT, "1": "Conflict"}.get(chosen, chosen)
+
+
+def _security_action(case, args, values, expected, key, actor):
+	if args.get("action") == "Replace":
+		return security_actions.replace(case, security_name=args["security"], expected_version=expected, idempotency_key=key, actor=actor)
+	return security_actions.record_return(case, returned_on=values.get("returned_on", ""), evidence=_files(values, "Discharge"), expected_version=expected, idempotency_key=key, actor=actor)
+
+
+def _termination_request(case, args, values, expected, key, actor):
+	return termination.request(case, grounds=pick(values.get("grounds")), clause=values.get("clause", ""), recommendation=values.get("recommendation", ""), evidence=_files(values, "Termination evidence"),
+		expected_version=expected, idempotency_key=key, actor=actor, correcting=int(args.get("correcting") or 0))
+
+
+def _settlement(case, args, values, expected, key, actor):
+	survivors = []
+	for name, text in values.items():
+		if name.startswith("basis.") and str(text).strip():
+			kind, ref = name[len("basis."):].split("|", 1)
+			survivors.append({"kind": kind, "ref": ref, "basis": str(text).strip()})
+	return termination.prepare_settlement(case, termination=int(args["termination"]), finance_reference=values.get("finance_reference", ""), classified=survivors, expected_version=expected, idempotency_key=key, actor=actor)
+
+
 def _number(value: Any) -> float:
 	try:
 		return float(str(value or "0").replace(",", ""))
@@ -163,7 +203,17 @@ COMMANDS: dict[str, Handler] = {
 	"RejectContractSecurity": lambda c, a, v, e, k, u: security.reject_security(c, security=a["security"], expected_version=e, idempotency_key=k, actor=u, reason=v.get("reason", "")),
 	"SaveContractParticulars": _particulars,
 	"RequestContractSignatures": lambda c, a, v, e, k, u: formation.request_signatures(c, expected_version=e, idempotency_key=k, actor=u),
-	"SignContractVersion": lambda c, a, v, e, k, u: formation.sign_contract(c, party=a["party"], expected_version=e, idempotency_key=k, actor=u),
+	"SignContractVersion": lambda c, a, v, e, k, u: change.sign_amendment(c, change=int(a["change"]), party=a["party"], expected_version=e, idempotency_key=k, actor=u) if a.get("change") else formation.sign_contract(c, party=a["party"], expected_version=e, idempotency_key=k, actor=u),
+	"RequestContractChange": _request_change,
+	"AppointContractChangeReviewers": lambda c, a, v, e, k, u: change.appoint_reviewers(c, change=int(a["change"]), reference=v.get("reference", ""), reviewers={kind: pick(v.get(f"reviewer.{change._slug(kind)}")) for kinds in change.REVIEW_KINDS.values() for kind in kinds if pick(v.get(f"reviewer.{change._slug(kind)}"))},
+		expected_version=e, idempotency_key=k, actor=u),
+	"RecordContractChangeReview": lambda c, a, v, e, k, u: change.record_review(c, change=int(a["change"]), kind=a["kind"], recommendation=v.get("recommendation", ""), declaration=_declaration(v.get("declaration")), reference=v.get("reference", ""),
+		expected_version=e, idempotency_key=k, actor=u),
+	"SignContractChangeReview": lambda c, a, v, e, k, u: change.sign_review(c, change=int(a["change"]), kind=a["kind"], expected_version=e, idempotency_key=k, actor=u),
+	"SubmitContractChangeForDecision": lambda c, a, v, e, k, u: change.submit_for_decision(c, change=int(a["change"]), expected_version=e, idempotency_key=k, actor=u),
+	"ReturnContractChange": lambda c, a, v, e, k, u: change.return_change(c, change=int(a["change"]), reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u),
+	"DecideContractChange": lambda c, a, v, e, k, u: change.decide(c, change=int(a["change"]), decision=a["decision"], reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u),
+	"ActivateContractChange": lambda c, a, v, e, k, u: change.activate_change(c, change=int(a["change"]), expected_version=e, idempotency_key=k, actor=u),
 	"RecommendContractInspectors": _recommend,
 	"AppointContractInspectors": lambda c, a, v, e, k, u: delivery.appoint_inspectors(c, appointment=a["appointment"], expected_version=e, idempotency_key=k, actor=u, from_date=v.get("from_date", ""), until_date=v.get("until_date", "")),
 	"ReturnContractAppointment": lambda c, a, v, e, k, u: delivery.return_appointment(c, appointment=a["appointment"], expected_version=e, idempotency_key=k, actor=u, reason=v.get("reason", "")),
@@ -181,6 +231,11 @@ COMMANDS: dict[str, Handler] = {
 	"CorrectContractInvoice": _invoice,
 	"RequestInvoiceCorrection": lambda c, a, v, e, k, u: payment.request_invoice_correction(c, invoice=a["invoice"], expected_version=e, idempotency_key=k, actor=u, reason=v.get("reason", "")),
 	"ResolveInvoiceDuplicate": lambda c, a, v, e, k, u: payment.resolve_duplicate(c, invoice=a["invoice"], disposition=a.get("disposition") or pick(v.get("disposition")), reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u),
+	"RecordContractIssue": lambda c, a, v, e, k, u: issues.record_issue(c, expected_version=e, idempotency_key=k, actor=u, kind=pick(v.get("kind")) or "Other", title=v.get("title", ""), description=v.get("description", ""),
+		requested_remedy=v.get("requested_remedy", ""), reply_by=v.get("reply_by", "")),
+	"SendContractCorrespondence": lambda c, a, v, e, k, u: issues.send_correspondence(c, issue=a["issue"], text=v.get("message", ""), expected_version=e, idempotency_key=k, actor=u),
+	"ReplyContractCorrespondence": lambda c, a, v, e, k, u: issues.reply_correspondence(c, issue=a["issue"], text=v.get("message", ""), expected_version=e, idempotency_key=k, actor=u, proposed_remedy=v.get("remedy", "")),
+	"ResolveContractIssue": lambda c, a, v, e, k, u: issues.resolve_issue(c, issue=a["issue"], disposition=v.get("disposition", ""), expected_version=e, idempotency_key=k, actor=u),
 	"SignContractCertification": lambda c, a, v, e, k, u: payment.sign_certification(c, invoice=a["invoice"], expected_version=e, idempotency_key=k, actor=u),
 	"SaveNativeFinanceDraft": _finance_save,
 	"SubmitNativeFinanceForApproval": _finance_submit,
@@ -192,4 +247,38 @@ COMMANDS: dict[str, Handler] = {
 	"IssueCompletionCertificate": lambda c, a, v, e, k, u: closeout.issue_completion_certificate(c, expected_version=e, idempotency_key=k, actor=u),
 	"SignContractCloseout": lambda c, a, v, e, k, u: closeout.sign_closeout(c, closeout=a["closeout"], expected_version=e, idempotency_key=k, actor=u),
 	"RestoreContractOperation": lambda c, a, v, e, k, u: formation.restore_operations(c, actor=u),
+	"RecordWarrantyClaim": lambda c, a, v, e, k, u: warranty.record_claim(c, unit=pick(v.get("unit")), fault=v.get("fault", ""), notice_date=v.get("notice_date", ""), remedy=pick(v.get("remedy")) or v.get("remedy", ""),
+		evidence=v.get("evidence", ""), expected_version=e, idempotency_key=k, actor=u),
+	"RecordWarrantyReturn": lambda c, a, v, e, k, u: warranty.record_return(c, issue=a["issue"], collected_on=v.get("collected_on", ""), evidence=v.get("evidence", ""), expected_version=e, idempotency_key=k, actor=u),
+	"ReconcileWarrantyReturn": lambda c, a, v, e, k, u: warranty.reconcile_return(c, issue=a["issue"], return_document=pick(v.get("return_document")), credit_document=pick(v.get("credit_document")), note=v.get("note", ""),
+		expected_version=e, idempotency_key=k, actor=u),
+	"VerifyContractRemedy": lambda c, a, v, e, k, u: warranty.verify_remedy(c, issue=a["issue"], evidence=v.get("evidence", ""), expected_version=e, idempotency_key=k, actor=u),
+	"PrepareContractAdjustment": lambda c, a, v, e, k, u: adjustment.prepare(c, causation=v.get("causation", ""), clause=v.get("clause", ""), supplier_response=v.get("supplier_response", ""), recommendation=v.get("recommendation", ""),
+		expected_version=e, idempotency_key=k, actor=u),
+	"DecideContractAdjustment": lambda c, a, v, e, k, u: adjustment.decide(c, adjustment=a["adjustment"], decision=a["decision"], reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u),
+	"RequestSecurityClaim": lambda c, a, v, e, k, u: security_actions.request_claim(c, grounds=v.get("grounds", ""), amount=_number(v.get("amount")), recipient=v.get("recipient", ""), mandate=v.get("mandate", ""),
+		evidence=_files(v, "Claim evidence"), expected_version=e, idempotency_key=k, actor=u, correcting=int(a.get("correcting") or 0)),
+	"DecideSecurityClaim": lambda c, a, v, e, k, u: security_actions.decide_claim(c, claim=int(a["claim"]), decision=a["decision"], reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u),
+	"RecordSecurityClaimCommunication": lambda c, a, v, e, k, u: security_actions.record_communication(c, claim=int(a["claim"]), sent_on=v.get("sent_on", ""), channel=v.get("channel", ""), reference=v.get("reference", ""),
+		evidence=_files(v, "Proof of delivery"), expected_version=e, idempotency_key=k, actor=u),
+	"RecordSecurityClaimOutcome": lambda c, a, v, e, k, u: security_actions.record_outcome(c, claim=int(a["claim"]), issuer_reference=v.get("issuer_reference", ""), outcome_on=v.get("outcome_on", ""),
+		evidence=_files(v, "Issuer outcome"), proceeds=_number(v.get("proceeds")), expected_version=e, idempotency_key=k, actor=u),
+	"RecordSecurityAction": _security_action,
+	"RequestContractTermination": _termination_request,
+	"DecideContractTermination": lambda c, a, v, e, k, u: termination.decide(c, termination=int(a["termination"]), decision=a["decision"], reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u),
+	"ReturnContractTermination": lambda c, a, v, e, k, u: (termination.return_settlement(c, termination=int(a["termination"]), reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u) if a.get("stage") == "settlement"
+		else termination.decide(c, termination=int(a["termination"]), decision="Return", reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u)),
+	"RecordTerminationNotice": lambda c, a, v, e, k, u: termination.record_notice(c, termination=int(a["termination"]), delivered_on=v.get("delivered_on", ""), method=v.get("method", ""), reference=v.get("reference", ""),
+		effective_on=v.get("effective_on", ""), evidence=_files(v, "Proof of delivery"), expected_version=e, idempotency_key=k, actor=u),
+	"RecordTerminationEffect": lambda c, a, v, e, k, u: termination.record_effect(c, termination=int(a["termination"]), expected_version=e, idempotency_key=k, actor=u),
+	"PrepareTerminationSettlement": _settlement,
+	"CompleteTerminationSettlement": lambda c, a, v, e, k, u: termination.complete_settlement(c, termination=int(a["termination"]), reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u),
+	"RecordLegalSourceEvidence": lambda c, a, v, e, k, u: obligations.record_source_evidence(c, obligation=a["obligation"], reference=v.get("reference", ""), dated=v.get("dated", ""), copy=v.get("copy", ""), notes=v.get("notes", ""),
+		expected_version=e, idempotency_key=k, actor=u),
+	"RecordContractAwardPublication": lambda c, a, v, e, k, u: obligations.record_publication(c, obligation=a["obligation"], channel=v.get("channel", ""), published_on=v.get("published_on", ""), evidence=_files(v, "Evidence of publication"),
+		expected_version=e, idempotency_key=k, actor=u),
+	"GenerateContractReport": lambda c, a, v, e, k, u: reporting.generate(a["report_type"], period_start=a["period_start"], idempotency_key=k, actor=u),
+	"SubmitContractReport": lambda c, a, v, e, k, u: reporting.submit(a["report"], idempotency_key=k, actor=u),
+	"RecordContractReportSubmission": lambda c, a, v, e, k, u: reporting.record_submission(a["report"], destination=v.get("destination", ""), reference=v.get("reference", ""), submitted_on=v.get("submitted_on", ""),
+		copy=v.get("copy", ""), idempotency_key=k, actor=u),
 }

@@ -83,7 +83,8 @@ def record_security(case: str, *, expected_version: int, idempotency_key: str, a
 	def body() -> dict[str, Any]:
 		doc = records.lock(case)
 		records.check_version(doc, expected_version)
-		preflight.lifecycle(doc, "Preparing")
+		replacing = doc.lifecycle in ("Active", "Terminated") and verified(case) is not None  # a replacement or an extension of the instrument in force; it supersedes the old one only once verified (`security_actions`)
+		preflight.lifecycle(doc, "Active", "Terminated") if replacing else preflight.lifecycle(doc, "Preparing")
 		need = requirement(_terms(case))
 		if not need:
 			fail("CM_CHANGED", reason="The issued terms do not require a performance security.")
@@ -138,6 +139,8 @@ def verify_security(case: str, *, security: str, expected_version: int, idempote
 			verified_by=actor, verified_at=clock.now(), record_version=cint(row.record_version) + 1)
 		records.bump(doc)
 		work.finish(case, command="VerifyContractSecurity", subject=f"security {row.version_no}", actor=actor)
+		if doc.lifecycle in ("Active", "Terminated") and any(name != row.name for name in frappe.get_all(SECURITY, filters={"contract_case": case, "kind": "Performance security", "state": "Verified"}, pluck="name")):
+			work.assign(case, "RecordSecurityAction", "Record the replacement security.", f"security {row.version_no}", row.version_no, work.holders(work.HOP), role=work.HOP)  # verified first, then it supersedes the old one
 		events.record(case, "Security verified", actor, f"Performance security {row.reference} verified from the issuer's confirmation {confirmation_reference.strip()}.", security=row.name)
 		return records.summary(doc, security=row.name)
 

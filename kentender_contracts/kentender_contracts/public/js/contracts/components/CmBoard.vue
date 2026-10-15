@@ -33,7 +33,7 @@
 				<ul v-if="refusal.reasons && refusal.reasons.length > 1" style="margin: 6px 0 0 18px">
 					<li v-for="reason in refusal.reasons" :key="reason.code + JSON.stringify(reason.detail)">{{ reason.message }} <span style="color: var(--color-neutral-700)">{{ reason.fix }}</span></li>
 				</ul>
-				<p v-else-if="refusal.reasons && refusal.reasons[0]" style="margin: 4px 0 0; color: var(--color-neutral-700)">{{ refusal.reasons[0].fix }}</p>
+				<p v-else-if="refusal.reasons && refusal.reasons[0]" style="margin: 4px 0 0; color: var(--color-neutral-700)">{{ refusal.reasons[0].detail && refusal.reasons[0].detail.reason ? refusal.reasons[0].detail.reason + " " : "" }}{{ refusal.reasons[0].fix }}</p>
 			</div>
 		</div>
 

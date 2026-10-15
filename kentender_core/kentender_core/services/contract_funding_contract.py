@@ -9,6 +9,12 @@ object (or None to decline, for example outside a simulation environment):
 
     lookup(*, identity)                                  -> {"reference", "amount"} | None
     convert(*, identity, contract, allocations, amount)  -> {"reference", "amount"}   (raises `Refused` when the owner definitively refuses)
+    adjust(*, identity, contract, allocations, event_id, event_type)
+                                                         -> {"reference", "amount", "before", "after"}   (optional; each allocation is `{"reservation", "new_total"}`, the supported total of
+                                                            that commitment after a lawful variation or termination; raises `Refused`)
+    close(*, identity, contract, final_amount, event_id, event_type, evidence)
+                                                         -> {"reference", "amount"}   (optional; closes the reconciled commitment once and releases nothing; raises `Refused`)
+    recall(*, identity)                                  -> {"reference", "amount"} | None   (optional; what an adjustment or closure already did under an identity, so the caller reads the owner first)
 
 `identity` is Contract Management's operation identity. A provider must be **idempotent on it**: `lookup` answers what it already holds under an identity, and `convert` called again
 with the same identity returns that same result and creates nothing more. That is what lets Contract Management read the owner first, link what exists and never convert twice.
@@ -22,6 +28,7 @@ import frappe
 
 HOOK = "kt_contract_funding_provider"
 FUNCTIONS: tuple[str, ...] = ("lookup", "convert")
+OPTIONAL: tuple[str, ...] = ("adjust", "close", "recall")
 
 
 class Refused(Exception):
@@ -65,3 +72,30 @@ def convert(identity: str, *, contract: str, allocations: list[dict[str, Any]], 
 	if not chosen:
 		raise Unavailable("No funding owner is installed on this site.")
 	return chosen[-1].convert(identity=identity, contract=contract, allocations=allocations, amount=amount)
+
+
+def adjust(identity: str, *, contract: str, allocations: list[dict[str, Any]], event_id: str, event_type: str) -> dict[str, Any]:
+	"""Ask the funding owner to apply a lawful variation or termination: the supported total of each commitment. Idempotent on `identity`."""
+	chosen = [p for p in providers() if callable(getattr(p, "adjust", None))]
+	if not chosen:
+		raise Unavailable("No funding owner able to adjust a commitment is installed on this site.")
+	return chosen[-1].adjust(identity=identity, contract=contract, allocations=allocations, event_id=event_id, event_type=event_type)
+
+
+def close(identity: str, *, contract: str, final_amount: float, event_id: str, event_type: str, evidence: list[str]) -> dict[str, Any]:
+	"""Ask the funding owner to close the contract's commitment on a reconciled outcome. Idempotent on `identity`; releases no funds."""
+	chosen = [p for p in providers() if callable(getattr(p, "close", None))]
+	if not chosen:
+		raise Unavailable("No funding owner able to close a commitment is installed on this site.")
+	return chosen[-1].close(identity=identity, contract=contract, final_amount=final_amount, event_id=event_id, event_type=event_type, evidence=evidence)
+
+
+def recall(identity: str) -> dict[str, Any] | None:
+	"""What the funding owner already did under an adjustment or closure identity, or None. Lets a retry read the owner first and link what exists."""
+	for provider in providers():
+		reader = getattr(provider, "recall", None)
+		if callable(reader):
+			answer = reader(identity=identity)
+			if answer is not None:
+				return answer
+	return None

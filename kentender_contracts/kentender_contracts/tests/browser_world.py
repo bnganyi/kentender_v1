@@ -37,7 +37,8 @@ EXTRA = {"security": ("CM-UI-0002", "CM-UI-AWD-SEC"), "outside": ("CM-UI-0003", 
 #: the contracts the delivery and acceptance spec walks, staged to the step the spec starts from (the staging goes through the services, each tested): `delivery` has its goods inspected, confirmed and the acceptance
 #: report prepared, and leaves acceptance to the Accounting Officer; `service` has a training session recorded as performed (the `-SVC` case carries the goods-plus-service package)
 STAGED = {"delivery": ("CM-UI-0005", "CM-UI-AWD-05"), "service": ("CM-UI-0006", "CM-UI-AWD-06-SVC"), "advance": ("CM-UI-0007", "CM-UI-AWD-07-ADV"), "payments": ("CM-UI-0008", "CM-UI-AWD-08"),
-	"claims": ("CM-UI-0009", "CM-UI-AWD-09")}
+	"claims": ("CM-UI-0009", "CM-UI-AWD-09"), "changes": ("CM-UI-0010", "CM-UI-AWD-10"), "warranty": ("CM-UI-0011", "CM-UI-AWD-11"), "delay": ("CM-UI-0012", "CM-UI-AWD-12"),
+	"security_actions": ("CM-UI-0013", "CM-UI-AWD-13"), "termination": ("CM-UI-0014", "CM-UI-AWD-14")}
 #: the contracts of the invoice and payment specs: `advance` has its goods accepted and no advance yet; `payments` has a certified, posted invoice of eight to pay in instalments; `claims` has two claims with the
 #: same invoice number (the second held for Finance as an apparent duplicate) and units still to claim
 EXISTING_REFERENCE = "MOH/ICT/2027/EXT-UI"
@@ -89,8 +90,10 @@ def _stage(kind: str, contract_id: str, award_case: str, people: dict[str, str])
 	from kentender_contracts.services import delivery, payment
 
 	frappe.flags.kt_contract_source_providers = None  # the registered provider answers by the case's name; one left over from the previous contract would answer for the wrong variant
-	t = tw.Thread(people, tag=f"UI{contract_id[-4:]}", contract_id=contract_id, services=award_case.endswith("-SVC"), award_case=award_case)
+	t = tw.Thread(people, tag=f"UI{contract_id[-4:]}", contract_id=contract_id, services=award_case.endswith("-SVC"), award_case=award_case, item=world.ITEM_PLAIN if kind == "warranty" else "", security=kind == "security_actions")
 	t.active()
+	if kind in ("changes", "warranty", "delay", "security_actions", "termination"):
+		frappe.db.set_value("Contract Case", t.case, "responsible_user", people["carol"])  # the contract's owner: the coordinator who requests changes and records warranty claims
 	t.appointed("Accounting Officer decides" if kind == "delivery" else "Committee accepts")
 	out = {"contract": t.case}
 	if kind == "advance":
@@ -107,6 +110,34 @@ def _stage(kind: str, contract_id: str, award_case: str, people: dict[str, str])
 		first = payment.submit_invoice(t.case, expected_version=t.version(), idempotency_key=t.key("c1"), actor=people["david"], claim_reference="DUP-1", invoice_date=today(), lines=line)["invoice"]
 		second = payment.submit_invoice(t.case, expected_version=t.version(), idempotency_key=t.key("c2"), actor=people["david"], claim_reference="DUP-1", invoice_date=add_days(today(), -1), lines=line)["invoice"]
 		out["invoices"] = [first, second]
+	elif kind == "changes":
+		pass  # an Active contract with its inspectors: the walk requests the extension, names the reviewers, decides and signs
+	elif kind == "warranty":
+		units = _accepted(t, 10)
+		out["units"] = units
+		receipt = delivery.posted_receipts(t.case)[0]
+		from erpnext.stock.doctype.purchase_receipt.purchase_receipt import make_purchase_return
+
+		native = make_purchase_return(receipt)  # Finance's native return of one unit, which the walk names when it reconciles the returned unit
+		native.items[0].qty = native.items[0].received_qty = -1
+		native.insert(ignore_permissions=True)
+		native.submit()
+		out["native_return"] = native.name
+	elif kind == "delay":
+		units = tw.fresh_serials(10)
+		arrival = t.arrive(units, received_at="2027-07-12 10:00:00")["arrival"]
+		t.inspect(arrival, units)
+		frappe.flags.kt_cm_clock = "2027-07-25 10:00:00"  # accepted after the due date of the 20th: five days late
+		t.accept(arrival)
+		frappe.flags.kt_cm_clock = None
+	elif kind == "security_actions":
+		pass  # an Active contract with a verified performance security of KES 100,000 (TEST-SG-01): the walk claims on it
+	elif kind == "termination":
+		_accepted(t, 8)
+		for number, count in ((1, 6), (2, 2)):  # eight accepted and all claimed, certified and paid: the termination leaves nothing unsettled
+			inv = t.claim(f"TERM-{number}", count)["invoice"]
+			t.certify_invoice(inv)
+			t.pay(inv, f"TERM-BANK-{number}")
 	elif kind == "delivery":
 		units = tw.fresh_serials(4)
 		arrival = t.arrive(units)["arrival"]
@@ -150,8 +181,16 @@ def build() -> dict:
 	receipt = world.fixed_asset_receipt("EXTUI", 4)  # the units of an existing contract that were already received and invoiced before management starts
 	invoice = adapter.invoice_receipt(receipt, world.identity("invoice extui", "Native invoice"), bill_no="EXT-UI-INV", qty=4)
 	frappe.db.commit()
-	data = {"previous_instant": str(previous or ""), "password": PASSWORD, "contract": received["contract"], "people": people, "supplier": world.SUPPLIER, "item": world.ITEM_FA, "location": world.LOCATION, "bank": world.BANK_ACCOUNT,
-		"mode": world.MODE, "unit": tw.unit(), "security_contract": extra["security"], "outside_contract": extra["outside"], "ending_contract": extra["ending"], "delivery_contract": staged["delivery"]["contract"], "delivery_units": staged["delivery"]["units"], "service_contract": staged["service"]["contract"], "advance_contract": staged["advance"]["contract"], "payments_contract": staged["payments"]["contract"], "claims_contract": staged["claims"]["contract"], "existing": {"reference": EXISTING_REFERENCE, "receipt": receipt, "invoice": invoice,
+	from kentender_contracts.services import reporting
+
+	frappe.flags.kt_cm_clock = "2027-08-01 09:00:00"  # the July progress report, generated once July has ended (the live pages run on the world's own clock)
+	made = reporting.generate("Progress", period_start="2027-07-01", idempotency_key="ui-world-july-report", actor=people["charles"])
+	frappe.flags.kt_cm_clock = None
+	report_contract = reporting.sources(reporting.get(made["report"]))["cases"][0]["case"] if made["state"] == "Draft" and made["rows"] else ""
+	frappe.db.commit()
+	data = {"previous_instant": str(previous or ""), "report": made["report"], "report_state": made["state"], "report_contract": report_contract, "password": PASSWORD, "contract": received["contract"], "people": people, "supplier": world.SUPPLIER, "item": world.ITEM_FA, "location": world.LOCATION, "bank": world.BANK_ACCOUNT,
+		"mode": world.MODE, "unit": tw.unit(), "security_contract": extra["security"], "outside_contract": extra["outside"], "ending_contract": extra["ending"], "delivery_contract": staged["delivery"]["contract"], "delivery_units": staged["delivery"]["units"], "service_contract": staged["service"]["contract"], "advance_contract": staged["advance"]["contract"], "payments_contract": staged["payments"]["contract"], "claims_contract": staged["claims"]["contract"], "changes_contract": staged["changes"]["contract"], "warranty_contract": staged["warranty"]["contract"], "warranty_units": staged["warranty"]["units"],
+		"warranty_return": staged["warranty"]["native_return"], "delay_contract": staged["delay"]["contract"], "security_contract_actions": staged["security_actions"]["contract"], "termination_contract": staged["termination"]["contract"], "existing": {"reference": EXISTING_REFERENCE, "receipt": receipt, "invoice": invoice,
 		"country": tw.REGISTRATION[0], "registration": "PVT-9X7K2M"}}
 	output().parent.mkdir(parents=True, exist_ok=True)
 	output().write_text(json.dumps(data, indent=1))
@@ -171,6 +210,8 @@ def clean() -> dict:
 			frappe.db.delete(doctype, {"contract_case": case})
 		frappe.db.delete("Contract Simulated Funding", {"contract": case})
 		frappe.db.delete("Contract Case", {"name": case})
+	frappe.db.delete("Contract Report", {"fixture_namespace": NAMESPACE})  # the generated reports belong to no one contract
+	frappe.db.delete("Contract Command Journal", {"fixture_namespace": NAMESPACE})
 	frappe.db.delete("Contract Simulated Signature", {"signer": ["in", list(_addresses().values())]})
 	for name in frappe.get_all("File", filters={"file_name": ["like", "cm-ui-%"]}, pluck="name"):  # the evidence files the walk uploaded
 		frappe.delete_doc("File", name, force=True, ignore_permissions=True)

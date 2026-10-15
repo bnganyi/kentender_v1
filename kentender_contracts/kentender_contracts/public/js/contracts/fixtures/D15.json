@@ -1,0 +1,218 @@
+{
+ "actions": {
+  "Record external submission": {
+   "dialog": "external",
+   "do": "dialog"
+  },
+  "Submit report": {
+   "args": {
+    "report": "CM-RPT-794937"
+   },
+   "command": "SubmitContractReport",
+   "do": "command"
+  },
+  "View contract": {
+   "do": "tab",
+   "tab": "Agreement"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_the_monthly_report_",
+ "d": "D15",
+ "dialogs": {
+  "external": {
+   "args": {
+    "report": "CM-RPT-794937"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Destination",
+       "name": "destination",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Reference",
+       "name": "reference",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Submitted on",
+       "name": "submitted_on",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Copy submitted",
+       "name": "copy",
+       "o": {},
+       "t": "file",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "RecordContractReportSubmission",
+   "p": "Save submission",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Record external submission"
+  }
+ },
+ "ev": [
+  "Agreement 1",
+  "Finance reconciliation"
+ ],
+ "id": "D15",
+ "name": "Contract reporting",
+ "next": {
+  "h": "Issue the completion certificate.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Submit report",
+ "page": "record",
+ "ref": "CM-TEST-test_the_monthly_report_",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Report month",
+       "July 2027"
+      ],
+      [
+       "Contracts covered",
+       "1 in Contract Management"
+      ],
+      [
+       "Contracts outside Contract Management",
+       "Not included \u2014 reconcile before claiming full coverage"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Coverage"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Contract",
+      "Title",
+      "Contract value",
+      "Commenced",
+      "Status",
+      "Cash confirmed",
+      "Expected completion"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      2,
+      5
+     ],
+     "rows": [
+      [
+       "CM-TEST-test_the_monthly_report_",
+       "IT equipment delivery",
+       "KES 1,000,000",
+       "2 July 2027",
+       "Active",
+       "KES 800,000",
+       "19 July 2028"
+      ]
+     ]
+    },
+    {
+     "k": "text",
+     "v": "10 laptop computers accepted. Unpaid KES 200,000; no noncash adjustment. No open delivery issue."
+    }
+   ],
+   "t": "Report"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Author",
+       "Charles Mutiso, HOP"
+      ],
+      [
+       "Recipient",
+       "Amina Hassan, Accounting Officer"
+      ],
+      [
+       "AO receipt",
+       "Recorded after submission"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Submission"
+  }
+ ],
+ "s2": [
+  "View contract",
+  "Record external submission"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "July 2027 progress report draft 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_the_monthly_report_",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_the_monthly_report_",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_the_monthly_report_",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_the_monthly_report_",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_the_monthly_report_",
+    "history"
+   ]
+  }
+ ],
+ "title": "Monthly contract progress",
+ "version": 26
+}

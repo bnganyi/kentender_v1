@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import frappe
+from frappe.utils import cstr
 
 from kentender_contracts.services import authority, people
 from kentender_contracts.services.errors import fail
@@ -113,6 +114,17 @@ def _supplier_standing(user: str, organisation: str, at) -> bool:
 	return any(a["organisation_id"] == organisation and a.get("active") for a in provider.active_assignments(user=user, at=at))
 
 
+def _reviewing(user: str, case: str) -> bool:
+	"""The person is named to review a requested change on this contract and the change is still open. The appointment is what reads the contract: nobody else sees it through this audience, and it ends with the change."""
+	from kentender_contracts.services import change, records
+
+	for name in frappe.get_all("Contract Change", filters={"contract_case": case, "state": ["in", list(change.OPEN)]}, pluck="name"):
+		row = frappe.get_doc("Contract Change", name)
+		if any(cstr(slot.get("reviewer")).lower() == user.lower() for slot in records.loads(row.reviews_json, []) if slot.get("state") != "Superseded"):
+			return True
+	return False
+
+
 def grants(user: str, facts: Facts, *, at=None) -> list[Grant]:
 	"""Every audience this user belongs to for this contract, each with the field sets it allows."""
 	if not user or user == "Guest":
@@ -142,6 +154,8 @@ def grants(user: str, facts: Facts, *, at=None) -> list[Grant]:
 					if found:
 						ok, evidence = True, {"capacity": capacity, **found}
 						break
+				if not ok and audience.key == "appointee" and _reviewing(user, facts.case):  # named by the head of procurement to review a requested change on this contract: the appointment is what reads it
+					ok, evidence = True, {"capacity": "change reviewer"}
 				if ok:
 					break
 		else:

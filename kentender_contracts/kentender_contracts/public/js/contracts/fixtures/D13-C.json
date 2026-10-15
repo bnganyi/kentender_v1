@@ -1,0 +1,149 @@
+{
+ "actions": {
+  "Report a new issue": {
+   "dialog": "new",
+   "do": "dialog"
+  },
+  "View replacement acceptance": {
+   "do": "tab",
+   "tab": "Deliveries"
+  }
+ },
+ "audiences": [
+  "coordinator"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_delivery_issue_fr",
+ "d": "D13",
+ "dialogs": {
+  "new": {
+   "args": {},
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Title",
+       "name": "title",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Description",
+       "name": "description",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "RecordContractIssue",
+   "p": "Report",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Report an issue"
+  }
+ },
+ "ev": [],
+ "id": "D13-C",
+ "name": "Delivery issue",
+ "next": {
+  "h": "This issue is closed.",
+  "k": "done",
+  "s": ""
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_a_delivery_issue_fr",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Units",
+       "CMTDFA369-0029 and CMTDFA369-0030"
+      ],
+      [
+       "Result",
+       "Does not meet"
+      ],
+      [
+       "Observed",
+       "Starts successfully is No, the requirement is Yes."
+      ],
+      [
+       "Requested remedy",
+       "Replacement"
+      ],
+      [
+       "Requested reply date",
+       "22 July 2027"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Issue"
+  },
+  {
+   "b": [
+    {
+     "k": "text",
+     "v": "Replacement units CMTDFA369-0031, CMTDFA369-0032 were accepted on 27 July 2027."
+    }
+   ],
+   "t": "Resolution"
+  }
+ ],
+ "s2": [
+  "Report a new issue",
+  "View replacement acceptance"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Issue 1 version 5",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "history"
+   ]
+  }
+ ],
+ "title": "2 laptop computers need replacement",
+ "version": 28
+}

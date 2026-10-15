@@ -1,0 +1,154 @@
+{
+ "actions": {
+  "View calculation": {
+   "do": "tab",
+   "tab": "Obligations"
+  },
+  "View issue": {
+   "do": "tab",
+   "tab": "Obligations"
+  }
+ },
+ "audiences": [
+  "finance"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_delay_adjustment_",
+ "d": "D36",
+ "dialogs": {},
+ "ev": [
+  "Delivery 25 Jul 2027",
+  "Clause TEST-DELAY-01",
+  "Supplier response 1"
+ ],
+ "id": "D36-H",
+ "name": "Contractual delay adjustment",
+ "next": {
+  "fixes": [
+   "View calculation",
+   "View issue"
+  ],
+  "h": "This action is on hold.",
+  "k": "blk",
+  "s": "Responsible for the fix: Josphat Mwangi",
+  "s2": "The native deduction mapping is not verified; payment is held."
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_a_delay_adjustment_",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Due date",
+       "20 Jul 2027"
+      ],
+      [
+       "Delivered",
+       "25 Jul 2027"
+      ],
+      [
+       "Days late",
+       "5 calendar days (21\u201325 Jul inclusive)"
+      ],
+      [
+       "Eligible principal",
+       "KES 1,000,000"
+      ],
+      [
+       "Rate",
+       "0.1% per day"
+      ],
+      [
+       "Cap",
+       "10% (KES 100,000)"
+      ],
+      [
+       "Effective extension",
+       "None"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "items": [
+      [
+       "Calculation",
+       "KES 1,000 per day \u00d7 5"
+      ],
+      [
+       "Proposed adjustment",
+       "KES 5,000"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Calculation"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Causation",
+       "Supplier shipment delay"
+      ],
+      [
+       "Supplier challenge",
+       "Requests exclusion of two days"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Causation and response"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "All units accepted 25 Jul 2027",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review delivery delay",
+ "version": 24
+}

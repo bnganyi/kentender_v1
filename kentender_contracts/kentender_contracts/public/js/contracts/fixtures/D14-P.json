@@ -1,0 +1,102 @@
+{
+ "actions": {
+  "View amendment": {
+   "do": "route",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "agreement",
+    "amendment",
+    "1"
+   ]
+  },
+  "View decision": {
+   "do": "tab",
+   "tab": "History"
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_delivery_extensio",
+ "d": "D14",
+ "dialogs": {},
+ "ev": [],
+ "id": "D14-P",
+ "name": "Extension review",
+ "next": {
+  "h": "Review and sign amendment 1.",
+  "k": "wait",
+  "s": "Mary Wanjiku; assigned 2 Jul 2027, 09:00 EAT."
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_a_delivery_extensio",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Decision",
+       "Approved 2 Jul 2027, 09:00 EAT"
+      ],
+      [
+       "Operative delivery date",
+       "20 July 2027 \u2014 amendment not yet effective"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Decision"
+  }
+ ],
+ "s2": [
+  "View amendment",
+  "View decision"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review delivery extension",
+ "version": 19
+}

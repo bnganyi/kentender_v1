@@ -47,7 +47,7 @@
    "label": "Outcome",
    "fieldtype": "Select",
    "read_only": 1,
-   "options": "Converted\nRefused"
+   "options": "Converted\nRefused\nAdjusted\nClosed"
   },
   {
    "fieldname": "received_at",

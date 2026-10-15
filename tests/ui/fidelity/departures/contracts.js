@@ -52,6 +52,17 @@ export const BOARD_PAGES = [
 	{ fixture: "D08-L", board: "D08-L" }, { fixture: "D17-H", board: "D17-H" }, { fixture: "D28", board: "D28" }, { fixture: "D28-C", board: "D28-C" }, { fixture: "D28-V", board: "D28-V" },
 	{ fixture: "D29", board: "D29" }, { fixture: "D29-H", board: "D29-H" }, { fixture: "D29-R", board: "D29-R" }, { fixture: "D33-U", board: "D33-U" }, { fixture: "D09-T", board: "D09-T" }, { fixture: "D09-AUD", board: "D09-AUD" },
 	{ fixture: "D24-S", board: "D24-S" }, { fixture: "D24-X", board: "D24-X" }, { fixture: "D05-M", board: "D05-M" }, { fixture: "D31", board: "D31" }, { fixture: "D31-A", board: "D31-A" },
+	// Phase 8 (plan CM8-801..807): issues, changes, warranty, delay, security actions, termination, reporting.
+	{ fixture: "D13", board: "D13" }, { fixture: "D13-S", board: "D13-S" }, { fixture: "D13-C", board: "D13-C" },
+	{ fixture: "D27", board: "D27" }, { fixture: "D27-R", board: "D27-R" }, { fixture: "D27-A", board: "D27-A" }, { fixture: "D14", board: "D14" }, { fixture: "D14-P", board: "D14-P" },
+	{ fixture: "D34", board: "D34" }, { fixture: "D34-R", board: "D34-R" }, { fixture: "D34-A", board: "D34-A" }, { fixture: "D34-P", board: "D34-P" }, { fixture: "D34-H", board: "D34-H" }, { fixture: "D34-L", board: "D34-L" }, { fixture: "D34-X", board: "D34-X" },
+	{ fixture: "D16-W", board: "D16-W" }, { fixture: "D16-P", board: "D16-P" }, { fixture: "D16", board: "D16" },
+	{ fixture: "D35", board: "D35" }, { fixture: "D35-V", board: "D35-V" }, { fixture: "D35-C", board: "D35-C" }, { fixture: "D35-H", board: "D35-H" },
+	{ fixture: "D36", board: "D36" }, { fixture: "D36-A", board: "D36-A" }, { fixture: "D36-E", board: "D36-E" }, { fixture: "D36-S", board: "D36-S" }, { fixture: "D36-H", board: "D36-H" },
+	{ fixture: "D37", board: "D37" }, { fixture: "D37-A", board: "D37-A" }, { fixture: "D37-P", board: "D37-P" }, { fixture: "D37-X", board: "D37-X" },
+	{ fixture: "D20", board: "D20" }, { fixture: "D20-P", board: "D20-P" }, { fixture: "D20-T", board: "D20-T" },
+	{ fixture: "D39-P", board: "D39-P" }, { fixture: "D39", board: "D39" }, { fixture: "D39-C", board: "D39-C" }, { fixture: "D39-H", board: "D39-H" },
+	{ fixture: "D15", board: "D15" }, { fixture: "D15-L", board: "D15-L" },
 ];
 // A board that is another board's page in a state the person reaches by choosing: drawn from the fixture, the choice made, then compared. `radio` names the radio group (its `cm-input-` test id) and
 // `choose` the option to pick; `shows` is what must then be on the page. The comparison collapses identical sibling fields, so what the choice reveals is asserted directly as well.
@@ -62,6 +73,9 @@ export const BOARD_DIALOGS = [
 	{ fixture: "D05", action: "View all observations", board: "D05 · All" }, { fixture: "D08", action: "Request correction", board: "D08 · Correction" },
 	{ fixture: "D33-A", action: "Return invoice for correction", board: "D33-A · Return" }, { fixture: "D17", action: "Return payment for correction", board: "D17 · Return" },
 	{ fixture: "D25", action: "Verify security", board: "D25 · Verify" }, { fixture: "D25", action: "Reject security", board: "D25 · Reject" },
+	{ fixture: "D14", action: "Approve extension", board: "D14 · Approve" }, { fixture: "D14", action: "Decline", board: "D14 · Decline" }, { fixture: "D34-A", action: "Approve change", board: "D34-A · Decide" },
+	{ fixture: "D35", action: "Record return", board: "D35 · Return" }, { fixture: "D36-A", action: "Approve adjustment", board: "D36-A · Decide" }, { fixture: "D37-P", action: "Record claim outcome", board: "D37-P · Outcome" },
+	{ fixture: "D20", action: "Decline", board: "D20 · Decline" }, { fixture: "D39", action: "Complete settlement", board: "D39 · Complete" }, { fixture: "D15-L", action: "Record source evidence", board: "D15-L · Evidence" },
 ];
 export const COVERED = ["D-ERR", "D-DENIED", ...LIST_PAGES.map((p) => p.board), ...BOARD_PAGES.map((p) => p.board), ...BOARD_STATES.map((p) => p.board), ...BOARD_DIALOGS.map((d) => d.board)];
 

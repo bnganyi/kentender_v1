@@ -64,21 +64,40 @@ def next_block(ctx: Context) -> dict[str, Any] | None:
 	return kit.wait(answer["headline"], f"{names or holder}; assigned {since}." if since else names)
 
 
+def form_turn(ctx: Context, command: str, headline: str) -> dict[str, Any]:
+	"""The next step of a form a person opens by choice (a request nobody has assigned them): their own task for the command when they have one, otherwise the form's own "your turn". Someone else's work on the contract is not their next step here."""
+	lead = ctx.lead
+	if lead and lead["holder"].lower() == ctx.user.lower() and lead["command"] == command and lead["state"] in ("actionable", "blocked"):
+		return next_block(ctx) or kit.turn(headline, ctx.name(ctx.user))
+	return kit.turn(headline, ctx.name(ctx.user))
+
+
 def ctx_view(ctx: Context) -> dict[str, Any]:
 	return ctx.view
 
 
-def tab_of(command: str, subject: str = "") -> str:
+def tab_of(command: str, subject: str = "", lifecycle: str = "") -> str:
 	"""The tab a task belongs on. A guarantee for an advance is recorded and verified on Invoices, with the advance, not on Agreement with the performance security."""
 	if command.split(":")[0] in ("RecordContractSecurity", "VerifyContractSecurity") and subject.startswith("advance guarantee"):
 		return "Invoices"
+	if command.split(":")[0] == "SignContractVersion" and subject.startswith("amendment"):
+		return "Obligations"  # an amendment is part of the contract's changes (D27-A, D34-P), not of the agreement being prepared
+	if command.split(":")[0] in ("RecordContractSecurity", "VerifyContractSecurity") and lifecycle in ("Active", "Terminated"):
+		return "Obligations"  # a replacement or an extension of the security in force is part of the contract's obligations, not of the agreement being prepared
 	return TAB_OF_COMMAND.get(command.split(":")[0], "Agreement")
 
 
 TAB_OF_COMMAND = {
 	"RequestContractSignatures": "Agreement", "SignContractVersion": "Agreement", "RecordContractSecurity": "Agreement", "VerifyContractSecurity": "Agreement", "ReviseContractIntake": "Agreement", "ReviewAwardRestriction": "Agreement", "RecordContractNotProceeding": "Agreement", "ConfirmOpeningPosition": "Invoices", "StartContractManagement": "Agreement", "RecommendContractInspectors": "Agreement", "AppointContractInspectors": "Agreement", "DeclareContractInterest": "Agreement",
 	"RecordInspectionObservations": "Deliveries", "ResolveDeliveryException": "Deliveries", "SignTechnicalCertificate": "Deliveries", "PrepareAcceptanceReport": "Deliveries", "SignAcceptanceReport": "Deliveries", "RequestAcceptanceCorrection": "Deliveries", "DecideContractAcceptance": "Deliveries",
-	"SignContractCertification": "Invoices", "ResolveInvoiceDuplicate": "Invoices", "PrepareContractAdvance": "Invoices", "SignAdvanceCertification": "Invoices", "RequestInvoiceCorrection": "Invoices", "CorrectContractInvoice": "Invoices", "SaveNativeFinanceDraft": "Invoices", "CorrectFinanceSettlement": "Invoices", "ReconcileInvoiceLiability": "Invoices",
+	"SignContractCertification": "Invoices", "ResolveInvoiceDuplicate": "Invoices", "RecordContractIssue": "Obligations", "SendContractCorrespondence": "Obligations", "ReplyContractCorrespondence": "Obligations", "ResolveContractIssue": "Obligations", "PrepareContractAdvance": "Invoices", "SignAdvanceCertification": "Invoices", "RequestInvoiceCorrection": "Invoices", "CorrectContractInvoice": "Invoices", "SaveNativeFinanceDraft": "Invoices", "CorrectFinanceSettlement": "Invoices", "ReconcileInvoiceLiability": "Invoices",
 	"SubmitNativeFinanceForApproval": "Invoices", "ApproveNativeFinanceRecord": "Invoices", "RecordFinanceSettlement": "Invoices",
+	"RequestContractChange": "Obligations", "AppointContractChangeReviewers": "Obligations", "RecordContractChangeReview": "Obligations", "SignContractChangeReview": "Obligations", "SubmitContractChangeForDecision": "Obligations",
+	"DecideContractChange": "Obligations", "ActivateContractChange": "Obligations", "RecordWarrantyReturn": "Obligations", "ReconcileWarrantyReturn": "Obligations", "VerifyContractRemedy": "Obligations",
+	"PrepareContractAdjustment": "Obligations", "DecideContractAdjustment": "Obligations", "RequestSecurityClaim": "Obligations", "DecideSecurityClaim": "Obligations", "RecordSecurityClaimCommunication": "Obligations",
+	"RecordSecurityClaimOutcome": "Obligations", "RecordSecurityAction": "Obligations", "RequestContractTermination": "Obligations", "DecideContractTermination": "Obligations", "RecordTerminationNotice": "Obligations",
+	"RecordTerminationEffect": "Obligations", "PrepareTerminationSettlement": "Obligations", "CompleteTerminationSettlement": "Obligations", "SubmitContractReport": "Obligations", "RecordContractAwardPublication": "Obligations",
+	"RecordContractReportSubmission": "Obligations",
 	"IssueCompletionCertificate": "Obligations", "PrepareContractCloseout": "Obligations", "SignContractCloseout": "Obligations", "RestoreContractOperation": "Obligations",
 }
+

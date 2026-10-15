@@ -85,6 +85,13 @@ class TestPickerSources(IntegrationTestCase):
 				self.ask(who, sources.UNIT, {})
 		self.assertEqual([r["id"] for r in self.ask("brian", sources.UNIT, {}, "no such unit anywhere")["rows"]], [])
 
+	def test_finance_names_the_native_return_and_credit_it_reconciles_but_not_the_other_documents(self):
+		for kind in ("purchase_receipt", "purchase_invoice"):
+			self.assertIn("rows", self.ask("josphat", sources.RECORD, {"kind": kind}), kind)
+		for kind in ("purchase_order", "payment_entry"):
+			with self.assertRaises(frappe.DoesNotExistError):
+				self.ask("josphat", sources.RECORD, {"kind": kind})
+
 	def test_the_native_documents_an_opening_position_links_are_chosen_by_preparers_only(self):
 		for kind in ("purchase_order", "purchase_receipt", "purchase_invoice", "payment_entry"):
 			self.assertIn("rows", self.ask("brian", sources.RECORD, {"kind": kind}), kind)

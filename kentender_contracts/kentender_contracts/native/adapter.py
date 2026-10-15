@@ -49,6 +49,41 @@ def create_purchase_order(identity: str, *, company: str, supplier: str, items: 
 	return po.name
 
 
+def _order_row(order: str, item_code: str, qty_wanted: float | None = None):
+	rows = frappe.get_all("Purchase Order Item", filters={"parent": order, "item_code": item_code}, fields=["name", "qty", "rate", "schedule_date"], order_by="idx asc")
+	return rows[0] if rows else None
+
+
+def update_order(order: str, *, items: list[dict[str, Any]], schedule_date: str) -> str:
+	"""Bring a submitted order to an amendment's terms by ERPNext's own supported method (`update_child_qty_rate`) and its schedule date. A line already at the wanted quantity is untouched, so a repeat does nothing."""
+	import json
+
+	from erpnext.controllers.accounts_controller import update_child_qty_rate
+
+	changes = []
+	for item in items:
+		row = _order_row(order, item["item_code"])
+		if row is not None and (flt(row.qty) != flt(item["qty"]) or flt(row.rate) != flt(item["rate"])):
+			changes.append({"docname": row.name, "item_code": item["item_code"], "qty": item["qty"], "rate": item["rate"]})
+	if changes:
+		update_child_qty_rate("Purchase Order", json.dumps(changes), order)
+	if str(frappe.db.get_value("Purchase Order", order, "schedule_date") or "") != str(schedule_date):
+		frappe.db.set_value("Purchase Order", order, "schedule_date", schedule_date, update_modified=False)
+		frappe.db.set_value("Purchase Order Item", {"parent": order}, "schedule_date", schedule_date, update_modified=False)
+	return order
+
+
+def order_reflects(order: str, *, items: list[dict[str, Any]], schedule_date: str) -> bool:
+	"""True when the native order already carries these quantities, rates and schedule date (the owner read before any change)."""
+	if not frappe.db.exists("Purchase Order", order) or str(frappe.db.get_value("Purchase Order", order, "schedule_date") or "") != str(schedule_date):
+		return False
+	for item in items:
+		row = _order_row(order, item["item_code"])
+		if row is None or flt(row.qty) != flt(item["qty"]) or flt(row.rate) != flt(item["rate"]):
+			return False
+	return True
+
+
 # -- receipt ---------------------------------------------------------------------------------------------------------------------
 def _refuse_unidentified_units(order_row_item: str, accepted: float, serials: list[str], unit_references: list[str]) -> None:
 	item = frappe.db.get_value("Item", order_row_item, ["has_serial_no", "is_fixed_asset", "auto_create_assets"], as_dict=True)
@@ -306,6 +341,14 @@ def advance_recovered(invoice: str) -> float:
 def certify_invoice(invoice: str, amount: float) -> None:
 	"""Record what procurement certified on the invoice: the ceiling the payment guard enforces. A direct write of the custom field."""
 	frappe.db.set_value("Purchase Invoice", invoice, "cm_certified_amount", amount)
+
+
+def reduce_certified(invoice: str, amount: float) -> float:
+	"""A contractual adjustment applied as a native deduction lowers what the invoice supports paying by the same amount (the payment guard reads this as the cap). Returns the new cap."""
+	row = frappe.db.get_value("Purchase Invoice", invoice, ["cm_certified_amount"], as_dict=True, for_update=True)
+	new = max(0.0, flt(row.cm_certified_amount) - flt(amount))
+	frappe.db.set_value("Purchase Invoice", invoice, "cm_certified_amount", new, update_modified=False)
+	return new
 
 
 def payment_draft(invoice: str, identity: str, *, amount: float | None = None, mode_of_payment: str, paid_from: str, reference_no: str, reference_date: str | None = None) -> str:

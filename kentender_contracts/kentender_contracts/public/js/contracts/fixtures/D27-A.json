@@ -1,0 +1,171 @@
+{
+ "actions": {
+  "Report a problem": {
+   "dialog": "problem",
+   "do": "dialog"
+  },
+  "Sign amendment": {
+   "args": {
+    "change": 1,
+    "party": "Supplier"
+   },
+   "command": "SignContractVersion",
+   "do": "command"
+  },
+  "View amendment 1": {
+   "do": "route",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "agreement",
+    "amendment",
+    "1"
+   ]
+  }
+ },
+ "audiences": [
+  "supplier"
+ ],
+ "back": "Back to my contracts",
+ "case": "CM-TEST-test_a_delivery_extensio",
+ "d": "D27",
+ "dialogs": {
+  "problem": {
+   "args": {},
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Title",
+       "name": "title",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Description",
+       "name": "description",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "RecordContractIssue",
+   "p": "Report",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Report a problem"
+  }
+ },
+ "ev": [
+  "Amendment 1",
+  "Decision 1"
+ ],
+ "id": "D27-A",
+ "name": "Sign amendment",
+ "next": {
+  "h": "Review and sign amendment 1.",
+  "k": "turn",
+  "s": "Responsible: Mary Wanjiku"
+ },
+ "p": "Sign amendment",
+ "page": "record",
+ "ref": "CM-TEST-test_a_delivery_extensio",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Term",
+      "Current",
+      "Amended"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      1,
+      2
+     ],
+     "rows": [
+      [
+       "Delivery date",
+       "20 July 2027",
+       "27 July 2027"
+      ],
+      [
+       "Contract value",
+       "KES 1,000,000",
+       "KES 1,000,000"
+      ],
+      [
+       "Quantity",
+       "10",
+       "10"
+      ]
+     ]
+    },
+    {
+     "items": [
+      "View amendment 1"
+     ],
+     "k": "links"
+    },
+    {
+     "k": "help",
+     "v": "The amendment takes effect only after both required signatures. Amina Hassan signs the same version next."
+    }
+   ],
+   "t": "Amendment 1"
+  }
+ ],
+ "s2": [
+  "Report a problem"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Amendment 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "history"
+   ]
+  }
+ ],
+ "title": "Sign amendment",
+ "version": 19
+}

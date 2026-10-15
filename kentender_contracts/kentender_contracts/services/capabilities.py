@@ -26,4 +26,5 @@ CAPABILITIES: dict[str, str] = {
 	"release_funds": "Release committed funds",
 	"mark_financially_finalised": "Show the contract as financially finalised",
 	"close_contract": "Sign close-out",
+	"close_claim": "Close a warranty claim on a verified remedy",
 }

@@ -33,15 +33,15 @@ def _row(ctx: Context, number: int):
 	return frappe.get_doc(service.SECURITY, name) if name else None
 
 
-def d25r(ctx: Context, number: int) -> dict:
+def d25r(ctx: Context, number: int, *, replacing: bool = False) -> dict:
 	"""Record the instrument (HOP). The entity's name is offered as the beneficiary because the issued terms name the entity as the party the security protects."""
 	entity = ((ctx.terms.get("parties") or {}).get("entity") or {}).get("name", "")
 	fields = [kit.tx("Issuer", "", "issuer"), kit.tx("Beneficiary", entity, "beneficiary"), kit.tx("Reference", "", "reference"), kit.tx("Amount", "", "amount"), kit.dt("Issued", "", "issued_on"),
 		kit.dt("Expires", "", "expires_on"), kit.file("Attachment", "", "attachment")]
-	board = chrome.base(ctx, "D25-R", d="D25", name="Verify security", title="Record performance security", tab="Agreement", next=chrome.next_block(ctx), regions=[_requirement(ctx), kit.R("Instrument", kit.fl(*fields))],
-		p="Save security", s2=["Cancel"], ev=[])
+	board = chrome.base(ctx, "D25-R", d="D25", name="Verify security", title="Record replacement security" if replacing else "Record performance security", tab="Obligations" if replacing else "Agreement",
+		next=chrome.form_turn(ctx, "RecordContractSecurity", "Record the replacement instrument.") if replacing else chrome.next_block(ctx), regions=[_requirement(ctx), kit.R("Instrument", kit.fl(*fields))], p="Save security", s2=["Cancel"], ev=[])
 	board["actions"]["Save security"] = kit.command("RecordContractSecurity")
-	board["actions"]["Cancel"] = kit.tab("Agreement")
+	board["actions"]["Cancel"] = kit.tab("Obligations" if replacing else "Agreement")
 	return board
 
 

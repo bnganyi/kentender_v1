@@ -8,9 +8,9 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cint, formatdate
 
-from kentender_contracts.boards import chrome, kit, statements
+from kentender_contracts.boards import changes, chrome, kit, reports, statements, termination as termination_boards
 from kentender_contracts.boards.context import Context, money, when
-from kentender_contracts.services import closeout, events, payment, records, work
+from kentender_contracts.services import change, closeout, events, issues, obligations as obligation_service, payment, people, records, reporting, security_actions, termination, work
 
 
 def d22(ctx: Context) -> dict:
@@ -70,8 +70,77 @@ def obligations(ctx: Context) -> dict:
 			[[t["title"], state[t["state"]], when(t["due"]) if t["due"] and t["due_verified"] else "Not established", ctx.name(t["holder"]), "@Open"] for t in shown])))
 	if not regions:
 		regions.append(kit.R("Remaining obligations", kit.xh("There is no remaining work on this contract.")))
+	if internal or ctx.doc.lifecycle == "Active":
+		if frappe.db.exists("Contract Change", {"contract_case": ctx.case}):
+			regions.append(changes.register(ctx))
+	listed = issues_region(ctx)
+	if listed is not None:
+		regions.append(listed)
+	filed = reports_region(ctx) if internal else None
+	if filed is not None:
+		regions.append(filed)
+	if internal:
+		held = [o for o in obligation_service.all_for(ctx.case) if o.state in ("Needs review", "Open") and o.kind != "Progress report"]
+		if held:
+			regions.append(kit.R("Duties", kit.t(["Duty", "Status", "Due", "Owner", ""], [[f"{o.kind}: {o.trigger_event}", o.state, o.due_basis if not o.due_at else when(o.due_at), ctx.name(o.owner_user), "@Review publication" if o.kind == "Publication" else ""] for o in held])))
+	effective = change.latest_pending(ctx.case) if internal else None
+	if effective is not None:  # the term is in force but the order or the funding update is not: spending that depends on it waits (D34-H)
+		return changes.effective_pending(ctx, effective)
+	ended = termination.live(ctx.case) if internal else None
+	if ended is not None and ended.state in ("Approved", "Notice delivered", "Effective", "Settlement prepared"):
+		return termination_boards.pending(ctx, ended)  # D20-P / D20-T: what the terminated contract is waiting on
+	if ended is not None and ended.state == "Settled":
+		return termination_boards.settled(ctx, ended)  # D39-C
 	b = chrome.base(ctx, "D10", d="D10", name="Contract obligations", title="Remaining obligations", tab="Obligations", next=chrome.next_block(ctx), regions=regions, ev=["Agreement 1"], s2=[])
+	_entries(ctx, b)
 	return b
+
+
+def issues_region(ctx: Context):
+	"""The contract's issues and warranty claims, each openable by its number."""
+	rows = [issues.get(ctx.case, n) for n in frappe.get_all("Contract Issue", filters={"contract_case": ctx.case}, pluck="issue_no", order_by="issue_no asc")]
+	if not rows:
+		return None
+	return kit.R("Issues", kit.t(["Issue", "Kind", "Status", "Reply by"], [[f"@Issue {r.issue_no}", r.kind, r.state, str(r.reply_by or "—")] for r in rows]))
+
+
+def may_manage(ctx: Context) -> bool:
+	"""The people who may record a warranty claim or report a matter: the contract's owner, its coordinator or a preparer (the service makes the same check)."""
+	owner = (issues.owner_of(ctx.case) or "").lower()
+	return bool(ctx.can_prepare or ctx.user.lower() == owner or people.holds(ctx.user, "Contract coordination", ctx.doc.managing_unit or ""))
+
+
+def reports_region(ctx: Context):
+	"""The period reports that cover this contract, each openable by its period: where the head finds what was submitted."""
+	rows = reporting.for_case(ctx.case)
+	if not rows:
+		return None
+	return kit.R("Reports", kit.t(["Report", "Period", "Status"], [[f"@{reporting.TYPES[r.report_type]['title']} {reporting.label_of(r.report_type, r.period_start.date() if hasattr(r.period_start, 'date') else r.period_start)}", reporting.label_of(r.report_type, r.period_start.date() if hasattr(r.period_start, 'date') else r.period_start), r.state] for r in rows]))
+
+
+def _entries(ctx: Context, b: dict) -> None:
+	"""What a person may start from the Obligations tab: a change, a warranty claim, a termination, a security claim or replacement. Each is offered only to who may do it, and only when it can be done."""
+	offered: list[tuple[str, tuple[str, ...]]] = []
+	active = ctx.doc.lifecycle == "Active"
+	if active and change.can_request(ctx.case, ctx.user) and not change.open_change(ctx.case):
+		offered += [("Request delivery extension", ("request-extension",)), ("Request quantity change", ("request-quantity",))]
+	if may_manage(ctx) and ctx.doc.lifecycle in ("Active", "Closed") and ctx.position["units"]:
+		offered.append(("Record a warranty claim", ("claim-warranty",)))
+	if ctx.can_prepare and active and termination.live(ctx.case) is None:
+		offered.append(("Request termination", ("request-termination",)))
+	if ctx.can_prepare and ctx.doc.lifecycle in ("Active", "Terminated") and security_actions.operative(ctx.case):
+		if security_actions.live_claim(ctx.case) is None:
+			offered.append(("Request security claim", ("request-security-claim",)))
+		offered.append(("Record replacement security", ("record-replacement",)))
+	for label, route in offered:
+		b["s2"].append(label)
+		b["actions"][label] = kit.route(ctx.case, "obligations", *route)
+	b["actions"]["Review publication"] = kit.route(ctx.case, "obligations", "publication")
+	for r in reporting.for_case(ctx.case):
+		start = r.period_start.date() if hasattr(r.period_start, "date") else r.period_start
+		b["actions"][f"{reporting.TYPES[r.report_type]['title']} {reporting.label_of(r.report_type, start)}"] = kit.route(ctx.case, "obligations", "report", r.name)
+	for n in frappe.get_all("Contract Issue", filters={"contract_case": ctx.case}, pluck="issue_no"):
+		b["actions"][f"Issue {n}"] = kit.route(ctx.case, "obligations", "issue", str(n))
 
 
 def operations(ctx: Context) -> dict:

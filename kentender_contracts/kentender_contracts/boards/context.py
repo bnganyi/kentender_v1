@@ -60,8 +60,14 @@ class Context:
 			return {"terms": {}, "missing": [], "failed": exc.detail.get("failed", [])}
 
 	@cached_property
+	def operative(self) -> dict[str, Any] | None:
+		"""The terms in force now: the latest effective version, an amendment once it has taken effect."""
+		found = frappe.db.get_value("Contract Agreement Version", {"contract_case": self.case, "state": "Effective"}, "terms_json", order_by="version_no desc")
+		return records.loads(found) if found else None
+
+	@cached_property
 	def terms(self) -> dict[str, Any]:
-		return self.assembled["terms"]
+		return self.operative or self.assembled["terms"]
 
 	@cached_property
 	def currency(self) -> str:

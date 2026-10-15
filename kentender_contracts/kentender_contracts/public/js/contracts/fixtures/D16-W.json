@@ -1,0 +1,132 @@
+{
+ "actions": {
+  "Send notice": {
+   "args": {
+    "issue": "CM-ISS-794676"
+   },
+   "command": "SendContractCorrespondence",
+   "do": "command"
+  },
+  "View warranty": {
+   "do": "tab",
+   "tab": "Agreement"
+  }
+ },
+ "audiences": [
+  "coordinator"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_warranty_claim_fr",
+ "d": "D16",
+ "dialogs": {},
+ "ev": [],
+ "id": "D16-W",
+ "name": "Security follow-up",
+ "next": {
+  "h": "Send the defect notice.",
+  "k": "turn",
+  "s": "Responsible: Carol Coordinator"
+ },
+ "p": "Send notice",
+ "page": "record",
+ "ref": "CM-TEST-test_a_warranty_claim_fr",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Unit",
+       "CMTDFA369-0072"
+      ],
+      [
+       "Accepted",
+       "20 Jul 2027"
+      ],
+      [
+       "Source terms",
+       "Agreement warranty, 12 months from each unit's acceptance"
+      ],
+      [
+       "Fault",
+       "Battery does not charge"
+      ],
+      [
+       "Warranty",
+       "Ends 20 July 2028"
+      ],
+      [
+       "Evidence",
+       "\u2014"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Claim"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Notice",
+       "name": "message",
+       "o": {},
+       "t": "ta",
+       "v": "Battery does not charge"
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Defect notice"
+  }
+ ],
+ "s2": [
+  "View warranty"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Agreement 1 \u00b7 warranty claim 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "history"
+   ]
+  }
+ ],
+ "title": "Warranty claim",
+ "version": 18
+}

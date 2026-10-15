@@ -66,3 +66,58 @@ class TestContractFundingProvider(_PrincipalBase):
 		self.assertEqual(done["amount"], 1_000_000)
 		self.assertEqual(len(done["reference"].split(", ")), 2)
 		self.assertEqual(sorted(frappe.get_all("Procurement Commitment", filters={"contract": self.contract}, pluck="current_amount")), [300_000, 700_000])
+
+
+class TestVariationAndClosure(_PrincipalBase):
+	"""CM-CHG-001 v0.8 sections 5.14 and 5.14.1 (tracker CM8-807, plan Phase 8): a lawful variation or termination adjusts the commitment once, and a reconciled outcome closes it by status only."""
+
+	def setUp(self):
+		super().setUp()
+		frappe.flags.kt_contract_funding_providers = [owner.Provider()]
+		self.addCleanup(lambda: setattr(frappe.flags, "kt_contract_funding_providers", None))
+		self.identity = f"{self.contract}|agreement 1|1|Funding conversion|effective"
+		self.variation = f"{self.contract}|amendment 1|2|Funding adjustment|update"
+		self.closure = f"{self.contract}|closure termination 1|1|Funding closure|close"
+		budget, line = self._new_dhi_line()
+		self.reservation = self._reserve(line, 10_000_000)
+		self._as("Administrator")
+		seam.convert(self.identity, contract=self.contract, allocations=[{"reservation": self.reservation, "amount": 1_000_000}], amount=1_000_000)
+
+	def amount(self):
+		return frappe.db.get_value("Procurement Commitment", {"contract": self.contract}, "current_amount")
+
+	def adjust(self, total, identity=None):
+		return seam.adjust(identity or self.variation, contract=self.contract, allocations=[{"reservation": self.reservation, "new_total": total}], event_id=f"{self.contract}|amendment 1", event_type="ContractVariationEffective")
+
+	def test_a_variation_increase_is_adjusted_once_and_recall_reads_what_it_did(self):
+		self.assertIsNone(seam.recall(self.variation))
+		first = self.adjust(1_100_000)
+		self.assertEqual(self.amount(), 1_100_000)
+		again = self.adjust(1_100_000)
+		self.assertEqual((first["reference"], first["amount"]), (again["reference"], again["amount"]))
+		self.assertEqual(self.amount(), 1_100_000)  # a retry changes nothing more
+		self.assertEqual(seam.recall(self.variation), {"reference": first["reference"], "amount": 1_100_000.0})
+		self.assertIsNone(seam.recall(self.variation + "-other"))
+
+	def test_an_increase_the_line_cannot_cover_is_refused_and_leaves_the_commitment(self):
+		with self.assertRaises(seam.Refused):
+			self.adjust(10 ** 13)
+		self.assertEqual(self.amount(), 1_000_000)
+
+	def test_a_termination_reduces_the_commitment_to_the_supported_obligation(self):
+		self.adjust(800_000, identity=f"{self.contract}|termination 1|1|Funding adjustment|effective")
+		self.assertEqual(self.amount(), 800_000)
+
+	def test_a_reconciled_outcome_closes_the_commitment_by_status_only_and_never_releases_funds(self):
+		self.adjust(800_000, identity=f"{self.contract}|termination 1|1|Funding adjustment|effective")
+		remaining = frappe.db.get_value("Funding Reservation", self.reservation, "remaining_amount")
+		with self.assertRaises(seam.Refused):  # the final supported obligation is the amount the commitment holds, never an implicit adjustment
+			seam.close(self.closure, contract=self.contract, final_amount=700_000, event_id="E", event_type="TerminationSettlementCompleted", evidence=["TERM-01"])
+		done = seam.close(self.closure, contract=self.contract, final_amount=800_000, event_id=f"{self.contract}|closure", event_type="TerminationSettlementCompleted", evidence=["TERM-01"])
+		self.assertEqual((done["amount"], self.amount(), frappe.db.get_value("Procurement Commitment", {"contract": self.contract}, "status")), (800_000.0, 800_000, "Closed"))
+		self.assertEqual(frappe.db.get_value("Funding Reservation", self.reservation, "remaining_amount"), remaining)  # closing frees nothing
+		again = seam.close(self.closure, contract=self.contract, final_amount=800_000, event_id=f"{self.contract}|closure", event_type="TerminationSettlementCompleted", evidence=["TERM-01"])
+		self.assertEqual(again["reference"], done["reference"])
+		self.assertEqual(seam.recall(self.closure), {"reference": done["reference"], "amount": 800_000.0})
+		with self.assertRaises(seam.Refused):  # a closed commitment can only be decreased
+			self.adjust(900_000, identity=f"{self.contract}|amendment 9|9|Funding adjustment|update")

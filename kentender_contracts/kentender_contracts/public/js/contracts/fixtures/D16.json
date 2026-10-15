@@ -1,0 +1,137 @@
+{
+ "actions": {
+  "Record return": {
+   "args": {
+    "action": "Return"
+   },
+   "command": "RecordSecurityAction",
+   "do": "command"
+  },
+  "View guarantee": {
+   "do": "tab",
+   "tab": "Agreement"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_the_return_is_due_a",
+ "d": "D16",
+ "dialogs": {},
+ "ev": [
+  "Guarantee TEST-SG-01"
+ ],
+ "id": "D16",
+ "name": "Security follow-up",
+ "next": {
+  "h": "Record the security return.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Record return",
+ "page": "record",
+ "ref": "CM-TEST-test_the_return_is_due_a",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Instrument",
+       "TEST-SG-01"
+      ],
+      [
+       "Guaranteed amount",
+       "KES 100,000"
+      ],
+      [
+       "AO final acceptance",
+       "27 July 2027"
+      ],
+      [
+       "Return due",
+       "26 August 2027 \u2014 30 days from AO final acceptance"
+      ],
+      [
+       "Status",
+       "Return due"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Instrument"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Return date",
+       "name": "returned_on",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Evidence",
+       "name": "evidence",
+       "o": {},
+       "t": "file",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Return"
+  }
+ ],
+ "s2": [
+  "View guarantee"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Agreement 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_the_return_is_due_a",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_the_return_is_due_a",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_the_return_is_due_a",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_the_return_is_due_a",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_the_return_is_due_a",
+    "history"
+   ]
+  }
+ ],
+ "title": "Performance security",
+ "version": 11
+}

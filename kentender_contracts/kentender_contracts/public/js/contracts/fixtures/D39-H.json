@@ -1,0 +1,103 @@
+{
+ "actions": {
+  "View recovery": {
+   "do": "tab",
+   "tab": "Obligations"
+  },
+  "View remaining obligations": {
+   "do": "tab",
+   "tab": "Obligations"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_an_advance_that_is_",
+ "d": "D39",
+ "dialogs": {},
+ "ev": [],
+ "id": "D39-H",
+ "name": "Termination settlement",
+ "next": {
+  "fixes": [
+   "View recovery",
+   "View remaining obligations"
+  ],
+  "h": "The advance recovery needs resolution.",
+  "k": "blk",
+  "s": "Responsible for the fix: Finance owner",
+  "s2": ""
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_an_advance_that_is_",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Accepted work",
+       "KES 800,000"
+      ],
+      [
+       "Outstanding advance",
+       "KES 20,000"
+      ],
+      [
+       "Survivor disposition",
+       "None valid"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Settlement"
+  }
+ ],
+ "s2": [],
+ "st": "Terminated",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Finance reconciliation",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_an_advance_that_is_",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_an_advance_that_is_",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_an_advance_that_is_",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_an_advance_that_is_",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_an_advance_that_is_",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review termination settlement",
+ "version": 38
+}

@@ -18,6 +18,7 @@
   "issued_on",
   "expires_on",
   "attachment",
+  "return_json",
   "confirmation_reference",
   "confirmation_received_on",
   "verification_basis",
@@ -56,7 +57,7 @@
    "label": "State",
    "fieldtype": "Select",
    "read_only": 1,
-   "options": "Recorded\nVerified\nRejected\nSuperseded"
+   "options": "Recorded\nVerified\nRejected\nSuperseded\nReturned"
   },
   {
    "fieldname": "issuer",
@@ -98,6 +99,12 @@
    "fieldname": "attachment",
    "label": "Attachment",
    "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "return_json",
+   "label": "Return json",
+   "fieldtype": "Long Text",
    "read_only": 1
   },
   {

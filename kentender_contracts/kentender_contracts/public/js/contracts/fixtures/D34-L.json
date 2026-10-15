@@ -1,0 +1,186 @@
+{
+ "actions": {
+  "Return for correction": {
+   "dialog": "return",
+   "do": "dialog"
+  },
+  "Submit change for decision": {
+   "args": {
+    "change": 1
+   },
+   "command": "SubmitContractChangeForDecision",
+   "do": "command"
+  },
+  "View request": {
+   "do": "tab",
+   "tab": "Obligations"
+  },
+  "View rule": {
+   "do": "tab",
+   "tab": "Obligations"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_an_early_total_incr",
+ "d": "D34",
+ "dialogs": {
+  "return": {
+   "args": {
+    "change": 1
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "ReturnContractChange",
+   "p": "Return",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Return for correction"
+  }
+ },
+ "ev": [
+  "Supplier request 1"
+ ],
+ "id": "D34-L",
+ "name": "Quantity variation",
+ "next": {
+  "fixes": [
+   "View rule",
+   "View request",
+   "Return for correction"
+  ],
+  "h": "Change requires legal review",
+  "k": "blk",
+  "s": "Responsible for the fix: Charles Mutiso",
+  "s2": "The proposed increase is within twelve months of signing. Its legal basis has not been established."
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_an_early_total_incr",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "",
+      "Current",
+      "Proposed"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      1,
+      2
+     ],
+     "rows": [
+      [
+       "Quantity",
+       "10",
+       "11"
+      ],
+      [
+       "Total",
+       "KES 1,000,000",
+       "KES 1,100,000"
+      ],
+      [
+       "Cumulative change",
+       "\u2014",
+       "10%"
+      ]
+     ]
+    },
+    {
+     "k": "help",
+     "v": "Synthetic mechanism test \u2014 not a legally cleared production example."
+    }
+   ],
+   "t": "Comparison"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Technical review",
+       "Peter Mugo: Supported at the unchanged rate"
+      ],
+      [
+       "Source and legal basis",
+       "Faith Atieno: Supported at the unchanged rate"
+      ],
+      [
+       "Funding confirmation",
+       "Brian Wafula: Supported at the unchanged rate (QTY-01)"
+      ],
+      [
+       "Funding",
+       "KES 100,000 additional on RSV-DEMO-1"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Review"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_an_early_total_incr",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_an_early_total_incr",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_an_early_total_incr",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_an_early_total_incr",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_an_early_total_incr",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review quantity change",
+ "version": 17
+}

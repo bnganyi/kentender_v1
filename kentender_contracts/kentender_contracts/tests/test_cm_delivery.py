@@ -281,6 +281,21 @@ class TestAcceptanceAndReceipt(DeliveryCase):
 		self.assertEqual(frappe.db.count("Contract Simulated Signature", {"fixture_namespace": "CM_TEST"}), signatures_before)
 		self.assertEqual(holds.open_holds(self.case), [])
 
+	def test_restore_operation_posts_a_receipt_that_failed_once_and_a_second_restore_finds_nothing_to_do(self):
+		from kentender_contracts.services import formation
+
+		self.certify()
+		out = self.prepare()
+		with mock.patch.object(adapter, "receive", side_effect=RuntimeError("stock service down")):
+			self.sign_all(out["acceptance"])
+		first = formation.restore_operations(self.case, actor=self.p["daniel"])
+		self.assertEqual([r["acceptance"] for r in first["receipts"]], [out["acceptance"]])
+		self.assertIn(first["receipts"][0]["state"], ("Succeeded", "Reconciled"))
+		self.assertEqual(len(delivery.posted_receipts(self.case)), 1)
+		self.assertEqual(formation.restore_operations(self.case, actor=self.p["daniel"])["receipts"], [])
+		self.assertEqual(len(delivery.posted_receipts(self.case)), 1)  # read the owner first: never a second receipt
+		self.assertEqual(holds.open_holds(self.case), [])
+
 	def test_the_posting_runs_as_the_service_not_as_the_person_whose_signature_completed_it(self):
 		self.certify()
 		out = self.prepare()

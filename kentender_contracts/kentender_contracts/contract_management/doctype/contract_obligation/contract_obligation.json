@@ -1,0 +1,150 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-OBL-{#####}",
+ "creation": "2026-10-15 12:00:00.000000",
+ "description": "A duty triggered by an event (a publication, a report, a retention, a security action): the trigger kept with its instant, the rule and due date where verified, the recipient, the owner and the evidence. Never a fabricated deadline.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "kind",
+  "state",
+  "rule",
+  "trigger_event",
+  "trigger_at",
+  "due_at",
+  "due_basis",
+  "recipient",
+  "owner_user",
+  "evidence_json",
+  "disposition",
+  "subject",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "kind",
+   "label": "Kind",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Publication\nProgress report\nVariation report\nTermination record\nSecurity action\nOther"
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Open\nNeeds review\nSatisfied\nNot applicable\nSuperseded"
+  },
+  {
+   "fieldname": "rule",
+   "label": "Rule",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "trigger_event",
+   "label": "Trigger event",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "trigger_at",
+   "label": "Trigger at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "due_at",
+   "label": "Due at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "due_basis",
+   "label": "Due basis",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recipient",
+   "label": "Recipient",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "owner_user",
+   "label": "Owner user",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_json",
+   "label": "Evidence json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "disposition",
+   "label": "Disposition",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "subject",
+   "label": "Subject",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Obligation",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

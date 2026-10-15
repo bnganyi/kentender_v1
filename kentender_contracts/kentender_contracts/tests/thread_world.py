@@ -26,6 +26,7 @@ PEOPLE: dict[str, tuple[str, list[str]]] = {
 	"brian": ("Brian Wafula", ["Contract preparation", "Contract inspection"]),
 	"amina": ("Amina Hassan", ["Accounting Officer", "Entity contract signing"]),
 	"julia": ("Julia Njeri", ["Contract inspection"]),
+	"carol": ("Carol Coordinator", ["Contract coordination"]),
 	"peter": ("Peter Mugo", ["Contract inspection", "Technical certification"]),
 	"grace": ("Grace Wanjiku", ["Receiving"]),
 	"faith": ("Faith Atieno", ["Contract inspection", "Technical certification"]),
@@ -193,8 +194,8 @@ def purge_native_operation_rows(case_ids: list[str]) -> None:
 class Thread:
 	"""Drives the ordinary thread through the services as the people of the boards. `case` and the latest `version` are kept so each step passes the version it last saw."""
 
-	def __init__(self, people: dict[str, str], tag: str = "T1", contract_id: str = "", services: bool = False, award_case: str = "", item: str = "", advance: bool = False):
-		self.p, self.tag, self.n, self.services, self.award_case, self.item, self.advance = people, tag, 0, services, award_case, item, advance
+	def __init__(self, people: dict[str, str], tag: str = "T1", contract_id: str = "", services: bool = False, award_case: str = "", item: str = "", advance: bool = False, security: bool = False):
+		self.p, self.tag, self.n, self.services, self.award_case, self.item, self.advance, self.security = people, tag, 0, services, award_case, item, advance, security
 		self.contract_id = contract_id or f"CM-TEST-{tag}"
 		self.case = ""
 
@@ -209,13 +210,25 @@ class Thread:
 		"""Receive, prepare, send, both signatures: an Active contract with its native order."""
 		from kentender_contracts.services import formation
 
-		out = receive(self.p, contract_id=self.contract_id, services=self.services, award_case=self.award_case, advance=self.advance)
+		out = receive(self.p, contract_id=self.contract_id, services=self.services, award_case=self.award_case, advance=self.advance, security_required=self.security)
 		self.case = out["contract"]
 		formation.save_particulars(self.case, expected_version=self.version(), idempotency_key=self.key("particulars"), actor=self.p["brian"], values=package_particulars(self.p, self.services, self.item))
+		if self.security:  # the performance security the issued terms require is recorded and verified before the agreement is sent
+			self.record_security()
 		formation.request_signatures(self.case, expected_version=self.version(), idempotency_key=self.key("send"), actor=self.p["charles"])
 		formation.sign_contract(self.case, party="Supplier", expected_version=self.version(), idempotency_key=self.key("sign-s"), actor=self.p["mary"])
 		formation.sign_contract(self.case, party="Entity", expected_version=self.version(), idempotency_key=self.key("sign-e"), actor=self.p["amina"])
 		return self.case
+
+	def record_security(self, *, reference: str = "TEST-SG-01", amount: float = 100_000, issued_on: str = "2027-07-01", expires_on: str = "2027-08-31", verify: bool = True) -> str:
+		"""Charles records an instrument for the Ministry and, unless told not to, verifies it from the issuer's confirmation."""
+		from kentender_contracts.services import security
+
+		row = security.record_security(self.case, expected_version=self.version(), idempotency_key=self.key("sec"), actor=self.p["charles"], issuer="Test Bank", beneficiary="Ministry of Health", reference=reference, amount=amount,
+			issued_on=issued_on, expires_on=expires_on)["security"]
+		if verify:
+			security.verify_security(self.case, security=row, expected_version=self.version(), idempotency_key=self.key("secv"), actor=self.p["charles"], confirmation_reference=f"{reference}-CONF", received_on="2027-07-02", basis="Issuer confirmation")
+		return row
 
 	def appointed(self, acceptance: str = "Committee accepts") -> dict:
 		"""HOP recommends Julia (chair), Peter (technical) and Brian; the Accounting Officer appoints; each declares no interest. `acceptance` is who makes the acceptance a decision."""
@@ -310,7 +323,25 @@ def _more(cls):
 			effective_date="2027-07-20", evidence=f"Bank statement line for {reference}")
 		return {**draft, **settled}
 
-	cls.accept, cls.claim, cls.certify_invoice, cls.post_accounting, cls.pay = accept, claim, certify_invoice, post_accounting, pay
+	def change_through(self, kind: str = "Extension", request: dict | None = None, *, number: int = 1, requester: str = "david", reason: str = "Supplier reports a shipment delay.") -> dict:
+		"""A change requested, reviewed by three named people, decided by the Accounting Officer and signed by both parties: the amendment is effective."""
+		from kentender_contracts.services import change
+
+		request = request or ({"proposed_date": "2027-07-27"} if kind == "Extension" else {"quantities": {"L1": 11}})
+		evidence = [{"label": "Supplier request 1", "file": "/private/files/request-1.pdf"}]
+		change.request_change(self.case, kind=kind, request=request, reason=reason, evidence=evidence, expected_version=self.version(), idempotency_key=self.key("ask"), actor=self.p[requester])
+		roster = dict(zip(change.REVIEW_KINDS[kind], (self.p["peter"], self.p["faith"], self.p["brian"]), strict=True))
+		change.appoint_reviewers(self.case, change=number, reference="AO/VAR/2027/001", reviewers=roster, expected_version=self.version(), idempotency_key=self.key("appoint"), actor=self.p["charles"])
+		for review_kind, reviewer in roster.items():
+			change.record_review(self.case, change=number, kind=review_kind, recommendation="Approve the change without a price change.", declaration=change.NO_CONFLICT, reference="QTY-01" if review_kind == "Funding confirmation" else "",
+				expected_version=self.version(), idempotency_key=self.key("rec"), actor=reviewer)
+			change.sign_review(self.case, change=number, kind=review_kind, expected_version=self.version(), idempotency_key=self.key("sig"), actor=reviewer)
+		change.submit_for_decision(self.case, change=number, expected_version=self.version(), idempotency_key=self.key("submit"), actor=self.p["charles"])
+		change.decide(self.case, change=number, decision="Approve", reason="The documented grounds support the change.", expected_version=self.version(), idempotency_key=self.key("decide"), actor=self.p["amina"])
+		change.sign_amendment(self.case, change=number, party="Supplier", expected_version=self.version(), idempotency_key=self.key("sign-s"), actor=self.p["mary"])
+		return change.sign_amendment(self.case, change=number, party="Entity", expected_version=self.version(), idempotency_key=self.key("sign-e"), actor=self.p["amina"])
+
+	cls.accept, cls.claim, cls.certify_invoice, cls.post_accounting, cls.pay, cls.change_through = accept, claim, certify_invoice, post_accounting, pay, change_through
 	return cls
 
 

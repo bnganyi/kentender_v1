@@ -43,6 +43,7 @@ STATUTORY: tuple[Parameter, ...] = (
 
 SYNTHETIC_ONLY: tuple[Parameter, ...] = (
 	Parameter("delay_rate_per_day", 0.001, "fraction of eligible principal per day", "CM-R-12", "D36 mechanism example, not a verified statutory rate"),
+	Parameter("delay_cap_percent", 10, "% of eligible principal", "CM-R-12", "D36 mechanism example, not a verified statutory cap"),
 )
 
 

@@ -46,7 +46,7 @@ def assign(case: str, command: str, title: str, subject: str, version: int, hold
 			if existing.state in ("Done", "Superseded"):  # the same obligation arising again (a recovery that fails twice) is the same item, reopened with its history kept
 				doc = frappe.get_doc(TASK, existing.name)
 				records.append_json(doc, "history_json", {"state": "Reopened", "at": str(clock.now())})
-				records.update(doc, state=state, assigned_at=clock.now(), completed_at=None)
+				records.update(doc, state=state, title=title, assigned_at=clock.now(), completed_at=None)
 				created.append(identity)
 			continue
 		records.new(TASK, contract_case=case, identity=identity, command=command, title=title, subject=subject, subject_version=version, holder=holder, holder_role=role, state=state,
@@ -96,6 +96,7 @@ def reassign(case: str, command: str, subject: str, version: int, old_holder: st
 #: The consequence an obligation exercises, so an open hold on it makes the step **blocked** (with the hold's reason and holder) instead of a button that will be refused (section 5.17, 6.3).
 CONSEQUENCE = {
 	"RequestContractSignatures": "new_signing_attempt", "SignContractVersion": "new_signing_attempt", "SignContractCertification": "certify_invoice", "SignAdvanceCertification": "certify_advance", "RecordFinanceSettlement": "confirm_settlement",
+	"VerifyContractRemedy": "close_claim", "SubmitContractChangeForDecision": "vary_contract", "DecideContractChange": "vary_contract", "ActivateContractChange": "vary_contract",
 	"IssueCompletionCertificate": "close_contract", "SignContractCloseout": "close_contract", "PrepareContractCloseout": "close_contract",
 }
 #: Finance's payment steps are blocked by a payment hold; the accounting invoice (liability) is not (section 5.8, 5.12).

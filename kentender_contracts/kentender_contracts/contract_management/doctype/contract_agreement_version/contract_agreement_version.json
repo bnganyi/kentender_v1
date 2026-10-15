@@ -22,6 +22,7 @@
   "rendered_digest",
   "frozen_at",
   "effective_at",
+  "change",
   "record_version",
   "fixture_namespace"
  ],
@@ -121,6 +122,12 @@
    "fieldname": "effective_at",
    "label": "Effective at",
    "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "change",
+   "label": "Change",
+   "fieldtype": "Data",
    "read_only": 1
   },
   {

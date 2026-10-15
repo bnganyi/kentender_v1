@@ -20,7 +20,7 @@ import frappe
 from frappe.utils import cint, cstr, formatdate, getdate
 
 from kentender_contracts.native import adapter
-from kentender_contracts.services import authority, clock, events, formation_rules, intents, parties, people, preflight, records, service_principal, simulation, source_package, signing_flow, work
+from kentender_contracts.services import authority, clock, events, formation_rules, intents, obligations, parties, people, preflight, records, service_principal, simulation, source_package, signing_flow, work
 from kentender_contracts.services.errors import Guards, fail, invalid
 from kentender_core.services import contract_funding_contract as funding_seam
 from kentender_core.utils.series import allocation_lock
@@ -71,6 +71,7 @@ def receive_award_package(package: dict[str, Any], *, handoff: list[dict[str, An
 			source_json=records.dumps({"package": package, "package_digest": records.digest(package), "handoff": handoff}))
 		work.assign(doc.name, "RequestContractSignatures", "Review the contract and send it for signature.", "agreement 1", 1, work.holders(work.HOP), role=work.HOP)
 		events.record(doc.name, "Award package received", actor, f"Award package {award_case} received.", award_case=award_case, package_digest=records.digest(package))
+		obligations.on_award_received(doc.name, package)  # publication is a duty of its own, opened for review with the decision's instant
 		return records.summary(doc, intake="created")
 
 	return records.command("ReceiveAwardPackage", case="", idempotency_key=idempotency_key, actor=actor, payload={"package": records.digest(package), "handoff": records.digest(handoff)}, body=body)
@@ -78,7 +79,8 @@ def receive_award_package(package: dict[str, Any], *, handoff: list[dict[str, An
 
 # -- the agreement --------------------------------------------------------------------------------------------------------------------
 def current_agreement(case: str, *states: str):
-	filters: dict[str, Any] = {"contract_case": case}
+	"""The latest agreement of the case. An amendment is a successor version that makes a change effective (`change`); it is read through the change, never as the agreement."""
+	filters: dict[str, Any] = {"contract_case": case, "change": ["is", "not set"]}
 	if states:
 		filters["state"] = ["in", list(states)]
 	name = frappe.db.get_value(AGREEMENT, filters, "name", order_by="version_no desc")
@@ -386,6 +388,7 @@ def _activate(doc, agreement, actor: str) -> None:
 	intents.record(doc.name, subject, agreement.version_no, "Funding conversion", "effective", recovery_owner="Technical operator; Budget owner")
 	work.assign(doc.name, "RecommendContractInspectors", "Recommend the inspectors for this contract.", subject, agreement.version_no, work.holders(work.HOP), role=work.HOP)
 	events.record(doc.name, "Agreement effective", actor, f"Agreement {agreement.version_no} is in force.", agreement=agreement.name)
+	obligations.on_signed(doc.name, clock.now())
 	from kentender_contracts.services import delivery
 
 	delivery.release_premature(doc.name, actor)
@@ -393,7 +396,8 @@ def _activate(doc, agreement, actor: str) -> None:
 
 # -- the native order and the funding conversion --------------------------------------------------------------------------------------
 def native_order(case: str) -> str:
-	return cstr(frappe.db.get_value(intents.INTENT, {"contract_case": case, "operation_kind": "Purchase order", "state": ["in", list(intents.SETTLED)]}, "result_reference"))
+	"""The contract's native purchase order: the one made when the agreement took effect. An amendment's order update (`change`) is a later operation of the same kind on the same order."""
+	return cstr(frappe.db.get_value(intents.INTENT, {"contract_case": case, "operation_kind": "Purchase order", "subject": ["like", "agreement%"], "state": ["in", list(intents.SETTLED)]}, "result_reference"))
 
 
 def _items(terms: dict[str, Any]) -> list[dict[str, Any]]:
@@ -466,4 +470,12 @@ def restore_operations(case: str, *, actor: str) -> dict[str, Any]:
 	"""`RestoreContractOperation` (technical recovery): read each owner first, link what exists, create only what is missing. Never asks for a new signature."""
 	if not (people.technical(actor) or people.holds(actor, work.TECHNICAL)):
 		fail("CM_AUTHORITY", missing="responsibility", responsibility=work.TECHNICAL, provisioned_by="System setup, by a System Manager")
-	return carry_out_effects(case, actor)
+	from kentender_contracts.services import change, delivery, issues, reporting, termination
+
+	out = carry_out_effects(case, actor)
+	out["reports_retried"] = reporting.retry_dispatches(case, actor)
+	out["amendments"] = change.carry_out_effects(case, actor)["operations"]
+	out["termination"] = termination.carry_out_effects(case, actor)["operations"]
+	out["receipts"] = delivery.restore_receipts(case, actor)
+	out["messages_retried"] = issues.retry_dispatches(case, actor)  # a message that never reached the supplier is sent again, the same one
+	return out

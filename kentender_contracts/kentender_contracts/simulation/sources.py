@@ -124,10 +124,10 @@ def _content(number: str, case: str, security_required: bool = False, outside_si
 		return _json({"delivery_schedule": {"due": DELIVERY_DUE, "destination": "Ministry of Health, Afya House store"}, "technical": [{"line_id": "L1", "requirement": "Laptop with at least 16 GB RAM and 512 GB storage that starts successfully"}],
 			"related_services": [SERVICE] if services else []})
 	if number == "S5":
-		security = {"required": True, "percentage": 10, "statement": "10% of the contract sum, in the form of a bank guarantee"} if security_required else {"required": False, "statement": "Not required under these test terms"}
+		security = {"required": True, "percentage": 10, "statement": "10% of the contract sum, in the form of a bank guarantee"} if security_required else {"required": False, "statement": "Not required by the issued terms"}
 		return _json({"warranty": {"months": 12, "from": "each unit's acceptance"}, "payment": {"basis": "certified invoice for accepted units", "terms": "as issued"},
 			"performance_security": security, "advance": ADVANCE if with_advance(case, advance) else {"allowed": False}, "delivery_due": DELIVERY_DUE,
-			"signing": {"outside_permitted": True, "basis": "Outside signing permitted in these test terms"} if outside_signing else {"outside_permitted": False}})
+			"signing": {"outside_permitted": True, "basis": "Outside signing permitted by the issued terms"} if outside_signing else {"outside_permitted": False}})
 	if number == "S6":
 		return _json({"criteria": CRITERIA + (SERVICE_CRITERIA if services else [])})
 	if number == "S7":

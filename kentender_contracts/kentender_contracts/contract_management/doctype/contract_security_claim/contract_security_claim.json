@@ -1,0 +1,157 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-SCL-{#####}",
+ "creation": "2026-10-15 12:00:00.000000",
+ "description": "A claim on a verified security: the grounds and amount, the claimant's mandate, the decision, the communication to the issuer and the issuer's actual outcome, each its own fact. A request or decision never means the issuer paid.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "security",
+  "claim_no",
+  "state",
+  "grounds",
+  "amount",
+  "mandate",
+  "recipient",
+  "evidence_json",
+  "decision_json",
+  "communication_json",
+  "outcome_json",
+  "prepared_by",
+  "prepared_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "security",
+   "label": "Security",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Security"
+  },
+  {
+   "fieldname": "claim_no",
+   "label": "Claim no",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Prepared\nRequested\nApproved\nDeclined\nReturned\nCommunicated\nOutcome recorded"
+  },
+  {
+   "fieldname": "grounds",
+   "label": "Grounds",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "label": "Amount",
+   "fieldtype": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "mandate",
+   "label": "Mandate",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recipient",
+   "label": "Recipient",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_json",
+   "label": "Evidence json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision_json",
+   "label": "Decision json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "communication_json",
+   "label": "Communication json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "outcome_json",
+   "label": "Outcome json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_by",
+   "label": "Prepared by",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_at",
+   "label": "Prepared at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Security Claim",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

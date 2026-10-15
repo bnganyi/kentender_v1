@@ -65,6 +65,12 @@ def change_roles_separate(actor: str, *, action: str, requesters: Iterable[str],
 		_refuse("change_roles_separate", "You recommended or reviewed this change, so you cannot make the final decision on it.")
 
 
+def preparer_not_decider(actor: str, preparers: Iterable[str], *, what: str) -> None:
+	"""The person who prepared a proposal (a delay adjustment, a termination, a security claim) cannot make the final decision on it: the same §6.1 separation as a change requester."""
+	if actor.lower() in _norm(preparers):
+		_refuse("change_roles_separate", f"You prepared this {what}, so you cannot make the final decision on it.")
+
+
 def finance_maker_not_approver(actor: str, makers: Iterable[str]) -> None:
 	if actor.lower() in _norm(makers):
 		_refuse("finance_independence", "You prepared this invoice or payment, so you cannot approve it.")

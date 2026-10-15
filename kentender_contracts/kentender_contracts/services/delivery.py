@@ -19,7 +19,7 @@ import operator
 from typing import Any
 
 import frappe
-from frappe.utils import cint, cstr, flt, get_datetime
+from frappe.utils import add_days, cint, cstr, flt, get_datetime
 
 from kentender_contracts.native import adapter
 from kentender_contracts.services import authority, bindings, clock, events, formation, intents, people, position, preflight, records, segregation, service_principal, signing_flow, work
@@ -914,7 +914,36 @@ def _make_effective(case: str, doc, report, actor: str, *, proof: str = "", deci
 		events.record(case, "Acceptance effective", actor, f"Acceptance report {report.version_no} is effective; no goods are to be received.", report=report.name)
 	if decision["dissent"]:
 		_reopen_readings(case, decision, actor)
+	_follow_up_findings(case, report, decision, actor)
 	return records.summary(doc, acceptance=report.name, effective=True, posting=bool(accepted))
+
+
+def _follow_up_findings(case: str, report, decision: dict[str, Any], actor: str) -> None:
+	"""What an effective decision asks of the parties: the units that did not meet become a delivery issue the owner sends to the supplier, and replacement units that were accepted close the issue that asked
+	for them (the thread is closed with the fact, never with a note)."""
+	from kentender_contracts.services import adjustment, issues, warranty
+
+	lines = decision["lines"]
+	rejected = [(line, unit) for line in lines for unit in line["units"]["rejected"]]
+	if rejected:
+		units = [u for _l, u in rejected]
+		observed = "; ".join(sorted({line["reasons"].get(u, "") for line, u in rejected if line["reasons"].get(u)}))
+		item = cstr(rejected[0][0]["item"]).lower()
+		issues.open_issue(case, kind="Delivery issue", title=f"{len(units)} {item}{'' if len(units) == 1 else 's'} need replacement",
+			facts={"units": units, "result": "Does not meet", "observed": observed or "The requirements were not met.", "acceptance": report.name, "inspection": f"arrival {rejected[0][0]['arrival_no']}"},
+			requested_remedy="Replacement", reply_by=str(add_days(clock.now(), 2))[:10], units=units, links={"acceptance": report.name},
+			draft=f"{len(units)} {item}{'' if len(units) == 1 else 's'} did not meet the requirements ({observed or 'see the inspection'}). Please arrange replacement and confirm the delivery date.", actor=actor)
+	replaced: dict[str, str] = {}
+	accepted = {u for line in lines for u in line["units"]["accepted"]}
+	for arrival in arrivals_all(case):
+		for item in arrival["items"]:
+			replaced.update({unit: old for unit, old in (item.get("replaces") or {}).items() if unit in accepted})
+	if replaced:
+		issues.close_when_replaced(case, replaced, report.version_no, actor)
+		warranty.on_replacement_accepted(case, replaced, actor)
+	adjustment.on_delivery_complete(case, actor)  # the delay, if the last unit came after the operative due date
+	services = service_lines(_terms_for(case, "Effective"))
+	warranty.on_accepted(case, [u for line in lines if line["line_id"] not in services for u in line["units"]["accepted"]], report.version_no, actor)  # the warranty runs from each goods unit's acceptance
 
 
 def _reopen_readings(case: str, decision: dict[str, Any], actor: str) -> None:
@@ -1106,6 +1135,20 @@ def reconcile_receipt(case: str, receipt: str, report) -> list[str]:
 	if abs(ledger["debit"] - ledger["credit"]) > 0.01:
 		differences.append(f"The receipt's ledger does not balance: {ledger['debit']:,.2f} debit, {ledger['credit']:,.2f} credit.")
 	return differences
+
+
+def restore_receipts(case: str, actor: str = "") -> list[dict[str, Any]]:
+	"""Technical recovery of accepted-receipt postings that did not complete: the owner is read first by identity, so a receipt that exists is linked and nothing is posted twice. A posting another hold stops is left for that hold's owner."""
+	out = []
+	for name in frappe.get_all(ACCEPTANCE, filters={"contract_case": case, "state": "Effective", "posting_intent": ["is", "set"]}, pluck="name", order_by="version_no asc"):
+		report = frappe.get_doc(ACCEPTANCE, name)
+		if frappe.db.get_value(intents.INTENT, report.posting_intent, "state") in intents.SETTLED:
+			continue
+		try:
+			out.append({"acceptance": name, **post_accepted_receipt(case, acceptance=name, actor=actor)})
+		except Exception as exc:  # noqa: BLE001 - a hold or a refusal leaves it pending for its own owner
+			out.append({"acceptance": name, "state": "Pending", "detail": str(exc)})
+	return out
 
 
 def posted_receipts(case: str) -> list[str]:

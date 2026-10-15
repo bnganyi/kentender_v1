@@ -29,7 +29,7 @@ def _delivery_due(ctx: Context) -> str:
 
 def _security(ctx: Context) -> str:
 	sec = ctx.terms.get("security") or {}
-	return sec.get("statement") or ("Required" if sec.get("required") else "Not required under these test terms")
+	return sec.get("statement") or ("Required" if sec.get("required") else "Not required by the issued terms")
 
 
 def _warranty(ctx: Context, short: bool = False) -> str:

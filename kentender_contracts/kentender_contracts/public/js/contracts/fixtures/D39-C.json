@@ -1,0 +1,128 @@
+{
+ "actions": {
+  "View funding update": {
+   "do": "tab",
+   "tab": "History"
+  },
+  "View settlement": {
+   "do": "tab",
+   "tab": "History"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_termination_from_",
+ "d": "D39",
+ "dialogs": {},
+ "ev": [],
+ "id": "D39-C",
+ "name": "Termination settlement",
+ "next": {
+  "h": "Amina Hassan completed the termination settlement on 25 Jul 2027, 10:00 EAT.",
+  "k": "done",
+  "s": "The Budget owner acknowledged the commitment's closure."
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_a_termination_from_",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Accepted work",
+       "KES 800,000"
+      ],
+      [
+       "Cash confirmed",
+       "KES 800,000"
+      ],
+      [
+       "Advance",
+       "KES 0"
+      ],
+      [
+       "Credit",
+       "KES 0"
+      ],
+      [
+       "Authorised costs",
+       "KES 0"
+      ],
+      [
+       "Dispute",
+       "KES 0"
+      ],
+      [
+       "Unperformed balance",
+       "KES 200,000 extinguished by effective termination"
+      ],
+      [
+       "Final supported obligation",
+       "KES 800,000"
+      ],
+      [
+       "Budget decrease",
+       "Acknowledged"
+      ],
+      [
+       "Closure acknowledgement",
+       "Acknowledged"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Settlement"
+  }
+ ],
+ "s2": [
+  "View settlement",
+  "View funding update"
+ ],
+ "st": "Terminated",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "history"
+   ]
+  }
+ ],
+ "title": "Complete termination settlement",
+ "version": 40
+}

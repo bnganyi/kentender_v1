@@ -12,10 +12,11 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
+from frappe.utils import flt
 
-from kentender_contracts.boards import agreement, chrome, delivery, ending, existing, invoices, kit, obligations, outside, security
+from kentender_contracts.boards import adjustments, agreement, changes, chrome, delivery, ending, existing, invoices, issues as issue_boards, kit, obligations, outside, reports, security, security_actions as security_boards, termination as termination_boards
 from kentender_contracts.boards.context import Context
-from kentender_contracts.services import advance, bindings, closeout, payment, records
+from kentender_contracts.services import adjustment, advance, bindings, change, closeout, issues, obligations as obligation_service, payment, records, reporting, security_actions, termination, warranty
 from kentender_contracts.services.errors import fail
 
 TAB_KEYS = {t.lower(): t for t in chrome.TABS}
@@ -43,7 +44,11 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 		_offer_ending(ctx, board)
 		return board
 	if command == "SignContractVersion":
+		if subject.startswith("amendment"):
+			return changes.sign(ctx, _change_of(ctx, subject), entity=bool(bindings.entity_signatory(ctx.case, ctx.user)))
 		return agreement.d03(ctx, entity=is_entity)
+	if command in change.COMMANDS:
+		return _change_board(ctx, lead)
 	if command == "ResolveDeliveryException":
 		board = delivery.deliveries_summary(ctx)
 		board["next"] = chrome.next_block(ctx)
@@ -71,8 +76,14 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 		return outside.d26(ctx, outside.mismatched(ctx)[0], differs=True) if outside.mismatched(ctx) else outside.d26e(ctx)
 	if command == "RecordContractSecurity":
 		return invoices.guarantee_record(ctx) if subject.startswith("advance guarantee") else security.d25r(ctx, lead["version"])
+	if command in _ISSUE_COMMANDS:
+		return _issue_board(ctx, lead)
+	if command in _OBLIGATION_COMMANDS:
+		return _obligation_board(ctx, lead)
 	if command == "VerifyContractSecurity":
-		return invoices.guarantee_verify(ctx, lead["version"]) if subject.startswith("advance guarantee") else security.d25(ctx, lead["version"])
+		if subject.startswith("advance guarantee"):
+			return invoices.guarantee_verify(ctx, lead["version"])
+		return security_boards.replacement(ctx, lead["version"]) if ctx.doc.lifecycle in ("Active", "Terminated") else security.d25(ctx, lead["version"])
 	if command == "SignAdvanceCertification":
 		return invoices.d29(ctx, advance.live(ctx.case))
 	if command == "RecommendContractInspectors":
@@ -97,6 +108,9 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 		return delivery.d07a(ctx, lead["version"])
 	if command == "SignContractCertification":
 		inv = invoices._invoice(ctx, _number(subject))
+		approved = adjustment.pending_application(ctx.case)
+		if approved:
+			return adjustments.certification(ctx, inv, flt(frappe.db.get_value("Contract Invoice", inv.name, "claimed_amount")), approved[0])
 		gap = next((g for g in payment.liability_gap(ctx.case) if g["successor"] == inv.name and not g["reconciled"]), None)
 		if gap:
 			return invoices.d08l(ctx, inv, gap)
@@ -109,6 +123,8 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 	if command == "CorrectContractInvoice":
 		return invoices.d18c(ctx, invoices._invoice(ctx, _number(subject)))
 	if command == "SaveNativeFinanceDraft":
+		if lead.get("state") == "blocked" and "adjustment mapping" in ((lead.get("blocker") or {}).get("holds") or []):
+			return adjustments.held(ctx)
 		if subject.startswith("payment advance"):
 			return invoices.d09f(ctx, _payment_invoice(ctx, subject))
 		inv = invoices._invoice(ctx, _number(subject))
@@ -130,9 +146,85 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 	return None
 
 
+_ISSUE_COMMANDS = ("SendContractCorrespondence", "ReplyContractCorrespondence", "ResolveContractIssue", "RecordWarrantyReturn", "ReconcileWarrantyReturn", "VerifyContractRemedy")
+_OBLIGATION_COMMANDS = ("PrepareContractAdjustment", "DecideContractAdjustment", "RequestSecurityClaim", "DecideSecurityClaim", "RecordSecurityClaimCommunication", "RecordSecurityAction", "RequestContractTermination",
+	"DecideContractTermination", "RecordTerminationNotice", "RecordTerminationEffect", "PrepareTerminationSettlement", "CompleteTerminationSettlement", "SubmitContractReport")
+
+
+def _issue_board(ctx: Context, lead: dict[str, Any]):
+	command, subject = lead["command"], lead["subject"]
+	row = issues.get(ctx.case, _number(subject))
+	if row is None:
+		return None
+	if command == "SendContractCorrespondence":
+		return issue_boards.notice(ctx, row) if row.kind == "Warranty claim" else issue_boards.send(ctx, row)
+	if command == "ReplyContractCorrespondence":
+		return issue_boards.reply(ctx, row)
+	if command == "ResolveContractIssue":
+		return issue_boards.resolve(ctx, row)
+	if command == "RecordWarrantyReturn":
+		return issue_boards.arrange(ctx, row)
+	if command == "ReconcileWarrantyReturn":
+		return issue_boards.reconcile(ctx, row)
+	return issue_boards.verify(ctx, row)
+
+
+def _obligation_board(ctx: Context, lead: dict[str, Any]):
+	command, subject = lead["command"], lead["subject"]
+	if command == "PrepareContractAdjustment":
+		return adjustments.propose(ctx)
+	if command == "DecideContractAdjustment":
+		return adjustments.decide(ctx, adjustment.get(ctx.case, _number(subject)))
+	if command in ("RequestSecurityClaim", "DecideSecurityClaim", "RecordSecurityClaimCommunication"):
+		claim = security_actions.get_claim(ctx.case, _number(subject))
+		return security_boards.prepare(ctx, correcting=claim) if command == "RequestSecurityClaim" else security_boards.decide(ctx, claim) if command == "DecideSecurityClaim" else security_boards.communicate(ctx, claim)
+	if command == "RecordSecurityAction":
+		if subject.endswith(" return"):
+			return security_boards.give_back(ctx)
+		return security_boards.replacement(ctx, _number(subject), recording=True)
+	if command in ("RequestContractTermination", "DecideContractTermination", "RecordTerminationNotice", "RecordTerminationEffect", "PrepareTerminationSettlement", "CompleteTerminationSettlement"):
+		row = termination.get(ctx.case, _number(subject))
+		return {"RequestContractTermination": lambda: termination_boards.request(ctx, correcting=row), "DecideContractTermination": lambda: termination_boards.decide(ctx, row), "RecordTerminationNotice": lambda: termination_boards.notice(ctx, row),
+			"RecordTerminationEffect": lambda: termination_boards.effect(ctx, row), "PrepareTerminationSettlement": lambda: termination_boards.prepare(ctx, row), "CompleteTerminationSettlement": lambda: termination_boards.complete(ctx, row)}[command]()
+	return reports.progress(ctx, reporting.get(subject.split(" ", 1)[1]))
+
+
+def _change_of(ctx: Context, subject: str):
+	"""The change a task subject names: `change N ...` or `amendment N`."""
+	return change.get(ctx.case, int(subject.split()[1]))
+
+
+def _change_board(ctx: Context, lead: dict[str, Any]):
+	command, subject = lead["command"], lead["subject"]
+	row = _change_of(ctx, subject)
+	if row is None:
+		return None
+	if command == "RequestContractChange":
+		return changes.request(ctx, row.kind, correcting=row)
+	if command == "AppointContractChangeReviewers":
+		return changes.appoint(ctx, row)
+	if command in ("RecordContractChangeReview", "SignContractChangeReview"):
+		kind = change.KIND_OF_SLUG[subject.split(" review ", 1)[1]]
+		return changes.review(ctx, row, kind, signing=command == "SignContractChangeReview")
+	if command == "SubmitContractChangeForDecision":
+		return changes.submit(ctx, row)
+	if command == "DecideContractChange":
+		return changes.decide(ctx, row)
+	return changes.activate(ctx, row)
+
+
 def _by_waiting(ctx: Context, lead: dict[str, Any]):
 	"""The screen for something the viewer is waiting on, where the design draws one (the declarations a recommender waits for)."""
 	command, subject = lead["command"], lead["subject"]
+	if command.startswith("SignContractVersion:waiting") and subject.startswith("amendment"):
+		return changes.pending(ctx, _change_of(ctx, subject))
+	if command.startswith("RecordTerminationNotice:waiting") and subject.startswith("termination"):
+		return termination_boards.pending(ctx, termination.get(ctx.case, _number(subject)))
+	if command == "RecordSecurityClaimOutcome":
+		return security_boards.waiting(ctx, security_actions.get_claim(ctx.case, _number(subject)))
+	if command.startswith("ReplyContractCorrespondence:waiting") and subject.startswith("issue"):
+		row = issues.get(ctx.case, _number(subject))
+		return issue_boards.notice(ctx, row) if row.kind == "Warranty claim" else issue_boards.resolve(ctx, row)
 	if command.startswith("DeclareContractInterest:waiting"):
 		return agreement.d23p(ctx)
 	if command.startswith("RecordContractSecurity:waiting"):
@@ -238,15 +330,15 @@ def board_for(case: str, user: str, *, tab: str | None = None, subject: tuple[st
 	if not ctx.grants:
 		fail("CM_AUTHORITY", denied=True, reason="You do not have access to this contract.")
 	lead = ctx.lead
-	selected = TAB_KEYS.get((tab or "").lower()) or (chrome.tab_of(lead["command"], lead["subject"]) if lead else "Agreement")
+	selected = TAB_KEYS.get((tab or "").lower()) or (chrome.tab_of(lead["command"], lead["subject"], ctx.doc.lifecycle) if lead else "Agreement")
 	board = None
 	if subject:
 		board = _subject_board(ctx, selected, subject)
 	own = bool(lead) and lead["holder"].lower() == user.lower() and lead["state"] in ("actionable", "blocked")  # someone else's leading item is only a "waiting on" line, never a screen to act on
-	if board is None and own and chrome.tab_of(lead["command"], lead["subject"]) == selected:
+	if board is None and own and chrome.tab_of(lead["command"], lead["subject"], ctx.doc.lifecycle) == selected:
 		board = _by_subject(ctx, lead)
 	if board is None and not own:
-		for item in sorted((t for t in ctx.tasks if t["holder"].lower() == user.lower() and t["state"] == "waiting" and chrome.tab_of(t["command"], t["subject"]) == selected), key=lambda t: t["assigned_at"]):
+		for item in sorted((t for t in ctx.tasks if t["holder"].lower() == user.lower() and t["state"] == "waiting" and chrome.tab_of(t["command"], t["subject"], ctx.doc.lifecycle) == selected), key=lambda t: t["assigned_at"]):
 			board = _by_waiting(ctx, item)
 			if board:
 				break
@@ -277,12 +369,49 @@ def _subject_board(ctx: Context, tab: str, subject: tuple[str, ...]) -> dict[str
 		return _agreement_summary(ctx)
 	if subject == ("intake",) and tab == "Agreement" and ctx.doc.source_kind == "External record" and ctx.can_prepare:
 		return existing.d12(ctx, ctx.user, ctx.case)
+	if subject[0] == "amendment" and len(subject) > 1 and subject[1].isdigit() and tab == "Agreement" and ({"terms", "supplier_view"} & _sets(ctx)):
+		row = change.get(ctx.case, int(subject[1]))
+		return changes.amendment_view(ctx, row) if row is not None and row.amendment_version else None
+	if subject[0] in ("request-extension", "request-quantity") and tab == "Obligations" and change.can_request(ctx.case, ctx.user):
+		return changes.request(ctx, "Extension" if subject[0] == "request-extension" else "Quantity", proposed=int(subject[1]) if len(subject) > 1 and subject[1].isdigit() else None)
+	if tab == "Obligations":
+		found = _obligation_route(ctx, subject)
+		if found is not None:
+			return found
 	if subject[0].isdigit() and tab == "Agreement" and "terms" in _sets(ctx):
 		return agreement.d02v(ctx, int(subject[0]))
 	if subject == ("record-delivery",) and "receiver" in ctx.audiences:
 		return delivery.d04(ctx)
 	if subject == ("submit-invoice",) and "supplier" in ctx.audiences:
 		return invoices.d18(ctx)
+	return None
+
+
+def _obligation_route(ctx: Context, subject: tuple[str, ...]):
+	"""The screens a person opens from the Obligations tab: a request form, an issue, a report."""
+	head = subject[0]
+	if head == "issue" and len(subject) > 1 and subject[1].isdigit():
+		row = issues.get(ctx.case, int(subject[1]))
+		if row is None:
+			return None
+		if "supplier" in ctx.audiences and len(ctx.audiences) == 1:  # the supplier sees the matter and answers it; the owner's review and the internal stages are not theirs
+			return issue_boards.closed(ctx, row) if row.state == "Closed" else issue_boards.reply(ctx, row)
+		if row.kind == "Warranty claim":
+			return issue_boards.warranty_view(ctx, row)
+		return issue_boards.closed(ctx, row) if row.state == "Closed" else issue_boards.resolve(ctx, row)
+	if head == "publication":
+		row = obligation_service.get(ctx.case, "Publication", "publication")
+		return reports.publication(ctx, row) if row is not None else None
+	if head == "report" and len(subject) > 1:
+		return reports.progress(ctx, reporting.get(subject[1]))
+	if head == "request-termination" and ctx.can_prepare and ctx.doc.lifecycle == "Active" and termination.live(ctx.case) is None:
+		return termination_boards.request(ctx)
+	if head == "request-security-claim" and ctx.can_prepare and security_actions.operative(ctx.case) and ctx.doc.lifecycle in ("Active", "Terminated"):
+		return security_boards.prepare(ctx)
+	if head == "record-replacement" and ctx.can_prepare and security_actions.operative(ctx.case) and ctx.doc.lifecycle in ("Active", "Terminated"):
+		return security.d25r(ctx, 0, replacing=True)
+	if head == "claim-warranty" and ctx.doc.lifecycle in ("Active", "Closed") and obligations.may_manage(ctx):
+		return issue_boards.new_claim(ctx)
 	return None
 
 
