@@ -258,6 +258,23 @@ def net_payable(supplier: str, on: str | None = None) -> float:
 	return -flt(get_balance_on(party_type="Supplier", party=supplier, date=on or today()))
 
 
+def receipt_facts(receipt: str) -> dict[str, Any]:
+	"""What ERPNext holds for a posted receipt, read only: the quantity and value of each line, the stock it put on the ledger, the assets made from it and the general ledger it posted. Contract Management
+	compares this with what the acceptance decided (`delivery.reconcile_receipt`); it never repairs a difference itself."""
+	doc = frappe.get_doc("Purchase Receipt", receipt)
+	items: dict[str, dict[str, float]] = {}
+	for row in doc.items:
+		entry = items.setdefault(row.item_code, {"qty": 0.0, "amount": 0.0})
+		entry["qty"] += flt(row.qty)
+		entry["amount"] += flt(row.amount)
+	stock: dict[str, float] = {}
+	for row in frappe.get_all("Stock Ledger Entry", filters={"voucher_type": "Purchase Receipt", "voucher_no": receipt, "is_cancelled": 0}, fields=["item_code", "actual_qty"]):
+		stock[row.item_code] = stock.get(row.item_code, 0.0) + flt(row.actual_qty)
+	ledger = frappe.db.sql("select coalesce(sum(debit), 0), coalesce(sum(credit), 0), count(*) from `tabGL Entry` where voucher_type = 'Purchase Receipt' and voucher_no = %s and is_cancelled = 0", receipt)[0]
+	return {"docstatus": doc.docstatus, "items": items, "amount": sum(v["amount"] for v in items.values()), "stock": stock,
+		"assets": frappe.db.count("Asset", {"purchase_receipt": receipt, "docstatus": ["<", 2]}), "ledger": {"debit": flt(ledger[0]), "credit": flt(ledger[1]), "entries": int(ledger[2])}}
+
+
 def downstream_of_receipt(receipt: str) -> dict[str, list[str]]:
 	"""The submitted documents that must be reversed before this receipt can be: invoices and assets."""
 	invoices = frappe.get_all("Purchase Invoice Item", filters={"purchase_receipt": receipt, "docstatus": 1}, pluck="parent", distinct=True)

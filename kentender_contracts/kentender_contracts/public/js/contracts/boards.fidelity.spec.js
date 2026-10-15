@@ -8,7 +8,7 @@ import { mount, flushPromises } from "@vue/test-utils";
 import { cmDialogSkeleton, cmSkeleton } from "../../../../../tests/ui/fidelity/board.js";
 import { compareSkeletons, formatMismatch, skeletonOf } from "../../../../../tests/ui/fidelity/skeleton.js";
 import { DEPARTURES } from "../../../../../tests/ui/fidelity/departures/contracts.js";
-import { BOARD_PAGES, BOARD_DIALOGS, LIST_PAGES } from "../../../../../tests/ui/fidelity/departures/contracts.js";
+import { BOARD_PAGES, BOARD_DIALOGS, BOARD_STATES, LIST_PAGES } from "../../../../../tests/ui/fidelity/departures/contracts.js";
 
 import CmBoard from "./components/CmBoard.vue";
 import BoardList from "./components/BoardList.vue";
@@ -56,6 +56,26 @@ describe.each(LIST_PAGES)("$fixture is $board (the list)", ({ fixture, board: id
 	}, 30_000);
 });
 
+describe.each(BOARD_STATES)("$fixture with choice $choose is $board", ({ fixture, board: id, radio: group, choose, shows }) => {
+	it("is built out of the board's own containers once the choice is made", async () => {
+		const wrapper = draw(fixture);
+		await flushPromises();
+		expect(wrapper.element.querySelectorAll("textarea").length, "nothing is revealed before the choice").toBe(0);
+		const radio = wrapper.element.querySelectorAll(`[data-testid="cm-input-${group}"] input[type="radio"]`)[choose];
+		expect(radio, `option ${choose} of ${group} on ${fixture}`).toBeTruthy();
+		radio.checked = true;
+		radio.dispatchEvent(new Event("change", { bubbles: true }));
+		await flushPromises();
+		expect(wrapper.element.querySelectorAll("textarea").length, "the choice reveals the description").toBe(shows.textareas);
+		expect(wrapper.element.textContent).toContain(shows.text);
+		const live = wrapper.element.classList.contains("kt-page") ? wrapper.element : wrapper.element.querySelector(".kt-page");
+		const result = compareSkeletons(cmSkeleton(id), skeletonOf(live), { departures: DEPARTURES[id] || [] });
+		const message = formatMismatch(id, result);
+		wrapper.unmount();
+		expect(message, message).toBe("");
+	}, 30_000);
+});
+
 describe.each(BOARD_DIALOGS)("$fixture opens $board", ({ fixture, action, board: id }) => {
 	it("draws the dialog the board draws", async () => {
 		const wrapper = draw(fixture);
@@ -78,7 +98,7 @@ import { COVERED } from "../../../../../tests/ui/fidelity/departures/contracts.j
 
 describe("the COVERED claim", () => {
 	it("lists exactly the boards the two specs compare: the shared pages, the record screens and their dialogs", () => {
-		const claimed = new Set(["D-ERR", "D-DENIED", ...LIST_PAGES.map((p) => p.board), ...BOARD_PAGES.map((p) => p.board), ...BOARD_DIALOGS.map((d) => d.board)]);
+		const claimed = new Set(["D-ERR", "D-DENIED", ...LIST_PAGES.map((p) => p.board), ...BOARD_PAGES.map((p) => p.board), ...BOARD_STATES.map((p) => p.board), ...BOARD_DIALOGS.map((d) => d.board)]);
 		expect([...COVERED].sort()).toEqual([...claimed].sort());
 	});
 });

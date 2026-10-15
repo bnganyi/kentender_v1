@@ -167,7 +167,8 @@ def d23r(ctx: Context) -> dict:
 	inspector = {"role": "Contract inspection"}
 	fields = [kit.pick("Chair", "", "contracts.person", "chair", inspector, "", "chair"), kit.sel("Chair capacity", labels[0], labels, "chair_label"),
 		kit.pick("Technical member (gives the technical confirmation)", "", "contracts.person", "member_technical", {"role": "Technical certification"}, "", "technical member"), kit.sel("Member capacity", labels[1], labels, "member_technical_label"),
-		kit.pick("Member", "", "contracts.person", "member_other", inspector, "", "member"), kit.sel("Member capacity", labels[2], labels, "member_other_label"), kit.dt("From date", "", "from_date"), kit.dt("Until date", "", "until_date")]
+		kit.pick("Member", "", "contracts.person", "member_other", inspector, "", "member"), kit.sel("Member capacity", labels[2], labels, "member_other_label"), kit.dt("From date", "", "from_date"), kit.dt("Until date", "", "until_date"),
+		kit.sel("Who accepts the goods", "Committee accepts", ["Committee accepts", "Accounting Officer decides"], "acceptance")]
 	b = chrome.base(ctx, "D23-R", d="D23", name="Appoint inspectors", title="Recommend inspectors", tab="Agreement", next=chrome.next_block(ctx), regions=[kit.R("Proposed members", kit.fl(*fields))],
 		p="Recommend inspectors", ev=[])
 	b["actions"]["Recommend inspectors"] = kit.command("RecommendContractInspectors")
@@ -220,4 +221,30 @@ def d24(ctx: Context) -> dict:
 	b = chrome.base(ctx, "D24", d="D24", name="Declare interest", title="Declare interest", tab="Agreement", next=chrome.next_block(ctx), ev=[f"Appointment {ctx.appointment['reference']}"],
 		regions=[ctx_region, kit.R("Declaration", kit.fl(field, conflict), note)], p="Save declaration")
 	b["actions"]["Save declaration"] = kit.command("DeclareContractInterest")
+	return b
+
+
+def _contract_region(ctx: Context) -> dict:
+	return kit.R("Contract", kit.f(["Contract", ctx.doc.contract_id], ["Title", ctx.terms.get("title") or ctx.doc.title or ""], ["Supplier", ctx.doc.supplier_name]))
+
+
+def d24s(ctx: Context) -> dict:
+	"""The declaration saved with no conflict: the member's receipt of it."""
+	mine = bindings.member(ctx.case, ctx.user)["member"]
+	rows = kit.r(["Declaration", "I have no conflict of interest"], ["Recorded", when(mine["declared_at"])])
+	b = chrome.base(ctx, "D24-S", d="D24", name="Declare interest", title="Declare interest", tab="Agreement", next=kit.done(f"{ctx.name(ctx.user)} recorded the declaration on {when(mine['declared_at'])}."),
+		regions=[_contract_region(ctx), kit.R("Declaration", rows)], p="", s2=["View appointment"], ev=[f"Appointment {ctx.appointment['reference']}", "Personal declaration 1"])
+	b["actions"]["View appointment"] = kit.route(ctx.case, "agreement", "appointment")
+	return b
+
+
+def d24x(ctx: Context, member: str) -> dict:
+	"""A member declared a conflict: the head of procurement is blocked until the member is replaced."""
+	row = next((m for m in records.loads(frappe.db.get_value("Contract Appointment", ctx.appointment["appointment"], "members_json") or "[]", []) if m["user"].lower() == member.lower()), {}) if ctx.appointment["appointment"] else {}
+	name = ctx.name(member)
+	rows = kit.r(["Member", name], ["Declaration", "I have a conflict of interest"], ["Description", ((row.get("conflict") or {}).get("reason")) or ""])
+	b = chrome.base(ctx, "D24-X", d="D24", name="Declare interest", title="Declare interest", tab="Agreement", next=kit.blk(f"{name} must be replaced before the affected inspection can proceed.", ctx.name(ctx.user),
+		["Revise appointment recommendation", "View declaration"]), regions=[_contract_region(ctx), kit.R("Declaration", rows)], p="", s2=[], ev=[f"Appointment {ctx.appointment['reference']}", "Personal declaration 1"])
+	b["actions"]["Revise appointment recommendation"] = kit.route(ctx.case, "agreement", "recommend")
+	b["actions"]["View declaration"] = kit.route(ctx.case, "agreement", "appointment")
 	return b

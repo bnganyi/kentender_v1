@@ -63,6 +63,7 @@ def match_claim(case: str, lines: list[dict[str, Any]], *, exclude: str = "") ->
 	"""Compare a claim with what the contract supports. Returns the frozen matching: a row per line and an overall outcome (`Supported` or `Needs review`)."""
 	terms = _terms(case)
 	ordered = {l["line_id"]: l for l in terms["lines"]}
+	services = delivery.service_lines(terms)
 	now = position.position(case)["lines"]
 	claimed = _claimed(case, exclude)
 	on_receipt = _claimed_on_receipts(case, exclude)
@@ -89,8 +90,8 @@ def match_claim(case: str, lines: list[dict[str, Any]], *, exclude: str = "") ->
 			problems.append(f"{quantity} claimed but only {eligible} accepted and unclaimed.")
 		if abs(rate - flt(contract["rate"])) > TOLERANCE:
 			problems.append(f"The price {rate:,.2f} differs from the contract price {flt(contract['rate']):,.2f}.")
-		receipt = next((r for r in receipts if _receipt_qty(r) - on_receipt.get(r, 0) >= quantity), "")
-		if quantity > 0 and quantity <= eligible and not receipt:
+		receipt = next((r for r in receipts if _receipt_qty(r) - on_receipt.get(r, 0) >= quantity), "") if line["line_id"] not in services else ""  # a service is received into nothing: its entitlement is the acceptance itself
+		if quantity > 0 and quantity <= eligible and not receipt and line["line_id"] not in services:
 			problems.append("The claim spans more than one receipt.")
 		rows.append({"line_id": line["line_id"], "claimed_quantity": quantity, "eligible_quantity": eligible, "claimed_rate": rate, "contract_rate": flt(contract["rate"]), "amount": quantity * rate,
 			"previously_claimed": claimed.get(line["line_id"], 0), "receipt": receipt, "outcome": "Needs review" if problems else "Supported", "reasons": problems})

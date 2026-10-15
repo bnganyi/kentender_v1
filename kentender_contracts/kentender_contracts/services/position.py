@@ -41,11 +41,32 @@ def returned_units(case: str) -> set[str]:
 	return units
 
 
+def effective_lines(row: Any) -> list[dict[str, Any]]:
+	"""What an effective report decided. The report's own lines are what the chair proposed; the decision the signatures made (a dissent moves a unit to needs-review) is kept apart and wins."""
+	decided = records.loads(row.decision_json, {}) if row.get("decision_json") else {}
+	return decided.get("lines") or records.loads(row.lines_json, [])
+
+
+def dissents(case: str) -> dict[str, int]:
+	"""unit -> the inspection version a member's recorded dissent was made against, for units no later effective report has decided. The reading is repeated before it is certified again."""
+	out: dict[str, int] = {}
+	for row in frappe.get_all(ACCEPTANCE, filters={"contract_case": case, "state": "Effective"}, fields=["decision_json", "lines_json", "version_no"], order_by="version_no asc"):
+		decided = records.loads(row.decision_json, {}) if row.decision_json else {}
+		for line in decided.get("lines") or records.loads(row.lines_json, []):
+			for kind in ("accepted", "rejected"):
+				for unit in line["units"].get(kind, []):
+					out.pop(unit, None)
+		for said in decided.get("dissent", []):
+			for unit, version in (said.get("inspections") or {}).items():
+				out[unit] = cint(version)
+	return out
+
+
 def decisions(case: str) -> dict[str, dict[str, Any]]:
 	"""unit -> its latest effective acceptance disposition: `{disposition, acceptance, version, reason}`."""
 	out: dict[str, dict[str, Any]] = {}
-	for row in frappe.get_all(ACCEPTANCE, filters={"contract_case": case, "state": "Effective"}, fields=["name", "version_no", "lines_json"], order_by="version_no asc"):
-		for line in records.loads(row.lines_json, []):
+	for row in frappe.get_all(ACCEPTANCE, filters={"contract_case": case, "state": "Effective"}, fields=["name", "version_no", "lines_json", "decision_json"], order_by="version_no asc"):
+		for line in effective_lines(row):
 			for disposition, units in (line.get("units") or {}).items():
 				for unit in units:
 					out[unit] = {"disposition": disposition, "acceptance": row.name, "version": row.version_no, "reason": (line.get("reasons") or {}).get(unit, "")}
@@ -57,28 +78,32 @@ def position(case: str) -> dict[str, Any]:
 	ordered = {l["line_id"]: l for l in terms.get("lines", [])}
 	decided, returned = decisions(case), returned_units(case)
 	lines = {lid: {"line_id": lid, "item": l.get("description") or l.get("item"), "ordered": cint(l["quantity"]), "rate": l["rate"], "arrived": 0, "accepted": 0, "rejected": 0, "deferred": 0,
-		"returned": 0, "in_custody": 0, "pending_decision": 0, "unidentified": 0} for lid, l in ordered.items()}
+		"returned": 0, "in_custody": 0, "pending_decision": 0, "unidentified": 0, "excess_held": 0} for lid, l in ordered.items()}
 	units: dict[str, dict[str, Any]] = {}
 	for arrival in arrivals(case):
 		for item in arrival["items"]:
 			row = lines.get(item["line_id"])
-			if row is None:
+			if row is None:  # goods the contract does not name are held and recorded, but belong to no line
 				continue
 			row["arrived"] += cint(item["quantity"])
 			named = item.get("units") or []
+			excess = set(item.get("excess_units") or [])
 			row["unidentified"] += max(0, cint(item["quantity"]) - len(named))
 			for unit in named:
 				said = decided.get(unit)
 				if unit in returned:
 					status = "Returned"
+				elif unit in excess:
+					status = "Excess"  # more than the contract asks for: held apart, never inspected or accepted
 				elif said:
 					status = {"accepted": "Accepted", "rejected": "Rejected", "deferred": "Deferred"}[said["disposition"]]
 				else:
 					status = "Awaiting decision"
-				units[unit] = {"unit": unit, "line_id": item["line_id"], "arrival": arrival["name"], "arrival_no": arrival["arrival_no"], "status": status, "acceptance": said["acceptance"] if said else ""}
+				units[unit] = {"unit": unit, "line_id": item["line_id"], "arrival": arrival["name"], "arrival_no": arrival["arrival_no"], "status": status, "acceptance": said["acceptance"] if said else "",
+					"replaces": (item.get("replaces") or {}).get(unit, "")}
 	for unit in units.values():
 		row = lines[unit["line_id"]]
-		key = {"Accepted": "accepted", "Rejected": "rejected", "Deferred": "deferred", "Returned": "returned", "Awaiting decision": "pending_decision"}[unit["status"]]
+		key = {"Accepted": "accepted", "Rejected": "rejected", "Deferred": "deferred", "Returned": "returned", "Awaiting decision": "pending_decision", "Excess": "excess_held"}[unit["status"]]
 		row[key] += 1
 	for lid, row in lines.items():  # a registered existing contract starts with units already accepted: they count as arrived and accepted, never as new activity
 		before = opening.line(case, lid)["accepted"]

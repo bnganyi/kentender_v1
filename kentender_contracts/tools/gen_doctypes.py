@@ -32,11 +32,11 @@ RECORDS = {
 		F("correlation_id"), F("proof_reference"), F("method"), F("signed_at", "Datetime"), F("signed_on", "Date"), F("copy_reference"), F("copy_digest"), F("evidence_json", "Long Text"), F("witness_json", "Long Text"), F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Appointment": ("APP", "A written appointment of inspectors and certifiers for a contract, with each member's personal declaration.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("version_no", "Int"), F("state", "Select", "Recommended\nAppointed\nReturned\nReplaced\nSuperseded"),
-		F("scope"), F("reference"), F("members_json", "Long Text"), F("recommended_by"), F("appointed_by"), F("reason", "Small Text"),
+		F("scope"), F("acceptance", "Select", "Committee accepts\nAccounting Officer decides"), F("reference"), F("members_json", "Long Text"), F("recommended_by"), F("appointed_by"), F("reason", "Small Text"),
 		F("effective_from", "Datetime"), F("effective_to", "Datetime"), F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Arrival": ("ARR", "One physical arrival: what was observed, when, by whom, where. Immutable; corrections are linked.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("arrival_no", "Int"), F("delivery_reference"), F("received_at", "Datetime"), F("recorded_at", "Datetime"), F("receiver"),
-		F("destination"), F("items_json", "Long Text"), F("notes", "Small Text"), F("state", "Select", "Recorded\nCorrected"), F("evidence_json", "Long Text"),
+		F("destination"), F("supplier_reference"), F("items_json", "Long Text"), F("exceptions_json", "Long Text"), F("notes", "Small Text"), F("state", "Select", "Recorded\nCorrected"), F("evidence_json", "Long Text"),
 		F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Inspection": ("INS", "One inspector's observations of an arrival against the frozen criteria, with the calculated findings.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("arrival", "Link", "Contract Arrival"), F("version_no", "Int"), F("inspector"),
@@ -47,8 +47,8 @@ RECORDS = {
 		F("state", "Select", "Awaiting signature\nSigned\nSuperseded"), F("signer"), F("proof_reference"), F("signed_at", "Datetime"), F("content_json", "Long Text"),
 		F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Acceptance": ("ACC", "One acceptance report version: quantities accepted, rejected and deferred per arrival item, the signers and the effective decision.", [
-		F("contract_case", "Link", "Contract Case", reqd=1), F("version_no", "Int"), F("state", "Select", "Draft\nAwaiting signatures\nEffective\nSuperseded"),
-		F("arrivals_json", "Long Text"), F("lines_json", "Long Text"), F("signers_json", "Long Text"), F("technical_certificate"), F("chair"),
+		F("contract_case", "Link", "Contract Case", reqd=1), F("version_no", "Int"), F("state", "Select", "Draft\nAwaiting signatures\nRecommended\nEffective\nSuperseded"),
+		F("arrivals_json", "Long Text"), F("lines_json", "Long Text"), F("signers_json", "Long Text"), F("decision_json", "Long Text"), F("technical_certificate"), F("chair"), F("correction_reason", "Small Text"),
 		F("decision_at", "Datetime"), F("posting_intent"), F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Invoice": ("INV", "A supplier's claim against the contract, with its automatic matching and its native invoice.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("invoice_no", "Int"), F("claim_reference"), F("invoice_date", "Date"), F("received_at", "Datetime"), F("claimed_amount", "Currency"),

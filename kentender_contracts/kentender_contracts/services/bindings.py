@@ -27,13 +27,13 @@ AGREEMENT = "Contract Agreement Version"
 def effective_appointment(case: str, at=None) -> dict[str, Any] | None:
 	"""The appointment in force at `at`: the latest Appointed version whose dates cover it."""
 	moment = get_datetime(at) if at else clock.now()
-	for row in frappe.get_all(APPOINTMENT, filters={"contract_case": case, "state": "Appointed"}, fields=["name", "version_no", "members_json", "effective_from", "effective_to", "scope", "reference"],
+	for row in frappe.get_all(APPOINTMENT, filters={"contract_case": case, "state": "Appointed"}, fields=["name", "version_no", "members_json", "effective_from", "effective_to", "scope", "reference", "acceptance"],
 			order_by="version_no desc"):
 		if row.effective_from and get_datetime(row.effective_from) > moment:
 			continue
 		if row.effective_to and get_datetime(row.effective_to) <= moment:
 			continue
-		return {"appointment": row.name, "version": row.version_no, "members": records.loads(row.members_json, []), "scope": row.scope, "reference": row.reference}
+		return {"appointment": row.name, "version": row.version_no, "members": records.loads(row.members_json, []), "scope": row.scope, "reference": row.reference, "acceptance": row.acceptance or "Committee accepts"}
 	return None
 
 

@@ -23,6 +23,7 @@ OTHER_SUPPLIER = "CM Test Ordinary Supplier"  # no contract invoice: the guards 
 ITEM_FA = "CM-TEST-LAPTOP-FA"  # serialised fixed asset
 ITEM_STK = "CM-TEST-LAPTOP-STK"  # serialised stock item, inspection required
 ITEM_SERVICE = "CM-TEST-SERVICE"  # plain non-stock item for an ordinary invoice
+ITEM_PLAIN = "CM-TEST-STOCK"  # a plain stock item (no serials, no inspection): the stock ledger reconciles to what was accepted
 CATEGORY = "CM Test Electronic Equipment"
 WAREHOUSE = f"Stores - {ABBR}"
 LOCATION = "CM Test Store Room"
@@ -87,6 +88,8 @@ def build() -> None:
 	if not frappe.db.exists("Item", ITEM_STK):
 		frappe.get_doc({**common, "item_code": ITEM_STK, "item_name": "CM Test Laptop (stock)", "is_stock_item": 1, "has_serial_no": 1, "serial_no_series": "CMTST-.#####",
 			"inspection_required_before_purchase": 1}).insert(ignore_permissions=True)
+	if not frappe.db.exists("Item", ITEM_PLAIN):
+		frappe.get_doc({**common, "item_code": ITEM_PLAIN, "item_name": "CM Test Laptop (plain stock)", "is_stock_item": 1}).insert(ignore_permissions=True)
 	if not frappe.db.exists("Item", ITEM_SERVICE):
 		frappe.get_doc({**common, "item_code": ITEM_SERVICE, "item_name": "CM Test Service", "is_stock_item": 0}).insert(ignore_permissions=True)
 	for key in USERS:
@@ -181,7 +184,7 @@ def submit_for_approval(pe: str, user: str) -> None:
 def teardown() -> dict:
 	"""Cancel and delete every document the tests made, newest first, then the world. Returns what could not be removed."""
 	failed: dict[str, str] = {}
-	items = [ITEM_FA, ITEM_STK, ITEM_SERVICE]
+	items = [ITEM_FA, ITEM_STK, ITEM_SERVICE, ITEM_PLAIN]
 	suppliers = [SUPPLIER, OTHER_SUPPLIER]
 
 	def drop(doctype: str, names: list[str]) -> None:
@@ -225,7 +228,7 @@ def teardown() -> dict:
 	drop("Asset", frappe.get_all("Asset", filters={"item_code": ["in", items]}, pluck="name"))
 	for serial in frappe.get_all("Serial No", filters={"item_code": ["in", items]}, pluck="name"):
 		frappe.delete_doc("Serial No", serial, force=True, ignore_permissions=True)
-	for doctype, name in [("Item", ITEM_FA), ("Item", ITEM_STK), ("Item", ITEM_SERVICE), ("Asset Category", CATEGORY), ("Supplier", SUPPLIER), ("Supplier", OTHER_SUPPLIER), ("Location", LOCATION)]:
+	for doctype, name in [("Item", ITEM_FA), ("Item", ITEM_STK), ("Item", ITEM_SERVICE), ("Item", ITEM_PLAIN), ("Asset Category", CATEGORY), ("Supplier", SUPPLIER), ("Supplier", OTHER_SUPPLIER), ("Location", LOCATION)]:
 		if frappe.db.exists(doctype, name):
 			try:
 				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)

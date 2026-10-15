@@ -13,8 +13,10 @@
   "arrivals_json",
   "lines_json",
   "signers_json",
+  "decision_json",
   "technical_certificate",
   "chair",
+  "correction_reason",
   "decision_at",
   "posting_intent",
   "record_version",
@@ -40,7 +42,7 @@
    "label": "State",
    "fieldtype": "Select",
    "read_only": 1,
-   "options": "Draft\nAwaiting signatures\nEffective\nSuperseded"
+   "options": "Draft\nAwaiting signatures\nRecommended\nEffective\nSuperseded"
   },
   {
    "fieldname": "arrivals_json",
@@ -61,6 +63,12 @@
    "read_only": 1
   },
   {
+   "fieldname": "decision_json",
+   "label": "Decision json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
    "fieldname": "technical_certificate",
    "label": "Technical certificate",
    "fieldtype": "Data",
@@ -70,6 +78,12 @@
    "fieldname": "chair",
    "label": "Chair",
    "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "correction_reason",
+   "label": "Correction reason",
+   "fieldtype": "Small Text",
    "read_only": 1
   },
   {

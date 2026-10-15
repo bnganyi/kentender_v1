@@ -21,6 +21,14 @@ from kentender_contracts.services.errors import fail
 TAB_KEYS = {t.lower(): t for t in chrome.TABS}
 
 
+def _arrival_items(ctx: Context, number: int) -> list[dict]:
+	return records.loads(frappe.db.get_value("Contract Arrival", {"contract_case": ctx.case, "arrival_no": number}, "items_json") or "[]", [])
+
+
+def _report(ctx: Context, version: int):
+	return frappe.get_doc("Contract Acceptance", frappe.db.get_value("Contract Acceptance", {"contract_case": ctx.case, "version_no": version}, "name"))
+
+
 def _number(subject: str) -> int:
 	return int(subject.split()[-1])
 
@@ -36,6 +44,11 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 		return board
 	if command == "SignContractVersion":
 		return agreement.d03(ctx, entity=is_entity)
+	if command == "ResolveDeliveryException":
+		board = delivery.deliveries_summary(ctx)
+		board["next"] = chrome.next_block(ctx)
+		delivery.resolve_dialog(board, frappe.db.get_value("Contract Arrival", {"contract_case": ctx.case, "arrival_no": _number(subject)}, "name"))
+		return board
 	if command == "ReviseContractIntake":
 		return existing.d12(ctx, ctx.user, ctx.case)
 	if command == "ConfirmOpeningPosition":
@@ -61,19 +74,25 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 	if command == "VerifyContractSecurity":
 		return security.d25(ctx, lead["version"])
 	if command == "RecommendContractInspectors":
+		if subject.startswith("replacement for "):
+			return agreement.d24x(ctx, subject.split("replacement for ", 1)[1])
 		return agreement.d23r(ctx)
 	if command == "AppointContractInspectors":
 		return agreement.d23(ctx)
 	if command == "DeclareContractInterest":
 		return agreement.d24(ctx)
 	if command == "RecordInspectionObservations":
-		return delivery.d05(ctx, _number(subject))
+		if ctx.mine("SignTechnicalCertificate", f"inspection {_number(subject)}"):
+			return delivery.d19(ctx, _number(subject))  # the units that have a reading are confirmed first; the rest wait for theirs
+		return delivery.d31(ctx, _number(subject)) if delivery.is_service(ctx, _arrival_items(ctx, _number(subject))) else delivery.d05(ctx, _number(subject))
 	if command == "SignTechnicalCertificate":
 		return delivery.d19(ctx, _number(subject))
 	if command == "PrepareAcceptanceReport":
 		return delivery.d06(ctx, _number(subject))
 	if command == "SignAcceptanceReport":
-		return delivery.d07(ctx, lead["version"])
+		return delivery.d31a(ctx, lead["version"]) if delivery.report_is_service(ctx, _report(ctx, lead["version"])) else delivery.d07(ctx, lead["version"])
+	if command == "DecideContractAcceptance":
+		return delivery.d07a(ctx, lead["version"])
 	if command == "SignContractCertification":
 		return invoices.d08c(ctx, invoices._invoice(ctx, _number(subject)))
 	if command == "RequestInvoiceCorrection":
@@ -216,6 +235,8 @@ def board_for(case: str, user: str, *, tab: str | None = None, subject: tuple[st
 			board = _by_waiting(ctx, item)
 			if board:
 				break
+	if board is None and not own and selected == "Agreement" and ctx.doc.lifecycle == "Active" and _declared_no_conflict(ctx):
+		board = agreement.d24s(ctx)  # the member's own receipt of the declaration, until there is something else for them to do
 	if board is None and not own and selected == "Agreement" and ctx.doc.lifecycle == "Preparing" and ctx.can_prepare and ctx.doc.source_kind != "External record":
 		board = agreement.d02(ctx)  # an authorised preparer prepares the agreement whether or not the head of procurement's task is theirs (section 5.3)
 		_offer_ending(ctx, board)
@@ -235,6 +256,10 @@ def _subject_board(ctx: Context, tab: str, subject: tuple[str, ...]) -> dict[str
 		return None
 	if subject[0] == "outside" and len(subject) > 1 and tab == "Agreement" and ctx.can_prepare and ctx.doc.lifecycle == "Awaiting signatures" and service_outside_permitted(ctx):
 		return outside.d26(ctx, "Entity" if subject[1] == "entity" else "Supplier", differs=bool(outside.mismatched(ctx)))
+	if subject == ("recommend",) and tab == "Agreement" and ctx.can_prepare and ctx.doc.lifecycle == "Active":
+		return agreement.d23r(ctx)
+	if subject == ("appointment",) and tab == "Agreement":
+		return _agreement_summary(ctx)
 	if subject == ("intake",) and tab == "Agreement" and ctx.doc.source_kind == "External record" and ctx.can_prepare:
 		return existing.d12(ctx, ctx.user, ctx.case)
 	if subject[0].isdigit() and tab == "Agreement" and "terms" in _sets(ctx):
@@ -244,6 +269,13 @@ def _subject_board(ctx: Context, tab: str, subject: tuple[str, ...]) -> dict[str
 	if subject == ("submit-invoice",) and "supplier" in ctx.audiences:
 		return invoices.d18(ctx)
 	return None
+
+
+def _declared_no_conflict(ctx: Context) -> bool:
+	from kentender_contracts.services import bindings
+
+	found = bindings.member(ctx.case, ctx.user) if ctx.appointment["appointment"] else None
+	return bool(found and found["member"].get("declared_at") and not found["member"].get("conflict") and "supplier" not in ctx.audiences)
 
 
 def service_outside_permitted(ctx: Context) -> bool:

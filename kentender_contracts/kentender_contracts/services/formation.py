@@ -127,7 +127,7 @@ def _assemble(doc, particulars: dict[str, Any]) -> dict[str, Any]:
 		"title": s["S1"].get("title") or doc.title, "currency": currency, "tax_included": bool(s["S3"].get("tax_included")), "total": total, "lines": lines,
 		"delivery": {"due": s["S4"]["delivery_schedule"]["due"], "destination": particulars.get("destination") or s["S4"]["delivery_schedule"].get("destination", "")},
 		"warranty": s["S5"]["warranty"], "security": s["S5"]["performance_security"], "signing": s["S5"].get("signing", {}), "advance": s["S5"].get("advance", {}), "payment": s["S5"].get("payment", {}),
-		"criteria": s["S6"]["criteria"], "signing_window": s["S8"], "funding": s["S9"], "restrictions": s["S12"].get("restrictions", []),
+		"criteria": s["S6"]["criteria"], "services": s["S4"].get("related_services") or [], "signing_window": s["S8"], "funding": s["S9"], "restrictions": s["S12"].get("restrictions", []),
 		"parties": {
 			"entity": {"name": entity["legal_name"], "address": entity.get("address", ""), "entity_type": entity.get("entity_type", ""), "user": entity_user, "signatory": _label_of(entity_user), "capacity": _entity_capacity(entity_user) if entity_user else ""},
 			"supplier": {"name": supplier_org["legal_name"], "organisation": supplier_org.get("organisation"), "user": supplier_pick["user"] if supplier_pick else "",
@@ -386,6 +386,9 @@ def _activate(doc, agreement, actor: str) -> None:
 	intents.record(doc.name, subject, agreement.version_no, "Funding conversion", "effective", recovery_owner="Technical operator; Budget owner")
 	work.assign(doc.name, "RecommendContractInspectors", "Recommend the inspectors for this contract.", subject, agreement.version_no, work.holders(work.HOP), role=work.HOP)
 	events.record(doc.name, "Agreement effective", actor, f"Agreement {agreement.version_no} is in force.", agreement=agreement.name)
+	from kentender_contracts.services import delivery
+
+	delivery.release_premature(doc.name, actor)
 
 
 # -- the native order and the funding conversion --------------------------------------------------------------------------------------

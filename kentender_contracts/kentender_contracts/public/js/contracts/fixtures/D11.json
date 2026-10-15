@@ -2,7 +2,7 @@
  "actions": {
   "Sign close-out": {
    "args": {
-    "closeout": "CM-CLS-420116"
+    "closeout": "CM-CLS-513423"
    },
    "command": "SignContractCloseout",
    "do": "command"

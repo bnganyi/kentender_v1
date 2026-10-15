@@ -7,11 +7,11 @@
   },
   "Signed agreement 1 \u2014 entity": {
    "do": "download",
-   "url": "/api/method/kentender_contracts.api.contract.download_evidence?contract=CM-TEST-0001&file=61d24b9d48"
+   "url": "/api/method/kentender_contracts.api.contract.download_evidence?contract=CM-TEST-0001&file=2e6be9fce1"
   },
   "Signed agreement 1 \u2014 supplier": {
    "do": "download",
-   "url": "/api/method/kentender_contracts.api.contract.download_evidence?contract=CM-TEST-0001&file=2cf43a6051"
+   "url": "/api/method/kentender_contracts.api.contract.download_evidence?contract=CM-TEST-0001&file=b254841f23"
   }
  },
  "audiences": [

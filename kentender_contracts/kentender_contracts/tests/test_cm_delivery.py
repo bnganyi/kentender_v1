@@ -191,11 +191,11 @@ class TestAcceptanceAndReceipt(DeliveryCase):
 			out = delivery.sign_acceptance_report(self.case, acceptance=acceptance, expected_version=self.v(), idempotency_key=self.k("s"), actor=self.p[person])
 		return out
 
-	def test_only_the_technical_certifier_signs_the_technical_certificate_and_only_when_every_reading_is_in(self):
+	def test_only_the_technical_certifier_signs_the_technical_certificate_and_only_the_units_with_a_reading(self):
 		self.assertEqual(refusal(delivery.sign_technical_certificate, self.case, arrival=self.arrival, expected_version=self.v(), idempotency_key=self.k("c"), actor=self.p["julia"]).code, "CM_AUTHORITY")
-		self.t.inspect(self.arrival, self.units, blank=(self.units[0],))
+		self.t.inspect(self.arrival, self.units, blank=tuple(self.units))
 		exc = refusal(self.certify)
-		self.assertEqual((exc.code, exc.detail["units"]), ("CM_INCOMPLETE", [self.units[0]]))
+		self.assertEqual((exc.code, exc.detail["units"]), ("CM_INCOMPLETE", sorted(self.units)), "with no reading in there is nothing to confirm")
 		self.t.inspect(self.arrival, self.units, bad=tuple(self.bad))
 		out = self.certify()
 		self.assertEqual(out["state"], "Signed")

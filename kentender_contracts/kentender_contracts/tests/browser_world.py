@@ -34,6 +34,9 @@ CONTRACT = "CM-UI-0001"
 AWARD_CASE = "CM-UI-AWD-01"
 #: the other received packages the formation spec walks: the issued terms require a performance security / permit signing outside the system (the case name carries the variant: `sources.variant`)
 EXTRA = {"security": ("CM-UI-0002", "CM-UI-AWD-SEC"), "outside": ("CM-UI-0003", "CM-UI-AWD-OUT"), "ending": ("CM-UI-0004", "CM-UI-AWD-04")}
+#: the contracts the delivery and acceptance spec walks, staged to the step the spec starts from (the staging goes through the services, each tested): `delivery` has its goods inspected, confirmed and the acceptance
+#: report prepared, and leaves acceptance to the Accounting Officer; `service` has a training session recorded as performed (the `-SVC` case carries the goods-plus-service package)
+STAGED = {"delivery": ("CM-UI-0005", "CM-UI-AWD-05"), "service": ("CM-UI-0006", "CM-UI-AWD-06-SVC")}
 EXISTING_REFERENCE = "MOH/ICT/2027/EXT-UI"
 NAMESPACE = "CM_UI"
 
@@ -67,6 +70,28 @@ def _addresses() -> dict[str, str]:
 	return {persona: tw.email(persona) for persona in tw.PEOPLE if persona in CANONICAL}
 
 
+def _stage(kind: str, contract_id: str, award_case: str, people: dict[str, str]) -> dict:
+	"""An Active contract with its inspectors appointed and declared, taken to the step the delivery spec starts from."""
+	from kentender_contracts.services import delivery
+
+	t = tw.Thread(people, tag=f"UI{contract_id[-4:]}", contract_id=contract_id, services=award_case.endswith("-SVC"), award_case=award_case)
+	t.active()
+	t.appointed("Accounting Officer decides" if kind == "delivery" else "Committee accepts")
+	out = {"contract": t.case}
+	if kind == "delivery":
+		units = tw.fresh_serials(4)
+		arrival = t.arrive(units)["arrival"]
+		t.inspect(arrival, units)
+		delivery.sign_technical_certificate(t.case, arrival=arrival, expected_version=t.version(), idempotency_key=t.key("cert"), actor=people["peter"])
+		delivery.prepare_acceptance_report(t.case, arrivals=[arrival], expected_version=t.version(), idempotency_key=t.key("prepare"), actor=people["julia"])
+		out["units"] = units
+	else:
+		delivery.record_arrival(t.case, expected_version=t.version(), idempotency_key=t.key("perform"), actor=people["grace"], received_at="2027-07-26 14:00:00", destination="Afya House training room",
+			items=[{"line_id": "L2", "quantity": 1, "units": ["TRAIN-01"]}])
+	frappe.db.commit()
+	return out
+
+
 def build() -> dict:
 	_guard()
 	frappe.set_user("Administrator")
@@ -91,11 +116,12 @@ def build() -> dict:
 			actor="Administrator", contract_id=contract_id)
 		extra[kind] = got["contract"]
 	frappe.db.commit()
+	staged = {kind: _stage(kind, contract_id, award_case, people) for kind, (contract_id, award_case) in STAGED.items()}
 	receipt = world.fixed_asset_receipt("EXTUI", 4)  # the units of an existing contract that were already received and invoiced before management starts
 	invoice = adapter.invoice_receipt(receipt, world.identity("invoice extui", "Native invoice"), bill_no="EXT-UI-INV", qty=4)
 	frappe.db.commit()
 	data = {"previous_instant": str(previous or ""), "password": PASSWORD, "contract": received["contract"], "people": people, "supplier": world.SUPPLIER, "item": world.ITEM_FA, "location": world.LOCATION, "bank": world.BANK_ACCOUNT,
-		"mode": world.MODE, "unit": tw.unit(), "security_contract": extra["security"], "outside_contract": extra["outside"], "ending_contract": extra["ending"], "existing": {"reference": EXISTING_REFERENCE, "receipt": receipt, "invoice": invoice,
+		"mode": world.MODE, "unit": tw.unit(), "security_contract": extra["security"], "outside_contract": extra["outside"], "ending_contract": extra["ending"], "delivery_contract": staged["delivery"]["contract"], "delivery_units": staged["delivery"]["units"], "service_contract": staged["service"]["contract"], "existing": {"reference": EXISTING_REFERENCE, "receipt": receipt, "invoice": invoice,
 		"country": tw.REGISTRATION[0], "registration": "PVT-9X7K2M"}}
 	output().parent.mkdir(parents=True, exist_ok=True)
 	output().write_text(json.dumps(data, indent=1))
@@ -107,7 +133,7 @@ def clean() -> dict:
 	_guard()
 	_use_canonical_people()
 	frappe.set_user("Administrator")
-	cases = frappe.get_all("Contract Case", filters={"contract_id": ["in", [CONTRACT, *(c for c, _a in EXTRA.values())]]}, pluck="name") + frappe.get_all("Contract Case", filters={"source_reference": EXISTING_REFERENCE}, pluck="name")
+	cases = frappe.get_all("Contract Case", filters={"contract_id": ["in", [CONTRACT, *(c for c, _a in EXTRA.values()), *(c for c, _a in STAGED.values())]]}, pluck="name") + frappe.get_all("Contract Case", filters={"source_reference": EXISTING_REFERENCE}, pluck="name")
 	for case in cases:
 		for doctype in records.DOCTYPES:
 			if doctype in ("Contract Case", "Contract Simulated Signature", "Contract Simulated Funding") or not frappe.get_meta(doctype).has_field("contract_case"):

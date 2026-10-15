@@ -28,6 +28,7 @@ PEOPLE: dict[str, tuple[str, list[str]]] = {
 	"julia": ("Julia Njeri", ["Contract inspection"]),
 	"peter": ("Peter Mugo", ["Contract inspection", "Technical certification"]),
 	"grace": ("Grace Wanjiku", ["Receiving"]),
+	"faith": ("Faith Atieno", ["Contract inspection", "Technical certification"]),
 	"josphat": ("Josphat Mwangi", ["Finance preparation"]),
 	"beatrice": ("Beatrice Kamau", ["Finance approval"]),
 	"daniel": ("Daniel Otieno", ["Technical Operator"]),
@@ -138,18 +139,33 @@ class Environment:
 		return False
 
 
-def package_particulars(people: dict[str, str]) -> dict:
-	return {"agreement_date": "2027-07-02", "entity_signatory": people["amina"], "item_mapping": {"L1": world.ITEM_FA}, "native_supplier": world.SUPPLIER, "asset_location": world.LOCATION}
+def capture(board: dict, name: str | None = None) -> dict:
+	"""With `CM_CAPTURE_BOARDS=1`, write a board as a fixture for the structural fidelity gate (see test_cm_boards). Returns the board."""
+	import json
+	import os
+	from pathlib import Path
+
+	if os.environ.get("CM_CAPTURE_BOARDS"):
+		folder = Path(frappe.get_app_path("kentender_contracts")) / "public/js/contracts/fixtures"
+		folder.mkdir(parents=True, exist_ok=True)
+		(folder / f"{(name or board['id']).replace(' · ', '_')}.json").write_text(json.dumps(board, indent=1, sort_keys=True, default=str) + "\n")
+	return board
 
 
-def receive(people: dict[str, str], *, contract_id: str = "CM-TEST-0001", security_required: bool = False, outside_signing: bool = False) -> dict:
-	"""Receive the demonstration Award package. With `security_required` the issued terms require a performance security, and the synthetic provider answers for that variant."""
+def package_particulars(people: dict[str, str], services: bool = False, item: str = "") -> dict:
+	return {"agreement_date": "2027-07-02", "entity_signatory": people["amina"], "item_mapping": {"L1": item or world.ITEM_FA, **({"L2": world.ITEM_SERVICE} if services else {})}, "native_supplier": world.SUPPLIER, "asset_location": world.LOCATION}
+
+
+def receive(people: dict[str, str], *, contract_id: str = "CM-TEST-0001", security_required: bool = False, outside_signing: bool = False, services: bool = False, award_case: str = "") -> dict:
+	"""Receive the demonstration Award package. With `security_required` the issued terms require a performance security, and the synthetic provider answers for that variant; `services` is the
+	goods-plus-service package (ten laptops and a training session)."""
 	from kentender_contracts.services import formation
 
-	package = sources.award_package()
-	if security_required or outside_signing:
-		frappe.flags.kt_contract_source_providers = [sources.Provider(security_required=security_required, outside_signing=outside_signing)]
-	return formation.receive_award_package(package, handoff=sources.source_handoff(package["award_case"], security_required=security_required, outside_signing=outside_signing), managing_unit=unit(), idempotency_key=f"receive-{contract_id}", actor="Administrator", contract_id=contract_id)
+	package = {**sources.award_package(services), **({"award_case": award_case} if award_case else {})}
+	if security_required or outside_signing or services:
+		frappe.flags.kt_contract_source_providers = [sources.Provider(security_required=security_required, outside_signing=outside_signing, services=services)]
+	return formation.receive_award_package(package, handoff=sources.source_handoff(package["award_case"], security_required=security_required, outside_signing=outside_signing, services=services), managing_unit=unit(),
+		idempotency_key=f"receive-{contract_id}", actor="Administrator", contract_id=contract_id)
 
 
 def evidence_file(owner: str, label: str) -> str:
@@ -176,8 +192,8 @@ def purge_native_operation_rows(case_ids: list[str]) -> None:
 class Thread:
 	"""Drives the ordinary thread through the services as the people of the boards. `case` and the latest `version` are kept so each step passes the version it last saw."""
 
-	def __init__(self, people: dict[str, str], tag: str = "T1", contract_id: str = ""):
-		self.p, self.tag, self.n = people, tag, 0
+	def __init__(self, people: dict[str, str], tag: str = "T1", contract_id: str = "", services: bool = False, award_case: str = "", item: str = ""):
+		self.p, self.tag, self.n, self.services, self.award_case, self.item = people, tag, 0, services, award_case, item
 		self.contract_id = contract_id or f"CM-TEST-{tag}"
 		self.case = ""
 
@@ -192,21 +208,21 @@ class Thread:
 		"""Receive, prepare, send, both signatures: an Active contract with its native order."""
 		from kentender_contracts.services import formation
 
-		out = receive(self.p, contract_id=self.contract_id)
+		out = receive(self.p, contract_id=self.contract_id, services=self.services, award_case=self.award_case)
 		self.case = out["contract"]
-		formation.save_particulars(self.case, expected_version=self.version(), idempotency_key=self.key("particulars"), actor=self.p["brian"], values=package_particulars(self.p))
+		formation.save_particulars(self.case, expected_version=self.version(), idempotency_key=self.key("particulars"), actor=self.p["brian"], values=package_particulars(self.p, self.services, self.item))
 		formation.request_signatures(self.case, expected_version=self.version(), idempotency_key=self.key("send"), actor=self.p["charles"])
 		formation.sign_contract(self.case, party="Supplier", expected_version=self.version(), idempotency_key=self.key("sign-s"), actor=self.p["mary"])
 		formation.sign_contract(self.case, party="Entity", expected_version=self.version(), idempotency_key=self.key("sign-e"), actor=self.p["amina"])
 		return self.case
 
-	def appointed(self) -> dict:
-		"""HOP recommends Julia (chair), Peter (technical) and Brian; the Accounting Officer appoints; each declares no interest."""
+	def appointed(self, acceptance: str = "Committee accepts") -> dict:
+		"""HOP recommends Julia (chair), Peter (technical) and Brian; the Accounting Officer appoints; each declares no interest. `acceptance` is who makes the acceptance a decision."""
 		from kentender_contracts.services import delivery
 
 		members = [{"user": self.p["julia"], "capacity": "Chair", "role_label": "User department"}, {"user": self.p["peter"], "capacity": "Member", "certifier": True, "role_label": "Technical"},
 			{"user": self.p["brian"], "capacity": "Member", "role_label": "Procurement"}]
-		rec = delivery.recommend_inspectors(self.case, expected_version=self.version(), idempotency_key=self.key("recommend"), actor=self.p["charles"], members=members)
+		rec = delivery.recommend_inspectors(self.case, expected_version=self.version(), idempotency_key=self.key("recommend"), actor=self.p["charles"], members=members, acceptance=acceptance)
 		delivery.appoint_inspectors(self.case, appointment=rec["appointment"], expected_version=self.version(), idempotency_key=self.key("appoint"), actor=self.p["amina"])
 		for who in ("julia", "peter", "brian"):
 			delivery.declare_interest(self.case, expected_version=self.version(), idempotency_key=self.key("declare"), actor=self.p[who])

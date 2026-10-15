@@ -117,6 +117,17 @@
        "o": {},
        "t": "dt",
        "v": ""
+      },
+      {
+       "l": "Who accepts the goods",
+       "name": "acceptance",
+       "o": {},
+       "opts": [
+        "Committee accepts",
+        "Accounting Officer decides"
+       ],
+       "t": "sel",
+       "v": "Committee accepts"
       }
      ],
      "k": "fields"

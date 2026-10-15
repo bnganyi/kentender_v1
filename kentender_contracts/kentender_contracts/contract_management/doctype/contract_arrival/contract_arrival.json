@@ -14,7 +14,9 @@
   "recorded_at",
   "receiver",
   "destination",
+  "supplier_reference",
   "items_json",
+  "exceptions_json",
   "notes",
   "state",
   "evidence_json",
@@ -67,8 +69,20 @@
    "read_only": 1
   },
   {
+   "fieldname": "supplier_reference",
+   "label": "Supplier reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
    "fieldname": "items_json",
    "label": "Items json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "exceptions_json",
+   "label": "Exceptions json",
    "fieldtype": "Long Text",
    "read_only": 1
   },

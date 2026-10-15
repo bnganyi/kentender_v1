@@ -18,7 +18,7 @@
  "dialogs": {
   "reject": {
    "args": {
-    "security": "CM-SEC-406632"
+    "security": "CM-SEC-516881"
    },
    "b": [
     {
@@ -43,7 +43,7 @@
   },
   "verify": {
    "args": {
-    "security": "CM-SEC-406632"
+    "security": "CM-SEC-516881"
    },
    "b": [
     {

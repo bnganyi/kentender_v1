@@ -39,7 +39,8 @@ def _recommend(case, args, values, expected, key, actor):
 	members = [{"user": pick(values["chair"]), "capacity": "Chair", "role_label": values.get("chair_label", ""), "certifier": values.get("chair_label") == "Technical"},
 		{"user": pick(values["member_technical"]), "capacity": "Member", "role_label": values.get("member_technical_label", ""), "certifier": True},
 		{"user": pick(values["member_other"]), "capacity": "Member", "role_label": values.get("member_other_label", ""), "certifier": False}]
-	return delivery.recommend_inspectors(case, expected_version=expected, idempotency_key=key, actor=actor, members=members, from_date=values.get("from_date", ""), until_date=values.get("until_date", ""))
+	return delivery.recommend_inspectors(case, expected_version=expected, idempotency_key=key, actor=actor, members=members, from_date=values.get("from_date", ""), until_date=values.get("until_date", ""),
+		acceptance=values.get("acceptance") or "Committee accepts")
 
 
 def _declare(case, args, values, expected, key, actor):
@@ -50,12 +51,21 @@ def _declare(case, args, values, expected, key, actor):
 	return delivery.declare_interest(case, expected_version=expected, idempotency_key=key, actor=actor, conflict=conflict)
 
 
+def _lines(text: Any) -> list[str]:
+	return [u.strip() for u in str(text or "").splitlines() if u.strip()]
+
+
 def _arrival(case, args, values, expected, key, actor):
 	line = next(iter(nested(values, "quantity")), args.get("line_id") or "")
-	units = [u.strip() for u in str(values.get(f"units.{line}", "")).splitlines() if u.strip()]
-	note = f"Supplier delivery reference: {values['supplier_reference']}" if str(values.get("supplier_reference", "")).strip() else ""
-	return delivery.record_arrival(case, expected_version=expected, idempotency_key=key, actor=actor, received_at=values.get("received_at", ""), destination=values.get("destination", ""),
-		items=[{"line_id": line, "quantity": values.get(f"quantity.{line}"), "units": units}] if line else [], notes=note)
+	items = [{"line_id": line, "quantity": values.get(f"quantity.{line}"), "units": _lines(values.get(f"units.{line}")), "replaces": _lines(values.get("replaces"))}] if line else []
+	if str(values.get("unexpected_description", "")).strip():  # goods no line of the contract names are recorded as an exception
+		items.append({"description": values["unexpected_description"], "quantity": values.get("unexpected_quantity"), "units": _lines(values.get("unexpected_units"))})
+	return delivery.record_arrival(case, expected_version=expected, idempotency_key=key, actor=actor, received_at=values.get("received_at", ""), destination=values.get("destination", ""), items=items,
+		supplier_reference=str(values.get("supplier_reference", "")).strip())
+
+
+def _resolve_exception(case, args, values, expected, key, actor):
+	return delivery.resolve_exception(case, arrival=args["arrival"], disposition=pick(values.get("disposition")), reason=values.get("reason", ""), expected_version=expected, idempotency_key=key, actor=actor)
 
 
 def _observations(case, args, values, expected, key, actor):
@@ -129,6 +139,7 @@ def _intake_values(values: dict[str, Any]) -> dict[str, Any]:
 
 
 COMMANDS: dict[str, Handler] = {
+	"ResolveDeliveryException": _resolve_exception,
 	"RecordRestrictionResolution": lambda c, a, v, e, k, u: award_receiver.release_restriction(c, issue=a["issue"], reason=v.get("reason", ""), reference=v.get("reference", ""), expected_version=e, idempotency_key=k, actor=u),
 	"RegisterExistingContract": lambda c, a, v, e, k, u: existing.register_existing_contract(idempotency_key=k, actor=u, values=_intake_values(v)),
 	"ReviseContractIntake": lambda c, a, v, e, k, u: existing.revise_intake(c, expected_version=e, idempotency_key=k, actor=u, values=_intake_values(v)),
@@ -154,7 +165,10 @@ COMMANDS: dict[str, Handler] = {
 	"RecordCustodyReturn": lambda c, a, v, e, k, u: delivery.record_custody_return(c, expected_version=e, idempotency_key=k, actor=u, units=[x.strip() for x in str(v.get("units", "")).splitlines() if x.strip()], evidence=v.get("evidence", "")),
 	"SignTechnicalCertificate": lambda c, a, v, e, k, u: delivery.sign_technical_certificate(c, arrival=a["arrival"], expected_version=e, idempotency_key=k, actor=u),
 	"PrepareAcceptanceReport": lambda c, a, v, e, k, u: delivery.prepare_acceptance_report(c, arrivals=a["arrivals"], expected_version=e, idempotency_key=k, actor=u),
-	"SignAcceptanceReport": lambda c, a, v, e, k, u: delivery.sign_acceptance_report(c, acceptance=a["acceptance"], expected_version=e, idempotency_key=k, actor=u),
+	"SignAcceptanceReport": lambda c, a, v, e, k, u: delivery.sign_acceptance_report(c, acceptance=a["acceptance"], expected_version=e, idempotency_key=k, actor=u,
+		dissent_units=[x.strip() for x in str(v.get("dissent_units", "")).splitlines() if x.strip()], dissent_reason=v.get("dissent_reason", "")),
+	"RequestAcceptanceCorrection": lambda c, a, v, e, k, u: delivery.request_acceptance_correction(c, acceptance=a["acceptance"], reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u),
+	"DecideContractAcceptance": lambda c, a, v, e, k, u: delivery.decide_acceptance(c, acceptance=a["acceptance"], expected_version=e, idempotency_key=k, actor=u),
 	"SubmitContractInvoice": _invoice,
 	"CorrectContractInvoice": _invoice,
 	"RequestInvoiceCorrection": lambda c, a, v, e, k, u: payment.request_invoice_correction(c, invoice=a["invoice"], expected_version=e, idempotency_key=k, actor=u, reason=v.get("reason", "")),

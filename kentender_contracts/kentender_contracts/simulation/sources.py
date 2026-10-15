@@ -57,6 +57,14 @@ FORM_4 = (
 	"<p>Signed for the Procuring Entity by <span data-insertion=\"entity_signatory\">{{entity_signatory}}</span> and for the Supplier by <span data-insertion=\"supplier_signatory\">{{supplier_signatory}}</span>.</p>"
 )
 
+#: The goods-plus-service package (board D31): the same ten laptops plus one training session at KES 50,000, named by a `-SVC` case.
+SERVICE_RATE = 50_000
+SERVICE = {"line_id": "L2", "requirement": "Train ten named users to start and operate the supplied laptops", "deadline": "2027-07-27", "evidence_required": "Attendance and completed practical checklist"}
+SERVICE_CRITERIA = [
+	{"id": "C4", "name": "Attendance", "label": "Observed attendance", "comparator": ">=", "value": 10, "unit": "users", "line_id": "L2", "coverage": "every unit"},
+	{"id": "C5", "name": "Practical checklist", "label": "Practical checklist", "comparator": ">=", "value": 10, "unit": "users", "line_id": "L2", "coverage": "every unit"},
+]
+
 CRITERIA = [
 	{"id": "C1", "name": "RAM", "comparator": ">=", "value": 16, "unit": "GB", "line_id": "L1", "coverage": "every unit"},
 	{"id": "C2", "name": "Storage", "comparator": ">=", "value": 512, "unit": "GB", "line_id": "L1", "coverage": "every unit"},
@@ -84,31 +92,40 @@ def variant(case: str, security_required: bool = False, outside_signing: bool = 
 	return security_required or case.endswith("-SEC"), outside_signing or case.endswith("-OUT")
 
 
-def _content(number: str, case: str, security_required: bool = False, outside_signing: bool = False) -> bytes:
+def with_services(case: str, services: bool = False) -> bool:
+	"""The goods-plus-service variant is named by its case (`-SVC`), like the security and outside-signing variants."""
+	return services or case.endswith("-SVC")
+
+
+def _content(number: str, case: str, security_required: bool = False, outside_signing: bool = False, services: bool = False) -> bytes:
 	security_required, outside_signing = variant(case, security_required, outside_signing)
+	services = with_services(case, services)
+	total = TOTAL + (SERVICE_RATE if services else 0)
 	if number == "S1":
 		return _json({"tender": "TND-DEMO-001", "tender_reference": "MOH/ICT/2027/DEMO-01", "title": "IT equipment delivery", "release": "IT-EQUIPMENT-OPEN-V1", "release_id": "1.5", "addenda": []})
 	if number == "S2":
-		return _json({"bid": "BID-DEMO-1", "supplier": SUPPLIER, "lines": [{"line_id": "L1", "item": "Laptop", "quantity": LAPTOPS, "rate": UNIT_PRICE}], "clarifications": []})
+		return _json({"bid": "BID-DEMO-1", "supplier": SUPPLIER, "lines": [{"line_id": "L1", "item": "Laptop", "quantity": LAPTOPS, "rate": UNIT_PRICE}]
+			+ ([{"line_id": "L2", "item": "Training", "quantity": 1, "rate": SERVICE_RATE}] if services else []), "clarifications": []})
 	if number == "S3":
-		return _json({"currency": "KES", "tax_included": True, "total": TOTAL,
-			"lines": [{"line_id": "L1", "item": "Laptop", "description": "Laptop computer", "uom": "Nos", "quantity": LAPTOPS, "rate": UNIT_PRICE, "amount": TOTAL}]})
+		return _json({"currency": "KES", "tax_included": True, "total": total,
+			"lines": [{"line_id": "L1", "item": "Laptop", "description": "Laptop computer", "uom": "Nos", "quantity": LAPTOPS, "rate": UNIT_PRICE, "amount": TOTAL}]
+			+ ([{"line_id": "L2", "item": "Training", "description": "Training session", "uom": "Session", "kind": "service", "quantity": 1, "rate": SERVICE_RATE, "amount": SERVICE_RATE}] if services else [])})
 	if number == "S4":
 		return _json({"delivery_schedule": {"due": DELIVERY_DUE, "destination": "Ministry of Health, Afya House store"}, "technical": [{"line_id": "L1", "requirement": "Laptop with at least 16 GB RAM and 512 GB storage that starts successfully"}],
-			"related_services": []})
+			"related_services": [SERVICE] if services else []})
 	if number == "S5":
 		security = {"required": True, "percentage": 10, "statement": "10% of the contract sum, in the form of a bank guarantee"} if security_required else {"required": False, "statement": "Not required under these test terms"}
 		return _json({"warranty": {"months": 12, "from": "each unit's acceptance"}, "payment": {"basis": "certified invoice for accepted units", "terms": "as issued"},
 			"performance_security": security, "advance": {"allowed": False}, "delivery_due": DELIVERY_DUE,
 			"signing": {"outside_permitted": True, "basis": "Outside signing permitted in these test terms"} if outside_signing else {"outside_permitted": False}})
 	if number == "S6":
-		return _json({"criteria": CRITERIA})
+		return _json({"criteria": CRITERIA + (SERVICE_CRITERIA if services else [])})
 	if number == "S7":
 		return FORM_4.encode()
 	if number == "S8":
 		return _json({"notification": {"id": "NTC-DEMO-1", "given_at": "2027-06-17 10:00:00"}, "signing_window": {"result": "Within window", "earliest_signing_at": "2027-07-02 09:00:00", "ends_on": "2027-07-14", "counting_basis": "synthetic"}})
 	if number == "S9":
-		return _json({"allocations": [{"reservation": "RSV-DEMO-1", "source_allocation": "PSA-DEMO-1", "budget_line": "BL-DEMO-1", "amount": TOTAL}]})
+		return _json({"allocations": [{"reservation": "RSV-DEMO-1", "source_allocation": "PSA-DEMO-1", "budget_line": "BL-DEMO-1", "amount": total}]})
 	if number == "S10":
 		return _json({"legal_name": ENTITY, "address": "Afya House, Nairobi", "entity_type": "Ministry"})
 	if number == "S11":
@@ -122,14 +139,16 @@ def _sha(data: bytes) -> str:
 	return hashlib.sha256(data).hexdigest()
 
 
-def award_package() -> dict[str, Any]:
-	"""The keys Award freezes in `content_json` (package_gap.md), carrying the synthetic demonstration."""
+def award_package(services: bool = False) -> dict[str, Any]:
+	"""The keys Award freezes in `content_json` (package_gap.md), carrying the synthetic demonstration. `services` adds the training session to the award."""
+	case = f"{CASE}-SVC" if services else CASE
+	total = TOTAL + (SERVICE_RATE if services else 0)
 	return {
-		"award_case": CASE, "tender": "TND-DEMO-001", "tender_reference": "MOH/ICT/2027/DEMO-01", "lot": "LOT-1", "cycle": 1,
+		"award_case": case, "tender": "TND-DEMO-001", "tender_reference": "MOH/ICT/2027/DEMO-01", "lot": "LOT-1", "cycle": 1,
 		"report": {"id": "EVL-DEMO-1", "version": 1, "digest": _sha(b"evaluation report"), "source": "synthetic"},
 		"opinion": {"id": "OPN-DEMO-1", "version": 1, "digest": _sha(b"opinion"), "proof": "synthetic"},
 		"decision": {"id": "DEC-DEMO-1", "version": 1, "outcome": "Award", "supplier": SUPPLIER, "organisation": organisation_id(), "bid": "BID-DEMO-1",
-			"submitted_amount": TOTAL, "evaluated_amount": TOTAL, "currency": "KES"},
+			"submitted_amount": total, "evaluated_amount": total, "currency": "KES"},
 		"notice_batch": {"id": "NTB-DEMO-1", "version": 1, "notices": [{"id": "NTC-DEMO-1", "digest": _sha(b"notice"), "given_at": "2027-06-17 10:00:00", "evidence": "synthetic"}]},
 		"response": {"id": "RSP-DEMO-1", "response": "Accepted", "by": SUPPLIER_SIGNATORY, "received_at": "2027-07-01 09:00:00", "authority": "synthetic"},
 		"contract_terms": {"quantity": LAPTOPS, "warranty": "12 months", "delivery_and_warranty": "As issued in the tender and the supplier's response",
@@ -143,11 +162,11 @@ def reference(number: str, case: str = CASE) -> str:
 	return f"{number}-{case}"
 
 
-def source_handoff(case: str = CASE, *, security_required: bool = False, outside_signing: bool = False) -> list[dict[str, Any]]:
-	"""One reference per required source S1 to S12 (plan D20). `security_required` is the variant whose issued terms require a performance security."""
+def source_handoff(case: str = CASE, *, security_required: bool = False, outside_signing: bool = False, services: bool = False) -> list[dict[str, Any]]:
+	"""One reference per required source S1 to S12 (plan D20). `security_required` is the variant whose issued terms require a performance security; `services` the goods-plus-service package."""
 	rows = []
 	for number, (category, owner, real) in SOURCES.items():
-		data = _content(number, case, security_required, outside_signing)
+		data = _content(number, case, security_required, outside_signing, services)
 		rows.append({"source": number, "category": category, "owner": owner, "reference": reference(number, case), "version": 1, "sha256": _sha(data),
 			"media_type": "text/html" if number == "S7" else "application/json", "size": len(data), "locator": f"synthetic/{number}", "basis": "required by CM v0.8 section 19.4",
 			"provider": "synthetic", "real_handoff_today": real})
@@ -160,10 +179,11 @@ _REFERENCE = re.compile(r"^(S\d+)-(.+)$")
 class Provider:
 	"""The `describe` / `fetch` seam of D20, answering from the synthetic handoff. `tamper` makes one source's bytes differ, to prove verification."""
 
-	def __init__(self, *, tamper: str = "", security_required: bool = False, outside_signing: bool = False):
+	def __init__(self, *, tamper: str = "", security_required: bool = False, outside_signing: bool = False, services: bool = False):
 		self.tamper = tamper
 		self.security_required = security_required
 		self.outside_signing = outside_signing
+		self.services = services
 
 	def _parse(self, reference: str):
 		m = _REFERENCE.match(reference or "")
@@ -171,13 +191,13 @@ class Provider:
 
 	def describe(self, *, reference: str) -> dict[str, Any] | None:
 		number, case = self._parse(reference)
-		return next((r for r in source_handoff(case, security_required=self.security_required, outside_signing=self.outside_signing) if r["source"] == number), None) if number else None
+		return next((r for r in source_handoff(case, security_required=self.security_required, outside_signing=self.outside_signing, services=self.services) if r["source"] == number), None) if number else None
 
 	def fetch(self, *, reference: str) -> dict[str, Any] | None:
 		number, case = self._parse(reference)
 		if not number:
 			return None
-		data = _content(number, case, self.security_required, self.outside_signing) + (b" tampered" if number == self.tamper else b"")
+		data = _content(number, case, self.security_required, self.outside_signing, self.services) + (b" tampered" if number == self.tamper else b"")
 		return {"content": data, "digest": _sha(data)}
 
 

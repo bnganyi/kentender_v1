@@ -1,11 +1,19 @@
 {
  "actions": {
+  "Request correction": {
+   "dialog": "correction",
+   "do": "dialog"
+  },
   "Sign report": {
    "args": {
-    "acceptance": "CM-ACC-419936"
+    "acceptance": "CM-ACC-513243"
    },
    "command": "SignAcceptanceReport",
    "do": "command"
+  },
+  "Sign with dissent": {
+   "dialog": "dissent",
+   "do": "dialog"
   }
  },
  "audiences": [
@@ -15,7 +23,71 @@
  "back": "Back to contracts",
  "case": "CM-TEST-BOARDS",
  "d": "D07",
- "dialogs": {},
+ "dialogs": {
+  "correction": {
+   "args": {
+    "acceptance": "CM-ACC-513243"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "RequestAcceptanceCorrection",
+   "p": "Send request",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Request correction"
+  },
+  "dissent": {
+   "args": {
+    "acceptance": "CM-ACC-513243"
+   },
+   "b": [
+    {
+     "k": "help",
+     "v": "Your signature stays on this exact report. The units you name are not decided: they are read again before they can be accepted or rejected."
+    },
+    {
+     "items": [
+      {
+       "l": "Units you dissent from",
+       "name": "dissent_units",
+       "o": {
+        "rows": 4
+       },
+       "t": "ta",
+       "v": ""
+      },
+      {
+       "l": "Reason for your dissent",
+       "name": "dissent_reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "SignAcceptanceReport",
+   "p": "Sign with dissent",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Sign with dissent"
+  }
+ },
  "ev": [
   "Inspection 1",
   "Technical certificate 1"
@@ -73,14 +145,14 @@
      "num": [],
      "rows": [
       [
-       "CMT9A002F-0009",
+       "CMTFDCFE5-0009",
        "Starts successfully is No, the requirement is Yes.",
        "",
        "",
        "!Does not meet"
       ],
       [
-       "CMT9A002F-0010",
+       "CMTFDCFE5-0010",
        "Starts successfully is No, the requirement is Yes.",
        "",
        "",
@@ -209,7 +281,10 @@
    "t": "Technical evidence"
   }
  ],
- "s2": [],
+ "s2": [
+  "Request correction",
+  "Sign with dissent"
+ ],
  "st": "Active",
  "sub": "Afya Digital Supplies Limited",
  "tab": "Deliveries",

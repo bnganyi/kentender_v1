@@ -1,0 +1,211 @@
+{
+ "actions": {
+  "Save observations": {
+   "args": {
+    "arrival": "CM-ARR-516179"
+   },
+   "command": "RecordInspectionObservations",
+   "do": "command"
+  },
+  "View service requirement": {
+   "dialog": "requirement",
+   "do": "dialog"
+  }
+ },
+ "arrival": "CM-ARR-516179",
+ "audiences": [
+  "appointee"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-SVC",
+ "d": "D31",
+ "dialogs": {
+  "requirement": {
+   "b": [
+    {
+     "items": [
+      [
+       "Requirement",
+       "Train ten named users to start and operate the supplied laptops"
+      ],
+      [
+       "Deadline",
+       "27 Jul 2027"
+      ],
+      [
+       "Evidence required",
+       "Attendance and completed practical checklist"
+      ],
+      [
+       "Observed attendance",
+       "At least 10 users"
+      ],
+      [
+       "Practical checklist",
+       "At least 10 users"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "local": true,
+   "p": "",
+   "s2": [
+    "Close"
+   ],
+   "t": "Service requirement"
+  }
+ },
+ "ev": [
+  "Agreement 1",
+  "TRAIN-01"
+ ],
+ "id": "D31",
+ "name": "Required services",
+ "next": {
+  "h": "Record the training evidence.",
+  "k": "turn",
+  "s": "Responsible: Peter Mugo"
+ },
+ "p": "Save observations",
+ "page": "record",
+ "ref": "CM-TEST-SVC",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Goods",
+       "10 laptops \u00b7 KES 1,000,000"
+      ],
+      [
+       "Service",
+       "1 training session \u00b7 KES 50,000"
+      ],
+      [
+       "Total",
+       "KES 1,050,000"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Agreement"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Requirement",
+       "Train ten named users to start and operate the supplied laptops"
+      ],
+      [
+       "Deadline",
+       "27 Jul 2027"
+      ],
+      [
+       "Evidence required",
+       "Attendance and completed practical checklist"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Required service"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Observed attendance",
+       "name": "obs.TRAIN-01.C4",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Practical checklist",
+       "name": "obs.TRAIN-01.C5",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Reference",
+       "name": "service_reference",
+       "o": {},
+       "t": "tx",
+       "v": "TRAIN-01"
+      }
+     ],
+     "k": "fields"
+    },
+    {
+     "cols": [
+      "Requirement",
+      "Result"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [],
+     "rows": [
+      [
+       "Training",
+       "!Needs review"
+      ]
+     ]
+    }
+   ],
+   "t": "Observations"
+  }
+ ],
+ "s2": [
+  "View service requirement"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Deliveries",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-SVC",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-SVC",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-SVC",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-SVC",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-SVC",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review training completion",
+ "version": 10
+}

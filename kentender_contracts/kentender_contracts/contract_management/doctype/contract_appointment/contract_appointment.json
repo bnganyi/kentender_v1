@@ -11,6 +11,7 @@
   "version_no",
   "state",
   "scope",
+  "acceptance",
   "reference",
   "members_json",
   "recommended_by",
@@ -48,6 +49,13 @@
    "label": "Scope",
    "fieldtype": "Data",
    "read_only": 1
+  },
+  {
+   "fieldname": "acceptance",
+   "label": "Acceptance",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Committee accepts\nAccounting Officer decides"
   },
   {
    "fieldname": "reference",

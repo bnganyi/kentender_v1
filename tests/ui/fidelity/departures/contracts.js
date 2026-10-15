@@ -49,7 +49,11 @@ export const BOARD_PAGES = [
 	{ fixture: "D25-R", board: "D25-R" }, { fixture: "D25", board: "D25" }, { fixture: "D25-J", board: "D25-J" },
 	{ fixture: "D26", board: "D26" }, { fixture: "D26-H", board: "D26-H" }, { fixture: "D26-E", board: "D26-E" },
 	{ fixture: "D12", board: "D12" }, { fixture: "D12-G", board: "D12-G" }, { fixture: "D21", board: "D21" }, { fixture: "D21-H", board: "D21-H" },
+	{ fixture: "D24-S", board: "D24-S" }, { fixture: "D24-X", board: "D24-X" }, { fixture: "D05-M", board: "D05-M" }, { fixture: "D31", board: "D31" }, { fixture: "D31-A", board: "D31-A" },
 ];
+// A board that is another board's page in a state the person reaches by choosing: drawn from the fixture, the choice made, then compared. `radio` names the radio group (its `cm-input-` test id) and
+// `choose` the option to pick; `shows` is what must then be on the page. The comparison collapses identical sibling fields, so what the choice reveals is asserted directly as well.
+export const BOARD_STATES = [{ fixture: "D24", board: "D24-C", radio: "declaration", choose: 1, shows: { textareas: 1, text: "You will not be able to inspect or sign this contract while this conflict remains unresolved." } }];
 export const BOARD_DIALOGS = [
 	{ fixture: "D23", action: "Appoint inspectors", board: "D23 · Appoint" }, { fixture: "D23", action: "Return for correction", board: "D23 · Return" },
 	{ fixture: "D04", action: "Enter unit references", board: "D04 · Units" }, { fixture: "D05", action: "Record observations", board: "D05 · Record" },
@@ -57,7 +61,7 @@ export const BOARD_DIALOGS = [
 	{ fixture: "D33-A", action: "Return invoice for correction", board: "D33-A · Return" }, { fixture: "D17", action: "Return payment for correction", board: "D17 · Return" },
 	{ fixture: "D25", action: "Verify security", board: "D25 · Verify" }, { fixture: "D25", action: "Reject security", board: "D25 · Reject" },
 ];
-export const COVERED = ["D-ERR", "D-DENIED", ...LIST_PAGES.map((p) => p.board), ...BOARD_PAGES.map((p) => p.board), ...BOARD_DIALOGS.map((d) => d.board)];
+export const COVERED = ["D-ERR", "D-DENIED", ...LIST_PAGES.map((p) => p.board), ...BOARD_PAGES.map((p) => p.board), ...BOARD_STATES.map((p) => p.board), ...BOARD_DIALOGS.map((d) => d.board)];
 
 // Rare-branch boards recorded as not compared. Each needs a reason that names
 // the authority for leaving it out (tracker rule 14).
