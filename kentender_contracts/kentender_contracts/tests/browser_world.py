@@ -38,7 +38,7 @@ EXTRA = {"security": ("CM-UI-0002", "CM-UI-AWD-SEC"), "outside": ("CM-UI-0003", 
 #: report prepared, and leaves acceptance to the Accounting Officer; `service` has a training session recorded as performed (the `-SVC` case carries the goods-plus-service package)
 STAGED = {"delivery": ("CM-UI-0005", "CM-UI-AWD-05"), "service": ("CM-UI-0006", "CM-UI-AWD-06-SVC"), "advance": ("CM-UI-0007", "CM-UI-AWD-07-ADV"), "payments": ("CM-UI-0008", "CM-UI-AWD-08"),
 	"claims": ("CM-UI-0009", "CM-UI-AWD-09"), "changes": ("CM-UI-0010", "CM-UI-AWD-10"), "warranty": ("CM-UI-0011", "CM-UI-AWD-11"), "delay": ("CM-UI-0012", "CM-UI-AWD-12"),
-	"security_actions": ("CM-UI-0013", "CM-UI-AWD-13"), "termination": ("CM-UI-0014", "CM-UI-AWD-14")}
+	"security_actions": ("CM-UI-0013", "CM-UI-AWD-13"), "termination": ("CM-UI-0014", "CM-UI-AWD-14"), "closeout": ("CM-UI-0015", "CM-UI-AWD-15-FIN")}
 #: the contracts of the invoice and payment specs: `advance` has its goods accepted and no advance yet; `payments` has a certified, posted invoice of eight to pay in instalments; `claims` has two claims with the
 #: same invoice number (the second held for Finance as an apparent duplicate) and units still to claim
 EXISTING_REFERENCE = "MOH/ICT/2027/EXT-UI"
@@ -90,9 +90,9 @@ def _stage(kind: str, contract_id: str, award_case: str, people: dict[str, str])
 	from kentender_contracts.services import delivery, payment
 
 	frappe.flags.kt_contract_source_providers = None  # the registered provider answers by the case's name; one left over from the previous contract would answer for the wrong variant
-	t = tw.Thread(people, tag=f"UI{contract_id[-4:]}", contract_id=contract_id, services=award_case.endswith("-SVC"), award_case=award_case, item=world.ITEM_PLAIN if kind == "warranty" else "", security=kind == "security_actions")
+	t = tw.Thread(people, tag=f"UI{contract_id[-4:]}", contract_id=contract_id, services=award_case.endswith("-SVC"), award_case=award_case, item=world.ITEM_PLAIN if kind in ("warranty", "closeout") else "", security=kind == "security_actions")
 	t.active()
-	if kind in ("changes", "warranty", "delay", "security_actions", "termination"):
+	if kind in ("changes", "warranty", "delay", "security_actions", "termination", "closeout"):
 		frappe.db.set_value("Contract Case", t.case, "responsible_user", people["carol"])  # the contract's owner: the coordinator who requests changes and records warranty claims
 	t.appointed("Accounting Officer decides" if kind == "delivery" else "Committee accepts")
 	out = {"contract": t.case}
@@ -123,6 +123,8 @@ def _stage(kind: str, contract_id: str, award_case: str, people: dict[str, str])
 		native.insert(ignore_permissions=True)
 		native.submit()
 		out["native_return"] = native.name
+	elif kind == "closeout":
+		_accepted(t, 10)  # everything ordered is accepted and the issued terms ask for the Accounting Officer's final acceptance (the `-FIN` case): the walk records it, completes, closes and corrects
 	elif kind == "delay":
 		units = tw.fresh_serials(10)
 		arrival = t.arrive(units, received_at="2027-07-12 10:00:00")["arrival"]
@@ -190,7 +192,7 @@ def build() -> dict:
 	frappe.db.commit()
 	data = {"previous_instant": str(previous or ""), "report": made["report"], "report_state": made["state"], "report_contract": report_contract, "password": PASSWORD, "contract": received["contract"], "people": people, "supplier": world.SUPPLIER, "item": world.ITEM_FA, "location": world.LOCATION, "bank": world.BANK_ACCOUNT,
 		"mode": world.MODE, "unit": tw.unit(), "security_contract": extra["security"], "outside_contract": extra["outside"], "ending_contract": extra["ending"], "delivery_contract": staged["delivery"]["contract"], "delivery_units": staged["delivery"]["units"], "service_contract": staged["service"]["contract"], "advance_contract": staged["advance"]["contract"], "payments_contract": staged["payments"]["contract"], "claims_contract": staged["claims"]["contract"], "changes_contract": staged["changes"]["contract"], "warranty_contract": staged["warranty"]["contract"], "warranty_units": staged["warranty"]["units"],
-		"warranty_return": staged["warranty"]["native_return"], "delay_contract": staged["delay"]["contract"], "security_contract_actions": staged["security_actions"]["contract"], "termination_contract": staged["termination"]["contract"], "existing": {"reference": EXISTING_REFERENCE, "receipt": receipt, "invoice": invoice,
+		"warranty_return": staged["warranty"]["native_return"], "delay_contract": staged["delay"]["contract"], "security_contract_actions": staged["security_actions"]["contract"], "termination_contract": staged["termination"]["contract"], "closeout_contract": staged["closeout"]["contract"], "existing": {"reference": EXISTING_REFERENCE, "receipt": receipt, "invoice": invoice,
 		"country": tw.REGISTRATION[0], "registration": "PVT-9X7K2M"}}
 	output().parent.mkdir(parents=True, exist_ok=True)
 	output().write_text(json.dumps(data, indent=1))

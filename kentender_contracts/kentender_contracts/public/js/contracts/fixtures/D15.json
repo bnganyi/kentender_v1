@@ -6,7 +6,7 @@
   },
   "Submit report": {
    "args": {
-    "report": "CM-RPT-794937"
+    "report": "CM-RPT-991628"
    },
    "command": "SubmitContractReport",
    "do": "command"
@@ -25,7 +25,7 @@
  "dialogs": {
   "external": {
    "args": {
-    "report": "CM-RPT-794937"
+    "report": "CM-RPT-991628"
    },
    "b": [
     {

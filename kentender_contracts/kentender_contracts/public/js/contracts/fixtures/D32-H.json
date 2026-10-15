@@ -1,0 +1,121 @@
+{
+ "actions": {
+  "View claim": {
+   "do": "route",
+   "route": [
+    "CM-TEST-test_an_open_claim_block",
+    "obligations",
+    "issue",
+    "1"
+   ]
+  },
+  "View issue": {
+   "do": "tab",
+   "tab": "Obligations"
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_an_open_claim_block",
+ "d": "D32",
+ "dialogs": {},
+ "ev": [
+  "Claim 1"
+ ],
+ "id": "D32-H",
+ "name": "Final acceptance",
+ "next": {
+  "fixes": [
+   "View issue"
+  ],
+  "h": "Review the final acceptance evidence.",
+  "k": "blk",
+  "s": "Responsible for the fix: Amina Hassan",
+  "s2": "Unit CMTDBDF51-0044 still has an unresolved completion defect."
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_an_open_claim_block",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Warranty",
+       "Warranty expired; timely claim remains open"
+      ],
+      [
+       "Remedy",
+       "Supplier remedy pending"
+      ],
+      [
+       "Defect",
+       "Battery does not charge \u2014 notified 10 Jul 2028"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Completion facts"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      "Claim 1"
+     ],
+     "k": "links"
+    }
+   ],
+   "t": "Evidence"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Agreement 1 \u00b7 claim 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_an_open_claim_block",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_an_open_claim_block",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_an_open_claim_block",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_an_open_claim_block",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_an_open_claim_block",
+    "history"
+   ]
+  }
+ ],
+ "title": "Record final acceptance",
+ "version": 18
+}

@@ -29,13 +29,21 @@ export async function as<T>(browser: Browser, persona: string, run: (page: Page)
 	}
 }
 
+/** The list is paged and a world holds many contracts: find the row by searching for the contract, the way a person with a long list does, never by scrolling to a page. */
+async function findRow(page: Page, contract: string) {
+	const search = page.getByTestId('cm-filter-search');
+	await search.fill(contract);
+	await search.press('Enter');
+	await expect(page.getByTestId(`cm-row-${contract}`)).toBeVisible({ timeout: 15_000 });
+}
+
 /** From the menu, never by URL: Home, the "Contract Management" item, then the contract. */
 export async function openContract(page: Page, contract: string, view: 'My work' | 'All contracts' = 'All contracts') {
 	await page.goto('/app/home');
 	await page.locator('.body-sidebar').getByText('Contract Management', { exact: true }).click();
 	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'workspace', { timeout: 30_000 }); // the list reads every contract the person may see: the world holds many
 	if (view === 'All contracts') await page.getByTestId('cm-view-1').click(); // the list opens on My work, as the board draws it
-	await expect(page.getByTestId(`cm-row-${contract}`)).toBeVisible({ timeout: 15_000 });
+	await findRow(page, contract);
 	await page.getByTestId(`cm-row-${contract}`).getByRole('link', { name: contract }).click();
 	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'board');
 }
@@ -46,6 +54,7 @@ export async function openAsSupplier(page: Page, contract: string) {
 	await page.locator('[data-kt-portal-nav="contracts"]').click();
 	await expect(page).toHaveURL(/\/supplier\/contracts/);
 	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'workspace', { timeout: 30_000 });
+	await findRow(page, contract);
 	await page.getByTestId(`cm-row-${contract}`).getByRole('link', { name: contract }).click();
 	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'board');
 }

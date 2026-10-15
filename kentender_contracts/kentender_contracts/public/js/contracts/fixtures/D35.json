@@ -14,7 +14,7 @@
  "dialogs": {
   "return": {
    "args": {
-    "issue": "CM-ISS-794676"
+    "issue": "CM-ISS-992892"
    },
    "b": [
     {
@@ -24,7 +24,7 @@
        "name": "",
        "o": {},
        "t": "ro",
-       "v": "CMTDFA369-0072"
+       "v": "CMTB0A72C-0072"
       },
       {
        "l": "Actual collection date",
@@ -72,7 +72,7 @@
      "items": [
       [
        "Unit",
-       "CMTDFA369-0072"
+       "CMTB0A72C-0072"
       ],
       [
        "Warranty ends",

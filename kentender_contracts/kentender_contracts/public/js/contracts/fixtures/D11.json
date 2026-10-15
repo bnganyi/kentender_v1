@@ -1,8 +1,12 @@
 {
  "actions": {
+  "Return for correction": {
+   "dialog": "return",
+   "do": "dialog"
+  },
   "Sign close-out": {
    "args": {
-    "closeout": "CM-CLS-513423"
+    "closeout": "CM-CLS-999588"
    },
    "command": "SignContractCloseout",
    "do": "command"
@@ -13,9 +17,35 @@
   "signatory"
  ],
  "back": "Back to contracts",
- "case": "CM-TEST-BOARDS",
+ "case": "CM-TEST-test_the_accounting_offi",
  "d": "D11",
- "dialogs": {},
+ "dialogs": {
+  "return": {
+   "args": {
+    "stage": "close-out"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "ReturnContractCloseout",
+   "p": "Return",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Return for correction"
+  }
+ },
  "ev": [
   "Completion certificate 1",
   "Financial reconciliation 1"
@@ -29,7 +59,7 @@
  },
  "p": "Sign close-out",
  "page": "record",
- "ref": "CM-TEST-BOARDS",
+ "ref": "CM-TEST-test_the_accounting_offi",
  "regions": [
   {
    "b": [
@@ -41,11 +71,11 @@
       ],
       [
        "Invoiced",
-       "KES 1,000,000"
+       "KES 0"
       ],
       [
        "Cash confirmed",
-       "KES 1,000,000"
+       "KES 0"
       ],
       [
        "Balance",
@@ -58,11 +88,11 @@
      "items": [
       [
        "Warranty",
-       "Runs from each unit\u2019s acceptance"
+       "Ended with no unresolved claim"
       ],
       [
        "Security",
-       "Not required under these test terms."
+       "Not required by the issued terms"
       ],
       [
        "Required reporting",
@@ -70,7 +100,7 @@
       ],
       [
        "Completion certificate",
-       "Signed"
+       "Certificate 1"
       ]
      ],
      "k": "rows"
@@ -88,7 +118,7 @@
      "items": [
       [
        "Surviving obligations",
-       "None"
+       "Publication \u2014 hopfsp, Not confirmed \u2014 set by current directions"
       ]
      ],
      "k": "rows"
@@ -97,7 +127,9 @@
    "t": "Close-out decision"
   }
  ],
- "s2": [],
+ "s2": [
+  "Return for correction"
+ ],
  "st": "Active",
  "sub": "Afya Digital Supplies Limited",
  "tab": "Obligations",
@@ -105,39 +137,39 @@
   {
    "label": "Agreement",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_accounting_offi",
     "agreement"
    ]
   },
   {
    "label": "Deliveries",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_accounting_offi",
     "deliveries"
    ]
   },
   {
    "label": "Invoices",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_accounting_offi",
     "invoices"
    ]
   },
   {
    "label": "Obligations",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_accounting_offi",
     "obligations"
    ]
   },
   {
    "label": "History",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_accounting_offi",
     "history"
    ]
   }
  ],
  "title": "Close contract",
- "version": 47
+ "version": 20
 }

@@ -342,10 +342,7 @@ def record_submission(report: str, *, destination: str, reference: str, submitte
 			fail("CM_REPORT", report=report, failed=sources(now)["failed"], reason="A source could not be read, so the report is not submitted.")
 		if now.state not in ("Draft", "Submitted"):
 			fail("CM_CHANGED", report=report, state=now.state)
-		try:
-			day = getdate(submitted_on)
-		except Exception:  # noqa: BLE001
-			day = None
+		day = records.day(submitted_on)
 		invalid({"destination": "" if cstr(destination).strip() else "Enter where it was submitted.", "reference": "" if cstr(reference).strip() else "Enter the submission reference.", "submitted_on": "" if day else "Enter the submission date.",
 			"copy": "" if cstr(copy).strip() else "Attach the copy that was submitted."})
 		cases = [t["case"] for t in sources(now)["cases"]]

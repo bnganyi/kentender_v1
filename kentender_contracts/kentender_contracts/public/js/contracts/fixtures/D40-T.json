@@ -1,5 +1,23 @@
 {
- "actions": {},
+ "actions": {
+  "Issue 1": {
+   "do": "route",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations",
+    "issue",
+    "1"
+   ]
+  },
+  "Review publication": {
+   "do": "route",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations",
+    "publication"
+   ]
+  }
+ },
  "audiences": [
   "technical"
  ],
@@ -13,17 +31,95 @@
  "id": "D10",
  "name": "Contract obligations",
  "next": null,
+ "p": "",
  "page": "record",
  "ref": "CM-TEST-BOARDS",
  "regions": [
   {
    "b": [
     {
-     "k": "help",
-     "v": "There is no remaining work on this contract."
+     "cols": [
+      "Task",
+      "State",
+      "Due",
+      "Responsible person",
+      "Action"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [],
+     "rows": [
+      [
+       "Warranty for 8 accepted units",
+       "Scheduled",
+       "2 Jul 2028, 00:00 EAT",
+       "hopfsp",
+       "@Open"
+      ],
+      [
+       "Warranty for 2 accepted units",
+       "Scheduled",
+       "2 Jul 2028, 00:00 EAT",
+       "hopfsp",
+       "@Open"
+      ]
+     ]
     }
    ],
-   "t": "Remaining obligations"
+   "t": "Work register"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Issue",
+      "Kind",
+      "Status",
+      "Reply by"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [],
+     "rows": [
+      [
+       "@Issue 1",
+       "Delivery issue",
+       "Closed",
+       "2027-07-04"
+      ]
+     ]
+    }
+   ],
+   "t": "Issues"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Duty",
+      "Status",
+      "Due",
+      "Owner",
+      ""
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [],
+     "rows": [
+      [
+       "Publication: Award decision recorded",
+       "Needs review",
+       "Not confirmed \u2014 set by current directions",
+       "hopfsp",
+       "@Review publication"
+      ]
+     ]
+    }
+   ],
+   "t": "Duties"
   }
  ],
  "s2": [],
@@ -68,5 +164,5 @@
   }
  ],
  "title": "Remaining obligations",
- "version": 48
+ "version": 49
 }

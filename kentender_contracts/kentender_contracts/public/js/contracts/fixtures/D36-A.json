@@ -23,7 +23,7 @@
  "dialogs": {
   "approve": {
    "args": {
-    "adjustment": "CM-ADJ-792717",
+    "adjustment": "CM-ADJ-990925",
     "decision": "Approve"
    },
    "b": [
@@ -49,7 +49,7 @@
   },
   "decline": {
    "args": {
-    "adjustment": "CM-ADJ-792717",
+    "adjustment": "CM-ADJ-990925",
     "decision": "Decline"
    },
    "b": [
@@ -75,7 +75,7 @@
   },
   "return": {
    "args": {
-    "adjustment": "CM-ADJ-792717",
+    "adjustment": "CM-ADJ-990925",
     "decision": "Return"
    },
    "b": [

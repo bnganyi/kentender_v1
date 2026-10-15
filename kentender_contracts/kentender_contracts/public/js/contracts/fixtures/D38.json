@@ -1,0 +1,170 @@
+{
+ "actions": {
+  "Reopen contract": {
+   "dialog": "reopen",
+   "do": "dialog"
+  },
+  "Return for correction": {
+   "dialog": "return",
+   "do": "dialog"
+  },
+  "View closure": {
+   "do": "tab",
+   "tab": "History"
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_correction_from_t",
+ "d": "D38",
+ "dialogs": {
+  "reopen": {
+   "args": {
+    "correction": 1
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "ReopenContractCloseout",
+   "p": "Confirm reopening",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Reopen contract"
+  },
+  "return": {
+   "args": {
+    "correction": 1
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "ReturnContractCloseout",
+   "p": "Return",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Return for correction"
+  }
+ },
+ "ev": [
+  "Closure 1",
+  "Delivery incident",
+  "HOP review"
+ ],
+ "id": "D38",
+ "name": "Close-out correction",
+ "next": {
+  "h": "Decide the correction.",
+  "k": "turn",
+  "s": "Responsible: Amina Hassan"
+ },
+ "p": "Reopen contract",
+ "page": "record",
+ "ref": "CM-TEST-test_a_correction_from_t",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Finding",
+       "Required completion certificate delivery was recorded without evidence"
+      ],
+      [
+       "Financial total",
+       "KES 0, unchanged"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "k": "help",
+     "v": "Keep closed with surviving work is unavailable: the bound completion rule requires this evidence."
+    },
+    {
+     "items": [
+      "Closure 1",
+      "Delivery incident",
+      "HOP review"
+     ],
+     "k": "links"
+    }
+   ],
+   "t": "Correction"
+  }
+ ],
+ "s2": [
+  "-Keep closed with surviving work",
+  "Return for correction",
+  "View closure"
+ ],
+ "st": "Closed",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "HOP correction 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review close-out correction",
+ "version": 22
+}

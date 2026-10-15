@@ -11,10 +11,11 @@
  "id": "D41",
  "name": "History",
  "next": {
-  "h": "Nothing is waiting for you on this contract.",
-  "k": "done",
-  "s": ""
+  "h": "Warranty for 8 accepted units",
+  "k": "wait",
+  "s": "hopfsp; assigned 2 Jul 2027, 09:00 EAT."
  },
+ "p": "",
  "page": "record",
  "ref": "CM-TEST-BOARDS",
  "regions": [
@@ -37,6 +38,12 @@
        "Award package received",
        "Administrator",
        "Award package CM-DEMO-AWD-01 received."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Publication obligation opened",
+       "",
+       "The publication requirement needs review; no deadline has been confirmed."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
@@ -78,7 +85,7 @@
        "2 Jul 2027, 09:00 EAT",
        "Funding conversion linked",
        "Amina Hassan",
-       "Funding conversion SIMCOM-D8F13B9B linked."
+       "Funding conversion SIMCOM-6815A3B6 linked."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
@@ -160,9 +167,21 @@
       ],
       [
        "2 Jul 2027, 09:00 EAT",
+       "Issue recorded",
+       "Brian Wafula",
+       "Issue 1 recorded: 2 laptop computers need replacement."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
        "Receipt posted",
        "Brian Wafula",
-       "Accepted goods received into stock: MAT-PRE-2026-00067."
+       "Accepted goods received into stock: MAT-PRE-2026-00214."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Receipt reconciled",
+       "Brian Wafula",
+       "The stock, the assets and the ledger agree with the acceptance."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
@@ -192,7 +211,7 @@
        "2 Jul 2027, 09:00 EAT",
        "Native invoice linked",
        "David Otieno",
-       "Native invoice ACC-PINV-2026-00051 created for invoice AFYA-1-R1."
+       "Native invoice ACC-PINV-2026-00101 created for invoice AFYA-1-R1."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
@@ -216,31 +235,31 @@
        "2 Jul 2027, 09:00 EAT",
        "Accounting invoice posted",
        "Beatrice Kamau",
-       "Accounting invoice ACC-PINV-2026-00051 posted."
+       "Accounting invoice ACC-PINV-2026-00101 posted."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Payment drafted",
        "Josphat Mwangi",
-       "Draft payment ACC-PAY-2026-00048 prepared for 800,000.00."
+       "Draft payment ACC-PAY-2026-00098 prepared for 800,000.00."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Payment submitted for approval",
        "Josphat Mwangi",
-       "Payment ACC-PAY-2026-00048 submitted for approval."
+       "Payment ACC-PAY-2026-00098 submitted for approval."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Payment approved",
        "Beatrice Kamau",
-       "Payment ACC-PAY-2026-00048 approved and posted."
+       "Payment ACC-PAY-2026-00098 approved and posted."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Settlement confirmed",
        "Beatrice Kamau",
-       "Payment ACC-PAY-2026-00048 for 800,000.00 confirmed as settled."
+       "Payment ACC-PAY-2026-00098 for 800,000.00 confirmed as settled."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
@@ -292,9 +311,21 @@
       ],
       [
        "2 Jul 2027, 09:00 EAT",
+       "Issue closed",
+       "Brian Wafula",
+       "Issue 1 closed: Replacement units CMT938427-0011, CMT938427-0012 were accepted on 2 July 2027."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
        "Receipt posted",
        "Brian Wafula",
-       "Accepted goods received into stock: MAT-PRE-2026-00068."
+       "Accepted goods received into stock: MAT-PRE-2026-00215."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Receipt reconciled",
+       "Brian Wafula",
+       "The stock, the assets and the ledger agree with the acceptance."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
@@ -306,7 +337,7 @@
        "2 Jul 2027, 09:00 EAT",
        "Native invoice linked",
        "David Otieno",
-       "Native invoice ACC-PINV-2026-00052 created for invoice AFYA-2."
+       "Native invoice ACC-PINV-2026-00102 created for invoice AFYA-2."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
@@ -330,37 +361,31 @@
        "2 Jul 2027, 09:00 EAT",
        "Accounting invoice posted",
        "Beatrice Kamau",
-       "Accounting invoice ACC-PINV-2026-00052 posted."
+       "Accounting invoice ACC-PINV-2026-00102 posted."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Payment drafted",
        "Josphat Mwangi",
-       "Draft payment ACC-PAY-2026-00049 prepared for 200,000.00."
+       "Draft payment ACC-PAY-2026-00099 prepared for 200,000.00."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Payment submitted for approval",
        "Josphat Mwangi",
-       "Payment ACC-PAY-2026-00049 submitted for approval."
+       "Payment ACC-PAY-2026-00099 submitted for approval."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Payment approved",
        "Beatrice Kamau",
-       "Payment ACC-PAY-2026-00049 approved and posted."
+       "Payment ACC-PAY-2026-00099 approved and posted."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Settlement confirmed",
        "Beatrice Kamau",
-       "Payment ACC-PAY-2026-00049 for 200,000.00 confirmed as settled."
-      ],
-      [
-       "2 Jul 2027, 09:00 EAT",
-       "Close-out prepared",
-       "Charles Mutiso",
-       "Close-out review 1 prepared."
+       "Payment ACC-PAY-2026-00099 for 200,000.00 confirmed as settled."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
@@ -370,9 +395,27 @@
       ],
       [
        "2 Jul 2027, 09:00 EAT",
+       "Certificate delivered",
+       "Charles Mutiso",
+       "The completion certificate was delivered to the contractor on 2 July 2027."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Close-out prepared",
+       "Charles Mutiso",
+       "Close-out review 1 prepared."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
        "Contract closed",
        "Amina Hassan",
        "The contract was closed."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Funding closure acknowledged",
+       "Amina Hassan",
+       "The funding owner closed the commitment (SIMCLS-98B31C41)."
       ]
      ]
     }
@@ -422,5 +465,5 @@
   }
  ],
  "title": "History",
- "version": 48
+ "version": 49
 }

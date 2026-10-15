@@ -921,7 +921,7 @@ def _make_effective(case: str, doc, report, actor: str, *, proof: str = "", deci
 def _follow_up_findings(case: str, report, decision: dict[str, Any], actor: str) -> None:
 	"""What an effective decision asks of the parties: the units that did not meet become a delivery issue the owner sends to the supplier, and replacement units that were accepted close the issue that asked
 	for them (the thread is closed with the fact, never with a note)."""
-	from kentender_contracts.services import adjustment, issues, warranty
+	from kentender_contracts.services import adjustment, final_acceptance, issues, warranty
 
 	lines = decision["lines"]
 	rejected = [(line, unit) for line in lines for unit in line["units"]["rejected"]]
@@ -944,6 +944,7 @@ def _follow_up_findings(case: str, report, decision: dict[str, Any], actor: str)
 	adjustment.on_delivery_complete(case, actor)  # the delay, if the last unit came after the operative due date
 	services = service_lines(_terms_for(case, "Effective"))
 	warranty.on_accepted(case, [u for line in lines if line["line_id"] not in services for u in line["units"]["accepted"]], report.version_no, actor)  # the warranty runs from each goods unit's acceptance
+	final_acceptance.offer(case, actor)  # where the issued terms ask for it and everything ordered is accepted, the Accounting Officer is asked to record the final acceptance
 
 
 def _reopen_readings(case: str, decision: dict[str, Any], actor: str) -> None:

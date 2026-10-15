@@ -8,7 +8,7 @@
    "args": {
     "claim_reference": "AFYA-1-R",
     "invoice_date": "2026-10-15",
-    "successor_of": "CM-INV-513265"
+    "successor_of": "CM-INV-990580"
    },
    "command": "CorrectContractInvoice",
    "do": "command"
@@ -81,10 +81,10 @@
      "rows": [
       [
        "Laptop computer",
-       "#0",
+       "#8",
        "KES 100,000",
        "Included",
-       "KES 0"
+       "KES 800,000"
       ]
      ]
     },

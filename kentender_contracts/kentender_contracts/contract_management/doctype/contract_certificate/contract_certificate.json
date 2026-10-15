@@ -16,6 +16,7 @@
   "proof_reference",
   "signed_at",
   "content_json",
+  "delivery_json",
   "record_version",
   "fixture_namespace"
  ],
@@ -75,6 +76,12 @@
   {
    "fieldname": "content_json",
    "label": "Content json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delivery_json",
+   "label": "Delivery json",
    "fieldtype": "Long Text",
    "read_only": 1
   },

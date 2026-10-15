@@ -341,7 +341,15 @@ def _more(cls):
 		change.sign_amendment(self.case, change=number, party="Supplier", expected_version=self.version(), idempotency_key=self.key("sign-s"), actor=self.p["mary"])
 		return change.sign_amendment(self.case, change=number, party="Entity", expected_version=self.version(), idempotency_key=self.key("sign-e"), actor=self.p["amina"])
 
-	cls.accept, cls.claim, cls.certify_invoice, cls.post_accounting, cls.pay, cls.change_through = accept, claim, certify_invoice, post_accounting, pay, change_through
+	def confirm_delivery(self, *, method: str = "Hand delivery to the supplier", reference: str = "DISP-001") -> dict:
+		"""The head of procurement confirms that the signed completion certificate reached the contractor, with the day, the way and the proof: the close-out review is generated from it."""
+		from kentender_contracts.services import clock, closeout
+
+		certificate = closeout.completion_certificate(self.case)
+		return closeout.confirm_certificate_delivery(self.case, certificate=certificate.name, delivered_on=str(clock.now().date()), method=method, reference=reference, evidence=[{"label": "Signed delivery note", "file": "/private/files/delivery-note.pdf"}],
+			expected_version=self.version(), idempotency_key=self.key("delivered"), actor=self.p["charles"])
+
+	cls.accept, cls.claim, cls.certify_invoice, cls.post_accounting, cls.pay, cls.change_through, cls.confirm_delivery = accept, claim, certify_invoice, post_accounting, pay, change_through, confirm_delivery
 	return cls
 
 

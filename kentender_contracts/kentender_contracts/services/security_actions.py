@@ -141,10 +141,7 @@ def record_communication(case: str, *, claim: int, sent_on: str, channel: str, r
 		row = get_claim(case, claim)
 		if row is None or row.state != "Approved":
 			fail("CM_CHANGED", claim=claim, state=row.state if row else "")
-		try:
-			day = getdate(sent_on)
-		except Exception:  # noqa: BLE001
-			day = None
+		day = records.day(sent_on)
 		invalid({"sent_on": "" if day else "Enter the day the claim was delivered.", "channel": "" if cstr(channel).strip() else "Enter how it was delivered.", "reference": "" if cstr(reference).strip() else "Enter the delivery reference.",
 			"evidence": "" if _evidence(evidence) else "Attach the proof of delivery."})
 		records.update(row, state="Communicated", communication_json=records.dumps({"sent_on": str(day), "channel": cstr(channel).strip(), "reference": cstr(reference).strip(), "evidence": _evidence(evidence), "by": actor, "at": str(clock.now())}),
@@ -169,10 +166,7 @@ def record_outcome(case: str, *, claim: int, issuer_reference: str, outcome_on: 
 		row = get_claim(case, claim)
 		if row is None or row.state != "Communicated":
 			fail("CM_CHANGED", claim=claim, state=row.state if row else "")
-		try:
-			day = getdate(outcome_on)
-		except Exception:  # noqa: BLE001
-			day = None
+		day = records.day(outcome_on)
 		problems = {"issuer_reference": "" if cstr(issuer_reference).strip() else "Enter the issuer's reference.", "outcome_on": "" if day else "Enter the date of the outcome.", "evidence": "" if _evidence(evidence) else "Attach the issuer's outcome."}
 		if flt(proceeds) < 0 or flt(proceeds) > flt(row.amount) + 0.005:
 			problems["proceeds"] = f"The proceeds are between 0 and the claim of {flt(row.amount):,.2f}."
@@ -269,10 +263,7 @@ def record_return(case: str, *, returned_on: str, evidence: list[dict[str, Any]]
 		open_claim = live_claim(case)
 		if open_claim is not None and open_claim.state != "Declined":
 			fail("CM_HOLD", hold="security claim open", kind="Claim", reason="A claim on this security is still in progress.", holder="Head of procurement function", clears_with="The claim is declined or its outcome is recorded", consequence="RecordSecurityAction")
-		try:
-			day = getdate(returned_on)
-		except Exception:  # noqa: BLE001
-			day = None
+		day = records.day(returned_on)
 		invalid({"returned_on": "" if day else "Enter the return date.", "evidence": "" if _evidence(evidence) else "Attach the discharge evidence."})
 		if day < accepted["on"]:
 			invalid({"returned_on": "The security cannot be returned before the final acceptance."})

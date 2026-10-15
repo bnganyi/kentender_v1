@@ -222,6 +222,9 @@ def resolve_issue(case: str, *, issue: str, disposition: str, expected_version: 
 		if row.kind == "Warranty claim":
 			fail("CM_RECONCILE", issue=issue, reason="A warranty claim is closed when its remedy is verified, not by a note.")
 		close(case, row, cstr(disposition).strip(), actor)
+		from kentender_contracts.services import closeout
+
+		closeout.offer_completion(case)
 		records.bump(doc)
 		return records.summary(doc, issue=row.name, state="Closed")
 

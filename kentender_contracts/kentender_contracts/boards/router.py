@@ -14,9 +14,9 @@ from typing import Any
 import frappe
 from frappe.utils import flt
 
-from kentender_contracts.boards import adjustments, agreement, changes, chrome, delivery, ending, existing, invoices, issues as issue_boards, kit, obligations, outside, reports, security, security_actions as security_boards, termination as termination_boards
+from kentender_contracts.boards import adjustments, agreement, changes, chrome, completion, delivery, ending, existing, invoices, issues as issue_boards, kit, obligations, outside, reports, security, security_actions as security_boards, termination as termination_boards
 from kentender_contracts.boards.context import Context
-from kentender_contracts.services import adjustment, advance, bindings, change, closeout, issues, obligations as obligation_service, payment, records, reporting, security_actions, termination, warranty
+from kentender_contracts.services import adjustment, advance, bindings, change, closeout, closure_correction, issues, obligations as obligation_service, payment, records, reporting, security_actions, termination, warranty
 from kentender_contracts.services.errors import fail
 
 TAB_KEYS = {t.lower(): t for t in chrome.TABS}
@@ -139,7 +139,17 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 		return invoices.d17(ctx, _payment_invoice(ctx, subject), subject.split()[-1], settle=True)
 	if command == "IssueCompletionCertificate":
 		return obligations.d22(ctx)
+	if command == "SignFinalContractAcceptance":
+		return completion.acceptance(ctx)
+	if command == "ConfirmCertificateDelivery":
+		return _delivery_board(ctx, lead)
+	if command == "ConfirmContractClosure":
+		return completion.correction_decision(ctx, closure_correction.get(ctx.case, _number(subject)))
+	if command == "PrepareContractClosureCorrection":
+		return completion.correction_request(ctx, correcting=closure_correction.get(ctx.case, _number(subject)))
 	if command == "SignContractCloseout":
+		if lead.get("state") == "blocked" and warranty.open_claims(ctx.case):
+			return completion.blocked_closeout(ctx)
 		return obligations.d11(ctx, frappe.db.get_value("Contract Closeout", {"contract_case": ctx.case, "state": "Awaiting signature"}, "name"))
 	if command == "RestoreContractOperation":
 		return obligations.operations(ctx)
@@ -211,6 +221,18 @@ def _change_board(ctx: Context, lead: dict[str, Any]):
 	if command == "DecideContractChange":
 		return changes.decide(ctx, row)
 	return changes.activate(ctx, row)
+
+
+def _delivery_board(ctx: Context, lead: dict[str, Any]):
+	"""The certificate whose delivery is the viewer's next step: the first delivery (D22-P), or the delivery a reopened closure withdrew (D38-R)."""
+	name = frappe.db.get_value("Contract Certificate", {"contract_case": ctx.case, "kind": "Completion", "state": "Signed", "subject_version": lead["version"]}, "name")
+	if not name:
+		return None
+	certificate = frappe.get_doc("Contract Certificate", name)
+	withdrawn = (closeout.delivery_of(certificate).get("withdrawn") or {}).get("correction")
+	if withdrawn:
+		return completion.reopened(ctx, frappe.get_doc("Contract Correction", withdrawn), certificate)
+	return completion.delivery(ctx, certificate)
 
 
 def _by_waiting(ctx: Context, lead: dict[str, Any]):
@@ -412,6 +434,10 @@ def _obligation_route(ctx: Context, subject: tuple[str, ...]):
 		return security.d25r(ctx, 0, replacing=True)
 	if head == "claim-warranty" and ctx.doc.lifecycle in ("Active", "Closed") and obligations.may_manage(ctx):
 		return issue_boards.new_claim(ctx)
+	if head == "request-correction" and ctx.doc.lifecycle == "Closed" and obligations.may_correct(ctx) and closure_correction.live(ctx.case) is None:
+		return completion.correction_request(ctx)
+	if head == "request-correction" and ctx.doc.lifecycle == "Terminated" and obligations.may_correct(ctx):
+		return completion.terminated_source(ctx)  # a termination is not corrected here: the screen says so and points to the termination and its settlement
 	return None
 
 

@@ -33,6 +33,9 @@ PREPARERS = ("Head of Procurement Function", "Contract preparation", "Accounting
 #: A person named to review a requested change holds one of these (the Accounting Officer, who decides, is deliberately not among them).
 REVIEWER = "Change reviewer"
 REVIEWER_ROLES = ("Contract inspection", "Technical certification", "Contract preparation", "Head of Procurement Function")
+#: A person who owns surviving work a close-out correction keeps (a duty that outlives the closure) holds one of these contract responsibilities.
+OWNER = "Surviving work owner"
+OWNER_ROLES = ("Head of Procurement Function", "Contract coordination", "Contract preparation", "Contract inspection", "Technical certification", "Finance preparation")
 FINANCE = ("Finance preparation",)
 #: kind -> (who may choose, how it is read)
 KINDS = {
@@ -67,14 +70,14 @@ def _holds_somewhere(actor: str, role: str) -> bool:
 def people_holding(*, query: str, context: dict, actor: str, limit: int) -> list[dict[str, Any]]:
 	"""Everyone who holds the responsibility in the context now."""
 	role = cstr(context.get("role"))
-	if role not in ROLES and role != REVIEWER:
+	if role not in ROLES and role not in (REVIEWER, OWNER):
 		raise frappe.DoesNotExistError("Not found")
 	_gate(actor, PREPARERS)
-	wanted = REVIEWER_ROLES if role == REVIEWER else (role,)
+	wanted = REVIEWER_ROLES if role == REVIEWER else OWNER_ROLES if role == OWNER else (role,)
 	users = frappe.get_all("User Responsibility Assignment", filters={"business_role": ["in", list(wanted)], "status": "Enabled"}, pluck="user", distinct=True)
 	rows = []
 	for user in sorted(set(users)):
-		if (eligible_reviewer(user) if role == REVIEWER else people.holds(user, role)):
+		if (eligible_reviewer(user) if role == REVIEWER else eligible_owner(user) if role == OWNER else people.holds(user, role)):
 			rows.append({"id": user, "label": people.full_name(user), "detail": user, "keywords": user})
 	return rows
 
@@ -82,6 +85,11 @@ def people_holding(*, query: str, context: dict, actor: str, limit: int) -> list
 def eligible_reviewer(user: str) -> bool:
 	"""May this person be named to review a requested change: an enabled person who holds one of the contract responsibilities (a unit-scoped one at any unit)."""
 	return any(people.holds(user, r) or _holds_somewhere(user, r) for r in REVIEWER_ROLES)
+
+
+def eligible_owner(user: str) -> bool:
+	"""May this person own surviving work: an enabled person who holds one of the contract responsibilities (a unit-scoped one at any unit)."""
+	return any(people.holds(user, r) or _holds_somewhere(user, r) for r in OWNER_ROLES)
 
 
 # -- native records ---------------------------------------------------------------------------------------------------------------------

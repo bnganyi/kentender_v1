@@ -93,7 +93,8 @@ class TestOrdinaryThread(ContractCase):
 
 		# the replacement units arrive, are accepted, claimed, certified and paid on the original entitlement
 		self.assertEqual(position.position(case)["remaining"], 2)
-		arrival2 = t.arrive(second, received_at="2027-07-16 09:00:00")["arrival"]
+		arrival2 = delivery.record_arrival(case, expected_version=t.version(), idempotency_key=t.key("arrive2"), actor=self.p["grace"], received_at="2027-07-16 09:00:00", destination="Afya House store",
+			items=[{"line_id": "L1", "quantity": 2, "units": second, "replaces": first[8:]}])["arrival"]  # a replacement names the rejected units it replaces: that closes their issue
 		t.inspect(arrival2, second)
 		t.accept(arrival2)
 		now = position.position(case)
@@ -109,7 +110,9 @@ class TestOrdinaryThread(ContractCase):
 		self.assertIn(("IssueCompletionCertificate", self.p["charles"]), {(x["command"], x["holder"]) for x in work.live(case)})
 		self.assertEqual(refusal(closeout.prepare_closeout, case, expected_version=t.version(), idempotency_key=t.key("early"), actor=self.p["charles"]).code, "CM_CLOSURE")
 		closeout.issue_completion_certificate(case, expected_version=t.version(), idempotency_key=t.key("completion"), actor=self.p["charles"])
-		prepared = closeout.prepare_closeout(case, expected_version=t.version(), idempotency_key=t.key("prepare-closeout"), actor=self.p["charles"])
+		self.assertIn(("ConfirmCertificateDelivery", self.p["charles"]), {(x["command"], x["holder"]) for x in work.live(case)}, "signed is not delivered")
+		self.assertEqual(refusal(closeout.prepare_closeout, case, expected_version=t.version(), idempotency_key=t.key("undelivered"), actor=self.p["charles"]).code, "CM_CLOSURE")
+		prepared = t.confirm_delivery()
 		review = records.loads(frappe.db.get_value("Contract Closeout", prepared["closeout"], "review_json"))
 		self.assertEqual((review["claimed_total"], review["settled_total"], review["remaining"]), (1_000_000.0, 1_000_000.0, []))
 		closed = closeout.sign_closeout(case, closeout=prepared["closeout"], expected_version=t.version(), idempotency_key=t.key("close"), actor=self.p["amina"])

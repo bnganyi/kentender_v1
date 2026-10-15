@@ -6,7 +6,7 @@
   },
   "Sign report": {
    "args": {
-    "acceptance": "CM-ACC-513243"
+    "acceptance": "CM-ACC-990553"
    },
    "command": "SignAcceptanceReport",
    "do": "command"
@@ -26,7 +26,7 @@
  "dialogs": {
   "correction": {
    "args": {
-    "acceptance": "CM-ACC-513243"
+    "acceptance": "CM-ACC-990553"
    },
    "b": [
     {
@@ -51,7 +51,7 @@
   },
   "dissent": {
    "args": {
-    "acceptance": "CM-ACC-513243"
+    "acceptance": "CM-ACC-990553"
    },
    "b": [
     {
@@ -145,14 +145,14 @@
      "num": [],
      "rows": [
       [
-       "CMTFDCFE5-0009",
+       "CMT938427-0009",
        "Starts successfully is No, the requirement is Yes.",
        "",
        "",
        "!Does not meet"
       ],
       [
-       "CMTFDCFE5-0010",
+       "CMT938427-0010",
        "Starts successfully is No, the requirement is Yes.",
        "",
        "",

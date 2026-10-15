@@ -14,6 +14,7 @@ CERTIFICATION = ("I certify that invoice {invoice}, for {amount}, is supported b
 	"after the adjustments and recoveries shown in the certification schedule.")
 COMPLETION = ("I confirm delivery and acceptance of the goods and services identified in the contract completion schedule, under contract {contract}, completed on {date}, "
 	"with the surviving obligations expressly listed.")
+FINAL_ACCEPTANCE = ("I record final acceptance on {date} for the scope identified in the schedule under {clause_and_evidence}. The remaining obligations, if any, are listed below.")
 CLOSEOUT = ("I close this procurement contract following the evidenced completion recorded below. The surviving obligations and their accountable owners are listed in the attached schedule.")
 
 #: output -> (statement, the placeholder text the specification writes in its place)
@@ -21,6 +22,7 @@ OUTPUTS = {
 	"technical certificate": (TECHNICAL, {}),
 	"acceptance report": (ACCEPTANCE, {}),
 	"invoice certification": (CERTIFICATION, {"invoice": "[ID/version]", "amount": "[currency/amount]"}),
+	"final acceptance": (FINAL_ACCEPTANCE, {"date": "[actual date]", "clause_and_evidence": "[clause and evidence]"}),
 	"completion certificate": (COMPLETION, {"contract": "[ID/version]", "date": "[evidenced date]"}),
 	"close-out decision": (CLOSEOUT, {}),
 }

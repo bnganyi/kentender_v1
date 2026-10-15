@@ -184,9 +184,8 @@ def record_notice(case: str, *, termination: int, delivered_on: str, method: str
 			fail("CM_CHANGED", termination=termination, state=row.state if row else "")
 		problems = {"method": "" if cstr(method).strip() else "Enter how the notice was delivered.", "reference": "" if cstr(reference).strip() else "Enter the delivery reference.",
 			"evidence": "" if evidence and all(cstr(e.get("label")).strip() for e in evidence) else "Attach the proof of delivery."}
-		try:
-			delivered, effective = getdate(delivered_on), getdate(effective_on)
-		except Exception:  # noqa: BLE001
+		delivered, effective = records.day(delivered_on), records.day(effective_on)
+		if delivered is None or effective is None:
 			delivered = effective = None
 			problems["delivered_on"] = "Enter the delivery date and the date the termination takes effect."
 		if delivered and effective and effective < delivered:

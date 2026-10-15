@@ -1,0 +1,114 @@
+{
+ "actions": {
+  "View claim": {
+   "do": "route",
+   "route": [
+    "CM-TEST-test_a_claim_opened_afte",
+    "obligations",
+    "issue",
+    "1"
+   ]
+  },
+  "View issue": {
+   "do": "tab",
+   "tab": "Obligations"
+  },
+  "View remaining obligations": {
+   "do": "tab",
+   "tab": "Obligations"
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_claim_opened_afte",
+ "d": "D11",
+ "dialogs": {},
+ "ev": [
+  "Claim 1"
+ ],
+ "id": "D11-B",
+ "name": "Close-out review",
+ "next": {
+  "fixes": [
+   "View issue"
+  ],
+  "h": "Review and sign the close-out.",
+  "k": "blk",
+  "s": "Responsible for the fix: Amina Hassan",
+  "s2": "Unit CMTDBDF51-0034 still has an unresolved completion defect."
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_a_claim_opened_afte",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Warranty",
+       "Warranty expired; timely claim remains open"
+      ],
+      [
+       "Open claim",
+       "Unit CMTDBDF51-0034"
+      ],
+      [
+       "Close-out",
+       "Not available while the claim is open"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Completion review"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Claim 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_claim_opened_afte",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_claim_opened_afte",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_claim_opened_afte",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_claim_opened_afte",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_claim_opened_afte",
+    "history"
+   ]
+  }
+ ],
+ "title": "Close contract",
+ "version": 21
+}

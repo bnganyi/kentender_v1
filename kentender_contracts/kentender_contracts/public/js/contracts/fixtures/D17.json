@@ -3,7 +3,7 @@
   "Approve payment": {
    "args": {
     "kind": "payment",
-    "payment": "ACC-PAY-2026-00078"
+    "payment": "ACC-PAY-2026-00098"
    },
    "command": "ApproveNativeFinanceRecord",
    "do": "command"
@@ -17,13 +17,13 @@
   "finance"
  ],
  "back": "Back to contracts",
- "case": "CM-TEST-test_the_advance_review_",
+ "case": "CM-TEST-BOARDS",
  "d": "D17",
  "dialogs": {
   "return": {
    "args": {
     "kind": "payment",
-    "payment": "ACC-PAY-2026-00078"
+    "payment": "ACC-PAY-2026-00098"
    },
    "b": [
     {
@@ -50,7 +50,7 @@
  "ev": [
   "Certification 1",
   "Accounting invoice",
-  "Payment Entry ACC-PAY-2026-00078"
+  "Payment Entry ACC-PAY-2026-00098"
  ],
  "id": "D17",
  "name": "Finance payment approval",
@@ -61,7 +61,7 @@
  },
  "p": "Approve payment",
  "page": "record",
- "ref": "CM-TEST-test_the_advance_review_",
+ "ref": "CM-TEST-BOARDS",
  "regions": [
   {
    "b": [
@@ -73,15 +73,15 @@
       ],
       [
        "Invoice",
-       "ADV-01"
+       "AFYA-1-R1"
       ],
       [
        "Certified / payable",
-       "KES 100,000"
+       "KES 800,000"
       ],
       [
        "Proposed cash",
-       "KES 100,000"
+       "KES 800,000"
       ],
       [
        "Prepared by",
@@ -127,15 +127,15 @@
       ],
       [
        "Amount",
-       "KES 100,000"
+       "KES 800,000"
       ],
       [
        "Allocation",
-       "ADV-01 \u00b7 KES 100,000"
+       "AFYA-1-R1 \u00b7 KES 800,000"
       ],
       [
        "Reference",
-       "ADV-BANK"
+       "B-1"
       ],
       [
        "Supported deductions / advance recovery / unapplied",
@@ -158,39 +158,39 @@
   {
    "label": "Agreement",
    "route": [
-    "CM-TEST-test_the_advance_review_",
+    "CM-TEST-BOARDS",
     "agreement"
    ]
   },
   {
    "label": "Deliveries",
    "route": [
-    "CM-TEST-test_the_advance_review_",
+    "CM-TEST-BOARDS",
     "deliveries"
    ]
   },
   {
    "label": "Invoices",
    "route": [
-    "CM-TEST-test_the_advance_review_",
+    "CM-TEST-BOARDS",
     "invoices"
    ]
   },
   {
    "label": "Obligations",
    "route": [
-    "CM-TEST-test_the_advance_review_",
+    "CM-TEST-BOARDS",
     "obligations"
    ]
   },
   {
    "label": "History",
    "route": [
-    "CM-TEST-test_the_advance_review_",
+    "CM-TEST-BOARDS",
     "history"
    ]
   }
  ],
  "title": "Review payment",
- "version": 15
+ "version": 27
 }

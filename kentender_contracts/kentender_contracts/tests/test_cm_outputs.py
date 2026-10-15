@@ -41,7 +41,7 @@ class TestCertificateStatements(IntegrationTestCase):
 			written = template
 			for name, text in placeholders.items():
 				written = written.replace("{" + name + "}", text)
-			quoted = spec_statement({"technical certificate": "Technical quality/quantity certificate", "acceptance report": "Inspection and acceptance report", "invoice certification": "Procurement invoice certification",
+			quoted = spec_statement({"technical certificate": "Technical quality/quantity certificate", "acceptance report": "Inspection and acceptance report", "invoice certification": "Procurement invoice certification", "final acceptance": "Final-acceptance record",
 				"completion certificate": "Noncomplex completion certificate", "close-out decision": "AO close-out decision"}[output])
 			self.assertEqual(" ".join(written.split()), " ".join(quoted.split()), output)
 

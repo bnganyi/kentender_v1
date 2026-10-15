@@ -2,7 +2,7 @@
  "actions": {
   "Sign certification": {
    "args": {
-    "invoice": "CM-INV-792727"
+    "invoice": "CM-INV-990935"
    },
    "command": "SignContractCertification",
    "do": "command"

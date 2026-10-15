@@ -107,10 +107,9 @@ def record_claim(case: str, *, unit: str, fault: str, notice_date: str, remedy: 
 		preflight.lifecycle(doc, "Active", "Closed")
 		have = position.position(case)["units"].get(unit)
 		problems = {"unit": "" if have and have["status"] == "Accepted" else "Choose an accepted unit.", "fault": "" if cstr(fault).strip() else "Describe the fault.", "remedy": "" if remedy in REMEDIES else "Choose the remedy asked for."}
-		try:
-			noticed = getdate(notice_date)
-		except Exception:  # noqa: BLE001
-			noticed, problems["notice_date"] = None, "Enter the day notice was given."
+		noticed = records.day(notice_date)
+		if noticed is None:
+			problems["notice_date"] = "Enter the day notice was given."
 		invalid(problems)
 		ends = warranty_ends(case, unit)
 		if ends is None:
@@ -154,10 +153,7 @@ def record_return(case: str, *, issue: str, collected_on: str, evidence: str, ex
 		row = frappe.get_doc(ISSUE, issue)
 		if row.contract_case != case or row.kind != "Warranty claim" or stage(row) != "return":
 			fail("CM_CHANGED", issue=issue, state=row.state)
-		try:
-			day = getdate(collected_on)
-		except Exception:  # noqa: BLE001
-			day = None
+		day = records.day(collected_on)
 		invalid({"collected_on": "" if day else "Enter the day the unit was collected.", "evidence": "" if cstr(evidence).strip() else "Enter the collection evidence."})
 		unit = facts(row)["unit"]
 		events.record(case, position.RETURN_EVENT, actor, f"Unit {unit} collected by the supplier under warranty claim {row.issue_no}.", units=[unit], evidence=cstr(evidence).strip(), warranty=row.name)
@@ -301,6 +297,9 @@ def verify_remedy(case: str, *, issue: str, evidence: str = "", expected_version
 		work.finish(case, command="VerifyContractRemedy", subject=subject_of(row), actor=actor)
 		issues.close(case, frappe.get_doc(ISSUE, issue), outcome, actor)
 		events.record(case, "Remedy verified", actor, outcome, issue=row.name, unit=found["unit"])
+		from kentender_contracts.services import closeout
+
+		closeout.offer_completion(case)  # with the claim closed, nothing about this remedy stands between the contract and completion
 		records.bump(doc)
 		return records.summary(doc, issue=row.name, state="Closed")
 
@@ -309,9 +308,12 @@ def verify_remedy(case: str, *, issue: str, evidence: str = "", expected_version
 
 @holds.provider("warranty")
 def _unreconciled_return(case: str) -> list[holds.Hold]:
-	"""A returned unit whose credit is not reconciled holds new certification and payment, and the claim's closing, until Finance reconciles it (matrix row R18-06). Independent work is not held."""
+	"""A returned unit whose credit is not reconciled holds new certification and payment, and the claim's closing, until Finance reconciles it (matrix row R18-06). An open warranty claim is also an unresolved completion
+	defect: the final acceptance and the close-out wait for its verified remedy, and the hold names the unit and the claim's holder. Independent work is not held."""
 	found = []
 	for row in open_claims(case):
+		found.append(holds.Hold(key=f"warranty claim:{row.name}", kind="Issue", reason=f"Unit {facts(row)['unit']} still has an unresolved completion defect.", blocks=frozenset({"final_accept", "close_contract"}), owner=row.owner_user,
+			clearing="The remedy is verified and the claim is closed", scope=()))
 		if stage(row) == "reconcile":
 			owner = next(iter(work.holders("Finance preparation")), "Finance")
 			found.append(holds.Hold(key=f"warranty return:{row.name}", kind="Correction", reason="Finance must reconcile the replacement.", blocks=frozenset({"certify_invoice", "pay", "close_claim"}), owner=owner,

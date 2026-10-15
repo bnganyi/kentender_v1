@@ -44,7 +44,7 @@ RECORDS = {
 		F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Certificate": ("CRT", "A certificate bound to an exact subject by a personal proof: technical, completion, final acceptance, close-out.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("kind", "Select", "Technical\nCompletion\nFinal acceptance\nProcurement certification"), F("subject"), F("subject_version", "Int"),
-		F("state", "Select", "Awaiting signature\nSigned\nSuperseded"), F("signer"), F("proof_reference"), F("signed_at", "Datetime"), F("content_json", "Long Text"),
+		F("state", "Select", "Awaiting signature\nSigned\nSuperseded"), F("signer"), F("proof_reference"), F("signed_at", "Datetime"), F("content_json", "Long Text"), F("delivery_json", "Long Text"),
 		F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Acceptance": ("ACC", "One acceptance report version: quantities accepted, rejected and deferred per arrival item, the signers and the effective decision.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("version_no", "Int"), F("state", "Select", "Draft\nAwaiting signatures\nRecommended\nEffective\nSuperseded"),
@@ -98,6 +98,10 @@ RECORDS = {
 	"Contract Closeout": ("CLS", "A close-out version: the fulfilment review, surviving obligations and the authorised proof.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("version_no", "Int"), F("state", "Select", "Draft\nAwaiting signature\nClosed\nSuperseded"),
 		F("review_json", "Long Text"), F("signer"), F("proof_reference"), F("closed_at", "Datetime"), F("record_version", "Int"), F("fixture_namespace")]),
+	"Contract Correction": ("COR", "A reasoned request to correct a close-out: the exact closure and the completion fact it got wrong, the evidence, the proposed disposition and the Accounting Officer's decision. The original closure is kept; a reopening is a successor decision, never an edit.", [
+		F("contract_case", "Link", "Contract Case", reqd=1), F("correction_no", "Int"), F("closeout", "Link", "Contract Closeout"), F("state", "Select", "Draft\nSubmitted\nReturned\nReopened\nKept closed"),
+		F("reason", "Small Text"), F("evidence_json", "Long Text"), F("disposition"), F("survivors_json", "Long Text"), F("decision_json", "Long Text"), F("requested_by"), F("requested_at", "Datetime"), F("decided_by"), F("decided_at", "Datetime"),
+		F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Task": ("TSK", "One obligation of one holder (command, subject, version, holder): the work and the handoff.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("identity", "Data", "", unique=1, reqd=1), F("command"), F("title"), F("subject"), F("subject_version", "Int"),
 		F("holder"), F("holder_role"), F("state", "Select", "Open\nBlocked\nWaiting\nScheduled\nDone\nSuperseded"), F("assigned_at", "Datetime"), F("due", "Datetime"),

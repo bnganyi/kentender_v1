@@ -2,7 +2,7 @@
  "actions": {
   "Send reply": {
    "args": {
-    "issue": "CM-ISS-793161"
+    "issue": "CM-ISS-991370"
    },
    "command": "ReplyContractCorrespondence",
    "do": "command"
@@ -37,7 +37,7 @@
      "items": [
       [
        "Units",
-       "CMTDFA369-0029 and CMTDFA369-0030"
+       "CMTB0A72C-0029 and CMTB0A72C-0030"
       ],
       [
        "Result",

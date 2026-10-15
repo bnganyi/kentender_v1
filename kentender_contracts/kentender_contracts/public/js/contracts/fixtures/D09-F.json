@@ -2,16 +2,16 @@
  "actions": {
   "Save draft": {
    "args": {
-    "advance": "CM-ADV-669925",
-    "kind": "advance"
+    "invoice": "CM-INV-990594",
+    "kind": "payment"
    },
    "command": "SaveNativeFinanceDraft",
    "do": "command"
   },
   "Submit payment for approval": {
    "args": {
-    "advance": "CM-ADV-669925",
-    "kind": "advance"
+    "invoice": "CM-INV-990594",
+    "kind": "payment"
    },
    "command": "SaveNativeFinanceDraft",
    "do": "command",
@@ -30,7 +30,7 @@
   "finance"
  ],
  "back": "Back to contracts",
- "case": "CM-TEST-test_the_advance_review_",
+ "case": "CM-TEST-BOARDS",
  "d": "D09",
  "dialogs": {},
  "ev": [
@@ -41,13 +41,13 @@
  "id": "D09-F",
  "name": "Payment follow-up",
  "next": {
-  "h": "Prepare the advance payment.",
+  "h": "Prepare the payment record.",
   "k": "turn",
   "s": "Responsible: Josphat Mwangi"
  },
  "p": "Submit payment for approval",
  "page": "record",
- "ref": "CM-TEST-test_the_advance_review_",
+ "ref": "CM-TEST-BOARDS",
  "regions": [
   {
    "b": [
@@ -67,7 +67,7 @@
       ],
       [
        "Source",
-       "ADV-01"
+       "AFYA-1-R1"
       ],
       [
        "Certification",
@@ -79,7 +79,7 @@
       ],
       [
        "Payable / certified outstanding",
-       "KES 100,000"
+       "KES 800,000"
       ],
       [
        "Payment hold",
@@ -145,14 +145,14 @@
        "name": "amount",
        "o": {},
        "t": "tx",
-       "v": "100000.00"
+       "v": "800000.00"
       },
       {
-       "l": "Invoice allocation \u2014 ADV-01",
+       "l": "Invoice allocation \u2014 AFYA-1-R1",
        "name": "allocation",
        "o": {},
        "t": "ro",
-       "v": "KES 100,000"
+       "v": "KES 800,000"
       },
       {
        "l": "Reference",
@@ -200,39 +200,39 @@
   {
    "label": "Agreement",
    "route": [
-    "CM-TEST-test_the_advance_review_",
+    "CM-TEST-BOARDS",
     "agreement"
    ]
   },
   {
    "label": "Deliveries",
    "route": [
-    "CM-TEST-test_the_advance_review_",
+    "CM-TEST-BOARDS",
     "deliveries"
    ]
   },
   {
    "label": "Invoices",
    "route": [
-    "CM-TEST-test_the_advance_review_",
+    "CM-TEST-BOARDS",
     "invoices"
    ]
   },
   {
    "label": "Obligations",
    "route": [
-    "CM-TEST-test_the_advance_review_",
+    "CM-TEST-BOARDS",
     "obligations"
    ]
   },
   {
    "label": "History",
    "route": [
-    "CM-TEST-test_the_advance_review_",
+    "CM-TEST-BOARDS",
     "history"
    ]
   }
  ],
  "title": "Prepare payment",
- "version": 13
+ "version": 25
 }

@@ -168,7 +168,8 @@ class TestBoards(ContractCase):
 
 		# replacement units, to completion
 		units2 = tw.fresh_serials(2)
-		arrival2 = t.arrive(units2, received_at="2027-07-16 09:00:00")["arrival"]
+		arrival2 = delivery.record_arrival(self.case, expected_version=t.version(), idempotency_key=t.key("arrive2"), actor=self.p["grace"], received_at="2027-07-16 09:00:00", destination="Afya House store",
+			items=[{"line_id": "L1", "quantity": 2, "units": units2, "replaces": units[8:]}])["arrival"]  # a replacement names the rejected units it replaces, which closes their issue
 		t.inspect(arrival2, units2)
 		t.accept(arrival2)
 		inv2 = t.claim("AFYA-2", 2)
@@ -179,10 +180,13 @@ class TestBoards(ContractCase):
 		from kentender_contracts.services import closeout
 
 		closeout.issue_completion_certificate(self.case, expected_version=t.version(), idempotency_key=t.key("ic"), actor=self.p["charles"])
+		pending = self.screen("charles", "D22-P")
+		self.assertEqual(self.primary(pending), "Confirm delivery")
+		t.confirm_delivery()
 		close = self.screen("amina", "D11")
 		self.assertEqual(self.primary(close), "Sign close-out")
 		closeout.sign_closeout(self.case, closeout=frappe.db.get_value("Contract Closeout", {"contract_case": self.case, "state": "Awaiting signature"}, "name"), expected_version=t.version(), idempotency_key=t.key("cl"), actor=self.p["amina"])
-		self.assertEqual(self.screen("amina", "D10", tab="Obligations")["st"], "Closed")
+		self.assertEqual(self.screen("amina", "D11-C", tab="Obligations")["st"], "Closed")
 		self.assertEqual(self.screen("daniel", "D10", tab="Obligations", capture_as="D40-T")["next"], None, "a technical reader has no personal work")
 		self.assertEqual(self.screen("charles", "D41", tab="History")["tab"], "History")
 

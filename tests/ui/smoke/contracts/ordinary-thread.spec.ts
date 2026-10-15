@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { pickRecord } from '../../helpers/picker';
-import { as, attr, board, nextStep, openAsSupplier as supplierOpen, openContract as open, press, tab, today, world } from './helpers';
+import { as, attr, board, nextStep, openAsSupplier as supplierOpen, openContract as open, pdf, press, tab, today, world } from './helpers';
 
 // CM-CHG-001 v0.8 plan Phase 4, tracker CM8-416 / gate CM-G04: the ordinary thread walked in a real browser, one session per person, from the menu: prepare, sign twice, appoint inspectors,
 // declare, receive, inspect, certify, accept (8 of 10), invoice, certify, Finance (accounting invoice, payment, settlement), the two replacement units, completion, close-out.
@@ -101,7 +101,7 @@ test.describe('The ordinary contract thread', () => {
 		});
 	});
 
-	async function receive(browser: Browser, units: string[]) {
+	async function receive(browser: Browser, units: string[], replaces: string[] = []) {
 		await as(browser, 'grace', async (page) => {
 			await openContract(page);
 			await tab(page, 'Deliveries');
@@ -115,6 +115,7 @@ test.describe('The ordinary contract thread', () => {
 			await page.getByTestId('cm-input-supplier_reference').fill(`AFYA-DN-${units.length}`);
 			await page.getByTestId('cm-input-received_at').fill('2027-07-12T10:00');
 			await page.getByTestId('cm-input-quantity.L1').fill(String(units.length));
+			if (replaces.length) await page.getByTestId('cm-input-replaces').fill(replaces.join('\n')); // a replacement names the rejected units it replaces: that is what closes their issue
 			await press(page);
 			await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'board');
 			await expect(board(page, 'D04-S')).toBeVisible();
@@ -230,7 +231,7 @@ test.describe('The ordinary contract thread', () => {
 	});
 
 	test('the two replacements are delivered, accepted and paid, then the contract is completed and closed', async ({ browser }) => {
-		await receive(browser, second);
+		await receive(browser, second, first.slice(8));
 		await inspect(browser, second, []);
 		await accept(browser);
 		await invoiceAndPay(browser, 2, `AFYA-${stamp}-2`);
@@ -238,6 +239,15 @@ test.describe('The ordinary contract thread', () => {
 			await openContract(page, 'My work');
 			await expect(board(page, 'D22')).toBeVisible();
 			await press(page); // Sign and issue certificate
+			await page.reload();
+			await expect(board(page, 'D22-P')).toBeVisible(); // signed is not delivered: the head confirms that it reached the contractor, with the proof
+			await page.getByTestId('cm-input-delivered_on').fill('2027-07-02');
+			await page.getByTestId('cm-input-method').fill('Hand delivery to the supplier');
+			await page.getByTestId('cm-input-reference').fill(`DISP-${stamp}`);
+			const uploaded = page.waitForResponse((r) => r.url().includes('upload_file') && r.ok());
+			await page.getByTestId('cm-input-evidence').setInputFiles(pdf('Delivery note'));
+			await uploaded;
+			await press(page); // Confirm delivery
 		});
 		await as(browser, 'amina', async (page) => {
 			await openContract(page, 'My work');

@@ -2,7 +2,7 @@
  "actions": {
   "Send notice": {
    "args": {
-    "issue": "CM-ISS-794676"
+    "issue": "CM-ISS-992892"
    },
    "command": "SendContractCorrespondence",
    "do": "command"
@@ -37,7 +37,7 @@
      "items": [
       [
        "Unit",
-       "CMTDFA369-0072"
+       "CMTB0A72C-0072"
       ],
       [
        "Accepted",

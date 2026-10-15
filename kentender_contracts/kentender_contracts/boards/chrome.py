@@ -98,6 +98,7 @@ TAB_OF_COMMAND = {
 	"RecordSecurityClaimOutcome": "Obligations", "RecordSecurityAction": "Obligations", "RequestContractTermination": "Obligations", "DecideContractTermination": "Obligations", "RecordTerminationNotice": "Obligations",
 	"RecordTerminationEffect": "Obligations", "PrepareTerminationSettlement": "Obligations", "CompleteTerminationSettlement": "Obligations", "SubmitContractReport": "Obligations", "RecordContractAwardPublication": "Obligations",
 	"RecordContractReportSubmission": "Obligations",
-	"IssueCompletionCertificate": "Obligations", "PrepareContractCloseout": "Obligations", "SignContractCloseout": "Obligations", "RestoreContractOperation": "Obligations",
+	"IssueCompletionCertificate": "Obligations", "PrepareContractCloseout": "Obligations", "SignContractCloseout": "Obligations", "RestoreContractOperation": "Obligations", "SignFinalContractAcceptance": "Obligations",
+	"ConfirmCertificateDelivery": "Obligations", "ReturnContractCloseout": "Obligations", "PrepareContractClosureCorrection": "Obligations", "ReopenContractCloseout": "Obligations", "ConfirmContractClosure": "Obligations",
 }
 

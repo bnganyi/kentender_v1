@@ -17,7 +17,7 @@ from typing import Any, Callable
 from uuid import uuid4
 
 import frappe
-from frappe.utils import cint, cstr
+from frappe.utils import cint, cstr, getdate
 
 from kentender_contracts.services import clock
 from kentender_contracts.services.errors import fail
@@ -32,7 +32,7 @@ DOCTYPES = (
 	"Contract Case", "Contract Operation Intent", "Contract Transaction Link", "Contract Simulated Signature", "Contract Command Journal",
 	"Contract Agreement Version", "Contract Source Package", "Contract Signature", "Contract Appointment", "Contract Arrival", "Contract Inspection",
 	"Contract Certificate", "Contract Acceptance", "Contract Invoice", "Contract Certification", "Contract Settlement", "Contract Closeout",
-	"Contract Task", "Contract Event", "Contract Simulated Funding", "Contract Security", "Contract Award Inbox", "Contract Advance", "Contract Issue", "Contract Change", "Contract Adjustment", "Contract Security Claim", "Contract Obligation", "Contract Report", "Contract Termination",
+	"Contract Task", "Contract Event", "Contract Simulated Funding", "Contract Security", "Contract Award Inbox", "Contract Advance", "Contract Issue", "Contract Change", "Contract Adjustment", "Contract Security Claim", "Contract Obligation", "Contract Report", "Contract Termination", "Contract Correction",
 )
 
 
@@ -70,6 +70,17 @@ def update(doc, **values) -> Any:
 	for field, value in values.items():
 		doc.set(field, value)
 	return save(doc)
+
+
+def day(value: Any):
+	"""A date a person typed, or None when it is blank or not a date. `frappe.utils.getdate` turns a blank into today, so a missing date would be recorded as today's date and pass every check."""
+	text = cstr(value).strip()
+	if not text:
+		return None
+	try:
+		return getdate(text)
+	except Exception:  # noqa: BLE001 - not a date
+		return None
 
 
 def digest(value: Any) -> str:

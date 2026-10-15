@@ -90,10 +90,7 @@ def record_source_evidence(case: str, *, obligation: str, reference: str, dated:
 		row = frappe.get_doc(OBL, obligation)
 		if row.contract_case != case:
 			raise frappe.DoesNotExistError("Not found")
-		try:
-			day = getdate(dated)
-		except Exception:  # noqa: BLE001
-			day = None
+		day = records.day(dated)
 		invalid({"reference": "" if cstr(reference).strip() else "Enter the source reference.", "dated": "" if day else "Enter the date of the source."})
 		found = detail(row)
 		found["evidence"].append({"reference": cstr(reference).strip(), "dated": str(day), "copy": cstr(copy).strip(), "notes": cstr(notes).strip(), "by": actor, "at": str(clock.now()), "status": "Proposed for the legal owner's review"})
@@ -123,10 +120,7 @@ def record_publication(case: str, *, obligation: str, channel: str, published_on
 			raise frappe.DoesNotExistError("Not found")
 		if row.state == "Satisfied":
 			return records.summary(doc, obligation=row.name, already=True)
-		try:
-			day = getdate(published_on)
-		except Exception:  # noqa: BLE001
-			day = None
+		day = records.day(published_on)
 		invalid({"channel": "" if cstr(channel).strip() else "Enter the channel it was published in.", "published_on": "" if day else "Enter the day it was published.",
 			"evidence": "" if evidence and all(cstr(e.get("label")).strip() for e in evidence) else "Attach the evidence of publication."})
 		preflight.rules(doc, "RecordContractAwardPublication").raise_if_any()

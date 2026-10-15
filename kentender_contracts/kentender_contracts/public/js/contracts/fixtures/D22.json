@@ -10,10 +10,11 @@
   "office"
  ],
  "back": "Back to contracts",
- "case": "CM-TEST-BOARDS",
+ "case": "CM-TEST-test_the_accounting_offi",
  "d": "D22",
  "dialogs": {},
  "ev": [
+  "Final acceptance 1",
   "Financial reconciliation 1"
  ],
  "id": "D22",
@@ -25,7 +26,7 @@
  },
  "p": "Sign and issue certificate",
  "page": "record",
- "ref": "CM-TEST-BOARDS",
+ "ref": "CM-TEST-test_the_accounting_offi",
  "regions": [
   {
    "b": [
@@ -37,7 +38,7 @@
       ],
       [
        "Acceptance",
-       "8 on 2 July 2027; 2 on 2 July 2027"
+       "10 on 20 July 2027"
       ],
       [
        "Contracted services",
@@ -49,7 +50,7 @@
       ],
       [
        "Final acceptance",
-       "Not required by the issued terms"
+       "Recorded"
       ],
       [
        "Obligations",
@@ -64,13 +65,13 @@
     },
     {
      "k": "text",
-     "v": "I confirm delivery and acceptance of the goods and services identified in the contract completion schedule, under contract CM-TEST-BOARDS agreement 1, completed on 2 July 2027, with the surviving obligations expressly listed."
+     "v": "I confirm delivery and acceptance of the goods and services identified in the contract completion schedule, under contract CM-TEST-test_the_accounting_offi agreement 1, completed on 28 July 2028, with the surviving obligations expressly listed."
     },
     {
      "items": [
       [
        "Surviving obligations",
-       "None"
+       "Publication \u2014 hopfsp, Not confirmed \u2014 set by current directions"
       ]
      ],
      "k": "rows"
@@ -87,39 +88,39 @@
   {
    "label": "Agreement",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_accounting_offi",
     "agreement"
    ]
   },
   {
    "label": "Deliveries",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_accounting_offi",
     "deliveries"
    ]
   },
   {
    "label": "Invoices",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_accounting_offi",
     "invoices"
    ]
   },
   {
    "label": "Obligations",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_accounting_offi",
     "obligations"
    ]
   },
   {
    "label": "History",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_accounting_offi",
     "history"
    ]
   }
  ],
  "title": "Confirm contract completion",
- "version": 46
+ "version": 18
 }

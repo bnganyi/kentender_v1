@@ -97,7 +97,7 @@ def reassign(case: str, command: str, subject: str, version: int, old_holder: st
 CONSEQUENCE = {
 	"RequestContractSignatures": "new_signing_attempt", "SignContractVersion": "new_signing_attempt", "SignContractCertification": "certify_invoice", "SignAdvanceCertification": "certify_advance", "RecordFinanceSettlement": "confirm_settlement",
 	"VerifyContractRemedy": "close_claim", "SubmitContractChangeForDecision": "vary_contract", "DecideContractChange": "vary_contract", "ActivateContractChange": "vary_contract",
-	"IssueCompletionCertificate": "close_contract", "SignContractCloseout": "close_contract", "PrepareContractCloseout": "close_contract",
+	"IssueCompletionCertificate": "close_contract", "SignContractCloseout": "close_contract", "PrepareContractCloseout": "close_contract", "SignFinalContractAcceptance": "final_accept",
 }
 #: Finance's payment steps are blocked by a payment hold; the accounting invoice (liability) is not (section 5.8, 5.12).
 PAYMENT_STEPS = ("SaveNativeFinanceDraft", "SubmitNativeFinanceForApproval", "ApproveNativeFinanceRecord")

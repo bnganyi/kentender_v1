@@ -100,6 +100,12 @@ class WarrantyCase(ContractCase):
 
 
 class TestClaim(WarrantyCase):
+	def test_a_blank_notice_date_is_refused_and_not_read_as_today(self):
+		for blank in ("", "  "):
+			exc = refusal(self.claim, notice=blank)
+			self.assertIn("notice_date", exc.detail["fields"], repr(blank))
+		self.assertEqual(frappe.db.count("Contract Issue", {"contract_case": self.case}), 0)
+
 	def test_a_claim_records_the_unit_the_fault_and_the_end_of_its_warranty_and_asks_for_the_defect_notice(self):
 		out = self.claim()
 		row = self.row()

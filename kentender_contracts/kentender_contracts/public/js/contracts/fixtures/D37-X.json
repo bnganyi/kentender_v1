@@ -18,7 +18,7 @@
  "dialogs": {
   "reject": {
    "args": {
-    "security": "CM-SEC-793547"
+    "security": "CM-SEC-991759"
    },
    "b": [
     {
@@ -43,7 +43,7 @@
   },
   "verify": {
    "args": {
-    "security": "CM-SEC-793547"
+    "security": "CM-SEC-991759"
    },
    "b": [
     {

@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from kentender_contracts import award_receiver
-from kentender_contracts.services import adjustment, advance, change, closeout, delivery, existing, formation, formation_end, issues, obligations, outside_signature, payment, reporting, security, security_actions, termination, warranty
+from kentender_contracts.services import adjustment, advance, change, closeout, closure_correction, delivery, existing, final_acceptance, formation, formation_end, issues, obligations, outside_signature, payment, reporting, security, security_actions, termination, warranty
 from kentender_contracts.services.errors import invalid
 
 Handler = Callable[[str, dict[str, Any], dict[str, Any], int, str, str], dict[str, Any]]
@@ -140,6 +140,20 @@ def _declaration(value: Any) -> str:
 	return {"0": change.NO_CONFLICT, "1": "Conflict"}.get(chosen, chosen)
 
 
+def _return_closeout(case, args, values, expected, key, actor):
+	"""Return for correction: a correction request's decision, or the final acceptance or the close-out review."""
+	if args.get("correction"):
+		return closure_correction.decide(case, correction=int(args["correction"]), decision="Return", reason=values.get("reason", ""), expected_version=expected, idempotency_key=key, actor=actor)
+	return closeout.return_review(case, stage=args.get("stage", ""), reason=values.get("reason", ""), expected_version=expected, idempotency_key=key, actor=actor)
+
+
+def _keep_closed(case, args, values, expected, key, actor):
+	"""Keep closed with surviving work: the one item the dialog names, with its owner, due event and the term that lets it survive."""
+	named = [values.get(f"survivor_{k}", "") for k in ("kind", "ref", "owner", "due", "basis")]
+	survivors = [{"kind": values.get("survivor_kind", ""), "ref": values.get("survivor_ref", ""), "owner": pick(values.get("survivor_owner")), "due": values.get("survivor_due", ""), "basis": values.get("survivor_basis", "")}] if any(str(n).strip() for n in named) else []
+	return closure_correction.decide(case, correction=int(args["correction"]), decision="Keep", reason=values.get("reason", ""), survivors=survivors, expected_version=expected, idempotency_key=key, actor=actor)
+
+
 def _security_action(case, args, values, expected, key, actor):
 	if args.get("action") == "Replace":
 		return security_actions.replace(case, security_name=args["security"], expected_version=expected, idempotency_key=key, actor=actor)
@@ -246,6 +260,15 @@ COMMANDS: dict[str, Handler] = {
 	"RecordFinanceSettlement": lambda c, a, v, e, k, u: payment.record_finance_settlement(c, payment=a["payment"], expected_version=e, idempotency_key=k, actor=u, effective_date=v.get("effective_date", ""), evidence=v.get("evidence", "")),
 	"IssueCompletionCertificate": lambda c, a, v, e, k, u: closeout.issue_completion_certificate(c, expected_version=e, idempotency_key=k, actor=u),
 	"SignContractCloseout": lambda c, a, v, e, k, u: closeout.sign_closeout(c, closeout=a["closeout"], expected_version=e, idempotency_key=k, actor=u),
+	"SignFinalContractAcceptance": lambda c, a, v, e, k, u: final_acceptance.sign(c, expected_version=e, idempotency_key=k, actor=u),
+	"ConfirmCertificateDelivery": lambda c, a, v, e, k, u: closeout.confirm_certificate_delivery(c, certificate=a["certificate"], delivered_on=v.get("delivered_on", ""), method=v.get("method", ""), reference=v.get("reference", ""),
+		evidence=_files(v, "Proof of delivery"), expected_version=e, idempotency_key=k, actor=u),
+	"PrepareContractCloseout": lambda c, a, v, e, k, u: closeout.prepare_closeout(c, expected_version=e, idempotency_key=k, actor=u),
+	"ReturnContractCloseout": _return_closeout,
+	"PrepareContractClosureCorrection": lambda c, a, v, e, k, u: closure_correction.prepare(c, fact=pick(v.get("fact")), reason=v.get("reason", ""), evidence_files=_files(v, "Closure correction evidence"), submit=bool(a.get("submit", True)),
+		correcting=int(a.get("correcting") or 0), expected_version=e, idempotency_key=k, actor=u),
+	"ReopenContractCloseout": lambda c, a, v, e, k, u: closure_correction.decide(c, correction=int(a["correction"]), decision="Reopen", reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u),
+	"ConfirmContractClosure": _keep_closed,
 	"RestoreContractOperation": lambda c, a, v, e, k, u: formation.restore_operations(c, actor=u),
 	"RecordWarrantyClaim": lambda c, a, v, e, k, u: warranty.record_claim(c, unit=pick(v.get("unit")), fault=v.get("fault", ""), notice_date=v.get("notice_date", ""), remedy=pick(v.get("remedy")) or v.get("remedy", ""),
 		evidence=v.get("evidence", ""), expected_version=e, idempotency_key=k, actor=u),

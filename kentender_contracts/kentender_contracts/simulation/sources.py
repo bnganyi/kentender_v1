@@ -102,6 +102,10 @@ def with_advance(case: str, advance: bool = False) -> bool:
 	return advance or case.endswith("-ADV")
 
 
+#: The final-acceptance variant (boards D32, D22): the issued terms ask the Accounting Officer to record a final acceptance once everything ordered is accepted; named by a `-FIN` case, like the others.
+FINAL_ACCEPTANCE = {"required": True, "basis": "The final-acceptance term of the issued conditions"}
+
+
 def with_services(case: str, services: bool = False) -> bool:
 	"""The goods-plus-service variant is named by its case (`-SVC`), like the security and outside-signing variants."""
 	return services or case.endswith("-SVC")
@@ -126,6 +130,7 @@ def _content(number: str, case: str, security_required: bool = False, outside_si
 	if number == "S5":
 		security = {"required": True, "percentage": 10, "statement": "10% of the contract sum, in the form of a bank guarantee"} if security_required else {"required": False, "statement": "Not required by the issued terms"}
 		return _json({"warranty": {"months": 12, "from": "each unit's acceptance"}, "payment": {"basis": "certified invoice for accepted units", "terms": "as issued"},
+			"final_acceptance": FINAL_ACCEPTANCE if case.endswith("-FIN") else {"required": False},
 			"performance_security": security, "advance": ADVANCE if with_advance(case, advance) else {"allowed": False}, "delivery_due": DELIVERY_DUE,
 			"signing": {"outside_permitted": True, "basis": "Outside signing permitted by the issued terms"} if outside_signing else {"outside_permitted": False}})
 	if number == "S6":

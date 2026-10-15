@@ -82,15 +82,13 @@ def record_outside_signature(case: str, *, party: str, expected_version: int, id
 			"capacity": "" if cstr(capacity).strip() else "Enter the capacity.",
 			"signed_on": "",
 		}
-		try:
-			day = getdate(signed_on)
-			if day > getdate(clock.now()):
-				problems["signed_on"] = "The date cannot be in the future."
-			elif agreement.frozen_at and day < getdate(agreement.frozen_at):
-				problems["signed_on"] = "The agreement was not out for signature on that date."
-		except Exception:
+		day = records.day(signed_on)
+		if day is None:
 			problems["signed_on"] = "Enter the date the copy was signed."
-			day = None
+		elif day > getdate(clock.now()):
+			problems["signed_on"] = "The date cannot be in the future."
+		elif agreement.frozen_at and day < getdate(agreement.frozen_at):
+			problems["signed_on"] = "The agreement was not out for signature on that date."
 		invalid(problems)
 		_signer_in_force(case, slot)
 		held = holds.blocking(case, "new_signing_attempt")

@@ -1,0 +1,141 @@
+{
+ "actions": {
+  "Confirm delivery": {
+   "args": {
+    "certificate": "CM-CRT-998615"
+   },
+   "command": "ConfirmCertificateDelivery",
+   "do": "command"
+  },
+  "View history": {
+   "do": "tab",
+   "tab": "History"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_correction_from_t",
+ "d": "D38",
+ "dialogs": {},
+ "ev": [],
+ "id": "D38-R",
+ "name": "Close-out correction",
+ "next": {
+  "h": "Confirm certificate delivery.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Confirm delivery",
+ "page": "record",
+ "ref": "CM-TEST-test_a_correction_from_t",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Closure 1",
+       "Retained"
+      ],
+      [
+       "Reopening 1",
+       "Recorded 28 Jul 2028"
+      ],
+      [
+       "Spending, stock and legal dates",
+       "Unchanged"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "History"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Delivered on",
+       "name": "delivered_on",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "How it was delivered",
+       "name": "method",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Delivery reference",
+       "name": "reference",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Proof of delivery",
+       "name": "evidence",
+       "o": {},
+       "t": "file",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Certificate delivery"
+  }
+ ],
+ "s2": [
+  "View history"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "HOP correction 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review close-out correction",
+ "version": 24
+}

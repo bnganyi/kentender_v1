@@ -148,10 +148,7 @@ def assess(case: str, kind: str, request: dict[str, Any]) -> dict[str, Any]:
 	if kind == "Extension":
 		current = operative["delivery"]["due"]
 		out.update(current_due=current, original_due=operative["delivery"].get("original_due") or current)
-		try:
-			proposed = getdate(request.get("proposed_date"))
-		except Exception:  # noqa: BLE001 - not a date
-			proposed = None
+		proposed = records.day(request.get("proposed_date"))
 		if not proposed:
 			out["problems"]["proposed_date"] = "Enter the proposed delivery date."
 		elif proposed <= getdate(current):

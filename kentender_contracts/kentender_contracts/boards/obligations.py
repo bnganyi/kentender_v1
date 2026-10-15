@@ -8,9 +8,9 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cint, formatdate
 
-from kentender_contracts.boards import changes, chrome, kit, reports, statements, termination as termination_boards
+from kentender_contracts.boards import changes, chrome, completion, kit, reports, statements, termination as termination_boards
 from kentender_contracts.boards.context import Context, money, when
-from kentender_contracts.services import change, closeout, events, issues, obligations as obligation_service, payment, people, records, reporting, security_actions, termination, work
+from kentender_contracts.services import change, clock, closeout, closure_correction, events, final_acceptance, issues, obligations as obligation_service, payment, people, records, reporting, security_actions, termination, warranty, work
 
 
 def d22(ctx: Context) -> dict:
@@ -18,15 +18,28 @@ def d22(ctx: Context) -> dict:
 	review = closeout.review(ctx.case)
 	accepted = sum(d["accepted"] for d in review["deliveries"])
 	history = [f"{a['accepted']} on {formatdate(a['date'], 'd MMMM yyyy')}" for a in _acceptance_dates(ctx)]
-	completed = formatdate(ctx.doc.operative_date or frappe.utils.today(), "d MMMM yyyy")
+	accepted_finally = final_acceptance.current(ctx.case) if final_acceptance.required(ctx.case) else None
+	completed = formatdate(accepted_finally.signed_at if accepted_finally is not None and accepted_finally.signed_at else ctx.doc.operative_date or frappe.utils.today(), "d MMMM yyyy")
 	statement = statements.COMPLETION.format(contract=f"{ctx.doc.contract_id} agreement {ctx.agreement.version_no}", date=completed)
-	b = chrome.base(ctx, "D22", d="D22", name="Completion certificate", title="Confirm contract completion", tab="Obligations", next=chrome.next_block(ctx), ev=["Financial reconciliation 1"],
+	final = "Recorded" if review["final_acceptance"].startswith("Recorded") else review["final_acceptance"]
+	b = chrome.base(ctx, "D22", d="D22", name="Completion certificate", title="Confirm contract completion", tab="Obligations", next=chrome.next_block(ctx), ev=["Final acceptance 1", "Financial reconciliation 1"] if accepted_finally is not None else ["Financial reconciliation 1"],
 		regions=[kit.R("Certificate summary", kit.r(["Delivered and accepted", f"{accepted} {(ctx.terms.get('lines') or [{}])[0].get('description', '').lower()}"] if accepted else ["Delivered and accepted", "—"],
-			["Acceptance", "; ".join(history) or "—"], ["Contracted services", "No contracted service line"], ["Unresolved defects", "None"], ["Final acceptance", "Not required by the issued terms"],
-			["Obligations", "All fulfilled" if not review["remaining"] else f"{len(review['remaining'])} remaining"], ["Recipient", ctx.doc.supplier_name]), kit.x(statement), kit.r(["Surviving obligations", "None"]))],
+			["Acceptance", "; ".join(history) or "—"], ["Contracted services", "No contracted service line"], ["Unresolved defects", "None"], ["Final acceptance", final],
+			["Obligations", "All fulfilled" if not review["remaining"] else f"{len(review['remaining'])} remaining"], ["Recipient", ctx.doc.supplier_name]), kit.x(statement), kit.r(["Surviving obligations", survivors_text(ctx, review)]))],
 		p="Sign and issue certificate")
 	b["actions"]["Sign and issue certificate"] = kit.command("IssueCompletionCertificate")
 	return b
+
+
+def survivors_text(ctx: Context, review: dict) -> str:
+	"""What outlives the closure, in one line each: the item, who owns it and when it falls due."""
+	listed = review.get("classified") or []
+	return "None" if not listed else "; ".join(f"{c['kind']} — {ctx.name(c['owner']) or c['owner']}, {formatdate(c['due'], 'd MMM yyyy') if str(c['due'])[:2] == '20' else c['due']}" for c in listed)
+
+
+def may_correct(ctx: Context) -> bool:
+	"""The head of procurement asks for a correction of a close-out (the service checks the same)."""
+	return people.holds(ctx.user, work.HOP)
 
 
 def _acceptance_dates(ctx: Context) -> list[dict]:
@@ -43,18 +56,26 @@ def d11(ctx: Context, closeout_name: str) -> dict:
 	cert = frappe.db.get_value("Contract Certificate", {"contract_case": ctx.case, "kind": "Completion", "state": "Signed"}, "name") or ""
 	accepted = sum(d["accepted"] for d in review["deliveries"])
 	decision = statements.CLOSEOUT
+	running = next((c for c in review["classified"] if c["kind"] == "Warranty"), None)
+	certificate_row = closeout.completion_certificate(ctx.case)
+	warranty_text = f"Runs until {formatdate(running['due'], 'd MMM yyyy')}" if running else "Ended with no unresolved claim" if any(warranty.warranty_ends(ctx.case, u) for u in ctx.position["units"]) else "Not provided by the issued terms"
 	b = chrome.base(ctx, "D11", d="D11", name="Close-out review", title="Close contract", tab="Obligations", next=chrome.next_block(ctx), ev=["Completion certificate 1", "Financial reconciliation 1"],
 		regions=[kit.R("Completion review", kit.f(["Accepted", str(accepted)], ["Invoiced", money(review["claimed_total"], ctx.currency)], ["Cash confirmed", money(review["settled_total"], ctx.currency)],
-			["Balance", money(review["claimed_total"] - review["settled_total"], ctx.currency)]), kit.r(["Warranty", "Runs from each unit’s acceptance"], ["Security", review["security"]], ["Required reporting", "Complete"], ["Completion certificate", "Signed" if cert else "Not signed"])),
-			kit.R("Close-out decision", kit.x(decision), kit.r(["Surviving obligations", "None" if not review["remaining"] else f"{len(review['remaining'])} listed"]))],
-		p="Sign close-out")
+			["Balance", money(review["claimed_total"] - review["settled_total"], ctx.currency)]), kit.r(["Warranty", warranty_text], ["Security", review["security"]], ["Required reporting", "Complete"], ["Completion certificate", f"Certificate {certificate_row.subject_version}" if certificate_row is not None else "Not signed"])),
+			kit.R("Close-out decision", kit.x(decision), kit.r(["Surviving obligations", survivors_text(ctx, review) if not review["remaining"] else f"{len(review['remaining'])} remaining"]))],
+		p="Sign close-out", s2=["Return for correction"])
 	b["actions"]["Sign close-out"] = kit.command("SignContractCloseout", closeout=closeout_name)
+	b["actions"]["Return for correction"] = kit.dialog("return")
+	b["dialogs"]["return"] = kit.dlg("Return for correction", [kit.fl(kit.ta("Reason", "", "reason"))], "Return", command="ReturnContractCloseout", args={"stage": "close-out"})
 	return b
 
 
 def obligations(ctx: Context) -> dict:
 	"""Remaining obligations (D10) and, for a reader with no personal work, the work register (D40)."""
 	internal = ctx.sees("obligations")  # a supplier sees only their own remedies, never the internal work behind them
+	closed = _closed(ctx) if ctx.doc.lifecycle == "Closed" and internal and not ctx.neutral else None  # a reader with no personal work keeps the register
+	if closed is not None:
+		return closed
 	remaining = closeout.remaining_obligations(ctx.case) if ctx.doc.lifecycle == "Active" and internal else []
 	regions = []
 	if remaining:
@@ -92,6 +113,24 @@ def obligations(ctx: Context) -> dict:
 	if ended is not None and ended.state == "Settled":
 		return termination_boards.settled(ctx, ended)  # D39-C
 	b = chrome.base(ctx, "D10", d="D10", name="Contract obligations", title="Remaining obligations", tab="Obligations", next=chrome.next_block(ctx), regions=regions, ev=["Agreement 1"], s2=[])
+	if ctx.mine("PrepareContractCloseout"):  # a returned final acceptance or review: the head sends it back once the evidence is right
+		b["p"] = "Send back for review"
+		b["actions"]["Send back for review"] = kit.command("PrepareContractCloseout")
+	_entries(ctx, b)
+	return b
+
+
+def _closed(ctx: Context):
+	"""A closed contract's Obligations tab: the correction in progress where there is one (D38-P for the head, D38 for the Accounting Officer, D38-R after a reopening), else the closure (D11-C)."""
+	live = closure_correction.live(ctx.case)
+	if live is not None and live.state == "Submitted" and ctx.mine("ConfirmContractClosure"):
+		return completion.correction_decision(ctx, live)
+	if live is not None and live.state in ("Draft", "Returned") and ctx.mine("PrepareContractClosureCorrection"):
+		return completion.correction_request(ctx, correcting=live)
+	b = completion.closed(ctx)
+	if may_correct(ctx) and live is None:
+		b["s2"].append("Request close-out correction")
+		b["actions"]["Request close-out correction"] = kit.route(ctx.case, "obligations", "request-correction")
 	_entries(ctx, b)
 	return b
 

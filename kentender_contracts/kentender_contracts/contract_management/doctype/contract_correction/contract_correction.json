@@ -1,0 +1,150 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-COR-{#####}",
+ "creation": "2026-10-15 12:00:00.000000",
+ "description": "A reasoned request to correct a close-out: the exact closure and the completion fact it got wrong, the evidence, the proposed disposition and the Accounting Officer's decision. The original closure is kept; a reopening is a successor decision, never an edit.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "correction_no",
+  "closeout",
+  "state",
+  "reason",
+  "evidence_json",
+  "disposition",
+  "survivors_json",
+  "decision_json",
+  "requested_by",
+  "requested_at",
+  "decided_by",
+  "decided_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "correction_no",
+   "label": "Correction no",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closeout",
+   "label": "Closeout",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Closeout"
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Draft\nSubmitted\nReturned\nReopened\nKept closed"
+  },
+  {
+   "fieldname": "reason",
+   "label": "Reason",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_json",
+   "label": "Evidence json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "disposition",
+   "label": "Disposition",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "survivors_json",
+   "label": "Survivors json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision_json",
+   "label": "Decision json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "label": "Requested by",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_at",
+   "label": "Requested at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_by",
+   "label": "Decided by",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_at",
+   "label": "Decided at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Correction",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
