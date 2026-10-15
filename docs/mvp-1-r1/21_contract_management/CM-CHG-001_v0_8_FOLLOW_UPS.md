@@ -99,7 +99,7 @@ This register holds corrections owed to other documents, external decisions, evi
 | FU-CM-65 | **Register filters.** The list draws Search, Status and Source; Responsible person and Managing unit are each a choice of one person or one unit from a list that can grow, which needs a register-filter source for the shared record picker (the existing ones answer System setup\'s administrators only). | Low | CM + core | Open (Phase 10) |
 | FU-CM-66 | **Certificate conformance beyond the text.** The §19.5 statements are compared with the specification word for word; the common frozen header (reference, type and version, digests, evidence manifest, line coverage by serial), the delivery receipt of each output and the layout are not conformance-tested. | Medium | CM | Open (Phases 6, 9; CM-AC-65, 70) |
 | FU-CM-67 | **`frappe.set_user` inside a request (B16).** Any app that calls it and undoes it inside a web request replaces the browser\'s session id. Contract Management has its own safe helper; core could offer one and other apps could be checked. | Medium | Core owner | Open |
-| FU-CM-68 | **Home provider for contract work.** Contract work appears in the list\'s My work view; the Home page\'s cross-module work (`kt_home_providers`) does not show it yet. | Low | CM | Open (Phase 10) |
+| FU-CM-68 | **Home provider for contract work.** Contract work appears in the list\'s My work view; the Home page\'s cross-module work (`kt_home_providers`) does not show it yet. | Low | CM | **Closed 15 Oct 2026:** `services/home_provider.py` is registered on `kt_home_providers` (`test_cm_home_provider`) and Home carries the Contracts module |
 
 ## 5. Found during Phase 5 (15 October 2026)
 
@@ -183,4 +183,12 @@ This register holds corrections owed to other documents, external decisions, evi
 | FU-CM-119 | **A native credit note is raised in the accounting records, not in Contract Management.** When a posted invoice is corrected down Finance must bring the liability to the supported amount with a credit note; the screen now says what is needed and Finance names the credit (read back, never written). A credit-note editor inside Contract Management, with its own maker and approver, is a decision for the owner (the standing rule is that routine Finance work is not a redirect to a Desk form). | Medium | Owner, Finance | Open |
 | FU-CM-120 | **No screen draws the funding allocation,** so the leakage sentinel for it guards a screen that does not yet exist; the specification's field set `deliberation` is granted to the office only. Revisit when a screen shows the source allocation. | Low | CM | Open |
 | FU-CM-121 | **Evidence download and export are not yet checked for each reader** (CM-AC-48), nor that no bid authority is inherited by a supplier (CM-AC-43). | Medium | CM | Open |
+
+## 11. Found during Phase 11 (15 October 2026)
+
+| ID | Item | Severity | Owner | Status |
+|---|---|---|---|---|
+| FU-CM-122 | **The plan's "stage `contracts` after `award`" cannot be a stage of the canonical seed world.** The world is read as at 18 June 2027 10:00 (SEED-002) and a contract exists only from 2 July 2027 09:00, when Award's package reaches Contracting (the award seed's AWD-DEMO-DELIVERED profile); the design's own boards run to July 2028. Built instead: isolated, clock-scoped demonstration profiles (`seeds/demo.py`, `make seed-cm-profile`), idempotent and cleanable. Owner decision needed: leave it so, or move the as-at instant and amend SEED-002 and the seed runbook (a Phase 13 document change). The plan's gate wording (`seed-canonical THROUGH=contracts`) is not met as written. | High | Owner | Open |
+| FU-CM-123 | **Every step that becomes someone's turn raises an alert,** which is a superset of the specification's notification column (it names a notified person for some handoffs and none for others, for example the sender's waiting items). The owner may narrow it to the named rows. A waiting or scheduled item is never an alert. | Low | Owner | Open |
+| FU-CM-124 | **The profiles use ERPNext master data the test world creates** (items, supplier, accounts, the Payment Entry workflow) and remove it with `clean`; on a site that already holds such data they would add and remove their own only. Installing them on the dev site waits for the owner's go-ahead (CM8-411). | Low | Owner | Open |
 

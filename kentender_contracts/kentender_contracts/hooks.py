@@ -288,6 +288,9 @@ kt_record_picker_sources = ["kentender_contracts.services.picker_sources.sources
 # Contract Management is the Contracting receiver of Award's package, decision events and updates (AWD-IF-05; FU-CM-33: it declines where another receiver answers, unless named by `kt_award_contracting_receiver`).
 kt_award_contracting_receivers = ["kentender_contracts.award_receiver.receiver"]
 
+# Contract work on the Home page (HOME-CHG-001 v0.6 section 7; CM-CHG-001 v0.8 section 5.10, FU-CM-68): one function that answers for one actor and only reads.
+kt_home_providers = ["kentender_contracts.services.home_provider.entries"]
+
 # The supplier's side (CM-CHG-001 v0.8 section 9): `/supplier/contracts` and `/supplier/contracts/<contract>/...` on the shared supplier portal (kentender_core's `kt_portal`). The resolver answers the verdict;
 # the bundle mounts the same screens the Desk page hosts, fed by the portal's route and transport.
 website_route_rules = [

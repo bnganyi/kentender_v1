@@ -225,6 +225,9 @@ def wipe(namespace_value: str) -> int:
 	if not namespace_value:
 		raise ValueError("a fixture wipe needs a namespace")
 	count = 0
+	cases = frappe.get_all(CASE, filters={"fixture_namespace": namespace_value}, pluck="name")
+	if cases:  # the bell's alerts for these contracts go with them
+		frappe.db.delete("Notification Log", {"document_type": CASE, "document_name": ["in", cases]})
 	for doctype in DOCTYPES:
 		count += frappe.db.count(doctype, {"fixture_namespace": namespace_value})
 		frappe.db.delete(doctype, {"fixture_namespace": namespace_value})
