@@ -128,6 +128,27 @@ class TestCorrectionOfAClaim(LiabilityCase):
 		self.assertEqual(exc.code, "CM_HOLD")
 		self.assertIn("native credit of 200,000.00", exc.reasons[0]["detail"]["reason"])
 
+	def test_finance_names_the_credit_it_raised_and_a_wrong_or_too_small_one_is_refused_with_nothing_changed(self):
+		from unittest import mock
+
+		first = self.claim("INV-01", 10)
+		self.t.post_accounting(first["invoice"])
+		second = self.correct(first)
+		original = self.row(second).native_invoice
+		ask = lambda doc, who="josphat": payment.reconcile_liability(self.case, invoice=second["invoice"], credit_document=doc, expected_version=self.t.version(), idempotency_key=self.t.key("rl"), actor=self.p[who])
+		self.assertEqual(refusal(ask, original).code, "CM_INPUT", "the invoice itself is not a credit")
+		self.assertEqual(refusal(ask, "", "charles").code, "CM_AUTHORITY", "only Finance names the credit")
+		with mock.patch("kentender_contracts.native.finance_events.on_purchase_invoice_submit"):  # the credit reaches Finance's screen only when the hook missed it
+			small = world.credit_note(original, 1, "lia-small")
+		self.assertEqual(refusal(ask, small).code, "CM_RECONCILE")
+		self.assertTrue([h for h in holds.open_holds(self.case) if h.key.startswith("liability:")], "100,000 of the 200,000 needed leaves the hold in place")
+		with mock.patch("kentender_contracts.native.finance_events.on_purchase_invoice_submit"):
+			rest = world.credit_note(original, 1, "lia-rest")
+		out = ask(rest)
+		self.assertTrue(out["reconciled"])
+		self.assertFalse([h for h in holds.open_holds(self.case) if h.key.startswith("liability:")])
+		self.assertFalse([t for t in self.tasks("josphat") if t[0] == "ReconcileInvoiceLiability"], "Finance's task is done")
+
 	def test_a_native_credit_lifts_the_hold_and_the_corrected_claim_is_certified_and_paid_800_000_once(self):
 		first = self.claim("INV-01", 10)
 		self.t.post_accounting(first["invoice"])

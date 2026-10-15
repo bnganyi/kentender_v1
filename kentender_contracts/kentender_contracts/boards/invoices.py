@@ -379,6 +379,20 @@ def d08l(ctx: Context, invoice, gap: dict) -> dict:
 	return b
 
 
+def liability(ctx: Context, gap: dict) -> dict:
+	"""Finance reconciles the original liability (authored: the artboards draw what the head sees while this waits, D08-L, and nothing for the person who has to act). The credit is raised in the accounting records; here
+	Finance names it, Contract Management reads it, and the certification and payment held for it are released."""
+	original = frappe.get_doc("Contract Invoice", gap["original"])
+	position_ = kit.r(["Native liability posted", money(gap["liability"], ctx.currency)], ["Supported by the corrected claim", money(gap["supported"], ctx.currency)], ["Credit needed", money(gap["required"], ctx.currency)],
+		["Credit received", money(gap["credited"], ctx.currency)])
+	field = kit.pick("Native credit against the original invoice", "", "contracts.native_record", "credit_document", {"kind": "purchase_invoice"}, "", "credit")
+	b = chrome.base(ctx, "D08-LR", d="D08", name="Corrected claim after early liability", title="Reconcile the original liability", tab="Invoices", next=chrome.next_block(ctx),
+		regions=[kit.R("Accounting position", position_, kit.xh(f"Raise a credit note of {money(gap['required'], ctx.currency)} against {gap['native']} in the accounting records, then name it here.")), kit.R("Credit", kit.fl(field))],
+		p="Reconcile credit", s2=[], ev=[f"Supplier invoice {original.claim_reference}", "Accounting invoice"])
+	b["actions"]["Reconcile credit"] = kit.command("ReconcileInvoiceLiability", invoice=gap["successor"])
+	return b
+
+
 def d09(ctx: Context, invoice=None) -> dict:
 	"""Invoice and payment: the read-only follow-up of the latest claim (the contract owner's and every reader's view of the Invoices tab)."""
 	focus = invoice or next((i for i in reversed(ctx.invoices) if i.state not in ("Superseded", "Set aside")), ctx.invoices[-1] if ctx.invoices else None)

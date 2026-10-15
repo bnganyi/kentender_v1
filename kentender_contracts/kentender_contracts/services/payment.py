@@ -378,6 +378,30 @@ def receive_finance_result(case: str, *, native_invoice: str, actor: str = "") -
 	return {"reconciled": None}
 
 
+def reconcile_liability(case: str, *, invoice: str, credit_document: str, expected_version: int, idempotency_key: str, actor: str) -> dict[str, Any]:
+	"""`ReconcileInvoiceLiability`: Finance names the native credit note that brings the liability posted for a superseded claim down to what the corrected claim supports. The credit is raised in the accounting
+	records (there is no credit-note editor here: FU-CM-119); Contract Management reads it, never writes the ledger, and when the credits stand at the amount needed the hold lifts and Finance's task is done.
+	A document that is not a posted credit against that original invoice is refused, and a credit that is too small says how much more is needed."""
+	preflight.exists(case)
+
+	def body() -> dict[str, Any]:
+		doc = records.lock(case)
+		records.check_version(doc, expected_version)
+		gap = next((g for g in liability_gap(case) if g["successor"] == invoice), None)
+		if gap is None:
+			fail("CM_CHANGED", invoice=invoice, reason="No liability is waiting for a credit on this claim.")
+		found = frappe.db.get_value("Purchase Invoice", cstr(credit_document).strip(), ["docstatus", "is_return", "return_against"], as_dict=True) if cstr(credit_document).strip() else None
+		invalid({"credit_document": "" if found and found.docstatus == 1 and found.is_return and found.return_against == gap["native"] else "This is not a posted credit against the original invoice."})
+		result = receive_finance_result(case, native_invoice=gap["native"], actor=actor)  # the owner is read, and the hold and the task end with its answer
+		if not result.get("reconciled"):
+			fail("CM_RECONCILE", invoice=invoice, reason=f"The credits against the original invoice are {result['credited']:,.2f}; {result['required']:,.2f} is needed.", required=result["required"], credited=result["credited"])
+		records.bump(doc)
+		return records.summary(doc, invoice=invoice, reconciled=True)
+
+	return records.command("ReconcileInvoiceLiability", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "invoice": invoice, "credit": credit_document}, body=body,
+		authorise=lambda: authority.require(actor, "Finance preparation"))
+
+
 # -- certification --------------------------------------------------------------------------------------------------------------------
 def _acceptance_signers(case: str) -> list[str]:
 	out = []

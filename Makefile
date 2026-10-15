@@ -1428,8 +1428,8 @@ std-templates-gate:
 # CM-CHG-001 v0.8 plan Phase 1 (tracker CM8-105). Contract Management's Python gates write real rows (no rollback on this bench), so they
 # run on the test site: `scripts/test-site.sh run make cm-services-gate`. They refuse the dev site and a live browser run.
 # Later gates (seams, native, leakage, dead ends, UI, seeds) are added with the phase that builds them (tracker rule 13).
-.PHONY: cm-preflight cm-services-gate cm-native-gate cm-ui-gate cm-independence-gate cm-seams-gate
-CM_SERVICE_MODULES ?= test_cm_import_boundary test_cm_schema test_cm_errors test_cm_records test_cm_intents test_cm_holds test_cm_recovery_matrix test_cm_signing_simulation test_cm_rules test_cm_authority test_cm_audience test_cm_tasks test_cm_workspace test_cm_support test_cm_formation test_cm_formation_rules test_cm_formation_end test_cm_outside_signature test_cm_security test_cm_existing test_cm_award_receiver test_cm_delivery test_cm_appointment test_cm_arrival_exceptions test_cm_inspection test_cm_acceptance test_cm_services test_cm_invoice test_cm_liability test_cm_settlement test_cm_advance test_cm_finance_boards test_cm_issues test_cm_change test_cm_adjustment test_cm_warranty test_cm_security_actions test_cm_termination test_cm_reporting test_cm_change_boards test_cm_obligation_boards test_cm_thread test_cm_boards test_cm_picker test_cm_service_principal test_cm_outputs test_cm_date_guard test_cm_completion test_cm_completion_boards
+.PHONY: cm-preflight cm-services-gate cm-native-gate cm-ui-gate cm-independence-gate cm-seams-gate cm-leakage-gate cm-dead-end-gate
+CM_SERVICE_MODULES ?= test_cm_import_boundary test_cm_schema test_cm_errors test_cm_records test_cm_intents test_cm_holds test_cm_recovery_matrix test_cm_signing_simulation test_cm_rules test_cm_authority test_cm_audience test_cm_tasks test_cm_workspace test_cm_support test_cm_formation test_cm_formation_rules test_cm_formation_end test_cm_outside_signature test_cm_security test_cm_existing test_cm_award_receiver test_cm_delivery test_cm_appointment test_cm_arrival_exceptions test_cm_inspection test_cm_acceptance test_cm_services test_cm_invoice test_cm_liability test_cm_settlement test_cm_advance test_cm_finance_boards test_cm_issues test_cm_change test_cm_adjustment test_cm_warranty test_cm_security_actions test_cm_termination test_cm_reporting test_cm_change_boards test_cm_obligation_boards test_cm_thread test_cm_boards test_cm_picker test_cm_service_principal test_cm_outputs test_cm_date_guard test_cm_completion test_cm_completion_boards test_cm_dead_end test_cm_idempotency test_cm_leakage test_cm_adversarial
 # Core modules Contract Management depends on: the shared signing facade (plan D8).
 CM_CORE_MODULES ?= test_signing_facade
 CM_ONLY_SITE ?= kentender-cm-only.local
@@ -1442,6 +1442,19 @@ cm-services-gate: cm-preflight
 		bench --site $(SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
 	cd $(BENCH_ROOT) && for m in $(CM_CORE_MODULES); do \
 		bench --site $(SITE) run-tests --app kentender_core --module kentender_core.tests.$$m || exit 1; done
+
+# CM-CHG-001 v0.8 plan Phase 10 (tracker CM8-1001..1004, CM-G10). Who may read what and what a read-only reader can never do (per-audience leakage of what the contract carries, the list without a task, the technical and
+# audit readers offered no business action, the adversarial authority scenarios failing without side effects), and no reader stranded (every task names a command the server can run; one contract walked from receipt to
+# a reopened close-out, every person on every stage; every command safe to send twice). Test site only.
+CM_LEAKAGE_MODULES ?= test_cm_audience test_cm_workspace test_cm_leakage test_cm_adversarial
+CM_DEAD_END_MODULES ?= test_cm_dead_end test_cm_idempotency test_cm_holds test_cm_recovery_matrix test_cm_tasks
+cm-leakage-gate: cm-preflight
+	cd $(BENCH_ROOT) && for m in $(CM_LEAKAGE_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
+
+cm-dead-end-gate: cm-preflight
+	cd $(BENCH_ROOT) && for m in $(CM_DEAD_END_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
 
 # The real owners (proof level L2): Award's provider of the source material through Tenders, Bid Evaluation, site configuration, Supplier Accounts and Budget, the core seams they answer, Budget's funding
 # provider and the principal gateway guard. The canonical award's sources are listed one by one: a source nobody can supply blocks formation, and the report names it and its owner.

@@ -175,3 +175,12 @@ This register holds corrections owed to other documents, external decisions, evi
 | FU-CM-116 | **A reopened contract restores nothing.** Reopening returns the lifecycle to Active and asks for the corrected fact; spending, stock, legal dates and the funding owner's closure are untouched (section 5.21). If the corrected fact changes the obligation, the funding and lawful-owner checks are the ordinary ones. A second closure asks the funding owner nothing more when its first closure was acknowledged. | Low | CM | Open |
 | FU-CM-117 | **The date a person types was read with `getdate` in nine Phase 8 commands,** and `getdate("")` is today, so a blank was recorded as the day the button was pressed. Fixed with `records.day` and a guard (`test_cm_date_guard`) that fails on a new parse of a typed date; every earlier parse was reviewed and listed. | Closed | CM | Closed 15 Oct 2026 |
 | FU-CM-118 | **Contract Management has not closed a contract against the real Budget on the canonical award.** The close-out is proved with the simulated funding owner (L1), and Budget's own tests prove the provider's `close` (identity replay, stale revision, an amount that is not what the commitments hold); the two have not been run together. It needs the canonical award formed through the real hooks, which is blocked by the source gaps of FU-CM-70, 71 and 72. | Medium | CM, Budget | Open |
+
+## 10. Found during Phase 10 (15 October 2026)
+
+| ID | Item | Severity | Owner | Status |
+|---|---|---|---|---|
+| FU-CM-119 | **A native credit note is raised in the accounting records, not in Contract Management.** When a posted invoice is corrected down Finance must bring the liability to the supported amount with a credit note; the screen now says what is needed and Finance names the credit (read back, never written). A credit-note editor inside Contract Management, with its own maker and approver, is a decision for the owner (the standing rule is that routine Finance work is not a redirect to a Desk form). | Medium | Owner, Finance | Open |
+| FU-CM-120 | **No screen draws the funding allocation,** so the leakage sentinel for it guards a screen that does not yet exist; the specification's field set `deliberation` is granted to the office only. Revisit when a screen shows the source allocation. | Low | CM | Open |
+| FU-CM-121 | **Evidence download and export are not yet checked for each reader** (CM-AC-48), nor that no bid authority is inherited by a supplier (CM-AC-43). | Medium | CM | Open |
+

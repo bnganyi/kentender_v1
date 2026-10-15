@@ -270,6 +270,7 @@ COMMANDS: dict[str, Handler] = {
 	"ReopenContractCloseout": lambda c, a, v, e, k, u: closure_correction.decide(c, correction=int(a["correction"]), decision="Reopen", reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u),
 	"ConfirmContractClosure": _keep_closed,
 	"RestoreContractOperation": lambda c, a, v, e, k, u: formation.restore_operations(c, actor=u),
+	"ReconcileInvoiceLiability": lambda c, a, v, e, k, u: payment.reconcile_liability(c, invoice=a["invoice"], credit_document=pick(v.get("credit_document")), expected_version=e, idempotency_key=k, actor=u),
 	"RecordWarrantyClaim": lambda c, a, v, e, k, u: warranty.record_claim(c, unit=pick(v.get("unit")), fault=v.get("fault", ""), notice_date=v.get("notice_date", ""), remedy=pick(v.get("remedy")) or v.get("remedy", ""),
 		evidence=v.get("evidence", ""), expected_version=e, idempotency_key=k, actor=u),
 	"RecordWarrantyReturn": lambda c, a, v, e, k, u: warranty.record_return(c, issue=a["issue"], collected_on=v.get("collected_on", ""), evidence=v.get("evidence", ""), expected_version=e, idempotency_key=k, actor=u),

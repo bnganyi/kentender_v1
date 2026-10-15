@@ -137,6 +137,9 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 		return invoices.d17(ctx, _payment_invoice(ctx, subject), subject.split()[-1])
 	if command == "RecordFinanceSettlement":
 		return invoices.d17(ctx, _payment_invoice(ctx, subject), subject.split()[-1], settle=True)
+	if command == "ReconcileInvoiceLiability":
+		gap = next((g for g in payment.liability_gap(ctx.case) if f"invoice {g['successor_no']}" == subject), None)
+		return invoices.liability(ctx, gap) if gap else None
 	if command == "IssueCompletionCertificate":
 		return obligations.d22(ctx)
 	if command == "SignFinalContractAcceptance":
@@ -371,10 +374,26 @@ def board_for(case: str, user: str, *, tab: str | None = None, subject: tuple[st
 		_offer_ending(ctx, board)
 	if board is None:
 		board = summary(ctx, selected)
+	if own and lead["state"] == "actionable":
+		_point_to_the_step(ctx, board, lead, selected)
 	board["tab"] = selected
 	board["tabs"] = [{"label": t, "route": [case, t.lower()]} for t in chrome.TABS]
 	board["audiences"] = ctx.audiences
 	return board
+
+
+STEP_LABEL = "Go to your next step"
+
+
+def _point_to_the_step(ctx: Context, board: dict[str, Any], lead: dict[str, Any], selected: str) -> None:
+	"""The next-step block is drawn on every tab and the step is taken on its own tab: from another tab the block says what to do, so the way there is one press away. Nobody is left on a screen that names their
+	step and gives them no way to it (section 6.3; KT-STD-001 3B.7)."""
+	step = board.get("next")
+	home = chrome.tab_of(lead["command"], lead["subject"], ctx.doc.lifecycle)
+	if not step or step.get("k") != "turn" or board.get("p") or home == selected or STEP_LABEL in board["actions"]:
+		return
+	board["s2"] = [*board.get("s2", []), STEP_LABEL]
+	board["actions"][STEP_LABEL] = kit.tab(home)
 
 
 def _subject_board(ctx: Context, tab: str, subject: tuple[str, ...]) -> dict[str, Any] | None:
