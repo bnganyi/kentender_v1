@@ -25,9 +25,15 @@ def tender_facts(tender: str) -> dict[str, Any] | None:
 	if not fact:
 		return None
 	pe = cstr(frappe.db.get_single_value("Site Procuring Entity", "pe_name")) if frappe.db.exists("DocType", "Site Procuring Entity") else ""
-	return {"tender": fact["tender"], "tender_reference": fact["tender_reference"], "title": fact["title"], "lot": "1", "procuring_entity": pe,
+	return {"tender": fact["tender"], "tender_reference": fact["tender_reference"], "title": fact["title"], "lot": "1", "procuring_entity": pe, "requesting_unit": requesting_unit(tender),
 		"status": fact.get("status"), "cancelled": bool(fact.get("cancelled")), "product_key": fact.get("product_key"),
 		"award_method": "Lowest evaluated responsive tender", "currency": "KES"}
+
+
+def requesting_unit(tender: str) -> str:
+	"""The organisation unit that asked for the goods (the requisition's lead unit): the unit that will manage the contract."""
+	requisition = frappe.db.get_value("Tender", tender, "requisition")
+	return cstr(frappe.db.get_value("Procurement Requisition", requisition, "lead_org_unit_id")) if requisition else ""
 
 
 def validity(tender: str) -> dict[str, Any]:

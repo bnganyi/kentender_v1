@@ -52,6 +52,9 @@ kt_my_work_providers = [
 # HOME-CHG-001 v0.6 §7 — Budget's feed to the Home page (core collects, never imports this app).
 kt_home_providers = ["kentender_budget.services.home_provider.entries"]
 
+# Budget answers the contract funding seam: it converts a formed agreement's reservation lineage into commitments (CM-CHG-001 v0.8 section 5.14; the one gateway that mints the Contract Management principal).
+kt_contract_funding_provider = ["kentender_budget.services.contract_funding_provider.service"]
+
 # ANL-CHG-001 v0.8 §7.1 — Budget's funding position for Procurement Analytics (core collects, never imports this app).
 kt_analytics_providers = ["kentender_budget.services.analytics_provider"]
 

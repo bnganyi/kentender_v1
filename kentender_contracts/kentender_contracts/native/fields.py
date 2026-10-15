@@ -27,7 +27,15 @@ CUSTOM_FIELDS: dict[str, list[dict]] = {
 
 def ensure() -> None:
 	create_custom_fields(CUSTOM_FIELDS, update=True)
+	ensure_indexes()
 	frappe.clear_cache()
+
+
+def ensure_indexes() -> None:
+	"""A contract registered from outside has one case: its origin key (site, origin system, external contract identity) is unique. It is an index added here, not a UNIQUE column in the DocType, because a
+	UNIQUE column cannot be added to a table that already exists on SQLite (the independence site). Idempotent on both databases."""
+	if frappe.db.has_column("Contract Case", "origin_key"):
+		frappe.db.add_unique("Contract Case", ["origin_key"], constraint_name="cm_origin_key_unique")
 
 
 def missing() -> list[str]:

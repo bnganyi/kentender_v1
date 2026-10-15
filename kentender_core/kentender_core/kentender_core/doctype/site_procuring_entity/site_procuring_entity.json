@@ -9,6 +9,7 @@
   "pe_type",
   "column_break_spe",
   "ppra_registration",
+  "pe_address",
   "timezone",
   "statutory_approval_route",
   "entity_is_county",
@@ -47,6 +48,12 @@
    "fieldname": "ppra_registration",
    "fieldtype": "Data",
    "label": "PPRA Registration"
+  },
+  {
+   "fieldname": "pe_address",
+   "fieldtype": "Small Text",
+   "label": "Principal address",
+   "description": "The entity's principal address as it appears in contracts. Read once by Contract Management; never typed again."
   },
   {
    "default": "Africa/Nairobi",

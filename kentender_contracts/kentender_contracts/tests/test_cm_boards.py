@@ -87,7 +87,8 @@ class TestBoards(ContractCase):
 		self.assertEqual((self.primary(ready), ready["st"], ready["tab"], ready["back"]), ("Send for signature", "Preparing", "Agreement", "Back to contracts"))
 		self.assertEqual([r["t"] for r in ready["regions"]], ["Summary", "Agreement summary"])
 		self.assertEqual(self.screen("mary", "D02-S", capture_as="D02-S-before").get("next"), None, "the supplier has nothing to do before the agreement is sent")
-		view = self.screen("charles", "D02-V", tab="Agreement", subject=("agreement", "1"))
+		view = self.screen("charles", "D02-V", tab="Agreement", subject=("1",))  # the route /<contract>/agreement/1
+		self.assertEqual(router.board_for(self.case, self.p["charles"], tab="Agreement", subject=("agreement", "1"))["id"], "D02-V", "a leading tab name is tolerated")
 		self.assertIn("Form No. 4 particulars", [r["t"] for r in view["regions"]])
 
 		# signing

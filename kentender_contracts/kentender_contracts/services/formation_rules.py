@@ -21,7 +21,7 @@ from typing import Any
 from frappe.utils import flt, get_datetime, getdate
 
 HOLDER = "Head of procurement function"
-SIMPLE = {"goods", "simple goods", "non-complex goods", "supply of goods"}
+SIMPLE = {"goods", "it goods", "simple goods", "non-complex goods", "supply of goods"}
 #: entity types the Attorney-General clearance section does not apply to (section 19.3 CM-R-03: "Preserve the Parliament/Judiciary exception")
 AG_EXEMPT = {"parliament", "judiciary"}
 #: the eight minimum categories of section 19.4 and the source each resolves from

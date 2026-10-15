@@ -228,12 +228,17 @@ def board_for(case: str, user: str, *, tab: str | None = None, subject: tuple[st
 
 
 def _subject_board(ctx: Context, tab: str, subject: tuple[str, ...]) -> dict[str, Any] | None:
-	if subject[0] == "agreement" and len(subject) > 2 and subject[1] == "outside" and ctx.can_prepare and ctx.doc.lifecycle == "Awaiting signatures" and service_outside_permitted(ctx):
-		return outside.d26(ctx, "Entity" if subject[2] == "entity" else "Supplier", differs=bool(outside.mismatched(ctx)))
-	if subject == ("agreement", "intake") and ctx.doc.source_kind == "External record" and ctx.can_prepare:
+	"""The screen a route names under a tab: `/<contract>/<tab>/<subject...>`. A leading tab name is tolerated (the first routes of the thread carried it) so a link and a direct address land on the same screen."""
+	if subject and subject[0].lower() == tab.lower():
+		subject = subject[1:]
+	if not subject:
+		return None
+	if subject[0] == "outside" and len(subject) > 1 and tab == "Agreement" and ctx.can_prepare and ctx.doc.lifecycle == "Awaiting signatures" and service_outside_permitted(ctx):
+		return outside.d26(ctx, "Entity" if subject[1] == "entity" else "Supplier", differs=bool(outside.mismatched(ctx)))
+	if subject == ("intake",) and tab == "Agreement" and ctx.doc.source_kind == "External record" and ctx.can_prepare:
 		return existing.d12(ctx, ctx.user, ctx.case)
-	if subject[0] == "agreement" and len(subject) > 1 and subject[1].isdigit() and "terms" in _sets(ctx):
-		return agreement.d02v(ctx, int(subject[1]))
+	if subject[0].isdigit() and tab == "Agreement" and "terms" in _sets(ctx):
+		return agreement.d02v(ctx, int(subject[0]))
 	if subject == ("record-delivery",) and "receiver" in ctx.audiences:
 		return delivery.d04(ctx)
 	if subject == ("submit-invoice",) and "supplier" in ctx.audiences:

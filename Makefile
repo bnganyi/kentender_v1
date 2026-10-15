@@ -1428,7 +1428,7 @@ std-templates-gate:
 # CM-CHG-001 v0.8 plan Phase 1 (tracker CM8-105). Contract Management's Python gates write real rows (no rollback on this bench), so they
 # run on the test site: `scripts/test-site.sh run make cm-services-gate`. They refuse the dev site and a live browser run.
 # Later gates (seams, native, leakage, dead ends, UI, seeds) are added with the phase that builds them (tracker rule 13).
-.PHONY: cm-preflight cm-services-gate cm-native-gate cm-ui-gate cm-independence-gate
+.PHONY: cm-preflight cm-services-gate cm-native-gate cm-ui-gate cm-independence-gate cm-seams-gate
 CM_SERVICE_MODULES ?= test_cm_import_boundary test_cm_schema test_cm_errors test_cm_records test_cm_intents test_cm_holds test_cm_recovery_matrix test_cm_signing_simulation test_cm_rules test_cm_authority test_cm_audience test_cm_tasks test_cm_workspace test_cm_support test_cm_formation test_cm_formation_rules test_cm_formation_end test_cm_outside_signature test_cm_security test_cm_existing test_cm_award_receiver test_cm_delivery test_cm_thread test_cm_boards test_cm_picker test_cm_service_principal test_cm_outputs
 # Core modules Contract Management depends on: the shared signing facade (plan D8).
 CM_CORE_MODULES ?= test_signing_facade
@@ -1442,6 +1442,22 @@ cm-services-gate: cm-preflight
 		bench --site $(SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
 	cd $(BENCH_ROOT) && for m in $(CM_CORE_MODULES); do \
 		bench --site $(SITE) run-tests --app kentender_core --module kentender_core.tests.$$m || exit 1; done
+
+# The real owners (proof level L2): Award's provider of the source material through Tenders, Bid Evaluation, site configuration, Supplier Accounts and Budget, the core seams they answer, Budget's funding
+# provider and the principal gateway guard. The canonical award's sources are listed one by one: a source nobody can supply blocks formation, and the report names it and its owner.
+CM_SEAMS_MODULES ?= test_cm_source_availability test_cm_award_receiver
+CORE_SEAM_MODULES ?= test_contract_source_contract test_contract_funding_contract
+BUDGET_SEAM_MODULES ?= test_budget_contract_funding_provider test_budget_service_principal
+AWARD_SEAM_MODULES ?= test_contract_sources
+cm-seams-gate: cm-preflight
+	cd $(BENCH_ROOT) && for m in $(CM_SEAMS_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && for m in $(CORE_SEAM_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_core --module kentender_core.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && for m in $(BUDGET_SEAM_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_budget --module kentender_budget.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && for m in $(AWARD_SEAM_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.$$m || exit 1; done
 
 # Real ERPNext documents (proof level L2): the native adapter, the payment bypass guards (every route, entitlement, maker/approver, a two-process
 # race, a hard-crash recovery) and the configuration readiness check. Test site only; MariaDB only; takes about a minute.
@@ -1457,7 +1473,7 @@ cm-ui-gate: cm-preflight
 	npx vitest run --project contracts
 	scripts/test-site.sh run npx playwright test tests/ui/smoke/contracts/shell.spec.ts --workers=1 --retries=0
 	$(MAKE) cm-ui-world
-	scripts/test-site.sh run npx playwright test tests/ui/smoke/contracts/ordinary-thread.spec.ts --workers=1 --retries=0; status=$$?; $(MAKE) cm-ui-world-clean; exit $$status
+	scripts/test-site.sh run npx playwright test tests/ui/smoke/contracts/ordinary-thread.spec.ts tests/ui/smoke/contracts/cm-formation.spec.ts tests/ui/smoke/contracts/cm-existing-contract.spec.ts --workers=1 --retries=0; status=$$?; $(MAKE) cm-ui-world-clean; exit $$status
 
 # The people, the ERPNext world and the received Award package the browser specs walk (plan Phase 4): the test site only; the builder refuses any other. Written to artifacts/cm-ui-world.json.
 # Build it, run the specs, clean it: the walk leaves the whole thread in the database until `cm-ui-world-clean`.

@@ -78,7 +78,14 @@ def organisation_id() -> str:
 		return "ORG-DEMO-1"
 
 
+def variant(case: str, security_required: bool = False, outside_signing: bool = False) -> tuple[bool, bool]:
+	"""A demonstration award's variant is named by its case: `-SEC` requires a performance security and `-OUT` permits signing outside the system (so a browser world can hold several, answered by the one
+	registered provider)."""
+	return security_required or case.endswith("-SEC"), outside_signing or case.endswith("-OUT")
+
+
 def _content(number: str, case: str, security_required: bool = False, outside_signing: bool = False) -> bytes:
+	security_required, outside_signing = variant(case, security_required, outside_signing)
 	if number == "S1":
 		return _json({"tender": "TND-DEMO-001", "tender_reference": "MOH/ICT/2027/DEMO-01", "title": "IT equipment delivery", "release": "IT-EQUIPMENT-OPEN-V1", "release_id": "1.5", "addenda": []})
 	if number == "S2":

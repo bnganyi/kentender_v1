@@ -206,8 +206,8 @@ class TestOutsideSignature(ContractCase):
 		agreement_tab = router.board_for(case, self.p["charles"], tab="Agreement")
 		self.assertIn("Record an outside signature", agreement_tab["actions"])
 		route = agreement_tab["actions"]["Record an outside signature"]["route"]
-		self.assertEqual(route[1:], ["agreement", "outside", "supplier"])
-		form = router.board_for(case, self.p["charles"], tab="Agreement", subject=("agreement", "outside", "supplier"))
+		self.assertEqual(route[1:], ["agreement", "outside", "supplier"], "the route is /<contract>/agreement/outside/supplier")
+		form = router.board_for(case, self.p["charles"], tab="Agreement", subject=("outside", "supplier"))
 		self.assertEqual((form["id"], form["p"], form["next"]["k"], form["next"]["h"]), ("D26", "Save signature evidence", "turn", "Record the supplier's signed agreement."))
 		self.assertEqual([f["name"] for f in form["regions"][0]["b"][0]["items"]], ["party", "signed_by", "capacity", "signed_on", "copy", "notes"])
 		self.assertEqual(form["regions"][0]["b"][0]["items"][1]["v"], "Mary Wanjiku")

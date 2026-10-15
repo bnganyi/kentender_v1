@@ -21,7 +21,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, get_datetime
 
-from kentender_procurement.award.services import checks, clock, clocks, contracting, issues, notices, notify, people, profile, records, state
+from kentender_procurement.award.services import checks, clock, clocks, contracting, issues, notices, notify, people, profile, records, sources, state
 
 PACKAGE = state.PACKAGE
 RESPONSE_SUBTYPE_DECLINED = "Declined"
@@ -88,7 +88,27 @@ def _content(doc) -> dict[str, Any]:
 		"restrictions": [{"id": i.name, "type": i.issue_type, "state": i.state, "disposition": i.disposition} for i in
 			(frappe.get_doc(state.ISSUE, n) for n in frappe.get_all(state.ISSUE, filters={"award_case": doc.name}, pluck="name", order_by="creation asc"))],
 		"legal_profile": profile.current().get("profile_version"), "fixture_namespace": doc.fixture_namespace,
+		"managing_unit": _managing_unit(doc), "handoff": _handoff(doc),
 	}
+
+
+def _managing_unit(doc) -> str:
+	"""The unit that asked for the goods and so will manage the contract (additive: Contracting needs it to know who prepares the agreement)."""
+	try:
+		return cstr((sources.for_case(doc).tender_facts(doc.tender) or {}).get("requesting_unit"))
+	except Exception:
+		return ""
+
+
+def _handoff(doc) -> list[dict[str, Any]]:
+	"""The references to the twelve sources the agreement is made from, with the digests they have now (additive: nothing else in the package changes). A source nobody lists is simply absent."""
+	from kentender_core.services import contract_source_contract
+
+	try:
+		return contract_source_contract.handoff(doc.name)
+	except Exception:
+		frappe.log_error(title=f"Award contract source handoff failed for {doc.name}")
+		return []
 
 
 def _prepare_package(doc):

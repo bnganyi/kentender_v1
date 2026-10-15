@@ -16,11 +16,18 @@ import json
 import re
 from typing import Any
 
+from frappe.utils import cstr
+
 from kentender_contracts.services import records
 from kentender_contracts.services.errors import fail
 from kentender_core.services import contract_source_contract as seam
 
 REQUIRED = tuple(f"S{n}" for n in range(1, 13))
+#: the places Form No. 4 must declare for the agreement to be generated (section 19.4 table): the bindings the generator fills and nothing else
+INSERTIONS = {
+	"agreement_date": "the agreement date", "entity_name": "the procuring entity's name", "entity_address": "the entity's address", "supplier_name": "the supplier's name", "goods": "the goods",
+	"amount": "the amount", "documents": "the incorporated documents", "entity_signatory": "the entity's signatory", "supplier_signatory": "the supplier's signatory",
+}
 CATEGORIES = {
 	"S1": "Issued tender and template release", "S2": "Accepted tender and clarifications", "S3": "Price schedule", "S4": "Schedule of requirements and technical specifications",
 	"S5": "General and special conditions", "S6": "Inspection and acceptance criteria", "S7": "Form No. 4, Contract Agreement", "S8": "Award notification and signing window",
@@ -48,7 +55,11 @@ def gather(handoff: list[dict[str, Any]]) -> dict[str, Any]:
 			failed.append({"source": number, "category": CATEGORIES[number], "reason": "The award did not supply this source.", "owner": ""})
 			continue
 		owner = row.get("owner", "")
-		described, fetched = seam.describe(row["reference"]), seam.fetch(row["reference"])
+		described = seam.describe(row["reference"])
+		if described and described.get("unavailable"):  # the owner owns it and says why it cannot supply it
+			failed.append({"source": number, "category": CATEGORIES[number], "reason": cstr(described["unavailable"]), "owner": owner})
+			continue
+		fetched = seam.fetch(row["reference"]) if described else None
 		if not described or not fetched:
 			failed.append({"source": number, "category": CATEGORIES[number], "reason": "Its owner cannot supply it now.", "owner": owner})
 			continue
@@ -62,6 +73,11 @@ def gather(handoff: list[dict[str, Any]]) -> dict[str, Any]:
 			continue
 		media = described.get("media_type") or row.get("media_type", "")
 		data = json.loads(content) if media == "application/json" else bytes(content).decode("utf-8")
+		if number == "S7":
+			absent = [label for key, label in INSERTIONS.items() if f'data-insertion="{key}"' not in data]
+			if absent:  # a form that declares no place to fill cannot be generated into an agreement: that is the template owner's to declare (CM-TPL-01), never ours to guess
+				failed.append({"source": number, "category": CATEGORIES[number], "reason": "Form No. 4 declares no place to fill for " + ", ".join(absent) + ".", "owner": owner})
+				continue
 		sources[number] = {**row, "version": described.get("version", row.get("version")), "sha256": actual, "size": len(content), "media_type": media, "data": data}
 	return {"sources": sources, "failed": failed}
 

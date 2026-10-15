@@ -9,7 +9,9 @@ stays retrievable and verifiable. Each owner registers a provider on `kt_contrac
 example outside a simulation environment). A provider answers only the references it owns and returns None for the others.
 
     describe(*, reference) -> {"reference", "version", "sha256", "media_type", "size", "owner", ...} | None
+                              (or {"reference", "unavailable": "why"} when the owner owns it but cannot supply it now: Contract Management then says why)
     fetch(*, reference)    -> {"content": bytes, "digest": sha256 hex} | None
+    references(*, award_case) -> [{"source": "S1".."S12", "reference", "owner", "version", "sha256", "media_type", "size"}]   (optional: the sources a provider owns for one award)
 
 `verify` recomputes the digest of what `fetch` returns against what `describe` said, so a source that changed after it was described fails. Contract Management resolves and
 verifies each reference at preparation, copies the bytes and digests into its own manifest, and never imports an owner's code or reads its tables. With no provider a
@@ -65,6 +67,21 @@ def describe(reference: str) -> dict[str, Any] | None:
 
 def fetch(reference: str) -> dict[str, Any] | None:
 	return _ask("fetch", reference)
+
+
+def handoff(award_case: str) -> list[dict[str, Any]]:
+	"""The references to every source the registered providers hold for one award, as Award freezes them into its package so each can be verified later. A provider that fails is logged and
+	skipped; a source nobody lists is simply absent, which the receiver reports by number."""
+	rows: list[dict[str, Any]] = []
+	for provider in providers():
+		function = getattr(provider, "references", None)
+		if not callable(function):
+			continue
+		try:
+			rows.extend(function(award_case=award_case) or [])
+		except Exception:
+			frappe.log_error(title=f"Contract source provider references failed for {award_case}")
+	return rows
 
 
 def verify(reference: str) -> bool:

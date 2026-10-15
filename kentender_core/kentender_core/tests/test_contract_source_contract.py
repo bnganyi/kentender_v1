@@ -84,3 +84,26 @@ class TestContractSourceSeam(IntegrationTestCase):
 			self.assertTrue(seam.verify("T:ok"))
 			self.assertIsNone(seam.describe("Z:none"))
 		self.assertTrue(logged.called)
+
+	def test_the_handoff_lists_what_each_provider_owns_for_one_award_and_skips_a_provider_that_fails(self):
+		class Lists(Owner):
+			def references(self, *, award_case):
+				return [{"source": "S8", "reference": f"S8-{award_case}", "owner": "Award"}]
+
+		class Breaks(Owner):
+			def references(self, *, award_case):
+				raise RuntimeError("down")
+
+		with providers(Lists("T:", {}), Breaks("U:", {}), Owner("V:", {})), mock.patch.object(frappe, "log_error"):
+			self.assertEqual(seam.handoff("AWD-1"), [{"source": "S8", "reference": "S8-AWD-1", "owner": "Award"}])
+		with providers():
+			self.assertEqual(seam.handoff("AWD-1"), [])
+
+	def test_an_owner_can_say_why_it_cannot_supply_a_source(self):
+		class Cannot(Owner):
+			def describe(self, *, reference):
+				return {"reference": reference, "unavailable": "The principal address is not held in site configuration."}
+
+		with providers(Cannot("T:", {})):
+			self.assertEqual(seam.describe("T:1")["unavailable"], "The principal address is not held in site configuration.")
+			self.assertFalse(seam.verify("T:1"))

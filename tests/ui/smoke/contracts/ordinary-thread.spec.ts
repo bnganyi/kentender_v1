@@ -1,78 +1,14 @@
-import fs from 'node:fs';
-import { expect, test, type Browser, type Page } from '@playwright/test';
-import { login } from '../../helpers/auth';
+import { expect, test } from '@playwright/test';
 import { pickRecord } from '../../helpers/picker';
+import { as, attr, board, nextStep, openAsSupplier as supplierOpen, openContract as open, press, tab, today, world } from './helpers';
 
 // CM-CHG-001 v0.8 plan Phase 4, tracker CM8-416 / gate CM-G04: the ordinary thread walked in a real browser, one session per person, from the menu: prepare, sign twice, appoint inspectors,
 // declare, receive, inspect, certify, accept (8 of 10), invoice, certify, Finance (accounting invoice, payment, settlement), the two replacement units, completion, close-out.
 // Each screen is verified on first paint and again after the command it offers (the page re-renders in place), the record survives a reload and Back/Forward, and nobody is sent to a Desk form.
 // Run `make cm-ui-world` first (the people, the ERPNext world and the received Award package); `make cm-ui-gate` does both and cleans up. The source handoff is synthetic (L1) and so is the
 // funding owner: this spec proves the screens and the ordinary thread, not package acceptance.
-const WORLD = process.env.CM_UI_WORLD || 'artifacts/cm-ui-world.json';
-const world = fs.existsSync(WORLD) ? JSON.parse(fs.readFileSync(WORLD, 'utf8')) : null;
-const today = new Date().toISOString().slice(0, 10);
-
-const board = (page: Page, id: string) => page.getByTestId(`cm-board-${id}`);
-const attr = (name: string) => `[data-testid="${name}"]`;
-
-async function as<T>(browser: Browser, persona: string, run: (page: Page) => Promise<T>): Promise<T> {
-	const context = await browser.newContext();
-	const page = await context.newPage();
-	const problems: string[] = [];
-	page.on('pageerror', (error) => problems.push(error.message));
-	page.on('framenavigated', (frame) => {
-		if (frame === page.mainFrame() && /\/app\/(contract-|purchase-|payment-)/.test(frame.url())) problems.push(`sent to a Desk form: ${frame.url()}`);
-	});
-	try {
-		await login(page, world.people[persona], world.password);
-		const result = await run(page);
-		expect(problems, `${persona}: no page error and no Desk form`).toEqual([]);
-		return result;
-	} finally {
-		await context.close();
-	}
-}
-
-/** From the menu, never by URL: Home, the "Contract Management" item, then the contract. */
-async function openContract(page: Page, view: 'My work' | 'All contracts' = 'All contracts') {
-	await page.goto('/app/home');
-	await page.locator('.body-sidebar').getByText('Contract Management', { exact: true }).click();
-	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'workspace');
-	if (view === 'All contracts') await page.getByTestId('cm-view-1').click(); // the list opens on My work, as the board draws it
-	await expect(page.getByTestId(`cm-row-${world.contract}`)).toBeVisible();
-	await page.getByTestId(`cm-row-${world.contract}`).getByRole('link', { name: world.contract }).click();
-	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'board');
-}
-
-/** The supplier's side is the supplier portal, from its own header: sign in, the "Contracts" item, the contract. */
-async function openAsSupplier(page: Page) {
-	await page.goto('/account');
-	await page.locator('[data-kt-portal-nav="contracts"]').click();
-	await expect(page).toHaveURL(/\/supplier\/contracts/);
-	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'workspace');
-	await page.getByTestId(`cm-row-${world.contract}`).getByRole('link', { name: world.contract }).click();
-	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'board');
-}
-
-const tab = async (page: Page, name: string) => {
-	await page.getByTestId(`cm-tab-${name.toLowerCase()}`).click();
-	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-refreshing', 'false');
-};
-/** Click a button that runs commands and wait until the server has answered all of them and the screen has drawn the outcome (a refusal would stay on the page). */
-const press = async (page: Page, testid = 'cm-primary', commands = 1) => {
-	let answered = 0;
-	const count = (response: { url(): string }) => {
-		if (response.url().includes('run_contract_command')) answered++;
-	};
-	page.on('response', count);
-	await page.getByTestId(testid).click();
-	await expect.poll(() => answered, { timeout: 30_000 }).toBeGreaterThanOrEqual(commands);
-	page.off('response', count);
-	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-busy', 'false');
-	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-refreshing', 'false');
-	expect(await page.getByTestId('cm-refusal').allInnerTexts(), 'the server accepted the command').toEqual([]);
-};
-const nextStep = (page: Page) => page.getByTestId('cm-next-step');
+const openContract = (page: Parameters<typeof open>[0], view: 'My work' | 'All contracts' = 'All contracts') => open(page, world.contract, view);
+const openAsSupplier = (page: Parameters<typeof supplierOpen>[0]) => supplierOpen(page, world.contract);
 
 test.describe('The ordinary contract thread', () => {
 	test.skip(!world, 'run `make cm-ui-world` first');

@@ -2,7 +2,7 @@
 
 | Control | Value |
 |---|---|
-| Version | 0.8-package-gap.3 (.2 read: Form No. 4 "Unknown" and "no contract destination" for payment and security terms; .1 read: "package gap", framed the eight-category package as something Award should carry) |
+| Version | 0.8-package-gap.4 (.3 read: the table below as at Phase 0; .4 adds the section "Verified against running code" below, nothing above it changed; .2 read: Form No. 4 "Unknown" and "no contract destination" for payment and security terms; .1 read: "package gap", framed the eight-category package as something Award should carry) |
 | Date | 14 October 2026 |
 | Source | CM v0.8 §19.4, §19.5, §5.14, §3, §17.10 and §19.8; Award `award/services/eligibility.py::_content`; Award v0.5 §5.8; STD-TPL release 1.5 `06_runtime/downstream_rules.json` and `release_manifest.json`; read 14 Oct 2026 (tracker CM8-008) |
 | Direction | Owner, 14 Oct 2026: "Award supplies the authoritative source material; CM generates the agreement. Award should not be expected to hold a completed eight-category agreement package before CM prepares it." The gap is "a required integration dependency already identified in approved v0.8 §19.8". |
@@ -39,6 +39,29 @@ Status: **Absent** (nothing usable reaches CM), **Partial**, **Unknown** (not es
 | S12 | Restrictions, later updates, `AwardDecisionRecorded v1` (§5.2, CM-R-13) | Award | `restrictions[]`, `receive_update`, `receive_decision_event` | Present (event payload content not re-read) | none |
 
 **Count:** 12 sources: 5 absent (S1, S5, S6, S9, S10), 5 partial (S2, S3, S4, S7, S8), 0 unknown, 2 present (S11, S12). (Version .2 counted S7 unknown; spike S8 settled it.)
+
+## Verified against running code (15 October 2026, tracker CM8-513, CM8-520)
+
+The table above is the Phase 0 reading of source. Phase 5 built the owners' providers and asked them, for the canonical laptop award on `kentender-test.local` (award case AWD-MOH-2026-002, tender TND-MOH-2026-002, Afya Digital Supplies Limited, KES 46,400,000, 250 units; the canonical tender TND-MOH-2027-002 named in CM8-520 is the same laptop tender read at the 2027 timeline: the seed world calls it TND-MOH-2026-002). The Award package now carries a `handoff` of twelve references and the managing unit. Result, source by source:
+
+| # | Source | Owner's answer today | Formable? | What closes the rest |
+|---|---|---|---|---|
+| S1 | Issued tender, release, addenda | Served: tender, published title, template release 1.4 (not 1.5), the issued document with its digest, one addendum (ADD-MOH-2026-002-001) | Yes | none |
+| S2 | Accepted tender and clarifications | Served as the exact offer accepted (bid reference, submission version, receipt, envelope, package digest) and the clarification asked and answered; the offer's own bytes stay with Bid Submission | Yes (reference form) | FU-CM-80 (custody) |
+| S3 | Price schedule | Served from the frozen evaluation report: 250 units at KES 160,000 before tax, KES 25,600 tax a unit, KES 185,600 with tax, KES 46,400,000; checked against the decision | Yes | none |
+| S4 | Requirements and technical schedules | Served: goods and delivery schedule (due 30 June 2027; destination after the addendum, the 3rd Floor Procurement Stores), eleven technical requirements, warranty and support obligations; no related services, stated | Yes | none |
+| S5 | GCC and SCC, commercial terms | Served as typed values: payment within 30 days, performance security required at 10%, delay damages 0.5% a week capped at 10%, warranty 36 months. **Not served:** an advance, remedies, termination and change terms (prose only) | Partly: CM-R-18 holds the dependent action naming the term | FU-CM-75 |
+| S6 | Inspection and acceptance criteria | Served: typed technical criteria (for example Memory at least 16 GB, Storage at least 512 GB); the five acceptance checks are carried untyped | Yes (typed ones) | FU-CM-76 |
+| S7 | Form No. 4 source | Served byte for byte from the issued tender (3,173 bytes, digest-checked). **It declares no insertions**: its blanks are underscores and Jinja tokens | **No** | FU-CM-70 (template owner) |
+| S8 | Notification and signing window | Served: the notice (identity, digest, given 17 June 2027 10:00), the earliest signing instant (2 July 2027 09:00, Award's own clock), the window's end (the tender validity end, 10 October 2027) and the counting basis | Yes | FU-CM-83 (reading of the end) |
+| S9 | Funding lineage | **Unavailable:** the award draws on two reservations and nobody has allocated the price between them; the reservations are not in Budget's table on the test site | **No** | FU-CM-71 (owner decision, seed) |
+| S10 | Entity | **Unavailable:** the principal address is not held (`Site Procuring Entity.pe_address` now exists and is empty) | **No** | FU-CM-72 |
+| S11 | Supplier identity and signatories | Served: legal name, registered company, registration number, address, and Mary Wanjiku as authorised signatory (in force from 1 March 2027), read at the instant Award retains | Yes | none |
+| S12 | Restrictions and award event | Served as a live fact (no digest is frozen: a later restriction reaches Contracting as an update) | Yes | none |
+
+**Count.** Ten of twelve are served by their owners (S1 to S8, S11, S12); nine are formable (S7 is served but cannot be generated into an agreement); S9 and S10 are unavailable. **Formation of the canonical award is not accepted** (CM8-520): S7, S9 and S10. The earlier statuses above (5 absent, 5 partial) are superseded by this table.
+
+Run `make cm-seams-gate`; `test_cm_source_availability` (Contract Management, through the core seam) and `award/tests/test_contract_sources.py` (Award's provider) assert exactly this, gap by gap.
 
 ## What CM produces (not Award's duty)
 

@@ -153,6 +153,9 @@ kt_tender_evaluation_portal = ["kentender_procurement.bid_evaluation.portal.reso
 # Award before a cancellation and reads its authority status; the Award goes
 # with its evaluation or Tender. Plan D10: the Contracting receiver (only the
 # simulation stand-in exists). Plan D7: the notice email channel.
+# Award is the integrator of an award's contract source material (CM-CHG-001 v0.8 section 19.4; plan D20): it answers `S<n>-<award case>` through the owners' published seams.
+kt_contract_source_provider = ["kentender_procurement.award.services.contract_sources.service"]
+
 kt_award_source_providers = [
 	"kentender_procurement.award.services.sources.evaluation_provider",
 	"kentender_procurement.award.test_services.sources.synthetic_provider",

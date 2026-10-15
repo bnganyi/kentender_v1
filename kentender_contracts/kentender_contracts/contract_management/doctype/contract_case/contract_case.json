@@ -204,8 +204,8 @@
    "label": "Origin Key",
    "read_only": 1,
    "no_copy": 1,
-   "unique": 1,
-   "description": "Stable unique key of an existing contract: site, origin system, external contract identity."
+   "description": "Stable unique key of an existing contract: site, origin system, external contract identity.",
+   "search_index": 1
   },
   {
    "fieldname": "source_system",

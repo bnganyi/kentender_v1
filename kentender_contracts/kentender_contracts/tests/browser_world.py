@@ -21,6 +21,7 @@ from pathlib import Path
 import frappe
 from frappe.utils.password import update_password
 
+from kentender_contracts.native import adapter
 from kentender_contracts.services import formation, records
 from kentender_core.services import test_clock
 from kentender_contracts.simulation import sources
@@ -31,6 +32,9 @@ TEST_SITE = "kentender-test.local"
 PASSWORD = "CmWalk-2027-Aa1!"
 CONTRACT = "CM-UI-0001"
 AWARD_CASE = "CM-UI-AWD-01"
+#: the other received packages the formation spec walks: the issued terms require a performance security / permit signing outside the system (the case name carries the variant: `sources.variant`)
+EXTRA = {"security": ("CM-UI-0002", "CM-UI-AWD-SEC"), "outside": ("CM-UI-0003", "CM-UI-AWD-OUT"), "ending": ("CM-UI-0004", "CM-UI-AWD-04")}
+EXISTING_REFERENCE = "MOH/ICT/2027/EXT-UI"
 NAMESPACE = "CM_UI"
 
 DAVID = "david.ouma@afyadigital.example"
@@ -81,9 +85,18 @@ def build() -> dict:
 	frappe.db.commit()
 	package = {**sources.award_package(), "award_case": AWARD_CASE}  # its own Award case, so the service tests (which receive the demonstration package) never meet this world's contract
 	received = formation.receive_award_package(package, handoff=sources.source_handoff(AWARD_CASE), managing_unit=tw.unit(), idempotency_key=f"receive-{CONTRACT}", actor="Administrator", contract_id=CONTRACT)
+	extra = {}
+	for kind, (contract_id, award_case) in EXTRA.items():
+		got = formation.receive_award_package({**sources.award_package(), "award_case": award_case}, handoff=sources.source_handoff(award_case), managing_unit=tw.unit(), idempotency_key=f"receive-{contract_id}",
+			actor="Administrator", contract_id=contract_id)
+		extra[kind] = got["contract"]
+	frappe.db.commit()
+	receipt = world.fixed_asset_receipt("EXTUI", 4)  # the units of an existing contract that were already received and invoiced before management starts
+	invoice = adapter.invoice_receipt(receipt, world.identity("invoice extui", "Native invoice"), bill_no="EXT-UI-INV", qty=4)
 	frappe.db.commit()
 	data = {"previous_instant": str(previous or ""), "password": PASSWORD, "contract": received["contract"], "people": people, "supplier": world.SUPPLIER, "item": world.ITEM_FA, "location": world.LOCATION, "bank": world.BANK_ACCOUNT,
-		"mode": world.MODE, "unit": tw.unit()}
+		"mode": world.MODE, "unit": tw.unit(), "security_contract": extra["security"], "outside_contract": extra["outside"], "ending_contract": extra["ending"], "existing": {"reference": EXISTING_REFERENCE, "receipt": receipt, "invoice": invoice,
+		"country": tw.REGISTRATION[0], "registration": "PVT-9X7K2M"}}
 	output().parent.mkdir(parents=True, exist_ok=True)
 	output().write_text(json.dumps(data, indent=1))
 	print(json.dumps(data))
@@ -94,7 +107,7 @@ def clean() -> dict:
 	_guard()
 	_use_canonical_people()
 	frappe.set_user("Administrator")
-	cases = frappe.get_all("Contract Case", filters={"contract_id": CONTRACT}, pluck="name")
+	cases = frappe.get_all("Contract Case", filters={"contract_id": ["in", [CONTRACT, *(c for c, _a in EXTRA.values())]]}, pluck="name") + frappe.get_all("Contract Case", filters={"source_reference": EXISTING_REFERENCE}, pluck="name")
 	for case in cases:
 		for doctype in records.DOCTYPES:
 			if doctype in ("Contract Case", "Contract Simulated Signature", "Contract Simulated Funding") or not frappe.get_meta(doctype).has_field("contract_case"):
@@ -103,6 +116,8 @@ def clean() -> dict:
 		frappe.db.delete("Contract Simulated Funding", {"contract": case})
 		frappe.db.delete("Contract Case", {"name": case})
 	frappe.db.delete("Contract Simulated Signature", {"signer": ["in", list(_addresses().values())]})
+	for name in frappe.get_all("File", filters={"file_name": ["like", "cm-ui-%"]}, pluck="name"):  # the evidence files the walk uploaded
+		frappe.delete_doc("File", name, force=True, ignore_permissions=True)
 	frappe.db.delete("Contract Command Journal", {"contract_case": ["in", cases]}) if cases else None
 	frappe.db.commit()
 	failed = world.teardown()
