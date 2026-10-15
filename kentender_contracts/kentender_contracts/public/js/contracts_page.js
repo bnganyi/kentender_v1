@@ -3,7 +3,7 @@
 // The rail is Contract Management's own Workspace Sidebar ("Contracts"): this app does not edit the shared Procurement sidebar (follow-up FU-CM-58).
 kentender_core.desk_page.register("contracts", {
 	title: __("Contracts"),
-	bundles: ["kt_industry_page_rail.bundle.js", "contracts.bundle.js"],
+	bundles: ["kt_industry_page_rail.bundle.js", "kt_industry_pager.bundle.js", "kt_industry_record_picker.bundle.js", "contracts.bundle.js"],
 	mount: (el) => frappe.kt_mount_contracts(el),
 	sidebarWorkspaceKey: "contracts",
 });

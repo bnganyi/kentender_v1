@@ -36,6 +36,7 @@
      ],
      "inputs": {},
      "k": "table",
+     "live": {},
      "num": [],
      "rows": [
       [
@@ -88,6 +89,7 @@
      ],
      "inputs": {},
      "k": "table",
+     "live": {},
      "num": [],
      "rows": []
     }

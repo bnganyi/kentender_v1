@@ -120,6 +120,11 @@ class Context:
 		return self.view["leading"] if not self.neutral else None
 
 	@cached_property
+	def can_prepare(self) -> bool:
+		"""May this viewer prepare the agreement: the head of procurement, or a person whose Contract preparation responsibility covers the managing unit."""
+		return people.holds(self.user, "Head of Procurement Function") or people.holds(self.user, "Contract preparation", self.doc.managing_unit or "")
+
+	@cached_property
 	def neutral(self) -> bool:
 		"""A reader with no personal work: technical, auditor and the read-only audiences (section 6.3 "Not involved")."""
 		return set(self.audiences) <= {"technical", "auditor"} or not self.audiences

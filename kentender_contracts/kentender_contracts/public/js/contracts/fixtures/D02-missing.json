@@ -85,6 +85,19 @@
        "t": "pick",
        "v": "",
        "valueLabel": ""
+      },
+      {
+       "context": {
+        "kind": "location"
+       },
+       "l": "Asset location",
+       "name": "asset_location",
+       "noun": "location",
+       "o": {},
+       "source": "contracts.native_record",
+       "t": "pick",
+       "v": "",
+       "valueLabel": ""
       }
      ],
      "k": "fields"

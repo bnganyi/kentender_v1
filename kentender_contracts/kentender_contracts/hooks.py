@@ -278,3 +278,13 @@ kt_contract_funding_provider = ["kentender_contracts.simulation.funding.service"
 
 # The contract screens' choices of one person or one native record (AGENTS.md section 6.12): kentender_core.services.record_picker.
 kt_record_picker_sources = ["kentender_contracts.services.picker_sources.sources"]
+
+# The supplier's side (CM-CHG-001 v0.8 section 9): `/supplier/contracts` and `/supplier/contracts/<contract>/...` on the shared supplier portal (kentender_core's `kt_portal`). The resolver answers the verdict;
+# the bundle mounts the same screens the Desk page hosts, fed by the portal's route and transport.
+website_route_rules = [
+	{"from_route": "/supplier/contracts", "to_route": "kt_portal"},
+	{"from_route": "/supplier/contracts/<path:portal_path>", "to_route": "kt_portal"},
+]
+kt_portal_surfaces = [
+	{"key": "contracts", "prefix": "/supplier/contracts", "resolver": "kentender_contracts.portal.resolve", "bundle": "contracts_portal.bundle.js", "css": []},
+]

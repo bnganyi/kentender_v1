@@ -128,6 +128,9 @@
       "0,2": "quantity.L1"
      },
      "k": "table",
+     "live": {
+      "0,3": "units.L1"
+     },
      "num": [
       1,
       2

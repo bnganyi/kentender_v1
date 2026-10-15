@@ -10,7 +10,7 @@ from typing import Any
 import frappe
 from frappe.utils import cint, formatdate
 
-from kentender_contracts.boards import chrome, kit
+from kentender_contracts.boards import chrome, kit, statements
 from kentender_contracts.boards.context import Context, money, when
 from kentender_contracts.services import bindings, delivery, records, work
 
@@ -44,7 +44,7 @@ def d04(ctx: Context) -> dict:
 	expected = max(0, cint(now.get("ordered")) - cint(now.get("accepted")) - cint(now.get("pending_decision")) - cint(now.get("deferred")))
 	destination = (ctx.terms.get("delivery") or {}).get("destination", "")
 	fields = [kit.tx("Supplier delivery reference", "", "supplier_reference"), kit.dt("Received at", "", "received_at", time=True), kit.sel("Destination", destination, [destination] if destination else [""], "destination")]
-	items = kit.t(["Item", "Expected", "Arrived", "Unit references"], [[line.get("description") or line.get("item"), str(expected), f"#{expected}", "—"]], [1, 2], inputs={"0,2": f"quantity.{line.get('line_id')}"})
+	items = kit.t(["Item", "Expected", "Arrived", "Unit references"], [[line.get("description") or line.get("item"), str(expected), f"#{expected}", "—"]], [1, 2], inputs={"0,2": f"quantity.{line.get('line_id')}"}, live={"0,3": f"units.{line.get('line_id')}"})
 	b = chrome.base(ctx, "D04", d="D04", name="Receive goods", title="Record delivery", tab="Deliveries", next=chrome.next_block(ctx) or kit.turn("Record the goods that arrived.", ctx.name(ctx.user)), ev=["Delivery schedule 1"],
 		regions=[kit.R("Delivery", kit.f(["Delivery due", formatdate((ctx.terms.get("delivery") or {}).get("due"), "d MMMM yyyy")], ["Destination", destination])), kit.R("Arrival details", kit.fl(*fields)),
 			kit.R("Items", items, kit.bt("Enter unit references"), kit.xh("Recording delivery does not accept the goods."))], p="Record delivery", s2=["Cancel"])
@@ -123,7 +123,7 @@ def d19(ctx: Context, number: int) -> dict:
 	b = chrome.base(ctx, "D19", d="D19", name="Technical certificate", title="Confirm technical inspection", tab="Deliveries", next=chrome.next_block(ctx), ev=[f"Inspection {inspection.version_no}"],
 		regions=[kit.R(f"Technical certificate {number}", kit.r(["Contract", ctx.doc.contract_id], ["Inspected", str(len(found["units"]))], ["Conforms", str(len(good))], ["Fails", str(len(bad))], ["Missing evidence", "0"], ["Tests", tests],
 			["Conforming units", units_summary(good)], ["Failed units", failed], ["Recipient", f"{ao}, Accounting Officer" if ao else "Accounting Officer"]),
-			kit.x("I confirm the quality and quantity of the goods or services identified in the attached coverage schedule against the cited contract requirements, subject to the recorded exceptions."))],
+			kit.x(statements.TECHNICAL))],
 		p="Sign technical certificate")
 	b["arrival"] = arrival.name
 	b["actions"]["Sign technical certificate"] = kit.command("SignTechnicalCertificate", arrival=arrival.name)
@@ -142,7 +142,7 @@ def _report_regions(ctx: Context, report, *, signatures: bool, with_failures: bo
 	disposition = kit.R("Quantity disposition", kit.f(["Accepted", str(len(accepted))], ["Rejected", str(len(rejected))], ["Deferred", str(len(deferred))]), kit.r(["Reason", reason]))
 	signers = records.loads(report.signers_json, [])
 	sigs = kit.R("Signatures", kit.t(["Signer", "Role", "Status", "Signed"], [[s["name"], s["capacity"], "!Signed" if s["state"] == "Signed" else "!Awaiting signature", when(s["signed_at"]) if s["signed_at"] else "—"] for s in signers]))
-	preview = kit.R("", kit.pv("Report preview", [["Statement", "We record the inspection findings and the accept/reject disposition for the goods or services identified in the coverage schedule, with the stated exceptions and evidence."],
+	preview = kit.R("", kit.pv("Report preview", [["Statement", statements.ACCEPTANCE],
 		["Findings", f"{len(accepted)} meet; {len(rejected)} do not meet; {len(deferred)} need review"], ["Accepted", str(len(accepted))], ["Rejected", str(len(rejected))], ["Deferred", str(len(deferred))], ["Reason", reason],
 		["Signers", ", ".join(s["name"] for s in signers)]]))
 	cert = frappe.get_all("Contract Certificate", filters={"name": ["in", (report.technical_certificate or "").split(",")]}, fields=["signer", "signed_at"], limit=1)
@@ -200,4 +200,10 @@ def deliveries_summary(ctx: Context) -> dict:
 	if ctx.doc.lifecycle == "Active" and "receiver" in ctx.audiences:
 		b["p"] = "Record delivery"
 		b["actions"]["Record delivery"] = kit.route(ctx.case, "deliveries", "record-delivery")
+		waiting = [u["unit"] for u in ctx.position["units"].values() if u["status"] == "Rejected"]
+		if waiting:  # rejected units still in custody: the receiver records the supplier's collection (section 5.4)
+			b["s2"] = ["Record collection of rejected units"]
+			b["actions"]["Record collection of rejected units"] = kit.dialog("collect")
+			b["dialogs"]["collect"] = kit.dlg("Record collection", [kit.xh("Rejected units are collected by the supplier, with the supplier's collection evidence."), kit.fl(kit.ta("Units collected", "\n".join(waiting), "units", rows=6),
+				kit.tx("Collection evidence", "", "evidence"))], "Record collection", command="RecordCustodyReturn", args={})
 	return b

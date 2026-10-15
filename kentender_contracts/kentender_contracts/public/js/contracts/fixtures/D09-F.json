@@ -2,7 +2,7 @@
  "actions": {
   "Save draft": {
    "args": {
-    "invoice": "CM-INV-364856",
+    "invoice": "CM-INV-380215",
     "kind": "payment"
    },
    "command": "SaveNativeFinanceDraft",
@@ -10,7 +10,7 @@
   },
   "Submit payment for approval": {
    "args": {
-    "invoice": "CM-INV-364856",
+    "invoice": "CM-INV-380215",
     "kind": "payment"
    },
    "command": "SaveNativeFinanceDraft",

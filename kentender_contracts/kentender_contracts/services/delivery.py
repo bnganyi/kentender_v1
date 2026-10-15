@@ -22,7 +22,7 @@ import frappe
 from frappe.utils import cint, cstr, flt, get_datetime
 
 from kentender_contracts.native import adapter
-from kentender_contracts.services import authority, bindings, clock, events, formation, intents, people, position, preflight, records, segregation, signing_flow, work
+from kentender_contracts.services import authority, bindings, clock, events, formation, intents, people, position, preflight, records, segregation, service_principal, signing_flow, work
 from kentender_contracts.services.errors import Guards, fail, invalid
 
 CASE = "Contract Case"
@@ -198,7 +198,7 @@ def declare_interest(case: str, *, expected_version: int, idempotency_key: str, 
 		mine["conflict"] = {"reason": conflict.strip(), "at": str(clock.now())} if cstr(conflict).strip() else None
 		records.update(row, members_json=records.dumps(members), record_version=cint(row.record_version) + 1)
 		records.bump(doc)
-		work.finish(case, command="DeclareContractInterest", subject=f"appointment {row.version_no}", actor=actor)
+		work.finish(case, command="DeclareContractInterest", subject=f"appointment {row.version_no}", actor=actor, holder=actor)
 		if mine["conflict"]:
 			work.assign(case, "RecommendContractInspectors", "Recommend a replacement: a member declared a conflict.", f"replacement for {mine['user']}", row.version_no, work.holders(work.HOP), role=work.HOP)
 			events.record(case, "Conflict declared", actor, "A member declared a conflict of interest.", appointment=row.name)
@@ -634,7 +634,8 @@ def post_accepted_receipt(case: str, *, acceptance: str, actor: str = "") -> dic
 
 	def executor(identity: str):
 		try:
-			return adapter.receive(order, identity, lines=lines), "Purchase Receipt"
+			with service_principal.acting():
+				return adapter.receive(order, identity, lines=lines), "Purchase Receipt"
 		except frappe.ValidationError as exc:
 			raise intents.OwnerRefused(str(exc)) from exc
 

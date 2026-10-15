@@ -6,6 +6,8 @@ the picker and the command agree about every person, and whoever may not choose 
 
 from __future__ import annotations
 
+import unittest
+
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -19,6 +21,8 @@ class TestPickerSources(IntegrationTestCase):
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
+		if frappe.db.db_type != "mariadb":
+			raise unittest.SkipTest("the picker reads ERPNext records on the MariaDB test site")
 		world.build()
 		cls.people = tw.build()
 		cls.addClassCleanup(tw.teardown)

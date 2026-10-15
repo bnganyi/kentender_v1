@@ -2,13 +2,13 @@
  "actions": {
   "Sign technical certificate": {
    "args": {
-    "arrival": "CM-ARR-364804"
+    "arrival": "CM-ARR-380163"
    },
    "command": "SignTechnicalCertificate",
    "do": "command"
   }
  },
- "arrival": "CM-ARR-364804",
+ "arrival": "CM-ARR-380163",
  "audiences": [
   "appointee"
  ],
@@ -60,11 +60,11 @@
       ],
       [
        "Conforming units",
-       "CMTB1D795-0001\u2013CMTB1D795-0008"
+       "CMT96C999-0001\u2013CMT96C999-0008"
       ],
       [
        "Failed units",
-       "CMTB1D795-0009: Starts successfully; CMTB1D795-0010: Starts successfully"
+       "CMT96C999-0009: Starts successfully; CMT96C999-0010: Starts successfully"
       ],
       [
        "Recipient",

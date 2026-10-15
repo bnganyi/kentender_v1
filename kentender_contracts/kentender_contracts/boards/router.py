@@ -117,8 +117,6 @@ def _agreement_summary(ctx: Context) -> dict[str, Any]:
 	if ctx.agreement and ctx.agreement.state in ("Awaiting signatures", "Effective"):
 		board = agreement.d03(ctx, entity=False, waiting=True)
 		board["id"], board["p"] = "D03-S", ""
-		if ctx.signatures:
-			board["regions"].append(agreement.signatures_region(ctx))
 	elif ctx.agreement:
 		board = agreement.d02(ctx)
 		board["p"], board["s2"], board["actions"] = "", [], {k: v for k, v in board["actions"].items() if k.startswith("View")}
@@ -150,6 +148,8 @@ def board_for(case: str, user: str, *, tab: str | None = None, subject: tuple[st
 			board = _by_waiting(ctx, item)
 			if board:
 				break
+	if board is None and not own and selected == "Agreement" and ctx.doc.lifecycle == "Preparing" and ctx.can_prepare:
+		board = agreement.d02(ctx)  # an authorised preparer prepares the agreement whether or not the head of procurement's task is theirs (section 5.3)
 	if board is None:
 		board = summary(ctx, selected)
 	board["tab"] = selected

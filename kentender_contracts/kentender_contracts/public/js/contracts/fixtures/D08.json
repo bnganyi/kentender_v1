@@ -14,7 +14,7 @@
  "dialogs": {
   "correction": {
    "args": {
-    "invoice": "CM-INV-364842"
+    "invoice": "CM-INV-380201"
    },
    "b": [
     {
@@ -76,6 +76,7 @@
      ],
      "inputs": {},
      "k": "table",
+     "live": {},
      "num": [
       1,
       2,

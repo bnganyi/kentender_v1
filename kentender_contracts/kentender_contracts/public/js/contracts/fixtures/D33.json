@@ -2,7 +2,7 @@
  "actions": {
   "Save draft": {
    "args": {
-    "invoice": "CM-INV-364856",
+    "invoice": "CM-INV-380215",
     "kind": "invoice"
    },
    "command": "SaveNativeFinanceDraft",
@@ -10,14 +10,14 @@
   },
   "Submit invoice for approval": {
    "args": {
-    "invoice": "CM-INV-364856",
+    "invoice": "CM-INV-380215",
     "kind": "invoice"
    },
    "command": "SaveNativeFinanceDraft",
    "do": "command",
    "then": {
     "args": {
-     "invoice": "CM-INV-364856",
+     "invoice": "CM-INV-380215",
      "kind": "invoice"
     },
     "command": "SubmitNativeFinanceForApproval"
@@ -92,6 +92,7 @@
      ],
      "inputs": {},
      "k": "table",
+     "live": {},
      "num": [
       1,
       2,

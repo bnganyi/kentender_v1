@@ -20,7 +20,7 @@ import frappe
 from frappe.utils import cint, cstr, formatdate, getdate
 
 from kentender_contracts.native import adapter
-from kentender_contracts.services import authority, clock, events, intents, parties, people, preflight, records, simulation, source_package, signing_flow, work
+from kentender_contracts.services import authority, clock, events, intents, parties, people, preflight, records, service_principal, simulation, source_package, signing_flow, work
 from kentender_contracts.services.errors import Guards, fail, invalid
 from kentender_core.services import contract_funding_contract as funding_seam
 from kentender_core.utils.series import allocation_lock
@@ -114,7 +114,8 @@ def _assemble(doc, particulars: dict[str, Any]) -> dict[str, Any]:
 		missing.append("item_mapping")
 	if not _native_supplier(particulars, supplier_org["legal_name"]):
 		missing.append("native_supplier")
-	if all(mapping.get(l["line_id"]) for l in lines) and any(_creates_assets(mapping[l["line_id"]]) for l in lines) and not particulars.get("asset_location"):
+	complete = all(mapping.get(l["line_id"]) for l in lines)
+	if not particulars.get("asset_location") and (not complete or any(_creates_assets(mapping[l["line_id"]]) for l in lines)):  # until every line is mapped we cannot say no unit needs a place
 		missing.append("asset_location")
 	terms = {
 		"title": s["S1"].get("title") or doc.title, "currency": currency, "tax_included": bool(s["S3"].get("tax_included")), "total": total, "lines": lines,
@@ -416,7 +417,8 @@ def carry_out_effects(case: str, actor: str = "") -> dict[str, Any]:
 
 			def executor(identity, supplier=supplier):
 				try:
-					return adapter.create_purchase_order(identity, company=_company(terms), supplier=supplier, items=_items(terms), currency=terms["currency"], schedule_date=terms["delivery"]["due"]), "Purchase Order"
+					with service_principal.acting():
+						return adapter.create_purchase_order(identity, company=_company(terms), supplier=supplier, items=_items(terms), currency=terms["currency"], schedule_date=terms["delivery"]["due"]), "Purchase Order"
 				except frappe.ValidationError as exc:
 					raise intents.OwnerRefused(str(exc)) from exc
 

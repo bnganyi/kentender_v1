@@ -68,6 +68,16 @@ def _json(value: Any) -> bytes:
 	return json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
 
 
+def organisation_id() -> str:
+	"""The supplier's organisation in Supplier Accounts where the site has one (the canonical Afya account), else the stand-in id. The synthetic S11 names it so the supplier's people are the real ones."""
+	import frappe
+
+	try:
+		return frappe.db.get_value("Supplier Organisation", {"legal_name": SUPPLIER}, "name") or "ORG-DEMO-1"
+	except Exception:  # a site without Supplier Accounts (the independence site) has no such table
+		return "ORG-DEMO-1"
+
+
 def _content(number: str, case: str) -> bytes:
 	if number == "S1":
 		return _json({"tender": "TND-DEMO-001", "tender_reference": "MOH/ICT/2027/DEMO-01", "title": "IT equipment delivery", "release": "IT-EQUIPMENT-OPEN-V1", "release_id": "1.5", "addenda": []})
@@ -93,7 +103,7 @@ def _content(number: str, case: str) -> bytes:
 	if number == "S10":
 		return _json({"legal_name": ENTITY, "address": "Afya House, Nairobi", "entity_type": "Ministry"})
 	if number == "S11":
-		return _json({"legal_name": SUPPLIER, "form": "Company", "organisation": "ORG-DEMO-1", "signatories": [{"name": "Mary Wanjiku", "user": SUPPLIER_SIGNATORY, "capacity": "Authorised signatory"}]})
+		return _json({"legal_name": SUPPLIER, "form": "Company", "organisation": organisation_id(), "signatories": [{"name": "Mary Wanjiku", "user": SUPPLIER_SIGNATORY, "capacity": "Authorised signatory"}]})
 	if number == "S12":
 		return _json({"restrictions": [], "event": "AwardDecisionRecorded v1"})
 	raise KeyError(number)
@@ -109,7 +119,7 @@ def award_package() -> dict[str, Any]:
 		"award_case": CASE, "tender": "TND-DEMO-001", "tender_reference": "MOH/ICT/2027/DEMO-01", "lot": "LOT-1", "cycle": 1,
 		"report": {"id": "EVL-DEMO-1", "version": 1, "digest": _sha(b"evaluation report"), "source": "synthetic"},
 		"opinion": {"id": "OPN-DEMO-1", "version": 1, "digest": _sha(b"opinion"), "proof": "synthetic"},
-		"decision": {"id": "DEC-DEMO-1", "version": 1, "outcome": "Award", "supplier": SUPPLIER, "organisation": "ORG-DEMO-1", "bid": "BID-DEMO-1",
+		"decision": {"id": "DEC-DEMO-1", "version": 1, "outcome": "Award", "supplier": SUPPLIER, "organisation": organisation_id(), "bid": "BID-DEMO-1",
 			"submitted_amount": TOTAL, "evaluated_amount": TOTAL, "currency": "KES"},
 		"notice_batch": {"id": "NTB-DEMO-1", "version": 1, "notices": [{"id": "NTC-DEMO-1", "digest": _sha(b"notice"), "given_at": "2027-06-30 10:00:00", "evidence": "synthetic"}]},
 		"response": {"id": "RSP-DEMO-1", "response": "Accepted", "by": SUPPLIER_SIGNATORY, "received_at": "2027-07-01 09:00:00", "authority": "synthetic"},

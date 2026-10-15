@@ -20,7 +20,7 @@ import frappe
 from frappe.utils import cint, cstr, flt, getdate
 
 from kentender_contracts.native import adapter, payment_guard
-from kentender_contracts.services import authority, clock, delivery, events, formation, intents, parties, people, position, preflight, records, segregation, signing_flow, work
+from kentender_contracts.services import authority, clock, delivery, events, formation, intents, parties, people, position, preflight, records, segregation, service_principal, signing_flow, work
 from kentender_contracts.services.errors import fail, invalid
 
 CASE = "Contract Case"
@@ -161,7 +161,8 @@ def _carry_out_native_invoice(case: str, invoice: str, actor: str) -> dict[str, 
 
 	def executor(identity: str):
 		try:
-			return adapter.invoice_receipt(line["receipt"], identity, bill_no=row.claim_reference, bill_date=str(row.invoice_date), qty=line["quantity"], submit=False), "Purchase Invoice"
+			with service_principal.acting():
+				return adapter.invoice_receipt(line["receipt"], identity, bill_no=row.claim_reference, bill_date=str(row.invoice_date), qty=line["quantity"], submit=False), "Purchase Invoice"
 		except frappe.ValidationError as exc:
 			raise intents.OwnerRefused(str(exc)) from exc
 
@@ -381,16 +382,9 @@ def return_accounting_invoice(case: str, *, invoice: str, expected_version: int,
 
 
 # -- Finance: the payment (D09-F, D17) ----------------------------------------------------------------------------------------------------
-class _as_user:
-	def __init__(self, user: str):
-		self.user = user
-
-	def __enter__(self):
-		self.previous = frappe.session.user
-		frappe.set_user(self.user)
-
-	def __exit__(self, *exc):
-		frappe.set_user(self.previous)
+def _as_user(user: str):
+	"""The Finance maker's or approver's own native session (see `service_principal`): the native workflow checks them, not a service."""
+	return service_principal.acting_as(user)
 
 
 def payments(case: str) -> list[dict[str, Any]]:

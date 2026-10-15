@@ -24,8 +24,9 @@ def r(*items) -> dict:
 	return {"k": "rows", "items": [list(i) for i in items]}
 
 
-def t(cols, rows, num=(), inputs: dict[str, str] | None = None) -> dict:
-	return {"k": "table", "cols": list(cols), "rows": [list(x) for x in rows], "num": list(num), "inputs": inputs or {}}
+def t(cols, rows, num=(), inputs: dict[str, str] | None = None, live: dict[str, str] | None = None) -> dict:
+	"""`inputs` names an input cell (`"row,col"` -> field name); `live` draws a cell from another field as the reader types (unit references, summarised as a range)."""
+	return {"k": "table", "cols": list(cols), "rows": [list(x) for x in rows], "num": list(num), "inputs": inputs or {}, "live": live or {}}
 
 
 def fl(*items) -> dict:

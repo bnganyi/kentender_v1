@@ -108,6 +108,7 @@ COMMANDS: dict[str, Handler] = {
 	"DeclareContractInterest": _declare,
 	"RecordContractArrival": _arrival,
 	"RecordInspectionObservations": _observations,
+	"RecordCustodyReturn": lambda c, a, v, e, k, u: delivery.record_custody_return(c, expected_version=e, idempotency_key=k, actor=u, units=[x.strip() for x in str(v.get("units", "")).splitlines() if x.strip()], evidence=v.get("evidence", "")),
 	"SignTechnicalCertificate": lambda c, a, v, e, k, u: delivery.sign_technical_certificate(c, arrival=a["arrival"], expected_version=e, idempotency_key=k, actor=u),
 	"PrepareAcceptanceReport": lambda c, a, v, e, k, u: delivery.prepare_acceptance_report(c, arrivals=a["arrivals"], expected_version=e, idempotency_key=k, actor=u),
 	"SignAcceptanceReport": lambda c, a, v, e, k, u: delivery.sign_acceptance_report(c, acceptance=a["acceptance"], expected_version=e, idempotency_key=k, actor=u),

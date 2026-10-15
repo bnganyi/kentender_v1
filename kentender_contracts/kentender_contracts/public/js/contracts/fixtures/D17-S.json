@@ -2,7 +2,7 @@
  "actions": {
   "Confirm payment": {
    "args": {
-    "payment": "ACC-PAY-2026-00028"
+    "payment": "ACC-PAY-2026-00038"
    },
    "command": "RecordFinanceSettlement",
    "do": "command"
@@ -18,7 +18,7 @@
  "ev": [
   "Certification 1",
   "Accounting invoice",
-  "Payment Entry ACC-PAY-2026-00028"
+  "Payment Entry ACC-PAY-2026-00038"
  ],
  "id": "D17-S",
  "name": "Finance payment approval",

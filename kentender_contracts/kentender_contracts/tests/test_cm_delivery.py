@@ -79,6 +79,13 @@ class TestAppointment(DeliveryCase):
 		self.assertTrue(delivery.appointment_state(self.case)["ready"])
 		self.assertEqual(refusal(delivery.declare_interest, self.case, expected_version=self.v(), idempotency_key=self.k("d"), actor=self.p["grace"]).code, "CM_AUTHORITY")
 
+	def test_one_members_declaration_closes_only_their_own_task(self):
+		rec = delivery.recommend_inspectors(self.case, expected_version=self.v(), idempotency_key=self.k("r"), actor=self.p["charles"], members=self.members())
+		delivery.appoint_inspectors(self.case, appointment=rec["appointment"], expected_version=self.v(), idempotency_key=self.k("a"), actor=self.p["amina"])
+		delivery.declare_interest(self.case, expected_version=self.v(), idempotency_key=self.k("d"), actor=self.p["julia"])
+		open_declarations = {t["holder"] for t in work.live(self.case) if t["command"] == "DeclareContractInterest"}
+		self.assertEqual(open_declarations, {self.p["peter"], self.p["brian"]})
+
 	def test_a_declared_conflict_suspends_that_member_and_asks_hop_for_a_replacement(self):
 		rec = delivery.recommend_inspectors(self.case, expected_version=self.v(), idempotency_key=self.k("r"), actor=self.p["charles"], members=self.members())
 		delivery.appoint_inspectors(self.case, appointment=rec["appointment"], expected_version=self.v(), idempotency_key=self.k("a"), actor=self.p["amina"])
@@ -273,6 +280,20 @@ class TestAcceptanceAndReceipt(DeliveryCase):
 		self.assertEqual(len(delivery.posted_receipts(self.case)), 1)
 		self.assertEqual(frappe.db.count("Contract Simulated Signature", {"fixture_namespace": "CM_TEST"}), signatures_before)
 		self.assertEqual(holds.open_holds(self.case), [])
+
+	def test_the_posting_runs_as_the_service_not_as_the_person_whose_signature_completed_it(self):
+		self.certify()
+		out = self.prepare()
+		with mock.patch.object(adapter, "receive", side_effect=RuntimeError("stock service down")):
+			self.sign_all(out["acceptance"])
+		frappe.set_user(self.p["brian"])  # an inspector holds no stock rights, and the supplier is no ERPNext user at all
+		try:
+			result = delivery.post_accepted_receipt(self.case, acceptance=out["acceptance"], actor=self.p["brian"])
+			self.assertEqual(frappe.session.user, self.p["brian"], "the session is the person's again afterwards")
+		finally:
+			frappe.set_user("Administrator")
+		self.assertIn(result["state"], ("Succeeded", "Reconciled"))
+		self.assertEqual(frappe.db.get_value("Purchase Receipt", delivery.posted_receipts(self.case)[0], "owner"), "Administrator")
 
 	def test_rejected_units_are_collected_by_the_supplier_and_only_rejected_units_can_be(self):
 		self.certify()

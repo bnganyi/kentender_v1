@@ -8,7 +8,7 @@
    "args": {
     "claim_reference": "AFYA-1-R",
     "invoice_date": "2026-10-15",
-    "successor_of": "CM-INV-364842"
+    "successor_of": "CM-INV-380201"
    },
    "command": "CorrectContractInvoice",
    "do": "command"
@@ -72,6 +72,7 @@
       "0,1": "quantity.L1"
      },
      "k": "table",
+     "live": {},
      "num": [
       1,
       2,

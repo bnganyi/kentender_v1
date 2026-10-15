@@ -24,6 +24,7 @@ import frappe
 from frappe.utils import flt, today
 
 from kentender_contracts.native import payment_guard
+from kentender_contracts.services import service_principal
 from kentender_contracts.services.errors import fail
 
 UNIT_REFERENCES = "cm_unit_references"  # flag: {(receipt, item_code): [reference, ...]} consumed as assets are created
@@ -188,16 +189,12 @@ def post_invoice(invoice: str, user: str) -> dict[str, Any]:
 	"""The approver's posting of a Draft invoice: the configured workflow's Approve if the site has one for Purchase Invoice, otherwise the native submission, taken as `user`."""
 	from frappe.model.workflow import apply_workflow, get_workflow_name
 
-	previous = frappe.session.user
-	frappe.set_user(user)
-	try:
+	with service_principal.acting_as(user):
 		doc = frappe.get_doc("Purchase Invoice", invoice)
 		if get_workflow_name("Purchase Invoice"):
 			doc = apply_workflow(doc, "Approve")
 		else:
 			doc.submit()
-	finally:
-		frappe.set_user(previous)
 	return {"invoice": invoice, "docstatus": doc.docstatus}
 
 
@@ -246,13 +243,9 @@ def approve_payment(entry: str, identity: str, user: str) -> dict[str, Any]:
 	(`allow_self_approval = 0`); the guard checks the entitlement under a lock when the entry posts."""
 	from frappe.model.workflow import apply_workflow
 
-	previous = frappe.session.user
-	frappe.set_user(user)
-	try:
+	with service_principal.acting_as(user):
 		with payment_guard.native_operation(identity):
 			doc = apply_workflow(frappe.get_doc("Payment Entry", entry), "Approve")
-	finally:
-		frappe.set_user(previous)
 	return {"workflow_state": doc.workflow_state, "docstatus": doc.docstatus}
 
 

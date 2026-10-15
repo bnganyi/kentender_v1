@@ -64,7 +64,7 @@ export function createScreenCache() {
 	};
 }
 
-const NAV_PREFIXES = { tenders: ["/tenders"], "my-bids": ["/my-bids"], account: ["/account"] };
+const NAV_PREFIXES = { tenders: ["/tenders"], "my-bids": ["/my-bids"], contracts: ["/supplier/contracts"], account: ["/account"] };
 const STATUS_TEXT = {
 	403: "You do not have permission to do this.",
 	404: "This item is unavailable or you do not have permission to view it.",

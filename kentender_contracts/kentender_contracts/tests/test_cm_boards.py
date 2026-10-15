@@ -15,7 +15,7 @@ from pathlib import Path
 
 import frappe
 
-from kentender_contracts.boards import router
+from kentender_contracts.boards import listing, router
 from kentender_contracts.services import delivery, errors, formation, payment, records, work
 from kentender_contracts.tests import native_world as world
 from kentender_contracts.tests import thread_world as tw
@@ -64,6 +64,19 @@ class TestBoards(ContractCase):
 		t = tw.Thread(self.p, tag="BOARDS")
 		out = tw.receive(self.p, contract_id=t.contract_id)
 		self.case = t.case = out["contract"]
+
+		# the list: My work for the head of procurement, the supplier's own list, an empty My work and a search that finds nothing
+		mine = listing.workspace(self.p["charles"], view="My work")["board"]
+		self.assertEqual((mine["id"], mine["title"], [c for c in mine["cols"]], mine["rows"][0][0], mine["rows"][0][2]), ("D01", "Contracts", listing.COLS, "@" + t.contract_id, "!Preparing"))
+		self.seen["D01"] = mine
+		self.seen["D01-S"] = listing.workspace(self.p["mary"])["board"]
+		self.assertEqual((self.seen["D01-S"]["title"], self.seen["D01-S"]["cols"], self.seen["D01-S"]["views"]), ("My contracts", listing.COLS_SUPPLIER, []))
+		empty = listing.workspace(self.p["grace"], view="My work")["board"]
+		self.assertEqual((empty["rows"], empty["empty"]), ([], "No contracts are available."))
+		self.seen["D01-E"] = empty
+		nothing = listing.workspace(self.p["charles"], view="All contracts", search="no such contract")["board"]
+		self.assertEqual((nothing["rows"], nothing["empty"], nothing["emptyAct"]), ([], "No contracts match your search.", "Clear search"))
+		self.seen["D01-F"] = nothing
 
 		# preparation: the particulars still to complete, then the agreement ready to send
 		blank = self.screen("charles", "D02", capture_as="D02-missing")

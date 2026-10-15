@@ -38,15 +38,26 @@ PEOPLE: dict[str, tuple[str, list[str]]] = {
 CLOCK = "2027-07-02 09:00:00"
 
 
+#: A browser world walks the seed world's own people: it maps a persona to their canonical address here (see `browser_world.py`); a test world uses throwaway `cm.thread.*` accounts.
+ADDRESSES: dict[str, str] = {}
+
+
 def email(persona: str) -> str:
+	if persona in ADDRESSES:
+		return ADDRESSES[persona]
 	return sources.SUPPLIER_SIGNATORY if persona == "mary" else sources.ENTITY_SIGNATORY if persona == "amina" else f"cm.thread.{persona}@{DOMAIN}"
+
+
+def ours(address: str) -> bool:
+	"""An account this world created (and may delete): throwaway thread accounts only, never a seed-world person."""
+	return address.startswith("cm.thread.")
 
 
 class Suppliers:
 	"""Supplier Accounts as the audience and parties code asks it: one organisation, its authorised signatory and its representative."""
 
-	def __init__(self, organisation: str = "ORG-DEMO-1"):
-		self.organisation = organisation
+	def __init__(self, organisation: str = ""):
+		self.organisation = organisation or sources.organisation_id()
 
 	def _row(self, user: str, responsibility: str) -> dict:
 		return {"assignment_id": f"A-{user}", "organisation_id": self.organisation, "user": user, "responsibility": responsibility, "active": True, "signatory_ready": responsibility == "Authorised Signatory"}
@@ -65,8 +76,9 @@ def unit() -> str:
 	return frappe.get_all("Organisation Unit", pluck="name", limit=1)[0]
 
 
-def build() -> dict[str, str]:
-	"""Create the people and grant their responsibilities (idempotent). Returns persona -> email."""
+def build(namespace: str = "CM_TEST") -> dict[str, str]:
+	"""Create the people and grant their responsibilities (idempotent). Returns persona -> email. A responsibility the person already holds is left as it was; the ones granted here carry
+	`namespace`, which is how `teardown` removes exactly those."""
 	registry.ensure_roles()
 	out = {}
 	for persona, (name, roles) in PEOPLE.items():
@@ -75,9 +87,7 @@ def build() -> dict[str, str]:
 			frappe.get_doc({"doctype": "User", "email": address, "first_name": name.split()[0], "last_name": name.split()[-1], "send_welcome_email": 0, "enabled": 1}).insert(ignore_permissions=True).add_roles("Desk User")
 		out[persona] = address
 		for role in roles:
-			if role == "Technical Operator" and registry.REGISTRY[role].technical_holder:
-				pass
-			administration.grant(user=address, business_role=role, organisation_unit=unit() if registry.REGISTRY[role].requires_organisation_unit else "", actor="Administrator")
+			administration.grant(user=address, business_role=role, organisation_unit=unit() if registry.REGISTRY[role].requires_organisation_unit else "", actor="Administrator", fixture_namespace=namespace)
 	# the Finance people also need the native roles the Payment Entry workflow names
 	for persona, roles in (("josphat", ["Accounts User", "Purchase User", "Stock User", "Item Manager"]), ("beatrice", ["Accounts Manager", "Purchase Manager", "Stock Manager"])):
 		frappe.get_doc("User", out[persona]).add_roles(*roles)
@@ -85,12 +95,14 @@ def build() -> dict[str, str]:
 	return out
 
 
-def teardown() -> None:
+def teardown(namespace: str = "CM_TEST") -> None:
 	for persona in PEOPLE:
 		address = email(persona)
-		for name in frappe.get_all("User Responsibility Assignment", filters={"user": address}, pluck="name"):
+		for name in frappe.get_all("User Responsibility Assignment", filters={"user": address, "fixture_namespace": namespace}, pluck="name"):
 			purge_doc("User Responsibility Assignment", name)
-		if frappe.db.exists("User", address) and address not in (sources.SUPPLIER_SIGNATORY, sources.ENTITY_SIGNATORY):
+		if ours(address) and frappe.db.exists("User", address):
+			for name in frappe.get_all("User Responsibility Assignment", filters={"user": address}, pluck="name"):
+				purge_doc("User Responsibility Assignment", name)
 			frappe.delete_doc("User", address, force=True, ignore_permissions=True)
 	frappe.db.commit()
 

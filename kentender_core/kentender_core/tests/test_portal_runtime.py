@@ -71,7 +71,7 @@ class TestPortalRuntime(IntegrationTestCase):
 
 	def test_the_header_marks_the_owning_section_and_keeps_board_order(self):
 		items = portal_runtime.nav("/account/receipts")
-		self.assertEqual([(i["label"], i["href"], i["current"]) for i in items], [("Tenders", "/tenders", False), ("My bids", "/my-bids", False), ("Account", "/account", True)])
+		self.assertEqual([(i["label"], i["href"], i["current"]) for i in items], [("Tenders", "/tenders", False), ("My bids", "/my-bids", False), ("Contracts", "/supplier/contracts", False), ("Account", "/account", True)])
 
 	def test_the_header_names_who_is_signed_in_and_a_surface_may_add_where_they_act_for(self):
 		self.assertIsNone(portal_runtime.identity("Guest"))

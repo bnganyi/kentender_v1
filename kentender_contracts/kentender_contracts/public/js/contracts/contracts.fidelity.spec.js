@@ -53,7 +53,7 @@ describe.each(SCREENS)("$board", (screen) => {
 });
 
 describe("the COVERED claim", () => {
-	it("lists exactly the boards this spec compares", () => {
-		expect([...COVERED].sort()).toEqual(SCREENS.map((s) => s.board).sort());
+	it("includes every board this spec compares (the record screens are compared by boards.fidelity.spec.js)", () => {
+		for (const screen of SCREENS) expect(COVERED).toContain(screen.board);
 	});
 });

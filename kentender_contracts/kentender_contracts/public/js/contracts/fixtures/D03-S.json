@@ -103,33 +103,6 @@
     }
    ],
    "t": "Agreement summary"
-  },
-  {
-   "b": [
-    {
-     "cols": [
-      "Signatory",
-      "Capacity",
-      "Status"
-     ],
-     "inputs": {},
-     "k": "table",
-     "num": [],
-     "rows": [
-      [
-       "Mary Wanjiku",
-       "Supplier authorised signatory",
-       "!Awaiting signature"
-      ],
-      [
-       "Amina Hassan",
-       "Entity signatory",
-       "!Awaiting signature"
-      ]
-     ]
-    }
-   ],
-   "t": "Signatures"
   }
  ],
  "s2": [

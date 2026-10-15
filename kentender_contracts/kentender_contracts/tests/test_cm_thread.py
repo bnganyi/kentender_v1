@@ -180,6 +180,36 @@ class TestOrdinaryThread(ContractCase):
 		self.assertEqual(settled["state"], "Paid")
 		self.assertEqual(payment_guard.entitlement(native)["available"], 0)
 
+	def drop_approval(self):
+		from kentender_core.services.command_write_guard import purge_doc
+
+		for name in frappe.get_all("User Responsibility Assignment", filters={"user": self.p["josphat"], "business_role": "Finance approval"}, pluck="name"):
+			purge_doc("User Responsibility Assignment", name)
+		frappe.db.commit()
+
+	def test_a_finance_maker_who_also_holds_approval_cannot_approve_their_own_draft(self):
+		from kentender_core.services import responsibility_administration as administration
+
+		t = tw.Thread(self.p, tag="SELF")
+		case = t.active()
+		t.appointed()
+		units = tw.fresh_serials(2)
+		arrival = t.arrive(units)["arrival"]
+		t.inspect(arrival, units)
+		t.accept(arrival)
+		inv = t.claim("SELF-1", 2)
+		t.certify_invoice(inv["invoice"])
+		native = frappe.db.get_value("Contract Invoice", inv["invoice"], "native_invoice")
+		administration.grant(user=self.p["josphat"], business_role="Finance approval", actor="Administrator", fixture_namespace="CM_TEST")
+		self.addCleanup(self.drop_approval)
+		payment.save_accounting_invoice(case, invoice=inv["invoice"], expected_version=t.version(), idempotency_key=t.key("ai"), actor=self.p["josphat"], posting_date=frappe.utils.today(),
+			payable_account=frappe.db.get_value("Company", world.COMPANY, "default_payable_account"), cost_centre=frappe.db.get_value("Company", world.COMPANY, "cost_center"),
+			expense_account=frappe.db.get_value("Purchase Invoice Item", {"parent": native}, "expense_account"))
+		payment.submit_accounting_invoice(case, invoice=inv["invoice"], expected_version=t.version(), idempotency_key=t.key("as"), actor=self.p["josphat"])
+		exc = refusal(payment.approve_accounting_invoice, case, invoice=inv["invoice"], expected_version=t.version(), idempotency_key=t.key("aa"), actor=self.p["josphat"])
+		self.assertEqual((exc.code, exc.detail["separation"]), ("CM_SEGREGATION", "finance_independence"))
+		self.assertEqual(frappe.db.get_value("Purchase Invoice", native, "docstatus"), 0, "nothing was posted")
+
 	def test_a_contract_that_is_not_complete_cannot_be_closed(self):
 		t = tw.Thread(self.p, tag="OPEN")
 		case = t.active()

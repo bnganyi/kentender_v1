@@ -22,7 +22,7 @@ test.describe('Contracts shell', () => {
 		await expect(page).toHaveURL(/\/(app|desk)\/contracts/);
 		const root = page.getByTestId('cm-root');
 		await expect(root).toHaveAttribute('data-screen', 'workspace');
-		await expect(page.getByTestId('cm-empty')).toContainText('There are no contracts to show yet.');
+		await expect(page.getByTestId('cm-empty')).toContainText('No contracts are available.');
 		await expect(page.locator('.kt-rail-mount')).toContainText('Contracts');
 		await expect(page.locator('.body-sidebar')).toContainText('Tenders'); // the shared rail, not a rail of its own
 

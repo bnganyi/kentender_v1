@@ -2,7 +2,7 @@
  "actions": {
   "Sign report": {
    "args": {
-    "acceptance": "CM-ACC-364820"
+    "acceptance": "CM-ACC-380179"
    },
    "command": "SignAcceptanceReport",
    "do": "command"
@@ -69,17 +69,18 @@
      ],
      "inputs": {},
      "k": "table",
+     "live": {},
      "num": [],
      "rows": [
       [
-       "CMTB1D795-0009",
+       "CMT96C999-0009",
        "Starts successfully is No, the requirement is Yes.",
        "",
        "",
        "!Does not meet"
       ],
       [
-       "CMTB1D795-0010",
+       "CMT96C999-0010",
        "Starts successfully is No, the requirement is Yes.",
        "",
        "",
@@ -132,6 +133,7 @@
      ],
      "inputs": {},
      "k": "table",
+     "live": {},
      "num": [],
      "rows": [
       [

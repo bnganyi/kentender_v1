@@ -8,7 +8,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cint, formatdate
 
-from kentender_contracts.boards import chrome, kit
+from kentender_contracts.boards import chrome, kit, statements
 from kentender_contracts.boards.context import Context, money, when
 from kentender_contracts.services import closeout, events, payment, records, work
 
@@ -19,8 +19,7 @@ def d22(ctx: Context) -> dict:
 	accepted = sum(d["accepted"] for d in review["deliveries"])
 	history = [f"{a['accepted']} on {formatdate(a['date'], 'd MMMM yyyy')}" for a in _acceptance_dates(ctx)]
 	completed = formatdate(ctx.doc.operative_date or frappe.utils.today(), "d MMMM yyyy")
-	statement = (f"I confirm delivery and acceptance of the goods and services identified in the contract completion schedule, under contract {ctx.doc.contract_id} agreement {ctx.agreement.version_no}, "
-		f"completed on {completed}, with the surviving obligations expressly listed.")
+	statement = statements.COMPLETION.format(contract=f"{ctx.doc.contract_id} agreement {ctx.agreement.version_no}", date=completed)
 	b = chrome.base(ctx, "D22", d="D22", name="Completion certificate", title="Confirm contract completion", tab="Obligations", next=chrome.next_block(ctx), ev=["Financial reconciliation 1"],
 		regions=[kit.R("Certificate summary", kit.r(["Delivered and accepted", f"{accepted} {(ctx.terms.get('lines') or [{}])[0].get('description', '').lower()}"] if accepted else ["Delivered and accepted", "—"],
 			["Acceptance", "; ".join(history) or "—"], ["Contracted services", "No contracted service line"], ["Unresolved defects", "None"], ["Final acceptance", "Not required by the issued terms"],
@@ -43,7 +42,7 @@ def d11(ctx: Context, closeout_name: str) -> dict:
 	review = records.loads(row.review_json)
 	cert = frappe.db.get_value("Contract Certificate", {"contract_case": ctx.case, "kind": "Completion", "state": "Signed"}, "name") or ""
 	accepted = sum(d["accepted"] for d in review["deliveries"])
-	decision = ("I close this procurement contract following the evidenced completion recorded below. The surviving obligations and their accountable owners are listed in the attached schedule.")
+	decision = statements.CLOSEOUT
 	b = chrome.base(ctx, "D11", d="D11", name="Close-out review", title="Close contract", tab="Obligations", next=chrome.next_block(ctx), ev=["Completion certificate 1", "Financial reconciliation 1"],
 		regions=[kit.R("Completion review", kit.f(["Accepted", str(accepted)], ["Invoiced", money(review["claimed_total"], ctx.currency)], ["Cash confirmed", money(review["settled_total"], ctx.currency)],
 			["Balance", money(review["claimed_total"] - review["settled_total"], ctx.currency)]), kit.r(["Warranty", "Runs from each unit’s acceptance"], ["Security", review["security"]], ["Required reporting", "Complete"], ["Completion certificate", "Signed" if cert else "Not signed"])),

@@ -64,6 +64,7 @@ describe("per-app copies", () => {
 		"kentender_budget/kentender_budget",
 		"kentender_strategy/kentender_strategy",
 		"kentender_core/kentender_core",
+		"kentender_contracts/kentender_contracts",
 	];
 	it.each(["TablePagerHost.vue", "pageSize.js", "usePagedRows.js"])("%s is identical in every app", (file) => {
 		const read = (root) => readFileSync(resolve(process.cwd(), root, "public/js/pager_shared", file), "utf8");

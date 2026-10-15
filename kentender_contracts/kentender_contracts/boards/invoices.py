@@ -13,7 +13,7 @@ from typing import Any
 import frappe
 from frappe.utils import cint, flt, formatdate
 
-from kentender_contracts.boards import chrome, kit
+from kentender_contracts.boards import chrome, kit, statements
 from kentender_contracts.boards.context import Context, money, when
 from kentender_contracts.services import payment, position, records, work
 
@@ -112,8 +112,7 @@ def d08c(ctx: Context, invoice) -> dict:
 	"""Corrected claim: certify (the exact matching, the exact accepted units)."""
 	accepted = [u["unit"] for u in ctx.position["units"].values() if u["status"] == "Accepted"]
 	rejected = [u["unit"] for u in ctx.position["units"].values() if u["status"] in ("Rejected", "Returned")]
-	statement = (f"I certify that invoice {invoice.claim_reference}, for {money(invoice.claimed_amount, ctx.currency)}, is supported by the cited effective contract and accepted goods or services, "
-		"after the adjustments and recoveries shown in the certification schedule.")
+	statement = statements.CERTIFICATION.format(invoice=invoice.claim_reference, amount=money(invoice.claimed_amount, ctx.currency))
 	b = chrome.base(ctx, "D08-C", d="D08", name="Invoice review", title="Review invoice", tab="Invoices", next=chrome.next_block(ctx), ev=[f"Supplier invoice {invoice.claim_reference}", "Acceptance report 1", "Receipt 1"],
 		regions=[_comparison(ctx, invoice, False), kit.R("Certification", kit.x(statement), kit.r(["Accepted units", ", ".join(accepted) or "—"], ["Rejected units", (", ".join(rejected) + " — not certified") if rejected else "None"], ["Recipient", "Finance"]))],
 		p="Sign certification")

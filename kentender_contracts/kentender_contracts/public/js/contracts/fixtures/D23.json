@@ -19,7 +19,7 @@
  "dialogs": {
   "appoint": {
    "args": {
-    "appointment": "CM-APP-364770"
+    "appointment": "CM-APP-380129"
    },
    "b": [
     {
@@ -72,7 +72,7 @@
   },
   "return": {
    "args": {
-    "appointment": "CM-APP-364770"
+    "appointment": "CM-APP-380129"
    },
    "b": [
     {
@@ -120,6 +120,7 @@
      ],
      "inputs": {},
      "k": "table",
+     "live": {},
      "num": [],
      "rows": [
       [
@@ -152,7 +153,7 @@
       ],
       [
        "Recommended by",
-       "Charles Mutiso, 15 Oct 2026, 02:33 EAT"
+       "Charles Mutiso, 15 Oct 2026, 03:32 EAT"
       ],
       [
        "Recommendation reference",

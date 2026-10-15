@@ -60,9 +60,12 @@ def waiting_command(command: str, qualifier: str) -> str:
 	return f"{command}:waiting:{qualifier}"
 
 
-def finish(case: str, *, command: str | None = None, subject: str | None = None, version: int | None = None, state: str = "Done", actor: str = "") -> int:
-	"""Close the matching live tasks. `state` is Done (the obligation was met) or Superseded (it no longer applies)."""
+def finish(case: str, *, command: str | None = None, subject: str | None = None, version: int | None = None, state: str = "Done", actor: str = "", holder: str | None = None) -> int:
+	"""Close the matching live tasks. `state` is Done (the obligation was met) or Superseded (it no longer applies). `holder` limits it to one person's own obligation (each member
+	declares for themselves: one member's declaration does not close another's)."""
 	filters: dict[str, Any] = {"contract_case": case, "state": ["in", list(LIVE)]}
+	if holder is not None:
+		filters["holder"] = holder
 	if subject is not None:
 		filters["subject"] = subject
 	if version is not None:

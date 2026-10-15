@@ -2,7 +2,7 @@
  "actions": {
   "Approve accounting invoice": {
    "args": {
-    "invoice": "CM-INV-364856",
+    "invoice": "CM-INV-380215",
     "kind": "invoice"
    },
    "command": "ApproveNativeFinanceRecord",
@@ -22,7 +22,7 @@
  "dialogs": {
   "return": {
    "args": {
-    "invoice": "CM-INV-364856",
+    "invoice": "CM-INV-380215",
     "kind": "invoice"
    },
    "b": [
@@ -108,6 +108,7 @@
      ],
      "inputs": {},
      "k": "table",
+     "live": {},
      "num": [
       1,
       2,

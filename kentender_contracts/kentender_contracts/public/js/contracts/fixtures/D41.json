@@ -29,6 +29,7 @@
      ],
      "inputs": {},
      "k": "table",
+     "live": {},
      "num": [],
      "rows": [
       [
@@ -77,7 +78,7 @@
        "2 Jul 2027, 09:00 EAT",
        "Funding conversion linked",
        "Amina Hassan",
-       "Funding conversion SIMCOM-0D3776D9 linked."
+       "Funding conversion SIMCOM-0CB60F8D linked."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
@@ -191,7 +192,7 @@
        "2 Jul 2027, 09:00 EAT",
        "Native invoice linked",
        "David Otieno",
-       "Native invoice ACC-PINV-2026-00031 created for invoice AFYA-1-R1."
+       "Native invoice ACC-PINV-2026-00041 created for invoice AFYA-1-R1."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
@@ -215,31 +216,31 @@
        "2 Jul 2027, 09:00 EAT",
        "Accounting invoice posted",
        "Beatrice Kamau",
-       "Accounting invoice ACC-PINV-2026-00031 posted."
+       "Accounting invoice ACC-PINV-2026-00041 posted."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Payment drafted",
        "Josphat Mwangi",
-       "Draft payment ACC-PAY-2026-00028 prepared for 800,000.00."
+       "Draft payment ACC-PAY-2026-00038 prepared for 800,000.00."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Payment submitted for approval",
        "Josphat Mwangi",
-       "Payment ACC-PAY-2026-00028 submitted for approval."
+       "Payment ACC-PAY-2026-00038 submitted for approval."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Payment approved",
        "Beatrice Kamau",
-       "Payment ACC-PAY-2026-00028 approved and posted."
+       "Payment ACC-PAY-2026-00038 approved and posted."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Settlement confirmed",
        "Beatrice Kamau",
-       "Payment ACC-PAY-2026-00028 for 800,000.00 confirmed as settled."
+       "Payment ACC-PAY-2026-00038 for 800,000.00 confirmed as settled."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
@@ -305,7 +306,7 @@
        "2 Jul 2027, 09:00 EAT",
        "Native invoice linked",
        "David Otieno",
-       "Native invoice ACC-PINV-2026-00032 created for invoice AFYA-2."
+       "Native invoice ACC-PINV-2026-00042 created for invoice AFYA-2."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
@@ -329,31 +330,31 @@
        "2 Jul 2027, 09:00 EAT",
        "Accounting invoice posted",
        "Beatrice Kamau",
-       "Accounting invoice ACC-PINV-2026-00032 posted."
+       "Accounting invoice ACC-PINV-2026-00042 posted."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Payment drafted",
        "Josphat Mwangi",
-       "Draft payment ACC-PAY-2026-00029 prepared for 200,000.00."
+       "Draft payment ACC-PAY-2026-00039 prepared for 200,000.00."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Payment submitted for approval",
        "Josphat Mwangi",
-       "Payment ACC-PAY-2026-00029 submitted for approval."
+       "Payment ACC-PAY-2026-00039 submitted for approval."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Payment approved",
        "Beatrice Kamau",
-       "Payment ACC-PAY-2026-00029 approved and posted."
+       "Payment ACC-PAY-2026-00039 approved and posted."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
        "Settlement confirmed",
        "Beatrice Kamau",
-       "Payment ACC-PAY-2026-00029 for 200,000.00 confirmed as settled."
+       "Payment ACC-PAY-2026-00039 for 200,000.00 confirmed as settled."
       ],
       [
        "2 Jul 2027, 09:00 EAT",
