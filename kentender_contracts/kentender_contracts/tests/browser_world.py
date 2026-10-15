@@ -19,12 +19,12 @@ import os
 from pathlib import Path
 
 import frappe
-from frappe.utils.password import update_password
 
 from kentender_contracts.native import adapter
 from kentender_contracts.services import formation, records
 from kentender_core.services import test_clock
 from kentender_contracts.simulation import sources
+from kentender_contracts.tests import known_passwords
 from kentender_contracts.tests import native_world as world
 from kentender_contracts.tests import thread_world as tw
 
@@ -167,9 +167,7 @@ def build() -> dict:
 	world.ensure_workflow()
 	people = tw.build(NAMESPACE)
 	people["david"] = DAVID
-	for address in set(people.values()):
-		if frappe.db.exists("User", address):
-			update_password(address, PASSWORD)
+	known_passwords.set_known(people.values(), PASSWORD)  # the seed world's own people, with the password they had kept for `clean` to put back
 	frappe.db.commit()
 	package = {**sources.award_package(), "award_case": AWARD_CASE}  # its own Award case, so the service tests (which receive the demonstration package) never meet this world's contract
 	received = formation.receive_award_package(package, handoff=sources.source_handoff(AWARD_CASE), managing_unit=tw.unit(), idempotency_key=f"receive-{CONTRACT}", actor="Administrator", contract_id=CONTRACT)
@@ -221,6 +219,7 @@ def clean() -> dict:
 	frappe.db.commit()
 	failed = world.teardown()
 	tw.teardown(NAMESPACE)
+	known_passwords.restore()
 	previous = json.loads(output().read_text()).get("previous_instant") if output().exists() else ""
 	test_clock.set_instant(previous or None)
 	if output().exists():

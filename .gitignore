@@ -8,6 +8,10 @@ test-results/
 blob-report/
 playwright/.cache/
 artifacts/playwright-mcp/
+# Contract Management worlds: built and removed by the gates; the passwords file holds the hashes they replaced until clean puts them back
+artifacts/cm-original-passwords.json
+artifacts/cm-demo-world.json
+artifacts/cm-ui-world.json
 .env.ui
 
 

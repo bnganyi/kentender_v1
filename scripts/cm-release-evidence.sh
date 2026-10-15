@@ -21,7 +21,7 @@ GATES=(
 	"cm-native-gate|L2 real ERPNext|the native adapter, the payment bypass guards, a two-process claim race, the readiness check"
 	"cm-leakage-gate|L1 + L2|who may read what; the technical and audit readers can never act; adversarial authority"
 	"cm-dead-end-gate|L1|no reader stranded on any stage; every command safe to send twice; holds and recovery"
-	"cm-regression-gate|L2 regression|Award's seams, Budget's funding provider, the signing facade, the supplier-account provider and Home, which now carries the Contracts module"
+	"cm-regression-gate|L2 regression|Award's seams, Budget's funding provider, the signing facade, the supplier-account provider and Home's structural comparison"
 	"ui-cm-fidelity-gate|structural|every board of the design compared with its artboard, or recorded as not compared with its reason"
 	"cm-ui-gate|L2 browser|the shell, the ordinary thread, formation, an existing contract, delivery and acceptance, finance, changes, close-out; then the world is cleaned"
 	"cm-demo-gate|L2 browser|the demonstration profiles walked as real people from the sidebar, My work and the bell"
@@ -68,7 +68,8 @@ done
 	echo "* **Phase 13** is owner-gated and has no gate: the approval of the proposed successor documents, the legal questions (LQ-01 to LQ-06), the production rule profile, the production Trust provider, the execution and witnessing method, real notice and report channels, Finance policy confirmations, and a security review. Until they are done, the proofs above are development proofs: the signing provider, the rule profile, the Award source provider and the funding owner may be simulated, and no screen says so."
 	echo "* **A contract closed against the real Budget on the canonical award** is not proved (FU-CM-118): Budget's own provider is proved and Contract Management's close-out is proved against the simulated funding owner."
 	echo "* **The canonical seed world** carries no contract (FU-CM-122); the demonstration profiles stand in for it."
-	echo "* **The cross-module regression** (Award, Budget, the signing facade, the supplier-account provider and the procurement UI smoke) is a release-time run of its own, recorded in the tracker (CM8-1206); this report covers Contract Management's gates only."
+	echo "* **Home's browser specs** (\`make ui-home-gate\`) are not run as evidence: they read the canonical world as it was seeded on 5 October, and the test site's canonical world has drifted from it (the head of procurement's Home reads 2 actions, 1 waiting item and 2 oversight records where the specs expect 9, 2 and 6, because Tenders, Bid opening and Requisitions rows are missing; none of that is Contract Management's). Contract work on Home is proved by \`test_cm_home_provider\` and the demonstration walk. Rebuilding the world with \`make seed-canonical SITE=kentender-test.local REBUILD=True\` makes them an oracle again."
+	echo "* **The rest of the platform's gates** (each other module's own services and browser gates) are not re-run: the regression gate above covers what Contract Management reaches into or changed in another app's world, and nothing else."
 } >"$OUT"
 
 echo

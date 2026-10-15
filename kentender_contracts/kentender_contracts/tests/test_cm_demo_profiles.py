@@ -8,6 +8,8 @@ as it is (the same identities, no new history); another profile replaces it; `cl
 
 from __future__ import annotations
 
+import unittest
+
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -41,6 +43,12 @@ class TestTheProfileTable(IntegrationTestCase):
 
 
 class TestTheProfiles(IntegrationTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		if frappe.db.db_type != "mariadb":
+			raise unittest.SkipTest("a profile builds the ERPNext world: MariaDB test site only")
+
 	def counts(self, case: str) -> dict[str, int]:
 		mine = {d: frappe.db.count(d, {"contract_case": case}) for d in records.DOCTYPES if d not in ("Contract Case",) and frappe.get_meta(d).has_field("contract_case")}
 		mine["cases"] = frappe.db.count("Contract Case", {"fixture_namespace": demo.NAMESPACE})

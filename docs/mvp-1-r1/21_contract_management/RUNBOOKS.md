@@ -21,6 +21,8 @@ Tests write real rows and have no rollback on this bench. **Run them on `kentend
 * The whole test site: `make test-site-rebuild` (copies the dev site over the test site).
 * The browser world the Playwright specs walk: `make cm-ui-world` builds it and `make cm-ui-world-clean` removes it; always clean before running Python gates.
 * A demonstration profile: `make seed-cm-profile SITE=kentender-test.local PROFILE=ACCEPTED` (profiles: RECEIVED, SIGNING, ACTIVE, ACCEPTED, PAID, CHANGE, WARRANTY, TERMINATION, CLOSED); the profile already in place is left exactly as it is, another replaces it, and `make seed-cm-clean` removes the contract, its native documents and the responsibilities granted for it and puts the clock back. `make seed-cm-profiles` builds and checks all nine once and cleans up.
+* Passwords: a browser or demonstration world signs the seed world's own people in with a password it knows, keeps the password each had in `artifacts/cm-original-passwords.json`, and puts it back when the world is cleaned (`make cm-ui-world-clean`, `make seed-cm-clean`). A run killed before its clean leaves those people with the world's password, so every other module's browser specs fail with "Invalid Login" until the clean is run.
+* A world also removes only the responsibilities it granted itself (its own namespace), never one a person already held: `test_cm_world_hygiene`.
 * Python-level: `kentender_contracts.services.records.wipe` deletes every Contract Management row of one fixture namespace and the bell alerts for its contracts.
 
 ## 3. The gates, in the order they are run
@@ -37,7 +39,7 @@ Tests write real rows and have no rollback on this bench. **Run them on `kentend
 | `make cm-independence-gate` | the app on a site that holds only ERPNext, core, supplier accounts and itself | 6 minutes |
 | `make ui-cm-fidelity-gate` | every board of the design compared with its artboard, or recorded as not compared with its reason | 1 minute |
 | `make cm-persona-gate` | each named person on the accepted contract, in a real browser, with no native-form redirect | 3 minutes |
-| `make cm-regression-gate` | what Contract Management reaches into in other apps: Award's seams, Budget's funding provider, the signing facade, the supplier-account provider and Home | 10 to 20 minutes |
+| `make cm-regression-gate` | what Contract Management reaches into in other apps: Award's seams, Budget's funding provider, the signing facade, the supplier-account provider and Home's structural comparison | 10 to 20 minutes |
 | `make ui-cm-release-evidence-gate` | all of the above, once, in the order that keeps one gate's leftovers out of the next; writes `artifacts/cm-release-evidence.md` with each result and its proof level; it does not cover the owner-gated Phase 13 | about 2 hours |
 
 If a UI run fails oddly (a teardown that fails, later specs failing against state an earlier one left behind), check `make ui-queue-check` before reading any application code.

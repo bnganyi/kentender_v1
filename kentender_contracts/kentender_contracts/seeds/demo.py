@@ -25,7 +25,6 @@ from pathlib import Path
 from typing import Any, Callable
 
 import frappe
-from frappe.utils.password import update_password
 
 from kentender_contracts.services import records, simulation
 
@@ -236,6 +235,7 @@ def validate(profile: str = "") -> dict[str, Any]:
 
 def clean() -> dict[str, Any]:
 	"""Remove the demonstration contract, its native documents and the responsibilities granted for it; put the clock back."""
+	from kentender_contracts.tests import known_passwords
 	from kentender_contracts.tests import native_world as world
 	from kentender_contracts.tests import thread_world as tw
 	from kentender_core.services import test_clock
@@ -258,6 +258,7 @@ def clean() -> dict[str, Any]:
 	frappe.db.commit()
 	failed = world.teardown() if cases else {}
 	tw.teardown(NAMESPACE)
+	known_passwords.restore()
 	test_clock.set_instant(_previous_instant())
 	if state_file().exists():
 		state_file().unlink()
@@ -267,6 +268,7 @@ def clean() -> dict[str, Any]:
 
 def run(profile: str = "ACTIVE", rebuild: bool = False, passwords: bool = False) -> dict[str, Any]:
 	"""Put the site on one profile. The profile already in place is left exactly as it is (`rebuild` builds it again). `passwords` sets a known password for the seed world's people on this copy (a browser walk signs in with it)."""
+	from kentender_contracts.tests import known_passwords
 	from kentender_contracts.tests import native_world as world
 	from kentender_contracts.tests import thread_world as tw
 	from kentender_core.services import test_clock
@@ -290,9 +292,7 @@ def run(profile: str = "ACTIVE", rebuild: bool = False, passwords: bool = False)
 	people = tw.build(NAMESPACE)
 	people.update({k: v for k, v in CANONICAL.items() if k in ("mary", "david", "naomi")})
 	if passwords:
-		for address in set(people.values()):
-			if frappe.db.exists("User", address):
-				update_password(address, PASSWORD)
+		known_passwords.set_known(people.values(), PASSWORD)  # kept as they were, put back by `clean`
 	frappe.db.commit()
 	frappe.flags.kt_contract_source_providers = None
 	t = tw.Thread(people, tag=f"DEMO{chosen.name[:6]}", contract_id=_contract(chosen), award_case=f"CM-DEMO-AWD-{chosen.name}{chosen.award_suffix}", item=world.ITEM_PLAIN)
