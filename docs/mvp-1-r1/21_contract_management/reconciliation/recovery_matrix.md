@@ -22,6 +22,7 @@
 | `post_receipt` | Post a native receipt or asset |
 | `new_spending` | Begin new supported spending |
 | `certify_invoice` | Certify an invoice or claim for payment |
+| `certify_advance` | Certify an advance for payment |
 | `pay` | Prepare, approve or submit a payment |
 | `confirm_settlement` | Confirm that a payment settled |
 | `claim_cash_paid` | State that cash was paid |
