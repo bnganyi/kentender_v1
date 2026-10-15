@@ -68,7 +68,10 @@ def ctx_view(ctx: Context) -> dict[str, Any]:
 	return ctx.view
 
 
-def tab_of(command: str) -> str:
+def tab_of(command: str, subject: str = "") -> str:
+	"""The tab a task belongs on. A guarantee for an advance is recorded and verified on Invoices, with the advance, not on Agreement with the performance security."""
+	if command.split(":")[0] in ("RecordContractSecurity", "VerifyContractSecurity") and subject.startswith("advance guarantee"):
+		return "Invoices"
 	return TAB_OF_COMMAND.get(command.split(":")[0], "Agreement")
 
 

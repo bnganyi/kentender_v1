@@ -180,7 +180,7 @@ COMMANDS: dict[str, Handler] = {
 	"SubmitContractInvoice": _invoice,
 	"CorrectContractInvoice": _invoice,
 	"RequestInvoiceCorrection": lambda c, a, v, e, k, u: payment.request_invoice_correction(c, invoice=a["invoice"], expected_version=e, idempotency_key=k, actor=u, reason=v.get("reason", "")),
-	"ResolveInvoiceDuplicate": lambda c, a, v, e, k, u: payment.resolve_duplicate(c, invoice=a["invoice"], disposition=pick(v.get("disposition")), reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u),
+	"ResolveInvoiceDuplicate": lambda c, a, v, e, k, u: payment.resolve_duplicate(c, invoice=a["invoice"], disposition=a.get("disposition") or pick(v.get("disposition")), reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u),
 	"SignContractCertification": lambda c, a, v, e, k, u: payment.sign_certification(c, invoice=a["invoice"], expected_version=e, idempotency_key=k, actor=u),
 	"SaveNativeFinanceDraft": _finance_save,
 	"SubmitNativeFinanceForApproval": _finance_submit,

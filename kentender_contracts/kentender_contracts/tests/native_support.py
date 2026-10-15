@@ -49,3 +49,35 @@ def job_submits_payment(pe: str) -> str:
 	doc = frappe.get_doc("Payment Entry", pe)
 	doc.submit()
 	return doc.name
+
+
+def race_claim(case: str, actor: str, reference: str, version: int, start_at: float) -> None:
+	"""One contender of a race for the same entitlement: wait for the common start instant, then submit a claim for the whole accepted quantity through the command."""
+	import time as _time
+
+	from kentender_contracts.services import errors, payment
+	from kentender_contracts.tests import thread_world as tw
+
+	tw.Environment().__enter__()  # the same supplier accounts and trusted clock the test world runs under
+	frappe.flags.kt_cm_fixture_namespace = "CM_TEST"  # what this process writes is removed with the test's own rows
+	_time.sleep(max(0.0, start_at - _time.time()))
+	started = _time.time()
+	try:
+		frappe.set_user(actor)
+		for attempt in (1, 2):  # a client whose screen went stale reloads and sends the same claim again
+			try:
+				out = payment.submit_invoice(case, expected_version=version, idempotency_key=f"race-{reference}-{attempt}", actor=actor, claim_reference=reference, invoice_date=today(), lines=[{"line_id": "L1", "quantity": 8}])
+				break
+			except errors.ContractError as exc:
+				if exc.code != "CM_CHANGED" or attempt == 2:
+					raise
+				frappe.db.rollback()
+				version = frappe.db.get_value("Contract Case", case, "record_version")
+		frappe.db.commit()
+		print("RACE " + json.dumps({"reference": reference, "ok": True, "state": out["state"], "attempts": attempt, "waited_s": round(_time.time() - started, 2)}))
+	except (errors.ContractError, errors.InputError) as exc:
+		frappe.db.rollback()
+		print("RACE " + json.dumps({"reference": reference, "ok": False, "code": getattr(exc, "code", ""), "waited_s": round(_time.time() - started, 2)}))
+	except Exception as exc:  # noqa: BLE001
+		frappe.db.rollback()
+		print("RACE " + json.dumps({"reference": reference, "ok": False, "error": f"{type(exc).__name__}: {str(exc)[:200]}"}))

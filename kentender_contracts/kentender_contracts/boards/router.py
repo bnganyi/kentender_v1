@@ -15,7 +15,7 @@ import frappe
 
 from kentender_contracts.boards import agreement, chrome, delivery, ending, existing, invoices, kit, obligations, outside, security
 from kentender_contracts.boards.context import Context
-from kentender_contracts.services import bindings, closeout, payment, records
+from kentender_contracts.services import advance, bindings, closeout, payment, records
 from kentender_contracts.services.errors import fail
 
 TAB_KEYS = {t.lower(): t for t in chrome.TABS}
@@ -70,9 +70,11 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 	if command == "ConfirmOutsideSignatureEvidence":
 		return outside.d26(ctx, outside.mismatched(ctx)[0], differs=True) if outside.mismatched(ctx) else outside.d26e(ctx)
 	if command == "RecordContractSecurity":
-		return security.d25r(ctx, lead["version"])
+		return invoices.guarantee_record(ctx) if subject.startswith("advance guarantee") else security.d25r(ctx, lead["version"])
 	if command == "VerifyContractSecurity":
-		return security.d25(ctx, lead["version"])
+		return invoices.guarantee_verify(ctx, lead["version"]) if subject.startswith("advance guarantee") else security.d25(ctx, lead["version"])
+	if command == "SignAdvanceCertification":
+		return invoices.d29(ctx, advance.live(ctx.case))
 	if command == "RecommendContractInspectors":
 		if subject.startswith("replacement for "):
 			return agreement.d24x(ctx, subject.split("replacement for ", 1)[1])
@@ -94,12 +96,21 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 	if command == "DecideContractAcceptance":
 		return delivery.d07a(ctx, lead["version"])
 	if command == "SignContractCertification":
-		return invoices.d08c(ctx, invoices._invoice(ctx, _number(subject)))
+		inv = invoices._invoice(ctx, _number(subject))
+		gap = next((g for g in payment.liability_gap(ctx.case) if g["successor"] == inv.name and not g["reconciled"]), None)
+		if gap:
+			return invoices.d08l(ctx, inv, gap)
+		plan = advance.recovery_plan(ctx.case, inv)
+		return invoices.d29r(ctx, inv, plan) if plan and plan["recovery"] > 0 else invoices.d08c(ctx, inv)
 	if command == "RequestInvoiceCorrection":
 		return invoices.d08(ctx, invoices._invoice(ctx, _number(subject)))
+	if command == "ResolveInvoiceDuplicate":
+		return invoices.d08d(ctx, invoices._invoice(ctx, _number(subject)))
 	if command == "CorrectContractInvoice":
 		return invoices.d18c(ctx, invoices._invoice(ctx, _number(subject)))
 	if command == "SaveNativeFinanceDraft":
+		if subject.startswith("payment advance"):
+			return invoices.d09f(ctx, _payment_invoice(ctx, subject))
 		inv = invoices._invoice(ctx, _number(subject))
 		return invoices.d33(ctx, inv, mode="maker") if subject.startswith("accounting invoice") else invoices.d09f(ctx, inv)
 	if command == "SubmitNativeFinanceForApproval":
@@ -139,7 +150,11 @@ def _payment_invoice(ctx: Context, subject: str):
 	entry = subject.split()[-1]
 	for p in payment.payments(ctx.case):
 		if p["name"] == entry:
+			if p["kind"] == "advance":
+				return invoices.advance_as_invoice(frappe.get_doc("Contract Advance", p["invoice"]))
 			return frappe.get_doc("Contract Invoice", p["invoice"])
+	if subject.startswith("payment advance"):  # the draft does not exist yet
+		return invoices.advance_as_invoice(advance.live(ctx.case))
 	# a payment subject names its invoice before the draft exists ("payment invoice N")
 	return invoices._invoice(ctx, _number(subject))
 
@@ -223,15 +238,15 @@ def board_for(case: str, user: str, *, tab: str | None = None, subject: tuple[st
 	if not ctx.grants:
 		fail("CM_AUTHORITY", denied=True, reason="You do not have access to this contract.")
 	lead = ctx.lead
-	selected = TAB_KEYS.get((tab or "").lower()) or (chrome.tab_of(lead["command"]) if lead else "Agreement")
+	selected = TAB_KEYS.get((tab or "").lower()) or (chrome.tab_of(lead["command"], lead["subject"]) if lead else "Agreement")
 	board = None
 	if subject:
 		board = _subject_board(ctx, selected, subject)
 	own = bool(lead) and lead["holder"].lower() == user.lower() and lead["state"] in ("actionable", "blocked")  # someone else's leading item is only a "waiting on" line, never a screen to act on
-	if board is None and own and chrome.tab_of(lead["command"]) == selected:
+	if board is None and own and chrome.tab_of(lead["command"], lead["subject"]) == selected:
 		board = _by_subject(ctx, lead)
 	if board is None and not own:
-		for item in sorted((t for t in ctx.tasks if t["holder"].lower() == user.lower() and t["state"] == "waiting" and chrome.tab_of(t["command"]) == selected), key=lambda t: t["assigned_at"]):
+		for item in sorted((t for t in ctx.tasks if t["holder"].lower() == user.lower() and t["state"] == "waiting" and chrome.tab_of(t["command"], t["subject"]) == selected), key=lambda t: t["assigned_at"]):
 			board = _by_waiting(ctx, item)
 			if board:
 				break

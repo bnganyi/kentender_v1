@@ -1,0 +1,109 @@
+{
+ "actions": {
+  "View missing certification": {
+   "do": "tab",
+   "tab": "Obligations"
+  }
+ },
+ "audiences": [
+  "finance"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_held_payment_show",
+ "d": "D17",
+ "dialogs": {},
+ "ev": [
+  "Certification 1",
+  "Accounting invoice",
+  "Payment Entry ACC-PAY-2026-00078"
+ ],
+ "id": "D17-H",
+ "name": "Finance payment approval",
+ "next": {
+  "fixes": [
+   "View missing certification"
+  ],
+  "h": "This payment is on hold.",
+  "k": "blk",
+  "s": "Responsible for the fix: hopfsp",
+  "s2": "Certification missing"
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_a_held_payment_show",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Supplier",
+       "Afya Digital Supplies Limited"
+      ],
+      [
+       "Invoice",
+       "D17H-1"
+      ],
+      [
+       "Prepared by",
+       "Josphat Mwangi"
+      ],
+      [
+       "Payment hold",
+       "Certification missing"
+      ],
+      [
+       "Settlement",
+       "Not confirmed"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Payment"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_held_payment_show",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_held_payment_show",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_held_payment_show",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_held_payment_show",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_held_payment_show",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review payment",
+ "version": 24
+}

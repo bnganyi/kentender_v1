@@ -36,7 +36,10 @@ AWARD_CASE = "CM-UI-AWD-01"
 EXTRA = {"security": ("CM-UI-0002", "CM-UI-AWD-SEC"), "outside": ("CM-UI-0003", "CM-UI-AWD-OUT"), "ending": ("CM-UI-0004", "CM-UI-AWD-04")}
 #: the contracts the delivery and acceptance spec walks, staged to the step the spec starts from (the staging goes through the services, each tested): `delivery` has its goods inspected, confirmed and the acceptance
 #: report prepared, and leaves acceptance to the Accounting Officer; `service` has a training session recorded as performed (the `-SVC` case carries the goods-plus-service package)
-STAGED = {"delivery": ("CM-UI-0005", "CM-UI-AWD-05"), "service": ("CM-UI-0006", "CM-UI-AWD-06-SVC")}
+STAGED = {"delivery": ("CM-UI-0005", "CM-UI-AWD-05"), "service": ("CM-UI-0006", "CM-UI-AWD-06-SVC"), "advance": ("CM-UI-0007", "CM-UI-AWD-07-ADV"), "payments": ("CM-UI-0008", "CM-UI-AWD-08"),
+	"claims": ("CM-UI-0009", "CM-UI-AWD-09")}
+#: the contracts of the invoice and payment specs: `advance` has its goods accepted and no advance yet; `payments` has a certified, posted invoice of eight to pay in instalments; `claims` has two claims with the
+#: same invoice number (the second held for Finance as an apparent duplicate) and units still to claim
 EXISTING_REFERENCE = "MOH/ICT/2027/EXT-UI"
 NAMESPACE = "CM_UI"
 
@@ -70,15 +73,41 @@ def _addresses() -> dict[str, str]:
 	return {persona: tw.email(persona) for persona in tw.PEOPLE if persona in CANONICAL}
 
 
-def _stage(kind: str, contract_id: str, award_case: str, people: dict[str, str]) -> dict:
-	"""An Active contract with its inspectors appointed and declared, taken to the step the delivery spec starts from."""
-	from kentender_contracts.services import delivery
+def _accepted(t, count: int) -> list[str]:
+	"""Goods delivered, inspected, confirmed and accepted by the committee."""
+	units = tw.fresh_serials(count)
+	arrival = t.arrive(units)["arrival"]
+	t.inspect(arrival, units)
+	t.accept(arrival)
+	return units
 
+
+def _stage(kind: str, contract_id: str, award_case: str, people: dict[str, str]) -> dict:
+	"""An Active contract with its inspectors appointed and declared, taken to the step the spec that walks it starts from."""
+	from frappe.utils import add_days, today
+
+	from kentender_contracts.services import delivery, payment
+
+	frappe.flags.kt_contract_source_providers = None  # the registered provider answers by the case's name; one left over from the previous contract would answer for the wrong variant
 	t = tw.Thread(people, tag=f"UI{contract_id[-4:]}", contract_id=contract_id, services=award_case.endswith("-SVC"), award_case=award_case)
 	t.active()
 	t.appointed("Accounting Officer decides" if kind == "delivery" else "Committee accepts")
 	out = {"contract": t.case}
-	if kind == "delivery":
+	if kind == "advance":
+		_accepted(t, 8)
+	elif kind == "payments":
+		_accepted(t, 8)
+		inv = t.claim("PAY-1", 8)["invoice"]
+		t.certify_invoice(inv)
+		t.post_accounting(inv)
+		out["invoice"] = inv
+	elif kind == "claims":
+		_accepted(t, 8)
+		line = [{"line_id": "L1", "quantity": 3}]
+		first = payment.submit_invoice(t.case, expected_version=t.version(), idempotency_key=t.key("c1"), actor=people["david"], claim_reference="DUP-1", invoice_date=today(), lines=line)["invoice"]
+		second = payment.submit_invoice(t.case, expected_version=t.version(), idempotency_key=t.key("c2"), actor=people["david"], claim_reference="DUP-1", invoice_date=add_days(today(), -1), lines=line)["invoice"]
+		out["invoices"] = [first, second]
+	elif kind == "delivery":
 		units = tw.fresh_serials(4)
 		arrival = t.arrive(units)["arrival"]
 		t.inspect(arrival, units)
@@ -89,6 +118,7 @@ def _stage(kind: str, contract_id: str, award_case: str, people: dict[str, str])
 		delivery.record_arrival(t.case, expected_version=t.version(), idempotency_key=t.key("perform"), actor=people["grace"], received_at="2027-07-26 14:00:00", destination="Afya House training room",
 			items=[{"line_id": "L2", "quantity": 1, "units": ["TRAIN-01"]}])
 	frappe.db.commit()
+	frappe.flags.kt_contract_source_providers = None
 	return out
 
 
@@ -121,7 +151,7 @@ def build() -> dict:
 	invoice = adapter.invoice_receipt(receipt, world.identity("invoice extui", "Native invoice"), bill_no="EXT-UI-INV", qty=4)
 	frappe.db.commit()
 	data = {"previous_instant": str(previous or ""), "password": PASSWORD, "contract": received["contract"], "people": people, "supplier": world.SUPPLIER, "item": world.ITEM_FA, "location": world.LOCATION, "bank": world.BANK_ACCOUNT,
-		"mode": world.MODE, "unit": tw.unit(), "security_contract": extra["security"], "outside_contract": extra["outside"], "ending_contract": extra["ending"], "delivery_contract": staged["delivery"]["contract"], "delivery_units": staged["delivery"]["units"], "service_contract": staged["service"]["contract"], "existing": {"reference": EXISTING_REFERENCE, "receipt": receipt, "invoice": invoice,
+		"mode": world.MODE, "unit": tw.unit(), "security_contract": extra["security"], "outside_contract": extra["outside"], "ending_contract": extra["ending"], "delivery_contract": staged["delivery"]["contract"], "delivery_units": staged["delivery"]["units"], "service_contract": staged["service"]["contract"], "advance_contract": staged["advance"]["contract"], "payments_contract": staged["payments"]["contract"], "claims_contract": staged["claims"]["contract"], "existing": {"reference": EXISTING_REFERENCE, "receipt": receipt, "invoice": invoice,
 		"country": tw.REGISTRATION[0], "registration": "PVT-9X7K2M"}}
 	output().parent.mkdir(parents=True, exist_ok=True)
 	output().write_text(json.dumps(data, indent=1))

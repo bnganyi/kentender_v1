@@ -1,0 +1,195 @@
+{
+ "actions": {
+  "View accounting invoice": {
+   "dialog": "view-accounting-invoice",
+   "do": "dialog"
+  },
+  "View correction": {
+   "dialog": "view-correction",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_the_corrected_claim",
+ "d": "D08",
+ "dialogs": {
+  "view-accounting-invoice": {
+   "b": [
+    {
+     "items": [
+      [
+       "Native invoice",
+       "ACC-PINV-2026-00081"
+      ],
+      [
+       "Liability posted",
+       "KES 1,000,000"
+      ],
+      [
+       "Credit received",
+       "KES 0"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "local": true,
+   "p": "",
+   "s2": [
+    "Close"
+   ],
+   "t": "Accounting invoice"
+  },
+  "view-correction": {
+   "b": [
+    {
+     "items": [
+      [
+       "Original claim",
+       "D08L-1 \u00b7 KES 1,000,000"
+      ],
+      [
+       "Corrected claim",
+       "D08L-1-R \u00b7 KES 800,000"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "local": true,
+   "p": "",
+   "s2": [
+    "Close"
+   ],
+   "t": "Correction"
+  }
+ },
+ "ev": [
+  "Supplier invoice D08L-1",
+  "Supplier invoice D08L-1-R version 2",
+  "Accounting invoice"
+ ],
+ "id": "D08-L",
+ "name": "Corrected claim after early liability",
+ "next": {
+  "fixes": [
+   "View correction",
+   "View accounting invoice"
+  ],
+  "h": "Finance must reconcile the original liability.",
+  "k": "blk",
+  "s": "Responsible for the fix: Josphat Mwangi",
+  "s2": ""
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_the_corrected_claim",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Claim",
+      "Received",
+      "Quantity",
+      "Amount"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      2,
+      3
+     ],
+     "rows": [
+      [
+       "Original claim",
+       "2 Jul 2027, 09:00 EAT",
+       "10",
+       "KES 1,000,000"
+      ],
+      [
+       "Corrected claim",
+       "2 Jul 2027, 09:00 EAT",
+       "8",
+       "KES 800,000"
+      ]
+     ]
+    }
+   ],
+   "t": "Claims"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Native liability posted",
+       "KES 1,000,000"
+      ],
+      [
+       "Required credit",
+       "KES 200,000"
+      ],
+      [
+       "Reconciled payable",
+       "Not established"
+      ],
+      [
+       "Supported amount",
+       "KES 800,000"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Accounting position"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_the_corrected_claim",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_the_corrected_claim",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_the_corrected_claim",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_the_corrected_claim",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_the_corrected_claim",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review corrected invoice",
+ "version": 23
+}

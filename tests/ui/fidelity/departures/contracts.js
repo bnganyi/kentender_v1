@@ -49,6 +49,8 @@ export const BOARD_PAGES = [
 	{ fixture: "D25-R", board: "D25-R" }, { fixture: "D25", board: "D25" }, { fixture: "D25-J", board: "D25-J" },
 	{ fixture: "D26", board: "D26" }, { fixture: "D26-H", board: "D26-H" }, { fixture: "D26-E", board: "D26-E" },
 	{ fixture: "D12", board: "D12" }, { fixture: "D12-G", board: "D12-G" }, { fixture: "D21", board: "D21" }, { fixture: "D21-H", board: "D21-H" },
+	{ fixture: "D08-L", board: "D08-L" }, { fixture: "D17-H", board: "D17-H" }, { fixture: "D28", board: "D28" }, { fixture: "D28-C", board: "D28-C" }, { fixture: "D28-V", board: "D28-V" },
+	{ fixture: "D29", board: "D29" }, { fixture: "D29-H", board: "D29-H" }, { fixture: "D29-R", board: "D29-R" }, { fixture: "D33-U", board: "D33-U" }, { fixture: "D09-T", board: "D09-T" }, { fixture: "D09-AUD", board: "D09-AUD" },
 	{ fixture: "D24-S", board: "D24-S" }, { fixture: "D24-X", board: "D24-X" }, { fixture: "D05-M", board: "D05-M" }, { fixture: "D31", board: "D31" }, { fixture: "D31-A", board: "D31-A" },
 ];
 // A board that is another board's page in a state the person reaches by choosing: drawn from the fixture, the choice made, then compared. `radio` names the radio group (its `cm-input-` test id) and

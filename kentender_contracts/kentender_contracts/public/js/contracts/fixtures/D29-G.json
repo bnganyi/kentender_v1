@@ -1,0 +1,153 @@
+{
+ "actions": {
+  "Cancel": {
+   "do": "tab",
+   "tab": "Invoices"
+  },
+  "Save guarantee": {
+   "args": {
+    "kind": "Advance guarantee"
+   },
+   "command": "RecordContractSecurity",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "finance"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_the_advance_review_",
+ "d": "D29",
+ "dialogs": {},
+ "ev": [],
+ "id": "D29-G",
+ "name": "Advance guarantee",
+ "next": {
+  "h": "Record the advance guarantee.",
+  "k": "turn",
+  "s": "Responsible: Josphat Mwangi"
+ },
+ "p": "Save guarantee",
+ "page": "record",
+ "ref": "CM-TEST-test_the_advance_review_",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Advance claimed",
+       "KES 100,000"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Advance requirement"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Issuer",
+       "name": "issuer",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Beneficiary",
+       "name": "beneficiary",
+       "o": {},
+       "t": "tx",
+       "v": "Ministry of Health"
+      },
+      {
+       "l": "Reference",
+       "name": "reference",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Amount",
+       "name": "amount",
+       "o": {},
+       "t": "tx",
+       "v": "100000.00"
+      },
+      {
+       "l": "Issued",
+       "name": "issued_on",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Expires",
+       "name": "expires_on",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Attachment",
+       "name": "attachment",
+       "o": {},
+       "t": "file",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Instrument"
+  }
+ ],
+ "s2": [
+  "Cancel"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "history"
+   ]
+  }
+ ],
+ "title": "Record advance guarantee",
+ "version": 10
+}

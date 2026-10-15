@@ -32,6 +32,7 @@ PEOPLE: dict[str, tuple[str, list[str]]] = {
 	"josphat": ("Josphat Mwangi", ["Finance preparation"]),
 	"beatrice": ("Beatrice Kamau", ["Finance approval"]),
 	"daniel": ("Daniel Otieno", ["Technical Operator"]),
+	"naomi": ("Naomi Auditor", ["Auditor"]),
 	"mary": ("Mary Wanjiku", []),
 	"david": ("David Otieno", []),
 	"stranger": ("Sam Stranger", []),

@@ -1429,7 +1429,7 @@ std-templates-gate:
 # run on the test site: `scripts/test-site.sh run make cm-services-gate`. They refuse the dev site and a live browser run.
 # Later gates (seams, native, leakage, dead ends, UI, seeds) are added with the phase that builds them (tracker rule 13).
 .PHONY: cm-preflight cm-services-gate cm-native-gate cm-ui-gate cm-independence-gate cm-seams-gate
-CM_SERVICE_MODULES ?= test_cm_import_boundary test_cm_schema test_cm_errors test_cm_records test_cm_intents test_cm_holds test_cm_recovery_matrix test_cm_signing_simulation test_cm_rules test_cm_authority test_cm_audience test_cm_tasks test_cm_workspace test_cm_support test_cm_formation test_cm_formation_rules test_cm_formation_end test_cm_outside_signature test_cm_security test_cm_existing test_cm_award_receiver test_cm_delivery test_cm_appointment test_cm_arrival_exceptions test_cm_inspection test_cm_acceptance test_cm_services test_cm_thread test_cm_boards test_cm_picker test_cm_service_principal test_cm_outputs
+CM_SERVICE_MODULES ?= test_cm_import_boundary test_cm_schema test_cm_errors test_cm_records test_cm_intents test_cm_holds test_cm_recovery_matrix test_cm_signing_simulation test_cm_rules test_cm_authority test_cm_audience test_cm_tasks test_cm_workspace test_cm_support test_cm_formation test_cm_formation_rules test_cm_formation_end test_cm_outside_signature test_cm_security test_cm_existing test_cm_award_receiver test_cm_delivery test_cm_appointment test_cm_arrival_exceptions test_cm_inspection test_cm_acceptance test_cm_services test_cm_invoice test_cm_liability test_cm_settlement test_cm_advance test_cm_finance_boards test_cm_thread test_cm_boards test_cm_picker test_cm_service_principal test_cm_outputs
 # Core modules Contract Management depends on: the shared signing facade (plan D8).
 CM_CORE_MODULES ?= test_signing_facade
 CM_ONLY_SITE ?= kentender-cm-only.local
@@ -1461,7 +1461,7 @@ cm-seams-gate: cm-preflight
 
 # Real ERPNext documents (proof level L2): the native adapter, the payment bypass guards (every route, entitlement, maker/approver, a two-process
 # race, a hard-crash recovery) and the configuration readiness check. Test site only; MariaDB only; takes about a minute.
-CM_NATIVE_MODULES ?= test_cm_native test_cm_readiness test_cm_receipt_reconciliation
+CM_NATIVE_MODULES ?= test_cm_native test_cm_readiness test_cm_receipt_reconciliation test_cm_claim_race
 cm-native-gate: cm-preflight
 	cd $(BENCH_ROOT) && for m in $(CM_NATIVE_MODULES); do \
 		bench --site $(SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
@@ -1473,7 +1473,7 @@ cm-ui-gate: cm-preflight
 	npx vitest run --project contracts
 	scripts/test-site.sh run npx playwright test tests/ui/smoke/contracts/shell.spec.ts --workers=1 --retries=0
 	$(MAKE) cm-ui-world
-	scripts/test-site.sh run npx playwright test tests/ui/smoke/contracts/ordinary-thread.spec.ts tests/ui/smoke/contracts/cm-formation.spec.ts tests/ui/smoke/contracts/cm-existing-contract.spec.ts tests/ui/smoke/contracts/cm-delivery-acceptance.spec.ts --workers=1 --retries=0; status=$$?; $(MAKE) cm-ui-world-clean; exit $$status
+	scripts/test-site.sh run npx playwright test tests/ui/smoke/contracts/ordinary-thread.spec.ts tests/ui/smoke/contracts/cm-formation.spec.ts tests/ui/smoke/contracts/cm-existing-contract.spec.ts tests/ui/smoke/contracts/cm-delivery-acceptance.spec.ts tests/ui/smoke/contracts/cm-invoice-finance.spec.ts tests/ui/smoke/contracts/cm-payment-settlement.spec.ts --workers=1 --retries=0; status=$$?; $(MAKE) cm-ui-world-clean; exit $$status
 
 # The people, the ERPNext world and the received Award package the browser specs walk (plan Phase 4): the test site only; the builder refuses any other. Written to artifacts/cm-ui-world.json.
 # Build it, run the specs, clean it: the walk leaves the whole thread in the database until `cm-ui-world-clean`.

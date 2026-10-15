@@ -1,0 +1,204 @@
+{
+ "actions": {
+  "View certification": {
+   "dialog": "view-certification",
+   "do": "dialog"
+  },
+  "View settlement": {
+   "dialog": "view-settlement",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "appointee"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_partly_paid_invoi",
+ "d": "D28",
+ "dialogs": {
+  "view-certification": {
+   "b": [
+    {
+     "items": [
+      [
+       "Certified",
+       "KES 800,000"
+      ],
+      [
+       "Signed by",
+       "Charles Mutiso"
+      ],
+      [
+       "Signed",
+       "2 Jul 2027, 09:00 EAT"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "local": true,
+   "p": "",
+   "s2": [
+    "Close"
+   ],
+   "t": "Certification"
+  },
+  "view-settlement": {
+   "b": [
+    {
+     "items": [
+      [
+       "ACC-PAY-2026-00078",
+       "KES 500,000 \u00b7 Confirmed"
+      ],
+      [
+       "ACC-PAY-2026-00079",
+       "KES 300,000 \u00b7 Reversed"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "local": true,
+   "p": "",
+   "s2": [
+    "Close"
+   ],
+   "t": "Settlements"
+  }
+ },
+ "ev": [
+  "Certification 1",
+  "ACC-PAY-2026-00078"
+ ],
+ "id": "D28-V",
+ "name": "Partly paid invoice",
+ "next": {
+  "h": "Prepare the payment again: 300,000.00 was reversed.",
+  "k": "wait",
+  "s": "Josphat Mwangi; assigned 2 Jul 2027, 09:00 EAT."
+ },
+ "page": "record",
+ "ref": "CM-TEST-test_a_partly_paid_invoi",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Certified",
+       "KES 800,000"
+      ],
+      [
+       "Cash confirmed",
+       "KES 500,000"
+      ],
+      [
+       "Noncash adjustment",
+       "KES 0"
+      ],
+      [
+       "Outstanding",
+       "KES 300,000"
+      ],
+      [
+       "Invoice",
+       "Partly paid"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": ""
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Payment entry",
+      "Amount",
+      "Status",
+      "Date",
+      "Bank reference"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      1
+     ],
+     "rows": [
+      [
+       "ACC-PAY-2026-00078",
+       "KES 500,000",
+       "!Confirmed",
+       "23 Jul 2027",
+       "Bank line ACC-PAY-2026-00078"
+      ],
+      [
+       "ACC-PAY-2026-00079",
+       "KES 300,000",
+       "!Reversed",
+       "Reversed 2 Jul 2027, 09:00 EAT",
+       "Bank line ACC-PAY-2026-00079"
+      ]
+     ]
+    },
+    {
+     "items": [
+      "Original settlement",
+      "Reversal"
+     ],
+     "k": "links"
+    }
+   ],
+   "t": "Settlements"
+  }
+ ],
+ "s2": [
+  "View certification",
+  "View settlement"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_partly_paid_invoi",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_partly_paid_invoi",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_partly_paid_invoi",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_partly_paid_invoi",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_partly_paid_invoi",
+    "history"
+   ]
+  }
+ ],
+ "title": "Invoice and payment",
+ "version": 31
+}

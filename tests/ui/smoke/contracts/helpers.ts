@@ -33,9 +33,9 @@ export async function as<T>(browser: Browser, persona: string, run: (page: Page)
 export async function openContract(page: Page, contract: string, view: 'My work' | 'All contracts' = 'All contracts') {
 	await page.goto('/app/home');
 	await page.locator('.body-sidebar').getByText('Contract Management', { exact: true }).click();
-	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'workspace');
+	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'workspace', { timeout: 30_000 }); // the list reads every contract the person may see: the world holds many
 	if (view === 'All contracts') await page.getByTestId('cm-view-1').click(); // the list opens on My work, as the board draws it
-	await expect(page.getByTestId(`cm-row-${contract}`)).toBeVisible();
+	await expect(page.getByTestId(`cm-row-${contract}`)).toBeVisible({ timeout: 15_000 });
 	await page.getByTestId(`cm-row-${contract}`).getByRole('link', { name: contract }).click();
 	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'board');
 }
@@ -45,7 +45,7 @@ export async function openAsSupplier(page: Page, contract: string) {
 	await page.goto('/account');
 	await page.locator('[data-kt-portal-nav="contracts"]').click();
 	await expect(page).toHaveURL(/\/supplier\/contracts/);
-	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'workspace');
+	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'workspace', { timeout: 30_000 });
 	await page.getByTestId(`cm-row-${contract}`).getByRole('link', { name: contract }).click();
 	await expect(page.getByTestId('cm-root')).toHaveAttribute('data-screen', 'board');
 }

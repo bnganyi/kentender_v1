@@ -1,0 +1,180 @@
+{
+ "actions": {
+  "View advance clause": {
+   "dialog": "view-advance-clause",
+   "do": "dialog"
+  },
+  "View guarantee": {
+   "dialog": "view-guarantee",
+   "do": "dialog"
+  },
+  "View issue": {
+   "do": "tab",
+   "tab": "Obligations"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_the_advance_review_",
+ "d": "D29",
+ "dialogs": {
+  "view-advance-clause": {
+   "b": [
+    {
+     "items": [
+      [
+       "Allowed",
+       "10% of KES 1,000,000"
+      ],
+      [
+       "Payable",
+       "After effective signature"
+      ],
+      [
+       "Recovery",
+       "KES 10,000 for each unit accepted and invoiced"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "local": true,
+   "p": "",
+   "s2": [
+    "Close"
+   ],
+   "t": "Advance clause"
+  },
+  "view-guarantee": {
+   "b": [
+    {
+     "items": [
+      [
+       "Guarantee",
+       "Not recorded"
+      ],
+      [
+       "Status",
+       "Not recorded"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "local": true,
+   "p": "",
+   "s2": [
+    "Close"
+   ],
+   "t": "Advance guarantee"
+  }
+ },
+ "ev": [
+  "Advance clause",
+  "Guarantee"
+ ],
+ "id": "D29-H",
+ "name": "Advance support",
+ "next": {
+  "fixes": [
+   "View guarantee",
+   "View issue"
+  ],
+  "h": "The advance guarantee has not been verified.",
+  "k": "blk",
+  "s": "Responsible for the fix: Josphat Mwangi",
+  "s2": ""
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_the_advance_review_",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Allowed",
+       "10% of KES 1,000,000 = KES 100,000"
+      ],
+      [
+       "Payable",
+       "After effective signature"
+      ],
+      [
+       "Recovery",
+       "KES 10,000 for each unit accepted and invoiced"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Advance clause"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Guarantee",
+       "\u2014"
+      ],
+      [
+       "Status",
+       "Not recorded"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Advance guarantee"
+  }
+ ],
+ "s2": [
+  "View guarantee"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review advance request",
+ "version": 10
+}

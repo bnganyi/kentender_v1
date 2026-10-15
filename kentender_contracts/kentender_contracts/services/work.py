@@ -115,12 +115,15 @@ def live(case: str) -> list[dict[str, Any]]:
 	rows = frappe.get_all(TASK, filters={"contract_case": case, "state": ["in", list(LIVE)]},
 		fields=["name", "command", "title", "subject", "subject_version", "holder", "holder_role", "state", "assigned_at", "due", "due_verified"], order_by="assigned_at asc, name asc")
 	out = []
+	open_now = None  # the holds are read once for the whole list (fresh for this reading), not once for each obligation
 	for r in rows:
 		item = {"task_id": r.name, "case": case, "subject": r.subject, "version": r.subject_version, "command": r.command, "title": r.title, "holder": r.holder, "holder_role": r.holder_role,
 			"state": STATE[r.state], "due": get_datetime(r.due) if r.due else None, "due_verified": bool(r.due_verified), "assigned_at": get_datetime(r.assigned_at)}
 		capability = _consequence(r.command, r.subject)
 		if capability and item["state"] == rules.ACTIONABLE:
-			blocking = holds.blocking(case, capability, r.subject)
+			if open_now is None:
+				open_now = holds.open_holds(case)
+			blocking = [h for h in open_now if capability in h.blocks and h.covers(r.subject)]
 			if blocking:
 				first = blocking[0]
 				item["state"] = rules.BLOCKED

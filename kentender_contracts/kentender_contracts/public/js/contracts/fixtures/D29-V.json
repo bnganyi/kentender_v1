@@ -1,0 +1,179 @@
+{
+ "actions": {
+  "Verify guarantee": {
+   "dialog": "verify",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_the_advance_review_",
+ "d": "D29",
+ "dialogs": {
+  "verify": {
+   "args": {
+    "kind": "Advance guarantee",
+    "security": "CM-SEC-669938"
+   },
+   "b": [
+    {
+     "items": [
+      [
+       "Instrument",
+       "TEST-AG-01"
+      ],
+      [
+       "Issuer",
+       "Test Bank"
+      ],
+      [
+       "Amount",
+       "KES 100,000"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "items": [
+      {
+       "l": "Issuer's confirmation reference",
+       "name": "confirmation_reference",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Confirmation received",
+       "name": "received_on",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Basis",
+       "name": "basis",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "VerifyContractSecurity",
+   "p": "Verify",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Verify guarantee"
+  }
+ },
+ "ev": [
+  "Guarantee TEST-AG-01"
+ ],
+ "id": "D29-V",
+ "name": "Advance guarantee",
+ "next": {
+  "h": "Check the issuer's confirmation of the advance guarantee.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Verify guarantee",
+ "page": "record",
+ "ref": "CM-TEST-test_the_advance_review_",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Issuer",
+       "Test Bank"
+      ],
+      [
+       "Beneficiary",
+       "Ministry of Health"
+      ],
+      [
+       "Reference",
+       "TEST-AG-01"
+      ],
+      [
+       "Amount",
+       "KES 100,000"
+      ],
+      [
+       "Expires",
+       "31 Aug 2027"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Instrument"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Source verification status",
+       "Awaiting the issuer's confirmation"
+      ],
+      [
+       "Recorded by",
+       "Josphat Mwangi, 2 Jul 2027, 09:00 EAT"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Issuer confirmation"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "history"
+   ]
+  }
+ ],
+ "title": "Verify advance guarantee",
+ "version": 11
+}

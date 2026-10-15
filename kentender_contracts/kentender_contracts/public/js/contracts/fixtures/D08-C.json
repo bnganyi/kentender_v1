@@ -2,7 +2,7 @@
  "actions": {
   "Sign certification": {
    "args": {
-    "invoice": "CM-INV-513279"
+    "invoice": "CM-INV-669288"
    },
    "command": "SignContractCertification",
    "do": "command"
@@ -12,11 +12,11 @@
   "office"
  ],
  "back": "Back to contracts",
- "case": "CM-TEST-BOARDS",
+ "case": "CM-TEST-test_the_corrected_claim",
  "d": "D08",
  "dialogs": {},
  "ev": [
-  "Supplier invoice AFYA-1-R1",
+  "Supplier invoice D08L-1-R",
   "Acceptance report 1",
   "Receipt 1"
  ],
@@ -29,7 +29,7 @@
  },
  "p": "Sign certification",
  "page": "record",
- "ref": "CM-TEST-BOARDS",
+ "ref": "CM-TEST-test_the_corrected_claim",
  "regions": [
   {
    "b": [
@@ -70,17 +70,17 @@
    "b": [
     {
      "k": "text",
-     "v": "I certify that invoice AFYA-1-R1, for KES 800,000, is supported by the cited effective contract and accepted goods or services, after the adjustments and recoveries shown in the certification schedule."
+     "v": "I certify that invoice D08L-1-R, for KES 800,000, is supported by the cited effective contract and accepted goods or services, after the adjustments and recoveries shown in the certification schedule."
     },
     {
      "items": [
       [
        "Accepted units",
-       "CMTFDCFE5-0001, CMTFDCFE5-0002, CMTFDCFE5-0003, CMTFDCFE5-0004, CMTFDCFE5-0005, CMTFDCFE5-0006, CMTFDCFE5-0007, CMTFDCFE5-0008"
+       "CMT6B4CE3-0025, CMT6B4CE3-0026, CMT6B4CE3-0027, CMT6B4CE3-0028, CMT6B4CE3-0029, CMT6B4CE3-0030, CMT6B4CE3-0031, CMT6B4CE3-0032"
       ],
       [
        "Rejected units",
-       "CMTFDCFE5-0009, CMTFDCFE5-0010 \u2014 not certified"
+       "None"
       ],
       [
        "Recipient",
@@ -101,39 +101,39 @@
   {
    "label": "Agreement",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_corrected_claim",
     "agreement"
    ]
   },
   {
    "label": "Deliveries",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_corrected_claim",
     "deliveries"
    ]
   },
   {
    "label": "Invoices",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_corrected_claim",
     "invoices"
    ]
   },
   {
    "label": "Obligations",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_corrected_claim",
     "obligations"
    ]
   },
   {
    "label": "History",
    "route": [
-    "CM-TEST-BOARDS",
+    "CM-TEST-test_the_corrected_claim",
     "history"
    ]
   }
  ],
  "title": "Review invoice",
- "version": 21
+ "version": 23
 }
