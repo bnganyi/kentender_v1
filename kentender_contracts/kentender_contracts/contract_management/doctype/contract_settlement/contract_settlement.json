@@ -17,6 +17,7 @@
   "effective_date",
   "recorded_at",
   "corrects",
+  "advance",
   "reason",
   "reversed_at",
   "record_version",
@@ -84,6 +85,12 @@
   {
    "fieldname": "corrects",
    "label": "Corrects",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "advance",
+   "label": "Advance",
    "fieldtype": "Data",
    "read_only": 1
   },

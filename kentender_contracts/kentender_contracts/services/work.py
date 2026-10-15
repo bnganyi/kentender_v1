@@ -95,7 +95,7 @@ def reassign(case: str, command: str, subject: str, version: int, old_holder: st
 
 #: The consequence an obligation exercises, so an open hold on it makes the step **blocked** (with the hold's reason and holder) instead of a button that will be refused (section 5.17, 6.3).
 CONSEQUENCE = {
-	"RequestContractSignatures": "new_signing_attempt", "SignContractVersion": "new_signing_attempt", "SignContractCertification": "certify_invoice", "RecordFinanceSettlement": "confirm_settlement",
+	"RequestContractSignatures": "new_signing_attempt", "SignContractVersion": "new_signing_attempt", "SignContractCertification": "certify_invoice", "SignAdvanceCertification": "certify_advance", "RecordFinanceSettlement": "confirm_settlement",
 	"IssueCompletionCertificate": "close_contract", "SignContractCloseout": "close_contract", "PrepareContractCloseout": "close_contract",
 }
 #: Finance's payment steps are blocked by a payment hold; the accounting invoice (liability) is not (section 5.8, 5.12).

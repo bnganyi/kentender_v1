@@ -62,7 +62,11 @@ RECORDS = {
 	"Contract Settlement": ("STL", "Settlement of a native payment, confirmed only by attributable evidence.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("invoice", "Link", "Contract Invoice"), F("native_payment"), F("amount", "Currency"),
 		F("state", "Select", "Recorded\nConfirmed\nReversed\nCorrected"), F("evidence_json", "Long Text"), F("recorder"), F("effective_date", "Date"), F("recorded_at", "Datetime"),
-		F("corrects"), F("reason", "Small Text"), F("reversed_at", "Datetime"), F("record_version", "Int"), F("fixture_namespace")]),
+		F("corrects"), F("advance"), F("reason", "Small Text"), F("reversed_at", "Datetime"), F("record_version", "Int"), F("fixture_namespace")]),
+	"Contract Advance": ("ADV", "An advance the issued terms allow: the claim, the guarantee it rests on, the certified amount and the recovery plan. Its cash is paid and confirmed like any payment; its recovery is set against later invoices.", [
+		F("contract_case", "Link", "Contract Case", reqd=1), F("advance_no", "Int"), F("claim_reference"), F("state", "Select", "Prepared\nCertified\nPaid\nSuperseded"), F("amount", "Currency"), F("percent", "Float"),
+		F("clause_json", "Long Text"), F("guarantee", "Link", "Contract Security"), F("recovery_json", "Long Text"), F("certified_amount", "Currency"), F("certifier"), F("proof_reference"), F("certified_at", "Datetime"),
+		F("submitted_by"), F("received_at", "Datetime"), F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Closeout": ("CLS", "A close-out version: the fulfilment review, surviving obligations and the authorised proof.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("version_no", "Int"), F("state", "Select", "Draft\nAwaiting signature\nClosed\nSuperseded"),
 		F("review_json", "Long Text"), F("signer"), F("proof_reference"), F("closed_at", "Datetime"), F("record_version", "Int"), F("fixture_namespace")]),

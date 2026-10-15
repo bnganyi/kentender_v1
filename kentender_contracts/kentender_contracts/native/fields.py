@@ -17,7 +17,7 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 _IDENTITY = {"fieldname": "cm_operation_identity", "label": "Contract operation identity", "fieldtype": "Data", "read_only": 1, "no_copy": 1, "search_index": 1, "insert_after": "naming_series"}
 
 CUSTOM_FIELDS: dict[str, list[dict]] = {
-	"Purchase Order": [_IDENTITY],
+	"Purchase Order": [_IDENTITY, {"fieldname": "cm_advance_certified", "label": "Contract certified advance", "fieldtype": "Currency", "read_only": 1, "no_copy": 1, "insert_after": "cm_operation_identity"}],
 	"Purchase Receipt": [_IDENTITY],
 	"Payment Entry": [_IDENTITY],
 	"Purchase Invoice": [_IDENTITY, {"fieldname": "cm_certified_amount", "label": "Contract certified amount", "fieldtype": "Currency", "read_only": 1, "no_copy": 1, "insert_after": "cm_operation_identity"}],

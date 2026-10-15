@@ -20,7 +20,7 @@ import frappe
 from frappe.utils import cint, cstr, flt, getdate
 
 from kentender_contracts.native import adapter, payment_guard
-from kentender_contracts.services import authority, clock, delivery, events, formation, holds, intents, opening, parties, people, position, preflight, records, segregation, service_principal, signing_flow, work
+from kentender_contracts.services import advance, authority, clock, delivery, events, formation, holds, intents, opening, parties, people, position, preflight, records, segregation, service_principal, signing_flow, work
 from kentender_contracts.services import errors
 from kentender_contracts.services.errors import fail, invalid
 
@@ -410,9 +410,10 @@ def sign_certification(case: str, *, invoice: str, expected_version: int, idempo
 		preflight.holds(guards, case, "certify_invoice", f"invoice {row.invoice_no}")
 		guards.raise_if_any()
 		match = records.loads(row.matching_json)
+		plan = advance.recovery_plan(case, row)
 		cert = frappe.db.get_value(CERTIFICATION, {"contract_case": case, "invoice": invoice, "state": ["!=", "Superseded"]}, "name")
 		if not cert:
-			cert = records.new(CERTIFICATION, contract_case=case, invoice=invoice, state="Awaiting signature", matching_json=row.matching_json, certified_amount=match["amount"], certifier=actor,
+			cert = records.new(CERTIFICATION, contract_case=case, invoice=invoice, state="Awaiting signature", matching_json=records.dumps({**match, "advance_recovery": plan}), certified_amount=match["amount"], certifier=actor,
 				acceptance_versions_json=records.dumps(sorted(frappe.get_all("Contract Acceptance", filters={"contract_case": case, "state": "Effective"}, pluck="name"))), record_version=1).name
 		intent = signing_flow.record(case, f"certification invoice {row.invoice_no}", 1, "sign")
 		digest = records.digest({"invoice": invoice, "matching": match, "native": row.native_invoice, "amount": match["amount"]})
@@ -491,6 +492,11 @@ def save_accounting_invoice(case: str, *, invoice: str, expected_version: int, i
 		if row.accounting_state in ("Submitted for approval", "Posted"):
 			fail("CM_CHANGED", invoice=invoice, accounting=row.accounting_state)
 		saved = native(adapter.prepare_invoice, row.native_invoice, posting_date=posting_date, payable_account=payable_account, cost_centre=cost_centre, expense_account=expense_account, tax_template=tax_template)
+		plan = advance.recovery_plan(case, row)
+		if plan and plan["recovery"] > 0:  # the advance is recovered on this invoice at the issued rate, set against it natively and never more than the advance still holds
+			applied = native(adapter.apply_advance, row.native_invoice, plan["payment"], plan["recovery"])
+			saved["grand_total"] = frappe.db.get_value("Purchase Invoice", row.native_invoice, "grand_total")
+			events.record(case, "Advance recovery set", actor, f"{applied:,.2f} of the advance is recovered on invoice {row.claim_reference}.", invoice=invoice, advance=plan["advance"], recovery=applied)
 		records.update(row, accounting_state="Draft saved", finance_maker=actor, record_version=cint(row.record_version) + 1)
 		records.bump(doc)
 		events.record(case, "Accounting invoice saved", actor, f"Accounting details of invoice {row.claim_reference} saved.", invoice=invoice, native=row.native_invoice)
@@ -589,13 +595,23 @@ def _as_user(user: str):
 
 
 def payments(case: str, *, cancelled: bool = False) -> list[dict[str, Any]]:
-	"""The native payment entries of the contract's invoices. Cancelled ones are left out unless asked for (they still count when a new payment is numbered)."""
+	"""The native payment entries of the contract: those of its invoices and the advance. Cancelled ones are left out unless asked for (they still count when a new payment is numbered).
+	An advance is known by the operation that made it, because ERPNext moves its reference from the order to the invoices it is set against."""
 	out = []
+	advance = frappe.db.get_value("Contract Advance", {"contract_case": case, "state": ["in", ["Certified", "Paid"]]}, ["name", "advance_no"], as_dict=True, order_by="advance_no desc")
+	advanced = [r for r in frappe.get_all(intents.INTENT, filters={"contract_case": case, "operation_kind": "Native payment", "subject": ["like", "payment advance %"]}, pluck="result_reference") if r]
 	for invoice in frappe.get_all(INVOICE, filters={"contract_case": case, "state": ACTIVE_INVOICE, "native_invoice": ["is", "set"]}, fields=["name", "native_invoice", "invoice_no"]):
 		for pe in frappe.get_all("Payment Entry Reference", filters={"reference_doctype": "Purchase Invoice", "reference_name": invoice.native_invoice}, pluck="parent"):
+			if pe in advanced:  # an advance also refers to the invoice it is set against: it is not that invoice's payment
+				continue
 			doc = frappe.db.get_value("Payment Entry", pe, ["name", "docstatus", "workflow_state", "paid_amount", "owner", "reference_no", "posting_date"], as_dict=True)
 			if doc.docstatus < 2 or cancelled:
-				out.append({**doc, "invoice": invoice.name, "invoice_no": invoice.invoice_no, "native_invoice": invoice.native_invoice})
+				out.append({**doc, "invoice": invoice.name, "invoice_no": invoice.invoice_no, "native_invoice": invoice.native_invoice, "kind": "invoice", "subject": f"invoice {invoice.invoice_no}"})
+	if advance:  # the money advanced against the order, before any invoice
+		for pe in advanced:
+			doc = frappe.db.get_value("Payment Entry", pe, ["name", "docstatus", "workflow_state", "paid_amount", "owner", "reference_no", "posting_date"], as_dict=True)
+			if doc and (doc.docstatus < 2 or cancelled):
+				out.append({**doc, "invoice": advance.name, "invoice_no": advance.advance_no, "native_invoice": "", "kind": "advance", "subject": f"advance {advance.advance_no}"})
 	return out
 
 
@@ -686,7 +702,7 @@ def submit_finance_for_approval(case: str, *, payment: str, expected_version: in
 		pe, row = _native_entry(case, payment)
 		if pe.docstatus != 0 or pe.workflow_state not in (None, "", "Draft"):
 			fail("CM_CHANGED", payment=payment, state=pe.workflow_state)
-		guards = preflight.holds(preflight.rules(doc, "SubmitNativeFinanceForApproval"), case, "pay", f"invoice {row['invoice_no']}")
+		guards = preflight.holds(preflight.rules(doc, "SubmitNativeFinanceForApproval"), case, "pay", row["subject"])
 		guards.raise_if_any()
 		with _as_user(actor):
 			apply_workflow(frappe.get_doc("Payment Entry", payment), "Submit for approval")
@@ -717,7 +733,7 @@ def approve_finance_record(case: str, *, payment: str, expected_version: int, id
 		if pe.workflow_state != "Pending Approval":
 			fail("CM_CHANGED", payment=payment, state=pe.workflow_state)
 		segregation.finance_maker_not_approver(actor, [pe.owner])
-		guards = preflight.holds(preflight.rules(doc, "ApproveNativeFinanceRecord"), case, "pay", f"invoice {row['invoice_no']}")
+		guards = preflight.holds(preflight.rules(doc, "ApproveNativeFinanceRecord"), case, "pay", row["subject"])
 		guards.raise_if_any()
 		identity = frappe.db.get_value("Payment Entry", payment, "cm_operation_identity")
 		adapter.approve_payment(payment, identity, actor)
@@ -777,7 +793,84 @@ def invoice_position(case: str, invoice: str) -> dict[str, float]:
 	cash = settled_amount(invoice)
 	noncash = max(0.0, native_reduced - recorded)
 	return {"certified": certified, "recorded": recorded, "cash_confirmed": cash, "unconfirmed": max(0.0, recorded - cash), "noncash": noncash, "credit": credit,
-		"outstanding": max(0.0, certified - recorded - noncash)}
+		"advance_recovery": adapter.advance_recovered(row.native_invoice) if row.native_invoice else 0.0, "outstanding": max(0.0, certified - recorded - noncash)}
+
+
+def _settle_advance(doc, case: str, pe, row: dict[str, Any], actor: str, effective_date: str, evidence: str) -> dict[str, Any]:
+	"""The independent confirmation that the advance's cash settled (an advance has no accounting invoice and no acceptance: the same independence applies to its maker and certifier)."""
+	advance_row = frappe.get_doc("Contract Advance", row["invoice"])
+	segregation.settlement_confirmer_independent(actor, makers=[pe.owner], certifiers=[advance_row.certifier] if advance_row.certifier else [])
+	guards = preflight.holds(preflight.rules(doc, "RecordFinanceSettlement"), case, "confirm_settlement", row["subject"])
+	guards.raise_if_any()
+	settlement = records.new(SETTLEMENT, contract_case=case, advance=advance_row.name, native_payment=pe.name, amount=pe.paid_amount, state="Confirmed",
+		evidence_json=records.dumps({"evidence": evidence, "native_payment": pe.name, "amount": flt(pe.paid_amount), "recorded_by": actor}), recorder=actor, effective_date=getdate(effective_date), recorded_at=clock.now(), record_version=1)
+	confirmed = sum(flt(a) for a in frappe.get_all(SETTLEMENT, filters={"advance": advance_row.name, "state": "Confirmed"}, pluck="amount"))
+	records.update(advance_row, state="Paid" if confirmed >= flt(advance_row.certified_amount) - TOLERANCE else advance_row.state, record_version=cint(advance_row.record_version) + 1)
+	work.finish(case, command="RecordFinanceSettlement", subject=f"payment {pe.name}", actor=actor)
+	work.finish(case, command=work.waiting_command("SaveNativeFinanceDraft", "advance"), actor=actor)
+	records.bump(doc, invoice_state="Advance paid")
+	events.record(case, "Settlement confirmed", actor, f"Advance payment {pe.name} for {flt(pe.paid_amount):,.2f} confirmed as settled.", settlement=settlement.name, payment=pe.name, advance=advance_row.name)
+	return records.summary(doc, settlement=settlement.name, advance=advance_row.name, state=advance_row.state)
+
+
+def save_advance_payment(case: str, *, advance: str, expected_version: int, idempotency_key: str, actor: str, mode_of_payment: str, paid_from: str, reference_no: str, amount: float | None = None) -> dict[str, Any]:
+	"""`SaveNativeFinanceDraft` for a certified advance: the Finance maker's draft native payment against the order. The guard allows no more than was certified; posting is the approver's."""
+	preflight.exists(case)
+
+	def body() -> dict[str, Any]:
+		invalid({"mode_of_payment": "" if cstr(mode_of_payment).strip() else "Choose how it is paid.", "paid_from": "" if cstr(paid_from).strip() else "Choose the account it is paid from.",
+			"reference_no": "" if cstr(reference_no).strip() else "Enter the payment reference."})
+		doc = records.lock(case)
+		records.check_version(doc, expected_version)
+		row = frappe.get_doc("Contract Advance", advance)
+		if row.contract_case != case or row.state != "Certified":
+			fail("CM_INVOICE", advance=advance, state=row.state, reason="Only a certified advance can be paid.")
+		order = formation.native_order(case)
+		held = payment_guard.advance_entitlement(order, lock=True)
+		wanted = flt(amount) if amount not in (None, "") else held["available"]
+		if wanted <= 0 or wanted > held["available"] + TOLERANCE:
+			fail("CM_HOLD", reason=f"The contract supports advancing {held['available']:,.2f}.", available=held["available"], requested=wanted, consequence="pay")
+		guards = preflight.holds(preflight.rules(doc, "SaveNativeFinanceDraft"), case, "pay", f"advance {row.advance_no}")
+		guards.raise_if_any()
+		unposted = next((p["name"] for p in payments(case) if p["kind"] == "advance" and p["docstatus"] == 0), "")
+		if unposted:
+			with _as_user(actor):
+				adapter.update_payment_draft(unposted, amount=wanted, mode_of_payment=mode_of_payment, paid_from=paid_from, reference_no=reference_no)
+			records.bump(doc)
+			return records.summary(doc, advance=advance, payment=unposted, amount=wanted, updated=True)
+		number = len([p for p in payments(case, cancelled=True) if p["kind"] == "advance"]) + 1
+		intent = intents.record(case, f"payment advance {row.advance_no}", number, "Native payment", "draft", recovery_owner="Finance; technical recovery")
+		return records.summary(doc, advance=advance, intent=intent.name, amount=wanted, payment_no=number)
+
+	recorded = records.command("SaveNativeFinanceDraft", case=case, idempotency_key=idempotency_key, actor=actor,
+		payload={"expected": expected_version, "advance": advance, "mode": mode_of_payment, "from": paid_from, "ref": reference_no, "amount": amount}, body=body, authorise=lambda: authority.require(actor, "Finance preparation"))
+	frappe.db.commit()
+	if recorded.get("updated"):
+		return recorded
+	order = formation.native_order(case)
+	number = frappe.get_doc("Contract Advance", advance).advance_no
+
+	def executor(identity: str):
+		try:
+			with _as_user(actor):
+				return adapter.advance_draft(order, identity, amount=recorded["amount"], mode_of_payment=mode_of_payment, paid_from=paid_from, reference_no=reference_no), "Payment Entry"
+		except frappe.ValidationError as exc:
+			raise intents.OwnerRefused(str(exc)) from exc
+
+	result = intents.execute(recorded["intent"], executor, lambda identity: adapter.find_by_identity("Payment Entry", identity), native_doctype="Payment Entry")
+	with records.atomic():
+		doc = records.lock(case)
+		if result["state"] in intents.SETTLED:
+			work.finish(case, command="SaveNativeFinanceDraft", subject=f"payment advance {number}", actor=actor)
+			work.assign(case, "SubmitNativeFinanceForApproval", "Submit the advance payment for approval.", f"payment {result['reference']}", 1, [actor], role="Finance preparation")
+			records.bump(doc)
+			events.record(case, "Payment drafted", actor, f"Draft advance payment {result['reference']} prepared for {recorded['amount']:,.2f}.", payment=result["reference"], advance=advance)
+		else:
+			work.incident(case, "RestoreContractOperation", "Restore the native payment", f"advance {number}", recorded["payment_no"])
+	frappe.db.commit()
+	if result["state"] not in intents.SETTLED:
+		fail("CM_RECONCILE", intent=recorded["intent"], state=result["state"], reason="The advance payment could not be created. Finance can restore it.")
+	return records.summary(frappe.get_doc(CASE, case), advance=advance, payment=result["reference"], amount=recorded["amount"])
 
 
 def record_finance_settlement(case: str, *, payment: str, expected_version: int, idempotency_key: str, actor: str, effective_date: str, evidence: str) -> dict[str, Any]:
@@ -796,9 +889,11 @@ def record_finance_settlement(case: str, *, payment: str, expected_version: int,
 			fail("CM_INVOICE", payment=payment, reason="The payment has not been posted.")
 		if frappe.db.exists(SETTLEMENT, {"native_payment": payment, "state": "Confirmed"}):
 			return records.summary(doc, payment=payment, already=True)
+		if row["kind"] == "advance":
+			return _settle_advance(doc, case, pe, row, actor, effective_date, evidence)
 		certifier = frappe.db.get_value(CERTIFICATION, {"contract_case": case, "invoice": row["invoice"], "state": "Signed"}, "certifier")
 		segregation.settlement_confirmer_independent(actor, makers=[pe.owner], certifiers=[certifier] if certifier else [])
-		guards = preflight.holds(preflight.rules(doc, "RecordFinanceSettlement"), case, "confirm_settlement", f"invoice {row['invoice_no']}")
+		guards = preflight.holds(preflight.rules(doc, "RecordFinanceSettlement"), case, "confirm_settlement", row["subject"])
 		guards.raise_if_any()
 		settlement = records.new(SETTLEMENT, contract_case=case, invoice=row["invoice"], native_payment=payment, amount=pe.paid_amount, state="Confirmed",
 			evidence_json=records.dumps({"evidence": evidence, "native_payment": payment, "amount": flt(pe.paid_amount), "recorded_by": actor}), recorder=actor, effective_date=getdate(effective_date), recorded_at=clock.now(), record_version=1)

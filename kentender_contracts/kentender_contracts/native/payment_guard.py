@@ -64,6 +64,22 @@ def allocations(doc) -> dict[str, float]:
 	return out
 
 
+def order_allocations(doc) -> dict[str, float]:
+	"""Amount a payment entry allocates to each Purchase Order: an advance against the order."""
+	out: dict[str, float] = {}
+	if doc.doctype == "Payment Entry":
+		for row in doc.get("references") or []:
+			if row.reference_doctype == "Purchase Order":
+				out[row.reference_name] = out.get(row.reference_name, 0.0) + flt(row.allocated_amount)
+	return out
+
+
+def advance_entitlement(order: str, *, lock: bool = False) -> dict:
+	"""What the contract supports advancing on one order: the advance procurement certified minus what has already been paid against it."""
+	row = frappe.db.get_value("Purchase Order", order, ["name", "cm_operation_identity", "cm_advance_certified", "advance_paid"], as_dict=True, for_update=lock)
+	return {"order": order, "cm_linked": bool(row.cm_operation_identity), "certified": flt(row.cm_advance_certified), "paid": flt(row.advance_paid), "available": flt(row.cm_advance_certified) - flt(row.advance_paid)}
+
+
 def new_allocations(doc, method: str) -> dict[str, float]:
 	"""Allocations this posting adds. At first submission the whole entry is new (the stored draft already holds the same rows); on an
 	update after submit (reconciliation) only the rows added by this change are."""
@@ -88,9 +104,14 @@ def supplier_has_contract_invoices(supplier: str | None) -> bool:
 	return bool(supplier) and bool(frappe.db.exists("Purchase Invoice", {"supplier": supplier, "cm_operation_identity": ["!=", ""], "docstatus": 1}))
 
 
+def advances_a_contract_order(doc) -> bool:
+	"""A payment entry that advances money against an order Contract Management made."""
+	return any(row.reference_doctype == "Purchase Order" and frappe.db.get_value("Purchase Order", row.reference_name, "cm_operation_identity") for row in doc.get("references") or [])
+
+
 def pays_a_contract_supplier(doc) -> bool:
 	if doc.doctype == "Payment Entry":
-		return doc.get("payment_type") == "Pay" and doc.get("party_type") == "Supplier" and supplier_has_contract_invoices(doc.get("party"))
+		return doc.get("payment_type") == "Pay" and doc.get("party_type") == "Supplier" and (supplier_has_contract_invoices(doc.get("party")) or advances_a_contract_order(doc))
 	if doc.doctype == "Journal Entry":
 		return any(row.get("party_type") == "Supplier" and flt(row.get("debit_in_account_currency")) > 0 and supplier_has_contract_invoices(row.get("party")) for row in doc.get("accounts") or [])
 	return False
@@ -117,6 +138,12 @@ def on_event(doc, method: str | None = None) -> None:
 		return
 	if not in_operation():
 		fail("CM_HOLD", reason="This payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation.", consequence="pay")
+	if method == "before_submit":
+		for order, amount in order_allocations(doc).items():
+			held = advance_entitlement(order, lock=True)  # a concurrent advance waits here, then sees this one
+			if held["cm_linked"] and amount > held["available"] + TOLERANCE:
+				fail("CM_HOLD", reason=f"{order} has {held['certified']:,.2f} certified as an advance and {held['paid']:,.2f} already paid; {amount:,.2f} is more than the supported advance.",
+					order=order, certified=held["certified"], paid=held["paid"], requested=amount, consequence="pay")
 	for invoice, amount in new_allocations(doc, method).items():
 		held = entitlement(invoice, lock=True)  # a concurrent payment waits here, then sees this one
 		if not held["cm_linked"]:

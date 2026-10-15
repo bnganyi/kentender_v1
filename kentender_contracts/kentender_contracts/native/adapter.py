@@ -252,13 +252,55 @@ def post_invoice(invoice: str, user: str) -> dict[str, Any]:
 	"""The approver's posting of a Draft invoice: the configured workflow's Approve if the site has one for Purchase Invoice, otherwise the native submission, taken as `user`."""
 	from frappe.model.workflow import apply_workflow, get_workflow_name
 
-	with service_principal.acting_as(user):
+	with service_principal.acting_as(user), payment_guard.native_operation(f"post invoice {invoice}"):  # setting an advance against the invoice updates the advance's payment entry: a controlled route
 		doc = frappe.get_doc("Purchase Invoice", invoice)
 		if get_workflow_name("Purchase Invoice"):
 			doc = apply_workflow(doc, "Approve")
 		else:
 			doc.submit()
 	return {"invoice": invoice, "docstatus": doc.docstatus}
+
+
+def certify_advance(order: str, amount: float) -> None:
+	"""Record what procurement certified as an advance on the order: the ceiling the payment guard enforces for a payment against it."""
+	frappe.db.set_value("Purchase Order", order, "cm_advance_certified", amount, update_modified=False)
+
+
+def advance_draft(order: str, identity: str, *, amount: float, mode_of_payment: str, paid_from: str, reference_no: str, reference_date: str | None = None) -> str:
+	"""A Draft native Payment Entry that advances money against the order, once per operation identity. Submission is the controlled operation's, not this call's."""
+	existing = find_by_identity("Payment Entry", identity)
+	if existing:
+		return existing
+	from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
+
+	entry = get_payment_entry("Purchase Order", order)
+	entry.mode_of_payment, entry.paid_from, entry.reference_no, entry.reference_date = mode_of_payment, paid_from, reference_no, reference_date or today()
+	entry.cm_operation_identity = identity
+	entry.paid_amount = entry.received_amount = amount
+	entry.references[0].allocated_amount = amount
+	entry.insert()
+	return entry.name
+
+
+def apply_advance(invoice: str, advance_entry: str, amount: float) -> float:
+	"""Set an advance against a Draft invoice: ERPNext offers the paid advance and `amount` of it is allocated, the recovery. Returns what is allocated (never more than the advance holds)."""
+	doc = frappe.get_doc("Purchase Invoice", invoice)
+	if doc.docstatus != 0:
+		fail("CM_RECONCILE", invoice=invoice, reason="The accounting invoice is already posted.")
+	doc.set_advances()
+	chosen = [row for row in doc.advances if row.reference_name == advance_entry]
+	doc.advances = chosen
+	left = flt(amount)
+	for row in doc.advances:
+		row.allocated_amount = min(left, flt(row.advance_amount))
+		left -= row.allocated_amount
+	doc.save(ignore_permissions=True)
+	return flt(amount) - left
+
+
+def advance_recovered(invoice: str) -> float:
+	"""What an invoice has set off against advances (its own total advance)."""
+	return flt(frappe.db.get_value("Purchase Invoice", invoice, "total_advance"))
 
 
 def certify_invoice(invoice: str, amount: float) -> None:

@@ -92,12 +92,22 @@ def variant(case: str, security_required: bool = False, outside_signing: bool = 
 	return security_required or case.endswith("-SEC"), outside_signing or case.endswith("-OUT")
 
 
+#: The advance branch (board D29): the issued terms provide 10% of the contract sum, paid after signature, recovered at KES 10,000 for each laptop accepted and invoiced.
+ADVANCE = {"allowed": True, "percent": 10, "recovery_per_unit": 10_000, "recovery_line": "L1", "after_signature": True,
+	"statement": "10% of the contract sum, paid after the agreement is effective and recovered at KES 10,000 for each laptop accepted and invoiced"}
+
+
+def with_advance(case: str, advance: bool = False) -> bool:
+	"""The advance variant is named by its case (`-ADV`), like the others."""
+	return advance or case.endswith("-ADV")
+
+
 def with_services(case: str, services: bool = False) -> bool:
 	"""The goods-plus-service variant is named by its case (`-SVC`), like the security and outside-signing variants."""
 	return services or case.endswith("-SVC")
 
 
-def _content(number: str, case: str, security_required: bool = False, outside_signing: bool = False, services: bool = False) -> bytes:
+def _content(number: str, case: str, security_required: bool = False, outside_signing: bool = False, services: bool = False, advance: bool = False) -> bytes:
 	security_required, outside_signing = variant(case, security_required, outside_signing)
 	services = with_services(case, services)
 	total = TOTAL + (SERVICE_RATE if services else 0)
@@ -116,7 +126,7 @@ def _content(number: str, case: str, security_required: bool = False, outside_si
 	if number == "S5":
 		security = {"required": True, "percentage": 10, "statement": "10% of the contract sum, in the form of a bank guarantee"} if security_required else {"required": False, "statement": "Not required under these test terms"}
 		return _json({"warranty": {"months": 12, "from": "each unit's acceptance"}, "payment": {"basis": "certified invoice for accepted units", "terms": "as issued"},
-			"performance_security": security, "advance": {"allowed": False}, "delivery_due": DELIVERY_DUE,
+			"performance_security": security, "advance": ADVANCE if with_advance(case, advance) else {"allowed": False}, "delivery_due": DELIVERY_DUE,
 			"signing": {"outside_permitted": True, "basis": "Outside signing permitted in these test terms"} if outside_signing else {"outside_permitted": False}})
 	if number == "S6":
 		return _json({"criteria": CRITERIA + (SERVICE_CRITERIA if services else [])})
@@ -162,11 +172,11 @@ def reference(number: str, case: str = CASE) -> str:
 	return f"{number}-{case}"
 
 
-def source_handoff(case: str = CASE, *, security_required: bool = False, outside_signing: bool = False, services: bool = False) -> list[dict[str, Any]]:
+def source_handoff(case: str = CASE, *, security_required: bool = False, outside_signing: bool = False, services: bool = False, advance: bool = False) -> list[dict[str, Any]]:
 	"""One reference per required source S1 to S12 (plan D20). `security_required` is the variant whose issued terms require a performance security; `services` the goods-plus-service package."""
 	rows = []
 	for number, (category, owner, real) in SOURCES.items():
-		data = _content(number, case, security_required, outside_signing, services)
+		data = _content(number, case, security_required, outside_signing, services, advance)
 		rows.append({"source": number, "category": category, "owner": owner, "reference": reference(number, case), "version": 1, "sha256": _sha(data),
 			"media_type": "text/html" if number == "S7" else "application/json", "size": len(data), "locator": f"synthetic/{number}", "basis": "required by CM v0.8 section 19.4",
 			"provider": "synthetic", "real_handoff_today": real})
@@ -179,11 +189,12 @@ _REFERENCE = re.compile(r"^(S\d+)-(.+)$")
 class Provider:
 	"""The `describe` / `fetch` seam of D20, answering from the synthetic handoff. `tamper` makes one source's bytes differ, to prove verification."""
 
-	def __init__(self, *, tamper: str = "", security_required: bool = False, outside_signing: bool = False, services: bool = False):
+	def __init__(self, *, tamper: str = "", security_required: bool = False, outside_signing: bool = False, services: bool = False, advance: bool = False):
 		self.tamper = tamper
 		self.security_required = security_required
 		self.outside_signing = outside_signing
 		self.services = services
+		self.advance = advance
 
 	def _parse(self, reference: str):
 		m = _REFERENCE.match(reference or "")
@@ -191,13 +202,13 @@ class Provider:
 
 	def describe(self, *, reference: str) -> dict[str, Any] | None:
 		number, case = self._parse(reference)
-		return next((r for r in source_handoff(case, security_required=self.security_required, outside_signing=self.outside_signing, services=self.services) if r["source"] == number), None) if number else None
+		return next((r for r in source_handoff(case, security_required=self.security_required, outside_signing=self.outside_signing, services=self.services, advance=self.advance) if r["source"] == number), None) if number else None
 
 	def fetch(self, *, reference: str) -> dict[str, Any] | None:
 		number, case = self._parse(reference)
 		if not number:
 			return None
-		data = _content(number, case, self.security_required, self.outside_signing, self.services) + (b" tampered" if number == self.tamper else b"")
+		data = _content(number, case, self.security_required, self.outside_signing, self.services, self.advance) + (b" tampered" if number == self.tamper else b"")
 		return {"content": data, "digest": _sha(data)}
 
 

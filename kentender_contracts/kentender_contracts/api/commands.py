@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from kentender_contracts import award_receiver
-from kentender_contracts.services import closeout, delivery, existing, formation, formation_end, outside_signature, payment, security
+from kentender_contracts.services import advance, closeout, delivery, existing, formation, formation_end, outside_signature, payment, security
 from kentender_contracts.services.errors import invalid
 
 Handler = Callable[[str, dict[str, Any], dict[str, Any], int, str, str], dict[str, Any]]
@@ -84,6 +84,9 @@ def _invoice(case, args, values, expected, key, actor):
 
 
 def _finance_save(case, args, values, expected, key, actor):
+	if args.get("kind") == "advance":
+		return payment.save_advance_payment(case, advance=args["advance"], expected_version=expected, idempotency_key=key, actor=actor, mode_of_payment=values.get("mode_of_payment", ""),
+			paid_from=values.get("paid_from", ""), reference_no=values.get("reference_no", ""), amount=values.get("amount") or None)
 	if args.get("kind") == "invoice":
 		return payment.save_accounting_invoice(case, invoice=args["invoice"], expected_version=expected, idempotency_key=key, actor=actor, posting_date=values.get("posting_date", ""),
 			payable_account=values.get("payable_account", ""), cost_centre=values.get("cost_centre", ""), expense_account=values.get("expense_account", ""), tax_template=values.get("tax_template", ""))
@@ -110,6 +113,9 @@ def _finance_return(case, args, values, expected, key, actor):
 
 
 def _record_security(case, args, values, expected, key, actor):
+	if args.get("kind") == "Advance guarantee":
+		return advance.record_guarantee(case, expected_version=expected, idempotency_key=key, actor=actor, issuer=values.get("issuer", ""), beneficiary=values.get("beneficiary", ""), reference=values.get("reference", ""),
+			amount=_number(values.get("amount")), issued_on=values.get("issued_on", ""), expires_on=values.get("expires_on", ""), attachment=values.get("attachment", ""))
 	return security.record_security(case, expected_version=expected, idempotency_key=key, actor=actor, issuer=values.get("issuer", ""), beneficiary=values.get("beneficiary", ""), reference=values.get("reference", ""),
 		amount=_number(values.get("amount")), issued_on=values.get("issued_on", ""), expires_on=values.get("expires_on", ""), attachment=values.get("attachment", ""))
 
@@ -150,8 +156,10 @@ COMMANDS: dict[str, Handler] = {
 		signed_by=v.get("signed_by", ""), capacity=v.get("capacity", ""), signed_on=v.get("signed_on", ""), copy=v.get("copy", ""), notes=v.get("notes", "")),
 	"ConfirmOutsideSignatureEvidence": lambda c, a, v, e, k, u: outside_signature.confirm_outside_signature(c, expected_version=e, idempotency_key=k, actor=u),
 	"RecordContractSecurity": _record_security,
-	"VerifyContractSecurity": lambda c, a, v, e, k, u: security.verify_security(c, security=a["security"], expected_version=e, idempotency_key=k, actor=u, confirmation_reference=v.get("confirmation_reference", ""),
-		received_on=v.get("received_on", ""), basis=v.get("basis", "")),
+	"VerifyContractSecurity": lambda c, a, v, e, k, u: (advance.verify_guarantee if a.get("kind") == "Advance guarantee" else security.verify_security)(c, security=a["security"], expected_version=e, idempotency_key=k, actor=u,
+		confirmation_reference=v.get("confirmation_reference", ""), received_on=v.get("received_on", ""), basis=v.get("basis", "")),
+	"PrepareContractAdvance": lambda c, a, v, e, k, u: advance.prepare_advance(c, expected_version=e, idempotency_key=k, actor=u, claim_reference=v.get("claim_reference", ""), amount=_number(v.get("amount"))),
+	"SignAdvanceCertification": lambda c, a, v, e, k, u: advance.sign_advance_certification(c, advance=a["advance"], expected_version=e, idempotency_key=k, actor=u),
 	"RejectContractSecurity": lambda c, a, v, e, k, u: security.reject_security(c, security=a["security"], expected_version=e, idempotency_key=k, actor=u, reason=v.get("reason", "")),
 	"SaveContractParticulars": _particulars,
 	"RequestContractSignatures": lambda c, a, v, e, k, u: formation.request_signatures(c, expected_version=e, idempotency_key=k, actor=u),
