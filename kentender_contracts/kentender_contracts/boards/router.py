@@ -13,7 +13,7 @@ from typing import Any
 
 import frappe
 
-from kentender_contracts.boards import agreement, chrome, delivery, invoices, kit, obligations
+from kentender_contracts.boards import agreement, chrome, delivery, invoices, kit, obligations, security
 from kentender_contracts.boards.context import Context
 from kentender_contracts.services import bindings, closeout, payment, records
 from kentender_contracts.services.errors import fail
@@ -34,6 +34,10 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 		return agreement.d02(ctx)
 	if command == "SignContractVersion":
 		return agreement.d03(ctx, entity=is_entity)
+	if command == "RecordContractSecurity":
+		return security.d25r(ctx, lead["version"])
+	if command == "VerifyContractSecurity":
+		return security.d25(ctx, lead["version"])
 	if command == "RecommendContractInspectors":
 		return agreement.d23r(ctx)
 	if command == "AppointContractInspectors":
@@ -79,6 +83,8 @@ def _by_waiting(ctx: Context, lead: dict[str, Any]):
 	command, subject = lead["command"], lead["subject"]
 	if command.startswith("DeclareContractInterest:waiting"):
 		return agreement.d23p(ctx)
+	if command.startswith("RecordContractSecurity:waiting"):
+		return security.d25j(ctx)
 	if command.startswith("RequestInvoiceCorrection:waiting"):
 		return invoices.d18r(ctx, invoices._invoice(ctx, _number(subject)))
 	if command.startswith("ApproveNativeFinanceRecord:waiting:accounting"):

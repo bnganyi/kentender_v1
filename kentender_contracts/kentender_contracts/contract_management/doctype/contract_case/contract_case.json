@@ -30,7 +30,8 @@
   "source_json",
   "delivery_state",
   "invoice_state",
-  "obligation_state"
+  "obligation_state",
+  "outcome_reason"
  ],
  "fields": [
   {
@@ -186,6 +187,12 @@
    "fieldname": "obligation_state",
    "label": "Obligation state",
    "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "outcome_reason",
+   "label": "Outcome reason",
+   "fieldtype": "Small Text",
    "read_only": 1
   }
  ],

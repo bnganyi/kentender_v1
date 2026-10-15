@@ -56,8 +56,20 @@ def provider(name: str) -> Callable[[Provider], Provider]:
 	return register
 
 
+#: Modules that register a hold provider when imported. They are loaded the first time holds are read, so a process that never imported one cannot miss its hold.
+PROVIDER_MODULES = ("kentender_contracts.services.security",)
+
+
+def _load() -> None:
+	import importlib
+
+	for name in PROVIDER_MODULES:
+		importlib.import_module(name)
+
+
 def open_holds(case: str) -> list[Hold]:
 	"""Every hold open on the case, from every source, read fresh."""
+	_load()
 	return [hold for fn in PROVIDERS.values() for hold in fn(case)]
 
 

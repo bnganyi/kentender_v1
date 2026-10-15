@@ -20,6 +20,13 @@ LIFECYCLE_LABEL = {"Preparing": "Preparing", "Awaiting signatures": "Awaiting si
 
 
 def base(ctx: Context, board_id: str, **o) -> dict[str, Any]:
+	board = _base(ctx, board_id, **o)
+	for fix in ((board.get("next") or {}).get("fixes") or []):  # a blocked step's fixes go somewhere: the contract's remaining work, where every hold is listed with its holder
+		board["actions"].setdefault(fix, kit.tab("Obligations"))
+	return board
+
+
+def _base(ctx: Context, board_id: str, **o) -> dict[str, Any]:
 	supplier_view = "supplier" in ctx.audiences and len(ctx.audiences) == 1
 	o.setdefault("d", board_id.split("-")[0].split(" ")[0])
 	o.setdefault("back", "Back to my contracts" if supplier_view else "Back to contracts")
@@ -66,7 +73,7 @@ def tab_of(command: str) -> str:
 
 
 TAB_OF_COMMAND = {
-	"RequestContractSignatures": "Agreement", "SignContractVersion": "Agreement", "RecommendContractInspectors": "Agreement", "AppointContractInspectors": "Agreement", "DeclareContractInterest": "Agreement",
+	"RequestContractSignatures": "Agreement", "SignContractVersion": "Agreement", "RecordContractSecurity": "Agreement", "VerifyContractSecurity": "Agreement", "RecommendContractInspectors": "Agreement", "AppointContractInspectors": "Agreement", "DeclareContractInterest": "Agreement",
 	"RecordInspectionObservations": "Deliveries", "SignTechnicalCertificate": "Deliveries", "PrepareAcceptanceReport": "Deliveries", "SignAcceptanceReport": "Deliveries",
 	"SignContractCertification": "Invoices", "RequestInvoiceCorrection": "Invoices", "CorrectContractInvoice": "Invoices", "SaveNativeFinanceDraft": "Invoices",
 	"SubmitNativeFinanceForApproval": "Invoices", "ApproveNativeFinanceRecord": "Invoices", "RecordFinanceSettlement": "Invoices",

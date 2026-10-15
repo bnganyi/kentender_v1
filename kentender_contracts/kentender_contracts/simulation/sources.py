@@ -78,7 +78,7 @@ def organisation_id() -> str:
 		return "ORG-DEMO-1"
 
 
-def _content(number: str, case: str) -> bytes:
+def _content(number: str, case: str, security_required: bool = False) -> bytes:
 	if number == "S1":
 		return _json({"tender": "TND-DEMO-001", "tender_reference": "MOH/ICT/2027/DEMO-01", "title": "IT equipment delivery", "release": "IT-EQUIPMENT-OPEN-V1", "release_id": "1.5", "addenda": []})
 	if number == "S2":
@@ -90,8 +90,9 @@ def _content(number: str, case: str) -> bytes:
 		return _json({"delivery_schedule": {"due": DELIVERY_DUE, "destination": "Ministry of Health, Afya House store"}, "technical": [{"line_id": "L1", "requirement": "Laptop with at least 16 GB RAM and 512 GB storage that starts successfully"}],
 			"related_services": []})
 	if number == "S5":
+		security = {"required": True, "percentage": 10, "statement": "10% of the contract sum, in the form of a bank guarantee"} if security_required else {"required": False, "statement": "Not required under these test terms"}
 		return _json({"warranty": {"months": 12, "from": "each unit's acceptance"}, "payment": {"basis": "certified invoice for accepted units", "terms": "as issued"},
-			"performance_security": {"required": False, "statement": "Not required under these test terms"}, "advance": {"allowed": False}, "delivery_due": DELIVERY_DUE})
+			"performance_security": security, "advance": {"allowed": False}, "delivery_due": DELIVERY_DUE})
 	if number == "S6":
 		return _json({"criteria": CRITERIA})
 	if number == "S7":
@@ -134,11 +135,11 @@ def reference(number: str, case: str = CASE) -> str:
 	return f"{number}-{case}"
 
 
-def source_handoff(case: str = CASE) -> list[dict[str, Any]]:
-	"""One reference per required source S1 to S12 (plan D20)."""
+def source_handoff(case: str = CASE, *, security_required: bool = False) -> list[dict[str, Any]]:
+	"""One reference per required source S1 to S12 (plan D20). `security_required` is the variant whose issued terms require a performance security."""
 	rows = []
 	for number, (category, owner, real) in SOURCES.items():
-		data = _content(number, case)
+		data = _content(number, case, security_required)
 		rows.append({"source": number, "category": category, "owner": owner, "reference": reference(number, case), "version": 1, "sha256": _sha(data),
 			"media_type": "text/html" if number == "S7" else "application/json", "size": len(data), "locator": f"synthetic/{number}", "basis": "required by CM v0.8 section 19.4",
 			"provider": "synthetic", "real_handoff_today": real})
@@ -151,8 +152,9 @@ _REFERENCE = re.compile(r"^(S\d+)-(.+)$")
 class Provider:
 	"""The `describe` / `fetch` seam of D20, answering from the synthetic handoff. `tamper` makes one source's bytes differ, to prove verification."""
 
-	def __init__(self, *, tamper: str = ""):
+	def __init__(self, *, tamper: str = "", security_required: bool = False):
 		self.tamper = tamper
+		self.security_required = security_required
 
 	def _parse(self, reference: str):
 		m = _REFERENCE.match(reference or "")
@@ -160,13 +162,13 @@ class Provider:
 
 	def describe(self, *, reference: str) -> dict[str, Any] | None:
 		number, case = self._parse(reference)
-		return next((r for r in source_handoff(case) if r["source"] == number), None) if number else None
+		return next((r for r in source_handoff(case, security_required=self.security_required) if r["source"] == number), None) if number else None
 
 	def fetch(self, *, reference: str) -> dict[str, Any] | None:
 		number, case = self._parse(reference)
 		if not number:
 			return None
-		data = _content(number, case) + (b" tampered" if number == self.tamper else b"")
+		data = _content(number, case, self.security_required) + (b" tampered" if number == self.tamper else b"")
 		return {"content": data, "digest": _sha(data)}
 
 

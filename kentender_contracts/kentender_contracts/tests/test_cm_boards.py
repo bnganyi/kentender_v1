@@ -197,6 +197,29 @@ class TestBoards(ContractCase):
 		self.assertEqual(board["audiences"], ["supplier"])
 
 
+	def test_a_hold_makes_the_step_blocked_with_its_reason_and_its_holder_and_never_a_button_that_will_be_refused(self):
+		from kentender_contracts.services import holds, work
+
+		t = tw.Thread(self.p, tag="HELD")
+		out = tw.receive(self.p, contract_id=t.contract_id)
+		self.case = t.case = out["contract"]
+		formation.save_particulars(self.case, expected_version=t.version(), idempotency_key=t.key("p"), actor=self.p["brian"], values=tw.package_particulars(self.p))
+		before = self.screen("charles", "D02")
+		self.assertEqual((before["next"]["k"], before["p"]), ("turn", "Send for signature"))
+		held = holds.Hold(key="restriction:R-1", kind="Restriction", reason="An award restriction requires review.", blocks=frozenset({"new_signing_attempt"}), owner="Head of procurement function",
+			clearing="The restriction is resolved by its owner")
+		holds.PROVIDERS["test-restriction"] = lambda case: [held] if case == self.case else []
+		self.addCleanup(holds.PROVIDERS.pop, "test-restriction", None)
+		live = [x for x in work.live(self.case) if x["holder"] == self.p["charles"]]
+		self.assertEqual((live[0]["state"], live[0]["blocker"]["message"], live[0]["blocker"]["responsibility"]), ("blocked", "An award restriction requires review.", "Head of procurement function"))
+		after = router.board_for(self.case, self.p["charles"])
+		self.assertEqual((after["next"]["k"], after["next"]["h"].startswith("Review the contract")), ("blk", True))
+		self.assertEqual(after["next"]["fixes"], ["View issue"])
+		self.assertEqual(after["actions"]["View issue"], {"do": "tab", "tab": "Obligations"})
+		obligations = router.board_for(self.case, self.p["charles"], tab="Obligations")
+		self.assertIn("An award restriction requires review.", json.dumps(obligations), "the hold is listed with the remaining work")
+
+
 def refusal_code(fn):
 	try:
 		fn()

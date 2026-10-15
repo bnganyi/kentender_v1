@@ -133,11 +133,14 @@ def package_particulars(people: dict[str, str]) -> dict:
 	return {"agreement_date": "2027-07-02", "entity_signatory": people["amina"], "item_mapping": {"L1": world.ITEM_FA}, "native_supplier": world.SUPPLIER, "asset_location": world.LOCATION}
 
 
-def receive(people: dict[str, str], *, contract_id: str = "CM-TEST-0001") -> dict:
+def receive(people: dict[str, str], *, contract_id: str = "CM-TEST-0001", security_required: bool = False) -> dict:
+	"""Receive the demonstration Award package. With `security_required` the issued terms require a performance security, and the synthetic provider answers for that variant."""
 	from kentender_contracts.services import formation
 
 	package = sources.award_package()
-	return formation.receive_award_package(package, handoff=sources.source_handoff(package["award_case"]), managing_unit=unit(), idempotency_key=f"receive-{contract_id}", actor="Administrator", contract_id=contract_id)
+	if security_required:
+		frappe.flags.kt_contract_source_providers = [sources.Provider(security_required=True)]
+	return formation.receive_award_package(package, handoff=sources.source_handoff(package["award_case"], security_required=security_required), managing_unit=unit(), idempotency_key=f"receive-{contract_id}", actor="Administrator", contract_id=contract_id)
 
 
 def purge_native_operation_rows(case_ids: list[str]) -> None:

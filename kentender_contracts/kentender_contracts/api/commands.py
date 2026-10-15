@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from kentender_contracts.services import closeout, delivery, formation, payment
+from kentender_contracts.services import closeout, delivery, formation, payment, security
 from kentender_contracts.services.errors import invalid
 
 Handler = Callable[[str, dict[str, Any], dict[str, Any], int, str, str], dict[str, Any]]
@@ -98,7 +98,24 @@ def _finance_return(case, args, values, expected, key, actor):
 	return payment.return_finance_for_correction(case, payment=args["payment"], expected_version=expected, idempotency_key=key, actor=actor, reason=values.get("reason", ""))
 
 
+def _record_security(case, args, values, expected, key, actor):
+	return security.record_security(case, expected_version=expected, idempotency_key=key, actor=actor, issuer=values.get("issuer", ""), beneficiary=values.get("beneficiary", ""), reference=values.get("reference", ""),
+		amount=_number(values.get("amount")), issued_on=values.get("issued_on", ""), expires_on=values.get("expires_on", ""), attachment=values.get("attachment", ""))
+
+
+def _number(value: Any) -> float:
+	try:
+		return float(str(value or "0").replace(",", ""))
+	except ValueError:
+		invalid({"amount": "Enter the amount as a number."})
+		return 0.0
+
+
 COMMANDS: dict[str, Handler] = {
+	"RecordContractSecurity": _record_security,
+	"VerifyContractSecurity": lambda c, a, v, e, k, u: security.verify_security(c, security=a["security"], expected_version=e, idempotency_key=k, actor=u, confirmation_reference=v.get("confirmation_reference", ""),
+		received_on=v.get("received_on", ""), basis=v.get("basis", "")),
+	"RejectContractSecurity": lambda c, a, v, e, k, u: security.reject_security(c, security=a["security"], expected_version=e, idempotency_key=k, actor=u, reason=v.get("reason", "")),
 	"SaveContractParticulars": _particulars,
 	"RequestContractSignatures": lambda c, a, v, e, k, u: formation.request_signatures(c, expected_version=e, idempotency_key=k, actor=u),
 	"SignContractVersion": lambda c, a, v, e, k, u: formation.sign_contract(c, party=a["party"], expected_version=e, idempotency_key=k, actor=u),

@@ -18,6 +18,9 @@
   "proof_reference",
   "method",
   "signed_at",
+  "signed_on",
+  "copy_reference",
+  "copy_digest",
   "witness_json",
   "record_version",
   "fixture_namespace"
@@ -69,7 +72,7 @@
    "label": "State",
    "fieldtype": "Select",
    "read_only": 1,
-   "options": "Waiting\nRequested\nSigned\nPending\nFailed\nRefused\nSuperseded"
+   "options": "Waiting\nRequested\nEvidence recorded\nSigned\nPending\nFailed\nRefused\nSuperseded"
   },
   {
    "fieldname": "correlation_id",
@@ -93,6 +96,24 @@
    "fieldname": "signed_at",
    "label": "Signed at",
    "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "signed_on",
+   "label": "Signed on",
+   "fieldtype": "Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "copy_reference",
+   "label": "Copy reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "copy_digest",
+   "label": "Copy digest",
+   "fieldtype": "Data",
    "read_only": 1
   },
   {

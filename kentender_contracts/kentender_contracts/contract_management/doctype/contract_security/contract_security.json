@@ -1,0 +1,192 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-SEC-{#####}",
+ "creation": "2026-10-15 12:00:00.000000",
+ "description": "A performance security (or advance guarantee) the supplier supplied: the instrument as recorded, the issuer's confirmation and the verification or rejection, each superseded by a replacement and never edited.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "version_no",
+  "kind",
+  "state",
+  "issuer",
+  "beneficiary",
+  "reference",
+  "amount",
+  "issued_on",
+  "expires_on",
+  "attachment",
+  "confirmation_reference",
+  "confirmation_received_on",
+  "verification_basis",
+  "verified_by",
+  "verified_at",
+  "rejection_reason",
+  "recorded_by",
+  "recorded_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "version_no",
+   "label": "Version no",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "kind",
+   "label": "Kind",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Performance security\nAdvance guarantee"
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Recorded\nVerified\nRejected\nSuperseded"
+  },
+  {
+   "fieldname": "issuer",
+   "label": "Issuer",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "beneficiary",
+   "label": "Beneficiary",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference",
+   "label": "Reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "label": "Amount",
+   "fieldtype": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issued_on",
+   "label": "Issued on",
+   "fieldtype": "Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expires_on",
+   "label": "Expires on",
+   "fieldtype": "Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attachment",
+   "label": "Attachment",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "confirmation_reference",
+   "label": "Confirmation reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "confirmation_received_on",
+   "label": "Confirmation received on",
+   "fieldtype": "Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verification_basis",
+   "label": "Verification basis",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verified_by",
+   "label": "Verified by",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verified_at",
+   "label": "Verified at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejection_reason",
+   "label": "Rejection reason",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recorded_by",
+   "label": "Recorded by",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recorded_at",
+   "label": "Recorded at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Security",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

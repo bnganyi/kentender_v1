@@ -28,8 +28,8 @@ RECORDS = {
 		F("manifest_json", "Long Text"), F("package_digest"), F("frozen_at", "Datetime"), F("fixture_namespace")]),
 	"Contract Signature": ("SIG", "One signer slot of one agreement version, with its proof.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("agreement_version", "Int", reqd=1), F("party", "Select", "Supplier\nEntity", reqd=1), F("sequence", "Int"),
-		F("signer", "Data"), F("capacity"), F("state", "Select", "Waiting\nRequested\nSigned\nPending\nFailed\nRefused\nSuperseded"),
-		F("correlation_id"), F("proof_reference"), F("method"), F("signed_at", "Datetime"), F("witness_json", "Long Text"), F("record_version", "Int"), F("fixture_namespace")]),
+		F("signer", "Data"), F("capacity"), F("state", "Select", "Waiting\nRequested\nEvidence recorded\nSigned\nPending\nFailed\nRefused\nSuperseded"),
+		F("correlation_id"), F("proof_reference"), F("method"), F("signed_at", "Datetime"), F("signed_on", "Date"), F("copy_reference"), F("copy_digest"), F("witness_json", "Long Text"), F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Appointment": ("APP", "A written appointment of inspectors and certifiers for a contract, with each member's personal declaration.", [
 		F("contract_case", "Link", "Contract Case", reqd=1), F("version_no", "Int"), F("state", "Select", "Recommended\nAppointed\nReturned\nReplaced\nSuperseded"),
 		F("scope"), F("reference"), F("members_json", "Long Text"), F("recommended_by"), F("appointed_by"), F("reason", "Small Text"),
@@ -70,6 +70,11 @@ RECORDS = {
 		F("contract_case", "Link", "Contract Case", reqd=1), F("identity", "Data", "", unique=1, reqd=1), F("command"), F("title"), F("subject"), F("subject_version", "Int"),
 		F("holder"), F("holder_role"), F("state", "Select", "Open\nBlocked\nWaiting\nScheduled\nDone\nSuperseded"), F("assigned_at", "Datetime"), F("due", "Datetime"),
 		F("due_verified", "Check"), F("completed_at", "Datetime"), F("history_json", "Long Text"), F("fixture_namespace")]),
+	"Contract Security": ("SEC", "A performance security (or advance guarantee) the supplier supplied: the instrument as recorded, the issuer's confirmation and the verification or rejection, each superseded by a replacement and never edited.", [
+		F("contract_case", "Link", "Contract Case", reqd=1), F("version_no", "Int"), F("kind", "Select", "Performance security\nAdvance guarantee"), F("state", "Select", "Recorded\nVerified\nRejected\nSuperseded"),
+		F("issuer"), F("beneficiary"), F("reference"), F("amount", "Currency"), F("issued_on", "Date"), F("expires_on", "Date"), F("attachment"),
+		F("confirmation_reference"), F("confirmation_received_on", "Date"), F("verification_basis", "Small Text"), F("verified_by"), F("verified_at", "Datetime"), F("rejection_reason", "Small Text"),
+		F("recorded_by"), F("recorded_at", "Datetime"), F("record_version", "Int"), F("fixture_namespace")]),
 	"Contract Simulated Funding": ("SFD", "Development-only funding owner: the conversions a simulation site's synthetic funding provider holds, idempotent on the operation identity. Never present on a live site.", [
 		F("identity", "Data", "", unique=1, reqd=1), F("contract"), F("amount", "Currency"), F("reference"), F("outcome", "Select", "Converted\nRefused"), F("received_at", "Datetime"),
 		F("fixture_namespace")]),

@@ -1,0 +1,231 @@
+{
+ "actions": {
+  "Reject security": {
+   "dialog": "reject",
+   "do": "dialog"
+  },
+  "Verify security": {
+   "dialog": "verify",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-0001",
+ "d": "D25",
+ "dialogs": {
+  "reject": {
+   "args": {
+    "security": "CM-SEC-406632"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "RejectContractSecurity",
+   "p": "Reject",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Reject security"
+  },
+  "verify": {
+   "args": {
+    "security": "CM-SEC-406632"
+   },
+   "b": [
+    {
+     "items": [
+      [
+       "Instrument",
+       "TEST-G-001"
+      ],
+      [
+       "Issuer",
+       "Test Bank"
+      ],
+      [
+       "Amount",
+       "KES 100,000"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "items": [
+      {
+       "l": "Issuer's confirmation reference",
+       "name": "confirmation_reference",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Confirmation received",
+       "name": "received_on",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Basis",
+       "name": "basis",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "VerifyContractSecurity",
+   "p": "Verify",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Verify security"
+  }
+ },
+ "ev": [
+  "Guarantee TEST-G-001"
+ ],
+ "id": "D25",
+ "name": "Verify security",
+ "next": {
+  "h": "Check the issuer's confirmation.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Verify security",
+ "page": "record",
+ "ref": "CM-TEST-0001",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Contract sum",
+       "KES 1,000,000"
+      ],
+      [
+       "Required under the issued terms",
+       "KES 100,000"
+      ],
+      [
+       "Amount supplied",
+       "KES 100,000"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Security requirement"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Issuer",
+       "Test Bank"
+      ],
+      [
+       "Beneficiary",
+       "Ministry of Health"
+      ],
+      [
+       "Reference",
+       "TEST-G-001"
+      ],
+      [
+       "Issued",
+       "1 Jul 2027"
+      ],
+      [
+       "Expires",
+       "31 Aug 2028"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Instrument"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Source verification status",
+       "Awaiting the issuer's confirmation"
+      ],
+      [
+       "Recorded by",
+       "Charles Mutiso, 2 Jul 2027, 09:00 EAT"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Issuer confirmation"
+  }
+ ],
+ "s2": [
+  "Reject security"
+ ],
+ "st": "Preparing",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-0001",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-0001",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-0001",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-0001",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-0001",
+    "history"
+   ]
+  }
+ ],
+ "title": "Verify performance security",
+ "version": 3
+}

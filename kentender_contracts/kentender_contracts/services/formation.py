@@ -181,6 +181,9 @@ def _draft(doc, particulars: dict[str, Any], actor: str):
 	else:
 		draft = records.new(AGREEMENT, contract_case=doc.name, version_no=cint(doc.current_agreement) + 1 if doc.current_agreement else 1, state="Draft", record_version=1, **fields)
 	records.bump(doc, title=built["terms"]["title"], current_agreement=draft.version_no)
+	from kentender_contracts.services import security
+
+	security.ensure_work(doc.name, built["terms"])
 	return draft, built
 
 

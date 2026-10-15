@@ -93,12 +93,40 @@ def reassign(case: str, command: str, subject: str, version: int, old_holder: st
 	records.update(doc, holder=new_holder, assigned_at=clock.now(), identity=identity_of(case, subject, version, command, new_holder))
 
 
+#: The consequence an obligation exercises, so an open hold on it makes the step **blocked** (with the hold's reason and holder) instead of a button that will be refused (section 5.17, 6.3).
+CONSEQUENCE = {
+	"RequestContractSignatures": "new_signing_attempt", "SignContractVersion": "new_signing_attempt", "SignContractCertification": "certify_invoice", "RecordFinanceSettlement": "confirm_settlement",
+	"IssueCompletionCertificate": "close_contract", "SignContractCloseout": "close_contract", "PrepareContractCloseout": "close_contract",
+}
+#: Finance's payment steps are blocked by a payment hold; the accounting invoice (liability) is not (section 5.8, 5.12).
+PAYMENT_STEPS = ("SaveNativeFinanceDraft", "SubmitNativeFinanceForApproval", "ApproveNativeFinanceRecord")
+
+
+def _consequence(command: str, subject: str) -> str | None:
+	if command in PAYMENT_STEPS:
+		return "pay" if subject.startswith("payment") else None
+	return CONSEQUENCE.get(command)
+
+
 def live(case: str) -> list[dict[str, Any]]:
-	"""The case's live obligations in the shape `tasks.view` orders."""
+	"""The case's live obligations in the shape `tasks.view` orders. An actionable one whose consequence a hold blocks is **blocked**, carrying the hold's reason, its holder and what clears it."""
+	from kentender_contracts.services import holds
+
 	rows = frappe.get_all(TASK, filters={"contract_case": case, "state": ["in", list(LIVE)]},
 		fields=["name", "command", "title", "subject", "subject_version", "holder", "holder_role", "state", "assigned_at", "due", "due_verified"], order_by="assigned_at asc, name asc")
-	return [{"task_id": r.name, "case": case, "subject": r.subject, "version": r.subject_version, "command": r.command, "title": r.title, "holder": r.holder, "holder_role": r.holder_role,
-		"state": STATE[r.state], "due": get_datetime(r.due) if r.due else None, "due_verified": bool(r.due_verified), "assigned_at": get_datetime(r.assigned_at)} for r in rows]
+	out = []
+	for r in rows:
+		item = {"task_id": r.name, "case": case, "subject": r.subject, "version": r.subject_version, "command": r.command, "title": r.title, "holder": r.holder, "holder_role": r.holder_role,
+			"state": STATE[r.state], "due": get_datetime(r.due) if r.due else None, "due_verified": bool(r.due_verified), "assigned_at": get_datetime(r.assigned_at)}
+		capability = _consequence(r.command, r.subject)
+		if capability and item["state"] == rules.ACTIONABLE:
+			blocking = holds.blocking(case, capability, r.subject)
+			if blocking:
+				first = blocking[0]
+				item["state"] = rules.BLOCKED
+				item["blocker"] = {"reason_code": "CM_HOLD", "message": first.reason, "fix_label": "View issue", "responsibility": first.owner, "clears_with": first.clearing, "holds": [h.key for h in blocking]}
+		out.append(item)
+	return out
 
 
 def view(case: str, actor: str, *, neutral: bool = False, holders: set[str] | None = None) -> dict[str, Any]:
