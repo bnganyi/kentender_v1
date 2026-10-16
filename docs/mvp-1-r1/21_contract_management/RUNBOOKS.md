@@ -40,7 +40,7 @@ Tests write real rows and have no rollback on this bench. **Run them on `kentend
 | `make ui-cm-fidelity-gate` | every board of the design compared with its artboard, or recorded as not compared with its reason | 1 minute |
 | `make cm-persona-gate` | each named person on the accepted contract, in a real browser, with no native-form redirect | 3 minutes |
 | `make cm-regression-gate` | what Contract Management reaches into in other apps: Award's seams, Budget's funding provider, the signing facade, the supplier-account provider and Home's structural comparison | 10 to 20 minutes |
-| `make ui-cm-release-evidence-gate` | all of the above, once, in the order that keeps one gate's leftovers out of the next; writes `artifacts/cm-release-evidence.md` with each result and its proof level; it does not cover the owner-gated Phase 13 | about 2 hours |
+| `make ui-cm-release-evidence-gate` | all of the above, once, in the order that keeps one gate's leftovers out of the next; writes `artifacts/cm-release-evidence.md` with each result and its proof level; it does not cover the owner-gated Phase 13; it holds the shared test-site lock (`/tmp/kt-test-site.lock`) and serves the site without the file watcher | about 70 minutes |
 
 If a UI run fails oddly (a teardown that fails, later specs failing against state an earlier one left behind), check `make ui-queue-check` before reading any application code.
 

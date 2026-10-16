@@ -1509,9 +1509,9 @@ cm-regression-gate: cm-preflight
 	npx vitest run --project home
 
 # Every Contract Management gate once, in the order that keeps one gate's leftovers out of the next, with each result and its proof level written to artifacts/cm-release-evidence.md (scripts/cm-release-evidence.sh).
-# `scripts/test-site.sh run make ui-cm-release-evidence-gate`; about two hours. It does not cover Phase 13, which is owner-gated.
+# `scripts/test-site.sh run make ui-cm-release-evidence-gate`; about 70 minutes, under the shared test-site lock (/tmp/kt-test-site.lock) so other work on the site waits. It does not cover Phase 13, which is owner-gated.
 ui-cm-release-evidence-gate:
-	scripts/cm-release-evidence.sh
+	flock /tmp/kt-test-site.lock scripts/cm-release-evidence.sh
 
 # The real owners (proof level L2): Award's provider of the source material through Tenders, Bid Evaluation, site configuration, Supplier Accounts and Budget, the core seams they answer, Budget's funding
 # provider and the principal gateway guard. The canonical award's sources are listed one by one: a source nobody can supply blocks formation, and the report names it and its owner.
