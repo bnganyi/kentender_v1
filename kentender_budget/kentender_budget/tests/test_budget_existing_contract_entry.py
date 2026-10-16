@@ -263,6 +263,14 @@ class TestAMissingOrUnusableBasisDoesNotStopTheRequest(_FundingBase):
 		received = self.receive(currency="USD", basis={**self.basis(), "currency": "USD"})["request"]
 		self.assertEqual((received["year_allocation_status"], received["display_status"]), ("Scope review required", "This funding is outside the supported scope"))
 
+	def test_out_of_scope_funding_can_neither_be_drafted_nor_submitted_and_the_screen_is_offered_neither(self):
+		received = self.receive(currency="USD", basis={**self.basis(), "currency": "USD"})["request"]
+		refused = self.prepare(received["id"], rows=[{"budget_line": self.hwd, "amount": "1.00"}])
+		self.assertEqual((refused["ok"], refused["code"]), (False, "BUDGET_INVALID_STATE"))
+		self._as(self.officer)
+		self.assertEqual(entries.get_contract_funding(received["id"])["actions"], {"decline": True})
+		self.assertEqual(self.commitments(), [])
+
 	def test_the_basis_arriving_later_refreshes_the_same_request(self):
 		received = self.receive(basis=None)["request"]
 		updated = funding.update_contract_funding_basis(received["scope_key"], self.basis("600000.00"), ["Annual basis 1"], f"upd-{frappe.generate_hash(length=8)}", caller=self.caller)
@@ -336,6 +344,17 @@ class TestApprovalCreatesEveryCommitmentOrNone(_FundingBase):
 		ledger = frappe.get_all("Budget Audit Event", filters={"budget": self.budget, "event_type": "Existing-contract commitment recorded"}, fields=["amount", "before_available", "after_available", "budget_line"])
 		self.assertEqual(sorted(float(e.amount) for e in ledger), [200000.0, 300000.0])
 		self.assertTrue(all(float(e.before_available) - float(e.after_available) == float(e.amount) for e in ledger))
+
+	def test_after_approval_the_request_still_shows_the_figures_it_was_decided_on(self):
+		request, entry = self.fixture()
+		self.assertTrue(self.decide(entry)["ok"])
+		done = funding.summary(frappe.get_doc("Contract Funding Request", request))
+		self.assertEqual((done["confirmed_charge"], done["coverage_total"], done["amount_requiring_funding"]), ("600000.00", "100000.00", "500000.00"), "the approval's own commitments are not 'existing coverage'")
+		self.assertEqual(len(done["coverage"]), 1)
+		self._as(self.officer)
+		shown = entries.get_contract_funding(request)
+		self.assertEqual((shown["request"]["amount_requiring_funding"], shown["entry"]["submitted_by_name"], shown["entry"]["decided_by_name"] != ""), ("500000.00", frappe.db.get_value("User", self.officer, "full_name"), True))
+		self.assertTrue(shown["entry"]["submitted_at_display"].endswith("EAT"))
 
 	def test_after_approval_the_entry_is_immutable_and_cannot_be_decided_again(self):
 		request, entry = self.fixture()
@@ -648,6 +667,12 @@ class TestACorrectionRequestHearsTheResult(_FundingBase):
 		self.assertEqual((frappe.get_doc("Contract Funding Request", request["id"]).status, self.receiver.names()), ("Completed", [seam.OUTCOME_CORRECTION_APPROVED]))
 		detail = self.receiver.outcomes[-1]["detail"]
 		self.assertEqual((detail["before_amount"], detail["after_amount"]), (100000.0, 40000.0))
+
+	def test_the_correction_read_names_the_commitment_the_screen_will_correct(self):
+		closed = self.cover("100000.00", status="Closed")
+		self._as(self.officer)
+		read = corrections.get_commitment_correction(commitment=closed)
+		self.assertEqual((read["commitment"]["id"], read["commitment"]["commitment_id"], read["actions"].get("record")), (closed, closed, True))
 
 	def test_a_returned_correction_leaves_the_request_open_for_a_corrected_record(self):
 		closed = self.cover("100000.00", status="Closed")

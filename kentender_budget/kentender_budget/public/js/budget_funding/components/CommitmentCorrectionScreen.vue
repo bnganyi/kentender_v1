@@ -104,7 +104,7 @@ const evidenceList = computed(() => form.evidence.split("\n").map((l) => l.trim(
 const nextStep = computed(() => {
 	if (!view.value) return "";
 	if (deciding.value) return actions.value.blocked ? __("Waiting on another Budget Approver") : actions.value.decide ? __("Your turn — Review the correction") : __("Waiting on a Budget Approver");
-	if (recording.value) return __("Your turn — Record the supported correction");
+	if (recording.value) return correction.value && correction.value.status === "Returned" ? __("Your turn — Record the supported correction again. {0} returned it: {1}", [correction.value.decided_by_name || correction.value.decided_by, correction.value.decision_reason]) : __("Your turn — Record the supported correction");
 	if (correction.value && correction.value.status === "Approved") return __("Done — the correction is approved");
 	if (correction.value && correction.value.status === "Returned") return __("Returned — {0}", [correction.value.decision_reason]);
 	return "";
@@ -241,8 +241,8 @@ function decide(decision, reason) {
 								<tr><td>{{ __("Reduction") }}</td><td class="is-num" data-testid="bud-correction-decrease">{{ formatExact(correction.decrease.toFixed(2), currency) }}</td></tr>
 								<tr><td>{{ __("Reason") }}</td><td>{{ correction.reason }}</td></tr>
 								<tr><td>{{ __("Evidence") }}</td><td><span v-for="e in correction.evidence" :key="e" style="display: block">{{ e }}</span></td></tr>
-								<tr><td>{{ __("Recorded by") }}</td><td>{{ correction.recorded_by }}</td></tr>
-								<tr v-if="correction.decided_by"><td>{{ correction.status === "Approved" ? __("Approved by") : __("Returned by") }}</td><td>{{ correction.decided_by }}<span v-if="correction.decision_reason" class="kt-muted"> — {{ correction.decision_reason }}</span></td></tr>
+								<tr><td>{{ __("Recorded by") }}</td><td>{{ correction.recorded_by_name || correction.recorded_by }}<span class="kt-muted"> — {{ correction.recorded_at_display }}</span></td></tr>
+								<tr v-if="correction.decided_by"><td>{{ correction.status === "Approved" ? __("Approved by") : __("Returned by") }}</td><td>{{ correction.decided_by_name || correction.decided_by }}<span class="kt-muted"> — {{ correction.decided_at_display }}</span><span v-if="correction.decision_reason" class="kt-muted"> — {{ correction.decision_reason }}</span></td></tr>
 							</tbody>
 						</table>
 					</div>
@@ -250,7 +250,7 @@ function decide(decision, reason) {
 					<div style="padding: 18px 28px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center" data-testid="bud-correction-actions">
 						<button v-if="recording" type="button" class="btn btn-primary" :disabled="acting || !form.new_amount || !form.reason || !evidenceList.length" data-testid="bud-correction-submit" @click="submitCorrection">{{ __("Submit correction") }}</button>
 						<button v-if="recording" type="button" class="btn btn-ghost" data-testid="bud-correction-cancel" @click="go('line', commitment.budget_line)">{{ __("Cancel") }}</button>
-						<template v-if="deciding">
+						<template v-if="deciding && actions.decide !== undefined">
 							<button type="button" class="btn btn-primary" :disabled="!actions.decide || acting" data-testid="bud-correction-approve" @click="approving = true">{{ __("Approve correction") }}</button>
 							<button type="button" class="btn btn-ghost" :disabled="!actions.decide || acting" data-testid="bud-correction-return" @click="returning = true">{{ __("Return for correction") }}</button>
 						</template>

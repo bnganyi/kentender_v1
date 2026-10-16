@@ -54,6 +54,20 @@ CALLING_MODULE = "Budget & Funding"
 _ZERO = Decimal("0")
 
 
+def _user_label(user: str | None) -> str:
+	"""A person's name for a screen, never their user id."""
+	from kentender_budget.services.budget_contracts import _user_label as label
+
+	return label(user)
+
+
+def _display_datetime(value) -> str:
+	"""An instant as the Budget artboards read it ("3 Oct 2026, 11:15 EAT")."""
+	from kentender_budget.services.budget_contracts import _display_datetime as display
+
+	return display(value)
+
+
 def _as_dict(payload) -> dict[str, Any]:
 	return dict(frappe.parse_json(payload) if isinstance(payload, str) else (payload or {}))
 
@@ -140,6 +154,7 @@ def entry_summary(entry, request=None) -> dict[str, Any]:
 		"coverage": frappe.parse_json(entry.coverage_json) if entry.coverage_json else [], "reconciliation": entry.reconciliation or "", "rows": rows,
 		"basis_stale": bool(entry.status == AWAITING and (int(entry.basis_revision or 0) != int(request.basis_revision or 0) or cstr(entry.basis_digest) != cstr(request.basis_digest))),
 		"prepared_by": entry.prepared_by or "", "submitted_by": entry.submitted_by or "", "submitted_at": cstr(entry.submitted_at or ""), "decided_by": entry.decided_by or "", "decided_at": cstr(entry.decided_at or ""),
+		"prepared_by_name": _user_label(entry.prepared_by), "submitted_by_name": _user_label(entry.submitted_by), "submitted_at_display": _display_datetime(entry.submitted_at), "decided_by_name": _user_label(entry.decided_by), "decided_at_display": _display_datetime(entry.decided_at),
 		"decision_reason": entry.decision_reason or "", "original_commitment": entry.original_commitment or "", "revision": str(entry.modified),
 	}
 
@@ -171,7 +186,8 @@ def get_contract_funding(request: str) -> dict[str, Any]:
 	if doc.status == funding.OPEN and doc.kind != "Correction":
 		confirmed = doc.year_allocation_status == seam.YEAR_CONFIRMED
 		if is_officer and (entry is None or entry.status in (DRAFT, RETURNED)):
-			actions.update(save=True, submit=confirmed, decline=True)
+			out_of_scope = doc.year_allocation_status == seam.SCOPE_REVIEW
+			actions.update(decline=True, **({} if out_of_scope else {"save": True, "submit": confirmed}))
 		if is_approver and entry is not None and entry.status == AWAITING:
 			blocked = _blocked_reason(entry, user)
 			actions.update(approve=not blocked and not out["entry"]["basis_stale"], **{"return": not blocked}, blocked=blocked)
@@ -263,6 +279,8 @@ def _record(payload: dict[str, Any]) -> dict[str, Any]:
 		return funding.refusal("BUDGET_INVALID_STATE", "request", _("A correction is recorded as a commitment correction, not as an entry."))
 	if request.status != funding.OPEN:
 		return funding.refusal("BUDGET_INVALID_STATE", "request", _("This funding request is no longer open."), request=funding.summary(request))
+	if request.year_allocation_status == seam.SCOPE_REVIEW:
+		return funding.refusal("BUDGET_INVALID_STATE", "request", _("This funding is outside the supported scope, so no entry can be prepared for it. Contract Management keeps its facts."))
 	entry = funding.current_entry(request)
 	entry = locked_doc(ENTRY, entry.name) if entry else None
 	if entry is not None and entry.status == SUPERSEDED:  # an abandoned attempt is retained; deliberate resubmission is the next version of the same lineage

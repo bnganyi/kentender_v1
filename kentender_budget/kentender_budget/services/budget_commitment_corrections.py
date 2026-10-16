@@ -47,6 +47,20 @@ REASON_MIN, REASON_MAX = 10, 500
 CALLING_MODULE = "Budget & Funding"
 
 
+def _user_label(user: str | None) -> str:
+	"""A person's name for a screen, never their user id."""
+	from kentender_budget.services.budget_contracts import _user_label as label
+
+	return label(user)
+
+
+def _display_datetime(value) -> str:
+	"""An instant as the Budget artboards read it ("3 Oct 2026, 11:15 EAT")."""
+	from kentender_budget.services.budget_contracts import _display_datetime as display
+
+	return display(value)
+
+
 def _as_dict(payload) -> dict[str, Any]:
 	if isinstance(payload, str):
 		payload = frappe.parse_json(payload)
@@ -96,6 +110,7 @@ def correction_summary(doc) -> dict[str, Any]:
 		"before_amount": float(before), "after_amount": float(after), "decrease": float(before - after), "currency": doc.currency,
 		"reason": doc.reason, "evidence": _evidence(doc), "contract_reference": doc.contract_reference,
 		"recorded_by": doc.recorded_by, "recorded_at": str(doc.recorded_at or ""), "decided_by": doc.decided_by or "", "decided_at": str(doc.decided_at or ""),
+		"recorded_by_name": _user_label(doc.recorded_by), "recorded_at_display": _display_datetime(doc.recorded_at), "decided_by_name": _user_label(doc.decided_by), "decided_at_display": _display_datetime(doc.decided_at),
 		"decision_reason": doc.decision_reason or "", "revision": str(doc.modified),
 	}
 
@@ -313,5 +328,5 @@ def get_commitment_correction(commitment: str = "", correction: str = "") -> dic
 		recorders = {record.recorded_by, _recorded_by_event(record)} - {None, ""}
 		blocked = (not recorders) or user in recorders
 		actions.update(decide=not blocked and not stale, blocked=_("Another Budget Approver must decide this correction.") if blocked else "")
-	return {"ok": True, "commitment": {**_commitment_result(commit), "budget_line_title": line_title, "retained_amount": float(stored(commit.current_amount, scale=scale))},
+	return {"ok": True, "commitment": {**_commitment_result(commit), "id": commit.name, "code": commit.generated_reference, "budget_line_title": line_title, "retained_amount": float(stored(commit.current_amount, scale=scale))},
 		"correction": correction_summary(record) if record else None, "closed_year": closed_year, "stale": stale, "actions": actions}

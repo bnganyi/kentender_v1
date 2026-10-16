@@ -225,6 +225,10 @@ def summary(doc) -> dict[str, Any]:
 	charge = confirmed_charge(doc)
 	cover = coverage_of(doc) if charge is not None else None
 	required = (charge - cover["total"]) if (charge is not None and cover is not None) else None
+	if entry is not None and doc.status == COMPLETED and entry.status == "Approved":
+		# Once the entry is approved the figures are the ones it was decided on. Read live they would count the commitments the approval itself created as 'existing coverage' and show nothing left to fund.
+		charge, cover = stored(entry.confirmed_charge, scale=scale), {"total": stored(entry.coverage_total, scale=scale), "items": frappe.parse_json(entry.coverage_json) if entry.coverage_json else []}
+		required = stored(entry.amount_requiring_funding, scale=scale)
 	waiting = waiting_item(doc) if doc.status == OPEN and doc.year_allocation_status != seam.YEAR_CONFIRMED else {}
 	return {
 		"id": doc.name, "code": doc.generated_reference, "kind": doc.kind, "status": doc.status, "outcome": doc.outcome or "", "display_status": display_status(doc, entry),

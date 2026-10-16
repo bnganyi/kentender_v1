@@ -308,7 +308,7 @@ function decide(decision, reason) {
 					</div>
 
 					<!-- the allocation: editable for the Officer, frozen for the Approver -->
-					<div v-if="request.status === 'Open' && request.year_allocation_status === 'Confirmed' && (editable || entry)" style="padding: 22px 28px; border-bottom: 1px solid var(--kt-color-divider)" data-testid="bud-funding-allocation">
+					<div v-if="(request.status === 'Open' && (request.year_allocation_status === 'Confirmed' || request.year_allocation_status === 'Year allocation required') && (editable || entry)) || (request.status === 'Completed' && entry && entry.status === 'Approved')" style="padding: 22px 28px; border-bottom: 1px solid var(--kt-color-divider)" data-testid="bud-funding-allocation">
 						<h3 class="kt-card-title" style="margin: 0 0 14px">{{ __("Allocation") }}</h3>
 						<table class="table">
 							<thead><tr><th>{{ __("Budget line") }}</th><th class="is-num">{{ __("Available") }}</th><th class="is-num">{{ __("Amount") }}</th><th v-if="editable"></th></tr></thead>
@@ -347,7 +347,7 @@ function decide(decision, reason) {
 							<div v-if="fieldErrors.reconciliation" class="kt-field-error">{{ fieldErrors.reconciliation }}</div>
 						</div>
 
-						<div v-if="entry && entry.status === 'Awaiting approval'" class="kt-muted" style="font-size: 13px; margin-top: 14px" data-testid="bud-funding-submitter">{{ __("Submitted by {0} on {1}", [entry.submitted_by, entry.submitted_at]) }}</div>
+						<div v-if="entry && entry.status === 'Awaiting approval'" class="kt-muted" style="font-size: 13px; margin-top: 14px" data-testid="bud-funding-submitter">{{ __("Submitted by {0} on {1}", [entry.submitted_by_name || entry.submitted_by, entry.submitted_at_display || entry.submitted_at]) }}</div>
 						<div v-if="entry && entry.status === 'Approved'" style="margin-top: 14px" data-testid="bud-funding-approved">
 							<strong>{{ __("Funding entry approved") }}</strong>
 							<ul style="margin: 6px 0 0; padding-left: 18px"><li v-for="r in entry.rows" :key="r.row_id">{{ lineTitle(r.budget_line) }} — {{ formatExact(r.amount, currency) }} <span v-if="r.commitment" class="kt-muted">({{ __("commitment {0}", [r.commitment]) }})</span></li></ul>
