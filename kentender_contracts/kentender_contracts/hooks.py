@@ -285,6 +285,9 @@ kt_contract_funding_provider = ["kentender_contracts.simulation.funding.service"
 # Which reservations a contract may draw on (BUD-CHG-001 v1.13 proposal): Budget refuses a conversion unless this answers yes. kentender_core.services.contract_reservation_authority.
 kt_contract_reservation_authority = ["kentender_contracts.services.reservation_authority.service"]
 
+# Budget reports what it decided on a contract's funding request, in order (kentender_core.services.contract_funding_request_contract): CM-CHG-001 v0.10 section 20.6 ReceiveContractFundingOutcome.
+kt_contract_funding_outcome_receiver = ["kentender_contracts.services.contract_funding.receiver"]
+
 # The contract screens' choices of one person or one native record (AGENTS.md section 6.12): kentender_core.services.record_picker.
 kt_record_picker_sources = ["kentender_contracts.services.picker_sources.sources"]
 

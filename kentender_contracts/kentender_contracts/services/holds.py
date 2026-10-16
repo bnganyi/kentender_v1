@@ -57,7 +57,7 @@ def provider(name: str) -> Callable[[Provider], Provider]:
 
 
 #: Modules that register a hold provider when imported. They are loaded the first time holds are read, so a process that never imported one cannot miss its hold.
-PROVIDER_MODULES = ("kentender_contracts.services.security", "kentender_contracts.award_receiver", "kentender_contracts.services.payment", "kentender_contracts.services.adjustment", "kentender_contracts.services.warranty")
+PROVIDER_MODULES = ("kentender_contracts.services.security", "kentender_contracts.award_receiver", "kentender_contracts.services.payment", "kentender_contracts.services.adjustment", "kentender_contracts.services.warranty", "kentender_contracts.services.contract_funding")
 
 
 def _load() -> None:

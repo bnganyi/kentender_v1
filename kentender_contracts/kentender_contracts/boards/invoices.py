@@ -15,6 +15,7 @@ from frappe.utils import cint, flt, formatdate
 
 from kentender_contracts.boards import chrome, kit, statements
 from kentender_contracts.boards.context import Context, money, when
+from kentender_contracts.boards import funding_board
 from kentender_contracts.services import advance, holds, payment, position, records, work
 
 COMPANY_DEFAULT = "company"
@@ -257,13 +258,31 @@ def d09f(ctx: Context, invoice, *, waiting: bool = False) -> dict:
 		save = kit.command("SaveNativeFinanceDraft", kind="advance", advance=invoice.name) if advance_payment else kit.command("SaveNativeFinanceDraft", kind="payment", invoice=invoice.name)
 		b["actions"]["Save draft"] = save
 		b["actions"]["Submit payment for approval"] = {**save, "then": {"command": "SubmitNativeFinanceForApproval", "args": {"kind": "payment"}, "carry": ["payment"]}}
+	held = _funding_hold(ctx, invoice)
+	if held and funding_board.visible(ctx):  # D09-F held: drafts and evidence stay; the consequential approval is withdrawn with its exact reason (CM-CHG-001 v0.10 section 10.9); no toggle can enable it
+		b["next"] = funding_board.held_block(ctx, held)
+		b["actions"][funding_board.OPEN] = kit.route(ctx.case, "invoices", "funding")
+		b["actions"].pop("Submit payment for approval", None)
+		b["p"], b["s2"] = "", [s for s in ["Save draft" if not waiting else "", funding_board.OPEN] if s]
 	return b
+
+
+def _funding_hold(ctx: Context, invoice):
+	"""The funding hold on this payment's scope, if any: an invoice belongs to the year of its date, an advance to the current year."""
+	subject = f"advance {invoice.invoice_no}" if invoice.get("is_advance") else f"invoice {invoice.invoice_no}"
+	return next((h for h in holds.blocking(ctx.case, "pay", subject) if h.kind == "Funding"), None)
 
 
 def d17(ctx: Context, invoice, payment_entry: str, *, settle: bool = False) -> dict:
 	"""Finance payment approval (the approver) and, once posted, the settlement record (D17-S)."""
 	pe = frappe.get_doc("Payment Entry", payment_entry)
 	hold = next(iter(holds.blocking(ctx.case, "pay", f"invoice {invoice.invoice_no}")), None) if not settle else None
+	if hold and hold.kind == "Funding" and funding_board.visible(ctx):  # D17-H, funding: the exact reason, the named holder and the way to the funding review
+		pay = kit.R("Payment", kit.r(["Supplier", ctx.doc.supplier_name], ["Invoice", invoice.claim_reference], ["Prepared by", ctx.name(pe.owner)], ["Payment hold", hold.reason], ["Settlement", "Not confirmed"]))
+		board = chrome.base(ctx, "D17-H", d="D17", name="Finance payment approval", title="Review payment", tab="Invoices", next=funding_board.held_block(ctx, hold), regions=[pay], p="", s2=[funding_board.OPEN],
+			ev=["Certification 1", "Accounting invoice", f"Payment Entry {payment_entry}"])
+		board["actions"][funding_board.OPEN] = kit.route(ctx.case, "invoices", "funding")
+		return board
 	if hold:  # D17-H: the payment is held; only the missing step is shown
 		pay = kit.R("Payment", kit.r(["Supplier", ctx.doc.supplier_name], ["Invoice", invoice.claim_reference], ["Prepared by", ctx.name(pe.owner)], ["Payment hold", hold.reason], ["Settlement", "Not confirmed"]))
 		return chrome.base(ctx, "D17-H", d="D17", name="Finance payment approval", title="Review payment", tab="Invoices", next=kit.blk("This payment is on hold.", ctx.name(next(iter(work.holders(work.HOP)), "")), ["View missing certification"], hold.reason),

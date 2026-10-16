@@ -34,7 +34,9 @@
   "outcome_reason",
   "origin_key",
   "source_system",
-  "intake_revision"
+  "intake_revision",
+  "funding_route",
+  "funding_authority_json"
  ],
  "fields": [
   {
@@ -220,13 +222,27 @@
    "label": "Intake Revision",
    "read_only": 1,
    "no_copy": 1
+  },
+  {
+   "fieldname": "funding_route",
+   "label": "Funding route",
+   "fieldtype": "Select",
+   "options": "\nKenTender Budget\nOutside KenTender Budget",
+   "read_only": 1,
+   "description": "How an independently registered contract is funded (CM-CHG-001 v0.10 section 20.4). Empty until the head of procurement records it."
+  },
+  {
+   "fieldname": "funding_authority_json",
+   "label": "Funding authority evidence",
+   "fieldtype": "Long Text",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "issingle": 0,
  "istable": 0,
  "links": [],
- "modified": "2026-10-15 12:00:00.000000",
+ "modified": "2026-10-16 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Contract Management",
  "name": "Contract Case",

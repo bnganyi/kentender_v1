@@ -22,7 +22,7 @@ class Provider:
 		row = frappe.db.get_value(LEDGER, {"identity": identity, "outcome": "Converted"}, ["reference", "amount"], as_dict=True)
 		return {"reference": row.reference, "amount": row.amount} if row else None
 
-	def convert(self, *, identity: str, contract: str, allocations: list, amount: float):
+	def convert(self, *, identity: str, contract: str, allocations: list, amount: float, lineage: dict | None = None):
 		held = self.lookup(identity=identity)
 		if held:
 			return held

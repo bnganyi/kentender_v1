@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from kentender_contracts import award_receiver
-from kentender_contracts.services import adjustment, advance, change, closeout, closure_correction, delivery, existing, final_acceptance, formation, formation_end, issues, obligations, outside_signature, payment, reporting, security, security_actions, termination, warranty
+from kentender_contracts.services import adjustment, advance, change, closeout, closure_correction, contract_funding, delivery, existing, final_acceptance, formation, formation_end, issues, obligations, outside_signature, payment, reporting, security, security_actions, termination, warranty
 from kentender_contracts.services.errors import invalid
 
 Handler = Callable[[str, dict[str, Any], dict[str, Any], int, str, str], dict[str, Any]]
@@ -204,7 +204,28 @@ def _intake_values(values: dict[str, Any]) -> dict[str, Any]:
 	return out
 
 
+def _funding_route(case, args, values, expected, key, actor):
+	indexes = sorted({int(k.split(".", 1)[0]) for k in nested(values, "schedule") if k.split(".", 1)[0].isdigit()})
+	rows = [{"year": pick(values.get(f"schedule.{i}.year")), "amount": values.get(f"schedule.{i}.amount", "")} for i in indexes]
+	rows = [r for r in rows if r["year"] or str(r["amount"]).strip()]
+	return contract_funding.record_route(case, route=pick(values.get("route")), authority_name=values.get("authority", ""), approved_amount=values.get("approved_amount", ""), evidence=_lines(values.get("evidence")),
+		schedule=rows, expected_version=expected, idempotency_key=key, actor=actor)
+
+
+def _funding_year(args, values) -> str:
+	return pick(values.get("year")) or str(args.get("year") or "")
+
+
 COMMANDS: dict[str, Handler] = {
+	"RecordContractFundingRoute": _funding_route,
+	"PrepareContractFundingBasis": lambda c, a, v, e, k, u: contract_funding.prepare_year_basis(c, year=_funding_year(a, v), charge=v.get("charge", ""), explanation=v.get("explanation", ""), evidence=_lines(v.get("evidence")),
+		expected_version=e, idempotency_key=k, actor=u),
+	"ConfirmContractFundingEvidence": lambda c, a, v, e, k, u: contract_funding.confirm_funding_evidence(c, year=_funding_year(a, v), charge=v.get("charge", ""), explanation=v.get("explanation", ""),
+		evidence=_lines(v.get("evidence")) or None, expected_version=e, idempotency_key=k, actor=u),
+	"RequestExistingContractFunding": lambda c, a, v, e, k, u: contract_funding.request_funding(c, year=_funding_year(a, v), expected_version=e, idempotency_key=k, actor=u),
+	"WithdrawContractFundingRequest": lambda c, a, v, e, k, u: contract_funding.withdraw_funding_request(c, year=_funding_year(a, v), reason=v.get("reason", ""), expected_version=e, idempotency_key=k, actor=u),
+	"RequestContractFundingCorrection": lambda c, a, v, e, k, u: contract_funding.request_funding_correction(c, commitment=v.get("commitment", a.get("commitment", "")), correction_reference=v.get("correction_reference", ""),
+		reason=v.get("reason", ""), evidence=_lines(v.get("evidence")), expected_version=e, idempotency_key=k, actor=u),
 	"ResolveDeliveryException": _resolve_exception,
 	"RecordRestrictionResolution": lambda c, a, v, e, k, u: award_receiver.release_restriction(c, issue=a["issue"], reason=v.get("reason", ""), reference=v.get("reference", ""), expected_version=e, idempotency_key=k, actor=u),
 	"RegisterExistingContract": lambda c, a, v, e, k, u: existing.register_existing_contract(idempotency_key=k, actor=u, values=_intake_values(v)),

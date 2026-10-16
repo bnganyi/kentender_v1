@@ -20,7 +20,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 
 import frappe
-from frappe.utils import flt
+from frappe.utils import cstr, flt
 
 from kentender_contracts.services.errors import fail
 
@@ -128,6 +128,28 @@ def invalidate_pending_approval(doc) -> None:
 		frappe.flags.cm_approval_invalidated = changed
 
 
+def case_of_order(order: str) -> str:
+	"""The contract an order belongs to, by the identity Contract Management stamped on it."""
+	identity = frappe.db.get_value("Purchase Order", order, "cm_operation_identity")
+	return cstr(frappe.db.get_value("Contract Operation Intent", {"operation_identity": identity}, "contract_case")) if identity else ""
+
+
+def _funding_recheck(case: str, subject: str | None, *, consequence: str) -> None:
+	"""A payment, advance or settlement posts only for a scope whose funding is confirmed (CM-CHG-001 v0.10 section 20.5). Read fresh from the holds framework at the moment of the native posting. A scope Budget has not funded
+	stays held, through every native route; factual recording is not a posting and is never stopped here."""
+	if not case:
+		return
+	from kentender_contracts.services import contract_funding, holds
+
+	if subject:
+		blocking = [h for h in holds.blocking(case, consequence, subject) if h.kind == "Funding"]
+	else:
+		advance = contract_funding.advance_hold(case)
+		blocking = [advance] if advance else []
+	if blocking:
+		fail("CM_HOLD", reason=blocking[0].reason, consequence=consequence, holder=blocking[0].owner, clears_with=blocking[0].clearing, scope=list(blocking[0].scope))
+
+
 def on_event(doc, method: str | None = None) -> None:
 	if doc.doctype == "Payment Entry" and method == "validate" and not doc.is_new():
 		invalidate_pending_approval(doc)
@@ -140,11 +162,17 @@ def on_event(doc, method: str | None = None) -> None:
 		fail("CM_HOLD", reason="This payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation.", consequence="pay")
 	if method == "before_submit":
 		for order, amount in order_allocations(doc).items():
+			_funding_recheck(case_of_order(order), None, consequence="pay")  # CM-CHG-001 v0.10 section 20.5: current funding is rechecked at the native transaction boundary, not only where CM drew its button
 			held = advance_entitlement(order, lock=True)  # a concurrent advance waits here, then sees this one
 			if held["cm_linked"] and amount > held["available"] + TOLERANCE:
 				fail("CM_HOLD", reason=f"{order} has {held['certified']:,.2f} certified as an advance and {held['paid']:,.2f} already paid; {amount:,.2f} is more than the supported advance.",
 					order=order, certified=held["certified"], paid=held["paid"], requested=amount, consequence="pay")
 	for invoice, amount in new_allocations(doc, method).items():
+		from kentender_contracts.services import contract_funding
+
+		found = contract_funding.case_of_native_invoice(invoice)
+		if found:
+			_funding_recheck(found[0], found[1], consequence="pay")
 		held = entitlement(invoice, lock=True)  # a concurrent payment waits here, then sees this one
 		if not held["cm_linked"]:
 			continue

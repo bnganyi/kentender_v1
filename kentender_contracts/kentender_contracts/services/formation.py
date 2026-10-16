@@ -439,6 +439,17 @@ def _warehouse(item_code: str) -> str | None:
 	return frappe.db.get_value("Item Default", {"parent": item_code}, "default_warehouse") or frappe.db.get_value("Warehouse", {"is_group": 0, "disabled": 0}, "name")
 
 
+def funding_lineage(case: str, terms: dict[str, Any], agreement) -> dict[str, Any] | None:
+	"""What the funding owner needs to have the award's owner verify the conversion (BUD-CHG-001 v1.16 BUD-BR-036), relayed exactly as Award supplied it: the award case and decision, the retained funding
+	allocation and its digest, the package it came in and the agreement version. Contract Management never builds or alters it. None for a contract that no Award funded."""
+	funding = terms.get("funding") or {}
+	if not funding.get("award"):
+		return None
+	package = (records.loads(frappe.db.get_value(CASE, case, "source_json")) or {}).get("package") or {}
+	return {"award": funding.get("award"), "decision": funding.get("decision"), "allocation_digest": (funding.get("allocation") or {}).get("digest"), "package_digest": package.get("package_digest"),
+		"agreement_version": agreement.version_no}
+
+
 def _company(terms: dict[str, Any]) -> str:
 	return terms["particulars"].get("company") or frappe.defaults.get_global_default("company")
 
@@ -471,7 +482,7 @@ def carry_out_effects(case: str, actor: str = "") -> dict[str, Any]:
 					problems = funding_problems(case, {**terms, "version_no": agreement.version_no}, "convert")  # the owner is asked again at the moment of conversion: what held at signing may not hold now
 					if problems:
 						raise funding_seam.Refused(" ".join(problems))
-					return funding_seam.convert(identity, contract=case, allocations=terms["funding"]["allocations"], amount=terms["total"])["reference"], "Procurement Commitment"
+					return funding_seam.convert(identity, contract=case, allocations=terms["funding"]["allocations"], amount=terms["total"], lineage=funding_lineage(case, terms, agreement))["reference"], "Procurement Commitment"
 				except funding_seam.Refused as exc:
 					raise intents.OwnerRefused(str(exc)) from exc
 

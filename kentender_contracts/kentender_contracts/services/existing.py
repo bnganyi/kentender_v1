@@ -22,7 +22,7 @@ import frappe
 from frappe.utils import cint, cstr, flt, get_datetime, getdate
 
 from kentender_contracts.native import adapter
-from kentender_contracts.services import authority, clock, events, evidence, formation, intents, opening, parties, people, preflight, records, security, service_principal, simulation, work
+from kentender_contracts.services import authority, clock, contract_funding, events, evidence, formation, intents, opening, parties, people, preflight, records, security, service_principal, simulation, work
 from kentender_contracts.services.errors import fail, invalid
 from kentender_core.services import supplier_account_contract
 
@@ -469,11 +469,12 @@ def confirm_opening_position(case: str, *, expected_version: int, idempotency_ke
 		if differing:
 			fail("CM_RECONCILE", differing=differing, reason="The source and the linked native records differ: " + ", ".join(differing) + ".")
 		intake["confirmations"]["finance"] = {"by": actor, "at": str(clock.now()), "revision": intake["revision"], "rows": rows}
+		funded = contract_funding.confirm_with_opening(doc, actor, idempotency_key)  # the prepared funding basis is confirmed in the same action (CM-CHG-001 v0.10 section 20.6)
 		records.update(agreement, intake_json=records.dumps(intake), record_version=cint(agreement.record_version) + 1)
 		records.bump(doc)
 		work.finish(case, command="ConfirmOpeningPosition", actor=actor)
 		work.assign(case, "StartContractManagement", "Start managing this contract.", f"intake {intake['revision']}", intake["revision"], work.holders(work.HOP), role=work.HOP)
-		events.record(case, "Opening position confirmed", actor, "Finance confirmed the opening position.", revision=intake["revision"], rows=rows)
+		events.record(case, "Opening position confirmed", actor, "Finance confirmed the opening position.", revision=intake["revision"], rows=rows, funding_years=funded)
 		return records.summary(doc, revision=intake["revision"])
 
 	return records.command("ConfirmOpeningPosition", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version}, body=body,

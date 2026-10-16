@@ -14,7 +14,7 @@ from typing import Any
 import frappe
 from frappe.utils import flt
 
-from kentender_contracts.boards import adjustments, agreement, changes, chrome, completion, delivery, ending, existing, invoices, issues as issue_boards, kit, obligations, outside, reports, security, security_actions as security_boards, termination as termination_boards
+from kentender_contracts.boards import adjustments, agreement, changes, chrome, completion, delivery, ending, existing, invoices, issues as issue_boards, funding_board, kit, obligations, outside, reports, security, security_actions as security_boards, termination as termination_boards
 from kentender_contracts.boards.context import Context
 from kentender_contracts.services import adjustment, advance, bindings, change, closeout, closure_correction, issues, obligations as obligation_service, payment, records, reporting, security_actions, termination, warranty
 from kentender_contracts.services.errors import fail
@@ -60,6 +60,8 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 		return existing.d21(ctx)
 	if command == "StartContractManagement":
 		return existing.d21h(ctx)
+	if command in ("RequestExistingContractFunding", "ConfirmContractFundingEvidence"):
+		return funding_board.d21f(ctx)
 	if command == "ReviewAwardRestriction":
 		board = _agreement_summary(ctx)
 		board["next"] = chrome.next_block(ctx)
@@ -421,6 +423,8 @@ def _subject_board(ctx: Context, tab: str, subject: tuple[str, ...]) -> dict[str
 		return agreement.d23r(ctx)
 	if subject == ("appointment",) and tab == "Agreement":
 		return _agreement_summary(ctx)
+	if subject == ("funding",) and tab in ("Agreement", "Invoices") and funding_board.visible(ctx):
+		return funding_board.d21f(ctx)
 	if subject == ("intake",) and tab == "Agreement" and ctx.doc.source_kind == "External record" and ctx.can_prepare:
 		return existing.d12(ctx, ctx.user, ctx.case)
 	if subject[0] == "amendment" and len(subject) > 1 and subject[1].isdigit() and tab == "Agreement" and ({"terms", "supplier_view"} & _sets(ctx)):

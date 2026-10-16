@@ -11,7 +11,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import flt
 
-from kentender_contracts.boards import chrome, kit
+from kentender_contracts.boards import chrome, funding_board, kit
 from kentender_contracts.boards.context import Context, money
 from kentender_contracts.services import existing, opening, people, records
 
@@ -116,6 +116,8 @@ def d12(ctx: Context | None, user: str, case: str = "", *, source: str = "") -> 
 			p="Save and review", s2=["Cancel"], ev=[])
 	board["actions"]["Save and review"] = kit.command("ReviseContractIntake" if case else "RegisterExistingContract")
 	board["actions"]["Cancel"] = kit.route() if not case else kit.tab("Agreement")
+	if ctx is not None and case:
+		funding_board.attach(ctx, board)  # D12-F: Funding after the source facts (CM-CHG-001 v0.10 section 10.9)
 	return board
 
 
@@ -139,6 +141,7 @@ def d21(ctx: Context) -> dict:
 		s2=[kit.disabled("Report difference")], ev=[])
 	if not differing:
 		board["actions"]["Confirm opening position"] = kit.command("ConfirmOpeningPosition")
+	funding_board.attach(ctx, board)  # D21-F: the funding basis beside the opening comparison; the same action confirms both
 	return board
 
 

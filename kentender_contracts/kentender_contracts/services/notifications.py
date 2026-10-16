@@ -87,6 +87,8 @@ QUIET: dict[str, str] = {
 	"ActivateContractChange": "the table notifies the current signatory of the amendment",
 	"RecordTerminationEffect": "scheduled for the date the notice names",
 	"RecordContractReportSubmission": "scheduled amendment report",
+	"RequestExistingContractFunding": "the head's own request step (CM-CHG-001 v0.10 section 20.6); the table names no notification for it, and the item is linked in My Work",
+	"ConfirmContractFundingEvidence": "Finance's confirmation inside the existing opening review (CM-CHG-001 v0.10 section 20.6); the table names no notification for it, and the item is linked in My Work",
 	"RecordContractNotProceeding": "no row names it",
 }
 
