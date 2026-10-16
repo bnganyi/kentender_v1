@@ -8,8 +8,8 @@ therefore never creates a second item (`dedupe` keeps the first assignment). A r
 identity confers no authority, because authority is AUTH's at the moment of the command, and `may_act` says only whose task it is now.
 
 For the actor, actionable work is ordered: a protective, legal or security deadline **at risk**; then other verified overdue duty; then the earliest verified
-upcoming due instant; then undated work by assignment instant and stable task id. An unverified date is not an urgency and shows "Not established"; no
-urgency score is invented. A blocked duty stays visible with its fix owner but never leads while actionable work exists, and waiting and scheduled rows sit
+upcoming due instant; then undated work by assignment instant and stable task id. A standing duty with no verified urgency (the award publication) follows work
+that blocks the contract (v0.11, FU-CM-133). An unverified date is not an urgency and shows "Not established"; no urgency score is invented. A blocked duty stays visible with its fix owner but never leads while actionable work exists, and waiting and scheduled rows sit
 below in the same ordering. The case shows one leading item and an Other work region without the leading item.
 
 Tasks here are plain dicts; the record that stores them arrives with the first package that creates real work (Phase 4). Keys: task_id, case, subject, version,
@@ -24,6 +24,9 @@ from typing import Any
 
 ACTIONABLE, BLOCKED, WAITING, SCHEDULED = "actionable", "blocked", "waiting", "scheduled"
 GROUP = {ACTIONABLE: 0, BLOCKED: 1, WAITING: 2, SCHEDULED: 3}
+#: Standing duties: always real work, always visible, but work that blocks the contract (a restriction to resolve, an agreement to send, an operation to restore) leads ahead of them. The Project Owner decided on
+#: 16 October 2026 (FU-CM-133): "The one that blocks should lead". A duty that is at risk or overdue by a verified date is not demoted: the protective ordering above still applies to it.
+DUTY_COMMANDS = frozenset({"RecordContractAwardPublication", "ResolvePublicationRequirement"})
 NOT_ESTABLISHED = "Not established"
 
 
@@ -67,10 +70,15 @@ def rank(task: dict[str, Any], now: datetime) -> int:
 	return 2 if due_verified(task) else 3
 
 
+def is_standing_duty(task: dict[str, Any], now: datetime) -> bool:
+	"""A standing duty with no verified urgency: it follows the work that blocks the contract."""
+	return str(task["command"]).split(":")[0] in DUTY_COMMANDS and rank(task, now) >= 2
+
+
 def sort_key(task: dict[str, Any], now: datetime) -> tuple:
 	r = rank(task, now)
 	# Two obligations assigned at the same instant (a simulated clock holds still; a batch is assigned in one moment) are led by the one recorded first, never by the order of their random names.
-	return (GROUP[task["state"]], r, task["due"] if r < 3 else task["assigned_at"], task.get("created") or task["assigned_at"], task["task_id"])
+	return (GROUP[task["state"]], int(is_standing_duty(task, now)), r, task["due"] if r < 3 else task["assigned_at"], task.get("created") or task["assigned_at"], task["task_id"])
 
 
 def order(tasks: list[dict[str, Any]], now: datetime) -> list[dict[str, Any]]:

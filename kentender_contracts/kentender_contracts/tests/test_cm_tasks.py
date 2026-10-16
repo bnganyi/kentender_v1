@@ -49,6 +49,27 @@ class TestOrdering(IntegrationTestCase):
 		return [t["task_id"] for t in tasks.order(list(items), NOW)]
 
 	def test_protective_at_risk_then_overdue_then_earliest_upcoming_then_undated(self):
+	def test_work_that_blocks_the_contract_leads_the_standing_publication_duty_even_when_the_duty_is_older(self):
+		"""The Project Owner, 16 October 2026 (FU-CM-133): "The one that blocks should lead"."""
+		duty = task("publication", assigned="2027-07-01 09:00", command="RecordContractAwardPublication")
+		resolve = task("resolve", assigned="2027-07-01 09:00", command="ResolvePublicationRequirement")
+		restriction = task("restriction", assigned="2027-07-20 09:00", command="ReviewAwardRestriction")
+		self.assertEqual(self.order(duty, resolve, restriction), ["restriction", "publication", "resolve"])
+		self.assertEqual(self.order(restriction, duty), ["restriction", "publication"], "whatever order they arrive in")
+
+	def test_with_nothing_else_to_do_the_publication_duty_leads_and_a_verified_urgent_duty_keeps_its_place(self):
+		duty = task("publication", assigned="2027-07-01 09:00", command="RecordContractAwardPublication")
+		self.assertEqual(self.order(duty), ["publication"])
+		overdue = task("overdue-publication", due="2027-07-10 00:00", command="RecordContractAwardPublication")
+		later = task("later", assigned="2027-07-05 09:00", command="ReviewAwardRestriction")
+		self.assertEqual(self.order(later, overdue), ["overdue-publication", "later"], "a duty overdue by a verified date is protective work and is not demoted")
+
+	def test_a_blocked_or_waiting_task_still_sits_below_an_actionable_duty(self):
+		duty = task("publication", command="RecordContractAwardPublication")
+		blocked = task("blocked", state="blocked", command="SignContractCertification")
+		waiting = task("waiting", state="waiting", command="SignContractVersion")
+		self.assertEqual(self.order(waiting, blocked, duty), ["publication", "blocked", "waiting"])
+
 		got = self.order(
 			task("undated-late", assigned="2027-07-21 09:00"),
 			task("upcoming-far", due="2027-08-30 00:00"),

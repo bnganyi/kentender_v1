@@ -93,9 +93,8 @@ class TestObligations(ReportCase):
 		self.assertFalse([t for t in work.live(self.case) if t["command"] == "ResolvePublicationRequirement"])
 		from kentender_contracts.boards import router
 
-		lead = router.board_for(self.case, self.p["charles"], tab="Obligations")
-		self.assertEqual((lead["id"], lead["p"]), ("D15-L", "Record publication"), "the head's task is the oldest on their day, so their Obligations tab opens on it (FU-CM-133)")
-		board = router.board_for(self.case, self.p["amina"], tab="Obligations")  # the duty as the contract shows it to a reader with no task of their own
+		board = router.board_for(self.case, self.p["charles"], tab="Obligations")
+		self.assertNotEqual(board.get("p"), "Record publication", "the standing duty follows work that blocks the contract (FU-CM-133), so the tab still shows the overview")
 		duties = next(r for r in board["regions"] if r["t"] == "Duties")
 		self.assertEqual(duties["b"][0]["rows"][0][:3], ["Publication: Award decision recorded", "Needs review", "Not confirmed — set by current directions"])
 		self.assertEqual(duties["b"][0]["rows"][0][4], "@Review publication")

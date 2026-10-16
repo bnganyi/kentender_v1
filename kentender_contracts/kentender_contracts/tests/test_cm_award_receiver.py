@@ -159,7 +159,8 @@ class TestReceiver(ContractCase):
 	def test_the_head_of_procurements_step_on_a_restriction_is_a_screen_with_one_dialog(self):
 		case = self.receiver.receive_package(self.package())["contract"]
 		self.receiver.receive_update(self.update())
-		board = router.board_for(case, self.p["charles"])
+		self.assertTrue([t for t in work.live(case) if t["command"] == "RecordContractAwardPublication" and t["holder"] == self.p["charles"]], "the head's publication task is open and older (FU-CM-108)")
+		board = router.board_for(case, self.p["charles"])  # the task that blocks signing leads the standing duty (the Project Owner, 16 October 2026, FU-CM-133)
 		self.assertEqual((board["p"], board["dialogs"]["resolution"]["command"], board["dialogs"]["resolution"]["args"]), ("Record the resolution", "RecordRestrictionResolution", {"issue": "ISS-1"}))
 		from kentender_contracts.api import commands
 
