@@ -286,6 +286,21 @@ def run(profile: str = "ACTIVE", rebuild: bool = False, passwords: bool = False)
 	frappe.flags.kt_cm_fixture_namespace = NAMESPACE
 	frappe.conf.kt_cm_simulation_environment = 1
 	tw.ADDRESSES.update(CANONICAL)
+def _alerts_as_raised_now(case: str) -> None:
+	"""The profile's alerts were raised while the frozen seed clock stood at the story's dates, so in a person's bell (the newest twenty, by time raised) they sort behind every alert raised since, and a walk or a
+	demonstration would never find them. They keep their order and are stamped with the real moment, never later than it (RA-PROP-001 rule R1)."""
+	from datetime import timedelta
+
+	from frappe.utils import now_datetime
+
+	names = frappe.get_all("Notification Log", filters={"document_type": "Contract Case", "document_name": case}, pluck="name", order_by="creation asc, name asc")
+	real = now_datetime()  # the frozen clock has ended: this is the real moment
+	for rank, name in enumerate(names):
+		stamp = real - timedelta(microseconds=len(names) - rank)
+		frappe.db.set_value("Notification Log", name, {"creation": stamp, "modified": stamp}, update_modified=False)
+	frappe.db.commit()
+
+
 	test_clock.set_instant("2027-07-02 09:00:00")
 	world.build()
 	world.ensure_workflow()
@@ -294,6 +309,7 @@ def run(profile: str = "ACTIVE", rebuild: bool = False, passwords: bool = False)
 	if passwords:
 		known_passwords.set_known(people.values(), PASSWORD)  # kept as they were, put back by `clean`
 	frappe.db.commit()
+	records.forget_alerts_of_missing_contracts()  # a bell that still holds a removed contract's alert would put it ahead of the profile's own
 	frappe.flags.kt_contract_source_providers = None
 	t = tw.Thread(people, tag=f"DEMO{chosen.name[:6]}", contract_id=_contract(chosen), award_case=f"CM-DEMO-AWD-{chosen.name}{chosen.award_suffix}", item=world.ITEM_PLAIN)
 	frappe.flags.kt_cm_clock = "2027-07-02 09:00:00"
@@ -311,3 +327,4 @@ def run(profile: str = "ACTIVE", rebuild: bool = False, passwords: bool = False)
 	state_file().parent.mkdir(parents=True, exist_ok=True)
 	state_file().write_text(json.dumps({**out, "previous_instant": str(previous or ""), "password": PASSWORD, "summary": chosen.summary, "people": CANONICAL, "steps": _steps(chosen, case)}, indent=1))
 	return out
+	_alerts_as_raised_now(case)

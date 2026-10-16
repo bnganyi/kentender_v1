@@ -456,6 +456,8 @@ def carry_out_effects(case: str, actor: str = "") -> dict[str, Any]:
 		if result["state"] not in intents.SETTLED:
 			with records.atomic():
 				work.incident(case, "RestoreContractOperation", "Restore contract operation", f"agreement {agreement.version_no}", agreement.version_no)
+				if result["state"] == "Failed":  # the owner refused it (a business failure): section 5.10 tells the head as well as the technical operator, who is told by their task
+					work.alert(case, work.holders(work.HOP), f"The {kind.lower()} was refused.", "RestoreContractOperation", f"agreement {agreement.version_no}")
 				events.record(case, "Operation pending", actor, f"{kind} did not complete ({result['state'].lower()}).", intent=name)
 			frappe.db.commit()
 		else:

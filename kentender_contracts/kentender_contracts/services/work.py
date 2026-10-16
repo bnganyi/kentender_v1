@@ -15,7 +15,7 @@ from typing import Any, Iterable
 import frappe
 from frappe.utils import get_datetime
 
-from kentender_contracts.services import clock, people, records, tasks as rules
+from kentender_contracts.services import clock, notifications, people, records, tasks as rules
 
 TASK = "Contract Task"
 STATE = {"Open": rules.ACTIONABLE, "Blocked": rules.BLOCKED, "Waiting": rules.WAITING, "Scheduled": rules.SCHEDULED}
@@ -48,28 +48,37 @@ def assign(case: str, command: str, title: str, subject: str, version: int, hold
 				records.append_json(doc, "history_json", {"state": "Reopened", "at": str(clock.now())})
 				records.update(doc, state=state, title=title, assigned_at=clock.now(), completed_at=None)
 				created.append(identity)
-				if state == "Open":
+				if state == "Open" and notifications.raises_alert(command):
 					_notify(case, holder, title, command, subject)
 			continue
 		records.new(TASK, contract_case=case, identity=identity, command=command, title=title, subject=subject, subject_version=version, holder=holder, holder_role=role, state=state,
 			assigned_at=clock.now(), due=due, due_verified=1 if due and due_verified else 0, history_json="[]")
 		created.append(identity)
-		if state == "Open":
+		if state == "Open" and notifications.raises_alert(command):
 			_notify(case, holder, title, command, subject)
 	return created
 
 
 def _notify(case: str, holder: str, title: str, command: str, subject: str) -> None:
-	"""The bell: one alert for the person whose turn it has just become, linking to the step on its own tab and never a second approval (section 5.10: "a notification links to that item"). A waiting or scheduled item
-	is not an alert, and an alert that cannot be shown does not undo the task."""
+	"""The bell: one alert for the person whose turn it has just become, linking to the step on its own tab and never a second approval (section 5.10: "a notification links to that item"). Only a task the
+	table names alerts (`notifications`); a waiting or scheduled item is not an alert, and an alert that cannot be shown does not undo the task. A supplier's person is sent to the supplier portal, not Desk."""
 	from kentender_contracts.boards import chrome
+	from kentender_contracts.services import audience
 
 	try:
 		doc = frappe.db.get_value("Contract Case", case, ["contract_id", "lifecycle"], as_dict=True)
+		root = "/supplier/contracts" if audience.workspace_audiences(holder) == ["supplier"] else "/desk/contracts"
 		frappe.get_doc({"doctype": "Notification Log", "for_user": holder, "type": "Alert", "subject": title, "email_content": f"{doc.contract_id}: {title}", "document_type": "Contract Case", "document_name": case,
-			"link": f"/desk/contracts/{case}/{chrome.tab_of(command, subject, doc.lifecycle).lower()}"}).insert(ignore_permissions=True)
+			"link": f"{root}/{case}/{chrome.tab_of(command, subject, doc.lifecycle).lower()}"}).insert(ignore_permissions=True)
 	except Exception:  # noqa: BLE001
 		frappe.log_error(title="Contract Management could not notify a task holder")
+
+
+def alert(case: str, holders: Iterable[str], title: str, command: str, subject: str) -> None:
+	"""An alert the table names for a holder who has no task of their own to open (for example the head of procurement when a funding or order update is refused: the table notifies them and gives them a waiting
+	item). One alert for each person, linking to the step's tab."""
+	for holder in sorted({h for h in holders if h}):
+		_notify(case, holder, title, command, subject)
 
 
 def waiting_command(command: str, qualifier: str) -> str:

@@ -218,6 +218,13 @@ def audit(case: str, action: str, actor: str, **metadata) -> None:
 		frappe.log_error(title="Contract Management audit write failed")
 
 
+def forget_alerts_of_missing_contracts() -> None:
+	"""Delete the bell's alerts about contracts that no longer exist (tests and browser worlds remove their contracts; an alert about one would otherwise stay in every person's bell for ever, and a later walk that
+	opens the bell would find the dead contract's alert before the live one's). A direct delete, like `wipe`."""
+	cases = frappe.get_all(CASE, pluck="name")
+	frappe.db.delete("Notification Log", {"document_type": CASE, **({"document_name": ["not in", cases]} if cases else {})})
+
+
 def wipe(namespace_value: str) -> int:
 	"""Delete every Contract Management row of one fixture namespace (tests and browser worlds).
 
@@ -231,4 +238,5 @@ def wipe(namespace_value: str) -> int:
 	for doctype in DOCTYPES:
 		count += frappe.db.count(doctype, {"fixture_namespace": namespace_value})
 		frappe.db.delete(doctype, {"fixture_namespace": namespace_value})
+	forget_alerts_of_missing_contracts()
 	return count

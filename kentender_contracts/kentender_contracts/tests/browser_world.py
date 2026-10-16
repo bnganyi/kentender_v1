@@ -211,6 +211,7 @@ def clean() -> dict:
 		frappe.db.delete("Contract Simulated Funding", {"contract": case})
 		frappe.db.delete("Contract Case", {"name": case})
 	frappe.db.delete("Contract Report", {"fixture_namespace": NAMESPACE})  # the generated reports belong to no one contract
+	records.forget_alerts_of_missing_contracts()  # the bell of the people the walk used must not keep the removed contracts' alerts
 	frappe.db.delete("Contract Command Journal", {"fixture_namespace": NAMESPACE})
 	frappe.db.delete("Contract Simulated Signature", {"signer": ["in", list(_addresses().values())]})
 	for name in frappe.get_all("File", filters={"file_name": ["like", "cm-ui-%"]}, pluck="name"):  # the evidence files the walk uploaded
