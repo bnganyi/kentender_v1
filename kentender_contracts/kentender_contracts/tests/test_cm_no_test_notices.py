@@ -38,3 +38,13 @@ class TestNoScreenCallsItselfATest(IntegrationTestCase):
 	def test_the_held_quantity_change_still_says_it_requires_legal_review(self):
 		source = (APP / "boards/changes.py").read_text()
 		self.assertTrue(re.search(r'kit\.blk\("Change requires legal review"', source), "removing the test note must not remove the legal hold")
+
+	def test_the_demonstration_agreement_text_a_screen_shows_carries_no_stand_in_line(self):
+		"""The Project Owner agreed on 16 October 2026 that the bracketed "Synthetic stand-in" line is removed from what a screen shows. The agreement body is what the agreement screen and the signing preview draw; a real
+		contract uses its real agreement text, and the fact that the demonstration text is a stand-in stays in the test evidence."""
+		from kentender_contracts.simulation import sources
+
+		self.assertNotIn("synthetic", sources.FORM_4.lower())
+		self.assertNotIn("stand-in", sources.FORM_4.lower())
+		fixture = (APP / "public/js/contracts/fixtures/D02-V.json").read_text().lower()
+		self.assertNotIn("stand-in", fixture, "the captured agreement screen does not carry it either")

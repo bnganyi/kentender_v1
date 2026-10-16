@@ -52,7 +52,6 @@ FORM_4 = (
 	"<p>THIS AGREEMENT is made on <span data-insertion=\"agreement_date\">{{agreement_date}}</span> between <span data-insertion=\"entity_name\">{{entity_name}}</span> of "
 	"<span data-insertion=\"entity_address\">{{entity_address}}</span> (the Procuring Entity) and <span data-insertion=\"supplier_name\">{{supplier_name}}</span> (the Supplier).</p>"
 	"<p>The Procuring Entity engages the Supplier to supply <span data-insertion=\"goods\">{{goods}}</span> for <span data-insertion=\"amount\">{{amount}}</span>.</p>"
-	"<p>[Synthetic stand-in: the covenant and precedence text of the issued Form No. 4 is copied verbatim here by the real template-release provider.]</p>"
 	"<p>Incorporated documents: <span data-insertion=\"documents\">{{documents}}</span>.</p>"
 	"<p>Signed for the Procuring Entity by <span data-insertion=\"entity_signatory\">{{entity_signatory}}</span> and for the Supplier by <span data-insertion=\"supplier_signatory\">{{supplier_signatory}}</span>.</p>"
 )
