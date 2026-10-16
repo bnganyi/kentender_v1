@@ -22,6 +22,8 @@ EVIDENCE = [{"label": "Delivery incident", "file": "/private/files/delivery-inci
 class CompletionBoards(ContractCase):
 	native = True
 
+	#: the test that needs the award publication left open, so that the closing review lists a surviving obligation (the head records it early everywhere else: FU-CM-108)
+	PUBLICATION_OPEN = ("test_the_accounting_officer_reviews_the_final_acceptance_and_the_head_completes_it",)
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
@@ -37,7 +39,11 @@ class CompletionBoards(ContractCase):
 		self.p = self.people
 		tag = self.id().rsplit(".", 1)[-1][:24]
 		self.t = tw.Thread(self.p, tag=tag, item=world.ITEM_PLAIN, award_case=f"CM-TEST-{tag}-FIN")
-		self.case = self.t.active()
+		self.case = self.t.active(publication_open=self._testMethodName in self.PUBLICATION_OPEN)
+		if self._testMethodName in self.PUBLICATION_OPEN:  # the obligation stays open and survives the close-out; the head's own task is set aside so the walk of screens below starts where it always did
+			from kentender_contracts.services import work
+
+			work.finish(self.case, command="RecordContractAwardPublication", state="Superseded", actor=self.p["charles"])
 		self.t.appointed()
 		frappe.db.set_value("Contract Case", self.case, "responsible_user", self.p["julia"])
 		self.units = tw.fresh_serials(10)

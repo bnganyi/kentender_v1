@@ -33,6 +33,8 @@ def refusal(fn, *args, **kwargs):
 class CompletionCase(ContractCase):
 	native = True
 
+	#: the tests that need the award publication left open, so that the closing review has a surviving obligation to classify (the head records it early everywhere else: FU-CM-108)
+	PUBLICATION_OPEN = ("test_the_review_states_the_final_acceptance_and_classifies_what_survives",)
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
@@ -48,7 +50,7 @@ class CompletionCase(ContractCase):
 		self.p = self.people
 		tag = self.id().rsplit(".", 1)[-1][:24]
 		self.t = tw.Thread(self.p, tag=tag, item=world.ITEM_PLAIN, award_case=f"CM-TEST-{tag}-FIN")
-		self.case = self.t.active()
+		self.case = self.t.active(publication_open=self._testMethodName in self.PUBLICATION_OPEN)
 		self.t.appointed()
 		frappe.db.set_value("Contract Case", self.case, "responsible_user", self.p["julia"])
 		self.units = tw.fresh_serials(10)
