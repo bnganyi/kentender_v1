@@ -29,8 +29,7 @@ test.describe('Reports and obligations', () => {
 		await as(browser, 'charles', async (page) => {
 			await openContract(page, world.changes_contract, 'All contracts');
 			await tab(page, 'Obligations');
-			await expect(page.getByTestId('cm-root')).toContainText('Not confirmed — set by current directions');
-			await page.getByRole('link', { name: 'Review publication' }).first().click();
+			// the head's next step is the publication requirement itself (FU-CM-108), so the tab opens on its screen
 			await expect(board(page, 'D15-L')).toBeVisible();
 			await expect(page.getByTestId('cm-root')).toContainText('Award decision recorded 17 Jun 2027');
 			await expect(page.getByTestId('cm-root')).toContainText('Not confirmed — set by current directions');
@@ -40,7 +39,9 @@ test.describe('Reports and obligations', () => {
 			await page.getByTestId('cm-input-notes').fill('Names a 14-day period; for the legal owner to review.');
 			await press(page, 'cm-dialog-primary');
 			await expect(page.getByTestId('cm-dialog')).toHaveCount(0);
-			await expect(page.getByTestId('cm-root')).toContainText('Needs review'); // evidence is a proposal: nothing became a deadline or a verified status
+			// evidence is a proposal: nothing became a deadline, and nothing was published
+			await expect(page.getByTestId('cm-root')).toContainText('Not confirmed — set by current directions');
+			await expect(page.getByTestId('cm-root')).not.toContainText('Published');
 		});
 	});
 });

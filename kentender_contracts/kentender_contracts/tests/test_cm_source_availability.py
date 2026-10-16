@@ -30,7 +30,7 @@ from kentender_contracts.tests.support import ContractCase
 from kentender_core.services import contract_source_contract as seam
 
 AWARD = "AWD-MOH-2026-002"
-GAPS = {"S7", "S9", "S10"}
+GAPS = {"S7", "S10"}  # S9, the funding lineage, is served by Award since AWD v0.7 section 7.1 (commit 478512c6): it was a gap here until then
 
 
 class TestCanonicalSources(ContractCase):
@@ -65,9 +65,9 @@ class TestCanonicalSources(ContractCase):
 			else:
 				self.assertTrue(row["available"] and not row["reason"], number)
 		self.assertIn("declares no place to fill", by["S7"]["reason"])
-		self.assertIn("2 reservations", by["S9"]["reason"])
+		self.assertTrue(by["S9"]["available"] and not by["S9"]["reason"], "the funding lineage is served by Award (AWD v0.7 section 7.1)")
 		self.assertIn("principal address", by["S10"]["reason"])
-		self.assertEqual((by["S7"]["owner"], by["S9"]["owner"], by["S10"]["owner"]), ("Tenders and the template release", "Budget", "Site configuration"))
+		self.assertEqual((by["S7"]["owner"], by["S10"]["owner"]), ("Tenders and the template release", "Site configuration"))
 
 	def test_a_source_that_changed_after_the_award_is_seen(self):
 		rows = seam.handoff(AWARD)

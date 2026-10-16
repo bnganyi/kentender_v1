@@ -76,8 +76,10 @@ class TestPickerSources(IntegrationTestCase):
 		self.assertIn("does not hold the Contract inspection responsibility", caught.exception.fields["members"])
 
 	def test_units_are_listed_only_where_the_person_prepares_contracts(self):
-		everyone = {r["id"] for r in self.ask("charles", sources.UNIT, {})["rows"]}
-		self.assertEqual(everyone, set(frappe.get_all("Organisation Unit", pluck="name")), "the head of procurement prepares for every unit")
+		page = self.ask("charles", sources.UNIT, {})  # the picker is paged: a page of the units, and how many there are in all
+		every_unit = set(frappe.get_all("Organisation Unit", pluck="name"))
+		self.assertEqual(page["total"], len(every_unit), "the head of procurement prepares for every unit")
+		self.assertTrue({r["id"] for r in page["rows"]} <= every_unit and len(page["rows"]) == min(len(every_unit), page["limit"]), "and is shown a page of them, whatever the site holds")
 		brian = {r["id"] for r in self.ask("brian", sources.UNIT, {})["rows"]}
 		self.assertEqual(brian, {tw.unit()}, "a Contract preparation assignment reaches its own unit")
 		for who in ("julia", "mary", "grace", "stranger"):

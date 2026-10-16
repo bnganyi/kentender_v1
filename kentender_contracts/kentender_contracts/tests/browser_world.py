@@ -91,7 +91,7 @@ def _stage(kind: str, contract_id: str, award_case: str, people: dict[str, str])
 
 	frappe.flags.kt_contract_source_providers = None  # the registered provider answers by the case's name; one left over from the previous contract would answer for the wrong variant
 	t = tw.Thread(people, tag=f"UI{contract_id[-4:]}", contract_id=contract_id, services=award_case.endswith("-SVC"), award_case=award_case, item=world.ITEM_PLAIN if kind in ("warranty", "closeout") else "", security=kind == "security_actions")
-	t.active()
+	t.active(publication_open=kind == "changes")  # the reports spec walks the publication requirement on the "changes" contract, so there it stays open (FU-CM-108)
 	if kind in ("changes", "warranty", "delay", "security_actions", "termination", "closeout"):
 		frappe.db.set_value("Contract Case", t.case, "responsible_user", people["carol"])  # the contract's owner: the coordinator who requests changes and records warranty claims
 	t.appointed("Accounting Officer decides" if kind == "delivery" else "Committee accepts")
@@ -172,10 +172,12 @@ def build() -> dict:
 	package = {**sources.award_package(), "award_case": AWARD_CASE}  # its own Award case, so the service tests (which receive the demonstration package) never meet this world's contract
 	received = formation.receive_award_package(package, handoff=sources.source_handoff(AWARD_CASE), managing_unit=tw.unit(), idempotency_key=f"receive-{CONTRACT}", actor="Administrator", contract_id=CONTRACT)
 	extra = {}
+	tw.publish(people, received["contract"])  # the head records the award publication early, as in every test world (FU-CM-108): the walks below start from their own step
 	for kind, (contract_id, award_case) in EXTRA.items():
 		got = formation.receive_award_package({**sources.award_package(), "award_case": award_case}, handoff=sources.source_handoff(award_case), managing_unit=tw.unit(), idempotency_key=f"receive-{contract_id}",
 			actor="Administrator", contract_id=contract_id)
 		extra[kind] = got["contract"]
+		tw.publish(people, got["contract"])
 	frappe.db.commit()
 	staged = {kind: _stage(kind, contract_id, award_case, people) for kind, (contract_id, award_case) in STAGED.items()}
 	receipt = world.fixed_asset_receipt("EXTUI", 4)  # the units of an existing contract that were already received and invoiced before management starts
