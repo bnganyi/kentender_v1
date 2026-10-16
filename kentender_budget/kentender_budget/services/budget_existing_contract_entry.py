@@ -158,9 +158,13 @@ def _position_safe(line: str) -> dict[str, float] | None:
 
 def get_contract_funding(request: str) -> dict[str, Any]:
 	"""Everything the funding screens need for one request, in one read: the request with its calculated figures, the current entry, the actions the caller may take and why not."""
+	from kentender_budget.services.budget_authorization import approved_only_reader, holds_any_budget_responsibility
+
+	user = frappe.session.user
+	if not holds_any_budget_responsibility(user) or approved_only_reader(user):  # a funding request names a contract, a supplier and amounts: a Budget responsibility or a technical read is needed, and reading approved plans alone is not enough
+		frappe.throw(_("You do not have access to this funding request."), frappe.PermissionError)
 	doc = funding.resolve_request(request)
 	entry = funding.current_entry(doc)
-	user = frappe.session.user
 	out: dict[str, Any] = {"ok": True, "request": funding.summary(doc), "entry": entry_summary(entry, doc) if entry else None, "actions": {}}
 	is_officer, is_approver = _holds(user, authority.ROLE_BUDGET_OFFICER), _holds(user, authority.ROLE_BUDGET_APPROVER)
 	actions: dict[str, Any] = {}
@@ -490,7 +494,8 @@ def _approve(entry, request, user: str, assignment: str, key: str) -> dict[str, 
 		commitment = frappe.get_doc({
 			"doctype": "Procurement Commitment", "generated_reference": allocate_commitment_reference(), "origin": "Existing-contract entry", "budget": budget, "budget_line": row.budget_line,
 			"entry_row": f"{entry.name}/{row.row_id}", "contract": request.contract, "status": "Active", "current_amount": amount, "currency": entry.currency,
-			"lineage_json": json.dumps({"entry": entry.name, "request": request.name, "kind": request.kind, "basis_digest": entry.basis_digest, "contract_reference": request.contract_reference}, sort_keys=True),
+			"lineage_json": json.dumps({"entry": entry.name, "request": request.name, "kind": request.kind, "basis_digest": entry.basis_digest, "contract_reference": request.contract_reference,
+				**({"original_commitment": request.original_commitment, "increment_event": request.subject_event} if request.kind == "Additional" else {})}, sort_keys=True),
 		})
 		with budget_write():
 			commitment.insert(ignore_permissions=True)

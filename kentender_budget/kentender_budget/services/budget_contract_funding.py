@@ -332,7 +332,7 @@ def _receive(request: dict[str, Any], identity: str) -> dict[str, Any]:
 	if kind in ("Additional", "Correction") and not subject:
 		return refusal("BUDGET_INVALID_STATE", "subject_event", _("An additional or correction request names the exact event or subject it is for."))
 	original = cstr(request.get("original_commitment")).strip()
-	if kind in ("Additional", "Correction") and not (original and frappe.db.exists("Procurement Commitment", original)):
+	if kind in ("Additional", "Correction") and not (original and frappe.db.get_value("Procurement Commitment", original, "status") == "Closed"):
 		return refusal("BUDGET_INVALID_STATE", "original_commitment", _("An additional or correction request names the Closed commitment it follows."))
 	key = seam.scope_key(kind=kind, contract=contract, target_year=year, subject_event=subject)
 	existing = frappe.db.get_value(REQUEST, {"scope_key": key}, "name")

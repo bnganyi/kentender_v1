@@ -9,6 +9,10 @@ of it already held by Budget as a real commitment of this contract, so KES 500,0
 
 from __future__ import annotations
 
+import ast
+import unittest
+from pathlib import Path
+
 import frappe
 
 from kentender_budget.services import budget_commitment_contracts as commit
@@ -666,3 +670,184 @@ class TestACorrectionRequestHearsTheResult(_FundingBase):
 	def decide_correction(self, correction, decision="Approve", reason=""):
 		self._as(self.approver)
 		return corrections.decide_commitment_correction({"correction": correction, "decision": decision, "reason": reason, "idempotency_key": f"dc-{frappe.generate_hash(length=8)}"})
+
+
+class TestWhoMayReadAFundingRequest(_FundingBase):
+	"""BUD-CHG-001 v1.16 section 11.22: technical readers and the Auditor get the same permitted values without editor or decision actions; a person with no Budget responsibility gets nothing."""
+
+	def test_a_person_with_no_budget_responsibility_cannot_read_a_request(self):
+		request = self.receive()["request"]
+		self._as(self.nobody)
+		with self.assertRaises(frappe.PermissionError):
+			entries.get_contract_funding(request["id"])
+
+	def test_an_auditor_reads_the_request_and_the_entry_with_no_action(self):
+		self.cover("100000.00")
+		request = self.receive()["request"]
+		self.prepare(request["id"])
+		self._as(self.auditor)
+		view = entries.get_contract_funding(request["id"])
+		self.assertEqual((view["request"]["amount_requiring_funding"], len(view["entry"]["rows"]), view["actions"]), ("500000.00", 2, {}))
+
+	def test_the_officer_sees_save_submit_and_decline_and_the_approver_only_the_decision(self):
+		self.cover("100000.00")
+		request = self.receive()["request"]
+		entry = self.prepare(request["id"])["entry"]
+		self._as(self.officer)
+		self.assertEqual(entries.get_contract_funding(request["id"])["actions"], {"save": True, "submit": True, "decline": True})
+		self.submit(entry["id"])
+		self._as(self.approver)
+		actions = entries.get_contract_funding(request["id"])["actions"]
+		self.assertEqual((actions["approve"], actions["return"], actions["blocked"]), (True, True, ""))
+		self._as(self.officer)
+		self.assertEqual(entries.get_contract_funding(request["id"])["actions"], {}, "once submitted the Officer has nothing to do here")
+
+	def test_the_work_list_shows_the_officers_request_then_the_approvers_entry(self):
+		self.cover("100000.00")
+		request = self.receive()["request"]
+		self.assertEqual([(r["task"], r["status"], r["holder"]) for r in funding.workspace_rows(self.fy, self.officer)], [("Fund existing contract", "Ready to prepare", "Budget Officer")])
+		self.assertEqual(funding.workspace_rows(self.fy, self.approver), [])
+		entry = self.prepare(request["id"])["entry"]
+		self.submit(entry["id"])
+		self.assertEqual([(r["task"], r["status"]) for r in funding.workspace_rows(self.fy, self.approver)], [("Review contract funding", "Awaiting approval")])
+		self.assertEqual(funding.workspace_rows(self.fy, self.officer), [])
+		self.assertEqual(funding.workspace_rows(self.fy, self.nobody), [])
+
+
+class TestAnAdditionalEntryFundsOnlyTheIncrementOnce(_FundingBase):
+	"""BUD-CHG-001 v1.16 8.7 and BUD-BR-040 (BUD25-AC-006): reopening changes no funding; a real later increment beside a Closed commitment is funded for the increment only, once, by a bounded Additional entry, even when
+	the original hold is exhausted. The original commitment is neither raised nor duplicated; a different legitimate increment is its own request."""
+
+	def increment(self, closed, event, amount, *, rows=None):
+		request = self.receive(kind="Additional", subject_event=event, original_commitment=closed, basis=self.basis(amount))["request"]
+		entry = self.prepare(request["id"], rows=rows or [{"budget_line": self.hwd, "amount": amount}])["entry"]
+		self.assertTrue(self.submit(entry["id"])["ok"])
+		return request, entry
+
+	def test_an_increment_is_funded_beside_the_untouched_closed_original_and_carries_its_lineage(self):
+		original = self.cover("100000.00", status="Closed")
+		before = self.position(self.hwd)
+		request, entry = self.increment(original, "INC-1", "30000.00")
+		decided = self.decide(entry["id"])
+		self.assertTrue(decided["ok"], decided)
+		self.assertEqual(frappe.db.get_value("Procurement Commitment", original, ["current_amount", "status"], as_dict=True), {"current_amount": 100000.0, "status": "Closed"}, "the original is neither raised nor reopened")
+		new = [c for c in self.commitments(origin="Existing-contract entry") if c.name != original]
+		self.assertEqual([(float(c.current_amount), c.reservation or "") for c in new], [(30000.0, "")])
+		lineage = frappe.parse_json(frappe.db.get_value("Procurement Commitment", new[0].name, "lineage_json"))
+		self.assertEqual((lineage["kind"], lineage["original_commitment"], lineage["increment_event"]), ("Additional", original, "INC-1"))
+		self.assertEqual(self.position(self.hwd)["committed"], before["committed"] + 30000)
+		self.assertEqual(frappe.get_doc("Contract Funding Request", request["id"]).status, "Completed")
+
+	def test_a_replay_of_the_same_increment_is_refused_and_a_different_increment_is_funded_on_its_own(self):
+		original = self.cover("100000.00", status="Closed")
+		request, entry = self.increment(original, "INC-1", "30000.00")
+		self.assertTrue(self.decide(entry["id"])["ok"])
+		again = self.receive(kind="Additional", subject_event="INC-1", original_commitment=original, basis=self.basis("30000.00"), identity=f"again-{frappe.generate_hash(length=6)}")
+		self.assertEqual((again["ok"], again["code"]), (False, "BUDGET_ENTRY_DUPLICATE"))
+		self.assertEqual(len(self.commitments(origin="Existing-contract entry")), 2)
+		second_request, second_entry = self.increment(original, "INC-2", "20000.00")
+		self.assertNotEqual(second_request["id"], request["id"])
+		self.assertTrue(self.decide(second_entry["id"])["ok"])
+		self.assertEqual(sorted(float(c.current_amount) for c in self.commitments(origin="Existing-contract entry")), [20000.0, 30000.0, 100000.0])
+
+	def test_an_entry_for_the_whole_value_instead_of_the_increment_is_refused(self):
+		original = self.cover("100000.00", status="Closed")
+		request = self.receive(kind="Additional", subject_event="INC-1", original_commitment=original, basis=self.basis("30000.00"))["request"]
+		entry = self.prepare(request["id"], rows=[{"budget_line": self.hwd, "amount": "130000.00"}])["entry"]
+		refused = self.submit(entry["id"])
+		self.assertEqual((refused["ok"], refused["code"], refused["required"]), (False, "BUDGET_ENTRY_ROWS_MISMATCH", "30000.00"))
+		self.assertEqual(len(self.commitments(origin="Existing-contract entry")), 1)
+
+	def test_an_additional_request_must_follow_a_commitment_that_is_closed(self):
+		active = self.cover("100000.00", status="Active")
+		refused = self.receive(kind="Additional", subject_event="INC-1", original_commitment=active, basis=self.basis("30000.00"))
+		self.assertEqual((refused["ok"], refused["code"]), (False, "BUDGET_INVALID_STATE"))
+
+	def test_a_contract_an_award_funded_whose_hold_is_exhausted_uses_the_same_bounded_path(self):
+		reservation = self._reserve(self.dhi, 1_000_000, ref=f"REQ-{self.contract}")
+		self._as("Administrator")
+		converted = commit.convert_reservation(reservation, self.contract, 1_000_000, f"conv-{self.contract}", contract_event_id=f"{self.contract}:signed", contract_event_type="ContractSigned", caller=self.caller)
+		closed = converted["commitment"]["commitment_id"]
+		commit.close_commitment(closed, commit.commitment_revision(closed), {"event_id": f"{self.contract}:closed", "event_type": "ContractClosed", "final_amount": 1_000_000}, ["RECON-1"], f"close-{self.contract}", caller=self.caller)
+		before = self.position(self.dhi)
+		request, entry = self.increment(closed, "INC-AWARD-1", "50000.00", rows=[{"budget_line": self.dhi, "amount": "50000.00"}])
+		self.assertTrue(self.decide(entry["id"])["ok"])
+		self.assertEqual(frappe.db.get_value("Procurement Commitment", closed, ["current_amount", "status"], as_dict=True), {"current_amount": 1_000_000.0, "status": "Closed"})
+		after = self.position(self.dhi)
+		self.assertEqual((after["reserved"], after["committed"]), (before["reserved"], before["committed"] + 50000), "the exhausted reservation is untouched and no reservation is invented")
+
+
+class TestEveryFundingOperationMovesTheBalanceAsTheTableSays(_FundingBase):
+	"""BUD-CHG-001 v1.16 8.7 (BUD25-AC-001): each operation, run through the real owner services, changes Reserved and Committed by exactly what the table says and leaves Available equal to Approved - Reserved -
+	Committed. The two commitment origins count alike. Budget reads no accounting record, so no payment can reduce a retained funding charge."""
+
+	def move(self, line, label, action, *, reserved=0, committed=0):
+		before = self.position(line)
+		result = action()
+		after = self.position(line)
+		self.assertAlmostEqual(after["approved"] - before["approved"], 0, msg=f"{label}: Approved does not move")
+		self.assertAlmostEqual(after["reserved"] - before["reserved"], reserved, msg=f"{label}: Reserved")
+		self.assertAlmostEqual(after["committed"] - before["committed"], committed, msg=f"{label}: Committed")
+		self.assertAlmostEqual(after["available"] - before["available"], -(reserved + committed), msg=f"{label}: Available moves opposite to R + C")
+		self.assertAlmostEqual(after["approved"] - after["reserved"] - after["committed"], after["available"], msg=f"{label}: A - R - C = V")
+		return result
+
+	def test_the_award_origin_operations_then_the_entry_origin_operations(self):
+		line = self.dhi
+		reservation = self.move(line, "reserve", lambda: self._reserve(line, 1_000_000, ref=f"REQ-{self.contract}"), reserved=1_000_000)
+		self._as("Administrator")
+		commitment = self.move(line, "convert", lambda: commit.convert_reservation(reservation, self.contract, 400_000, f"conv-{self.contract}", contract_event_id=f"{self.contract}:signed",
+			contract_event_type="ContractSigned", caller=self.caller)["commitment"]["commitment_id"], reserved=-400_000, committed=400_000)
+		self.move(line, "adjust an Active obligation up", lambda: commit.adjust_commitment(commitment, 450_000, f"{self.contract}:var1", "ContractVariation", f"adj-{self.contract}", caller=self.caller), committed=50_000)
+		self.move(line, "close", lambda: commit.close_commitment(commitment, commit.commitment_revision(commitment), {"event_id": f"{self.contract}:closed", "event_type": "ContractClosed", "final_amount": 450_000},
+			["RECON-1"], f"close-{self.contract}", caller=self.caller))
+		self._as(self.officer)
+		correction = corrections.record_commitment_correction({"commitment": commitment, "new_amount": 400_000, "reason": "The final obligation included work never performed.", "evidence": ["Final obligation review 1"],
+			"contract_reference": "CM-BAL-1", "idempotency_key": f"cor-{frappe.generate_hash(length=8)}"})["correction"]
+
+		def decide_correction():
+			self._as(self.approver)
+			return corrections.decide_commitment_correction({"correction": correction["id"], "decision": "Approve", "reason": "", "idempotency_key": f"dc-{frappe.generate_hash(length=8)}"})
+
+		self.assertTrue(self.move(line, "correct a Closed commitment downward", decide_correction, committed=-50_000)["ok"])
+		self._as("Administrator")
+		self.move(line, "release the unused hold", lambda: commit.release_reservation(reservation, 600_000, f"{self.contract}:unused", "ContractUnusedAmount", f"rel-{self.contract}", caller=self.caller), reserved=-600_000)
+
+		# the entry origin, for a contract signed before KenTender
+		self.contract = f"{self.contract}-EXT"
+		self.caller = service_caller(PRINCIPAL_CONTRACT, reference=self.contract)
+		self.cover("100000.00", line=line)
+		request = self.receive()["request"]
+		entry = self.prepare(request["id"], rows=[{"budget_line": line, "amount": "500000.00"}])["entry"]
+		self.assertTrue(self.submit(entry["id"])["ok"])
+		self.assertTrue(self.move(line, "existing-contract entry", lambda: self.decide(entry["id"]), committed=500_000)["ok"])
+		closed = self.cover("100000.00", status="Closed", line=line)
+		self._as(self.officer)
+		request2, entry2 = self.receive(kind="Additional", subject_event="INC-BAL", original_commitment=closed, basis=self.basis("30000.00"))["request"], None
+		entry2 = self.prepare(request2["id"], rows=[{"budget_line": line, "amount": "30000.00"}])["entry"]
+		self.assertTrue(self.submit(entry2["id"])["ok"])
+		self.assertTrue(self.move(line, "additional entry", lambda: self.decide(entry2["id"]), committed=30_000)["ok"])
+
+	def test_a_shortfall_and_a_return_move_nothing(self):
+		request, entry = self.fixture()
+		self._reserve(self.dhi, 99_900_000, ref="REQ-TAKE-DHI-BAL")
+		hwd, dhi = self.position(self.hwd), self.position(self.dhi)
+		self.assertFalse(self.decide(entry)["ok"])
+		self.assertEqual((self.position(self.hwd), self.position(self.dhi)), (hwd, dhi))
+
+
+class TestBudgetReadsNoAccountingRecord(unittest.TestCase):
+	"""BUD-CHG-001 v1.16 BUD25-AC-010 and 8.7: Budget receives validated funding facts and opaque evidence references from Contract Management; it makes no native ledger, account or Cost Center read, so a posted invoice
+	or payment alone can never supply coverage or reduce a retained charge."""
+
+	ACCOUNTING = {"Payment Entry", "Purchase Invoice", "Sales Invoice", "GL Entry", "Journal Entry", "Cost Center", "Payment Ledger Entry", "Account", "Purchase Order", "Purchase Receipt", "Stock Ledger Entry"}
+
+	def test_no_budget_service_api_or_record_class_names_an_accounting_record(self):
+		root = Path(frappe.get_app_path("kentender_budget"))
+		named = []
+		for folder in ("services", "api", "doctype", "utils"):
+			for path in sorted((root / folder).rglob("*.py")):
+				for node in ast.walk(ast.parse(path.read_text())):
+					if isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value in self.ACCOUNTING:
+						named.append(f"{path.relative_to(root)}:{node.lineno} {node.value}")
+		self.assertEqual(named, [], "Budget is not an accounting integration: it names an accounting record")
