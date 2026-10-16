@@ -266,6 +266,7 @@ One frozen source-to-output thread, with deliberately thin screens, on the ten-l
 - Stage `contracts` after `award`; isolated branches seeded through production commands and labelled synthetic Trust and Finance evidence; second run idempotent with no new audit transitions.
 - Demo profiles, one per main stage; `cm-demo-walk.spec.ts` walked from the sidebar, My Work and the bell, one browser session per person.
 - **Gate CM-G11:** `make seed-canonical SITE=… THROUGH=contracts` and `make seed-canonical-validate` green; demo walk green.
+- **Gate CM-G11, amended 16 Oct 2026 (FU-CM-122):** the stage the wording above names cannot be a stage of a world that is read before any contract exists, so the gate is `make seed-cm-profiles` and `make cm-demo-gate` green with a second run that builds nothing; the scenarios' clock joins the shared seed anchor in `docs/mvp-1-r1/20_seed_data/Real_Date_Anchor_Implementation_Plan.md` Phase 6. The wording above is kept as the original.
 
 ### Phase 12: Release evidence and whole-chain acceptance
 - `ui-cm-fidelity-gate` over all 157 boards (compared or recorded as not compared with a reason).

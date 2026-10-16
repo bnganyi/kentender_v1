@@ -64,10 +64,20 @@ done
 	echo "| Started | $started |"
 	echo "| Finished | $(now) |"
 	echo "| Gates failed | $failed of ${#GATES[@]} |"
+	if [ -n "${CM_LOCK_HELD:-}" ]; then
+		echo "| Shared test-site lock | held for the whole run (\`${CM_LOCK_HELD}\`) |"
+	else
+		echo "| Shared test-site lock | **not held**: the script was run directly, so other work could have used the site during the run |"
+	fi
+	echo "| Preflight | run first by every gate (\`cm-preflight\`: refuses a live Playwright run and the development site) |"
 	echo
 	echo "| Gate | Result | Took | Proof level | What it covers |"
 	echo "|---|---|---|---|---|"
 	printf '%s' "$rows"
+	echo
+	echo "## Platform"
+	echo
+	"$ROOT/scripts/cm-platform-manifest.sh" | sed 1,2d
 	echo
 	echo "## Not run, and why"
 	echo

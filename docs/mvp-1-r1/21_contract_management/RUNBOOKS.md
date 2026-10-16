@@ -40,6 +40,7 @@ Tests write real rows and have no rollback on this bench. **Run them on `kentend
 | `make ui-cm-fidelity-gate` | every board of the design compared with its artboard, or recorded as not compared with its reason | 1 minute |
 | `make cm-persona-gate` | each named person on the accepted contract, in a real browser, with no native-form redirect | 3 minutes |
 | `make cm-regression-gate` | what Contract Management reaches into in other apps: Award's seams, Budget's funding provider, the signing facade, the supplier-account provider and Home's structural comparison | 10 to 20 minutes |
+| `make cm-platform-manifest` | the versions of Frappe, ERPNext, the KenTender apps, Python, Node and the database server and the repository commit, written to `artifacts/cm-platform-manifest.md` (the evidence report carries the same table); after any change to one of them the native and seams gates are run again | under 1 second |
 | `make ui-cm-release-evidence-gate` | all of the above, once, in the order that keeps one gate's leftovers out of the next; writes `artifacts/cm-release-evidence.md` with each result and its proof level; it does not cover the owner-gated Phase 13; it holds the shared test-site lock (`/tmp/kt-test-site.lock`) and serves the site without the file watcher | about 70 minutes |
 
 If a UI run fails oddly (a teardown that fails, later specs failing against state an earlier one left behind), check `make ui-queue-check` before reading any application code.
@@ -71,3 +72,13 @@ An operation that crosses to another owner is stored as a **Contract Operation I
 * Do not delete a native document the contract is linked to: the link stops the document's name from being reused until the contract's own record says what happened.
 * Do not reuse an idempotency key for anything but the exact same command: another payload, person or command with the same key is refused as a conflict, on purpose.
 * Do not turn on the simulation switches on a live site to "get past" a refused action. A refusal with `CM_RULE` means the production rule profile has not been verified (LQ-01), which is a decision for the legal and procurement owners, not a setting.
+
+## 7. Installing on the dev site (not done; waits for the owner's go-ahead, FU-CM-62)
+
+Nothing here has been run on the dev site. What installing it does, so the go-ahead is given knowing it:
+
+* It adds the module and its record types, custom fields on native documents (`native/fields.py`), the payment guards on Payment Entry and Journal Entry for suppliers that have contract invoices, and takes over the Contract Management rail slot.
+* **It also switches the simulation stand-ins on there**, because the dev site carries the platform's `kt_bds_simulation_environment`: the signing provider, the synthetic rule profile, the synthetic Award source provider and the simulated funding owner would answer on dev, and a production site must never carry that flag.
+* The demonstration profiles (`make seed-cm-profile`) refuse the dev site without `CM_ALLOW_DEV_SITE`, and one of them activates a Payment Entry workflow, which Frappe makes the only active one for that document (FU-CM-124): it must restore the one it replaced before it is run on a site that has its own.
+* The command when approved is in the implementation tracker, CM8-411. A rollback has not been written or tried; prove it on the test site first. The receipt to keep: migrate, build and smoke output, and the native configuration before and after.
+
