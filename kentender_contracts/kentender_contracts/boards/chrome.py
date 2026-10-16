@@ -96,7 +96,7 @@ TAB_OF_COMMAND = {
 	"DecideContractChange": "Obligations", "ActivateContractChange": "Obligations", "RecordWarrantyReturn": "Obligations", "ReconcileWarrantyReturn": "Obligations", "VerifyContractRemedy": "Obligations",
 	"PrepareContractAdjustment": "Obligations", "DecideContractAdjustment": "Obligations", "RequestSecurityClaim": "Obligations", "DecideSecurityClaim": "Obligations", "RecordSecurityClaimCommunication": "Obligations",
 	"RecordSecurityClaimOutcome": "Obligations", "RecordSecurityAction": "Obligations", "RequestContractTermination": "Obligations", "DecideContractTermination": "Obligations", "RecordTerminationNotice": "Obligations",
-	"RecordTerminationEffect": "Obligations", "PrepareTerminationSettlement": "Obligations", "CompleteTerminationSettlement": "Obligations", "SubmitContractReport": "Obligations", "RecordContractAwardPublication": "Obligations",
+	"RecordTerminationEffect": "Obligations", "PrepareTerminationSettlement": "Obligations", "CompleteTerminationSettlement": "Obligations", "SubmitContractReport": "Obligations", "RecordContractAwardPublication": "Obligations", "ResolvePublicationRequirement": "Obligations",
 	"RecordContractReportSubmission": "Obligations",
 	"IssueCompletionCertificate": "Obligations", "PrepareContractCloseout": "Obligations", "SignContractCloseout": "Obligations", "RestoreContractOperation": "Obligations", "SignFinalContractAcceptance": "Obligations",
 	"ConfirmCertificateDelivery": "Obligations", "ReturnContractCloseout": "Obligations", "PrepareContractClosureCorrection": "Obligations", "ReopenContractCloseout": "Obligations", "ConfirmContractClosure": "Obligations",

@@ -42,6 +42,8 @@ NOTIFY: dict[str, str] = {
 	"RecordTerminationNotice": "Termination request ready",
 	"RequestContractTermination": "Termination request ready",
 	"SubmitContractReport": "Reporting/publication duty triggered",
+	"RecordContractAwardPublication": "Reporting/publication duty triggered",
+	"ResolvePublicationRequirement": "Reporting/publication duty triggered",
 	"SignFinalContractAcceptance": "Required final acceptance / completion certificate ready",
 	"IssueCompletionCertificate": "Required final acceptance / completion certificate ready",
 	"ConfirmCertificateDelivery": "Required final acceptance / completion certificate ready",

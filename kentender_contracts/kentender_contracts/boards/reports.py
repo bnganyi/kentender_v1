@@ -60,18 +60,30 @@ def progress(ctx: Context, report) -> dict[str, Any]:
 
 
 def publication(ctx: Context, row) -> dict[str, Any]:
-	"""D15-L: the publication requirement needs review. The trigger and the separate fact are shown as they happened; the deadline is not confirmed and no countdown is invented."""
+	"""D15-L: the publication duty. The trigger and the separate fact are shown as they happened; the deadline is not confirmed and no countdown is invented. Where the requirement is verified the person who
+	prepares the contract records the publication as it happened (channel, day, evidence); where it is not, their step is to record the source for the legal owner (FU-CM-108: Duties plus actionable tasks)."""
+	from kentender_contracts.services import preflight
+
 	found = obligations.detail(row)
 	events = found["events"]
 	award = next((e for e in events if e["event"] == "Award decision recorded"), events[0])
 	signed = next((e for e in events if e["event"] == "Contract signed"), None)
-	b = chrome.base(ctx, "D15-L", d="D15", name="Contract reporting", title="Publication requirement needs review", tab="Obligations", subj="Publication obligation",
-		next=kit.blk("The applicable publication deadline needs confirmation.", ctx.name(ctx.user), ["Record source evidence", "View source event", "View signing record"]),
-		regions=[kit.R("Obligation", kit.r(["Trigger", f"Award decision recorded {when(award['at'])}"], ["Separate fact", f"Contract signed {when(signed['at'])}" if signed else "Contract not yet signed"],
-			["Destinations", found.get("destinations", "")], ["Deadline", "Not confirmed — set by current directions"], ["Responsible review", "Procurement/reporting owner"]))], ev=["Award decision event", "Signing record"])
-	b["st"] = "Needs review"
+	published = found.get("published")
+	ready = not preflight.rules(ctx.doc, "RecordContractAwardPublication")
+	acts = ctx.can_prepare and row.state != "Satisfied"
+	facts = [["Trigger", f"Award decision recorded {when(award['at'])}"], ["Separate fact", f"Contract signed {when(signed['at'])}" if signed else "Contract not yet signed"], ["Destinations", found.get("destinations", "")],
+		["Deadline", "Not confirmed — set by current directions"], ["Responsible review", "Procurement/reporting owner"]]
+	if published:
+		facts.append(["Published", f"{formatdate(published['on'], 'd MMM yyyy')} ({published['channel']})"])
+	b = chrome.base(ctx, "D15-L", d="D15", name="Contract reporting", title="Award publication" if ready or published else "Publication requirement needs review", tab="Obligations", subj="Publication obligation",
+		next=chrome.next_block(ctx), regions=[kit.R("Obligation", kit.r(*facts))], ev=["Award decision event", "Signing record"],
+		p="Record publication" if acts and ready else "Record source evidence" if acts else "", s2=["Record source evidence"] if acts and ready else [])
+	b["st"] = "Published" if published else "Ready to record" if ready else "Needs review"
 	b["actions"]["Record source evidence"] = kit.dialog("evidence")
+	b["actions"]["Record publication"] = kit.dialog("publish")
 	b["actions"]["View source event"] = b["actions"]["View signing record"] = kit.tab("History")
 	b["dialogs"]["evidence"] = kit.dlg("Record source evidence", [kit.fl(kit.tx("Source reference", "", "reference"), kit.dt("Dated", "", "dated"), kit.file("Copy", "", "copy"), kit.ta("Notes", "", "notes"))],
 		"Save evidence", command="RecordLegalSourceEvidence", args={"obligation": row.name})
+	b["dialogs"]["publish"] = kit.dlg("Record publication", [kit.fl(kit.tx("Channel", "", "channel"), kit.dt("Published on", "", "published_on"), kit.file("Evidence of publication", "", "evidence"))],
+		"Save publication", command="RecordContractAwardPublication", args={"obligation": row.name})
 	return b

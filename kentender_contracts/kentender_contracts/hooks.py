@@ -145,7 +145,7 @@ required_apps = ["erpnext", "kentender_core"]
 
 scheduler_events = {
 	"hourly": ["kentender_contracts.services.formation_end.sweep_signing_windows"],
-	"daily": ["kentender_contracts.services.reporting.generate_scheduled"],
+	"daily": ["kentender_contracts.services.reporting.generate_scheduled", "kentender_contracts.services.obligations.reconcile_all"],
 }
 
 # scheduler_events = {

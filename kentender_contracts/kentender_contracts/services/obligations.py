@@ -61,6 +61,38 @@ def add_event(row, event: str, at) -> None:
 
 
 # -- publication --------------------------------------------------------------------------------------------------------------------------
+PUBLISH = "RecordContractAwardPublication"
+RESOLVE = "ResolvePublicationRequirement"
+
+
+def reconcile_tasks(case: str) -> None:
+	"""The publication duty's work, kept true to what someone can do now (the Project Owner's decision of 16 October 2026, FU-CM-108: "Use Duties plus actionable tasks. Duties preserves the obligation and
+	evidence. Create a task when someone can act; while requirements are unresolved, give the responsible owner a resolution task rather than an endlessly blocked publishing task").
+
+	The duty itself stays in the contract's Duties with its evidence. Where the profile can answer (the rule is verified) the head has a task to record the publication; where it cannot, the head has a task
+	to put the legal source in front of the legal owner, which ends when source evidence is recorded and leaves the waiting item. Safe to run again: an existing task is left as it is."""
+	row = get(case, "Publication", "publication")
+	if row is None or row.state == "Satisfied":
+		return
+	heads = work.holders(work.HOP)
+	if not preflight.rules(frappe.get_doc(CASE, case), PUBLISH):  # someone can act: the requirement is verified
+		work.finish(case, command=RESOLVE, subject="publication", state="Superseded")
+		work.finish(case, command=work.waiting_command(PUBLISH, "legal"), subject="publication", state="Superseded")
+		work.assign(case, PUBLISH, "Record the award publication.", "publication", 1, heads, role=work.HOP)
+	else:
+		work.finish(case, command=PUBLISH, subject="publication", state="Superseded", exact=True)  # a requirement no longer verified leaves nothing the head could do; its waiting item stays
+		if not detail(row)["evidence"]:  # nobody has yet put the source in front of the legal owner
+			work.assign(case, RESOLVE, "Resolve the publication requirement: the legal and reporting owner must confirm it.", "publication", 1, heads, role=work.HOP)
+
+
+def reconcile_all() -> int:
+	"""Daily: a requirement that was unresolved when its duty opened may have been verified since; its task then appears. Returns how many duties were looked at."""
+	cases = sorted(set(frappe.get_all(OBL, filters={"kind": "Publication", "state": ["not in", ["Satisfied", "Superseded"]]}, pluck="contract_case")))
+	for case in cases:
+		reconcile_tasks(case)
+	return len(cases)
+
+
 def on_award_received(case: str, package: dict[str, Any]) -> None:
 	"""The award decision arrived: publication is an obligation whose deadline and channel nobody can state yet, so it is opened for review now with the decision's own instant."""
 	notices = (package.get("notice_batch") or {}).get("notices") or []
@@ -68,6 +100,7 @@ def on_award_received(case: str, package: dict[str, Any]) -> None:
 	row = open_obligation(case, kind="Publication", rule="CM-R-13", trigger_event="Award decision recorded", trigger_at=at, subject="publication",
 		facts={"destinations": "Notice boards; website if available; report to PPRA"})
 	events.record(case, "Publication obligation opened", "", "The publication requirement needs review; no deadline has been confirmed.", obligation=row.name)
+	reconcile_tasks(case)
 
 
 def on_signed(case: str, at) -> None:
@@ -95,6 +128,7 @@ def record_source_evidence(case: str, *, obligation: str, reference: str, dated:
 		found = detail(row)
 		found["evidence"].append({"reference": cstr(reference).strip(), "dated": str(day), "copy": cstr(copy).strip(), "notes": cstr(notes).strip(), "by": actor, "at": str(clock.now()), "status": "Proposed for the legal owner's review"})
 		records.update(row, evidence_json=records.dumps(found), record_version=cint(row.record_version) + 1)
+		work.finish(case, command=RESOLVE, subject="publication", actor=actor)  # the resolution task is done: the source is now with the legal owner
 		work.assign(case, work.waiting_command("RecordContractAwardPublication", "legal"), "Waiting for the legal and reporting owner to confirm the requirement.", "publication", 1, work.holders(work.HOP), role=work.HOP, state="Waiting")
 		events.record(case, "Legal source evidence recorded", actor, f"Source evidence {cstr(reference).strip()} was recorded for the legal owner's review.", obligation=row.name)
 		records.bump(doc)

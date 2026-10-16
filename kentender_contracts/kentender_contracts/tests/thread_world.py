@@ -158,7 +158,7 @@ def package_particulars(people: dict[str, str], services: bool = False, item: st
 	return {"agreement_date": "2027-07-02", "entity_signatory": people["amina"], "item_mapping": {"L1": item or world.ITEM_FA, **({"L2": world.ITEM_SERVICE} if services else {})}, "native_supplier": world.SUPPLIER, "asset_location": world.LOCATION}
 
 
-def receive(people: dict[str, str], *, contract_id: str = "CM-TEST-0001", security_required: bool = False, outside_signing: bool = False, services: bool = False, award_case: str = "", advance: bool = False) -> dict:
+def receive(people: dict[str, str], *, contract_id: str = "CM-TEST-0001", security_required: bool = False, outside_signing: bool = False, services: bool = False, award_case: str = "", advance: bool = False, publication_open: bool = False) -> dict:
 	"""Receive the demonstration Award package. With `security_required` the issued terms require a performance security, and the synthetic provider answers for that variant; `services` is the
 	goods-plus-service package (ten laptops and a training session)."""
 	from kentender_contracts.services import formation
@@ -169,6 +169,25 @@ def receive(people: dict[str, str], *, contract_id: str = "CM-TEST-0001", securi
 	return formation.receive_award_package(package, handoff=sources.source_handoff(package["award_case"], security_required=security_required, outside_signing=outside_signing, services=services, advance=advance), managing_unit=unit(),
 		idempotency_key=f"receive-{contract_id}", actor="Administrator", contract_id=contract_id)
 
+	if not publication_open:
+		publish(people, out["contract"])
+		out = {**out, "record_version": int(frappe.db.get_value("Contract Case", out["contract"], "record_version"))}  # recording it advanced the revision the caller holds
+	return out
+
+
+def publish(people: dict[str, str], case: str) -> None:
+	"""The head records the award's publication (notice board, with a photograph) as a diligent head does early. The head of procurement has a task to record it (FU-CM-108), the oldest on their day, so a flow that
+	does not test the publication duty has it done; a test of the duty itself passes `publication_open`. A profile that cannot answer refuses it, and then there is nothing for the head to record."""
+	from kentender_contracts.services import errors, obligations
+
+	row = obligations.get(case, "Publication", "publication")
+	if row is None or row.state == "Satisfied":
+		return
+	try:
+		obligations.record_publication(case, obligation=row.name, channel="Notice board", published_on=CLOCK[:10], evidence=[{"label": "Notice board photograph", "file": "/private/files/publication.jpg"}],
+			expected_version=int(frappe.db.get_value("Contract Case", case, "record_version")), idempotency_key=f"publish-{case}", actor=people["charles"])
+	except errors.ContractError:
+		return
 
 def evidence_file(owner: str, label: str) -> str:
 	"""A private labelled PDF uploaded by `owner` (the person's own upload is the only file a command accepts as evidence). Removed with the world."""
@@ -206,11 +225,11 @@ class Thread:
 	def version(self) -> int:
 		return int(frappe.db.get_value("Contract Case", self.case, "record_version"))
 
-	def active(self) -> str:
-		"""Receive, prepare, send, both signatures: an Active contract with its native order."""
+	def active(self, publication_open: bool = False) -> str:
+		"""Receive, prepare, send, both signatures: an Active contract with its native order. `publication_open` keeps the award's publication duty open (see `receive`)."""
 		from kentender_contracts.services import formation
 
-		out = receive(self.p, contract_id=self.contract_id, services=self.services, award_case=self.award_case, advance=self.advance, security_required=self.security)
+		out = receive(self.p, contract_id=self.contract_id, services=self.services, award_case=self.award_case, advance=self.advance, security_required=self.security, publication_open=publication_open)
 		self.case = out["contract"]
 		formation.save_particulars(self.case, expected_version=self.version(), idempotency_key=self.key("particulars"), actor=self.p["brian"], values=package_particulars(self.p, self.services, self.item))
 		if self.security:  # the performance security the issued terms require is recorded and verified before the agreement is sent

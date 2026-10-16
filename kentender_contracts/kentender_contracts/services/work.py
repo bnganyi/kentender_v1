@@ -86,7 +86,7 @@ def waiting_command(command: str, qualifier: str) -> str:
 	return f"{command}:waiting:{qualifier}"
 
 
-def finish(case: str, *, command: str | None = None, subject: str | None = None, version: int | None = None, state: str = "Done", actor: str = "", holder: str | None = None) -> int:
+def finish(case: str, *, command: str | None = None, subject: str | None = None, version: int | None = None, state: str = "Done", actor: str = "", holder: str | None = None, exact: bool = False) -> int:
 	"""Close the matching live tasks. `state` is Done (the obligation was met) or Superseded (it no longer applies). `holder` limits it to one person's own obligation (each member
 	declares for themselves: one member's declaration does not close another's)."""
 	filters: dict[str, Any] = {"contract_case": case, "state": ["in", list(LIVE)]}
@@ -98,8 +98,10 @@ def finish(case: str, *, command: str | None = None, subject: str | None = None,
 		filters["subject_version"] = version
 	if command is None:
 		names = frappe.get_all(TASK, filters=filters, pluck="name")
-	else:  # the obligation itself, and the sender's "waiting" items that were raised for it (`waiting`)
-		names = frappe.get_all(TASK, filters={**filters, "command": command}, pluck="name") + frappe.get_all(TASK, filters={**filters, "command": ["like", f"{command}:waiting:%"]}, pluck="name")
+	else:  # the obligation itself, and the sender's "waiting" items that were raised for it (`waiting`), unless `exact`: the obligation alone
+		names = frappe.get_all(TASK, filters={**filters, "command": command}, pluck="name")
+		if not exact:
+			names += frappe.get_all(TASK, filters={**filters, "command": ["like", f"{command}:waiting:%"]}, pluck="name")
 	count = 0
 	for name in names:
 		doc = frappe.get_doc(TASK, name)

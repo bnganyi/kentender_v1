@@ -280,15 +280,9 @@ class TestTermination(OpsBoards):
 
 
 class TestReports(OpsBoards):
-	def test_the_monthly_report_and_the_publication_requirement(self):
-		publication = self.screen("charles", "D15-L", tab="Obligations", subject=("publication",))
-		self.assertEqual((publication["st"], publication["next"]["k"], publication["next"]["h"]), ("Needs review", "blk", "The applicable publication deadline needs confirmation."))
-		self.assertEqual(publication["next"]["fixes"], ["Record source evidence", "View source event", "View signing record"])
-		items = publication["regions"][0]["b"][0]["items"]
-		self.assertEqual(items[0], ["Trigger", "Award decision recorded 17 Jun 2027, 10:00 EAT"])
-		self.assertEqual(items[3], ["Deadline", "Not confirmed — set by current directions"])
-		self.assertEqual(publication["dialogs"]["evidence"]["p"], "Save evidence")
-		self.accepted(10, on="2027-07-19 10:00:00")
+	def test_the_monthly_report(self):
+		# the publication duty's own board, in both of its states, is `test_cm_publication_tasks`; here the head's day is the monthly report
+		self.accepted(10, on=D("2027-07-19 10:00:00"))
 		invoice = self.t.claim("INV-R-1", 8)["invoice"]
 		self.t.certify_invoice(invoice)
 		self.t.pay(invoice, "RPT-BANK-1")

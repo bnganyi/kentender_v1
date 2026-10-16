@@ -43,7 +43,7 @@ class ReportCase(ContractCase):
 		self.addCleanup(lambda: (setattr(frappe.flags, "kt_cm_dispatch_fault", None), self.env.__exit__(None, None, None)))
 		self.p = self.people
 		self.t = tw.Thread(self.p, tag=self.id().rsplit(".", 1)[-1][:24])
-		self.case = self.t.active()
+		self.case = self.t.active(publication_open=True)
 
 	def delivered(self):
 		"""Ten laptops ordered: eight accepted, two rejected and replaced; eight invoiced, certified and paid (KES 800,000)."""
@@ -88,8 +88,9 @@ class TestObligations(ReportCase):
 		self.assertEqual(events_, ["Award decision recorded", "Contract signed"])  # the signing is a separate fact and does not replace the award event
 		self.assertEqual(obligations.detail(row)["events"][0]["at"], "2027-06-17 10:00:00")
 
-	def test_the_duty_is_review_work_in_the_contracts_duties_without_a_countdown_or_a_standing_task(self):
-		self.assertFalse([t for t in work.live(self.case) if t["command"] == "RecordContractAwardPublication"])  # a blocked item that never clears would sit on the head's work for ever
+	def test_the_duty_is_in_the_contracts_duties_without_a_countdown_and_the_head_has_a_task_only_where_the_profile_can_answer(self):
+		self.assertEqual({t["title"] for t in work.live(self.case) if t["command"] == "RecordContractAwardPublication"}, {"Record the award publication."})  # the test profile can answer: someone can act (FU-CM-108)
+		self.assertFalse([t for t in work.live(self.case) if t["command"] == "ResolvePublicationRequirement"])
 		from kentender_contracts.boards import router
 
 		board = router.board_for(self.case, self.p["charles"], tab="Obligations")

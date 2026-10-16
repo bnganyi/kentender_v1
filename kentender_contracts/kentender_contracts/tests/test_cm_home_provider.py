@@ -119,8 +119,8 @@ class TestComingUp(HomeCase):
 
 class TestTheBell(HomeCase):
 	def test_a_step_that_becomes_the_person_s_turn_raises_one_alert_linking_to_its_own_tab(self):
-		alerts = self.bells("charles")
-		self.assertEqual([a["subject"] for a in alerts], ["Review the contract and send it for signature."])
+		alerts = [a for a in self.bells("charles") if a["subject"] == "Review the contract and send it for signature."]  # the publication duty also alerts the head at the award (FU-CM-108); this test is about the signature step
+		self.assertEqual(len(alerts), 1)
 		self.assertEqual(alerts[0]["link"], f"/desk/contracts/{self.case}/agreement")
 		self.assertFalse(alerts[0]["link"].startswith("/app/contract-case"), "never a Desk form")
 

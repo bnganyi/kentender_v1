@@ -161,7 +161,7 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 
 _ISSUE_COMMANDS = ("SendContractCorrespondence", "ReplyContractCorrespondence", "ResolveContractIssue", "RecordWarrantyReturn", "ReconcileWarrantyReturn", "VerifyContractRemedy")
 _OBLIGATION_COMMANDS = ("PrepareContractAdjustment", "DecideContractAdjustment", "RequestSecurityClaim", "DecideSecurityClaim", "RecordSecurityClaimCommunication", "RecordSecurityAction", "RequestContractTermination",
-	"DecideContractTermination", "RecordTerminationNotice", "RecordTerminationEffect", "PrepareTerminationSettlement", "CompleteTerminationSettlement", "SubmitContractReport")
+	"DecideContractTermination", "RecordTerminationNotice", "RecordTerminationEffect", "PrepareTerminationSettlement", "CompleteTerminationSettlement", "SubmitContractReport", "ResolvePublicationRequirement", "RecordContractAwardPublication")
 
 
 def _issue_board(ctx: Context, lead: dict[str, Any]):
@@ -199,6 +199,9 @@ def _obligation_board(ctx: Context, lead: dict[str, Any]):
 		row = termination.get(ctx.case, _number(subject))
 		return {"RequestContractTermination": lambda: termination_boards.request(ctx, correcting=row), "DecideContractTermination": lambda: termination_boards.decide(ctx, row), "RecordTerminationNotice": lambda: termination_boards.notice(ctx, row),
 			"RecordTerminationEffect": lambda: termination_boards.effect(ctx, row), "PrepareTerminationSettlement": lambda: termination_boards.prepare(ctx, row), "CompleteTerminationSettlement": lambda: termination_boards.complete(ctx, row)}[command]()
+	if command in ("ResolvePublicationRequirement", "RecordContractAwardPublication"):
+		row = obligation_service.get(ctx.case, "Publication", "publication")
+		return reports.publication(ctx, row) if row is not None else None
 	return reports.progress(ctx, reporting.get(subject.split(" ", 1)[1]))
 
 
