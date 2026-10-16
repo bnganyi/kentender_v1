@@ -156,6 +156,9 @@ kt_tender_evaluation_portal = ["kentender_procurement.bid_evaluation.portal.reso
 # Award is the integrator of an award's contract source material (CM-CHG-001 v0.8 section 19.4; plan D20): it answers `S<n>-<award case>` through the owners' published seams.
 kt_contract_source_provider = ["kentender_procurement.award.services.contract_sources.service"]
 
+# Award's answer to Budget about which reservations an award is allocated to (AWD-CHG-001 v0.7 section 7.1): kentender_core.services.award_funding_verification.
+kt_award_funding_verification = ["kentender_procurement.award.services.funding_verification.service"]
+
 kt_award_source_providers = [
 	"kentender_procurement.award.services.sources.evaluation_provider",
 	"kentender_procurement.award.test_services.sources.synthetic_provider",

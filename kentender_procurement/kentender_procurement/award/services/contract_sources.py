@@ -164,24 +164,36 @@ def _s7(doc):
 
 
 def _s9(doc):
-	from kentender_procurement.tenders.services import award_seam
+	"""S9, funding lineage: the retained `AwardFundingAllocation.v1` of the committed Award decision (AWD-CHG-001 v0.7 §7.1), with each reservation's Budget identity from Budget's published read. The
+	content is stable: it carries identities and awarded amounts, never a balance that moves, so a later conversion or hold does not read as 'a source that changed after the award'."""
+	from kentender_procurement.award.services import funding_allocation
 
-	reservations = award_seam.funding_reservations(doc.tender)
 	decision = state.committed_decision(doc)
-	if not reservations:
-		raise Unavailable("The tender has no recorded budget reservation.")
-	if len(reservations) > 1:
-		raise Unavailable(f"The award draws on {len(reservations)} reservations ({', '.join(reservations)}) and no funding owner has allocated the awarded price between them.")
+	if not decision or decision.outcome != "Award":
+		raise Unavailable("The award has no committed decision to allocate.")
 	try:
 		from kentender_budget.services.budget_downstream_contracts import get_funding_lineage
 	except ImportError as exc:
 		raise Unavailable("Budget is not installed.") from exc
-	rows = get_funding_lineage(reservation=reservations[0]).get("rows") or []
-	if not rows:
-		raise Unavailable(f"Budget does not hold the reservation {reservations[0]}.")
-	row = rows[0]
-	return _json({"allocations": [{"reservation": row["reservation"]["id"], "source_allocation": row["reservation"].get("plan_source_allocation"), "budget_line": row["budget_line"],
-		"amount": float(Decimal(cstr(decision.evaluated_amount)))}], "lineage": rows}), "application/json", cstr(row.get("budget_version_at_creation"))
+	try:
+		held = funding_allocation.current(doc) or funding_allocation.retain(doc, decision)
+	except funding_allocation.FundingIssue as exc:
+		raise Unavailable(exc.reason) from exc
+	except funding_allocation.FundingUnavailable as exc:
+		raise Unavailable(cstr(exc)) from exc
+	payload = funding_allocation.payload_of(held)
+	allocations, lineage = [], []
+	for row in payload["allocations"]:
+		rows = get_funding_lineage(reservation=row["reservation"]).get("rows") or []
+		if not rows:
+			raise Unavailable(f"Budget does not hold the reservation {row['reservation']}.")
+		budget = rows[0]
+		allocations.append({"reservation": row["reservation"], "source_allocation": row["plan_source_allocation"], "budget_line": budget["budget_line"], "amount": row["amount"],
+			"drawdown_line": row["drawdown_line"], "source_organisation_unit": row["source_organisation_unit"], "quantity": row["quantity"]})
+		lineage.append({"budget": budget["budget"], "budget_version_at_creation": budget["budget_version_at_creation"], "budget_line": budget["budget_line"],
+			"reservation": {key: budget["reservation"].get(key) for key in ("id", "code", "plan_item", "plan_source_allocation", "original_amount")}})
+	return _json({"award": doc.name, "decision": held.decision, "allocation": {"id": held.name, "version": held.version, "digest": held.digest, "schema": payload["schema"]},
+		"total": payload["supported_total"], "currency": payload["currency"], "allocations": allocations, "lineage": lineage}), "application/json", cstr(held.version)
 
 
 def _s10(doc):

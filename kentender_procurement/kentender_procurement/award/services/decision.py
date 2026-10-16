@@ -26,7 +26,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.award.services import checks, clock, events, guards, issues, notices, notify, records, state
+from kentender_procurement.award.services import checks, clock, events, funding_allocation, guards, issues, notices, notify, records, state
 from kentender_procurement.award.services.errors import Guards, fail, invalid
 
 OUTCOMES = ("Award", "No award", "Return for correction")
@@ -63,6 +63,7 @@ def apply_award(doc, opinion, *, reason: str, user: str, kind: str = "Initial", 
 	records.update(c, decision=decision.name)
 	events.record(doc, decision)
 	records.bump(doc, decision_status="Award recorded", current_decision=decision.name, outcome="")
+	funding_allocation.retain(state.reload(doc), decision)  # AWD-CHG-001 v0.7 §7.1: the allocation is retained with the committed decision, in the same transaction
 	batch = None
 	if authorise_batch:
 		batch = notices.prepare_batch(doc, decision, kind=notice_kind)

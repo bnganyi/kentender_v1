@@ -30,7 +30,7 @@ JOURNAL = "Award Command Journal"
 DOCTYPES = (
 	"Award Case", "Award Source Report", "Award Decision Cycle", "Award Professional Opinion", "Award Decision", "Award Decision Event",
 	"Award Notice Batch", "Award Notice", "Award Supplier Response", "Award Issue", "Award Correspondence", "Award Clock",
-	"Award Contracting Package", "Award Command Journal", "Award Test Contracting Inbox",
+	"Award Contracting Package", "Award Funding Allocation", "Award Command Journal", "Award Test Contracting Inbox",
 )
 
 

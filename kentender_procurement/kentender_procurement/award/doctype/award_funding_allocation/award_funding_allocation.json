@@ -1,0 +1,140 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-16 15:00:00.000000",
+ "description": "AWD-CHG-001 v0.7 section 7.1: the immutable AwardFundingAllocation.v1 for the exact committed Award decision version and supported price. A read-only source calculation, not a reservation or an approval.",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "allocation_id",
+  "award_case",
+  "cycle",
+  "decision",
+  "decision_version",
+  "version",
+  "status",
+  "currency",
+  "supported_total",
+  "payload_json",
+  "digest",
+  "superseded_by",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "allocation_id",
+   "label": "Allocation ID",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "award_case",
+   "label": "Award case",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "cycle",
+   "label": "Cycle",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "decision",
+   "label": "Decision",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "search_index": 1
+  },
+  {
+   "fieldname": "decision_version",
+   "label": "Decision version",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "version",
+   "label": "Version",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Current\nSuperseded",
+   "reqd": 1
+  },
+  {
+   "fieldname": "currency",
+   "label": "Currency",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "supported_total",
+   "label": "Supported total",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "payload_json",
+   "label": "Payload JSON",
+   "read_only": 1,
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "digest",
+   "label": "Digest",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "search_index": 1
+  },
+  {
+   "fieldname": "superseded_by",
+   "label": "Superseded by",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "read_only": 1,
+   "fieldtype": "Data"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-16 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Award",
+ "name": "Award Funding Allocation",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "autoname": "field:allocation_id"
+}

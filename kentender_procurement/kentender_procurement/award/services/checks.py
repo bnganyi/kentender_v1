@@ -28,6 +28,7 @@ STATUS_UNAVAILABLE = "Status unavailable"
 RULES_UNVERIFIED = "Rules unverified"
 VALIDITY_EXPIRED = "Validity expired"
 FUNDING = "Funding restriction"
+FUNDING_ALLOCATION = "Funding allocation"
 
 
 def source_problem(snap: dict[str, Any]) -> str:
@@ -99,9 +100,22 @@ def funding(doc) -> dict[str, Any]:
 
 def funding_stop(doc) -> str:
 	""""" when funding is confirmed sufficient now; else why a positive step
-	must not proceed: "unknown" (Budget unavailable) or "restricted"."""
+	must not proceed: "unknown" (Budget or an owner of a source unavailable), "restricted"
+	(a shortfall) or "allocation" (the awarded price cannot be traced to its sources, or the
+	retained allocation no longer matches them: AWD-CHG-001 v0.7 §7.1)."""
 	f = funding(doc)
-	return "unknown" if not f["known"] else "restricted" if f["restricted"] else ""
+	if not f["known"]:
+		return "unknown"
+	if f["restricted"]:
+		return "restricted"
+	standing = allocation_standing(doc)
+	return "unknown" if standing["state"] == "Unavailable" else "allocation" if standing["state"] in ("Issue", "Changed") else ""
+
+
+def allocation_standing(doc) -> dict[str, Any]:
+	from kentender_procurement.award.services import funding_allocation
+
+	return funding_allocation.standing(doc)
 
 
 def sync(doc) -> dict[str, Any]:
@@ -149,6 +163,17 @@ def sync(doc) -> dict[str, Any]:
 		else:
 			issues.resolve_automatic(doc, subtype=FUNDING, note="Budget now confirms the funding.")
 	out["funding"] = fund
+	if rep and fund["known"] and not fund["restricted"] and doc.stage in ("Decision", "Notices", "Waiting to proceed"):
+		standing = allocation_standing(doc)
+		out["allocation"] = standing
+		if standing["state"] in ("Issue", "Changed"):
+			if not issues.open_issues(doc, subtype=FUNDING_ALLOCATION):
+				number = sequence.next_count(issues.ISSUE, {"award_case": doc.name, "subtype": FUNDING_ALLOCATION})
+				issues.open_issue(doc, source_event=f"funding-allocation:{rep.name}:{number}", issue_type="Funding", subtype=FUNDING_ALLOCATION,
+					title="The awarded items could not be matched to their funding sources. Procurement must resolve the source details.", reason=cstr(standing.get("reason")),
+					detail={"owner": "Head of Procurement function", "allocation": standing})
+		elif standing["state"] in ("Current", "Absent"):
+			issues.resolve_automatic(doc, subtype=FUNDING_ALLOCATION, note="The awarded price can again be traced to its funding sources.")
 	return out
 
 

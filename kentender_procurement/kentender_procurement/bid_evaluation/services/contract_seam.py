@@ -51,6 +51,16 @@ def accepted_offer(*, report: str, bid: str) -> dict[str, Any]:
 		"clarifications": clarifications}
 
 
+def definition_identity(*, report: str) -> dict[str, Any]:
+	"""Which published bid definition the evaluation (and so the accepted offer) was made against: the Tender and the definition version and digest, from the Evaluation Case of the frozen report. Award uses it to
+	trace the price rows to their source items (AWD-CHG-001 v0.7 §7.1); nothing is inferred from the newest definition."""
+	doc = _report(report)
+	case = frappe.db.get_value("Evaluation Case", doc.evaluation_case, ["tender", "definition_id", "definition_version", "definition_digest"], as_dict=True)
+	if not case or not case.definition_version:
+		raise Unavailable("The evaluation does not name the bid definition it was made against.")
+	return {"tender": case.tender, "definition_id": cstr(case.definition_id), "definition_version": int(case.definition_version), "definition_digest": cstr(case.definition_digest)}
+
+
 def awarded_prices(*, report: str, bid: str) -> dict[str, Any]:
 	"""S3: the priced lines of the accepted offer, as the evaluation froze them: quantity, unit price before tax, tax and the line total, with the evaluated arithmetic."""
 	doc = _report(report)

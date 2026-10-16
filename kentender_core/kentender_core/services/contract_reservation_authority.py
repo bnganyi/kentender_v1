@@ -96,13 +96,21 @@ def installed(*authorities: Any) -> Iterator[None]:
 		frappe.flags[FLAG] = previous
 
 
-def awarded(contract: str, *reservations: str):
-	"""For a seed that stands in for Contract Management: within the block, `contract` is awarded exactly these reservations and no other contract is known."""
-	return installed(Static({contract: reservations}))
+@contextmanager
+def awarded(contract: str, *reservations: str) -> Iterator[None]:
+	"""For a seed that stands in for Contract Management and Award: within the block, `contract` is awarded exactly these reservations (its agreement names them and the award's owner verifies them) and no other
+	contract is known."""
+	from kentender_core.services import award_funding_verification as verification
+
+	with installed(Static({contract: reservations})), verification.verified_for(contract, *reservations):
+		yield
 
 
 def permit_all(testcase) -> None:
-	"""Install `PermitAll` for one test case and put the previous setting back afterwards."""
+	"""Install `PermitAll` for one test case, here and on the award verification seam, and put the previous settings back afterwards."""
+	from kentender_core.services import award_funding_verification as verification
+
 	previous = frappe.flags.get(FLAG)
 	frappe.flags[FLAG] = [PermitAll()]
 	testcase.addCleanup(lambda: frappe.flags.update({FLAG: previous}))
+	verification.permit_all(testcase)

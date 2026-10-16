@@ -8,7 +8,7 @@ package carried into a commitment; later phases ask it to adjust and to close. E
 object (or None to decline, for example outside a simulation environment):
 
     lookup(*, identity)                                  -> {"reference", "amount"} | None
-    convert(*, identity, contract, allocations, amount)  -> {"reference", "amount"}   (raises `Refused` when the owner definitively refuses)
+    convert(*, identity, contract, allocations, amount, lineage=None) -> {"reference", "amount"}   (the whole allocation of one award, atomically; raises `Refused` when the owner definitively refuses)
     adjust(*, identity, contract, allocations, event_id, event_type)
                                                          -> {"reference", "amount", "before", "after"}   (optional; each allocation is `{"reservation", "new_total"}`, the supported total of
                                                             that commitment after a lawful variation or termination; raises `Refused`. A commitment already Closed accepts no adjustment from the
@@ -71,11 +71,18 @@ def lookup(identity: str) -> dict[str, Any] | None:
 	return None
 
 
-def convert(identity: str, *, contract: str, allocations: list[dict[str, Any]], amount: float) -> dict[str, Any]:
+def convert(identity: str, *, contract: str, allocations: list[dict[str, Any]], amount: float, lineage: dict[str, Any] | None = None) -> dict[str, Any]:
+	"""Ask the funding owner to convert the whole allocation of one award, once. `lineage` is what Contract Management relays exactly as Award supplied it (the award case and decision, the allocation and its
+	digest, the package digest and the agreement version); the funding owner has the award's owner verify it (BUD-CHG-001 v1.16 BUD-BR-036). A provider that does not take a lineage is called without it."""
+	import inspect
+
 	chosen = providers()
 	if not chosen:
 		raise Unavailable("No funding owner is installed on this site.")
-	return chosen[-1].convert(identity=identity, contract=contract, allocations=allocations, amount=amount)
+	provider = chosen[-1]
+	takes = "lineage" in inspect.signature(provider.convert).parameters
+	extra = {"lineage": lineage} if takes else {}
+	return provider.convert(identity=identity, contract=contract, allocations=allocations, amount=amount, **extra)
 
 
 def adjust(identity: str, *, contract: str, allocations: list[dict[str, Any]], event_id: str, event_type: str) -> dict[str, Any]:

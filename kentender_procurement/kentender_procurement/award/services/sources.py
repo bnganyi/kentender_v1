@@ -159,6 +159,26 @@ class EvaluationSource:
 			return {"known": False, "reason": cstr(exc)[:140] or "Budget did not answer."}
 		return {"known": True, "available": str(total.quantize(Decimal("0.01"))), "reservations": codes, "source": "Budget"}
 
+	def allocation_inputs(self, tender: str, report: str, bid: str) -> dict[str, Any]:
+		"""What the Award funding allocation (AWD-CHG-001 v0.7 §7.1) is derived from, each read from its owner's published seam: the frozen evaluation's awarded prices and the definition it was made against
+		(Bid Evaluation), the Tender's mapping of price rows to source items, drawdown lines and reservations (Tenders), and the Requisition's own current facts (Requisitions). Nothing is inferred."""
+		from kentender_procurement.bid_evaluation.services import contract_seam
+		from kentender_procurement.procurement_requisitions.services import source_seam
+		from kentender_procurement.tenders.services import award_seam
+
+		try:
+			prices = contract_seam.awarded_prices(report=report, bid=bid)
+			identity = contract_seam.definition_identity(report=report)
+			mapped = award_seam.funding_sources(tender, identity["definition_version"])
+			requisition = (mapped or {}).get("requisition") or {}
+			authoritative = source_seam.authorised_sources(requisition=requisition.get("id"), version=requisition.get("version")) if requisition else None
+		except contract_seam.Unavailable as exc:
+			raise SourceUnavailable(str(exc)) from exc
+		except Exception as exc:
+			frappe.log_error(title="Award funding allocation inputs unavailable")
+			raise SourceUnavailable(cstr(exc)[:200] or "An owner of the award's sources did not answer.") from exc
+		return {"prices": prices, "identity": identity, "mapped": mapped or {}, "authoritative": authoritative}
+
 	# -- bidders and suppliers (AWD-IF-03) ---------------------------------------
 	def audience(self, tender: str) -> list[dict[str, Any]]:
 		from kentender_procurement.bid_submission.services import award_gateway

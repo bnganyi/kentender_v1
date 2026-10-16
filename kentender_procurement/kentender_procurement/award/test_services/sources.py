@@ -20,6 +20,7 @@ from __future__ import annotations
 import copy
 from typing import Any
 
+from decimal import Decimal
 import frappe
 from frappe.utils import cstr, get_datetime
 
@@ -244,6 +245,33 @@ class SyntheticSource:
 
 	def audience(self, tender: str) -> list[dict[str, Any]]:
 		state = _state()
+	def allocation_inputs(self, tender: str, report: str, bid: str) -> dict[str, Any]:
+		"""The inputs of the funding allocation for a synthetic award: by default one source (`SYN-DL`, reservation `SYN-RSV`) takes the whole awarded price; a world may name several with
+		`set_fact(tender, allocation={"sources": [{"drawdown_line", "reservation", "quantity", "unit"}], "unit_price": "..."})`, or make the owners unavailable with `allocation_down`."""
+		t = self._tender(tender)
+		if t.get("allocation_down"):
+			from kentender_procurement.award.services.sources import SourceUnavailable
+
+			raise SourceUnavailable("The synthetic owners of the award's sources are down.")
+		spec = t.get("allocation") or {}
+		sources = spec.get("sources") or [{"drawdown_line": "SYN-DL", "reservation": "SYN-RSV", "quantity": "250", "unit": "SYN-OU"}]
+		quantity = sum(Decimal(cstr(s["quantity"])) for s in sources)
+		snap = next((v for v in _state().get("deliveries", {}).values() if v["tender"] == tender), None) or {}
+		total = Decimal(cstr((snap.get("recommended") or {}).get("evaluated_total") or "0"))
+		price = Decimal(cstr(spec["unit_price"])) if spec.get("unit_price") else (total / quantity if quantity else Decimal("0"))
+		line = {"line": "1", "description": "Synthetic goods", "quantity": cstr(quantity), "unit": "Each", "unit_price": cstr(price), "amount_before_tax": cstr(price * quantity), "tax_amount": "0.00", "line_total": cstr(price * quantity)}
+		drawdown = {s["drawdown_line"]: {"plan_item_line_id": f"PSA-{s['drawdown_line']}", "source_line_id": f"NDS-{s['drawdown_line']}", "contributing_org_unit": s.get("unit") or "SYN-OU", "budget_line": spec.get("budget_line") or "SYN-BL",
+			"requested_quantity": cstr(s["quantity"]), "requested_value": "0.00", "reservation_id": s["reservation"], "reservation_reference": f"REF-{s['reservation']}"} for s in sources}
+		items = [{"requisition_item_id": f"RQI-{s['drawdown_line']}", "drawdown_line_id": s["drawdown_line"], "quantity": cstr(s["quantity"])} for s in sources]
+		mapped = {"tender_version": "SYN-TDV", "requisition": {"id": "SYN-REQ", "version": "SYN-RQV", "content_digest": "syn-content", "handoff_digest": "syn-handoff"}, "definition": {"id": "SYN-BDF", "version": 1, "digest": "syn-definition"},
+			"drawdown_lines": drawdown, "items": items, "price_rows": [{"line": "1", "price_row_id": "SYN-PRC-1", "quantity": cstr(quantity), "unit": "Each", "description": "Synthetic goods",
+			"sources": [{"requisition_item_id": i["requisition_item_id"], "drawdown_line_id": i["drawdown_line_id"], "quantity": i["quantity"]} for i in items]}]}
+		authoritative = {"requisition": "SYN-REQ", "version": "SYN-RQV", "state": "Authorised", "authorised": not t.get("requisition_revoked"), "content_digest": "syn-content", "handoff_digest": "syn-handoff",
+			"source_set_hash": cstr(spec.get("source_set_hash") or "syn-source-set"), "drawdown_lines": [{"drawdown_line_id": k, "reservation_id": v["reservation_id"], "plan_item_line_id": v["plan_item_line_id"],
+			"contributing_org_unit": v["contributing_org_unit"]} for k, v in drawdown.items()], "items": items}
+		return {"prices": {"report": {"id": report, "digest": "syn-report"}, "bid": bid, "currency": "KES", "submitted_total": cstr(total), "calculated_total": cstr(total), "lines": [line]},
+			"identity": {"tender": tender, "definition_id": "SYN-BDF", "definition_version": 1, "definition_digest": "syn-definition"}, "mapped": mapped, "authoritative": authoritative}
+
 		snap = next((v for v in state.get("deliveries", {}).values() if v["tender"] == tender), None)
 		if not snap:
 			return []

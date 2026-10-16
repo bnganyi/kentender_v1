@@ -88,8 +88,23 @@ def _content(doc) -> dict[str, Any]:
 		"restrictions": [{"id": i.name, "type": i.issue_type, "state": i.state, "disposition": i.disposition} for i in
 			(frappe.get_doc(state.ISSUE, n) for n in frappe.get_all(state.ISSUE, filters={"award_case": doc.name}, pluck="name", order_by="creation asc"))],
 		"legal_profile": profile.current().get("profile_version"), "fixture_namespace": doc.fixture_namespace,
-		"managing_unit": _managing_unit(doc), "handoff": _handoff(doc),
+		"managing_unit": _managing_unit(doc), "handoff": _handoff(doc), "funding_allocation": _allocation_ref(doc),
 	}
+
+
+def _allocation_ref(doc) -> dict[str, Any]:
+	"""The retained funding allocation the package carries (AWD-CHG-001 v0.7 §7.1): its identity and digest, so the package is bound to exactly one allocation. Empty while the awarded price cannot be traced to
+	its sources; delivery is held then (`checks.funding_stop`)."""
+	from kentender_procurement.award.services import funding_allocation
+
+	d = state.committed_decision(doc)
+	held = funding_allocation.current(doc)
+	if not held and d and d.outcome == "Award":
+		try:
+			held = funding_allocation.retain(doc, d)
+		except (funding_allocation.FundingIssue, funding_allocation.FundingUnavailable):
+			return {}
+	return {"id": held.name, "version": held.version, "digest": held.digest, "decision": held.decision, "total": held.supported_total, "schema": funding_allocation.SCHEMA} if held else {}
 
 
 def _managing_unit(doc) -> str:
@@ -113,9 +128,11 @@ def _handoff(doc) -> list[dict[str, Any]]:
 
 def _prepare_package(doc):
 	pkg = current_package(doc)
-	if pkg:
+	if pkg and pkg.status == "Delivered":
 		return pkg
 	content = _content(doc)
+	if pkg and (records.loads(pkg.content_json).get("funding_allocation") or {}).get("digest") == (content["funding_allocation"] or {}).get("digest"):
+		return pkg  # a package carries exactly one funding allocation; a corrected allocation gives a new package version beside it (AWD-FUND-AC-004)
 	version = records.next_number(PACKAGE, {"award_case": doc.name})
 	return records.new(PACKAGE, package_id=f"{doc.name}-PKG-{version:02d}", award_case=doc.name, cycle=doc.current_cycle, decision=content["decision"]["id"],
 		version=version, content_json=records.dumps(content), digest=records.digest(content), status="Prepared", attempts_json="[]", updates_json="[]",
