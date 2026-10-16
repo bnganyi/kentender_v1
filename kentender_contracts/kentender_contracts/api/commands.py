@@ -85,7 +85,7 @@ def _invoice(case, args, values, expected, key, actor):
 
 def _finance_save(case, args, values, expected, key, actor):
 	if args.get("kind") == "credit":
-		return payment.prepare_liability_credit(case, invoice=args["invoice"], expected_version=expected, idempotency_key=key, actor=actor)
+		return payment.prepare_liability_credit(case, invoice=args["invoice"], expected_version=expected, idempotency_key=key, actor=actor, supplier_credit_note=values.get("supplier_credit_note", ""))
 	if args.get("kind") == "advance":
 		return payment.save_advance_payment(case, advance=args["advance"], expected_version=expected, idempotency_key=key, actor=actor, mode_of_payment=values.get("mode_of_payment", ""),
 			paid_from=values.get("paid_from", ""), reference_no=values.get("reference_no", ""), amount=values.get("amount") or None)

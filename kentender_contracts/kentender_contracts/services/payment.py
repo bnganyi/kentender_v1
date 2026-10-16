@@ -228,8 +228,8 @@ def _retire_native(case: str, earlier, successor, actor: str) -> bool:
 	records.update(successor, native_invoice=earlier.native_invoice, accounting_state="Posted", finance_maker=earlier.finance_maker)
 	required = posted - flt(successor.claimed_amount)
 	if required > TOLERANCE:
-		work.assign(case, "ReconcileInvoiceLiability", f"Reconcile the original liability: a native credit of {required:,.2f} is needed.", f"invoice {successor.invoice_no}", 1, work.holders("Finance preparation"), role="Finance preparation")
-		events.record(case, "Liability needs a credit", actor, f"Invoice {earlier.claim_reference} was posted for {posted:,.2f}; the corrected claim supports {flt(successor.claimed_amount):,.2f}, so a native credit of {required:,.2f} is needed.",
+		work.assign(case, "ReconcileInvoiceLiability", f"Reconcile the original liability: a Debit Note of {required:,.2f} is needed.", f"invoice {successor.invoice_no}", 1, work.holders("Finance preparation"), role="Finance preparation")
+		events.record(case, "Liability needs a Debit Note", actor, f"Invoice {earlier.claim_reference} was posted for {posted:,.2f}; the corrected claim supports {flt(successor.claimed_amount):,.2f}, so a Debit Note of {required:,.2f} is needed.",
 			invoice=earlier.name, native=earlier.native_invoice, required=required)
 	return True
 
@@ -360,8 +360,8 @@ def liability_gap(case: str) -> list[dict[str, Any]]:
 def _liability_holds(case: str):
 	for gap in liability_gap(case):
 		if not gap["reconciled"]:
-			yield holds.Hold(key=f"liability:{gap['original']}", kind="Correction", reason=f"Finance must reconcile the original liability of {gap['liability']:,.2f}: a native credit of {gap['required']:,.2f} is needed.",
-				blocks=frozenset({"certify_invoice", "pay"}), owner="Finance", clearing="A native credit that brings the liability to the supported amount", scope=(f"invoice {gap['successor_no']}", f"invoice {gap['original_no']}"))
+			yield holds.Hold(key=f"liability:{gap['original']}", kind="Correction", reason=f"Finance must reconcile the original liability of {gap['liability']:,.2f}: a Debit Note of {gap['required']:,.2f} is needed.",
+				blocks=frozenset({"certify_invoice", "pay"}), owner="Finance", clearing="A Debit Note that brings the liability to the supported amount", scope=(f"invoice {gap['successor_no']}", f"invoice {gap['original_no']}"))
 
 
 def receive_finance_result(case: str, *, native_invoice: str, actor: str = "") -> dict[str, Any]:
@@ -371,7 +371,7 @@ def receive_finance_result(case: str, *, native_invoice: str, actor: str = "") -
 		if gap["native"] != native_invoice:
 			continue
 		by = actor or "Administrator"
-		events.record(case, "Native credit received", by, f"A native credit of {gap['credited']:,.2f} now stands against invoice {gap['native']}; {gap['required']:,.2f} is needed.", native=native_invoice, credited=gap["credited"], required=gap["required"])
+		events.record(case, "Native credit received", by, f"Debit Notes of {gap['credited']:,.2f} now stand against invoice {gap['native']}; {gap['required']:,.2f} is needed.", native=native_invoice, credited=gap["credited"], required=gap["required"])
 		if gap["reconciled"]:
 			work.finish(case, command="ReconcileInvoiceLiability", subject=f"invoice {gap['successor_no']}", actor=by)
 			events.record(case, "Liability reconciled", by, f"The liability now equals what the corrected claim supports ({gap['supported']:,.2f}).", native=native_invoice)
@@ -390,12 +390,12 @@ def reconcile_liability(case: str, *, invoice: str, credit_document: str, expect
 		records.check_version(doc, expected_version)
 		gap = next((g for g in liability_gap(case) if g["successor"] == invoice), None)
 		if gap is None:
-			fail("CM_CHANGED", invoice=invoice, reason="No liability is waiting for a credit on this claim.")
+			fail("CM_CHANGED", invoice=invoice, reason="No liability is waiting for a Debit Note on this claim.")
 		found = frappe.db.get_value("Purchase Invoice", cstr(credit_document).strip(), ["docstatus", "is_return", "return_against"], as_dict=True) if cstr(credit_document).strip() else None
-		invalid({"credit_document": "" if found and found.docstatus == 1 and found.is_return and found.return_against == gap["native"] else "This is not a posted credit against the original invoice."})
+		invalid({"credit_document": "" if found and found.docstatus == 1 and found.is_return and found.return_against == gap["native"] else "This is not a posted Debit Note against the original invoice."})
 		result = receive_finance_result(case, native_invoice=gap["native"], actor=actor)  # the owner is read, and the hold and the task end with its answer
 		if not result.get("reconciled"):
-			fail("CM_RECONCILE", invoice=invoice, reason=f"The credits against the original invoice are {result['credited']:,.2f}; {result['required']:,.2f} is needed.", required=result["required"], credited=result["credited"])
+			fail("CM_RECONCILE", invoice=invoice, reason=f"The Debit Notes against the original invoice total {result['credited']:,.2f}; {result['required']:,.2f} is needed.", required=result["required"], credited=result["credited"])
 		records.bump(doc)
 		return records.summary(doc, invoice=invoice, reconciled=True)
 
@@ -407,34 +407,35 @@ def reconcile_liability(case: str, *, invoice: str, credit_document: str, expect
 def _ask_for_credit(case: str, gap: dict[str, Any]) -> None:
 	"""Finance's obligation to bring the original liability down: assigned when the corrected claim supports less than was posted, and reopened (the same item, its history kept) when a credit note is returned or leaves a shortfall."""
 	needed = gap["required"] - gap["credited"]
-	work.assign(case, "ReconcileInvoiceLiability", f"Reconcile the original liability: a native credit of {needed:,.2f} is needed.", f"invoice {gap['successor_no']}", 1, work.holders("Finance preparation"), role="Finance preparation")
+	work.assign(case, "ReconcileInvoiceLiability", f"Reconcile the original liability: a Debit Note of {needed:,.2f} is needed.", f"invoice {gap['successor_no']}", 1, work.holders("Finance preparation"), role="Finance preparation")
 
 
 def _liability_of(case: str, invoice: str) -> dict[str, Any]:
 	gap = next((g for g in liability_gap(case) if g["successor"] == invoice), None)
 	if gap is None or gap["reconciled"]:
-		fail("CM_CHANGED", invoice=invoice, reason="No liability is waiting for a credit on this claim.")
+		fail("CM_CHANGED", invoice=invoice, reason="No liability is waiting for a Debit Note on this claim.")
 	return gap
 
 
 def _credit_identity(case: str, gap: dict[str, Any]) -> str:
-	"""One credit note for what is still needed: it changes only when a credit has already been posted, so a replay finds the draft and a later shortfall gets its own."""
+	"""One Debit Note for what is still needed: it changes only when a credit has already been posted, so a replay finds the draft and a later shortfall gets its own."""
 	return intents.identity(case, f"credit invoice {gap['successor_no']}", 1, "Native invoice", f"credit-{round(gap['credited'] * 100)}")
 
 
 def credit_draft(case: str, gap: dict[str, Any]) -> dict[str, Any] | None:
-	"""The Draft credit note Finance prepared for this liability and who prepared it, or None. Read only."""
+	"""The Draft Debit Note Finance prepared for this liability and who prepared it, or None. Read only."""
 	name = frappe.db.get_value("Purchase Invoice", {"cm_operation_identity": _credit_identity(case, gap), "docstatus": 0}, "name")
 	if not name:
 		return None
-	maker = next((e["actor"] for e in reversed(events.history(case)) if e["type"] == "Credit note prepared" and e["detail"].get("credit") == name), "")
+	maker = next((e["actor"] for e in reversed(events.history(case)) if e["type"] == "Debit Note prepared" and e["detail"].get("credit") == name), "")
 	return {"credit": name, "amount": abs(flt(frappe.db.get_value("Purchase Invoice", name, "grand_total"))), "maker": maker}
 
 
-def prepare_liability_credit(case: str, *, invoice: str, expected_version: int, idempotency_key: str, actor: str) -> dict[str, Any]:
-	"""`SaveNativeFinanceDraft` for the original liability: Finance prepares, from the corrected claim, the credit note that brings the liability posted for the superseded claim down to what the corrected claim
-	supports, and hands it to a different Finance person to post. ERPNext stays the accounting owner: the credit is its own document, made and posted there; nothing here writes the ledger. Preparing it
-	certifies no claim and releases no payment hold; the hold lifts when the credit is posted."""
+def prepare_liability_credit(case: str, *, invoice: str, expected_version: int, idempotency_key: str, actor: str, supplier_credit_note: str = "") -> dict[str, Any]:
+	"""`SaveNativeFinanceDraft` for the original liability, the credit adjustment: Finance prepares, from the corrected claim, the Debit Note (ERPNext's name for the entity's own record of a reduction; the supplier's
+	matching paper is their credit note) that brings the liability posted for the superseded claim down to what the corrected claim supports, and hands it to a different Finance person to post. ERPNext stays the
+	accounting owner: the Debit Note is its own document, made and posted there; nothing here writes the ledger. `supplier_credit_note` is the number of the supplier's credit note when they sent one, and is
+	never invented. Preparing it certifies no claim and releases no payment hold; the hold lifts when the Debit Note is posted."""
 	preflight.exists(case)
 
 	def body() -> dict[str, Any]:
@@ -444,26 +445,26 @@ def prepare_liability_credit(case: str, *, invoice: str, expected_version: int, 
 		records.check_version(doc, expected_version)
 		gap = _liability_of(case, invoice)
 		if credit_draft(case, gap):
-			fail("CM_CHANGED", invoice=invoice, reason="A credit note is already waiting for approval.")
+			fail("CM_CHANGED", invoice=invoice, reason="A Debit Note is already waiting for approval.")
 		needed = gap["required"] - gap["credited"]
-		made = native(adapter.prepare_credit, gap["native"], _credit_identity(case, gap), amount=needed, bill_no=f"CN-{gap['original_no']}-{gap['successor_no']}")
+		made = native(adapter.prepare_credit, gap["native"], _credit_identity(case, gap), amount=needed, supplier_credit_note=supplier_credit_note)
 		if get_workflow_name("Purchase Invoice"):
 			with _as_user(actor):
 				apply_workflow(frappe.get_doc("Purchase Invoice", made["credit"]), "Submit for approval")
 		subject = f"credit invoice {gap['successor_no']}"
-		work.finish(case, command="ReconcileInvoiceLiability", subject=f"invoice {gap['successor_no']}", state="Superseded", actor=actor)  # it rests while the credit note waits, and is reopened if it is returned or falls short
-		work.assign(case, "ApproveNativeFinanceRecord", "Review the credit note.", subject, 1, work.holders("Finance approval"), role="Finance approval")
+		work.finish(case, command="ReconcileInvoiceLiability", subject=f"invoice {gap['successor_no']}", state="Superseded", actor=actor)  # it rests while the Debit Note waits, and is reopened if it is returned or falls short
+		work.assign(case, "ApproveNativeFinanceRecord", "Review the Debit Note.", subject, 1, work.holders("Finance approval"), role="Finance approval")
 		work.assign(case, work.waiting_command("ApproveNativeFinanceRecord", "credit"), "Waiting for the Finance approver.", subject, 1, [actor], role="Finance preparation", state="Waiting")
 		records.bump(doc)
-		events.record(case, "Credit note prepared", actor, f"A credit note of {made['amount']:,.2f} against invoice {gap['native']} was prepared and submitted for approval.", invoice=invoice, native=gap["native"], credit=made["credit"], amount=made["amount"])
+		events.record(case, "Debit Note prepared", actor, f"A Debit Note of {made['amount']:,.2f} against invoice {gap['native']} was prepared and submitted for approval.", invoice=invoice, native=gap["native"], credit=made["credit"], amount=made["amount"], supplier_credit_note=cstr(supplier_credit_note).strip())
 		return records.summary(doc, invoice=invoice, credit=made["credit"], amount=made["amount"])
 
-	return records.command("SaveNativeFinanceDraft", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "invoice": invoice, "kind": "credit"}, body=body,
+	return records.command("SaveNativeFinanceDraft", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "invoice": invoice, "kind": "credit", "supplier_credit_note": cstr(supplier_credit_note).strip()}, body=body,
 		authorise=lambda: authority.require(actor, "Finance preparation"))
 
 
 def approve_liability_credit(case: str, *, invoice: str, expected_version: int, idempotency_key: str, actor: str) -> dict[str, Any]:
-	"""`ApproveNativeFinanceRecord` for the credit note: a different Finance person posts it natively. The hook on that posting reads the credit (`receive_finance_result`): the liability comes down to what the
+	"""`ApproveNativeFinanceRecord` for the Debit Note: a different Finance person posts it natively. The hook on that posting reads it (`receive_finance_result`): the liability comes down to what the
 	corrected claim supports, the hold on its certification and payment lifts, and Finance's reconcile task is done."""
 	preflight.exists(case)
 
@@ -473,16 +474,16 @@ def approve_liability_credit(case: str, *, invoice: str, expected_version: int, 
 		gap = _liability_of(case, invoice)
 		draft = credit_draft(case, gap)
 		if not draft:
-			fail("CM_CHANGED", invoice=invoice, reason="There is no credit note waiting for approval.")
+			fail("CM_CHANGED", invoice=invoice, reason="There is no Debit Note waiting for approval.")
 		segregation.finance_maker_not_approver(actor, [draft["maker"]])
 		native(adapter.post_invoice, draft["credit"], actor)
 		subject = f"credit invoice {gap['successor_no']}"
 		work.finish(case, command="ApproveNativeFinanceRecord", subject=subject, actor=actor)
 		after = next(g for g in liability_gap(case) if g["successor"] == invoice)
-		if not after["reconciled"]:  # a credit that still falls short leaves Finance's task open for the rest
+		if not after["reconciled"]:  # a Debit Note that still falls short leaves Finance's task open for the rest
 			_ask_for_credit(case, after)
 		records.bump(doc, invoice_state="Liability credit posted")
-		events.record(case, "Credit note posted", actor, f"Credit note {draft['credit']} against invoice {gap['native']} was posted.", invoice=invoice, native=gap["native"], credit=draft["credit"])
+		events.record(case, "Debit Note posted", actor, f"Debit Note {draft['credit']} against invoice {gap['native']} was posted.", invoice=invoice, native=gap["native"], credit=draft["credit"])
 		return records.summary(doc, invoice=invoice, credit=draft["credit"], reconciled=after["reconciled"])
 
 	return records.command("ApproveNativeFinanceRecord", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "invoice": invoice, "kind": "credit"}, body=body,
@@ -490,7 +491,7 @@ def approve_liability_credit(case: str, *, invoice: str, expected_version: int, 
 
 
 def return_liability_credit(case: str, *, invoice: str, expected_version: int, idempotency_key: str, actor: str, reason: str) -> dict[str, Any]:
-	"""`ReturnNativeFinanceForCorrection` for the credit note: the approver sends it back with the reason. The unposted draft is discarded, and its maker is told why, so a new one is prepared."""
+	"""`ReturnNativeFinanceForCorrection` for the Debit Note: the approver sends it back with the reason. The unposted draft is discarded, and its maker is told why, so a new one is prepared."""
 	preflight.exists(case)
 
 	def body() -> dict[str, Any]:
@@ -500,15 +501,15 @@ def return_liability_credit(case: str, *, invoice: str, expected_version: int, i
 		gap = _liability_of(case, invoice)
 		draft = credit_draft(case, gap)
 		if not draft:
-			fail("CM_CHANGED", invoice=invoice, reason="There is no credit note waiting for approval.")
+			fail("CM_CHANGED", invoice=invoice, reason="There is no Debit Note waiting for approval.")
 		adapter.discard_draft_invoice(draft["credit"])
 		subject = f"credit invoice {gap['successor_no']}"
 		work.finish(case, command="ApproveNativeFinanceRecord", subject=subject, actor=actor)
 		_ask_for_credit(case, gap)
 		if draft["maker"]:
-			work.alert(case, [draft["maker"]], f"The credit note was returned: {reason}", "ApproveNativeFinanceRecord", subject)
+			work.alert(case, [draft["maker"]], f"The Debit Note was returned: {reason}", "ApproveNativeFinanceRecord", subject)
 		records.bump(doc)
-		events.record(case, "Credit note returned", actor, f"The credit note against invoice {gap['native']} was returned: {reason}", invoice=invoice, native=gap["native"], credit=draft["credit"], maker=draft["maker"])
+		events.record(case, "Debit Note returned", actor, f"The Debit Note against invoice {gap['native']} was returned: {reason}", invoice=invoice, native=gap["native"], credit=draft["credit"], maker=draft["maker"])
 		return records.summary(doc, invoice=invoice)
 
 	return records.command("ReturnNativeFinanceForCorrection", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "invoice": invoice, "kind": "credit", "reason": reason},

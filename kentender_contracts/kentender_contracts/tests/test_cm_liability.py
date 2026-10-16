@@ -122,11 +122,11 @@ class TestCorrectionOfAClaim(LiabilityCase):
 		held = [h for h in holds.open_holds(self.case) if h.key.startswith("liability:")]
 		self.assertEqual(len(held), 1)
 		self.assertEqual((held[0].owner, sorted(held[0].blocks)), ("Finance", ["certify_invoice", "pay"]))
-		self.assertIn(("ReconcileInvoiceLiability", "Reconcile the original liability: a native credit of 200,000.00 is needed.", "actionable"), self.tasks("josphat"))
+		self.assertIn(("ReconcileInvoiceLiability", "Reconcile the original liability: a Debit Note of 200,000.00 is needed.", "actionable"), self.tasks("josphat"))
 		self.assertIn("SignContractCertification", {c for c, _t, state in self.tasks("charles") if state == "blocked"}, "the certification waits, and says why")
 		exc = refusal(payment.sign_certification, self.case, invoice=second["invoice"], expected_version=self.t.version(), idempotency_key=self.t.key("c"), actor=self.p["charles"])
 		self.assertEqual(exc.code, "CM_HOLD")
-		self.assertIn("native credit of 200,000.00", exc.reasons[0]["detail"]["reason"])
+		self.assertIn("Debit Note of 200,000.00", exc.reasons[0]["detail"]["reason"])
 
 	def test_finance_names_the_credit_it_raised_and_a_wrong_or_too_small_one_is_refused_with_nothing_changed(self):
 		from unittest import mock

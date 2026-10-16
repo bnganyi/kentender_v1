@@ -271,7 +271,7 @@ def _by_waiting(ctx: Context, lead: dict[str, Any]):
 
 
 def _credit_board(ctx: Context, subject: str):
-	"""The credit note Finance prepared for a corrected claim's original liability: the approver's review, or the maker's waiting view."""
+	"""The Debit Note Finance prepared for a corrected claim's original liability: the approver's review, or the maker's waiting view."""
 	gap = next((g for g in payment.liability_gap(ctx.case) if str(g["successor_no"]) == subject.split()[-1] and not g["reconciled"]), None)
 	return invoices.liability(ctx, gap) if gap else None
 

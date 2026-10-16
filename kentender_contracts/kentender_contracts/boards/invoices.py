@@ -389,36 +389,39 @@ def d08l(ctx: Context, invoice, gap: dict) -> dict:
 
 
 def liability(ctx: Context, gap: dict) -> dict:
-	"""Finance reconciles the original liability (authored: the artboards draw what the head sees while this waits, D08-L, and nothing for the person who has to act). Finance prepares the credit note from here, and
-	a different Finance person approves it (the Project Owner's decision of 16 October 2026); a credit note already raised in the accounting records can be named instead. ERPNext keeps the accounting: Contract
-	Management reads the credit, and the certification and payment held for it are released when it is posted."""
+	"""Finance reconciles the original liability (authored: the artboards draw what the head sees while this waits, D08-L, and nothing for the person who has to act). Finance prepares the credit adjustment from here, as
+	ERPNext's Debit Note (the entity's own record of a reduction; the supplier's matching paper is their credit note), and a different Finance person approves it (the Project Owner's decision of 16 October 2026); a
+	Debit Note already raised in the accounting records can be named instead. ERPNext keeps the accounting: Contract Management reads the Debit Note, and the certification and payment held for it are released when it is posted."""
 	from kentender_contracts.services import people
 
 	original = frappe.get_doc("Contract Invoice", gap["original"])
 	draft = payment.credit_draft(ctx.case, gap)
-	position_ = kit.r(["Native liability posted", money(gap["liability"], ctx.currency)], ["Supported by the corrected claim", money(gap["supported"], ctx.currency)], ["Credit needed", money(gap["required"], ctx.currency)],
-		["Credit received", money(gap["credited"], ctx.currency)])
+	position_ = kit.r(["Native liability posted", money(gap["liability"], ctx.currency)], ["Supported by the corrected claim", money(gap["supported"], ctx.currency)], ["Reduction needed", money(gap["required"], ctx.currency)],
+		["Reduction received", money(gap["credited"], ctx.currency)])
 	ev = [f"Supplier invoice {original.claim_reference}", "Accounting invoice"]
+	meaning = "A Debit Note is the entity's own record of the reduction: it lowers what we owe the supplier. The supplier's matching document is their credit note."
 	if draft:
 		mine = draft["maker"].lower() == ctx.user.lower()
 		approver = people.holds(ctx.user, "Finance approval") and not mine
-		note = kit.r(["Credit note", draft["credit"]], ["Amount", money(draft["amount"], ctx.currency)], ["Prepared by", ctx.name(draft["maker"]) if draft["maker"] else "Finance"])
-		text = "Posting this credit note brings the liability down to what the corrected claim supports. It certifies nothing and releases no payment by itself." if approver else \
-			"The credit note you prepared waits for a different Finance person to approve it." if mine else "The credit note waits for a Finance approver."
-		b = chrome.base(ctx, "D08-LA" if approver else "D08-LW", d="D08", name="Corrected claim after early liability", title="Review the credit note" if approver else "Credit note waiting for approval", tab="Invoices",
-			next=chrome.next_block(ctx), regions=[kit.R("Accounting position", position_), kit.R("Credit note", note, kit.xh(text))], p="Approve credit note" if approver else "", s2=["Return credit note"] if approver else [], ev=ev)
+		note = kit.r(["Debit Note", draft["credit"]], ["Amount", money(draft["amount"], ctx.currency)], ["Prepared by", ctx.name(draft["maker"]) if draft["maker"] else "Finance"])
+		text = f"Posting this Debit Note brings the liability down to what the corrected claim supports. It certifies nothing and releases no payment by itself. {meaning}" if approver else \
+			"The Debit Note you prepared waits for a different Finance person to approve it." if mine else "The Debit Note waits for a Finance approver."
+		b = chrome.base(ctx, "D08-LA" if approver else "D08-LW", d="D08", name="Corrected claim after early liability", title="Review the Debit Note" if approver else "Debit Note waiting for approval", tab="Invoices",
+			next=chrome.next_block(ctx), regions=[kit.R("Accounting position", position_), kit.R("Debit Note", note, kit.xh(text))], p="Approve Debit Note" if approver else "", s2=["Return Debit Note"] if approver else [], ev=ev)
 		if approver:
-			b["actions"]["Approve credit note"] = kit.command("ApproveNativeFinanceRecord", kind="credit", invoice=gap["successor"])
-			b["actions"]["Return credit note"] = kit.dialog("return")
-			b["dialogs"]["return"] = kit.dlg("Return credit note", [kit.fl(kit.ta("Reason", "", "reason"))], "Return credit note", command="ReturnNativeFinanceForCorrection", args={"kind": "credit", "invoice": gap["successor"]})
+			b["actions"]["Approve Debit Note"] = kit.command("ApproveNativeFinanceRecord", kind="credit", invoice=gap["successor"])
+			b["actions"]["Return Debit Note"] = kit.dialog("return")
+			b["dialogs"]["return"] = kit.dlg("Return Debit Note", [kit.fl(kit.ta("Reason", "", "reason"))], "Return Debit Note", command="ReturnNativeFinanceForCorrection", args={"kind": "credit", "invoice": gap["successor"]})
 		return b
 	needed = gap["required"] - gap["credited"]
-	field = kit.pick("Credit note already raised in the accounting records", "", "contracts.native_record", "credit_document", {"kind": "purchase_invoice"}, "", "credit")
+	field = kit.pick("Debit Note already raised in the accounting records", "", "contracts.native_record", "credit_document", {"kind": "purchase_invoice"}, "", "credit")
 	b = chrome.base(ctx, "D08-LR", d="D08", name="Corrected claim after early liability", title="Reconcile the original liability", tab="Invoices", next=chrome.next_block(ctx),
-		regions=[kit.R("Accounting position", position_, kit.xh(f"Prepare a credit note of {money(needed, ctx.currency)} against {gap['native']}: it is made in the accounting records and a different Finance person approves it. Preparing it certifies nothing and "
-			"releases no payment hold; the hold lifts when the credit is posted.")), kit.R("Or name a credit note", kit.fl(field))], p="Prepare credit note", s2=["Reconcile credit"], ev=ev)
-	b["actions"]["Prepare credit note"] = kit.command("SaveNativeFinanceDraft", kind="credit", invoice=gap["successor"])
-	b["actions"]["Reconcile credit"] = kit.command("ReconcileInvoiceLiability", invoice=gap["successor"])
+		regions=[kit.R("Accounting position", position_, kit.xh(f"Prepare the credit adjustment of {money(needed, ctx.currency)} against {gap['native']}. {meaning} A different Finance person approves it. Preparing it certifies nothing and "
+			"releases no payment hold; the hold lifts when the Debit Note is posted.")), kit.R("Or name a Debit Note", kit.fl(field))], p="Prepare credit adjustment", s2=["Name a Debit Note"], ev=ev)
+	b["actions"]["Prepare credit adjustment"] = kit.dialog("prepare")
+	b["dialogs"]["prepare"] = kit.dlg("Prepare credit adjustment", [kit.xh(f"A Debit Note of {money(needed, ctx.currency)} against {gap['native']} is prepared for a different Finance person to approve."),
+		kit.fl(kit.tx("Supplier's credit note number, if they sent one", "", "supplier_credit_note"))], "Prepare credit adjustment", command="SaveNativeFinanceDraft", args={"kind": "credit", "invoice": gap["successor"]})
+	b["actions"]["Name a Debit Note"] = kit.command("ReconcileInvoiceLiability", invoice=gap["successor"])
 	return b
 
 

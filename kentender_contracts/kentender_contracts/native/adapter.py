@@ -21,7 +21,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import flt, today
+from frappe.utils import cstr, flt, today
 
 from kentender_contracts.native import payment_guard
 from kentender_contracts.services import service_principal
@@ -296,8 +296,9 @@ def post_invoice(invoice: str, user: str) -> dict[str, Any]:
 	return {"invoice": invoice, "docstatus": doc.docstatus}
 
 
-def prepare_credit(invoice: str, identity: str, *, amount: float, bill_no: str) -> dict[str, Any]:
-	"""A Draft native credit (debit) note against a posted invoice for `amount` of its total, once per operation identity: a replay returns the draft that exists. Every line is reduced in the same proportion, so the
+def prepare_credit(invoice: str, identity: str, *, amount: float, supplier_credit_note: str = "") -> dict[str, Any]:
+	"""The credit adjustment of a posted invoice: ERPNext's Debit Note against it (the entity's own record of a reduction; the supplier's matching paper is their credit note) for `amount` of its total, as a Draft, once
+	per operation identity: a replay returns the draft that exists. Its supplier-document number is the number of the supplier's credit note when the supplier sent one, and empty otherwise, never invented. Every line is reduced in the same proportion, so the
 	tax follows and the credit equals `amount`; ERPNext refuses a quantity its unit cannot take, and that refusal is shown as it stands. It is posted by the Finance approver through `post_invoice`, and the hook on
 	that submission (`finance_events`) tells Contract Management the liability has come down."""
 	existing = find_by_identity("Purchase Invoice", identity)
@@ -305,10 +306,10 @@ def prepare_credit(invoice: str, identity: str, *, amount: float, bill_no: str) 
 		return {"credit": existing, "amount": abs(flt(frappe.db.get_value("Purchase Invoice", existing, "grand_total")))}
 	original = frappe.db.get_value("Purchase Invoice", invoice, ["docstatus", "is_return", "grand_total"], as_dict=True)
 	if not original or original.docstatus != 1 or original.is_return:
-		fail("CM_RECONCILE", invoice=invoice, reason="A credit is raised only against an invoice that has been posted.")
+		fail("CM_RECONCILE", invoice=invoice, reason="A Debit Note is raised only against an invoice that has been posted.")
 	total = flt(original.grand_total)
 	if amount <= 0 or amount > total + 0.005:
-		fail("CM_RECONCILE", invoice=invoice, reason=f"A credit of {amount:,.2f} cannot be raised against an invoice of {total:,.2f}.")
+		fail("CM_RECONCILE", invoice=invoice, reason=f"A Debit Note of {amount:,.2f} cannot be raised against an invoice of {total:,.2f}.")
 	from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import make_debit_note
 
 	note = make_debit_note(invoice)
@@ -316,7 +317,8 @@ def prepare_credit(invoice: str, identity: str, *, amount: float, bill_no: str) 
 	for row in note.items:
 		row.qty = -flt(frappe.db.get_value("Purchase Invoice Item", row.purchase_invoice_item, "qty")) * share  # a share of what the invoice billed (the return is drawn with only what earlier credits left)
 	note.cm_operation_identity = identity
-	note.bill_no = bill_no
+	note.bill_no = cstr(supplier_credit_note).strip()  # the supplier's own number for their credit note, or nothing: ERPNext would otherwise copy the original invoice's number
+	note.bill_date = None
 	note.insert(ignore_permissions=True)
 	return {"credit": note.name, "amount": abs(flt(note.grand_total))}
 
