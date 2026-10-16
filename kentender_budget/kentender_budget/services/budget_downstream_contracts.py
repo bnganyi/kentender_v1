@@ -40,6 +40,19 @@ def _resolve_reservations(*, plan_item: str | None, plan_source_allocation: str 
 	return []
 
 
+def _entry_commitments(*, contract: str | None, commitment: str | None) -> list[Any]:
+	"""BUD-CHG-001 v1.16 4.6 — commitments an approved existing-contract entry created. They have no reservation, so the reservation walk above never finds them."""
+	if not (contract or commitment):
+		return []
+	filters: dict[str, Any] = {"origin": "Existing-contract entry"}
+	if commitment:
+		key = commitment.strip()
+		filters["name"] = key if frappe.db.exists("Procurement Commitment", key) else frappe.db.get_value("Procurement Commitment", {"generated_reference": key}, "name") or "-"
+	if contract:
+		filters["contract"] = contract
+	return frappe.get_all("Procurement Commitment", filters=filters, fields=["name", "generated_reference", "contract", "current_amount", "status", "budget", "budget_line", "entry_row"])
+
+
 def get_funding_lineage(
 	*,
 	plan_item: str | None = None,
@@ -51,8 +64,23 @@ def get_funding_lineage(
 	reservations = _resolve_reservations(
 		plan_item=plan_item, plan_source_allocation=plan_source_allocation, reservation=reservation, contract=contract, commitment=commitment
 	)
+	entry_rows = []
+	for c in _entry_commitments(contract=contract, commitment=commitment):
+		budget = frappe.get_doc("Procurement Budget", c.budget)
+		active = frappe.db.get_value("Procurement Budget Version", {"budget": budget.name, "status": "Active"}, "name") or frappe.db.get_value("Procurement Budget Version", {"budget": budget.name}, "name", order_by="creation desc")
+		require_budget_version_read_scope(frappe.get_doc("Procurement Budget Version", active))
+		line = frappe.get_doc("Procurement Budget Line", c.budget_line)
+		entry_rows.append(
+			{
+				"budget": {"id": budget.name, "code": budget.generated_reference},
+				"budget_line": {"id": line.name, "code": line.generated_reference},
+				"reservation": None,
+				"origin": "Existing-contract entry",
+				"commitments": [{"id": c.name, "code": c.generated_reference, "contract": c.contract, "current_amount": c.current_amount, "status": c.status, "entry_row": c.entry_row}],
+			}
+		)
 	if not reservations:
-		return {"rows": []}
+		return {"rows": entry_rows}
 
 	rows = []
 	for rsv in reservations:
@@ -89,4 +117,4 @@ def get_funding_lineage(
 				],
 			}
 		)
-	return {"rows": rows}
+	return {"rows": rows + entry_rows}

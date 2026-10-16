@@ -10,7 +10,7 @@ import AccessDenied from "../../budget_shared/components/AccessDenied.vue";
 // §12.4): the live position, then each reservation led by its Requisition
 // and source department, with original/still reserved and the requires-
 // review reason. Read-only; links only where the server returned them.
-const { route, epoch } = useRouteState("budget-funding");
+const { route, go, epoch } = useRouteState("budget-funding");
 const lineIdParam = computed(() => route.value[2]);
 const line = ref(null);
 const railTrail = computed(() => [
@@ -206,6 +206,24 @@ function pad(i) {
 							</details>
 						</div>
 					</div>
+				</div>
+				<div v-if="line.commitments && line.commitments.length" class="card blueprint" style="margin-top: 16px; padding: 22px 28px" data-testid="bud-line-commitments">
+					<h3 class="kt-card-title" style="margin: 0 0 14px">{{ __("Commitments") }}</h3>
+					<table class="table">
+						<thead><tr><th>{{ __("Commitment") }}</th><th>{{ __("Contract") }}</th><th>{{ __("Status") }}</th><th class="is-num">{{ __("Retained amount") }}</th><th></th></tr></thead>
+						<tbody>
+							<tr v-for="c in line.commitments" :key="c.id" data-testid="bud-line-commitment">
+								<td>{{ c.code }}<div class="kt-muted" style="font-size: 12px">{{ c.origin === "Existing-contract entry" ? __("Existing contract") : __("From a reservation") }}</div></td>
+								<td>{{ c.contract }}</td>
+								<td>{{ c.status }}</td>
+								<td class="is-num">{{ formatKes(c.current_amount, currency) }}</td>
+								<td>
+									<button v-if="c.can_correct" type="button" class="btn btn-ghost" data-testid="bud-line-correct" @click="go('correct', c.id)">{{ __("Correct commitment") }}</button>
+									<button v-else-if="c.correction_awaiting" type="button" class="btn btn-ghost" data-testid="bud-line-correction-awaiting" @click="go('correct', c.id)">{{ __("View correction") }}</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
 				<p class="kt-muted" style="font-size: 12px; margin-top: 12px">{{ __("There is no release, convert or adjust action here; those belong to the owning Requisition and Contract processes.") }}</p>
 			</template>

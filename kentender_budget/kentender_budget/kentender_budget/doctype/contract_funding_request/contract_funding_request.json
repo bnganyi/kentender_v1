@@ -1,0 +1,330 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-10-16 15:00:00.000000",
+ "description": "BUD-CHG-001 v1.16 8.6/8.7: the one request for a contract and target year (or exact increment or correction subject).",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "generated_reference",
+  "kind",
+  "status",
+  "outcome",
+  "col_a",
+  "scope_key",
+  "contract",
+  "contract_reference",
+  "agreement_version",
+  "supplier_name",
+  "sec_a",
+  "fiscal_year",
+  "currency",
+  "source_organisation_unit",
+  "subject_event",
+  "original_commitment",
+  "sec_b",
+  "year_allocation_status",
+  "basis_revision",
+  "basis_digest",
+  "basis_json",
+  "evidence_json",
+  "basis_issues_json",
+  "sec_c",
+  "current_entry",
+  "received_by",
+  "received_at",
+  "closed_by",
+  "closed_at",
+  "closed_reason",
+  "idempotency_key",
+  "payload_digest",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "generated_reference",
+   "label": "Request Reference",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "kind",
+   "label": "Kind",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Initial\nAnnual\nAdditional\nCorrection",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Open\nCompleted\nDeclined\nWithdrawn",
+   "reqd": 1,
+   "default": "Open",
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "outcome",
+   "label": "Outcome",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_a",
+   "label": "",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "scope_key",
+   "label": "Scope Key",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "description": "One request per contract and target year (Initial or Annual), per exact increment event (Additional), per correction subject (BUD-CHG-001 v1.16 8.7)."
+  },
+  {
+   "fieldname": "contract",
+   "label": "Contract",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "contract_reference",
+   "label": "Contract Reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "agreement_version",
+   "label": "Agreement Version",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supplier_name",
+   "label": "Supplier",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sec_a",
+   "label": "Target",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "fiscal_year",
+   "label": "Target Budget Year",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Fiscal Year",
+   "search_index": 1
+  },
+  {
+   "fieldname": "currency",
+   "label": "Currency",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Currency"
+  },
+  {
+   "fieldname": "source_organisation_unit",
+   "label": "Source Organisation Unit",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Organisation Unit"
+  },
+  {
+   "fieldname": "subject_event",
+   "label": "Subject Event",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "description": "Additional: the exact effective increment event. Correction: the correction subject."
+  },
+  {
+   "fieldname": "original_commitment",
+   "label": "Original Commitment",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Procurement Commitment"
+  },
+  {
+   "fieldname": "sec_b",
+   "label": "Funding Basis",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "year_allocation_status",
+   "label": "Year Allocation",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Year allocation required\nConfirmed\nScope review required",
+   "default": "Year allocation required"
+  },
+  {
+   "fieldname": "basis_revision",
+   "label": "Basis Revision",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "basis_digest",
+   "label": "Basis Digest",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "basis_json",
+   "label": "Funding Basis",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_json",
+   "label": "Evidence References",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "basis_issues_json",
+   "label": "Basis Issues",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sec_c",
+   "label": "Handling",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "current_entry",
+   "label": "Current Entry",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Existing Contract Commitment Entry"
+  },
+  {
+   "fieldname": "received_by",
+   "label": "Received From",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_at",
+   "label": "Received At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_by",
+   "label": "Closed By",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_at",
+   "label": "Closed At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_reason",
+   "label": "Closed Reason",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "idempotency_key",
+   "label": "First Operation Key",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payload_digest",
+   "label": "First Payload Digest",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture Namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-16 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Budget",
+ "name": "Contract Funding Request",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "istable": 0,
+ "editable_grid": 0,
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Approver",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

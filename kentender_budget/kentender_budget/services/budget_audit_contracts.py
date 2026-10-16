@@ -42,6 +42,15 @@ EVENT_COMMITMENT_CLOSED = "Commitment closed"
 EVENT_CORRECTION_RECORDED = "Commitment correction recorded"
 EVENT_CORRECTION_RETURNED = "Commitment correction returned"
 EVENT_COMMITMENT_CORRECTED = "Commitment corrected"
+# BUD-CHG-001 v1.16 §§4.12/8.6 — an independently registered contract's funding request and its entry. The request and entry events are lifecycle records of their own (neither Budget History nor money);
+# the commitment an approved entry creates is a funding event with the positions before and after.
+EVENT_FUNDING_REQUEST_RECEIVED = "Contract funding request received"
+EVENT_FUNDING_REQUEST_DECLINED = "Contract funding request declined"
+EVENT_FUNDING_REQUEST_WITHDRAWN = "Contract funding request withdrawn"
+EVENT_ENTRY_SUBMITTED = "Existing-contract entry submitted"
+EVENT_ENTRY_RETURNED = "Existing-contract entry returned"
+EVENT_ENTRY_APPROVED = "Existing-contract entry approved"
+EVENT_ENTRY_COMMITMENT = "Existing-contract commitment recorded"
 EVENT_PERMISSION_DENIED = "Permission denied"
 EVENT_CONCURRENCY_CONFLICT = "Concurrency conflict"
 # BUD-CHG-001 v1.11 §12 — a Planning budget revision request and each outcome.
@@ -75,6 +84,7 @@ FUNDING_EVENT_TYPES = frozenset(
 		EVENT_COMMITMENT_ADJUSTED,
 		EVENT_COMMITMENT_CLOSED,
 		EVENT_COMMITMENT_CORRECTED,
+		EVENT_ENTRY_COMMITMENT,
 	}
 )
 
@@ -105,6 +115,13 @@ _DISPLAY_LABEL = {
 	EVENT_CORRECTION_RECORDED: _("Commitment correction recorded"),
 	EVENT_CORRECTION_RETURNED: _("Commitment correction returned"),
 	EVENT_COMMITMENT_CORRECTED: _("Commitment corrected"),
+	EVENT_FUNDING_REQUEST_RECEIVED: _("Contract funding request received"),
+	EVENT_FUNDING_REQUEST_DECLINED: _("Contract funding request declined"),
+	EVENT_FUNDING_REQUEST_WITHDRAWN: _("Contract funding request withdrawn"),
+	EVENT_ENTRY_SUBMITTED: _("Funding entry submitted for review"),
+	EVENT_ENTRY_RETURNED: _("Funding entry returned for correction"),
+	EVENT_ENTRY_APPROVED: _("Funding entry approved"),
+	EVENT_ENTRY_COMMITMENT: _("Existing contract funded"),
 }
 
 _POSITION_KEYS = ("approved", "reserved", "committed", "available")
@@ -120,6 +137,7 @@ _FUNDING_EVENT_ORDER = (
 	EVENT_COMMITMENT_ADJUSTED,
 	EVENT_COMMITMENT_CLOSED,
 	EVENT_COMMITMENT_CORRECTED,
+	EVENT_ENTRY_COMMITMENT,
 )
 
 

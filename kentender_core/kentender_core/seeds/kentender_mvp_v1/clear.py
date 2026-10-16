@@ -85,6 +85,23 @@ def _delete_budget_graph(budget_name: str, deleted: dict[str, int]) -> None:
 				purge_doc("Procurement Commitment", name)
 				deleted["Procurement Commitment"] = deleted.get("Procurement Commitment", 0) + 1
 
+	# BUD-CHG-001 v1.16: a commitment carries its Budget. A conversion's reservation led to it above; an existing-contract entry's commitment has no reservation, so it is found here, with the entries,
+	# requests and outcomes of this Budget's year.
+	if frappe.db.exists("DocType", "Procurement Commitment") and frappe.db.has_column("Procurement Commitment", "budget"):
+		for name in frappe.get_all("Procurement Commitment", filters={"budget": budget_name}, pluck="name"):
+			purge_doc("Procurement Commitment", name)
+			deleted["Procurement Commitment"] = deleted.get("Procurement Commitment", 0) + 1
+	if frappe.db.exists("DocType", "Existing Contract Commitment Entry"):
+		for name in frappe.get_all("Existing Contract Commitment Entry", filters={"budget": budget_name}, pluck="name"):
+			purge_doc("Existing Contract Commitment Entry", name)
+			deleted["Existing Contract Commitment Entry"] = deleted.get("Existing Contract Commitment Entry", 0) + 1
+		fiscal_year = frappe.db.get_value("Procurement Budget", budget_name, "fiscal_year")
+		for request in frappe.get_all("Contract Funding Request", filters={"fiscal_year": fiscal_year}, pluck="name") if fiscal_year else []:
+			for outcome in frappe.get_all("Contract Funding Outcome", filters={"request": request}, pluck="name"):
+				purge_doc("Contract Funding Outcome", outcome)
+			purge_doc("Contract Funding Request", request)
+			deleted["Contract Funding Request"] = deleted.get("Contract Funding Request", 0) + 1
+
 	if frappe.db.exists("DocType", "Procurement Budget Line Version") and frappe.db.exists("DocType", "Procurement Budget Version"):
 		version_names = frappe.get_all("Procurement Budget Version", filters={"budget": budget_name}, pluck="name")
 		if version_names:

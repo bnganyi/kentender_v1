@@ -1,0 +1,77 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-10-16 15:00:00.000000",
+ "description": "BUD-CHG-001 v1.16 4.12 allocation row.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "row_id",
+  "budget_line",
+  "funding_source",
+  "amount",
+  "currency",
+  "commitment"
+ ],
+ "fields": [
+  {
+   "fieldname": "row_id",
+   "label": "Row ID",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "budget_line",
+   "label": "Budget Line",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Procurement Budget Line",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "funding_source",
+   "label": "Funding Source",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "label": "Amount",
+   "fieldtype": "Currency",
+   "read_only": 1,
+   "options": "currency",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "currency",
+   "label": "Currency",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Currency"
+  },
+  {
+   "fieldname": "commitment",
+   "label": "Resulting Commitment",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Procurement Commitment"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-16 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Budget",
+ "name": "Existing Contract Entry Row",
+ "owner": "Administrator",
+ "istable": 1,
+ "editable_grid": 0,
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

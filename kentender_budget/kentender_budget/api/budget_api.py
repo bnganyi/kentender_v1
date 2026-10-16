@@ -44,6 +44,54 @@ def decide_commitment_correction(payload: dict | str | None = None):
 
 
 @frappe.whitelist()
+def get_contract_funding(request: str):
+	"""BUD v1.16 §11.22 — one request with its calculated figures, current entry, the caller's actions and the eligible lines (BUD-DES-21/22)."""
+	from kentender_budget.services import budget_existing_contract_entry as entries
+
+	return entries.get_contract_funding(request)
+
+
+@frappe.whitelist()
+def record_existing_contract_commitment_entry(payload: dict | str | None = None):
+	"""BUD v1.16 §9.2 — the Budget Officer saves a Draft or Returned entry; no money moves."""
+	from kentender_budget.services import budget_existing_contract_entry as entries
+
+	return entries.record_existing_contract_commitment_entry(payload)
+
+
+@frappe.whitelist()
+def submit_existing_contract_commitment_entry(payload: dict | str | None = None):
+	"""BUD v1.16 §9.2 — the Budget Officer submits the complete entry for review."""
+	from kentender_budget.services import budget_existing_contract_entry as entries
+
+	return entries.submit_existing_contract_commitment_entry(payload)
+
+
+@frappe.whitelist()
+def decide_existing_contract_commitment_entry(payload: dict | str | None = None):
+	"""BUD v1.16 §9.2 — a Budget Approver independent of the preparer and of every relied-on Finance confirmer approves or returns the entry."""
+	from kentender_budget.services import budget_existing_contract_entry as entries
+
+	return entries.decide_existing_contract_commitment_entry(payload)
+
+
+@frappe.whitelist()
+def decline_contract_funding_request(payload: dict | str | None = None):
+	"""BUD v1.16 §9.2 — the Budget Officer declines an open request with a reason."""
+	from kentender_budget.services import budget_contract_funding as requests
+
+	return requests.decline_contract_funding_request(payload)
+
+
+@frappe.whitelist()
+def get_commitment_correction(commitment: str = "", correction: str = ""):
+	"""BUD v1.16 §11.22 — one Closed commitment with its correction and the caller's actions (BUD-DES-20)."""
+	from kentender_budget.services import budget_commitment_corrections as corrections
+
+	return corrections.get_commitment_correction(commitment, correction)
+
+
+@frappe.whitelist()
 def decline_budget_revision_request(payload: dict | str | None = None):
 	"""BUD v1.11 §9.2 — the Budget Officer's decline (BUD-DES-19)."""
 	from kentender_budget.services import budget_revision_request_contracts as requests

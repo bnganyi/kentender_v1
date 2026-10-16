@@ -146,3 +146,24 @@ def allocate_correction_reference() -> str:
 		if not frappe.db.exists("Commitment Correction", {"generated_reference": candidate}):
 			return candidate
 	frappe.throw(_("Could not allocate a unique Commitment Correction reference"))
+
+
+def _allocate(doctype: str, code: str, label: str) -> str:
+	slug = site_slug()
+	prefix = f"{code}-{slug}-"
+	_sync_series(prefix, _max_seq(doctype, "generated_reference", prefix))
+	for _ in range(200):
+		candidate = make_autoname(f"{prefix}.####")
+		if not frappe.db.exists(doctype, {"generated_reference": candidate}):
+			return candidate
+	frappe.throw(_("Could not allocate a unique {0} reference").format(label))
+
+
+def allocate_funding_request_reference() -> str:
+	"""Allocate next never-reuse `CFR-{SITE}-####` (BUD-CHG-001 v1.16 §8.6: a contract funding request)."""
+	return _allocate("Contract Funding Request", "CFR", "Contract Funding Request")
+
+
+def allocate_entry_reference() -> str:
+	"""Allocate next never-reuse `ECE-{SITE}-####` (BUD-CHG-001 v1.16 §4.12: an existing-contract commitment entry)."""
+	return _allocate("Existing Contract Commitment Entry", "ECE", "Existing Contract Commitment Entry")

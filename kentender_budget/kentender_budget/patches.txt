@@ -30,3 +30,7 @@ kentender_budget.patches.req_chg_001_v1_6_drop_reservation_allocation_unique
 # reservation, not table-wide: one contract may be funded from several
 # reservations.
 kentender_budget.patches.bud_chg_001_v1_12_commitment_contract_unique_per_reservation
+
+# BUD-CHG-001 v1.16 §4.6 — a Procurement Commitment carries its Budget Line, Budget, origin, entry row and verified lineage; the reservation becomes optional;
+# the natural key gains the entry row. Existing commitments are all conversions: their line and Budget are their reservation's.
+kentender_budget.patches.bud_chg_001_v1_16_commitment_carries_its_line

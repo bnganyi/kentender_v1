@@ -193,7 +193,9 @@ class TestPrincipalMatrix(_PrincipalBase):
 		"""RG-26 / AUD-BUD-012 — an import and syntax-tree scan, not a regex over literal names: an aliased import,
 		a module attribute call, a variable principal or a constant of another principal is found."""
 		root = Path(frappe.get_app_path("kentender_budget")).parent.parent
-		gateway = {PRINCIPAL_REQUISITIONS: "procurement_requisitions/services/funding_gateway.py", PRINCIPAL_CONTRACT: "kentender_budget/services/contract_funding_provider.py"}
+		# Contract Management reaches Budget through two gateways, one per seam: the funding provider (conversion, adjustment, closure, revalidation) and the funding-request owner (BUD-CHG-001 v1.16 section 8.6)
+		gateway = {PRINCIPAL_REQUISITIONS: ("procurement_requisitions/services/funding_gateway.py",),
+			PRINCIPAL_CONTRACT: ("kentender_budget/services/contract_funding_provider.py", "kentender_budget/services/contract_funding_request_owner.py")}
 		seed_principals = {"PRINCIPAL_CONTRACT", "PRINCIPAL_BUDGET", "PRINCIPAL_REQUISITIONS"}  # seeds exercise the registered principals
 		offenders = []
 		for path in sorted(root.glob("kentender_*/**/*.py")):
@@ -208,7 +210,7 @@ class TestPrincipalMatrix(_PrincipalBase):
 				if is_seed and principal in seed_principals:
 					continue
 				owned = gateway.get(getattr(principals, principal, None)) if principal else None
-				if owned and not is_seed and rel.endswith(owned):
+				if owned and not is_seed and rel.endswith(owned):  # `owned` is the tuple of that principal's gateway files
 					continue
 				offenders.append((rel, line, principal or "(not a PRINCIPAL_* constant)"))
 		self.assertEqual(offenders, [])

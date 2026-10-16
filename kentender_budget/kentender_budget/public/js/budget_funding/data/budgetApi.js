@@ -111,3 +111,36 @@ export function declineBudgetRevisionRequest(budgetRevisionRequest, reason) {
 		payload: { budget_revision_request: budgetRevisionRequest, reason },
 	});
 }
+
+// BUD-CHG-001 v1.16 §11.22 — contract funding (BUD-DES-21/22) and the correction of a Closed commitment (BUD-DES-20).
+export function getContractFunding(request) {
+	return frappeCall(`${APP}.get_contract_funding`, { request });
+}
+
+export function recordContractEntry(payload) {
+	return frappeCall(`${APP}.record_existing_contract_commitment_entry`, { payload });
+}
+
+export function submitContractEntry(payload) {
+	return frappeCall(`${APP}.submit_existing_contract_commitment_entry`, { payload });
+}
+
+export function decideContractEntry(payload) {
+	return frappeCall(`${APP}.decide_existing_contract_commitment_entry`, { payload });
+}
+
+export function declineContractRequest(payload) {
+	return frappeCall(`${APP}.decline_contract_funding_request`, { payload });
+}
+
+export function getCommitmentCorrection(commitment, correction) {
+	return frappeCall(`${APP}.get_commitment_correction`, { commitment: commitment || "", correction: correction || "" });
+}
+
+export function recordCommitmentCorrection(payload) {
+	return frappeCall(`${APP}.record_commitment_correction`, { payload });
+}
+
+export function decideCommitmentCorrection(payload) {
+	return frappeCall(`${APP}.decide_commitment_correction`, { payload });
+}

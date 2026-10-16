@@ -199,6 +199,8 @@ async function updateAllocation() {
 // BUD v1.11 §11.1B — BUD-DES-18: Procurement Planning's open budget revision
 // requests, each with its own decision; BUD-DES-19: the decline dialog.
 const revisionRequests = computed(() => workspace.value?.revision_requests || []);
+// BUD-CHG-001 v1.16 §11.22 — funding work joins the same list: title, contract reference, who has the turn, Open. No KPI cards.
+const fundingWork = computed(() => workspace.value?.funding_work || []);
 function runRequestAction(request) {
 	if (request.primary_action === "update_allocation") return updateAllocation();
 	const p = workspace.value?.pending_version;
@@ -441,6 +443,20 @@ function openLine(line) {
 								<div class="bud-revision-request-actions">
 									<button v-if="request.can_decline" type="button" class="btn btn-secondary kt-danger" data-testid="budget-revision-decline" @click="openDecline(request)">{{ __("Decline request") }}</button>
 									<button type="button" class="btn btn-primary" data-testid="budget-revision-primary" :disabled="updating" @click="runRequestAction(request)">{{ request.primary_label }}</button>
+								</div>
+							</div>
+						</div>
+
+						<!-- BUD-DES-21/22 — a contract to fund, an entry to review. -->
+						<div v-for="work in fundingWork" :key="work.request" class="bud-revision-request" data-testid="budget-funding-work">
+							<div class="bud-revision-request-body">
+								<div class="bud-revision-request-text">
+									<h2>{{ __(work.task) }}</h2>
+									<p><strong>{{ work.reference }}</strong> · <span data-testid="budget-funding-work-status">{{ work.status }}</span></p>
+									<div class="bud-revision-request-meta"><div>{{ __("With {0}", [work.holder]) }}</div></div>
+								</div>
+								<div class="bud-revision-request-actions">
+									<button type="button" class="btn btn-primary" data-testid="budget-funding-work-open" @click="go(...work.route.slice(1))">{{ __("Open") }}</button>
 								</div>
 							</div>
 						</div>

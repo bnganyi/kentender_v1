@@ -130,7 +130,6 @@ def _record(payload: dict[str, Any]) -> dict[str, Any]:
 	from kentender_budget.services.budget_commitment_contracts import _commitment_result
 
 	commitment = _resolve_commitment(payload.get("commitment") or "")
-	reservation = frappe.get_doc("Funding Reservation", commitment.reservation)
 	scale = scale_for(commitment.currency)
 	reason = (payload.get("reason") or "").strip()
 	evidence = [str(ref).strip() for ref in (payload.get("evidence") or []) if str(ref).strip()]
@@ -149,7 +148,7 @@ def _record(payload: dict[str, Any]) -> dict[str, Any]:
 	after = parse_money(payload["new_amount"], scale=scale, field="new_amount", allow_zero=True)
 
 	# the same lock order as every other commitment change (AUD-XC-101..103); everything below is a locking read of the latest committed state
-	lock_budgets_of_lines([reservation.budget_line])
+	lock_budgets_of_lines([commitment.budget_line])
 	commitment = locked_doc("Procurement Commitment", commitment.name)
 	before = stored(commitment.current_amount, scale=scale)
 	if commitment.status != "Closed":
@@ -165,7 +164,7 @@ def _record(payload: dict[str, Any]) -> dict[str, Any]:
 	key = (payload.get("idempotency_key") or "").strip()
 	doc = frappe.get_doc(
 		{
-			"doctype": CORRECTION, "generated_reference": allocate_correction_reference(), "commitment": commitment.name, "budget": reservation.budget, "budget_line": reservation.budget_line,
+			"doctype": CORRECTION, "generated_reference": allocate_correction_reference(), "commitment": commitment.name, "budget": commitment.budget, "budget_line": commitment.budget_line,
 			"status": AWAITING, "before_amount": before, "after_amount": after, "currency": commitment.currency, "reason": reason, "evidence_json": json.dumps(evidence),
 			"contract_reference": contract_reference, "recorded_by": frappe.session.user, "recorded_at": now_datetime(), "idempotency_key": key,
 		}
@@ -174,7 +173,7 @@ def _record(payload: dict[str, Any]) -> dict[str, Any]:
 		doc.insert(ignore_permissions=True)
 	# the record is also on the ledger, so who recorded it is attributable independently of the row (a non-best-effort write: a correction with no attribution must not stand)
 	event = record_event(
-		budget=reservation.budget, budget_line=reservation.budget_line, reservation=reservation.name, commitment=commitment.name, event_type=EVENT_CORRECTION_RECORDED,
+		budget=commitment.budget, budget_line=commitment.budget_line, reservation=commitment.reservation or None, commitment=commitment.name, event_type=EVENT_CORRECTION_RECORDED,
 		actor=frappe.session.user, correlation_id=key or doc.name, calling_module=CALLING_MODULE, downstream_reference=contract_reference, amount=after,
 		currency=commitment.currency, reason="; ".join(evidence)[:1000],
 	)
@@ -222,7 +221,6 @@ def _decide(payload: dict[str, Any]) -> dict[str, Any]:
 		fail("AUTH_SEGREGATION_BLOCKED")
 
 	commitment = locked_doc("Procurement Commitment", correction.commitment)
-	reservation = frappe.get_doc("Funding Reservation", commitment.reservation)
 	scale = scale_for(commitment.currency)
 	key = (payload.get("idempotency_key") or "").strip()
 	evidence = _evidence(correction)
@@ -232,25 +230,26 @@ def _decide(payload: dict[str, Any]) -> dict[str, Any]:
 		with budget_write():
 			correction.save(ignore_permissions=True)
 		record_event(
-			budget=correction.budget, budget_line=correction.budget_line, reservation=reservation.name, commitment=commitment.name, event_type=EVENT_CORRECTION_RETURNED, actor=user,
+			budget=correction.budget, budget_line=correction.budget_line, reservation=commitment.reservation or None, commitment=commitment.name, event_type=EVENT_CORRECTION_RETURNED, actor=user,
 			correlation_id=key or correction.name, calling_module=CALLING_MODULE, downstream_reference=correction.contract_reference, amount=correction.after_amount,
 			currency=correction.currency, reason=reason,
 		)
 		correction.reload()
+		_tell_contract_management(commitment.name, approved=False, correction=correction_summary(correction), attempt=key or correction.name)
 		return {"ok": True, "correction": correction_summary(correction), "commitment": _commitment_result(commitment)}
 
 	before, after = stored(correction.before_amount, scale=scale), stored(correction.after_amount, scale=scale)
 	if commitment.status != "Closed" or stored(commitment.current_amount, scale=scale) != before:
 		return _refusal("BUDGET_STALE_REVISION", "correction", _("The commitment changed after this correction was recorded. Record a new correction against its current amount."), correction=correction_summary(correction))
-	position_before = _position(reservation.budget_line)
+	position_before = _position(commitment.budget_line)
 	commitment.current_amount = after
 	with budget_write():
 		commitment.save(ignore_permissions=True)
-	position_after = _position(reservation.budget_line)
+	position_after = _position(commitment.budget_line)
 	if round(position_after["available"] - position_before["available"], scale) != float(before - after) or position_after["reserved"] != position_before["reserved"]:
 		frappe.throw(_("A correction must return exactly the decrease to Available and change nothing else"), frappe.ValidationError, title="BUDGET_POSITION_CHANGED")
 	record_event(
-		budget=correction.budget, budget_line=correction.budget_line, reservation=reservation.name, commitment=commitment.name, event_type=EVENT_COMMITMENT_CORRECTED, actor=user,
+		budget=correction.budget, budget_line=correction.budget_line, reservation=commitment.reservation or None, commitment=commitment.name, event_type=EVENT_COMMITMENT_CORRECTED, actor=user,
 		correlation_id=key or correction.name, calling_module=CALLING_MODULE, downstream_reference=correction.contract_reference, amount=after, currency=commitment.currency,
 		before=position_before, after=position_after, reason="; ".join(evidence)[:1000],
 	)
@@ -259,4 +258,60 @@ def _decide(payload: dict[str, Any]) -> dict[str, Any]:
 		correction.save(ignore_permissions=True)
 	correction.reload()
 	commitment.reload()
+	_tell_contract_management(commitment.name, approved=True, correction=correction_summary(correction), attempt=key or correction.name)
 	return {"ok": True, "correction": correction_summary(correction), "commitment": _commitment_result(commitment), "positions": {"before": position_before, "after": position_after}}
+
+
+def _tell_contract_management(commitment: str, *, approved: bool, correction: dict[str, Any], attempt: str) -> None:
+	"""A request Contract Management raised for this correction hears the result, in order (BUD-CHG-001 v1.16 8.6). Nothing is sent when no request names the commitment."""
+	from kentender_budget.services.budget_contract_funding import correction_decided
+
+	correction_decided(commitment, approved=approved, correction=correction, attempt=attempt)
+
+
+# ---- reads for the screens ---------------------------------------------------------------------------------------------------
+
+
+def _holds_role(user: str, role: str) -> bool:
+	return bool(authorise_record(user=user, business_role=role, organisation_unit="", purpose=PURPOSE_COMMAND).allowed)
+
+
+def line_commitments(budget_line: str, user: str) -> list[dict[str, Any]]:
+	"""The commitments charged to a line, of either origin, for the line detail. **Correct commitment** is offered to the Budget Officer for a Closed commitment with no correction already awaiting approval."""
+	officer = _holds_role(user, ROLE_BUDGET_OFFICER)
+	rows = []
+	for c in frappe.get_all("Procurement Commitment", filters={"budget_line": budget_line}, fields=["name", "generated_reference", "contract", "status", "current_amount", "currency", "origin", "reservation"], order_by="creation asc"):
+		awaiting = frappe.db.exists(CORRECTION, {"commitment": c.name, "status": AWAITING})
+		rows.append({"id": c.name, "code": c.generated_reference, "contract": c.contract, "status": c.status, "origin": c.origin, "current_amount": float(c.current_amount or 0), "currency": c.currency,
+			"correction_awaiting": bool(awaiting), "can_correct": bool(officer and c.status == "Closed" and not awaiting)})
+	return rows
+
+
+def get_commitment_correction(commitment: str = "", correction: str = "") -> dict[str, Any]:
+	"""BUD-DES-20 — one Closed commitment with its correction, the caller's actions and why not. Read-only; the closed-year and stale variants are facts the server states, not something the screen works out."""
+	from kentender_budget.services.budget_authorization import require_budget_read_scope
+	from kentender_budget.services.budget_commitment_contracts import _commitment_result
+
+	record = _resolve_correction(correction) if (correction or "").strip() else None
+	commit = _resolve_commitment(commitment) if (commitment or "").strip() else (_resolve_commitment(record.commitment) if record else None)
+	if commit is None:
+		frappe.throw(_("Commitment is required"))
+	require_budget_read_scope("Procurement Budget Line", commit.budget_line)
+	if record is None:
+		name = frappe.db.get_value(CORRECTION, {"commitment": commit.name, "status": AWAITING}, "name") or frappe.db.get_value(CORRECTION, {"commitment": commit.name}, "name", order_by="creation desc")
+		record = frappe.get_doc(CORRECTION, name) if name else None
+	user = frappe.session.user
+	officer, approver = _holds_role(user, ROLE_BUDGET_OFFICER), _holds_role(user, ROLE_BUDGET_APPROVER)
+	scale = scale_for(commit.currency)
+	line_title = frappe.db.get_value("Procurement Budget Line Version", {"budget_line": commit.budget_line}, "title", order_by="creation desc") or commit.budget_line
+	closed_year = bool(frappe.db.get_value("Procurement Budget Version", {"budget": commit.budget, "status": "Closed"}, "name")) and not frappe.db.get_value("Procurement Budget Version", {"budget": commit.budget, "status": "Active"}, "name")
+	actions: dict[str, Any] = {}
+	if record is None or record.status != AWAITING:
+		actions["record"] = bool(officer and commit.status == "Closed")
+	stale = bool(record and record.status == AWAITING and (commit.status != "Closed" or stored(commit.current_amount, scale=scale) != stored(record.before_amount, scale=scale)))
+	if record is not None and record.status == AWAITING and approver:
+		recorders = {record.recorded_by, _recorded_by_event(record)} - {None, ""}
+		blocked = (not recorders) or user in recorders
+		actions.update(decide=not blocked and not stale, blocked=_("Another Budget Approver must decide this correction.") if blocked else "")
+	return {"ok": True, "commitment": {**_commitment_result(commit), "budget_line_title": line_title, "retained_amount": float(stored(commit.current_amount, scale=scale))},
+		"correction": correction_summary(record) if record else None, "closed_year": closed_year, "stale": stale, "actions": actions}

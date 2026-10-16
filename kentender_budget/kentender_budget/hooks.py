@@ -116,3 +116,8 @@ scheduler_events = globals().get("scheduler_events") or {}
 scheduler_events.setdefault("hourly", []).append(
 	"kentender_budget.services.budget_revision_request_contracts.retry_pending_outcomes"
 )
+
+
+# BUD-CHG-001 v1.16 section 8.6: Budget answers the contract funding request seam (kentender_core.services.contract_funding_request_contract) and keeps its outcomes flowing to Contract Management.
+kt_contract_funding_request_owner = ["kentender_budget.services.contract_funding_request_owner.service"]
+scheduler_events.setdefault("hourly", []).append("kentender_budget.services.budget_contract_funding.retry_pending_outcomes")

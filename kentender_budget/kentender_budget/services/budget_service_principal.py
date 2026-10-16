@@ -55,10 +55,12 @@ ACTION_CONVERT = "convert_reservation"
 ACTION_ADJUST = "adjust_commitment"
 ACTION_CLOSE = "close_commitment"
 ACTION_REVALIDATE = "revalidate_reservations"
+# BUD-CHG-001 v1.16 §8.6: Contract Management raises, refreshes and withdraws the funding request of its own contract. It creates no reservation, commitment or appropriation by itself.
+ACTION_FUNDING_REQUEST = "contract_funding_request"
 
 ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
 	PRINCIPAL_REQUISITIONS: frozenset({ACTION_CHECK, ACTION_RESERVE, ACTION_RELEASE}),
-	PRINCIPAL_CONTRACT: frozenset({ACTION_CONVERT, ACTION_RELEASE, ACTION_ADJUST, ACTION_CLOSE, ACTION_REVALIDATE}),
+	PRINCIPAL_CONTRACT: frozenset({ACTION_CONVERT, ACTION_RELEASE, ACTION_ADJUST, ACTION_CLOSE, ACTION_REVALIDATE, ACTION_FUNDING_REQUEST}),
 	PRINCIPAL_BUDGET: frozenset({ACTION_REVALIDATE}),
 	PRINCIPAL_PLANNING: frozenset(),
 	PRINCIPAL_TENDERS: frozenset(),

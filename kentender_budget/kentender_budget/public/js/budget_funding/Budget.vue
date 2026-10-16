@@ -9,6 +9,8 @@ import BudgetDetailScreen from "./components/BudgetDetailScreen.vue";
 import BudgetClosureScreen from "./components/BudgetClosureScreen.vue";
 import BudgetApprovalTaskScreen from "./components/BudgetApprovalTaskScreen.vue";
 import BudgetLineDetailScreen from "./components/BudgetLineDetailScreen.vue";
+import ContractFundingScreen from "./components/ContractFundingScreen.vue";
+import CommitmentCorrectionScreen from "./components/CommitmentCorrectionScreen.vue";
 
 // BUD-CHG-001 v1.9 §10 — the five canonical routes (plus the closure
 // composition on BUD-UI-03) share one Frappe Page, "budget-funding" (not the
@@ -21,6 +23,8 @@ const screen = computed(() => {
 	if (!seg) return "workspace";
 	if (seg === "review") return "review";
 	if (seg === "line") return "line";
+	if (seg === "funding") return "funding";
+	if (seg === "correct" || seg === "correction") return "correction";
 	if (seg === "new") return "register";
 	if (route.value[2] === "version") return "editor";
 	if (route.value[2] === "close") return "closure";
@@ -35,6 +39,8 @@ const SCREENS = {
 	closure: BudgetClosureScreen,
 	review: BudgetApprovalTaskScreen,
 	line: BudgetLineDetailScreen,
+	funding: ContractFundingScreen,
+	correction: CommitmentCorrectionScreen,
 };
 const screenComponent = computed(() => SCREENS[screen.value] || null);
 

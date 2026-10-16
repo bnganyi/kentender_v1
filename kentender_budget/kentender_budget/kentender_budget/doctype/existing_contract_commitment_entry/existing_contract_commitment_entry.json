@@ -1,0 +1,391 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-10-16 15:00:00.000000",
+ "description": "BUD-CHG-001 v1.16 4.12: one coordinated entry recognising an independently registered contract's confirmed funding charge.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "generated_reference",
+  "request",
+  "version_no",
+  "kind",
+  "status",
+  "col_a",
+  "contract",
+  "contract_reference",
+  "fiscal_year",
+  "budget",
+  "currency",
+  "source_organisation_unit",
+  "sec_a",
+  "confirmed_charge",
+  "coverage_total",
+  "amount_requiring_funding",
+  "rows_total",
+  "coverage_json",
+  "coverage_digest",
+  "reconciliation",
+  "sec_b",
+  "basis_json",
+  "basis_digest",
+  "basis_revision",
+  "confirmers_json",
+  "original_commitment",
+  "increment_event",
+  "sec_c",
+  "rows",
+  "sec_d",
+  "prepared_by",
+  "prepared_at",
+  "prepared_assignment",
+  "submitted_by",
+  "submitted_at",
+  "payload_digest",
+  "decided_by",
+  "decided_at",
+  "decision_assignment",
+  "decision_reason",
+  "idempotency_key",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "generated_reference",
+   "label": "Entry Reference",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "request",
+   "label": "Request",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Funding Request",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "version_no",
+   "label": "Version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "kind",
+   "label": "Kind",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Initial\nAnnual\nAdditional",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Draft\nAwaiting approval\nReturned\nApproved\nSuperseded",
+   "reqd": 1,
+   "default": "Draft",
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_a",
+   "label": "",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contract",
+   "label": "Contract",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "contract_reference",
+   "label": "Contract Reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fiscal_year",
+   "label": "Target Budget Year",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Fiscal Year"
+  },
+  {
+   "fieldname": "budget",
+   "label": "Procurement Budget",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Procurement Budget"
+  },
+  {
+   "fieldname": "currency",
+   "label": "Currency",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Currency"
+  },
+  {
+   "fieldname": "source_organisation_unit",
+   "label": "Source Organisation Unit",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Organisation Unit"
+  },
+  {
+   "fieldname": "sec_a",
+   "label": "Amounts",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "confirmed_charge",
+   "label": "Confirmed Gross Funding Charge",
+   "fieldtype": "Currency",
+   "read_only": 1,
+   "options": "currency"
+  },
+  {
+   "fieldname": "coverage_total",
+   "label": "Verified Existing Coverage",
+   "fieldtype": "Currency",
+   "read_only": 1,
+   "options": "currency"
+  },
+  {
+   "fieldname": "amount_requiring_funding",
+   "label": "Amount Requiring Funding",
+   "fieldtype": "Currency",
+   "read_only": 1,
+   "options": "currency"
+  },
+  {
+   "fieldname": "rows_total",
+   "label": "Allocation Rows Total",
+   "fieldtype": "Currency",
+   "read_only": 1,
+   "options": "currency"
+  },
+  {
+   "fieldname": "coverage_json",
+   "label": "Verified Coverage",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "coverage_digest",
+   "label": "Coverage Digest",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reconciliation",
+   "label": "Reconciliation to Budget",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sec_b",
+   "label": "Basis relied on",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "basis_json",
+   "label": "Funding Basis",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "basis_digest",
+   "label": "Basis Digest",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "basis_revision",
+   "label": "Basis Revision",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "confirmers_json",
+   "label": "Funding-basis Confirmers",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "original_commitment",
+   "label": "Original Commitment",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Procurement Commitment"
+  },
+  {
+   "fieldname": "increment_event",
+   "label": "Increment Event",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sec_c",
+   "label": "Allocation Rows",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "rows",
+   "label": "Rows",
+   "fieldtype": "Table",
+   "options": "Existing Contract Entry Row",
+   "read_only": 0
+  },
+  {
+   "fieldname": "sec_d",
+   "label": "Actors and Evidence",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "prepared_by",
+   "label": "Prepared By",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_at",
+   "label": "Prepared At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_assignment",
+   "label": "Preparer Assignment",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_by",
+   "label": "Submitted By",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "label": "Submitted At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payload_digest",
+   "label": "Submitted Payload Digest",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_by",
+   "label": "Decided By",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_at",
+   "label": "Decided At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision_assignment",
+   "label": "Approver Assignment",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision_reason",
+   "label": "Decision Reason",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "idempotency_key",
+   "label": "Operation Key",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture Namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-16 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Budget",
+ "name": "Existing Contract Commitment Entry",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "istable": 0,
+ "editable_grid": 0,
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Approver",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -126,8 +126,8 @@ def facts(*, user: str, kind: str, at: datetime, fiscal_year: str = "", org_unit
 	}
 	committed_by_line = {
 		row.budget_line: _amount(row.total) for row in _texts(
-			"select r.budget_line as budget_line, cast(coalesce(sum(c.current_amount), 0) as char) as total from `tabProcurement Commitment` c "
-			"join `tabFunding Reservation` r on r.name = c.reservation where r.budget_line in %s and c.status in ('Active', 'Closed') group by r.budget_line", (lines_by_id,),
+			"select c.budget_line as budget_line, cast(coalesce(sum(c.current_amount), 0) as char) as total from `tabProcurement Commitment` c "
+			"where c.budget_line in %s and c.status in ('Active', 'Closed') group by c.budget_line", (lines_by_id,),
 		)
 	}
 	lines: list[dict[str, Any]] = []

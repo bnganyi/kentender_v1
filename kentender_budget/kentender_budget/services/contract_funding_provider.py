@@ -33,37 +33,35 @@ def _key(identity: str, reservation: str) -> str:
 
 class Provider:
 	def lookup(self, *, identity: str) -> dict[str, Any] | None:
+		"""What the identity already converted: the whole set when it was converted as one (journalled under the identity itself), or the rows converted one by one (journalled `identity#reservation`). A partial
+		answer is never given for a set: a set is in the journal complete or not at all."""
 		rows = frappe.get_all(JOURNAL, filters={"idempotency_key": ["like", f"{identity}#%"], "command": "convert_reservation"}, fields=["result"])
+		whole = frappe.get_all(JOURNAL, filters={"idempotency_key": identity, "command": "convert_reservation"}, fields=["result"])
 		codes, total = [], Decimal("0")
-		for row in rows:
+		for row in [*whole, *rows]:
 			result = frappe.parse_json(row.result) if row.result else {}
-			commitment = (result.get("commitment") or {})
-			if commitment.get("commitment_code"):
-				codes.append(commitment["commitment_code"])
-				total += Decimal(str(commitment.get("current_amount") or 0))
+			for commitment in ([result["commitment"]] if result.get("commitment") else []) + list(result.get("commitments") or []):
+				if commitment.get("commitment_code"):
+					codes.append(commitment["commitment_code"])
+					total += Decimal(str(commitment.get("current_amount") or 0))
 		return {"reference": ", ".join(codes), "amount": float(total)} if codes else None
 
-	def convert(self, *, identity: str, contract: str, allocations: list[dict[str, Any]], amount: float) -> dict[str, Any]:
+	def convert(self, *, identity: str, contract: str, allocations: list[dict[str, Any]], amount: float, lineage: dict[str, Any] | None = None) -> dict[str, Any]:
+		"""Convert the whole allocation of one award, atomically (BUD-CHG-001 v1.16 §9.2): every row is verified against the award's funding allocation and checked before any is converted, and the set
+		commits or none of it does. The allocations are the awarded price mapped to reservations by their owner; they must add up to the contract amount or nothing is converted."""
 		parts = [(str(a.get("reservation") or "").strip(), Decimal(str(a.get("amount")))) for a in allocations or []]
 		if not parts or any(not reservation or part <= 0 for reservation, part in parts):
 			raise seam.Refused("The award names no usable funding allocation.")
 		if sum((part for _r, part in parts), Decimal("0")) != Decimal(str(amount)):
 			raise seam.Refused("The funding allocations do not add up to the contract amount.")
 		caller = service_caller(PRINCIPAL_CONTRACT, reference=contract)
-		for reservation, _part in parts:  # every allocation is checked against the award before any is converted, so a reservation the award does not name converts nothing, not even the others
-			try:
-				commitments.require_authorised_reservation(contract, commitments._resolve_reservation(reservation).name)
-			except (frappe.ValidationError, frappe.PermissionError, frappe.DoesNotExistError) as exc:
-				raise seam.Refused(frappe.safe_decode(str(exc))) from exc
-		codes = []
-		for reservation, part in parts:
-			try:
-				done = commitments.convert_reservation(reservation, contract, part, _key(identity, reservation), contract_event_id=identity, contract_event_type=CONTRACT_EVENT, caller=caller)
-			except (frappe.ValidationError, frappe.PermissionError, frappe.DoesNotExistError) as exc:
-				raise seam.Refused(frappe.safe_decode(str(exc))) from exc
-			codes.append(done["commitment"]["commitment_code"])
+		try:
+			done = commitments.convert_award_allocation([{"reservation": reservation, "amount": str(part)} for reservation, part in parts], contract, identity, contract_event_id=identity,
+				contract_event_type=CONTRACT_EVENT, lineage=lineage, caller=caller)
+		except (frappe.ValidationError, frappe.PermissionError, frappe.DoesNotExistError) as exc:
+			raise seam.Refused(frappe.safe_decode(str(exc))) from exc
+		codes = [c["commitment_code"] for c in done["commitments"]]
 		return {"reference": ", ".join(codes), "amount": float(sum((part for _r, part in parts), Decimal("0")))}
-
 
 	def revalidate(self, *, identity: str, contract: str, allocations: list[dict[str, Any]]) -> dict[str, Any]:
 		"""Ask Budget to revalidate the exact reservations the contract's award names (the owner's decision of 16 October 2026). Budget decides each status; nothing is converted, released or moved. A reservation
