@@ -8,10 +8,15 @@ funding source the contract was awarded on: sharing a supplier, or a Tender refe
 only on a clear yes. The owner registers a provider on `kt_contract_reservation_authority`, a callable returning an object (or None to decline, for example where the owner is not installed):
 
     authorises(*, contract, reservation) -> True | False | None
+    names(*, contract, reservation)      -> True | False | None   (optional; see below)
 
 `True`: the contract's award names this reservation. `False`: the owner knows the contract and this reservation is not one of its own. `None`: this owner does not know the contract. With no
 provider, or no provider that knows the contract, `authorises` answers None and Budget refuses: no answer is never a yes. Several providers are asked in turn and the first answer that is not
 None wins.
+
+`names` is the narrower question a request that draws nothing needs (the owner's decision of 16 October 2026: Contract Management may ask Budget to revalidate the exact reservations its award names): does the
+contract's award package name this reservation, **whether or not the agreement is effective yet**? A contract about to be signed names its reservations long before it may draw on them, and `authorises` stays
+No for it until the agreement is effective. A provider without `names` answers by `authorises`, so nothing that already worked changes.
 
 Seeds and tests may set `frappe.flags.kt_contract_reservation_authorities` to a list of providers; `installed()` and `permit_all()` do it with a clean-up. Nothing else in production code
 sets it (`test_budget_contract_reservation_authority` fails if it does)."""
@@ -47,6 +52,16 @@ def authorises(contract: str, reservation: str) -> bool | None:
 	"""Does the owner of `contract`'s funding lineage say the contract may draw on `reservation`? None when no owner knows the contract."""
 	for provider in providers():
 		answer = provider.authorises(contract=contract, reservation=reservation)
+		if answer is not None:
+			return bool(answer)
+	return None
+
+
+def names(contract: str, reservation: str) -> bool | None:
+	"""Does the contract's award package name `reservation`, even before its agreement is effective? None when no owner knows the contract. A provider with no `names` answers by `authorises`."""
+	for provider in providers():
+		reader = getattr(provider, "names", None) or provider.authorises
+		answer = reader(contract=contract, reservation=reservation)
 		if answer is not None:
 			return bool(answer)
 	return None

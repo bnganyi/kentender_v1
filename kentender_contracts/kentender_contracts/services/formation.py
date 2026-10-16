@@ -215,6 +215,27 @@ def save_particulars(case: str, *, expected_version: int, idempotency_key: str, 
 	return records.command("SaveContractParticulars", case=case, idempotency_key=idempotency_key, actor=actor, payload={"expected": expected_version, "values": values or {}}, body=body, authorise=authorise)
 
 
+# -- funding ---------------------------------------------------------------------------------------------------------------------------
+def funding_problems(case: str, terms: dict[str, Any], step: str) -> list[str]:
+	"""What the funding owner says stops the award's reservations being drawn on, in plain words (the Project Owner's decision of 16 October 2026: Contract Management may ask Budget to revalidate the exact
+	reservations its award names, and nothing wider). Budget decides each status and nothing is moved. Empty when they can be drawn on, and when no funding owner on this site can revalidate (there is then nothing
+	to ask, as before the owner offered it). A reservation the award does not name is a refusal of the whole request and is reported the same way. Any other failure of the owner is not turned into a finding:
+	it propagates, because the outcome is unknown and the step is tried again. A refusal that follows rolls back with its command, so Budget's own record of a status stays what Budget derived."""
+	allocations = (terms.get("funding") or {}).get("allocations") or []
+	if not allocations:
+		return []
+	try:
+		answer = funding_seam.revalidate(f"{case}|agreement {terms.get('version_no') or ''}|1|Funding revalidation|{step}", contract=case, allocations=allocations)
+	except funding_seam.Refused as exc:
+		return [str(exc)]
+	return list((answer or {}).get("problems") or [])
+
+
+def _funding_findings(case: str, terms: dict[str, Any], step: str, consequence: str) -> list[dict[str, Any]]:
+	return [{"hold": "funding revalidation", "kind": "Correction", "reason": reason, "holder": "Budget owner", "clears_with": "Budget confirms the reservations behind this contract can be drawn on", "consequence": consequence}
+		for reason in funding_problems(case, terms, step)]
+
+
 # -- send for signature ---------------------------------------------------------------------------------------------------------------
 def request_signatures(case: str, *, expected_version: int, idempotency_key: str, actor: str) -> dict[str, Any]:
 	"""`RequestContractSignatures`: after the source, authority, rule, restriction and signing-window checks, freeze one complete version and its source package (section 5.3)."""
@@ -239,6 +260,8 @@ def request_signatures(case: str, *, expected_version: int, idempotency_key: str
 		guards = preflight.rules(doc, "RequestContractSignatures", branches)
 		preflight.holds(guards, case, "new_signing_attempt")
 		for finding in formation_rules.sending(records.loads(doc.source_json).get("package", {}), built["terms"], built["sources"], clock.now(), preflight.profile(doc).parameter("ag_clearance_threshold").value):
+			guards.add("CM_HOLD", **finding)
+		for finding in _funding_findings(case, {**built["terms"], "version_no": draft.version_no}, "send", "new_signing_attempt"):
 			guards.add("CM_HOLD", **finding)
 		if built["terms"]["restrictions"]:
 			guards.add("CM_HOLD", hold="award restriction", kind="Restriction", reason="An award restriction requires review.", holder="Head of procurement function", clears_with="The restriction is resolved by its owner", consequence="new_signing_attempt")
@@ -306,6 +329,8 @@ def _record_attempt(case: str, party: str, expected_version: int, actor: str, ke
 	preflight.holds(guards, case, "new_signing_attempt", except_keys=[f"operation:{existing}"] if existing else [])
 	terms = records.loads(agreement.terms_json)
 	for finding in formation_rules.at_commit(terms, clock.now()):
+		guards.add("CM_HOLD", **finding)
+	for finding in _funding_findings(case, {**terms, "version_no": agreement.version_no}, f"sign-{party.lower()}", "new_signing_attempt"):
 		guards.add("CM_HOLD", **finding)
 	if terms.get("restrictions"):
 		guards.add("CM_HOLD", hold="award restriction", kind="Restriction", reason="An award restriction requires review.", holder="Head of procurement function", clears_with="The restriction is resolved by its owner", consequence="new_signing_attempt")
@@ -443,6 +468,9 @@ def carry_out_effects(case: str, actor: str = "") -> dict[str, Any]:
 		else:
 			def executor(identity):
 				try:
+					problems = funding_problems(case, {**terms, "version_no": agreement.version_no}, "convert")  # the owner is asked again at the moment of conversion: what held at signing may not hold now
+					if problems:
+						raise funding_seam.Refused(" ".join(problems))
 					return funding_seam.convert(identity, contract=case, allocations=terms["funding"]["allocations"], amount=terms["total"])["reference"], "Procurement Commitment"
 				except funding_seam.Refused as exc:
 					raise intents.OwnerRefused(str(exc)) from exc

@@ -36,6 +36,13 @@ class Provider:
 		return {"reference": reference, "amount": amount}
 
 
+	def revalidate(self, *, identity: str, contract: str, allocations: list):
+		"""The stand-in's answer when Contract Management asks the funding owner to revalidate the reservations an award names: every reservation can be drawn on, unless a test sets the fault `stale` (a
+		reservation that stopped being available between the award and the signing). It moves nothing."""
+		stale = frappe.flags.get("kt_cm_funding_fault") == "stale"
+		rows = [{"reservation": str(a.get("reservation") or ""), "status": "Needs Attention" if stale else "Active"} for a in allocations or []]
+		return {"reservations": rows, "problems": [f"Reservation {r['reservation']} no longer has funding behind it: Budget has marked it as needing attention." for r in rows] if stale else []}
+
 	def recall(self, *, identity: str):
 		row = frappe.db.get_value(LEDGER, {"identity": identity, "outcome": ["in", ["Adjusted", "Closed"]]}, ["reference", "amount"], as_dict=True)
 		return {"reference": row.reference, "amount": float(row.amount)} if row else None

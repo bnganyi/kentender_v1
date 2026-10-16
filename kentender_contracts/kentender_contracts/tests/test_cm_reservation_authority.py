@@ -71,3 +71,19 @@ class TestContractManagementAnswersWhichReservationsAreTheContractsOwn(Integrati
 		case = self._case("F", versions=[("Effective", self._awarded("RSV-1"))])
 		self.assertIs(seam.authorises(case, "RSV-1"), True)
 		self.assertIs(seam.authorises(case, "RSV-2"), False)
+
+	def test_the_award_package_names_its_reservations_before_the_agreement_is_effective_but_draws_on_none(self):
+		"""FU-CM-81 (the Project Owner's decision of 16 October 2026): Budget may be asked to revalidate the reservations the award names before signing, which draws nothing."""
+		for label, state in (("G1", "Draft"), ("G2", "Awaiting signatures"), ("G3", "Effective")):
+			case = self._case(label, versions=[(state, self._awarded("RSV-1"))])
+			self.assertIs(owner.Authority().names(contract=case, reservation="RSV-1"), True, state)
+			self.assertIs(owner.Authority().names(contract=case, reservation="RSV-2"), False, state)
+			self.assertIs(owner.Authority().authorises(contract=case, reservation="RSV-1"), state == "Effective", "drawing on it still waits for an effective agreement")
+			self.assertIs(seam.names(case, "RSV-1"), True)
+
+	def test_a_superseded_agreement_an_external_record_and_a_stranger_name_nothing(self):
+		old = self._case("H1", versions=[("Superseded", self._awarded("RSV-1"))])
+		self.assertIs(owner.Authority().names(contract=old, reservation="RSV-1"), False)
+		external = self._case("H2", kind="External record", versions=[("Effective", {"external": True})])
+		self.assertIs(owner.Authority().names(contract=external, reservation="RSV-1"), False)
+		self.assertIsNone(owner.Authority().names(contract="NOT-A-CASE", reservation="RSV-1"))

@@ -27,6 +27,10 @@ Owner decision 6 Oct 2026:
   commitment. (No Contract Management module exists yet; the principal is a
   registered capability exercised by tests.)
 - Planning, Tenders, Evaluation and Award can do none of it.
+
+Owner decision 16 Oct 2026 (a narrow amendment of the 6 Oct decision): Contract Management may also ask Budget to revalidate the exact reservations its own contract's
+award names, and nothing wider. Budget does the revalidating (it decides each status); the grant gives no general Budget access and no power to change funds, and
+`revalidate_reservations` refuses a Contract Management caller for any reservation the contract's award does not name.
 """
 
 from __future__ import annotations
@@ -54,7 +58,7 @@ ACTION_REVALIDATE = "revalidate_reservations"
 
 ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
 	PRINCIPAL_REQUISITIONS: frozenset({ACTION_CHECK, ACTION_RESERVE, ACTION_RELEASE}),
-	PRINCIPAL_CONTRACT: frozenset({ACTION_CONVERT, ACTION_RELEASE, ACTION_ADJUST, ACTION_CLOSE}),
+	PRINCIPAL_CONTRACT: frozenset({ACTION_CONVERT, ACTION_RELEASE, ACTION_ADJUST, ACTION_CLOSE, ACTION_REVALIDATE}),
 	PRINCIPAL_BUDGET: frozenset({ACTION_REVALIDATE}),
 	PRINCIPAL_PLANNING: frozenset(),
 	PRINCIPAL_TENDERS: frozenset(),

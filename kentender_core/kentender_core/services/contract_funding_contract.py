@@ -16,6 +16,9 @@ object (or None to decline, for example outside a simulation environment):
     close(*, identity, contract, final_amount, event_id, event_type, evidence)
                                                          -> {"reference", "amount"}   (optional; closes the reconciled commitment once and releases nothing; raises `Refused`)
     recall(*, identity)                                  -> {"reference", "amount"} | None   (optional; what an adjustment or closure already did under an identity, so the caller reads the owner first)
+    revalidate(*, identity, contract, allocations)       -> {"reservations": [{"reservation", "status"}], "problems": [plain words]}   (optional; the owner re-reads the exact reservations the contract's award names and
+                                                            decides each one's status; it converts, releases and moves nothing. The owner's decision of 16 October 2026: Contract Management may ask this, for its own contract's
+                                                            reservations only. Raises `Refused` for a reservation the award does not name; `problems` is empty when every reservation can still be drawn on)
 
 `identity` is Contract Management's operation identity. A provider must be **idempotent on it**: `lookup` answers what it already holds under an identity, and `convert` called again
 with the same identity returns that same result and creates nothing more. That is what lets Contract Management read the owner first, link what exists and never convert twice.
@@ -29,7 +32,7 @@ import frappe
 
 HOOK = "kt_contract_funding_provider"
 FUNCTIONS: tuple[str, ...] = ("lookup", "convert")
-OPTIONAL: tuple[str, ...] = ("adjust", "close", "recall")
+OPTIONAL: tuple[str, ...] = ("adjust", "close", "recall", "revalidate")
 
 
 class Refused(Exception):
@@ -100,3 +103,12 @@ def recall(identity: str) -> dict[str, Any] | None:
 			if answer is not None:
 				return answer
 	return None
+
+
+def revalidate(identity: str, *, contract: str, allocations: list[dict[str, Any]]) -> dict[str, Any] | None:
+	"""Ask the funding owner to revalidate the reservations a contract's award names, before a step that depends on them. None when no funding owner on this site can: the caller then goes on as it did before the
+	owner offered it, because no owner means nothing to ask. Moves no funds."""
+	chosen = [p for p in providers() if callable(getattr(p, "revalidate", None))]
+	if not chosen:
+		return None
+	return chosen[-1].revalidate(identity=identity, contract=contract, allocations=allocations)

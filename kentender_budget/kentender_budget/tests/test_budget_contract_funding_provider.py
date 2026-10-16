@@ -13,6 +13,7 @@ import frappe
 from kentender_budget.services import contract_funding_provider as owner
 from kentender_budget.tests.test_budget_service_principal import _PrincipalBase
 from kentender_core.services import contract_funding_contract as seam
+from kentender_core.services import contract_reservation_authority as authority
 
 
 class TestContractFundingProvider(_PrincipalBase):
@@ -66,6 +67,53 @@ class TestContractFundingProvider(_PrincipalBase):
 		self.assertEqual(done["amount"], 1_000_000)
 		self.assertEqual(len(done["reference"].split(", ")), 2)
 		self.assertEqual(sorted(frappe.get_all("Procurement Commitment", filters={"contract": self.contract}, pluck="current_amount")), [300_000, 700_000])
+
+
+class TestRevalidation(_PrincipalBase):
+	"""The owner's decision of 16 October 2026: Contract Management asks Budget to revalidate the exact reservations its award names, before a step that depends on them. Budget decides; nothing moves."""
+
+	def setUp(self):
+		super().setUp()
+		frappe.flags.kt_contract_funding_providers = [owner.Provider()]
+		self.addCleanup(lambda: setattr(frappe.flags, "kt_contract_funding_providers", None))
+		self.identity = f"{self.contract}|agreement 1|1|Funding revalidation|signing"
+
+	def _reservation(self, amount=10_000_000):
+		budget, line = self._new_dhi_line()
+		reservation = self._reserve(line, amount)
+		self._as("Administrator")
+		return reservation
+
+	def _ask(self, reservation, awarded=True):
+		allocations = [{"reservation": reservation, "amount": 1_000_000}]
+		with authority.awarded(self.contract, *([reservation] if awarded else ["SOME-OTHER-RESERVATION"])):
+			return seam.revalidate(self.identity, contract=self.contract, allocations=allocations)
+
+	def test_budget_answers_for_the_reservations_the_award_names_and_reports_no_problem_when_they_can_be_drawn_on(self):
+		reservation = self._reservation()
+		answer = self._ask(reservation)
+		self.assertEqual(answer["problems"], [])
+		self.assertEqual([r["status"] for r in answer["reservations"]], ["Active"])
+		self.assertEqual(frappe.db.get_value("Funding Reservation", reservation, "remaining_amount"), 10_000_000, "nothing was moved")
+		self.assertEqual(frappe.db.count("Procurement Commitment", {"contract": self.contract}), 0)
+
+	def test_a_released_reservation_is_a_problem_in_plain_words(self):
+		reservation = self._reservation()
+		frappe.db.set_value("Funding Reservation", reservation, "status", "Released")
+		answer = self._ask(reservation)
+		self.assertEqual(len(answer["problems"]), 1)
+		self.assertIn("has been released", answer["problems"][0])
+
+	def test_a_reservation_the_award_does_not_name_is_refused(self):
+		reservation = self._reservation()
+		with self.assertRaises(seam.Refused) as caught:
+			self._ask(reservation, awarded=False)
+		self.assertIn("only the reservations its own contract's award names", str(caught.exception))
+
+	def test_an_award_that_names_no_usable_allocation_is_refused(self):
+		for allocations in ([], [{"reservation": "", "amount": 1}]):
+			with self.assertRaises(seam.Refused):
+				seam.revalidate(self.identity, contract=self.contract, allocations=allocations)
 
 
 class TestVariationAndClosure(_PrincipalBase):

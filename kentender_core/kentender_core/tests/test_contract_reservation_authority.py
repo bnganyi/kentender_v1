@@ -50,3 +50,19 @@ class TestContractReservationAuthority(IntegrationTestCase):
 		with seam.installed(Owner(True)):
 			self.assertIsNotNone(frappe.flags.get(seam.FLAG))
 		self.assertEqual(frappe.flags.get(seam.FLAG), before)
+
+	def test_names_is_asked_of_an_owner_that_offers_it_and_falls_back_to_authorises_for_one_that_does_not(self):
+		"""A request that draws nothing (the owner's decision of 16 October 2026, revalidation) asks whether the award names a reservation, before its agreement is effective."""
+
+		class Names(Owner):
+			def names(self, *, contract, reservation):
+				return True
+
+		plain = Owner(False)
+		with seam.installed(plain):
+			self.assertIs(seam.names("C-1", "R-1"), False, "an owner with no `names` answers by `authorises`")
+		with seam.installed(Owner(False)), seam.installed(Names(False)):
+			self.assertIs(seam.names("C-1", "R-1"), True)
+			self.assertIs(seam.authorises("C-1", "R-1"), False, "naming it draws on nothing")
+		with seam.installed():
+			self.assertIsNone(seam.names("C-1", "R-1"), "no owner is never a yes")

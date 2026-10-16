@@ -24,6 +24,7 @@ from kentender_budget.services.budget_service_principal import PRINCIPAL_CONTRAC
 from kentender_core.services import contract_funding_contract as seam
 
 CONTRACT_EVENT = "ContractEffective"
+REVALIDATION_EVENT = "ContractFundingRevalidation"
 
 
 def _key(identity: str, reservation: str) -> str:
@@ -63,6 +64,26 @@ class Provider:
 			codes.append(done["commitment"]["commitment_code"])
 		return {"reference": ", ".join(codes), "amount": float(sum((part for _r, part in parts), Decimal("0")))}
 
+
+	def revalidate(self, *, identity: str, contract: str, allocations: list[dict[str, Any]]) -> dict[str, Any]:
+		"""Ask Budget to revalidate the exact reservations the contract's award names (the owner's decision of 16 October 2026). Budget decides each status; nothing is converted, released or moved. A reservation
+		the award does not name refuses the whole request, and a reservation that is Released or needs attention is reported as a problem in plain words so the caller can hold the step it would otherwise allow."""
+		reservations = [str(a.get("reservation") or "").strip() for a in allocations or []]
+		if not reservations or any(not reservation for reservation in reservations):
+			raise seam.Refused("The award names no usable funding allocation.")
+		caller = service_caller(PRINCIPAL_CONTRACT, reference=contract)
+		try:
+			done = commitments.revalidate_reservations(reservations, identity, REVALIDATION_EVENT, f"{identity}#revalidate", caller=caller)
+		except (frappe.ValidationError, frappe.PermissionError, frappe.DoesNotExistError) as exc:
+			raise seam.Refused(frappe.safe_decode(str(exc))) from exc
+		rows = [{"reservation": r["reservation_code"] or r["reservation_id"], "status": r["status"]} for r in done["reservations"]]
+		problems = []
+		for row in rows:
+			if row["status"] == "Needs Attention":
+				problems.append(f"Reservation {row['reservation']} no longer has funding behind it: Budget has marked it as needing attention.")
+			elif row["status"] == "Released":
+				problems.append(f"Reservation {row['reservation']} has been released.")
+		return {"reservations": rows, "problems": problems}
 
 	def recall(self, *, identity: str) -> dict[str, Any] | None:
 		"""What an adjustment or a closure already did under this identity (read from Budget's own idempotency journal), so a retry links it and does nothing twice."""

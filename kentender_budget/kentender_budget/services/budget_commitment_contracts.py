@@ -129,10 +129,14 @@ def revalidate_reservations(
 	caller=None,
 ) -> dict[str, Any]:
 	"""§9.1 `revalidate_reservations` — Current or Needs Attention results and
-	ledger events; no new reservation is created. Budget-internal only."""
-	require_principal(caller, ACTION_REVALIDATE)
+	ledger events; no new reservation is created. Budget's own, and (the owner's
+	decision of 16 Oct 2026) Contract Management's for the exact reservations its
+	own contract's award names: it can ask, Budget decides, and no fund moves."""
+	caller = require_principal(caller, ACTION_REVALIDATE)
 	_require_event(downstream_event_id, downstream_event_type)
 	_require_key(idempotency_key)
+	if caller.principal == PRINCIPAL_CONTRACT:
+		_require_revalidation_scope(caller, reservations)
 	from kentender_budget.services.budget_contracts import _line_position_exact
 	from kentender_budget.services.budget_audit_contracts import EVENT_REVALIDATED, safe_record_event
 
@@ -175,6 +179,19 @@ def revalidate_reservations(
 			doc.reload()
 		results.append(_reservation_result(doc))
 	return {"ok": True, "reservations": results}
+
+
+def _require_revalidation_scope(caller, reservations) -> None:
+	"""A Contract Management caller revalidates only reservations its own contract's award names, every one checked before any is touched; refused as BUDGET_DOWNSTREAM_FORBIDDEN, like every principal-scope refusal."""
+	if not caller.reference:
+		refuse(_("The calling service must name what it acts for."))
+	if not reservations:
+		refuse(_("Contract Management must name the reservations to revalidate."))
+	from kentender_core.services import contract_reservation_authority as authority
+
+	for name in reservations:
+		if authority.names(caller.reference, _resolve_reservation(name).name) is not True:  # a scope refusal like the others: no answer is not a yes. The award names it; the agreement need not be effective, because this draws nothing
+			refuse(_("Contract Management may revalidate only the reservations its own contract's award names."))
 
 
 def _current_line_version(budget_line: str, *, for_update: bool = False):

@@ -36,11 +36,29 @@ def awarded_reservations(case: str) -> set[str]:
 	return found
 
 
+def named_reservations(case: str) -> set[str]:
+	"""The reservations the award package of the contract's agreement names, at any stage before it is superseded: a draft, an agreement out for signature or an effective one. A contract is about to
+	be signed long before it may draw on them; this is what its award package says, which is enough to ask Budget to revalidate them and nothing more."""
+	found: set[str] = set()
+	for terms_json in frappe.get_all(AGREEMENT, filters={"contract_case": case, "state": ["in", ["Draft", "Awaiting signatures", "Effective"]]}, pluck="terms_json"):
+		for allocation in ((records.loads(terms_json) or {}).get("funding") or {}).get("allocations") or []:
+			reservation = str(allocation.get("reservation") or "").strip()
+			if reservation:
+				found.add(reservation)
+	return found
+
+
 class Authority:
 	def authorises(self, *, contract: str, reservation: str) -> bool | None:
 		if not contract or not frappe.db.exists(CASE, contract):
 			return None
 		return str(reservation or "").strip() in awarded_reservations(contract)
+
+	def names(self, *, contract: str, reservation: str) -> bool | None:
+		"""May Budget revalidate this reservation for this contract? The award package names it (FU-CM-81); whether the agreement is effective is not asked, because revalidating draws nothing."""
+		if not contract or not frappe.db.exists(CASE, contract):
+			return None
+		return str(reservation or "").strip() in named_reservations(contract)
 
 
 def service() -> Any:

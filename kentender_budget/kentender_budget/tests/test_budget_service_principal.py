@@ -8,7 +8,8 @@ session role. Matrix (owner decision 6 Oct 2026):
 
 - Requisitions: check/reserve funding; release only the exact reservations its
   own requisition created and has not converted.
-- Contract: convert, release an unused amount on an owner event, adjust.
+- Contract: convert, release an unused amount on an owner event, adjust, and (16 Oct 2026)
+  revalidate the exact reservations its own contract's award names, and no other.
 - Planning, Tenders, Evaluation, Award, any session user: refused.
 """
 
@@ -35,6 +36,7 @@ from kentender_budget.services.budget_service_principal import (
 )
 from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import FUNDING_SOURCE, _FinanceTestBase, owner_ou
 from kentender_budget.utils.version_stamp import stamped
+from kentender_core.services import contract_reservation_authority as authority
 from kentender_core.services.command_write_guard import purge_doc
 
 FORBIDDEN = "BUDGET_DOWNSTREAM_FORBIDDEN"
@@ -167,7 +169,7 @@ class TestPrincipalMatrix(_PrincipalBase):
 	def test_each_principal_is_refused_the_actions_that_are_not_its_own(self):
 		self._as("Administrator")
 		not_requisitions = ("convert_reservation", "adjust_commitment", "close_commitment", "revalidate_reservations")
-		not_contract = ("check_funding", "reserve_funding", "revalidate_reservations")
+		not_contract = ("check_funding", "reserve_funding")
 		not_budget = ("check_funding", "reserve_funding", "release_reservation", "convert_reservation", "adjust_commitment", "close_commitment")
 		for principal, refused in ((PRINCIPAL_REQUISITIONS, not_requisitions), (PRINCIPAL_CONTRACT, not_contract), (PRINCIPAL_BUDGET, not_budget)):
 			calls = self._calls(service_caller(principal, reference="X"))
@@ -409,8 +411,20 @@ class TestContractPrincipal(_PrincipalBase):
 		self.assert_forbidden(commit.adjust_commitment, commitment, 1, "", "", self._key("adj"), caller=contract_caller(self.contract))
 
 
-class TestBudgetInternalRevalidation(_PrincipalBase):
-	def test_revalidation_is_budget_internal(self):
+class TestRevalidation(_PrincipalBase):
+	"""Budget's own revalidation, and (the owner's decision of 16 Oct 2026, a narrow amendment of the 6 Oct one) Contract Management's request for the exact reservations its own contract's award names."""
+
+	def _two_reservations(self):
+		_, line = self._new_dhi_line()
+		mine = self._reserve(line, 10_000_000)
+		other = self._reserve(line, 1_000_000, reference="REQ-SP-2", plan_item="TEST-PPI-SP2")
+		self._as("Administrator")
+		return mine, other
+
+	def _revalidate(self, reservations, caller):
+		return commit.revalidate_reservations(reservations, "EVT-SP-2", "ContractFundingRevalidation", self._key("rev"), caller=caller)
+
+	def test_budget_revalidates_its_own_reservations_and_no_other_service_may(self):
 		_, line = self._new_dhi_line()
 		reservation = self._reserve(line, 10_000_000)
 		self._as("Administrator")
@@ -418,8 +432,36 @@ class TestBudgetInternalRevalidation(_PrincipalBase):
 			[reservation], "EVT-SP-1", "BudgetVersionActivated", self._key("rev"), caller=service_caller(PRINCIPAL_BUDGET)
 		)
 		self.assertTrue(result["ok"])
-		self.assert_forbidden(commit.revalidate_reservations, [reservation], "E", "T", self._key("rev"), caller=contract_caller(self.contract))
 		self.assert_forbidden(commit.revalidate_reservations, [reservation], "E", "T", self._key("rev"), caller=req("REQ-SP-1"))
+		self.assert_forbidden(commit.revalidate_reservations, [reservation], "E", "T", self._key("rev"), caller=None)
+
+	def test_contract_management_revalidates_the_reservations_its_award_names_and_moves_no_fund(self):
+		mine, _other = self._two_reservations()
+		before = frappe.db.get_value("Funding Reservation", mine, ["remaining_amount", "original_amount", "status"], as_dict=True)
+		with authority.awarded(self.contract, mine):
+			result = self._revalidate([mine], contract_caller(self.contract))
+		self.assertTrue(result["ok"])
+		self.assertEqual(result["reservations"][0]["reservation_id"], mine)
+		self.assertEqual(frappe.db.get_value("Funding Reservation", mine, ["remaining_amount", "original_amount", "status"], as_dict=True), before, "revalidating moves no fund")
+		self.assertEqual(frappe.db.count("Procurement Commitment", {"contract": self.contract}), 0, "and converts nothing")
+
+	def test_a_reservation_the_award_does_not_name_is_refused_as_a_scope_refusal_and_the_whole_request_with_it(self):
+		mine, other = self._two_reservations()
+		with authority.awarded(self.contract, mine):
+			self.assert_forbidden(commit.revalidate_reservations, [other], "E", "T", self._key("rev"), caller=contract_caller(self.contract))
+			self.assert_forbidden(commit.revalidate_reservations, [mine, other], "E", "T", self._key("rev"), caller=contract_caller(self.contract))
+			self.assert_forbidden(commit.revalidate_reservations, [mine], "E", "T", self._key("rev"), caller=contract_caller(f"{self.contract}-OTHER"))  # another contract's award does not name it
+
+	def test_no_answer_from_the_owner_of_the_lineage_is_not_a_yes(self):
+		mine, _other = self._two_reservations()
+		with authority.installed():
+			self.assert_forbidden(commit.revalidate_reservations, [mine], "E", "T", self._key("rev"), caller=contract_caller(self.contract))
+
+	def test_the_contract_principal_must_name_what_it_acts_for_and_what_to_revalidate(self):
+		mine, _other = self._two_reservations()
+		with authority.awarded(self.contract, mine):
+			self.assert_forbidden(commit.revalidate_reservations, [mine], "E", "T", self._key("rev"), caller=contract_caller(""))
+			self.assert_forbidden(commit.revalidate_reservations, [], "E", "T", self._key("rev"), caller=contract_caller(self.contract))
 
 
 class TestCheckReserveCaller(_PrincipalBase):

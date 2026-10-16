@@ -51,3 +51,28 @@ class TestContractFundingSeam(IntegrationTestCase):
 		with self.assertRaises(seam.Unavailable):
 			seam.convert("x", contract="CM-1", allocations=[], amount=1)
 		self.assertIsNone(seam.lookup("x"))
+
+
+class TestRevalidation(IntegrationTestCase):
+	"""The owner's decision of 16 October 2026: Contract Management may ask the funding owner to revalidate the reservations its award names. The function is optional, and moves no funds."""
+
+	def use(self, *owners):
+		frappe.flags.kt_contract_funding_providers = list(owners)
+		self.addCleanup(lambda: setattr(frappe.flags, "kt_contract_funding_providers", None))
+
+	def test_with_no_owner_that_can_revalidate_the_caller_is_told_there_is_nothing_to_ask(self):
+		self.use()
+		self.assertIsNone(seam.revalidate("CM|agreement 1|1|Funding revalidation|k", contract="CM-1", allocations=[{"reservation": "R-1", "amount": 5}]))
+		self.use(Owner())  # an owner that converts but offers no revalidation
+		self.assertIsNone(seam.revalidate("CM|agreement 1|1|Funding revalidation|k", contract="CM-1", allocations=[{"reservation": "R-1", "amount": 5}]))
+		self.assertIn("revalidate", seam.OPTIONAL)
+		self.assertEqual(seam.missing_functions(Owner()), [], "it is optional: a provider without it is still a complete provider")
+
+	def test_the_answer_of_an_owner_that_can_is_passed_through_untouched(self):
+		class Revalidating(Owner):
+			def revalidate(self, *, identity, contract, allocations):
+				return {"reservations": [{"reservation": a["reservation"], "status": "Released"} for a in allocations], "problems": [f"Reservation {allocations[0]['reservation']} has been released."]}
+
+		self.use(Revalidating())
+		answer = seam.revalidate("CM|agreement 1|1|Funding revalidation|k", contract="CM-1", allocations=[{"reservation": "R-1", "amount": 5}])
+		self.assertEqual(answer["problems"], ["Reservation R-1 has been released."])
