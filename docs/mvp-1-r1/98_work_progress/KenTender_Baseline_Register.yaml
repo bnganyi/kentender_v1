@@ -114,7 +114,7 @@
       "filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_12.md",
       "scope": "Funding ceilings, affordability, reservations and commitments, plus the Budget-owned receiving side of a Planning budget revision request. Budget remains separate from the statutory APP reservation denominator.",
       "dependencies": "PLN-CHG-001 v1.27; LAW-REG-001 v1.2; KT-STD-001 v1.8",
-      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "action": "Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v1.13 proposed 16 October 2026 (owner decision 1): Committed counts Active and Closed commitments at their retained amounts, close_commitment becomes a requirement, a Closed commitment accepts no increase and no ordinary adjustment, and its amount is lowered only by a Budget correction that a Budget Officer records and a different Budget Approver approves (BUD-BR-031 to 034; follow-up FU-CM-59). v1.14 proposed 16 October 2026 (owner decisions 2 and 3): carries v1.13 in full, makes the whole-chain check on conversion a requirement (BUD-BR-035) and records the funding path for a contract with no tender in KenTender as missing (BUD23-XD-004). v1.15 proposed 16 October 2026 (owner instruction to draft it with CM v0.9): carries v1.14, verifies lineage at the first conversion and retains it on the commitment and the conversion event, and adds the existing-contract commitment entry for KenTender Budget-controlled funding (BUD-BR-036 to 039). v1.12 remains the approved baseline until the Project Owner approves v1.13, v1.14 or v1.15.",
       "source_sha256": "71ea6ca83c54841cbf18e2e4d978ea3769f9ceed64a7663b7744e186b043b4d4",
       "prior_approved_baseline": {
         "version": "1.11",
@@ -124,10 +124,26 @@
       },
       "approval_record": "Project Owner: Mark the documents as approved; 3 October 2026",
       "approval_history": {
-        "proposed_version": "1.12",
-        "proposed_filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_12.md",
-        "proposal_status": "Project Owner review",
-        "proposed_base_version": "1.11"
+        "proposed_version": "1.15",
+        "proposed_filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_15.md",
+        "proposal_status": "Proposed 16 October 2026; awaiting Project Owner review, together with CM-CHG-001 v0.9. Carries v1.14 and v1.13 in full.",
+        "proposed_base_version": "1.14",
+        "pending_predecessor_version": "1.14",
+        "pending_predecessor_filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_14.md",
+        "pending_predecessor_status": "Proposed 16 October 2026; carries v1.13 in full; may be approved without v1.15, which leaves v1.15 proposed",
+        "pending_predecessor_base_version": "1.13",
+        "earlier_pending_predecessor": {
+          "version": "1.13",
+          "filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_13.md",
+          "status": "Proposed 16 October 2026; may be approved on its own",
+          "base_version": "1.12"
+        },
+        "prior_proposal": {
+          "proposed_version": "1.12",
+          "proposed_filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_12.md",
+          "proposal_status": "Approved 3 October 2026",
+          "proposed_base_version": "1.11"
+        }
       }
     },
     {
