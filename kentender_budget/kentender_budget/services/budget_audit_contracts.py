@@ -38,6 +38,10 @@ EVENT_COMMITMENT = "Contract commitment recorded"
 EVENT_COMMITMENT_ADJUSTED = "Commitment adjusted"
 # CM-CHG-001 v0.8 §5.14.1 — the zero-value record of a commitment's status closure.
 EVENT_COMMITMENT_CLOSED = "Commitment closed"
+# BUD-CHG-001 v1.13 proposal — the Budget-owned correction that lowers a Closed commitment: recorded by a Budget Officer, decided by a different Budget Approver.
+EVENT_CORRECTION_RECORDED = "Commitment correction recorded"
+EVENT_CORRECTION_RETURNED = "Commitment correction returned"
+EVENT_COMMITMENT_CORRECTED = "Commitment corrected"
 EVENT_PERMISSION_DENIED = "Permission denied"
 EVENT_CONCURRENCY_CONFLICT = "Concurrency conflict"
 # BUD-CHG-001 v1.11 §12 — a Planning budget revision request and each outcome.
@@ -70,6 +74,7 @@ FUNDING_EVENT_TYPES = frozenset(
 		EVENT_COMMITMENT,
 		EVENT_COMMITMENT_ADJUSTED,
 		EVENT_COMMITMENT_CLOSED,
+		EVENT_COMMITMENT_CORRECTED,
 	}
 )
 
@@ -97,6 +102,9 @@ _DISPLAY_LABEL = {
 	EVENT_COMMITMENT: _("Converted into a commitment"),
 	EVENT_COMMITMENT_ADJUSTED: _("Commitment adjusted"),
 	EVENT_COMMITMENT_CLOSED: _("Commitment closed"),
+	EVENT_CORRECTION_RECORDED: _("Commitment correction recorded"),
+	EVENT_CORRECTION_RETURNED: _("Commitment correction returned"),
+	EVENT_COMMITMENT_CORRECTED: _("Commitment corrected"),
 }
 
 _POSITION_KEYS = ("approved", "reserved", "committed", "available")
@@ -111,6 +119,7 @@ _FUNDING_EVENT_ORDER = (
 	EVENT_COMMITMENT,
 	EVENT_COMMITMENT_ADJUSTED,
 	EVENT_COMMITMENT_CLOSED,
+	EVENT_COMMITMENT_CORRECTED,
 )
 
 

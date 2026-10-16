@@ -19,6 +19,7 @@ from kentender_budget.tests.test_bud_chg_001_phase3_lifecycle import (
 	_BudgetLifecycleTestBase,
 	owner_ou,
 )
+from kentender_core.services import contract_reservation_authority
 
 
 # The only caller Budget accepts for check/reserve: the Requisitions principal
@@ -35,6 +36,11 @@ class _FinanceTestBase(_BudgetLifecycleTestBase):
 	def setUpClass(cls):
 		super().setUpClass()
 		cls.finance_officer = cls._make_user("finance", ("Finance Confirmation Officer",))
+
+	def setUp(self):
+		super().setUp()
+		# these tests are about money, not about which award a contract came from: every contract may draw on every reservation here (the lineage rule has its own tests)
+		contract_reservation_authority.permit_all(self)
 
 	def _new_dhi_line(self, *, approved_amount=100_000_000) -> tuple[str, str]:
 		"""One fresh Active baseline's DHI line — returns (budget, budget_line)."""

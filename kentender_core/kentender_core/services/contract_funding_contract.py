@@ -11,7 +11,8 @@ object (or None to decline, for example outside a simulation environment):
     convert(*, identity, contract, allocations, amount)  -> {"reference", "amount"}   (raises `Refused` when the owner definitively refuses)
     adjust(*, identity, contract, allocations, event_id, event_type)
                                                          -> {"reference", "amount", "before", "after"}   (optional; each allocation is `{"reservation", "new_total"}`, the supported total of
-                                                            that commitment after a lawful variation or termination; raises `Refused`)
+                                                            that commitment after a lawful variation or termination; raises `Refused`. A commitment already Closed accepts no adjustment from the
+                                                            contract service: the funding owner lowers it only through its own approved correction)
     close(*, identity, contract, final_amount, event_id, event_type, evidence)
                                                          -> {"reference", "amount"}   (optional; closes the reconciled commitment once and releases nothing; raises `Refused`)
     recall(*, identity)                                  -> {"reference", "amount"} | None   (optional; what an adjustment or closure already did under an identity, so the caller reads the owner first)

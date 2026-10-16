@@ -1,0 +1,266 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-10-16 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "generated_reference",
+  "commitment",
+  "status",
+  "col_a",
+  "budget",
+  "budget_line",
+  "section_amounts",
+  "before_amount",
+  "after_amount",
+  "currency",
+  "section_basis",
+  "reason",
+  "evidence_json",
+  "contract_reference",
+  "section_who",
+  "recorded_by",
+  "recorded_at",
+  "recorded_event",
+  "col_b",
+  "decided_by",
+  "decided_at",
+  "decision_reason",
+  "section_tech",
+  "idempotency_key",
+  "payload_digest",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "generated_reference",
+   "fieldtype": "Data",
+   "label": "Reference",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "commitment",
+   "fieldtype": "Link",
+   "label": "Commitment",
+   "options": "Procurement Commitment",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Awaiting approval\nApproved\nReturned",
+   "default": "Awaiting approval",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "budget",
+   "fieldtype": "Link",
+   "label": "Budget",
+   "options": "Procurement Budget",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "budget_line",
+   "fieldtype": "Link",
+   "label": "Budget line",
+   "options": "Procurement Budget Line",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_amounts",
+   "fieldtype": "Section Break",
+   "label": "Amounts"
+  },
+  {
+   "fieldname": "before_amount",
+   "fieldtype": "Currency",
+   "label": "Amount before",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "after_amount",
+   "fieldtype": "Currency",
+   "label": "Amount after",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_basis",
+   "fieldtype": "Section Break",
+   "label": "Why"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_json",
+   "fieldtype": "Long Text",
+   "label": "Evidence references (JSON list)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contract_reference",
+   "fieldtype": "Data",
+   "label": "Contract Management reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_who",
+   "fieldtype": "Section Break",
+   "label": "Who and when"
+  },
+  {
+   "fieldname": "recorded_by",
+   "fieldtype": "Data",
+   "label": "Recorded by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recorded_at",
+   "fieldtype": "Datetime",
+   "label": "Recorded at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recorded_event",
+   "fieldtype": "Data",
+   "label": "Recording ledger event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "decided_by",
+   "fieldtype": "Data",
+   "label": "Decided by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_at",
+   "fieldtype": "Datetime",
+   "label": "Decided at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision_reason",
+   "fieldtype": "Small Text",
+   "label": "Decision reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_tech",
+   "fieldtype": "Section Break",
+   "label": "Technical",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payload_digest",
+   "fieldtype": "Data",
+   "label": "Payload digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-16 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Budget",
+ "name": "Commitment Correction",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Approver",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "search_fields": "generated_reference,commitment,contract_reference",
+ "title_field": "generated_reference"
+}

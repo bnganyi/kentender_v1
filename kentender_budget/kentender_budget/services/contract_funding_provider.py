@@ -49,6 +49,11 @@ class Provider:
 		if sum((part for _r, part in parts), Decimal("0")) != Decimal(str(amount)):
 			raise seam.Refused("The funding allocations do not add up to the contract amount.")
 		caller = service_caller(PRINCIPAL_CONTRACT, reference=contract)
+		for reservation, _part in parts:  # every allocation is checked against the award before any is converted, so a reservation the award does not name converts nothing, not even the others
+			try:
+				commitments.require_authorised_reservation(contract, commitments._resolve_reservation(reservation).name)
+			except (frappe.ValidationError, frappe.PermissionError, frappe.DoesNotExistError) as exc:
+				raise seam.Refused(frappe.safe_decode(str(exc))) from exc
 		codes = []
 		for reservation, part in parts:
 			try:

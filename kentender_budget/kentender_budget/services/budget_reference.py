@@ -136,3 +136,13 @@ def allocate_commitment_reference() -> str:
 	frappe.throw(_("Could not allocate a unique Procurement Commitment reference"))
 
 
+def allocate_correction_reference() -> str:
+	"""Allocate next never-reuse `COR-{SITE}-####` (BUD-CHG-001 v1.13 proposal: a correction of a Closed commitment)."""
+	slug = site_slug()
+	prefix = f"COR-{slug}-"
+	_sync_series(prefix, _max_seq("Commitment Correction", "generated_reference", prefix))
+	for _ in range(200):
+		candidate = make_autoname(f"{prefix}.####")
+		if not frappe.db.exists("Commitment Correction", {"generated_reference": candidate}):
+			return candidate
+	frappe.throw(_("Could not allocate a unique Commitment Correction reference"))

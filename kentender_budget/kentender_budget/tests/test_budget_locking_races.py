@@ -37,6 +37,7 @@ from kentender_budget.services.budget_service_principal import PRINCIPAL_CONTRAC
 from kentender_budget.tests.test_bud_chg_001_phase3_lifecycle import FUNDING_SOURCE, owner_ou
 from kentender_budget.tests.test_budget_service_principal import _PrincipalBase
 from kentender_budget.utils.version_stamp import stamped
+from kentender_core.services import contract_reservation_authority
 
 _WAIT = 30
 _BLOCKED_FOR = 1.5
@@ -64,6 +65,7 @@ class _Conn:
 		try:
 			frappe.init(site=self.site, sites_path=self.sites_path)
 			frappe.connect()
+			frappe.flags[contract_reservation_authority.FLAG] = [contract_reservation_authority.PermitAll()]  # flags are per thread; these races are about locks, not about the award's lineage
 			frappe.set_user(self.user)
 			if self.snapshot_first:
 				frappe.db.sql("select count(*) from `tabFunding Reservation`")

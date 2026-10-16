@@ -61,6 +61,7 @@ from kentender_budget.seeds.kentender_mvp_v1_portfolio import (
 )
 from kentender_budget.services.budget_authorization import ensure_budget_governance_roles
 from kentender_budget.utils.version_stamp import stamped
+from kentender_core.services import contract_reservation_authority
 from kentender_core.services.command_write_guard import purge_doc
 
 OFFICER = C.USER_BUD_OFFICER
@@ -451,7 +452,8 @@ def reset_close_ready(*, commit: bool = True) -> dict[str, Any]:
 	hold = _reserve(iso["dhi_line"], 80_000_000, ref="REQ-MOH-2027-031-001")
 	_as(OFFICER)
 	contract = _contract_caller("KT-CON-2027-004")
-	commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12), contract_event_id="KT-CON-2027-004:signed", contract_event_type="ContractSigned", caller=contract)
+	with contract_reservation_authority.awarded("KT-CON-2027-004", hold):
+		commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12), contract_event_id="KT-CON-2027-004:signed", contract_event_type="ContractSigned", caller=contract)
 	commit_svc.release_reservation(reservation=hold, amount=20_000_000, downstream_event_id="KT-CON-2027-004:unused", downstream_event_type="ContractUnusedAmount", idempotency_key=frappe.generate_hash(length=12), caller=contract)
 	return _finish(base, {"closure": iso, "reservation": hold, "active_commitments_total": 60_000_000}, commit=commit)
 
@@ -465,7 +467,8 @@ def reset_partial_conversion(*, commit: bool = True) -> dict[str, Any]:
 	iso = _isolated_budget(code="BUD19-CONVERT", fy_start_year=2043, dhi=100_000_000, hwd=None)
 	hold = _reserve(iso["dhi_line"], 80_000_000, ref="REQ-MOH-2027-021-001")
 	_as(OFFICER)
-	commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12), contract_event_id="KT-CON-2027-004:signed", contract_event_type="ContractSigned", caller=_contract_caller("KT-CON-2027-004"))
+	with contract_reservation_authority.awarded("KT-CON-2027-004", hold):
+		commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12), contract_event_id="KT-CON-2027-004:signed", contract_event_type="ContractSigned", caller=_contract_caller("KT-CON-2027-004"))
 	return _finish(base, {"conversion": iso, "reservation": hold}, commit=commit)
 
 

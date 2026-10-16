@@ -37,6 +37,7 @@ from kentender_budget.utils.version_stamp import stamped
 from kentender_core.seeds import calendar, clock
 from kentender_core.seeds._common import ensure_currency_kes
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
+from kentender_core.services import contract_reservation_authority
 
 FIXTURE_NS = C.FIXTURE_NS
 FUNDING_SOURCE = "Government of Kenya"
@@ -845,12 +846,13 @@ def upsert_isolated_finance_profiles() -> dict[str, Any]:
 				idempotency_key=frappe.generate_hash(length=12), caller=_requisitions("BUD-SC-CONVERT-PARTIAL-HOLD"),
 			)
 			reservation_name = (reserve_result.get("reservations") or [{}])[0].get("reservation_id")
-			commitment_svc.convert_reservation(
-				reservation=reservation_name, contract="BUD-SC-CONVERT-PARTIAL-CTR", amount=60_000_000,
-				idempotency_key=frappe.generate_hash(length=12),
-				contract_event_id="BUD-SC-CONVERT-PARTIAL-CTR:signed", contract_event_type="ContractSigned",
-				caller=service_caller(PRINCIPAL_CONTRACT, reference="BUD-SC-CONVERT-PARTIAL-CTR"),
-			)
+			with contract_reservation_authority.awarded("BUD-SC-CONVERT-PARTIAL-CTR", reservation_name):
+				commitment_svc.convert_reservation(
+					reservation=reservation_name, contract="BUD-SC-CONVERT-PARTIAL-CTR", amount=60_000_000,
+					idempotency_key=frappe.generate_hash(length=12),
+					contract_event_id="BUD-SC-CONVERT-PARTIAL-CTR:signed", contract_event_type="ContractSigned",
+					caller=service_caller(PRINCIPAL_CONTRACT, reference="BUD-SC-CONVERT-PARTIAL-CTR"),
+				)
 		finally:
 			frappe.set_user(prior_user)
 	out["BUD-SC-CONVERT-PARTIAL"] = {"version": version_name, "line": line_name, "reservation": reservation_name}

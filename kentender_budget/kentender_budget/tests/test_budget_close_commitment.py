@@ -153,20 +153,25 @@ class TestCloseCommitment(_PrincipalBase):
 		self.assertEqual(self._position(line)["committed"], 800_000)
 
 	# 7 ----------------------------------------------------------------------------------------------------------------------------------
-	def test_no_increase_and_no_new_obligation_goes_into_a_closed_budget_but_a_decrease_still_reconciles(self):
+	def test_no_increase_and_no_new_obligation_goes_into_a_closed_budget_and_a_closed_commitment_is_changed_only_by_a_correction(self):
 		budget, line, reservation, commitment = self._commitment(reserved=10_000_000, converted=1_000_000)
 		self._close(commitment, 1_000_000)
-		frappe.local.message_log = []
-		with self.assertRaises(frappe.ValidationError):
-			self._adjust(commitment, 1_100_000, label="increase")  # an increase of a Closed commitment needs owner revalidation and a funding decision first
-		self.assertEqual(frappe.db.get_value("Procurement Commitment", commitment, "current_amount"), 1_000_000)
-		self._adjust(commitment, 900_000, label="decrease")  # an exact, separately authorised decrease later reconciles a Closed commitment
-		self.assertEqual((frappe.db.get_value("Procurement Commitment", commitment, ["status", "current_amount"], as_dict=True), self._position(line)["committed"]), ({"status": "Closed", "current_amount": 900_000}, 900_000))
+		# the contract service can neither raise nor lower a Closed commitment: its amount changes only through an approved correction (BUD-BR-033, tested in test_budget_retained_commitments)
+		for label, amount in (("increase", 1_100_000), ("decrease", 900_000)):
+			frappe.local.message_log = []
+			with self.subTest(label), self.assertRaises(frappe.ValidationError):
+				self._adjust(commitment, amount, label=label)
+			self.assertEqual(self._title(), "BUDGET_INVALID_STATE", label)
+			self.assertEqual(frappe.db.get_value("Procurement Commitment", commitment, "current_amount"), 1_000_000)
+		# a second contract's Active commitment on the same reservation is still adjustable; once the Budget is Closed it can take neither an increase nor a new conversion
+		other = f"{self.contract}-2"
+		self._as("Administrator")
+		second = commit.convert_reservation(reservation, other, 500_000, self._key("conv"), contract_event_id="E", contract_event_type="ContractSigned", caller=contract_caller(other))["commitment"]["commitment_id"]
 		version = frappe.db.get_value("Procurement Budget Version", {"budget": budget, "status": "Active"}, "name")
 		frappe.db.set_value("Procurement Budget Version", version, "status", "Closed")
 		for label, call in (
-			("an increase", lambda: self._adjust(commitment, 950_000, label="late-increase")),
-			("a new conversion", lambda: commit.convert_reservation(reservation, f"{self.contract}-2", 500_000, self._key("conv"), contract_event_id="E", contract_event_type="ContractSigned", caller=contract_caller(f"{self.contract}-2"))),
+			("an increase", lambda: commit.adjust_commitment(second, 600_000, "E", "ContractVariation", self._key("adj"), caller=contract_caller(other))),
+			("a new conversion", lambda: commit.convert_reservation(reservation, f"{self.contract}-3", 500_000, self._key("conv"), contract_event_id="E", contract_event_type="ContractSigned", caller=contract_caller(f"{self.contract}-3"))),
 		):
 			frappe.local.message_log = []
 			with self.subTest(label), self.assertRaises(frappe.ValidationError):

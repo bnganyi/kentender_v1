@@ -28,6 +28,22 @@ def get_budget_workspace(fiscal_year: str | None = None):
 
 
 @frappe.whitelist()
+def record_commitment_correction(payload: dict | str | None = None):
+	"""BUD v1.13 proposal, BUD-BR-033 — a Budget Officer records a correction that lowers a Closed commitment."""
+	from kentender_budget.services import budget_commitment_corrections as corrections
+
+	return corrections.record_commitment_correction(payload)
+
+
+@frappe.whitelist()
+def decide_commitment_correction(payload: dict | str | None = None):
+	"""BUD v1.13 proposal, BUD-BR-033 — a different person holding Budget Approver approves or returns the correction."""
+	from kentender_budget.services import budget_commitment_corrections as corrections
+
+	return corrections.decide_commitment_correction(payload)
+
+
+@frappe.whitelist()
 def decline_budget_revision_request(payload: dict | str | None = None):
 	"""BUD v1.11 §9.2 — the Budget Officer's decline (BUD-DES-19)."""
 	from kentender_budget.services import budget_revision_request_contracts as requests

@@ -308,6 +308,7 @@ def convert_reservation(
 	if caller.reference != contract:
 		refuse(_("Contract Management may convert a reservation only for its own contract."))
 	doc = _resolve_reservation(reservation)
+	require_authorised_reservation(contract, doc.name)
 	amount = parse_money(amount, scale=scale_for(doc.currency), field="amount")
 	params = {"reservation": doc.name, "contract": contract, "amount": text(amount, scale=scale_for(doc.currency)), "event_id": contract_event_id, "event_type": contract_event_type}
 	return _idempotent(
@@ -315,6 +316,21 @@ def convert_reservation(
 		fn=lambda: _convert(doc.name, contract, amount, key, contract_event_id, contract_event_type),
 		budget_for=_budget_of_reservation("reservation_id"),
 	)
+
+
+def require_authorised_reservation(contract: str, reservation: str) -> None:
+	"""BUD-CHG-001 v1.13 — a contract may consume only a reservation its own award names. Sharing a supplier or a Tender reference is not enough, and no answer is not a yes: Budget asks the owner of
+	the contract's funding lineage (`contract_reservation_authority`) and refuses unless it says yes. Read before any lock is taken, because the answer comes from the contract's frozen award."""
+	from kentender_core.services import contract_reservation_authority as authority
+
+	answer = authority.authorises(contract, reservation)
+	if answer is True:
+		return
+	if answer is None:
+		message = _("No funding owner confirms which reservations contract {0} may draw on. Nothing was committed.").format(contract)
+	else:
+		message = _("Reservation {0} is not one of the reservations awarded to contract {1}. Nothing was committed.").format(reservation, contract)
+	frappe.throw(message, frappe.ValidationError, title="BUDGET_RESERVATION_NOT_AUTHORISED")
 
 
 def _require_open_budget(budget: str) -> None:
@@ -411,10 +427,12 @@ def adjust_commitment(
 	caller=None,
 ) -> dict[str, Any]:
 	"""§9.1 `adjust_commitment` — apply a contract variation/cancellation to
-	an Active (or, downwards only, a Closed) commitment's current amount after locked revalidation. An
+	an Active commitment's current amount after locked revalidation. An
 	increase must be covered by the line's current available balance.
 	Contract Management only, for its own contract's commitment, on a
-	variation or cancellation event."""
+	variation or cancellation event. A **Closed** commitment accepts no change here, up or down
+	(BUD-CHG-001 v1.13, BUD-BR-033): its amount is lowered only by an approved correction
+	(`budget_commitment_corrections`)."""
 	caller = require_principal(caller, ACTION_ADJUST)
 	_require_event(variation_event_id, variation_event_type)
 	key = _require_key(idempotency_key)
@@ -448,17 +466,17 @@ def _adjust(commitment: str, new_total: Decimal, variation_event_id: str, variat
 	budget_line = frappe.db.get_value("Funding Reservation", reservation_name, "budget_line")
 	lock_budgets_of_lines([budget_line])
 	doc = locked_doc("Procurement Commitment", commitment)
-	if doc.status not in ("Active", "Closed"):
-		frappe.throw(_("Only an Active or Closed commitment can be adjusted"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+	if doc.status == "Closed":
+		# BUD-BR-033 — a Closed commitment is changed only by an approved correction, never by the contract service
+		frappe.throw(_("A Closed commitment is changed only by an approved correction"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+	if doc.status != "Active":
+		frappe.throw(_("Only an Active commitment can be adjusted"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
 
 	reservation = locked_doc("Funding Reservation", doc.reservation)
 	prior_amount = stored(doc.current_amount, scale=scale_for(doc.currency))
 	delta = new_amt - prior_amount
 	if delta > 0:
 		_require_open_budget(reservation.budget)
-		if doc.status == "Closed":
-			# §5.14.1 — a Closed commitment can later be reconciled downwards; an increase needs owner revalidation and a funding decision first
-			frappe.throw(_("A Closed commitment can only be decreased"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
 		from kentender_budget.services.budget_contracts import _line_position_exact
 
 		pos = _line_position_exact(reservation.budget_line, _current_line_version(reservation.budget_line, for_update=True), for_update=True)
@@ -472,7 +490,7 @@ def _adjust(commitment: str, new_total: Decimal, variation_event_id: str, variat
 			)
 
 	doc.current_amount = new_amt
-	if new_amt <= 0 and doc.status == "Active":  # a Closed commitment keeps its closure; its amount may reach zero
+	if new_amt <= 0:
 		doc.status = "Cancelled"
 	with budget_write():
 		doc.save(ignore_permissions=True)
