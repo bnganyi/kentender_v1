@@ -129,7 +129,7 @@ def compute(doc) -> dict[str, Any]:
 		if covered != quantity:
 			raise FundingIssue(f"The source items of line {line} cover {covered} of the {quantity} awarded.", line=line)
 		rows.append(split.Row(f"L{line}", _money(priced.get("line_total"), f"Total of line {line}"), tuple(coverage)))
-		evidence_rows.append({"row": f"L{line}", "line": line, "price_row": goods["price_row_id"], "quantity": str(quantity), "amount": cstr(priced.get("line_total")),
+		evidence_rows.append({"row": f"L{line}", "line": line, "price_row": goods["price_row_id"], "quantity": str(quantity), "unit": cstr(goods.get("unit")), "amount": cstr(priced.get("line_total")),
 			"coverage": [{"item": s["requisition_item_id"], "drawdown_line": s["drawdown_line_id"], "quantity": s["quantity"]} for s in goods["sources"]]})
 	try:
 		result = split.allocate(rows)
@@ -217,7 +217,23 @@ def disclosure(doc) -> dict[str, Any]:
 		return {"state": "Missing", "message": "The awarded items could not be matched to their funding sources. Procurement must resolve the source details."}
 	except FundingUnavailable:
 		return {"state": "Unavailable", "message": "Funding details are unavailable. The system will retry."}
-	rows = [{"department": cstr(frappe.db.get_value("Organisation Unit", a["source_organisation_unit"], "unit_name") or a["source_organisation_unit"]), "quantity": a["quantity"], "amount": a["amount"],
-		"reservation": a["reservation"], "reservation_reference": a["reservation_reference"], "drawdown_line": a["drawdown_line"], "budget_line": a["budget_line"]} for a in payload["allocations"]]
-	return {"state": "Available", "currency": payload["currency"], "rows": rows, "total_quantity": str(sum((Decimal(r["quantity"]) for r in rows), Decimal("0"))), "total_amount": payload["supported_total"],
-		"retained": bool(held), "allocation": held.name if held else ""}
+	units = {cstr(r.get("unit")) for r in payload.get("commercial_rows") or [] if cstr(r.get("unit"))}
+	unit = next(iter(units)) if len(units) == 1 else ""
+	source = sources.for_case(doc)
+
+	def facts(reservation: str) -> dict[str, Any]:
+		"""The Budget line's own name and code, read through the source provider (Budget's published read); a gap leaves the identifiers, never a guess."""
+		try:
+			return source.reservation_facts(reservation) or {}
+		except Exception:  # noqa: BLE001 - a missing name must not hide the allocation
+			return {}
+
+	rows = []
+	for a in payload["allocations"]:
+		seen = facts(a["reservation"])
+		rows.append({"department": cstr(frappe.db.get_value("Organisation Unit", a["source_organisation_unit"], "unit_name") or a["source_organisation_unit"]), "quantity": a["quantity"], "unit": unit, "amount": a["amount"],
+			"reservation": a["reservation"], "reservation_reference": a["reservation_reference"], "drawdown_line": a["drawdown_line"], "budget_line": a["budget_line"],
+			"budget_line_title": cstr(seen.get("budget_line_title")), "budget_line_code": cstr(seen.get("budget_line_code"))})
+	requisition = payload.get("requisition") or {}
+	return {"state": "Available", "currency": payload["currency"], "rows": rows, "total_quantity": str(sum((Decimal(r["quantity"]) for r in rows), Decimal("0"))), "unit": unit, "total_amount": payload["supported_total"],
+		"requisition": {"id": cstr(requisition.get("id")), "version": cstr(requisition.get("version"))}, "retained": bool(held), "allocation": held.name if held else ""}

@@ -159,6 +159,14 @@ class EvaluationSource:
 			return {"known": False, "reason": cstr(exc)[:140] or "Budget did not answer."}
 		return {"known": True, "available": str(total.quantize(Decimal("0.01"))), "reservations": codes, "source": "Budget"}
 
+	def reservation_facts(self, reservation: str) -> dict[str, Any]:
+		"""The names Budget gives a reservation's line, for the read-only funding disclosure (AWD-CHG-001 v0.7 section 10.4), through Budget's published `get_funding_lineage`. Nothing here decides anything."""
+		from kentender_budget.services.budget_downstream_contracts import get_funding_lineage
+
+		rows = get_funding_lineage(reservation=reservation).get("rows") or []
+		line = (rows[0].get("budget_line") or {}) if rows else {}
+		return {"budget_line_title": cstr(line.get("title")), "budget_line_code": cstr(line.get("code"))}
+
 	def allocation_inputs(self, tender: str, report: str, bid: str) -> dict[str, Any]:
 		"""What the Award funding allocation (AWD-CHG-001 v0.7 §7.1) is derived from, each read from its owner's published seam: the frozen evaluation's awarded prices and the definition it was made against
 		(Bid Evaluation), the Tender's mapping of price rows to source items, drawdown lines and reservations (Tenders), and the Requisition's own current facts (Requisitions). Nothing is inferred."""

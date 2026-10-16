@@ -243,8 +243,14 @@ class SyntheticSource:
 			return {"known": False, "reason": "The synthetic Budget service is down."}
 		return {"known": True, "available": cstr(t.get("funding_available") or "50000000.00"), "reservations": ["SYN-RSV"], "source": "Budget (synthetic)"}
 
-	def audience(self, tender: str) -> list[dict[str, Any]]:
-		state = _state()
+	def reservation_facts(self, reservation: str) -> dict[str, Any]:
+		"""The synthetic Budget's names for a reservation's line: a world may set `reservation_facts={reservation: {"budget_line_title": ..., "budget_line_code": ...}}`; otherwise a fixed pair."""
+		for t in (_state().get("tenders") or {}).values():
+			found = (t.get("reservation_facts") or {}).get(reservation)
+			if found:
+				return dict(found)
+		return {"budget_line_title": "Synthetic budget line", "budget_line_code": "SYN-BL"}
+
 	def allocation_inputs(self, tender: str, report: str, bid: str) -> dict[str, Any]:
 		"""The inputs of the funding allocation for a synthetic award: by default one source (`SYN-DL`, reservation `SYN-RSV`) takes the whole awarded price; a world may name several with
 		`set_fact(tender, allocation={"sources": [{"drawdown_line", "reservation", "quantity", "unit"}], "unit_price": "..."})`, or make the owners unavailable with `allocation_down`."""
@@ -272,6 +278,8 @@ class SyntheticSource:
 		return {"prices": {"report": {"id": report, "digest": "syn-report"}, "bid": bid, "currency": "KES", "submitted_total": cstr(total), "calculated_total": cstr(total), "lines": [line]},
 			"identity": {"tender": tender, "definition_id": "SYN-BDF", "definition_version": 1, "definition_digest": "syn-definition"}, "mapped": mapped, "authoritative": authoritative}
 
+	def audience(self, tender: str) -> list[dict[str, Any]]:
+		state = _state()
 		snap = next((v for v in state.get("deliveries", {}).values() if v["tender"] == tender), None)
 		if not snap:
 			return []

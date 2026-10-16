@@ -14,10 +14,10 @@ from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import frappe
 
 from kentender_core.services.award_funding_verification import NOT_VERIFIED, UNAVAILABLE, VERIFIED
-from kentender_procurement.award.services import checks, decision, funding_allocation as allocation, funding_verification as verification, records
+from kentender_procurement.award.services import checks, decision, funding_allocation as allocation, funding_verification as verification, reads, records
 from kentender_procurement.award.services.errors import AwardError
 from kentender_procurement.award.test_services import sources as syn
-from kentender_procurement.award.tests.support import AO, CASE, AwardCase
+from kentender_procurement.award.tests.support import AO, CASE, HOP, NAOMI, AwardCase
 
 TENDER = "SYN-TND-AWT-2100-033"
 REASON = "I accept the recommendation in the signed evaluation report and professional opinion."
@@ -216,3 +216,67 @@ class TestAwardAnswersBudgetsQuestion(_Allocated):
 		answer = self.verify(self.both())
 		self.assertEqual(answer.status, NOT_VERIFIED)
 		self.assertIn("holds this award", " ".join(answer.mismatches))
+
+
+class TestTheFundingSourcesDisclosure(_Allocated):
+	"""AWD-CHG-001 v0.7 section 10.4 and AWD-FUND-AC-006: a read-only 'Funding sources' disclosure on the internal Award record, correct for the people who may read the record, never an empty table when the sources cannot
+	be traced, and absent from what a supplier or a technical reader is given."""
+
+	HWD = {"RSV-HRMD": {"budget_line_title": "Hardware and IT equipment", "budget_line_code": "HWD"}, "RSV-DHI": {"budget_line_title": "Hardware and IT equipment", "budget_line_code": "HWD"}}
+
+	def record(self, user=AO):
+		return reads.record(award=CASE, user=user)
+
+	def test_the_ordinary_two_source_award_shows_each_department_quantity_and_amount_with_the_total(self):
+		syn.set_fact(TENDER, allocation=TWO, reservation_facts=self.HWD)
+		self.award()
+		funding = self.record()["funding"]
+		self.assertEqual(funding["state"], "Available")
+		self.assertEqual([(r["quantity"], r["amount"]) for r in funding["rows"]], [("150", "27840000.00"), ("100", "18560000.00")])
+		self.assertEqual((funding["total_quantity"], funding["total_amount"], funding["currency"], funding["unit"]), ("250", "46400000.00", "KES", "Each"))
+		self.assertTrue(all((r["budget_line_title"], r["budget_line_code"]) == ("Hardware and IT equipment", "HWD") for r in funding["rows"]), "the line's own name is shown on both rows")
+		self.assertTrue(all(r["reservation"] and r["drawdown_line"] for r in funding["rows"]))
+		self.assertTrue(funding["retained"])
+
+	def test_before_the_decision_the_disclosure_is_the_current_computation_not_a_retained_record(self):
+		syn.set_fact(TENDER, allocation=TWO)
+		funding = self.record()["funding"]
+		self.assertEqual((funding["state"], funding["retained"], funding["total_amount"]), ("Available", False, "46400000.00"))
+
+	def test_the_head_of_procurement_the_accounting_officer_and_the_auditor_read_the_same_disclosure(self):
+		syn.set_fact(TENDER, allocation=TWO)
+		self.award()
+		views = [self.record(user)["funding"] for user in (AO, HOP, NAOMI)]
+		self.assertEqual(views[0], views[1])
+		self.assertEqual(views[0], views[2])
+
+	def test_a_price_that_cannot_be_matched_to_its_sources_is_the_named_missing_variant_never_an_empty_table(self):
+		syn.set_fact(TENDER, allocation={**TWO, "unit_price": "100"})
+		funding = self.record()["funding"]
+		self.assertEqual(funding["state"], "Missing")
+		self.assertEqual(funding["message"], "The awarded items could not be matched to their funding sources. Procurement must resolve the source details.")
+		self.assertNotIn("rows", funding)
+
+	def test_an_owner_that_cannot_answer_is_the_unavailable_variant(self):
+		syn.set_fact(TENDER, allocation_down=True)
+		funding = self.record()["funding"]
+		self.assertEqual((funding["state"], funding["message"]), ("Unavailable", "Funding details are unavailable. The system will retry."))
+
+	def test_a_closed_award_has_no_disclosure(self):
+		out = self.run_as(AO, decision.record, award=CASE, outcome="No award", reason="The sources could not be traced.", next_action="Ask Procurement to resolve the sources", expected_version=self.version())
+		self.assertTrue(out["ok"])
+		self.assertIsNone(self.record()["funding"])
+
+	def test_a_technical_reader_and_a_supplier_never_receive_it(self):
+		import json
+
+		from kentender_procurement.award.services import state, supplier
+		from kentender_procurement.award.tests.support import DANIEL, MARY
+
+		syn.set_fact(TENDER, allocation=TWO, reservation_facts=self.HWD)
+		self.award()
+		self.assertNotIn("funding", reads.record(award=CASE, user=DANIEL))
+		notice = state.successful_notice(state.current_batch(self.case()))
+		mine = json.dumps(supplier.notice_view(notice=notice.name, user=MARY), default=str)
+		for word in ("Funding sources", "RSV-HRMD", "RSV-DHI", "Hardware and IT equipment", "27840000", "18560000"):
+			self.assertNotIn(word, mine)

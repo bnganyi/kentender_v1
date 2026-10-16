@@ -5,7 +5,8 @@
 
 Level L2: nothing here is synthetic. The canonical award (AWD-MOH-2026-002, tender TND-MOH-2026-002, Afya Digital Supplies Limited, KES 46,400,000) is asked for each of the twelve sources through the
 owners' published seams (Tenders, Bid Evaluation, the site configuration, Supplier Accounts, Budget). The assertions are the **present truth**, including the sources that cannot yet be given and why:
-S9 (the award draws on two reservations and nobody has allocated the price between them) and S10 (the entity's principal address is not held in its site configuration). S7 is served: the issued
+S10 (the entity's principal address is not held in its site configuration). S9, funding lineage, was a gap while the award drew on two reservations and nobody allocated the price between them; since AWD-CHG-001 v0.7 section 7.1
+it is served from the retained `AwardFundingAllocation.v1` (16 October 2026: the two reservations of the canonical award, split by the quantity each covers). S7 is served: the issued
 Form No. 4 is a recorded tender document, byte for byte; that its blanks are not declared as insertions is what Contract Management's own coverage check reports."""
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ import hashlib
 import json
 import unittest
 import unittest.mock
+from decimal import Decimal
 
 import frappe
 from frappe.tests import IntegrationTestCase
@@ -22,7 +24,7 @@ from kentender_core.services import contract_source_contract as seam
 from kentender_procurement.award.services import contract_sources, eligibility
 
 AWARD = "AWD-MOH-2026-002"
-GAPS = {"S9", "S10"}  # S7 is built (the issued Form No. 4 is served byte for byte); whether it can be generated into an agreement is Contract Management's coverage check
+GAPS = {"S10"}  # S9 is built from the retained funding allocation (AWD-CHG-001 v0.7 section 7.1); S7 is built (the issued Form No. 4 is served byte for byte); whether it can be generated into an agreement is Contract Management's coverage check
 
 
 class TestAwardContractSources(IntegrationTestCase):
@@ -47,7 +49,7 @@ class TestAwardContractSources(IntegrationTestCase):
 		self.assertNotIn("sha256", rows["S12"], "a restriction is a live fact, not 'a source that changed after the award'")
 		for number in set(rows) - GAPS - {"S12"}:
 			self.assertEqual(len(rows[number]["sha256"]), 64, number)
-		self.assertIn("2 reservations", rows["S9"]["unavailable"])
+		self.assertNotIn("unavailable", rows["S9"], "the funding lineage is served from the retained allocation")
 		self.assertIn("principal address", rows["S10"]["unavailable"])
 
 	def test_what_is_described_is_what_is_fetched_and_it_does_not_change_with_the_clock(self):
@@ -90,6 +92,16 @@ class TestAwardContractSources(IntegrationTestCase):
 
 	def test_the_package_award_freezes_carries_the_unit_and_every_reference(self):
 		package = eligibility._content(self.doc())
+	def test_the_funding_lineage_names_every_reservation_the_price_was_split_over_and_adds_up_to_the_award(self):
+		funding = json.loads(seam.fetch(f"S9-{AWARD}")["content"])
+		self.assertEqual((funding["award"], funding["allocation"]["schema"], funding["currency"]), (AWARD, "AwardFundingAllocation.v1", "KES"))
+		self.assertGreaterEqual(len(funding["allocations"]), 2, "the canonical award draws on two reservations")
+		self.assertEqual(sum(Decimal(a["amount"]) for a in funding["allocations"]), Decimal(funding["total"]))
+		self.assertEqual(funding["total"], "46400000.00")
+		self.assertEqual(len({a["reservation"] for a in funding["allocations"]}), len(funding["allocations"]), "each reservation is named once")
+		provider = contract_sources.Provider()
+		self.assertEqual(provider.describe(reference=f"S9-{AWARD}")["sha256"], provider.describe(reference=f"S9-{AWARD}")["sha256"], "serving it twice retains nothing new and changes nothing")
+
 		self.assertTrue(package["managing_unit"])
 		self.assertEqual([r["source"] for r in package["handoff"]], [f"S{n}" for n in range(1, 13)])
 		self.assertEqual({r["source"] for r in package["handoff"] if "unavailable" in r}, GAPS)
