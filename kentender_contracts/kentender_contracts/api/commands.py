@@ -84,6 +84,8 @@ def _invoice(case, args, values, expected, key, actor):
 
 
 def _finance_save(case, args, values, expected, key, actor):
+	if args.get("kind") == "credit":
+		return payment.prepare_liability_credit(case, invoice=args["invoice"], expected_version=expected, idempotency_key=key, actor=actor)
 	if args.get("kind") == "advance":
 		return payment.save_advance_payment(case, advance=args["advance"], expected_version=expected, idempotency_key=key, actor=actor, mode_of_payment=values.get("mode_of_payment", ""),
 			paid_from=values.get("paid_from", ""), reference_no=values.get("reference_no", ""), amount=values.get("amount") or None)
@@ -101,12 +103,16 @@ def _finance_submit(case, args, values, expected, key, actor):
 
 
 def _finance_approve(case, args, values, expected, key, actor):
+	if args.get("kind") == "credit":
+		return payment.approve_liability_credit(case, invoice=args["invoice"], expected_version=expected, idempotency_key=key, actor=actor)
 	if args.get("kind") == "invoice":
 		return payment.approve_accounting_invoice(case, invoice=args["invoice"], expected_version=expected, idempotency_key=key, actor=actor)
 	return payment.approve_finance_record(case, payment=args["payment"], expected_version=expected, idempotency_key=key, actor=actor)
 
 
 def _finance_return(case, args, values, expected, key, actor):
+	if args.get("kind") == "credit":
+		return payment.return_liability_credit(case, invoice=args["invoice"], expected_version=expected, idempotency_key=key, actor=actor, reason=values.get("reason", ""))
 	if args.get("kind") == "invoice":
 		return payment.return_accounting_invoice(case, invoice=args["invoice"], expected_version=expected, idempotency_key=key, actor=actor, reason=values.get("reason", ""))
 	return payment.return_finance_for_correction(case, payment=args["payment"], expected_version=expected, idempotency_key=key, actor=actor, reason=values.get("reason", ""))

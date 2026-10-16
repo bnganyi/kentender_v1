@@ -132,6 +132,8 @@ def _by_subject(ctx: Context, lead: dict[str, Any]):
 	if command == "SubmitNativeFinanceForApproval":
 		return invoices.d09f(ctx, _payment_invoice(ctx, subject))
 	if command == "ApproveNativeFinanceRecord":
+		if subject.startswith("credit invoice"):
+			return _credit_board(ctx, subject)
 		if subject.startswith("accounting invoice"):
 			return invoices.d33(ctx, invoices._invoice(ctx, _number(subject)), mode="approver")
 		return invoices.d17(ctx, _payment_invoice(ctx, subject), subject.split()[-1])
@@ -259,11 +261,19 @@ def _by_waiting(ctx: Context, lead: dict[str, Any]):
 		return security.d25j(ctx)
 	if command.startswith("RequestInvoiceCorrection:waiting"):
 		return invoices.d18r(ctx, invoices._invoice(ctx, _number(subject)))
+	if command.startswith("ApproveNativeFinanceRecord:waiting:credit"):
+		return _credit_board(ctx, subject)
 	if command.startswith("ApproveNativeFinanceRecord:waiting:accounting"):
 		return invoices.d33(ctx, invoices._invoice(ctx, _number(subject)), mode="waiting")
 	if command.startswith("ApproveNativeFinanceRecord:waiting:payment"):
 		return invoices.d09f(ctx, _payment_invoice(ctx, subject), waiting=True)
 	return None
+
+
+def _credit_board(ctx: Context, subject: str):
+	"""The credit note Finance prepared for a corrected claim's original liability: the approver's review, or the maker's waiting view."""
+	gap = next((g for g in payment.liability_gap(ctx.case) if str(g["successor_no"]) == subject.split()[-1] and not g["reconciled"]), None)
+	return invoices.liability(ctx, gap) if gap else None
 
 
 def _payment_invoice(ctx: Context, subject: str):
