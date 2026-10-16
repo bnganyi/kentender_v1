@@ -1337,6 +1337,48 @@
       "upstream": "Strategy Alignment",
       "downstream": "Procurement Planning",
       "contract": "Accepted objective reference and immutable strategy snapshot",
+    {
+      "document_id": "CM-CHG-001",
+      "title": "Contract Management",
+      "version": "0.10",
+      "category": "Module requirements",
+      "module": "Contract Management",
+      "requirement_status": "Approved requirement",
+      "approval_date": "2026-10-16",
+      "supersedes": "v0.8 approved 14 October 2026; the v0.9 proposal carried as incorporated and corrected by v0.10 section 20",
+      "implementation_status": "In progress",
+      "verification_status": "Pending",
+      "release_status": "Not approved",
+      "normative": "Yes",
+      "library_file_id": "",
+      "filename": "KenTender_CM-CHG-001_Contract_Management_v0_10.md",
+      "source_sha256": "2d9fa9061d87f6da8449d7173b4f18f4a10dde1b3b1b0523d489f653e0587f02",
+      "scope": "Contract Management: preparation and signing, delivery and performance, and payment and close-out in one module and one case; ERPNext Accounts is authoritative for the first Finance deployment; the module works without KenTender's tendering apps; includes the §19 focused amendment (rule register, agreement and document mappings, certificate contents) and the §10.1B scenario facts.",
+      "dependencies": "KT-STD-001; AUTH-ADR-001; CFG-CHG-002; AWD-CHG-001; BUD-CHG-001; TPR-CHG-001; BDS-CHG-001; PRC-CHG-001; STD-TPL-001; EVL-CHG-001; BOP-CHG-001; REQ-CHG-001; PLN-CHG-001; NDS-CHG-001; STR-CHG-001; SEED-002 (demonstration seed, §A8); ERPNext Accounts",
+      "action": "Approved 16 October 2026 (v0.10): the coordinated funding specification (section 20), the funding screens inside the existing intake and opening screens (section 10.9) and CM-AC-85 to -96. Build state, 17 October 2026 (no approval is evidence of it): the coordinated funding build is implemented and partly verified on the test site only; the development site is untouched. Verified: Budget app (all 30 modules) and its funding entry module 67/67, Budget browser specs 13/13 as the normal roles, Award chain (all modules, with the funding allocation module 33/33), Contract Management funding module 38/38 and the notification, dead-end, date, import-boundary and navigation guards. Not done: the real Award to Contract Management to Budget journey on the canonical award (the test site's canonical reservations were purged by a Budget browser fixture and the rebuild is awaiting the Project Owner), a normal migrate on the verification site, and a browser walk of the Contract Management funding screens. Detail: docs/mvp-1-r1/03_budget/BUD-CHG-001_IMPLEMENTATION_TRACKER.md addendum of 17 October 2026. (Earlier record, retained: Approved 14 October 2026 (v0.8), as the document's own control table states; the file is docs/mvp-1-r1/21_contract_management/KenTender_CM-CHG-001_Contract_Management_v0_8.md. Added to this register on 15 October 2026 at the Project Owner's request (“4. Yes”); the register's statuses follow the document and the repository, not a new decision. Implementation is in progress (phases 3 to 12 committed on 15 October 2026; see docs/mvp-1-r1/21_contract_management/CM-CHG-001_v0_8_IMPLEMENTATION_TRACKER.md for each gate); verification is pending; no release is approved. The register's FW-008 and DEC-016 still describe Contract Management as planned future work and are not changed here: the Project Owner has not stated the release-slice scope. LQ-01 to LQ-06 and the implementation, evidence and release conditions remain outstanding. Its follow-up FU-CM-61 is decided by DEC-057 and DEC-060. v0.9 proposed 16 October 2026: the Contract Management side of three Budget decisions (conversion event contents, correction of a Closed commitment through Budget, funding of a contract with no tender in KenTender); reviewed together with the matching proposed Budget amendment (see the BUD-CHG-001 entry). v0.8 remains the approved baseline.)",
+      "approval_record": "Project Owner, 16 October 2026, verbatim: “Mark them as approved”, answering the delivery of the coordinated package BUD-CHG-001 v1.16, AWD-CHG-001 v0.7, CM-CHG-001 v0.10 and AUTH-ADR-001 v1.16 with the two adopted product decisions (“Adopt”) incorporated. Approves the version in full.",
+      "prior_approved_baseline": {
+        "version": "0.8",
+        "approval_date": "2026-10-14",
+        "filename": "KenTender_CM-CHG-001_Contract_Management_v0_8.md",
+        "requirement_status": "Approved requirement"
+      },
+      "approval_history": {
+        "proposed_version": "0.10",
+        "proposed_filename": "KenTender_CM-CHG-001_Contract_Management_v0_10.md",
+        "proposal_status": "Approved 16 October 2026 (Project Owner: “Mark them as approved”)",
+        "proposed_base_version": "0.8",
+        "proposed_revision": null,
+        "proposed_scope": "Replaces section 20 with one coordinated funding specification (single-year, single-currency opening basis, Finance approval confirming the basis, one request per contract and year, holds for unfunded scope on the existing native payment guard) and adds the funding screens inside the existing intake and opening screens (section 10.9); acceptance CM-AC-85 to -96. Carries the v0.9 proposal as corrected.",
+        "prior_proposal": {
+          "proposed_version": "0.9",
+          "proposed_filename": "KenTender_CM-CHG-001_Contract_Management_v0_9.md",
+          "proposal_status": "Superseded as the one proposal by v0.10 on 16 October 2026; its content is carried and corrected",
+          "proposed_base_version": "0.8",
+          "proposed_scope": "Focused amendment (§20) for three Budget decisions: the conversion event, the correction of a Closed commitment through Budget, and the funding of a contract registered with no tender in KenTender."
+        }
+      }
+    },
       "status": "Closed in requirements",
       "implementation_status": "Not evidenced",
       "test_status": "Not evidenced",
