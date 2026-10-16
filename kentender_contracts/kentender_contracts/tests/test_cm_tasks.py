@@ -48,7 +48,6 @@ class TestOrdering(IntegrationTestCase):
 	def order(self, *items):
 		return [t["task_id"] for t in tasks.order(list(items), NOW)]
 
-	def test_protective_at_risk_then_overdue_then_earliest_upcoming_then_undated(self):
 	def test_work_that_blocks_the_contract_leads_the_standing_publication_duty_even_when_the_duty_is_older(self):
 		"""The Project Owner, 16 October 2026 (FU-CM-133): "The one that blocks should lead"."""
 		duty = task("publication", assigned="2027-07-01 09:00", command="RecordContractAwardPublication")
@@ -70,6 +69,7 @@ class TestOrdering(IntegrationTestCase):
 		waiting = task("waiting", state="waiting", command="SignContractVersion")
 		self.assertEqual(self.order(waiting, blocked, duty), ["publication", "blocked", "waiting"])
 
+	def test_protective_at_risk_then_overdue_then_earliest_upcoming_then_undated(self):
 		got = self.order(
 			task("undated-late", assigned="2027-07-21 09:00"),
 			task("upcoming-far", due="2027-08-30 00:00"),
