@@ -428,6 +428,10 @@ def _subject_board(ctx: Context, tab: str, subject: tuple[str, ...]) -> dict[str
 		return delivery.d04(ctx)
 	if subject == ("submit-invoice",) and "supplier" in ctx.audiences:
 		return invoices.d18(ctx)
+	if subject[0] == "record-liability" and len(subject) > 1 and subject[1].isdigit() and tab == "Invoices":
+		name = frappe.db.get_value("Contract Invoice", {"contract_case": ctx.case, "invoice_no": int(subject[1])}, "name")
+		row = frappe.get_doc("Contract Invoice", name) if name else None
+		return invoices.d33(ctx, row, mode="maker", early=True) if invoices.may_record_liability(ctx, row) else None
 	return None
 
 

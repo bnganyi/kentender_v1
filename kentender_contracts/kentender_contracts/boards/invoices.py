@@ -179,7 +179,16 @@ def _accounting(invoice, *, editable: bool) -> dict:
 		kit.xh("The supplier's quantities and prices are not editable here. The tax breakdown is generated from the configured template."))
 
 
-def d33(ctx: Context, invoice, *, mode: str = "maker") -> dict:
+def may_record_liability(ctx: Context, invoice) -> bool:
+	"""Finance records an early liability from the claim itself (the Project Owner's decision of 16 October 2026, FU-CM-93): a claim that has its native draft and is not yet certified, for the person who holds
+	Finance preparation, while no accounting step is in progress. ERPNext remains the accounting owner; recording the liability certifies nothing and does not release the payment hold."""
+	from kentender_contracts.services import people
+
+	return bool(invoice is not None and invoice.native_invoice and invoice.state in ("Submitted", "Held") and (invoice.accounting_state or "") not in ("Submitted for approval", "Posted")
+		and ctx.doc.lifecycle in ("Active", "Terminated") and people.holds(ctx.user, "Finance preparation"))
+
+
+def d33(ctx: Context, invoice, *, mode: str = "maker", early: bool = False) -> dict:
 	"""Finance invoice preparation (maker), D33-W (submitted, waiting) and D33-A (approver review)."""
 	ident = {"maker": "D33", "waiting": "D33-W", "approver": "D33-A"}[mode]
 	regions = [_source(ctx, invoice), _accepted_items(ctx, invoice), _accounting(invoice, editable=mode == "maker")]
@@ -188,7 +197,7 @@ def d33(ctx: Context, invoice, *, mode: str = "maker") -> dict:
 	title = "Prepare accounting invoice" if mode != "approver" else "Review accounting invoice"
 	unresolved = payment.accounting_setup(ctx.case, invoice.name) if mode == "maker" and invoice.native_invoice else []
 	b = chrome.base(ctx, "D33-U" if unresolved else ident, d="D33", name="Finance invoice preparation", title=title, tab="Invoices",
-		next=kit.blk("The accounting setup needs review.", "Finance configuration owner", ["View certification"], "; ".join(unresolved)) if unresolved else chrome.next_block(ctx), regions=regions, ev=[f"Supplier invoice {invoice.claim_reference}", "Certification 1", "Receipt 1"])
+		next=kit.blk("The accounting setup needs review.", "Finance configuration owner", ["View certification"], "; ".join(unresolved)) if unresolved else chrome.form_turn(ctx, "SaveNativeFinanceDraft", "Record the liability for this claim: it is not yet certified, and payment stays held.") if early else chrome.next_block(ctx), regions=regions, ev=[f"Supplier invoice {invoice.claim_reference}", "Certification 1", "Receipt 1"])
 	if unresolved:
 		b["p"], b["s2"] = "", []  # submission is unavailable until the configuration owner resolves the mapping
 	elif mode == "maker":
@@ -416,6 +425,9 @@ def d09(ctx: Context, invoice=None) -> dict:
 	if not regions:
 		regions.append(kit.R("Invoices", kit.xh("No invoice has been submitted yet.")))
 	b = chrome.base(ctx, "D09", d="D09", name="Payment follow-up", title="Invoice and payment", tab="Invoices", next=chrome.next_block(ctx), regions=regions, ev=[])
+	if may_record_liability(ctx, focus):
+		b["s2"] = [*(b.get("s2") or []), "Record liability"]
+		b["actions"]["Record liability"] = kit.route(ctx.case, "invoices", "record-liability", str(focus.invoice_no))
 	supplier = ctx.doc.lifecycle == "Active" and "supplier" in ctx.audiences
 	if supplier and any(v > 0 for v in eligible_unclaimed(ctx).values()):
 		b["p"] = "Submit invoice"
