@@ -17,8 +17,6 @@ from kentender_contracts.boards import chrome, kit
 from kentender_contracts.boards.context import Context, money, when
 from kentender_contracts.services import change, events, intents, records
 
-SYNTHETIC_NOTE = "Synthetic mechanism test — not a legally cleared production example."
-
 
 def _long(value: Any) -> str:
 	return formatdate(value, "d MMMM yyyy") if value else "—"
@@ -148,7 +146,7 @@ def submit(ctx: Context, row) -> dict[str, Any]:
 	else:
 		note = chrome_review(ctx, row)
 		b = chrome.base(ctx, "D34-L" if held else "D34-R", d="D34", name="Quantity variation", title="Review quantity change", tab="Obligations", next=chrome.next_block(ctx),
-			regions=[kit.R("Comparison", _comparison(ctx, row, "Proposed"), kit.xh(SYNTHETIC_NOTE)), note], p="" if held else "Submit change for decision", s2=[] if held else ["Return for correction"], ev=_evidence(row))
+			regions=[kit.R("Comparison", _comparison(ctx, row, "Proposed")), note], p="" if held else "Submit change for decision", s2=[] if held else ["Return for correction"], ev=_evidence(row))
 		if held:
 			b["next"] = kit.blk("Change requires legal review", name, ["View rule", "View request", "Return for correction"], "The proposed increase is within twelve months of signing. Its legal basis has not been established.")
 			b["actions"]["View rule"] = b["actions"]["View request"] = kit.tab("Obligations")
@@ -178,7 +176,7 @@ def decide(ctx: Context, row) -> dict[str, Any]:
 		approve_title, decline_title = "Approve extension", "Decline extension"
 	else:
 		b = chrome.base(ctx, "D34-A", d="D34", name="Quantity variation", title="Review quantity change", tab="Obligations", next=chrome.next_block(ctx),
-			regions=[kit.R("Comparison", _comparison(ctx, row, "Proposed"), kit.xh(SYNTHETIC_NOTE)), chrome_review(ctx, row)], p="Approve change", s2=["Decline", "Return for correction"], ev=_evidence(row))
+			regions=[kit.R("Comparison", _comparison(ctx, row, "Proposed")), chrome_review(ctx, row)], p="Approve change", s2=["Decline", "Return for correction"], ev=_evidence(row))
 		approve_title, decline_title = "Approve change", "Decline change"
 	primary = b["p"]
 	args = {"change": row.change_no}
@@ -199,8 +197,6 @@ def sign(ctx: Context, row, *, entity: bool = False) -> dict[str, Any]:
 	other = "The supplier has signed; the amendment takes effect when you sign." if entity else f"The amendment takes effect only after both required signatures. {ctx.name((records.loads(amendment.terms_json)['parties']['entity'] or {}).get('user'))} signs the same version next."
 	identifier = "D27-A" if row.kind == "Extension" else "D34-P"
 	regions = [kit.R(f"Amendment {row.change_no}", _comparison(ctx, row, "Amended"), *([kit.lk(f"View amendment {row.change_no}")] if row.kind == "Extension" else []), kit.xh(other))]
-	if row.kind == "Quantity":
-		regions[0]["b"].insert(1, kit.xh(SYNTHETIC_NOTE))
 	b = chrome.base(ctx, identifier, d=identifier.split("-")[0], name="Sign amendment", title="Sign amendment", tab="Obligations", next=chrome.next_block(ctx), subj=f"Amendment {row.change_no}",
 		back="Back to my contracts" if not entity else "Back to contracts", regions=regions, p="Sign amendment", s2=["Report a problem"], ev=[f"Amendment {row.change_no}", f"Decision {row.change_no}"])
 	b["actions"]["Sign amendment"] = kit.command("SignContractVersion", change=row.change_no, party=party)
@@ -242,7 +238,7 @@ def effective_pending(ctx: Context, row) -> dict[str, Any]:
 	if funding is not None:
 		facts.append(["Budget adjustment", "Acknowledged" if funding in intents.SETTLED else "Pending"])
 	facts += [["Order update", "Done" if order in intents.SETTLED else "Pending"], ["New spending", "Held for the changed quantity" if row.kind == "Quantity" else "Held until the order is updated"]]
-	b = chrome.base(ctx, "D34-H", d="D34", name="Quantity variation", title="Contract change recorded", tab="Obligations", next=chrome.next_block(ctx), regions=[kit.R("Change", kit.r(*facts), *([kit.xh(SYNTHETIC_NOTE)] if row.kind == "Quantity" else []))],
+	b = chrome.base(ctx, "D34-H", d="D34", name="Quantity variation", title="Contract change recorded", tab="Obligations", next=chrome.next_block(ctx), regions=[kit.R("Change", kit.r(*facts))],
 		s2=["View update status", "View amendment"], ev=[])
 	b["actions"]["View update status"] = kit.tab("Obligations")
 	b["actions"]["View amendment"] = kit.route(ctx.case, "agreement", "amendment", str(row.change_no))

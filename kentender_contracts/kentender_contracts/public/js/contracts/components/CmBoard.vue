@@ -2,8 +2,8 @@
      (page head, tabs, next step, regions of blocks, the "Evidence and history" disclosure, the footer, the dialog): the board and the live screen are built from the same decisions, and
      `contracts.fidelity.spec.js` compares the containers they use. The server decides what the viewer may do; this draws its answer and carries the form the person fills in.
 
-     Choosing one person or one native record is the shared record picker (AGENTS.md section 6.12), never a dropdown. The text "Illustrative test record" the design prints beside the heading is
-     not drawn (DEC-044: no test labels on a user-facing surface). -->
+     Choosing one person or one native record is the shared record picker (AGENTS.md section 6.12), never a dropdown. The test caption the design prints beside the heading is
+     not drawn (DEC-044: no test labels on a user-facing surface; `test_cm_no_test_notices` guards it). -->
 <template>
 	<div class="kt-page" :data-testid="`cm-board-${board.id}`" :data-board="board.id" :data-tab="board.tab">
 		<div class="kt-page-head">

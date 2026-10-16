@@ -28,7 +28,7 @@
  "next": {
   "h": "Restore contract operation",
   "k": "wait",
-  "s": "Daniel Otieno; assigned 2 Jul 2027, 09:00 EAT."
+  "s": "Daniel Otieno; assigned 2 Jul 2025, 09:00 EAT."
  },
  "p": "",
  "page": "record",
@@ -56,10 +56,6 @@
       ]
      ],
      "k": "rows"
-    },
-    {
-     "k": "help",
-     "v": "Synthetic mechanism test \u2014 not a legally cleared production example."
     }
    ],
    "t": "Change"
