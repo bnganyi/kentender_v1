@@ -34,7 +34,7 @@ Departmental Needs, Bid Opening, Award) is undone; at the end a test site's
 clock is set to the anchor. The story's own dates (18 Jun 2027 and the
 months before it) are illustrative: `calendar.world` (`W`) moves each one to
 where the anchor puts it, `calendar.fiscal` (`F`) moves fiscal-calendar dates by
-whole years, and `ANCHOR=story` builds the v0.7 world unchanged (it is still the default of `make seed-canonical` until the development site is reseeded). The world, the
+whole years, and `ANCHOR=story` builds the v0.7 world unchanged. The world, the
 commands and how a module adds to it are in SEED-002
 (`docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_9.md`; the
 approved baseline is v0.3 of 8 October 2026, which retired SEED-001 and

@@ -117,7 +117,7 @@ help:
 	@echo "  make seed-req-profiles SITE=$(SITE) — list the REQ-CHG-001 §16.4A Requisitions demo profiles"
 	@echo "  make seed-req-profile SITE=$(SITE) PROFILE=REQ-SC-HOLD — load one profile on the canonical MOH item (replaces any loaded one) and print its report"
 	@echo "  make seed-req-profile-restore SITE=$(SITE) — undo the loaded profile and restore the base authorised requisition"
-	@echo "  make seed-canonical SITE=$(SITE) [CURRENT=award] [NEXT=] [ANCHOR=real|story] [REBUILD=True] [WIPE=True] [FORCE=True] — clear every non-canonical row, then reseed the three-year world around the real date and validate, draining the background-job queue before and after. ANCHOR=real first stores the world's anchor, the latest Friday 10:00 not later than the run's start (a rebuild or a wipe takes a new one; a plain rerun keeps it), so no simulated instant is later than the real clock; ANCHOR=story (the default until the development site is reseeded) is the v0.7 world read as at 18 Jun 2027 10:00. Year 0, the closed financial year, is always built; CURRENT moves Year 1, the year that contains the anchor and is carried out (annual_plan → requisitions → tenders → bid_submission → bid_opening → bid_evaluation → award; its Active plan is always built); NEXT moves Year 2, the year being prepared (none → budget → needs → departmental_plans → annual_plan), and by default goes as far as the anchor allows (Departmental Needs in October). THROUGH= (retired) still maps onto them; WIPE=True also drops and rebuilds the site stage itself (needs FORCE=True outside developer_mode)"
+	@echo "  make seed-canonical SITE=$(SITE) [CURRENT=award] [NEXT=] [ANCHOR=real|story] [REBUILD=True] [WIPE=True] [FORCE=True] — clear every non-canonical row, then reseed the three-year world around the real date and validate, draining the background-job queue before and after. ANCHOR=real (the default) first stores the world's anchor, the latest Friday 10:00 not later than the run's start (a rebuild or a wipe takes a new one; a plain rerun keeps it), so no simulated instant is later than the real clock; ANCHOR=story is the v0.7 world read as at 18 Jun 2027 10:00. Year 0, the closed financial year, is always built; CURRENT moves Year 1, the year that contains the anchor and is carried out (annual_plan → requisitions → tenders → bid_submission → bid_opening → bid_evaluation → award; its Active plan is always built); NEXT moves Year 2, the year being prepared (none → budget → needs → departmental_plans → annual_plan), and by default goes as far as the anchor allows (Departmental Needs in October). THROUGH= (retired) still maps onto them; WIPE=True also drops and rebuilds the site stage itself (needs FORCE=True outside developer_mode)"
 	@echo "  make seed-canonical-dry-run SITE=$(SITE) — report what seed-canonical would remove, delete nothing"
 	@echo "  make seed-canonical-validate SITE=$(SITE) [CURRENT=award] [NEXT=annual_plan] — validate the canonical world only"
 	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — fixture-scoped reset + full KENTENDER_MVP_V1 seed + Playwright purge + validate"
@@ -1262,9 +1262,9 @@ vue-desk-bundle-translation-binding-gate:
 CURRENT ?= award
 # Empty NEXT lets the anchor decide: the furthest prepared-year stage it allows (kentender_core.seeds.calendar.default_next_stage).
 NEXT ?=
-# ANCHOR=real stores the world's anchor (the latest Friday 10:00 not later than the run's start) in its own process first, so
-# no instant is later than the real clock (SEED-002 v0.9); ANCHOR=story, the default until the development site is reseeded, is the v0.7 world, read as at 18 Jun 2027 (it clears a stored anchor).
-ANCHOR ?= story
+# ANCHOR=real (the default; the development and test sites were reseeded on it on 17 Oct 2026) stores the world's anchor (the latest Friday 10:00 not later than the run's start) in its own process first, so
+# no instant is later than the real clock (SEED-002 v0.9); ANCHOR=story is the v0.7 world, read as at 18 Jun 2027 (it clears a stored anchor).
+ANCHOR ?= real
 THROUGH ?=
 WIPE ?= False
 FORCE ?= False

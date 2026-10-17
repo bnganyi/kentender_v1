@@ -444,6 +444,18 @@ def seed_consumed_handoff(*, commit: bool = False) -> dict[str, Any]:
 # Planning's own §14.10 isolated profiles share one Fiscal Year.
 
 
+def _forget_vanished_reservations(version_name: str | None) -> None:
+	"""An authorised version whose drawdown line names a Funding Reservation that no longer exists (a test or a fixture purged the budget's
+	reservations behind the Requisition's back) cannot be revoked by the real command, which releases every named reservation and refuses a
+	missing one. There is nothing left to release, so the line stops naming it and the revoke reverses the Planning drawdown as usual."""
+	if not version_name or not frappe.db.exists("Requisition Version", version_name):
+		return
+	version = frappe.get_doc("Requisition Version", version_name)
+	for line in version.drawdown_lines:
+		if line.reservation_id and not frappe.db.exists("Funding Reservation", line.reservation_id):
+			frappe.db.set_value(line.doctype, line.name, "reservation_id", "", update_modified=False)
+
+
 def _wipe_combined_item_profile(*, cross_module_rebuild: bool = False, plan_item_ids: list[str] | None = None) -> dict[str, int]:
 	"""Tear down whatever Requisition currently sits on the combined item (or
 	on each of `plan_item_ids`), revoking first (through the real command) if
@@ -458,8 +470,9 @@ def _wipe_combined_item_profile(*, cross_module_rebuild: bool = False, plan_item
 		return deleted
 	for root_row in frappe.get_all(
 		"Procurement Requisition", filters={"plan_item_id": ("in", plan_item_ids), "current_state": "Authorised", "handoff_consumed_at": ("is", "not set")},
-		fields=["name", "record_version"],
+		fields=["name", "record_version", "authorised_version"],
 	):
+		_forget_vanished_reservations(root_row.authorised_version)
 		with _as(HOPF):
 			authorise.revoke_unconsumed_authorisation(
 				requisition=root_row.name, reason="KENTENDER_MVP_V1 profile reseed.",

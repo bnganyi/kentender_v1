@@ -6,7 +6,7 @@
 | Version | tracker.1 |
 | Plan | `Real_Date_Anchor_Implementation_Plan.md` (plan.1) |
 | Proposal | `KenTender_Seed_World_Real_Date_Anchor_Proposal_2026-10-15.md` |
-| Status | **Built and run on the test site; two things open.** Phases 1 to 7 done or partial as the rows say; Phase 8 is partial: the development site is not reseeded (refused by the permission classifier on 16 October 2026; the owner decides) and the clock policy `never_ahead` is not adopted. SEED-002 v0.9 is proposed. Nothing is committed. |
+| Status | **Done, with the open items named in the rows.** SEED-002 v0.9 approved by the owner on 17 October 2026; test and development sites rebuilt on the anchor of Friday 16 October 2026 10:00; the clock policy `never_ahead` is not adopted (RA-0311). The work is committed in 78a22214, 16f72c34 and 02c15f1a; later edits (approval, the reseed fix, the Makefile default) are not yet committed. |
 | Updated | 16 October 2026 |
 
 ## Rules
@@ -111,17 +111,17 @@
 | RA-0701 | SEED-002 v0.8 (Proposed) under the document-change protocol | Done (model) | RA-0010. SEED-002 v0.9, which records the offsets as built, is owed after Phase 3. |
 | RA-0702 | The replacement text for KT-STD-001 §8.4 and KT-STD-001 §8.4A | Done — approved | RA-0011: KT-STD-001 v1.30, approved 15 October 2026. At the owner's request it was written here, not left for the owner to apply (two-year decision D7, SW-0104). |
 | RA-0703 | Notes for HOME-CHG-001 v0.6, ANL-CHG-001 v0.8 and CM-CHG-001 v0.8 §10.1B | Done — none needed for HOME and ANL | Plan BF-RA-04. CM-CHG-001 v0.8 §10.1B: SEED-002 v0.8 §A8 states the rule (RA-8); the specification is not in the register and its follow-up FU-CM-61 is closed by the Contract Management owner (RA-0605). |
-| RA-0704 | Runbooks, `CLAUDE.md`, the Makefile help, `kentender_core/seeds/README.md` | Done, except the default | Makefile help line and comment, `CLAUDE.md` command card and `kentender_core/seeds/README.md` describe the anchor model; `scripts/test-site.sh` no longer passes `next_year`. `ANCHOR` stays `story` by default until the development site is reseeded (RA-0801). |
+| RA-0704 | Runbooks, `CLAUDE.md`, the Makefile help, `kentender_core/seeds/README.md` | Done | Makefile help line and comment, `CLAUDE.md` command card and `kentender_core/seeds/README.md` describe the anchor model; `scripts/test-site.sh` no longer passes `next_year`; the Makefile default is `ANCHOR ?= real` since the development site was reseeded (17 Oct 2026). |
 | RA-0705 | The register entry for SEED-002 v0.8 | Done | RA-0012. |
-| RA-0706 | Gate RA-G07 | Blocked — owner | Awaiting the owner's approval of SEED-002 v0.9 (proposed 16 Oct 2026; preservation PASS, no new consistency error, register check 0 errors). |
+| RA-0706 | Gate RA-G07 | Met | The Project Owner approved SEED-002 v0.9 on 17 October 2026 (“SEED-002 v0.9 is approved”); the register and the control table carry it. |
 | RA-0707 | RA-OD5: keep the fiscal year at 1 July to 30 June, or amend CFG-CHG-002 v0.19 CFG10-EC-001 and CFG10-AC-009 | Done — kept | Owner, 15 October 2026: "1. Keep 1 Jul to 30 Jun" (plan RA-10); written into SEED-002 v0.8 §A1.1, §A1.2 and Appendix D question 5; register finding AUD-032 closed, DEC-061. |
 
 ## Phase 8 — Roll out
 
 | ID | Work | Status | Evidence |
 |---|---|---|---|
-| RA-0801 | Tell the owner; reseed `kentender.midas.com` (policy `off`) and rebuild `kentender-test.local` (policy `never_ahead`) | Partial | Test site rebuilt (anchor 9 Oct 2026) and validated. The development site is NOT reseeded: the reseed was refused by the permission classifier on 16 Oct 2026 and is left for the owner's decision; its policy stays `off`. |
+| RA-0801 | Tell the owner; reseed `kentender.midas.com` (policy `off`) and rebuild `kentender-test.local` (policy `never_ahead`) | Done | 17 Oct 2026, at the owner's instruction: the test site was repaired (WIPE rebuild plus a plain run; anchor Fri 16 Oct 2026 10:00; validates) and the development site was backed up (10:15), migrated (`bench migrate`: five funding record types, a Commitment field and patch `bud_chg_001_v1_16`, which only the test site had) and reseeded on the same anchor (validates; `kt_test_clock_policy` stays `off`). The first dev attempt stopped at once (dev not migrated); the second stopped in Bid Submission on a `DocShare` that the background worker had just deleted, and a plain rerun finished it. |
 | RA-0802 | Hand-over note to the module sessions | Done | `Real_Date_Anchor_HANDOVER_NOTE_2026-10-16.md`; the Contract Management and Budget sessions were told by message. |
 | RA-0803 | Propose `never_ahead` as the default policy | Proposed | `never_ahead` as the test-site default is proposed in the change report; not adopted. |
 | RA-0804 | Memory updated | Done | Memory `real-date-anchor-build-progress-2026-10-16` updated. |
-| RA-0805 | Gate RA-G08 | Not met | The development site is not reseeded. |
+| RA-0805 | Gate RA-G08 | Met | Both sites validate with no failures at an anchor of Fri 16 Oct 2026 10:00; the hand-over note is filed and the sessions were told by message. |

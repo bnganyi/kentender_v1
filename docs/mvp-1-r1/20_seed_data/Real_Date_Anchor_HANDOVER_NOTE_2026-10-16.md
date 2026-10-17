@@ -4,11 +4,12 @@ Written for: engineers and module sessions that seed, test or demonstrate the ca
 
 ## What changed
 
-1. **The canonical world is read as at an anchor, not at 18 June 2027.** `make seed-canonical ANCHOR=real` stores an anchor (the latest Friday 10:00 not later than the run's start) on the site (site default `kt_seed_world_state`) and builds three financial years around it: Year 0 closed, Year 1 carried out, Year 2 prepared. No seeded instant is later than the real clock. `ANCHOR=story` builds the v0.7 world, and it is still the default of the Makefile until the development site is reseeded.
+1. **The canonical world is read as at an anchor, not at 18 June 2027.** `make seed-canonical ANCHOR=real` stores an anchor (the latest Friday 10:00 not later than the run's start) on the site (site default `kt_seed_world_state`) and builds three financial years around it: Year 0 closed, Year 1 carried out, Year 2 prepared. No seeded instant is later than the real clock. `ANCHOR=story` builds the v0.7 world. `ANCHOR=real` is the Makefile default since the development site was reseeded (17 October 2026).
 2. **The prepared year goes as far as the anchor allows.** At an October anchor that is Departmental Needs: the Year 2 Annual Plan does not exist. A test or spec that reads the Year 2 plan must build its own, or skip when the Year 2 Annual Plan has no active version.
-3. **Test site, 9 October 2026 10:00 anchor.** Rebuilt and validated on 16 October. Rebuild: `make seed-canonical SITE=kentender-test.local REBUILD=True ANCHOR=real FORCE=True` (6 to 8 minutes when nothing else runs on the site).
+3. **Both sites are on the anchor of Friday 16 October 2026 10:00** (test site repaired and the development site migrated and reseeded on 17 October; both validate; the test clock is pinned on the test site only). Rebuild: `make seed-canonical SITE=<site> REBUILD=True FORCE=True` (6 to 25 minutes, longer when anything else runs on the site; after a failed rebuild a plain run finishes it).
 4. **A command never runs at an instant later than the real clock** (`kentender_core.seeds.clock.at`, in an anchored world).
 5. **Clock policy** (`kt_test_clock_policy`): `off` on the development site; the test site stays `free` (not `never_ahead`) because the Python suite has not been re-run under `never_ahead`.
+6. **Anchor-dependent text:** an anchor of 16 October (not 9 October) is what the sites hold now; tests and specs read it at run time (`calendar.describe()`), so none names the day.
 
 ## How a test or spec names a seeded date
 
