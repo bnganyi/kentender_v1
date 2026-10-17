@@ -1547,6 +1547,14 @@ cm-seams-gate: cm-preflight
 	cd $(BENCH_ROOT) && for m in $(AWARD_SEAM_MODULES); do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.$$m || exit 1; done
 
+# BUD-CHG-001 v1.16 (BUD25-AC-003, -009, -011): the two journeys with the real owners, on the test site only (each script refuses any other site and puts the site back). The first follows the canonical two-source
+# award from the Award owner's verification through Budget's conversion, increase, closure, Additional request and correction (Contract Management stands in for itself: FU-CM-70, FU-CM-72); the second funds a contract signed
+# before KenTender year by year through Contract Management and Budget, both real. Reports: artifacts/bud-v116-canonical-award-journey.md and artifacts/bud-v116-independent-contract-journey.md.
+.PHONY: bud-funding-journeys
+bud-funding-journeys:
+	cd $(BENCH_ROOT)/sites && flock -o /tmp/kt-test-site.lock ../env/bin/python ../apps/kentender_v1/scripts/bud_v116_canonical_award_journey.py ../apps/kentender_v1/artifacts/bud-v116-canonical-award-journey.md
+	cd $(BENCH_ROOT)/sites && flock -o /tmp/kt-test-site.lock ../env/bin/python ../apps/kentender_v1/scripts/bud_v116_independent_contract_journey.py ../apps/kentender_v1/artifacts/bud-v116-independent-contract-journey.md
+
 # Real ERPNext documents (proof level L2): the native adapter, the payment bypass guards (every route, entitlement, maker/approver, a two-process
 # race, a hard-crash recovery) and the configuration readiness check. Test site only; MariaDB only; takes about a minute.
 CM_NATIVE_MODULES ?= test_cm_native test_cm_readiness test_cm_receipt_reconciliation test_cm_claim_race

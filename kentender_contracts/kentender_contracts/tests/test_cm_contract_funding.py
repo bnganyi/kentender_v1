@@ -4,7 +4,8 @@
 """CM-CHG-001 v0.10 sections 20.4, 20.4A, 20.5, 20.6 (CM-AC-72 to -96): how Contract Management funds a contract signed before KenTender.
 
 A stand-in for the funding owner records what Contract Management sends it and lets the test feed outcomes back, so that Contract Management's side of the journey is proved without Budget. The real
-Award -> Contract Management -> Budget journey, with both real owners, is proved in `test_cm_funding_budget_journey`.
+Award -> Contract Management -> Budget journey and the independent-contract journey, with both real owners, are run by `scripts/bud_v116_canonical_award_journey.py` and `scripts/bud_v116_independent_contract_journey.py`
+(reports in `artifacts/`): Contract Management does not import Budget, so the two modules meet only in those scripts, never in this module.
 
 The head of procurement records the route; Finance approval (never the Finance preparer of the same figures) confirms a year's charge as a versioned `ContractFundingBasis.v1`; the head raises one request per
 year; outcomes arrive in order and idempotently; and what is not funded is held, scope by scope, and nothing else."""
