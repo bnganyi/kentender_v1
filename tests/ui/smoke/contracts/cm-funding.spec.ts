@@ -27,6 +27,15 @@ test.describe('Funding an independently registered contract', () => {
 	let contract = '';
 	let year = '';
 
+	// The request lives in the canonical Budget, which the Contract Management world's clean-up does not reach: take away what this contract left there, so the shared Budget keeps no work item for a contract that no longer exists.
+	test.afterAll(() => {
+		if (!contract) return;
+		execSync(
+			`cd "${BENCH_ROOT}" && bench --site kentender-test.local execute kentender_budget.seeds.funding_ui_fixtures.remove_contract_requests --kwargs '{"contract": "${contract}"}'`,
+			{ stdio: 'pipe', encoding: 'utf8', timeout: 120_000 },
+		);
+	});
+
 	const openFunding = async (page: import('@playwright/test').Page) => {
 		await page.goto('/app/home');
 		await page.locator('.body-sidebar').getByText('Contract Management', { exact: true }).click();

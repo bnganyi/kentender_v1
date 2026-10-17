@@ -53,6 +53,34 @@ def _remove_isolated() -> dict[str, int]:
 	return deleted
 
 
+def remove_contract_requests(contract: str) -> dict[str, int]:
+	"""Remove what one independently registered contract left in Budget: its funding requests, their outcomes and entries, the commitments those entries made, and the audit events that name the contract. For the
+	Contract Management browser walk, which raises a real request against the canonical Budget and then has its world cleaned away; nothing else on the canonical Budget is touched."""
+	frappe.set_user("Administrator")
+	from kentender_core.services.command_write_guard import purge_doc
+
+	deleted: dict[str, int] = {}
+
+	def purge(doctype: str, names: list[str]) -> None:
+		for name in names:
+			purge_doc(doctype, name)
+		deleted[doctype] = deleted.get(doctype, 0) + len(names)
+
+	if not contract:
+		return deleted
+	requests = frappe.get_all("Contract Funding Request", filters={"contract": contract}, pluck="name")
+	for request in requests:
+		entries_of = frappe.get_all("Existing Contract Commitment Entry", filters={"request": request}, pluck="name")
+		for entry in entries_of:
+			purge("Procurement Commitment", frappe.get_all("Procurement Commitment", filters={"entry_row": ["like", f"{entry}/%"]}, pluck="name"))
+		purge("Existing Contract Commitment Entry", entries_of)
+		purge("Contract Funding Outcome", frappe.get_all("Contract Funding Outcome", filters={"request": request}, pluck="name"))
+	purge("Contract Funding Request", requests)
+	purge("Budget Audit Event", frappe.get_all("Budget Audit Event", filters={"downstream_reference": contract, "calling_module": "Contract Management"}, pluck="name"))
+	frappe.db.commit()
+	return deleted
+
+
 def _isolated(code: str, fy_start_year: int) -> dict[str, Any]:
 	"""One isolated year with the two Entity-wide lines of the document's fixture, built through the real commands as Josphat and Beatrice."""
 	fy = _ensure_isolated_fy(fy_start_year)
