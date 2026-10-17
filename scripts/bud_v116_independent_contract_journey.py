@@ -167,7 +167,11 @@ class Journey:
 		frappe.db.commit()
 		if self.before.get("positions"):
 			check("the canonical Budget is back exactly as it was found", {l: self.position(l) for l in self.before["positions"]} == self.before["positions"])
-		left = {dt: frappe.db.count(dt) for dt in ("Contract Funding Request", "Contract Funding Outcome", "Existing Contract Commitment Entry", "Contract Case") if frappe.db.count(dt)}
+		# the canonical world's own contracts (SEED-002 v0.10 section A8.1) are not this journey's to find gone: only rows named for this journey's contracts count (its contracts all start with PREFIX; a case it
+		# creates carries no fixture namespace, so the namespace could not tell them apart)
+		mine = {"Contract Case": {"contract_id": ["like", f"{PREFIX}%"]}, "Contract Funding Request": {"contract": ["like", f"{PREFIX}%"]}, "Existing Contract Commitment Entry": {"contract": ["like", f"{PREFIX}%"]},
+			"Contract Funding Outcome": {"request": ["in", requests or ["-"]]}}
+		left = {dt: n for dt, n in ((dt, frappe.db.count(dt, filters)) for dt, filters in mine.items()) if n}
 		check("no request, outcome, entry or contract of this journey is left behind", not left, str(left))
 
 	# -- the journey ----------------------------------------------------------------------------------------------------------
