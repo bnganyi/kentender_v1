@@ -17,9 +17,12 @@ def d22(ctx: Context) -> dict:
 	"""Confirm contract completion (HOP): the completion certificate for non-complex goods."""
 	review = closeout.review(ctx.case)
 	accepted = sum(d["accepted"] for d in review["deliveries"])
-	history = [f"{a['accepted']} on {formatdate(a['date'], 'd MMMM yyyy')}" for a in _acceptance_dates(ctx)]
+	acceptances = _acceptance_dates(ctx)
+	history = [f"{a['accepted']} on {formatdate(a['date'], 'd MMMM yyyy')}" for a in acceptances]
 	accepted_finally = final_acceptance.current(ctx.case) if final_acceptance.required(ctx.case) else None
-	completed = formatdate(accepted_finally.signed_at if accepted_finally is not None and accepted_finally.signed_at else ctx.doc.operative_date or frappe.utils.today(), "d MMMM yyyy")
+	# the evidenced date of completion: the final acceptance where the terms require one, otherwise the last acceptance of delivered goods (never the date the agreement began, which is before anything was delivered)
+	last_accepted = max((a["date"] for a in acceptances if a["date"]), default=None)
+	completed = formatdate(accepted_finally.signed_at if accepted_finally is not None and accepted_finally.signed_at else last_accepted or frappe.utils.today(), "d MMMM yyyy")
 	statement = statements.COMPLETION.format(contract=f"{ctx.doc.contract_id} agreement {ctx.agreement.version_no}", date=completed)
 	final = "Recorded" if review["final_acceptance"].startswith("Recorded") else review["final_acceptance"]
 	b = chrome.base(ctx, "D22", d="D22", name="Completion certificate", title="Confirm contract completion", tab="Obligations", next=chrome.next_block(ctx), ev=["Final acceptance 1", "Financial reconciliation 1"] if accepted_finally is not None else ["Financial reconciliation 1"],

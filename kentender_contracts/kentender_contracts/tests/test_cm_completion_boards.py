@@ -22,6 +22,8 @@ EVIDENCE = [{"label": "Delivery incident", "file": "/private/files/delivery-inci
 
 class CompletionBoards(ContractCase):
 	native = True
+	#: how the test's award is named: "-FIN" makes the issued terms require the Accounting Officer's final acceptance
+	SUFFIX = "-FIN"
 	#: the test that needs the award publication left open, so that the closing review lists a surviving obligation (the head records it early everywhere else: FU-CM-108)
 	PUBLICATION_OPEN = ("test_the_accounting_officer_reviews_the_final_acceptance_and_the_head_completes_it",)
 
@@ -39,7 +41,7 @@ class CompletionBoards(ContractCase):
 		self.addCleanup(lambda: self.env.__exit__(None, None, None))
 		self.p = self.people
 		tag = self.id().rsplit(".", 1)[-1][:24]
-		self.t = tw.Thread(self.p, tag=tag, item=world.ITEM_PLAIN, award_case=f"CM-TEST-{tag}-FIN")
+		self.t = tw.Thread(self.p, tag=tag, item=world.ITEM_PLAIN, award_case=f"CM-TEST-{tag}{self.SUFFIX}")
 		self.case = self.t.active(publication_open=self._testMethodName in self.PUBLICATION_OPEN)
 		if self._testMethodName in self.PUBLICATION_OPEN:  # the obligation stays open and survives the close-out; the head's own task is set aside, or it would be the head's only task once the contract is closed and lead the head's screen there
 			from kentender_contracts.services import work
@@ -140,6 +142,22 @@ class TestFinalAcceptanceToClosure(CompletionBoards):
 		self.assertEqual((board["p"], board["s2"], board["next"]["k"]), ("", [], "blk"))
 		self.assertEqual(board["regions"][0]["b"][0]["items"][1], ["Open claim", f"Unit {self.units[3]}"])
 		self.assertEqual(board["next"]["fixes"], ["View issue"])
+
+
+class TestCompletionWithoutFinalAcceptance(CompletionBoards):
+	SUFFIX = ""
+
+	def test_the_certificate_says_the_goods_were_completed_when_they_were_accepted_not_when_the_agreement_began(self):
+		# the issued terms require no final acceptance, so the evidence of completion is the last acceptance (20 July 2027 here); the agreement began on 2 July 2027, before anything was delivered
+		frappe.flags.kt_cm_clock = D("2027-07-21 08:05:00")  # the claim, its certification and its payment, so nothing keeps the head from completing the contract
+		invoice = self.t.claim("AFYA-1", 10)["invoice"]
+		self.t.certify_invoice(invoice)
+		self.t.pay(invoice, "B-1")
+		frappe.flags.kt_cm_clock = D("2028-07-28 08:30:00")
+		certificate = self.screen("charles", "D22", tab="Obligations", capture=False)
+		statement = certificate["regions"][0]["b"][1]["v"]
+		self.assertIn(f"completed on {long_date('2027-07-20')}", statement)
+		self.assertNotIn(long_date("2027-07-02"), statement, "the agreement's own date is not the completion date")
 
 
 class TestCorrection(CompletionBoards):
