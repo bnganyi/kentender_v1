@@ -165,8 +165,8 @@ def conditions(tender: str) -> dict[str, Any]:
 
 
 #: What the issued Special Conditions of a reviewed template release say about an advance, as the sentence that release prints (CM-R-18; CM-TPL-01). Release 1.5 prints one fixed sentence in its payment clause
-#: and offers the tender officer no advance setting, so the sentence is the typed value; a tender whose conditions do not contain it (or contain it more than once) gets no value, and Contract Management
-#: names the gap. New content for the Project Owner's review: it reads one sentence of the issued document and adds no word to it.
+#: and offers the tender officer no advance setting, so the sentence is the typed value; a tender whose conditions do not contain it (or contain it more than once) gets no value, so the agreement's terms
+#: provide no advance (nothing is assumed, CM-R-07). New content for the Project Owner's review: it reads one sentence of the issued document and adds no word to it.
 ADVANCE_SENTENCES = {"1.5": (("No advance payment is offered or payable under this Contract.", False),)}
 
 
