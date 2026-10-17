@@ -293,50 +293,65 @@
     {
       "document_id": "CFG-CHG-002",
       "title": "Site Configuration and System Setup",
-      "version": "0.19",
+      "version": "0.20",
       "category": "Module requirements",
       "module": "System Setup",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-08",
-      "supersedes": "v0.18 on approval; v0.15; prior approved v0.13 retained",
+      "approval_date": "2026-10-17",
+      "supersedes": "v0.19 on approval; v0.18 on approval; v0.15; prior approved v0.13 retained",
       "implementation_status": "Planned",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "",
-      "filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_19.md",
-      "scope": "Site, responsibilities, procurement rules, schedules, STD Templates inspection and supplier portal operating settings. v0.19 adds the maintenance of the staff home organisation unit (one command, two reads, a change event, audit).",
+      "filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_20.md",
+      "scope": "v0.20 (approved 17 October 2026): the entity's principal address is maintained in System setup. Earlier scope, retained: Site, responsibilities, procurement rules, schedules, STD Templates inspection and supplier portal operating settings. v0.19 adds the maintenance of the staff home organisation unit (one command, two reads, a change event, audit).",
       "dependencies": "AUTH-ADR-001 v1.12; PLN-CHG-001; TPR-CHG-001; BDS-CHG-001; STD-TPL-001; EVL-CHG-001 v0.7 (consumer)",
-      "action": "Approved 8 October 2026 (v0.19). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
-      "source_sha256": "7df71e675b1de9dc9853ce6a77d697669c7ef1d508d3f8f2d245a7e907df2ff7",
+      "action": "Approved 17 October 2026 (v0.20; Project Owner: “Documents approved”): the entity's principal address in System setup (§4.2 field, §7 commands, §10.2 tab field, CFG20-AC-001 to -005). Approval does not by itself show implementation, verification or release. Earlier action text, retained: CFG-CHG-002 v0.20 proposed 17 October 2026 (file KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_20.md): adds the entity's principal address to System setup (built; awaiting Project Owner review). v0.19 remains the approved baseline. Approved 8 October 2026 (v0.19). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "source_sha256": "da351971f6d037ba999340d75186a0dae16da079922457932d11732a3ef85f36",
       "prior_approved_baseline": {
-        "version": "0.18",
-        "approval_date": "2026-10-03",
-        "filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_18.md",
-        "requirement_status": "Approved requirement"
+        "version": "0.19",
+        "approval_date": "2026-10-08",
+        "filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_19.md",
+        "requirement_status": "Approved requirement",
+        "source_sha256": "7df71e675b1de9dc9853ce6a77d697669c7ef1d508d3f8f2d245a7e907df2ff7",
+        "earlier_approved_baseline": {
+          "version": "0.18",
+          "approval_date": "2026-10-03",
+          "filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_18.md",
+          "requirement_status": "Approved requirement"
+        }
       },
-      "approval_record": "Project Owner, 8 October 2026, verbatim: “Approved. Proceed”, answering the report of the proposed set AUTH-ADR-001 v1.12, CFG-CHG-002 v0.19, KT-STD-001 v1.26 and EVL-CHG-001 v0.7. (v0.18: Project Owner: Mark the documents as approved; 3 October 2026)",
+      "approval_record": "Project Owner, 17 October 2026, verbatim: “Documents approved”, in a message that also instructed “Commt changes and reseed the dev site” (quoted as written), answering the author's report of the proposed set SEED-002 v0.10, KT-STD-001 v1.32 and CFG-CHG-002 v0.20. Earlier records, retained: Project Owner, 8 October 2026, verbatim: “Approved. Proceed”, answering the report of the proposed set AUTH-ADR-001 v1.12, CFG-CHG-002 v0.19, KT-STD-001 v1.26 and EVL-CHG-001 v0.7. (v0.18: Project Owner: Mark the documents as approved; 3 October 2026)",
       "approval_history": {
-        "proposed_version": "0.19",
-        "proposed_filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_19.md",
-        "proposal_status": "Approved 8 October 2026",
-        "proposed_base_version": "0.18",
-        "proposed_revision": null,
-        "proposed_scope": "Maintenance of the staff home organisation unit: SetStaffHomeOrganisationUnit, two reads, the StaffHomeUnitChanged event, audit, CFG_HOME_UNIT_INVALID, seed rules and CFG19-AC-001 to 006. Proposed with AUTH-ADR-001 v1.12, KT-STD-001 v1.26 and EVL-CHG-001 v0.7. v0.18 was the approved baseline until 8 October 2026.",
-        "earlier_proposals": [
-          {
-            "proposed_version": "0.18",
-            "proposed_filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_18.md",
-            "proposed_base_version": "0.17",
-            "outcome": "Approved 3 October 2026"
-          },
-          {
-            "proposed_version": "0.17",
-            "proposed_filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_17.md",
-            "proposed_base_version": "0.16",
-            "outcome": "Incorporated in v0.18; not separately approved (Open Tender bid-opening minimum 7 days beside the 21-day default)"
-          }
-        ]
+        "proposed_version": "0.20",
+        "proposed_filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_20.md",
+        "proposal_status": "Approved 17 October 2026",
+        "proposed_base_version": "0.19",
+        "proposed_revision": "Adds the entity's principal address to System setup (§4.2 field, §7 ConfigureProcuringEntity and UpdateProcuringEntity, §10.2 tab field, CFG20-AC-001 to -005, §17.12), on FU-CM-72 and the Project Owner's decision of 17 October 2026: “3. Yes”.",
+        "source_sha256": "da351971f6d037ba999340d75186a0dae16da079922457932d11732a3ef85f36",
+        "prior_proposal": {
+          "proposed_version": "0.19",
+          "proposed_filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_19.md",
+          "proposal_status": "Approved 8 October 2026",
+          "proposed_base_version": "0.18",
+          "proposed_revision": null,
+          "proposed_scope": "Maintenance of the staff home organisation unit: SetStaffHomeOrganisationUnit, two reads, the StaffHomeUnitChanged event, audit, CFG_HOME_UNIT_INVALID, seed rules and CFG19-AC-001 to 006. Proposed with AUTH-ADR-001 v1.12, KT-STD-001 v1.26 and EVL-CHG-001 v0.7. v0.18 was the approved baseline until 8 October 2026.",
+          "earlier_proposals": [
+            {
+              "proposed_version": "0.18",
+              "proposed_filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_18.md",
+              "proposed_base_version": "0.17",
+              "outcome": "Approved 3 October 2026"
+            },
+            {
+              "proposed_version": "0.17",
+              "proposed_filename": "KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_17.md",
+              "proposed_base_version": "0.16",
+              "outcome": "Incorporated in v0.18; not separately approved (Open Tender bid-opening minimum 7 days beside the 21-day default)"
+            }
+          ]
+        }
       }
     },
     {
@@ -507,101 +522,116 @@
     {
       "document_id": "KT-STD-001",
       "title": "Document, Design and Verification Standards",
-      "version": "1.31",
+      "version": "1.32",
       "category": "Cross-cutting standard",
       "module": "All",
       "requirement_status": "Approved requirement",
       "approval_date": "2026-10-17",
-      "supersedes": "v1.30 on approval; v1.29 on approval; v1.28 on approval; v1.27 on approval; v1.26 on approval; v1.25 on approval; v1.24 on approval; v1.23, v1.22, v1.21 and v1.15 were earlier approved baselines",
+      "supersedes": "v1.31 on approval; v1.30 on approval; v1.29 on approval; v1.28 on approval; v1.27 on approval; v1.26 on approval; v1.25 on approval; v1.24 on approval; v1.23, v1.22, v1.21 and v1.15 were earlier approved baselines",
       "implementation_status": "Not applicable",
       "verification_status": "Passed",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "",
-      "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_31.md",
-      "scope": "v1.31 (approved 17 October 2026): §8.3 registers Hellen Mutua, a second Budget Approver (site-wide, permanent), so that each Budget Approver can approve what the other has confirmed; no rule, component, permission, workflow, contract or verification requirement changes. v1.30 (approved 15 October 2026): §8.4 and §8.4A point to SEED-002 v0.8 and its anchor model; §8.6 rule that seeds never set an instant later than the real clock. v1.29 (approved 9 October 2026): §2.4 date field hover edge — a .date-field wrapper takes the hover outline #6b7690 unless disabled (aria-disabled) or focused within. v1.28 (approved 9 October 2026): §2.4 states the KenTender field outline colour (#8590a6, hover #6b7690) and a 4px field corner (--radius-field); buttons, the segmented control and notice banners stay 2px; the secondary button shares the field outline colours. v1.27 (approved 8 October 2026): fixture register only — Charles Mutiso is the evaluation secretary by office and Brian Wafula the delegate. v1.26 (approved 8 October 2026): fixture register only — units OU-MOH-ICT (ICT) and OU-MOH-FIN (Finance) in section 8.2 and the home organisation units of section 8.3A. v1.25 (approved 6 October 2026): white input fill for editable fields in section 2.4. v1.24 (approved 6 October 2026): KenTender corner and control values in section 2.4 (controls and notice banners 2px, containers 4px, status chips 6px). v1.23 (approved 6 October 2026): journey position figure, compact tracker and blocked next-step shape (sections 2.9.1 to 2.9.3). v1.22 (approved 4 October 2026): Frappe v16 surfaces, one bordered white sheet on a neutral ground, the Home and Analytics archetypes; earlier content retained. Current cross-cutting standard, including plain language, minimum steps, Scheduled next step and actor/state/event conformance; v1.11 adds the §8.3 fixture actors Daniel Otieno (technical operator) and Jane Wanjiku (public observer), and v1.12 adds Nadia Kamau (release operator); retains earlier design and verification rules. v1.14 adds eight supplier people: Afya's Mary Wanjiku and David Ouma, and the people of Jirani, Pwani and Mlima.",
+      "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_32.md",
+      "scope": "v1.32 (approved 17 October 2026): §8.1 lists the Ministry's principal address; §8.3B lists the Contract Management responsibilities of nine existing register people; no person, rule, component, permission, workflow, contract or verification requirement is added. Earlier scope, retained: v1.31 (approved 17 October 2026): §8.3 registers Hellen Mutua, a second Budget Approver (site-wide, permanent), so that each Budget Approver can approve what the other has confirmed; no rule, component, permission, workflow, contract or verification requirement changes. v1.30 (approved 15 October 2026): §8.4 and §8.4A point to SEED-002 v0.8 and its anchor model; §8.6 rule that seeds never set an instant later than the real clock. v1.29 (approved 9 October 2026): §2.4 date field hover edge — a .date-field wrapper takes the hover outline #6b7690 unless disabled (aria-disabled) or focused within. v1.28 (approved 9 October 2026): §2.4 states the KenTender field outline colour (#8590a6, hover #6b7690) and a 4px field corner (--radius-field); buttons, the segmented control and notice banners stay 2px; the secondary button shares the field outline colours. v1.27 (approved 8 October 2026): fixture register only — Charles Mutiso is the evaluation secretary by office and Brian Wafula the delegate. v1.26 (approved 8 October 2026): fixture register only — units OU-MOH-ICT (ICT) and OU-MOH-FIN (Finance) in section 8.2 and the home organisation units of section 8.3A. v1.25 (approved 6 October 2026): white input fill for editable fields in section 2.4. v1.24 (approved 6 October 2026): KenTender corner and control values in section 2.4 (controls and notice banners 2px, containers 4px, status chips 6px). v1.23 (approved 6 October 2026): journey position figure, compact tracker and blocked next-step shape (sections 2.9.1 to 2.9.3). v1.22 (approved 4 October 2026): Frappe v16 surfaces, one bordered white sheet on a neutral ground, the Home and Analytics archetypes; earlier content retained. Current cross-cutting standard, including plain language, minimum steps, Scheduled next step and actor/state/event conformance; v1.11 adds the §8.3 fixture actors Daniel Otieno (technical operator) and Jane Wanjiku (public observer), and v1.12 adds Nadia Kamau (release operator); retains earlier design and verification rules. v1.14 adds eight supplier people: Afya's Mary Wanjiku and David Ouma, and the people of Jirani, Pwani and Mlima.",
       "dependencies": "Workflow Guidance Standard; all controlled change documents",
-      "action": "Approved 17 October 2026 (v1.31; Project Owner: “KT-STD-001 v1.31 is approved.”): KT-STD-001 §8.3 registers Hellen Mutua, a second Budget Approver (site-wide, permanent). Approval of v1.31 does not by itself show implementation, verification or release; the canonical seed carries her since 17 October 2026. Earlier action text, retained: Approved 15 October 2026 (v1.30; Project Owner: “3. Approved”): KT-STD-001 §8.4 and KT-STD-001 §8.4A point to SEED-002 v0.8 and its anchor model (three financial years read as at the anchor; instants are offsets and never later than the real clock), and §8.6 gains the rule that seeds never set an instant later than the real clock. It applies the pointer that SEED-002 v0.7 Appendix C asked the Project Owner to apply. Approved 9 October 2026 (v1.29); the design-system pack was updated for DS-REV-006 and its date-field addendum on 9 October 2026. Approved 9 October 2026 (v1.28). Approved 8 October 2026 (v1.27). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v1.31 was proposed on 17 October 2026 (file KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_31.md): adds the second Budget Approver, Hellen Mutua, to §8.3; approved the same day.",
-      "source_sha256": "0bd54546a3141a49e6056a0e81617707d0781aa4b898e822b4cc46723d011739",
-      "approval_record": "Project Owner, 17 October 2026, verbatim: “KT-STD-001 v1.31 is approved.” Earlier records, retained: Project Owner, 15 October 2026, verbatim: “3. Approved”, answering the report of the harmonization of that day, which asked the owner to approve SEED-002 v0.8 and KT-STD-001 v1.30. (v1.29 record, retained: Project Owner, 9 October 2026, verbatim: “APPROVED”, recorded in the Claude Design handoff “DS-REV-006 addendum: date field hover edge” and applied on the user's instruction “Apply this from Claude Design” (KT-STD-001 v1.29). (Project Owner, 9 October 2026, verbatim: “1. Approved”, “2. Sharing is accepted” and “3. Yes”, answering the three decisions at the end of the report of KT-STD-001 v1.28 (approve v1.28; the secondary button shares the field outline colours; fields 4px while buttons and notice banners stay 2px). (Project Owner, 8 October 2026, verbatim: “All decisions approved. Proceed”, answering the report of the proposed set EVL-CHG-001 v0.8, KT-STD-001 v1.27, SEED-002 v0.3 and PRC-CHG-001 v0.12 with its Owner decisions D7–D11. (Project Owner, 8 October 2026, verbatim: “Approved. Proceed”, answering the report of the proposed set AUTH-ADR-001 v1.12, CFG-CHG-002 v0.19, KT-STD-001 v1.26 and EVL-CHG-001 v0.7. (v1.25: Project Owner, 6 October 2026, verbatim: “v1.25 is approved”. (v1.24: Project Owner, 6 October 2026, verbatim: “KT-STD-001 v1.24 is approved”.) (v1.23: Project Owner, 6 October 2026, verbatim: “KT-STD-001 v1.23 is approved”.) (v1.22: Project Owner, 4 October 2026, verbatim: “Yes”, answering “Shall I apply this pass, and then approve KT-STD v1.22, HOME v0.6 and ANL v0.8 together?”))))))",
+      "action": "Approved 17 October 2026 (v1.32; Project Owner: “Documents approved”): KT-STD-001 §8.1 lists the Ministry's principal address and the new KT-STD-001 §8.3B lists the nine Contract Management responsibilities held by existing register people. Approval does not by itself show implementation, verification or release. Earlier action text, retained: KT-STD-001 v1.32 proposed 17 October 2026 (file KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_32.md): the principal address and the Contract Management responsibilities (awaiting Project Owner review). v1.31 remains the approved baseline. Approved 17 October 2026 (v1.31; Project Owner: “KT-STD-001 v1.31 is approved.”): KT-STD-001 §8.3 registers Hellen Mutua, a second Budget Approver (site-wide, permanent). Approval of v1.31 does not by itself show implementation, verification or release; the canonical seed carries her since 17 October 2026. Earlier action text, retained: Approved 15 October 2026 (v1.30; Project Owner: “3. Approved”): KT-STD-001 §8.4 and KT-STD-001 §8.4A point to SEED-002 v0.8 and its anchor model (three financial years read as at the anchor; instants are offsets and never later than the real clock), and §8.6 gains the rule that seeds never set an instant later than the real clock. It applies the pointer that SEED-002 v0.7 Appendix C asked the Project Owner to apply. Approved 9 October 2026 (v1.29); the design-system pack was updated for DS-REV-006 and its date-field addendum on 9 October 2026. Approved 9 October 2026 (v1.28). Approved 8 October 2026 (v1.27). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v1.31 was proposed on 17 October 2026 (file KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_31.md): adds the second Budget Approver, Hellen Mutua, to §8.3; approved the same day.",
+      "source_sha256": "8a80e15fe3a34d1a35ea1229587c2f0a1ad75ad68363b4c664e347c00b41b635",
+      "approval_record": "Project Owner, 17 October 2026, verbatim: “Documents approved”, in a message that also instructed “Commt changes and reseed the dev site” (quoted as written), answering the author's report of the proposed set SEED-002 v0.10, KT-STD-001 v1.32 and CFG-CHG-002 v0.20. Earlier records, retained: Project Owner, 17 October 2026, verbatim: “KT-STD-001 v1.31 is approved.” Earlier records, retained: Project Owner, 15 October 2026, verbatim: “3. Approved”, answering the report of the harmonization of that day, which asked the owner to approve SEED-002 v0.8 and KT-STD-001 v1.30. (v1.29 record, retained: Project Owner, 9 October 2026, verbatim: “APPROVED”, recorded in the Claude Design handoff “DS-REV-006 addendum: date field hover edge” and applied on the user's instruction “Apply this from Claude Design” (KT-STD-001 v1.29). (Project Owner, 9 October 2026, verbatim: “1. Approved”, “2. Sharing is accepted” and “3. Yes”, answering the three decisions at the end of the report of KT-STD-001 v1.28 (approve v1.28; the secondary button shares the field outline colours; fields 4px while buttons and notice banners stay 2px). (Project Owner, 8 October 2026, verbatim: “All decisions approved. Proceed”, answering the report of the proposed set EVL-CHG-001 v0.8, KT-STD-001 v1.27, SEED-002 v0.3 and PRC-CHG-001 v0.12 with its Owner decisions D7–D11. (Project Owner, 8 October 2026, verbatim: “Approved. Proceed”, answering the report of the proposed set AUTH-ADR-001 v1.12, CFG-CHG-002 v0.19, KT-STD-001 v1.26 and EVL-CHG-001 v0.7. (v1.25: Project Owner, 6 October 2026, verbatim: “v1.25 is approved”. (v1.24: Project Owner, 6 October 2026, verbatim: “KT-STD-001 v1.24 is approved”.) (v1.23: Project Owner, 6 October 2026, verbatim: “KT-STD-001 v1.23 is approved”.) (v1.22: Project Owner, 4 October 2026, verbatim: “Yes”, answering “Shall I apply this pass, and then approve KT-STD v1.22, HOME v0.6 and ANL v0.8 together?”))))))",
       "approval_history": {
-        "proposed_version": "1.31",
-        "proposed_filename": "docs/mvp-1-r1/00_common/KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_31.md",
+        "proposed_version": "1.32",
+        "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_32.md",
         "proposal_status": "Approved 17 October 2026",
-        "proposed_base_version": "1.30",
-        "proposed_revision": "§8.3 adds Hellen Mutua, a second site-wide Budget Approver, on the Project Owner's instruction of 17 October 2026: “fix by adding a second permanent approver”.",
-        "source_sha256": "0bd54546a3141a49e6056a0e81617707d0781aa4b898e822b4cc46723d011739",
+        "proposed_base_version": "1.31",
+        "proposed_revision": "§8.1 lists the Ministry's principal address; new §8.3B lists the Contract Management responsibilities of nine existing register people (Dr Peter Kimani, not the Evaluation committee's Peter Mugo, is the technical inspector), on the Project Owner's instructions of 17 October 2026.",
+        "source_sha256": "8a80e15fe3a34d1a35ea1229587c2f0a1ad75ad68363b4c664e347c00b41b635",
         "prior_proposal": {
-          "proposed_version": "1.30",
-          "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_30.md",
-          "proposal_status": "Approved 15 October 2026",
-          "proposed_base_version": "1.29",
-          "proposed_revision": null,
-          "proposed_scope": "Fixture register change and one seed rule: §8.4 and §8.4A point to SEED-002 (proposed v0.8) and its anchor model; §8.6 gains the rule that seeds never set an instant later than the real clock. No component, permission, workflow, contract or verification requirement changes, and no actor changes. Earlier proposed_scope (v1.29): Presentation amendment: §2.4 date field hover edge (.date-field takes #6b7690 on hover unless disabled or focused within). Earlier proposed_scope (v1.28): Presentation amendment: §2.4 field outline colour #8590a6 (hover #6b7690) and 4px field corner; buttons and notice banners stay 2px. Earlier proposed_scope (v1.27): Fixture register change only: Charles Mutiso is the evaluation secretary by office and Brian Wafula the delegate (section 8.3 and the v1.13 binding). Proposed with EVL-CHG-001 v0.8, SEED-002 v0.3 and PRC-CHG-001 v0.12. v1.26 remains the approved standard.",
-          "earlier_proposals": [
-            {
-              "proposed_version": "1.29",
-              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_29.md",
-              "proposed_base_version": "1.28",
-              "outcome": "Approved 9 October 2026"
-            },
-            {
-              "proposed_version": "1.28",
-              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_28.md",
-              "proposed_base_version": "1.27",
-              "outcome": "Approved 9 October 2026"
-            },
-            {
-              "proposed_version": "1.27",
-              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_27.md",
-              "proposed_base_version": "1.26",
-              "outcome": "Approved 8 October 2026"
-            },
-            {
-              "proposed_version": "1.26",
-              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_26.md",
-              "proposed_base_version": "1.25",
-              "outcome": "Approved 8 October 2026"
-            },
-            {
-              "proposed_version": "1.25",
-              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_25.md",
-              "proposed_base_version": "1.24",
-              "outcome": "Approved 6 October 2026"
-            },
-            {
-              "proposed_version": "1.24",
-              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_24.md",
-              "proposed_base_version": "1.23",
-              "outcome": "Approved 6 October 2026"
-            },
-            {
-              "proposed_version": "1.23",
-              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_23.md",
-              "proposed_base_version": "1.22",
-              "outcome": "Approved 6 October 2026"
-            },
-            {
-              "proposed_version": "1.22",
-              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_22.md",
-              "proposed_base_version": "1.15",
-              "outcome": "Approved 4 October 2026"
-            }
-          ]
+          "proposed_version": "1.31",
+          "proposed_filename": "docs/mvp-1-r1/00_common/KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_31.md",
+          "proposal_status": "Approved 17 October 2026",
+          "proposed_base_version": "1.30",
+          "proposed_revision": "§8.3 adds Hellen Mutua, a second site-wide Budget Approver, on the Project Owner's instruction of 17 October 2026: “fix by adding a second permanent approver”.",
+          "source_sha256": "0bd54546a3141a49e6056a0e81617707d0781aa4b898e822b4cc46723d011739",
+          "prior_proposal": {
+            "proposed_version": "1.30",
+            "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_30.md",
+            "proposal_status": "Approved 15 October 2026",
+            "proposed_base_version": "1.29",
+            "proposed_revision": null,
+            "proposed_scope": "Fixture register change and one seed rule: §8.4 and §8.4A point to SEED-002 (proposed v0.8) and its anchor model; §8.6 gains the rule that seeds never set an instant later than the real clock. No component, permission, workflow, contract or verification requirement changes, and no actor changes. Earlier proposed_scope (v1.29): Presentation amendment: §2.4 date field hover edge (.date-field takes #6b7690 on hover unless disabled or focused within). Earlier proposed_scope (v1.28): Presentation amendment: §2.4 field outline colour #8590a6 (hover #6b7690) and 4px field corner; buttons and notice banners stay 2px. Earlier proposed_scope (v1.27): Fixture register change only: Charles Mutiso is the evaluation secretary by office and Brian Wafula the delegate (section 8.3 and the v1.13 binding). Proposed with EVL-CHG-001 v0.8, SEED-002 v0.3 and PRC-CHG-001 v0.12. v1.26 remains the approved standard.",
+            "earlier_proposals": [
+              {
+                "proposed_version": "1.29",
+                "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_29.md",
+                "proposed_base_version": "1.28",
+                "outcome": "Approved 9 October 2026"
+              },
+              {
+                "proposed_version": "1.28",
+                "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_28.md",
+                "proposed_base_version": "1.27",
+                "outcome": "Approved 9 October 2026"
+              },
+              {
+                "proposed_version": "1.27",
+                "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_27.md",
+                "proposed_base_version": "1.26",
+                "outcome": "Approved 8 October 2026"
+              },
+              {
+                "proposed_version": "1.26",
+                "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_26.md",
+                "proposed_base_version": "1.25",
+                "outcome": "Approved 8 October 2026"
+              },
+              {
+                "proposed_version": "1.25",
+                "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_25.md",
+                "proposed_base_version": "1.24",
+                "outcome": "Approved 6 October 2026"
+              },
+              {
+                "proposed_version": "1.24",
+                "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_24.md",
+                "proposed_base_version": "1.23",
+                "outcome": "Approved 6 October 2026"
+              },
+              {
+                "proposed_version": "1.23",
+                "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_23.md",
+                "proposed_base_version": "1.22",
+                "outcome": "Approved 6 October 2026"
+              },
+              {
+                "proposed_version": "1.22",
+                "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_22.md",
+                "proposed_base_version": "1.15",
+                "outcome": "Approved 4 October 2026"
+              }
+            ]
+          }
         }
       },
       "prior_approved_baseline": {
-        "version": "1.29",
-        "approval_date": "2026-10-09",
-        "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_29.md",
+        "version": "1.31",
+        "approval_date": "2026-10-17",
+        "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_31.md",
         "requirement_status": "Approved requirement",
+        "source_sha256": "0bd54546a3141a49e6056a0e81617707d0781aa4b898e822b4cc46723d011739",
         "earlier_approved_baseline": {
-          "version": "1.28",
+          "version": "1.29",
           "approval_date": "2026-10-09",
-          "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_28.md",
-          "requirement_status": "Approved requirement"
-        },
-        "source_sha256": "d539b4127a963fcbff19fbe84b7ef0ebe1836f198edf080a1ed66e888e5aecef"
+          "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_29.md",
+          "requirement_status": "Approved requirement",
+          "earlier_approved_baseline": {
+            "version": "1.28",
+            "approval_date": "2026-10-09",
+            "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_28.md",
+            "requirement_status": "Approved requirement"
+          },
+          "source_sha256": "d539b4127a963fcbff19fbe84b7ef0ebe1836f198edf080a1ed66e888e5aecef"
+        }
       }
     },
     {
@@ -743,57 +773,65 @@
     {
       "document_id": "SEED-002",
       "title": "Canonical Seed World",
-      "version": "0.9",
+      "version": "0.10",
       "category": "Fixture standard and operational runbook",
       "module": "Cross-module",
       "requirement_status": "Approved requirement",
       "approval_date": "2026-10-17",
-      "supersedes": "v0.8 (approved 15 October 2026); v0.7 (approved 11 October 2026); v0.3; v0.4 to v0.6 proposals carried in full",
+      "supersedes": "v0.9 (approved 17 October 2026); v0.8 (approved 15 October 2026); v0.7 (approved 11 October 2026); v0.3; v0.4 to v0.6 proposals carried in full",
       "implementation_status": "In progress",
       "verification_status": "Pending",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "",
-      "filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_9.md",
-      "source_sha256": "4ecefcfa801b36b865a4d1a7e116138f6622d0eafeb526cb02aa32621aade85f",
-      "approval_record": "Project Owner, 17 October 2026, verbatim: “SEED-002 v0.9 is approved”, in a message that also answered “Test-site repair: repair it” and “Reseed dev site”. (v0.8 record, retained: Project Owner, 15 October 2026, verbatim: “3. Approved”, answering the report of the harmonization of that day, which asked the owner to approve SEED-002 v0.8 and KT-STD-001 v1.30; the same message answered “1. Keep 1 Jul to 30 Jun”, “2. Yes” and “4. Yes”. v0.8 is approved with the RA-OD5 answer written into §A1.1, §A1.2 and Appendix D question 5. (v0.7 record, retained: Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it.))",
-      "scope": "The canonical world read as at the anchor, the instant a seed run starts, with no simulated instant later than the real clock, as built and run (v0.9): three financial years (Year 0 closed, Year 1 carried out, Year 2 prepared; the prepared year goes as far as the anchor allows), the instants as offsets (§A3.1), the site clock policy, a closed FY 2025/26 (§A7), Contract Management's demonstrations as one block of whole years (§A8); how to seed it (make seed-canonical CURRENT=/NEXT=/ANCHOR=) and how a module adds to it; carry-over register of every SEED-001 and SEED-OPS-001 rule. (v0.8 read: The canonical world read as at the anchor, the instant a seed run starts, with no simulated instant later than the real clock: three financial years (Year 0 closed, Year 1 carried out, Year 2 prepared; the prepared year goes as far as the anchor allows), instants as offsets (Awaiting fixture, recorded in v0.9 when built), the site clock policy, a closed FY 2025/26, Contract Management's demonstrations as one block; how to seed it (make seed-canonical CURRENT=/NEXT=) and how a module adds to it; carry-over register of every SEED-001 and SEED-OPS-001 rule. (v0.7 read: The canonical world — FY 2026/27 carried out (Active plan, laptops Tender and an executed portfolio of eleven more items) and FY 2027/28 prepared, read as at 18 June 2027 10:00 EAT — how to seed it (make seed-canonical CURRENT=/NEXT=) and how a module adds to it; carry-over register of every SEED-001 and SEED-OPS-001 rule.))",
+      "filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_10.md",
+      "source_sha256": "4c6a8082831d220cf63793650bc419e176cef7fb7d121cf84f1cb65abe037d9c",
+      "approval_record": "Project Owner, 17 October 2026, verbatim: “Documents approved”, in a message that also instructed “Commt changes and reseed the dev site” (quoted as written), answering the author's report of the proposed set SEED-002 v0.10, KT-STD-001 v1.32 and CFG-CHG-002 v0.20. Earlier records, retained: Project Owner, 17 October 2026, verbatim: “SEED-002 v0.9 is approved”, in a message that also answered “Test-site repair: repair it” and “Reseed dev site”. (v0.8 record, retained: Project Owner, 15 October 2026, verbatim: “3. Approved”, answering the report of the harmonization of that day, which asked the owner to approve SEED-002 v0.8 and KT-STD-001 v1.30; the same message answered “1. Keep 1 Jul to 30 Jun”, “2. Yes” and “4. Yes”. v0.8 is approved with the RA-OD5 answer written into §A1.1, §A1.2 and Appendix D question 5. (v0.7 record, retained: Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it.))",
+      "scope": "v0.10 (approved 17 October 2026): the canonical `contracts` stage (the closed year's three awards through Contract Management, one paid, one in delivery, one waiting for its agreement), the principal address through System setup's command, the nine demonstration profiles documented. Earlier scope, retained: The canonical world read as at the anchor, the instant a seed run starts, with no simulated instant later than the real clock, as built and run (v0.9): three financial years (Year 0 closed, Year 1 carried out, Year 2 prepared; the prepared year goes as far as the anchor allows), the instants as offsets (§A3.1), the site clock policy, a closed FY 2025/26 (§A7), Contract Management's demonstrations as one block of whole years (§A8); how to seed it (make seed-canonical CURRENT=/NEXT=/ANCHOR=) and how a module adds to it; carry-over register of every SEED-001 and SEED-OPS-001 rule. (v0.8 read: The canonical world read as at the anchor, the instant a seed run starts, with no simulated instant later than the real clock: three financial years (Year 0 closed, Year 1 carried out, Year 2 prepared; the prepared year goes as far as the anchor allows), instants as offsets (Awaiting fixture, recorded in v0.9 when built), the site clock policy, a closed FY 2025/26, Contract Management's demonstrations as one block; how to seed it (make seed-canonical CURRENT=/NEXT=) and how a module adds to it; carry-over register of every SEED-001 and SEED-OPS-001 rule. (v0.7 read: The canonical world — FY 2026/27 carried out (Active plan, laptops Tender and an executed portfolio of eleven more items) and FY 2027/28 prepared, read as at 18 June 2027 10:00 EAT — how to seed it (make seed-canonical CURRENT=/NEXT=) and how a module adds to it; carry-over register of every SEED-001 and SEED-OPS-001 rule.))",
       "dependencies": "Two-year seed world proposal decisions D1–D12 (4 October 2026); KT-STD-001 §8.1–§8.3; KT-STD-001 v1.30 (approved 15 October 2026; carries the §8.4/§8.4A pointer); RA-PROP-001 v1 (approved 15 October 2026); CFG-CHG-002 v0.19 CFG10-EC-001 (fiscal-year contract, unchanged; kept by the owner, 15 October 2026) (v0.7 read: Two-year seed world proposal decisions D1–D12 (4 October 2026); KT-STD-001 §8.1–§8.3; KT-STD-001 §8.4/§8.4A correction (Appendix C) owed by the Project Owner)",
-      "action": "Approved 17 October 2026 (v0.9; Project Owner: “SEED-002 v0.9 is approved”). v0.9 records the anchor model as built and run on kentender-test.local on 16 October 2026; approval of v0.9 does not by itself show implementation, verification or release. (v0.8 action, retained: Approved 15 October 2026 (v0.8; Project Owner: “3. Approved”). v0.8: the canonical world is read as at the anchor, the instant a seed run starts, and no simulated instant is later than the real clock; three financial years; instants are offsets, Awaiting fixture, recorded in v0.9 when built; the site clock policy (free, never_ahead, off); a closed FY 2025/26; Contract Management's demonstrations as one block; the financial year stays 1 July to 30 June (RA-OD5, “1. Keep 1 Jul to 30 Jun”). Only Phase 0 of Real_Date_Anchor_Implementation_Plan.md is built (the site clock policy); the seed still builds the v0.7 world until Phase 3, so implementation is In progress (it was Implemented for v0.7). Approval does not establish implementation, verification or release. (v0.7 read: Approved 8 October 2026 (Project Owner, 8 October 2026, verbatim: “SEED-002 v0.3 is approved.”, answering the report that EVL-CHG-001 v0.8, KT-STD-001 v1.27 and PRC-CHG-001 v0.12 were approved and SEED-002 v0.3 remained Proposed because its approval also retires SEED-001 and SEED-OPS-001). v0.3 is the one proposal (v0.2 and v0.1 superseded). Complete outstanding verification; approval does not establish implementation or verification. v0.3 (8 October 2026) adds the evaluation secretary by office and by delegation (the proposed EVL-CHG-001 and KT-STD-001 successors); it supersedes v0.2 (staff home organisation units) and v0.1 as the one proposal. sha256 59c69575a333d7bfeb215b4b3e876c0665ef752267ac6ceebfbedf065cac49ef. Built and validated on kentender-test.local on 5 October 2026 (commit bedf8a5b and later); approval does not establish verification. v0.5 proposed 10 October 2026: the tender-security intake duty and its fixtures. v0.3 remains the approved baseline until the Project Owner approves the successor. v0.6 proposed 10 October 2026: every canonical Tender states its tender-security method and original delivery; the supplier-facing status validation; carries v0.5 in full. The approved baseline is unchanged until the Project Owner approves v0.6. v0.7 proposed 11 October 2026: canonical Tenders state the bidder-uploads method and are bound to template release 1.5; carries v0.6 in full. The approved baseline is unchanged until the Project Owner approves v0.7. Approved 2026-10-11 (v0.7): Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it. Approval is not evidence of implementation, verification or release.) v0.9 proposed 16 October 2026 (file KenTender_SEED-002_Canonical_Seed_World_v0_9.md): the anchor model as built; awaiting Project Owner review. Approval of v0.9 would not by itself show implementation, verification or release.)",
+      "action": "Approved 17 October 2026 (v0.10; Project Owner: “Documents approved”): the canonical contracts stage (§A8.1), the principal address set through System setup's command, and the nine demonstration profiles documented (§B6.1). Built and verified on kentender-test.local. Approval does not by itself show implementation, verification or release. (v0.10 was proposed on 17 October 2026.) Earlier action text, retained: SEED-002 v0.10 proposed 17 October 2026 (file KenTender_SEED-002_Canonical_Seed_World_v0_10.md): the canonical contracts stage and the documentation of the demonstration profiles (built and verified on the test site; awaiting Project Owner review). v0.9 remains the approved baseline. Approved 17 October 2026 (v0.9; Project Owner: “SEED-002 v0.9 is approved”). v0.9 records the anchor model as built and run on kentender-test.local on 16 October 2026; approval of v0.9 does not by itself show implementation, verification or release. (v0.8 action, retained: Approved 15 October 2026 (v0.8; Project Owner: “3. Approved”). v0.8: the canonical world is read as at the anchor, the instant a seed run starts, and no simulated instant is later than the real clock; three financial years; instants are offsets, Awaiting fixture, recorded in v0.9 when built; the site clock policy (free, never_ahead, off); a closed FY 2025/26; Contract Management's demonstrations as one block; the financial year stays 1 July to 30 June (RA-OD5, “1. Keep 1 Jul to 30 Jun”). Only Phase 0 of Real_Date_Anchor_Implementation_Plan.md is built (the site clock policy); the seed still builds the v0.7 world until Phase 3, so implementation is In progress (it was Implemented for v0.7). Approval does not establish implementation, verification or release. (v0.7 read: Approved 8 October 2026 (Project Owner, 8 October 2026, verbatim: “SEED-002 v0.3 is approved.”, answering the report that EVL-CHG-001 v0.8, KT-STD-001 v1.27 and PRC-CHG-001 v0.12 were approved and SEED-002 v0.3 remained Proposed because its approval also retires SEED-001 and SEED-OPS-001). v0.3 is the one proposal (v0.2 and v0.1 superseded). Complete outstanding verification; approval does not establish implementation or verification. v0.3 (8 October 2026) adds the evaluation secretary by office and by delegation (the proposed EVL-CHG-001 and KT-STD-001 successors); it supersedes v0.2 (staff home organisation units) and v0.1 as the one proposal. sha256 59c69575a333d7bfeb215b4b3e876c0665ef752267ac6ceebfbedf065cac49ef. Built and validated on kentender-test.local on 5 October 2026 (commit bedf8a5b and later); approval does not establish verification. v0.5 proposed 10 October 2026: the tender-security intake duty and its fixtures. v0.3 remains the approved baseline until the Project Owner approves the successor. v0.6 proposed 10 October 2026: every canonical Tender states its tender-security method and original delivery; the supplier-facing status validation; carries v0.5 in full. The approved baseline is unchanged until the Project Owner approves v0.6. v0.7 proposed 11 October 2026: canonical Tenders state the bidder-uploads method and are bound to template release 1.5; carries v0.6 in full. The approved baseline is unchanged until the Project Owner approves v0.7. Approved 2026-10-11 (v0.7): Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it. Approval is not evidence of implementation, verification or release.) v0.9 proposed 16 October 2026 (file KenTender_SEED-002_Canonical_Seed_World_v0_9.md): the anchor model as built; awaiting Project Owner review. Approval of v0.9 would not by itself show implementation, verification or release.)",
       "approval_history": {
-        "proposed_version": "0.9",
-        "proposed_filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_9.md",
+        "proposed_version": "0.10",
+        "proposed_filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_10.md",
         "proposal_status": "Approved 17 October 2026",
-        "proposed_base_version": "0.8",
-        "proposed_revision": "the anchor model as built (§A3.1 offsets, §A7 Year 0, §A8 Contract Management block by whole years, §B1 to §B7 command, options, validation and troubleshooting, Appendix B regenerated, Appendix D new content); evidence of the 16 October 2026 run in the control table.",
-        "proposed_scope": "Records, as built and run on kentender-test.local, what v0.8 left Awaiting fixture or Awaiting run. Nothing about the story's people, money or states changes. The development site is not yet reseeded and the clock policy never_ahead is not yet adopted (change report).",
-        "source_sha256": "2d03a9136183bab952cd7d8bbbace1efa4e9246ddbb97696658e8cbee6d19dbb",
+        "proposed_base_version": "0.9",
+        "proposed_revision": "Contract Management joins the canonical world: the contracts stage (§A8.1: the closed year's three awards through Contract Management, one paid, one in delivery, one waiting for its agreement), the default of CURRENT, the principal address through System setup's command (§A2), validation and clear rows (§B3, §B5), the nine demonstration profiles documented (§B6.1), Appendix D questions 6 to 9, on the Project Owner's decisions of 17 October 2026.",
+        "source_sha256": "4c6a8082831d220cf63793650bc419e176cef7fb7d121cf84f1cb65abe037d9c",
         "prior_proposal": {
-          "proposed_version": "0.8",
-          "proposed_filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_8.md",
-          "proposal_status": "Approved 15 October 2026",
-          "proposed_base_version": "0.7",
-          "proposed_revision": "the anchor model: no simulated instant later than the real clock; three financial years read as at the anchor; instants as offsets (Awaiting fixture); site clock policy; closed FY 2025/26; Contract Management block; fiscal-year check and RA-OD5; carries v0.7 in full.",
-          "proposed_scope": "The anchor model of RA-PROP-001 v1 (approved 15 October 2026), in the world's controlling decision, §A1 to §A8, §B1, §B2, §B5 to §B7, Part C and Appendices C and D; the v0.7 18 June 2027 world is retained as the story's shape. Owner decisions RA-1 to RA-5 and the answers of 15 October 2026 are quoted in the control table.",
-          "previous_proposal": {
-            "proposed_version": "0.7",
-            "proposed_filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_7.md",
-            "proposal_status": "Approved 11 October 2026",
-            "proposed_base_version": "0.3",
-            "proposed_revision": "canonical Tenders state the bidder-uploads method and are bound to template release 1.5; carries v0.6 in full.",
-            "proposed_scope": "canonical Tenders state the bidder-uploads method and are bound to template release 1.5; carries v0.6 in full.",
+          "proposed_version": "0.9",
+          "proposed_filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_9.md",
+          "proposal_status": "Approved 17 October 2026",
+          "proposed_base_version": "0.8",
+          "proposed_revision": "the anchor model as built (§A3.1 offsets, §A7 Year 0, §A8 Contract Management block by whole years, §B1 to §B7 command, options, validation and troubleshooting, Appendix B regenerated, Appendix D new content); evidence of the 16 October 2026 run in the control table.",
+          "proposed_scope": "Records, as built and run on kentender-test.local, what v0.8 left Awaiting fixture or Awaiting run. Nothing about the story's people, money or states changes. The development site is not yet reseeded and the clock policy never_ahead is not yet adopted (change report).",
+          "source_sha256": "2d03a9136183bab952cd7d8bbbace1efa4e9246ddbb97696658e8cbee6d19dbb",
+          "prior_proposal": {
+            "proposed_version": "0.8",
+            "proposed_filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_8.md",
+            "proposal_status": "Approved 15 October 2026",
+            "proposed_base_version": "0.7",
+            "proposed_revision": "the anchor model: no simulated instant later than the real clock; three financial years read as at the anchor; instants as offsets (Awaiting fixture); site clock policy; closed FY 2025/26; Contract Management block; fiscal-year check and RA-OD5; carries v0.7 in full.",
+            "proposed_scope": "The anchor model of RA-PROP-001 v1 (approved 15 October 2026), in the world's controlling decision, §A1 to §A8, §B1, §B2, §B5 to §B7, Part C and Appendices C and D; the v0.7 18 June 2027 world is retained as the story's shape. Owner decisions RA-1 to RA-5 and the answers of 15 October 2026 are quoted in the control table.",
             "previous_proposal": {
-              "version": "0.6",
+              "proposed_version": "0.7",
+              "proposed_filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_7.md",
+              "proposal_status": "Approved 11 October 2026",
               "proposed_base_version": "0.3",
-              "outcome": "Superseded as the one proposal by v0.7 on 11 October 2026; its content is carried in full",
+              "proposed_revision": "canonical Tenders state the bidder-uploads method and are bound to template release 1.5; carries v0.6 in full.",
+              "proposed_scope": "canonical Tenders state the bidder-uploads method and are bound to template release 1.5; carries v0.6 in full.",
               "previous_proposal": {
-                "version": "0.5",
+                "version": "0.6",
                 "proposed_base_version": "0.3",
-                "outcome": "Superseded as the one proposal by v0.6 on 10 October 2026; its content is carried in full",
+                "outcome": "Superseded as the one proposal by v0.7 on 11 October 2026; its content is carried in full",
                 "previous_proposal": {
-                  "version": "0.4",
+                  "version": "0.5",
                   "proposed_base_version": "0.3",
-                  "outcome": "Superseded as the one proposal by v0.5 on 10 October 2026; its content is carried in full"
+                  "outcome": "Superseded as the one proposal by v0.6 on 10 October 2026; its content is carried in full",
+                  "previous_proposal": {
+                    "version": "0.4",
+                    "proposed_base_version": "0.3",
+                    "outcome": "Superseded as the one proposal by v0.5 on 10 October 2026; its content is carried in full"
+                  }
                 }
               }
             }
@@ -801,23 +839,30 @@
         }
       },
       "prior_approved_baseline": {
-        "version": "0.8",
-        "approval_date": "2026-10-15",
-        "filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_8.md",
+        "version": "0.9",
+        "approval_date": "2026-10-17",
+        "filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_9.md",
         "requirement_status": "Approved requirement",
-        "source_sha256": "62342c446ef96a9195b40417fd24ea311bf35c3a2a79ea59b42576d48b20c3a8",
+        "source_sha256": "4ecefcfa801b36b865a4d1a7e116138f6622d0eafeb526cb02aa32621aade85f",
         "earlier_approved_baseline": {
-          "version": "0.7",
-          "approval_date": "2026-10-11",
-          "filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_7.md",
+          "version": "0.8",
+          "approval_date": "2026-10-15",
+          "filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_8.md",
           "requirement_status": "Approved requirement",
+          "source_sha256": "62342c446ef96a9195b40417fd24ea311bf35c3a2a79ea59b42576d48b20c3a8",
           "earlier_approved_baseline": {
-            "version": "0.3",
-            "approval_date": "2026-10-08",
-            "filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_3.md",
-            "requirement_status": "Approved requirement"
-          },
-          "source_sha256": "d5f4fd615acf1a7fdcb545192226f12e9209dd6c0367a89fc690a8e9613c6b63"
+            "version": "0.7",
+            "approval_date": "2026-10-11",
+            "filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_7.md",
+            "requirement_status": "Approved requirement",
+            "earlier_approved_baseline": {
+              "version": "0.3",
+              "approval_date": "2026-10-08",
+              "filename": "docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_3.md",
+              "requirement_status": "Approved requirement"
+            },
+            "source_sha256": "d5f4fd615acf1a7fdcb545192226f12e9209dd6c0367a89fc690a8e9613c6b63"
+          }
         }
       }
     },
