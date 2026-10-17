@@ -73,9 +73,9 @@ An operation that crosses to another owner is stored as a **Contract Operation I
 * Do not reuse an idempotency key for anything but the exact same command: another payload, person or command with the same key is refused as a conflict, on purpose.
 * Do not turn on the simulation switches on a live site to "get past" a refused action. A refusal with `CM_RULE` means the production rule profile has not been verified (LQ-01), which is a decision for the legal and procurement owners, not a setting.
 
-## 7. Installing on the dev site (not done; waits for the owner's go-ahead, FU-CM-62)
+## 7. Installing on the dev site (done 17 October 2026; receipt in `evidence/dev_install_2026-10-17/receipt.md`)
 
-Nothing here has been run on the dev site. What installing it does, so the go-ahead is given knowing it:
+The Project Owner authorised it on 17 October 2026 and it was run that day: backup, `install-app kentender_contracts`, the app build, cache clear, canonical-seed validation and a read-only smoke (9 s to install, no rows created, no restart needed). The text below is what installing it does, kept as it was written before the go-ahead; the rollback it mentions is still written and not tried.
 
 * It adds the module and its record types, custom fields on native documents (`native/fields.py`), the payment guards on Payment Entry and Journal Entry for suppliers that have contract invoices, and takes over the Contract Management rail slot.
 * **It also switches the simulation stand-ins on there**, because the dev site carries the platform's `kt_bds_simulation_environment`: the signing provider, the synthetic rule profile, the synthetic Award source provider and the simulated funding owner would answer on dev, and a production site must never carry that flag.
