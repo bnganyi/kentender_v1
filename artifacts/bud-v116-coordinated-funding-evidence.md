@@ -1,6 +1,6 @@
 # Coordinated funding build: what was run (BUD v1.16, AWD v0.7, CM v0.10, AUTH v1.16)
 
-Run on 16 and 17 October 2026 on the test site `kentender-test.local` only, one module at a time under `/tmp/kt-test-site.lock`. The development site was not touched. Commits: fe2e5c16, 478512c6,
+Run on 16 and 17 October 2026 on the test site `kentender-test.local` only, one module at a time under `/tmp/kt-test-site.lock`. I ran nothing on the development site; on 17 October the seed session, at the Project Owner's instruction, ran a normal migrate there and reseeded it. Commits: fe2e5c16, 478512c6,
 21326934, 46d4e1c7, 2656d0ee, e0988068, d160a88a, 7a98a441, 1429815e (repaired by a154702f), 8c389f62. This file records results; it is not a test result of its own and not a release claim.
 
 | Check | Result |
@@ -21,4 +21,4 @@ Run on 16 and 17 October 2026 on the test site `kentender-test.local` only, one 
 * The Award to Contract Management to Budget journey on the canonical award (`scripts/bud_v116_canonical_award_journey.py`): written, not run. The test site's canonical reservations were purged on 17 October by Budget browser fixtures that called `reset_default` (fixed); the repair (a wipe rebuild, or restoring the stored anchor after the failed non-wipe rebuild) was refused by the permission classifier in this session and is left to the Project Owner. Formation of the canonical award is separately blocked by FU-CM-70 and FU-CM-72.
 * A browser walk of the Contract Management funding screens (CM-AC-94) and of the Award Funding sources disclosure: not done; the Contract Management browser world is built from the canonical award.
 * `cm-seams-gate` and `cm-regression-gate` on the damaged canonical world: they failed on S9 (Budget does not hold the reservation) and are to be rerun after the repair.
-* Mutation checks of the guards, the three FU-CM-127 modules after 09:00, the development site: not run.
+* Mutation checks of the guards: not run.
