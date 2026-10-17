@@ -21,6 +21,7 @@ from pathlib import Path
 import frappe
 from frappe.tests.utils import FrappeTestCase  # noqa: F401  (base class lives in _FinanceTestBase)
 
+from kentender_budget.services import budget_cancellation_release as cancel_release
 from kentender_budget.services import budget_check_reserve_contracts as check_reserve
 from kentender_budget.services import budget_commitment_contracts as commit
 from kentender_budget.services import budget_service_principal as principals
@@ -118,11 +119,15 @@ class _PrincipalBase(_FinanceTestBase):
 			"adjust_commitment": lambda: commit.adjust_commitment("X", 0, "E", "T", "K", caller=caller),
 			"close_commitment": lambda: commit.close_commitment("X", "R", {"event_id": "E", "event_type": "ContractClosed", "final_amount": 1}, ["REF"], "K", caller=caller),
 			"revalidate_reservations": lambda: commit.revalidate_reservations(["X"], "E", "T", "K", caller=caller),
+			# BUD-CHG-001 v1.17 section 8.9 - the cancellation mode of release; granted to Requisitions alone.
+			"release_cancelled_tender_reservations": lambda: cancel_release.release_reservations_for_cancelled_tender(
+				recovery_id="CRR", cancellation_id="TDC", requisition_reference="REQ-SP-1", releases=[{"reservation": "X", "drawdown_line_id": "D", "amount": "1"}], idempotency_key="K", caller=caller,
+			),
 		}
 
 
 class TestNoWebSurface(_PrincipalBase):
-	NAMES = ("check_funding", "reserve_funding", "release_reservation", "convert_reservation", "adjust_commitment", "close_commitment", "revalidate_reservations")
+	NAMES = ("check_funding", "reserve_funding", "release_reservation", "convert_reservation", "adjust_commitment", "close_commitment", "revalidate_reservations", "release_cancelled_tender_reservations")
 
 	def test_no_budget_api_endpoint_remains_for_the_guarded_actions(self):
 		from kentender_budget.api import budget_api
@@ -132,7 +137,7 @@ class TestNoWebSurface(_PrincipalBase):
 				self.assertFalse(hasattr(budget_api, name), f"budget_api.{name} is still published")
 
 	def test_service_functions_are_not_whitelisted(self):
-		for module in (check_reserve, commit):
+		for module in (check_reserve, commit, cancel_release):
 			for name in self.NAMES:
 				fn = getattr(module, name, None)
 				if fn is not None:
@@ -169,8 +174,8 @@ class TestPrincipalMatrix(_PrincipalBase):
 	def test_each_principal_is_refused_the_actions_that_are_not_its_own(self):
 		self._as("Administrator")
 		not_requisitions = ("convert_reservation", "adjust_commitment", "close_commitment", "revalidate_reservations")
-		not_contract = ("check_funding", "reserve_funding")
-		not_budget = ("check_funding", "reserve_funding", "release_reservation", "convert_reservation", "adjust_commitment", "close_commitment")
+		not_contract = ("check_funding", "reserve_funding", "release_cancelled_tender_reservations")
+		not_budget = ("check_funding", "reserve_funding", "release_reservation", "convert_reservation", "adjust_commitment", "close_commitment", "release_cancelled_tender_reservations")
 		for principal, refused in ((PRINCIPAL_REQUISITIONS, not_requisitions), (PRINCIPAL_CONTRACT, not_contract), (PRINCIPAL_BUDGET, not_budget)):
 			calls = self._calls(service_caller(principal, reference="X"))
 			for action in refused:

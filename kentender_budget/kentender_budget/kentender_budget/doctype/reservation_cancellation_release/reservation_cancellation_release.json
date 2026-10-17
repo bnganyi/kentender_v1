@@ -1,0 +1,184 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-10-18 00:30:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "release_key",
+  "recovery_id",
+  "cancellation_id",
+  "requisition_reference",
+  "col_a",
+  "reservation",
+  "drawdown_line_id",
+  "plan_source_allocation",
+  "budget",
+  "budget_line",
+  "section_amount",
+  "amount",
+  "currency",
+  "closed_context",
+  "col_b",
+  "payload_digest",
+  "audit_event",
+  "released_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "release_key",
+   "fieldtype": "Data",
+   "label": "Release Key",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "description": "BUD-CHG-001 v1.17 §4.13 — the cancellation and the originating drawdown line. One release per cancellation and drawdown line: a new retry key finds this row and reuses its result, a changed fact is a conflict."
+  },
+  {
+   "fieldname": "recovery_id",
+   "fieldtype": "Data",
+   "label": "Cancellation Recovery",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1,
+   "description": "The Requisitions-owned recovery this release carried out. An opaque reference here: Budget owns the release, Requisitions owns the recovery."
+  },
+  {
+   "fieldname": "cancellation_id",
+   "fieldtype": "Data",
+   "label": "Cancellation",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "requisition_reference",
+   "fieldtype": "Data",
+   "label": "Requisition Reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reservation",
+   "fieldtype": "Link",
+   "label": "Reservation",
+   "options": "Funding Reservation",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "drawdown_line_id",
+   "fieldtype": "Data",
+   "label": "Originating Drawdown Line",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "plan_source_allocation",
+   "fieldtype": "Data",
+   "label": "Plan Source Allocation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "budget",
+   "fieldtype": "Link",
+   "label": "Budget",
+   "options": "Procurement Budget",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "budget_line",
+   "fieldtype": "Link",
+   "label": "Budget Line",
+   "options": "Procurement Budget Line",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_amount",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount Released",
+   "options": "currency",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "closed_context",
+   "fieldtype": "Data",
+   "label": "Closure Context",
+   "read_only": 1,
+   "description": "BUD-CHG-001 v1.17 §8.9 — set to Budget Closed when the held reservation of a Closed Budget was released. The historical Available difference is not authority to reserve in that closed year."
+  },
+  {
+   "fieldname": "col_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "payload_digest",
+   "fieldtype": "Data",
+   "label": "Facts Digest",
+   "read_only": 1,
+   "description": "Digest of the pinned reservation facts, so an identical replay is recognised and a changed one is a conflict."
+  },
+  {
+   "fieldname": "audit_event",
+   "fieldtype": "Link",
+   "label": "Ledger Event",
+   "options": "Budget Audit Event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "released_at",
+   "fieldtype": "Datetime",
+   "label": "Released at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-18 00:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Budget",
+ "name": "Reservation Cancellation Release",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 0, "delete": 0, "email": 0, "export": 1, "print": 1, "read": 1, "report": 1, "role": "System Manager", "share": 0, "write": 0},
+  {"create": 0, "delete": 0, "email": 0, "export": 1, "print": 1, "read": 1, "report": 1, "role": "Budget Officer", "share": 0, "write": 0},
+  {"create": 0, "delete": 0, "email": 0, "export": 1, "print": 1, "read": 1, "report": 1, "role": "Budget Approver", "share": 0, "write": 0},
+  {"create": 0, "delete": 0, "email": 0, "export": 1, "print": 1, "read": 1, "report": 1, "role": "Auditor", "share": 0, "write": 0},
+  {"create": 0, "delete": 0, "email": 0, "export": 1, "print": 1, "read": 1, "report": 1, "role": "Head of Procurement Function", "share": 0, "write": 0}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "search_fields": "recovery_id,cancellation_id,reservation"
+}
