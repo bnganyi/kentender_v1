@@ -1216,7 +1216,7 @@ def _active_view(version, plan) -> dict[str, Any]:
 	for item in items:
 		allocations = frappe.get_all(
 			"Plan Source Allocation", filters={"plan_item": item.name, "allocation_state": "Active"},
-			fields=["name", "organisation_unit", "source_origin", "quantity", "unit", "indicative_amount"],
+			fields=["name", "plan_item_id", "allocation_id", "organisation_unit", "source_origin", "quantity", "unit", "indicative_amount"],
 		)
 		drawn = _drawn(allocations)
 		departments |= {a.organisation_unit for a in allocations}
@@ -1287,11 +1287,14 @@ def _latest_publication(version_name: str) -> dict[str, Any] | None:
 
 
 def _drawn(allocations: list) -> tuple[float, float]:
-	names = [a.name for a in allocations]
-	if not names:
+	"""What these allocations have drawn, counted by the stable allocation identity (PLN-CHG-001 v1.32 §4.11)
+	so the figure survives an Annual Plan successor; see `plan_requisition._drawn_totals`."""
+	from kentender_procurement.procurement_planning.services import plan_requisition
+
+	if not allocations:
 		return 0.0, 0.0
-	rows = frappe.get_all("Plan Drawdown Reference", filters={"allocation": ("in", names), "drawdown_state": "Active"}, fields=["quantity", "amount"])
-	return sum(flt(r.quantity) for r in rows), sum(flt(r.amount) for r in rows)
+	totals = plan_requisition._drawn_totals(allocations)
+	return sum(flt(q) for q, _ in totals.values()), sum(flt(a) for _, a in totals.values())
 
 
 # --------------------------------------------------------------------------

@@ -460,6 +460,7 @@ _DOCTYPES = (
 	# (a budget revision request's Budget side goes with its Budget).
 	"Plan Budget Revision Request",
 	"Departmental Plan Update Request",
+	"Plan Cancellation Recovery Hold",
 	"Plan Drawdown Reference",
 	# PLN-CHG-001 v1.18 §5.5.2 publication chain. These were absent from the
 	# purge, so a reset left the previous run's Approved Plan Snapshot behind
@@ -1314,6 +1315,7 @@ def _wipe_fiscal_year(fiscal_year: str) -> dict[str, int]:
 	plans = frappe.get_all("Annual Plan", filters={"fiscal_year": fiscal_year}, pluck="name")
 	plan_versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	delete("Plan Cancellation Recovery Hold", frappe.get_all("Plan Cancellation Recovery Hold", filters={"plan_item": ("in", items or ("",))}, pluck="name"))
 	delete("Plan Drawdown Reference", frappe.get_all("Plan Drawdown Reference", filters={"plan_item": ("in", items or ("",))}, pluck="name"))
 	delete("Plan Source Allocation", frappe.get_all("Plan Source Allocation", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
 	delete("Annual Plan Item", items)

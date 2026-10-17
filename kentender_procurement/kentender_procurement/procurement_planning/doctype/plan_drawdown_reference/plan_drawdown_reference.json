@@ -9,6 +9,7 @@
   "plan_item",
   "plan_item_id",
   "allocation",
+  "allocation_id",
   "requisition_reference",
   "requisition_version",
   "correlation_id",
@@ -17,6 +18,10 @@
   "amount",
   "drawdown_state",
   "reversal_reference",
+  "reversal_reason",
+  "recovery_id",
+  "cancellation_id",
+  "reversed_at",
   "record_version",
   "fixture_namespace"
  ],
@@ -46,6 +51,14 @@
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "allocation_id",
+   "fieldtype": "Data",
+   "label": "Source Allocation ID",
+   "read_only": 1,
+   "search_index": 1,
+   "description": "PLN-CHG-001 v1.32 §4.11 — the stable allocation identity (it survives an Annual Plan successor, which copies the allocation as a new row with the same id). The allowance a drawdown consumes is counted by this identity together with the stable Plan Item ID, never by the allocation row's name."
   },
   {
    "fieldname": "requisition_reference",
@@ -107,6 +120,35 @@
    "label": "Reversal Reference",
    "read_only": 1,
    "description": "Set once, on ReverseRequisitionDrawdown."
+  },
+  {
+   "fieldname": "reversal_reason",
+   "fieldtype": "Select",
+   "label": "Reversal Reason",
+   "options": "\nRequisition revoked\nTenderCancelled",
+   "read_only": 1,
+   "description": "PLN-CHG-001 v1.32 §7.8 — why the drawdown was reversed. Blank on a reversal made before v1.32 (the unconsumed-revocation route)."
+  },
+  {
+   "fieldname": "recovery_id",
+   "fieldtype": "Data",
+   "label": "Cancellation Recovery",
+   "read_only": 1,
+   "search_index": 1,
+   "description": "Set once, when a verified whole-Tender cancellation recovery reversed this drawdown."
+  },
+  {
+   "fieldname": "cancellation_id",
+   "fieldtype": "Data",
+   "label": "Cancellation",
+   "read_only": 1,
+   "description": "The Tender cancellation whose verified recovery reversed this drawdown."
+  },
+  {
+   "fieldname": "reversed_at",
+   "fieldtype": "Datetime",
+   "label": "Reversed at",
+   "read_only": 1
   },
   {
    "fieldname": "record_version",

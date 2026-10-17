@@ -95,6 +95,7 @@ PLANNING_DOCTYPES = frozenset(
 		"Plan Governance Decision",
 		"Annual Plan Publication",
 		"Plan Drawdown Reference",
+		"Plan Cancellation Recovery Hold",
 		"Planning Command Journal",
 	}
 )

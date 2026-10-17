@@ -1,0 +1,204 @@
+{
+ "actions": [],
+ "autoname": "format:PCH-{#####}",
+ "creation": "2026-10-17 23:59:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "hold_key",
+  "recovery_id",
+  "cancellation_id",
+  "plan_item",
+  "plan_item_id",
+  "allocation_id",
+  "drawdown_reference",
+  "requisition_reference",
+  "quantity",
+  "amount",
+  "facts_digest",
+  "state",
+  "display_status",
+  "reason",
+  "registered_at",
+  "removed_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "hold_key",
+   "fieldtype": "Data",
+   "label": "Hold Key",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "description": "PLN-CHG-001 v1.32 §4.11 — recovery ID and source allocation ID. One hold per cancellation recovery and source; an identical replay reuses it, a conflicting lineage fails."
+  },
+  {
+   "fieldname": "recovery_id",
+   "fieldtype": "Data",
+   "label": "Cancellation Recovery",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1,
+   "description": "The Requisitions-owned recovery record this hold belongs to. An opaque reference here: Planning owns the hold, Requisitions owns the recovery."
+  },
+  {
+   "fieldname": "cancellation_id",
+   "fieldtype": "Data",
+   "label": "Cancellation",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "plan_item",
+   "fieldtype": "Link",
+   "label": "Plan Item Row",
+   "options": "Annual Plan Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "plan_item_id",
+   "fieldtype": "Data",
+   "label": "Plan Item ID",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "allocation_id",
+   "fieldtype": "Data",
+   "label": "Source Allocation ID",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "drawdown_reference",
+   "fieldtype": "Link",
+   "label": "Original Drawdown",
+   "options": "Plan Drawdown Reference",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "requisition_reference",
+   "fieldtype": "Data",
+   "label": "Requisition Reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "label": "Pinned Quantity",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Pinned Amount",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "facts_digest",
+   "fieldtype": "Data",
+   "label": "Facts Digest",
+   "read_only": 1,
+   "description": "Digest of the pinned drawdown facts, so an identical replay is recognised and a changed one is a conflict."
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "options": "Active\nRemoved",
+   "default": "Active",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "display_status",
+   "fieldtype": "Select",
+   "label": "Recovery Status",
+   "options": "Pending\nNeeds attention",
+   "default": "Pending",
+   "read_only": 1,
+   "reqd": 1,
+   "description": "Mirrors the owning recovery's status so the authorisation refusal can say which of the two cases applies. Removed only by the coordinated reversal."
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1,
+   "description": "The owner's reason while the recovery is Needs attention."
+  },
+  {
+   "fieldname": "registered_at",
+   "fieldtype": "Datetime",
+   "label": "Registered at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "removed_at",
+   "fieldtype": "Datetime",
+   "label": "Removed at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record Version",
+   "default": "0",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "hidden": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-10-17 23:59:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Plan Cancellation Recovery Hold",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1
+  },
+  {
+   "role": "Administrator",
+   "read": 1
+  },
+  {
+   "role": "Procurement Planner",
+   "read": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1
+  },
+  {
+   "role": "Head of Procurement Function",
+   "read": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

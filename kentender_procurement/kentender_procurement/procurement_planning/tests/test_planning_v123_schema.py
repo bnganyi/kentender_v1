@@ -42,7 +42,7 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	# --- departmental (§4.2–4.4) -------------------------------------------
 	"Departmental Plan": {"dpp_reference", "fiscal_year", "organisation_unit", "current_state", "current_version", "current_accepted_version", "record_version", "fixture_namespace"},
 	"Departmental Plan Version": {"version_reference", "departmental_plan", "version_number", "based_on_version", "returned_from_submission", "version_status", "submission", "record_version", "fixture_namespace"},
-	"Departmental Plan Entry": {"entry_id", "dpp_version", "source_origin", "direct_source_id", "need", "need_revision", "title", "description", "expected_operational_result", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount", "not_proceeding_reason", "fixture_namespace"},
+	"Departmental Plan Entry": {"entry_id", "dpp_version", "source_origin", "direct_source_id", "need", "need_revision", "title", "description", "expected_operational_result", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount", "not_proceeding_reason", "fixture_namespace", "need_estimated_total_cost"},
 	"Departmental Plan Submission": {"submission_reference", "dpp_version", "submission_number", "entry_snapshots", "content_hash", "attestation_text", "submitted_by_user", "authority_snapshot", "submitted_at", "fixture_namespace"},
 	"Departmental Plan Validation Task": {"task_reference", "submission", "dpp_version", "organisation_unit", "fiscal_year", "status", "decision", "task_token", "record_version", "fixture_namespace"},
 	"Departmental Plan Validation Decision": {"decision_reference", "task", "submission", "decision", "classifications", "derived_categories", "issues", "actor", "authority_snapshot", "decided_at", "command_idempotency_key", "fixture_namespace"},
@@ -81,7 +81,10 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	# --- downstream use, correction, operational evidence (§4.8) --------------
 	# REQ-CHG-001 v1.11 (commit f24b1b65) added the exact requisition version and
 	# the correlation id to each drawdown; the allow-list had not followed.
-	"Plan Drawdown Reference": {"plan_item", "plan_item_id", "allocation", "requisition_reference", "requisition_version", "correlation_id", "requesting_org_unit", "quantity", "amount", "drawdown_state", "reversal_reference", "record_version", "fixture_namespace"},
+	# PLN-CHG-001 v1.32 §4.11 added the stable allocation identity and the cancellation-recovery reversal evidence to each drawdown.
+	"Plan Drawdown Reference": {"plan_item", "plan_item_id", "allocation", "allocation_id", "requisition_reference", "requisition_version", "correlation_id", "requesting_org_unit", "quantity", "amount", "drawdown_state", "reversal_reference", "reversal_reason", "recovery_id", "cancellation_id", "reversed_at", "record_version", "fixture_namespace"},
+	# PLN-CHG-001 v1.32 §4.11 / §7.8 — the per-source hold a whole-Tender cancellation recovery places.
+	"Plan Cancellation Recovery Hold": {"hold_key", "recovery_id", "cancellation_id", "plan_item", "plan_item_id", "allocation_id", "drawdown_reference", "requisition_reference", "quantity", "amount", "facts_digest", "state", "display_status", "reason", "registered_at", "removed_at", "record_version", "fixture_namespace"},
 	"Plan Item Correction Request": {"plan_item", "plan_item_id", "plan_version", "requisition_reference", "requisition_version", "reason", "requested_by", "requested_role", "requested_at", "producer_event_id", "status", "resolved_by", "resolved_at", "resolution_note", "idempotency_key", "record_version", "fixture_namespace"},
 	"Plan Item Correction Disposition": {"correction_request", "action", "actor", "authority_snapshot", "disposed_at", "reason", "correcting_plan_version", "replacement_lineage", "producer_event_id", "command_idempotency_key", "fixture_namespace"},
 	"Milestone Actual Event": {"producer", "event_id", "schema_version", "proceeding_type", "proceeding_id", "requisition_reference", "plan_version", "plan_item", "plan_item_id", "allocation", "milestone", "actual_date", "recorded_at", "producer_sequence", "supersedes_event_id", "source_evidence_reference", "fixture_namespace"},
@@ -200,6 +203,9 @@ OWED_TO_SPEC = {
 	"PLN_BUDGET_REVISION_ALREADY_DECLINED",
 	"PLN_DEPARTMENTAL_UPDATE_NOT_REQUIRED",
 	"PLN_DEPARTMENTAL_UPDATE_ALREADY_REQUESTED",
+	# PLN-CHG-001 v1.32 §8 supplement (17 Oct 2026): the two whole-Tender cancellation recovery codes; this test still reads the v1.27 table.
+	"PLN_CANCELLATION_RECOVERY_PENDING",
+	"PLN_CANCELLATION_RECOVERY_CONFLICT",
 }
 
 SCAN_DIRS = ("doctype", "services", "tests", "page", "seeds")

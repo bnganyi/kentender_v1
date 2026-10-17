@@ -317,6 +317,7 @@ def wipe_planning_rows() -> None:
 	plans = frappe.get_all("Annual Plan", filters={"fiscal_year": ("in", fys)}, pluck="name")
 	plan_versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	frappe.db.delete("Plan Cancellation Recovery Hold", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Drawdown Reference", {"plan_item": ("in", items or ("",))})
 	# PLN v1.27 §4.7 / BUD v1.11 §4.10 — both sides of a budget revision
 	# request and Budget's outcome outbox for these plan Versions. Version
