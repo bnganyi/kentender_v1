@@ -65,8 +65,12 @@ const emit = defineEmits(["filter", "view", "open", "page", "size", "head"]);
 const moreOpen = ref(false);
 const local = reactive({});
 const fields = computed(() => props.board.filters.map((f, i) => fieldView(f, `list-${i}`, i)));
-const bar = computed(() => fields.value.slice(0, 2));
-const more = computed(() => fields.value.slice(2));
+// The artboard draws five filters: the first two in the bar and the rest under a "Filters" disclosure. The build offers three (Responsible person and Managing unit wait for the picker's register-filter
+// source), and a disclosure for one select is a heavy band over a lone, stretched field, so up to three filters sit in the one row and the disclosure appears from the fourth.
+const INLINE = 3;
+const inline = computed(() => (fields.value.length <= INLINE ? fields.value.length : 2));
+const bar = computed(() => fields.value.slice(0, inline.value));
+const more = computed(() => fields.value.slice(inline.value));
 const table = computed(() => tableView({ cols: props.board.cols, rows: props.board.rows, num: [] }));
 
 // The filters the server applied are what the screen shows; a typed value waits for the reader to apply it.

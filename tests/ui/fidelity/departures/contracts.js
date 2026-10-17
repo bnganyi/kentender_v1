@@ -43,7 +43,16 @@ const DELIVERY_AGAIN = {
 	authority: "CM-CHG-001 v0.8 section 5.21 (a reopening asks for the corrected fact); plan Phase 9, D38",
 };
 
-export const DEPARTURES = { "D01-E": [REGISTER], "D25 · Verify": [CONFIRMATION], "D22-P": [DELIVERY_FORM], "D38-R": [DELIVERY_AGAIN] };
+// The artboard draws five filters on the list: Search and Status in the bar, and Source, Responsible person and Managing unit under a "Filters" disclosure. The build draws three, all in the one row, because
+// a disclosure over the single remaining select was a heavy band over a lone, stretched field (the Project Owner, 17 October 2026: "the layout of filters is wrong"). Responsible person and Managing unit are
+// each a choice of one person or unit from a list that can grow, which AGENTS.md section 6.12 gives to the shared picker, and the picker has no register-filter source yet (plan Phase 10).
+const FILTERS_INLINE = {
+	omits: ["disclosure"],
+	because: "The artboard draws two more filters than the build offers and puts three under a disclosure; with three filters the build draws them all in the one row and the disclosure of a single select is not drawn.",
+	authority: "Project Owner, 17 October 2026 (the filter layout was wrong); AGENTS.md section 6.12 (a person or unit filter is the shared picker); plan Phase 10",
+};
+
+export const DEPARTURES = { "D01": [FILTERS_INLINE], "D01-F": [FILTERS_INLINE], "D01-T": [FILTERS_INLINE], "D01-AUD": [FILTERS_INLINE], "D01-E": [REGISTER, FILTERS_INLINE], "D25 · Verify": [CONFIRMATION], "D22-P": [DELIVERY_FORM], "D38-R": [DELIVERY_AGAIN] };
 // Phase 4 (CM8-414) needed none: the built screens use the boards' own containers. What the structural instrument cannot see, and the tracker lists as known simplifications: the list's
 // "Responsible person" and "Managing unit" filters are not drawn (each is a choice of one person or unit from a list that can grow, which AGENTS.md section 6.12 gives to the shared picker, and
 // the picker has no register-filter source yet: plan Phase 10), the invoice form has no file field (attaching the supplier's invoice file arrives with the Invoices package), and the
