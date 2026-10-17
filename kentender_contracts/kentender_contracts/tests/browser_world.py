@@ -228,9 +228,8 @@ def clean() -> dict:
 	failed = world.teardown()
 	tw.teardown(NAMESPACE)
 	known_passwords.restore()
-	previous = json.loads(output().read_text()).get("previous_instant") if output().exists() else ""
-	test_clock.set_instant(previous or None)
-	if output().exists():
+	if output().exists():  # a world that was built put the clock on its own moment and kept the one it found; with no world to put back, the clock is not this clean-up's to change
+		test_clock.set_instant(json.loads(output().read_text()).get("previous_instant") or None)
 		output().unlink()
 	frappe.db.commit()
 	print(json.dumps({"cases": cases, "native_not_removed": failed}))

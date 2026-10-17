@@ -54,8 +54,9 @@ def _remove_isolated() -> dict[str, int]:
 
 
 def remove_contract_requests(contract: str) -> dict[str, int]:
-	"""Remove what one independently registered contract left in Budget: its funding requests, their outcomes and entries, the commitments those entries made, and the audit events that name the contract. For the
-	Contract Management browser walk, which raises a real request against the canonical Budget and then has its world cleaned away; nothing else on the canonical Budget is touched."""
+	"""Remove what one independently registered contract left in Budget: its funding requests, their outcomes and entries, the commitments those entries made, and every audit event that names the contract or one of
+	those commitments, whichever module recorded it (Contract Management's "request received", Budget's own "entry submitted", "commitment recorded" and "entry approved"). For the Contract Management browser walk,
+	which raises a real request against the canonical Budget, has it approved and then has its world cleaned away; nothing else on the canonical Budget is touched."""
 	frappe.set_user("Administrator")
 	from kentender_core.services.command_write_guard import purge_doc
 
@@ -69,14 +70,23 @@ def remove_contract_requests(contract: str) -> dict[str, int]:
 	if not contract:
 		return deleted
 	requests = frappe.get_all("Contract Funding Request", filters={"contract": contract}, pluck="name")
+	commitments: list[str] = []
 	for request in requests:
 		entries_of = frappe.get_all("Existing Contract Commitment Entry", filters={"request": request}, pluck="name")
 		for entry in entries_of:
-			purge("Procurement Commitment", frappe.get_all("Procurement Commitment", filters={"entry_row": ["like", f"{entry}/%"]}, pluck="name"))
+			made = frappe.get_all("Procurement Commitment", filters={"entry_row": ["like", f"{entry}/%"]}, pluck="name")
+			commitments += made
+			purge("Procurement Commitment", made)
 		purge("Existing Contract Commitment Entry", entries_of)
 		purge("Contract Funding Outcome", frappe.get_all("Contract Funding Outcome", filters={"request": request}, pluck="name"))
 	purge("Contract Funding Request", requests)
-	purge("Budget Audit Event", frappe.get_all("Budget Audit Event", filters={"downstream_reference": contract, "calling_module": "Contract Management"}, pluck="name"))
+	events = set(frappe.get_all("Budget Audit Event", filters={"downstream_reference": contract}, pluck="name"))
+	events |= set(frappe.get_all("Budget Audit Event", filters={"commitment": ["in", commitments or ["-"]]}, pluck="name"))
+	frappe.flags.allow_budget_audit_purge = True
+	try:
+		purge("Budget Audit Event", sorted(events))
+	finally:
+		frappe.flags.allow_budget_audit_purge = False
 	frappe.db.commit()
 	return deleted
 
