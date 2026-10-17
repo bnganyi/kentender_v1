@@ -277,3 +277,23 @@ class TestTheVerificationHelpersAreForTestsAndSeedsOnly(_AwardBase):
 			if "kt_award_funding_verifications" in text or "award_funding_verification.permit_all" in text or "award_funding_verification.PermitAll" in text or "verified_for(" in text:
 				offenders.append(relative)
 		self.assertEqual(offenders, [])
+
+
+class TestARepeatedCallReadsBackTheSameReference(_AwardBase):
+	"""The funding owner answers a repeated conversion, lookup or closure with exactly what it answered the first time, in the same order (found on the canonical award, where a repeated closure came back
+	with its two commitment codes the other way round)."""
+
+	def test_conversion_lookup_and_closure_repeat_identically(self):
+		from kentender_budget.services.contract_funding_provider import service
+
+		provider = service()
+		self._as("Administrator")
+		identity = f"{self.contract}:convert"
+		first = provider.convert(identity=identity, contract=self.contract, allocations=self.rows(), amount=46_400_000.0, lineage=LINEAGE)
+		self.assertEqual(provider.convert(identity=identity, contract=self.contract, allocations=self.rows(), amount=46_400_000.0, lineage=LINEAGE), first)
+		self.assertEqual(provider.lookup(identity=identity), first)
+		args = dict(identity=f"{self.contract}:close", contract=self.contract, final_amount=46_400_000.0, event_id=f"{self.contract}:closed", event_type="ContractClosed", evidence=["RECON-1"])
+		closed = provider.close(**args)
+		for _ in range(3):
+			self.assertEqual(provider.close(**args), closed)
+		self.assertEqual(closed["reference"], ", ".join(sorted(closed["reference"].split(", "))))

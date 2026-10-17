@@ -106,8 +106,24 @@ class Journey:
 		self.budgets = sorted({frappe.db.get_value("Procurement Budget Line", l, "budget") for l in self.lines})
 		self.rows = [{"reservation": a["reservation"], "amount": a["amount"], "source_allocation": a.get("source_allocation")} for a in self.allocations]
 
+	def install_authority(self):
+		"""Stand in for Contract Management's interim answer: each journey contract may draw on exactly the two reservations the award names. The Award owner's verification stays real."""
+		from kentender_core.services import contract_reservation_authority as authority
+
+		self.authority_flag = authority.FLAG
+		self.authority_stand_in = authority.Static({c: set(self.reservations) for c in (self.contract, self.rival, f"CM-JRNY-THIRD-{self.tag}")})
+		frappe.flags[authority.FLAG] = [self.authority_stand_in]
+
 	def convert_args(self, **over):
-		return {"contract": self.contract, "allocations": over.pop("allocations", self.rows), "amount": float(over.pop("amount", self.total)), "lineage": over.pop("lineage", self.lineage)}
+		return {"contract": over.pop("contract", self.contract), "allocations": over.pop("allocations", self.rows), "amount": float(over.pop("amount", self.total)), "lineage": over.pop("lineage", self.lineage)}
+
+	def declined(self, fn):
+		"""The text of the refusal when `fn` is refused, by an exception (a person without the responsibility) or by a result that says it was not done; None when it was done."""
+		try:
+			out = fn()
+		except Exception as exc:  # noqa: BLE001 - the refusal is what is looked for
+			return f"{type(exc).__name__}: {str(exc)[:90]}"
+		return str(out)[:120] if isinstance(out, dict) and out.get("ok") is False else None
 
 	def refusals(self):
 		bad_rows = [dict(self.rows[0], amount=str(money(self.rows[0]["amount"]) + 1)), *self.rows[1:]]
@@ -147,6 +163,7 @@ class Journey:
 				from kentender_core.services import contract_funding_contract as seam
 
 				frappe.flags.kt_contract_funding_providers = [service()]
+				frappe.flags[self.authority_flag] = [self.authority_stand_in]
 				try:
 					outcome[name] = ("ok", seam.convert(identity, **self.convert_args(contract=contract)))
 					frappe.db.commit()
@@ -202,7 +219,7 @@ class Journey:
 		after = {l: self.position(l) for l in self.lines}
 		check("closing the contract changes status only: the final amount stays counted and nothing is released", after == before and all(c.status == "Closed" for c in self.commitments(contract=self.contract)), str(closed)[:100])
 		again = self.seam.close(f"{self.contract}:close", contract=self.contract, final_amount=float(final_total), event_id=f"{self.contract}:closed", event_type="ContractClosed", evidence=["Closure 1"])
-		check("a repeated closure is the same closure", again.get("reference") == closed.get("reference"))
+		check("a repeated closure is the same closure", again.get("reference") == closed.get("reference") and again.get("amount") == closed.get("amount"), f"first {closed}, again {again}")
 		self.refused("a Closed commitment accepts no further adjustment from the contract service", lambda: self.seam.adjust(f"{self.contract}:vary-closed", contract=self.contract, allocations=[{"reservation": first.reservation, "new_total": float(adjusted_total + 1)}], event_id=f"{self.contract}:variation-2", event_type="ContractVariation"))
 		events_before = frappe.db.count("Budget Audit Event", {"budget": ["in", self.budgets]})
 		check("reopening the contract in Contract Management makes no funding call and changes nothing in Budget", frappe.db.count("Budget Audit Event", {"budget": ["in", self.budgets]}) == events_before and {l: self.position(l) for l in self.lines} == after)
@@ -233,8 +250,8 @@ class Journey:
 		submitted = self.entries.submit_existing_contract_commitment_entry({"entry": entry["entry"]["id"], "idempotency_key": f"sub-{frappe.generate_hash(length=8)}"})
 		check("the Officer submits it", submitted.get("ok"), str(submitted)[:140])
 		self.as_user(OFFICER)
-		own = self.entries.decide_existing_contract_commitment_entry({"entry": entry["entry"]["id"], "decision": "Approve", "reason": "", "idempotency_key": f"dec-{frappe.generate_hash(length=8)}"})
-		check("the preparer cannot approve their own entry", own.get("ok") is False, str(own)[:120])
+		own = self.declined(lambda: self.entries.decide_existing_contract_commitment_entry({"entry": entry["entry"]["id"], "decision": "Approve", "reason": "", "idempotency_key": f"dec-{frappe.generate_hash(length=8)}"}))
+		check("the preparer cannot approve their own entry", own is not None, own or "it was approved")
 		self.as_user(APPROVER)
 		decided = self.entries.decide_existing_contract_commitment_entry({"entry": entry["entry"]["id"], "decision": "Approve", "reason": "", "idempotency_key": f"dec-{frappe.generate_hash(length=8)}"})
 		check("a different Budget Approver approves it", decided.get("ok"), str(decided)[:140])
@@ -255,8 +272,8 @@ class Journey:
 		recorded = self.corrections.record_commitment_correction({"commitment": target.name, "new_amount": float(new_amount), "reason": "The final obligation included work that was never performed.", "evidence": ["Final obligation review 1", "Closure 1"],
 			"contract_reference": self.contract, "idempotency_key": f"cor-{frappe.generate_hash(length=8)}"})
 		check("the Officer records a supported downward correction of the Closed commitment", recorded.get("ok"), str(recorded)[:140])
-		own = self.corrections.decide_commitment_correction({"correction": recorded["correction"]["id"], "decision": "Approve", "reason": "", "idempotency_key": f"dc-{frappe.generate_hash(length=8)}"})
-		check("the person who recorded the correction cannot approve it", own.get("ok") is False, str(own)[:120])
+		own = self.declined(lambda: self.corrections.decide_commitment_correction({"correction": recorded["correction"]["id"], "decision": "Approve", "reason": "", "idempotency_key": f"dc-{frappe.generate_hash(length=8)}"}))
+		check("the person who recorded the correction cannot approve it", own is not None, own or "it was approved")
 		self.as_user(APPROVER)
 		decided = self.corrections.decide_commitment_correction({"correction": recorded["correction"]["id"], "decision": "Approve", "reason": "", "idempotency_key": f"dc-{frappe.generate_hash(length=8)}"})
 		check("a different Budget Approver approves it", decided.get("ok"), str(decided)[:140])
@@ -311,6 +328,9 @@ class Journey:
 	def run(self):
 		self.facts()
 		frappe.flags.kt_contract_funding_providers = [__import__("kentender_budget.services.contract_funding_provider", fromlist=["service"]).service()]
+		# Contract Management's interim answer (may this contract draw on this reservation?) is the one thing stood in for: these contract ids are not Contract Management cases, so with the real hook nobody knows them.
+		self.refused("a contract Contract Management does not know cannot draw on any reservation (the interim check, before any stand-in)", lambda: self.seam.convert(f"{self.contract}:unknown", **self.convert_args()))
+		self.install_authority()
 		self.refusals()
 		self.commitf()
 		made = self.race()

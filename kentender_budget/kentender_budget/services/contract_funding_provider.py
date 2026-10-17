@@ -44,7 +44,7 @@ class Provider:
 				if commitment.get("commitment_code"):
 					codes.append(commitment["commitment_code"])
 					total += Decimal(str(commitment.get("current_amount") or 0))
-		return {"reference": ", ".join(codes), "amount": float(total)} if codes else None
+		return {"reference": ", ".join(sorted(codes)), "amount": float(total)} if codes else None
 
 	def convert(self, *, identity: str, contract: str, allocations: list[dict[str, Any]], amount: float, lineage: dict[str, Any] | None = None) -> dict[str, Any]:
 		"""Convert the whole allocation of one award, atomically (BUD-CHG-001 v1.16 §9.2): every row is verified against the award's funding allocation and checked before any is converted, and the set
@@ -61,7 +61,7 @@ class Provider:
 		except (frappe.ValidationError, frappe.PermissionError, frappe.DoesNotExistError) as exc:
 			raise seam.Refused(frappe.safe_decode(str(exc))) from exc
 		codes = [c["commitment_code"] for c in done["commitments"]]
-		return {"reference": ", ".join(codes), "amount": float(sum((part for _r, part in parts), Decimal("0")))}
+		return {"reference": ", ".join(sorted(codes)), "amount": float(sum((part for _r, part in parts), Decimal("0")))}
 
 	def revalidate(self, *, identity: str, contract: str, allocations: list[dict[str, Any]]) -> dict[str, Any]:
 		"""Ask Budget to revalidate the exact reservations the contract's award names (the owner's decision of 16 October 2026). Budget decides each status; nothing is converted, released or moved. A reservation
@@ -92,7 +92,7 @@ class Provider:
 				if commitment.get("commitment_code"):
 					codes.append(commitment["commitment_code"])
 					total += Decimal(str(commitment.get("current_amount") or 0))
-		return {"reference": ", ".join(codes), "amount": float(total)} if codes else None
+		return {"reference": ", ".join(sorted(codes)), "amount": float(total)} if codes else None
 
 	def _commitments(self, contract: str) -> list[Any]:
 		return frappe.get_all("Procurement Commitment", filters={"contract": contract, "status": ["in", ["Active", "Closed"]]}, fields=["name", "reservation", "current_amount", "status", "modified"], order_by="creation asc")
@@ -115,7 +115,7 @@ class Provider:
 			codes.append(done["commitment"]["commitment_code"])
 			before += Decimal(str(current.current_amount or 0))
 			after += Decimal(str(done["commitment"]["current_amount"]))
-		return {"reference": ", ".join(codes), "amount": float(after), "before": float(before), "after": float(after)}
+		return {"reference": ", ".join(sorted(codes)), "amount": float(after), "before": float(before), "after": float(after)}
 
 	def close(self, *, identity: str, contract: str, final_amount: float, event_id: str, event_type: str, evidence: list[str]) -> dict[str, Any]:
 		"""Close the contract's commitments on a reconciled outcome. The final amount must equal what the commitments hold now (a mismatch is an error, never an implicit adjustment)."""
@@ -134,7 +134,7 @@ class Provider:
 			except (frappe.ValidationError, frappe.PermissionError, frappe.DoesNotExistError) as exc:
 				raise seam.Refused(frappe.safe_decode(str(exc))) from exc
 			codes.append(done["commitment"]["commitment_code"])
-		return {"reference": ", ".join(codes), "amount": float(held)}
+		return {"reference": ", ".join(sorted(codes)), "amount": float(held)}
 
 
 def service() -> Provider:
