@@ -19,6 +19,8 @@ Run:
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import unittest
 from unittest import mock
 
@@ -40,7 +42,7 @@ HOP_COMMANDS = {
 	"SaveProfessionalOpinion": (opinion.save, {"conclusion": "Recommend award", "reason": "x"}),
 	"SignProfessionalOpinion": (opinion.sign, {}),
 	"ReturnEvaluationReport": (opinion.return_report, {"reason": "x"}),
-	"RecordExternalAwardRestriction": (restrictions.record_external, {"basis": "Reported challenge", "source": "x", "received_at": "2027-06-17 09:00:00", "reason": "x"}),
+	"RecordExternalAwardRestriction": (restrictions.record_external, {"basis": "Reported challenge", "source": "x", "received_at": W("2027-06-17 09:00:00"), "reason": "x"}),
 	"RecordAwardIssueDisposition": (restrictions.disposition, {"issue": "none", "outcome": "Further action required", "reason": "x", "evidence": "x", "next_action": "x"}),
 	"SaveAwardExplanation": (explanation.save, {"request": "none", "reply": "x"}),
 	"SendAwardExplanation": (explanation.send, {"request": "none", "reply": "x"}),
@@ -185,13 +187,13 @@ class TestAwardRoleMatrix(AwardCase):
 	def test_the_person_who_signed_the_opinion_cannot_record_the_decision(self):
 		both = _make_user(f"{PREFIX}both{DOMAIN}")
 		self.take_offices(both, people.HEAD_OF_PROCUREMENT, people.ACCOUNTING_OFFICER)
-		self.at("2027-06-17 09:00:00")
+		self.at(W("2027-06-17 09:00:00"))
 		self.run_as(both, opinion.save, award=CASE, conclusion="Recommend award", reason="The signed report supports the recommendation.", expected_version=self.version())
-		self.at("2027-06-17 09:10:00")
+		self.at(W("2027-06-17 09:10:00"))
 		signed = self.run_as(both, opinion.sign, award=CASE, expected_version=self.version())
 		self.assertTrue(signed.get("signed"), signed)
 		self.assertEqual(frappe.db.get_value(state.OPINION, {"award_case": CASE}, "signed_by"), both)
-		self.at("2027-06-17 10:00:00")
+		self.at(W("2027-06-17 10:00:00"))
 		before = self.version()
 		with self.assertRaises(AwardError) as ctx:
 			self.run_as(both, decision.record, award=CASE, outcome="Award", reason="I accept it.", expected_version=before)
@@ -204,14 +206,14 @@ class TestAwardRoleMatrix(AwardCase):
 
 	def test_an_accounting_officer_who_did_not_prepare_the_opinion_decides_normally(self):
 		self.signed_opinion()
-		self.at("2027-06-17 10:00:00")
+		self.at(W("2027-06-17 10:00:00"))
 		self.assertTrue(self.run_as(AO, decision.record, award=CASE, outcome="Award", reason="I accept it.", expected_version=self.version())["ok"])
 
 	def test_the_person_who_recorded_the_decision_cannot_prepare_or_sign_the_opinion(self):
 		self.signed_opinion()  # Charles (the sitting HOP) prepared and signed it
 		both = _make_user(f"{PREFIX}both2{DOMAIN}")
 		self.take_offices(both, people.HEAD_OF_PROCUREMENT, people.ACCOUNTING_OFFICER)
-		self.at("2027-06-17 10:00:00")
+		self.at(W("2027-06-17 10:00:00"))
 		self.run_as(both, decision.record, award=CASE, outcome="Return for correction", reason="Explain the unresolved funding concern.", expected_version=self.version())
 		before = self.version()
 		for fn, extra in ((opinion.save, {"conclusion": "Recommend award", "reason": "x"}), (opinion.sign, {})):

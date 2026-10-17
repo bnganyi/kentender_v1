@@ -12,6 +12,7 @@ Run:
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from datetime import datetime
 
 import frappe
@@ -37,7 +38,7 @@ class TestSuspendedAccountsOnHome(AccountsCase):
 
 	def suspend(self):
 		org = self.active_account()
-		self.at("2027-05-19 08:00:00")
+		self.at(W("2027-05-19 08:00:00"))
 		access.suspend_supplier_account(organisation=org, reason="Reported misuse of the account.", expected_version=self._version(org), idempotency_key=key(), user=AMINA)
 		return org
 
@@ -50,7 +51,7 @@ class TestSuspendedAccountsOnHome(AccountsCase):
 		(row,) = self.mine(org)
 		self.assertEqual((row["region"], row["owner"], row["action_id"]), ("my_work", "suppliers", "review-suspended-access"))
 		self.assertEqual((row["title"], row["action"]), (AFYA, "Review suspended supplier account access"))
-		self.assertEqual((row["entered_verb"], str(row["entered_at"])), ("Suspended", "2027-05-19 08:00:00"))
+		self.assertEqual((row["entered_verb"], str(row["entered_at"])), ("Suspended", W("2027-05-19 08:00:00")))
 		self.assertEqual(row["destination"], {"route": ["Form", "Supplier Organisation", org], "route_options": {}})
 
 	def test_restoring_the_account_clears_the_row(self):

@@ -57,6 +57,7 @@ then confirms the whole visible proposal and marks it Reviewed.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from contextlib import contextmanager
 from typing import Any
 
@@ -74,7 +75,7 @@ FY = calendar.YEAR1.fiscal_year
 #: 2027 boundary (a Requisition refuses a later one, DATE_BEYOND_BOUNDARY), so
 #: the executed year's laptops are delivered inside FY 2026/27 (two-year seed
 #: world build finding: was 30 Sep 2027; the bids offer late-June delivery).
-LATEST_DELIVERY = "2027-06-30"
+LATEST_DELIVERY = calendar.delivery("2027-06-30")
 
 AUTHOR = "grace.wanjiku@moh.example.test"
 HOD = "peter.kimani@moh.example.test"
@@ -91,12 +92,12 @@ DELIVERY_LOCATION = "Ministry of Health Headquarters, Afya House, Nairobi"
 # §16.4's exact fixture-4 timeline. Site datetimes are naive Africa/Nairobi
 # values, rendered as stored (read.presenters.eat).
 CLOCK = {
-	"draft_opened": "2027-03-01 09:00:00",
-	"steps_completed": "2027-03-01 11:00:00",
-	"sent_for_department_approval": "2027-03-01 11:05:00",
-	"submitted_to_procurement": "2027-03-08 09:00:00",
-	"authorised": "2027-03-15 10:00:00",
-	"consumed": "2027-03-20 09:00:00",
+	"draft_opened": W("2027-03-01 09:00:00"),
+	"steps_completed": W("2027-03-01 11:00:00"),
+	"sent_for_department_approval": W("2027-03-01 11:05:00"),
+	"submitted_to_procurement": W("2027-03-08 09:00:00"),
+	"authorised": W("2027-03-15 10:00:00"),
+	"consumed": W("2027-03-20 09:00:00"),
 }
 
 # §16.3 — each department's equipment row (one shared laptop definition).
@@ -143,10 +144,10 @@ def canonical_plan_item_ids() -> list[str]:
 	"""Every stable Plan Item of the executed year's canonical Annual Plan
 	(two-year seed world: the laptops and the portfolio). A Requisition on one
 	of them is canonical; any other is a stray."""
-	plan_name = frappe.db.get_value("Annual Plan", {"fiscal_year": FY}, "name")
-	if not plan_name:
+	plan_names = frappe.get_all("Annual Plan", filters={"fiscal_year": ("in", _executed_fiscal_years())}, pluck="name")
+	if not plan_names:
 		return []
-	versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": plan_name}, pluck="name")
+	versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": ("in", plan_names)}, pluck="name")
 	return sorted(set(frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", versions or ("",))}, pluck="plan_item_id")))
 
 
@@ -156,8 +157,19 @@ def seeded_requisition_references() -> list[str]:
 	return frappe.get_all("Procurement Requisition", filters={"plan_item_id": ("in", canonical_plan_item_ids() or ("",))}, pluck="requisition_reference")
 
 
-def _plan_item_id(title: str) -> str:
-	plan_name = frappe.db.get_value("Annual Plan", {"fiscal_year": FY}, "name")
+def _executed_fiscal_years() -> list[str]:
+	"""The years whose Requisitions are canonical: the executed year's and every earlier Annual Plan's (the closed year's, and in
+	an anchored world the years that were closed before a rollover), never the prepared year's or a later isolation year's
+	(SEED-002 v0.8 R3). So a rebuild revokes an old year's authorised Requisitions through the real command, as it does Year 1's."""
+	start = calendar.YEAR1.start_year
+	return [
+		fy for fy in frappe.get_all("Annual Plan", pluck="fiscal_year")
+		if str(fy)[:4].isdigit() and int(str(fy)[:4]) <= start
+	] or [calendar.YEAR1.fiscal_year]
+
+
+def _plan_item_id(title: str, fiscal_year: str | None = None) -> str:
+	plan_name = frappe.db.get_value("Annual Plan", {"fiscal_year": fiscal_year or FY}, "name")
 	if not plan_name:
 		return ""
 	versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": plan_name}, pluck="name")
@@ -343,7 +355,7 @@ REQUISITION_STOPS = {"department": "Awaiting Department Approval", "procurement"
 
 def build_requisition(
 	*, key: str, plan_item_title: str, requirement_title: str, shared: dict[str, Any], uses: dict[str, str], clock_map: dict[str, str],
-	stop: str = "authorised", amounts: dict[str, tuple[str, str]] | None = None,
+	stop: str = "authorised", amounts: dict[str, tuple[str, str]] | None = None, fiscal_year: str | None = None,
 ) -> dict[str, Any]:
 	"""One executed-portfolio Requisition on its own Plan Item, through the
 	same commands as the canonical one (§16.4), as the named actors at its
@@ -358,9 +370,9 @@ def build_requisition(
 	_guard()
 	if stop not in REQUISITION_STOPS:
 		frappe.throw(f"Unknown Requisition stop {stop!r}; expected one of {', '.join(REQUISITION_STOPS)}.")
-	plan_item_id = _plan_item_id(plan_item_title)
+	plan_item_id = _plan_item_id(plan_item_title, fiscal_year)
 	if not plan_item_id:
-		frappe.throw(f"Requisitions seed: no Active Plan Item '{plan_item_title}' in the {FY} Annual Plan (seed the executed year's plan first).")
+		frappe.throw(f"Requisitions seed: no Active Plan Item '{plan_item_title}' in the {fiscal_year or FY} Annual Plan (seed the executed year's plan first).")
 	existing = frappe.get_all(
 		"Procurement Requisition", filters={"plan_item_id": plan_item_id, "current_state": ("not in", ("Withdrawn", "Revoked", "Superseded"))},
 		fields=["name", "current_state"], limit_page_length=1,
@@ -709,7 +721,9 @@ def validate_requisitions_seed() -> list[dict[str, Any]]:
 		total = sum((Decimal(cstr(r.original_amount)) for r in reservations), Decimal(0))
 		check("reservations.total_50m", total == Decimal("50000000"), str(total))
 		view = req_read.get_authorised_requisition_handoff(requisition=root.name, user=HOPF)
-		check("handoff.version_1_4", view.get("handoff_version") == "1.4", cstr(view.get("handoff_version")))
+		from kentender_procurement.procurement_requisitions.services.handoff import HANDOFF_VERSION
+
+		check("handoff.version_current", view.get("handoff_version") == HANDOFF_VERSION, f"{view.get('handoff_version')} (current {HANDOFF_VERSION})")
 		payload = view.get("payload") or {}
 		check("handoff.two_lines", len(payload.get("drawdown_lines") or []) == 2, "")
 		check("handoff.nine_checks", len(payload.get("compatibility") or []) == 9, "")
@@ -720,7 +734,7 @@ def validate_requisitions_seed() -> list[dict[str, Any]]:
 		# REQ §13.1 / SEED-001 v1.3 §3.6 with the two-year corrections: the
 		# laptops' baseline (invited 1 Feb 2027, signed 14 Apr) completes
 		# 13 Jun 2027 (60 days), inside FY 2026/27.
-		check("handoff.estimated_completion_13_jun_2027", cstr(payload.get("estimated_completion_date"))[:10] == "2027-06-13", cstr(payload.get("estimated_completion_date")))
+		check("handoff.estimated_completion_13_jun_2027", cstr(payload.get("estimated_completion_date"))[:10] == W("2027-06-13"), cstr(payload.get("estimated_completion_date")))
 		# NDS-CHG-001 v1.14 §14.3 — the HRMD laptops come from the returned
 		# and corrected Need's Revision 2 (Year 1's NDS-MOH-2026-0002).
 		revisions = sorted(cstr(line.get("need_revision")) for line in payload.get("drawdown_lines") or [])

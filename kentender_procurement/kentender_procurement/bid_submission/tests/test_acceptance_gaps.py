@@ -7,11 +7,14 @@ tests"). Each test names the row it proves."""
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 import os
 from unittest import mock
 
 import frappe
+from frappe.utils import get_datetime
 from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.bid_submission.services import (
@@ -55,7 +58,7 @@ class TestSuspendedAccount(ChangeCase):
 		self.accounts.orgs[AFYA]["account_status"] = "Active"
 		receipt = self.submitted()
 		self.accounts.orgs[AFYA]["account_status"] = "Suspended"
-		self.at("2027-05-31 08:30:00")
+		self.at(W("2027-05-31 08:30:00"))
 		self.assertEqual(self.code(self.replace), "BDS_ACCOUNT_SUSPENDED")
 		self.assertEqual(self.code(self.withdraw, receipt=receipt), "BDS_ACCOUNT_SUSPENDED")
 		self.assertEqual(self.current()[0], "Submitted")
@@ -76,14 +79,14 @@ class TestCertificates(SubmissionCase):
 		trust.issue_certificate(user=MARY, subject_name="Mary Wanjiku", **certificate)
 
 	def test_an_expired_certificate_cannot_sign(self):
-		self._only(organisation=AFYA, valid_from="2027-01-01 00:00:00", valid_to="2027-05-29 23:59:59")
+		self._only(organisation=AFYA, valid_from=W("2027-01-01 00:00:00"), valid_to=W("2027-05-29 23:59:59"))
 		self.assertEqual(signature.certificate(MARY, AFYA, frappe.utils.get_datetime(SUBMIT_AT))["status"], "Expired")
 		self.assertEqual(signature.check_certificate(bid_reference=self.bid, user=MARY)["status"], "Required")
 		self.assertEqual(self.code(self.prepare), "BDS_SIGNATORY_CERTIFICATE_REQUIRED")
 		self.assertEqual(self.counts(), dict.fromkeys(COUNTED, 0))
 
 	def test_a_certificate_issued_for_another_organisation_cannot_sign_for_this_one(self):
-		self._only(organisation=KISIWA, valid_from="2027-01-01 00:00:00", valid_to="2027-12-31 23:59:59")
+		self._only(organisation=KISIWA, valid_from=W("2027-01-01 00:00:00"), valid_to=W("2027-12-31 23:59:59"))
 		self.assertEqual(signature.certificate(MARY, AFYA, frappe.utils.get_datetime(SUBMIT_AT))["status"], "None")
 		self.assertEqual(signature.check_certificate(bid_reference=self.bid, user=MARY)["status"], "Required")
 		self.assertEqual(self.code(self.prepare), "BDS_SIGNATORY_CERTIFICATE_REQUIRED")
@@ -129,13 +132,13 @@ class TestAddendumAfterSubmission(ChangeCase):
 		self._flag("kt_tenders_notice_transport", lambda notice: {"result": "Delivered", "provider_reference": f"test:{notice.name}", "failure_reason": ""})
 
 	def issue_addendum(self) -> str:
-		frappe.flags.kt_tenders_clock = "2027-05-31 08:30:00"
-		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "revised_submission_deadline": "2027-06-12 11:00:00"})
+		frappe.flags.kt_tenders_clock = W("2027-05-31 08:30:00")
+		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "revised_submission_deadline": W("2027-06-12 11:00:00")})
 		addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=self._root().record_version, idempotency_key=tender_fx.key(), user=tender_fx.OFFICER)
-		frappe.flags.kt_tenders_clock = "2027-05-31 09:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-31 09:00:00")
 		addenda.issue_addendum(tender=self.name, addendum=name, expected_record_version=self._root().record_version, idempotency_key=tender_fx.key(), user=tender_fx.HOPF)
 		for channel in CHANNELS:
-			self._confirm("addendum", channel, addendum=name, available_at="2027-05-31 09:00:00")
+			self._confirm("addendum", channel, addendum=name, available_at=W("2027-05-31 09:00:00"))
 		return name
 
 	def test_a_submitted_bid_stays_sealed_and_a_change_needs_a_replacement_on_the_current_definition(self):
@@ -144,7 +147,7 @@ class TestAddendumAfterSubmission(ChangeCase):
 		sealed = frappe.db.get_value("Bid Submission Version", v1, ["definition_version", "definition_digest", "package_digest", "tender_box_envelope"], as_dict=True)
 		self.issue_addendum()
 		self.assertEqual(bid_definition.current(self.name)["definition_version"], 2)
-		self.at("2027-06-01 12:00:00")
+		self.at(W("2027-06-01 12:00:00"))
 		self.assertEqual(frappe.db.get_value("Bid Submission Version", v1, ["definition_version", "definition_digest", "package_digest", "tender_box_envelope"], as_dict=True), sealed)
 		self.assertEqual((self.current(), frappe.db.get_value("Bid Workspace", self.bid, "definition_version")), (("Submitted", v1), 1))
 		self.assertEqual(frappe.db.get_value("Tender Box Envelope", sealed.tender_box_envelope, "box_state"), "Sealed")
@@ -152,7 +155,7 @@ class TestAddendumAfterSubmission(ChangeCase):
 		self.assertTrue(self.replace()["ok"])
 		self.assertEqual(self.code(self.prepare), "BDS_ADDENDUM_REVIEW_REQUIRED")
 		field = next(f for g in reads.get_bid_task(bid_reference=self.bid, task="requirements", user=DAVID)["groups"] for f in g["fields"] if f["label"] == "Offered make and model")
-		self.at("2027-06-01 12:10:00")
+		self.at(W("2027-06-01 12:10:00"))
 		from kentender_procurement.bid_submission.services import save
 
 		moved = save.save_bid_task(bid_reference=self.bid, task="requirements", values={field["handle"]: "ApexBook Pro 14 G3"}, expected_record_version=self.version(), idempotency_key=key(), user=DAVID)
@@ -168,10 +171,10 @@ class TestAddendumReview(AddendumCase):
 	def test_the_review_item_clears_when_the_acknowledgement_is_saved(self):
 		name = self.issue_addendum()
 		reference = frappe.db.get_value("Tender Addendum", name, "addendum_reference")
-		self.at("2027-06-01 12:05:00")
+		self.at(W("2027-06-01 12:05:00"))
 		handoffs.sweep()
 		self.assertEqual(frappe.db.count("Bid Hand-off", {"bid_workspace": self.bid, "kind": "Review addendum", "status": "Open"}), 1)
-		self.at("2027-06-01 12:10:00")
+		self.at(W("2027-06-01 12:10:00"))
 		moved = self.save("documents", {})
 		self.assertEqual((moved["ok"], moved["code"]), (False, "BDS_ADDENDUM_REVIEW_REQUIRED"))
 		self.assertEqual(frappe.db.count("Bid Hand-off", {"bid_workspace": self.bid, "kind": "Review addendum", "status": "Open"}), 1)  # still open: not yet acknowledged
@@ -188,7 +191,7 @@ class TestAddendumReview(AddendumCase):
 
 	def test_a_successor_definition_whose_digest_fails_is_refused_at_refresh(self):
 		self.issue_addendum()
-		self.at("2027-06-01 12:10:00")
+		self.at(W("2027-06-01 12:10:00"))
 		current = bid_definition.current(self.name)
 		tampered = dict(current, definition=dict(current["definition"], submission_deadline="2099-01-01T00:00:00+03:00"))
 		before = frappe.db.get_value("Bid Workspace", self.bid, ["definition_version", "definition_digest"])
@@ -291,9 +294,9 @@ class TestAnswersOnThePortal(AddendumCase):
 
 	def ask_and_answer(self, *, affects: bool = False) -> str:
 		arrangement = frappe.db.get_value("Bidder Arrangement", frappe.db.get_value("Bid Workspace", self.bid, "bidder_arrangement"), "bidder_arrangement_id")
-		frappe.flags.kt_tenders_clock = "2027-05-26 09:00:00"
-		received = clarifications.receive_tender_clarification(tender=self.name, candidate_registration_id=arrangement, question=self.QUESTION, received_at="2027-05-26 09:00:00", inbound_event_id=key(), user=tender_fx.PRODUCER)
-		frappe.flags.kt_tenders_clock = "2027-05-26 11:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-26 09:00:00")
+		received = clarifications.receive_tender_clarification(tender=self.name, candidate_registration_id=arrangement, question=self.QUESTION, received_at=W("2027-05-26 09:00:00"), inbound_event_id=key(), user=tender_fx.PRODUCER)
+		frappe.flags.kt_tenders_clock = W("2027-05-26 11:00:00")
 		clarifications.respond_to_tender_clarification(
 			tender=self.name, clarification=received["clarification"], response=self.ANSWER, affects_published_tender=affects, response_audience="All registered candidates",
 			expected_record_version=self._root().record_version, idempotency_key=tender_fx.key(), user=tender_fx.OFFICER,
@@ -302,7 +305,7 @@ class TestAnswersOnThePortal(AddendumCase):
 
 	def test_a_general_answer_reaches_every_reader_without_naming_the_asker(self):
 		self.ask_and_answer()
-		self.at("2027-05-26 12:00:00")
+		self.at(W("2027-05-26 12:00:00"))
 		for user in ("Guest", PETER, DAVID):
 			with self.subTest(user=user):
 				tender = overview.get_tender_overview(tender_reference=self.reference, user=user)
@@ -313,12 +316,12 @@ class TestAnswersOnThePortal(AddendumCase):
 
 	def ask_only(self) -> str:
 		arrangement = frappe.db.get_value("Bidder Arrangement", frappe.db.get_value("Bid Workspace", self.bid, "bidder_arrangement"), "bidder_arrangement_id")
-		frappe.flags.kt_tenders_clock = "2027-05-26 09:00:00"
-		received = clarifications.receive_tender_clarification(tender=self.name, candidate_registration_id=arrangement, question=self.QUESTION, received_at="2027-05-26 09:00:00", inbound_event_id=key(), user=tender_fx.PRODUCER)
+		frappe.flags.kt_tenders_clock = W("2027-05-26 09:00:00")
+		received = clarifications.receive_tender_clarification(tender=self.name, candidate_registration_id=arrangement, question=self.QUESTION, received_at=W("2027-05-26 09:00:00"), inbound_event_id=key(), user=tender_fx.PRODUCER)
 		return received["clarification"]
 
 	def answer(self, clarification: str, audience: str) -> None:
-		frappe.flags.kt_tenders_clock = "2027-05-26 11:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-26 11:00:00")
 		clarifications.respond_to_tender_clarification(
 			tender=self.name, clarification=clarification, response=self.ANSWER, affects_published_tender=False, response_audience=audience,
 			expected_record_version=self._root().record_version, idempotency_key=tender_fx.key(), user=tender_fx.OFFICER,
@@ -326,7 +329,7 @@ class TestAnswersOnThePortal(AddendumCase):
 
 	def test_the_asker_sees_their_own_question_while_it_waits_and_nobody_else_does(self):
 		self.ask_only()
-		self.at("2027-05-26 09:30:00")
+		self.at(W("2027-05-26 09:30:00"))
 		for page in (
 			overview.get_tender_overview(tender_reference=self.reference, user=DAVID),
 			reads.get_bid_task(bid_reference=self.bid, task="documents", user=DAVID),
@@ -334,7 +337,7 @@ class TestAnswersOnThePortal(AddendumCase):
 			mine = page["my_questions"]
 			self.assertEqual([(q["question"], q["status"], q["answer"]) for q in mine], [(self.QUESTION, "Received", "")])
 			self.assertEqual(mine[0]["status_label"], "Received · waiting for an answer")
-			self.assertIn("26 May 2027, 09:00", mine[0]["received"])
+			self.assertIn(f"{ad.d_short('2027-05-26')}, 09:00", mine[0]["received"])
 		for user in ("Guest", PETER):
 			self.assertEqual(overview.get_tender_overview(tender_reference=self.reference, user=user)["my_questions"], [])
 		notices = reads.get_bid_workspace(bid_reference=self.bid, user=DAVID)["notices"]
@@ -343,7 +346,7 @@ class TestAnswersOnThePortal(AddendumCase):
 
 	def test_an_answer_meant_only_for_the_asker_reaches_the_asker_alone(self):
 		self.answer(self.ask_only(), "Asker only")
-		self.at("2027-05-26 12:00:00")
+		self.at(W("2027-05-26 12:00:00"))
 		mine = overview.get_tender_overview(tender_reference=self.reference, user=DAVID)["my_questions"]
 		self.assertEqual([(q["status"], q["answer"], q["private"]) for q in mine], [("Answered", self.ANSWER, True)])
 		self.assertIn(self.ANSWER, json.dumps(reads.get_bid_task(bid_reference=self.bid, task="documents", user=DAVID)["my_questions"]))
@@ -359,7 +362,7 @@ class TestAnswersOnThePortal(AddendumCase):
 
 	def test_a_general_answer_also_alerts_the_asker(self):
 		self.answer(self.ask_only(), "All registered candidates")
-		self.at("2027-05-26 12:00:00")
+		self.at(W("2027-05-26 12:00:00"))
 		mine = overview.get_tender_overview(tender_reference=self.reference, user=DAVID)["my_questions"]
 		self.assertEqual([(q["status"], q["private"]) for q in mine], [("Answered", False)])
 		alerts = [r["alerts"] for r in reads.get_my_bids(user=DAVID)["rows"] if r["bid_reference"] == self.bid][0]
@@ -367,17 +370,17 @@ class TestAnswersOnThePortal(AddendumCase):
 
 	def test_an_answer_that_would_change_the_tender_waits_for_its_addendum(self):
 		self.ask_and_answer(affects=True)
-		self.at("2027-05-26 12:00:00")
+		self.at(W("2027-05-26 12:00:00"))
 		self.assertEqual(overview.get_tender_overview(tender_reference=self.reference, user="Guest")["answers"], [])
 		self.assertNotIn(self.ANSWER, json.dumps(reads.get_bid_task(bid_reference=self.bid, task="documents", user=DAVID)))
 
 	def test_an_issued_addendum_is_listed_on_the_tender_page(self):
 		name = self.issue_addendum()
 		reference = frappe.db.get_value("Tender Addendum", name, "addendum_reference")
-		self.at("2027-06-01 12:00:00")
+		self.at(W("2027-06-01 12:00:00"))
 		tender = overview.get_tender_overview(tender_reference=self.reference, user="Guest")
 		self.assertEqual([a["reference"] for a in tender["addenda"]], [reference])
-		self.assertEqual(tender["tender"]["deadline"], "12 Jun 2027, 11:00 EAT")
+		self.assertEqual(tender["tender"]["deadline"], f"{ad.dt_eat('2027-06-12 11:00:00')}")
 
 
 # -- BDS01-AC-002 / -027 / -085 ----------------------------------------------------------
@@ -437,7 +440,7 @@ class TestNothingInternalReachesThePortal(ChangeCase):
 		for name, read in after.items():
 			with self.subTest(read=name):
 				self.assertClean(name, read())
-		self.at("2027-05-31 08:30:00")
+		self.at(W("2027-05-31 08:30:00"))
 		acknowledgement = self.withdraw(receipt=receipt)["acknowledgement_reference"]
 		self.assertClean("acknowledgement page", changes_view.get_acknowledgement_page(tender_reference=self.reference, acknowledgement_reference=acknowledgement, user=MARY))
 
@@ -474,7 +477,7 @@ class TestSideChannels(ChangeCase):
 		marker = "SIDE-CHANNEL-MARKER-7Q2"
 		field = next(f for g in reads.get_bid_task(bid_reference=self.bid, task="requirements", user=DAVID)["groups"] for f in g["fields"] if f["label"] == "Offered make and model")
 		logs = frappe.db.count("Error Log")
-		self.at("2027-05-30 14:00:00")
+		self.at(W("2027-05-30 14:00:00"))
 		from kentender_procurement.bid_submission.services import save
 
 		self.assertTrue(save.save_bid_task(bid_reference=self.bid, task="requirements", values={field["handle"]: marker}, expected_record_version=self.version(), idempotency_key=key(), user=DAVID)["ok"])
@@ -573,12 +576,12 @@ class TestActionRegister(ChangeCase):
 		simulation.reset_controls()
 		receipt = self.submitted()
 		read_everything()
-		self.at("2027-05-31 08:30:00")
+		self.at(W("2027-05-31 08:30:00"))
 		self.replace()
 		read_everything()
 		self.at(str(self.deadline()))
 		read_everything()
-		tasks = {t.label for t in bid_context.load(self.bid, actor=DAVID).model.tasks}  # the task list: §11.4 Task View / Continue / Fix
+		tasks = {t.label for t in bid_context.load(self.bid, actor=DAVID, at=get_datetime(W("2027-05-31 08:30:00"))).model.tasks}  # the task list: §11.4 Task View / Continue / Fix
 		unmapped = sorted(label for label in found if label not in register and label.split(":")[0] not in register and label not in catalogue and label not in tasks)
 		self.assertEqual(unmapped, [], "actions with no §11 mapping")
 		self.assertTrue(receipt)
@@ -602,7 +605,7 @@ class TestEventMinimum(ChangeCase):
 
 		field = next(f for g in reads.get_bid_task(bid_reference=self.bid, task="requirements", user=DAVID)["groups"] for f in g["fields"] if f["label"] == "Offered make and model")
 		request = key()
-		self.at("2027-05-30 14:00:00")
+		self.at(W("2027-05-30 14:00:00"))
 		before = frappe.db.get_value("Bid Workspace", self.bid, "status")
 		self.assertTrue(save.save_bid_task(bid_reference=self.bid, task="requirements", values={field["handle"]: "ApexBook Pro 14 G2"}, expected_record_version=self.version(), idempotency_key=request, user=DAVID)["ok"])
 		saved = self.event("BidTaskSaved")
@@ -612,7 +615,7 @@ class TestEventMinimum(ChangeCase):
 			(saved.schema_version, saved.command, saved.idempotency_key_hash, saved.actor, saved.assignment),
 			(1, "SaveBidTask", hashlib.sha256(request.encode()).hexdigest(), DAVID, assignment),
 		)
-		self.assertEqual((saved.occurred_at_utc, saved.occurred_at_eat), (to_utc_iso(saved.occurred_at), "30 May 2027, 14:00:00 EAT"))
+		self.assertEqual((saved.occurred_at_utc, saved.occurred_at_eat), (to_utc_iso(saved.occurred_at), f"{ad.d_short('2027-05-30')}, 14:00:00 EAT"))
 		self.assertEqual((saved.previous_status, saved.resulting_status, saved.record_version), (before, after.status, after.record_version))
 		self.assertNotIn("ApexBook", saved.payload_json)
 		# the lifecycle change of a submission, and its §12.2 facts
@@ -625,7 +628,7 @@ class TestEventMinimum(ChangeCase):
 		signed = self.event("BidSignatureRequested")
 		self.assertEqual((signed.command, json.loads(signed.payload_json)["signatory_assignment"]), ("PrepareBidSignature", bid_context.load(self.bid, actor=MARY).assignment["assignment_id"]))
 		# a withdrawal names the exact Version, signatory, reason and acknowledgement
-		self.at("2027-05-31 08:30:00")
+		self.at(W("2027-05-31 08:30:00"))
 		acknowledgement = self.withdraw(receipt=receipt)["acknowledgement_reference"]
 		withdrawn = self.event("BidWithdrawn")
 		facts = json.loads(withdrawn.payload_json)
@@ -669,7 +672,7 @@ class TestCancelledTender(ChangeCase):
 
 		def cancelled(reference, *, at):
 			published = real(reference, at=at) or {}
-			return {**published, "availability": "cancelled", "cancellation": {"notice_key": "cancellation-notice", "cancelled_at": "2027-05-28 10:00:00"}}
+			return {**published, "availability": "cancelled", "cancellation": {"notice_key": "cancellation-notice", "cancelled_at": W("2027-05-28 10:00:00")}}
 
 		with mock.patch.object(tenders_gateway, "published_tender", cancelled):
 			guest = overview.get_tender_overview(tender_reference=self.reference, user="Guest")
@@ -678,6 +681,6 @@ class TestCancelledTender(ChangeCase):
 		self.assertEqual([(a["kind"], a["label"]) for a in guest["actions"]], [("view_notice", "View notice")])
 		self.assertIn("cancellation-notice", guest["action"]["href"])
 		self.assertIn("inline=1", guest["action"]["href"])
-		self.assertEqual(guest["cancellation"]["cancelled"], "28 May 2027, 10:00 EAT")
+		self.assertEqual(guest["cancellation"]["cancelled"], f"{ad.dt_eat('2027-05-28 10:00:00')}")
 		self.assertIsNone(guest["start"])
 		self.assertEqual([a["kind"] for a in david["actions"]], ["view_notice"])  # not Continue bid on a cancelled Tender

@@ -8,6 +8,7 @@ journal, audit events, responsibility grants and the test users."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import uuid
 from unittest import mock
 
@@ -121,7 +122,7 @@ class AccountsCase(IntegrationTestCase):
 		wipe_accounts()
 		self.addCleanup(frappe.set_user, "Administrator")
 		frappe.flags.kt_accounts_fixture_namespace = NS
-		frappe.flags.kt_accounts_clock = "2027-05-18 09:00:00"
+		frappe.flags.kt_accounts_clock = W("2027-05-18 09:00:00")
 		self.sent: list[dict] = []
 		frappe.flags.kt_account_message_transport = lambda message: self.sent.append(message) or {"result": "Delivered"}
 		for flag in ("kt_accounts_fixture_namespace", "kt_accounts_clock", "kt_account_message_transport"):

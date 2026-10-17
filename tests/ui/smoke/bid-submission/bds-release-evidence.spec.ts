@@ -4,6 +4,7 @@ import { expect, Page, test } from "@playwright/test";
 
 import { login, loginAsAdministrator } from "../../helpers/auth";
 import { collectPortalConsoleErrors, expectNoFrappeDialog, expectNoHorizontalOverflow, loginToPortal, waitForPortal } from "../../helpers/portal";
+import { inputDateTime, shortDateTime, world as W } from "../../helpers/anchor";
 import { OFFICER, PASSWORD as DESK_PASSWORD } from "../tenders/helpers";
 import { bdsFixture, restoreBdsWorld } from "./bdsWorld";
 
@@ -89,15 +90,15 @@ test.describe("BDS-CHG-001 v0.8 — persona release pass", () => {
 		await expect(page.getByTestId("bds-workspace-refs")).toContainText("BID-");
 		const reference = (await page.getByTestId("bds-workspace-refs").innerText()).match(/BID-[A-Z0-9-]+/)?.[0] || "";
 		expect(reference).toMatch(/^BID-/);
-		bdsFixture("fill_world_bid", { bid_reference: reference, tasks: ["company", "requirements"], at: "2027-05-20 11:10:00" });
-		bdsFixture("set_instant", { instant: "2027-05-20 11:15:00" });
+		bdsFixture("fill_world_bid", { bid_reference: reference, tasks: ["company", "requirements"], at: W("2027-05-20 11:10:00") });
+		bdsFixture("set_instant", { instant: W("2027-05-20 11:15:00") });
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await waitForPortal(page);
 		await expect(page.getByTestId("bds-task-company")).toContainText("Complete");
 		await capture(page, "workspace-preparing");
 
 		// 31 May: the addendum; 1 Jun 12:05 David acknowledges it and the bid moves to it.
-		bdsFixture("issue_world_addendum", { tender_reference: world.tender_reference, instant: "2027-06-01 12:05:00" });
+		bdsFixture("issue_world_addendum", { tender_reference: world.tender_reference, instant: W("2027-06-01 12:05:00") });
 		await page.goto(`${base}/bid/documents`, { waitUntil: "domcontentloaded" });
 		await waitForPortal(page);
 		await expect(page.getByTestId("bds-documents-badge")).toHaveText("Needs attention");
@@ -107,7 +108,7 @@ test.describe("BDS-CHG-001 v0.8 — persona release pass", () => {
 		await expect(page).toHaveURL(new RegExp(`${base}/bid/price$`));
 		await page.goto(`${base}/bid/company`, { waitUntil: "domcontentloaded" });
 		// …and reviews the responses the addendum moved (§13.3 Draft Version 5).
-		bdsFixture("fill_world_bid", { bid_reference: reference, tasks: ["company", "requirements"], at: "2027-06-01 12:10:00" });
+		bdsFixture("fill_world_bid", { bid_reference: reference, tasks: ["company", "requirements"], at: W("2027-06-01 12:10:00") });
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await waitForPortal(page);
 		await expect(page.getByTestId("bds-company-badge")).toHaveText("Complete");
@@ -117,7 +118,7 @@ test.describe("BDS-CHG-001 v0.8 — persona release pass", () => {
 		// 10 Jun 10:00 — the assigned intake officer records the physical original blind, in Desk.
 		const security = bdsFixture<Record<string, string>>("world_security", { bid_reference: reference });
 		bdsFixture("assign_intake_duty", { tender_reference: world.tender_reference });
-		bdsFixture("set_instant", { instant: "2027-06-10 10:00:00" });
+		bdsFixture("set_instant", { instant: W("2027-06-10 10:00:00") });
 		await login(page, OFFICER, DESK_PASSWORD);
 		await page.goto("/desk/tender-security-receipts", { waitUntil: "domcontentloaded" });
 		await expect(page.getByTestId("tsr-shell")).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
@@ -130,7 +131,7 @@ test.describe("BDS-CHG-001 v0.8 — persona release pass", () => {
 		await intake.getByTestId("tsr-d-issuer").fill(security.issuer);
 		await intake.getByTestId("tsr-d-reference").fill(security.reference);
 		await intake.getByTestId("tsr-d-amount").fill(security.amount);
-		await intake.getByTestId("tsr-d-received").fill("2027-06-10T09:55");
+		await intake.getByTestId("tsr-d-received").fill(inputDateTime(W("2027-06-10 09:55:00")));
 		await intake.getByTestId("tsr-d-confirm").setChecked(true);
 		await intake.getByTestId("tsr-d-submit").click();
 		await expect(page.getByTestId("tsr-recorded")).toContainText("Receipt recorded. Intake reference TSI-");
@@ -139,8 +140,8 @@ test.describe("BDS-CHG-001 v0.8 — persona release pass", () => {
 		await signOut(page);
 
 		// 10 Jun 13:50 — the price completes the Draft; 14:15 David reviews and cannot submit.
-		bdsFixture("fill_world_bid", { bid_reference: reference, tasks: ["price"], at: "2027-06-10 13:50:00" });
-		bdsFixture("set_instant", { instant: "2027-06-10 14:15:00" });
+		bdsFixture("fill_world_bid", { bid_reference: reference, tasks: ["price"], at: W("2027-06-10 13:50:00") });
+		bdsFixture("set_instant", { instant: W("2027-06-10 14:15:00") });
 		await loginToPortal(page, world.representative, world.password, `${base}/bid/review`);
 		await expect(page.getByTestId("bds-review-result")).toHaveText("All required bid information is complete.");
 		// the supplier reads its own actual status: the intake officer recorded the original, so it reads Original received before any opening starts
@@ -151,7 +152,7 @@ test.describe("BDS-CHG-001 v0.8 — persona release pass", () => {
 		// Mary reviews, signs and submits; the receipt is her proof.
 		await loginToPortal(page, world.signatory, world.password, `${base}/bid/review`);
 		await capture(page, "review");
-		bdsFixture("set_instant", { instant: "2027-06-10 14:31:58" });
+		bdsFixture("set_instant", { instant: W("2027-06-10 14:31:58") });
 		await page.getByTestId("bds-review-action").click();
 		await expect(page).toHaveURL(new RegExp(`${base}/bid/submit$`));
 		// She has no certificate yet: she obtains one, then Check certificate.
@@ -166,7 +167,7 @@ test.describe("BDS-CHG-001 v0.8 — persona release pass", () => {
 		await page.screenshot({ path: `${EVIDENCE}/bds-release-submit-dialog-1440.png` });
 		await page.getByTestId("bds-submit-confirm").click();
 		await expect(page).toHaveURL(new RegExp(`${base}/bid/receipt/RCPT-`), { timeout: 60_000 });
-		await expect(page.getByTestId("bds-receipt-facts")).toContainText("10 Jun 2027, 14:31:58 EAT");
+		await expect(page.getByTestId("bds-receipt-facts")).toContainText(shortDateTime(W("2027-06-10 14:31:58"), true));
 		await expect(page.getByTestId("bds-receipt-facts")).toContainText("Mary Wanjiku");
 		const receipt = new URL(page.url()).pathname.split("/").pop() || "";
 		await capture(page, "receipt");

@@ -8,6 +8,7 @@ gives no intake access."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 
 from kentender_procurement.bid_opening.services import appointment, picker_sources
@@ -70,5 +71,5 @@ class TestIntakeDutyAndOpening(OpeningCase):
 	def test_the_boundary_is_crossed_only_when_the_opening_starts(self):
 		self.prepared()
 		self.assertFalse(security_matching.opening_crossed(self.name))
-		frappe.db.set_value("Bid Opening Case", {"tender": self.name}, "started_at", "2027-06-12 11:00:12")
+		frappe.db.set_value("Bid Opening Case", {"tender": self.name}, "started_at", W("2027-06-12 11:00:12"))
 		self.assertTrue(security_matching.opening_crossed(self.name))

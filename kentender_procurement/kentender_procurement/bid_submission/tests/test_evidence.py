@@ -10,6 +10,8 @@ submit."""
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import hashlib
 import json
 
@@ -157,7 +159,7 @@ class TestUploadBidEvidence(EvidenceCase):
 		self.assertEqual((missing["ok"], missing["code"]), (False, "BDS_FIELD_INVALID"))
 
 	def test_the_bid_offers_only_saved_documents_of_the_right_kind_with_nothing_internal(self):
-		self.accounts.add_evidence(AFYA, "EVD-TCC", "Tax compliance certificate", "tcc.pdf", content=pdf("t"), title="Tax compliance certificate", reference="P051234567X", valid_until="2027-12-31")
+		self.accounts.add_evidence(AFYA, "EVD-TCC", "Tax compliance certificate", "tcc.pdf", content=pdf("t"), title="Tax compliance certificate", reference="P051234567X", valid_until=W("2027-12-31"))
 		self.accounts.add_evidence(AFYA, "EVD-INC", "Certificate of incorporation", "inc.pdf", content=pdf("i"), reference="PVT-9X7K2M")
 		self.accounts.add_evidence(AFYA, "EVD-AGPO", "Reservation evidence", "agpo.pdf", content=pdf("a"))
 		self.accounts.add_evidence(AFYA, "EVD-AUTH", "Signatory authority", "auth.pdf", content=pdf("s"))
@@ -165,7 +167,7 @@ class TestUploadBidEvidence(EvidenceCase):
 		eligibility = self.eligibility()
 		offered = {o["id"]: o for o in eligibility["evidence"]["account_options"]}
 		self.assertEqual(sorted(offered), ["EVD-INC", "EVD-TCC"])  # not the reservation, not the signatory's authority, not an unscanned file
-		self.assertEqual({k: offered["EVD-TCC"][k] for k in ("title", "type", "reference", "valid_until", "expired")}, {"title": "Tax compliance certificate", "type": "Tax compliance certificate", "reference": "P051234567X", "valid_until": "31 Dec 2027", "expired": False})
+		self.assertEqual({k: offered["EVD-TCC"][k] for k in ("title", "type", "reference", "valid_until", "expired")}, {"title": "Tax compliance certificate", "type": "Tax compliance certificate", "reference": "P051234567X", "valid_until": f"{ad.d_short('2027-12-31')}", "expired": False})
 		self.assertNotIn("digest", str(offered).lower())
 		self.assertNotIn("account_options", self.by_label("Tender Security instrument", "company")["evidence"])  # a tender security is never a saved document
 
@@ -188,7 +190,7 @@ class TestUploadBidEvidence(EvidenceCase):
 		self.assertEqual((again["ok"], again["errors"][target["handle"]]), (False, "This saved document is already in this requirement."))
 
 	def test_an_expired_document_is_flagged_and_refused(self):
-		self.accounts.add_evidence(AFYA, "EVD-OLD", "Tax compliance certificate", "old.pdf", content=pdf("o"), valid_until="2027-01-31")
+		self.accounts.add_evidence(AFYA, "EVD-OLD", "Tax compliance certificate", "old.pdf", content=pdf("o"), valid_until=W("2027-01-31"))
 		target = self.eligibility()
 		self.assertTrue(target["evidence"]["account_options"][0]["expired"])
 		refused = self.link(target["handle"], "EVD-OLD")

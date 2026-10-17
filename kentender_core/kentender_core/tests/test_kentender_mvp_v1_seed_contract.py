@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from unittest.mock import patch
 
 import frappe
@@ -184,7 +185,7 @@ class TestKentenderMvpV1SeedContract(IntegrationTestCase):
 					"title": "Non-fixture leftover",
 					"plan_type": "Entity Strategic Plan",
 					"procuring_entity": pe,
-					"start_date": "2026-07-01",
+					"start_date": W("2026-07-01"),
 					"end_date": "2030-06-30",
 					"status": "Draft",
 				}
@@ -390,8 +391,8 @@ class TestKentenderMvpV1SeedContract(IntegrationTestCase):
 				"status": "Draft",
 				"revision_type": "Line amendment",
 				"external_approval_reference": "MOF/UI/REV-01",
-				"approval_date": "2027-12-01",
-				"effective_date": "2027-12-15",
+				"approval_date": W("2027-12-01"),
+				"effective_date": W("2027-12-15"),
 				"reason": "Playwright draft revision",
 				"lines": [
 					{

@@ -7,6 +7,7 @@ Run:
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from frappe.tests import IntegrationTestCase
 
 from kentender_core.services import next_step as ns
@@ -73,7 +74,7 @@ class TestAnswer(IntegrationTestCase):
 
 	def test_since_is_none_without_a_recorded_instant(self):
 		self.assertIsNone(ns.since(None, "x"))
-		self.assertEqual(ns.since("2026-12-15 10:00:00", "15 Dec 2026, 10:00 EAT")["display"], "15 Dec 2026, 10:00 EAT")
+		self.assertEqual(ns.since(W("2026-12-15 10:00:00"), "15 Dec 2026, 10:00 EAT")["display"], "15 Dec 2026, 10:00 EAT")
 
 
 class TestScheduled(IntegrationTestCase):

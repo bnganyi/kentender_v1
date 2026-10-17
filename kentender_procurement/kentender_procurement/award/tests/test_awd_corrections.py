@@ -6,6 +6,8 @@ tracker AWD4-901)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import frappe
 
 from kentender_procurement.award.services import corrections, eligibility, issues, restrictions, state
@@ -14,7 +16,7 @@ from kentender_procurement.award.test_services import sources as syn
 from kentender_procurement.award.tests.support import AO, HOP, AwardCase
 
 CORRECTION = {"source_event": "SYN-CN:1", "kind": "Report correction", "reference": "SYN-CN-1", "reason": "Evaluation reported a material calculation issue.",
-	"detail": "The line total was recalculated.", "effective_at": "2027-06-18 09:30:00"}
+	"detail": "The line total was recalculated.", "effective_at": W("2027-06-18 09:30:00")}
 
 
 class TestCorrection(AwardCase):
@@ -22,7 +24,7 @@ class TestCorrection(AwardCase):
 		super().setUp()
 		self.deliver()
 		self.awarded()
-		self.at("2027-06-18 10:00:00")
+		self.at(W("2027-06-18 10:00:00"))
 		syn.add_correction(self.case().tender, CORRECTION)
 		corrections.pull_case(self.case().name)
 		self.issue = issues.open_issues(self.case(), issue_type="Source correction")[0]
@@ -48,7 +50,7 @@ class TestCorrection(AwardCase):
 		self.assertTrue(restrictions.proposals(self.case()))
 		with self.assertRaises(AwardError):
 			self.run_as(HOP, corrections.record, award=self.case().name, outcome="Request corrected evaluation", reason="x", expected_version=self.version())
-		self.at("2027-06-18 10:05:00")
+		self.at(W("2027-06-18 10:05:00"))
 		out = self.run_as(AO, corrections.record, award=self.case().name, outcome="Request corrected evaluation",
 			reason="The reported calculation issue may affect the recommendation.", expected_version=self.version())
 		self.assertEqual(out["cycle"], 2)

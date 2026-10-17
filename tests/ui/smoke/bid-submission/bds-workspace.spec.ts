@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { collectPortalConsoleErrors, expectNoFrappeDialog, expectNoHorizontalOverflow, loginToPortal, waitForPortal } from "../../helpers/portal";
+import { world as W } from "../../helpers/anchor";
 import { bdsFixture, restoreBdsWorld } from "./bdsWorld";
 
 /**
@@ -71,7 +72,7 @@ test.describe("BDS-DES-06 Your bid", () => {
 
 	test("after the deadline the Draft is read-only with the trusted time and Back to My bids", async ({ page }) => {
 		const world = bdsFixture<World>("reset_my_bids_fixture", { state: "ready" });
-		bdsFixture("set_instant", { instant: "2027-06-05 11:00:01" });
+		bdsFixture("set_instant", { instant: W("2027-06-05 11:00:01") });
 		const errors = collectPortalConsoleErrors(page);
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await loginToPortal(page, world.representative, world.password, `/tenders/${world.tender_reference}/bid`);

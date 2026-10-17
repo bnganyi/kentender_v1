@@ -73,8 +73,8 @@ BUDGETS = {
 		"year": calendar.YEAR1,
 		"clock": {step: calendar.YEAR1.at(at) for step, at in _YEAR2_CLOCK.items()},
 		"approval_date": calendar.YEAR1.at("2026-09-30"),
-		"approval_reference": "MOH-FIN-BUD-2026-01 (Demo)",
-		"approval_document": "MOH Approved Procurement Budget 2026-27 (Demo).pdf",
+		"approval_reference": f"MOH-FIN-BUD-{calendar.YEAR1.start_year}-01 (Demo)",
+		"approval_document": f"MOH Approved Procurement Budget {calendar.YEAR1.fiscal_year[:4]}-{calendar.YEAR1.fiscal_year[7:]} (Demo).pdf",
 		"authorised_total": 290_000_000,
 		"lines": {
 			"dhi": {"title": "Digital health infrastructure programme", "owner": "Digital Health", "amount": 120_000_000},
@@ -89,10 +89,10 @@ BUDGETS = {
 	},
 	"year2": {
 		"year": calendar.YEAR2,
-		"clock": _YEAR2_CLOCK,
-		"approval_date": "2026-09-30",
-		"approval_reference": "MOH-FIN-BUD-2027-01 (Demo)",
-		"approval_document": "MOH Approved Procurement Budget 2027-28 (Demo).pdf",
+		"clock": {step: calendar.YEAR2.at(at) for step, at in _YEAR2_CLOCK.items()},
+		"approval_date": calendar.YEAR2.at("2026-09-30"),
+		"approval_reference": f"MOH-FIN-BUD-{calendar.YEAR2.start_year}-01 (Demo)",
+		"approval_document": f"MOH Approved Procurement Budget {calendar.YEAR2.fiscal_year[:4]}-{calendar.YEAR2.fiscal_year[7:]} (Demo).pdf",
 		"authorised_total": 160_000_000,
 		"lines": {
 			"dhi": {"title": "Digital health infrastructure programme", "owner": "Digital Health", "amount": 100_000_000},
@@ -100,6 +100,26 @@ BUDGETS = {
 		},
 	},
 }
+if calendar.mode() == "anchored":
+	#: The closed year's budget (SEED-002 v0.8 §A7; new content for the owner's review): the same journey as the others, in
+	#: FY 2025/26, on two lines. It is not closed: a Budget closes only when no reservation remains held, and the year's
+	#: Requisitions hold theirs.
+	BUDGETS["year0"] = {
+		"year": calendar.YEAR0,
+		"clock": {step: calendar.YEAR0.at(at) for step, at in _YEAR2_CLOCK.items()},
+		"approval_date": calendar.YEAR0.at("2026-09-30"),
+		"approval_reference": f"MOH-FIN-BUD-{calendar.YEAR0.start_year}-01 (Demo)",
+		"approval_document": f"MOH Approved Procurement Budget {calendar.YEAR0.fiscal_year[:4]}-{calendar.YEAR0.fiscal_year[7:]} (Demo).pdf",
+		"authorised_total": 100_000_000,
+		"lines": {
+			"ict": {"title": "Ministry-wide ICT infrastructure", "owner": None, "amount": 60_000_000},
+			"hrmd": {
+				"title": "Office equipment for Human Resources Management and Development",
+				"owner": "Human Resources Management and Development",
+				"amount": 40_000_000,
+			},
+		},
+	}
 #: The executed year's budget (Year 1) under the names callers have always
 #: read: Requisitions reserve against it, and its lines fund the executed plan.
 _EXECUTED = BUDGETS["year1"]

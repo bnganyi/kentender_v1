@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { collectPortalConsoleErrors, expectNoHorizontalOverflow, loginToPortal, waitForPortal } from "../../helpers/portal";
+import { shortDateTime, world as W } from "../../helpers/anchor";
 import { bdsFixture, restoreBdsWorld } from "./bdsWorld";
 
 /**
@@ -74,12 +75,12 @@ test.describe("BDS-DES-16 common states", () => {
 
 	test("after the deadline the Submit page is Deadline passed", async ({ page }) => {
 		const world = bdsFixture<World>("reset_my_bids_fixture", { state: "review" });
-		bdsFixture("set_instant", { instant: "2027-06-05 11:00:01" });
+		bdsFixture("set_instant", { instant: W("2027-06-05 11:00:01") });
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await loginToPortal(page, world.signatory, world.password, `/tenders/${world.tender_reference}/bid/submit`);
 		const state = page.getByTestId("bds-state-deadline-passed");
 		await expect(state.locator("h1")).toHaveText("The submission deadline has passed. This bid was not submitted.");
-		await expect(state).toContainText("trusted server time 5 Jun 2027, 11:00:01 EAT");
+		await expect(state).toContainText(`trusted server time ${shortDateTime(W("2027-06-05 11:00:01"), true)}`);
 		await expect(state.getByRole("link", { name: "Back to My bids" })).toHaveAttribute("href", "/my-bids");
 	});
 });

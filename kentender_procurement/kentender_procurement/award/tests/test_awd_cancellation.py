@@ -5,12 +5,14 @@
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 from kentender_procurement.award.services import issues, simulation, state, tender_events
 from kentender_procurement.award.test_services import sources as syn
 from kentender_procurement.award.tests.support import AwardCase
 
 EVENT = {"event_key": "TND-CANCEL:T1", "kind": "Cancellation", "source": "Tenders", "source_reference": "TCN-1", "authority": "amina.hassan@moh.example.test",
-	"reason": "The procurement is no longer required.", "effective_at": "2027-06-17 09:30:00"}
+	"reason": "The procurement is no longer required.", "effective_at": W("2027-06-17 09:30:00")}
 
 
 class TestCancellation(AwardCase):
@@ -20,7 +22,7 @@ class TestCancellation(AwardCase):
 		doc = self.case()
 		syn.set_fact(doc.tender, cancelled=True)
 		syn.add_event(doc.tender, EVENT)
-		self.at("2027-06-17 09:30:00")
+		self.at(W("2027-06-17 09:30:00"))
 		tender_events.consume_case(doc.name)
 		doc = self.case()
 		self.assertEqual((doc.stage, doc.outcome, doc.cancelled), ("Closed", "Cancelled", 1))
@@ -53,7 +55,7 @@ class TestCancellation(AwardCase):
 		self.awarded()
 		doc = self.case()
 		syn.add_event(doc.tender, {"event_key": "SUSP-1", "kind": "Suspension", "authority": "Review Board", "source_reference": "PPARB/2027/33",
-			"reason": "Review Board suspension", "effective_at": "2027-06-20 11:00:00"})
+			"reason": "Review Board suspension", "effective_at": W("2027-06-20 11:00:00")})
 		tender_events.consume_case(doc.name)
 		tender_events.consume_case(doc.name)
 		found = issues.open_issues(self.case(), issue_type="Review/order")

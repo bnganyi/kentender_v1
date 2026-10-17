@@ -11,6 +11,7 @@ and must be green on the release that fixes them. No database is touched.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 import unittest
 from pathlib import Path
@@ -89,7 +90,7 @@ class TestTables(unittest.TestCase):
 
 	def test_deferral_needs_a_reason_and_a_decision_date_and_is_reported(self):
 		self.assertEqual(len(self.check({"treatment": "deferred"})[0]), 1)
-		out, deferred = self.check({"treatment": "deferred", "reason": "Owner chose audit only", "decided": "2026-10-02"})
+		out, deferred = self.check({"treatment": "deferred", "reason": "Owner chose audit only", "decided": W("2026-10-02")})
 		self.assertEqual((out, len(deferred)), ([], 1))
 
 

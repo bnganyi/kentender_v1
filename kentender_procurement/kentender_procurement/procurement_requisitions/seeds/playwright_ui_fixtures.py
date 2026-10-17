@@ -30,6 +30,7 @@ concurrently on one site (mirrors PLN-CHG-001's own D13 rule).
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from contextlib import contextmanager
 from typing import Any
@@ -195,7 +196,7 @@ def _budget_world() -> None:
 			{
 				"doctype": "Procurement Budget Version", "generated_reference": "BUDV-PWREQ-0001", "budget": budget,
 				"version_number": 1, "status": "Active", "approval_reference": "PWREQ-APPROVAL-1",
-				"approval_date": "2026-06-30", "authorised_total": 100000000, "currency": "KES",
+				"approval_date": W("2026-06-30"), "authorised_total": 100000000, "currency": "KES",
 				"approval_document": "/files/pwreq-approval.pdf",
 			}
 		)).name

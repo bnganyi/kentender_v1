@@ -21,6 +21,7 @@ therefore never execute concurrently against one site (tracker rule 8).
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 from frappe.utils import cstr
 
@@ -381,7 +382,7 @@ def _link_targets() -> None:
 			{
 				"doctype": "Procurement Budget Version", "generated_reference": "BUDV-PLNT-0001", "budget": budget,
 				"version_number": 1, "status": "Active", "approval_reference": "PLNT-APPROVAL-1",
-				"approval_date": "2026-06-30", "authorised_total": 200000000, "currency": "KES",
+				"approval_date": W("2026-06-30"), "authorised_total": 200000000, "currency": "KES",
 				"approval_document": "/files/plnt-approval.pdf",
 			}
 		)).name

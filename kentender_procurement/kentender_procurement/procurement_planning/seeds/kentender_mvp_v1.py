@@ -40,6 +40,7 @@ from the governed defaults PLN-DES-09 shows (21 / 30 / 5 / 2 / 14 days from
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W, world0 as W0  # noqa: F401
 from contextlib import contextmanager
 from typing import Any
 
@@ -127,7 +128,7 @@ ITEM_VALUES = {
 	"lotting_indicator": "Single lot",
 	"reservation_category": "None",
 	"procurement_method": "Open Tender",
-	"baseline_invitation_date": "2027-05-01",
+	"baseline_invitation_date": F("2027-05-01"),
 	# PLN-CHG-001 v1.18 §4.6 — estimate basis and the estimated delivery
 	# period; v1.27 §10.2 gives the basis text and reference word for word
 	# (until 26 Sep 2026 the seed carried an invented survey and reference).
@@ -154,7 +155,7 @@ DIRECT_FIXTURE = {
 	),
 	"quantity": 1,
 	"unit": "Service Month",
-	"required_by_date": "2027-10-31",
+	"required_by_date": F("2027-10-31"),
 	"indicative_amount": 20000000,
 }
 
@@ -190,7 +191,7 @@ COMBINED_ITEM_VALUES = {
 	# §14.5 — "using the same governed periods as PPI-MOH-2027-021," a
 	# fortnight-later invitation date; every other *_period_days field is
 	# inherited from ITEM_VALUES above unchanged.
-	"baseline_invitation_date": "2027-05-15",
+	"baseline_invitation_date": F("2027-05-15"),
 	# v1.27 §10.2 / SEED-001 v1.3 §3.6: laptops 60 calendar days, estimated
 	# completion 24 Sep 2027 (the seed inherited the infrastructure item's 30
 	# until 26 Sep 2026).
@@ -270,7 +271,7 @@ def _item(title: str, description: str, invitation: str, delivery_days: int, *, 
 	}
 
 
-def _direct(source: str, title: str, purpose: str, quantity: int, amount: int, line: str, *, required_by: str = "2027-06-30") -> dict[str, Any]:
+def _direct(source: str, title: str, purpose: str, quantity: int, amount: int, line: str, *, required_by: str = F("2027-06-30")) -> dict[str, Any]:
 	"""A direct departmental requirement (no Need behind it): IT equipment the
 	executed portfolio's Requisitions draw on (two-year seed world proposal §5;
 	the only installed Tender format is IT equipment, so each one is)."""
@@ -294,17 +295,17 @@ _YEAR1_DESCRIPTION = "Procure and implement the national digital health infrastr
 #: key, purpose, quantity, KES, budget line, invitation, delivery days,
 #: designation)
 PORTFOLIO = (
-	("printers", "Printers", "dhi", "Digital Health offices", 40, 5_000_000, "dhi", "2027-02-15", 30, "None"),
-	("lab_desktops", "Laboratory desktop computers", "dhi", "hospital laboratory systems", 60, 9_000_000, "ict", "2027-02-22", 30, "None"),
-	("tablets", "Medical-grade tablets", "dhi", "clinical teams at priority facilities", 100, 6_000_000, "dhi", "2027-03-15", 21, "None"),
-	("field_laptops", "Field laptops", "dhi", "county digital health officers", 50, 7_000_000, "dhi", "2027-03-01", 30, "None"),
-	("routers", "Core network routers", "dhi", "the national digital health data centre", 10, 25_000_000, "ict", "2027-02-01", 60, "Women"),
-	("clinic_desktops", "Clinic desktop computers", "dhi", "outpatient clinics", 80, 12_000_000, "dhi", "2027-03-15", 21, "None"),
-	("scanners", "Document scanners", "hrmd", "staff records digitisation", 25, 3_500_000, "hrmd", "2027-03-01", 21, "None"),
-	("switches", "Network switches", "hrmd", "the training centres' networks", 30, 9_000_000, "ict", "2027-02-08", 45, "None"),
-	("ups", "UPS units", "hrmd", "power protection in training centres", 40, 4_000_000, "ict", "2027-03-08", 21, "None"),
-	("desktops", "Desktop computers", "hrmd", "human resources offices", 80, 12_000_000, "hrmd", "2027-02-22", 30, "None"),
-	("monitors", "Monitors", "hrmd", "human resources offices", 150, 7_500_000, "hrmd", "2027-03-01", 21, "None"),
+	("printers", "Printers", "dhi", "Digital Health offices", 40, 5_000_000, "dhi", W("2027-02-15"), 30, "None"),
+	("lab_desktops", "Laboratory desktop computers", "dhi", "hospital laboratory systems", 60, 9_000_000, "ict", W("2027-02-22"), 30, "None"),
+	("tablets", "Medical-grade tablets", "dhi", "clinical teams at priority facilities", 100, 6_000_000, "dhi", W("2027-03-15"), 21, "None"),
+	("field_laptops", "Field laptops", "dhi", "county digital health officers", 50, 7_000_000, "dhi", W("2027-03-01"), 30, "None"),
+	("routers", "Core network routers", "dhi", "the national digital health data centre", 10, 25_000_000, "ict", W("2027-02-01"), 60, "Women"),
+	("clinic_desktops", "Clinic desktop computers", "dhi", "outpatient clinics", 80, 12_000_000, "dhi", W("2027-03-15"), 21, "None"),
+	("scanners", "Document scanners", "hrmd", "staff records digitisation", 25, 3_500_000, "hrmd", W("2027-03-01"), 21, "None"),
+	("switches", "Network switches", "hrmd", "the training centres' networks", 30, 9_000_000, "ict", W("2027-02-08"), 45, "None"),
+	("ups", "UPS units", "hrmd", "power protection in training centres", 40, 4_000_000, "ict", W("2027-03-08"), 21, "None"),
+	("desktops", "Desktop computers", "hrmd", "human resources offices", 80, 12_000_000, "hrmd", W("2027-02-22"), 30, "None"),
+	("monitors", "Monitors", "hrmd", "human resources offices", 150, 7_500_000, "hrmd", W("2027-03-01"), 21, "None"),
 )
 #: The one portfolio item both departments contribute to (ANL-CHG-001 v0.8
 #: A1's "IT peripherals" shape, as equipment the Tender format supports): one
@@ -313,7 +314,7 @@ PERIPHERALS = {
 	"title": "Wireless access points",
 	"dhi": ("peripherals_dhi", 80, 4_000_000),
 	"hrmd": ("peripherals_hrmd", 50, 2_500_000),
-	"line": "ict", "invitation": "2027-02-15", "delivery_days": 30,
+	"line": "ict", "invitation": W("2027-02-15"), "delivery_days": 30,
 	"reason": "Both departments need the same wireless access points for the digital health rollout; one package secures one price and one delivery.",
 }
 
@@ -341,12 +342,52 @@ def _portfolio_items() -> list[dict[str, Any]]:
 	return items
 
 
+#: Year 0's (the closed FY 2025/26) Plan Items beside its one Need-backed item (SEED-002 v0.8 §A7; new content for the
+#: owner's review): two direct requirements of Human Resources Management and Development, the second drawing on the
+#: ministry-wide ICT line. Same shape as `PORTFOLIO`. (source key, item title, department key, purpose, quantity, KES,
+#: budget line, invitation, delivery days, designation)
+PORTFOLIO0 = (
+	("printers0", "Multifunction office printers", "hrmd", "the headquarters offices", 30, 6_000_000, "hrmd", W0("2027-03-08", 1), 21, "None"),
+	("laptops0", "Replacement staff laptops", "hrmd", "headquarters staff", 60, 12_000_000, "ict", W0("2027-03-15", 2), 30, "Women"),
+)
+#: The Need-backed item: 120 desktop computers (Departmental Need NDS-MOH-2025-0001), reserved to Youth-owned suppliers.
+WORKSTATIONS0 = {"source": "workstations", "title": "Staff workstation computers", "amount": 24_000_000, "invitation": W0("2027-03-01"), "delivery_days": 30, "designation": "Youth"}
+REQUIRED_BY0 = F("2026-06-30")
+
+
+def _year0_spec() -> dict[str, Any]:
+	from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import references
+
+	needs = references("year0")
+	return {
+		"dpps": (
+			{
+				"key": "hrmd", "unit": HRMD_NAME, "submitter": HOD,
+				"needs": ({"source": WORKSTATIONS0["source"], "need": needs[0], "line": "hrmd", "amount": WORKSTATIONS0["amount"], "classification": "Goods"},),
+				"direct": [_direct(key, title, purpose, quantity, amount, line, required_by=REQUIRED_BY0) for key, title, _dept, purpose, quantity, amount, line, *_ in PORTFOLIO0],
+			},
+		),
+		"items": (
+			{"sources": (WORKSTATIONS0["source"],), "values": _item(
+				WORKSTATIONS0["title"], "Replacement desktop computers for staff workstations in the Ministry's headquarters offices.",
+				WORKSTATIONS0["invitation"], WORKSTATIONS0["delivery_days"], designation=WORKSTATIONS0["designation"],
+			)},
+			*({"sources": (key,), "values": _item(title, f"{title} for {purpose}.", invitation, days, designation=designation)}
+				for key, title, _dept, purpose, _quantity, _amount, _line, invitation, days, designation in PORTFOLIO0),
+		),
+		"treasury_reference": f"MOH/APP/{calendar.YEAR0.start_year}/001",
+		"public_plan_url": f"https://www.moh.example.test/procurement/annual-procurement-plan-{calendar.YEAR0.fiscal_year[:4]}-{calendar.YEAR0.fiscal_year[7:]}",
+	}
+
+
 def plan_spec(year: str) -> dict[str, Any]:
 	"""`year`'s departmental plans, Plan Items and Treasury reference. Need
 	sources name the Need by its position in the Needs seed's list for that
 	year (`departmental_needs.seeds.kentender_mvp_r1.references`)."""
 	from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import references
 
+	if year == "year0":
+		return _year0_spec()
 	needs = references(year)
 	if year == "year1":
 		return {
@@ -368,15 +409,15 @@ def plan_spec(year: str) -> dict[str, Any]:
 			"items": (
 				# SEED-001 §3.6 / §5.2 with the two-year corrections: baselines
 				# moved so signing plus delivery ends by 30 Jun 2027.
-				{"sources": ("infra",), "values": {**ITEM_VALUES, "description": _YEAR1_DESCRIPTION, "baseline_invitation_date": "2027-03-01"}},
+				{"sources": ("infra",), "values": {**ITEM_VALUES, "description": _YEAR1_DESCRIPTION, "baseline_invitation_date": W("2027-03-01")}},
 				{
 					"sources": ("laptops_hrmd", "laptops_dhi"), "mode": "combined",
-					"values": {**COMBINED_ITEM_VALUES, "baseline_invitation_date": "2027-02-01"},
+					"values": {**COMBINED_ITEM_VALUES, "baseline_invitation_date": W("2027-02-01")},
 				},
 				*_portfolio_items(),
 			),
-			"treasury_reference": "MOH/APP/2026/001",
-			"public_plan_url": "https://www.moh.example.test/procurement/annual-procurement-plan-2026-27",
+			"treasury_reference": f"MOH/APP/{calendar.YEAR1.start_year}/001",
+			"public_plan_url": f"https://www.moh.example.test/procurement/annual-procurement-plan-{calendar.YEAR1.fiscal_year[:4]}-{calendar.YEAR1.fiscal_year[7:]}",
 		}
 	return {
 		"dpps": (
@@ -397,19 +438,19 @@ def plan_spec(year: str) -> dict[str, Any]:
 		"items": (
 			{"sources": ("hie",), "values": _item(
 				"Health information exchange platform upgrade",
-				"Upgrade the national health information exchange platform as one FY 2027/28 programme.", "2027-05-03", 30,
+				"Upgrade the national health information exchange platform as one FY 2027/28 programme.", F("2027-05-03"), 30,
 			)},
 			{"sources": ("av",), "values": _item(
 				"Training centre audio-visual equipment", "Projectors, displays and sound equipment for the staff training centres.",
-				"2027-08-02", 45, designation="Women",
+				F("2027-08-02"), 45, designation="Women",
 			)},
 			{"sources": ("cds",), "values": _item(
 				"Clinical decision-support software licences", "Decision-support software licences for clinicians at priority facilities.",
-				"2027-07-15", 60, designation="Youth",
+				F("2027-07-15"), 60, designation="Youth",
 			)},
 		),
-		"treasury_reference": "MOH/APP/2027/001",
-		"public_plan_url": "https://www.moh.example.test/procurement/annual-procurement-plan-2027-28",
+		"treasury_reference": f"MOH/APP/{calendar.YEAR2.start_year}/001",
+		"public_plan_url": f"https://www.moh.example.test/procurement/annual-procurement-plan-{calendar.YEAR2.fiscal_year[:4]}-{calendar.YEAR2.fiscal_year[7:]}",
 	}
 
 
@@ -935,7 +976,7 @@ def _year_intake(year: str):
 	y = calendar.year(year)
 	with clock.at(y.at("2026-11-25 09:00:00")):
 		site_configuration.open_dpp_submission(
-			fiscal_year=y.fiscal_year, closes_at=y.at(site_setup.DPP_INTAKE["closes_at"]),
+			fiscal_year=y.fiscal_year, closes_at=y.window(site_setup.DPP_INTAKE_AUTHORED_CLOSE),
 			reason=f"Departmental procurement plans called for {y.label} under regulation 40(3).",
 		)
 	try:
@@ -1141,14 +1182,31 @@ def upsert_planning_base(*, commit: bool = False, years: dict[str, str] | None =
 	_destination()
 	years = years if years is not None else {"year1": "annual_plan"}
 	out: dict[str, Any] = {"ok": True, "years": {}}
-	for year in ("year1", "year2"):
+	for year in ("year0", "year1", "year2"):
 		if year in years:
 			out["years"][year] = upsert_year_plan(year, through=years[year])
+	out["drafts_stamped"] = stamp_autostarted_drafts()
 	executed = out["years"].get("year1") or {}
 	out.update({"plan_reference": executed.get("plan_reference"), "idempotent": all(r.get("idempotent") for r in out["years"].values())})
 	if commit:
 		frappe.db.commit()
 	return out
+
+
+def stamp_autostarted_drafts() -> int:
+	"""Accepting a Need starts its department's Draft plan by itself (`dpp_autostart`), carrying the Needs seed's tag. Where the
+	prepared year stops at its Needs (the default in an October world, SEED-002 v0.8 R5) no planning build stamps those drafts, so
+	every reset would remove them and a later stage would find no draft to project into: they are Planning's, so they take its tag."""
+	stamped = 0
+	years = [year.fiscal_year for year in calendar.seeded_years()]
+	for name in frappe.get_all("Departmental Plan", filters={"fiscal_year": ("in", years), "current_state": "Draft"}, pluck="name"):
+		if frappe.db.get_value("Departmental Plan", name, "fixture_namespace") != NS:
+			_stamp_namespace("Departmental Plan", name)
+			stamped += 1
+		for version in frappe.get_all("Departmental Plan Version", filters={"departmental_plan": name}, pluck="name"):
+			if frappe.db.get_value("Departmental Plan Version", version, "fixture_namespace") != NS:
+				_stamp_namespace("Departmental Plan Version", version)
+	return stamped
 
 
 def wipe_all_planning() -> dict[str, int]:
@@ -1187,17 +1245,24 @@ def reset_planning_seed(*, commit: bool = False) -> dict[str, int]:
 
 	_guard()
 	frappe.set_user("Administrator")
-	for year in calendar.YEARS:
-		for need in frappe.get_all("Departmental Need", filters={"financial_year": year.fiscal_year}, pluck="name"):
-			accepted_revision = needs_intake.current_accepted_revision_of(need, year.fiscal_year)
+	# The years the world seeds now, and any year an earlier world seeded (a rollover into a later financial year, or the
+	# return to the v0.7 world): the plans this seed stamped name them.
+	fiscal_years = list(dict.fromkeys([
+		*(year.fiscal_year for year in calendar.seeded_years()),
+		*frappe.get_all("Annual Plan", filters={"fixture_namespace": NS}, pluck="fiscal_year"),
+		*frappe.get_all("Departmental Plan", filters={"fixture_namespace": NS}, pluck="fiscal_year"),
+	]))
+	for fiscal_year in fiscal_years:
+		for need in frappe.get_all("Departmental Need", filters={"financial_year": fiscal_year}, pluck="name"):
+			accepted_revision = needs_intake.current_accepted_revision_of(need, fiscal_year)
 			if accepted_revision and needs_usage.is_actively_included(accepted_revision):
 				needs_usage.project_planning_usage(
 					departmental_need=need, accepted_revision=accepted_revision, usage="Not included",
 					source_event_id=f"pln-seed-reset:{uuid4().hex}", source_event_time=now_datetime(), user="Administrator",
 				)
 	deleted: dict[str, int] = {}
-	for year in calendar.YEARS:
-		for doctype, count in _wipe_fiscal_year(year.fiscal_year).items():
+	for fiscal_year in fiscal_years:
+		for doctype, count in _wipe_fiscal_year(fiscal_year).items():
 			deleted[doctype] = deleted.get(doctype, 0) + count
 	deleted.update(clear_planning_fixture_rows(include_playwright=False, namespaces=(NS,)))
 	journal = frappe.get_all("Planning Command Journal", filters={"idempotency_key": ("like", "pln-seed:%")}, pluck="name")

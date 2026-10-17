@@ -10,6 +10,7 @@ Operator's; each clears from the event that ends it — never from a read."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 
 import frappe
@@ -95,7 +96,7 @@ class TestAddendumHandoff(AddendumCase):
 	def test_an_effective_addendum_gives_the_preparer_a_named_review_item(self):
 		name = self.issue_addendum()
 		reference = frappe.db.get_value("Tender Addendum", name, "addendum_reference")
-		self.at("2027-06-01 12:05:00")
+		self.at(W("2027-06-01 12:05:00"))
 		handoffs.sweep()
 		row = frappe.get_all("Bid Hand-off", filters={"bid_workspace": self.bid, "status": "Open"}, fields=["kind", "holder_users", "item_title", "sender_users"])
 		self.assertEqual([(r.kind, json.loads(r.holder_users), r.item_title, json.loads(r.sender_users)) for r in row], [("Review addendum", [DAVID], f"Review {reference} for {self.bid}", [])])

@@ -16,6 +16,7 @@ unless its instruction permits them."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from typing import Any
 
@@ -290,7 +291,7 @@ class TestSuspensionScope(CommitteeCase):
 		doc = frappe.get_doc("Evaluation Case", self.evaluation)
 		event = records.insert(frappe.get_doc({
 			"doctype": "Evaluation Source Event", "source_event_id": f"{doc.name}-SE-T1", "evaluation_case": doc.name, "event_key": f"test-suspend:{doc.name}",
-			"source": "Simulation", "kind": "Suspension", "instruction_reference": "MOH/REVIEW/TEST-PREP", "authority": AO, "received_at": "2027-06-11 08:55:00",
+			"source": "Simulation", "kind": "Suspension", "instruction_reference": "MOH/REVIEW/TEST-PREP", "authority": AO, "received_at": W("2027-06-11 08:55:00"),
 			"permitted_actions_json": json.dumps(permitted),
 		}))
 		records.bump(doc, suspended=1, suspension_event=event.name)

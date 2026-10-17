@@ -10,6 +10,7 @@ lifecycle engine (Phase 2), permissions/SoD (Phase 3), or contracts/API
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
@@ -28,7 +29,7 @@ def _plan(**kwargs) -> dict:
 		"doctype": "Strategic Plan",
 		"title": "Phase 1 Test Plan",
 		"plan_role": "Primary",
-		"period_start": "2027-07-01",
+		"period_start": W("2027-07-01"),
 		"period_end": "2032-06-30",
 	}
 	data.update(kwargs)
@@ -84,7 +85,7 @@ class TestStrategicPlanDomainModel(FrappeTestCase):
 			"doctype": "Strategic Plan Version",
 			"plan_id": plan_name,
 			"version_number": 1,
-			"effective_from": "2027-07-01",
+			"effective_from": W("2027-07-01"),
 			"effective_to": "2032-06-30",
 		}
 		data.update(kwargs)
@@ -261,7 +262,7 @@ class TestStrategicPlanDomainModel(FrappeTestCase):
 		)
 		with self.assertRaises(frappe.ValidationError):
 			frappe.get_doc(
-				self._target(indicator.name, fiscal_year=FY, target_by_date="2028-06-30")
+				self._target(indicator.name, fiscal_year=FY, target_by_date=W("2028-06-30"))
 			).insert(ignore_permissions=True)
 		with self.assertRaises(frappe.ValidationError):
 			frappe.get_doc(self._target(indicator.name, fiscal_year=None)).insert(

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-import { CHARLES, EVIDENCE, as, awardWorld, awdFixture, closeSession, expectJourney, expectNextStep, expectScreen, restoreAwardWorld } from "./awdWorld";
+import { shortDateTime } from "../../helpers/anchor";
+import { CHARLES, EVIDENCE, as, awardWorld, awardWorldInstant, awdFixture, closeSession, expectJourney, expectNextStep, expectScreen, restoreAwardWorld } from "./awdWorld";
 
 /**
  * AWD-CHG-001 v0.4 slice 7 (boards D05, D06, V10; tracker AWD4-706): the
@@ -25,11 +26,11 @@ test.describe("Award — wait and deliver", () => {
 		await expectNextStep(page, "waiting", "The required waiting period is still running.");
 		await expectJourney(page, ["Done", "Done", "Done", "Current", "Not started"]);
 		const root = page.locator('[data-testid="awd-root"]');
-		await expect(root).toContainText("Supplier accepted, 18 Jun 2027, 09:00 EAT");
+		await expect(root).toContainText(`Supplier accepted, ${shortDateTime(awardWorldInstant("2027-06-18 09:00:00"))}`);
 		await expect(root).toContainText("All bidders have been notified");
-		await expect(root.locator('[data-testid="awd-fact-earliest-permitted-date-and-time"]')).toHaveText("2 Jul 2027, 09:00 EAT");
+		await expect(root.locator('[data-testid="awd-fact-earliest-permitted-date-and-time"]')).toHaveText(shortDateTime(awardWorldInstant("2027-07-02 09:00:00")));
 		await page.screenshot({ path: `${EVIDENCE}/D05.png`, fullPage: true });
-		awdFixture("set_instant", { instant: "2027-07-02 09:00:00" });
+		awdFixture("set_instant", { instant: awardWorldInstant("2027-07-02 09:00:00") });
 		awdFixture("refresh", { award: world.award });
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await expectScreen(page, "delivered");

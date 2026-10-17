@@ -10,6 +10,8 @@ supplier."""
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from decimal import Decimal
 from unittest import mock
 
@@ -63,7 +65,7 @@ class SecurityCase(BidCase):
 	def intake(self, user=None, **overrides):
 		values = {
 			"tender_reference": self.reference, "instrument_type": "Demand Bank Guarantee", "issuer": ISSUER, "instrument_reference": REFERENCE,
-			"amount": self.facts["amount"], "currency": self.facts["currency"], "received_at": "2027-05-19 09:00:00", "notes": "", "confirmed": True, **overrides,
+			"amount": self.facts["amount"], "currency": self.facts["currency"], "received_at": W("2027-05-19 09:00:00"), "notes": "", "confirmed": True, **overrides,
 		}
 		return security_intake.record_physical_tender_security_receipt(**values, idempotency_key=key(), user=user or tender_fx.OFFICER)
 
@@ -140,21 +142,21 @@ class TestBlindIntake(SecurityCase):
 			self.assertNotIn(forbidden, source)
 
 	def test_a_physical_original_and_an_issuer_confirmation_keep_their_times_apart(self):
-		self.at("2027-05-20 10:30:00")
-		physical = self.intake(received_at="2027-05-20 09:00:00")
+		self.at(W("2027-05-20 10:30:00"))
+		physical = self.intake(received_at=W("2027-05-20 09:00:00"))
 		self.assertEqual((physical["intake_kind"], physical["issuer_confirmed_at"]), ("Physical original", ""))
-		confirmation = self.intake(intake_kind="Issuer confirmation", received_at="2027-05-20 10:00:00", issuer_confirmed_at="2027-05-20 09:41:00", instrument_reference="KCB/TG/2027/9001")
+		confirmation = self.intake(intake_kind="Issuer confirmation", received_at=W("2027-05-20 10:00:00"), issuer_confirmed_at=W("2027-05-20 09:41:00"), instrument_reference="KCB/TG/2027/9001")
 		self.assertTrue(confirmation["ok"], confirmation)
 		doc = frappe.get_doc("Tender Security Intake", {"intake_reference": confirmation["intake_reference"]})
 		self.assertEqual((str(doc.received_at), str(doc.issuer_confirmed_at), str(doc.recorded_at), doc.recorded_by, doc.intake_kind),
-			("2027-05-20 10:00:00", "2027-05-20 09:41:00", "2027-05-20 10:30:00", tender_fx.OFFICER, "Issuer confirmation"))
-		missing = self.intake(intake_kind="Issuer confirmation", received_at="2027-05-20 10:00:00")
+			(W("2027-05-20 10:00:00"), W("2027-05-20 09:41:00"), W("2027-05-20 10:30:00"), tender_fx.OFFICER, "Issuer confirmation"))
+		missing = self.intake(intake_kind="Issuer confirmation", received_at=W("2027-05-20 10:00:00"))
 		self.assertEqual(missing["errors"], {"issuer_confirmed_at": "Enter the date and time the issuer confirmed the instrument."})
-		later = self.intake(intake_kind="Issuer confirmation", received_at="2027-05-20 10:00:00", issuer_confirmed_at="2027-05-20 10:10:00")
+		later = self.intake(intake_kind="Issuer confirmation", received_at=W("2027-05-20 10:00:00"), issuer_confirmed_at=W("2027-05-20 10:10:00"))
 		self.assertEqual(later["errors"], {"issuer_confirmed_at": "The issuer cannot have confirmed after you received the confirmation."})
-		stray = self.intake(received_at="2027-05-20 10:00:00", issuer_confirmed_at="2027-05-20 09:41:00")
+		stray = self.intake(received_at=W("2027-05-20 10:00:00"), issuer_confirmed_at=W("2027-05-20 09:41:00"))
 		self.assertEqual(stray["errors"], {"issuer_confirmed_at": "Only an issuer confirmation has an issuer confirmation time."})
-		self.assertEqual(self.intake(intake_kind="Postal", received_at="2027-05-20 10:00:00")["errors"]["intake_kind"], "Choose what was received: physical original or issuer confirmation.")
+		self.assertEqual(self.intake(intake_kind="Postal", received_at=W("2027-05-20 10:00:00"))["errors"]["intake_kind"], "Choose what was received: physical original or issuer confirmation.")
 
 	def test_the_deadline_class_is_decided_by_the_actual_receipt_time_and_the_recording_time_is_kept_apart(self):
 		from datetime import timedelta
@@ -170,10 +172,10 @@ class TestBlindIntake(SecurityCase):
 		self.assertEqual((get_datetime(doc.received_at), get_datetime(doc.recorded_at)), (deadline - timedelta(hours=1), deadline + timedelta(hours=3)))
 
 	def test_an_intake_is_append_only_with_the_server_actor_and_time(self):
-		self.at("2027-05-20 10:30:00")
-		recorded = self.intake(received_at="2027-05-20 10:00:00")
+		self.at(W("2027-05-20 10:30:00"))
+		recorded = self.intake(received_at=W("2027-05-20 10:00:00"))
 		doc = frappe.get_doc("Tender Security Intake", {"intake_reference": recorded["intake_reference"]})
-		self.assertEqual((doc.recorded_by, str(doc.recorded_at), doc.deadline_class), (tender_fx.OFFICER, "2027-05-20 10:30:00", "Before deadline"))
+		self.assertEqual((doc.recorded_by, str(doc.recorded_at), doc.deadline_class), (tender_fx.OFFICER, W("2027-05-20 10:30:00"), "Before deadline"))
 		doc.issuer = "Another bank"
 		with self.assertRaises(frappe.ValidationError):
 			doc.save(ignore_permissions=True)
@@ -207,7 +209,7 @@ class TestPrivateMatch(SecurityCase):
 		self.assertIn(self.NOTE, [n["text"] for n in reads.get_bid_review(bid_reference=self.bid, user=DAVID)["review_notes"]])
 		recorded = self.intake()
 		after = self.task("company")["security"]
-		self.assertEqual((after["physical_receipt_status"], after["physical_receipt_reference"], after["physical_received_at"]), ("Original received", recorded["intake_reference"], "19 May 2027, 09:00 EAT"))
+		self.assertEqual((after["physical_receipt_status"], after["physical_receipt_reference"], after["physical_received_at"]), ("Original received", recorded["intake_reference"], f"{ad.dt_eat('2027-05-19 09:00:00')}"))
 		self.assertEqual(frappe.db.count("Tender Security Intake Match", {"tender": self.name}), 0)  # still no stored link before the boundary
 		self.assertNotIn(self.NOTE, [n["text"] for n in reads.get_bid_review(bid_reference=self.bid, user=DAVID)["review_notes"]])
 		for word in ("not yet matched", "Not yet matched"):
@@ -396,7 +398,7 @@ class TestTenderStatesTheOriginal(SecurityCase):
 		group, so the issuer group is stood in for by the facts the group would carry: nothing to upload, nothing missing."""
 		from kentender_procurement.bid_submission.services import security_verification as sv
 
-		facts = {"security_type": "Demand Bank Guarantee", "issuer": ISSUER, "reference": REFERENCE, "amount": "500000.00", "valid_until": "2027-11-15", "proof": [], "proof_expected": False}
+		facts = {"security_type": "Demand Bank Guarantee", "issuer": ISSUER, "reference": REFERENCE, "amount": "500000.00", "valid_until": W("2027-11-15"), "proof": [], "proof_expected": False}
 		self.assertEqual(sv.missing(facts), {})  # no proof is required where the group has no attachment
 		self.assertEqual(sv.missing({**facts, "proof_expected": True}), {"proof": "Add the instrument's proof."})
 		with self.stated(ISSUER_SUPPLIED, "Not required"):

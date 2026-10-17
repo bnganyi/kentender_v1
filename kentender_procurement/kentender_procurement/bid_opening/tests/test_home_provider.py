@@ -15,6 +15,7 @@ Run:
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import world as W
 import json
 from datetime import datetime, timedelta
 from unittest import mock
@@ -97,6 +98,16 @@ class TestBidOpeningHomeProvider(OpeningCase):
 
 	# ----- helpers -----
 
+	def reading(self, at: datetime):
+		"""Home reads at the real site time, and the world's instants lie before it now (SEED-002 v0.9 R1): a test that needs "within thirty
+		days of the appointment" reads at an instant after it, with the clock frozen there. An instant later than the real clock cannot be frozen
+		in an anchored world and is read as it is."""
+		from contextlib import nullcontext
+
+		from kentender_core.seeds import clock
+
+		return clock.at(at) if at <= datetime.now() else nullcontext()
+
 	def region(self, user: str, region: str):
 		home_support.reset()
 		return entries(user=user, region=region)
@@ -131,7 +142,8 @@ class TestBidOpeningHomeProvider(OpeningCase):
 	def all_rows(self, user: str, at: datetime, region: str) -> list[dict]:
 		rows, cursor = [], None
 		while True:
-			page = hw.get_workspace(user, regions=[region], cursors={region: cursor} if cursor else None, providers=[entries], at=at)["regions"][region]
+			with self.reading(at):
+				page = hw.get_workspace(user, regions=[region], cursors={region: cursor} if cursor else None, providers=[entries], at=at)["regions"][region]
 			rows += page["entries"]
 			cursor = page["next_cursor"]
 			if not cursor:
@@ -297,16 +309,16 @@ class TestBidOpeningHomeProvider(OpeningCase):
 		for user in ("Administrator", SUPPORT, NOBODY, OUTSIDER):
 			for region in he.REGIONS:
 				self.assertIsNone(self.region(user, region), (user, region))
-		view = self.home("Administrator", datetime(2027, 6, 1, 10, 0))
+		view = self.home("Administrator", W(datetime(2027, 6, 1, 10, 0)))
 		self.assertEqual((view["empty"], view["regions"]["my_work"]["entries"]), (True, []))
-		nobody = self.home(NOBODY, datetime(2027, 6, 1, 10, 0))
+		nobody = self.home(NOBODY, W(datetime(2027, 6, 1, 10, 0)))
 		self.assertEqual(nobody["state"], "ready")
 		self.assertFalse(any(region["entries"] for region in nobody["regions"].values()))
 		self.assertEqual({region["coverage"] for region in nobody["regions"].values()}, {hw.NOT_APPLICABLE})
 
 	def test_a_user_without_the_responsibility_sees_none_of_it_and_a_revoked_responsibility_removes_it(self):
 		self.prepare_case()
-		at = datetime(2027, 5, 19, 12, 0)
+		at = W(datetime(2027, 5, 19, 12, 0))
 		administration.grant(user=EXTRA, business_role="Accounting Officer", fixture_namespace=EXTRA_NS, actor="Administrator")
 		self.addCleanup(_remove_extra)
 		self.assertEqual(self.row(EXTRA, at, "my_work", "appoint")["action"], "Appoint opening committee")
@@ -324,14 +336,16 @@ class TestBidOpeningHomeProvider(OpeningCase):
 	def test_the_accounting_officers_own_appointment_and_publication_are_completed_actions(self):
 		self.prepared()
 		appointed = appointment.current(self.case())
-		rows = {row["action"]: row for row in self.mine(self.region(AO, he.COMPLETED))}
+		with self.reading(get_datetime(appointed.appointed_at) + timedelta(days=1)):
+			rows = {row["action"]: row for row in self.mine(self.region(AO, he.COMPLETED))}
 		self.assertEqual(set(rows), {"Appointed opening committee", "Published how to attend"})
 		row = rows["Appointed opening committee"]
 		self.assertEqual((row["title"], row["reference"], row["completed_at"], row["action_id"]), (self.doc().tender_title, self.reference, appointed.appointed_at, appointed.name))
-		self.assertTrue(row["sentence"].startswith("You appointed the opening committee on 19 May 2027, 09:20 ") and row["sentence"].endswith("."), row["sentence"])
+		appointed = datetime.strptime(W("2027-05-19 09:20:00"), "%Y-%m-%d %H:%M:%S")
+		self.assertTrue(row["sentence"].startswith(f"You appointed the opening committee on {appointed.day} {appointed:%B %Y}, {appointed:%H:%M} ") and row["sentence"].endswith("."), row["sentence"])
 		self.assertEqual(row["destination"], {"route": ["tenders", self.reference, "opening"], "route_options": {}})
 		published = rows["Published how to attend"]
-		self.assertTrue(published["sentence"].startswith("You published how to attend this opening on 19 May 2027, 09:20 "), published["sentence"])
+		self.assertTrue(published["sentence"].startswith(f"You published how to attend this opening on {appointed.day} {appointed:%B %Y}, {appointed:%H:%M} "), published["sentence"])
 		# nobody else appointed or published
 		for user in (CHAIR, MEMBER, AUDITOR):
 			self.assertEqual(self.mine(self.region(user, he.COMPLETED)), [], user)
@@ -415,10 +429,11 @@ class TestBidOpeningHomeProvider(OpeningCase):
 
 	def test_an_actor_who_can_no_longer_read_the_case_sees_nothing_of_it_in_completed(self):
 		self.prepared()
-		self.assertTrue(self.mine(self.region(AO, he.COMPLETED)))
-		with mock.patch("kentender_procurement.bid_opening.services.reads.can_read", return_value=False):
-			self.assertEqual(self.mine(self.region(AO, he.COMPLETED)), [])
-			self.assertIsInstance(self.region(AO, he.COMPLETED), list)
+		with self.reading(get_datetime(appointment.current(self.case()).appointed_at) + timedelta(days=1)):
+			self.assertTrue(self.mine(self.region(AO, he.COMPLETED)))
+			with mock.patch("kentender_procurement.bid_opening.services.reads.can_read", return_value=False):
+				self.assertEqual(self.mine(self.region(AO, he.COMPLETED)), [])
+				self.assertIsInstance(self.region(AO, he.COMPLETED), list)
 
 	# ----- writes, cost, destinations -----
 
@@ -443,7 +458,7 @@ class TestBidOpeningHomeProvider(OpeningCase):
 			return original(user)
 
 		with mock.patch.object(my_work_provider, "my_work_rows", counting):
-			self.home(CHAIR, datetime(2027, 5, 25, 10, 0))
+			self.home(CHAIR, W(datetime(2027, 5, 25, 10, 0)))
 		self.assertEqual(calls, [CHAIR])
 
 	def test_every_destination_opens_a_real_page_the_actor_may_open(self):

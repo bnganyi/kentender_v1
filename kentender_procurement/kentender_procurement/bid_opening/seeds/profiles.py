@@ -271,10 +271,10 @@ def restore_base(*, commit: bool = True) -> dict[str, Any]:
 	built = base.upsert_bid_opening_base(commit=False)
 	failures = [r["check"] for r in base.validate_bid_opening_seed() if not r["ok"]]
 	# the canonical world's own moment, not the profile's (two-year seed world plan D1)
-	from kentender_core.seeds.calendar import AS_AT
+	from kentender_core.seeds import calendar
 	from kentender_core.services import test_clock
 
-	test_clock.set_instant(AS_AT)
+	test_clock.set_instant(calendar.as_at())
 	if commit:
 		frappe.db.commit()
 	return {"restored": True, "was": was or None, "tender": reference, "opening": built.get("opening"), "failures": failures}

@@ -6,6 +6,8 @@ v0.4 §5.4, §7; AWD-AC-010, AC-018; tracker AWD4-504)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import frappe
 
 from kentender_procurement.award.services import authority, simulation, state
@@ -15,7 +17,7 @@ from kentender_procurement.tests.two_connections import WAIT, Conn
 
 def _in_world():
 	frappe.flags.kt_awd_fixture_namespace = NS
-	frappe.flags.kt_awd_clock = "2027-06-17 09:00:00"
+	frappe.flags.kt_awd_clock = W("2027-06-17 09:00:00")
 
 
 class TestAuthority(AwardCase):
@@ -56,7 +58,7 @@ class TestAuthority(AwardCase):
 		when the guard takes the case lock. The guard must read the status as last
 		committed (a locking read), not from that older snapshot."""
 		self.deliver()
-		self.at("2027-06-17 09:00:00")
+		self.at(W("2027-06-17 09:00:00"))
 		doc = self.case()
 		tender = doc.tender
 		frappe.db.commit()

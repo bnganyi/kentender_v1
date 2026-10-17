@@ -82,17 +82,31 @@ def resolve_years(*, current: str | None = None, next_year: str | None = None, t
 		if through in _THROUGH_TO_NEXT:
 			current, next_year = current or CURRENT_STAGES[0], next_year or _THROUGH_TO_NEXT[through]
 		else:
-			current, next_year = current or through, next_year or DEFAULT_NEXT
-	current, next_year = current or DEFAULT_CURRENT, next_year or DEFAULT_NEXT
+			current, next_year = current or through, next_year or calendar.default_next_stage()
+	# The default prepared-year stage is the furthest the anchor allows (SEED-002 v0.8 R5): the v0.7 world's `annual_plan`
+	# in legacy mode, Departmental Needs at an October anchor.
+	current, next_year = current or DEFAULT_CURRENT, next_year or calendar.default_next_stage()
 	if current not in CURRENT_STAGES:
 		frappe.throw(f"Unknown CURRENT={current!r} for {calendar.YEAR1.label}; expected one of {', '.join(CURRENT_STAGES)}")
 	if next_year not in NEXT_STAGES:
 		frappe.throw(f"Unknown NEXT={next_year!r} for {calendar.YEAR2.label} (it never goes past an approved Annual Plan); expected one of {', '.join(NEXT_STAGES)}")
+	allowed = calendar.default_next_stage()
+	if NEXT_STAGES.index(next_year) > NEXT_STAGES.index(allowed):
+		frappe.throw(
+			f"NEXT={next_year} is later than the world's anchor ({calendar.as_at()}) allows for {calendar.YEAR2.label}: its work for that stage "
+			f"would fall after the anchor (SEED-002 v0.8 R1, R5). The furthest stage is NEXT={allowed}."
+		)
 	return current, next_year
 
 
 def _reaches(stage: str, *, current: str) -> bool:
 	return CURRENT_STAGES.index(current) >= CURRENT_STAGES.index(stage)
+
+
+def _closed_years() -> tuple[str, ...]:
+	"""The closed year (Year 0) is part of the world whenever the world is anchored (SEED-002 v0.8 R3), whatever
+	CURRENT and NEXT cap; the v0.7 world has none."""
+	return ("year0",) if calendar.mode() == "anchored" else ()
 
 
 def _next_reaches(stage: str, *, next_year: str) -> bool:
@@ -114,7 +128,7 @@ PORTFOLIO_OPENING_NS = "KENTENDER_MVP_1_R1_BOP_PORTFOLIO"
 PORTFOLIO_EVALUATION_NS = "KENTENDER_MVP_1_R1_EVL_PORTFOLIO"
 BIDS_NS = "KENTENDER_MVP_1_R1_BDS"  # BDS-CHG-001 v0.8 plan D19: the canonical bids and supplier accounts
 CANONICAL_NAMESPACES = frozenset(
-	{site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS, TENDERS_NS, BID_OPENING_NS, BID_EVALUATION_NS, PORTFOLIO_OPENING_NS, PORTFOLIO_EVALUATION_NS}
+	{site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS, TENDERS_NS, BID_OPENING_NS, BID_EVALUATION_NS, PORTFOLIO_OPENING_NS, PORTFOLIO_EVALUATION_NS, BIDS_NS}
 )
 
 # KT-STD-001 §8.3 — the whole shared register, whatever stage is seeded.
@@ -230,6 +244,13 @@ def _canonical_units() -> set[str]:
 		if not frappe.db.exists("DocType", doctype) or not frappe.db.has_column(doctype, field):
 			continue
 		for unit in frappe.get_all(doctype, filters=filters, pluck=field):
+			while unit and unit not in keep:
+				keep.add(unit)
+				unit = frappe.db.get_value("Organisation Unit", unit, "parent_organisation_unit")
+	# KT-STD-001 §8.3A: the register's people have a home unit (ICT and Finance hold nobody else); it is canonical, or every clear
+	# would remove the two units and the site stage would create them again under new names.
+	if frappe.db.has_column("User", "kt_home_organisation_unit"):
+		for unit in frappe.get_all("User", filters={"name": ["in", list(REGISTER_USERS)]}, pluck="kt_home_organisation_unit"):
 			while unit and unit not in keep:
 				keep.add(unit)
 				unit = frappe.db.get_value("Organisation Unit", unit, "parent_organisation_unit")
@@ -371,6 +392,13 @@ def collect_non_canonical() -> dict[str, list[str]]:
 					"Procurement Commitment",
 					frappe.get_all("Procurement Commitment", filters={"reservation": ["in", stray_reservations]}, pluck="name"),
 				)
+
+	# A commitment whose reservation is gone is residue (a test that opened funding and a clear that removed the reservation first).
+	if frappe.db.exists("DocType", "Procurement Commitment"):
+		add(
+			"Procurement Commitment",
+			[c.name for c in frappe.get_all("Procurement Commitment", fields=["name", "reservation"]) if c.reservation and not frappe.db.exists("Funding Reservation", c.reservation)],
+		)
 
 	# Departmental Needs, Procurement Planning and the regulatory reference:
 	# rows outside their canonical namespace. Filtered in Python — a SQL
@@ -598,6 +626,9 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 		finally:
 			frappe.flags.allow_budget_audit_purge = False
 		_delete_docs("Funding Reservation", reservations, deleted)
+	if plan.get("Procurement Commitment"):
+		# what is still there: the reservations' own commitments went with them above; the rest are orphans
+		_delete_docs("Procurement Commitment", [name for name in plan["Procurement Commitment"] if frappe.db.exists("Procurement Commitment", name)], deleted)
 	for version in plan.get("Procurement Budget Version", []):
 		if not frappe.db.exists("Procurement Budget Version", version):
 			continue
@@ -811,6 +842,7 @@ def seed(*, current: str | None = None, next_year: str | None = None, through: s
 	canonical Tender before its deadline, was retired on 5 Oct 2026: the
 	executed portfolio's Medical-grade tablets Tender is open past the as-at
 	instant, so the public Tenders page always lists a Tender.)"""
+	calendar.assert_resolution_current()
 	current, next_year = resolve_years(current=current, next_year=next_year, through=through)
 	ahead = world_ahead(current=current, next_year=next_year)
 	if ahead:
@@ -828,15 +860,15 @@ def seed(*, current: str | None = None, next_year: str | None = None, through: s
 
 	# The §15.3 Active baselines only — §15.5/§15.6 profiles are created and
 	# removed by the tests that need them (§15.7).
-	budget_years = ("year1", "year2") if _next_reaches("budget", next_year=next_year) else ("year1",)
+	budget_years = (*_closed_years(), "year1", *(("year2",) if _next_reaches("budget", next_year=next_year) else ()))
 	report["budget"] = upsert_kentender_mvp_v1_portfolio(include_test_edges=False, commit=False, years=budget_years)
 	from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import upsert_departmental_needs
 
-	needs_years = ("year1", "year2") if _next_reaches("needs", next_year=next_year) else ("year1",)
+	needs_years = (*_closed_years(), "year1", *(("year2",) if _next_reaches("needs", next_year=next_year) else ()))
 	report["needs"] = upsert_departmental_needs(commit=False, years=needs_years)
 	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import upsert_planning_base
 
-	planning_years = {"year1": "annual_plan"}
+	planning_years = {**{year: "annual_plan" for year in _closed_years()}, "year1": "annual_plan"}
 	if _next_reaches("departmental_plans", next_year=next_year):
 		planning_years["year2"] = next_year
 	report["planning"] = upsert_planning_base(commit=False, years=planning_years)
@@ -956,13 +988,88 @@ def stamp_requisition_reservations() -> int:
 	return stamped
 
 
+def _clock_problem() -> str:
+	"""What is wrong with the site's test clock, or ``""``. Under the default
+	policy a test environment runs its live pages on the as-at instant (plan
+	D1); under `never_ahead` the stored instant may not be ahead of the real
+	clock and under `off` none may be stored (`test_clock.problem`)."""
+	from frappe.utils import cint
+
+	from kentender_core.services import test_clock
+
+	return test_clock.problem(expected=calendar.as_at() if cint(frappe.conf.get("kt_bds_simulation_environment")) else None)
+
+
+STALE_ANCHOR_DAYS = 60  # SEED-002 v0.8 (RA-OD4): a test site fails a world this old (counted from the run that built it)
+
+
+#: The recorded-event fields the anchored world checks against R1 (no simulated instant later than the anchor): each is
+#: written by an owning command at its fixture instant. (doctype, field); a pair the site does not have is skipped.
+EVENT_FIELDS: tuple[tuple[str, str], ...] = (
+	("Budget Audit Event", "event_at"),
+	("Departmental Need Decision", "occurred_at"),
+	("Departmental Plan Submission", "submitted_at"),
+	("Departmental Plan Validation Decision", "decided_at"),
+	("Plan Preparation Signature", "signed_at"),
+	("Annual Plan Version", "activated_at"),
+	("Bid Receipt", "received_at"),
+	("Bid Receipt", "accepted_at"),
+	("Evaluation Report Delivery", "delivered_at"),
+)
+
+
+def events_after_anchor() -> list[str]:
+	"""Recorded events dated after the anchor (R1), one line per field, or ``[]``. Legacy mode has no anchor to compare."""
+	if calendar.mode() == "legacy":
+		return []
+	anchor = calendar.as_at()
+	out = []
+	for doctype, field in EVENT_FIELDS:
+		if not frappe.db.exists("DocType", doctype) or not frappe.get_meta(doctype).has_field(field):
+			continue
+		later = frappe.db.sql(f"select count(*), max(`{field}`) from `tab{doctype}` where `{field}` > %s", (anchor,))[0]
+		if later[0]:
+			out.append(f"{doctype}.{field}: {later[0]} later than the anchor {anchor} (latest {later[1]})")
+	return out
+
+
+def anchor_status() -> dict[str, Any]:
+	"""The world's anchor, its age, and what is wrong with it: an anchor later than the real clock (R1) or, on a test
+	site whose clock policy is `never_ahead`, one older than `STALE_ANCHOR_DAYS`. Legacy mode has none."""
+	from frappe.utils import get_datetime, now_datetime
+
+	if calendar.mode() == "legacy":
+		return {"mode": "legacy", "as_at": calendar.as_at(), "problems": []}
+	anchor = calendar.anchor_datetime()
+	state = calendar.state() or {}
+	now = get_datetime(now_datetime())
+	# The world ages from the run that built it, not from its anchor: a run early in the year is anchored on the end of the
+	# previous season and is that much older at birth (SEED-002 v0.8 §A1.1), which a reseed cannot cure.
+	started = get_datetime(state["started"]) if state.get("started") else anchor
+	age = (now - started).days
+	anchor_age = (now - anchor).days
+	problems = []
+	ahead = calendar.never_ahead_problem(calendar.as_at())
+	if ahead:
+		problems.append(f"the world's anchor is ahead of the real clock: {ahead}")
+	problems.extend(f"a recorded event is later than the anchor (SEED-002 v0.8 R1): {line}" for line in events_after_anchor())
+	from kentender_core.services import test_clock
+
+	if age > STALE_ANCHOR_DAYS and test_clock.policy() == test_clock.NEVER_AHEAD:
+		problems.append(f"the world was built {age} days ago (a test site fails a world over {STALE_ANCHOR_DAYS}); reseed with REBUILD=True")
+	return {
+		"mode": "anchored", "as_at": calendar.as_at(), "started": state.get("started"), "age_days": age, "anchor_age_days": anchor_age,
+		"season_notice": state.get("season_notice") or "", "problems": problems,
+	}
+
+
 def set_as_at() -> bool:
 	"""Put a test site's live pages on the as-at instant (two-year seed world
 	plan D1). False on a site that is not a test environment: it reads the
 	real clock."""
 	from kentender_core.services import test_clock
 
-	return test_clock.set_instant(calendar.AS_AT)
+	return test_clock.set_instant(calendar.as_at())
 
 
 # --------------------------------------------------------------------------
@@ -1068,7 +1175,7 @@ def validate(*, current: str | None = None, next_year: str | None = None, throug
 
 	from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budget, validate_budget_seed
 
-	budget_years = ("year1", "year2") if _next_reaches("budget", next_year=next_year) else ("year1",)
+	budget_years = (*_closed_years(), "year1", *(("year2",) if _next_reaches("budget", next_year=next_year) else ()))
 	budgets = frappe.get_all("Procurement Budget", fields=["name", "generated_reference"])
 	expected_budgets = sorted(b for b in (canonical_budget(year) for year in budget_years) if b)
 	check(sorted(b.name for b in budgets) == expected_budgets and len(expected_budgets) == len(budget_years),
@@ -1086,7 +1193,7 @@ def validate(*, current: str | None = None, next_year: str | None = None, throug
 
 	from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import validate_needs_seed
 
-	for year in ("year1", "year2") if _next_reaches("needs", next_year=next_year) else ("year1",):
+	for year in (*_closed_years(), "year1", *(("year2",) if _next_reaches("needs", next_year=next_year) else ())):
 		for row in validate_needs_seed(year):
 			check(row["ok"], f"needs {calendar.year(year).label}: {row['check']}")
 	if not _next_reaches("needs", next_year=next_year):
@@ -1095,8 +1202,9 @@ def validate(*, current: str | None = None, next_year: str | None = None, throug
 
 	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import validate_planning_history, validate_planning_seed, year_plan
 
-	for row in validate_planning_history("year1"):
-		check(row["ok"], f"{row['check']}: {row['detail']}")
+	for year in (*_closed_years(), "year1"):
+		for row in validate_planning_history(year):
+			check(row["ok"], f"{row['check']}: {row['detail']}")
 	if _next_reaches("departmental_plans", next_year=next_year):
 		for row in validate_planning_history("year2", through=next_year):
 			check(row["ok"], f"{row['check']}: {row['detail']}")
@@ -1148,15 +1256,13 @@ def validate(*, current: str | None = None, next_year: str | None = None, throug
 	for row in portfolio.validate_portfolio(current=current):
 		check(row["ok"], row["check"])
 
-	from frappe.utils import cint
+	clock_problem = _clock_problem()
+	check(not clock_problem, clock_problem or "the site test clock is as its policy requires")
+	anchor_report = anchor_status()
+	for problem in anchor_report.get("problems", []):
+		check(False, problem)
 
-	from kentender_core.services import test_clock
-
-	if cint(frappe.conf.get("kt_bds_simulation_environment")):
-		# a test environment runs its live pages on the as-at instant (plan D1)
-		check(str(test_clock.current_instant() or "")[:19] == calendar.AS_AT, f"the site test clock is at {calendar.AS_AT} (found {test_clock.current_instant()!r})")
-
-	report = {"ok": not failures, "current": current, "next_year": next_year, "failures": failures}
+	report = {"ok": not failures, "current": current, "next_year": next_year, "failures": failures, "anchor": anchor_report}
 	if failures:
 		frappe.throw("Canonical seed validation failed:\n- " + "\n- ".join(failures))
 	return report

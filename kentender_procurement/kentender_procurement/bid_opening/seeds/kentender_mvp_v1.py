@@ -32,6 +32,7 @@ the Opening access support holder; the canonical opening needs no support."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from datetime import timedelta
 from typing import Any
 from uuid import uuid4
@@ -55,11 +56,11 @@ SUPPORT = f"daniel.otieno@{DOMAIN}"  # KT-STD-001 v1.11 §8.3 technical operator
 ROSTER = ({"user": CHAIR, "committee_role": "Chair and recorder"}, {"user": MEMBER, "committee_role": "Member"},
 	{"user": INDEPENDENT, "committee_role": "Independent member"})
 CLOCK = {
-	"prepare": "2027-06-10 10:10:00", "appoint": "2027-06-10 10:15:00", "publish": "2027-06-10 10:20:00",
-	"join_chair": "2027-06-12 10:55:10", "join_member": "2027-06-12 10:56:00", "join_independent": "2027-06-12 10:57:00", "join_david": "2027-06-12 10:58:00", "join_jane": "2027-06-12 10:59:00",
-	"receive": "2027-06-12 11:00:05", "begin": "2027-06-12 11:00:12", "open": "2027-06-12 11:01:00", "spoken": "2027-06-12 11:01:30",
-	"readout": "2027-06-12 11:01:45", "asked": "2027-06-12 11:02:00", "answered": "2027-06-12 11:02:20", "end": "2027-06-12 11:05:30",
-	"freeze": "2027-06-12 11:07:00", "sign_member": "2027-06-12 11:08:00", "sign_independent": "2027-06-12 11:09:00", "sign_chair": "2027-06-12 11:10:30",
+	"prepare": W("2027-06-10 10:10:00"), "appoint": W("2027-06-10 10:15:00"), "publish": W("2027-06-10 10:20:00"),
+	"join_chair": W("2027-06-12 10:55:10"), "join_member": W("2027-06-12 10:56:00"), "join_independent": W("2027-06-12 10:57:00"), "join_david": W("2027-06-12 10:58:00"), "join_jane": W("2027-06-12 10:59:00"),
+	"receive": W("2027-06-12 11:00:05"), "begin": W("2027-06-12 11:00:12"), "open": W("2027-06-12 11:01:00"), "spoken": W("2027-06-12 11:01:30"),
+	"readout": W("2027-06-12 11:01:45"), "asked": W("2027-06-12 11:02:00"), "answered": W("2027-06-12 11:02:20"), "end": W("2027-06-12 11:05:30"),
+	"freeze": W("2027-06-12 11:07:00"), "sign_member": W("2027-06-12 11:08:00"), "sign_independent": W("2027-06-12 11:09:00"), "sign_chair": W("2027-06-12 11:10:30"),
 }
 ARRANGEMENTS = {"attendance_method": "Attend the public bid opening online",
 	"access_instructions": "Select Join public opening on this Tender’s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, "
@@ -67,9 +68,9 @@ ARRANGEMENTS = {"attendance_method": "Attend the public bid opening online",
 #: The other bids, read aloud after Afya's in the tender box's acceptance order:
 #: (open, spoken, recorded) instants and the total each register row shows.
 OTHERS = (
-	("Jirani Office Supplies Limited", ("2027-06-12 11:02:40", "2027-06-12 11:03:05", "2027-06-12 11:03:15"), "KES 48,720,000.00"),
-	("Pwani Tech Distributors Limited", ("2027-06-12 11:03:30", "2027-06-12 11:03:50", "2027-06-12 11:04:00"), "KES 43,500,000.00"),
-	("Mlima Computer Solutions Limited", ("2027-06-12 11:04:15", "2027-06-12 11:04:35", "2027-06-12 11:04:45"), "KES 46,980,000.00"),
+	("Jirani Office Supplies Limited", (W("2027-06-12 11:02:40"), W("2027-06-12 11:03:05"), W("2027-06-12 11:03:15")), "KES 48,720,000.00"),
+	("Pwani Tech Distributors Limited", (W("2027-06-12 11:03:30"), W("2027-06-12 11:03:50"), W("2027-06-12 11:04:00")), "KES 43,500,000.00"),
+	("Mlima Computer Solutions Limited", (W("2027-06-12 11:04:15"), W("2027-06-12 11:04:35"), W("2027-06-12 11:04:45")), "KES 46,980,000.00"),
 )
 REQUEST = {"exception_class": "Repeat request", "speaker_name": "David Ouma", "what": "Asked for the submitted total to be repeated",
 	"response": "Charles Mutiso asked Brian Wafula to repeat it. Brian Wafula repeated KES 46,400,000.00 at 11:02:15."}

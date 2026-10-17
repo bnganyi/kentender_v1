@@ -13,6 +13,7 @@ decided from it.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from uuid import uuid4
 
 import time
@@ -132,7 +133,7 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 		try:
 			open_needs_submission(
 				fiscal_year=FY,
-				closes_at="2026-11-25 23:59:00",
+				closes_at=F("2026-11-25 23:59:00"),
 				reason="Test cleanup: restore the seeded default.",
 				idempotency_key=self.key(),
 			)
@@ -178,8 +179,8 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 				{
 					"doctype": "Fiscal Year",
 					"year": name,
-					"year_start_date": "2028-07-01",
-					"year_end_date": "2029-06-30",
+					"year_start_date": F("2028-07-01"),
+					"year_end_date": F("2029-06-30"),
 				}
 			).insert(ignore_permissions=True)
 		previous = frappe.session.user
@@ -187,7 +188,7 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 		try:
 			open_needs_submission(
 				fiscal_year=name,
-				closes_at="2028-11-25 23:59:00",
+				closes_at=F("2028-11-25 23:59:00"),
 				reason="Test-only second Fiscal Year.",
 				idempotency_key=self.key(),
 			)
@@ -268,7 +269,7 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 			"indicative_quantity": 10,
 			"unit": "Each",
 			"estimated_total_cost": 1000000,
-			"required_by_date": "2027-12-31",
+			"required_by_date": F("2027-12-31"),
 		}
 		values.update(overrides)
 		return values
@@ -449,7 +450,7 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 			expected_operational_result="An operational result long enough as well.",
 			indicative_quantity=None,
 			unit="Each",
-			required_by_date="2027-12-31",
+			required_by_date=F("2027-12-31"),
 		)
 		with self.assertRaises(DepartmentalNeedError) as caught:
 			self.submit(created)
@@ -1102,14 +1103,14 @@ class TestAcceptedSuccessorLifecycle(DepartmentalNeedsCommandCase):
 			need=accepted["need"],
 			expected_version=opened["record_version"],
 			idempotency_key=self.key(),
-			**self.content(required_by_date="2027-09-15"),
+			**self.content(required_by_date=F("2027-09-15")),
 		)
 		self.assertEqual(saved["action"], "Save successor")
 		self.assertEqual(
-			str(self.version(opened["successor_revision"]).required_by_date), "2027-09-15"
+			str(self.version(opened["successor_revision"]).required_by_date), F("2027-09-15")
 		)
 		self.assertEqual(
-			str(self.version(accepted["current_accepted_revision"]).required_by_date), "2027-12-31"
+			str(self.version(accepted["current_accepted_revision"]).required_by_date), F("2027-12-31")
 		)
 
 	def test_cancelling_an_update_withdraws_only_the_successor(self):
@@ -1180,7 +1181,7 @@ class TestAcceptedSuccessorLifecycle(DepartmentalNeedsCommandCase):
 		self.assertIsNotNone(found)
 		self.assertEqual(found["revision"], accepted["current_accepted_revision"])
 		self.assertEqual(found["revision_number"], 1)
-		self.assertEqual(str(found["content"]["required_by_date"]), "2027-12-31")
+		self.assertEqual(str(found["content"]["required_by_date"]), F("2027-12-31"))
 
 	def test_older_revision_usage_is_none_once_the_current_revision_has_its_own_projection(self):
 		accepted, opened = self.successor()
@@ -1485,7 +1486,7 @@ class TestSuccessorReachesTheReviewQueue(DepartmentalNeedsCommandCase):
 			need=accepted["need"],
 			expected_version=opened["record_version"],
 			idempotency_key=self.key(),
-			**self.content(required_by_date="2027-09-15"),
+			**self.content(required_by_date=F("2027-09-15")),
 		)
 		submitted = lifecycle.submit_need(
 			need=accepted["need"],
@@ -1551,8 +1552,8 @@ class TestSuccessorReachesTheReviewQueue(DepartmentalNeedsCommandCase):
 			read = workspace.get_review_task(task=task, user=REVIEWER)
 		finally:
 			frappe.set_user("Administrator")
-		self.assertEqual(str(read["accepted_revision"]["required_by_date"]), "2027-12-31")
-		self.assertEqual(str(read["revision"]["required_by_date"]), "2027-09-15")
+		self.assertEqual(str(read["accepted_revision"]["required_by_date"]), F("2027-12-31"))
+		self.assertEqual(str(read["revision"]["required_by_date"]), F("2027-09-15"))
 
 	def test_review_task_scope_is_named_not_raw_ids(self):
 		# The artboards show Department/Financial year by name; a raw doc name

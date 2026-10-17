@@ -10,6 +10,8 @@ restore their own world)."""
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 import re
 
@@ -29,7 +31,7 @@ class AvailableTendersCase(OpenPeriodCase):
 	def setUp(self):
 		super().setUp()
 		self.reference = self._root().tender_reference
-		frappe.flags.kt_bds_clock = "2027-05-20 10:00:00"
+		frappe.flags.kt_bds_clock = W("2027-05-20 10:00:00")
 		self.addCleanup(setattr, frappe.flags, "kt_bds_clock", None)
 
 	def _mine(self, result):
@@ -44,7 +46,7 @@ class TestGetAvailableTenders(AvailableTendersCase):
 		self.assertEqual(set(mine[0]), ROW_KEYS)
 		self.assertEqual(
 			(mine[0]["title"], mine[0]["method"], mine[0]["submission_deadline_label"], mine[0]["href"]),
-			("Supply and delivery of business laptops", "Open Tender", "5 Jun 2027, 11:00 EAT", f"/tenders/{self.reference}"),
+			("Supply and delivery of business laptops", "Open Tender", f"{ad.dt_eat('2027-06-05 11:00:00')}", f"/tenders/{self.reference}"),
 		)
 		n = len(result["rows"])
 		self.assertEqual(result["count_text"], f"{n} available Tender" + ("" if n == 1 else "s"))
@@ -63,7 +65,7 @@ class TestGetAvailableTenders(AvailableTendersCase):
 		self.assertEqual(empty["applied"], {"search": "no tender is called this", "method": "", "reservation": "", "closing": "open"})
 
 	def test_closing_follows_trusted_time_and_unknown_values_fall_back_to_open(self):
-		frappe.flags.kt_bds_clock = "2027-06-05 11:00:00"
+		frappe.flags.kt_bds_clock = W("2027-06-05 11:00:00")
 		self.assertFalse(self._mine(reads.get_available_tenders()))
 		self.assertTrue(self._mine(reads.get_available_tenders(closing="closed")))
 		self.assertTrue(self._mine(reads.get_available_tenders(closing="all")))

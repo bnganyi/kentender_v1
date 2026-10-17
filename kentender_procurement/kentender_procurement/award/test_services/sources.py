@@ -17,10 +17,12 @@ the simulation controls' synthetic state, never in Award's own records."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import copy
+from decimal import Decimal
 from typing import Any
 
-from decimal import Decimal
 import frappe
 from frappe.utils import cstr, get_datetime
 
@@ -76,7 +78,7 @@ def report(world: str, reference: str, *, version: int = 1, delivered_at=None, o
 	if recommended:
 		recommended = {**recommended, "quantity": "250 Each", "warranty": "36 months"}
 	signed = o.pop("signed", 3)
-	at = get_datetime(delivered_at or "2027-06-16 14:07:01")
+	at = get_datetime(delivered_at or W("2027-06-16 14:07:01"))
 	sigs = [{"user": u, "name": n, "signed_at": str(at) if i < signed else None} for i, (n, u) in enumerate(MEMBERS)]
 	annexes = [{"name": s, "available": True} for s in SECTIONS]
 	if o.pop("missing_annex", False):
@@ -92,7 +94,7 @@ def report(world: str, reference: str, *, version: int = 1, delivered_at=None, o
 		"reason": reason or o.pop("reason", "") or default_reason, "qualifications": o.pop("qualifications", []), "funding": o.pop("funding", {"available": "50000000.00",
 		"shortfall": "0.00", "qualification": "", "source": "Budget confirmation"}), "recommended": recommended, "comparison": bids,
 		"committee": [n for n, _u in MEMBERS], "dissent": o.pop("dissent", []), "narrative": "", "world": world,
-		"validity": {"validity_end": o.pop("validity_end", "2027-10-10 11:00:00"), "rule": {"counting": "Submission deadline date plus the published validity days",
+		"validity": {"validity_end": o.pop("validity_end", W("2027-10-10 11:00:00")), "rule": {"counting": "Submission deadline date plus the published validity days",
 			"source": "Published bid definition (synthetic)", "timezone": "Site time (EAT)"}},
 	}
 	snap.update(o)
@@ -228,7 +230,7 @@ class SyntheticSource:
 	def validity(self, tender: str) -> dict[str, Any]:
 		self._check(tender)
 		t = self._tender(tender)
-		return {"validity_end": get_datetime(t.get("validity_end") or "2027-10-10 11:00:00"), "rule": {"counting": "Submission deadline date plus the published validity days",
+		return {"validity_end": get_datetime(t.get("validity_end") or W("2027-10-10 11:00:00")), "rule": {"counting": "Submission deadline date plus the published validity days",
 			"source": "Published bid definition (synthetic)", "timezone": "Site time (EAT)", "extension_count": int(t.get("extensions") or 0)}}
 
 	def status_events(self, tender: str) -> list[dict[str, Any]]:

@@ -10,6 +10,7 @@ bid's organisation. Writes
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import os
 from unittest import mock
 
@@ -156,7 +157,7 @@ class TestBidDeadEndMatrix(GuidanceCase):
 		simulation.set_controls(bound_release_state="")
 		trust.revoke_certificate(self.certificate)
 		self.read_all("Signatory certificate required")
-		self.certificate = trust.issue_certificate(user=MARY, organisation=AFYA, subject_name="Mary Wanjiku", valid_from="2027-01-01 00:00:00", valid_to="2027-12-31 23:59:59")
+		self.certificate = trust.issue_certificate(user=MARY, organisation=AFYA, subject_name="Mary Wanjiku", valid_from=W("2027-01-01 00:00:00"), valid_to=W("2027-12-31 23:59:59"))
 		for state, controls in (("Production gate closed", {"gate_closed": 1}), ("Signing service down", {"trust_service_down": 1}), ("Submission service down", {"custody_service_down": 1})):
 			simulation.set_controls(**controls)
 			self.read_all(state)
@@ -176,20 +177,20 @@ class TestBidDeadEndMatrix(GuidanceCase):
 		simulation.set_controls(bound_release_state="Withdrawn")
 		self.read_all("Bound release withdrawn, submitted bid")
 		simulation.set_controls(bound_release_state="")
-		self.at("2027-05-31 08:30:00")
+		self.at(W("2027-05-31 08:30:00"))
 		self.replace()
 		self.read_all("Replacement Draft")
-		self.at("2027-05-31 09:00:00")
+		self.at(W("2027-05-31 09:00:00"))
 		self.withdraw()
 		self.read_all("Withdrawn, before the deadline")
-		self.at("2027-05-31 09:30:00")
+		self.at(W("2027-05-31 09:30:00"))
 		self.replace()
 		self.read_all("Started again after a withdrawal")
 		# a second supplier submits, to read a submitted bid after the deadline
 		other = start_bid.start_bid(tender_reference=self.reference, organisation=KISIWA, arrangement=self.single(), notice_contact_id=f"{KISIWA}-C1", idempotency_key=key(), user=PETER)["bid_reference"]
 		fill_everything(other, user=PETER)
-		trust.issue_certificate(user=GRACE, organisation=KISIWA, subject_name="Grace Njeri", valid_from="2027-01-01 00:00:00", valid_to="2027-12-31 23:59:59")
-		self.at("2027-05-31 10:00:00")
+		trust.issue_certificate(user=GRACE, organisation=KISIWA, subject_name="Grace Njeri", valid_from=W("2027-01-01 00:00:00"), valid_to=W("2027-12-31 23:59:59"))
+		self.at(W("2027-05-31 10:00:00"))
 		from kentender_procurement.bid_submission.services import signature
 
 		version = frappe.db.get_value("Bid Workspace", other, "record_version")

@@ -9,6 +9,7 @@ route resolved from the site's configured `statutory_approval_route`
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from unittest.mock import patch
 from uuid import uuid4
@@ -260,7 +261,7 @@ class TestSubmitConsolidatedPlan(GovernanceCase):
 		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
 		plan = frappe.get_doc("Annual Plan", version.annual_plan)
 		absent = {"method": {"found": False, "reason": "no_profile"}, "schedule": {"found": True, "verification_status": "Verified"},
-			"unresolved": set(), "applicability_date": "2026-12-01"}
+			"unresolved": set(), "applicability_date": W("2026-12-01")}
 		frappe.set_user(fx.HOPF)
 		with patch.object(rdy, "method_profile_for", return_value=absent):
 			read = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])

@@ -16,8 +16,19 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from kentender_core.seeds import calendar, canonical
+from kentender_core.seeds.calendar import world as W
 from kentender_core.services.command_write_guard import fixture_insert
 from kentender_core.services.command_write_guard import maintenance_write, purge_doc
+
+
+#: The furthest stage the prepared year reaches in this world: `annual_plan` in the v0.7 world, what the anchor allows otherwise
+#: (SEED-002 v0.8 R5; Departmental Needs at an October anchor).
+FULL_NEXT = calendar.default_next_stage()
+
+
+def _next_at_most(stage: str) -> str:
+	"""`stage`, or the furthest the anchor allows when that is earlier."""
+	return stage if canonical.NEXT_STAGES.index(stage) <= canonical.NEXT_STAGES.index(FULL_NEXT) else FULL_NEXT
 
 
 def _full(**kwargs):
@@ -44,7 +55,7 @@ class TestCanonicalSelection(IntegrationTestCase):
 			("annual_plan", "requisitions", "tenders", "bid_submission", "bid_opening", "bid_evaluation", "award"),
 		)
 		self.assertEqual(canonical.NEXT_STAGES, ("none", "budget", "needs", "departmental_plans", "annual_plan"))
-		self.assertEqual(canonical.resolve_years(), ("award", "annual_plan"))  # the plain seed: the full world (plan D6)
+		self.assertEqual(canonical.resolve_years(), ("award", FULL_NEXT))  # the plain seed: the full world (plan D6; v0.8: as far as the anchor allows)
 		self.assertEqual(canonical.resolve_years(current="requisitions", next_year="budget"), ("requisitions", "budget"))
 		with self.assertRaises(frappe.ValidationError):
 			canonical.resolve_years(current="tender")
@@ -58,18 +69,29 @@ class TestCanonicalSelection(IntegrationTestCase):
 		later stage moves the executed year with the prepared year complete."""
 		self.assertEqual(canonical.resolve_years(through="site"), ("annual_plan", "none"))
 		self.assertEqual(canonical.resolve_years(through="budget"), ("annual_plan", "budget"))
-		self.assertEqual(canonical.resolve_years(through="planning"), ("annual_plan", "annual_plan"))
-		self.assertEqual(canonical.resolve_years(through="tenders"), ("tenders", "annual_plan"))
+		if FULL_NEXT == "annual_plan":
+			self.assertEqual(canonical.resolve_years(through="planning"), ("annual_plan", "annual_plan"))
+		else:
+			with self.assertRaises(frappe.ValidationError):  # the anchor does not allow the prepared year's Annual Plan yet
+				canonical.resolve_years(through="planning")
+		self.assertEqual(canonical.resolve_years(through="tenders"), ("tenders", FULL_NEXT))
 		with self.assertRaises(frappe.ValidationError):
 			canonical.resolve_years(through="tender")
 
 	def test_the_world_is_read_as_at_18_june_2027_with_year_1_fifty_two_weeks_earlier(self):
-		self.assertEqual(calendar.AS_AT, "2027-06-18 10:00:00")
-		self.assertEqual((calendar.YEAR1.fiscal_year, calendar.YEAR2.fiscal_year), ("2026-2027", "2027-2028"))
-		# 364 days keeps each weekday (Mon 7 Dec 2026 -> Mon 8 Dec 2025)
-		self.assertEqual(calendar.YEAR1.at("2026-12-07 10:00:00"), "2025-12-08 10:00:00")
-		self.assertEqual(calendar.YEAR1.at("2026-11-30"), "2025-12-01")
-		self.assertEqual(calendar.YEAR2.at("2026-12-07 10:00:00"), "2026-12-07 10:00:00")
+		self.assertEqual(calendar.STORY_AS_AT, "2027-06-18 10:00:00")
+		if calendar.mode() == "legacy":
+			self.assertEqual(calendar.as_at(), "2027-06-18 10:00:00")
+			self.assertEqual((calendar.YEAR1.fiscal_year, calendar.YEAR2.fiscal_year), ("2026-2027", "2027-2028"))
+			# 364 days keeps each weekday (Mon 7 Dec 2026 -> Mon 8 Dec 2025)
+			self.assertEqual(calendar.YEAR1.at("2026-12-07 10:00:00"), "2025-12-08 10:00:00")
+			self.assertEqual(calendar.YEAR1.at("2026-11-30"), "2025-12-01")
+			self.assertEqual(calendar.YEAR2.at("2026-12-07 10:00:00"), "2026-12-07 10:00:00")
+		else:
+			# an anchored world: whole weeks everywhere, so every weekday is kept (SEED-002 v0.8 §A1.1; `test_calendar` has the arithmetic)
+			self.assertEqual(calendar.YEAR1.shift_days % 7, 0)
+			self.assertEqual(calendar.YEAR2.shift_days % 7, 0)
+			self.assertEqual(calendar.execution_shift_days() % 7, 0)
 
 	def test_register_actor_and_real_person_are_never_selected(self):
 		plan = canonical.collect_non_canonical()
@@ -356,9 +378,10 @@ class TestCanonicalSeedRun(IntegrationTestCase):
 		}
 		second = _full(validate=True)
 		self.assertTrue(second["ok"])
-		for year in ("year1", "year2"):
-			self.assertFalse(second["seeded"]["budget"]["years"][year]["created"], year)
-			self.assertTrue(second["seeded"]["planning"]["years"][year]["idempotent"], year)
+		for year, row in second["seeded"]["budget"]["years"].items():
+			self.assertFalse(row["created"], year)
+		for year, row in second["seeded"]["planning"]["years"].items():
+			self.assertTrue(row["idempotent"], year)
 		for stage in ("requisitions", "bid_submission", "bid_opening", "bid_evaluation", "award"):
 			self.assertTrue(second["seeded"][stage]["idempotent"], stage)
 		for dt, count in counts.items():
@@ -406,14 +429,21 @@ class TestCanonicalSeedRun(IntegrationTestCase):
 		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import year_plan
 
 		_full()
-		self.assertTrue(year_plan("year1").active_version and year_plan("year2").active_version)
-		requisition = frappe.get_all("Procurement Requisition", fields=["plan_item_id"], limit=1)[0]
-		plan = frappe.db.get_value("Plan Item", requisition.plan_item_id, "annual_plan")
-		self.assertEqual(frappe.db.get_value("Annual Plan", plan, "fiscal_year"), calendar.YEAR1.fiscal_year)
-		y2_items = frappe.get_all("Plan Item", filters={"annual_plan": year_plan("year2").name}, pluck="name")
+		self.assertTrue(year_plan("year1").active_version)
+		if FULL_NEXT == "annual_plan":
+			self.assertTrue(year_plan("year2").active_version)
+		# every Requisition draws on the executed year's plan or, in an anchored world, the closed year's; none on the prepared year's
+		years = {
+			frappe.db.get_value("Annual Plan", frappe.db.get_value("Plan Item", row.plan_item_id, "annual_plan"), "fiscal_year")
+			for row in frappe.get_all("Procurement Requisition", fields=["plan_item_id"])
+		}
+		self.assertIn(calendar.YEAR1.fiscal_year, years)
+		self.assertLessEqual(years, {calendar.YEAR1.fiscal_year, *(y.fiscal_year for y in calendar.seeded_years() if y.key == "year0")})
+		plan_year2 = year_plan("year2")
+		y2_items = frappe.get_all("Plan Item", filters={"annual_plan": plan_year2.name}, pluck="name") if plan_year2 else []
 		self.assertFalse(frappe.db.exists("Procurement Requisition", {"plan_item_id": ("in", y2_items or ("",))}))
 		if frappe.conf.get("kt_bds_simulation_environment"):
-			self.assertEqual(str(test_clock.current_instant())[:19], calendar.AS_AT)
+			self.assertEqual(str(test_clock.current_instant())[:19], calendar.as_at())
 
 
 class TestTwoYearLadders(IntegrationTestCase):
@@ -438,14 +468,16 @@ class TestTwoYearLadders(IntegrationTestCase):
 	def test_2_a_higher_stage_builds_on_what_is_there(self):
 		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import year_plan
 
-		out = canonical.run(current="requisitions", next_year="departmental_plans", force=True, commit=True)
+		next_year = _next_at_most("departmental_plans")
+		out = canonical.run(current="requisitions", next_year=next_year, force=True, commit=True)
 		self.assertFalse(out.get("rebuilt_after_partial_world"))
 		self.assertGreater(frappe.db.count("Procurement Requisition"), 0)
 		self.assertEqual(frappe.db.count("Tender"), 0)
-		self.assertTrue(year_plan("year2") and not year_plan("year2").active_version)
+		if next_year == "departmental_plans":
+			self.assertTrue(year_plan("year2") and not year_plan("year2").active_version)
 
 	def test_3_the_bid_stage_tells_every_tender_with_its_bids(self):
-		out = canonical.run(current="bid_submission", next_year="annual_plan", force=True, commit=True)
+		out = canonical.run(current="bid_submission", next_year=FULL_NEXT, force=True, commit=True)
 		self.assertFalse(out.get("rebuilt_after_partial_world"))
 		self.assertGreater(frappe.db.count("Bid Workspace", {"status": "Submitted"}), 4)
 
@@ -454,7 +486,8 @@ class TestTwoYearLadders(IntegrationTestCase):
 
 		out = canonical.run(force=True, commit=True)
 		self.assertTrue(out["ok"])
-		self.assertTrue(year_plan("year2").active_version)
+		if FULL_NEXT == "annual_plan":
+			self.assertTrue(year_plan("year2").active_version)
 
 
 class TestDemoProfilesReleased(IntegrationTestCase):
@@ -468,7 +501,7 @@ class TestDemoProfilesReleased(IntegrationTestCase):
 		from kentender_procurement.bid_opening.seeds import profiles as bop_profiles
 
 		frappe.set_user("Administrator")
-		if not test_clock.set_instant("2027-06-12 11:00:05"):
+		if not test_clock.set_instant(W("2027-06-12 11:00:05")):
 			self.skipTest("not a test environment: nothing keeps a test clock")
 		frappe.db.set_default(bop_profiles.LOADED_KEY, "BOP-DEMO-READY")
 		try:
@@ -485,7 +518,7 @@ class TestDemoProfilesReleased(IntegrationTestCase):
 		from kentender_core.services import test_clock
 
 		frappe.set_user("Administrator")
-		if not test_clock.set_instant("2027-06-17 10:00:00"):
+		if not test_clock.set_instant(W("2027-06-17 10:00:00")):
 			self.skipTest("not a test environment: nothing keeps a test clock")
 		try:
 			canonical.release_demo_profiles()
@@ -641,7 +674,7 @@ class TestPublicTenders(IntegrationTestCase):
 		from kentender_procurement.bid_submission.services import reads
 
 		_full()
-		tender = frappe.db.get_value("Tender", {"overall_status": "Published — open", "submission_deadline": (">", calendar.AS_AT)}, "tender_reference")
+		tender = frappe.db.get_value("Tender", {"overall_status": "Published — open", "submission_deadline": (">", calendar.as_at())}, "tender_reference")
 		self.assertTrue(tender)
 		try:
 			frappe.set_user("Guest")
@@ -670,7 +703,7 @@ class TestFieldLaptopsCancellationReview(IntegrationTestCase):
 		task = frappe.db.get_value("Tender Task", {"tender": tender.name, "task_type": "AO cancellation review", "status": "Open"}, ["sender", "creation"], as_dict=True)
 		self.assertTrue(task, "an open cancellation review on the field laptops Tender")
 		self.assertEqual(task.sender, "brian.wafula@moh.example.test")
-		self.assertEqual(str(task.creation)[:19], "2027-06-16 14:00:00")
+		self.assertEqual(str(task.creation)[:19], W("2027-06-16 14:00:00"))
 		try:
 			frappe.set_user("amina.hassan@moh.example.test")
 			mine = [r["title"] for r in get_my_work()["buckets"].get("assigned", [])]
@@ -680,3 +713,50 @@ class TestFieldLaptopsCancellationReview(IntegrationTestCase):
 			frappe.set_user("Administrator")
 		self.assertIn(f"Consider cancellation of {tender.tender_reference}", mine)
 		self.assertIn(f"Waiting for Amina Hassan to consider cancellation of {tender.tender_reference}", waiting)
+
+
+class TestAnchoredWorld(IntegrationTestCase):
+	"""SEED-002 v0.8 R1 and R3 on a site whose world is anchored: three years, the closed one complete, nothing recorded after the
+	anchor. Skipped on a site that still holds the v0.7 world."""
+
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		if calendar.mode() != "anchored":
+			import unittest
+
+			raise unittest.SkipTest("the site's world is not anchored (v0.7)")
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+
+	def test_the_three_years_are_configured_and_nothing_else(self):
+		names = {y.fiscal_year for y in calendar.ALL_YEARS}
+		for name in names:
+			self.assertTrue(frappe.db.exists("Fiscal Year", name), name)
+		self.assertEqual({fy for fy in frappe.get_all("Fiscal Year", filters={"name": ["not like", "_Test%"]}, pluck="name")}, names)
+
+	def test_the_closed_year_has_its_budget_its_active_plan_and_three_awards_waiting(self):
+		from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budget
+		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import year_plan
+
+		self.assertTrue(canonical_budget("year0"))
+		plan = year_plan("year0")
+		self.assertTrue(plan and plan.active_version)
+		from kentender_core.seeds import portfolio
+
+		for spec in portfolio.PORTFOLIO0:
+			requisition = portfolio._requisition(spec)
+			self.assertTrue(requisition, spec["key"])
+			tender = frappe.db.get_value("Tender", {"requisition": requisition}, "name")
+			self.assertEqual(frappe.db.get_value("Award Case", {"tender": tender}, "stage"), "Waiting to proceed", spec["key"])
+
+	def test_no_recorded_event_is_later_than_the_anchor(self):
+		self.assertEqual(canonical.events_after_anchor(), [])
+
+	def test_the_anchor_is_on_a_friday_at_ten_and_not_ahead_of_the_real_clock(self):
+		from frappe.utils import get_datetime, now_datetime
+
+		anchor = calendar.anchor_datetime()
+		self.assertEqual((anchor.weekday(), anchor.hour, anchor.minute), (4, 10, 0))
+		self.assertLessEqual(anchor, get_datetime(now_datetime()))

@@ -7,6 +7,7 @@ committee, the secretary by office and a delegated secretary."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 
 from kentender_procurement.bid_evaluation.services import picker_sources, roster, secretary
@@ -69,7 +70,7 @@ class TestEvaluationAndIntakeDuty(CommitteeCase):
 		with records.atomic("exposure"):
 			security_duty.record_exposure(self.name, self.reference, head, security_duty.RECORDED, "TSI-0000000000")
 			conflict = records.insert(frappe.get_doc({"doctype": security_duty.CONFLICT, "tender": self.name, "tender_reference": self.reference, "user": head, "conflicting_duty": "Evaluation secretary",
-				"basis": "Has recorded intake", "status": "Open", "detected_at": "2027-05-19 09:00:00", "detected_by": "System"}))
+				"basis": "Has recorded intake", "status": "Open", "detected_at": W("2027-05-19 09:00:00"), "detected_by": "System"}))
 		error = self.refused(self.evl_appoint)
 		self.assertEqual(error.code, "EVL_SECRETARY_INELIGIBLE", error.detail)
 		self.assertFalse(roster.current_appointment(self.evaluation))

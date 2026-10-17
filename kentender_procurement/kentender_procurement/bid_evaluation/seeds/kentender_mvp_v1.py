@@ -36,6 +36,7 @@ test attestation service's, so the stage runs only on a test site."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from typing import Any
 from uuid import uuid4
 
@@ -61,13 +62,13 @@ ROSTER = [
 	{"user": MEMBER_2, "capacity": "Member"},
 ]
 CLOCK = {
-	"prepare": "2027-06-11 08:58:00", "appoint": "2027-06-11 09:00:00", "secretary": "2027-06-11 09:05:00",
-	"declare": ("2027-06-11 09:10:00", "2027-06-11 09:12:00", "2027-06-11 09:14:00"), "intake": "2027-06-12 11:10:33",
-	"eligibility": "2027-06-14 08:45:00", "technical": "2027-06-14 08:50:00", "start": "2027-06-14 09:00:00", "join": ("2027-06-14 09:02:00", "2027-06-14 09:03:00"),
-	"note": "2027-06-14 09:04:00", "authorise": "2027-06-14 09:05:00", "end": "2027-06-14 09:06:00", "send": "2027-06-14 09:10:00",
-	"deadline": "2027-06-15 17:00:00", "reply": "2027-06-15 10:00:00", "restart": "2027-06-16 09:00:00", "rejoin": ("2027-06-16 09:02:00", "2027-06-16 09:03:00"),
-	"dispose": "2027-06-16 09:05:00", "basis": "2027-06-16 09:05:30", "end2": "2027-06-16 09:06:00", "narrative": "2027-06-16 13:55:00",
-	"freeze": "2027-06-16 14:00:00", "sign": ("2027-06-16 14:05:00", "2027-06-16 14:06:00", "2027-06-16 14:07:00"),
+	"prepare": W("2027-06-11 08:58:00"), "appoint": W("2027-06-11 09:00:00"), "secretary": W("2027-06-11 09:05:00"),
+	"declare": (W("2027-06-11 09:10:00"), W("2027-06-11 09:12:00"), W("2027-06-11 09:14:00")), "intake": W("2027-06-12 11:10:33"),
+	"eligibility": W("2027-06-14 08:45:00"), "technical": W("2027-06-14 08:50:00"), "start": W("2027-06-14 09:00:00"), "join": (W("2027-06-14 09:02:00"), W("2027-06-14 09:03:00")),
+	"note": W("2027-06-14 09:04:00"), "authorise": W("2027-06-14 09:05:00"), "end": W("2027-06-14 09:06:00"), "send": W("2027-06-14 09:10:00"),
+	"deadline": W("2027-06-15 17:00:00"), "reply": W("2027-06-15 10:00:00"), "restart": W("2027-06-16 09:00:00"), "rejoin": (W("2027-06-16 09:02:00"), W("2027-06-16 09:03:00")),
+	"dispose": W("2027-06-16 09:05:00"), "basis": W("2027-06-16 09:05:30"), "end2": W("2027-06-16 09:06:00"), "narrative": W("2027-06-16 13:55:00"),
+	"freeze": W("2027-06-16 14:00:00"), "sign": (W("2027-06-16 14:05:00"), W("2027-06-16 14:06:00"), W("2027-06-16 14:07:00")),
 }
 Q1 = "Please identify the page and section of your submitted Kenya service-centre details that gives the Nairobi service address."
 SCOPE = "Explain the submitted evidence. Do not change your offer or add a new service arrangement."
@@ -83,9 +84,9 @@ AFYA = "Afya Digital Supplies Limited"
 #: The other bids' evidence reviews: (tenderer, eligibility instant by Ruth Achieng, technical instant by Peter Mugo, the requirement mapping that
 #: fails with its reason, or None). Every other row awaiting review meets.
 REVIEWS = (
-	("Jirani Office Supplies Limited", "2027-06-14 08:10:00", "2027-06-14 08:15:00", None),
-	("Pwani Tech Distributors Limited", "2027-06-14 08:20:00", "2027-06-14 08:25:00", None),
-	("Mlima Computer Solutions Limited", "2027-06-14 08:30:00", "2027-06-14 08:35:00",
+	("Jirani Office Supplies Limited", W("2027-06-14 08:10:00"), W("2027-06-14 08:15:00"), None),
+	("Pwani Tech Distributors Limited", W("2027-06-14 08:20:00"), W("2027-06-14 08:25:00"), None),
+	("Mlima Computer Solutions Limited", W("2027-06-14 08:30:00"), W("2027-06-14 08:35:00"),
 		("DM-EVIDENCE-ELIGIBILITY-DOCUMENTS", "The tax compliance certificate in the eligibility documents expired on 30 April 2027, before the submission deadline.")),
 )
 #: The ranking the comparison must show: (tenderer, position, evaluated total).
@@ -162,6 +163,9 @@ class _Story:
 		for r in sorted(aggregate.bid_results(case, checks.current_run(case), bid)["requirements"], key=lambda r: r["group_id"] != ELIGIBILITY):
 			if r["result"] != "Needs review":
 				continue
+			if r.get("unsupported_basis"):
+				# A finding cannot resolve a missing rule or an arithmetic discrepancy (EVL §4.4): the seeded bid has one, so say which.
+				frappe.throw(f"{tenderer}'s bid has a requirement no finding can resolve: {r['label']!r} ({r['reason']}); the seeded offer needs correcting.")
 			eligibility = r["group_id"] == ELIGIBILITY
 			fails = bool(failing) and r["mapping_id"] == failing[0] and not failed
 			failed = failed or fails

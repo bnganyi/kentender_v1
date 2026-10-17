@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { Browser, BrowserContext, expect, Page } from "@playwright/test";
 
+import { block } from "../../helpers/anchor";
 import { login } from "../../helpers/auth";
 
 /**
@@ -15,6 +16,9 @@ import { login } from "../../helpers/auth";
 const BENCH_ROOT = path.resolve(__dirname, "../../../../../..");
 const SITE = process.env.UI_SITE || "kentender.midas.com";
 const FIXTURES = "kentender_procurement.award.seeds.playwright_ui_fixtures";
+
+/** The browser worlds move back as one block (`award.seeds.playwright_ui_fixtures.W`): the instants a spec sets and reads for them go through the same mapping. */
+export const awardWorldInstant = block("2027-10-11 10:00:00");
 
 export const PASSWORD = process.env.UI_SEED_PASSWORD || "Test@123";
 export const CHARLES = "charles.mutiso@moh.example.test";

@@ -16,6 +16,8 @@ Run:
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from datetime import datetime, timedelta
 
 import frappe
@@ -37,9 +39,9 @@ from kentender_procurement.procurement_requisitions.tests import fixtures as fx
 
 EXTRA = "reqt.home.extra@example.test"  # an unrelated internal user until a test grants it something
 EXTRA_NS = "KT_TEST_REQHOME"
-H12 = datetime(2027, 6, 18, 10, 0)
+H12 = W(datetime(2027, 6, 18, 10, 0))
 SPEC_PAGES = ("procurement-requisitions",)
-SENT_AT, CERTIFIED_AT, AUTHORISED_AT = "2027-06-16 09:00:00", "2027-06-16 11:00:00", "2027-06-17 11:00:00"
+SENT_AT, CERTIFIED_AT, AUTHORISED_AT = W("2027-06-16 09:00:00"), W("2027-06-16 11:00:00"), W("2027-06-17 11:00:00")
 HOD, AUTHOR, HOPF, PLANNER, AUDITOR, AO, OUTSIDER = fx.HOD, fx.AUTHOR, fx.HOPF, fx.PLANNER, fx.AUDITOR, fx.ACCOUNTING_OFFICER, fx.OUTSIDER
 HOPF_2 = pln_fx.HYBRID_HOPF_AO  # a second Head of Procurement Function (also an Accounting Officer)
 
@@ -233,9 +235,9 @@ class TestRequisitionsHomeProvider(HomeCase):
 	def test_the_home_read_renders_the_spec_timing_for_the_authorise_row(self):
 		requisition = self.certified()
 		row = self.row(HOPF, "my_work", requisition)
-		self.assertEqual((row["action"], row["timing"], row["module"]), ("Authorise requisition", "Received 2 days ago (16 June, 11:00)", "Requisitions"))
+		self.assertEqual((row["action"], row["timing"], row["module"]), ("Authorise requisition", f"Received 2 days ago ({ad.home_dt('2027-06-16 11:00:00')})", "Requisitions"))
 		self.assertEqual(row["title"], self.title(requisition))
-		self.assertEqual(self.row(HOPF, "my_work", requisition, at=datetime(2027, 6, 17, 10, 0))["timing"], "Received yesterday (16 June, 11:00)")
+		self.assertEqual(self.row(HOPF, "my_work", requisition, at=W(datetime(2027, 6, 17, 10, 0)))["timing"], f"Received yesterday ({ad.home_dt('2027-06-16 11:00:00')})")
 
 	def test_the_departmental_approval_row_belongs_to_the_head_of_user_department(self):
 		requisition = self.sent()
@@ -296,7 +298,7 @@ class TestRequisitionsHomeProvider(HomeCase):
 		self.assertEqual(wait["action"], f"Waiting for {subject} to review the departmental requisition")
 		self.assertEqual((wait["holder"], wait["action_id"]), (display, fx.open_task(requisition, "Head of User Department")))
 		self.assertEqual(wait["destination"]["route"], ["procurement-requisitions", self.reference(requisition)])
-		self.assertEqual(self.row(AUTHOR, "waiting", requisition)["timing"], "Waiting 2 days (since 16 June, 09:00)")
+		self.assertEqual(self.row(AUTHOR, "waiting", requisition)["timing"], f"Waiting 2 days (since {ad.home_dt('2027-06-16 09:00:00')})")
 		# nobody else waits: the Head holds the task, the outsider sent nothing
 		for user in (HOD, OUTSIDER, PLANNER, AUDITOR):
 			self.assertEqual([r for r in self.region(user, he.WAITING) or [] if r["root"] == requisition], [], user)
@@ -308,7 +310,7 @@ class TestRequisitionsHomeProvider(HomeCase):
 		self.assertEqual(wait["since"], _dt(CERTIFIED_AT))
 		self.assertEqual(wait["action"], f"Waiting for {subject} to authorise the requisition")
 		self.assertEqual((wait["holder"], wait["title"], wait["action_id"]), (display, self.title(requisition), fx.open_task(requisition, "Head of Procurement Function")))
-		self.assertEqual(self.row(HOD, "waiting", requisition)["timing"], "Waiting 2 days (since 16 June, 11:00)")
+		self.assertEqual(self.row(HOD, "waiting", requisition)["timing"], f"Waiting 2 days (since {ad.home_dt('2027-06-16 11:00:00')})")
 		# Grace sent it, but it has left the Head of Department: her wait is over
 		self.assertEqual([r for r in self.region(AUTHOR, he.WAITING) if r["root"] == requisition], [])
 		# the Head of Procurement Function holds the task; the one who certified it did not hand anything to himself
@@ -355,7 +357,7 @@ class TestRequisitionsHomeProvider(HomeCase):
 		row = self.one(AUTHOR, he.COMPLETED, requisition)
 		display, _subject = self.phrase("Head of User Department", fx.ou_alpha(), besides=AUTHOR)
 		self.assertEqual((row["title"], row["action"], row["reference"], row["completed_at"]), (self.title(requisition), "Sent requisition for department approval", self.reference(requisition), _dt(SENT_AT)))
-		self.assertTrue(row["sentence"].startswith("You sent this requisition for department approval on 16 June 2027, 09:00 "), row["sentence"])
+		self.assertTrue(row["sentence"].startswith(f"You sent this requisition for department approval on {ad.d_long('2027-06-16')}, 09:00 "), row["sentence"])
 		self.assertEqual(row["sentence"].split(". ", 1)[1], f"It is awaiting department approval by {display}.")
 		self.assertEqual(row["destination"]["route"], ["procurement-requisitions", self.reference(requisition)])
 		self.assertEqual(self.row(AUTHOR, "completed", requisition)["action"], "Sent requisition for department approval")
@@ -366,7 +368,7 @@ class TestRequisitionsHomeProvider(HomeCase):
 		row = self.one(HOD, he.COMPLETED, requisition, decision)
 		display, _subject = self.phrase("Head of Procurement Function", besides=HOD)
 		self.assertEqual((row["action"], row["completed_at"], row["title"]), ("Sent requisition to Procurement", _dt(CERTIFIED_AT), self.title(requisition)))
-		self.assertTrue(row["sentence"].startswith("You sent this requisition to Procurement on 16 June 2027, 11:00 "), row["sentence"])
+		self.assertTrue(row["sentence"].startswith(f"You sent this requisition to Procurement on {ad.d_long('2027-06-16')}, 11:00 "), row["sentence"])
 		self.assertEqual(row["sentence"].split(". ", 1)[1], f"It is awaiting authorisation by {display}.")
 		# once the requisition has moved on, the clause is dropped (FU-HOME-24)
 		frappe.db.set_value("Procurement Requisition", requisition, "current_state", "Authorised", update_modified=False)
@@ -380,7 +382,7 @@ class TestRequisitionsHomeProvider(HomeCase):
 		frappe.db.set_value("Procurement Requisition", requisition, "current_state", "Authorised", update_modified=False)
 		row = self.one(HOPF_2, he.COMPLETED, requisition, decision)
 		self.assertEqual((row["title"], row["action"], row["completed_at"]), (self.title(requisition), "Authorised requisition", _dt(AUTHORISED_AT)))
-		self.assertTrue(row["sentence"].startswith("You authorised this requisition on 17 June 2027, 11:00 ") and row["sentence"].endswith("."), row["sentence"])
+		self.assertTrue(row["sentence"].startswith(f"You authorised this requisition on {ad.d_long('2027-06-17')}, 11:00 ") and row["sentence"].endswith("."), row["sentence"])
 		self.assertNotIn("awaiting", row["sentence"])
 		self.assertEqual(row["destination"]["route"], ["procurement-requisitions", self.reference(requisition)])
 		self.assertEqual(self.row(HOPF_2, "completed", requisition)["action"], "Authorised requisition")
@@ -394,7 +396,7 @@ class TestRequisitionsHomeProvider(HomeCase):
 		self.assertEqual({row["action"] for row in rows}, {label for label, _did in home_provider.COMPLETED.values()})
 		self.assertNotIn(other, [row["action_id"] for row in rows])
 		for row in rows:
-			self.assertTrue(row["sentence"].startswith("You ") and " on 17 June 2027, 11:00 " in row["sentence"], row["sentence"])
+			self.assertTrue(row["sentence"].startswith("You ") and f" on {ad.d_long('2027-06-17')}, 11:00 " in row["sentence"], row["sentence"])
 
 	def test_only_the_actors_own_decisions_inside_thirty_days_for_a_requisition_they_can_read(self):
 		requisition = self.certified()
@@ -544,7 +546,7 @@ class TestRequisitionsHomeAfterAPlanningCorrection(HomeCase):
 		frappe.set_user(HOPF)
 		lifecycle.request_upstream_plan_correction(requisition=requisition, reason="The approved source allocation refers to the wrong Budget Line.", expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
 		frappe.set_user("Administrator")
-		stopped_at = _dt("2027-06-17 15:00:00")
+		stopped_at = _dt(W("2027-06-17 15:00:00"))
 		decision = frappe.db.get_value("Requisition Decision", {"requisition_version": self.version(requisition), "decision": "Request Planning correction"}, "name")
 		frappe.db.set_value("Requisition Decision", decision, "decided_at", stopped_at, update_modified=False)
 		self.assertEqual(frappe.db.get_value("Procurement Requisition", requisition, "current_state"), "Upstream correction required")
@@ -553,7 +555,7 @@ class TestRequisitionsHomeAfterAPlanningCorrection(HomeCase):
 		self.assertEqual((wait["since"], wait["holder"], wait["title"]), (stopped_at, display, self.title(requisition)))
 		self.assertEqual(wait["action"], f"Waiting for {subject} to resolve the Planning correction request")
 		self.assertEqual(wait["action_id"], f"{requisition}:planning-correction")
-		self.assertEqual(self.row(HOPF, "waiting", requisition)["timing"], "Waiting 1 day (since 17 June, 15:00)")
+		self.assertEqual(self.row(HOPF, "waiting", requisition)["timing"], f"Waiting 1 day (since {ad.home_dt('2027-06-17 15:00:00')})")
 		# the stopped requisition has no open task: nobody holds an item, and only the requester waits
 		for user in (HOPF, HOPF_2, HOD, AUTHOR):
 			self.assertEqual([r for r in self.region(user, he.MY_WORK) if r["root"] == requisition], [], user)
@@ -561,7 +563,7 @@ class TestRequisitionsHomeAfterAPlanningCorrection(HomeCase):
 			self.assertEqual([r for r in self.region(user, he.WAITING) if r["root"] == requisition], [], user)
 		row = self.one(HOPF, he.COMPLETED, requisition, decision)
 		self.assertEqual(row["action"], "Requested Planning correction")
-		self.assertTrue(row["sentence"].startswith("You asked Planning to correct the plan behind this requisition on 17 June 2027, 15:00 "), row["sentence"])
+		self.assertTrue(row["sentence"].startswith(f"You asked Planning to correct the plan behind this requisition on {ad.d_long('2027-06-17')}, 15:00 "), row["sentence"])
 		self.assertNotIn("awaiting", row["sentence"])
 		before = frappe.db.transaction_writes
 		for user in (HOPF, HOD, PLANNER):

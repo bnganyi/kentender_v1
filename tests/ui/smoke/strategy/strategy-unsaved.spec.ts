@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { fiscal } from "../../helpers/anchor";
 
 import { login } from "../../helpers/auth";
 import {
@@ -106,7 +107,7 @@ test.describe("Strategy — unsaved changes and Update plan copy", () => {
 		expect(saved).not.toBe("");
 		await expect(page.locator(unsaved)).toHaveCount(0);
 
-		await useUntil.fill("2028-06-29");
+		await useUntil.fill(fiscal("2028-06-29"));
 		await expect(page.locator(unsaved)).toHaveText("Unsaved changes");
 
 		// Stay here keeps the page and the typed value.
@@ -117,7 +118,7 @@ test.describe("Strategy — unsaved changes and Update plan copy", () => {
 		await guard.locator('[data-testid="str-confirm-cancel"]').click();
 		await expect(guard).toBeHidden();
 		await expect(page.locator('[data-testid="str-plan"]')).toHaveAttribute("data-tab", "overview");
-		await expect(useUntil).toHaveValue("2028-06-29");
+		await expect(useUntil).toHaveValue(fiscal("2028-06-29"));
 
 		// Discard restores the saved value and continues to the chosen tab.
 		await page.locator('[data-testid="str-tab-history"]').click();
@@ -129,14 +130,14 @@ test.describe("Strategy — unsaved changes and Update plan copy", () => {
 		await expect(page.locator(unsaved)).toHaveCount(0);
 
 		// Save commits the value, then continues.
-		await useUntil.fill("2028-06-29");
+		await useUntil.fill(fiscal("2028-06-29"));
 		await page.locator('[data-testid="str-tab-history"]').click();
 		await guard.locator('[data-testid="str-confirm-ok"]').click();
 		await expect(page).toHaveURL(/\/version\/2\/history$/, { timeout: 30_000 });
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await expectScreen(page, "plan");
 		await page.locator('[data-testid="str-tab-overview"]').click();
-		await expect(useUntil).toHaveValue("2028-06-29");
+		await expect(useUntil).toHaveValue(fiscal("2028-06-29"));
 		await expect(page.locator(unsaved)).toHaveCount(0);
 		await expectNoFrappeModal(page);
 
@@ -173,7 +174,7 @@ test.describe("Strategy — unsaved changes and Update plan copy", () => {
 		await expect(page.locator('[data-testid="str-plan"]')).toHaveAttribute("data-tab", "overview");
 
 		// Plan details: the breadcrumb is held the same way.
-		await page.locator('[data-testid="str-use-until"]').fill("2028-06-28");
+		await page.locator('[data-testid="str-use-until"]').fill(fiscal("2028-06-28"));
 		await page.locator(".kt-rail-crumb-link", { hasText: "Strategy Alignment" }).click();
 		const detailsGuard = page.locator('[data-testid="str-details-unsaved-dialog"]');
 		await expect(detailsGuard).toBeVisible();

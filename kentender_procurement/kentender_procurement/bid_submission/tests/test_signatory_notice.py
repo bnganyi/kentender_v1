@@ -9,6 +9,8 @@ and only while the bid is ready and open. The signatory herself never needs it."
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from datetime import datetime, timedelta
 from unittest import TestCase
 
@@ -21,10 +23,10 @@ from kentender_procurement.bid_submission.tests.test_submission import Submissio
 
 class TestComposition(TestCase):
 	def test_the_message_names_who_prepared_the_bid_what_it_is_and_where_to_open_it(self):
-		subject, body = signatory_notice.compose(sender="David Ouma", tender_title="Supply of laptops", bid="BID-1", deadline_label="5 Jun 2027, 11:00 EAT", url="https://x.example/tenders/T/bid/review", note="")
+		subject, body = signatory_notice.compose(sender="David Ouma", tender_title="Supply of laptops", bid="BID-1", deadline_label=f"{ad.dt_eat('2027-06-05 11:00:00')}", url="https://x.example/tenders/T/bid/review", note="")
 		self.assertEqual(subject, "Bid ready for your signature: Supply of laptops")
 		self.assertIn("David Ouma has finished preparing the bid BID-1 for Supply of laptops", body)
-		self.assertIn("Submissions close 5 Jun 2027, 11:00 EAT.", body)
+		self.assertIn(f"Submissions close {ad.dt_eat('2027-06-05 11:00:00')}.", body)
 		self.assertIn('href="https://x.example/tenders/T/bid/review"', body)
 		self.assertNotIn("<blockquote", body)
 
@@ -46,7 +48,7 @@ class TestNotifyTheSignatory(SubmissionCase):
 		super().setUp()
 		self.sent: list[dict] = []
 		self._flag("kt_bds_message_transport", lambda message: self.sent.append(message) or {"result": "Sent"})
-		self.at("2027-05-20 11:00:00")
+		self.at(W("2027-05-20 11:00:00"))
 
 	def notify(self, user=DAVID, note="", **kw):
 		return signatory_notice.notify_signatory(bid_reference=self.bid, note=note, idempotency_key=kw.pop("request_key", key()), user=user, **kw)
@@ -83,7 +85,7 @@ class TestNotifyTheSignatory(SubmissionCase):
 		self.assertFalse(again["ok"])
 		self.assertIn("You can send another reminder after", again["errors"]["notify"])
 		self.assertEqual(len(self.sent), 1)
-		self.at("2027-05-20 11:11:00")
+		self.at(W("2027-05-20 11:11:00"))
 		self.assertTrue(self.notify()["ok"])
 		self.assertEqual(len(self.sent), 2)
 
@@ -120,7 +122,7 @@ class TestNotifyTheSignatory(SubmissionCase):
 		self.assertEqual(self.sent, [])
 
 	def test_after_the_deadline_nothing_is_sent(self):
-		self.at("2027-07-01 12:00:00")
+		self.at(W("2027-07-01 12:00:00"))
 		with self.assertRaises(Exception):
 			self.notify()
 		self.assertEqual(self.sent, [])

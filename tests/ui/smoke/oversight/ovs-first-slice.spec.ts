@@ -1,6 +1,7 @@
 import { expect, Page, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
+import { shortDateTime, world } from "../../helpers/anchor";
 
 /**
  * OVS-CHG-001 v0.6 plan Phases 6–8 — the first slice, driven as the canonical personas on the
@@ -18,9 +19,9 @@ const CHARLES = "charles.mutiso@moh.example.test"; // Head of Procurement Functi
 const NAOMI = "naomi.chebet@moh.example.test"; // Auditor
 const PETER = "peter.kimani@moh.example.test"; // Head of User Department (Human Resources Management and Development contributes)
 const DANIEL = "daniel.otieno@moh.example.test"; // Technical Operator
-const AWARD = "AWD-MOH-2027-002";
+const AWARD = "AWD-MOH-2026-002";
 const ESTHER = "esther.muthoni@moh.example.test"; // Strategy Author: no procurement responsibility
-const TENDER = "TND-MOH-2027-002";
+const TENDER = "TND-MOH-2026-002";
 const BIDDERS = ["Afya Digital Supplies Limited", "Jirani Office Supplies Limited", "Pwani Tech Distributors Limited", "Mlima Computer Solutions Limited"];
 
 async function gotoDesk(page: Page, route: string) {
@@ -32,7 +33,7 @@ test.describe("the Accounting Officer after the report is delivered", () => {
 	test("reads the decision, the four-bid comparison and the report, with no bid to review", async ({ page }) => {
 		await login(page, AMINA, PASSWORD);
 		await gotoDesk(page, `tenders/${TENDER}/evaluation`);
-		await expect(evl(page)).toContainText("The committee report was sent to Charles Mutiso on 16 Jun 2027, 14:07 EAT.", { timeout: 60_000 });
+		await expect(evl(page)).toContainText(`The committee report was sent to Charles Mutiso on ${shortDateTime(world("2027-06-16 14:07:00"))}.`, { timeout: 60_000 });
 		const comparison = evl(page).locator('[data-testid="evl-comparison"]');
 		for (const bidder of BIDDERS) await expect(comparison).toContainText(bidder);
 		await expect(evl(page)).toContainText("Recommendation: Afya Digital Supplies Limited");

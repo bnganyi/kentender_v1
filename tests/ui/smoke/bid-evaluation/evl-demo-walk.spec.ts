@@ -3,6 +3,7 @@ import { Browser, expect, Page, test } from "@playwright/test";
 import { login } from "../../helpers/auth";
 import { loginToPortal, waitForPortal } from "../../helpers/portal";
 import { collectConsoleErrors, evlFixture, expectNextStep, expectScreen } from "./evlWorld";
+import { shortDateTime, world } from "../../helpers/anchor";
 
 /**
  * The canonical evaluation (`make seed-canonical THROUGH=bid_evaluation`,
@@ -13,7 +14,7 @@ import { collectConsoleErrors, evlFixture, expectNextStep, expectScreen } from "
  */
 
 const PASSWORD = process.env.UI_SEED_PASSWORD || "Test@123";
-const REF = "TND-MOH-2027-002";
+const REF = "TND-MOH-2026-002";
 const CHARLES = "charles.mutiso@moh.example.test";
 const GRACE = "grace.wambui@moh.example.test";
 const DAVID = "david.ouma@afyadigital.example";
@@ -41,11 +42,14 @@ async function openWorkspaceFromMenu(page: Page): Promise<void> {
 
 test.describe.configure({ mode: "serial", timeout: 600_000 });
 
+// the canonical story's moment the report reached Charles, where the anchored world has it
+const reportSent = new RegExp(`^The committee report was sent to Charles Mutiso on ${shortDateTime(world("2027-06-16 14:07:00"))}\\.$`);
+
 test.describe("Bid Evaluation, walked from the menu on the canonical Tender", () => {
 	// the canonical story's own moment: just after the report reached Charles
 	let previous = "";
 	test.beforeAll(() => {
-		previous = evlFixture<{ previous: string }>("set_instant", { instant: "2027-06-16 14:08:00" }).previous;
+		previous = evlFixture<{ previous: string }>("set_instant", { instant: world("2027-06-16 14:08:00") }).previous;
 	});
 	test.afterAll(async () => {
 		if (current) await current.close();
@@ -63,7 +67,7 @@ test.describe("Bid Evaluation, walked from the menu on the canonical Tender", ()
 		await expect(ws.locator(".kt-task-row", { hasText: `Review evaluation report for ${REF}` })).toHaveCount(0);
 		await page.goto(`/app/tenders/${REF}/evaluation/report`, { waitUntil: "domcontentloaded" });
 		await expectScreen(page, "report");
-		await expectNextStep(page, "done", /^The committee report was sent to Charles Mutiso on 16 Jun 2027, 14:07 EAT\.$/);
+		await expectNextStep(page, "done", reportSent);
 		await expect(page.locator('[data-testid="evl-root"] [data-testid="evl-summary"]')).toContainText("Afya Digital Supplies Limited");
 		await expect(page.locator('[data-testid="evl-root"] [data-testid="evl-summary"]')).toContainText("KES 46,400,000.00");
 		await expect(page.getByRole("button", { name: /award/i })).toHaveCount(0);
@@ -76,7 +80,7 @@ test.describe("Bid Evaluation, walked from the menu on the canonical Tender", ()
 		await openWorkspaceFromMenu(page);
 		await page.locator(`[data-testid="evl-view-${REF}"]`).click();
 		await expectScreen(page, "results");
-		await expectNextStep(page, "done", /^The committee report was sent to Charles Mutiso on 16 Jun 2027, 14:07 EAT\.$/);
+		await expectNextStep(page, "done", reportSent);
 		await page.locator('[data-testid="evl-root"] [data-testid="evl-tab-committee-record"]').click();
 		await expectScreen(page, "committee-record");
 		await expect(page.locator('[data-testid="evl-root"]')).toContainText("Please identify the page and section");

@@ -38,7 +38,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import cstr
 
-from kentender_core.seeds import clock
+from kentender_core.seeds import calendar, clock
 from kentender_core.services.responsibility_administration import grant
 from kentender_procurement.departmental_needs.constants import ROLE_HEAD_OF_USER_DEPARTMENT
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
@@ -125,7 +125,7 @@ class TestTransitionNotificationRecipients(NotificationCase):
 		# FY 2026/27's planning history by the two-year seed world); once it
 		# ended her Role projection went with it, so she is not told.
 		second = self.ensure_second_hod()
-		with clock.at("2026-11-24 10:00:00"):
+		with clock.at(calendar.YEAR2.at("2026-11-24 10:00:00")):  # the Needs window's design clock, where the anchored world has it
 			submitted = self.submit(self.create_in(self.ou))
 		told = self.recipients(submitted["need"], notifications.EVENT_SUBMITTED)
 		self.assertEqual(told, sorted([REVIEWER, second]))

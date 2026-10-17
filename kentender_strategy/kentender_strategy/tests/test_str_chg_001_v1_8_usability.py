@@ -14,6 +14,7 @@ reorder, STR18-208 fixture profiles. Traceability: STR18-AC-001/002/
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from uuid import uuid4
 
 import frappe
@@ -79,7 +80,7 @@ class TestVocabulary(UsabilityTestBase):
 		self.assertEqual(ui.version_status_label("Draft", version_number=2), "Draft update")
 		self.assertEqual(ui.version_status_label("Draft", version_number=2, return_reason="fix it please"), "Changes requested")
 		self.assertEqual(ui.fiscal_year_label("2027-2028"), "FY 2027/28")
-		self.assertEqual(ui.target_period_label(None, "2028-06-30"), "By 30 Jun 2028")
+		self.assertEqual(ui.target_period_label(None, F("2028-06-30")), "By 30 Jun 2028")
 
 	def test_register_row_actions_follow_server_authority(self):
 		plan_id, version_id = self._plan_and_version()
@@ -499,7 +500,7 @@ class TestPlaywrightPurgeRestoresPredecessorDates(UsabilityTestBase):
 		with patch.object(pw, "_canonical_plan", return_value=plan_id):
 			pw.purge(commit=False)
 		self.assertEqual(frappe.db.get_value("Strategic Plan Version", v1, "status"), "Active")
-		self.assertEqual(str(frappe.db.get_value("Strategic Plan Version", v1, "effective_to")), "2028-06-30")
+		self.assertEqual(str(frappe.db.get_value("Strategic Plan Version", v1, "effective_to")), F("2028-06-30"))
 
 
 class TestFixtureProfiles(UsabilityTestBase):
@@ -528,13 +529,13 @@ class TestFixtureProfiles(UsabilityTestBase):
 		fixture = seed.seed_str_des_v2_fixture(profile=seed.PROFILE_FUTURE)
 		v2 = fixture["plan_version"]
 		try:
-			self.assertEqual(str(frappe.db.get_value("Strategic Plan Version", v2, "effective_from")), "2027-07-01")
+			self.assertEqual(str(frappe.db.get_value("Strategic Plan Version", v2, "effective_from")), F("2027-07-01"))
 			self.assertEqual(frappe.db.get_value("Strategic Plan Version", v2, "status"), "Submitted for approval")
 			history = ui.get_version_history(v2)
 			by_event = {h["event"]: h for h in history}
-			self.assertEqual(by_event["Successor Version Created"]["at"], "2026-11-24 13:10:00")
-			self.assertEqual(by_event["Draft structure saved"]["at"], "2026-11-24 15:55:00")
-			self.assertEqual(by_event["Submit for approval"]["at"], "2026-11-24 16:20:00")
+			self.assertEqual(by_event["Successor Version Created"]["at"], W("2026-11-24 13:10:00"))
+			self.assertEqual(by_event["Draft structure saved"]["at"], W("2026-11-24 15:55:00"))
+			self.assertEqual(by_event["Submit for approval"]["at"], W("2026-11-24 16:20:00"))
 			self.assertEqual(len(history), 3)
 			self.assertEqual(frappe.db.get_value("Performance Target", fixture["target"], "target_value"), 85)
 			# The comparison names both the target and the applicability start.
@@ -551,7 +552,7 @@ class TestFixtureProfiles(UsabilityTestBase):
 			self.assertEqual(frappe.db.get_value("Strategic Plan Version", v2, "status"), "Draft")
 			self.assertEqual(frappe.db.get_value("Strategic Plan Version", v2, "return_reason"), seed.RETURN_REASON)
 			returned = next(h for h in ui.get_version_history(v2) if h["event"] == "Return")
-			self.assertEqual(returned["at"], "2026-11-25 11:20:00")
+			self.assertEqual(returned["at"], W("2026-11-25 11:20:00"))
 		finally:
 			seed.teardown_str_des_v2_fixture(v2)
 

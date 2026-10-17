@@ -8,6 +8,7 @@ the browser worlds and the canonical seed — never by a user."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from typing import Any
 from uuid import uuid4
 
@@ -75,7 +76,7 @@ def sample_value(field: dict[str, Any]):
 	if kind in ("decimal", "money"):
 		return str(limits.get("minimum", "1.00"))
 	if kind == "date":
-		return str(limits.get("not_before") or limits.get("not_after") or "2027-06-01")
+		return str(limits.get("not_before") or limits.get("not_after") or W("2027-06-01"))
 	raise ValueError(kind)
 
 

@@ -6,6 +6,8 @@ AC-028; tracker AWD4-701–702, AWD4-704)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, shift as S  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import frappe
 
 from kentender_procurement.award.services import eligibility, issues, profile, restrictions, state, supplier
@@ -23,31 +25,31 @@ class Accepted(AwardCase):
 
 class TestWait(Accepted):
 	def test_wait_boundary(self):
-		self.at("2027-06-18 09:00:00")
+		self.at(W("2027-06-18 09:00:00"))
 		self.run_as(MARY, supplier.respond, notice=self.notice.name, response="Accept", notice_version=1)
 		cond = eligibility.conditions(self.case())
 		self.assertEqual([cond[str(n)]["met"] for n in range(1, 7)], [True, True, True, False, True, True])
-		self.assertEqual(str(cond["4"]["earliest"]), "2027-07-02 09:00:00")
-		self.at("2027-07-02 08:59:59")
+		self.assertEqual(str(cond["4"]["earliest"]), S(W("2027-06-18 09:00:00"), 14))  # derived from the notice, not a live deadline
+		self.at(S(W("2027-06-18 08:59:59"), 14))
 		self.assertEqual(eligibility.refresh_case(self.case().name)["stage"], "Waiting to proceed")
-		self.at("2027-07-02 09:00:00")
+		self.at(S(W("2027-06-18 09:00:00"), 14))
 		out = eligibility.refresh_case(self.case().name)
 		self.assertEqual(out["stage"], "Sent to Contracting")
 
 	def test_profile_terms(self):
-		deadline, _ = profile.reply_deadline("2027-06-17 10:00:00")
-		earliest, _ = profile.earliest_permitted("2027-06-17 10:00:00")
-		self.assertEqual((str(deadline), str(earliest)), ("2027-06-24 17:00:00", "2027-07-02 09:00:00"))
+		deadline, _ = profile.reply_deadline(W("2027-06-17 10:00:00"))
+		earliest, _ = profile.earliest_permitted(W("2027-06-17 10:00:00"))
+		self.assertEqual((str(deadline), str(earliest)), (S(W("2027-06-17 17:00:00"), 7), S(W("2027-06-18 09:00:00"), 14)))
 		# a later giving time moves the earliest instant to the following day
-		self.assertEqual(str(profile.earliest_permitted("2027-06-17 09:00:00")[0]), "2027-07-01 09:00:00")
+		self.assertEqual(str(profile.earliest_permitted(W("2027-06-17 09:00:00"))[0]), S(W("2027-06-18 09:00:00"), 13))
 
 
 class TestReply(Accepted):
 	def test_no_response_task(self):
-		self.at("2027-06-24 17:00:00")
+		self.at(S(W("2027-06-17 17:00:00"), 7))
 		eligibility.refresh_case(self.case().name)
 		self.assertEqual(issues.open_issues(self.case(), subtype=eligibility.RESPONSE_SUBTYPE_OVERDUE), [])
-		self.at("2027-06-24 17:01:00")
+		self.at(S(W("2027-06-17 17:01:00"), 7))
 		eligibility.refresh_case(self.case().name)
 		found = issues.open_issues(self.case(), subtype=eligibility.RESPONSE_SUBTYPE_OVERDUE)
 		self.assertEqual(found[0].title, "The supplier has not replied by the deadline.")
@@ -60,10 +62,10 @@ class TestReply(Accepted):
 
 class TestValidity(Accepted):
 	def test_expiry_holds(self):
-		self.at("2027-06-18 09:00:00")
+		self.at(W("2027-06-18 09:00:00"))
 		self.run_as(MARY, supplier.respond, notice=self.notice.name, response="Accept", notice_version=1)
-		syn.set_fact(self.case().tender, validity_end="2027-06-30 11:00:00")
-		self.at("2027-07-02 09:00:00")
+		syn.set_fact(self.case().tender, validity_end=W("2027-06-30 11:00:00"))
+		self.at(W("2027-07-02 09:00:00"))
 		out = eligibility.refresh_case(self.case().name)
 		self.assertEqual(out["stage"], "Waiting to proceed")
 		self.assertTrue(issues.open_issues(self.case(), subtype="Validity expired"))
@@ -76,8 +78,8 @@ class TestClockRevision(Accepted):
 
 		doc = self.case()
 		first = clocks.current(doc, "Minimum wait", self.notice.name)[0]
-		revised = clocks.record(doc, kind="Minimum wait", notice=self.notice.name, trigger_at="2027-06-17 10:00:00",
-			trigger_evidence="Revised by the verified profile", deadline="2027-07-05 09:00:00", rule="Revised treatment (test)")
-		self.assertEqual((revised.revision, str(revised.deadline)), (2, "2027-07-05 09:00:00"))
+		revised = clocks.record(doc, kind="Minimum wait", notice=self.notice.name, trigger_at=W("2027-06-17 10:00:00"),
+			trigger_evidence="Revised by the verified profile", deadline=W("2027-07-05 09:00:00"), rule="Revised treatment (test)")
+		self.assertEqual((revised.revision, str(revised.deadline)), (2, W("2027-07-05 09:00:00")))
 		self.assertEqual(frappe.db.get_value("Award Clock", first.name, "state"), "Revised")
-		self.assertEqual(str(eligibility.conditions(self.case())["4"]["earliest"]), "2027-07-05 09:00:00")
+		self.assertEqual(str(eligibility.conditions(self.case())["4"]["earliest"]), W("2027-07-05 09:00:00"))

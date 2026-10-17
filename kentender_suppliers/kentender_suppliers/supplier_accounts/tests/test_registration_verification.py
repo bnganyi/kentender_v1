@@ -7,6 +7,7 @@ BDS03-IMP-009; BDS01-AC-004/005, BDS03-AC-009)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -21,7 +22,7 @@ class TestRegistration(AccountsCase):
 		result = self.register()
 		self.assertEqual((result["ok"], result["account_status"], result["verification_sent_to"]), (True, "Pending verification", "tenders@afyadigital.example"))
 		org = frappe.get_doc("Supplier Organisation", result["organisation"])
-		self.assertEqual((org.legal_name, org.registration_number, org.tax_identifier, org.registered_by, str(org.status_since)), (AFYA["legal_name"], AFYA["registration_number"], "P051234567X", MARY, "2027-05-18 09:00:00"))
+		self.assertEqual((org.legal_name, org.registration_number, org.tax_identifier, org.registered_by, str(org.status_since)), (AFYA["legal_name"], AFYA["registration_number"], "P051234567X", MARY, W("2027-05-18 09:00:00")))
 		self.assertEqual([(c.channel, c.value, c.verification_status) for c in org.contacts], [("Email", "tenders@afyadigital.example", "Unverified"), ("Phone", "+254 709 555 014", "Unverified")])
 		assignment = frappe.get_all("Supplier User Assignment", filters={"organisation": org.name}, fields=["user", "responsibility", "job_title", "authority_evidence", "assigned_by"])
 		self.assertEqual([(a.user, a.responsibility, a.job_title, a.assigned_by) for a in assignment], [(MARY, "Authorised Signatory", "Managing Director", MARY)])
@@ -81,25 +82,25 @@ class TestRegistration(AccountsCase):
 class TestVerification(AccountsCase):
 	def test_the_link_activates_the_account_and_proves_the_channel_only(self):
 		org = self.register()["organisation"]
-		self.at("2027-05-18 09:05:00")
+		self.at(W("2027-05-18 09:05:00"))
 		result = verification.verify_account_communication(token=self.token(), user=MARY)
 		self.assertEqual((result["ok"], result["account_status"]), (True, "Active"))
 		doc = frappe.get_doc("Supplier Organisation", org)
-		self.assertEqual((doc.contacts[0].verification_status, str(doc.contacts[0].verified_at), doc.contacts[0].verified_by), ("Verified", "2027-05-18 09:05:00", MARY))
+		self.assertEqual((doc.contacts[0].verification_status, str(doc.contacts[0].verified_at), doc.contacts[0].verified_by), ("Verified", W("2027-05-18 09:05:00"), MARY))
 		self.assertEqual(doc.contacts[1].verification_status, "Unverified")  # the phone is not the configured channel
-		self.assertEqual(str(doc.status_since), "2027-05-18 09:05:00")
+		self.assertEqual(str(doc.status_since), W("2027-05-18 09:05:00"))
 		again = verification.verify_account_communication(token=self.token(), user=MARY)
 		self.assertEqual((again["ok"], again["already_verified"]), (True, True))
 
 	def test_an_expired_superseded_or_foreign_link_does_not_activate(self):
 		org = self.register()["organisation"]
 		first = self.token()
-		self.at("2027-05-18 09:10:00")
+		self.at(W("2027-05-18 09:10:00"))
 		verification.send_account_verification(organisation=org, idempotency_key=key(), user=MARY)
 		self.assertEqual(verification.verify_account_communication(token=first, user=MARY)["reason"], "superseded")
 		self.assertEqual(verification.verify_account_communication(token=self.token(), user=PETER)["reason"], "invalid")  # not his organisation: no disclosure
 		self.assertEqual(verification.verify_account_communication(token="made-up", user=MARY)["reason"], "invalid")
-		self.at("2027-05-19 09:10:00")  # 24 hours later
+		self.at(W("2027-05-19 09:10:00"))  # 24 hours later
 		self.assertEqual(verification.verify_account_communication(token=self.token(), user=MARY)["reason"], "expired")
 		self.assertEqual(frappe.db.get_value("Supplier Organisation", org, "account_status"), "Pending verification")
 
@@ -108,11 +109,11 @@ class TestVerification(AccountsCase):
 		for minute in ("09:10", "09:20"):
 			self.at(f"2027-05-18 {minute}:00")
 			self.assertTrue(verification.send_account_verification(organisation=org, idempotency_key=key(), user=MARY)["sent"])
-		self.at("2027-05-18 09:30:00")
+		self.at(W("2027-05-18 09:30:00"))
 		limited = verification.send_account_verification(organisation=org, idempotency_key=key(), user=MARY)
 		self.assertEqual((limited["ok"], limited["sent"], limited["limited"], limited["message"]), (True, False, True, "A verification link was sent recently. Check your inbox, or try again later."))
 		self.assertEqual(len(self.sent), 3)
-		self.at("2027-05-18 10:00:01")
+		self.at(W("2027-05-18 10:00:01"))
 		self.assertTrue(verification.send_account_verification(organisation=org, idempotency_key=key(), user=MARY)["sent"])
 
 	def test_only_the_organisations_people_can_resend_and_an_active_account_needs_none(self):

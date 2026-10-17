@@ -20,6 +20,7 @@ concurrently on one site (both move the same flags; PLN-CHG-001 D13)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from io import BytesIO
 from typing import Any
@@ -48,12 +49,12 @@ CHANNELS = ("STATE_PORTAL", "MINISTRY_WEBSITE", "NOTICE_BOARD", "NATIONAL_NEWSPA
 
 # §13.3 instants, pinned.
 CLOCK = {
-	"start": "2027-03-20 09:00:00", "submit": "2027-03-20 11:40:00", "return": "2027-03-25 14:00:00", "resubmit": "2027-04-15 09:15:00",
-	"approve": "2027-04-20 10:00:00", "authorise": "2027-05-15 07:55:00", "confirm": "2027-05-15 08:03:00", "addendum": "2027-05-31 08:30:00",
-	"addendum_confirm": "2027-05-31 09:00:00", "candidate": "2027-05-19 09:20:00", "clarification": "2027-05-26 09:00:00", "respond": "2027-05-26 11:00:00",
-	"cancel": "2027-06-04 14:00:00", "close": "2027-06-12 11:00:00",
+	"start": W("2027-03-20 09:00:00"), "submit": W("2027-03-20 11:40:00"), "return": W("2027-03-25 14:00:00"), "resubmit": W("2027-04-15 09:15:00"),
+	"approve": W("2027-04-20 10:00:00"), "authorise": W("2027-05-15 07:55:00"), "confirm": W("2027-05-15 08:03:00"), "addendum": W("2027-05-31 08:30:00"),
+	"addendum_confirm": W("2027-05-31 09:00:00"), "candidate": W("2027-05-19 09:20:00"), "clarification": W("2027-05-26 09:00:00"), "respond": W("2027-05-26 11:00:00"),
+	"cancel": W("2027-06-04 14:00:00"), "close": W("2027-06-12 11:00:00"),
 }
-AVAILABLE = {"STATE_PORTAL": "2027-05-15 08:00:00", "MINISTRY_WEBSITE": "2027-05-15 08:00:00", "NOTICE_BOARD": "2027-05-15 08:15:00", "NATIONAL_NEWSPAPERS": "2027-05-15 08:20:00"}
+AVAILABLE = {"STATE_PORTAL": W("2027-05-15 08:00:00"), "MINISTRY_WEBSITE": W("2027-05-15 08:00:00"), "NOTICE_BOARD": W("2027-05-15 08:15:00"), "NATIONAL_NEWSPAPERS": W("2027-05-15 08:20:00")}
 
 # Candidates register through Bid Submission's Start bid (TPR FU-25): the
 # first is the canonical Afya account; the second, whose notices fail, gets a
@@ -202,8 +203,8 @@ def _authorised() -> dict[str, Any]:
 
 def officer_values(**overrides) -> dict[str, Any]:
 	values = {
-		"tender_title": "Supply and delivery of business laptops", "issue_date": "2027-05-15", "clarification_deadline": "2027-05-27 17:00:00",
-		"submission_deadline": "2027-06-05 11:00:00", "tender_validity_days": 120, "tender_security_amount": 500000.00, "tender_security_method": "Bidder uploads an electronic instrument", "tender_security_original": "Required", "pre_tender_meeting": False,
+		"tender_title": "Supply and delivery of business laptops", "issue_date": W("2027-05-15"), "clarification_deadline": W("2027-05-27 17:00:00"),
+		"submission_deadline": W("2027-06-05 11:00:00"), "tender_validity_days": 120, "tender_security_amount": 500000.00, "tender_security_method": "Bidder uploads an electronic instrument", "tender_security_original": "Required", "pre_tender_meeting": False,
 		"manufacturer_authorisation_required": True, "datasheets_required": True, "past_experience_required": True, "minimum_comparable_contracts": 2,
 		"experience_period_years": 5, "after_sales_evidence_required": True, "after_sales_evidence": "Kenya service-centre details and escalation contacts",
 		"inspection_location": LOCATION, "payment_timing_days": "30", "performance_security_required": True, "performance_security_percent": 10,
@@ -315,9 +316,9 @@ def reset_draft_complete_fixture(*, commit: bool = True, meeting: str = "No") ->
 	state = reset_draft_fixture(commit=False)
 	values = officer_values()
 	if meeting == "Physical":
-		values.update({"pre_tender_meeting": True, "meeting_datetime": "2027-05-22 10:00:00", "meeting_mode": "Physical", "meeting_venue": LOCATION})
+		values.update({"pre_tender_meeting": True, "meeting_datetime": W("2027-05-22 10:00:00"), "meeting_mode": "Physical", "meeting_venue": LOCATION})
 	elif meeting == "Online":
-		values.update({"pre_tender_meeting": True, "meeting_datetime": "2027-05-22 10:00:00", "meeting_mode": "Online", "online_joining_information": "Microsoft Teams — https://meet.example.test/tnd-pw"})
+		values.update({"pre_tender_meeting": True, "meeting_datetime": W("2027-05-22 10:00:00"), "meeting_mode": "Online", "online_joining_information": "Microsoft Teams — https://meet.example.test/tnd-pw"})
 	_save(state["tender"], values)
 	return _done(state, commit)
 
@@ -411,7 +412,7 @@ def reset_ended_fixture(*, commit: bool = True) -> dict[str, Any]:
 ADDENDUM_VALUES = {
 	"change_class": "Administrative clarification", "affected_area": "Goods/delivery schedule", "affected_reference_key": "delivery_location",
 	"revised_value": "Playwright — Requisitions Delivery Location, Loading Bay 3", "reason": "Loading bay reassigned after warehouse reorganisation.",
-	"materiality_statement": "Same site; no change to scope, quantity, value or evaluation basis.", "revised_submission_deadline": "2027-06-12 11:00:00",
+	"materiality_statement": "Same site; no change to scope, quantity, value or evaluation basis.", "revised_submission_deadline": W("2027-06-12 11:00:00"),
 }
 
 

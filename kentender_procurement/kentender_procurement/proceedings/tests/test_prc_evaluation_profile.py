@@ -12,6 +12,7 @@ evidence only (PRC-CHG-001 v0.9 §15)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from itertools import count
 from typing import Any
 
@@ -50,7 +51,7 @@ class TestEvaluationProfile(IntegrationTestCase):
 		self.addCleanup(wipe)
 		self.owner_id = f"SIM-EVL-{frappe.generate_hash(length=6)}"
 		self.owner.add(self.owner_id)
-		self.at("2027-06-11 09:00:00")
+		self.at(W("2027-06-11 09:00:00"))
 		self.created = lifecycle.create_proceeding(owner_type=OWNER_TYPE, owner_id=self.owner_id, title="Test evaluation", idempotency_key=self.key(), actor=CHAIR)
 
 	def _flag(self, name: str, value) -> None:
@@ -79,7 +80,7 @@ class TestEvaluationProfile(IntegrationTestCase):
 		return sessions.record_roster(**self.ref(), roster=roster, reason=reason, owner_event_id=f"roster-{frappe.generate_hash(length=6)}", idempotency_key=self.key(),
 			actor=CHAIR)
 
-	def start(self, at: str = "2027-06-14 09:00:00") -> dict[str, Any]:
+	def start(self, at: str = W("2027-06-14 09:00:00")) -> dict[str, Any]:
 		self.at(at)
 		return sessions.start_session(**self.ref(), subject="Service-location evidence", idempotency_key=self.key(), actor=CHAIR)
 
@@ -124,7 +125,7 @@ class TestEvaluationProfile(IntegrationTestCase):
 	def test_members_and_the_secretary_join_personally(self):
 		self.roster()
 		self.start()
-		self.at("2027-06-14 09:02:00")
+		self.at(W("2027-06-14 09:02:00"))
 		self.join(MEMBER)
 		self.join(SECRETARY, "Secretary")
 		self.assertEqual(sorted(sessions.present(self.created["proceeding"])), sorted([CHAIR, MEMBER, SECRETARY]))
@@ -153,7 +154,7 @@ class TestEvaluationProfile(IntegrationTestCase):
 		self.start()
 		self.join(MEMBER)
 		self.join(INDEPENDENT)
-		self.at("2027-06-14 09:03:30")
+		self.at(W("2027-06-14 09:03:30"))
 		self.leave(INDEPENDENT)
 		self.assertEqual(self.assertCode("PRC_EVIDENCE_INCOMPLETE", self.conclude).detail["absent"], [INDEPENDENT])
 		self.join(INDEPENDENT)
@@ -170,17 +171,17 @@ class TestEvaluationProfile(IntegrationTestCase):
 	def test_ending_closes_the_session_and_a_later_session_is_numbered(self):
 		self.roster()
 		self.start()
-		self.at("2027-06-14 09:06:00")
+		self.at(W("2027-06-14 09:06:00"))
 		ended = sessions.end_session(**self.ref(), note="", idempotency_key=self.key(), actor=CHAIR)
 		self.assertTrue(ended["ok"])
 		self.assertEqual(sessions.present(self.created["proceeding"]), [])
 		self.assertCode("PRC_VERSION_CONFLICT", self.conclude)
-		second = self.start(at="2027-06-16 09:00:00")
+		second = self.start(at=W("2027-06-16 09:00:00"))
 		self.assertEqual(second["session_number"], 2)
 		times = frappe.get_all("Proceeding Session", filters={"proceeding": self.created["proceeding"]}, fields=["session_number", "state", "actual_start", "actual_end"],
 			order_by="session_number asc")
 		self.assertEqual([(t.session_number, t.state) for t in times], [(1, "Ended"), (2, "Active")])
-		self.assertEqual(str(times[0].actual_end), "2027-06-14 09:06:00")
+		self.assertEqual(str(times[0].actual_end), W("2027-06-14 09:06:00"))
 
 	def test_owner_facts_outside_a_session_and_member_statements(self):
 		self.roster()

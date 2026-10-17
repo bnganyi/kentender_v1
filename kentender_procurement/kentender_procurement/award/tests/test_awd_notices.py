@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W, ad  # noqa: F401
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -25,10 +27,10 @@ class TestDelivery(AwardCase):
 		self.assertEqual((n.result, n.status, n.version), ("Successful", "Given", 1))
 		body = frappe.parse_json(n.content_json)
 		self.assertEqual(body["notice"], "Award notice 1")
-		self.assertEqual(body["reply_deadline"], "24 Jun 2027, 17:00 EAT")
+		self.assertEqual(body["reply_deadline"], ad.dt_eat("2027-06-17 17:00:00", plus_days=7))  # derived from the notice, not a live deadline
 		self.assertIn("Accepting this award does not create a contract.", n.letter_html)
 		self.assertEqual(len(frappe.parse_json(n.evidence_json)), 2)  # portal published (not giving) + email delivered (giving)
-		self.assertEqual(str(clocks.current(self.case(), "Minimum wait", n.name)[0].deadline), "2027-07-02 09:00:00")
+		self.assertEqual(str(clocks.current(self.case(), "Minimum wait", n.name)[0].deadline), W("2027-07-02 09:00:00"))
 
 	def test_two_bidders_each_get_their_own_result(self):
 		self.deliver("037")
@@ -78,8 +80,8 @@ class TestDelivery(AwardCase):
 		self.deliver()
 		self.signed_opinion()
 		doc = self.case()
-		syn.set_fact(doc.tender, validity_end="2027-06-17 09:59:00")
-		self.at("2027-06-17 10:00:00")
+		syn.set_fact(doc.tender, validity_end=W("2027-06-17 09:59:00"))
+		self.at(W("2027-06-17 10:00:00"))
 		with self.assertRaises(AwardError) as ctx:
 			self.run_as(AO, decision.record, award=CASE, outcome="Award", reason="ok", expected_version=self.version())
 		self.assertIn("AWD_VALIDITY_EXPIRED", [r["code"] for r in ctx.exception.reasons])

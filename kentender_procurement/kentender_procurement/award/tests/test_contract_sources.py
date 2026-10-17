@@ -11,11 +11,13 @@ Form No. 4 is a recorded tender document, byte for byte; that its blanks are not
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
+from kentender_core.seeds.calendar import delivery, fiscal as F, shift, world as W  # noqa: F401
 import hashlib
 import json
+from decimal import Decimal
 import unittest
 import unittest.mock
-from decimal import Decimal
 
 import frappe
 from frappe.tests import IntegrationTestCase
@@ -79,7 +81,7 @@ class TestAwardContractSources(IntegrationTestCase):
 		self.assertEqual((conditions["warranty"]["months"], conditions["payment"]["days"], conditions["performance_security"]["required"], conditions["performance_security"]["percentage"]), (36, 30, True, "10"))
 		self.assertNotIn("advance", conditions, "an advance the conditions state only in prose is not invented as a value")
 		schedule = source("S4")["delivery_schedule"]
-		self.assertEqual(schedule["due"], "2027-06-30")
+		self.assertEqual(schedule["due"], delivery("2027-06-30"))
 		self.assertIn("3rd Floor Procurement Stores", schedule["destination"], "the addendum is applied")
 		self.assertEqual(source("S1")["addenda"][0]["reference"], "ADD-MOH-2026-002-001")
 		criteria = source("S6")
@@ -87,11 +89,9 @@ class TestAwardContractSources(IntegrationTestCase):
 		self.assertTrue(criteria["untyped"], "the acceptance checks stated only as text are carried untyped")
 		accepted = source("S2")
 		self.assertEqual((accepted["bid"]["reference"], accepted["bid"]["submitted_total"]), ("BID-MOH-2026-002-001", "46400000.00"))
-		self.assertEqual(source("S8")["signing_window"]["earliest_signing_at"], "2027-07-02 09:00:00")
+		self.assertEqual(source("S8")["signing_window"]["earliest_signing_at"], shift(W("2027-06-18 09:00:00"), 14))  # the supplier accepted on 18 Jun; the waiting period is 14 days
 		self.assertEqual([s["name"] for s in source("S11")["signatories"]], ["Mary Wanjiku"])
 
-	def test_the_package_award_freezes_carries_the_unit_and_every_reference(self):
-		package = eligibility._content(self.doc())
 	def test_the_funding_lineage_names_every_reservation_the_price_was_split_over_and_adds_up_to_the_award(self):
 		funding = json.loads(seam.fetch(f"S9-{AWARD}")["content"])
 		self.assertEqual((funding["award"], funding["allocation"]["schema"], funding["currency"]), (AWARD, "AwardFundingAllocation.v1", "KES"))
@@ -102,6 +102,8 @@ class TestAwardContractSources(IntegrationTestCase):
 		provider = contract_sources.Provider()
 		self.assertEqual(provider.describe(reference=f"S9-{AWARD}")["sha256"], provider.describe(reference=f"S9-{AWARD}")["sha256"], "serving it twice retains nothing new and changes nothing")
 
+	def test_the_package_award_freezes_carries_the_unit_and_every_reference(self):
+		package = eligibility._content(self.doc())
 		self.assertTrue(package["managing_unit"])
 		self.assertEqual([r["source"] for r in package["handoff"]], [f"S{n}" for n in range(1, 13)])
 		self.assertEqual({r["source"] for r in package["handoff"] if "unavailable" in r}, GAPS)

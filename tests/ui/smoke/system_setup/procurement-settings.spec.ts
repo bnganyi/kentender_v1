@@ -1,4 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
+import { ruleWindowStart } from "../../helpers/anchor";
 import { login, loginAsAdministrator } from "../../helpers/auth";
 import { collectPageErrors } from "../../helpers/designFidelity";
 
@@ -55,7 +56,7 @@ test.describe("System setup — Procurement settings", () => {
 		// The seeded window starts at the first fiscal year the site seeds
 		// (site_setup.PROFILE_EFFECTIVE), so a reseeded site always has its
 		// rules in force on the day you open it.
-		await expect(page.locator('[data-testid="kt-mve-from"]')).toHaveValue("2026-07-01");
+		await expect(page.locator('[data-testid="kt-mve-from"]')).toHaveValue(ruleWindowStart());
 		await expect(page.locator('[data-testid="kt-mve-method"]')).toHaveText("Open Tender");
 		await expect(page.locator('[data-testid="kt-mve-id-0"]')).toHaveValue("G-VALUE");
 		// Every condition is editable here and nowhere else, and one can be

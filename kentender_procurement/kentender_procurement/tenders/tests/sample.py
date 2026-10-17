@@ -11,6 +11,7 @@ materials)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from typing import Any
 
@@ -55,9 +56,9 @@ def handoff_payload(*, delivery_location: str = "Ministry of Health Headquarters
 		"business_need": "Laptop computers for clinical training and field digital-health deployment.",
 		"expected_operational_result": "Endpoint equipment required to use the deployed digital health services.",
 		"planned_method": "Open Tender",
-		"planned_dates": {"invitation_date": "2027-05-15", "bid_opening_date": "2027-06-05"},
+		"planned_dates": {"invitation_date": W("2027-05-15"), "bid_opening_date": W("2027-06-05")},
 		"requirement_title": "Clinical training and deployment laptops for digital health rollout",
-		"delivery_location": delivery_location, "latest_delivery_date": "2027-09-30",
+		"delivery_location": delivery_location, "latest_delivery_date": W("2027-09-30"),
 		"items": [
 			{"requisition_item_id": "SRC-MOH-033-001", "plan_item_line_id": "DL-001", "equipment_category": "Laptop", "item_name": "Business laptops", "quantity": 100, "unit": "Each", "intended_use": "Clinical training"},
 			{"requisition_item_id": "SRC-MOH-033-002", "plan_item_line_id": "DL-002", "equipment_category": "Laptop", "item_name": "Business laptops", "quantity": 150, "unit": "Each", "intended_use": "Field digital-health deployment"},
@@ -72,7 +73,7 @@ def handoff_payload(*, delivery_location: str = "Ministry of Health Headquarters
 		"acceptance_requirements": [{"acceptance_requirement_id": aid, "applies_to_scope": "All items", "applies_to_id": None, "check_type": check, "pass_condition": condition, "evidence_type": evidence} for aid, check, condition, evidence in ACCEPTANCE],
 		"supporting_materials": [],
 		"product_pattern": "IT Equipment", "reservation_category_value": "Youth", "county_resident_reservation": False, "reservation_rule_snapshot_ids": ["RULE-RES-YOUTH-V1"], "lotting_indicator": "Single lot",
-		"handoff_version": "1.3", "generated_at": "2027-03-15 10:00:00",
+		"handoff_version": "1.3", "generated_at": W("2027-03-15 10:00:00"),
 		"decisions": [{"actor": "charles.mutiso@moh.example.test", "capacity": "Head of Procurement Function", "decision": "RQD-SAMPLE"}],
 		"handoff_digest": "d" * 64,
 	}
@@ -92,17 +93,17 @@ def sample_snapshot(**kwargs) -> tuple[dict[str, Any], str]:
 def officer_values(*, inspection_location: str, contact_office: str, meeting: str = "No") -> dict[str, Any]:
 	"""§10.1 "Officer values" — the complete, valid set."""
 	values = {
-		"tender_title": "Supply and delivery of business laptops", "issue_date": "2027-05-15", "clarification_deadline": "2027-05-27 17:00:00",
-		"submission_deadline": "2027-06-05 11:00:00", "tender_validity_days": 120, "tender_security_amount": 500000.00, "tender_security_method": "Bidder uploads an electronic instrument", "tender_security_original": "Required", "pre_tender_meeting": False,
+		"tender_title": "Supply and delivery of business laptops", "issue_date": W("2027-05-15"), "clarification_deadline": W("2027-05-27 17:00:00"),
+		"submission_deadline": W("2027-06-05 11:00:00"), "tender_validity_days": 120, "tender_security_amount": 500000.00, "tender_security_method": "Bidder uploads an electronic instrument", "tender_security_original": "Required", "pre_tender_meeting": False,
 		"manufacturer_authorisation_required": True, "datasheets_required": True, "past_experience_required": True, "minimum_comparable_contracts": 2,
 		"experience_period_years": 5, "after_sales_evidence_required": True, "after_sales_evidence": "Kenya service-centre details and escalation contacts",
 		"inspection_location": inspection_location, "payment_timing_days": "30", "performance_security_required": True, "performance_security_percent": 10,
 		"delay_damages_per_week_percent": 0.5, "maximum_delay_damages_percent": 10, "contract_contact_office": contact_office,
 	}
 	if meeting == "Physical":
-		values.update({"pre_tender_meeting": True, "meeting_datetime": "2027-05-22 10:00:00", "meeting_mode": "Physical", "meeting_venue": inspection_location})
+		values.update({"pre_tender_meeting": True, "meeting_datetime": W("2027-05-22 10:00:00"), "meeting_mode": "Physical", "meeting_venue": inspection_location})
 	elif meeting == "Online":
-		values.update({"pre_tender_meeting": True, "meeting_datetime": "2027-05-22 10:00:00", "meeting_mode": "Online", "online_joining_information": "Microsoft Teams — https://meet.example.test/tnd-moh-2027-033"})
+		values.update({"pre_tender_meeting": True, "meeting_datetime": W("2027-05-22 10:00:00"), "meeting_mode": "Online", "online_joining_information": "Microsoft Teams — https://meet.example.test/tnd-moh-2027-033"})
 	return values
 
 

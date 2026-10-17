@@ -11,6 +11,8 @@ acknowledgement is saved through `SaveBidTask`; a read acknowledges nothing."""
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 
 from kentender_procurement.bid_submission.services import reads, start_bid
@@ -40,12 +42,12 @@ class TestWithAddendum(AddendumCase):
 	def test_an_effective_addendum_waits_for_this_bids_acknowledgement(self):
 		name = self.issue_addendum()
 		reference = frappe.db.get_value("Tender Addendum", name, "addendum_reference")
-		self.at("2027-06-01 12:05:00")
+		self.at(W("2027-06-01 12:05:00"))
 		view = documents(self.bid)
 		addendum = next(a for a in view["addenda"] if a["reference"] == reference)
 		self.assertEqual((view["badge"], view["footer"]["blocked_text"]), ({"label": "Needs attention", "tone": "attention"}, BLOCKED))
 		self.assertIsNone(addendum["notice"])  # delivered: nothing to warn about
-		self.assertEqual(addendum["revised_deadline"], "12 Jun 2027, 11:00 EAT")
+		self.assertEqual(addendum["revised_deadline"], f"{ad.dt_eat('2027-06-12 11:00:00')}")
 		ack = addendum["acknowledgement"]
 		self.assertFalse(ack["value"])
 		self.assertIn(reference, ack["label"])
@@ -54,7 +56,7 @@ class TestWithAddendum(AddendumCase):
 		self.assertEqual((ack["handle"], ack["moves_bid"]), ("", True))  # the Draft is still bound to the earlier definition
 
 		# the first save moves the bid to the current definition; then the acknowledgement saves
-		self.at("2027-06-01 12:10:00")
+		self.at(W("2027-06-01 12:10:00"))
 		moved = self.save("documents", {})
 		self.assertEqual((moved["ok"], moved["code"], moved["refreshed"]), (False, "BDS_ADDENDUM_REVIEW_REQUIRED", True))
 		ack = next(a for a in documents(self.bid)["addenda"] if a["reference"] == reference)["acknowledgement"]
@@ -63,14 +65,14 @@ class TestWithAddendum(AddendumCase):
 		self.assertTrue(saved["ok"], saved)
 		after = documents(self.bid)
 		ack = next(a for a in after["addenda"] if a["reference"] == reference)["acknowledgement"]
-		self.assertEqual((ack["value"], ack["acknowledged_text"]), (True, "Acknowledged by David Ouma on 1 Jun 2027, 12:10 EAT"))
+		self.assertEqual((ack["value"], ack["acknowledged_text"]), (True, f"Acknowledged by David Ouma on {ad.dt_eat('2027-06-01 12:10:00')}"))
 		self.assertEqual((after["badge"]["label"], after["footer"]["blocked_text"]), ("Complete", ""))
 
 	def test_a_failed_notice_is_named_and_offers_only_a_verified_email(self):
 		self._flag("kt_tenders_notice_transport", lambda notice: {"result": "Failed", "provider_reference": "", "failure_reason": "Mailbox unavailable"})
 		name = self.issue_addendum()
 		reference = frappe.db.get_value("Tender Addendum", name, "addendum_reference")
-		self.at("2027-05-31 09:15:00")
+		self.at(W("2027-05-31 09:15:00"))
 		view = documents(self.bid)
 		notice = next(a for a in view["addenda"] if a["reference"] == reference)["notice"]
 		self.assertEqual((notice["status"], notice["tone"], notice["can_update_contact"]), ("Delivery problem", "attention", True))

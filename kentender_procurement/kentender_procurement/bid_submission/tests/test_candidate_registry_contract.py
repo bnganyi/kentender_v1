@@ -8,6 +8,7 @@ force at each instant."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 
 from kentender_procurement.bid_submission.services import candidate_registry, errors, notice_contact, start_bid
@@ -27,7 +28,7 @@ class TestCandidateRegistry(BidCase):
 	def test_the_arrangement_is_the_candidate_from_its_start_instant(self):
 		arrangement = self.start()["bidder_arrangement_id"]
 		jv = self.start(user=PETER, organisation=KISIWA, arrangement=self.joint_venture(), contact=f"{KISIWA}-C1")["bidder_arrangement_id"]
-		self.assertEqual(candidate_gateway.candidate_audience(tender=self.name, at="2027-05-19 09:19:59"), [])
+		self.assertEqual(candidate_gateway.candidate_audience(tender=self.name, at=W("2027-05-19 09:19:59")), [])
 		self.assertEqual(
 			candidate_gateway.candidate_audience(tender=self.name, at=START_AT),
 			[{"candidate_registration_id": arrangement, "destination": "tenders@afyadigital.example", "destination_version": "1"}, {"candidate_registration_id": jv, "destination": "tenders@kisiwadigital.example", "destination_version": "1"}],
@@ -41,23 +42,23 @@ class TestCandidateRegistry(BidCase):
 		# period, the arrangement is Closed, and Tenders' protected reads (who
 		# asked a question, the audit trail) must still name the candidate.
 		arrangement = self.start()["bidder_arrangement_id"]
-		frappe.db.set_value("Bidder Arrangement", arrangement, {"status": "Closed", "status_since": "2027-06-12 11:00:00"})
+		frappe.db.set_value("Bidder Arrangement", arrangement, {"status": "Closed", "status_since": W("2027-06-12 11:00:00")})
 		self.assertEqual(candidate_gateway.candidate_name(tender=self.name, candidate_registration_id=arrangement), "Afya Digital Supplies Limited")
 		self.assertEqual(candidate_gateway.candidate_registration(tender=self.name, candidate_registration_id=arrangement)["status"], "Closed")
 		# …while it is no longer in the audience for notices after it closed
-		self.assertEqual(candidate_gateway.candidate_audience(tender=self.name, at="2027-06-12 11:00:01"), [])
+		self.assertEqual(candidate_gateway.candidate_audience(tender=self.name, at=W("2027-06-12 11:00:01")), [])
 
 	def test_a_notice_email_change_applies_from_its_instant_only(self):
 		arrangement = self.start()["bidder_arrangement_id"]
 		self.accounts.contacts[AFYA].append({"contact_id": f"{AFYA}-C2", "channel": "Email", "value": "bids@afyadigital.example", "contact_version": 1, "is_official": False})
-		self.at("2027-05-25 10:00:00")
+		self.at(W("2027-05-25 10:00:00"))
 		version = frappe.db.get_value("Bidder Arrangement", arrangement, "record_version")
 		unverified = notice_contact.update_tender_notice_contact(bidder_arrangement_id=arrangement, notice_contact_id="unverified", expected_record_version=version, idempotency_key=key(), user=DAVID)
 		self.assertEqual((unverified["ok"], unverified["code"]), (False, "BDS_NOTICE_CONTACT_REQUIRED"))
 		changed = notice_contact.update_tender_notice_contact(bidder_arrangement_id=arrangement, notice_contact_id=f"{AFYA}-C2", expected_record_version=version, idempotency_key=key(), user=DAVID)
 		self.assertEqual((changed["changed"], changed["notice_contact_version"]), (True, 2))
-		self.assertEqual(candidate_gateway.candidate_audience(tender=self.name, at="2027-05-20 09:00:00")[0]["destination"], "tenders@afyadigital.example")
-		self.assertEqual(candidate_gateway.candidate_audience(tender=self.name, at="2027-05-26 09:00:00")[0], {"candidate_registration_id": arrangement, "destination": "bids@afyadigital.example", "destination_version": "2"})
+		self.assertEqual(candidate_gateway.candidate_audience(tender=self.name, at=W("2027-05-20 09:00:00"))[0]["destination"], "tenders@afyadigital.example")
+		self.assertEqual(candidate_gateway.candidate_audience(tender=self.name, at=W("2027-05-26 09:00:00"))[0], {"candidate_registration_id": arrangement, "destination": "bids@afyadigital.example", "destination_version": "2"})
 		with self.assertRaises(errors.BidSubmissionError) as stale:
 			notice_contact.update_tender_notice_contact(bidder_arrangement_id=arrangement, notice_contact_id=f"{AFYA}-C1", expected_record_version=version, idempotency_key=key(), user=DAVID)
 		self.assertEqual(stale.exception.code, "BDS_STALE_VERSION")

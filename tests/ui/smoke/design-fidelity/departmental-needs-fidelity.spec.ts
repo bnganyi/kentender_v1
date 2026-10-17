@@ -1,4 +1,5 @@
 import { expect, test, Page } from "@playwright/test";
+import { fiscal } from "../../helpers/anchor";
 
 import {
 	loginAsAdministrator,
@@ -396,7 +397,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 		await expectScreen(page, "detail");
 		await page.locator('[data-testid="nds-owner-action"][data-action="create-update"]').click();
 		await expectScreen(page, "editor");
-		await page.locator('[data-testid="nds-required-by"]').fill("2028-04-30");
+		await page.locator('[data-testid="nds-required-by"]').fill(fiscal("2028-04-30"));
 		await page.locator('[data-testid="nds-submit"]').click();
 		await page.locator('[data-testid="nds-dialog-confirm"]').click();
 		await expectScreen(page, "detail");
@@ -461,7 +462,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 		await expectScreen(page, "detail");
 		await page.locator('[data-testid="nds-owner-action"][data-action="create-update"]').click();
 		await expectScreen(page, "editor");
-		await page.locator('[data-testid="nds-required-by"]').fill("2028-04-30");
+		await page.locator('[data-testid="nds-required-by"]').fill(fiscal("2028-04-30"));
 		await page.locator('[data-testid="nds-submit"]').click();
 		await page.locator('[data-testid="nds-dialog-confirm"]').click();
 		await expectScreen(page, "detail");
@@ -501,7 +502,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 		await expectScreen(page, "detail");
 		await page.locator('[data-testid="nds-owner-action"][data-action="create-update"]').click();
 		await expectScreen(page, "editor");
-		await page.locator('[data-testid="nds-required-by"]').fill("2028-04-30");
+		await page.locator('[data-testid="nds-required-by"]').fill(fiscal("2028-04-30"));
 		await page.locator('[data-testid="nds-submit"]').click();
 		await page.locator('[data-testid="nds-dialog-confirm"]').click();
 		await expectScreen(page, "detail");
@@ -1216,7 +1217,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 		await page.locator('[data-testid="nds-title"]').fill("National digital health infrastructure upgrade");
 		await page.locator('[data-testid="nds-quantity"]').fill("1");
 		await page.locator('[data-testid="nds-estimated-cost"]').fill("1000000");
-		await page.locator('[data-testid="nds-required-by"]').fill("2027-08-31");
+		await page.locator('[data-testid="nds-required-by"]').fill(fiscal("2027-08-31"));
 		await mockCallFailure(page, "save_need_draft", "Your changes were not saved.");
 		await page.locator('[data-testid="nds-save-draft"]').click();
 		await expect(page.locator(".kt-notice.is-critical")).toContainText("Your changes were not saved.");
@@ -1239,7 +1240,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 		await page.locator('[data-testid="nds-title"]').fill("National digital health infrastructure upgrade");
 		await page.locator('[data-testid="nds-quantity"]').fill("1");
 		await page.locator('[data-testid="nds-estimated-cost"]').fill("1000000");
-		await page.locator('[data-testid="nds-required-by"]').fill("2027-08-31");
+		await page.locator('[data-testid="nds-required-by"]').fill(fiscal("2027-08-31"));
 		// save_need_draft goes through for real (NDS13-406 — an untagged Need
 		// this way, swept up by purgeUntaggedNeedsSince in afterAll); only the
 		// submit that follows it is refused, exactly NDS-BR-002/003's own real
@@ -1276,7 +1277,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 		await page.locator('[data-testid="nds-title"]').fill("National digital health infrastructure upgrade");
 		await page.locator('[data-testid="nds-quantity"]').fill("1");
 		await page.locator('[data-testid="nds-estimated-cost"]').fill("1000000");
-		await page.locator('[data-testid="nds-required-by"]').fill("2027-08-31");
+		await page.locator('[data-testid="nds-required-by"]').fill(fiscal("2027-08-31"));
 		// A dropped connection on the save-before-submit step itself: no
 		// interpretable server answer at all (frappeCall's `ambiguous` flag) —
 		// nothing is created, unlike PARTIAL-SUBMIT above.
@@ -1303,7 +1304,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 		await expectScreen(page, "editor");
 		await page.locator('[data-testid="nds-title"]').fill("National digital health infrastructure upgrade");
 		await page.locator('[data-testid="nds-quantity"]').fill("0");
-		await page.locator('[data-testid="nds-required-by"]').fill("2027-08-31");
+		await page.locator('[data-testid="nds-required-by"]').fill(fiscal("2027-08-31"));
 		await page.locator('[data-testid="nds-submit"]').click();
 		await expect(page.getByTestId("nds-quantity-error")).toHaveText("Enter a quantity greater than zero.");
 		// Client-side only — no modal, and nothing was sent.

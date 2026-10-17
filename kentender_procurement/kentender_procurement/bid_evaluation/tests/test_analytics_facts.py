@@ -15,6 +15,7 @@ Run:
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 import re
 import unittest
@@ -216,10 +217,10 @@ class TestEvaluationAnalyticsFacts(EvaluationCase):
 		doc = self.evl_doc()
 		event = records.insert(frappe.get_doc({"doctype": "Evaluation Source Event", "source_event_id": f"{doc.name}-SE-ANL", "evaluation_case": doc.name,
 			"event_key": f"anl-suspend:{doc.name}", "source": "Simulation", "kind": "Suspension", "instruction_reference": "MOH/REVIEW/TEST-ANL", "authority": AO,
-			"received_at": "2027-06-11 08:55:00", "permitted_actions_json": "[]"}))
+			"received_at": W("2027-06-11 08:55:00"), "permitted_actions_json": "[]"}))
 		records.bump(doc, suspended=1, suspension_event=event.name)
 		self.assertEqual(self.mine()["outstanding"], {"text": "Evaluation is paused by the recorded instruction.", "holder": self.name_of(AO),
-			"since": datetime(2027, 6, 11, 8, 55)})
+			"since": datetime.strptime(W("2027-06-11 08:55:00"), "%Y-%m-%d %H:%M:%S")})
 		self.assertEqual(self.mine()["position"], "paused by the recorded instruction")
 
 	def test_a_matter_with_no_recorded_instant_is_none_not_invented(self):

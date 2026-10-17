@@ -9,6 +9,7 @@ after a second run.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -60,14 +61,14 @@ class TestReferenceDataSeedMvp1(IntegrationTestCase):
 
 		fy = frappe.get_doc("Financial Year", "FY-2027-2028")
 		self.assertEqual(fy.record_status, "Available")
-		self.assertEqual(str(fy.start_date), "2027-07-01")
-		self.assertEqual(str(fy.end_date), "2028-06-30")
+		self.assertEqual(str(fy.start_date), W("2027-07-01"))
+		self.assertEqual(str(fy.end_date), W("2028-06-30"))
 
 		for ctx_name in ("CTX-MOH-2027-2028", "CTX-NSSF-2027-2028", "CTX-CGKIS-2027-2028"):
 			ctx = frappe.get_doc("PE Fiscal Year Context", ctx_name)
 			self.assertEqual(ctx.context_status, "Active")
-			self.assertEqual(str(ctx.active_from), "2027-01-01 00:00:00")
-			self.assertEqual(str(ctx.active_to), "2028-09-30 23:59:00")
+			self.assertEqual(str(ctx.active_from), W("2027-01-01 00:00:00"))
+			self.assertEqual(str(ctx.active_to), W("2028-09-30 23:59:00"))
 
 	def test_reference_data_manager_granted_only_to_lydia(self):
 		"""CFG-CHG-002 v0.4 / AUTH-ADR-001 v1.1 §12.4 — one global Reference

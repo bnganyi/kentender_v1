@@ -9,6 +9,7 @@ every change is kept; reads change nothing and mask other organisations."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 
 from kentender_procurement.bid_submission.services import errors, reads, save, start_bid, tender_contact
@@ -71,12 +72,12 @@ class TestSaveBidTask(SaveCase):
 		form, bank = self.field(view, "Form of Tender Security"), next(f for g in view["groups"] for f in g["fields"] if f["label"] == "Guarantee valid until" and f["shown_when"]["values"] == ["Demand Bank Guarantee"])
 		self.assertFalse(bank["visible"])
 		with self.assertRaises(errors.BidSubmissionError) as hidden:
-			self.save({bank["handle"]: "2027-11-15"})
+			self.save({bank["handle"]: W("2027-11-15")})
 		self.assertEqual(hidden.exception.code, "BDS_UNKNOWN_RESPONSE")
-		self.save({form["handle"]: "Demand Bank Guarantee", bank["handle"]: "2027-11-15"})
+		self.save({form["handle"]: "Demand Bank Guarantee", bank["handle"]: W("2027-11-15")})
 		self.assertEqual(self.field(self.task(), "Form of Tender Security")["value"], "Demand Bank Guarantee")
 		shown = next(f for g in self.task()["groups"] for f in g["fields"] if f["handle"] == bank["handle"])
-		self.assertEqual((shown["visible"], shown["value"]), (True, "2027-11-15"))
+		self.assertEqual((shown["visible"], shown["value"]), (True, W("2027-11-15")))
 		self.save({form["handle"]: "Insurance Guarantee"})
 		hidden_now = next(f for g in self.task()["groups"] for f in g["fields"] if f["handle"] == bank["handle"])
 		self.assertEqual((hidden_now["visible"], hidden_now.get("issue")), (False, None))
@@ -93,7 +94,7 @@ class TestSaveBidTask(SaveCase):
 
 	def test_after_the_deadline_nothing_saves(self):
 		year = self.field(self.task(), "Authorised representative's address")
-		self.at("2027-07-01 09:00:00")
+		self.at(W("2027-07-01 09:00:00"))
 		with self.assertRaises(errors.BidSubmissionError) as ctx:
 			self.save({year["handle"]: "11 Riverside Drive, Nairobi"})
 		self.assertEqual(ctx.exception.code, "BDS_TENDER_NOT_OPEN")

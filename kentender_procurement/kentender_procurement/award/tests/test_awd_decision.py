@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import frappe
 
 from kentender_procurement.award.services import decision, opinion, simulation, state
@@ -84,7 +86,7 @@ class TestDecision(AwardCase):
 	def test_expired_validity_blocks_award_but_allows_no_award(self):
 		self.deliver()
 		self.signed_opinion()
-		self.at("2027-10-11 09:00:00")
+		self.at(W("2027-10-11 09:00:00"))
 		with self.assertRaises(AwardError) as ctx:
 			self.run_as(AO, decision.record, award=CASE, outcome="Award", reason="x", expected_version=self.version())
 		self.assertIn("AWD_VALIDITY_EXPIRED", [r["code"] for r in ctx.exception.reasons])

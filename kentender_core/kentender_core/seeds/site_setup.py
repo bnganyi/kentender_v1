@@ -26,6 +26,8 @@ from contextlib import nullcontext
 
 import frappe
 
+from kentender_core.seeds import calendar
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from kentender_core.services import organisation_structure as structure
 from kentender_core.services.command_write_guard import maintenance_write
 from kentender_core.services import responsibility_administration as administration
@@ -64,18 +66,23 @@ HOME_UNITS = (
 	("samuel.otieno", "ICT"),
 )
 
-FISCAL_START_YEARS = (2026, 2027)
-INTAKE = {"start_year": 2027, "closes_at": "2026-11-25 23:59:00"}
+#: The financial years the site configures. The v0.7 world has Year 1 and Year 2; an anchored world (SEED-002 v0.8 R3) also has
+#: Year 0, the closed year: an executed item's planned invitation date, moved with the world, can fall in it, and Tenders resolve the
+#: rules in force by the financial year that date is in.
+FISCAL_START_YEARS = tuple(_y.start_year for _y in calendar.seeded_years())
+INTAKE = {"start_year": calendar.YEAR2.start_year, "closes_at": F("2026-11-25 23:59:00")}
 # PLN-CHG-001 v1.12 §14.1 — departmental-plan intake for FY 2027/28 closes
 # 30 Nov 2026, 23:59:59 EAT, stored in site time like every instant (owner
 # decision 26 Sep 2026; it was stored as UTC, so the gate, which compares
 # against the site clock, closed it at 20:59 EAT).
-DPP_INTAKE = {"start_year": 2027, "closes_at": "2026-11-30 23:59:59"}
+#: The authored close, in story coordinates: a seeded year's own intake close is this moved by `Year.window`, not by `F` again.
+DPP_INTAKE_AUTHORED_CLOSE = "2026-11-30 23:59:59"
+DPP_INTAKE = {"start_year": calendar.YEAR2.start_year, "closes_at": F(DPP_INTAKE_AUTHORED_CLOSE)}
 # CFG-CHG-002 v0.11 §4.3 — the third registered intake. Disposal plans are
 # called for the same year as the procurement plan; nothing consumes the
 # flag yet, but the Financial years tab lists the activity, so a seed that
 # left it closed showed one permanently unfinished row.
-DISPOSAL_INTAKE = {"start_year": 2027, "closes_at": "2026-11-30 23:59:59"}
+DISPOSAL_INTAKE = {"start_year": calendar.YEAR2.start_year, "closes_at": F("2026-11-30 23:59:59")}
 
 # CFG-CHG-002 v0.9 §3 — the requirement-type and procurement-method
 # catalogues Configuration & Governance owns (PLN-CHG-001 v1.12 §14.1: four
@@ -137,7 +144,7 @@ RESERVATION_CATEGORIES = (
 )
 REGULATORY_REFERENCE = {
 	"gazette_reference": "PPADR 2020 Second Schedule (rev. 2022) — FY 2027/28",
-	"effective_from": "2027-07-01",
+	"effective_from": F("2027-07-01"),
 	"reservation_target_percent": 30,
 	"county_resident_target_percent": 20,
 	"exclusive_preference_works_amount": 1_000_000_000,
@@ -232,7 +239,7 @@ ASSIGNMENTS = (
 	# Two-year seed world (plan D8, 4 Oct 2026): the SEED-001 chronology is
 	# Year 1's planning history, 364 days before its 2026 instants (was
 	# 1 Dec 2026), so Peter also decides Year 2's Digital Health Needs.
-	("peter.kimani", "Head of User Department", "Digital Health", {"effective_from": "2025-12-02 00:00:00"}),
+	("peter.kimani", "Head of User Department", "Digital Health", {"effective_from": W("2025-12-02 00:00:00")}),
 	(
 		"julia.njeri",
 		"Head of User Department",
@@ -250,8 +257,8 @@ ASSIGNMENTS = (
 			# instant (kentender_core.seeds.clock), so her 25 Nov 2026
 			# decisions are authorised for real. The retired stop-gap row is
 			# revoked by `_reconcile_superseded_fixture_assignments`.
-			"effective_from": "2025-10-02 00:00:00",
-			"effective_to": "2025-12-01 23:59:59",
+			"effective_from": W("2025-10-02 00:00:00"),
+			"effective_to": W("2025-12-01 23:59:59"),
 		},
 	),
 	("mercy.kilonzo", "Procurement Planner", None, {}),
@@ -302,8 +309,8 @@ ASSIGNMENTS = (
 		"Directorate of Digital Health and Policy",
 		{
 			# 364 days before 1 Jan–31 Aug 2026 (two-year seed world plan D8).
-			"effective_from": "2025-01-02 00:00:00",
-			"effective_to": "2025-09-01 23:59:59",
+			"effective_from": W("2025-01-02 00:00:00"),
+			"effective_to": W("2025-09-01 23:59:59"),
 		},
 	),
 	# Samuel's Directorate term above ends 31 Aug 2026 and is deliberately
@@ -329,7 +336,7 @@ ASSIGNMENTS = (
 		"Head of User Department",
 		"Directorate of Digital Health and Policy",
 		# 364 days before 1 Sep 2026 (two-year seed world plan D8).
-		{"effective_from": "2025-09-02 00:00:00"},
+		{"effective_from": W("2025-09-02 00:00:00")},
 	),
 )
 
@@ -380,8 +387,12 @@ def contact_office_display(office_name: str) -> str:
 # bound still ends with the last one. Nothing here is now-relative: these
 # are fixed dates that follow the seeded years, so a visual baseline
 # captured today still matches tomorrow.
+# In an anchored world (SEED-002 v0.8) the window starts on 1 January of the first seeded year instead: the executed
+# chain is moved earlier by whole weeks, so a planned invitation date can fall up to about six weeks before the financial
+# year it belongs to (a run on the first Friday that has 100 days of the year behind it puts Year 1's first invitation
+# on 25 May, and Year 0's a year before), and the method and schedule rules resolve by that date.
 PROFILE_EFFECTIVE = {
-	"effective_from": f"{FISCAL_START_YEARS[0]}-07-01",
+	"effective_from": f"{FISCAL_START_YEARS[0]}-{'01-01' if calendar.mode() == 'anchored' else '07-01'}",
 	"effective_until": f"{FISCAL_START_YEARS[-1] + 1}-06-30",
 }
 PROFILE_SOURCE = {

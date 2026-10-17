@@ -27,6 +27,7 @@ The matrix is written to
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import os
 
 import frappe
@@ -91,7 +92,7 @@ class TestTendersDeadEndMatrix(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		fx.wipe_all()
 		self.addCleanup(frappe.set_user, "Administrator")
-		frappe.flags.kt_tenders_clock = "2027-04-20 10:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-04-20 10:00:00")
 		self.addCleanup(setattr, frappe.flags, "kt_tenders_clock", None)
 
 	# ------------------------------------------------------------------
@@ -170,7 +171,7 @@ class TestTendersDeadEndMatrix(IntegrationTestCase):
 	def _confirm(self, root, channel, *, subject="publication", addendum=""):
 		root.reload()
 		online = channel in configuration_gateway.ONLINE_CHANNELS
-		common = dict(available_at="2027-05-15 08:00:00", evidence_reference=f"REF-{channel}", evidence_file=fx.evidence_file(f"{channel}.png"), public_url=f"https://portal.example.test/{channel}" if online else "", url_not_applicable_reason="" if online else "Physical channel", expected_record_version=root.record_version, idempotency_key=fx.key(), attestation_confirmed=True, user=fx.HOPF)
+		common = dict(available_at=W("2027-05-15 08:00:00"), evidence_reference=f"REF-{channel}", evidence_file=fx.evidence_file(f"{channel}.png"), public_url=f"https://portal.example.test/{channel}" if online else "", url_not_applicable_reason="" if online else "Physical channel", expected_record_version=root.record_version, idempotency_key=fx.key(), attestation_confirmed=True, user=fx.HOPF)
 		if subject == "publication":
 			return publication.confirm_publication_channel(tender=root.name, channel=channel, package_digest=frappe.db.get_value("Tender Publication", root.publication, "package_digest"), **common)
 		return addenda.confirm_addendum_publication_channel(tender=root.name, addendum=addendum, channel=channel, addendum_digest=frappe.db.get_value("Tender Addendum", addendum, "addendum_digest"), **common)
@@ -196,7 +197,7 @@ class TestTendersDeadEndMatrix(IntegrationTestCase):
 		failures += self.check("Approved — awaiting AO authorisation", self.publication_screen(root.name))
 		publication.authorise_tender_publication(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO, task=approved["task"])
 		root.reload()
-		frappe.flags.kt_tenders_clock = "2027-05-15 07:55:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-15 07:55:00")
 		for channel in CHANNELS[:2]:
 			self._confirm(root, channel)
 		failures += self.check("Publication authorised — 2 of 4 confirmed", self.publication_screen(root.name))
@@ -207,7 +208,7 @@ class TestTendersDeadEndMatrix(IntegrationTestCase):
 		failures += self.check("Published — open", self.record(root.name))
 
 		# a non-material addendum through every status
-		frappe.flags.kt_tenders_clock = "2027-05-20 08:30:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-20 08:30:00")
 		root.reload()
 		name = addenda.create_addendum_draft(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)["addendum"]["name"]
 		root.reload()
@@ -230,17 +231,17 @@ class TestTendersDeadEndMatrix(IntegrationTestCase):
 		self.addCleanup(setattr, frappe.flags, "kt_tenders_notice_sync", False)
 		self.addCleanup(setattr, frappe.flags, "kt_tenders_notice_transport", None)
 		fake_candidates.install(self).register(tender=root.name, bidder_arrangement_id="ARR-TNDT-001", candidate_name="Afya Digital Supplies Limited", notice_address="tenders@afyadigital.example")
-		frappe.flags.kt_tenders_clock = "2027-05-26 09:00:00"
-		received = clarifications.receive_tender_clarification(tender=root.name, candidate_registration_id="ARR-TNDT-001", question="May the two comparable contracts be from different customers?", received_at="2027-05-26 09:00:00", inbound_event_id="EVT-MATRIX-1", user=fx.PRODUCER)
+		frappe.flags.kt_tenders_clock = W("2027-05-26 09:00:00")
+		received = clarifications.receive_tender_clarification(tender=root.name, candidate_registration_id="ARR-TNDT-001", question="May the two comparable contracts be from different customers?", received_at=W("2027-05-26 09:00:00"), inbound_event_id="EVT-MATRIX-1", user=fx.PRODUCER)
 		failures += self.check("Clarification — Awaiting response", self.clarification(root.name, received["clarification"]))
 		failures += self.check("Published — open, clarification pending", self.record(root.name))
 		root.reload()
-		frappe.flags.kt_tenders_clock = "2027-05-26 11:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-26 11:00:00")
 		clarifications.respond_to_tender_clarification(tender=root.name, clarification=received["clarification"], response="Yes. The two comparable contracts may be from different customers.", response_audience="All registered candidates", affects_published_tender=False, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		failures += self.check("Clarification — Answered", self.clarification(root.name, received["clarification"]))
 
 		# a material proposal and its cancellation review
-		frappe.flags.kt_tenders_clock = "2027-05-28 10:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-28 10:00:00")
 		root.reload()
 		material = addenda.create_addendum_draft(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)["addendum"]["name"]
 		root.reload()
@@ -252,7 +253,7 @@ class TestTendersDeadEndMatrix(IntegrationTestCase):
 		failures += self.check("Cancel Tender — review requested", self.cancellation_screen(root.name))
 
 		# cancellation
-		frappe.flags.kt_tenders_clock = "2027-06-04 14:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-06-04 14:00:00")
 		root.reload()
 		cancellation.cancel_tender(tender=root.name, ground="INADEQUATE_BUDGET", reason="The confirmed budget available for this procurement is insufficient to proceed.", expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO)
 		failures += self.check("Cancelled — obligations due", self.cancellation_screen(root.name))

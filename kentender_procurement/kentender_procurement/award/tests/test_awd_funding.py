@@ -11,6 +11,8 @@ contract is covered by `TestEvaluationSourceFunding`."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -29,7 +31,7 @@ class TestFundingAtDecision(AwardCase):
 		super().setUp()
 		self.deliver()
 		self.signed_opinion()
-		self.at("2027-06-17 10:00:00")
+		self.at(W("2027-06-17 10:00:00"))
 
 	def award(self):
 		return self.run_as(AO, decision.record, award=CASE, outcome="Award", reason=REASON, expected_version=self.version())

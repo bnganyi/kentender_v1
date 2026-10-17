@@ -13,6 +13,7 @@ corrected successor, the compatibility checks, the review result and the
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 
 import frappe
@@ -37,6 +38,10 @@ class TenderLifecycleCase(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		fx.wipe_all()
 		self.addCleanup(frappe.set_user, "Administrator")
+		# The sample Tender's dates are the story's (issue 15 May, deadline 5 June 2027); the system reads its clock at a story instant before them,
+		# so they lie ahead as they did when the world was read at a fixed date ahead of the real clock (SEED-002 v0.9 R1).
+		frappe.flags.kt_tenders_clock = W("2027-05-14 09:00:00")
+		self.addCleanup(setattr, frappe.flags, "kt_tenders_clock", None)
 
 	def _started(self, *, items=(("Business laptops", 1, "Clinical training"),)) -> tuple[dict, dict]:
 		authorised = fx.authorised_handoff(items=items)
@@ -183,7 +188,7 @@ class TestSaveDraft(TenderLifecycleCase):
 		with self.assertRaises(TendersError) as ctx:
 			cmd.save_tender_draft(tender=root.name, values={"items": []}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertEqual(ctx.exception.code, "TND_INHERITED_EDIT")
-		saved = cmd.save_tender_draft(tender=root.name, values={"tender_title": "Supply and delivery of business laptops", "pre_tender_meeting": True, "meeting_mode": "Physical", "meeting_datetime": "2027-05-22 10:00:00", "meeting_venue": fx.LOCATION}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		saved = cmd.save_tender_draft(tender=root.name, values={"tender_title": "Supply and delivery of business laptops", "pre_tender_meeting": True, "meeting_mode": "Physical", "meeting_datetime": W("2027-05-22 10:00:00"), "meeting_venue": fx.LOCATION}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertTrue(saved["ok"])
 		self.assertEqual(saved["record_version"], root.record_version + 1)
 		self.assertEqual(saved["tasks"]["details"], "Needs attention")

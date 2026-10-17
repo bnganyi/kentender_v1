@@ -36,6 +36,7 @@ seeding day and only submission and approval were back-stamped to 1 Jul
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from typing import Any
 
 import frappe
@@ -68,7 +69,7 @@ V1_DRAFT_AT = "2023-07-01 08:00:00"
 V1_SUBMITTED_AT = "2023-07-01 08:30:00"
 V1_APPROVED_AT = "2023-07-01 09:15:00"
 
-PERIOD = ("2023-07-01", "2028-06-30")
+PERIOD = ("2023-07-01", F("2028-06-30"))
 #: (client id, node type, title), each the parent of the next.
 NODES = (
 	("$pillar", "Pillar", "Digital health systems"),
@@ -331,17 +332,17 @@ def validate_strategy_seed() -> list[dict[str, Any]]:
 
 PROFILE_FUTURE = "STR18-FX-FUTURE"
 PROFILE_IMMEDIATE = "STR18-FX-IMMEDIATE"
-PROFILE_EFFECTIVE_FROM = {PROFILE_FUTURE: "2027-07-01", PROFILE_IMMEDIATE: "2026-11-25"}
-PROFILE_EFFECTIVE_TO = "2028-06-30"
-V2_CREATED_AT = "2026-11-24 13:10:00"
-V2_DRAFT_SAVED_AT = "2026-11-24 15:55:00"
-V2_SUBMITTED_AT = "2026-11-24 16:20:00"
-V2_RETURNED_AT = "2026-11-25 11:20:00"
+PROFILE_EFFECTIVE_FROM = {PROFILE_FUTURE: F("2027-07-01"), PROFILE_IMMEDIATE: W("2026-11-25")}
+PROFILE_EFFECTIVE_TO = F("2028-06-30")
+V2_CREATED_AT = W("2026-11-24 13:10:00")
+V2_DRAFT_SAVED_AT = W("2026-11-24 15:55:00")
+V2_SUBMITTED_AT = W("2026-11-24 16:20:00")
+V2_RETURNED_AT = W("2026-11-25 11:20:00")
 RETURN_REASON = (
 	"Explain how the revised target will be measured and confirm the date these changes should take effect."
 )
 NEW_PLAN_TITLE = "Ministry of Health Strategic Plan 2028–2033 (Demo)"
-NEW_PLAN_PERIOD = ("2028-07-01", "2033-06-30")
+NEW_PLAN_PERIOD = (F("2028-07-01"), F("2033-06-30"))
 
 
 def _moh_plan_name() -> str:

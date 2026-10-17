@@ -7,6 +7,7 @@ PRC-N12. Shared-service evidence only (PRC v0.9 §15)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 
 import frappe
@@ -45,7 +46,7 @@ class TestStart(ProceedingsCase):
 		created = self.create()
 		started = self.start(created)
 		row = frappe.get_doc("Proceeding", created["proceeding"])
-		self.assertEqual((row.state, str(row.actual_start)), ("In session", "2027-06-12 11:00:12"))
+		self.assertEqual((row.state, str(row.actual_start)), ("In session", W("2027-06-12 11:00:12")))
 		self.assertEqual([m.member_user for m in row.members], [r["member_user"] for r in ROSTER])
 		self.assertEqual({m.roster_segment for m in row.members}, {1})
 		self.assertEqual(started["state"], "In session")
@@ -65,11 +66,11 @@ class TestStart(ProceedingsCase):
 	def test_prc_n08_pre_session_arrivals_carry_into_the_session_without_a_second_arrival(self):
 		created = self.create()
 		ref = lambda: self.ref(created)  # noqa: E731
-		self.at("2027-06-12 10:55:00")
+		self.at(W("2027-06-12 10:55:00"))
 		attendance.record_attendance(**ref(), person_name="Test Member", user=MEMBER, capacity="Committee member", movement="Arrival", idempotency_key=self.key(), actor=CHAIR)
-		self.at("2027-06-12 10:58:00")
+		self.at(W("2027-06-12 10:58:00"))
 		attendance.record_attendance(**ref(), person_name="Test Visitor", user=VISITOR, capacity="Public observer", movement="Arrival", idempotency_key=self.key(), actor=CHAIR)
-		self.at("2027-06-12 10:59:00")
+		self.at(W("2027-06-12 10:59:00"))
 		attendance.record_attendance(**ref(), person_name="Test Member", user=MEMBER, capacity="Committee member", movement="Departure", idempotency_key=self.key(), actor=CHAIR)
 		rows = frappe.get_all("Proceeding Attendance", filters={"proceeding": created["proceeding"]}, fields=["pre_session", "movement"])
 		self.assertEqual({r.pre_session for r in rows}, {1})
@@ -100,7 +101,7 @@ class TestStart(ProceedingsCase):
 class TestTerminalOutcomes(ProceedingsCase):
 	def test_prc_n10_not_held_is_terminal(self):
 		created = self.create()
-		self.at("2027-06-26 11:10:00")
+		self.at(W("2027-06-26 11:10:00"))
 		out = lifecycle.mark_not_held(**self.ref(created), reason="The public attendance service was unavailable; opening did not start", custody_reference="TEST-CUSTODY",
 			idempotency_key=self.key(), actor=CHAIR)
 		self.assertEqual(out["state"], "Not held")
@@ -119,16 +120,16 @@ class TestTerminalOutcomes(ProceedingsCase):
 	def test_prc_n09_cancellation_after_start_closes_the_partial_session(self):
 		created = self.create()
 		self.start(created)
-		self.at("2027-06-12 11:01:45")
+		self.at(W("2027-06-12 11:01:45"))
 		self.owner_event(created, "ReadoutConfirmed", "readout-1")
-		self.at("2027-06-12 11:03:00")
+		self.at(W("2027-06-12 11:03:00"))
 		key = self.key()
 		closed = lifecycle.close_aborted(**self.ref(created), cancellation_reference="TEST-CANCEL-1", custody_reference="TEST-CUSTODY", idempotency_key=key, actor=CHAIR)
 		replay = lifecycle.close_aborted(**(self.ref(created) | {"expected_version": closed["record_version"] - 1}), cancellation_reference="TEST-CANCEL-1",
 			custody_reference="TEST-CUSTODY", idempotency_key=key, actor=CHAIR)
 		self.assertEqual(closed, replay)
 		row = frappe.db.get_value("Proceeding", created["proceeding"], ["state", "actual_start", "ceased_at", "actual_end"], as_dict=True)
-		self.assertEqual((row.state, str(row.actual_start), str(row.ceased_at), row.actual_end), ("Aborted after start", "2027-06-12 11:00:12", "2027-06-12 11:03:00", None))
+		self.assertEqual((row.state, str(row.actual_start), str(row.ceased_at), row.actual_end), ("Aborted after start", W("2027-06-12 11:00:12"), W("2027-06-12 11:03:00"), None))
 		self.assertEqual(count_events(created["proceeding"], "ReadoutConfirmed"), 1)
 		self.assertCode("PRC_START_BLOCKED", self.start, created)
 		self.assertCode("PRC_VERSION_CONFLICT", self.end, created)
@@ -146,7 +147,7 @@ class TestEmptyOutcome(ProceedingsCase):
 		self.assertCode("PRC_VERSION_CONFLICT", self.end, created, outcome_event={"event_type": "NoBidsOutcome", "owner_event_id": "zero-early", "payload": {"count": 0}})
 		self.start(created)
 		key = self.key()
-		self.at("2027-06-19 11:01:00")
+		self.at(W("2027-06-19 11:01:00"))
 		outcome = {"event_type": "NoBidsOutcome", "owner_event_id": "zero-1", "payload": {"count": 0}, "note": "No bids to open"}
 		ended = lifecycle.end_proceeding(**self.ref(created), owner_event_id="end-zero", outcome_event=outcome, idempotency_key=key, actor=CHAIR)
 		replay = lifecycle.end_proceeding(**(self.ref(created) | {"expected_version": ended["record_version"] - 1}), owner_event_id="end-zero", outcome_event=outcome,
@@ -155,7 +156,7 @@ class TestEmptyOutcome(ProceedingsCase):
 		self.assertEqual(count_events(created["proceeding"], "NoBidsOutcome"), 1)
 		self.assertEqual(count_events(created["proceeding"], "ProceedingEnded"), 1)
 		row = frappe.db.get_value("Proceeding", created["proceeding"], ["state", "actual_end"], as_dict=True)
-		self.assertEqual((row.state, str(row.actual_end)), ("Session ended", "2027-06-19 11:01:00"))
+		self.assertEqual((row.state, str(row.actual_end)), ("Session ended", W("2027-06-19 11:01:00")))
 		self.assertCode("PRC_VERSION_CONFLICT", lifecycle.mark_not_held, **self.ref(created), reason="x", idempotency_key=self.key(), actor=CHAIR)
 
 
@@ -165,7 +166,7 @@ class TestRoster(ProceedingsCase):
 		self.start(created)
 		successor = [dict(r) for r in ROSTER]
 		successor[2] = successor[2] | {"member_user": VISITOR, "full_name": "Test Visitor", "appointment_reference": "TEST-APPT-2"}
-		self.at("2027-06-12 11:05:00")
+		self.at(W("2027-06-12 11:05:00"))
 		lifecycle.add_roster_segment(**self.ref(created), roster=successor, reason="Successor appointed", idempotency_key=self.key(), actor=CHAIR)
 		members = frappe.get_doc("Proceeding", created["proceeding"]).members
 		self.assertEqual({(m.member_user, m.roster_segment, m.active) for m in members if m.roster_segment == 1 and m.member_user == ROSTER[2]["member_user"]},

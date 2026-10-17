@@ -10,6 +10,7 @@ opening world purges its own rows, and this world purges Evaluation's."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from typing import Any
 
 import frappe
@@ -173,7 +174,7 @@ class EvaluationCase(RecordCase):
 			wipe_evaluations()
 			super().setUp()
 			self._fresh_evaluation()
-			bid_answers.fill(self.bid, actor=SUPPLIER, at=str(frappe.flags.get("kt_bop_clock") or "2027-05-30 14:30:00"), overrides=self.overrides)
+			bid_answers.fill(self.bid, actor=SUPPLIER, at=str(frappe.flags.get("kt_bop_clock") or W("2027-05-30 14:30:00")), overrides=self.overrides)
 			return
 		if not self._built():
 			_drop_world()
@@ -212,7 +213,7 @@ class EvaluationCase(RecordCase):
 		try:
 			wipe_evaluations()
 			super().setUp()
-			bid_answers.fill(self.bid, actor=SUPPLIER, at=str(frappe.flags.get("kt_bop_clock") or "2027-05-30 14:30:00"), overrides=self.overrides)
+			bid_answers.fill(self.bid, actor=SUPPLIER, at=str(frappe.flags.get("kt_bop_clock") or W("2027-05-30 14:30:00")), overrides=self.overrides)
 			if self.world == "completed":
 				super().completed()
 			elif self.world == "empty":

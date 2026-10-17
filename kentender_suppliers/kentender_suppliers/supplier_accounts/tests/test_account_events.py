@@ -10,6 +10,8 @@ previous and resulting status."""
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import hashlib
 import json
 
@@ -33,7 +35,7 @@ class TestAccountEventMinimum(AccountsCase):
 		registered = self.event(org, "register_supplier_organisation")["metadata"]["event"]
 		self.assertEqual((registered["schema_version"], registered["command"], registered["organisation"]), (1, "RegisterSupplierOrganisation", org))
 		self.assertRegex(registered["idempotency_key_hash"], r"^[0-9a-f]{64}$")
-		self.at("2027-05-19 08:00:00")
+		self.at(W("2027-05-19 08:00:00"))
 		request = key()
 		version = frappe.db.get_value("Supplier Organisation", org, "record_version")
 		access.suspend_supplier_account(organisation=org, reason="Reported misuse of the account.", expected_version=version, idempotency_key=request, user=AMINA)
@@ -43,7 +45,7 @@ class TestAccountEventMinimum(AccountsCase):
 			(event["command"], event["idempotency_key_hash"], event["previous_status"], event["resulting_status"], event["record_version"]),
 			("SuspendSupplierAccount", hashlib.sha256(request.encode()).hexdigest(), "Active", "Suspended", frappe.db.get_value("Supplier Organisation", org, "record_version")),
 		)
-		self.assertEqual((event["occurred_at_utc"], event["occurred_at_eat"]), (to_utc_iso(row["timestamp"]), "19 May 2027, 08:00:00 EAT"))
+		self.assertEqual((event["occurred_at_utc"], event["occurred_at_eat"]), (to_utc_iso(row["timestamp"]), f"{ad.dt_eat('2027-05-19 08:00:00', seconds=True)}"))
 		self.assertEqual(row["actor"], AMINA)
 		self.assertTrue(event["assignment"])  # the support officer's responsibility assignment
 		mary = self.event(org, "register_supplier_organisation")

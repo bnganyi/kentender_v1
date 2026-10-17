@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { fiscal, shortDate } from "../../helpers/anchor";
 
 import { login } from "../../helpers/auth";
 import {
@@ -177,15 +178,15 @@ test.describe("STR-UI-04 — Strategy Approver", () => {
 		await gotoStrategy(page, `/approval/${future.v2_reference}`);
 		await expectScreen(page, "approval");
 		const banner = page.locator('[data-testid="str-future-effective"]');
-		await expect(banner).toContainText("This version starts on 1 Jul 2027.");
+		await expect(banner).toContainText(`This version starts on ${shortDate(fiscal("2027-07-01"))}.`);
 		await expect(banner).toContainText("keeps the current version in use until the day before");
 		await expect(page.locator('[data-testid="str-approve"]')).toBeEnabled();
 		await expect(page.locator('[data-testid="str-return"]')).toBeEnabled();
 		await page.locator('[data-testid="str-atab-changes"]').click();
 		await expect(banner).toBeVisible();
-		await expect(page.locator('[data-testid="str-approval-changes"] [data-testid="str-changes-row"]').filter({ hasText: "Version effective from" })).toContainText("1 Jul 2027");
+		await expect(page.locator('[data-testid="str-approval-changes"] [data-testid="str-changes-row"]').filter({ hasText: "Version effective from" })).toContainText(shortDate(fiscal("2027-07-01")));
 		await page.locator('[data-testid="str-approve"]').click();
-		await expect(page.locator('[data-testid="str-approval-status"]')).toHaveText("Starts 1 Jul 2027", { timeout: 30_000 });
+		await expect(page.locator('[data-testid="str-approval-status"]')).toHaveText(`Starts ${shortDate(fiscal("2027-07-01"))}`, { timeout: 30_000 });
 		await expectNoFrappeModal(page);
 		// Version 1 is still the one in force; Version 2 is approved and waits for its date.
 		await page.locator('[data-testid="str-open-plan"]').click();

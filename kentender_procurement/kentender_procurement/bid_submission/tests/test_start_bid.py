@@ -9,6 +9,7 @@ guard leaves nothing behind."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from unittest import mock
 
@@ -106,7 +107,7 @@ class TestStartGuards(StartBidCase):
 		self.accounts.orgs[AFYA]["account_status"] = "Active"
 		with mock.patch("kentender_core.services.public_portal.get_public_portal_information", return_value={"status": "Incomplete", "missing": ["support"]}):
 			self.assertFails("BDS_PORTAL_INFORMATION_UNAVAILABLE")
-		self.at("2027-07-01 09:00:00")
+		self.at(W("2027-07-01 09:00:00"))
 		self.assertFails("BDS_TENDER_NOT_OPEN")
 
 	def test_an_unknown_tender_is_not_found(self):

@@ -15,6 +15,7 @@ does not change a total."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import unittest
 from unittest import mock
 
@@ -23,7 +24,7 @@ from kentender_procurement.proceedings.services import register
 DEPARTMENTS = {"OU-A": "Digital Health", "OU-B": "Human Resources Management and Development"}
 
 
-def candidate(n, *, type, lead, contributors=(), held=True, state="Session ended", date="2027-06-12", session=1):
+def candidate(n, *, type, lead, contributors=(), held=True, state="Session ended", date=W("2027-06-12"), session=1):
 	return {"n": n, "type": type, "lead": lead, "contributors": list(contributors), "held": held, "state": state, "date": date, "session": session if held else None,
 		"owner_type": "Bid Opening Case" if type == register.OPENING else "Evaluation Case", "owner_id": f"CASE-{n}"}
 
@@ -42,10 +43,10 @@ class AllowAll:
 		return True
 
 
-A_OPENING = candidate(1, type=register.OPENING, lead="OU-A", contributors=["OU-B"], state="Finalized", date="2027-06-12")
-A_EVAL_1 = candidate(2, type=register.EVALUATION, lead="OU-A", contributors=["OU-B"], date="2027-06-14", session=1)
-A_EVAL_2 = candidate(3, type=register.EVALUATION, lead="OU-A", contributors=["OU-B"], date="2027-06-16", session=2)
-B_NOT_HELD = candidate(4, type=register.OPENING, lead="OU-B", held=False, state="Not held", date="2027-06-20")
+A_OPENING = candidate(1, type=register.OPENING, lead="OU-A", contributors=["OU-B"], state="Finalized", date=W("2027-06-12"))
+A_EVAL_1 = candidate(2, type=register.EVALUATION, lead="OU-A", contributors=["OU-B"], date=W("2027-06-14"), session=1)
+A_EVAL_2 = candidate(3, type=register.EVALUATION, lead="OU-A", contributors=["OU-B"], date=W("2027-06-16"), session=2)
+B_NOT_HELD = candidate(4, type=register.OPENING, lead="OU-B", held=False, state="Not held", date=W("2027-06-20"))
 
 
 def listed(candidates, **filters):
@@ -95,11 +96,11 @@ class TestCounting(unittest.TestCase):
 		self.assertEqual(listed(self.CANDIDATES, type="", state="", query="")["matched"], 4)
 
 	def test_the_date_filter_is_inclusive_and_a_not_held_row_uses_its_scheduled_date(self):
-		self.assertEqual(listed(self.CANDIDATES, date_from="2027-06-14", date_to="2027-06-16")["matched"], 2)  # both ends inclusive
-		self.assertEqual([r["state"] for r in listed(self.CANDIDATES, date_from="2027-06-20", date_to="2027-06-20")["rows"]], ["Not held"])
+		self.assertEqual(listed(self.CANDIDATES, date_from=W("2027-06-14"), date_to=W("2027-06-16"))["matched"], 2)  # both ends inclusive
+		self.assertEqual([r["state"] for r in listed(self.CANDIDATES, date_from=W("2027-06-20"), date_to=W("2027-06-20"))["rows"]], ["Not held"])
 		undated = dict(B_NOT_HELD, date="")
 		self.assertEqual(listed([A_OPENING, undated])["matched"], 2)  # an undated row appears only with no date filter
-		self.assertEqual(listed([A_OPENING, undated], date_from="2027-01-01")["matched"], 1)
+		self.assertEqual(listed([A_OPENING, undated], date_from=W("2027-01-01"))["matched"], 1)
 
 	def test_an_owner_that_denies_a_row_neither_shows_it_nor_counts_it(self):
 		class Denies:

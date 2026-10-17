@@ -18,6 +18,7 @@ run."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 
 from kentender_core.services import support_issues
@@ -121,11 +122,11 @@ class TestDiscussion(DiscussionCase):
 
 	def test_a_lapsed_member_is_not_present(self):
 		self.set_lapse(60)
-		self.at("2027-06-14 09:00:00")
+		self.at(W("2027-06-14 09:00:00"))
 		self.evl_start()
 		for user in (MEMBER, MEMBER_2):
 			self.evl_join(user)
-		self.at("2027-06-14 09:05:00")
+		self.at(W("2027-06-14 09:05:00"))
 		for user in (CHAIR, MEMBER):
 			discussion.heartbeat(tender=self.name, user=user)
 		self.assertEqual(self.refused(self.evl_conclude).detail["absent"], [MEMBER_2])

@@ -16,6 +16,8 @@ Run:
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import shift, fiscal as F, world as W  # noqa: F401
 from datetime import datetime, timedelta
 from uuid import uuid4
 
@@ -49,8 +51,8 @@ OFFICER = "brian.wafula@moh.example.test"  # a Procurement Officer: no Needs res
 NO_GRANT = "samuel.otieno@moh.example.test"  # his Head of User Department assignment ended in August
 EXTRA = "ndst.home.extra@example.test"  # an unrelated internal user until a test grants it something
 EXTRA_NS = "KT_TEST_NDSHOME"
-H12 = datetime(2027, 6, 18, 10, 0)
-SUBMITTED_AT, RETURNED_AT, DECIDED_AT = "2027-06-17 14:00:00", "2027-06-18 09:00:00", "2027-06-18 10:00:00"
+H12 = W(datetime(2027, 6, 18, 10, 0))
+SUBMITTED_AT, RETURNED_AT, DECIDED_AT = W("2027-06-17 14:00:00"), W("2027-06-18 09:00:00"), W("2027-06-18 10:00:00")
 SPEC_PAGES = ("departmental-needs",)
 NEEDS_TABLES = ("Departmental Need", "Departmental Need Revision", "Departmental Need Decision", "Departmental Need Review Task", "Need Withdrawal Request", "Departmental Need Event")
 
@@ -231,9 +233,9 @@ class TestNeedsHomeProvider(HomeCase):
 	def test_the_home_read_renders_peters_submitted_yesterday_row(self):
 		need = self.made()["need"]
 		row = self.row(REVIEWER, "my_work", need)
-		self.assertEqual((row["action"], row["timing"], row["module"]), ("Decide whether this requirement is available to Procurement Planning", "Submitted yesterday (17 June, 14:00)", "Needs"))
+		self.assertEqual((row["action"], row["timing"], row["module"]), ("Decide whether this requirement is available to Procurement Planning", f"Submitted yesterday ({ad.home_dt('2027-06-17 14:00:00')})", "Needs"))
 		self.assertEqual(row["title"], "Clinical deployment laptops for rollout")
-		self.assertEqual(self.row(REVIEWER, "my_work", need, at=datetime(2027, 6, 19, 10, 0))["timing"], "Submitted 2 days ago (17 June, 14:00)")
+		self.assertEqual(self.row(REVIEWER, "my_work", need, at=shift(W(datetime(2027, 6, 17, 10, 0)), 2))["timing"], f"Submitted 2 days ago ({ad.home_dt('2027-06-17 14:00:00')})")
 
 	def test_only_the_reviewers_in_scope_are_offered_the_row(self):
 		need = self.made()["need"]
@@ -273,7 +275,7 @@ class TestNeedsHomeProvider(HomeCase):
 		self.assertEqual(self.one(AUDITOR, he.OVERSIGHT, need)["action_id"], requested["task"])
 		completed = self.one(AUTHOR, he.COMPLETED, need, self.stamp_decision(need, "Request withdrawal", SUBMITTED_AT))
 		self.assertEqual(completed["action"], "Requested withdrawal")
-		self.assertTrue(completed["sentence"].startswith("You asked to withdraw this requirement on 17 June 2027, 14:00 ") and "awaiting the withdrawal decision by " in completed["sentence"], completed["sentence"])
+		self.assertTrue(completed["sentence"].startswith(f"You asked to withdraw this requirement on {ad.d_long('2027-06-17')}, 14:00 ") and "awaiting the withdrawal decision by " in completed["sentence"], completed["sentence"])
 
 	def test_an_update_under_review_is_the_heads_decision_and_a_returned_update_the_authors_correction(self):
 		submitted = self.made()
@@ -314,7 +316,7 @@ class TestNeedsHomeProvider(HomeCase):
 		self.assertEqual((row["entered_at"], row["entered_verb"], row["action_id"]), (_dt(RETURNED_AT), "Received", f"{need}:correct"))
 		self.assertEqual(row["destination"], {"route": ["departmental-needs", need, "edit"], "route_options": {}})
 		self.assertEqual((row["blocked"], row["reason"]), (False, ""))
-		self.assertEqual(self.row(AUTHOR, "my_work", need)["timing"], "Received today (18 June, 09:00)")
+		self.assertEqual(self.row(AUTHOR, "my_work", need)["timing"], f"Received today ({ad.home_dt('2027-06-18 09:00:00')})")
 		# the head who returned it has nothing left to do, and the wait is over
 		self.assertEqual(self.about(REVIEWER, he.MY_WORK, need), [])
 		self.assertEqual(self.about(AUTHOR, he.WAITING, need), [])
@@ -347,7 +349,7 @@ class TestNeedsHomeProvider(HomeCase):
 		self.assertEqual(wait["action"], f"Waiting for {wait['holder']} to review the requirement")  # the holder is the owner's display, once
 		self.assertEqual((wait["action_id"], wait["destination"]["route"]), (f"{need}:waiting", ["departmental-needs", need]))
 		view = self.row(AUTHOR, "waiting", need)
-		self.assertEqual((view["timing"], view["holder"]), ("Waiting 1 day (since 17 June, 14:00)", wait["holder"]))
+		self.assertEqual((view["timing"], view["holder"]), (f"Waiting 1 day (since {ad.home_dt('2027-06-17 14:00:00')})", wait["holder"]))
 		# the title is the requirement's, the stage is not swapped in (the old provider put "Waiting for…" in the title)
 		self.assertNotIn("Waiting", wait["title"])
 		for user in (REVIEWER, PLANNER, AUDITOR, EXTRA):
@@ -380,7 +382,7 @@ class TestNeedsHomeProvider(HomeCase):
 			self.assertTrue(row["action"].startswith("Waiting for ") and row["action"].endswith("to review the requirement"), row["action"])
 			self.assertEqual(row["destination"]["route"], ["departmental-needs", need])
 			self.assertIn(self.name(REVIEWER), row["holder"])
-		self.assertEqual(self.row(AUDITOR, "oversight", need)["timing"], "Outstanding 1 day (since 17 June, 14:00)")
+		self.assertEqual(self.row(AUDITOR, "oversight", need)["timing"], f"Outstanding 1 day (since {ad.home_dt('2027-06-17 14:00:00')})")
 
 	def test_a_returned_need_is_overseen_by_its_head_and_the_auditor_but_not_by_the_two_offices(self):
 		submitted = self.made()
@@ -430,7 +432,7 @@ class TestNeedsHomeProvider(HomeCase):
 		decision = frappe.db.get_value("Departmental Need Decision", {"review_task": submitted["task"], "action": "Submit"}, "name")
 		row = self.one(AUTHOR, he.COMPLETED, need, decision)
 		self.assertEqual((row["title"], row["action"], row["completed_at"], row["reference"]), ("Clinical deployment laptops for rollout", "Submitted requirement for review", _dt(SUBMITTED_AT), need))
-		self.assertTrue(row["sentence"].startswith("You submitted this requirement for review on 17 June 2027, 14:00 "), row["sentence"])
+		self.assertTrue(row["sentence"].startswith(f"You submitted this requirement for review on {ad.d_long('2027-06-17')}, 14:00 "), row["sentence"])
 		clause = row["sentence"].split(". ", 1)[1]
 		self.assertTrue(clause.startswith("It is awaiting review by ") and clause.endswith("."), clause)
 		self.assertEqual(row["destination"]["route"], ["departmental-needs", need])
@@ -444,7 +446,7 @@ class TestNeedsHomeProvider(HomeCase):
 		self.assertEqual(self.stamp_decision(need, "Accept for planning", DECIDED_AT), decision)
 		row = self.one(REVIEWER, he.COMPLETED, need, decision)
 		self.assertEqual((row["action"], row["completed_at"], row["title"]), ("Accepted requirement for planning", _dt(DECIDED_AT), "Clinical deployment laptops for rollout"))
-		self.assertTrue(row["sentence"].startswith("You accepted this requirement for planning on 18 June 2027, 10:00 ") and row["sentence"].endswith("."), row["sentence"])
+		self.assertTrue(row["sentence"].startswith(f"You accepted this requirement for planning on {ad.d_long('2027-06-18')}, 10:00 ") and row["sentence"].endswith("."), row["sentence"])
 		self.assertNotIn("awaiting", row["sentence"])
 		self.assertEqual(self.row(REVIEWER, "completed", need)["action"], "Accepted requirement for planning")
 
@@ -455,7 +457,7 @@ class TestNeedsHomeProvider(HomeCase):
 		decision = frappe.db.get_value("Departmental Need Decision", {"departmental_need": need, "action": "Return for correction"}, "name")
 		row = self.one(REVIEWER, he.COMPLETED, need, decision)
 		self.assertEqual(row["action"], "Returned requirement for correction")
-		self.assertTrue(row["sentence"].startswith("You returned this requirement for correction on 18 June 2027, 09:00 "), row["sentence"])
+		self.assertTrue(row["sentence"].startswith(f"You returned this requirement for correction on {ad.d_long('2027-06-18')}, 09:00 "), row["sentence"])
 		self.assertEqual(row["sentence"].split(". ", 1)[1], f"It is awaiting correction by {self.name(AUTHOR)}.")
 		# once the author has resubmitted, the earlier return is not what anyone is waiting on
 		frappe.db.set_value("Departmental Need", need, "current_state", "Draft", update_modified=False)
@@ -487,7 +489,7 @@ class TestNeedsHomeProvider(HomeCase):
 		rows = [row for row in self.region(REVIEWER, he.COMPLETED) if row["root"] == need]
 		self.assertEqual({row["action"] for row in rows}, {label for label, _did in home_provider.COMPLETED.values()})
 		for row in rows:
-			self.assertTrue(row["sentence"].startswith("You ") and " on 18 June 2027, 10:00 " in row["sentence"], row["sentence"])
+			self.assertTrue(row["sentence"].startswith("You ") and f" on {ad.d_long('2027-06-18')}, 10:00 " in row["sentence"], row["sentence"])
 
 	def test_an_actor_who_lost_scope_sees_nothing_of_the_need(self):
 		# an extra Head of the unit returns it, then loses the unit and keeps only another department's authorship

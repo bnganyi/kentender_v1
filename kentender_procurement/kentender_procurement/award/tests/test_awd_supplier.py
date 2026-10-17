@@ -6,6 +6,8 @@ tracker AWD4-601–602)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W, ad  # noqa: F401
 import frappe
 
 from kentender_procurement.award.services import eligibility, issues, state, supplier
@@ -20,18 +22,18 @@ class TestRespond(AwardCase):
 		self.deliver()
 		self.awarded()
 		self.notice = state.successful_notice(state.current_batch(self.case()))
-		self.at("2027-06-18 09:00:00")
+		self.at(W("2027-06-18 09:00:00"))
 
 	def test_accept(self):
 		view = self.run_as(MARY, lambda user, idempotency_key: supplier.notice_view(notice=self.notice.name, user=user))
 		self.assertTrue(view["can_respond"])
 		self.assertEqual((view["next_step"]["headline"], view["reply_deadline"], view["not_a_contract"]),
-			("Your tender was successful.", "24 Jun 2027, 17:00 EAT", "Accepting this award does not create a contract."))
+			("Your tender was successful.", ad.dt_eat("2027-06-24 17:00:00"), "Accepting this award does not create a contract."))
 		self.assertEqual(view["accept_wording"], "I accept Award notice 1 on behalf of Afya Digital Supplies Limited.")
 		out = self.run_as(MARY, supplier.respond, notice=self.notice.name, response="Accept", notice_version=1)
 		self.assertTrue(out["ok"])
 		r = state.operative_response(frappe.get_doc(state.NOTICE, self.notice.name))
-		self.assertEqual((r.response, r.responder, r.late, str(r.received_at)), ("Accept", MARY, 0, "2027-06-18 09:00:00"))
+		self.assertEqual((r.response, r.responder, r.late, str(r.received_at)), ("Accept", MARY, 0, W("2027-06-18 09:00:00")))
 		self.assertTrue(r.authority_evidence)
 
 	def test_representative_cannot_respond(self):
@@ -66,7 +68,7 @@ class TestRespond(AwardCase):
 		self.assertFalse(frappe.db.exists("Award Contracting Package", {"award_case": self.case().name, "status": "Delivered"}))
 
 	def test_late_response(self):
-		self.at("2027-06-24 17:01:00")
+		self.at(W("2027-06-24 17:01:00"))
 		out = self.run_as(MARY, supplier.respond, notice=self.notice.name, response="Accept", notice_version=1)
 		self.assertEqual((out["late"], out["message"]), (True, "Your response was received after the deadline. It cannot be used to proceed with this award."))
 		self.assertIsNone(state.operative_response(frappe.get_doc(state.NOTICE, self.notice.name)))

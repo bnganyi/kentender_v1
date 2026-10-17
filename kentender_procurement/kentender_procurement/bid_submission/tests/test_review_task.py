@@ -11,6 +11,8 @@ waiting on portal information see no Submit. Viewing it changes nothing."""
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -74,12 +76,12 @@ class TestReadyReview(SubmissionCase):
 		# the supplier reads its own recorded original at once; the stored match waits for the opening
 		recorded = security_intake.record_physical_tender_security_receipt(
 			tender_reference=self.reference, instrument_type=security["security_type"], issuer=security["issuer"], instrument_reference=security["reference"],
-			amount=security["amount"], currency=security["currency"], received_at="2027-05-19 09:00:00", notes="", confirmed=True, idempotency_key=key(), user=tender_fx.OFFICER,
+			amount=security["amount"], currency=security["currency"], received_at=W("2027-05-19 09:00:00"), notes="", confirmed=True, idempotency_key=key(), user=tender_fx.OFFICER,
 		)
 		self.assertTrue(recorded["ok"], recorded)
 		view = review(self.bid)
 		self.assertEqual(view["security_notice"]["tone"], "live")
-		self.assertTrue(view["security_notice"]["text"].startswith(f"Original received: receipt {recorded['intake_reference']}, 19 May 2027"), view["security_notice"])
+		self.assertTrue(view["security_notice"]["text"].startswith(f"Original received: receipt {recorded['intake_reference']}, {ad.d_short('2027-05-19')}"), view["security_notice"])
 		self.assertIn("Security will be checked against your bid after opening.", view["security_notice"]["text"])
 		self.assertEqual(facts(view["declarations"])["Physical original"], f"Original received · {recorded['intake_reference']}")
 
@@ -138,7 +140,7 @@ class TestAddendumReview(AddendumCase):
 	def test_an_addendum_links_the_changed_response_at_its_task(self):
 		fill_everything(self.bid)
 		self.issue_addendum()
-		self.at("2027-06-01 12:10:00")
+		self.at(W("2027-06-01 12:10:00"))
 		price = reads.get_bid_task(bid_reference=self.bid, task="price", user=DAVID)
 		unit = next(f for g in price["groups"] for f in g["fields"] if f["kind"] == "money")
 		refreshed = self.save("price", {unit["handle"]: unit["value"]})

@@ -8,6 +8,9 @@ usage projection is idempotent and ordered.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
+from kentender_core.seeds.calendar import fiscal as F
+
 import inspect
 from uuid import uuid4
 
@@ -294,7 +297,7 @@ class TestIdempotencyConflict(ContractCase):
 			"indicative_quantity": 10,
 			"unit": "Each",
 			"estimated_total_cost": 1000000,
-			"required_by_date": "2027-12-31",
+			"required_by_date": F("2027-12-31"),
 		}
 		values.update(overrides)
 		return lifecycle.create_need(
@@ -530,7 +533,7 @@ class TestPlanningUsageProjection(ContractCase):
 			indicative_quantity=1,
 			unit="Each",
 			estimated_total_cost=1000000,
-			required_by_date="2027-12-31",
+			required_by_date=F("2027-12-31"),
 		)
 		submitted = lifecycle.submit_need(
 			need=created["need"], expected_version=created["record_version"], idempotency_key=self.key()
@@ -682,7 +685,7 @@ class TestEndpointsSurviveTheFrameworksTransportFields(ContractCase):
 			"indicative_quantity": 10,
 			"unit": "Each",
 			"estimated_total_cost": 1000000,
-			"required_by_date": "2027-12-31",
+			"required_by_date": F("2027-12-31"),
 		}
 		values.update(overrides)
 		return values
@@ -818,7 +821,7 @@ class TestPlanningDispositionProjection(ContractCase):
 			"source_event_id": self.key(),
 			"producer_sequence": 1,
 			"actor": "julia.njeri@moh.example.test",
-			"decision_at": "2026-11-27 14:00:00",
+			"decision_at": W("2026-11-27 14:00:00"),
 		}
 		values.update(kwargs)
 		return project_planning_disposition(**values)
@@ -904,7 +907,7 @@ class TestPlanningIntakeProjection(ContractCase):
 			"position": "Update required",
 			"departmental_plan": "DPP-MOH-02314-2027-001",
 			"source_event_id": self.key(),
-			"source_event_time": "2026-11-28 09:00:00",
+			"source_event_time": W("2026-11-28 09:00:00"),
 		}
 		values.update(kwargs)
 		return project_planning_intake(**values)
@@ -945,7 +948,7 @@ class TestPlanningIntakeProjection(ContractCase):
 
 	def test_nothing_to_report_once_the_need_is_in_the_plan(self):
 		self.project()
-		self.project(position="No update needed", source_event_time="2026-11-28 10:00:00")
+		self.project(position="No update needed", source_event_time=W("2026-11-28 10:00:00"))
 		self.assertIsNone(self.intake(AUTHOR))
 
 	def test_a_position_about_an_earlier_revision_is_not_reported(self):
@@ -965,7 +968,7 @@ class TestPlanningIntakeProjection(ContractCase):
 		self.assertFalse(first["idempotent"])
 		repeat = self.project()
 		self.assertTrue(repeat["idempotent"], "the same position again is not a change")
-		late = self.project(position="No update needed", source_event_time="2026-11-27 09:00:00")
+		late = self.project(position="No update needed", source_event_time=W("2026-11-27 09:00:00"))
 		self.assertTrue(late.get("superseded"))
 		self.assertEqual(self.intake(AUTHOR)["position"], "Update required")
 		with self.assertRaises(DepartmentalNeedError) as caught:

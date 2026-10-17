@@ -13,6 +13,8 @@ inventory."""
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import hashlib
 import json
 
@@ -57,7 +59,7 @@ class TestReplacement(ChangeCase):
 		first = self.submitted()
 		_status, v1 = self.current()
 		self.assertEqual(self.code(self.replace, user=DAVID), "BDS_SIGNATORY_REQUIRED")
-		self.at("2027-05-31 08:30:00")
+		self.at(W("2027-05-31 08:30:00"))
 		prepared = self.replace()
 		self.assertEqual((prepared["ok"], prepared["status"], prepared["started_from"]), (True, "Ready to submit", "Submitted"))
 		self.assertEqual((self.current(), self.version_status(v1)), (("Ready to submit", v1), "Submitted"))  # Version 1 stays current
@@ -65,8 +67,8 @@ class TestReplacement(ChangeCase):
 		header = reads.get_bid_workspace(bid_reference=self.bid, user=DAVID)["bid"]
 		self.assertEqual(header["current_submission"], {"version_label": "Submitted bid Version 1", "receipt_reference": first})
 		self.assertEqual(self.code(self.replace), "BDS_STALE_VERSION")  # already open
-		self.edit("ApexBook Pro 15", "2027-05-31 08:45:00")  # the representative works on the replacement Draft
-		self.at("2027-05-31 09:15:00")
+		self.edit("ApexBook Pro 15", W("2027-05-31 08:45:00"))  # the representative works on the replacement Draft
+		self.at(W("2027-05-31 09:15:00"))
 		# a definite rejection leaves Version 1 current
 		simulation.set_controls(deposit_outcome="Reject")
 		self.assertEqual(self.submit(self.signed())["code"], "BDS_CUSTODY_REJECTED")
@@ -79,7 +81,7 @@ class TestReplacement(ChangeCase):
 		self.assertEqual((self.current(), self.version_status(v1), self.version_status(v2)), (("Submitted", v2), "Superseded", "Submitted"))
 		self.assertEqual(frappe.db.get_value("Bid Submission Version", v2, ["version_number", "predecessor_submission_version"]), (2, v1))
 		facts = receipts.get_bid_receipt(receipt_reference=second, user=MARY)
-		self.assertEqual((facts["submitted_version"], facts["replaces_receipt"], facts["accepted_at"]), ("Submitted bid Version 2", first, "31 May 2027, 09:15:00 EAT"))
+		self.assertEqual((facts["submitted_version"], facts["replaces_receipt"], facts["accepted_at"]), ("Submitted bid Version 2", first, f"{ad.dt_eat('2027-05-31 09:15:00', seconds=True)}"))
 		self.assertEqual(receipts.get_bid_receipt(receipt_reference=first, user=MARY)["status"], "Superseded")
 		change = frappe.get_all("Bid Submission Change", filters={"bid_workspace": self.bid}, fields=["change_type", "affected_submission_version", "new_submission_version", "acknowledgement_ref"])
 		self.assertEqual([dict(c) for c in change], [{"change_type": "Replacement submitted", "affected_submission_version": v1, "new_submission_version": v2, "acknowledgement_ref": second}])
@@ -94,10 +96,10 @@ class TestWithdrawal(ChangeCase):
 			self.assertEqual(self.withdraw(reason=reason)["errors"], {"reason": "Enter 10–500 characters."})
 		self.assertEqual(self.withdraw(confirmed=False)["errors"], {"confirmed": withdrawal.CONFIRM_TEXT})
 		self.assertEqual(self.code(self.withdraw, receipt="RCPT-SOMETHING-ELSE"), "BDS_REPLACEMENT_CONFLICT")
-		self.at("2027-05-30 15:00:00")
+		self.at(W("2027-05-30 15:00:00"))
 		ack = self.withdraw(reason="x" * 10, receipt=first)
 		self.assertRegex(ack["acknowledgement_reference"], r"^WD-MOH-\d{4}-\d{3}-001$")
-		self.assertEqual((ack["withdrawn_by"], ack["withdrawn_at"], ack["status"], ack["withdrawn_receipt"]), ("Mary Wanjiku", "30 May 2027, 15:00:00 EAT", "Withdrawn", first))
+		self.assertEqual((ack["withdrawn_by"], ack["withdrawn_at"], ack["status"], ack["withdrawn_receipt"]), ("Mary Wanjiku", f"{ad.dt_eat('2027-05-30 15:00:00', seconds=True)}", "Withdrawn", first))
 		self.assertEqual((self.current(), self.version_status(v1)), (("Withdrawn", None), "Withdrawn"))
 		self.assertTrue(frappe.db.exists("Tender Box Envelope", frappe.db.get_value("Bid Submission Version", v1, "tender_box_envelope")))
 		self.assertEqual(receipts.get_bid_receipt(receipt_reference=first, user=DAVID)["status"], "Withdrawn")
@@ -106,7 +108,7 @@ class TestWithdrawal(ChangeCase):
 			withdrawal.get_withdrawal_acknowledgement(acknowledgement_reference=ack["acknowledgement_reference"], user=PETER)
 		self.assertEqual(self.code(self.withdraw), "BDS_STALE_VERSION")  # nothing current to withdraw
 		# Start replacement: a new Draft, then a new Version and receipt; Version 1 stays Withdrawn
-		self.at("2027-05-31 10:00:00")
+		self.at(W("2027-05-31 10:00:00"))
 		self.assertEqual(self.replace()["started_from"], "Withdrawn")
 		self.assertEqual(self.current(), ("Ready to submit", None))
 		second = self.submitted()
@@ -127,14 +129,14 @@ class TestClose(ChangeCase):
 	def test_the_box_closes_drafts_close_and_the_hand_off_is_sealed(self):
 		first = self.submitted()
 		_status, v1 = self.current()
-		self.at("2027-05-31 09:00:00")
+		self.at(W("2027-05-31 09:00:00"))
 		self.replace()  # never submitted
 		other = start_bid.start_bid(tender_reference=self.reference, organisation=KISIWA, arrangement=self.single(), notice_contact_id=f"{KISIWA}-C1", idempotency_key=key(), user=PETER)["bid_reference"]
 		facts = next(g["published_facts"] for s in bid_definition.current(self.name)["definition"]["sections"] for g in s["groups"] if g["rule_id"] == "RR-TENDER-SECURITY")
 		assign_intake_officer(self)
 		intake = security_intake.record_physical_tender_security_receipt(
 			tender_reference=self.reference, instrument_type=facts["permitted_forms"][0], issuer="KCB Bank Kenya", instrument_reference="KCB/TG/HANDOFF/1", amount=facts["amount"],
-			currency=facts["currency"], received_at="2027-05-31 08:00:00", confirmed=True, idempotency_key=key(), user=tender_fx.OFFICER,
+			currency=facts["currency"], received_at=W("2027-05-31 08:00:00"), confirmed=True, idempotency_key=key(), user=tender_fx.OFFICER,
 		)["intake_reference"]
 		self.at(str(self.deadline()))
 		submission_close.close_tender_submission_period(tender=self.name, idempotency_key=key(), user="Administrator")

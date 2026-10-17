@@ -12,6 +12,8 @@ cleans up after itself; nothing touches the canonical rows."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import itertools
 import unittest
 from typing import Any
@@ -32,7 +34,7 @@ DANIEL = "daniel.otieno@moh.example.test"
 NAOMI = "naomi.chebet@moh.example.test"
 REF = "TND-AWT-2100-033"
 CASE = "AWD-AWT-2100-033"
-T0 = "2027-06-16 14:07:01"
+T0 = W("2027-06-16 14:07:01")
 _keys = itertools.count(1)
 
 
@@ -61,7 +63,7 @@ class AwardCase(IntegrationTestCase):
 		reset()
 		frappe.flags.kt_awd_fixture_namespace = NS
 		profile.install_test_profile(contracting_owner=HOP, technical_operator=DANIEL)
-		self.at("2027-06-16 14:07:01")
+		self.at(W("2027-06-16 14:07:01"))
 
 	def tearDown(self) -> None:
 		frappe.set_user("Administrator")
@@ -96,15 +98,15 @@ class AwardCase(IntegrationTestCase):
 			reason: str = "The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the proposed award.") -> dict[str, Any]:
 		from kentender_procurement.award.services import opinion
 
-		self.at("2027-06-17 09:00:00")
+		self.at(W("2027-06-17 09:00:00"))
 		self.run_as(HOP, opinion.save, award=name, conclusion=conclusion, reason=reason, expected_version=self.version(name))
-		self.at("2027-06-17 09:10:00")
+		self.at(W("2027-06-17 09:10:00"))
 		return self.run_as(HOP, opinion.sign, award=name, expected_version=self.version(name))
 
 	def awarded(self, name: str = CASE) -> dict[str, Any]:
 		from kentender_procurement.award.services import decision
 
 		self.signed_opinion(name)
-		self.at("2027-06-17 10:00:00")
+		self.at(W("2027-06-17 10:00:00"))
 		return self.run_as(AO, decision.record, award=name, outcome="Award",
 			reason="I accept the recommendation in the signed evaluation report and professional opinion.", expected_version=self.version(name))
