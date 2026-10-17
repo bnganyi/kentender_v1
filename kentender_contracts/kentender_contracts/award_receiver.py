@@ -140,12 +140,14 @@ def release_restriction(case: str, *, issue: str, reason: str, reference: str, e
 
 # -- the receiver -----------------------------------------------------------------------------------------------------------------------
 class Receiver:
-	"""The three operations Award calls. Each returns `{"receipt", "received_at"}` (a package also names the person asked to prepare the contract)."""
+	"""The three operations Award calls. Each returns `{"receipt", "received_at"}` (a package also names the person asked to prepare the contract).
+
+	An answer never commits. Award calls it inside its own savepoint and releases that savepoint afterwards, so a commit here would destroy it and every real delivery would fail; the receipt becomes
+	durable with Award's own transaction, which is the one that moves the case to *Sent to Contracting*. If Award's transaction is undone, the receipt is undone with it and the retry is a fresh answer."""
 
 	def receive_decision_event(self, payload: dict[str, Any]) -> dict[str, Any]:
 		row, again = _keep("Decision event", payload)
 		_apply(row)
-		frappe.db.commit()
 		return {"receipt": row.receipt, "received_at": row.received_at, "duplicate": again}
 
 	def receive_package(self, payload: dict[str, Any]) -> dict[str, Any]:
@@ -159,12 +161,10 @@ class Receiver:
 			records.update(row, contract_case=out["contract"], state="Applied", record_version=cint(row.record_version) + 1)
 		for waiting in frappe.get_all(INBOX, filters={"award_case": row.award_case, "state": "Received", "kind": ["!=", "Package"]}, pluck="name"):
 			_apply(frappe.get_doc(INBOX, waiting))  # an event or an update that arrived first
-		frappe.db.commit()
 		holders = work.holders(work.HOP)
 		return {"receipt": row.receipt, "received_at": row.received_at, "task_user": holders[0] if holders else None, "contract": out["contract"], "duplicate": again}
 
 	def receive_update(self, payload: dict[str, Any]) -> dict[str, Any]:
 		row, again = _keep("Update", payload)
 		_apply(row)
-		frappe.db.commit()
 		return {"receipt": row.receipt, "received_at": row.received_at, "duplicate": again}

@@ -106,6 +106,13 @@ class TestReceiver(ContractCase):
 		self.assertIn("cannot accept the package", str(caught.exception))
 		self.assertEqual(frappe.db.count("Contract Case", {"fixture_namespace": "CM_TEST"}), 0)
 
+	def test_an_answer_never_ends_the_transaction_award_is_inside(self):
+		# Award delivers inside its own savepoint and releases it afterwards; an answer that committed would destroy that savepoint, and a real delivery would fail on every attempt ("SAVEPOINT ... does not exist").
+		for answer in (lambda: self.receiver.receive_package(self.package()), lambda: self.receiver.receive_decision_event(self.event()), lambda: self.receiver.receive_update(self.update())):
+			frappe.db.savepoint("award_delivery")
+			answer()
+			frappe.db.release_savepoint("award_delivery")
+
 	# -- events ---------------------------------------------------------------------------------------------------------------------
 	def test_an_event_that_arrives_first_waits_and_is_applied_when_the_package_comes(self):
 		early = self.receiver.receive_decision_event(self.event())

@@ -12,7 +12,8 @@ The gaps this run shows (owner and what is needed):
 
 * S7 Form No. 4: the issued template declares no place to fill (its blanks are plain underscores) so no agreement can be generated from it. The template owner declares the insertions (CM-TPL-01).
 * S9 funding: the award draws on two reservations and no funding owner has allocated the awarded price between them. Budget or Award decides how (owner decision).
-* S10 entity: the principal address is not held in the entity's site configuration. The configuration owner records it once (the field now exists)."""
+* S10 entity: the principal address is not held in the entity's site configuration. The configuration owner records it once (the field now exists); the canonical seed holds it (SEED-002 v0.10 section A2), so on a seeded
+site S10 is formable and only S7 remains."""
 
 from __future__ import annotations
 
@@ -31,7 +32,13 @@ from kentender_contracts.tests.support import ContractCase
 from kentender_core.services import contract_source_contract as seam
 
 AWARD = "AWD-MOH-2026-002"
-GAPS = {"S7", "S10"}  # S9, the funding lineage, is served by Award since AWD v0.7 section 7.1 (commit 478512c6): it was a gap here until then
+
+
+def gaps() -> set[str]:
+	"""The sources not yet formable on this site. S9, the funding lineage, is served by Award since AWD v0.7 section 7.1 (commit 478512c6). S10 is a gap only while the entity's principal address is not held:
+	the canonical seed holds it (SEED-002 v0.10 section A2), a site that was not seeded since does not. S7 stays a gap until the template release declares its places to fill."""
+	held = (frappe.db.get_single_value("Site Procuring Entity", "pe_address") or "").strip()
+	return {"S7"} if held else {"S7", "S10"}
 
 
 class TestCanonicalSources(ContractCase):
@@ -58,17 +65,21 @@ class TestCanonicalSources(ContractCase):
 		report = availability.report(AWARD)
 		by = {r["source"]: r for r in report["sources"]}
 		self.assertEqual([r["source"] for r in report["sources"]], [f"S{n}" for n in range(1, 13)])
-		self.assertEqual({n for n, r in by.items() if not r["verified"]}, GAPS, "exactly these sources are not yet formable")
+		self.assertEqual({n for n, r in by.items() if not r["verified"]}, gaps(), "exactly these sources are not yet formable")
 		self.assertFalse(report["formable"], "formation is not accepted while a source is missing")
 		for number, row in by.items():
-			if number in GAPS:
+			if number in gaps():
 				self.assertTrue(row["reason"] and row["owner"], f"{number} says why and whose it is")
 			else:
 				self.assertTrue(row["available"] and not row["reason"], number)
 		self.assertIn("declares no place to fill", by["S7"]["reason"])
 		self.assertTrue(by["S9"]["available"] and not by["S9"]["reason"], "the funding lineage is served by Award (AWD v0.7 section 7.1)")
-		self.assertIn("principal address", by["S10"]["reason"])
-		self.assertEqual((by["S7"]["owner"], by["S10"]["owner"]), ("Tenders and the template release", "Site configuration"))
+		self.assertEqual(by["S7"]["owner"], "Tenders and the template release")
+		if "S10" in gaps():
+			self.assertIn("principal address", by["S10"]["reason"])
+			self.assertEqual(by["S10"]["owner"], "Site configuration")
+		else:
+			self.assertTrue(by["S10"]["available"] and not by["S10"]["reason"], "the entity's address is held, so its source is formable")
 
 	def test_a_source_that_changed_after_the_award_is_seen(self):
 		rows = seam.handoff(AWARD)
@@ -100,8 +111,8 @@ class TestCanonicalSources(ContractCase):
 		self.assertEqual((board["id"], board["p"]), ("D02", ""), "no agreement is offered for signature")
 		self.assertEqual(board["next"]["k"], "blk")
 		table = board["regions"][0]["b"][0]
-		self.assertEqual({row[0] for row in table["rows"]}, GAPS)
+		self.assertEqual({row[0] for row in table["rows"]}, gaps())
 		with self.assertRaises(errors.ContractError) as caught:
 			formation.save_particulars(case, expected_version=frappe.db.get_value("Contract Case", case, "record_version"), idempotency_key="sources-1", actor=self.people["charles"], values={})
 		self.assertEqual(caught.exception.code, "CM_SOURCE")
-		self.assertEqual({f["source"] for f in caught.exception.detail["failed"]}, GAPS)
+		self.assertEqual({f["source"] for f in caught.exception.detail["failed"]}, gaps())
