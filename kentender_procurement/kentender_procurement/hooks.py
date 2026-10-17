@@ -183,6 +183,11 @@ kt_evaluation_correction_consumers = ["kentender_procurement.award.services.corr
 kt_evaluation_removal_consumers = ["kentender_procurement.award.seeds.clear.on_evaluations_removed"]
 kt_award_authority_status = ["kentender_procurement.award.services.authority.tender_status"]
 kt_tender_cancellation_guards = ["kentender_procurement.award.services.authority.cancellation_guard"]
+# PLN-CHG-001 v1.32 §5.4.7 / TPR-CHG-001 v0.21 §7.5 — what Award holds that would make restoring a cancelled Tender's allowance unsafe, and the
+# Tender owner's verified basis Requisitions asks for before it restores anything (Requisitions must not import Tenders).
+kt_tender_cancellation_downstream_disposition = ["kentender_procurement.award.services.authority.downstream_disposition"]
+kt_tender_cancellation_recovery_basis = ["kentender_procurement.tenders.services.cancellation_recovery_basis.provider"]
+kt_cancellation_recovery_reader = ["kentender_procurement.procurement_requisitions.services.recovery_reader.reader"]
 kt_award_contracting_receivers = ["kentender_procurement.award.test_services.contracting_receiver.receiver"]
 kt_award_notice_transports = ["kentender_procurement.bid_submission.test_services.mailbox.deliver"]
 
@@ -524,6 +529,9 @@ scheduler_events: dict[str, list[str]] = {
 		# AWD-CHG-001 v0.4 plan D9 — receipt retries, Tenders' events, corrections,
 		# deadlines and technical retries for awards.
 		"kentender_procurement.award.services.sweep.run",
+		# REQ-CHG-001 v1.20 §9.1D — carry out each registered whole-Tender cancellation recovery (retried with a backoff while an owner is
+		# unavailable; a Needs attention recovery is never retried by itself).
+		"kentender_procurement.procurement_requisitions.services.recovery_sweep.run",
 	],
 }
 

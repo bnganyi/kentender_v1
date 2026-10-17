@@ -7,8 +7,13 @@ The Accounting Officer is the decision-maker; the Head of Procurement
 Function's recommendation is optional and non-binding. A configured,
 verified lawful ground and a specific reason are mandatory; the decision
 closes the proceeding immediately, even while notices or reports remain
-due, and never reopens the Requisition, restores reserved funding or creates
-a replacement Tender (TPR08-AC-066..068). Notices use the original channel
+due, and never reopens the Requisition or creates a replacement Tender
+(TPR08-AC-066..068). TPR-CHG-001 v0.21 §5.7A (approved with v0.22, 17 Oct 2026)
+changes one thing: in the same transaction it registers the recovery of the
+Tender's exact unused Planning allowance and Budget reservations
+(`recovery_gateway.register`; if that cannot be done the cancellation does not
+commit), which Requisitions carries out afterwards without ever reopening the
+cancellation. Notices use the original channel
 set and the immutable cancellation digest; the PPRA report and candidate
 notice obligations come from Configuration's `TenderCancellation` rows.
 
@@ -25,7 +30,7 @@ import frappe
 from frappe.utils import cstr, getdate
 
 from kentender_core.services import file_integrity
-from kentender_procurement.tenders.services import candidate_notices, channel_confirmation, clarifications, clock, configuration_gateway, digest, documents, draft_commands, envelope, events, handoffs, lifecycle, notices, serializer
+from kentender_procurement.tenders.services import candidate_notices, channel_confirmation, clarifications, clock, configuration_gateway, digest, documents, draft_commands, envelope, events, handoffs, lifecycle, notices, recovery_gateway, serializer
 from kentender_procurement.tenders.services import tender_authorization as authz
 from kentender_procurement.tenders.services.errors import fail
 from kentender_procurement.tenders.services.tender_roles import ROLE_ACCOUNTING_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION, ROLE_PROCUREMENT_OFFICER
@@ -186,8 +191,12 @@ def cancel_tender(*, tender: str, ground: str, reason: str, expected_record_vers
 		handoffs.open_task(root, approved, task_type=handoffs.CANCELLATION_COMPLIANCE, subject_type=DOCTYPE, subject_id=doc.name, holder=cstr(approved.prepared_by), sender=actor)
 		envelope.bump(publication, publication_status="Cancelled")
 		envelope.bump(root, overall_status="Cancelled", cancellation=doc.name)
-		events.emit(tender=root.name, event_type="TenderCancelled", command="CancelTender", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment), previous_status="Published — open", resulting_status="Cancelled", record_version=root.record_version, subject_type=DOCTYPE, subject_id=doc.name, reason=text, payload={"ground": ground, "ground_label": GROUND_LABELS[ground], "recommendation": recommendation, "cancellation_digest": cancellation_digest, "notice_digest": rendered["digest"], "document": document, "obligations": obligations, "channels": [r.channel for r in rows], "decision": decision.name}, fixture_namespace=root.fixture_namespace)
-	result = {"ok": True, "idempotent": False, "action": "cancelled", "tender": root.name, "record_version": root.record_version, "cancellation": doc.name, "cancellation_digest": cancellation_digest, "obligations": obligations}
+		# TPR-CHG-001 v0.21 §5.7A — the exact recovery intent and Planning's hold on the affected sources, registered with the decision.
+		# Requisitions resolves the whole consumed lineage; nothing a browser sends reaches it. A failure here rolls the cancellation back.
+		recovery = recovery_gateway.register(root=root, cancellation=doc, cancellation_digest=cancellation_digest, decided_at=decided_at, actor=actor)
+		envelope.bump(doc, resource_recovery=recovery["recovery"])
+		events.emit(tender=root.name, event_type="TenderCancelled", command="CancelTender", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment), previous_status="Published — open", resulting_status="Cancelled", record_version=root.record_version, subject_type=DOCTYPE, subject_id=doc.name, reason=text, payload={"ground": ground, "ground_label": GROUND_LABELS[ground], "recommendation": recommendation, "cancellation_digest": cancellation_digest, "notice_digest": rendered["digest"], "document": document, "obligations": obligations, "channels": [r.channel for r in rows], "decision": decision.name, "resource_recovery": {"recovery": recovery["recovery"], **recovery["lineage"]}}, fixture_namespace=root.fixture_namespace)
+	result = {"ok": True, "idempotent": False, "action": "cancelled", "tender": root.name, "record_version": root.record_version, "cancellation": doc.name, "cancellation_digest": cancellation_digest, "obligations": obligations, "resource_recovery": recovery["recovery"]}
 	envelope.record_command(idempotency_key=idempotency_key, command="CancelTender", payload=payload, result=result, document_type=DOCTYPE, document_name=doc.name, actor=actor, fixture_namespace=root.fixture_namespace)
 	return result
 

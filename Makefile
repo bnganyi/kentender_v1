@@ -1594,3 +1594,33 @@ cm-independence-gate: cm-preflight
 		bench --site $(CM_ONLY_SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
 	cd $(BENCH_ROOT) && for m in $(CM_CORE_MODULES); do \
 		bench --site $(CM_ONLY_SITE) run-tests --app kentender_core --module kentender_core.tests.$$m || exit 1; done
+
+# REQ-CHG-001 v1.20 §9.1D / PLN-CHG-001 v1.32 §5.4.7 / BUD-CHG-001 v1.17 §8.9 — whole-Tender cancellation recovery.
+# The scheduler runs the worker every tick; the development site's scheduler is off and this bench runs no RQ worker (AGENTS.md §8.1), so a
+# recovery shown as Pending there waits for this target (or for a scheduled run). It carries out the recoveries that are due, one transaction each.
+# The reconciliation of Tenders cancelled before this existed is a dry run unless APPLY=1 is given, and the second run creates nothing.
+.PHONY: cancellation-recovery-run cancellation-recovery-inventory cancellation-recovery-reconcile cancellation-recovery-gate
+cancellation-recovery-run:
+	cd $(BENCH_ROOT)/sites && ../env/bin/python -c "import frappe; frappe.init(site='$(SITE)', sites_path='.'); frappe.connect(); \
+	from kentender_procurement.procurement_requisitions.services import recovery_sweep; \
+	print(recovery_sweep.run())"
+
+cancellation-recovery-inventory:
+	cd $(BENCH_ROOT)/sites && ../env/bin/python -c "import frappe, json; frappe.init(site='$(SITE)', sites_path='.'); frappe.connect(); \
+	from kentender_procurement.tenders.services import recovery_reconciliation as r; \
+	print(json.dumps(r.inventory(), indent=1, default=str))"
+
+cancellation-recovery-reconcile:
+	cd $(BENCH_ROOT)/sites && ../env/bin/python -c "import frappe, json; frappe.init(site='$(SITE)', sites_path='.'); frappe.connect(); \
+	from kentender_procurement.tenders.services import recovery_reconciliation as r; \
+	result = r.reconcile(dry_run=not bool('$(APPLY)')); frappe.db.commit() if '$(APPLY)' else None; \
+	print(json.dumps(result, indent=1, default=str))"
+
+# The owner halves and the real-adapter scenario, one module at a time on the TEST site (AGENTS.md §8.2).
+cancellation-recovery-gate:
+	scripts/test-site.sh run bash -c 'cd $(BENCH_ROOT) && for m in \
+		kentender_procurement.procurement_planning.tests.test_cancellation_recovery \
+		kentender_procurement.procurement_requisitions.tests.test_cancellation_recovery_integration \
+		kentender_procurement.procurement_requisitions.tests.test_cancellation_recovery_concurrency; do \
+		bench --site kentender-test.local run-tests --app kentender_procurement --module $$m || exit 1; done; \
+		bench --site kentender-test.local run-tests --app kentender_budget --module kentender_budget.tests.test_budget_cancellation_release'

@@ -212,10 +212,11 @@ def reverse_requisition_drawdowns_for_cancellation(
 	plan: list[tuple[dict[str, Any], Any, Any, bool]] = []
 	for source in parsed:
 		digest = _digest(recovery_id, plan_item_id, source)
-		drawdown = _find_drawdown(source["drawdown_reference"])
-		_check_drawdown(drawdown, source, plan_item_id, requisition_reference)
+		# the hold before the drawdown: the order authorisation and registration take (one lock order, proved by test_cancellation_recovery_concurrency)
 		hold_name = frappe.db.get_value(HOLD, {"hold_key": hold_key(recovery_id, source["allocation_id"])}, "name", for_update=True)
 		hold = envelope.locked(HOLD, hold_name) if hold_name else None
+		drawdown = _find_drawdown(source["drawdown_reference"])
+		_check_drawdown(drawdown, source, plan_item_id, requisition_reference)
 		if hold is not None and (cstr(hold.facts_digest) != digest or cstr(hold.cancellation_id) != cancellation_id):
 			_conflict("The registered hold differs from the facts presented.", allocation_id=source["allocation_id"], hold=hold.name)
 		if drawdown.drawdown_state == "Reversed":

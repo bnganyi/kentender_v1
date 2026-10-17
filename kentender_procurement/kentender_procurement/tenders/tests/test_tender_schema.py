@@ -87,7 +87,7 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	"Tender Cancellation": {
 		"tender", "publication", "ground", "ground_label", "reason", "recommendation", "decided_by", "decided_at", "ppra_report_due_by",
 		"candidate_notice_due_by", "ppra_report_status", "ppra_report_evidence_id", "candidate_notice_status", "notice_publication_status",
-		"cancellation_digest", "notice_document_digest", "obligations", *AUDIT,
+		"cancellation_digest", "notice_document_digest", "resource_recovery", "obligations", *AUDIT,  # TPR-CHG-001 v0.21 section 4.11: the recovery registered with the cancellation
 	},
 	"Tender Cancellation Obligation": {
 		"obligation_id", "obligation_type", "channel", "label", "due_by", "status", "evidence_reference", "evidence_file", "evidence_digest",

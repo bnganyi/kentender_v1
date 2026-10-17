@@ -89,3 +89,25 @@ def cancellation_guard(*, tender: str) -> str:
 	if value == "Unknown":
 		return "The award notification status could not be confirmed. Cancellation is unavailable until it is recovered."
 	return "Award notices have been issued. The pre-notification cancellation route is unavailable."
+
+
+def downstream_disposition(*, tender: str) -> dict[str, Any]:
+	"""`kt_tender_cancellation_downstream_disposition` (PLN-CHG-001 v1.32 §5.4.7, TPR-CHG-001 v0.21 §7.5): what Award itself holds that would
+	make a cancelled Tender's allowance unsafe to restore, read at the moment of consequence. A locking read of the case, so an issue of
+	notices that another command is committing is waited for and seen, never answered from an older snapshot (the same reason as
+	`cancellation_guard`). `known` is False when Award could not say; notices issued or in progress, or a contracting package prepared or
+	delivered, each mean a downstream obligation may exist. The answer never says 'nothing' for a case it cannot read."""
+	try:
+		name = _case_for_tender(tender)
+		if not name:
+			return {"known": True, "case": "", "notification_status": "Not issued", "package_status": "", "package_delivered": False, "source": "No Award case"}
+		row = frappe.db.get_value(records.CASE, name, ["notification_status", "decision_status"], as_dict=True, for_update=True)
+		packages = frappe.get_all(state.PACKAGE, filters={"award_case": name}, fields=["status"], limit_page_length=0)
+		statuses = sorted({cstr(p.status) for p in packages})
+		return {
+			"known": True, "case": name, "notification_status": cstr(row.notification_status), "decision_status": cstr(row.decision_status),
+			"package_status": ", ".join(statuses), "package_delivered": "Delivered" in statuses, "source": name,
+		}
+	except Exception:
+		frappe.log_error(title="Award downstream disposition failed")
+		return {"known": False, "case": "", "notification_status": "Unknown", "package_status": "", "package_delivered": False, "source": "Unavailable"}

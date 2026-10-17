@@ -95,3 +95,14 @@ def cancellation_refusals(tender: str) -> list[str]:
 		if reason:
 			out.append(cstr(reason))
 	return out
+
+
+def downstream_disposition(tender: str) -> dict[str, Any]:
+	"""What Award holds that would make restoring a cancelled Tender's allowance unsafe (a notice issued or being issued, a contracting package
+	prepared or delivered), from the first registered owner (`kt_tender_cancellation_downstream_disposition`). `known` is False when no owner
+	answers or the owner could not say: no answer is never 'nothing exists'."""
+	for path in frappe.get_hooks("kt_tender_cancellation_downstream_disposition") or []:
+		answer = frappe.get_attr(path)(tender=tender)
+		if isinstance(answer, dict) and answer.get("known") is not None:
+			return answer
+	return {"known": False, "case": "", "notification_status": "Unknown", "package_status": "", "package_delivered": False, "source": "No owner answered"}

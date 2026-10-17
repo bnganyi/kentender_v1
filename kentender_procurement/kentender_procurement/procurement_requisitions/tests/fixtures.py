@@ -169,6 +169,8 @@ def wipe_requisition_rows() -> None:
 	):
 		names |= set(frappe.get_all(doctype, filters={field: ("in", values)}, pluck="name"))
 		frappe.db.delete(doctype, {field: ("in", values)})
+	# REQ-CHG-001 v1.20: a cancellation recovery (with its source rows) belongs to the Requisition it recovers
+	delete_rows("Cancellation Resource Recovery", {"requisition": ("in", requisitions)})
 	frappe.db.delete("Requisition Command Journal", {"document_name": ("in", list(names - {""}) or [""])})
 	# a claim that never recorded a result (a command that failed inside a surviving transaction) belongs to no record
 	frappe.db.sql("delete from `tabRequisition Command Journal` where result is null or result=''")
@@ -183,6 +185,8 @@ def wipe_requisition_rows() -> None:
 	# re-issued) plan_source_allocation blocks the next test's reserve call
 	# with BUDGET_RESERVATION_CONFLICT unless wiped here too — test-year
 	# budgets only.
+	# BUD-CHG-001 v1.17: the release rows of a cancellation recovery point at these reservations
+	frappe.db.delete("Reservation Cancellation Release", {"reservation": ("in", test_reservations() or [""])})
 	frappe.db.delete("Funding Reservation", {"name": ("in", test_reservations() or [""])})
 	frappe.db.commit()
 

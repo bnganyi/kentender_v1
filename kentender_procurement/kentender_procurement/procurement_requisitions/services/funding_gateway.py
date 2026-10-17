@@ -94,3 +94,42 @@ def line_positions(budget_lines: list[str]) -> dict[str, dict[str, Any]]:
 				continue
 			out[line] = {"code": result.get("code") or line, "positions": result.get("positions") or {}}
 	return out
+
+
+# --------------------------------------------------------------------------
+# REQ-CHG-001 v1.20 §9.1D / §10.3 — whole-Tender cancellation recovery
+# --------------------------------------------------------------------------
+
+
+def _refusal(exc) -> None:
+	"""Budget's two typed recovery refusals become `OwnerRefusal`: the recovery needs attention with Budget's own reason. Anything else Budget
+	raises is not a refusal and propagates (the recovery stays Pending and is retried)."""
+	from kentender_procurement.procurement_requisitions.services.owner_refusal import OwnerRefusal
+
+	raise OwnerRefusal("Budget", "invalid" if exc.code.endswith("_INVALID") else "conflict", exc.code, exc.detail) from exc
+
+
+def get_cancellation_release_basis(*, cancellation_id: str, requisition_reference: str, releases: list[dict[str, Any]]) -> dict[str, Any]:
+	"""Budget's own account of each reservation of a cancelled Tender: whether releasing it is supported now, why not, and the revision
+	Requisitions pins. A plain read; the release decides again under Budget's locks."""
+	from kentender_budget.services.budget_cancellation_release import CancellationReleaseError, get_cancellation_release_basis as contract
+
+	try:
+		return contract(cancellation_id=cancellation_id, requisition_reference=requisition_reference, releases=releases, caller=_principal(requisition_reference))
+	except CancellationReleaseError as exc:
+		_refusal(exc)
+	return {}
+
+
+def release_reservations_for_cancelled_tender(*, recovery_id: str, cancellation_id: str, requisition_reference: str, releases: list[dict[str, Any]], idempotency_key: str) -> dict[str, Any]:
+	"""The cancellation mode of `release_reservation`: the complete exact set, once, in the recovery transaction. Never commits."""
+	from kentender_budget.services.budget_cancellation_release import CancellationReleaseError, release_reservations_for_cancelled_tender as contract
+
+	try:
+		return contract(
+			recovery_id=recovery_id, cancellation_id=cancellation_id, requisition_reference=requisition_reference, releases=releases,
+			idempotency_key=idempotency_key, caller=_principal(requisition_reference),
+		)
+	except CancellationReleaseError as exc:
+		_refusal(exc)
+	return {}

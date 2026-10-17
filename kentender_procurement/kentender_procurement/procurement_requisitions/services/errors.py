@@ -49,6 +49,9 @@ MESSAGES: dict[str, str] = {
 	"REQ_LEAD_RECERTIFICATION_REQUIRED": "This requisition must be certified and submitted by the new submitting department before authorisation.",
 	"REQ_OWNER_VALIDATION_UNAVAILABLE": "Planning or Budget could not confirm this action. Nothing was committed.",
 	"REQ_HANDOFF_CONFLICT": "This handoff is already consumed by another Tender or has been revoked.",
+	# REQ-CHG-001 v1.20 §11.1 supplement (whole-Tender cancellation recovery).
+	"REQ_CANCELLATION_RECOVERY_INVALID": "The linked records do not support restoring this allowance. Review the recorded issue.",
+	"REQ_CANCELLATION_RECOVERY_PENDING": "Unused allowance and funding are being restored. Try authorising this request when restoration is complete.",
 }
 
 #: REQ-CHG-001 v1.11 §11 — the closed error contract.

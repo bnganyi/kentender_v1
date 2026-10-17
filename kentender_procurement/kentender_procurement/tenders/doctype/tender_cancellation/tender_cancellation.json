@@ -23,6 +23,7 @@
   "notice_publication_status",
   "cancellation_digest",
   "notice_document_digest",
+  "resource_recovery",
   "section_obl",
   "obligations",
   "record_version",
@@ -131,6 +132,13 @@
    "fieldtype": "Data",
    "label": "Cancellation digest",
    "read_only": 1
+  },
+  {
+   "fieldname": "resource_recovery",
+   "fieldtype": "Data",
+   "label": "Allowance and funding recovery",
+   "read_only": 1,
+   "description": "TPR-CHG-001 v0.21 \u00a74.11 \u2014 the Requisitions-owned recovery registered with this cancellation. Set once, outside the cancellation digest; its status is read live from Requisitions and never copied here."
   },
   {
    "fieldname": "notice_document_digest",
