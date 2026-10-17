@@ -100,29 +100,36 @@
     {
       "document_id": "BUD-CHG-001",
       "title": "Clean Budget and Funding",
-      "version": "1.16",
+      "version": "1.17",
       "category": "Module requirements",
       "module": "Budget and Funding",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-16",
-      "supersedes": "v1.12 approved 3 October 2026; v1.13, v1.14 and v1.15 proposals carried in full and corrected; v1.12 and earlier retained as history",
+      "approval_date": "2026-10-17",
+      "supersedes": "v1.16 approved 16 October 2026 (superseded by v1.17 on its approval, 17 October 2026); v1.12 approved 3 October 2026; v1.13, v1.14 and v1.15 proposals carried in full and corrected; v1.12 and earlier retained as history",
       "implementation_status": "In progress",
       "verification_status": "Pending",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "libfile_9ee7baefbc088191af5a27ce1d7f7aff",
-      "filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_16.md",
-      "scope": "Funding ceilings, affordability, reservations and commitments, plus the Budget-owned receiving side of a Planning budget revision request. Budget remains separate from the statutory APP reservation denominator.",
+      "filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_17.md",
+      "scope": "v1.17 (approved 17 October 2026) adds the release of the exact unused reservations after a verified whole-Tender cancellation (section 8.9, acceptance BUD-CR-AC-001 to 012), with no change to the approved v1.16 funding, annual-entry, commitment or segregation rules. Earlier scope, retained: Funding ceilings, affordability, reservations and commitments, plus the Budget-owned receiving side of a Planning budget revision request. Budget remains separate from the statutory APP reservation denominator.",
       "dependencies": "PLN-CHG-001 v1.27; LAW-REG-001 v1.2; KT-STD-001 v1.8",
-      "action": "Approved 16 October 2026 (v1.16). Build state, 17 October 2026, afternoon (no approval is evidence of it): the coordinated funding build is implemented and verified on the test site; this build ran nothing on the development site (the seed session ran a normal migrate there at the Project Owner's instruction). Verified: Budget app (all 30 modules) and its funding entry module 67/67; Budget browser specs 13/13 as the normal roles; Award chain (all modules, funding allocation module 33/33) and the Funding sources disclosure walked in a browser on the canonical award 4/4; Contract Management funding module 40/40, 21 further Contract Management modules rerun on the final tree, and the 15 seams and regression modules with the real owners; the Award to Contract Management to Budget journey on the canonical award 37/37 (Contract Management stood in for itself because the formation of that award is blocked by FU-CM-70 and FU-CM-72); an independently registered contract funded through both real owners for two financial years without reopening 53/53, finished by the second Budget Approver; the Contract Management funding screens walked in a browser as the real people with the real Budget owner 4/4, including the refusal of the Approver who confirmed the year's basis and the approval by the second Budget Approver; a normal migrate on the test site. Not done: mutation checks of the guards; the error and stale variants of the correction screens in a browser; a full Contract Management UI gate run after the last change. (Earlier wording, retained: 'the approval half of the cross-module path in one browser session' was listed as not done; it is walked since the second Budget Approver was added.) No follow-up is closed by this build. Detail: docs/mvp-1-r1/03_budget/BUD-CHG-001_IMPLEMENTATION_TRACKER.md, addendum and closing update of 17 October 2026, and artifacts/bud-v116-coordinated-funding-evidence.md. (Earlier build state, morning of 17 October 2026, retained: Build state, 17 October 2026 (no approval is evidence of it): the coordinated funding build is implemented and partly verified on the test site only; the development site is untouched. Verified: Budget app (all 30 modules) and its funding entry module 67/67, Budget browser specs 13/13 as the normal roles, Award chain (all modules, with the funding allocation module 33/33), Contract Management funding module 38/38 and the notification, dead-end, date, import-boundary and navigation guards. Not done: the real Award to Contract Management to Budget journey on the canonical award (the test site's canonical reservations were purged by a Budget browser fixture and the rebuild is awaiting the Project Owner), a normal migrate on the verification site, and a browser walk of the Contract Management funding screens. Detail: docs/mvp-1-r1/03_budget/BUD-CHG-001_IMPLEMENTATION_TRACKER.md addendum of 17 October 2026.) (Earlier record, retained: Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v1.13 proposed 16 October 2026 (owner decision 1): Committed counts Active and Closed commitments at their retained amounts, close_commitment becomes a requirement, a Closed commitment accepts no increase and no ordinary adjustment, and its amount is lowered only by a Budget correction that a Budget Officer records and a different Budget Approver approves (BUD-BR-031 to 034; follow-up FU-CM-59). v1.14 proposed 16 October 2026 (owner decisions 2 and 3): carries v1.13 in full, makes the whole-chain check on conversion a requirement (BUD-BR-035) and records the funding path for a contract with no tender in KenTender as missing (BUD23-XD-004). v1.15 proposed 16 October 2026 (owner instruction to draft it with CM v0.9): carries v1.14, verifies lineage at the first conversion and retains it on the commitment and the conversion event, and adds the existing-contract commitment entry for KenTender Budget-controlled funding (BUD-BR-036 to 039). v1.12 remains the approved baseline until the Project Owner approves v1.13, v1.14 or v1.15.)",
-      "source_sha256": "372dbd35a2ecfd282c84c4ee0eab451553ac7ed0ceb4effd48602576af968483",
+      "action": "Approved 17 October 2026 (v1.17: whole-Tender cancellation recovery; Project Owner: “Mark them as approved and give me a handoff for Claude Code to implement”, recorded in the cancellation recovery handoff, and “Yes, record it” in the implementation session). Approval does not by itself show implementation, verification or release; BUD-CR-AC-001 to 012 stay open until evidence closes them, and the v1.16 build state below is not changed by this approval. Earlier action text, retained: Approved 16 October 2026 (v1.16). Build state, 17 October 2026, afternoon (no approval is evidence of it): the coordinated funding build is implemented and verified on the test site; this build ran nothing on the development site (the seed session ran a normal migrate there at the Project Owner's instruction). Verified: Budget app (all 30 modules) and its funding entry module 67/67; Budget browser specs 13/13 as the normal roles; Award chain (all modules, funding allocation module 33/33) and the Funding sources disclosure walked in a browser on the canonical award 4/4; Contract Management funding module 40/40, 21 further Contract Management modules rerun on the final tree, and the 15 seams and regression modules with the real owners; the Award to Contract Management to Budget journey on the canonical award 37/37 (Contract Management stood in for itself because the formation of that award is blocked by FU-CM-70 and FU-CM-72); an independently registered contract funded through both real owners for two financial years without reopening 53/53, finished by the second Budget Approver; the Contract Management funding screens walked in a browser as the real people with the real Budget owner 4/4, including the refusal of the Approver who confirmed the year's basis and the approval by the second Budget Approver; a normal migrate on the test site. Not done: mutation checks of the guards; the error and stale variants of the correction screens in a browser; a full Contract Management UI gate run after the last change. (Earlier wording, retained: 'the approval half of the cross-module path in one browser session' was listed as not done; it is walked since the second Budget Approver was added.) No follow-up is closed by this build. Detail: docs/mvp-1-r1/03_budget/BUD-CHG-001_IMPLEMENTATION_TRACKER.md, addendum and closing update of 17 October 2026, and artifacts/bud-v116-coordinated-funding-evidence.md. (Earlier build state, morning of 17 October 2026, retained: Build state, 17 October 2026 (no approval is evidence of it): the coordinated funding build is implemented and partly verified on the test site only; the development site is untouched. Verified: Budget app (all 30 modules) and its funding entry module 67/67, Budget browser specs 13/13 as the normal roles, Award chain (all modules, with the funding allocation module 33/33), Contract Management funding module 38/38 and the notification, dead-end, date, import-boundary and navigation guards. Not done: the real Award to Contract Management to Budget journey on the canonical award (the test site's canonical reservations were purged by a Budget browser fixture and the rebuild is awaiting the Project Owner), a normal migrate on the verification site, and a browser walk of the Contract Management funding screens. Detail: docs/mvp-1-r1/03_budget/BUD-CHG-001_IMPLEMENTATION_TRACKER.md addendum of 17 October 2026.) (Earlier record, retained: Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v1.13 proposed 16 October 2026 (owner decision 1): Committed counts Active and Closed commitments at their retained amounts, close_commitment becomes a requirement, a Closed commitment accepts no increase and no ordinary adjustment, and its amount is lowered only by a Budget correction that a Budget Officer records and a different Budget Approver approves (BUD-BR-031 to 034; follow-up FU-CM-59). v1.14 proposed 16 October 2026 (owner decisions 2 and 3): carries v1.13 in full, makes the whole-chain check on conversion a requirement (BUD-BR-035) and records the funding path for a contract with no tender in KenTender as missing (BUD23-XD-004). v1.15 proposed 16 October 2026 (owner instruction to draft it with CM v0.9): carries v1.14, verifies lineage at the first conversion and retains it on the commitment and the conversion event, and adds the existing-contract commitment entry for KenTender Budget-controlled funding (BUD-BR-036 to 039). v1.12 remains the approved baseline until the Project Owner approves v1.13, v1.14 or v1.15.)",
+      "source_sha256": "e0a7dee4ff660f6f4aa6a09df5a8fbf577352426ee6990e3b45b5c2e4941b29b",
       "prior_approved_baseline": {
-        "version": "1.12",
-        "approval_date": "2026-10-03",
-        "filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_12.md",
-        "requirement_status": "Approved requirement"
+        "version": "1.16",
+        "approval_date": "2026-10-16",
+        "filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_16.md",
+        "requirement_status": "Approved requirement",
+        "source_sha256": "372dbd35a2ecfd282c84c4ee0eab451553ac7ed0ceb4effd48602576af968483",
+        "earlier_approved_baseline": {
+          "version": "1.12",
+          "approval_date": "2026-10-03",
+          "filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_12.md",
+          "requirement_status": "Approved requirement"
+        }
       },
-      "approval_record": "Project Owner, 16 October 2026, verbatim: “Mark them as approved”, answering the delivery of the coordinated package BUD-CHG-001 v1.16, AWD-CHG-001 v0.7, CM-CHG-001 v0.10 and AUTH-ADR-001 v1.16 with the two adopted product decisions (“Adopt”) incorporated. Approves the version in full.",
+      "approval_record": "Project Owner, 17 October 2026: “Mark them as approved and give me a handoff for Claude Code to implement” (recorded in the cancellation recovery implementation handoff; coordinated set PLN-CHG-001 v1.32, TPR-CHG-001 v0.21, REQ-CHG-001 v1.20, BUD-CHG-001 v1.17) and, asked in the implementation session whether to write the approval into the file, “Yes, record it”. Approves v1.17 in full. Earlier record, retained: Project Owner, 16 October 2026, verbatim: “Mark them as approved”, answering the delivery of the coordinated package BUD-CHG-001 v1.16, AWD-CHG-001 v0.7, CM-CHG-001 v0.10 and AUTH-ADR-001 v1.16 with the two adopted product decisions (“Adopt”) incorporated. Approves the version in full.",
       "approval_history": {
         "proposed_version": "1.15",
         "proposed_filename": "KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_15.md",
@@ -190,70 +197,91 @@
     {
       "document_id": "PLN-CHG-001",
       "title": "Clean Procurement Planning",
-      "version": "1.31",
+      "version": "1.32",
       "category": "Module requirements",
       "module": "Procurement Planning",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-09",
-      "supersedes": "v1.30 (approved 9 October 2026 with v1.31); v1.29 approved 3 October 2026; v1.27 and earlier as before",
+      "approval_date": "2026-10-17",
+      "supersedes": "v1.31 approved 9 October 2026 (superseded by v1.32 on its approval, 17 October 2026); v1.30 (approved 9 October 2026 with v1.31); v1.29 approved 3 October 2026; v1.27 and earlier as before",
       "implementation_status": "Not implemented",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "",
-      "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_31.md",
-      "scope": "Complete Planning authority including the current-complete-APP reservation denominator, next-step and journey contract, corrected funding-request blockers, Planning-side budget revision request, hand-off register and Purchase-ready-for-requisition item. From v1.30 a Need-origin departmental plan entry starts from the accepted Need's estimated total cost and Planning shows any change from it; from v1.31 the Procurement Planner records the Treasury submission and entity-website publication in one Confirm plan publication action, and the system then runs the existing activation checks.",
+      "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_32.md",
+      "scope": "v1.32 (approved 17 October 2026) adds the whole-Tender cancellation recovery rule (section 5.4.7, acceptance PLN-CR-AC-001 to 012): the exact unused Planning drawdown is restored by a verified recovery that Requisitions coordinates, with no new approval, manual restore or scope unlock. Earlier scope, retained: Complete Planning authority including the current-complete-APP reservation denominator, next-step and journey contract, corrected funding-request blockers, Planning-side budget revision request, hand-off register and Purchase-ready-for-requisition item. From v1.30 a Need-origin departmental plan entry starts from the accepted Need's estimated total cost and Planning shows any change from it; from v1.31 the Procurement Planner records the Treasury submission and entity-website publication in one Confirm plan publication action, and the system then runs the existing activation checks.",
       "dependencies": "STR-CHG-001 v1.8; BUD-CHG-001 v1.11; NDS-CHG-001 v1.17; CFG-CHG-002 v0.13+; REQ-CHG-001 v1.12; KT-STD-001 v1.8",
-      "action": "Approved 9 October 2026 (v1.30: estimate prefill from the Need; v1.31: Planner confirms publication). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "action": "Approved 17 October 2026 (v1.32: whole-Tender cancellation recovery; Project Owner: “Mark them as approved and give me a handoff for Claude Code to implement”, recorded in the cancellation recovery handoff, and “Yes, record it” in the implementation session). Approval does not by itself show implementation, verification or release; PLN-CR-AC-001 to 012 stay open until evidence closes them. Earlier action text, retained: Approved 9 October 2026 (v1.30: estimate prefill from the Need; v1.31: Planner confirms publication). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
       "source_bundle": "files.zip; supplied control block",
-      "source_sha256": "69eaaaf629237921a20c781b1a697dc1b937184f2892e5f08cd18f2b210481c9",
+      "source_sha256": "2ce6bf352312b54c569fa2f74b4ee7527b42e8b3deee401d0a31b314e32f87cf",
       "prior_approved_baseline": {
-        "version": "1.29",
-        "approval_date": "2026-10-03",
-        "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_29.md",
-        "requirement_status": "Approved requirement"
+        "version": "1.31",
+        "approval_date": "2026-10-09",
+        "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_31.md",
+        "requirement_status": "Approved requirement",
+        "source_sha256": "69eaaaf629237921a20c781b1a697dc1b937184f2892e5f08cd18f2b210481c9",
+        "earlier_approved_baseline": {
+          "version": "1.29",
+          "approval_date": "2026-10-03",
+          "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_29.md",
+          "requirement_status": "Approved requirement"
+        }
       },
-      "approval_record": "Project Owner: “1, Approved” — 9 October 2026, answering the question: approve NDS-CHG-001 v1.17, PLN-CHG-001 v1.30 and PLN-CHG-001 v1.31, in that order (v1.29: Mark the documents as approved; 3 October 2026)",
+      "approval_record": "Project Owner, 17 October 2026: “Mark them as approved and give me a handoff for Claude Code to implement” (recorded in the cancellation recovery implementation handoff; coordinated set PLN-CHG-001 v1.32, TPR-CHG-001 v0.21, REQ-CHG-001 v1.20, BUD-CHG-001 v1.17) and, asked in the implementation session whether to write the approval into the file, “Yes, record it”. Approves v1.32 in full. Earlier record, retained: Project Owner: “1, Approved” — 9 October 2026, answering the question: approve NDS-CHG-001 v1.17, PLN-CHG-001 v1.30 and PLN-CHG-001 v1.31, in that order (v1.29: Mark the documents as approved; 3 October 2026)",
       "approval_history": {
         "proposed_version": "1.29",
         "proposed_filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_29.md",
         "proposal_status": "Project Owner review",
         "proposed_base_version": "1.28",
         "latest_approved": {
-          "version": "1.31",
-          "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_31.md",
-          "approved_on": "2026-10-09",
-          "base_version": "1.30",
-          "note": "v1.30 and v1.31 approved by the Project Owner on 9 October 2026. The proposed_* values above are v1.29 drafting history and are not corrected here."
+          "version": "1.32",
+          "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_32.md",
+          "approved_on": "2026-10-17",
+          "base_version": "1.31",
+          "note": "v1.32 (whole-Tender cancellation recovery) approved by the Project Owner on 17 October 2026. The proposed_* values above are v1.29 drafting history and are not corrected here.",
+          "previous_latest_approved": {
+            "version": "1.31",
+            "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_31.md",
+            "approved_on": "2026-10-09",
+            "base_version": "1.30",
+            "note": "v1.30 and v1.31 approved by the Project Owner on 9 October 2026. The proposed_* values above are v1.29 drafting history and are not corrected here."
+          }
         }
       }
     },
     {
       "document_id": "REQ-CHG-001",
       "title": "Structured Procurement Requisitions",
-      "version": "1.18",
+      "version": "1.20",
       "category": "Module requirements",
       "module": "Procurement Requisitions",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-09",
-      "supersedes": "v1.17 never approved on its own (its content is carried in v1.18); v1.16 approved 9 October 2026; v1.15 approved 9 October 2026; v1.14 approved 3 October 2026; v1.12 approved 25 September 2026; v1.11 approved 24 September 2026; v1.9 and earlier; v1.10 remains withdrawn",
+      "approval_date": "2026-10-17",
+      "supersedes": "v1.18 approved 9 October 2026 (superseded by v1.20 on its approval, 17 October 2026); v1.19 display proposal incorporated in v1.20 and never approved on its own; v1.17 never approved on its own (its content is carried in v1.18); v1.16 approved 9 October 2026; v1.15 approved 9 October 2026; v1.14 approved 3 October 2026; v1.12 approved 25 September 2026; v1.11 approved 24 September 2026; v1.9 and earlier; v1.10 remains withdrawn",
       "implementation_status": "Not evidenced",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "",
-      "filename": "KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_18.md",
-      "scope": "Structured requisition preparation, Planning-created Purchase ready for requisition hand-off, Budget reservation at authorisation and authorised handoff to Tenders.",
+      "filename": "KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_20.md",
+      "scope": "v1.20 (approved 17 October 2026) adds the coordination of the whole-Tender cancellation recovery (section 9.1D, acceptance REQ-CR-AC-001 to 012) and incorporates the v1.19 Record details display change. Earlier scope, retained: Structured requisition preparation, Planning-created Purchase ready for requisition hand-off, Budget reservation at authorisation and authorised handoff to Tenders.",
       "dependencies": "PLN-CHG-001 v1.27; BUD-CHG-001 v1.11; TPR-CHG-001; STD-TPL-001; STD-STD-001 v1.1",
-      "action": "Approved 9 October 2026 (v1.18: requirement rows store exact item ids, per-item proposals, handoff 1.5; carries v1.17 presentation change; v1.16: dialog action reads Add item / Add N items; v1.15: items entered once, requested quantity derived, estimated total per source, frozen evidence, Goods template boundary). Build, artboards, seed and verification outstanding; automatic cost estimation deferred; CM and template walkthrough remain deferred.",
-      "source_sha256": "41ffec6df4a4193e59c1edf4035ecd59643d0c5b6d3910e603d2763b7c323785",
+      "action": "Approved 17 October 2026 (v1.20: whole-Tender cancellation recovery, with the v1.19 display change it incorporates; Project Owner: “Mark them as approved and give me a handoff for Claude Code to implement”, recorded in the cancellation recovery handoff, and “Yes, record it” in the implementation session). Approval does not by itself show implementation, verification or release; REQ-CR-AC-001 to 012 stay open until evidence closes them. Earlier action text, retained: Approved 9 October 2026 (v1.18: requirement rows store exact item ids, per-item proposals, handoff 1.5; carries v1.17 presentation change; v1.16: dialog action reads Add item / Add N items; v1.15: items entered once, requested quantity derived, estimated total per source, frozen evidence, Goods template boundary). Build, artboards, seed and verification outstanding; automatic cost estimation deferred; CM and template walkthrough remain deferred.",
+      "source_sha256": "89d2aa9d77f646124fa555ae3d532cf361ef1a7444557a3d6f6dd5fdf0b9c9a2",
       "prior_approved_baseline": {
-        "version": "1.16",
+        "version": "1.18",
         "approval_date": "2026-10-09",
-        "filename": "KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_16.md",
-        "requirement_status": "Approved requirement"
+        "filename": "KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_18.md",
+        "requirement_status": "Approved requirement",
+        "source_sha256": "41ffec6df4a4193e59c1edf4035ecd59643d0c5b6d3910e603d2763b7c323785",
+        "earlier_approved_baseline": {
+          "version": "1.16",
+          "approval_date": "2026-10-09",
+          "filename": "KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_16.md",
+          "requirement_status": "Approved requirement"
+        }
       },
-      "approval_record": "Project Owner: v1.18 approved; 9 October 2026 (v1.16: v1.16 is approved; 9 October 2026; v1.15: Approved with all recommendations; 9 October 2026; v1.14: Mark the documents as approved; 3 October 2026)",
+      "approval_record": "Project Owner, 17 October 2026: “Mark them as approved and give me a handoff for Claude Code to implement” (recorded in the cancellation recovery implementation handoff; coordinated set PLN-CHG-001 v1.32, TPR-CHG-001 v0.21, REQ-CHG-001 v1.20, BUD-CHG-001 v1.17) and, asked in the implementation session whether to write the approval into the file, “Yes, record it”. Approves v1.20 in full, including the v1.19 display change it incorporates. Earlier record, retained: Project Owner: v1.18 approved; 9 October 2026 (v1.16: v1.16 is approved; 9 October 2026; v1.15: Approved with all recommendations; 9 October 2026; v1.14: Mark the documents as approved; 3 October 2026)",
       "approval_history": {
         "proposed_version": "1.14",
         "proposed_filename": "KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_14.md",
@@ -280,6 +308,14 @@
           "note": "Editorial: the item dialog action reads Add item / Add N items (direction: Project Owner, 9 October 2026, reply Do it). Approved by the Project Owner on 9 October 2026 (v1.16 is approved)."
         },
         "latest_approved": {
+          "version": "1.20",
+          "filename": "KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_20.md",
+          "proposal_status": "Approved 2026-10-17",
+          "base_version": "1.18 (with the v1.19 display proposal, incorporated and never approved on its own)",
+          "proposed_on": "2026-10-17",
+          "approved_on": "2026-10-17",
+          "note": "Approved by the Project Owner on 17 October 2026 (whole-Tender cancellation recovery, section 9.1D; carries the v1.19 Record details display change).",
+          "previous_latest_approved": {
           "version": "1.18",
           "filename": "KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_18.md",
           "proposal_status": "Approved 2026-10-09",
@@ -287,6 +323,7 @@
           "proposed_on": "2026-10-09",
           "approved_on": "2026-10-09",
           "note": "Approved by the Project Owner on 9 October 2026 (v1.18 approved). Carries the v1.17 presentation change (13.4A-C) and the requirements-follow-items change (5.7A, 6.4A, 6.5A, 13.6A, handoff 1.5). Per-item warranty deferred by the owner; TPR/STD-TPL wording for handoff 1.5 is a required correction in those documents."
+          }
         }
       }
     },
@@ -371,7 +408,7 @@
       "filename": "KenTender_TPR-CHG-001_Tenders_v0_22.md",
       "scope": "v0.22 (approved 17 October 2026) carries v0.21 (whole-Tender cancellation recovery, section 5.7A) and adds the agreement places and the advance value of the contract projection (section 4.5.3, section 25). Earlier scope, retained: Approved Tender preparation, approval, publication, clarifications, addenda, cancellation, exact bound STD-release lifecycle including published Superseded/Withdrawn behavior, and KT-STD-001 v1.8 journey guidance.",
       "dependencies": "REQ-CHG-001 v1.12; CFG-CHG-002 v0.16; STD-TPL-001 v0.10; STD-TPL-IMP-001 v1.1; BDS-CHG-001 v0.8; BOP-CHG-001 v0.10 and PRC-CHG-001 v0.9 proposed for post-close cancellation; Award-status owner pending",
-      "action": "Approved 17 October 2026 (v0.22; Project Owner: “Reconcile TPR v0.21 and v0.22 and then mark as approved”). Approval does not by itself show implementation, verification or release. The declaration of the Form No. 4 places belongs to the template pack and stays Proposed; the files of the other owners of the cancellation recovery (Planning, Requisitions, Budget) read Proposed on 17 October 2026. Earlier action text, retained: TPR-CHG-001 v0.22 proposed 17 October 2026 (file KenTender_TPR-CHG-001_Tenders_v0_22.md): the agreement places and the advance value in the contract projection; carries the uncommitted v0.21 (awaiting Project Owner review). v0.20 remains the approved baseline. Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v0.19 proposed 10 October 2026: the Tender-stated tender-security submission method and original delivery (section 5.2, section 23) and the explicit-review read for Tenders published without them; carries the v0.18 Review digests change. The approved baseline is unchanged until the Project Owner approves v0.19. v0.20 proposed 11 October 2026: three submission methods, the explicit update of an unpublished Draft to the new template release, amendment of the statements by the existing addendum and an auditable correction (section 24); carries v0.19 and v0.18. The approved baseline is unchanged until the Project Owner approves v0.20. Approved 2026-10-11 (v0.20): Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it. Approval is not evidence of implementation, verification or release.",
+      "action": "Approved 17 October 2026 (v0.22; Project Owner: “Reconcile TPR v0.21 and v0.22 and then mark as approved”). Approval does not by itself show implementation, verification or release. The declaration of the Form No. 4 places belongs to the template pack and stays Proposed; the files of the other owners of the cancellation recovery (Planning, Requisitions, Budget) read Proposed on 17 October 2026. (Later on 17 October 2026 the Project Owner approved PLN-CHG-001 v1.32, REQ-CHG-001 v1.20 and BUD-CHG-001 v1.17 separately; see their entries.) Earlier action text, retained: TPR-CHG-001 v0.22 proposed 17 October 2026 (file KenTender_TPR-CHG-001_Tenders_v0_22.md): the agreement places and the advance value in the contract projection; carries the uncommitted v0.21 (awaiting Project Owner review). v0.20 remains the approved baseline. Approved 3 October 2026. Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v0.19 proposed 10 October 2026: the Tender-stated tender-security submission method and original delivery (section 5.2, section 23) and the explicit-review read for Tenders published without them; carries the v0.18 Review digests change. The approved baseline is unchanged until the Project Owner approves v0.19. v0.20 proposed 11 October 2026: three submission methods, the explicit update of an unpublished Draft to the new template release, amendment of the statements by the existing addendum and an auditable correction (section 24); carries v0.19 and v0.18. The approved baseline is unchanged until the Project Owner approves v0.20. Approved 2026-10-11 (v0.20): Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it. Approval is not evidence of implementation, verification or release.",
       "prior_approved_baseline": {
         "version": "0.20",
         "approval_date": "2026-10-11",
@@ -386,7 +423,7 @@
         }
       },
       "source_sha256": "834039ffa96481a9ad7db9478bf1e0ee5e10710881483da99dbd51741c16bb98",
-      "approval_record": "Project Owner, 17 October 2026, verbatim: “Reconcile TPR v0.21 and v0.22 and then mark as approved”, answering the report of the proposed set STD-TPL-001 v0.18, TPR-CHG-001 v0.22, AWD-CHG-001 v0.8 and CM-CHG-001 v0.12. Approves v0.22 in full, including v0.21 (whole-Tender cancellation recovery, which this register had not listed) that it carries; it does not approve STD-TPL-001 v0.18, AWD-CHG-001 v0.8, CM-CHG-001 v0.12, PLN-CHG-001 v1.32, REQ-CHG-001 v1.20 or BUD-CHG-001 v1.17. Earlier records, retained: Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it.",
+      "approval_record": "Project Owner, 17 October 2026, verbatim: “Reconcile TPR v0.21 and v0.22 and then mark as approved”, answering the report of the proposed set STD-TPL-001 v0.18, TPR-CHG-001 v0.22, AWD-CHG-001 v0.8 and CM-CHG-001 v0.12. Approves v0.22 in full, including v0.21 (whole-Tender cancellation recovery, which this register had not listed) that it carries; it does not approve STD-TPL-001 v0.18, AWD-CHG-001 v0.8, CM-CHG-001 v0.12, PLN-CHG-001 v1.32, REQ-CHG-001 v1.20 or BUD-CHG-001 v1.17. (Later on 17 October 2026 the Project Owner approved PLN-CHG-001 v1.32, REQ-CHG-001 v1.20 and BUD-CHG-001 v1.17 separately; see their entries.) Earlier records, retained: Project Owner, 11 October 2026: “Mark the documents as approved”, answering the report of the proposed set BDS-CHG-001 v0.16, TPR-CHG-001 v0.20, STD-TPL-001 v0.17, BOP-CHG-001 v0.15, TRUST-ADR-001 v0.6, AUTH-ADR-001 v1.15, SEED-002 v0.7 and TRUST-OPS-001 v0.1. The proposals each carries in full are approved with it.",
       "approval_history": {
         "proposed_version": "0.22",
         "proposed_filename": "KenTender_TPR-CHG-001_Tenders_v0_22.md",
