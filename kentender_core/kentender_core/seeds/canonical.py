@@ -143,6 +143,7 @@ REGISTER_LOCAL_PARTS: tuple[str, ...] = (
 	"naomi.chebet",
 	"josphat.mwangi",
 	"beatrice.kamau",
+	"hellen.mutua",  # the second Budget Approver (KT-STD-001 v1.31 §8.3)
 	"amina.hassan",
 	"daniel.rotich",
 	"daniel.otieno",  # KT-STD-001 v1.11 §8.3 — technical operator

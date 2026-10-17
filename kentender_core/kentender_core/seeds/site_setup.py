@@ -172,6 +172,9 @@ ACTORS = (
 	# named actors, in the shared register rather than a module-owned copy.
 	("josphat.mwangi", "Josphat Mwangi"),
 	("beatrice.kamau", "Beatrice Kamau"),
+	# KT-STD-001 v1.31 §8.3 (Project Owner, 17 Oct 2026: "fix by adding a second permanent approver") — the canonical world had one
+	# Budget Approver, so a year she had confirmed could not be approved by anyone else (no self-approval). Not Beatrice Kamau.
+	("hellen.mutua", "Hellen Mutua"),
 	# REQ-CHG-001 v1.6 §16.1 / KT-STD-001 §8.3 (2026-09-06) — the Head of
 	# Procurement Function actor Requisitions authorisation names.
 	("charles.mutiso", "Charles Mutiso"),
@@ -273,10 +276,11 @@ ASSIGNMENTS = (
 	("naomi.chebet", "Auditor", None, {}),
 	# BUD-CHG-001 v1.6 §15.1 — Josphat holds Budget Officer and, separately,
 	# Finance Confirmation Officer (the no-self-approval fixture); Beatrice
-	# is the Budget Approver. All Site-wide (§7).
+	# is the Budget Approver, and Hellen Mutua the second one (KT-STD-001 v1.31 §8.3), so one can approve what the other confirmed. All Site-wide (§7).
 	("josphat.mwangi", "Budget Officer", None, {}),
 	("josphat.mwangi", "Finance Confirmation Officer", None, {}),
 	("beatrice.kamau", "Budget Approver", None, {}),
+	("hellen.mutua", "Budget Approver", None, {}),
 	# REQ-CHG-001 v1.6 §16.1 — Charles authorises Requisitions and, later,
 	# approves Tenders (TPR-CHG-001). Site-wide (§8).
 	("charles.mutiso", "Head of Procurement Function", None, {}),

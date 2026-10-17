@@ -521,66 +521,74 @@
       "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_30.md",
       "scope": "v1.30 (approved 15 October 2026): §8.4 and §8.4A point to SEED-002 v0.8 and its anchor model; §8.6 rule that seeds never set an instant later than the real clock. v1.29 (approved 9 October 2026): §2.4 date field hover edge — a .date-field wrapper takes the hover outline #6b7690 unless disabled (aria-disabled) or focused within. v1.28 (approved 9 October 2026): §2.4 states the KenTender field outline colour (#8590a6, hover #6b7690) and a 4px field corner (--radius-field); buttons, the segmented control and notice banners stay 2px; the secondary button shares the field outline colours. v1.27 (approved 8 October 2026): fixture register only — Charles Mutiso is the evaluation secretary by office and Brian Wafula the delegate. v1.26 (approved 8 October 2026): fixture register only — units OU-MOH-ICT (ICT) and OU-MOH-FIN (Finance) in section 8.2 and the home organisation units of section 8.3A. v1.25 (approved 6 October 2026): white input fill for editable fields in section 2.4. v1.24 (approved 6 October 2026): KenTender corner and control values in section 2.4 (controls and notice banners 2px, containers 4px, status chips 6px). v1.23 (approved 6 October 2026): journey position figure, compact tracker and blocked next-step shape (sections 2.9.1 to 2.9.3). v1.22 (approved 4 October 2026): Frappe v16 surfaces, one bordered white sheet on a neutral ground, the Home and Analytics archetypes; earlier content retained. Current cross-cutting standard, including plain language, minimum steps, Scheduled next step and actor/state/event conformance; v1.11 adds the §8.3 fixture actors Daniel Otieno (technical operator) and Jane Wanjiku (public observer), and v1.12 adds Nadia Kamau (release operator); retains earlier design and verification rules. v1.14 adds eight supplier people: Afya's Mary Wanjiku and David Ouma, and the people of Jirani, Pwani and Mlima.",
       "dependencies": "Workflow Guidance Standard; all controlled change documents",
-      "action": "Approved 15 October 2026 (v1.30; Project Owner: “3. Approved”): KT-STD-001 §8.4 and KT-STD-001 §8.4A point to SEED-002 v0.8 and its anchor model (three financial years read as at the anchor; instants are offsets and never later than the real clock), and §8.6 gains the rule that seeds never set an instant later than the real clock. It applies the pointer that SEED-002 v0.7 Appendix C asked the Project Owner to apply. Approved 9 October 2026 (v1.29); the design-system pack was updated for DS-REV-006 and its date-field addendum on 9 October 2026. Approved 9 October 2026 (v1.28). Approved 8 October 2026 (v1.27). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred.",
+      "action": "Approved 15 October 2026 (v1.30; Project Owner: “3. Approved”): KT-STD-001 §8.4 and KT-STD-001 §8.4A point to SEED-002 v0.8 and its anchor model (three financial years read as at the anchor; instants are offsets and never later than the real clock), and §8.6 gains the rule that seeds never set an instant later than the real clock. It applies the pointer that SEED-002 v0.7 Appendix C asked the Project Owner to apply. Approved 9 October 2026 (v1.29); the design-system pack was updated for DS-REV-006 and its date-field addendum on 9 October 2026. Approved 9 October 2026 (v1.28). Approved 8 October 2026 (v1.27). Complete outstanding design/implementation verification; CM and template walkthrough remain deferred. v1.31 proposed 17 October 2026 (file KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_31.md): adds the second Budget Approver, Hellen Mutua, to §8.3; awaiting Project Owner review.",
       "source_sha256": "d5e144f8e4509ae75b54fa205d9aa0f7ad5133d4d8eff5cd99964ac36dd7d0ba",
       "approval_record": "Project Owner, 15 October 2026, verbatim: “3. Approved”, answering the report of the harmonization of that day, which asked the owner to approve SEED-002 v0.8 and KT-STD-001 v1.30. (v1.29 record, retained: Project Owner, 9 October 2026, verbatim: “APPROVED”, recorded in the Claude Design handoff “DS-REV-006 addendum: date field hover edge” and applied on the user's instruction “Apply this from Claude Design” (KT-STD-001 v1.29). (Project Owner, 9 October 2026, verbatim: “1. Approved”, “2. Sharing is accepted” and “3. Yes”, answering the three decisions at the end of the report of KT-STD-001 v1.28 (approve v1.28; the secondary button shares the field outline colours; fields 4px while buttons and notice banners stay 2px). (Project Owner, 8 October 2026, verbatim: “All decisions approved. Proceed”, answering the report of the proposed set EVL-CHG-001 v0.8, KT-STD-001 v1.27, SEED-002 v0.3 and PRC-CHG-001 v0.12 with its Owner decisions D7–D11. (Project Owner, 8 October 2026, verbatim: “Approved. Proceed”, answering the report of the proposed set AUTH-ADR-001 v1.12, CFG-CHG-002 v0.19, KT-STD-001 v1.26 and EVL-CHG-001 v0.7. (v1.25: Project Owner, 6 October 2026, verbatim: “v1.25 is approved”. (v1.24: Project Owner, 6 October 2026, verbatim: “KT-STD-001 v1.24 is approved”.) (v1.23: Project Owner, 6 October 2026, verbatim: “KT-STD-001 v1.23 is approved”.) (v1.22: Project Owner, 4 October 2026, verbatim: “Yes”, answering “Shall I apply this pass, and then approve KT-STD v1.22, HOME v0.6 and ANL v0.8 together?”))))))",
       "approval_history": {
-        "proposed_version": "1.30",
-        "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_30.md",
-        "proposal_status": "Approved 15 October 2026",
-        "proposed_base_version": "1.29",
-        "proposed_revision": null,
-        "proposed_scope": "Fixture register change and one seed rule: §8.4 and §8.4A point to SEED-002 (proposed v0.8) and its anchor model; §8.6 gains the rule that seeds never set an instant later than the real clock. No component, permission, workflow, contract or verification requirement changes, and no actor changes. Earlier proposed_scope (v1.29): Presentation amendment: §2.4 date field hover edge (.date-field takes #6b7690 on hover unless disabled or focused within). Earlier proposed_scope (v1.28): Presentation amendment: §2.4 field outline colour #8590a6 (hover #6b7690) and 4px field corner; buttons and notice banners stay 2px. Earlier proposed_scope (v1.27): Fixture register change only: Charles Mutiso is the evaluation secretary by office and Brian Wafula the delegate (section 8.3 and the v1.13 binding). Proposed with EVL-CHG-001 v0.8, SEED-002 v0.3 and PRC-CHG-001 v0.12. v1.26 remains the approved standard.",
-        "earlier_proposals": [
-          {
-            "proposed_version": "1.29",
-            "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_29.md",
-            "proposed_base_version": "1.28",
-            "outcome": "Approved 9 October 2026"
-          },
-          {
-            "proposed_version": "1.28",
-            "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_28.md",
-            "proposed_base_version": "1.27",
-            "outcome": "Approved 9 October 2026"
-          },
-          {
-            "proposed_version": "1.27",
-            "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_27.md",
-            "proposed_base_version": "1.26",
-            "outcome": "Approved 8 October 2026"
-          },
-          {
-            "proposed_version": "1.26",
-            "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_26.md",
-            "proposed_base_version": "1.25",
-            "outcome": "Approved 8 October 2026"
-          },
-          {
-            "proposed_version": "1.25",
-            "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_25.md",
-            "proposed_base_version": "1.24",
-            "outcome": "Approved 6 October 2026"
-          },
-          {
-            "proposed_version": "1.24",
-            "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_24.md",
-            "proposed_base_version": "1.23",
-            "outcome": "Approved 6 October 2026"
-          },
-          {
-            "proposed_version": "1.23",
-            "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_23.md",
-            "proposed_base_version": "1.22",
-            "outcome": "Approved 6 October 2026"
-          },
-          {
-            "proposed_version": "1.22",
-            "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_22.md",
-            "proposed_base_version": "1.15",
-            "outcome": "Approved 4 October 2026"
-          }
-        ]
+        "proposed_version": "1.31",
+        "proposed_filename": "docs/mvp-1-r1/00_common/KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_31.md",
+        "proposal_status": "Proposed 17 October 2026; awaiting Project Owner review. Carries v1.30 in full.",
+        "proposed_base_version": "1.30",
+        "proposed_revision": "§8.3 adds Hellen Mutua, a second site-wide Budget Approver, on the Project Owner's instruction of 17 October 2026: “fix by adding a second permanent approver”.",
+        "source_sha256": "aa5ac58dac1aa0c50359ffb478ed21c5705ad6d506e5b240bafbe18ee8f27686",
+        "prior_proposal": {
+          "proposed_version": "1.30",
+          "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_30.md",
+          "proposal_status": "Approved 15 October 2026",
+          "proposed_base_version": "1.29",
+          "proposed_revision": null,
+          "proposed_scope": "Fixture register change and one seed rule: §8.4 and §8.4A point to SEED-002 (proposed v0.8) and its anchor model; §8.6 gains the rule that seeds never set an instant later than the real clock. No component, permission, workflow, contract or verification requirement changes, and no actor changes. Earlier proposed_scope (v1.29): Presentation amendment: §2.4 date field hover edge (.date-field takes #6b7690 on hover unless disabled or focused within). Earlier proposed_scope (v1.28): Presentation amendment: §2.4 field outline colour #8590a6 (hover #6b7690) and 4px field corner; buttons and notice banners stay 2px. Earlier proposed_scope (v1.27): Fixture register change only: Charles Mutiso is the evaluation secretary by office and Brian Wafula the delegate (section 8.3 and the v1.13 binding). Proposed with EVL-CHG-001 v0.8, SEED-002 v0.3 and PRC-CHG-001 v0.12. v1.26 remains the approved standard.",
+          "earlier_proposals": [
+            {
+              "proposed_version": "1.29",
+              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_29.md",
+              "proposed_base_version": "1.28",
+              "outcome": "Approved 9 October 2026"
+            },
+            {
+              "proposed_version": "1.28",
+              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_28.md",
+              "proposed_base_version": "1.27",
+              "outcome": "Approved 9 October 2026"
+            },
+            {
+              "proposed_version": "1.27",
+              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_27.md",
+              "proposed_base_version": "1.26",
+              "outcome": "Approved 8 October 2026"
+            },
+            {
+              "proposed_version": "1.26",
+              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_26.md",
+              "proposed_base_version": "1.25",
+              "outcome": "Approved 8 October 2026"
+            },
+            {
+              "proposed_version": "1.25",
+              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_25.md",
+              "proposed_base_version": "1.24",
+              "outcome": "Approved 6 October 2026"
+            },
+            {
+              "proposed_version": "1.24",
+              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_24.md",
+              "proposed_base_version": "1.23",
+              "outcome": "Approved 6 October 2026"
+            },
+            {
+              "proposed_version": "1.23",
+              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_23.md",
+              "proposed_base_version": "1.22",
+              "outcome": "Approved 6 October 2026"
+            },
+            {
+              "proposed_version": "1.22",
+              "proposed_filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_22.md",
+              "proposed_base_version": "1.15",
+              "outcome": "Approved 4 October 2026"
+            }
+          ]
+        }
       },
       "prior_approved_baseline": {
         "version": "1.29",
@@ -1362,8 +1370,8 @@
       "source_sha256": "dc746e65562c2c71cc8991bb64fbf4b468700cbb7fc400fd0c0e15d34713d3ed",
       "scope": "Contract Management: preparation and signing, delivery and performance, and payment and close-out in one module and one case; ERPNext Accounts is authoritative for the first Finance deployment; the module works without KenTender's tendering apps; includes the §19 focused amendment (rule register, agreement and document mappings, certificate contents) and the §10.1B scenario facts.",
       "dependencies": "KT-STD-001; AUTH-ADR-001; CFG-CHG-002; AWD-CHG-001; BUD-CHG-001; TPR-CHG-001; BDS-CHG-001; PRC-CHG-001; STD-TPL-001; EVL-CHG-001; BOP-CHG-001; REQ-CHG-001; PLN-CHG-001; NDS-CHG-001; STR-CHG-001; SEED-002 (demonstration seed, §A8); ERPNext Accounts",
-      "action": "Approved 17 October 2026 (v0.11): the six Project Owner decisions of 16 October 2026 carried into sections 5.8, 5.10, 5.14, 5.15, 6.3, 19.6 and the new section 21 with CM-AC-97 to -104, CM-IF-11 and CM-CP-11 (Finance early liability and the Debit Note credit adjustment by two people; alerts follow the notification table; no test wording on ordinary screens; the publication duty has actionable tasks; revalidation of the funding package\u2019s reservations; work that blocks leads a standing duty). Approval is not evidence of implementation or verification: the release evidence of 17 October 2026 on commit 02c15f1a (11 of 11 gates) is recorded in the implementation tracker. (Earlier record, retained: Approved 16 October 2026 (v0.10): the coordinated funding specification (section 20), the funding screens inside the existing intake and opening screens (section 10.9) and CM-AC-85 to -96. Build state, 17 October 2026, afternoon (no approval is evidence of it): the coordinated funding build is implemented and verified on the test site; this build ran nothing on the development site (the seed session ran a normal migrate there at the Project Owner's instruction). Verified: Budget app (all 30 modules) and its funding entry module 67/67; Budget browser specs 13/13 as the normal roles; Award chain (all modules, funding allocation module 33/33) and the Funding sources disclosure walked in a browser on the canonical award 4/4; Contract Management funding module 40/40, 21 further Contract Management modules rerun on the final tree, and the 15 seams and regression modules with the real owners; the Award to Contract Management to Budget journey on the canonical award 37/37 (Contract Management stood in for itself because the formation of that award is blocked by FU-CM-70 and FU-CM-72); an independently registered contract funded through both real owners for two financial years without reopening 53/53, finished by the second Budget Approver; the Contract Management funding screens walked in a browser as the real people with the real Budget owner 4/4, including the refusal of the Approver who confirmed the year's basis and the approval by the second Budget Approver; a normal migrate on the test site. Not done: mutation checks of the guards; the error and stale variants of the correction screens in a browser; a full Contract Management UI gate run after the last change. (Earlier wording, retained: 'the approval half of the cross-module path in one browser session' was listed as not done; it is walked since the second Budget Approver was added.) No follow-up is closed by this build. Detail: docs/mvp-1-r1/03_budget/BUD-CHG-001_IMPLEMENTATION_TRACKER.md, addendum and closing update of 17 October 2026, and artifacts/bud-v116-coordinated-funding-evidence.md. (Earlier build state, morning of 17 October 2026, retained: Build state, 17 October 2026 (no approval is evidence of it): the coordinated funding build is implemented and partly verified on the test site only; the development site is untouched. Verified: Budget app (all 30 modules) and its funding entry module 67/67, Budget browser specs 13/13 as the normal roles, Award chain (all modules, with the funding allocation module 33/33), Contract Management funding module 38/38 and the notification, dead-end, date, import-boundary and navigation guards. Not done: the real Award to Contract Management to Budget journey on the canonical award (the test site's canonical reservations were purged by a Budget browser fixture and the rebuild is awaiting the Project Owner), a normal migrate on the verification site, and a browser walk of the Contract Management funding screens. Detail: docs/mvp-1-r1/03_budget/BUD-CHG-001_IMPLEMENTATION_TRACKER.md addendum of 17 October 2026.) (Earlier record, retained: Approved 14 October 2026 (v0.8), as the document's own control table states; the file is docs/mvp-1-r1/21_contract_management/KenTender_CM-CHG-001_Contract_Management_v0_8.md. Added to this register on 15 October 2026 at the Project Owner's request (“4. Yes”); the register's statuses follow the document and the repository, not a new decision. Implementation is in progress (phases 3 to 12 committed on 15 October 2026; see docs/mvp-1-r1/21_contract_management/CM-CHG-001_v0_8_IMPLEMENTATION_TRACKER.md for each gate); verification is pending; no release is approved. The register's FW-008 and DEC-016 still describe Contract Management as planned future work and are not changed here: the Project Owner has not stated the release-slice scope. LQ-01 to LQ-06 and the implementation, evidence and release conditions remain outstanding. Its follow-up FU-CM-61 is decided by DEC-057 and DEC-060. v0.9 proposed 16 October 2026: the Contract Management side of three Budget decisions (conversion event contents, correction of a Closed commitment through Budget, funding of a contract with no tender in KenTender); reviewed together with the matching proposed Budget amendment (see the BUD-CHG-001 entry). v0.8 remains the approved baseline.))",
-      "approval_record": "Project Owner, 17 October 2026, verbatim: \u201c1. Version v0.11 approved\u201d, answering the report of the evidence run and the open decisions; and \u201c2. Accepted\u201d (the head lands on the publication step after sending an agreement), \u201c3. Commit and install dev site\u201d. Approves CM-CHG-001 v0.11 in full. (Earlier record, retained: Project Owner, 16 October 2026, verbatim: “Mark them as approved”, answering the delivery of the coordinated package BUD-CHG-001 v1.16, AWD-CHG-001 v0.7, CM-CHG-001 v0.10 and AUTH-ADR-001 v1.16 with the two adopted product decisions (“Adopt”) incorporated. Approves the version in full.)",
+      "action": "Approved 17 October 2026 (v0.11): the six Project Owner decisions of 16 October 2026 carried into sections 5.8, 5.10, 5.14, 5.15, 6.3, 19.6 and the new section 21 with CM-AC-97 to -104, CM-IF-11 and CM-CP-11 (Finance early liability and the Debit Note credit adjustment by two people; alerts follow the notification table; no test wording on ordinary screens; the publication duty has actionable tasks; revalidation of the funding package’s reservations; work that blocks leads a standing duty). Approval is not evidence of implementation or verification: the release evidence of 17 October 2026 on commit 02c15f1a (11 of 11 gates) is recorded in the implementation tracker. (Earlier record, retained: Approved 16 October 2026 (v0.10): the coordinated funding specification (section 20), the funding screens inside the existing intake and opening screens (section 10.9) and CM-AC-85 to -96. Build state, 17 October 2026, afternoon (no approval is evidence of it): the coordinated funding build is implemented and verified on the test site; this build ran nothing on the development site (the seed session ran a normal migrate there at the Project Owner's instruction). Verified: Budget app (all 30 modules) and its funding entry module 67/67; Budget browser specs 13/13 as the normal roles; Award chain (all modules, funding allocation module 33/33) and the Funding sources disclosure walked in a browser on the canonical award 4/4; Contract Management funding module 40/40, 21 further Contract Management modules rerun on the final tree, and the 15 seams and regression modules with the real owners; the Award to Contract Management to Budget journey on the canonical award 37/37 (Contract Management stood in for itself because the formation of that award is blocked by FU-CM-70 and FU-CM-72); an independently registered contract funded through both real owners for two financial years without reopening 53/53, finished by the second Budget Approver; the Contract Management funding screens walked in a browser as the real people with the real Budget owner 4/4, including the refusal of the Approver who confirmed the year's basis and the approval by the second Budget Approver; a normal migrate on the test site. Not done: mutation checks of the guards; the error and stale variants of the correction screens in a browser; a full Contract Management UI gate run after the last change. (Earlier wording, retained: 'the approval half of the cross-module path in one browser session' was listed as not done; it is walked since the second Budget Approver was added.) No follow-up is closed by this build. Detail: docs/mvp-1-r1/03_budget/BUD-CHG-001_IMPLEMENTATION_TRACKER.md, addendum and closing update of 17 October 2026, and artifacts/bud-v116-coordinated-funding-evidence.md. (Earlier build state, morning of 17 October 2026, retained: Build state, 17 October 2026 (no approval is evidence of it): the coordinated funding build is implemented and partly verified on the test site only; the development site is untouched. Verified: Budget app (all 30 modules) and its funding entry module 67/67, Budget browser specs 13/13 as the normal roles, Award chain (all modules, with the funding allocation module 33/33), Contract Management funding module 38/38 and the notification, dead-end, date, import-boundary and navigation guards. Not done: the real Award to Contract Management to Budget journey on the canonical award (the test site's canonical reservations were purged by a Budget browser fixture and the rebuild is awaiting the Project Owner), a normal migrate on the verification site, and a browser walk of the Contract Management funding screens. Detail: docs/mvp-1-r1/03_budget/BUD-CHG-001_IMPLEMENTATION_TRACKER.md addendum of 17 October 2026.) (Earlier record, retained: Approved 14 October 2026 (v0.8), as the document's own control table states; the file is docs/mvp-1-r1/21_contract_management/KenTender_CM-CHG-001_Contract_Management_v0_8.md. Added to this register on 15 October 2026 at the Project Owner's request (“4. Yes”); the register's statuses follow the document and the repository, not a new decision. Implementation is in progress (phases 3 to 12 committed on 15 October 2026; see docs/mvp-1-r1/21_contract_management/CM-CHG-001_v0_8_IMPLEMENTATION_TRACKER.md for each gate); verification is pending; no release is approved. The register's FW-008 and DEC-016 still describe Contract Management as planned future work and are not changed here: the Project Owner has not stated the release-slice scope. LQ-01 to LQ-06 and the implementation, evidence and release conditions remain outstanding. Its follow-up FU-CM-61 is decided by DEC-057 and DEC-060. v0.9 proposed 16 October 2026: the Contract Management side of three Budget decisions (conversion event contents, correction of a Closed commitment through Budget, funding of a contract with no tender in KenTender); reviewed together with the matching proposed Budget amendment (see the BUD-CHG-001 entry). v0.8 remains the approved baseline.))",
+      "approval_record": "Project Owner, 17 October 2026, verbatim: “1. Version v0.11 approved”, answering the report of the evidence run and the open decisions; and “2. Accepted” (the head lands on the publication step after sending an agreement), “3. Commit and install dev site”. Approves CM-CHG-001 v0.11 in full. (Earlier record, retained: Project Owner, 16 October 2026, verbatim: “Mark them as approved”, answering the delivery of the coordinated package BUD-CHG-001 v1.16, AWD-CHG-001 v0.7, CM-CHG-001 v0.10 and AUTH-ADR-001 v1.16 with the two adopted product decisions (“Adopt”) incorporated. Approves the version in full.)",
       "prior_approved_baseline": {
         "version": "0.10",
         "approval_date": "2026-10-16",

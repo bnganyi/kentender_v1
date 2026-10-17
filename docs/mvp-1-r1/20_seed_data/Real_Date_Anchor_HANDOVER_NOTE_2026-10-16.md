@@ -9,6 +9,7 @@ Written for: engineers and module sessions that seed, test or demonstrate the ca
 3. **Both sites are on the anchor of Friday 16 October 2026 10:00** (test site repaired and the development site migrated and reseeded on 17 October; both validate; the test clock is pinned on the test site only). Rebuild: `make seed-canonical SITE=<site> REBUILD=True FORCE=True` (6 to 25 minutes, longer when anything else runs on the site; after a failed rebuild a plain run finishes it).
 4. **A command never runs at an instant later than the real clock** (`kentender_core.seeds.clock.at`, in an anchored world).
 5. **Clock policy** (`kt_test_clock_policy`): `off` on the development site; the test site stays `free` (not `never_ahead`) because the Python suite has not been re-run under `never_ahead`.
+7. **A second permanent Budget Approver** (Hellen Mutua, `hellen.mutua@moh.example.test`, site-wide) is in the canonical world on both sites since 17 October (KT-STD-001 v1.31, proposed): the one Approver could not approve what she had confirmed. A fixture or script that adds its own second Approver does not need to.
 6. **Anchor-dependent text:** an anchor of 16 October (not 9 October) is what the sites hold now; tests and specs read it at run time (`calendar.describe()`), so none names the day.
 
 ## How a test or spec names a seeded date

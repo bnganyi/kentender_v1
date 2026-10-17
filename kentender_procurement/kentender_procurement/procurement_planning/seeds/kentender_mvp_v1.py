@@ -1233,6 +1233,23 @@ def wipe_all_planning() -> dict[str, int]:
 # --- isolated profiles (§14.10 — mutually exclusive with the baseline) -------
 
 
+def persona_pass_facts(fiscal_year: str) -> dict[str, Any]:
+	"""What the §14 persona pass reads on the Active plan of `fiscal_year`, as the server states it: the plan's reference and title, its total,
+	its three governance lines and its number of items. The browser pass compares the page with these, so it follows the world's anchor and
+	reads whichever year the anchor made the Active one (an October anchor has no Annual Plan for the prepared year)."""
+	from kentender_procurement.procurement_planning.services import plan_read
+
+	plan = frappe.get_doc("Annual Plan", {"fiscal_year": fiscal_year})
+	version = frappe.get_doc("Annual Plan Version", plan.active_version)
+	view = plan_read._active_view(version, plan)
+	card = view["governance_card"]
+	return {
+		"plan_reference": plan.plan_reference, "title": plan.title, "fiscal_year": fiscal_year, "total": view["summary"]["value_display"],
+		"items": len(view["items"]), "ao_adoption_line": card["ao_adoption_line"], "statutory_approval_line": card["statutory_approval_line"],
+		"publication_line": card["publication_line"],
+	}
+
+
 def reset_planning_seed(*, commit: bool = False) -> dict[str, int]:
 	"""Remove every Planning row on both seeded years (FY 2026/27 and
 	FY 2027/28) and every NS-stamped row, each Need usage projection an

@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
+from contextlib import contextmanager
 from io import BytesIO
 from typing import Any
 from uuid import uuid4
@@ -30,6 +31,31 @@ import frappe
 
 from kentender_procurement.procurement_requisitions.seeds import playwright_ui_fixtures as req_pw
 from kentender_procurement.tenders.seeds import clear as tender_clear
+
+
+# A world the browser then acts on at the real clock (an addendum the Head issues, a publication the Accounting Officer withdraws) needs deadlines
+# that are still ahead of the real clock. The story's own deadlines (5 and 12 June 2027) lie in the past of an anchored world, where the story's
+# "now" is the anchor, so such a world takes its deadlines a number of days from today instead (SEED-002 v0.9 R1). The world's own history stays
+# on the story's instants.
+_LIVE = {"on": False}
+
+
+@contextmanager
+def _live(on: bool):
+	before = _LIVE["on"]
+	_LIVE["on"] = bool(on) or before
+	try:
+		yield
+	finally:
+		_LIVE["on"] = before
+
+
+def _deadline(story: str, days_ahead: int, at: str) -> str:
+	if _LIVE["on"]:
+		from frappe.utils import add_days, nowdate
+
+		return f"{add_days(nowdate(), days_ahead)} {at}"
+	return W(story)
 
 NS_PW = "KENTENDER_TND_PLAYWRIGHT"
 OFFICER = "pw.tnd.officer@example.test"
@@ -203,8 +229,8 @@ def _authorised() -> dict[str, Any]:
 
 def officer_values(**overrides) -> dict[str, Any]:
 	values = {
-		"tender_title": "Supply and delivery of business laptops", "issue_date": W("2027-05-15"), "clarification_deadline": W("2027-05-27 17:00:00"),
-		"submission_deadline": W("2027-06-05 11:00:00"), "tender_validity_days": 120, "tender_security_amount": 500000.00, "tender_security_method": "Bidder uploads an electronic instrument", "tender_security_original": "Required", "pre_tender_meeting": False,
+		"tender_title": "Supply and delivery of business laptops", "issue_date": W("2027-05-15"), "clarification_deadline": _deadline("2027-05-27 17:00:00", 7, "17:00:00"),
+		"submission_deadline": _deadline("2027-06-05 11:00:00", 14, "11:00:00"), "tender_validity_days": 120, "tender_security_amount": 500000.00, "tender_security_method": "Bidder uploads an electronic instrument", "tender_security_original": "Required", "pre_tender_meeting": False,
 		"manufacturer_authorisation_required": True, "datasheets_required": True, "past_experience_required": True, "minimum_comparable_contracts": 2,
 		"experience_period_years": 5, "after_sales_evidence_required": True, "after_sales_evidence": "Kenya service-centre details and escalation contacts",
 		"inspection_location": LOCATION, "payment_timing_days": "30", "performance_security_required": True, "performance_security_percent": 10,
@@ -374,22 +400,29 @@ def reset_segregation_fixture(*, commit: bool = True, stage: str = "hopf") -> di
 	return _done(state, commit)
 
 
-def reset_publication_fixture(*, commit: bool = True, confirmed: int = 2) -> dict[str, Any]:
-	"""TPR-DES-08 opening state: publication authorised, `confirmed` of four channels confirmed."""
-	state = reset_awaiting_ao_fixture(commit=False)
-	authorised = _authorise(state["tender"], state["task"])
-	state["publication"] = authorised["publication"]
-	_clock("confirm")
-	for channel in CHANNELS[: max(0, int(confirmed))]:
-		_confirm(state["tender"], channel)
-	return _done(state, commit)
+def reset_publication_fixture(*, commit: bool = True, confirmed: int = 2, live: bool = True) -> dict[str, Any]:
+	"""TPR-DES-08 opening state: publication authorised, `confirmed` of four channels confirmed. The browser withdraws or confirms at the real
+	clock, so the world's deadlines are still ahead of it (`live`)."""
+	with _live(live):
+		state = reset_awaiting_ao_fixture(commit=False)
+		authorised = _authorise(state["tender"], state["task"])
+		state["publication"] = authorised["publication"]
+		_clock("confirm")
+		for channel in CHANNELS[: max(0, int(confirmed))]:
+			_confirm(state["tender"], channel)
+		return _done(state, commit)
 
 
-def reset_published_fixture(*, commit: bool = True, with_addendum: bool = False, with_clarification: bool = False, answered: bool = False) -> dict[str, Any]:
+def reset_published_fixture(*, commit: bool = True, with_addendum: bool = False, with_clarification: bool = False, answered: bool = False, live: bool = False) -> dict[str, Any]:
 	"""TPR-DES-09 opening state: Published — open with one registered
 	candidate; optionally its general clarification (awaiting or answered)
 	and one issued, fully confirmed addendum."""
-	state = reset_publication_fixture(commit=False, confirmed=4)
+	with _live(live):
+		return _published_world(commit=commit, with_addendum=with_addendum, with_clarification=with_clarification, answered=answered, live=live)
+
+
+def _published_world(*, commit: bool, with_addendum: bool, with_clarification: bool, answered: bool, live: bool) -> dict[str, Any]:
+	state = reset_publication_fixture(commit=False, confirmed=4, live=live)
 	state.update(_candidate(state["tender"]))
 	if with_clarification:
 		state.update(_clarification(state["tender"], answered=answered))
@@ -409,11 +442,13 @@ def reset_ended_fixture(*, commit: bool = True) -> dict[str, Any]:
 	return _done(state, commit)
 
 
-ADDENDUM_VALUES = {
-	"change_class": "Administrative clarification", "affected_area": "Goods/delivery schedule", "affected_reference_key": "delivery_location",
-	"revised_value": "Playwright — Requisitions Delivery Location, Loading Bay 3", "reason": "Loading bay reassigned after warehouse reorganisation.",
-	"materiality_statement": "Same site; no change to scope, quantity, value or evaluation basis.", "revised_submission_deadline": W("2027-06-12 11:00:00"),
-}
+def _addendum_values() -> dict[str, Any]:
+	return {
+		"change_class": "Administrative clarification", "affected_area": "Goods/delivery schedule", "affected_reference_key": "delivery_location",
+		"revised_value": "Playwright — Requisitions Delivery Location, Loading Bay 3", "reason": "Loading bay reassigned after warehouse reorganisation.",
+		"materiality_statement": "Same site; no change to scope, quantity, value or evaluation basis.",
+		"revised_submission_deadline": _deadline("2027-06-12 11:00:00", 21, "11:00:00"),
+	}
 
 
 def _addendum_draft(name: str, *, values: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -433,7 +468,7 @@ def _addendum_draft(name: str, *, values: dict[str, Any] | None = None) -> dict[
 def _issued_addendum(name: str) -> dict[str, Any]:
 	from kentender_procurement.tenders.services import addenda
 
-	state = _addendum_draft(name, values=ADDENDUM_VALUES)
+	state = _addendum_draft(name, values=_addendum_values())
 	with _as(OFFICER):
 		addenda.submit_addendum_for_issue(tender=name, addendum=state["addendum"], expected_record_version=_root(name).record_version, idempotency_key=_key())
 	with _as(HOPF):
@@ -483,21 +518,23 @@ def _clarification(name: str, *, answered: bool = False, question: str = "May th
 	return state
 
 
-def reset_addendum_draft_fixture(*, commit: bool = True, saved: bool = True) -> dict[str, Any]:
+def reset_addendum_draft_fixture(*, commit: bool = True, saved: bool = True, live: bool = False) -> dict[str, Any]:
 	"""TPR-DES-10 "Draft (Procurement Officer)": a saved (or empty) draft addendum."""
-	state = reset_published_fixture(commit=False)
-	state.update(_addendum_draft(state["tender"], values=ADDENDUM_VALUES if saved else None))
-	return _done(state, commit)
+	with _live(live):
+		state = reset_published_fixture(commit=False, live=live)
+		state.update(_addendum_draft(state["tender"], values=_addendum_values() if saved else None))
+		return _done(state, commit)
 
 
-def reset_addendum_awaiting_issue_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""TPR-DES-10 "HOPF issue": submitted for issue."""
+def reset_addendum_awaiting_issue_fixture(*, commit: bool = True, live: bool = True) -> dict[str, Any]:
+	"""TPR-DES-10 "HOPF issue": submitted for issue. The Head issues it in the browser at the real clock, so the deadlines are still ahead of it (`live`)."""
 	from kentender_procurement.tenders.services import addenda
 
-	state = reset_addendum_draft_fixture(commit=False)
-	with _as(OFFICER):
-		addenda.submit_addendum_for_issue(tender=state["tender"], addendum=state["addendum"], expected_record_version=_root(state["tender"]).record_version, idempotency_key=_key())
-	return _done(state, commit)
+	with _live(live):
+		state = reset_addendum_draft_fixture(commit=False, live=live)
+		with _as(OFFICER):
+			addenda.submit_addendum_for_issue(tender=state["tender"], addendum=state["addendum"], expected_record_version=_root(state["tender"]).record_version, idempotency_key=_key())
+		return _done(state, commit)
 
 
 def reset_addendum_confirming_fixture(*, commit: bool = True) -> dict[str, Any]:
@@ -520,7 +557,7 @@ def reset_material_addendum_fixture(*, commit: bool = True, review: str = "") ->
 	state = reset_published_fixture(commit=False)
 	line = next(r for r in addenda.affected_references(_root(state["tender"])) if r["key"].startswith("goods:"))
 	quantity = int(float(line["value"].split(" ", 1)[0].replace(",", "")))
-	state.update(_addendum_draft(state["tender"], values={**ADDENDUM_VALUES, "affected_reference_key": line["key"], "revised_value": f"{quantity + 50} Each", "reason": "Additional deployment sites require 50 more laptops", "materiality_statement": "", "revised_submission_deadline": None}))
+	state.update(_addendum_draft(state["tender"], values={**_addendum_values(), "affected_reference_key": line["key"], "revised_value": f"{quantity + 50} Each", "reason": "Additional deployment sites require 50 more laptops", "materiality_statement": "", "revised_submission_deadline": None}))
 	state["current_quantity"] = line["value"]
 	if review in ("requested", "closed"):
 		with _as(OFFICER):
