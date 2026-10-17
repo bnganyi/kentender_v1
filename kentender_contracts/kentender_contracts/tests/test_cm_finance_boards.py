@@ -7,6 +7,7 @@ The server builds each board for the viewer at their step; with `CM_CAPTURE_BOAR
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -60,7 +61,7 @@ class FinanceBoards(ContractCase):
 		return out["payment"]
 
 	def settle(self, entry):
-		return payment.record_finance_settlement(self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("st"), actor=self.p["beatrice"], effective_date="2027-07-23", evidence=f"Bank line {entry}")
+		return payment.record_finance_settlement(self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("st"), actor=self.p["beatrice"], effective_date=D("2027-07-23"), evidence=f"Bank line {entry}")
 
 
 class TestPartlyPaid(FinanceBoards):
@@ -155,10 +156,10 @@ class TestAdvanceBoards(FinanceBoards):
 		record = self.screen("josphat", "D29-G")
 		self.assertEqual(record["p"], "Save guarantee")
 		sec = advance.record_guarantee(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("g"), actor=self.p["josphat"], issuer="Test Bank", beneficiary="Ministry of Health", reference="TEST-AG-01", amount=100000,
-			issued_on="2027-06-01", expires_on="2027-08-31")["security"]
+			issued_on=D("2027-06-01"), expires_on=D("2027-08-31"))["security"]
 		verify = self.screen("charles", "D29-V")
 		self.assertEqual(verify["p"], "Verify guarantee")
-		advance.verify_guarantee(self.case, security=sec, expected_version=self.t.version(), idempotency_key=self.t.key("v"), actor=self.p["charles"], confirmation_reference="TEST-AG-CONF-01", received_on="2027-07-02")
+		advance.verify_guarantee(self.case, security=sec, expected_version=self.t.version(), idempotency_key=self.t.key("v"), actor=self.p["charles"], confirmation_reference="TEST-AG-CONF-01", received_on=D("2027-07-02"))
 		review = self.screen("charles", "D29")
 		self.assertEqual((review["p"], review["s2"]), ("Sign advance certification", ["View advance clause", "View guarantee"]))
 		text = frappe.as_json(review["regions"])
@@ -172,7 +173,7 @@ class TestAdvanceBoards(FinanceBoards):
 		approve = self.screen("beatrice", "D17")
 		self.assertEqual(approve["actions"]["Approve payment"]["args"]["kind"], "payment")
 		payment.approve_finance_record(self.case, payment=out["payment"], expected_version=self.t.version(), idempotency_key=self.t.key("a"), actor=self.p["beatrice"])
-		payment.record_finance_settlement(self.case, payment=out["payment"], expected_version=self.t.version(), idempotency_key=self.t.key("st"), actor=self.p["beatrice"], effective_date="2027-07-05", evidence="Bank line ADV")
+		payment.record_finance_settlement(self.case, payment=out["payment"], expected_version=self.t.version(), idempotency_key=self.t.key("st"), actor=self.p["beatrice"], effective_date=D("2027-07-05"), evidence="Bank line ADV")
 		self.goods(8)
 		inv = self.t.claim("ADV-INV-1", 8)["invoice"]
 		recovery = self.screen("charles", "D29-R")

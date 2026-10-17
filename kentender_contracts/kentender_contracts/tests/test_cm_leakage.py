@@ -10,6 +10,7 @@ business action on any screen and are refused every business command."""
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import json
 
 import frappe
@@ -51,7 +52,7 @@ class LeakageCase(ContractCase):
 		self.t.appointed()
 		frappe.db.set_value("Contract Case", self.case, "responsible_user", self.p["carol"])
 		units = tw.fresh_serials(10)
-		arrival = self.t.arrive(units, received_at="2027-07-12 10:00:00")["arrival"]
+		arrival = self.t.arrive(units, received_at=D("2027-07-12 10:00:00"))["arrival"]
 		self.t.inspect(arrival, units)
 		self.t.accept(arrival)
 		invoice = self.t.claim("LK-1", 10)["invoice"]  # a claim, certified; Finance has saved the accounting invoice with its accounts and not yet posted it
@@ -61,7 +62,7 @@ class LeakageCase(ContractCase):
 		payment.save_accounting_invoice(self.case, invoice=invoice, expected_version=self.t.version(), idempotency_key=self.t.key("acct"), actor=self.p["josphat"], posting_date=frappe.utils.today(), payable_account=payable,
 			cost_centre=frappe.db.get_value("Company", world.COMPANY, "cost_center"), expense_account=frappe.db.get_value("Purchase Invoice Item", {"parent": native}, "expense_account"))
 		self.payable = payable  # Finance's account: drawn only while Finance prepares the accounting invoice
-		change.request_change(self.case, kind="Extension", request={"proposed_date": "2027-07-27"}, reason="Supplier reports a shipment delay.", evidence=[{"label": "Supplier request", "file": "/private/files/r.pdf"}],
+		change.request_change(self.case, kind="Extension", request={"proposed_date": D("2027-07-27")}, reason="Supplier reports a shipment delay.", evidence=[{"label": "Supplier request", "file": "/private/files/r.pdf"}],
 			expected_version=self.t.version(), idempotency_key=self.t.key("ask"), actor=self.p["david"])
 		roster = dict(zip(change.REVIEW_KINDS["Extension"], (self.p["peter"], self.p["faith"], self.p["brian"]), strict=True))
 		change.appoint_reviewers(self.case, change=1, reference="AO/VAR/2027/001", reviewers=roster, expected_version=self.t.version(), idempotency_key=self.t.key("appoint"), actor=self.p["charles"])

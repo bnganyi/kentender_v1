@@ -8,6 +8,7 @@ live work ends and every record stays."""
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import frappe
 
 from kentender_contracts.boards import router
@@ -118,7 +119,7 @@ class TestFormationEnd(ContractCase):
 	def test_an_expired_window_raises_one_follow_up_and_decides_nothing(self):
 		case = self.sent()
 		self.assertEqual(formation_end.sweep_signing_windows(), 0, "inside the window nothing is raised")
-		frappe.flags.kt_cm_clock = "2027-07-15 09:00:00"
+		frappe.flags.kt_cm_clock = D("2027-07-15 09:00:00")
 		raised = formation_end.sweep_signing_windows()
 		again = formation_end.sweep_signing_windows()
 		self.assertEqual((raised >= 1, again), (True, 0), "one follow-up, not one per sweep")

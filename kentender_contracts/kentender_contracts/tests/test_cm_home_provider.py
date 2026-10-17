@@ -9,6 +9,7 @@ tab (and never to a Desk form); work that waits or is scheduled is not an alert.
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import frappe
 
 from kentender_contracts.services import formation, home_provider, work
@@ -108,13 +109,13 @@ class TestWaitingAndCompleted(HomeCase):
 class TestComingUp(HomeCase):
 	def test_a_scheduled_step_with_a_verified_date_is_coming_up_and_one_without_is_not_shown(self):
 		self.activate()
-		work.assign(self.case, "RecordWarrantyClaim", "Warranty for 10 accepted units", "warranty acceptance 1", 1, [self.p["julia"]], role="Contract owner", state="Scheduled", due="2028-07-20 00:00:00", due_verified=True)
+		work.assign(self.case, "RecordWarrantyClaim", "Warranty for 10 accepted units", "warranty acceptance 1", 1, [self.p["julia"]], role="Contract owner", state="Scheduled", due=D("2028-07-20 00:00:00"), due_verified=True)
 		work.assign(self.case, "RecordWarrantyClaim", "An undated reminder", "warranty acceptance 2", 1, [self.p["julia"]], role="Contract owner", state="Scheduled")
 		frappe.db.set_value("Contract Case", self.case, "responsible_user", self.p["julia"])
 		self.t.appointed()
 		coming = self.mine("julia", he.COMING_UP)
 		self.assertEqual([e["action"] for e in coming], ["Warranty for 10 accepted units"])
-		self.assertEqual(str(coming[0]["scheduled_at"].date() if hasattr(coming[0]["scheduled_at"], "date") else coming[0]["scheduled_at"]), "2028-07-20")
+		self.assertEqual(str(coming[0]["scheduled_at"].date() if hasattr(coming[0]["scheduled_at"], "date") else coming[0]["scheduled_at"]), D("2028-07-20"))
 
 
 class TestTheBell(HomeCase):

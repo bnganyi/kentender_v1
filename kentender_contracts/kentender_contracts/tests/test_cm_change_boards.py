@@ -7,6 +7,7 @@ The server builds each board for the viewer at their step; with `CM_CAPTURE_BOAR
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D, long_date, short_date  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -45,7 +46,7 @@ class ChangeBoards(ContractCase):
 		return tw.capture(board) if capture else board
 
 	def ask(self, kind="Extension", request=None, who="carol"):
-		request = request or ({"proposed_date": "2027-07-27"} if kind == "Extension" else {"quantities": {"L1": 11}})
+		request = request or ({"proposed_date": D("2027-07-27")} if kind == "Extension" else {"quantities": {"L1": 11}})
 		return change.request_change(self.case, kind=kind, request=request, reason="Supplier reports a seven-day shipment delay." if kind == "Extension" else "One additional user needs the same specified laptop",
 			evidence=EVIDENCE, expected_version=self.t.version(), idempotency_key=self.t.key("ask"), actor=self.p[who])
 
@@ -99,19 +100,19 @@ class TestExtension(ChangeBoards):
 		ao = self.screen("amina", "D14")
 		self.assertEqual((ao["p"], ao["s2"], ao["next"]["h"]), ("Approve extension", ["Decline", "Return for correction"], "Decide the requested delivery date."))
 		self.assertEqual(sorted(ao["dialogs"]), ["approve", "decline", "return"])
-		self.assertEqual(ao["regions"][0]["b"][0]["rows"][0], ["Delivery date", "20 July 2027", "27 July 2027"])
+		self.assertEqual(ao["regions"][0]["b"][0]["rows"][0], ["Delivery date", long_date("2027-07-20"), long_date("2027-07-27")])
 		self.approve()
 		supplier = self.screen("mary", "D27-A")
 		self.assertEqual((supplier["p"], supplier["s2"], supplier["subj"]), ("Sign amendment", ["Report a problem"], "Amendment 1"))
 		waiting = self.screen("amina", "D14-P", tab="Obligations")
 		self.assertEqual(waiting["next"]["k"], "wait")
-		self.assertEqual(waiting["regions"][0]["b"][0]["items"][1], ["Operative delivery date", "20 July 2027 — amendment not yet effective"])
+		self.assertEqual(waiting["regions"][0]["b"][0]["items"][1], ["Operative delivery date", f"{long_date('2027-07-20')} — amendment not yet effective"])
 		self.sign("Supplier")
 		self.assertEqual(self.screen("amina", "D27-A", capture=False)["p"], "Sign amendment")
 		self.sign("Entity")
 		after = router.board_for(self.case, self.p["carol"], tab="Obligations")
 		register = next(r for r in after["regions"] if r["t"] == "Contract changes")
-		self.assertEqual(register["b"][0]["rows"][0][:3], ["Change 1", "Delivery date to 27 Jul 2027", "Effective"])
+		self.assertEqual(register["b"][0]["rows"][0][:3], ["Change 1", f"Delivery date to {short_date('2027-07-27')}", "Effective"])
 		view = router.board_for(self.case, self.p["charles"], tab="Agreement", subject=("amendment", "1"))
 		self.assertEqual(view["title"], "Amendment 1")
 

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { cmWorld } from "../../helpers/anchor";
 import { as, board, openContract, pdf, press, tab, world } from './helpers';
 
 // CM-CHG-001 v0.8 plan Phase 8, tracker CM8-808: a delay adjustment and a termination in a real browser. Delay: the head of procurement submits the system's proposal (KES 5,000, five days late) with the causation and clause,
@@ -70,10 +71,10 @@ test.describe('A delay adjustment and a termination', () => {
 		await as(browser, 'charles', async (page) => {
 			await openContract(page, contract, 'My work');
 			await expect(board(page, 'D20-R')).toBeVisible();
-			await page.getByTestId('cm-input-delivered_on').fill('2027-07-02');
+			await page.getByTestId('cm-input-delivered_on').fill(cmWorld('2027-07-02'));
 			await page.getByTestId('cm-input-method').fill('Registered post');
 			await page.getByTestId('cm-input-reference').fill('RP-0042');
-			await page.getByTestId('cm-input-effective_on').fill('2027-07-02');
+			await page.getByTestId('cm-input-effective_on').fill(cmWorld('2027-07-02'));
 			await attach(page, 'evidence', 'Proof of delivery');
 			await press(page); // Record delivery
 		});

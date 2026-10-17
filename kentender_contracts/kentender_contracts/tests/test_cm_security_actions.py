@@ -8,6 +8,7 @@ force, and only when the two overlap. A return needs the evidenced final accepta
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D, short_date  # noqa: F401
 import frappe
 
 from kentender_contracts.services import errors, records, security, security_actions, work
@@ -24,7 +25,7 @@ def refusal(fn, *args, **kwargs):
 
 
 EVIDENCE = [{"label": "Default notice", "file": "/private/files/default.pdf"}]
-AUGUST_12 = "2027-08-12 09:00:00"
+AUGUST_12 = D("2027-08-12 09:00:00")
 
 
 class SecurityActionCase(ContractCase):
@@ -53,11 +54,11 @@ class SecurityActionCase(ContractCase):
 		return security_actions.decide_claim(self.case, claim=number, decision=decision, reason=reason, expected_version=self.t.version(), idempotency_key=self.t.key("dec"), actor=self.p[who])
 
 	def communicate(self, number=1, **kw):
-		return security_actions.record_communication(self.case, claim=number, sent_on=kw.pop("sent_on", "2027-08-12"), channel=kw.pop("channel", "Courier"), reference=kw.pop("reference", "CR-0042"),
+		return security_actions.record_communication(self.case, claim=number, sent_on=kw.pop("sent_on", D("2027-08-12")), channel=kw.pop("channel", "Courier"), reference=kw.pop("reference", "CR-0042"),
 			evidence=kw.pop("evidence", [{"label": "Proof of delivery", "file": "/private/files/pod.pdf"}]), expected_version=self.t.version(), idempotency_key=self.t.key("comm"), actor=self.p[kw.pop("who", "charles")])
 
 	def outcome(self, number=1, **kw):
-		return security_actions.record_outcome(self.case, claim=number, issuer_reference=kw.pop("reference", "TEST-SG-OUT-01"), outcome_on=kw.pop("on", "2027-08-13"), evidence=kw.pop("evidence", [{"label": "Test issuer outcome 1", "file": "/private/files/out.pdf"}]),
+		return security_actions.record_outcome(self.case, claim=number, issuer_reference=kw.pop("reference", "TEST-SG-OUT-01"), outcome_on=kw.pop("on", D("2027-08-13")), evidence=kw.pop("evidence", [{"label": "Test issuer outcome 1", "file": "/private/files/out.pdf"}]),
 			proceeds=kw.pop("proceeds", 40_000), expected_version=self.t.version(), idempotency_key=self.t.key("out"), actor=self.p["charles"])
 
 	def row(self, number=1):
@@ -82,7 +83,7 @@ class TestClaim(SecurityActionCase):
 		self.assertIn("evidence", refusal(self.ask, evidence=[]).fields)
 		self.assertIn("amount", refusal(self.ask, amount=0).fields)
 		self.assertIn("amount", refusal(self.ask, amount=100_001).fields)
-		frappe.flags.kt_cm_clock = "2027-09-01 09:00:00"  # the day after the instrument expired
+		frappe.flags.kt_cm_clock = D("2027-09-01 09:00:00")  # the day after the instrument expired
 		out = refusal(self.ask)
 		self.assertEqual((out.code, out.detail["hold"]), ("CM_HOLD", "security expired"))
 		self.assertFalse(frappe.db.count("Contract Security Claim", {"contract_case": self.case}))
@@ -125,7 +126,7 @@ class TestClaim(SecurityActionCase):
 		self.assertIn("evidence", refusal(self.communicate, evidence=[]).fields)
 		self.communicate()
 		self.assertEqual(self.row().state, "Communicated")
-		self.assertIn(("RecordSecurityClaimOutcome", "Test Bank must respond to the approved claim; communication delivered 12 Aug 2027.", "waiting"), self.tasks("charles"))
+		self.assertIn(("RecordSecurityClaimOutcome", "Test Bank must respond to the approved claim; communication delivered " + short_date("2027-08-12") + ".", "waiting"), self.tasks("charles"))
 		self.assertIn("proceeds", refusal(self.outcome, proceeds=40_001).fields)
 		self.assertIn("issuer_reference", refusal(self.outcome, reference=" ").fields)
 		out = self.outcome()
@@ -137,10 +138,10 @@ class TestClaim(SecurityActionCase):
 class TestReplacement(SecurityActionCase):
 	def setUp(self):
 		super().setUp()
-		self.new = self.t.record_security(reference="TEST-SG-02", issued_on="2027-08-15", expires_on="2027-09-30", verify=False)
+		self.new = self.t.record_security(reference="TEST-SG-02", issued_on=D("2027-08-15"), expires_on=D("2027-09-30"), verify=False)
 
 	def verify_new(self):
-		return security.verify_security(self.case, security=self.new, expected_version=self.t.version(), idempotency_key=self.t.key("v"), actor=self.p["charles"], confirmation_reference="TEST-SG-CONF-02", received_on="2027-08-15", basis="Issuer confirmation")
+		return security.verify_security(self.case, security=self.new, expected_version=self.t.version(), idempotency_key=self.t.key("v"), actor=self.p["charles"], confirmation_reference="TEST-SG-CONF-02", received_on=D("2027-08-15"), basis="Issuer confirmation")
 
 	def replace(self):
 		return security_actions.replace(self.case, security_name=self.new, expected_version=self.t.version(), idempotency_key=self.t.key("rep"), actor=self.p["charles"])
@@ -162,48 +163,48 @@ class TestReplacement(SecurityActionCase):
 		self.assertFalse({t for t in self.tasks("charles") if t[0] == "RecordSecurityAction"})
 
 	def test_a_replacement_that_leaves_a_gap_is_a_held_issue_and_the_old_instrument_stays(self):
-		gap = self.t.record_security(reference="TEST-SG-03", issued_on="2027-09-05", expires_on="2027-10-31", verify=True)
+		gap = self.t.record_security(reference="TEST-SG-03", issued_on=D("2027-09-05"), expires_on=D("2027-10-31"), verify=True)
 		old = frappe.db.get_value("Contract Security", {"contract_case": self.case, "version_no": 1}, "name")
 		out = refusal(security_actions.replace, self.case, security_name=gap, expected_version=self.t.version(), idempotency_key=self.t.key("gap"), actor=self.p["charles"])
 		self.assertEqual((out.code, out.detail["hold"]), ("CM_HOLD", "security coverage gap"))
 		self.assertEqual(frappe.db.get_value("Contract Security", old, "state"), "Verified")
 
 	def test_a_replacement_for_less_than_the_instrument_is_refused(self):
-		small = self.t.record_security(reference="TEST-SG-04", amount=100_000, issued_on="2027-08-15", expires_on="2027-09-30", verify=False)
+		small = self.t.record_security(reference="TEST-SG-04", amount=100_000, issued_on=D("2027-08-15"), expires_on=D("2027-09-30"), verify=False)
 		frappe.db.set_value("Contract Security", small, {"state": "Verified", "amount": 50_000})
 		self.assertIn("amount", refusal(security_actions.replace, self.case, security_name=small, expected_version=self.t.version(), idempotency_key=self.t.key("small"), actor=self.p["charles"]).fields)
 
 
 class TestReturn(SecurityActionCase):
-	def final_acceptance(self, signed="2027-07-27 10:00:00"):
+	def final_acceptance(self, signed=D("2027-07-27 10:00:00")):
 		records.new("Contract Certificate", contract_case=self.case, kind="Final acceptance", subject="final acceptance", subject_version=1, state="Signed", signer=self.p["amina"], proof_reference="TEST-PROOF",
 			signed_at=signed, content_json="{}", record_version=1)
 
-	def give_back(self, on="2027-08-01", **kw):
+	def give_back(self, on=D("2027-08-01"), **kw):
 		return security_actions.record_return(self.case, returned_on=on, evidence=kw.pop("evidence", [{"label": "Bank discharge TEST-SG-01", "file": "/private/files/discharge.pdf"}]), expected_version=self.t.version(),
 			idempotency_key=self.t.key("ret"), actor=self.p[kw.pop("who", "charles")])
 
 	def test_nothing_is_returned_without_the_evidenced_final_acceptance_even_after_expiry(self):
-		frappe.flags.kt_cm_clock = "2027-09-15 09:00:00"  # the instrument expired on 31 August
-		out = refusal(self.give_back, on="2027-09-15")
+		frappe.flags.kt_cm_clock = D("2027-09-15 09:00:00")  # the instrument expired on 31 August
+		out = refusal(self.give_back, on=D("2027-09-15"))
 		self.assertEqual((out.code, out.detail["hold"]), ("CM_HOLD", "FINAL_ACCEPTANCE_NOT_EVIDENCED"))
 		self.assertEqual(security_actions.operative(self.case).state, "Verified")  # expiry released nothing
 
 	def test_the_return_is_due_thirty_days_after_the_final_acceptance_and_may_be_made_before_that(self):
 		self.assertIsNone(security_actions.return_due(self.case))
 		self.final_acceptance()
-		self.assertEqual(str(security_actions.return_due(self.case)), "2027-08-26")
+		self.assertEqual(str(security_actions.return_due(self.case)), D("2027-08-26"))
 		instrument = security_actions.operative(self.case).name
-		out = self.give_back(on="2027-08-01")
+		out = self.give_back(on=D("2027-08-01"))
 		self.assertEqual((out["state"], frappe.db.get_value("Contract Security", instrument, "state")), ("Returned", "Returned"))
 		detail = records.loads(frappe.db.get_value("Contract Security", instrument, "return_json"))
-		self.assertEqual((detail["on"], detail["due"], detail["final_acceptance"]), ("2027-08-01", "2027-08-26", "2027-07-27"))
+		self.assertEqual((detail["on"], detail["due"], detail["final_acceptance"]), (D("2027-08-01"), D("2027-08-26"), D("2027-07-27")))
 		self.assertIsNone(security_actions.operative(self.case))
 
 	def test_the_return_needs_its_evidence_a_date_after_the_final_acceptance_and_no_open_claim(self):
 		self.final_acceptance()
 		self.assertIn("evidence", refusal(self.give_back, evidence=[]).fields)
-		self.assertIn("returned_on", refusal(self.give_back, on="2027-07-20").fields)
+		self.assertIn("returned_on", refusal(self.give_back, on=D("2027-07-20")).fields)
 		self.assertEqual(refusal(self.give_back, who="stranger").code, "CM_AUTHORITY")
 		self.ask()
 		blocked = refusal(self.give_back)

@@ -8,6 +8,7 @@ nothing twice. The supplier replies and may propose a remedy but never closes th
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import frappe
 
 from kentender_contracts.services import errors, formation, issues, records, work
@@ -147,7 +148,7 @@ class TestReplyAndClose(IssueCase):
 		replacements = tw.fresh_serials(2)
 		from kentender_contracts.services import delivery
 
-		out = delivery.record_arrival(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("rep"), actor=self.p["grace"], received_at="2027-07-27 10:00:00", destination="Afya House store",
+		out = delivery.record_arrival(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("rep"), actor=self.p["grace"], received_at=D("2027-07-27 10:00:00"), destination="Afya House store",
 			items=[{"line_id": "L1", "quantity": 2, "units": replacements, "replaces": self.units[8:]}])
 		self.t.inspect(out["arrival"], replacements)
 		self.t.accept(out["arrival"])
@@ -182,7 +183,7 @@ class TestCrashAndPartial(IssueCase):
 
 		self.send()
 		one = tw.fresh_serials(1)
-		out = delivery.record_arrival(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("rep"), actor=self.p["grace"], received_at="2027-07-27 10:00:00", destination="Afya House store",
+		out = delivery.record_arrival(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("rep"), actor=self.p["grace"], received_at=D("2027-07-27 10:00:00"), destination="Afya House store",
 			items=[{"line_id": "L1", "quantity": 1, "units": one, "replaces": [self.units[8]]}])
 		self.t.inspect(out["arrival"], one)
 		self.t.accept(out["arrival"])

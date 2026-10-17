@@ -7,6 +7,7 @@ replay returns the original; a conflicting reuse is refused; time comes from the
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D, short_instant  # noqa: F401
 import unittest
 
 import frappe
@@ -58,11 +59,11 @@ class TestContractRecords(IntegrationTestCase):
 
 	# -- the clock ---------------------------------------------------------------------------------------------------
 	def test_the_clock_honours_an_injected_instant_then_the_trusted_test_clock_then_the_site_clock(self):
-		frappe.flags.kt_cm_clock = "2027-07-02 09:00:00"
-		self.assertEqual(clock.now(), get_datetime("2027-07-02 09:00:00"))
+		frappe.flags.kt_cm_clock = D("2027-07-02 09:00:00")
+		self.assertEqual(clock.now(), get_datetime(D("2027-07-02 09:00:00")))
 		frappe.flags.kt_cm_clock = None
 		self.assertIsNotNone(clock.now())
-		self.assertEqual(clock.when("2027-07-02 09:01:00"), "2 Jul 2027, 09:01 EAT")
+		self.assertEqual(clock.when(D("2027-07-02 09:01:00")), short_instant("2027-07-02 09:01:00"))
 		self.assertEqual(clock.when(None), "")
 
 	# -- the command envelope ------------------------------------------------------------------------------------------

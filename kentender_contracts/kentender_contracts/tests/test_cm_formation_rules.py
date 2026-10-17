@@ -7,6 +7,7 @@ The pure checks are tested on their inputs; the wiring is tested on a received p
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import copy
 import unittest
 
@@ -17,11 +18,11 @@ from kentender_contracts.simulation import sources
 from kentender_contracts.tests import thread_world as tw
 from kentender_contracts.tests.support import ContractCase
 
-NOW = "2027-07-02 09:00:00"
+NOW = D("2027-07-02 09:00:00")
 TERMS = {
-	"total": 1_000_000, "parties": {"entity": {"entity_type": "Ministry"}, "supplier": {"organisation": "ORG-1"}}, "delivery": {"due": "2027-07-20"}, "warranty": {"months": 12},
+	"total": 1_000_000, "parties": {"entity": {"entity_type": "Ministry"}, "supplier": {"organisation": "ORG-1"}}, "delivery": {"due": D("2027-07-20")}, "warranty": {"months": 12},
 	"payment": {"terms": "as issued"}, "security": {"required": False}, "advance": {"allowed": False},
-	"signing_window": {"notification": {"id": "N1", "given_at": "2027-06-17 10:00:00"}, "signing_window": {"result": "Within window", "earliest_signing_at": "2027-07-02 09:00:00", "ends_on": "2027-07-14", "counting_basis": "x"}},
+	"signing_window": {"notification": {"id": "N1", "given_at": D("2027-06-17 10:00:00")}, "signing_window": {"result": "Within window", "earliest_signing_at": D("2027-07-02 09:00:00"), "ends_on": D("2027-07-14"), "counting_basis": "x"}},
 }
 
 
@@ -48,8 +49,8 @@ class TestRuleFacts(unittest.TestCase):
 			self.assertEqual(keys(rules.window(broken, NOW)), ["SIGNING_WINDOW_UNESTABLISHED"], drop)
 		no_notice = self.terms(signing_window={"signing_window": TERMS["signing_window"]["signing_window"]})
 		self.assertEqual(keys(rules.window(no_notice, NOW)), ["SIGNING_WINDOW_UNESTABLISHED"])
-		self.assertIn("waiting period", rules.window(TERMS, "2027-07-01 09:00:00")[0]["reason"])
-		self.assertIn("has ended", rules.window(TERMS, "2027-07-15 09:00:00")[0]["reason"])
+		self.assertIn("waiting period", rules.window(TERMS, D("2027-07-01 09:00:00"))[0]["reason"])
+		self.assertIn("has ended", rules.window(TERMS, D("2027-07-15 09:00:00"))[0]["reason"])
 
 	def test_the_attorney_general_clearance_is_needed_only_above_the_threshold_and_not_for_the_exempt(self):
 		threshold = 5_000_000_000
@@ -117,7 +118,7 @@ class TestRulesOnAReceivedPackage(ContractCase):
 
 	def test_sending_before_the_waiting_period_ends_is_held_with_the_rule_and_its_holder(self):
 		case, saved = self.prepared()
-		frappe.flags.kt_cm_clock = "2027-07-01 09:00:00"
+		frappe.flags.kt_cm_clock = D("2027-07-01 09:00:00")
 		with self.assertRaises(errors.ContractError) as caught:
 			formation.request_signatures(case, expected_version=saved["record_version"], idempotency_key=self.k(), actor=self.p["charles"])
 		reasons = caught.exception.reasons if hasattr(caught.exception, "reasons") else []
@@ -131,7 +132,7 @@ class TestRulesOnAReceivedPackage(ContractCase):
 	def test_the_window_closing_between_the_request_and_a_signature_stops_that_signature(self):
 		case, saved = self.prepared()
 		sent = formation.request_signatures(case, expected_version=saved["record_version"], idempotency_key=self.k(), actor=self.p["charles"])
-		frappe.flags.kt_cm_clock = "2027-07-15 09:00:00"
+		frappe.flags.kt_cm_clock = D("2027-07-15 09:00:00")
 		with self.assertRaises(errors.ContractError) as caught:
 			formation.sign_contract(case, party="Supplier", expected_version=sent["record_version"], idempotency_key=self.k(), actor=self.p["mary"])
 		self.assertEqual(caught.exception.code, "CM_HOLD")

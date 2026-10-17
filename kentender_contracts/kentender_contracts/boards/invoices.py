@@ -16,7 +16,7 @@ from frappe.utils import cint, flt, formatdate
 from kentender_contracts.boards import chrome, kit, statements
 from kentender_contracts.boards.context import Context, money, when
 from kentender_contracts.boards import funding_board
-from kentender_contracts.services import advance, holds, payment, position, records, work
+from kentender_contracts.services import advance, clock, holds, payment, position, records, work
 
 COMPANY_DEFAULT = "company"
 
@@ -246,7 +246,7 @@ def d09f(ctx: Context, invoice, *, waiting: bool = False) -> dict:
 	modes = sorted(frappe.get_all("Mode of Payment", pluck="name", limit=50))
 	amount = flt(pe.paid_amount) if pe else available
 	payable = frappe.db.get_value("Company", _company(), "default_payable_account") if advance_payment else frappe.db.get_value("Purchase Invoice", invoice.native_invoice, "credit_to")
-	fields = [kit.dt("Posting date", str(pe.posting_date) if pe else frappe.utils.today(), "posting_date"),
+	fields = [kit.dt("Posting date", str(pe.posting_date) if pe else str(clock.now().date()), "posting_date"),
 		kit.sel("Payment method", (pe.mode_of_payment if pe else "") or "", modes, "mode_of_payment"), kit.pick("Bank account", (pe.paid_from if pe else "") or "", "contracts.native_record", "paid_from", {"kind": "account.bank"}, (pe.paid_from if pe else "") or "", "bank account"),
 		kit.ro("Payable account", payable, "payable_account"), kit.tx("Amount", f"{amount:.2f}", "amount"), kit.ro("Invoice allocation — " + invoice.claim_reference, money(amount, ctx.currency), "allocation"),
 		kit.tx("Reference", (pe.reference_no if pe else "") or "", "reference_no")]

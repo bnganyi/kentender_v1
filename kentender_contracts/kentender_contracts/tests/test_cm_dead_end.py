@@ -10,6 +10,7 @@ the one shared denial and nothing else."""
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import ast
 import re
 from pathlib import Path
@@ -151,11 +152,11 @@ class TestTheWalk(SweepCase):
 		frappe.db.set_value("Contract Case", self.case, "responsible_user", self.p["julia"])
 		self.sweep("inspectors appointed")
 		units = tw.fresh_serials(10)
-		arrival = t.arrive(units, received_at="2027-07-12 10:00:00")["arrival"]
+		arrival = t.arrive(units, received_at=D("2027-07-12 10:00:00"))["arrival"]
 		self.sweep("goods arrived")
 		t.inspect(arrival, units, bad=tuple(units[8:]))
 		self.sweep("inspected, two units do not conform")
-		frappe.flags.kt_cm_clock = "2027-07-20 10:00:00"
+		frappe.flags.kt_cm_clock = D("2027-07-20 10:00:00")
 		t.accept(arrival)
 		self.sweep("accepted, two rejected")
 		first_claim = t.claim("DE-1", 8)["invoice"]
@@ -169,10 +170,10 @@ class TestTheWalk(SweepCase):
 		self.sweep("the rejected units collected")
 		replacement = tw.fresh_serials(2)
 
-		second = delivery.record_arrival(self.case, expected_version=t.version(), idempotency_key=t.key("arrive2"), actor=self.p["grace"], received_at="2027-07-22 10:00:00", destination="Afya House store",
+		second = delivery.record_arrival(self.case, expected_version=t.version(), idempotency_key=t.key("arrive2"), actor=self.p["grace"], received_at=D("2027-07-22 10:00:00"), destination="Afya House store",
 			items=[{"line_id": "L1", "quantity": 2, "units": replacement, "replaces": units[8:]}])["arrival"]
 		t.inspect(second, replacement)
-		frappe.flags.kt_cm_clock = "2027-07-23 10:00:00"
+		frappe.flags.kt_cm_clock = D("2027-07-23 10:00:00")
 		t.accept(second)
 		self.sweep("everything accepted")
 		second_claim = t.claim("DE-2", 2)["invoice"]
@@ -181,7 +182,7 @@ class TestTheWalk(SweepCase):
 		self.sweep("the claim certified")
 		t.pay(second_claim, "DE-BANK-2")
 		self.sweep("paid")
-		frappe.flags.kt_cm_clock = "2028-07-28 08:30:00"
+		frappe.flags.kt_cm_clock = D("2028-07-28 08:30:00")
 		self.sweep("the final acceptance is the Accounting Officer's")
 		final_acceptance.sign(self.case, expected_version=t.version(), idempotency_key=t.key("final"), actor=self.p["amina"])
 		self.sweep("final acceptance recorded")

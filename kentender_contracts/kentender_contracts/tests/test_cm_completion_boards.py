@@ -8,6 +8,7 @@ The server builds each board for the viewer at their step; with `CM_CAPTURE_BOAR
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D, long_date, short_date  # noqa: F401
 import frappe
 
 from kentender_contracts.boards import router
@@ -21,9 +22,9 @@ EVIDENCE = [{"label": "Delivery incident", "file": "/private/files/delivery-inci
 
 class CompletionBoards(ContractCase):
 	native = True
-
 	#: the test that needs the award publication left open, so that the closing review lists a surviving obligation (the head records it early everywhere else: FU-CM-108)
 	PUBLICATION_OPEN = ("test_the_accounting_officer_reviews_the_final_acceptance_and_the_head_completes_it",)
+
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
@@ -40,18 +41,18 @@ class CompletionBoards(ContractCase):
 		tag = self.id().rsplit(".", 1)[-1][:24]
 		self.t = tw.Thread(self.p, tag=tag, item=world.ITEM_PLAIN, award_case=f"CM-TEST-{tag}-FIN")
 		self.case = self.t.active(publication_open=self._testMethodName in self.PUBLICATION_OPEN)
-		if self._testMethodName in self.PUBLICATION_OPEN:  # the obligation stays open and survives the close-out; the head's own task is set aside so the walk of screens below starts where it always did
+		if self._testMethodName in self.PUBLICATION_OPEN:  # the obligation stays open and survives the close-out; the head's own task is set aside, or it would be the head's only task once the contract is closed and lead the head's screen there
 			from kentender_contracts.services import work
 
 			work.finish(self.case, command="RecordContractAwardPublication", state="Superseded", actor=self.p["charles"])
 		self.t.appointed()
 		frappe.db.set_value("Contract Case", self.case, "responsible_user", self.p["julia"])
 		self.units = tw.fresh_serials(10)
-		arrival = self.t.arrive(self.units, received_at="2027-07-12 10:00:00")["arrival"]
+		arrival = self.t.arrive(self.units, received_at=D("2027-07-12 10:00:00"))["arrival"]
 		self.t.inspect(arrival, self.units)
-		frappe.flags.kt_cm_clock = "2027-07-20 10:00:00"
+		frappe.flags.kt_cm_clock = D("2027-07-20 10:00:00")
 		self.t.accept(arrival)
-		frappe.flags.kt_cm_clock = "2028-07-28 08:30:00"
+		frappe.flags.kt_cm_clock = D("2028-07-28 08:30:00")
 
 	def screen(self, who, expected, capture=True, **kw):
 		board = router.board_for(self.case, self.p[who], **kw)
@@ -65,7 +66,7 @@ class CompletionBoards(ContractCase):
 		return closeout.issue_completion_certificate(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("completion"), actor=self.p["charles"])
 
 	def delivered(self):
-		return closeout.confirm_certificate_delivery(self.case, certificate=closeout.completion_certificate(self.case).name, delivered_on="2028-07-28", method="Hand delivery", reference="DISP-014",
+		return closeout.confirm_certificate_delivery(self.case, certificate=closeout.completion_certificate(self.case).name, delivered_on=D("2028-07-28"), method="Hand delivery", reference="DISP-014",
 			evidence=EVIDENCE, expected_version=self.t.version(), idempotency_key=self.t.key("delivered"), actor=self.p["charles"])
 
 	def close(self):
@@ -73,10 +74,10 @@ class CompletionBoards(ContractCase):
 		return closeout.sign_closeout(self.case, closeout=review, expected_version=self.t.version(), idempotency_key=self.t.key("close"), actor=self.p["amina"])
 
 	def claim(self):
-		frappe.flags.kt_cm_clock = "2028-07-10 09:00:00"
-		warranty.record_claim(self.case, unit=self.units[3], fault="Battery does not charge", notice_date="2028-07-10", remedy="Like-for-like replacement", expected_version=self.t.version(), idempotency_key=self.t.key("claim"),
+		frappe.flags.kt_cm_clock = D("2028-07-10 09:00:00")
+		warranty.record_claim(self.case, unit=self.units[3], fault="Battery does not charge", notice_date=D("2028-07-10"), remedy="Like-for-like replacement", expected_version=self.t.version(), idempotency_key=self.t.key("claim"),
 			actor=self.p["julia"])
-		frappe.flags.kt_cm_clock = "2028-07-28 08:30:00"
+		frappe.flags.kt_cm_clock = D("2028-07-28 08:30:00")
 
 
 class TestFinalAcceptanceToClosure(CompletionBoards):
@@ -85,10 +86,10 @@ class TestFinalAcceptanceToClosure(CompletionBoards):
 		self.assertEqual((board["title"], board["p"], board["s2"], board["next"]["h"]), ("Record final acceptance", "Sign final acceptance", ["Return for correction"], "Review the final acceptance evidence."))
 		facts = board["regions"][0]["b"][0]["items"]
 		self.assertEqual(facts[0], ["Units accepted", "10"])
-		self.assertEqual(facts[1], ["Initial 10 — warranty ended", "20 July 2028"])
+		self.assertEqual(facts[1], ["Initial 10 — warranty ended", long_date("2028-07-20")])
 		self.assertEqual([facts[2][0], facts[2][1]], ["Unresolved completion defects", "None"])
 		record = board["regions"][1]["b"]
-		self.assertIn("I record final acceptance on 28 July 2028 for the scope identified in the schedule under", record[0]["v"])
+		self.assertIn(f"I record final acceptance on {long_date('2028-07-28')} for the scope identified in the schedule under", record[0]["v"])
 		self.assertEqual(record[1]["items"], [["Scope", "Whole contract — 10 laptop computers"], ["Remaining obligations", "None"]])
 		self.assertEqual(board["actions"]["Sign final acceptance"]["command"], "SignFinalContractAcceptance")
 		self.assertEqual(board["dialogs"]["return"]["args"], {"stage": "final acceptance"})
@@ -97,7 +98,7 @@ class TestFinalAcceptanceToClosure(CompletionBoards):
 		rows = certificate["regions"][0]["b"][0]["items"]
 		self.assertIn(["Final acceptance", "Recorded"], rows)
 		self.assertIn(["Unresolved defects", "None"], rows)
-		self.assertIn("completed on 28 July 2028", certificate["regions"][0]["b"][1]["v"])
+		self.assertIn(f"completed on {long_date('2028-07-28')}", certificate["regions"][0]["b"][1]["v"])
 		self.certificate()
 		delivery = self.screen("charles", "D22-P", tab="Obligations")
 		self.assertEqual((delivery["p"], delivery["next"]["h"], delivery["s2"]), ("Confirm delivery", "Confirm certificate delivery.", ["View delivery status", "View certificate"]))
@@ -127,7 +128,7 @@ class TestFinalAcceptanceToClosure(CompletionBoards):
 		self.assertEqual((board["p"], board["s2"], board["next"]["k"]), ("", [], "blk"))
 		self.assertEqual(board["regions"][0]["b"][0]["items"][0], ["Warranty", "Warranty expired; timely claim remains open"])
 		self.assertEqual([r[0] for r in board["regions"][0]["b"][0]["items"]], ["Warranty", "Remedy", "Defect"])
-		self.assertIn("Battery does not charge — notified 10 Jul 2028", board["regions"][0]["b"][0]["items"][2][1])
+		self.assertIn(f"Battery does not charge — notified {short_date('2028-07-10')}", board["regions"][0]["b"][0]["items"][2][1])
 		self.assertEqual([r["t"] for r in board["regions"]], ["Completion facts", "Evidence"])
 
 	def test_a_claim_opened_after_the_review_blocks_the_close_out_review(self):

@@ -8,6 +8,7 @@ instrument and asks the supplier for a replacement; the supplier sees only its o
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import json
 import os
 from pathlib import Path
@@ -71,11 +72,11 @@ class TestSecurity(ContractCase):
 		return out["contract"]
 
 	def record(self, case, *, who="charles", **o):
-		values = {"issuer": "Test Bank", "beneficiary": ENTITY, "reference": "TEST-G-001", "amount": REQUIRED, "issued_on": "2027-07-01", "expires_on": "2028-08-31", **o}
+		values = {"issuer": "Test Bank", "beneficiary": ENTITY, "reference": "TEST-G-001", "amount": REQUIRED, "issued_on": D("2027-07-01"), "expires_on": D("2028-08-31"), **o}
 		return security.record_security(case, expected_version=self.version(case), idempotency_key=self.k(), actor=self.p[who], **values)
 
 	def verify(self, case, row, *, who="charles", **o):
-		values = {"confirmation_reference": "TEST-CONF-01", "received_on": "2027-07-02", "basis": "Issuer confirmation", **o}
+		values = {"confirmation_reference": "TEST-CONF-01", "received_on": D("2027-07-02"), "basis": "Issuer confirmation", **o}
 		return security.verify_security(case, security=row, expected_version=self.version(case), idempotency_key=self.k(), actor=self.p[who], **values)
 
 	def mine(self, case):
@@ -88,7 +89,7 @@ class TestSecurity(ContractCase):
 		self.assertEqual(holds.open_holds(case), [])
 		self.assertFalse([c for c, _h, _s in self.mine(case) if "Security" in c])
 		self.assertIn("do not require", str(refusal(security.record_security, case, expected_version=self.version(case), idempotency_key=self.k(), actor=self.p["charles"], issuer="B", beneficiary=ENTITY,
-			reference="X", amount=1, issued_on="2027-07-01", expires_on="2028-01-01").detail))
+			reference="X", amount=1, issued_on=D("2027-07-01"), expires_on=D("2028-01-01")).detail))
 
 	def test_terms_that_require_one_ask_the_head_of_procurement_to_record_it_and_hold_the_signing_request(self):
 		case = self.prepared()
@@ -107,11 +108,11 @@ class TestSecurity(ContractCase):
 	def test_recording_names_each_field_to_correct_and_only_the_preparers_may_record(self):
 		case = self.prepared()
 		exc = refusal(security.record_security, case, expected_version=self.version(case), idempotency_key=self.k(), actor=self.p["charles"], issuer="", beneficiary=ENTITY, reference="G", amount=0,
-			issued_on="2027-07-01", expires_on="2027-06-01")
+			issued_on=D("2027-07-01"), expires_on=D("2027-06-01"))
 		self.assertEqual({k for k, v in exc.fields.items() if v}, {"issuer", "amount", "expires_on"})
 		for who in ("julia", "mary", "grace"):
 			self.assertEqual(refusal(security.record_security, case, expected_version=self.version(case), idempotency_key=self.k(), actor=self.p[who], issuer="B", beneficiary=ENTITY, reference="G",
-				amount=REQUIRED, issued_on="2027-07-01", expires_on="2028-01-01").code, "CM_AUTHORITY", who)
+				amount=REQUIRED, issued_on=D("2027-07-01"), expires_on=D("2028-01-01")).code, "CM_AUTHORITY", who)
 		self.assertEqual(frappe.db.count("Contract Security", {"contract_case": case}), 0)
 
 	def test_a_recorded_instrument_asks_hop_to_check_it_and_tells_the_supplier_it_is_awaited(self):
@@ -127,7 +128,7 @@ class TestSecurity(ContractCase):
 	def test_a_replay_with_the_same_key_records_once(self):
 		case = self.prepared()
 		key = self.k()
-		args = dict(issuer="Test Bank", beneficiary=ENTITY, reference="TEST-G-001", amount=REQUIRED, issued_on="2027-07-01", expires_on="2028-08-31")
+		args = dict(issuer="Test Bank", beneficiary=ENTITY, reference="TEST-G-001", amount=REQUIRED, issued_on=D("2027-07-01"), expires_on=D("2028-08-31"))
 		first = security.record_security(case, expected_version=self.version(case), idempotency_key=key, actor=self.p["charles"], **args)
 		again = security.record_security(case, expected_version=first["record_version"] - 1, idempotency_key=key, actor=self.p["charles"], **args)
 		self.assertEqual(first["security"], again["security"])
@@ -148,7 +149,7 @@ class TestSecurity(ContractCase):
 		short = self.record(case, amount=REQUIRED - 1, reference="G-B")["security"]
 		self.assertIn("less than", refusal(self.verify, case, short).fields["confirmation_reference"])
 		self.assertEqual(frappe.db.get_value("Contract Security", wrong_party, "state"), "Superseded", "a newer record supersedes an unverified one")
-		lapsed = self.record(case, expires_on="2027-07-02", reference="G-C")["security"]
+		lapsed = self.record(case, expires_on=D("2027-07-02"), reference="G-C")["security"]
 		self.assertIn("expired", refusal(self.verify, case, lapsed).fields["confirmation_reference"])
 		self.assertTrue(holds.blocking(case, "new_signing_attempt"))
 

@@ -8,6 +8,7 @@ where another receiver answers, Contract Management declines unless the site nam
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -76,7 +77,7 @@ class TestReceiver(ContractCase):
 
 	def update(self, issue="ISS-1", reference="AWD-PKG-01:UPD:ISS-1"):
 		return {"reference": reference, "award_case": sources.CASE, "package": "AWD-PKG-01", "kind": "Restriction", "issue": issue, "basis": "Reported challenge", "scope": "This award",
-			"effective_at": "2027-07-03 09:00:00", "fixture_namespace": "CM_TEST"}
+			"effective_at": D("2027-07-03 09:00:00"), "fixture_namespace": "CM_TEST"}
 
 	def mine(self, case):
 		ours = set(self.p.values())

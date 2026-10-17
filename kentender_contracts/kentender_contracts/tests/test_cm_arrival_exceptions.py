@@ -9,6 +9,7 @@ reviewed by HOP and never accepted; the same units under the same reference are 
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import frappe
 
 from kentender_contracts.services import delivery, errors, formation, position, records, work
@@ -45,7 +46,7 @@ class TestArrivalExceptions(ContractCase):
 		self.t.appointed()
 		return self.case
 
-	def arrive(self, items, *, reference="", who="grace", at="2027-07-12 10:00:00"):
+	def arrive(self, items, *, reference="", who="grace", at=D("2027-07-12 10:00:00")):
 		return delivery.record_arrival(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("arrive"), actor=self.p[who], received_at=at, destination="Afya House store", items=items, supplier_reference=reference)
 
 	def row(self, number=1):
@@ -76,7 +77,7 @@ class TestArrivalExceptions(ContractCase):
 		first = tw.fresh_serials(8)
 		self.t.arrive(first)
 		second = tw.fresh_serials(4)
-		out = self.arrive([{"line_id": "L1", "quantity": 4, "units": second}], at="2027-07-13 10:00:00")
+		out = self.arrive([{"line_id": "L1", "quantity": 4, "units": second}], at=D("2027-07-13 10:00:00"))
 		found = self.exceptions(2)
 		self.assertEqual([(e["kind"], e["quantity"], e["units"]) for e in found], [("Excess", 2, second[2:])], "the two beyond the entitlement are the surplus")
 		units = position.position(self.case)["units"]
@@ -124,10 +125,10 @@ class TestArrivalExceptions(ContractCase):
 		self.arrive([{"line_id": "L1", "quantity": 2, "units": first}], reference="DN-100")
 		again = refusal(self.arrive, [{"line_id": "L1", "quantity": 2, "units": first}], reference="dn-100")
 		self.assertEqual(again.code, "CM_DUPLICATE")
-		other = self.arrive([{"line_id": "L1", "quantity": 2, "units": tw.fresh_serials(2)}], reference="DN-100", at="2027-07-13 10:00:00")
+		other = self.arrive([{"line_id": "L1", "quantity": 2, "units": tw.fresh_serials(2)}], reference="DN-100", at=D("2027-07-13 10:00:00"))
 		self.assertEqual([(e["kind"], e["earlier"]) for e in self.exceptions(2)], [("Ambiguous", "DEL-001")])
 		self.assertTrue(frappe.db.exists("Contract Arrival", other["arrival"]))
-		blank = self.arrive([{"line_id": "L1", "quantity": 1}], reference="DN-200", at="2027-07-14 10:00:00")
+		blank = self.arrive([{"line_id": "L1", "quantity": 1}], reference="DN-200", at=D("2027-07-14 10:00:00"))
 		self.assertEqual(refusal(self.arrive, [{"line_id": "L1", "quantity": 1}], reference="DN-200").code, "CM_DUPLICATE", "the same note, the same quantity, no units: the same delivery")
 
 	def test_hop_records_what_became_of_an_exception_once_and_only_hop(self):
@@ -140,7 +141,7 @@ class TestArrivalExceptions(ContractCase):
 			actor=self.p["charles"]).fields), {"disposition", "reason"})
 		delivery.resolve_exception(self.case, arrival=out["arrival"], disposition="To be collected by the supplier", reason="Told the supplier.", expected_version=self.t.version(), idempotency_key=self.t.key("res"), actor=self.p["charles"])
 		self.assertFalse([1 for c, _h, _s in self.mine("charles") if c == "ResolveDeliveryException"])
-		normal = self.arrive([{"line_id": "L1", "quantity": 1, "units": tw.fresh_serials(1)}], at="2027-07-13 10:00:00")
+		normal = self.arrive([{"line_id": "L1", "quantity": 1, "units": tw.fresh_serials(1)}], at=D("2027-07-13 10:00:00"))
 		self.assertEqual(refusal(delivery.resolve_exception, self.case, arrival=normal["arrival"], disposition="Separate delivery", reason="x", expected_version=self.t.version(), idempotency_key=self.t.key("res2"),
 			actor=self.p["charles"]).code, "CM_CHANGED")
 
@@ -155,7 +156,7 @@ class TestArrivalExceptions(ContractCase):
 		delivery.record_custody_return(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("collect"), actor=self.p["grace"], units=[units[1]], evidence="Collection note C-2")
 		fresh = tw.fresh_serials(1)
 		self.assertEqual(refusal(self.arrive, [{"line_id": "L1", "quantity": 1, "units": fresh, "replaces": [units[0]]}]).code, "CM_INPUT", "an accepted unit is not replaced here")
-		self.arrive([{"line_id": "L1", "quantity": 1, "units": fresh, "replaces": [units[1]]}], at="2027-07-15 10:00:00")
+		self.arrive([{"line_id": "L1", "quantity": 1, "units": fresh, "replaces": [units[1]]}], at=D("2027-07-15 10:00:00"))
 		unit = position.position(self.case)["units"][fresh[0]]
 		self.assertEqual((unit["status"], unit["replaces"]), ("Awaiting decision", units[1]), "linked to the unit it replaces")
 		self.assertEqual(self.exceptions(2), [], "a replacement is not surplus: the original entitlement is still open")

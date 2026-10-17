@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { cmWorld, longDate } from "../../helpers/anchor";
 import { pickRecord } from '../../helpers/picker';
 import { as, board, openContract, pdf, press, tab, today, world } from './helpers';
 
@@ -26,11 +27,11 @@ test.describe('A warranty claim and a security claim', () => {
 			await expect(board(page, 'D16-N')).toBeVisible();
 			await page.getByTestId('cm-input-unit').fill(world.warranty_units[3]);
 			await page.getByTestId('cm-input-fault').fill('Battery does not charge');
-			await page.getByTestId('cm-input-notice_date').fill('2028-06-01');
+			await page.getByTestId('cm-input-notice_date').fill(cmWorld('2028-06-01'));
 			await press(page); // Record claim
 			await openContract(page, contract, 'My work');
 			await expect(board(page, 'D16-W')).toBeVisible();
-			await expect(page.getByTestId('cm-root')).toContainText('Ends 2 July 2028');
+			await expect(page.getByTestId('cm-root')).toContainText(`Ends ${longDate(cmWorld('2028-07-02'))}`);
 			await press(page); // Send notice
 			await openContract(page, contract, 'My work');
 			await expect(board(page, 'D35')).toBeVisible();
@@ -79,7 +80,7 @@ test.describe('A warranty claim and a security claim', () => {
 		await as(browser, 'charles', async (page) => {
 			await openContract(page, contract, 'My work');
 			await expect(board(page, 'D37-C')).toBeVisible();
-			await page.getByTestId('cm-input-sent_on').fill('2027-07-02');
+			await page.getByTestId('cm-input-sent_on').fill(cmWorld('2027-07-02'));
 			await page.getByTestId('cm-input-channel').fill('Courier');
 			await page.getByTestId('cm-input-reference').fill('CR-0042');
 			await attach(page, 'evidence', 'Proof of delivery');
@@ -89,7 +90,7 @@ test.describe('A warranty claim and a security claim', () => {
 			await expect(page.getByTestId('cm-root')).toContainText('Not recorded'); // the issuer has not answered: a request or a decision is not a payment
 			await page.getByTestId('cm-secondary-record-claim-outcome').click();
 			await page.getByTestId('cm-input-issuer_reference').fill('TEST-SG-OUT-01');
-			await page.getByTestId('cm-input-outcome_on').fill('2027-07-02');
+			await page.getByTestId('cm-input-outcome_on').fill(cmWorld('2027-07-02'));
 			await attach(page, 'evidence', 'Issuer outcome');
 			await page.getByTestId('cm-input-proceeds').fill('40000');
 			await press(page, 'cm-dialog-primary');

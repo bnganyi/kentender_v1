@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { cmWorld, inputDateTime } from "../../helpers/anchor";
 import { pickRecord } from '../../helpers/picker';
 import { as, board, nextStep, pdf, press, world } from './helpers';
 
@@ -27,9 +28,9 @@ test.describe('An existing signed contract', () => {
 			const uploaded = page.waitForResponse((r) => r.url().includes('upload_file') && r.ok());
 			await page.getByTestId('cm-input-agreement_file').setInputFiles(pdf('existing-agreement'));
 			await uploaded;
-			await page.getByTestId('cm-input-signed_on').fill('2027-07-02');
-			await page.getByTestId('cm-input-effective_on').fill('2027-07-02');
-			await page.getByTestId('cm-input-cutover').fill('2027-08-03T00:00');
+			await page.getByTestId('cm-input-signed_on').fill(cmWorld('2027-07-02'));
+			await page.getByTestId('cm-input-effective_on').fill(cmWorld('2027-07-02'));
+			await page.getByTestId('cm-input-cutover').fill(inputDateTime(cmWorld('2027-08-03 00:00:00')));
 			await pickRecord(page, '#cm-f-owner', 'Julia');
 			await pickRecord(page, '#cm-f-managing_unit', world.unit);
 			await pickRecord(page, '#cm-f-entity_signatory', 'Amina');
@@ -43,7 +44,7 @@ test.describe('An existing signed contract', () => {
 			await row('accepted', '4');
 			await row('in_custody', '2');
 			await row('invoiced_quantity', '4');
-			await page.getByTestId('cm-input-delivery_due').fill('2027-07-20');
+			await page.getByTestId('cm-input-delivery_due').fill(cmWorld('2027-07-20'));
 			await page.getByTestId('cm-input-payment_days').fill('30');
 			await page.getByTestId('cm-input-warranty_months').fill('12');
 			await page.getByTestId('cm-input-security_required').selectOption('No');

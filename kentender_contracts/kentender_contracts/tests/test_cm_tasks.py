@@ -7,6 +7,7 @@ its fix owner and cannot hide actionable work; waiting and scheduled rows sit be
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 from datetime import datetime, timedelta
 
 from frappe.tests import IntegrationTestCase
@@ -140,7 +141,7 @@ class TestNextStepAnswer(IntegrationTestCase):
 
 	def test_waiting_on_someone_names_the_holder_and_since_when(self):
 		result = self.answer([task("T1", holder="julia@x", state="waiting", assigned="2027-07-20 09:00", holder_role="Head of procurement function")])
-		self.assertEqual((result["kind"], result["holder"]["display"], result["since"]["at"]), ("waiting", "julia@x (Head of procurement function)", "2027-07-20 09:00:00"))
+		self.assertEqual((result["kind"], result["holder"]["display"], result["since"]["at"]), ("waiting", "julia@x (Head of procurement function)", "2027-07-20 09:00:00"))  # the task's own text, passed through
 
 	def test_a_scheduled_event_is_not_a_person_to_wait_on(self):
 		result = self.answer([task("T1", state="scheduled", holder="", due="2027-08-01 00:00")])

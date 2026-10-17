@@ -21,7 +21,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import cstr, flt, today
+from frappe.utils import cstr, flt
 
 from kentender_contracts.native import payment_guard
 from kentender_contracts.services import service_principal
@@ -35,13 +35,36 @@ def find_by_identity(doctype: str, identity: str) -> str | None:
 	return frappe.db.get_value(doctype, {"cm_operation_identity": identity, "docstatus": ["<", 2]}, "name")
 
 
+# -- dates -------------------------------------------------------------------------------------------------------------------------
+def _trusted_now():
+	"""Contract Management's trusted clock (`services.clock.now`): the site clock in production; a test or a demonstration injects an instant, so a
+	native document takes the date of the story it records and is never dated later than the real clock (SEED-002 v0.9 §A8, FU-CM-61)."""
+	from kentender_contracts.services import clock
+
+	return clock.now()
+
+
+def _today() -> str:
+	return str(_trusted_now().date())
+
+
+def _dated_as_trusted(doc) -> None:
+	"""A native document drawn today by ERPNext is dated by the trusted clock instead: its posting date and time are set explicitly."""
+	now = _trusted_now()
+	if doc.meta.has_field("set_posting_time"):
+		doc.set_posting_time = 1
+	if doc.meta.has_field("posting_time"):
+		doc.posting_time = now.strftime("%H:%M:%S")
+	doc.posting_date = str(now.date())
+
+
 # -- order -----------------------------------------------------------------------------------------------------------------------
 def create_purchase_order(identity: str, *, company: str, supplier: str, items: list[dict[str, Any]], currency: str, schedule_date: str, transaction_date: str | None = None) -> str:
 	"""One submitted Purchase Order per operation identity; a replay returns the document that exists. `items`: item_code, qty, rate, warehouse."""
 	existing = find_by_identity("Purchase Order", identity)
 	if existing:
 		return existing
-	po = frappe.get_doc({"doctype": "Purchase Order", "company": company, "supplier": supplier, "currency": currency, "transaction_date": transaction_date or today(),
+	po = frappe.get_doc({"doctype": "Purchase Order", "company": company, "supplier": supplier, "currency": currency, "transaction_date": transaction_date or _today(),
 		"schedule_date": schedule_date, "cm_operation_identity": identity,
 		"items": [{"item_code": i["item_code"], "qty": i["qty"], "rate": i["rate"], "schedule_date": schedule_date, "warehouse": i.get("warehouse")} for i in items]})
 	po.insert(ignore_permissions=True)
@@ -109,6 +132,7 @@ def receive(order: str, identity: str, *, lines: list[dict[str, Any]], submit: b
 	from erpnext.buying.doctype.purchase_order.purchase_order import make_purchase_receipt
 
 	receipt = make_purchase_receipt(order)
+	_dated_as_trusted(receipt)
 	receipt.cm_operation_identity = identity
 	wanted = {line["item_code"]: line for line in lines}
 	receipt.items = [row for row in receipt.items if row.item_code in wanted]
@@ -173,7 +197,7 @@ def inspect_accepted(receipt: str, item_code: str, *, status: str, sample: int, 
 	for reading in readings:
 		ensure_parameter(reading["specification"])
 	qi = frappe.get_doc({"doctype": "Quality Inspection", "inspection_type": "Incoming", "reference_type": "Purchase Receipt", "reference_name": receipt, "child_row_reference": row.name,
-		"item_code": item_code, "item_name": row.item_name, "sample_size": sample, "inspected_by": inspector, "report_date": today(), "manual_inspection": 1, "status": status,
+		"item_code": item_code, "item_name": row.item_name, "sample_size": sample, "inspected_by": inspector, "report_date": _today(), "manual_inspection": 1, "status": status,
 		"readings": [{**r, "manual_inspection": 1} for r in readings]})
 	qi.insert(ignore_permissions=True)
 	qi.submit()
@@ -190,9 +214,10 @@ def invoice_receipt(receipt: str, identity: str, *, bill_no: str, bill_date: str
 	from erpnext.stock.doctype.purchase_receipt.purchase_receipt import make_purchase_invoice
 
 	invoice = make_purchase_invoice(receipt)
+	_dated_as_trusted(invoice)
 	invoice.cm_operation_identity = identity
 	invoice.bill_no = bill_no
-	invoice.bill_date = bill_date or today()
+	invoice.bill_date = bill_date or _today()
 	if qty is not None:
 		invoice.items[0].qty = qty
 	invoice.insert(ignore_permissions=True)
@@ -212,13 +237,14 @@ def invoice_order(order: str, identity: str, *, bill_no: str, bill_date: str | N
 	from erpnext.buying.doctype.purchase_order.purchase_order import make_purchase_invoice
 
 	invoice = make_purchase_invoice(order)
+	_dated_as_trusted(invoice)
 	invoice.items = [row for row in invoice.items if row.item_code == item_code][:1]
 	if not invoice.items:
 		fail("CM_RECONCILE", item=item_code, reason="The order has nothing left to invoice for this item.")
 	invoice.items[0].qty = qty
 	invoice.cm_operation_identity = identity
 	invoice.bill_no = bill_no
-	invoice.bill_date = bill_date or today()
+	invoice.bill_date = bill_date or _today()
 	invoice.insert(ignore_permissions=True)
 	if submit:
 		invoice.submit()
@@ -336,7 +362,8 @@ def advance_draft(order: str, identity: str, *, amount: float, mode_of_payment: 
 	from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
 
 	entry = get_payment_entry("Purchase Order", order)
-	entry.mode_of_payment, entry.paid_from, entry.reference_no, entry.reference_date = mode_of_payment, paid_from, reference_no, reference_date or today()
+	_dated_as_trusted(entry)
+	entry.mode_of_payment, entry.paid_from, entry.reference_no, entry.reference_date = mode_of_payment, paid_from, reference_no, reference_date or _today()
 	entry.cm_operation_identity = identity
 	entry.paid_amount = entry.received_amount = amount
 	entry.references[0].allocated_amount = amount
@@ -386,7 +413,8 @@ def payment_draft(invoice: str, identity: str, *, amount: float | None = None, m
 	from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
 
 	entry = get_payment_entry("Purchase Invoice", invoice)
-	entry.mode_of_payment, entry.paid_from, entry.reference_no, entry.reference_date = mode_of_payment, paid_from, reference_no, reference_date or today()
+	_dated_as_trusted(entry)
+	entry.mode_of_payment, entry.paid_from, entry.reference_no, entry.reference_date = mode_of_payment, paid_from, reference_no, reference_date or _today()
 	entry.cm_operation_identity = identity
 	if amount is not None:
 		entry.paid_amount = entry.received_amount = amount
@@ -430,7 +458,7 @@ def net_payable(supplier: str, on: str | None = None) -> float:
 	the native credit note stands alone and leaves the invoice it reduces unchanged. Positive means money owed to the supplier."""
 	from erpnext.accounts.utils import get_balance_on
 
-	return -flt(get_balance_on(party_type="Supplier", party=supplier, date=on or today()))
+	return -flt(get_balance_on(party_type="Supplier", party=supplier, date=on or _today()))
 
 
 def receipt_facts(receipt: str) -> dict[str, Any]:

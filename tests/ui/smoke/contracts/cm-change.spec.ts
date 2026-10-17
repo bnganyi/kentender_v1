@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { cmWorld, longDate, shortDate } from "../../helpers/anchor";
 import { pickRecord } from '../../helpers/picker';
 import { as, board, openAsSupplier, openContract, pdf, press, tab, today, world } from './helpers';
 
@@ -54,13 +55,13 @@ test.describe('A change to the contract', () => {
 			await tab(page, 'Obligations');
 			await page.getByTestId('cm-secondary-request-delivery-extension').click();
 			await expect(board(page, 'D27')).toBeVisible();
-			await expect(page.getByTestId('cm-root')).toContainText('20 Jul 2027');
-			await page.getByTestId('cm-input-proposed_date').fill('2027-07-27');
+			await expect(page.getByTestId('cm-root')).toContainText(shortDate(cmWorld('2027-07-20')));
+			await page.getByTestId('cm-input-proposed_date').fill(cmWorld('2027-07-27'));
 			await page.getByTestId('cm-input-reason').fill('Supplier reports a seven-day shipment delay.');
 			await attach(page, 'evidence', 'Supplier request 1');
 			await press(page); // Request extension
 			await expect(page.getByTestId('cm-root')).toContainText('Contract changes');
-			await expect(page.getByTestId('cm-root')).toContainText('Delivery date to 27 Jul 2027');
+			await expect(page.getByTestId('cm-root')).toContainText(`Delivery date to ${shortDate(cmWorld('2027-07-27'))}`);
 		});
 		await as(browser, 'charles', async (page) => {
 			await openContract(page, contract(), 'My work');
@@ -84,14 +85,14 @@ test.describe('A change to the contract', () => {
 		await as(browser, 'amina', async (page) => {
 			await openContract(page, contract(), 'My work');
 			await expect(board(page, 'D14')).toBeVisible();
-			await expect(page.getByTestId('cm-root').locator('tr', { hasText: 'Delivery date' }).locator('td')).toHaveText(['Delivery date', '20 July 2027', '27 July 2027']);
+			await expect(page.getByTestId('cm-root').locator('tr', { hasText: 'Delivery date' }).locator('td')).toHaveText(['Delivery date', longDate(cmWorld('2027-07-20')), longDate(cmWorld('2027-07-27'))]);
 			await page.getByTestId('cm-primary').click(); // Approve extension
 			await page.getByTestId('cm-input-reason').fill('The documented grounds support the revised date without changing price or quantity.');
 			await press(page, 'cm-dialog-primary');
 			await expect(page.getByTestId('cm-dialog')).toHaveCount(0);
 			await page.reload();
 			await expect(board(page, 'D14-P')).toBeVisible(); // approved, the amendment not yet effective
-			await expect(page.getByTestId('cm-root')).toContainText('20 July 2027 — amendment not yet effective');
+			await expect(page.getByTestId('cm-root')).toContainText(`${longDate(cmWorld('2027-07-20'))} — amendment not yet effective`);
 		});
 		await as(browser, 'mary', async (page) => {
 			await openAsSupplier(page, contract());
@@ -107,7 +108,7 @@ test.describe('A change to the contract', () => {
 		await as(browser, 'carol', async (page) => {
 			await openContract(page, contract(), 'All contracts');
 			await tab(page, 'Obligations');
-			await expect(page.getByTestId('cm-root').locator('tr', { hasText: 'Change 1' }).locator('td')).toContainText(['Change 1', 'Delivery date to 27 Jul 2027', 'Effective']);
+			await expect(page.getByTestId('cm-root').locator('tr', { hasText: 'Change 1' }).locator('td')).toContainText(['Change 1', `Delivery date to ${shortDate(cmWorld('2027-07-27'))}`, 'Effective']);
 		});
 	});
 });

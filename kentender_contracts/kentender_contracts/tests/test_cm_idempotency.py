@@ -9,6 +9,7 @@ contract and the native world exactly as they were. The same key with something 
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -60,14 +61,14 @@ class TestEveryCommandIsSafeToSendTwice(ContractCase):
 			t.appointed()
 			frappe.db.set_value("Contract Case", case, "responsible_user", self.p["julia"])
 			units = tw.fresh_serials(10)
-			arrival = t.arrive(units, received_at="2027-07-12 10:00:00")["arrival"]
+			arrival = t.arrive(units, received_at=D("2027-07-12 10:00:00"))["arrival"]
 			t.inspect(arrival, units)
-			frappe.flags.kt_cm_clock = "2027-07-20 10:00:00"
+			frappe.flags.kt_cm_clock = D("2027-07-20 10:00:00")
 			t.accept(arrival)
 			invoice = t.claim("IDEM-1", 10)["invoice"]
 			t.certify_invoice(invoice)
 			t.pay(invoice, "IDEM-BANK-1")
-			frappe.flags.kt_cm_clock = "2028-07-28 08:30:00"
+			frappe.flags.kt_cm_clock = D("2028-07-28 08:30:00")
 			final_acceptance.sign(case, expected_version=t.version(), idempotency_key=t.key("final"), actor=self.p["amina"])
 			closeout.issue_completion_certificate(case, expected_version=t.version(), idempotency_key=t.key("completion"), actor=self.p["charles"])
 			t.confirm_delivery()

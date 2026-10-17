@@ -9,6 +9,7 @@ apparent duplicate is held for Finance review, never refused or deleted, and a d
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import frappe
 from frappe.utils import add_days, today
 
@@ -97,16 +98,16 @@ class TestMatching(InvoiceCase):
 
 class TestCorrection(InvoiceCase):
 	def test_a_correction_is_a_linked_successor_and_the_original_receipt_time_survives(self):
-		frappe.flags.kt_cm_clock = "2027-07-21 08:05:00"
+		frappe.flags.kt_cm_clock = D("2027-07-21 08:05:00")
 		first = self.claim("INV-01", 10)
-		frappe.flags.kt_cm_clock = "2027-07-21 10:00:00"
+		frappe.flags.kt_cm_clock = D("2027-07-21 10:00:00")
 		payment.request_invoice_correction(self.case, invoice=first["invoice"], expected_version=self.t.version(), idempotency_key=self.t.key("ask"), actor=self.p["charles"], reason="Please correct the invoice to match the eight accepted laptops.")
 		second = self.claim("INV-01-C", 8, successor_of=first["invoice"], reason="Corrected to the eight accepted laptops.")
 		original, successor = self.row(first), self.row(second)
 		self.assertEqual((original.state, successor.state, successor.successor_of), ("Superseded", "Submitted", original.name))
-		self.assertEqual((str(original.received_at), str(successor.received_at)), ("2027-07-21 08:05:00", "2027-07-21 10:00:00"))
-		self.assertEqual(str(successor.first_received_at), "2027-07-21 08:05:00", "the clock of the claim runs from the first receipt, never from the correction")
-		self.assertEqual(str(original.first_received_at), "2027-07-21 08:05:00")
+		self.assertEqual((str(original.received_at), str(successor.received_at)), (D("2027-07-21 08:05:00"), D("2027-07-21 10:00:00")))
+		self.assertEqual(str(successor.first_received_at), D("2027-07-21 08:05:00"), "the clock of the claim runs from the first receipt, never from the correction")
+		self.assertEqual(str(original.first_received_at), D("2027-07-21 08:05:00"))
 		self.assertEqual(records.loads(original.lines_json)[0]["quantity"], 10, "the original claim is kept as it was")
 
 	def test_a_correction_of_a_claim_that_is_not_held_is_refused(self):

@@ -16,6 +16,7 @@ The gaps this run shows (owner and what is needed):
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import json
 import unittest
 import unittest.mock
@@ -47,7 +48,7 @@ class TestCanonicalSources(ContractCase):
 	def setUp(self):
 		super().setUp()
 		self.previous = frappe.flags.get("kt_cm_clock")
-		frappe.flags.kt_cm_clock = "2027-07-02 09:00:00"
+		frappe.flags.kt_cm_clock = D("2027-07-02 09:00:00")
 		self.addCleanup(lambda: setattr(frappe.flags, "kt_cm_clock", self.previous))
 
 	def rows(self):

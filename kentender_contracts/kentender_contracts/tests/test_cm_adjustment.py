@@ -9,6 +9,7 @@ invoice through a Finance-verified mapping and is noncash: cash 995,000 and the 
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -48,10 +49,10 @@ class DelayCase(ContractCase):
 		self.case = self.t.active()
 		self.t.appointed()
 
-	def delivered(self, on="2027-07-25 10:00:00"):
+	def delivered(self, on=D("2027-07-25 10:00:00")):
 		"""All ten laptops arrive and are accepted on `on` (the actual delivery event)."""
 		units = tw.fresh_serials(10)
-		arrival = self.t.arrive(units, received_at="2027-07-12 10:00:00")["arrival"]
+		arrival = self.t.arrive(units, received_at=D("2027-07-12 10:00:00"))["arrival"]
 		self.t.inspect(arrival, units)
 		frappe.flags.kt_cm_clock = on
 		return self.t.accept(arrival)
@@ -76,7 +77,7 @@ class TestCalculation(DelayCase):
 		out = self.prepare()
 		figures = adjustment.calculation(self.row())
 		self.assertEqual((out["days"], out["amount"]), (5, 5000))
-		self.assertEqual((figures["due"], figures["event"], figures["days"]), ("2027-07-20", "2027-07-25", 5))
+		self.assertEqual((figures["due"], figures["event"], figures["days"]), (D("2027-07-20"), D("2027-07-25"), 5))
 		self.assertEqual((figures["principal"], figures["rate_percent"], figures["daily"], figures["gross"], figures["cap"], figures["amount"]), (1_000_000, 0.1, 1000, 5000, 100_000, 5000))
 		self.assertEqual((figures["clause"], figures["exclusions"], figures["extensions"]), ("TEST-DELAY-01", [], []))
 		self.assertIn("up to and including", figures["count_basis"])
@@ -93,14 +94,14 @@ class TestCalculation(DelayCase):
 		self.assertEqual(adjustment.calculation(self.row())["recommendation"], "No supported exclusion")
 
 	def test_the_cap_limits_a_long_delay(self):
-		self.delivered(on="2028-02-20 10:00:00")  # 215 days late: 215,000 before the cap
+		self.delivered(on=D("2028-02-20 10:00:00"))  # 215 days late: 215,000 before the cap
 		self.prepare()
 		figures = adjustment.calculation(self.row())
 		self.assertEqual((figures["gross"], figures["cap"], figures["amount"]), (215_000, 100_000, 100_000))
 
 	def test_there_is_nothing_to_adjust_until_every_unit_is_accepted_or_when_delivery_was_on_time(self):
 		self.assertIn("delivery", refusal(self.prepare).fields)  # nothing delivered yet
-		self.delivered(on="2027-07-20 10:00:00")  # on the due date itself
+		self.delivered(on=D("2027-07-20 10:00:00"))  # on the due date itself
 		self.assertIn("delivery", refusal(self.prepare).fields)
 
 	def test_a_missing_cause_or_clause_is_corrected(self):
@@ -120,17 +121,17 @@ class TestCalculation(DelayCase):
 		self.delivered()
 		self.prepare()
 		self.decide("Return", reason="An extension may apply; re-read it.")
-		self.t.change_through("Extension", {"proposed_date": "2027-07-22"})  # signed by both: the operative due date is now 22 July
+		self.t.change_through("Extension", {"proposed_date": D("2027-07-22")})  # signed by both: the operative due date is now 22 July
 		self.prepare()
 		figures = adjustment.calculation(self.row(2))
-		self.assertEqual((figures["due"], figures["original_due"], figures["days"], figures["amount"]), ("2027-07-22", "2027-07-20", 3, 3000))
-		self.assertEqual(figures["extensions"][0]["to"], "2027-07-22")
-		self.assertEqual((figures["prior"]["amount"], figures["prior"]["days"], figures["prior"]["due"]), (5000, 5, "2027-07-20"))
+		self.assertEqual((figures["due"], figures["original_due"], figures["days"], figures["amount"]), (D("2027-07-22"), D("2027-07-20"), 3, 3000))
+		self.assertEqual(figures["extensions"][0]["to"], D("2027-07-22"))
+		self.assertEqual((figures["prior"]["amount"], figures["prior"]["days"], figures["prior"]["due"]), (5000, 5, D("2027-07-20")))
 		self.assertEqual((self.row(1).state, self.row(2).supersedes), ("Superseded", self.row(1).name))
 
 	def test_a_request_that_is_not_signed_changes_no_date(self):
 		self.delivered()
-		change.request_change(self.case, kind="Extension", request={"proposed_date": "2027-07-22"}, reason="Delay.", evidence=[{"label": "Supplier request 1", "file": "/private/files/r.pdf"}], expected_version=self.t.version(),
+		change.request_change(self.case, kind="Extension", request={"proposed_date": D("2027-07-22")}, reason="Delay.", evidence=[{"label": "Supplier request 1", "file": "/private/files/r.pdf"}], expected_version=self.t.version(),
 			idempotency_key=self.t.key("ask"), actor=self.p["david"])
 		self.prepare()
 		self.assertEqual(adjustment.calculation(self.row())["days"], 5)

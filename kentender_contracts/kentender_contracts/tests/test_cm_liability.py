@@ -10,6 +10,7 @@ certified or paid. Contract Management reads the credit; it never writes the led
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -178,12 +179,12 @@ class TestCorrectionOfAClaim(LiabilityCase):
 		self.assertTrue([h for h in holds.open_holds(self.case) if h.key.startswith("liability:")])
 
 	def test_the_original_receipt_and_the_correction_are_both_kept_and_the_clock_runs_from_the_first(self):
-		frappe.flags.kt_cm_clock = "2027-07-21 08:05:00"
+		frappe.flags.kt_cm_clock = D("2027-07-21 08:05:00")
 		first = self.claim("INV-01", 10)
-		frappe.flags.kt_cm_clock = "2027-07-21 10:00:00"
+		frappe.flags.kt_cm_clock = D("2027-07-21 10:00:00")
 		second = self.correct(first)
 		a, b = self.row(first), self.row(second)
-		self.assertEqual((str(a.received_at), str(b.received_at), str(b.first_received_at)), ("2027-07-21 08:05:00", "2027-07-21 10:00:00", "2027-07-21 08:05:00"))
+		self.assertEqual((str(a.received_at), str(b.received_at), str(b.first_received_at)), (D("2027-07-21 08:05:00"), D("2027-07-21 10:00:00"), D("2027-07-21 08:05:00")))
 		self.assertEqual((a.claimed_amount, b.claimed_amount), (1000000, 800000))
 
 

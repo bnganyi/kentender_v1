@@ -9,6 +9,7 @@ is not reconciled, new certification and payment wait."""
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D, after_months  # noqa: F401
 import frappe
 
 from kentender_contracts.services import change, delivery, errors, holds, issues, position, records, warranty, work
@@ -25,8 +26,8 @@ def refusal(fn, *args, **kwargs):
 	raise AssertionError("expected a refusal")
 
 
-ACCEPTED_ON = "2027-07-20 10:00:00"
-NOTICE_ON = "2028-07-10 09:00:00"
+ACCEPTED_ON = D("2027-07-20 10:00:00")
+NOTICE_ON = D("2028-07-10 09:00:00")
 
 
 class WarrantyCase(ContractCase):
@@ -50,13 +51,13 @@ class WarrantyCase(ContractCase):
 		self.t.appointed()
 		frappe.db.set_value("Contract Case", self.case, "responsible_user", self.p["julia"])
 		self.units = tw.fresh_serials(10)
-		arrival = self.t.arrive(self.units, received_at="2027-07-12 10:00:00")["arrival"]
+		arrival = self.t.arrive(self.units, received_at=D("2027-07-12 10:00:00"))["arrival"]
 		self.t.inspect(arrival, self.units)
 		frappe.flags.kt_cm_clock = ACCEPTED_ON
 		self.t.accept(arrival)
 		frappe.flags.kt_cm_clock = NOTICE_ON
 
-	def claim(self, unit=None, remedy="Like-for-like replacement", notice="2028-07-10", fault="Battery does not charge", who="julia"):
+	def claim(self, unit=None, remedy="Like-for-like replacement", notice=D("2028-07-10"), fault="Battery does not charge", who="julia"):
 		return warranty.record_claim(self.case, unit=unit or self.units[3], fault=fault, notice_date=notice, remedy=remedy, expected_version=self.t.version(), idempotency_key=self.t.key("claim"), actor=self.p[who])
 
 	def row(self, number=1):
@@ -66,7 +67,7 @@ class WarrantyCase(ContractCase):
 		return issues.send_correspondence(self.case, issue=self.row(number).name, text="The battery does not charge. Please arrange a replacement.", expected_version=self.t.version(), idempotency_key=self.t.key("notice"), actor=self.p["julia"])
 
 	def collected(self, number=1):
-		return warranty.record_return(self.case, issue=self.row(number).name, collected_on="2028-07-12", evidence="Collection note WAR-01", expected_version=self.t.version(), idempotency_key=self.t.key("ret"), actor=self.p["julia"])
+		return warranty.record_return(self.case, issue=self.row(number).name, collected_on=D("2028-07-12"), evidence="Collection note WAR-01", expected_version=self.t.version(), idempotency_key=self.t.key("ret"), actor=self.p["julia"])
 
 	def native_return(self):
 		"""Finance's native return of one unit against the contract's receipt."""
@@ -85,10 +86,10 @@ class WarrantyCase(ContractCase):
 
 	def replacement(self, old=None):
 		new = tw.fresh_serials(1)
-		out = delivery.record_arrival(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("rarrive"), actor=self.p["grace"], received_at="2028-07-14 10:00:00", destination="Afya House store",
+		out = delivery.record_arrival(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("rarrive"), actor=self.p["grace"], received_at=D("2028-07-14 10:00:00"), destination="Afya House store",
 			items=[{"line_id": "L1", "quantity": 1, "units": new, "replaces": [old or self.units[3]]}])
 		self.t.inspect(out["arrival"], new)
-		frappe.flags.kt_cm_clock = "2028-07-15 09:00:00"
+		frappe.flags.kt_cm_clock = D("2028-07-15 09:00:00")
 		self.t.accept(out["arrival"])
 		return new[0]
 
@@ -111,13 +112,13 @@ class TestClaim(WarrantyCase):
 		row = self.row()
 		found = warranty.facts(row)
 		self.assertEqual((row.kind, row.state, row.requested_remedy, out["issue_no"]), ("Warranty claim", "Open", "Like-for-like replacement", 1))
-		self.assertEqual((found["unit"], found["fault"], found["notice_date"], found["warranty_ends"]), (self.units[3], "Battery does not charge", "2028-07-10", "2028-07-20"))
+		self.assertEqual((found["unit"], found["fault"], found["notice_date"], found["warranty_ends"]), (self.units[3], "Battery does not charge", D("2028-07-10"), after_months("2027-07-20", 12)))
 		self.assertEqual(warranty.stage(row), "notice")
 		self.assertIn(("SendContractCorrespondence", "Send the defect notice.", "actionable"), self.tasks("julia"))
 
 	def test_only_an_accepted_unit_inside_its_warranty_and_not_already_claimed_can_be_claimed(self):
 		self.assertIn("unit", refusal(self.claim, unit="NO-SUCH-UNIT").fields)
-		self.assertIn("notice_date", refusal(self.claim, notice="2028-07-21").fields)  # the day after the warranty ended
+		self.assertIn("notice_date", refusal(self.claim, notice=D("2028-07-21")).fields)  # the day after the warranty ended
 		self.assertIn("fault", refusal(self.claim, fault=" ").fields)
 		self.assertIn("remedy", refusal(self.claim, remedy="Refund").fields)
 		self.claim()
@@ -145,7 +146,7 @@ class TestReplacement(WarrantyCase):
 		self.assertEqual(refusal(self.verify).code, "CM_CHANGED")  # not ready to be verified yet
 
 	def test_the_return_removes_the_unit_from_the_accepted_ones_asks_finance_and_holds_new_certification_and_payment(self):
-		self.assertIn("evidence", refusal(warranty.record_return, self.case, issue=self.row().name, collected_on="2028-07-12", evidence=" ", expected_version=self.t.version(), idempotency_key=self.t.key("r0"), actor=self.p["julia"]).fields)
+		self.assertIn("evidence", refusal(warranty.record_return, self.case, issue=self.row().name, collected_on=D("2028-07-12"), evidence=" ", expected_version=self.t.version(), idempotency_key=self.t.key("r0"), actor=self.p["julia"]).fields)
 		self.collected()
 		now = position.position(self.case)
 		self.assertEqual((now["units"][self.units[3]]["status"], now["lines"]["L1"]["accepted"], now["lines"]["L1"]["remaining"], now["lines"]["L1"]["ordered"]), ("Returned", 9, 1, 10))

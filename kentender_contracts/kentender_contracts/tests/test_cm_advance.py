@@ -9,6 +9,7 @@ cash of 100,000 + 720,000 + 180,000 = 1,000,000 and the advance is consumed once
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import frappe
 from frappe.utils import flt, today
 
@@ -49,13 +50,13 @@ class AdvanceCase(ContractCase):
 		self.t.appointed()
 
 	# -- steps ------------------------------------------------------------------------------------------------------------------------
-	def guarantee(self, amount=100000, beneficiary="Ministry of Health", expires="2027-08-31", issued="2027-06-01"):
+	def guarantee(self, amount=100000, beneficiary="Ministry of Health", expires=D("2027-08-31"), issued=D("2027-06-01")):
 		out = advance.record_guarantee(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("g"), actor=self.p["josphat"], issuer="Test Bank", beneficiary=beneficiary, reference="TEST-AG-01",
 			amount=amount, issued_on=issued, expires_on=expires)
 		return out["security"]
 
 	def verify(self, security):
-		return advance.verify_guarantee(self.case, security=security, expected_version=self.t.version(), idempotency_key=self.t.key("v"), actor=self.p["charles"], confirmation_reference="TEST-AG-CONF-01", received_on="2027-07-02")
+		return advance.verify_guarantee(self.case, security=security, expected_version=self.t.version(), idempotency_key=self.t.key("v"), actor=self.p["charles"], confirmation_reference="TEST-AG-CONF-01", received_on=D("2027-07-02"))
 
 	def claim(self, amount=100000, reference="ADV-01"):
 		return advance.prepare_advance(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("adv"), actor=self.p["david"], claim_reference=reference, amount=amount)["advance"]
@@ -71,7 +72,7 @@ class AdvanceCase(ContractCase):
 		return out["payment"]
 
 	def settle(self, entry, evidence="Bank line ADV"):
-		return payment.record_finance_settlement(self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("settle"), actor=self.p["beatrice"], effective_date="2027-07-05", evidence=evidence)
+		return payment.record_finance_settlement(self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("settle"), actor=self.p["beatrice"], effective_date=D("2027-07-05"), evidence=evidence)
 
 	def paid_advance(self):
 		row = self.claim()
@@ -130,7 +131,7 @@ class TestNoAdvanceInTheTerms(AdvanceCase):
 		exc = refusal(advance.prepare_advance, self.case, expected_version=self.t.version(), idempotency_key=self.t.key("a"), actor=self.p["david"], claim_reference="ADV-01", amount=100000)
 		self.assertEqual((exc.code, exc.detail["rule"]), ("CM_RULE", "CM-R-07"))
 		self.assertEqual(refusal(advance.record_guarantee, self.case, expected_version=self.t.version(), idempotency_key=self.t.key("b"), actor=self.p["josphat"], issuer="Test Bank", beneficiary="Ministry of Health",
-			reference="X", amount=1, issued_on="2027-07-01", expires_on="2027-08-31").code, "CM_RULE")
+			reference="X", amount=1, issued_on=D("2027-07-01"), expires_on=D("2027-08-31")).code, "CM_RULE")
 
 
 class TestTheGuarantee(AdvanceCase):
@@ -150,7 +151,7 @@ class TestTheGuarantee(AdvanceCase):
 		self.assertIn("confirmation_reference", refusal(self.verify, small).fields)
 		wrong = self.guarantee(beneficiary="Another Entity")
 		self.assertIn("The beneficiary is Another Entity", refusal(self.verify, wrong).fields["confirmation_reference"])
-		old = self.guarantee(expires="2027-07-01")
+		old = self.guarantee(expires=D("2027-07-01"))
 		self.assertIn("expired", refusal(self.verify, old).fields["confirmation_reference"])
 
 	def test_a_replacement_supersedes_an_unverified_instrument_and_the_earlier_is_kept(self):
@@ -160,9 +161,9 @@ class TestTheGuarantee(AdvanceCase):
 
 	def test_only_the_custodian_records_and_only_procurement_verifies(self):
 		self.assertEqual(refusal(advance.record_guarantee, self.case, expected_version=self.t.version(), idempotency_key=self.t.key("a"), actor=self.p["julia"], issuer="Test Bank", beneficiary="Ministry of Health",
-			reference="X", amount=100000, issued_on="2027-07-01", expires_on="2027-08-31").code, "CM_AUTHORITY")
+			reference="X", amount=100000, issued_on=D("2027-07-01"), expires_on=D("2027-08-31")).code, "CM_AUTHORITY")
 		sec = self.guarantee()
-		self.assertEqual(refusal(advance.verify_guarantee, self.case, security=sec, expected_version=self.t.version(), idempotency_key=self.t.key("b"), actor=self.p["josphat"], confirmation_reference="C", received_on="2027-07-02").code, "CM_AUTHORITY")
+		self.assertEqual(refusal(advance.verify_guarantee, self.case, security=sec, expected_version=self.t.version(), idempotency_key=self.t.key("b"), actor=self.p["josphat"], confirmation_reference="C", received_on=D("2027-07-02")).code, "CM_AUTHORITY")
 
 
 class TestPayingAndRecovering(AdvanceCase):
@@ -179,7 +180,7 @@ class TestPayingAndRecovering(AdvanceCase):
 		entry = self.pay_advance(row)
 		self.assertEqual((frappe.db.get_value("Payment Entry", entry, "docstatus"), flt(frappe.db.get_value("Purchase Order", order, "advance_paid"))), (1, 100000))
 		self.assertEqual(frappe.db.get_value("Contract Advance", row, "state"), "Certified", "a posted payment is not a settled one")
-		self.assertEqual(refusal(payment.record_finance_settlement, self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("s0"), actor=self.p["josphat"], effective_date="2027-07-05", evidence="x").code, "CM_AUTHORITY")
+		self.assertEqual(refusal(payment.record_finance_settlement, self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("s0"), actor=self.p["josphat"], effective_date=D("2027-07-05"), evidence="x").code, "CM_AUTHORITY")
 		self.settle(entry)
 		self.assertEqual(frappe.db.get_value("Contract Advance", row, "state"), "Paid")
 		self.assertEqual(advance.position(self.case), {"advance": row, "certified": 100000, "paid": 100000, "recovered": 0, "outstanding": 100000})

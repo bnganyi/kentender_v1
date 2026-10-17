@@ -9,6 +9,7 @@ with the design's board (the structural fidelity gate)."""
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import json
 import os
 from pathlib import Path
@@ -177,7 +178,7 @@ class TestBoards(ContractCase):
 
 		# replacement units, to completion
 		units2 = tw.fresh_serials(2)
-		arrival2 = delivery.record_arrival(self.case, expected_version=t.version(), idempotency_key=t.key("arrive2"), actor=self.p["grace"], received_at="2027-07-16 09:00:00", destination="Afya House store",
+		arrival2 = delivery.record_arrival(self.case, expected_version=t.version(), idempotency_key=t.key("arrive2"), actor=self.p["grace"], received_at=D("2027-07-16 09:00:00"), destination="Afya House store",
 			items=[{"line_id": "L1", "quantity": 2, "units": units2, "replaces": units[8:]}])["arrival"]  # a replacement names the rejected units it replaces, which closes their issue
 		t.inspect(arrival2, units2)
 		t.accept(arrival2)

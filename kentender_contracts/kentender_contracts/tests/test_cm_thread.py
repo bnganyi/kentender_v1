@@ -10,6 +10,7 @@ ordinary thread and nothing about the rare branches, which later phases prove.""
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import frappe
 from frappe.model.workflow import apply_workflow
 
@@ -93,7 +94,7 @@ class TestOrdinaryThread(ContractCase):
 
 		# the replacement units arrive, are accepted, claimed, certified and paid on the original entitlement
 		self.assertEqual(position.position(case)["remaining"], 2)
-		arrival2 = delivery.record_arrival(case, expected_version=t.version(), idempotency_key=t.key("arrive2"), actor=self.p["grace"], received_at="2027-07-16 09:00:00", destination="Afya House store",
+		arrival2 = delivery.record_arrival(case, expected_version=t.version(), idempotency_key=t.key("arrive2"), actor=self.p["grace"], received_at=D("2027-07-16 09:00:00"), destination="Afya House store",
 			items=[{"line_id": "L1", "quantity": 2, "units": second, "replaces": first[8:]}])["arrival"]  # a replacement names the rejected units it replaces: that closes their issue
 		t.inspect(arrival2, second)
 		t.accept(arrival2)
@@ -178,8 +179,8 @@ class TestOrdinaryThread(ContractCase):
 		self.assertEqual(frappe.db.get_value("Payment Entry", draft["payment"], "docstatus"), 1)
 		# a posted payment is not a settled one
 		self.assertEqual(frappe.db.get_value("Contract Invoice", inv["invoice"], "state"), "Certified")
-		self.assertIn("evidence", refusal(payment.record_finance_settlement, case, payment=draft["payment"], expected_version=t.version(), idempotency_key=t.key("st"), actor=self.p["beatrice"], effective_date="2027-07-20", evidence=" ").fields)
-		settled = payment.record_finance_settlement(case, payment=draft["payment"], expected_version=t.version(), idempotency_key=t.key("st2"), actor=self.p["beatrice"], effective_date="2027-07-20", evidence="Bank line 44")
+		self.assertIn("evidence", refusal(payment.record_finance_settlement, case, payment=draft["payment"], expected_version=t.version(), idempotency_key=t.key("st"), actor=self.p["beatrice"], effective_date=D("2027-07-20"), evidence=" ").fields)
+		settled = payment.record_finance_settlement(case, payment=draft["payment"], expected_version=t.version(), idempotency_key=t.key("st2"), actor=self.p["beatrice"], effective_date=D("2027-07-20"), evidence="Bank line 44")
 		self.assertEqual(settled["state"], "Paid")
 		self.assertEqual(payment_guard.entitlement(native)["available"], 0)
 

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { cmWorld } from "../../helpers/anchor";
 import { pickRecord } from '../../helpers/picker';
 import { as, board, nextStep, openAsSupplier, openContract, pdf, press, today, world } from './helpers';
 
@@ -7,9 +8,9 @@ import { as, board, nextStep, openAsSupplier, openContract, pdf, press, today, w
 // Run `make cm-ui-world` first; `make cm-ui-gate` does both and cleans up. The sources are synthetic (L1): the real owners' answer is `make cm-seams-gate`, whose report names the sources the canonical award
 // cannot yet be formed from. This spec proves the screens and the rules they enforce, not package acceptance.
 // the world runs on the seed world's own timeline (2 July 2027): dates the server checks against its clock are that clock's, not the machine's
-const NOW = '2027-07-02';
-const ISSUED = '2027-07-01';
-const EXPIRES = '2028-08-31';
+const NOW = cmWorld('2027-07-02');
+const ISSUED = cmWorld('2027-07-01');
+const EXPIRES = cmWorld('2028-08-31');
 
 async function prepare(page: import('@playwright/test').Page) {
 	await expect(page.getByTestId('cm-primary')).toHaveText('Save particulars');

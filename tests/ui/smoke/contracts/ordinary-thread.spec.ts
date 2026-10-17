@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { cmWorld, inputDateTime } from "../../helpers/anchor";
 import { pickRecord } from '../../helpers/picker';
 import { as, attr, board, nextStep, openAsSupplier as supplierOpen, openContract as open, pdf, press, tab, today, world } from './helpers';
 
@@ -113,7 +114,7 @@ test.describe('The ordinary contract thread', () => {
 			await expect(page.getByTestId('cm-dialog')).toHaveCount(0);
 			await expect(page.locator('table.table')).toContainText(units.length > 3 ? `${units[0]}–${units[units.length - 1]}` : units.join(', '));
 			await page.getByTestId('cm-input-supplier_reference').fill(`AFYA-DN-${units.length}`);
-			await page.getByTestId('cm-input-received_at').fill('2027-07-12T10:00');
+			await page.getByTestId('cm-input-received_at').fill(inputDateTime(cmWorld('2027-07-12 10:00:00')));
 			await page.getByTestId('cm-input-quantity.L1').fill(String(units.length));
 			if (replaces.length) await page.getByTestId('cm-input-replaces').fill(replaces.join('\n')); // a replacement names the rejected units it replaces: that is what closes their issue
 			await press(page);
@@ -247,7 +248,7 @@ test.describe('The ordinary contract thread', () => {
 			await press(page); // Sign and issue certificate
 			await page.reload();
 			await expect(board(page, 'D22-P')).toBeVisible(); // signed is not delivered: the head confirms that it reached the contractor, with the proof
-			await page.getByTestId('cm-input-delivered_on').fill('2027-07-02');
+			await page.getByTestId('cm-input-delivered_on').fill(cmWorld('2027-07-02'));
 			await page.getByTestId('cm-input-method').fill('Hand delivery to the supplier');
 			await page.getByTestId('cm-input-reference').fill(`DISP-${stamp}`);
 			const uploaded = page.waitForResponse((r) => r.url().includes('upload_file') && r.ok());

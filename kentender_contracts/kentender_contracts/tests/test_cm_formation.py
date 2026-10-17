@@ -11,6 +11,7 @@ import frappe
 
 from kentender_contracts.services import errors, formation, holds, records, simulation, work
 from kentender_contracts.simulation import sources
+from kentender_contracts.simulation.timeline import long_date
 from kentender_contracts.tests import native_world as world
 from kentender_contracts.tests import thread_world as tw
 from kentender_contracts.tests.support import ContractCase
@@ -93,7 +94,7 @@ class TestFormation(ContractCase):
 		full = formation.save_particulars(out["contract"], expected_version=blank["record_version"], idempotency_key=self.k(), actor=self.p["brian"], values=tw.package_particulars(self.p))
 		self.assertEqual(full["missing"], [])
 		html = frappe.db.get_value("Contract Agreement Version", full["agreement"], "rendered_html")
-		for fragment in ("2 July 2027", "Ministry of Health", "Afya Digital Supplies Limited", "10 Laptop computer", "KES 1,000,000, tax included", "Amina Hassan, Accounting Officer", "Mary Wanjiku, Authorised signatory"):
+		for fragment in (long_date("2027-07-02"), "Ministry of Health", "Afya Digital Supplies Limited", "10 Laptop computer", "KES 1,000,000, tax included", "Amina Hassan, Accounting Officer", "Mary Wanjiku, Authorised signatory"):
 			self.assertIn(fragment, html)
 		self.assertEqual(frappe.db.count("Contract Agreement Version", {"contract_case": out["contract"]}), 1, "saving again refreshes the draft, it does not make another version")
 

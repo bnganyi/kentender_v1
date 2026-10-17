@@ -8,6 +8,7 @@ and its criteria do not apply to the laptops; accepting it creates no receipt, n
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D, short_date  # noqa: F401
 import json
 
 import frappe
@@ -54,7 +55,7 @@ class TestRelatedServices(ContractCase):
 		self.terms = records.loads(frappe.db.get_value("Contract Agreement Version", {"contract_case": self.case, "state": "Effective"}, "terms_json"))
 
 	def perform(self, reference="TRAIN-01", quantity=1):
-		return delivery.record_arrival(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("perform"), actor=self.p["grace"], received_at="2027-07-26 14:00:00", destination="Afya House training room",
+		return delivery.record_arrival(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("perform"), actor=self.p["grace"], received_at=D("2027-07-26 14:00:00"), destination="Afya House training room",
 			items=[{"line_id": "L2", "quantity": quantity, "units": [reference] if reference else []}])
 
 	def read(self, arrival, unit, **kw):
@@ -81,7 +82,7 @@ class TestRelatedServices(ContractCase):
 	def test_the_package_carries_the_service_with_its_requirement_deadline_and_evidence(self):
 		lines = {l["line_id"]: l for l in self.terms["lines"]}
 		self.assertEqual((lines["L2"]["kind"], lines["L2"]["quantity"], lines["L2"]["rate"], self.terms["total"]), ("service", 1, 50000, 1050000))
-		self.assertEqual(self.terms["services"][0], {"line_id": "L2", "requirement": "Train ten named users to start and operate the supplied laptops", "deadline": "2027-07-27", "evidence_required": "Attendance and completed practical checklist"})
+		self.assertEqual(self.terms["services"][0], {"line_id": "L2", "requirement": "Train ten named users to start and operate the supplied laptops", "deadline": D("2027-07-27"), "evidence_required": "Attendance and completed practical checklist"})
 		self.assertEqual({l["line_id"] for l in self.terms["lines"] if l.get("kind") == "service"}, {"L2"})
 		self.assertEqual(delivery.service_lines(self.terms), {"L2"})
 
@@ -111,7 +112,7 @@ class TestRelatedServices(ContractCase):
 		self.assertEqual((item["units"], item["unidentified"]), (["SVC-001-L2-1"], 0))
 
 	def test_a_service_is_recorded_on_its_own_not_with_goods(self):
-		exc = refusal(delivery.record_arrival, self.case, expected_version=self.t.version(), idempotency_key=self.t.key("mixed"), actor=self.p["grace"], received_at="2027-07-12 10:00:00", destination="Afya House store",
+		exc = refusal(delivery.record_arrival, self.case, expected_version=self.t.version(), idempotency_key=self.t.key("mixed"), actor=self.p["grace"], received_at=D("2027-07-12 10:00:00"), destination="Afya House store",
 			items=[{"line_id": "L1", "quantity": 1, "units": tw.fresh_serials(1)}, {"line_id": "L2", "quantity": 1, "units": ["TRAIN-01"]}])
 		self.assertIn("on its own", exc.fields["items"])
 
@@ -184,7 +185,7 @@ class TestRelatedServices(ContractCase):
 		board = tw.capture(router.board_for(self.case, self.p["peter"]))
 		self.assertEqual((board["id"], board["title"], board["p"]), ("D31", "Review training completion", "Save observations"))
 		text = flat(board["regions"])
-		for needle in ("1 training session · KES 50,000", "Train ten named users to start and operate the supplied laptops", "27 Jul 2027", "Attendance and completed practical checklist", "TRAIN-01", "Observed attendance"):
+		for needle in ("1 training session · KES 50,000", "Train ten named users to start and operate the supplied laptops", short_date("2027-07-27"), "Attendance and completed practical checklist", "TRAIN-01", "Observed attendance"):
 			self.assertIn(needle, text)
 		self.read(arrival, "TRAIN-01")
 		self.certify(arrival)

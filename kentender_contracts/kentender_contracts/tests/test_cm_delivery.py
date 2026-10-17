@@ -7,6 +7,7 @@ recorded in the tracker."""
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -119,7 +120,7 @@ class TestArrivalAndInspection(DeliveryCase):
 
 	def test_only_the_receiver_records_an_arrival_and_it_makes_custody_and_inspection_work_not_a_receipt(self):
 		before = frappe.db.count("Purchase Receipt", {"supplier": world.SUPPLIER})
-		self.assertEqual(refusal(delivery.record_arrival, self.case, expected_version=self.v(), idempotency_key=self.k("a"), actor=self.p["julia"], received_at="2027-07-12 10:00:00",
+		self.assertEqual(refusal(delivery.record_arrival, self.case, expected_version=self.v(), idempotency_key=self.k("a"), actor=self.p["julia"], received_at=D("2027-07-12 10:00:00"),
 			destination="Afya House store", items=[{"line_id": "L1", "quantity": 10, "units": self.units}]).code, "CM_AUTHORITY")
 		out = self.t.arrive(self.units)
 		self.assertEqual(frappe.db.count("Purchase Receipt", {"supplier": world.SUPPLIER}), before, "arrival creates no native receipt (section 5.4)")
@@ -136,7 +137,7 @@ class TestArrivalAndInspection(DeliveryCase):
 		self.assertEqual(set(exc.fields), {"items", "received_at", "destination"})
 
 	def test_missing_serials_stay_unresolved_and_no_serial_is_invented(self):
-		out = delivery.record_arrival(self.case, expected_version=self.v(), idempotency_key=self.k("a"), actor=self.p["grace"], received_at="2027-07-12 10:00:00", destination="Afya House store",
+		out = delivery.record_arrival(self.case, expected_version=self.v(), idempotency_key=self.k("a"), actor=self.p["grace"], received_at=D("2027-07-12 10:00:00"), destination="Afya House store",
 			items=[{"line_id": "L1", "quantity": 10, "units": self.units[:8]}])
 		items = records.loads(frappe.db.get_value("Contract Arrival", out["arrival"], "items_json"))
 		self.assertEqual((items[0]["quantity"], len(items[0]["units"]), items[0]["unidentified"]), (10, 8, 2))

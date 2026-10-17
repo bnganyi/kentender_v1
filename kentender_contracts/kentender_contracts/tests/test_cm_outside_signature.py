@@ -8,6 +8,7 @@ checked upload, nothing is signed until HOP confirms, the confirmation is never 
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import json
 import os
 from pathlib import Path
@@ -69,7 +70,7 @@ class TestOutsideSignature(ContractCase):
 
 	def record(self, case, party, *, who="charles", signer=None, **o):
 		signer = signer or ("mary" if party == "Supplier" else "amina")
-		values = {"signed_by": tw.PEOPLE[signer][0], "capacity": "Authorised signatory" if party == "Supplier" else "Accounting Officer", "signed_on": "2027-07-02", "notes": "",
+		values = {"signed_by": tw.PEOPLE[signer][0], "capacity": "Authorised signatory" if party == "Supplier" else "Accounting Officer", "signed_on": D("2027-07-02"), "notes": "",
 			"copy": tw.evidence_file(self.p[who], f"{party.lower()}-{self.n}"), **o}
 		return outside.record_outside_signature(case, party=party, expected_version=self.version(case), idempotency_key=self.k(), actor=self.p[who], **values)
 
@@ -97,8 +98,8 @@ class TestOutsideSignature(ContractCase):
 		exc = refusal(self.record, case, "Supplier", signed_by="Amina Hassan")
 		self.assertIn("This signature is for Mary Wanjiku", exc.fields["signed_by"])
 		self.assertEqual(refusal(self.record, case, "Supplier", capacity=" ").fields["capacity"], "Enter the capacity.")
-		self.assertIn("future", refusal(self.record, case, "Supplier", signed_on="2027-07-09").fields["signed_on"])
-		self.assertIn("not out for signature", refusal(self.record, case, "Supplier", signed_on="2027-06-01").fields["signed_on"])
+		self.assertIn("future", refusal(self.record, case, "Supplier", signed_on=D("2027-07-09")).fields["signed_on"])
+		self.assertIn("not out for signature", refusal(self.record, case, "Supplier", signed_on=D("2027-06-01")).fields["signed_on"])
 		self.assertEqual(self.slot(case, "Supplier").state, "Requested")
 
 	def test_the_copy_is_the_persons_own_checked_upload(self):
@@ -188,7 +189,7 @@ class TestOutsideSignature(ContractCase):
 		case = self.sent()
 		self.record(case, "Supplier")
 		self.record(case, "Entity")
-		frappe.flags.kt_cm_clock = "2027-07-15 09:00:00"
+		frappe.flags.kt_cm_clock = D("2027-07-15 09:00:00")
 		self.assertEqual(refusal(self.confirm, case).code, "CM_HOLD")
 		self.assertEqual(frappe.db.get_value("Contract Case", case, "lifecycle"), "Awaiting signatures")
 

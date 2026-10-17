@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { cmWorld } from "../../helpers/anchor";
 import { as, board, openContract, pdf, press, tab, world } from './helpers';
 
 // CM-CHG-001 v0.8 plan Phase 9, tracker CM8-909: final acceptance, completion, the certificate's delivery, the close-out and its correction in a real browser. The Accounting Officer records the final acceptance, the
@@ -12,7 +13,7 @@ async function attach(page: Page, field: string, label: string) {
 }
 
 async function confirmDelivery(page: Page, reference: string, proof: string) {
-	await page.getByTestId('cm-input-delivered_on').fill('2027-07-02');
+	await page.getByTestId('cm-input-delivered_on').fill(cmWorld('2027-07-02'));
 	await page.getByTestId('cm-input-method').fill('Hand delivery to the supplier');
 	await page.getByTestId('cm-input-reference').fill(reference);
 	await attach(page, 'evidence', proof);

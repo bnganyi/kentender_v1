@@ -9,6 +9,7 @@ settled or named as a surviving obligation. Its completion is its own fact, the 
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import frappe
 
 from kentender_contracts.services import errors, funding_closure, holds, intents, payment, position, records, termination, work
@@ -65,7 +66,7 @@ class TerminationCase(ContractCase):
 	def decide(self, decision="Approve", who="amina", reason="The grounds are established.", number=1):
 		return termination.decide(self.case, termination=number, decision=decision, reason=reason, expected_version=self.t.version(), idempotency_key=self.t.key("dec"), actor=self.p[who])
 
-	def notice(self, delivered="2027-07-02", effective="2027-07-02", who="charles", number=1, **kw):
+	def notice(self, delivered=D("2027-07-02"), effective=D("2027-07-02"), who="charles", number=1, **kw):
 		return termination.record_notice(self.case, termination=number, delivered_on=delivered, method=kw.pop("method", "Registered post"), reference=kw.pop("reference", "RP-0042"), effective_on=effective,
 			evidence=kw.pop("evidence", [{"label": "Proof of delivery", "file": "/private/files/pod.pdf"}]), expected_version=self.t.version(), idempotency_key=self.t.key("notice"), actor=self.p[who])
 
@@ -188,18 +189,18 @@ class TestEffect(TerminationCase):
 		self.assertEqual(refusal(self.notice, who="stranger").code, "CM_AUTHORITY")
 		self.assertIn("method", refusal(self.notice, method=" ").fields)
 		self.assertIn("evidence", refusal(self.notice, evidence=[]).fields)
-		self.assertIn("effective_on", refusal(self.notice, delivered="2027-07-05", effective="2027-07-02").fields)
+		self.assertIn("effective_on", refusal(self.notice, delivered=D("2027-07-05"), effective=D("2027-07-02")).fields)
 		self.assertEqual(self.row().state, "Approved")
 
 	def test_a_later_effective_date_waits_for_its_own_record(self):
 		self.ask()
 		self.decide()
-		out = self.notice(delivered="2027-07-02", effective="2027-07-09")
+		out = self.notice(delivered=D("2027-07-02"), effective=D("2027-07-09"))
 		self.assertFalse(out["effective"])
 		self.assertEqual((self.row().state, frappe.db.get_value("Contract Case", self.case, "lifecycle")), ("Notice delivered", "Active"))
 		self.assertIn(("RecordTerminationEffect", "Record that the termination took effect.", "scheduled"), self.tasks("charles"))
 		self.assertEqual(refusal(termination.record_effect, self.case, termination=1, expected_version=self.t.version(), idempotency_key=self.t.key("e"), actor=self.p["charles"]).code, "CM_HOLD")
-		frappe.flags.kt_cm_clock = "2027-07-09 09:00:00"
+		frappe.flags.kt_cm_clock = D("2027-07-09 09:00:00")
 		termination.record_effect(self.case, termination=1, expected_version=self.t.version(), idempotency_key=self.t.key("e2"), actor=self.p["charles"])
 		self.assertEqual((self.row().state, frappe.db.get_value("Contract Case", self.case, "lifecycle")), ("Effective", "Terminated"))
 

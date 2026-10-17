@@ -8,6 +8,7 @@ kept apart; cash is only what attributable evidence confirmed, so a posted payme
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import frappe
 from frappe.utils import flt, today
 
@@ -63,7 +64,7 @@ class SettlementCase(ContractCase):
 		payment.approve_finance_record(self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("approve"), actor=self.p["beatrice"])
 		return entry
 
-	def settle(self, entry, evidence="Bank line", date="2027-07-23"):
+	def settle(self, entry, evidence="Bank line", date=D("2027-07-23")):
 		return payment.record_finance_settlement(self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("settle"), actor=self.p["beatrice"], effective_date=date, evidence=evidence)
 
 	def instalment(self, amount, reference):
@@ -128,9 +129,9 @@ class TestWhatIsCash(SettlementCase):
 
 	def test_only_a_person_independent_of_the_payment_confirms_it(self):
 		entry = self.post(self.draft(800000, "BANK-1"))
-		maker_with_approval = refusal(payment.record_finance_settlement, self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("s1"), actor=self.p["josphat"], effective_date="2027-07-23", evidence="x")
+		maker_with_approval = refusal(payment.record_finance_settlement, self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("s1"), actor=self.p["josphat"], effective_date=D("2027-07-23"), evidence="x")
 		self.assertEqual(maker_with_approval.code, "CM_AUTHORITY")
-		self.assertIn("evidence", refusal(payment.record_finance_settlement, self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("s2"), actor=self.p["beatrice"], effective_date="2027-07-23", evidence=" ").fields)
+		self.assertIn("evidence", refusal(payment.record_finance_settlement, self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("s2"), actor=self.p["beatrice"], effective_date=D("2027-07-23"), evidence=" ").fields)
 
 
 class TestReversalAndCorrection(SettlementCase):
@@ -156,19 +157,19 @@ class TestReversalAndCorrection(SettlementCase):
 
 	def test_a_settlement_is_corrected_without_touching_the_ledger_and_the_old_confirmation_stays(self):
 		entry = self.post(self.draft(800000, "BANK-1"))
-		original = self.settle(entry, "Bank line 44", "2027-07-23")["settlement"]
-		out = payment.correct_finance_settlement(self.case, settlement=original, effective_date="2027-07-24", evidence="Bank line 45", reason="The statement showed the next day.", expected_version=self.t.version(),
+		original = self.settle(entry, "Bank line 44", D("2027-07-23"))["settlement"]
+		out = payment.correct_finance_settlement(self.case, settlement=original, effective_date=D("2027-07-24"), evidence="Bank line 45", reason="The statement showed the next day.", expected_version=self.t.version(),
 			idempotency_key=self.t.key("fix"), actor=self.p["beatrice"])
 		old, new = frappe.get_doc("Contract Settlement", original), frappe.get_doc("Contract Settlement", out["settlement"])
-		self.assertEqual((old.state, new.state, new.corrects, str(new.effective_date), new.amount), ("Corrected", "Confirmed", original, "2027-07-24", 800000))
+		self.assertEqual((old.state, new.state, new.corrects, str(new.effective_date), new.amount), ("Corrected", "Confirmed", original, D("2027-07-24"), 800000))
 		self.assertEqual(self.position()["cash_confirmed"], 800000, "the cash is counted once")
 		self.assertEqual(flt(frappe.db.get_value("Payment Entry", entry, "paid_amount")), 800000)
 
 	def test_a_correction_needs_a_reason_the_right_person_and_a_confirmation_that_stands(self):
 		entry = self.post(self.draft(800000, "BANK-1"))
 		original = self.settle(entry)["settlement"]
-		self.assertIn("reason", refusal(payment.correct_finance_settlement, self.case, settlement=original, effective_date="2027-07-24", evidence="x", reason=" ", expected_version=self.t.version(), idempotency_key=self.t.key("a"), actor=self.p["beatrice"]).fields)
-		self.assertEqual(refusal(payment.correct_finance_settlement, self.case, settlement=original, effective_date="2027-07-24", evidence="x", reason="r", expected_version=self.t.version(), idempotency_key=self.t.key("b"), actor=self.p["josphat"]).code, "CM_AUTHORITY")
-		payment.correct_finance_settlement(self.case, settlement=original, effective_date="2027-07-24", evidence="x", reason="r", expected_version=self.t.version(), idempotency_key=self.t.key("c"), actor=self.p["beatrice"])
-		self.assertEqual(refusal(payment.correct_finance_settlement, self.case, settlement=original, effective_date="2027-07-25", evidence="y", reason="r2", expected_version=self.t.version(), idempotency_key=self.t.key("d"), actor=self.p["beatrice"]).code, "CM_CHANGED",
+		self.assertIn("reason", refusal(payment.correct_finance_settlement, self.case, settlement=original, effective_date=D("2027-07-24"), evidence="x", reason=" ", expected_version=self.t.version(), idempotency_key=self.t.key("a"), actor=self.p["beatrice"]).fields)
+		self.assertEqual(refusal(payment.correct_finance_settlement, self.case, settlement=original, effective_date=D("2027-07-24"), evidence="x", reason="r", expected_version=self.t.version(), idempotency_key=self.t.key("b"), actor=self.p["josphat"]).code, "CM_AUTHORITY")
+		payment.correct_finance_settlement(self.case, settlement=original, effective_date=D("2027-07-24"), evidence="x", reason="r", expected_version=self.t.version(), idempotency_key=self.t.key("c"), actor=self.p["beatrice"])
+		self.assertEqual(refusal(payment.correct_finance_settlement, self.case, settlement=original, effective_date=D("2027-07-25"), evidence="y", reason="r2", expected_version=self.t.version(), idempotency_key=self.t.key("d"), actor=self.p["beatrice"]).code, "CM_CHANGED",
 			"the corrected confirmation is history; correct the one that stands")

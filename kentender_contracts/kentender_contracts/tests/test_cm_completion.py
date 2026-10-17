@@ -10,6 +10,7 @@ corrected only by a reasoned request and a successor decision."""
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D, after_months, long_date  # noqa: F401
 import frappe
 
 from kentender_contracts.services import closeout, closure_correction, errors, final_acceptance, funding_closure, holds, issues, records, security_actions, warranty, work
@@ -17,9 +18,9 @@ from kentender_contracts.tests import native_world as world
 from kentender_contracts.tests import thread_world as tw
 from kentender_contracts.tests.support import ContractCase
 
-ACCEPTED_ON = "2027-07-20 10:00:00"
-FINAL_ON = "2028-07-28 08:30:00"
-NOTICE_ON = "2028-07-10 09:00:00"
+ACCEPTED_ON = D("2027-07-20 10:00:00")
+FINAL_ON = D("2028-07-28 08:30:00")
+NOTICE_ON = D("2028-07-10 09:00:00")
 
 
 def refusal(fn, *args, **kwargs):
@@ -32,9 +33,9 @@ def refusal(fn, *args, **kwargs):
 
 class CompletionCase(ContractCase):
 	native = True
-
 	#: the tests that need the award publication left open, so that the closing review has a surviving obligation to classify (the head records it early everywhere else: FU-CM-108)
 	PUBLICATION_OPEN = ("test_the_review_states_the_final_acceptance_and_classifies_what_survives",)
+
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
@@ -54,7 +55,7 @@ class CompletionCase(ContractCase):
 		self.t.appointed()
 		frappe.db.set_value("Contract Case", self.case, "responsible_user", self.p["julia"])
 		self.units = tw.fresh_serials(10)
-		arrival = self.t.arrive(self.units, received_at="2027-07-12 10:00:00")["arrival"]
+		arrival = self.t.arrive(self.units, received_at=D("2027-07-12 10:00:00"))["arrival"]
 		self.t.inspect(arrival, self.units)
 		frappe.flags.kt_cm_clock = ACCEPTED_ON
 		self.t.accept(arrival)
@@ -92,7 +93,7 @@ class CompletionCase(ContractCase):
 		return {c for c, _, _ in self.tasks(who)}
 
 	def claim(self):
-		return warranty.record_claim(self.case, unit=self.units[3], fault="Battery does not charge", notice_date="2028-07-10", remedy="Like-for-like replacement", expected_version=self.t.version(), idempotency_key=self.t.key("claim"), actor=self.p["julia"])
+		return warranty.record_claim(self.case, unit=self.units[3], fault="Battery does not charge", notice_date=D("2028-07-10"), remedy="Like-for-like replacement", expected_version=self.t.version(), idempotency_key=self.t.key("claim"), actor=self.p["julia"])
 
 
 class TestFinalAcceptance(CompletionCase):
@@ -103,7 +104,7 @@ class TestFinalAcceptance(CompletionCase):
 
 	def test_the_evidence_is_read_from_the_records_and_names_the_units_and_the_end_of_their_warranty(self):
 		found = final_acceptance.evidence(self.case)
-		self.assertEqual((found["accepted"], found["defects"], found["warranty_ends"]), (10, [], ["2028-07-20"]))
+		self.assertEqual((found["accepted"], found["defects"], found["warranty_ends"]), (10, [], [after_months("2027-07-20", 12)]))
 		self.assertTrue(found["treatment"])
 
 	def test_only_the_accounting_officer_signs_it_and_it_is_recorded_once(self):
@@ -121,7 +122,7 @@ class TestFinalAcceptance(CompletionCase):
 		self.assertIn("IssueCompletionCertificate", self.commands("charles"))
 		self.assertNotIn("SignFinalContractAcceptance", self.commands("amina"))
 		found = security_actions.final_acceptance(self.case)
-		self.assertEqual(str(found["on"]), "2028-07-28")
+		self.assertEqual(str(found["on"]), D("2028-07-28"))
 
 	def test_an_open_warranty_claim_blocks_it_names_the_unit_and_its_holder(self):
 		frappe.flags.kt_cm_clock = NOTICE_ON
@@ -191,24 +192,24 @@ class TestCertificateDeliveryAndClosure(CompletionCase):
 	def test_only_the_head_confirms_delivery(self):
 		self.accept_finally()
 		self.issue_certificate()
-		exc = refusal(closeout.confirm_certificate_delivery, self.case, certificate=self.certificate().name, delivered_on="2028-07-28", method="Post", evidence=[{"label": "Receipt", "file": "x"}], expected_version=self.t.version(),
+		exc = refusal(closeout.confirm_certificate_delivery, self.case, certificate=self.certificate().name, delivered_on=D("2028-07-28"), method="Post", evidence=[{"label": "Receipt", "file": "x"}], expected_version=self.t.version(),
 			idempotency_key=self.t.key("stranger"), actor=self.p["julia"])
 		self.assertEqual(exc.code, "CM_AUTHORITY")
 
 	def test_the_review_states_the_final_acceptance_and_classifies_what_survives(self):
 		self.completed()
 		review = records.loads(frappe.db.get_value("Contract Closeout", {"contract_case": self.case, "state": "Awaiting signature"}, "review_json"))
-		self.assertEqual(review["final_acceptance"], "Recorded on 28 July 2028")
+		self.assertEqual(review["final_acceptance"], f"Recorded on {long_date('2028-07-28')}")
 		self.assertEqual(review["remaining"], [])
 		self.assertEqual([c["kind"] for c in review["classified"]], ["Publication"])
 		self.assertTrue(all(c["owner"] and c["basis"] for c in review["classified"]))
 
 	def test_a_running_warranty_survives_the_closure_with_its_owner_and_its_end(self):
-		frappe.flags.kt_cm_clock = "2028-07-10 09:00:00"  # the warranty still runs
+		frappe.flags.kt_cm_clock = D("2028-07-10 09:00:00")  # the warranty still runs
 		self.completed()
 		review = records.loads(frappe.db.get_value("Contract Closeout", {"contract_case": self.case, "state": "Awaiting signature"}, "review_json"))
 		warranty_row = next(c for c in review["classified"] if c["kind"] == "Warranty")
-		self.assertEqual((warranty_row["owner"], warranty_row["due"]), (self.p["julia"], "2028-07-20"))
+		self.assertEqual((warranty_row["owner"], warranty_row["due"]), (self.p["julia"], D("2028-07-20")))
 
 	def test_an_unclassified_surviving_duty_is_needs_review_and_prevents_the_closure(self):
 		self.completed()

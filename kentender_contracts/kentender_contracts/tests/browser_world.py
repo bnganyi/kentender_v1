@@ -14,6 +14,7 @@ It refuses any site but `kentender-test.local`: it sets passwords and writes doc
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import json
 import os
 from pathlib import Path
@@ -127,9 +128,9 @@ def _stage(kind: str, contract_id: str, award_case: str, people: dict[str, str])
 		_accepted(t, 10)  # everything ordered is accepted and the issued terms ask for the Accounting Officer's final acceptance (the `-FIN` case): the walk records it, completes, closes and corrects
 	elif kind == "delay":
 		units = tw.fresh_serials(10)
-		arrival = t.arrive(units, received_at="2027-07-12 10:00:00")["arrival"]
+		arrival = t.arrive(units, received_at=D("2027-07-12 10:00:00"))["arrival"]
 		t.inspect(arrival, units)
-		frappe.flags.kt_cm_clock = "2027-07-25 10:00:00"  # accepted after the due date of the 20th: five days late
+		frappe.flags.kt_cm_clock = D("2027-07-25 10:00:00")  # accepted after the due date of the 20th: five days late
 		t.accept(arrival)
 		frappe.flags.kt_cm_clock = None
 	elif kind == "security_actions":
@@ -148,7 +149,7 @@ def _stage(kind: str, contract_id: str, award_case: str, people: dict[str, str])
 		delivery.prepare_acceptance_report(t.case, arrivals=[arrival], expected_version=t.version(), idempotency_key=t.key("prepare"), actor=people["julia"])
 		out["units"] = units
 	else:
-		delivery.record_arrival(t.case, expected_version=t.version(), idempotency_key=t.key("perform"), actor=people["grace"], received_at="2027-07-26 14:00:00", destination="Afya House training room",
+		delivery.record_arrival(t.case, expected_version=t.version(), idempotency_key=t.key("perform"), actor=people["grace"], received_at=D("2027-07-26 14:00:00"), destination="Afya House training room",
 			items=[{"line_id": "L2", "quantity": 1, "units": ["TRAIN-01"]}])
 	frappe.db.commit()
 	frappe.flags.kt_contract_source_providers = None
@@ -171,13 +172,13 @@ def build() -> dict:
 	frappe.db.commit()
 	package = {**sources.award_package(), "award_case": AWARD_CASE}  # its own Award case, so the service tests (which receive the demonstration package) never meet this world's contract
 	received = formation.receive_award_package(package, handoff=sources.source_handoff(AWARD_CASE), managing_unit=tw.unit(), idempotency_key=f"receive-{CONTRACT}", actor="Administrator", contract_id=CONTRACT)
-	extra = {}
 	tw.publish(people, received["contract"])  # the head records the award publication early, as in every test world (FU-CM-108): the walks below start from their own step
+	extra = {}
 	for kind, (contract_id, award_case) in EXTRA.items():
 		got = formation.receive_award_package({**sources.award_package(), "award_case": award_case}, handoff=sources.source_handoff(award_case), managing_unit=tw.unit(), idempotency_key=f"receive-{contract_id}",
 			actor="Administrator", contract_id=contract_id)
-		extra[kind] = got["contract"]
 		tw.publish(people, got["contract"])
+		extra[kind] = got["contract"]
 	frappe.db.commit()
 	staged = {kind: _stage(kind, contract_id, award_case, people) for kind, (contract_id, award_case) in STAGED.items()}
 	receipt = world.fixed_asset_receipt("EXTUI", 4)  # the units of an existing contract that were already received and invoiced before management starts
@@ -185,8 +186,8 @@ def build() -> dict:
 	frappe.db.commit()
 	from kentender_contracts.services import reporting
 
-	frappe.flags.kt_cm_clock = "2027-08-01 09:00:00"  # the July progress report, generated once July has ended (the live pages run on the world's own clock)
-	made = reporting.generate("Progress", period_start="2027-07-01", idempotency_key="ui-world-july-report", actor=people["charles"])
+	frappe.flags.kt_cm_clock = D("2027-08-01 09:00:00")  # the July progress report, generated once July has ended (the live pages run on the world's own clock)
+	made = reporting.generate("Progress", period_start=D("2027-07-01"), idempotency_key="ui-world-july-report", actor=people["charles"])
 	frappe.flags.kt_cm_clock = None
 	report_contract = reporting.sources(reporting.get(made["report"]))["cases"][0]["case"] if made["state"] == "Draft" and made["rows"] else ""
 	frappe.db.commit()
@@ -212,8 +213,8 @@ def clean() -> dict:
 			frappe.db.delete(doctype, {"contract_case": case})
 		frappe.db.delete("Contract Simulated Funding", {"contract": case})
 		frappe.db.delete("Contract Case", {"name": case})
-	frappe.db.delete("Contract Report", {"fixture_namespace": NAMESPACE})  # the generated reports belong to no one contract
 	records.forget_alerts_of_missing_contracts()  # the bell of the people the walk used must not keep the removed contracts' alerts
+	frappe.db.delete("Contract Report", {"fixture_namespace": NAMESPACE})  # the generated reports belong to no one contract
 	frappe.db.delete("Contract Command Journal", {"fixture_namespace": NAMESPACE})
 	frappe.db.delete("Contract Simulated Signature", {"signer": ["in", list(_addresses().values())]})
 	for name in frappe.get_all("File", filters={"file_name": ["like", "cm-ui-%"]}, pluck="name"):  # the evidence files the walk uploaded

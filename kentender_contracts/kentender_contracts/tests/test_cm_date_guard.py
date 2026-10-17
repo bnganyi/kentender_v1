@@ -12,6 +12,7 @@ parameter is an internal date the service computed rather than one a person type
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import ast
 import unittest
 from pathlib import Path
@@ -58,8 +59,8 @@ class TestDatesTypedByAPerson(unittest.TestCase):
 	def test_a_blank_or_invalid_date_is_none_never_today(self):
 		for value in ("", "   ", None, "not a date", "2027-13-45"):
 			self.assertIsNone(records.day(value), repr(value))
-		self.assertEqual(str(records.day("2027-07-02")), "2027-07-02")
-		self.assertEqual(str(records.day(" 2027-07-02 ")), "2027-07-02")
+		self.assertEqual(str(records.day(D("2027-07-02"))), D("2027-07-02"))
+		self.assertEqual(str(records.day(f" {D('2027-07-02')} ")), D("2027-07-02"))
 
 	def test_no_service_parses_a_typed_date_with_getdate_without_review(self):
 		unreviewed = sorted(_parses_of_a_parameter() - REVIEWED)

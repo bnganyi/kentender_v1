@@ -9,6 +9,7 @@ other module walks all the way are here: a termination while an advance is outst
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import frappe
 from frappe.utils import flt
 
@@ -60,8 +61,8 @@ class TestTerminationWithAnAdvance(WholeChain):
 		self.t.appointed()
 		row = advance.prepare_advance(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("adv"), actor=self.p["david"], claim_reference="WC-ADV-1", amount=100_000)["advance"]
 		sec = advance.record_guarantee(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("g"), actor=self.p["josphat"], issuer="Test Bank", beneficiary="Ministry of Health", reference="WC-AG-01",
-			amount=100_000, issued_on="2027-06-01", expires_on="2027-08-31")["security"]
-		advance.verify_guarantee(self.case, security=sec, expected_version=self.t.version(), idempotency_key=self.t.key("v"), actor=self.p["charles"], confirmation_reference="WC-AG-CONF", received_on="2027-07-02")
+			amount=100_000, issued_on=D("2027-06-01"), expires_on=D("2027-08-31"))["security"]
+		advance.verify_guarantee(self.case, security=sec, expected_version=self.t.version(), idempotency_key=self.t.key("v"), actor=self.p["charles"], confirmation_reference="WC-AG-CONF", received_on=D("2027-07-02"))
 		advance.sign_advance_certification(self.case, advance=row, expected_version=self.t.version(), idempotency_key=self.t.key("cert"), actor=self.p["charles"])
 		from kentender_contracts.services import payment
 
@@ -69,7 +70,7 @@ class TestTerminationWithAnAdvance(WholeChain):
 			reference_no="WC-ADV-BANK")["payment"]
 		payment.submit_finance_for_approval(self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("sub"), actor=self.p["josphat"])
 		payment.approve_finance_record(self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("app"), actor=self.p["beatrice"])
-		payment.record_finance_settlement(self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("settle"), actor=self.p["beatrice"], effective_date="2027-07-05", evidence="Bank line WC-ADV")
+		payment.record_finance_settlement(self.case, payment=entry, expected_version=self.t.version(), idempotency_key=self.t.key("settle"), actor=self.p["beatrice"], effective_date=D("2027-07-05"), evidence="Bank line WC-ADV")
 		units = tw.fresh_serials(8)
 		arrival = self.t.arrive(units)["arrival"]
 		self.t.inspect(arrival, units)
@@ -82,7 +83,7 @@ class TestTerminationWithAnAdvance(WholeChain):
 		termination.request(self.case, grounds="Material non-delivery", clause="Contract clause 8", recommendation="Terminate the unperformed balance", evidence=EVIDENCE, expected_version=self.t.version(),
 			idempotency_key=self.t.key("ask"), actor=self.p["charles"])
 		termination.decide(self.case, termination=1, decision="Approve", reason="The grounds are established.", expected_version=self.t.version(), idempotency_key=self.t.key("dec"), actor=self.p["amina"])
-		return termination.record_notice(self.case, termination=1, delivered_on="2027-07-02", method="Registered post", reference="RP-0042", effective_on="2027-07-02", evidence=[{"label": "Proof of delivery", "file": "/private/files/pod.pdf"}],
+		return termination.record_notice(self.case, termination=1, delivered_on=D("2027-07-02"), method="Registered post", reference="RP-0042", effective_on=D("2027-07-02"), evidence=[{"label": "Proof of delivery", "file": "/private/files/pod.pdf"}],
 			expected_version=self.t.version(), idempotency_key=self.t.key("notice"), actor=self.p["charles"])
 
 	def test_the_advance_still_owed_is_in_the_position_the_settlement_and_the_close_of_the_contract(self):
@@ -120,8 +121,8 @@ class TestImportedActivityIsCarriedToTheClose(WholeChain):
 		invoice = adapter.invoice_receipt(receipt, world.identity("invoice wcext", "Native invoice"), bill_no="WC-EXT-INV", qty=4)
 		frappe.db.commit()
 		values = {"source": "External records", "reference": "MOH/ICT/2027/WC-EXT", "supplier_country": tw.REGISTRATION[0], "supplier_registration": tw.REGISTRATION[1], "agreement_file": tw.evidence_file(self.p["brian"], "wc-agreement"),
-			"amendments": "None", "signed_on": "2027-07-02", "effective_on": "2027-07-02", "cutover": "2027-08-03 00:00:00", "original_value": 1_000_000, "current_value": 1_000_000,
-			"items": "Laptop computer | 10 | Each | 100000 | Included | 4 | 2 | 4", "delivery_due": "2027-07-20", "payment_days": 30, "warranty_months": 12,
+			"amendments": "None", "signed_on": D("2027-07-02"), "effective_on": D("2027-07-02"), "cutover": D("2027-08-03 00:00:00"), "original_value": 1_000_000, "current_value": 1_000_000,
+			"items": "Laptop computer | 10 | Each | 100000 | Included | 4 | 2 | 4", "delivery_due": D("2027-07-20"), "payment_days": 30, "warranty_months": 12,
 			"acceptance": "RAM | >= | 16 | GB\nStorage | >= | 512 | GB\nStarts successfully | = | Yes | ", "security_required": "No", "advance_allowed": "No", "restrictions": "None", "clauses": "Agreement WC-EXT §§2-8",
 			"owner": self.p["julia"], "managing_unit": tw.unit(), "entity_signatory": self.p["amina"], "native_supplier": world.SUPPLIER, "asset_location": world.LOCATION, "item_mapping": {"L1": world.ITEM_FA},
 			"prior_activity": "Some", "opening_invoiced": 400_000, "opening_credits": 0, "opening_cash_paid": 0, "opening_outstanding": 400_000, "opening_advance": 0, "units_in_custody": "WC-EXT-009\nWC-EXT-010",
@@ -147,7 +148,7 @@ class TestImportedActivityIsCarriedToTheClose(WholeChain):
 		self.t.inspect(opening.name, ["WC-EXT-009", "WC-EXT-010"])
 		self.t.accept(opening.name)
 		units = tw.fresh_serials(4)
-		arrival = self.t.arrive(units, received_at="2027-07-16 10:00:00")["arrival"]
+		arrival = self.t.arrive(units, received_at=D("2027-07-16 10:00:00"))["arrival"]
 		self.t.inspect(arrival, units)
 		self.t.accept(arrival)
 		now = position.position(self.case)["lines"]["L1"]

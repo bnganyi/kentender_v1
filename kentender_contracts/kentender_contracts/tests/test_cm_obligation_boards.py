@@ -8,6 +8,7 @@ The server builds each board for the viewer at their step; with `CM_CAPTURE_BOAR
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D, day, day_month, long_date, short_date, short_instant  # noqa: F401
 import frappe
 
 from kentender_contracts.boards import router
@@ -47,7 +48,7 @@ class OpsBoards(ContractCase):
 		self.assertEqual(board["id"], expected, f"{who}: {board.get('title')} / {(board.get('next') or {}).get('h')}")
 		return tw.capture(board) if capture else board
 
-	def accepted(self, count=10, bad=(), on="2027-07-25 10:00:00", received="2027-07-12 10:00:00"):
+	def accepted(self, count=10, bad=(), on=D("2027-07-25 10:00:00"), received=D("2027-07-12 10:00:00")):
 		units = tw.fresh_serials(count)
 		arrival = self.t.arrive(units, received_at=received)["arrival"]
 		self.t.inspect(arrival, units, bad=tuple(units[i] for i in bad))
@@ -58,7 +59,7 @@ class OpsBoards(ContractCase):
 
 class TestIssues(OpsBoards):
 	def test_a_delivery_issue_from_the_findings_to_the_closed_thread(self):
-		units = self.accepted(10, bad=(8, 9), on="2027-07-20 15:00:00")
+		units = self.accepted(10, bad=(8, 9), on=D("2027-07-20 15:00:00"))
 		owner = self.screen("carol", "D13", tab="Obligations")
 		self.assertEqual((owner["title"], owner["p"], owner["next"]["h"], owner["s2"]), ("2 laptop computers need replacement", "Send message", "Send the inspection findings to the supplier.", ["View acceptance report"]))
 		facts = owner["regions"][0]["b"][0]["items"]
@@ -71,10 +72,10 @@ class TestIssues(OpsBoards):
 		self.assertEqual(supplier["regions"][1]["t"], "Message from Ministry of Health")
 		issues.reply_correspondence(self.case, issue=row.name, text="We will deliver two replacement laptops on 27 July 2027.", expected_version=self.t.version(), idempotency_key=self.t.key("r"), actor=self.p["david"])
 		new = tw.fresh_serials(2)
-		again = delivery.record_arrival(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("ra"), actor=self.p["grace"], received_at="2027-07-26 10:00:00", destination="Afya House store",
+		again = delivery.record_arrival(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("ra"), actor=self.p["grace"], received_at=D("2027-07-26 10:00:00"), destination="Afya House store",
 			items=[{"line_id": "L1", "quantity": 2, "units": new, "replaces": units[8:]}])["arrival"]
 		self.t.inspect(again, new)
-		frappe.flags.kt_cm_clock = "2027-07-27 16:00:00"
+		frappe.flags.kt_cm_clock = D("2027-07-27 16:00:00")
 		self.t.accept(again)
 		closed = self.screen("carol", "D13-C", tab="Obligations", subject=("issue", "1"))
 		self.assertEqual((closed["next"]["k"], closed["p"], closed["s2"]), ("done", "", ["Report a new issue", "View replacement acceptance"]))
@@ -86,11 +87,11 @@ class TestWarranty(OpsBoards):
 
 	def setUp(self):
 		super().setUp()
-		self.units = self.accepted(10, on="2027-07-20 10:00:00")
-		frappe.flags.kt_cm_clock = "2028-07-10 09:00:00"
+		self.units = self.accepted(10, on=D("2027-07-20 10:00:00"))
+		frappe.flags.kt_cm_clock = D("2028-07-10 09:00:00")
 
 	def claim(self, remedy, unit):
-		return warranty.record_claim(self.case, unit=unit, fault="Battery does not charge", notice_date="2028-07-10", remedy=remedy, expected_version=self.t.version(), idempotency_key=self.t.key("claim"), actor=self.p["carol"])
+		return warranty.record_claim(self.case, unit=unit, fault="Battery does not charge", notice_date=D("2028-07-10"), remedy=remedy, expected_version=self.t.version(), idempotency_key=self.t.key("claim"), actor=self.p["carol"])
 
 	def row(self):
 		return issues.get(self.case, 1)
@@ -101,17 +102,17 @@ class TestWarranty(OpsBoards):
 		self.assertEqual((notice["title"], notice["p"], notice["next"]["h"], notice["s2"]), ("Warranty claim", "Send notice", "Send the defect notice.", ["View warranty"]))
 		self.assertEqual([r[0] for r in notice["regions"][0]["b"][0]["items"]], ["Unit", "Accepted", "Source terms", "Fault", "Warranty", "Evidence"])
 		issues.send_correspondence(self.case, issue=self.row().name, text="The battery does not charge. Please arrange a replacement.", expected_version=self.t.version(), idempotency_key=self.t.key("n"), actor=self.p["carol"])
-		frappe.flags.kt_cm_clock = "2028-07-10 09:30:00"
+		frappe.flags.kt_cm_clock = D("2028-07-10 09:30:00")
 		arrange = self.screen("carol", "D35", tab="Obligations")
 		self.assertEqual((arrange["p"], arrange["next"]["h"]), ("Record return", "Arrange return of the faulty laptop computer."))
 		self.assertEqual(arrange["regions"][1]["b"][0]["items"], [["Returned", "No"], ["Replacement", "Not received"], ["Finance correction", "Pending — Josphat Mwangi"]])
 		self.assertEqual(arrange["dialogs"]["return"]["p"], "Record return")
-		warranty.record_return(self.case, issue=self.row().name, collected_on="2028-07-12", evidence="Test collection WAR-01", expected_version=self.t.version(), idempotency_key=self.t.key("ret"), actor=self.p["carol"])
+		warranty.record_return(self.case, issue=self.row().name, collected_on=D("2028-07-12"), evidence="Test collection WAR-01", expected_version=self.t.version(), idempotency_key=self.t.key("ret"), actor=self.p["carol"])
 		new = tw.fresh_serials(1)
-		out = delivery.record_arrival(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("ra"), actor=self.p["grace"], received_at="2028-07-14 10:00:00", destination="Afya House store",
+		out = delivery.record_arrival(self.case, expected_version=self.t.version(), idempotency_key=self.t.key("ra"), actor=self.p["grace"], received_at=D("2028-07-14 10:00:00"), destination="Afya House store",
 			items=[{"line_id": "L1", "quantity": 1, "units": new, "replaces": [self.units[3]]}])
 		self.t.inspect(out["arrival"], new)
-		frappe.flags.kt_cm_clock = "2028-07-15 09:00:00"
+		frappe.flags.kt_cm_clock = D("2028-07-15 09:00:00")
 		self.t.accept(out["arrival"])
 		blocked = self.screen("peter", "D35-H", tab="Obligations")
 		self.assertEqual((blocked["next"]["k"], blocked["next"]["h"], blocked["p"]), ("blk", "Finance must reconcile the replacement.", ""))
@@ -135,7 +136,7 @@ class TestWarranty(OpsBoards):
 	def test_a_repair_claim_waits_on_the_supplier_after_the_warranty_has_ended(self):
 		self.claim("Repair", self.units[4])
 		issues.send_correspondence(self.case, issue=self.row().name, text="Battery does not charge.", expected_version=self.t.version(), idempotency_key=self.t.key("n2"), actor=self.p["carol"])
-		frappe.flags.kt_cm_clock = "2028-07-21 09:00:00"
+		frappe.flags.kt_cm_clock = D("2028-07-21 09:00:00")
 		board = self.screen("carol", "D16-P", tab="Obligations")
 		self.assertEqual((board["next"]["k"], board["p"], board["s2"]), ("wait", "", ["View notice", "View claim history"]))
 		self.assertIn("Expired", dict(board["regions"][0]["b"][0]["items"])["Warranty"])
@@ -143,7 +144,7 @@ class TestWarranty(OpsBoards):
 
 class TestAdjustment(OpsBoards):
 	def test_a_delay_adjustment_from_the_proposal_to_the_certification_and_the_held_payment(self):
-		self.accepted(10, on="2027-07-25 10:00:00")
+		self.accepted(10, on=D("2027-07-25 10:00:00"))
 		hop = self.screen("charles", "D36", tab="Obligations")
 		self.assertEqual((hop["title"], hop["p"], hop["next"]["h"]), ("Review delivery delay", "Submit adjustment for decision", "Review the proposed adjustment."))
 		calc = hop["regions"][0]["b"]
@@ -167,13 +168,13 @@ class TestAdjustment(OpsBoards):
 		self.assertEqual(held["next"]["fixes"], ["View calculation", "View issue"])
 
 	def test_an_extension_that_took_effect_shows_the_retained_earlier_computation(self):
-		self.accepted(10, on="2027-07-25 10:00:00")
+		self.accepted(10, on=D("2027-07-25 10:00:00"))
 		adjustment.prepare(self.case, causation="Supplier shipment delay", clause="TEST-DELAY-01", supplier_response="", recommendation="", expected_version=self.t.version(), idempotency_key=self.t.key("p"), actor=self.p["charles"])
 		adjustment.decide(self.case, adjustment=adjustment.get(self.case, 1).name, decision="Return", reason="Re-read the extension.", expected_version=self.t.version(), idempotency_key=self.t.key("d"), actor=self.p["amina"])
-		self.t.change_through("Extension", {"proposed_date": "2027-07-22"})
+		self.t.change_through("Extension", {"proposed_date": D("2027-07-22")})
 		board = self.screen("charles", "D36-E", tab="Obligations")
 		calc = board["regions"][0]["b"]
-		self.assertEqual((calc[0]["items"][0], calc[0]["items"][2]), (["Due date", "22 Jul 2027 (effective extension)"], ["Days late", "3 calendar days (23–25 Jul inclusive)"]))
+		self.assertEqual((calc[0]["items"][0], calc[0]["items"][2]), (["Due date", f"{short_date('2027-07-22')} (effective extension)"], ["Days late", f"3 calendar days ({day('2027-07-23')}–{day_month('2027-07-25')} inclusive)"]))
 		self.assertEqual(calc[1]["items"][1], ["Proposed adjustment", "KES 3,000"])
 
 
@@ -182,7 +183,7 @@ class TestSecurity(OpsBoards):
 
 	def setUp(self):
 		super().setUp()
-		frappe.flags.kt_cm_clock = "2027-08-12 09:00:00"
+		frappe.flags.kt_cm_clock = D("2027-08-12 09:00:00")
 
 	def claim(self):
 		return security_actions.request_claim(self.case, grounds="Failure to perform the unfulfilled obligation", amount=40_000, recipient="Test Bank", mandate="Reviewed test mandate 1", evidence=EVIDENCE,
@@ -197,7 +198,7 @@ class TestSecurity(OpsBoards):
 		self.assertEqual(ao["regions"][1]["b"][0]["items"][0], ["Amount", "KES 40,000"])
 		security_actions.decide_claim(self.case, claim=1, decision="Approve", reason="The exact claim is supported.", expected_version=self.t.version(), idempotency_key=self.t.key("d"), actor=self.p["amina"])
 		self.assertEqual(self.screen("charles", "D37-C", capture=False)["p"], "Record delivery")
-		security_actions.record_communication(self.case, claim=1, sent_on="2027-08-12", channel="Courier", reference="CR-1", evidence=[{"label": "Proof", "file": "/private/files/p.pdf"}], expected_version=self.t.version(),
+		security_actions.record_communication(self.case, claim=1, sent_on=D("2027-08-12"), channel="Courier", reference="CR-1", evidence=[{"label": "Proof", "file": "/private/files/p.pdf"}], expected_version=self.t.version(),
 			idempotency_key=self.t.key("m"), actor=self.p["charles"])
 		waiting = self.screen("charles", "D37-P", tab="Obligations")
 		self.assertEqual((waiting["next"]["k"], waiting["p"], waiting["s2"]), ("wait", "", ["Record claim outcome"]))
@@ -205,28 +206,28 @@ class TestSecurity(OpsBoards):
 		self.assertEqual(waiting["regions"][1]["b"][0]["items"][2], ["Outcome", "Not recorded"])
 
 	def test_a_replacement_instrument_is_verified_while_the_old_one_stays_operative(self):
-		new = self.t.record_security(reference="TEST-SG-02", issued_on="2027-08-15", expires_on="2027-09-30", verify=False)
+		new = self.t.record_security(reference="TEST-SG-02", issued_on=D("2027-08-15"), expires_on=D("2027-09-30"), verify=False)
 		board = self.screen("charles", "D37-X", tab="Obligations")
 		self.assertEqual((board["p"], board["s2"], board["next"]["h"]), ("Verify replacement", ["Reject replacement"], "Check the issuer's confirmation."))
 		table = board["regions"][0]["b"][0]
 		self.assertEqual([[r[0], r[3]] for r in table["rows"]], [["TEST-SG-01", "!Operative"], ["TEST-SG-02", "!Not verified"]])
-		security.verify_security(self.case, security=new, expected_version=self.t.version(), idempotency_key=self.t.key("v"), actor=self.p["charles"], confirmation_reference="TEST-SG-CONF-02", received_on="2027-08-15")
+		security.verify_security(self.case, security=new, expected_version=self.t.version(), idempotency_key=self.t.key("v"), actor=self.p["charles"], confirmation_reference="TEST-SG-CONF-02", received_on=D("2027-08-15"))
 		self.assertEqual(self.screen("charles", "D37-R", capture=False)["p"], "Record replacement")
 
 	def test_the_return_is_due_after_the_final_acceptance(self):
 		records.new("Contract Certificate", contract_case=self.case, kind="Final acceptance", subject="final acceptance", subject_version=1, state="Signed", signer=self.p["amina"], proof_reference="TEST",
-			signed_at="2027-07-27 10:00:00", content_json="{}", record_version=1)
+			signed_at=D("2027-07-27 10:00:00"), content_json="{}", record_version=1)
 		security_actions.on_final_acceptance(self.case)
-		frappe.flags.kt_cm_clock = "2027-08-01 09:30:00"
+		frappe.flags.kt_cm_clock = D("2027-08-01 09:30:00")
 		board = self.screen("charles", "D16", tab="Obligations")
 		self.assertEqual((board["title"], board["p"], board["next"]["h"], board["s2"]), ("Performance security", "Record return", "Record the security return.", ["View guarantee"]))
-		self.assertEqual(board["regions"][0]["b"][0]["items"][2:], [["AO final acceptance", "27 July 2027"], ["Return due", "26 August 2027 — 30 days from AO final acceptance"], ["Status", "Return due"]])
+		self.assertEqual(board["regions"][0]["b"][0]["items"][2:], [["AO final acceptance", long_date("2027-07-27")], ["Return due", f"{long_date('2027-08-26')} — 30 days from AO final acceptance"], ["Status", "Return due"]])
 
 
 class TestTermination(OpsBoards):
 	def setUp(self):
 		super().setUp()
-		self.accepted(8, on="2027-07-25 10:00:00")
+		self.accepted(8, on=D("2027-07-25 10:00:00"))
 		self.paid = self.t.claim("INV-T-1", 6)["invoice"]
 		self.t.certify_invoice(self.paid)
 		self.t.pay(self.paid, "TERM-BANK-1")
@@ -248,7 +249,7 @@ class TestTermination(OpsBoards):
 		self.assertEqual(self.screen("charles", "D20-R", capture=False)["p"], "Record delivery")
 		waiting = self.screen("amina", "D20-P", tab="Obligations")
 		self.assertEqual((waiting["next"]["k"], waiting["p"], waiting["s2"]), ("wait", "", ["View notice", "View delivery status"]))
-		termination.record_notice(self.case, termination=1, delivered_on="2027-07-02", method="Registered post", reference="RP-1", effective_on="2027-07-02", evidence=[{"label": "Proof", "file": "/private/files/p.pdf"}],
+		termination.record_notice(self.case, termination=1, delivered_on=D("2027-07-02"), method="Registered post", reference="RP-1", effective_on=D("2027-07-02"), evidence=[{"label": "Proof", "file": "/private/files/p.pdf"}],
 			expected_version=self.t.version(), idempotency_key=self.t.key("not"), actor=self.p["charles"])
 		effective = self.screen("amina", "D20-T", tab="Obligations")
 		self.assertEqual((effective["st"], effective["next"]["k"], effective["p"], effective["s2"]), ("Terminated", "wait", "", ["View termination record", "View settlement"]))
@@ -266,7 +267,7 @@ class TestTermination(OpsBoards):
 	def test_an_advance_that_is_not_recovered_blocks_the_settlement(self):
 		self.ask()
 		termination.decide(self.case, termination=1, decision="Approve", reason="Established.", expected_version=self.t.version(), idempotency_key=self.t.key("dec"), actor=self.p["amina"])
-		termination.record_notice(self.case, termination=1, delivered_on="2027-07-02", method="Post", reference="RP-1", effective_on="2027-07-02", evidence=[{"label": "Proof", "file": "/private/files/p.pdf"}],
+		termination.record_notice(self.case, termination=1, delivered_on=D("2027-07-02"), method="Post", reference="RP-1", effective_on=D("2027-07-02"), evidence=[{"label": "Proof", "file": "/private/files/p.pdf"}],
 			expected_version=self.t.version(), idempotency_key=self.t.key("not"), actor=self.p["charles"])
 		self.t.pay(self.unpaid, "TERM-BANK-2")
 		from unittest import mock
@@ -286,8 +287,8 @@ class TestReports(OpsBoards):
 		invoice = self.t.claim("INV-R-1", 8)["invoice"]
 		self.t.certify_invoice(invoice)
 		self.t.pay(invoice, "RPT-BANK-1")
-		frappe.flags.kt_cm_clock = "2027-08-01 09:00:00"
-		reporting.generate("Progress", period_start="2027-07-01", idempotency_key=self.t.key("g"), actor=self.p["charles"])
+		frappe.flags.kt_cm_clock = D("2027-08-01 09:00:00")
+		reporting.generate("Progress", period_start=D("2027-07-01"), idempotency_key=self.t.key("g"), actor=self.p["charles"])
 		report = self.screen("charles", "D15", tab="Obligations", subject=("report", frappe.db.get_value("Contract Report", {"report_type": "Progress", "contract_case": ["is", "not set"]}, "name", order_by="creation desc")))
 		self.assertEqual((report["title"], report["p"], report["s2"][0]), ("Monthly contract progress", "Submit report", "View contract"))
 		table = report["regions"][1]["b"][0]

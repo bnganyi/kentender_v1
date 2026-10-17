@@ -9,6 +9,7 @@ held before. These are the services the screens call, with real ERPNext document
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import frappe
 
 from kentender_contracts.services import audience, delivery, errors, payment, records
@@ -47,7 +48,7 @@ class AdversarialCase(ContractCase):
 		self.case = self.t.active()
 		self.t.appointed()
 		self.units = tw.fresh_serials(4)
-		self.arrival = self.t.arrive(self.units, received_at="2027-07-12 10:00:00")["arrival"]
+		self.arrival = self.t.arrive(self.units, received_at=D("2027-07-12 10:00:00"))["arrival"]
 
 	def snapshot(self) -> dict[str, int]:
 		"""Everything the contract and the native world hold that a refused action could have changed."""
@@ -86,7 +87,7 @@ class TestAnotherSupplier(AdversarialCase):
 class TestExpiredAppointment(AdversarialCase):
 	def test_an_inspector_whose_appointment_has_ended_cannot_record_observations(self):
 		appointment = frappe.get_all("Contract Appointment", filters={"contract_case": self.case, "state": "Appointed"}, pluck="name")[0]
-		frappe.db.set_value("Contract Appointment", appointment, "effective_to", "2027-07-01 00:00:00")
+		frappe.db.set_value("Contract Appointment", appointment, "effective_to", D("2027-07-01 00:00:00"))
 		self.refused(lambda: delivery.record_inspection(self.case, arrival=self.arrival, expected_version=self.t.version(), idempotency_key="expired-inspect", actor=self.p["peter"], observations=tw.readings(self.units)),
 			"CM_AUTHORITY", "CM_APPOINTMENT")
 

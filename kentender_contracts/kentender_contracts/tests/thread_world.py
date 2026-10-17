@@ -8,6 +8,7 @@ provider and the clock the boards are read at (2 July 2027). Built once per test
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 from uuid import uuid4
 
 import frappe
@@ -38,7 +39,7 @@ PEOPLE: dict[str, tuple[str, list[str]]] = {
 	"david": ("David Otieno", []),
 	"stranger": ("Sam Stranger", []),
 }
-CLOCK = "2027-07-02 09:00:00"
+CLOCK = D("2027-07-02 09:00:00")
 #: the supplier's identity as an executed contract states it: country and registration number (the supplier-accounts stand-in resolves it)
 REGISTRATION = ("Kenya", "CPR/2018/00123")
 
@@ -155,7 +156,7 @@ def capture(board: dict, name: str | None = None) -> dict:
 
 
 def package_particulars(people: dict[str, str], services: bool = False, item: str = "") -> dict:
-	return {"agreement_date": "2027-07-02", "entity_signatory": people["amina"], "item_mapping": {"L1": item or world.ITEM_FA, **({"L2": world.ITEM_SERVICE} if services else {})}, "native_supplier": world.SUPPLIER, "asset_location": world.LOCATION}
+	return {"agreement_date": D("2027-07-02"), "entity_signatory": people["amina"], "item_mapping": {"L1": item or world.ITEM_FA, **({"L2": world.ITEM_SERVICE} if services else {})}, "native_supplier": world.SUPPLIER, "asset_location": world.LOCATION}
 
 
 def receive(people: dict[str, str], *, contract_id: str = "CM-TEST-0001", security_required: bool = False, outside_signing: bool = False, services: bool = False, award_case: str = "", advance: bool = False, publication_open: bool = False) -> dict:
@@ -166,9 +167,8 @@ def receive(people: dict[str, str], *, contract_id: str = "CM-TEST-0001", securi
 	package = {**sources.award_package(services), **({"award_case": award_case} if award_case else {})}
 	if security_required or outside_signing or services or advance:
 		frappe.flags.kt_contract_source_providers = [sources.Provider(security_required=security_required, outside_signing=outside_signing, services=services, advance=advance)]
-	return formation.receive_award_package(package, handoff=sources.source_handoff(package["award_case"], security_required=security_required, outside_signing=outside_signing, services=services, advance=advance), managing_unit=unit(),
+	out = formation.receive_award_package(package, handoff=sources.source_handoff(package["award_case"], security_required=security_required, outside_signing=outside_signing, services=services, advance=advance), managing_unit=unit(),
 		idempotency_key=f"receive-{contract_id}", actor="Administrator", contract_id=contract_id)
-
 	if not publication_open:
 		publish(people, out["contract"])
 		out = {**out, "record_version": int(frappe.db.get_value("Contract Case", out["contract"], "record_version"))}  # recording it advanced the revision the caller holds
@@ -188,6 +188,7 @@ def publish(people: dict[str, str], case: str) -> None:
 			expected_version=int(frappe.db.get_value("Contract Case", case, "record_version")), idempotency_key=f"publish-{case}", actor=people["charles"])
 	except errors.ContractError:
 		return
+
 
 def evidence_file(owner: str, label: str) -> str:
 	"""A private labelled PDF uploaded by `owner` (the person's own upload is the only file a command accepts as evidence). Removed with the world."""
@@ -239,14 +240,14 @@ class Thread:
 		formation.sign_contract(self.case, party="Entity", expected_version=self.version(), idempotency_key=self.key("sign-e"), actor=self.p["amina"])
 		return self.case
 
-	def record_security(self, *, reference: str = "TEST-SG-01", amount: float = 100_000, issued_on: str = "2027-07-01", expires_on: str = "2027-08-31", verify: bool = True) -> str:
+	def record_security(self, *, reference: str = "TEST-SG-01", amount: float = 100_000, issued_on: str = D("2027-07-01"), expires_on: str = D("2027-08-31"), verify: bool = True) -> str:
 		"""Charles records an instrument for the Ministry and, unless told not to, verifies it from the issuer's confirmation."""
 		from kentender_contracts.services import security
 
 		row = security.record_security(self.case, expected_version=self.version(), idempotency_key=self.key("sec"), actor=self.p["charles"], issuer="Test Bank", beneficiary="Ministry of Health", reference=reference, amount=amount,
 			issued_on=issued_on, expires_on=expires_on)["security"]
 		if verify:
-			security.verify_security(self.case, security=row, expected_version=self.version(), idempotency_key=self.key("secv"), actor=self.p["charles"], confirmation_reference=f"{reference}-CONF", received_on="2027-07-02", basis="Issuer confirmation")
+			security.verify_security(self.case, security=row, expected_version=self.version(), idempotency_key=self.key("secv"), actor=self.p["charles"], confirmation_reference=f"{reference}-CONF", received_on=D("2027-07-02"), basis="Issuer confirmation")
 		return row
 
 	def appointed(self, acceptance: str = "Committee accepts") -> dict:
@@ -261,7 +262,7 @@ class Thread:
 			delivery.declare_interest(self.case, expected_version=self.version(), idempotency_key=self.key("declare"), actor=self.p[who])
 		return rec
 
-	def arrive(self, units: list[str], *, received_at: str = "2027-07-12 10:00:00") -> dict:
+	def arrive(self, units: list[str], *, received_at: str = D("2027-07-12 10:00:00")) -> dict:
 		from kentender_contracts.services import delivery
 
 		return delivery.record_arrival(self.case, expected_version=self.version(), idempotency_key=self.key("arrive"), actor=self.p["grace"], received_at=received_at,
@@ -339,14 +340,14 @@ def _more(cls):
 		payment.submit_finance_for_approval(self.case, payment=draft["payment"], expected_version=self.version(), idempotency_key=self.key("submit"), actor=self.p["josphat"])
 		payment.approve_finance_record(self.case, payment=draft["payment"], expected_version=self.version(), idempotency_key=self.key("approve"), actor=self.p["beatrice"])
 		settled = payment.record_finance_settlement(self.case, payment=draft["payment"], expected_version=self.version(), idempotency_key=self.key("settle"), actor=self.p["beatrice"],
-			effective_date="2027-07-20", evidence=f"Bank statement line for {reference}")
+			effective_date=D("2027-07-20"), evidence=f"Bank statement line for {reference}")
 		return {**draft, **settled}
 
 	def change_through(self, kind: str = "Extension", request: dict | None = None, *, number: int = 1, requester: str = "david", reason: str = "Supplier reports a shipment delay.") -> dict:
 		"""A change requested, reviewed by three named people, decided by the Accounting Officer and signed by both parties: the amendment is effective."""
 		from kentender_contracts.services import change
 
-		request = request or ({"proposed_date": "2027-07-27"} if kind == "Extension" else {"quantities": {"L1": 11}})
+		request = request or ({"proposed_date": D("2027-07-27")} if kind == "Extension" else {"quantities": {"L1": 11}})
 		evidence = [{"label": "Supplier request 1", "file": "/private/files/request-1.pdf"}]
 		change.request_change(self.case, kind=kind, request=request, reason=reason, evidence=evidence, expected_version=self.version(), idempotency_key=self.key("ask"), actor=self.p[requester])
 		roster = dict(zip(change.REVIEW_KINDS[kind], (self.p["peter"], self.p["faith"], self.p["brian"]), strict=True))

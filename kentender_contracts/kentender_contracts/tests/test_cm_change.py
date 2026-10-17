@@ -10,6 +10,7 @@ funding owner follow as durable operations that can fail and be restored without
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -51,7 +52,7 @@ class ChangeCase(ContractCase):
 
 	# -- steps ---------------------------------------------------------------------------------------------------------------------
 	def ask(self, kind="Extension", who="julia", request=None, **kw):
-		request = request if request is not None else ({"proposed_date": "2027-07-27"} if kind == "Extension" else {"quantities": {"L1": 11}})
+		request = request if request is not None else ({"proposed_date": D("2027-07-27")} if kind == "Extension" else {"quantities": {"L1": 11}})
 		return change.request_change(self.case, kind=kind, request=request, reason=kw.pop("reason", "Supplier reports a seven-day shipment delay."), evidence=kw.pop("evidence", EVIDENCE),
 			expected_version=self.t.version(), idempotency_key=self.t.key("ask"), actor=self.p[who], **kw)
 
@@ -109,28 +110,28 @@ class TestRequest(ChangeCase):
 		out = self.ask()
 		row = self.row()
 		self.assertEqual((row.kind, row.state, row.requested_by), ("Extension", "Requested", self.p["julia"]))
-		self.assertEqual((records.loads(row.baseline_json)["due"], change.proposal(row)["proposed_date"]), ("2027-07-20", "2027-07-27"))
-		self.assertEqual(self.operative()["delivery"]["due"], "2027-07-20")  # a pending request moves no date
+		self.assertEqual((records.loads(row.baseline_json)["due"], change.proposal(row)["proposed_date"]), (D("2027-07-20"), D("2027-07-27")))
+		self.assertEqual(self.operative()["delivery"]["due"], D("2027-07-20"))  # a pending request moves no date
 		self.assertEqual(out["change_no"], 1)
 		self.assertIn(("AppointContractChangeReviewers", "Name the reviewers for the requested change.", "actionable"), self.tasks("charles"))
 
 	def test_the_supplier_or_the_owner_may_ask_and_a_stranger_may_not(self):
 		self.ask(who="david")
 		self.assertEqual(self.row().requested_by, self.p["david"])
-		self.assertEqual(refusal(change.request_change, self.case, kind="Extension", request={"proposed_date": "2027-07-27"}, reason="x", evidence=EVIDENCE, expected_version=self.t.version(), idempotency_key=self.t.key("s"),
+		self.assertEqual(refusal(change.request_change, self.case, kind="Extension", request={"proposed_date": D("2027-07-27")}, reason="x", evidence=EVIDENCE, expected_version=self.t.version(), idempotency_key=self.t.key("s"),
 			actor=self.p["stranger"]).code, "CM_AUTHORITY")
 
 	def test_a_request_without_grounds_a_later_date_or_a_request_file_is_corrected_not_recorded(self):
 		self.assertIn("reason", refusal(self.ask, reason=" ").fields)
 		self.assertIn("evidence", refusal(self.ask, evidence=[]).fields)
-		self.assertIn("proposed_date", refusal(self.ask, request={"proposed_date": "2027-07-20"}).fields)  # not after the current date
+		self.assertIn("proposed_date", refusal(self.ask, request={"proposed_date": D("2027-07-20")}).fields)  # not after the current date
 		self.assertIn("proposed_date", refusal(self.ask, request={"proposed_date": "soon"}).fields)
 		self.assertIn("kind", refusal(self.ask, kind="Price").fields)
 		self.assertFalse(frappe.db.count("Contract Change", {"contract_case": self.case}))
 
 	def test_one_change_is_decided_before_another_is_asked(self):
 		self.ask()
-		self.assertEqual(refusal(self.ask, request={"proposed_date": "2027-08-03"}).code, "CM_CHANGED")
+		self.assertEqual(refusal(self.ask, request={"proposed_date": D("2027-08-03")}).code, "CM_CHANGED")
 
 	def test_a_quantity_increase_is_calculated_at_the_issued_rate_and_nobody_edits_the_rate(self):
 		self.ask("Quantity")
@@ -157,7 +158,7 @@ class TestRequest(ChangeCase):
 
 	def test_a_replayed_request_is_one_request(self):
 		key = self.t.key("once")
-		args = dict(kind="Extension", request={"proposed_date": "2027-07-27"}, reason="Delay.", evidence=EVIDENCE, expected_version=self.t.version(), idempotency_key=key, actor=self.p["julia"])
+		args = dict(kind="Extension", request={"proposed_date": D("2027-07-27")}, reason="Delay.", evidence=EVIDENCE, expected_version=self.t.version(), idempotency_key=key, actor=self.p["julia"])
 		first = change.request_change(self.case, **args)
 		self.assertEqual(change.request_change(self.case, **args), first)
 		self.assertEqual(frappe.db.count("Contract Change", {"contract_case": self.case}), 1)
@@ -303,7 +304,7 @@ class TestDecision(ChangeCase):
 		self.decide("Decline", reason="The grounds are not supported.")
 		self.assertEqual((self.row().state, records.loads(self.row().decision_json)["reason"]), ("Declined", "The grounds are not supported."))
 		self.assertFalse(self.row().amendment_version)
-		self.assertEqual(self.operative()["delivery"]["due"], "2027-07-20")
+		self.assertEqual(self.operative()["delivery"]["due"], D("2027-07-20"))
 		self.assertFalse(frappe.db.exists("Contract Agreement Version", {"contract_case": self.case, "version_no": 2}))
 
 	def test_a_returned_change_is_corrected_by_the_requester_and_reviewed_again(self):
@@ -314,9 +315,9 @@ class TestDecision(ChangeCase):
 		self.decide("Return", reason="State the effect on the warranty.")
 		self.assertEqual(self.row().state, "Returned")
 		self.assertIn(("RequestContractChange", "Correct the change request.", "actionable"), self.tasks("julia"))
-		self.ask(correcting=1, request={"proposed_date": "2027-07-28"}, reason="Seven additional days; the warranty runs from acceptance.")
+		self.ask(correcting=1, request={"proposed_date": D("2027-07-28")}, reason="Seven additional days; the warranty runs from acceptance.")
 		row = self.row()
-		self.assertEqual((row.state, change.proposal(row)["proposed_date"], change.draft_of(row), frappe.db.count("Contract Change", {"contract_case": self.case})), ("Requested", "2027-07-28", 2, 1))
+		self.assertEqual((row.state, change.proposal(row)["proposed_date"], change.draft_of(row), frappe.db.count("Contract Change", {"contract_case": self.case})), ("Requested", D("2027-07-28"), 2, 1))
 		self.assertFalse(change.slots(row))  # the earlier reviews no longer stand; new reviewers are named
 		self.assertEqual({s["state"] for s in change.slots(row, live=False)}, {"Superseded"})
 		self.assertIn(("AppointContractChangeReviewers", "Name the reviewers for the requested change.", "actionable"), self.tasks("charles"))
@@ -327,10 +328,10 @@ class TestDecision(ChangeCase):
 		self.assertEqual((row.state, row.amendment_version), ("Approved", 2))
 		amendment = change.amendment_of(row)
 		self.assertEqual((amendment.version_no, amendment.state, amendment.change), (2, "Awaiting signatures", row.name))
-		self.assertEqual(records.loads(amendment.terms_json)["delivery"]["due"], "2027-07-27")
-		self.assertIn("2027-07-20", amendment.rendered_html)
-		self.assertIn("2027-07-27", amendment.rendered_html)
-		self.assertEqual(self.operative()["delivery"]["due"], "2027-07-20")  # an approved but unsigned amendment changes no date
+		self.assertEqual(records.loads(amendment.terms_json)["delivery"]["due"], D("2027-07-27"))
+		self.assertIn(D("2027-07-20"), amendment.rendered_html)
+		self.assertIn(D("2027-07-27"), amendment.rendered_html)
+		self.assertEqual(self.operative()["delivery"]["due"], D("2027-07-20"))  # an approved but unsigned amendment changes no date
 		self.assertEqual(formation.current_agreement(self.case).version_no, 1)  # the agreement is still agreement 1
 		self.assertEqual(sorted(frappe.get_all("Contract Signature", filters={"contract_case": self.case, "agreement_version": 2}, pluck="party")), ["Entity", "Supplier"])
 		self.assertIn(("SignContractVersion", "Review and sign amendment 1.", "actionable"), self.tasks("mary"))
@@ -343,7 +344,7 @@ class TestEffect(ChangeCase):
 		self.assertEqual(refusal(change.sign_amendment, self.case, change=1, party="Supplier", expected_version=self.t.version(), idempotency_key=self.t.key("w"), actor=self.p["david"]).code, "CM_SEGREGATION")
 		self.sign("Supplier")
 		self.assertEqual(self.row().state, "Approved")
-		self.assertEqual(self.operative()["delivery"]["due"], "2027-07-20")  # half-signed: still the original
+		self.assertEqual(self.operative()["delivery"]["due"], D("2027-07-20"))  # half-signed: still the original
 		self.assertIn(("SignContractVersion", "Review and sign amendment 1.", "actionable"), self.tasks("amina"))
 		out = self.sign("Entity")
 		self.assertTrue(out["effective"])
@@ -352,9 +353,9 @@ class TestEffect(ChangeCase):
 		self.effective()
 		self.assertEqual(self.row().state, "Effective")
 		terms = self.operative()
-		self.assertEqual((terms["delivery"]["due"], terms["delivery"]["original_due"], terms["delivery"]["extensions"][0]["to"]), ("2027-07-27", "2027-07-20", "2027-07-27"))
-		self.assertEqual(str(frappe.db.get_value("Purchase Order", self.order(), "schedule_date")), "2027-07-27")
-		self.assertEqual(frappe.db.get_value("Purchase Order Item", {"parent": self.order()}, "schedule_date").isoformat(), "2027-07-27")
+		self.assertEqual((terms["delivery"]["due"], terms["delivery"]["original_due"], terms["delivery"]["extensions"][0]["to"]), (D("2027-07-27"), D("2027-07-20"), D("2027-07-27")))
+		self.assertEqual(str(frappe.db.get_value("Purchase Order", self.order(), "schedule_date")), D("2027-07-27"))
+		self.assertEqual(frappe.db.get_value("Purchase Order Item", {"parent": self.order()}, "schedule_date").isoformat(), D("2027-07-27"))
 		self.assertEqual(float(frappe.db.get_value("Purchase Order", self.order(), "grand_total")), 1_000_000)
 		self.assertFalse(frappe.db.exists("Contract Operation Intent", {"contract_case": self.case, "operation_kind": "Funding adjustment"}))  # the price did not change
 		self.assertEqual(formation.current_agreement(self.case).version_no, 1)
@@ -383,9 +384,9 @@ class TestEffect(ChangeCase):
 
 	def test_a_second_change_is_numbered_and_judged_on_the_terms_the_first_left(self):
 		self.effective()
-		self.ask(request={"proposed_date": "2027-08-03"})
+		self.ask(request={"proposed_date": D("2027-08-03")})
 		self.assertEqual(self.row(2).change_no, 2)
-		self.assertEqual(records.loads(self.row(2).baseline_json)["due"], "2027-07-27")  # the date the first amendment made operative
+		self.assertEqual(records.loads(self.row(2).baseline_json)["due"], D("2027-07-27"))  # the date the first amendment made operative
 
 	def test_a_pending_order_or_funding_update_holds_new_spending_until_it_is_restored_without_new_signatures(self):
 		frappe.flags.kt_cm_funding_fault = "fail"
@@ -443,10 +444,10 @@ class TestEffect(ChangeCase):
 		self.assertEqual({k: frappe.db.get_value("Contract Operation Intent", n, "state") for k, n in names.items()}, {"Purchase order": "Reconciled", "Funding adjustment": "Reconciled"})
 
 	def test_a_future_effective_date_waits_signed_and_the_date_activates_it(self):
-		self.ask(request={"proposed_date": "2027-07-27"})
+		self.ask(request={"proposed_date": D("2027-07-27")})
 		row = self.row()
 		body = change.proposal(row)
-		frappe.db.set_value("Contract Change", row.name, "proposal_json", records.dumps({**body, "effective_on": "2027-07-10"}))
+		frappe.db.set_value("Contract Change", row.name, "proposal_json", records.dumps({**body, "effective_on": D("2027-07-10")}))
 		self.appoint()
 		self.reviewed()
 		self.submit()
@@ -455,12 +456,12 @@ class TestEffect(ChangeCase):
 		out = self.sign("Entity")
 		self.assertNotIn("effective", out)
 		self.assertEqual(self.row().state, "Approved")
-		self.assertEqual(self.operative()["delivery"]["due"], "2027-07-20")
+		self.assertEqual(self.operative()["delivery"]["due"], D("2027-07-20"))
 		self.assertIn(("ActivateContractChange", "Bring amendment 1 into effect.", "scheduled"), self.tasks("charles"))
 		self.assertEqual(refusal(change.activate_change, self.case, change=1, expected_version=self.t.version(), idempotency_key=self.t.key("act"), actor=self.p["charles"]).code, "CM_HOLD")
-		frappe.flags.kt_cm_clock = "2027-07-10 09:00:00"
+		frappe.flags.kt_cm_clock = D("2027-07-10 09:00:00")
 		change.activate_change(self.case, change=1, expected_version=self.t.version(), idempotency_key=self.t.key("act2"), actor=self.p["charles"])
-		self.assertEqual((self.row().state, self.operative()["delivery"]["due"]), ("Effective", "2027-07-27"))
+		self.assertEqual((self.row().state, self.operative()["delivery"]["due"]), ("Effective", D("2027-07-27")))
 
 	def test_a_replayed_signature_or_activation_changes_nothing_more(self):
 		self.approved("Quantity")

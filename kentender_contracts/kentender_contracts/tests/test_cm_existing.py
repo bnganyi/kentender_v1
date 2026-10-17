@@ -8,6 +8,7 @@ is linked to; the head of procurement starts management. Nothing is signed again
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import json
 import os
 from pathlib import Path
@@ -75,8 +76,8 @@ class TestExistingContract(ContractCase):
 	def values(self, **o):
 		receipt, invoice = self.linked()
 		v = {"source": "External records", "reference": "MOH/ICT/2027/EXT-01", "supplier_country": tw.REGISTRATION[0], "supplier_registration": tw.REGISTRATION[1],
-			"agreement_file": tw.evidence_file(self.p["brian"], "ext-agreement"), "amendments": "None", "signed_on": "2027-07-02", "effective_on": "2027-07-02", "cutover": "2027-08-03 00:00:00",
-			"original_value": 1_000_000, "current_value": 1_000_000, "items": "Laptop computer | 10 | Each | 100000 | Included | 4 | 2 | 4", "delivery_due": "2027-07-20", "payment_days": 30,
+			"agreement_file": tw.evidence_file(self.p["brian"], "ext-agreement"), "amendments": "None", "signed_on": D("2027-07-02"), "effective_on": D("2027-07-02"), "cutover": D("2027-08-03 00:00:00"),
+			"original_value": 1_000_000, "current_value": 1_000_000, "items": "Laptop computer | 10 | Each | 100000 | Included | 4 | 2 | 4", "delivery_due": D("2027-07-20"), "payment_days": 30,
 			"warranty_months": 12, "acceptance": "RAM | >= | 16 | GB\nStorage | >= | 512 | GB\nStarts successfully | = | Yes | ", "security_required": "No", "advance_allowed": "No", "restrictions": "None",
 			"clauses": "Agreement EXT-01 §§2-8", "owner": self.p["julia"], "managing_unit": tw.unit(), "entity_signatory": self.p["amina"], "native_supplier": world.SUPPLIER, "asset_location": world.LOCATION,
 			"item_mapping": {"L1": world.ITEM_FA}, "prior_activity": "Some", "opening_invoiced": 400_000, "opening_credits": 0, "opening_cash_paid": 0, "opening_outstanding": 400_000, "opening_advance": 0,
@@ -188,7 +189,7 @@ class TestExistingContract(ContractCase):
 		done = self.start(case)
 		doc = frappe.get_doc("Contract Case", case)
 		agreement = formation.current_agreement(case)
-		self.assertEqual((doc.lifecycle, str(doc.operative_date), agreement.state, str(agreement.effective_at)[:10]), ("Active", "2027-07-02", "Effective", "2027-07-02"))
+		self.assertEqual((doc.lifecycle, str(doc.operative_date), agreement.state, str(agreement.effective_at)[:10]), ("Active", D("2027-07-02"), "Effective", D("2027-07-02")))
 		self.assertEqual(frappe.db.count("Contract Signature", {"contract_case": case}), 0, "nobody was asked to sign")
 		self.assertEqual(frappe.db.count("Contract Simulated Signature", {"fixture_namespace": "CM_TEST"}), 0)
 		live = self.mine(case)

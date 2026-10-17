@@ -15,6 +15,7 @@ The provider is registered on `kt_contract_source_provider` and answers only on 
 
 from __future__ import annotations
 
+from kentender_contracts.simulation.timeline import D  # noqa: F401
 import hashlib
 import json
 import re
@@ -25,7 +26,7 @@ TERMS = "CM-DEMO-TERMS-01"
 SUPPLIER = "Afya Digital Supplies Limited"
 LAPTOPS, UNIT_PRICE = 10, 100_000
 TOTAL = LAPTOPS * UNIT_PRICE
-DELIVERY_DUE = "2027-07-20"
+DELIVERY_DUE = D("2027-07-20")
 ENTITY = "Ministry of Health"
 SUPPLIER_SIGNATORY = "mary.wanjiku@afyadigital.example"
 ENTITY_SIGNATORY = "amina.hassan@moh.example.test"
@@ -58,7 +59,7 @@ FORM_4 = (
 
 #: The goods-plus-service package (board D31): the same ten laptops plus one training session at KES 50,000, named by a `-SVC` case.
 SERVICE_RATE = 50_000
-SERVICE = {"line_id": "L2", "requirement": "Train ten named users to start and operate the supplied laptops", "deadline": "2027-07-27", "evidence_required": "Attendance and completed practical checklist"}
+SERVICE = {"line_id": "L2", "requirement": "Train ten named users to start and operate the supplied laptops", "deadline": D("2027-07-27"), "evidence_required": "Attendance and completed practical checklist"}
 SERVICE_CRITERIA = [
 	{"id": "C4", "name": "Attendance", "label": "Observed attendance", "comparator": ">=", "value": 10, "unit": "users", "line_id": "L2", "coverage": "every unit"},
 	{"id": "C5", "name": "Practical checklist", "label": "Practical checklist", "comparator": ">=", "value": 10, "unit": "users", "line_id": "L2", "coverage": "every unit"},
@@ -137,7 +138,7 @@ def _content(number: str, case: str, security_required: bool = False, outside_si
 	if number == "S7":
 		return FORM_4.encode()
 	if number == "S8":
-		return _json({"notification": {"id": "NTC-DEMO-1", "given_at": "2027-06-17 10:00:00"}, "signing_window": {"result": "Within window", "earliest_signing_at": "2027-07-02 09:00:00", "ends_on": "2027-07-14", "counting_basis": "synthetic"}})
+		return _json({"notification": {"id": "NTC-DEMO-1", "given_at": D("2027-06-17 10:00:00")}, "signing_window": {"result": "Within window", "earliest_signing_at": D("2027-07-02 09:00:00"), "ends_on": D("2027-07-14"), "counting_basis": "synthetic"}})
 	if number == "S9":
 		return _json({"allocations": [{"reservation": "RSV-DEMO-1", "source_allocation": "PSA-DEMO-1", "budget_line": "BL-DEMO-1", "amount": total}]})
 	if number == "S10":
@@ -163,8 +164,8 @@ def award_package(services: bool = False) -> dict[str, Any]:
 		"opinion": {"id": "OPN-DEMO-1", "version": 1, "digest": _sha(b"opinion"), "proof": "synthetic"},
 		"decision": {"id": "DEC-DEMO-1", "version": 1, "outcome": "Award", "supplier": SUPPLIER, "organisation": organisation_id(), "bid": "BID-DEMO-1",
 			"submitted_amount": total, "evaluated_amount": total, "currency": "KES"},
-		"notice_batch": {"id": "NTB-DEMO-1", "version": 1, "notices": [{"id": "NTC-DEMO-1", "digest": _sha(b"notice"), "given_at": "2027-06-17 10:00:00", "evidence": "synthetic"}]},
-		"response": {"id": "RSP-DEMO-1", "response": "Accepted", "by": SUPPLIER_SIGNATORY, "received_at": "2027-07-01 09:00:00", "authority": "synthetic"},
+		"notice_batch": {"id": "NTB-DEMO-1", "version": 1, "notices": [{"id": "NTC-DEMO-1", "digest": _sha(b"notice"), "given_at": D("2027-06-17 10:00:00"), "evidence": "synthetic"}]},
+		"response": {"id": "RSP-DEMO-1", "response": "Accepted", "by": SUPPLIER_SIGNATORY, "received_at": D("2027-07-01 09:00:00"), "authority": "synthetic"},
 		"contract_terms": {"quantity": LAPTOPS, "warranty": "12 months", "delivery_and_warranty": "As issued in the tender and the supplier's response",
 			"reservation_treatment": "As recorded in the tender's reservation lineage", "performance_security": "As published in the tender (Contracting verifies before signature)",
 			"tender_security": "As recorded at submission"},

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { cmWorld } from "../../helpers/anchor";
 import { pickRecord } from '../../helpers/picker';
 import { as, board, nextStep, openAsSupplier, openContract, press, tab, today, world } from './helpers';
 
@@ -89,8 +90,8 @@ test.describe('Payment and the advance', () => {
 			await expect(board(page, 'D29-G')).toBeVisible();
 			await page.getByTestId('cm-input-issuer').fill('Test Bank');
 			await page.getByTestId('cm-input-reference').fill('TEST-AG-01');
-			await page.getByTestId('cm-input-issued_on').fill('2027-06-01');
-			await page.getByTestId('cm-input-expires_on').fill('2027-08-31');
+			await page.getByTestId('cm-input-issued_on').fill(cmWorld('2027-06-01'));
+			await page.getByTestId('cm-input-expires_on').fill(cmWorld('2027-08-31'));
 			await press(page); // Save guarantee
 		});
 		await as(browser, 'charles', async (page) => {
@@ -98,7 +99,7 @@ test.describe('Payment and the advance', () => {
 			await expect(board(page, 'D29-V')).toBeVisible();
 			await page.getByTestId('cm-primary').click(); // Verify guarantee
 			await page.getByTestId('cm-input-confirmation_reference').fill('TEST-AG-CONF-01');
-			await page.getByTestId('cm-input-received_on').fill('2027-07-02');
+			await page.getByTestId('cm-input-received_on').fill(cmWorld('2027-07-02'));
 			await press(page, 'cm-dialog-primary');
 			await expect(page.getByTestId('cm-dialog')).toHaveCount(0);
 			await openContract(page, contract, 'My work');
