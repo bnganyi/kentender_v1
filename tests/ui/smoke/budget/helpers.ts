@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
 import path from "node:path";
 
-import { expect, Page } from "@playwright/test";
+import { expect, Page, test } from "@playwright/test";
 
 /**
  * Shared plumbing for the BUD-CHG-001 v1.9 §16 browser journeys.
@@ -40,6 +40,16 @@ export function bench(command: string): string {
 		const stdout = (error?.stdout || "").toString().trim();
 		throw new Error(`bench ${command} failed\n${stderr || stdout || error?.message}`);
 	}
+}
+
+/**
+ * Every spec file leaves the shared test site as it found it: when the file ends, the fixtures' isolated budgets, their Fiscal Years and the ledger rows of the run go (`purge`). It never removes the canonical
+ * world's own reservations. Call it once at the top of a spec file.
+ */
+export function purgeWhenDone(): void {
+	test.afterAll(() => {
+		bench(`execute ${FIXTURES}.purge`);
+	});
 }
 
 function parseResult<T>(fn: string, output: string): T {

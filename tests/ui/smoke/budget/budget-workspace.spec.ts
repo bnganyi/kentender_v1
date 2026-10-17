@@ -16,6 +16,7 @@ import {
 	login,
 	resetFixture,
 	selectYear,
+	purgeWhenDone,
 } from "./helpers";
 
 /**
@@ -23,6 +24,7 @@ import {
  * §11.1B, §12.1; BUD19-AC-001/002/025/026) and the read-only journeys on
  * BUD-UI-03/05 (§11.4–§11.7A, §11.19; BUD19-AC-015/016/017).
  */
+purgeWhenDone();
 test.describe.configure({ mode: "serial" });
 
 test("no record: the Officer may record an allocation, a reader may not", async ({ page }) => {

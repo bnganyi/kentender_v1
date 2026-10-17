@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { ADMIN, CANONICAL_BUDGET, CANONICAL_FY, NOBODY, SuccessorFixture, expectNoFrappeModal, expectScreen, gotoBudget, login, resetFixture, selectYear } from "./helpers";
+import { ADMIN, CANONICAL_BUDGET, CANONICAL_FY, NOBODY, SuccessorFixture, expectNoFrappeModal, expectScreen, gotoBudget, login, resetFixture, selectYear, purgeWhenDone } from "./helpers";
 
 /**
  * BUD-CHG-001 v1.9 — access and shared states (§7.1, §11.16, §11.20, §12.1,
@@ -7,6 +7,7 @@ import { ADMIN, CANONICAL_BUDGET, CANONICAL_FY, NOBODY, SuccessorFixture, expect
  * technical read reaches every route without decision controls, and the
  * compositions survive a narrow viewport and keyboard use.
  */
+purgeWhenDone();
 test.describe.configure({ mode: "serial" });
 
 test("an actor with no Budget responsibility sees only the inline Forbidden panel on every route", async ({ page }) => {

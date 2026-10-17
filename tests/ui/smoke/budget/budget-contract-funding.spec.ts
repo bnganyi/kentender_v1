@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { APPROVER, AUDITOR, NOBODY, OFFICER, bench, collectConsoleErrors, confirmDecision, gotoBudget, login, selectYear } from "./helpers";
+import { APPROVER, AUDITOR, NOBODY, OFFICER, bench, collectConsoleErrors, confirmDecision, gotoBudget, login, selectYear, purgeWhenDone } from "./helpers";
 
 /**
  * BUD-CHG-001 v1.16 §11.22 — BUD-DES-21 Contract funding and BUD-DES-22 Review contract funding, with their variants
@@ -8,6 +8,7 @@ import { APPROVER, AUDITOR, NOBODY, OFFICER, bench, collectConsoleErrors, confir
  * same year (Hardware and IT equipment 300,000, IT support equipment 200,000). The roles are the normal ones: Josphat Mwangi
  * prepares, Beatrice Kamau decides, the Auditor reads, Samuel Otieno holds nothing.
  */
+purgeWhenDone();
 test.describe.configure({ mode: "serial" });
 
 const FIXTURES = "kentender_budget.seeds.funding_ui_fixtures";

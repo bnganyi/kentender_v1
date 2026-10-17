@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { APPROVER, AUDITOR, CANONICAL_BUDGET, ClosureFixture, collectConsoleErrors, expectScreen, gotoBudget, login, resetFixture } from "./helpers";
+import { APPROVER, AUDITOR, CANONICAL_BUDGET, ClosureFixture, collectConsoleErrors, expectScreen, gotoBudget, login, resetFixture, purgeWhenDone } from "./helpers";
 
 /**
  * BUD-CHG-001 v1.9 — BUD-DES-17 year-end closure on BUD-UI-03 (§11.18,
  * §12.8; BUD19-AC-021/022): before year end, blocked, ready, confirm, closed.
  */
+purgeWhenDone();
 test.describe.configure({ mode: "serial" });
 
 test("before the year ends the budget explains the date and offers no override", async ({ page }) => {

@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { ADMIN, APPROVER, OFFICER, PendingFixture, SuccessorFixture, RETURN_REASON, collectConsoleErrors, confirmDecision, expectScreen, gotoBudget, login, resetFixture } from "./helpers";
+import { ADMIN, APPROVER, OFFICER, PendingFixture, SuccessorFixture, RETURN_REASON, collectConsoleErrors, confirmDecision, expectScreen, gotoBudget, login, resetFixture, purgeWhenDone } from "./helpers";
 
 /**
  * BUD-CHG-001 v1.9 — BUD-UI-04: the decision and its evidence together
  * (§11.8–§11.13, §12.5; BUD19-AC-011/012/013/014/026).
  */
+purgeWhenDone();
 test.describe.configure({ mode: "serial" });
 
 test("returning to Overview from another tab never lands on a literal \"undefined\" route", async ({ page }) => {

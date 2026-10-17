@@ -13,6 +13,7 @@ import {
 	login,
 	resetFixture,
 	selectYear,
+	purgeWhenDone,
 } from "./helpers";
 
 /**
@@ -21,6 +22,7 @@ import {
  * for review (§11.3, §12.2; BUD19-AC-005/006/007/008), correcting a returned
  * update and the successor rules (§11.14–§11.15; BUD19-AC-009/010).
  */
+purgeWhenDone();
 test.describe.configure({ mode: "serial" });
 
 test("record approved allocation, add lines and submit for review", async ({ page }) => {

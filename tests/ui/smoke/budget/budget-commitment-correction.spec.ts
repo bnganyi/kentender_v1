@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { APPROVER, AUDITOR, OFFICER, bench, collectConsoleErrors, confirmDecision, gotoBudget, login } from "./helpers";
+import { APPROVER, AUDITOR, OFFICER, bench, collectConsoleErrors, confirmDecision, gotoBudget, login, purgeWhenDone } from "./helpers";
 
 /**
  * BUD-CHG-001 v1.16 §11.22 — BUD-DES-20 Correct commitment (BUD25-AC-007, -012; CM-AC-74). Isolated commitment
@@ -7,6 +7,7 @@ import { APPROVER, AUDITOR, OFFICER, bench, collectConsoleErrors, confirmDecisio
  * records it from the line detail, a different Approver decides, and the line shows exactly the reduction as Available; the
  * reservation is never touched and nothing is spendable that was not before.
  */
+purgeWhenDone();
 test.describe.configure({ mode: "serial" });
 
 const FIXTURES = "kentender_budget.seeds.funding_ui_fixtures";
