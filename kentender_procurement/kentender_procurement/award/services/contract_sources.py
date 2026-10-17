@@ -150,6 +150,8 @@ def _s5(doc):
 	content = {"warranty": warranty, "payment": {"days": data["payment"]["days"], "source": data["payment"]["source"]},
 		"performance_security": {"required": data["performance_security"]["required"], "percentage": data["performance_security"]["percentage"], "statement": data["performance_security"]["statement"]},
 		"delay_damages": data["delay_damages"], "inspection_acceptance_office": data["inspection_acceptance_office"], "template": data["template"]}
+	if "advance" in data:  # a typed value only where the issued conditions state one (Tenders, CM-R-18)
+		content["advance"] = data["advance"]
 	return _json(content), "application/json", cstr(data["template"]["version"])
 
 
@@ -196,13 +198,26 @@ def _s9(doc):
 		"total": payload["supported_total"], "currency": payload["currency"], "allocations": allocations, "lineage": lineage}), "application/json", cstr(held.version)
 
 
-def _s10(doc):
+def entity_particulars() -> dict[str, Any]:
+	"""The procuring entity's particulars as the site configuration holds them now (S10's content), or `Unavailable` with the reason."""
 	entity = frappe.db.get_value("Site Procuring Entity", None, ["pe_name", "pe_address", "pe_type"], as_dict=True) if frappe.db.exists("DocType", "Site Procuring Entity") else None
 	if not entity or not cstr(entity.pe_name).strip():
 		raise Unavailable("The procuring entity's site configuration is not held.")
 	if not cstr(entity.pe_address).strip():
 		raise Unavailable("The principal address is not held in the entity's site configuration.")
-	return _json({"legal_name": entity.pe_name, "address": entity.pe_address, "entity_type": cstr(entity.pe_type)}), "application/json", "1"
+	return {"legal_name": entity.pe_name, "address": entity.pe_address, "entity_type": cstr(entity.pe_type)}
+
+
+def frozen_entity(doc) -> dict[str, Any] | None:
+	"""The entity particulars the award's first package froze (FU-CM-72: "historical package unchanged after later setup change"): a correction of the principal address in System setup reaches awards that have no
+	package yet, never one whose package was already prepared, so its source does not read as "changed after the award was made"."""
+	rows = frappe.get_all(state.PACKAGE, filters={"award_case": doc.name}, fields=["content_json"], order_by="version asc", limit=1)
+	frozen = (json.loads(rows[0].content_json or "{}").get("entity_particulars") or None) if rows else None
+	return frozen if isinstance(frozen, dict) and frozen.get("address") else None
+
+
+def _s10(doc):
+	return _json(frozen_entity(doc) or entity_particulars()), "application/json", "1"
 
 
 def _s11(doc):

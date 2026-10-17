@@ -271,6 +271,16 @@ def clear_kentender_mvp_v1_budget(
 	):
 		_delete_budget_graph(budget_name, deleted)
 
+	# Budget answers a command it has already answered from its journal. A conversion made for a contract of the world just dropped (its operation identity names the contract,
+	# `CM-2025-0001|agreement 1|1|Funding conversion|effective`) would be answered with the result of a commitment that no longer exists when the rebuilt world forms a contract of the same
+	# identifier: the contract would read as funded and Budget would hold nothing (found 17 October 2026, SEED-002 v0.10 §B3).
+	if include_canonical and frappe.db.exists("DocType", "Budget Command Journal"):
+		stale = frappe.get_all("Budget Command Journal", filters={"idempotency_key": ["like", "CM-%|%"]}, pluck="name")
+		for start in range(0, len(stale), 500):
+			frappe.db.delete("Budget Command Journal", {"name": ["in", stale[start : start + 500]]})
+		if stale:
+			deleted["Budget Command Journal"] = len(stale)
+
 	# Orphan fixture lines / ledger by exact known canonical codes.
 	canonical_line_codes = (
 		(

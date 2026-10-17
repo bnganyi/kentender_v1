@@ -40,6 +40,9 @@ def keys(gaps):
 
 
 class TestReadiness(IntegrationTestCase):
+	def setUp(self):
+		world.suspend_workflows()  # a site with the canonical world holds a Finance workflow of its own; these tests read a site that has none
+
 	def tearDown(self):
 		world.drop_workflow()
 

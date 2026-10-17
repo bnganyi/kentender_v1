@@ -48,6 +48,24 @@ class TestPrecedence(ContractCase):
 		self.assertIn(receiving.PATH, frappe.get_hooks(receiving.HOOK))
 
 
+class TestLegalProfileOfAReceivedPackage(ContractCase):
+	"""Award's only profile on a bench that has had no legal review is its simulation test profile, which its package says is simulation-only (AWD-CHG-001 v0.7). On a simulation site the case runs under Contract
+	Management's labelled Illustrative terms profile; anywhere else the profile Award names is kept, and an unknown one is the production profile, which refuses until the legal baseline is verified (LQ-01)."""
+
+	def test_a_simulation_only_profile_runs_under_the_illustrative_terms_on_a_simulation_site_only(self):
+		package = {"legal_profile": "test-1", "legal_profile_simulation_only": True}
+		with mock.patch("kentender_contracts.services.simulation.enabled", return_value=True):
+			self.assertEqual(formation._legal_profile(package), "SYNTHETIC-ILLUSTRATIVE")
+		with mock.patch("kentender_contracts.services.simulation.enabled", return_value=False):
+			self.assertEqual(formation._legal_profile(package), "test-1", "a site that is not a simulation site keeps what Award named")
+
+	def test_a_reviewed_profile_is_kept_and_a_package_that_says_nothing_keeps_what_it_named(self):
+		with mock.patch("kentender_contracts.services.simulation.enabled", return_value=True):
+			self.assertEqual(formation._legal_profile({"legal_profile": "KE-PPADA-2015", "legal_profile_simulation_only": False}), "KE-PPADA-2015")
+			self.assertEqual(formation._legal_profile({"legal_profile": "KE-PPADA-2015"}), "KE-PPADA-2015")
+			self.assertEqual(formation._legal_profile({}), "")
+
+
 class TestReceiver(ContractCase):
 	native = True
 

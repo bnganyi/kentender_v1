@@ -48,9 +48,12 @@ class TestTheListFilters(ContractCase):
 	def version(self, case):
 		return int(frappe.db.get_value("Contract Case", case, "record_version"))
 
-	def ids(self, who, **filters):
+	def ids(self, who, own=True, **filters):
+		"""The test's own contracts the reader sees (`own=False`: every contract the reader sees). The Accounting Officer of this world is the register's own Amina Hassan, who also reads the canonical world's
+		contracts (SEED-002 v0.10 section A8.1), which are not this test's to count."""
 		board = listing.workspace(self.p[who], view="All contracts", **filters)["board"]
-		return {frappe.db.get_value("Contract Case", route[0], "contract_id") for route in board["rowRoutes"]}
+		found = {frappe.db.get_value("Contract Case", route[0], "contract_id") for route in board["rowRoutes"]}
+		return {cid for cid in found if cid.startswith("CM-TEST-")} if own else found
 
 	def lead_holder(self, who, contract_id):
 		"""Whoever holds the next action of that contract as this reader sees it (the head of procurement's turn on a contract still being prepared belongs to every head the site has, and the list names one)."""
@@ -94,16 +97,20 @@ class TestTheListFilters(ContractCase):
 
 	def test_the_pickers_offer_only_the_people_and_units_of_contracts_the_reader_may_read(self):
 		people = {row["id"] for row in self.ask("amina", listing.RESPONSIBLE)["rows"]}
-		self.assertEqual(people, {self.p["amina"], self.lead_holder("amina", "CM-TEST-RFA")})
+		self.assertTrue({self.p["amina"], self.lead_holder("amina", "CM-TEST-RFA")} <= people)  # (the canonical world's contracts add their own people for this reader)
+		self.assertNotIn(self.p["julia"], people, "someone who holds no next action of a contract the reader may read is never offered")
 		units = {row["id"] for row in self.ask("amina", listing.MANAGING_UNIT)["rows"]}
-		self.assertEqual(units, {self.unit_a, self.unit_b})
+		self.assertTrue({self.unit_a, self.unit_b} <= units)
+		unused = {u for u in frappe.get_all("Organisation Unit", pluck="name") if not frappe.db.exists("Contract Case", {"managing_unit": u})}
+		self.assertTrue(unused, "the site has a unit that manages no contract")
+		self.assertFalse(unused & units, "a unit that manages no contract the reader may read is never offered")
 		self.assertEqual({row["id"] for row in self.ask("amina", listing.MANAGING_UNIT, self.unit_b)["rows"]}, {self.unit_b}, "typing narrows the units")
 
 	def test_everything_the_picker_offers_returns_at_least_one_contract(self):
 		for row in self.ask("amina", listing.RESPONSIBLE)["rows"]:
-			self.assertTrue(self.ids("amina", responsible=row["id"]), row["label"])
+			self.assertTrue(self.ids("amina", own=False, responsible=row["id"]), row["label"])
 		for row in self.ask("amina", listing.MANAGING_UNIT)["rows"]:
-			self.assertTrue(self.ids("amina", unit=row["id"]), row["label"])
+			self.assertTrue(self.ids("amina", own=False, unit=row["id"]), row["label"])
 
 	def test_a_reader_with_no_part_in_contracts_and_a_supplier_are_told_nothing(self):
 		frappe.flags.kt_supplier_account_provider = None

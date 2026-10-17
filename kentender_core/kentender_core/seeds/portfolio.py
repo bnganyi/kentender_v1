@@ -468,7 +468,7 @@ def seed_portfolio(*, current: str) -> dict[str, Any]:
 				tender, spec["evaluation"]["clock"], stop=spec["evaluation"]["stop"], reference=spec["evaluation"]["reference"], summary=_summary(spec),
 			)
 		if spec.get("award") and _reaches("award", current):
-			row["award"] = award_portfolio_tender(tender, through=spec["award"]["through"], clock_map=spec["award"]["clock"])
+			row["award"] = award_portfolio_tender(tender, through=spec["award"]["through"], clock_map=spec["award"]["clock"], keep_delivered=_reaches("contracts", current) and spec in PORTFOLIO0)
 	return out
 
 
@@ -517,6 +517,8 @@ def expected_state(spec: dict[str, Any], current: str) -> dict[str, Any]:
 			out["evaluation"] = (stop if _reaches("bid_evaluation", current) else None)
 		if spec.get("award"):
 			out["award"] = {"received": "Opinion", "signed": "Decision", "accepted": "Waiting to proceed"}[spec["award"]["through"]] if _reaches("award", current) else None
+			if out["award"] and spec in PORTFOLIO0 and _reaches("contracts", current):  # SEED-002 v0.10 §A8.1: the closed year's awards are delivered to Contract Management
+				out["award"] = "Sent to Contracting"
 	return out
 
 

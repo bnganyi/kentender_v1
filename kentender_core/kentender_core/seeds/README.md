@@ -5,9 +5,9 @@ Implements [docs/data/seed-data-spec-v1.md](../../docs/data/seed-data-spec-v1.md
 ## Canonical world (three years, around the real date) — the current entry point
 
 ```bash
-bench --site <site> execute kentender_core.seeds.canonical.run --kwargs '{"current": "award", "next_year": "annual_plan"}'
+bench --site <site> execute kentender_core.seeds.canonical.run --kwargs '{"current": "contracts", "next_year": ""}'
 bench --site <site> execute kentender_core.seeds.canonical.dry_run
-bench --site <site> execute kentender_core.seeds.canonical.validate --kwargs '{"current": "award", "next_year": "annual_plan"}'
+bench --site <site> execute kentender_core.seeds.canonical.validate --kwargs '{}'
 ```
 
 `run` first removes every row that is not part of the canonical world
@@ -46,7 +46,7 @@ legacy reference doctypes alone (KT-STD-001 §10).
 
 The site stage also records each fixture person's home organisation unit (`site_setup.HOME_UNITS`, KT-STD-001 §8.3A) through the System setup command `SetStaffHomeOrganisationUnit` (CFG-CHG-002 v0.19), never by writing the field; Esther Muthoni has none on purpose. Evaluation reads a committee member's department from it and generates the appointment reference, so no Evaluation seed passes either.
 
-`make seed-canonical SITE=<site>` wraps `run` for the full world (`CURRENT=award`, `NEXT` empty = as far as the anchor allows; set either lower to stop a year earlier, add `REBUILD=True` for a rebuild and a new anchor, `ANCHOR=story` for the v0.7 world; `THROUGH=` still maps for one release). The site's test clock follows its own policy, `kt_test_clock_policy` in site_config: no key (`free`), `never_ahead` (a test site) or `off` (the development site); read it with `bench --site <site> execute kentender_core.services.test_clock.describe`.
+`make seed-canonical SITE=<site>` wraps `run` for the full world (`CURRENT` empty = `contracts` on an anchored world with Contract Management installed, else `award`: the closed year's three awards go through Contract Management, one paid, one in delivery, one waiting for its agreement — SEED-002 v0.10 §A8.1; `NEXT` empty = as far as the anchor allows; set either lower to stop a year earlier, add `REBUILD=True` for a rebuild and a new anchor, `ANCHOR=story` for the v0.7 world; `THROUGH=` still maps for one release). The site's test clock follows its own policy, `kt_test_clock_policy` in site_config: no key (`free`), `never_ahead` (a test site) or `off` (the development site); read it with `bench --site <site> execute kentender_core.services.test_clock.describe`.
 
 **Procurement meetings branch (OVS-CHG-001 v0.6, runbook v1.23 §9C).** `make seed-ovs-register-branch SITE=<site>` adds Tender B beside the canonical Tender: a second department's Tender whose opening was recorded Not held, so the register shows four rows and counts three meetings held. `make seed-ovs-register-branch-restore SITE=<site>` removes it. Opt-in, test-site use; the canonical rows are never touched.
 

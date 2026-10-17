@@ -235,6 +235,40 @@ class TestSitePE(ConfigurationTestCase):
 			)
 			frappe.db.commit()
 
+	def test_the_principal_address_is_corrected_through_the_command_and_never_removed(self):
+		"""CFG-CHG-002 v0.20 (CFG20-AC-001, -003): an address the agreement can print, as one normalised line, with an audit event of the previous and the new value."""
+		before = frappe.get_doc(configuration.SITE_PE_DOCTYPE).get("pe_address") or ""
+		try:
+			configuration.update_procuring_entity(payload={"pe_address": "Afya House,   Cathedral Road,\nNairobi"})
+			self.assertEqual(frappe.db.get_single_value(configuration.SITE_PE_DOCTYPE, "pe_address"), "Afya House, Cathedral Road, Nairobi")
+			self.assertEqual(configuration.get_site_configuration()["procuring_entity"]["pe_address"], "Afya House, Cathedral Road, Nairobi")
+			event = frappe.get_all("Audit Event", filters={"action": "update_procuring_entity", "document_name": configuration.SITE_PE_DOCTYPE}, fields=["metadata"], order_by="creation desc", limit=1)
+			if event:  # the audit store of this bench; the change is in its metadata
+				self.assertIn("Afya House, Cathedral Road, Nairobi", str(event[0].metadata))
+			for bad in ("", "   ", "N/A", "12345678", "x" * 301):
+				with self.assertRaises(ConfigurationError, msg=bad) as caught:
+					configuration.update_procuring_entity(payload={"pe_address": bad})
+				self.assertEqual(self.code(caught), "CFG_PE_INVALID")
+			self.assertEqual(frappe.db.get_single_value(configuration.SITE_PE_DOCTYPE, "pe_address"), "Afya House, Cathedral Road, Nairobi", "a refused value changes nothing")
+		finally:
+			frappe.db.set_single_value(configuration.SITE_PE_DOCTYPE, "pe_address", before)
+			frappe.db.commit()
+
+	def test_the_same_address_again_appends_no_audit_event_through_the_seed(self):
+		"""CFG20-AC-005: the seed sets the fixture address through the command only when it differs."""
+		from kentender_core.seeds import site_setup
+
+		before = frappe.db.get_single_value(configuration.SITE_PE_DOCTYPE, "pe_address") or ""
+		try:
+			site_setup._seed_site()
+			self.assertEqual(frappe.db.get_single_value(configuration.SITE_PE_DOCTYPE, "pe_address"), site_setup.SITE_ADDRESS)
+			modified = frappe.db.get_single_value(configuration.SITE_PE_DOCTYPE, "modified")
+			site_setup._seed_site()
+			self.assertEqual(frappe.db.get_single_value(configuration.SITE_PE_DOCTYPE, "modified"), modified)
+		finally:
+			frappe.db.set_single_value(configuration.SITE_PE_DOCTYPE, "pe_address", before)
+			frappe.db.commit()
+
 	def test_an_ordinary_user_may_not_configure(self):
 		ordinary = fx.user("cfg.ordinary")
 		frappe.db.commit()

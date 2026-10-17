@@ -17,6 +17,8 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
+from kentender_procurement.tenders.services import form4_places
+
 COMPARATORS = {"Minimum": ">=", "Maximum": "<=", "Required": "=", "Exact": "=", "Equal": "=", "At least": ">=", "At most": "<="}
 
 
@@ -156,12 +158,41 @@ def conditions(tender: str) -> dict[str, Any]:
 		out["performance_security"]["statement"] = "Not required by the Special Conditions of Contract"
 	else:
 		out["performance_security"]["statement"] = f"{security['percentage']}% of the contract amount"
+	advance = _advance(tender, cstr(root.template_release))
+	if advance is not None:
+		out["advance"] = advance
 	return out
 
 
+#: What the issued Special Conditions of a reviewed template release say about an advance, as the sentence that release prints (CM-R-18; CM-TPL-01). Release 1.5 prints one fixed sentence in its payment clause
+#: and offers the tender officer no advance setting, so the sentence is the typed value; a tender whose conditions do not contain it (or contain it more than once) gets no value, and Contract Management
+#: names the gap. New content for the Project Owner's review: it reads one sentence of the issued document and adds no word to it.
+ADVANCE_SENTENCES = {"1.5": (("No advance payment is offered or payable under this Contract.", False),)}
+
+
+def _advance(tender: str, release: str) -> dict[str, Any] | None:
+	import hashlib
+
+	from kentender_core.services.file_integrity import read_bytes
+
+	sentences = ADVANCE_SENTENCES.get(release)
+	complete = _document(tender, "Complete Tender")
+	if not sentences or not complete or not complete.html_file:
+		return None
+	data = read_bytes(complete.html_file)
+	if hashlib.sha256(data).hexdigest() != complete.digest:
+		return None
+	html = data.decode("utf-8")
+	found = [(sentence, allowed) for sentence, allowed in sentences if html.count(sentence) == 1]
+	if len(found) != 1:
+		return None
+	return {"allowed": found[0][1], "source": f"Special Conditions of Contract (template release {release}): \u201c{found[0][0]}\u201d"}
+
+
 def form_no_4(tender: str) -> dict[str, Any]:
-	"""S7: Form No. 4 (Contract Agreement) as the **issued** tender holds it, byte for byte from the heading to the next form, after the issued document is checked against its recorded digest. The release
-	it came from is the one the tender was bound to, never the latest. The form's blanks are the form's own: this function declares no insertion for any of them (that is the template owner's, CM-TPL-01)."""
+	"""S7: Form No. 4 (Contract Agreement) as the **issued** tender holds it, from the heading to the next form, after the issued document is checked against its recorded digest. The release it came from is the
+	one the tender was bound to, never the latest. The form's blanks are the form's own: this function guesses none. A release the template owner has reviewed (`form4_places`, CM-TPL-01, FU-CM-70) has its
+	declared places wrapped, and nothing else about the form changes (`places` lists them); a release with no reviewed declaration is served as issued and declares no place."""
 	import hashlib
 
 	from kentender_core.services.file_integrity import read_bytes
@@ -178,4 +209,10 @@ def form_no_4(tender: str) -> dict[str, Any]:
 	if start < 0:
 		raise Unavailable("The issued tender has no Form No. 4.")
 	end = html.find("<h3>", start + 10)
-	return {"release_id": cstr(root.template_release_id), "release": cstr(root.template_release), "document": complete.name, "document_digest": complete.digest, "fragment": html[start:end if end > start else None]}
+	fragment, places = html[start:end if end > start else None], []
+	if form4_places.declared(cstr(root.template_release)):
+		try:
+			fragment, places = form4_places.mark(fragment, cstr(root.template_release))
+		except form4_places.Undeclared as exc:
+			raise Unavailable(cstr(exc)) from exc
+	return {"release_id": cstr(root.template_release_id), "release": cstr(root.template_release), "document": complete.name, "document_digest": complete.digest, "fragment": fragment, "places": places}

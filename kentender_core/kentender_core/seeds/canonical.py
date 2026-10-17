@@ -59,14 +59,27 @@ from kentender_core.services.command_write_guard import maintenance_write, purge
 #:   and at most its approved, Active Annual Plan.
 #:
 #: The site, its people and the Strategy are shared and always built.
-CURRENT_STAGES: tuple[str, ...] = ("annual_plan", "requisitions", "tenders", "bid_submission", "bid_opening", "bid_evaluation", "award")
+CURRENT_STAGES: tuple[str, ...] = ("annual_plan", "requisitions", "tenders", "bid_submission", "bid_opening", "bid_evaluation", "award", "contracts")
 NEXT_STAGES: tuple[str, ...] = ("none", "budget", "needs", "departmental_plans", "annual_plan")
 #: The plain seed's world (plan D6): Home and Analytics need all of it.
 DEFAULT_CURRENT, DEFAULT_NEXT = CURRENT_STAGES[-1], NEXT_STAGES[-1]
 
+#: Contract Management's own seed (SEED-002 v0.10 §A8.1); the `contracts` stage takes the closed year's awards into it.
+CONTRACTS_NS = "KENTENDER_MVP_1_R1_CM"
+
+
+def contracts_available() -> bool:
+	"""The `contracts` stage needs Contract Management and the closed year's awards, so only an anchored world on a site that has the app."""
+	return calendar.mode() == "anchored" and "kentender_contracts" in frappe.get_installed_apps()
+
+
+def default_current() -> str:
+	"""The furthest executed-year stage this site's world goes to by default: `contracts` where Contract Management is installed and the world is anchored, `award` otherwise (a notice says so)."""
+	return DEFAULT_CURRENT if contracts_available() else "award"
+
 #: The single-year ladder `THROUGH` named until 4 Oct 2026, kept one release
 #: as an alias (`resolve_years`).
-STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders", "bid_submission", "bid_opening", "bid_evaluation", "award")
+STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders", "bid_submission", "bid_opening", "bid_evaluation", "award", "contracts")
 _THROUGH_TO_NEXT = {"site": "none", "strategy": "none", "budget": "budget", "needs": "needs", "planning": "annual_plan"}
 
 
@@ -85,9 +98,13 @@ def resolve_years(*, current: str | None = None, next_year: str | None = None, t
 			current, next_year = current or through, next_year or calendar.default_next_stage()
 	# The default prepared-year stage is the furthest the anchor allows (SEED-002 v0.8 R5): the v0.7 world's `annual_plan`
 	# in legacy mode, Departmental Needs at an October anchor.
-	current, next_year = current or DEFAULT_CURRENT, next_year or calendar.default_next_stage()
+	if not current and not contracts_available():
+		print("NOTICE: CURRENT defaults to award here: the contracts stage needs an anchored world and the Contract Management app (SEED-002 v0.10 §A8.1).")
+	current, next_year = current or default_current(), next_year or calendar.default_next_stage()
 	if current not in CURRENT_STAGES:
 		frappe.throw(f"Unknown CURRENT={current!r} for {calendar.YEAR1.label}; expected one of {', '.join(CURRENT_STAGES)}")
+	if current == "contracts" and not contracts_available():
+		frappe.throw("CURRENT=contracts needs an anchored world (ANCHOR=real) on a site that has the Contract Management app installed (SEED-002 v0.10 §A8.1).")
 	if next_year not in NEXT_STAGES:
 		frappe.throw(f"Unknown NEXT={next_year!r} for {calendar.YEAR2.label} (it never goes past an approved Annual Plan); expected one of {', '.join(NEXT_STAGES)}")
 	allowed = calendar.default_next_stage()
@@ -738,6 +755,11 @@ def clear_canonical_modules() -> dict[str, Any]:
 		from kentender_procurement.bid_opening.seeds import clear as opening_clear
 		from kentender_procurement.bid_submission.seeds import clear as bids_clear
 
+		if "kentender_contracts" in frappe.get_installed_apps():
+			# The contracts the closed year's awards became go before the awards themselves (SEED-002 v0.10 §B3).
+			from kentender_core.seeds.contracts_stage import clear_contracts
+
+			out["contracts"] = clear_contracts()
 		out["award"] = award_clear.wipe(tenders=tenders)
 		out["bid_evaluation"] = evaluation_clear.wipe(tenders=tenders, namespace=BID_EVALUATION_NS)
 		out["bid_evaluation"] += evaluation_clear.wipe(namespace=PORTFOLIO_EVALUATION_NS)
@@ -799,7 +821,7 @@ def _stage_index(through: str) -> int:
 	return STAGES.index(through)
 
 
-def prepare_site(*, current: str = DEFAULT_CURRENT, through: str | None = None) -> dict[str, Any]:
+def prepare_site(*, current: str = "award", through: str | None = None) -> dict[str, Any]:
 	"""What the stages need from the site itself, so one allowed run is enough
 	on a new demo or test site (found 4 Oct 2026: a new server failed one
 	missing piece at a time). From `requisitions`: this repository's
@@ -926,6 +948,12 @@ def seed(*, current: str | None = None, next_year: str | None = None, through: s
 	report["portfolio"] = portfolio.seed_portfolio(current=current)
 	if _reaches("requisitions", current=current):
 		stamp_requisition_reservations()
+	if _reaches("contracts", current=current):
+		# SEED-002 v0.10 §A8.1: the closed year's awards carried into Contract Management through the owners' own commands. The reservations are stamped first: Budget's conversion
+		# spends them, and a spent reservation is no longer Active for the stamp to find.
+		from kentender_core.seeds.contracts_stage import upsert_contracts_base
+
+		report["contracts"] = upsert_contracts_base(commit=False)
 	report["test_clock"] = set_as_at()
 	return report
 
@@ -954,6 +982,8 @@ def world_ahead(*, current: str, next_year: str) -> list[str]:
 		ahead.append(f"an Active {calendar.YEAR2.label} Annual Plan")
 	if not _reaches("requisitions", current=current) and has("Procurement Requisition"):
 		ahead.append(f"Requisitions (CURRENT={current} stops before requisitions)")
+	if not _reaches("contracts", current=current) and has("Contract Case", {"fixture_namespace": CONTRACTS_NS}):
+		ahead.append(f"Contract Management cases (CURRENT={current} stops before contracts)")
 	tenders = frappe.get_all("Tender", pluck="name") if frappe.db.exists("DocType", "Tender") else []
 	if not _reaches("tenders", current=current) and tenders:
 		ahead.append(f"Tenders (CURRENT={current} stops before tenders)")
@@ -1016,6 +1046,15 @@ EVENT_FIELDS: tuple[tuple[str, str], ...] = (
 	("Bid Receipt", "received_at"),
 	("Bid Receipt", "accepted_at"),
 	("Evaluation Report Delivery", "delivered_at"),
+	("Award Contracting Package", "received_at"),
+	("Contract Case", "received_at"),
+	("Contract Event", "occurred_at"),
+	("Contract Signature", "signed_at"),
+	("Contract Agreement Version", "effective_at"),
+	("Contract Acceptance", "decision_at"),
+	("Contract Certification", "certified_at"),
+	("Contract Arrival", "recorded_at"),
+	("Contract Settlement", "recorded_at"),
 )
 
 
@@ -1090,6 +1129,9 @@ def validate(*, current: str | None = None, next_year: str | None = None, throug
 
 	pe = frappe.db.get_single_value("Site Procuring Entity", "pe_code")
 	check(pe == site_setup.SITE["pe_code"], f"site Procuring Entity is {pe!r}, expected {site_setup.SITE['pe_code']!r}")
+	# SEED-002 v0.10 §A2 — the principal address Award's agreement source needs.
+	address = frappe.db.get_single_value("Site Procuring Entity", "pe_address") or ""
+	check(address == site_setup.SITE_ADDRESS, f"the site Procuring Entity's principal address is {address!r}, expected {site_setup.SITE_ADDRESS!r}")
 	units = frappe.get_all("Organisation Unit", fields=["name", "unit_name", "parent_organisation_unit"])
 	check(sum(1 for u in units if not u.parent_organisation_unit) == 1, "exactly one root Organisation Unit")
 	names = [u.unit_name for u in units]
@@ -1256,6 +1298,11 @@ def validate(*, current: str | None = None, next_year: str | None = None, throug
 
 	for row in portfolio.validate_portfolio(current=current):
 		check(row["ok"], row["check"])
+	if _reaches("contracts", current=current):
+		from kentender_core.seeds.contracts_stage import validate_contracts_seed
+
+		for row in validate_contracts_seed():
+			check(row["ok"], row["check"])
 
 	clock_problem = _clock_problem()
 	check(not clock_problem, clock_problem or "the site test clock is as its policy requires")
@@ -1458,5 +1505,10 @@ def release_demo_profiles() -> dict[str, Any]:
 	from kentender_procurement.bid_opening.seeds.profiles import release_loaded_profile as release_opening_profile
 
 	out["bid_opening"] = release_opening_profile()
+	# A loaded Contract Management demonstration profile is one synthetic contract on a moved clock (SEED-002 v0.10 §B6); it is removed through its own clean.
+	if "kentender_contracts" in frappe.get_installed_apps():
+		from kentender_contracts.seeds import demo as contracts_demo
+
+		out["contracts_demo"] = contracts_demo.clean() if contracts_demo.present() else {"loaded": None}
 	out["test_clock_cleared"] = test_clock.set_instant(None)
 	return out

@@ -158,7 +158,22 @@ class as_user:
 
 
 # -- the Finance workflow stand-in --------------------------------------------------------------------------------------------------
+#: A site keeps one active Payment Entry workflow. The canonical world has one of its own (`kentender_core/seeds/contracts_stage.py`, Finance configuration), so a test that needs the stand-in, or needs none, suspends it for the length
+#: of the test and `drop_workflow` puts it back; a process that dies in between is caught by the canonical validation ("an active Payment Entry workflow exists").
+_SUSPENDED: list[str] = []
+
+
+def suspend_workflows() -> None:
+	for name in frappe.get_all("Workflow", filters={"document_type": "Payment Entry", "is_active": 1, "name": ["!=", WORKFLOW]}, pluck="name"):
+		frappe.db.set_value("Workflow", name, "is_active", 0)
+		if name not in _SUSPENDED:
+			_SUSPENDED.append(name)
+	frappe.db.commit()
+	frappe.clear_cache()
+
+
 def ensure_workflow() -> None:
+	suspend_workflows()
 	for state in ("Draft", "Pending Approval", "Approved"):
 		if not frappe.db.exists("Workflow State", state):
 			frappe.get_doc({"doctype": "Workflow State", "workflow_state_name": state}).insert(ignore_permissions=True)
@@ -183,8 +198,12 @@ def ensure_workflow() -> None:
 def drop_workflow() -> None:
 	if frappe.db.exists("Workflow", WORKFLOW):
 		frappe.delete_doc("Workflow", WORKFLOW, force=True, ignore_permissions=True)
-		frappe.db.commit()
-		frappe.clear_cache()
+	while _SUSPENDED:  # the workflow the site had before this test, active again
+		name = _SUSPENDED.pop()
+		if frappe.db.exists("Workflow", name) and not frappe.db.exists("Workflow", {"document_type": "Payment Entry", "is_active": 1}):
+			frappe.db.set_value("Workflow", name, "is_active", 1)
+	frappe.db.commit()
+	frappe.clear_cache()
 
 
 def submit_for_approval(pe: str, user: str) -> None:
@@ -196,7 +215,20 @@ def submit_for_approval(pe: str, user: str) -> None:
 
 # -- teardown ---------------------------------------------------------------------------------------------------------------------
 def teardown() -> dict:
-	"""Cancel and delete every document the tests made, newest first, then the world. Returns what could not be removed."""
+	"""Cancel and delete every document the tests made, newest first, then the world. Returns what could not be removed.
+
+	Frappe lowers a naming series when a document is deleted and reads the series of *today's* year for a document named in another year, so removing a document of a frozen-clock year (a demonstration profile
+	told in 2025) lowered this year's series from 0 to -1 and the next order was numbered 00000 again, colliding with the canonical world's (found 17 October 2026). A series counted up is not counted down here."""
+	series = {name: current for name, current in frappe.db.sql("select name, current from `tabSeries`")}
+	try:
+		return _teardown()
+	finally:
+		for name, value in series.items():
+			frappe.db.sql("update `tabSeries` set current = %s where name = %s and current < %s", (value, name, value))
+		frappe.db.commit()
+
+
+def _teardown() -> dict:
 	failed: dict[str, str] = {}
 	items = [ITEM_FA, ITEM_STK, ITEM_SERVICE, ITEM_PLAIN]
 	suppliers = [SUPPLIER, OTHER_SUPPLIER]

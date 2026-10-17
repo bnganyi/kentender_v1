@@ -46,6 +46,12 @@ SITE = {
 	"entity_is_county": False,
 }
 
+#: SEED-002 v0.10 §A2 — the principal address the agreement's party block reads (Award's source S10 refuses to build without it). It is the
+#: address the world already gives the Ministry: the governed contact office and delivery location below, and the issued Form No. 4 of
+#: template release 1.5 prints it, so the agreement does not contradict itself. The entity's legal name stays Ministry of Health (Project
+#: Owner, 17 October 2026: "Do not rename the entity").
+SITE_ADDRESS = "Afya House, Cathedral Road, Nairobi"
+
 UNITS = (
 	# (unit name, parent unit name or None for the root)
 	("Directorate of Digital Health and Policy", None),
@@ -221,6 +227,9 @@ TECHNICAL_ACTORS: tuple[str, ...] = ("daniel.otieno",)
 # no bidder rights, on the public portal only.
 PUBLIC_ACTORS: tuple[tuple[str, str], ...] = (("jane.wanjiku@observer.example", "Jane Wanjiku"),)
 
+#: The term of the Contract Management responsibilities below: from the first day of Year 0 (the closed year), open-ended.
+CM_TERM = {"effective_from": f"{calendar.YEAR0.start_date} 00:00:00"}
+
 ASSIGNMENTS = (
 	# (user local part, business role, unit name or None, kwargs)
 	("grace.wanjiku", "Departmental Author", "Digital Health", {}),
@@ -342,6 +351,20 @@ ASSIGNMENTS = (
 		# 364 days before 1 Sep 2026 (two-year seed world plan D8).
 		{"effective_from": W("2025-09-02 00:00:00")},
 	),
+	# KT-STD-001 v1.32 §8.3B / SEED-002 v0.10 §A8.1 — Contract Management's responsibilities, held by people the register already names (CM-CHG-001 v0.11 §6). They take effect on the first day of Year 0
+	# (the closed year), so that the closed year's contracts are formed, received, inspected and paid by people who held the responsibility at the instant, as every command checks. Preparation and
+	# receiving are scoped to the unit that asked for the goods (Human Resources Management and Development); the rest are site-wide.
+	("brian.wafula", "Contract preparation", "Human Resources Management and Development", CM_TERM),
+	("brian.wafula", "Contract inspection", None, CM_TERM),
+	("amina.hassan", "Entity contract signing", None, CM_TERM),
+	("julia.njeri", "Contract inspection", None, CM_TERM),
+	# Dr Peter Kimani, the Head of the user department, is the technical inspector and certifier of the goods his department asked for. Peter Mugo is not: KT-STD-001 v1.13 §8.3 keeps the Evaluation committee's
+	# people (Grace Wambui, Peter Mugo, Ruth Achieng) without any standing responsibility.
+	("peter.kimani", "Contract inspection", None, CM_TERM),
+	("peter.kimani", "Technical certification", None, CM_TERM),
+	("grace.wanjiku", "Receiving", "Human Resources Management and Development", CM_TERM),
+	("josphat.mwangi", "Finance preparation", None, CM_TERM),
+	("beatrice.kamau", "Finance approval", None, CM_TERM),
 )
 
 # BUD-CHG-001 v1.6 §15.2 — the one governed funding source every Budget
@@ -639,6 +662,7 @@ def _seed_site() -> str:
 			field: SITE[field]
 			for field in ("pe_name", "pe_type", "ppra_registration", "timezone", "statutory_approval_route", "entity_is_county")
 		}
+		payload["pe_address"] = SITE_ADDRESS  # System setup's own command carries it (SEED-002 v0.10 §A2; the field and its command are CFG-CHG-002 v0.20)
 		def _differs(field: str, value) -> bool:
 			stored = frappe.db.get_single_value(configuration.SITE_PE_DOCTYPE, field)
 			return int(stored or 0) != int(value) if isinstance(value, bool) else (stored or "") != value
@@ -655,7 +679,7 @@ def _seed_site() -> str:
 		if not structure._root():
 			configuration.repair_organisation_root()
 		return "updated"
-	configuration.configure_procuring_entity(**SITE)
+	configuration.configure_procuring_entity(**SITE, pe_address=SITE_ADDRESS)
 	return "configured"
 
 
@@ -1757,7 +1781,7 @@ def reset_site_setup(*, commit: bool = False) -> dict[str, int]:
 		pending = remaining
 
 	if configuration.is_configured():
-		for field in ("pe_name", "pe_code", "pe_type", "ppra_registration", "statutory_approval_route"):
+		for field in ("pe_name", "pe_code", "pe_type", "ppra_registration", "pe_address", "statutory_approval_route"):
 			frappe.db.set_single_value(configuration.SITE_PE_DOCTYPE, field, "")
 		frappe.db.set_single_value(configuration.SITE_PE_DOCTYPE, "entity_is_county", 0)
 		frappe.db.set_single_value(configuration.SITE_PE_DOCTYPE, "timezone", "Africa/Nairobi")

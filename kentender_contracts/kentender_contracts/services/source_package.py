@@ -23,11 +23,17 @@ from kentender_contracts.services.errors import fail
 from kentender_core.services import contract_source_contract as seam
 
 REQUIRED = tuple(f"S{n}" for n in range(1, 13))
-#: the places Form No. 4 must declare for the agreement to be generated (section 19.4 table): the bindings the generator fills and nothing else
+#: every place the agreement may fill in Form No. 4 (section 19.4 table): the bindings the generator fills and nothing else. A form declares the places it has; it is never asked for one it does not.
 INSERTIONS = {
-	"agreement_date": "the agreement date", "entity_name": "the procuring entity's name", "entity_address": "the entity's address", "supplier_name": "the supplier's name", "goods": "the goods",
-	"amount": "the amount", "documents": "the incorporated documents", "entity_signatory": "the entity's signatory", "supplier_signatory": "the supplier's signatory",
+	"agreement_date": "the agreement date", "agreement_day": "the agreement day", "agreement_month": "the agreement month", "agreement_year": "the agreement year",
+	"entity_name": "the procuring entity's name", "entity_address": "the entity's address", "supplier_name": "the supplier's name", "supplier_country": "the supplier's country of incorporation",
+	"supplier_address": "the supplier's address", "goods": "the goods", "addenda": "the addenda numbers", "amount": "the amount", "documents": "the incorporated documents",
+	"entity_signatory": "the entity's signatory", "entity_capacity": "the entity signatory's capacity", "supplier_signatory": "the supplier's signatory", "supplier_capacity": "the supplier signatory's capacity",
 }
+#: the places without which no agreement can be generated. The price and the incorporated documents are not among them: "Form No. 4 need not have an invented additional price clause" and the
+#: documents are the manifest (section 19.4), so a form without a place for them is not refused. The agreement date is declared either as one place or as day, month and year.
+REQUIRED_PLACES = ("entity_name", "entity_address", "supplier_name", "goods", "entity_signatory", "supplier_signatory")
+DATE_PLACES = ("agreement_day", "agreement_month", "agreement_year")
 CATEGORIES = {
 	"S1": "Issued tender and template release", "S2": "Accepted tender and clarifications", "S3": "Price schedule", "S4": "Schedule of requirements and technical specifications",
 	"S5": "General and special conditions", "S6": "Inspection and acceptance criteria", "S7": "Form No. 4, Contract Agreement", "S8": "Award notification and signing window",
@@ -74,7 +80,9 @@ def gather(handoff: list[dict[str, Any]]) -> dict[str, Any]:
 		media = described.get("media_type") or row.get("media_type", "")
 		data = json.loads(content) if media == "application/json" else bytes(content).decode("utf-8")
 		if number == "S7":
-			absent = [label for key, label in INSERTIONS.items() if f'data-insertion="{key}"' not in data]
+			absent = [INSERTIONS[key] for key in REQUIRED_PLACES if f'data-insertion="{key}"' not in data]
+			if 'data-insertion="agreement_date"' not in data and any(f'data-insertion="{key}"' not in data for key in DATE_PLACES):
+				absent.insert(0, INSERTIONS["agreement_date"])
 			if absent:  # a form that declares no place to fill cannot be generated into an agreement: that is the template owner's to declare (CM-TPL-01), never ours to guess
 				failed.append({"source": number, "category": CATEGORIES[number], "reason": "Form No. 4 declares no place to fill for " + ", ".join(absent) + ".", "owner": owner})
 				continue

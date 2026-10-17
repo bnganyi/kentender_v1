@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import cstr, get_datetime
+from frappe.utils import cint, cstr, get_datetime
 
 from kentender_procurement.award.services import checks, clock, clocks, contracting, issues, notices, notify, people, profile, records, sources, state
 
@@ -87,9 +87,19 @@ def _content(doc) -> dict[str, Any]:
 			"tender_security": "As recorded at submission"},
 		"restrictions": [{"id": i.name, "type": i.issue_type, "state": i.state, "disposition": i.disposition} for i in
 			(frappe.get_doc(state.ISSUE, n) for n in frappe.get_all(state.ISSUE, filters={"award_case": doc.name}, pluck="name", order_by="creation asc"))],
-		"legal_profile": profile.current().get("profile_version"), "fixture_namespace": doc.fixture_namespace,
-		"managing_unit": _managing_unit(doc), "handoff": _handoff(doc), "funding_allocation": _allocation_ref(doc),
+		"legal_profile": profile.current().get("profile_version"), "legal_profile_simulation_only": bool(cint(profile.current().get("simulation_only"))), "fixture_namespace": doc.fixture_namespace,
+		"managing_unit": _managing_unit(doc), "entity_particulars": _entity_particulars(doc), "handoff": _handoff(doc), "funding_allocation": _allocation_ref(doc),
 	}
+
+
+def _entity_particulars(doc) -> dict[str, Any]:
+	"""The entity particulars the package freezes (S10's content), so a later correction in System setup does not change a package already prepared (FU-CM-72). Empty while the address is not held."""
+	from kentender_procurement.award.services import contract_sources
+
+	try:
+		return contract_sources.frozen_entity(doc) or contract_sources.entity_particulars()
+	except contract_sources.Unavailable:
+		return {}
 
 
 def _allocation_ref(doc) -> dict[str, Any]:

@@ -52,10 +52,13 @@ class TestCanonicalSelection(IntegrationTestCase):
 	def test_the_two_year_ladders_are_ordered_and_closed(self):
 		self.assertEqual(
 			canonical.CURRENT_STAGES,
-			("annual_plan", "requisitions", "tenders", "bid_submission", "bid_opening", "bid_evaluation", "award"),
+			("annual_plan", "requisitions", "tenders", "bid_submission", "bid_opening", "bid_evaluation", "award", "contracts"),
 		)
 		self.assertEqual(canonical.NEXT_STAGES, ("none", "budget", "needs", "departmental_plans", "annual_plan"))
-		self.assertEqual(canonical.resolve_years(), ("award", FULL_NEXT))  # the plain seed: the full world (plan D6; v0.8: as far as the anchor allows)
+		# the plain seed: the full world (plan D6; v0.8: as far as the anchor allows; v0.10: through the contracts stage where Contract Management is installed and the world is anchored)
+		self.assertEqual(canonical.resolve_years(), (canonical.default_current(), FULL_NEXT))
+		self.assertEqual(canonical.default_current(), "contracts" if canonical.contracts_available() else "award")
+		self.assertEqual(canonical.resolve_years(current="award"), ("award", FULL_NEXT))
 		self.assertEqual(canonical.resolve_years(current="requisitions", next_year="budget"), ("requisitions", "budget"))
 		with self.assertRaises(frappe.ValidationError):
 			canonical.resolve_years(current="tender")
@@ -306,6 +309,37 @@ class TestEvaluationPeople(IntegrationTestCase):
 			self.assertTrue(frappe.db.exists("User", f"{local}@moh.example.test"))
 		self.assertEqual(held("esther.njeri"), ["Evaluation Technical Support"])
 		self.assertNotIn("Technical Operator", frappe.get_roles("esther.njeri@moh.example.test"))
+
+
+class TestPrincipalAddress(IntegrationTestCase):
+	"""SEED-002 v0.10 §A2: the agreement's party block reads the Procuring Entity's principal address (Award's source S10), and no command of
+	System setup writes it, so the site stage sets it and the validator checks it."""
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+		self._stored = frappe.db.get_single_value("Site Procuring Entity", "pe_address")
+
+	def tearDown(self):
+		frappe.db.set_single_value("Site Procuring Entity", "pe_address", self._stored or "")
+
+	def test_the_site_stage_sets_the_principal_address_and_a_rerun_changes_nothing(self):
+		from kentender_core.seeds import site_setup
+
+		frappe.db.set_single_value("Site Procuring Entity", "pe_address", "")
+		site_setup._seed_site()
+		self.assertEqual(frappe.db.get_single_value("Site Procuring Entity", "pe_address"), site_setup.SITE_ADDRESS)
+		self.assertEqual(site_setup.SITE_ADDRESS, site_setup.CONTACT_OFFICES[0][3])  # the world's one governed address
+		modified = frappe.db.get_single_value("Site Procuring Entity", "modified")
+		site_setup._seed_site()
+		self.assertEqual(frappe.db.get_single_value("Site Procuring Entity", "modified"), modified)
+
+	def test_the_entity_keeps_its_name_and_the_validator_fails_closed_on_a_missing_address(self):
+		from kentender_core.seeds import site_setup
+
+		self.assertEqual(site_setup.SITE["pe_name"], "Ministry of Health")
+		frappe.db.set_single_value("Site Procuring Entity", "pe_address", "")
+		with self.assertRaisesRegex(frappe.ValidationError, "principal address"):
+			canonical.validate()
 
 
 class TestFixturePasswords(IntegrationTestCase):
@@ -736,7 +770,7 @@ class TestAnchoredWorld(IntegrationTestCase):
 			self.assertTrue(frappe.db.exists("Fiscal Year", name), name)
 		self.assertEqual({fy for fy in frappe.get_all("Fiscal Year", filters={"name": ["not like", "_Test%"]}, pluck="name")}, names)
 
-	def test_the_closed_year_has_its_budget_its_active_plan_and_three_awards_waiting(self):
+	def test_the_closed_year_has_its_budget_its_active_plan_and_three_awards_delivered_to_contracting(self):
 		from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budget
 		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import year_plan
 
@@ -749,7 +783,9 @@ class TestAnchoredWorld(IntegrationTestCase):
 			requisition = portfolio._requisition(spec)
 			self.assertTrue(requisition, spec["key"])
 			tender = frappe.db.get_value("Tender", {"requisition": requisition}, "name")
-			self.assertEqual(frappe.db.get_value("Award Case", {"tender": tender}, "stage"), "Waiting to proceed", spec["key"])
+			# SEED-002 v0.10 §A7: the contracts stage (the default where Contract Management is installed) delivers each closed-year award to Contracting; through `award` they wait.
+			stage = "Sent to Contracting" if canonical.contracts_available() and frappe.db.exists("Contract Case", {"fixture_namespace": canonical.CONTRACTS_NS}) else "Waiting to proceed"
+			self.assertEqual(frappe.db.get_value("Award Case", {"tender": tender}, "stage"), stage, spec["key"])
 
 	def test_no_recorded_event_is_later_than_the_anchor(self):
 		self.assertEqual(canonical.events_after_anchor(), [])

@@ -65,7 +65,9 @@ class TestBoards(ContractCase):
 		t = tw.Thread(self.p, tag="BOARDS")
 		# a supplier with a binding and no contract yet has the empty list; the same supplier has the contract once Award has sent it
 		first = listing.workspace(self.p["mary"])["board"]
-		self.assertEqual((first["id"], first["rows"], first["empty"]), ("D01-S", [], "No contracts are available."))
+		# (the supplier of this world is the register's own Afya Digital Supplies Limited, whose three canonical contracts the list shows once the canonical world holds them, SEED-002 v0.10 section A8.1; this thread's own is not among them yet)
+		self.assertEqual((first["id"], first["empty"]), ("D01-S", "No contracts are available."))
+		self.assertNotIn(t.contract_id, [row[0].lstrip("@") for row in first["rows"]])
 		self.seen["D01-S-E"] = first
 		out = tw.receive(self.p, contract_id=t.contract_id)
 		self.case = t.case = out["contract"]

@@ -26,7 +26,10 @@ from kentender_core.services import contract_source_contract as seam
 from kentender_procurement.award.services import contract_sources, eligibility
 
 AWARD = "AWD-MOH-2026-002"
-GAPS = {"S10"}  # S9 is built from the retained funding allocation (AWD-CHG-001 v0.7 section 7.1); S7 is built (the issued Form No. 4 is served byte for byte); whether it can be generated into an agreement is Contract Management's coverage check
+def gaps() -> set[str]:
+	"""The sources the owners cannot give on this site. S9 is built from the retained funding allocation (AWD-CHG-001 v0.7 section 7.1); S7 is built (the issued Form No. 4 is served with its declared places wrapped,
+	`tenders/services/form4_places.py`); S10 is a gap only while the entity's principal address is not held, and the canonical seed holds it (SEED-002 v0.10 section A2)."""
+	return set() if (frappe.db.get_single_value("Site Procuring Entity", "pe_address") or "").strip() else {"S10"}
 
 
 class TestAwardContractSources(IntegrationTestCase):
@@ -42,17 +45,18 @@ class TestAwardContractSources(IntegrationTestCase):
 	def test_every_source_the_owners_can_give_is_built_and_the_rest_say_why_and_whose_they_are(self):
 		rows = {r["source"]: r for r in contract_sources.Provider().references(award_case=AWARD)}
 		self.assertEqual(list(rows), [f"S{n}" for n in range(1, 13)])
-		self.assertEqual({n for n, r in rows.items() if "unavailable" in r}, GAPS)
+		self.assertEqual({n for n, r in rows.items() if "unavailable" in r}, gaps())
 		for number, row in rows.items():
 			self.assertEqual(row["reference"], f"{number}-{AWARD}")
 			self.assertTrue(row["owner"] and row["category"])
-			if number not in GAPS:
+			if number not in gaps():
 				self.assertTrue(row["version"] and row["media_type"] and row["size"], number)
 		self.assertNotIn("sha256", rows["S12"], "a restriction is a live fact, not 'a source that changed after the award'")
-		for number in set(rows) - GAPS - {"S12"}:
+		for number in set(rows) - gaps() - {"S12"}:
 			self.assertEqual(len(rows[number]["sha256"]), 64, number)
 		self.assertNotIn("unavailable", rows["S9"], "the funding lineage is served from the retained allocation")
-		self.assertIn("principal address", rows["S10"]["unavailable"])
+		if "S10" in gaps():
+			self.assertIn("principal address", rows["S10"]["unavailable"])
 
 	def test_what_is_described_is_what_is_fetched_and_it_does_not_change_with_the_clock(self):
 		provider = contract_sources.Provider()
@@ -79,7 +83,8 @@ class TestAwardContractSources(IntegrationTestCase):
 		self.assertEqual((source("S3")["total"], price["quantity"], price["net_rate"], price["rate"], price["tax_amount"]), (46_400_000.0, 250, 160_000.0, 185_600.0, 6_400_000.0))
 		conditions = source("S5")
 		self.assertEqual((conditions["warranty"]["months"], conditions["payment"]["days"], conditions["performance_security"]["required"], conditions["performance_security"]["percentage"]), (36, 30, True, "10"))
-		self.assertNotIn("advance", conditions, "an advance the conditions state only in prose is not invented as a value")
+		self.assertEqual(conditions["advance"]["allowed"], False, "the issued conditions of release 1.5 print that no advance payment is offered, and that sentence is the typed value")
+		self.assertIn("No advance payment is offered or payable under this Contract.", conditions["advance"]["source"])
 		schedule = source("S4")["delivery_schedule"]
 		self.assertEqual(schedule["due"], delivery("2027-06-30"))
 		self.assertIn("3rd Floor Procurement Stores", schedule["destination"], "the addendum is applied")
@@ -106,9 +111,20 @@ class TestAwardContractSources(IntegrationTestCase):
 		package = eligibility._content(self.doc())
 		self.assertTrue(package["managing_unit"])
 		self.assertEqual([r["source"] for r in package["handoff"]], [f"S{n}" for n in range(1, 13)])
-		self.assertEqual({r["source"] for r in package["handoff"] if "unavailable" in r}, GAPS)
+		self.assertEqual({r["source"] for r in package["handoff"] if "unavailable" in r}, gaps())
 		for key in ("award_case", "tender", "decision", "notice_batch", "restrictions", "legal_profile"):
 			self.assertIn(key, package, "what the package carried before is still carried")
+		self.assertIs(package["legal_profile_simulation_only"], True, "Award's test profile says it is simulation-only, so Contract Management can run the case under its illustrative terms on a simulation site")
+		if "S10" not in gaps():
+			self.assertEqual(package["entity_particulars"], json.loads(contract_sources.BUILDERS["S10"](self.doc())[0]), "the package freezes the entity particulars its source S10 serves")
+
+	def test_a_package_freezes_the_entity_particulars_a_later_setup_change_does_not_reach(self):
+		frozen = {"legal_name": "Ministry of Health", "address": "Afya House, Cathedral Road, Nairobi", "entity_type": "National Government Ministry"}
+		with unittest.mock.patch.object(frappe, "get_all", return_value=[frappe._dict(content_json=json.dumps({"entity_particulars": frozen}))]):
+			content, _media, _version = contract_sources.BUILDERS["S10"](self.doc())
+			self.assertEqual(json.loads(content), frozen, "the package's own copy is what the source serves, whatever System setup says now")
+		with unittest.mock.patch.object(frappe, "get_all", return_value=[]):
+			self.assertIsNone(contract_sources.frozen_entity(self.doc()), "an award with no package yet reads the site configuration")
 
 	def test_a_source_that_cannot_be_built_is_reported_not_raised(self):
 		with unittest.mock.patch.dict(contract_sources.BUILDERS, {"S9": lambda doc: (_ for _ in ()).throw(contract_sources.Unavailable("Budget did not answer."))}):

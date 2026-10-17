@@ -42,6 +42,7 @@ const form = reactive({
 	pe_code: pe.value?.pe_code || "",
 	pe_type: pe.value?.pe_type || "",
 	ppra_registration: pe.value?.ppra_registration || "",
+	pe_address: pe.value?.pe_address || "",
 	timezone: pe.value?.timezone || "Africa/Nairobi",
 	statutory_approval_route: pe.value?.statutory_approval_route || "",
 	entity_is_county: pe.value ? !!pe.value.entity_is_county : null,
@@ -52,6 +53,7 @@ watch(pe, (value) => {
 	form.pe_code = value?.pe_code || "";
 	form.pe_type = value?.pe_type || "";
 	form.ppra_registration = value?.ppra_registration || "";
+	form.pe_address = value?.pe_address || "";
 	form.timezone = value?.timezone || "Africa/Nairobi";
 	form.statutory_approval_route = value?.statutory_approval_route || "";
 	form.entity_is_county = value ? !!value.entity_is_county : null;
@@ -63,6 +65,7 @@ const dirty = computed(() => {
 		form.pe_name !== (pe.value?.pe_name || "") ||
 		form.pe_type !== (pe.value?.pe_type || "") ||
 		form.ppra_registration !== (pe.value?.ppra_registration || "") ||
+		form.pe_address !== (pe.value?.pe_address || "") ||
 		form.statutory_approval_route !== (pe.value?.statutory_approval_route || "") ||
 		form.entity_is_county !== !!pe.value?.entity_is_county
 	);
@@ -104,6 +107,7 @@ async function submit() {
 				pe_code: form.pe_code,
 				pe_type: form.pe_type,
 				ppra_registration: form.ppra_registration,
+				pe_address: form.pe_address,
 				timezone: form.timezone,
 				statutory_approval_route: form.statutory_approval_route,
 				entity_is_county: form.entity_is_county ? 1 : 0,
@@ -116,6 +120,7 @@ async function submit() {
 					pe_name: form.pe_name,
 					pe_type: form.pe_type,
 					ppra_registration: form.ppra_registration,
+					pe_address: form.pe_address,
 					timezone: form.timezone,
 					statutory_approval_route: form.statutory_approval_route,
 					entity_is_county: form.entity_is_county,
@@ -207,6 +212,16 @@ function goToProcurementRules() {
 				<div class="field">
 					<label for="kt-pe-ppra">{{ __("PPRA registration") }}</label>
 					<input id="kt-pe-ppra" v-model="form.ppra_registration" class="input" data-testid="kt-setup-pe-ppra">
+				</div>
+				<div class="field">
+					<label for="kt-pe-address">{{ __("Principal address") }}</label>
+					<input
+						id="kt-pe-address"
+						v-model="form.pe_address"
+						class="input"
+						autocomplete="off"
+						data-testid="kt-setup-pe-address"
+					>
 				</div>
 				<div class="field">
 					<label for="kt-pe-tz">{{ __("Timezone") }}</label>

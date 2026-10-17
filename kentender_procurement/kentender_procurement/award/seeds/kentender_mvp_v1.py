@@ -121,7 +121,7 @@ def tell(tender: str, through: str = STEPS[-1], clock_map: dict[str, str] | None
 	return award
 
 
-def award_portfolio_tender(tender: str, *, through: str, clock_map: dict[str, str]) -> dict[str, Any]:
+def award_portfolio_tender(tender: str, *, through: str, clock_map: dict[str, str], keep_delivered: bool = False) -> dict[str, Any]:
 	"""An executed-portfolio Tender's award to `through` ("received": the
 	professional opinion is Charles Mutiso's to prepare; "signed": the award
 	decision is Amina Hassan's; "accepted": the successful supplier has accepted and the waiting period
@@ -133,6 +133,9 @@ def award_portfolio_tender(tender: str, *, through: str, clock_map: dict[str, st
 	existing = frappe.db.get_value(records.CASE, {"tender": tender}, ["name", "stage"], as_dict=True)
 	if existing and existing.stage == wanted and (through in ("received", "accepted") or state.signed_opinion(frappe.get_doc(records.CASE, existing.name))):
 		return {"ok": True, "idempotent": True, "award": existing.name}
+	if keep_delivered and through == "accepted" and existing and existing.stage == "Sent to Contracting":
+		# SEED-002 v0.10 §A8.1: a closed-year award the contracts stage has delivered to Contracting stays delivered; telling it again would remove the contract it became.
+		return {"ok": True, "idempotent": True, "award": existing.name, "delivered": True}
 	if not _delivery(tender):
 		frappe.throw(f"The evaluation report of {tender} has not been delivered.")
 	if existing:

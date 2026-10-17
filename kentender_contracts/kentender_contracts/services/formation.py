@@ -47,6 +47,15 @@ def _next_contract_id() -> str:
 	return f"CM-{year}-{last + 1:04d}"
 
 
+def _legal_profile(package: dict[str, Any]) -> str:
+	"""The rule profile the case runs under. Award's only profile on a bench that has not had a legal review is its simulation test profile, which the package says is simulation-only; on a simulation site that is
+	Contract Management's labelled *Illustrative test terms* profile, the one that exists for exactly this (rules/profile.py). Anywhere else the profile Award names is kept, and an unknown one is the production
+	profile, which refuses consequential actions until the legal baseline is verified (LQ-01)."""
+	if package.get("legal_profile_simulation_only") and simulation.enabled():
+		return "SYNTHETIC-ILLUSTRATIVE"
+	return cstr(package.get("legal_profile") or "")
+
+
 def receive_award_package(package: dict[str, Any], *, handoff: list[dict[str, Any]], managing_unit: str, idempotency_key: str, actor: str, contract_id: str = "") -> dict[str, Any]:
 	"""`ReceiveAwardPackage` (service-only): a durable case and one **Prepare contract** task for HOP. A retry returns the existing case (section 5.2)."""
 
@@ -66,7 +75,7 @@ def receive_award_package(package: dict[str, Any], *, handoff: list[dict[str, An
 				reason="This is a complex or specialised contract, which this product does not manage.")
 		doc = records.new(CASE, contract_id=contract_id or _next_contract_id(), source_kind="KenTender award", source_reference=award_case, supplier_organisation=decision.get("organisation"),
 			supplier_name=decision.get("supplier"), managing_unit=managing_unit or None, currency=decision.get("currency"), contract_value=decision.get("evaluated_amount"),
-			tender_reference=package.get("tender_reference") or package.get("tender"), award_reference=decision.get("id"), legal_profile=package.get("legal_profile") or "", lifecycle="Preparing",
+			tender_reference=package.get("tender_reference") or package.get("tender"), award_reference=decision.get("id"), legal_profile=_legal_profile(package), lifecycle="Preparing",
 			received_at=clock.now(), record_version=1, title=cstr(package.get("tender_reference") or package.get("tender")),
 			source_json=records.dumps({"package": package, "package_digest": records.digest(package), "handoff": handoff}))
 		work.assign(doc.name, "RequestContractSignatures", "Review the contract and send it for signature.", "agreement 1", 1, work.holders(work.HOP), role=work.HOP)
@@ -91,6 +100,11 @@ def _label_of(user: str, fallback: str = "") -> str:
 	return people.full_name(user) if user and frappe.db.exists("User", user) else fallback
 
 
+def _ordinal(day: int) -> str:
+	"""1st, 2nd, 3rd, 4th ... 11th, 12th, 13th ... 21st: how a form reads "the ___ day of"."""
+	return f"{day}{'th' if 10 <= day % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(day % 10, 'th')}"
+
+
 def _entity_capacity(user: str) -> str:
 	return "Accounting Officer" if people.holds(user, "Accounting Officer") else "Authorised signatory"
 
@@ -107,12 +121,20 @@ def _assemble(doc, particulars: dict[str, Any]) -> dict[str, Any]:
 	supplier_pick = next((p for p in signatories if p["user"] == particulars.get("supplier_signatory")), signatories[0] if len(signatories) == 1 else None)
 	total, currency = s["S3"]["total"], s["S3"]["currency"]
 	money = f"{currency} {total:,.0f}" + (", tax included" if s["S3"].get("tax_included") else "")
+	form = sources["S7"]["data"]
+	split = lambda key: f'data-insertion="{key}"' in form  # noqa: E731 - a form with a place of its own for the capacity has the name alone in the signatory's place
+	entity_name = _label_of(entity_user) if entity_user else ""
+	entity_capacity = _entity_capacity(entity_user) if entity_user else ""
+	day = particulars.get("agreement_date")
 	values = {
-		"agreement_date": formatdate(particulars["agreement_date"], "d MMMM yyyy") if particulars.get("agreement_date") else "", "entity_name": entity["legal_name"], "entity_address": entity.get("address", ""),
-		"supplier_name": supplier_org["legal_name"], "goods": ", ".join(f"{cint(l['quantity'])} {l['description']}" for l in lines), "amount": money,
-		"documents": ", ".join(label for label, _n, _o in source_package.INCORPORATED),
-		"entity_signatory": f"{_label_of(entity_user)}, {_entity_capacity(entity_user)}" if entity_user else "",
-		"supplier_signatory": f"{supplier_pick['name']}, {supplier_pick['capacity']}" if supplier_pick else "",
+		"agreement_date": formatdate(day, "d MMMM yyyy") if day else "", "agreement_day": _ordinal(getdate(day).day) if day else "", "agreement_month": formatdate(day, "MMMM") if day else "",
+		"agreement_year": formatdate(day, "yyyy") if day else "", "entity_name": entity["legal_name"], "entity_address": entity.get("address", ""),
+		"supplier_name": supplier_org["legal_name"], "supplier_country": cstr(supplier_org.get("country")), "supplier_address": cstr(supplier_org.get("registered_address")),
+		"goods": ", ".join(f"{cint(l['quantity'])} {l['description']}" for l in lines), "addenda": ", ".join(cstr(a.get("number") or a.get("reference") or a.get("name") or a) for a in s["S1"].get("addenda") or []) or "none",
+		"amount": money, "documents": ", ".join(label for label, _n, _o in source_package.INCORPORATED),
+		"entity_signatory": (entity_name if split("entity_capacity") else f"{entity_name}, {entity_capacity}") if entity_user else "", "entity_capacity": entity_capacity,
+		"supplier_signatory": (supplier_pick["name"] if split("supplier_capacity") else f"{supplier_pick['name']}, {supplier_pick['capacity']}") if supplier_pick else "",
+		"supplier_capacity": supplier_pick["capacity"] if supplier_pick else "",
 	}
 	html, missing = source_package.render(sources["S7"]["data"], values)
 	mapping = particulars.get("item_mapping") or {}

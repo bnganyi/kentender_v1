@@ -85,7 +85,9 @@ class TestFormation(ContractCase):
 	def test_particulars_generate_the_agreement_from_the_verified_sources_and_say_what_is_missing(self):
 		out = tw.receive(self.p)
 		blank = formation.save_particulars(out["contract"], expected_version=out["record_version"], idempotency_key=self.k(), actor=self.p["brian"], values={})
-		self.assertEqual(blank["missing"], ["agreement_date", "asset_location", "entity_signatory", "item_mapping", "native_supplier"])
+		# the supplier's native record is mapped by its exact legal name where ERPNext holds one: the canonical world's contracts stage makes Afya Digital Supplies Limited's (SEED-002 v0.10 section A8.1), the synthetic supplier's name
+		mapped = bool(frappe.db.exists("Supplier", sources.SUPPLIER))
+		self.assertEqual(blank["missing"], ["agreement_date", "asset_location", "entity_signatory", "item_mapping", *([] if mapped else ["native_supplier"])])
 		agreement = frappe.get_doc("Contract Agreement Version", blank["agreement"])
 		self.assertEqual((agreement.state, agreement.version_no, float(agreement.amount)), ("Draft", 1, 1_000_000.0))
 		self.assertIn("{{agreement_date}}", agreement.rendered_html)
