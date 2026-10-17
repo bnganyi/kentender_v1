@@ -1,5 +1,5 @@
 <!-- BoardList — the contracts list (boards D01 and D01-S), drawn from the server's board (CM-CHG-001 v0.8 section 10). Ported from the design template's list markup class for class: the page
-     head, the My work / All contracts switch, the filter bar with the rest of the filters under a disclosure, the table or the empty state. The register is paged on the server and drawn with the
+     head, the My work / All contracts switch, the filter bar with every filter in one row, the table or the empty state. The register is paged on the server and drawn with the
      one shared pager (AGENTS.md section 6.11); the root screen owns the page and the filters so a visit to a contract and back keeps them. -->
 <template>
 	<div class="kt-page" :data-testid="`cm-board-${board.id}`" :data-board="board.id">
@@ -12,24 +12,23 @@
 		</div>
 		<div>
 			<div class="kt-filter-bar">
-				<div v-for="(f, i) in bar" :key="f.name" class="field" :class="{ 'is-wide': i === 0 }">
+				<div v-for="(f, i) in fields" :key="f.name" class="field" :class="{ 'is-wide': i === 0 }">
 					<label :for="`cm-filter-${f.name}`">{{ f.l }}</label>
 					<input v-if="f.t === 'tx'" :id="`cm-filter-${f.name}`" v-model="local[f.name]" class="input" :data-testid="`cm-filter-${f.name}`" @change="apply" @keydown.enter="apply" />
+					<RecordPickerHost
+						v-else-if="f.t === 'pick'"
+						:model-value="local[f.name] ?? ''"
+						:source="f.source"
+						:context="f.context"
+						:value-label="labelOf(f)"
+						:input-id="`cm-filter-${f.name}`"
+						:noun="f.noun"
+						:all-label="(f.o && f.o.allLabel) || ''"
+						:data-testid="`cm-pick-${f.name}`"
+						@update:model-value="(v) => pickFilter(f.name, v)"
+						@change="(row) => (chosen[f.name] = row ? row.label : '')"
+					/>
 					<select v-else :id="`cm-filter-${f.name}`" v-model="local[f.name]" class="input" :data-testid="`cm-filter-${f.name}`" @change="apply"><option v-for="o in f.options" :key="o.value" :value="o.value">{{ o.label }}</option></select>
-				</div>
-			</div>
-			<div v-if="more.length" class="kt-disclosure" style="margin-top: 4px">
-				<div class="kt-disclosure-head" style="padding-left: 0; padding-right: 0" role="button" tabindex="0" @click="moreOpen = !moreOpen" @keydown.enter="moreOpen = !moreOpen">
-					<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">{{ __("Filters") }}</span></div>
-					<svg class="kt-icon is-sm kt-disclosure-chevron" :class="{ 'is-open': moreOpen }" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
-				</div>
-				<div v-if="moreOpen" class="kt-disclosure-body" style="padding-left: 0; padding-right: 0">
-					<div class="kt-filter-bar">
-						<div v-for="f in more" :key="f.name" class="field">
-							<label :for="`cm-filter-${f.name}`">{{ f.l }}</label>
-							<select :id="`cm-filter-${f.name}`" v-model="local[f.name]" class="input" :data-testid="`cm-filter-${f.name}`" @change="apply"><option v-for="o in f.options" :key="o.value" :value="o.value">{{ o.label }}</option></select>
-						</div>
-					</div>
 				</div>
 			</div>
 			<table v-if="board.rows.length" class="table" data-testid="cm-list">
@@ -55,33 +54,37 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, watch } from "vue";
+import RecordPickerHost from "../../record_picker_shared/RecordPickerHost.vue";
 import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
 import { fieldView, tableView } from "../board_view.js";
 
 const props = defineProps({ board: { type: Object, required: true } });
 const emit = defineEmits(["filter", "view", "open", "page", "size", "head"]);
 
-const moreOpen = ref(false);
 const local = reactive({});
 const fields = computed(() => props.board.filters.map((f, i) => fieldView(f, `list-${i}`, i)));
-// The artboard draws five filters: the first two in the bar and the rest under a "Filters" disclosure. The build offers three (Responsible person and Managing unit wait for the picker's register-filter
-// source), and a disclosure for one select is a heavy band over a lone, stretched field, so up to three filters sit in the one row and the disclosure appears from the fourth.
-const INLINE = 3;
-const inline = computed(() => (fields.value.length <= INLINE ? fields.value.length : 2));
-const bar = computed(() => fields.value.slice(0, inline.value));
-const more = computed(() => fields.value.slice(inline.value));
+// The design draws all five filters in the one bar, the first (Search) wide.
 const table = computed(() => tableView({ cols: props.board.cols, rows: props.board.rows, num: [] }));
 
 // The filters the server applied are what the screen shows; a typed value waits for the reader to apply it.
 watch(() => props.board.filters, (filters) => { for (const f of filters) local[f.name] = f.v ?? ""; }, { immediate: true });
 
 function apply() {
-	emit("filter", { search: local.search ?? "", status: local.status ?? "", source: local.source ?? "" });
+	emit("filter", { search: local.search ?? "", status: local.status ?? "", source: local.source ?? "", responsible: local.responsible ?? "", unit: local.unit ?? "" });
+}
+
+// A person or a unit is chosen with the shared picker, which hands back the chosen id, or nothing for "All". The picker is given the reader's own choice and its name, never the server's echo of the
+// last answer (which still names the old choice for a moment after a Clear).
+const chosen = reactive({});
+const labelOf = (f) => (local[f.name] ? chosen[f.name] || f.valueLabel || "" : "");
+function pickFilter(name, value) {
+	local[name] = value || "";
+	apply();
 }
 
 function clear() {
-	Object.assign(local, { search: "", status: props.board.filters.find((f) => f.name === "status")?.opts?.[0] ?? "", source: props.board.filters.find((f) => f.name === "source")?.opts?.[0] ?? "" });
+	Object.assign(local, { search: "", status: props.board.filters.find((f) => f.name === "status")?.opts?.[0] ?? "", source: props.board.filters.find((f) => f.name === "source")?.opts?.[0] ?? "", responsible: "", unit: "" });
 	apply();
 }
 </script>

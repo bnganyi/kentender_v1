@@ -16,5 +16,5 @@ from kentender_contracts.boards import listing
 
 
 @frappe.whitelist()
-def get_contract_workspace(page: int = 1, page_size: int = 10, view: str = "", search: str = "", status: str = "", source: str = "") -> dict[str, Any]:
-	return listing.workspace(frappe.session.user, page=page, page_size=page_size, view=view, search=search, status=status, source=source)
+def get_contract_workspace(page: int = 1, page_size: int = 10, view: str = "", search: str = "", status: str = "", source: str = "", responsible: str = "", unit: str = "") -> dict[str, Any]:
+	return listing.workspace(frappe.session.user, page=page, page_size=page_size, view=view, search=search, status=status, source=source, responsible=responsible, unit=unit)

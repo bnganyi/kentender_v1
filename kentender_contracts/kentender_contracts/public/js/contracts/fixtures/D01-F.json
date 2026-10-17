@@ -50,6 +50,32 @@
    ],
    "t": "sel",
    "v": "All sources"
+  },
+  {
+   "context": {},
+   "l": "Responsible person",
+   "name": "responsible",
+   "noun": "person",
+   "o": {
+    "allLabel": "All people"
+   },
+   "source": "contracts.register_person",
+   "t": "pick",
+   "v": "",
+   "valueLabel": ""
+  },
+  {
+   "context": {},
+   "l": "Managing unit",
+   "name": "unit",
+   "noun": "unit",
+   "o": {
+    "allLabel": "All units"
+   },
+   "source": "contracts.register_unit",
+   "t": "pick",
+   "v": "",
+   "valueLabel": ""
   }
  ],
  "headP": "Register existing contract",

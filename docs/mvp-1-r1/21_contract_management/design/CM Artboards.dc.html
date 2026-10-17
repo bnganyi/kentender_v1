@@ -319,7 +319,7 @@ class Component extends DCLogic {
       v.headP = s.headP || ''; v.hasHeadP = !!s.headP;
       v.views = (s.views || []).map((l, i) => ({ l, sel: i === (s.view || 0), name: 'view-' + key })); v.hasViews = v.views.length > 0;
       const fs = (s.filters || []).map((f, i) => Object.assign(this.field(f, key, i), { wcls: i === 0 ? 'is-wide' : '' }));
-      v.filters = fs.slice(0, 2); v.more = fs.slice(2); v.hasMore = v.more.length > 0;
+      v.filters = fs; v.more = []; v.hasMore = v.more.length > 0;
       v.fOpen = !!this.state.ev['f-' + key]; v.fCls = v.fOpen ? 'is-open' : '';
       v.toggleF = () => this.setState(st => ({ ev: Object.assign({}, st.ev, { ['f-' + key]: !st.ev['f-' + key] }) }));
       const tb = this.table({ cols: s.cols, rows: s.rows || [], num: s.num || [] });

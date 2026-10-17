@@ -72,7 +72,7 @@ let pendingKey = ""; // the operation key of a command whose answer never arrive
 
 // The list's own state lives in the root so a visit to a contract and back keeps it (AGENTS.md §6.11).
 const view = ref("My work");
-const filters = ref({ search: "", status: "", source: "" });
+const filters = ref({ search: "", status: "", source: "", responsible: "", unit: "" });
 const page = ref(1);
 const pageSize = ref(savedPageSize("contracts-list"));
 
@@ -88,7 +88,7 @@ async function load() {
 		const t = target.value;
 		const answer = t.contract
 			? await api.getBoard({ contract: t.contract, tab: t.tab, subject: t.subject })
-			: await api.getWorkspace({ page: page.value, pageSize: pageSize.value, view: view.value, search: filters.value.search, status: filters.value.status, source: filters.value.source });
+			: await api.getWorkspace({ page: page.value, pageSize: pageSize.value, view: view.value, search: filters.value.search, status: filters.value.status, source: filters.value.source, responsible: filters.value.responsible, unit: filters.value.unit });
 		if (token !== seq) return;
 		if (answer && answer.ok === false) throw new Error(answer.message || "failed");
 		payload.value = answer;

@@ -13,8 +13,8 @@ function call(method, args, options) {
 	return transport(method, args, options);
 }
 
-export function getWorkspace({ page = 1, pageSize = 10, view = "", search = "", status = "", source = "" } = {}) {
-	return call(`${BASE}.workspace.get_contract_workspace`, { page, page_size: pageSize, view, search, status, source });
+export function getWorkspace({ page = 1, pageSize = 10, view = "", search = "", status = "", source = "", responsible = "", unit = "" } = {}) {
+	return call(`${BASE}.workspace.get_contract_workspace`, { page, page_size: pageSize, view, search, status, source, responsible, unit });
 }
 
 export function getBoard({ contract, tab = "", subject = [] }) {
