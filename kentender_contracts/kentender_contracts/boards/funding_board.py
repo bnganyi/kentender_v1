@@ -13,10 +13,12 @@ from __future__ import annotations
 
 from typing import Any
 
+import frappe
+
 from kentender_contracts.boards import chrome, kit
 from kentender_contracts.boards.context import Context
 from kentender_contracts.services import contract_funding as funding
-from kentender_contracts.services import people, work
+from kentender_contracts.services import clock, people, work
 from kentender_core.services import contract_funding_request_contract as seam
 
 BOARD = "D21-F"
@@ -77,7 +79,10 @@ def _money(text: str, currency: str) -> str:
 
 
 def _year_options(ctx: Context, view: dict[str, Any]) -> list[str]:
-	return [y["year"] for y in view["years"]]
+	"""The financial years a year share can be given for: the years already recorded, then the site's own years from the one that contains the contract's clock on (a contract with no year recorded yet still has years to choose from)."""
+	recorded = [y["year"] for y in view["years"]]
+	coming = frappe.get_all("Fiscal Year", filters={"year_end_date": [">=", clock.now().date()]}, order_by="year_start_date asc", pluck="name", limit=SHARES + 2)
+	return list(dict.fromkeys([*recorded, *coming]))
 
 
 def _eligible(year: dict[str, Any], current: str) -> bool:

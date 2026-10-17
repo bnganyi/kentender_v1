@@ -207,6 +207,9 @@ def _intake_values(values: dict[str, Any]) -> dict[str, Any]:
 def _funding_route(case, args, values, expected, key, actor):
 	indexes = sorted({int(k.split(".", 1)[0]) for k in nested(values, "schedule") if k.split(".", 1)[0].isdigit()})
 	rows = [{"year": pick(values.get(f"schedule.{i}.year")), "amount": values.get(f"schedule.{i}.amount", "")} for i in indexes]
+	for r in rows:
+		if r["year"] == "Select":  # a share row nobody filled in still carries the select's placeholder
+			r["year"] = ""
 	rows = [r for r in rows if r["year"] or str(r["amount"]).strip()]
 	return contract_funding.record_route(case, route=pick(values.get("route")), authority_name=values.get("authority", ""), approved_amount=values.get("approved_amount", ""), evidence=_lines(values.get("evidence")),
 		schedule=rows, expected_version=expected, idempotency_key=key, actor=actor)

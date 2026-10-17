@@ -323,6 +323,8 @@ def _agreement_summary(ctx: Context) -> dict[str, Any]:
 	appointed = ctx.appointment
 	if appointed["appointment"]:
 		board["regions"].append(kit.R("Inspectors", agreement._members_table(appointed["members"])))
+	if ctx.doc.source_kind == "External record":
+		funding_board.attach(ctx, board)  # how an independently registered contract is funded stays one press away on its agreement for the people who work with it, after management has started too (CM-CHG-001 v0.10 section 10.9)
 	return board
 
 

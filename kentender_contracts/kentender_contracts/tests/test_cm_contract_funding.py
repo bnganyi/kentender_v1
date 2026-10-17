@@ -141,6 +141,14 @@ class TestFundingAnIndependentContract(_FundingWorld):
 		self.assertEqual(records.loads(case.funding_authority_json)["evidence"], ["Funding authority letter 1"])
 		self.assertEqual([(r.fiscal_year, r.schedule_amount) for r in funding.records_of(self.case)], [(YEAR_1, "300000.00"), (YEAR_2, "400000.00"), (YEAR_3, "200000.00")])
 
+	def test_a_share_row_left_on_the_placeholder_is_no_year_at_all(self):
+		from kentender_contracts.api import commands
+
+		values = {"route": "KenTender Budget", "authority": "Ministry Accounting Officer", "approved_amount": "900000", "evidence": "Funding authority letter 1", "schedule.1.year": YEAR_1, "schedule.1.amount": "300000",
+			"schedule.2.year": "Select", "schedule.2.amount": "", "schedule.3.year": "Select", "schedule.3.amount": ""}
+		commands.COMMANDS["RecordContractFundingRoute"](self.case, {}, values, self.version(), self.k(), self.p["charles"])
+		self.assertEqual([(r.fiscal_year, r.schedule_amount) for r in funding.records_of(self.case)], [(YEAR_1, "300000.00")])
+
 	def test_only_the_head_records_the_route_and_it_needs_evidence_and_real_years(self):
 		for who in ("josphat", "beatrice", "brian"):
 			with self.subTest(who):
@@ -445,6 +453,15 @@ class TestTheFundingScreens(_FundingWorld):
 		board = funding_board.d21f(self.context("charles"))
 		self.assertIn(f"Request funding for {YEAR_1}", board["actions"])
 		self.assertTrue(any(label.startswith("Request annual funding for") for label in board["actions"]) is False, "the first request is the initial one, the annual wording follows a funded year")
+
+	def test_the_route_dialog_offers_financial_years_before_any_year_is_recorded(self):
+		from kentender_contracts.boards import funding_board
+
+		board = funding_board.d21f(self.context("charles"))
+		fields = [f for row in board["dialogs"]["route"]["b"] for f in (row.get("items") or [row]) if isinstance(f, dict)]
+		year = next(f for f in fields if f.get("name") == "schedule.1.year")
+		self.assertEqual(year["opts"][0], "Select")
+		self.assertTrue(len(year["opts"]) > 1, "a head with no year recorded still has years to give a share to")
 
 	def test_finance_sees_the_confirm_action_for_a_year_and_never_the_request(self):
 		from kentender_contracts.boards import funding_board
