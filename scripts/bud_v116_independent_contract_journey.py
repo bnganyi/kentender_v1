@@ -3,12 +3,11 @@
 
 What is real: Contract Management's funding services (the route, the year's basis prepared by Finance preparation and confirmed by Finance approval, the one request per year, the outcome receiver, the funding
 holds), the funding-request seam that carries the request to Budget, Budget's request, entry and decision commands, the canonical Budget's lines and positions for two financial years, the commitments an approved
-entry makes, and the people who hold Budget Officer and Budget Approver. What is stood in: nothing. The one thing added is a second Budget Approver, a throwaway person, because the canonical world has a single
-Budget Approver and she is also the only Finance approval holder who can confirm a year's basis: the rule that she may not approve what she confirmed is then shown with the real people, and a different
-Approver is needed to finish the journey.
+entry makes, and the people who hold Budget Officer and Budget Approver. What is stood in: nothing. The canonical world has two Budget Approvers: Beatrice Kamau, who is also the Finance approval holder who confirms a
+year's basis (so Budget refuses her the approval of that year's entry), and Hellen Mutua (KT-STD-001 v1.31 section 8.3), who prepared and confirmed nothing and finishes the journey.
 
-It changes the canonical Budget and Contract Management on the TEST site and puts them back (the contract, its records, the requests, entries, commitments, ledger events, journal rows, the responsibilities it
-granted and the throwaway person) in a `finally`. Run it under the test-site lock, with no other session using the site, and never against the development site:
+It changes the canonical Budget and Contract Management on the TEST site and puts them back (the contract, its records, the requests, entries, commitments, ledger events, journal rows and the Contract Management
+responsibilities it granted) in a `finally`. It never touches a person: Hellen is a permanent member of the canonical world. Run it under the test-site lock, with no other session using the site, and never against the development site:
 
     cd /home/midasuser/frappe-bench/sites && flock -o /tmp/kt-test-site.lock ../env/bin/python ../apps/kentender_v1/scripts/bud_v116_independent_contract_journey.py [report.md]
 """
@@ -27,7 +26,7 @@ PREFIX = "CM-JRNY-IND-"
 HOP = "charles.mutiso@moh.example.test"  # Head of Procurement Function
 PREP = "josphat.mwangi@moh.example.test"  # Finance preparation, and the canonical Budget Officer
 CONFIRM = "beatrice.kamau@moh.example.test"  # Finance approval, and the canonical (only) Budget Approver
-SECOND_APPROVER = "journey.second.approver@example.test"
+SECOND_APPROVER = "hellen.mutua@moh.example.test"  # the second Budget Approver of the canonical world (KT-STD-001 v1.31 section 8.3)
 CASE_ROLES = ((HOP, "Head of Procurement Function"), (PREP, "Finance preparation"), (CONFIRM, "Finance approval"))
 RESULTS: list[tuple[str, bool, str]] = []
 
@@ -113,11 +112,15 @@ class Journey:
 		self.unit = tw.unit()
 		for user, role in CASE_ROLES:
 			administration.grant(user=user, business_role=role, organisation_unit=self.unit if registry.REGISTRY[role].requires_organisation_unit else "", actor="Administrator", fixture_namespace=NAMESPACE)
-		if not frappe.db.exists("User", SECOND_APPROVER):
-			frappe.get_doc({"doctype": "User", "email": SECOND_APPROVER, "first_name": "Second", "last_name": "Approver", "send_welcome_email": 0, "enabled": 1}).insert(ignore_permissions=True).add_roles("Desk User")
-			self.created_user = True
-		administration.grant(user=SECOND_APPROVER, business_role="Budget Approver", organisation_unit="", actor="Administrator", fixture_namespace=NAMESPACE)
 		frappe.db.commit()
+
+	def second_approver(self):
+		"""The canonical world's second Budget Approver must be there: without a second person the journey cannot finish."""
+		from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
+
+		holds = bool(frappe.db.exists("User", SECOND_APPROVER)) and bool(authorise_record(user=SECOND_APPROVER, business_role="Budget Approver", organisation_unit="", purpose=PURPOSE_COMMAND).allowed)
+		if not check("the canonical world has a second Budget Approver who is not the Finance approval holder", holds and SECOND_APPROVER != CONFIRM, SECOND_APPROVER):
+			raise RuntimeError(f"{SECOND_APPROVER} is not a Budget Approver on this site: reseed it (make seed-canonical) or run the journey on a site that has the second Approver of KT-STD-001 v1.31")
 
 	def register_contract(self):
 		self.case = self.records.new("Contract Case", contract_id=f"{PREFIX}{self.tag}", source_kind="External record", lifecycle="Active", record_version=1, contract_value=700000, currency="KES",
@@ -161,11 +164,6 @@ class Journey:
 			self.records.forget_alerts_of_missing_contracts()
 		for name in frappe.get_all("User Responsibility Assignment", filters={"fixture_namespace": NAMESPACE}, pluck="name"):
 			purge_doc("User Responsibility Assignment", name)
-		if frappe.db.exists("User", SECOND_APPROVER):
-			for name in frappe.get_all("User Responsibility Assignment", filters={"user": SECOND_APPROVER}, pluck="name"):
-				purge_doc("User Responsibility Assignment", name)
-			frappe.db.delete("Has Role", {"parent": SECOND_APPROVER})
-			frappe.db.delete("User", {"name": SECOND_APPROVER})
 		frappe.db.commit()
 		if self.before.get("positions"):
 			check("the canonical Budget is back exactly as it was found", {l: self.position(l) for l in self.before["positions"]} == self.before["positions"])
@@ -341,6 +339,7 @@ class Journey:
 	def run(self):
 		first, second = self.years()
 		check("the site has two consecutive financial years with an Active Budget each", bool(first and second) and all(frappe.db.exists("Procurement Budget", {"fiscal_year": y}) for y in (first, second)), f"{first}, {second}")
+		self.second_approver()
 		self.people()
 		self.register_contract()
 		self.route_and_basis(first, second)

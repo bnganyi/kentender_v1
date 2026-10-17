@@ -46,6 +46,8 @@ EXISTING_REFERENCE = "MOH/ICT/2027/EXT-UI"
 NAMESPACE = "CM_UI"
 
 DAVID = "david.ouma@afyadigital.example"
+#: The second Budget Approver of the seed world (KT-STD-001 v1.31 §8.3). Beatrice Kamau confirms a year's funding basis here and is also the first Budget Approver, so the walk of a contract's funding in Budget is finished by Hellen Mutua, who prepared and confirmed nothing.
+HELLEN = "hellen.mutua@moh.example.test"
 
 
 def output() -> Path:
@@ -168,6 +170,8 @@ def build() -> dict:
 	world.ensure_workflow()
 	people = tw.build(NAMESPACE)
 	people["david"] = DAVID
+	if frappe.db.exists("User", HELLEN):
+		people["hellen"] = HELLEN
 	known_passwords.set_known(people.values(), PASSWORD)  # the seed world's own people, with the password they had kept for `clean` to put back
 	frappe.db.commit()
 	package = {**sources.award_package(), "award_case": AWARD_CASE}  # its own Award case, so the service tests (which receive the demonstration package) never meet this world's contract
