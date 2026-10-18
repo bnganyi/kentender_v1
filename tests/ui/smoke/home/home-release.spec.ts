@@ -71,18 +71,25 @@ test.describe("keyboard (Charles)", () => {
 		await page.locator('[data-testid="kt-home-summary-waiting"]').focus();
 		await page.keyboard.press("Enter");
 		await expect.poll(() => page.evaluate(() => (document.activeElement as HTMLElement | null)?.closest("#waiting") !== null)).toBe(true);
+		// The row's owner names its own route (Home only carries it): Enter must open that route, whatever the row is today.
+		// The fifth row was the opening of TND-MOH-2026-005 in the story world; in the real-date world it is a clarification on it.
+		const workspace = (await (await page.request.get("/api/method/kentender_core.api.home.get_home_workspace")).json()).message;
+		const destination = workspace.regions.my_work.entries[4].destination;
 		await rows(page, "my-work").nth(4).locator('[data-testid="kt-home-continue"]').focus();
 		await page.keyboard.press("Enter");
-		await expect(page).toHaveURL(/\/desk\/tenders\/TND-MOH-2026-005\/opening$/, { timeout: 60_000 });
+		await expect(page).toHaveURL(new RegExp(`/desk/${destination.route.map(encodeURIComponent).join("/")}$`), { timeout: 60_000 });
 	});
 
 	test("Show more works from the keyboard and puts focus on the first appended row", async ({ page }) => {
 		await openHomeFromMenu(page, CHARLES);
+		// How many rows Charles has today is the world's business (9 in the story world, 10 in the real-date world): the test holds
+		// only that Show more appends rows and that focus lands on the first appended one.
+		const shown = await rows(page, "my-work").count();
 		await page.locator('#my-work [data-testid="kt-home-show-more"]').focus();
 		await page.keyboard.press("Enter");
-		await expect(rows(page, "my-work")).toHaveCount(9);
+		await expect.poll(() => rows(page, "my-work").count()).toBeGreaterThan(shown);
 		const focused = await page.evaluate(() => (document.activeElement as HTMLElement | null)?.closest("[data-key]")?.getAttribute("data-key") || "");
-		expect(focused).toBe(await rows(page, "my-work").nth(5).getAttribute("data-key"));
+		expect(focused).toBe(await rows(page, "my-work").nth(shown).getAttribute("data-key"));
 	});
 });
 
@@ -121,8 +128,10 @@ test.describe("200% zoom (Charles)", () => {
 });
 
 test.describe("every persona, from the sidebar", () => {
+	// Counts are the canonical world's (SEED-002): Charles's two extra actions since v0.10 are the contracts stage's (the completion
+	// certificate of CM-2025-0001 and the review of CM-2026-0002), on top of the nine HOME-CHG-001 v0.6 §14 describes.
 	const PERSONAS = [
-		{ user: CHARLES, name: "Charles", line: "Head of Procurement Function", columns: ["My work 9 actions for you", "Waiting on others 2 items you're waiting on", "Records you oversee 6 records with outstanding matters"] },
+		{ user: CHARLES, name: "Charles", line: "Head of Procurement Function", columns: ["My work 11 actions for you", "Waiting on others 2 items you're waiting on", "Records you oversee 6 records with outstanding matters"] },
 		{ user: AMINA, name: "Amina", line: "Accounting Officer", columns: ["My work 4 actions for you", "Waiting on others 1 item you're waiting on", "Records you oversee 6 records with outstanding matters"] },
 		{ user: BRIAN, name: "Brian", line: "Procurement Officer", columns: ["My work 9 actions for you", "Waiting on others 1 item you're waiting on"] },
 		{ user: PETER, name: "Peter", line: "Head of User Department", columns: ["My work 1 action for you", "Waiting on others 1 item you're waiting on", "Records you oversee 6 records with outstanding matters"] },

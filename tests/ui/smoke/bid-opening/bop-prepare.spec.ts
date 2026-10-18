@@ -97,7 +97,9 @@ test.describe("BOP-DES-01 Prepare opening", () => {
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await page.goto(`/app/tenders/${world.tender_reference}`, { waitUntil: "domcontentloaded" });
 		await expect(page.locator('[data-testid="tnd-shell"]')).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
-		await page.locator('[data-testid="tnd-link-bid-opening"]').click();
+		// The Tender page's header link gives way to the Bid opening stage block's own "View record" when that block is shown (OVS-CHG-001 v0.6 §8):
+		// the way in is whichever the page offers.
+		await page.locator('[data-testid="tnd-link-bid-opening"], [data-testid="tnd-stage-bid-opening-view-record"]').first().click();
 		await expect(page).toHaveURL(new RegExp(`/(app|desk)/tenders/${world.tender_reference}/opening$`));
 		await expectScreen(page, "prepare");
 		await expectNextStep(page, "your_turn", "Appoint opening committee");

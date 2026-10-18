@@ -62,7 +62,9 @@ async function openFromMenu(page: Page): Promise<void> {
 	await expect(shell).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
 	await page.locator(`tr[data-tender="${REF}"] button`).first().click();
 	await expect(shell).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
-	await page.locator('[data-testid="tnd-link-bid-opening"]').click();
+	// The Tender page's header link gives way to the Bid opening stage block's own "View record" when that block is shown (OVS-CHG-001 v0.6 §8):
+	// the way in is whichever the page offers.
+	await page.locator('[data-testid="tnd-link-bid-opening"], [data-testid="tnd-stage-bid-opening-view-record"]').first().click();
 }
 
 /** Desk home → the notification bell → the named notification. */

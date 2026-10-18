@@ -70,7 +70,8 @@ test.describe('Contracts shell', () => {
 			await expect(page.getByTestId('kt-access-denied')).toContainText('You do not have access to Contracts');
 			await expect(page.getByTestId('cm-empty')).toHaveCount(0);
 		} finally {
-			await request.delete(`/api/resource/User/${encodeURIComponent(email)}`);
+			// deleting a Desk user walks every table that links users; on the test site it can take longer than the default 15 s
+			await request.delete(`/api/resource/User/${encodeURIComponent(email)}`, { timeout: 90_000 });
 		}
 	});
 
