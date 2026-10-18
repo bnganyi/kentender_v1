@@ -137,6 +137,9 @@ class _BudgetLifecycleTestBase(FrappeTestCase):
 			purge_doc(doctype, name) if doctype in _COMMAND_ONLY_DOCTYPES else (
 				purge_doc(doctype, name) if frappe.db.exists(doctype, name) else None
 			)
+		# The runner commits what a class built, so what its clean-up removes has to be committed too, or the next module finds the
+		# class's budgets, units, users and fiscal years still on the site (found 18 Oct 2026: test_budget_approval_integrity left 2 budgets, 4 units, 10 users and 4 fiscal years per run)
+		frappe.db.commit()
 		super().tearDownClass()
 
 	@classmethod
