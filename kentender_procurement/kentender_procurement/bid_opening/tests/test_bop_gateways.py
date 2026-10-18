@@ -170,7 +170,11 @@ class TestSupportNotification(GatewayCase):
 
 class TestErrorContract(IntegrationTestCase):
 	def test_the_contract_is_the_closed_section_8_set(self):
-		self.assertEqual(len(errors.ERROR_CODES), 13)
+		# BOP-CHG-001 v0.16 §8 adds BOP_TENDER_CANCELLED to the closed set: fourteen codes
+		self.assertEqual(len(errors.ERROR_CODES), 14)
+		self.assertIn("BOP_TENDER_CANCELLED", errors.ERROR_CODES)
+		self.assertEqual(errors.message("BOP_TENDER_CANCELLED"), "Cancellation recorded. The opening record is being updated.")
+		self.assertEqual(errors.TERMINAL["BOP_TENDER_CANCELLED"], "This tender was cancelled. Opening ended.")
 		self.assertEqual(errors.message("BOP_DEADLINE_NOT_REACHED", deadline="12 Jun 2027, 11:00 EAT"), "Bids can be opened after submissions close at 12 Jun 2027, 11:00 EAT.")
 		self.assertEqual(errors.message("BOP_MEMBER_ABSENT", name="Beatrice Kamau"), "Opening cannot start because Beatrice Kamau has not joined.")
 		self.assertEqual(errors.message("BOP_MEMBER_ABSENT", name="Beatrice Kamau", started=True), "Opening is paused because Beatrice Kamau is not present.")

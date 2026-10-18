@@ -10,7 +10,8 @@
   "opening_profile_down",
   "attendance_service_down",
   "render_outcome",
-  "notify_outcome"
+  "notify_outcome",
+  "cancellation_integration_down"
  ],
  "fields": [
   {
@@ -40,6 +41,12 @@
    "options": "Deliver\nFail",
    "default": "Deliver",
    "description": "BOP-CHG-001 v0.10 §10 branch (6)."
+  },
+  {
+   "fieldname": "cancellation_integration_down",
+   "label": "Cancellation integration down",
+   "fieldtype": "Check",
+   "default": "0"
   }
  ],
  "grid_page_length": 50,

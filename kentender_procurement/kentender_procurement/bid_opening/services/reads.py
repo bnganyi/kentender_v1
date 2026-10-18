@@ -77,7 +77,8 @@ def get_opening(*, tender: str, user: str) -> dict[str, Any]:
 	technical = people.technical(user)
 	# Project Owner, 10 October 2026: System Manager or Administrator status alone shows no incident. Incidents are the committee's, the Accounting
 	# Officer's and the Opening access support holders' (the restricted incident workflow); a technical reader who holds none of those sees none.
-	incident_reader = not technical or user in notify.holders() or bool(appointment.member(case, user)) or people.holds(user, people.ACCOUNTING_OFFICER)
+	# BOP-CHG-001 v0.16 §6: the committee, the Accounting Officer, the assigned support holders and the Auditor — a business responsibility counts on its own
+	incident_reader = bool(appointment.member(case, user)) or user in notify.holders() or people.holds(user, people.ACCOUNTING_OFFICER) or people.holds(user, people.AUDITOR)
 	member = appointment.member(case, user)
 	ao = people.holds(user, people.ACCOUNTING_OFFICER)
 	current_appointment = appointment.current(case)
@@ -105,19 +106,19 @@ def get_opening(*, tender: str, user: str) -> dict[str, Any]:
 		"attendees": [] if technical else _attendees(case),
 		"start_guard": guard,
 		"incidents": [{"incident_id": r.incident_id, "type": r.incident_type, "holder": guards.SUPPORT, "notification_state": r.notification_state,
-			"notified_label": labels.time_seconds(r.last_notified_at)} for r in incidents.open_incidents(case)] if incident_reader else [],
+			"current_finding": r.current_finding, "incident_revision": r.incident_revision, "notified_label": labels.time_seconds(r.last_notified_at)} for r in incidents.open_incidents(case)] if incident_reader else [],
 		"decision": {"kind": item.kind, "reason": item.reason, "holder": people.full_name(item.holder_user), "unavailable_text": next_steps.UNAVAILABLE_DECISION,
-			"recorded_label": labels.when(item.created_at)}
-			if item and (ao or (technical and incident_reader)) else None,
+			"recorded_label": labels.when(item.created_at), "item": item.decision_item_id, "tender": doc.tender, "tender_reference": doc.tender_reference,
+			"message": incidents.NOT_RECOVERED if item.kind in ("Paused opening", "Opening cannot proceed") else ""}
+			if item and (ao or (user in notify.holders() and incident_reader)) else None,
 		"ceremony": session.view(doc, user),
 		"record": record_view(doc, user),
 		"technical_status": {"message": "You can see technical status for this opening. Bids, the register and the opening record are not shown to administrators.",
 			"state": doc.state, "completed_label": labels.when_seconds(doc.completed_at),
 			"incidents": frappe.db.count(incidents.INCIDENT, {"opening_case": case}) if incident_reader else None} if technical else None,
-		"cancellation": {"message": "Opening ended by Tender cancellation", "note": "What happened up to the cancellation is kept as a partial record. There is no opening "
-			"record to sign and nothing is passed to Evaluation."} if doc.state == "Cancelled after start" else None,
+		"cancellation": next_steps.cancellation_view(doc),
 		"viewer": {"is_member": bool(member), "is_chair": bool(member and member["is_chair"]), "is_recorder": bool(member and member["is_recorder"]),
-			"is_accounting_officer": ao, "technical": technical,
+			"is_accounting_officer": ao, "technical": technical, "is_support": incident_access.SUPPORT in incident_access.capacities(case, user),
 			# Project Owner, 10 October 2026: the full incident details are an explicit, audited read for these capacities only
 			"can_read_incident_details": bool(incident_access.capacity(case, user)), "incident_purposes": list(incident_access.PURPOSES)},
 	}

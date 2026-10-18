@@ -10,7 +10,7 @@ Bid Opening stand-in stays silent. The controls are a Single no role can read
 or write, set only by fixtures and tests. They force the Bid Opening worlds
 the §10 branches need: the opening service unavailable (branch 6), the public
 attendance service down (branch 4), an unreadable package (branch 2) and a
-failed support notification (branch 6). The tender box's own reveal outcome
+failed support notification (branch 6), and the cancellation integration down (TPR-CHG-001 v0.24 §8 `TND_CANCELLATION_UNAVAILABLE`). The tender box's own reveal outcome
 belongs to Bid Submission's controls."""
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from frappe.utils import cint
 
 CONFIG_KEY = "kt_bds_simulation_environment"
 CONTROLS = "BOP Test Environment Controls"
-DEFAULTS: dict = {"opening_profile_down": 0, "attendance_service_down": 0, "render_outcome": "Render", "notify_outcome": "Deliver"}
+DEFAULTS: dict = {"opening_profile_down": 0, "attendance_service_down": 0, "render_outcome": "Render", "notify_outcome": "Deliver", "cancellation_integration_down": 0}
 
 
 def enabled() -> bool:

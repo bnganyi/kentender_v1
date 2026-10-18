@@ -173,6 +173,16 @@ def notify_support(tender_reference: str, incident: str, idempotency_key: str) -
 
 
 @frappe.whitelist(methods=["POST"])
+def record_incident_finding(tender_reference: str, incident: str, finding: str, reason: str, evidence_refs: str = "", expected_revision=None, idempotency_key: str = "") -> dict[str, Any]:
+	"""TRUST-OPS-001 v0.2 §9.2: an Opening access support holder appends an attributed finding (Unresolved / Recovered / Cannot recover) with its reason, opaque
+	evidence references and the incident revision it was made against. Writes no Bid Opening, Tenders or Proceedings state."""
+	from kentender_procurement.bid_opening.services import incidents
+
+	return _call("RecordIncidentFinding", tender_reference, incidents.record_finding, incident=incident, finding=finding, reason=reason, evidence_refs=evidence_refs,
+		expected_revision=expected_revision, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist(methods=["POST"])
 def record_incident_outcome(tender_reference: str, incident: str, resolved: int, note: str, idempotency_key: str) -> dict[str, Any]:
 	"""Opening access support: resolved, or cannot be fixed."""
 	from kentender_procurement.bid_opening.services import incidents

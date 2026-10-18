@@ -132,20 +132,41 @@ def end_proceeding(*, owner_type: str, owner_id: str, expected_version: int, own
 		payload={"expected_version": expected_version, "owner_event_id": owner_event_id, "outcome_event": outcome_event or {}}, body=body)
 
 
+def _recorded_cancellation(doc, reference: str) -> str | None:
+	"""The event that first recorded this cancellation on the proceeding, when this very cancellation is already recorded (an identical replay returns it,
+	under any key); None when none is. A different cancellation than the one recorded is a conflict that changes nothing (PRC-CHG-001 v0.14 §5.1, §7.2)."""
+	recorded = cstr(doc.cancellation_reference)
+	if not recorded:
+		return None
+	if recorded != reference:
+		fail("PRC_VERSION_CONFLICT", {"reason": "another_cancellation", "recorded": recorded})
+	return frappe.db.get_value(records.EVENT, {"proceeding": doc.name, "owner_reference": reference,
+		"event_type": ("in", ("ProceedingNotHeld", "ProceedingAborted", "ProceedingCancellationReceived"))}, "event_id", order_by="sequence asc") or ""
+
+
 def mark_not_held(*, owner_type: str, owner_id: str, expected_version: int, reason: str, idempotency_key: str, actor: str, cancellation_reference: str = "",
-		custody_reference: str = "") -> dict[str, Any]:
-	"""MarkNotHeld: terminal, only from Pending with no Start (PRC-N10)."""
+		custody_reference: str = "", source_at=None) -> dict[str, Any]:
+	"""MarkNotHeld: terminal, only from Pending with no Start (PRC-N10). With a TPR cancellation reference (PRC v0.14 §7.2) it is recorded once: the same
+	cancellation again returns the first closure, another one conflicts; `source_at` is when Tenders decided it, the receipt time is when this ran."""
 
 	def body() -> dict[str, Any]:
 		doc = records.lock(owner_type, owner_id)
+		reference = cstr(cancellation_reference).strip()
+		if reference and doc.state == "Not held":
+			first = _recorded_cancellation(doc, reference)
+			if first is not None:
+				return records.summary(doc, first, replayed=True)
 		records.check_version(doc, expected_version)
 		records.require_state(doc, ("Pending",))
 		if not cstr(reason).strip():
 			fail("PRC_EVIDENCE_INCOMPLETE", {"fields": {"reason": "Record what happened."}})
 		event_id = records.event(doc, "ProceedingNotHeld", source="System", actor=actor, note=cstr(reason).strip(),
 			owner_reference=cstr(cancellation_reference or custody_reference))
-		records.bump(doc, state="Not held", not_held_reason=cstr(reason).strip(), cancellation_reference=cancellation_reference,
-			custody_reference=custody_reference or doc.custody_reference)
+		values = {"state": "Not held", "not_held_reason": cstr(reason).strip(), "cancellation_reference": cancellation_reference,
+			"custody_reference": custody_reference or doc.custody_reference}
+		if reference:
+			values.update(cancellation_source_at=source_at or None, cancellation_received_at=clock.now())
+		records.bump(doc, **values)
 		return records.summary(doc, event_id)
 
 	return records.command("MarkNotHeld", owner_type=owner_type, owner_id=owner_id, idempotency_key=idempotency_key, actor=actor, capacity="owner",
@@ -153,22 +174,52 @@ def mark_not_held(*, owner_type: str, owner_id: str, expected_version: int, reas
 		body=body)
 
 
-def close_aborted(*, owner_type: str, owner_id: str, expected_version: int, cancellation_reference: str, custody_reference: str, idempotency_key: str,
-		actor: str) -> dict[str, Any]:
-	"""CloseAbortedProceeding: terminal after an actual Start; the partial
-	chronology and actual cessation time are kept (PRC-N09)."""
+def attach_cancellation(*, owner_type: str, owner_id: str, expected_version: int, cancellation_reference: str, idempotency_key: str, actor: str, source_at=None) -> dict[str, Any]:
+	"""AttachCancellation: a TPR cancellation arriving for a proceeding already recorded Not held (PRC-CHG-001 v0.14 §7.2; BOP-CHG-001 v0.16 §5.2 OF-F03).
+	The record stays Not held — never relabelled, never restarted — with the factual reason untouched; the cancellation, its decision time and its receipt time
+	are added once. The same cancellation again returns the first event; another one conflicts."""
 
 	def body() -> dict[str, Any]:
 		doc = records.lock(owner_type, owner_id)
+		reference = cstr(cancellation_reference).strip()
+		if not reference:
+			fail("PRC_EVIDENCE_INCOMPLETE", {"fields": {"cancellation_reference": "The authoritative cancellation is required."}})
+		if doc.state == "Not held":
+			first = _recorded_cancellation(doc, reference)
+			if first is not None:
+				return records.summary(doc, first, replayed=True)
+		records.check_version(doc, expected_version)
+		records.require_state(doc, ("Not held",))
+		event_id = records.event(doc, "ProceedingCancellationReceived", source="System", actor=actor, owner_reference=reference,
+			note="The Tender was cancelled after this opening was recorded as not held.")
+		records.bump(doc, cancellation_reference=reference, cancellation_source_at=source_at or None, cancellation_received_at=clock.now())
+		return records.summary(doc, event_id)
+
+	return records.command("AttachCancellation", owner_type=owner_type, owner_id=owner_id, idempotency_key=idempotency_key, actor=actor, capacity="owner",
+		payload={"expected_version": expected_version, "cancellation_reference": cancellation_reference}, body=body)
+
+
+def close_aborted(*, owner_type: str, owner_id: str, expected_version: int, cancellation_reference: str, custody_reference: str, idempotency_key: str,
+		actor: str, source_at=None) -> dict[str, Any]:
+	"""CloseAbortedProceeding: terminal after an actual Start; the partial chronology and actual cessation time are kept (PRC-N09). The cessation time is
+	when Tenders decided the cancellation (`source_at`, else now); the receipt time is when this ran. The same cancellation again returns the first closure."""
+
+	def body() -> dict[str, Any]:
+		doc = records.lock(owner_type, owner_id)
+		reference = cstr(cancellation_reference).strip()
+		if reference and doc.state == "Aborted after start":
+			first = _recorded_cancellation(doc, reference)
+			if first is not None:
+				return records.summary(doc, first, replayed=True, last_event=first)
 		records.check_version(doc, expected_version)
 		records.require_state(doc, ("In session", "Session ended", "Awaiting attestations"))
-		if not cstr(cancellation_reference).strip():
+		if not reference:
 			fail("PRC_EVIDENCE_INCOMPLETE", {"fields": {"cancellation_reference": "The authoritative cancellation is required."}})
 		last = frappe.db.get_value(records.EVENT, {"proceeding": doc.name}, "event_id", order_by="sequence desc")
 		event_id = records.event(doc, "ProceedingAborted", source="System", actor=actor, owner_reference=cstr(cancellation_reference),
 			payload={"last_event": last, "custody_reference": custody_reference})
-		records.bump(doc, state="Aborted after start", ceased_at=clock.now(), cancellation_reference=cancellation_reference,
-			custody_reference=custody_reference or doc.custody_reference)
+		records.bump(doc, state="Aborted after start", ceased_at=source_at or clock.now(), cancellation_reference=cancellation_reference,
+			cancellation_source_at=source_at or None, cancellation_received_at=clock.now(), custody_reference=custody_reference or doc.custody_reference)
 		return records.summary(doc, event_id, last_event=last)
 
 	return records.command("CloseAbortedProceeding", owner_type=owner_type, owner_id=owner_id, idempotency_key=idempotency_key, actor=actor, capacity="owner",

@@ -14,10 +14,13 @@
   "reason",
   "last_committed_event",
   "incident",
+  "tender",
+  "escalation_ref",
   "status",
   "created_at",
   "cleared_at",
-  "clearing_event"
+  "clearing_event",
+  "clearing_reference"
  ],
  "fields": [
   {
@@ -41,7 +44,7 @@
    "fieldtype": "Select",
    "label": "Kind",
    "read_only": 1,
-   "options": "Not held\nPaused opening\nReplacement member",
+   "options": "Not held\nPaused opening\nOpening cannot proceed\nReplacement member",
    "reqd": 1
   },
   {
@@ -97,12 +100,30 @@
    "fieldtype": "Data",
    "label": "Clearing event",
    "read_only": 1
+  },
+  {
+   "fieldname": "clearing_reference",
+   "label": "Clearing reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tender",
+   "label": "Tender",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "escalation_ref",
+   "label": "Escalation",
+   "fieldtype": "Data",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-10-10 23:00:00.000000",
+ "modified": "2026-10-18 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Bid Opening",
  "name": "Opening Decision Item",

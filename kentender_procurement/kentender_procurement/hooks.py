@@ -197,6 +197,8 @@ kt_award_authority_facts = ["kentender_procurement.award.services.authority.stat
 kt_tender_cancellation_ground_verifiers = ["kentender_procurement.tenders.test_services.ground_verifier.verify"]
 # TPR-CHG-001 v0.24 §7.6 — the consumers of the existing TenderCancelled event whose delivery Tenders tracks and retries from the same event.
 kt_tender_cancellation_consumers = ["kentender_procurement.bid_opening.services.cancellation_consumer"]
+# Bid Opening's own account of the opening and its decision item for the Tender decision screen (references and states only; the Accounting Officer's alone).
+kt_tender_opening_decision_context = ["kentender_procurement.bid_opening.services.decision_context.get"]
 # PLN-CHG-001 v1.32 §5.4.7 / TPR-CHG-001 v0.21 §7.5 — what Award holds that would make restoring a cancelled Tender's allowance unsafe, and the
 # Tender owner's verified basis Requisitions asks for before it restores anything (Requisitions must not import Tenders).
 kt_tender_cancellation_downstream_disposition = ["kentender_procurement.award.services.authority.downstream_disposition"]
@@ -806,6 +808,7 @@ for _bds_content in (
 	"Tender Security Intake", "Tender Security Intake Match", "Tender Security Exposure", "Tender Security Duty Conflict", "Tender Security Verification",
 	# and the Opening incident records and the opening records that carry an envelope identifier or a bidder's name
 	"Opening Access Incident", "Opening Exception", "Opening Decision Item", "Opening Entry", "Opening Register Request", "Opening Incident Access Event",
+	"Opening Incident Finding",
 ):
 	has_permission[_bds_content] = "kentender_procurement.bid_submission.services.bid_authorization.deny_desk_access"
 	permission_query_conditions[_bds_content] = "kentender_procurement.bid_submission.services.bid_authorization.deny_desk_query"

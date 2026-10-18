@@ -20,7 +20,11 @@ from kentender_procurement.bid_opening.services import (
 STAGES = (("prepare", "Prepare opening"), ("open", "Open bids"), ("record", "Record opening"))
 SUPPORT = guards.SUPPORT
 SYSTEM = "System"
-UNAVAILABLE_DECISION = "A Tender decision is needed. Cancellation after submissions close is not available in this version."
+UNAVAILABLE_DECISION = "A Tender decision is needed. Open the Tender to see the decision and anything that stops it."
+#: BOP-CHG-001 v0.16 §10.8: what the opening says once the Tender is authoritatively cancelled — before and after Bid Opening has recorded the terminal outcome.
+CANCELLATION_PENDING = "Cancellation recorded. The opening record is being updated."
+CANCELLATION_ENDED = "This tender was cancelled. Opening ended."
+TERMINAL_STATES = ("Not held", "Cancelled after start")
 _COUNT = {3: "three", 4: "four", 5: "five", 6: "six", 7: "seven"}
 
 
@@ -163,7 +167,11 @@ def _ceremony(doc, user: str, member, ao: bool) -> list[dict[str, Any] | None]:
 		if pause and pause.exception_class == "Member absent":
 			absent = [m for m in ceremony.absent_members(doc)]
 			name = absent[0]["full_name"] if absent else pause.speaker_name
-			if member and absent and member["member_user"] == absent[0]["member_user"]:
+			if member and member["is_chair"] and not absent and ceremony.ceremony_ready(doc)[0]:
+				# every member is back and the last obstacle is recovered; the pause only waits for the chair (BOP-CHG-001 v0.16 §5.2, ResumeOpening)
+				out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Resume the opening", sentence="Every member is present and secure access is ready. "
+					"The opening continues from the last recorded step.", stage="open", primary_action="resume"))
+			elif member and absent and member["member_user"] == absent[0]["member_user"]:
 				out.append(ns.answer(ns.KIND_YOUR_TURN, headline=f"Join opening for {doc.tender_reference}", sentence="The opening is paused until you rejoin.",
 					stage="open", primary_action="join"))
 			elif member:
@@ -174,9 +182,9 @@ def _ceremony(doc, user: str, member, ao: bool) -> list[dict[str, Any] | None]:
 				out.append(ns.answer(ns.KIND_YOUR_TURN, headline=f"Appoint replacement for {doc.tender_reference}", sentence=f"Opening is paused because {name} is not "
 					"present. Appoint a replacement only if they cannot return.", stage="open", primary_action="appoint_replacement"))
 		elif pause:
-			incident = frappe.db.get_value(incidents.INCIDENT, {"opening_case": doc.name, "incident_id": pause.incident}, ["status", "resolved_at"], as_dict=True) \
+			incident = frappe.db.get_value(incidents.INCIDENT, {"opening_case": doc.name, "incident_id": pause.incident}, ["current_finding", "resolved_at"], as_dict=True) \
 				if pause.incident else None
-			status = (incident or {}).get("status")
+			status = {"Recovered": "Resolved", "Cannot recover": "Unresolved"}.get((incident or {}).get("current_finding"))
 			problem = ns.fix("View problem details", responsibility=SUPPORT, kind=ns.FIX_FOCUS, fix_id="view_problem_details", target=pause.incident)
 			if member and member["is_chair"]:
 				if status == "Resolved":
@@ -184,7 +192,7 @@ def _ceremony(doc, user: str, member, ao: bool) -> list[dict[str, Any] | None]:
 						f"{labels.time(incident.resolved_at)}. The same bid will be opened again.", stage="open", primary_action="retry"))
 				elif status == "Unresolved":
 					out.append(ns.answer(ns.KIND_WAITING, headline=f"Waiting for {ao_display} to resolve the paused opening",
-						sentence=f"Opening access support could not fix the problem. {ao_display} will decide how to proceed.", stage="open",
+						sentence=f"{incidents.NOT_RECOVERED} {ao_display} will decide how to proceed.", stage="open",
 						holder=ns.holder(people.ACCOUNTING_OFFICER, ao_names)))
 				else:
 					blocker = ns.guard(False, reason_code={"Package unreadable": "BOP_PACKAGE_UNREADABLE", "Package mismatch": "BOP_PACKAGE_MISMATCH"}.get(
@@ -193,8 +201,8 @@ def _ceremony(doc, user: str, member, ao: bool) -> list[dict[str, Any] | None]:
 			elif member:
 				out.append(ns.answer(ns.KIND_WAITING, headline=pause.observed_fact, stage="open", holder=ns.holder(SUPPORT)))
 			if ao and status == "Unresolved":
-				out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Decide how to proceed with the paused opening", sentence="Opening access support could not fix the "
-					"problem. This stays in your work until the opening resumes or a Tender decision is recorded.", stage="open", primary_action="tender_decision"))
+				out.append(_ao_decision(doc, headline="Decide how to proceed with the paused opening", sentence="Opening access support could not fix the "
+					"problem. This stays in your work until the opening resumes or a Tender decision is recorded."))
 	elif doc.state == "Readout complete":
 		if member and member["is_recorder"]:
 			out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Prepare opening record", sentence=f"The opening ended at {labels.time(doc.ended_at)}. The draft is "
@@ -255,24 +263,72 @@ def _completed_answer(doc, user: str, member, ao: bool) -> dict[str, Any] | None
 		sentence=f"The opened {'bid is' if count == 1 else 'bids are'} now available to the Evaluation Committee.", stage="record")
 
 
+def _ao_decision(doc, *, headline: str, sentence: str) -> dict[str, Any]:
+	"""BOP-CHG-001 v0.16 §10.7, §10.8: the Accounting Officer's decision. "Your turn" when the Tender's cancellation verdict allows a decision; "Your turn,
+	blocked" — **A tender decision is needed** — when the AO remains responsible but a current guard prevents it, with every blocker, its named holder and the
+	route to them. Navigating changes no state; the decision itself is Tenders' command."""
+	from kentender_procurement.tenders.services import opening_seam
+
+	verdict = opening_seam.cancellation_decision(doc.tender)
+	if verdict["allowed"] or not verdict["blockers"]:
+		return ns.answer(ns.KIND_YOUR_TURN, headline=headline, sentence=sentence, stage="open", primary_action="tender_decision")
+	blockers = [ns.blocker(ns.guard(False, reason_code=b["code"], message=b["message"], figures={"holder": b["holder"]},
+		fixes=[ns.fix(f"Ask {b['holder']}", responsibility=b["holder"], kind=ns.FIX_TEXT, fix_id=b["reason"])])) for b in verdict["blockers"]]
+	return ns.answer(ns.KIND_BLOCKED, headline="A tender decision is needed", sentence=sentence, stage="open", blockers=blockers, primary_action="tender_decision")
+
+
+def cancellation_view(doc) -> dict[str, Any] | None:
+	"""The cancellation as the opening page shows it (BOP-CHG-001 v0.16 §10.8): None while the Tender stands. Authoritative cancellation is shown the moment it
+	commits — "Cancellation recorded. The opening record is being updated." — and the terminal wording replaces it when the BOP/PRC outcome has committed. The
+	distinction between Opening not held and Cancelled after start, and the partial record kept, are stated; separate compliance and resource status stay with
+	their owners."""
+	from kentender_procurement.tenders.services import opening_seam
+
+	cancelled = opening_seam.authoritative_cancellation(doc.tender)
+	if cancelled is None:
+		return None
+	terminal = doc.state in TERMINAL_STATES
+	after_start = doc.state == "Cancelled after start"
+	return {
+		"state": "Ended" if terminal else "Recorded", "message": CANCELLATION_ENDED if terminal else CANCELLATION_PENDING, "reference": cancelled["reference"],
+		"outcome": ("Cancelled after start" if after_start else "Opening not held") if terminal else "",
+		"decided_label": labels.when(cancelled["cancelled_at"]),
+		"note": ("What happened up to the cancellation is kept as a partial record. There is no opening record to sign and nothing is passed to Evaluation."
+			if after_start else ("The opening never started. What was recorded stays as it was; bids stay sealed under their existing custody." if terminal else "")),
+	}
+
+
 def answer_for(doc, user: str) -> dict[str, Any]:
 	now = clock.now()
 	technical = people.technical(user)
 	member = appointment.member(doc.name, user)
 	ao = people.holds(user, people.ACCOUNTING_OFFICER)
 	candidates: list[dict[str, Any] | None] = []
+	cancelled = cancellation_view(doc)
+	if cancelled is not None and doc.state != "Opening complete":
+		# authoritative cancellation: no one has a ceremony step; the page says only what is true now, and the decision item (if any) waits for the committed closure
+		kind = ns.KIND_DONE if cancelled["state"] == "Ended" else ns.KIND_NOT_INVOLVED
+		result = ns.answer(kind, headline=cancelled["message"], sentence=cancelled["note"], stage="open")
+		return ns.for_viewer(result, technical=technical, reader=ns.not_involved(result.get("stage", "")))
 	if doc.state == "Not held":
 		item = _decision_item(doc)
 		if item and ao:
-			candidates.append(ns.answer(ns.KIND_YOUR_TURN, headline="Decide what happens next", sentence="The opening did not take place.", stage="open",
-				primary_action="tender_decision"))
+			candidates.append(_ao_decision(doc, headline="Decide what happens next", sentence="The opening did not take place."))
 		elif item:
 			candidates.append(ns.answer(ns.KIND_WAITING, headline="The opening did not take place. Waiting for "
 				f"{people.full_name(item.holder_user)} to decide what happens next.", stage="open", holder=ns.holder(people.ACCOUNTING_OFFICER, [people.full_name(item.holder_user)])))
 		else:
 			candidates.append(ns.answer(ns.KIND_DONE, headline="The opening did not take place.", sentence="The Tender was cancelled before the opening.", stage="open"))
 	elif doc.state in ("Awaiting deadline", "Ready to open"):
-		if ao:
+		item = _decision_item(doc)
+		if item and item.kind == "Opening cannot proceed":
+			# BOP-CHG-001 v0.16 §5.2: support could not recover an opening that has not started; the Accounting Officer holds the one decision item
+			if ao:
+				candidates.append(_ao_decision(doc, headline="Decide what happens next", sentence=incidents.NOT_RECOVERED))
+			elif member and member["is_chair"]:
+				candidates.append(ns.answer(ns.KIND_WAITING, headline=f"Waiting for {_ao_phrase(_ao_names())} to decide what happens next", sentence=incidents.NOT_RECOVERED,
+					stage="open", holder=ns.holder(people.ACCOUNTING_OFFICER, _ao_names())))
+		elif ao:
 			candidates.append(_ao_before_start(doc, now))
 		if member and member["is_chair"]:
 			candidates.append(_chair_before_start(doc, member, now))
@@ -298,8 +354,15 @@ def tender_page_step(doc, user: str) -> dict[str, Any] | None:
 		return None
 	if result["kind"] in ns.TURN_KINDS:
 		responsibility = people.ACCOUNTING_OFFICER if people.holds(user, people.ACCOUNTING_OFFICER) else "Opening committee"
-		result = {**result, "primary_action": "", "fixes": [ns.fix("Open opening record", responsibility=responsibility, kind=ns.FIX_ROUTE, fix_id="open_opening_record",
-			target=["tenders", doc.tender_reference, "opening"], primary=True)]}
+		if result.get("primary_action") == "tender_decision":
+			# BOP-CHG-001 v0.16 §10.7: the Accounting Officer's turn is Tenders' own decision, reached by the exact item as a path segment — not the opening record
+			item = _decision_item(doc)
+			fix = ns.fix("Review the tender decision", responsibility=responsibility, kind=ns.FIX_ROUTE, fix_id="open_tender_decision",
+				target=["tenders", doc.tender_reference, "cancel", *([item.decision_item_id] if item else [])], primary=True)
+		else:
+			fix = ns.fix("Open opening record", responsibility=responsibility, kind=ns.FIX_ROUTE, fix_id="open_opening_record",
+				target=["tenders", doc.tender_reference, "opening"], primary=True)
+		result = {**result, "primary_action": "", "fixes": [fix]}
 	return result
 
 

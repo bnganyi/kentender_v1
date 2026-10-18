@@ -173,3 +173,72 @@ class TestRoster(ProceedingsCase):
 			{(ROSTER[2]["member_user"], 1, 0)})
 		self.assertIn((VISITOR, 2, 1), {(m.member_user, m.roster_segment, m.active) for m in members})
 		self.assertEqual(count_events(created["proceeding"], "RosterSegmentStarted"), 1)
+
+
+class TestCancellationLineage(ProceedingsCase):
+	"""PRC-CHG-001 v0.14 §5, §7.2 (PRC-OF-AC-006, AC-007): the TPR cancellation ID deduplicates closure. An identical replay (even with a new key) returns the
+	first closure; a conflicting cancellation or a wrong state fails with no change; the closure keeps the authoritative source time and the receipt time
+	apart; a cancellation arriving after Not held is attached to that record without relabelling or re-opening it."""
+
+	def test_closing_after_start_keeps_the_source_time_and_the_receipt_time_apart_and_the_replay_returns_the_first_closure(self):
+		created = self.create()
+		self.start(created)
+		self.at(W("2027-06-12 11:01:45"))
+		self.owner_event(created, "ReadoutConfirmed", "readout-1")
+		self.at(W("2027-06-12 11:09:00"))  # delivery runs later than the decision
+		first = lifecycle.close_aborted(**self.ref(created), cancellation_reference="TCN-LINEAGE-1", custody_reference="TEST-CUSTODY", idempotency_key=self.key(), actor=CHAIR,
+			source_at=W("2027-06-12 11:03:00"))
+		row = frappe.db.get_value("Proceeding", created["proceeding"], ["state", "ceased_at", "cancellation_source_at", "cancellation_received_at"], as_dict=True)
+		self.assertEqual((row.state, str(row.ceased_at), str(row.cancellation_source_at), str(row.cancellation_received_at)),
+			("Aborted after start", W("2027-06-12 11:03:00"), W("2027-06-12 11:03:00"), W("2027-06-12 11:09:00")))
+		before = count_events(created["proceeding"])
+		# the same cancellation delivered again, under a new key and at the current version: the first closure, no second event
+		again = lifecycle.close_aborted(**self.ref(created), cancellation_reference="TCN-LINEAGE-1", custody_reference="TEST-CUSTODY", idempotency_key=self.key(), actor=CHAIR,
+			source_at=W("2027-06-12 11:03:00"))
+		self.assertEqual((again["event_id"], again["state"]), (first["event_id"], "Aborted after start"))
+		self.assertEqual(count_events(created["proceeding"]), before)
+		self.assertEqual(count_events(created["proceeding"], "ProceedingAborted"), 1)
+		# a different cancellation is a conflict and changes nothing
+		self.assertCode("PRC_VERSION_CONFLICT", lifecycle.close_aborted, **self.ref(created), cancellation_reference="TCN-OTHER", custody_reference="TEST-CUSTODY",
+			idempotency_key=self.key(), actor=CHAIR)
+		self.assertEqual(count_events(created["proceeding"]), before)
+		self.assertEqual(frappe.db.get_value("Proceeding", created["proceeding"], "cancellation_reference"), "TCN-LINEAGE-1")
+
+	def test_not_held_before_start_by_cancellation_is_once_and_a_replay_returns_the_first(self):
+		created = self.create()
+		self.at(W("2027-06-26 11:10:00"))
+		first = lifecycle.mark_not_held(**self.ref(created), reason="The Tender was cancelled before the opening.", cancellation_reference="TCN-LINEAGE-2", custody_reference="TEST-CUSTODY",
+			idempotency_key=self.key(), actor=CHAIR, source_at=W("2027-06-26 11:05:00"))
+		row = frappe.db.get_value("Proceeding", created["proceeding"], ["state", "cancellation_source_at", "cancellation_received_at"], as_dict=True)
+		self.assertEqual((row.state, str(row.cancellation_source_at), str(row.cancellation_received_at)), ("Not held", W("2027-06-26 11:05:00"), W("2027-06-26 11:10:00")))
+		again = lifecycle.mark_not_held(**self.ref(created), reason="The Tender was cancelled before the opening.", cancellation_reference="TCN-LINEAGE-2",
+			custody_reference="TEST-CUSTODY", idempotency_key=self.key(), actor=CHAIR)
+		self.assertEqual(again["event_id"], first["event_id"])
+		self.assertEqual(count_events(created["proceeding"], "ProceedingNotHeld"), 1)
+		self.assertCode("PRC_VERSION_CONFLICT", lifecycle.mark_not_held, **self.ref(created), reason="x", cancellation_reference="TCN-OTHER", idempotency_key=self.key(), actor=CHAIR)
+
+	def test_a_cancellation_after_a_factual_not_held_is_attached_without_relabelling_the_record(self):
+		created = self.create()
+		self.at(W("2027-06-26 11:10:00"))
+		lifecycle.mark_not_held(**self.ref(created), reason="The public attendance service was unavailable; opening did not start", custody_reference="TEST-CUSTODY",
+			idempotency_key=self.key(), actor=CHAIR)
+		self.assertEqual(frappe.db.get_value("Proceeding", created["proceeding"], "cancellation_reference") or "", "")
+		self.at(W("2027-06-26 14:00:00"))
+		attached = lifecycle.attach_cancellation(**self.ref(created), cancellation_reference="TCN-LINEAGE-3", idempotency_key=self.key(), actor=CHAIR, source_at=W("2027-06-26 13:00:00"))
+		row = frappe.db.get_value("Proceeding", created["proceeding"], ["state", "not_held_reason", "cancellation_reference", "cancellation_source_at", "cancellation_received_at", "actual_start"], as_dict=True)
+		self.assertEqual((row.state, row.cancellation_reference, str(row.cancellation_source_at), str(row.cancellation_received_at), row.actual_start),
+			("Not held", "TCN-LINEAGE-3", W("2027-06-26 13:00:00"), W("2027-06-26 14:00:00"), None))
+		self.assertIn("attendance service was unavailable", row.not_held_reason)  # the factual reason is untouched
+		self.assertEqual(count_events(created["proceeding"], "ProceedingCancellationReceived"), 1)
+		again = lifecycle.attach_cancellation(**self.ref(created), cancellation_reference="TCN-LINEAGE-3", idempotency_key=self.key(), actor=CHAIR)
+		self.assertEqual((again["event_id"], count_events(created["proceeding"], "ProceedingCancellationReceived")), (attached["event_id"], 1))
+		self.assertCode("PRC_VERSION_CONFLICT", lifecycle.attach_cancellation, **self.ref(created), cancellation_reference="TCN-OTHER", idempotency_key=self.key(), actor=CHAIR)
+		# still terminal: no start, no finalisation
+		self.assertCode("PRC_START_BLOCKED", self.start, created)
+
+	def test_attach_needs_a_not_held_record_and_a_reference(self):
+		created = self.create()
+		self.assertCode("PRC_VERSION_CONFLICT", lifecycle.attach_cancellation, **self.ref(created), cancellation_reference="TCN-X", idempotency_key=self.key(), actor=CHAIR)
+		self.at(W("2027-06-26 11:10:00"))
+		lifecycle.mark_not_held(**self.ref(created), reason="Did not start", custody_reference="C", idempotency_key=self.key(), actor=CHAIR)
+		self.assertCode("PRC_EVIDENCE_INCOMPLETE", lifecycle.attach_cancellation, **self.ref(created), cancellation_reference=" ", idempotency_key=self.key(), actor=CHAIR)

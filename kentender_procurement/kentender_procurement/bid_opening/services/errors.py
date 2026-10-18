@@ -1,9 +1,9 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Stable Bid Opening errors (BOP-CHG-001 v0.10 §8), verbatim.
+"""Stable Bid Opening errors (BOP-CHG-001 v0.10 §8, v0.16 §8.1), verbatim.
 
-§8 is a closed set of thirteen codes. Three carry the facts the sentence
+§8 is a closed set of fourteen codes (v0.16 adds `BOP_TENDER_CANCELLED`). Three carry the facts the sentence
 names (the deadline, the member's full name) and two read differently before
 and after Start. Proceedings errors are mapped to Bid Opening copy here
 (§7.1 "Product vocabulary"), so no second conflict message is ever shown.
@@ -28,7 +28,11 @@ MESSAGES: dict[str, str] = {
 	"BOP_ATTESTATION_MISSING": "The opening record still needs signatures from the appointed members.",
 	"BOP_REGISTER_NOT_READY": "The opening register is still being prepared. You can check its status here.",
 	"BOP_VERSION_CONFLICT": "Someone updated this opening record. Refresh the page before continuing.",
+	# BOP-CHG-001 v0.16 §10.8: authoritative cancellation denies every ceremony command at once; this is what it says until the record has caught up
+	"BOP_TENDER_CANCELLED": "Cancellation recorded. The opening record is being updated.",
 }
+#: ... and what it says once Bid Opening and Proceedings have recorded the terminal outcome (§10.8).
+TERMINAL: dict[str, str] = {"BOP_TENDER_CANCELLED": "This tender was cancelled. Opening ended."}
 AFTER_START: dict[str, str] = {
 	"BOP_MEMBER_ABSENT": "Opening is paused because {name} is not present.",
 	"BOP_CREDENTIAL_UNAVAILABLE": "Opening is paused because secure access is unavailable.",
@@ -57,15 +61,17 @@ class BidOpeningError(frappe.ValidationError):
 		super().__init__(message)
 
 
-def message(code: str, *, started: bool = False, **facts) -> str:
+def message(code: str, *, started: bool = False, terminal: bool = False, **facts) -> str:
 	if code not in ERROR_CODES:
-		raise ValueError(f"{code!r} is not part of the BOP-CHG-001 v0.10 §8 error contract.")
+		raise ValueError(f"{code!r} is not part of the BOP-CHG-001 v0.16 §8 error contract.")
+	if terminal and code in TERMINAL:
+		return TERMINAL[code].format(**facts)
 	template = AFTER_START.get(code, MESSAGES[code]) if started else MESSAGES[code]
 	return template.format(**facts)
 
 
-def fail(code: str, detail: dict | None = None, *, started: bool = False, **facts) -> None:
-	raise BidOpeningError(code, message(code, started=started, **facts), detail)
+def fail(code: str, detail: dict | None = None, *, started: bool = False, terminal: bool = False, **facts) -> None:
+	raise BidOpeningError(code, message(code, started=started, terminal=terminal, **facts), detail)
 
 
 def from_prc(code: str) -> tuple[str, str]:

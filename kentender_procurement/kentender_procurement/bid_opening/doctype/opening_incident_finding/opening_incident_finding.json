@@ -1,0 +1,126 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:finding_id",
+ "creation": "2026-10-18 20:00:00.000000",
+ "description": "BOP-CHG-001 v0.16 §5.2; TRUST-OPS-001 v0.2 §9: an attributed, append-only support finding on an Opening incident (Unresolved / Recovered / Cannot recover) with its reason, safe evidence references and the incident and opening revisions it was made against. No sealed content. Sealed.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "finding_id",
+  "incident",
+  "opening_case",
+  "finding_no",
+  "finding",
+  "reason",
+  "evidence_refs",
+  "recorded_by",
+  "recorded_at",
+  "incident_revision",
+  "opening_revision",
+  "last_committed_event",
+  "request_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "finding_id",
+   "label": "Finding",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "incident",
+   "label": "Incident",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "opening_case",
+   "label": "Opening case",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "finding_no",
+   "label": "Finding number",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "finding",
+   "label": "Finding",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Unresolved\nRecovered\nCannot recover",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reason",
+   "label": "Reason",
+   "read_only": 1,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "evidence_refs",
+   "label": "Evidence references (opaque)",
+   "read_only": 1,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "recorded_by",
+   "label": "Recorded by",
+   "read_only": 1,
+   "fieldtype": "Link",
+   "options": "User"
+  },
+  {
+   "fieldname": "recorded_at",
+   "label": "Recorded at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "incident_revision",
+   "label": "Incident revision",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "opening_revision",
+   "label": "Opening revision",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "last_committed_event",
+   "label": "Last committed step",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "request_key",
+   "label": "Request key",
+   "read_only": 1,
+   "fieldtype": "Data"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-18 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Opening",
+ "name": "Opening Incident Finding",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
