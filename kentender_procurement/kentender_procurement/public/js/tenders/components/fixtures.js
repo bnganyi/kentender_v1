@@ -350,6 +350,38 @@ export function cancelData(variant = "BASE") {
 	};
 }
 
+/**
+ * TPR-CHG-001 v0.24 §10.13 POSTCLOSE / §10.19 — `GetTenderCancellation` for a Tender whose submission period has ended:
+ * "POSTCLOSE-ALLOWED" (a verified ground and Award notification Not issued), "POSTCLOSE-BLOCKED" (every blocker, holder and route; no action),
+ * "POSTCLOSE-CANCELLED" (cancelled from the ended state, the opening record's closure still being delivered) and "POSTCLOSE-CLOSED"
+ * (the same, delivered).
+ */
+export function postCloseCancelData(variant = "POSTCLOSE-ALLOWED") {
+	const base = cancelData(variant === "POSTCLOSE-CANCELLED" || variant === "POSTCLOSE-CLOSED" ? "CANCELLED-READER" : "BASE");
+	const cancelled = variant === "POSTCLOSE-CANCELLED" || variant === "POSTCLOSE-CLOSED";
+	const allowed = variant === "POSTCLOSE-ALLOWED";
+	const award = { notification_status: "Not issued", decision_status: "No decision recorded", source: "Award Tender Authority TND-MOH-2027-034", source_revision: 1, checked_at_label: "12 Jun 2027, 11:20 EAT", label: "Award notification status: Not issued" };
+	const blockers = [
+		{ code: "TND_AWARD_STATUS_UNAVAILABLE", reason: "status_unknown", message: "We cannot confirm that cancellation is permitted from the current award status.", holder: "Award service owner", route: { area: "Award", case: "" } },
+		{ code: "TND_CANCEL_GROUND_UNVERIFIED", reason: "ground_unverified", message: "A verified cancellation basis is needed before this tender can be cancelled.", holder: "Head of Procurement Function coordinates the documented review; the Accounting Officer keeps the decision", route: { area: "Tenders", case: "" } },
+	];
+	return {
+		...base,
+		tender: { ...base.tender, overall_status: cancelled ? "Cancelled" : "Submission period ended", badge: cancelled ? "Cancelled" : "Submission period ended" },
+		grounds: allowed ? [{ key: "INADEQUATE_BUDGET", label: "Inadequate budgetary provision", reference: "GRD-INADEQUATE_BUDGET" }] : [],
+		decision: cancelled ? null : {
+			stage: "post_close", allowed, blockers: allowed ? [] : blockers, heading: allowed ? "" : "A tender decision is needed", blocked_title: allowed ? "" : "Cancellation cannot be decided here",
+			award: allowed ? award : { ...award, notification_status: "Unknown", label: "Award notification status: Unknown" },
+			opening: { item: "BOC-MOH-2027-033-DEC-01", kind: "Paused opening", state: "Interrupted", finding: "Cannot recover", message: "Opening could not be recovered. The Accounting Officer must review the next step." },
+		},
+		allowed_actions: cancelled ? [] : allowed ? ["cancel_tender"] : ["review_cancellation_decision"],
+		postclose_warning_text: "Cancellation is final for this tender. A replacement purchase requires a new requisition.",
+		postclose_recovery_text: "KenTender will separately restore the unused planning allowance and release the unused budget reservation, after checking the linked records. An unsuccessful opening alone releases nothing.",
+		cancellation: cancelled ? { ...base.cancellation, previous_status: "Submission period ended" } : null,
+		delivery: cancelled ? [{ consumer: "bid-opening", label: "Bid Opening", status: variant === "POSTCLOSE-CLOSED" ? "Delivered" : "Pending", attempts: variant === "POSTCLOSE-CLOSED" ? 1 : 0, receipt: "" }] : [],
+	};
+}
+
 /** TPR-DES-13 — `GetTender` on a Tender stopped for a Requisition correction ("REQUESTED" / "SUCCESSOR"). */
 export function correctionRecord(variant = "REQUESTED") {
 	const successor = variant === "SUCCESSOR";

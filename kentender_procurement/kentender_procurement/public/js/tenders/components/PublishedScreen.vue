@@ -97,6 +97,9 @@
 				<button v-if="has('reopen_tender')" type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-reopen" @click="$emit('reopen')">Reopen for correction</button>
 				<button v-if="has('request_requisition_correction')" type="button" class="btn btn-secondary" :disabled="pending" data-testid="tnd-request-correction" @click="$emit('request-correction')">Request requisition correction</button>
 				<button v-if="has('view_publication')" type="button" class="btn btn-secondary" data-testid="tnd-view-publication" @click="$emit('publication')">View publication</button>
+			<!-- TPR-CHG-001 v0.24 §10.19: after the period ended the Accounting Officer's decision opens the same Cancel Tender screen — executable only when every guard passes, otherwise read-only with every blocker -->
+			<button v-if="has('review_cancellation_decision')" type="button" class="btn btn-secondary" data-testid="tnd-review-cancellation-decision" @click="$emit('cancel-screen')">Review the tender decision</button>
+			<button v-if="has('cancel_tender') && ended" type="button" class="btn tnd-btn-danger" :disabled="pending" data-testid="tnd-cancel-tender" @click="$emit('cancel-screen')">Cancel Tender</button>
 				<span v-if="!hasAnyAction && !ended" class="tnd-status-text" data-testid="tnd-no-action">No business action available for this role.</span>
 				<!-- once submission has closed the lead panel carries the reader's next step; this line is only for a reader who truly has none -->
 				<span v-if="ended && !hasAnyAction && nothingToDo" class="tnd-status-text" data-testid="tnd-nothing-to-do">Nothing for you to do here.</span>
@@ -156,5 +159,5 @@ function has(action) {
 }
 // true only where the server's answer leaves the reader nothing to do: done, or no step at all (a wait or a turn is stated in the lead panel)
 const nothingToDo = computed(() => ["", "done", "not_involved"].includes((((props.record.guidance || {}).next_step) || {}).kind || ""));
-const hasAnyAction = computed(() => ["record_cancellation_evidence", "reopen_tender", "request_requisition_correction", "view_publication"].some(has) || tender.value.overall_status === "Cancelled");
+const hasAnyAction = computed(() => ["record_cancellation_evidence", "reopen_tender", "request_requisition_correction", "view_publication", "review_cancellation_decision", "cancel_tender"].some(has) || tender.value.overall_status === "Cancelled");
 </script>

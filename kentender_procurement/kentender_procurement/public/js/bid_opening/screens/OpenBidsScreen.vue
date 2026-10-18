@@ -199,6 +199,10 @@
 			<CommitteeTable :members="members">
 				<button v-for="m in absentMembers" v-show="viewer.is_chair" :key="m.member_user" type="button" class="btn btn-secondary" :disabled="pending" :data-testid="`bop-notify-${m.member_user}`" @click="run('notify_member', { member: m.member_user })">Notify {{ m.full_name }}</button>
 			</CommitteeTable>
+			<div v-if="primary === 'resume'" class="kt-decision">
+				<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">Every member is present and secure access is ready. The opening continues from the last recorded step.</p>
+				<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary" :disabled="pending" data-testid="bop-resume" @click="run('resume_opening')">Resume opening</button></div>
+			</div>
 			<div v-if="primary === 'join'" class="kt-decision">
 				<p style="margin:0 0 var(--space-4);font-size:15px;max-width:75ch">The opening is paused until you rejoin. It continues from the last recorded step.</p>
 				<div style="display:flex;justify-content:flex-end;gap:12px"><button type="button" class="btn btn-primary" :disabled="pending" data-testid="bop-join" @click="run('join_opening')">Rejoin opening</button></div>
@@ -217,19 +221,20 @@
 				<p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">If support fixes the problem, the chair can resume the opening once every member has rejoined. Nothing from the bid has been read aloud or shown.</p>
 			</div>
 			<div class="kt-region" data-testid="bop-tender-decision"><h2>Tender decision</h2>
-				<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">{{ data.decision.unavailable_text }}</p></div>
+				<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty" data-testid="bop-decision-message">{{ data.decision.message || data.decision.unavailable_text }}</p>
+					<div v-if="viewer.is_accounting_officer && data.decision.item" style="margin-top:12px"><button type="button" class="btn btn-primary" data-testid="bop-open-tender-decision" @click="openTenderDecision">{{ blockedTurn ? "Review the tender decision" : "Decide on the Tender" }}</button></div></div>
 			</div>
 		</template>
 
 		<template v-else-if="mode === 'paused-bid'">
 			<div class="kt-region" data-testid="bop-bid-problem"><h2>{{ isMismatch ? "Bid being checked" : "Bid that could not be opened" }}</h2>
 				<div v-if="isMismatch" class="kt-meta-row"><div><span class="kt-label">Receipt</span><span class="kt-meta-value">{{ pause.receipt }}</span></div><div><span class="kt-label">Found at</span><span class="kt-meta-value">{{ pause.since_label }}</span></div><div><span class="kt-label">Being checked by</span><span class="kt-meta-value">Opening access support</span></div></div>
-				<div v-else class="kt-meta-row"><div><span class="kt-label">Receipt</span><span class="kt-meta-value">{{ pause.receipt }}</span></div><div><span class="kt-label">Tried to open</span><span class="kt-meta-value">{{ pause.since_label }}</span></div><div><span class="kt-label">Being checked by</span><span class="kt-meta-value">Opening access support</span></div><div><span class="kt-label">Status</span><span class="kt-meta-value" data-testid="bop-problem-status"><span v-if="incidentStatus === 'Resolved'" class="kt-status is-live">Resolved {{ incidentResolved }}</span><span v-else-if="incidentStatus === 'Unresolved'" class="kt-status is-critical">Not resolved</span><template v-else>Being checked</template></span></div></div>
+				<div v-else class="kt-meta-row"><div><span class="kt-label">Receipt</span><span class="kt-meta-value">{{ pause.receipt }}</span></div><div><span class="kt-label">Tried to open</span><span class="kt-meta-value">{{ pause.since_label }}</span></div><div><span class="kt-label">Being checked by</span><span class="kt-meta-value">Opening access support</span></div><div><span class="kt-label">Status</span><span class="kt-meta-value" data-testid="bop-problem-status"><span v-if="incidentStatus === 'Resolved'" class="kt-status is-live">Recovered {{ incidentResolved }}</span><span v-else-if="incidentStatus === 'Unresolved'" class="kt-status is-critical">Could not be recovered</span><template v-else>Being checked</template></span></div></div>
 				<p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">{{ isMismatch ? "The bid cannot be replaced or left out. The opening cannot finish until there is a documented outcome." : "The bid is not skipped or rejected. Nothing from it has been read aloud or shown." }}</p>
 				<div v-if="!isMismatch && viewer.is_chair" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px">
 					<template v-if="primary === 'retry'"><button type="button" class="btn btn-primary" :disabled="pending" data-testid="bop-retry" @click="run('retry_opening')">Retry opening</button><button type="button" class="btn btn-secondary" @click="showProblem = !showProblem">View problem details</button></template>
-					<template v-else-if="incidentStatus === 'Unresolved'"><button type="button" class="btn btn-secondary" @click="showProblem = !showProblem">View problem details</button></template>
-					<template v-else><button type="button" class="btn btn-secondary" disabled data-testid="bop-retry">Retry opening</button><span style="font-size:13px;color:var(--color-neutral-800)">Available when support marks the problem resolved</span></template>
+					<template v-else-if="incidentStatus === 'Unresolved'"><button type="button" class="btn btn-secondary" @click="showProblem = !showProblem">View problem details</button><span style="font-size:13px;color:var(--color-neutral-800)" data-testid="bop-not-recovered">{{ NOT_RECOVERED }}</span></template>
+					<template v-else><button type="button" class="btn btn-secondary" disabled data-testid="bop-retry">Retry opening</button><span style="font-size:13px;color:var(--color-neutral-800)">Available when support records that the problem is recovered</span></template>
 				</div>
 			</div>
 			<CommitteeTable :members="members" secondary />
@@ -239,11 +244,20 @@
 		<!-- c12: ended by Tender cancellation -->
 		<template v-else-if="mode === 'cancelled'">
 			<div class="kt-region" data-testid="bop-cancelled"><h2>{{ data.cancellation.message }}</h2>
-				<div class="kt-meta-row"><div><span class="kt-label">Opening started</span><span class="kt-meta-value">{{ startedAt }}</span></div><div><span class="kt-label">Last recorded step</span><span class="kt-meta-value">{{ lastChronology }}</span></div></div>
+				<div v-if="state === 'Cancelled after start'" class="kt-meta-row"><div><span class="kt-label">Opening started</span><span class="kt-meta-value">{{ startedAt }}</span></div><div><span class="kt-label">Last recorded step</span><span class="kt-meta-value">{{ lastChronology }}</span></div></div>
+				<div v-else class="kt-meta-row"><div><span class="kt-label">Outcome</span><span class="kt-meta-value" data-testid="bop-cancelled-outcome">{{ data.cancellation.outcome }}</span></div><div><span class="kt-label">Bids</span><span class="kt-meta-value">Still sealed</span></div></div>
 				<p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">{{ data.cancellation.note }} Cancellation notices are handled with the Tender.</p>
 			</div>
 			<SessionTable :rows="chronology" title="Session up to cancellation" />
 			<History title="Evidence details" :summary="evidenceSummary" :rows="evidenceRows" />
+		</template>
+
+		<!-- v0.16: the Tender was cancelled and the opening record is catching up; no ceremony action is offered to anyone -->
+		<template v-else-if="mode === 'cancel-pending'">
+			<div class="kt-region" data-testid="bop-cancel-pending"><h2>{{ data.cancellation.message }}</h2>
+				<p style="margin:12px 0 0;font-size:14px;max-width:75ch;text-wrap:pretty">Nothing more can be opened, read out or recorded. What was recorded so far is kept, and the bids stay sealed under their existing custody.</p>
+			</div>
+			<SessionTable v-if="chronology.length" :rows="chronology" title="Session so far" />
 		</template>
 
 		<!-- n1: the opening has not started; the Accounting Officer records what happened -->
@@ -266,7 +280,8 @@
 				<div v-if="firstIncident" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px"><button type="button" class="btn btn-secondary" @click="showProblem = !showProblem">View problem details</button></div>
 			</div>
 			<div v-if="data.decision" class="kt-region"><h2>Tender decision</h2>
-				<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">{{ data.decision.unavailable_text }}</p></div>
+				<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty" data-testid="bop-decision-message">{{ data.decision.message || data.decision.unavailable_text }}</p>
+					<div v-if="viewer.is_accounting_officer && data.decision.item" style="margin-top:12px"><button type="button" class="btn btn-primary" data-testid="bop-open-tender-decision" @click="openTenderDecision">{{ blockedTurn ? "Review the tender decision" : "Decide on the Tender" }}</button></div></div>
 			</div>
 			<div class="kt-region is-secondary"><h2>What this means</h2>
 				<div class="kt-group"><p style="margin:0;font-size:14px;max-width:75ch;text-wrap:pretty">No bids were opened and there is no opening record. The Tender is not cancelled or rescheduled by this record.</p></div>
@@ -280,6 +295,7 @@
 			<template v-if="(data.viewer || {}).can_read_incident_details">
 				<IncidentDetails v-for="i in data.incidents" :key="'d-' + i.incident_id" :tender="data.opening.tender_reference" :incident="i.incident_id" :purposes="data.viewer.incident_purposes" />
 			</template>
+			<IncidentFindingForm v-for="i in (viewer.is_support ? data.incidents : [])" :key="'f-' + i.incident_id" :incident="i" :pending="pending" @record="(v) => emit('command', { method: 'record_incident_finding', args: v })" />
 		</div>
 
 		<AttendanceDialog v-if="attendanceFor" :attendee="attendanceFor" :pending="pending" @confirm="recordAttendance" @cancel="attendanceFor = null" />
@@ -295,6 +311,7 @@ import CommitteeTable from "../components/CommitteeTable.vue";
 import Guidance from "../components/Guidance.vue";
 import History from "../components/History.vue";
 import IncidentDetails from "../components/IncidentDetails.vue";
+import IncidentFindingForm from "../components/IncidentFindingForm.vue";
 import PageHead from "../components/PageHead.vue";
 import RegisterTable from "../components/RegisterTable.vue";
 import ReplacementForm from "../components/ReplacementForm.vue";
@@ -320,9 +337,14 @@ const account = computed(() => (ceremony.value.accounts || []).find((a) => !a.re
 const primary = computed(() => (props.data.next_step && props.data.next_step.primary_action) || "");
 const state = computed(() => opening.value.state);
 
+// BOP-CHG-001 v0.16 §10.8: an authoritative cancellation shows at once ("Cancellation recorded. The opening record is being updated.") and the terminal words
+// replace it when the BOP/PRC outcome has committed; every ceremony action is gone in both
+const cancellation = computed(() => props.data.cancellation || null);
+
 const mode = computed(() => {
+	if (cancellation.value && cancellation.value.state === "Recorded") return "cancel-pending";
+	if (cancellation.value && cancellation.value.state === "Ended") return "cancelled";
 	if (state.value === "Not held") return "not-held";
-	if (state.value === "Cancelled after start") return "cancelled";
 	if (primary.value === "record_not_held") return "not-held-due";
 	if (state.value === "Interrupted") {
 		if (pause.value.class === "Member absent") return "paused-member";
@@ -411,7 +433,15 @@ const lastStep = computed(() => {
 	return last.what ? `${last.what}${last.at_label ? `, ${last.at_label}` : ""}` : "Nothing recorded yet";
 });
 const isMismatch = computed(() => pause.value.class === "Package mismatch");
-const incidentStatus = computed(() => (pause.value.incident || {}).status || "");
+// the support finding the page was shown: Recovered / Cannot recover; the template maps them to its "Resolved" / "Unresolved" states
+const incidentStatus = computed(() => ({ Recovered: "Resolved", "Cannot recover": "Unresolved" }[(pause.value.incident || {}).current_finding] || ""));
+const NOT_RECOVERED = "Opening could not be recovered. The Accounting Officer must review the next step.";
+// "Your turn, blocked" (BOP-CHG-001 v0.16 §10.7): the Accounting Officer is still the one to decide, but a Tender guard prevents it today
+const blockedTurn = computed(() => ((props.data.next_step || {}).kind || "") === "your_turn_blocked");
+function openTenderDecision() {
+	const item = (props.data.decision || {}).item;
+	frappe.set_route("tenders", opening.value.tender_reference, "cancel", ...(item ? [item] : []));
+}
 const incidentResolved = computed(() => {
 	const at = (pause.value.incident || {}).resolved_at;
 	return at ? String(at).slice(11, 16) : "";

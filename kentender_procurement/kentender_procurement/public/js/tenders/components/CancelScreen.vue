@@ -11,7 +11,18 @@
          obligations, with evidence actions only for the authorised
          procurement function on an outstanding obligation.
      The HOPF may record a recommendation (never a decision). Grounds come
-     from the server's catalogue; every action is the server's. -->
+     from the server's catalogue; every action is the server's.
+
+     TPR-CHG-001 v0.24 §10.13 POSTCLOSE / §10.19: after the submission period
+     ended, the same route carries the server's verdict (`data.decision`):
+       - allowed: the Award notification status with its evidence, the verified
+         grounds, the finality warning and the separate funding explanation,
+         then the ordinary ground/reason decision;
+       - blocked: **Cancellation cannot be decided here**, **A tender decision
+         is needed** and every blocker with its holder and permitted route — no
+         form, no Cancel Tender button;
+       - cancelled: who decided and when, and the closing of the opening record
+         as its own status, apart from notices, reports and funding. -->
 <template>
 	<div class="tnd-page" data-screen-label="TPR-DES-12 Cancel Tender">
 		<BlueprintCard>
@@ -19,10 +30,29 @@
 			<TenderGuidance :guidance="data.guidance || null" :pending="pending" @fix="onFix" />
 
 			<template v-if="!cancelled">
-				<div v-if="deciding" class="tnd-section tnd-section--plain">
+				<div v-if="postClose" class="tnd-section" data-testid="tnd-postclose" :data-allowed="decision.allowed ? 'true' : 'false'">
+					<h2 class="tnd-h2" data-testid="tnd-postclose-title">{{ decision.allowed ? "Cancel this Tender" : decision.blocked_title }}</h2>
+					<p v-if="decision.award" class="tnd-body-text" style="margin: 0 0 6px" data-testid="tnd-award-status">{{ decision.award.label }}</p>
+					<details v-if="decision.award" class="tnd-technical" data-testid="tnd-award-evidence">
+						<summary class="tnd-small">Evidence for this status</summary>
+						<dl class="tnd-small"><dt class="kt-label">Source</dt><dd>{{ decision.award.source }}</dd><dt class="kt-label">Revision</dt><dd>{{ decision.award.source_revision }}</dd><dt class="kt-label">Checked</dt><dd>{{ decision.award.checked_at_label }}</dd></dl>
+					</details>
+					<p v-if="decision.opening && decision.opening.message" class="tnd-small" style="margin: 8px 0 0" data-testid="tnd-opening-context">{{ decision.opening.message }}<span v-if="decision.opening.item" class="tnd-muted-700"> Decision item {{ decision.opening.item }}.</span></p>
+					<div v-if="!decision.allowed" style="margin-top: 12px" data-testid="tnd-blockers">
+						<h3 class="tnd-h2" style="font-size: 15px" data-testid="tnd-blockers-heading">{{ decision.heading }}</h3>
+						<ul class="tnd-list">
+							<li v-for="b in decision.blockers" :key="b.code" data-testid="tnd-blocker" :data-code="b.code">
+								<strong>{{ b.message }}</strong>
+								<span class="tnd-small tnd-muted-700"> Held by {{ b.holder }}.</span>
+								<a v-if="b.link" href="#" class="tnd-small" data-testid="tnd-blocker-link" @click.prevent="emit('fix', { kind: 'route', target: b.link.route })">{{ b.link.label }}</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div v-if="deciding && !blockedPost" class="tnd-section tnd-section--plain">
 					<div class="kt-notice is-critical" data-testid="tnd-cancel-warning">
 						<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-						<div class="kt-notice-body">{{ data.warning_text || "The tender will end. KenTender will restore its unused planning allowance and release its unused budget reservation after checking the linked records. A replacement purchase requires a new requisition." }}</div>
+						<div class="kt-notice-body">{{ postClose ? data.postclose_warning_text : (data.warning_text || "The tender will end. KenTender will restore its unused planning allowance and release its unused budget reservation after checking the linked records. A replacement purchase requires a new requisition.") }}<template v-if="postClose"><br><span data-testid="tnd-postclose-recovery">{{ data.postclose_recovery_text }}</span></template></div>
 					</div>
 				</div>
 				<div v-if="review && !deciding" class="tnd-section" data-testid="tnd-review-request">
@@ -45,7 +75,7 @@
 					<p class="tnd-body-text">{{ recommendation.text }}</p>
 					<p class="tnd-small tnd-muted-700" style="margin: 6px 0 0">{{ recommendation.by_name }}, Head of Procurement Function · {{ recommendation.at_label }}</p>
 				</div>
-				<template v-if="deciding">
+				<template v-if="deciding && !blockedPost">
 					<div class="tnd-section tnd-section--form">
 						<div class="field tnd-form-row"><label for="tnd-cancel-ground">Ground</label>
 							<select id="tnd-cancel-ground" class="input" v-model="ground" :disabled="!canDecide && !canRecommend" data-testid="tnd-cancel-ground"><option v-for="g in data.grounds || []" :key="g.key" :value="g.key">{{ g.label }}</option></select>
@@ -59,6 +89,7 @@
 						<h2 class="tnd-h2">Consequences</h2>
 						<ul class="tnd-list" data-testid="tnd-consequences">
 							<li>Tender closes immediately.</li>
+							<li v-if="postClose" data-testid="tnd-postclose-consequence">The opening record ends with what was recorded so far; no bid is opened or evaluated.</li>
 							<li>Cancellation notice published through all original channels.</li>
 							<li>PPRA report due {{ consequences.ppra_report_due_by }}.</li>
 							<li>Candidate notices due {{ consequences.candidate_notice_due_by }}.</li>
@@ -75,6 +106,14 @@
 					<div class="tnd-fact"><div class="kt-label">Decided at</div><div class="tnd-fact-value">{{ cancellation.decided_at_label }}</div></div>
 					<div class="tnd-fact"><div class="kt-label">Ground</div><div class="tnd-fact-value">{{ cancellation.ground_label }}</div></div>
 					<div class="tnd-fact"><div class="kt-label">Reason</div><div class="tnd-fact-value">{{ cancellation.reason }}</div></div>
+					<div v-if="cancellation.previous_status" class="tnd-fact"><div class="kt-label">Cancelled from</div><div class="tnd-fact-value" data-testid="tnd-cancelled-from">{{ cancellation.previous_status }}</div></div>
+				</div>
+				<div v-if="delivery.length" class="tnd-section" data-testid="tnd-delivery">
+					<h2 class="tnd-h2">Closing the opening record</h2>
+					<p v-for="row in delivery" :key="row.consumer" class="tnd-body-text" style="margin: 0 0 6px" :data-testid="`tnd-delivery-${row.consumer}`" :data-status="row.status">
+						<span class="kt-status" :class="row.status === 'Delivered' ? 'is-live' : 'is-attention'">{{ row.label }}: {{ row.status === "Delivered" ? "Updated" : "Being updated" }}</span>
+						<span class="tnd-small tnd-muted-700" style="display: block">{{ row.status === "Delivered" ? "The opening record shows this tender was cancelled." : "Cancellation recorded. The opening record is being updated." }}</span>
+					</p>
 				</div>
 				<div v-if="recovery" class="tnd-section" data-testid="tnd-resource-recovery" :data-status="recovery.status">
 					<h2 class="tnd-h2">{{ recovery.title }}</h2>
@@ -149,6 +188,11 @@ const summary = computed(() => props.data.summary || {});
 const consequences = computed(() => props.data.consequences || {});
 const recommendation = computed(() => props.data.recommendation || null);
 const cancellation = computed(() => props.data.cancellation || null);
+// TPR-CHG-001 v0.24 §10.13 POSTCLOSE: the server's verdict for a Tender whose submission period has ended
+const decision = computed(() => props.data.decision || null);
+const postClose = computed(() => !!decision.value && decision.value.stage === "post_close");
+const blockedPost = computed(() => postClose.value && !decision.value.allowed);
+const delivery = computed(() => props.data.delivery || []);
 // TPR-CHG-001 v0.21 §5.7A: Requisitions' recovery of the unused allowance and funding, in the server's words (permitted rows and links only)
 const recovery = computed(() => props.data.resource_recovery || null);
 const recoveryTone = computed(() => ({ Completed: "is-live", "Needs attention": "is-critical" }[(recovery.value || {}).status] || "is-attention"));

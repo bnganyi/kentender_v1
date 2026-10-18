@@ -20,6 +20,7 @@ export const CHAIR = "pw.req.hopf@example.test";
 export const MEMBER = "pw.tnd.officer@example.test";
 export const INDEPENDENT = "pw.bop.independent@example.test";
 export const AUDITOR = "pw.req.auditor@example.test";
+export const SUPPORT = "pw.bop.support@example.test";
 
 export type OpeningWorld = { stage: string; tender: string; tender_reference: string; instant: string; independent: string; independent_name: string };
 
@@ -31,6 +32,8 @@ export function bopFixture<T = OpeningWorld>(fn: string, kwargs: Record<string, 
 
 export const openingWorld = (stage: string) => bopFixture("reset_opening_fixture", { stage });
 export const restoreBopWorld = () => bopFixture("restore_site");
+/** The grounds this test environment verifies for the post-close cancellation route (TPR-CHG-001 v0.24 §5.12); "" verifies none. */
+export const verifyGrounds = (grounds: string) => bopFixture("set_tender_controls", { verified_cancellation_grounds: grounds });
 
 export async function gotoOpening(page: Page, reference: string, sub = ""): Promise<void> {
 	await page.setViewportSize({ width: 1440, height: 1024 });
