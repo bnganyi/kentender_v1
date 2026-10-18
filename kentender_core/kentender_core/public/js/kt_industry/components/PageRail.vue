@@ -1,4 +1,6 @@
 <script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+
 // CFG-PEFY-DES-12 — shared top page rail, rendered inside the Vue root (.kt-industry
 // scope) rather than reusing kentender_core.cl_shell's Civic Ledger toolbar, which is
 // a different design system (Tailwind/Material Symbols) — kt_industry_tokens.css is
@@ -13,19 +15,8 @@ const props = defineProps({
 // CTX-CHG-001 v1.1 §2: there is no Procuring Entity switcher. A site is one Procuring Entity, shown where useful
 // and never chosen; the global working-entity preference and its picker are retired.
 
-function initials(name) {
-	const parts = String(name || "")
-		.trim()
-		.split(/\s+/)
-		.filter(Boolean);
-	if (!parts.length) return "U";
-	if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-	return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-// Mirrors kt_cl_components.js's sessionUserLabel/sessionUserRole/sessionAvatarUrl —
-// same source data, kept local so this Industry-scoped component has no dependency
-// on the Civic Ledger component file.
+// Mirrors kt_cl_components.js's sessionUserLabel/sessionUserRole — same source data,
+// kept local so this Industry-scoped component has no dependency on Civic Ledger.
 function sessionUserLabel() {
 	try {
 		return (frappe.session && frappe.session.user_fullname) || frappe.session.user || "User";
@@ -33,6 +24,7 @@ function sessionUserLabel() {
 		return "User";
 	}
 }
+
 function sessionUserRole() {
 	try {
 		const roles = (frappe.boot && frappe.boot.user && frappe.boot.user.roles) || [];
@@ -45,25 +37,150 @@ function sessionUserRole() {
 		return "";
 	}
 }
-function sessionAvatarUrl() {
-	try {
-		const user = (frappe.session && frappe.session.user) || "";
-		if (frappe.user_info && user) {
-			const info = frappe.user_info(user);
-			if (info && info.image) return info.image;
-		}
-		if (frappe.boot && frappe.boot.user && frappe.boot.user.image)
-			return frappe.boot.user.image;
-	} catch (e) {
-		/* ignore */
-	}
-	return "";
-}
 
 const userName = sessionUserLabel();
 const userRole = sessionUserRole();
-const avatarUrl = sessionAvatarUrl();
-const userInitials = initials(userName);
+const menuOpen = ref(false);
+const notificationsOpen = ref(false);
+const unreadNotificationCount = ref(0);
+const userMenu = ref(null);
+const searchTrigger = ref(null);
+const notificationWrapper = ref(null);
+const searchEnabled = computed(() => !!frappe.boot?.desk_settings?.search_bar);
+const notificationsEnabled = computed(
+	() => !!frappe.boot?.desk_settings?.notifications && frappe.session?.user !== "Guest",
+);
+
+function closeMenu() {
+	menuOpen.value = false;
+}
+
+function openSearch() {
+	const deskSearchTrigger = document.querySelector("#navbar-modal-search");
+	if (deskSearchTrigger) {
+		deskSearchTrigger.click();
+		return;
+	}
+	searchTrigger.value?.click();
+}
+
+function setNotificationsOpen(open) {
+	if (!notificationWrapper.value) return;
+	const dropdown = $(notificationWrapper.value).find(".dropdown-notifications");
+	dropdown.toggleClass("hidden", !open);
+	notificationsOpen.value = open;
+}
+
+function toggleNotifications() {
+	setNotificationsOpen(!notificationsOpen.value);
+	if (notificationsOpen.value) {
+		menuOpen.value = false;
+		refreshUnreadNotificationCount();
+	}
+}
+
+function closeRailNotifications() {
+	setNotificationsOpen(false);
+}
+
+async function refreshUnreadNotificationCount() {
+	if (!notificationsEnabled.value) {
+		unreadNotificationCount.value = 0;
+		return;
+	}
+	try {
+		const response = await frappe.call({
+			method: "frappe.client.get_count",
+			args: {
+				doctype: "Notification Log",
+				filters: {
+					for_user: frappe.session.user,
+					read: 0,
+				},
+			},
+		});
+		unreadNotificationCount.value = Number(response.message) || 0;
+	} catch (error) {
+		unreadNotificationCount.value = 0;
+	}
+}
+
+function onNewNotification() {
+	refreshUnreadNotificationCount();
+}
+
+function onNotificationIndicatorHide() {
+	refreshUnreadNotificationCount();
+}
+
+function onNotificationReadAction() {
+	window.setTimeout(refreshUnreadNotificationCount, 400);
+}
+
+function handleClickOutside(event) {
+	if (userMenu.value && !userMenu.value.contains(event.target)) {
+		closeMenu();
+	}
+	if (
+		notificationsOpen.value &&
+		notificationWrapper.value &&
+		!notificationWrapper.value.contains(event.target) &&
+		!event.target.closest(".notifications-list")
+	) {
+		closeRailNotifications();
+	}
+}
+
+onMounted(() => {
+	document.addEventListener("click", handleClickOutside);
+	if (searchEnabled.value && frappe.search?.AwesomeBar && searchTrigger.value) {
+		const deskSearchTrigger = document.querySelector("#navbar-modal-search");
+		if (deskSearchTrigger) {
+			deskSearchTrigger.classList.add("hidden");
+		} else {
+			new frappe.search.AwesomeBar().setup(searchTrigger.value);
+		}
+	}
+	if (notificationsEnabled.value && frappe.ui?.Notifications && notificationWrapper.value) {
+		const notifications = frappe.app?.sidebar?.notifications;
+		if (notifications?.dropdown?.length) {
+			$(notificationWrapper.value).find(".dropdown-notifications").remove();
+			$(notificationWrapper.value).append(notifications.dropdown);
+			const view = notifications.tabs?.notifications;
+			if (view) {
+				view.notifications_icon = $(notificationWrapper.value).find(".notifications-icon");
+			}
+		} else {
+			new frappe.ui.Notifications({
+				full_height: true,
+				wrapper: $(notificationWrapper.value),
+			});
+		}
+		document.querySelector(".body-sidebar .sidebar-notification")?.classList.add("hidden");
+		refreshUnreadNotificationCount();
+		frappe.realtime?.on("notification", onNewNotification);
+		frappe.realtime?.on("indicator_hide", onNotificationIndicatorHide);
+		$(notificationWrapper.value).on(
+			"click.ktIndustryRailCount",
+			".notification-item, .mark-all-read",
+			onNotificationReadAction,
+		);
+	}
+	$(document).on("page-change.ktIndustryRail", closeRailNotifications);
+});
+
+onBeforeUnmount(() => {
+	document.removeEventListener("click", handleClickOutside);
+	$(document).off("page-change.ktIndustryRail", closeRailNotifications);
+	frappe.realtime?.off?.("notification", onNewNotification);
+	frappe.realtime?.off?.("indicator_hide", onNotificationIndicatorHide);
+	$(notificationWrapper.value).off(".ktIndustryRailCount");
+});
+
+function toggleMenu() {
+	menuOpen.value = !menuOpen.value;
+	if (menuOpen.value) closeRailNotifications();
+}
 
 function goRoute(route) {
 	if (!route) return;
@@ -78,11 +195,21 @@ function goRoute(route) {
 }
 
 function openProfile() {
+	closeMenu();
 	frappe.set_route("Form", "User", frappe.session.user);
 }
 
 function logout() {
-	frappe.app.logout();
+	closeMenu();
+	if (typeof frappe.logout === "function") {
+		frappe.logout();
+		return;
+	}
+	if (frappe.app && typeof frappe.app.logout === "function") {
+		frappe.app.logout();
+		return;
+	}
+	window.location.href = "/login";
 }
 </script>
 
@@ -105,27 +232,97 @@ function logout() {
 		</nav>
 		<div class="kt-rail-actions">
 			<button
+				v-if="searchEnabled"
+				ref="searchTrigger"
 				type="button"
-				class="kt-rail-btn"
-				:aria-label="__('Notifications')"
-				@click="frappe.set_route('List', 'Notification Log')"
+				id="kt-rail-awesomebar-search"
+				class="kt-rail-btn kt-rail-search navbar-search-bar"
+				:aria-label="__('Search')"
+				title="Search (Ctrl+K)"
+				@click="openSearch"
 			>
 				<svg
-					width="20"
-					height="20"
+					width="18"
+					height="18"
 					viewBox="0 0 24 24"
 					fill="none"
 					stroke="currentColor"
-					stroke-width="1.5"
+					stroke-width="1.8"
 					stroke-linecap="round"
 					stroke-linejoin="round"
 				>
-					<path d="M10.268 21a2 2 0 0 0 3.464 0"></path>
-					<path
-						d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"
-					></path>
+					<circle cx="11" cy="11" r="6"></circle>
+					<path d="m16 16 5 5"></path>
 				</svg>
 			</button>
+			<div
+				v-if="notificationsEnabled"
+				ref="notificationWrapper"
+				class="standard-items-sections kt-rail-notification-host"
+			>
+				<button
+					type="button"
+					class="kt-rail-btn kt-rail-notifications sidebar-notification"
+					:aria-label="__('Notifications')"
+					@click.stop="toggleNotifications"
+				>
+					<span class="notifications-icon">
+						<svg
+							class="notifications-seen"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.5"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="M10.268 21a2 2 0 0 0 3.464 0"></path>
+							<path
+								d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"
+							></path>
+						</svg>
+						<svg
+							class="notifications-unseen"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.5"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="M10.268 21a2 2 0 0 0 3.464 0"></path>
+							<path
+								d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"
+							></path>
+						</svg>
+					</span>
+					<span
+						v-if="unreadNotificationCount > 0"
+						class="kt-rail-notification-count"
+						:aria-label="`${unreadNotificationCount} unread notifications`"
+						:title="`${unreadNotificationCount} unread notifications`"
+					>
+						{{ unreadNotificationCount > 99 ? "99+" : unreadNotificationCount }}
+					</span>
+				</button>
+				<div class="dropdown-notifications" :class="{ hidden: !notificationsOpen }">
+					<div class="notifications-list" role="menu">
+						<div class="notification-list-header">
+							<div class="header-items"></div>
+							<div class="header-actions"></div>
+						</div>
+						<div class="notification-list-body">
+							<div class="panel-notifications"></div>
+							<div class="panel-events"></div>
+							<div class="panel-changelog-feed"></div>
+						</div>
+					</div>
+				</div>
+			</div>
 			<button
 				type="button"
 				class="kt-rail-btn"
@@ -149,53 +346,60 @@ function logout() {
 			</button>
 		</div>
 		<div class="kt-rail-div"></div>
-		<button type="button" class="kt-rail-user" @click="openProfile">
-			<span class="kt-rail-user-text">
-				<span class="kt-rail-user-name">{{ userName }}</span>
-				<span v-if="userRole" class="kt-rail-user-role">{{ userRole }}</span>
-			</span>
-			<span class="kt-rail-avatar-frame">
-				<img v-if="avatarUrl" class="kt-rail-avatar-photo" :src="avatarUrl" alt="" />
-				<span v-else class="kt-rail-avatar">{{ userInitials }}</span>
-			</span>
-			<svg
-				width="16"
-				height="16"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="1.5"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				class="kt-rail-chevron"
+		<div ref="userMenu" class="kt-rail-user-wrap">
+			<button
+				type="button"
+				class="kt-rail-user"
+				:aria-expanded="menuOpen"
+				@click.stop="toggleMenu"
 			>
-				<path d="m6 9 6 6 6-6"></path>
-			</svg>
-		</button>
-		<button
-			type="button"
-			class="kt-rail-logout"
-			:aria-label="__('Logout')"
-			:title="__('Logout')"
-			@click="logout"
-		>
-			<span>{{ __("Logout") }}</span>
-			<svg
-				width="18"
-				height="18"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="1.7"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				aria-hidden="true"
-			>
-				<path d="M10 17l5-5-5-5"></path>
-				<path d="M15 12H3"></path>
-				<path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"></path>
-			</svg>
-		</button>
+				<span class="kt-rail-user-text">
+					<span class="kt-rail-user-name">{{ userName }}</span>
+					<span v-if="userRole" class="kt-rail-user-role">{{ userRole }}</span>
+				</span>
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="kt-rail-chevron"
+				>
+					<path d="m6 9 6 6 6-6"></path>
+				</svg>
+			</button>
+
+			<div v-if="menuOpen" class="kt-rail-user-menu" role="menu" aria-label="User menu">
+				<button
+					type="button"
+					class="kt-rail-user-menu-item"
+					role="menuitem"
+					@click="openProfile"
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true" class="kt-rail-user-menu-icon">
+						<path d="M20 21a8 8 0 0 0-16 0"></path>
+						<circle cx="12" cy="7" r="4"></circle>
+					</svg>
+					<span>{{ __("Profile") }}</span>
+				</button>
+				<button
+					type="button"
+					class="kt-rail-user-menu-item danger"
+					role="menuitem"
+					@click="logout"
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true" class="kt-rail-user-menu-icon">
+						<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+						<path d="M16 17l5-5-5-5"></path>
+						<path d="M21 12H9"></path>
+					</svg>
+					<span>{{ __("Logout") }}</span>
+				</button>
+			</div>
+		</div>
 	</header>
 </template>
 
@@ -285,6 +489,69 @@ function logout() {
 	gap: 4px;
 	flex: none;
 }
+.kt-rail-tools {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+.kt-rail-notification-host {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+.kt-rail-notification-host :deep(.dropdown-notifications) {
+	position: absolute;
+	top: 0;
+	right: 0;
+	z-index: 35;
+}
+.kt-rail-notification-host :deep(.notifications-list) {
+	position: absolute;
+	top: 0;
+	right: 0;
+	left: auto;
+	width: min(360px, calc(100vw - 32px));
+	max-height: min(70vh, 640px);
+	height: min(70vh, 640px);
+	min-height: 360px;
+	border: 1px solid var(--kt-color-divider);
+	border-radius: var(--kt-radius-md);
+	box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+}
+.kt-rail-notification-host :deep(.notification-list-body) {
+	max-height: calc(70vh - 64px);
+}
+.kt-rail-notification-host :deep(.notifications-unseen) {
+	position: absolute;
+	top: 3px;
+	right: 3px;
+	color: #df3d3d;
+}
+.kt-rail-notification-host :deep(.notifications-icon) {
+	position: relative;
+	display: grid;
+	place-items: center;
+}
+.kt-rail-notification-count {
+	position: absolute;
+	top: 1px;
+	right: 1px;
+	z-index: 2;
+	min-width: 16px;
+	height: 16px;
+	padding: 0 4px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid #f2f4f6;
+	border-radius: 999px;
+	background: #df3d3d;
+	color: #fff;
+	font-size: 9px;
+	font-weight: 700;
+	line-height: 1;
+}
 .kt-rail-btn {
 	width: 40px;
 	height: 40px;
@@ -295,6 +562,7 @@ function logout() {
 	color: color-mix(in srgb, var(--kt-color-text) 70%, transparent);
 	cursor: pointer;
 	border-radius: var(--kt-radius-md);
+	position: relative;
 }
 .kt-rail-btn:hover {
 	background: var(--kt-color-accent-100);
@@ -306,12 +574,16 @@ function logout() {
 	background: var(--kt-color-divider);
 	flex: none;
 }
+.kt-rail-user-wrap {
+	position: relative;
+	flex: none;
+}
 .kt-rail-user {
 	flex: none;
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	padding: 4px 4px 4px 8px;
+	padding: 4px 10px 4px 8px;
 	border: 0;
 	background: none;
 	cursor: pointer;
@@ -320,29 +592,56 @@ function logout() {
 .kt-rail-user:hover {
 	background: var(--kt-color-accent-100);
 }
-.kt-rail-logout {
-	width: auto;
-	height: 36px;
-	flex: none;
+.kt-rail-user-menu {
+	position: absolute;
+	top: calc(100% + 8px);
+	right: 0;
+	min-width: 180px;
+	display: flex;
+	flex-direction: column;
+	padding: 8px;
+	border: 1px solid var(--kt-color-divider);
+	border-radius: var(--kt-radius-md);
+	background: #fff;
+	box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+	z-index: 30;
+}
+.kt-rail-user-menu-item {
 	display: inline-flex;
 	align-items: center;
-	justify-content: center;
-	gap: 6px;
+	gap: 10px;
 	border: 0;
-	border-radius: var(--kt-radius-md);
-	background: none;
-	color: color-mix(in srgb, var(--kt-color-text) 70%, transparent);
-	cursor: pointer;
-	padding: 0 8px;
+	background: transparent;
+	color: var(--kt-color-text);
+	padding: 10px 12px;
+	border-radius: 8px;
+	text-align: left;
 	font: inherit;
-	font-size: 13px;
-	white-space: nowrap;
+	font-size: 14px;
+	cursor: pointer;
 }
-.kt-rail-logout:hover,
-.kt-rail-logout:focus-visible {
+.kt-rail-user-menu-item:hover,
+.kt-rail-user-menu-item:focus-visible {
 	background: var(--kt-color-accent-100);
-	color: var(--kt-color-accent-800);
 	outline: none;
+}
+.kt-rail-user-menu-item.danger {
+	color: color-mix(in srgb, var(--kt-color-text) 78%, transparent);
+}
+.kt-rail-user-menu-item.danger:hover,
+.kt-rail-user-menu-item.danger:focus-visible {
+	background: rgba(220, 38, 38, 0.08);
+	color: #b42318;
+}
+.kt-rail-user-menu-icon {
+	width: 16px;
+	height: 16px;
+	stroke: currentColor;
+	fill: none;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	flex: none;
 }
 .kt-rail-user-text {
 	display: flex;

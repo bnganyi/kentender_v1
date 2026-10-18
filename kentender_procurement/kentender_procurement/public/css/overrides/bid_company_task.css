@@ -1,0 +1,239 @@
+/* Company and declarations task only. These rules layer over bid_portal.css. */
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] {
+	--bds-company-ink: #183b38;
+	--bds-company-muted: #60716e;
+	--bds-company-line: #dce5e2;
+	--bds-company-soft: #f5f8f7;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-stepper {
+	padding: 16px 18px 14px;
+	border: 1px solid var(--bds-company-line);
+	border-radius: 12px;
+	background: #fff;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-stepper-list {
+	gap: 10px;
+}
+
+.kt-industry.kt-portal
+	.kt-page[data-testid="bds-company-task"]
+	.bds-stepper
+	.bds-stepper-list
+	a.bds-stepper-item {
+	gap: 10px;
+	min-height: 46px;
+	padding: 8px 10px;
+	border: 1px solid transparent;
+	border-bottom: 2px solid var(--bds-company-line);
+	border-radius: 8px 8px 0 0;
+	transition:
+		background-color 140ms ease,
+		border-color 140ms ease,
+		color 140ms ease;
+}
+
+.kt-industry.kt-portal
+	.kt-page[data-testid="bds-company-task"]
+	.bds-stepper
+	.bds-stepper-list
+	a.bds-stepper-item.is-current {
+	border-color: #cbd9d5;
+	border-bottom-color: #28766b;
+	background: #f2f8f6;
+	color: var(--bds-company-ink);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-stepper-number {
+	width: 26px;
+	height: 26px;
+	background: #eef2f1;
+	color: #52635f;
+}
+
+.kt-industry.kt-portal
+	.kt-page[data-testid="bds-company-task"]
+	.bds-stepper-item.is-current
+	.bds-stepper-number {
+	background: #28766b;
+	color: #fff;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-stepper-line {
+	padding-top: 2px;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-stepper-previous,
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-stepper-next {
+	color: #28766b;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-stepper-previous:hover,
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-stepper-next:hover {
+	text-decoration: underline;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .kt-page-head {
+	margin-bottom: 20px;
+	padding-bottom: 18px;
+	border-bottom: 1px solid var(--bds-company-line);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .kt-page-title {
+	color: var(--bds-company-ink);
+	letter-spacing: -0.035em;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .kt-page-desc {
+	max-width: 62ch;
+	color: var(--bds-company-muted);
+	line-height: 1.55;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .kt-region {
+	margin-top: 18px;
+	padding: 20px;
+	border: 1px solid var(--bds-company-line);
+	border-radius: 12px;
+	background: #fff;
+	box-shadow: 0 2px 8px rgb(24 59 56 / 4%);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .kt-region > h2 {
+	margin: 0 0 15px;
+	color: var(--bds-company-ink);
+	font-size: 17px;
+	letter-spacing: -0.015em;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-region-body {
+	display: grid;
+	gap: 16px;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-facts {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(259px, 1fr));
+	gap: var(--kt-space-4) var(--kt-space-6);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-fact {
+	min-width: 0;
+	padding: 12px 14px;
+	border: 1px solid #e6ecea;
+	border-radius: 8px;
+	background: var(--bds-company-soft);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-fact-value {
+	overflow-wrap: anywhere;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-snapshot-line {
+	gap: 8px 16px;
+	padding: 12px 14px;
+	border-left: 3px solid #7ba99f;
+	border-radius: 0 6px 6px 0;
+	background: #f5f8f7;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-grid-2 {
+	gap: 18px 22px;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .field > label {
+	margin-bottom: 6px;
+	color: #415550;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .field > .input {
+	min-height: 42px;
+	border-color: #cbd6d3;
+	border-radius: 8px;
+	background-color: #fff;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .field > .input:focus-visible {
+	border-color: #28766b;
+	outline: 3px solid rgb(40 118 107 / 16%);
+	outline-offset: 1px;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .table {
+	overflow: hidden;
+	border: 1px solid var(--bds-company-line);
+	border-radius: 8px;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .table thead th {
+	background: var(--bds-company-soft);
+	color: #52635f;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.035em;
+	text-transform: uppercase;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .table th,
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .table td {
+	padding: 12px 14px;
+	vertical-align: middle;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .table tbody tr:last-child td {
+	border-bottom: 0;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-strong {
+	color: var(--bds-company-ink);
+	font-weight: 600;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-muted,
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-help {
+	color: var(--bds-company-muted);
+	line-height: 1.55;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-footer {
+	margin-top: 20px;
+	padding-top: 16px;
+	border-top: 1px solid var(--bds-company-line);
+}
+
+@media (max-width: 760px) {
+	.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-stepper {
+		padding: 12px;
+	}
+
+	.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-stepper-list {
+		gap: 4px;
+	}
+
+	.kt-industry.kt-portal
+		.kt-page[data-testid="bds-company-task"]
+		.bds-stepper
+		.bds-stepper-list
+		a.bds-stepper-item {
+		justify-content: center;
+		padding: 8px 4px;
+	}
+
+	.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .kt-region {
+		padding: 16px;
+	}
+
+	.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-facts {
+		grid-template-columns: 1fr;
+	}
+
+	.kt-industry.kt-portal .kt-page[data-testid="bds-company-task"] .bds-footer {
+		align-items: stretch;
+		flex-direction: column;
+	}
+}

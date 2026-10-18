@@ -70,6 +70,9 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/procurement_requisitions_industry.css?v={_desk_asset_v('public/css/procurement_requisitions_industry.css')}",
 	f"/assets/kentender_procurement/css/tenders_industry.css?v={_desk_asset_v('public/css/tenders_industry.css')}",
 	f"/assets/kentender_procurement/css/bid_opening_industry.css?v={_desk_asset_v('public/css/bid_opening_industry.css')}",
+	f"/assets/kentender_procurement/css/overrides/analytics_industry.css?v={_desk_asset_v('public/css/overrides/analytics_industry.css')}",
+	f"/assets/kentender_procurement/css/overrides/strategy_portfolio.css?v={_desk_asset_v('public/css/overrides/strategy_portfolio.css')}",
+
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_sidebar_header.js?v={_desk_asset_v('public/js/procurement_sidebar_header.js')}",
@@ -114,7 +117,14 @@ kt_portal_surfaces = [
 		"prefix": "/tenders",
 		"resolver": "kentender_procurement.bid_submission.portal.resolve",
 		"bundle": "bid_portal.bundle.js",
-		"css": [f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}"],
+		"css": [
+			# f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}",
+   			f"/assets/kentender_procurement/css/overrides/bds_available_tenders.css?v={_asset_version('public/css/overrides/bds_available_tenders.css')}",
+         	f"/assets/kentender_procurement/css/overrides/bds_tender_overview.css?v={_asset_version('public/css/overrides/bds_tender_overview.css')}",
+			f"/assets/kentender_procurement/css/overrides/bds_my_bids.css?v={_asset_version('public/css/overrides/bds_my_bids.css')}",
+			f"/assets/kentender_procurement/css/overrides/bid_company_task.css?v={_asset_version('public/css/overrides/bid_company_task.css')}",
+			f"/assets/kentender_procurement/css/overrides/bid_documents_task.css?v={_asset_version('public/css/overrides/bid_documents_task.css')}",
+		],
 	},
 	# BDS-DES-05 My bids and BDS-DES-17 receipt history — the same app and
 	# bundle; `/account/receipts` outranks Supplier Accounts' `/account`.
