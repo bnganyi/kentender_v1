@@ -40,4 +40,31 @@ PLN v1.32, REQ v1.20 and BUD v1.17 carry your approval record, written at your i
 
 ## Not done yet (listed so nothing is assumed)
 
-See the closing report. This list is updated at the end of the work.
+Last updated 18 October 2026, when the build was committed.
+
+**Needs your go-ahead, then a few commands**
+
+- `bench migrate` on the development site. The three new records and the one patch exist only on the test site.
+- Running the recovery for the two cancelled demo Tenders on the development site (`make cancellation-recovery-reconcile SITE=kentender.midas.com APPLY=1`, then `make cancellation-recovery-run SITE=kentender.midas.com`). It is safe to repeat. It would release KES 37,000,000 of reservations (see decision 3 above).
+- Deciding who runs the recovery worker on a site without a scheduler (decision 1 above).
+
+**Built, but not shown by a run**
+
+- Killing the process in the middle of a recovery (only raised errors were used).
+- Racing a cancellation against Award issuing a notice with two real connections. The order of locks and Award's re-read under the lock are shown; the race itself is not.
+- A recovery failing and the cancellation notices carrying on (the notices and the failure are each tested, not together).
+- A recovery for a Budget that has been closed, from Requisitions through to Planning (Budget's own handling of a closed Budget is tested).
+- A cancelled failed opening, to see that nothing registers (there is no path that could).
+- The Budget line in the Needs attention state, and browser back and forward on the new sections, in a real browser.
+
+**Not built**
+
+- The recovery on Planning's work queue (U01) and on the Requisitions workspace's "Ready to start" line. See the notes above.
+- Cancelling after the submission period has closed.
+- A design board for the new section.
+
+**Not touched on purpose**
+
+- The document register's implementation, verification and release fields (approval is not evidence).
+- The canonical seed, SEED-002 and the Analytics expected values.
+- TPR section 10.13 (still carries the old warning).

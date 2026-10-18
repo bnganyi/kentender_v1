@@ -26,6 +26,10 @@ help:
 	@echo "  make smoke SITE=$(SITE) — guard_frappe_scaffolds + Wave 0 smoke tests"
 	@echo "  make vue-desk-bundle-translation-binding-gate SITE=$(SITE) — every Vue-in-Desk bundle using __() in templates binds globalProperties.__ (AGENTS.md §6.1)"
 	@echo "  make fidelity-affected [SINCE=<ref>] [RUN=1] — which design-match gates this change makes due (only modules whose screens, styles or boards changed); RUN=1 runs them on the test site (AGENTS.md §8)"
+	@echo "  make cancellation-recovery-run SITE=<site> — carry out the cancelled-Tender recoveries that are due, once (the scheduler does this on a site that runs one; the development site does not)"
+	@echo "  make cancellation-recovery-inventory SITE=<site> — read-only: each cancelled Tender before the recovery existed, with its class (eligible, converted, released for another reason, unmapped…)"
+	@echo "  make cancellation-recovery-reconcile SITE=<site> [APPLY=1] — dry run of registering the recovery for those Tenders; APPLY=1 writes it. A second run creates nothing"
+	@echo "  make cancellation-recovery-gate — Planning, Requisitions (real adapters, concurrency, legacy) and Budget recovery tests, one module at a time on the TEST site"
 	@echo "  make test-site-rebuild — overwrite the SEPARATE test site (kentender-test.local) with a copy of the dev site; run tests there, not on the dev site (AGENTS.md §8.2)"
 	@echo "  make test-site-serve|test-site-stop|test-site-status — the test site's own server on :8001 and whether its canonical world is intact"
 	@echo "  scripts/test-site.sh run <command> — run any test command (npx playwright test ..., make <gate>) against the test site"
@@ -1621,6 +1625,7 @@ cancellation-recovery-gate:
 	scripts/test-site.sh run bash -c 'cd $(BENCH_ROOT) && for m in \
 		kentender_procurement.procurement_planning.tests.test_cancellation_recovery \
 		kentender_procurement.procurement_requisitions.tests.test_cancellation_recovery_integration \
-		kentender_procurement.procurement_requisitions.tests.test_cancellation_recovery_concurrency; do \
+		kentender_procurement.procurement_requisitions.tests.test_cancellation_recovery_concurrency \
+		kentender_procurement.procurement_requisitions.tests.test_cancellation_recovery_legacy; do \
 		bench --site kentender-test.local run-tests --app kentender_procurement --module $$m || exit 1; done; \
 		bench --site kentender-test.local run-tests --app kentender_budget --module kentender_budget.tests.test_budget_cancellation_release'
