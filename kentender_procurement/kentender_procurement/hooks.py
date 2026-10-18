@@ -190,6 +190,13 @@ kt_tender_publication_registrars = ["kentender_procurement.award.services.tender
 # and route) and, once the cancellation is committed to, stamps the cancellation on the Tender's authority record in the same transaction.
 kt_tender_cancellation_fence = ["kentender_procurement.award.services.authority.cancellation_fence"]
 kt_tender_cancellation_recorders = ["kentender_procurement.award.services.tender_authority.recorder"]
+# GetAwardAuthorityStatus for Tenders' decision screen: the canonical decision and notification facts with source, revision and checked time (read-only).
+kt_award_authority_facts = ["kentender_procurement.award.services.authority.status"]
+# TPR-CHG-001 v0.24 §5.12, §7.6 — a verified applicable cancellation ground for the post-close route; with none, the route stays blocked
+# (`TND_CANCEL_GROUND_UNVERIFIED`). The one registered here answers only on a test environment, with the grounds a test or browser world names.
+kt_tender_cancellation_ground_verifiers = ["kentender_procurement.tenders.test_services.ground_verifier.verify"]
+# TPR-CHG-001 v0.24 §7.6 — the consumers of the existing TenderCancelled event whose delivery Tenders tracks and retries from the same event.
+kt_tender_cancellation_consumers = ["kentender_procurement.bid_opening.services.cancellation_consumer"]
 # PLN-CHG-001 v1.32 §5.4.7 / TPR-CHG-001 v0.21 §7.5 — what Award holds that would make restoring a cancelled Tender's allowance unsafe, and the
 # Tender owner's verified basis Requisitions asks for before it restores anything (Requisitions must not import Tenders).
 kt_tender_cancellation_downstream_disposition = ["kentender_procurement.award.services.authority.downstream_disposition"]
@@ -480,7 +487,7 @@ _TND_AUTHZ = "kentender_procurement.tenders.services.tender_authorization"
 _TND_FAMILY = (
 	"Tender", "Tender Version", "Tender Task", "Tender Decision", "Tender Publication", "Tender Channel Confirmation",
 	"Tender Addendum", "Tender Clarification", "Tender Candidate Notice", "Tender Bid Definition",
-	"Tender Cancellation", "Tender Document", "Tender Event", "Tender Submission Handoff", "Tender Command Journal",
+	"Tender Cancellation", "Tender Document", "Tender Event", "Tender Event Delivery", "Tender Submission Handoff", "Tender Command Journal",
 )
 permission_query_conditions.update({doctype: f"{_TND_AUTHZ}.permission_query_conditions" for doctype in _TND_FAMILY})
 has_permission.update({doctype: f"{_TND_AUTHZ}.has_permission" for doctype in _TND_FAMILY})

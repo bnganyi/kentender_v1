@@ -87,19 +87,28 @@ def status_events(tender: str) -> list[dict[str, Any]]:
 	return evaluation_seam.status_events(tender)
 
 
-def cancellation_blockers(tender: str) -> list[dict[str, Any]]:
+def cancellation_blockers(tender: str, *, lock: bool = True) -> list[dict[str, Any]]:
 	"""The shared cancellation / first-notice fence (AWD-CHG-001 v0.9 §5.11, TPR-CHG-001 v0.24 §7.6): every blocker, each with its reason, the holder who can
-	resolve it and the route to them. Takes the Tender → authority record → case locks in that order and holds them until the caller's transaction ends.
-	No registered fence is itself a blocker — absence of an owner proves nothing."""
+	resolve it and the route to them. With `lock` (the command) it takes the Tender → authority record → case locks in that order and holds them until the
+	caller's transaction ends; a read passes `lock=False`. No registered fence is itself a blocker — absence of an owner proves nothing."""
 	paths = frappe.get_hooks("kt_tender_cancellation_fence") or []
 	if not paths:
 		return [{"reason": "no_authority_record", "message": "The award notification status could not be confirmed. Cancellation is unavailable until it is recovered.",
 			"holder": "Award service owner", "route": {"area": "Award", "case": ""}}]
 	out: list[dict[str, Any]] = []
 	for path in paths:
-		answer = frappe.get_attr(path)(tender=tender) or {}
+		answer = frappe.get_attr(path)(tender=tender, lock=lock) or {}
 		out.extend(answer.get("blockers") or [])
 	return out
+
+
+def authority_facts(tender: str) -> dict[str, Any]:
+	"""GetAwardAuthorityStatus as the decision screen shows it: the canonical notification and decision facts with their source, revision and checked time.
+	Unknown when Award cannot say. Read-only; takes no lock."""
+	for path in frappe.get_hooks("kt_award_authority_facts") or []:
+		answer = frappe.get_attr(path)(tender=tender) or {}
+		return {key: answer.get(key) for key in ("notification_status", "decision_status", "source", "source_revision", "checked_at", "evidence", "case", "reason")}
+	return {"notification_status": "Unknown", "decision_status": "Unknown", "source": "No Award authority answered", "checked_at": None, "reason": "No Award authority answered"}
 
 
 def record_cancellation(tender: str, *, cancellation_ref: str, cancelled_at=None) -> None:

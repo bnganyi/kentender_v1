@@ -116,7 +116,7 @@ def _blocker(reason: str, message: str, holder: str, *, case: str = "") -> dict[
 	return {"reason": reason, "message": message, "holder": holder, "route": {"area": "Award", "case": case}}
 
 
-def cancellation_fence(*, tender: str) -> dict[str, Any]:
+def cancellation_fence(*, tender: str, lock: bool = True) -> dict[str, Any]:
 	"""`kt_tender_cancellation_fence` — the structured pre-notification fence Tenders asks before it cancels (AWD-CHG-001 v0.9 §5.11, §7.2).
 
 	Takes the Tender's record lock, then its case's (Tender → record → case): issue and cancellation serialise on that one row even when no Award case
@@ -127,8 +127,9 @@ def cancellation_fence(*, tender: str) -> dict[str, Any]:
 	- issue in progress → the Award service owner (an unresolved issue for them);
 	- issued → the Award and legal process owner (cancellation is no longer available through this route).
 
-	A cancellation already stamped on the record (a replay of the same decision) is not blocked."""
-	row, case, problem = _believe(tender, lock_rows=True)
+	A cancellation already stamped on the record (a replay of the same decision) is not blocked. A read (the decision screen) passes `lock=False`: the same
+	answer without the locks."""
+	row, case, problem = _believe(tender, lock_rows=lock)
 	checked_at = clock.now()
 	name = case.name if case is not None else ""
 	if row is None:

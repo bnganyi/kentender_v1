@@ -31,7 +31,7 @@ class FakeCandidates:
 		})
 		return bidder_arrangement_id
 
-	def candidate_audience(self, *, tender: str, at=None) -> list[dict[str, Any]]:
+	def candidate_audience(self, *, tender: str, at=None, include_closed: bool = False) -> list[dict[str, Any]]:
 		instant = get_datetime(at or clock.now())
 		return [
 			{"candidate_registration_id": r["candidate_registration_id"], "destination": r["destination"], "destination_version": r["destination_version"]}

@@ -88,6 +88,7 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 		"tender", "publication", "ground", "ground_label", "reason", "recommendation", "decided_by", "decided_at", "ppra_report_due_by",
 		"candidate_notice_due_by", "ppra_report_status", "ppra_report_evidence_id", "candidate_notice_status", "notice_publication_status",
 		"cancellation_digest", "notice_document_digest", "resource_recovery", "obligations", *AUDIT,  # TPR-CHG-001 v0.21 section 4.11: the recovery registered with the cancellation
+		"previous_status", "ground_evidence_json", "authority_evidence_json",  # TPR-CHG-001 v0.24 section 5.12: the state it was cancelled from and the evidence the decision rested on
 	},
 	"Tender Cancellation Obligation": {
 		"obligation_id", "obligation_type", "channel", "label", "due_by", "status", "evidence_reference", "evidence_file", "evidence_digest",
@@ -96,6 +97,9 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	"Tender Document": {"tender", "tender_version", "addendum", "cancellation", "kind", "audience", "digest", "file", "html_file", "generated_by", "generated_at", "fixture_namespace"},
 	"Tender Command Journal": {"idempotency_key", "command", "document_type", "document_name", "request_fingerprint", "actor", "result", "occurred_at", "fixture_namespace"},
 	"Tender Event": {"event_id", "event_type", "tender", "sequence", "subject_type", "subject_id", "occurred_at", "payload", "status", "consumer", "delivered_at", "fixture_namespace"},
+	# TPR-CHG-001 v0.24 section 7.6: per-consumer delivery of the existing TenderCancelled event, tracked and retried from the same event
+	"Tender Event Delivery": {"delivery_key", "event_id", "event_type", "tender", "consumer", "subject_id", "status", "attempts", "last_attempt_at", "error_code", "error_detail",
+		"receipt_ref", "delivered_at", "fixture_namespace"},
 	"Tender Submission Handoff": {"tender", "tender_version", "publication", "handoff_version", "payload_json", "handoff_digest", "effective_submission_deadline", "closed_at", "fixture_namespace"},
 }
 CHILD_TABLES = ("Tender Evidence Requirement", "Tender Review Finding", "Tender Cancellation Obligation", "Tender Candidate Notice Attempt")
@@ -165,7 +169,7 @@ class TestTendersSchema(IntegrationTestCase):
 		self.assertFalse(any(p.write or p.create for p in template_perms), "no role writes the installed STD release registry")
 
 	def test_the_error_contract_is_exactly_the_section_8_set(self):
-		self.assertEqual(len(errors.ERROR_CODES), 35)
+		self.assertEqual(len(errors.ERROR_CODES), 39)
 		self.assertEqual(set(errors.MESSAGES), errors.ERROR_CODES)
 		with self.assertRaises(ValueError):
 			errors.fail("TND_SOMETHING_ELSE")

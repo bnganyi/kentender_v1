@@ -47,6 +47,10 @@ class TestCandidateRegistry(BidCase):
 		self.assertEqual(candidate_gateway.candidate_registration(tender=self.name, candidate_registration_id=arrangement)["status"], "Closed")
 		# …while it is no longer in the audience for notices after it closed
 		self.assertEqual(candidate_gateway.candidate_audience(tender=self.name, at=W("2027-06-12 11:00:01")), [])
+		# …except for a cancellation after the submission period ended: closing did not unregister anyone (TPR-CHG-001 v0.24 §5.7)
+		self.assertEqual(candidate_gateway.candidate_audience(tender=self.name, at=W("2027-06-12 11:00:01"), include_closed=True),
+			[{"candidate_registration_id": arrangement, "destination": "tenders@afyadigital.example", "destination_version": "1"}])
+		self.assertEqual(candidate_gateway.candidate_audience(tender=self.name, at=W("2027-05-19 09:19:59"), include_closed=True), [])  # never before it registered
 
 	def test_a_notice_email_change_applies_from_its_instant_only(self):
 		arrangement = self.start()["bidder_arrangement_id"]

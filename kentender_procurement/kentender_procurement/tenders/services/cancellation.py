@@ -8,7 +8,8 @@ Function's recommendation is optional and non-binding. A configured,
 verified lawful ground and a specific reason are mandatory; the decision
 closes the proceeding immediately, even while notices or reports remain
 due, and never reopens the Requisition or creates a replacement Tender
-(TPR08-AC-066..068). TPR-CHG-001 v0.21 §5.7A (approved with v0.22, 17 Oct 2026)
+(TPR08-AC-066..068). TPR-CHG-001 v0.24 §5.12 (approved 18 Oct 2026) also supports the decision from Submission period ended, before authoritative
+Award notification (`post_close.verdict` answers whether it may be taken and, if not, every blocker with its holder and route). TPR-CHG-001 v0.21 §5.7A (approved with v0.22, 17 Oct 2026)
 changes one thing: in the same transaction it registers the recovery of the
 Tender's exact unused Planning allowance and Budget reservations
 (`recovery_gateway.register`; if that cannot be done the cancellation does not
@@ -30,7 +31,7 @@ import frappe
 from frappe.utils import cstr, getdate
 
 from kentender_core.services import file_integrity
-from kentender_procurement.tenders.services import candidate_notices, channel_confirmation, clarifications, clock, configuration_gateway, digest, documents, draft_commands, envelope, events, handoffs, lifecycle, notices, recovery_gateway, serializer
+from kentender_procurement.tenders.services import award_seam, cancellation_delivery, candidate_notices, channel_confirmation, clarifications, clock, configuration_gateway, digest, documents, draft_commands, envelope, events, handoffs, lifecycle, notices, post_close, recovery_gateway, serializer
 from kentender_procurement.tenders.services import tender_authorization as authz
 from kentender_procurement.tenders.services.errors import fail
 from kentender_procurement.tenders.services.tender_roles import ROLE_ACCOUNTING_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION, ROLE_PROCUREMENT_OFFICER
@@ -128,13 +129,17 @@ def cancel_tender(*, tender: str, ground: str, reason: str, expected_record_vers
 		fail("TND_CONTROL_INVALID", "State the specific circumstances (20–2,000 characters).", {"fields": {"reason": "Enter the circumstances (20–2,000 characters)."}})
 	root, version = draft_commands.load(tender)
 	envelope.check_record_version(root, expected_record_version)
-	_require_open(root)
-	# AWD-CHG-001 v0.4 §5.4 (AWD-IF-02): the serialised issue/cancellation boundary.
-	from kentender_procurement.tenders.services import award_seam
-
-	refusals = award_seam.cancellation_refusals(root.name)
-	if refusals:
-		fail("TND_MUST_FIX", refusals[0], {"reasons": refusals})
+	if not post_close.stage(root):
+		if root.overall_status == "Cancelled":
+			fail("TND_CANCELLED")
+		fail("TND_STALE_VERSION", "Only a Published — open Tender, or one whose submission period has ended, can be cancelled.")
+	previous_status = cstr(root.overall_status)
+	# AWD-CHG-001 v0.9 §5.11, TPR-CHG-001 v0.24 §7.6: the shared cancellation / first-notice fence, taken here (Tender → authority record → case) and held to
+	# the end of this transaction, with the verified ground and the cancellation consumers checked in the same breath. Every current blocker is returned.
+	verdict = post_close.verdict(root, ground=ground, lock=True)
+	if verdict["blockers"]:
+		first = verdict["blockers"][0]
+		fail(first["code"], first["message"], {"blockers": verdict["blockers"], "reasons": [b["message"] for b in verdict["blockers"]]})
 	publication = frappe.get_doc("Tender Publication", root.publication)
 	decided_at = clock.now()
 	obligations = preview_obligations(root, decided_on=decided_at.date())
@@ -147,6 +152,7 @@ def cancel_tender(*, tender: str, ground: str, reason: str, expected_record_vers
 			{
 				"doctype": DOCTYPE, "tender": root.name, "publication": publication.name, "ground": ground, "ground_label": GROUND_LABELS[ground], "reason": text, "recommendation": recommendation or None,
 				"decided_by": actor, "decided_at": decided_at, "ppra_report_due_by": ppra_due, "candidate_notice_due_by": candidate_due, "record_version": 0, "fixture_namespace": root.fixture_namespace,
+				"previous_status": previous_status, "ground_evidence_json": digest.canonical_json(verdict["ground_evidence"] or {}), "authority_evidence_json": digest.canonical_json(verdict["award"] or {}),
 			}
 		)
 		for obligation in obligations:
@@ -160,7 +166,7 @@ def cancel_tender(*, tender: str, ground: str, reason: str, expected_record_vers
 				"procuring_entity": {"name": cstr(frappe.db.get_single_value("Site Procuring Entity", "pe_name")), "address": contact_address, "contact_office": contact_display},
 				"platform": {"name": serializer.PLATFORM_NAME},
 				"tender": {"reference": root.tender_reference, "title": cstr(state.get("tender_title") or root.requirement_title), "submission_deadline": serializer.fmt_datetime_eat(root.submission_deadline), "published_at": serializer.fmt_datetime_eat(root.published_at)},
-				"cancellation": {"decided_at": serializer.fmt_datetime_eat(decided_at), "ground": GROUND_LABELS[ground], "reason": text, "decided_by": cstr(frappe.db.get_value("User", actor, "full_name") or actor), "reference": doc.name},
+				"cancellation": {"decided_at": serializer.fmt_datetime_eat(decided_at), "ground": GROUND_LABELS[ground], "reason": text, "decided_by": cstr(frappe.db.get_value("User", actor, "full_name") or actor), "reference": doc.name, "post_close": previous_status == post_close.ENDED},
 			}
 		)
 		cancellation_digest = digest.sha256_hex({"cancellation": doc.name, "ground": ground, "reason": text, "decided_by": actor, "decided_at": cstr(decided_at), "recommendation": recommendation, "notice_digest": rendered["digest"], "obligations": obligations, "package_digest": cstr(publication.package_digest)})
@@ -179,6 +185,7 @@ def cancel_tender(*, tender: str, ground: str, reason: str, expected_record_vers
 		dispatched = candidate_notices.freeze(
 			root, notice_type="Tender cancelled", subject_type=DOCTYPE, subject_id=doc.name, subject_digest=cancellation_digest,
 			content={"tender_reference": root.tender_reference, "cancellation": doc.name, "ground": GROUND_LABELS[ground], "decided_at": cstr(decided_at), "notice_digest": rendered["digest"]},
+			include_closed=previous_status == post_close.ENDED,
 		)
 		if not dispatched:
 			# §5.7: absence of candidates is recorded from the registry, never assumed.
@@ -197,7 +204,11 @@ def cancel_tender(*, tender: str, ground: str, reason: str, expected_record_vers
 		# Requisitions resolves the whole consumed lineage; nothing a browser sends reaches it. A failure here rolls the cancellation back.
 		recovery = recovery_gateway.register(root=root, cancellation=doc, cancellation_digest=cancellation_digest, decided_at=decided_at, actor=actor)
 		envelope.bump(doc, resource_recovery=recovery["recovery"])
-		events.emit(tender=root.name, event_type="TenderCancelled", command="CancelTender", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment), previous_status="Published — open", resulting_status="Cancelled", record_version=root.record_version, subject_type=DOCTYPE, subject_id=doc.name, reason=text, payload={"ground": ground, "ground_label": GROUND_LABELS[ground], "recommendation": recommendation, "cancellation_digest": cancellation_digest, "notice_digest": rendered["digest"], "document": document, "obligations": obligations, "channels": [r.channel for r in rows], "decision": decision.name, "resource_recovery": {"recovery": recovery["recovery"], **recovery["lineage"]}}, fixture_namespace=root.fixture_namespace)
+		cancelled_event = events.emit(tender=root.name, event_type="TenderCancelled", command="CancelTender", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment), previous_status=previous_status, resulting_status="Cancelled", record_version=root.record_version, subject_type=DOCTYPE, subject_id=doc.name, reason=text, payload={"ground": ground, "ground_label": GROUND_LABELS[ground], "recommendation": recommendation, "cancellation_digest": cancellation_digest, "notice_digest": rendered["digest"], "document": document, "obligations": obligations, "channels": [r.channel for r in rows], "decision": decision.name, "resource_recovery": {"recovery": recovery["recovery"], **recovery["lineage"]}, "stage": verdict["stage"]}, fixture_namespace=root.fixture_namespace)
+		# TPR-CHG-001 v0.24 §7.6: one delivery row per consumer of this same event, written with the decision; they are delivered (and retried from the same
+		# event) independently of the terminal cancellation, right after this transaction commits.
+		cancellation_delivery.register(root, cancelled_event, cancellation=doc.name)
+		cancellation_delivery.after_commit(root.name)
 	result = {"ok": True, "idempotent": False, "action": "cancelled", "tender": root.name, "record_version": root.record_version, "cancellation": doc.name, "cancellation_digest": cancellation_digest, "obligations": obligations, "resource_recovery": recovery["recovery"]}
 	envelope.record_command(idempotency_key=idempotency_key, command="CancelTender", payload=payload, result=result, document_type=DOCTYPE, document_name=doc.name, actor=actor, fixture_namespace=root.fixture_namespace)
 	return result

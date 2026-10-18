@@ -39,7 +39,9 @@ def _contact_at(arrangement: str, instant) -> dict[str, Any] | None:
 	return current
 
 
-def candidate_audience(*, tender: str, at=None) -> list[dict[str, Any]]:
+def candidate_audience(*, tender: str, at=None, include_closed: bool = False) -> list[dict[str, Any]]:
+	"""`include_closed`: a cancellation after the submission period ended notifies everyone who was a candidate — the close marked the arrangement Closed
+	but did not unregister it (TPR-CHG-001 v0.24 §5.7). Default off: after it closed an arrangement is no longer in the audience of an ordinary notice."""
 	instant = get_datetime(at or clock.now())
 	rows = frappe.get_all(
 		ARRANGEMENT, filters={"tender": tender}, fields=["name", "status", "status_since", "candidate_registered_at"],
@@ -49,7 +51,7 @@ def candidate_audience(*, tender: str, at=None) -> list[dict[str, Any]]:
 	for row in rows:
 		if not row.candidate_registered_at or get_datetime(row.candidate_registered_at) > instant:
 			continue
-		if row.status != "Active" and row.status_since and get_datetime(row.status_since) <= instant:
+		if not include_closed and row.status != "Active" and row.status_since and get_datetime(row.status_since) <= instant:
 			continue
 		contact = _contact_at(row.name, instant)
 		if contact:

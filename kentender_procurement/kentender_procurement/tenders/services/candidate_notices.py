@@ -79,14 +79,14 @@ def transport():
 # --------------------------------------------------------------------------
 
 
-def freeze(root, *, notice_type: str, subject_type: str, subject_id: str, subject_digest: str, content: dict[str, Any], only: str = "") -> list[Any]:
+def freeze(root, *, notice_type: str, subject_type: str, subject_id: str, subject_digest: str, content: dict[str, Any], only: str = "", include_closed: bool = False) -> list[Any]:
 	"""One `Queued` dispatch per Active candidate at this instant (or to the
 	asking candidate only, when `only` names one). The content digest never
 	includes a clarification source's identity (§16(17))."""
 	if notice_type not in TYPES:
 		raise ValueError(notice_type)
 	at = clock.now()
-	audience = candidate_gateway.candidate_audience(tender=root.name, at=at)
+	audience = candidate_gateway.candidate_audience(tender=root.name, at=at, include_closed=include_closed)
 	if only:
 		audience = [a for a in audience if a["candidate_registration_id"] == only]
 	content_digest = digest.sha256_hex(content)

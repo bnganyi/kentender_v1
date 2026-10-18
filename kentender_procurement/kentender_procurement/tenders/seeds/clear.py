@@ -29,7 +29,7 @@ from kentender_core.utils.raw_delete import delete_rows
 
 #: Every doctype that carries a `tender` link, dependants first; `Tender` last.
 TENDER_DOCTYPES = (
-	"Tender Event", "Tender Document", "Tender Submission Handoff", "Tender Channel Confirmation", "Tender Candidate Notice", "Tender Clarification",
+	"Tender Event Delivery", "Tender Event", "Tender Document", "Tender Submission Handoff", "Tender Channel Confirmation", "Tender Candidate Notice", "Tender Clarification",
 	"Tender Bid Definition", "Tender Addendum", "Tender Cancellation", "Tender Publication", "Tender Decision", "Tender Task",
 	"Tender Version", "Tender",
 )

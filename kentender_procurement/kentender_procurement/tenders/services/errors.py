@@ -3,9 +3,10 @@
 
 """Stable Tenders service errors (TPR-CHG-001 v0.12 §8).
 
-§8 defines a closed set of thirty-five codes: v0.8's twenty-eight less the
-retired inquiry-deadline code, the two v0.11 bound-release codes, and the six
-v0.10/v0.12 reservation, clarification and candidate-notice codes. They are stable service
+§8 defines a closed set of thirty-nine codes: v0.8's twenty-eight less the
+retired inquiry-deadline code, the two v0.11 bound-release codes, the six
+v0.10/v0.12 reservation, clarification and candidate-notice codes, and the four
+v0.23/v0.24 post-close cancellation codes (TPR-CHG-001 v0.24 §8). They are stable service
 results; `fail()` refuses any code outside the contract — an invented code is
 a defect in the caller, not a new error type. Record-existence masking follows
 AUTH-ADR-001: a record outside the actor's authorised responsibility is
@@ -53,6 +54,10 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"TND_NOTICE_DELIVERY_FAILED",
 		"TND_CANCELLATION_GROUND_INVALID",
 		"TND_CANCELLED",
+		"TND_CANCEL_TOO_LATE",
+		"TND_CANCELLATION_UNAVAILABLE",
+		"TND_AWARD_STATUS_UNAVAILABLE",
+		"TND_CANCEL_GROUND_UNVERIFIED",
 		"TND_IDEMPOTENCY_CONFLICT",
 	}
 )
@@ -92,6 +97,10 @@ MESSAGES: dict[str, str] = {
 	"TND_NOTICE_DELIVERY_FAILED": "A candidate notice could not be delivered.",
 	"TND_CANCELLATION_GROUND_INVALID": "Select an applicable cancellation ground.",
 	"TND_CANCELLED": "This Tender has been cancelled and cannot accept further work.",
+	"TND_CANCEL_TOO_LATE": "It is too late to cancel this Tender: the award has been notified.",
+	"TND_CANCELLATION_UNAVAILABLE": "Cancellation is unavailable. Opening access support is checking the problem.",
+	"TND_AWARD_STATUS_UNAVAILABLE": "We cannot confirm that cancellation is permitted from the current award status.",
+	"TND_CANCEL_GROUND_UNVERIFIED": "A verified cancellation basis is needed before this tender can be cancelled.",
 	"TND_IDEMPOTENCY_CONFLICT": "This request was already used with different information. Stop and refresh.",
 }
 

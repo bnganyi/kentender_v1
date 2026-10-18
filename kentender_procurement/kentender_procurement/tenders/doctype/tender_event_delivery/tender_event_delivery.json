@@ -1,0 +1,197 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-18 19:00:00.000000",
+ "description": "TPR-CHG-001 v0.24 §7.6: one row per consumer of the existing TenderCancelled event, so delivery is tracked and retried from the same event independently of the terminal cancellation.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "delivery_key",
+  "event_id",
+  "event_type",
+  "tender",
+  "consumer",
+  "subject_id",
+  "status",
+  "attempts",
+  "last_attempt_at",
+  "error_code",
+  "error_detail",
+  "receipt_ref",
+  "delivered_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "delivery_key",
+   "label": "Delivery key",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "event_id",
+   "label": "Event",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "event_type",
+   "label": "Event type",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "tender",
+   "label": "Tender",
+   "read_only": 1,
+   "fieldtype": "Link",
+   "options": "Tender",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "consumer",
+   "label": "Consumer",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "subject_id",
+   "label": "Cancellation",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Pending\nDelivered\nFailed",
+   "default": "Pending",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "attempts",
+   "label": "Attempts",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "last_attempt_at",
+   "label": "Last attempt at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "error_code",
+   "label": "Error",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "error_detail",
+   "label": "Error detail",
+   "read_only": 1,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "receipt_ref",
+   "label": "Receipt",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "delivered_at",
+   "label": "Delivered at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "read_only": 1,
+   "fieldtype": "Data"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-18 19:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tenders",
+ "name": "Tender Event Delivery",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  },
+  {
+   "role": "Procurement Officer",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  },
+  {
+   "role": "Head of Procurement Function",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  },
+  {
+   "role": "Accounting Officer",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  },
+  {
+   "role": "Auditor",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "hash"
+}
