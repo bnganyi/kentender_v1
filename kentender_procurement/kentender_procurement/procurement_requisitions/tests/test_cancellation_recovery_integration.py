@@ -159,6 +159,10 @@ class TestCrF01(WorldCase):
 		self.assertEqual(self.balances(), {"planning": self.sources_before["item"], "position": self.sources_before["position"]})
 		self.assertEqual({frappe.db.get_value("Funding Reservation", r, "status") for r in self.sources_before["reservations"]}, {"Active"})
 		self.assertEqual(frappe.db.get_value("Tender", self.tender, "overall_status"), "Cancelled")  # a failed recovery never reopens the cancellation
+		# ...and the cancellation's own compliance work goes on whatever the recovery does (TPR-CR-AC-009): the task is still open, the notices still due
+		self.assertEqual(frappe.db.get_value("Tender Task", {"tender": self.tender, "task_type": "Cancellation compliance"}, "status"), "Open")
+		obligations = frappe.get_doc("Tender Cancellation", self.cancelled["cancellation"]).obligations
+		self.assertTrue([o for o in obligations if o.obligation_type == "Notice channel" and o.status == "Due"])
 
 	def test_unavailable_evidence_leaves_it_pending_to_be_tried_again(self):
 		with self.trial():
@@ -168,7 +172,7 @@ class TestCrF01(WorldCase):
 			self.assertEqual((outcome["status"], outcome["reason_code"]), ("Pending", "TENDER_BASIS_UNAVAILABLE"))
 			self.assertEqual((doc.attempt_count, bool(doc.next_attempt_at)), (1, True))
 			self.assert_nothing_moved()
-			self.assertEqual(recovery_sweep.due(), [])  # not before its backoff has passed
+			self.assertNotIn(self.recovery, recovery_sweep.due())  # not before its backoff has passed (other recoveries on a shared site may be due)
 
 	def test_notices_being_issued_is_not_proof_either_way(self):
 		with self.trial():
