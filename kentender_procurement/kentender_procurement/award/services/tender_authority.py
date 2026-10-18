@@ -212,6 +212,11 @@ def unlink_cases(cases: list[str]) -> int:
 	return count
 
 
+def recorder(*, tender: str, cancellation_ref: str, cancelled_at=None, **_ignored) -> dict[str, Any]:
+	"""`kt_tender_cancellation_recorders`: Tenders calls this inside the transaction that cancels the Tender, after the fence allowed it."""
+	return record_cancellation(tender, cancellation_ref=cancellation_ref, cancelled_at=cancelled_at)
+
+
 # ---------------------------------------------------------------- repair
 
 

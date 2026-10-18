@@ -108,21 +108,51 @@ def tender_status(*, tender: str) -> dict[str, Any] | None:
 	return {"status": EVL_NONE, "checked_at": s["checked_at"], "source": f"Award {doc.name}", "correction_instruction": instruction}
 
 
-def cancellation_guard(*, tender: str) -> str:
-	"""`kt_tender_cancellation_guards`: refuse while any notice is issued, being
-	issued or of unknown state (§5.4: in-progress or unknown is never "no
-	notification"), and while the Tender-level status cannot be believed. Takes
-	the Tender's record lock, then its case's, so issue and cancellation serialise
-	even when no Award case exists."""
-	row, _case, problem = _believe(tender, lock_rows=True)
+AWARD_OWNER = "Award service owner"
+AWARD_AND_LEGAL = "Award and legal process owner"
+
+
+def _blocker(reason: str, message: str, holder: str, *, case: str = "") -> dict[str, Any]:
+	return {"reason": reason, "message": message, "holder": holder, "route": {"area": "Award", "case": case}}
+
+
+def cancellation_fence(*, tender: str) -> dict[str, Any]:
+	"""`kt_tender_cancellation_fence` — the structured pre-notification fence Tenders asks before it cancels (AWD-CHG-001 v0.9 §5.11, §7.2).
+
+	Takes the Tender's record lock, then its case's (Tender → record → case): issue and cancellation serialise on that one row even when no Award case
+	exists, and the answer is read as last committed, never from the caller's older snapshot. Allowed only while the Tender-level notification status is
+	Not issued and can be believed. Each blocker carries its reason, the holder who can resolve it and the route to it:
+
+	- no record / a record that cannot be believed / Unknown → the Award service owner;
+	- issue in progress → the Award service owner (an unresolved issue for them);
+	- issued → the Award and legal process owner (cancellation is no longer available through this route).
+
+	A cancellation already stamped on the record (a replay of the same decision) is not blocked."""
+	row, case, problem = _believe(tender, lock_rows=True)
+	checked_at = clock.now()
+	name = case.name if case is not None else ""
+	if row is None:
+		return {"allowed": False, "blockers": [_blocker("no_authority_record", UNAVAILABLE, AWARD_OWNER)], "status": _unknown(tender, problem), "checked_at": checked_at}
 	if problem:
-		return UNAVAILABLE
+		return {"allowed": False, "blockers": [_blocker("status_unknown", UNAVAILABLE, AWARD_OWNER, case=name)], "status": _unknown(tender, problem), "checked_at": checked_at}
 	value = cstr(row.notification_status)
-	if value == tender_authority.NOT_ISSUED:
-		return ""
+	blockers: list[dict[str, Any]] = []
 	if value == tender_authority.UNKNOWN:
-		return UNAVAILABLE
-	return ISSUED
+		blockers.append(_blocker("status_unknown", UNAVAILABLE, AWARD_OWNER, case=name))
+	elif value == tender_authority.IN_PROGRESS:
+		blockers.append(_blocker("issue_in_progress", ISSUED, AWARD_OWNER, case=name))
+	elif value == tender_authority.ISSUED:
+		blockers.append(_blocker("issued", ISSUED, AWARD_AND_LEGAL, case=name))
+	return {"allowed": not blockers, "blockers": blockers, "checked_at": checked_at,
+		"status": {"notification_status": value, "source": _source(tender), "source_revision": cint(row.record_version), "case": name,
+			"cancellation_ref": cstr(row.cancellation_ref), "verified_at": str(row.verified_at or "")}}
+
+
+def cancellation_guard(*, tender: str) -> str:
+	"""`kt_tender_cancellation_guards`: the first blocker's words, or "" when cancellation is allowed. Refuses while any notice is issued, being issued or
+	of unknown state (§5.4: in-progress or unknown is never "no notification"), and while the Tender-level status cannot be believed."""
+	blockers = cancellation_fence(tender=tender)["blockers"]
+	return cstr(blockers[0]["message"]) if blockers else ""
 
 
 def downstream_disposition(*, tender: str) -> dict[str, Any]:

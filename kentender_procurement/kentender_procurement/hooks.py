@@ -186,6 +186,10 @@ kt_tender_cancellation_guards = ["kentender_procurement.award.services.authority
 # AWD-CHG-001 v0.9 §5.11 — Award's Tender-publication integration: the durable Tender-level authority record is registered in the transaction that
 # publishes the Tender, before any Award case exists. Insert-if-absent; a replay never resets a recorded notice or cancellation.
 kt_tender_publication_registrars = ["kentender_procurement.award.services.tender_authority.registrar"]
+# AWD-CHG-001 v0.9 §5.11, §7.2 / TPR-CHG-001 v0.24 §7.6 — the shared cancellation / first-notice fence: Tenders asks it (structured blockers with reason, holder
+# and route) and, once the cancellation is committed to, stamps the cancellation on the Tender's authority record in the same transaction.
+kt_tender_cancellation_fence = ["kentender_procurement.award.services.authority.cancellation_fence"]
+kt_tender_cancellation_recorders = ["kentender_procurement.award.services.tender_authority.recorder"]
 # PLN-CHG-001 v1.32 §5.4.7 / TPR-CHG-001 v0.21 §7.5 — what Award holds that would make restoring a cancelled Tender's allowance unsafe, and the
 # Tender owner's verified basis Requisitions asks for before it restores anything (Requisitions must not import Tenders).
 kt_tender_cancellation_downstream_disposition = ["kentender_procurement.award.services.authority.downstream_disposition"]

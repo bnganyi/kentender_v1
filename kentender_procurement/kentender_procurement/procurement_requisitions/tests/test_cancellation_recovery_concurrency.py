@@ -32,10 +32,10 @@ from kentender_procurement.tenders.tests import fixtures as tnd_fx
 from kentender_procurement.tenders.tests.test_open_period import OpenPeriodCase
 from kentender_procurement.tests.two_connections import BLOCKED_FOR, WAIT, Conn
 
-#: Tender, Award case, Requisition root, handoff, recovery, Version; Budget; Planning — a table never appears after one below it.
+#: Tender, Award Tender Authority, Award case, Requisition root, handoff, recovery, Version; Budget; Planning — a table never appears after one below it.
 RECOVERY_DOCTYPE = recovery_service.DOCTYPE
 LOCK_ORDER = (
-	"Tender", "Award Case", "Procurement Requisition", "Authorised Requisition Handoff", "Cancellation Resource Recovery", "Requisition Version",
+	"Tender", "Award Tender Authority", "Award Case", "Procurement Requisition", "Authorised Requisition Handoff", "Cancellation Resource Recovery", "Requisition Version",
 	"Procurement Budget Version", "Procurement Budget Line", "Funding Reservation",
 	"Annual Plan Item", "Annual Plan Version", "Plan Item", "Plan Cancellation Recovery Hold", "Plan Source Allocation", "Plan Drawdown Reference",
 )

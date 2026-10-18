@@ -26,7 +26,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.award.services import checks, clock, events, funding_allocation, guards, issues, notices, notify, records, state
+from kentender_procurement.award.services import checks, clock, events, funding_allocation, guards, issue_worker, issues, notices, notify, records, state
 from kentender_procurement.award.services.errors import Guards, fail, invalid
 
 OUTCOMES = ("Award", "No award", "Return for correction")
@@ -70,7 +70,7 @@ def apply_award(doc, opinion, *, reason: str, user: str, kind: str = "Initial", 
 		notices.authorise(batch, user)
 		records.update(decision, notice_batch=batch.name, notices_authorised=1)
 		state.set_stage(state.reload(doc), "Notices")
-		notices.issue(state.reload(doc), batch, actor=user)
+		issue_worker.request(state.reload(doc), batch, actor=user)
 	else:
 		state.set_stage(state.reload(doc), "Notices")
 	return decision, batch

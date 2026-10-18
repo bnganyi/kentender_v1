@@ -152,6 +152,8 @@ def cancel_tender(*, tender: str, ground: str, reason: str, expected_record_vers
 		for obligation in obligations:
 			doc.append("obligations", {**obligation, "status": "Due"})
 		envelope.insert(doc)
+		# AWD-CHG-001 v0.9 §5.11: the cancellation is stamped on the Tender's durable authority record in this transaction, under the fence taken above.
+		award_seam.record_cancellation(root.name, cancellation_ref=doc.name, cancelled_at=decided_at)
 		contact_display, contact_address = serializer._office_display(state.get("contract_contact_office"))
 		rendered = notices.render_cancellation_notice(
 			{

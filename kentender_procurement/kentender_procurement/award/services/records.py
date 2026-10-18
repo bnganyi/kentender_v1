@@ -149,6 +149,11 @@ def command(name: str, *, case: str, idempotency_key: str, actor: str, payload: 
 		authorise()
 	payload_hash = digest({"command": name, "case": case, "actor": actor, **payload})
 	if case and frappe.db.exists(CASE, case):
+		# Tender → record → case on every Award command (AWD-CHG-001 v0.9 §5.11): a cancellation holds the Tender's record before the case, so no
+		# command may take the case first and then wait for the record.
+		from kentender_procurement.award.services import tender_authority
+
+		tender_authority.lock(frappe.db.get_value(CASE, case, "tender"))
 		lock(case)
 	with atomic():
 		if not _claim(key, name, payload_hash, actor, case):

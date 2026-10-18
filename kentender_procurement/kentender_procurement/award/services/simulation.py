@@ -17,7 +17,7 @@ from frappe.utils import cint, cstr
 
 CONTROLS = "Award Test Environment Controls"
 FIELDS = ("signing_outcome", "email_failure_organisations", "email_service_down", "status_service_down", "contracting_down", "event_delivery_down",
-	"rule_unverified", "revised_treatment_unverified")
+	"email_outcome_unknown", "issue_deferred", "rule_unverified", "revised_treatment_unverified")
 
 
 def enabled() -> bool:
@@ -57,6 +57,6 @@ def reset_controls() -> None:
 		return
 	doc = frappe.get_single(CONTROLS)
 	for f in FIELDS:
-		doc.set(f, 0 if f in ("email_service_down", "status_service_down", "contracting_down", "event_delivery_down", "rule_unverified",
-			"revised_treatment_unverified") else "")
+		doc.set(f, 0 if f in ("email_service_down", "status_service_down", "contracting_down", "event_delivery_down", "email_outcome_unknown", "issue_deferred",
+			"rule_unverified", "revised_treatment_unverified") else "")
 	doc.save(ignore_permissions=True)

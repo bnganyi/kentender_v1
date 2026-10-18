@@ -90,7 +90,9 @@ class AwardCase(IntegrationTestCase):
 	def run_as(self, user: str, fn, **kwargs) -> dict[str, Any]:
 		frappe.set_user(user)
 		try:
-			return fn(user=user, idempotency_key=kwargs.pop("idempotency_key", None) or self.key(fn.__name__), **kwargs)
+			result = fn(user=user, idempotency_key=kwargs.pop("idempotency_key", None) or self.key(fn.__name__), **kwargs)
+			frappe.db.commit()  # as the request's commit does: it runs the notice issue the command queued (AWD v0.9 §5.11)
+			return result
 		finally:
 			frappe.set_user("Administrator")
 

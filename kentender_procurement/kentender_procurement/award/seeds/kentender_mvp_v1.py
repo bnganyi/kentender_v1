@@ -83,7 +83,9 @@ def _ok(result: dict[str, Any], what: str) -> dict[str, Any]:
 def _as(user: str, fn, **kwargs) -> dict[str, Any]:
 	frappe.set_user(user)
 	try:
-		return fn(user=user, idempotency_key=_key(fn.__name__), **kwargs)
+		result = fn(user=user, idempotency_key=_key(fn.__name__), **kwargs)
+		frappe.db.commit()  # the request's commit runs the notice issue the command queued (AWD v0.9 §5.11)
+		return result
 	finally:
 		frappe.set_user("Administrator")
 

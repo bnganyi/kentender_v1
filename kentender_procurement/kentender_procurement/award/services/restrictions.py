@@ -25,7 +25,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, get_datetime
 
-from kentender_procurement.award.services import checks, clock, contracting, eligibility, guards, issues, notify, people, records, state
+from kentender_procurement.award.services import checks, clock, contracting, eligibility, guards, issue_worker, issues, notify, people, records, state
 from kentender_procurement.award.services.errors import fail, invalid
 
 BASES = ("Authoritative order", "Reported challenge")
@@ -41,6 +41,9 @@ PROPOSALS = (REQUEST_EVALUATION, REQUEST_REVIEW)
 
 def applicable(issue) -> tuple[str, ...]:
 	"""The §5.10 outcomes the server offers for this issue."""
+	if issue.subtype == issue_worker.UNKNOWN_SUBTYPE:
+		# AWD-CHG-001 v0.9 §5.11: an interrupted notice issue is reconciled only with evidence the server checks against its own notice rows.
+		return (issue_worker.GIVEN, issue_worker.NOT_GIVEN, FURTHER)
 	if issue.issue_type == "Source correction":
 		return (NO_MATERIAL, REQUEST_EVALUATION, REQUEST_REVIEW, FURTHER)
 	if issue.issue_type == "Review/order":
@@ -160,7 +163,8 @@ def disposition(*, award: str, issue: str, outcome: str = "", reason: str = "", 
 		invalid({
 			"outcome": "Choose an outcome." if chosen not in allowed else "",
 			"reason": "Enter the reason." if not cstr(reason).strip() else "",
-			"evidence": "Enter the evidence." if chosen in (NO_MATERIAL, ENDED, NOT_SUBSTANTIATED, OWNER_CONFIRMED, FURTHER, REQUEST_EVALUATION) and not proof else "",
+			"evidence": "Enter the evidence." if chosen in (NO_MATERIAL, ENDED, NOT_SUBSTANTIATED, OWNER_CONFIRMED, FURTHER, REQUEST_EVALUATION, issue_worker.GIVEN,
+				issue_worker.NOT_GIVEN) and not proof else "",
 			"next_action": "Enter the next action." if chosen in (REQUEST_REVIEW, REQUEST_EVALUATION, FURTHER) and not cstr(next_action).strip() else "",
 		})
 		if chosen == ENDED:
@@ -179,7 +183,12 @@ def disposition(*, award: str, issue: str, outcome: str = "", reason: str = "", 
 		history = records.loads(row.detail_json)
 		history.setdefault("dispositions", []).append({"outcome": chosen, "reason": cstr(reason).strip(), "evidence": proof, "next_action": cstr(next_action).strip(),
 			"by": user, "at": str(clock.now())})
-		if chosen in (NO_MATERIAL, ENDED, NOT_SUBSTANTIATED, OWNER_CONFIRMED):
+		if chosen in (issue_worker.GIVEN, issue_worker.NOT_GIVEN):
+			issue_worker.reconcile(award=doc.name, issue=row.name, outcome=chosen, evidence=proof, user=user)
+			doc = state.reload(doc)  # the reconciliation moved the case's notification status
+			records.update(row, detail_json=records.dumps(history))
+			issues.resolve(row, disposition=chosen, reason=reason, evidence=proof, next_action=next_action, user=user)
+		elif chosen in (NO_MATERIAL, ENDED, NOT_SUBSTANTIATED, OWNER_CONFIRMED):
 			records.update(row, detail_json=records.dumps(history))
 			if not funding_gate:  # Budget's confirmation already closed it
 				issues.resolve(row, disposition=chosen, reason=reason, evidence=proof, next_action=next_action, user=user)

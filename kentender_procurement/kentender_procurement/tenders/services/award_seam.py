@@ -87,6 +87,27 @@ def status_events(tender: str) -> list[dict[str, Any]]:
 	return evaluation_seam.status_events(tender)
 
 
+def cancellation_blockers(tender: str) -> list[dict[str, Any]]:
+	"""The shared cancellation / first-notice fence (AWD-CHG-001 v0.9 §5.11, TPR-CHG-001 v0.24 §7.6): every blocker, each with its reason, the holder who can
+	resolve it and the route to them. Takes the Tender → authority record → case locks in that order and holds them until the caller's transaction ends.
+	No registered fence is itself a blocker — absence of an owner proves nothing."""
+	paths = frappe.get_hooks("kt_tender_cancellation_fence") or []
+	if not paths:
+		return [{"reason": "no_authority_record", "message": "The award notification status could not be confirmed. Cancellation is unavailable until it is recovered.",
+			"holder": "Award service owner", "route": {"area": "Award", "case": ""}}]
+	out: list[dict[str, Any]] = []
+	for path in paths:
+		answer = frappe.get_attr(path)(tender=tender) or {}
+		out.extend(answer.get("blockers") or [])
+	return out
+
+
+def record_cancellation(tender: str, *, cancellation_ref: str, cancelled_at=None) -> None:
+	"""Stamp the cancellation on the Tender's durable authority record, in the cancellation's own transaction (after `cancellation_blockers` allowed it)."""
+	for path in frappe.get_hooks("kt_tender_cancellation_recorders") or []:
+		frappe.get_attr(path)(tender=tender, cancellation_ref=cancellation_ref, cancelled_at=cancelled_at)
+
+
 def cancellation_refusals(tender: str) -> list[str]:
 	"""Every registered guard's reason to refuse cancelling `tender` now."""
 	out: list[str] = []

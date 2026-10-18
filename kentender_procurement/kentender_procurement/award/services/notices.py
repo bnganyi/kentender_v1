@@ -30,6 +30,7 @@ NOTICE = state.NOTICE
 TRANSPORT_HOOK = "kt_award_notice_transports"
 DELIVERY_SUBTYPE = "Notice delivery"
 SERVICE_SUBTYPE = "Notice service"
+UNCONFIRMED_SUBTYPE = "Notice outcome unknown"
 AUDIENCE_SUBTYPE = "Audience unresolved"
 
 
@@ -92,7 +93,7 @@ def authorise(batch, user: str) -> None:
 	records.update(batch, state="Authorised", authorised_by=user, authorised_at=clock.now())
 
 
-def _stop_reasons(doc) -> list[str]:
+def stop_reasons(doc) -> list[str]:
 	out = []
 	st = checks.tender_status(doc)
 	if not st["known"]:
@@ -111,49 +112,38 @@ def _stop_reasons(doc) -> list[str]:
 	return out
 
 
-def issue(doc, batch, *, actor: str = "system") -> dict[str, Any]:
-	"""IssueAwardNotices. The caller holds the case lock (the serialised
-	issue/cancellation transition): nothing outward happens unless every
-	check passes at this moment."""
-	if batch.state == "Issued" or batch.status == "Issued":
-		return {"status": batch.status}
-	stop = _stop_reasons(doc)
-	if stop:
-		records.update(batch, state="Stopped", stop_reason=", ".join(stop))
-		if "validity" in stop:
-			issues.open_issue(doc, source_event=f"validity-expired:{doc.name}", issue_type="Validity", subtype=checks.VALIDITY_EXPIRED,
-				title="Tender validity has expired. No award can proceed.", reason="Tender validity expired before an award could be notified.")
-		if "status" in stop:
-			if doc.notification_status == "Issue in progress":
-				tender_authority.set_notification(doc.tender, tender_authority.UNKNOWN, batch=batch.name)
-		return {"status": "Stopped", "reasons": stop}
-	now = clock.now()
-	deadline, rule = profile.reply_deadline(now)
-	records.update(batch, state="Issuing", status="Issue in progress", issued_at=now, reply_deadline=deadline)
-	tender_authority.set_notification(doc.tender, tender_authority.IN_PROGRESS, batch=batch.name, token=batch.name)
-	doc = state.reload(doc)
+_stop_reasons = stop_reasons  # the name the funding tests use
+
+
+def stop_batch(doc, batch, stop: list[str]) -> None:
+	"""Nothing outward happens: the batch stops with its reasons (the caller holds the fence)."""
+	records.update(batch, state="Stopped", stop_reason=", ".join(stop))
+	if "validity" in stop:
+		issues.open_issue(doc, source_event=f"validity-expired:{doc.name}", issue_type="Validity", subtype=checks.VALIDITY_EXPIRED,
+			title="Tender validity has expired. No award can proceed.", reason="Tender validity expired before an award could be notified.")
+
+
+def publish_portal(doc, batch, *, now) -> None:
+	"""Phase 2a of the issue: every recipient's portal notice is published together, in the caller's one transaction."""
 	for n in state.notices(batch):
 		body = records.loads(n.content_json)
 		if body.get("result") == "Successful":
-			body["reply_deadline"] = clock.when(deadline)
+			body["reply_deadline"] = clock.when(batch.reply_deadline)
 		html = letters.render(body)
 		records.update(n, content_json=records.dumps(body), letter_html=html, content_digest=records.digest(html), published_at=now, status="Pending",
-			reply_deadline=deadline if body.get("result") == "Successful" else None)
+			reply_deadline=batch.reply_deadline if body.get("result") == "Successful" else None)
 		records.append_json(n, "evidence_json", {"channel": "Portal", "at": str(now), "outcome": "Published", "given": False})
 		records.save(n)
 		if body.get("result") == "Successful":
-			clocks.record(doc, kind="Reply deadline", notice=n.name, trigger_at=now, trigger_evidence=f"{n.name} issued {clock.when(now)}", deadline=deadline, rule=rule)
-	for n in state.notices(batch):
-		_dispatch(doc, n)
-	records.update(batch, state="Issued", status="Issued")
-	tender_authority.set_notification(doc.tender, tender_authority.ISSUED, batch=batch.name, token=batch.name)
-	refresh_given(state.reload(doc), batch)
-	records.audit(doc.name, "IssueAwardNotices", actor, batch=batch.name)
+			rule = profile.reply_deadline(now)[1]
+			clocks.record(doc, kind="Reply deadline", notice=n.name, trigger_at=now, trigger_evidence=f"{n.name} issued {clock.when(now)}", deadline=batch.reply_deadline, rule=rule)
+
+
+def tell_recipients(doc, batch) -> None:
 	for n in state.notices(batch):
 		users = [p.get("user") for p in sources.for_case(doc).organisation_users(n.organisation, at=clock.now())]
 		notify.tell(doc, users, subject=f"Award notice for {doc.tender_reference}", message=f"{n.organisation_name}: your award result is available.",
 			key=f"notice:{n.name}", event_type="Award notice")
-	return {"status": "Issued"}
 
 
 def _transport(message: dict[str, Any]) -> dict[str, Any] | None:
@@ -164,30 +154,45 @@ def _transport(message: dict[str, Any]) -> dict[str, Any] | None:
 	return None
 
 
-def _dispatch(doc, n) -> str:
-	"""One email attempt for one notice; the giving evidence follows the
-	profile's channel rule (test profile: the test mailbox's delivery)."""
+def send(doc, n) -> dict[str, Any]:
+	"""One email attempt for one notice — the external effect and nothing else. It writes no Award row and the caller holds no lock and no transaction
+	across it (AWD-CHG-001 v0.9 §5.11). The outcome is Delivered, Service unavailable or Delivery failed (known: the message did not leave) or Unknown (it
+	may or may not have: the transport failed without an answer). Unknown is never read as not sent."""
 	now = clock.now()
 	attempt = {"channel": "Email", "at": str(now), "to": n.contact_email}
 	failing = simulation.failing_organisations()
-	if simulation.flag("email_service_down"):
+	if simulation.flag("email_outcome_unknown"):
+		attempt.update(outcome="Unknown", detail="The mail service did not confirm whether the message was sent.")
+	elif simulation.flag("email_service_down"):
 		attempt.update(outcome="Service unavailable")
 	elif n.organisation in failing or n.organisation_name in failing:
 		attempt.update(outcome="Delivery failed", detail="The notice address was rejected.")
 	else:
-		result = _transport({"to": n.contact_email, "subject": f"Award notice for {doc.tender_reference}", "body": records.loads(n.content_json).get("statement", ""),
-			"link": f"/supplier/awards/{n.name}"})
-		if result:
-			attempt.update(outcome="Delivered", detail=cstr(result.get("result")))
+		try:
+			result = _transport({"to": n.contact_email, "subject": f"Award notice for {doc.tender_reference}", "body": records.loads(n.content_json).get("statement", ""),
+				"link": f"/supplier/awards/{n.name}"})
+		except Exception:  # noqa: BLE001 - the transport failed without an answer: the message may have left
+			frappe.log_error(title="Award notice transport failed without an answer")
+			attempt.update(outcome="Unknown", detail="The mail service failed without an answer.")
 		else:
-			attempt.update(outcome="Service unavailable")
+			if result:
+				attempt.update(outcome="Delivered", detail=cstr(result.get("result")))
+			else:
+				attempt.update(outcome="Service unavailable")
+	return attempt
+
+
+def record_attempt(doc, n, attempt: dict[str, Any]) -> str:
+	"""Record an attempt's outcome (the writes `send` left out); the giving evidence follows the profile's channel rule (test profile: the test
+	mailbox's delivery)."""
+	now = clock.now()
 	records.append_json(n, "attempts_json", attempt)
 	if attempt["outcome"] == "Delivered":
 		records.append_json(n, "evidence_json", {"channel": "Email", "at": str(now), "outcome": "Delivered", "given": True, "rule": profile.current().get("profile_version")})
 		records.update(n, status="Given", given_at=now, failure_reason="")
 		min_at, rule = profile.earliest_permitted(now)
 		clocks.record(doc, kind="Minimum wait", notice=n.name, trigger_at=now, trigger_evidence=f"{n.name} given {clock.when(now)}", deadline=min_at, rule=rule)
-		for i in issues.open_issues(doc, subtype=DELIVERY_SUBTYPE) + issues.open_issues(doc, subtype=SERVICE_SUBTYPE):
+		for i in issues.open_issues(doc, subtype=DELIVERY_SUBTYPE) + issues.open_issues(doc, subtype=SERVICE_SUBTYPE) + issues.open_issues(doc, subtype=UNCONFIRMED_SUBTYPE):
 			if records.loads(i.detail_json).get("notice") == n.name:
 				issues.resolve(i, disposition="Owner correction confirmed", reason="The notice was given.", evidence=f"Email delivered {clock.when(now)}")
 		checks.support_resolved(f"notice:{n.name}")
@@ -198,12 +203,24 @@ def _dispatch(doc, n) -> str:
 			detail={"notice": n.name, "channel": "Email"})
 		checks.open_support_issue(doc, "IssueAwardNotices", f"notice:{n.name}", "Restore notice delivery",
 			"Operation: Award notice delivery. Result: Service unavailable.")
+	elif attempt["outcome"] == "Unknown":
+		records.update(n, status="Failed", failure_reason="Outcome unknown")
+		issues.open_issue(doc, source_event=f"notice-unconfirmed:{n.name}", issue_type="Service failure", subtype=UNCONFIRMED_SUBTYPE,
+			title="A required notice is not yet confirmed.", owner_role=people.TECHNICAL_OPERATOR, owner_user=checks._technical(),
+			reason="The notice service did not confirm whether the message was sent. It is not assumed sent or unsent.", detail={"notice": n.name, "channel": "Email"})
+		checks.open_support_issue(doc, "IssueAwardNotices", f"notice:{n.name}", "Confirm whether the notice was sent",
+			"Operation: Award notice delivery. Result: outcome unknown.")
 	else:
 		records.update(n, status="Failed", failure_reason=attempt.get("detail") or "Delivery failed")
 		issues.open_issue(doc, source_event=f"notice-delivery:{n.name}:{n.contact_email}", issue_type="Delivery", subtype=DELIVERY_SUBTYPE,
 			title="A required notice is not yet confirmed.", reason=attempt.get("detail") or "Delivery failed", detail={"notice": n.name, "channel": "Email",
 			"organisation": n.organisation_name})
 	return attempt["outcome"]
+
+
+def _dispatch(doc, n) -> str:
+	"""A retry's attempt: the external send, then its record (a retry runs after the first issue, when cancellation is no longer possible)."""
+	return record_attempt(doc, n, send(doc, n))
 
 
 def refresh_given(doc, batch) -> bool:
@@ -222,12 +239,18 @@ def all_given(batch) -> bool:
 	return bool(batch and batch.given_complete_at)
 
 
+def _cancellation_stamped(doc) -> bool:
+	"""The Tender's record carries a committed cancellation: nothing is sent for it, whatever this caller's view of the case says."""
+	row = tender_authority.read(doc.tender)
+	return bool(row is not None and cstr(row.cancellation_ref))
+
+
 def retry(doc, n, *, actor: str = "system") -> str:
 	"""RetryNoticeDelivery: the same logical notice to its current authoritative
 	route. No new decision, no duplicate notice."""
 	if n.status == "Given":
 		return n.status
-	if doc.cancelled:
+	if doc.cancelled or _cancellation_stamped(doc):
 		return n.status
 	current = sources.for_case(doc).notice_contact(n.bid) if n.bid else {}
 	if current.get("email") and current["email"] != n.contact_email:

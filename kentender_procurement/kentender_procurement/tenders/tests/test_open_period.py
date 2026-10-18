@@ -456,6 +456,8 @@ class TestCancellationAndClose(OpenPeriodCase):
 		self.assertEqual((root.overall_status, doc.ground_label, doc.decided_by, doc.recommendation), ("Cancelled", "Inadequate budgetary provision", fx.AO, recommended["decision"]))
 		# the Accounting Officer's decision itself registered the recovery of the unused allowance and funding, Pending, in the same transaction
 		self.assertEqual(frappe.db.get_value("Cancellation Resource Recovery", {"tender": self.name}, ["name", "status"]), (doc.resource_recovery, "Pending"))
+		# AWD-CHG-001 v0.9 §5.11: ... and stamped the cancellation on the Tender's durable authority record, which still reads Not issued
+		self.assertEqual(frappe.db.get_value("Award Tender Authority", self.name, ["cancellation_ref", "notification_status"]), (doc.name, "Not issued"))
 		self.assertEqual((str(doc.ppra_report_due_by), str(doc.candidate_notice_due_by)), (W("2027-06-18"), W("2027-06-18")))
 		self.assertEqual([o.obligation_type for o in doc.obligations], ["Notice channel"] * 4 + ["PPRA report", "Candidate notice"])
 		# §5.7: no candidate registered, so the absence is recorded from the registry
