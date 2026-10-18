@@ -6,6 +6,37 @@
 **Status:** Phases 0–4 Done 15 September 2026 (uncommitted at time of writing). Every §16.2 journey was driven in a real browser by the §15.1 actors on the v1.9 compositions; the Budget Python suite, the five-spec browser gate and the rewritten fidelity gate are green; the industry design gate's Python half is blocked by the site's pre-existing fiscal-year overlap (R2).
 **Started:** 15 September 2026.
 
+## Cancellation recovery (BUD-CHG-001 v1.17) — built 17–18 October 2026, code complete on the test site
+
+**Authority:** `KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_17.md` (approved by the Project Owner, 17 October 2026; the approval record is in its control table). Built across Planning, Requisitions, Tenders and Budget as one coordinated change. The shared acceptance map is `98_work_progress/CANCELLATION_RECOVERY_EVIDENCE_MAP.md`; the Project Owner's running list is `98_work_progress/CANCELLATION_RECOVERY_OWNER_ATTENTION.md`.
+
+**Not claimed:** nothing is migrated, reconciled or released on the development site; nothing was pushed. Approval closed no row. Every status below is from a run on `kentender-test.local`.
+
+| Row | Item | Status | Evidence |
+|---|---|---|---|
+| BUDCR-01 | Reservation Cancellation Release (one per cancellation and drawdown line); `release_reservations_for_cancelled_tender` releases the whole set or none, validating every reservation first | Done | `test_budget_cancellation_release` 15 of 15 |
+| BUDCR-02 | A read-only basis (`get_cancellation_release_basis`) with a revision digest per reservation; the Requisitions principal's grant extended | Done | same module; `test_budget_service_principal` 36 of 36 |
+| BUDCR-03 | Converted, partly used and other-reason reservations are never released again or guessed at | Done | same module |
+| BUDCR-04 | A closed Budget records its closure context and gains no spending authority | Done (Budget level) | `test_a_closed_budget_records_its_closure_and_gains_no_spending_authority` |
+| BUDCR-05 | The Budget line detail: a held reservation carries the recovery's status and reason; a card lists the reservations released because their Tender was cancelled | Done | integration, browser spec, `budget-fidelity.spec.ts` 12 of 12 |
+
+### Acceptance rows
+
+| ID | Required result (short) | Status | Evidence |
+|---|---|---|---|
+| BUD-CR-AC-001 | Exact unused set restored and released once; scope lock kept | Done | Integration CR-F01 and CR-F02, last test of each; owner half in the module named below |
+| BUD-CR-AC-002 | No recovery effect without authority; Pending vs Needs attention | Done | Unavailable → Pending; notice, package, converted, other-reason, different lineage → Needs attention; a recommendation registers nothing. No test cancels a failed opening and looks |
+| BUD-CR-AC-003 | Crash before / after commit; cancellation stays committed | Partial | Failures on either owner leg commit neither effect; same key returns the recorded result; the Tender stays Cancelled. A killed process was not simulated |
+| BUD-CR-AC-004 | Retry, new key, changed payload; sequential draws | Done | Replay, new key, changed facts, two sequential draws, two workers on two real connections |
+| BUD-CR-AC-005 | Notice, contract or conversion racing cancellation or recovery | Partial | Recovery against a Budget conversion in both orders on two real connections. Cancellation against Award issuing a notice is ordered by the lock order and Award's re-read under lock, but was not raced |
+| BUD-CR-AC-006 | Legacy and partial effects never blanket-recovered | Done | Legacy module 6 of 6 and the run on the canonical data (rolled back); no screen offers a restore or release |
+| BUD-CR-AC-007 | Block only affected sources; no automatic replacement | Done | Held source refuses a second authorisation; unrelated item usable; completion creates no replacement |
+| BUD-CR-AC-008 | Fresh requisition on restored scope; scope lock never reset | Done | Fresh Requisition with fresh identities; successor Plan tests; old recovery replay leaves new balances alone |
+| BUD-CR-AC-009 | Notices, Bid Opening and sealed evidence unaffected | Partial | Compliance tasks, Bid Opening and Award suites unchanged and green; recovery reads show permitted rows only. No test makes the recovery fail and then checks the notices |
+| BUD-CR-AC-010 | Closed-year recovery is historical only | Partial | Budget records a closed Budget's context and gives no spending authority. No Requisitions-to-Planning run against a closed year |
+| BUD-CR-AC-011 | Owner screens show the three statuses and a real next step | Done | Python reads for each owner, component tests, and the browser spec on Tenders, Requisitions, Planning (progress and Plan Item) and Budget. Budget Needs attention and browser back/forward not walked |
+| BUD-CR-AC-012 | Single-source and shared-Budget-Line on real adapters | Done | Integration CR-F01 (single source) and CR-F02 (two sources, one shared Budget Line) on the real adapters |
+
 ## Tracker rules
 
 1. Rows are permanent. Vocabulary: `Planned` / `In progress` / `Blocked` / `Partial` / `Done`. Reversed decisions are struck through in place.

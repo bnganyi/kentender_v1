@@ -161,7 +161,7 @@ function pad(i) {
 										<div class="kt-record-body">
 											<div class="kt-record-ref">{{ rsv.code }}</div>
 											<div class="kt-record-title">{{ rsv.title }}</div>
-											<div class="kt-record-meta"><span class="kt-status" :class="rsv.requires_review ? 'is-attention' : 'is-live'">{{ rsv.status_label }}</span><span v-if="rsv.plan_item_label">{{ __("Plan Item {0}", [rsv.plan_item_label]) }}</span></div>
+											<div class="kt-record-meta"><span class="kt-status" :class="rsv.requires_review ? 'is-attention' : 'is-live'">{{ rsv.status_label }}</span><span v-if="rsv.recovery" class="kt-status" :class="rsv.recovery.status === 'Needs attention' ? 'is-critical' : 'is-attention'" data-testid="bud-line-reservation-recovery">{{ rsv.recovery.label }}</span><span v-if="rsv.plan_item_label">{{ __("Plan Item {0}", [rsv.plan_item_label]) }}</span></div>
 										</div>
 										<div class="kt-record-value">
 											<div class="kt-record-amount">{{ formatKes(rsv.still_reserved, currency) }}</div>
@@ -178,6 +178,11 @@ function pad(i) {
 									</div>
 								</summary>
 								<div class="kt-record-detail" style="padding: 0">
+									<!-- BUD-CHG-001 v1.17 §11.23 — a reservation whose Tender was cancelled stays held, with the recovery's own status and reason, until the whole recovery commits. Nothing is released from this screen. -->
+									<div v-if="rsv.recovery" class="kt-notice" :class="rsv.recovery.status === 'Needs attention' ? 'is-critical' : 'is-warning'" style="margin: 14px" data-testid="bud-line-recovery">
+										<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+										<div class="kt-notice-body"><strong>{{ rsv.recovery.label }}</strong> {{ rsv.recovery.explanation }} <span v-if="rsv.recovery.reason" data-testid="bud-line-recovery-reason">{{ rsv.recovery.reason }}</span> {{ __("Nothing is released from this screen.") }}</div>
+									</div>
 									<div v-if="rsv.requires_review && rsv.review" class="kt-notice is-warning" style="margin: 14px" data-testid="bud-line-requires-review">
 										<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 										<div class="kt-notice-body"><strong>{{ __("Requires review — funds remain reserved.") }}</strong> {{ rsv.review.reason }} {{ rsv.review.owner_hint }} {{ __("Nothing is released from this screen.") }}</div>
@@ -206,6 +211,21 @@ function pad(i) {
 							</details>
 						</div>
 					</div>
+				</div>
+				<div v-if="line.cancellation_releases && line.cancellation_releases.length" class="card blueprint" style="margin-top: 16px; padding: 22px 28px" data-testid="bud-line-cancellation-releases">
+					<h3 class="kt-card-title" style="margin: 0 0 6px">{{ __("Unused allowance and funding") }}</h3>
+					<p class="kt-muted" style="font-size: 13px; margin: 0 0 12px">{{ __("These reservations were released because their tender was cancelled before any award. The original reservation and its authorisation are kept in history.") }}</p>
+					<table class="table">
+						<thead><tr><th>{{ __("Reservation") }}</th><th>{{ __("Status") }}</th><th class="is-num">{{ __("Amount released") }}</th><th>{{ __("Released") }}</th></tr></thead>
+						<tbody>
+							<tr v-for="r in line.cancellation_releases" :key="r.release" data-testid="bud-line-cancellation-release">
+								<td>{{ r.reservation_code }}<span v-if="r.requisition_reference" class="kt-muted"> · {{ r.requisition_reference }}</span></td>
+								<td><span class="kt-status is-live">{{ __("Released after tender cancellation") }}</span><span v-if="r.closure" class="kt-muted"> · {{ __("Budget closed") }}</span></td>
+								<td class="is-num">{{ formatKes(r.amount, currency) }}</td>
+								<td>{{ r.released_at_label }}</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
 				<div v-if="line.commitments && line.commitments.length" class="card blueprint" style="margin-top: 16px; padding: 22px 28px" data-testid="bud-line-commitments">
 					<h3 class="kt-card-title" style="margin: 0 0 14px">{{ __("Commitments") }}</h3>

@@ -453,6 +453,7 @@ def get_budget_line_position(budget_line: str, *, as_at_version: str | None = No
 	line_version = _line_version_for(version_name, line.name) if version_name else None
 	position = _line_position(line.name, line_version)
 	reservations = _line_active_reservations(line.name)
+	_annotate_recoveries(reservations)
 	converted_total = sum(r["converted"] for r in reservations)
 	currency = line_version.currency if line_version else (budget.currency or "")
 	explanation = ""
@@ -483,10 +484,38 @@ def get_budget_line_position(budget_line: str, *, as_at_version: str | None = No
 		"reservations": reservations,
 		# BUD v1.16 §11.22 — the commitments charged to this line, of either origin; a Closed one offers **Correct commitment** to the Budget Officer only
 		"commitments": _line_commitments(line.name),
+		# BUD-CHG-001 v1.17 §11.23 — the reservations released because their Tender was cancelled (the recovery's own record in Budget)
+		"cancellation_releases": _line_cancellation_releases(line.name),
 		# BUD v1.11 §11 line detail — one quiet line while Planning's request
 		# for this line is Open; no action on this page.
 		"revision_request_note": _revision_request_note(line.name),
 	}
+
+
+def _annotate_recoveries(reservations: list[dict[str, Any]]) -> None:
+	"""A held reservation whose Tender was cancelled carries the recovery's status and reason, from the Requisitions reader (Budget sits upstream
+	of it and asks through the core seam). With no reader nothing is added: the reservation is shown as it is, which is the truth."""
+	from kentender_core.services import cancellation_recovery_contract as seam
+
+	found = seam.recoveries_of_reservations([r["id"] for r in reservations])
+	for row in reservations:
+		if row["id"] in found:
+			row["recovery"] = found[row["id"]]
+
+
+def _line_cancellation_releases(budget_line: str) -> list[dict[str, Any]]:
+	rows = frappe.get_all(
+		"Reservation Cancellation Release", filters={"budget_line": budget_line},
+		fields=["name", "reservation", "requisition_reference", "amount", "currency", "closed_context", "released_at"], order_by="released_at desc",
+	)
+	return [
+		{
+			"release": r.name, "reservation": r.reservation, "reservation_code": frappe.db.get_value("Funding Reservation", r.reservation, "generated_reference") or r.reservation,
+			"requisition_reference": r.requisition_reference or "", "amount": flt(r.amount), "currency": r.currency, "closure": r.closed_context or "",
+			"released_at_label": _display_datetime(r.released_at) if r.released_at else "—",
+		}
+		for r in rows
+	]
 
 
 def _line_commitments(budget_line: str) -> list[dict[str, Any]]:

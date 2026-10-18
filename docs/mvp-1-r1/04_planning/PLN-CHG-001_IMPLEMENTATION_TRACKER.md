@@ -9,6 +9,38 @@
 
 ---
 
+## Cancellation recovery (PLN-CHG-001 v1.32) — built 17–18 October 2026, code complete on the test site
+
+**Authority:** `KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_32.md` (approved by the Project Owner, 17 October 2026; the approval record is in its control table). Built across Planning, Requisitions, Tenders and Budget as one coordinated change. The shared acceptance map is `98_work_progress/CANCELLATION_RECOVERY_EVIDENCE_MAP.md`; the Project Owner's running list is `98_work_progress/CANCELLATION_RECOVERY_OWNER_ATTENTION.md`.
+
+**Not claimed:** nothing is migrated, reconciled or released on the development site; nothing was pushed. Approval closed no row. Every status below is from a run on `kentender-test.local`.
+
+| Row | Item | Status | Evidence |
+|---|---|---|---|
+| PLNCR-01 | The allowance is counted by the stable plan item and allocation identity, so a drawn item stays drawn after an Annual Plan update is activated (a defect found while building this; the old counting let the ceiling be drawn again) | Done | `test_the_ceiling_is_not_redrawn_after_a_successor`; the old counting was shown to fail it |
+| PLNCR-02 | Plan Cancellation Recovery Hold (one per recovery and source), two refusal codes, drawdown fields (`allocation_id`, reason, recovery, cancellation, reversed instant), a patch that backfills `allocation_id` | Done | `test_cancellation_recovery` 20 of 20 |
+| PLNCR-03 | Exact reversal in cancellation mode, callable only by Requisitions' minted principal; the web reversal route refuses a held drawdown and stores its reason | Done | same module, including the mint-scan guard |
+| PLNCR-04 | Reads: the eligible-item read carries recovery status and reason; the list leaves held sources out; the authorisation refuses a held source with the pending or invalid code | Done | `test_authorisation_on_the_held_source_is_refused_and_the_read_says_why`, `test_an_unrelated_item_is_still_usable` |
+| PLNCR-05 | Screens: Procurement progress (in the purchase's row) and the Plan Item, through one shared `RecoverySection`; the next-step route goes out as segments | Done | vitest (4 + 4 new tests), browser spec, integration reads |
+| PLNCR-06 | The U01 work queue does not show the recovery | Not built | The text also says there is no recovery task, so nothing exists to list; recorded as a question to the owner |
+
+### Acceptance rows
+
+| ID | Required result (short) | Status | Evidence |
+|---|---|---|---|
+| PLN-CR-AC-001 | Exact unused set restored and released once; scope lock kept | Done | Integration CR-F01 and CR-F02, last test of each; owner half in the module named below |
+| PLN-CR-AC-002 | No recovery effect without authority; Pending vs Needs attention | Done | Unavailable → Pending; notice, package, converted, other-reason, different lineage → Needs attention; a recommendation registers nothing. No test cancels a failed opening and looks |
+| PLN-CR-AC-003 | Crash before / after commit; cancellation stays committed | Partial | Failures on either owner leg commit neither effect; same key returns the recorded result; the Tender stays Cancelled. A killed process was not simulated |
+| PLN-CR-AC-004 | Retry, new key, changed payload; sequential draws | Done | Replay, new key, changed facts, two sequential draws, two workers on two real connections |
+| PLN-CR-AC-005 | Notice, contract or conversion racing cancellation or recovery | Partial | Recovery against a Budget conversion in both orders on two real connections. Cancellation against Award issuing a notice is ordered by the lock order and Award's re-read under lock, but was not raced |
+| PLN-CR-AC-006 | Legacy and partial effects never blanket-recovered | Done | Legacy module 6 of 6 and the run on the canonical data (rolled back); no screen offers a restore or release |
+| PLN-CR-AC-007 | Block only affected sources; no automatic replacement | Done | Held source refuses a second authorisation; unrelated item usable; completion creates no replacement |
+| PLN-CR-AC-008 | Fresh requisition on restored scope; scope lock never reset | Done | Fresh Requisition with fresh identities; successor Plan tests; old recovery replay leaves new balances alone |
+| PLN-CR-AC-009 | Notices, Bid Opening and sealed evidence unaffected | Partial | Compliance tasks, Bid Opening and Award suites unchanged and green; recovery reads show permitted rows only. No test makes the recovery fail and then checks the notices |
+| PLN-CR-AC-010 | Closed-year recovery is historical only | Partial | Budget records a closed Budget's context and gives no spending authority. No Requisitions-to-Planning run against a closed year |
+| PLN-CR-AC-011 | Owner screens show the three statuses and a real next step | Done | Python reads for each owner, component tests, and the browser spec on Tenders, Requisitions, Planning (progress and Plan Item) and Budget. Budget Needs attention and browser back/forward not walked |
+| PLN-CR-AC-012 | Single-source and shared-Budget-Line on real adapters | Done | Integration CR-F01 (single source) and CR-F02 (two sources, one shared Budget Line) on the real adapters |
+
 ## Tracker rules
 
 1. Rows are permanent. Vocabulary: `Planned` / `In progress` / `Blocked` / `Partial` / `Done`. Reversed decisions are struck through in place.

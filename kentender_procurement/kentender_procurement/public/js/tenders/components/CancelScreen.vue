@@ -22,7 +22,7 @@
 				<div v-if="deciding" class="tnd-section tnd-section--plain">
 					<div class="kt-notice is-critical" data-testid="tnd-cancel-warning">
 						<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-						<div class="kt-notice-body">{{ data.warning_text || "Cancellation is final for this Tender. It does not restore the Requisition or create a replacement Tender." }}</div>
+						<div class="kt-notice-body">{{ data.warning_text || "The tender will end. KenTender will restore its unused planning allowance and release its unused budget reservation after checking the linked records. A replacement purchase requires a new requisition." }}</div>
 					</div>
 				</div>
 				<div v-if="review && !deciding" class="tnd-section" data-testid="tnd-review-request">
@@ -62,7 +62,7 @@
 							<li>Cancellation notice published through all original channels.</li>
 							<li>PPRA report due {{ consequences.ppra_report_due_by }}.</li>
 							<li>Candidate notices due {{ consequences.candidate_notice_due_by }}.</li>
-							<li>{{ consequences.replacement_text || "Replacement procurement requires new governance." }}</li>
+							<li>{{ consequences.replacement_text || "A replacement purchase requires a new requisition." }}</li>
 						</ul>
 					</div>
 				</template>
@@ -75,6 +75,24 @@
 					<div class="tnd-fact"><div class="kt-label">Decided at</div><div class="tnd-fact-value">{{ cancellation.decided_at_label }}</div></div>
 					<div class="tnd-fact"><div class="kt-label">Ground</div><div class="tnd-fact-value">{{ cancellation.ground_label }}</div></div>
 					<div class="tnd-fact"><div class="kt-label">Reason</div><div class="tnd-fact-value">{{ cancellation.reason }}</div></div>
+				</div>
+				<div v-if="recovery" class="tnd-section" data-testid="tnd-resource-recovery" :data-status="recovery.status">
+					<h2 class="tnd-h2">{{ recovery.title }}</h2>
+					<p class="tnd-body-text" style="margin: 0 0 6px"><span class="kt-status" :class="recoveryTone" data-testid="tnd-resource-recovery-label">{{ recovery.label }}</span></p>
+					<p class="tnd-small tnd-muted-700" style="margin: 0 0 6px" data-testid="tnd-resource-recovery-explanation">{{ recovery.explanation }}</p>
+					<p v-if="recovery.reason" class="tnd-small" style="margin: 0 0 6px" data-testid="tnd-resource-recovery-reason">{{ recovery.reason }}</p>
+					<table v-if="(recovery.rows || []).length" class="table" data-testid="tnd-resource-recovery-rows">
+						<thead><tr><th>Source</th><th>Quantity</th><th>Value</th><th v-if="recovery.status === 'Completed'">Allowance restored</th><th v-if="recovery.status === 'Completed'">Funding released</th></tr></thead>
+						<tbody>
+							<tr v-for="row in recovery.rows" :key="row.key"><td>{{ row.source }}</td><td>{{ row.quantity }}</td><td>{{ row.value }}</td><td v-if="recovery.status === 'Completed'">{{ row.restored }}</td><td v-if="recovery.status === 'Completed'">{{ row.released }}</td></tr>
+						</tbody>
+					</table>
+					<p v-if="recovery.partial_view" class="tnd-small tnd-muted-700" style="margin: 6px 0 0">Only the sources of your department are shown.</p>
+					<p v-if="recovery.next_step" class="tnd-small" style="margin: 8px 0 0" data-testid="tnd-resource-recovery-next"><a v-if="recovery.next_step.route" :href="recovery.next_step.route" data-testid="tnd-resource-recovery-next-link">{{ recovery.next_step.label }}</a><span v-else>{{ recovery.next_step.label }}</span></p>
+					<details v-if="(recovery.technical || []).length" class="tnd-technical" data-testid="tnd-resource-recovery-technical">
+						<summary class="tnd-small">Technical details</summary>
+						<dl class="tnd-small"><template v-for="item in recovery.technical" :key="item.label"><dt class="kt-label">{{ item.label }}</dt><dd>{{ item.value }}</dd></template></dl>
+					</details>
 				</div>
 				<div class="tnd-section tnd-section--last">
 					<h2 class="tnd-h2">Compliance obligations</h2>
@@ -131,6 +149,9 @@ const summary = computed(() => props.data.summary || {});
 const consequences = computed(() => props.data.consequences || {});
 const recommendation = computed(() => props.data.recommendation || null);
 const cancellation = computed(() => props.data.cancellation || null);
+// TPR-CHG-001 v0.21 §5.7A: Requisitions' recovery of the unused allowance and funding, in the server's words (permitted rows and links only)
+const recovery = computed(() => props.data.resource_recovery || null);
+const recoveryTone = computed(() => ({ Completed: "is-live", "Needs attention": "is-critical" }[(recovery.value || {}).status] || "is-attention"));
 const review = computed(() => props.data.review || null);
 const cancelled = computed(() => tender.value.overall_status === "Cancelled" && !!cancellation.value);
 const actions = computed(() => props.data.allowed_actions || []);

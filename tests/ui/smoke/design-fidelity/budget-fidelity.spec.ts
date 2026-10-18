@@ -368,7 +368,7 @@ test.describe("Budget & Funding — design fidelity (v1.9 boards)", () => {
 		await gotoBudget(page, `/line/${conv.conversion.dhi_code}`);
 		await expectScreen(page, "line");
 		expectLandmarkSubsequence(wanted.texts, await liveLandmarks(page), "BUD-DES-06B");
-		await expectStructure(page, LIVE, wanted.html, "BUD-DES-06B");
+		await expectStructure(page, LIVE, wanted.html, "BUD-DES-06B", DEPARTURES["BudgetLineDetailScreen#BUD-DES-06B"]);
 	});
 
 	test("BUD-DES-13 review registered allocation, four tabs", async ({ page, browser }) => {

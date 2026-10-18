@@ -15,8 +15,11 @@ from __future__ import annotations
 import re
 from contextlib import contextmanager
 from unittest.mock import patch
+from uuid import uuid4
 
 import frappe
+
+from kentender_core.services import contract_reservation_authority as authority
 
 from kentender_procurement.procurement_requisitions.services import authorise as authorise_service
 from kentender_procurement.procurement_requisitions.services import cancellation_recovery as recovery_service
@@ -27,7 +30,7 @@ from kentender_procurement.procurement_requisitions.tests import fixtures as req
 from kentender_procurement.procurement_requisitions.tests.test_cancellation_recovery_integration import WorldCase
 from kentender_procurement.tenders.tests import fixtures as tnd_fx
 from kentender_procurement.tenders.tests.test_open_period import OpenPeriodCase
-from kentender_procurement.tests.two_connections import WAIT, Conn
+from kentender_procurement.tests.two_connections import BLOCKED_FOR, WAIT, Conn
 
 #: Tender, Award case, Requisition root, handoff, recovery, Version; Budget; Planning — a table never appears after one below it.
 RECOVERY_DOCTYPE = recovery_service.DOCTYPE
@@ -219,3 +222,133 @@ class TestRecoveryAndANewRequisition(WorldCase):
 		self.assertEqual(float(position["available"]), float(before["available"]) + 3_000_000.0)
 		self.assertEqual(frappe.db.get_value("Funding Reservation", self.sources_before["reservations"][0], "status"), "Released")
 		self.assertEqual(frappe.db.get_value("Tender", self.tender, "overall_status"), "Cancelled")
+
+
+CONTRACT_PREFIX = "CTR-CR-"
+
+
+def purge_conversions() -> dict[str, int]:
+	"""Remove what the races' contract conversions left on the Budget Line: their commitments and every audit event that names the contract or
+	one of those commitments. A conversion commits on its own connection, so no rollback undoes it, and a commitment left behind would sit on
+	the shared Budget Line for every later run."""
+	from kentender_core.services.command_write_guard import purge_doc
+
+	frappe.set_user("Administrator")
+	commitments = frappe.get_all("Procurement Commitment", filters={"contract": ["like", f"{CONTRACT_PREFIX}%"]}, pluck="name")
+	events = set(frappe.get_all("Budget Audit Event", filters={"downstream_reference": ["like", f"{CONTRACT_PREFIX}%"]}, pluck="name"))
+	events |= set(frappe.get_all("Budget Audit Event", filters={"commitment": ["in", commitments or ["-"]]}, pluck="name"))
+	for name in commitments:
+		purge_doc("Procurement Commitment", name)
+	frappe.flags.allow_budget_audit_purge = True
+	try:
+		for name in sorted(events):
+			purge_doc("Budget Audit Event", name)
+	finally:
+		frappe.flags.allow_budget_audit_purge = False
+	frappe.db.commit()
+	return {"commitments": len(commitments), "audit_events": len(events)}
+
+
+class RaceWorld(WorldCase):
+	"""One cancelled Tender whose single reservation a contract may convert while its recovery is being carried out (REQ-CR-AC-005 / PLN-CR-AC-005)."""
+
+	@classmethod
+	def tearDownClass(cls):
+		try:
+			purge_conversions()
+		finally:
+			super().tearDownClass()
+
+	@classmethod
+	def build_world(cls):
+		return world.single_source_requisition()
+
+	@classmethod
+	def snapshot(cls) -> dict:
+		reservations = world.reservations_of(cls.authorised["requisition"])
+		line = world.budget_line_of(reservations[0])
+		return {"item": world.planning_remaining(cls.authorised["item_id"]), "line": line, "position": world.budget_position(line), "reservations": reservations}
+
+	def convert(self):
+		"""A contract's conversion of the reservation, on whatever connection calls it (the lineage seam is stood in for: the subject is the race)."""
+		from kentender_budget.services import budget_commitment_contracts as commit
+		from kentender_budget.services.budget_service_principal import PRINCIPAL_CONTRACT, service_caller
+
+		reservation = self.sources_before["reservations"][0]
+		contract = f"{CONTRACT_PREFIX}{uuid4().hex[:6]}"
+		with authority.awarded(contract, reservation):
+			return commit.convert_reservation(
+				reservation, contract, 1_000_000, uuid4().hex, contract_event_id=f"{contract}:signed", contract_event_type="ContractSigned",
+				caller=service_caller(PRINCIPAL_CONTRACT, reference=contract),
+			)
+
+
+class TestRecoveryAheadOfConversion(RaceWorld):
+	def test_a_conversion_waiting_for_the_recovery_is_refused_on_the_released_reservation(self):
+		"""The recovery holds its uncommitted release. A contract's conversion of the same reservation waits for the lock, then decides from what the
+		recovery committed: the reservation is Released, so nothing converts and the released money funds no obligation."""
+		frappe.db.commit()
+		recovery_conn = Conn("Administrator", lambda: recovery_sweep.run_one(self.recovery), hold=True)
+		try:
+			self.assertTrue(recovery_conn.ran.wait(WAIT))
+			self.assertIsNone(recovery_conn.error, recovery_conn.error)
+			self.assertEqual(recovery_conn.value["status"], "Completed")
+			attempt = Conn("Administrator", self.convert)
+			self.assertFalse(attempt.finished.wait(BLOCKED_FOR), "the conversion must wait for the recovery's lock")
+		finally:
+			recovery_conn.commit()
+		self.assertTrue(attempt.finished.wait(WAIT))
+		self.assertIsNotNone(attempt.error, "a Released reservation cannot be converted")
+		frappe.db.commit()
+		reservation = self.sources_before["reservations"][0]
+		self.assertEqual(frappe.db.get_value("Funding Reservation", reservation, "status"), "Released")
+		self.assertEqual(frappe.db.get_value(RECOVERY_DOCTYPE, self.recovery, "status"), "Completed")
+		self.assertEqual([float(x) for x in world.planning_remaining(self.authorised["item_id"])], [100.0, 10_000_000.0])
+
+
+class TestConversionAheadOfRecovery(RaceWorld):
+	def test_a_recovery_waiting_for_a_conversion_restores_nothing_and_says_why(self):
+		"""The conversion holds its uncommitted effect. The recovery, which read the reservation as Active before the conversion committed, waits for
+		the lock and re-checks what it pinned: the reservation has changed, so it releases nothing and restores nothing, and states the reason."""
+		frappe.db.commit()
+		conversion = Conn("Administrator", self.convert, hold=True)
+		try:
+			self.assertTrue(conversion.ran.wait(WAIT))
+			self.assertIsNone(conversion.error, conversion.error)
+			attempt = Conn("Administrator", lambda: recovery_sweep.run_one(self.recovery))
+			self.assertFalse(attempt.finished.wait(BLOCKED_FOR), "the recovery must wait for the conversion's lock")
+		finally:
+			conversion.commit()
+		self.assertTrue(attempt.finished.wait(WAIT))
+		self.assertIsNone(attempt.error, attempt.error)
+		self.assertEqual(attempt.value["status"], "Needs attention")  # the owner's refusal, with its own reason, never a guess
+		self.assertTrue(attempt.value["reason"])
+		frappe.db.commit()
+		reservation = self.sources_before["reservations"][0]
+		self.assertEqual(frappe.db.get_value("Funding Reservation", reservation, "status"), "Partially Converted")
+		self.assertEqual(world.planning_remaining(self.authorised["item_id"]), self.sources_before["item"])  # nothing restored
+		self.assertEqual(frappe.db.count("Plan Cancellation Recovery Hold", {"recovery_id": self.recovery, "state": "Active"}), 1)  # the source stays held
+		self.assertEqual(frappe.db.get_value(RECOVERY_DOCTYPE, self.recovery, "status"), "Needs attention")
+
+
+class TestTwoWorkersAtOnce(RaceWorld):
+	def test_a_second_worker_neither_repeats_nor_adds_to_the_first_workers_effect(self):
+		"""Two workers pick up the same recovery. The first holds its uncommitted effect; the second, asked to do the same recovery now, waits or is
+		turned away, and once the first commits it finds the recorded outcome and does nothing: one reversal and one release, whoever ran first."""
+		frappe.db.commit()
+		first = Conn("Administrator", lambda: recovery_sweep.run_one(self.recovery), hold=True)
+		try:
+			self.assertTrue(first.ran.wait(WAIT))
+			self.assertIsNone(first.error, first.error)
+			self.assertEqual((first.value["status"], first.value["acted"]), ("Completed", True))
+			second = Conn("Administrator", lambda: recovery_sweep.run_one(self.recovery))
+		finally:
+			first.commit()
+		self.assertTrue(second.finished.wait(WAIT))
+		self.assertIsNone(second.error, second.error)
+		self.assertEqual((second.value["status"], second.value["acted"]), ("Completed", False))
+		frappe.db.commit()
+		cancellation = self.cancelled["cancellation"]
+		self.assertEqual(frappe.db.count("Plan Drawdown Reference", {"recovery_id": self.recovery, "drawdown_state": "Reversed"}), 1)
+		self.assertEqual(frappe.db.count("Reservation Cancellation Release", {"cancellation_id": cancellation}), 1)
+		self.assertEqual([float(x) for x in world.planning_remaining(self.authorised["item_id"])], [100.0, 10_000_000.0])

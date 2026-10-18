@@ -337,7 +337,7 @@ export function cancelData(variant = "BASE") {
 		summary: { purchase: "Supply and delivery of district clinic printers", tender: "TND-MOH-2027-034", published_at: "20 May 2027, 08:00 EAT", submission_deadline: "10 Jun 2027, 11:00 EAT", required_channels: "State Portal, Ministry website, Notice board, Two national newspapers", channel_count: 4 },
 		grounds: [{ key: "INADEQUATE_BUDGET", label: "Inadequate budgetary provision" }],
 		recommendation: variant === "RECOMMEND" ? { by_name: "Charles Mutiso", at_label: "4 Jun 2027, 13:30 EAT", text: "I recommend cancellation because the confirmed budget is insufficient to complete this procurement.", ground: "INADEQUATE_BUDGET" } : null,
-		consequences: { ppra_report_due_by: "18 Jun 2027", candidate_notice_due_by: "18 Jun 2027", replacement_text: "Replacement procurement requires new governance." },
+		consequences: { ppra_report_due_by: "18 Jun 2027", candidate_notice_due_by: "18 Jun 2027", replacement_text: "A replacement purchase requires a new requisition." },
 		cancellation: cancelled ? { name: "TCX-0001", ground_label: "Inadequate budgetary provision", reason: "The confirmed budget available for this procurement is insufficient to proceed.", decided_by_name: "Amina Hassan", decided_at_label: "4 Jun 2027, 14:00 EAT", obligations } : null,
 		compliance: cancelled ? [
 			{ key: "record_cancellation_notice_evidence", label: "Cancellation notices", due_by: "18 Jun 2027", status: "Outstanding", detail: "0 of 4 recorded", action: "record_cancellation_notice_evidence", action_label: "Record cancellation notice evidence", obligation_id: "NOTICE-C0" },
@@ -345,7 +345,7 @@ export function cancelData(variant = "BASE") {
 		] : [],
 		review: variant === "REQUEST" ? { addendum: "TDA-0039", addendum_reference: "ADD-MOH-2027-039-001", requested_by_name: "Brian Wafula", requested_by_role: "Procurement Officer", field: "Business laptops — Quantity", current: "250 Each", proposed: "300 Each", reason: "Additional deployment sites require 50 more laptops" } : null,
 		allowed_actions: cancelled ? (holder ? ["record_cancellation_evidence"] : []) : variant === "REQUEST" ? ["cancel_tender", "close_cancellation_review"] : ["cancel_tender"],
-		warning_text: "Cancellation is final for this Tender. It does not restore the Requisition or create a replacement Tender.",
+		warning_text: "The tender will end. KenTender will restore its unused planning allowance and release its unused budget reservation after checking the linked records. A replacement purchase requires a new requisition.",
 		guidance: guidance(g[0], g[1], g[2]),
 	};
 }
@@ -410,5 +410,23 @@ export function startDetail(variant = "SUPPORTED") {
 		supported, result_text: supported ? "Supported — IT equipment using the standard Open Tender format." : "This requisition is not supported by the current IT-equipment Tender format.",
 		template: { available: true, display_name: "IT Equipment — Open Tender", template_version: "1.1", official_source_title: "PPRA Goods Standard Tender Document" },
 		can_start: supported,
+	};
+}
+
+// TPR-CHG-001 v0.21 §10.18 — the 'Unused allowance and funding' section as the server sends it, in each of the three states.
+export function recoverySection(status = "Pending") {
+	const copy = {
+		Pending: ["Restoring unused allowance and funding", "You can view the cancelled tender. The affected allowance cannot be used until restoration is complete."],
+		Completed: ["Unused allowance and funding restored", "The unused planning allowance and budget reservation of this tender have been restored."],
+		"Needs attention": ["Unused allowance and funding need attention", "The unused allowance and funding could not be restored automatically. Nothing was changed."],
+	}[status];
+	return {
+		title: "Unused allowance and funding", status, label: copy[0], explanation: copy[1],
+		reason: status === "Needs attention" ? "Budget — The reservation has been converted, wholly or in part." : "",
+		rows: [{ key: "DL-1", source: "Ministry of Health Headquarters", quantity: "60 Each", value: "KES 6,000,000.00", restored: status === "Completed" ? "60 Each · KES 6,000,000.00" : "—", released: status === "Completed" ? "KES 6,000,000.00" : "—" }],
+		partial_view: false,
+		technical: [{ label: "Recovery", value: "CRR-00001" }, { label: "Cancellation", value: "TDC-00001" }],
+		next_step: status === "Completed" ? { label: "Start a new requisition for this purchase", route: "/app/procurement-requisitions/new/PPI-MOH-2027-001" } : null,
+		recovery: "CRR-00001", status_revision: status === "Pending" ? 1 : 2,
 	};
 }

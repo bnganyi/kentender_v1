@@ -318,6 +318,7 @@
 						@remove="dissolveDialog = true"
 						@back="onBackToPlan"
 						@view-classification="onViewItemClassification"
+						@navigate="onNavigate"
 					/>
 					<DissolveItemDialog
 						v-if="dissolveDialog"

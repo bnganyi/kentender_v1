@@ -440,6 +440,7 @@ class TestCancellationAndClose(OpenPeriodCase):
 		self.assertEqual(ctx.exception.code, "TND_CANCELLATION_GROUND_INVALID")
 		recommended = cancellation.recommend_tender_cancellation(tender=self.name, ground="INADEQUATE_BUDGET", reason="I recommend cancellation because the confirmed budget is insufficient to complete this procurement.", expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
 		self.assertEqual(frappe.db.get_value("Tender", self.name, "overall_status"), "Published — open")
+		self.assertEqual(frappe.db.count("Cancellation Resource Recovery", {"tender": self.name}), 0)  # a recommendation is not cancellation authority (TPR-CR-AC-002)
 		screen = open_period_read.get_tender_cancellation(tender=self.name, user=fx.AO)
 		self.assertEqual((screen["recommendation"]["ground"], screen["allowed_actions"], screen["summary"]["channel_count"]), ("INADEQUATE_BUDGET", ["cancel_tender"], 4))
 		self.assertEqual(screen["consequences"]["ppra_report_due_by"], f"{ad.d_short('2027-06-18')}")
@@ -453,6 +454,8 @@ class TestCancellationAndClose(OpenPeriodCase):
 		root.reload()
 		doc = frappe.get_doc("Tender Cancellation", cancelled["cancellation"])
 		self.assertEqual((root.overall_status, doc.ground_label, doc.decided_by, doc.recommendation), ("Cancelled", "Inadequate budgetary provision", fx.AO, recommended["decision"]))
+		# the Accounting Officer's decision itself registered the recovery of the unused allowance and funding, Pending, in the same transaction
+		self.assertEqual(frappe.db.get_value("Cancellation Resource Recovery", {"tender": self.name}, ["name", "status"]), (doc.resource_recovery, "Pending"))
 		self.assertEqual((str(doc.ppra_report_due_by), str(doc.candidate_notice_due_by)), (W("2027-06-18"), W("2027-06-18")))
 		self.assertEqual([o.obligation_type for o in doc.obligations], ["Notice channel"] * 4 + ["PPRA report", "Candidate notice"])
 		# §5.7: no candidate registered, so the absence is recorded from the registry

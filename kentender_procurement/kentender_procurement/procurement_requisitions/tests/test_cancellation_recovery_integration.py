@@ -29,7 +29,7 @@ from kentender_procurement.procurement_requisitions.services import eligibility_
 from kentender_procurement.procurement_requisitions.services.errors import ProcurementRequisitionsError
 from kentender_procurement.procurement_requisitions.tests import cancellation_world as world
 from kentender_procurement.procurement_requisitions.tests import fixtures as req_fx
-from kentender_procurement.procurement_planning.services import progress_read
+from kentender_procurement.procurement_planning.services import plan_read, progress_read, recovery_read
 from kentender_procurement.procurement_requisitions.services import read as req_read
 from kentender_procurement.tenders.services import award_seam, open_period_read
 from kentender_procurement.tenders.tests import fixtures as tnd_fx
@@ -304,6 +304,14 @@ class TestCrF01(WorldCase):
 			frappe.set_user("Administrator")
 		return next(r for r in rows if r["plan_item_id"] == self.authorised["item_id"])["recoveries"]
 
+	def plan_item_sections(self):
+		"""The same recovery on the Plan Item's own detail (PLN-CHG-001 v1.32 §10.19)."""
+		frappe.set_user(req_fx.PLANNER)
+		try:
+			return plan_read.get_plan_item(plan_item_id=self.authorised["item_id"])["recoveries"]
+		finally:
+			frappe.set_user("Administrator")
+
 	def budget_line(self):
 		from kentender_budget.services.budget_contracts import get_budget_line_position
 
@@ -320,6 +328,7 @@ class TestCrF01(WorldCase):
 		self.assertEqual(self.requisition_section()["label"], "Restoring unused allowance and funding")
 		planning = self.planning_sections()
 		self.assertEqual([(s["status"], s["label"]) for s in planning], [("Pending", "Restoring unused allowance")])
+		self.assertEqual([(s["status"], s["label"]) for s in self.plan_item_sections()], [("Pending", "Restoring unused allowance")])
 		reservation = self.budget_line()["reservations"][0]
 		self.assertEqual((reservation["status"], reservation["recovery"]["status"], reservation["recovery"]["label"]), ("Active", "Pending", "Being released after tender cancellation"))
 		self.assertEqual(self.budget_line()["cancellation_releases"], [])
@@ -333,6 +342,7 @@ class TestCrF01(WorldCase):
 			self.assertIn("notices", tender["reason"].lower())
 			self.assertEqual(self.requisition_section()["status"], "Needs attention")
 			self.assertEqual(self.planning_sections()[0]["label"], "Unused allowance could not be restored")
+			self.assertEqual(self.plan_item_sections()[0]["label"], "Unused allowance could not be restored")
 			self.assertEqual(self.budget_line()["reservations"][0]["recovery"]["status"], "Needs attention")
 
 	def test_a_departmental_reader_sees_only_the_permitted_rows(self):
@@ -361,7 +371,7 @@ class TestCrF01(WorldCase):
 		self.assertEqual((doc.reason_code, bool(doc.completed_at), doc.attempt_count), ("", True, 1))
 		self.assertEqual([float(x) for x in world.planning_remaining(self.authorised["item_id"])], [100.0, 10_000_000.0])
 		position, before = world.budget_position(line), self.sources_before["position"]
-		self.assertEqual((float(position["reserved"]), float(position["committed"]), float(position["approved"])), (0.0, 0.0, float(before["approved"])))
+		self.assertEqual((float(position["reserved"]), float(position["committed"]), float(position["approved"])), (0.0, float(before["committed"]), float(before["approved"])))  # the release touches only what was reserved
 		self.assertEqual(float(position["available"]), float(before["available"]) + 6_000_000.0)  # V rises by exactly what R fell by
 		self.assertEqual(frappe.db.get_value("Funding Reservation", reservation, "status"), "Released")
 		self.assertEqual(float(frappe.db.get_value("Funding Reservation", reservation, "original_amount")), 6_000_000.0)  # the authorisation is never edited
@@ -404,6 +414,11 @@ class TestCrF01(WorldCase):
 		self.assertTrue(tender["next_step"]["route"].endswith(f"/new/{self.authorised['item_id']}"))
 		self.assertEqual(self.requisition_section()["label"], "Unused allowance and funding restored")
 		self.assertEqual([(s["status"], s["label"]) for s in self.planning_sections()], [("Completed", "Unused allowance restored after tender cancellation")])
+		self.assertEqual([(s["status"], s["label"]) for s in self.plan_item_sections()], [("Completed", "Unused allowance restored after tender cancellation")])
+		# Desk routes travel as the segments frappe.set_route takes, never as a path string it would spread into letters
+		offered = recovery_read.sections_for_item(self.authorised["item_id"], start_route=lambda: f"/app/procurement-requisitions/new/{self.authorised['item_id']}")
+		self.assertEqual(offered[0]["next_step"]["route"], ["procurement-requisitions", "new", self.authorised["item_id"]])
+		self.assertIsNone(recovery_read.sections_for_item(self.authorised["item_id"], start_route=lambda: "")[0]["next_step"])  # nothing offered, no link
 		line_view = self.budget_line()
 		self.assertEqual(line_view["reservations"], [])  # a released reservation is no longer a hold on the line
 		self.assertEqual([(r["reservation"], r["closure"]) for r in line_view["cancellation_releases"]], [(reservation, "")])
@@ -466,7 +481,7 @@ class TestCrF02(WorldCase):
 		frappe.db.commit()
 		self.assertEqual((outcome["status"], outcome["status_revision"]), ("Completed", 2))
 		position, before = world.budget_position(self.sources_before["line"]), self.sources_before["position"]
-		self.assertEqual((float(position["reserved"]), float(position["committed"])), (0.0, 0.0))
+		self.assertEqual((float(position["reserved"]), float(position["committed"])), (0.0, float(before["committed"])))  # the release touches only what was reserved
 		self.assertEqual(float(position["available"]), float(before["available"]) + 10_000_000.0)  # R down 10m, V up 10m, A and C unchanged
 		self.assertEqual((float(position["approved"]), float(before["reserved"])), (float(before["approved"]), 10_000_000.0))
 		self.assertEqual([float(x) for x in world.planning_remaining(self.authorised["item_id"])], [100.0, 10_000_000.0])

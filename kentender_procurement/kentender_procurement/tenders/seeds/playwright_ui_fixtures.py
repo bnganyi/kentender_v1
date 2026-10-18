@@ -619,6 +619,49 @@ def reset_cancelled_fixture(*, commit: bool = True) -> dict[str, Any]:
 	return _done(state, commit)
 
 
+def _recovery_facts(tender: str) -> dict[str, Any]:
+	"""The ids a browser spec needs to walk the four screens of one cancelled Tender's recovery."""
+	recovery = frappe.db.get_value("Cancellation Resource Recovery", {"tender": tender}, ["name", "requisition", "plan_item_id", "status"], as_dict=True)
+	if not recovery:
+		return {}
+	source = frappe.db.get_value("Cancellation Recovery Source", {"parent": recovery.name}, ["reservation_id"], as_dict=True)
+	return {
+		"recovery": recovery.name, "recovery_status": recovery.status, "requisition": recovery.requisition,
+		"requisition_reference": frappe.db.get_value("Procurement Requisition", recovery.requisition, "requisition_reference"), "plan_item_id": recovery.plan_item_id,
+		"plan_reference": frappe.db.get_value("Annual Plan", frappe.db.get_value("Plan Item", recovery.plan_item_id, "annual_plan"), "plan_reference"),
+		"reservation": source.reservation_id if source else "", "budget_line": frappe.db.get_value("Funding Reservation", source.reservation_id, "budget_line") if source else "",
+	}
+
+
+def reset_cancelled_recovery_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""TPR-DES-12 'Cancelled detail' with the recovery of the unused allowance and funding that the real cancellation registered (Pending)."""
+	state = reset_cancelled_fixture(commit=False)
+	state.update(_recovery_facts(state["tender"]))
+	return _done(state, commit)
+
+
+def cancellation_recovery_facts(*, tender: str) -> dict[str, Any]:
+	"""Read-only: the ids of a cancelled Tender's recovery, for a browser spec that cancelled it through the screen."""
+	return _recovery_facts(tender)
+
+
+def run_cancellation_recovery(*, tender: str, other_reason: bool = False, commit: bool = True) -> dict[str, Any]:
+	"""Carry out the recovery the way the scheduler's worker does (the test site has none running). With `other_reason`, the reservation is first
+	released for another reason through Budget, so the recovery has to stop with the owner's own reason."""
+	from kentender_procurement.procurement_requisitions.services import funding_gateway, recovery_sweep
+
+	facts = _recovery_facts(tender)
+	frappe.set_user("Administrator")
+	if other_reason:
+		funding_gateway.release_reservation(
+			reservation=facts["reservation"], requisition_reference=facts["requisition_reference"], downstream_event_id="playwright-other-reason", idempotency_key=_key(),
+		)
+	outcome = recovery_sweep.run_one(facts["recovery"])
+	if commit:
+		frappe.db.commit()
+	return {**facts, "recovery_status": outcome["status"], "reason": outcome["reason"]}
+
+
 def reset_correction_requested_fixture(*, commit: bool = True, successor: bool = False) -> dict[str, Any]:
 	"""TPR-DES-13 "Correction requested"; with `successor`, the "Corrected
 	successor available" state. REQ-CHG-001 v1.11 retired the handoff release

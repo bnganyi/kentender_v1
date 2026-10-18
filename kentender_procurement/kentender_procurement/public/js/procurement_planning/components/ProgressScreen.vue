@@ -71,6 +71,11 @@
 										</div>
 									</td>
 								</tr>
+								<!-- PLN-CHG-001 v1.32 §10.19 — the recovery of the unused allowance after a tender was cancelled, in this purchase's own row: Planning's
+								     account of it (a held source, or the exact draw restored), its next step, and nothing that restores or edits anything. -->
+								<tr v-for="recovery in row.recoveries || []" :key="recovery.recovery" class="pln-row-detail">
+									<td colspan="6"><RecoverySection :recovery="recovery" prefix="prg-recovery" @navigate="$emit('navigate', $event)" /></td>
+								</tr>
 								<tr data-testid="prg-purchase">
 									<td>
 										<div style="font-weight: 600">{{ row.title }}</div>
@@ -165,6 +170,7 @@
 
 <script setup>
 import { computed } from "vue";
+import RecoverySection from "./RecoverySection.vue";
 
 const props = defineProps({
 	progress: { type: Object, default: () => ({}) },

@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
-import { addendumData, cancelData, clarificationData } from "./fixtures.js";
+import { addendumData, cancelData, clarificationData, recoverySection } from "./fixtures.js";
 import AddendumScreen from "./AddendumScreen.vue";
 import ClarificationScreen from "./ClarificationScreen.vue";
 import CancelScreen from "./CancelScreen.vue";
@@ -97,7 +97,7 @@ describe("CancelScreen — TPR-DES-12", () => {
 	it("AO decision: warning, summary, ground/reason, consequences; the reason is checked inline", async () => {
 		const w = mount(CancelScreen, { props: { data: cancelData("RECOMMEND"), pending: false, error: "" }, attachTo: document.body });
 		await nextTick();
-		expect(w.find('[data-testid="tnd-cancel-warning"]').text()).toContain("Cancellation is final for this Tender.");
+		expect(w.find('[data-testid="tnd-cancel-warning"]').text()).toContain("The tender will end. KenTender will restore its unused planning allowance and release its unused budget reservation");
 		expect(w.find('[data-testid="tnd-recommendation"]').text()).toContain("Charles Mutiso, Head of Procurement Function · 4 Jun 2027, 13:30 EAT");
 		expect(w.find('[data-testid="tnd-consequences"]').text()).toContain("PPRA report due 18 Jun 2027.");
 		await w.find('[data-testid="tnd-cancel-open-dialog"]').trigger("click");
@@ -127,6 +127,42 @@ describe("CancelScreen — TPR-DES-12", () => {
 		expect(holder.emitted("record-evidence")[0][0].obligation_id).toBe("PPRA_REPORT");
 		const reader = mount(CancelScreen, { props: { data: cancelData("CANCELLED-READER"), pending: false, error: "" } });
 		expect(reader.findAll('[data-testid="tnd-obligations"] button')).toHaveLength(0);
+	});
+});
+
+describe("CancelScreen — the unused allowance and funding (TPR-CHG-001 v0.21 §10.18)", () => {
+	const shown = async (status) => {
+		const w = mount(CancelScreen, { props: { data: { ...cancelData("CANCELLED-READER"), resource_recovery: status ? recoverySection(status) : null }, pending: false, error: "" } });
+		await nextTick();
+		return w;
+	};
+	it("Pending: the state in plain words, no restored column and no next step", async () => {
+		const w = await shown("Pending");
+		expect(w.find('[data-testid="tnd-resource-recovery"] h2').text()).toBe("Unused allowance and funding");
+		expect(w.find('[data-testid="tnd-resource-recovery-label"]').text()).toBe("Restoring unused allowance and funding");
+		expect(w.find('[data-testid="tnd-resource-recovery-explanation"]').text()).toContain("cannot be used until restoration is complete");
+		expect(w.find('[data-testid="tnd-resource-recovery-next"]').exists()).toBe(false);
+		expect(w.find('[data-testid="tnd-resource-recovery-rows"] thead').text()).not.toContain("restored");
+		w.unmount();
+	});
+	it("Completed: the exact amounts restored and released, and the ordinary route to a fresh requisition", async () => {
+		const w = await shown("Completed");
+		expect(w.find('[data-testid="tnd-resource-recovery-label"]').text()).toBe("Unused allowance and funding restored");
+		expect(w.find('[data-testid="tnd-resource-recovery-rows"] tbody').text()).toContain("60 Each · KES 6,000,000.00");
+		expect(w.find('[data-testid="tnd-resource-recovery-next-link"]').attributes("href")).toBe("/app/procurement-requisitions/new/PPI-MOH-2027-001");
+		w.unmount();
+	});
+	it("Needs attention: the owner's real reason, the identifiers only under Technical details", async () => {
+		const w = await shown("Needs attention");
+		expect(w.find('[data-testid="tnd-resource-recovery-reason"]').text()).toContain("converted");
+		expect(w.find('[data-testid="tnd-resource-recovery-next"]').exists()).toBe(false);
+		expect(w.find('[data-testid="tnd-resource-recovery"]').text().replace(w.find('[data-testid="tnd-resource-recovery-technical"]').text(), "")).not.toContain("CRR-00001");
+		w.unmount();
+	});
+	it("nothing is shown when the reader has no section", async () => {
+		const w = await shown(null);
+		expect(w.find('[data-testid="tnd-resource-recovery"]').exists()).toBe(false);
+		w.unmount();
 	});
 });
 

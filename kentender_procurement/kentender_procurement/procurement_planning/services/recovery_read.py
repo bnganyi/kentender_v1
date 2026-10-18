@@ -70,6 +70,24 @@ def sections_for_item(plan_item_id: str, *, start_route: Callable[[], str] | Non
 	return out
 
 
+def start_route_for(plan_item_id: str) -> str:
+	"""The ordinary route to a fresh Requisition for this purchase, only when Planning currently offers it to this reader (the Requisitions
+	eligibility read is scoped to the reader). Nothing starts for anyone and the old handoff is never reopened."""
+	from kentender_procurement.procurement_planning.services import plan_requisition
+
+	try:
+		offered = {row["plan_item_id"] for row in plan_requisition.list_requisition_eligible_plan_items()}
+	except Exception:  # noqa: BLE001 — an unreadable offer is no offer
+		return ""
+	return f"/app/procurement-requisitions/new/{cstr(plan_item_id)}" if cstr(plan_item_id) in offered else ""
+
+
+def _segments(path: str) -> list[str]:
+	"""The Desk route as the segments `frappe.set_route` takes ('/app/procurement-requisitions/new/PPI-1' -> ['procurement-requisitions', 'new', 'PPI-1'])."""
+	parts = [p for p in cstr(path).split("/") if p]
+	return parts[1:] if parts and parts[0] == "app" else parts
+
+
 def _row(allocation_id: str, quantity, amount, restored_quantity, restored_amount) -> dict[str, Any]:
 	unit = _department(_label(allocation_id))
 	return {
@@ -82,5 +100,5 @@ def _section(recovery_id: str, cancellation_id: str, status: str, label: str, ex
 	return {
 		"title": TITLE, "status": status, "label": label, "explanation": explanation, "reason": reason, "rows": rows, "partial_view": False,
 		"technical": [{"label": "Recovery", "value": recovery_id}, {"label": "Cancellation", "value": cancellation_id}, *({"label": "Planning drawdown", "value": d} for d in drawdowns)],
-		"next_step": ({"label": "Start a new requisition for this purchase", "route": start_route} if status == "Completed" and start_route else None), "recovery": recovery_id,
+		"next_step": ({"label": "Start a new requisition for this purchase", "route": _segments(start_route)} if status == "Completed" and start_route else None), "recovery": recovery_id,
 	}

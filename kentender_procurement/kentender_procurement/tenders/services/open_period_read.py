@@ -15,7 +15,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.tenders.services import addenda, cancellation, channel_confirmation, clock, draft_commands, guidance, publication_read, read, serializer
+from kentender_procurement.tenders.services import addenda, cancellation, channel_confirmation, clock, draft_commands, guidance, publication_read, read, recovery_gateway, serializer
 from kentender_procurement.tenders.services import tender_authorization as authz
 
 
@@ -250,12 +250,14 @@ def get_tender_cancellation(*, tender: str, user: str | None = None) -> dict[str
 		"summary": {"purchase": cstr(state.get("tender_title") or root.requirement_title), "tender": root.tender_reference, "published_at": serializer.fmt_datetime_short(root.published_at) if root.published_at else "", "submission_deadline": serializer.fmt_datetime_short(root.submission_deadline) if root.submission_deadline else "", "required_channels": ", ".join(c["label"] for c in channels), "channel_count": len(channels)},
 		"grounds": cancellation.grounds_for_client(), "grounds_source": cancellation.GROUNDS_SOURCE,
 		"recommendation": recommendation,
-		"consequences": {"closes_immediately": True, "notice_channels": [c["label"] for c in channels], "ppra_report_due_by": next((serializer.fmt_date_short(o["due_by"]) for o in preview if o["obligation_type"] == "PPRA report"), ""), "candidate_notice_due_by": next((serializer.fmt_date_short(o["due_by"]) for o in preview if o["obligation_type"] == "Candidate notice"), ""), "replacement_text": "A replacement procurement requires new governance."},
+		"consequences": {"closes_immediately": True, "notice_channels": [c["label"] for c in channels], "ppra_report_due_by": next((serializer.fmt_date_short(o["due_by"]) for o in preview if o["obligation_type"] == "PPRA report"), ""), "candidate_notice_due_by": next((serializer.fmt_date_short(o["due_by"]) for o in preview if o["obligation_type"] == "Candidate notice"), ""), "replacement_text": "A replacement purchase requires a new requisition."},
 		"cancellation": existing,
 		"notice_channels": publication_read.confirmation_rows(subject_type="Cancellation notice", subject_id=root.cancellation) if root.cancellation else [],
 		"allowed_actions": actions,
 		"review": review,
 		"compliance": _compliance_rows(existing) if existing else [],
-		"warning_text": "Cancellation is final for this Tender. It does not restore the Requisition or create a replacement Tender.",
+		"warning_text": "The tender will end. KenTender will restore its unused planning allowance and release its unused budget reservation after checking the linked records. A replacement purchase requires a new requisition.",
+		# TPR-CHG-001 v0.21 §10.18 — Requisitions' recovery of the unused allowance and funding, as this reader may see it
+		"resource_recovery": recovery_gateway.section(root.name, user=actor) if root.overall_status == "Cancelled" else None,
 		"guidance": _guidance(root, actor, roles, "cancellation"),
 	}

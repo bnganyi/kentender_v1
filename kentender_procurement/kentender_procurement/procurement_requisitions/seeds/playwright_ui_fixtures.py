@@ -408,10 +408,14 @@ def _wipe_planning_side() -> None:
 	frappe.db.delete("Annual Plan Version", {"name": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan", {"name": ("in", plans or ("",))})
 	frappe.db.delete("Planning Command Journal", {"actor": ("in", ACTORS)})
+	frappe.db.delete("Reservation Cancellation Release", {"budget_line": BUDGET_LINE or "__missing__"})  # BUD-CHG-001 v1.17: a recovery's release rows point at these reservations
 	frappe.db.delete("Funding Reservation", {"budget_line": BUDGET_LINE or "__missing__"})
 
 
 def _wipe_requisitions_side() -> None:
+	# REQ-CHG-001 v1.20: a cancellation recovery (with its source rows) belongs to the Requisition it recovers
+	owned = frappe.get_all("Procurement Requisition", filters={"owner": ("in", ACTORS)}, pluck="name")
+	delete_rows("Cancellation Resource Recovery", {"requisition": ("in", owned or ("",))})
 	for doctype in (
 		"Requisition Event", "Requisition Decision", "Requisition Task", "Authorised Requisition Handoff",
 		"Requisition Version", "IT Equipment Requirement Package Version", "IT Equipment Requirement Package",

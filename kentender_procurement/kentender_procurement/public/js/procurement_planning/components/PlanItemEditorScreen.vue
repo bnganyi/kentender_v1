@@ -51,6 +51,9 @@
 					<p>{{ notice.text }}</p>
 				</div>
 			</div>
+			<!-- PLN-CHG-001 v1.32 §10.19 — the unused allowance after a tender was cancelled: Pending, restored (with the ordinary route to start
+			     again when Planning offers it), or the cause it could not be restored. Nothing here restores or edits anything. -->
+			<RecoverySection v-for="recovery in item.recoveries || []" :key="recovery.recovery" :recovery="recovery" prefix="ppi-recovery" @navigate="$emit('navigate', $event)" />
 			<div v-for="blocker in visibleBlockers" :key="blocker.message" class="kt-notice is-critical" data-testid="ppi-blocker">
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
@@ -457,6 +460,7 @@
 import { computed, nextTick, reactive, ref, watch } from "vue";
 import { formatDate } from "../data/format.js";
 import MissingSettingGroup from "./MissingSettingGroup.vue";
+import RecoverySection from "./RecoverySection.vue";
 
 const props = defineProps({
 	item: { type: Object, default: () => ({}) },
@@ -464,7 +468,7 @@ const props = defineProps({
 	errorSummary: String,
 });
 
-const emit = defineEmits(["save", "remove", "back", "view-classification"]);
+const emit = defineEmits(["save", "remove", "back", "view-classification", "navigate"]);
 
 const EDITABLE = [
 	"title",

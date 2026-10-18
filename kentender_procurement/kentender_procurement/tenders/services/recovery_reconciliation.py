@@ -39,9 +39,12 @@ AMBIGUOUS = "ambiguous"
 CLASSES = (ELIGIBLE, REGISTERED, PARTIAL, OBLIGATION, OTHER_REASON, UNMAPPED, AMBIGUOUS)
 
 
-def _cancelled() -> list[dict[str, Any]]:
+def _cancelled(only: list[str] | None = None) -> list[dict[str, Any]]:
+	filters: dict[str, Any] = {"overall_status": "Cancelled", "cancellation": ("is", "set")}
+	if only is not None:
+		filters["name"] = ("in", list(only) or [""])
 	return frappe.get_all(
-		"Tender", filters={"overall_status": "Cancelled", "cancellation": ("is", "set")},
+		"Tender", filters=filters,
 		fields=["name", "tender_reference", "cancellation", "requisition_handoff", "requisition", "fixture_namespace"], order_by="creation asc", limit_page_length=0,
 	)
 
@@ -61,17 +64,17 @@ def classify(tender: dict[str, Any]) -> dict[str, Any]:
 	return {**base, **owned, "class": ELIGIBLE}
 
 
-def inventory() -> dict[str, Any]:
-	"""Every cancelled Tender with its class and reason, and the counts. Read-only."""
-	rows = [classify(t) for t in _cancelled()]
+def inventory(tenders: list[str] | None = None) -> dict[str, Any]:
+	"""Every cancelled Tender (or only the named ones) with its class and reason, and the counts. Read-only."""
+	rows = [classify(t) for t in _cancelled(tenders)]
 	counts = {c: sum(1 for r in rows if r["class"] == c) for c in CLASSES}
 	return {"version": VERSION, "total": len(rows), "counts": counts, "tenders": rows}
 
 
-def reconcile(*, dry_run: bool = True) -> dict[str, Any]:
+def reconcile(*, dry_run: bool = True, tenders: list[str] | None = None) -> dict[str, Any]:
 	"""Register the recovery of every unregistered cancelled Tender; the recovery worker then carries each out. `dry_run` writes
 	nothing. Returns the inventory it acted on and what it did to each Tender."""
-	report = inventory()
+	report = inventory(tenders)
 	actions = []
 	for row in report["tenders"]:
 		if row["class"] == REGISTERED:

@@ -32,7 +32,7 @@ from frappe.utils import cstr, flt, fmt_money, formatdate, get_datetime
 
 from kentender_core.services import next_step as ns
 from kentender_procurement.procurement_planning.errors import MESSAGES
-from kentender_procurement.procurement_planning.services import missing_setting, money, needs_intake, readiness, references, schedule, scope_lock
+from kentender_procurement.procurement_planning.services import missing_setting, money, needs_intake, readiness, recovery_read, references, schedule, scope_lock
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
@@ -1492,6 +1492,8 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 		},
 		"scope_lock": lock,
 		"notices": notices,
+		# PLN-CHG-001 v1.32 §10.19 — the unused allowance after a tender was cancelled, from Planning's own records
+		"recoveries": recovery_read.sections_for_item(cstr(item.plan_item_id), start_route=lambda: recovery_read.start_route_for(cstr(item.plan_item_id))),
 		"classification": {
 			"strategic_objective": cstr(item.strategic_objective),
 			"objective_path": cstr(item.objective_path),
