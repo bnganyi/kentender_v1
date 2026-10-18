@@ -52,7 +52,6 @@ Last updated 18 October 2026, when the build was committed.
 
 - Killing the process in the middle of a recovery (only raised errors were used).
 - Racing a cancellation against Award issuing a notice with two real connections. The order of locks and Award's re-read under the lock are shown; the race itself is not.
-- A recovery failing and the cancellation notices carrying on (the notices and the failure are each tested, not together).
 - A recovery for a Budget that has been closed, from Requisitions through to Planning (Budget's own handling of a closed Budget is tested).
 - A cancelled failed opening, to see that nothing registers (there is no path that could).
 - The Budget line in the Needs attention state, and browser back and forward on the new sections, in a real browser.
