@@ -10,6 +10,9 @@ Started 18 October 2026 while building the whole-Tender cancellation recovery (P
 4. **The support operator** is the existing technical operator (chosen at the start); no new role.
 5. **A new consequence found on 18 October:** on the development site the canonical world check now fails on one line, "a recorded event is later than the anchor", because the recovery's Budget events are dated 18 October. It will do the same after any real action; a reseed takes a new anchor.
 
+6. **Editorial mistakes in the four approved documents: “Fix them now as part of document hygiene”** (18 October 2026). Four correction versions are written and wait for your approval: Planning v1.33, Requisitions v1.21, Budget v1.18, Tenders v0.23. They only list the recovery error messages in each document's own table, relabel one repeated Budget row, and split one Planning table row; no rule changes. The wording of the Tenders “too late to cancel” message is new. See `DOCUMENT_HYGIENE_REPORT_2026-10-18.md`.
+7. **The register: “Update the cancellation documents”** (18 October 2026). The register now shows these four documents as implementation “In progress” and verification “Pending”, with a pointer to the evidence map. It does not say “Implemented” or “Passed”: three of the twelve acceptance rows are only partly shown.
+
 **Still open, not asked yet:** cancelling a Tender after its submission period has closed is still not possible (the approved text lists it; Bid Opening says it waits for Bid Opening and Evaluation to approve their side).
 
 ## Found and fixed (already in the code)
@@ -62,6 +65,6 @@ Last updated 18 October 2026, when the build was committed.
 
 **Not touched on purpose**
 
-- The document register's implementation, verification and release fields (approval is not evidence).
+- The document register's release fields (approval is not evidence). Its implementation and verification fields were updated on 18 October 2026 for the four cancellation documents (see decision 7 above).
 - The canonical seed, SEED-002 and the Analytics expected values.
 - TPR section 10.13 (still carries the old warning).

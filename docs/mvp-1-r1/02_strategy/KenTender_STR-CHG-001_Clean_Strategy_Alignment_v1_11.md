@@ -1,5 +1,7 @@
 # STR-CHG-001 — Clean Strategy Alignment
 
+**Approval record — 18 October 2026 (v1.11).** Project Owner, 18 October 2026, verbatim: “2. Approved. Mark them as such”, answering decision 2 of docs/mvp-1-r1/98_work_progress/SYSTEM_CHECK_2026-10-18.md (“Seven newer document versions are waiting for your approval”: STR-CHG-001 v1.11, SEED-OPS-001 v1.25, PRC-CHG-001 v0.13, EVL-CHG-001 v0.9, AWD-CHG-001 v0.8, CM-CHG-001 v0.12 and G1-REG-001 v1.2). This approves STR-CHG-001 v1.11 in full, including its four business rules (STR-BR-025 to STR-BR-028), its five acceptance criteria (STR111-AC-001 to STR111-AC-005), its recorded owner decision (§18.5) and the five defaults in §18.6, which this approval settles as taken. v1.11 supersedes approved v1.10 as the Strategy authority and baseline. It decides no other difference in §18.4; those stay open and undecided. Approval establishes the requirement only: it does not establish implementation, migration, seed execution, testing, legal clearance or production readiness, and it closes no acceptance criterion. The proposed-status wording below (the “Proposed successor v1.11” paragraph, the retained Proposed status row of the control table and the “v1.11 — proposed” subsection of §19) is drafting history superseded by this record.
+
 **Proposed successor v1.11 — 12 October 2026.** v1.11 carries the whole of v1.10 and reverses one rule of v1.9 and v1.10. The Project Owner instructed on 12 October 2026, verbatim: “Make this change. Future dated strategies should not be blocked for approval”, answering a note that set out the options and a recommendation (no new status, no scheduler). v1.9 §5.1 said approval is permitted only when the version can become effective immediately, and §11.6, §14.4 and STR18-AC-021 built a July-2027-effective version as a blocked example. Under v1.11 a version whose start date is later than the site date is approved like any other (STR-BR-025). Approval does not change what applies today: the current version keeps applying until the day before the new version starts, both versions stay approved, and nothing happens on the start date because there is no scheduler and no new status (STR-BR-026). “Current” and “Previous version” become labels worked out from the site date (STR-BR-027). v1.11 also records, as defaults for the Project Owner to confirm, which version “Update plan” copies and how a date or fiscal year is resolved when several approved versions exist (STR-BR-028, §18.6). v1.11 adds no workflow role, command, status or consumer contract. v1.10 is approved and remains the Strategy authority until the Project Owner approves v1.11.
 
 **Approval record — 12 October 2026 (v1.10).** Project Owner, 12 October 2026, verbatim: “Approve it and commit”, answering the report of v1.10, which listed the 17 open differences in §18.4 and asked whether to approve it or to take D1, D2, D12, D15 and D16 first. This approves STR-CHG-001 v1.10 in full. v1.10 supersedes v1.9 as the Strategy authority. The differences in §18.4 stay open and undecided. Approval does not establish implementation, seed execution, testing, legal clearance or production readiness.
@@ -21,11 +23,13 @@ Shared usability rules are owned once by **OVS-CHG-001 v0.6**, especially §§3�
 | Date | 12 October 2026 |
 | v1.10 date | 12 October 2026 |
 | v1.9 date | 3 October 2026 |
-| Status | Proposed — v1.10 was Approved; re-approval required |
+| Status | Approved — 18 October 2026 (v1.11) |
+| v1.11 status (retained) | Proposed — v1.10 was Approved; re-approval required |
 | v1.10 status | Approved — 12 October 2026 |
-| Approved on | Not yet approved |
+| Approved on | 18 October 2026 (v1.11) |
+| v1.11 approved on (proposed read, retained) | Not yet approved |
 | v1.10 approved on | 12 October 2026 |
-| Approval record | None for v1.11. v1.10: Project Owner, 12 October 2026, verbatim: “Approve it and commit”, answering the report of v1.10. v1.9: Project Owner instructed “Mark the documents as approved”, 3 October 2026. |
+| Approval record | Project Owner, 18 October 2026, verbatim: “2. Approved. Mark them as such”, answering decision 2 of SYSTEM_CHECK_2026-10-18.md (“Seven newer document versions are waiting for your approval”; the seven are STR-CHG-001 v1.11, SEED-OPS-001 v1.25, PRC-CHG-001 v0.13, EVL-CHG-001 v0.9, AWD-CHG-001 v0.8, CM-CHG-001 v0.12 and G1-REG-001 v1.2). Approves v1.11 in full; v1.11 supersedes approved v1.10 as the baseline. (v1.11 proposed read: None for v1.11.) v1.10: Project Owner, 12 October 2026, verbatim: “Approve it and commit”, answering the report of v1.10. v1.9: Project Owner instructed “Mark the documents as approved”, 3 October 2026. |
 | v1.9 status | Approved — 3 October 2026 |
 | Approval basis | Approved v1.7 baseline and Project Owner approval of STR Usability Amendment v0.1, STR-UX-001–012, on 13 September 2026, with direction to incorporate into the full document. |
 | Supersedes | On approval only: source v1.8; approved baseline and pending chain listed in OVS impact schedule |
@@ -33,7 +37,7 @@ Shared usability rules are owned once by **OVS-CHG-001 v0.6**, especially §§3�
 | Change type | Rule change on the Project Owner's instruction: a later start date no longer blocks approval; versions of one plan are settled by their dates; Current and Previous version are labels worked out from the site date. 4 business rules and five acceptance criteria added, 73 acceptance criteria in all. No role, command, status or consumer-contract change. |
 | v1.10 change type | Aligning successor: records the owner-decided read rule and the behaviour the audit remediation added, writes in four earlier owner decisions, and lists 17 differences between this document and the build without deciding them. 4 business rules and seven acceptance criteria added, 68 acceptance criteria in all. No lifecycle, role, command or consumer-contract change. |
 | v1.10 supersedes | v1.9, on approval, 12 October 2026 |
-| v1.11 supersedes | On approval only: v1.10 |
+| v1.11 supersedes | v1.10, on the approval of 18 October 2026. (v1.11 proposed read: On approval only: v1.10) |
 | Module | Strategy Alignment |
 | Standards | Inspected KT-STD-001 v1.4, AUTH-ADR-001 v1.7 and approved CFG-CHG-002 v0.10; owner boundaries and remaining evidence in §18. |
 | v1.10 standards | Inspected KT-STD-001 v1.29 (approved 9 October 2026), AUTH-ADR-001 v1.12 (approved 8 October 2026), SEED-002 v0.7 (approved 11 October 2026) and OVS-CHG-001 v0.6 §4.1; see §18.1. |
@@ -1091,7 +1095,13 @@ The instruction above settled that a later start date is not blocked. The note i
 
 ## 19. Approval effect
 
-### v1.11 — proposed
+### v1.11 — approved 18 October 2026
+
+**v1.11 approval effect (approved 18 October 2026).** v1.11 is approved by the Project Owner on 18 October 2026 (verbatim: “2. Approved. Mark them as such”) and supersedes v1.10 as the Strategy authority. It carries all of v1.10 and adds 4 business rules (STR-BR-025 to STR-BR-028), five acceptance criteria (STR111-AC-001 to STR111-AC-005), which makes 73 acceptance criteria in all, a 4-row change register (§18.2B), one recorded owner decision (§18.5) and five defaults (§18.6). Approval records that a later start date does not block approval and settles the defaults. It decides no other difference in §18.4. It does not establish implementation, migration, seed execution, passing tests, release, legal clearance or production readiness, and it closes no acceptance criterion. v1.10 is superseded.
+
+### v1.11 — proposed (retained as drafting history)
+
+*Drafting history, kept unchanged: the paragraph below was the approval effect while v1.11 was Proposed. Its “is Proposed”, “only when” and “would” wording is superseded by the approval-effect subsection above and by the approval record at the head of this document.*
 
 v1.11 is Proposed. It becomes the Strategy authority only when the Project Owner approves it, on an explicit instruction that the approval record quotes. It carries all of v1.10 and adds 4 business rules (STR-BR-025 to STR-BR-028), five acceptance criteria (STR111-AC-001 to STR111-AC-005), which makes 73 acceptance criteria in all, a 4-row change register (§18.2B), one recorded owner decision (§18.5) and five defaults for the Project Owner to confirm (§18.6). Approval would record that a later start date does not block approval and settle the defaults. It would not decide any other difference in §18.4, and it would not establish implementation, passing tests, release or legal clearance. v1.10 is approved and remains the authority until then.
 

@@ -5,11 +5,14 @@
 | Document ID | LAW-REG-001 |
 | Version | 1.2 |
 | Date | 23 September 2026 |
-| Status | **Proposed for approval — 30% reservation interpretation correction** |
-| Approved on | Not yet approved |
-| Approval record | Prepared following the Project Owner's instruction to correct the 30% reservation rule. |
+| Status | **Approved — 30% reservation interpretation correction** |
+| Status (retained) | **Proposed for approval — 30% reservation interpretation correction** |
+| Approved on | 23 September 2026, the approval date the Baseline Register (KT-DOC-CTRL-001) records for v1.2. The Project Owner confirmed this approval on 18 October 2026. |
+| Approved on (retained) | Not yet approved |
+| Approval record | The Baseline Register (KT-DOC-CTRL-001) records LAW-REG-001 v1.2 as an approved requirement with approval date 23 September 2026. No verbatim record of the Project Owner's instruction of that date is held in this file. On 18 October 2026 the Project Owner confirmed the approval, answering decision 1 of docs/mvp-1-r1/98_work_progress/SYSTEM_CHECK_2026-10-18.md (“Which of these three documents did you approve?”, which listed this document), verbatim: “1. All are approved. Harmonize”. The (retained) rows of this table keep this file's earlier wording as history. |
+| Approval record (retained) | Prepared following the Project Owner's instruction to correct the 30% reservation rule. |
 | Predecessor | v1.1, approved 12 September 2026; retained unchanged as historical evidence |
-| Approval effect | On approval, supersedes v1.1's interpretations and implementation instructions where corrected below. Approval of this document does not verify an unverified legal proposition or amend another controlled document automatically. |
+| Approval effect | LAW-REG-001 v1.2 is approved by the Project Owner and supersedes v1.1's interpretations and implementation instructions where corrected below. (v1.2 proposed read: On approval, supersedes v1.1's interpretations and implementation instructions where corrected below.) Approval of this document does not verify an unverified legal proposition or amend another controlled document automatically. |
 | Purpose | Separate source evidence, legal interpretation and KenTender design decisions; correct the Planning-related statutory register and assign unresolved legal/configuration work to its proper owner. |
 | Governing project decisions | Approved LAW v1.1 retained except for this correction; proposed PLN-CHG-001 v1.25 and CFG-CHG-002 v0.13; attached 30% reservation-rule review |
 | Verification scope | Targeted primary-source checks and a visual inspection of the historical Third Schedule. No claim of exhaustive legislation, amendment, case-law or circular review through the document date. |
@@ -431,6 +434,8 @@ Verification IDs abbreviate `LAW11-AC-`. Original P1–P11 and C1–C3 remain ma
 | LAW12-AC-003 | Actual achievement is calculated from authoritative actual procurement facts, never inferred from planned estimates. |
 | LAW12-AC-004 | Every expected current Plan Item is covered or explicitly excluded under the verified rule, and an approved amendment recalculates the successor snapshot without rewriting history. |
 | LAW12-AC-005 | Current-edition applicability, qualifying categories, evidence, overlap and county basis remain blocked until their specified verification is complete. |
+
+**Approval record — 23 September 2026 (v1.2), confirmed 18 October 2026.** The Baseline Register (KT-DOC-CTRL-001) records LAW-REG-001 v1.2 as an approved requirement with approval date 23 September 2026. No verbatim record of the Project Owner's instruction of that date is held in this file. On 18 October 2026 the Project Owner confirmed the approval, answering decision 1 of docs/mvp-1-r1/98_work_progress/SYSTEM_CHECK_2026-10-18.md (“Which of these three documents did you approve?”), verbatim: “1. All are approved. Harmonize”. Until that confirmation this file's control table read “Proposed for approval” and “Not yet approved”, which disagreed with the register. This record adds no legal proposition and verifies none, and it closes no item in §10 beyond what §10 already records. The paragraphs below were written before approval; their conditional wording (“proposed for Project Owner approval”, “until approval is recorded”, “On approval, v1.2 will retain”) is drafting history. With this record, approval is recorded and what they state for approval takes effect as written, including their statement of what approval does not close.
 
 LAW-REG-001 v1.2 is proposed for Project Owner approval. Approved v1.1 remains the controlled register until approval is recorded. On approval, v1.2 will retain every v1.1 correction and owner disposition except the superseded 30% denominator instruction, and LAW12-CHG-001–004 / LAW12-AC-001–005 will govern that correction.
 

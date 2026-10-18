@@ -5,10 +5,13 @@
 | Document ID | G1-REG-001 |
 | Version | 1.2 |
 | Date | 26 September 2026 |
-| Status | **Proposed — v1.1 was Proposed for approval and was not approved; re-approval required** |
-| Approved on | Not yet approved |
-| Approval record | None for v1.2. v1.1 had no approval record; it was Proposed for approval. |
-| Supersedes | On approval, v1.1 (proposed, not approved) and v1.0. v1.1 had no Supersedes row; the KT-DOC-CTRL-001 register records v1.1 as superseding v1.0 on approval. |
+| Status | **Approved — 18 October 2026 (v1.2)** |
+| Status (v1.2 proposed read, retained) | Proposed — v1.1 was Proposed for approval and was not approved; re-approval required |
+| Approved on | 18 October 2026 (v1.2) |
+| Approved on (v1.2 proposed read, retained) | Not yet approved |
+| Approval record | Project Owner, 18 October 2026, verbatim: “2. Approved. Mark them as such”, answering decision 2 of docs/mvp-1-r1/98_work_progress/SYSTEM_CHECK_2026-10-18.md (“Seven newer document versions are waiting for your approval”; the seven are STR-CHG-001 v1.11, SEED-OPS-001 v1.25, PRC-CHG-001 v0.13, EVL-CHG-001 v0.9, AWD-CHG-001 v0.8, CM-CHG-001 v0.12 and G1-REG-001 v1.2). This approves G1-REG-001 v1.2 in full. Approval establishes the requirement and handoff text only. It does not establish implementation, migration, seed execution, testing, legal clearance or production readiness, and it closes no acceptance criterion. |
+| Approval record (v1.2 proposed read, retained) | None for v1.2. v1.1 had no approval record; it was Proposed for approval. |
+| Supersedes | v1.2 supersedes v1.1 and v1.0, on the approval of 18 October 2026. (v1.2 proposed read: “On approval, v1.1 (proposed, not approved) and v1.0.”) v1.1 had no Supersedes row; the KT-DOC-CTRL-001 register records v1.1 as superseding v1.0 on approval. |
 | Change type | Narrow proposed successor to v1.1. Replaces the exact-manifest approval of the template release with owner decision OD5. No interface, delivery item, owner, future-work boundary or other implementation step changes. v1.1 had no Change type row. |
 | v1.2 decision basis | Owner decision OD5, Project Owner, 26 September 2026: “I don't want this complicated admin overhead regarding approvals and commissioning of templates. It is unnecessary, adds no value and is vexing. Allow development work to contine without this friction. Template release is purely an on and off switch on an affected site. Update this decision as a follow up to reflect in affected documents if necessary”. Project Owner instruction, 26 September 2026: “Close the open issues”. OD5 is recorded in the STD-TPL-IMP-001 v1.0 implementation tracker decision log and in the release 1.1 review record. |
 | v1.2 change scope | Replaces the template-release approval and commissioning step with the OD5 rule: the intact release is installed under IMP v1.0 with its site switch On, and release gate results and reviews are recorded evidence that do not decide whether the site may use the release. Changed: §4 step 2; the §5 Template release row; §7 split into §7.1 (v1.2, with required corrections in other documents) and §7.2 (v1.1, retained); control-table rows. Superseded wording is kept beside each correction as “v1.1 read”. All other v1.1 content is unchanged. |
@@ -125,7 +128,7 @@ Design and code may proceed in parallel only after the owner contracts in steps 
 
 ### 7.1 v1.2 approval effect
 
-v1.2 is **proposed**. Approval of v1.2 confirms the v1.1 sequence and boundary in §7.2 with one change: release 1.1 of the template is installed intact under IMP v1.0 with its site switch On, and its gate results and reviews are recorded evidence rather than an approval or commissioning step (owner decision OD5, recorded in the v1.2 control table). Approval of v1.2 does not install, approve or switch on a template release.
+v1.2 is approved by the Project Owner (18 October 2026) (v1.2 proposed read: “v1.2 is **proposed**.”). Approval of v1.2 confirms the v1.1 sequence and boundary in §7.2 with one change: release 1.1 of the template is installed intact under IMP v1.0 with its site switch On, and its gate results and reviews are recorded evidence rather than an approval or commissioning step (owner decision OD5, recorded in the v1.2 control table). Approval of v1.2 does not install, approve or switch on a template release. Approval establishes the requirement and handoff text only. It does not establish implementation, migration, seed execution, testing, legal clearance or production readiness, and it closes no acceptance criterion or §5 release-evidence item.
 
 **Required corrections in other documents.** The owner documents below still make an exact-manifest owner approval the condition for using the release. Each must change to match OD5; until it does, OD5 governs the difference for this register.
 

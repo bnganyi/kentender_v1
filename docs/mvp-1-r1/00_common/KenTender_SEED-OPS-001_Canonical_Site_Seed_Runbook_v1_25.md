@@ -1,8 +1,10 @@
 # SEED-OPS-001 — Canonical Site Seed Runbook
 
+**Current approval record — 18 October 2026 (v1.25).** On 18 October 2026 the Project Owner answered decision 2 of the system check of 18 October 2026 (docs/mvp-1-r1/98_work_progress/SYSTEM_CHECK_2026-10-18.md, “Seven newer document versions are waiting for your approval”: STR-CHG-001 v1.11, SEED-OPS-001 v1.25, PRC-CHG-001 v0.13, EVL-CHG-001 v0.9, AWD-CHG-001 v0.8, CM-CHG-001 v0.12 and G1-REG-001 v1.2) with, verbatim: “2. Approved. Mark them as such”. This approves SEED-OPS-001 v1.25 in full, including the option described in its new §1.3; v1.25 supersedes approved v1.24 as the runbook baseline. The proposed-status wording below is drafting history superseded by this record, and the v1.24 approval record below is retained as history. Approval establishes the requirement only: it does not establish implementation, migration, seed execution, testing, legal clearance or production readiness, and it closes no acceptance criterion and none of the open differences in §11.
+
 **Source status — v1.25 proposed, 4 October 2026.** A new option, `OPEN=True`, leaves the canonical Tender open for bids, so a demonstration site shows a Tender on the public Tenders page that anyone can see and suppliers can bid on (new §1.3; §1, §4, §5 and §7 follow). Nothing in the canonical story changes: without `OPEN=True` the seed builds exactly what v1.24 describes. It is not approved. Approved v1.24 remains the runbook baseline until the Project Owner approves v1.25. The v1.24 approval record below is retained as history.
 
-**Current approval record — 4 October 2026.** The Project Owner instructed: "v1.24 is approved". This approves SEED-OPS-001 v1.24, and with it v1.23, on which v1.24 is built. The proposed-status notes below are retained as history.
+**Current approval record — 4 October 2026.** *(This is the v1.24 record, retained as history; the v1.25 record is stated above.)* The Project Owner instructed: "v1.24 is approved". This approves SEED-OPS-001 v1.24, and with it v1.23, on which v1.24 is built. The proposed-status notes below are retained as history.
 
 **Source status — v1.24 proposed, 4 October 2026.** What seeding a new server taught (4 October 2026): a new §1.2 lists what a server needs once and what the seed now does for itself; §1 records that from the `bid_submission` stage on a failed run is no longer wholly undone; §1.1 and §4 record that one permission covers every stage; §7 gains a row for each error met. Built on v1.23, which is also proposed.
 
@@ -27,16 +29,18 @@ Shared usability rules are owned once by **OVS-CHG-001 v0.6**, especially §§3�
 | Document ID | SEED-OPS-001 |
 | Version | 1.25 |
 | Date | 4 October 2026 |
-| Status | **Proposed — v1.24 was Approved; re-approval required** (v1.24 read: "Approved reference — Project Owner approved 4 October 2026") |
-| Approved on | Not yet approved (v1.25). v1.24 read: "4 October 2026 (v1.24, and v1.23 with it). v1.22 was approved on 3 October 2026." |
+| Status | **Approved — Project Owner approved 18 October 2026 (v1.25)** (v1.24 read: "Approved reference — Project Owner approved 4 October 2026") |
+| v1.25 status (retained) | Proposed — v1.24 was Approved; re-approval required. This was the v1.25 status from 4 October 2026 until the approval of 18 October 2026. |
+| Approved on | 18 October 2026 (v1.25). v1.24 read: "4 October 2026 (v1.24, and v1.23 with it). v1.22 was approved on 3 October 2026." |
+| v1.25 approved on (retained) | Not yet approved (v1.25), from 4 October 2026 until 18 October 2026. |
 | v1.20 approval record | None for v1.20. The v1.19 approval record above is retained. |
 | v1.21 approval record | Approved 3 October 2026; Project Owner instruction, verbatim: "All docs approved." It covers v1.20 too. |
 | v1.24 approval record | Approved 4 October 2026; Project Owner instruction, verbatim: "v1.24 is approved". It covers v1.23, on which v1.24 is built. |
-| v1.25 approval record | None for v1.25. The v1.24 approval record above is retained. |
+| v1.25 approval record | Approved 18 October 2026; Project Owner instruction, verbatim: “2. Approved. Mark them as such”, answering decision 2 of the system check of 18 October 2026 (docs/mvp-1-r1/98_work_progress/SYSTEM_CHECK_2026-10-18.md, “Seven newer document versions are waiting for your approval”; the seven documents are listed in the Current approval record paragraph above). It approves v1.25 in full; v1.25 supersedes approved v1.24 as the runbook baseline. The v1.24 approval record above is retained. (v1.25 proposed read: None for v1.25. The v1.24 approval record above is retained.) |
 | Purpose | The one command that resets a KenTender site to the canonical seed world and how to keep it truthful as modules land |
 | Standards | KT-STD-001 v1.13 is approved on 1 October 2026, superseding v1.12. The Evaluation actor directions remain recorded in §11. SEED-001 v1.3 is the registered fixture baseline pending reconciliation (AUD-008). This reference update does not certify conformance or close the differences in §11. |
 | Standards for the stages added in v1.16 | `bid_evaluation`: EVL-CHG-001 v0.4 §11.1 (approved 30 September 2026). `award`: AWD-CHG-001 v0.4 §13 (approved 1 October 2026; built under its plan's owner decision OD-A "Build now, amend later"). |
-| Supersedes | On approval only: v1.24. (v1.24 read: "On approval only: v1.22 (and, through it, source v1.21); approved baseline and pending chain listed in OVS impact schedule") |
+| Supersedes | v1.24, on the approval of 18 October 2026: v1.25 supersedes approved v1.24 as the runbook baseline. (v1.25 proposed read: On approval only: v1.24.) (v1.24 read: "On approval only: v1.22 (and, through it, source v1.21); approved baseline and pending chain listed in OVS impact schedule") |
 | Register | KT-DOC-CTRL-001 (`KenTender_Baseline_Register.yaml`) entry SEED-OPS-001, added 1 October 2026 at the Project Owner's instruction: "Please add to the register". |
 | Owner | `kentender_core` (`kentender_core/kentender_core/seeds/canonical.py`) |
 
