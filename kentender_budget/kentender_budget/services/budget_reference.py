@@ -88,14 +88,32 @@ def allocate_budget_reference(fiscal_year: str) -> str:
 	frappe.throw(_("Could not allocate a unique Budget reference"))
 
 
+def _max_line_version_seq(prefix: str) -> int:
+	"""The highest line number any Budget Line Version still carries (`{prefix}####-V#`). A Line Version can outlive its Line (a clean-up that
+	removed the Line alone, found 18 October 2026), and its reference is unique, so its number is as much in use as the Line's own."""
+	if not frappe.db.has_column("Procurement Budget Line Version", "generated_reference"):
+		return 0
+	rows = frappe.db.sql(
+		"SELECT `generated_reference` FROM `tabProcurement Budget Line Version` WHERE `generated_reference` LIKE %s", (prefix + "%",)
+	)
+	max_seq = 0
+	for (raw,) in rows:
+		match = re.match(re.escape(prefix) + r"(\d+)-V\d+$", str(raw or ""))
+		if match:
+			max_seq = max(max_seq, int(match.group(1)))
+	return max_seq
+
+
 def allocate_budget_line_reference() -> str:
-	"""Allocate next never-reuse `{SITE}-BL-####` (BUD-FR-020)."""
+	"""Allocate next never-reuse `{SITE}-BL-####` (BUD-FR-020): a number is never reissued while a Line or a Line Version still carries it."""
 	slug = site_slug()
 	prefix = f"{slug}-BL-"
-	_sync_series(prefix, _max_seq("Procurement Budget Line", "generated_reference", prefix))
+	_sync_series(prefix, max(_max_seq("Procurement Budget Line", "generated_reference", prefix), _max_line_version_seq(prefix)))
 	for _ in range(200):
 		candidate = make_autoname(f"{prefix}.####")
-		if not frappe.db.exists("Procurement Budget Line", {"generated_reference": candidate}):
+		if not frappe.db.exists("Procurement Budget Line", {"generated_reference": candidate}) and not frappe.db.exists(
+			"Procurement Budget Line Version", {"generated_reference": ["like", candidate + "-V%"]}
+		):
 			return candidate
 	frappe.throw(_("Could not allocate a unique Budget Line reference"))
 

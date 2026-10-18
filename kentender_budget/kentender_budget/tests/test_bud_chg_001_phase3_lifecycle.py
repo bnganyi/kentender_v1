@@ -30,6 +30,7 @@ from kentender_core.services import organisation_structure as structure
 from kentender_core.services import responsibility_administration as administration
 from kentender_core.services.command_write_guard import purge_doc
 from kentender_core.services.responsibility_errors import ResponsibilityError
+from kentender_core.seeds.kentender_mvp_v1.clear import _delete_budget_graph
 from kentender_budget.services import budget_contracts as contracts
 from kentender_budget.services import budget_line_contracts as lines_svc
 from kentender_budget.services import budget_readiness_contracts as readiness
@@ -123,6 +124,15 @@ class _BudgetLifecycleTestBase(FrappeTestCase):
 
 	@classmethod
 	def tearDownClass(cls):
+		cls._purge_tracked()
+		super().tearDownClass()
+
+	@classmethod
+	def _purge_tracked(cls) -> None:
+		"""Remove everything the class tracked, and everything that hangs off its Budgets. A class tracks the Budget, its Versions and its Lines
+		but builds far more through the real commands (Line Versions, reservations, commitments, audit events); the seed's own budget clear knows
+		that graph, so each tracked Budget goes through it first. Then no Line Version of a tracked Version may survive: it would keep a line
+		number out of use that the allocator used to re-sync past (found 18 October 2026, twelve seam modules failing on `MOH-BL-0065-V1`)."""
 		frappe.set_user("Administrator")
 		budgets = [name for doctype, name in cls._cleanup if doctype == "Procurement Budget"]
 		if budgets:
@@ -131,6 +141,8 @@ class _BudgetLifecycleTestBase(FrappeTestCase):
 		if versions:
 			# Submission attempts are append-only records of every submit.
 			frappe.db.delete("Budget Submission Attempt", {"budget_version": ["in", versions]})
+		for budget in budgets:
+			_delete_budget_graph(budget, {})
 		for doctype, name in reversed(cls._cleanup):
 			# Command-only doctypes (AUD-XC-006/010): clean-up opens its own
 			# maintenance window through `purge_doc`.
@@ -140,7 +152,11 @@ class _BudgetLifecycleTestBase(FrappeTestCase):
 		# The runner commits what a class built, so what its clean-up removes has to be committed too, or the next module finds the
 		# class's budgets, units, users and fiscal years still on the site (found 18 Oct 2026: test_budget_approval_integrity left 2 budgets, 4 units, 10 users and 4 fiscal years per run)
 		frappe.db.commit()
-		super().tearDownClass()
+		stranded = (
+			frappe.get_all("Procurement Budget Line Version", filters={"budget_version": ["in", versions]}, pluck="generated_reference") if versions else []
+		)
+		if stranded:
+			raise AssertionError(f"{cls.__name__} left Budget Line Versions on the site after its clean-up: {sorted(stranded)}")
 
 	@classmethod
 	def _track(cls, doctype: str, name: str) -> str:
