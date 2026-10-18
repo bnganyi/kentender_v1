@@ -57,7 +57,12 @@ _MIN_TOTAL_PROBES_EXECUTED = 20
 # `plan_read.get_publication_task`'s `can_retry` is the one `can_*` flag this
 # gate must not flag as decision authority — it is a technical action, not a
 # business one, and `is_technical` is documented as gating it on purpose.
-_TECHNICAL_ACTION_EXCEPTIONS = {"can_retry"}
+#
+# `can_configure` (Tender publication read, "Publication not configured") is the second: it only offers the way into System setup, where
+# Administrator and System Manager maintain the publication rule (CFG-CHG-002 §3.1 CFG11-EX-001). The Project Owner kept it for
+# technical operators on 18 October 2026 on condition of full auditability; `test_regulatory_reference.
+# TestMaintenanceByATechnicalOperatorIsAudited` pins that every maintenance command writes an Audit Event naming the person.
+_TECHNICAL_ACTION_EXCEPTIONS = {"can_retry", "can_configure"}
 
 
 def _is_view_like_can_key(key: str) -> bool:

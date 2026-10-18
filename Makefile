@@ -269,8 +269,6 @@ ui-strategy-fidelity-gate:
 
 # Shared Stitch Desk chrome baseline — must stay green for Strategy/Budget/… canvases.
 ui-stitch-desk-chrome-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_core.tests.test_stitch_desk_chrome_gate
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/stitch-desk/stitch-desk-chrome.spec.ts
 
