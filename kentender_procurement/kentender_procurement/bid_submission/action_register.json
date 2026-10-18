@@ -211,6 +211,55 @@
    "control": "",
    "maps_to": "GetBidWorkspace / GetBidTask",
    "note": "catalogue action (portal-information-draft)"
+  },
+  {
+   "label": "Tender documents",
+   "spec": "not in §11",
+   "control": "",
+   "maps_to": "GetBidTask (documents)",
+   "note": "§11 has no row; closest is §11.4 Task View / Continue / Fix. The previous or next link at the foot of a bid task page, by the task's short name"
+  },
+  {
+   "label": "Company and declarations",
+   "spec": "not in §11",
+   "control": "",
+   "maps_to": "GetBidTask (company)",
+   "note": "§11 has no row; closest is §11.4 Task View / Continue / Fix. The previous or next link at the foot of a bid task page, by the task's short name"
+  },
+  {
+   "label": "Requirements",
+   "spec": "not in §11",
+   "control": "",
+   "maps_to": "GetBidTask (requirements)",
+   "note": "§11 has no row; closest is §11.4 Task View / Continue / Fix. The previous or next link at the foot of a bid task page, by the task's short name"
+  },
+  {
+   "label": "Review",
+   "spec": "not in §11",
+   "control": "",
+   "maps_to": "GetBidTask (the finished task, read again)",
+   "note": "§11 has no row; closest is §11.4 Task View / Continue / Fix. The action on a task row that is already complete"
+  },
+  {
+   "label": "Hand over bid",
+   "spec": "not in §11",
+   "control": "",
+   "maps_to": "GetBidWorkspace",
+   "note": "§11 has no row; on My bids when the bid is ready and the viewer is not the Authorised Signatory: opens the bid page, which says who signs. Changes nothing"
+  },
+  {
+   "label": "View complete bid",
+   "spec": "not in §11",
+   "control": "",
+   "maps_to": "GetBidTask (review), read-only",
+   "note": "§11 has no row; on the bid page once the preparer's tasks are done and only the Authorised Signatory can submit. Changes nothing"
+  },
+  {
+   "label": "New supplier? Create a login",
+   "spec": "not in §11",
+   "control": "",
+   "maps_to": "the sign-up form of the portal login page, returning to the same Tender",
+   "note": "§11 has no row; closest is §11.2 Sign in to start bid. Shown to a signed-out visitor only when sign-up is enabled. Supplier Accounts owns the sign-up"
   }
  ]
 }

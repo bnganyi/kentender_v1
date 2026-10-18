@@ -31,33 +31,81 @@ This page says what was run, what it showed, what I fixed, and what is left for 
 4. **The Technical Operator runs the recovery worker by hand** where there is no scheduler.
 5. **Commit.** Everything is committed; nothing is pushed.
 
-## Still needs your attention
+## Decisions I need from you
 
-1. **Bid Submission's action register is behind its screens.** Seven actions the reads now show have no entry in the register: Company and declarations, Hand over bid, New supplier? Create a login, Requirements, Review, Tender documents, View complete bid. Test: `test_acceptance_gaps` (one failure of 27). It needs someone who knows which command each maps to.
-2. **The document register still says most implementation is "Not evidenced" or "Planned"**, though the code exists and many modules have passing tests (register as of 15 October: for example Planning "Not implemented", Requisitions "Not evidenced", Tenders "Planned"). The register's own rule forbids using approval as evidence, which is right, but nothing has moved those fields as evidence arrived. The cancellation recovery now has an acceptance map you can use as the model.
-3. **The persona walk specs** for Home, Award, Bid Opening and Contracts fail against the real-date world (details under "Where this stands").
-4. **The development site's canonical world check** now fails on one line, "a recorded event is later than the anchor", because the recovery's Budget events are dated 18 October (see the evidence map). A reseed takes a new anchor.
+Eight things are left. For each one I say what it is in plain words, why it matters, what I recommend, and what I need from you. Most need only a yes or a no. The first is already fixed and is here so you know about it.
 
-## The requirement documents themselves
+### 0. Already fixed: seven buttons missing from a checklist (Bid Submission)
 
-I ran the document change protocol's two checkers over the registered documents (register check and consistency check). Nothing was edited; documents change only through a new version you approve.
+Bid Submission keeps a checklist of every button and link a supplier can see, with the action each one performs. Seven links the supplier screens show were missing from it: the "previous" and "next" links between the bid's tasks (Tender documents, Company and declarations, Requirements), the "Review" button on a finished task, "Hand over bid", "View complete bid", and "New supplier? Create a login". None of them changes anything; they only open another page. A test checks that nothing is missing from the checklist, and it was failing for these seven. I added all seven, each with the page it opens. Nothing for you to decide.
 
-**The register and the files disagree on status (6 errors).**
-- STD-TPL-IMP-001 v1.1: the register says approved; the file says it is proposed and that v1.0 "was proposed on 25 September 2026 and never approved".
-- LAW-REG-001 v1.2: the register says approved; the file says "Proposed for approval — 30% reservation interpretation correction".
-- KT-RCA-001 v1.3: the register says approved; the file carries no approval.
-- PLN-JOURNEY-REF, SEED-001 and SEED-OPS-001: the files say Approved; the register calls them "Historical provenance".
+### 1. Which of these three documents did you approve?
 
-**Newer versions sit on disk, all still proposed (seven).** STR-CHG-001 v1.11, SEED-OPS-001 v1.25, PRC-CHG-001 v0.13, EVL-CHG-001 v0.9, AWD-CHG-001 v0.8, CM-CHG-001 v0.12 and G1-REG-001 v1.2. The register correctly lists the approved versions. Some code is already built to them ("built ahead of approval").
+The master list of documents (the "register") and the documents themselves disagree about whether three of them are approved. I cannot tell which is right; only you know.
 
-**The four approved cancellation documents have defects of their own.** These came with the files you approved; I added only the approval records.
-- PLN v1.32 uses `PLN_CANCELLATION_RECOVERY_PENDING` and `PLN_CANCELLATION_RECOVERY_CONFLICT`, REQ v1.20 uses `REQ_CANCELLATION_RECOVERY_INVALID` and `REQ_CANCELLATION_RECOVERY_PENDING`, and BUD v1.17 uses `BUDGET_CANCELLATION_RECOVERY_INVALID` and `BUDGET_CANCELLATION_RECOVERY_CONFLICT`, none of them defined in that document's own error table. The code defines them.
-- BUD v1.17 defines the identifier `BUD24-XD-002` twice (lines 2130 and 2142). PLN v1.32 has a table row with six cells under a seven-cell header (line 1948).
-- TPR v0.22 uses `TND_CANCEL_TOO_LATE` (line 747) without defining it.
-- LAW-REG-001 has a table row with the wrong number of cells (line 396); EVL-CHG-001's control table has no Version row.
-Each needs a corrected version; I recommend one small correction version per document, to be approved with the next set.
+| Document | The register says | The document itself says |
+|---|---|---|
+| Installed STD Template Runtime v1.1 | Approved | Proposed; v1.0 "was proposed on 25 September 2026 and never approved" |
+| Statutory Correction Register v1.2 (the 30% reservation correction) | Approved | "Proposed for approval" |
+| Roadmap Coverage Assessment v1.3 | Approved | Carries no approval |
 
-The checker also reports about 300 warnings, nearly all of them the register citing an older version of a document in its history text, which is expected.
+Three older documents (the Planning journey reference, SEED-001 and SEED-OPS-001) are labelled "historical" in the register while their own files say "Approved". That is only a difference in labelling; I would leave it.
+
+**Why it matters:** the register is what everyone reads to know what is in force.
+**What I need:** for each document, "approved" or "not approved". I will then correct whichever side is wrong, through the normal document change steps. If you do not remember approving it, the safe answer is "not approved".
+
+### 2. Seven newer document versions are waiting for your approval
+
+These files exist and are marked "Proposed": Strategy v1.11, Seed runbook v1.25, Procurement Proceedings v0.13, Bid Evaluation v0.9, Award v0.8, Contract Management v0.12 and the Gate 1 handoff v1.2. The register correctly still lists the older approved versions. Some code has already been built to the newer text.
+**Why it matters:** until you approve them, the built behaviour and the approved text can differ.
+**What I need:** nothing from me. This is your approval queue; I am telling you it is seven items long.
+
+### 3. Mistakes inside the four cancellation documents you approved
+
+The four documents (Planning v1.32, Requisitions v1.20, Budget v1.17, Tenders v0.22) were already like this when you approved them; I only added the approval records. The mistakes are editorial, and the software is right:
+- Each document names error messages (for example "cancellation recovery is pending") in its text but does not list them in its own table of error messages. The software defines them. Planning has two of these, Requisitions two, Budget two, Tenders one (the "too late to cancel" message).
+- Budget v1.17 gives the same identifier (BUD24-XD-002) to two different rows.
+- Planning v1.32 has one table row with six cells under a seven-cell heading.
+**Why it matters:** very little today. The document checker keeps flagging them, and a developer reading only the tables of messages would miss seven messages that exist.
+**What I recommend:** do not create four new versions just for this. Fix them when each document next changes for a real reason, so you approve each only once.
+**What I need:** "bundle them" (my recommendation) or "fix them now". If now, I prepare four small correction versions for you to approve.
+
+### 4. The register still says most work is "not evidenced"
+
+For each document the register records whether the work is built, tested and released. For most modules it still says "Not evidenced" or "Planned" (as of 15 October, for example Planning "Not implemented", Requisitions "Not evidenced", Tenders "Planned"), although the code exists and thousands of tests pass. The register's own rule says approval must never count as evidence, which is right; but nothing has updated those fields as real evidence arrived.
+**Why it matters:** anyone reading the register would think the system is far less built than it is.
+**Options:** (A) leave it. (B) I update only the four cancellation documents now, using the evidence map I wrote, which shows 9 of 12 acceptance rows done and 3 partly done, with the test that proves each. (C) Update every module; that needs each module's evidence collected first, roughly a day or more of work.
+**What I recommend:** B now, C as a separate piece of work later.
+**What I need:** A, B or C.
+
+### 5. The "walk through the menu as each person" tests fail on the current demo data
+
+These browser tests log in as real people (Charles, Amina, the supplier, and so on) and click through from the menu, as a user would, for Home, Award, Bid Opening and Contracts. They were written for the older demo world and fail now. Some failures are stale details (a tender number that changed from 2027 to 2026, an old notification button, a hard-coded date, a count that is now 11 where the test says 9). One could be real: on the Bid Opening walk, the tender page shows no link to Bid Opening for the demo tender, and I have not found out why.
+**Why it matters:** these are the only automated checks that a person can really get from the menu to the end of the job. Until they pass, the question "does it flow, start to finish" is answered by hand.
+**What I recommend:** I bring them up to date one module at a time, starting with Award and Bid Opening (the Award walk already passes its first two steps), and I will tell you of any failure that turns out to be a real fault rather than a stale test.
+**What I need:** a yes. It will take several hours.
+
+### 6. The development site's demo-data check now reports one problem
+
+The demo data is built around one moment in time (the "anchor", 16 October 10:00). A check confirms that nothing in it is dated after that moment. When the recovery ran for the two cancelled demo tenders on 18 October, it recorded two Budget events dated 18 October, so the check now reports exactly that and nothing else. Any real use of the demo data does the same.
+**Why it matters:** it is cosmetic for you, but it will show up whenever someone runs that check on the development site.
+**Options:** (A) leave it until the next planned reseed, which sets a new anchor. (B) Reseed the development site now; that removes everything on the site that is not demo data.
+**What I recommend:** A.
+**What I need:** a yes to A, or tell me to reseed.
+
+### 7. Not all the Python tests were run
+
+I ran 259 of 564 test files, including every file that belongs to a feature's own acceptance set. The other 305 (mostly Procurement and Contract Management) are not run. They take several hours because each builds a full tender-to-award world.
+**Why it matters:** problems in the unrun files would not have been seen.
+**What I recommend:** I run them in one long session and report only the failures, sorted into real faults, stale tests and site clutter, as I did for the first 259.
+**What I need:** a yes, and an idea of when the test site can be mine for several hours.
+
+### 8. Two small old problems I did not cause
+
+- One check fails because Planning's demo-data file reaches into the Needs demo-data file, which the rules forbid (2 checks in the Needs architecture test). The fix is to move what they share into a neutral place; it is a few lines but touches both modules' demo data.
+- One make target (`ui-req-authorised-gate`) names a browser test file that does not exist.
+**What I recommend:** let me fix both; they are small.
+**What I need:** a yes.
 
 ## Old-era tests, now retired
 
@@ -76,6 +124,8 @@ These tested things the system no longer has; the Project Owner said to retire t
 
 ## Where this stands
 
+This is the detail behind the decisions above. You can skip it unless you want the evidence.
+
 **How far it got.** I stopped the Python sweep at 259 of 564 test modules (about 2,750 tests): all 47 modules that belong to a feature's own acceptance gate, all of Core, Strategy, Budget and Suppliers, ten of Contract Management, and 72 of Procurement (Bid Opening, Bid Evaluation, Award, Planning, Tenders and Needs gates and guards). I did not run the other 305, mostly the less cross-module ones in Procurement, Contract Management and Home. The sweep only moves while I am actively working, and the heavy modules take 4 to 14 minutes each, so I chose to spend the time on rerunning failures cleanly and on the browser journeys instead. Run `make` targets or the module list in the scratch folder to finish it.
 
 **What the sweep showed, module by module (34 failing of 259).**
@@ -84,7 +134,7 @@ These tested things the system no longer has; the Project Owner said to retire t
 |---|---|---|
 | Fixed in this check, now passing | 10 | Stale test expectations (and, for the Budget and Bid Opening items above, the real defects): `test_calendar`, `test_business_action`, `test_exception_record`, `test_master_data`, `test_typed_attachment`, `test_workflow_guard`, `test_portal_runtime`, `test_whitelisted_principal_parameters`, `test_command_write_coverage`, `test_departmental_needs_lifecycle` (a disposable fiscal year had no Budget currency, and the closed year was missing from the expected list) |
 | Caused by the test site's own pollution, pass on a clean site | 12 | The 9 Strategy modules, `test_canonical_seed` (42 of 42 on a clean world), `test_dead_end_matrix` (Planning) and `test_evl_canonical_seed` |
-| Real, left for you | 2 | `test_acceptance_gaps` in Bid Submission (1 of 27), and `test_departmental_needs_architecture` (2 checks: Planning's seed file imports the Needs seed and reads a Needs table; already failing before this work). `test_technical_read_conformance` was the third; it passes since the owner's decision on `can_configure` |
+| Real, left for you | 1 | `test_departmental_needs_architecture` (2 checks: Planning's seed file imports the Needs seed and reads a Needs table; already failing before this work; decision 8). `test_technical_read_conformance` passes since the owner's decision on `can_configure`, and `test_acceptance_gaps` in Bid Submission passes 27 of 27 since the seven missing entries were added (decision 0) |
 | Old-era, retired by the owner's decision | 9 | Listed in the previous section |
 
 **Test hygiene (the rule is "always remove test data").** The sweep left the shared test site unfit to validate its own canonical world. Causes found and what I did:
@@ -108,4 +158,4 @@ After each cleaning (the seed's own `clear_non_canonical`, then setting the test
 
 Two stale-spec fixes made while doing this (commit below): the canonical Tender, Award and Requisition are now numbered 2026 (the real-date world renamed them from 2027) in six specs, and the Award and Bid Opening walks used Desk's old notification bell where Home's "Notification" control is now the way in.
 
-**What is left for you from the journeys:** the Home, Award, Bid Opening and Contracts walk specs need an owner who knows the intended world to bring their expectations up to date. They are the specs closest to "does the person's path work from the menu to the end", so I would give them priority. I could not call any of those failures a product defect, and could not clear them either.
+**What is left from the journeys:** see decision 5 above.
