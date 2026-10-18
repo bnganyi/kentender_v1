@@ -11,7 +11,7 @@
 
 **Authority:** `KenTender_TPR-CHG-001_Tenders_v0_22.md` (approved by the Project Owner, 17 October 2026; the approval record is in its control table). Built across Planning, Requisitions, Tenders and Budget as one coordinated change. The shared acceptance map is `98_work_progress/CANCELLATION_RECOVERY_EVIDENCE_MAP.md`; the Project Owner's running list is `98_work_progress/CANCELLATION_RECOVERY_OWNER_ATTENTION.md`.
 
-**Not claimed:** nothing is migrated, reconciled or released on the development site; nothing was pushed. Approval closed no row. Every status below is from a run on `kentender-test.local`.
+**What is and is not claimed:** the development site was migrated on 18 October 2026 on the Project Owner's instruction and the two cancelled demo Tenders (TND-MOH-2026-007 and -012) were recovered there; nothing is released to production and nothing was pushed. Approval closed no row. Every status below is from a run on `kentender-test.local`, except the dev migration and recovery recorded in the evidence map.
 
 | Row | Item | Status | Evidence |
 |---|---|---|---|

@@ -76,6 +76,12 @@ def _delete_budget_graph(budget_name: str, deleted: dict[str, int]) -> None:
 	# field (only `reservation` / `budget_version` respectively), so each
 	# needs its own hop through this Budget's own Funding Reservation / Budget
 	# Version rows, deleted before those parents.
+	# BUD-CHG-001 v1.17: the release rows a cancelled Tender's recovery wrote point at this Budget's reservations
+	if frappe.db.exists("DocType", "Reservation Cancellation Release"):
+		releases = frappe.db.count("Reservation Cancellation Release", {"budget": budget_name})
+		if releases:
+			frappe.db.delete("Reservation Cancellation Release", {"budget": budget_name})
+			deleted["Reservation Cancellation Release"] = deleted.get("Reservation Cancellation Release", 0) + releases
 	if frappe.db.exists("DocType", "Procurement Commitment") and frappe.db.exists("DocType", "Funding Reservation"):
 		reservation_names = frappe.get_all("Funding Reservation", filters={"budget": budget_name}, pluck="name")
 		if reservation_names:

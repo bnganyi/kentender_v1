@@ -2,13 +2,15 @@
 
 Started 18 October 2026 while building the whole-Tender cancellation recovery (PLN v1.32, TPR v0.21/v0.22, REQ v1.20, BUD v1.17). It is a running list, kept in plain words. Each item says what was found, what I did about it, and what only you can decide. Nothing here is a claim that something was released or deployed.
 
-## Needs your decision
+## Decisions (answered by the Project Owner, 18 October 2026)
 
-1. **The development site has no scheduler, so a recovery will sit at "Pending" there until someone runs it.** The recovery is carried out by a worker that the scheduler runs every tick. On `kentender.midas.com` the scheduler is off (only a small loop for notices and mail runs). Until you decide, `make cancellation-recovery-run SITE=kentender.midas.com` runs it once. Options: switch the scheduler on, add the worker to the small loop that already runs the notice sender, or keep running it by hand.
-2. **Nothing has been migrated or reconciled on the development site.** The change adds three records (Plan Cancellation Recovery Hold, Cancellation Resource Recovery with its source rows, Reservation Cancellation Release), a few fields and one patch. They exist only on the test site (`kentender-test.local`). Running `bench migrate` on dev, and then `make cancellation-recovery-inventory` and `make cancellation-recovery-reconcile`, is your go-ahead to give. The reconciliation is a dry run unless `APPLY=1`, and its second run creates nothing.
-3. **The canonical seed world cancels two Tenders (T10 desktops, T11 routers) through the real command, so they now register recoveries.** I have not changed the seed or SEED-002. If the seed also carries them to "Completed", the reserved and covered figures SEED-002 and the Analytics expected-values file state for those two purchases will change. That is a document change for you to approve; I will not guess it.
-4. **Cancelling after the submission period has closed is still not possible.** The approved text lists "Published — open" and "Submission period ended", but the code, and the Bid Opening note, only allow the first, and say the second waits for Bid Opening and Evaluation to approve their side. I kept it as it is.
-5. **The specifications do not say who the "authorised support operator" is.** I used the existing technical operator (Administrator, System Manager, or an in-force Technical Operator assignment) and added no role, as you chose. The retry changes no evidence and no amount.
+1. **Who runs the recovery worker where there is no scheduler: the Technical Operator, by hand** (`make cancellation-recovery-run SITE=<site>`). The development site has no scheduler, so a recovery stays Pending there until a technical operator runs it. Nothing else was changed.
+2. **Migrate the development site now, and reconcile.** Done the same day; figures are in the evidence map ("The development site"). The two cancelled demo Tenders were recovered: KES 37,000,000 of reservations released.
+3. **Canonical seed and the two cancelled demo Tenders (T10, T11):** the owner's "migrate now" answer accepted the changed figures. The seed and SEED-002 are unchanged, so a reseed registers the two recoveries as Pending and a technical operator runs the worker. SEED-002 and the Analytics expected values should be re-read at the next reseed.
+4. **The support operator** is the existing technical operator (chosen at the start); no new role.
+5. **A new consequence found on 18 October:** on the development site the canonical world check now fails on one line, "a recorded event is later than the anchor", because the recovery's Budget events are dated 18 October. It will do the same after any real action; a reseed takes a new anchor.
+
+**Still open, not asked yet:** cancelling a Tender after its submission period has closed is still not possible (the approved text lists it; Bid Opening says it waits for Bid Opening and Evaluation to approve their side).
 
 ## Found and fixed (already in the code)
 
@@ -42,11 +44,7 @@ PLN v1.32, REQ v1.20 and BUD v1.17 carry your approval record, written at your i
 
 Last updated 18 October 2026, when the build was committed.
 
-**Needs your go-ahead, then a few commands**
-
-- `bench migrate` on the development site. The three new records and the one patch exist only on the test site.
-- Running the recovery for the two cancelled demo Tenders on the development site (`make cancellation-recovery-reconcile SITE=kentender.midas.com APPLY=1`, then `make cancellation-recovery-run SITE=kentender.midas.com`). It is safe to repeat. It would release KES 37,000,000 of reservations (see decision 3 above).
-- Deciding who runs the recovery worker on a site without a scheduler (decision 1 above).
+**Done since the first version of this list:** the development site was migrated, reconciled and recovered (see the evidence map); the seed clear paths now remove a recovery with its holds and release rows (a reseed had been leaving orphan recoveries behind on the test site).
 
 **Built, but not shown by a run**
 

@@ -2,7 +2,7 @@
 
 Built 17–18 October 2026 for the whole-Tender cancellation recovery (PLN v1.32, TPR v0.21 carried by v0.22, REQ v1.20, BUD v1.17). The four documents carry the same twelve acceptance rows, so this one table answers all four (`PLN-CR-AC-001` to `-012`, `TPR-…`, `REQ-…`, `BUD-…`).
 
-This is **code complete and test-site evidence only**. Nothing has been migrated, reconciled or released on the development site, and nothing was pushed. Approval of the documents closed none of these rows.
+This is **code complete, test-site evidence, and the development site migrated and recovered on 18 October 2026** (section "The development site" below). Nothing is released to production and nothing was pushed. Approval of the documents closed none of these rows.
 
 ## How to read the evidence
 
@@ -68,7 +68,21 @@ Run on 18 October 2026 against `kentender-test.local` (a copy of the development
 | Worker | Both **Completed**: both drawdowns Reversed, both reservations Released, both holds removed |
 | Apply, second run | Both skipped ("already registered"); the worker did nothing (`acted` false); every row count and balance unchanged |
 
-What this means for the development site: running it for real would release KES 37,000,000 of reservations and restore the two drawdowns. That changes the reserved and available figures the canonical seed and the Analytics expected values state for those two purchases, which is the owner decision recorded in `CANCELLATION_RECOVERY_OWNER_ATTENTION.md`. It has **not** been run on the development site.
+What this meant for the development site is in the next section.
+
+## The development site (18 October 2026)
+
+Done on the Project Owner's instruction "Migrate now", recorded in his words in the owner list.
+
+| Step | Result |
+|---|---|
+| `bench migrate` | One pending patch (`pln_chg_001_v132_drawdown_allocation_id`, mine) and the four new records (Cancellation Resource Recovery with its source rows, Plan Cancellation Recovery Hold, Reservation Cancellation Release) created. No other patch was pending. No tracked file changed |
+| Inventory | Same as the test site: 2 cancelled Tenders, both eligible |
+| Reconciliation, applied | CRR-308860 (TND-MOH-2026-007) and CRR-308863 (TND-MOH-2026-012) registered, origin "Legacy reconciliation". A second run skipped both |
+| Worker, run once by hand (the Technical Operator's job, per the owner's decision) | Both Completed: both drawdowns Reversed, both reservations Released |
+| Effect on the two Budget lines | MOH-BL-0005: reserved KES 52,000,000 to 27,000,000, available 28,000,000 to 53,000,000. MOH-BL-0006: reserved 23,000,000 to 11,000,000, available 7,000,000 to 19,000,000 |
+| The test site afterwards | It had been brought to the same recovered state to see what the tests make of it; that made its own canonical check fail on the same line for everyone, so it was reseeded (`make seed-canonical SITE=kentender-test.local REBUILD=True`, ok, validates). The reseed cancels the two demo Tenders through the real command and leaves their recoveries Pending, as designed |
+| Canonical world check on dev | One line now fails: "a recorded event is later than the anchor" (the recovery's Budget events are dated 18 October, the anchor is 16 October 10:00). Every other check passes. Any real action on the seeded world does the same; a reseed takes a new anchor |
 
 ## Test runs
 

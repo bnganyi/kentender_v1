@@ -360,6 +360,24 @@ class TestCrF01(WorldCase):
 
 	# ---- the complete recovery, last: it carries the world to its end -----------------------------------------------------------
 
+	def test_the_seed_clear_takes_a_recovery_its_holds_and_its_releases_with_the_requisition_or_the_tender(self):
+		"""A reseed or a fixture reset removes Tenders and Requisitions directly. A recovery left behind would be picked up by the sweep with
+		nothing to verify (found 18 Oct 2026: orphan Pending recoveries on the test site), and its holds would keep a source blocked."""
+		from kentender_procurement.procurement_requisitions.seeds import clear
+
+		requisition = self.authorised["requisition"]
+		for by in ({"requisitions": [requisition]}, {"tenders": [self.tender]}):
+			with self.subTest(by=list(by)), self.trial():
+				self.assertEqual(self.attempt()["status"], "Completed")  # so there are releases as well as holds and sources
+				self.assertTrue(frappe.db.count("Plan Cancellation Recovery Hold", {"recovery_id": self.recovery}))
+				self.assertTrue(frappe.db.count("Reservation Cancellation Release", {"recovery_id": self.recovery}))
+				removed = clear.delete_recoveries(**by)
+				self.assertEqual(removed.get("Cancellation Resource Recovery"), 1)
+				self.assertFalse(frappe.db.exists(RECOVERY, self.recovery))
+				self.assertEqual(frappe.db.count("Cancellation Recovery Source", {"parent": self.recovery}), 0)
+				self.assertEqual(frappe.db.count("Plan Cancellation Recovery Hold", {"recovery_id": self.recovery}), 0)
+				self.assertEqual(frappe.db.count("Reservation Cancellation Release", {"recovery_id": self.recovery}), 0)
+
 	def test_zz_the_exact_draw_is_restored_the_hold_released_and_a_fresh_requisition_can_use_it(self):
 		line = self.sources_before["line"]
 		reservation = self.sources_before["reservations"][0]

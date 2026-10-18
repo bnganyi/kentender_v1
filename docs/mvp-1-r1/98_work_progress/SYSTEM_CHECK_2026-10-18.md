@@ -23,12 +23,20 @@ This page says what was run, what it showed, what I fixed, and what is left for 
 
 `test_calendar` (the default executed-year stage is now the contracts stage where Contract Management is installed), `test_business_action`, `test_exception_record` and `test_master_data` (a Procuring Entity now needs a reporting currency), `test_portal_runtime` (the portal navigation is spread over several lines, and the CSRF check compared with the wrong mention of the script), `test_whitelisted_principal_parameters` (the staff home unit endpoint names the person whose home unit is set, not the acting person; added to the reviewed list with that reason), and the cancellation recovery integration test (it assumed no other recovery on the site was due). Commit `0ed72b09` and the cancellation commits.
 
-## Needs your attention
+## Decided by the Project Owner, 18 October 2026, and done
 
-1. **Technical readers and "can configure".** The conformance test says a technical reader (System Manager) must get view-only access on every read. The Tender publication read gives them `can_configure` = true, which is what shows the "configure the publication rule" link in the "Publication not configured" state. Either the rule is relaxed for this link (it opens System setup, where they act under setup's own authority) or the link is removed for technical readers. I did not change it. Test: `test_technical_read_conformance`.
-2. **Bid Submission's action register is behind its screens.** Seven actions the reads now show have no entry in the register: Company and declarations, Hand over bid, New supplier? Create a login, Requirements, Review, Tender documents, View complete bid. Test: `test_acceptance_gaps` (one failure of 27). It needs someone who knows which command each maps to.
-3. **Old-era tests that can no longer pass** (listed in the next section). Each tests a concept that has since been retired. My recommendation is to retire them rather than patch them; that is your call because it deletes tests.
-4. **The document register still says most implementation is "Not evidenced" or "Planned"**, though the code exists and many modules have passing tests (register as of 15 October: for example Planning "Not implemented", Requisitions "Not evidenced", Tenders "Planned"). The register's own rule forbids using approval as evidence, which is right, but nothing has moved those fields as evidence arrived. The cancellation recovery now has an acceptance map you can use as the model for moving them.
+1. **Old-era tests: retire them. The eight empty Core scaffold tests: delete them.** Done (commit `46516c37`): nine Python tests for the retired Demands module, the Civic Ledger and Stitch Desk chrome, the first seed packs and the multi-entity migration, plus the four generic workspace browser specs, are removed; the Stitch Desk make target keeps only its browser spec. The eight scaffold files are deleted, so the Strategy tests no longer collide with `_Test Fiscal Year` rows.
+2. **`can_configure` stays for technical operators, with full auditability.** Done (`46516c37`): the technical-read conformance test names it beside `can_retry` as a reviewed technical action, and a new test (`TestMaintenanceByATechnicalOperatorIsAudited`) shows a System Manager's creating, renaming and saving a publication rule each write an Audit Event naming that person.
+3. **Migrate the development site.** Done: see `CANCELLATION_RECOVERY_EVIDENCE_MAP.md`, "The development site".
+4. **The Technical Operator runs the recovery worker by hand** where there is no scheduler.
+5. **Commit.** Everything is committed; nothing is pushed.
+
+## Still needs your attention
+
+1. **Bid Submission's action register is behind its screens.** Seven actions the reads now show have no entry in the register: Company and declarations, Hand over bid, New supplier? Create a login, Requirements, Review, Tender documents, View complete bid. Test: `test_acceptance_gaps` (one failure of 27). It needs someone who knows which command each maps to.
+2. **The document register still says most implementation is "Not evidenced" or "Planned"**, though the code exists and many modules have passing tests (register as of 15 October: for example Planning "Not implemented", Requisitions "Not evidenced", Tenders "Planned"). The register's own rule forbids using approval as evidence, which is right, but nothing has moved those fields as evidence arrived. The cancellation recovery now has an acceptance map you can use as the model.
+3. **The persona walk specs** for Home, Award, Bid Opening and Contracts fail against the real-date world (details under "Where this stands").
+4. **The development site's canonical world check** now fails on one line, "a recorded event is later than the anchor", because the recovery's Budget events are dated 18 October (see the evidence map). A reseed takes a new anchor.
 
 ## The requirement documents themselves
 
@@ -51,19 +59,20 @@ Each needs a corrected version; I recommend one small correction version per doc
 
 The checker also reports about 300 warnings, nearly all of them the register citing an older version of a document in its history text, which is expected.
 
-## Old-era tests that cannot pass (not changed)
+## Old-era tests, now retired
 
-These fail because they test things the system no longer has. Each is a different concept, so I did not patch them. My recommendation is to retire them, which is your call because it removes tests.
+These tested things the system no longer has; the Project Owner said to retire them. They are removed in commit `46516c37` (their history stays in git and in the older trackers).
 
-| Test module | What it still expects |
+| Test module | What it expected |
 |---|---|
-| `test_dem_seed_004_orchestrator_demands`, `test_stable_platform_seed` | The retired Demands module (a `Demand` table and a Demands seed stage) |
-| `test_module_registry` | Demand routes (`form/demand`, `demands`) in the module registry |
-| `test_kt_cl_shell_layout_guard`, `test_stitch_desk_chrome_gate` | The Civic Ledger and Stitch Desk chrome (registry entries and pages that were retired) |
-| `test_seed_v1`, `test_reference_data_seed_mvp1`, `test_kentender_mvp_v1_seed_contract` | The first seed packs (a `strategic_plan_name` column, an active Procuring Entity, a requisition whose handoff is not yet consumed); the canonical seed replaced them |
-| `test_backfill_pe_fy_context_links` | The multi-entity era (organisation units linked to Procuring Entities and Financial Year contexts) |
+| `test_dem_seed_004_orchestrator_demands`, `test_stable_platform_seed` | The retired Demands module |
+| `test_module_registry` | Demand routes in the module registry |
+| `test_kt_cl_shell_layout_guard`, `test_stitch_desk_chrome_gate` | The retired Civic Ledger and Stitch Desk chrome |
+| `test_seed_v1`, `test_reference_data_seed_mvp1`, `test_kentender_mvp_v1_seed_contract` | The first seed packs |
+| `test_backfill_pe_fy_context_links` | The multi-entity era |
+| `workspace-clickability`, `-discoverability`, `-navigation`, `-shell` (browser) | Selectors that never worked (`data-id="[object Object]"`, an empty text pattern) |
 
-Also stale, in the browser: `workspace-clickability`, `workspace-discoverability` (it builds the launcher locator from an object, `data-id="[object Object]"`), `workspace-navigation` and `workspace-shell` (an empty text pattern that matches 7,645 elements). Six of the eight tests in those four files fail for reasons in the specs themselves.
+`test_departmental_needs_architecture` (2 checks, Planning's seed file importing the Needs seed) is not retired: it guards a real rule and was already failing.
 
 ## Where this stands
 
@@ -75,14 +84,15 @@ Also stale, in the browser: `workspace-clickability`, `workspace-discoverability
 |---|---|---|
 | Fixed in this check, now passing | 10 | Stale test expectations (and, for the Budget and Bid Opening items above, the real defects): `test_calendar`, `test_business_action`, `test_exception_record`, `test_master_data`, `test_typed_attachment`, `test_workflow_guard`, `test_portal_runtime`, `test_whitelisted_principal_parameters`, `test_command_write_coverage`, `test_departmental_needs_lifecycle` (a disposable fiscal year had no Budget currency, and the closed year was missing from the expected list) |
 | Caused by the test site's own pollution, pass on a clean site | 12 | The 9 Strategy modules, `test_canonical_seed` (42 of 42 on a clean world), `test_dead_end_matrix` (Planning) and `test_evl_canonical_seed` |
-| Real, left for you | 3 | `test_technical_read_conformance` (1 check), `test_acceptance_gaps` in Bid Submission (1 of 27), and `test_departmental_needs_architecture` (2 checks: Planning's seed file imports the Needs seed and reads a Needs table; already failing before this work) |
-| Old-era, recommend retiring | 9 | Listed in the previous section |
+| Real, left for you | 2 | `test_acceptance_gaps` in Bid Submission (1 of 27), and `test_departmental_needs_architecture` (2 checks: Planning's seed file imports the Needs seed and reads a Needs table; already failing before this work). `test_technical_read_conformance` was the third; it passes since the owner's decision on `can_configure` |
+| Old-era, retired by the owner's decision | 9 | Listed in the previous section |
 
 **Test hygiene (the rule is "always remove test data").** The sweep left the shared test site unfit to validate its own canonical world. Causes found and what I did:
 - Budget test classes removed their records but did not commit the removal, so each run left budgets, organisation units, users and fiscal years behind (28 budgets, 99 users, 15 units and 12 fiscal years had piled up). Fixed in the shared base class (commit `b174e984`); the module I measured now leaves nothing.
-- Eight scaffold test files under Core's `doctype/` folders contain no tests but, when run, load ERPNext's test records and create 14 `_Test Fiscal Year` rows, which collide with the fiscal years the Strategy tests use. I recommend deleting those eight stubs; I did not.
+- Eight scaffold test files under Core's `doctype/` folders contained no tests but, when run, loaded ERPNext's test records and created 14 `_Test Fiscal Year` rows, which collided with the fiscal years the Strategy tests use. Deleted on the owner's instruction.
 - Frappe's runner creates nine `…@example.com` test users. They are harmless to tests but make the canonical validation fail until removed.
 - Planning's test world leaves `plnt.*` users and units (known, see the older note on it).
+- Cancellation recoveries were left behind when a seed or fixture reset removed their Tender or Requisition (5 orphan rows on the test site, picked up by the recovery sweep with nothing to verify). The seed clear paths now remove a recovery with its holds and release rows, a test pins it, and the orphans are cleared.
 After each cleaning (the seed's own `clear_non_canonical`, then setting the test clock) the canonical world validates again on the test site.
 
 **Browser journeys** (test site, one spec group at a time, each after a clean-up):
