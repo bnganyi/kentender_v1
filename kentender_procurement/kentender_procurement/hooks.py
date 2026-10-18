@@ -183,6 +183,9 @@ kt_evaluation_correction_consumers = ["kentender_procurement.award.services.corr
 kt_evaluation_removal_consumers = ["kentender_procurement.award.seeds.clear.on_evaluations_removed"]
 kt_award_authority_status = ["kentender_procurement.award.services.authority.tender_status"]
 kt_tender_cancellation_guards = ["kentender_procurement.award.services.authority.cancellation_guard"]
+# AWD-CHG-001 v0.9 §5.11 — Award's Tender-publication integration: the durable Tender-level authority record is registered in the transaction that
+# publishes the Tender, before any Award case exists. Insert-if-absent; a replay never resets a recorded notice or cancellation.
+kt_tender_publication_registrars = ["kentender_procurement.award.services.tender_authority.registrar"]
 # PLN-CHG-001 v1.32 §5.4.7 / TPR-CHG-001 v0.21 §7.5 — what Award holds that would make restoring a cancelled Tender's allowance unsafe, and the
 # Tender owner's verified basis Requisitions asks for before it restores anything (Requisitions must not import Tenders).
 kt_tender_cancellation_downstream_disposition = ["kentender_procurement.award.services.authority.downstream_disposition"]

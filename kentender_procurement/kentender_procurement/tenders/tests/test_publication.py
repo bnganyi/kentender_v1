@@ -502,3 +502,7 @@ class TestIntegrity(PublicationCase):
 		self.assertEqual((first["completed"]["published_at"], second["idempotent"]), (str(frappe.db.get_value("Tender", name, "published_at")), True))
 		self.assertEqual(frappe.db.count("Tender Event", {"tender": name, "event_type": "TenderPublishedOpen"}), 1)
 		self.assertEqual(json.loads(frappe.db.get_value("Tender Event", {"tender": name, "event_type": "TenderPublishedOpen"}, "payload"))["resulting_status"], "Published — open")
+		# AWD-CHG-001 v0.9 §5.11: the publication transaction registered the durable Tender-level authority record, once, Not issued, with no case.
+		authority = frappe.db.get_value("Award Tender Authority", name, ["notification_status", "source_kind", "award_case"], as_dict=True)
+		self.assertEqual((authority.notification_status, authority.source_kind, authority.award_case or ""), ("Not issued", "Publication", ""))
+		self.assertEqual(frappe.db.count("Award Tender Authority", {"tender": name}), 1)

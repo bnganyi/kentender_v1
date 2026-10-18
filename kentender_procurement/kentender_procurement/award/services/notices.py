@@ -23,7 +23,7 @@ from typing import Any
 import frappe
 from frappe.utils import cint, cstr
 
-from kentender_procurement.award.services import checks, clock, clocks, issues, letters, notify, people, profile, records, simulation, sources, state
+from kentender_procurement.award.services import checks, clock, clocks, issues, letters, notify, people, profile, records, simulation, sources, state, tender_authority
 
 BATCH = state.BATCH
 NOTICE = state.NOTICE
@@ -124,12 +124,14 @@ def issue(doc, batch, *, actor: str = "system") -> dict[str, Any]:
 			issues.open_issue(doc, source_event=f"validity-expired:{doc.name}", issue_type="Validity", subtype=checks.VALIDITY_EXPIRED,
 				title="Tender validity has expired. No award can proceed.", reason="Tender validity expired before an award could be notified.")
 		if "status" in stop:
-			records.bump(doc, notification_status="Unknown" if doc.notification_status == "Issue in progress" else doc.notification_status)
+			if doc.notification_status == "Issue in progress":
+				tender_authority.set_notification(doc.tender, tender_authority.UNKNOWN, batch=batch.name)
 		return {"status": "Stopped", "reasons": stop}
 	now = clock.now()
 	deadline, rule = profile.reply_deadline(now)
 	records.update(batch, state="Issuing", status="Issue in progress", issued_at=now, reply_deadline=deadline)
-	records.bump(doc, notification_status="Issue in progress", current_batch=batch.name)
+	tender_authority.set_notification(doc.tender, tender_authority.IN_PROGRESS, batch=batch.name, token=batch.name)
+	doc = state.reload(doc)
 	for n in state.notices(batch):
 		body = records.loads(n.content_json)
 		if body.get("result") == "Successful":
@@ -144,7 +146,7 @@ def issue(doc, batch, *, actor: str = "system") -> dict[str, Any]:
 	for n in state.notices(batch):
 		_dispatch(doc, n)
 	records.update(batch, state="Issued", status="Issued")
-	records.bump(state.reload(doc), notification_status="Issued")
+	tender_authority.set_notification(doc.tender, tender_authority.ISSUED, batch=batch.name, token=batch.name)
 	refresh_given(state.reload(doc), batch)
 	records.audit(doc.name, "IssueAwardNotices", actor, batch=batch.name)
 	for n in state.notices(batch):

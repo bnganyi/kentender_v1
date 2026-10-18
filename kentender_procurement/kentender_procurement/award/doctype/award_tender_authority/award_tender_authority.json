@@ -1,0 +1,165 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-18 17:30:00.000000",
+ "description": "AWD-CHG-001 v0.9 §5.11, §7: the durable Tender-level authority record. One per Tender, registered by Award's Tender-publication integration before any Award case exists. It owns the Tender's notification status and its cancellation stamp, so cancellation and first-notice issue serialise on one row. It creates no Award case, opinion task or bidder notice.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tender",
+  "tender_reference",
+  "award_case",
+  "notification_status",
+  "current_batch",
+  "issue_token",
+  "issue_started_at",
+  "cancellation_ref",
+  "cancelled_at",
+  "source_kind",
+  "source_event",
+  "registered_at",
+  "evidence_json",
+  "evidence_digest",
+  "verified_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender",
+   "label": "Tender",
+   "read_only": 1,
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_reference",
+   "label": "Tender reference",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "award_case",
+   "label": "Award case",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "notification_status",
+   "label": "Notification status",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Not issued\nIssue in progress\nIssued\nUnknown",
+   "default": "Not issued"
+  },
+  {
+   "fieldname": "current_batch",
+   "label": "Current batch",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "issue_token",
+   "label": "Issue token",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "issue_started_at",
+   "label": "Issue started at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "cancellation_ref",
+   "label": "Cancellation",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "cancelled_at",
+   "label": "Cancelled at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "source_kind",
+   "label": "Source",
+   "read_only": 1,
+   "fieldtype": "Select",
+   "options": "Publication\nDerived from case\nBackfill\nReplay"
+  },
+  {
+   "fieldname": "source_event",
+   "label": "Source event",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "registered_at",
+   "label": "Registered at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "evidence_json",
+   "label": "Evidence",
+   "read_only": 1,
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "evidence_digest",
+   "label": "Evidence digest",
+   "read_only": 1,
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "verified_at",
+   "label": "Verified at",
+   "read_only": 1,
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "read_only": 1,
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "read_only": 1,
+   "fieldtype": "Data"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-18 17:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Award",
+ "name": "Award Tender Authority",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:tender"
+}
