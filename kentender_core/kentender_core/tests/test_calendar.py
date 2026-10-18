@@ -296,7 +296,8 @@ class TestTheLaddersFollowTheAnchor(unittest.TestCase):
 	def test_an_october_anchor_stops_the_prepared_year_at_needs_and_refuses_a_later_cap(self):
 		from kentender_core.seeds import canonical
 
-		with anchored("2026-10-09 10:00:00"):
+		# the executed year's default stage is its own question (see the contracts test below); this one is about the prepared year
+		with anchored("2026-10-09 10:00:00"), patch("kentender_core.seeds.canonical.contracts_available", return_value=False):
 			self.assertEqual(canonical.resolve_years(), ("award", "needs"))
 			self.assertEqual(canonical.resolve_years(next_year="budget"), ("award", "budget"))
 			self.assertEqual(canonical.resolve_years(next_year="none"), ("award", "none"))
@@ -310,8 +311,17 @@ class TestTheLaddersFollowTheAnchor(unittest.TestCase):
 	def test_a_january_anchor_allows_the_whole_prepared_year(self):
 		from kentender_core.seeds import canonical
 
-		with anchored("2027-01-15 10:00:00"):
+		with anchored("2027-01-15 10:00:00"), patch("kentender_core.seeds.canonical.contracts_available", return_value=False):
 			self.assertEqual(canonical.resolve_years(), ("award", "annual_plan"))
+
+	def test_an_anchored_world_with_contract_management_goes_on_to_the_contracts_stage_by_default(self):
+		"""SEED-002 v0.10 §A8.1: where Contract Management is installed and the world is anchored, the executed year carries the closed year's awards through Contract Management."""
+		from kentender_core.seeds import canonical
+
+		with anchored("2027-01-15 10:00:00"), patch("kentender_core.seeds.canonical.contracts_available", return_value=True):
+			self.assertEqual(canonical.resolve_years(), ("contracts", "annual_plan"))
+		with anchored("2027-01-15 10:00:00"), patch("kentender_core.seeds.canonical.contracts_available", return_value=False):
+			self.assertEqual(canonical.default_current(), "award")  # without the app (or an anchor) it stops at the award, with a notice
 
 
 if __name__ == "__main__":

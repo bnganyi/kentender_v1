@@ -106,7 +106,8 @@ class TestPortalRuntime(IntegrationTestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertIn('data-kt-portal-surface="tenders"', html)
 		self.assertIn('href="#kt-portal-main"', html)
-		self.assertIn('<a href="/tenders" data-kt-portal-nav="tenders" aria-current="page">Tenders</a>', html)
+		# the template spreads the anchor over several lines, so the markup is matched by what it says, not by its whitespace
+		self.assertRegex(html, r'<a\s+href="/tenders"\s+data-kt-portal-nav="tenders"\s+aria-current="page"\s*>\s*Tenders\s*</a\s*>')
 		self.assertIn("fake_surface.bundle.js", html)
 		self.assertIn("kt_portal_runtime", html)
 		self.assertIn('"search": "laptops"', html)
@@ -116,7 +117,9 @@ class TestPortalRuntime(IntegrationTestCase):
 		self.assertTrue("frappe.csrf_token" in html or "<!-- csrf_token -->" in html)  # Frappe fills it when the session has one
 		# ...and it is in place before any bundle runs: a screen that posts as it mounts needs it on the first call
 		marker = re.search(r"frappe\.csrf_token|<!-- csrf_token -->", html)
-		self.assertLess(marker.start(), html.index("kt_portal_runtime"))
+		runtime_script = re.search(r"<script[^>]+kt_portal_runtime\.bundle", html)  # the script that runs; the bundle's name also appears earlier, as a preload in the head
+		self.assertIsNotNone(runtime_script)
+		self.assertLess(marker.start(), runtime_script.start())
 		# no Frappe website stylesheet, theme, navbar or footer reaches the portal
 		stylesheets = re.findall(r'<link[^>]+rel="stylesheet"[^>]*>', html)
 		self.assertEqual([s for s in stylesheets if "kentender_core/css/" not in s], [])
