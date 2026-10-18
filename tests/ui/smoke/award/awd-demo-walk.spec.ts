@@ -10,17 +10,18 @@ import { AMINA, CHARLES, DAVID, EVIDENCE, MARY, PASSWORD, as, awdFixture, closeS
  * walked the way people reach it — the Head from the menu, the Accounting
  * Officer from the bell, the supplier from her own Tender page in the portal —
  * never from a typed address. Starts from demo profile AWD-DEMO-OPINION on the
- * real Evaluation delivery of TND-MOH-2027-002 and ends with the canonical
+ * real Evaluation delivery of TND-MOH-2026-002 and ends with the canonical
  * award restored (tracker AWD4-1103).
  */
 
-const REF = "TND-MOH-2027-002";
-const AWARD = "AWD-MOH-2027-002";
+const REF = "TND-MOH-2026-002";
+const AWARD = "AWD-MOH-2026-002";
 
 async function openFromBell(page: Page, subject: string): Promise<void> {
-	await page.goto("/app", { waitUntil: "domcontentloaded" });
-	await page.locator(".dropdown-notifications .nav-link, .dropdown-notifications > a").first().click();
-	await page.locator(".notification-list-body").getByText(subject).first().click();
+	// Home carries the bell (the "Notification" control); Desk's own navbar bell is not the way in any more
+	await page.goto("/app/home", { waitUntil: "domcontentloaded" });
+	await page.getByText("Notification", { exact: true }).first().click();
+	await page.getByText(subject).first().click();
 }
 
 test.describe.configure({ mode: "serial", timeout: 600_000 });

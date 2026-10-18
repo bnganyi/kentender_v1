@@ -21,7 +21,7 @@ const BENCH_ROOT = path.resolve(__dirname, "../../../../../..");
 const SITE = process.env.UI_SITE || "kentender.midas.com";
 const PROFILES = "kentender_procurement.bid_opening.seeds.profiles";
 const PASSWORD = process.env.UI_SEED_PASSWORD || "Test@123";
-const REF = "TND-MOH-2027-002";
+const REF = "TND-MOH-2026-002";
 const AMINA = "amina.hassan@moh.example.test";
 const CHARLES = "charles.mutiso@moh.example.test";
 const BRIAN = "brian.wafula@moh.example.test";
@@ -68,9 +68,10 @@ async function openFromMenu(page: Page): Promise<void> {
 /** Desk home → the notification bell → the named notification. */
 async function openFromBell(page: Page, subject: string): Promise<void> {
 	await page.setViewportSize({ width: 1440, height: 1024 });
-	await page.goto("/app", { waitUntil: "domcontentloaded" });
-	await page.locator(".dropdown-notifications .nav-link, .dropdown-notifications > a").first().click();
-	await page.locator(".notification-list-body").getByText(subject).first().click();
+	// Home carries the bell (the "Notification" control); Desk's own navbar bell is not the way in any more
+	await page.goto("/app/home", { waitUntil: "domcontentloaded" });
+	await page.getByText("Notification", { exact: true }).first().click();
+	await page.getByText(subject).first().click();
 }
 
 test.describe.configure({ mode: "serial", timeout: 600_000 });

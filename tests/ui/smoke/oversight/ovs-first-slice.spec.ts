@@ -5,7 +5,7 @@ import { shortDateTime, world } from "../../helpers/anchor";
 
 /**
  * OVS-CHG-001 v0.6 plan Phases 6–8 — the first slice, driven as the canonical personas on the
- * canonical Tender (TND-MOH-2027-002: four bids, a delivered report with review state With Award,
+ * canonical Tender (TND-MOH-2026-002: four bids, a delivered report with review state With Award,
  * an Award case at the Opinion stage). Read-only: nothing is written, so no world is reset.
  * Run on the test site: scripts/test-site.sh run npx playwright test tests/ui/smoke/oversight --workers=1
  *

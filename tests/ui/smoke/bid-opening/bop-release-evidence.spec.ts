@@ -16,7 +16,7 @@ import { collectConsoleErrors, expectNextStep, expectScreen, gotoOpening } from 
  * members, David Ouma's attendance and the final signed record.
  */
 
-const REFERENCE = process.env.UI_BOP_CANONICAL_TENDER || "TND-MOH-2027-002";
+const REFERENCE = process.env.UI_BOP_CANONICAL_TENDER || "TND-MOH-2026-002";
 // The canonical world is dated 2027; the pages read it just after the opening
 // completed (12 Jun 2027 11:15), as the Bid Submission persona pass does, so
 // every person's roles are in force. Cleared afterwards.

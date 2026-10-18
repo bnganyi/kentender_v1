@@ -17,6 +17,7 @@ class TestTypedAttachment(IntegrationTestCase):
 				"doctype": "Procuring Entity",
 				"entity_code": code,
 				"entity_name": "Test Procuring Entity for Typed Attachment",
+				"reporting_currency": "KES",
 			}
 		)
 		pe.insert()

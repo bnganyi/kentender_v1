@@ -1426,21 +1426,29 @@ class TestMultiFiscalYearBrowsing(DepartmentalNeedsCommandCase):
 		first = self.accepted()
 		second_fy = self.open_second_fiscal_year()
 		frappe.set_user(AUTHOR)
-		created = lifecycle.create_need(
-			organisation_unit=self.ou,
-			financial_year=second_fy,
-			idempotency_key=self.key(),
-			**self.content(title="Second fiscal year requirement", required_by_date="2029-03-31"),
-		)
-		second = self.decide(self.submit(created), "accept")
+		# A Need's estimate takes its currency from the Budget of its year, and a disposable year has no Budget: the browsing is the subject
+		# here, so the year is given the currency the seeded years have (the refusal without one is tested in test_departmental_needs_estimate).
+		from unittest import mock
+
+		from kentender_procurement.services.budget_currency import CurrencyBasis
+
+		with mock.patch("kentender_procurement.departmental_needs.services.estimate.currency_basis", return_value=CurrencyBasis("KES", 2)):
+			created = lifecycle.create_need(
+				organisation_unit=self.ou,
+				financial_year=second_fy,
+				idempotency_key=self.key(),
+				**self.content(title="Second fiscal year requirement", required_by_date="2029-03-31"),
+			)
+			second = self.decide(self.submit(created), "accept")
 
 		# NDS-AC-050 — every year the author can see is offered, ordered by
-		# calendar: the seeded world's two years (FY 2026/27 carried out,
-		# `FY` = FY 2027/28 being prepared) and then the disposable one.
-		from kentender_core.seeds.calendar import YEAR1
+		# calendar: the seeded world's years (the closed year, FY 2026/27
+		# carried out, `FY` = FY 2027/28 being prepared) and then the
+		# disposable one.
+		from kentender_core.seeds.calendar import YEAR0, YEAR1
 
 		years = selectable_financial_years(AUTHOR)
-		self.assertEqual([row["id"] for row in years], [YEAR1.fiscal_year, FY, second_fy])
+		self.assertEqual([row["id"] for row in years], [YEAR0.fiscal_year, YEAR1.fiscal_year, FY, second_fy])
 
 		# No explicit year selected — CTX-CHG-001's own rule ("several
 		# offered, none selected/remembered" -> no FY filter applied) means
